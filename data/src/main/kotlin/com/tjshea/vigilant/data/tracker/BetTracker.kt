@@ -1032,10 +1032,17 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
  */
 @kotlinx.serialization.Serializable
 data class FairBasis(val source: String, val sharp: List<String> = emptyList(), val books: Int = 0) {
+    /** Pinnacle is among the sharp books this fair was worked out from. */
+    val hasPinnacle: Boolean get() = sharp.any { it.equals("pinnacle", ignoreCase = true) }
+
+    /** Pinnacle is the whole fair: its devigged two-sided price, no other book (Pinnacle only, RESEARCH.md §88.5). */
+    val pinnacleAlone: Boolean get() = hasPinnacle && sharp.all { it.equals("pinnacle", ignoreCase = true) } && books == 1
+
     /** A short group name: "Pinnacle-anchored", "exchange only (Kalshi)", "books' average", "CNO". */
     val group: String get() = when {
         source == SOURCE_CNO || source == SOURCE_PARLAY -> source
-        "pinnacle" in sharp -> "Pinnacle in the fair"
+        // The fair line names its books by title ("Pinnacle"), the tests and older bets by key ("pinnacle"): either is Pinnacle.
+        hasPinnacle -> "Pinnacle in the fair"
         sharp.isNotEmpty() -> "exchange sharp only (${sharp.joinToString("+") { com.tjshea.vigilant.data.reference.TheOddsApiClient.bookTitle(it) }})"
         else -> "books' average only"
     } + (if (books == 1) ", one book" else "")
