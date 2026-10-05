@@ -146,6 +146,26 @@ class AutoScanTest {
         assertEquals(listOf(240, 240, 240, 240, 360, 300, 600, 1200, 1800, 2400), ScanSettings.AUTO_SCAN_SECONDS_CHOICES.map(ScanSettings::vigilantEverySeconds))
     }
 
+    /** Low API usage bids (RESEARCH.md §92) run Vigilant's scan at the pace Tj picked, however fast the cycles are, and the cycle really asks for it. */
+    @Test
+    fun `in low API usage bids Vigilant's scan waits the picked pace - 10 minutes by default - and the usual four otherwise`() {
+        val low = ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, maker = true)
+        val gap = low.vigilantGapSeconds
+        assertEquals(600, gap)
+        // A 60-second cycle (what bids turn on): not due 4 or 9 minutes after the last one, due at 10; the usual gap would have run at 4.
+        assertFalse(AutoScanClock.vigilantDue(now - 4 * 60_000L, 60, now, gap))
+        assertFalse(AutoScanClock.vigilantDue(now - 9 * 60_000L, 60, now, gap))
+        assertTrue(AutoScanClock.vigilantDue(now - 10 * 60_000L, 60, now, gap))
+        assertTrue(AutoScanClock.vigilantDue(now - 4 * 60_000L, 60, now))
+        assertTrue("none yet this run: now", AutoScanClock.vigilantDue(null, 60, now, gap))
+        // A cycle as slow as the pace runs every time; a slower pace than the cycle still holds the scan back.
+        assertTrue(AutoScanClock.vigilantDue(now - 600_000L + 400, 600, now, gap))
+        assertFalse(AutoScanClock.vigilantDue(now - 600_000L, 600, now, 1_800))
+        // The cycle passes the settings' own gap.
+        val src = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
+        assertTrue(src.contains("AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock(), settings.vigilantGapSeconds)"))
+    }
+
     /** Faster cycles than the usual 5 minutes also re-read the bets in their last 15 minutes at the cycle's pace: a closer last read before the start is the close. */
     @Test
     fun `cycles faster than 5 minutes re-read bets about to start at their own pace, never faster than once a minute`() {

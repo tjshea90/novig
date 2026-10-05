@@ -157,4 +157,45 @@ class BidReportTest {
         assertFalse(BidReport.fillLines(rows, now, limit = 1).size != 1)
         assertNotNull(lines.firstOrNull())
     }
+
+    // ---- low API usage bids (RESEARCH.md §92) ------------------------------------------------------------------------------
+
+    private fun tagged(n: Int, focus: String?, books: List<String> = emptyList(), age: Int? = null) =
+        bid(n).copy(focus = focus, fairBooks = books, fairAgeSec = age, fairNewestAgeSec = age)
+
+    @Test
+    fun `a row carries which choice posted the bid, the books behind its fair and how old their prices were`() {
+        val b = tagged(1, "LOW_USAGE", listOf("Kalshi", "ProphetX"), 75)
+        val r = BidReport.rows(listOf(b), emptyList(), now).single()
+        assertEquals("LOW_USAGE", r.focus)
+        assertEquals(listOf("Kalshi", "ProphetX"), r.fairBooks)
+        assertEquals(75, r.fairAgeSec)
+        assertEquals("Low API usage", BidReport.focusLabel("LOW_USAGE"))
+        assertEquals("Quick & likely to win", BidReport.focusLabel("QUICK_LIKELY"))
+        assertEquals("All bids", BidReport.focusLabel("ALL"))
+        assertNull(BidReport.focusLabel(null))
+        assertEquals("under 1 min", BidReport.ageBand(59))
+        assertEquals("1 to 3 min", BidReport.ageBand(60))
+        assertEquals("3 to 5 min", BidReport.ageBand(180))
+        assertEquals("5 min or more", BidReport.ageBand(300))
+    }
+
+    @Test
+    fun `once a low-usage bid filled the fills are split by the choice, the books behind the fair and the age of their prices`() {
+        val rows = BidReport.rows(
+            listOf(tagged(1, "LOW_USAGE", listOf("Kalshi", "ProphetX"), 30), tagged(2, "LOW_USAGE", listOf("FanDuel", "Kalshi"), 200), tagged(3, "ALL"), tagged(4, null)),
+            emptyList(), now,
+        )
+        val text = BidReport.summary(rows, now).joinToString("\n")
+        assertTrue(text, text.contains("-- fills by which bids go up (Settings › Bids) --"))
+        assertTrue(text.contains("Low API usage: 2 fills"))
+        assertTrue(text.contains("All bids: 1 fill"))
+        assertTrue(text, text.contains("Kalshi + ProphetX: 1 fill"))
+        assertTrue(text, text.contains("FanDuel + Kalshi: 1 fill"))
+        assertTrue(text, text.contains("under 1 min: 1 fill") && text.contains("3 to 5 min: 1 fill"))
+        // Without a low-usage bid none of those splits is printed.
+        val plain = BidReport.summary(BidReport.rows(listOf(tagged(1, "ALL"), tagged(2, null)), emptyList(), now), now).joinToString("\n")
+        assertFalse(plain.contains("which bids go up"))
+        assertFalse(plain.contains("the books behind the fair"))
+    }
 }

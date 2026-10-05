@@ -580,4 +580,27 @@ class DiagnosticsTest {
         assertTrue(down.finding, down.finding.startsWith("standing down now"))
         assertEquals("VPN", down.evidence)
     }
+
+    // ---- low API usage bids (RESEARCH.md §92) ------------------------------------------------------------------------------
+
+    @Test
+    fun `Diagnostics says what low API usage bids read, at what pace, through which feeds, and what cannot be read`() {
+        val off = ScanSettings(maker = true)
+        assertTrue("nothing when that isn't the bids' choice", Diagnostics.lowUsageLines(off, null, 0L).isEmpty())
+        val low = ScanSettings(maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, lowUsageMinutes = 15, lowUsageMargin = 0.03)
+        val plan = com.tjshea.vigilant.data.scanner.LowUsageBids.feedsFor(com.tjshea.vigilant.data.scanner.LowUsageBids.books(low), setOf("kalshi", "propline_props"))
+        val lines = Diagnostics.lowUsageLines(low, plan, 0L)
+        val text = lines.joinToString("\n")
+        assertTrue(text, text.contains("ON: Vigilant's scan reads player props only, the next 6 h, from the picked books alone"))
+        assertTrue(text, text.contains("books Kalshi, ProphetX, FanDuel"))
+        assertTrue(text, text.contains("scan at most every 15 min (the usual gap is 4 min)"))
+        assertTrue(text, text.contains("at least +3.0% under the fair") || text.contains("at least 3.0% under the fair"))
+        assertTrue(text, text.contains("no bid longer than +130"))
+        assertTrue(text, text.contains("feeds asked: Kalshi (free), PropLine props"))
+        assertTrue("ProphetX has no feed with a key", text.contains("CANNOT BE READ: ProphetX"))
+        // Chosen but bids off: said plainly, and the scan is the usual one.
+        assertTrue(Diagnostics.lowUsageLines(low.copy(maker = false, makerRecommend = false), plan, 0L).first().contains("chosen but bids are off"))
+        // A tighter limit of Tj's is the one shown.
+        assertTrue(Diagnostics.lowUsageLines(low.copy(makerMaxOdds = 115), plan, 0L).joinToString().contains("no bid longer than +115"))
+    }
 }
