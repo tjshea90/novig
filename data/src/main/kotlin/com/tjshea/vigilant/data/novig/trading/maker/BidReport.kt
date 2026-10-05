@@ -98,7 +98,7 @@ object BidReport {
                 minToStartAtFill = fillAt?.let { (b.startsTs - it) / 60_000L },
                 fairAtFill = b.fairAtFill, sharpAtFill = b.sharpFairAtFill, evAtFill = ev, pickedOff = ev?.let { it < 0.0 },
                 betStatus = bet?.status?.name, profit = bet?.profit, stake = bet?.stake,
-                closeFair = bet?.let { ClosingLine.closeOf(it, now) }, clv = bet?.let { ClosingLine.clv(it, now) }, closeVia = bet?.closeVia,
+                closeFair = bet?.let { ClosingLine.closeFair(it, now) }, clv = bet?.let { ClosingLine.clv(it, now) }, closeVia = bet?.let { ClosingLine.closeOf(it, now)?.second },
             )
         }
     }
@@ -135,7 +135,7 @@ object BidReport {
             parts += if (judged > 0) "EV at fill ${pct(evFill / judged)} ($judged judged, ${Math.round(100.0 * picked / judged)}% picked off)" else "EV at fill: none judged yet"
             parts += if (clvN > 0) "CLV ${pct(clvSum / clvN)} ($clvN closes, ${Math.round(100.0 * beat / clvN)}% beat)" else "CLV: no close yet"
             if (settled > 0) parts += "results ${money(profit)} on ${money(staked)} (${settled} settled)"
-            if (delayN > 0) parts += "median wait ~${secs(delaySum / delayN)} (mean)"
+            if (delayN > 0) parts += "mean wait ${secs(delaySum / delayN)}"
             return "$label: " + parts.joinToString(" · ")
         }
     }
