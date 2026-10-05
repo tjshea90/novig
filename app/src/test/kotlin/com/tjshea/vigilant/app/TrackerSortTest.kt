@@ -75,6 +75,16 @@ class TrackerSortTest {
     }
 
     @Test
+    fun `the Pinnacle only filter lists the bets made with Pinnacle only on, by their record, and they stay Vigilant's too`() {
+        val pin = bets[2].copy(atBet = com.tjshea.vigilant.data.tracker.AtBet(atMs = t0, how = "auto", scanner = BetTracker.SOURCE_VIGILANT, pinnacleOnly = true))
+        val plain = bets[0].copy(atBet = com.tjshea.vigilant.data.tracker.AtBet(atMs = t0, how = "auto", scanner = BetTracker.SOURCE_VIGILANT))
+        val list = listOf(plain, bets[1], pin, bets[3])
+        assertEquals(listOf("c"), TrackerSort.inScanner(list, ScannerFilter.PINNACLE).map { it.id })
+        assertEquals(listOf("a", "c"), TrackerSort.inScanner(list, ScannerFilter.VIGILANT).map { it.id })
+        assertEquals(4, TrackerSort.inScanner(list, ScannerFilter.ALL).size)
+    }
+
+    @Test
     fun `a chip says which end of the list is at the top only once it is the chosen one`() {
         // The pinned chip is short: the sort, and which way round it runs.
         assertEquals("Sort: Needs a look", TrackerSort.barLabel(BetSort.DEFAULT, false, "Needs a look"))
