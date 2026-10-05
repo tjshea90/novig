@@ -139,12 +139,11 @@ object AutoScanClock {
 
     /**
      * Whether a cycle at [seconds] runs Vigilant's own scan (Tj, 2026-10-01: CNO may be read every 15 s, but a Vigilant scan spends API credits
-     * and takes ~100 s): every cycle when they're [ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS] or more apart, else only once that long
-     * has passed since the last one started ([lastVigilantStartMs]; null = none yet this run of the app).
+     * and takes ~100 s): every cycle when they're [gapSeconds] ([ScanSettings.vigilantGapSeconds]: the usual [ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS], or the
+     * low-usage bids' pace) or more apart, else only once that long has passed since the last one started ([lastVigilantStartMs]; null = none yet this run of the app).
      */
-    fun vigilantDue(lastVigilantStartMs: Long?, seconds: Int, now: Long): Boolean =
-        seconds >= ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS || lastVigilantStartMs == null ||
-            now - lastVigilantStartMs + JITTER_MS >= ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS * 1_000L
+    fun vigilantDue(lastVigilantStartMs: Long?, seconds: Int, now: Long, gapSeconds: Int = ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS): Boolean =
+        seconds >= gapSeconds || lastVigilantStartMs == null || now - lastVigilantStartMs + JITTER_MS >= gapSeconds * 1_000L
 }
 
 /**
@@ -263,7 +262,7 @@ class AutoScanner(
                     runCatching { timed("autolock") { c.autoLock.run(settings) } }.onFailure { if (it is CancellationException) throw it; errors += "Auto-lock: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 var scanned = false
-                if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && (forceVigilant || AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock()))) {
+                if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && (forceVigilant || AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock(), settings.vigilantGapSeconds))) {
                     _status.update { it.copy(step = "Vigilant scan") }
                     lastVigilantStartMs = clock()
                     scanned = true
