@@ -12,6 +12,12 @@ object TrackerBreakdown {
 
     enum class By(val label: String) {
         SCANNER("Scanner"), LEAGUE("League"), MARKET("Market"), EV("Edge"), ODDS("Price"),
+
+        /**
+         * How long before the start the bet was placed (Tj, 2026-10-05, v0.60.0 file: placed within 6 h his bets kept their edge at the close, earlier none of it;
+         * RESEARCH.md §82). The one split here whose rows read in time order, not by the number settled.
+         */
+        LEAD("Time to start"),
     }
 
     data class Row(val label: String, val stats: TrackerStats)
@@ -21,7 +27,10 @@ object TrackerBreakdown {
         .groupBy { keyOf(it, by) }
         .map { (label, group) -> Row(label, BetTracker.stats(group)) }
         .filter { it.stats.bets > 0 }
-        .sortedWith(compareByDescending<Row> { it.stats.settled }.thenByDescending { it.stats.bets }.thenBy { it.label })
+        .sortedWith(
+            if (by == By.LEAD) compareBy<Row> { BetLedger.LEAD_ORDER.indexOf(it.label).let { i -> if (i < 0) Int.MAX_VALUE else i } }.thenBy { it.label }
+            else compareByDescending<Row> { it.stats.settled }.thenByDescending { it.stats.bets }.thenBy { it.label },
+        )
 
     fun keyOf(b: TrackedBet, by: By): String = when (by) {
         By.SCANNER -> when (b.source) {
@@ -33,6 +42,7 @@ object TrackerBreakdown {
         By.MARKET -> marketOf(b)
         By.EV -> evBand(b.evPercentAtBet)
         By.ODDS -> oddsBand(b.american ?: Odds.probabilityToAmerican(b.price.coerceIn(0.001, 0.999)))
+        By.LEAD -> BetLedger.keyOf(b, BetLedger.Split.LEAD)
     }
 
     /** The kind of market: moneyline, spread, total, team total, player prop, or the period/set variants. */

@@ -117,6 +117,9 @@ object BetLedger {
         }
     }
 
+    /** [leadBand]'s bands, nearest to the start first (the Tracker's "Time to start" rows read in this order). */
+    val LEAD_ORDER = listOf("under 30 min", "30 min-2 h", "2-6 h", "6-24 h", "24 h or more", "after the start", "not recorded")
+
     /** Minutes before the start, banded. */
     fun leadBand(minutes: Long): String = when {
         minutes < 0 -> "after the start"
