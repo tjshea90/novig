@@ -274,8 +274,22 @@ class MakerDesk(
         val noReplace = HashSet<String>()
         val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }
         var placed = 0
-        val wantedLines = actions.places.filter { it.line.outcomeId !in noReplace }
-        for (post in wantedLines) {
+        var queue = actions.places.filter { it.line.outcomeId !in noReplace }
+        // Many new bids go up in a request each 256, not one by one (each takes ~0.2 s with this lock held, and fair prices move while they do).
+        if (trading.batchOrders && queue.size >= 2) {
+            val rest = ArrayList<MakerDecision.Post>()
+            var lost = false
+            for (chunk in queue.chunked(NovigTradingClient.MAX_BATCH)) {
+                if (!keepPosting()) { lost = true; break }
+                when (val r = withContext(NonCancellable) { placeBatch(chunk, rules, auto = true, problems) }) {
+                    is Batch.Placed -> placed += r.n
+                    is Batch.Singly -> rest += r.posts
+                    is Batch.Lost -> { problems += r.why; lost = true; break }
+                }
+            }
+            queue = if (lost) emptyList() else rest
+        }
+        for (post in queue) {
             if (!keepPosting()) break
             val result = withContext(NonCancellable) { placeOne(post, rules, auto = true) }
             when (result) {
@@ -452,8 +466,8 @@ class MakerDesk(
         data class Refused(val why: String, val stopsCycle: Boolean) : Placed
     }
 
-    private suspend fun placeOne(post: MakerDecision.Post, rules: MakerRules, auto: Boolean): Placed {
-        val now = clock()
+    /** The bid [post] becomes at [now] and how long it may rest in ms, or null when the fair it was priced from is about to go old. */
+    private fun bidFor(post: MakerDecision.Post, rules: MakerRules, auto: Boolean, now: Long): Pair<MakerBid, Long>? {
         val line = post.line
         val bid = MakerBid(
             clientId = NovigTradingClient.newClientId(), marketId = line.marketId, eventId = line.market.eventId, outcomeId = line.outcomeId,
@@ -467,7 +481,14 @@ class MakerDesk(
         )
         val ttl = bid.expiresAtMs!! - now
         // Worked out a moment ago: if that window has closed since, nothing is sent.
-        if (ttl < MIN_TTL_MS) return Placed.Refused("${line.selection}: its fair price is about to go old; re-priced at the next scan", stopsCycle = false)
+        return if (ttl < MIN_TTL_MS) null else bid to ttl
+    }
+
+    private val tooOld = { post: MakerDecision.Post -> "${post.line.selection}: its fair price is about to go old; re-priced at the next scan" }
+
+    private suspend fun placeOne(post: MakerDecision.Post, rules: MakerRules, auto: Boolean): Placed {
+        val line = post.line
+        val (bid, ttl) = bidFor(post, rules, auto, clock()) ?: return Placed.Refused(tooOld(post), stopsCycle = false)
         // Recorded before it's sent: an answer that never comes back is still a bid Vigilant knows to look for.
         store.update { it + bid }
         return try {
@@ -484,6 +505,51 @@ class MakerDesk(
         } catch (e: Exception) {
             // No answer: it may be resting. The next cycle finds it by its clientId; it's never sent again.
             Placed.Refused("${line.selection}: Novig didn't answer (${e.message ?: e.javaClass.simpleName}); looked for again next time", stopsCycle = true)
+        }
+    }
+
+    /** How a batch of new bids ended. */
+    private sealed interface Batch {
+        /** [n] bids are resting. */
+        data class Placed(val n: Int) : Batch
+
+        /** Novig placed none of them (all or nothing): each goes one by one, so a single refusal costs only itself. */
+        data class Singly(val posts: List<MakerDecision.Post>) : Batch
+
+        /** No usable answer: they may be resting, found by their client ids at the next look; nothing more is sent this pass. */
+        data class Lost(val why: String) : Batch
+    }
+
+    /**
+     * Up to [NovigTradingClient.MAX_BATCH] new bids in ONE request (Novig's batch route: all or nothing, one `place` token a bid). Every bid is recorded before the request
+     * is sent, as [placeOne] does, so an answer that never comes back is still a bid Vigilant looks for by its client id. A refusal places none, so the records come out
+     * and the bids go [Batch.Singly].
+     */
+    private suspend fun placeBatch(posts: List<MakerDecision.Post>, rules: MakerRules, auto: Boolean, problems: MutableList<String>): Batch {
+        val now = clock()
+        val built = ArrayList<Triple<MakerDecision.Post, MakerBid, Long>>()
+        for (p in posts) {
+            val b = bidFor(p, rules, auto, now)
+            if (b == null) problems += tooOld(p) else built += Triple(p, b.first, b.second)
+        }
+        if (built.isEmpty()) return Batch.Placed(0)
+        val bids = built.map { it.second }
+        store.update { it + bids }
+        val specs = built.map { (p, b, ttl) -> NovigTradingClient.NewOrder(p.line.outcomeId, p.price, p.contracts, "PO", b.clientId, ttl) }
+        return try {
+            val ids = trading.placeOrders(specs)
+            store.update { list -> list.map { b -> ids[b.clientId]?.let { id -> b.copy(orderId = id, status = MakerStatus.RESTING) } ?: b } }
+            val missing = bids.count { it.clientId !in ids }
+            if (missing > 0) Batch.Lost("Novig's answer named ${ids.size} of ${bids.size} bids; the rest are looked for by their client ids next time") else Batch.Placed(bids.size)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: NovigApiException) {
+            val gone = bids.mapTo(HashSet()) { it.clientId }
+            store.update { list -> list.filterNot { it.clientId in gone } }
+            problems += "A batch of ${bids.size} bids was refused (${e.advice}); they go one at a time"
+            Batch.Singly(built.map { it.first })
+        } catch (e: Exception) {
+            Batch.Lost("Novig didn't answer a batch of ${bids.size} bids (${e.message ?: e.javaClass.simpleName}); looked for again next time")
         }
     }
 
@@ -508,7 +574,30 @@ class MakerDesk(
     private suspend fun cancelBids(orders: List<Pair<String, String>>, problems: MutableList<String>, grown: MutableList<TrackedBet>): Map<String, Cancel> {
         val out = HashMap<String, Cancel>()
         val sent = ArrayList<String>()
-        for ((orderId, why) in orders) {
+        // Several cancels go in a request each 256 (partial: one unknown id does not stop the rest); an id the batch could not answer for, or a batch that failed, is
+        // cancelled one by one below, which reports its own trouble.
+        var singles = orders
+        if (trading.batchOrders && orders.size >= 2) {
+            val left = ArrayList<Pair<String, String>>()
+            for (chunk in orders.chunked(NovigTradingClient.MAX_BATCH)) {
+                val res = try {
+                    trading.cancelOrdersBatch(chunk.map { it.first })
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    left += chunk
+                    continue
+                }
+                for ((orderId, why) in chunk) {
+                    // FILLED = nothing left to cancel, it's a bet (its fills are read with the others'); CANCELED / NOT_FOUND = already off the book, confirmed below.
+                    if (res.notCanceled[orderId] == "FILLED") out[orderId] = Cancel.FILLED
+                    store.update { list -> list.map { if (it.orderId == orderId && it.resting) it.copy(status = MakerStatus.CANCELING, why = why) else it } }
+                    sent += orderId
+                }
+            }
+            singles = left
+        }
+        for ((orderId, why) in singles) {
             val status = try {
                 trading.cancelOrder(orderId)
             } catch (e: CancellationException) {
