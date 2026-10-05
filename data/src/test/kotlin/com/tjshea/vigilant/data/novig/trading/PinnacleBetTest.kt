@@ -93,7 +93,7 @@ class PinnacleBetTest {
         assertNull(PinnacleBet.judge(rules, opp(starts = now + 61_000), now, maxAge))
         assertEquals("Novig's price for it was read too long ago", PinnacleBet.judge(rules, opp(bookAt = now - 20 * 60_000), now, maxAge))
         assertEquals("Novig's price for it was read too long ago", PinnacleBet.judge(rules, opp(bookAt = null), now, maxAge))
-        assertEquals("Pinnacle has no price for it", PinnacleBet.judge(rules, opp(fairP = null), now, maxAge))
+        assertEquals("Pinnacle has no price for it", PinnacleBet.judge(rules, opp().copy(fairProbability = null), now, maxAge))
         assertEquals("nobody is selling it at Novig", PinnacleBet.judge(rules, opp().copy(quote = null), now, maxAge))
     }
 
