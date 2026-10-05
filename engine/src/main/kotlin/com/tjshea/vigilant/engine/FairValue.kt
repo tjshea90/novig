@@ -37,10 +37,17 @@ data class FairSettings(
      * §16). One stale or off-market book can pull a mean a long way; it can't pull the median.
      */
     val outlierGuard: Boolean = true,
+    /**
+     * The fewest sharp books a sharp component may be built from (SHARP and BLEND): fewer than this and the sharp component doesn't exist, so SHARP falls back to the
+     * average (or skips the line with the fallback off) and BLEND is the average. 1 = one sharp book is enough (every setting before low-usage bids, whose fair must be
+     * built from at least two sharp prop books: RESEARCH.md §92).
+     */
+    val minSharp: Int = 1,
 ) {
     init {
         require(sharpWeight in 0.0..1.0) { "sharpWeight must be in [0,1], got $sharpWeight" }
         require(minBooks >= 1) { "minBooks must be >= 1" }
+        require(minSharp >= 1) { "minSharp must be >= 1" }
     }
 
     companion object {
@@ -128,10 +135,12 @@ object FairValue {
         }
 
         val averageOk = average.size >= settings.minBooks
+        // "Is there a sharp component": enough sharp books, not just one (the default).
+        val sharpOk = sharp.size >= settings.minSharp
 
         return when (settings.source) {
             FairSource.SHARP -> when {
-                sharp.isNotEmpty() -> line(avg(sharp), settings, FairSource.SHARP, perBook, sharp, emptyList())
+                sharpOk -> line(avg(sharp), settings, FairSource.SHARP, perBook, sharp, emptyList())
                 settings.fallbackToAverage && averageOk ->
                     line(avg(average), settings, FairSource.MARKET_AVERAGE, perBook, emptyList(), average)
                 else -> null
@@ -141,13 +150,13 @@ object FairValue {
                 if (averageOk) line(avg(average), settings, FairSource.MARKET_AVERAGE, perBook, emptyList(), average) else null
 
             FairSource.BLEND -> when {
-                sharp.isNotEmpty() && averageOk -> {
+                sharpOk && averageOk -> {
                     val s = avg(sharp)
                     val a = avg(average)
                     val w = settings.sharpWeight
                     line(s.indices.map { w * s[it] + (1 - w) * a[it] }, settings, FairSource.BLEND, perBook, sharp, average)
                 }
-                sharp.isNotEmpty() -> line(avg(sharp), settings, FairSource.SHARP, perBook, sharp, emptyList())
+                sharpOk -> line(avg(sharp), settings, FairSource.SHARP, perBook, sharp, emptyList())
                 averageOk -> line(avg(average), settings, FairSource.MARKET_AVERAGE, perBook, emptyList(), average)
                 else -> null
             }
