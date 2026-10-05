@@ -14,8 +14,11 @@ import com.tjshea.vigilant.data.novig.trading.ApiBetPlacer
 import com.tjshea.vigilant.data.novig.trading.AutoBet
 import com.tjshea.vigilant.data.novig.trading.BetLimits
 import com.tjshea.vigilant.data.novig.trading.BetTarget
+import com.tjshea.vigilant.data.novig.trading.PinnacleBet
 import com.tjshea.vigilant.data.novig.trading.PlaceResult
 import com.tjshea.vigilant.data.reference.SharpBooks
+import com.tjshea.vigilant.data.scanner.Opportunity
+import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.SharpConfirm
 import com.tjshea.vigilant.data.scanner.BetKind
@@ -23,6 +26,7 @@ import com.tjshea.vigilant.data.scanner.SharpMode
 import com.tjshea.vigilant.data.scanner.SharpVeto
 import com.tjshea.vigilant.data.scanner.TrapGuard
 import com.tjshea.vigilant.data.tracker.AtBet
+import com.tjshea.vigilant.data.tracker.AtBets
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.GameExposure
 import com.tjshea.vigilant.data.tracker.GameRef
@@ -275,6 +279,128 @@ class AutoBettor(
         return finish(now, report, balance = balance)
     }
 
+    /**
+     * One pass of the auto-bet in Pinnacle only (Tj, 2026-10-05; RESEARCH.md §88.5), after a Vigilant scan that priced every Novig outcome against Pinnacle's devigged price
+     * alone ([ScanSettings.effective]) ended: [scanned] is its result. The best edges are looked at ([PinnacleBet.TOP]); for any whose Pinnacle quote is older than a third of
+     * [ScanSettings.pinnacleMaxAgeSeconds] the leagues' Pinnacle boards are read again first ([refresh], one read a league) and the bets re-priced with that price; a bet then
+     * passes only if [PinnacleBet.judge] says so (Pinnacle's quote within the limit, an edge in range, pregame, a kind and odds you allow), and goes through the same order
+     * path as every auto-bet ([sendOrder]: in-flight marker, the placer's own price and limit checks against Novig's book right now, a lost answer halts). Returns the
+     * same [Report] as [run] (looked = bets examined, passed = passed [PinnacleBet.judge]).
+     */
+    suspend fun runPinnacle(settings: ScanSettings, scanned: ScanResult?, refresh: suspend (Set<String>) -> ScanResult?): Report {
+        val now = clock()
+        val rules = AutoBet.rules(settings)
+        if (!settings.autoBet) return finish(now, Report(), blocker = "Auto-bet is off")
+        if (settings.killed || c.settingsStore.flow.value?.killed == true) return finish(now, Report(), blocker = "Stopped by the STOP button: tap RESUME on the red bar to run again")
+        settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (the Auto-bet tab › Resume auto-bet)") }
+        failure?.takeIf { now < failedUntilMs }?.let { return finish(now, Report(stopped = it), blocker = it) }
+        val placer = placer()
+        if (!AppBook.isNovig || placer == null) return finish(now, Report(), blocker = "Betting through Novig's API isn't set up (Settings › Betting & Novig account › Enable betting)")
+        cooldown.entries.removeAll { it.value <= now }
+
+        val skipped = LinkedHashMap<String, Int>()
+        fun skip(reason: String) { skipped.merge(reason, 1, Int::plus) }
+        val maxAge = PinnacleBet.maxAgeMs(settings)
+        val refreshAfter = PinnacleBet.refreshAfterMs(settings)
+
+        // The scan's best edges, a point under the minimum included (a fresher Pinnacle price can lift one over it).
+        fun best(result: ScanResult?) = PinnacleBet.candidates(result, settings).filter { (it.evPercent ?: -1.0) >= rules.minEv - LOOK_BELOW }.take(PinnacleBet.TOP)
+        var looking = best(scanned)
+        // Pinnacle's price as young as can be: every league holding a bet whose quote is past a third of the limit is read again once, and the bets are re-priced with it.
+        val old = looking.filter { (PinnacleBet.ageMs(it, now) ?: Long.MAX_VALUE) > refreshAfter }.mapTo(LinkedHashSet()) { it.league.novigName }
+        if (old.isNotEmpty()) {
+            val fresh = try {
+                refresh(old)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                c.eventLog.warn("AUTOBET", "Pinnacle's prices couldn't be read again: ${e.message ?: e.javaClass.simpleName}")
+                null
+            }
+            if (fresh != null) looking = best(fresh)
+            c.eventLog.count(if (fresh != null) "pinnacle.refresh.ok" else "pinnacle.refresh.failed")
+        }
+        val judgedAt = clock()
+        val passing = ArrayList<Opportunity>()
+        for (o in looking) {
+            when {
+                (cooldown[o.key] ?: 0L) > judgedAt -> skip("tried a moment ago")
+                TrapGuard.isEarly(o.event.startsTs, judgedAt, settings.trapEarlyHours) -> skip(TrapGuard.earlyReason(settings.trapEarlyHours))
+                else -> PinnacleBet.judge(rules, o, judgedAt, maxAge)?.let(::skip) ?: passing.add(o)
+            }
+        }
+        if (passing.isEmpty()) {
+            c.wallet.last?.takeIf { judgedAt - it.atMs < WalletBalance.FRESH_MS }?.let { w ->
+                if (w.dollars < AutoBet.MIN_STAKE) { if (!walletEmptyNoted) walletRanOut(w.dollars) } else walletEmptyNoted = false
+            }
+            return finish(now, Report(looked = looking.size, skipped = skipped))
+        }
+
+        val balance0 = try {
+            wallet()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: NovigApiException) {
+            return stopFor(now, Report(looked = looking.size, passed = passing.size, skipped = skipped), "Couldn't read the wallet: ${e.advice}")
+        } catch (e: Exception) {
+            return stopFor(now, Report(looked = looking.size, passed = passing.size, skipped = skipped), "Couldn't read the wallet: ${e.message ?: e.javaClass.simpleName}")
+        } ?: return finish(now, Report(looked = looking.size, passed = passing.size, skipped = skipped), blocker = "Betting through Novig's API isn't set up (Settings › Betting & Novig account › Enable betting)")
+        var balance = balance0
+        if (balance >= AutoBet.MIN_STAKE) walletEmptyNoted = false
+
+        val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
+        val limits = BetLimits(
+            maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds, maxPerGame = settings.apiMaxPerGame,
+            minEvWhere = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
+        )
+        val exposure = if (settings.apiMaxPerGame > 0.0) GameExposure.items(c.tracker.all()) + GameExposure.bidItems(c.makerStore.all()) else emptyList()
+        val placed = ArrayList<TrackedBet>()
+        var stopped: String? = null
+        var walletEmpty = false
+        var halted = false
+        for (o in passing) {
+            currentCoroutineContext().ensureActive()
+            if (c.settingsStore.flow.value?.killed == true) { stopped = "the STOP button was pressed while this pass ran"; break }
+            if (placed.size >= AutoBet.MAX_PER_CYCLE) { stopped = "placed ${AutoBet.MAX_PER_CYCLE} this cycle (the best edges first); the rest wait for the next"; break }
+            val q = o.quote ?: continue
+            val stake = when (val st = PinnacleBet.stake(rules, o, settings.bankroll, balance)) {
+                is AutoBet.Stake.WalletEmpty -> { walletEmpty = true; stopped = "the wallet has ${money(balance)}, under a cent"; break }
+                is AutoBet.Stake.Skip -> { skip(st.reason); continue }
+                is AutoBet.Stake.Amount -> st.dollars
+            }
+            if (stake <= tooSmallBelow + 1e-9) { skip("Novig refused an order of ${money(tooSmallBelow)} as too small, and this one is no bigger"); continue }
+            val target = ApiBetTargets.of(o)
+            if (target == null) { cooldown[o.key] = judgedAt + NOT_FOUND_COOLDOWN_MS; skip("its exact bet couldn't be found on Novig"); continue }
+            if (target.market.marketId in openMarkets) { skip("a bet in this Novig market is already open"); continue }
+            val game = GameRef(target.market.eventId, target.eventName, target.startsTs, target.league)
+            if (settings.apiMaxPerGame > 0.0) {
+                val check = GameExposure.check(game, exposure, target.market.marketId, target.outcomeId, stake, settings.apiMaxPerGame)
+                if (check.blocked) { noteGameLimit(check); skip(AutoBet.GAME_LIMIT_SKIP); continue }
+            }
+            val moveReason = novigMove(o.key, BetKind.of(o.marketLabel, o.selection), q.cost, o.selection, target, settings)
+            if (moveReason != null) { cooldown[o.key] = clock() + AutoBet.COOLDOWN_MS; skip(moveReason); continue }
+            val sentAt = clock()
+            val atBet = runCatching { AtBets.opportunity(o, settings, sentAt, AtBet.HOW_AUTO, BuildConfig.VERSION_NAME, stake = stake, wallet = balance).copy(novigMove = moveSaid[o.key], stakeRule = settings.autoBetStake.label) }.getOrNull()
+            when (val sent = sendOrder(placer, target, stake, limits, q.cost, atBet, o.key, sentAt)) {
+                is Sent.Placed -> {
+                    val bet = sent.bet
+                    placed += bet
+                    openMarkets += target.market.marketId
+                    balance -= bet.stake
+                    withContext(NonCancellable) { markPlaced(c, target, sent.result, clock()) }
+                    c.eventLog.count("pinnacle.autobet.placed")
+                    notes.placedPinnacle(app, target, bet, atBet?.pinnacleAgeSec, balance)
+                }
+                is Sent.Skipped -> skip(sent.reason)
+                is Sent.Stop -> { stopped = sent.why; halted = sent.halted; break }
+            }
+        }
+        if (walletEmpty && !walletEmptyNoted) walletRanOut(balance)
+        val report = Report(looked = looking.size, passed = passing.size, placed = placed, skipped = skipped, stopped = stopped, walletEmpty = walletEmpty, halted = halted)
+        if (stopped != null && !walletEmpty) postStop(now, stopped, halted)
+        return finish(now, report, balance = balance)
+    }
+
     /** What one order came to, for the pass that sent it. */
     private sealed interface Sent {
         data class Placed(val bet: TrackedBet, val result: PlaceResult.Placed) : Sent
@@ -427,14 +553,18 @@ class AutoBettor(
      */
     private suspend fun novigMove(item: AlertPicks.CnoChecked, target: BetTarget, settings: ScanSettings): String? {
         val row = item.shown.row
-        val kind = BetKind.of(row.market, row.bet)
+        return novigMove(item.pick.row.key, BetKind.of(row.market, row.bet), AutoBet.priceOf(row), row.bet, target, settings)
+    }
+
+    /** [novigMove] for any bet: its [key] (where the record is kept), [kind], the [price] it was judged at, and its [words]. */
+    private suspend fun novigMove(key: String, kind: BetKind, price: Double, words: String, target: BetTarget, settings: ScanSettings): String? {
         if (!settings.trapNovigMove || kind !in TrapGuard.MOVE_KINDS) return null
         val move = try {
-            TrapGuard.move(recentTrades(target.market.marketId), target.outcomeId, AutoBet.priceOf(row), clock())
+            TrapGuard.move(recentTrades(target.market.marketId), target.outcomeId, price, clock())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            moveSaid[item.pick.row.key] = "UNREAD · ${(e.message ?: e.javaClass.simpleName).take(REASON_CHARS)}"
+            moveSaid[key] = "UNREAD · ${(e.message ?: e.javaClass.simpleName).take(REASON_CHARS)}"
             c.eventLog.count("trap.move.UNREAD")
             return null
         }
@@ -443,10 +573,10 @@ class AutoBettor(
             move.trap -> "TRAP"
             else -> "CLEAR"
         }
-        moveSaid[item.pick.row.key] = "$verdict · ${TrapGuard.describe(move)}"
+        moveSaid[key] = "$verdict · ${TrapGuard.describe(move)}"
         c.eventLog.count("trap.move.${verdict.replace(' ', '_')}")
         val why = TrapGuard.moveReason(kind, move) ?: return null
-        c.eventLog.info("AUTOBET", "trap guard: ${row.bet}: $why")
+        c.eventLog.info("AUTOBET", "trap guard: $words: $why")
         return MOVE_SKIP
     }
 
@@ -523,6 +653,9 @@ class AutoBettor(
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
     companion object {
+        /** The Pinnacle-only pass looks at bets this far (EV, a point) under the minimum: a fresher Pinnacle price can lift one over it. */
+        const val LOOK_BELOW = 0.01
+
         /** Auto-bet bets the sharp veto stopped only for its bar (the sharpest book gave a positive edge under [ScanSettings.sharpVetoMinEv]). */
         const val SHARP_BAR_COUNTER = "sharpbar.autobet.under"
 
@@ -707,6 +840,28 @@ object AutoBetNotes {
             .setContentIntent(EvAlerts.openVigilant(app, ID_PLACED))
             .build()
         // Its own notification each (the bet's id is the tag): two bets in one cycle never replace one another.
+        runCatching { NotificationManagerCompat.from(app).notify(bet.id, ID_PLACED, n) }
+    }
+
+    /** "Auto-bet $4.20 · +3.4% EV · Over 5.5" with Pinnacle's price age: a bet placed in Pinnacle only (the EV is against Pinnacle's devigged price alone). */
+    fun placedPinnacle(app: Application, target: BetTarget, bet: TrackedBet, pinnacleAgeSec: Long?, walletLeft: Double? = null) {
+        if (!ScanService.canNotify(app)) return
+        ensureChannel(app)
+        val odds = bet.american?.let { if (it > 0) "+$it" else "$it" } ?: "?"
+        val left = walletLeft?.let { " · wallet ${String.format(Locale.US, "$%.2f", it.coerceAtLeast(0.0))} left" }.orEmpty()
+        val age = pinnacleAgeSec?.let { " · Pinnacle's price ${it}s old" }.orEmpty()
+        val text = "$odds · vs Pinnacle devigged$age · ${target.marketLabel} · ${target.eventName}$left"
+        val n = NotificationCompat.Builder(app, CHANNEL_BET)
+            .setSmallIcon(R.drawable.ic_scan)
+            .withWallet(app)
+            .setContentTitle(title(bet, target))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setAutoCancel(true)
+            .setContentIntent(EvAlerts.openVigilant(app, ID_PLACED))
+            .build()
         runCatching { NotificationManagerCompat.from(app).notify(bet.id, ID_PLACED, n) }
     }
 
