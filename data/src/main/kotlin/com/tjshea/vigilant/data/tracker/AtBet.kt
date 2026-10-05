@@ -218,7 +218,7 @@ object AtBets {
         atMs = atMs, version = version, how = AtBet.HOW_BID, scanner = BetTracker.SOURCE_VIGILANT,
         league = b.league, sport = SharpVeto.sportOf(b.league).name, kind = b.kind.name, minutesToStart = minutes(b.startsTs, atMs),
         american = Odds.probabilityToAmerican(b.price.coerceIn(0.001, 0.999)), ev = b.evAtFair, fair = b.fair,
-        fairMethod = b.fairBasis?.source, fairBooks = b.fairBasis?.sharp.orEmpty(), fairSharp = b.fairBasis?.sharp.orEmpty(),
+        fairMethod = b.fairBasis?.source, fairSharp = b.fairBasis?.sharp.orEmpty(),
         sharpVerdict = if (b.sharpFairAtPost != null) "ANCHORED" else "NO_SHARP", sharpEv = b.sharpFairAtPost?.let { it / b.price - 1.0 },
         twoSided = b.books.takeIf { it > 0 }, fairAgeSec = secs(b.bookAtMs, b.postedAtMs),
         fullKelly = fullKelly(b.fair, b.price), stake = b.paid.takeIf { it > 0.0 } ?: b.cost,
