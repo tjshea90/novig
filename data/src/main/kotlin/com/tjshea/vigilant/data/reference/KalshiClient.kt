@@ -45,9 +45,10 @@ class KalshiClient(
     private val baseUrl: String = "https://api.elections.kalshi.com/trade-api/v2",
     /**
      * Kalshi's docs now name this host as the production one (docs.kalshi.com market-data quickstart, read 2026-10-05; RESEARCH.md §90.2) while [baseUrl] still answers.
-     * If [baseUrl] stops (a retired host: 404 / 410 or no connection), reads switch to this one for the life of the app instead of failing every scan. Null: none.
+     * If [baseUrl] stops (a retired host: 404 / 410 or no connection), reads switch to this one for the life of the app instead of failing every scan. Null: none
+     * (the tests'; the app passes [ALT_URL]).
      */
-    private val altBaseUrl: String? = "https://external-api.kalshi.com/trade-api/v2",
+    private val altBaseUrl: String? = null,
     private val clock: () -> Long = System::currentTimeMillis,
     private val usage: UsageMeter? = null,
     sleep: suspend (Long) -> Unit = { delay(it) },
@@ -217,6 +218,9 @@ class KalshiClient(
 
     companion object {
         const val BOOK_KEY = "kalshi"
+
+        /** The host Kalshi's docs name as production now ([altBaseUrl]). */
+        const val ALT_URL = "https://external-api.kalshi.com/trade-api/v2"
 
         /** How long a series [lines] read stands in for reading it again in [odds]: within one scan. */
         const val EARLY_MS = 60_000L

@@ -820,7 +820,7 @@ class AppContainer(private val app: Application) {
         NovigSignedClient(client, json, KeystoreSigningKey(connection.readAlias, connection.readKeyId))
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
-    private val kalshi = KalshiClient(http, json, usage = usage)
+    private val kalshi = KalshiClient(http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage)
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage), json)
 
     /** ParlayAPI's degraded-mode check (free): books it says aren't keeping up don't price from it. */
