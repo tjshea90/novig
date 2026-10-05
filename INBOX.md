@@ -3907,3 +3907,8 @@ Review the full docs on all the apis used in the app and :
 4) consider if I should buy propline api which grades every single prop outcome
 5) if apis overlap on functions, consider which ones are best for vigilant in terms of accuracy, speed, and freshness of odds. Optimize vigilant to use the best apis for its functions first, then fallback to other apis if the best api is not responding or out of usage
 ```
+
+## 2026-10-05T17:23:39Z
+```
+Also consider if matchwire can help match props that vigilant has a hard time with or if it can help do it faster or more efficiently or save usage from other apis
+```
