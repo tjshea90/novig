@@ -162,7 +162,7 @@ class Scanner(
 
     override suspend fun scan(
         requested: ScanSettings,
-        sources: List<ReferenceSource>,
+        offered: List<ReferenceSource>,
         /** Markets always priced past the per-game line cap: the ones Tj has open bets on. */
         pinned: Set<String>,
         onProgress: (ScanProgress) -> Unit,
@@ -174,6 +174,7 @@ class Scanner(
     ): ScanReport = mutex.withLock {
         // Pinnacle only reads Novig and Pinnacle and nothing else ([ScanSettings.effective]): applied here, once, so no part of the scan can read another book.
         val settings = requested.effective()
+        val sources = readable(offered, settings)
         this.pinned = pinned
         // What a bets-only pass fetched was asked for these bets' games alone: never re-used for the next pass's bets (a board that
         // can't be read leaves no catalog at all, not the last pass's).
@@ -772,8 +773,9 @@ class Scanner(
      * stands), the first choices first and the fallbacks only for the leagues those didn't answer, as a scan does; then the books already read are re-priced with
      * them. Pinnacle only calls it right before it bets, so the price it bets on is a read of this minute (RESEARCH.md §88.5). Null before any scan.
      */
-    override suspend fun refreshFair(requested: ScanSettings, sources: List<ReferenceSource>, leagues: Set<String>): ScanResult? = mutex.withLock {
+    override suspend fun refreshFair(requested: ScanSettings, offered: List<ReferenceSource>, leagues: Set<String>): ScanResult? = mutex.withLock {
         val settings = requested.effective()
+        val sources = readable(offered, settings)
         val cat = catalog ?: return@withLock null
         val picked = settings.selectedLeagues.filter { it.novigName in leagues }
         if (picked.isEmpty() || sources.isEmpty()) return@withLock null
@@ -843,6 +845,13 @@ class Scanner(
             errors.addSync("Novig board: ${e.message ?: e.javaClass.simpleName}")
         }
     }
+
+    /**
+     * The sources a scan may read: all that were offered, except in Pinnacle only, where a source the settings don't switch on ([ScanSettings.effective]: not the exchanges,
+     * not The Odds API) is never asked, whoever offered it (RESEARCH.md §88.5: Novig and Pinnacle and no other API's usage).
+     */
+    private fun readable(offered: List<ReferenceSource>, settings: ScanSettings): List<ReferenceSource> =
+        if (settings.pinnacleOnly) offered.filter { it.id in settings.enabledSources } else offered
 
     /**
      * What source [firstId] gave this scan, as a fallback's [ScanContext]: the leagues it answered
