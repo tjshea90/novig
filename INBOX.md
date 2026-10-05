@@ -3867,3 +3867,20 @@ Notice the app locked in negative profit. Either this is an error in stats or th
 ```
 Investigate
 ```
+
+## 2026-10-05T16:20:05Z
+```
+Make a option somewhere in the app to auto bet and also a scan filter for only comparing current novig odds on any market and any sport to the current pinnacle devigged odds for the same bet. Make sure it only scans novig and pinnacle when this option is on so as not to waste usage of other apis. Make sure the Pinnacle odds are as current as possible. Maybe this can be an option in the auto bet and scanner settings for pinnacle only to calculate EV. If the app already covers this tell me how to set it. If it doesn't, add it. Make the diagnostics scan logging keep track of all betting information used with this Pinnacle only setting on so I can track how well bets do clv and EV and profit when only compared to Pinnacle
+
+In the bet tracker where it shows my stats and total profit with the chart, when I click novig only at the top, it shows a green chart with profit, but when I uncheck novig only, it shows a red chart and I lost money. Shouldn't my profit be the same? Investigate and fix if needed.
+
+Then make sure: 
+
+1) the math for the auto bid feature is sound and is getting me true positive EV bids placed because my bids right now are being taken fast and I'm worried they aren't true positive Ev
+
+2) make sure the auto bid feature is also thoroughly tracked in the scan/diagnosis feature and all information logged so I can see how well my auto bids do
+
+3) make it so there is an option for unlimited bids up at once. Right now the max is 40 bids. then make an option for it to make auto bids for only the bets which have the maximum chance of being filled quickly and also are decent chance for me to win the bet (remove longshots and keep favorites and small underdogs for my side of the bet to win) but remain positive EV and the best chance at beating clv. Do whatever research is needed to achieve this.
+
+4) make a stop button kill switch in the app visible everywhere that immediately stops all scanning, all auto betting, all auto bidding, and all background scan. If I press this, everything remains off, even if I close the app and open it again, until I press resume.
+```
