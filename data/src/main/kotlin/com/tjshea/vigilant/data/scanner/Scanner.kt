@@ -161,7 +161,7 @@ class Scanner(
     private val fairMemo = FairMemo()
 
     override suspend fun scan(
-        settings: ScanSettings,
+        requested: ScanSettings,
         sources: List<ReferenceSource>,
         /** Markets always priced past the per-game line cap: the ones Tj has open bets on. */
         pinned: Set<String>,
@@ -172,6 +172,8 @@ class Scanner(
          */
         onPartial: (ScanResult) -> Unit,
     ): ScanReport = mutex.withLock {
+        // Pinnacle only reads Novig and Pinnacle and nothing else ([ScanSettings.effective]): applied here, once, so no part of the scan can read another book.
+        val settings = requested.effective()
         this.pinned = pinned
         // What a bets-only pass fetched was asked for these bets' games alone: never re-used for the next pass's bets (a board that
         // can't be read leaves no catalog at all, not the last pass's).
@@ -726,10 +728,11 @@ class Scanner(
      * that the feed's edges are still there right before betting. Null result before any scan.
      */
     override suspend fun recheck(
-        settings: ScanSettings,
+        requested: ScanSettings,
         marketIds: Collection<String>,
         onProgress: (Int, Int) -> Unit,
     ): RecheckReport = mutex.withLock {
+        val settings = requested.effective()
         val cat = catalog ?: return@withLock RecheckReport(null, 0, 0, null)
         val ids = marketIds.distinct().take(MAX_RECHECK)
         val now = clock()
@@ -756,7 +759,8 @@ class Scanner(
     }
 
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
-    override suspend fun reprice(settings: ScanSettings): ScanResult? = mutex.withLock {
+    override suspend fun reprice(requested: ScanSettings): ScanResult? = mutex.withLock {
+        val settings = requested.effective()
         val cat = catalog ?: return@withLock null
         if (settings.leagues.isEmpty()) return@withLock null
         val now = clock()

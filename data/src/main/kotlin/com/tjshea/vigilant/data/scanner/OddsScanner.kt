@@ -28,6 +28,13 @@ interface OddsScanner {
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
     suspend fun reprice(settings: ScanSettings): ScanResult?
 
+    /**
+     * Re-reads the fair-odds boards of [leagues] (Novig names) from [sources] now, bypassing every re-use window the scanner has, then re-prices with them
+     * and the books already read (Pinnacle only bets on a Pinnacle price this new: RESEARCH.md §88.5). Null when there is no scan to re-price or the scanner has no such
+     * boards. Costs the requests of one fetch per league and source that answers.
+     */
+    suspend fun refreshFair(settings: ScanSettings, sources: List<ReferenceSource>, leagues: Set<String>): ScanResult? = null
+
     /** Leagues selected now that the last scan didn't load. */
     suspend fun unscannedLeagues(settings: ScanSettings): Set<String>
 
