@@ -54,7 +54,7 @@ def load_day(day, cache):
         subprocess.run(['curl', '-sS', '-m', '300', '-o', raw, f'{DATA}/{day}/trades.csv'], check=True)
     d = pd.read_csv(raw, usecols=['timestamp', 'outcomeId', 'marketId', 'league', 'marketType', 'tradeType', 'cost', 'qty', 'side'])
     d = d[(d.tradeType == 'STRAIGHT') & (d.side == 'TAKER') & d.marketType.isin(GAME_LINES) & d.league.isin(WINDOW_H)].copy()
-    d['t'] = pd.to_datetime(d.timestamp, utc=True, format='ISO8601').astype('int64') / 1e9
+    d['t'] = (pd.to_datetime(d.timestamp, utc=True, format='ISO8601') - pd.Timestamp('1970-01-01', tz='UTC')).dt.total_seconds()  # not astype(int64): its unit varies by pandas version
     d['p'] = d.cost / d.qty
     d = d[['t', 'marketId', 'outcomeId', 'league', 'marketType', 'p', 'qty']].sort_values('t').reset_index(drop=True)
     d.to_pickle(pkl)
