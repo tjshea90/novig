@@ -119,6 +119,77 @@ class MakerTest {
         assertTrue((one.first { it.line.outcomeId == "m1-over" } as MakerDecision.Skip).why.startsWith("One side per market"))
     }
 
+    // ---- the longest odds a bid may be posted at (Tj, 2026-10-05: "do not post bids longer than +140 odds") ------------------
+
+    private val limit140 = rules.copy(maxOdds = 140)
+
+    @Test
+    fun `no limit on a bid's odds until Tj sets one - what ran before does not change`() {
+        assertEquals(0, ScanSettings().makerMaxOdds)
+        assertEquals(0, MakerRules.of(ScanSettings()).maxOdds)
+        // 0.43 / 1.04 = 0.4135 → 0.410 on the grid = +143.9: posted with no limit, skipped under +140.
+        val post = MakerQuote.decide(line(fair = 0.43), rules, now) as MakerDecision.Post
+        assertEquals(0.410, post.price, 1e-9)
+        assertEquals(listOf(100, 110, 120, 130, 140, 150, 175, 200, 250, 300, 0), ScanSettings.MAKER_MAX_ODDS_CHOICES)
+    }
+
+    @Test
+    fun `a bid longer than the limit is skipped at the boundary, a bid at or shorter than it goes up, favorites always pass`() {
+        fun why(fair: Double) = (MakerQuote.decide(line(fair = fair, offer = 0.60), limit140, now) as? MakerDecision.Skip)?.why
+        fun price(fair: Double) = (MakerQuote.decide(line(fair = fair, offer = 0.60), limit140, now) as? MakerDecision.Post)?.price
+        // +140 is a price of 100 / 240 = 0.41667; the grid has 0.415 (+140.96: longer than +140, skipped) and 0.420 (+138.1: allowed).
+        assertEquals(100.0 / 240.0, MakerRules.priceAtOdds(140), 1e-12)
+        assertEquals("a fair of 0.434 bids 0.415 = +141", "A bid at that price would be at longer odds than your +140 limit for bids", why(0.434))
+        assertEquals("a fair of 0.437 bids 0.420 = +138", 0.420, price(0.437)!!, 1e-9)
+        // Further out: +180 and +250.
+        assertTrue(why(0.36)!!.contains("longer odds than your +140 limit"))
+        assertTrue(why(0.29)!!.contains("longer odds than your +140 limit"))
+        // Even money and favorites (negative odds) are never longer than a positive limit.
+        assertEquals(0.480, price(0.50)!!, 1e-9)
+        assertEquals(0.600, price(0.627)!!, 1e-9)
+        // The limit is the same number, signed: +100 stops everything under even money's 0.50.
+        val even = rules.copy(maxOdds = 100)
+        assertTrue(MakerQuote.decide(line(fair = 0.50, offer = 0.60), even, now) is MakerDecision.Skip)
+        assertTrue(MakerQuote.decide(line(fair = 0.53, offer = 0.60), even, now) is MakerDecision.Post)
+    }
+
+    @Test
+    fun `the limit judges the price that is posted - a sharp book's lower fair can push a bid past it`() {
+        // The blend 0.50 bids 0.480 (+108); a sharp book's own 0.42 takes the margin from that: 0.4038 → 0.400 = +150, longer than +140.
+        val sharp = line(fair = 0.50, offer = 0.60).copy(sharpFairs = listOf(0.42))
+        val free = MakerQuote.decide(sharp, rules, now) as MakerDecision.Post
+        assertEquals(0.400, free.price, 1e-9)
+        assertTrue((MakerQuote.decide(sharp, limit140, now) as MakerDecision.Skip).why.contains("longer odds than your +140 limit"))
+        assertTrue(MakerQuote.decide(sharp, rules.copy(maxOdds = 150), now) is MakerDecision.Post)
+        // With the sharp-book anchor off the blend alone prices it: +108.
+        assertTrue(MakerQuote.decide(sharp, limit140.copy(anchorSharp = false), now) is MakerDecision.Post)
+    }
+
+    @Test
+    fun `the limit comes from the settings, never under even money, and quick and likely keeps it`() {
+        assertEquals(140, MakerRules.of(ScanSettings(makerMaxOdds = 140)).maxOdds)
+        assertEquals(100, MakerRules.of(ScanSettings(makerMaxOdds = 50)).maxOdds)
+        assertEquals(0, MakerRules.of(ScanSettings(makerMaxOdds = 0)).maxOdds)
+        assertEquals(0, MakerRules.of(ScanSettings(makerMaxOdds = -120)).maxOdds)
+        assertEquals(140, MakerRules.of(ScanSettings(makerMaxOdds = 140, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY)).maxOdds)
+        assertEquals(0.0, MakerRules.priceAtOdds(0), 0.0)
+        assertEquals(0.5, MakerRules.priceAtOdds(100), 1e-12)
+    }
+
+    @Test
+    fun `a bid already up at odds longer than the limit comes down with the reason, and a bid inside it stays`() {
+        val lines = listOf(line("m1-over", fair = 0.43, offer = 0.60), line("m2-over", fair = 0.50, offer = 0.60))
+        val decisions = MakerQuote.decideAll(lines, limit140, now, emptySet())
+        val plan = MakerPlan.plan(
+            wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = listOf(resting("m1-over", 0.410), resting("m2-over", 0.480)), rules = limit140, now = now,
+            skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why },
+        )
+        assertEquals(listOf("o-m1-over"), plan.cancels.map { it.first.orderId })
+        assertTrue(plan.cancels.single().second.contains("longer odds than your +140 limit"))
+        assertEquals(listOf("o-m2-over"), plan.kept.map { it.orderId })
+        assertTrue(plan.places.isEmpty())
+    }
+
     // ---- resting bids against the bids wanted ---------------------------------------------------------------------------
 
     private fun post(outcome: String, price: Double, contracts: Long = 1_000) =
