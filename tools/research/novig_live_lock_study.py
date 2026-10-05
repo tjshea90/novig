@@ -84,7 +84,7 @@ def entries(m, lo, hi, combos, acc, league, mid):
             askY, ageY = last_seen(ty, py, t0)
             bid_x = 1 - askY if ageY <= STALE else np.nan
             for H, M in combos:
-                add = lambda strat, v: acc[(H, M, strat)][(mid, league)].__iadd__([v, 1]) if False else _add(acc, (H, M, strat), (mid, league), v)
+                add = lambda strat, v, H=H, M=M: _add(acc, (H, M, strat), (mid, league), v)
                 j0 = np.searchsorted(ty, t0, side='right'); j1 = np.searchsorted(ty, t0 + H, side='right')
                 net = 1 - a1 - py[j0:j1] - fee(a1) - fee(py[j0:j1])
                 hit = np.nonzero(net >= M)[0]
