@@ -444,7 +444,7 @@ class DiagnosticsTest {
     @Test
     fun `the report says how Pinnacle only is doing - off, on with no bets yet, and its bets by the age of Pinnacle's price, with the profit of every one`() {
         val set = com.tjshea.vigilant.data.scanner.ScanSettings()
-        assertTrue(Diagnostics.pinnacleOnlyLines(emptyList(), set, AutoBettor.Status(), now).single().startsWith("Off"))
+        assertTrue(Diagnostics.pinnacleOnlyLines(emptyList(), set, AutoBettor.Status(), now).first().startsWith("Off"))
         val on = set.copy(pinnacleOnly = true, pinnacleMaxAgeSeconds = 60)
         val none = Diagnostics.pinnacleOnlyLines(emptyList(), on, AutoBettor.Status(), now)
         assertTrue(none.toString(), none.first().startsWith("On: age limit 1 min") && none.last().startsWith("No bet made with it on yet"))
