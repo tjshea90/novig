@@ -166,6 +166,25 @@ class AutoScanTest {
         assertTrue(src.contains("AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock(), settings.vigilantGapSeconds)"))
     }
 
+    /** Tj's screenshot, 2026-10-05: at 15 s the page says Vigilant's own scan starts at most every 4 min; with low API usage bids on it is their pace, and the page says so. */
+    @Test
+    fun `the Scanning page says how often Vigilant's own scan really runs at a 15 second interval - 4 minutes, or the low API usage pace`() {
+        val base = ScanSettings(autoScan = AutoScanMode.BOTH, autoScanSeconds = 15, scanner = com.tjshea.vigilant.data.scanner.ScannerMode.BOTH)
+        val usual = com.tjshea.vigilant.app.ui.autoScanHint(base)
+        assertTrue(usual, usual.contains("it starts at most every 4 min, however fast CNO is read"))
+        assertTrue(usual, usual.contains("360 scans a day"))
+        assertFalse(usual.contains("Low API usage"))
+        val low = com.tjshea.vigilant.app.ui.autoScanHint(base.copy(maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE))
+        assertTrue(low, low.contains("it starts at most every 10 min, however fast CNO is read"))
+        assertTrue(low, low.contains("144 scans a day"))
+        assertTrue(low, low.contains("Low API usage bids are on: this scan reads player props only"))
+        // The gap, not the cycle, sets it; a gap shorter than the cycle changes nothing.
+        assertEquals(600, ScanSettings.vigilantEverySeconds(15, 600))
+        assertEquals(600, ScanSettings.vigilantEverySeconds(600, 600))
+        assertEquals(1800, ScanSettings.vigilantEverySeconds(1800, 600))
+        assertEquals(240, ScanSettings.vigilantEverySeconds(15))
+    }
+
     /** Faster cycles than the usual 5 minutes also re-read the bets in their last 15 minutes at the cycle's pace: a closer last read before the start is the close. */
     @Test
     fun `cycles faster than 5 minutes re-read bets about to start at their own pace, never faster than once a minute`() {
