@@ -421,8 +421,8 @@ class MakerUiTest {
         compose.onNodeWithTag("makerMaxOddsField").performTextInput("50")
         assertEquals(165, st.value.makerMaxOdds)
         compose.onNodeWithText("(even money) or more", substring = true).assertExists()
-        // No limit puts it back.
-        compose.onAllNodesWithText("No limit")[0].performScrollTo().performClick()
+        // No limit puts it back (the dollars limit's own "No limit" chip comes first on the tab, the longest odds' second).
+        compose.onAllNodesWithText("No limit")[1].performScrollTo().performClick()
         assertEquals(0, st.value.makerMaxOdds)
         compose.onNodeWithTag("makerMaxOddsNote").assertTextContains("No limit", substring = true)
     }
