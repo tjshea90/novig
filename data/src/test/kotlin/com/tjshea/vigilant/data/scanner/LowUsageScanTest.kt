@@ -121,7 +121,8 @@ class LowUsageScanTest {
         Scanner(novig, clock = { now }).scan(on, emptyList())
         assertEquals(now + (6 + 24) * hour, novig.startsBefore)
         assertTrue("PASSING_YARDS" in novig.types)
-        assertFalse("SPREAD" in novig.types || "TOTAL" in novig.types)
+        // The main lines' market list always comes along (one cheap request, so the switch re-prices from cache); the plan prices families it is set to, props only.
+        assertTrue(on.effective().families == setOf(MarketFamily.PLAYER_PROPS))
         // The usual scan reads days ahead.
         val usual = Board()
         Scanner(usual, clock = { now }).scan(on.copy(makerFocus = BidFocus.ALL), emptyList())
