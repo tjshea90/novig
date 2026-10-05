@@ -128,11 +128,14 @@ class MakerRunner(
                 return@withLock null
             }
             val partial = result?.partial == true
+            // The sides Vigilant has a bid on, or a fill not yet judged, get their books' fairs worked out whatever the precheck says (a fill is judged against them).
+            val mine = desk.bids().filter { it.active || (it.filled > 0 && it.fairAtFill == null) }.mapTo(HashSet()) { it.outcomeId }
             val report = desk.cycle(
-                withMoves(MakerLines.from(result, s, now), rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
+                withMoves(MakerLines.from(result, s, now, always = mine), rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,
             )
             notifyFills(report.fills, desk.bids())
+            guard(s, desk)
             if (report.placed > 0 || report.cancelled > 0 || report.fills.isNotEmpty()) {
                 // Whether Novig holds a resting bid's cost from the balance isn't in its docs (NOVIG_API.md §17): the wallet just after posting says.
                 val walletNote = if (report.placed > 0 && wallet != null) {
@@ -330,8 +333,28 @@ class MakerRunner(
 
     private fun stopReason(s: ScanSettings): String? = when {
         !AppBook.isNovig -> "Make orders are for Novig"
+        s.killed -> "Stopped by the kill switch"
         s.paused -> "Scanning is paused"
+        s.maker && s.makerHalted != null -> "Stopped by the picked-off guard"
         else -> null
+    }
+
+    /**
+     * The picked-off guard (Tj, 2026-10-05; RESEARCH.md §88.3): after a pass, when half or more of the last fills were filled at a price above the fair the next
+     * scan had for them, the bids stop themselves and say why ([ScanSettings.makerHalted]); Tj's Resume on the Bids tab starts them again from the fills after it.
+     */
+    private suspend fun guard(s: ScanSettings, desk: MakerDesk) {
+        if (!s.makerGuard || !s.maker || s.makerHalted != null) return
+        val verdict = MakerGuard.check(desk.bids(), s.makerGuardFromMs, s.makerAnchorSharp)
+        if (!verdict.tripped) return
+        val why = MakerGuard.haltedText(verdict)
+        withContext(NonCancellable) {
+            runCatching { c.settingsStore.update { if (it.makerHalted == null) it.copy(makerHalted = why) else it } }
+            runCatching { desk.cancelAuto("Stopped by the picked-off guard") }
+        }
+        c.eventLog.warn("MAKER", "bids stopped by the picked-off guard: ${verdict.text}")
+        c.eventLog.count("maker.guard.tripped")
+        runCatching { AutoBetNotes.stopped(app, "Bids stopped: fills are being picked off", why) }
     }
 
     private fun notifyFills(bets: List<TrackedBet>, bids: List<MakerBid>) {
