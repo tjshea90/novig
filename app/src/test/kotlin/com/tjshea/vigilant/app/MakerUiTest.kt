@@ -13,6 +13,8 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextClearance
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsOff
@@ -389,6 +391,40 @@ class MakerUiTest {
         compose.onNodeWithTag("makerGuard").assertIsOn()
         compose.onNodeWithTag("makerGuard").performClick()
         assertFalse(s.makerGuard)
+    }
+
+    /** Tj, 2026-10-05: "make a settings options for the auto bid feature for me to select the longest odds for bids (for example, do not post bids longer than +140 odds)". */
+    @Test
+    fun `the longest odds for a bid is a preset or typed, has no limit until picked, and the tab says what it does`() {
+        assertEquals("no limit by default: what ran before doesn't change", 0, settings.makerMaxOdds)
+        assertFalse(MakerRulesText.summary(settings).contains("no bid longer than"))
+        var s = settings
+        compose.setContent { VigilantTheme { MakerScreen(ui(s), MakerActions(onUpdate = { f -> s = f(s) })) } }
+        compose.onNodeWithText(MakerRulesText.summary(settings)).performClick()
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerMaxOddsField"))
+        compose.onNodeWithText("Longest odds a bid may be posted at").assertExists()
+        compose.onNodeWithTag("makerMaxOddsNote").assertTextContains("No limit", substring = true)
+        for ((label, odds) in listOf("+100" to 100, "+110" to 110, "+120" to 120, "+130" to 130, "+140" to 140, "+150" to 150, "+175" to 175, "+200" to 200, "+250" to 250, "+300" to 300)) {
+            compose.onNodeWithText(label).performScrollTo().performClick()
+            assertEquals(label, odds, s.makerMaxOdds)
+        }
+        compose.onNodeWithText("+140").performScrollTo().performClick()
+        compose.onNodeWithTag("makerMaxOddsNote").assertTextContains("longer than +140", substring = true)
+        compose.onNodeWithTag("makerMaxOddsNote").assertTextContains("41.7¢", substring = true)
+        assertTrue(MakerRulesText.summary(s).contains("no bid longer than +140"))
+        // Typed.
+        compose.onNodeWithTag("makerMaxOddsField").performScrollTo().performTextClearance()
+        compose.onNodeWithTag("makerMaxOddsField").performTextInput("165")
+        assertEquals(165, s.makerMaxOdds)
+        // Under +100 isn't saved (the last good one stands), and the field says why.
+        compose.onNodeWithTag("makerMaxOddsField").performTextClearance()
+        compose.onNodeWithTag("makerMaxOddsField").performTextInput("50")
+        assertEquals(165, s.makerMaxOdds)
+        compose.onNodeWithText("(even money) or more", substring = true).assertExists()
+        // No limit puts it back.
+        compose.onAllNodesWithText("No limit")[0].performScrollTo().performClick()
+        assertEquals(0, s.makerMaxOdds)
+        compose.onNodeWithTag("makerMaxOddsNote").assertTextContains("No limit", substring = true)
     }
 
     @Test

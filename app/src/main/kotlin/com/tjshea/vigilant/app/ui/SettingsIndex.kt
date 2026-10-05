@@ -109,6 +109,7 @@ object SettingsIndex {
         Entry("Fully automatic", null, "Bids: off, recommend each one, or post them by themselves", "bids make orders maker post auto-make recommend", novig, bids = true),
         Entry("Under the fair", null, "How far under the fair each bid is posted (its EV)", "bids maker margin edge ev", novig, bids = true),
         Entry("Size of each bid", null, "Kelly, \$1 or your amount per bid", "bids maker stake kelly amount", novig, bids = true),
+        Entry("Longest odds a bid may be posted at", null, "No bid at longer odds than this (+140: nothing at +141 or longer)", "bids maker longest odds longshot limit max plus", novig, bids = true),
         Entry("Most bids up at once", null, "How many bids rest at the same time", "bids maker cap limit", novig, bids = true),
         Entry("Most dollars up at once", null, "How much money all bids together may hold", "bids maker wallet dollars", novig, bids = true),
         Entry("Each bid expires after", null, "How long a bid rests before Novig takes it down", "bids maker ttl expiry", novig, bids = true),
