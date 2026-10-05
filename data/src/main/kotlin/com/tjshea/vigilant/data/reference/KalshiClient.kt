@@ -43,6 +43,11 @@ class KalshiClient(
     private val http: OkHttpClient,
     private val json: Json,
     private val baseUrl: String = "https://api.elections.kalshi.com/trade-api/v2",
+    /**
+     * Kalshi's docs now name this host as the production one (docs.kalshi.com market-data quickstart, read 2026-10-05; RESEARCH.md §90.2) while [baseUrl] still answers.
+     * If [baseUrl] stops (a retired host: 404 / 410 or no connection), reads switch to this one for the life of the app instead of failing every scan. Null: none.
+     */
+    private val altBaseUrl: String? = "https://external-api.kalshi.com/trade-api/v2",
     private val clock: () -> Long = System::currentTimeMillis,
     private val usage: UsageMeter? = null,
     sleep: suspend (Long) -> Unit = { delay(it) },
@@ -149,33 +154,53 @@ class KalshiClient(
         }.associate { (s, job) -> s to job.await() }
     }
 
+    /** The host reads go to: [baseUrl] until it fails, then [altBaseUrl]. */
+    @Volatile private var onAlt = false
+
+    private fun host(): String = if (onAlt && altBaseUrl != null) altBaseUrl else baseUrl
+
+    /** The first host failed in a way that means it is gone, not busy: the other one, if there is one and it isn't already the one in use. */
+    private fun switchHost(): Boolean {
+        if (altBaseUrl == null || onAlt) return false
+        onAlt = true
+        return true
+    }
+
     private suspend fun fetchSeries(series: String): List<EventDto> {
         val out = ArrayList<EventDto>()
         var cursor: String? = null
         repeat(MAX_PAGES) {
-            val url = "$baseUrl/events".toHttpUrl().newBuilder().apply {
-                addQueryParameter("series_ticker", series)
-                addQueryParameter("status", "open")
-                addQueryParameter("with_nested_markets", "true")
-                addQueryParameter("limit", "200")
-                cursor?.let { addQueryParameter("cursor", it) }
-            }.build()
             var page: PageDto? = null
             for (attempt in 0 until ATTEMPTS) {
+                val url = "${host()}/events".toHttpUrl().newBuilder().apply {
+                    addQueryParameter("series_ticker", series)
+                    addQueryParameter("status", "open")
+                    addQueryParameter("with_nested_markets", "true")
+                    addQueryParameter("limit", "200")
+                    cursor?.let { addQueryParameter("cursor", it) }
+                }.build()
                 gate.acquire()
-                val result = http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
-                    val body = response.body?.string().orEmpty()
-                    usage?.countKeyless(QuotaPolicy.KALSHI, calls = 1, throttled = if (response.code == 429) 1 else 0)
-                    when {
-                        response.code == 429 -> {
-                            val wait = response.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000) ?: 2_000L
-                            gate.pause(System.currentTimeMillis() + wait)
-                            gate.slowDown()
-                            null
+                val result = try {
+                    http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
+                        val body = response.body?.string().orEmpty()
+                        usage?.countKeyless(QuotaPolicy.KALSHI, calls = 1, throttled = if (response.code == 429) 1 else 0)
+                        when {
+                            response.code == 429 -> {
+                                val wait = response.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000) ?: 2_000L
+                                gate.pause(System.currentTimeMillis() + wait)
+                                gate.slowDown()
+                                null
+                            }
+                            // A retired host: the other one is tried at once (the same attempt count, the next try on it).
+                            (response.code == 404 || response.code == 410) && switchHost() -> null
+                            !response.isSuccessful -> throw ReferenceException("Kalshi HTTP ${response.code}")
+                            else -> json.decodeFromString(PageDto.serializer(), body).also { gate.success() }
                         }
-                        !response.isSuccessful -> throw ReferenceException("Kalshi HTTP ${response.code}")
-                        else -> json.decodeFromString(PageDto.serializer(), body).also { gate.success() }
                     }
+                } catch (e: java.io.IOException) {
+                    // No connection to the host (it no longer resolves): the other one, once; else the failure stands.
+                    if (!switchHost()) throw e
+                    null
                 }
                 if (result != null) {
                     page = result
