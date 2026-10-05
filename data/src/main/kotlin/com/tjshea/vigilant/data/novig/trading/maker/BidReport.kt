@@ -163,7 +163,7 @@ object BidReport {
             val u = ledKnown.filter { it.filled == 0L }
             out += "  led their side when posted (no bid as high): filled ${pctOf(f.count { it.led == true }, f.size)} of ${f.size}, unfilled ${pctOf(u.count { it.led == true }, u.size)} of ${u.size}"
         }
-        fun split(title: String, key: (Row) -> String?, order: List<String>? = null) {
+        fun split(title: String, order: List<String>?, key: (Row) -> String?) {
             val groups = LinkedHashMap<String, Agg>()
             for (r in filled) key(r)?.let { groups.getOrPut(it) { Agg() }.add(r) }
             if (groups.isEmpty()) return
@@ -171,15 +171,15 @@ object BidReport {
             val sorted = if (order != null) groups.entries.sortedBy { order.indexOf(it.key).let { i -> if (i < 0) Int.MAX_VALUE else i } } else groups.entries.sortedByDescending { it.value.fills }
             sorted.forEach { out += "   " + it.value.line(it.key) }
         }
-        split("how fast they were taken", ::delayBand, DELAY_ORDER)
-        split("kind of market") { it.kind }
-        split("bid price (about the chance the side wins)", ::priceBand, PRICE_ORDER)
-        split("a sharp book behind the price") { if (it.sharpAtPost != null) "sharp book in the fair" else "no sharp book in the fair" }
-        split("whether it led its side") { it.led?.let { l -> if (l) "led (no bid as high)" else "behind another bid" } }
-        split("time to the start when posted") { BetLedger.leadBand(it.minToStartAtPost) }
-        split("picked off or not (the fair on the next scan against the price filled at)") { it.pickedOff?.let { p -> if (p) "picked off (fair under the price)" else "still above the price" } }
-        split("who posted it") { if (it.auto) "auto-make" else "by hand" }
-        split("league") { it.league }
+        split("how fast they were taken", DELAY_ORDER, ::delayBand)
+        split("kind of market", null) { it.kind }
+        split("bid price (about the chance the side wins)", PRICE_ORDER, ::priceBand)
+        split("a sharp book behind the price", null) { if (it.sharpAtPost != null) "sharp book in the fair" else "no sharp book in the fair" }
+        split("whether it led its side", null) { it.led?.let { l -> if (l) "led (no bid as high)" else "behind another bid" } }
+        split("time to the start when posted", null) { BetLedger.leadBand(it.minToStartAtPost) }
+        split("picked off or not (the fair on the next scan against the price filled at)", null) { it.pickedOff?.let { p -> if (p) "picked off (fair under the price)" else "still above the price" } }
+        split("who posted it", null) { if (it.auto) "auto-make" else "by hand" }
+        split("league", null) { it.league }
         return out
     }
 
