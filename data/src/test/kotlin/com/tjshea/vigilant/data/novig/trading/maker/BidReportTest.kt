@@ -126,15 +126,15 @@ class BidReportTest {
         assertTrue(text, text.contains("-- fills by kind of market --") && text.contains("TEAM_TOTAL: 1 fill") && text.contains("PROP: 3 fills"))
         assertTrue(text, text.contains("-- fills by bid price (about the chance the side wins) --") && text.contains("0.30-0.40: 1 fill") && text.contains("0.40-0.50: 2 fills") && text.contains("0.50-0.60: 1 fill"))
         assertTrue(text, text.contains("sharp book in the fair: 1 fill") && text.contains("no sharp book in the fair: 3 fills"))
-        assertTrue(text, text.contains("led (no bid as high): 2 fills") && text.contains("behind another bid: 1 fill"))
+        assertTrue(text, text.contains("led (no bid as high): 3 fills") && text.contains("behind another bid: 1 fill"))
         assertTrue(text, text.contains("picked off (fair under the price): 2 fills") && text.contains("still above the price: 1 fill"))
         assertTrue(text, text.contains("auto-make: 3 fills") && text.contains("by hand: 1 fill"))
         // Led: filled 3 of 4 known... the line compares the bids that filled with the ones that didn't.
-        assertTrue(text, text.contains("led their side when posted (no bid as high): filled 67% of 3") || text.contains("led their side when posted (no bid as high): filled"))
+        assertTrue(text, text.contains("led their side when posted (no bid as high): filled 75% of 4, unfilled 67% of 3"))
         // How fast: 2 of the 4 fills inside 2 minutes.
         assertTrue(text, text.contains("50% within 2 minutes of posting"))
         // Results are added up for the settled ones.
-        assertTrue(text, text.contains("settled"))
+        assertTrue(text, text.contains("results +10.79 on 40.00 staked (4 settled)") && text.contains("(1 close, 100% beat)"))
         // Nothing posted: nothing said.
         assertTrue(BidReport.summary(emptyList(), now).isEmpty())
         // Posted but none filled: one line.

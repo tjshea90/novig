@@ -133,8 +133,8 @@ object BidReport {
             parts += "$fills fill${if (fills == 1) "" else "s"}"
             parts += "EV at post ${pct(evPost / fills)}"
             parts += if (judged > 0) "EV at fill ${pct(evFill / judged)} ($judged judged, ${Math.round(100.0 * picked / judged)}% picked off)" else "EV at fill: none judged yet"
-            parts += if (clvN > 0) "CLV ${pct(clvSum / clvN)} ($clvN closes, ${Math.round(100.0 * beat / clvN)}% beat)" else "CLV: no close yet"
-            if (settled > 0) parts += "results ${money(profit)} on ${money(staked)} (${settled} settled)"
+            parts += if (clvN > 0) "CLV ${pct(clvSum / clvN)} ($clvN close${if (clvN == 1) "" else "s"}, ${Math.round(100.0 * beat / clvN)}% beat)" else "CLV: no close yet"
+            if (settled > 0) parts += "results ${money(profit)} on ${String.format(Locale.US, "%.2f", staked)} staked ($settled settled)"
             if (delayN > 0) parts += "mean wait ${secs(delaySum / delayN)}"
             return "$label: " + parts.joinToString(" · ")
         }
