@@ -535,6 +535,8 @@ object MakerPlan {
         partial: Boolean = false,
         /** What Tj's open bets have at risk, for the per-game limit ([MakerRules.maxPerGame]): bids add to it, never replace it ([GameExposure.items]). */
         heldItems: List<GameExposure.Item> = emptyList(),
+        /** Bids whose cancel is in flight ([MakerDesk]): they can still be on Novig's book, so the wash guard counts them with [resting]. */
+        onTheWay: List<RestingBid> = emptyList(),
     ): MakerActions {
         if (stopAll != null) return MakerActions(resting.map { it to stopAll }, emptyList(), emptyList())
         val byOutcome = wanted.associateBy { it.line.outcomeId }
@@ -600,12 +602,17 @@ object MakerPlan {
         var spend = budget
         // One game is one event: what is at risk on each game now (open bets, the bids that stay up) and what this pass adds, market by market.
         var onGames = if (rules.maxPerGame > 0.0) heldItems + kept.mapNotNull { it.gameItem } else emptyList()
+        // Every bid of ours that may be on the book while this pass places: the ones up (the ones this pass cancels too: a cancel can fail or lag), the ones coming
+        // down, and each bid this pass places. A new bid is held back when it and one of these on the OTHER side of its market add up to $1 or more ([WASH]).
+        val onBook = HashMap<String, MutableList<Pair<String, Double>>>()
+        for (r in resting + onTheWay) onBook.getOrPut(r.marketId) { ArrayList() } += r.outcomeId to r.price
         val places = ArrayList<MakerDecision.Post>()
         val waiting = HashMap<String, Int>()
         fun wait(why: String) = waiting.merge(why, 1, Int::plus)
         for (w in wanted.filter { it.line.outcomeId !in covered }.sortedWith(priority(rules))) {
             val credit = freed[w.line.outcomeId] ?: 0.0
             when {
+                wouldTrade(w, onBook) -> wait(WASH)
                 bids >= rules.maxBids -> wait(MAX_BIDS_REACHED.format(rules.maxBids))
                 places.size >= rules.postsPerPass -> wait(PASS_FULL.format(rules.postsPerPass))
                 dollars + w.cost > rules.maxDollars + 1e-9 -> wait(MAX_DOLLARS_REACHED.format(money(rules.maxDollars)))
@@ -614,6 +621,7 @@ object MakerPlan {
                 w.cost > spend + credit + 1e-9 -> wait(BUDGET_REACHED)
                 else -> {
                     if (rules.maxPerGame > 0.0) onGames = onGames + w.gameItem
+                    onBook.getOrPut(w.line.marketId) { ArrayList() } += w.line.outcomeId to w.price
                     places += w
                     bids++
                     dollars += w.cost
@@ -623,6 +631,15 @@ object MakerPlan {
         }
         return MakerActions(cancels, places, kept, waiting, trimmed)
     }
+
+    /**
+     * Whether [w] would trade with a bid of ours on the other side of its market ([onBook]: market to (outcome, price)): a buyer of one side at P is a seller of
+     * the other at 1 − P, so two bids on the two sides that add up to $1 or more meet (a wash: Novig sends a fill, the position doesn't change, NOVIG_API.md §17;
+     * the Maker Credit terms name self-matching orders). Never with a margin under a coherent fair (the two sides' fairs add up to $1 and each bid is under its own),
+     * so this only fires when a fair moved far between two passes.
+     */
+    fun wouldTrade(w: MakerDecision.Post, onBook: Map<String, List<Pair<String, Double>>>): Boolean =
+        onBook[w.line.marketId].orEmpty().any { (outcome, price) -> outcome != w.line.outcomeId && price + w.price >= 1.0 - 1e-9 }
 
     /**
      * Which wanted bids go up first when the most bids, the most dollars or the wallet can't take them all: the ones that would lead their side (a
@@ -654,6 +671,7 @@ object MakerPlan {
     const val MAX_DOLLARS_REACHED = "the most dollars up at once (%s) is reached"
     const val BUDGET_REACHED = "the wallet (or today's limit for API bets) can't cover it beside the bids already up"
     const val GAME_REACHED = "the most at risk on one game (%s) is reached"
+    const val WASH = "it would trade with your own bid on the other side of that market (a wash: the two prices add up to \$1 or more); it goes up once that bid is gone"
     const val PASS_FULL = "a pass sends at most %d new bids; the rest go up on the next pass"
 
     /** Why a bid that was up came down because the money behind it fell short (the bid's own reason in the Bids tab). */

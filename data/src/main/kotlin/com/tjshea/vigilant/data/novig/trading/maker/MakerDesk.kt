@@ -269,7 +269,7 @@ class MakerDesk(
         val actions = MakerPlan.plan(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
-            repost = autoPost, partial = partial, heldItems = GameExposure.items(bets),
+            repost = autoPost, partial = partial, heldItems = GameExposure.items(bets), onTheWay = comingDown(bids),
         )
         val noReplace = HashSet<String>()
         val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }
@@ -354,13 +354,16 @@ class MakerDesk(
     }
 
     /** The bids resting on Novig as the plan sees them (a bid with no order id yet isn't one: it's in the budget as up, but nothing can cancel it). */
-    private fun restingOf(bids: List<MakerBid>): List<RestingBid> = bids.filter { it.resting && it.orderId != null }.map {
-        RestingBid(
-            it.orderId!!, it.marketId, it.outcomeId, it.price, (it.contracts - it.filled).coerceAtLeast(0), it.filled, it.expiresAtMs,
-            auto = it.auto, evAtFair = it.evAtFair, leads = it.bestBidAtPost.let { b -> b == null || b < it.price - 1e-9 },
-            game = GameRef(it.eventId, it.eventName, it.startsTs, it.league),
-        )
-    }
+    private fun restingOf(bids: List<MakerBid>): List<RestingBid> = bids.filter { it.resting && it.orderId != null }.map(::restingBid)
+
+    /** Bids whose cancel is in flight: still on Novig's book until it confirms ([MakerPlan.plan]'s onTheWay: no new bid goes up that would trade with one). */
+    private fun comingDown(bids: List<MakerBid>): List<RestingBid> = bids.filter { it.status == MakerStatus.CANCELING && it.orderId != null }.map(::restingBid)
+
+    private fun restingBid(it: MakerBid) = RestingBid(
+        it.orderId!!, it.marketId, it.outcomeId, it.price, (it.contracts - it.filled).coerceAtLeast(0), it.filled, it.expiresAtMs,
+        auto = it.auto, evAtFair = it.evAtFair, leads = it.bestBidAtPost.let { b -> b == null || b < it.price - 1e-9 },
+        game = GameRef(it.eventId, it.eventName, it.startsTs, it.league),
+    )
 
     /**
      * What's left of the wallet and the day's limit beside every bid not yet ended (any can still fill, one on its way down too): the least of the two,
