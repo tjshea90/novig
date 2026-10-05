@@ -56,7 +56,8 @@ class ParlayPropsSource(
         var offset = 0
         for (page in 0 until ParlayProps.MAX_PAGES) {
             val answer = try {
-                client.bulkProps(sport, markets, ParlayProps.BOOKS, offset)
+                // Low-usage bids ask for the picked sharp books alone (RESEARCH.md §92); the price of the call is the same, but nothing else is read or devigged.
+                client.bulkProps(sport, markets, if (settings.lowUsageScan) com.tjshea.vigilant.data.scanner.LowUsageBids.parlayBooks(settings) else ParlayProps.BOOKS, offset)
             } catch (e: CreditsHeldBackException) {
                 // A later page held back: keep what the first pages gave.
                 if (page == 0) throw e else break
