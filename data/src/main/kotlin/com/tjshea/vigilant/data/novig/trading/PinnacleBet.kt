@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.novig.trading
 
+import com.tjshea.vigilant.data.scanner.AutoBetStake
 import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.Opportunity
