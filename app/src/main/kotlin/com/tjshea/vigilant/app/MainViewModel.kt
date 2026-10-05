@@ -1539,7 +1539,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         val api = c.apiSettler?.let { s ->
             try {
-                s.run()
+                s.run().also {
+                    if (it.reopened > 0) {
+                        c.eventLog.warn("SETTLE", "${it.reopened} grade(s) taken back: a market held on both sides can't lose on both (Novig's silence isn't a loss there)")
+                        c.eventLog.count("settle.reopened")
+                    }
+                }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {

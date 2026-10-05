@@ -21,7 +21,10 @@ class SettleWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         val app = applicationContext as? VigilantApp ?: return Result.success()
         // Bets placed through Novig's API are graded from Novig's own ledger (when betting is set up), the rest from final scores.
         runCatching { app.container.apiSync?.run() }
-        runCatching { app.container.apiSettler?.run() }
+        runCatching { app.container.apiSettler?.run() }.getOrNull()?.takeIf { it.reopened > 0 }?.let {
+            app.container.eventLog.warn("SETTLE", "${it.reopened} grade(s) taken back: a market held on both sides can't lose on both (Novig's silence isn't a loss there)")
+            app.container.eventLog.count("settle.reopened")
+        }
         val report = runCatching { app.container.settler.run() }.getOrNull()
         // Closing lines for CLV of games that started while the phone was off or asleep (ESPN right after the start, Novig's trades next day).
         app.container.backfillCloses()
