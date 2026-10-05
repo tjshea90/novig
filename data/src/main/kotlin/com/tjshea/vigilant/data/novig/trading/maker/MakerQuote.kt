@@ -34,7 +34,8 @@ data class MakerRules(
     val maxPrice: Double,
     /**
      * The longest American odds a bid may be posted at ([ScanSettings.makerMaxOdds]; 0 = no limit): a bid priced under [priceAtOdds] of it is skipped, however good its EV
-     * (Tj, 2026-10-05: "do not post bids longer than +140 odds"). Applied through [lowestPrice] wherever the price window is.
+     * (Tj, 2026-10-05: "do not post bids longer than +140 odds"). Judged in [MakerQuote.outsideWindow], where the price window is, so every path that bids
+     * (auto-make, a recommendation, a re-post, quick & likely) and the resting bids the plan keeps or takes down agree on it.
      */
     val maxOdds: Int = 0,
     val bothSides: Boolean,
@@ -93,9 +94,6 @@ data class MakerRules(
      */
     val postsPerPass: Int = POSTS_PER_PASS,
 ) {
-    /** The lowest price a bid may rest at: the window's floor, or the price [maxOdds] works out to when that is higher (+140 is 41.7¢). */
-    val lowestPrice: Double get() = maxOf(minPrice, priceAtOdds(maxOdds))
-
     companion object {
         /** [postsPerPass]'s default. */
         const val POSTS_PER_PASS = 60
