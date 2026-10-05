@@ -3912,3 +3912,8 @@ Review the full docs on all the apis used in the app and :
 ```
 Also consider if matchwire can help match props that vigilant has a hard time with or if it can help do it faster or more efficiently or save usage from other apis
 ```
+
+## 2026-10-05T19:53:19Z
+```
+Review the screenshot of bids. Is it wise to bid the under and the over for the same prop? If not, set a guard for it. Also make a settings options for the auto bid feature for me to select the longest odds for bids (for example, do not post bids longer than +140 odds)
+```
