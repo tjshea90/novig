@@ -305,6 +305,42 @@ class ApiSettlerTest {
     }
 
     @Test
+    fun `a pick with a small hedge on the other side is guarded the same way (Tj's Bhayshul Tuten 53.5: 232 contracts of the Under, 1 of the Over)`() = runBlocking {
+        novig()
+        fun held(t: BetTracker) = runBlocking {
+            t.logApi(target("a"), "o1", listOf(NovigFill("f-o1", "o1", null, "mkt", "A", 232, 1.0788, true, 0.0, start - hour)))
+            t.logApi(target("b").copy(outcomeId = "B", selection = "Over 53.5"), "o2", listOf(NovigFill("f-o2", "o2", null, "mkt", "B", 1, 0.00465, true, 0.0, start - hour)))
+        }
+        val t = tracker(); held(t)
+        now = start + 7 * hour
+        val feed: suspend (TrackedBet) -> BetGrader.Grade? = { b -> if (b.outcomeId == "A") BetGrader.Grade.Result(BetStatus.LOST, "Tuten ran 73 yards") else null }
+        val r = settler(t, feed).run()
+        assertEquals(BetStatus.LOST, t.all().single { it.orderId == "o1" }.status)
+        assertEquals(BetStatus.PENDING, t.all().single { it.orderId == "o2" }.status)
+        assertEquals(1, r.manual)
+
+        // What Tj's phone holds: the 1-contract Over graded lost from silence. Taken back.
+        val t2 = tracker(); held(t2)
+        t2.editMany(t2.all().associate { b ->
+            b.id to { x: TrackedBet ->
+                x.copy(status = BetStatus.LOST, settledAtMs = now, settledBy = BetSettler.BY_NOVIG, gradeNote = if (x.orderId == "o2") ApiSettler.SILENT_LOSS else "${ApiSettler.SILENT_LOSS} (Tuten ran 73 yards)")
+            }
+        })
+        assertEquals(1, settler(t2, feed).run().reopened)
+        assertEquals(BetStatus.PENDING, t2.all().single { it.orderId == "o2" }.status)
+        assertEquals(BetStatus.LOST, t2.all().single { it.orderId == "o1" }.status)
+
+        // A market with a Draw side is three-way: two of its sides can both lose, so silence still grades a loss there.
+        val t3 = tracker()
+        runBlocking {
+            t3.logApi(target("a").copy(selection = "Team A"), "o1", listOf(fill("o1")))
+            t3.logApi(target("b").copy(outcomeId = "B", selection = "Draw"), "o2", listOf(NovigFill("f-o2", "o2", null, "mkt", "B", 100, 0.3, true, 0.0, start - hour)))
+        }
+        settler(t3).run()
+        assertTrue(t3.all().all { it.status == BetStatus.LOST })
+    }
+
+    @Test
     fun `a feed that says lost for both sides of a locked market grades only the first`() = runBlocking {
         novig()
         val t = tracker(); lockedPair(t)

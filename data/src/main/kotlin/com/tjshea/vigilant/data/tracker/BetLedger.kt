@@ -53,6 +53,11 @@ object BetLedger {
          */
         val marketId: String? = null,
         val outcomeId: String? = null,
+        /**
+         * An API bet's grading note when it is worth a look: a loss taken from Novig's silence alone ([ApiSettler.SILENT_LOSS], no payout row, no score
+         * feed), or a note that needs a tap. Tj's Ollie Gordon and Bhayshul Tuten overs won and were graded lost this way (RESEARCH.md §87).
+         */
+        val gradeNote: String? = null,
     )
 
     private val json = Json { encodeDefaults = false; explicitNulls = false }
@@ -65,6 +70,7 @@ object BetLedger {
         nowEv = b.nowEv, nowAtMs = b.nowAtMs, outlier = b.isOutlier, atBet = b.atBet,
         lockFor = b.lockFor?.take(8), novigFair = b.novigFair, novigClose = b.novigClose,
         marketId = b.marketId.ifBlank { null }, outcomeId = b.outcomeId.ifBlank { null },
+        gradeNote = b.gradeNote?.takeIf { b.viaApi && (it == ApiSettler.SILENT_LOSS || b.gradeManual) }?.take(240),
     )
 
     /** [b] as one JSON line. */
