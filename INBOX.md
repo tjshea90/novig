@@ -3830,3 +3830,8 @@ Where are the 3.25 and 3.5 auto bid chips
 
 Analyze my clv and EV bets. Am I beating the clv? Why am I losing money? Can I and should I tweak anything 
 ```
+
+## 2026-10-05T02:35:07Z
+```
+After you are finished with the analysis, consider whether it would be plausible to make a live betting arbitrage system for the app. The system would track rapidly moving live odds across live events on novig, which I think is possible with the novig API key. It would then do rapid math to find when to place bets on one side of a live event and then when to place bets on the other side based on the odds, resulting in guaranteed profit. It can utilize both make and take bets. Don't make the feature yet, just investigate and research if it is plausible. The feature would have to auto bet using the novig API so it can catch rapidly moving odds
+```
