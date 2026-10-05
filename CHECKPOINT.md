@@ -1,13 +1,13 @@
-# CHECKPOINT 2568 — read me first, then TASKS.md
+# CHECKPOINT 2569 — read me first, then TASKS.md
 
-**Written:** 2026-10-05T18:36:09Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-fef46304-swa9m4` · **builds on:** `9ccfc195` (this checkpoint is the commit after it)
+**Written:** 2026-10-05T18:39:44Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-fef46304-swa9m4` · **builds on:** `b8ac455d` (this checkpoint is the commit after it)
 
 ## Just done
-Novig batch place/cancel in the bid desk (client flag, fallback to singles, unreadable-answer switch), 6 desk tests + 3 wire tests; v0.65.0 released and recorded
+Kalshi alternate-host fallback (404/410/unknown host -> external-api.kalshi.com, tests) and PropLine 30 s Pinnacle-only board reuse
 
 ## Do this next
-update docs (NOVIG_API.md batch, RESEARCH 90.5, TASKS ticks CO1-CO7), PropLine Pinnacle-only reuse, health/diagnostics line for batches, full floor, version 0.66.0, ship
+docs: NOVIG_API.md batch/private-channel facts, RESEARCH 90.5/90.7 wording, tick CO1-CO7; then full floor, sweep, bump 0.66.0/113, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ update docs (NOVIG_API.md batch, RESEARCH 90.5, TASKS ticks CO1-CO7), PropLine P
 
 ## Last ten checkpoints
 ```
+  b9293edb ckpt 2568: Novig batch place/cancel in the bid desk (client flag, fallback to singles, 
   42f8cff7 ckpt 2567: RESEARCH §90 written: API audit (docs vs code, ranking, PropLine buy answer
   46e07514 ckpt 2566: pre-release: v0.65.0: Pinnacle only (Settings › Scanning and the Auto-bet 
   b3a705c9 ckpt 2565: pre-ship: v0.65.0: Pinnacle only (Settings › Scanning and the Auto-bet tab
@@ -25,8 +26,7 @@ update docs (NOVIG_API.md batch, RESEARCH 90.5, TASKS ticks CO1-CO7), PropLine P
   db5ac025 ckpt 2561: CI2 UI: Pinnacle only switch + age chips in Settings › Scanning and the Au
   ce4ad21b ckpt 2560: CI2 core: PinnacleBackup + Pinnacle-only sources, PinnacleBet rules, AutoBet
   b409e741 ckpt 2559: pre-release: v0.64.0: STOP ALL kill switch (red bar on every tab, widget, no
-  64708aec ckpt 2558: fixed a kill-switch race: the pause watcher now cancels bids with the kill s
 ```
 
-(7 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
