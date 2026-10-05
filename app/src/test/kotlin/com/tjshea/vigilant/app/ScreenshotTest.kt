@@ -1573,10 +1573,15 @@ class ScreenshotTest {
         val outlier = base.bets.first { it.id == "b1" }.copy(id = "big", selection = "Big Outlier", evPercentAtBet = 0.18, stake = 50.0)
         val s = base.copy(bets = base.bets + outlier)
         shoot("4c_tracker_outlier") { TrackerScreen(s, { _, _ -> }, {}) }
-        // The same record and profit as without it (trackerStats): a $50 win at +18% EV counts for nothing.
+        // The record is the same as without it: a $50 win at +18% EV is neither a win nor a loss in it (Tj, 2026-09-27). But Profit is real money (Tj, 2026-10-05:
+        // the same bets must make the same profit with "Novig only" on or off): it counts the outlier too, which is the number the old caption called "your bankroll's result".
         compose.onNodeWithText("2-1").assertExists()
-        compose.onNodeWithText("+$17.52").assertExists()
+        val withOutlier = com.tjshea.vigilant.data.tracker.BetTracker.stats(s.bets, SampleScan.NOW)
+        assertTrue(withOutlier.profitAll > withOutlier.profit + 1.0)
+        compose.onNodeWithText(com.tjshea.vigilant.app.ui.Format.signedMoney(withOutlier.profitAll)).assertExists()
+        compose.onAllNodesWithText(com.tjshea.vigilant.app.ui.Format.signedMoney(withOutlier.profit)).assertCountEquals(0)
         compose.onNodeWithText("1 outlier bet (over ±6% EV when bet)", substring = true).assertExists()
+        compose.onNodeWithText("Profit counts it: it's real money", substring = true).assertExists()
     }
 
     @Config(qualifiers = "w393dp-h2000dp-xxhdpi")
