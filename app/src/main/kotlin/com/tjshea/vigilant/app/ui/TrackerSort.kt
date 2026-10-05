@@ -23,6 +23,9 @@ enum class ScannerFilter(val label: String, val short: String) {
     VIGILANT("Vigilant", "Vigilant"),
     CNO("CNO", "CNO"),
     PARLAY("ParlayAPI", "ParlayAPI"),
+
+    /** The bets made with Pinnacle only on (Tj, 2026-10-05): judged against Pinnacle's devigged price alone, so their EV, CLV and profit read as that alone ([com.tjshea.vigilant.data.tracker.AtBet.pinnacleOnly]). */
+    PINNACLE("Pinnacle only", "Pinnacle only"),
 }
 
 object TrackerSort {
@@ -33,7 +36,11 @@ object TrackerSort {
         else -> ScannerFilter.VIGILANT
     }
 
-    fun inScanner(bets: List<TrackedBet>, f: ScannerFilter): List<TrackedBet> = if (f == ScannerFilter.ALL) bets else bets.filter { scannerOf(it) == f }
+    fun inScanner(bets: List<TrackedBet>, f: ScannerFilter): List<TrackedBet> = when (f) {
+        ScannerFilter.ALL -> bets
+        ScannerFilter.PINNACLE -> bets.filter { it.atBet?.pinnacleOnly == true }
+        else -> bets.filter { scannerOf(it) == f }
+    }
 
     /** The chip's text: just the name, until it's the chosen one, when it also says which end is at the top. */
     /** The pinned sort chip: "Sort: Needs a look", "Sort: Current EV · best" (or "worst" once turned round). */
