@@ -140,7 +140,7 @@ object SettingsSummary {
         val s = state.settings
         return when (page) {
             SettingsPage.SCANNING -> listOfNotNull(
-                if (s.killed) "STOPPED" else if (s.paused) "Paused" else s.scanner.displayName,
+                if (s.killed) "STOPPED" else if (s.paused) "Paused" else if (s.pinnacleOnly) "Pinnacle only" else s.scanner.displayName,
                 if (!AppBook.isNovig) null else if (s.startsWithinHours <= 0) "any start time" else "games within ${s.startsWithinHours}h",
                 if (!AppBook.isNovig) null else if (BackgroundScan.on(s)) "background every ${ScanSettings.intervalLabel(s.autoScanSeconds)}" else "background off",
             ).joinToString(" · ")
@@ -192,7 +192,7 @@ object SettingsSummary {
  */
 object BackgroundScan {
     /** Whether the background scan runs something (pause aside): what the switch shows. */
-    fun on(s: ScanSettings): Boolean = (s.autoScan.cno && s.cnoOn) || (s.autoScan.vigilant && s.vigilantOn)
+    fun on(s: ScanSettings): Boolean = (s.autoScan.cno && s.cnoOn) || (s.autoScan.vigilant && s.vigilantOn) || (s.pinnacleOnly && s.autoScan != AutoScanMode.OFF)
 
     /** Vigilant's own scan runs in the background too (only meaningful with both scanners on). */
     fun alsoVigilant(s: ScanSettings): Boolean = s.autoScan == AutoScanMode.BOTH
@@ -381,6 +381,7 @@ private fun ColumnScope.ScanningPage(s: ScanSettings, onUpdate: SettingsUpdate) 
     )
     Text("Which scanner", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScannerMode.entries, s.scanner, { it.displayName }) { v -> onUpdate { it.copy(scanner = v) } }
+    if (s.pinnacleOnly) Hint("Pinnacle only is on (below), so Vigilant's scan runs alone whatever this says.")
     Hint(
         when (s.scanner) {
             ScannerMode.BOTH -> "Two sources of +EV bets: Vigilant's own scan (it works out fair odds itself, when you tap Scan) and CrazyNinjaOdds' list (a website that " +
@@ -391,6 +392,11 @@ private fun ColumnScope.ScanningPage(s: ScanSettings, onUpdate: SettingsUpdate) 
                 (if (AppBook.isNovig) "The Tracker's Check odds now still reads them for your open bets, so every bet gets its EV now." else "")
         },
     )
+    if (AppBook.isNovig) {
+        // Tj, 2026-10-05: "an option in the auto bet and scanner settings for pinnacle only to calculate EV".
+        SectionTitle("Pinnacle only")
+        PinnacleOnlyRows(s, onUpdate)
+    }
     if (AppBook.isNovig) {
         Text("Games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
         ChoiceChips(ScanSettings.STARTS_WITHIN_CHOICES, s.startsWithinHours, ::startsWithinLabel) { v -> onUpdate { it.copy(startsWithinHours = v) } }
@@ -563,7 +569,7 @@ private fun ColumnScope.WidgetPage(s: ScanSettings, onUpdate: SettingsUpdate) {
         )
     }
     // Only with both scanners on: the widget then lists Vigilant's bets beside CNO's, and these rescans keep them fresh.
-    if (s.scanner == ScannerMode.BOTH) {
+    if (s.scannerNow == ScannerMode.BOTH) {
         Text("Vigilant's scan again while the widget is open", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
         ChoiceChips(ScanSettings.WIDGET_RESCAN_CHOICES, s.widgetRescanMinutes, { if (it <= 0) "Off" else "$it min" }) { v -> onUpdate { it.copy(widgetRescanMinutes = v) } }
         Hint(
@@ -575,7 +581,7 @@ private fun ColumnScope.WidgetPage(s: ScanSettings, onUpdate: SettingsUpdate) {
     }
     if (!s.floatingWidget) {
         Hint(
-            when (s.scanner) {
+            when (s.scannerNow) {
                 ScannerMode.BOTH -> "Picture-in-picture: it lists Vigilant's bets and CrazyNinjaOdds' (tagged CNO), best EV first; tap it for Scan (which refreshes CNO's too), Recheck and Next. Pinch or double-tap to enlarge; drag it to the bottom to close."
                 ScannerMode.VIGILANT -> "Picture-in-picture: it lists Vigilant's bets; tap it for Scan, Recheck and Next. Pinch or double-tap to enlarge; drag it to the bottom to close."
                 ScannerMode.CNO -> "Picture-in-picture: it lists CNO's bets; tap it for Up, Down and Books (every book's odds for the top bet; Up and Down then move between bets). Pinch or double-tap to enlarge."
@@ -1087,7 +1093,7 @@ private fun ColumnScope.BackgroundScanSection(s: ScanSettings, onUpdate: ((ScanS
         tag = "backgroundScan",
     ) { v -> onUpdate { BackgroundScan.set(it, v) } }
     if (!on && s.autoBet && s.cnoOn) Warn("Auto-bet is on and runs inside the background scan: while this is off, auto-bet places nothing.", "backgroundAutoBetOff")
-    if (on && s.scanner == ScannerMode.BOTH) {
+    if (on && s.scannerNow == ScannerMode.BOTH) {
         SwitchRow(
             "  Also run Vigilant's own scan",
             "Off: only CrazyNinjaOdds' list is read in the background (free). On: Vigilant's own scan runs too, spending API credits like a tap on Scan.",
@@ -1221,15 +1227,16 @@ fun autoScanHint(s: ScanSettings): String {
         if (vigilantEvery != s.autoScanSeconds) " (it starts at most every ${ScanSettings.intervalLabel(vigilantEvery)}, however fast CNO is read)" else ""
     val fast = if (s.autoScanSeconds < 60) " Under a minute apart is constant background work: more battery." + (if (KeepAwake.active(s)) "" else " Android may space scans out while the phone sits idle (Keep awake, below, prevents that).") else ""
     val notification = " A quiet notification shows while it's on (Scan now, Stop)." +
-        if (s.autoBetsNow) " Auto-bet is on: bets that pass your rules are placed with each CNO check (the Auto-bet tab)." else ""
+        if (s.autoBetsNow) (if (s.pinnacleOnly) " Auto-bet is on: after each scan, bets that beat Pinnacle by your rules are placed (the Auto-bet tab)." else " Auto-bet is on: bets that pass your rules are placed with each CNO check (the Auto-bet tab).") else ""
     return when {
         s.autoScansCno && s.autoScansVigilant -> "Every $every, with Vigilant open or closed: $cnoPart, then $vigilantPart.$notification$fast"
         s.autoScansCno -> "Every $every, with Vigilant open or closed: $cnoPart.$notification About $perDay reads of CNO a day, each well under a second of work.$fast" +
             if (s.autoScan.vigilant) " Vigilant's scan is skipped, because the scanner above is on CNO only: no API credits are spent in the background." else ""
-        s.autoScansVigilant -> "Every $every, with Vigilant open or closed: $vigilantPart.$notification CrazyNinjaOdds isn't read, because the scanner above is on Vigilant only.$fast"
+        s.autoScansVigilant -> "Every $every, with Vigilant open or closed: $vigilantPart.$notification CrazyNinjaOdds isn't read, because " +
+            (if (s.pinnacleOnly) "Pinnacle only is on (Novig and Pinnacle are all that's read)." else "the scanner above is on Vigilant only.") + fast
         s.killed -> "Everything is stopped by the STOP button: tap RESUME on the red bar to run again."
         s.paused -> "Paused with everything else: resume scanning (the ⏸ button) to run again."
-        else -> "Nothing runs in the background: the scanner above is on ${s.scanner.displayName}, which leaves nothing for this choice to read. Pick a scanner that is on."
+        else -> "Nothing runs in the background: the scanner above is on ${s.scannerNow.displayName}, which leaves nothing for this choice to read. Pick a scanner that is on."
     }
 }
 

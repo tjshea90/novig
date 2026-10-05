@@ -440,7 +440,7 @@ class MainActivity : ComponentActivity() {
         MiniWindow.shouldAutoEnter(s.settings, s.status, MiniWindow.items(s, System.currentTimeMillis()).size)
 
     /** CNO only: the mini window lists CNO alone, with Refresh, Books and Next. */
-    private fun cnoOnly(s: UiState): Boolean = s.settings.scanner == ScannerMode.CNO
+    private fun cnoOnly(s: UiState): Boolean = s.settings.scannerNow == ScannerMode.CNO
 
     /** The picture-in-picture parameters for now: auto-enter only when the floating widget isn't the one in use. */
     private fun pipParams(auto: Boolean = true): android.app.PictureInPictureParams {
@@ -680,7 +680,7 @@ private fun VigilantRoot(
     onReplaceBet: (com.tjshea.vigilant.data.tracker.TrackedBet) -> Unit = {},
     openingBet: String? = null,
 ) {
-    val mode = state.settings.scanner
+    val mode = state.settings.scannerNow
     val tabs = Tab.entries.filter { it.shownIn(mode) }
     var tabName by rememberSaveable { mutableStateOf<String?>(null) }
     // The Settings page open (null = its home list): kept here so the Auto-bet tab can open Betting.
