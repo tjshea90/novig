@@ -59,7 +59,7 @@ object MakerSetup {
             on += "the background scan every ${ScanSettings.intervalLabel(MAX_INTERVAL_SECONDS)} (fresh fair prices for the bids)"
         }
         if (next.paused) {
-            next = next.copy(paused = false)
+            next = next.copy(pausedByHand = false)
             on += "scanning (it was paused)"
         }
         return Change(next, on, startsAutoBet = !s.autoBetsNow && next.autoBetsNow)

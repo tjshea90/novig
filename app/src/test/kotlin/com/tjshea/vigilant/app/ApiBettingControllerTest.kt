@@ -133,7 +133,7 @@ class ApiBettingControllerTest {
         // Tj, 2026-10-02: "Remove the restriction of minimum bet EV on bet slips in the app, I should be able to bet on whatever I want manually.
         // Only keep the hard restrictions on the auto bet function". Scanning paused: the sheet still plans (the old minimum-edge setting is gone).
         val (o, book) = sample()
-        val state = startState().also { st -> st.update { it.copy(settings = it.settings.copy(paused = true)) } }
+        val state = startState().also { st -> st.update { it.copy(settings = it.settings.copy(pausedByHand = true)) } }
         val api = controller(state, book, FakeNovig(AtomicInteger()) { _, _ -> null })
         api.bet(o)
         waitFor("a plan or a refusal") { state.value.betSheet?.let { it.plan != null || it.refusal != null } == true }

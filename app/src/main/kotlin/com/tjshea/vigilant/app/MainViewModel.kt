@@ -1106,7 +1106,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun setPaused(paused: Boolean) {
         viewModelScope.launch {
-            applySettings { it.copy(paused = paused) }
+            applySettings { it.copy(pausedByHand = paused) }
             _toasts.tryEmit(if (paused) "Scanning paused: nothing is read until you resume" else RESUMED_TOAST)
         }
     }
@@ -1117,7 +1117,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     private fun resumeThen(then: () -> Unit) {
         viewModelScope.launch {
-            applySettings { it.copy(paused = false) }
+            applySettings { it.copy(pausedByHand = false) }
             _toasts.tryEmit(RESUMED_TOAST)
             then()
         }

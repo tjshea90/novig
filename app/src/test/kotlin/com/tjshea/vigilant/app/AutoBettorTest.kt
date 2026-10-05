@@ -505,7 +505,7 @@ class AutoBettorTest {
         val note = notifications().single { it.extras.getString("android.title") == "Wallet empty: Vigilant is asleep" }
         assertTrue(note.extras.getCharSequence("android.text")!!.contains("scanning is paused"))
         // Tj resumes with the wallet still empty: he's left alone.
-        app.container.settingsStore.update { it.copy(paused = false) }
+        app.container.settingsStore.update { it.copy(pausedByHand = false) }
         b.run(s, state(s))
         assertFalse(app.container.settingsStore.flow.value!!.paused)
         // It refills, bets, then runs out again: asleep again.
@@ -537,7 +537,7 @@ class AutoBettorTest {
         AutoBettor(app, app.container, clock = { now }, placer = { placer(FakeNovig()) }, wallet = { 0.0 }, resolve = { targetOf(it) }).run(s, nothing)
         assertTrue(app.container.settingsStore.flow.value!!.paused)
         // An old reading (not this cycle's) isn't enough to put it to sleep.
-        app.container.settingsStore.update { it.copy(paused = false) }
+        app.container.settingsStore.update { it.copy(pausedByHand = false) }
         app.container.wallet.record(0.0, at = now - 5_000)
         val later = AutoBettor(app, app.container, clock = { now + WalletBalance.FRESH_MS + 5_000 }, placer = { placer(FakeNovig()) }, wallet = { 0.0 }, resolve = { targetOf(it) })
         later.run(s, nothing)

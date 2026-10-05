@@ -202,7 +202,7 @@ class SettingsFixesTest {
         compose.onNodeWithTag("autoBetFixBackground").performClick()
         assertTrue(state.settings.autoBetsNow)
         compose.onNodeWithTag("autoBetFixBackground").assertDoesNotExist()
-        state = state.copy(settings = state.settings.copy(paused = true))
+        state = state.copy(settings = state.settings.copy(pausedByHand = true))
         compose.onNodeWithTag("autoBetFixPause").performClick()
         assertFalse(state.settings.paused)
         // Not set up: the button opens Settings › Betting & Novig account.
@@ -217,7 +217,7 @@ class SettingsFixesTest {
     fun `each page's line on the home list says what it's set to now`() {
         val st = SampleScan.state()
         val s = st.settings
-        assertTrue(SettingsSummary.of(SettingsPage.SCANNING, st.copy(settings = s.copy(paused = true))).startsWith("Paused"))
+        assertTrue(SettingsSummary.of(SettingsPage.SCANNING, st.copy(settings = s.copy(pausedByHand = true))).startsWith("Paused"))
         assertTrue(SettingsSummary.of(SettingsPage.SCANNING, st.copy(settings = BackgroundScan.set(s.copy(autoScanSeconds = 30), true))).contains("background every 30 sec"))
         assertTrue(SettingsSummary.of(SettingsPage.SCANNING, st.copy(settings = s.copy(autoScan = AutoScanMode.OFF))).contains("background off"))
         assertEquals("Off", SettingsSummary.of(SettingsPage.ALERTS, st.copy(settings = s.copy(alertMinEv = 0.0))))

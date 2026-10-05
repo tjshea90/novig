@@ -324,7 +324,7 @@ class AutoBetUiTest {
         // The scanner choice, the background scan and Pause each keep it from running.
         assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(scanner = ScannerMode.VIGILANT)))!!.contains("Vigilant only"))
         assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(autoScan = AutoScanMode.OFF)))!!.contains("The background scan is off"))
-        assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(paused = true)))!!.contains("paused"))
+        assertTrue(AutoBetText.whyNotRunning(ui.copy(settings = settings.copy(pausedByHand = true)))!!.contains("paused"))
     }
 
     @Test

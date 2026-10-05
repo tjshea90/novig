@@ -30,7 +30,7 @@ class KeepAwakeTest {
     fun `nothing is held while auto-scan runs nothing, or the switch is off`() {
         assertFalse(KeepAwake.active(on.copy(autoScan = AutoScanMode.OFF)))
         // Paused, or a scanner choice that leaves the background nothing to read: activeAutoScan is OFF, so no lock for nothing.
-        assertFalse(KeepAwake.active(on.copy(paused = true)))
+        assertFalse(KeepAwake.active(on.copy(pausedByHand = true)))
         assertFalse(KeepAwake.active(on.copy(scanner = ScannerMode.VIGILANT)))
         assertFalse(KeepAwake.active(on.copy(autoScanKeepAwake = false)))
         assertTrue(KeepAwake.active(on.copy(autoScan = AutoScanMode.BOTH, scanner = ScannerMode.BOTH)))

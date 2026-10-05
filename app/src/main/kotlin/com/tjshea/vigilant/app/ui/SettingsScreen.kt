@@ -372,7 +372,7 @@ private fun ColumnScope.ScanningPage(s: ScanSettings, onUpdate: SettingsUpdate) 
             "+EV and CNO tabs and the widget. Opening bets and grading tracked ones still work. A pull to refresh, or the Tracker's Check odds now, resumes.",
         s.paused,
         tag = "pauseSwitch",
-    ) { v -> onUpdate { it.copy(paused = v) } }
+    ) { v -> onUpdate { it.copy(pausedByHand = v) } }
     Text("Which scanner", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScannerMode.entries, s.scanner, { it.displayName }) { v -> onUpdate { it.copy(scanner = v) } }
     Hint(

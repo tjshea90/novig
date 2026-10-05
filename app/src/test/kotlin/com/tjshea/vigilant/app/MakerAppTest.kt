@@ -195,7 +195,7 @@ class MakerAppTest {
         app.container.installTradingForTest(novig, "sub-1")
         runner(novig).run("test")
         assertTrue(novig.orders.values.any { it.status == "OPEN" })
-        app.container.settingsStore.update { it.copy(paused = true) }
+        app.container.settingsStore.update { it.copy(pausedByHand = true) }
         withTimeout(10_000) {
             while (novig.orders.values.any { it.status == "OPEN" }) delay(50)
         }

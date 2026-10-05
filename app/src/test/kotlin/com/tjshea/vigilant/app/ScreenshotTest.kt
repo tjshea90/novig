@@ -1657,7 +1657,7 @@ class ScreenshotTest {
     @Test fun thePauseButtonOnTheFeedPausesAndTheBannerResumes() {
         val picked = ArrayList<Boolean>()
         var paused by androidx.compose.runtime.mutableStateOf(false)
-        screen { FeedScreen(SampleScan.state().let { it.copy(settings = it.settings.copy(paused = paused)) }, {}, {}, {}, { _, _ -> }, onPause = { picked += it; paused = it }) }
+        screen { FeedScreen(SampleScan.state().let { it.copy(settings = it.settings.copy(pausedByHand = paused)) }, {}, {}, {}, { _, _ -> }, onPause = { picked += it; paused = it }) }
         compose.onAllNodesWithText(com.tjshea.vigilant.app.ui.PAUSED_TEXT).assertCountEquals(0)
         compose.onNodeWithContentDescription("Pause all scanning").performClick()
         assertEquals(listOf(true), picked)
@@ -1669,13 +1669,13 @@ class ScreenshotTest {
     }
 
     @Test fun feedWhilePaused() = shoot("1k_feed_paused") {
-        FeedScreen(SampleScan.state().let { it.copy(settings = it.settings.copy(paused = true)) }, {}, {}, {}, { _, _ -> })
+        FeedScreen(SampleScan.state().let { it.copy(settings = it.settings.copy(pausedByHand = true)) }, {}, {}, {}, { _, _ -> })
     }
 
     @Test fun theCnoTabSaysItsPausedAndResumes() {
         val picked = ArrayList<Boolean>()
         val base = SampleCno.state()
-        shoot("8h_cno_paused") { com.tjshea.vigilant.app.ui.CnoScreen(base.copy(settings = base.settings.copy(paused = true)), {}, {}, onPause = { picked += it }) }
+        shoot("8h_cno_paused") { com.tjshea.vigilant.app.ui.CnoScreen(base.copy(settings = base.settings.copy(pausedByHand = true)), {}, {}, onPause = { picked += it }) }
         compose.onNodeWithText("Paused · read 20s ago").assertIsDisplayed()
         compose.onNodeWithText(com.tjshea.vigilant.app.ui.PAUSED_TEXT).assertIsDisplayed()
         // Refresh waits too (a pull says it's paused).
@@ -1687,7 +1687,7 @@ class ScreenshotTest {
     /** Paused before CNO's list was ever read: not "Reading CrazyNinjaOdds…" forever. */
     @Test fun theCnoTabPausedBeforeItsFirstReadSaysPaused() {
         val base = SampleCno.state(cno = com.tjshea.vigilant.data.cno.CnoState())
-        screen { com.tjshea.vigilant.app.ui.CnoScreen(base.copy(settings = base.settings.copy(paused = true)), {}, {}) }
+        screen { com.tjshea.vigilant.app.ui.CnoScreen(base.copy(settings = base.settings.copy(pausedByHand = true)), {}, {}) }
         compose.onNodeWithText("Scanning is paused").assertIsDisplayed()
         compose.onAllNodesWithText("Reading CrazyNinjaOdds…").assertCountEquals(0)
     }
@@ -1696,15 +1696,15 @@ class ScreenshotTest {
     @Test fun theWidgetPausesAndResumesFromItsTopBar() {
         val picked = ArrayList<Boolean>()
         val s = floatingState()
-        floating("9p_floating_paused", s.copy(settings = s.settings.copy(paused = true)), actions = com.tjshea.vigilant.app.ui.FloatingActions(onPause = { picked += it }))
+        floating("9p_floating_paused", s.copy(settings = s.settings.copy(pausedByHand = true)), actions = com.tjshea.vigilant.app.ui.FloatingActions(onPause = { picked += it }))
         compose.onNodeWithText("Paused", substring = true).assertIsDisplayed()
         // Refresh waits with it (greyed, not a silent tap).
         compose.onNodeWithContentDescription("Refresh").assertIsNotEnabled()
         compose.onNodeWithContentDescription("Resume scanning").performClick()
         assertEquals(listOf(false), picked)
-        assertTrue(com.tjshea.vigilant.app.ui.miniStatus(s.copy(settings = s.settings.copy(paused = true)), SampleScan.NOW).startsWith("Paused · "))
+        assertTrue(com.tjshea.vigilant.app.ui.miniStatus(s.copy(settings = s.settings.copy(pausedByHand = true)), SampleScan.NOW).startsWith("Paused · "))
         assertFalse(com.tjshea.vigilant.app.ui.miniStatus(s, SampleScan.NOW).startsWith("Paused"))
-        assertEquals("Scanning is paused · tap ▶ to resume", com.tjshea.vigilant.app.ui.emptyText(s.copy(settings = s.settings.copy(paused = true)), floating = true))
+        assertEquals("Scanning is paused · tap ▶ to resume", com.tjshea.vigilant.app.ui.emptyText(s.copy(settings = s.settings.copy(pausedByHand = true)), floating = true))
     }
 
     @Config(qualifiers = "w380dp-h320dp-xxhdpi")

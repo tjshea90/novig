@@ -28,10 +28,10 @@ class PauseScanningTest {
     fun `while paused background auto-scan does nothing, and resuming brings back the choice`() {
         val on = ScanSettings(autoScan = AutoScanMode.BOTH)
         assertEquals(AutoScanMode.BOTH, on.activeAutoScan)
-        val paused = on.copy(paused = true)
+        val paused = on.copy(pausedByHand = true)
         assertEquals(AutoScanMode.OFF, paused.activeAutoScan)
         assertEquals(AutoScanMode.BOTH, paused.autoScan)
-        assertEquals(AutoScanMode.BOTH, paused.copy(paused = false).activeAutoScan)
+        assertEquals(AutoScanMode.BOTH, paused.copy(pausedByHand = false).activeAutoScan)
         // The scanner choice is untouched too.
         assertEquals(ScannerMode.BOTH, paused.scanner)
     }

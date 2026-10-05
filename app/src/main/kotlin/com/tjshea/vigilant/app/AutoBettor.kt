@@ -317,7 +317,7 @@ class AutoBettor(
      */
     private suspend fun walletRanOut(balance: Double) {
         walletEmptyNoted = true
-        withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(paused = true) } } }
+        withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(pausedByHand = true) } } }
         if (c.runner.running) runCatching { c.runner.stop() }
         runCatching { ScanService.cancelDone(app) }
         runCatching { c.eventLog.info("AUTOBET", "wallet empty (${money(balance)}): scanning paused") }

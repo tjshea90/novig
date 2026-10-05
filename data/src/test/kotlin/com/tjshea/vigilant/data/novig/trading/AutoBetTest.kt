@@ -84,7 +84,7 @@ class AutoBetTest {
         assertTrue(on.copy(autoScan = AutoScanMode.BOTH).autoBetsNow)
         assertFalse("the background scan is off", on.copy(autoScan = AutoScanMode.OFF).autoBetsNow)
         assertFalse("the scanner is Vigilant only: CNO is asleep", on.copy(scanner = ScannerMode.VIGILANT).autoBetsNow)
-        assertFalse("paused", on.copy(paused = true).autoBetsNow)
+        assertFalse("paused", on.copy(pausedByHand = true).autoBetsNow)
         assertFalse("halted until Tj resumes it", on.copy(autoBetHalted = "an order's answer was lost").autoBetsNow)
         assertFalse("switched off", on.copy(autoBet = false).autoBetsNow)
     }

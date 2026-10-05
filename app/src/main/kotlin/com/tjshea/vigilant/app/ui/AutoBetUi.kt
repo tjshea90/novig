@@ -222,7 +222,7 @@ fun AutoBetSection(
         when (AutoBetText.fixFor(state)) {
             AutoBetText.Fix.SET_UP_BETTING -> OutlinedButton(onClick = { onOpenSettings(SettingsPage.BETTING) }, modifier = Modifier.testTag("autoBetFixBetting")) { Text("Set up betting") }
             AutoBetText.Fix.BACKGROUND_SCAN -> OutlinedButton(onClick = { onUpdate { BackgroundScan.set(it, true) } }, modifier = Modifier.testTag("autoBetFixBackground")) { Text("Turn on the background scan") }
-            AutoBetText.Fix.RESUME_SCANNING -> OutlinedButton(onClick = { onUpdate { it.copy(paused = false) } }, modifier = Modifier.testTag("autoBetFixPause")) { Text("Resume scanning") }
+            AutoBetText.Fix.RESUME_SCANNING -> OutlinedButton(onClick = { onUpdate { it.copy(pausedByHand = false) } }, modifier = Modifier.testTag("autoBetFixPause")) { Text("Resume scanning") }
             AutoBetText.Fix.SCANNER -> OutlinedButton(onClick = { onUpdate { it.copy(scanner = ScannerMode.BOTH) } }, modifier = Modifier.testTag("autoBetFixScanner")) { Text("Turn CrazyNinjaOdds back on") }
             null -> Unit
         }

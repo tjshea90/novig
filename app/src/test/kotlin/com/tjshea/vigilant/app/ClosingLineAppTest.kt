@@ -110,7 +110,7 @@ class ClosingLineAppTest {
         writeBets(bet("due", now + 8 * min), bet("far", now + 3 * hour))
         val c = AppContainer(app)
         runBlocking {
-            c.settingsStore.update { it.copy(paused = true) }
+            c.settingsStore.update { it.copy(pausedByHand = true) }
             val r = ClosingCapture.run(c, now)
             assertEquals(ClosingCapture.Result(due = 1, read = 0), r)
             val bets = c.tracker.all()
@@ -119,7 +119,7 @@ class ClosingLineAppTest {
             // Tried just now: the next try is 2 minutes later, not at once.
             assertEquals(now + ClosingLine.RETRY_MS, ClosingLine.nextAt(bets, now))
             assertEquals(ClosingCapture.Result(0, 0), ClosingCapture.run(c, now + 30_000))
-            c.settingsStore.update { it.copy(paused = false) }
+            c.settingsStore.update { it.copy(pausedByHand = false) }
         }
     }
 
