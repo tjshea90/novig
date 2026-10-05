@@ -173,7 +173,7 @@ class Scanner(
         onPartial: (ScanResult) -> Unit,
     ): ScanReport = mutex.withLock {
         // Pinnacle only reads Novig and Pinnacle and nothing else ([ScanSettings.effective]): applied here, once, so no part of the scan can read another book.
-        val settings = requested.effective()
+        val settings = requested.effective(forBets = betsOnly)
         val sources = readable(offered, settings)
         this.pinned = pinned
         // What a bets-only pass fetched was asked for these bets' games alone: never re-used for the next pass's bets (a board that
@@ -733,7 +733,7 @@ class Scanner(
         marketIds: Collection<String>,
         onProgress: (Int, Int) -> Unit,
     ): RecheckReport = mutex.withLock {
-        val settings = requested.effective()
+        val settings = requested.effective(forBets = betsOnly)
         val cat = catalog ?: return@withLock RecheckReport(null, 0, 0, null)
         val ids = marketIds.distinct().take(MAX_RECHECK)
         val now = clock()
@@ -761,7 +761,7 @@ class Scanner(
 
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
     override suspend fun reprice(requested: ScanSettings): ScanResult? = mutex.withLock {
-        val settings = requested.effective()
+        val settings = requested.effective(forBets = betsOnly)
         val cat = catalog ?: return@withLock null
         if (settings.leagues.isEmpty()) return@withLock null
         val now = clock()
@@ -774,7 +774,7 @@ class Scanner(
      * them. Pinnacle only calls it right before it bets, so the price it bets on is a read of this minute (RESEARCH.md §88.5). Null before any scan.
      */
     override suspend fun refreshFair(requested: ScanSettings, offered: List<ReferenceSource>, leagues: Set<String>): ScanResult? = mutex.withLock {
-        val settings = requested.effective()
+        val settings = requested.effective(forBets = betsOnly)
         val sources = readable(offered, settings)
         val cat = catalog ?: return@withLock null
         val picked = settings.selectedLeagues.filter { it.novigName in leagues }
@@ -847,11 +847,12 @@ class Scanner(
     }
 
     /**
-     * The sources a scan may read: all that were offered, except in Pinnacle only, where a source the settings don't switch on ([ScanSettings.effective]: not the exchanges,
-     * not The Odds API) is never asked, whoever offered it (RESEARCH.md §88.5: Novig and Pinnacle and no other API's usage).
+     * The sources a scan may read: all that were offered, except in Pinnacle only (where a source the settings don't switch on, [ScanSettings.effective]: not the exchanges,
+     * not The Odds API, is never asked, whoever offered it: RESEARCH.md §88.5) and in low-usage bids (the same, for the feeds that don't carry a picked sharp prop book:
+     * RESEARCH.md §92).
      */
     private fun readable(offered: List<ReferenceSource>, settings: ScanSettings): List<ReferenceSource> =
-        if (settings.pinnacleOnly) offered.filter { it.id in settings.enabledSources } else offered
+        if (settings.pinnacleOnly || settings.lowUsageScan) offered.filter { it.id in settings.enabledSources } else offered
 
     /**
      * What source [firstId] gave this scan, as a fallback's [ScanContext]: the leagues it answered
@@ -990,7 +991,8 @@ class Scanner(
     private fun requestKey(source: ReferenceSource, settings: ScanSettings): String = when (source.id) {
         "oddsapi" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
         "parlay" -> "${settings.families.sorted()}|${settings.scanWindowHours}"
-        "parlay_props" -> (MarketFamily.PLAYER_PROPS in settings.families).toString()
+        // Low-usage bids ask ParlayAPI for the picked books alone: an answer read with the usual fourteen is not the same ask.
+        "parlay_props" -> "${MarketFamily.PLAYER_PROPS in settings.families}|${if (settings.lowUsageScan) LowUsageBids.parlayBooks(settings).sorted() else ""}"
         "parlay_1h" -> (MarketFamily.FIRST_HALF in settings.families).toString()
         "oddsapi_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropWindowHours}"
         "propline" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
@@ -1025,7 +1027,7 @@ class Scanner(
         val inputs = listOf(
             System.identityHashCode(cat), refs.map { System.identityHashCode(it) }, books,
             settings.leagues, settings.families, settings.includeLive, settings.scanWindowHours, settings.linesPerGame,
-            settings.propsPerGame, settings.maxBooksPerScan, settings.fillBudget, pinned, now / 60_000L, fairAsOf / 60_000L, headroomMs,
+            settings.propsPerGame, settings.maxBooksPerScan, settings.fillBudget, pinned, now / 60_000L, fairAsOf / 60_000L, headroomMs, settings.lowUsageScan,
         )
         plans[youngFairOnly]?.let { (key, plan) -> if (key == inputs) return plan }
         val filtered = refs.map { snap ->

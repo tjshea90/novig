@@ -243,7 +243,12 @@ object Pricing {
 
         fun fairFor(key: LineKey): FairLine? = fairCache.getOrPut(key) {
             val ref = refById[key.refEventId] ?: return@getOrPut null
-            FairValue.compute(bookPrices(ref, key), fairSettings)
+            // Low-usage bids: a book's quote past the freshness limit is left out BEFORE the devig, so a stale third book can't spoil a line two fresh sharp books price,
+            // and a book with no stamp is not known to be current (RESEARCH.md §92). Everywhere else the oldest quote only dates the whole line ([Opportunity.fairIsOld]).
+            val prices = bookPrices(ref, key).let { all ->
+                if (settings.lowUsageScan) all.filter { b -> b.lastUpdateMs != null && Freshness.fresh(b.lastUpdateMs, now, ref.commenceMs) } else all
+            }
+            FairValue.compute(prices, fairSettings)
         }
 
         val kept = memo?.pricedFor(plan, fairSettings)
