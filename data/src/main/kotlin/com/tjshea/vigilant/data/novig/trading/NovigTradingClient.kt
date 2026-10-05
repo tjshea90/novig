@@ -57,7 +57,21 @@ data class LedgerRow(val transactionId: String, val kind: String, val amount: Do
  * key to place and read, or its `trading::read` key to read. Every money and price field is a decimal string on the wire, parsed
  * exactly here; quantities are whole 1¢ contracts. A refusal is a [NovigApiException] with Novig's own code.
  */
-open class NovigTradingClient(private val signer: NovigSignedClient, private val json: Json) {
+open class NovigTradingClient(
+    private val signer: NovigSignedClient,
+    private val json: Json,
+    /**
+     * The batch routes (`POST /v3/orders/batch`, `DELETE /v3/orders/batch`) may be used by the bid desk ([placeOrders], [cancelOrdersBatch]). On in the app;
+     * off for the test doubles, which only know the single-order calls.
+     */
+    open val batchOrders: Boolean = false,
+) {
+
+    /** One order for [placeOrders]; the fields of [placeOrder]. */
+    data class NewOrder(val outcomeId: String, val price: Double, val qty: Long, val tif: String, val clientId: String, val ttlMs: Long? = null)
+
+    /** What [cancelOrdersBatch] did: the ids whose cancel Novig queued, and the ones it could not cancel with why (`FILLED`, `CANCELED`, `NOT_FOUND`). */
+    data class BatchCancel(val canceled: Set<String>, val notCanceled: Map<String, String>)
 
     /** The subaccount's balance in dollars (`trading` key; a `trading::read` key can't read it). */
     open suspend fun balance(subaccountKeyId: String): Double {
@@ -92,6 +106,48 @@ open class NovigTradingClient(private val signer: NovigSignedClient, private val
             ),
         )
         return json.decodeFromString(AcceptedDto.serializer(), signer.call("POST", "/v3/orders", body = body)).orderId
+    }
+
+    /**
+     * Places up to [MAX_BATCH] orders in ONE request (`POST /v3/orders/batch`, docs: api-reference/execution/batch-place-orders): **all or nothing** ("a resend places the
+     * batch again"), one `place` token an order. The answer is each order's id by its `clientId`. A [NovigApiException] means Novig placed none of them (a refusal);
+     * any other failure is a lost answer: the orders may be resting, to be found by their client ids (each is a UUID, as for [placeOrder]).
+     */
+    open suspend fun placeOrders(orders: List<NewOrder>): Map<String, String> {
+        require(orders.isNotEmpty() && orders.size <= MAX_BATCH) { "a batch is 1 to $MAX_BATCH orders: ${orders.size}" }
+        orders.forEach { o ->
+            require(isUuid(o.clientId)) { "clientId must be a UUID (Novig parses it as one): ${o.clientId}" }
+            require(o.ttlMs == null || (o.tif == "PO" || o.tif == "GTT") && o.ttlMs > 0) { "ttl is only for PO and GTT orders, and positive: ${o.tif} ${o.ttlMs}" }
+            require(o.tif != "GTT" || o.ttlMs != null) { "a GTT order needs a ttl" }
+        }
+        val items = orders.map { o ->
+            JsonObject(
+                buildMap {
+                    put("outcomeId", JsonPrimitive(o.outcomeId))
+                    put("price", JsonPrimitive(priceText(o.price)))
+                    put("qty", JsonPrimitive(o.qty))
+                    put("tif", JsonPrimitive(o.tif))
+                    o.ttlMs?.let { put("ttl", JsonPrimitive(it)) }
+                    put("clientId", JsonPrimitive(o.clientId))
+                },
+            )
+        }
+        val body = json.encodeToString(JsonObject.serializer(), JsonObject(mapOf("orders" to kotlinx.serialization.json.JsonArray(items))))
+        val accepted = json.decodeFromString(BatchAcceptedDto.serializer(), signer.call("POST", "/v3/orders/batch", body = body)).accepted
+        // By client id; a reply that echoes none is read in the order sent (it answers in that order).
+        return if (accepted.all { it.clientId != null }) accepted.associate { it.clientId!! to it.orderId }
+        else orders.zip(accepted).associate { (o, a) -> o.clientId to a.orderId }
+    }
+
+    /**
+     * Cancels up to [MAX_BATCH] orders by id in ONE request (`DELETE /v3/orders/batch`, docs: batch-cancel-orders): partial ("one unknown ID does not stop the
+     * rest"), idempotent, one `cancel` token an id. `200` and `207` are both answers; a [NovigApiException] means none was cancelled.
+     */
+    open suspend fun cancelOrdersBatch(orderIds: List<String>): BatchCancel {
+        require(orderIds.isNotEmpty() && orderIds.size <= MAX_BATCH) { "a batch is 1 to $MAX_BATCH ids: ${orderIds.size}" }
+        val body = json.encodeToString(JsonObject.serializer(), JsonObject(mapOf("orderIds" to kotlinx.serialization.json.JsonArray(orderIds.map { JsonPrimitive(it) }))))
+        val dto = json.decodeFromString(BatchCancelDto.serializer(), signer.call("DELETE", "/v3/orders/batch", body = body))
+        return BatchCancel(dto.canceled.toSet(), dto.notCanceled.associate { it.orderId to it.reason })
     }
 
     /**
@@ -232,6 +288,15 @@ private data class BalanceDto(val balance: String)
 
 @Serializable
 private data class AcceptedDto(val orderId: String, val clientId: String? = null)
+
+@Serializable
+private data class BatchAcceptedDto(val accepted: List<AcceptedDto> = emptyList())
+
+@Serializable
+private data class NotCanceledDto(val orderId: String, val reason: String = "")
+
+@Serializable
+private data class BatchCancelDto(val canceled: List<String> = emptyList(), val notCanceled: List<NotCanceledDto> = emptyList())
 
 @Serializable
 private data class CancelDto(val orderId: String = "", val status: String = "")
