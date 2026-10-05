@@ -249,4 +249,14 @@ class LowUsageBidTest {
         assertEquals(LowUsage.NOT_PRICED, (MakerQuote.decide(l, MakerRules.of(s), now) as MakerDecision.Skip).why)
         assertNull((MakerQuote.decide(l, MakerRules.of(s), now) as? MakerDecision.Post))
     }
+
+    @Test
+    fun `switching bids on in this mode keeps the cycle at a minute but says Vigilant's own scan waits its pace`() {
+        val slow = ScanSettings(autoScanSeconds = 600, scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, makerFocus = BidFocus.LOW_USAGE, lowUsageMinutes = 15)
+        val change = MakerSetup.set(slow, BidMode.AUTOMATIC)
+        assertEquals(60, change.settings.autoScanSeconds)
+        assertTrue(change.turnedOn.toString(), change.turnedOn.any { it.contains("Vigilant's own scan still waits 15 min") })
+        // The usual wording is untouched for the other choices.
+        assertTrue(MakerSetup.set(slow.copy(makerFocus = BidFocus.ALL), BidMode.AUTOMATIC).turnedOn.any { it.contains("fresh fair prices for the bids") })
+    }
 }
