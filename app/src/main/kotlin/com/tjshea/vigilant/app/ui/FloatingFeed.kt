@@ -96,6 +96,9 @@ class FloatingActions(
     val onStartsWithin: (Int) -> Unit = {},
     /** The top bar's pause button: pause every scan (true) or resume (false). */
     val onPause: (Boolean) -> Unit = {},
+    /** The top bar's red STOP: the kill switch (Tj, 2026-10-05), and the red play button that lifts it. */
+    val onKill: () -> Unit = {},
+    val onResume: () -> Unit = {},
 )
 
 /** Height of one bet in the floating widget: a comfortable touch target. */
@@ -185,6 +188,14 @@ fun FloatingFeed(
                 if (items.isNotEmpty()) {
                     Text("${items.size} +EV", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Edge.colors.positive, modifier = Modifier.padding(start = 6.dp, end = 2.dp))
                 }
+                // The kill switch (Tj, 2026-10-05): red STOP, and once pressed a red play that resumes everything.
+                val killed = state.settings.killed
+                HeaderButton(
+                    painterResource(if (killed) R.drawable.ic_play else R.drawable.ic_stop),
+                    if (killed) KillBarText.RESUME_DESCRIPTION else KillBarText.STOP_DESCRIPTION,
+                    { if (killed) actions.onResume() else actions.onKill() },
+                    tint = Edge.colors.negative,
+                )
                 // Pause / resume every scan (Tj, 2026-09-28: "Make an option in the app to pause all scanning").
                 val paused = state.settings.paused
                 HeaderButton(

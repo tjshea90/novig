@@ -33,6 +33,7 @@ import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanReport
 import com.tjshea.vigilant.data.scanner.ScanResult
+import com.tjshea.vigilant.app.ui.KillBarText
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScanTiming
 import com.tjshea.vigilant.data.scanner.SourceReport

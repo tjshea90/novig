@@ -253,6 +253,8 @@ class MainActivity : ComponentActivity() {
                     onScanner = { mode -> vm.setScanner(mode) },
                     onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
                     onPause = vm::setPaused,
+                    onKill = vm::killAll,
+                    onResume = vm::resumeAfterKill,
                 )
             }
             FloatingWindow(

@@ -353,6 +353,7 @@ fun miniStatus(state: UiState, now: Long): String {
         else -> "CrazyNinjaOdds"
     }
     // Paused (Tj, 2026-09-28): said first, with how old what's showing is.
+    if (state.settings.killed) return (listOf("STOPPED") + listOfNotNull(ours, theirs)).joinToString(" · ")
     if (state.settings.paused) return (listOf("Paused") + listOfNotNull(ours, theirs)).joinToString(" · ")
     return listOfNotNull(ours, theirs).joinToString(" · ").ifEmpty { "Vigilant" }
 }
@@ -389,6 +390,7 @@ internal fun emptyText(state: UiState, floating: Boolean = false, now: Long = Sy
     // "Only bets the books agree on" is holding back what CNO listed: say so, not "no +EV".
     val heldBack = if (MiniWindow.showsCno(state.settings) && state.settings.cnoOnlyAgreed) state.cnoCandidates(now).size else 0
     return when {
+        state.settings.killed -> if (floating) "Everything is stopped · tap the red ▶ to resume" else "Everything is stopped · resume in Vigilant (the red bar)"
         state.settings.paused -> if (floating) "Scanning is paused · tap ▶ to resume" else "Scanning is paused · resume in Vigilant"
         state.status.scanning && MiniWindow.showsVigilant(state.settings) -> "Scanning… bets show here as they're found"
         heldBack > 0 -> "No bets the books agree on yet · $heldBack held back" +
