@@ -265,6 +265,9 @@ open class NovigTradingClient(
     private fun percent(s: String) = URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
     companion object {
+        /** The most orders (or ids) one batch call takes (the docs: 256). */
+        const val MAX_BATCH = 256
+
         /** The most fills one call reads (8 + 1 per 50 rows of the `history` bucket: 2,000 rows cost 48 tokens of 512). */
         const val MAX_FILL_ROWS = 2_000
 
