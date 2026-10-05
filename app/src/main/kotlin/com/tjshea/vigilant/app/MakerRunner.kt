@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
 import com.tjshea.vigilant.data.novig.trading.maker.MakerDecision
 import com.tjshea.vigilant.data.novig.trading.maker.MakerDesk
+import com.tjshea.vigilant.data.novig.trading.maker.MakerGuard
 import com.tjshea.vigilant.data.novig.trading.maker.MakerLines
 import com.tjshea.vigilant.data.novig.trading.maker.MakerQuote
 import com.tjshea.vigilant.data.novig.trading.maker.MakerRules
@@ -15,6 +16,8 @@ import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.GameExposure
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
