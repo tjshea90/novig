@@ -76,6 +76,10 @@ class StartsWithinTest {
         assertEquals("", laterText(s, s.cnoPicks(now)!!.picks, now))
         // 24 h includes a game starting exactly 24 h from now.
         assertEquals(SampleCno.kept, s.within(24).cnoCandidates(now).map { it.row.bet })
+        // 6 h (the trap guard's window, v0.61.0): Ohio starts in 8 h, so a list set to 6 h shows none of the four; 3 h the same.
+        assertEquals(emptyList<String>(), s.within(6).cnoCandidates(now).map { it.row.bet })
+        assertEquals(emptyList<String>(), s.within(3).cnoShown(now).map { it.row.bet })
+        assertEquals("4 start after 6h", laterText(s.within(6), s.within(6).cnoPicks(now)!!.picks, now))
         // A CNO row without a start time isn't hidden.
         val noStart = SampleCno.state(cno = CnoState(snapshot = SampleCno.snapshot(rows = SampleCno.rows.map { it.copy(startsAtMs = null) }))).within(12)
         assertEquals(SampleCno.kept, noStart.cnoCandidates(now).map { it.row.bet })
