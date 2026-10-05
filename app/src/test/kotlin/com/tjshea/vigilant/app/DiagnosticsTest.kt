@@ -585,9 +585,9 @@ class DiagnosticsTest {
 
     @Test
     fun `Diagnostics says what low API usage bids read, at what pace, through which feeds, and what cannot be read`() {
-        val off = ScanSettings(maker = true)
+        val off = com.tjshea.vigilant.data.scanner.ScanSettings(maker = true)
         assertTrue("nothing when that isn't the bids' choice", Diagnostics.lowUsageLines(off, null, 0L).isEmpty())
-        val low = ScanSettings(maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, lowUsageMinutes = 15, lowUsageMargin = 0.03)
+        val low = com.tjshea.vigilant.data.scanner.ScanSettings(maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, lowUsageMinutes = 15, lowUsageMargin = 0.03)
         val plan = com.tjshea.vigilant.data.scanner.LowUsageBids.feedsFor(com.tjshea.vigilant.data.scanner.LowUsageBids.books(low), setOf("kalshi", "propline_props"))
         val lines = Diagnostics.lowUsageLines(low, plan, 0L)
         val text = lines.joinToString("\n")
