@@ -781,6 +781,7 @@ class Scanner(
         val errors = ArrayList<String>()
         val ordered = sources.sortedBy { SOURCE_ORDER.indexOf(it.id).let { i -> if (i < 0) Int.MAX_VALUE else i } }
         synchronized(references) { for (l in picked) for (src in ordered) references.remove("${src.id}|${l.novigName}") }
+        for (l in picked) for (src in ordered) src.forget(l)
         synchronized(answered) { answered.clear() }
         val board = ScanContext(cat.events, cat.markets, now)
         for (source in ordered.filter { it.fallbackFor == null }) {
