@@ -292,8 +292,9 @@ class MakerTest {
         val cancelBatches = ArrayList<List<String>>()
         var refuseBatch: NovigApiException? = null
         var loseBatchAnswer = false
-        /** Orders that fill the moment a cancel batch names them. */
+        /** Orders that fill the moment a cancel batch names them, and ones that are off the book by the time it does (answered NOT_FOUND). */
         val fillOnCancel = HashSet<String>()
+        val vanishOnCancel = HashSet<String>()
 
         override suspend fun placeOrders(orders: List<NewOrder>): Map<String, String> {
             batches += orders
@@ -315,6 +316,7 @@ class MakerTest {
                 val o = orders[id]
                 when {
                     o == null -> not[id] = "NOT_FOUND"
+                    id in vanishOnCancel -> { orders[id] = o.copy(status = "CANCELED"); not[id] = "NOT_FOUND" }
                     id in fillOnCancel -> { fill(id, o.remaining); not[id] = "FILLED" }
                     o.status != "OPEN" -> not[id] = "CANCELED"
                     else -> { orders[id] = o.copy(status = "CANCELED"); canceled += id }
@@ -1608,7 +1610,7 @@ class MakerTest {
         val ids = d.bids().map { it.orderId!! }
         // One fills in the instant before the cancel; one is off the book already.
         novig.fillOnCancel += ids[0]
-        novig.orders[ids[1]] = novig.orders.getValue(ids[1]).copy(status = "CANCELED")
+        novig.vanishOnCancel += ids[1]
         val r = d.cycle(emptyList(), rules, stop = "Scanning is paused", maxPerDay = 50.0, wallet = 100.0)
         assertEquals("one cancel request", 1, novig.cancelBatches.size)
         assertEquals(ids.toSet(), novig.cancelBatches.single().toSet())
