@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.cno.CnoFilters
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.cno.CnoSnapshot
 import com.tjshea.vigilant.data.cno.LivePrice
+import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.data.tracker.BetGraderTest
