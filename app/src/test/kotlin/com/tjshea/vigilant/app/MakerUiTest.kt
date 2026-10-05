@@ -396,7 +396,7 @@ class MakerUiTest {
     /** Tj, 2026-10-05: "make a settings options for the auto bid feature for me to select the longest odds for bids (for example, do not post bids longer than +140 odds)". */
     @Test
     fun `the longest odds for a bid is a preset or typed, has no limit until picked, and the tab says what it does`() {
-        assertEquals("no limit by default: what ran before doesn't change", 0, settingst.value.makerMaxOdds)
+        assertEquals("no limit by default: what ran before doesn't change", 0, settings.makerMaxOdds)
         assertFalse(MakerRulesText.summary(settings).contains("no bid longer than"))
         val st = androidx.compose.runtime.mutableStateOf(settings)
         compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
