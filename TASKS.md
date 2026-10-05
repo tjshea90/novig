@@ -3874,3 +3874,10 @@ CLAUDE.md: work from the READ ME and splits, and ask Tj before changing any rule
 ## Tj, 2026-10-05 (after CE): "You just told me some very high clv and positive EV values, clarify how I can replicate these bets. What kind of bets were they, how long before each game ,etc"
 
 - [x] CF1 Profile the prop bets behind §86's numbers (the 61 of Tj's and 35 of the study's with a close and Pinnacle's two-sided price): sport, market, over/under, price, how much cheaper than Pinnacle, time to start, which scanner, how many games; which of today's app settings already select them; what a replicating rule would be and what it would have caught; what the sample can't say. Record in RESEARCH §86.5; list the bets in a file Tj can open.
+
+
+## Tj, 2026-10-05 (after CF; screenshot of Tracker › Stats › "Locked in": 14 (2%) bets locked, Profit locked −$2.29, −6.52%): "Notice the app locked in negative profit. Either this is an error in stats or the app allowed lock in at negative return. Immediate"
+
+- [ ] CG1 Find out which it is: read how a lock is made (auto-lock, "lock in" by hand, any other path that books a second leg), how the Locked in card computes "Profit locked" (−$2.29 on $35.11 staked, fees included; −$2.49 graded), and whether the 14 locks (13 markets) were placed at a negative guaranteed return by the app or by Tj's hand, or the number is wrong (fees counted twice, a leg missing, a partly-locked market counted whole, graded vs pending).
+- [ ] CG2 If the stats are wrong: fix and test (name the test). If the app locked at a loss: find the path, stop it (a lock below the minimum return must not be placed automatically; by hand it needs an explicit "lock in a loss" label), test it, and say which of the 14 were which.
+- [ ] CG3 Ship it as a version if the app changes (ship.sh, release.yml, record-release.sh) and send Tj the link.
