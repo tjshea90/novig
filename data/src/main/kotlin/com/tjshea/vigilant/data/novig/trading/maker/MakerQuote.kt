@@ -77,6 +77,8 @@ data class MakerRules(
     val popularBooks: Int = ScanSettings.MAKER_POPULAR_BOOKS,
     /** A bid needs a sharp book that prices the line both ways and agrees, on any kind of bet, not game lines only ([ScanSettings.makerRequireSharp]). */
     val requireSharp: Boolean = false,
+    /** The margin is under the lower of the blended fair and the sharpest book's own fair, not the blend alone ([ScanSettings.makerAnchorSharp]). */
+    val anchorSharp: Boolean = true,
 ) {
     companion object {
         fun of(s: ScanSettings) = MakerRules(
@@ -102,7 +104,15 @@ data class MakerRules(
             maxPerGame = s.apiMaxPerGame.coerceAtLeast(0.0),
             popularFirst = s.makerPopularFirst,
             requireSharp = s.makerRequireSharp,
+            anchorSharp = s.makerAnchorSharp,
         )
+
+        /**
+         * The fair a bid's margin is taken from (RESEARCH.md §88.3): the lower of [blend] and the sharpest book's own fair in [sharpFairs] (each devigged the worst
+         * way) when [anchorSharp] is on; [blend] when it's off or no sharp book is in the fair. Never above [blend].
+         */
+        fun anchorOf(blend: Double, sharpFairs: List<Double>, anchorSharp: Boolean): Double =
+            if (anchorSharp && sharpFairs.isNotEmpty()) minOf(blend, sharpFairs.min()) else blend
 
         /** Game lines (moneylines, spreads, game totals): bid on only with a sharp book in the fair (RESEARCH.md §70.2). */
         val GAME_LINES = setOf(BetKind.MONEYLINE, BetKind.SPREAD, BetKind.TOTAL)
@@ -279,7 +289,16 @@ sealed interface MakerDecision {
      * Post [contracts] at [price] (what they cost: [cost] dollars); [evAtFair] = fair / price − 1; [restUntilMs]: when it must be down (the expiry, the
      * fair's freshness and the stop window before the start, whichever comes first).
      */
-    data class Post(override val line: MakerLine, val price: Double, val contracts: Long, val evAtFair: Double, val restUntilMs: Long = Long.MAX_VALUE) : MakerDecision {
+    data class Post(
+        override val line: MakerLine,
+        val price: Double,
+        val contracts: Long,
+        /** The EV at the fair the margin was taken from: the anchor ([anchorFair]) when a sharp book lowered it, else the blend. */
+        val evAtFair: Double,
+        val restUntilMs: Long = Long.MAX_VALUE,
+        /** The fair the margin is under ([MakerRules.anchorOf]); null = the line's own fair. */
+        val anchorFair: Double? = null,
+    ) : MakerDecision {
         val cost: Double get() = contracts * price * EvMath.CONTRACT_PAYOUT_DOLLARS
 
         /**
@@ -304,12 +323,16 @@ object MakerQuote {
      * (a post-only bid at or over it would be refused: that side is a bet to take now, the +EV feed's).
      */
     fun decide(line: MakerLine, rules: MakerRules, now: Long, held: Set<String> = emptySet()): MakerDecision {
-        val (price, until) = when (val pre = precheck(line, rules, now, held)) {
+        val (blendPrice, until) = when (val pre = precheck(line, rules, now, held)) {
             is Pre.No -> return pre.skip
             is Pre.Price -> pre.price to pre.until
         }
         fun skip(why: String) = MakerDecision.Skip(line, why)
-        val fair = line.fair!!
+        val blend = line.fair!!
+        // The margin is under the lower of the blend and the sharpest book's own fair (only lines with their books' fairs worked out get here: [MakerLines.from]).
+        val fair = MakerRules.anchorOf(blend, line.sharpFairs, rules.anchorSharp)
+        val price = if (fair < blend - 1e-12) PriceGrid.floor(fair / (1.0 + rules.margin)) ?: return skip("The sharp book's price is too small to bid under") else blendPrice
+        if (price < rules.minPrice - 1e-9) return skip("A bid at ${percent(price)} is outside the price window (${percent(rules.minPrice)}-${percent(rules.maxPrice)})")
         if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
         if (rules.requireSharp && line.sharpFairs.isEmpty()) return skip("No sharp book (Pinnacle, Circa, an exchange) prices this both ways, and a sharp book must agree (your setting)")
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
@@ -325,7 +348,7 @@ object MakerQuote {
         val stake = stake(fair, price, rules) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
         val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
         if (contracts < 1) return skip("The stake is too small for one contract")
-        return MakerDecision.Post(line, price, contracts, fair / price - 1.0, until)
+        return MakerDecision.Post(line, price, contracts, fair / price - 1.0, until, anchorFair = fair)
     }
 
     /** What [precheck] made of a line before the books are asked: no bid (why), or the bid's price and how long it may rest. */

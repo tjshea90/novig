@@ -92,12 +92,41 @@ data class MakerBid(
     val offerAtPost: Double? = null,
     val bookAtMs: Long? = null,
     /**
+     * Vigilant's blended fair when the bid was posted ([fair] is the fair its margin is under: the lower of this and the sharpest book's, [MakerRules.anchorOf]),
+     * and the sharpest book's own fair then (the lowest of the sharp books' worst-case devigs; null = no sharp book in the fair). RESEARCH.md §88.3.
+     */
+    val blendFair: Double? = null,
+    val sharpFairAtPost: Double? = null,
+    /**
+     * The first fill (Novig's own clock), and what the fair was on the first scan after it: Vigilant's blend, the sharpest book's, and when the oldest book price
+     * behind it was seen. A fill whose fair had already moved under its price was picked off (RESEARCH.md §88.3, [fillEv]); null before a fill or when no
+     * scan priced the side since. The fill's delay, [fillDelayMs], is how fast it was taken.
+     */
+    val firstFillAtMs: Long? = null,
+    val fairAtFill: Double? = null,
+    val sharpFairAtFill: Double? = null,
+    val fairAtFillAsOfMs: Long? = null,
+    /** The scan's blend and sharp fair when the bid was REPOSTED the last time it moved (reserved: repricing is a cancel and a new bid, each its own record). */
+    val repricedFromBidId: String? = null,
+    /**
      * Seen in Novig's open orders at least once. Once it has been, an order missing from that list is off the book and its record isn't read (Novig
      * answers 404 by then); one never seen there may have been refused (post-only, `REJECTED`), which only its record says.
      */
     val seenOpen: Boolean = false,
 ) {
     val active: Boolean get() = !status.ended
+
+    /** How long after posting the first fill came (Novig's clock against Vigilant's), null before a fill. */
+    val fillDelayMs: Long? get() = firstFillAtMs?.let { (it - postedAtMs).coerceAtLeast(0L) }
+
+    /**
+     * The EV this bid's fill had on the first scan after it: the fair then (the lower of the blend and the sharpest book's, as the bid was priced) against the
+     * price it was filled at. Negative = the fair had moved under the price: the market walked away from the bid (picked off). Null when no scan priced it after.
+     */
+    fun fillEv(anchorSharp: Boolean = true): Double? {
+        val f = fairAtFill ?: return null
+        return MakerRules.anchorOf(f, listOfNotNull(sharpFairAtFill), anchorSharp) / price - 1.0
+    }
 
     /** Up on Novig as far as Vigilant knows (sent or resting), not on its way down. */
     val resting: Boolean get() = status == MakerStatus.SENT || status == MakerStatus.RESTING
@@ -400,7 +429,8 @@ class MakerDesk(
         val bid = MakerBid(
             clientId = NovigTradingClient.newClientId(), marketId = line.marketId, eventId = line.market.eventId, outcomeId = line.outcomeId,
             league = line.league, eventName = line.eventName, startsTs = line.startsTs, marketLabel = line.marketLabel, selection = line.selection,
-            kind = line.kind, price = post.price, contracts = post.contracts, fair = line.fair ?: post.price, evAtFair = post.evAtFair,
+            kind = line.kind, price = post.price, contracts = post.contracts, fair = post.anchorFair ?: line.fair ?: post.price, evAtFair = post.evAtFair,
+            blendFair = line.fair, sharpFairAtPost = line.sharpFairs.minOrNull(),
             margin = rules.margin, books = line.books, source = line.source, gameUrl = line.gameUrl, fairBasis = line.basis, postedAtMs = now,
             // Never past what it was priced from ([MakerDecision.Post.restUntilMs]: the expiry, the fair's freshness, the stop window before the start).
             expiresAtMs = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, post.restUntilMs), auto = auto,
