@@ -28,7 +28,7 @@ from datetime import datetime, timezone
 
 UA = {'User-Agent': 'Mozilla/5.0'}
 NOVIG = 'https://api.novig.com/v3/public'
-STOP = {'fc', 'cf', 'sc', 'ac', 'the', 'de', 'of', 'city', 'united', 'real', 'club', 'st', 'saint', 'a', 'and'}
+STOP = {'fc', 'cf', 'sc', 'ac', 'the', 'de', 'of', 'city', 'united', 'real', 'club', 'st', 'saint', 'a', 'and', 'los', 'angeles', 'la', 'new', 'york', 'ny', 'san', 'north', 'south', 'west', 'east'}
 _lock = threading.Lock()
 _out = None
 _stop = threading.Event()
@@ -295,7 +295,7 @@ def novig_feed(leagues, every=2.5, max_markets=8):
         while now() < end and not _stop.is_set():
             for e, ms in picked:
                 for m in ms[:3]:
-                    r = http(f"{NOVIG}/catalog/markets/{m['marketId']}/trades?limit=40")
+                    r = http(f"{NOVIG}/catalog/markets/{m['marketId']}/trades?limit=100")
                     time.sleep(gap)
                     if not r:
                         continue
@@ -366,49 +366,33 @@ def cluster(scores):
     """Group score records into games across sources by team-name tokens (unordered pair).  Returns [{'names': (h,a), 'recs': [...]}]."""
     games = []
     for r in scores:
+        if not (r['home'] and r['away']):
+            continue
         for g in games:
             if same_game(g['names'], (r['home'], r['away'])):
                 g['recs'].append(r)
                 break
         else:
-            if r['home'] and r['away']:
-                games.append(dict(names=(r['home'], r['away']), recs=[r]))
-            # a record with no team names (the MLB push frames) is attached below by its id
-    ids = {}
-    for g in games:
-        for r in g['recs']:
-            ids[(r['src'], r['id'])] = g
-    for r in scores:
-        if not (r['home'] and r['away']):
-            g = ids.get(('mlb', r['id'])) or ids.get(('mlb_nc', r['id']))
-            if g:
-                g['recs'].append(r)
+            games.append(dict(names=(r['home'], r['away']), recs=[r]))
     return games
 
 
 def transitions(g):
-    """Score states reached after the baseline.  A state is ordered by its total: {total: {src: t}} for NEW totals only (never a rewind)."""
+    """{(h, a): {src: t}}: for each feed, the first time it showed a score above the one it first showed (its baseline), per new score."""
     out = {}
-    tot = lambda r: r['h'] + r['a']
-    base = max((tot(r) for r in g['recs'] if r['init']), default=0)
     by_src = collections.defaultdict(list)
     for r in sorted(g['recs'], key=lambda r: r['t']):
         by_src[r['src']].append(r)
     for src, rs in by_src.items():
-        seen_max = None
+        top = None
         for r in rs:
-            if r['init'] and not r.get('live'):
-                seen_max = tot(r)
+            tot = r['h'] + r['a']
+            if top is None:
+                top = tot
                 continue
-            if seen_max is None:
-                seen_max = tot(r) if r['init'] else base
-                if r['init']:
-                    continue
-            if tot(r) > seen_max:
-                key = (r['h'], r['a'])
-                out.setdefault(key, {})
-                out[key].setdefault(src, r['t'])
-                seen_max = tot(r)
+            if tot > top:
+                out.setdefault((r['h'], r['a']), {}).setdefault(src, r['t'])
+                top = tot
     return out
 
 
