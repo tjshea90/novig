@@ -4001,3 +4001,8 @@ This session's worker process was restarted. If your previous turn was already c
 ```
 Where is the summary
 ```
+
+## 2026-10-06T02:15:42Z
+```
+I also set the scan to any time instead of next 6 hours and it still did the one second scan
+```
