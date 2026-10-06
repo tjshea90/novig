@@ -27,23 +27,24 @@ object BurstText {
     const val TRADE_CONFIRM_TITLE = "Trade with real money?"
     const val TRADE_RESUME = "Resume trading"
 
-    const val TRADE_HINT = "OFF, and it cannot be turned on until the recorder above has proved itself on THIS phone with THIS key: your delays measured (not assumed), at least 3 games and 10 windows that paid 1 cent " +
-        "or more, and a paper result that is positive at your slow delay. Then it is still your switch. Each time a window opens it re-reads the books, and if the pair still pays it sends BOTH legs as one request of two " +
+    const val TRADE_HINT = "OFF, and it cannot be turned on until the recorder above has proved itself on THIS phone with THIS key: your delays measured (not assumed), and in at least one league at least 3 games and 10 windows that paid 1 cent " +
+        "or more, and a paper result that is positive at your slow delay. It is judged LEAGUE BY LEAGUE: it trades only the leagues whose own windows proved it (football's say nothing about hockey's). Then it is still your switch. Each time a window opens it re-reads the books, and if the pair still pays it sends BOTH legs as one request of two " +
         "immediate-or-cancel orders at the prices it saw (they never rest), sized to your stake, your game and day limits and what is on offer. A leg that fills alone is bought out at break-even once; failing that it " +
         "is a bet you hold, and two such covers in a row, or the loss limit, halt it until you tap Resume. It keeps clear of your own resting bids, leaves a market Novig refuses alone, and stops at STOP ALL. Its legs are " +
         "not Tracker bets (one leg of a cover always loses): its record is the share file. Paper cannot prove a profit; the first real orders are the real test, so start at $1."
 
     /** The confirmation before the switch goes on: what it will do with money, in the user's numbers. */
-    fun tradeConfirm(s: ScanSettings): String = "This places REAL orders on Novig from your Vigilant wallet, on its own, in live games: up to ${money(s.burstTradeStake)} a leg, ${money(s.burstTradeMaxGame)} a game and " +
+    fun tradeConfirm(s: ScanSettings, leagues: Set<String> = emptySet()): String = "This places REAL orders on Novig from your Vigilant wallet, on its own, in live ${if (leagues.isEmpty()) "games" else leagues.sorted().joinToString(", ") + " games (the leagues the recorder has proved; others are left alone)"}: up to ${money(s.burstTradeStake)} a leg, ${money(s.burstTradeMaxGame)} a game and " +
         "${money(s.burstTradeMaxDay)} a day. It halts after legs held alone cost ${money(s.burstTradeHaltLoss)} or two covers in a row end that way. STOP ALL stops it at once. Turn it on?"
 
     /** What the page says about the trader: why it is locked (the proof's own reason), or that it is unlocked, and what it has done. [proofReason] null = proved. */
-    fun tradeLine(proofReason: String?, status: BurstTradeStatus, settings: ScanSettings): String {
+    fun tradeLine(proofReason: String?, status: BurstTradeStatus, settings: ScanSettings, leagues: Set<String> = emptySet()): String {
+        val only = if (leagues.isEmpty()) "" else " in ${leagues.sorted().joinToString(", ")} only"
         val gate = when {
             !settings.burstRecorder -> "Locked: switch the recorder on first (it is the recorder's windows that are traded)"
             proofReason != null -> "Locked: $proofReason"
-            settings.burstTrade && settings.burstTradeHalted == null -> "ON: trading with real money"
-            else -> "Unlocked: the recorder has proved it on this phone; the switch is yours"
+            settings.burstTrade && settings.burstTradeHalted == null -> "ON: trading with real money$only"
+            else -> "Unlocked$only: the recorder has proved it on this phone; the switch is yours"
         }
         val did = if (status.attempts + status.refused == 0) "no order sent yet" else
             "${status.attempts} sent: ${status.locked} locked (${money(status.lockedProfit)}), ${status.partial + status.naked} with a leg held alone (${money(status.nakedCost)}), ${status.none} not filled, ${status.refused} refused"
@@ -67,7 +68,7 @@ object BurstText {
     }
 
     /** The Diagnostics block: null when the recorder was never switched on and nothing was recorded. */
-    fun diagnostics(status: BurstStatus, records: List<BurstLine>, latencyNote: String, settings: ScanSettings, running: Boolean, trades: List<TradeRecord> = emptyList(), trader: BurstTradeStatus = BurstTradeStatus(), proofReason: String? = null): String? {
+    fun diagnostics(status: BurstStatus, records: List<BurstLine>, latencyNote: String, settings: ScanSettings, running: Boolean, trades: List<TradeRecord> = emptyList(), trader: BurstTradeStatus = BurstTradeStatus(), proofReason: String? = null, provedLeagues: Set<String> = emptySet()): String? {
         if (!settings.burstRecorder && records.isEmpty() && trades.isEmpty()) return null
         val o = StringBuilder()
         o.appendLine("Live burst recorder: ${if (settings.burstRecorder) "ON" else "off"} · ${if (running) "running" else "not running"} · leagues ${settings.burstLeagues.sorted().joinToString(", ")}")
@@ -75,7 +76,7 @@ object BurstText {
         o.append(BurstStudy.report(records, latencyNote, settings.apiMaxStake))
         o.appendLine("Burst trader (real money): ${if (settings.burstTrade) "ON" else "off"} · stake ${money(settings.burstTradeStake)} a leg, ${money(settings.burstTradeMaxGame)} a game, ${money(settings.burstTradeMaxDay)} a day, halts at ${money(settings.burstTradeHaltLoss)} held alone" +
             (settings.burstTradeHalted?.let { " · HALTED: $it" } ?: ""))
-        o.appendLine("  ${tradeLine(proofReason, trader, settings)}")
+        o.appendLine("  ${tradeLine(proofReason, trader, settings, provedLeagues)}")
         if (trader.skipped.isNotEmpty()) o.appendLine("  held back this run: ${trader.skipped.entries.sortedByDescending { it.value }.joinToString(", ") { "${it.key} ${it.value}" }}")
         if (trades.isNotEmpty()) o.appendLine("  ${BurstTradeReport.summary(trades)}")
         return o.toString()

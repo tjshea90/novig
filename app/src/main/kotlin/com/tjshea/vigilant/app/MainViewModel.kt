@@ -191,6 +191,8 @@ data class UiState(
     val burstProofReason: String? = null,
     /** True once the page has read the proof (so a null [burstProofReason] means proved, not unread). */
     val burstProofRead: Boolean = false,
+    /** The leagues the recorder has proved on their own windows: the only ones the trader may trade ([com.tjshea.vigilant.data.novig.burst.BurstStudy.Proof.leagues]). */
+    val burstProvedLeagues: Set<String> = emptySet(),
     /** What the burst trader has done this run ([com.tjshea.vigilant.data.novig.trading.burst.BurstTradeStatus]). */
     val burstTrade: com.tjshea.vigilant.data.novig.trading.burst.BurstTradeStatus = com.tjshea.vigilant.data.novig.trading.burst.BurstTradeStatus(),
 ) {
@@ -1787,7 +1789,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val note = runCatching { BurstText.note(c.burst.status.value, c.burstJournal.readAll()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull() ?: return@launch
             val proof = runCatching { c.burstProof(force = true) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
             val trade = c.burstTrader.status.value
-            _state.update { it.copy(burstNote = note, burstProofReason = proof?.reason ?: if (proof == null) "the proof could not be read" else null, burstProofRead = true, burstTrade = trade) }
+            _state.update { it.copy(burstNote = note, burstProofReason = proof?.reason ?: if (proof == null) "the proof could not be read" else null, burstProofRead = true, burstProvedLeagues = proof?.leagues.orEmpty(), burstTrade = trade) }
         }
     }
 

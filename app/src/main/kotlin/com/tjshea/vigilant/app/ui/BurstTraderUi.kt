@@ -61,7 +61,7 @@ fun BurstTraderSettings(state: UiState, onUpdate: ((ScanSettings) -> ScanSetting
         Switch(checked = s.burstTrade, onCheckedChange = null, enabled = unlocked || s.burstTrade)
     }
     Text(
-        BurstText.tradeLine(if (state.burstProofRead) state.burstProofReason else "checking the recorder's proof…", state.burstTrade, s),
+        BurstText.tradeLine(if (state.burstProofRead) state.burstProofReason else "checking the recorder's proof…", state.burstTrade, s, state.burstProvedLeagues),
         style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("burstTradeNote"),
     )
     if (unlocked || s.burstTrade) {
@@ -74,7 +74,7 @@ fun BurstTraderSettings(state: UiState, onUpdate: ((ScanSettings) -> ScanSetting
         AlertDialog(
             onDismissRequest = { confirming = false },
             title = { Text(BurstText.TRADE_CONFIRM_TITLE) },
-            text = { Text(BurstText.tradeConfirm(s)) },
+            text = { Text(BurstText.tradeConfirm(s, state.burstProvedLeagues)) },
             confirmButton = { TextButton(onClick = { confirming = false; onUpdate { it.copy(burstTrade = true, burstTradeHalted = null) } }, modifier = Modifier.testTag("burstTradeConfirm")) { Text("Turn on") } },
             dismissButton = { TextButton(onClick = { confirming = false }, modifier = Modifier.testTag("burstTradeCancel")) { Text("Cancel") } },
         )

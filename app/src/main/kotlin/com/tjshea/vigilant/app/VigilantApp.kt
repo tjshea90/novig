@@ -908,6 +908,7 @@ class AppContainer(private val app: Application) {
                 }
             },
             lock = orderLock,
+            leagueOk = { league -> burstProof().leagues.contains(league) },
         )
     }
 
