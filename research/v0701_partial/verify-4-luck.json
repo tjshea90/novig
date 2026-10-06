@@ -1,0 +1,523 @@
+{
+ "lens": "LUCK AND MULTIPLE COMPARISONS (adversarial verifier, label verify-4-luck)",
+ "rule": "6 h trap guard (today 24 h) plus skip when the book page's own edge (ab_checkEv) is 1 point or more under the list's edge (ev); app universe: shown, ev>=2.5%, odds -200..+130, PROP/MONEYLINE/SPREAD, first listed within 24 h, book page read",
+ "numbers_reproduced": "Matches the builder on every headline: 75 universe bets/28 games; rule keeps 39 bets/20 games (36 dropped), 17.29 a day over 2.256 days. CLV on bets with a close: kept 34 bets/18 games +3.30% [+2.03,+4.75] (close_ok 31/16 +3.33% [+2.04,+4.57]); universe 64/25 +1.38% [-0.04,+3.06]; dropped 30/17 -0.79% [-3.86,+1.92]. Lift kept-universe +1.91 pts, game-bootstrap CI [+0.62,+3.51]; kept-dropped +4.08 pts [+1.35,+7.53]. ROI kept -11.8% [-52.2,+38.3] on 38 settled (no confirmation by results). Raw one-sided p (rule vs the universe): 0.0032 random 34-of-64 subsets, 0.0040 shuffle within first-look day, 0.0052 within start day, 0.0031-0.0044 wild game-cluster sign flip, 0.0027 random game bundles; close_ok 0.0022-0.0078; matches the builder's 0.004/0.005. Halves by the shared date split (cut Oct 4): first 26 closes/14 games +2.94%, second 8 closes/4 games +4.46%; the builder's halves (3.62/3.12) do not reproduce.",
+ "survives": false,
+ "reason": "From the luck lens the combined rule is not distinguishable from luck once the tries are counted, and its two halves carry very unequal weight. (1) Raw p is about 0.003-0.008 on five nulls, but with the builder's 107 tries Bonferroni gives 0.29-0.47, and a max-over-family wild-cluster test gives p=0.09 (1,485 kept sets, >=34 closes), 0.24 (>=30), 0.88 (>=20); only narrower families give 0.02-0.05 (214 rules built on the 7 named signs; 6 h fixed plus one more flag). (2) The 6 h guard alone is only +1.18 pts over the universe (39 closes/20 games, p=0.092; long-vs-short +3.0 pts CI [-0.6,+7.3]); the 6 h cut has an independent prior (RESEARCH.md 71: Tj's own 176 bets, 3.6 SE, before the study), which is the real support, not this sample. (3) The falling-edge add-on is 5 dropped closes in 5 games in this universe (mean -2.45%, only 2 on close_ok), carried by one -9.3% Tracker bet (ex it: 4 closes, -0.74%, exact p=0.025 before any multiplicity); pooled over all page-read bets within 6 h it is 10 closes/42 games, +3.83 pts [+1.49,+5.57], p=0.002 raw, about 0.1-0.2 after counting ~57-107 alternative flags. (4) The contrast depends on the dropped tail: the three worst universe bets (-30.6%, -20.7%, -9.3%) are all dropped; without them the lift is +0.85 pts; the second-half 'confirmation' is 8 kept bets/4 games against 3 dropped bets, one of them -30.6% (exact p=0.048 on 11 closes). The kept side itself is not fragile (leave-one-game-out 3.07-4.05%; drop top-3 games +2.65% [+1.47,+4.10]; drop top-3 bets +2.77% [+1.69,+4.04]), the threshold sits on a plateau (kept 2.95-3.64% for gap cuts 0 to -3 pts), and the 6 h flag does separate on 172 other page-read bets in the same games (+1.73 pts [+0.69,+2.96]) but not on bets in games with no universe bet (38 closes/20 games, +0.12 pts [-1.9,+3.5], underpowered). Worth putting to Tj only as a question of whether to move the trap guard window from 24 h to 6 h (a prior-backed change), not as a validated two-part rule; the falling-edge half needs about 30 falling-edge closes in 25+ games (25 more, about 11-14 days at 2.2 a day) and the 6 h split about 35 games per arm if the true gap is 2 pts (about 15 if 3 pts; the flow is about 8 games a day an arm, so 2-5 more days).",
+ "caveats": [
+  "Selection of closes: 27 of the 31 kept closes are Tracker closes ('read before the start, CNO's books': CNO's own consensus a few minutes before the start, only for bets Tj placed), 3 Novig trades, 1 Pinnacle. CLV here mostly measures whether CNO's consensus stayed put, not a sharp close; 69% of kept bets were placed by Tj vs 44% of dropped, so closes exist for different bet populations in the two arms.",
+  "Within Tracker closes the contrast still holds (kept +3.74% on 27 closes/14 games vs dropped -1.45% on 16/12), and listed fair drifted -0.44% on kept vs -4.45% on dropped.",
+  "The whole 75-bet universe (39 kept, 36 dropped) is props: no moneyline or spread bet is in it, so nothing here says anything about game lines.",
+  "Effective sample is 18 games kept, 4 games in the second half (5 in the half's universe); the three days of first looks (Oct 3-5) are one slice, with the app version and presets changing.",
+  "ab_checkEv was read a median 0.27 minutes after the first look but 11 of 75 were read more than 5 minutes later (max 904 min); 2 of the 13 falling-edge flags (both long-lead, dropped anyway by the 6 h cut) were read 279 and 350 minutes after the first look.",
+  "The wild-cluster null assumes symmetric game residuals; the data have a heavy left tail (-30.6%, -20.7%), so the family-max p-values are approximate; the within-day permutation ignores game clustering and is anti-conservative.",
+  "My families are my own construction (not the builder's actual 107 tries); the answer ranges from 0.02 to 0.88 depending on family size and minimum kept closes, so the multiplicity verdict is not sharp.",
+  "ROI at the first-listed price is -11.8% on the kept bets (38 settled, SE about 17 pts), +2.1% on the dropped: not informative either way, but not confirming.",
+  "Replication outside the universe uses the same games, so it is not independent; the only independent check (games with no universe bet) is underpowered and null.",
+  "Any change to which bets are placed (trap guard window, a falling-edge skip) is a question for Tj, not an action; the rule only tightens, it loosens no safety limit."
+ ],
+ "numbers": {
+  "reproduced": {
+   "universe_bets": 75,
+   "universe_games": 28,
+   "kept_bets": 39,
+   "kept_games": 20,
+   "dropped_bets": 36,
+   "per_day": 17.29,
+   "span_days": 2.256,
+   "closes_all": {
+    "kept_n": 34,
+    "kept_games": 18,
+    "kept_clv": 0.033,
+    "kept_ci": [
+     0.0204,
+     0.0475
+    ],
+    "universe_n": 64,
+    "universe_games": 25,
+    "universe_clv": 0.0138,
+    "universe_ci": [
+     -0.0004,
+     0.0306
+    ],
+    "dropped_n": 30,
+    "dropped_clv": -0.0079,
+    "dropped_ci": [
+     -0.0386,
+     0.0192
+    ]
+   },
+   "closes_ok": {
+    "kept_n": 31,
+    "kept_games": 16,
+    "kept_clv": 0.0333,
+    "kept_ci": [
+     0.0204,
+     0.0457
+    ],
+    "universe_n": 57,
+    "universe_clv": 0.0131,
+    "dropped_n": 26,
+    "dropped_clv": -0.011
+   },
+   "lift_kept_minus_universe": {
+    "all": 0.0191,
+    "ci": [
+     0.006210544156245789,
+     0.03514852288128917
+    ],
+    "ok": 0.0202,
+    "ci_ok": [
+     0.0061149520137928366,
+     0.038197020241619285
+    ]
+   },
+   "diff_kept_minus_dropped": {
+    "all": 0.0408,
+    "ci": [
+     0.013458021565285748,
+     0.07529711487949613
+    ],
+    "ok": 0.0443,
+    "ci_ok": [
+     0.0138491611903288,
+     0.0820114023941463
+    ]
+   },
+   "roi": {
+    "kept": -0.118,
+    "kept_ci": [
+     -0.5215,
+     0.3825
+    ],
+    "kept_settled": 38,
+    "dropped": 0.0206,
+    "universe": -0.0515
+   },
+   "halves_shared_split_cut_Oct4": {
+    "first": {
+     "closes": 26,
+     "games": 14,
+     "clv": 0.0294
+    },
+    "second": {
+     "closes": 8,
+     "games": 4,
+     "clv": 0.0446
+    }
+   },
+   "builder_halves_not_reproduced": [
+    0.0362,
+    0.0312
+   ]
+  },
+  "raw_p_one_sided": {
+   "clv_all_closes": {
+    "naive_random_subset_34_of_64": 0.003249837508124594,
+    "permute_clv_within_firstDay": 0.004049797510124494,
+    "permute_within_startDay": 0.0052,
+    "wild_cluster_sign_flip_lift": 0.004449777511124443,
+    "random_game_bundles": 0.0026998650067496625,
+    "paired_within_mixed_games": {
+     "games": 10,
+     "mean_diff": 0.05287928391148341,
+     "games_positive": 8,
+     "p": 0.028948724582100523
+    }
+   },
+   "clv_ok": {
+    "naive_random_subset": 0.0036998150092495377,
+    "permute_within_firstDay": 0.007799610019499025,
+    "permute_within_startDay": 0.0056,
+    "wild_cluster_sign_flip_lift": 0.0071996400179991,
+    "random_game_bundles": 0.0022498875056247186
+   },
+   "percentile_of_observed_in_random_subset_null": "99.7th"
+  },
+  "multiplicity": {
+   "bonferroni_107_of_raw": {
+    "naive": 0.34,
+    "within_firstDay": 0.43,
+    "wild_cluster": 0.47,
+    "game_bundle": 0.29,
+    "builder_own": [
+     0.2,
+     0.45
+    ]
+   },
+   "family_max_wild_cluster_null": {
+    "broad_1485_distinct_kept_sets": {
+     "min_kept_closes_20": {
+      "rules": 992,
+      "rank_of_observed_by_lift": 21,
+      "best_lift_observed_family": 0.023628833685384737,
+      "p_family_max": 0.8837790552361909,
+      "null_max_median": 0.025527381531606823,
+      "null_max_p95": 0.035587235869433284
+     },
+     "min_kept_closes_30": {
+      "rules": 632,
+      "rank_of_observed_by_lift": 8,
+      "best_lift_observed_family": 0.021850330314676328,
+      "p_family_max": 0.2361909522619345,
+      "null_max_median": 0.016500001061142168,
+      "null_max_p95": 0.022378136340133095
+     },
+     "min_kept_closes_34": {
+      "rules": 541,
+      "rank_of_observed_by_lift": 6,
+      "best_lift_observed_family": 0.021850330314676328,
+      "p_family_max": 0.08772806798300425,
+      "null_max_median": 0.015062398434264636,
+      "null_max_p95": 0.019853607384448885
+     }
+    },
+    "narrow_named_signs_214_rules": {
+     "min_kept_closes_30": {
+      "distinct_rules": 214,
+      "eligible": 109,
+      "obs_lift": 0.019140576182617573,
+      "rank": 2,
+      "p_max": 0.04673831542114471,
+      "null_max_median": 0.013261325867730319,
+      "null_max_p90": 0.017838938704466525
+     },
+     "min_kept_closes_34": {
+      "distinct_rules": 214,
+      "eligible": 95,
+      "obs_lift": 0.019140576182617573,
+      "rank": 2,
+      "p_max": 0.02274431392151962,
+      "null_max_median": 0.012266148856323291,
+      "null_max_p90": 0.01661882936838611
+     }
+    },
+    "six_hour_guard_fixed_plus_one_more_flag_57_rules": {
+     "min_kept_closes_30": {
+      "distinct_rules": 57,
+      "eligible": 27,
+      "obs_lift": 0.019140576182617573,
+      "rank": 3,
+      "p_max": 0.03499125218695326,
+      "null_max_median": 0.004654972043236869,
+      "null_max_p90": 0.016151689043811427
+     },
+     "min_kept_closes_34": {
+      "distinct_rules": 57,
+      "eligible": 19,
+      "obs_lift": 0.019140576182617573,
+      "rank": 1,
+      "p_max": 0.016745813546613347,
+      "null_max_median": 0.003187263744398581,
+      "null_max_p90": 0.014693629786249435
+     }
+    }
+   }
+  },
+  "components": {
+   "six_hour_guard_only": {
+    "kept_closes": 39,
+    "games": 20,
+    "clv": 0.0256,
+    "lift_vs_universe": 0.0118,
+    "p_wild": 0.09209539523023849,
+    "long_vs_short_diff": 0.0301,
+    "diff_ci": [
+     -0.0062,
+     0.0731
+    ],
+    "long_group": {
+     "closes": 25,
+     "games": 16,
+     "clv": -0.0045
+    }
+   },
+   "falling_edge_only_any_lead": {
+    "kept_closes": 55,
+    "lift": 0.005,
+    "p_wild": 0.005299735013249337
+   },
+   "falling_edge_increment_inside_6h_app_universe": {
+    "dropped_closes": 5,
+    "dropped_games": 5,
+    "dropped_mean": -0.0245,
+    "exact_p_random_5_of_39": 0.0032,
+    "values": [
+     -0.0931,
+     -0.0283,
+     -0.002,
+     0.0,
+     0.0008
+    ],
+    "ex_worst": {
+     "dropped_closes": 4,
+     "mean": -0.0074,
+     "exact_p": 0.024669782564519408
+    },
+    "close_ok_dropped_closes": 2
+   },
+   "falling_edge_pooled_all_judged_within_6h": {
+    "n": 121,
+    "kept": 111,
+    "dropped": 10,
+    "games": 42,
+    "kept_mean": 0.01963981536775627,
+    "dropped_mean": -0.018690207729851794,
+    "diff": 0.038330023097608065,
+    "ci": [
+     0.01488692987644708,
+     0.05574743076897153
+    ],
+    "p_wild": 0.0017998200179982
+   },
+   "falling_edge_pooled_ex_worst_dropped": {
+    "n": 120,
+    "kept": 111,
+    "dropped": 9,
+    "games": 42,
+    "kept_mean": 0.01963981536775627,
+    "dropped_mean": -0.010417810875847712,
+    "diff": 0.03005762624360398,
+    "ci": [
+     0.014503410884747603,
+     0.044118610192680555
+    ],
+    "p_wild": 0.0024997500249975004
+   }
+  },
+  "robustness": {
+   "leave_one_game_out_kept_clv": [
+    0.030705179583477748,
+    0.04047773449139762
+   ],
+   "leave_one_game_out_lift": [
+    0.013381514163935581,
+    0.023434832912322155
+   ],
+   "drop_top3_positive_games": {
+    "n": 27,
+    "games": "15",
+    "mean": 0.02650180146545576,
+    "lo": 0.014747281825143671,
+    "hi": 0.04097653123955738,
+    "lift": 0.020086636910281154
+   },
+   "drop_3_biggest_games": {
+    "n": 21,
+    "games": "15",
+    "mean": 0.03872057633594076,
+    "lo": 0.027184095651135783,
+    "hi": 0.050776461818936844,
+    "lift": 0.01751148936214572
+   },
+   "drop_top3_bets": {
+    "n": 31,
+    "games": "17",
+    "mean": 0.027743139894922532,
+    "lo": 0.01689226469500287,
+    "hi": 0.040443518947689654,
+    "lift": 0.017509439941775423
+   },
+   "drop_worst3_universe_bets_all_in_dropped_group": {
+    "n": 34,
+    "games": "18",
+    "mean": 0.03297384120289667,
+    "lo": 0.020350995579300223,
+    "hi": 0.0474813609033278,
+    "lift": 0.008510460603979836
+   },
+   "medians": {
+    "kept": 0.04098621419203674,
+    "universe": 0.02428534116670522,
+    "dropped": 0.0049079344786118195
+   },
+   "trimmed10": {
+    "kept": 0.0345938873444493,
+    "dropped": 0.00470057570151429
+   },
+   "mannwhitney_p": 0.0078698660175024,
+   "beat_share": {
+    "kept": 0.794,
+    "dropped": 0.6,
+    "universe": 0.703
+   },
+   "kept_minus_dropped_gap": {
+    "full": 0.0408,
+    "ex_worst_dropped_minus30_6": 0.0305,
+    "ex_worst_two_dropped": 0.023
+   },
+   "dropped_worst_values": [
+    -0.30636581923885287,
+    -0.2074296565813235,
+    -0.09314177941588853,
+    -0.08862416659057315
+   ],
+   "kept_worst_values": [
+    -0.08254789814553287,
+    -0.01777777777777767,
+    -0.00826583297867134,
+    -0.00826551706351264
+   ]
+  },
+  "threshold_plateau_kept_clv": {
+   "at_lead_cut_360_by_gap_cut": {
+    "none": 0.0256,
+    "0": 0.0364,
+    "-0.005": 0.0355,
+    "-0.01": 0.033,
+    "-0.015": 0.0312,
+    "-0.02": 0.0304,
+    "-0.03": 0.0295
+   },
+   "at_gap_cut_minus_0_01_by_lead_cut_min": {
+    "60": 0.039,
+    "120": 0.0368,
+    "180": 0.0304,
+    "240": 0.0303,
+    "300": 0.033,
+    "360": 0.033,
+    "480": 0.0295,
+    "720": 0.0215,
+    "1440": 0.0188
+   }
+  },
+  "second_half": {
+   "closes": 11,
+   "kept": 8,
+   "games": 5,
+   "kept_games": 4,
+   "kept_mean": 0.044562770614650415,
+   "dropped_mean": -0.09455550315034222,
+   "univ_mean": 0.006621423224197878,
+   "lift": 0.03794134739045254,
+   "p_bet_level_exact_or_mc": 0.048484848484848485,
+   "kept_values_second": [
+    0.009,
+    0.0235,
+    0.0482,
+    0.0486,
+    0.0499,
+    0.0507,
+    0.0517,
+    0.0749
+   ],
+   "dropped_values": [
+    -0.3064,
+    -0.0329,
+    0.0556
+   ],
+   "note": "the 3 dropped closes are -30.6%, -3.3%, +5.6%; the -30.6% bet is a 613-minute-lead Tracker close"
+  },
+  "first_half": {
+   "closes": 53,
+   "kept": 26,
+   "games": 20,
+   "kept_games": 14,
+   "kept_mean": 0.029408016768510906,
+   "dropped_mean": 0.0017735136981630276,
+   "univ_mean": 0.015330062374182742,
+   "lift": 0.014077954394328164,
+   "p_bet_level_exact_or_mc": 0.029319413611727765,
+   "kept_values_second": null,
+   "dropped_values": [
+    -0.2074,
+    -0.0931,
+    -0.0886,
+    -0.0685,
+    -0.0326,
+    -0.0283,
+    -0.0191,
+    -0.0099,
+    -0.002,
+    0.0,
+    0.0007,
+    0.0008,
+    0.0009,
+    0.0089,
+    0.0126,
+    0.0129,
+    0.0202,
+    0.0225,
+    0.0314,
+    0.0373,
+    0.04,
+    0.0434,
+    0.0526,
+    0.055,
+    0.0794,
+    0.08,
+    0.0989
+   ]
+  },
+  "close_source": {
+   "kept_closes": {
+    "tracker": 27,
+    "novig_trades": 3,
+    "pinnacle": 1
+   },
+   "dropped_closes": {
+    "tracker": 16,
+    "novig_trades": 10,
+    "pinnacle": 0
+   },
+   "kept_tracker_clv": 0.0374,
+   "dropped_tracker_clv": -0.0145,
+   "fair_drift_kept": -0.0044,
+   "fair_drift_dropped": -0.0445
+  },
+  "out_of_universe_judged_bets": {
+   "all": {
+    "n": 172,
+    "kept": 77,
+    "dropped": 95,
+    "games": 42.0,
+    "kept_mean": 0.013752063700291677,
+    "dropped_mean": -0.005585722114162215,
+    "diff": 0.019337785814453893,
+    "ci": [
+     0.008543834001534786,
+     0.03087849785214092
+    ],
+    "p_wild": 0.0025997400259974
+   },
+   "six_h_only": {
+    "n": 172,
+    "kept": 82,
+    "dropped": 90,
+    "games": 42.0,
+    "kept_mean": 0.012129615417750438,
+    "dropped_mean": -0.00518181289087208,
+    "diff": 0.01731142830862252,
+    "ci": [
+     0.006938761616682208,
+     0.029641139033239925
+    ],
+    "p_wild": 0.0029997000299970002
+   },
+   "games_with_no_universe_bet": {
+    "n": 38,
+    "kept": 28,
+    "dropped": 10,
+    "games": 20.0,
+    "kept_mean": 0.010454157219817604,
+    "dropped_mean": 0.009206291761713437,
+    "diff": 0.0012478654581041665,
+    "ci": [
+     -0.019370771288846227,
+     0.03547205841393667
+    ],
+    "p_wild": 0.45015498450154984
+   }
+  },
+  "power": {
+   "game_level_sd_clv": 0.0335,
+   "bet_level_sd": 0.0649,
+   "closes_per_game": 2.56,
+   "games_per_arm_for_2pt_gap_80pct_power": 35,
+   "games_per_arm_for_3pt_gap_80pct_power": 15,
+   "games_a_day_per_arm": 8,
+   "falling_edge_closes_per_day": 2.2,
+   "falling_edge_closes_wanted": 30
+  }
+ }
+}
