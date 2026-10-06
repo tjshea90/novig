@@ -1,0 +1,365 @@
+{
+ "area": "study-data-quality: step 1 of the READ ME task, CHECK THE DATA FIRST (v0.70.1 scan-study file, 2080 bets, firstSeen 2026-10-03 17:56 ET to 2026-10-06 00:05 ET = 2.256 days, game days Oct 3-12)",
+ "trust_notes": "CAN TRUST: (1) the app's own arithmetic: all 250 summary/split lines and the 3 what-if rules (kept/dropped/not judged) reproduce exactly from the loader (bets, W-L-open, ROI, units, closes, share beating the close, EV listed; +/- within 0.05 ROI points and 0.005 CLV points, the app uses an analytic game-cluster formula, the loader a bootstrap): no bug in the study's own arithmetic. (2) status and profit: profit = 1/cost - 1 exactly on every WON row, -1 on every LOST, 0 on VOID; results are calibrated (895 wins vs 890.5 expected at the fair, z=+0.28 game-clustered), so there is no sign of systematic mis-grading. (3) first-look price/EV/fair: top-level fields equal atBet and the first priced look on all 2080 rows; EV = fair/cost - 1 within 0.0005 on 2063 of 2080 (the 17 exceptions are the 16 MISMATCH-screen rows and 1 other); no EV over 20%. (4) ids: no exact duplicate bets (2080 distinct event|market|selection|start); only 2 true duplicate pairs (same Novig outcome under two market labels, both ungradeable). (5) a close inside its own source: ESPN, Pinnacle, Novig trades with 3+ trades and the Tracker read are internally coherent (complementary Over/Under closes of the same source sum to 1.000).\nCANNOT TRUST: (1) the pooled CLV +0.19% as a rate for the 2080 bets: only 683 of 1767 STARTED bets (38.7%; 313 more have not started) have a close and who has one is not random: 93.9% of Tj-placed bets vs 29.8% of the rest, 5.0% of wide-read-only props, 16.1% of wide-only bets, 91.4% of moneylines vs 17.2% of period lines; the closes carry listed EV +1.60% vs +1.08% for the bets without. The unselected closes (not placed, 454 closes, 61 games) give CLV -0.01% [-0.60, +0.65]; propensity-weighting gives +0.08 to +0.17%, post-stratifying -0.07%. Read the headline as 'consistent with zero, between -0.1 and +0.2%', not as +0.19%. (2) any CLV difference between close sources, lister groups or kinds: the four yardsticks differ (Tracker = 74.6% CNO's own consensus read ~50 s before the start; ESPN = DraftKings line, game lines only and only when the line did not move; Pinnacle 17 bets; Novig's last-30-minute trades), each bet has only ONE close, and the same-line rule censors the bets whose line moved (164 game-line bets, 112 of them against the bettor). (3) the second date half: split_by_date on firstDay gives a second half of 612 bets / 100 games but only 65 closes in 10 games and 392 settled bets in 12 games (the rest are future games): say 'too-thin' for any second-half CLV or ROI check; 78% of all closes come from one slate (Oct 4 games, 29 games). (4) labels that say more than they know: 'shown' (803) includes 290 Vigilant-only finds that CNO's list never carried, and 'hidden' (1277) includes 328 that CNO's list did carry later; 'Sharp veto NO_SHARP' (1482) is vacuous for 1442 of them (no book page was read: only 319 of 2080 bets have a page, PASSED 197 / VETOED 77 / NO_SHARP 40 / none 5); 'still listed at its last look' (1402) includes 880 wide-only bets that were never in an app list; 'available' is measured differently by CNO and by Vigilant (only 11% equal on the same bet, median ratio 2.0); 'EV listed' is not comparable across listers (Vigilant's EV is +1.46 points above CNO's for the same bet, n=109). (5) first-look TIME: 619 bets (29.8%) were first seen in 12 burst minutes (20 to 101 first-looks in one minute: app start, resume or scan switched on), so 'first-listed price' and 'minutes to start' are the price/time when the app woke, not when the market opened; the book-page verdict (sharp veto, books agreeing) was read a median 18.6 minutes after the first look (58% more than 5 minutes after, 36% more than 1 hour): it is not a first-look fact. (6) clvBest (+1.31%) is a hindsight price and must never be an outcome; clvLast (+0.64%) also uses later prices.\nBIASES THAT MATTER (direction): closes over-represent Tj-placed, shown, higher-EV, 6-24 h-early bets (60% of closes are bets first seen 6-24 h before the start, where CLV is -0.37%) and Sunday Oct 4; ESPN/Pinnacle game-line CLV is an upper bound (line-moved bets drop out); the Tracker yardstick is partly the same consensus that produced the EV (CLV tracks EV at r=0.86 for the 17 bets first seen within 15 minutes of the start). ROBUSTNESS FILTERS FOR THE OTHER ANALYSTS: report CLV on all closes AND on close_ok (dropping 1-2-trade Novig closes changes the mean by 0.00 points, +0.19% -> +0.19%, but removes 95 closes with SD 8.2 points); always split by close_src and never rank groups pooled across sources; show the unselected check df.placedByTj.isna(); use game-clustered CIs (design effect 1.6, effective n about 426 of 683); split dates by game START day (Oct 3-4 vs Oct 5: 604 vs 79 closes) because the firstDay split leaves 65 closes; treat sharpVerdict as 'not judged' unless df.ab_checkAtMs.notna(); compute ROI over status in (WON, LOST) not profit.notna() (the loader's roi_stats counts the 9 VOIDs as staked units: n 1705 vs the app's 1696, ROI +1.576% vs +1.584%); use df.listedMin.notna() to mean 'was in an app list'.",
+ "key_numbers": [
+  "Status: 2080 bets = 895 WON + 801 LOST + 375 PENDING + 9 VOID (0 PUSH, 0 FMV). Of the 375 PENDING, 313 are games not started (Oct 6-12) and 62 started but not gradeable (18 first-touchdown-scorer needs play-by-play, 18 game not found on the scoreboard, 11 market unreadable, 5 retired, 5 stat missing from the box score, 3 other, 2 not over). The app's W-L-P line adds to 2071, the 9 VOIDs are not printed. 190 games in all (94 started, 81 with a settled bet, 69 with a close).",
+  "Closes: 683 of 2080 = 32.8% printed by the app, but the right denominator is the 1767 started bets = 38.7%. By source: Novig's last trades 341 (95 are 1-2 trades, 246 are 3+), Tracker 228, ESPN 97, Pinnacle (ParlayAPI) 17; close_ok = 588.",
+  "Why 1084 started bets have no close: 824 (76%) have no Novig outcome id on record, so the only source that covers props and the wide read cannot be asked; 158 wait for Novig's next-morning trade file (157 are Oct 5 games and will fill); 96 had no trade in the last 30 minutes. Pinnacle: not in ParlayAPI's file 451, last price too old 220, a different line closed 167, market type not kept 80. ESPN: market type not kept 877, a different line closed 164. The app's summary cuts each reason at 90 characters, which hides the Novig reason (the biggest).",
+  "Who is missing a close (share of STARTED bets with one): Tj-placed 93.9% (229/244) vs not placed 29.8% (454/1523); shown 53.9% (384/712) vs hidden 28.3% (299/1055); source w-only 16.1% (119/741) vs c+v+w 74.1% (186/251); props 37.0% (477/1290) vs moneylines 91.4% (32/35) vs period lines 17.2% (10/58); wide-only props 5.0% (24/476); bets with a Novig outcome id 68.3% vs without 13.1%; first seen under 30 min before the start 22.6% vs 6-24 h 52.2%; game day Oct 4 47.9% vs Oct 5 17.5%. Chi-square p < 1e-10 for placed, src, shown, time to start, day; kind p=3e-11; league p=0.027.",
+  "The closes are not a sample of the 2080: listed EV +1.60% on the 683 closes vs +1.08% on the 1084 started bets without; placed share 33.5% of closes vs 13.8% of started bets; shown 56.2% vs 40.3%; median first-look time to start 705 min vs 170 for the bets without a close (246 for all started); book page read 34.6% vs 6.6%. Headline CLV +0.19% [-0.36, +0.79], 683 closes, 69 games, 56% beat. Unselected closes (not placed) -0.01% [-0.60, +0.65], 454 closes, 61 games, 51% beat; Tj-placed +0.59% [-0.36, +1.61], 229 closes, 48 games, 66% beat.",
+  "Bias-corrected CLV: inverse-propensity weighting (close model AUC 0.92, 683 closes, game-clustered bootstrap) gives +0.08% [-0.61, +0.86] unclipped (effective n 155 of 683), +0.12% [-0.59, +0.86] clipped at 20, +0.16% [-0.40, +0.78] at 10, +0.17% [-0.35, +0.77] at 5; post-stratifying on placed x shown x prop/game line gives -0.07%. All intervals contain 0: the data suggests the headline is overstated by 0.02 to 0.26 points and is not distinguishable from zero.",
+  "CLV by close source (n closes, games): ESPN +0.82% [+0.05, +1.50] (97, 48), Tracker +0.57% [-0.34, +1.62] (228, 48), Novig 1-2 trades +0.17% [-1.41, +1.80] SD 8.2 points (95, 28), Novig 3+ trades -0.39% [-1.16, +0.35] SD 5.9 (246, 34), Pinnacle -0.01% [-1.53, +3.49] (17, 9). Game lines only: ESPN +0.82% (97, 48 games), Tracker +0.72% [-0.63, +2.01] (48, 27), Novig 3+ -1.24% [-2.46, +0.06] (35, 24), Pinnacle -1.19% (11, 7). Props only: Tracker +0.53% [-0.70, +1.76] (180, 36), Novig 3+ -0.25% [-1.01, +0.57] (211, 22), Novig 1-2 0.00% (80, 20), Pinnacle +2.16% (6, 3).",
+  "Source generosity after controlling for time to start, EV and prop/line (OLS, game-clustered SE): game lines (206 closes, 61 games) ESPN +2.50 points (SE 0.69, t=3.6) and Tracker +2.15 (SE 0.60, t=3.6) above Novig 3+; props (477 closes, 39 games) Tracker +0.35 (SE 0.68) and Pinnacle +1.74 (SE 1.10) above Novig 3+, no difference; all closes (683, 69 games) ESPN +1.56 (SE 0.72), Tracker +0.67 (SE 0.54). The data suggests Novig's last-trades close is about 2 points harsher than DraftKings/Tracker on game lines, with 35 Novig-3+ game-line closes behind it; the second date half has 0 Novig closes, so it cannot be checked.",
+  "Novig-trades closes by trades behind them: N=1 +0.21% (60 bets, SD 9.2), N=2 +0.11% (35, SD 6.2), N=3 +0.36% (29, SD 4.4), 4-5 -1.22% (51, SD 7.3), 6-10 +0.29% (72, SD 6.2), 11-20 +0.06% (45, SD 5.6), 21-50 -1.24% (38, SD 5.3), 51+ -1.81% (11). 1-2 trades are noise in the spread (31.7% and 22.9% of them are beyond +/-5% vs 13.8-24.4% for 3+) not in the mean: close_ok changes CLV +0.19% -> +0.19% [-0.32, +0.81] (588 closes, 66 games). Spearman |CLV| vs N rho=0.08 (p=0.14): more trades do not clean the close much.",
+  "Same-line censoring: ESPN and Pinnacle give a close only when the closing line equals the bet's line. 290 started bets lost their close to a moved line: spreads 75 (28% moved in the bettor's favour), totals 89 (35%), props 126 (64%; Unders 72%, Overs 40%). The 164 game-line bets: 52 favourable, 112 unfavourable, mean -0.78 points (NFL 84: -1.27 points, 30% favourable; NCAAF 58: -0.35). With a half-point worth roughly 1 to 2 probability points, those 164 would average about -3% to -6% CLV, so ESPN/Pinnacle game-line CLV (+0.82%) is an upper bound.",
+  "Date halves: split_by_date(firstDay) cuts at Oct 4: first half 1468 bets / 142 games / 618 closes (42.1%) / 1304 settled (75 games); second half 612 bets / 100 games / 65 closes (10.6%, 10 games) / 392 settled (12 games). CLV first half +0.15% [-0.40, +0.78], second +0.60% [-0.77, +2.66]; ROI +1.46% and +2.00%. The second half has 0 Novig closes and 42 of its 65 closes are Tj-placed. By game START day: Oct 3 194 bets/68 closes CLV +1.29% [+0.57, +2.01]; Oct 4 1119 bets/29 games/536 closes (78.5% of all closes) +0.08% [-0.56, +0.73]; Oct 5 451 bets/79 closes -0.03% [-1.70, +2.27].",
+  "Concentration and power: the top 10 games hold 46.2% of the bets (one game 245) and 56.4% of the closes; median 3 bets a game; design effect for the CLV mean 1.60 (SE 0.29 vs 0.23 if independent), effective n about 426 of 683. SD of game-mean CLV is 2.98 points: a CI half-width of +/-0.5 points needs about 137 games with closes, +/-0.25 points about 547 (now 69).",
+  "Headline ROI +1.58% on 1696 settled bets, +/-4.1 over 81 games (z=0.8: not different from 0 or from the +1.22% EV listed). Recomputed profit matches the field exactly (1/cost-1); at the american-implied price ROI is +1.581% (cost sits on a 0.005 grid for 321 Vigilant-listed rows, max gap 0.0011). Excluding the 16 MISMATCH rows +1.31%, EV>6% (23) +1.53%, Vigilant-listed rows +1.38%. If the 62 started-but-ungraded bets all lost ROI would be -2.0%, all won +4.5%. Props +3.18% +/-4.9 (45 games), game lines -2.90% +/-10.3 (72 games).",
+  "Grading looks unbiased: 895 wins vs 890.5 expected at the fair (z=+0.28 clustered); props 689 vs 677.8 (z=+0.83); game lines 206 vs 212.7 (z=-0.62); NFL props Under at lines 0.5/1.5 130 vs 134.0 expected (n=204, z=-0.85), the group where the grader's 'player absent from a football box score counts as 0' rule (Unders win, Overs lose where Novig refunds) would show up. The 9 VOIDs (6 NFL, 2 NHL, 1 WNBA, all props, a ruled-out player) are staked 0 and counted 0 (Novig may settle at fair value instead).",
+  "Odd values: EV: max 19.68%, 0 over 20%, 5 over 10%, 23 over 6%, 28 exactly 0, 14 rows have fair < cost; the 16 MISMATCH rows have EV off fair/cost-1 by up to 20.4 points (4 by more than 8 points, three of them props priced by 1 to 3 books). Odds: -8991 to +900, none between -99 and +99; 29 longer than -1000 (first-TD-scorer 'No' and touchdown Unders, cost up to 0.989), 6 over +400 (all lost). Available dollars: median 72, mean 716, max 333,565; 35 over $5,000; 7.6% under $5 and 2.6% under $2; the top 1% of bets hold 46% of all dollars. CLV: median +0.48% vs mean +0.19%; 156 closes (22.8%) beyond +/-5%, 42 beyond +/-10%, 13 beyond +/-20% (max +47.8% on a 1-trade close); dropping |CLV|>5% gives +0.38% (527), winsorizing 1% +0.17%.",
+  "Duplicates: 0 exact; 2 true duplicate pairs (same Novig outcome id under 'Player Longest Pass' and 'Longest Completion': the app cannot parse the pick so CNO and Vigilant do not merge; both ungradeable, no effect on ROI/CLV); 1 pair that looks like a duplicate but is two different days of one series; 2 games split in two clusters (one start time 60 s apart, one team-name variant) so the game count is 2 too high. Correlated structure: 82 same-line Over/Under pairs (164 bets; 64 of the 82 have first-look costs summing under 1 because the two sides were first seen a median 392 min apart), 70 of 189 spread/moneyline markets listed on both teams, 617 of 1644 Over/Under bets in 230 same-player ladders (same player, stat and direction at 2+ lines).",
+  "Time coverage and rules: 2.256 days, 14 app versions with first-looks (0.57.0 to 0.70.1), 56 hours spanned of which 18 have 0 first-looks (Oct 4 05-09, 11, 14-15, 23; Oct 5 03-09, 21, 23); first-looks per ET day 718 / 750 / 601 / 11; game days Oct 3-12 with 194 / 1119 / 451 / 45 / 21 / 37 / 24 / 120 / 66 / 3 bets. Presets: '2 (Safe CLV)' 1873 + 80 edited, 'Volume + safe CLV' 60 (Oct 4 early), '5 (Super CLV all markets)' 59 (Oct 3 only), '3 (Safe CLV all markets)' 8. v0.57.0 (first-looks Oct 3 17:56-18:55 ET) had no wide read; v0.58.0 added it (18:57); v0.58.2 wrote the study in every background cycle and added the props split; v0.58.4 dropped closes that cannot be the bet's (3 closes removed in this file, none kept violates the bars); v0.61.0 added the game-clustered +/-; v0.62-0.63 changed grading of both-sides markets.",
+  "First-look bursts: 12 minutes with 20 or more first-looks hold 619 bets (29.8%; the largest minute 101 bets, 70 of them Vigilant-only; one minute 9 min before an NFL kickoff held 96). Those bets: listed EV 1.59% vs 1.07%, CLV -0.08% [-1.24, +0.99] (284 closes, 81 games) vs +0.39% [-0.13, +0.93] (399, 184 games), ROI +3.12% vs +0.80%: not distinguishable, but their 'minutes to start' and 'listed minutes' are app-wake artefacts.",
+  "Book page and sharp verdict: only 314 bets have a page read (319 with a book list), 15.3%; PASSED 197, VETOED 77, NO_SHARP 40, none 5. The split 'Sharp veto: NO_SHARP 1482 bets, CLV +0.04%' and 'none on the page 1482' are really 'no page read' for 1442 of them. Page-read bets differ: EV 1.94% vs 1.09%, median 253 vs 572 min to start, 65.8% shown (210 of 319); CLV +0.60% [-0.10, +1.43] (236 closes, 47 games) vs -0.02% (447). Page read median 18.6 min after the first look (58% over 5 min, 36% over 1 h, 18% over 4 h); CLV by lag: under 1 min +2.30% (72), 1-15 min +0.51% (43), 15-120 min +0.62% (51), over 2 h -1.11% (70).",
+  "Lister comparability: Vigilant's EV vs CNO's for the same bet at the wide read: 2.30% vs 0.84% (n=109, +1.46 points; Vigilant's fair is 1.3 probability points higher). Vigilant-first bets: listed EV 2.51%, CLV -0.22% [-1.41, +1.17] (178 closes); CNO-first: EV 0.97%, CLV +0.34% [-0.17, +0.93] (505). Vigilant's first-look quotes are old: fair-line age median 206 s, p90 490 s, max 778 s (88 over 300 s, 16 over 600 s); its Novig price age median 31 s, p90 198 s, max 285 s; CLV by fair age <2 min +0.73% (31), 2-4 min +0.03% (45), 4-6 min -0.30% (64), 6+ min -1.18% (38).",
+  "Tracker closes (228): 170 'CNO's books' (+0.52% [-0.42, +1.68], 25 games), 23 unspecified (+2.70%), 18 'Vigilant's fair line' (-0.26%), 17 'Novig's trades' (-0.94%). On the 193 bets with both a Tracker close and Novig's own last price, CLV is +0.15% against the Tracker close but +1.14% against Novig's last price (r=0.54, closeFair minus Novig price -0.51 points): same bets, two yardsticks, one point apart. For the 17 Tracker bets first seen within 15 minutes of the start CLV 4.35% vs EV 3.06%, r=0.86 (the read is the same read). Complementary Over/Under closes of the same source sum to 1.000 (ESPN 6 pairs, Novig 3) but Tracker vs Novig closes of the same line sum to 1.010 (SD 0.013, 5 pairs): about 1 point of cross-source noise on one market.",
+  "CLV by how early the bet was first seen (closes, games): under 15 min +1.95% (52, 29); 15-30 min +0.53% (37, 25); 30 min-2 h +1.49% (74, 33); 2-6 h +1.40% (93, 38); 6-24 h -0.37% (412, 31); 24 h+ -5.07% (15, 5). 60% of all closes are 6-24 h bets, which is why the headline is near zero. Controlling for source and time bands, CLV rises +0.66 points per 1 point of listed EV (SE 0.24, t=2.8).",
+  "Loader/summary cross-check: the loader's counts, ROI, units, closes, beat %, EV listed and game counts reproduce all 250 summary lines (diffs 0); the loader's bootstrap half-widths agree with the app's analytic ones (CLV +/-0.57 vs 0.58 on all bets; ROI 4.2 vs 4.1). One loader discrepancy: roi_stats keeps profit.notna() so the 9 VOIDs (profit 0) count as staked units: ROI +1.576% on n=1705 vs the app's +1.584% on 1696 (-0.008 points; up to -0.02 on groups holding voids). Loader game key (event|start) splits 2 games in 2."
+ ],
+ "findings": [
+  {
+   "claim": "Counts by status are 895 WON, 801 LOST, 375 PENDING, 9 VOID; no PUSH or FMV; 313 of the PENDING bets are games not yet started and 62 are started but ungraded (3.5% of started bets).",
+   "evidence": "Parsed status column; crosstab with start time vs file time (2026-10-06 00:08 ET); gradeNote classes of the 62: 18 no play-by-play (first TD scorer), 18 game not found on the scoreboard, 11 unreadable market, 5 retired, 5 stat missing, 3 other, 2 not over.",
+   "n_bets": 2080,
+   "holds_on_both_date_halves": "yes",
+   "n_games": 190,
+   "effect": "if the 62 all lost ROI -2.0%, all won +4.5%, as is +1.58%",
+   "luck_risk": "Deterministic count, not a sampling claim."
+  },
+  {
+   "claim": "The correct close-coverage denominator is the 1767 started bets (38.7%), not the 2080 the summary prints (32.8%).",
+   "evidence": "313 bets start after the file was made and cannot have a close. Closes: Novig trades 341, Tracker 228, ESPN 97, Pinnacle 17 = 683; close_ok 588 (95 Novig closes of 1-2 trades dropped).",
+   "n_bets": 1767,
+   "holds_on_both_date_halves": "no",
+   "n_games": 94,
+   "effect": "683/1767 = 38.7%; first date half 45.7% of started bets, second 15.6%",
+   "luck_risk": "Deterministic."
+  },
+  {
+   "claim": "Three quarters of the started bets without a close (824 of 1084) cannot get a Novig-trades close because no Novig outcome id was ever linked to them; 158 more wait for the next-morning trade file.",
+   "evidence": "closeNote parts: 'No Novig outcome on record' 824, 'publishes this day's trades the next morning' 158 (157 for Oct 5 games), 'No trades in the 30 minutes before the start' 96. Bets with an outcome id: 68.3% have a close (818 started), without 13.1% (949). Outcome ids exist for 836 of 2080 bets (wide-only 2.6%, Vigilant-listed 100%). The Pinnacle/ESPN sources cannot fill the gap (props are 73% of started bets; Pinnacle: not in file 451, too old 220, other line 167; ESPN keeps game lines only 877).",
+   "n_bets": 1084,
+   "holds_on_both_date_halves": "yes",
+   "effect": "outcome id: 68.3% vs 13.1% of started bets have a close",
+   "luck_risk": "Deterministic; the first-half and second-half outcome-id share is 46.5% vs 45.7%."
+  },
+  {
+   "claim": "The study's 'why no close' summary hides the main reason because it cuts each note at 90 characters.",
+   "evidence": "StudyExport.closeReasons.merge(row.closeNote.take(90)): the note concatenates Pinnacle, ESPN and Novig reasons, so the printed reasons (x393, x134, x80 ...) end before 'No Novig outcome on record' (x824 over all notes).",
+   "n_bets": 1084,
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "Code reading plus counts."
+  },
+  {
+   "claim": "The closes are a biased sample of the bets: they over-represent Tj-placed, shown, higher-EV, wide-read-excluded, early (6-24 h) and Oct 4 bets.",
+   "evidence": "Started bets with close vs without: placed 33.5% vs 1.4% of group, shown 56.2% vs 30.3%, listed EV 1.60% vs 1.08%, book page read 34.6% vs 6.6%, median time to start 705 vs 170 min; close rates: placed 93.9% vs 29.8%, w-only 16.1%, wide-only props 5.0%, moneylines 91.4%, period lines 17.2%, Oct 5 games 17.5%. Chi-square p<1e-10 for placed, source, shown, time to start, day.",
+   "n_bets": 1767,
+   "holds_on_both_date_halves": "yes",
+   "n_games": 94,
+   "effect": "close rate placed 93.9% vs 29.8% unplaced",
+   "luck_risk": "Not luck: p<1e-10 on five variables; the pattern holds on both firstDay halves (placed 94.9% / 89.4%, unplaced 37.3% / 6.2%)."
+  },
+  {
+   "claim": "Correcting for who has a close moves the headline CLV from +0.19% to between -0.07% and +0.17%; the unselected (not placed) closes give -0.01%.",
+   "evidence": "Logistic close-propensity model on started bets (kind, source, placed, shown, log time to start, EV, price, size, league, game day; AUC 0.92) then game-clustered weighted mean: unclipped +0.08% [-0.61, +0.86] (effective n 155); clipped 20/10/5: +0.12/+0.16/+0.17%; post-stratified on placed x shown x prop/game line -0.07%; not-placed closes -0.01% [-0.60, +0.65] (454, 61 games); placed +0.59% [-0.36, +1.61] (229, 48 games).",
+   "n_bets": 683,
+   "holds_on_both_date_halves": "too-thin",
+   "n_games": 69,
+   "effect": "IPW +0.08% to +0.17%; post-stratified -0.07%; raw +0.19% [-0.36, +0.79]",
+   "luck_risk": "Reweighting only fixes selection on observed variables (unobserved: why Novig linked an outcome id); the result is 'consistent with zero', the one-sided p of seeing +0.19% or more if the true CLV were 0 is about 0.26 on game clusters."
+  },
+  {
+   "claim": "Placed vs not-placed CLV differ in sign but the intervals overlap and the difference is partly selection: Tj/auto-bet placed the bets that had the better lead time and EV.",
+   "evidence": "Not placed: first date half -0.07% [-0.71, +0.64] (431, 57 games), second +1.16% [+0.14, +2.50] (23, 10); placed: first +0.66% [-0.18, +1.51] (187, 41), second +0.29% [-1.27, +3.29] (42, 8). By start day: placed Oct 3-4 +0.89% [+0.25, +1.64] (180), Oct 5 -0.50% (49).",
+   "n_bets": 683,
+   "holds_on_both_date_halves": "no",
+   "n_games": 69,
+   "effect": "placed minus not placed about +0.6 points, overlapping CIs",
+   "luck_risk": "High: the sign flips between halves and the second half has 23 unplaced closes."
+  },
+  {
+   "claim": "Any date-half check on CLV is too thin: the firstDay split leaves 65 closes in 10 games in the second half (no Novig closes at all), and 78.5% of all closes come from the 29 games of Oct 4.",
+   "evidence": "split_by_date cut 2026-10-04: first 1468 bets / 142 games / 618 closes / 1304 settled (75 games); second 612 bets / 100 games / 65 closes (10 games) / 392 settled (12 games); 416 of the 612 second-half bets are for games already started. Start-day alternative: Oct 3-4 games 1313 bets / 604 closes / 57 games with closes; Oct 5 games 451 bets / 79 closes / 12 games. The 157 Oct 5 bets waiting on Novig's trade file will raise the second half to roughly 200 closes.",
+   "n_bets": 612,
+   "holds_on_both_date_halves": "too-thin",
+   "n_games": 100,
+   "effect": "second-half CLV +0.60% [-0.77, +2.66] on 65 closes vs first half +0.15% [-0.40, +0.78] on 618",
+   "luck_risk": "Deterministic; with 10 game clusters no second-half effect smaller than about +/-2 points can be seen."
+  },
+  {
+   "claim": "The effective sample for CLV is small: 683 closes behave like about 426 independent bets, and about 137 games with closes (now 69) are needed for a +/-0.5 point interval, 547 for +/-0.25.",
+   "evidence": "Game-clustered SE 0.29 points vs 0.23 if independent (design effect 1.60); SD of game-mean CLV 2.98 points over 69 games; top 5 games hold 34.1% of closes, top 10 56.4%; top 10 games hold 46.2% of all bets (largest game 245 bets); median 3 bets a game; 617 of 1644 Over/Under bets sit in same-player ladders.",
+   "n_bets": 683,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 69,
+   "effect": "need about 137 games for +/-0.5 and 547 for +/-0.25 at SD 2.98",
+   "luck_risk": "n/a (power statement)."
+  },
+  {
+   "claim": "A close from 1-2 Novig trades is noise in the spread, not in the mean: dropping those 95 closes leaves CLV at +0.19% and cuts the CI width by 0.04 points; the 3+ closes are only modestly cleaner.",
+   "evidence": "CLV all closes +0.19% [-0.36, +0.79] (683, 69 games); close_ok +0.19% [-0.32, +0.81] (588, 66 games); 1-2 trades +0.17% [-1.41, +1.80] (95, 28 games) SD 8.19 points; 3+ -0.39% [-1.16, +0.35] SD 5.94; by N: 1: SD 9.20, 2: 6.21, 3: 4.36, 4-5: 7.30, 6-10: 6.23, 11-20: 5.56, 21-50: 5.27, 51+: 4.01; Spearman |CLV| vs N rho 0.08 (p=0.14).",
+   "n_bets": 341,
+   "holds_on_both_date_halves": "yes",
+   "n_games": 62,
+   "effect": "mean unchanged (0.00 points); 1-2 trades SD 8.2 vs 5.9 points",
+   "luck_risk": "Low: the mean does not move on either half (first half all 0.15% vs close_ok 0.14%; second half has none)."
+  },
+  {
+   "claim": "The close sources are not interchangeable: for game lines Novig's last-trades close is about 2 points harsher than ESPN's DraftKings line and the Tracker read; for props the sources agree within noise.",
+   "evidence": "Game lines: ESPN +0.82% [+0.05, +1.50] (97, 48 games), Tracker +0.72% [-0.63, +2.01] (48, 27), Novig 3+ -1.24% [-2.46, +0.06] (35, 24), Pinnacle -1.19% (11, 7). OLS with source dummies, listed EV and time-to-start bands, game-clustered SE (206 closes, 61 games): ESPN +2.50 (SE 0.69), Tracker +2.15 (SE 0.60), Novig 1-2 +1.40 (SE 0.98) vs Novig 3+. Props (477 closes, 39 games): Tracker +0.35 (SE 0.68), Pinnacle +1.74 (SE 1.10), Novig 1-2 -0.07 (SE 1.16). Time to start is the stronger driver: 6-24 h -1.5 points, 24 h+ -6.2 points vs under 6 h.",
+   "n_bets": 206,
+   "holds_on_both_date_halves": "too-thin",
+   "n_games": 61,
+   "effect": "game lines: ESPN/Tracker minus Novig 3+ about +2.2 to +2.5 points (SE 0.6-0.7)",
+   "luck_risk": "Moderate: t=3.6 with only 35 Novig-3+ game-line closes from 24 games and about 6 comparisons made (Bonferroni p about 0.002); the second half has no Novig closes. About 100 Novig-3+ game-line closes would settle it."
+  },
+  {
+   "claim": "ESPN and Pinnacle closes exist only when the closing line equals the bet's line, so the bets that lost to a line move have no close and game-line CLV from those sources is an upper bound.",
+   "evidence": "From closeNote: 290 started bets lost their close to a moved line. Spreads 75 (21 favourable to the bettor = 28%, binomial p=0.0002), totals 89 (31 = 35%, p=0.006), props 126 (81 = 64%, p=0.002; Unders 69 of 96, Overs 12 of 30). The 164 game-line bets: 52 favourable, 112 unfavourable, mean move -0.78 points (median -1.0; NFL 84 bets mean -1.27 points, 30% favourable; NCAAF 58 bets -0.35). All 290 together 46% favourable (p=0.18): props and game lines point opposite ways. At 1 to 2 probability points a half-point (NFL totals/spreads) the censored 164 would average about -3% to -6% CLV (illustrative, not measured).",
+   "n_bets": 290,
+   "holds_on_both_date_halves": "unknown",
+   "effect": "game-line censored bets: 68% unfavourable; ESPN CLV +0.82% is an upper bound",
+   "luck_risk": "The direction test is significant (p<0.01) but the size per point is an assumption."
+  },
+  {
+   "claim": "The Tracker 'close' is mostly CNO's own consensus read about a minute before the start and is partly the same read that produced the bet's EV; against Novig's own last price the same bets look 1 point better.",
+   "evidence": "228 Tracker closes: 170 'CNO's books', 23 unspecified, 18 'Vigilant's fair line', 17 'Novig's trades'. 17 Tracker bets first seen within 15 min of the start: CLV +4.35% vs EV +3.06%, r=0.86. 193 bets with both a Tracker close and Novig's own last price: CLV +0.15% vs +1.14%, r=0.54. RESEARCH.md 81.2: the read is a median 50 s before the start.",
+   "n_bets": 228,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 48,
+   "effect": "Tracker CLV +0.57% [-0.34, +1.62]; against Novig's own last price +1.14% on the same 193 bets",
+   "luck_risk": "n/a (definition)."
+  },
+  {
+   "claim": "Complementary sides of one line close to 1.000 inside one source but differ by about 1 point across sources: the noise floor for comparing yardsticks is about 1 point of CLV.",
+   "evidence": "18 same-line Over/Under pairs with both closes: mean sum 1.0035, SD 0.0083; ESPN-ESPN 6 pairs 1.0000, Novig-Novig 3 pairs 1.0000, Tracker-Novig 5 pairs 1.0102 (SD 0.0130, range 0.990 to 1.023), Tracker-Novig 2 pairs 1.0010, Tracker-Pinnacle 1 pair 1.0142.",
+   "n_bets": 36,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 18,
+   "effect": "cross-source disagreement about 1 point (SD 1.3 points)",
+   "luck_risk": "Small n (18 pairs)."
+  },
+  {
+   "claim": "The CLV mean is moved by its tails: the median is +0.48% against a mean of +0.19%, 22.8% of closes are beyond +/-5% and 13 beyond +/-20%.",
+   "evidence": "683 closes: 5th/95th percentile -8.3%/+7.6%, 1st/99th -22.5%/+14.7%; mean without |CLV|>5% +0.38% (527); without >10% +0.40% (641); winsorized 1% +0.17%, 2.5% +0.27%, 5% +0.30%; trimmed (1% each side) +0.26%. 5 closes are exactly 0 (counted as not beating the close). Extremes are props with 1-5 trade Novig closes or Tracker reads of early bets (a player ruled out); only 3 closes were removed by the app's plausibility filter (20, 24 and 27 points from the bet's fair) and none kept exceeds 19.4 points.",
+   "n_bets": 683,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 69,
+   "effect": "median +0.48% vs mean +0.19%",
+   "luck_risk": "n/a (descriptive)."
+  },
+  {
+   "claim": "clvBest and clvLast are hindsight prices and must not be used as outcomes or as a rule's target.",
+   "evidence": "Mean CLV at the first-listed price +0.19% vs at the best listed price over the bet's life +1.31% vs at the last listed price +0.64% (683 closes). clvBest is closeFair x best decimal odds - 1 (formula verified to 2e-16). Bets whose price got longer after the first look had CLV -1.28% (547 bets, 251 closes) vs +1.05% for unchanged prices.",
+   "n_bets": 683,
+   "holds_on_both_date_halves": "yes",
+   "n_games": 69,
+   "effect": "clvBest minus clv = +1.12 points by construction",
+   "luck_risk": "n/a (arithmetic)."
+  },
+  {
+   "claim": "Profit agrees with status and the first-listed price on all 1705 graded or voided rows; the Vigilant-listed rows have a cost on a 0.005 grid so american and cost differ slightly, with no material effect.",
+   "evidence": "WON profit = 1/cost - 1 with 0 differences; LOST = -1 (801 of 801); VOID = 0 (9 of 9); no WON with profit <= 0. At the american-implied price 135 WON rows differ by more than 0.0001 (max 0.0047 units), total profit 26.811 vs 26.871, ROI +1.581% vs +1.584%. cost differs from american-implied on 321 rows (all Vigilant-listed), max gap 0.00107; the CLV mean changes by 0.004 points (66 rows differ by more than 0.001, max 0.0027).",
+   "n_bets": 1705,
+   "holds_on_both_date_halves": "yes",
+   "n_games": 81,
+   "effect": "ROI +1.584% (field) vs +1.581% (american)",
+   "luck_risk": "n/a (arithmetic)."
+  },
+  {
+   "claim": "The 16 MISMATCH-screen rows are the only rows whose EV does not follow from fair/cost-1; the rest of the listed prices are internally consistent.",
+   "evidence": "|ev - (fair/cost-1)| > 0.0005 on 17 rows: all 16 MISMATCH rows (up to 20.4 points; 4 over 8 points, three of them props priced by 1 to 3 books) and 1 other row (0.0013). Every MISMATCH row is caught by the screen (16 of 16, 0 false). EV range 0 to 19.68%, 0 negative, 28 exactly 0, 14 rows with fair < cost (true EV negative), 0 over 20% (the TOO_GOOD screen never fired). The 16 rows: ROI +30.8% (app), 3 closes; excluding them ROI +1.58% -> +1.31%.",
+   "n_bets": 16,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 15,
+   "effect": "ROI +1.58% -> +1.31% without them",
+   "luck_risk": "n/a."
+  },
+  {
+   "claim": "Some prices and sizes are extreme or not comparable: 29 bets are longer than -1000, 6 longer than +400, available dollars run from $0.0047 to $333,565, and CNO's and Vigilant's 'available' are different measures.",
+   "evidence": "american -8991 to +900 (none between -99 and +99); 15 bets with cost over 0.95 (first-TD-scorer 'No', touchdown Unders), 6 over +400 all lost. available: median 72.4, p25 18, p75 289, mean 716; 35 over $5,000, 10 over $10,000; 1.9% under $1, 2.6% under $2, 7.6% under $5, 14.9% under $10; the 21 largest (1%) hold 46% of the dollars. On the same bet Vigilant's available vs CNO's dollars: 11% equal, median ratio 2.0, p10 0.27, p90 63 (109 bets); median by lister: v 170, w 59, c+w 50.",
+   "n_bets": 2080,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 190,
+   "effect": "dollar bands mix two measures",
+   "luck_risk": "n/a (descriptive)."
+  },
+  {
+   "claim": "There are no duplicate bets of substance; the real overlap problem is correlated bets (both sides, ladders) and two split game clusters.",
+   "evidence": "2080 distinct ids and event|market|selection|start keys; the only repeated event|market|selection (2 rows) is the same series on two different days (19.5 h apart). Two true duplicates (same Novig outcome id, 'Player Longest Pass' vs 'Longest Completion', one bet by CNO and Vigilant not merged because the pick cannot be parsed): both PENDING/ungradeable. Same-line Over and Under both listed 82 times (164 bets, first seen a median 392 min apart; 64 pairs with cost sum under 1); 70 of 189 spread/moneyline markets listed on both teams; 617 of 1644 Over/Under bets in 230 same-player ladders; 158 player-stat groups with both Over and Under at some line (533 bets). Game clusters: two games are split into 2 clusters each (one NCAAF game with start times 60 s apart, one with two spellings of a team name), so the game count (190) is 2 too high.",
+   "n_bets": 2080,
+   "holds_on_both_date_halves": "yes",
+   "n_games": 190,
+   "effect": "0 exact duplicates; 2 true duplicate pairs; 2 games double counted",
+   "luck_risk": "n/a."
+  },
+  {
+   "claim": "About a third of the bets were first seen in app-wake bursts, so first-listed price and minutes-to-start measure when the app woke, not when the market opened.",
+   "evidence": "12 minutes hold 20 to 101 first-looks each = 619 bets (29.8%; 849 bets in minutes with 10+); examples: 101 bets in one minute (70 Vigilant-only, median 15 h before the start: a Vigilant scan finishing or being switched on), 96 bets in one minute 9 minutes before an NFL kickoff (no first-looks in the 11:00 hour). 18 of 56 hours have 0 first-looks. Burst bets: EV 1.59% vs 1.07%, median time to start 705 vs 410 min, CLV -0.08% [-1.24, +0.99] (284 closes, 81 games) vs +0.39% [-0.13, +0.93] (399, 184 games), ROI +3.12% vs +0.80%.",
+   "n_bets": 619,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 81,
+   "effect": "CLV burst vs non-burst -0.47 points, overlapping CIs",
+   "luck_risk": "High: the difference is inside the CI."
+  },
+  {
+   "claim": "The 'shown' and 'hidden' labels do not mean what the brief says: 'shown' includes Vigilant-only finds and 'hidden' includes bets CNO's list carried later.",
+   "evidence": "shown 803 = 513 where the CNO list carried it at first look (src c, c+v, c+v+w, c+w) + 290 Vigilant-only (src v, v+w) that CNO never listed; hidden 1277 = 880 wide-only + 328 whose screen reason (EV 281, NOT_LISTED 28, BOOKS 15 ...) held at the first look but which CNO's list carried later + 69 Vigilant bets that the wide read also found with a screen reason. By lister: lister_c 841 bets CLV +0.22% [-0.38, +0.90] (385 closes), shown label +0.57% [-0.20, +1.40] (384), shown-but-not-CNO 290 bets +0.08% [-1.46, +1.62] (138).",
+   "n_bets": 2080,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 190,
+   "effect": "shown label +0.57% vs CNO-list-only +0.22% CLV",
+   "luck_risk": "n/a (definition)."
+  },
+  {
+   "claim": "Three of the app's printed splits are mislabelled for rows that were never observed: 'Sharp veto NO_SHARP', 'none on the page', and 'still listed at its last look'.",
+   "evidence": "NO_SHARP 1482 = 40 with a page read + 1442 with no page (the atBet field defaults to NO_SHARP; StudyExport.verdictOf handles it for props but BetLedger.keyOf's SHARP split does not). Only 319 bets have a book list / 314 a checkAt time. 'Whether a scan dropped it': 'still listed' 1402 = 522 app-listed and not dropped + 880 wide-only never in an app list (gone is absent, listedMin absent); correct buckets: dropped 678 (CLV +0.08%, 256 closes, ROI +2.23%), not dropped 522 (+0.25%, 308 closes, ROI -0.38%), wide-only 880 (+0.28%, 119 closes, ROI +2.36%). 'Novig's own trades just before (trap guard)' and 'How placed' carry no information (all 'not recorded' / 'study').",
+   "n_bets": 2080,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 190,
+   "effect": "no effect on totals; relabels groups",
+   "luck_risk": "n/a."
+  },
+  {
+   "claim": "The book-page facts (sharp verdict, books agreeing, check EV) are not first-look facts: the page was read a median 18.6 minutes after the first look and only for the top-EV rows.",
+   "evidence": "314 bets with a page read: lag median 18.6 min (p25 0.9, p75 179, p90 484, max 2528 min); 58% over 5 min, 36% over 60 min, 18% over 240 min; page age at read median 10 s. By lag: under 1 min CLV +2.30% (72 closes, EV 3.54%), 1-15 min +0.51% (43), 15-120 min +0.62% (51), over 2 h -1.11% (70). The page-read set has EV 1.94% vs 1.09% and median 253 vs 572 min to start; sharp edge vs listed EV correlation 0.06.",
+   "n_bets": 314,
+   "holds_on_both_date_halves": "too-thin",
+   "n_games": 55,
+   "effect": "page-read CLV +0.60% [-0.10, +1.43] (236 closes, 47 games) vs -0.02% for the rest (447)",
+   "luck_risk": "Selection on staying in the top-EV rows: a verdict read late is read on a bet that survived."
+  },
+  {
+   "claim": "Listed EV is not comparable across listers and Vigilant's own first-look quotes are old.",
+   "evidence": "Same bet, wide-read cols vs Vigilant's first record (109 bets): EV 2.30% vs 0.84%, fair +1.3 probability points. Vigilant-first (348 bets): EV 2.51%, CLV -0.22% [-1.41, +1.17] (178 closes); CNO-first (1732): EV 0.97%, CLV +0.34% [-0.17, +0.93] (505). 224 of 348 Vigilant-first bets have EV under the 2.5% auto-bet bar (floor 1.0%). Vigilant fair-line age at first look median 206 s, p90 490 s, max 778 s; Novig price age median 31 s, p90 198 s, max 285 s; CLV by fair age under 2 min +0.73% (31), 4-6 min -0.30% (64), 6 min+ -1.18% (38).",
+   "n_bets": 348,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 51,
+   "effect": "Vigilant EV exceeds CNO's by 1.46 points on the same bets",
+   "luck_risk": "Moderate: the stale-quote CLV gradient is on 38 to 64 bets per band."
+  },
+  {
+   "claim": "Voids, futures and grading: 9 VOIDs (staked 0, profit 0), no FMV or PUSH rows, no futures in this file, and no sign that the grader's 'absent football player counts 0' rule distorts results.",
+   "evidence": "VOID: 6 NFL props, 2 NHL props, 1 WNBA prop (a ruled-out player); the grader voids only a player flagged inactive or absent from a non-football box score, and counts a football player absent from the box score as 0 (Unders win, Overs lose where Novig refunds). Calibration: NFL props Under at 0.5/1.5: 130 wins vs 134.0 expected at the fair (204 bets, 15 games, z=-0.85); Overs at 0.5/1.5 53 vs 51.2. Futures: screen NOT_A_GAME 0, no outright/winner/MVP market names; 14 'Moneyline 3-way' soccer bets are kind OTHER and ungraded. The app's own note says Novig may settle a voided prop at a fair value (FMV): counted $0 here.",
+   "n_bets": 9,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 8,
+   "effect": "9 voids = 0.53% of 1705 graded",
+   "luck_risk": "A few unflagged DNPs cannot be excluded; gradeNote is only kept for pending bets, so it cannot be audited."
+  },
+  {
+   "claim": "Results are calibrated and the ROI is not distinguishable from zero or from the listed EV.",
+   "evidence": "895 wins vs 890.5 expected at the fair and 880.5 at the price (z +0.28 game-clustered); ROI +1.58% +/-4.1 over 81 games vs EV listed +1.22% (expected ROI at the fair on the settled bets +1.22%); props 689 vs 677.8 (+0.83), game lines 206 vs 212.7 (-0.62); shown 340 vs 349.2 (-0.74), hidden 555 vs 541.3 (+0.92); first date half ROI +1.46% (1304 settled, 75 games), second +2.00% (392, 12 games).",
+   "n_bets": 1696,
+   "holds_on_both_date_halves": "too-thin",
+   "n_games": 81,
+   "effect": "ROI +1.58% [app +/-4.1; bootstrap -2.19 to +6.44]",
+   "luck_risk": "ROI needs about 10x more games: the SE is 2 points."
+  },
+  {
+   "claim": "Version and rule changes during the 2.26 days: 14 app versions and 6 preset states, so the rules in force differ across the file.",
+   "evidence": "First-looks by version: 0.57.0 116 (Oct 3 17:56-18:55 ET, no wide read), 0.58.0 240, 0.58.2 250, 0.58.3 97, 0.58.4 21, 0.59.0 121, 0.59.1 462 (Oct 4 03:48-18:54), 0.60.0 160, 0.61.0 284 (to Oct 5 15:44), 0.66.0 138, 0.67.0 62, 0.68.0 110, 0.68.1 8, 0.70.1 11. Presets: '2 (Safe CLV)' 1873 (90%), '(changed)' 80, 'Volume + safe CLV' 60 (Oct 4 01:14-03:44), '5 (Super CLV all markets)' 59 (Oct 3 only), '3 (Safe CLV all markets)' 8. Changes that matter for the data: v0.58.0 wide read, v0.58.2 study written every cycle, v0.58.4 closes of another game excluded, v0.59.0 most-at-risk-per-game limit (affects which bets Tj/auto placed), v0.61.0 3 h/6 h start filters, v0.62/0.63 both-sides grading guard.",
+   "n_bets": 2080,
+   "holds_on_both_date_halves": "unknown",
+   "n_games": 190,
+   "effect": "per-version samples 8 to 462 bets",
+   "luck_risk": "n/a (descriptive)."
+  },
+  {
+   "claim": "The loader and the summary agree everywhere except one small loader convention.",
+   "evidence": "All 250 group lines in study_summary_splits.txt (sections: summary 4, kind, sport, league, market, preset, who listed, screen, odds, EV, books, share agreeing, time to start, dollars, hour, placed, price moved, close source, CLV band, listed time, dropped, book check, companies, page age, Pinnacle only, sharp veto, sharp book, props sharp/edge/exchanges, books agreeing/dissent) and the 3 what-if rules (kept 196/178/141, dropped 63/81/118, not judged 1061) reproduce: bets, W-L, open, units, staked, closes, beat %, CLV, EV, ROI, games; the app's analytic game-cluster half-widths match the recomputation to 0.05 ROI points and 0.005 CLV points; the loader's bootstrap gives CLV +/-0.57 vs the app's 0.58 and ROI 4.2 vs 4.1. Loader convention: roi_stats uses profit.notna(), so 9 VOIDs enter as staked 0-profit units (n 1705 vs 1696; ROI +1.576% vs +1.584%).",
+   "n_bets": 2080,
+   "holds_on_both_date_halves": "yes",
+   "n_games": 190,
+   "effect": "0 mismatches in 253 lines; ROI -0.008 points from the VOID convention",
+   "luck_risk": "n/a (reconciliation)."
+  }
+ ],
+ "candidate_rules": [
+  {
+   "name": "FILTER (analysis hygiene, not a bet rule): robust closes",
+   "expr": "df.close_ok",
+   "rationale": "Drops the 95 Novig-trades closes of 1-2 trades (a price, not a close). Mean CLV unchanged, SD of those closes 8.2 points. Report next to all closes.",
+   "bets": 588,
+   "games": 66,
+   "clv": 0.001949219950328647,
+   "clv_lo": -0.0031603659039174292,
+   "clv_hi": 0.008086018101531965,
+   "roi": 0.022295322892283847,
+   "first_half_clv": 0.0014451851274574466,
+   "second_half_clv": 0.006004761678969227,
+   "per_day": 260.6
+  },
+  {
+   "name": "FILTER (analysis hygiene, not a bet rule): unselected robust closes",
+   "expr": "df.close_ok & df.placedByTj.isna()",
+   "rationale": "Closes of bets Tj/auto-bet did not place: the check that a CLV is not an artefact of which bets were placed (359 closes; headline-style CLV about -0.06%).",
+   "bets": 359,
+   "games": 57,
+   "clv": -0.0005795630897988653,
+   "clv_lo": -0.006783713660261792,
+   "clv_hi": 0.006088989649333126,
+   "roi": 0.065590464397024,
+   "first_half_clv": -0.00141350201891747,
+   "second_half_clv": 0.011603196918194664,
+   "per_day": 159.1
+  },
+  {
+   "name": "FILTER (analysis hygiene, not a bet rule): independent closes",
+   "expr": "df.close_src.isin(['espn','pinnacle']) | ((df.close_src=='novig_trades') & (df.close_trades>=3))",
+   "rationale": "Closes that do not come from the Tracker's own CNO-consensus read. Compare groups inside one close_src; pooled across these sources only as a sensitivity check.",
+   "bets": 360,
+   "games": 57,
+   "clv": -0.00043596648118055523,
+   "clv_lo": -0.006481001646180725,
+   "clv_hi": 0.006115755317407254,
+   "roi": 0.06258880111703238,
+   "first_half_clv": -0.0012576304520577957,
+   "second_half_clv": 0.011603196918194664,
+   "per_day": 159.6
+  },
+  {
+   "name": "FILTER (analysis hygiene, not a bet rule): bets with a real book page",
+   "expr": "df.ab_checkAtMs.notna()",
+   "rationale": "The only bets whose sharpVerdict / booksAgreeing mean something (the others carry a default NO_SHARP). Selected: top-EV rows, page read a median 18.6 min after the first look.",
+   "bets": 314,
+   "games": 55,
+   "clv": 0.005989806209215723,
+   "clv_lo": -0.0010358102115343147,
+   "clv_hi": 0.014252989887912787,
+   "roi": 0.0009655002340201341,
+   "first_half_clv": 0.00581155282909307,
+   "second_half_clv": 0.007313974175841156,
+   "per_day": 139.2
+  }
+ ],
+ "app_changes_implied": [
+  "PROPOSAL for Tj (logging only, no betting rule changes): resolve and store the Novig outcome id at the first look of every wide-read bet (CnoFeed link lookup, data/.../cno/CnoFeed.kt, today wide-only bets have 2.6%), so Novig's trades can close them: 824 of the 1084 started bets without a close would become closable. This costs Novig public catalog reads, an API/rate-limit budget question for Tj (the repo notes finished games leave the public catalog, so it must be done before the game).",
+  "PROPOSAL (study export only): in data/.../study/StudyExport.kt stop cutting close reasons at 90 characters (closeReasons.merge(row.closeNote.take(90))) and count each source's reason separately, so 'No Novig outcome on record' (x824) is printed.",
+  "PROPOSAL (study export only): print the VOID count on the summary lines (W-L-P-V), count the close denominator over started bets, and relabel three splits: 'Sharp veto' / 'Sharpest book' should read 'no page read' when no book page exists (use the same verdictOf rule as the props what-if), 'Whether a scan dropped it' should exclude wide-only bets, and 'shown' should be split into 'CNO list' and 'Vigilant list'.",
+  "PROPOSAL (study export only): drop the 'Novig's own trades just before (trap guard)' and 'How placed' splits (always 'not recorded'/'study') or fill them.",
+  "PROPOSAL (analysis loader, repo tools if any): make roi_stats count only WON/LOST/PUSH as staked (the loader file is in the scratch lib, not the repo), and use game start day for date halves.",
+  "QUESTION FOR TJ (no safety limit involved): the grader counts a football player absent from the ESPN box score as 0 (Overs lose, Unders win) where Novig refunds a player who did not play; today only an ESPN-flagged inactive player is voided. 9 voids exist and the calibration shows no distortion, but the bets cannot be audited; see next_logging."
+ ],
+ "next_logging": [
+  "For every bet record ALL closes found, not only the first: {source, fair, line, trades, readAtMs} for Pinnacle, ESPN, Novig trades (always, with N) and the Tracker read, so the same bet can be compared across yardsticks (today one closeVia per bet; novigClose exists for 208 bets).",
+  "Record the closing LINE and price even when the line moved (structured fields closeLine, closeFair at that line) instead of the text note 'closed at X, not your Y', so a line-move-adjusted CLV can be computed for the 290 censored bets (112 game-line bets that moved against the bettor are invisible today).",
+  "Log the Novig outcome id for every bet at the first look (and whether it came from the link, the catalog or Novig's own price), and log why a bet has none; log `closeTriedAtMs` and each source's answer so 'not yet' and 'never' can be told apart.",
+  "Log the app-wake context for each first look: the time the app/scan started or resumed, and whether the bet was already on the CNO list when the app woke (so bursts of first-looks can be flagged: 619 bets, 29.8%).",
+  "Log the grading evidence for every graded bet (settleValue and gradeNote today only for pending/manual bets), including 'player not in box score, counted as 0' and 'inactive', so the football absent-player rule can be audited.",
+  "Log the book page's verdict with the page's read time on EVERY look (already in `k` looks) and mark the first-look fields as 'no page' explicitly instead of the default NO_SHARP; log the page for every bet at its first look if the budget allows (only 15% have one).",
+  "Log CNO's and Vigilant's EV, fair, price and dollars as two separate records on every bet (cols holds CNO's only for wide-read bets) so listers can be compared on the same bet (EV differs by +1.46 points).",
+  "Log the wide read's row count and whether it hit its limit for every read (capped flag), and the CNO list's read time, so coverage gaps (18 of 56 hours had no first-looks) can be separated from quiet markets.",
+  "Next export: after the Oct 5 games' trade file is published (about 157 bets) and the Oct 6-12 games are graded, ask Tj for the file again: roughly 200 second-half closes instead of 65, and a start-day split of Oct 3-4 vs Oct 5-7."
+ ]
+}
