@@ -124,7 +124,7 @@ fun TrapEarlyHoursField(hours: Int, tag: String, onSet: (Int) -> Unit) {
         value = text,
         onValueChange = { t ->
             text = t.filter { it.isDigit() }.take(3)
-            TrapGuard.parseHours(text)?.let(onSet)
+            TrapGuard.parseHours(text)?.let { }
         },
         label = { Text("Or type your own (hours)") },
         isError = bad,

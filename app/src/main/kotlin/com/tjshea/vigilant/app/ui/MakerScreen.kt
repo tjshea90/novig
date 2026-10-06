@@ -667,7 +667,7 @@ private fun LowUsageMarginField(margin: Double, onSet: (Double) -> Unit) {
         value = text,
         onValueChange = { t ->
             text = t.filter { it.isDigit() || it == '.' || it == ',' }.take(6)
-            com.tjshea.vigilant.data.scanner.LowUsageBids.parseMargin(text)?.let(onSet)
+            com.tjshea.vigilant.data.scanner.LowUsageBids.parseMargin(text)?.let { }
         },
         label = { Text("Or type your own (% under the fair)") },
         isError = bad,
