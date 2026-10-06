@@ -11,7 +11,7 @@
   "CLV at first look of the rule's 19 first-look-EV>=2.5% bets: 3.33% on 15 closes (independent 0.39% on 5); the non-selected 135: 1.69% on 67 (independent 1.00% on 15): no separable difference.",
   "EV vs CLV: listed EV at T averages 3.47% (3.63% on the 22 with a close). Against independent closes the EV shrinks to +0.58%; only the Tracker closes keep it.",
   "No look-ahead found in the construction: only looks at or before T (minToStart is an integer minute, so a look can be up to a minute off T), listing state replayed per source with x-looks, price from the last c/w look. The close used for CLV is of course after T.",
-  "What would settle it: about 100+ independent closes (Pinnacle/ESPN/Novig trades with 3+ trades) for the sniped bets, i.e. 100+ bets in 40+ games with the Tracker close left out, or a log of the book's own price at the start for every sniped bet; at 12 bets a day that is more than 8 days even if every bet had an independent close, and about 4 times that at today's 27% independent-close rate. Any change to which bets are bought stays a question for Tj.",
+  "What would settle it: about 100+ independent closes (Pinnacle/ESPN/Novig trades with 3+ trades) for the sniped bets, i.e. 100+ bets in 40+ games with the Tracker close left out, or a log of the book's own price at the start for every sniped bet; at 12 bets a day that is about 8 days even if every bet had an independent close, and about 38 days at today's rate (6 of 28 bets, 21%, have one). Any change to which bets are bought stays a question for Tj.",
   "Not a rule that loosens any safety limit (it does not change the 2.5% floor), but it is also not a better rule: do not put it to Tj as a gain."
  ],
  "data": {
