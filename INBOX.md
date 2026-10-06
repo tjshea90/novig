@@ -4021,3 +4021,8 @@ Right now it will just be a test, but make it good enough so that if it is prove
 ```
 @"/root/.claude/uploads/e7298d8a-0231-53a8-924e-b6a6ddb983d4/605996c4-vigilant-diagnostics-v0.70.1-2026-10-06-0008.txt" @"/root/.claude/uploads/e7298d8a-0231-53a8-924e-b6a6ddb983d4/7df62b36-vigilant-scan-study-v0.70.1-2026-10-06-0008.txt" 
 ```
+
+## 2026-10-06T04:16:45Z
+```
+Save any progress now and checkpoint exactly how to resume all of this work. Assume your usage is about to run out. Save everything and log exact instructions for a new Claude session to find and resume without explanation from me
+```
