@@ -172,20 +172,23 @@ class LowUsageBidsTest {
         val old = json.decodeFromString(ScanSettings.serializer(), """{"maker":true,"schema":12}""")
         assertEquals(BidFocus.ALL, old.makerFocus)
         assertEquals(LowUsageBids.DEFAULT_BOOKS, old.lowUsageBooks)
-        assertEquals(10, old.lowUsageMinutes)
+        assertEquals("a file from before v0.68.1 reads as Auto, not as the 10 minutes that left the bids down half the time", LowUsageBids.AUTO, old.lowUsagePace)
+        assertEquals("a saved old pace is ignored, not carried over", LowUsageBids.AUTO, json.decodeFromString(ScanSettings.serializer(), """{"maker":true,"lowUsageMinutes":10}""").lowUsagePace)
         assertEquals(0.025, old.lowUsageMargin, 0.0)
-        val picked = ScanSettings(makerFocus = BidFocus.LOW_USAGE, lowUsageBooks = setOf("kalshi", "draftkings"), lowUsageMinutes = 15, lowUsageMargin = 0.03)
+        val picked = ScanSettings(makerFocus = BidFocus.LOW_USAGE, lowUsageBooks = setOf("kalshi", "draftkings"), lowUsagePace = 15, lowUsageMargin = 0.03)
         assertEquals(picked, json.decodeFromString(ScanSettings.serializer(), json.encodeToString(ScanSettings.serializer(), picked)))
     }
 
     @Test
     fun `Vigilant's scan runs at the pace Tj picked in the mode, and at the usual four minutes otherwise`() {
         assertEquals(240, ScanSettings().vigilantGapSeconds)
-        assertEquals(600, on.vigilantGapSeconds)
-        assertEquals(300, on.copy(lowUsageMinutes = 5).vigilantGapSeconds)
-        assertEquals("never faster than the freshness limit allows", 300, on.copy(lowUsageMinutes = 1).vigilantGapSeconds)
+        assertEquals("Auto's short gap: the 5 minute limit less the 2 minute re-post window", 180, on.vigilantGapSeconds)
+        assertEquals(600, on.copy(lowUsagePace = 10).vigilantGapSeconds)
+        assertEquals(300, on.copy(lowUsagePace = 5).vigilantGapSeconds)
+        assertEquals("a fixed pace is never faster than 5 minutes", 300, on.copy(lowUsagePace = 1).vigilantGapSeconds)
         assertEquals("bids off: the usual gap", 240, on.copy(maker = false, makerRecommend = false).vigilantGapSeconds)
-        assertTrue(LowUsageBids.PACE_CHOICES.all { it >= LowUsageBids.MIN_MINUTES })
+        assertTrue(LowUsageBids.PACE_CHOICES.filter { it != LowUsageBids.AUTO }.all { it >= LowUsageBids.MIN_MINUTES })
+        assertEquals("Auto leads the choices", LowUsageBids.AUTO, LowUsageBids.PACE_CHOICES.first())
     }
 
     // ---- what the low-usage scan prices a line from ------------------------------------------------------------------------

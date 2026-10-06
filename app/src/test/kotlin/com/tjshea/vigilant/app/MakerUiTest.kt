@@ -460,10 +460,14 @@ class MakerUiTest {
         compose.onNodeWithTag("lowUsageBooksNote").assertTextContains("Pinnacle", substring = true)
         // The pace and the margin.
         compose.onNodeWithTag("lowUsagePace-5").performScrollTo().performClick()
-        assertEquals(5, st.value.lowUsageMinutes)
+        assertEquals(5, st.value.lowUsagePace)
         compose.onNodeWithTag("lowUsagePaceNote").assertTextContains("every 5 min", substring = true)
         compose.onNodeWithTag("lowUsagePace-15").performClick()
-        assertEquals(15, st.value.lowUsageMinutes)
+        assertEquals(15, st.value.lowUsagePace)
+        // Auto (the default) is a chip too, and its note says what it costs.
+        compose.onNodeWithTag("lowUsagePace-0").performClick()
+        assertEquals(com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO, st.value.lowUsagePace)
+        compose.onNodeWithTag("lowUsagePaceNote").assertTextContains("Bids stay up", substring = true)
         compose.onNodeWithTag("lowUsageMargin-35").performScrollTo().performClick()
         assertEquals(0.035, st.value.lowUsageMargin, 1e-12)
         compose.onNodeWithTag("lowUsageMargin-25").performClick()

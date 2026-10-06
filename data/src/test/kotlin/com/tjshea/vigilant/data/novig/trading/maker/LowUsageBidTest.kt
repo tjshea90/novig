@@ -251,11 +251,11 @@ class LowUsageBidTest {
     }
 
     @Test
-    fun `switching bids on in this mode keeps the cycle at a minute but says Vigilant's own scan waits its pace`() {
-        val slow = ScanSettings(autoScanSeconds = 600, scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, makerFocus = BidFocus.LOW_USAGE, lowUsageMinutes = 15)
+    fun `switching bids on in this mode keeps the cycle at a minute but says Vigilant's own scan keeps its own pace`() {
+        val slow = ScanSettings(autoScanSeconds = 600, scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, makerFocus = BidFocus.LOW_USAGE, lowUsagePace = 15)
         val change = MakerSetup.set(slow, BidMode.AUTOMATIC)
         assertEquals(60, change.settings.autoScanSeconds)
-        assertTrue(change.turnedOn.toString(), change.turnedOn.any { it.contains("Vigilant's own scan still waits 15 min") })
+        assertTrue(change.turnedOn.toString(), change.turnedOn.any { it.contains("Vigilant's own scan keeps its own pace: at most every 15 min") })
         // The usual wording is untouched for the other choices.
         assertTrue(MakerSetup.set(slow.copy(makerFocus = BidFocus.ALL), BidMode.AUTOMATIC).turnedOn.any { it.contains("fresh fair prices for the bids") })
     }
