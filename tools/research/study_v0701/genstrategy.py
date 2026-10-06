@@ -7,7 +7,7 @@ Reads  <v0701 dir>/prompts/_preamble.txt, _strategy_angles.json, _schemas.json (
        research/v0701_partial/study-*.json (the 9 saved study analysts: numbers only)
 Writes <v0701 dir>/prompts/strategy-<angle>.txt (the full prompt; each builder writes its result to
        research/v0701_partial/<label>.json as its last step, like the phase-1 analysts).
-Same digest fields as workflow_files_analysis.js (area, trust, key numbers, <=14 findings, <=10 rules per analyst), but each analyst gets an equal share of 60000 chars.
+The digest is compact (see digest()) so that ALL nine analysts fit; the full results are named in the prompt as files the builder may read.
 """
 import glob
 import json
@@ -18,20 +18,26 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')
 PARTIAL = os.path.join(REPO, 'research', 'v0701_partial')
 
 
-def digest(cap=60000):
-    """Every analyst gets an equal share of `cap` characters (the workflow's plain slice would keep only the first one or two)."""
-    es = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(PARTIAL, 'study-*.json')))]
-    share = cap // max(1, len(es))
+def _cut(x, n):
+    x = x if isinstance(x, str) else json.dumps(x)
+    return x if len(x) <= n else x[:n] + '...'
+
+
+def digest():
+    """A compact digest of all 9 analysts (the workflow's plain 60000-char slice kept only the first one or two): per analyst the area, a short trust note,
+    the key numbers, each finding's claim + effect, and each candidate rule's name/expr/bets/games/CLV (+ CI). The full JSON stays readable at research/v0701_partial/."""
     out = []
-    for e in es:
-        ent = {'area': e.get('area'), 'trust': (e.get('trust_notes') or '')[:1500], 'key': e.get('key_numbers'),
-               'findings': (e.get('findings') or [])[:14], 'rules': (e.get('candidate_rules') or [])[:10]}
-        # shed the tail (rules first, then findings) until this analyst fits its share
-        while len(json.dumps(ent)) > share and (ent['rules'] or ent['findings']):
-            (ent['rules'] if ent['rules'] else ent['findings']).pop()
-        if len(json.dumps(ent)) > share:
-            ent['key'] = json.dumps(ent['key'])[:max(200, share - 2500)]
-        out.append(ent)
+    for f in sorted(glob.glob(os.path.join(PARTIAL, 'study-*.json'))):
+        e = json.load(open(f))
+        kn = e.get('key_numbers') or []
+        out.append({
+            'file': os.path.basename(f),
+            'area': e.get('area'),
+            'trust': _cut(e.get('trust_notes') or '', 900),
+            'key': [_cut(k, 330) for k in (kn if isinstance(kn, list) else [kn])[:9]],
+            'findings': [{'claim': _cut(x.get('claim', ''), 260), 'effect': _cut(x.get('effect', ''), 220), 'n_games': x.get('n_games')} for x in (e.get('findings') or [])[:16]],
+            'rules': [{k: x.get(k) for k in ('name', 'expr', 'bets', 'games', 'clv', 'clv_lo', 'clv_hi', 'clv_bets', 'clv_games', 'first_half_clv', 'second_half_clv', 'per_day')} for x in (e.get('candidate_rules') or [])[:12]],
+        })
     return json.dumps(out)
 
 
@@ -48,11 +54,11 @@ def main(v):
     for ang in angles:
         txt = (pre + "\nYOU ARE A STRATEGY BUILDER (step 6 of the READ ME's task). Nine analysts have already explored the data; their findings, "
                "trust notes and candidate rules are below as JSON (they may contradict each other; re-check what matters yourself with the loader "
-               "instead of trusting any number).\nANALYSTS' DIGEST:\n" + d[:60000] + '\n\n' + ang['prompt']
+               "instead of trusting any number).\nANALYSTS' DIGEST:\n" + d + '\n(Full per-analyst results: /home/user/novig/research/v0701_partial/study-*.json; read them for any detail the digest cut.)\n\n' + ang['prompt']
                + "\nReturn at most 8 rules, strongest first, each reproducible from its 'expr'." + saving
                + '\nRESULT SCHEMA (write JSON that matches it):\n' + json.dumps(schema, indent=1))
         open(os.path.join(p, ang['label'] + '.txt'), 'w').write(txt)
-        print('wrote', ang['label'] + '.txt', len(txt), 'chars (digest', min(len(d), 60000), 'of', len(d), ')')
+        print('wrote', ang['label'] + '.txt', len(txt), 'chars (digest', len(d), ')')
 
 
 if __name__ == '__main__':
