@@ -1,0 +1,245 @@
+{
+ "area": "diag-bids-autobet: bids (make orders) and the auto-bet, from the v0.70.1 diagnostics + scan-study bid sections (Oct 6 2026 12:08 AM EDT)",
+ "summary": "What is fine: the bid desk works as designed in Quick & likely mode (bids rolled forward with no gap for 10.7 min, though one 12:05 AM cohort came down together, 32 STOP cancels confirmed in the same second, 0 HTTP 429 on /v3/orders, no refused or lost bid in the newest 300), the 17 fills (only 6 games) beat the close by +2.6% and the fill count (16 vs 19.2 expected) is in line, and the auto-bet is not blind or stuck (its '0 looked at' is 2 candidates, both over 24 h out). What is wrong: Novig's batch-place answer was unreadable 3 of 3 times (an unverified response shape that would also halt the real-money burst trader's first live trade), two report lines mislead (the 'sharp book' fill split and a 3-of-6 'most fills fast' alarm), and the v0.68.1 'stay up' fix was not exercised because no Low API usage bid existed after it was installed. What matters most: fills follow bid-hours and only 119.8 were up in 24 h (5.0 bids up on average; any bid up for 10.2% of the last 6 h) against about 1,150 a day that 48 resting bids would give, so uptime, the wallet and the scan-credit budgets (ParlayAPI funds about 16 full scans a day), not churn or rate limits, set the fill count, and whether bids on games 18-23 h out earn their wallet is the open question for Tj that one day of running settles.",
+ "findings": [
+  {
+   "kind": "BUG",
+   "title": "Novig's batch-place reply is unreadable: 3 of 3 first batches per process ended 'couldn't be read', so bids go one at a time (and the burst trader shares the code)",
+   "evidence": "diag L563,564,575 (Recent problems): 'Novig's answer to a batch of N bids couldn't be read; ... bids go one at a time from now on' at Oct 5 6:49:58 PM (N=10, first pass after the v0.68.0 install), 10:26:29 PM (N=17, first pass after the 10:24:14 process start) and Oct 6 12:05:09 AM (N=8, first pass after v0.70.1). The orders WERE placed and recovered by client id: 22 resting at 10:26:51 (17+5), 48 resting at 12:05:31 (8+40); the 17 bids share one postedAt ms (22:26:29.018), so no duplicate and no lost bid (design safety works). Cost: after the failure every bid is a single POST: median spacing 0.274 s (n=48 bids at 12:05, 22 s for the pass), one lock hold per bid, the failed pass posts nothing more (queue emptied, MakerDesk.cycle) so the rest wait for the next pass (first single 11 s after the batch at 00:05: 00:05:08.868 vs 00:05:19.680; 20 s at 22:26: 22:26:29 vs 22:26:49). NOVIG_API.md has no sample of the 201 body and the only decode test (MakerOrdersClientTest L83) uses an assumed (not captured from Novig) {\"accepted\":[{orderId,clientId}]} shape. BurstTrader.trade (L255-266) calls the same placeOrders for its two IOC legs: any non-API exception there is 'UNCONFIRMED' and halts after both legs may already have filled (trader is OFF and locked, so no money has moved).",
+   "appFault": true,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/NovigTradingClient.kt:116-140 (placeOrders) and :293-296 (AcceptedDto, BatchAcceptedDto)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerDesk.kt:551-580 (placeBatch; SerializationException at :573-577 sets batchUnreadable)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/burst/BurstTrader.kt:255-266",
+    "data/src/test/kotlin/com/tjshea/vigilant/data/novig/trading/MakerOrdersClientTest.kt:83"
+   ],
+   "suggestedAction": "Make the unreadable-answer problem line carry the SHAPE of Novig's 201 body (top-level key names and value types only, no ids or bodies, per the file's no-bodies rule) so the next file shows it; fix the DTO against that real shape; add a test with it; do this before the burst trader is ever switched on. Cancel batch (BatchCancelDto, MakerDesk.kt:615) sets the same flag silently on a decode error: log that too."
+  },
+  {
+   "kind": "WATCH",
+   "title": "The v0.68.1 'bids stay up' fix was not exercised by this file: no Low API usage bid was posted after it was installed",
+   "evidence": "BUILDLOG: v0.68.1 released 01:22Z (9:22 PM EDT), process on 0.68.1 from 21:38:43 (diag L850). All 151 LOW_USAGE bids in the newest-300 sample were posted 18:49-19:27 under v0.68.0; none after 19:28. At 22:25:43-48 the scan timeline logged 'Low API usage: no game with a prop market on Novig in the next 6 h, so no feed was asked and nothing was spent' (x3; the v0.68.1 wording works) and Tj switched the focus LOW_USAGE -> QUICK_LIKELY at 22:25:59 (diag L877), so the Auto pace (180 s near / 480 s far, LowUsageBids) has not run on a real slate. The pre-fix bug is visible: 18:49:00-19:28:30 (39.8 min) any LOW_USAGE bid was up in 50.3% of 15-s slots, longest stretch with none 6.75 min, 7 such stretches, 151 bids in 12 posting minutes ending in same-ms cohorts of 20/19/18; of 102 natural ends 99 were 'fair goes old' (gap) and 3 'About to expire: re-posted' (2.9% rolled). Contrast in QUICK_LIKELY (v0.68.1+ code, a different mode with the 10-min freshness limit for far games and the plain 240 s scan gap): 32 of 55 natural ends were re-posts (58%).",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/LowUsageBids.kt:39-44",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt:405 (vigilantGap)",
+    "RESEARCH.md section 93"
+   ],
+   "suggestedAction": "Judge the fix from the next file that has Low API usage bids on a night with a game inside 6 h: expect 'About to expire: re-posted' to be the majority end and no stretch with zero bids longer than about 1 min inside the window. Nothing to change now."
+  },
+  {
+   "kind": "FINE",
+   "title": "Bid desk behaves as designed in Quick & likely mode: ttl, roll-forward, re-pricing all work for the 14 minutes observed",
+   "evidence": "Settings (diag L158): focus Quick & likely, up to 10 min, stop 15 min before the start, 3.5% under the fair (sharp book's if lower). QL sample n=116 bids: max rest 7.05 min (the 10-min cap is never the limit; the limit is the oldest quote's age), median rest 3.20 min, every bid priced 3.5% margin (mean EV at fair 4.1%). 22:26:30-22:37:10 (10.7 min, 43 slots of 15 s): 17 to 32 bids up in EVERY slot (22 to 32 from 22:27:00), i.e. cohorts rolled forward ('About to expire: re-posted' x32, 'fair goes old' x23) with no all-cancel-together hole. Caveat: at 00:08:19 the 00:05 cohort did come down together (33 of 44, see the QL scan-cadence finding) because its quotes were about 375 s old at posting. 'The fair price goes old within a minute' ends cost almost nothing: planned life minus actual rest = 0.06 min (QL), 0.26 min (LOW_USAGE) on average. 'Fair fell: re-posted lower' x83 all-time. 24 h: 2,201 posted, 879 'About to expire: re-posted' and 854 'fair goes old' (diag L160-161).",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerQuote.kt:439-452 (precheck until / minLife)",
+    "MakerQuote.kt:562-592 (plan: cancels and re-post)",
+    "MakerQuote.kt:112 (REFRESH_BEFORE_MS 2 min)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Freshness.kt:32-33"
+   ],
+   "suggestedAction": "None."
+  },
+  {
+   "kind": "OPTIMIZE",
+   "title": "Bid-hours are limited by uptime, not by churn: 119.8 bid-hours in 24 h is 5.0 bids up on average; any bid was up for 10.2% of the last 6 h",
+   "evidence": "diag L160: 2,201 posted, 119.8 bid-hours (mean life 3.27 min). Newest-300 sample 18:06:57-00:08:19 (361.5 min): any bid up 10.2% of 15-s slots; 14.15 bid-hours in those 6 h (so about 105.6 of the 119.8 were the earlier 18 h). Dark windows: 19:28:30-22:26:30 (178 min, 0.1% up) = mostly Low API usage having nothing to bid (no game with props in 6 h; RESEARCH 94: none since 8:15 PM) plus DNS failures 19:33-20:23, HTTP 451 on /v3/orders 20:21-20:23, Novig timeouts 20:50, app closed 20:53/22:10, process starts 21:38/21:59/22:24 and the kill switch ON before Resume at 22:24:16; and 22:37:10-00:05:20 (88 min, 0.6% up) = Tj's STOP ALL (kill switch ON 22:37:11 to OFF 00:04:41 = 87.5 min). When running in QL: 100% of slots had >=1 bid up (22 to 32; 48 at 00:05:30). Background cycles: 7,328 since Oct 1 11:56 PM (diag L319) at the 15 s interval = about 30.5 h of 96.2 h (32%): the service ran about a third of the time. 48 bids up all day at 3.3 min life would be about 1,152 bid-hours/day (9.6x yesterday): an upper bound that ignores the scan-credit budgets (see the scan-credit finding).",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/MakerRunner.kt:339-340 (stopReason)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt:701-710 (cancelAll / cancelAuto reasons)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/KillSwitch.kt:111"
+   ],
+   "suggestedAction": "More fills come first from keeping the desk running while games are in range: STOP ALL / closing the app costs the whole cohort (32 bids at 22:37). Not a code change."
+  },
+  {
+   "kind": "OPTIMIZE",
+   "title": "Wallet-bound while posting: 13 to 45 wanted bids waited for money in all 9 passes logged 22:26-22:37, with 96 to 99% of the wallet already resting",
+   "evidence": "diag L879-890 (MAKER lines 22:26:51-22:36:43, 9 passes): 'waiting: the wallet (or today's limit for API bets) can't cover it' 37, 45, 43, 42, 13, 43, 43, 43, 13 wanted bids; resting dollars / wallet = 98.2% (22:26:51), 96.2% (22:29:09), 98.7% (22:29:21); 32 bids max up. At 00:05:31 (after the wallet grew) 48 up, 93.7% committed, nothing waiting (the wanted set, not money, was the cap). Per-bid stake about 2-3 dollars (1/4 Kelly of the bankroll, cap 5); the $500/day API limit is not binding (auto bets staked 22.95-57.14 a day). PRIORITY already funds bids that lead their side first, then popularity tier, then fill chance per hour, then EV (QuickLikely/MakerQuote priority).",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerQuote.kt:677-698 (priority, quick comparator)",
+    "MakerDesk.kt:240-262 (spare / budget)"
+   ],
+   "suggestedAction": "Question for Tj: a bigger Vigilant wallet raises concurrent bids one for one (to first order, more wallet is more concurrent bids). No rule change needed."
+  },
+  {
+   "kind": "FINE",
+   "title": "Fill rate 17 of 3,128 (0.54%) and 16 of 2,201 in 24 h is in line with the research and with the focus's own table",
+   "evidence": "diag L160: 16 fills vs 19.2 expected (yardstick MakerStats.fillChance, Poisson P(X<=16 | 19.2) = 0.28). 16 fills / 119.8 bid-hours = 0.134 per bid-hour (Poisson 95% CI 0.076-0.217); 17/3,128 = 0.54% (Wilson 0.34-0.87%); 16/2,201 = 0.73% (0.45-1.18%). Quick & likely's design table promises 8.5-10.5% of bids filling per bid-hour at prices 0.35-0.55 (QuickLikely.fillChancePerHour): the 7.6 QL bid-hours in the sample had 0 fills where about 0.76 were expected (P(0) = 0.47). Fills came 20 s to 5.6 min after posting (6 known delays: 20, 68, 101, 194, 299, 334 s).",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt:709-741 (MakerStats.fillChance / recent)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/QuickLikely.kt:40-48"
+   ],
+   "suggestedAction": "None; judge QL after about 150 QL bid-hours (3 hours of the 48-bid state): expect about 15 fills at 0.1/bid-hour."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "Bids that do not lead their side almost never fill (0.08% vs 0.92%), and the 'in line with the research' yardstick ignores that",
+   "evidence": "diag L159, L171: led their side 57% of 3,045 bids (about 1,736 led, 1,309 not); fills: 16 led, 1 behind. Fill rate led 16/1,736 = 0.92% (Wilson 0.57-1.49%) vs not led 1/1,309 = 0.08% (0.01-0.43%); Fisher exact p = 0.001, odds ratio 12 (the led count is rebuilt from the 57% line). Newest-300 sample (6 h): LOW_USAGE bids led 4 of 151 (2.6%; median 1.5 cents under the best bid) and 3 of those 4 filled while 0 of 147 non-led did; QUICK_LIKELY led 72 of 116 (62%) with 0 fills in 7.6 bid-hours. The yardstick (MakerStats.fillChance) treats every bid-hour as a competitive static prop bid at 4%; led share of bid-hours is about 57%, so the led-only expectation is about 10.9 for 16 actual fills (about 1.5x the research for bids that can fill), which the 'in line' verdict hides.",
+   "appFault": true,
+   "confidence": "medium",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt:724-741 (recent)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/BidReport.kt (summary splits)",
+    "MakerQuote.kt:362 (leads)"
+   ],
+   "suggestedAction": "Reporting only: count only led bid-hours in the yardstick and print posted counts and bid-hours next to every fills-by split. No bid rule change: leads-first ranking already exists."
+  },
+  {
+   "kind": "OPTIMIZE",
+   "title": "Question for Tj: Quick & likely bids all sit 17.9-23.2 h before the start where no fill has ever been recorded; fills came 0.5-8.6 h out",
+   "evidence": "Fills by minutes to start at posting: 0-2 h 5, 2-6 h 4, 6-8.6 h 8, over 8.6 h 0 of 17 (max 512 min; diag L192-195 buckets). All 116 QL bids in the sample were posted 1,074-1,390 min (17.9-23.2 h) out; LOW_USAGE 34-85 min; old ALL mode 82-128 min. Median gap between the bid and Novig's offer: fills 2.0 cents (12 of 17 within 3 cents) vs unfilled led QL bids 6.0 cents; among led bids 11 of 16 fills had a gap of 3 cents or less vs 5 of 83 unfilled led (Fisher p about 1e-7) - but gap and distance to the start are confounded (the unfilled sample is mostly QL far games), 17 fills are only 6 games, and the unfilled list is only the newest 300 of 3,111. Research 70.3 expects a bid re-quoted from 24 h out to fill 40-46% of sides over the whole day (about 0.02-0.03 per bid-hour averaged), far below the 0.134 per bid-hour seen overall, which is consistent with a hazard concentrated near the start. Other unfilled-vs-fill fields do not separate them: kind mix unfilled 80% prop / 20% team total vs fills 65% / 24% (+ 1 total, 1 period); oldest-quote age at posting LOW_USAGE fills 86, 53, 125 s vs LOW_USAGE unfilled median 121 s; book age median 28 s (fills) vs 15 s (unfilled); price band 0.40-0.60 for all unfilled, fills 0.16-0.59.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerQuote.kt:691-692 (quick comparator: no time-to-start term)",
+    "TASKS.md DA4 (trap guard hour options)"
+   ],
+   "suggestedAction": "Question for Tj (a ranking or window change, never a loosening): rank wanted bids nearer to the start first when the wallet cannot fund all (the 22:26-22:36 passes left 13-45 wanted bids unfunded), or use DA4's shorter window for bids. Do nothing until a day of QL is in: about 150 far bid-hours at 0.134/h would give about 20 fills if hazard is flat, vs about 3 at 0.02/h; 0-3 fills settles it."
+  },
+  {
+   "kind": "OPTIMIZE",
+   "title": "Question for Tj: in Quick & likely the Vigilant scan gap is a fixed 240 s, but a bid lives only (limit minus its OLDEST quote's age); Auto pace exists only for Low API usage",
+   "evidence": "ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS = 240 (used when lowUsageNow is false). QL scan finishes 22:26:56 (48 s), 22:29:22 (62 s), 22:32:52 (33 s), 22:36:52 (32 s), 00:05:19 (32.4 s; started about 00:04:47). A QL bid's oldest quote at posting: median 179 s, p90 382 s, max 450 s (newest quote median 41 s, p90 229 s; 38% of QL bids over 300 s old; 5.9 books on average, 105 of 116 'Pinnacle in the fair') so the freshness limit (600 s beyond 3 h, 300 s inside, Freshness.maxAgeMs) leaves a median planned life of 421 s but p10 218 s. The 12:05 cohort: all 48 bids priced from quotes about 375 s old (median), life about 225 s. OBSERVED at the file's end: 44 bids were resting at 00:08:12 (4 had been cancelled at 00:06:59); by 00:08:19 33 of the 44 (75%) were taken down in one pass, 2 min 49 s after posting (15 CANCELED in the same ms 00:08:19.517 with 'fair goes old within a minute' + 18 CANCELING), 11 still resting: the all-cancel-together pattern again, here in QL with old quotes. INFERRED: the next scan was due about 00:08:41-46 and ends about 00:09:15, so about a minute with few bids per 4.5-min cycle (about 75% duty); the sample ends at 00:08:19. No evidence yet for games inside 3 h in QL (limit 300 s vs 240 s gap + 32-62 s scan).",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/ScanSettings.kt:703,852",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt:405",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/LowUsageBids.kt:43-44",
+    "MakerQuote.kt:447-452"
+   ],
+   "suggestedAction": "Question for Tj, not an action: (a) give QL the Auto pace for games inside 3 h (costs ParlayAPI credits, 60 per league-hour near per RESEARCH 93.2, while the Runway check already says ParlayAPI is SHORT: 16,637 left, ends Oct 31 at this pace); (b) whether a bid's life should follow the sharp anchor's age instead of the oldest of 6-10 books is a freshness rule, so ask before touching it (it would add a median 101 s of life per QL bid; the picked-off rate needs about 100 judged fills, about 750 bid-hours, to be trusted). Check the next file for bid-hours of bids under 3 h."
+  },
+  {
+   "kind": "OPTIMIZE",
+   "title": "Question for Tj: the scan-credit budgets, not the 10-min ttl, cap how many fresh fairs (hence bid-hours) a day can buy: ParlayAPI about 16 full scans a day, PinnWire 120, PropLine 333",
+   "evidence": "diag L295-305 (Runway): ParlayAPI 3,363 of 20,000 credits used, 16,637 left, resets Nov 1, 'a scan costs 40 -> 500 a month', health WARN 'won't last to its reset' (ends Oct 31); PinnWire 'a scan costs 5 -> 20 a day per key, 120 with 6 keys'; PropLine 'a scan costs 9 -> 333 a day with 3 keys'. Last scan cost (diag L309): ParlayAPI 15 requests = 40 credits. 16,637 credits / about 26 days = about 640 a day = about 16 full scans a day (one per 90 min) against the 240 s gap Quick & likely scans at (up to 15 an hour = 600 credits an hour: a day's share gone in about 64 minutes of continuous scanning, CreditPace then holds ParlayAPI back, 'back tomorrow'); PinnWire's 120 a day is one per 12 min (8 h at a 240 s gap); PropLine 333 a day is 92% of 360. Observed: 4 scans in 11 min at 22:26-22:37 (up to 160 credits) and 1 at 00:05. 5 of the last scan's 17 ParlayAPI fetches are the '1st half' source that matched 0 Novig games (diag L255, WATCH #9) at 2 credits a call (PARLAY_API.md 6.7) = about 10 of the 40 credits (25%), an inference. Each scan buys a bid cohort 3.7-7 min of life (QL oldest-quote age 179 s median at 600 s limit), so 16 ParlayAPI-funded scans a day buy at most about 16 x 7 min x 48 bids = about 90 bid-hours, the same order as the 119.8 observed. What QL's bids do when ParlayAPI is held back (105 of 116 anchor on Pinnacle, the rest Kalshi; they need 2+ books) is NOT visible in this file.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Usage.kt:413-450 (CreditPace.floor, spendableToday)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt:405",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/ScanSettings.kt:852",
+    "RESEARCH.md section 93.2 (credit cost, Pro plan 5x)"
+   ],
+   "suggestedAction": "Question for Tj, nothing to change now: (1) turn off the ParlayAPI 1st-half source while it matches 0 games (saves about 10 of 40 credits a scan, about +33% more scans a month); (2) decide whether QL should scan every 240 s (the credits do not last) or on a slower, credit-paced cadence, or buy ParlayAPI Pro ($20, 5x credits, RESEARCH 93.2); (3) next file: read 'ParlayAPI held back' and 'Source ParlayAPI' health lines on a QL day to see what the credit pace does to bids."
+  },
+  {
+   "kind": "FINE",
+   "title": "Fill quality: CLV +2.6% on 16 closes, results -0.10 on 32.18 staked, picked-off 0 of 5 judged - good but only 6 games",
+   "evidence": "17 fills, only 6 distinct games (fills per game 7, 3, 3, 2, 1, 1: 7 of the 17 are one game), 7 won 10 lost. CLV +2.57% on 16 closes, beat the close 12 of 16 (75%); game-cluster bootstrap 95% CI +1.6% to +4.7% (6 clusters: unreliable), game-mean t-test t=2.87 df=5 p=0.035, one-sided sign test p=0.038: the chance of this under 'no edge' is about 3-4%, with n this small. Only 15 captured-before-start closes: +2.1% (73% beat); the one Novig-trades close (8 trades) +9.5%. Results: -0.10 on 32.18 (-0.3%) vs +1.34 expected at the fair (sum of stake x EV at post 4.19%), SD 8.9, z -0.16; wins 7 vs 7.85 expected. Close fair minus fair at post: mean -0.43 cents, only 3 of 16 moved toward the bid. Picked off 0 of 5 judged (12 not judged: older fills predate the field or no scan priced the side within 45 min of the fill; exact 95% upper bound for 0 of 5 is 45%). Splits (all tiny): PROP 11 fills CLV +2.2% (10 closes, 70% beat), team total 4 +3.4% (100%), period 1 +9.5%, total 1 -4.5%; Pinnacle in the fair 9 fills +3.8% (88% of 8) vs 8 others +1.3% (62%); within 2 h 5 fills +3.5%, 2-6 h 4 fills -0.2%, 6-8.6 h 8 fills +3.5%. In line with research 70.3 (+3.1% EV at close per fill at w=0.25 and a 4% margin). 3 LOW_USAGE fills (one game): all lost, -5.73 on 5.73, CLV +1.5%.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/BidReport.kt",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerGuard.kt"
+   ],
+   "suggestedAction": "Say 'the data suggests' only. About 200 fills with a close (about 1,500 bid-hours) or about 50 games would settle whether maker CLV is +2.6% or +0.4% like Tj's CNO takers (+0.4% on 547 closes)."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "Misleading split: 'no sharp book in the fair: 11 fills' - 10 of those 11 had a sharp book (7 Pinnacle, 3 Kalshi)",
+   "evidence": "diag L186-188: 'no sharp book in the fair: 11 fills, CLV +3.4%, results +8.37' vs 'sharp book in the fair: 6 fills, CLV +1.3%, results -8.47'. BidReport splits on sharpAtPost != null, a field absent on bids before v0.67; by fair basis (study_filled_bids): sharpAtPost missing = 7 'Pinnacle in the fair' + 3 'exchange sharp only (Kalshi)' + 1 'books' average only'. A reader would conclude sharp books hurt (-8.47 vs +8.37); all 17 fills were in fact 16 with a sharp basis and 1 without (CLV +3.8% on 9 Pinnacle fills (8 closes) vs +1.3% on 8 others).",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/BidReport.kt:183"
+   ],
+   "suggestedAction": "Split on the recorded fair basis (fairBasis) and print 'not recorded' for bids older than the field."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "Health WATCH 'most fills came within 2 minutes of posting' fires on 3 of 6 and contradicts its own evidence",
+   "evidence": "HealthChecks.kt:145 requires only fast.size >= 6 and count(<120 s) x 2 >= size: 3 of 6 is exactly 50%, not 'most'. Only 6 of 17 fills have a delay recorded (20, 68, 101, 194, 299, 334 s). The warning says fast fills are 'moving away', but 0 of 5 judged were picked off and the three fast fills (under 2 min) had CLV +3.0%/+2.4% (3 closes, all beat) vs -0.1% (3 closes, 33% beat) for the 2-10 min fills (diag L95-98 finding #16, L125, L173-175).",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/HealthChecks.kt:144-146"
+   ],
+   "suggestedAction": "Need at least 10 recorded delays, a strict majority, and either a picked-off fill or EV-at-fill below EV-at-post before saying it."
+  },
+  {
+   "kind": "WATCH",
+   "title": "maker.json is rewritten whole (with fsync) on every bid update and keeps 14 days: it will outgrow a full-speed Quick & likely run in days",
+   "evidence": "diag L912: maker.json 3,429 KB of 5,651 KB total = 1.10 KB per recorded bid x 3,128. JsonFileStore.update re-encodes the whole list and fsyncs per call (L42-76); placeOne does 2 updates per bid, cancelBids one per cancel and more on confirm. Singles are spaced 0.274 s apart with a 107 ms average /v3/orders first byte (diag L594), so about 80 ms per update at 3.4 MB (inference). At the 12:05 state (48 up, mean life 3.3 min) that is about 870 posts/hour = about 20-23 MB/day, and KEEP_MS is 14 days (MakerStore): about 300 MB by day 14, about 0.5 s per update at 20 MB and about 1 s per bid; the heap is a fixed 512 MB (diag L545). EXTRAPOLATION, not observed: at 2.4 MB/day so far it was harmless.",
+   "appFault": true,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/store/JsonFileStore.kt:42-76",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerDesk.kt:153-161 (MakerStore, KEEP_MS)"
+   ],
+   "suggestedAction": "Before a multi-day QL run: keep ended bids older than a day in an append-only journal (as StudyJournal does) and only live bids in maker.json; watch the STORAGE line (maker.json) in the next file."
+  },
+  {
+   "kind": "FINE",
+   "title": "The 2,941 slow-downs are not the bid desk: 0 HTTP 429 on /v3/orders; place and cancel use a small share of their buckets",
+   "evidence": "diag L591-598: api.novig.com 161,262 calls, 429 x2,941 (Retry-After 1), 451 x360. /v3/orders 6,336 calls, 167 failed = 451 x145, dns x13, timeout x1 (no 429); /v3/orders/{id} 5,900 calls; 1,262 of the 429s are on /v3/public/catalog/markets/... (3,138 failed there), the rest on routes the file does not list. Timeline: 429 bursts at 20:21:36 (x3) and 20:31:55 (x25), right after the key route stood down for HTTP 451 and reads fell back to the public route (6 a second). Desk traffic: 2,201 posts in 24 h, peak 48 in about 22 s (2.4/s vs 8/s refill and 256 burst for place; cancel 16/s, 256 burst); 32 cancels at STOP in 1 s. Roll-forward churn: about 880 re-posts a day = about 1,760 order calls: negligible.",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/RateGate.kt"
+   ],
+   "suggestedAction": "None for the bids. The 429s belong to the key-route 451 fallback (network slice)."
+  },
+  {
+   "kind": "FINE",
+   "title": "No money was left exposed by cancels: STOP ALL took 32 bids down in the same second; 451 and DNS outages hit while no bid was up",
+   "evidence": "Kill switch ON 22:37:11 (diag L892); the 32 QL bids 'Stopped by the kill switch' ended 22:37:11.427 (study_bids_summary L55: 42 all-time). Every bid carries a Novig ttl (min of 10 min, fair freshness, start minus 15 min), so a cancel that cannot reach Novig still ends it within 5-10 min (MakerDesk.bidFor). HTTP 451 on /v3/orders at 20:21:43-20:22:55 (5) and 22:24:19-22:25:04 (3) and DNS failures 19:33-20:23: no bid was up then (the last sample bid ended about 19:28:30, the first QL bid was posted 22:26:29). Newest 300: 271 CANCELED, 18 CANCELING (cancel queued at 00:08:19, confirmation pending), 11 RESTING, 0 REFUSED, 0 LOST. The diag shows 44 resting at 00:08:12 and the study 11 resting + 18 canceling at 00:08:19 (15 more cancelled in between). CORRECTION to RESEARCH 94.1: the 'Auto-make switched off x97' (24 h) are Tj's switch-off (VigilantApp.kt:708 cancelAuto), not the 8:21 STOP - no bid was up at 8:21 PM and the count was already 97 in the 8:44 PM file; 'Cancelled by you' x80 (24 h) / x121 are the Cancel-all button (MainViewModel.kt:1507); maker.trimmed 18 in 4 days = bids dropped because the wallet fell short.",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/KillSwitch.kt:111",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt:701-710",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerDesk.kt:477-497 (bidFor ttl)"
+   ],
+   "suggestedAction": "Fix the attribution sentence in RESEARCH.md section 94.1 when the analysis is written up."
+  },
+  {
+   "kind": "FINE",
+   "title": "The auto-bet is not blind or stuck: '0 looked at, 0 met your criteria, skipped 2 (more than 24 h)' is the right answer for a thin 12:05 AM board",
+   "evidence": "diag L148,156: last check just now; Auto-bet ON, kill switch off since 00:04:41 (3.5 min before the file). AutoBettor candidates = CNO's list rows at or over the auto-bet's 2.5% with a book page read and a Novig price from the last minute (AlertPicks.cnoChecked); AlertPicks.tooEarly counted exactly 2 CNO rows at or over 2.5% that start more than 24 h out, and the trap guard (24 h) removed them, so looked = 0. CNO read 10 rows, the app's feed has 5 bets (diag L250, L314). Counters since Oct 2 (diag L706-711): 7,317 cycles, 2,766 auto-bet runs with at least one bet looked at (counted only when looked > 0), 6,696 looks, 564 passes, 111 placed, 124 alerts; skip reasons led by 'ProphetX says not +EV at Novig's price' 1,180 and 'ProphetX gives under the veto's 1.0%' 206 (the sharp veto working), '1 book prices both sides' 914. Dollars staked by the 99 how=auto bets per day: Oct 2 38.68 (22 bets), Oct 3 57.13 (32), Oct 4 57.14 (32), Oct 5 22.95 (13) vs the $500 limit. The 4 h 10 min with no bet of any kind after Oct 5 7:57:24 PM is explained by the DNS/451/timeout outage, the kill switch (87.5 min ON before the file) and closed app; the study log (which only logs while the app reads CNO) shows 10 new app-listed bets 19:57-22:37 with 0 at or over 2.5% EV, and 3 in 22:37-00:05 with 1 at or over 2.5%. Background auto-scan: running, 9 late cycles of 7,328, worst 7 min at 8:21 PM (the 451/DNS outage).",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoBettor.kt:148-190 (run: candidates, trap guard, skips)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoBettor.kt:626-632 (autobet.runs only when looked > 0)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt:44-61 (cnoCandidates, tooEarly)"
+   ],
+   "suggestedAction": "None."
+  },
+  {
+   "kind": "WATCH",
+   "title": "By design the auto-bet's only candidates are CrazyNinjaOdds' list rows; Vigilant's own scan finds bets it never auto-bets",
+   "evidence": "All 99 bets with how=auto in EVERY BET have scanner=cno; Vigilant scanner bets are 6 'bid', 23 'sheet' (by hand), 88 older/unmarked. At 12:04 AM Vigilant's scan listed 27 +EV sides and 5 feed bets (diag L248, L250) while the auto-bet looked at 0 (its pool is CNO's 10 rows, 2 at or over 2.5%). Only the Pinnacle-only mode (off, diag L504-506) feeds Vigilant's scan to the auto-bet. The CNO list itself is Tj's filtered Shared View (10 rows; wide read finds 49).",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoBettor.kt:166 and :290 (runPinnacle)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt:44-61"
+   ],
+   "suggestedAction": "Question for Tj only if he wants more auto-bets: whether Vigilant's own +EV sides that pass the same rules (2.5% edge, 3 books agree, the sharp veto) should reach the auto-bet; evidence would be the study's src=v bets at or over 2.5% first-look EV with a close (n and CLV by the strategy analysts)."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "The bid study cannot compute fill rates by feature: the unfilled list is the newest 300 of 3,111 and no split prints its denominator",
+   "evidence": "study_unfilled_bids.jsonl has 300 rows (9.6% of the 3,111 unfilled; posted 18:06:57-00:05:30, the newest 6 h) while 14 of 17 fills are older, so fills and non-fills never cover the same period; diag 'fills by ...' tables (L172-212) list fills only (n=17) with no bids-posted or bid-hours per band, so 'fill rate by time to the start / gap to the offer / led / kind' is not computable beyond the 6-hour sample (3 fills in it, all LOW_USAGE).",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/BidReport.kt:176-212 (summary splits)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/study/StudyExport.kt (bids section)"
+   ],
+   "suggestedAction": "Add per-band posted counts and bid-hours up (numbers only: by minutes to start, gap to offer in cents, led, kind, focus, oldest-quote age) to the Diagnostics and study bid sections; keep the newest-300 rows as examples."
+  }
+ ]
+}
