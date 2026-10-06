@@ -15,7 +15,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -101,7 +100,6 @@ class BurstRecorderTest {
         // t = 1,000: the moneyline's NO side is re-bid at 0.461 (YES now costs 0.539): the cover pays.
         r.push("ml", remove("ml-b", 420, 40_000), add("ml-b", 461, 40_000))
         runCurrent()
-        println("DEBUG status=${r.recorder.status.value} watched=${r.feed.watched}")
         assertEquals(1, r.recorder.status.value.open)
         // t = 1,300: the makers fix the spread: the cover is gone.
         advanceTimeBy(300); runCurrent()
@@ -111,7 +109,7 @@ class BurstRecorderTest {
         r.push("ml", add("ml-a", 380, 100))
         advanceTimeBy(1_000); runCurrent()
         r.recorder.stop()
-        advanceUntilIdle()
+        runCurrent()
         val ws = r.journal.readAll().filterIsInstance<WindowRecord>()
         assertEquals(1, ws.size)
         val w = ws.single()
@@ -144,7 +142,7 @@ class BurstRecorderTest {
         r.calm()
         advanceTimeBy(60_000); runCurrent()
         r.push("ml", add("ml-b", 440, 10))      // a better bid but the cover still costs more than a dollar
-        r.recorder.stop(); advanceUntilIdle()
+        r.recorder.stop(); runCurrent()
         assertEquals(0, r.journal.readAll().filterIsInstance<WindowRecord>().size)
         assertEquals(0, r.recorder.status.value.windows)
     }
@@ -153,7 +151,7 @@ class BurstRecorderTest {
     fun `the echo probe measures the signed round trip, and a fill the books showed against the same trade's engine time measures the push delay`() = runTest {
         val r = rig(echoMs = 40L, probeEveryMs = 100L)
         r.recorder.start(setOf("NFL"), 0.0)
-        runCurrent()
+        advanceTimeBy(50); runCurrent()
         assertEquals("the signed echo's round trip", 1, r.recorder.latency.roundTrips())
         r.calm()
         advanceTimeBy(500); runCurrent()
@@ -167,7 +165,7 @@ class BurstRecorderTest {
         // The same trade listed again is not a second sample.
         advanceTimeBy(1_000); runCurrent()
         assertEquals(1, r.recorder.latency.pushDelays())
-        r.recorder.stop(); advanceUntilIdle()
+        r.recorder.stop(); runCurrent()
     }
 
     @Test
@@ -190,7 +188,7 @@ class BurstRecorderTest {
         assertTrue("two snapshots and a delta were pushed", g.updates >= 3)
         assertEquals("the open window was closed and written when the game left", 1, all.filterIsInstance<WindowRecord>().size)
         assertEquals(0, r.recorder.status.value.games)
-        r.recorder.stop(); advanceUntilIdle()
+        r.recorder.stop(); runCurrent()
     }
 
     @Test
@@ -214,8 +212,7 @@ class BurstRecorderTest {
         r.push("ml", remove("ml-b", 420, 40_000), add("ml-b", 461, 40_000))
         advanceTimeBy(500); runCurrent()
         r.recorder.stop("stopped by the test")
-        advanceUntilIdle()
-        println("DEBUG2 closed=${r.feed.closed} running=${r.recorder.running} status=${r.recorder.status.value} journal=${r.journal.readAll().size}")
+        runCurrent()
         assertTrue(r.feed.closed)
         assertEquals(1, r.journal.readAll().filterIsInstance<WindowRecord>().size)
         assertEquals(1, r.journal.readAll().filterIsInstance<GameRecord>().size)
@@ -226,7 +223,7 @@ class BurstRecorderTest {
         r.recorder.start(setOf("NFL"), 0.0)
         runCurrent()
         assertEquals(0, r.recorder.status.value.windows)
-        r.recorder.stop(); advanceUntilIdle()
+        r.recorder.stop(); runCurrent()
     }
 
     @Test
