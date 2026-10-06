@@ -101,6 +101,7 @@ class BurstRecorderTest {
         // t = 1,000: the moneyline's NO side is re-bid at 0.461 (YES now costs 0.539): the cover pays.
         r.push("ml", remove("ml-b", 420, 40_000), add("ml-b", 461, 40_000))
         runCurrent()
+        println("DEBUG status=${r.recorder.status.value} watched=${r.feed.watched}")
         assertEquals(1, r.recorder.status.value.open)
         // t = 1,300: the makers fix the spread: the cover is gone.
         advanceTimeBy(300); runCurrent()
