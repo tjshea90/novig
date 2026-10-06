@@ -1,0 +1,293 @@
+{
+ "lens": "APP FEASIBILITY AND SAFETY (adversarial verifier, verify-2-feasibility)",
+ "rule": "R6 Stack: R1 (first look inside [2,360] min with EV>=2.5%) and first seen inside the window (m0<=360) and plus-money (cost<0.50)",
+ "numbers_reproduced": "MATCHES the builder: R6 119 bets, 40 games, 74 closes in 32 games, CLV +3.21% [+2.30%, +4.53%] (builder +3.21% [+2.33%, +4.45%]; bootstrap noise), beat the close 81%; 52.7 bets/day over the 2.256-day span; R1 184 bets/44 games, 116 closes/40 games, CLV +2.54% [+1.77%, +3.52%]; R6 minus R1-rest +1.84 pts [+0.80, +3.23] on 74 vs 42 closes. ROI at first-listed price -2.9% to -3.1% on 114-115 settled bets in 38 games (49-65 W-L, 4 open), game-clustered CI [-26.6%, +22.8%] (builder -2.89%). Halves: builder's 2.43%/3.43% reproduce exactly when the date split is made on bets WITH A CLOSE (cut Oct 3|Oct 4: 16 vs 58 closes); split on all 2080 bets (cut Oct 4) gives +3.11% (62 closes/28 games) and +3.75% (12 closes/4 games): positive on both, but the second half is 4 games. Close sources of the 74 closes: Tracker 52, Novig last trades 18, ESPN 3, Pinnacle 1; 45 of 119 bets (38%) have no close (39 props, 4 totals, 1 spread, 1 period).",
+ "survives": false,
+ "reason": "Fails on feasibility and on what the evidence can show, though it does not loosen any limit when applied as an extra filter. (1) As defined, 73 of the 119 bets (61%) cannot be placed by today's auto-bet without loosening a rule: 29 have their qualifying look only in the wide read (not in the app's list), 15 are totals/team totals/period bets (kinds are props, moneylines, spreads), 30 are longer than Tj's +130 cap (18 over the preset's +150), 39 never had a book page read, 7 have a sharp-VETOED first book page. The part the app may place is 46 bets/18 games/20.4 a day, not 119/40/52.7. (2) Inside that feasible set the stack adds little: re-simulated with the app's own procedure (c-list look, EV 2.5-15%, odds<=+130, >=4 CNO books, a book page already read with >=2 two-sided and >=3 agreeing, not vetoed, placed at the first passing look), the 6-hour rule alone gives 63 bets/23 games, CLV +2.98% [+2.41%, +3.67%], and the stack 43 bets/15 games, +3.48% [+2.91%, +4.30%]: +0.5 pts. The 20 bets it drops still have CLV +1.90% [+0.75%, +2.96%] (19 closes/12 games), so expected edge (stake x CLV) falls from $1.58 to $1.28 a day (-19%). (3) The 'fresh' piece (the only part that needs new code) is not shown: inside the feasible set fresh vs not fresh is +0.46 pts [-1.34, +2.30] (54 vs 9 closes, 24 vs 7 games); on bets with a RELIABLE first look (not after a >=60-min scan gap, not in the study's first hour, not a game inside 6 h of the study start) fresh vs not fresh is +0.08 pts [-1.25, +1.86]; R6's edge sits in bets first seen right after long scan gaps (37 bets, 26 closes/16 games, +4.63% [+3.58%, +5.70%]) while the other 82 show +2.44% [+1.60%, +3.98%]. The scanner covered only 51% of the study's minutes (9 gaps of 60+ min = 1,482 min), so 'first seen' means 'first seen by this phone'. (4) 70% of R6's closes (52 of 74) are Tracker closes that exist only for bets Tj/the app placed (53 of 119 placed); the 22 non-Tracker closes show +1.56% [+0.58%, +3.27%]; against Novig's own last price (29 R6 bets) R6 is +2.34% [+0.67%, +4.48%] vs R1-rest +3.39% [+1.56%, +5.08%] (19 bets): difference -1.05 pts [-3.33, +2.12], so the stack's advantage does not replicate on the one independent close available. The one piece with a real signal inside the feasible set is plus-money (+3.23% on 52 closes/21 games vs +0.94% on 11 closes/9 games, diff +2.29 pts [+0.75, +4.28]); it needs a new -100 chip, and is a question for Tj, not the stack.",
+ "caveats": [
+  "No safety limit is loosened IF R6 is applied only as an extra filter on top of Tj's current auto-bet rules: EV>=2.5% equals autoBetMinEv, trap guard 24h->6h and plus-money-only and first-seen<=6h are all tightenings. Reaching the study's 119 bets would need a looser odds cap (up to +809), totals/period kinds, no book check, or the hidden wide-read rows: a fail.",
+  "Existing machinery: window = ScanSettings.trapEarlyHours (data/.../scanner/ScanSettings.kt:372; TrapGuard.DEFAULT_EARLY_HOURS = 6; Tj's phone is on 24; typed hours allowed). EV floor = autoBetMinEv 2.5% (Presets.VOLUME). Plus-money: AutoBet.rules() already clamps autoBetMinOdds to <= -100 and tooShort() rejects every price shorter than that, but AUTO_BET_MIN_ODDS_CHOICES (ScanSettings.kt:936) is [0,-150,-200,-250,-300] and the Chips UI (app/.../ui/AutoBetUi.kt:362) has no typed field: a -100 chip is a small code change, not a setting. Fresh/first-seen: no code holds a per-bet first-seen (AutoBettor.run lines 166-181 and AlertPicks.cnoCandidates in AutoScan.kt:35-41 judge each row from the current scan only); the scan-study journal (data/.../study/ScanStudy.kt, StudyJournal) has it but is not wired to the auto-bet, and depends on the wide-read switch.",
+  "Dollars: stake = 1/4 Kelly of the bankroll setting, capped at the auto-bet's own $3.50 (the API per-bet cap is $5): R6 median stake $1.64, mean $1.76, total about $93 a day if all 119 were placed (max one day $116, max one game $42.7 with 23 bets, peak open $60); 5 of 119 (4.2%) had fewer Novig dollars available than the stake (median available $47). None of $5/bet, $500/day, $70/game binds on bets alone; the binding limits are the rules (book check on the top 10 only, MAX_PER_CYCLE 5, one bet per market) and the per-game budget shared with resting bids (378 per-game skips in the counters).",
+  "Bets a day: study 52.7 (R6 as defined) vs 20.4 (46 bets/18 games, first-look prices) or 19.1 (43 bets/15 games, app-procedure sim) feasible; the sim over-places versus the app's own record (sim of today's settings 43 a day vs 27.8 a day recorded: 111 placed in 4 days), so expect about 12-19 a day for the stack, about 28 a day for the 6-hour rule alone.",
+  "Information at decision time: no look-ahead in the rule itself (EV, price and m0 are all known when the look happens) and the close is not used to choose. Book pages are read only for the best 10 candidates (AUTO_BET_CHECK_TOP=10, page valid 5 min): only 78 of 119 R6 bets had a page by the chosen look plus 4 min; E6 needs it. Timing: the rule's bets are late (R6 median 58 min to start; 24 of 119 inside 10 min, 4 inside 5 min; 16 of 43 sim placements inside 20 min), so the order must clear the price tolerance and the 1-minute pregame lead in the last minutes (AutoBettor.MIN_LEAD_MS 60 s vs the rule's 2 min).",
+  "Closes: 62% of R6 has one, 70% of those are the Tracker's read of CNO's books before the start, only for bets that were placed (52 of 53 placed R6 bets have one; 22 of 66 unplaced do). A rule that selects different bets than the app places will get its closes from Novig's last trades (CLV +1.17% [-0.07%, +3.00%], 18 closes) or nothing: 39 of the 45 no-close R6 bets are props whose Pinnacle close is not in ParlayAPI. So the rule cannot be evaluated on the bets it would add.",
+  "Against what is placed today (245 bets, 229 closes/48 games, CLV at the placed price +1.05% [+0.06%, +2.16%]) most of the gain is the 6-hour window, which is an existing setting: placed bets first listed <=360 min before the start +2.49% (101 closes/38 games) vs >360 min -0.09% (128 closes/26 games); placed bets in the feasible stack +3.79% (36 closes/17 games) vs the other 209 placed +0.54% [-0.70%, +1.80%].",
+  "Days: R6 CLV by look day +2.43% (16 closes, Oct 3), +3.34% (46, Oct 4), +3.75% (12, Oct 5); R1-rest +2.44% (4), +0.91% (32), +3.11% (6): the contrast is mostly Oct 4. R6 first seen 12-17h ET +4.25% [+3.15%, +5.47%] (39 closes/23 games) vs 18-23h ET +2.04% [+1.18%, +3.79%] (32/16): a time-of-day / scanner-uptime pattern that the rule cannot separate from freshness in 2.26 days.",
+  "Wide-read dependence: if freshness used only the app's own list (c looks), 8 more bets would count as fresh (R6 127 instead of 119; those 8 show +1.83% on 6 closes); feasible E1 fresh 60 instead of 56 of 66.",
+  "What would settle it: the standard error of E6 vs the dropped bets is now about 0.56 pts (42 vs 19 closes, 15 vs 12 games, 5.3 dropped-arm games a day). A true 1-pt difference needs about 30 dropped-arm games (about 6 days) and a 0.5-pt increment about 115 dropped-arm games (about 3 weeks, 400+ closes), with the scanner running at 90%+ uptime so 'first seen' is trustworthy, and a Pinnacle/ESPN or Novig-own close recorded for unplaced bets too (log novigClose for every study bet, not only tracked ones).",
+  "Any change that decides which bets are placed is a question for Tj: (a) trap guard 24h -> 6h (existing setting, tightening; evidence above, separate candidate); (b) a -100 'plus money only' min-odds chip (tightening; the minus-odds side of the feasible set is only 11 closes/9 games, so +2.3 pts needs many more closes there to confirm); (c) a first-seen rule only after the scanner runs near-continuously. Do not ship R6 as a stack."
+ ],
+ "evidence": {
+  "funnel_R6_cascade_bets": {
+   "R6_as_defined": 119,
+   "app_list_carried_it_by_then": 90,
+   "kind_prop_ml_spread": 78,
+   "odds_le_130": 69,
+   "ev_le_15pct": 69,
+   "cno_books_ge4": 68,
+   "book_page_by_then_2sided_3agree": 49,
+   "sharp_not_vetoed_E6": 46
+  },
+  "R6_individual_blocks": {
+   "wide_read_only": 29,
+   "kind_excluded": 15,
+   "odds_gt_130": 30,
+   "odds_gt_150": 18,
+   "no_book_page_ever": 39,
+   "sharp_vetoed_first_page": 7
+  },
+  "E1_feasible_universe": {
+   "bets": 66,
+   "games": 25,
+   "per_day": 29.3,
+   "closes": 63,
+   "clv": 0.0283,
+   "ci": [
+    0.0216,
+    0.0364
+   ]
+  },
+  "E6_feasible_stack": {
+   "bets": 46,
+   "games": 18,
+   "per_day": 20.4,
+   "closes": 44,
+   "clv": 0.0334,
+   "ci": [
+    0.0265,
+    0.043
+   ],
+   "close_src": {
+    "tracker": 36,
+    "novig_trades": 8,
+    "none": 2
+   },
+   "clv_tracker": 0.0392,
+   "clv_novig_trades": 0.0076
+  },
+  "app_sim": {
+   "current_trap24": {
+    "bets": 97,
+    "games": 29,
+    "per_day": 43.0,
+    "clv": 0.0221,
+    "ci": [
+     0.012,
+     0.0315
+    ],
+    "stake_per_day": 80.5,
+    "edge_per_day": 1.87
+   },
+   "trap6": {
+    "bets": 63,
+    "games": 23,
+    "per_day": 27.9,
+    "clv": 0.0298,
+    "ci": [
+     0.0241,
+     0.0367
+    ],
+    "stake_per_day": 51.3,
+    "edge_per_day": 1.58
+   },
+   "plus_only": {
+    "bets": 52,
+    "games": 18,
+    "per_day": 23.0,
+    "clv": 0.0335,
+    "ci": [
+     0.0282,
+     0.0415
+    ],
+    "stake_per_day": 42.3,
+    "edge_per_day": 1.44
+   },
+   "fresh_only": {
+    "bets": 53,
+    "games": 22,
+    "per_day": 23.5,
+    "clv": 0.0299,
+    "ci": [
+     0.0235,
+     0.0376
+    ]
+   },
+   "stack": {
+    "bets": 43,
+    "games": 15,
+    "per_day": 19.1,
+    "clv": 0.0348,
+    "ci": [
+     0.0291,
+     0.043
+    ],
+    "stake_per_day": 35.3,
+    "edge_per_day": 1.28
+   },
+   "stack_vs_dropped": {
+    "diff_pts": 1.57,
+    "ci": [
+     0.59,
+     2.78
+    ],
+    "dropped_bets": 20,
+    "dropped_closes": 19,
+    "dropped_games": 12,
+    "dropped_clv": 0.019
+   },
+   "beyond_6h_part_of_current": {
+    "bets": 34,
+    "games": 17,
+    "clv": 0.0076,
+    "ci": [
+     -0.0247,
+     0.0329
+    ]
+   }
+  },
+  "components_in_feasible_set": {
+   "plus_vs_not_plus_diff_pts": 2.29,
+   "plus_ci": [
+    0.75,
+    4.28
+   ],
+   "plus_closes": 52,
+   "notplus_closes": 11,
+   "fresh_vs_notfresh_diff_pts": 0.46,
+   "fresh_ci": [
+    -1.34,
+    2.3
+   ],
+   "fresh_closes": 54,
+   "notfresh_closes": 9
+  },
+  "first_seen_reliability": {
+   "scan_minutes_covered_share": 0.51,
+   "gaps_ge60min": 9,
+   "gap_minutes": 1482,
+   "R6_after_gap": {
+    "bets": 37,
+    "closes": 26,
+    "games": 16,
+    "clv": 0.0463
+   },
+   "R6_not_after_gap": {
+    "bets": 82,
+    "closes": 48,
+    "games": 22,
+    "clv": 0.0244
+   },
+   "R6_reliable_only": {
+    "bets": 62,
+    "closes": 33,
+    "games": 10,
+    "clv": 0.0231,
+    "ci": [
+     0.0147,
+     0.047
+    ]
+   },
+   "R1_minus_that": {
+    "bets": 122,
+    "closes": 83,
+    "games": 38,
+    "clv": 0.0264
+   },
+   "diff_pts": -0.32,
+   "diff_ci": [
+    -1.3,
+    2.07
+   ],
+   "fresh_reliable_vs_notfresh_pts": 0.08,
+   "fresh_reliable_vs_notfresh_ci": [
+    -1.25,
+    1.86
+   ]
+  },
+  "close_independence": {
+   "R6_tracker": {
+    "closes": 52,
+    "games": 23,
+    "clv": 0.0391
+   },
+   "R6_non_tracker": {
+    "closes": 22,
+    "games": 15,
+    "clv": 0.0156,
+    "ci": [
+     0.0058,
+     0.0327
+    ]
+   },
+   "R1rest_tracker": {
+    "closes": 23,
+    "games": 16,
+    "clv": 0.0254
+   },
+   "R1rest_non_tracker": {
+    "closes": 19,
+    "games": 13,
+    "clv": -0.0004
+   },
+   "novig_own_close_R6": {
+    "n": 29,
+    "games": 15,
+    "clv": 0.0234,
+    "ci": [
+     0.0067,
+     0.0448
+    ]
+   },
+   "novig_own_close_R1rest": {
+    "n": 19,
+    "games": 13,
+    "clv": 0.0339,
+    "ci": [
+     0.0156,
+     0.0508
+    ]
+   },
+   "novig_own_close_diff_pts": -1.05,
+   "novig_own_close_diff_ci": [
+    -3.33,
+    2.12
+   ]
+  },
+  "placed_today": {
+   "bets": 245,
+   "closes": 229,
+   "games": 48,
+   "clv_at_placed_price": 0.0105,
+   "ci": [
+    0.0006,
+    0.0216
+   ],
+   "first_look_le360": {
+    "closes": 101,
+    "clv": 0.0249
+   },
+   "first_look_gt360": {
+    "closes": 128,
+    "clv": -0.0009
+   },
+   "placed_in_E6": {
+    "n": 36,
+    "clv": 0.0379
+   }
+  },
+  "stakes": {
+   "kelly_median": 1.64,
+   "stake_median": 1.64,
+   "stake_mean": 1.76,
+   "R6_total_per_day": 93.0,
+   "max_day": 116.4,
+   "max_game": 42.7,
+   "max_bets_in_game": 23,
+   "available_median": 47.0,
+   "share_available_below_stake": 0.042,
+   "E6_total_per_day": 38.3,
+   "E6_max_game": 24.0,
+   "R6_peak_open": 60.1
+  }
+ }
+}
