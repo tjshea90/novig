@@ -635,10 +635,10 @@ private fun LowUsagePanel(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSett
             }
         }
         Text(LowUsageText.booksNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("lowUsageBooksNote"))
-        Text("Vigilant's scan runs at most every", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
+        Text("How often Vigilant's scan runs", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             com.tjshea.vigilant.data.scanner.LowUsageBids.PACE_CHOICES.forEach { m ->
-                FilterChip(selected = m == s.lowUsageMinutes, onClick = { onUpdate { it.copy(lowUsageMinutes = m) } }, label = { Text(LowUsageText.paceLabel(m)) }, modifier = Modifier.testTag("lowUsagePace-$m"))
+                FilterChip(selected = m == s.lowUsagePace, onClick = { onUpdate { it.copy(lowUsagePace = m) } }, label = { Text(LowUsageText.paceLabel(m)) }, modifier = Modifier.testTag("lowUsagePace-$m"))
             }
         }
         Text(LowUsageText.paceNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("lowUsagePaceNote"))
@@ -653,7 +653,7 @@ private fun LowUsagePanel(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSett
 
 /** The low-usage bids' words, free of Compose. */
 object LowUsageText {
-    fun paceLabel(minutes: Int): String = "$minutes min"
+    fun paceLabel(minutes: Int): String = if (minutes == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "Auto" else "$minutes min"
 
     /** A feed's name for the screens and Diagnostics. */
     fun feedName(feed: String): String = when (feed) {
@@ -670,20 +670,26 @@ object LowUsageText {
         return com.tjshea.vigilant.data.scanner.LowUsageBids.BOOKS.filter { it.key in picked }.joinToString("\n") { "${it.title}: ${it.note}" }
     }
 
-    /** How the pace trades against bids being up, in the app's own freshness rule. */
+    /** How the pace trades against bids being up, in the app's own freshness rule (RESEARCH.md §93). */
     fun paceNote(s: ScanSettings): String {
-        val minutes = s.lowUsageMinutes.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MINUTES)
-        val coverage = when {
-            minutes <= 5 -> "Bids on games inside 3 hours of the start stay up all the time"
-            minutes <= 10 -> "Games 3-6 hours out keep their bids up all the time; inside 3 hours a bid is up about ${(5 * 100) / minutes}% of the time (it ends when its books' prices are 5 minutes old)"
-            else -> "Bids are up part of the time (they end when the books' prices are 5 minutes old, 10 for a game over 3 hours away)"
+        val skip = "A league with no game in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} hours with a prop market on Novig isn't read at all."
+        if (s.lowUsagePace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) {
+            return "Auto: a scan starts ${com.tjshea.vigilant.data.scanner.LowUsageBids.NEAR_GAP_SECONDS / 60} min after the last while a game is inside 3 hours of its start (a bid ends when its books' prices are 5 minutes old, " +
+                "so it is re-posted from the fresh scan before it does), ${com.tjshea.vigilant.data.scanner.LowUsageBids.FAR_GAP_SECONDS / 60} min while every game is further off (10-minute limit). Bids stay up. " +
+                "Costs about 60 ParlayAPI credits per league per hour in the short stretch. $skip"
         }
-        return "At most one scan every $minutes min, and a league with no game in the next 6 hours with a prop market on Novig isn't read at all. $coverage."
+        val minutes = s.lowUsagePace.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MINUTES)
+        val coverage = when {
+            minutes <= 5 -> "Bids on games inside 3 hours of the start stay up most of the time"
+            minutes <= 8 -> "Games 3-6 hours out keep their bids up most of the time; inside 3 hours a bid is up about ${(3 * 100) / minutes}% of the time (it ends when its books' prices are 5 minutes old)"
+            else -> "Bids are down part of the time, and every bid ends together: they end when the books' prices are 5 minutes old (10 for a game over 3 hours away) and wait for the next scan"
+        }
+        return "A scan every $minutes min at most. $coverage. $skip"
     }
 
     /** One line for the rules' summary. */
     fun summary(s: ScanSettings): String =
-        "low API usage: ${com.tjshea.vigilant.data.scanner.LowUsageBids.names(com.tjshea.vigilant.data.scanner.LowUsageBids.books(s))} · scan every ${s.lowUsageMinutes} min · " +
+        "low API usage: ${com.tjshea.vigilant.data.scanner.LowUsageBids.names(com.tjshea.vigilant.data.scanner.LowUsageBids.books(s))} · scan ${if (s.lowUsagePace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "pace Auto" else "every ${s.lowUsagePace} min"} · " +
             "props in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} h · ${MakerRulesText.pct(s.lowUsageMargin.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MARGIN))} or more under the fair · " +
             "no bid longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(lowUsageMaxOdds(s))} · ${MakerRulesText.stake(s)}"
 

@@ -58,7 +58,7 @@ object MakerSetup {
             next = next.copy(autoScanSeconds = MAX_INTERVAL_SECONDS)
             // Low API usage: the cycle (fills, expiries, the upkeep of the bids) is every minute, but Vigilant's own scan, the one that spends credits, waits its own pace.
             on += if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE) {
-                "the background cycle every ${ScanSettings.intervalLabel(MAX_INTERVAL_SECONDS)} (fills and the bids' upkeep; Vigilant's own scan still waits ${s.lowUsageMinutes} min)"
+                "the background cycle every ${ScanSettings.intervalLabel(MAX_INTERVAL_SECONDS)} (fills and the bids' upkeep; Vigilant's own scan keeps its own pace: ${if (s.lowUsagePace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "Auto" else "at most every ${s.lowUsagePace} min"})"
             } else {
                 "the background scan every ${ScanSettings.intervalLabel(MAX_INTERVAL_SECONDS)} (fresh fair prices for the bids)"
             }
