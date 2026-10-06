@@ -168,7 +168,7 @@ class BurstTrader(
     private val dayStart: (Long) -> Long = { ApiBetPlacer.localMidnight(it) },
     private val pause: suspend (Long) -> Unit = { delay(it) },
     private val ioContext: kotlin.coroutines.CoroutineContext = Dispatchers.IO,
-    private val newClientId: () -> String = NovigTradingClient::newClientId,
+    private val newClientId: () -> String = { NovigTradingClient.newClientId() },
 ) : WindowSink {
     private val _status = MutableStateFlow(BurstTradeStatus())
     val status: StateFlow<BurstTradeStatus> = _status.asStateFlow()
