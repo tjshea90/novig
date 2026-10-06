@@ -1,13 +1,13 @@
-# CHECKPOINT 2632 — read me first, then TASKS.md
+# CHECKPOINT 2633 — read me first, then TASKS.md
 
-**Written:** 2026-10-06T19:37:10Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `f83ccfff` (this checkpoint is the commit after it)
+**Written:** 2026-10-06T19:51:42Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `f2bb84a8` (this checkpoint is the commit after it)
 
 ## Just done
-strategy-simple-filters saved (first look within 6 h of the start is the one simple filter that holds: CLV +1.41% on 256 closes, family-wise p 0.0005; EV>=2% inside it +3.01% on 79 closes; only +0.58% on independent closes); RESEARCH §98 apify written (not usable for live betting); diag-tracker-accuracy launched
+phase 2 complete: all 3 strategy builders saved, plan.py wrote candidates.json (24 unique rules, 10 kept); built genverify.py (30 verifier prompts, selftest) and generated them; diag-lifecycle-errors launched
 
 ## Do this next
-running: strategy-timing-price, strategy-trap-avoid-and-props, diag-tracker-accuracy; then diag-bids-autobet, diag-lifecycle-errors; then verifiers (plan.py writes candidates.json once all 3 strategy files are saved), synthesis, critic; plan.py --running <labels>; save each with tools/save_agent.sh
+running: diag-tracker-accuracy, diag-bids-autobet, diag-lifecycle-errors; as slots free up launch verify-<n>-<lens> from plan.py --running <labels> (prompts in <scratch>/v0701/prompts, regenerate with genverify.py), save each with tools/save_agent.sh; then synthesis, critic, RESEARCH.md 97 + research/scan_study_analysis_2026-10-06_v0.70.1.md + short-bullet answer to Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ running: strategy-timing-price, strategy-trap-avoid-and-props, diag-tracker-accu
 
 ## Last ten checkpoints
 ```
+  0c2ebb34 ckpt 2632: strategy-simple-filters saved (first look within 6 h of the start is the one
   600f47c7 ckpt 2631: restart after the session-limit stop: another session (9208ead4) had saved t
   3cb8fcda ckpt 2630: SAVED study-props-sharp-book, study-hidden-and-filters, study-traps, study-b
   82053167 ckpt 2629: SIXTH container (session 9208ead4): Tj re-sent both v0.70.1 files; extracted
@@ -25,8 +26,7 @@ running: strategy-timing-price, strategy-trap-avoid-and-props, diag-tracker-accu
   ac396409 ckpt 2625: files re-sent and extracted (loader matches the phone); wave 1 launched, stu
   90a3bcf0 ckpt 2624: pre-release: v0.70.2: the Diagnostics file always says whether the live burs
   e6ba9e93 ckpt 2623: built plan.py (wave planner, selftest) + save_agent.sh (bank one agent's res
-  2b3b86ab ckpt 2622: Tj's 14:14Z instruction recorded as CY1-CY3 in TASKS.md (max 3 agents in fli
 ```
 
-(3 automatic checkpoint(s) since the last deliberate one — the
+(8 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
