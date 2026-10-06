@@ -754,6 +754,8 @@ class AppContainer(private val app: Application) {
     fun startVigilantScan(settings: ScanSettings, bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, background: Boolean = false): Boolean {
         val now = System.currentTimeMillis()
         val pinned = bets.filter { it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
+        // Low API usage bids: the markets a bid of ours rests on are read first, so each is re-posted from this scan's fair before its old one ends (RESEARCH.md §93).
+        if (settings.lowUsageNow) pinned += com.tjshea.vigilant.data.novig.trading.maker.LowUsage.restingMarkets(makerStore.flow.value.orEmpty())
         val before = usage.flow.value
         // ParlayAPI's own figure for what's left, read for free (at most every few minutes): the pace decides from the key's word.
         if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) appScope.launch { runCatching { parlayAccount.refresh() } }

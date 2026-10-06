@@ -46,11 +46,18 @@ object LowUsage {
         )
     }
 
-    /** What this focus does, in a few sentences for the Bids tab (the design is RESEARCH.md §92). */
+    /**
+     * The Novig markets Vigilant has a bid resting on: the low-usage scan reads them first ([ScanSettings.lowUsageNow]; the scan's read order puts a line by its EV at Novig's TAKE
+     * price, and a market with a bid of ours is usually under water there, so it came last: a bid is re-posted from a fresh scan only when its market is read, and one read last
+     * ended before it was reached; RESEARCH.md §93).
+     */
+    fun restingMarkets(bids: Collection<MakerBid>): Set<String> = bids.filter { it.resting }.mapTo(LinkedHashSet()) { it.marketId }
+
+    /** What this focus does, in a few sentences for the Bids tab (the design is RESEARCH.md §92, §93). */
     const val EXPLAINER =
         "Reads as little as it can: only player props, only games starting in the next 6 hours, only the 2-3 sharp prop books picked below, only when there is a game to bid on, " +
-            "and Vigilant's scan runs at the pace chosen (not every few minutes). The fair is those books' own two-sided prices devigged, at least two of them, each fresh " +
+            "and Vigilant's scan runs at the pace chosen (Auto: just before the bids' prices go old, so they stay up). The fair is those books' own two-sided prices devigged, at least two of them, each fresh " +
             "(5 minutes, 10 for a game over 3 hours away) and quoting BOTH sides of the exact line; fewer than two and there is no bid. Each bid is posted at least the margin " +
             "under that fair (never under 2.5%), and under the lowest picked book's own fair, at no longer than +130, priced 30-60% (over that a bid almost never fills), on the " +
-            "kinds of prop takers trade most, the likeliest to fill first. A bid never outlives the fair behind it, so a slower pace means bids are up part of the time."
+            "kinds of prop takers trade most, the likeliest to fill first. A bid never outlives the fair behind it, so a fixed pace slower than Auto means bids are up part of the time."
 }
