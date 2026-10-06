@@ -869,6 +869,12 @@ data class ScanSettings(
         /** The leagues the burst recorder can watch (Novig's league names): the ones with a game clock whose lines Novig lists as a moneyline, spreads and totals. */
         val BURST_LEAGUES = listOf("NFL", "NCAAF", "NBA", "WNBA", "NHL", "MLB")
 
+        /** The real-money burst trader's choices (dollars): a leg's stake, a game's and a day's total (both legs of every attempt, fees in), and legs held alone that halt it. No "no limit" here. */
+        val BURST_TRADE_STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0)
+        val BURST_TRADE_MAX_GAME_CHOICES = listOf(5.0, 10.0, 25.0)
+        val BURST_TRADE_MAX_DAY_CHOICES = listOf(10.0, 25.0, 50.0, 100.0)
+        val BURST_TRADE_HALT_LOSS_CHOICES = listOf(1.0, 3.0, 5.0, 10.0)
+
         /** [apiMaxPerGame]'s chips, dollars (0 = no limit); any other amount is typed (Tj, 2026-10-04: "add $5 and a manual entry"). */
         val API_MAX_PER_GAME_CHOICES = listOf(5.0, 10.0, 25.0, 50.0, 100.0, 0.0)
 
