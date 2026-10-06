@@ -1,0 +1,169 @@
+{
+ "lens": "reproduce-and-date-split (adversarial verifier 1)",
+ "rule": "R8 Late sniper: at 5 minutes before the start buy every listed bet with EV at least 2.5% (NO GAIN, thin)",
+ "numbers_reproduced": "Re-implemented from the expr with the shared loader (own code). MATCHES the builder on every number: 28 bets, 16 games, 22 closes in 15 games (6 bets have no close), all 22 closes are close_ok (the 5 Novig-trades closes have 9-48 trades) so close_ok CLV = all-closes CLV = +3.72% (+3.7186%), game-clustered 95% CI [+2.82%, +4.64%] at 2000 draws (builder [+2.81%, +4.59%]: bootstrap noise only), 91% of the 22 beat the close. ROI -17.38% on 26 settled (10 won, 16 lost, 2 pending; CI [-59.8%, +22.6%]; expected wins at the T prices about 12.4, so 10 is z about -0.9: no information). Date halves by game day (the builder's split): Oct 3 = 6 closes/5 games +4.01%; Oct 4-5 = 16 closes/10 games +3.61% (matches the builder 4.01%/3.61%). Baseline (same 28 bets at the first c/w look) +2.95% on 22 closes, paired gain +0.77 pts: reproduced exactly; sign-flip over 15 games p = 0.006 reproduced (0.0059). Parameter note: the rule is stable to the 7-minute age cap (5/7/10 min give the same 28), the listing definition (c/w only gives the same 28), and ev NaN handling (no NaN ev or american in any c/w look, so the >= mask drops nothing silently).",
+ "survives": false,
+ "reason": "The numbers reproduce, but the CLV is not evidence of a gain. (1) 16 of the 22 closes are Tracker reads, which exist only for bets Tj placed himself (16 of 16 Tracker closes are placedByTj) and are read from CNO's books a few minutes after the look: closeFair minus the fair at the T look averages +0.55 pts (mean absolute 0.59 pts), so CLV is about the listed EV (3.7% EV vs 4.90% CLV on those 16, beat 100%): circular and selected. (2) The independent closes (5 Novig trades + 1 Pinnacle) give +0.58% on 6 bets in 5 games against 3.3% listed EV (at the first look the same 6 are +0.09%); paired gain on them +0.48 pts, sign-flip p 0.25. Six bets in five games settle nothing. (3) Against the right control, buying every first-look EV>=2.5% bet the sniper could also have seen (154 bets/54 games; 82 closes, +1.99% [+0.50%, +3.76%]), the independent closes are +0.85% on 20 bets (12 games) and the rule's +0.58% on 6 is not better; reweighting that baseline to the rule's close mix (73% Tracker) gives +2.02% vs the rule's +3.72%, and the whole difference sits in the Tracker bucket (rule 4.90% vs baseline 2.46%) where Tj's own placement picks the sample. (4) The paired gain +0.77 pts comes from 9 of 22 bets whose price moved (8 cheaper, 1 dearer, mean +1.87 pts on those 9); the other 13 are exactly 0. It is also survivor-conditioned: a bet whose price worsened or dropped (dropped or under 2.5% EV at T) is not in the pairing. (5) The sample is 8 start times: 15 of 28 bets (8 of 16 games) are the 1 pm Oct 4 NFL slate, 12 bets first seen 12:50-12:54 ET Oct 4 (9 minutes before kickoff, when the app was opened), 15 of 28 first seen within 10 minutes of the start. 'Late sniper' is largely 'bets that were only seen late'. Slot-clustered CI (8 start times) [+2.72%, +4.18%] on the same circular closes. (6) The rule is not smooth in its parameter: T = 3/5/7/10/15/20 min before start give 33/28/21/10/18/11 bets; the builder tried 522 variants, so p = 0.006 is not a haircut-adjusted number. (7) Size: 12.4 bets/day, median Novig $ at the T look $32.8 (16 of 28 under $50, 11 under $25). Default to survives = false.",
+ "caveats": [
+  "Date halves: by the builder's game-day split the first half is 6 closes in 5 games and the second 16 closes in 10 games; by the loader's own split_by_date (firstDay on all 2080 bets, cut Oct 4) the rule has 25 bets (20 closes, 13 games) in the first half and 3 bets (2 closes, 2 games) in the second (+3.37%): too few games to check anything. Independent closes by half: Oct 3 = 1 bet (Pinnacle, +2.14%); Oct 4-5 = 5 bets in 4 games, +0.27% [+0.08%, +0.48%], 60% beat.",
+  "Leave-one-game-out CLV range +3.48% to +3.99% (not driven by one game), and excluding the 12:50 ET burst the rest is +3.22% on 17 closes/13 games: the sample is not one burst, the problem is the closes, not the burst.",
+  "Population check: the rule picks 19 of the 154 first-look EV>=2.5% bets (12%) plus 9 bets whose first-look EV was under 2.5% (0.3% to 2.1%) and rose to 2.6-4.7% by T; 7 of those 9 have Tracker closes (CLV +3.0% to +6.9%) and 1 a Novig-trades close (+0.6%): a Tj-placed, Tracker-closed subset again.",
+  "CLV at first look of the rule's 19 first-look-EV>=2.5% bets: 3.33% on 15 closes (independent 0.39% on 5); the non-selected 135: 1.69% on 67 (independent 1.00% on 15): no separable difference.",
+  "EV vs CLV: listed EV at T averages 3.47% (3.63% on the 22 with a close). Against independent closes the EV shrinks to +0.58%; only the Tracker closes keep it.",
+  "No look-ahead found in the construction: only looks at or before T (minToStart is an integer minute, so a look can be up to a minute off T), listing state replayed per source with x-looks, price from the last c/w look. The close used for CLV is of course after T.",
+  "What would settle it: about 100+ independent closes (Pinnacle/ESPN/Novig trades with 3+ trades) for the sniped bets, i.e. 100+ bets in 40+ games with the Tracker close left out, or a log of the book's own price at the start for every sniped bet; at 12 bets a day that is more than 8 days even if every bet had an independent close, and about 4 times that at today's 27% independent-close rate. Any change to which bets are bought stays a question for Tj.",
+  "Not a rule that loosens any safety limit (it does not change the 2.5% floor), but it is also not a better rule: do not put it to Tj as a gain."
+ ],
+ "data": {
+  "bets": 28,
+  "games": 16,
+  "closes": 22,
+  "close_games": 15,
+  "close_ok": 22,
+  "clv_all": 0.037185,
+  "clv_all_ci": [
+   0.02816,
+   0.04635
+  ],
+  "clv_close_ok": 0.037185,
+  "beat_share": 0.909,
+  "roi": -0.17381,
+  "roi_ci": [
+   -0.598,
+   0.226
+  ],
+  "settled": 26,
+  "won": 10,
+  "lost": 16,
+  "pending": 2,
+  "first_half_gameday": {
+   "bets": 6,
+   "games": 5,
+   "closes": 6,
+   "clv": 0.040147
+  },
+  "second_half_gameday": {
+   "bets": 22,
+   "games": 11,
+   "closes": 16,
+   "close_games": 10,
+   "clv": 0.036075
+  },
+  "loader_split_firstDay": {
+   "first": {
+    "bets": 25,
+    "games": 14,
+    "closes": 20,
+    "close_games": 13,
+    "clv": 0.03753
+   },
+   "second": {
+    "bets": 3,
+    "games": 2,
+    "closes": 2,
+    "clv": 0.03373
+   }
+  },
+  "baseline_same_bets_first_cw_look": 0.029519,
+  "paired_gain": 0.007666,
+  "paired_gain_ci_game_cluster": [
+   0.0032,
+   0.0161
+  ],
+  "paired_signflip_p": 0.0059,
+  "close_mix": {
+   "tracker": 16,
+   "novig_trades": 5,
+   "pinnacle": 1,
+   "none": 6
+  },
+  "tracker_closes": {
+   "n": 16,
+   "games": 12,
+   "clv_T": 0.048959,
+   "clv_first": 0.040236,
+   "ev_T": 0.037269,
+   "closeFair_minus_fair_T_mean": 0.005519,
+   "abs_mean": 0.005939,
+   "placedByTj": 16
+  },
+  "independent_closes": {
+   "n": 6,
+   "games": 5,
+   "clv_T": 0.00579,
+   "clv_T_ci": [
+    0.0015,
+    0.0132
+   ],
+   "clv_first": 0.000941,
+   "paired_gain": 0.0048,
+   "paired_signflip_p": 0.25,
+   "ev_T_mean_novig": 0.03166,
+   "closeFair_minus_fair_T_novig": -0.01375
+  },
+  "baseline_first_look_ev25_universe": {
+   "bets": 154,
+   "games": 54,
+   "closes": 82,
+   "close_games": 30,
+   "clv": 0.0199,
+   "ci": [
+    0.005,
+    0.0376
+   ],
+   "tracker_n": 53,
+   "tracker_clv": 0.0246,
+   "independent_n": 20,
+   "independent_games": 12,
+   "independent_clv": 0.0085,
+   "independent_ci": [
+    -0.0131,
+    0.0371
+   ],
+   "reweighted_to_rule_mix": 0.0202
+  },
+  "price_moved": {
+   "improved": 8,
+   "same": 13,
+   "worse": 1,
+   "mean_gain_among_moved": 0.01874
+  },
+  "start_slots": 8,
+  "slot_clustered_ci": [
+   0.0272,
+   0.0418
+  ],
+  "first_seen_within_10min": 15,
+  "first_seen_12_50_to_12_54_ET_Oct4": 12,
+  "per_day": 12.41,
+  "median_dollars_at_T_look": 32.79,
+  "sweep_T_min_bets": {
+   "2": 31,
+   "3": 33,
+   "5": 28,
+   "7": 21,
+   "10": 10,
+   "15": 18,
+   "20": 11,
+   "30": 4
+  },
+  "sweep_ev_floor_bets_indclv": {
+   "0.020": [
+    38,
+    0.0026
+   ],
+   "0.025": [
+    28,
+    0.0058
+   ],
+   "0.030": [
+    14,
+    0.009
+   ],
+   "0.035": [
+    12,
+    0.009
+   ]
+  }
+ }
+}
