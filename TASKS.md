@@ -4016,3 +4016,9 @@ Plan (RESEARCH.md §92; a session cut off mid-way resumes at the first unticked 
 
 
 - [x] CW1 v0.70.1: the trader is judged LEAGUE BY LEAGUE (Tj asked whether it works in other sports): `BurstStudy.proof` returns the leagues whose own row reads WORTH_A_TEST over windows of 1 cent or more (so football proves nothing about hockey and two thin leagues don't add up), `BurstTrader.leagueOk` holds back any other league (skip "league not proved"), Settings names the leagues that proved themselves and the confirmation says the others are left alone. Tests: BurstCoreTest (per-league proof), BurstTraderTest (league held back), BurstTraderUiTest (words); 3 mutants killed.
+
+## Tj, 2026-10-06 04:08Z (no words, two files): `vigilant-diagnostics-v0.70.1-2026-10-06-0008.txt` and `vigilant-scan-study-v0.70.1-2026-10-06-0008.txt`
+
+- [ ] CX1 DIAGNOSE the v0.70.1 diagnostics file (what the phone shows since v0.70.1: health, the burst recorder's status line / what it recorded, anything broken, anything new since v0.68.1's fixes) and say plainly what is wrong, if anything, and what is fine. Nothing to change without a finding.
+- [ ] CX2 ANALYZE the scan-study file from its own READ ME and splits (CLAUDE.md "Scan study": ask Tj before changing any rule it suggests; RESEARCH.md §75-§76), and answer with the numbers: what beats the close, what does not.
+- [ ] CX3 Anything a file shows is the app's fault gets a fix (tests, mutation check, floor, ship); anything that is a rule change goes to Tj as a question first.
