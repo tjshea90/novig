@@ -101,6 +101,10 @@ class AutoBetDiagnosticsTest {
         // The scan read nothing from a picked feed that matched a game: WARN.
         val unpriced = lowChecks(withSources(com.tjshea.vigilant.data.scanner.SourceReport("kalshi", "Kalshi", 1, 0, 0, null)), extras.copy(lowUsagePlan = plan("kalshi", "parlay_props")))
         assertEquals(listOf(HealthChecks.Level.WARN), unpriced.map { it.level })
+        // Every league skipped, none read (no game with a prop market inside the window): nothing to read is OK, not a failure to price.
+        val empty = lowChecks(withSources(com.tjshea.vigilant.data.scanner.SourceReport("kalshi", "Kalshi", 0, 0, 0, null, skipped = 8)), extras.copy(lowUsagePlan = plan("kalshi", "parlay_props")))
+        assertEquals(listOf(HealthChecks.Level.OK), empty.map { it.level })
+        assertTrue(empty.single().text(), empty.single().text().contains("nothing to read"))
         // The mode chosen but bids off: nothing (the scan is the usual one).
         assertTrue(lowChecks(state { it.copy(maker = false, makerRecommend = false, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE) }, extras.copy(lowUsagePlan = plan())).isEmpty())
     }

@@ -81,10 +81,30 @@ class LowUsageScanTest {
     fun `a league with no game in the window and a prop market on Novig is not asked - and one with a game is`() = runTest {
         val kalshi = Feed("kalshi")
         val parlay = Feed("parlay_props")
-        Scanner(Board(), clock = { now }).scan(on, listOf(LowUsageSource(kalshi), LowUsageSource(parlay)))
+        val report = Scanner(Board(), clock = { now }).scan(on, listOf(LowUsageSource(kalshi), LowUsageSource(parlay)))
         // NFL has a game in 3 h with a prop market; MLB's only game is in 2 days; NHL's game in 4 h has no prop market.
         assertEquals(listOf("NFL"), kalshi.asked)
         assertEquals(listOf("NFL"), parlay.asked)
+        // The report tells a league that was not asked from one that was (Tj's 8:41 PM file said "8 fetched" for reads that never happened).
+        val k = report.sources.single { it.id == "kalshi" }
+        assertEquals("asked", 1, k.fetched)
+        assertEquals("not asked", 2, k.skipped)
+    }
+
+    @Test
+    fun `a scan with nothing in the window reports every league as skipped, none fetched, and never re-uses a skipped league`() = runTest {
+        val kalshi = Feed("kalshi")
+        // No game inside the window with a prop market: only the far-off MLB game and the prop-less NHL one are listed.
+        val onlyFar = on.copy(leagues = setOf("MLB", "NHL"))
+        val scanner = Scanner(Board(), clock = { now })
+        val first = scanner.scan(onlyFar, listOf(LowUsageSource(kalshi))).sources.single()
+        assertEquals(0, first.fetched)
+        assertEquals(2, first.skipped)
+        assertTrue(kalshi.asked.isEmpty())
+        // A second scan a moment later: still skipped, not "re-used" (a game may have come inside the window).
+        val second = scanner.scan(onlyFar, listOf(LowUsageSource(kalshi))).sources.single()
+        assertEquals(0, second.reused)
+        assertEquals(2, second.skipped)
     }
 
     @Test
