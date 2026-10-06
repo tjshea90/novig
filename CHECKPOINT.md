@@ -1,22 +1,22 @@
-# CHECKPOINT 2641 — read me first, then TASKS.md
+# CHECKPOINT 2642 — read me first, then TASKS.md
 
-**Written:** 2026-10-06T22:08:21Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-8a6337ad-qbceu9` · **builds on:** `bf784626` (this checkpoint is the commit after it)
+**Written:** 2026-10-06T22:10:08Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-8a6337ad-qbceu9` · **builds on:** `b08a0ac9` (this checkpoint is the commit after it)
 
 ## Just done
-added tools/research/study_v0701/genphase4.py (phase 4 prompts: 3 section writers synth-diagnose/synth-study/synth-strategies, synthesis, critic, final) + plan.py gating for them + selftests in tools/test_plan_v0701.sh; verify-2..10 x3 running as a 3-wide Workflow (run wf_2597009f-1d1) with saver loop
+DA6 feed-race recorder RESTARTED 22:09Z (370 min, ends ~04:20Z) in the 8th container's scratchpad race/night1.ndjson; the 3 hosts all answer through the proxy
 
 ## Do this next
-when the 27 verifiers are saved (plan.py), run the phase-4 chain: python3 -I tools/research/study_v0701/genphase4.py <scratch>/v0701 then synth-* (3 at a time), synthesis, critic, final; then RESEARCH §97 + research/scan_study_analysis_2026-10-06_v0.70.1.md + short-bullet answer
+after ~04:20Z: python3 tools/research/live_feed_race.py analyze <scratch>/race/night1.ndjson and fill RESEARCH §99.7 (relative lag per feed, lead over Novig's price move, stale fills); if the container is gone rerun the record command from TASKS DA6; verifier workflow wf_2597009f-1d1 still running (see plan.py)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M tools/test_plan_v0701.sh
 
 ## Last ten checkpoints
 ```
+  691e51b1 ckpt 2641: added tools/research/study_v0701/genphase4.py (phase 4 prompts: 3 section wr
   913eb393 ckpt 2640: 8th container: Tj re-sent both v0.70.1 files; extracted+prompts generated in
   50e5f7c8 ckpt 2639: v0.70.3 RELEASED and RECORDED (code 121, tag peels to ed80cfeb = ci-v0.70.3,
   367d6e39 ckpt 2638: RESUMED (8th container, branch ccr-8a6337ad-qbceu9): hooks ok; ci-v0.70.3 (e
@@ -27,5 +27,5 @@ when the 27 verifiers are saved (plan.py), run the phase-4 chain: python3 -I too
   9c9950c2 ckpt 2633: phase 2 complete: all 3 strategy builders saved, plan.py wrote candidates.js
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
