@@ -1,0 +1,192 @@
+{
+ "area": "Fair-odds sources, matching and API credits (diagnostics file v0.70.1, Oct 6 2026 00:08 ET)",
+ "summary": "Matching and the providers are fine in the last scan (69 of 69 games matched, no errors, every source answered), and the two health WARNs on this slice are artifacts: 'ParlayAPI 1st half matched no Novig game' is a no-market snapshot counted as fetched (5 = the 5 supported leagues; nothing on Novig's board to match), and the Runway 'SHORT' lines are linear averages (ParlayAPI +0.8% over its allowance, 5 h 45 min early, while CreditPace caps it at 635 a day; The Odds API a stale early-month rate). What is wrong is the credit economics, not a leak: a 40-credit ParlayAPI scan against 635 credits a day buys about 16 scans for 360 four-minute slots (spent at or just over the pacer's cap: 3,363 vs a 3,283 cap), 2 of the 4 props calls (6 of 40 credits, up to 15%) went to leagues with no game in the window, leagues are bought in a fixed order that holds tennis (78% of games) back first, and the file cannot split the 40 credits or show a heavy day. Most useful next: add the 'no game in the window' guard to ParlayAPI props (code exists in LowUsageSource), flag the empty 1st-half snapshot as skipped, and print ParlayAPI's per-day and per-endpoint credits and held-back counts in Diagnostics so one more file settles how much of each day ParlayAPI is actually fresh.",
+ "findings": [
+  {
+   "kind": "IMPROVE",
+   "title": "'ParlayAPI 1st half answered 5 leagues but matched no Novig game' is a false alarm (no 1st-half market to match), not a matching bug",
+   "evidence": "Last Vigilant scan block: 'ParlayAPI 1st half: 5 fetched, 0 re-used, 0 games matched'; health check WARN 'answered 5 leagues but matched no Novig game' (new since the 3 h older v0.68.0 file). The 5 equals the number of leagues the source supports (ParlayPeriodSource.PERIODS: NFL, NCAAF, NBA, WNBA, MLB) and the sibling rows fit their supports() the same way (ParlayAPI 8 = ATP, WTA, NFL, NCAAF, MLB, WNBA, NHL, NBA; ParlayAPI props 4 = NFL, MLB, WNBA, NHL; Sportsbook props 3 = NFL, MLB, WNBA), so 'fetched' here means 'the source returned a snapshot for every supported league', not 'a request was answered'. The board at 00:04 ET (Matched by league: ATP 30, WTA 24, NHL 9, NBA 3, MLB 2, NCAAF 1; NFL 0, WNBA 0) leaves nothing for it to match: NFL and WNBA have no game in the 24 h window; MLB is skipped by design while PinnWire/pinnapi are on (pinnacleFeedOn: F5 is Pinnacle's alone at ParlayAPI); NBA is preseason (0 NBA 1st-half rows in the 2,080-bet study); NCAAF has 1 game. ParlayPeriodSource.odds returns RefSnapshot(sport, emptyList(), now, provider=id) in 3 early-return cases (family off, MLB with a Pinnacle feed, no SPREAD_1H/TOTAL_1H on Novig's board for the league) and, unlike LowUsageSource, does not set skipped=true, so Scanner.fetchSource does fetched++ and HealthChecks.sources (r.fetched > 0 && r.matched == 0) raises the WARN. Matching itself works: the same ParlayAPI names matched 68 of 69 Novig games in the full-game source, and on game days Vigilant priced 1st-half bets (study: 12 Vigilant PERIOD bets on Oct 3-5, 2 of them with Fanatics/FanDuel books beside Pinnacle/Kalshi, books ParlayAPI's 1st-half feed carries; PropLine could also have supplied them). Credits: the guard (needsCatalog = true; 'context.novigMarkets.none{...} -> return none') makes a league with no Novig 1st-half spread/total free; a league that has them costs 2 credits (PARLAY_API.md 6.7). Only NBA and NCAAF could have been paid this scan (at most 4 of the scan's 40 credits); the file cannot tell which. Side effect: the empty snapshot is not 'skipped', so it is stored and re-used for up to 2 min (Freshness.MAX_REUSE_MS), delaying a 1st-half line that Novig opens right after a scan by at most 2 min.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/ParlayPeriods.kt:51-56 (the three early returns, no skipped=true)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt:912,940 (fetched++ unless snap.skipped; re-use unless skipped)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/HealthChecks.kt:233-236 (fetched > 0 && matched == 0)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/LowUsageSource.kt:22 (the pattern that sets skipped = true)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/ReferenceModels.kt:115 (RefSnapshot.skipped)"
+   ],
+   "suggestedAction": "Set skipped = true on ParlayPeriodSource's three 'nothing to ask' snapshots (as LowUsageSource does): the row then reads 0 fetched, the false WARN goes, and an empty answer is never re-used. Optionally print 'asked N leagues (N requests, N credits); M had no 1st-half market on Novig' so a real miss is separable. Does not change which bets can be placed."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "Runway 'ParlayAPI: SHORT, last goes Oct 31' is the credit pacer working at its ceiling, not a leak; the estimator is a straight average that ignores CreditPace",
+   "evidence": "Runway.line: elapsed = now - period start. The 3,363 credits are spread over 5.17 days (Oct 1 00:00 UTC to Oct 6 04:08 UTC; period start read from /v1/usage), so 650.2 a day; projected 3,363 x 31/5.17 = 20,156 = 100.78% of the 20,000 allowance; runs out 2026-10-31 18:15 UTC, 5 h 45 min before the Nov 1 00:00 UTC reset, 156 credits short. The rule is 'projected > allowance' with no tolerance, so +0.8% reads SHORT. CreditPace (the hard limit on every paced scan call) allows (20,000 - 300 reserve)/31 = 635.5 credits a day cumulatively: 3,283 by the end of Oct 5 ET. Used 3,363 is 102.4% of that cap (80 over) and 113% of the 2,965 a background scan may reach (cap minus the 318 it leaves for hand scans), so the pacer, not demand, sets the spend and nothing can run a day 'heavy' past the cap; the 80+ over-cap credits are calls with no pace (closing-line lookups, Check odds now, injuries; reserve-only). At the cap the month cannot exhaust early: the result of 'too fast' is ParlayAPI being held back (standingBy, heldBack) later in a day, not a dead key on Oct 31. The estimator also has a time-of-day bias: a day's share is released at local midnight, so a mid-day average projects (d+1)/(d+0.5) times the cap (about +9% at day 5), i.e. it will read SHORT for as long as the pacer binds. The account agrees with the meter: /v1/usage says 16,677 left vs local 16,637, a 40-credit gap that matches the scan that finished after the account read. The file has no per-day split (the app already reads /v1/meta/usage?days=30 daily_breakdown and top_endpoints for its chart but Diagnostics does not print them), so a heavy day cannot be ruled in or out from the file; the cap says none exceeded about 635 + carry-over.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Runway.kt:81-120 (linear projection, projected > allowance -> SHORT)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Usage.kt:CreditPace.floor (day share, endOfToday in the phone zone, keepOfDay)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/TheOddsApiClient.kt:OddsFeed.PARLAY (reserve = 300, BACKGROUND_KEEP = 0.5)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/ParlayAccount.kt:62-65,210 (history: daily_breakdown, top_endpoints) not in app/.../Diagnostics.kt"
+   ],
+   "suggestedAction": "Make Runway aware of the pacer for ParlayAPI: show 'paced to 635 a day; spent X% of the cap (3,363 of 3,283 + today)' and call it SHORT only when projected exceeds the allowance by a margin (say 5%) AND the pacer cannot hold it. Print ParlayAccount.history (30 days of credits per day and per endpoint, free call) in Diagnostics so a heavy day and the per-purpose split are visible."
+  },
+  {
+   "kind": "WATCH",
+   "title": "What the pace means in practice: ParlayAPI buys about 16 full scans a day (40 credits each) against 360 possible 4-minute scan slots, so most scans price without a fresh ParlayAPI answer",
+   "evidence": "Cost: Last rounds 'Scan: ParlayAPI 15 (40 of its allowance)'; the runway says 'a scan costs 40 -> 500 a month'. At the day's share of 635.5 that is 15.9 full scans a day. Cadence: background Vigilant scans start at most every 240 s (ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS; the 15 s cycle reads CNO every time but runs a Vigilant scan only about 1 cycle in 16: perf 'cycle.step.vigilant 1 sample of 15'); the timeline shows scan starts 22:28:20, 22:32:19, 22:36:20 and 00:04:47 (about 240 s apart). 360 slots a day if the app ran 24 h; the cycle record (7,328 cycles of 15 s since Oct 1 11:56 PM = 30.5 h in about 4 days) means about 7.6 h a day, so about 114 slots a day. ParlayAPI is bought in 4.4% of 24 h slots or about 14% of the slots the app actually ran. Nothing is re-used between scans: reuse is capped at 2 min (Freshness.MAX_REUSE_MS) and the gap is 4 min, so every source shows 'N fetched, 0 re-used' (the last scan was also the first after a restart, which empties the in-memory boards). Upper bound on how often it bought: 3,363 credits / 40 = 84 full-scan equivalents out of at most 458 slots (7,328/16) in the cycle record = at most 18%; at 20 credits a scan (an off day) at most 37%. Right now the day has 3,919 credits of cumulative cap (day ends Oct 7 00:00 ET) vs 3,363 used: 556 spendable for a hand scan (13.9 scans), 238 for the background (5.95 scans, because it leaves 318). The pacer has no intra-day smoothing ('a busy evening can spend the whole of today's share'), so by the code's rules a continuously running app buys ParlayAPI in its first slots after the share is released or the app starts and is then held back (CreditsHeldBackException, 'back tomorrow') until the next ET midnight; the file does not show a held-back moment (the last scan was the first after midnight ET). Freshness is unaffected by design: a held-back league keeps its last answer only while it is under the 5 min (10 min for games over 3 h away) limit, then other feeds price. The other paid or capped sources at the same cadence: PinnWire 5 requests a scan x 6 keys x 100 a day = 120 scans a day (8 h of 4-minute scans), pinnapi 3 keys = 60 more (4 h); PropLine 9 requests a scan x 3 keys x 1,000 = 333 scans a day (92% of 360); The Odds API 0 credits a scan (5 free /events calls); Kalshi 64 and Polymarket 9 free calls a scan.",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/ScanSettings.kt:852 (AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS = 240)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt:145 (AutoScanClock.vigilantDue)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Usage.kt:CreditPace",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt:907-972 (fetchSource: CreditsHeldBackException -> standingBy, heldBack)",
+    "RESEARCH.md section 90.6 (the same arithmetic: ~8,600 credits a day wanted at 360 scans vs ~645 allowed)"
+   ],
+   "suggestedAction": "No safety limit is involved. The honest options are Tj's: (a) leave it (a held-back ParlayAPI is replaced by Pinnacle/PropLine/Kalshi/Polymarket), (b) spend the same credits only where they matter (see the next two findings), (c) a second $5 ParlayAPI key doubles the daily share to about 1,270 (the key pool already rotates keys). To settle how often ParlayAPI is really held back, print per-scan 'ParlayAPI bought / held back' counts per day in Diagnostics: one day of the file settles it."
+  },
+  {
+   "kind": "OPTIMIZE",
+   "title": "A usual scan buys ParlayAPI player props for leagues with no Novig game in the window: 2 of the 4 props calls (6 of the scan's 40 credits, up to 15%) priced nothing",
+   "evidence": "ParlayPropsSource has no needsCatalog guard: every scan asks every supported league (NFL, MLB, WNBA, NHL = 'ParlayAPI props: 4 fetched') at 3 credits a call whatever Novig lists (bulkProps charged = ParlayProps.COST). At 00:04 ET Novig had no NFL and no WNBA game in the 24 h window ('Matched by league' lists neither), so 2 of 4 calls = 6 credits (15% of 40) bought boards for games outside the window; NFL props is also the slowest endpoint (189 calls, avg 9,860 ms to first byte, 61 failed = 32%). ParlayAPI /odds for the same two leagues should be free (no events returned = no charge) but still burns a call and the pacer's headroom check (cost 3 must fit under the floor). The code's own author flagged this (LowUsageSource doc: 'before this, every source was asked for every picked league on every scan ... however empty its board was') and fixed it only for the low-usage mode; RESEARCH.md 90.6 lists it as a lever for Tj ('a league with no Novig games still costs a board request'). The 1st-half source already has the guard. Size: if every scan wasted 6 of 40 credits, the month's 635 a day would buy 2.4 more full scans a day (+15%); the real share depends on how many days a league has no game in the 24 h window (NFL about 3 of 7 days). The file shows one scan, so this is 'up to'.",
+   "appFault": true,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/ParlayProps.kt:38-60 (no needsCatalog; odds() calls bulkProps for every supported league)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/TheOddsApiClient.kt:233-248 (bulkProps, charged = COST)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/LowUsageSource.kt:12-45 (hasPropsToBidOn, the guard to reuse)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/PropStats.kt:51-138 (parlayMarkets: NFL, MLB, WNBA + NHL only)"
+   ],
+   "suggestedAction": "Give ParlayPropsSource (and the /odds source) the same needsCatalog test the 1st-half source and low-usage mode use: ask a league only when Novig has a game inside the scan window with an open market of that family. A league with no Novig game in the window cannot produce a bet, so it changes no bet that could be placed; it frees the credits for leagues that have games. Ask Tj first only because it changes what the pacer spends."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "When the day's share runs short, leagues are bought in the fixed order NFL, NCAAF, MLB, WNBA, NHL, ATP, WTA, NBA, so tennis (78% of the games) and NBA are the first to be held back",
+   "evidence": "Scanner.fetchSource loops the picked leagues in settings.selectedLeagues order = Leagues.ALL order (NFL, NCAAF, MLB, WNBA, NHL, ATP, WTA, NBA) and each call must fit under CreditPace's floor, so with 238-556 spendable credits the first leagues take them. The last scan's board: ATP 30 + WTA 24 = 54 of 69 games (78%), NHL 9, NBA 3, MLB 2, NCAAF 1, NFL 0, WNBA 0. Tennis /odds is 6 of the 40 credits (3 a tour; tennis never takes alternates). Tennis evidence of value is thin: 32 Vigilant-listed tennis bets (5.2% of 614) in 28 games, 7 with a close, 13 settled; closes are missing because ESPN has none for tennis and ParlayAPI's file rarely has them (closeNote counts), so the app cannot yet say whether its tennis fair beats the close.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Leagues.kt:42-85 (Leagues.ALL order)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/ScanSettings.kt:764 (selectedLeagues)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt:907-972"
+   ],
+   "suggestedAction": "QUESTION FOR TJ, not an action: when credits are short, buy the leagues with the soonest Novig starts (or most open lines) first instead of NFL-first. It decides which fair lines exist, so it needs his yes. Evidence needed to decide on tennis: about 200 tennis bets with a close (the READ ME's rule of thumb; now 7)."
+  },
+  {
+   "kind": "WATCH",
+   "title": "Runway 'The Odds API: SHORT, last goes Oct 20' is a stale early-month average: the API is a backup that spent 0 credits in the last two rounds",
+   "evidence": "950 of 3,500 credits (7 keys x 500) in 5.17 days = 183.7 a day; projected 950 x 31/5.17 = 5,694 (163% of the allowance); at that rate 2,550 left runs out 2026-10-20 01:20 UTC. But two keys carry all of it (500 used and spent, 450 used with 50 left) and five keys are untouched; the last scan cost 'The Odds API 5 (0 of its allowance)' (free /events lists) and Check odds now 'The Odds API 2 (0 of its allowance)'; health 'Source The Odds API: backup: asked only for what PropLine missed, and nothing was'; 'oddsapi: 25 calls today'. PropLine (the first choice it backs up) is at 56 of 3,000 requests today. The average cannot see that the spending stopped, so the projection is not a forecast. To settle: if the next file's used figure is still 950 the real pace is about 0 and the warning is dead weight; if it grows, only a PropLine outage makes the backup spend (3 credits a league).",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Runway.kt:81-120",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/TheOddsApiClient.kt:needed() (fallbackFor = PropLine)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/OddsApiPropsSource.kt"
+   ],
+   "suggestedAction": "Show the pace of the last 24 h next to the month-to-date average (the ledger has the time of each call) so a source that stopped spending stops warning."
+  },
+  {
+   "kind": "WATCH",
+   "title": "Free Pinnacle and PropLine allowances say OK from a partial-day average; at the 4-minute cadence all day they cover only part of the day",
+   "evidence": "PinnWire 'about 226 by the reset: OK' is 39 requests x 24 h / 4.14 h elapsed since 00:00 UTC; the app was closed 22:37-00:03 ET and restarted, so the average is low. Per scan: PinnWire 5 requests (120 scans a day with 6 keys x 100, i.e. 8 h of 4-minute scans), pinnapi 3 keys (60 more, 4 h), together 180 scans = 12 h of 4-minute scans; 360 scans a day would need 1,800 requests vs 900 available. PropLine 9 a scan: 333 scans a day with 3 keys (92% of 360). The key pool rests a spent key and the next feed takes the league (PinnWire -> pinnapi -> PropLine's Pinnacle copy), so nothing fails, but Pinnacle's fair would come from the slower copy later in a long day. RESEARCH.md 90.6 already lists the same table.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Runway.kt:81-120 (DAY_UTC projection, minElapsed 3 h)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/PinnacleBackup.kt",
+    "RESEARCH.md section 90.6"
+   ],
+   "suggestedAction": "No change needed now. If Tj runs the app overnight, watch Runway PinnWire/pinnapi and PropLine in the next file; extra free PinnWire/pinnapi keys are the cheap lever (each key is its own 100 a day)."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "'Last rounds' ParlayAPI cost (15 calls, 40 credits) is not a pure scan cost and cannot be split; Diagnostics has no per-endpoint or per-day credit view",
+   "evidence": "A scan's own ParlayAPI calls explain at most 8 /odds + 4 /props = 12 calls and 36 credits (8 x 3 + 4 x 3 if every league returned games; NFL and WNBA were empty so /odds is probably 18, giving 30). The remaining 3 calls and 4-10 credits are other ParlayAPI traffic inside the 32 s window. UsageDelta.between subtracts two snapshots of the whole ledger, and every account read (recordBalance -> edit -> countKeyless) counts as a 'call' at 0 credits, so concurrent closing-line lookups (5 credits a league, 'ParlayAPI close calls 4' in the file), injuries (1 credit; 'injuries 4' since the app opened), 1st-half calls (2) and balance reads all land in the scan's line. One decomposition that fits exactly: 8 /odds (6 charged = 18) + 4 /props (12) + 1 balance read (0) + 2 closing-line calls (10) = 15 calls, 40 credits; the file cannot confirm it. The app already reads ParlayAPI's own 30-day daily_breakdown and top_endpoints (ParlayAccount.history, free) for a chart; the diagnostics file does not print them, so 'which day was heavy' and 'what the 3,363 bought' are unanswerable from the file.",
+   "appFault": true,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Runway.kt:14 (UsageDelta.between)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Usage.kt:recordBalance/edit/countKeyless",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/ParlayAccount.kt:62-65,200-215 (history)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt:676 (costText)"
+   ],
+   "suggestedAction": "Record credits per purpose (scan odds, props, 1st half, closes, injuries, usage) as the pool records each call, and print ParlayAccount.history (daily and per-endpoint credits) in Diagnostics. Settles the pace question with one file."
+  },
+  {
+   "kind": "WATCH",
+   "title": "ParlayAPI answers badly on its heavy endpoints: 8.5% of calls failed, NFL props 32%, closes file 22%; whether failed paid calls are charged is unknown",
+   "evidence": "CONNECTIONS parlay-api.com: 3,369 calls, 288 failed (8.5%): HTTP 500 x90 (2.7%), 503 x67 (2.0%), cancelled x53, timeout x31, dns x47 (the 19:3x-20:23 ET name-lookup outage on the carrier, which also hit Novig, CNO and Kalshi). 5xx alone = 157 calls = 4.7%. By endpoint: /v1/sports/americanfootball_nfl/props 189 calls, 61 failed (32.3%: 503 x12, timeout x8), avg 9,860 ms to first byte; /v1/historical/closing-lines.json 157 calls, 35 failed (22.3%, HTTP 500 x19); /v1/sports/americanfootball_ncaaf/odds 84 calls, 21 failed (25%); /v1/meta/movers 1,738 calls (51.6% of all ParlayAPI traffic, free, avg 955 ms, 67 failed, 'line moves 0'); p50 738 ms, p95 3,293 ms, bodies 51 KB/s. In the last scan: 'Errors: none'. Credit risk: call() retries a 502-504 or a 'busy' 200 up to MAX_ATTEMPTS and PARLAY_API.md section 1 records that a /line-movement 503 is still charged; if a 503/timeout on /props is also charged, the 61 failed NFL props calls are up to 183 credits (5.4% of 3,363). The file cannot say (local 'charged' is not printed beside the server's 'used'). Provider fault, with the app's retries as the lever.",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/TheOddsApiClient.kt:call() 360-385 (retry on 502-504/busy), parlayGet",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/ParlayMovers.kt (3-minute reads per league while on screen)",
+    "PARLAY_API.md section 1 (503 charged on /line-movement)"
+   ],
+   "suggestedAction": "Print the local charged total beside the server's used (KeyUsage.charged vs used) so credits lost to failed or cancelled paid calls show as a number; if props 503s are charged, do not retry the NFL board more than once and skip it when no NFL game is in the window (finding on empty leagues)."
+  },
+  {
+   "kind": "WATCH",
+   "title": "ParlayAPI's closing-line credits buy very few closes: 11 of 547 tracker closes (2.0%) and 17 of 683 study closes (2.5%) come from ParlayAPI",
+   "evidence": "Closing line value: 547 closes = 319 read before the start, 203 Novig's trades, 14 ESPN, 11 Pinnacle via ParlayAPI; study: 683 closes = Novig trades 341, Tracker 228, ESPN 97, ParlayAPI 17; study reason for missing closes: 'Pinnacle's close for this prop isn't in ParlayAPI's file' on 393 of 2,080 bets. Against that, 157 /v1/historical/closing-lines.json calls (22% failed; 1 credit per 1,000 rows) plus 5-credit /sports/{s}/closing-lines calls ('ParlayAPI close calls 4' on the last look) are paced only by the 300 reserve, not by the day's share, and are part of the 80+ credits over the cap. The credit cost per close found cannot be computed from the file.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/tracker/ParlayCloses.kt:108,133 (cost 1 and 5)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/TheOddsApiClient.kt:OddsFeed.PARLAY reserve = 300"
+   ],
+   "suggestedAction": "Count credits spent on closes and closes found per credit (finding on attribution). Decide with Tj whether closes should draw from the same day share as scans."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "24% of the sides the scan reads have no fair price, and the 'Scan budget 100%' health check cannot show it",
+   "evidence": "Last scan: 998 lines priced = 1,996 priced sides (Memory block), 1,508 sides with a fair price, so 488 sides (24.4%) have none, about 244 lines read from Novig for nothing; 27 sides are +EV (1.8% of 1,508) and the feed shows 5 (edge 1-25%, odds, 2+ books). The check reports 'Scan budget: 100% of the Novig prices read were judged against a fair line [998 of 998]' because it divides marketsPriced (plan.markets.size) by booksFetched, which are the same 998 lines by construction. A line is planned when at least 1 book quotes it (Planner.lineStats), but FairValue.compute needs 2 books (minBooks 2, BLEND) or 1 sharp book, so a single soft-book line is read and never priced; quotes that age past the 5/10 min limit between planning and the final young-quote plan have the same effect. The file does not say which cause. At about 31 reads a second, 244 lines are about 8 s of the 32 s scan (Novig reads are rate-limited, not credits).",
+   "appFault": true,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Planner.kt:265 (lineStats: >= 1 book) vs engine/.../FairValue.kt:137 (minBooks)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/HealthChecks.kt:196-200 (Scan budget)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Pricing.kt:322 (outcomesWithFair)"
+   ],
+   "suggestedAction": "Report sides with a fair price over sides priced (1,508 of 1,996 = 75.6%) and split the missing ones into 'one book' and 'quote too old'. Only then decide whether the planner should skip lines that cannot be priced; skipping them changes which Novig lines are read, so it is Tj's call."
+  },
+  {
+   "kind": "FINE",
+   "title": "The 97 games past 'days ahead 1' are not scanned by design and do not skew Vigilant's own results; they do skew any CNO-vs-Vigilant comparison unless it is cut at 24 h",
+   "evidence": "Games 69 on Novig in the window, 69 matched, 97 past days ahead 1 (58% of the 166 pregame games in the picked leagues are outside the window). Of 614 Vigilant-listed bets in the 2,080-bet study, 597 (97.2%) were first listed within 24 h of the start; the 17 beyond came from earlier settings (13 on Oct 3, 4 on Oct 4) and closed at CLV -8.9% [-14.1, -5.1] on 7 closes in 2 games. CNO's list has no such limit: 187 CNO-list bets first listed over 24 h out (only 8 have a close yet, CLV -7.6% [-10.1, -5.1] over 2 games) and the diagnostics say CNO bets placed over 24 h early closed at CLV -0.9% on 238 bets vs +1.4% on 294 within 24 h. Cut at 24 h, CNO-only bets are CLV +0.77% [+0.12, +1.47] (170 closes, 49 games), Vigilant-only +0.32% [-0.90, +1.58] (126, 26), bets both listed -0.30% [-1.02, +0.39] (170, 27): overlapping intervals, no scanner difference shown at this sample.",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/.../scanner/Planner.kt:148 (laterGames)",
+    "data/.../scanner/ScanSettings.kt (scanWindowHours)"
+   ],
+   "suggestedAction": "When comparing scanners or judging 'early' bets, cut at 24 h (the trap guard already does for betting). About 140 games (about 4x today's 35 with a close) would shrink the Vigilant CLV interval to about +/-0.4 points."
+  },
+  {
+   "kind": "FINE",
+   "title": "Quote freshness at first look meets the rule since v0.60.0; no sign that Novig-price age or fair-quote age skews CLV at this sample",
+   "evidence": "614 Vigilant-listed bets (69 games): fair quote age (oldest book in the fair) at first look median 225 s, 66% over 180 s, 28% over 300 s (allowed: 300 s within 3 h of the start, 600 s beyond). 40 (6.5%) exceed their limit when logged, 11 by more than 60 s, 2 by more than 120 s, all 11 in versions up to 0.59 (before Oct 4 21:35Z); from v0.60.0 on 0 of 214 exceed it by 60 s and the median is 85 s (283 s before, n=400). Novig price age at first look: median 41 s, 29.6% over 180 s, max 297 s. CLV (closes that are not 1-2 Novig trades) by group, game-clustered 95% CIs: all Vigilant-listed -0.24% [-1.01, +0.62] (303 closes, 35 games), first date half -0.34% [-1.13, +0.50] (273, 27), second half +0.65% [-0.95, +4.15] (30, 9); Novig age 0-10 s +0.71% [-1.08, +2.74] (56, 19), 181+ s +0.22% [-0.94, +1.27] (132, 18); fair age 0-60 s -0.15% [-2.79, +3.33] (34, 10), 301-600 s -0.75% [-2.35, +1.10] (81, 19); Pinnacle in the fair -0.14% (200 closes) vs not -0.44% (103); live feed vs key route is not recorded per bet. No monotone pattern and every interval spans zero; listed EV averages +1.91%, so the shown edge runs about 2.2 points above the close (the diagnostics say 2.6), the same finding as health 'Vigilant's edges (CLV)'. Hence 'the data suggests', nothing more.",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "data/.../scanner/Freshness.kt (5/10 min, MIN_SHOWN_MS 2 min)",
+    "data/.../tracker/AtBet.kt:213 (fairAgeSec = oldest quote)"
+   ],
+   "suggestedAction": "None. About 140 games with a close would settle whether any age bin differs by 1 point."
+  },
+  {
+   "kind": "FINE",
+   "title": "Matching and providers in the last scan are healthy: 69 of 69 games matched, no scan errors, every fair-odds source answered",
+   "evidence": "Per source (games matched, leagues answered): Pinnacle 36 (8), Polymarket 14 (6), Kalshi 60 (8), ParlayAPI 68 (8), PropLine 8 (6), ParlayAPI props 9 (4), PropLine props 2 (4); The Odds API and its props 0 matched = backups standing by (6 leagues, 0 credits). Matched by league ATP 30/30, WTA 24/24, NHL 9/9, NBA 3/3, MLB 2/2, NCAAF 1/1; 'Errors: none'; scan 32 s (Kalshi 30 s sets it; ParlayAPI 17 s and props 18 s run beside it). Hosts since Oct 1: Kalshi api.elections 7,543 calls, 0.1% failed (the alternate external-api host 262 calls, 23 DNS failures all in the 19:3x ET outage); PinnWire 588 calls 0 failed; The Odds API 585, 0 failed; Polymarket 1,321, 3 cancelled; PropLine 1,385, 17 failed (1.2%: HTTP 500 x3, 504 x1, timeouts/cancels 13); pinnapi 71, 0 failed. Odd-match evidence: none (no matching problem in Recent problems; closes: 21 of 553 last-week bets missing a close, 'Pinnacle's close for this prop isn't in ParlayAPI's file'). Cosmetic: the usage ledger lists a second ParlayAPI key row (42 used, 19,958 left, no reset time) though 'Keys saved: ParlayAPI 1'; Runway counts 1 key, so it is a stale ledger row, not a second allowance.",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/.../scanner/Planner.kt:matchEvents",
+    "data/.../match/TeamMatcher.kt",
+    "app/.../Diagnostics.kt:matchingByLeague"
+   ],
+   "suggestedAction": "None."
+  }
+ ]
+}
