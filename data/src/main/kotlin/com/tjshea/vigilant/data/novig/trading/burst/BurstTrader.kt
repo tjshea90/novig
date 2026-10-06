@@ -245,7 +245,7 @@ class BurstTrader(
     }
 
     private suspend fun trade(w: WindowOpening, c: Cover, q: Long, decidedAtMs: Long) {
-        val first = NovigTradingClient.NewOrder(c.lo.yesOutcomeId, c.yes.price, q, "IOC", newClientId())
+        val first = NovigTradingClient.NewOrder(c.lo.yesOutcomeId, c.yes.price, q, "GTC", newClientId())
         val second = NovigTradingClient.NewOrder(c.hi.noOutcomeId, c.no.price, q, "IOC", newClientId())
         val pair = "${c.lo.label} YES / ${c.hi.label} NOT"
         fun base(outcome: String, msg: String, yesF: Long = 0, noF: Long = 0, paid: Double = 0.0, fees: Double = 0.0, hedge: Long = 0, lockedC: Long = 0, lockedP: Double = 0.0, nakedC: Long = 0, nakedCost: Double = 0.0) =
