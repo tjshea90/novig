@@ -15,7 +15,7 @@ object BurstText {
 
     const val HINT = "After a play, a game's moneyline, spreads and totals are re-quoted one after another, and for a moment a pair can cost under $1 to cover (a profit whatever happens). " +
         "This watches Novig's live books with your READ key (it has no way to place an order), logs each such window and what a taker with YOUR measured delays (your signed round trip to Novig, how late " +
-        "pushes arrive) would have found when his order arrived, on paper, at your per-bet limit. Leave it on through live games (it uses one extra websocket and a little battery) and tap Share: " +
+        "pushes arrive) would have found when his order arrived, on paper, at your per-bet limit. Leave it on through live games (it uses one extra websocket and a little battery, and runs while the app is open or the background scan is on: Android may end the app otherwise) and tap Share: " +
         "after 3 games and 10 windows it says whether a real $1 test is worth running. It cannot prove a profit by itself: no order is sent, so a faster rival or a refused order isn't seen."
 
     /** One line for the page: what it is doing now. */
