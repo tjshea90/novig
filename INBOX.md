@@ -4362,3 +4362,8 @@ Continue this project
   Proposals only, no safety limit touched: set `skipped = true` on the empty 1st-half snapshots; add the "no game in the window" guard to ParlayAPI props; make Runway aware of the pacer; print per-purpose credits, daily credits and held-back counts in Diagnostics.
 </agent-message>
 ```
+
+## 2026-10-06T16:07:05Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
