@@ -39,7 +39,7 @@ class BurstTradeGateTest {
     fun `the trader's code can only send immediate-or-cancel orders and never cancels or rests anything`() {
         val code = java.io.File("src/main/kotlin/com/tjshea/vigilant/data/novig/trading/burst/BurstTrader.kt").readText().lines()
             .filterNot { it.trimStart().startsWith("*") || it.trimStart().startsWith("//") || it.trimStart().startsWith("/*") }.joinToString("\n")
-        assertEquals("every order is IOC", 2, Regex("\"IOC\"").findAll(code).count())
+        assertEquals("every order is IOC: the two legs and the hedge", 3, Regex("\"IOC\"").findAll(code).count())
         for (word in listOf("\"PO\"", "\"GTT\"", "\"GTC\"", "\"FOK\"", "cancelOrder", "cancelOrders", "placeOrder(", "ttlMs =")) {
             assertEquals("the trader must not use $word", false, code.contains(word))
         }
