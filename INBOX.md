@@ -4011,3 +4011,8 @@ I also set the scan to any time instead of next 6 hours and it still did the one
 ```
 Build a no orders recorder of the score burst idea to see if it works with my current setup and novig key. It must prove to be able to profit on my current system and app. Also, does it work in sports other than NFL?
 ```
+
+## 2026-10-06T02:41:47Z
+```
+Right now it will just be a test, but make it good enough so that if it is proven I can just turn it on for actual money betting
+```
