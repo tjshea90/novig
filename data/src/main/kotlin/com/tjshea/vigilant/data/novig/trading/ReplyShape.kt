@@ -7,6 +7,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
 
 /**
  * What a reply looked like, with none of what it said: its keys and the kind of each value (`{accepted:[{clientId:string,orderId:string}x2]}`), so a reply this app can't read can be
@@ -22,11 +23,14 @@ object ReplyShape {
     /** [body]'s shape in at most [MAX_LENGTH] characters; an empty body, or one that isn't JSON, says so (and what kind of character it starts with, never the text). */
     fun of(body: String, json: Json = Json): String {
         if (body.isBlank()) return "an empty body (${body.length} characters)"
+        val notJson = "not JSON (${body.length} characters, starting with ${startsWith(body.trimStart().first())})"
         val element = try {
             json.parseToJsonElement(body)
         } catch (e: Exception) {
-            return "not JSON (${body.length} characters, starting with ${startsWith(body.trimStart().first())})"
+            return notJson
         }
+        // The parser reads a bare word ("<html>…", "oops!") as an unquoted literal: only a number, true, false or null is a JSON value on its own.
+        if (element is JsonPrimitive && !element.isString && element !is JsonNull && element.booleanOrNull == null && element.doubleOrNull == null) return notJson
         return shape(element, 0).let { if (it.length > MAX_LENGTH) it.take(MAX_LENGTH) + "…" else it }
     }
 
