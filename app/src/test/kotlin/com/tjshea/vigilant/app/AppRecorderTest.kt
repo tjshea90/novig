@@ -132,6 +132,29 @@ class AppRecorderTest {
         assertEquals("Vigilant scan finished in 31 s: 120 Novig prices (120 through the key), 0 errors · 20.0 a second", line)
     }
 
+    @Test
+    fun `a scan with nothing in its window says so - and with Low API usage on, that no feed was asked and nothing spent`() {
+        val none = com.tjshea.vigilant.data.scanner.ScanResult(emptyList(), emptyList(), com.tjshea.vigilant.data.scanner.ScanStats(23, 0, 0, 0, 0, 152), 0L)
+        val empty = report(timing = ScanTiming(totalMs = 400)).copy(result = none, booksFetched = 0, booksViaKey = 0)
+        val low = AppRecorder.scanLine(empty, lowUsage = true)
+        assertTrue(low, low.contains("Low API usage: no game with a prop market on Novig in the next 6 h, so no feed was asked and nothing was spent"))
+        assertTrue(AppRecorder.scanLine(empty).contains("no market in the scan's window to price"))
+        // Something to price: no note. A scan that failed is not "nothing to read" either.
+        val priced = com.tjshea.vigilant.data.scanner.ScanResult(emptyList(), emptyList(), com.tjshea.vigilant.data.scanner.ScanStats(23, 4, 120, 80, 1, 0), 0L)
+        assertFalse(AppRecorder.scanLine(empty.copy(result = priced), lowUsage = true).contains("Low API usage"))
+        assertFalse(AppRecorder.scanLine(empty.copy(errors = listOf("Novig board: no network")), lowUsage = true).contains("Low API usage"))
+        // The line the existing tests pin is unchanged when the report has no result.
+        assertFalse(AppRecorder.scanLine(report(), lowUsage = true).contains("Low API usage"))
+    }
+
+    @Test
+    fun `the +EV tab's words for a Low API usage scan that had nothing to read`() {
+        val auto = com.tjshea.vigilant.app.ui.LowUsageText.nothingToRead(com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO)
+        assertTrue(auto, auto.contains("starts in the next 6 hours") && auto.contains("spent nothing") && auto.contains("every few minutes"))
+        assertTrue(com.tjshea.vigilant.app.ui.LowUsageText.nothingToRead(10).contains("every 10 min at most"))
+        assertTrue(com.tjshea.vigilant.app.ui.LowUsageText.TAB_NOTE.contains("Bids tab"))
+    }
+
     // ---- CNO's pause and Tj's switches ---------------------------------------------------------------------------------------
 
     @Test
