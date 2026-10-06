@@ -6,7 +6,8 @@ GitHub the moment it finishes (tools/save_agent.sh <label>), so a session that d
 agents that were still running. A new session runs this first; it never reruns a saved label.
 
   python3 tools/research/study_v0701/plan.py                # status + the next agents to launch
-  python3 tools/research/study_v0701/plan.py --inflight 2   # 2 already running: prints 1 to launch
+  python3 tools/research/study_v0701/plan.py --running study-traps,study-bids   # these are in flight: never suggested again, and they count against the 3
+  python3 tools/research/study_v0701/plan.py --inflight 2   # same count, labels unknown
   python3 tools/research/study_v0701/plan.py --selftest
 
 A label is saved when research/v0701_partial/<label>.json exists and parses as JSON.
@@ -87,8 +88,10 @@ def plan(d):
     return rows, ready
 
 
-def report(d, inflight, maxn=3):
+def report(d, inflight, maxn=3, running=()):
     rows, ready = plan(d)
+    ready = [l for l in ready if l not in running]
+    inflight = max(inflight, len(running))
     out = []
     for phase in dict.fromkeys(p for p, _, _ in rows):
         ls = [(l, s) for p, l, s in rows if p == phase]
@@ -111,6 +114,8 @@ def selftest():
         assert ready[:3] == STUDY[:3] and 'strategy-simple-filters' not in ready, ready   # builders wait for the 9 study results
         assert ready[9:] == DIAG, ready
         assert 'ALL SAVED' not in report(d, 0) and report(d, 2).count('  -> ') == 1 and report(d, 3).count('  -> ') == 0
+        r = report(d, 0, running=(STUDY[0], STUDY[1]))                                          # running labels are never suggested again
+        assert '-> ' + STUDY[0] not in r and '-> ' + STUDY[1] not in r and '-> ' + STUDY[2] in r and r.count('  -> ') == 1, r
         open(os.path.join(d, STUDY[0] + '.json'), 'w').write('{half written')                  # a torn write is not saved
         assert not saved(d, STUDY[0])
         for l in STUDY: mk(l)
@@ -144,6 +149,7 @@ if __name__ == '__main__':
         selftest(); sys.exit(0)
     d = a[a.index('--dir') + 1] if '--dir' in a else DEFAULT_DIR
     n = int(a[a.index('--inflight') + 1]) if '--inflight' in a else 0
+    run = tuple(x for x in a[a.index('--running') + 1].split(',') if x) if '--running' in a else ()
     os.makedirs(d, exist_ok=True)
     print(f'v0.70.1 analysis: saved results in {os.path.relpath(d)}')
-    print(report(d, n))
+    print(report(d, n, running=run))
