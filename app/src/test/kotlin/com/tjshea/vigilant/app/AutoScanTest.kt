@@ -177,11 +177,11 @@ class AutoScanTest {
                 ScanSettings(
                     autoScan = AutoScanMode.BOTH, scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, autoScanSeconds = 60, leagues = setOf("NFL"),
                     maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE,
+                    // The current schema: an older one is migrated, which puts the interval back to the minutes a v0.19 file held.
+                    schema = 12,
                 )
             }
         }
-        val seen = kotlinx.coroutines.runBlocking { app.container.currentSettings() }
-        println("DEBUG lowUsageNow=${seen.lowUsageNow} gap=${seen.vigilantGapSeconds} every=${seen.autoScanSeconds} vig=${seen.autoScansVigilant} pace=${seen.lowUsagePace}")
         var clock = now
         var started = 0
         var starts: List<Long>? = listOf(now + 2 * 3_600_000L)
