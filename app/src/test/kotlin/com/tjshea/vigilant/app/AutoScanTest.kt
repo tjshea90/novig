@@ -148,8 +148,10 @@ class AutoScanTest {
 
     /** Low API usage bids (RESEARCH.md §92) run Vigilant's scan at the pace Tj picked, however fast the cycles are, and the cycle really asks for it. */
     @Test
-    fun `in low API usage bids Vigilant's scan waits the picked pace - 10 minutes by default - and the usual four otherwise`() {
-        val low = ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, maker = true)
+    fun `in low API usage bids Vigilant's scan waits the picked pace - Auto's 3 minutes by default, 10 when picked - and the usual four otherwise`() {
+        val auto = ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, maker = true)
+        assertEquals("Auto's shortest gap: the 5 minute limit less the 2 minute re-post window", 180, auto.vigilantGapSeconds)
+        val low = auto.copy(lowUsagePace = 10)
         val gap = low.vigilantGapSeconds
         assertEquals(600, gap)
         // A 60-second cycle (what bids turn on): not due 4 or 9 minutes after the last one, due at 10; the usual gap would have run at 4.
@@ -163,7 +165,41 @@ class AutoScanTest {
         assertFalse(AutoScanClock.vigilantDue(now - 600_000L, 600, now, 1_800))
         // The cycle passes the settings' own gap.
         val src = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
-        assertTrue(src.contains("AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock(), settings.vigilantGapSeconds)"))
+        assertTrue(src.contains("AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock(), vigilantGap(settings))"))
+    }
+
+    /** Auto pace (RESEARCH.md §93): the cycle itself asks for the gap by the games the last scan saw. */
+    @Test
+    fun `Auto pace - the cycle starts the next Vigilant scan 3 minutes on while a game is inside 3 hours, 8 minutes on while every game is further off`() {
+        val app = context as VigilantApp
+        kotlinx.coroutines.runBlocking {
+            app.container.settingsStore.update {
+                ScanSettings(
+                    autoScan = AutoScanMode.BOTH, scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, autoScanSeconds = 60, leagues = setOf("NFL"),
+                    maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE,
+                )
+            }
+        }
+        var clock = now
+        var started = 0
+        var starts: List<Long>? = listOf(now + 2 * 3_600_000L)
+        val scanner = AutoScanner(context, app.container, clock = { clock }, phone = { false to false }, startVigilant = { _, _ -> started++; true }, gameStarts = { starts })
+        fun cycle() = kotlinx.coroutines.runBlocking { kotlinx.coroutines.withTimeout(20_000) { scanner.cycle() } }
+        cycle()
+        assertEquals("none yet this run: now", 1, started)
+        clock += 120_000L
+        cycle()
+        assertEquals("2 minutes on: not yet", 1, started)
+        clock += 60_000L
+        cycle()
+        assertEquals("3 minutes on, a game 2 h out: the bids' fair is about to go old", 2, started)
+        // Every game now far off (a 10 minute limit): the same cadence would spend credits for nothing.
+        starts = listOf(clock + 6 * 3_600_000L)
+        for (minute in 1..7) { clock += 60_000L; cycle() }
+        assertEquals("7 minutes on, every game 6 h out: not yet", 2, started)
+        clock += 60_000L
+        cycle()
+        assertEquals("8 minutes on: due", 3, started)
     }
 
     /** Tj's screenshot, 2026-10-05: at 15 s the page says Vigilant's own scan starts at most every 4 min; with low API usage bids on it is their pace, and the page says so. */
@@ -174,9 +210,11 @@ class AutoScanTest {
         assertTrue(usual, usual.contains("it starts at most every 4 min, however fast CNO is read"))
         assertTrue(usual, usual.contains("360 scans a day"))
         assertFalse(usual.contains("Low API usage"))
-        val low = com.tjshea.vigilant.app.ui.autoScanHint(base.copy(maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE))
+        val low = com.tjshea.vigilant.app.ui.autoScanHint(base.copy(maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, lowUsagePace = 10))
         assertTrue(low, low.contains("it starts at most every 10 min, however fast CNO is read"))
         assertTrue(low, low.contains("144 scans a day"))
+        val autoPace = com.tjshea.vigilant.app.ui.autoScanHint(base.copy(maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE))
+        assertTrue(autoPace, autoPace.contains("it starts at most every 3 min, however fast CNO is read"))
         assertTrue(low, low.contains("Low API usage bids are on: this scan reads player props only"))
         // The gap, not the cycle, sets it; a gap shorter than the cycle changes nothing.
         assertEquals(600, ScanSettings.vigilantEverySeconds(15, 600))
