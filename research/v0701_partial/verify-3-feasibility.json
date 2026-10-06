@@ -1,0 +1,79 @@
+{
+ "lens": "APP FEASIBILITY AND SAFETY (could the app do this with its existing machinery; does it loosen a limit; look-ahead; is a close available)",
+ "rule": "First listed within 6 h AND listed EV at least 2%: (df.minToStartFirst<=360)&(df.ev>=0.02)",
+ "numbers_reproduced": "Reproduced the builder exactly with the shared loader: 161 bets, 51 games, 79 closes in 34 games, CLV +3.01% [+2.12, +4.19] (builder +3.01% [+2.12, +4.19]); close_ok 66 closes +3.27%; ROI +9.2% on 154 settled in 48 games, CI [-9.0%, +27.2%]; date halves +2.70% (64 closes, 26 games) and +4.35% (15 closes, 8 games); window baseline (<=360 min, 938 bets) +1.41%; 71.4 bets/day over the study's 2.256 days. All match. WHAT THE 161 ARE: 131 props (81%), 15 totals, 9 spreads, 4 team totals, 1 moneyline, 1 period; 89 NFL; 128 shown by the app's list, 33 hidden. CLOSE COVERAGE: only 79/161 (49%) have a close and 82 have none (68 of 131 props have none). The 79 closes are 43 Tracker (CNO's own books read ~2 min before the start, and a Tracker close exists ONLY for a bet Tj/the app placed: 43 of 44 placed rule bets), 29 Novig trades (13 of them from 1-2 trades), 6 ESPN, 1 Pinnacle. Independent closes (ESPN/Pinnacle/Novig 3+) = 23 bets in 16 games, CLV +1.86% [+1.02, +2.95]; independent closes for props = 14 bets in 9 games, CLV +0.87% [+0.16, +1.66], beat 50%. Hidden rule bets have 4 closes of 33.",
+ "survives": false,
+ "reason": "From the feasibility lens the rule as measured cannot be run by the app, and the part the app can run adds no demonstrated edge beyond a setting Tj already owns. (1) Only 41 of the 161 bets (25%; 20 games; 18.2 a day) pass the auto-bet's current gates (on CNO's list, prop/moneyline/spread, odds -200..+130, sharp check not VETOED, book check 2+ two-sided and 3+ agreeing). The other 120 would need the odds cap, the kinds list, the books-agree gate, CNO's filters, or the sharp veto (a named safety limit: 12 bets) to be loosened, or are Vigilant-scan-only bets the CNO auto-bet never places (34). (2) The +3.01% is not an app result: the 41 feasible bets have +2.88% [+1.73, +4.14] on 37 closes, but 27 of those closes are Tracker closes of bets that were ALREADY placed (27 of 41 = 66% already placed: 13 by the auto-bet at +3.24%, 14 by Tj's hand at +4.22%, so human selection is mixed in); the 10 feasible bets nobody placed have CLV +0.55% [-0.69, +1.82], beat 40%, 7 games. Second-half feasible set: 8 bets, 5 games, 7 closes, all Tracker. (3) The EV >= 2% part loosens the auto-bet's live edge floor (autoBetMinEv 2.5% in force on the phone, the Volume preset's value) to 2.0%. Rule 3 (EV >= 2.5%) and this rule have the identical CLV (+3.01% both, 64 vs 79 closes); the 2.0-2.5% slice is 39 bets / 15 closes, CLV +3.01% but slice-minus-rest diff 0.00 [-1.74, +1.93] and on independent closes 10 bets (-0.50 vs the >=2.5% group, CI [-2.30, +1.74]); inside the app's gates the slice is 9 bets / 9 games / 6 closes at first look and, simulating entry at the first qualifying look, 19 bets / 14 games / 12 closes at +1.35% [+0.23, +2.54] against +2.94% for the 2.5% set. No evidence 2% beats the existing 2.5%, so it is a loosening with no benefit shown: a QUESTION FOR TJ, not an action. (4) What does carry the result is the 6 h window, which is the existing trap guard (trapEarlyHours, chip 6, default 6; Tj's phone is at 24 h) and a tightening, not a loosening. On the 245 bets Tj/the app placed (one close type, Tracker): first look within 6 h +2.39% (101 closes, 38 games) vs over 6 h -0.83% (128 closes, 27 games); the auto-bet's own bets inside the rule +2.52% [+0.61, +4.92] on 19 bets / 12 games vs +0.15% on its 66 bets outside it. That belongs to the separate 6 h candidate and to Tj's open 24 h-vs-6 h question, not to the 2% floor.",
+ "caveats": [
+  "SETTINGS TO RUN IT INSIDE TODAY'S GATES (no code change): Settings trap guard window to 6 (ScanSettings.trapEarlyHours; chips Off/3/6/12/24 plus typed hours since v0.70.3; the Diagnostics file shows Tj's phone at 24 h) and Auto-bet 'Smallest edge' to 2% (ScanSettings.autoBetMinEv; 0.02 is in AUTO_BET_MIN_EV_CHOICES; MIN_EV_FLOOR is 0.5%). A preset cannot carry the window: PresetRules has no trapEarlyHours field, so applying 'Volume + safe CLV' (edge 2.5%) resets only the edge, never the window. 'Starts within' 6 h is a separate list filter (STARTS_WITHIN_CHOICES has 6). Nothing in the app can express 'first LISTED within 6 h': TrapGuard.early tests time-to-start now, so bets listed earlier that enter the 6 h window are bet too.",
+  "LOOSENING TALLY (proposal 2.5% -> 2.0% is the only loosening inside the gates): the 6 h window is a tightening (24 h -> 6 h). Safety limits NOT touched if the gates stay: daily limit, per-bet cap, price tolerance 3%, pregame only, halt on lost order, sharp veto (the rule's 12 VETOED bets stay excluded; their CLV is +0.43% on 7 closes, consistent with the veto). To place the 120 gated-out bets would loosen: odds cap +130 (29 rule bets, CLV +6.56% on only 5 closes), kinds (20: totals/team totals/period), CNO books/odds/mismatch filters (33 hidden: 15 BOOKS, 12 ODDS, 3 MISMATCH, 3 NOT_LISTED), books-agree gates (86 with no page read, 17 checked but under 2 two-sided or 3 agree), and the sharp veto (12). None of that should be proposed.",
+  "AUTO-BET MECHANICS CHECKED IN CODE: it only judges CNO-list candidates (UiState.cnoCandidates), trap-guarded by time to start, whose book page was read (the best 10 per cycle, AUTO_BET_CHECK_TOP), at Novig's live price read within a minute, 1 minute minimum lead, max 5 per cycle, one bet per Novig market, per-game exposure counts open bets AND resting bids. Vigilant-scan bets (34 of the 161) are not auto-bet unless Pinnacle only is on (only 2 of the 161 are Pinnacle-only).",
+  "CAPS DO NOT BIND, GATES DO: stake estimate = 1/4 Kelly of the $250 bankroll capped at $3.50 and at the dollars available: mean $1.86 a bet (gated first-look set), $1.66 (entry-simulated set). Gated first-look set: 41 bets = 18.2 a day = about $34 a day, busiest game $13.9 over 7 bets, busiest day $56 (limits $500 a day, $70 a game, $5 a bet). Entry-simulated set (first CNO-list look inside 6 h with EV >= 2%, gates applied; 89 bets, 29 games): 39.4 a day, $66 a day, busiest day $94, busiest game $25.4 over 17 bets. Ungated 161: 71 a day, $126 a day, one game with 26 bets and $42.8. Available dollars: median $60 (gated) / $70 (all 161), 10th percentile $6 / $4; 14 of 161 and 4 of 41 have under $3.50 at the price. In the app's own 4-day counters the per-game limit skipped 378 bet-looks (resting bids count toward it), the sharp veto 1,386 (ProphetX), odds over +130 556, book-count gates about 2,900; placed 111 of 6,696 looked. The auto-bet actually placed 19 bets inside the rule in 2.26 days (8.4 a day), vs 18.2 a day feasible and 24 more rule bets placed by hand.",
+  "TOP-10 BOOK-READ BUDGET: with a 6 h window and 2% floor the CNO-list candidate set (bets with a list look inside 6 h at EV >= 2%) in 5-minute bins has median 2, mean 3.6, and exceeds 10 in 7 of 158 bins; under today's 24 h / 2.5% it has median 3, mean 6.1 and exceeds 10 in 56 of 236 bins. So the narrower window frees read budget; but 18 of the 70 shown/kind/odds/sharp-ok bets never had a page read at first look.",
+  "DECISION-TIME INFORMATION: no close, no look-ahead in the rule's two inputs (time to start and EV at the first look are known when listed). Two approximations: (a) the study prices every bet at the FIRST-LISTED price; for the 44 rule bets that were placed, the price paid was on average 0.18 points of probability worse than the first look and CLV at the price paid is +3.68% against +4.03% at first look (about 0.35 pt slippage; in-rule placements happened a median 0.63 min after the first look, 75th percentile 3.1 min). (b) The app bets at any look where live EV >= floor, not only at the first look: simulating entry at the first CNO-list look inside 6 h with EV >= 2% gives 230 bets / 50 games / 157 closes, CLV +2.23% [+1.67, +2.98] ungated and, with the app's gates, 89 bets / 29 games / 79 closes, CLV +2.67% [+2.15, +3.29] (halves +2.46% on 63 closes, 41 of them Tracker, and +3.52% on 16 closes, all Tracker); the same gated set at 2.5% is +2.94% on 67 closes, and entries 6-24 h out (what today's 24 h guard adds) +0.14% [-3.20, +2.56] on 31 closes.",
+  "WHAT SETTLES IT: to tell a 1.5-point CLV difference between the 2.0-2.5% band and the >=2.5% set at 80% power takes about 150 closes in each arm (per-bet CLV sd 4.3%, game-cluster design effect 1.17), about 350 each for a 1-point difference; today the band has 6 (first look, gated) to 15 (all bets) closes and 10 independent ones. A prop needs a Pinnacle, Kalshi or ProphetX close, which ParlayAPI's file does not hold for props: 68 of the 131 rule props have no close at all.",
+  "STATISTICAL CONTEXT FOR THIS LENS: the EV >= 2% gradient is real inside every close type (EV>=2% minus EV<2% within the 6 h window: all closes +2.32 pts [+1.37, +3.50]; Tracker only +2.86 [+1.00, +5.00]; independent only +1.55 [+0.52, +2.68]; Novig trades only +1.87 [+0.62, +3.01]), so the monotone climb is not only a mix of close sources, though the Tracker share does grow with the EV floor (101 -> 43 of the window's closes from 0% to 2%, 16 at 4%). The question this lens answers is narrower: the climb above 2% is not shown for 2.0-2.5% versus the existing 2.5%.",
+  "CONCENTRATION: 80 of the 161 and 29 of the 41 feasible bets start on one day (Oct 4, an NFL Sunday); 89 of 161 and 30 of 41 are NFL; feasible set outside NFL is 11 bets / 9 games / 8 closes (+4.22%). First-half/second-half evidence for the feasible set is 33 + 8 bets.",
+  "ROI is not evidence here: feasible set ROI -9.1% (39 settled, 20 games); unplaceable 120 bets +15.4% (115 settled); no-close bets +33.6% vs close bets -15.2% (noise: one NFL day). Statistical honesty: the effective sample is 20 games for the feasible set, 51 for the rule.",
+  "Prior sessions already recorded (INBOX.md research notes) that inside 6 h only the EV at the look matters, kept the 6 h guard, and left the 24 h-vs-6 h choice with Tj ('about 50 more auto closes at 6-24 h would settle it'); this verification is consistent with that and adds that the 2% floor was not separately shown."
+ ],
+ "proposal_for_tj": "If anything is put to Tj from this rule, split it: (A) return the trap guard window from 24 h to 6 h (tightening; no code change; evidence: placed bets first looked at inside 6 h +2.39% on 101 closes vs over 6 h -0.83% on 128); (B) leave the auto-bet floor at 2.5%: lowering it to 2% adds about 4 gated bets a day at first look (9 bets in 2.26 days) or 8 a day entry-simulated (19 bets) with an unshown CLV edge, and loosens a rule that decides which bets are placed. Question for Tj, not an action.",
+ "claims": [
+  {
+   "claim": "feasible_share",
+   "value": "41/161 bets (25.5%), 20/51 games pass the auto-bet's current gates"
+  },
+  {
+   "claim": "feasible_clv_all",
+   "value": "+2.88% [+1.73,+4.14], 37 closes, beat 76%"
+  },
+  {
+   "claim": "feasible_clv_tracker",
+   "value": "+3.75% [+2.31,+5.07], 27 closes (already-placed bets, CNO-books close)"
+  },
+  {
+   "claim": "feasible_clv_unplaced",
+   "value": "+0.55% [-0.69,+1.82], 10 closes, 7 games, beat 40%"
+  },
+  {
+   "claim": "feasible_independent_closes",
+   "value": "6 bets, 4 games, +0.75% [-0.08,+1.99]"
+  },
+  {
+   "claim": "slice_2.0_2.5_gated_first_look",
+   "value": "9 bets, 9 games, 6 closes, +3.21%"
+  },
+  {
+   "claim": "slice_2.0_2.5_gated_entry_sim",
+   "value": "19 bets, 14 games, 12 closes, +1.35% [+0.23,+2.54] vs 2.5% set +2.94% [+2.32,+3.72] on 67 closes"
+  },
+  {
+   "claim": "slice_2.0_2.5_all_bets",
+   "value": "39 bets, 26 games, 15 closes, +3.01%; vs >=2.5%: diff +0.00 [-1.74,+1.93]"
+  },
+  {
+   "claim": "window_effect_placed_bets",
+   "value": "<=6h +2.39% (101 closes, 38 games); >6h -0.83% (128 closes, 27 games); same Tracker close type"
+  },
+  {
+   "claim": "auto_placed_in_rule_vs_outside",
+   "value": "+2.52% [+0.61,+4.92] 19 bets/12 games vs +0.15% 66 bets"
+  },
+  {
+   "claim": "placed_by_hand_in_rule",
+   "value": "24 bets, 13 games, +5.23% [+3.66,+7.07]: human selection mixed into the Tracker closes"
+  },
+  {
+   "claim": "close_coverage",
+   "value": "79/161 closes; props 63/131; hidden rule bets 4/33; independent 23"
+  },
+  {
+   "claim": "bets_per_day",
+   "value": "gated first look 18.2; entry-simulated gated 39.4; auto-bet actually placed in rule 8.4; ungated 71.4"
+  },
+  {
+   "claim": "dollars",
+   "value": "gated first look about $34/day; entry-sim $66/day (max day $94); caps $500/day, $70/game, $5/bet not binding"
+  }
+ ]
+}
