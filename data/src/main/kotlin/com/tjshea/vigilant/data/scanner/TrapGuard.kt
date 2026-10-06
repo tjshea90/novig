@@ -23,8 +23,18 @@ object TrapGuard {
     /** The default: bet only within 6 h of the start (where Tj's own bets beat the close). 0 = off. */
     const val DEFAULT_EARLY_HOURS = 6
 
-    /** The choices Settings offers (0 = off). */
+    /** The chips Settings offers (0 = off); the field beside them takes any whole number of hours from 1 to [MAX_EARLY_HOURS] (Tj, 2026-10-06: "or an amount in hours I type in"). */
     val EARLY_CHOICES = listOf(0, 3, 6, 12, 24)
+
+    /** The most hours a typed window can be (about 41 days: past any game Novig lists, so past it the guard is as good as off). */
+    const val MAX_EARLY_HOURS = 999
+
+    /** A window typed as hours ("9", " 18 h ") as the setting, or null when it isn't a whole number from 1 to [MAX_EARLY_HOURS] (0 is Off, a chip; the field says why and saves nothing). */
+    fun parseHours(text: String): Int? {
+        val t = text.trim().removeSuffix("h").removeSuffix("H").trim()
+        if (t.isEmpty() || !t.all { it.isDigit() }) return null
+        return t.toIntOrNull()?.takeIf { it in 1..MAX_EARLY_HOURS }
+    }
 
     /** How far under its own last-hour level a game line's price must be, in probability (2¢), for the move rule. */
     const val MOVE = 0.02
