@@ -1,13 +1,13 @@
-# CHECKPOINT 2624 — read me first, then TASKS.md
+# CHECKPOINT 2625 — read me first, then TASKS.md
 
-**Written:** 2026-10-06T14:36:26Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `093c6306` (this checkpoint is the commit after it)
+**Written:** 2026-10-06T14:39:23Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `954ba48b` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.70.2: the Diagnostics file always says whether the live burst recorder and the real-money trader are on or off (versionCode 120, v0.70.2)
+files re-sent and extracted (loader matches the phone); wave 1 launched, study-overall-edge saved on GitHub; plan.py now takes --running; v0.70.2 gated+pushed, release.yml triggered 14:36Z
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.70.2), then run: bash tools/record-release.sh v0.70.2 120 "v0.70.2: the Diagnostics file always says whether the live burst recorder and the real-money trader are on or off"
+as each running agent finishes (study-data-quality, study-splits-bet-attributes, study-splits-process-attributes): save_agent.sh then launch the next from plan.py --running; confirm Release v0.70.2 + record-release.sh; then strategy builders after all 9 study results
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  90a3bcf0 ckpt 2624: pre-release: v0.70.2: the Diagnostics file always says whether the live burs
   e6ba9e93 ckpt 2623: built plan.py (wave planner, selftest) + save_agent.sh (bank one agent's res
   2b3b86ab ckpt 2622: Tj's 14:14Z instruction recorded as CY1-CY3 in TASKS.md (max 3 agents in fli
   8a4d5a5a ckpt 2620: 4th container: files re-sent and re-extracted into scratchpad v0701 (loader 
@@ -25,8 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   6d988e7b ckpt 2616: v0.70.1 analysis resumed in a NEW container (old workflow lost): files were 
   0039a333 ckpt 2615: Tj sent two files (v0.70.1 diagnostics + scan study, no words): data extract
   1909ebb8 ckpt 2614: v0.70.1 RELEASED and recorded (v0.70.0 too); RESEARCH 95/96 and NOVIG_API 20
-  d4810416 ckpt 2613: pre-release: v0.70.1: the burst trader is judged league by league (a league 
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
