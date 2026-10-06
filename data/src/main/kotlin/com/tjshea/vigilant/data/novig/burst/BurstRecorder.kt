@@ -85,6 +85,8 @@ class BurstRecorder(
     private val echoEveryMs: Long = ECHO_MS,
     private val probeEveryMs: Long = PROBE_MS,
     private val tickMs: Long = TICK_MS,
+    /** Where the journal is written: the disk's dispatcher (tests use their own so a write is done when they look). */
+    private val ioContext: kotlin.coroutines.CoroutineContext = Dispatchers.IO,
 ) {
     private val _status = MutableStateFlow(BurstStatus())
     val status: StateFlow<BurstStatus> = _status.asStateFlow()
@@ -339,7 +341,7 @@ class BurstRecorder(
 
     private suspend fun write(atMs: Long, lines: List<BurstLine>) {
         try {
-            withContext(Dispatchers.IO) { journal.append(atMs, lines) }
+            withContext(ioContext) { journal.append(atMs, lines) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
