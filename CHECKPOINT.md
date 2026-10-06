@@ -1,18 +1,19 @@
-# CHECKPOINT 2621 — read me first, then TASKS.md
+# CHECKPOINT 2622 — read me first, then TASKS.md
 
-**Written:** 2026-10-06T13:57:38Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-6516f8a0-0ekqlc` · **builds on:** `ed770d94` (this checkpoint is the commit after it)
+**Written:** 2026-10-06T14:16:55Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `8efd4251` (this checkpoint is the commit after it)
 
 ## Just done
-launched the 14 phase-1 analysts in container 4 (they write numbers-only copies to research/v0701_partial/<label>.json); status log updated in the resume file
+Tj's 14:14Z instruction recorded as CY1-CY3 in TASKS.md (max 3 agents in flight, save to GitHub as each finishes); fifth container: uploads dir gone again, no analyst results survive, main has everything
 
 ## Do this next
-wait for the 14 completion notifications; git add+commit research/v0701_partial after each; then phase 2 strategy builders, phase 3 verifiers, phase 4 synthesis+critic; no app-code edits while analysts read the repo
+build tools/research/study_v0701/plan.py + tools/save_agent.sh, tick stale boxes, tell Tj to resend the two files (CY3), then run waves of three
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
-    MM CHECKPOINT.md
+     M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
@@ -28,5 +29,5 @@ wait for the 14 completion notifications; git add+commit research/v0701_partial 
   73c148b8 ckpt 2611: pre-release: v0.70.0: real-money burst trader behind the recorder (OFF by de
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
