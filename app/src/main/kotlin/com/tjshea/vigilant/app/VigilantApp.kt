@@ -838,8 +838,76 @@ class AppContainer(private val app: Application) {
     /** The burst recorder's files (RESEARCH.md §95): one journal a day, appended to, never rewritten. */
     val burstJournal = com.tjshea.vigilant.data.novig.burst.BurstJournal(File(app.filesDir, "burst"))
 
+    /** The real-money burst trader's attempts (RESEARCH.md §95): one file a day, appended to, never rewritten. A cover's two legs are not Tracker bets (one of them always loses); this is their record. */
+    val burstTradeJournal = com.tjshea.vigilant.data.novig.trading.burst.BurstTradeJournal(File(app.filesDir, "burst-trades"))
+
+    /** What the trader sends orders through: whatever betting client is connected at that moment (the gate has checked there is one; a key removed mid-way fails the order, which halts it). */
+    private val burstOrders = object : com.tjshea.vigilant.data.novig.trading.burst.BurstOrders {
+        private fun client() = trading ?: error("no betting key connected")
+        override suspend fun placeBatch(orders: List<NovigTradingClient.NewOrder>) = client().placeOrders(orders)
+        override suspend fun order(orderId: String) = client().order(orderId)
+        override suspend fun fills(orderId: String) = client().fills(orderId)
+    }
+
+    /** The recorder's proof for the trader, read from the journal at most this often (a window is judged in milliseconds; the journal is a file). */
+    @Volatile private var burstProofCache: Pair<Long, com.tjshea.vigilant.data.novig.burst.BurstStudy.Proof>? = null
+
+    suspend fun burstProof(force: Boolean = false): com.tjshea.vigilant.data.novig.burst.BurstStudy.Proof {
+        val now = System.currentTimeMillis()
+        burstProofCache?.takeIf { !force && now - it.first < BURST_PROOF_TTL_MS }?.let { return it.second }
+        val proof = withContext(Dispatchers.IO) {
+            com.tjshea.vigilant.data.novig.burst.BurstStudy.proof(burstJournal.readAll(), com.tjshea.vigilant.data.novig.trading.burst.BurstTradeLimits.MIN_NET, burst.latency)
+        }
+        burstProofCache = now to proof
+        return proof
+    }
+
+    /** Tj's limits for the trader, from the saved settings, read at each window; off unless the recorder is on too (it is the recorder's windows it trades). */
+    private fun burstRules(): com.tjshea.vigilant.data.novig.trading.burst.BurstTradeRules {
+        val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.novig.trading.burst.BurstTradeRules(false, 0.0, 0.0, 0.0, 0.0)
+        return com.tjshea.vigilant.data.novig.trading.burst.BurstTradeRules(
+            enabled = AppBook.isNovig && s.burstTrade && s.burstRecorder && !s.killed,
+            stakePerLeg = s.burstTradeStake.coerceIn(BURST_TRADE_MIN_STAKE, BURST_TRADE_MAX_STAKE),
+            maxPerGame = s.burstTradeMaxGame, maxPerDay = s.burstTradeMaxDay, haltLoss = s.burstTradeHaltLoss, halted = s.burstTradeHalted,
+        )
+    }
+
     /**
-     * The score-burst recorder (Tj, 2026-10-06): NO ORDERS. Its connection is the read key's own websocket ([NovigStream] with a listener), its echo probe is a signed `POST /v3/echo`
+     * Why the trader must not trade right now, or null: STOP ALL or a pause, no betting key, a wallet that cannot cover both legs, or a recorder that has not proved the idea
+     * on this phone with these delays ([burstProof]). The words are fixed (they are counted in the status); the detail is [burstTradeNote].
+     */
+    private suspend fun burstGate(): String? {
+        val s = settingsStore.flow.value ?: return "settings not loaded"
+        if (s.killed) return "STOP ALL is on"
+        if (s.pausedByHand) return "scanning is paused"
+        if (trading == null) return "no betting key connected"
+        val balance = wallet.flow.value?.dollars ?: return "wallet not read yet"
+        if (balance < s.burstTradeStake * 2.2) return "wallet too low for both legs"
+        if (!burstProof().proved) return "not proved yet"
+        return null
+    }
+
+    /** The trader: a [WindowSink] of the recorder, so it hears of each window at the moment it opens. */
+    val burstTrader: com.tjshea.vigilant.data.novig.trading.burst.BurstTrader by lazy {
+        com.tjshea.vigilant.data.novig.trading.burst.BurstTrader(
+            orders = burstOrders, scope = appScope, rules = ::burstRules, gate = ::burstGate,
+            ownBids = { makerStore.flow.value.orEmpty().filter { it.resting }.map { com.tjshea.vigilant.data.novig.trading.burst.OwnBid(it.marketId, it.outcomeId, it.price) } },
+            journal = burstTradeJournal,
+            onHalt = { why ->
+                eventLog.warn("BURST", "trader halted: $why")
+                appScope.launch {
+                    withContext(kotlinx.coroutines.NonCancellable) {
+                        runCatching { settingsStore.update { if (it.burstTradeHalted == null) it.copy(burstTradeHalted = why) else it } }
+                        runCatching { AutoBetNotes.stopped(app, "Burst trading stopped", why) }
+                    }
+                }
+            },
+            lock = orderLock,
+        )
+    }
+
+    /**
+     * The score-burst recorder (Tj, 2026-10-06): its connection never places an order. Its connection is the read key's own websocket ([NovigStream] with a listener), its echo probe is a signed `POST /v3/echo`
      * (free), and it is given no trading client at all, so nothing in it can place or cancel an order whatever the code did.
      */
     val burst: com.tjshea.vigilant.data.novig.burst.BurstRecorder by lazy {
@@ -850,8 +918,12 @@ class AppContainer(private val app: Application) {
             echo = { (novig.keyed ?: error("no Novig key")).echo() },
             trades = { id -> novig.trades(id) },
             journal = burstJournal,
+            windowSink = burstTrader,
         )
     }
+
+    /** True while the settings carry a halt of the burst trader, so the Resume that clears it is told to the trader once ([burstTick]). */
+    @Volatile private var burstSawHalt = false
 
     /** Starts or stops the burst recorder to match [s]: on, a key connected, STOP ALL not pressed, the Novig app. Safe to call on every settings change. */
     suspend fun burstTick(s: ScanSettings) {
@@ -861,6 +933,8 @@ class AppContainer(private val app: Application) {
             return
         }
         ensureLoaded()
+        if (s.burstTradeHalted != null) burstSawHalt = true else if (burstSawHalt) { burstSawHalt = false; burstTrader.resumed() }
+        if (s.burstTrade) runCatching { wallet.fresh() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
         // New leagues take effect at once: the run in progress stops (its windows are written) and a new one starts when it has finished.
         if (burst.running && burst.status.value.leagues != s.burstLeagues) burst.stop()
         burst.start(s.burstLeagues, s.apiMaxStake)
