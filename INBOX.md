@@ -4031,3 +4031,8 @@ Save any progress now and checkpoint exactly how to resume all of this work. Ass
 ```
 @"/root/.claude/uploads/4be479b7-90a1-5f77-96b4-511e8525cfa7/edf91537-vigilant-diagnostics-v0.70.1-2026-10-06-0008.txt" @"/root/.claude/uploads/4be479b7-90a1-5f77-96b4-511e8525cfa7/e5207925-vigilant-scan-study-v0.70.1-2026-10-06-0008.txt" Continue the agents process that already started
 ```
+
+## 2026-10-06T04:51:09Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
