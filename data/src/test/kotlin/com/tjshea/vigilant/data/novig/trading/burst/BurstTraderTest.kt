@@ -86,7 +86,7 @@ class BurstTraderTest {
 
     private val on = BurstTradeRules(enabled = true, stakePerLeg = 1.0, maxPerGame = 5.0, maxPerDay = 10.0, haltLoss = 3.0)
 
-    private fun TestScope.rig(rules: BurstTradeRules = on): Rig {
+    private fun TestScope.rig(rules: BurstTradeRules = on, lock: kotlinx.coroutines.sync.Mutex? = null): Rig {
         val orders = FakeOrders()
         val halts = ArrayList<String>()
         val own = ArrayList<OwnBid>()
@@ -94,7 +94,7 @@ class BurstTraderTest {
         var counter = 0
         val trader = BurstTrader(
             orders = orders, scope = backgroundScope, rules = { r.rules }, gate = { r.gate }, ownBids = { own }, journal = BurstTradeJournal(tmp.newFolder("t" + System.nanoTime())),
-            onHalt = { halts += it }, clock = { base + currentTime }, dayStart = { base - 3_600_000L }, newClientId = { java.util.UUID.nameUUIDFromBytes("c${++counter}".toByteArray()).toString() },
+            onHalt = { halts += it }, clock = { base + currentTime }, dayStart = { base - 3_600_000L }, newClientId = { java.util.UUID.nameUUIDFromBytes("c${++counter}".toByteArray()).toString() }, lock = lock,
         )
         r = Rig(this, orders, trader, BurstTradeJournal(tmp.newFolder("j" + System.nanoTime())), halts, rules, null, own)
         return r
@@ -138,6 +138,22 @@ class BurstTraderTest {
         val s = r.trader.status.value.skipped
         assertEquals(setOf("STOP ALL is on", "halted", "window too old", "no longer pays", "net under the minimum", "own bid in the way", "limit reached"), s.keys)
         assertTrue(s.values.all { it == 1 })
+    }
+
+    @Test
+    fun `the app's one-order-at-a-time lock: held by another order, the attempt is skipped (never queued), and it is given back after a trade`() = runTest {
+        val lock = kotlinx.coroutines.sync.Mutex()
+        val r = rig(lock = lock)
+        assertTrue(lock.tryLock())                                   // the auto-bet is placing an order
+        r.send(r.window(cover())); step(r)
+        assertTrue(r.orders.batches.isEmpty())
+        assertEquals(1, r.trader.status.value.skipped["busy"])
+        lock.unlock()
+        r.send(r.window(cover())); runCurrent()
+        assertEquals(1, r.orders.batches.size)
+        assertFalse("given back", lock.isLocked)
+        // and the trader's own guard too: a second window while one is being traded is busy, not a second order.
+        advanceTimeBy(5_000); runCurrent()
     }
 
     @Test
