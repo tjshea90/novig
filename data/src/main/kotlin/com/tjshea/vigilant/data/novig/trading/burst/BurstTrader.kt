@@ -201,7 +201,7 @@ class BurstTrader(
         val start = clock()
         if (start < standDownUntil) return skip("stood down")
         if (start - w.openedMs > BurstTradeLimits.MAX_AGE_MS) return skip("window too old")
-        
+        gate()?.let { return skip(it) }
         val ladder = w.first.lo.ladderKey
         if (start - (lastTry[ladder] ?: 0L) < BurstTradeLimits.COOLDOWN_MS) return skip("cooldown")
         val barred = listOf(w.first.lo.marketId, w.first.hi.marketId).any { (blacklist[it] ?: 0L) > start }
