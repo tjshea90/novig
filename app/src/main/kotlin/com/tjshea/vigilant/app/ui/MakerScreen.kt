@@ -549,6 +549,7 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             "Trap guard: only games starting within (shared with auto-bet and alerts)", com.tjshea.vigilant.data.scanner.TrapGuard.EARLY_CHOICES, s.trapEarlyHours,
             TrapGuardText::hoursLabel,
         ) { v -> onUpdate { it.copy(trapEarlyHours = v) } }
+        TrapEarlyHoursField(s.trapEarlyHours, "maker") { v -> onUpdate { it.copy(trapEarlyHours = v) } }
         Text(
             MakerRulesText.earlyNote(s.trapEarlyHours), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.testTag("makerTrapEarlyNote"),
@@ -616,7 +617,7 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
 
 /**
  * The low-usage bids' controls (Tj, 2026-10-05; RESEARCH.md §92): the 2-3 sharp prop books the fair is built from, how often Vigilant's own scan runs while it is on, and
- * how far under the fair each bid goes (never under 2.5%). Chips are the same look as every other rule here.
+ * how far under the fair each bid goes (2.5% by default; 1.5% or an amount typed in, never under 0.5%). Chips are the same look as every other rule here.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -642,17 +643,54 @@ private fun LowUsagePanel(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSett
             }
         }
         Text(LowUsageText.paceNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("lowUsagePaceNote"))
-        Text("Under the fair (at least 2.5%): more fills at 2.5%, more per fill higher", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
+        Text("Under the fair (the +EV each bid is posted at): more bids and fills at 1.5%, more per fill higher", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             com.tjshea.vigilant.data.scanner.LowUsageBids.MARGIN_CHOICES.forEach { m ->
                 FilterChip(selected = m == s.lowUsageMargin, onClick = { onUpdate { it.copy(lowUsageMargin = m) } }, label = { Text(MakerRulesText.pct(m)) }, modifier = Modifier.testTag("lowUsageMargin-${Math.round(m * 1000)}"))
             }
         }
+        LowUsageMarginField(s.lowUsageMargin) { m -> onUpdate { it.copy(lowUsageMargin = m) } }
+        Text(LowUsageText.marginNote(s.lowUsageMargin), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("lowUsageMarginNote"))
     }
+}
+
+/**
+ * The margin under the fair typed in as a percent (Tj, 2026-10-06: "add options for minimum 1.5% positive EV or an amount I type in"), under the chips. The field always shows the saved
+ * margin ([margin]); a typed value saves as soon as it is a percent from [com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MARGIN] to [com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_MARGIN],
+ * anything else saves nothing and says why.
+ */
+@Composable
+private fun LowUsageMarginField(margin: Double, onSet: (Double) -> Unit) {
+    var text by remember(margin) { mutableStateOf(com.tjshea.vigilant.data.scanner.LowUsageBids.marginText(margin)) }
+    val bad = text.isNotEmpty() && com.tjshea.vigilant.data.scanner.LowUsageBids.parseMargin(text) == null
+    OutlinedTextField(
+        value = text,
+        onValueChange = { t ->
+            text = t.filter { it.isDigit() || it == '.' || it == ',' }.take(6)
+            com.tjshea.vigilant.data.scanner.LowUsageBids.parseMargin(text)?.let(onSet)
+        },
+        label = { Text("Or type your own (% under the fair)") },
+        isError = bad,
+        supportingText = { if (bad) Text(LowUsageText.MARGIN_ERROR) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = Modifier.fillMaxWidth().testTag("lowUsageMarginField"),
+    )
 }
 
 /** The low-usage bids' words, free of Compose. */
 object LowUsageText {
+    /** Shown under the margin field when what was typed is not a percent the mode takes. */
+    const val MARGIN_ERROR = "A percent from 0.5 to 50"
+
+    /** What the margin setting means at [margin] (the chips and the typed field set the same number). */
+    fun marginNote(margin: Double): String {
+        val m = margin.coerceIn(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MARGIN, com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_MARGIN)
+        val low = m < com.tjshea.vigilant.data.scanner.LowUsageBids.DEFAULT_MARGIN - 1e-9
+        return "Each bid is posted at least ${MakerRulesText.pct(m)} under the fair (the lowest prop-book fair too)" +
+            if (low) ": under the 2.5% it started at, so more bids go up and fill, each worth less and closer to the fair's own error." else "."
+    }
+
     fun paceLabel(minutes: Int): String = if (minutes == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "Auto" else "$minutes min"
 
     const val NOTHING_TO_READ_TITLE = "Low API usage: nothing to read right now"

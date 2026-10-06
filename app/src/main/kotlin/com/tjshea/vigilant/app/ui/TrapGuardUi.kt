@@ -8,15 +8,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.TrapGuard
@@ -29,6 +36,9 @@ object TrapGuardText {
 
     /** "Off", "3 h", "6 h". */
     fun hoursLabel(hours: Int): String = if (hours <= 0) "Off" else "$hours h"
+
+    /** Shown under the hours field when what was typed is not a window the guard takes. */
+    const val HOURS_ERROR = "A whole number of hours from 1 to ${TrapGuard.MAX_EARLY_HOURS}; pick Off for no limit"
 
     const val INTRO =
         "Skips the \"gifts\" the market later proves wrong. A price that beats the books often means someone on Novig knows something the books " +
@@ -84,6 +94,7 @@ fun TrapGuardSection(s: ScanSettings, showMove: Boolean, tag: String, onUpdate: 
             FilterChip(selected = h == s.trapEarlyHours, onClick = { onUpdate { it.copy(trapEarlyHours = h) } }, label = { Text(TrapGuardText.hoursLabel(h)) })
         }
     }
+    TrapEarlyHoursField(s.trapEarlyHours, tag) { v -> onUpdate { it.copy(trapEarlyHours = v) } }
     Text(TrapGuardText.earlyNote(s.trapEarlyHours), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 4.dp).testTag("$tag-trapEarlyNote"))
     if (showMove) {
         Row(
@@ -98,4 +109,28 @@ fun TrapGuardSection(s: ScanSettings, showMove: Boolean, tag: String, onUpdate: 
         }
         Text(TrapGuardText.moveNote(s.trapNovigMove), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("$tag-trapMoveNote"))
     }
+}
+
+/**
+ * The trap guard's window typed in as hours (Tj, 2026-10-06: "or an amount in hours I type in"), under the chips. The field always shows the saved window ([hours]; blank = Off), so a chip
+ * and the field never disagree; a typed value saves as soon as it is a whole number from 1 to [TrapGuard.MAX_EARLY_HOURS], anything else saves nothing and says why. [tag] prefixes the
+ * test tag like [TrapGuardSection]'s other controls.
+ */
+@Composable
+fun TrapEarlyHoursField(hours: Int, tag: String, onSet: (Int) -> Unit) {
+    var text by remember(hours) { mutableStateOf(if (hours > 0) "$hours" else "") }
+    val bad = text.isNotEmpty() && TrapGuard.parseHours(text) == null
+    OutlinedTextField(
+        value = text,
+        onValueChange = { t ->
+            text = t.filter { it.isDigit() }.take(3)
+            TrapGuard.parseHours(text)?.let(onSet)
+        },
+        label = { Text("Or type your own (hours)") },
+        isError = bad,
+        supportingText = { if (bad) Text(TrapGuardText.HOURS_ERROR) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier.fillMaxWidth().testTag("$tag-trapEarlyField"),
+    )
 }
