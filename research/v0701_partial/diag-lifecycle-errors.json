@@ -1,0 +1,315 @@
+{
+ "area": "diag-lifecycle-errors: stability, errors, lifecycle and what the v0.70.1 file does not show about the burst features",
+ "summary": "Stable: no crash, ANR, memory kill or stuck cycle appears in the file (crashes24h 0, heap 14%, 0 frozen frames, 9 late cycles of 7,328), and all 120 timeline warnings are the phone's mobile network gaps or Novig's 451 ANONYMIZED_NETWORK screen on the carrier address (6 clusters, 364 s of 274 min) except one app-side fault. What is wrong: Novig's batch-place reply is unreadable on the first batch of every app run (3 of 3 runs, 35 bids), the timeline cap (120) silently drops at least 49 of 64 errors, and the burst recorder/trader state is absent from v0.70.1's file (block returns null when off; v0.70.2 now prints two lines but not why the trader is locked). What matters most: weigh the numbers knowing the file is 5 minutes after a restart with the scanner stopped by Tj (kill switch) for at least 87 of the last 274 minutes and probably about 3 h, and that 9 of 11 'since previous report' entries, the cycle p95 move (2111 to 5712 = max of 14 samples) and the two top FAILUREs (a fallback resolver measured only during outages) are artifacts of keys, restarts or by-design counting.",
+ "findings": [
+  {
+   "kind": "FINE",
+   "title": "No crash, ANR, memory kill, freeze or stuck cycle in the file",
+   "evidence": "crashes24h 0 (MACHINE-READABLE); How the app last ended: 6 exits = 3 closed by Tj (remove task), 2 package updates (shown as 'reason 16'), 1 cached-process reclaim ('too many empty procs'), none bad; Memory heap 73 of 512 MB (14%), 31 MB and 20 MB right after start; frames 3,430 timed, 0 frozen, worst 322 ms (frozen = over 700 ms); COUNTERS has no cycle.errors key; no 'a background cycle took N s' warning in the timeline; cycle record 7,328 cycles, 9 late (0.12%), 1,035 started screen-off of which 663 in Doze, battery 55% charging, thermal none, battery unrestricted, standby bucket exempted. The READ ME rules held: the timeline shows 'screen opened (auto-bet and auto-scan kept as they were)' at 22:24:14 and 00:03:00 and Resume pressed by Tj at 22:24:16, 22:24:43 and 00:04:41.",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AppExits.kt",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/HealthChecks.kt:355-375",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/CycleLog.kt"
+   ],
+   "suggestedAction": "None."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "'App stability: OK ... in the last day' is judged from only the 6 newest exit records, which cover 5.8 h of the 24 h",
+   "evidence": "AppExits.recent(context, max = 6) reads exactly 6 records; the file lists exactly 6 (Oct 5 6:48:20 PM to 10:37:17 PM), i.e. 5.8 h of the 24 h window the health line claims. Installs and remove-task closes (5 of the 6) fill the cap, so a crash, ANR or low-memory kill earlier than 6:48 PM would never reach the check. Java crashes are still caught by the app's own handler (last_crash.txt, none in Recent problems), so the gap is for ANR, native crash and system kills only.",
+   "appFault": true,
+   "confidence": "medium",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AppExits.kt:107",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/HealthChecks.kt:355-375"
+   ],
+   "suggestedAction": "Read more records (Android keeps more than 6), filter out user/package exits before capping, and print the oldest record's time in the OK line ('checked back to Oct 5 6:48 PM')."
+  },
+  {
+   "kind": "FINE",
+   "title": "Timeline warnings and errors grouped by cause: every one is explained except the batch-reply parse failure",
+   "evidence": "Timeline holds 120 WARN/ERROR lines = 149 events (n summed) in 6 clusters totalling 364 s (6.1 min) of the 274 min from 19:34:11 to the report (2.2%). (1) 19:34:11-19:34:27, 16 s, 45 lines: whole-network gap (DoH fallback 26, CNO connect 14, system DNS 5); the app was on mobile only (calls by network: Wi-Fi 0, mobile 204,074). (2) 20:21:34-20:23:14, 100 s, 52 lines: Novig HTTP 451 ANONYMIZED_NETWORK x26 lines (/v3/limits, /v3/catalog/events, /v3/catalog/markets x10, /v3/ws, /v3/orders, /v3/echo; key route stood down 30 s then 120 s) then a no-route gap (system DNS 18 incl. 19 ParlayAPI closing-line calls, DoH 4, CNO 'Host unreachable' 3). (3) 20:31:55-20:32:05: 25 Novig public-route 429s (Retry-After 1) in 10 s; the key route's 120 s stand-down had ended at about 20:23:36, so this is the public route's own pacing, not an outage. (4) 20:50:04-20:52:01: 1 websocket 451 plus 6 calls reaching the 20 s limit on unrelated hosts at once (Novig orders and sub-accounts x3, ParlayAPI x2, Make orders read x1): a phone/network stall. (5) 22:24:18-22:26:29: second 451 episode (12 lines), recovered by 22:26:56 (717 prices through the key). (6) 22:26:29 and 00:05:09: batch-reply unreadable (not explained: see the BUG). Lines/events by cause: 451 39/39; DoH fallback 30/30; system DNS or no route 23/26; CNO connect 17/17; 429 2/28; timeout 6/6; empty scan 1/1; batch unreadable 2/2. Explained = Novig screening the carrier's shared address (the app's own message says so), no-route gaps on mobile, and provider 5xx/slowness (ParlayAPI 500 x90 + 503 x67 = 157 of 3,369 calls = 4.7%; its NFL props endpoint 61 of 189 failed, 9,860 ms average to first byte).",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetInterceptor.kt:114-123"
+   ],
+   "suggestedAction": "None for the network causes; see the BUG for the unexplained one."
+  },
+  {
+   "kind": "BUG",
+   "title": "Novig's batch-place reply is unreadable on the first batch of every app run (3 of 3 runs, 35 bids), so each run loses its first batch's order ids",
+   "evidence": "Recent problems: Oct 5 6:49:58 PM batch of 10 bids, 10:26:29 PM batch of 17, Oct 6 12:05:09 AM batch of 8 - each 28 s to 2 min after a process/service start (install 6:48:20 PM; process 22:24:14; service 00:04:41). Code: MakerDesk.placeBatch catches SerializationException from NovigTradingClient.placeOrders (decodes BatchAcceptedDto(accepted:[{orderId,clientId?}])), sets batchUnreadable = true for the life of the process, returns Batch.Lost and sends nothing more that pass; the shape was only ever tested against a hand-written fixture (MakerOrdersClientTest.kt:83) taken from the docs, NOVIG_API.md line 687 lists 'an unreadable 201 turns batches off for the run' as a fallback, never as observed. The three occurrences line up with the first batch of each run, so the real 201 body does not match the DTO (or is empty). Effects seen: 35 bids placed whose ids are known only by client id until the next open-orders read; after it the bids go one at a time (40 posted in one pass at 00:05:31); cancels of a batch use the same flag. The flag is per process, so every restart repeats it (BUILDLOG: 7 releases v0.66.0-v0.70.1 between Oct 5 2:55 PM and 11:42 PM EDT). No money was lost in the file (the next pass showed 22 resting = 17 from the unread batch + 5 posted at 22:26:51; 48 = 8 + 40 at 00:05:31), but it is a real-money path with a deterministic parse failure.",
+   "appFault": true,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerDesk.kt:551-580",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/NovigTradingClient.kt:116-141,296",
+    "data/src/test/kotlin/com/tjshea/vigilant/data/novig/trading/MakerOrdersClientTest.kt:83",
+    "NOVIG_API.md:687"
+   ],
+   "suggestedAction": "Make the failure self-describing first: on SerializationException log the reply's top-level key names, value types and HTTP status (no values, no ids) into the event log and Recent problems, so the next file shows the real shape; then fix the DTO. QUESTION FOR TJ (not an action): whether to let the app send one real minimum-size 2-bid batch purely to capture the reply shape; the diagnostic-only change needs no order. Also persist 'batch unreadable' across restarts (or stop attempting batches until the DTO is fixed) so a restart does not repeat the lost first batch."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "The EVENT TIMELINE says it holds 'every warning and error of the last day' but its 120-line cap was hit exactly, so 49 or more errors are missing",
+   "evidence": "timelineEvents keeps the newest MAX_IMPORTANT = 120 non-INFO events; the file has 105 WARN + 15 ERROR = 120. MACHINE-READABLE events.errors24h = 64 but only 15 ERROR lines (each n = 1) are shown, so at least 49 ERROR events from the last 24 h are not in the file. The oldest line is 10-05 19:34:11 although the 24 h window opens Oct 5 00:08; Recent problems proves what was cut: the start of the biggest outage (problems at 7:33:06, 7:33:11, 7:33:37 PM) and the 6:49:58 PM batch error. Cause of the flood: NetInterceptor writes 'host/path failed: kind after N ms' (N in the text) and EventLog.record only merges with the single previous event when the text is identical, so alternating hosts and varying milliseconds never merge: the 16 s gap took 45 slots and the 100 s gap 52, i.e. 97 of 120 slots for 2 minutes of one afternoon. The 5xx 'server error' ERROR events (ParlayAPI 500x90, 503x67 since Oct 1) are absent from the shown part although they count in errors24h.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/DiagnosticsFile.kt:257-260,330",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/EventLog.kt:51-62",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetInterceptor.kt:69,114-123"
+   ],
+   "suggestedAction": "Print a per-cause roll-up (host, kind, count, first, last) for the whole 24 h before the raw lines, drop 'after N ms' from the message (keep it in ms), merge by (cat, level, msg) within 60 s not only with the previous event, and say 'N older events not shown' when the cap bites."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "SINCE THE PREVIOUS REPORT: 9 of its 11 RESOLVED/NEW entries are key-text churn, restart, setting changes or the slate, not fixes or new problems",
+   "evidence": "(a) The late-cycle finding is both RESOLVED ('worst 7 min, 22m ago') and NEW ('worst 7 min, 3h ago'): the finding key is 'health:<area>:<finding.take(60)>' and the finding text embeds Format.age(), so the key changes as time passes. (b) RESOLVED 'Novig key route: stood down 2 times in the last 6 h' is a restart artifact: the check reads NovigPublicClient.standdownLog (in memory, 'since the app opened': 0 now) although the timeline shows 3 stand-downs in the last 4 h (20:21:34, 20:21:36, 22:24:18) and COUNTERS novig.keyStanddowns = 9; the true count within 6 h went up, not down. (c) 'Early bets' key changed from 'more than 6 h' to 'more than 24 h' (the update), shown as RESOLVED plus NEW. (d) 'Low API usage bids' RESOLVED because Tj switched the focus LOW_USAGE to QUICK_LIKELY at 22:25:59. (e) 'Kalshi' and 'ParlayAPI props' no-game WATCHes RESOLVED and 'ParlayAPI 1st half' NEW because the 12:04 AM slate had 69 games (ATP 30, WTA 24, NHL 9, NBA 3, MLB 2, NCAAF 1) against none priced at 20:51; a 1st-half market cannot match tennis. Only 'API Novig throttled' (aged past 1 h) and 'Vigilant's edges' (54 bets) are real changes.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Advisor.kt:162",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/HealthChecks.kt:216-219,338",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt:271"
+   ],
+   "suggestedAction": "Build the key from the check's area plus a stable id (not the text), keep the stand-down log (or its count) across restarts, and mark a diff entry 'update/setting change' when the version or the setting changed."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "'cycle p95 2111 to 5712' is one slow first cycle: p95 of 14 samples is the maximum",
+   "evidence": "PERFORMANCE: cycle.ms 14 samples p50 659, p95 5712, max 5712, mean 1715; SampleSummary uses nearest rank, ceil(0.95 x 14) = 14 = the max. cycle.step.closing 15 samples p50 0, p95 = max 3834, mean 255 (15 x 255 = 3,825 so one cycle spent 3,834 ms and 14 spent about 0); cycle.step.maker p95 = max 4430 over 13 samples. Advisor.metrics publishes perf.cycle.p95ms once count >= 5, so the 'Numbers that moved' line compares a max of 14 cold samples (211 s since the service started) with an earlier p95 of 2111. Same for frames.quiet.slowPct 0.60 to 1.20: 19 slow of 1,640 frames in 5 minutes after an install (ART not yet compiled).",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Advisor.kt:65,249",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/RollingSamples.kt:12-18"
+   ],
+   "suggestedAction": "Publish a p95 only from 20 or more samples (else publish max and n), and exclude the first cycle after a process start or label it 'cold'."
+  },
+  {
+   "kind": "FINE",
+   "title": "Restart artifacts in this file (what to ignore when reading it)",
+   "evidence": "The phone went 0.68.1 to 0.70.1 directly (timeline: process started 0.68.1 at 21:38:43, 21:59:37, 22:24:14; then 0.70.1 at 00:03:00, 1 s after the 12:02:59 install): v0.69.0/0.70.0 never ran on it, and the file is made 5 min 12 s after the new process started. Artifacts: PERFORMANCE and CPU are one run of 211 s (14 cycles, 1 scan; garbage collector 45% of one core during that first scan while the heap grew 20 to 73 MB); the scan shows '0 re-used' for all 10 fair-odds sources and cost ParlayAPI 15 calls = 40 credits because the in-memory boards were empty (52 boards, 945 games rebuilt by that scan); 'stand-downs since the app opened: 0', 'Check odds now counter since 12:04:42 AM', 'ParlayAPI extras since the app opened', 'Scan study 42 bets since the app opened', 'Closes found after the start: 0' and the 'last pass 15s ago' bid pass all restart at process or resume time; 40 bids posted in one pass at 00:05:31 follows Tj's STOP (kill switch ON 22:37:11, OFF 00:04:41 = 87 min 30 s; 48 resting = 8 from the unread batch + 40). The app was also stopped by Tj (kill switch 'true to false' at 22:24:16 proves it was ON before) for part of 20:52-22:24 and has no Novig calls at all in clock hours 21h and 23h (CONNECTIONS last-hours), so 'last day' counters cover roughly a third of the 19:34-00:08 span with the scanner actually running (inferred, +-15 min).",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt:95",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt:700-715"
+   ],
+   "suggestedAction": "Add 'process up since HH:MM' and 'scanner running N of the last 24 h' to the top of the file so a reader can weigh the numbers."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "The burst block is omitted by design when the recorder was never on; v0.70.1's file says nothing about the recorder or the trader anywhere",
+   "evidence": "grep -i burst finds 0 matches in the 938-line diagnostics text and 0 in the 694 bet lines; the CODE MAP, COUNTERS, MACHINE-READABLE metrics, health checks and READ ME have no burst entry either. Code (v0.70.1): BurstText.diagnostics returns null when !settings.burstRecorder && records.isEmpty() && trades.isEmpty() (BurstText.kt:72); Diagnostics.kt:206 appends burstReport only when non-null; the Settings block lines (Diagnostics.kt ~180-206) print auto-bet, auto-lock and bids but no recorder/trader state; settings.burstRecorder defaults to false (ScanSettings.kt:318). So the file's silence means recorder OFF and no journal windows and no trade records, or the block threw: MainViewModel.kt:1923-1928 wraps it in runCatching{}.getOrNull(), which hides an exception as an absent block. The recorder writes no event-log lines when on or off (only 'trader halted' warns, VigilantApp.kt:902), and the burst websocket and /v3/echo do not appear in CONNECTIONS because MAX_PATHS = 5 lists only the 5 busiest endpoints (timeline lines show /v3/ws and /v3/echo exist).",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/BurstText.kt:72 (v0.70.1)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt:206",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt:1923-1928",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/ScanSettings.kt:318"
+   ],
+   "suggestedAction": "Already partly fixed in v0.70.2 (BurstText.kt:74-78: two lines when off). See the next two findings for what is still missing."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "Exact one-line additions so the next file says recorder off/on and why the trader is locked, even when off",
+   "evidence": "v0.70.2's off-branch prints 'Live burst recorder: off · nothing recorded (...)' and 'Burst trader (real money): off' but not WHY the trader is locked (BurstText.tradeLine already builds it: 'Locked: switch the recorder on first ...' or the proof's own reason, and DiagInputs.burstProofReason is computed at file time, MainViewModel.kt:1738). Proposed edits: (1) in BurstText.diagnostics' off-branch append to the trader line: ' · locked: ' + (if (settings.burstTrade) \"its switch is on but the recorder is off\" else \"the recorder is off\") + ' · proof: ' + (proofReason ?: \"proved\"). (2) MainViewModel.kt:1928 replace .getOrNull() with .getOrElse { \"Live burst recorder: this block failed (${it.javaClass.simpleName}); state unknown\\n\" }. (3) Advisor.metrics: put(\"burst.recorder\", if (s.settings.burstRecorder) 1.0 else 0.0) and put(\"burst.trader\", if (s.settings.burstTrade) 1.0 else 0.0) so the next 'Numbers that moved' shows a switch. (4) CODE_MAP entry 'Live burst recorder and real-money trader: app/.../BurstText.kt, ui/BurstTraderUi.kt, data/.../novig/burst/, data/.../novig/trading/burst/'. (5) READ ME rules line: 'The burst trader (v0.70) is a second real-money path, gated by the recorder's proof; the same never-loosen rule applies.' (6) a health check 'Live burst recorder' OK/WARN with the recorder's status.problem. (7) eventLog.info(\"BURST\", ...) when the recorder starts and stops (BurstTick, VigilantApp.kt:935-947).",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/BurstText.kt:74-78",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt:1923-1928",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Advisor.kt:56-73",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/DiagnosticsFile.kt:46",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/DiagnosticsFile.kt:76",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt:935-947"
+   ],
+   "suggestedAction": "Small, display-only changes; none touches a rule that decides which bets are placed."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "'Last Vigilant scan: Finished 3m ago (12:04:46 AM)' prints the scan's start time as its finish",
+   "evidence": "Timeline: 'Vigilant scan finished in 32 s [32435 ms]' stamped 00:05:19; 00:05:19 minus 32.4 s = 00:04:46.6, the time the Last scan block calls 'Finished'. Code: status.scannedAtMs = result.computedAtMs = Pricing.price(..., now) where now = clock() at the top of Scanner.scan (Scanner.kt:189). At the 62 s scans the skew would be a minute; the 'Last rounds: Scan: 3m ago' line has the same origin.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt:273",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Pricing.kt:326",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt:189"
+   ],
+   "suggestedAction": "Say 'Started' or store the finish time separately."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "STORAGE 'Total 5651 KB' omits every sub-directory, including the 11.2 MB scan study",
+   "evidence": "DiagnosticsShare.storage lists only filesDir.listFiles().filter { isFile }; the scan study (files/study/, 11.2 MB per the Tracker block) and the new files/burst and files/burst-trades journals are not counted, so the real app storage is at least 16.8 MB, about 3x the figure. maker.json is 3,429 KB of the 5,651 KB listed (61%).",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/DiagnosticsShare.kt:113-114"
+   ],
+   "suggestedAction": "Sum directories recursively and list them."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "API usage lists a second ParlayAPI key that Settings says is not saved; Runway's SHORT verdict flips on 40 credits",
+   "evidence": "Settings 'Keys saved: ... ParlayAPI 1' and Runway '(1 key)', but the API usage block prints 2 ParlayAPI ledger entries (one with 42 used, '19958 left', no reset): the block iterates the ledger's keys (Diagnostics.kt:298) while the meter views iterate the saved keys (UsageView.build). Runway: used 3,363 of 20,000 at 5.17 of 31 days gives a projection of 20,156 (100.8%) = SHORT with the last credit on Oct 31 18:15 UTC, 5.75 h before the reset; the provider's own account figure in the same block says 16,677 left = 3,323 used, which projects 19,916 (99.6%) = not SHORT. The 40-credit gap is one scan ('a scan costs 40'). So the WARN and the 'add keys, or scan less' advice rest on a 0.2% difference between the app's meter and the provider's. Reset is printed as 'Nov 1' in Runway and 'Oct 31, 8:00:00 PM (the provider's time)' in the usage block: same instant (00:00 UTC), but the second is in the phone's zone and labelled the provider's.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt:294-300",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/UsageView.kt:63",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Runway.kt:100-125"
+   ],
+   "suggestedAction": "Show only saved keys (or tag ledger-only ones 'removed'), use the provider's own remaining figure when it is newer than the meter, and require projected over 105% before SHORT."
+  },
+  {
+   "kind": "WATCH",
+   "title": "The Odds API Runway 'SHORT, last credit Oct 20' projects a month-to-date average although the current scans spend 0 credits there",
+   "evidence": "950 of 3,500 credits used (7 keys; one key spent 500, another 450, five untouched); projection 5,694 at 5.17 of 31 days, last credit Oct 20 01:20 UTC. 'Last rounds' says The Odds API 5 calls (0 of its allowance) for the scan and 2 (0 of its allowance) for Check odds now, 'API usage' says 25 calls today, and the Source line says 'backup: asked only for what PropLine missed, and nothing was'. The burn that produced the 950 is older than the present behaviour, so the WARN is stale. Runway counts 'the hours he wasn't scanning too' by design (Runway.kt header), so this is a design choice, not a bug.",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Runway.kt:90-125"
+   ],
+   "suggestedAction": "Also show the last-24 h pace next to the month average, and base SHORT on the lower of the two only when both exceed the allowance."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "'API Novig: 28 calls throttled or refused today' counts only 429/403, not the 451 refusals",
+   "evidence": "countKeyless(NOVIG, throttled = if (code == 429 || code == 403)) (NovigPublicClient.kt:650) so the 28 = the 3 + 25 429s at 20:21 and 20:31-20:32 (timeline). The same day (UTC day starts 8 PM EDT) the timeline holds 27 'refused with 451' lines (20:21:34-22:25:14) and 360 451s since Oct 1; none are in the 28. The health line (OK because the last 429 was over 1 h ago) therefore understates Novig's refusals. The 4,480 'calls today' is also 10.7% below the 5,017 calls the CONNECTIONS hour buckets give for the same span (1,879 + 2,569 + 569): two different counters.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt:650",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/HealthChecks.kt:260-270"
+   ],
+   "suggestedAction": "Count 451 separately ('refused by Novig's network screen') and make a 451 within the last hour a WARN."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "CONNECTIONS error rates mix expected statuses and the app's own cancels with real failures, and the itemised reasons do not add up",
+   "evidence": "failed = status == null || status >= 400 (NetStats.kt:78). api.novig.com 4,292 'errors' (2.7%) = 429 x2,941 + 404 x407 + 451 x360 + dns x545 + cancelled x31 + 423 x5 + timeout x3; the 3,384 expected or self-inflicted (429, 404, 423, cancelled) are 79% of it, leaving 908 real failures (dns 545, 451 360, timeout 3) = 0.56% of 161,262 calls. crazyninjaodds.com 536 'errors' include 232 cancelled by the app (43%); parlay-api.com 288 include 53 cancelled. Of all 5,397 failures, 3,874 (72%) have an HTTP status and 54.5% are Novig 429s. Itemised reasons per endpoint miss most failures recorded before reasons existed: /v3/public/catalog/markets 3,138 failed but 1,483 itemised (429 x1,262, 404 x179, dns x42); /v3/orders/{id} 206 failed, 5 itemised (the code comment cites about 200 404s in the v0.53.0 file).",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetStats.kt:78",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/DiagnosticsFile.kt:176-181"
+   ],
+   "suggestedAction": "Keep 'cancelled' and expected statuses out of the error rate and say how many failures have no itemised reason."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "The two top-ranked FAILUREs (cloudflare-dns.com and dns.google 100% failed) are a by-design fallback measured only during outages",
+   "evidence": "Header '0 BUG, 2 FAILURE'; both findings: 105 calls, 105 failed ('connect after' mostly under 80 ms, max 327 = no route), networks none 25, mobile 12, other 68. The resolvers are called only from DnsOverHttps, which RememberingDns asks after the system resolver already failed for crazyninjaodds.com, so the failure rate is 100% by construction; 64 of the 105 are the 19:34 gap, 2 at 20:23, 3 at 14h, 2 at 20h on Oct 4. The guard (online = NetKind.of(app) != NONE, VigilantApp.kt:284) lets calls through when the active network is 'other' (68) or 'mobile' (12) but not routable. Harmless (5 ms each) but ranks above real work and is not an app failure; the app then falls back to its remembered CNO address, consistent with CNO showing 'Host unreachable' (NoRouteToHostException) rather than a DNS error.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/cno/CnoNetwork.kt:57-75,104",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt:284",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/NetKind.kt",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Advisor.kt (network findings)"
+   ],
+   "suggestedAction": "Rate these two as WATCH 'fallback resolvers unreachable during the N outages', or require NET_CAPABILITY_VALIDATED in the guard."
+  },
+  {
+   "kind": "WATCH",
+   "title": "Failures cluster at 3-5 AM EDT: 603 of 2,196 hour-bucketed failures (27.5%) in 7h-8h UTC, with no host or kind attached",
+   "evidence": "'Failures by hour of day (UTC)': 7h 171, 8h 432 (3 and 4 AM EDT), against 23h 722 (7 PM EDT, explained by the 19:33 gap) and 20h-23h UTC total 1,183 (53.9%). The data is 48 h of per-host hour buckets summed by hour of day (NetStats.HOURS_KEPT = 48), so it spans two nights and cannot say which host, kind or day. Screen-off cycles ran normally (663 in Doze, 9 late), so it is likely a provider or carrier window rather than the app, but the file cannot confirm.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/DiagnosticsFile.kt:204",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetStats.kt:86,173"
+   ],
+   "suggestedAction": "Keep the per-hour buckets per host and kind and print the top 3 (day, host, kind) cells instead of a flat hour-of-day sum."
+  },
+  {
+   "kind": "WATCH",
+   "title": "One 7-minute-late cycle (Oct 5 8:21:43 PM, screen on) has no recorded cause",
+   "evidence": "Cycle record: 9 late of 7,328, worst 7 min at Oct 5 8:21:43 PM with the screen on (so not Doze); CycleLog.apply counts lateness from max(lastStart + interval, lastEnd), so nothing was running for about 7 minutes. The first Novig 451 of the day is 9 s earlier (20:21:34) and a DNS/no-route gap follows at 20:23:09, so a mobile-network outage that stalled the loop is the likeliest cause, but the timeline has no event between 19:34:27 and 20:21:34 and the late-cycle record keeps no step or network state. The other late cycle (11:22:32 AM, 30 s) is within noise.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/CycleLog.kt:84-110",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt:196-231"
+   ],
+   "suggestedAction": "Record the network type, wake-lock state and the last step name in LateCycle."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "12 of the 25 'Recent problems' are a benign skip logged as a problem (and an ERROR event)",
+   "evidence": "Oct 5 5:52-6:09 PM: 12 lines 'Make orders: <player> <side>: its fair price is about to go old; re-priced at the next scan'. MakerDesk.placeBatch adds tooOld(p) to problems for a bid whose fair expires before it can rest (MakerDesk.kt:556), every problem also becomes an ERROR PROBLEM event, so they inflate events.errors24h (64) and push real problems out of the 25-line list. Expected behaviour, not an error.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerDesk.kt:505,556"
+   ],
+   "suggestedAction": "Log it as an INFO count ('bids skipped, fair about to go old: N') instead of a problem."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "'Bids: most fills came within 2 minutes of posting' fires on 3 of 6 and is contradicted by the file's own split",
+   "evidence": "HealthChecks.kt:145 tests fast.size >= 6 && fast.count { it < 120 } * 2 >= fast.size, so exactly half is 'most'. Only 6 of the 17 fills have a post-to-fill time ('taken ?' on 11). The split under it: under 2 min 3 fills CLV +3.0% and +2.4% (2 closes each side counted: 1 and 2), 2-10 min 3 fills CLV -0.1%; EV at fill versus at post +3.8% against +3.9%, 0 of 5 judged picked off. The warning text ('a bid taken that fast is often one the market was already moving away from') has no support at n = 6.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/HealthChecks.kt:144-147"
+   ],
+   "suggestedAction": "Require a majority and at least 20 timed fills, or phrase it as 'n = 6, too few to judge'."
+  },
+  {
+   "kind": "OPTIMIZE",
+   "title": "maker.json (3,429 KB, 61% of the listed storage) is rewritten and fsynced in full on every bid update, including once per order inside cancel loops",
+   "evidence": "MakerStore wraps JsonFileStore, whose update() serialises the whole list and calls fd.sync() under a mutex (JsonFileStore.kt:42-70). Last 24 h: 2,201 bids posted (placeOne and placeBatch each do 2 updates) and about 1,910 ended (cancelBids does one store.update per order, MakerDesk.kt ~620-650), so at least 6,300 full rewrites of 3.4 MB a day (2,201 x 2 + about 1,910), 40 posts at 00:05:31 alone about 80. During the 32 s first scan the CPU profile shows the garbage collector at 45% of a core; the link to these rewrites is plausible (large string plus byte array per update) but unproven because the first scan is also cold. Storage is not a constraint (CLAUDE.md), speed is: each fsync sits on the bid pass's critical path.",
+   "appFault": true,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/store/JsonFileStore.kt:42-70",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerDesk.kt:153-157,601-650"
+   ],
+   "suggestedAction": "Batch the per-order updates of a cancel pass into one update, append-only or split the file by day; measure with a 'store write ms' perf sample first."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "Android exit reason 16 (package updated) prints as 'reason 16'",
+   "evidence": "2 of the 6 exits ('stop com.tjshea.vigilant due to installPackageLI') show 'reason 16'; AppExits.reasonName maps only API 31-33 reasons and falls through to 'reason $n'. 16 is REASON_PACKAGE_UPDATED and 15 REASON_PACKAGE_STATE_CHANGE (API 34); 14 (freezer) would also print raw. Not counted as bad, so no wrong health result.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AppExits.kt:133-148"
+   ],
+   "suggestedAction": "Map 14, 15 and 16 to words ('cached app frozen', 'package state changed', 'updated')."
+  },
+  {
+   "kind": "WATCH",
+   "title": "'Novig prices (N through the key)' can exceed the prices fetched",
+   "evidence": "Timeline: 22:29:22 '672 Novig prices (716 through the key)' and 22:32:52 '695 Novig prices (450 through the key) ... (268 live feed)' where 450 + 268 = 718 > 695; the last scan adds up exactly (998 = 480 + 518). speedNote clamps the public count at 0 (AppRecorder.kt), so the code expects the overlap: the per-route counters count attempts or reads that were replaced, not distinct prices. Cosmetic, but it makes the 'a second' pace figures ambiguous.",
+   "appFault": true,
+   "confidence": "low",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AppRecorder.kt:70-102"
+   ],
+   "suggestedAction": "Count distinct market ids per route."
+  },
+  {
+   "kind": "WATCH",
+   "title": "Counter windows differ, so a few totals disagree by design",
+   "evidence": "cycle.runs 7,317 (EventLog counters) against 7,328 cycles in the cycle record (CycleLog): different stores, 11 apart. maker.posted.auto 2,955 against 'auto-make 3,034' bids on record: the counters start about 4 days ago, the bid record covers 14 days, difference 79. 'bids ended' lines (x1,245, x1,168, x138, x121, x83 over 14 days) against the 24 h lines (x854, x879, x97, x80): 24 h shares 69%, 75%, 70%, 66% against 2,201 of 3,128 bids (70%) posted in 24 h: consistent, no error. Health 'Closing lines 86% (477 of 553)', 'Early bets 238 vs 16' and 'Edge accuracy 294 within 24 h' use different windows from the Tracker's 547 closes; all arithmetic checks out (0 FAIL + 8 WARN + 24 OK lines match the header).",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/EventLog.kt",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/CycleLog.kt"
+   ],
+   "suggestedAction": "Label each counter with its window start in the line."
+  }
+ ]
+}
