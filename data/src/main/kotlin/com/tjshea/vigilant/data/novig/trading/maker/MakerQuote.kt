@@ -105,6 +105,12 @@ data class MakerRules(
     val focus: String = com.tjshea.vigilant.data.scanner.BidFocus.ALL.name,
 ) {
     companion object {
+        /**
+         * [refreshBeforeMs]'s default: a bid is re-posted from a fresher fair once it is this close to its end, so a scan that STARTS this long before the oldest bid's
+         * fair goes old keeps it up ([com.tjshea.vigilant.data.scanner.LowUsageBids.autoGapSeconds] is the freshness limit minus this).
+         */
+        const val REFRESH_BEFORE_MS = 2 * 60_000L
+
         /** [postsPerPass]'s default. */
         const val POSTS_PER_PASS = 60
 
