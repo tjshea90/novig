@@ -271,7 +271,7 @@ def mlb_ws_feed():
     asyncio.run(run())
 
 
-def novig_feed(leagues, every=2.5, max_markets=8):
+def novig_feed(leagues, every=2.5, max_markets=16):
     """Trades of each live game's moneyline (public route).  The engine ts is when the trade happened: the instant Novig's price MOVED."""
     seen = set()
     gap = 0.3
@@ -294,7 +294,7 @@ def novig_feed(leagues, every=2.5, max_markets=8):
         end = now() + 60   # re-list the games once a minute
         while now() < end and not _stop.is_set():
             for e, ms in picked:
-                for m in ms[:3]:
+                for m in ms[:1]:
                     r = http(f"{NOVIG}/catalog/markets/{m['marketId']}/trades?limit=100")
                     time.sleep(gap)
                     if not r:
