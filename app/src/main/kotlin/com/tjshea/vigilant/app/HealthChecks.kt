@@ -104,7 +104,11 @@ object HealthChecks {
             if (other.isNotEmpty()) {
                 add(Check(Level.WARN, "Low API usage bids", "the last scan read ${other.joinToString(", ") { it.name }}, which the mode never asks for (a scan from before the switch, or a bug)", look = "data/scanner/Scanner.kt (readable), app/VigilantApp.kt (lowUsageSources)"))
             }
-            if (reads.none { it.id in asked && it.matched > 0 }) {
+            // Every league skipped (no game with a prop market on Novig inside the window): nothing to read is not a failure to read (Tj's 8:41 PM scan, RESEARCH.md §94).
+            val nothingInWindow = reads.none { it.id in asked } && s.status.sources.any { it.id in asked && it.skipped > 0 }
+            if (nothingInWindow) {
+                add(Check(Level.OK, "Low API usage bids", "nothing to read: no game with a prop market on Novig starts in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} h, so no feed was asked and nothing was spent"))
+            } else if (reads.none { it.id in asked && it.matched > 0 }) {
                 add(Check(Level.WARN, "Low API usage bids", "the last scan priced no prop from the picked books", reads.joinToString(", ") { "${it.name} ${it.matched} matched" }.ifEmpty { "no feed answered (no game in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} h, or the feeds are down)" }.take(160), "Settings › API usage"))
             }
         }

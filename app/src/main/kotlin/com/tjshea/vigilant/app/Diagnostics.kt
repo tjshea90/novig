@@ -281,7 +281,7 @@ object Diagnostics {
             }
             o.appendLine("Feed now: ${s.feed.size} bets")
             for (r in st.sources) {
-                o.appendLine("  ${r.name}: ${r.fetched} fetched, ${r.reused} re-used${if (r.standingBy > 0) ", ${r.standingBy} standing by" else ""}, ${r.matched} games matched" + (r.error?.let { " · ERROR: $it" } ?: "") + (r.heldBack?.let { " · $it" } ?: ""))
+                o.appendLine("  ${r.name}: ${r.fetched} fetched, ${r.reused} re-used${if (r.standingBy > 0) ", ${r.standingBy} standing by" else ""}${if (r.skipped > 0) ", ${r.skipped} leagues not asked (nothing in the window)" else ""}, ${r.matched} games matched" + (r.error?.let { " · ERROR: $it" } ?: "") + (r.heldBack?.let { " · $it" } ?: ""))
             }
             if (st.errors.isEmpty()) o.appendLine("Errors: none") else st.errors.take(MAX_ERRORS).forEach { o.appendLine("Error: $it") }
             st.backoffSeconds?.let { o.appendLine("Novig asked us to wait $it s") }
