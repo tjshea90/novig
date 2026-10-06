@@ -1223,7 +1223,10 @@ fun autoScanHint(s: ScanSettings): String {
         (if (AutoScanClock.closingFreshMs(s.autoScanSeconds) != null) "; in their last 15 minutes, once a minute each at most" else "") + ")"
     val vigilantPart = "Vigilant's own scan exactly as the Scan button runs it (" +
         (if (s.maxBooksPerScan >= ScanSettings.NO_LIMIT) "every priced line in ${windowLabel(s.scanWindowHours)}: " else "${s.maxBooksPerScan} Novig prices at most: ") +
-        "${scanTime(s.maxBooksPerScan)}). Each scan spends API credits like a tap on Scan: $vigilantPerDay scans a day at this setting" +
+        "${scanTime(s.maxBooksPerScan)}). Each scan spends API credits like a tap on Scan: " +
+        (if (s.lowUsageNow && s.lowUsagePace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO)
+            "at most $vigilantPerDay scans a day on Auto pace (every ${com.tjshea.vigilant.data.scanner.LowUsageBids.NEAR_GAP_SECONDS / 60} min while a game is inside 3 hours of its start, ${com.tjshea.vigilant.data.scanner.LowUsageBids.FAR_GAP_SECONDS / 60} min while every game is further off, none when nothing is in the next 6 hours)"
+        else "$vigilantPerDay scans a day at this setting") +
         (if (vigilantEvery != s.autoScanSeconds) " (it starts at most every ${ScanSettings.intervalLabel(vigilantEvery)}, however fast CNO is read)" else "") +
         // Low API usage bids (RESEARCH.md §92) narrow this scan and set its pace; say so here, where the pace is read.
         (if (s.lowUsageNow) " Low API usage bids are on: this scan reads player props only, in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} hours, from your picked sharp books (Bids tab), at the pace set there." else "")

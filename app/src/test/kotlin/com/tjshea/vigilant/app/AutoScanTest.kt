@@ -227,6 +227,7 @@ class AutoScanTest {
         assertTrue(low, low.contains("144 scans a day"))
         val autoPace = com.tjshea.vigilant.app.ui.autoScanHint(base.copy(maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE))
         assertTrue(autoPace, autoPace.contains("it starts at most every 3 min, however fast CNO is read"))
+        assertTrue(autoPace, autoPace.contains("at most 480 scans a day on Auto pace (every 3 min while a game is inside 3 hours of its start, 8 min while every game is further off"))
         assertTrue(low, low.contains("Low API usage bids are on: this scan reads player props only"))
         // The gap, not the cycle, sets it; a gap shorter than the cycle changes nothing.
         assertEquals(600, ScanSettings.vigilantEverySeconds(15, 600))
