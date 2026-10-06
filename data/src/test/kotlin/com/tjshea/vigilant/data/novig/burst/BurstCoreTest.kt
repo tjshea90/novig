@@ -288,6 +288,27 @@ class BurstCoreTest {
         assertEquals(BurstVerdict.TOO_SMALL, BurstStudy.verdict(BurstStudy.summarize(half).last()))
     }
 
+    private fun measured(n: Int = 25) = LatencyModel().also { m -> repeat(n) { m.addRoundTrip(100L + it); m.addPushDelay(50L + it) } }
+
+    @Test
+    fun `the trader's proof needs measured delays, and a worth-a-test verdict over only the windows it would trade`() {
+        val good = many(4, 5, PaperOutcome.BOTH, 0.30)                       // each window's net is 0.02
+        assertTrue("proved", BurstStudy.proof(good, 0.01, measured()).proved)
+        // Delays still assumed: not proved, whatever the windows say.
+        val assumed = BurstStudy.proof(good, 0.01, measured(5))
+        assertFalse(assumed.proved); assertTrue(assumed.reason!!, assumed.reason!!.contains("assuming your delays"))
+        // A trader that only acts on a cover of 3 cents or more has no windows to be judged on: a verdict over windows it would not trade proves nothing.
+        val strict = BurstStudy.proof(good, 0.03, measured())
+        assertFalse(strict.proved); assertEquals(BurstVerdict.NEEDS_DATA, strict.verdict)
+        // The thin windows lose on paper while the fat ones win: the proof is over the windows at or above the floor only.
+        val mixed = good + many(4, 5, PaperOutcome.BOTH, -0.5).map { if (it is WindowRecord) it.copy(net = 0.004) else it }
+        assertTrue("the 0.4-cent losers are not traded", BurstStudy.proof(mixed, 0.01, measured()).proved)
+        assertFalse("but they would count at a 0.3 cent floor", BurstStudy.proof(mixed, 0.003, measured()).proved)
+        // A verdict that is no: its words are the verdict's.
+        val no = BurstStudy.proof(many(4, 5, PaperOutcome.MISSED, 0.0), 0.01, measured())
+        assertEquals(BurstVerdict.NOT_CATCHABLE, no.verdict); assertTrue(no.reason!!, no.reason!!.contains("before an order of yours would arrive"))
+    }
+
     @Test
     fun `the report says what the paper trade is, names the delays, the verdict, and that it cannot prove a profit`() {
         val text = BurstStudy.report(many(4, 5, PaperOutcome.BOTH, 0.30), "round trip: ASSUMED 150 ms (0 measured so far); push delay: ASSUMED 150 ms (0 measured so far)", 10.0)
