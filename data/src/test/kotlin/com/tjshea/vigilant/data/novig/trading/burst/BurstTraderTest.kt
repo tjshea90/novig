@@ -80,7 +80,7 @@ class BurstTraderTest {
         }
     }
 
-    private class Rig(val scope: TestScope, val orders: FakeOrders, val trader: BurstTrader, val journal: BurstTradeJournal, val halts: MutableList<String>, var rules: BurstTradeRules, var gate: String?, val own: MutableList<OwnBid>) {
+    private class Rig(val scope: TestScope, val orders: FakeOrders, val trader: BurstTrader, val journal: BurstTradeJournal, val halts: MutableList<String>, var rules: BurstTradeRules, var gate: String?, val own: MutableList<OwnBid>, var leagueOk: Boolean = true) {
         fun window(c: Cover, openedAgoMs: Long = 0L, current: Cover? = c) = WindowOpening("NFL", "ev1", "A @ B", c, 1_790_000_000_000L + scope.currentTime - openedAgoMs) { current }
     }
 
@@ -93,7 +93,7 @@ class BurstTraderTest {
         lateinit var r: Rig
         var counter = 0
         val trader = BurstTrader(
-            orders = orders, scope = backgroundScope, rules = { r.rules }, gate = { r.gate }, ownBids = { own }, journal = BurstTradeJournal(tmp.newFolder("t" + System.nanoTime())),
+            orders = orders, scope = backgroundScope, rules = { r.rules }, gate = { r.gate }, leagueOk = { r.leagueOk }, ownBids = { own }, journal = BurstTradeJournal(tmp.newFolder("t" + System.nanoTime())),
             onHalt = { halts += it }, clock = { base + currentTime }, dayStart = { base - 3_600_000L }, newClientId = { java.util.UUID.nameUUIDFromBytes("c${++counter}".toByteArray()).toString() }, lock = lock,
         )
         r = Rig(this, orders, trader, BurstTradeJournal(tmp.newFolder("j" + System.nanoTime())), halts, rules, null, own)
@@ -138,6 +138,18 @@ class BurstTraderTest {
         val s = r.trader.status.value.skipped
         assertEquals(setOf("STOP ALL is on", "halted", "window too old", "no longer pays", "net under the minimum", "own bid in the way", "limit reached"), s.keys)
         assertTrue(s.values.all { it == 1 })
+    }
+
+    @Test
+    fun `a league the recorder has not proved is held back, whatever the gate says`() = runTest {
+        val r = rig()
+        r.leagueOk = false
+        r.send(r.window(cover())); step(r)
+        assertTrue(r.orders.batches.isEmpty())
+        assertEquals(1, r.trader.status.value.skipped["league not proved"])
+        r.leagueOk = true
+        r.send(r.window(cover())); runCurrent()
+        assertEquals(1, r.orders.batches.size)
     }
 
     @Test

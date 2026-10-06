@@ -309,6 +309,24 @@ class BurstCoreTest {
         assertEquals(BurstVerdict.NOT_CATCHABLE, no.verdict); assertTrue(no.reason!!, no.reason!!.contains("before an order of yours would arrive"))
     }
 
+    private fun manyIn(league: String, games: Int, perGame: Int, outcome: PaperOutcome, pnl: Double): List<BurstLine> =
+        (1..games).flatMap { g -> (1..perGame).map { window("$league-g$g", league, outcome, pnl) } + GameRecord(league, "$league-g$g", "$league-g$g", 0L, 3_600_000L, 50, 1L) }
+
+    @Test
+    fun `a league trades only on its own proof - football's windows prove nothing about hockey, and two thin leagues do not add up to one`() {
+        val both = manyIn("NFL", 4, 5, PaperOutcome.BOTH, 0.30) + manyIn("NHL", 3, 5, PaperOutcome.MISSED, 0.0)
+        val p = BurstStudy.proof(both, 0.01, measured())
+        assertTrue(p.proved); assertEquals("only the league that earned it", setOf("NFL"), p.leagues)
+        // Two leagues each short of 10 windows: together they are 14 windows in 4 games, which the old ALL row would have passed.
+        val thin = manyIn("NFL", 2, 3, PaperOutcome.BOTH, 0.30) + manyIn("NBA", 2, 4, PaperOutcome.BOTH, 0.30)
+        assertEquals(BurstVerdict.WORTH_A_TEST, BurstStudy.verdict(BurstStudy.summarize(thin).last()))
+        val q = BurstStudy.proof(thin, 0.01, measured())
+        assertFalse(q.proved); assertTrue(q.leagues.isEmpty())
+        assertTrue(q.reason!!, q.reason!!.contains("NBA: not enough yet") && q.reason!!.contains("NFL: not enough yet"))
+        // Both earned it: both listed.
+        assertEquals(setOf("NFL", "NBA"), BurstStudy.proof(manyIn("NFL", 4, 5, PaperOutcome.BOTH, 0.30) + manyIn("NBA", 4, 5, PaperOutcome.BOTH, 0.30), 0.01, measured()).leagues)
+    }
+
     @Test
     fun `the report says what the paper trade is, names the delays, the verdict, and that it cannot prove a profit`() {
         val text = BurstStudy.report(many(4, 5, PaperOutcome.BOTH, 0.30), "round trip: ASSUMED 150 ms (0 measured so far); push delay: ASSUMED 150 ms (0 measured so far)", 10.0)
