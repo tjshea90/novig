@@ -22,6 +22,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.TreeMap
 
+/**
+ * A window the recorder just saw open, handed to whoever wants to act on it ([WindowSink]; the real-money executor of the app, when Tj has turned it on). [first] is the cover as it was first
+ * seen at [openedMs] (the phone's clock); [current] is the same cover on the live books right now (null when it no longer pays or a side has nothing on offer): safe to call from any thread.
+ */
+class WindowOpening(val league: String, val eventId: String, val event: String, val first: Cover, val openedMs: Long, val current: () -> Cover?)
+
+/** Told of each window as it opens, on the recorder's own coroutine: keep it to handing the work on. The recorder itself never acts on a window. */
+fun interface WindowSink {
+    fun onOpen(w: WindowOpening)
+}
+
 /** What the recorder is doing, for Settings and Diagnostics. */
 data class BurstStatus(
     val running: Boolean = false,
@@ -87,6 +98,8 @@ class BurstRecorder(
     private val tickMs: Long = TICK_MS,
     /** Where the journal is written: the disk's dispatcher (tests use their own so a write is done when they look). */
     private val ioContext: kotlin.coroutines.CoroutineContext = Dispatchers.IO,
+    /** Told of each window as it opens; null by default (recording only). */
+    private val windowSink: WindowSink? = null,
 ) {
     private val _status = MutableStateFlow(BurstStatus())
     val status: StateFlow<BurstStatus> = _status.asStateFlow()
@@ -146,6 +159,9 @@ class BurstRecorder(
 
     private class Fill(val marketId: String, val outcome: String, val priceMilli: Int, val qty: Long, val atMs: Long, var matched: Boolean = false)
 
+    @Volatile
+    private var feedNow: PushedBooks? = null
+
     private suspend fun runLoop(leagues: Set<String>) {
         reset()
         val queue = Channel<Msg>(Channel.UNLIMITED)
@@ -155,6 +171,7 @@ class BurstRecorder(
             _status.value = _status.value.copy(running = false, problem = "No Novig key is connected: the recorder needs the read key's live feed (Settings › Betting & Novig account).")
             return
         }
+        feedNow = feed
         val helpers = ArrayList<Job>()
         try {
             helpers += scope.launch { discover(leagues, feed, queue) }
@@ -164,6 +181,7 @@ class BurstRecorder(
             consume(queue)
         } finally {
             helpers.forEach { it.cancel() }
+            feedNow = null
             runCatching { feed.close() }
             // Written even when cancelled: a stop must not lose what was seen.
             withContext(kotlinx.coroutines.NonCancellable) { shutdown(queue) }
@@ -256,6 +274,13 @@ class BurstRecorder(
 
     private fun book(marketId: String, atMs: Long): NovigBook? = replay[marketId]?.book(atMs)
 
+    /** [c]'s pair on the live books now (the stream's own, thread-safe, current by push); null when it no longer pays or a side has nothing on offer. */
+    private fun currentCover(c: Cover): Cover? {
+        val books = feedNow?.live(listOf(c.lo.marketId, c.hi.marketId)) ?: return null
+        val now = CoverMath.cover(c.lo, books[c.lo.marketId], c.hi, books[c.hi.marketId]) ?: return null
+        return now.takeIf { it.net > 0.0 }
+    }
+
     private suspend fun onCatalog(m: Msg.Catalog) {
         val liveIds = m.events.mapTo(HashSet()) { it.eventId }
         for (e in m.events) {
@@ -293,6 +318,7 @@ class BurstRecorder(
                 windowsSeen++
                 lastWindowMs = m.atMs
                 pending += Pending(game, w, profiles.map { Eval(it, w.openedMs + it.totalMs) })
+                windowSink?.let { sink -> runCatching { sink.onOpen(WindowOpening(game.event.league, game.event.eventId, game.event.description, w.first, w.openedMs) { currentCover(w.first) }) } }
             }
             drain(m.atMs)
         }
