@@ -28,6 +28,7 @@ from datetime import datetime, timezone
 
 UA = {'User-Agent': 'Mozilla/5.0'}
 NOVIG = 'https://api.novig.com/v3/public'
+FEE_C = 0.03   # Novig's in-play taker fee coefficient: 0.03 * p * (1 - p) per $1 of payout (NOVIG_API.md section 8)
 STOP = {'fc', 'cf', 'sc', 'ac', 'the', 'de', 'of', 'city', 'united', 'real', 'club', 'st', 'saint', 'a', 'and', 'los', 'angeles', 'la', 'new', 'york', 'ny', 'san', 'north', 'south', 'west', 'east'}
 _lock = threading.Lock()
 _out = None
@@ -397,31 +398,60 @@ def transitions(g):
 
 
 def novig_series(trades, ev_names):
-    """[(ts_s, price, outcome)] of the moneyline trades of the Novig event matching these team names."""
+    """{(market, outcome): [(ts_s, price, contracts)]} of the moneyline trades of the Novig event matching these team names."""
     ser = collections.defaultdict(list)
     for t in trades:
         a, _, b = t['ev'].partition(' @ ')
         if same_game((b, a), ev_names) or same_game((a, b), ev_names):
-            ser[(t['mk'], t['o'])].append((t['ts'] / 1000.0, t['p']))
+            ser[(t['mk'], t['o'])].append((t['ts'] / 1000.0, t['p'], t.get('q', 0)))
     for v in ser.values():
         v.sort()
     return ser
 
 
 def first_move(ser, t_ref, jump, lookback=30.0, pre=15.0, horizon=90.0):
-    """Earliest trade time at/after t_ref - pre whose price is `jump` or more from the median price of the `lookback` s before t_ref - pre.  None if no move."""
+    """Earliest trade time at/after t_ref - pre whose price is `jump` or more from the median price of the `lookback` s before t_ref - pre.
+    Returns (time, signed move, {series key: its pre-score median}) or None if no series moved."""
     best = None
-    for pts in ser.values():
-        before = [p for t, p in pts if t_ref - pre - lookback <= t < t_ref - pre]
+    refs = {}
+    for key, pts in ser.items():
+        before = [p for t, p, *_ in pts if t_ref - pre - lookback <= t < t_ref - pre]
         if len(before) < 2:
             continue
-        ref = statistics.median(before)
-        for t, p in pts:
+        refs[key] = ref = statistics.median(before)
+        for t, p, *_ in pts:
             if t >= t_ref - pre and t - t_ref <= horizon and abs(p - ref) >= jump:
                 if best is None or t < best[0]:
                     best = (t, p - ref)
                 break
-    return best
+    return (best[0], best[1], refs) if best else None
+
+
+def stale_fills(ser, refs, t_feed, t_move, jump, settle=3.0, after=20.0):
+    """What a taker who saw the score at t_feed could have bought at the OLD price, from what really traded: trades at or after t_feed (and before the market had settled,
+    t_move + settle) on an outcome whose price then FELL by `jump` or more, still at (within jump/2 of) its pre-score price.  A trade on outcome o' at price p' is a resting bid
+    on o'; its taker bought the other outcome at 1 - p', worth 1 - new_level: the gain per $1 of payout is p' - new_level, less the in-play taker fee 0.03 p (1 - p).
+    Returns (trades, payout dollars, net gain dollars)."""
+    n = 0
+    payout = gain = 0.0
+    for key, pts in ser.items():
+        ref = refs.get(key)
+        if ref is None:
+            continue
+        post = [p for t, p, *_ in pts if t_move <= t <= t_move + after]
+        if not post:
+            continue
+        new = statistics.median(post)
+        if ref - new < jump:
+            continue   # this outcome did not fall: its resting bids were not too high
+        for t, p, qty in pts:
+            if t_feed <= t <= t_move + settle and p >= ref - jump / 2:
+                g = p - new - FEE_C * p * (1 - p)
+                if g > 0:
+                    n += 1
+                    payout += qty / 100.0
+                    gain += g * qty / 100.0
+    return n, payout, gain
 
 
 def q(xs, f):
@@ -458,6 +488,7 @@ def analyze(a):
     if trades:
         print(f'\nAGAINST NOVIG (moneyline moved {a.jump:.2f}+ from its median of the 30 s before; M - feed > 0 = the feed showed the score BEFORE Novig moved)')
         lead = collections.defaultdict(list)
+        stale = collections.defaultdict(lambda: [0, 0.0, 0.0])
         n_ev = n_mv = 0
         detail = []
         for names, key, d, g in rows:
@@ -470,17 +501,28 @@ def analyze(a):
             if not mv:
                 continue
             n_mv += 1
-            for s, t in d.items():
-                lead[s].append(mv[0] - t)
+            for s_, t in d.items():
+                lead[s_].append(mv[0] - t)
+                n, pay, gain = stale_fills(ser, mv[2], t, mv[0], a.jump)
+                st = stale[s_]
+                st[0] += n
+                st[1] += pay
+                st[2] += gain
             detail.append((t_first, names, key, mv, d))
         print(f'  {n_ev} scores on games Novig traded; {n_mv} moved the moneyline')
         print(f'  {"feed":8} {"scores":>6} {"before":>7} {"by 3s+":>7} {"median":>8} {"p10":>7} {"p90":>7}')
-        for s in sorted(lead, key=lambda s: -statistics.median(lead[s])):
-            L = lead[s]
-            print(f'  {s:8} {len(L):6d} {sum(1 for x in L if x > 0):7d} {sum(1 for x in L if x >= 3):7d} {statistics.median(L):8.1f} {q(L, .1):7.1f} {q(L, .9):7.1f}')
+        for s_ in sorted(lead, key=lambda s_: -statistics.median(lead[s_])):
+            L = lead[s_]
+            print(f'  {s_:8} {len(L):6d} {sum(1 for x in L if x > 0):7d} {sum(1 for x in L if x >= 3):7d} {statistics.median(L):8.1f} {q(L, .1):7.1f} {q(L, .9):7.1f}')
+        print('\n  STALE FILLS A TAKER COULD HAVE HAD at each feed\'s time (what really traded at the old price after the feed showed the score, before the market settled;')
+        print('  a floor on the opportunity: only fills that happened; net of the in-play taker fee; payout dollars = contracts / 100):')
+        print(f'  {"feed":8} {"trades":>7} {"payout $":>10} {"net gain $":>11}')
+        for s_ in sorted(stale, key=lambda s_: -stale[s_][2]):
+            n, pay, gain = stale[s_]
+            print(f'  {s_:8} {n:7d} {pay:10.2f} {gain:11.2f}')
         print('\n  per score (UTC, game, score, Novig move, then each feed: its time minus the first feed, and M - feed):')
         for t_first, names, key, mv, d in sorted(detail)[:60]:
-            cells = ' '.join(f'{s}:{d[s] - t_first:+.1f}/{mv[0] - d[s]:+.1f}' for s in sorted(d))
+            cells = ' '.join(f'{s_}:{d[s_] - t_first:+.1f}/{mv[0] - d[s_]:+.1f}' for s_ in sorted(d))
             print(f"    {time.strftime('%H:%M:%S', time.gmtime(t_first))} {names[0][:14]} v {names[1][:14]} {key[0]}-{key[1]} move {mv[1]:+.2f}  {cells}")
     ages = collections.defaultdict(list)
     for r in scores:
@@ -519,11 +561,19 @@ def selftest():
     assert len(g) == 1
     tr = transitions(g[0])
     assert tr == {(1, 0): {'fast': 200, 'slow': 207}}, tr
-    trades = [dict(k='n', ev='Croatia @ Spain', mk='m', o='o1', p=0.50, ts=(150 + i) * 1000) for i in range(0, 40, 4)]
-    trades += [dict(k='n', ev='Croatia @ Spain', mk='m', o='o1', p=0.60, ts=205 * 1000), dict(k='n', ev='Croatia @ Spain', mk='m', o='o1', p=0.62, ts=206 * 1000)]
+    trades = [dict(k='n', ev='Croatia @ Spain', mk='m', o='o1', p=0.50, q=100, ts=(150 + i) * 1000) for i in range(0, 40, 4)]
+    trades += [dict(k='n', ev='Croatia @ Spain', mk='m', o='o1', p=0.60, q=100, ts=205 * 1000), dict(k='n', ev='Croatia @ Spain', mk='m', o='o1', p=0.62, q=100, ts=206 * 1000)]
+    # the other outcome: its price falls from 0.50 to 0.40 at 205 s, but a stale bid at 0.50 is hit at 201 s and 203 s, 1,000 and 500 contracts
+    trades += [dict(k='n', ev='Croatia @ Spain', mk='m', o='o2', p=0.50, q=100, ts=(150 + i) * 1000) for i in range(0, 40, 4)]
+    trades += [dict(k='n', ev='Croatia @ Spain', mk='m', o='o2', p=0.50, q=1000, ts=201 * 1000), dict(k='n', ev='Croatia @ Spain', mk='m', o='o2', p=0.50, q=500, ts=203 * 1000),
+               dict(k='n', ev='Croatia @ Spain', mk='m', o='o2', p=0.40, q=100, ts=205 * 1000), dict(k='n', ev='Croatia @ Spain', mk='m', o='o2', p=0.38, q=100, ts=206 * 1000)]
     ser = novig_series(trades, ('Spain', 'Croatia'))
     mv = first_move(ser, 200, 0.03)
     assert mv and abs(mv[0] - 205) < 1e-6, mv
+    n, pay, gain = stale_fills(ser, mv[2], 200, mv[0], 0.03)
+    assert n == 2 and abs(pay - 15.0) < 1e-9 and gain > 0, (n, pay, gain)      # 1,500 contracts = $15 of payout at ~10 c: about $1.5 less fees
+    n2, pay2, _ = stale_fills(ser, mv[2], 202, mv[0], 0.03)
+    assert n2 == 1 and abs(pay2 - 5.0) < 1e-9, (n2, pay2)                      # a slower feed (202 s) had only the later fill
     print('selftest ok')
 
 
