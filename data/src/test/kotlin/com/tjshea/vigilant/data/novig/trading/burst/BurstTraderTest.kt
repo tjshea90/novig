@@ -141,7 +141,7 @@ class BurstTraderTest {
     }
 
     @Test
-    fun `the app's one-order-at-a-time lock: held by another order, the attempt is skipped (never queued), and it is given back after a trade`() = runTest {
+    fun `the one-order-at-a-time lock of the app - held by another order the attempt is skipped (never queued), and it is given back after a trade`() = runTest {
         val lock = kotlinx.coroutines.sync.Mutex()
         val r = rig(lock = lock)
         assertTrue(lock.tryLock())                                   // the auto-bet is placing an order
