@@ -1,0 +1,223 @@
+{
+ "lens": "LUCK AND MULTIPLE COMPARISONS (permutation tests, game-clustered CI, leave-one-game-out, drop top games, Bonferroni for tried_count=522)",
+ "rule": "R8 Late sniper: at 5 min before the start buy every listed bet with EV >= 2.5% (last c/w price look, listed, <=7 min old)",
+ "numbers_reproduced": "Reproduced exactly with my own implementation of the selection: 28 bets, 16 games, 22 with a close (15 games), 12.41 bets/day over 2.256 days. CLV at the T-5 look 3.7186% game-clustered 95% CI [2.82%, 4.60%] (builder [2.81%, 4.59%]); 91% beat the close; same 22 bets at first look 2.865% (builder baseline 2.95%, paired gain +0.85 pts vs builder +0.77: small difference in how the baseline is taken, no effect on the verdict). Builder's halves reproduce only with a split Oct 3 | Oct 4-5 by start day (6 closes/5 games +4.01% | 16 closes/10 games +3.61%); the shared loader's split_by_date cuts at Oct 4 and leaves 20 closes before and 2 after. ROI at the T price -17.4% on 26 settled (16 games), game CI [-58.8%, +23.3%]. Paired sign-flip p for the gain over first look = 0.0060 (bet-level) and 0.0061 (game-level), matches the builder's 0.006. Close mix of the 22: 16 Tracker (all Tj-placed bets, 12 of them 'CNO's books'), 5 Novig last trades (9-48 trades), 1 Pinnacle.",
+ "survives": false,
+ "reason": "Not credible as an improvement; the apparent significance is a circularity/selection artifact and the multiple-comparison bill is unpaid. (1) The headline CLV is Tracker-driven: Tracker closes (16 of 22, CLV +4.90% [4.27, 5.44] on 12 games) are CNO-consensus reads made at about the same time as the look, so CLV tracks the listed EV (EV at the look 3.73%, CLV 4.90%, whole-study correlation 0.75 inside the T-5 universe). The independent closes (5 Novig trades + 1 Pinnacle) give +0.58% on 6 bets/5 games, t-interval [-0.30%, +1.45%] (the game bootstrap [0.15%, 1.3%] on 5 games is not trustworthy); drop the single Pinnacle bet and it is +0.27% (5 Novig-trades bets, mean 0.27%, i.e. zero). Listed EV on those 6 was 3.38%, so ~90% of the EV vanished. (2) The 'paired gain' over the first look (+0.85 pts, p 0.006) is explained by selecting on EV at the T look: listed EV rose by +0.70 pts (2.93% to 3.63%) and CLV by +0.85 pts; net of EV the late-timing gain is +0.15 pts (t 0.82, p 0.42 t-test, 0.18 game-level sign-flip). (3) Placebo times: the same rule at T=1,2,3,7,10,15 min gives CLV +3.4% to +4.3% and at T=60 +6.4% (5 closes), independent closes +0.5% to +1.2% at every T: lateness is not what produces the number. (4) Permutation tests (20000 draws each, observed 3.719%): same-size random draws from the 97 closed bets listed at T-5: p<5e-5 uniform, 0 of 20000 game-level; stratified by close source p<5e-5; label shuffle within start day x close source p 0.00025 (Bonferroni x522 = 0.13); whole-study first-look uniform draws p 0.0043 (Bonferroni 1.0). The EV-matched null (whole-study bets with EV>=2.5% and a close, same close-source mix, at their first look; mean 2.16%) gives p 0.128. Independent closes only: p 0.177 vs random 6-draws from the 50 independent closes at T-5 (pool mean -0.11%). The small p-values in the first rows measure 'high listed EV predicts a CNO-based close', not a timing edge. (5) Multiple comparisons: the gain over first look has p 0.006; with tried_count 522 Bonferroni gives 3.1 (cap 1.0), family-wise P(at least one variant this good by chance) = 1-(1-0.006)^522 = 0.96 (0.26 if only ~50 variants are effectively independent, 0.11 for 20); the expected best null t over 522 independent tests is 3.4 vs the observed 2.70. To survive Bonferroni at 522 a p below 9.6e-5 is needed. (6) Not driven by one or two games: leave-one-game-out CLV 3.48% to 3.99%; drop the top 1/2/3/5 games 3.51/3.21/2.99/2.65%, all CIs above zero. That robustness is a property of the Tracker closes, so it does not rescue the claim. (7) Volume: 12.4 bets/day (28 bets, thin); only 6 of 28 (2.7 a day) have an independent close.",
+ "caveats": [
+  "Sample is about 2.26 days; the 22 closes sit in 15 games, 5 of which carry the 6 independent closes. Any statement about a late-sniping edge is untestable on this log.",
+  "Closes exist only where Tj also placed the bet (Tracker) or the game had a Novig trades/Pinnacle/ESPN close; the 6 of 28 bets with no close are unaccounted for (selection on having a close).",
+  "A Novig-trades close read minutes after a T-5 buy is mostly Novig's own price a few minutes later, so ~0 CLV from it is close to mechanical for a late buy and says little about value either way; only the single Pinnacle close (+2.14%) is a sharp close.",
+  "ROI -17.4% on 26 settled is noise (CI [-58.8%, +23.3%]); it neither supports nor refutes the rule.",
+  "I could not rebuild the 522 variants, so the multiple-comparison numbers use K=522 (Bonferroni, independent-tests formula) and sensible effective K of 20 to 50 as brackets, not the exact family.",
+  "What would settle it: a late-vs-early comparison on INDEPENDENT closes (Pinnacle/Novig trades >=3) needs about 29 independent closes to see a +1 pt effect (SD 1.9 pts, 80% power) or 7 to see +2 pts; at 2.7 independent-close bets a day that is ~11 days for 29 (about 18 days for 49 to be safe), counting games not bets (roughly 25-40 games). To detect it Tj's study would also need to log a Pinnacle close for props (393 started bets have none).",
+  "Any change to which bets are bought at what time is a QUESTION FOR TJ, not an action; nothing here argues for loosening a safety limit (pregame only, price tolerance, trap guard, sharp check). This analysis supports not adopting R8 on the present evidence."
+ ],
+ "data": {
+  "selection": {
+   "bets": 28,
+   "games": 16,
+   "closes": 22,
+   "close_games": 15,
+   "bets_per_day": 12.41,
+   "days": 2.256
+  },
+  "clv_T5_all_closes": {
+   "mean": 0.037186,
+   "ci": [
+    0.0282,
+    0.046
+   ],
+   "beat_close_share": 0.909
+  },
+  "clv_first_look_same22": 0.028652,
+  "paired_gain_pts": 0.853,
+  "ev_listed_T_look_mean_22": 0.036318,
+  "ev_first_look_mean_22": 0.02933,
+  "net_gain_beyond_EV_pts": 0.1545,
+  "net_gain_p_ttest": 0.4207,
+  "net_gain_p_gamelevel_signflip": 0.1848,
+  "by_close_source": {
+   "tracker": {
+    "n": 16,
+    "games": 12,
+    "clv": 0.048959,
+    "ci": [
+     0.04265,
+     0.05437
+    ],
+    "ev": 0.037269
+   },
+   "novig_trades": {
+    "n": 5,
+    "clv": 0.002666
+   },
+   "pinnacle": {
+    "n": 1,
+    "clv": 0.021413
+   },
+   "independent_6": {
+    "n": 6,
+    "games": 5,
+    "clv": 0.00579,
+    "t_ci": [
+     -0.002959,
+     0.014539
+    ],
+    "ev": 0.03384,
+    "clv_without_pinnacle": 0.002666
+   }
+  },
+  "halves_builder_split_Oct3_vs_Oct4_5": {
+   "first": {
+    "closes": 6,
+    "games": 5,
+    "clv": 0.040147
+   },
+   "second": {
+    "closes": 16,
+    "games": 10,
+    "clv": 0.036075
+   }
+  },
+  "halves_loader_split_cut_Oct4": {
+   "first": {
+    "closes": 20,
+    "games": 13,
+    "clv": 0.037531,
+    "ci": [
+     0.02736,
+     0.04703
+    ]
+   },
+   "second": {
+    "closes": 2,
+    "games": 2,
+    "clv": 0.033726
+   }
+  },
+  "leave_one_game_out_range": [
+   0.034802,
+   0.039865
+  ],
+  "drop_top_games": {
+   "1": 0.03514,
+   "2": 0.03209,
+   "3": 0.02986,
+   "5": 0.02651,
+   "top3_ci": [
+    0.0224,
+    0.03898
+   ]
+  },
+  "permutation_tests_20000_draws_observed_0.037186": {
+   "A_uniform_22_of_97_closed_listed_at_T5": {
+    "p": 0.0,
+    "null_median": 0.0114,
+    "null_p99": 0.0246
+   },
+   "A2_game_level_15_games_uniform": {
+    "p": 0.0,
+    "null_median": 0.0114,
+    "null_p99": 0.0182
+   },
+   "B_stratified_by_close_source": {
+    "p": 0.0,
+    "null_median": 0.0198,
+    "null_p99": 0.0308
+   },
+   "C_label_shuffle_within_startday_x_closesrc": {
+    "p": 0.00025,
+    "bonferroni_522": 0.131,
+    "null_median": 0.0218,
+    "null_p99": 0.0327
+   },
+   "C2_label_shuffle_within_closesrc": {
+    "p": 0.0001,
+    "bonferroni_522": 0.052
+   },
+   "D_whole_study_first_look_uniform": {
+    "p": 0.00425,
+    "bonferroni_522": 1.0,
+    "null_median": 0.0022
+   },
+   "D2_whole_study_first_look_stratified_by_closesrc": {
+    "p": 0.00275,
+    "bonferroni_522": 1.0
+   },
+   "E_EV_matched_whole_study_ev_ge_2.5pct_first_look_stratified": {
+    "p": 0.12835,
+    "null_median": 0.0216,
+    "null_p95": 0.0451
+   },
+   "F_independent_closes_only_6_of_50": {
+    "observed": 0.00579,
+    "p": 0.17715,
+    "pool_mean": -0.00109
+   }
+  },
+  "placebo_times_same_rule": {
+   "T1": {
+    "closes": 22,
+    "clv": 0.0365,
+    "indep_clv": 0.0088,
+    "indep_n": 8
+   },
+   "T3": {
+    "closes": 26,
+    "clv": 0.0344,
+    "indep_clv": 0.005,
+    "indep_n": 10
+   },
+   "T5": {
+    "closes": 22,
+    "clv": 0.0372,
+    "indep_clv": 0.0058,
+    "indep_n": 6
+   },
+   "T7": {
+    "closes": 17,
+    "clv": 0.0434,
+    "indep_clv": 0.0123,
+    "indep_n": 5
+   },
+   "T15": {
+    "closes": 13,
+    "clv": 0.036,
+    "indep_clv": 0.0084,
+    "indep_n": 4
+   },
+   "T60": {
+    "closes": 5,
+    "clv": 0.0643,
+    "indep_n": 0
+   }
+  },
+  "multiple_comparisons": {
+   "p_single": 0.006,
+   "bonferroni_522": 1.0,
+   "unadjusted_bonferroni_value": 3.13,
+   "familywise_K522": 0.957,
+   "familywise_K50": 0.26,
+   "familywise_K20": 0.113,
+   "null_expected_max_t_K522": 3.4,
+   "observed_t": 2.7,
+   "p_needed_for_bonferroni_522": 9.58e-05
+  },
+  "roi_T5_price": {
+   "settled": 26,
+   "games": 16,
+   "roi": -0.17381,
+   "ci": [
+    -0.5884,
+    0.2335
+   ]
+  },
+  "sample_to_settle": {
+   "independent_closes_for_1pt_effect_80pct_power": 29,
+   "for_2pt": 7,
+   "independent_closes_per_day": 2.66,
+   "days_for_29": 10.9
+  }
+ }
+}
