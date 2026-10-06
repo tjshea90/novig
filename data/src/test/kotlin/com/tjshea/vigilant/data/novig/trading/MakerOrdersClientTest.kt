@@ -111,6 +111,33 @@ class MakerOrdersClientTest {
         assertTrue(refused.toString(), refused is com.tjshea.vigilant.data.novig.signing.NovigApiException && (refused as com.tjshea.vigilant.data.novig.signing.NovigApiException).status == 422)
     }
 
+    /** v0.70.4: Novig's batch reply was unreadable 3 of 3 times in the v0.70.1 file and nothing recorded its shape. */
+    @Test
+    fun `a batch reply the app cannot read is reported with its shape - keys and kinds of value, never a value`() = runBlocking {
+        val a = NovigTradingClient.newClientId()
+        val order = NovigTradingClient.NewOrder("out-1", 0.5, 10, "PO", a, 60_000)
+        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"accepted":"SECRET-ONE","note":"x"}"""))
+        val e1 = runCatching { client().placeOrders(listOf(order)) }.exceptionOrNull()
+        assertTrue(e1.toString(), e1 is NovigTradingClient.BatchReplyUnreadable)
+        assertEquals("{accepted:string,note:string}", (e1 as NovigTradingClient.BatchReplyUnreadable).shape)
+        assertFalse("no value leaves the reply", e1.message!!.contains("SECRET-ONE"))
+        assertTrue("still a SerializationException, so every caller that handles one handles this", e1 is kotlinx.serialization.SerializationException)
+        server.takeRequest()
+        // A list of the right kind whose items are not: the first item's shape and the count.
+        server.enqueue(MockResponse().setResponseCode(201).setBody("""{"accepted":[{"orderId":{"id":"abc"},"clientId":"$a"},{"orderId":{"id":"def"}}]}"""))
+        val e2 = runCatching { client().placeOrders(listOf(order)) }.exceptionOrNull() as NovigTradingClient.BatchReplyUnreadable
+        assertEquals("{accepted:[{clientId:string,orderId:{id:string}}x2]}", e2.shape)
+        server.takeRequest()
+        // An empty body, and a page that is not JSON, say so without quoting it.
+        server.enqueue(MockResponse().setResponseCode(201).setBody(""))
+        assertEquals("an empty body (0 characters)", (runCatching { client().placeOrders(listOf(order)) }.exceptionOrNull() as NovigTradingClient.BatchReplyUnreadable).shape)
+        server.takeRequest()
+        server.enqueue(MockResponse().setResponseCode(201).setBody("<html>Forbidden</html>"))
+        val e4 = runCatching { client().placeOrders(listOf(order)) }.exceptionOrNull() as NovigTradingClient.BatchReplyUnreadable
+        assertEquals("not JSON (22 characters, starting with '<' (HTML))", e4.shape)
+        assertFalse(e4.message!!.contains("Forbidden"))
+    }
+
     @Test
     fun `a batch is refused before sending when empty, over 256, or built wrongly`() = runBlocking {
         val c = client()

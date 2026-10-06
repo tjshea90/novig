@@ -426,6 +426,8 @@ class MakerTest {
         var refuseBatch: NovigApiException? = null
         var loseBatchAnswer = false
         var garbledBatchAnswer = false
+        /** The garbled answer as the real client reports it: with what the reply looked like. */
+        var garbledShape: String? = null
         /** Orders that fill the moment a cancel batch names them, and ones that are off the book by the time it does (answered NOT_FOUND). */
         val fillOnCancel = HashSet<String>()
         val vanishOnCancel = HashSet<String>()
@@ -439,7 +441,8 @@ class MakerTest {
                 o.clientId to id
             }
             if (loseBatchAnswer) throw java.io.IOException("timeout")
-            if (garbledBatchAnswer) throw kotlinx.serialization.SerializationException("not the shape this app reads")
+            if (garbledBatchAnswer) throw garbledShape?.let { NovigTradingClient.BatchReplyUnreadable(it, kotlinx.serialization.SerializationException("x")) }
+                ?: kotlinx.serialization.SerializationException("not the shape this app reads")
             return ids
         }
 
@@ -1766,6 +1769,17 @@ class MakerTest {
         assertEquals(1, novig.batches.size)
         assertEquals(2, second.placed)
         assertEquals(4, d.bids().count { it.status == MakerStatus.RESTING && it.orderId != null })
+    }
+
+    /** v0.70.4: the 3-of-3 unreadable batch replies of the v0.70.1 file could not say why; the problem now says what the reply looked like (keys and kinds, never a value). */
+    @Test
+    fun `an unreadable batch answer says what it looked like, and an unshaped one still just says it couldn't be read`() = runBlocking {
+        val shaped = BatchNovig().also { it.garbledBatchAnswer = true; it.garbledShape = "{accepted:[{orderId:number}x2]}" }
+        val a = desk(shaped, tracker()).cycle(oneGame("a-over", "b-over"), rules, stop = null, maxPerDay = 50.0, wallet = 100.0)
+        assertTrue(a.problems.toString(), a.problems.any { it.contains("couldn't be read (it looked like {accepted:[{orderId:number}x2]})") })
+        val plain = BatchNovig().also { it.garbledBatchAnswer = true }
+        val b = desk(plain, tracker()).cycle(oneGame("a-over", "b-over"), rules, stop = null, maxPerDay = 50.0, wallet = 100.0)
+        assertTrue(b.problems.toString(), b.problems.any { it.contains("couldn't be read; they are looked for") && !it.contains("looked like") })
     }
 
     @Test
