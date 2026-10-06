@@ -1,13 +1,13 @@
-# CHECKPOINT 2629 — read me first, then TASKS.md
+# CHECKPOINT 2630 — read me first, then TASKS.md
 
-**Written:** 2026-10-06T15:11:41Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-aa01feef-3ekhg1` · **builds on:** `dbc8408c` (this checkpoint is the commit after it)
+**Written:** 2026-10-06T15:49:51Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-aa01feef-3ekhg1` · **builds on:** `b49679f4` (this checkpoint is the commit after it)
 
 ## Just done
-SIXTH container (session 9208ead4): Tj re-sent both v0.70.1 files; extracted into scratchpad v0701 (loader matches the phone: 2080 bets / 683 closes / CLV +0.19% / 69 games / ROI +1.58% on 1705 settled); 5 of 14 phase-1 saved earlier; launched study-traps, study-props-sharp-book, study-hidden-and-filters (3 in flight)
+SAVED study-props-sharp-book, study-hidden-and-filters, study-traps, study-bids on GitHub: ALL 9 study analysts done (phase 1 study complete); wrote tools/research/study_v0701/genstrategy.py (phase 2 prompt builder, compact digest of all 9); launched strategy-simple-filters; in flight also diag-network-performance, diag-sources-credits
 
 ## Do this next
-On each agent's finish: scan its research/v0701_partial/<label>.json for wallet/ids, bash tools/save_agent.sh <label>, python3 tools/research/study_v0701/plan.py --running <labels>, launch next (study-bids, then 5 diag-*), then strategy builders, verifiers, synthesis, critic; then RESEARCH.md §97 + research/scan_study_analysis_2026-10-06_v0.70.1.md and short-bullet answer to Tj
+On each finish: scan json, bash tools/save_agent.sh <label>, plan.py --running <labels>. Phase 2: python3 -I tools/research/study_v0701/genstrategy.py <scratch>/v0701 writes prompts/strategy-*.txt; launch strategy-timing-price + strategy-trap-avoid-and-props as slots free; still to run diag-tracker-accuracy, diag-bids-autobet, diag-lifecycle-errors; then verifiers (<=10 rules x 3 lenses), synthesis, critic; then RESEARCH.md 97 + research/scan_study_analysis_2026-10-06_v0.70.1.md + short-bullet answer to Tj (proposals only, no rule changes without his yes)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ On each agent's finish: scan its research/v0701_partial/<label>.json for wallet/
 
 ## Last ten checkpoints
 ```
+  82053167 ckpt 2629: SIXTH container (session 9208ead4): Tj re-sent both v0.70.1 files; extracted
   bc5b02cc ckpt 2628: SAVE-NOW: v0.70.2 released+recorded; 5 of 14 phase-1 analysts saved on GitHu
   50d60335 ckpt 2627: 4 of 9 study analysts saved on GitHub (overall-edge, splits-bet-attributes, 
   8f3e12e6 ckpt 2626: v0.70.2 RELEASED + recorded (Release link in TASKS CX3); study-overall-edge 
@@ -25,8 +26,7 @@ On each agent's finish: scan its research/v0701_partial/<label>.json for wallet/
   2b3b86ab ckpt 2622: Tj's 14:14Z instruction recorded as CY1-CY3 in TASKS.md (max 3 agents in fli
   8a4d5a5a ckpt 2620: 4th container: files re-sent and re-extracted into scratchpad v0701 (loader 
   93c73318 ckpt 2619: Tj re-sent the two v0.70.1 files; extracted (loader matches the phone) and l
-  1bc152c5 ckpt 2618: container lost again (uploads, scratchpad, analyst results all gone): CX1/CX
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(11 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
