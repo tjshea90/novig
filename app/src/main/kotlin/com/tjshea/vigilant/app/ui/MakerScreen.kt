@@ -659,7 +659,7 @@ object LowUsageText {
 
     /** What the +EV tab says when the mode's scan had no market in its window (Tj, 2026-10-05: "it said it scanned but I don't think it did because it only took 1 second"). */
     fun nothingToRead(pace: Int): String =
-        "No game with a player-prop market on ${AppBook.name} starts in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} hours (games already under way aren't bid on), so this scan asked no " +
+        "No game with a player-prop market on ${com.tjshea.vigilant.app.AppBook.name} starts in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} hours (games already under way aren't bid on), so this scan asked no " +
             "feed and spent nothing: that is why it took a second. It reads again " +
             (if (pace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "every few minutes" else "every $pace min at most") + " and starts as soon as a game comes inside the window. " + TAB_NOTE
 
