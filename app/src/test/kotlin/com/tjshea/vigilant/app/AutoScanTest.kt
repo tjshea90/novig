@@ -180,6 +180,8 @@ class AutoScanTest {
                 )
             }
         }
+        val seen = kotlinx.coroutines.runBlocking { app.container.currentSettings() }
+        println("DEBUG lowUsageNow=${seen.lowUsageNow} gap=${seen.vigilantGapSeconds} every=${seen.autoScanSeconds} vig=${seen.autoScansVigilant} pace=${seen.lowUsagePace}")
         var clock = now
         var started = 0
         var starts: List<Long>? = listOf(now + 2 * 3_600_000L)
