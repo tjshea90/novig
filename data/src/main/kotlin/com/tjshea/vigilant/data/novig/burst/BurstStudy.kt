@@ -172,6 +172,29 @@ object BurstStudy {
         return if (perGame < MIN_DOLLARS_PER_GAME || upShare < GAMES_UP_SHARE) BurstVerdict.TOO_SMALL else BurstVerdict.WORTH_A_TEST
     }
 
+    /**
+     * What the real-money trader needs before it may place an order (Tj, 2026-10-06: "if it is proven I can just turn it on"): the verdict over the windows the trader would
+     * actually act on (the ones that paid at least [minNet] when first seen) must be [BurstVerdict.WORTH_A_TEST], and the delays it was judged at must be MEASURED on this phone,
+     * not assumed. [reason] is null when proved, else why not, in words for Settings.
+     */
+    class Proof(val verdict: BurstVerdict, val reason: String?) {
+        val proved: Boolean get() = reason == null
+    }
+
+    fun proof(records: List<BurstLine>, minNet: Double, latency: LatencyModel): Proof {
+        if (latency.roundTrips() < LatencyModel.MIN_SAMPLES || latency.pushDelays() < LatencyModel.MIN_SAMPLES) {
+            return Proof(BurstVerdict.NEEDS_DATA, "the recorder is still assuming your delays (${latency.roundTrips()} round trips and ${latency.pushDelays()} push delays measured; it needs ${LatencyModel.MIN_SAMPLES} of each)")
+        }
+        val actable = records.filter { it !is WindowRecord || it.net >= minNet }
+        val all = summarize(actable).lastOrNull() ?: return Proof(BurstVerdict.NEEDS_DATA, "nothing recorded yet")
+        val v = verdict(all)
+        return when (v) {
+            BurstVerdict.WORTH_A_TEST -> Proof(v, null)
+            BurstVerdict.NEEDS_DATA -> Proof(v, "not enough yet: ${all.games} games and ${all.windows} windows that paid at least ${"%.1f".format(Locale.US, minNet * 100)} cents (it needs $MIN_GAMES and $MIN_WINDOWS)")
+            else -> Proof(v, "the recorder's verdict on the windows it would trade is: ${v.label}")
+        }
+    }
+
     /** The report Diagnostics and "Share live burst study" print. [latencyNote]: where the delays came from ([LatencyModel.note]). */
     fun report(records: List<BurstLine>, latencyNote: String, capDollars: Double): String {
         val totals = summarize(records)

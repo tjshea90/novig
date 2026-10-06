@@ -169,6 +169,8 @@ class BurstTrader(
     private val pause: suspend (Long) -> Unit = { delay(it) },
     private val ioContext: kotlin.coroutines.CoroutineContext = Dispatchers.IO,
     private val newClientId: () -> String = { NovigTradingClient.newClientId() },
+    /** The app's one-order-at-a-time lock (auto-bet, the bid desk and the Bet sheet share it): an attempt that cannot take it at once is skipped, never queued behind a stale window. */
+    private val lock: Mutex? = null,
 ) : WindowSink {
     private val _status = MutableStateFlow(BurstTradeStatus())
     val status: StateFlow<BurstTradeStatus> = _status.asStateFlow()
@@ -205,6 +207,7 @@ class BurstTrader(
         val barred = listOf(w.first.lo.marketId, w.first.hi.marketId).any { (blacklist[it] ?: 0L) > start }
         if (barred) return skip("market refused lately")
         if (!mutex.tryLock()) return skip("busy")
+        if (lock != null && !lock.tryLock()) { mutex.unlock(); return skip("busy") }
         try {
             lastTry[ladder] = start
             val c = w.current() ?: return skip("no longer pays")
@@ -213,6 +216,7 @@ class BurstTrader(
             val q = size(c, r, w.eventId, start) ?: return skip("limit reached")
             withContext(NonCancellable) { trade(w, c, q, start) }
         } finally {
+            lock?.unlock()
             mutex.unlock()
         }
     }
