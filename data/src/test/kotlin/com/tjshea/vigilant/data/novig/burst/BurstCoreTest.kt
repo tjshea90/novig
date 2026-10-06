@@ -154,6 +154,7 @@ class BurstCoreTest {
         assertEquals(1, w.onBook(lines, books, ml, 1_000).size)
         books.map["ml"] = book("ml")                                      // the order is removed ...
         w.onBook(lines, books, ml, 1_100)
+        assertTrue("inside the grace nothing is closed yet", w.sweep(1_110).isEmpty())
         books.map["ml"] = book("ml", bBids = listOf(461 to 30_000L))      // ... and the rest added back
         assertTrue(w.onBook(lines, books, ml, 1_120).isEmpty())
         assertTrue(w.sweep(2_000).isEmpty())
@@ -205,6 +206,8 @@ class BurstCoreTest {
 
     @Test
     fun `one leg gone is a naked leg that loses its fee and the penalty, a price moved against the order is no fill, both gone is a miss`() {
+        assertEquals("two cents a contract: about half a spread less what a stale leg is worth", 0.02, PaperTrader.NAKED_PENALTY, 0.0)
+        assertEquals(150L, CoverWindows.GRACE_MS)
         val one = PaperTrader.trade(open, open.yes, null, 0.0)
         assertEquals(PaperOutcome.ONE_LEG, one.outcome)
         val fee = 0.03 * 0.539 * 0.461
