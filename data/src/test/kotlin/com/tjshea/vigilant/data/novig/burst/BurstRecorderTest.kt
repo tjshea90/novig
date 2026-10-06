@@ -227,6 +227,25 @@ class BurstRecorderTest {
     }
 
     @Test
+    fun `a restart for other leagues waits for the old run to finish writing, and the new run begins clean`() = runTest {
+        val r = rig(tickMs = 50L)
+        r.recorder.start(setOf("NFL"), 0.0)
+        runCurrent()
+        r.calm()
+        advanceTimeBy(500); runCurrent()
+        r.push("ml", remove("ml-b", 420, 40_000), add("ml-b", 461, 40_000))
+        advanceTimeBy(500); runCurrent()
+        r.recorder.stop()
+        r.recorder.start(setOf("NBA"), 0.0)       // at once, before the old run has been resumed to finish
+        runCurrent()
+        assertEquals("the old run's window was written before the new run began", 1, r.journal.readAll().filterIsInstance<WindowRecord>().size)
+        assertEquals(setOf("NBA"), r.recorder.status.value.leagues)
+        assertEquals(0, r.recorder.status.value.windows)
+        assertTrue(r.recorder.running)
+        r.recorder.stop(); runCurrent()
+    }
+
+    @Test
     fun `the replayed book follows add, partial fill and gap exactly`() {
         val b = ReplayBook("m")
         assertNull("nothing before a snapshot", b.book(0))

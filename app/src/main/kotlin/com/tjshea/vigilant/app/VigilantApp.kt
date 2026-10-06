@@ -861,6 +861,8 @@ class AppContainer(private val app: Application) {
             return
         }
         ensureLoaded()
+        // New leagues take effect at once: the run in progress stops (its windows are written) and a new one starts when it has finished.
+        if (burst.running && burst.status.value.leagues != s.burstLeagues) burst.stop()
         burst.start(s.burstLeagues, s.apiMaxStake)
     }
 

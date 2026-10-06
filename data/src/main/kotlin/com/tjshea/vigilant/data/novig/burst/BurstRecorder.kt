@@ -94,6 +94,10 @@ class BurstRecorder(
     @Volatile
     private var job: Job? = null
 
+    /** The run [stop] last cancelled: a new run waits for its shutdown (its windows written, its connection closed) before it touches anything. */
+    @Volatile
+    private var previous: Job? = null
+
     @Volatile
     private var capDollars = 0.0
 
@@ -105,7 +109,11 @@ class BurstRecorder(
         this.capDollars = capDollars
         if (running || leagues.isEmpty()) return
         _status.value = BurstStatus(running = true, sinceMs = clock(), leagues = leagues)
-        job = scope.launch { runLoop(leagues) }
+        val prev = previous
+        job = scope.launch {
+            prev?.join()
+            runLoop(leagues)
+        }
     }
 
     /** Stops: every open window is closed and written, every game's coverage is written, the connection is closed. */
@@ -113,6 +121,7 @@ class BurstRecorder(
     fun stop(why: String? = null) {
         val j = job ?: return
         job = null
+        previous = j
         j.cancel()
         _status.value = _status.value.copy(running = false, problem = why ?: _status.value.problem)
     }
