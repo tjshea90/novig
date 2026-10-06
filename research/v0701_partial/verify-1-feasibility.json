@@ -1,0 +1,175 @@
+{
+ "lens": "APP FEASIBILITY AND SAFETY (verify-1-feasibility)",
+ "rule": "R8 Late sniper: at 5 minutes before the start buy every listed bet with EV >= 2.5% (builder label: NO GAIN, thin)",
+ "numbers_reproduced": "Matches the builder. 28 bets, 16 games, 12.41 bets/day over 2.256 days. 22 bets have a close (15 games): CLV at the T-5 look price +3.72% [+2.82%, +4.64%] (builder [+2.81%, +4.59%]; bootstrap-seed difference only), 91% beat the close. Same bets at first c/w look +2.95% (builder +2.95%); paired gain +0.77 pts [+0.29, +1.43] over 15 games. ROI at the look price -17.4% on 26 settled/16 games [-59.8%, +22.6%]. Builder's halves reproduce only if split by START day (Oct 3: 6 bets +4.01%; Oct 4-5: 22 bets, 16 closes +3.61%); the shared date split (firstDay cut Oct 4) puts 25 bets in the first half and 3 in the second (2 closes, 2 games), so a half-vs-half check carries no information. Mix: 26 PROP, 1 SPREAD, 1 TEAM_TOTAL; 21 NFL, 6 NHL, 1 NCAAF; 15 of the 28 bets (8 games) are the single NFL 1 pm Oct 4 kickoff. Closes: 16 Tracker, 5 Novig-trades (9, 11, 19, 48, 9 trades), 1 Pinnacle, 6 none.",
+ "survives": false,
+ "reason": "Not a credible improvement, and not implementable as written. (1) As literally written (EV >= 2.5% only) 10 of 28 bets (36%) fail the auto-bet's own checks, so placing them would loosen limits: 3 were never in the app's CNO list at T-5 (found only by the study-only wide read, no book page), 4 have fewer than 3 books agreeing (the preset needs 3 agreeing, 2 pricing both sides), 1 is sharp-VETOED, 1 is a team total (kind not allowed), 1 has no book check by T-5. (2) Layered on the existing preset (no limit loosened) it is 18 bets = 8.0/day, and it adds almost nothing: 16 of those 18 already passed the preset EARLIER (median 9 min before the start, range 5 to 410), so the existing auto-bet would already own them; in 15 of 18 the price at the first pass is identical to the T-5 price. Paired CLV, T-5 price vs first-pass price, same bets, same close: +0.14 pts [-0.11, +0.51] over 13 games, 3 nonzero differences (+2.44, +0.97, -0.96 pts). Only 2 to 3 bets in 2.26 days are new. (3) As a REPLACEMENT for buying at first pass it would drop 88 of the 107 bets that pass the preset in the logged looks (82%; 47.4/day down to 8.4/day), whose first-pass CLV was +1.92% [+0.78%, +3.02%] on 83 closes/26 games. (4) The edge is circular: the Tracker close is the app's own CNO-books/Vigilant fair read 0 to 4 minutes after the buy (ClosingLine.kt: capture wakes 6 min before the start, final read ~110 s), so CLV is about EV: on the 16 Tracker closes mean EV at the look +3.73%, mean CLV +4.90% (CLV minus EV +1.17 pts, SD 1.42, corr 0.49). The 6 independent closes (5 Novig trades, 1 Pinnacle) average +0.58% against +3.38% EV; among the 18 preset-passing bets the 4 independent closes average +0.16%. (5) It would be worth cents: about $15 staked a day at 1/4 Kelly of $250; at +3.5% claimed EV that is $0.53/day, at the +0.16% to +0.58% independent-close level $0.02 to $0.09/day. (6) It is one of 522 variants tried, selected on 28 bets of which 54% sit in one kickoff cluster.",
+ "caveats": [
+  "WHAT THE APP HAS: no setting expresses 'wait until N minutes before the start'. ScanSettings.trapEarlyHours (TrapGuard) is an upper bound in whole hours (1..999; chips 0/3/6/12/24): it lets a bet be bought at ANY time inside the window, it does not hold it. AutoBettor.MIN_LEAD_MS = 60_000 (AutoBettor.kt:711, gate at ~line 175) is a fixed lower bound. R8 needs new code: a minutes-based window in AutoBettor.run's pregame gate plus per-bet hold-back state, and the existing auto-bet's buy-at-first-pass must be suppressed or R8 is redundant. It is not a preset change (Presets.kt PresetRules has no timing field).",
+  "NO SAFETY LIMIT IS LOOSENED if R8 is layered on the preset: daily $500 (R8 needs about $15 to $23 a day), per game $70 (max R8 stake on one game $6.10), price tolerance 3 cents (PRICE_TOLERANCE), pregame-only (60 s lead; T-5 leaves 4 minutes), sharp veto, trap guard, halt on a lost order are all untouched. It DOES loosen the books/veto/kind/list checks if implemented as EV-only (10 of 28 bets, see reason). A late cycle (diagnostics: 9 late cycles, worst 7 min) would be blocked by the 60 s lead, so the rule would silently miss bets, not break a limit.",
+  "STAKES AT THE REAL CAPS (settings in force: 1/4 Kelly of $250 bankroll, auto-bet max $3.50 a bet, $500 a day, $70 a game): mean stake $1.85 (range $1.29 to $3.30); all 28 = $51.7 over 2.26 days = $22.9/day; the 18 preset-passing = $34.0 = $15.1/day; 4 of 28 have 'available' below the Kelly stake ($0.005 to $2.00). The caps never bind; volume and liquidity do.",
+  "INFORMATION AT DECISION TIME: no look-ahead found. The entry uses only looks at or before T = start - 5 min and the listed EV; no close is used to choose. But 4 of 28 bets (3 w-only + 1 dropped from the c list) are not visible to the app's list at T, 6 have no close at all (all 6 are among the 10 that fail the preset checks), and the books page the auto-bet needs is read for the top 10 candidates only (AutoScan.AUTO_BET_CHECK_TOP = 10), one page every 4 s (CnoFeed.AGREE_GAP_MS), kept 4 min (AGREE_TTL_MS). At the 1 pm NFL kickoff 19 candidates were listed at once: of the 18 preset-passing bets, 13 rank within the top 10 and 5 rank 12 to 18 (approximate: assumes CNO's order is by EV); 11 of 18 have a book check logged within 4 min of T (logging is on change, so this understates reads).",
+  "CLOSE AVAILABILITY: 26 of 28 are props. In the whole study 843 of 1320 props (64%) have no close; closes are 180 Tracker, 291 Novig-trades, 6 Pinnacle, 0 ESPN; independent (non-Tracker) usable closes exist for 217 props (16%). All 228 Tracker closes in the file are on bets Tj or the auto-bet placed (0 on unplaced bets). Of the 16 Tracker-closed R8 bets, 10 were placed by hand from the bet sheet and 5 to 6 by the auto-bet, 5 to 10 minutes before the start. A deployed R8 would produce its own circular Tracker closes (read minutes after the buy), so it could not validate itself.",
+  "WHAT WOULD SETTLE IT (a QUESTION FOR TJ, not an action): a shadow log, no money: for every bet that passes the preset record the price, EV and book check at T-5 and the later independent close (Pinnacle where it exists, Novig trades with at least 3 trades). With per-bet SD of CLV 6.2% on props with independent closes (n 217, 24 games, mean -0.18%), a +-1 pt CI needs about 146 independent-close bets (about 888 R8 bets, 105 days at 8.4/day) and +-0.5 pt about 584 (about 3,550 bets, 422 days), before game clustering widens it. Also worth asking: does Tj want a rule that makes the 15 of 18 same-price cases wait at all, given the price is identical?",
+  "APPROXIMATIONS in the first-pass test: it replays the logged c/k looks with the preset in force now (edge >= 2.5% at the CNO list price, 2+ two-sided, 3+ agree, odds -200 to +130, kinds PROP/MONEYLINE/SPREAD, edge <= 15%, sharp not VETOED, 1+ min to start) over the whole period although the preset changed between v0.57 and v0.70.1; it ignores the live Novig price, the check EV, the per-game cap (378 skips in the counters), the top-10 read limit and cooldowns, so it is an upper bound on what the app would have bought (the app placed 111 bets in 4 days, about 28/day; the replay gives 47/day). A 19th bet passes at T-5 in the preset-only replay that the builder's 28 do not contain.",
+  "SAMPLE: 2.26 days of first-looks, 16 games, 15 of 28 bets from one kickoff; the second date half has 3 bets. The result is descriptive only; nothing here is evidence of an edge, and nothing is evidence against a late-timing effect either, because the evaluation cannot see one."
+ ],
+ "evidence": {
+  "days_logged": 2.256,
+  "r8_as_written": {
+   "bets": 28,
+   "games": 16,
+   "per_day": 12.41,
+   "closes": 22,
+   "close_games": 15,
+   "clv_look": 0.03719,
+   "clv_ci": [
+    0.02816,
+    0.04635
+   ],
+   "first_look_clv_same_bets": 0.02952,
+   "paired_gain_pts": 0.77,
+   "paired_ci_pts": [
+    0.29,
+    1.43
+   ],
+   "roi_look": -0.1738,
+   "roi_ci": [
+    -0.598,
+    0.226
+   ],
+   "settled": 26
+  },
+  "close_source_counts_28": {
+   "tracker": 16,
+   "novig_trades": 5,
+   "pinnacle": 1,
+   "none": 6
+  },
+  "kind_counts_28": {
+   "PROP": 26,
+   "SPREAD": 1,
+   "TEAM_TOTAL": 1
+  },
+  "fail_preset_checks_of_28": {
+   "total": 10,
+   "not_in_app_cno_list_at_T": 4,
+   "never_c_listed_wide_read_only": 3,
+   "fewer_than_3_books_agreeing": 4,
+   "sharp_vetoed": 1,
+   "kind_not_allowed": 1,
+   "no_book_check_by_T": 1
+  },
+  "stage_counts_cumulative": {
+   "c_listed_at_T": 24,
+   "kind_ok": 23,
+   "odds_ok": 23,
+   "book_check_logged": 22,
+   "books_ok_2sided_3agree": 18,
+   "sharp_ok": 18
+  },
+  "preset_passing_at_T": {
+   "bets": 18,
+   "games": 13,
+   "per_day": 7.98,
+   "clv_look": 0.0381,
+   "clv_ci": [
+    0.0289,
+    0.0459
+   ],
+   "clv_first_look": 0.032,
+   "tracker_closes": 14,
+   "novig_trades_closes": 4,
+   "independent_close_mean_clv": 0.0016,
+   "stake_total_dollars": 34.0,
+   "stake_per_day_dollars": 15.1,
+   "max_stake_one_game_dollars": 5.9,
+   "rank_within_top10": 13,
+   "rank_beyond_top10": 5
+  },
+  "vs_existing_auto_bet_first_pass": {
+   "already_passing_earlier_of_18": 16,
+   "same_price_as_T5_of_18": 15,
+   "median_first_pass_min_to_start": 9,
+   "paired_clv_diff_pts": 0.14,
+   "paired_ci_pts": [
+    -0.11,
+    0.51
+   ],
+   "paired_games": 13,
+   "nonzero_diffs": 3
+  },
+  "whole_study_replay": {
+   "preset_passing_ever": 107,
+   "per_day": 47.4,
+   "games": 30,
+   "still_passing_at_T5": 19,
+   "per_day_at_T5": 8.42,
+   "forgone_if_replacement": 88,
+   "forgone_share": 0.82,
+   "forgone_clv_first_pass": 0.0192,
+   "forgone_clv_ci": [
+    0.0078,
+    0.0302
+   ],
+   "forgone_closes": 83,
+   "forgone_games": 26,
+   "status_quo_clv_first_pass": 0.0222,
+   "status_quo_ci": [
+    0.0134,
+    0.0322
+   ],
+   "status_quo_closes": 102,
+   "status_quo_independent_closes": 15,
+   "status_quo_independent_clv": 0.0059,
+   "status_quo_independent_ci": [
+    -0.0045,
+    0.0116
+   ],
+   "median_first_pass_min_to_start": 160
+  },
+  "circularity_16_tracker_closes": {
+   "mean_ev_at_look": 0.0373,
+   "mean_clv_at_look": 0.049,
+   "clv_minus_ev_pts": 1.17,
+   "sd_pts": 1.42,
+   "corr_ev_clv": 0.49
+  },
+  "independent_6_closes": {
+   "mean_ev": 0.0338,
+   "mean_clv": 0.0058
+  },
+  "props_close_availability": {
+   "props": 1320,
+   "no_close": 843,
+   "tracker": 180,
+   "novig_trades": 291,
+   "pinnacle": 6,
+   "espn": 0,
+   "independent_usable": 217,
+   "tracker_closes_on_unplaced_bets": 0,
+   "tracker_closes_total": 228
+  },
+  "settle_sample_sizes": {
+   "prop_clv_sd_independent": 0.0616,
+   "bets_for_pm1pt": 146,
+   "r8_bets_for_pm1pt": 888,
+   "days_pm1pt": 105,
+   "bets_for_pm0_5pt": 584,
+   "days_pm0_5pt": 422
+  },
+  "dollars_per_day_at_15_1_staked": {
+   "at_claimed_ev_3_5pct": 0.53,
+   "at_independent_close_0_58pct": 0.09,
+   "at_0_16pct": 0.02
+  },
+  "code_pointers": [
+   "app/.../AutoBettor.kt:175 (pregame gate), :711 MIN_LEAD_MS=60000",
+   "app/.../AutoScan.kt AUTO_BET_CHECK_TOP=10 (line ~473), cnoRead",
+   "data/.../cno/CnoFeed.kt AGREE_GAP_MS=4000, AGREE_TTL_MS=240000",
+   "data/.../scanner/TrapGuard.kt (trapEarlyHours whole hours)",
+   "data/.../scanner/Presets.kt (no timing field)",
+   "data/.../tracker/ClosingLine.kt:14-15 and LEAD_MS=6 min, FINAL_LEAD_MS=110 s"
+  ]
+ }
+}
