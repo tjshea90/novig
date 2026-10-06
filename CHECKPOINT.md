@@ -1,13 +1,13 @@
-# CHECKPOINT 2607 — read me first, then TASKS.md
+# CHECKPOINT 2608 — read me first, then TASKS.md
 
-**Written:** 2026-10-06T02:50:04Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-3436e911-cyln4u` · **builds on:** `03852e89` (this checkpoint is the commit after it)
+**Written:** 2026-10-06T02:57:01Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-3436e911-cyln4u` · **builds on:** `793b307c` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.69.0: live burst recorder (no orders): watches live games' lines on the read key, finds cross-line mispricings after plays, paper-trades them at your measured delays, verdict + share file (versionCode 117, v0.69.0)
+v0.69.0 released + recorded (run green, Release up); BurstTrader core + 16 tests green (skip-reason test fixed: step past the 2 s cooldown, day cap under the 20-contract least)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.69.0), then run: bash tools/record-release.sh v0.69.0 117 "v0.69.0: live burst recorder (no orders): watches live games' lines on the read key, finds cross-line mispricings after plays, paper-trades them at your measured delays, verdict + share file"
+executor app wiring: adapter on NovigTradingClient, settings (burstTrade/ack/stake/caps/halted), proof gate from BurstStudy verdict, onHalt persistence + Resume, ownBids from maker store, windowSink into the recorder, Settings UI gated, share file includes trade journal; then mutation-check, floor, ship v0.70.0; MNF analysis + RESEARCH 95/96 after ~03:30Z
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  d561774b ckpt 2607: pre-release: v0.69.0: live burst recorder (no orders): watches live games' l
   5a183237 ckpt 2606: v0.69.0 burst recorder: full floor green (2,282), TASKS/NOVIG_API updated, v
   46753e50 ckpt 2605: score-burst recorder built: ladders, covers, windows, paper trader, delays, 
   49db12ad ckpt 2604: Tj asks for a no-orders score-burst recorder in the app and whether it works
@@ -25,8 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   10ad5b04 ckpt 2600: v0.68.1 ready: Auto pace + resting markets first + the +EV tab/timeline/heal
   9ee7b975 ckpt 2599: CR5 code + tests green (Auto pace, resting markets pinned, mutants killed); 
   edf8a14c ckpt 2598: CR1/CR2/CR5 code written (Auto pace + resting markets read first, 9 timeline
-  e398422c ckpt 2597: CR4/CR5 written into TASKS.md (Tj: bids all cancel together; asks for a fres
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
