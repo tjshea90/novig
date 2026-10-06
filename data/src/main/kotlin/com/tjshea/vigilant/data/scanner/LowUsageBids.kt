@@ -24,10 +24,40 @@ object LowUsageBids {
     /** The longest American odds a bid may be posted at (no long shots); a tighter [ScanSettings.makerMaxOdds] still wins. */
     const val MAX_ODDS = 130
 
-    /** [ScanSettings.lowUsageMinutes]: Vigilant's own scan runs at most this often in the mode. 5 min is the shortest (the freshness limit inside 3 h of the start). */
-    const val DEFAULT_MINUTES = 10
+    /**
+     * [ScanSettings.lowUsagePace] (minutes): how often Vigilant's own scan runs while the mode is on. [AUTO] (the default since v0.68.1) scans again just before the bids' fair
+     * prices go old, so a bid is rolled forward instead of ending and leaving a gap ([autoGapSeconds]; Tj, 2026-10-05: "it will put up many bids, then leave them a couple
+     * minutes, then cancel all of them at the same time"); a number is a fixed pace, at most that often: slower than the freshness limit allows leaves the bids down part of the
+     * time (RESEARCH.md §93). 5 min is the shortest fixed pace.
+     */
+    const val AUTO = 0
     const val MIN_MINUTES = 5
-    val PACE_CHOICES = listOf(5, 8, 10, 15, 20, 30)
+    val PACE_CHOICES = listOf(AUTO, 5, 8, 10, 15, 20, 30)
+
+    /**
+     * The gap that keeps bids up (Auto pace): a bid is re-posted from a fresher fair once it is within [MakerRules.REFRESH_BEFORE_MS] of its end, and its end is the oldest quote's
+     * stamp plus the freshness limit, so a scan must start that long before the limit: 5 min - 2 = 3 min for a game inside [Freshness.FAR_OFF_MS] of its start, 10 - 2 = 8 min
+     * beyond it. A feed's quote is already some seconds old when it is read, and the bids of a scan are posted as its Novig reads reach them, so no longer gap is safe.
+     */
+    const val NEAR_GAP_SECONDS = ((Freshness.MAX_QUOTE_AGE_MS - MakerRules.REFRESH_BEFORE_MS) / 1_000L).toInt()
+    const val FAR_GAP_SECONDS = ((Freshness.FAR_OFF_AGE_MS - MakerRules.REFRESH_BEFORE_MS) / 1_000L).toInt()
+
+    /**
+     * The Auto gap now: [NEAR_GAP_SECONDS] when a game a bid could still be posted on ([stopMs] before its start) starts inside the 3-hour limit's reach (a game just over 3 h
+     * away gets the short limit within one far gap, so it counts), else [FAR_GAP_SECONDS]. [startsMs] null = the last scan isn't known (just started, or it failed): the short gap.
+     */
+    fun autoGapSeconds(startsMs: Collection<Long>?, now: Long, stopMs: Long): Int {
+        if (startsMs == null) return NEAR_GAP_SECONDS
+        val reach = Freshness.FAR_OFF_MS + FAR_GAP_SECONDS * 1_000L
+        return if (startsMs.any { it - stopMs > now && it - now <= reach }) NEAR_GAP_SECONDS else FAR_GAP_SECONDS
+    }
+
+    /** The shortest gap Vigilant's own scan keeps in the mode at [s]' pace: a fixed pace, or the Auto pace's short gap. */
+    fun shortestGapSeconds(s: ScanSettings): Int = if (s.lowUsagePace == AUTO) NEAR_GAP_SECONDS else s.lowUsagePace.coerceAtLeast(MIN_MINUTES) * 60
+
+    /** The gap Vigilant's own scan keeps in the mode right now: [s]' fixed pace, or the Auto gap for the games the last scan saw ([startsMs], their start times). */
+    fun gapSeconds(s: ScanSettings, startsMs: Collection<Long>?, now: Long): Int =
+        if (s.lowUsagePace == AUTO) autoGapSeconds(startsMs, now, s.makerStopMinutes.coerceAtLeast(0) * 60_000L) else shortestGapSeconds(s)
 
     /** [ScanSettings.lowUsageMargin]'s choices (2.5% is the floor). */
     val MARGIN_CHOICES = listOf(MIN_MARGIN, 0.03, 0.035, 0.04)
