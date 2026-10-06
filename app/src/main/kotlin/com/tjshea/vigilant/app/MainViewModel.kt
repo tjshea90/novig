@@ -1718,6 +1718,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val makerBids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid>,
         /** The scan study's counts: read from its journal off the main thread. */
         val study: com.tjshea.vigilant.data.study.ScanStudy.Overview?,
+        /** Why the real-money burst trader is locked, or null when the recorder has proved it ([VigilantApp.burstProof]). */
+        val burstProofReason: String?,
     )
 
     private suspend fun gatherDiag(): DiagInputs = withContext(Dispatchers.IO) {
@@ -1729,6 +1731,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             previous = runCatching { c.diagHistory.all().lastOrNull() }.getOrNull(),
             makerBids = runCatching { c.makerStore.all() }.getOrDefault(emptyList()),
             study = runCatching { c.study.overview() }.getOrNull(),
+            burstProofReason = runCatching { c.burstProof().reason }.getOrDefault("the proof could not be read"),
         )
     }
 
@@ -1915,7 +1918,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             burstReport = runCatching {
                 BurstText.diagnostics(
                     c.burst.status.value, c.burstJournal.readAll(), c.burst.latency.note(), _state.value.settings, c.burst.running,
-                    trades = c.burstTradeJournal.readAll(), trader = c.burstTrader.status.value, proofReason = c.burstProof().reason,
+                    trades = c.burstTradeJournal.readAll(), trader = c.burstTrader.status.value, proofReason = inputs.burstProofReason,
                 )
             }.getOrNull(),
             sharpCalls = c.sharp.calls,
