@@ -25,8 +25,6 @@ import com.tjshea.vigilant.data.novig.burst.WindowRecord
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
