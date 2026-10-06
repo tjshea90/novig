@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.app
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -87,7 +88,7 @@ class TrapGuardUiTest {
     @Test
     fun `the guard's window has a 12 h chip and a field for any whole number of hours, and a number it can't take saves nothing`() {
         val st = androidx.compose.runtime.mutableStateOf(ScanSettings(trapEarlyHours = 6))
-        screen { TrapGuardSection(st.value, showMove = false, tag = "t") { f -> st.value = f(st.value) } }
+        screen { Column { TrapGuardSection(st.value, showMove = false, tag = "t") { f -> st.value = f(st.value) } } }
         compose.onNodeWithTag("t-trapEarlyField").assertTextContains("6")
         compose.onNodeWithText("12 h").performClick()
         assertEquals(12, st.value.trapEarlyHours)
