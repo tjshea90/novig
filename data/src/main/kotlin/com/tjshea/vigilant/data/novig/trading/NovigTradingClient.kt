@@ -70,6 +70,13 @@ open class NovigTradingClient(
     /** One order for [placeOrders]; the fields of [placeOrder]. */
     data class NewOrder(val outcomeId: String, val price: Double, val qty: Long, val tif: String, val clientId: String, val ttlMs: Long? = null)
 
+    /**
+     * A batch of orders was placed (Novig answered with a success) but its reply is not in the shape [placeOrders] reads. [shape] is what the reply looked like ([ReplyShape]: keys and
+     * kinds of value, never a value), the thing the diagnostics could not say. Still a [kotlinx.serialization.SerializationException], so every caller that handles one handles this.
+     */
+    class BatchReplyUnreadable(val shape: String, cause: Throwable) :
+        kotlinx.serialization.SerializationException("Novig's batch reply isn't in the shape this app reads; it looked like $shape", cause)
+
     /** What [cancelOrdersBatch] did: the ids whose cancel Novig queued, and the ones it could not cancel with why (`FILLED`, `CANCELED`, `NOT_FOUND`). */
     data class BatchCancel(val canceled: Set<String>, val notCanceled: Map<String, String>)
 
@@ -133,7 +140,13 @@ open class NovigTradingClient(
             )
         }
         val body = json.encodeToString(JsonObject.serializer(), JsonObject(mapOf("orders" to kotlinx.serialization.json.JsonArray(items))))
-        val accepted = json.decodeFromString(BatchAcceptedDto.serializer(), signer.call("POST", "/v3/orders/batch", body = body)).accepted
+        val reply = signer.call("POST", "/v3/orders/batch", body = body)
+        val accepted = try {
+            json.decodeFromString(BatchAcceptedDto.serializer(), reply).accepted
+        } catch (e: kotlinx.serialization.SerializationException) {
+            // The orders are placed (a refusal is a NovigApiException): say what the reply looked like, keys and kinds only, so the next file can show why it was unreadable.
+            throw BatchReplyUnreadable(ReplyShape.of(reply, json), e)
+        }
         // By client id; a reply that echoes none is read in the order sent (it answers in that order).
         return if (accepted.all { it.clientId != null }) accepted.associate { it.clientId!! to it.orderId }
         else orders.zip(accepted).associate { (o, a) -> o.clientId to a.orderId }

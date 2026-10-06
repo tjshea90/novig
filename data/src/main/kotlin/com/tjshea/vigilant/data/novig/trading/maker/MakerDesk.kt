@@ -574,7 +574,8 @@ class MakerDesk(
         } catch (e: kotlinx.serialization.SerializationException) {
             // Placed (the reply was a success) but not in a shape this app reads: found by client id next look, and no batch is sent again.
             batchUnreadable = true
-            Batch.Lost("Novig's answer to a batch of ${bids.size} bids couldn't be read; they are looked for by their client ids, and bids go one at a time from now on")
+            val looked = (e as? NovigTradingClient.BatchReplyUnreadable)?.let { " (it looked like ${it.shape})" } ?: ""
+            Batch.Lost("Novig's answer to a batch of ${bids.size} bids couldn't be read$looked; they are looked for by their client ids, and bids go one at a time from now on")
         } catch (e: Exception) {
             Batch.Lost("Novig didn't answer a batch of ${bids.size} bids (${e.message ?: e.javaClass.simpleName}); looked for again next time")
         }
