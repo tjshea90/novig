@@ -215,6 +215,7 @@ class BurstRecorderTest {
         advanceTimeBy(500); runCurrent()
         r.recorder.stop("stopped by the test")
         advanceUntilIdle()
+        println("DEBUG2 closed=${r.feed.closed} running=${r.recorder.running} status=${r.recorder.status.value} journal=${r.journal.readAll().size}")
         assertTrue(r.feed.closed)
         assertEquals(1, r.journal.readAll().filterIsInstance<WindowRecord>().size)
         assertEquals(1, r.journal.readAll().filterIsInstance<GameRecord>().size)
