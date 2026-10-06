@@ -1,0 +1,405 @@
+{
+ "area": "diag-network-performance",
+ "summary": "Fine: the keyed Novig route is clean (126,792 signed book reads with no 429, 69/118 ms p50/p95), the last scan took 32 s with 0 Novig refusals and 998 prices, the background loop held its 15 s schedule (14 cycles in 211 s; 9 late of 7,328 = 0.12%), and the two DNS-over-HTTPS FAILUREs are the phone having no route for ~82 s on Oct 5 at 19:33 and 9 s at 20:23 (not the app, not Cloudflare/Google). Wrong or misleading: the diagnostics' own judging (the DoH hosts ranked FAILURE because network 'other' counts as connected, 'cancelled' counted as errors, a cumulative 429 count shown as current, a body-speed figure that includes first-byte time, a 120-line timeline cap that hid the start of the outage) and, in the app, a 5 min websocket retry after a Novig 451 that cost two scans 16-29 s each. What matters most: no network or performance number in this file puts money at risk except the Novig 451 windows (145 of 6,336 order calls refused, bids cannot be cancelled then) and a fail-open Novig-trades check in the auto-bet that has so far never been hit (0 of 5 reads unread); the cycle p95 '2111 -> 5712' is one cold first cycle of 14, not a regression.",
+ "findings": [
+  {
+   "kind": "FINE",
+   "title": "Findings #1/#2 and #17 (cloudflare-dns.com and dns.google 100% failed; 635 name lookups failed) = the phone had no route, not the app",
+   "evidence": "CONNECTIONS: each DoH host 105 calls / 105 failed / connect kind, identical counts (DoH is asked as a pair: Cloudflare first, Google only when Cloudflare failed); 0 of 105 lookups ever succeeded. DoH is only called by CNO's client (RememberingDns, after the phone's own lookup of crazyninjaodds.com failed and the app's network label is not 'none'): CNO shows 0 'dns' failures (swallowed) but 171 connect + 69 other = 240 failures, and CNO calls made on network label 'other' = 68 = DoH calls on 'other' per host = 68 (exact match). Of 205,102 calls the app made, 1,028 (0.50%) were made while the phone's own network label was 'none' (327) or 'other' (701; neither Wi-Fi nor cellular transport); the three no-route kinds dns 635 + connect 382 + other 69 = 1,086 and 1,028/1,086 = 94.7% coincide with those labels. Per host, dns failures vs calls on none+other: api.novig.com 545 vs 541, parlay-api.com 47 vs 43, site.api.espn.com 12 vs 11, external-api.kalshi.com 23 vs 23, api.elections.kalshi.com 2 vs 2 (all six hosts: 635 vs 620). DoH connects failed after a median 7 ms (Cloudflare, n=15 in the timeline, 14 of 15 within 25 ms) and 6 ms (Google), all-time p50/p95 8/33 ms and 6/20 ms: faster than one mobile round trip, so a local 'network unreachable', not a blocked or slow resolver. EVENT TIMELINE: DoH failures sit in two clusters, 19:34:12-19:34:27 (26 lines) and 20:23:09-20:23:10 (4 lines), the same seconds as api.novig.com/parlay-api.com 'dns after 0-8 ms' lines and CNO 'Host unreachable' (Recent problems: first 19:33:06 CNO, 19:33:11 Novig, last 20:23:10). No 451 or 429 line falls inside a no-route cluster, and no dns line inside a 451/429 cluster: the 451 answers (20:21:34-20:22:55, 20:50:04, 22:24:18-22:25:14) came from Novig's edge, so a route existed then. Consistency with 'DoH runs only when system DNS failed': yes. DoH 'none' 25/28 calls are mostly from before the offline gate (the v0.52.0 file had 25 offline DoH calls), 'other' 68 and 'mobile' 12/9 since. In 4 days the phone's DNS never failed alone: the fallback has rescued 0 lookups, and costs about 7 ms of local failure per CNO call during an outage.",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/cno/CnoNetwork.kt (RememberingDns.lookup, DnsOverHttps)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt:284 (online = NetKind != NONE)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/NetKind.kt"
+   ],
+   "suggestedAction": "None for the fallback itself. Wording and ranking of the finding: see the next IMPROVE."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "The diagnostics rank the DoH hosts as FAILURE because 'other' counts as connected, and count the app's own cancelled calls as errors",
+   "evidence": "Advisor.network() subtracts only byNet['none'] (25 of 105 Cloudflare, 28 of 105 Google) before judging 'with a connection', so the 68 'other' calls (a no-route state, see previous finding) plus 12/9 'mobile' ones read '80 of 80 failed' and two FAILUREs outrank everything (weight = errors). A fallback host that is only asked after the primary failed will always read 100% failed during an outage. Separately NetInterceptor passes kind 'cancelled' to NetStats as a failure: 333 of the 5,397 recorded errors (6.2%) are the app cancelling its own in-flight calls (CNO 232 of its 536 = 43%, so CNO's 2.2% error rate is 1.25% without them; parlay-api.com 53 of 288 = 18%; Novig 31; PropLine 8). The finding's total also hides that 'failed' calls are 0.50% of the 205,102 calls.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Advisor.kt:189-192 (offline = NONE only; MIN_CALLS 15; 10% rate)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetInterceptor.kt (cancelled -> stats.record error)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetStats.kt:62-80"
+   ],
+   "suggestedAction": "Diagnostics only, no bet rule: treat NetKind 'other' and calls that fail in under ~50 ms with connect/dns as offline; never raise a FAILURE for a fallback host (DoH) on its own, say 'DNS fallback asked N times, all inside M minutes of a no-route'; stop counting cancelled as errors."
+  },
+  {
+   "kind": "WATCH",
+   "title": "No-route minutes: one big one (Oct 5 19:33:06-19:34:28) and two small ones; the phone's cellular link, not the app",
+   "evidence": "Oct 5 19:33:06-19:34:28 (at least 82 s; the timeline shows no warning between 19:34:27 and 20:21:34, so it had ended): the 19h bucket has 692 failed calls (api.novig.com 465, CNO 65, external-api.kalshi.com 23, parlay-api.com 9, api.elections.kalshi.com 2, DoH 64+64) = about 8.4 failed calls a second; UTC hour 23 holds 722 of the 2,196 failed calls of the last 48 h (32.9%). Cost: the Vigilant scan at 19:33:37 failed on 'Unable to resolve host api.novig.com' (426 prices shown from the last scan) and the maker's open-orders read failed 6 times (19:33:11-20:23:10). Second window 20:23:05-20:23:14 (about 23 NET lines in 10 s, ParlayAPI closing-lines retried ~19 times, 0 credits since nothing left the phone). Third: 20:50:04-20:52:01 timeouts of 20 s on orders, subaccounts x2, parlay /v1/usage and /v1/meta/api-key-check (a black hole, not a refusal). Network label 'other' was seen on 701 calls (68% of the no-route calls), a state the file cannot explain (VPN, Ethernet/USB, a satellite transport or a transitional state all fit the label). The 451 at 20:21:34 came 91 s before the 20:23:05 no-route: a carrier address change would explain both, but one pair of events proves nothing. Other DoH hour buckets: Oct 4 20h 2, Oct 5 14h 3, 34 older than 48 h: about 6 separate incidents in 4 days, one holding 61% of the DoH pairs (64 of 105).",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/NetKind.kt",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/tracker/ParlayCloses.kt:142-162 (one retry after 1 s, per bet and date)"
+   ],
+   "suggestedAction": "Nothing the app can fix; record the actual transports and validated state at failure time (see timeline finding) so the next file says what 'other' is."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "The EVENT TIMELINE says 'every warning and error of the last day' but is capped at 120 WARN/ERROR lines, so an outage's start and the daytime are lost",
+   "evidence": "The file has exactly 120 non-INFO timeline lines (105 WARN + 15 ERROR) plus 43 INFO; the first is 19:34:11. NetInterceptor writes one WARN per failed call with the elapsed ms in the text, and EventLog.record merges only identical text within 60 s, so no-route failures never merge: the 19:33-19:34 flood (about 690 failed calls, one WARN each) is cut by the 120-line cap at 19:34:11 and everything before it (including any daytime 429 bursts) is gone. The start of the 19:33 outage (19:33:06) is known only from Recent problems. 44 of the 163 timeline lines are NET lines of the 16 seconds 19:34:11-19:34:27 alone.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/DiagnosticsFile.kt:257-261,330-331 (MAX_IMPORTANT=120, MAX_RECENT=60)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/EventLog.kt (MERGE_MS, KEEP=1000)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetInterceptor.kt (record NET warn)"
+   ],
+   "suggestedAction": "Merge NET failure events by host+kind within a minute (drop the ms from the key) and print 'x N' with first and last time; or count suppressed lines; keep per-host failing-hour tables for more than the newest 6 hours."
+  },
+  {
+   "kind": "FINE",
+   "title": "Finding #3 (api.novig.com asked the app to slow down 2,941 times): on the public route (none listed on the key's 16/s route or /v3/orders); falling to 28 in the last 4 h and 0 in the last 3 h 36 min",
+   "evidence": "Period: NetStats since Oct 1 11:34 PM (4.02 days = 96.6 h), 'Retry-After: 1' every time (the edge's 1-second burst limit). 2,941 of 161,262 Novig calls = 1.8%; against the public route's 15,524 calls that is 8.1% for the 1,262 listed and up to 18.9% for all 2,941. By endpoint (CONNECTIONS): /v3/public/catalog/markets/... failed 3,138 of 15,524 (HTTP 429 x1,262 listed, 404 x179, dns x42; the other 1,655 failures predate the per-endpoint breakdown, PathStat.fails, which came with the release after the v0.54.0 file: 2,941 - 1,262 = 1,679 unplaced 429s against 1,655 unclassified failures, so nearly all of them are here and at least 24 cannot be placed); /v3/catalog/markets/{id}/... (the signed key route) 644 failed of 126,792 with no 429 in its classified list (dns 443, 451 x114, 404 x22, cancelled x4; 61 older failures unclassified; RESEARCH 81.1 also found none of the key's own 429s); /v3/orders 167 of 6,336 (451 x145, dns x13, timeout x1), /v3/orders/{id} and subaccounts: no 429 listed. Cumulative counts at earlier files (TASKS.md BI1/BK1, RESEARCH.md 78.3): 1,163 (Oct 3 00:45) -> 1,673 (Oct 3 11:07, = the Tracker's Novig-only read asking every open bet's market publicly one by one) -> 1,952 (Oct 3 22:01) -> 2,941 (Oct 6 00:08). Rates per hour: 46, 49, 25.6, 19.7. So 1,679 of 2,941 (57%) predate the v0.55.0 fix (market details kept 6 h), 1,262 (43%) came in the ~60 h since (21 an hour), and 28 in the last UTC day (4 h) = 0.6% of its 4,480 counted calls, all within 20:21:36-20:32:05 (3 at 20:21:36-37, 25 at 20:31:55-20:32:05). The 989 between Oct 3 22:01 and now are not dated by this file (RESEARCH 81.1 puts bursts of 20-38 on Oct 4 at 13:12 and 16:01, before the v0.60.0 fix of Oct 4 17:35). Key's 16/s: not exceeded. The last scan read 480 books through the key in about 31.8 s = 15.1 a second (the gate is 90% of 16 = 14.4/s plus a 44-token burst: 502 allowed), 'Novig refused none', and the signed path has no 429 in 126,792 calls. Harm: none to bets. A refused book read pauses every public request for Retry-After, halves the public pace for 60 s, retries twice, then serves the last scan's copy; the auto-bet needs a Novig price read in the last minute (skip reason 'no Novig price read in the last minute' 479 of 6,696 looked-at bets = 7.2%, a safe-direction skip). No 429 ever hit /v3/orders, so bids were never un-cancellable because of a 429 (the 451 is the order-route risk: see its finding).",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt:425-520 (books: pause, slowDown, 2 retries, stop on long Retry-After)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/RateGate.kt (publicRate 4/s, max 6/s, halve for 60 s, ceiling 10 min)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt:395-410 (keyed gate = 0.9 x readPerSec)",
+    "NOVIG_API.md 5.1"
+   ]
+  },
+  {
+   "kind": "WATCH",
+   "title": "25 of today's 28 429s came with the key route healthy: a caller that always uses the public route fired 25+ requests in 10 s; the recorder cannot say which",
+   "evidence": "Timeline: 429 x3 at 20:21:36-37 (inside the 451 stand-down) but 429 x25 at 20:31:55-20:32:05 (Retry-After 1) on /v3/public/catalog/markets/...; the last 451 before it was 20:22:55 and the next is 20:50:04, and the 20:32:03 scan read 485 of 508 prices through the key (RESEARCH 94.1, v0.68.0 file), so the key route was usable (that file's 'as a result of the 451' reading is not supported by the timeline). 25 refusals in 10 s is about 2.5 a second, below the public gate's 4-6/s and after its own halving, so the edge refused at a rate the app itself would not have caused: the carrier address's shared per-IP bucket (the same address Novig's edge flags with 451 ANONYMIZED_NETWORK). Callers that use the public route even when the key works: NovigPublicClient.market(), event(), trades() (no retry: one attempt, the caller treats a failure as 'none'), NovigLive.resolve (a CNO row's market), ApiSettler, LockScanner, AutoBettor.novigMove (trap guard trades), MakerRunner game-line move reads. NetShape cuts a path at 4 segments, so '/v3/public/catalog/markets/...' is the board, a book, a single market and trades alike (15,524 calls cannot be split).",
+   "appFault": true,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetInterceptor.kt:30-38 (NetShape.MAX_SEGMENTS = 4)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt:332,347,361 (market, event, trades: no retry)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/cno/NovigLive.kt:134",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/tracker/ApiSettler.kt:285-293"
+   ],
+   "suggestedAction": "Recorder only: keep a fifth segment for known suffixes (book, trades) and label the caller; add per-hour 429 counts to HourStat so the 'asked to slow down' finding reports the last 24 h (28 here) instead of 4 days (2,941)."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "Finding #3 states a 4-day cumulative count as if current; judged on the last 24 h it would be 28 (UTC day) and the finding would be a WATCH or gone",
+   "evidence": "Advisor raises OPTIMIZE when h.limits >= 3, where limits is the host's total since NetStats started (Oct 1 11:34 PM, kept up to 14 days); its evidence line is 'Retry-After: 1; last 3h ago' with no rate. 1,679 of the 2,941 predate a fix shipped 2.5 days ago. It will stay in every file for 14 days whatever the app does.",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Advisor.kt:220-226",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetStats.kt (limits, HourStat has no 429 field)"
+   ],
+   "suggestedAction": "Count 429s per hour and judge the last 24 h (and say the rate per 1,000 calls)."
+  },
+  {
+   "kind": "WATCH",
+   "title": "Novig 451 ANONYMIZED_NETWORK: 360 refusals, 145 on /v3/orders (2.3% of order calls): while refused a resting bid can be neither posted nor cancelled",
+   "evidence": "api.novig.com status 451 x360 of 161,262 (0.22%); /v3/orders 451 x145 of 6,336 calls; subaccounts 451 x8; signed catalog 451 x114. Oct 5 episodes in the timeline: 20:21:34-20:22:55 (26 lines; the key route stood down 30 s then 120 s; /v3/orders refused at 20:21:43, :51, 20:22:24, :40, :55) and 22:24:18-22:25:14 (/v3/orders refused 3 times, ws refused), plus a ws 451 at 20:50:04. Recent problems: 'Make orders: Novig's open orders ... ANONYMIZED_NETWORK (x8 since 8:21:43 PM)'. Earlier files: 51 (v0.52.0), 60 (v0.53.0), 95 (v0.58.2), 360 now: 265 in the last 50 h. The app already stands down (2 min after a 451, 30 s after no connection), says why, and retries the order read every cycle (8-30 s apart: no hammering). It cannot change the carrier address; Novig's own advice is the other connection (Wi-Fi). During a window a bid keeps standing for its (at most 5-10 min) life; the file shows 0 of the last 5 fills picked off. A user-visible line is stale: PUBLIC_PRICES says 'The key is tried again every 10 minutes' while a 451 retries after 2 min.",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt:249-255,688 (NETWORK_RETRY_MS 2 min, NO_CONNECTION_RETRY_MS 30 s)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt:1137 (PUBLIC_PRICES wording)"
+   ],
+   "suggestedAction": "Tj-level: Wi-Fi when a 451 episode starts (the notification could say so); fix the '10 minutes' wording. Shared with the bids/lifecycle slice."
+  },
+  {
+   "kind": "OPTIMIZE",
+   "title": "After a 451 the live feed (websocket) is not retried for 5 min while the REST key route returns after 2 min: two scans on Oct 5 ran 16 s and 29 s long",
+   "evidence": "Timeline: ws refused with 451 at 22:24:19. Scans after it: 22:26:56 took 48 s (717 prices all through the key at 14.8/s, live feed held 0 of 262 asked), 22:29:22 took 62 s (716 through the key at 10.8/s, held 0 of 446), 22:32:52 took 33 s (298 of 298 held), 22:36:52 32 s (297 of 297), 00:05:19 32 s (518 by feed, 480 through the key, held 548 of 548). So two scans were 16 s and 30 s longer than the 32 s the feed-assisted scans take. Code: NovigStream retries a failed socket only after RETRY_AFTER_FAILURE_MS = 5 min; the REST key route after NETWORK_RETRY_MS = 2 min for a network-address refusal. 451 episodes tonight: 3 (20:21, 20:50 ws, 22:24).",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/stream/NovigStream.kt:468 (RETRY_AFTER_FAILURE_MS)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt:249-255 (NETWORK_RETRY_MS)"
+   ],
+   "suggestedAction": "Try the feed again after 2 min when the failure was a network-address 451 (as the REST route does). Reads only, no bet rule. One more 451 episode in the next file would show whether it pays."
+  },
+  {
+   "kind": "FINE",
+   "title": "Cycle p95 2,111 -> 5,712 ms is one cold first cycle in a 14-sample window, not a regression",
+   "evidence": "PERFORMANCE is 'this run': the process started 00:03:00, the auto-scan service 00:04:41, the file 00:08:12, so cycle.ms has 14 samples in 211 s = one every 15.07 s (on schedule). SampleSummary uses nearest rank, so p95 of 14 samples is the maximum (rank ceil(0.95 x 14) = 14); the previous 2,111 was a p95 of up to 200 samples (RollingSamples cap 200, a run that began at the 6:48 PM install). p50 659 ms (4.4% of the 15 s interval), mean 1,715 (11%), max 5,712 (38%): no cycle overran its interval and there is no 'CYCLE' slow-cycle event (needs 30 s); the Advisor's own perf:cycle finding needs p95 above max(1.5 x interval, 20 s) = 22.5 s and did not fire. Where the max comes from: every step has its max once - cno 1,801 + autobet 15 + alerts 6 + closing 3,834 + vigilant 3 = 5,659, and 5,712 - 5,659 = 53 ms for the wallet read and study catch-up. cycle.step.closing has mean 255 and max 3,834 over 15 samples (15 x 255 = 3,825: the other 14 took about 0 ms), cno max 1,801 vs p50 432, and cycle.step.maker has 13 samples = 15 started - the first cycle (it started the Vigilant scan, so no maker pass: cycle.step.vigilant 1 sample, 3 ms) - the one in flight. So the max is the first cycle after the 00:04:41 Resume: a cold CNO connection (1.8 s) and the first closing-line capture (the only slow I/O there is ParlayAPI's closing-lines, 1,924 ms average to first byte, 4 such calls this run). Second slowest cycle: cycle.step.maker max 4,430 ms (mean 603, p50 150): near 40 bids posted one at a time at ~107 ms each after 'Novig's answer to a batch of 8 bids couldn't be read; bids go one at a time from now on' (00:05:09), the 00:05:31 pass 'after a scan: 40 posted' (inference, medium-low). cycle.ms minus the sum of its steps is about 300 ms a cycle (wallet read, scan-study catch-up). The update restart is the cause only in the sense of a cold process: the Tj-visible cost is one 5.7 s cycle once. Other 'numbers that moved': frames.scan.slowPct 1.9 -> 0.4 (6 of 1,638 frames, 0 frozen: better); frames.quiet.slowPct 0.6 -> 1.2 (19 of 1,640 frames, worst 322 ms, the run is 5 min old with a 1,059 ms cold start: about 2.9 sigma on counts if the earlier run had a similar number of frames (the file does not say), and startup frames cluster; low weight); net.data.novig.com p95 188 -> 319 ms (p50 62, the last 100 calls include the 467 ms index.json reads); kalshi p95 238 -> 169 (better); health.warn 11 -> 8.",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt:236-282 (timed steps, cycle order cno -> autobet -> alerts -> closing -> vigilant -> maker)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/RollingSamples.kt:11-16 (nearest-rank percentile)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Advisor.kt:258-275 (perf:cycle threshold)"
+   ],
+   "suggestedAction": "Re-read the next file with 100+ cycles; nothing to change in the app."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "'Numbers that moved' compares a 14-sample p95 with a ~200-sample p95 without saying so",
+   "evidence": "The perf.cycle.p95ms 2111 -> 5712 line (the file only says 'THE APP WAS UPDATED SINCE, so changes below may be the update's') has no sample count; a p95 of 14 values is a max. Same for net.*.p95ms, which are 'the last 100 calls' (data.novig.com 188 -> 319 on a window that includes its few slow index.json reads).",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/DiagHistory.kt:41-61 (Numbers that moved)"
+   ],
+   "suggestedAction": "Print n beside each p95 in the metrics and skip the 'moved' line when n < 30 or n differs 5x."
+  },
+  {
+   "kind": "FINE",
+   "title": "Background auto-scan (CNO + Vigilant every 15 s) is keeping up: on schedule, wake lock held, 1,035 screen-off cycles of which 663 in Doze, none of the itemised late ones in Doze or screen-off",
+   "evidence": "Cycle record since Oct 1 11:56 PM: 7,328 cycles, 1,035 started with the screen off (14.1%), 663 of those in Doze (64% of the screen-off ones, 9.0% of all), 9 late (more than 30 s after schedule) = 0.12%. This run: 14 cycles in 211 s (15.07 s each). Phone: battery unrestricted yes, exact alarms yes, standby bucket exempted, Doze now no, Battery Saver off, Data Saver off; Keep awake switch on and the wake lock held. How the app last ended: no crash, no memory kill (health check 'App stability OK'); two Android restarts for installs (6:48 PM, 10:10 PM), 3 'closed by you', one 'too many empty procs' kill at 9:52 PM of a cached process with nothing running. Heap 73 of 512 MB (14%), cold start 1,059 ms. The worst of the 9 (7 min at Oct 5 8:21 PM) is printed without the 'in Doze' or 'with the screen off' suffix, i.e. screen on.",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt (loop, step, maintainKeepAwake)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/KeepAwake.kt",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/CycleLog.kt:79-100"
+   ]
+  },
+  {
+   "kind": "WATCH",
+   "title": "Two cycles started late in the last day (30 s at 11:22:32 AM; 7 min at 8:21:43 PM), both with the screen on; the file cannot say why",
+   "evidence": "Late = start minus max(previous start + 15 s, previous end) above max(30 s, interval): a long cycle is never 'late', so a 7-minute lateness is a 7-minute gap in which no cycle ran (CycleLog.apply). The first is 30 s over a 30 s threshold (borderline). The second is the minute of the first 451 (20:21:34) and sits between the 19:33 and 20:23 no-route windows; it is the cycle that did 'Make orders: Novig's open orders ... 451' at 20:21:43; the screen was on at its start, Tj pressed STOP ALL at 8:21:49 (RESEARCH 94.1), and no process end is recorded between 6:48 PM and 8:53 PM, so it was not a kill. Hypothesis (low confidence): the loop stalled while the screen was off and the cycle started when Tj picked the phone up; the 3-minute watchdog alarm (WATCHDOG_MIN_MS) would then have been held by Doze's alarm allowance (~9 min). The log stores the screen and Doze flags only at the cycle's start, not across the gap, and only the newest 5 late cycles within 24 h are printed (7 of the 9 are not itemised). Effect: for 7 minutes CNO was not read and the auto-bet did not look (cost: unknown; the app was in a 451 window at the end of it).",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/CycleLog.kt:79-100 (lateness formula)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoScanService.kt (step: delay slices of 30 s, watchdog)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Diagnostics.kt:354 (takeLast(5))"
+   ],
+   "suggestedAction": "Recorder: store the screen-on/off transitions and the last sign of life of the loop with each late cycle, and keep all 9. If a late cycle with the screen off ever shows, the keep-awake lock and the watchdog are the suspects."
+  },
+  {
+   "kind": "OPTIMIZE",
+   "title": "Finding #4 (parlay-api.com slow: 738 ms to first byte, props 9,860 ms): the provider's latency; the app reads its leagues one after another, but ParlayAPI did not set the last scan's 30 s",
+   "evidence": "Last scan: fair odds 30 s = Kalshi 30 s, ParlayAPI props 18 s, ParlayAPI 17 s (sources run in parallel: Scanner.scan async per source; the scan waits for the slowest). ParlayAPI's 17 s and 18 s hid 12-13 s behind Kalshi, so its slowness added 0 s to this scan. ParlayAPI's time per call: 8 game-line leagues in 17 s = 2.1 s each; 4 props leagues in 18 s = 4.5 s each, because Scanner.fetchSource loops 'for (league in leagues)' one call at a time. First-byte times: /v1/meta/movers 955 ms average (free, public, 90 s server cache), /v1/usage 1,278, closing-lines.json 1,924, ncaaf odds 4,135, nfl props 9,860 (189 calls, 61 failed = 32%: 503 busy x12, 20 s timeouts x8); p50 738 / p95 3,293 / max 20,009 (the 20 s read timeout), against 69 ms for Novig, 77 Kalshi, 90 ESPN, 115 The Odds API, 198 PinnWire. Same phone, so it is the host. PARLAY_API.md section 1: 'Rate limit: 60/s free, none on paid tiers' (Tj has Starter), so a league's calls could run in parallel (credits are unchanged: a call costs the same). Reads cannot start earlier: first-choice sources start at t = 0 (only the 1st-half and low-usage sources wait for the 0.6 s board); re-use within the freshness limit already exists (0 re-used because the last scan before it was 1.5 h earlier). Error mix of the 288 failed (8.5%): HTTP 500 x90 and 503 x67 (provider: Oct 3 02:35-03:30 outage and busy props), timeouts 31, dns x47 (no route), cancelled x53 (the app's own); without dns and cancelled: 188 of 3,269 = 5.8% over 4 days, but the last 6 busy hours show 38 failed of 428 calls, 32 of them in the two incident hours (19h 9, 20h 23) and 6 elsewhere (00h 2 = our own cancel, 22h 2, 17h 2): 1.4%, healthy now. /v1/meta/movers is 1,738 of 3,369 calls (51.6%), free, read about every 3 min per league while the screen is on, harmless.",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt:217,907 (async per source; sequential 'for (league in leagues)')",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/ParlayProps.kt:45 and TheOddsApiClient.kt:128 (one call per league)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/keys/Usage.kt (CreditPace)",
+    "PARLAY_API.md section 1"
+   ],
+   "suggestedAction": "Optional: read a source's leagues with a small concurrency (3-4) for ParlayAPI/PropLine only, behind the credit pacing. It shortens the last scan only if Kalshi's 30 s shrinks too (next finding): measure first. Estimate: a 6-league ParlayAPI props pass at 4.5 s a league is about 27 s in series and about the slowest single call (up to 10 s on NFL props) in parallel."
+  },
+  {
+   "kind": "OPTIMIZE",
+   "title": "What sets the scan's length is Kalshi's deliberate 2 requests a second (64 requests = 30 s of the 32 s scan) together with the key's 16/s REST ceiling",
+   "evidence": "Last scan: 'fair odds 30 s (Kalshi 30 s ...)', cost Kalshi 64 requests: 64 / 2 per second = 32 s. The live feed is handed its markets once, when the plan has filled in (every source answered or STREAM_HOLD_MS = 30 s): 'live feed asked for 548 at 30 s' and it delivered 518 of the 998 prices in the last ~2 s; the other 480 were REST reads through the key at 15.1 a second for the whole scan (key limit 16/s). Kalshi at 2/s: api.elections.kalshi.com 7,543 calls, 0 rate-limit answers, 4 failures (2 dns, 2 cancelled), 77/169/334 ms, 839 KB/s; its own documented limit is 20 reads a second (Usage.kt rule), but RESEARCH 36.2 measured 429s at 4/s (2 of 24) and 6/s (3 of 36) on the nested-markets route on Sep 29, which is why START_RATE = MAX_RATE = 2.0 with no ramp. If Kalshi finished in 21 s (64 at 3/s) the feed would be asked at about 21 s and the scan would end near 23 s (REST would have read about 315 by then): about 9 s (28%) off. ParlayAPI props (18 s) would then be the next gate.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/KalshiClient.kt:233-241 (START_RATE 2.0, MAX_RATE 2.0, PARALLEL 2)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt:541-553,1145 (feedStream, STREAM_HOLD_MS)"
+   ],
+   "suggestedAction": "Question for Tj (a read pacing, not a bet rule): allow a measured test of 3/s on the current Kalshi host with the RateGate ramp and back-off kept. To show a refusal rate under 1% with 95% confidence needs about 300 requests with none refused = about 5 scans; stop at the first 429 burst."
+  },
+  {
+   "kind": "IMPROVE",
+   "title": "Findings #6/#7/#8 ('big answers arrive slowly': ParlayAPI 51 KB/s, CNO 53, MLB 44) measure first-byte time plus body, not bandwidth; they are the servers, not the phone",
+   "evidence": "NetStats.record: bps = bytes * 1000 / totalMs where totalMs runs from the start of the call (it includes time to first byte and the server's think time), and the bytes are counted after OkHttp's gzip decoding (the interceptor is an application interceptor). The same phone and mobile link gets 3,949 KB/s from api.prop-line.com (3.6 MB a call), 2,649 from ESPN, 927 from data.novig.com, 885 Polymarket, 839 Kalshi, 532 The Odds API, 465 PinnWire, against ParlayAPI 51 (102 KB a call, 738 ms first byte), CNO 53 (42 KB a call, 433 ms first byte), statsapi.mlb.com 44 (50 KB a call, 329 ms first byte). The 8 KB filter keeps small bodies out but not slow first bytes. The advice 'ask for fewer rows or fewer fields' conflicts with the standing rule that data is not a constraint and accuracy beats size; statsapi.mlb.com has 36 calls in 4 days and is not on any scan path (grading only); CNO's list step costs p50 432 ms of a 15 s cycle (3%).",
+   "appFault": true,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetStats.kt:84",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetInterceptor.kt (finish: total = clock() - t0)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Advisor.kt:229-237,371 (SLOW_BPS 60 KB/s)"
+   ],
+   "suggestedAction": "Record transfer speed as bytes / (total - first byte) and show first byte and transfer separately; never suggest fewer fields."
+  },
+  {
+   "kind": "FINE",
+   "title": "Finding #5 (api.prop-line.com slow): borderline on a static threshold, fast bodies, 1.2% errors",
+   "evidence": "p50/p95/max 387/3,099/6,508 ms against the 3,000 ms rule (Advisor SLOW_P95_MS) over the last 100 calls; 1,385 calls, 17 failed (500 x3, 504 x1, timeout x5, cancelled x8); bodies 3,949 KB/s and 3.6 MB a call (whole-sport /odds boards: NCAAF 2,598 ms and NFL 2,403 ms average first byte, MLB 1,069, per-event 1,261): server compute for a big board, nothing for the phone or the app to fix; PropLine's 56 requests today are far under its 3,000 a day.",
+   "appFault": false,
+   "confidence": "high",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/reference/PropLineClient.kt",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/Advisor.kt:210,370"
+   ]
+  },
+  {
+   "kind": "FINE",
+   "title": "The rest of the network and performance picture is normal",
+   "evidence": "api.novig.com p50/p95/max 69/118/187 ms, 107 ms on /v3/orders, 161 ms on subaccounts; 4,292 errors (2.7%) = 429 x2,941, 451 x360, dns x545, 404 x407 (closed markets: handled as 'gone', not as a verdict on the key, since v0.60.0, but still counted as errors), cancelled x31, 423 x5, timeout x3. data.novig.com 0 failures in 2,842 calls (206 range reads, p95 319 ms). api.elections.kalshi.com 0.1% errors. Polymarket 0.2%, ESPN site 1.7% (12 dns), pinnwire.com 0 of 588, api.the-odds-api.com 0 of 585, pinnapi.com 0 of 71. CNO 24,296 calls, 97.8% HTTP 200 (errors: connect 171, other 69, timeout 64, cancelled 232), cycle step cno p50 432 ms. Last scan 32 s: board 0.6 s, 998 prices (31.4 a second), first bet at 13 s, Novig refused none, 69 of 69 games matched. Screen: a scan running 1,638 frames, 0.4% slow (6), 0 frozen, p95 31 ms, worst 160 ms; CNO read 130 frames 0 slow; Check odds 22 frames. Heap 73 of 512 MB, cold start 1,059 ms, no crash or freeze in the last day.",
+   "appFault": false,
+   "confidence": "high"
+  },
+  {
+   "kind": "WATCH",
+   "title": "Garbage collection took 45% of a core during the last scan (scan workers 83%, main thread 17%)",
+   "evidence": "CPU during the 32 s scan (193% in all across cores): scan workers 83%, garbage collector 45%, other 24%, main 17%, RenderThread 14%, default dispatcher 8%. The v0.53.0 file measured 64% (no baseline then, TASKS BJ3), so it fell by 19 points. Frames stayed fine (0.4% slow). Heap is only 14% used, so it is allocation churn from parsing 998 books and 480 JSON replies, not memory pressure.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt:566-600 (fetchBook decode)",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/ThreadCpu.kt"
+   ],
+   "suggestedAction": "Low priority: only if frames during scans worsen from 0.4% slow."
+  },
+  {
+   "kind": "WATCH",
+   "title": "A failed Novig-trades read lets a game-line auto-bet through without the trap guard's move check (fail-open by design): 0 of 5 reads failed in this file",
+   "evidence": "AutoBettor.novigMove: 'a read that fails stops nothing (the guard adds a check, it never blocks betting on a hiccup)'; the failure is recorded as trap.move.UNREAD. COUNTERS (4 days): trap.move.CLEAR 3, trap.move.NO_LEVEL 2, no UNREAD; maker.move.unread 2 (game-line bids). The trades route is /v3/public/catalog/markets/{id}/trades, one attempt, paced with the public gate, so it shares the public route's 429s (18.9% of its calls over 4 days, 0.6% today), the 451s and the no-route minutes. Game-line kinds are moneyline, spread and total only; the auto-bet looked at 6,696 bets and placed 111 in 4 days, so game-line trap checks are rare (5). No bet in this file is known to have gone through an unread check.",
+   "appFault": false,
+   "confidence": "medium",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/AutoBettor.kt:548-581",
+    "app/src/main/kotlin/com/tjshea/vigilant/app/MakerRunner.kt:76-90",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt:361-372"
+   ],
+   "suggestedAction": "QUESTION FOR TJ, not an action: should an UNREAD trap check skip the game-line bet (a tightening)? Evidence needed: this file has 5 checks and 0 unread, so about 50 more game-line checks (or the first UNREAD in a file) would show how often it matters; until then no change."
+  },
+  {
+   "kind": "WATCH",
+   "title": "603 failed calls (27.5% of the last 48 h's 2,196) fall in UTC hours 07-08 (03:00-04:59 EDT) and the file cannot attribute them",
+   "evidence": "API ISSUES 'Failures by hour of day (UTC)': 7h 171, 8h 432; the others are 1-79 except 20h 210, 22h 197 and 23h 722 (the 19:33 incident). Only the newest 6 hour buckets per host are printed and the timeline cap hides the night, so the host and kind are unknown (Oct 4 or Oct 5, overnight with the screen off; not the Oct 3 ParlayAPI outage, which is older than the 48 h kept). 1,035 cycles started screen-off and 663 in Doze in the 4 days, with none of the itemised late cycles in those states.",
+   "appFault": false,
+   "confidence": "low",
+   "codePointers": [
+    "app/src/main/kotlin/com/tjshea/vigilant/app/DiagnosticsFile.kt:202-204 (byHour)",
+    "data/src/main/kotlin/com/tjshea/vigilant/data/diag/NetStats.kt (HourStat, HOURS_KEPT 48)"
+   ],
+   "suggestedAction": "Recorder: print the failing hours per host for all 48 hours (host, kind, count) so the next file attributes it."
+  }
+ ],
+ "numbers": {
+  "window": "Oct 1 11:34 PM - Oct 6 12:08 AM EDT = 96.6 h (NetStats since); file made at 04:08Z",
+  "calls_total": 205102,
+  "calls_by_network_label": {
+   "mobile": 204074,
+   "none": 327,
+   "other": 701,
+   "wifi": 0
+  },
+  "errors_total": 5397,
+  "error_kinds": {
+   "dns": 635,
+   "connect": 382,
+   "cancelled": 333,
+   "timeout": 104,
+   "other": 69
+  },
+  "no_route_family_failures_dns_connect_other": 1086,
+  "calls_on_none_or_other_label": 1028,
+  "coincidence": 0.947,
+  "doh_pairs": 105,
+  "doh_success": 0,
+  "doh_connect_ms_median_cloudflare": 7,
+  "doh_connect_ms_median_google": 6,
+  "dns_failures_by_host_vs_none_other_calls": {
+   "api.novig.com": [
+    545,
+    541
+   ],
+   "parlay-api.com": [
+    47,
+    43
+   ],
+   "site.api.espn.com": [
+    12,
+    11
+   ],
+   "external-api.kalshi.com": [
+    23,
+    23
+   ],
+   "api.elections.kalshi.com": [
+    2,
+    2
+   ]
+  },
+  "incident_A_oct5_19_33_06_to_19_34_28": {
+   "failed_calls_in_hour_bucket": 692,
+   "novig": 465,
+   "cno": 65,
+   "doh": 128,
+   "min_duration_s": 82
+  },
+  "utc_hour23_failures_of_2196": 722,
+  "utc_hours_7_8_failures": 603,
+  "novig_429_total": 2941,
+  "novig_429_today_utc": 28,
+  "novig_calls_today_utc": 4480,
+  "novig_429_public_path_calls": 15524,
+  "novig_429_cumulative_checkpoints": {
+   "Oct3_0045": 1163,
+   "Oct3_1107": 1673,
+   "Oct3_2201": 1952,
+   "Oct6_0008": 2941
+  },
+  "novig_429_per_hour_between_checkpoints": [
+   46.2,
+   49.2,
+   25.6,
+   19.7
+  ],
+  "novig_429_before_v0_55_0_fix_share": 0.57,
+  "novig_429_signed_route": 0,
+  "novig_429_on_orders": 0,
+  "keyed_reads_last_scan": 480,
+  "keyed_rate_last_scan_per_s": 15.1,
+  "key_limit_per_s": 16,
+  "novig_451_total": 360,
+  "novig_451_orders": 145,
+  "orders_calls": 6336,
+  "cycle_ms": {
+   "samples": 14,
+   "p50": 659,
+   "p95_equals_max": 5712,
+   "mean": 1715,
+   "interval_ms": 15000,
+   "sum_of_step_maxima": 5659
+  },
+  "cycle_record": {
+   "cycles": 7328,
+   "late": 9,
+   "screen_off": 1035,
+   "doze": 663
+  },
+  "last_scan": {
+   "seconds": 32,
+   "fair_odds_s": 30,
+   "kalshi_s": 30,
+   "parlay_props_s": 18,
+   "parlay_s": 17,
+   "prices": 998,
+   "feed": 518,
+   "keyed": 480,
+   "kalshi_requests": 64
+  },
+  "parlay_api": {
+   "calls": 3369,
+   "errors": 288,
+   "http500": 90,
+   "http503": 67,
+   "timeouts": 31,
+   "dns": 47,
+   "cancelled": 53,
+   "ttfb_p50_p95_max_ms": [
+    738,
+    3293,
+    20009
+   ],
+   "movers_calls": 1738
+  },
+  "bps_p50_kb_s": {
+   "parlay": 51,
+   "cno": 53,
+   "mlb": 44,
+   "propline": 3949,
+   "espn": 2649,
+   "data_novig": 927,
+   "kalshi": 839
+  }
+ },
+ "unknowns": [
+  "Why the 7-minute late cycle at Oct 5 8:21:43 PM happened (the log keeps screen/Doze only at the cycle's start).",
+  "What network label 'other' (701 calls) is; whether the 19:33 outage was a handover or a dead spot.",
+  "Which public-route caller drew the 25 429s at 20:31:55 (path shape cut at 4 segments).",
+  "How the 989 429s since Oct 3 22:01 split between Oct 4 (before v0.60.0 at 17:35 EDT) and later.",
+  "The cause of 603 failed calls in UTC hours 07-08.",
+  "Which cycle held the 4,430 ms maker step (inferred, not shown)."
+ ],
+ "questionsForTj": [
+  "Kalshi: allow a measured test of 3 requests a second (about 300 requests, stop at the first 429 burst)? Potential: scan 32 s -> about 23 s.",
+  "Trap guard: should an unread Novig-trades check (429, 451, no route) skip a game-line auto-bet instead of letting it through? (a tightening; 0 of 5 reads unread so far)"
+ ]
+}
