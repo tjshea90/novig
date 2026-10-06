@@ -318,6 +318,18 @@ data class ScanSettings(
     val burstRecorder: Boolean = false,
     val burstLeagues: Set<String> = BURST_LEAGUES.toSet(),
     /**
+     * The real-money burst trader (Tj, 2026-10-06: "make it good enough so that if it is proven I can just turn it on for actual money betting"; RESEARCH.md §95): OFF by default, and
+     * it places nothing until the recorder's own verdict says its windows are worth a test on this phone ([com.tjshea.vigilant.data.novig.burst.BurstStudy.proof]). It buys both legs of a
+     * cover at once as two immediate-or-cancel orders, at most [burstTradeStake] dollars a leg, [burstTradeMaxGame] a game and [burstTradeMaxDay] a day (fees in). Legs held alone
+     * ([burstTradeHaltLoss] dollars of them in a day, or two covers in a row) halt it: [burstTradeHalted] says why until Tj resumes it. STOP ALL stops it like everything else.
+     */
+    val burstTrade: Boolean = false,
+    val burstTradeStake: Double = 1.0,
+    val burstTradeMaxGame: Double = 5.0,
+    val burstTradeMaxDay: Double = 10.0,
+    val burstTradeHaltLoss: Double = 3.0,
+    val burstTradeHalted: String? = null,
+    /**
      * Set only by [effective]: these settings are the low-usage scan's ([LowUsageBids.profile]). The scanner and the feeds read it (quotes past the freshness limit are
      * dropped before the devig, a league with no game in the window isn't asked); never saved, so a saved file can't switch it on.
      */
