@@ -95,6 +95,20 @@ object DiagnosticsShare {
 
     const val STUDY_PREFIX = "vigilant-scan-study-"
 
+    /** The live burst study's file (RESEARCH.md §95), kept like the others: the newest [KEEP]. */
+    fun writeBurst(context: Context, name: String, fill: (java.io.Writer) -> Unit): File {
+        val dir = dir(context).apply { mkdirs() }
+        val file = File(dir, name)
+        file.bufferedWriter().use(fill)
+        dir.listFiles { f -> f.isFile && f.name.startsWith(BURST_PREFIX) }?.sortedByDescending { it.lastModified() }?.drop(KEEP)?.forEach { runCatching { it.delete() } }
+        return file
+    }
+
+    fun burstIntent(context: Context, file: File, versionName: String): Intent =
+        share(context, file, "Vigilant live burst study (v$versionName)", com.tjshea.vigilant.data.novig.burst.BurstExport.PROMPT, "Share live burst study")
+
+    const val BURST_PREFIX = "vigilant-burst-study-"
+
     /** The app's files and their sizes in bytes, largest first (the file listing in the report). */
     fun storage(context: Context): List<Pair<String, Long>> =
         context.filesDir.listFiles()?.filter { it.isFile }?.map { it.name to it.length() }?.sortedByDescending { it.second }.orEmpty()

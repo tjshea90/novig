@@ -857,6 +857,8 @@ private fun VigilantRoot(
                         onShare = vm::shareDiagnostics,
                         onShareStudy = vm::shareScanStudy,
                         onStudyShown = vm::refreshStudy,
+                        onShareBurst = vm::shareBurstStudy,
+                        onBurstShown = vm::refreshBurst,
                     ),
                     onNovigConnect = { typed -> vm.connectNovig(typed) },
                     onNovigTest = vm::testNovig,

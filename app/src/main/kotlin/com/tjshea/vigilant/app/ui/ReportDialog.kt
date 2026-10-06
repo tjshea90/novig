@@ -36,6 +36,9 @@ data class ReportActions(
     /** Make the scan study's file and open the share sheet (Tj, 2026-10-03), and read the line that says what's logged when the page opens. */
     val onShareStudy: () -> Unit = {},
     val onStudyShown: () -> Unit = {},
+    /** The live burst recorder (Tj, 2026-10-06): make its study file and share it, and read the line that says what it is doing. */
+    val onShareBurst: () -> Unit = {},
+    val onBurstShown: () -> Unit = {},
 )
 
 /** A report in a dialog: the text to select or copy, and Copy / Close. */

@@ -1046,6 +1046,31 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
     SwitchRow(StudyText.SWITCH_TITLE, StudyText.SWITCH_SUB, state.settings.scanStudy, tag = "scanStudySwitch") { v -> onUpdate { it.copy(scanStudy = v) } }
     SwitchRow(StudyText.HIDDEN_TITLE, StudyText.HIDDEN_SUB, state.settings.scanStudyHidden, tag = "scanStudyHiddenSwitch") { v -> onUpdate { it.copy(scanStudyHidden = v) } }
 
+    // ---- The live burst recorder (Tj, 2026-10-06): no orders; RESEARCH.md §95 ----------------------------------------------------------
+    if (AppBook.isNovig) {
+        SectionTitle("Live burst recorder")
+        val burstShown by androidx.compose.runtime.rememberUpdatedState(reportActions.onBurstShown)
+        androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { burstShown(); kotlinx.coroutines.delay(5_000) } }
+        Hint(com.tjshea.vigilant.app.BurstText.HINT)
+        SwitchRow(com.tjshea.vigilant.app.BurstText.SWITCH_TITLE, com.tjshea.vigilant.app.BurstText.SWITCH_SUB, state.settings.burstRecorder, tag = "burstSwitch") { v -> onUpdate { it.copy(burstRecorder = v) } }
+        if (state.settings.burstRecorder) {
+            Text(com.tjshea.vigilant.app.BurstText.LEAGUES_TITLE, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ScanSettings.BURST_LEAGUES.forEach { lg ->
+                    androidx.compose.material3.FilterChip(
+                        selected = lg in state.settings.burstLeagues,
+                        onClick = { onUpdate { s -> s.copy(burstLeagues = if (lg in s.burstLeagues) s.burstLeagues - lg else s.burstLeagues + lg) } },
+                        label = { Text(lg) }, modifier = Modifier.testTag("burstLeague-$lg"),
+                    )
+                }
+            }
+        }
+        state.burstNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("burstNote")) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+            androidx.compose.material3.Button(onClick = reportActions.onShareBurst, modifier = Modifier.testTag("shareBurstStudy")) { Text(com.tjshea.vigilant.app.BurstText.BUTTON) }
+        }
+    }
+
     SectionTitle("About")
     Hint(
         (if (AppBook.isNovig) "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com"

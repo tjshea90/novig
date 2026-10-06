@@ -185,6 +185,8 @@ data class UiState(
     val placedIndex: PlacedIndex = PlacedIndex.EMPTY,
     /** What the scan study has logged, in a line for Settings › Diagnostics & about ([StudyText.note]); null until that page asked. */
     val studyNote: String? = null,
+    /** The live burst recorder's one line (RESEARCH.md §95), refreshed while Settings › Diagnostics & about is open. */
+    val burstNote: String? = null,
 ) {
     /**
      * The +EV feed as of [now]: without EVs whose other books' prices are over a few minutes old
@@ -1767,6 +1769,47 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             val o = runCatching { c.study.overview() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull() ?: return@launch
             _state.update { it.copy(studyNote = StudyText.note(o, System.currentTimeMillis())) }
+        }
+    }
+
+    /** The burst recorder's line for the Diagnostics page: what it is doing and what it has recorded. */
+    fun refreshBurst() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val note = runCatching { BurstText.note(c.burst.status.value, c.burstJournal.readAll()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull() ?: return@launch
+            _state.update { if (it.burstNote == note) it else it.copy(burstNote = note) }
+        }
+    }
+
+    /** Settings › Diagnostics & about › Share live burst study with Claude (Tj, 2026-10-06): the recorder's report and every window, as one file, saved to Downloads/Vigilant and shared like the scan study. */
+    fun shareBurstStudy() {
+        viewModelScope.launch {
+            _toasts.tryEmit("Making the live burst study file…")
+            val intent = try {
+                withContext(Dispatchers.IO) {
+                    val now = System.currentTimeMillis()
+                    val app = getApplication<Application>()
+                    val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
+                    val s = _state.value.settings
+                    val meta = com.tjshea.vigilant.data.novig.burst.BurstExport.Meta(
+                        info?.versionName ?: "?", "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})", s.apiMaxStake, s.burstLeagues,
+                    )
+                    val records = c.burstJournal.readAll()
+                    val file = DiagnosticsShare.writeBurst(app, com.tjshea.vigilant.data.novig.burst.BurstExport.fileName(meta.versionName, now)) { w ->
+                        com.tjshea.vigilant.data.novig.burst.BurstExport.write(w, records, c.burst.latency.note(), meta, now)
+                    }
+                    runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
+                        .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}") }
+                        .onFailure { e -> _toasts.tryEmit("Couldn't save it to Downloads (${e.message ?: e.javaClass.simpleName})") }
+                    c.eventLog.info("DIAG", "live burst study file made (${file.length() / 1024} KB)")
+                    DiagnosticsShare.burstIntent(app, file, meta.versionName)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                c.eventLog.error("DIAG", "couldn't make the live burst study file", e)
+                null
+            }
+            if (intent == null) _toasts.tryEmit("Couldn't make the live burst study file") else shares.send(intent)
         }
     }
 
