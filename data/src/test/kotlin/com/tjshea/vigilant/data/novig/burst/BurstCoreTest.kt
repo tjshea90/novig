@@ -306,3 +306,24 @@ class BurstCoreTest {
         assertFalse(back.results.isEmpty())
     }
 }
+
+/** The share file: a READ ME that says what it cannot prove, the report, and a JSON line per game and window; no secrets. */
+class BurstExportTest {
+    @Test
+    fun `the file has the read me, the report, and one line per game and window`() {
+        val r = ProfileResult(LatencyModel.SLOW, 465, PaperOutcome.BOTH.name, 100, 0.5, 100, 0.5)
+        val w = WindowRecord("NFL", "g1", "A @ B", "ML ATL YES / Spr ATL -1.5 NOT", 1_790_000_000_000L, 900, 0.539, 0.435, 25_000, 0.011, 0.012, 30_000, 4, listOf(r))
+        val g = GameRecord("NFL", "g1", "A @ B", 1_000L, 3_601_000L, 56, 9_000L)
+        val out = java.io.StringWriter()
+        BurstExport.write(out, listOf(g, w), "round trip: ASSUMED 150 ms", BurstExport.Meta("0.69.0", "motorola · Android 16", 10.0, setOf("NFL", "NBA")), 1_790_000_100_000L)
+        val text = out.toString()
+        assertTrue(text, text.startsWith("VIGILANT LIVE BURST STUDY · version 0.69.0"))
+        assertTrue(text, text.contains("== READ ME FIRST (for Claude) ==") && text.contains("WHAT THIS PROVES") && text.contains("cannot place or cancel an order"))
+        assertTrue(text, text.contains("== REPORT ==") && text.contains("Live burst recorder (no orders"))
+        assertEquals(1, text.lines().count { it.startsWith("{\"k\":\"g\"") })
+        assertEquals(1, text.lines().count { it.startsWith("{\"k\":\"w\"") })
+        assertTrue(text, text.contains("leagues: NBA, NFL"))
+        assertFalse("no key, no id", Regex("(?i)api[_ -]?key|BEGIN PRIVATE|keyId").containsMatchIn(text))
+        assertTrue(BurstExport.fileName("0.69.0", 1_790_000_100_000L).matches(Regex("vigilant-burst-study-v0\\.69\\.0-\\d{4}-\\d{2}-\\d{2}-\\d{4}\\.txt")))
+    }
+}
