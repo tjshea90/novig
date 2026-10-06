@@ -1,0 +1,923 @@
+{
+ "area": "Bids (make orders): fills, speed, pick-off, why the rest did not fill, bids vs takers, and whether to run them at the current settings",
+ "trust_notes": "What can be trusted: the 17 fills are real executed orders with their own closes and results; counts (3128 posted, 3082 ended unfilled, end reasons, 119.8 bid-hours and 16 fills in the last 24 h) come from the app's own totals. What cannot: (1) 17 fills in 6 games (7 in one game, 3 in another), all but 3 from before the focus tag existed (no sharp book for 11, kinds and margins since changed); QUICK_LIKELY (the current setting) has 0 fills and ALL 0, LOW_USAGE 3 (one game). The loader's game-cluster bootstrap is too narrow with 6 clusters, so t-intervals over game means (5 df) are given as the honest ones. (2) The close of 15 of 16 fills is 'captured': the app's own fair (CNO's books or Vigilant's line) read in the last minutes before the start, not Pinnacle; it matches the Tracker closes of Tj's taker bets (190 in the bid kinds) but not the study's Pinnacle/ESPN/Novig-trades closes; for the 11 no-sharp fills the fair and the close share a source family, which can flatter CLV. One close is Novig's last 8 trades (+9.5%). (3) The 300 unfilled bids are the NEWEST 300 only, in 3 bursts over 6 hours (18:06-18:09, 18:49-19:27, 22:26-00:05 ET), not a random draw of 3082; rates per bid-hour for older bids are derived by subtracting the sample from the app's 24-hour bid-hours (119.8) and are approximate. Led, distance and book age come from Novig's book read up to 507 s before posting (median 28 s). (4) Fill time is known for 6 fills; for 9 more the rest time is used (an upper bound by a few seconds); 2 partial fills have none. EV at fill is judged for 5 of 17. (5) The taker comparisons use the study's unit-stake listings at the first-listed price (not what Tj bet), mixed close sources, and 13 of the 17 bid sides are also in the study as Tj-placed rows. The 'if filled regardless' CLV assumes a fill is independent of the later drift and uses the listing's fair at first look, picked because it looked +EV for a taker (its drift is biased down). (6) Splits were run on about 12 variables; with 1-11 fills each none can be believed. Results (ROI) are noise at this size. Nothing here involves a bid rule being loosened; every change is a question for Tj.",
+ "key_numbers": [
+  "17 fills of 3128 bids posted in 14 days (0.54% per bid; 1 fill in the 927 bids older than 24 h, 16 in the last 24 h's 2201: Fisher p=0.032), all auto-make (0 of 94 by-hand bids filled), in only 6 games (7 fills in one game, 3 in another); $32.18 staked, mean $1.89 a fill (range $0.71-$2.74); 3 of the 17 filled only partly (144/585, 404/569, 344/518 contracts).",
+  "CLV of fills +2.57% on 16 closes in 6 games, beat the close 12 of 16 (75%); 95% interval over the 6 game clusters +0.80% to +4.34% (t, 5 df; the loader's bootstrap says +1.60% to +4.76% but is too narrow with only 6 clusters); positive in 6 of 6 games (exact sign-flip p=0.016 one-sided); excluding the one fill whose close is Novig's last 8 trades: +2.11% on 15 closes in 5 games (t-interval +0.92% to +3.30%). 15 of the 16 closes are 'captured' (the app's own fair read just before the start), not Pinnacle.",
+  "Both date halves positive: first 9 fills (Oct 3 - Oct 5 12:10) +3.31% on 8 closes, 5 games (t-interval -0.42% to +7.04%); last 8 fills (Oct 5 12:10 - 19:25) +1.83% on 8 closes, 4 games (-0.11% to +3.77%). Neither half alone is significant.",
+  "Results: 7 wins of 17, profit -$0.10 on $32.18 staked (ROI -0.3%, game-cluster 95% CI -54% to +79%); the CLV predicts about +$1.00 and 7.5 wins were expected at the prices, so nothing here is lucky or unlucky; results need about 6,700 bets to confirm a 2.6% edge at 2 SE.",
+  "The edge claimed at posting was +4.15% (16 with closes) and the close kept +2.57%: a giveback of 1.58 points (t-interval -0.01 to +3.17), the fair drifting -1.51% between posting and the close; the study's 495 taker listings in the same kinds (props, team totals; 39 games) gave back 1.73 points (EV +1.87% to CLV +0.13%; fair drift -1.70%, CI -2.28 to -1.05), so no adverse selection beyond the normal fair drift is visible.",
+  "Taking the same sides at Novig's price when the bids were posted would have averaged CLV -3.39% (t-interval -5.57% to -1.20%; 3 of 16 positive): the bids sat on average 2.65 cents (6.2%) under the offer, so making is the only route to an edge in those markets, not a cheaper route to the same one. 13 of the 17 sides were also listed in the study as taker bets: on the 11 with closes (4 games) the bid price beat the first-listed taker price by 3.29 points of CLV (t-interval +1.86 to +4.72) on the identical close.",
+  "Bids versus takers of the same kinds (props+team totals): bids +2.57% vs takers +0.13% (495 closes, 39 games; difference +2.44 pts, bootstrap 95% +1.21 to +4.52) or +0.60% on the like-for-like Tracker closes (190, 36 games; difference +1.97, +0.38 to +4.25); but against takers listed at EV 3% or more, the bid-sized edge, takers got +2.30% (93 closes, 30 games; difference +0.27 pts, -1.76 to +2.82). Per dollar a bid is as good as a +4% taker listing, not better; per bet a fill is $1.89 (expected CLV profit $0.049) against $1.75 for Tj's placed prop bets.",
+  "Fill rate: 0.134 fills per bid-hour in the last 24 h (16 in 119.8 bid-hours, Poisson 95% 0.076-0.217), against 19.2 expected by the app's research curve (observed/expected 0.83, P=0.28): bids fill about as the research said, they just rest only 2.4 min at the median (90th percentile 5.3 min), so a bid fills 0.54% of the time. Since Oct 5 18:06: LOW_USAGE 3 fills in 5.50 bid-hours (0.55/h, 0.11-1.6), QUICK_LIKELY 0 in 7.58 bid-hours (upper 95% 0.49/h; the curve expected 0.66, P(0)=0.52), the older all-kinds bids 13 in about 105.7 bid-hours (0.123/h).",
+  "Leading the book decides whether a bid fills: 16 of 17 fills led their side against 57% of the 3028 unfilled bids (binomial P=0.001, odds ratio 12); in the LOW_USAGE burst 3 of the 4 bids that led filled and 0 of 147 that did not (Fisher p=7e-6); 211 of the newest 303 bids sat behind a better bid (median 1 cent behind) and filled 0 times in 8.53 bid-hours. Fills were also nearer the offer: 2.65 cents under it (median 2.0) against 4.1 (median 4.0) for the 294 unfilled with a book (Mann-Whitney p=0.002). 79% of the 3082 unfilled bids ended by housekeeping (fair goes old 40.9%, expiry 37.8%), 2.7% because the fair fell.",
+  "The current QUICK_LIKELY setting has produced no fill and no information: its 116 bids (62 props, 54 team totals) were all posted 17.9 to 23.2 h before the start, a median 5.5 cents under the offer (LOW_USAGE: 2.5), and every one of the 17 fills was posted at most 8.5 h before the start (the trap guard's window is set to 24 h; its default is 6 h). Fills under rules like QUICK_LIKELY's (props/team totals, 0.444-0.60, sharp book in the fair): 4 fills in 2 games, CLV +1.94% (3 of 4 beat).",
+  "'Fast fill = stale bid' is not supported: 6 of 15 timed fills came within 2 minutes against 65% expected if bids are hit at a constant rate over the 2-3 minutes they rest (P(this few)=0.04); the 6 fast fills have CLV +4.13% (6 of 6 beat) against +1.13% for the 9 slower ones (5 of 9); all 5 fills the next scan could judge still had edge (EV at post +3.88%, at fill +3.79%, 0 picked off). The Diagnostics WARN 'most fills came within 2 minutes' fired on 3 of 6 (HealthChecks.kt line 146).",
+  "What a bid would earn if every one filled regardless of what the market did next (study listings in the bid kinds, price 0.30-0.60 after a 3.5% margin, first-look fair against the close): CLV +2.36% (472 closes, 39 games, 95% +1.71 to +3.02; both date halves +2.36 and +2.39); 6-24 h before the start +1.95% (313, 26 games) against 6 h or less +3.63% (151, 35 games); margin 2.5%: +1.39%, 4%: +2.85%. The actual fills (+2.57%) match it, so a bid keeps about margin minus 1.5 to 2 points.",
+  "Scale: expected CLV profit is about $0.05 a fill and $0.0065 a bid-hour; 17 fills in 14 days is $1.00 of expected edge. At 30-48 bids up (as in the QUICK_LIKELY burst) and 0.04-0.134 fills per bid-hour that would be 1.2-6.4 fills an hour while bids are up. Order-endpoint calls: 12,236 (/v3/orders 6,336 + /v3/orders/{id} 5,900) against about 2,955 auto bids posted over the same 4 days, about 4.1 per bid and about 720 per fill (includes 111 auto-bet orders). 13-45 wanted bids per pass (typically about 43) were waiting for the wallet or the day's limit while 22-32 rested in the QUICK_LIKELY burst, so capital, not eligibility, capped the bids up."
+ ],
+ "findings": [
+  {
+   "claim": "Filled bids beat the close: CLV +2.57% per fill",
+   "evidence": "16 fills with a close, 6 games: mean +2.57%, 12 beat (75%), SD 3.73 pts; t-interval over 6 game clusters +0.80% to +4.34%; positive in all 6 games (game means +0.82%, +1.56%, +2.11%, +3.64%, +4.57%, +9.50%); exact sign-flip p=0.016; paired t on game means p=0.035; dropping any one game keeps it between +2.11% and +2.97%. 15 of 16 closes are 'captured' (the app's own CNO/Vigilant fair read in the last minutes), 1 is Novig's last 8 trades; 11 of the 17 fills were priced from a blend of soft books with no sharp book, so fair and close share a source family.",
+   "n_bets": 16,
+   "n_games": 6,
+   "effect": "+2.57% (t-CI +0.80% to +4.34%; loader bootstrap +1.60% to +4.76%, too narrow for 6 clusters)",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "about 2-4% that the true CLV is zero or negative given the 6 game-level signs (0.016 one-sided exact, 0.035 two-sided t); but 6 clusters, two rule eras, and the closes are the app's own fair: moderate. 14 of the 17 fills come from before the rules now in force."
+  },
+  {
+   "claim": "The bids' results say nothing yet",
+   "evidence": "7 wins of 17; profit -0.10 on 32.18 staked = ROI -0.3% (game-cluster CI -54% to +79%); expected from CLV +1.00; 7.5 wins expected at the prices; SD of total profit about 8.9. By group (all thin): PROP -9.51 on 19.62, TEAM_TOTAL +6.97 on 9.28, PERIOD +3.15, TOTAL -0.71; sharp-in-fair 6 fills -8.47 (1 win of 6; chance of 1 or fewer wins in 6 at about 50% is 11%) against no-sharp 11 fills +8.37.",
+   "n_bets": 17,
+   "n_games": 6,
+   "effect": "ROI -0.3% (CI -54% to +79%)",
+   "holds_on_both_date_halves": "no",
+   "luck_risk": "results are luck at this size: first half +6.97 (9 fills), second half -7.07 (8 fills); about 6,700 bets would confirm a 2.6% edge."
+  },
+  {
+   "claim": "A filled bid gives back about 1.6 points of its claimed edge, the same as a taker listing: no extra adverse selection is visible",
+   "evidence": "EV at post +4.15% vs CLV +2.57% (16): giveback 1.58 pts (t-CI -0.01 to +3.17), fair drift post-to-close -1.51% (t-CI -3.02 to 0.00). Study taker listings, props+team totals: EV +1.87% vs CLV +0.13% (495 closes, 39 games) giveback 1.73; Tracker-closed 190: EV +1.99 vs CLV +0.60, giveback 1.38; listing fair drift -1.70% (CI -2.28 to -1.05). By margin: 2.5% -> CLV +1.56% (3 fills, 1 game), 3.0% -> +1.98% (3, 2 games), 4.0% -> +3.05% (10 closes, 5 games). Bias: the taker-listing drift is measured on rows picked because the fair looked high (winner's curse), so it overstates what a bid would give back; the bids' own fair at posting is not picked that way.",
+   "n_bets": 16,
+   "n_games": 6,
+   "effect": "giveback 1.58 pts (t-CI -0.01 to +3.17); bids' drift -1.51% vs listings' -1.70% (CI -2.28 to -1.05)",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "the equality of the two gives is an absence of evidence (6 games); adverse selection on fills cannot be measured without the close of the bids that did not fill"
+  },
+  {
+   "claim": "Making is not a cheaper way to the same edge; it is the only way to an edge where the taker price is not +EV, and per dollar it is no better than a +4% taker listing",
+   "evidence": "Taking at Novig's offer when each bid was posted: CLV -3.39% (t-CI -5.57% to -1.20%, 3 of 16 positive, 6 games); bid price on average 2.65 cents / 6.2% under the offer. Same-side pairs with the study's taker listing (13 of 17 sides listed, 11 with a close, 4 games; identical close): bid +3.29 pts better (t-CI +1.86 to +4.72); in 6 of 13 pairs the listing came after the bid and was 2.3% worse than the bid on average, 7 came before (5.8% worse); 2 of 13 listings were at or below the bid price. Takers in the same kinds: all closes +0.13% (495, 39 games), Tracker-closed +0.60% (190, 36 games), listed EV>=3% +2.30% (93, 30 games, Tracker-closed 46: +2.62%), listed EV 3-5% +1.36% (66, 26 games). Bid minus taker: +2.44 (+1.21, +4.52), +1.97 (+0.38, +4.25), +0.27 (-1.76, +2.82), +1.21 (-0.69, +3.94).",
+   "n_bets": 16,
+   "n_games": 6,
+   "effect": "bid +2.57% vs takers at EV>=3% +2.30%: difference +0.27 pts (bootstrap 95% -1.76 to +2.82)",
+   "holds_on_both_date_halves": "too-thin",
+   "luck_risk": "the bid-vs-all-takers gap is real by construction (a 4% margin vs 1.9% listed EV); the bid-vs-EV>=3% takers difference is zero within +-2.5 pts. Pairs share the close, so only price differs; they are not a fill-probability comparison."
+  },
+  {
+   "claim": "A bid's chance to fill is about 0.12-0.13 per bid-hour, as the research expected; bids simply rest only 2.4 minutes, so only 0.54% of them fill",
+   "evidence": "Last 24 h: 2201 bids, 119.8 bid-hours, 16 fills = 0.134/bid-hour (Poisson 95% 0.076-0.217); the app's research curve expected 19.2 (P(X<=16)=0.28). Rest time in the 303 newest bids median 2.37 min, 90th percentile 5.30 (app, all 3128: median 3, 90th 6). Before Oct 5 00:07: 1 fill in 927 bids (0.11%) against 16 in 2201 (0.73%) after: Fisher p=0.032. 17 / (3128 x 2.8 min = 146 bid-hours) = 0.117 per bid-hour over the whole 14 days (estimate).",
+   "n_bets": 3128,
+   "n_games": 6,
+   "effect": "0.134 fills per bid-hour (Poisson 95% 0.076-0.217); observed/expected 0.83",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "the expectation is the app's own curve, so agreement is weak evidence about the next window; 16 fills"
+  },
+  {
+   "claim": "Leading the book (and sitting within about 3 cents of the offer) is what makes a bid fill; most bids do not lead and never fill",
+   "evidence": "Fills: 16 of 17 led; unfilled: 57% of 3028 led (app) -> P(>=16 of 17 | 0.57)=0.001, Fisher odds ratio 12.1 (p=0.002). In the newest 303 bids (3 fills): bids that led 3 of 92 filled (5.62 bid-hours, 0.53 fills per bid-hour), bids behind a better bid 0 of 211 (8.53 bid-hours). In the LOW_USAGE burst (2.5% margin) only 4 of 151 bids led (the best bid sat 1-1.5 cents above the bid, spread 1 cent); 3 of the 4 filled, 0 of 147 others (Fisher p=7e-6). Cents under the offer: fills mean 2.65 / median 2.0; unfilled 294: mean 4.1 / median 4.0 (Mann-Whitney p=0.002); within LOW_USAGE all 3 fills were 2.0 cents or less under the offer against 17% of its unfilled. QUICK_LIKELY: 72 of 116 led but at a median 6.0 cents under the offer, 0 fills in 4.96 leading bid-hours (curve expected 0.44, P(0)=0.64). Leading and distance are confounded (only 3 fills): 3 of the 105 bids within 3 cents of the offer filled and 0 of 192 farther (Fisher p=0.043).",
+   "n_bets": 303,
+   "n_games": 13,
+   "effect": "3/92 led bids filled vs 0/211 behind (0.53 vs 0 fills per bid-hour); all-time 16/17 led vs 57%",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "all-time led-share test P=0.001; LOW_USAGE burst p=7e-6 but all 3 fills are one game (ATL-NO) 17 minutes apart, so effectively one cluster: moderate. Era confound: the 57% comes from different versions."
+  },
+  {
+   "claim": "The 'most fills came within 2 minutes = picked off' warning is a false alarm at this sample; fast fills did better, not worse",
+   "evidence": "15 fills with a time (6 from fillDelaySec, 9 from rest time, an upper bound by seconds): median 2.23 min, 25%/75% 1.41/3.39, range 0.20-5.57. 6 of 15 (40%) within 2 min against 65.2% of bid-time lying in the first 2 min of a rest in the sample (constant-hazard expectation): P(X<=6)=0.04, so if anything fills come slightly later than a flat rate predicts. CLV: <=2 min +4.13% (6 fills, 5 games, 6 of 6 beat, drift +0.05%) vs >2 min +1.13% (9 fills, 4 games, 5 of 9 beat, drift -2.88%); Spearman rest-minutes vs CLV -0.47 (p=0.076, n=15). Fills in the first half of the bid's life +3.02% (6) vs second half +2.30% (10). EV at fill judged for 5 of 17 (the other 12 had no scan after the fill or pre-date the field): EV at post +3.88%, at fill +3.79%, fair moves +0.06%, -0.24%, 0, +0.65%, +0.34%, 0 picked off.",
+   "n_bets": 15,
+   "n_games": 6,
+   "effect": "<=2 min +4.13% vs >2 min +1.13% (difference +3.0 pts, thin); 0 of 5 judged picked off",
+   "holds_on_both_date_halves": "too-thin",
+   "luck_risk": "the slow-fills-are-worse pattern is p=0.08: could be luck; it would fit adverse selection that grows with waiting"
+  },
+  {
+   "claim": "Why the newest bids did not fill: they were behind the book, far from the offer, short-lived and (for QUICK_LIKELY) posted overnight a day ahead",
+   "evidence": "The 300 newest unfilled (18:06-00:05 ET Oct 5-6, 3 bursts; with the 3 fills 303 bids): median 2.37 min rested (90th pct 5.30), 4.0 cents under the offer (294 with a book read) (LOW_USAGE 2.5, untagged 4.25, QUICK_LIKELY 5.5), 62 min to the start for LOW_USAGE vs 1233 for QUICK_LIKELY (all 116 between 1074 and 1390 min, 17.9-23.2 h), oldest sharp price a median 128 s old (newest 29.5 s), 70% (211 of 303) behind a better bid; the 303 bids were 135 distinct sides (2.2 posts per side; LOW_USAGE 3.6). End reasons in the sample: fair goes old within a minute 158 (LOW_USAGE 99 of 148 = 67%, all 36 untagged), about to expire 35, no longer a bid 45 (all LOW_USAGE), kill switch 32 and still resting 29 (QUICK_LIKELY). Across all 3082 unfilled: housekeeping re-posts 78.7%; only 2.7% (83) because the fair fell.",
+   "n_bets": 303,
+   "n_games": 13,
+   "effect": "descriptive",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "a 6-hour sample of 3 bursts of the 3082 unfilled; not a random draw"
+  },
+  {
+   "claim": "Time to the start: the data points to 6 hours or less, but the 17 fills do not show it",
+   "evidence": "All 17 fills were posted 32-512 min (at most 8.5 h) before the start; 0 fills from 116 QUICK_LIKELY bids at 17.9-23.2 h (7.58 bid-hours; P(0)=0.52 even at the normal rate, so not proof). Actual fills <=6 h: 9 fills, 4 games, CLV +1.83%; 6-24 h: 8 fills, 3 games, CLV +3.52% (7 closes; margin 3.4% vs 3.7%): the reverse, thin. Study takers in the bid kinds, price 0.444-0.60: first look <=6 h CLV +1.67% (135 closes, 35 games, CI +1.15 to +2.49; ROI +10.5%) against 6-24 h -0.24% (273, 25 games, CI -1.21 to +0.68; ROI -2.4%): both halves agree in sign (H1 +1.58 vs -0.12; H2 +2.30 (17) vs -2.24 (15)). Hypothetical bid at 3.5% margin if filled: <=6 h +3.63% (151 closes, 35 games) vs 6-24 h +1.95% (313, 26 games); at 2.5% margin 6-24 h only +0.96% (CI +0.07 to +1.86). Tj's own placed bets: within 6 h +3.0% vs earlier -0.5% (app note, ScanSettings.kt STARTS_WITHIN_CHOICES). The code comment says 71% of prop takers' dollars trade in the last 6 h. trapEarlyHours defaults to 6 and is 24 now.",
+   "n_bets": 17,
+   "n_games": 6,
+   "effect": "takers <=6 h +1.67% vs 6-24 h -0.24% (difference +1.9 pts); hypothetical bid +3.63% vs +1.95% (+1.7 pts); actual fills -1.7 pts (the other way, 7-9 fills)",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "taker/hypothetical gap is across 25-35 games per band and holds in both halves; fill-level contradiction is 8 vs 9 fills: likely luck"
+  },
+  {
+   "claim": "Margin: a filled bid keeps about its margin minus 1.5 points, so 2.5% is a sensible floor and nothing below about 2% should be tried",
+   "evidence": "Margin 2.5% -> CLV +1.56% (3 fills, 1 game); 3.0% -> +1.98% (3, 2 games); 4.0% -> +3.05% (10 closes, 5 games); pooled slope of CLV on margin 1.02 (r=0.18, p=0.51, n=16: not significant). Hypothetical (study listings, if filled): 2.5% +1.39% (469 closes, 39 games, CI +0.75 to +2.03), 3.5% +2.36%, 4.0% +2.85%. Giveback 1.4-2.1 pts per margin cell; at 6-24 h the giveback is larger (drift -2.04% on study listings vs -0.40% within 6 h).",
+   "n_bets": 16,
+   "n_games": 6,
+   "effect": "CLV about margin minus 1.5 pts",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "model-based, not a result; the actual-fill slope is not significant"
+  },
+  {
+   "claim": "Kind, league, price band, sharp-in-fair, books, fair age: every split is too thin to say",
+   "evidence": "Kind: PROP +2.23% (10 closes, 3 games, 7 beat), TEAM_TOTAL +3.45% (4, 3 games, 4 of 4), PERIOD +9.50% (1), TOTAL -4.47% (1, a 0.165 longshot posted 8.5 h out). League: MLB +1.68% (9, 2 games), NHL +3.95% (3, 2), NFL +1.56% (3, 1), NCAAF +9.50% (1). Price: 0.40-0.50 +2.42% (9 closes, 6 games), 0.50-0.60 +4.87% (4, 3 games), 0.30-0.40 +2.19% (2), under 0.20 -4.47% (1). Sharp book in the fair: 6 fills +1.27% (3 games, 4 beat, -8.47 profit) vs none 10 closes +3.35% (5 games, 8 beat, +8.37): the reverse of what requiring a sharp book expects, with fair and close from the same consensus family for the no-sharp ones. Books behind the fair: 2 books +3.12% (7 fills), 3-4 +2.50% (4), 5+ +1.86% (5 closes). LOW_USAGE fair books: FanDuel+Kalshi 2 fills +0.8%, FanDuel+ProphetX 1 fill +3.0%; fair age 86/53/125 s oldest, 54/16/16 s newest, no pattern. Focus: untagged 14 fills +2.81% (13 closes, 5 games), LOW_USAGE 3 fills +1.56% (1 game), QUICK_LIKELY and ALL 0.",
+   "n_bets": 16,
+   "n_games": 6,
+   "effect": "no split has more than 11 fills or 5 games",
+   "holds_on_both_date_halves": "too-thin",
+   "luck_risk": "with about 12 splits tried, one or two will look significant by chance; none is. About 55 fills per group are needed to see a 2-point difference."
+  },
+  {
+   "claim": "Dollars: bids are a small, cheap addition; the fills so far are worth about $1 of expected edge in 14 days",
+   "evidence": "$1.89 a fill (median $1.99; 361-585 contracts a fill, mean 474), expected CLV profit $0.049 a fill, $0.0065 a bid-hour at 0.134 fills per bid-hour. 4.1 order-endpoint calls per bid posted, about 720 per fill. Bids are capped by the wallet or day limit, not by eligibility: 13-45 wanted bids waited per pass (typically about 43) while 22-32 rested (22:26-22:37 Oct 5). Novig answered /v3/orders with HTTP 451 (VPN/proxy screen) 145 times and DNS errors 13 times; reads of the open orders failed repeatedly between 19:33 (DNS x6) and 22:25 (HTTP 451 x8 from 20:21) on Oct 5, and the sample has no bids from 19:27 to 22:26.",
+   "n_bets": 3128,
+   "n_games": 6,
+   "effect": "about $0.05 expected CLV per fill; $0.0065 per bid-hour",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "arithmetic from a +2.57% CLV whose interval is +0.8% to +4.3%: $0.015-$0.082 per fill"
+  }
+ ],
+ "candidate_rules": [
+  {
+   "name": "taker, bid kinds, price 0.444-0.60, first look 6 h or less to start",
+   "expr": "df.kind.isin(['PROP','TEAM_TOTAL']) & (df.minToStartFirst<=360) & (df.cost>=0.444) & (df.cost<=0.60)",
+   "rationale": "the population a QUICK_LIKELY bid competes in, near the start; bids earn a margin on top of this",
+   "bets": 397,
+   "games": 47,
+   "clv": 0.0167,
+   "clv_lo": 0.0115,
+   "clv_hi": 0.0249,
+   "roi": 0.1049,
+   "first_half_clv": 0.0158,
+   "second_half_clv": 0.023,
+   "per_day": 176.0
+  },
+  {
+   "name": "taker, bid kinds, price 0.444-0.60, first look 6-24 h to start",
+   "expr": "df.kind.isin(['PROP','TEAM_TOTAL']) & (df.minToStartFirst>360) & (df.minToStartFirst<=1440) & (df.cost>=0.444) & (df.cost<=0.60)",
+   "rationale": "the 6-24 h window the guard admits today (all 116 QUICK_LIKELY bids): takers lose to the close here, a bid needs its margin to cover the drift (-2.0%)",
+   "bets": 433,
+   "games": 28,
+   "clv": -0.0024,
+   "clv_lo": -0.0121,
+   "clv_hi": 0.0068,
+   "roi": -0.0241,
+   "first_half_clv": -0.0012,
+   "second_half_clv": -0.0224,
+   "per_day": 191.9
+  },
+  {
+   "name": "taker, bid kinds, listed EV 3%+, within 24 h, price 0.30-0.60 (the edge a 3.5% bid claims)",
+   "expr": "df.kind.isin(['PROP','TEAM_TOTAL']) & (df.ev>=0.03) & (df.minToStartFirst<=1440) & (df.cost>=0.30) & (df.cost<=0.60)",
+   "rationale": "comparator for the bids at equal claimed EV: CLV +2.37% (91 closes, 29 games) against the bids' +2.57%; the second half has 7 closes",
+   "bets": 160,
+   "games": 35,
+   "clv": 0.0237,
+   "clv_lo": 0.0064,
+   "clv_hi": 0.0418,
+   "roi": 0.062,
+   "first_half_clv": 0.0265,
+   "second_half_clv": -0.01,
+   "per_day": 70.9
+  }
+ ],
+ "app_changes_implied": [
+  "PROPOSAL (question for Tj; it tightens, so it is not a loosening, but it also changes the auto-bet and alerts): put the trap guard's window back from 24 h to its default 6 h (ScanSettings.trapEarlyHours, TrapGuard.DEFAULT_EARLY_HOURS = 6; bids read it as MakerRules.earlyHours, MakerQuote.kt) or to 12 h. Evidence: takers in the bid kinds at 0.444-0.60 +1.67% within 6 h (135 closes, 35 games) vs -0.24% at 6-24 h (273, 25 games); a bid with a 3.5% margin if filled +3.63% vs +1.95% (151 vs 313 closes); all 17 fills were at most 8.5 h out and the 116 QUICK_LIKELY bids at 18-23 h had 0 fills; the actual fills point the other way (+1.83%, 9 fills vs +3.52%, 8 fills), so it is not settled. About 30 fills in each band (60 fills, roughly 1-3 days at the QUICK_LIKELY pace if it fills at all) would settle it; to get them without changing the rule, keep the 24 h window for 2-3 more days and let the next file split fills by hours to start.",
+  "PROPOSAL (question for Tj; lowers the margin on the affected bids, so his decision): let a bid that sits 1-2 ticks behind the best bid step up to lead the book while it stays at least 2.0% under the fair (MakerQuote.kt: the price is PriceGrid.floor(fair / (1 + rules.margin)) near line 454; MakerRules.requoteSteps and the MakerPlan.PRIORITY order already treat leading as first). Evidence: 16 of 17 fills led (57% of unfilled did); in the LOW_USAGE burst 97% of bids (147 of 151) did not lead and filled 0 times while 3 of the 4 that led filled; a filled bid keeps about margin minus 1.5 pts, so 2.0% leaves about +0.5% per fill, 2.5% about +1.0%. Do not go under 2.0%. Settle it first without risking money: simulate it from Novig's public trades (tools/research/novig_bid_focus_study.py) and log would-lead prices; then about 100 fills per arm would separate +0.5% from +1.5%.",
+  "PROPOSAL (diagnostics only, no bet rule): change the 'most fills came within 2 minutes of posting' warning (app/HealthChecks.kt line 146: fast.size >= 6 and half under 120 s) to compare with the expected share under a constant fill rate (about 65% for bids that rest 2-3 minutes) and to need at least 20 timed fills; today it fired on 3 of 6 and the 6 fast fills had the best CLV (+4.13%).",
+  "No change proposed to the safety rules: keep makerRequireSharp on (QUICK_LIKELY sets it), the 3.5% margin, pregame only, sharp veto, trap guard and the picked-off guard. The no-sharp fills did better (+3.35%, 10 closes, 5 games vs +1.27%, 6 fills, 3 games) but that is thin and its close is from the same source as its fair; dropping the sharp requirement would loosen a rule and is Tj's call, with about 55 fills a group to settle.",
+  "NOTE for the QUICK_LIKELY copy in QuickLikely.kt: the Tj +125 odds cap already narrows its window to 0.444-0.60 (the 116 bids priced 0.445-0.595); the 0.30-0.44 band it lists is not in use. Keep kinds PROP + TEAM_TOTAL: 11 prop fills +2.23% (10 closes), 4 team-total fills +3.45% (4 of 4 beat)."
+ ],
+ "next_logging": [
+  "For EVERY bid, filled or not, log the closing fair of its side (the same 'captured' read the Tracker takes) and Pinnacle's close when ParlayAPI has it: today only filled bids have a close, so adverse selection (do fills drift worse than the same bid that did not fill?) cannot be measured. This is the one number that would turn 'CLV +2.57% on 16' into a rule about fills.",
+  "Log an exposure table in the file, not only the 300 newest unfilled: for each cell of focus x kind x led/behind x cents-under-offer band (0-2, 2-3, 3-4, 4-5, 5-7, 7+) x hours-to-start band (<1, 1-2, 2-6, 6-12, 12-24) the number of bids, the bid-hours rested and the fills (and the CLV sum of the fills). Rates need the denominator; the 300-bid sample covers 6 hours in 3 bursts.",
+  "At each post and re-post log the ticks behind the best bid and the size ahead of the bid (dollars at better or equal prices), whether the bid kept its place when re-posted, and the price it would have needed to lead with the margin that would have left; log the same for the hypothetical lead-the-book price so the lead rule can be judged from the log.",
+  "At each fill log the time of the fill and the taker's size (partial fills: 3 of 17), the book (best bid, offer) at the fill, and the fair and sharp prices at +1, +5 and +30 minutes after (11 of 17 fills had no fair on the next scan): picked-off should be judged for every fill.",
+  "Log the minutes to the start at each fill, the clock hour, and the first-listed taker price of the same side (the pair), so make-versus-take is measured on one side and moment.",
+  "Log the pass-level counts the file lacks: eligible bids waiting for the wallet or the day's limit (13-45 per pass in the QUICK_LIKELY burst), minutes when bids could not be read or posted (HTTP 451 / DNS / timeout on /v3/orders), and order calls per pass; Diagnostics has them in text only.",
+  "Put a per-bid close-source label in each fill row (captured from CNO's books / Vigilant's fair line / Novig's trades / Pinnacle) so CLV can be split by close source as the taker bets are.",
+  "Keep fill rows only as aggregates in anything public; the file is already enough per fill."
+ ],
+ "answer_run_bids": "Yes at low priority, on a thin positive: the 16 closes say +2.57% per fill (t-CI +0.80% to +4.34%, 6 of 6 games positive), and an independent estimate from 472 study listings says a 3.5%-margin bid keeps +2.36% if it fills; but it is about $0.05 per fill, 17 fills in 14 days, and the setting now in force (QUICK_LIKELY, posting 18-23 h ahead, 5.5 cents under the offer, 62% leading) has 0 fills in 7.6 bid-hours so it is unproven. Keep it running at the 3.5% margin to collect about 50-100 fills (the next file settles whether QUICK_LIKELY fills at all); ask Tj about the 6-hour window and about leading the book.",
+ "splits": {
+  "focus_tag": [
+   {
+    "group": "LOW_USAGE",
+    "fills": 3,
+    "games": 1,
+    "closes": 3,
+    "clv_pct": 1.56,
+    "beat": "2/3",
+    "ev_post_pct": 3.1,
+    "drift_pct": -1.5,
+    "stake": 5.73,
+    "profit": -5.73,
+    "wins": 0
+   },
+   {
+    "group": "PRE_TAG",
+    "fills": 14,
+    "games": 5,
+    "closes": 13,
+    "clv_pct": 2.81,
+    "beat": "10/13",
+    "ev_post_pct": 4.39,
+    "drift_pct": -1.51,
+    "stake": 26.45,
+    "profit": 5.63,
+    "wins": 7
+   }
+  ],
+  "kind": [
+   {
+    "group": "PERIOD",
+    "fills": 1,
+    "games": 1,
+    "closes": 1,
+    "clv_pct": 9.5,
+    "beat": "1/1",
+    "ev_post_pct": 5.04,
+    "drift_pct": 4.25,
+    "stake": 2.57,
+    "profit": 3.15,
+    "wins": 1
+   },
+   {
+    "group": "PROP",
+    "fills": 11,
+    "games": 3,
+    "closes": 10,
+    "clv_pct": 2.23,
+    "beat": "7/10",
+    "ev_post_pct": 3.86,
+    "drift_pct": -1.56,
+    "stake": 19.62,
+    "profit": -9.51,
+    "wins": 3
+   },
+   {
+    "group": "TEAM_TOTAL",
+    "fills": 4,
+    "games": 3,
+    "closes": 4,
+    "clv_pct": 3.45,
+    "beat": "4/4",
+    "ev_post_pct": 4.26,
+    "drift_pct": -0.78,
+    "stake": 9.28,
+    "profit": 6.97,
+    "wins": 3
+   },
+   {
+    "group": "TOTAL",
+    "fills": 1,
+    "games": 1,
+    "closes": 1,
+    "clv_pct": -4.47,
+    "beat": "0/1",
+    "ev_post_pct": 5.73,
+    "drift_pct": -9.65,
+    "stake": 0.71,
+    "profit": -0.71,
+    "wins": 0
+   }
+  ],
+  "league": [
+   {
+    "group": "MLB",
+    "fills": 10,
+    "games": 2,
+    "closes": 9,
+    "clv_pct": 1.68,
+    "beat": "6/9",
+    "ev_post_pct": 4.26,
+    "drift_pct": -2.45,
+    "stake": 16.18,
+    "profit": -6.07,
+    "wins": 3
+   },
+   {
+    "group": "NCAAF",
+    "fills": 1,
+    "games": 1,
+    "closes": 1,
+    "clv_pct": 9.5,
+    "beat": "1/1",
+    "ev_post_pct": 5.04,
+    "drift_pct": 4.25,
+    "stake": 2.57,
+    "profit": 3.15,
+    "wins": 1
+   },
+   {
+    "group": "NFL",
+    "fills": 3,
+    "games": 1,
+    "closes": 3,
+    "clv_pct": 1.56,
+    "beat": "2/3",
+    "ev_post_pct": 3.1,
+    "drift_pct": -1.5,
+    "stake": 5.73,
+    "profit": -5.73,
+    "wins": 0
+   },
+   {
+    "group": "NHL",
+    "fills": 3,
+    "games": 2,
+    "closes": 3,
+    "clv_pct": 3.95,
+    "beat": "3/3",
+    "ev_post_pct": 4.56,
+    "drift_pct": -0.59,
+    "stake": 7.7,
+    "profit": 8.55,
+    "wins": 3
+   }
+  ],
+  "price_band": [
+   {
+    "group": "<0.20",
+    "fills": 1,
+    "games": 1,
+    "closes": 1,
+    "clv_pct": -4.47,
+    "beat": "0/1",
+    "ev_post_pct": 5.73,
+    "drift_pct": -9.65,
+    "stake": 0.71,
+    "profit": -0.71,
+    "wins": 0
+   },
+   {
+    "group": "0.30-0.40",
+    "fills": 2,
+    "games": 1,
+    "closes": 2,
+    "clv_pct": 2.19,
+    "beat": "2/2",
+    "ev_post_pct": 4.12,
+    "drift_pct": -1.85,
+    "stake": 2.89,
+    "profit": -2.89,
+    "wins": 0
+   },
+   {
+    "group": "0.40-0.50",
+    "fills": 10,
+    "games": 6,
+    "closes": 9,
+    "clv_pct": 2.42,
+    "beat": "6/9",
+    "ev_post_pct": 4.18,
+    "drift_pct": -1.69,
+    "stake": 20.66,
+    "profit": 1.31,
+    "wins": 4
+   },
+   {
+    "group": "0.50-0.60",
+    "fills": 4,
+    "games": 3,
+    "closes": 4,
+    "clv_pct": 4.87,
+    "beat": "4/4",
+    "ev_post_pct": 3.71,
+    "drift_pct": 1.11,
+    "stake": 7.92,
+    "profit": 2.19,
+    "wins": 3
+   }
+  ],
+  "minutes_to_start_at_post": [
+   {
+    "group": "<1h",
+    "fills": 3,
+    "games": 2,
+    "closes": 3,
+    "clv_pct": 2.01,
+    "beat": "2/3",
+    "ev_post_pct": 3.48,
+    "drift_pct": -1.42,
+    "stake": 4.16,
+    "profit": -2.72,
+    "wins": 1
+   },
+   {
+    "group": "1-2h",
+    "fills": 2,
+    "games": 2,
+    "closes": 2,
+    "clv_pct": 5.62,
+    "beat": "2/2",
+    "ev_post_pct": 4.07,
+    "drift_pct": 1.47,
+    "stake": 4.93,
+    "profit": 0.79,
+    "wins": 1
+   },
+   {
+    "group": "2-6h",
+    "fills": 4,
+    "games": 2,
+    "closes": 4,
+    "clv_pct": -0.2,
+    "beat": "2/4",
+    "ev_post_pct": 4.19,
+    "drift_pct": -4.2,
+    "stake": 6.95,
+    "profit": -6.95,
+    "wins": 0
+   },
+   {
+    "group": "6-24h",
+    "fills": 8,
+    "games": 3,
+    "closes": 7,
+    "clv_pct": 3.52,
+    "beat": "6/7",
+    "ev_post_pct": 4.44,
+    "drift_pct": -0.85,
+    "stake": 16.13,
+    "profit": 8.79,
+    "wins": 5
+   }
+  ],
+  "led_its_side": [
+   {
+    "group": "behind another bid",
+    "fills": 1,
+    "games": 1,
+    "closes": 1,
+    "clv_pct": 9.5,
+    "beat": "1/1",
+    "ev_post_pct": 5.04,
+    "drift_pct": 4.25,
+    "stake": 2.57,
+    "profit": 3.15,
+    "wins": 1
+   },
+   {
+    "group": "led its side",
+    "fills": 16,
+    "games": 5,
+    "closes": 15,
+    "clv_pct": 2.11,
+    "beat": "11/15",
+    "ev_post_pct": 4.09,
+    "drift_pct": -1.89,
+    "stake": 29.61,
+    "profit": -3.25,
+    "wins": 6
+   }
+  ],
+  "sharp_book_in_fair": [
+   {
+    "group": "no sharp book (blend only)",
+    "fills": 11,
+    "games": 5,
+    "closes": 10,
+    "clv_pct": 3.35,
+    "beat": "8/10",
+    "ev_post_pct": 4.4,
+    "drift_pct": -0.98,
+    "stake": 22.27,
+    "profit": 8.37,
+    "wins": 6
+   },
+   {
+    "group": "sharp book in the fair",
+    "fills": 6,
+    "games": 3,
+    "closes": 6,
+    "clv_pct": 1.27,
+    "beat": "4/6",
+    "ev_post_pct": 3.74,
+    "drift_pct": -2.38,
+    "stake": 9.91,
+    "profit": -8.47,
+    "wins": 1
+   }
+  ],
+  "books_behind_fair": [
+   {
+    "group": "2 books",
+    "fills": 7,
+    "games": 4,
+    "closes": 7,
+    "clv_pct": 3.12,
+    "beat": "5/7",
+    "ev_post_pct": 3.71,
+    "drift_pct": -0.57,
+    "stake": 14.41,
+    "profit": -4.06,
+    "wins": 2
+   },
+   {
+    "group": "3-4 books",
+    "fills": 4,
+    "games": 2,
+    "closes": 4,
+    "clv_pct": 2.5,
+    "beat": "3/4",
+    "ev_post_pct": 4.41,
+    "drift_pct": -1.83,
+    "stake": 6.35,
+    "profit": -0.87,
+    "wins": 2
+   },
+   {
+    "group": "5+ books",
+    "fills": 6,
+    "games": 4,
+    "closes": 5,
+    "clv_pct": 1.86,
+    "beat": "4/5",
+    "ev_post_pct": 4.55,
+    "drift_pct": -2.56,
+    "stake": 11.43,
+    "profit": 4.82,
+    "wins": 3
+   }
+  ],
+  "fill_speed_minutes": [
+   {
+    "group": "<1m",
+    "fills": 2,
+    "games": 2,
+    "closes": 2,
+    "clv_pct": 6.25,
+    "beat": "2/2",
+    "ev_post_pct": 4.04,
+    "drift_pct": 2.11,
+    "stake": 4.32,
+    "profit": 1.4,
+    "wins": 1
+   },
+   {
+    "group": "1-2m",
+    "fills": 4,
+    "games": 4,
+    "closes": 4,
+    "clv_pct": 3.07,
+    "beat": "4/4",
+    "ev_post_pct": 4.08,
+    "drift_pct": -0.97,
+    "stake": 8.11,
+    "profit": 3.93,
+    "wins": 3
+   },
+   {
+    "group": "2-3.5m",
+    "fills": 6,
+    "games": 4,
+    "closes": 6,
+    "clv_pct": 1.41,
+    "beat": "3/6",
+    "ev_post_pct": 4.2,
+    "drift_pct": -2.65,
+    "stake": 11.3,
+    "profit": -1.02,
+    "wins": 2
+   },
+   {
+    "group": "3.5m+",
+    "fills": 3,
+    "games": 2,
+    "closes": 3,
+    "clv_pct": 0.59,
+    "beat": "2/3",
+    "ev_post_pct": 4.09,
+    "drift_pct": -3.35,
+    "stake": 4.96,
+    "profit": -4.96,
+    "wins": 0
+   },
+   {
+    "group": "nan",
+    "fills": 2,
+    "games": 1,
+    "closes": 1,
+    "clv_pct": 6.14,
+    "beat": "1/1",
+    "ev_post_pct": 4.51,
+    "drift_pct": 1.56,
+    "stake": 3.49,
+    "profit": 0.55,
+    "wins": 1
+   }
+  ],
+  "margin": [
+   {
+    "group": "2.5%",
+    "fills": 3,
+    "games": 1,
+    "closes": 3,
+    "clv_pct": 1.56,
+    "beat": "2/3",
+    "ev_post_pct": 3.1,
+    "drift_pct": -1.5,
+    "stake": 5.73,
+    "profit": -5.73,
+    "wins": 0
+   },
+   {
+    "group": "3.0%",
+    "fills": 3,
+    "games": 2,
+    "closes": 3,
+    "clv_pct": 1.98,
+    "beat": "2/3",
+    "ev_post_pct": 4.04,
+    "drift_pct": -1.91,
+    "stake": 5.02,
+    "profit": -0.39,
+    "wins": 1
+   },
+   {
+    "group": "4.0%",
+    "fills": 11,
+    "games": 5,
+    "closes": 10,
+    "clv_pct": 3.05,
+    "beat": "8/10",
+    "ev_post_pct": 4.5,
+    "drift_pct": -1.39,
+    "stake": 21.44,
+    "profit": 6.01,
+    "wins": 6
+   }
+  ],
+  "close_source": [
+   {
+    "group": "Novig's last trades (8)",
+    "fills": 1,
+    "games": 1,
+    "closes": 1,
+    "clv_pct": 9.5,
+    "beat": "1/1",
+    "ev_post_pct": 5.04,
+    "drift_pct": 4.25,
+    "stake": 2.57,
+    "profit": 3.15,
+    "wins": 1
+   },
+   {
+    "group": "captured",
+    "fills": 15,
+    "games": 5,
+    "closes": 15,
+    "clv_pct": 2.11,
+    "beat": "11/15",
+    "ev_post_pct": 4.09,
+    "drift_pct": -1.89,
+    "stake": 28.17,
+    "profit": -1.81,
+    "wins": 6
+   },
+   {
+    "group": "nan",
+    "fills": 1,
+    "games": 1,
+    "closes": 0,
+    "clv_pct": null,
+    "beat": null,
+    "ev_post_pct": null,
+    "drift_pct": null,
+    "stake": 1.44,
+    "profit": -1.44,
+    "wins": 0
+   }
+  ],
+  "fair_books_low_usage_only": [
+   {
+    "group": "FanDuel+Kalshi",
+    "fills": 2,
+    "games": 1,
+    "clv_pct": 0.8,
+    "beat": "1/2"
+   },
+   {
+    "group": "FanDuel+ProphetX",
+    "fills": 1,
+    "games": 1,
+    "clv_pct": 3.0,
+    "beat": "1/1"
+   }
+  ],
+  "fair_age_sec_low_usage_only": [
+   {
+    "group": "3 LOW_USAGE fills (1 game)",
+    "note": "oldest sharp price 53, 86, 125 s old; newest 16, 16, 54 s; CLV -0.1%, +1.7%, +3.0%: no pattern with n=3"
+   }
+  ],
+  "_note": "Every row is thin: 1 to 11 fills in 1 to 5 games. clv_pct is the mean over fills with a close. A 2-point difference between two groups needs about 55 fills per group (80% power, SD 3.7 pts)."
+ },
+ "bid_hours_by_window": [
+  {
+   "window": "Oct 5 00:07 to 18:06 ET (before the 300-bid sample; all-kinds, no focus tag; derived = app 24h bid-hours 119.8 minus sample 14.15)",
+   "bids": 1898,
+   "bid_hours": 105.65,
+   "fills": 13,
+   "fills_per_bid_hour": 0.123,
+   "poisson95": [
+    0.066,
+    0.21
+   ]
+  },
+  {
+   "window": "Oct 5 18:06-18:09 ET, untagged, 3.5% margin",
+   "bids": 36,
+   "bid_hours": 1.07,
+   "fills": 0
+  },
+  {
+   "window": "Oct 5 18:49-19:27 ET, LOW_USAGE, 2.5% margin, props, ~1 h before the start",
+   "bids": 151,
+   "bid_hours": 5.5,
+   "fills": 3,
+   "fills_per_bid_hour": 0.546,
+   "poisson95": [
+    0.113,
+    1.595
+   ],
+   "expected_by_app_curve": 0.5,
+   "P_at_least_obs": 0.0146
+  },
+  {
+   "window": "Oct 5 22:26 - Oct 6 00:05 ET, QUICK_LIKELY, 3.5% margin, props+team totals, 18-23 h before the start",
+   "bids": 116,
+   "bid_hours": 7.58,
+   "fills": 0,
+   "fills_per_bid_hour": 0.0,
+   "poisson95_upper": 0.486,
+   "expected_by_app_curve": 0.66,
+   "P_zero": 0.52
+  },
+  {
+   "window": "last 24 h (app)",
+   "bids": 2201,
+   "bid_hours": 119.8,
+   "fills": 16,
+   "fills_per_bid_hour": 0.134,
+   "poisson95": [
+    0.076,
+    0.217
+   ],
+   "expected_by_app": 19.2,
+   "P_at_most_obs": 0.277
+  },
+  {
+   "window": "older than 24 h (14-day total 3128 minus 2201)",
+   "bids": 927,
+   "fills": 1,
+   "fills_per_bid": 0.0011,
+   "vs_last24h_fills_per_bid": 0.0073,
+   "fisher_p": 0.032
+  }
+ ],
+ "unfilled_sample": {
+  "fills_by_posting_hour_ET": {
+   "11": 7,
+   "12": 3,
+   "15": 2,
+   "16": 1,
+   "19": 3,
+   "21": 1,
+   "note": "no fill from a bid posted between 22:00 and 10:59 ET (the QUICK_LIKELY burst was 22:26-00:05: 0 fills)"
+  },
+  "n": 300,
+  "window_et": "Oct 5 18:06 - Oct 6 00:05 in 3 bursts (no unfilled bids in the sample 18:09-18:49 or 19:27-22:26: bids paused/blocked)",
+  "by_focus": {
+   "LOW_USAGE": 148,
+   "QUICK_LIKELY": 116,
+   "untagged": 36
+  },
+  "kind": {
+   "PROP": 239,
+   "TEAM_TOTAL": 61
+  },
+  "league": {
+   "NFL": 137,
+   "MLB": 122,
+   "NHL": 29,
+   "NCAAF": 12
+  },
+  "median_rested_min": 2.37,
+  "p90_rested_min": 5.3,
+  "median_cents_under_offer": 4.0,
+  "cents_under_offer_median_by_focus": {
+   "LOW_USAGE": 2.5,
+   "untagged": 4.25,
+   "QUICK_LIKELY": 5.5
+  },
+  "minutes_to_start_median_by_focus": {
+   "LOW_USAGE": 62,
+   "untagged": 113,
+   "QUICK_LIKELY": 1233
+  },
+  "fair_age_sec_oldest_median_by_focus": {
+   "LOW_USAGE": 121.5,
+   "QUICK_LIKELY": 179
+  },
+  "fair_age_sec_newest_median_by_focus": {
+   "LOW_USAGE": 21,
+   "QUICK_LIKELY": 41
+  },
+  "led_share": {
+   "LOW_USAGE": "4 of 151 (2.6%)",
+   "untagged": "16 of 36 (44%)",
+   "QUICK_LIKELY": "72 of 116 (62%)"
+  },
+  "ended_by_in_sample": {
+   "fair goes old within a minute: re-priced": 158,
+   "about to expire: re-posted": 35,
+   "no longer a bid to post": 45,
+   "kill switch": 32,
+   "fair fell: re-posted lower": 1,
+   "still resting at export": 29
+  },
+  "ended_by_all_3082_unfilled_14d_pct": {
+   "fair goes old within a minute": 40.9,
+   "about to expire": 37.8,
+   "auto-make switched off": 4.5,
+   "cancelled by you": 3.9,
+   "fair fell re-posted lower": 2.7,
+   "scanning paused": 2.2,
+   "no longer a bid": 1.9,
+   "kill switch": 1.4,
+   "housekeeping_total_pct": 78.7
+  },
+  "position_vs_best_bid_in_newest_303": [
+   {
+    "position": "led (best bid below ours or no bid)",
+    "bids": 92,
+    "fills": 3,
+    "bid_hours": 5.62
+   },
+   {
+    "position": "behind by 0.5c or less",
+    "bids": 63,
+    "fills": 0,
+    "bid_hours": 3.02
+   },
+   {
+    "position": "behind by 1c",
+    "bids": 40,
+    "fills": 0,
+    "bid_hours": 1.51
+   },
+   {
+    "position": "behind by 1.5-2c",
+    "bids": 59,
+    "fills": 0,
+    "bid_hours": 2.19
+   },
+   {
+    "position": "behind by more than 2c",
+    "bids": 49,
+    "fills": 0,
+    "bid_hours": 1.81
+   }
+  ],
+  "cents_under_offer_bands_in_newest_303": [
+   {
+    "band": "0-2c",
+    "bids": 30,
+    "fills": 2,
+    "bid_hours": 0.98
+   },
+   {
+    "band": "2-3c",
+    "bids": 75,
+    "fills": 1,
+    "bid_hours": 2.76
+   },
+   {
+    "band": "3-4c",
+    "bids": 64,
+    "fills": 0,
+    "bid_hours": 2.62
+   },
+   {
+    "band": "4-5c",
+    "bids": 49,
+    "fills": 0,
+    "bid_hours": 2.39
+   },
+   {
+    "band": "5-7c",
+    "bids": 45,
+    "fills": 0,
+    "bid_hours": 2.74
+   },
+   {
+    "band": "over 7c",
+    "bids": 34,
+    "fills": 0,
+    "bid_hours": 2.24
+   }
+  ]
+ },
+ "fills_needed_to_settle": {
+  "cluster_note": "sd of CLV across fills 3.73 pts; ICC across games about 0 (-0.01, 6 clusters: not trustworthy) so about 1 fill = 1 independent look; if same-game fills correlate, multiply by about 1.5",
+  "fills_to_show_CLV_plus_1.5pts_with_95pct_CI_half_width_0.75": 95,
+  "fills_for_80pct_power_vs_zero_at_true_CLV_1.5pts": 48,
+  "fills_for_80pct_power_vs_zero_at_true_CLV_2pts": 27,
+  "fills_per_arm_to_separate_two_groups_2pts_apart": 55,
+  "fills_per_arm_for_1.5pts_apart": 97,
+  "fills_per_arm_for_1pt_apart": 218,
+  "bets_to_confirm_a_2.6pct_edge_by_RESULTS_at_2_SE": 6700,
+  "pace_to_get_50_fills": "if QUICK_LIKELY fills like the Oct 5 daytime bids (0.12/bid-hour) with 30-48 bids up: 3.6-5.8 fills per clock hour, so 50 fills in 9-14 hours; if it fills at a third of that (0.04/bid-hour): 26-42 hours; the 0 of 7.58 bid-hours so far cannot tell these apart"
+ }
+}
