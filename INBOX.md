@@ -3987,3 +3987,9 @@ Can you resume this branch which started in a different Claude code account
 
 After diagnosing that issue, investigate if I have any apis or if there are any free sources that are fast enough that I can profit from live betting on moving. And if it is possible with a cheap API around 20 dollars or less, tell me about it. The odds have to be rapidly updating to find good live betting edges. Also , in your earlier research you found a way to profit on novig live betting directly after a score or change in a live event. See if this is plausible to replicate
 ```
+
+## 2026-10-06T01:07:00Z
+```
+It will put up many bids, then leave them a couple minutes, then cancel all of them at the same time. Is there a fresher source for prop odds from sharp books? Either one of my apis or search online to see if the actual sharp books have free feeds or apis
+Make sure you complete all the prior prompts even if I interrupt with new messages
+```
