@@ -119,11 +119,9 @@ class BurstCoreTest {
     fun `a window opens when a book change makes a pair pay, stays open while it pays, and closes after the grace with its true length`() {
         val w = CoverWindows(minNet = 0.003, minContracts = 100, graceMs = 150)
         val books = Books()
-        books.map["s1"] = book("s1", aBids = listOf(555 to 25_000L))
-        books.map["s2"] = book("s2", aBids = listOf(300 to 25_000L))   // far out: NOT at +2.5 costs 0.70, nothing pays
-        books.map["ml"] = book("ml", bBids = listOf(480 to 40_000L))     // calm: costs 0.52 + 0.445 = 0.965? 0.480 bid on NO => YES 0.520
-        // calm first: ml YES 0.520 + spread NOT 0.445 = 0.965 pays, so make the calm one not pay:
-        books.map["ml"] = book("ml", bBids = listOf(420 to 40_000L))     // YES 0.580 + 0.445 = 1.025: calm
+        books.map["s1"] = book("s1", aBids = listOf(555 to 25_000L))      // NOT at -1.5 costs 0.445
+        books.map["s2"] = book("s2", aBids = listOf(300 to 25_000L))      // far out: NOT at -2.5 costs 0.700, nothing pays against it
+        books.map["ml"] = book("ml", bBids = listOf(420 to 40_000L))      // calm: YES 0.580 + 0.445 = 1.025
         assertTrue(w.onBook(lines, books, ml, 1_000).isEmpty())
         assertEquals(0, w.openCount)
         // The moneyline re-quotes stale: the NO side is bid at 0.461 => YES 0.539.
@@ -282,9 +280,9 @@ class BurstCoreTest {
     fun `a positive paper result that is pennies at Tj's limits is too small, and one that holds in most games is worth a test`() {
         assertEquals(BurstVerdict.TOO_SMALL, BurstStudy.verdict(BurstStudy.summarize(many(4, 5, PaperOutcome.BOTH, 0.02)).last()))   // 10 cents a game
         assertEquals(BurstVerdict.WORTH_A_TEST, BurstStudy.verdict(BurstStudy.summarize(many(4, 5, PaperOutcome.BOTH, 0.30)).last()))  // $1.50 a game
-        // Positive in only half the games: not worth it.
-        val half = many(2, 5, PaperOutcome.BOTH, 0.30) + many(2, 5, PaperOutcome.BOTH, -0.01).map { if (it is WindowRecord) it.copy(eventId = "x" + it.eventId) else it }
-        assertEquals(BurstVerdict.NOT_CATCHABLE, BurstStudy.verdict(BurstStudy.summarize(half).last()).let { if (it == BurstVerdict.TOO_SMALL) BurstVerdict.NOT_CATCHABLE else it })
+        // Positive in only half the games: not worth it, whatever the total.
+        val half = many(2, 5, PaperOutcome.BOTH, 0.30) + (3..4).flatMap { g -> (1..5).map { window("g$g", "NFL", PaperOutcome.BOTH, -0.01) } + GameRecord("NFL", "g$g", "g$g", 0L, 3_600_000L, 50, 1L) }
+        assertEquals(BurstVerdict.TOO_SMALL, BurstStudy.verdict(BurstStudy.summarize(half).last()))
     }
 
     @Test
