@@ -159,16 +159,15 @@ class BurstTraderUiTest {
         val on = ScanSettings(burstRecorder = true, burstTrade = true, burstTradeStake = 1.0)
         val st = BurstTradeStatus(attempts = 1, locked = 1, lockedProfit = 0.02, skipped = mapOf("cooldown" to 7, "not proved yet" to 2))
         val text = BurstText.diagnostics(BurstStatus(running = true, leagues = setOf("NFL")), emptyList(), "round trip: ASSUMED 150 ms", on, running = true, trades = listOf(trade("LOCKED", 0.02, 0.0)), trader = st, proofReason = "not enough yet")
-        assertNotNull(text)
-        assertTrue(text, text!!.contains("Burst trader (real money): ON · stake \$1 a leg, \$5 a game, \$10 a day, halts at \$3 held alone"))
+        assertTrue(text, text.contains("Burst trader (real money): ON · stake \$1 a leg, \$5 a game, \$10 a day, halts at \$3 held alone"))
         assertTrue(text, text.contains("Locked: not enough yet"))
         assertTrue(text, text.contains("held back this run: cooldown 7, not proved yet 2"))
         assertTrue(text, text.contains("1 attempt: 1 locked · profit locked \$0.02"))
         // A halt is in it too.
-        val halted = BurstText.diagnostics(BurstStatus(), emptyList(), "", on.copy(burstTradeHalted = "an order's answer was lost"), running = false, trades = listOf(trade("UNCONFIRMED", 0.0, 0.0)))!!
+        val halted = BurstText.diagnostics(BurstStatus(), emptyList(), "", on.copy(burstTradeHalted = "an order's answer was lost"), running = false, trades = listOf(trade("UNCONFIRMED", 0.0, 0.0)))
         assertTrue(halted, halted.contains("HALTED: an order's answer was lost"))
         // A trade journal alone (the recorder since turned off) still shows.
-        assertNotNull(BurstText.diagnostics(BurstStatus(), emptyList(), "", ScanSettings(), running = false, trades = listOf(trade("NONE", 0.0, 0.0))))
+        assertTrue(BurstText.diagnostics(BurstStatus(), emptyList(), "", ScanSettings(), running = false, trades = listOf(trade("NONE", 0.0, 0.0))).startsWith("Live burst recorder: off · not running"))
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.onAllNodesWithTagCount(tag: String): Int =
