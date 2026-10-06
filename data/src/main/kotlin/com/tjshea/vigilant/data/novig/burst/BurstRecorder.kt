@@ -136,8 +136,10 @@ class BurstRecorder(
     private class Fill(val marketId: String, val outcome: String, val priceMilli: Int, val qty: Long, val atMs: Long, var matched: Boolean = false)
 
     private suspend fun runLoop(leagues: Set<String>) {
+        reset()
         val queue = Channel<Msg>(Channel.UNLIMITED)
-        val feed = newFeed { marketId, atMs, changes -> queue.trySend(Msg.Book(marketId, atMs, changes)) }
+        val listener = BookListener { marketId, atMs, changes -> queue.trySend(Msg.Book(marketId, atMs, changes)) }
+        val feed = newFeed(listener)
         if (feed == null) {
             _status.value = _status.value.copy(running = false, problem = "No Novig key is connected: the recorder needs the read key's live feed (Settings › Betting & Novig account).")
             return
@@ -148,7 +150,7 @@ class BurstRecorder(
             helpers += scope.launch { echoLoop() }
             helpers += scope.launch { while (isActive) { delay(tickMs); queue.trySend(Msg.Tick(clock())) } }
             helpers += scope.launch { probeLoop(queue) }
-            consume(queue, feed)
+            consume(queue)
         } finally {
             helpers.forEach { it.cancel() }
             runCatching { feed.close() }
@@ -225,7 +227,12 @@ class BurstRecorder(
     private var updates = 0L
     private var lastWindowMs: Long? = null
 
-    private suspend fun consume(queue: Channel<Msg>, feed: PushedBooks) {
+    private fun reset() {
+        games.clear(); replay.clear(); byMarket.clear(); pending.clear(); fills.clear(); matchedTrades.clear()
+        windowsSeen = 0; updates = 0L; lastWindowMs = null; probeTargets = emptyList()
+    }
+
+    private suspend fun consume(queue: Channel<Msg>) {
         for (msg in queue) {
             when (msg) {
                 is Msg.Book -> onBook(msg)
