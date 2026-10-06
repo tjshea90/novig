@@ -3991,7 +3991,7 @@ Plan (RESEARCH.md §92; a session cut off mid-way resumes at the first unticked 
 - [x] CT1 DONE (RESEARCH.md §95: ESPN 40.7 s late, Novig moved 16.1 s after a play, Kalshi level; no free or <= $20 source leads; the burst replicated: 8 on MNF, $15.64 floor = 1.1% of payout, someone already takes them): recorders ran for tonight's MNF (Novig ladder tape, ESPN plays, Kalshi price; `tools/research/espn_lead_lag.py` is new); analyze after ~03:30Z, then write RESEARCH.md §95 and answer Tj.
 
 - [x] CR3/CQ5 SHIPPED: v0.68.1 (code 116): CI green (run 9704), `ship.sh` gated (2,251 tests: 2,228 passed, 23 skipped), release.yml run 122 green, Release https://github.com/tjshea90/novig/releases/tag/v0.68.1 (signed APK 9.1 MB), recorded in BUILDLOG. `main` had diverged by one captured INBOX.md line (a different container's hook): merged, both lines kept, main fast-forwarded.
-- [x] (rides the next release) the Scanning page's hint says "at most 480 scans a day on Auto pace (3 min near, 8 min far, none when nothing is in the window)" instead of the generic count (`autoScanHint`); done in the tree, test green, not in v0.68.1. **[ticked 2026-10-06, stale box: shipped in v0.68.1 (test AutoScanTest autoScanHint); tag and BUILDLOG.md row exist]**
+- [x] (rides the next release) the Scanning page's hint says "at most 480 scans a day on Auto pace (3 min near, 8 min far, none when nothing is in the window)" instead of the generic count (`autoScanHint`); done in the tree, test green, not in v0.68.1. **[ticked 2026-10-06, stale box: shipped in v0.70.0 (first tag containing it; test AutoScanTest autoScanHint); tag and BUILDLOG.md row exist]**
 
 
 
