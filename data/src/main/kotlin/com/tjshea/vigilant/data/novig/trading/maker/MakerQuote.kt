@@ -55,7 +55,7 @@ data class MakerRules(
     /** A resting bid is moved up only when the bid wanted is at least this many grid steps higher (moving loses its place in the queue). */
     val requoteSteps: Int = 2,
     /** A bid this close to expiring is re-posted now (so a bid that's still good is always up). */
-    val refreshBeforeMs: Long = 2 * 60_000L,
+    val refreshBeforeMs: Long = REFRESH_BEFORE_MS,
     /** No bid is posted for less time than this (its fair about to go old, the start or the stop window too near). */
     val minLifeMs: Long = 60_000L,
     /**
