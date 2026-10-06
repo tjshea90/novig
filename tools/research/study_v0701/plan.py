@@ -8,6 +8,7 @@ agents that were still running. A new session runs this first; it never reruns a
   python3 tools/research/study_v0701/plan.py                # status + the next agents to launch
   python3 tools/research/study_v0701/plan.py --running study-traps,study-bids   # these are in flight: never suggested again, and they count against the 3
   python3 tools/research/study_v0701/plan.py --inflight 2   # same count, labels unknown
+  python3 -I tools/research/study_v0701/genverify.py <v0701 dir>   # phase 3: writes prompts/verify-<n>-<lens>.txt once the 3 strategy-* are saved
   python3 tools/research/study_v0701/plan.py --selftest
 
 A label is saved when research/v0701_partial/<label>.json exists and parses as JSON.
