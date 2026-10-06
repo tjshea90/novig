@@ -1,13 +1,13 @@
-# CHECKPOINT 2616 — read me first, then TASKS.md
+# CHECKPOINT 2617 — read me first, then TASKS.md
 
-**Written:** 2026-10-06T04:26:37Z · **tests:** all 3 fast checks green
-**Branch:** `ccr-8f2e11d8-x298xq` · **builds on:** `8e73b733` (this checkpoint is the commit after it)
+**Written:** 2026-10-06T04:27:31Z · **tests:** all 3 fast checks green
+**Branch:** `ccr-8f2e11d8-x298xq` · **builds on:** `fcf5cc69` (this checkpoint is the commit after it)
 
 ## Just done
-v0.70.1 analysis resumed in a NEW container (old workflow lost): files were re-uploaded, re-extracted to the session scratchpad v0701/ (loader reproduces the phone's numbers); launching the analysis agents with the Agent tool
+launched 14 background analyst agents (phase 1 of the v0.70.1 analysis) in the new container; resume file updated with the Agent-tool recipe and the phases left
 
 ## Do this next
-wait for the Agent-tool analysts (reports in scratchpad v0701/work/<label>/report.md), then strategy builders + verifiers, write research/scan_study_analysis_2026-10-06_v0.70.1.md + RESEARCH 97, CX3 fixes v0.70.2
+wait for the 14 completion notifications; check v0701/work/<label>/result.json; then phase 2 strategy builders
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ wait for the Agent-tool analysts (reports in scratchpad v0701/work/<label>/repor
 
 ## Last ten checkpoints
 ```
+  6d988e7b ckpt 2616: v0.70.1 analysis resumed in a NEW container (old workflow lost): files were 
   0039a333 ckpt 2615: Tj sent two files (v0.70.1 diagnostics + scan study, no words): data extract
   1909ebb8 ckpt 2614: v0.70.1 RELEASED and recorded (v0.70.0 too); RESEARCH 95/96 and NOVIG_API 20
   d4810416 ckpt 2613: pre-release: v0.70.1: the burst trader is judged league by league (a league 
