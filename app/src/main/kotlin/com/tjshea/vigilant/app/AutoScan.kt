@@ -174,6 +174,8 @@ class AutoScanner(
     private val phone: () -> Pair<Boolean, Boolean> = { screenOffAndDozing(app) },
     /** Starts Vigilant's scan for a cycle (false: not started, one may already be running); tests stand in their own. */
     private val startVigilant: suspend (ScanSettings, List<com.tjshea.vigilant.data.tracker.TrackedBet>) -> Boolean = { s, bets -> c.startVigilantScan(s, bets, background = true) },
+    /** The start times of the games Vigilant's last scan priced (null: no scan result yet): what the low-usage bids' Auto pace sets its gap by ([LowUsageBids.gapSeconds]). */
+    private val gameStarts: () -> Collection<Long>? = { c.runner.state.value.result?.games?.map { it.event.startsTs } },
 ) {
 
     data class Status(
@@ -262,7 +264,7 @@ class AutoScanner(
                     runCatching { timed("autolock") { c.autoLock.run(settings) } }.onFailure { if (it is CancellationException) throw it; errors += "Auto-lock: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 var scanned = false
-                if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && (forceVigilant || AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock(), settings.vigilantGapSeconds))) {
+                if (settings.autoScansVigilant && settings.leagues.isNotEmpty() && (forceVigilant || AutoScanClock.vigilantDue(lastVigilantStartMs, settings.autoScanSeconds, clock(), vigilantGap(settings)))) {
                     _status.update { it.copy(step = "Vigilant scan") }
                     lastVigilantStartMs = clock()
                     scanned = true
@@ -398,6 +400,10 @@ class AutoScanner(
      * The cycle used to wait the scan out (Tj's v0.52.0 file: "a background cycle took 456 s (its interval is 30 sec)"), and for those minutes CNO
      * wasn't read and auto-bet placed nothing. Tj's own scan may be running already: then its end is this one's.
      */
+    /** The gap between two Vigilant scans now: the usual one, or the low-usage bids' (Auto: the freshness limit less the bids' re-post window, for the games the last scan saw). */
+    private fun vigilantGap(settings: ScanSettings): Int =
+        if (settings.lowUsageNow) com.tjshea.vigilant.data.scanner.LowUsageBids.gapSeconds(settings, gameStarts(), clock()) else settings.vigilantGapSeconds
+
     private suspend fun vigilantScan(settings: ScanSettings) {
         val before = c.runner.state.value.finished
         val bets = runCatching { c.tracker.all() }.onFailure { if (it is CancellationException) throw it }.getOrDefault(emptyList())

@@ -676,7 +676,7 @@ object LowUsageText {
         if (s.lowUsagePace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) {
             return "Auto: a scan starts ${com.tjshea.vigilant.data.scanner.LowUsageBids.NEAR_GAP_SECONDS / 60} min after the last while a game is inside 3 hours of its start (a bid ends when its books' prices are 5 minutes old, " +
                 "so it is re-posted from the fresh scan before it does), ${com.tjshea.vigilant.data.scanner.LowUsageBids.FAR_GAP_SECONDS / 60} min while every game is further off (10-minute limit). Bids stay up. " +
-                "Costs about 60 ParlayAPI credits per league per hour in the short stretch. $skip"
+                "With ParlayAPI carrying a picked book (ProphetX, Caesars) that is about 60 credits per league per hour in the short stretch (3 a scan). $skip"
         }
         val minutes = s.lowUsagePace.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MINUTES)
         val far = if (minutes * 60 <= com.tjshea.vigilant.data.scanner.LowUsageBids.FAR_GAP_SECONDS) "Games 3-6 hours out keep their bids up" else "Games 3-6 hours out are down part of the time too"
