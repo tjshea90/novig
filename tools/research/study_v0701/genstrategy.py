@@ -7,7 +7,7 @@ Reads  <v0701 dir>/prompts/_preamble.txt, _strategy_angles.json, _schemas.json (
        research/v0701_partial/study-*.json (the 9 saved study analysts: numbers only)
 Writes <v0701 dir>/prompts/strategy-<angle>.txt (the full prompt; each builder writes its result to
        research/v0701_partial/<label>.json as its last step, like the phase-1 analysts).
-Same digest as workflow_files_analysis.js (area, trust, key numbers, <=14 findings, <=10 rules per analyst), capped at 60000 chars.
+Same digest fields as workflow_files_analysis.js (area, trust, key numbers, <=14 findings, <=10 rules per analyst), but each analyst gets an equal share of 60000 chars.
 """
 import glob
 import json
@@ -18,12 +18,20 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')
 PARTIAL = os.path.join(REPO, 'research', 'v0701_partial')
 
 
-def digest():
+def digest(cap=60000):
+    """Every analyst gets an equal share of `cap` characters (the workflow's plain slice would keep only the first one or two)."""
+    es = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(PARTIAL, 'study-*.json')))]
+    share = cap // max(1, len(es))
     out = []
-    for f in sorted(glob.glob(os.path.join(PARTIAL, 'study-*.json'))):
-        e = json.load(open(f))
-        out.append({'area': e.get('area'), 'trust': e.get('trust_notes'), 'key': e.get('key_numbers'),
-                    'findings': (e.get('findings') or [])[:14], 'rules': (e.get('candidate_rules') or [])[:10]})
+    for e in es:
+        ent = {'area': e.get('area'), 'trust': (e.get('trust_notes') or '')[:1500], 'key': e.get('key_numbers'),
+               'findings': (e.get('findings') or [])[:14], 'rules': (e.get('candidate_rules') or [])[:10]}
+        # shed the tail (rules first, then findings) until this analyst fits its share
+        while len(json.dumps(ent)) > share and (ent['rules'] or ent['findings']):
+            (ent['rules'] if ent['rules'] else ent['findings']).pop()
+        if len(json.dumps(ent)) > share:
+            ent['key'] = json.dumps(ent['key'])[:max(200, share - 2500)]
+        out.append(ent)
     return json.dumps(out)
 
 
