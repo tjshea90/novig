@@ -67,9 +67,15 @@ object BurstText {
         return now + (status.problem?.takeIf { status.running }?.let { " · $it" } ?: "") + " · $recorded"
     }
 
-    /** The Diagnostics block: null when the recorder was never switched on and nothing was recorded. */
-    fun diagnostics(status: BurstStatus, records: List<BurstLine>, latencyNote: String, settings: ScanSettings, running: Boolean, trades: List<TradeRecord> = emptyList(), trader: BurstTradeStatus = BurstTradeStatus(), proofReason: String? = null, provedLeagues: Set<String> = emptySet()): String? {
-        if (!settings.burstRecorder && records.isEmpty() && trades.isEmpty()) return null
+    /**
+     * The Diagnostics block. Always present, so a file never leaves "is it on?" to guesswork (v0.70.1's showed no
+     * burst line at all because the recorder was off): when it is off and nothing was recorded it is two short lines.
+     */
+    fun diagnostics(status: BurstStatus, records: List<BurstLine>, latencyNote: String, settings: ScanSettings, running: Boolean, trades: List<TradeRecord> = emptyList(), trader: BurstTradeStatus = BurstTradeStatus(), proofReason: String? = null, provedLeagues: Set<String> = emptySet()): String {
+        if (!settings.burstRecorder && records.isEmpty() && trades.isEmpty()) {
+            return "Live burst recorder: off · nothing recorded (switch it on in Settings › Live burst recorder)\n" +
+                "Burst trader (real money): ${if (settings.burstTrade) "ON" else "off"}${settings.burstTradeHalted?.let { " · HALTED: $it" } ?: ""}\n"
+        }
         val o = StringBuilder()
         o.appendLine("Live burst recorder: ${if (settings.burstRecorder) "ON" else "off"} · ${if (running) "running" else "not running"} · leagues ${settings.burstLeagues.sorted().joinToString(", ")}")
         o.appendLine("  now: ${note(status, emptyList()).substringBefore(" · nothing recorded yet").substringBefore(" · ")}${status.problem?.let { " · PROBLEM: $it" } ?: ""}")
