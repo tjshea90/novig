@@ -1918,7 +1918,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             burstReport = runCatching {
                 BurstText.diagnostics(
                     c.burst.status.value, c.burstJournal.readAll(), c.burst.latency.note(), _state.value.settings, c.burst.running,
-                    trades = c.burstTradeJournal.readAll(), trader = c.burstTrader.status.value, proofReason = inputs.burstProofReason,
+                    trades = c.burstTradeJournal.readAll(), trader = c.burstTrader.status.value, proofReason = g.burstProofReason,
                 )
             }.getOrNull(),
             sharpCalls = c.sharp.calls,
