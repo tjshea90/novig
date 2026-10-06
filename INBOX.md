@@ -4692,3 +4692,8 @@ https://www.scrapeless.com/en/wiki/how-to-scrape-espn-match-scores-with-scrapele
   Approximation: the first-pass replay uses logged c/k looks and the preset in force now, so it overstates what the app bought (47/day replayed against about 28/day actual).
 </agent-message>
 ```
+
+## 2026-10-06T21:24:46Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
