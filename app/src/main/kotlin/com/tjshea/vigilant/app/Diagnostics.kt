@@ -53,6 +53,8 @@ object Diagnostics {
         val sharpFeeds: List<String> = emptyList(),
         /** Low API usage bids (RESEARCH.md §92): the feeds the picked books need and the picked books nothing can read; null when that isn't the bids' choice. */
         val lowUsagePlan: com.tjshea.vigilant.data.scanner.LowUsageBids.Plan? = null,
+        /** The live burst recorder (no orders; RESEARCH.md §95): its status line and its report from the journal; null when it was never on and has recorded nothing. */
+        val burstReport: String? = null,
         val sharpCalls: Int = 0,
         val sharpFailures: Int = 0,
         val sharpAnswers: Map<String, Int> = emptyMap(),
@@ -201,6 +203,7 @@ object Diagnostics {
                 (x.maker.problem?.let { " · problem: $it" } ?: ""),
         )
         lowUsageLines(set, x.lowUsagePlan, now).forEach { o.appendLine(it) }
+        x.burstReport?.let { r -> o.appendLine(); o.append(r) }
         MakerStats.line(x.makerBids, now)?.let { o.appendLine("  $it") }
         MakerStats.recent(x.makerBids, now).forEach { o.appendLine("  $it") }
         x.makerBids.filter { it.status.ended }.groupingBy { it.status.label + (it.why?.let { w -> ": $w" } ?: "") }.eachCount().entries.sortedByDescending { it.value }.take(5)

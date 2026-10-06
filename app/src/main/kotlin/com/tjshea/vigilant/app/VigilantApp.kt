@@ -131,6 +131,9 @@ class AppContainer(private val app: Application) {
         /** How often the flight recorder is written to its files. */
         const val FLUSH_EVERY_MS = 30_000L
 
+        /** The burst recorder's connection is never closed for being idle (a scan's is after two minutes): it lives while the recorder does. */
+        const val BURST_IDLE_CLOSE_MS = 24 * 3_600_000L
+
         /** CNO game pages read at once in "Check odds now" (the client's bulk pace keeps them to two requests a second). */
         const val RECHECK_AT_ONCE = 3
 

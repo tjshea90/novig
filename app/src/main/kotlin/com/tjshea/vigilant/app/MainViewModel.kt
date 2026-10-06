@@ -1861,6 +1861,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             keepAwakeHeld = AutoScanService.keepAwakeHeld,
             sharpFeeds = runCatching { com.tjshea.vigilant.data.reference.SharpBooks.feedsAmong(c.referenceSources(_state.value.settings, background = true)) }.getOrDefault(emptyList()),
             lowUsagePlan = _state.value.settings.takeIf { it.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }?.let { runCatching { c.lowUsagePlan(it) }.getOrNull() },
+            burstReport = runCatching { BurstText.diagnostics(c.burst.status.value, c.burstJournal.readAll(), c.burst.latency.note(), _state.value.settings, c.burst.running) }.getOrNull(),
             sharpCalls = c.sharp.calls,
             sharpFailures = c.sharp.failures,
             sharpAnswers = c.sharp.answeredBy,
