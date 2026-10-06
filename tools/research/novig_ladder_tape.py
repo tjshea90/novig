@@ -28,7 +28,7 @@ import numpy as np
 API = 'https://api.novig.com/v3/public'
 FEE_C = 0.03
 WINDOW_MS = 1000
-MIN_RATE_GAP = 0.27   # s between requests: ~3.7 a second
+MIN_RATE_GAP = 0.27   # s between requests: ~3.7 a second (record --rate lowers it: two recorders on one address share the edge's ~4-6 a second)
 
 
 def fee(p):
@@ -56,9 +56,11 @@ def get(url, tries=3):
 # ---------------------------------------------------------------------------------------------------------------- record
 def record(a):
     last = [0.0]
+    gap = 1.0 / a.rate if getattr(a, 'rate', None) else MIN_RATE_GAP
+    leagues = [x.strip() for x in a.league.split(',') if x.strip()]
 
     def paced(url):
-        d = MIN_RATE_GAP - (time.time() - last[0])
+        d = gap - (time.time() - last[0])
         if d > 0:
             time.sleep(d)
         last[0] = time.time()
@@ -75,8 +77,10 @@ def record(a):
     print('recording', a.league, 'until', time.strftime('%H:%M:%S', time.localtime(end)), file=sys.stderr, flush=True)
     while time.time() < end:
         if time.time() - chosen_at > 90:
-            ev = paced(f'{API}/catalog/events?status=OPEN_INGAME&league={a.league}&limit=50')
-            events = (ev or {}).get('items', [])
+            events = []
+            for lg in leagues:
+                ev = paced(f'{API}/catalog/events?status=OPEN_INGAME&league={lg}&limit=50')
+                events += (ev or {}).get('items', [])
             if not events:
                 if not a.wait:
                     print('no live', a.league, 'game; use --wait to wait for a kickoff', file=sys.stderr)
@@ -286,7 +290,7 @@ def analyze(a):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest='cmd', required=True)
-    r = sub.add_parser('record'); r.add_argument('--league', default='NFL'); r.add_argument('--minutes', type=float, default=200); r.add_argument('--out', default='tape.ndjson'); r.add_argument('--wait', action='store_true')
+    r = sub.add_parser('record'); r.add_argument('--league', default='NFL', help='one league or several, comma separated'); r.add_argument('--rate', type=float, default=None, help='requests a second (default 3.7)'); r.add_argument('--minutes', type=float, default=200); r.add_argument('--out', default='tape.ndjson'); r.add_argument('--wait', action='store_true')
     z = sub.add_parser('analyze'); z.add_argument('tapes', nargs='+'); z.add_argument('--overlap', type=float, default=0.03)
     a = ap.parse_args()
     record(a) if a.cmd == 'record' else analyze(a)
