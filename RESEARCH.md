@@ -5293,14 +5293,14 @@ The argument does not need a price list: Novig's makers already move the moneyli
 
 ### 96.1 Measured (the same tape tool, public routes, Oct 5-6)
 - **MNF (NFL)**: 8 bursts, 9,653 prints (95.3); the nearest cover outside the bursts cost a median 1.150 (5th percentile 1.000).
-- **NBA preseason (SAC @ LAL, MIN @ MIL), NHL (SJ @ DAL), MLB (NYY @ TB)**: 6 ladders, 1,722 prints, **0 bursts**, no moneyline jump of 4¢ or more, and the nearest cover outside bursts cost a median **1.33** (5th percentile 1.05, 0.0% under $1, n=53); the MLB ladder's nearest covers cost 1.24 at the median. Too little play and too few prints to say anything about basketball in season.
+- **NBA preseason (SAC @ LAL, MIN @ MIL), NHL (SJ @ DAL), MLB (NYY @ TB)**: 6 ladders, 1,722 prints, **0 bursts**, no moneyline jump of 4¢ or more, and the nearest cover outside bursts cost a median **1.33** (5th percentile 1.05, 0.0% under $1, n=53); an earlier look at the MLB ladder alone found its nearest covers at a median 1.24. Too little play and too few prints to say anything about basketball in season.
 - **What could NOT be measured**: the 29 days of Novig trade files cannot answer it: they carry the league, market and trade but no game (event) and no line (strike), so a ladder cannot be rebuilt from them. Only a book or trade tape that knows each market's game and line can (the recorder's catalog does).
 
 ### 96.2 Why the structure matters (a cover pays when a stale quote is wrong by more than the chance the margin lands BETWEEN the two lines, plus fees)
 A cover of two neighbouring lines is fair at `1 + P(margin lands between them)`, and the two taker fees add about 1.5-2¢ more. So a window needs a stale quote that is wrong by at least that much, and the room differs by sport (typical base rates, approximate, NOT measured here):
 - **NFL, NCAAF**: the moneyline against the -1.5 spread is `P(margin = 1)`, about 2-3%; adjacent totals half a point apart about 3-4% (more on a key number such as 3 or 7). Narrow band: a 4-5¢ error after a score opens a window (as seen).
 - **NBA, WNBA, NCAAB**: spreads and totals a point apart are about 2-3% of the margin each: also a narrow band, and far more plays (every possession) so many more chances: but each play moves the lines by only a fraction of a point, so the errors are small. The most promising sport after football to MEASURE.
-- **MLB**: `P(one-run margin)` about 25-30%: the moneyline against -1.5 costs about 1.25-1.30 at fair, which is exactly what the tape shows (1.24 at the median). A window needs a 25¢ mistake: a grand slam or an ejection, rare and priced fast.
+- **MLB**: `P(one-run margin)` about 25-30%: the moneyline against -1.5 costs about 1.25-1.30 at fair, in line with the 1.24 the MLB ladder showed at the median. A window needs a 25¢ mistake: a grand slam or an ejection, rare and priced fast.
 - **NHL**: one-goal margins about 35-40%, adjacent totals about 15-20%: even wider; no window short of a huge instant jump.
 - **Tennis, MMA, soccer 3-way moneylines**: no margin ladder of this kind, so no cover of this kind.
 
