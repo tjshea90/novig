@@ -123,9 +123,9 @@ class BurstTraderUiTest {
     }
 
     @Test
-    fun `a halt shows why and one tap on Resume clears it, and a halt is not hidden when the switch is off`() {
+    fun `a halt shows why and one tap on Resume clears it without turning anything on or off`() {
         val ui = show(state(ScanSettings(burstRecorder = true, burstTrade = true, burstTradeHalted = "2 covers in a row ended with a leg held alone: Resume it in Settings once you have looked at the Tracker"), null))
-        compose.onNodeWithTag("burstTradeHalted").performScrollTo().assertTextContains("2 covers in a row", substring = true)
+        compose.onNode(androidx.compose.ui.test.hasText("Stopped: 2 covers in a row", substring = true)).performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag("burstTradeResume").performClick()
         assertNull(ui().settings.burstTradeHalted)
         assertTrue("still on: Resume does not turn it off or on", ui().settings.burstTrade)
