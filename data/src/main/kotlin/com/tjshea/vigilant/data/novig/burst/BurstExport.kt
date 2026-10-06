@@ -1,5 +1,7 @@
 package com.tjshea.vigilant.data.novig.burst
 
+import com.tjshea.vigilant.data.novig.trading.burst.BurstTradeReport
+import com.tjshea.vigilant.data.novig.trading.burst.TradeRecord
 import kotlinx.serialization.json.Json
 import java.io.Writer
 import java.text.SimpleDateFormat
@@ -17,14 +19,14 @@ object BurstExport {
 
     const val PROMPT = "This is Vigilant's live burst study (a no-orders recorder of cross-line mispricings after plays, RESEARCH.md §95). Read the READ ME at the top, then the report, " +
         "then analyze the window lines: which leagues show windows that last long enough for an order from this phone to arrive, what a paper trade at the measured delays made, and whether " +
-        "the verdict (needs 3 games and 10 windows) says it is worth a real $1 test. Do not build or enable anything that places orders without asking Tj."
+        "the verdict (needs 3 games and 10 windows) says it is worth a real $1 test. If REAL-MONEY TRADES is there, compare it with the paper trade. Do not turn the real-money trader on or change its limits without asking Tj."
 
     fun fileName(versionName: String, nowMs: Long): String =
         "vigilant-burst-study-v$versionName-${SimpleDateFormat("yyyy-MM-dd-HHmm", Locale.US).apply { timeZone = TimeZone.getTimeZone("America/New_York") }.format(Date(nowMs))}.txt"
 
     class Meta(val versionName: String, val device: String, val capDollars: Double, val leagues: Set<String>)
 
-    fun write(w: Writer, records: List<BurstLine>, latencyNote: String, meta: Meta, nowMs: Long) {
+    fun write(w: Writer, records: List<BurstLine>, latencyNote: String, meta: Meta, nowMs: Long, trades: List<TradeRecord> = emptyList()) {
         w.appendLine("VIGILANT LIVE BURST STUDY · version ${meta.versionName} · ${meta.device}")
         w.appendLine()
         w.appendLine("== READ ME FIRST (for Claude) ==")
@@ -36,7 +38,9 @@ object BurstExport {
         w.appendLine("seen price or better when the order would arrive; 'one leg' = a naked leg (charged its fee and a flat 2 cents a contract); 'missed' = neither. 'capped' = at Tj's own per-bet limit.")
         w.appendLine("Conservative on purpose: only the best price level, the chance the margin lands between the lines ignored, the push delay includes any clock difference between the phone and Novig.")
         w.appendLine("WHAT THIS PROVES: ${BurstStudy.PROVES}")
-        w.appendLine("Rules: never place orders without Tj's say-so; never loosen a limit; the repo is public: no keys. Tj's questions: does it work on this setup, and does it work in sports other than the NFL?")
+        w.appendLine("The recorder itself never places an order. A separate real-money trader exists (OFF by default, locked until this verdict says WORTH A TEST, then Tj's own switch); if it ever ran, its attempts are in")
+        w.appendLine("REAL-MONEY TRADES below: that is the REAL answer to 'does it profit on this setup', which the paper trade can only estimate. Compare the two (did both legs fill as often as the paper said?).")
+        w.appendLine("Rules: never turn the trader on or loosen a limit without Tj's say-so; the repo is public: no keys. Tj's questions: does it work on this setup, and does it work in sports other than the NFL?")
         w.appendLine()
         w.appendLine("== SETTINGS ==")
         w.appendLine("leagues: ${meta.leagues.sorted().joinToString(", ")} · per-bet limit used for 'capped': ${if (meta.capDollars > 0) "$" + "%.2f".format(Locale.US, meta.capDollars) else "none"} · made ${Date(nowMs)}")
@@ -49,6 +53,11 @@ object BurstExport {
         w.appendLine()
         w.appendLine("== WINDOWS (JSON lines, oldest first) ==")
         for (x in records.filterIsInstance<WindowRecord>().sortedBy { it.openedMs }) w.appendLine(json.encodeToString(BurstLine.serializer(), x))
+        if (trades.isNotEmpty()) {
+            w.appendLine()
+            w.appendLine("== REAL-MONEY TRADES (the trader's own record: one JSON line an attempt) ==")
+            w.append(BurstTradeReport.section(trades))
+        }
         w.appendLine()
         w.appendLine("== END OF FILE ==")
     }
