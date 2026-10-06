@@ -139,6 +139,17 @@ class BurstTraderUiTest {
         assertTrue(BurstText.tradeLine(null, BurstTradeStatus(), ScanSettings(burstRecorder = true, burstTrade = true, burstTradeHalted = "x")).startsWith("Unlocked"))
     }
 
+    @Test
+    fun `the words name the leagues that proved themselves, and the confirmation says the others are left alone`() {
+        val on = ScanSettings(burstRecorder = true, burstTrade = true)
+        val line = BurstText.tradeLine(null, BurstTradeStatus(), on, setOf("NFL", "NBA"))
+        assertTrue(line, line.startsWith("ON: trading with real money in NBA, NFL only"))
+        assertTrue(BurstText.tradeLine(null, BurstTradeStatus(), on.copy(burstTrade = false), setOf("NFL")).startsWith("Unlocked in NFL only"))
+        val confirm = BurstText.tradeConfirm(on, setOf("NFL"))
+        assertTrue(confirm, confirm.contains("NFL games (the leagues the recorder has proved; others are left alone)"))
+        assertTrue(BurstText.TRADE_HINT.contains("LEAGUE BY LEAGUE"))
+    }
+
     private fun trade(outcome: String, locked: Double, naked: Double) = TradeRecord(
         1_790_000_000_000L, "NFL", "g1", "A @ B", "ML ATL YES / Spr ATL -1.5 NOT", 185, 0.539, 0.435, 0.011, 90, outcome, 185, if (outcome == "NAKED") 0 else 185, 1.8, 0.05, 0, 185, locked, 0, naked, "both legs sent at once",
     )
