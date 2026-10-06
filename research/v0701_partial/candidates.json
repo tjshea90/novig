@@ -1,0 +1,2681 @@
+{
+ "cap": 10,
+ "unique_rules": 24,
+ "candidates": [
+  {
+   "bets": 28,
+   "games": 16,
+   "per_day": 12.411347517730498,
+   "avg_available": 229.94455714285712,
+   "median_available": 32.7946,
+   "closes": 22,
+   "close_games": 15,
+   "clv": 0.03718550147562882,
+   "clv_lo": 0.028089172980860756,
+   "clv_hi": 0.04593667503351005,
+   "beat_the_close": 0.9090909090909091,
+   "roi": -0.17381150381150381,
+   "roi_lo": -0.5649784009009008,
+   "roi_hi": 0.24420248645384487,
+   "settled": 26,
+   "clv_close_ok": 0.03718550147562882,
+   "clv_close_ok_lo": 0.02783946466639729,
+   "clv_close_ok_hi": 0.0458464746171887,
+   "closes_ok": 22,
+   "first_half_clv": 0.04014716782639072,
+   "second_half_clv": 0.0360748765940931,
+   "first_half_detail": {
+    "closes": 6,
+    "games": 5,
+    "clv": 0.04014716782639072,
+    "lo": 0.02981352760580036,
+    "hi": 0.04666345119628747
+   },
+   "second_half_detail": {
+    "closes": 16,
+    "games": 10,
+    "clv": 0.0360748765940931,
+    "lo": 0.02386639449236459,
+    "hi": 0.04758379449602257
+   },
+   "start_date_halves": {
+    "first": {
+     "closes": 6,
+     "games": 5,
+     "clv": 0.04014716782639072,
+     "lo": 0.02981352760580036,
+     "hi": 0.04666345119628747
+    },
+    "second": {
+     "closes": 16,
+     "games": 10,
+     "clv": 0.0360748765940931,
+     "lo": 0.02386639449236459,
+     "hi": 0.04758379449602257
+    }
+   },
+   "by_close_family": {
+    "espn_pinn": {
+     "closes": 1,
+     "games": 1,
+     "clv": 0.02141290209858071,
+     "lo": 0.02141290209858071,
+     "hi": 0.02141290209858071
+    },
+    "novig_3plus": {
+     "closes": 5,
+     "games": 4,
+     "clv": 0.0026655350278270706,
+     "lo": 0.0007857904149752293,
+     "hi": 0.004764172812898848
+    },
+    "tracker": {
+     "closes": 16,
+     "games": 12,
+     "clv": 0.048958778451632365,
+     "lo": 0.042592844625309066,
+     "hi": 0.054480987599765184
+    },
+    "independent": {
+     "closes": 6,
+     "games": 5,
+     "clv": 0.005790096206286011,
+     "lo": 0.0014671043066424767,
+     "hi": 0.013162057425138518
+    },
+    "not_placed_by_tj": {
+     "closes": 6,
+     "games": 5,
+     "clv": 0.005790096206286011,
+     "lo": 0.0014671043066424767,
+     "hi": 0.013162057425138518
+    }
+   },
+   "paired_vs_first_price_of_same_bets": {
+    "closes": 22,
+    "mean_first": 0.02951918552038014,
+    "mean_rule": 0.03718550147562882,
+    "diff": 0.007666315955248673,
+    "lo": 0.002646326407452385,
+    "hi": 0.014113066017929667,
+    "p_signflip": 0.00575
+   },
+   "permutation_within_game_day": null,
+   "vs_other_candidates": null,
+   "p_clv_le_all_bets_baseline": 0.0,
+   "available_dollars_sum_per_day": 2853.921808510638,
+   "avg_listed_ev": 0.03471785714285715,
+   "clv_points_times_bets_per_day": 46.15221814351095,
+   "name": "R8 Late sniper: at 5 minutes before the start buy every listed bet with EV at least 2.5% (NO GAIN, thin)",
+   "expr": "import sys; sys.path.insert(0,'<scratch>/v0701/lib'); from load import load, looks, clv_stats; import numpy as np, pandas as pd\ndf = load(); L = looks(df); d = df.set_index('id')\nL['startsAtMs'] = L.id.map(d.startsAtMs); L['closeFair'] = L.id.map(d.closeFair); L['t_ms'] = L.startsAtMs - L.minToStart*60000   # look time, ms\nimp = lambda a: np.where(a<0, -a/(100-a), 100/(100+a))\nP = L[L.kind.isin(['c','w'])].sort_values(['id','i']).copy()      # CNO-family PRICE looks: c = the app's CNO list, w = the wide read (same devig; Vigilant's own v looks are separate)\nP['cost'] = imp(P.american.astype(float)); P['clv_i'] = P.closeFair/P.cost - 1     # CLV had the bet been bought at THIS look (closeFair/cost - 1)\nf = P.groupby('id').head(1).set_index('id')                         # each bet's first c/w look\nP['m0'] = P.id.map(f.minToStart)                                     # minutes to the start at the first look\nP['age'] = (P.t_ms - P.id.map(f.t_ms))/60000                         # minutes since the first look (known at decision time)\nP['improve'] = (P.id.map(f.cost) - P.cost)/P.id.map(f.cost)          # >0 = cheaper than at the first look\nW = P[(P.minToStart>=2) & (P.minToStart<=360)]                       # looks inside the 6 h window, pregame with a 2-minute buffer\n# every rule below picks ONE look per bet (the first that satisfies it, groupby('id').head(1)) using only that look and earlier looks; CLV/ROI are taken at that look's price. See rules_repro.py for the runnable version.\n# for each bet: T = startsAtMs - 5*60000; state at T as in R7; buy at the last c/w price look if listed, <= 7 min old and ev >= 0.025",
+   "rationale": "Waiting for the last minutes (small fair drift, the line has settled) is the other timing extreme. 28 bets in 16 games (12/day), 22 closes: CLV +3.72% [+2.81%, +4.59%], but 16 of the 22 closes are Tracker reads taken at about the same minute (circular) and independent closes are +0.58% on 6. The same bets at their first look +2.95%: the paired gain is +0.77 pts. At -15 min 18 bets, +3.81% (14 closes). Inside the 6 h window the time to the start has no slope (-0.05 pts/h, p 0.74).",
+   "baseline_clv": 0.02951918552038014,
+   "baseline_note": "the same bets at their first c/w look",
+   "luck_probability": "paired sign-flip p = 0.006 on 22 closes/15 games; too few bets to matter: 12 a day, 15% of R1's volume.",
+   "verdict": "Not a strategy: tiny volume, no CLV gain over buying at the first qualifying look, higher fill risk (median $33 at the price).",
+   "angle": "WHEN and AT WHAT PRICE to take a bet: decision-time rules over each bet's looks (no hindsight): window, EV-at-the-look entry, freshness of the listing, price level, price improvement, waiting / confirming / late sniping, EV path, stale listings; CNO-family (c/w) looks for the main rules, the Vigilant scan (v) separately.",
+   "tried_count": 522,
+   "baseline": "Universe = the study's 2080 bets (190 games); 683 have a close (69 games). First-listed-price CLV of ALL bets +0.19% [-0.36, +0.80]; of the 1842 bets the CNO family (c/w) listed +0.38% [-0.06, +0.86] on 571 closes/61 games (ROI +3.1%); of the 614 the Vigilant scan listed -0.14% [-0.89, +0.71] on 368 closes/39 games. Reference rule: first look 2-360 min before the start for bets first seen there (FRESH) +1.29% [+0.88, +1.83] on 234 closes/58 games; the guard as built (ENTER_360, entrants included) +0.82% [+0.46, +1.28] on 378/59. Every rule's CLV is taken at the price of the LOOK where the rule buys (closeFair/cost-1), game-cluster bootstrap CIs (loader method), ROI at that price. Date halves: decision date Oct 3 | Oct 4+ (the 'first_half' is Oct 3: 20-73 closes, so its CIs are wide), plus a game-start median split; both are in the rules' detail."
+  },
+  {
+   "bets": 119,
+   "games": 40,
+   "per_day": 52.74822695035461,
+   "avg_available": 152.15784831932774,
+   "median_available": 47.0,
+   "closes": 74,
+   "close_games": 32,
+   "clv": 0.03211010094288087,
+   "clv_lo": 0.023275982448117547,
+   "clv_hi": 0.04450892448955212,
+   "beat_the_close": 0.8108108108108109,
+   "roi": -0.028869565217391313,
+   "roi_lo": -0.26021259469696967,
+   "roi_hi": 0.2397398189005329,
+   "settled": 115,
+   "clv_close_ok": 0.03209077177036895,
+   "clv_close_ok_lo": 0.02363985833744161,
+   "clv_close_ok_hi": 0.04445962819880343,
+   "closes_ok": 71,
+   "first_half_clv": 0.024254891239473275,
+   "second_half_clv": 0.03427705534382089,
+   "first_half_detail": {
+    "closes": 16,
+    "games": 13,
+    "clv": 0.024254891239473275,
+    "lo": 0.006705394220854312,
+    "hi": 0.042689341520721326
+   },
+   "second_half_detail": {
+    "closes": 58,
+    "games": 19,
+    "clv": 0.03427705534382089,
+    "lo": 0.023953680150275585,
+    "hi": 0.05157075634121787
+   },
+   "start_date_halves": {
+    "first": {
+     "closes": 16,
+     "games": 13,
+     "clv": 0.024254891239473275,
+     "lo": 0.006705394220854312,
+     "hi": 0.042689341520721326
+    },
+    "second": {
+     "closes": 58,
+     "games": 19,
+     "clv": 0.03427705534382089,
+     "lo": 0.023953680150275585,
+     "hi": 0.05157075634121787
+    }
+   },
+   "by_close_family": {
+    "espn_pinn": {
+     "closes": 4,
+     "games": 4,
+     "clv": 0.03328571759462012,
+     "lo": 0.0254764590014403,
+     "hi": 0.03979510331654801
+    },
+    "novig_1_2": {
+     "closes": 3,
+     "games": 3,
+     "clv": 0.0325675580256628,
+     "lo": -0.009887000566732862,
+     "hi": 0.10783967464372135
+    },
+    "novig_3plus": {
+     "closes": 15,
+     "games": 10,
+     "clv": 0.00753787365052517,
+     "lo": -0.0021359949940170883,
+     "hi": 0.018454289345220348
+    },
+    "tracker": {
+     "closes": 52,
+     "games": 23,
+     "clv": 0.03908141962615072,
+     "lo": 0.02887925085708904,
+     "hi": 0.05538051752373094
+    },
+    "independent": {
+     "closes": 19,
+     "games": 14,
+     "clv": 0.012958472375597791,
+     "lo": 0.0049134404683414705,
+     "hi": 0.02356584191956175
+    },
+    "not_placed_by_tj": {
+     "closes": 22,
+     "games": 15,
+     "clv": 0.015632438600606657,
+     "lo": 0.005948735949410312,
+     "hi": 0.03056561190861423
+    }
+   },
+   "paired_vs_first_price_of_same_bets": {
+    "closes": 74,
+    "mean_first": 0.026041428879403472,
+    "mean_rule": 0.03211010094288087,
+    "diff": 0.0060686720634773915,
+    "lo": 0.0036747990685739836,
+    "hi": 0.00953362572434213,
+    "p_signflip": 0.00015
+   },
+   "permutation_within_game_day": {
+    "p": 0.006,
+    "null_mean": 0.025680320457701022,
+    "candidate_closes": 116,
+    "rule_closes": 74,
+    "label": "stack vs random R1 events"
+   },
+   "vs_other_candidates": {
+    "diff": 0.018401247252932757,
+    "lo": 0.007788753121400635,
+    "hi": 0.032432629789473,
+    "p_le_0": 0.0,
+    "rule_closes": 74,
+    "other_closes": 42,
+    "other_clv": 0.013708853689948116
+   },
+   "p_clv_le_all_bets_baseline": 0.0,
+   "available_dollars_sum_per_day": 8026.056715425533,
+   "avg_listed_ev": 0.03736638655462185,
+   "clv_points_times_bets_per_day": 169.3750891933876,
+   "name": "R6 Stack: R1 and first seen inside the window and plus-money (the three effects together)",
+   "expr": "import sys; sys.path.insert(0,'<scratch>/v0701/lib'); from load import load, looks, clv_stats; import numpy as np, pandas as pd\ndf = load(); L = looks(df); d = df.set_index('id')\nL['startsAtMs'] = L.id.map(d.startsAtMs); L['closeFair'] = L.id.map(d.closeFair); L['t_ms'] = L.startsAtMs - L.minToStart*60000   # look time, ms\nimp = lambda a: np.where(a<0, -a/(100-a), 100/(100+a))\nP = L[L.kind.isin(['c','w'])].sort_values(['id','i']).copy()      # CNO-family PRICE looks: c = the app's CNO list, w = the wide read (same devig; Vigilant's own v looks are separate)\nP['cost'] = imp(P.american.astype(float)); P['clv_i'] = P.closeFair/P.cost - 1     # CLV had the bet been bought at THIS look (closeFair/cost - 1)\nf = P.groupby('id').head(1).set_index('id')                         # each bet's first c/w look\nP['m0'] = P.id.map(f.minToStart)                                     # minutes to the start at the first look\nP['age'] = (P.t_ms - P.id.map(f.t_ms))/60000                         # minutes since the first look (known at decision time)\nP['improve'] = (P.id.map(f.cost) - P.cost)/P.id.map(f.cost)          # >0 = cheaper than at the first look\nW = P[(P.minToStart>=2) & (P.minToStart<=360)]                       # looks inside the 6 h window, pregame with a 2-minute buffer\n# every rule below picks ONE look per bet (the first that satisfies it, groupby('id').head(1)) using only that look and earlier looks; CLV/ROI are taken at that look's price. See rules_repro.py for the runnable version.\nR1 = W[W.ev >= 0.025].groupby('id').head(1); R6 = R1[(R1.m0 <= 360) & (R1.cost < 0.50)]",
+   "rationale": "Intersection of the three decision-time facts (EV at the look, fresh listing, plus money). 119 bets, 74 closes in 32 games, 53 a day. Highest CLV of the set but it is the most fitted: three conditions picked on the same 2.26 days; it loses 65 of R1's 184 bets for about +0.7 pts a bet. Against the rest of R1 +1.84 pts [+0.78 pts, +3.24 pts]. Independent closes +1.30% [+0.49%, +2.33%] on 19 closes/14 games (one-sided p(<=0) 0.0013), Tracker +3.91%.",
+   "baseline_clv": 0.026041428879403472,
+   "baseline_note": "same bets at first look +2.60%; rest of R1 +1.37% on 42 closes",
+   "luck_probability": "Bootstrap p(stack <= rest of R1) = 0.000; permutation within game-day p = 0.006. Because the three conditions were chosen together on one data set, treat the raw p as optimistic by a factor of ~10; the honest statement is 'R1 is real, R2/R4 are likely real, the stack is their sum until a fresh sample says otherwise'.",
+   "robustness": {
+    "per_day_steady_state_after_first_6h_of_study": 48.29171041916874,
+    "after_first_6h": {
+     "closes": 58,
+     "games": 19,
+     "clv": 0.03427705534382089,
+     "lo": 0.023951541504265615,
+     "hi": 0.05130128662209752
+    },
+    "NFL": {
+     "closes": 45,
+     "games": 11,
+     "clv": 0.02976040618110403,
+     "lo": 0.020506975725017237,
+     "hi": 0.04869198490903522
+    },
+    "non_NFL": {
+     "closes": 29,
+     "games": 21,
+     "clv": 0.03575617902150009,
+     "lo": 0.021889442837117946,
+     "hi": 0.04896660816507387
+    },
+    "props": {
+     "closes": 62,
+     "games": 23,
+     "clv": 0.03263433712703438,
+     "lo": 0.02329554120413118,
+     "hi": 0.04780623671343867
+    },
+    "by_game_start_day": {
+     "start_2026-10-03": {
+      "closes": 15,
+      "games": 12,
+      "clv": 0.027298353051814748,
+      "lo": 0.01125804933627268,
+      "hi": 0.04625379002412737
+     },
+     "start_2026-10-04": {
+      "closes": 47,
+      "games": 16,
+      "clv": 0.03226045660692537,
+      "lo": 0.02104255293825406,
+      "hi": 0.053782478706556475
+     },
+     "start_2026-10-05": {
+      "closes": 12,
+      "games": 4,
+      "clv": 0.037535892789205876,
+      "lo": 0.03345638069558385,
+      "hi": 0.04639363091436288
+     }
+    },
+    "app_cno_list_c_looks_only": {
+     "closes": 68,
+     "games": 31,
+     "clv": 0.03255340459284543,
+     "lo": 0.023670302493242673,
+     "hi": 0.046592699788781014,
+     "bets": 85,
+     "per_day": 37.67730496453901
+    },
+    "independent_closes": {
+     "closes": 19,
+     "games": 14,
+     "clv": 0.012958472375597791,
+     "lo": 0.004898469928024107,
+     "hi": 0.02327736443363196,
+     "halfwidth_pts": 0.9189447252803925,
+     "games_for_pm0.5": 47.289726854756736,
+     "closes_for_pm0.5": 64.17891501716986
+    }
+   },
+   "verdict": "Do not adopt as is. Re-test on the next ~150 closes (about 4-5 days at this rate) before it decides which bets are placed.",
+   "angle": "WHEN and AT WHAT PRICE to take a bet: decision-time rules over each bet's looks (no hindsight): window, EV-at-the-look entry, freshness of the listing, price level, price improvement, waiting / confirming / late sniping, EV path, stale listings; CNO-family (c/w) looks for the main rules, the Vigilant scan (v) separately.",
+   "tried_count": 522,
+   "baseline": "Universe = the study's 2080 bets (190 games); 683 have a close (69 games). First-listed-price CLV of ALL bets +0.19% [-0.36, +0.80]; of the 1842 bets the CNO family (c/w) listed +0.38% [-0.06, +0.86] on 571 closes/61 games (ROI +3.1%); of the 614 the Vigilant scan listed -0.14% [-0.89, +0.71] on 368 closes/39 games. Reference rule: first look 2-360 min before the start for bets first seen there (FRESH) +1.29% [+0.88, +1.83] on 234 closes/58 games; the guard as built (ENTER_360, entrants included) +0.82% [+0.46, +1.28] on 378/59. Every rule's CLV is taken at the price of the LOOK where the rule buys (closeFair/cost-1), game-cluster bootstrap CIs (loader method), ROI at that price. Date halves: decision date Oct 3 | Oct 4+ (the 'first_half' is Oct 3: 20-73 closes, so its CIs are wide), plus a game-start median split; both are in the rules' detail."
+  },
+  {
+   "name": "First listed within 6 h AND listed EV at least 2%",
+   "key": "T6_and_EV2",
+   "expr": "(df.minToStartFirst<=360)&(df.ev>=0.02)",
+   "rationale": "Inside the 6 h window the listed EV is almost fully kept: CLV climbs monotonically with the EV floor (1%: +2.0%, 1.5%: +2.4%, 2%: +3.0%, 3%: +3.7%, 4%: +4.1%), while beyond 6 h the same floors give +0.3% at 2%. EV >= 2% is the only single add-on to the 6 h window that survives a family-wise test (within-window p=0.020 over 475 rules; excess +1.9 pts over the window's +1.38%); fitted on the first half only it is the top single EV floor in both protocols (excess +1.8 and +2.0 pts) and the second half agrees (+1.9 and +2.0 pts). Nothing else added to the window (shown/hidden, kind, price, books, dollars, sharp verdict, lister) beats noise. The 2.5% variant is rule 3 (the auto-bet's own floor). About 80% of its bets are ones the app's CNO list shows today.",
+   "bets": 161,
+   "games": 51,
+   "per_day": 71.4,
+   "games_per_day": 22.6,
+   "avg_available": 422.6,
+   "median_available": 70.0,
+   "p25_available": 16.0,
+   "listed_ev_mean": 0.0362,
+   "shown_share": 0.795,
+   "bets_by_first_look_day": {
+    "2026-10-03": 26,
+    "2026-10-04": 78,
+    "2026-10-05": 57
+   },
+   "games_by_first_look_day": {
+    "2026-10-03": 19,
+    "2026-10-04": 21,
+    "2026-10-05": 12
+   },
+   "clv": 0.030119597473411218,
+   "clv_lo": 0.02120417187146242,
+   "clv_hi": 0.04186625251299077,
+   "clv_closes": 79,
+   "clv_games": 34,
+   "beat_close_share": 0.7341772151898734,
+   "clv_close_ok": {
+    "clv": 0.03272987914548159,
+    "lo": 0.02168830019595159,
+    "hi": 0.0468876854111987,
+    "closes": 66,
+    "games": 30,
+    "beat": 0.7878787878787878
+   },
+   "clv_independent_closes": {
+    "clv": 0.018594108654305653,
+    "lo": 0.009973263576297454,
+    "hi": 0.030378789851950288,
+    "closes": 23,
+    "games": 16,
+    "beat": 0.6521739130434783
+   },
+   "roi": 0.09173296360777858,
+   "roi_lo": -0.08997127403392792,
+   "roi_hi": 0.2718786668835435,
+   "roi_settled": 154,
+   "roi_games": 48,
+   "baseline_universe": "T6",
+   "baseline_clv": 0.014107574966926073,
+   "baseline_clv_closes": 256,
+   "baseline_clv_games": 66,
+   "complement_in_baseline_clv": 0.006960966051602195,
+   "complement_closes": 177,
+   "all_bets_baseline_clv": 0.0019152551730908345,
+   "first_half_clv": 0.02698177602332012,
+   "first_half_closes": 64,
+   "first_half_games": 26,
+   "first_half_roi": 0.10357374507838796,
+   "second_half_clv": 0.04350763566046659,
+   "second_half_closes": 15,
+   "second_half_games": 8,
+   "second_half_roi": 0.07101159603421212,
+   "loader_cut_day": "2026-10-04",
+   "game_start_split": {
+    "first_clv": 0.02718489810028692,
+    "first_closes": 32,
+    "first_games": 17,
+    "second_clv": 0.03211769066362351,
+    "second_closes": 47,
+    "second_games": 17,
+    "first_independent_clv": 0.011019784938918009,
+    "first_independent_closes": 10,
+    "second_independent_clv": 0.02442051151229615,
+    "second_independent_closes": 13
+   },
+   "first_look_day_split": {
+    "oct3_clv": 0.022225008869658888,
+    "oct3_closes": 15,
+    "oct3_games": 11,
+    "oct4_6_clv": 0.03196989167741567,
+    "oct4_6_closes": 64,
+    "oct4_6_games": 24
+   },
+   "fit_on_first_half": {
+    "loader_split": {
+     "rank1": 53.0,
+     "n1": 51.0,
+     "g1": 22.0,
+     "clv1": 0.0295599507587213,
+     "t1": 3.337556495709506,
+     "p1": 0.043989002749312674,
+     "n2": 15.0,
+     "g2": 8.0,
+     "clv2": 0.04350763566046659,
+     "t2": 2.3130058411791468
+    },
+    "game_start_split": null
+   },
+   "robustness": {
+    "leave_one_game_out_clv_range": [
+     0.028183923784240505,
+     0.03435653935318441
+    ],
+    "game_equal_weight_clv_ci_games": [
+     0.032155938444629543,
+     0.020208534085282663,
+     0.04298137296348139,
+     34
+    ],
+    "ex_biggest_game": {
+     "n": 63,
+     "games": 33,
+     "clv": 0.03435653935318441,
+     "lo": 0.024176891780765958,
+     "hi": 0.0434781572545593,
+     "beat": 0.7936507936507936
+    },
+    "ex_NFL": {
+     "n": 33,
+     "games": 22,
+     "clv": 0.03619726640297572,
+     "lo": 0.021707428893098513,
+     "hi": 0.049971322334334906,
+     "beat": 0.8181818181818182
+    },
+    "NFL_only": {
+     "n": 46,
+     "games": 12,
+     "clv": 0.025759530632636696,
+     "lo": 0.01639736068050938,
+     "hi": 0.04192059272968409,
+     "beat": 0.6739130434782609
+    },
+    "not_placed_by_Tj": {
+     "n": 36,
+     "games": 21,
+     "clv": 0.017970574329075877,
+     "lo": 0.00870611933746004,
+     "hi": 0.027697401892519506,
+     "beat": 0.5833333333333334
+    },
+    "placed_by_Tj": {
+     "n": 43,
+     "games": 21,
+     "clv": 0.04029087266401756,
+     "lo": 0.024694752353510527,
+     "hi": 0.058866978961142916,
+     "beat": 0.8604651162790697
+    },
+    "liquidity_weighted_clv_cap100_ci": [
+     0.021787902909702738,
+     0.012431993533141226,
+     0.03643472673445006
+    ]
+   },
+   "p_values": {
+    "boot_p_clv_le0_all": 0.0,
+    "boot_p_clv_le0_ok": 0.0,
+    "boot_p_clv_le0_indep": 0.0,
+    "fwer_signflip_closeok": 0.0014996250937265683,
+    "fwer_signflip_all_closes": 0.0014996250937265683,
+    "fwer_signflip_indep_closes": null,
+    "fwer_signflip_unplaced_closeok": null,
+    "naive_shuffle_p": 0.002999000333222259,
+    "H2_loader": {
+     "n": 15,
+     "games": 8,
+     "clv": 0.04350763566046659,
+     "half_mean": 0.006004761678969227,
+     "p_single_signflip_above_half_mean": 0.007699615019249037,
+     "p_single_signflip_above_zero": 0.007699615019249037
+    },
+    "H2_game_start": {
+     "n": 41,
+     "games": 16,
+     "clv": 0.030529751881942693,
+     "half_mean": -0.00175739862460322,
+     "p_single_signflip_above_half_mean": 4.999750012499375e-05,
+     "p_single_signflip_above_zero": 9.99950002499875e-05
+    }
+   },
+   "games_with_closes_needed": {
+    "all_closes_halfwidth_0p5pt": 142.80985374073404,
+    "all_closes_80pct_power_vs_zero_at_1pt": 72.8621702758847,
+    "independent_closes_halfwidth_0p5pt": 66.48212048922059,
+    "independent_closes_80pct_power_at_observed": 9.810656338363914,
+    "have_independent_games": 16
+   },
+   "luck_probability": "Chance the true CLV is <= 0 (bootstrap over games): all closes <0.001, close_ok <0.001, independent closes (ESPN/Pinnacle/Novig 3+ trades) <0.001. Chance a rule this good appears among the 5,074 rules tried (cluster sign-flip max-t, 4000 flips, vs the all-closes mean): 0.001 on close_ok, 0.001 on all closes, not testable on independent closes (fewer than 30 of them); naive within-game-day shuffle (iid t-statistic, treats same-game bets as independent): 0.003. Single pre-specified check on the second date half (cluster sign-flip, above that half's mean): loader split p=0.008 (15 closes, 8 games), game-start split p<0.001 (41 closes, 16 games).",
+   "angle": "strategy-simple-filters: a few simple first-look filters (1-3 conditions: time to start, listed EV, shown/hidden, kind, league, price band, books behind the fair, dollars available, sharp verdict, lister) on the bets the app lists or could list (all 2,080 logged bets, wide read included). Every rule is evaluated on three yardsticks (all closes, close_ok, independent closes = ESPN/Pinnacle/Novig trades of 3+ with no Tracker close), fitted on the first date half and checked on the second under two protocols, and put through a family-wise permutation test over the whole grid.",
+   "tried_count": 9340,
+   "baseline": "Universe = all 2,080 logged first-looks (wide read included), 683 with a close in 69 games: CLV +0.19% [-0.33,+0.78] on all closes, +0.19% [-0.32,+0.81] on close_ok (588 closes, 66 games), -0.04% [-0.65,+0.61] on independent closes (360 closes, 57 games); ROI +1.58% on 1,696 settled. The phone's current setting (trap guard 24 h) leaves 1,749 bets (775/day) with CLV +0.31% [-0.21,+0.83] (668 closes, 69 games; +0.01% on 353 independent closes). Bets first listed more than 6 h out: -0.54% [-1.57,+0.35] (427 closes, 31 games). Every rule below must beat these; the parent universe of each rule is named in baseline_universe."
+  },
+  {
+   "name": "6 h trap guard (today 24 h) plus skip when the book page's own edge is 1 point or more under the list's edge",
+   "rank": 2,
+   "universe": "UJ",
+   "universe_expr": "(df.shown) & (df.ev>=0.025) & (df.american>=-200) & (df.american<=130) & df.kind.isin(['PROP','MONEYLINE','SPREAD']) & (df.minToStartFirst<=1440) & df.ab_verdict.notna()",
+   "expr": "((df.shown) & (df.ev>=0.025) & (df.american>=-200) & (df.american<=130) & df.kind.isin(['PROP','MONEYLINE','SPREAD']) & (df.minToStartFirst<=1440) & df.ab_verdict.notna()) & ~((df.minToStartFirst>360) | ((df.ab_checkEv-df.ev)<-0.01))",
+   "drop_expr": "(df.minToStartFirst>360) | ((df.ab_checkEv-df.ev)<-0.01)",
+   "rationale": "Two decision-time signs layered: first listed within 6 h (the repo default; Tj's phone is at 24 h) and, for a bet whose book page was read, the page's own consensus EV (ab_checkEv) not more than 1 point under the EV the list showed (a falling edge between the list and the page). The falling-edge sign works only inside 6 h (WJ within 6 h +3.83 pts [+1.61, +5.49], 10 dropped closes; app universe within 6 h +5.75 [+3.68, +9.13], 5 dropped) and does nothing beyond 6 h; one of the falling-edge half's dropped closes is a -9.3% Tracker close (a bet Tj placed 35 minutes before the start); for the combined rule the worst dropped close is a -30.6% long-lead bet, and without it the gap is still +3.05 pts [+1.09, +5.13]. Cost: drops 36 of 75 bets (48%; 16.0 a day), keeps 17.3 a day. Bets the auto-bet could still place (book page read, 3+ agree, not vetoed): 13.3 a day instead of 20.8, $63 a day at the caps ($5 a bet, $500 a day, $70 a game) instead of $97, or $27 instead of $42 at its quarter-Kelly stake (never over $3.50); expected CLV worth about $1.96 a day instead of $1.11 at the caps ($0.85 vs $0.48 at quarter-Kelly). The whole list at the caps: $82 a day vs $159.",
+   "verdict": "Largest kept CLV (+3.30%) and the clearest gap, same sign on every wider universe and both game-start halves; but (a) only 4 of its kept closes and 10 of its dropped closes are independent closes, and on independent closes the gain is +1.1 pts [-0.9, +3.4] in the app's universe and about 0 on the wider ones (WJ -0.04, 43 vs 52 closes); (b) it keeps only 39 of 75 judged bets; (c) the falling-edge half has only 5 dropped closes inside 6 h in the app's universe.",
+   "question_for_tj": "QUESTION FOR TJ: (1) set Starts within / trap guard to 6 h instead of 24 h (a tighter setting); (2) require the book page's own edge to be within 1 point of the list's edge? Pre-registered test on new games: about 14 games with closes in total (the app's universe has 25 so far) if the effect is as observed, about 56 if it is half.",
+   "bets": 39,
+   "games": 20,
+   "per_day": 17.286674340638115,
+   "games_per_day": 8.864961200327238,
+   "avg_available": 174.93654102564102,
+   "median_available": 60.0,
+   "ev_listed": 0.03709402480298743,
+   "bets_dropped": 36,
+   "dropped_per_day": 15.95693016058903,
+   "dropped_share": 0.48,
+   "clv": 0.03297384120289667,
+   "clv_lo": 0.020337960635997507,
+   "clv_hi": 0.047593387715206964,
+   "clv_n_closes": 34,
+   "clv_games": 18,
+   "beat_share": 0.7941176470588235,
+   "clv_close_ok": {
+    "n": 31,
+    "games": 16,
+    "clv": 0.03326770013008205,
+    "lo": 0.02074596345172622,
+    "hi": 0.04579405322313277,
+    "beat": 0.8387096774193549
+   },
+   "clv_independent_closes": {
+    "n": 4,
+    "games": 4,
+    "clv": 0.00542564347259461,
+    "lo": -0.0007201752827136199,
+    "hi": 0.016020066192116683,
+    "beat": 0.5
+   },
+   "clv_novig_trades3": {
+    "n": 3,
+    "games": 3,
+    "clv": 9.655726393265063e-05,
+    "lo": -0.0012819090381525067,
+    "hi": 0.0017300223572251916,
+    "beat": 0.3333333333333333
+   },
+   "clv_tracker_closes": {
+    "n": 27,
+    "games": 14,
+    "clv": 0.03739244926452462,
+    "lo": 0.024040703686413516,
+    "hi": 0.050271564469289105,
+    "beat": 0.8888888888888888
+   },
+   "clv_stake_weighted": 0.033478687251288296,
+   "roi": -0.11799807952612881,
+   "roi_lo": -0.5205537778478352,
+   "roi_hi": 0.3907039499247179,
+   "roi_n_settled": 38,
+   "roi_games": 20,
+   "baseline_clv": 0.013833265020279093,
+   "baseline_clv_lo": -0.0003827664773566906,
+   "baseline_clv_hi": 0.030660859568942087,
+   "baseline_bets": 75,
+   "baseline_closes": 64,
+   "baseline_roi": {
+    "n": 73,
+    "games": 27,
+    "roi": -0.05153240093266297,
+    "lo": -0.2877362372260996,
+    "hi": 0.20766861640528483
+   },
+   "baseline_clv_independent": {
+    "n": 14,
+    "games": 13,
+    "clv": -0.0022758419113733585,
+    "lo": -0.01583318420875427,
+    "hi": 0.010501719000864131,
+    "beat": 0.5
+   },
+   "baseline_clv_tracker": {
+    "n": 43,
+    "games": 21,
+    "clv": 0.01806648159085701,
+    "lo": -0.0014002511797794011,
+    "hi": 0.042393773577494485,
+    "beat": 0.813953488372093
+   },
+   "baseline_clv_stake_weighted": 0.014472710084572085,
+   "gain_kept_minus_baseline": 0.019140576182617573,
+   "clv_gain_pts_per_10pct_of_bets_dropped": 0.39876200380453275,
+   "dropped": {
+    "bets": 36,
+    "clv": {
+     "n": 30,
+     "games": 17,
+     "clv": -0.007859387986687498,
+     "lo": -0.03679712814988123,
+     "hi": 0.018407638174851526,
+     "beat": 0.6
+    },
+    "clv_independent": {
+     "n": 10,
+     "games": 10,
+     "clv": -0.005356436064960546,
+     "lo": -0.023775548960791544,
+     "hi": 0.011040332221342824,
+     "beat": 0.5
+    },
+    "clv_tracker": {
+     "n": 16,
+     "games": 12,
+     "clv": -0.014546088858457082,
+     "lo": -0.06463020716355532,
+     "hi": 0.03588924561222941,
+     "beat": 0.6875
+    },
+    "roi": {
+     "n": 35,
+     "games": 19,
+     "roi": 0.020630335825957098,
+     "lo": -0.2264967455709448,
+     "hi": 0.28293426393286963
+    },
+    "ev_listed": 0.03498125365172729
+   },
+   "kept_minus_dropped": {
+    "diff": 0.040833229189584166,
+    "lo": 0.013781101796396612,
+    "hi": 0.07464815277156157,
+    "n_keep_closes": 34,
+    "n_drop_closes": 30,
+    "games_drop": 17
+   },
+   "kept_minus_dropped_independent_closes": {
+    "diff": 0.010782079537555157,
+    "lo": -0.008770742021440655,
+    "hi": 0.03414352578813416,
+    "n_keep_closes": 4,
+    "n_drop_closes": 10
+   },
+   "kept_minus_dropped_tracker_closes": {
+    "diff": 0.0519385381229817,
+    "lo": -0.001496849273442444,
+    "hi": 0.10607298528571227,
+    "n_keep_closes": 27,
+    "n_drop_closes": 16
+   },
+   "kept_minus_dropped_without_worst_dropped_close": {
+    "diff": 0.030539903973992255,
+    "lo": 0.010884276952423574,
+    "hi": 0.05132615940076963,
+    "worst_clv": -0.30636581923885287
+   },
+   "first_half_clv": 0.036220854341483505,
+   "second_half_clv": 0.031202743127303856,
+   "first_half_closes": 12,
+   "second_half_closes": 22,
+   "halves_definition": "first_half/second_half = kept CLV on bets whose GAME starts before / after the median game start of the baseline's closes (balanced by closes); halves detail has the kept-minus-dropped gap on each half, on first-look halves and on the loader's firstDay cut",
+   "loader_first_half_clv": 0.029408016768510906,
+   "loader_second_half_clv": 0.044562770614650415,
+   "loader_first_half_closes": 26,
+   "loader_second_half_closes": 8,
+   "halves": {
+    "balanced_firstlook": {
+     "h1": {
+      "keep": {
+       "n": 11,
+       "games": 9,
+       "clv": 0.04322779731643684,
+       "lo": 0.028033185012190962,
+       "hi": 0.05661786850515096,
+       "beat": 0.9090909090909091
+      },
+      "drop": {
+       "n": 24,
+       "games": 14,
+       "clv": 0.0059605698455548846,
+       "lo": -0.015753979338715023,
+       "hi": 0.029392477320707586,
+       "beat": 0.7083333333333334
+      },
+      "diff": {
+       "diff": 0.03726722747088196,
+       "lo": 0.0077296880453876305,
+       "hi": 0.05972939736214894,
+       "n_keep": 11,
+       "n_drop": 24
+      }
+     },
+     "h2": {
+      "keep": {
+       "n": 23,
+       "games": 12,
+       "clv": 0.02806977523555138,
+       "lo": 0.014580588862206421,
+       "hi": 0.047144932461594395,
+       "beat": 0.7391304347826086
+      },
+      "drop": {
+       "n": 6,
+       "games": 5,
+       "clv": -0.06313921931565702,
+       "lo": -0.13190959339141342,
+       "hi": 0.0325298209978909,
+       "beat": 0.16666666666666666
+      },
+      "diff": {
+       "diff": 0.0912089945512084,
+       "lo": 0.0012648882242156352,
+       "hi": 0.16780798756805554,
+       "n_keep": 23,
+       "n_drop": 6
+      }
+     }
+    },
+    "balanced_gamestart": {
+     "h1": {
+      "keep": {
+       "n": 12,
+       "games": 8,
+       "clv": 0.036220854341483505,
+       "lo": 0.023675828630796248,
+       "hi": 0.049343834097901655,
+       "beat": 0.8333333333333334
+      },
+      "drop": {
+       "n": 20,
+       "games": 9,
+       "clv": 0.009127171254969108,
+       "lo": -0.01551342853634615,
+       "hi": 0.03404523816414823,
+       "beat": 0.7
+      },
+      "diff": {
+       "diff": 0.027093683086514397,
+       "lo": 0.0005318572560298134,
+       "hi": 0.04744114068245768,
+       "n_keep": 12,
+       "n_drop": 20
+      }
+     },
+     "h2": {
+      "keep": {
+       "n": 22,
+       "games": 10,
+       "clv": 0.031202743127303856,
+       "lo": 0.015650860175203073,
+       "hi": 0.05258209991615718,
+       "beat": 0.7727272727272727
+      },
+      "drop": {
+       "n": 10,
+       "games": 8,
+       "clv": -0.04183250647000071,
+       "lo": -0.09246793389338154,
+       "hi": 0.009866988502757459,
+       "beat": 0.4
+      },
+      "diff": {
+       "diff": 0.07303524959730456,
+       "lo": 0.018400054352698737,
+       "hi": 0.13667929573001908,
+       "n_keep": 22,
+       "n_drop": 10
+      }
+     }
+    },
+    "loader_firstDay_cut_2026-10-04": {
+     "h1": {
+      "keep": {
+       "n": 26,
+       "games": 14,
+       "clv": 0.029408016768510906,
+       "lo": 0.014416279994382424,
+       "hi": 0.04769467267826182,
+       "beat": 0.7307692307692307
+      },
+      "drop": {
+       "n": 27,
+       "games": 15,
+       "clv": 0.0017735136981630276,
+       "lo": -0.019223939999202022,
+       "hi": 0.021812472893626585,
+       "beat": 0.6296296296296297
+      },
+      "bets_keep": 29,
+      "bets_drop": 33,
+      "diff": {
+       "diff": 0.027634503070347878,
+       "lo": 0.008664086207492396,
+       "hi": 0.052594808496099814,
+       "n_keep": 26,
+       "n_drop": 27
+      }
+     },
+     "h2": {
+      "keep": {
+       "n": 8,
+       "games": 4,
+       "clv": 0.044562770614650415,
+       "lo": 0.03955815520596582,
+       "hi": 0.05078493325849961,
+       "beat": 1.0
+      },
+      "drop": {
+       "n": 3,
+       "games": 2,
+       "clv": -0.09455550315034222,
+       "lo": -0.16961711456609807,
+       "hi": 0.05556771968116947,
+       "beat": 0.3333333333333333
+      },
+      "bets_keep": 10,
+      "bets_drop": 3,
+      "diff": {
+       "diff": 0.13911827376499264,
+       "lo": -0.01675550830385686,
+       "hi": 0.21789941100669774,
+       "n_keep": 8,
+       "n_drop": 3
+      }
+     }
+    }
+   },
+   "replication_wider_universes": {
+    "MJ": {
+     "bets": 86,
+     "closes": 71,
+     "drop_share": 0.5,
+     "keep": 0.04045552020860906,
+     "drop": -0.007360939352017971,
+     "diff": 0.047816459560627037,
+     "lo": 0.024094246813827196,
+     "hi": 0.07600186725889692,
+     "n_keep": 38,
+     "n_drop": 33,
+     "games_drop": 19,
+     "indep_diff": 0.020114741538134726,
+     "indep_lo": -0.003625800061898917,
+     "indep_hi": 0.046075010667768965,
+     "indep_n_keep": 5,
+     "indep_n_drop": 12
+    },
+    "SJ": {
+     "bets": 198,
+     "closes": 153,
+     "drop_share": 0.5353535353535354,
+     "keep": 0.02669630257790557,
+     "drop": -0.0015790821819535797,
+     "diff": 0.02827538475985915,
+     "lo": 0.014118509230741165,
+     "hi": 0.04456685615925435,
+     "n_keep": 73,
+     "n_drop": 80,
+     "games_drop": 25,
+     "indep_diff": 0.0026956368709038724,
+     "indep_lo": -0.014058823864570904,
+     "indep_hi": 0.016606194855570234,
+     "indep_n_keep": 24,
+     "indep_n_drop": 37
+    },
+    "WJ": {
+     "bets": 302,
+     "closes": 233,
+     "drop_share": 0.5264900662251656,
+     "keep": 0.01963981536775627,
+     "drop": -0.00322671095644905,
+     "diff": 0.02286652632420532,
+     "lo": 0.012380218269978222,
+     "hi": 0.035510456256651626,
+     "n_keep": 111,
+     "n_drop": 122,
+     "games_drop": 27,
+     "indep_diff": -0.0003596137146707518,
+     "indep_lo": -0.012503518534738887,
+     "indep_hi": 0.012744697595004503,
+     "indep_n_keep": 43,
+     "indep_n_drop": 52
+    }
+   },
+   "wider_universe_luck": {
+    "MJ": {
+     "z": 3.625931620885859,
+     "p_wild_cluster_one_sided": 0.0004998750312421895
+    },
+    "SJ": {
+     "z": 3.644297755451575,
+     "p_wild_cluster_one_sided": 0.000999750062484379
+    },
+    "WJ": {
+     "z": 3.925342431179287,
+     "p_wild_cluster_one_sided": 0.0007498125468632841
+    }
+   },
+   "dollars": {
+    "list_caps": {
+     "bets_per_day": 17.286674340638115,
+     "usd_staked_per_day": 82.44413916304332,
+     "expected_clv_usd_per_day": 2.7184999528717047
+    },
+    "list_kelly": {
+     "bets_per_day": 17.286674340638115,
+     "usd_staked_per_day": 35.77958346268199,
+     "expected_clv_usd_per_day": 1.1797903034042636
+    },
+    "autobet_eligible_caps": {
+     "bets_per_day": 13.297441800490859,
+     "usd_staked_per_day": 62.941224522323395,
+     "expected_clv_usd_per_day": 1.96257672718676
+    },
+    "autobet_eligible_kelly": {
+     "bets_per_day": 13.297441800490859,
+     "usd_staked_per_day": 27.145371276504417,
+     "expected_clv_usd_per_day": 0.8464225842828415
+    },
+    "baseline_list_caps": {
+     "bets_per_day": 33.243604501227146,
+     "usd_staked_per_day": 158.98439146589268,
+     "expected_clv_usd_per_day": 2.1992732212354915
+    },
+    "baseline_list_kelly": {
+     "bets_per_day": 33.243604501227146,
+     "usd_staked_per_day": 68.43545782747212,
+     "expected_clv_usd_per_day": 0.9466858249115552
+    },
+    "baseline_autobet_eligible_caps": {
+     "bets_per_day": 20.832658820769012,
+     "usd_staked_per_day": 97.3729111236184,
+     "expected_clv_usd_per_day": 1.1129647809424463
+    },
+    "baseline_autobet_eligible_kelly": {
+     "bets_per_day": 20.832658820769012,
+     "usd_staked_per_day": 41.595889147302074,
+     "expected_clv_usd_per_day": 0.4754377692802106
+    }
+   },
+   "games_with_closes_needed_if_effect_is_as_observed": 13.887276606086601,
+   "games_with_closes_needed_if_effect_is_half": 55.549106424346405,
+   "luck_probability": "Inside the app's universe: P(this good by luck) = 0.004 (game-cluster wild bootstrap, one-sided) / 0.005 (permutation within game-day); after counting 107 tries (max over the 95 testable rules) the chance that SOME rule looks this good by luck is 0.45 / 0.20, i.e. not distinguishable from luck. The same flag on wider universes (single-rule one-sided wild-cluster p): MJ 0.000, SJ 0.001, WJ 0.001.",
+   "luck": {
+    "lib_name": "UJ lead>360 | check_ev-ev<-0.01",
+    "p_wild_cluster_single": 0.0036660556573904347,
+    "p_wild_cluster_adjusted_for_tries": 0.4537577070488252,
+    "p_permutation_within_gameday_single": 0.004999166805532411,
+    "p_permutation_within_gameday_adjusted_for_tries": 0.20463256123979337,
+    "z_cluster": 2.623716029381766,
+    "tried": 107,
+    "eligible_in_max": 95,
+    "draws": 6000
+   },
+   "tried_count": 107,
+   "angle": "TRAP AVOIDANCE and the props/sharp-book rule layered on the universe the app already bets: rules that REMOVE the bets most likely to lose to the close (long lead, wide Novig book, falling edge, low edge, sharp veto bar, few books, long price) and rules that RAISE the bar where the evidence is thin (a higher edge floor for props with no sharp PASS), ranked by CLV gained per bet dropped, with the cost of each in bets and dollars a day at the auto-bet's caps.",
+   "baseline": "The app's own universe U = shown by the CNO list & listed EV >= 2.5% & odds -200..+130 & props/moneylines/spreads & first listed within 24 h: 182 bets, 39 games, 80.7 a day, avg $354 available; CLV +1.37% [+0.07, +2.85] on 120 closes in 35 games, beat the close 64%; ROI -3.7% [-21.4, +12.9] on 174 settled bets in 38 games; vs Tracker closes +2.17% [+0.48, +4.00] on 56 closes in 27 games; vs independent closes +0.54% [-1.77, +2.53] on 38 closes in 19 games. Judged part UJ (book page read, the only bets the auto-bet can place): 75 bets, CLV +1.38% [-0.04, +3.07] on 64 closes in 25 games. Rules are measured as kept-minus-dropped CLV on the same universe, plus the same flag on the wider universes M, S, W (within 24 h)."
+  },
+  {
+   "name": "First listed within 6 h AND listed EV at least 2.5% (what the auto-bet would do with a 6 h guard instead of 24 h)",
+   "key": "T6_and_EV25",
+   "expr": "(df.minToStartFirst<=360)&(df.ev>=0.025)",
+   "rationale": "The auto-bet already requires an edge of 2.5% or more; this is that floor with the phone's trap guard moved from 24 h to 6 h. Same shape as rule 2 with fewer bets; the independent-close sample is 13 closes, so treat its +1.64% as unproven. On the auto-bet's own approximate universe (Vigilant-listed, -200..+130, props/moneylines/spreads, EV >= 2.5%) the 6 h guard keeps 29 of 121 bets (12.9 a day of 53.6) with CLV +2.38% on 14 closes (7 games) against +0.97% on 73 closes (24 games) at 24 h: too thin to separate.",
+   "bets": 122,
+   "games": 43,
+   "per_day": 54.1,
+   "games_per_day": 19.1,
+   "avg_available": 400.6,
+   "median_available": 70.8,
+   "p25_available": 15.0,
+   "listed_ev_mean": 0.0406,
+   "shown_share": 0.779,
+   "bets_by_first_look_day": {
+    "2026-10-03": 15,
+    "2026-10-04": 64,
+    "2026-10-05": 43
+   },
+   "games_by_first_look_day": {
+    "2026-10-03": 12,
+    "2026-10-04": 21,
+    "2026-10-05": 11
+   },
+   "clv": 0.030125532505309725,
+   "clv_lo": 0.019928105938378717,
+   "clv_hi": 0.04386627130420991,
+   "clv_closes": 64,
+   "clv_games": 31,
+   "beat_close_share": 0.71875,
+   "clv_close_ok": {
+    "clv": 0.03363765199119463,
+    "lo": 0.019851435522821214,
+    "hi": 0.05095760239908557,
+    "closes": 52,
+    "games": 27,
+    "beat": 0.7884615384615384
+   },
+   "clv_independent_closes": {
+    "clv": 0.01641009711580218,
+    "lo": 0.005899255487289963,
+    "hi": 0.03439247425989036,
+    "closes": 13,
+    "games": 10,
+    "beat": 0.5384615384615384
+   },
+   "roi": 0.037518294468442966,
+   "roi_lo": -0.1622377597533513,
+   "roi_hi": 0.23695519565013615,
+   "roi_settled": 118,
+   "roi_games": 42,
+   "baseline_universe": "T6",
+   "baseline_clv": 0.014107574966926073,
+   "baseline_clv_closes": 256,
+   "baseline_clv_games": 66,
+   "complement_in_baseline_clv": 0.008768255787464858,
+   "complement_closes": 192,
+   "all_bets_baseline_clv": 0.0019152551730908345,
+   "first_half_clv": 0.027044533504616268,
+   "first_half_closes": 52,
+   "first_half_games": 23,
+   "first_half_roi": 0.013859056219517019,
+   "second_half_clv": 0.04347652817498138,
+   "second_half_closes": 12,
+   "second_half_games": 8,
+   "second_half_roi": 0.07878440769331381,
+   "loader_cut_day": "2026-10-04",
+   "game_start_split": {
+    "first_clv": 0.02884571103866015,
+    "first_closes": 25,
+    "first_games": 15,
+    "second_clv": 0.030945930881367146,
+    "second_closes": 39,
+    "second_games": 16,
+    "first_independent_clv": 0.00764684606134039,
+    "first_independent_closes": 4,
+    "second_independent_clv": 0.020304875362229642,
+    "second_independent_closes": 9
+   },
+   "first_look_day_split": {
+    "oct3_clv": 0.02286990040842187,
+    "oct3_closes": 10,
+    "oct3_games": 9,
+    "oct4_6_clv": 0.03146916807880747,
+    "oct4_6_closes": 54,
+    "oct4_6_games": 23
+   },
+   "fit_on_first_half": {
+    "loader_split": {
+     "rank1": 349.0,
+     "n1": 40.0,
+     "g1": 19.0,
+     "clv1": 0.030685989136058613,
+     "t1": 2.9220735007754435,
+     "p1": 0.1992001999500125,
+     "n2": 12.0,
+     "g2": 8.0,
+     "clv2": 0.04347652817498138,
+     "t2": 2.374041221486423
+    },
+    "game_start_split": null
+   },
+   "robustness": {
+    "leave_one_game_out_clv_range": [
+     0.02770633606263957,
+     0.03574154519321635
+    ],
+    "game_equal_weight_clv_ci_games": [
+     0.032636002608022435,
+     0.019604883565784992,
+     0.04437582860624623,
+     31
+    ],
+    "ex_biggest_game": {
+     "n": 49,
+     "games": 30,
+     "clv": 0.03574154519321635,
+     "lo": 0.024503321369785627,
+     "hi": 0.04613288284925321,
+     "beat": 0.7959183673469388
+    },
+    "ex_NFL": {
+     "n": 25,
+     "games": 19,
+     "clv": 0.0355641283286298,
+     "lo": 0.018646875389979348,
+     "hi": 0.05208997139292144,
+     "beat": 0.8
+    },
+    "NFL_only": {
+     "n": 39,
+     "games": 12,
+     "clv": 0.026639253131386598,
+     "lo": 0.01531771561566883,
+     "hi": 0.046238152157610256,
+     "beat": 0.6666666666666666
+    },
+    "not_placed_by_Tj": {
+     "n": 25,
+     "games": 15,
+     "clv": 0.015688297572125184,
+     "lo": 0.0013619028174929127,
+     "hi": 0.02806430285795901,
+     "beat": 0.48
+    },
+    "placed_by_Tj": {
+     "n": 39,
+     "games": 20,
+     "clv": 0.03938017028299212,
+     "lo": 0.02269433951775678,
+     "hi": 0.05787453752984774,
+     "beat": 0.8717948717948718
+    },
+    "liquidity_weighted_clv_cap100_ci": [
+     0.019360415894182866,
+     0.009113380441482103,
+     0.0362148593018837
+    ]
+   },
+   "p_values": {
+    "boot_p_clv_le0_all": 0.0,
+    "boot_p_clv_le0_ok": 0.0,
+    "boot_p_clv_le0_indep": 0.0,
+    "fwer_signflip_closeok": 0.00899775056235941,
+    "fwer_signflip_all_closes": 0.0069982504373906525,
+    "fwer_signflip_indep_closes": null,
+    "fwer_signflip_unplaced_closeok": null,
+    "naive_shuffle_p": 0.023658780406531157,
+    "H2_loader": {
+     "n": 12,
+     "games": 8,
+     "clv": 0.04347652817498138,
+     "half_mean": 0.006004761678969227,
+     "p_single_signflip_above_half_mean": 0.0039998000099995,
+     "p_single_signflip_above_zero": 0.007699615019249037
+    },
+    "H2_game_start": {
+     "n": 34,
+     "games": 15,
+     "clv": 0.02910234324537247,
+     "half_mean": -0.00175739862460322,
+     "p_single_signflip_above_half_mean": 4.999750012499375e-05,
+     "p_single_signflip_above_zero": 9.99950002499875e-05
+    }
+   },
+   "games_with_closes_needed": {
+    "all_closes_halfwidth_0p5pt": 175.684246327478,
+    "all_closes_80pct_power_vs_zero_at_1pt": 89.63481955483572,
+    "independent_closes_halfwidth_0p5pt": 81.72918834837606,
+    "independent_closes_80pct_power_at_observed": 15.484557964796036,
+    "have_independent_games": 10
+   },
+   "luck_probability": "Chance the true CLV is <= 0 (bootstrap over games): all closes <0.001, close_ok <0.001, independent closes (ESPN/Pinnacle/Novig 3+ trades) <0.001. Chance a rule this good appears among the 5,074 rules tried (cluster sign-flip max-t, 4000 flips, vs the all-closes mean): 0.009 on close_ok, 0.007 on all closes, not testable on independent closes (fewer than 30 of them); naive within-game-day shuffle (iid t-statistic, treats same-game bets as independent): 0.024. Single pre-specified check on the second date half (cluster sign-flip, above that half's mean): loader split p=0.004 (12 closes, 8 games), game-start split p<0.001 (34 closes, 15 games).",
+   "angle": "strategy-simple-filters: a few simple first-look filters (1-3 conditions: time to start, listed EV, shown/hidden, kind, league, price band, books behind the fair, dollars available, sharp verdict, lister) on the bets the app lists or could list (all 2,080 logged bets, wide read included). Every rule is evaluated on three yardsticks (all closes, close_ok, independent closes = ESPN/Pinnacle/Novig trades of 3+ with no Tracker close), fitted on the first date half and checked on the second under two protocols, and put through a family-wise permutation test over the whole grid.",
+   "tried_count": 9340,
+   "baseline": "Universe = all 2,080 logged first-looks (wide read included), 683 with a close in 69 games: CLV +0.19% [-0.33,+0.78] on all closes, +0.19% [-0.32,+0.81] on close_ok (588 closes, 66 games), -0.04% [-0.65,+0.61] on independent closes (360 closes, 57 games); ROI +1.58% on 1,696 settled. The phone's current setting (trap guard 24 h) leaves 1,749 bets (775/day) with CLV +0.31% [-0.21,+0.83] (668 closes, 69 games; +0.01% on 353 independent closes). Bets first listed more than 6 h out: -0.54% [-1.57,+0.35] (427 closes, 31 games). Every rule below must beat these; the parent universe of each rule is named in baseline_universe."
+  },
+  {
+   "bets": 77,
+   "games": 28,
+   "per_day": 34.13120567375887,
+   "avg_available": 156.86985909090907,
+   "median_available": 28.0,
+   "closes": 52,
+   "close_games": 25,
+   "clv": 0.029316489482745196,
+   "clv_lo": 0.01985809271333214,
+   "clv_hi": 0.03810721395962789,
+   "beat_the_close": 0.8269230769230769,
+   "roi": -0.16066385669125396,
+   "roi_lo": -0.41832127387537843,
+   "roi_hi": 0.10373878205128181,
+   "settled": 73,
+   "clv_close_ok": 0.03084970461761056,
+   "clv_close_ok_lo": 0.021162175921814592,
+   "clv_close_ok_hi": 0.039662859474351345,
+   "closes_ok": 50,
+   "first_half_clv": 0.023192007691322864,
+   "second_half_clv": 0.0305983577646708,
+   "first_half_detail": {
+    "closes": 9,
+    "games": 7,
+    "clv": 0.023192007691322864,
+    "lo": 0.0009222279386004395,
+    "hi": 0.057121829209011904
+   },
+   "second_half_detail": {
+    "closes": 43,
+    "games": 18,
+    "clv": 0.0305983577646708,
+    "lo": 0.018957120088883197,
+    "hi": 0.03876886963027896
+   },
+   "start_date_halves": {
+    "first": {
+     "closes": 12,
+     "games": 8,
+     "clv": 0.012233361275068669,
+     "lo": -0.0090724276852262,
+     "hi": 0.04521552829843833
+    },
+    "second": {
+     "closes": 40,
+     "games": 17,
+     "clv": 0.034441427945048154,
+     "lo": 0.028983735796618212,
+     "hi": 0.040764436963750955
+    }
+   },
+   "by_close_family": {
+    "espn_pinn": {
+     "closes": 1,
+     "games": 1,
+     "clv": 0.02141290209858071,
+     "lo": 0.02141290209858071,
+     "hi": 0.02141290209858071
+    },
+    "novig_1_2": {
+     "closes": 2,
+     "games": 2,
+     "clv": -0.009013888888888988,
+     "lo": -0.017777777777777892,
+     "hi": -0.0002500000000000835
+    },
+    "novig_3plus": {
+     "closes": 11,
+     "games": 9,
+     "clv": -0.004817346350918855,
+     "lo": -0.018676009700305758,
+     "hi": 0.014724431928608504
+    },
+    "tracker": {
+     "closes": 38,
+     "games": 23,
+     "clv": 0.04142271417479091,
+     "lo": 0.032069676342871736,
+     "hi": 0.05003357260265363
+    },
+    "independent": {
+     "closes": 12,
+     "games": 10,
+     "clv": -0.0026314923134605575,
+     "lo": -0.016412508944717904,
+     "hi": 0.015260966711714582
+    },
+    "not_placed_by_tj": {
+     "closes": 14,
+     "games": 11,
+     "clv": -0.0035432632528074764,
+     "lo": -0.015760168439847917,
+     "hi": 0.01201996329519491
+    }
+   },
+   "paired_vs_first_price_of_same_bets": {
+    "closes": 52,
+    "mean_first": 0.01827837895607224,
+    "mean_rule": 0.029316489482745196,
+    "diff": 0.011038110526672954,
+    "lo": 0.00620206316635619,
+    "hi": 0.017589193976799433,
+    "p_signflip": 0.0001
+   },
+   "permutation_within_game_day": {
+    "p": 0.13525,
+    "null_mean": 0.024909976936737792,
+    "candidate_closes": 116,
+    "rule_closes": 52,
+    "label": "confirmed vs random R1 triggers"
+   },
+   "vs_other_candidates": {
+    "diff": 0.00568793832963415,
+    "lo": -0.014855661183953716,
+    "hi": 0.019647753278966524,
+    "p_le_0": 0.30033333333333334,
+    "rule_closes": 52,
+    "other_closes": 64,
+    "other_clv": 0.023628551153111046
+   },
+   "p_clv_le_all_bets_baseline": 0.0,
+   "available_dollars_sum_per_day": 5354.15742464539,
+   "avg_listed_ev": 0.03434545454545455,
+   "clv_points_times_bets_per_day": 100.06071321681651,
+   "name": "R7 Wait-and-confirm: after an R1 trigger wait 5 minutes and buy only if the bet is still listed with EV still at least 2.5% (NO GAIN)",
+   "expr": "import sys; sys.path.insert(0,'<scratch>/v0701/lib'); from load import load, looks, clv_stats; import numpy as np, pandas as pd\ndf = load(); L = looks(df); d = df.set_index('id')\nL['startsAtMs'] = L.id.map(d.startsAtMs); L['closeFair'] = L.id.map(d.closeFair); L['t_ms'] = L.startsAtMs - L.minToStart*60000   # look time, ms\nimp = lambda a: np.where(a<0, -a/(100-a), 100/(100+a))\nP = L[L.kind.isin(['c','w'])].sort_values(['id','i']).copy()      # CNO-family PRICE looks: c = the app's CNO list, w = the wide read (same devig; Vigilant's own v looks are separate)\nP['cost'] = imp(P.american.astype(float)); P['clv_i'] = P.closeFair/P.cost - 1     # CLV had the bet been bought at THIS look (closeFair/cost - 1)\nf = P.groupby('id').head(1).set_index('id')                         # each bet's first c/w look\nP['m0'] = P.id.map(f.minToStart)                                     # minutes to the start at the first look\nP['age'] = (P.t_ms - P.id.map(f.t_ms))/60000                         # minutes since the first look (known at decision time)\nP['improve'] = (P.id.map(f.cost) - P.cost)/P.id.map(f.cost)          # >0 = cheaper than at the first look\nW = P[(P.minToStart>=2) & (P.minToStart<=360)]                       # looks inside the 6 h window, pregame with a 2-minute buffer\n# every rule below picks ONE look per bet (the first that satisfies it, groupby('id').head(1)) using only that look and earlier looks; CLV/ROI are taken at that look's price. See rules_repro.py for the runnable version.\n# trigger = R1 rows; T = t_ms + 5*60000; state = last look of the bet at or before T (all sources, x-looks replayed); buy if any source still lists it, that look is <= 7 min old, minToStart >= 2 and the last c/w price look has ev >= 0.025; price = that look's",
+   "rationale": "Persistence of EV could separate a real mispricing from a flash. R1 triggers 184: after 5 min 55 were dropped, 36 listed with EV under 2.5%, 16 too close to the start, 77 confirmed. First-price CLV of the confirmed +2.77% (52 closes) vs not confirmed +2.36% (64): difference +0.41 pts [-1.68 pts, +1.81 pts], p(<=0) 0.36. The confirmed buys are 42% of R1's bets for +2.93% vs +2.54%. The Tracker share is 38 of 52 closes; independent closes -0.26% on 12. (A first test on first-look EV >= 2% bets looked like +1.2 pts for the confirmed; it vanished on the full R1 trigger, a reminder of how easily a 40-close cell misleads.)",
+   "baseline_clv": 0.027686385595228808,
+   "baseline_note": "same confirmed bets at their trigger price",
+   "luck_probability": "p(confirmed <= not confirmed) = 0.36; permutation p 0.14: nothing to separate from luck.",
+   "verdict": "Reject: waiting costs 58% of the bets and adds no CLV.",
+   "angle": "WHEN and AT WHAT PRICE to take a bet: decision-time rules over each bet's looks (no hindsight): window, EV-at-the-look entry, freshness of the listing, price level, price improvement, waiting / confirming / late sniping, EV path, stale listings; CNO-family (c/w) looks for the main rules, the Vigilant scan (v) separately.",
+   "tried_count": 522,
+   "baseline": "Universe = the study's 2080 bets (190 games); 683 have a close (69 games). First-listed-price CLV of ALL bets +0.19% [-0.36, +0.80]; of the 1842 bets the CNO family (c/w) listed +0.38% [-0.06, +0.86] on 571 closes/61 games (ROI +3.1%); of the 614 the Vigilant scan listed -0.14% [-0.89, +0.71] on 368 closes/39 games. Reference rule: first look 2-360 min before the start for bets first seen there (FRESH) +1.29% [+0.88, +1.83] on 234 closes/58 games; the guard as built (ENTER_360, entrants included) +0.82% [+0.46, +1.28] on 378/59. Every rule's CLV is taken at the price of the LOOK where the rule buys (closeFair/cost-1), game-cluster bootstrap CIs (loader method), ROI at that price. Date halves: decision date Oct 3 | Oct 4+ (the 'first_half' is Oct 3: 20-73 closes, so its CIs are wide), plus a game-start median split; both are in the rules' detail."
+  },
+  {
+   "bets": 150,
+   "games": 41,
+   "per_day": 66.48936170212767,
+   "avg_available": 138.79860033333333,
+   "median_available": 41.0,
+   "closes": 95,
+   "close_games": 35,
+   "clv": 0.028256059883746715,
+   "clv_lo": 0.01971935963543322,
+   "clv_hi": 0.03986140225675957,
+   "beat_the_close": 0.7894736842105263,
+   "roi": -0.03386206896551725,
+   "roi_lo": -0.26181754330977886,
+   "roi_hi": 0.2022101190476188,
+   "settled": 145,
+   "clv_close_ok": 0.028115467553032056,
+   "clv_close_ok_lo": 0.01965928676545812,
+   "clv_close_ok_hi": 0.039624918719411296,
+   "closes_ok": 92,
+   "first_half_clv": 0.024254891239473275,
+   "second_half_clv": 0.029066423153472982,
+   "first_half_detail": {
+    "closes": 16,
+    "games": 13,
+    "clv": 0.024254891239473275,
+    "lo": 0.006705394220854312,
+    "hi": 0.042689341520721326
+   },
+   "second_half_detail": {
+    "closes": 79,
+    "games": 22,
+    "clv": 0.029066423153472982,
+    "lo": 0.01925479362510532,
+    "hi": 0.04274140440094442
+   },
+   "start_date_halves": {
+    "first": {
+     "closes": 19,
+     "games": 14,
+     "clv": 0.016670499519163936,
+     "lo": -0.0006397928948713416,
+     "hi": 0.03830948538029315
+    },
+    "second": {
+     "closes": 76,
+     "games": 21,
+     "clv": 0.03115244997489241,
+     "lo": 0.021430442645127615,
+     "hi": 0.04467499036676915
+    }
+   },
+   "by_close_family": {
+    "espn_pinn": {
+     "closes": 5,
+     "games": 5,
+     "clv": 0.034628574075696104,
+     "lo": 0.02766030897312457,
+     "hi": 0.040220698037853796
+    },
+    "novig_1_2": {
+     "closes": 3,
+     "games": 3,
+     "clv": 0.0325675580256628,
+     "lo": -0.009887000566732862,
+     "hi": 0.10783967464372135
+    },
+    "novig_3plus": {
+     "closes": 21,
+     "games": 14,
+     "clv": -0.0026959833561610792,
+     "lo": -0.012443212685513379,
+     "hi": 0.00844011755904405
+    },
+    "tracker": {
+     "closes": 66,
+     "games": 27,
+     "clv": 0.03742569386333108,
+     "lo": 0.028252553782290864,
+     "hi": 0.05007827077536835
+    },
+    "independent": {
+     "closes": 26,
+     "games": 18,
+     "clv": 0.004481816149965303,
+     "lo": -0.004920170084976601,
+     "hi": 0.01598426385722744
+    },
+    "not_placed_by_tj": {
+     "closes": 29,
+     "games": 19,
+     "clv": 0.0073872377233133195,
+     "lo": -0.002561549939002807,
+     "hi": 0.02148578466486034
+    }
+   },
+   "paired_vs_first_price_of_same_bets": {
+    "closes": 95,
+    "mean_first": 0.01976698626736401,
+    "mean_rule": 0.028256059883746715,
+    "diff": 0.008489073616382707,
+    "lo": 0.006098647782981267,
+    "hi": 0.011492185959394727,
+    "p_signflip": 0.0
+   },
+   "permutation_within_game_day": {
+    "p": 0.05975,
+    "null_mean": 0.025612419794606437,
+    "candidate_closes": 116,
+    "rule_closes": 95,
+    "label": "plus-money vs random R1 events"
+   },
+   "vs_other_candidates": {
+    "diff": 0.015513505798267333,
+    "lo": 0.0028694311669912043,
+    "hi": 0.03215434546841073,
+    "p_le_0": 0.008333333333333333,
+    "rule_closes": 95,
+    "other_closes": 21,
+    "other_clv": 0.012742554085479382
+   },
+   "p_clv_le_all_bets_baseline": 0.0,
+   "available_dollars_sum_per_day": 9228.630341312057,
+   "avg_listed_ev": 0.036224,
+   "clv_points_times_bets_per_day": 187.87273858874147,
+   "name": "R2 Plus-money only: R1 and the price is plus money (implied cost below 0.50, American above +100)",
+   "expr": "import sys; sys.path.insert(0,'<scratch>/v0701/lib'); from load import load, looks, clv_stats; import numpy as np, pandas as pd\ndf = load(); L = looks(df); d = df.set_index('id')\nL['startsAtMs'] = L.id.map(d.startsAtMs); L['closeFair'] = L.id.map(d.closeFair); L['t_ms'] = L.startsAtMs - L.minToStart*60000   # look time, ms\nimp = lambda a: np.where(a<0, -a/(100-a), 100/(100+a))\nP = L[L.kind.isin(['c','w'])].sort_values(['id','i']).copy()      # CNO-family PRICE looks: c = the app's CNO list, w = the wide read (same devig; Vigilant's own v looks are separate)\nP['cost'] = imp(P.american.astype(float)); P['clv_i'] = P.closeFair/P.cost - 1     # CLV had the bet been bought at THIS look (closeFair/cost - 1)\nf = P.groupby('id').head(1).set_index('id')                         # each bet's first c/w look\nP['m0'] = P.id.map(f.minToStart)                                     # minutes to the start at the first look\nP['age'] = (P.t_ms - P.id.map(f.t_ms))/60000                         # minutes since the first look (known at decision time)\nP['improve'] = (P.id.map(f.cost) - P.cost)/P.id.map(f.cost)          # >0 = cheaper than at the first look\nW = P[(P.minToStart>=2) & (P.minToStart<=360)]                       # looks inside the 6 h window, pregame with a 2-minute buffer\n# every rule below picks ONE look per bet (the first that satisfies it, groupby('id').head(1)) using only that look and earlier looks; CLV/ROI are taken at that look's price. See rules_repro.py for the runnable version.\nR1 = W[W.ev >= 0.025].groupby('id').head(1); R2 = R1[R1.cost < 0.50]",
+   "rationale": "At the same listed EV, CLV falls 0.95 pts for every +0.10 of implied probability (SE 0.22, p < 0.001; 378 bets, 59 games); the sign and size hold in both game-day groups (Oct 4: -0.88, Oct 3+5: -0.96). Without any EV gate the in-window entries on plus-money sides closed +1.25% (274 closes/56 games) and the favourites -0.32% (104/38); at cost 0.55 or more -0.96% (36/20). Dog minus favourite +1.57 pts [+1.06 pts, +2.06 pts] on 59 games, same in Oct 4 (+1.54 pts) and Oct 3+5 (+1.43 pts [+0.16 pts, +2.69 pts]). Consistent with the analysts' finding that heavy favourites trap. CAVEAT: against Novig's own last trades alone the cost slope is -0.28 (SE 0.17, p 0.12): the price effect shows against books/consensus closes (ESPN, Tracker), not against Novig's own late price. The 0.50 cut was chosen as 'plus money' before looking at CLV by cut; cuts 0.48/0.52/0.55 on R1 give +2.99%/+2.58%/+2.57% (the effect lives at 0.50-0.55, it is not a cliff).",
+   "baseline_clv": 0.01976698626736401,
+   "baseline_note": "R1's favourites (cost >= 0.50) +1.27% on 21 closes/14 games; R2 minus them +1.55 pts [+0.29 pts, +3.22 pts] (bootstrap p 0.008); same bets at first look +1.98%",
+   "luck_probability": "Bootstrap p(R2 <= R1 favourites) = 0.008; within-game-day permutation of plus-money vs random R1 events p = 0.060; with the unconditional dog-minus-favourite gap (+1.57 pts, p < 0.001, 59 games) the raw p is about 0.005 for this rule's marginal +1.6 pts and about 0.08 after a Bonferroni-15 haircut: moderately likely real, not proven. Independent-close CLV +0.45% on 26 closes (p(<=0) 0.18): the independent yardstick does not show the price effect (see caveat).",
+   "robustness": {
+    "per_day_steady_state_after_first_6h_of_study": 63.725143645913384,
+    "after_first_6h": {
+     "closes": 79,
+     "games": 22,
+     "clv": 0.029066423153472982,
+     "lo": 0.019471886726783568,
+     "hi": 0.042718959111129384
+    },
+    "NFL": {
+     "closes": 65,
+     "games": 14,
+     "clv": 0.02474006947477888,
+     "lo": 0.01523832374143843,
+     "hi": 0.03904487442504595
+    },
+    "non_NFL": {
+     "closes": 30,
+     "games": 21,
+     "clv": 0.03587403910317702,
+     "lo": 0.022675633838879238,
+     "hi": 0.04883669411607089
+    },
+    "props": {
+     "closes": 80,
+     "games": 27,
+     "clv": 0.02738132955137178,
+     "lo": 0.018134477795989125,
+     "hi": 0.040930930776877136
+    },
+    "by_game_start_day": {
+     "start_2026-10-03": {
+      "closes": 15,
+      "games": 12,
+      "clv": 0.027298353051814748,
+      "lo": 0.01125804933627268,
+      "hi": 0.04625379002412737
+     },
+     "start_2026-10-04": {
+      "closes": 64,
+      "games": 19,
+      "clv": 0.02658534060442444,
+      "lo": 0.01640961164992496,
+      "hi": 0.04443309548437859
+     },
+     "start_2026-10-05": {
+      "closes": 16,
+      "games": 4,
+      "clv": 0.03583678715597203,
+      "lo": 0.03318201324996632,
+      "hi": 0.04560455875407901
+     }
+    },
+    "app_cno_list_c_looks_only": {
+     "closes": 87,
+     "games": 34,
+     "clv": 0.028688698224793956,
+     "lo": 0.01969189523289748,
+     "hi": 0.041034595529113774,
+     "bets": 109,
+     "per_day": 48.315602836879435
+    },
+    "independent_closes": {
+     "closes": 26,
+     "games": 18,
+     "clv": 0.004481816149965303,
+     "lo": -0.004892419629346837,
+     "hi": 0.01635233672677979,
+     "halfwidth_pts": 1.0622378178063314,
+     "games_for_pm0.5": 81.2411410736129,
+     "closes_for_pm0.5": 117.34831488410752
+    }
+   },
+   "verdict": "Worth a QUESTION FOR TJ, not an action: it drops about 19% of R1's bets (34 of 184) for about +0.3 pts per bet, so it only pays if the daily limit binds. A cheaper form of the same idea is a higher EV bar for favourites (R1's 21 favourite closes still made +1.3%).",
+   "angle": "WHEN and AT WHAT PRICE to take a bet: decision-time rules over each bet's looks (no hindsight): window, EV-at-the-look entry, freshness of the listing, price level, price improvement, waiting / confirming / late sniping, EV path, stale listings; CNO-family (c/w) looks for the main rules, the Vigilant scan (v) separately.",
+   "tried_count": 522,
+   "baseline": "Universe = the study's 2080 bets (190 games); 683 have a close (69 games). First-listed-price CLV of ALL bets +0.19% [-0.36, +0.80]; of the 1842 bets the CNO family (c/w) listed +0.38% [-0.06, +0.86] on 571 closes/61 games (ROI +3.1%); of the 614 the Vigilant scan listed -0.14% [-0.89, +0.71] on 368 closes/39 games. Reference rule: first look 2-360 min before the start for bets first seen there (FRESH) +1.29% [+0.88, +1.83] on 234 closes/58 games; the guard as built (ENTER_360, entrants included) +0.82% [+0.46, +1.28] on 378/59. Every rule's CLV is taken at the price of the LOOK where the rule buys (closeFair/cost-1), game-cluster bootstrap CIs (loader method), ROI at that price. Date halves: decision date Oct 3 | Oct 4+ (the 'first_half' is Oct 3: 20-73 closes, so its CIs are wide), plus a game-start median split; both are in the rules' detail."
+  },
+  {
+   "bets": 184,
+   "games": 44,
+   "per_day": 81.56028368794327,
+   "avg_available": 165.9716850543478,
+   "median_available": 37.0,
+   "closes": 116,
+   "close_games": 40,
+   "clv": 0.025447580385784527,
+   "clv_lo": 0.018210124533444852,
+   "clv_hi": 0.03532888633955869,
+   "beat_the_close": 0.7672413793103449,
+   "roi": -0.06734448123514676,
+   "roi_lo": -0.2303434648769835,
+   "roi_hi": 0.1059862257643866,
+   "settled": 178,
+   "clv_close_ok": 0.026689424928008125,
+   "clv_close_ok_lo": 0.018876507267622133,
+   "clv_close_ok_hi": 0.0371779019290734,
+   "closes_ok": 108,
+   "first_half_clv": 0.024292567690911537,
+   "second_half_clv": 0.02568820803054973,
+   "first_half_detail": {
+    "closes": 20,
+    "games": 16,
+    "clv": 0.024292567690911537,
+    "lo": 0.009918301858220686,
+    "hi": 0.03989266681840001
+   },
+   "second_half_detail": {
+    "closes": 96,
+    "games": 24,
+    "clv": 0.02568820803054973,
+    "lo": 0.017069264553044323,
+    "hi": 0.03782364166273251
+   },
+   "start_date_halves": {
+    "first": {
+     "closes": 23,
+     "games": 17,
+     "clv": 0.0180222862978597,
+     "lo": 0.0019222073942246746,
+     "hi": 0.03622966488242139
+    },
+    "second": {
+     "closes": 93,
+     "games": 23,
+     "clv": 0.027283943439787437,
+     "lo": 0.019042053993050673,
+     "hi": 0.039059317002542136
+    }
+   },
+   "by_close_family": {
+    "espn_pinn": {
+     "closes": 5,
+     "games": 5,
+     "clv": 0.034628574075696104,
+     "lo": 0.02766030897312457,
+     "hi": 0.040220698037853796
+    },
+    "novig_1_2": {
+     "closes": 8,
+     "games": 7,
+     "clv": 0.008682679065765891,
+     "lo": -0.013650038376419173,
+     "hi": 0.041709566636264045
+    },
+    "novig_3plus": {
+     "closes": 28,
+     "games": 19,
+     "clv": 0.003347505177718222,
+     "lo": -0.006392105276079119,
+     "hi": 0.016076602566332494
+    },
+    "tracker": {
+     "closes": 75,
+     "games": 29,
+     "clv": 0.03487446502493716,
+     "lo": 0.026068196401813425,
+     "hi": 0.046056738927685754
+    },
+    "independent": {
+     "closes": 33,
+     "games": 23,
+     "clv": 0.008087061071351235,
+     "lo": -0.0009398271452751035,
+     "hi": 0.020180921391598994
+    },
+    "not_placed_by_tj": {
+     "closes": 41,
+     "games": 24,
+     "clv": 0.008203279216602875,
+     "lo": -0.00015459553375036383,
+     "hi": 0.01917489536975082
+    }
+   },
+   "paired_vs_first_price_of_same_bets": {
+    "closes": 116,
+    "mean_first": 0.01683679423107532,
+    "mean_rule": 0.025447580385784527,
+    "diff": 0.008610786154709204,
+    "lo": 0.005970079387185939,
+    "hi": 0.011112715591177519,
+    "p_signflip": 0.0
+   },
+   "permutation_within_game_day": {
+    "p": 0.0,
+    "null_mean": 0.008503060453887986,
+    "candidate_closes": 378,
+    "rule_closes": 116,
+    "label": "EV>=2.5% vs random in-window entries"
+   },
+   "vs_other_candidates": {
+    "diff": 0.021863609093733135,
+    "lo": 0.014686038534447193,
+    "hi": 0.031177058381149304,
+    "p_le_0": 0.0,
+    "rule_closes": 116,
+    "other_closes": 262,
+    "other_clv": 0.0035839712920513913
+   },
+   "p_clv_le_all_bets_baseline": 0.0,
+   "available_dollars_sum_per_day": 13536.697717198582,
+   "avg_listed_ev": 0.03520978260869565,
+   "clv_points_times_bets_per_day": 207.55118754363266,
+   "name": "R1 EV-gated window entry: buy at the first look inside 6 h of the start where the CNO-family listed EV is at least 2.5%",
+   "expr": "import sys; sys.path.insert(0,'<scratch>/v0701/lib'); from load import load, looks, clv_stats; import numpy as np, pandas as pd\ndf = load(); L = looks(df); d = df.set_index('id')\nL['startsAtMs'] = L.id.map(d.startsAtMs); L['closeFair'] = L.id.map(d.closeFair); L['t_ms'] = L.startsAtMs - L.minToStart*60000   # look time, ms\nimp = lambda a: np.where(a<0, -a/(100-a), 100/(100+a))\nP = L[L.kind.isin(['c','w'])].sort_values(['id','i']).copy()      # CNO-family PRICE looks: c = the app's CNO list, w = the wide read (same devig; Vigilant's own v looks are separate)\nP['cost'] = imp(P.american.astype(float)); P['clv_i'] = P.closeFair/P.cost - 1     # CLV had the bet been bought at THIS look (closeFair/cost - 1)\nf = P.groupby('id').head(1).set_index('id')                         # each bet's first c/w look\nP['m0'] = P.id.map(f.minToStart)                                     # minutes to the start at the first look\nP['age'] = (P.t_ms - P.id.map(f.t_ms))/60000                         # minutes since the first look (known at decision time)\nP['improve'] = (P.id.map(f.cost) - P.cost)/P.id.map(f.cost)          # >0 = cheaper than at the first look\nW = P[(P.minToStart>=2) & (P.minToStart<=360)]                       # looks inside the 6 h window, pregame with a 2-minute buffer\n# every rule below picks ONE look per bet (the first that satisfies it, groupby('id').head(1)) using only that look and earlier looks; CLV/ROI are taken at that look's price. See rules_repro.py for the runnable version.\nR1 = W[W.ev >= 0.025].groupby('id').head(1)",
+   "rationale": "Inside the 6 h window the CLV of a look is almost a straight line in its own listed EV: CLV% = -0.17 + 0.83 x EV% (slope SE 0.16; 378 bets, 59 games; looks weighted 1/bet), and neither time to the start inside the window (-0.05 pts/h, p 0.74) nor how much the price moved since the first look (+0.005 pts per % cheaper, p 0.96) adds anything once EV at the look is known. So the timing rule is: take the FIRST look inside the window at which the EV clears the bar, whether the bet was first seen there or its EV rose into the bar later (requalifiers). Outside the window the same EV does not keep: first look ever with EV >= 2.5% at 6-12 h -0.59% [-3.22%, +2.01%] on 27 closes/11 games, at 12-24 h +1.01% [-0.73%, +2.36%] on 63/20 (RESEARCH.md section 82 found the same 6 h step on Tj's own 176 bets, so the window is replicated, not fitted here). Vs the same bets at their first c/w look (+1.68%) waiting for the EV to qualify adds +0.86 pts [+0.60 pts, +1.11 pts]. HONEST SPLIT BY CLOSE SOURCE: Tracker closes (CNO's own consensus re-read for bets Tj placed, 75 closes) +3.49%; independent closes (Novig 3+ trades, ESPN; 33 closes/23 games) only +0.81% [-0.07%, +2.11%]; bets Tj did not place +0.82% on 41 closes. Close coverage is 63% of R1's bets; re-weighting the closed bets by 1/(closure rate within placed x prop-or-line x game day) gives +2.24% [+1.50%, +3.27%] (raw +2.54%).",
+   "baseline_clv": 0.01683679423107532,
+   "baseline_note": "same bets at their first c/w look +1.68%; every c/w bet at first look +0.38% on 571 closes; every OTHER in-window first look (EV < 2.5%) +0.36% on 262 closes (difference +2.19 pts [+1.47 pts, +3.12 pts])",
+   "luck_probability": "Game-cluster bootstrap: 0 of 4000 resamples put CLV at or under the all-bets baseline (+0.19%); R1 minus the other in-window entries +2.19 pts [+1.47 pts, +3.12 pts], bootstrap p < 0.001; same-day random picks of 116 in-window entries match it in 0 of 4000 draws (p < 0.00025; ignores same-game correlation, so too optimistic). Replicates in both game-day groups: Oct 4 NFL Sunday +2.14 pts [+1.30 pts, +3.48 pts] (23 games), Oct 3+5 +2.22 pts [+0.90 pts, +3.35 pts] (36 games). After a haircut for ~329 variants in ~15 independent families (Bonferroni 15) the family-wise p is still < 0.01. But the independent-close CLV is +0.81% on 33 closes with one-sided bootstrap p(<=0) = 0.039: about a 1-in-25 chance that the edge against Novig's own last trades is luck, and the Tracker-measured part (+3.5%) is a softer yardstick.",
+   "robustness": {
+    "close_coverage_reweighted": {
+     "bets_started": 184,
+     "closes": 116,
+     "close_rate": 0.6304347826086957,
+     "raw_clv": 0.025447580385784527,
+     "ipw_clv": 0.02238468788405268,
+     "ipw_lo": 0.014961941760257872,
+     "ipw_hi": 0.03272405562184208
+    },
+    "per_day_steady_state_after_first_6h_of_study": 78.66072418792433,
+    "after_first_6h": {
+     "closes": 96,
+     "games": 24,
+     "clv": 0.02568820803054973,
+     "lo": 0.017052640358644233,
+     "hi": 0.03770117133556591
+    },
+    "NFL": {
+     "closes": 75,
+     "games": 15,
+     "clv": 0.021508932939221452,
+     "lo": 0.012743072875991779,
+     "hi": 0.03471651322698237
+    },
+    "non_NFL": {
+     "closes": 41,
+     "games": 25,
+     "clv": 0.03265242327583892,
+     "lo": 0.021967340925627427,
+     "hi": 0.042813913508054253
+    },
+    "props": {
+     "closes": 98,
+     "games": 30,
+     "clv": 0.023820586535978454,
+     "lo": 0.01646275843568126,
+     "hi": 0.0350433424158738
+    },
+    "lines": {
+     "closes": 18,
+     "games": 17,
+     "clv": 0.03430565801250646,
+     "lo": 0.014797395718503404,
+     "hi": 0.05535793474916579
+    },
+    "without_3_biggest_games": {
+     "closes": 76,
+     "games": 37,
+     "clv": 0.027748035645951092,
+     "lo": 0.019465090709139828,
+     "hi": 0.03603851258916452,
+     "dropped_closes": 40
+    },
+    "by_game_start_day": {
+     "start_2026-10-03": {
+      "closes": 19,
+      "games": 15,
+      "clv": 0.026697283671783135,
+      "lo": 0.012668312026568748,
+      "hi": 0.042914185817271654
+     },
+     "start_2026-10-04": {
+      "closes": 79,
+      "games": 20,
+      "clv": 0.022878894791128916,
+      "lo": 0.014124121999589512,
+      "hi": 0.036435673947341256
+     },
+     "start_2026-10-05": {
+      "closes": 18,
+      "games": 5,
+      "clv": 0.035402124804885624,
+      "lo": 0.0315062718296441,
+      "hi": 0.04733707326708886
+     }
+    },
+    "app_cno_list_c_looks_only": {
+     "closes": 108,
+     "games": 39,
+     "clv": 0.0255880590865939,
+     "lo": 0.017836243789335248,
+     "hi": 0.035997640135736704,
+     "bets": 139,
+     "per_day": 61.61347517730497
+    },
+    "independent_closes": {
+     "closes": 33,
+     "games": 23,
+     "clv": 0.008087061071351235,
+     "lo": -0.0006797816535523496,
+     "hi": 0.021123138042479766,
+     "halfwidth_pts": 1.0901459848016057,
+     "games_for_pm0.5": 109.33448067247377,
+     "closes_for_pm0.5": 156.87121139963628
+    },
+    "games_needed_for_pm0_5_pts_all_closes": 115.42118050579063,
+    "games_needed_for_pm0_5_pts_independent": 109.33448067247377
+   },
+   "verdict": "Best-supported rule. The app's own CNO list (c looks) is the actionable part: 139 bets (62/day) CLV +2.56% [+1.78%, +3.60%] on 108 closes. ROI -6.73% [-23.03%, +10.60%] on 178 settled bets says nothing yet (needs thousands of bets).",
+   "angle": "WHEN and AT WHAT PRICE to take a bet: decision-time rules over each bet's looks (no hindsight): window, EV-at-the-look entry, freshness of the listing, price level, price improvement, waiting / confirming / late sniping, EV path, stale listings; CNO-family (c/w) looks for the main rules, the Vigilant scan (v) separately.",
+   "tried_count": 522,
+   "baseline": "Universe = the study's 2080 bets (190 games); 683 have a close (69 games). First-listed-price CLV of ALL bets +0.19% [-0.36, +0.80]; of the 1842 bets the CNO family (c/w) listed +0.38% [-0.06, +0.86] on 571 closes/61 games (ROI +3.1%); of the 614 the Vigilant scan listed -0.14% [-0.89, +0.71] on 368 closes/39 games. Reference rule: first look 2-360 min before the start for bets first seen there (FRESH) +1.29% [+0.88, +1.83] on 234 closes/58 games; the guard as built (ENTER_360, entrants included) +0.82% [+0.46, +1.28] on 378/59. Every rule's CLV is taken at the price of the LOOK where the rule buys (closeFair/cost-1), game-cluster bootstrap CIs (loader method), ROI at that price. Date halves: decision date Oct 3 | Oct 4+ (the 'first_half' is Oct 3: 20-73 closes, so its CIs are wide), plus a game-start median split; both are in the rules' detail."
+  },
+  {
+   "name": "Trap guard 6 h: only bets first listed within 6 h of the start (today 24 h)",
+   "rank": 3,
+   "universe": "U",
+   "universe_expr": "(df.shown) & (df.ev>=0.025) & (df.american>=-200) & (df.american<=130) & df.kind.isin(['PROP','MONEYLINE','SPREAD']) & (df.minToStartFirst<=1440)",
+   "expr": "((df.shown) & (df.ev>=0.025) & (df.american>=-200) & (df.american<=130) & df.kind.isin(['PROP','MONEYLINE','SPREAD']) & (df.minToStartFirst<=1440)) & ~(df.minToStartFirst>360)",
+   "drop_expr": "df.minToStartFirst>360",
+   "rationale": "The only trap sign that is large on the wide samples: first-look lead over 6 h loses to the consensus close (wider universe W: kept +1.41% on 256 closes vs dropped -0.37% on 412, +1.79 pts [+0.93, +2.68], 69 games; within the same game +2.56 [+1.35, +3.81] over 28 games, 82% of games positive). It is the repo's own default (TrapGuard.DEFAULT_EARLY_HOURS = 6). Only 3 of the 106 dropped bets re-enter the 6 h window still listed and passing, so the first-look cut is what the guard really does here. Cost: drops 106 of 182 bets (58%; 47.0 a day), keeps 33.7 a day. Bets the auto-bet could still place (book page read, 3+ agree, not vetoed): 14.2 a day instead of 20.8, $67 a day at the caps ($5 a bet, $500 a day, $70 a game) instead of $97, or $29 instead of $42 at its quarter-Kelly stake (never over $3.50); expected CLV worth about $1.90 a day instead of $1.11 at the caps ($0.81 vs $0.48 at quarter-Kelly). The whole list at the caps: $158 a day vs $346.",
+   "verdict": "Best supported by sample size and by the halves (both game-start halves positive: +2.45 and +1.75 pts). Inside the app's universe the interval touches 0 (+2.12 [-0.58, +5.23], 51 kept vs 69 dropped closes, 20 dropped games). The gap shows against Tracker closes (+3.15 in the app's universe, +2.85 in W) and ESPN (+2.11 in W) but NOT against Novig's own last trades (W -0.15 [-1.7, +1.2]); on all independent closes W +0.89 [-0.11, +1.97]. The dropped bets are not losers in the app's universe (+0.46% [-2.18, +2.79]), so it saves volume more than it saves money.",
+   "question_for_tj": "QUESTION FOR TJ: set the trap guard (Starts within) to 6 h instead of 24 h? Pre-registered test on new games: about 66 games with closes in total (the app's universe has 35 so far) if the effect is as observed, about 262 if it is half.",
+   "bets": 76,
+   "games": 32,
+   "per_day": 33.686852561243505,
+   "games_per_day": 14.183937920523581,
+   "avg_available": 369.4162690789474,
+   "median_available": 81.0,
+   "ev_listed": 0.03720982939246506,
+   "bets_dropped": 106,
+   "dropped_per_day": 46.984294361734364,
+   "dropped_share": 0.5824175824175825,
+   "clv": 0.025856223406446995,
+   "clv_lo": 0.014468707233836248,
+   "clv_hi": 0.041413106900626204,
+   "clv_n_closes": 51,
+   "clv_games": 27,
+   "beat_share": 0.7058823529411765,
+   "clv_close_ok": {
+    "n": 43,
+    "games": 23,
+    "clv": 0.028768808333346003,
+    "lo": 0.01595938228224012,
+    "hi": 0.04499413813635467,
+    "beat": 0.7674418604651163
+   },
+   "clv_independent_closes": {
+    "n": 9,
+    "games": 7,
+    "clv": 0.008801182020223015,
+    "lo": 0.003013717006290146,
+    "hi": 0.015345409182141187,
+    "beat": 0.4444444444444444
+   },
+   "clv_novig_trades3": {
+    "n": 6,
+    "games": 4,
+    "clv": 0.005462365750598904,
+    "lo": -7.922076363736652e-05,
+    "hi": 0.00936078410209289,
+    "beat": 0.3333333333333333
+   },
+   "clv_tracker_closes": {
+    "n": 34,
+    "games": 18,
+    "clv": 0.034054356475055024,
+    "lo": 0.018108661925630886,
+    "hi": 0.0530140556038677,
+    "beat": 0.8529411764705882
+   },
+   "clv_stake_weighted": 0.025360346465708773,
+   "roi": -0.022231941326844452,
+   "roi_lo": -0.27982041374071975,
+   "roi_hi": 0.22888951366413146,
+   "roi_n_settled": 74,
+   "roi_games": 31,
+   "baseline_clv": 0.013655241528974321,
+   "baseline_clv_lo": 0.0006514052022553871,
+   "baseline_clv_hi": 0.028462599051634743,
+   "baseline_bets": 182,
+   "baseline_closes": 120,
+   "baseline_roi": {
+    "n": 174,
+    "games": 38,
+    "roi": -0.03695405847795195,
+    "lo": -0.21428047377974943,
+    "hi": 0.1289856080040682
+   },
+   "baseline_clv_independent": {
+    "n": 38,
+    "games": 19,
+    "clv": 0.005379456491168169,
+    "lo": -0.01767818344669458,
+    "hi": 0.02534019695880907,
+    "beat": 0.5
+   },
+   "baseline_clv_tracker": {
+    "n": 56,
+    "games": 27,
+    "clv": 0.021673721304221103,
+    "lo": 0.004824583531897528,
+    "hi": 0.039961525834597396,
+    "beat": 0.8214285714285714
+   },
+   "baseline_clv_stake_weighted": 0.012437700392442512,
+   "gain_kept_minus_baseline": 0.012200981877472674,
+   "clv_gain_pts_per_10pct_of_bets_dropped": 0.20948855676415343,
+   "dropped": {
+    "bets": 106,
+    "clv": {
+     "n": 69,
+     "games": 20,
+     "clv": 0.0046371244891032165,
+     "lo": -0.02181143019007672,
+     "hi": 0.02791108432904858,
+     "beat": 0.5942028985507246
+    },
+    "clv_independent": {
+     "n": 29,
+     "games": 13,
+     "clv": 0.004317541671806321,
+     "lo": -0.024316149727816375,
+     "hi": 0.031291246287220534,
+     "beat": 0.5172413793103449
+    },
+    "clv_tracker": {
+     "n": 22,
+     "games": 16,
+     "clv": 0.0025400124038414055,
+     "lo": -0.03831991015234067,
+     "hi": 0.03846815472642397,
+     "beat": 0.7727272727272727
+    },
+    "roi": {
+     "n": 100,
+     "games": 22,
+     "roi": -0.04784842516977151,
+     "lo": -0.2762508021577874,
+     "hi": 0.15794809460094153
+    },
+    "ev_listed": 0.04151598120406125
+   },
+   "kept_minus_dropped": {
+    "diff": 0.02121909891734378,
+    "lo": -0.005766190342130402,
+    "hi": 0.0523232276641264,
+    "n_keep_closes": 51,
+    "n_drop_closes": 69,
+    "games_drop": 20
+   },
+   "kept_minus_dropped_independent_closes": {
+    "diff": 0.0044836403484166945,
+    "lo": -0.02357726434638094,
+    "hi": 0.03632267976999965,
+    "n_keep_closes": 9,
+    "n_drop_closes": 29
+   },
+   "kept_minus_dropped_tracker_closes": {
+    "diff": 0.03151434407121362,
+    "lo": -0.010159045292953686,
+    "hi": 0.07971305574704873,
+    "n_keep_closes": 34,
+    "n_drop_closes": 22
+   },
+   "kept_minus_dropped_without_worst_dropped_close": {
+    "diff": 0.016645526215462073,
+    "lo": -0.009119382411439359,
+    "hi": 0.04579172843199527,
+    "worst_clv": -0.30636581923885287
+   },
+   "first_half_clv": 0.02802503609364844,
+   "second_half_clv": 0.024568490873421132,
+   "first_half_closes": 19,
+   "second_half_closes": 32,
+   "halves_definition": "first_half/second_half = kept CLV on bets whose GAME starts before / after the median game start of the baseline's closes (balanced by closes); halves detail has the kept-minus-dropped gap on each half, on first-look halves and on the loader's firstDay cut",
+   "loader_first_half_clv": 0.022097639434203762,
+   "loader_second_half_clv": 0.03952380148733147,
+   "loader_first_half_closes": 40,
+   "loader_second_half_closes": 11,
+   "halves": {
+    "balanced_firstlook": {
+     "h1": {
+      "keep": {
+       "n": 7,
+       "games": 7,
+       "clv": 0.03141028460328713,
+       "lo": -0.009035675812347467,
+       "hi": 0.06683361981089779,
+       "beat": 0.8571428571428571
+      },
+      "drop": {
+       "n": 54,
+       "games": 17,
+       "clv": -0.0036284666350357864,
+       "lo": -0.0273100528401912,
+       "hi": 0.01702524865043318,
+       "beat": 0.5740740740740741
+      },
+      "diff": {
+       "diff": 0.03503875123832292,
+       "lo": -0.009536619425888633,
+       "hi": 0.07634484922387458,
+       "n_keep": 7,
+       "n_drop": 54
+      }
+     },
+     "h2": {
+      "keep": {
+       "n": 44,
+       "games": 20,
+       "clv": 0.024972622761495148,
+       "lo": 0.013777910912088496,
+       "hi": 0.04081134529464135,
+       "beat": 0.6818181818181818
+      },
+      "drop": {
+       "n": 15,
+       "games": 12,
+       "clv": 0.03439325253600363,
+       "lo": -0.04131461466603381,
+       "hi": 0.11910137038699076,
+       "beat": 0.6666666666666666
+      },
+      "diff": {
+       "diff": -0.009420629774508481,
+       "lo": -0.10302274655141498,
+       "hi": 0.0737034863134197,
+       "n_keep": 44,
+       "n_drop": 15
+      }
+     }
+    },
+    "balanced_gamestart": {
+     "h1": {
+      "keep": {
+       "n": 19,
+       "games": 14,
+       "clv": 0.02802503609364844,
+       "lo": 0.010832083635058488,
+       "hi": 0.04757195649394246,
+       "beat": 0.7368421052631579
+      },
+      "drop": {
+       "n": 48,
+       "games": 12,
+       "clv": 0.003558658840725174,
+       "lo": -0.02405363353913464,
+       "hi": 0.033102509914280334,
+       "beat": 0.5833333333333334
+      },
+      "diff": {
+       "diff": 0.024466377252923267,
+       "lo": -0.015344052688634015,
+       "hi": 0.05769598995365074,
+       "n_keep": 19,
+       "n_drop": 48
+      }
+     },
+     "h2": {
+      "keep": {
+       "n": 32,
+       "games": 13,
+       "clv": 0.024568490873421132,
+       "lo": 0.012439864209148568,
+       "hi": 0.04371712689656728,
+       "beat": 0.6875
+      },
+      "drop": {
+       "n": 21,
+       "games": 8,
+       "clv": 0.007102188828253028,
+       "lo": -0.0498659219319769,
+       "hi": 0.039731916055554574,
+       "beat": 0.6190476190476191
+      },
+      "diff": {
+       "diff": 0.017466302045168105,
+       "lo": -0.02066333781601199,
+       "hi": 0.08988476509796019,
+       "n_keep": 32,
+       "n_drop": 21
+      }
+     }
+    },
+    "loader_firstDay_cut_2026-10-04": {
+     "h1": {
+      "keep": {
+       "n": 40,
+       "games": 20,
+       "clv": 0.022097639434203762,
+       "lo": 0.008956996171558922,
+       "hi": 0.04187844549553212,
+       "beat": 0.65
+      },
+      "drop": {
+       "n": 66,
+       "games": 18,
+       "clv": 0.009145880290896191,
+       "lo": -0.016502909208344897,
+       "hi": 0.031176197657201032,
+       "beat": 0.6060606060606061
+      },
+      "bets_keep": 52,
+      "bets_drop": 97,
+      "diff": {
+       "diff": 0.01295175914330757,
+       "lo": -0.014667132797392003,
+       "hi": 0.042170441102055596,
+       "n_keep": 40,
+       "n_drop": 66
+      }
+     },
+     "h2": {
+      "keep": {
+       "n": 11,
+       "games": 7,
+       "clv": 0.03952380148733147,
+       "lo": 0.026352807196360538,
+       "hi": 0.04709072652012145,
+       "beat": 0.9090909090909091
+      },
+      "drop": {
+       "n": 3,
+       "games": 2,
+       "clv": -0.09455550315034222,
+       "lo": -0.16961711456609807,
+       "hi": 0.05556771968116947,
+       "beat": 0.3333333333333333
+      },
+      "bets_keep": 24,
+      "bets_drop": 9,
+      "diff": {
+       "diff": 0.1340793046376737,
+       "lo": -0.0267797835906167,
+       "hi": 0.21484100693457264,
+       "n_keep": 11,
+       "n_drop": 3
+      }
+     }
+    }
+   },
+   "replication_wider_universes": {
+    "M": {
+     "bets": 224,
+     "closes": 138,
+     "drop_share": 0.5758928571428571,
+     "keep": 0.03014535705145661,
+     "drop": 0.010536103520438442,
+     "diff": 0.019609253531018167,
+     "lo": -0.0021972865798275017,
+     "hi": 0.04531620426550688,
+     "n_keep": 62,
+     "n_drop": 76,
+     "games_drop": 21,
+     "indep_diff": 0.0037506868954780906,
+     "indep_lo": -0.020826587181071797,
+     "indep_hi": 0.035377114698228594,
+     "indep_n_keep": 12,
+     "indep_n_drop": 33
+    },
+    "S": {
+     "bets": 711,
+     "closes": 378,
+     "drop_share": 0.5513361462728551,
+     "keep": 0.019196724118562353,
+     "drop": 0.00011773421257509546,
+     "diff": 0.01907898990598726,
+     "lo": 0.00856031031665912,
+     "hi": 0.032362518767199706,
+     "n_keep": 136,
+     "n_drop": 242,
+     "games_drop": 25,
+     "indep_diff": 0.00946984011514392,
+     "indep_lo": -0.009030799503169127,
+     "indep_hi": 0.027296452373253368,
+     "indep_n_keep": 54,
+     "indep_n_drop": 124
+    },
+    "W": {
+     "bets": 1749,
+     "closes": 668,
+     "drop_share": 0.46369353916523726,
+     "keep": 0.014107574966926073,
+     "drop": -0.0037457266427459142,
+     "diff": 0.01785330160967199,
+     "lo": 0.009255572013487786,
+     "hi": 0.026780678488405145,
+     "n_keep": 256,
+     "n_drop": 412,
+     "games_drop": 31,
+     "indep_diff": 0.008946377472755595,
+     "indep_lo": -0.0016180709099063108,
+     "indep_hi": 0.020114386579578133,
+     "indep_n_keep": 128,
+     "indep_n_drop": 225
+    }
+   },
+   "wider_universe_luck": {
+    "M": {
+     "z": 1.6033414305046612,
+     "p_wild_cluster_one_sided": 0.07223194201449637
+    },
+    "S": {
+     "z": 3.225384735841609,
+     "p_wild_cluster_one_sided": 0.0024993751562109472
+    },
+    "W": {
+     "z": 4.035939278778829,
+     "p_wild_cluster_one_sided": 0.0004998750312421895
+    }
+   },
+   "dollars": {
+    "list_caps": {
+     "bets_per_day": 33.243604501227146,
+     "usd_staked_per_day": 158.44899213419896,
+     "expected_clv_usd_per_day": 4.096892539148211
+    },
+    "list_kelly": {
+     "bets_per_day": 33.243604501227146,
+     "usd_staked_per_day": 68.06342216651225,
+     "expected_clv_usd_per_day": 1.7598630493446574
+    },
+    "autobet_eligible_caps": {
+     "bets_per_day": 14.183937920523581,
+     "usd_staked_per_day": 67.37370512248701,
+     "expected_clv_usd_per_day": 1.8993365491495382
+    },
+    "autobet_eligible_kelly": {
+     "bets_per_day": 14.183937920523581,
+     "usd_staked_per_day": 28.7925318506788,
+     "expected_clv_usd_per_day": 0.811692157750931
+    },
+    "baseline_list_caps": {
+     "bets_per_day": 77.12516244284697,
+     "usd_staked_per_day": 345.62626510704433,
+     "expected_clv_usd_per_day": 4.719610128794
+    },
+    "baseline_list_kelly": {
+     "bets_per_day": 78.89815468291242,
+     "usd_staked_per_day": 154.52644923292638,
+     "expected_clv_usd_per_day": 2.1100959868903986
+    },
+    "baseline_autobet_eligible_caps": {
+     "bets_per_day": 20.832658820769012,
+     "usd_staked_per_day": 97.3729111236184,
+     "expected_clv_usd_per_day": 1.1129647809424463
+    },
+    "baseline_autobet_eligible_kelly": {
+     "bets_per_day": 20.832658820769012,
+     "usd_staked_per_day": 41.595889147302074,
+     "expected_clv_usd_per_day": 0.4754377692802106
+    }
+   },
+   "games_with_closes_needed_if_effect_is_as_observed": 65.57649932243861,
+   "games_with_closes_needed_if_effect_is_half": 262.30599728975443,
+   "luck_probability": "Inside the app's universe: P(this good by luck) = 0.089 (game-cluster wild bootstrap, one-sided) / 0.063 (permutation within game-day); after counting 107 tries (max over the 95 testable rules) the chance that SOME rule looks this good by luck is 0.99 / 0.92, i.e. not distinguishable from luck. The same flag on wider universes (single-rule one-sided wild-cluster p): M 0.072, S 0.002, W 0.000.",
+   "luck": {
+    "lib_name": "lead>360",
+    "p_wild_cluster_single": 0.08865189135144143,
+    "p_wild_cluster_adjusted_for_tries": 0.9918346942176304,
+    "p_permutation_within_gameday_single": 0.06282286285619064,
+    "p_permutation_within_gameday_adjusted_for_tries": 0.9211798033661056,
+    "z_cluster": 1.4379308615310598,
+    "tried": 107,
+    "eligible_in_max": 95,
+    "draws": 6000
+   },
+   "tried_count": 107,
+   "angle": "TRAP AVOIDANCE and the props/sharp-book rule layered on the universe the app already bets: rules that REMOVE the bets most likely to lose to the close (long lead, wide Novig book, falling edge, low edge, sharp veto bar, few books, long price) and rules that RAISE the bar where the evidence is thin (a higher edge floor for props with no sharp PASS), ranked by CLV gained per bet dropped, with the cost of each in bets and dollars a day at the auto-bet's caps.",
+   "baseline": "The app's own universe U = shown by the CNO list & listed EV >= 2.5% & odds -200..+130 & props/moneylines/spreads & first listed within 24 h: 182 bets, 39 games, 80.7 a day, avg $354 available; CLV +1.37% [+0.07, +2.85] on 120 closes in 35 games, beat the close 64%; ROI -3.7% [-21.4, +12.9] on 174 settled bets in 38 games; vs Tracker closes +2.17% [+0.48, +4.00] on 56 closes in 27 games; vs independent closes +0.54% [-1.77, +2.53] on 38 closes in 19 games. Judged part UJ (book page read, the only bets the auto-bet can place): 75 bets, CLV +1.38% [-0.04, +3.07] on 64 closes in 25 games. Rules are measured as kept-minus-dropped CLV on the same universe, plus the same flag on the wider universes M, S, W (within 24 h)."
+  },
+  {
+   "name": "Wide Novig book: skip a judged bet whose two sides cost 2 cents or more over $1",
+   "rank": 1,
+   "universe": "UJ",
+   "universe_expr": "(df.shown) & (df.ev>=0.025) & (df.american>=-200) & (df.american<=130) & df.kind.isin(['PROP','MONEYLINE','SPREAD']) & (df.minToStartFirst<=1440) & df.ab_verdict.notna()",
+   "expr": "((df.shown) & (df.ev>=0.025) & (df.american>=-200) & (df.american<=130) & df.kind.isin(['PROP','MONEYLINE','SPREAD']) & (df.minToStartFirst<=1440) & df.ab_verdict.notna()) & ~((df.cost + np.where(df.ab_otherAmerican<0, -df.ab_otherAmerican/(100-df.ab_otherAmerican), 100/(100+df.ab_otherAmerican)) - 1)>=0.02)",
+   "drop_expr": "(df.cost + np.where(df.ab_otherAmerican<0, -df.ab_otherAmerican/(100-df.ab_otherAmerican), 100/(100+df.ab_otherAmerican)) - 1)>=0.02",
+   "rationale": "Novig's own book is thin or stale when the price of this side plus the price of the other side comes to 1.02 or more. Those bets lose to the consensus close more often than the rest (the traps analyst's second sign, re-checked here on the app's universe and on wider ones). It needs the other side's price, which is logged only with the book page (judged bets), so it applies to the bets the auto-bet can place. It is a LONG-LEAD sign: inside 6 h it adds nothing (wider judged universe WJ, within 6 h: +0.08 pts [-1.75, +1.48], 30 dropped), and 7 of its 17 dropped bets are the over-6 h ones the 6 h guard would also drop, so it is an alternative to the guard (or a belt-and-braces layer if the guard stays at 24 h), not an addition. Cost: drops 17 of 75 bets (23%; 7.5 a day), keeps 25.7 a day. Bets the auto-bet could still place (book page read, 3+ agree, not vetoed): 15.1 a day instead of 20.8, $72 a day at the caps ($5 a bet, $500 a day, $70 a game) instead of $97, or $31 instead of $42 at its quarter-Kelly stake (never over $3.50); expected CLV worth about $1.61 a day instead of $1.11 at the caps ($0.69 vs $0.48 at quarter-Kelly). The whole list at the caps: $125 a day vs $159.",
+   "verdict": "Best CLV gain per bet dropped. Replicates on wider universes on all closes (WJ +2.15 pts [+0.90, +3.41], 80 dropped closes, 27 games) AND on independent closes (WJ +1.58 [+0.32, +2.94]), same sign in both game-start halves. Thin inside the app's universe (16 dropped closes, 11 games, interval touches 0) and not significant after the multiple-tries haircut.",
+   "question_for_tj": "QUESTION FOR TJ (it would only make the auto-bet stricter): skip a bet when Novig's price for this side plus the other side's price is 1.02 or more?  Pre-registered test on new games: about 25 games with closes in total (the app's universe has 25 so far) if the effect is as observed, about 101 if it is half.",
+   "bets": 58,
+   "games": 27,
+   "per_day": 25.708387480948993,
+   "games_per_day": 11.967697620441772,
+   "avg_available": 169.22652499999998,
+   "median_available": 77.0,
+   "ev_listed": 0.036041379844964284,
+   "bets_dropped": 17,
+   "dropped_per_day": 7.535217020278153,
+   "dropped_share": 0.22666666666666666,
+   "clv": 0.02461706757893209,
+   "clv_lo": 0.01336588179094405,
+   "clv_hi": 0.038061499719910775,
+   "clv_n_closes": 48,
+   "clv_games": 24,
+   "beat_share": 0.7291666666666666,
+   "clv_close_ok": {
+    "n": 42,
+    "games": 24,
+    "clv": 0.02436927205620774,
+    "lo": 0.012919979604156062,
+    "hi": 0.03689441005550917,
+    "beat": 0.7619047619047619
+   },
+   "clv_independent_closes": {
+    "n": 12,
+    "games": 11,
+    "clv": 0.002003692177621567,
+    "lo": -0.0079449329225132,
+    "hi": 0.012857662655760637,
+    "beat": 0.5
+   },
+   "clv_novig_trades3": {
+    "n": 11,
+    "games": 10,
+    "clv": 0.00023921854844348317,
+    "lo": -0.010834018464271282,
+    "hi": 0.010762801363957965,
+    "beat": 0.45454545454545453
+   },
+   "clv_tracker_closes": {
+    "n": 30,
+    "games": 18,
+    "clv": 0.033315504007642216,
+    "lo": 0.0180806640564249,
+    "hi": 0.050874813674918126,
+    "beat": 0.8666666666666667
+   },
+   "clv_stake_weighted": 0.02454684925923327,
+   "roi": 0.023142334987373465,
+   "roi_lo": -0.2346722097903387,
+   "roi_hi": 0.3018684033034559,
+   "roi_n_settled": 56,
+   "roi_games": 26,
+   "baseline_clv": 0.013833265020279093,
+   "baseline_clv_lo": -0.0003827664773566906,
+   "baseline_clv_hi": 0.030660859568942087,
+   "baseline_bets": 75,
+   "baseline_closes": 64,
+   "baseline_roi": {
+    "n": 73,
+    "games": 27,
+    "roi": -0.05153240093266297,
+    "lo": -0.2877362372260996,
+    "hi": 0.20766861640528483
+   },
+   "baseline_clv_independent": {
+    "n": 14,
+    "games": 13,
+    "clv": -0.0022758419113733585,
+    "lo": -0.01583318420875427,
+    "hi": 0.010501719000864131,
+    "beat": 0.5
+   },
+   "baseline_clv_tracker": {
+    "n": 43,
+    "games": 21,
+    "clv": 0.01806648159085701,
+    "lo": -0.0014002511797794011,
+    "hi": 0.042393773577494485,
+    "beat": 0.813953488372093
+   },
+   "baseline_clv_stake_weighted": 0.014472710084572085,
+   "gain_kept_minus_baseline": 0.010783802558652996,
+   "clv_gain_pts_per_10pct_of_bets_dropped": 0.475755995234691,
+   "dropped": {
+    "bets": 17,
+    "clv": {
+     "n": 16,
+     "games": 11,
+     "clv": -0.0185181426556799,
+     "lo": -0.05705738620345344,
+     "hi": 0.02587612418332957,
+     "beat": 0.625
+    },
+    "clv_independent": {
+     "n": 2,
+     "games": 2,
+     "clv": -0.02795304644534291,
+     "lo": -0.06846287314002786,
+     "hi": 0.012556780249342037,
+     "beat": 0.5
+    },
+    "clv_tracker": {
+     "n": 13,
+     "games": 9,
+     "clv": -0.017123570140185763,
+     "lo": -0.06428401430753368,
+     "hi": 0.04509553732118972,
+     "beat": 0.6923076923076923
+    },
+    "roi": {
+     "n": 17,
+     "games": 11,
+     "roi": -0.2975197663163125,
+     "lo": -0.6989550264550264,
+     "hi": 0.12699082568807338
+    },
+    "ev_listed": 0.03621129810416257
+   },
+   "kept_minus_dropped": {
+    "diff": 0.04313521023461199,
+    "lo": -0.0009997030694211483,
+    "hi": 0.08561442000321408,
+    "n_keep_closes": 48,
+    "n_drop_closes": 16,
+    "games_drop": 11
+   },
+   "kept_minus_dropped_independent_closes": {
+    "diff": 0.02995673862296448,
+    "lo": -0.016861115268630295,
+    "hi": 0.07750630468182823,
+    "n_keep_closes": 12,
+    "n_drop_closes": 2
+   },
+   "kept_minus_dropped_tracker_closes": {
+    "diff": 0.05043907414782798,
+    "lo": -0.009447900961872301,
+    "hi": 0.10251433643645101,
+    "n_keep_closes": 30,
+    "n_drop_closes": 13
+   },
+   "kept_minus_dropped_without_worst_dropped_close": {
+    "diff": 0.023945365129067125,
+    "lo": -0.0028624331658107733,
+    "hi": 0.049996197933532105,
+    "worst_clv": -0.30636581923885287
+   },
+   "first_half_clv": 0.023764006627429266,
+   "second_half_clv": 0.02533888838404987,
+   "first_half_closes": 22,
+   "second_half_closes": 26,
+   "halves_definition": "first_half/second_half = kept CLV on bets whose GAME starts before / after the median game start of the baseline's closes (balanced by closes); halves detail has the kept-minus-dropped gap on each half, on first-look halves and on the loader's firstDay cut",
+   "loader_first_half_clv": 0.01946252539605365,
+   "loader_second_half_clv": 0.050389778493324294,
+   "loader_first_half_closes": 40,
+   "loader_second_half_closes": 8,
+   "halves": {
+    "balanced_firstlook": {
+     "h1": {
+      "keep": {
+       "n": 25,
+       "games": 17,
+       "clv": 0.02006874213142868,
+       "lo": 0.0021352873358836365,
+       "hi": 0.0362703873809394,
+       "beat": 0.76
+      },
+      "drop": {
+       "n": 10,
+       "games": 7,
+       "clv": 0.011684089348840543,
+       "lo": -0.02305282434870523,
+       "hi": 0.04848642150856727,
+       "beat": 0.8
+      },
+      "diff": {
+       "diff": 0.008384652782588138,
+       "lo": -0.041824356311555566,
+       "hi": 0.04761003378425053,
+       "n_keep": 25,
+       "n_drop": 10
+      }
+     },
+     "h2": {
+      "keep": {
+       "n": 23,
+       "games": 13,
+       "clv": 0.029560899587087974,
+       "lo": 0.015528881432002192,
+       "hi": 0.047191700226835866,
+       "beat": 0.6956521739130435
+      },
+      "drop": {
+       "n": 6,
+       "games": 4,
+       "clv": -0.06885519599654731,
+       "lo": -0.10585608797407656,
+       "hi": 0.005146587958511195,
+       "beat": 0.3333333333333333
+      },
+      "diff": {
+       "diff": 0.09841609558363529,
+       "lo": 0.023376815443025264,
+       "hi": 0.14775028641431961,
+       "n_keep": 23,
+       "n_drop": 6
+      }
+     }
+    },
+    "balanced_gamestart": {
+     "h1": {
+      "keep": {
+       "n": 22,
+       "games": 11,
+       "clv": 0.023764006627429266,
+       "lo": 0.00812969650300749,
+       "hi": 0.039036755394853594,
+       "beat": 0.7272727272727273
+      },
+      "drop": {
+       "n": 10,
+       "games": 7,
+       "clv": 0.009438553139374039,
+       "lo": -0.026347961540807683,
+       "hi": 0.04981306471318235,
+       "beat": 0.8
+      },
+      "diff": {
+       "diff": 0.014325453488055227,
+       "lo": -0.0272889011083043,
+       "hi": 0.04327811306685355,
+       "n_keep": 22,
+       "n_drop": 10
+      }
+     },
+     "h2": {
+      "keep": {
+       "n": 26,
+       "games": 13,
+       "clv": 0.02533888838404987,
+       "lo": 0.010222089222689124,
+       "hi": 0.04441735197985377,
+       "beat": 0.7307692307692307
+      },
+      "drop": {
+       "n": 6,
+       "games": 4,
+       "clv": -0.06511263564743647,
+       "lo": -0.10585608797407656,
+       "hi": 0.01637426900584371,
+       "beat": 0.3333333333333333
+      },
+      "diff": {
+       "diff": 0.09045152403148633,
+       "lo": -0.0024869480975431065,
+       "hi": 0.14065668799657646,
+       "n_keep": 26,
+       "n_drop": 6
+      }
+     }
+    },
+    "loader_firstDay_cut_2026-10-04": {
+     "h1": {
+      "keep": {
+       "n": 40,
+       "games": 19,
+       "clv": 0.01946252539605365,
+       "lo": 0.007617108541908604,
+       "hi": 0.03418859289261097,
+       "beat": 0.675
+      },
+      "drop": {
+       "n": 13,
+       "games": 10,
+       "clv": 0.0026147915376568687,
+       "lo": -0.028901748363300974,
+       "hi": 0.03213055608228733,
+       "beat": 0.6923076923076923
+      },
+      "bets_keep": 49,
+      "bets_drop": 13,
+      "diff": {
+       "diff": 0.01684773385839678,
+       "lo": -0.0141790580883984,
+       "hi": 0.04768731864620682,
+       "n_keep": 40,
+       "n_drop": 13
+      }
+     },
+     "h2": {
+      "keep": {
+       "n": 8,
+       "games": 5,
+       "clv": 0.050389778493324294,
+       "lo": 0.040819371563868674,
+       "hi": 0.05957302139824272,
+       "beat": 1.0
+      },
+      "drop": {
+       "n": 3,
+       "games": 1,
+       "clv": -0.1100941908268059,
+       "lo": -0.1100941908268059,
+       "hi": -0.1100941908268059,
+       "beat": 0.3333333333333333
+      },
+      "bets_keep": 9,
+      "bets_drop": 4,
+      "diff": {
+       "diff": 0.1604839693201302,
+       "lo": 0.15411240853793465,
+       "hi": 0.16902223011696133,
+       "n_keep": 8,
+       "n_drop": 3
+      }
+     }
+    }
+   },
+   "replication_wider_universes": {
+    "MJ": {
+     "bets": 86,
+     "closes": 71,
+     "drop_share": 0.23255813953488372,
+     "keep": 0.02837222221619822,
+     "drop": -0.011629389341553017,
+     "diff": 0.04000161155775124,
+     "lo": -0.005244066063678947,
+     "hi": 0.08130951687657825,
+     "n_keep": 53,
+     "n_drop": 18,
+     "games_drop": 13,
+     "indep_diff": 0.03812834366665204,
+     "indep_lo": -0.012657927283431774,
+     "indep_hi": 0.07405406143196858,
+     "indep_n_keep": 14,
+     "indep_n_drop": 3
+    },
+    "SJ": {
+     "bets": 198,
+     "closes": 153,
+     "drop_share": 0.25252525252525254,
+     "keep": 0.019400093037179576,
+     "drop": -0.008544070891055919,
+     "diff": 0.027944163928235496,
+     "lo": 0.005289037469790445,
+     "hi": 0.04954646005468024,
+     "n_keep": 112,
+     "n_drop": 41,
+     "games_drop": 18,
+     "indep_diff": 0.02163887601970336,
+     "indep_lo": 0.0025061233186137594,
+     "indep_hi": 0.03841663813146595,
+     "indep_n_keep": 44,
+     "indep_n_drop": 17
+    },
+    "WJ": {
+     "bets": 302,
+     "closes": 233,
+     "drop_share": 0.33112582781456956,
+     "keep": 0.015036265414787154,
+     "drop": -0.006427347991603409,
+     "diff": 0.021463613406390563,
+     "lo": 0.008984031566620159,
+     "hi": 0.03406716645076244,
+     "n_keep": 153,
+     "n_drop": 80,
+     "games_drop": 27,
+     "indep_diff": 0.01582096243507838,
+     "indep_lo": 0.0030195246778809263,
+     "indep_hi": 0.028878798660672486,
+     "indep_n_keep": 67,
+     "indep_n_drop": 28
+    }
+   },
+   "wider_universe_luck": {
+    "MJ": {
+     "z": 1.7922547215514968,
+     "p_wild_cluster_one_sided": 0.05923519120219945
+    },
+    "SJ": {
+     "z": 2.5085347359622525,
+     "p_wild_cluster_one_sided": 0.012996750812296926
+    },
+    "WJ": {
+     "z": 3.305774337111948,
+     "p_wild_cluster_one_sided": 0.0029992501874531365
+    }
+   },
+   "dollars": {
+    "list_caps": {
+     "bets_per_day": 25.708387480948993,
+     "usd_staked_per_day": 124.99595292461406,
+     "expected_clv_usd_per_day": 3.0770338202382383
+    },
+    "list_kelly": {
+     "bets_per_day": 25.708387480948993,
+     "usd_staked_per_day": 54.104076905086366,
+     "expected_clv_usd_per_day": 1.33188371746825
+    },
+    "autobet_eligible_caps": {
+     "bets_per_day": 15.070434040556306,
+     "usd_staked_per_day": 72.249433782667,
+     "expected_clv_usd_per_day": 1.6081685293546066
+    },
+    "autobet_eligible_kelly": {
+     "bets_per_day": 15.070434040556306,
+     "usd_staked_per_day": 31.13119665345973,
+     "expected_clv_usd_per_day": 0.6929356829264736
+    },
+    "baseline_list_caps": {
+     "bets_per_day": 33.243604501227146,
+     "usd_staked_per_day": 158.98439146589268,
+     "expected_clv_usd_per_day": 2.1992732212354915
+    },
+    "baseline_list_kelly": {
+     "bets_per_day": 33.243604501227146,
+     "usd_staked_per_day": 68.43545782747212,
+     "expected_clv_usd_per_day": 0.9466858249115552
+    },
+    "baseline_autobet_eligible_caps": {
+     "bets_per_day": 20.832658820769012,
+     "usd_staked_per_day": 97.3729111236184,
+     "expected_clv_usd_per_day": 1.1129647809424463
+    },
+    "baseline_autobet_eligible_kelly": {
+     "bets_per_day": 20.832658820769012,
+     "usd_staked_per_day": 41.595889147302074,
+     "expected_clv_usd_per_day": 0.4754377692802106
+    }
+   },
+   "games_with_closes_needed_if_effect_is_as_observed": 25.19959753274105,
+   "games_with_closes_needed_if_effect_is_half": 100.7983901309642,
+   "luck_probability": "Inside the app's universe: P(this good by luck) = 0.051 (game-cluster wild bootstrap, one-sided) / 0.030 (permutation within game-day); after counting 107 tries (max over the 95 testable rules) the chance that SOME rule looks this good by luck is 0.88 / 0.93, i.e. not distinguishable from luck. The same flag on wider universes (single-rule one-sided wild-cluster p): MJ 0.059, SJ 0.013, WJ 0.003.",
+   "luck": {
+    "lib_name": "spread>=0.02",
+    "p_wild_cluster_single": 0.051491418096983835,
+    "p_wild_cluster_adjusted_for_tries": 0.8825195800699883,
+    "p_permutation_within_gameday_single": 0.02982836193967672,
+    "p_permutation_within_gameday_adjusted_for_tries": 0.92751208131978,
+    "z_cluster": 1.9103293306843099,
+    "tried": 107,
+    "eligible_in_max": 95,
+    "draws": 6000
+   },
+   "tried_count": 107,
+   "angle": "TRAP AVOIDANCE and the props/sharp-book rule layered on the universe the app already bets: rules that REMOVE the bets most likely to lose to the close (long lead, wide Novig book, falling edge, low edge, sharp veto bar, few books, long price) and rules that RAISE the bar where the evidence is thin (a higher edge floor for props with no sharp PASS), ranked by CLV gained per bet dropped, with the cost of each in bets and dollars a day at the auto-bet's caps.",
+   "baseline": "The app's own universe U = shown by the CNO list & listed EV >= 2.5% & odds -200..+130 & props/moneylines/spreads & first listed within 24 h: 182 bets, 39 games, 80.7 a day, avg $354 available; CLV +1.37% [+0.07, +2.85] on 120 closes in 35 games, beat the close 64%; ROI -3.7% [-21.4, +12.9] on 174 settled bets in 38 games; vs Tracker closes +2.17% [+0.48, +4.00] on 56 closes in 27 games; vs independent closes +0.54% [-1.77, +2.53] on 38 closes in 19 games. Judged part UJ (book page read, the only bets the auto-bet can place): 75 bets, CLV +1.38% [-0.04, +3.07] on 64 closes in 25 games. Rules are measured as kept-minus-dropped CLV on the same universe, plus the same flag on the wider universes M, S, W (within 24 h)."
+  }
+ ]
+}
