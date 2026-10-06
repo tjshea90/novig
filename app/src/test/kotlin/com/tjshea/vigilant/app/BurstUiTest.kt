@@ -97,15 +97,18 @@ class BurstUiTest {
     }
 
     @Test
-    fun `Diagnostics has a burst block only when the recorder is on or has recorded something, with the status and the report`() {
+    fun `Diagnostics always says whether the recorder is on - two short lines when off and empty, the full block otherwise`() {
         val on = ScanSettings(burstRecorder = true, burstLeagues = setOf("NFL"))
-        assertNull(BurstText.diagnostics(BurstStatus(), emptyList(), "", ScanSettings(), running = false))
+        val off = BurstText.diagnostics(BurstStatus(), emptyList(), "", ScanSettings(), running = false)
+        assertTrue(off, off.startsWith("Live burst recorder: off · nothing recorded"))
+        assertTrue(off, off.contains("Burst trader (real money): off"))
+        assertFalse(off, off.contains("WHAT THIS PROVES"))
+        assertTrue(BurstText.diagnostics(BurstStatus(), emptyList(), "", ScanSettings(burstTrade = true, burstTradeHalted = "x"), running = false).contains("Burst trader (real money): ON · HALTED: x"))
         val text = BurstText.diagnostics(BurstStatus(running = true, leagues = setOf("NFL")), listOf(window("g1")), "round trip: ASSUMED 150 ms", on, running = true)
-        assertNotNull(text)
-        assertTrue(text, text!!.startsWith("Live burst recorder: ON · running · leagues NFL"))
+        assertTrue(text, text.startsWith("Live burst recorder: ON · running · leagues NFL"))
         assertTrue(text, text.contains("WHAT THIS PROVES") && text.contains("NFL: 1 game"))
         // Off but with a journal: still shown, as off.
-        assertTrue(BurstText.diagnostics(BurstStatus(), listOf(window("g1")), "", ScanSettings(), running = false)!!.startsWith("Live burst recorder: off · not running"))
+        assertTrue(BurstText.diagnostics(BurstStatus(), listOf(window("g1")), "", ScanSettings(), running = false).startsWith("Live burst recorder: off · not running"))
     }
 
     @Test
