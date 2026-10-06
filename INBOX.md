@@ -4573,3 +4573,10 @@ add trap guard option for maximum 12 hours until game time or an amount in hours
   Questions for Tj: keep the 24 h guard (~50 more auto closes at 6-24 h would settle it); gate and size on the lower of CNO's and the book-check EV; keep spreads in the auto-bet.
 </agent-message>
 ```
+
+## 2026-10-06T20:40:59Z
+```
+Add this to research: 
+
+https://www.scrapeless.com/en/wiki/how-to-scrape-espn-match-scores-with-scrapeless
+```
