@@ -664,7 +664,8 @@ object LowUsageText {
             (if (pace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "every few minutes" else "every $pace min at most") + " and starts as soon as a game comes inside the window. " + TAB_NOTE
 
     /** This tab lists bets to TAKE at Novig's price now; Low API usage posts bids UNDER the fair, which are on the Bids tab and never listed here. */
-    const val TAB_NOTE = "Low API usage bids are on: this tab lists bets to take at Novig's price; the bids are on the Bids tab."
+    const val TAB_NOTE = "Low API usage bids are on: this tab lists bets to take at Novig's price; the bids are on the Bids tab. " +
+        "The scan is always the next 6 hours (Starts within: Any time does not widen it); for a scan further out, set Bids › Which bids go up to All bids."
 
     /** A feed's name for the screens and Diagnostics. */
     fun feedName(feed: String): String = when (feed) {

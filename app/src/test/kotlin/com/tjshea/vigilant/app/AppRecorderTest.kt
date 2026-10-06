@@ -153,6 +153,9 @@ class AppRecorderTest {
         assertTrue(auto, auto.contains("starts in the next 6 hours") && auto.contains("spent nothing") && auto.contains("every few minutes"))
         assertTrue(com.tjshea.vigilant.app.ui.LowUsageText.nothingToRead(10).contains("every 10 min at most"))
         assertTrue(com.tjshea.vigilant.app.ui.LowUsageText.TAB_NOTE.contains("Bids tab"))
+        // Tj, 2026-10-06: "I also set the scan to any time instead of next 6 hours and it still did the one second scan": the mode's window is its own rule, and the screen says so.
+        assertTrue(com.tjshea.vigilant.app.ui.LowUsageText.TAB_NOTE.contains("Starts within: Any time does not widen it"))
+        assertTrue(auto, auto.contains("Starts within: Any time does not widen it"))
     }
 
     // ---- CNO's pause and Tj's switches ---------------------------------------------------------------------------------------
