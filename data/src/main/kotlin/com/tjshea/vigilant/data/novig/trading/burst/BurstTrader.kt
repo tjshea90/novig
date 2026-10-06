@@ -161,8 +161,6 @@ class BurstTrader(
     private val rules: () -> BurstTradeRules,
     /** Why trading must not happen now (STOP ALL, paused, no betting key, no wallet, the proof lapsed, no measured delays ...), or null. */
     private val gate: suspend () -> String?,
-    /** Whether the recorder has proved the idea for THIS league (a league trades only on its own proof); the default trusts the gate alone. */
-    private val leagueOk: suspend (String) -> Boolean = { true },
     private val ownBids: () -> List<OwnBid>,
     private val journal: BurstTradeJournal,
     private val onHalt: (String) -> Unit,
@@ -173,6 +171,8 @@ class BurstTrader(
     private val newClientId: () -> String = { NovigTradingClient.newClientId() },
     /** The app's one-order-at-a-time lock (auto-bet, the bid desk and the Bet sheet share it): an attempt that cannot take it at once is skipped, never queued behind a stale window. */
     private val lock: Mutex? = null,
+    /** Whether the recorder has proved the idea for THIS league (a league trades only on its own proof); the default trusts the gate alone. */
+    private val leagueOk: suspend (String) -> Boolean = { true },
 ) : WindowSink {
     private val _status = MutableStateFlow(BurstTradeStatus())
     val status: StateFlow<BurstTradeStatus> = _status.asStateFlow()
