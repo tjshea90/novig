@@ -309,6 +309,10 @@ private fun FeedSummary(
                 action = "Scan now",
                 onAction = onScan,
             )
+            state.settings.lowUsageNow && result.stats.marketsPriced == 0 -> EmptyState(
+                LowUsageText.NOTHING_TO_READ_TITLE,
+                LowUsageText.nothingToRead(state.settings.lowUsagePace),
+            )
             result.stats.matchedEvents == 0 && result.games.isNotEmpty() -> EmptyState(
                 "No fair odds for these games",
                 "${AppBook.name}'s prices for ${result.games.size} games are on the Games tab, but none of your fair-odds " +
@@ -335,6 +339,7 @@ private fun FeedSummary(
                 "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games " +
                     "starting in ${windowLabel(state.settings.scanWindowHours)}. " +
                     "Nothing at or above ${Format.percent(state.settings.minEvPercent)} EV. Scan again for fresh prices." +
+                    (if (state.settings.lowUsageNow) " ${LowUsageText.TAB_NOTE}" else "") +
                     laterGamesText(result.stats.laterGames, state.settings),
                 action = if (result.stats.laterGames > 0) (if (state.settings.scanWindowHours < state.settings.daysAhead * 24) "Any time" else "Days ahead") else null,
                 onAction = { if (state.settings.scanWindowHours < state.settings.daysAhead * 24) onStartsWithin(0) else onOpenSettings() },

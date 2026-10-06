@@ -31,10 +31,10 @@ class AppRecorder(private val events: EventLog, private val net: NetStats, priva
     }
 
     /** One line for a finished Vigilant scan (its length, what it read, what failed), a WARN when it had errors, and its time in the performance block. */
-    fun scanFinished(r: ScanReport) {
+    fun scanFinished(r: ScanReport, lowUsage: Boolean = false) {
         val ms = r.timing?.totalMs
         ms?.let { perf.add("scan.ms", it.toDouble()) }
-        val line = scanLine(r)
+        val line = scanLine(r, lowUsage)
         if (r.errors.isEmpty()) events.info("SCAN", line, ms) else events.warn("SCAN", line, ms)
     }
 
@@ -67,11 +67,22 @@ class AppRecorder(private val events: EventLog, private val net: NetStats, priva
     }
 
     companion object {
-        fun scanLine(r: ScanReport): String {
+        fun scanLine(r: ScanReport, lowUsage: Boolean = false): String {
             val ms = r.timing?.totalMs
             return "Vigilant scan finished" + (ms?.let { " in ${it / 1000} s" } ?: "") + ": ${r.booksFetched} Novig prices (${r.booksViaKey} through the key), " +
                 "${r.errors.size} error${if (r.errors.size == 1) "" else "s"}" + (r.timing?.refused?.takeIf { it > 0 }?.let { ", Novig refused $it" } ?: "") +
-                r.timing?.let { speedNote(it, r) }.orEmpty()
+                r.timing?.let { speedNote(it, r) }.orEmpty() + emptyNote(r, lowUsage)
+        }
+
+        /**
+         * A scan with nothing in its window to price says so (Tj, 2026-10-05 20:44, v0.68.0 file: scans "finished in 0 s: 0 Novig prices" for twenty minutes looked like a broken
+         * scan): with Low API usage on, no league had a game with a prop market on Novig in the next 6 h, so no feed was asked and no credit spent (RESEARCH.md §93.3).
+         */
+        private fun emptyNote(r: ScanReport, lowUsage: Boolean): String {
+            val stats = r.result?.stats ?: return ""
+            if (stats.marketsPriced > 0 || r.errors.isNotEmpty()) return ""
+            return if (lowUsage) " · Low API usage: no game with a prop market on Novig in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} h, so no feed was asked and nothing was spent"
+            else " · no market in the scan's window to price"
         }
 
         /**

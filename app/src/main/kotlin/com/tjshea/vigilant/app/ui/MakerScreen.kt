@@ -655,6 +655,17 @@ private fun LowUsagePanel(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSett
 object LowUsageText {
     fun paceLabel(minutes: Int): String = if (minutes == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "Auto" else "$minutes min"
 
+    const val NOTHING_TO_READ_TITLE = "Low API usage: nothing to read right now"
+
+    /** What the +EV tab says when the mode's scan had no market in its window (Tj, 2026-10-05: "it said it scanned but I don't think it did because it only took 1 second"). */
+    fun nothingToRead(pace: Int): String =
+        "No game with a player-prop market on ${AppBook.name} starts in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} hours (games already under way aren't bid on), so this scan asked no " +
+            "feed and spent nothing: that is why it took a second. It reads again " +
+            (if (pace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "every few minutes" else "every $pace min at most") + " and starts as soon as a game comes inside the window. " + TAB_NOTE
+
+    /** This tab lists bets to TAKE at Novig's price now; Low API usage posts bids UNDER the fair, which are on the Bids tab and never listed here. */
+    const val TAB_NOTE = "Low API usage bids are on: this tab lists bets to take at Novig's price; the bids are on the Bids tab."
+
     /** A feed's name for the screens and Diagnostics. */
     fun feedName(feed: String): String = when (feed) {
         com.tjshea.vigilant.data.scanner.LowUsageBids.FEED_KALSHI -> "Kalshi (free)"
