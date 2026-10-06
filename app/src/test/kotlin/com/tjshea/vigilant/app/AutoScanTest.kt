@@ -204,6 +204,16 @@ class AutoScanTest {
         assertEquals("8 minutes on: due", 3, started)
     }
 
+    /** The scan's read order puts a line by its EV at Novig's TAKE price, so a market with a bid of ours came last: the mode pins them (RESEARCH.md §93). */
+    @Test
+    fun `a Low API usage scan reads the markets with a resting bid of ours first - they are pinned when the scan starts`() {
+        val src = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText()
+        assertTrue(src.contains("if (settings.lowUsageNow) pinned += com.tjshea.vigilant.data.novig.trading.maker.LowUsage.restingMarkets(makerStore.flow.value.orEmpty())"))
+        // Pinned markets are group 0 of the scan's read order, ahead of every other.
+        val scanner = java.io.File("../data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Scanner.kt").readText()
+        assertTrue(scanner.contains("if (id in pinned) return 0"))
+    }
+
     /** Tj's screenshot, 2026-10-05: at 15 s the page says Vigilant's own scan starts at most every 4 min; with low API usage bids on it is their pace, and the page says so. */
     @Test
     fun `the Scanning page says how often Vigilant's own scan really runs at a 15 second interval - 4 minutes, or the low API usage pace`() {
