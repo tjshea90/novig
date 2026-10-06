@@ -34,4 +34,14 @@ class BurstTradeGateTest {
         assertEquals(BurstTradeGate.NO_KEY, BurstTradeGate.reason(false, false, false, 50.0, 1.0) { asked++; true })
         assertEquals("the proof reads a file: not asked for nothing", 0, asked)
     }
+
+    @Test
+    fun `the trader's code can only send immediate-or-cancel orders and never cancels or rests anything`() {
+        val code = java.io.File("src/main/kotlin/com/tjshea/vigilant/data/novig/trading/burst/BurstTrader.kt").readText().lines()
+            .filterNot { it.trimStart().startsWith("*") || it.trimStart().startsWith("//") || it.trimStart().startsWith("/*") }.joinToString("\n")
+        assertEquals("every order is IOC", 2, Regex("\"IOC\"").findAll(code).count())
+        for (word in listOf("\"PO\"", "\"GTT\"", "\"GTC\"", "\"FOK\"", "cancelOrder", "cancelOrders", "placeOrder(", "ttlMs =")) {
+            assertEquals("the trader must not use $word", false, code.contains(word))
+        }
+    }
 }
