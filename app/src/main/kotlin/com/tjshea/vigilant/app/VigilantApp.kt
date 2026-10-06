@@ -885,13 +885,11 @@ class AppContainer(private val app: Application) {
      */
     private suspend fun burstGate(): String? {
         val s = settingsStore.flow.value ?: return "settings not loaded"
-        if (s.killed) return "STOP ALL is on"
-        if (s.pausedByHand) return "scanning is paused"
-        if (trading == null) return "no betting key connected"
-        val balance = wallet.flow.value?.dollars ?: return "wallet not read yet"
-        if (balance < s.burstTradeStake * 2.2) return "wallet too low for both legs"
-        if (!burstProof().proved) return "not proved yet"
-        return null
+        val proved = burstProof().proved
+        return com.tjshea.vigilant.data.novig.trading.burst.BurstTradeGate.reason(
+            killed = s.killed, pausedByHand = s.pausedByHand, hasBettingKey = trading != null, walletDollars = wallet.flow.value?.dollars,
+            stakePerLeg = s.burstTradeStake.coerceIn(BURST_TRADE_MIN_STAKE, BURST_TRADE_MAX_STAKE), proved = { proved },
+        )
     }
 
     /** The trader: a [WindowSink] of the recorder, so it hears of each window at the moment it opens. */

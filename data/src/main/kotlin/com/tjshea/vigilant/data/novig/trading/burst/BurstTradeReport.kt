@@ -35,3 +35,29 @@ object BurstTradeReport {
         return o.toString()
     }
 }
+
+/**
+ * Whether the real-money trader may act at this moment, as one pure decision (the app reads its inputs and calls this at every window). The words are FIXED: the trader counts them as
+ * its reasons for holding back, and the settings page explains the detail. Order matters: the most absolute first.
+ */
+object BurstTradeGate {
+    const val STOP_ALL = "STOP ALL is on"
+    const val PAUSED = "scanning is paused"
+    const val NO_KEY = "no betting key connected"
+    const val NO_WALLET = "wallet not read yet"
+    const val WALLET_LOW = "wallet too low for both legs"
+    const val NOT_PROVED = "not proved yet"
+
+    /** What each leg's stake must be covered by: both legs and their fees. */
+    const val WALLET_FACTOR = 2.2
+
+    fun reason(killed: Boolean, pausedByHand: Boolean, hasBettingKey: Boolean, walletDollars: Double?, stakePerLeg: Double, proved: () -> Boolean): String? = when {
+        killed -> STOP_ALL
+        pausedByHand -> PAUSED
+        !hasBettingKey -> NO_KEY
+        walletDollars == null -> NO_WALLET
+        walletDollars < stakePerLeg * WALLET_FACTOR -> WALLET_LOW
+        !proved() -> NOT_PROVED
+        else -> null
+    }
+}
