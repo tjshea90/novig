@@ -201,7 +201,7 @@ class AppRecorderTest {
         val src = File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText()
         val init = src.substringAfter("// The flight recorder: what earlier runs kept comes back first").substringBefore("// Written down as it happens, whatever screen is open")
         assertTrue(init, init.contains("appScope.launch(Dispatchers.IO) {\n            recorder.run(runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName }.getOrNull(), FLUSH_EVERY_MS)"))
-        assertTrue(init, init.contains("runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.collect { run -> run.report?.let { recorder.scanFinished(it) } }"))
+        assertTrue(init, init.contains("runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.collect { run -> run.report?.let { recorder.scanFinished(it, lowUsage = run.settings?.lowUsageNow == true) } }"))
         assertTrue(init, init.contains("cno.state.map { it.pausedUntilMs?.takeIf { p -> p > System.currentTimeMillis() } }.distinctUntilChanged().filterNotNull().collect { until ->\n                recorder.cnoPaused(until, System.currentTimeMillis())"))
         assertTrue(init, init.contains("if (b != null) recorder.settingsChanged(b, s)"))
         assertTrue(src.contains("val recorder = AppRecorder(eventLog, netStats, perf)"))
