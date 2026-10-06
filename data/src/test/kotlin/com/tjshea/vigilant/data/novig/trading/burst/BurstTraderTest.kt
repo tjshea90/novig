@@ -197,6 +197,9 @@ class BurstTraderTest {
         val game = rig(rules = on.copy(maxPerGame = 1.0, stakePerLeg = 5.0)).also { it.send(it.window(cover())); runCurrent() }
         // $1 for the game, both legs and a 2-cent fee margin: 1 / ((0.539 + 0.435 + 0.02) x 0.01) = 100 contracts.
         assertEquals(100L, game.orders.batches.single().first().qty)
+        // The stake caps the DEARER leg whichever it is: here NOT costs 0.60 and YES 0.35, so $1 buys 166 contracts of NOT (not 285 of YES).
+        val noDear = rig().also { it.send(it.window(cover(noBid = 400, yesBidOnNo = 650))); runCurrent() }
+        assertEquals(166L, noDear.orders.batches.single().first().qty)
         val tiny = rig(rules = on.copy(stakePerLeg = 0.05)).also { it.send(it.window(cover())); runCurrent() }
         assertTrue("under 20 contracts is not worth an order", tiny.orders.batches.isEmpty())
     }
