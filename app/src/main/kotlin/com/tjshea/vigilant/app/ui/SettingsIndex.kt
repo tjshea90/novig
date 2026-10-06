@@ -41,7 +41,7 @@ object SettingsIndex {
         // Alerts
         Entry("Smallest edge (EV) to alert on", SettingsPage.ALERTS, "How good a new bet must be to notify you", "alerts notification push ev minimum", novig),
         Entry("Sharp-book veto for alerts", SettingsPage.ALERTS, "Skip alerts the sharpest book disagrees with", "pinnacle kalshi confirm veto sharp", { AppBook.isNovig && it.cnoOn }),
-        Entry("Trap guard", SettingsPage.ALERTS, "No alerts for games too far from the start (bets that early lost to the close)", "trap sharp early hours start gift steam", novig),
+        Entry("Trap guard", SettingsPage.ALERTS, "No alerts for games too far from the start (bets that early lost to the close)", "trap sharp early hours start gift steam type custom 12 hours", novig),
         // CrazyNinjaOdds list
         Entry("How the true odds are worked out", SettingsPage.CNO, "Devig: taking the sportsbooks' profit out of their odds", "devig vig conservative fair true odds"),
         Entry("Longest odds", SettingsPage.CNO, "No long shots past this in CNO's list", "max odds longshot underdog cno"),
@@ -115,7 +115,7 @@ object SettingsIndex {
         Entry("Most dollars up at once", null, "How much money all bids together may hold", "bids maker wallet dollars", novig, bids = true),
         Entry("Each bid expires after", null, "How long a bid rests before Novig takes it down", "bids maker ttl expiry", novig, bids = true),
         Entry("No bids this close to the start", null, "Bids come down this long before a game", "bids maker stop start", novig, bids = true),
-        Entry("Trap guard: only games starting within", null, "No bids on games too far off (shared with auto-bet and alerts)", "bids maker trap early hours", novig, bids = true),
+        Entry("Trap guard: only games starting within", null, "No bids on games too far off (shared with auto-bet and alerts)", "bids maker trap early hours type custom 12 hours", novig, bids = true),
     )
 
     /** The entries matching every word of [query] (in the title, the line or the extra words), for these settings. */
