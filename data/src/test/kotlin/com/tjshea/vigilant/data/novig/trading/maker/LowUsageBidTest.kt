@@ -58,10 +58,15 @@ class LowUsageBidTest {
     }
 
     @Test
-    fun `the margin is Tj's but never under 2_5 percent, whatever the usual margin says`() {
+    fun `the margin is Tj's - 2_5 percent by default, 1_5 percent or a typed amount allowed, never under half a percent, whatever the usual margin says`() {
         assertEquals(0.035, MakerRules.of(s.copy(lowUsageMargin = 0.035)).margin, 0.0)
-        assertEquals(0.025, MakerRules.of(s.copy(lowUsageMargin = 0.01)).margin, 0.0)
-        assertEquals(0.025, MakerRules.of(s.copy(lowUsageMargin = 0.0)).margin, 0.0)
+        // Tj, 2026-10-06: "add options for minimum 1.5% positive EV or an amount I type in".
+        assertEquals(0.015, MakerRules.of(s.copy(lowUsageMargin = 0.015)).margin, 0.0)
+        assertEquals(0.017, MakerRules.of(s.copy(lowUsageMargin = 0.017)).margin, 0.0)
+        assertEquals("under the floor is raised to it", 0.005, MakerRules.of(s.copy(lowUsageMargin = 0.001)).margin, 0.0)
+        assertEquals(0.005, MakerRules.of(s.copy(lowUsageMargin = 0.0)).margin, 0.0)
+        assertEquals("a damaged file can't ask for half the fair or more", 0.5, MakerRules.of(s.copy(lowUsageMargin = 0.9)).margin, 0.0)
+        assertEquals("a fresh install posts at 2.5%", 0.025, MakerRules.of(s).margin, 0.0)
         assertEquals("the usual margin setting is not the mode's", 0.025, MakerRules.of(s.copy(makerMargin = 0.08)).margin, 0.0)
     }
 
