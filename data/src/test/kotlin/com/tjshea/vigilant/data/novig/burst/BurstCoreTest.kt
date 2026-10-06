@@ -16,7 +16,7 @@ import org.junit.rules.TemporaryFolder
 
 /**
  * The score-burst recorder's pure core (RESEARCH.md §83-§84, §95): the ladders, the cover's cost after the in-play fee, the windows, the paper trade, the delays, the
- * journal and the verdict. The numbers in the cover tests are the §84.2 burst of 01:25:43 (moneyline YES at 0.539 against the −1.5 spread NOT at 0.445) and a calm pair.
+ * journal and the verdict. The numbers in the cover tests are the §84.2 burst of 01:25:43 (moneyline YES at 0.539 against the −1.5 spread NOT, here at 0.435 so the net is clear of the noise) and a calm pair.
  */
 class BurstCoreTest {
     @get:Rule
@@ -74,13 +74,13 @@ class BurstCoreTest {
 
     @Test
     fun `a cover is YES at the lower line plus NOT at the higher, each at 1 minus the best bid on the other side, net of both in-play fees`() {
-        // ML: the best bid on NO is 0.461 => YES costs 0.539. Spread -1.5: the best bid on ATL -1.5 (its YES) is 0.555 => NOT costs 0.445.
-        val c = CoverMath.cover(ml, book("ml", bBids = listOf(461 to 40_000L)), spread, book("s1", aBids = listOf(555 to 25_000L)))!!
+        // ML: the best bid on NO is 0.461 => YES costs 0.539. Spread -1.5: the best bid on ATL -1.5 (its YES) is 0.565 => NOT costs 0.435.
+        val c = CoverMath.cover(ml, book("ml", bBids = listOf(461 to 40_000L)), spread, book("s1", aBids = listOf(565 to 25_000L)))!!
         assertEquals(0.539, c.yes.price, 1e-9)
-        assertEquals(0.445, c.no.price, 1e-9)
+        assertEquals(0.435, c.no.price, 1e-9)
         assertEquals(25_000L, c.contracts)
-        val fees = 0.03 * 0.539 * 0.461 + 0.03 * 0.445 * 0.555
-        assertEquals(1.0 - 0.984 - fees, c.net, 1e-9)
+        val fees = 0.03 * 0.539 * 0.461 + 0.03 * 0.435 * 0.565
+        assertEquals(1.0 - 0.974 - fees, c.net, 1e-9)
         assertEquals("dollars: net x contracts x 1 cent", c.net * 25_000 * 0.01, c.dollars, 1e-9)
         assertTrue("this burst paid", c.net > 0.003)
         assertEquals("ml>s1", c.key)
@@ -119,9 +119,9 @@ class BurstCoreTest {
     fun `a window opens when a book change makes a pair pay, stays open while it pays, and closes after the grace with its true length`() {
         val w = CoverWindows(minNet = 0.003, minContracts = 100, graceMs = 150)
         val books = Books()
-        books.map["s1"] = book("s1", aBids = listOf(555 to 25_000L))      // NOT at -1.5 costs 0.445
+        books.map["s1"] = book("s1", aBids = listOf(565 to 25_000L))      // NOT at -1.5 costs 0.435
         books.map["s2"] = book("s2", aBids = listOf(300 to 25_000L))      // far out: NOT at -2.5 costs 0.700, nothing pays against it
-        books.map["ml"] = book("ml", bBids = listOf(420 to 40_000L))      // calm: YES 0.580 + 0.445 = 1.025
+        books.map["ml"] = book("ml", bBids = listOf(420 to 40_000L))      // calm: YES 0.580 + 0.435 = 1.015
         assertTrue(w.onBook(lines, books, ml, 1_000).isEmpty())
         assertEquals(0, w.openCount)
         // The moneyline re-quotes stale: the NO side is bid at 0.461 => YES 0.539.
@@ -149,7 +149,7 @@ class BurstCoreTest {
     fun `a cover that stops paying and pays again inside the grace is one window - a partial fill is a remove then an add`() {
         val w = CoverWindows(graceMs = 150)
         val books = Books()
-        books.map["s1"] = book("s1", aBids = listOf(555 to 25_000L))
+        books.map["s1"] = book("s1", aBids = listOf(565 to 25_000L))
         books.map["ml"] = book("ml", bBids = listOf(461 to 40_000L))
         assertEquals(1, w.onBook(lines, books, ml, 1_000).size)
         books.map["ml"] = book("ml")                                      // the order is removed ...
@@ -163,11 +163,11 @@ class BurstCoreTest {
     @Test
     fun `a sliver of a contract, or a net under the noise, is not a window`() {
         val books = Books()
-        books.map["s1"] = book("s1", aBids = listOf(555 to 25_000L))
+        books.map["s1"] = book("s1", aBids = listOf(565 to 25_000L))
         books.map["ml"] = book("ml", bBids = listOf(461 to 50L))           // 50 contracts is 50 cents of payout
         assertTrue(CoverWindows(minContracts = 100).onBook(lines, books, ml, 1).isEmpty())
         books.map["ml"] = book("ml", bBids = listOf(461 to 40_000L))
-        assertTrue("net 1.5 cents is not under 5 cents", CoverWindows(minNet = 0.05).onBook(lines, books, ml, 1).isEmpty())
+        assertTrue("a net of a cent is not 5 cents", CoverWindows(minNet = 0.05).onBook(lines, books, ml, 1).isEmpty())
         assertEquals(1, CoverWindows(minNet = 0.003).onBook(lines, books, ml, 1).size)
     }
 
@@ -175,7 +175,7 @@ class BurstCoreTest {
     fun `closeAll ends everything open - when the game ends or the feed drops`() {
         val w = CoverWindows()
         val books = Books()
-        books.map["s1"] = book("s1", aBids = listOf(555 to 25_000L))
+        books.map["s1"] = book("s1", aBids = listOf(565 to 25_000L))
         books.map["ml"] = book("ml", bBids = listOf(461 to 40_000L))
         w.onBook(lines, books, ml, 1_000)
         val closed = w.closeAll(5_000)
@@ -186,7 +186,7 @@ class BurstCoreTest {
 
     // ---- the paper trade ----------------------------------------------------------------------------------------------------
 
-    private val open = CoverMath.cover(ml, book("ml", bBids = listOf(461 to 40_000L)), spread, book("s1", aBids = listOf(555 to 25_000L)))!!
+    private val open = CoverMath.cover(ml, book("ml", bBids = listOf(461 to 40_000L)), spread, book("s1", aBids = listOf(565 to 25_000L)))!!
 
     @Test
     fun `both legs still on offer at the seen price or better fill - the profit is the cover's, on the thinner leg, capped by Tj's limit`() {
@@ -208,7 +208,7 @@ class BurstCoreTest {
         val one = PaperTrader.trade(open, open.yes, null, 0.0)
         assertEquals(PaperOutcome.ONE_LEG, one.outcome)
         val fee = 0.03 * 0.539 * 0.461
-        assertEquals(-(fee + PaperTrader.NAKED_PENALTY) * 25_000 * 0.01, one.pnl, 1e-9)
+        assertEquals("the leg's own depth: 40,000", -(fee + PaperTrader.NAKED_PENALTY) * 40_000 * 0.01, one.pnl, 1e-9)
         val worse = PaperTrader.trade(open, Leg(0.545, 25_000L), open.no, 0.0)
         assertEquals("the yes leg moved against the order: only the no leg fills", PaperOutcome.ONE_LEG, worse.outcome)
         assertEquals(PaperOutcome.MISSED, PaperTrader.trade(open, null, null, 0.0).outcome)
