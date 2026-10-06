@@ -312,6 +312,12 @@ data class ScanSettings(
     val lowUsagePace: Int = LowUsageBids.AUTO,
     val lowUsageMargin: Double = LowUsageBids.MIN_MARGIN,
     /**
+     * The live burst recorder (Tj, 2026-10-06; RESEARCH.md §95): while a live game of [burstLeagues] is on Novig, the read key's websocket records the cross-line mispricings after plays and
+     * paper-trades them at Tj's own measured delays. It never places or cancels anything. Off by default; STOP ALL stops it.
+     */
+    val burstRecorder: Boolean = false,
+    val burstLeagues: Set<String> = BURST_LEAGUES.toSet(),
+    /**
      * Set only by [effective]: these settings are the low-usage scan's ([LowUsageBids.profile]). The scanner and the feeds read it (quotes past the freshness limit are
      * dropped before the devig, a league with no game in the window isn't asked); never saved, so a saved file can't switch it on.
      */
@@ -847,6 +853,9 @@ data class ScanSettings(
 
         /** [autoBetMinEv]'s choices (Tj, 2026-10-01: "+2%, +2.5, +3, +3.25, +3.5, +3.75, +4, plus an option to manually type in an amount"). */
         val AUTO_BET_MIN_EV_CHOICES = listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04)
+
+        /** The leagues the burst recorder can watch (Novig's league names): the ones with a game clock whose lines Novig lists as a moneyline, spreads and totals. */
+        val BURST_LEAGUES = listOf("NFL", "NCAAF", "NBA", "WNBA", "NHL", "MLB")
 
         /** [apiMaxPerGame]'s chips, dollars (0 = no limit); any other amount is typed (Tj, 2026-10-04: "add $5 and a manual entry"). */
         val API_MAX_PER_GAME_CHOICES = listOf(5.0, 10.0, 25.0, 50.0, 100.0, 0.0)

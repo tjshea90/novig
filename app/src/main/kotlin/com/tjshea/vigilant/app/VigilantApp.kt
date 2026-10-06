@@ -599,6 +599,10 @@ class AppContainer(private val app: Application) {
                 if (b != null) recorder.settingsChanged(b, s)
             }
         }
+        // The burst recorder follows its switch, the leagues and STOP ALL (no orders; RESEARCH.md §95).
+        appScope.launch {
+            settingsStore.flow.filterNotNull().collect { s -> runCatching { burstTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
+        }
         // Written down as it happens, whatever screen is open: a finished scan's errors and failed fair-odds sources, and CNO's errors
         // (the background scan's own are added where it ends: [AutoScanner]).
         appScope.launch {
@@ -803,6 +807,7 @@ class AppContainer(private val app: Application) {
      */
     @Synchronized
     fun useConnection(connection: NovigConnection?) {
+        readConnection = connection
         val signer = connection?.let(::readKeyClient)
         novig.stream?.close()
         novig.keyed = signer
@@ -822,6 +827,39 @@ class AppContainer(private val app: Application) {
 
     fun readKeyClient(connection: NovigConnection, client: OkHttpClient = http) =
         NovigSignedClient(client, json, KeystoreSigningKey(connection.readAlias, connection.readKeyId))
+
+    /** The connected Novig key as [useConnection] last saw it (null: none): the score-burst recorder opens its own connection on its READ key. */
+    @Volatile
+    private var readConnection: NovigConnection? = null
+
+    /** The burst recorder's files (RESEARCH.md §95): one journal a day, appended to, never rewritten. */
+    val burstJournal = com.tjshea.vigilant.data.novig.burst.BurstJournal(File(app.filesDir, "burst"))
+
+    /**
+     * The score-burst recorder (Tj, 2026-10-06): NO ORDERS. Its connection is the read key's own websocket ([NovigStream] with a listener), its echo probe is a signed `POST /v3/echo`
+     * (free), and it is given no trading client at all, so nothing in it can place or cancel an order whatever the code did.
+     */
+    val burst: com.tjshea.vigilant.data.novig.burst.BurstRecorder by lazy {
+        com.tjshea.vigilant.data.novig.burst.BurstRecorder(
+            scope = appScope,
+            source = novig,
+            newFeed = { listener -> readConnection?.let { NovigStream(http, readKeyClient(it), appScope, idleCloseMs = BURST_IDLE_CLOSE_MS, bookListener = listener) } },
+            echo = { (novig.keyed ?: error("no Novig key")).echo() },
+            trades = { id -> novig.trades(id) },
+            journal = burstJournal,
+        )
+    }
+
+    /** Starts or stops the burst recorder to match [s]: on, a key connected, STOP ALL not pressed, the Novig app. Safe to call on every settings change. */
+    suspend fun burstTick(s: ScanSettings) {
+        if (!AppBook.isNovig) return
+        if (!s.burstRecorder || s.killed) {
+            if (burst.running) burst.stop(if (s.killed) "stopped by STOP ALL" else null)
+            return
+        }
+        ensureLoaded()
+        burst.start(s.burstLeagues, s.apiMaxStake)
+    }
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
     private val kalshi = KalshiClient(http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage)
