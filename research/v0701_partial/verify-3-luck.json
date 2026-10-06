@@ -1,0 +1,79 @@
+{
+ "lens": "LUCK AND MULTIPLE COMPARISONS (verify-3-luck)",
+ "rule": "First listed within 6 h (minToStartFirst<=360) AND listed EV >= 2% (df.minToStartFirst<=360)&(df.ev>=0.02)",
+ "numbers_reproduced": "Reproduced with the shared loader: 161 bets, 51 games, 79 with a close in 34 games; CLV +3.01% [+2.12%, +4.19%] game-clustered (20000-draw bootstrap: [+2.15%, +4.17%]); close_ok 66 closes/30 games +3.27% [+2.17%, +4.69%]; ROI +9.17% on 154 settled/48 games, CI [-9.0%, +27.2%] (uninformative); halves (loader cut Oct 4) +2.70% (64 closes/26 games) and +4.35% (15 closes/8 games); window baseline +1.41% (256 closes/66 games), all closed bets +0.19% (683/69). All match the builder to the digit. Of the 79 closes, 43 (54%) are Tracker closes (only exist for bets Tj/auto-bet PLACED; CLV +4.03% [2.5%,5.9%], 21 games, keep ratio CLV/EV = 1.01) and 36 are independent (ESPN 6, Pinnacle 1, Novig trades 29; +1.80% [0.82%,2.74%], 21 games, keep ratio 0.53); the strict independent set (ESPN/Pinnacle/Novig 3+ trades) is 23 closes/16 games +1.86% [+1.00%,+3.04%]. Luck tests (my own grid of 6,877 rules of 1-3 conditions with >=40 closes; builder tried 5,074/9,340): (1) random re-draws of 79 closed bets from the 683: null mean +0.20%, sd 0.64%, 0 of 20,000 reach +3.01% (z=4.4); same inside the window (79 of 256: null +1.41%, sd 0.35%, 0/20,000); within-start-day shuffle 0/20,000; whole-game re-draws (34 random games, 79 bets) 0/20,000 (null +0.44%, sd 0.61%); (2) game-clustered t vs 0: t=5.70 (33 df), one-sided p=1.2e-6; vs all-closed mean t=5.34, p=3.4e-6; Bonferroni x5,074 = 0.017, x6,877 = 0.023, x9,340 = 0.032 (two-sided x9,340 = 0.064); (3) cluster sign-flip max-t over the whole family (40,000 flips, vs all-closes mean): FWER p=0.0006-0.0011 (rule T=4.09, rank 92 of 6,877; null max-T 95th pct 3.34); close_ok only 0.0006; the 6 h window ALONE has T=4.62, FWER p=0.00005 and EV>=2% ALONE (any time) has FWER p=0.89; naive within-start-day iid permutation max-t FWER p=0.0065; (4) incremental EV>=2% inside the window (508-542 add-on rules): excess +1.60 pts over the window's +1.41% (CR t=3.03, one-sided p=0.0024, Bonferroni x475 >1), sign-flip single p=0.0003, family-wise p=0.022 (builder 0.020), rank 7-8 of 508-542 (ev>=2% & sharp=PASSED etc rank higher), EV-floor-only subfamily (8 rules) p=0.001; (5) robustness: leave-one-game-out CLV +2.82% to +3.44%, worst lower CI +2.0%; drop top-3 contributing games 57 bets/31 games +3.00% [+2.17%,+3.84%]; drop top-8 games +2.55% [+1.56%,+3.55%]; drop the 3 biggest games by bets (25 bets) +3.40% [+2.45%,+4.34%]; drop NFL +3.62%, drop NHL +2.61% [+1.66%,+3.89%]; 29 of 34 rule games have a positive mean CLV (sign test p=1.9e-5); by start day Oct 3/4/5 +2.3%/+2.8%/+4.4% (13/51/15 closes); (6) walk-forward: 50 best first-half rules (by cluster t) all positive in the second half (mean +2.46% vs +0.60% for all second-half closes; 65 closes/10 games), but the target rule itself ranks 206 of 3,593 on first-half T (window alone or window+plus-money rank above it). Second half alone: 15 closes/8 games, sign-flip p=0.0075 (floor with 8 games is 0.004), 11 of the 15 are Tracker closes (non-tracker: 4 closes/3 games +3.8%).",
+ "survives": true,
+ "reason": "From the luck lens the rule is not luck, but the headline 3.0% is inflated and the EV>=2% add-on is the weak part. Whole rule: game-clustered CI [+2.1%,+4.2%] excludes zero, 0 of 20,000 random same-size re-draws (bet, within-day and whole-game) reach it, family-wise max-t p=0.0006-0.0011 over 6,877 rules (builder 0.001), one-sided Bonferroni x9,340 on the cluster-t is still 0.032, and it holds leaving out any one game (+2.82% to +3.44%) or the top 3-8 games (+3.0% to +2.55%). Almost all of that significance is the 6 h window itself (window alone FWER p=0.00005; EV>=2% alone at any time FWER p=0.89; outside the window EV>=2% is +0.34% on 117 closes). The EV>=2% increment inside the window is +1.6 pts (family-wise p=0.022, fails Bonferroni x475; rank 7-8 of ~510; neighbouring floors 1.5-3.5% do equally well), so the 2% value is not special and roughly 2% of the time such an add-on would appear by chance; its direction holds in every cut (tracker +2.9 pts, independent closes +1.3 pts [0.08,2.4], strict independent +1.6 pts [0.5,2.7], both date halves, each start day, controlling for close source in a regression +2.05 pts, t=4.2). Against that: 54% of the closes are Tracker closes that only exist for placed bets and keep 101% of the listed EV, which is what a re-read of the same CNO consensus would give; on independent closes alone the rule is +1.8% (23-36 closes, 16-21 games), single-test p=0.0015, but family-wise p=0.61 and add-on family-wise p=0.75 (power too low with 36 closes), so quote +1.8% to +3.0%, not 3.0%, and the claim 'listed EV almost fully kept' only holds on Tracker closes (independent keep ratio 0.53). Worth putting to Tj as a question (it tightens, never loosens, a rule), framed as '6 h window is the proven part, EV floor around 2% is likely but unproven'. About 48 games with an independent close (27 more than now, about 4-10 more study days at 7 such games a day) would put the add-on's family-wise p under 0.05 if the true excess is +1.3 pts; about 88 games if it is +1.0 pt.",
+ "caveats": [
+  "Only 79 of 161 rule bets (49%) have a close; 82 do not (Pinnacle prop closes missing from ParlayAPI's file, ESPN has no props, Novig trades published next morning, Tracker only for placed bets), and missing closes depend on bet type and day (Oct 5 games: 15 of 59 closed), so the rule's CLV is measured on a selected half; its CLV on the other half is unknown.",
+  "Tracker closes (43 of 79; +4.03%) exist only for bets placed by Tj or the auto-bet, i.e. bets that already passed the app's own filters (sharp check, 3+ agree, EV >= 2.5%) and the close is a re-read of CNO's books; in the rule they beat independent closes by +2.2 pts (p=0.064; p=0.047 controlling for EV) and keep 101% of listed EV against 53% on independent closes, so part of the CLV-rises-with-EV-floor pattern may be the close source's own measurement, not market information; expect +1.8% (independent) to +3.0% (all).",
+  "Independent-close evidence is thin: strict independent closes (ESPN/Pinnacle/Novig 3+ trades) 23 closes/16 games +1.86% [1.00%,3.04%]; all non-tracker 36/21 games +1.80% [0.82%,2.74%]; family-wise p=0.61 and add-on family-wise p=0.75 on non-tracker closes (a low-power result, not evidence of no effect); the rule is not even in a >=25-close family on the strict set.",
+  "The second date half is 15 closes in 8 games (11 Tracker, 4 non-tracker in 3 games): a sign-flip p cannot go under 1/256=0.004 with 8 games; 'out of sample' here is the last ~1 of 2.3 days, with app version and presets changing (0.57 to 0.70.1); halves by first look day and by start day differ.",
+  "The rule family-wise p (0.0006-0.0011) is dominated by the window effect (T=4.62 alone, higher than the rule's T=4.09); a family-wise test over ~500 add-ons inside the window gives 0.022 and the best add-ons by T are other combinations (ev>=2% & sharp=PASSED 44 closes T=3.35; ev>=2% & plus-money 59 closes T=3.28 vs 3.16 here), so the exact 2% / 6 h pair is a fitted choice; 2.5% variant (64 closes) has FWER p=0.0069.",
+  "Sign-flip and cluster-t use 34-66 game clusters; heavy tails (Lions @ Panthers alone has 16 of 79 rule closes, though dropping the 3 biggest games raises CLV to +3.4%) and same-player props within a game are handled only by game clustering; the 6,877-rule family is my own approximation of the builder's 5,074/9,340 variants and Bonferroni is conservative for heavily overlapping rules.",
+  "ROI is +9.2% on 154 settled bets but CI [-9.0%, +27.2%] (48 games) says nothing; only CLV carries the evidence; ROI is at the first-listed price and ~71 rule bets/day with $423 average available is the builder's figure, which I did not re-test for feasibility.",
+  "Everything is one phone over ~2.3 days of first looks (Oct 3 17:56 ET to Oct 6 00:05 ET), 69 closed games of 190."
+ ],
+ "tests": {
+  "bets": 161,
+  "games": 51,
+  "closes": 79,
+  "closed_games": 34,
+  "clv": 0.0301,
+  "ci": [
+   0.0215,
+   0.0417
+  ],
+  "p_one_sided_cluster_t_vs_all_closed_mean": 3.4e-06,
+  "bonferroni_x5074": 0.017,
+  "bonferroni_x6877": 0.023,
+  "bonferroni_x9340": 0.032,
+  "p_fwer_maxt_sign_flip": [
+   0.0006,
+   0.0011
+  ],
+  "p_fwer_window_alone": 5e-05,
+  "p_fwer_ev2_alone": 0.89,
+  "p_fwer_incremental_ev2_in_window": 0.022,
+  "p_random_redraw_79_of_683": "0 of 20000",
+  "loo_game_range": [
+   0.0282,
+   0.0344
+  ],
+  "drop_top3_games": {
+   "n": 57,
+   "games": 31,
+   "clv": 0.03,
+   "ci": [
+    0.0217,
+    0.0384
+   ]
+  },
+  "tracker_closes": {
+   "n": 43,
+   "games": 21,
+   "clv": 0.0403
+  },
+  "non_tracker_closes": {
+   "n": 36,
+   "games": 21,
+   "clv": 0.018,
+   "ci": [
+    0.0084,
+    0.0276
+   ]
+  },
+  "strict_independent_closes": {
+   "n": 23,
+   "games": 16,
+   "clv": 0.0186,
+   "ci": [
+    0.01,
+    0.0304
+   ]
+  },
+  "non_tracker_p_fwer": 0.61,
+  "non_tracker_incremental_p_fwer": 0.75,
+  "non_tracker_p_single_flip": 0.00145
+ }
+}
