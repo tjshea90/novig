@@ -14,9 +14,10 @@ agents that were still running. A new session runs this first; it never reruns a
 A label is saved when research/v0701_partial/<label>.json exists and parses as JSON.
 Labels: study-* (9) and diag-* (5) need only the extracted data; strategy-* (3) need all 9 study-*;
 verify-<n>-<lens> (<=10 candidate rules x 3 lenses; candidates.json is made here from the strategy-* files,
-same dedupe/cap as workflow_files_analysis.js) need the strategy-*; synthesis needs everything before it;
-critic needs synthesis. Prompts: node tools/research/study_v0701/genprompts.js ... writes prompts/<label>.txt
-for phase 1 and the strategy angles / lenses / schemas for the rest.
+same dedupe/cap as workflow_files_analysis.js) need the strategy-*; phase 4 needs everything before it: the three section reports
+(synth-diagnose, synth-study, synth-strategies, any order), then synthesis, then critic, then final (the critic's follow-ups answered).
+Prompts: node tools/research/study_v0701/genprompts.js ... writes prompts/<label>.txt for phase 1 and the strategy angles / lenses / schemas
+for the rest; genverify.py writes phase 3's; genphase4.py writes phase 4's (python3 -I tools/research/study_v0701/genphase4.py <v0701 dir>).
 """
 import json, os, re, sys, tempfile
 
@@ -25,6 +26,7 @@ STUDY = ['study-data-quality', 'study-overall-edge', 'study-splits-bet-attribute
 DIAG = ['diag-network-performance', 'diag-sources-credits', 'diag-tracker-accuracy', 'diag-bids-autobet', 'diag-lifecycle-errors']
 STRAT = ['strategy-simple-filters', 'strategy-timing-price', 'strategy-trap-avoid-and-props']
 LENSES = ['reproduce', 'luck', 'feasibility']
+SECTIONS = ['synth-diagnose', 'synth-study', 'synth-strategies']   # phase 4a: each reads the saved slices of its own part, any order
 CAP = 10  # candidate rules to verify, as in the workflow script
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -77,15 +79,20 @@ def plan(d):
     for l in verify_labels: rows.append(('3 verify', l, done(l)))
     p1_done = study_done and all(done(l) for l in DIAG)
     verify_done = strat_done and all(done(l) for l in verify_labels)
+    for l in SECTIONS: rows.append(('4 sections', l, done(l)))
     rows.append(('4 synthesis', 'synthesis', done('synthesis')))
     rows.append(('4 critic', 'critic', done('critic')))
-    # priority: study (they unlock the builders) > strategy > verify > diagnose > synthesis > critic
+    rows.append(('4 final', 'final', done('final')))
+    # priority: study (they unlock the builders) > strategy > verify > diagnose > sections > synthesis > critic > final
     ready += [l for l in STUDY if not done(l)]
     if study_done: ready += [l for l in STRAT if not done(l)]
     if strat_done: ready += [l for l in verify_labels if not done(l)]
     ready += [l for l in DIAG if not done(l)]
-    if p1_done and verify_done and not done('synthesis'): ready.append('synthesis')
+    if p1_done and verify_done: ready += [l for l in SECTIONS if not done(l)]
+    sections_done = all(done(l) for l in SECTIONS)
+    if p1_done and verify_done and sections_done and not done('synthesis'): ready.append('synthesis')
     if done('synthesis') and not done('critic'): ready.append('critic')
+    if done('critic') and not done('final'): ready.append('final')
     return rows, ready
 
 
@@ -100,7 +107,7 @@ def report(d, inflight, maxn=3, running=()):
     slots = max(0, maxn - inflight)
     out.append('')
     if not ready:
-        out.append('ALL SAVED: nothing to launch. Next: write research/scan_study_analysis_2026-10-06_v0.70.1.md and RESEARCH.md §97 from synthesis.json + critic.json, tick CX1/CX2.')
+        out.append('ALL SAVED: nothing to launch. Next: write research/scan_study_analysis_2026-10-06_v0.70.1.md and RESEARCH.md §97 from final.json (+ synthesis.json, critic.json), tick CX1/CX2/DA1.')
     else:
         out.append(f'NEXT: launch {min(slots, len(ready))} now (max {maxn} in flight, {inflight} running); after EACH one finishes run: bash tools/save_agent.sh <label>')
         for l in ready[:slots]: out.append(f'  -> {l}')
@@ -135,9 +142,12 @@ def selftest():
         assert ready == [f'verify-{i}-{k}' for i in (1, 2, 3) for k in LENSES], ready
         for l in ready: mk(l)
         rows, ready = plan(d)
-        assert ready == ['synthesis'], ready
+        assert ready == SECTIONS, ready                                                          # the three section reports, any order, before the synthesis
+        mk(SECTIONS[0]); mk(SECTIONS[1]); assert plan(d)[1] == [SECTIONS[2]], plan(d)[1]
+        mk(SECTIONS[2]); assert plan(d)[1] == ['synthesis']
         mk('synthesis'); assert plan(d)[1] == ['critic']
-        mk('critic'); assert plan(d)[1] == [] and 'ALL SAVED' in report(d, 0)
+        mk('critic'); assert plan(d)[1] == ['final'] and 'ALL SAVED' not in report(d, 0)
+        mk('final'); assert plan(d)[1] == [] and 'ALL SAVED' in report(d, 0)
         many = {'rules': [rule(f'x{i}', f'v>{i}', i / 100, 0) for i in range(15)]}
         mk(STRAT[0], many)
         assert len(candidates(d)[0]) == CAP and candidates(d)[1] == 15 + 2
