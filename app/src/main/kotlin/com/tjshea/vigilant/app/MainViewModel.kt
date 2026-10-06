@@ -187,6 +187,12 @@ data class UiState(
     val studyNote: String? = null,
     /** The live burst recorder's one line (RESEARCH.md §95), refreshed while Settings › Diagnostics & about is open. */
     val burstNote: String? = null,
+    /** Why the real-money burst trader is locked (the recorder's proof, in words), or null when it has proved itself; null too until the page asked. */
+    val burstProofReason: String? = null,
+    /** True once the page has read the proof (so a null [burstProofReason] means proved, not unread). */
+    val burstProofRead: Boolean = false,
+    /** What the burst trader has done this run ([com.tjshea.vigilant.data.novig.trading.burst.BurstTradeStatus]). */
+    val burstTrade: com.tjshea.vigilant.data.novig.trading.burst.BurstTradeStatus = com.tjshea.vigilant.data.novig.trading.burst.BurstTradeStatus(),
 ) {
     /**
      * The +EV feed as of [now]: without EVs whose other books' prices are over a few minutes old
@@ -1776,7 +1782,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshBurst() {
         viewModelScope.launch(Dispatchers.IO) {
             val note = runCatching { BurstText.note(c.burst.status.value, c.burstJournal.readAll()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull() ?: return@launch
-            _state.update { if (it.burstNote == note) it else it.copy(burstNote = note) }
+            val proof = runCatching { c.burstProof(force = true) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
+            val trade = c.burstTrader.status.value
+            _state.update { it.copy(burstNote = note, burstProofReason = proof?.reason ?: if (proof == null) "the proof could not be read" else null, burstProofRead = true, burstTrade = trade) }
         }
     }
 
@@ -1795,7 +1803,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     )
                     val records = c.burstJournal.readAll()
                     val file = DiagnosticsShare.writeBurst(app, com.tjshea.vigilant.data.novig.burst.BurstExport.fileName(meta.versionName, now)) { w ->
-                        com.tjshea.vigilant.data.novig.burst.BurstExport.write(w, records, c.burst.latency.note(), meta, now)
+                        com.tjshea.vigilant.data.novig.burst.BurstExport.write(w, records, c.burst.latency.note(), meta, now, runCatching { c.burstTradeJournal.readAll() }.getOrDefault(emptyList()))
                     }
                     runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
                         .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}") }
@@ -1904,7 +1912,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             keepAwakeHeld = AutoScanService.keepAwakeHeld,
             sharpFeeds = runCatching { com.tjshea.vigilant.data.reference.SharpBooks.feedsAmong(c.referenceSources(_state.value.settings, background = true)) }.getOrDefault(emptyList()),
             lowUsagePlan = _state.value.settings.takeIf { it.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }?.let { runCatching { c.lowUsagePlan(it) }.getOrNull() },
-            burstReport = runCatching { BurstText.diagnostics(c.burst.status.value, c.burstJournal.readAll(), c.burst.latency.note(), _state.value.settings, c.burst.running) }.getOrNull(),
+            burstReport = runCatching {
+                BurstText.diagnostics(
+                    c.burst.status.value, c.burstJournal.readAll(), c.burst.latency.note(), _state.value.settings, c.burst.running,
+                    trades = c.burstTradeJournal.readAll(), trader = c.burstTrader.status.value, proofReason = c.burstProof().reason,
+                )
+            }.getOrNull(),
             sharpCalls = c.sharp.calls,
             sharpFailures = c.sharp.failures,
             sharpAnswers = c.sharp.answeredBy,
