@@ -134,6 +134,13 @@ class AppContainer(private val app: Application) {
         /** The burst recorder's connection is never closed for being idle (a scan's is after two minutes): it lives while the recorder does. */
         const val BURST_IDLE_CLOSE_MS = 24 * 3_600_000L
 
+        /** How long the trader keeps the recorder's proof before reading the journal again. */
+        const val BURST_PROOF_TTL_MS = 30_000L
+
+        /** A leg of the burst trader is never staked under or over these, whatever the saved settings say. */
+        const val BURST_TRADE_MIN_STAKE = 0.5
+        const val BURST_TRADE_MAX_STAKE = 10.0
+
         /** CNO game pages read at once in "Check odds now" (the client's bulk pace keeps them to two requests a second). */
         const val RECHECK_AT_ONCE = 3
 
