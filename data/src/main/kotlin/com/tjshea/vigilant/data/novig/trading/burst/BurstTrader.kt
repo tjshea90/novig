@@ -201,7 +201,7 @@ class BurstTrader(
         val start = clock()
         if (start < standDownUntil) return skip("stood down")
         if (start - w.openedMs > BurstTradeLimits.MAX_AGE_MS) return skip("window too old")
-        gate()?.let { return skip(it) }
+        
         val ladder = w.first.lo.ladderKey
         if (start - (lastTry[ladder] ?: 0L) < BurstTradeLimits.COOLDOWN_MS) return skip("cooldown")
         val barred = listOf(w.first.lo.marketId, w.first.hi.marketId).any { (blacklist[it] ?: 0L) > start }
@@ -245,7 +245,7 @@ class BurstTrader(
     }
 
     private suspend fun trade(w: WindowOpening, c: Cover, q: Long, decidedAtMs: Long) {
-        val first = NovigTradingClient.NewOrder(c.lo.yesOutcomeId, c.yes.price, q, "GTC", newClientId())
+        val first = NovigTradingClient.NewOrder(c.lo.yesOutcomeId, c.yes.price, q, "IOC", newClientId())
         val second = NovigTradingClient.NewOrder(c.hi.noOutcomeId, c.no.price, q, "IOC", newClientId())
         val pair = "${c.lo.label} YES / ${c.hi.label} NOT"
         fun base(outcome: String, msg: String, yesF: Long = 0, noF: Long = 0, paid: Double = 0.0, fees: Double = 0.0, hedge: Long = 0, lockedC: Long = 0, lockedP: Double = 0.0, nakedC: Long = 0, nakedCost: Double = 0.0) =
