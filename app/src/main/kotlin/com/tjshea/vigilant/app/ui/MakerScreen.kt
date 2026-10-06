@@ -679,12 +679,9 @@ object LowUsageText {
                 "Costs about 60 ParlayAPI credits per league per hour in the short stretch. $skip"
         }
         val minutes = s.lowUsagePace.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MINUTES)
-        val coverage = when {
-            minutes <= 5 -> "Bids on games inside 3 hours of the start stay up most of the time"
-            minutes <= 8 -> "Games 3-6 hours out keep their bids up most of the time; inside 3 hours a bid is up about ${(3 * 100) / minutes}% of the time (it ends when its books' prices are 5 minutes old)"
-            else -> "Bids are down part of the time, and every bid ends together: they end when the books' prices are 5 minutes old (10 for a game over 3 hours away) and wait for the next scan"
-        }
-        return "A scan every $minutes min at most. $coverage. $skip"
+        val far = if (minutes * 60 <= com.tjshea.vigilant.data.scanner.LowUsageBids.FAR_GAP_SECONDS) "Games 3-6 hours out keep their bids up" else "Games 3-6 hours out are down part of the time too"
+        return "A scan every $minutes min at most. Inside 3 hours of a start a bid ends when its books' prices are 5 minutes old (a few minutes after the scan that priced it), so at this " +
+            "pace those bids are down part of every $minutes min, and all end together; $far (10-minute limit). Auto keeps them up. $skip"
     }
 
     /** One line for the rules' summary. */
