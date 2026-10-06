@@ -305,10 +305,11 @@ data class ScanSettings(
     val makerFocus: BidFocus = BidFocus.ALL,
     /**
      * Low API usage ([BidFocus.LOW_USAGE]): the 2-3 sharp prop books the fair is built from ([LowUsageBids.books] makes sure of two or three), how often Vigilant's own
-     * scan runs while it is on (minutes, [LowUsageBids.PACE_CHOICES]), and the margin each bid is posted under the fair (never under [LowUsageBids.MIN_MARGIN]).
+     * scan runs while it is on ([lowUsagePace]: [LowUsageBids.AUTO] or minutes, [LowUsageBids.PACE_CHOICES]), and the margin each bid is posted under the fair (never under
+     * [LowUsageBids.MIN_MARGIN]). [lowUsagePace] replaced `lowUsageMinutes` (v0.68.1): a saved 10 (the old default, which left the bids down half the time) is not carried over.
      */
     val lowUsageBooks: Set<String> = LowUsageBids.DEFAULT_BOOKS,
-    val lowUsageMinutes: Int = LowUsageBids.DEFAULT_MINUTES,
+    val lowUsagePace: Int = LowUsageBids.AUTO,
     val lowUsageMargin: Double = LowUsageBids.MIN_MARGIN,
     /**
      * Set only by [effective]: these settings are the low-usage scan's ([LowUsageBids.profile]). The scanner and the feeds read it (quotes past the freshness limit are
@@ -673,12 +674,15 @@ data class ScanSettings(
 
     /**
      * Bids are on ([maker] or [makerRecommend]) and set to [BidFocus.LOW_USAGE], and Pinnacle only isn't (that mode already reads Novig and Pinnacle alone and wins): Vigilant's
-     * own scan is the low-usage scan ([effective]) and runs at the pace [lowUsageMinutes] says.
+     * own scan is the low-usage scan ([effective]) and runs at the pace [lowUsagePace] says ([LowUsageBids.gapSeconds]).
      */
     val lowUsageNow: Boolean get() = makerFocus == BidFocus.LOW_USAGE && (maker || makerRecommend) && !pinnacleOnly
 
-    /** The shortest gap between two background runs of Vigilant's own scan: the usual [AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS], or the low-usage pace. */
-    val vigilantGapSeconds: Int get() = if (lowUsageNow) lowUsageMinutes.coerceAtLeast(LowUsageBids.MIN_MINUTES) * 60 else AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS
+    /**
+     * The shortest gap between two background runs of Vigilant's own scan: the usual [AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS], or the low-usage pace ([LowUsageBids.shortestGapSeconds];
+     * the Auto pace's gap is longer while every game is far off, [LowUsageBids.gapSeconds], which the background scan asks).
+     */
+    val vigilantGapSeconds: Int get() = if (lowUsageNow) LowUsageBids.shortestGapSeconds(this) else AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS
 
     /** What background auto-scan does now: [autoScan], or nothing while [paused]. */
     val activeAutoScan: AutoScanMode get() = if (autoScansCno || autoScansVigilant) autoScan else AutoScanMode.OFF

@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.scanner
 
+import com.tjshea.vigilant.data.novig.trading.maker.MakerRules
 import com.tjshea.vigilant.engine.DevigMethod
 import com.tjshea.vigilant.engine.FairSource
 
