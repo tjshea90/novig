@@ -3980,3 +3980,8 @@ claude/low-api-auto-bid-x67nzl
 
 Can you resume this branch which started in a different Claude code account
 ```
+
+## 2026-10-06T00:36:37Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
