@@ -1066,6 +1066,7 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
             }
         }
         state.burstNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("burstNote")) }
+        BurstTraderSettings(state, onUpdate)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
             androidx.compose.material3.Button(onClick = reportActions.onShareBurst, modifier = Modifier.testTag("shareBurstStudy")) { Text(com.tjshea.vigilant.app.BurstText.BUTTON) }
         }
