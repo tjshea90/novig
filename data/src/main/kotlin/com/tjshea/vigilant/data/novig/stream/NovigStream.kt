@@ -89,6 +89,8 @@ class NovigStream(
     maxMarkets: Int = MAX_MARKETS,
     private val idleCloseMs: Long = IDLE_CLOSE_MS,
     private val retryAfterFailureMs: Long = RETRY_AFTER_FAILURE_MS,
+    /** Told of every book change as it arrives: the burst recorder's own connection (RESEARCH.md §95). A scan's stream has none. */
+    bookListener: BookListener? = null,
 ) : PushedBooks {
     @Volatile
     private var capacity = capacity
@@ -111,7 +113,7 @@ class NovigStream(
     }
     private val http = http.newBuilder().pingInterval(20, TimeUnit.SECONDS).build()
     private val json = Json { ignoreUnknownKeys = true }
-    val books = StreamBooks(clock)
+    val books = StreamBooks(clock).also { it.listener = bookListener }
 
     private val _state = MutableStateFlow<StreamState>(StreamState.Off)
     val state: StateFlow<StreamState> = _state.asStateFlow()

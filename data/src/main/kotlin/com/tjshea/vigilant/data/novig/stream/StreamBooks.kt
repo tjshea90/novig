@@ -10,12 +10,36 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 
+/** One change to a market's book as the push arrived, for a listener that replays books ([BookListener]; the scan never listens). */
+data class BookChange(val kind: Kind, val outcome: String = "", val priceMilli: Int = 0, val qty: Long = 0L, val reason: String? = null) {
+    enum class Kind {
+        /** A snapshot is coming as ADDs: forget what was held. */
+        CLEAR,
+        ADD,
+
+        /** [reason] is Novig's: `fill` or `cancel`. [outcome], [priceMilli] and [qty] are the removed order's own. */
+        REMOVE,
+
+        /** A gap in the sequence: the book is wrong until the next CLEAR. */
+        STALE,
+    }
+}
+
+/** Told of every change right after it is applied, with the phone's clock at arrival. Called on the socket's thread: keep it to handing the work on. */
+fun interface BookListener {
+    fun onChange(marketId: String, atMs: Long, changes: List<BookChange>)
+}
+
 /**
  * The order books the websocket keeps current, applied exactly as NOVIG_API.md §6 describes:
  * a snapshot sets the book and its `seq`, each delta must carry `seq + 1`, a gap marks the book
  * stale until a fresh snapshot arrives. Pure logic, no socket, so every rule is unit-testable.
  */
 class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {
+
+    /** Set once by whoever records the books (the burst recorder's own connection); null for a scan's. */
+    @Volatile
+    var listener: BookListener? = null
 
     private class Order(val outcome: String, val priceMilli: Int, val qty: Long)
 
@@ -41,6 +65,9 @@ class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {
             }
         }
         markets[marketId] = Market(seq, orders, stale = false, updatedAtMs = clock())
+        listener?.let { l ->
+            l.onChange(marketId, clock(), listOf(BookChange(BookChange.Kind.CLEAR)) + orders.values.map { BookChange(BookChange.Kind.ADD, it.outcome, it.priceMilli, it.qty) })
+        }
     }
 
     /**
@@ -55,14 +82,17 @@ class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {
             Market(0, LinkedHashMap(), stale = false, updatedAtMs = clock()).also { markets[marketId] = it }
         } else {
             markets[marketId] = Market(seq, LinkedHashMap(), stale = true, updatedAtMs = clock())
+            listener?.onChange(marketId, clock(), listOf(BookChange(BookChange.Kind.STALE)))
             return false
         }
         if (m.stale) return false
         if (seq <= m.seq) return true // already covered by a newer snapshot
         if (seq != m.seq + 1) {
             m.stale = true
+            listener?.onChange(marketId, clock(), listOf(BookChange(BookChange.Kind.STALE)))
             return false
         }
+        val changes = if (listener != null) ArrayList<BookChange>() else null
         (book["deltas"] as? JsonArray)?.forEach { el ->
             val d = el.jsonObject
             val order = d["order"]?.jsonPrimitive?.content ?: return@forEach
@@ -72,12 +102,16 @@ class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {
                     val price = d["price"]?.jsonPrimitive?.content?.let(NovigText::priceMilli) ?: return@forEach
                     val qty = d["qty"]?.jsonPrimitive?.longOrNull ?: return@forEach
                     m.orders[order] = Order(outcome, price, qty)
+                    changes?.add(BookChange(BookChange.Kind.ADD, outcome, price, qty))
                 }
-                "remove" -> m.orders.remove(order)
+                "remove" -> m.orders.remove(order)?.let { o ->
+                    changes?.add(BookChange(BookChange.Kind.REMOVE, o.outcome, o.priceMilli, o.qty, d["reason"]?.jsonPrimitive?.content))
+                }
             }
         }
         m.seq = seq
         m.updatedAtMs = clock()
+        if (changes != null && changes.isNotEmpty()) listener?.onChange(marketId, clock(), changes)
         return true
     }
 
