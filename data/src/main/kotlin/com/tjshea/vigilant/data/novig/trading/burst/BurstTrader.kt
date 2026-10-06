@@ -161,6 +161,8 @@ class BurstTrader(
     private val rules: () -> BurstTradeRules,
     /** Why trading must not happen now (STOP ALL, paused, no betting key, no wallet, the proof lapsed, no measured delays ...), or null. */
     private val gate: suspend () -> String?,
+    /** Whether the recorder has proved the idea for THIS league (a league trades only on its own proof); the default trusts the gate alone. */
+    private val leagueOk: suspend (String) -> Boolean = { true },
     private val ownBids: () -> List<OwnBid>,
     private val journal: BurstTradeJournal,
     private val onHalt: (String) -> Unit,
@@ -202,6 +204,7 @@ class BurstTrader(
         if (start < standDownUntil) return skip("stood down")
         if (start - w.openedMs > BurstTradeLimits.MAX_AGE_MS) return skip("window too old")
         gate()?.let { return skip(it) }
+        if (!leagueOk(w.league)) return skip("league not proved")
         val ladder = w.first.lo.ladderKey
         if (start - (lastTry[ladder] ?: 0L) < BurstTradeLimits.COOLDOWN_MS) return skip("cooldown")
         val barred = listOf(w.first.lo.marketId, w.first.hi.marketId).any { (blacklist[it] ?: 0L) > start }

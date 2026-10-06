@@ -145,7 +145,10 @@ object BurstStudy {
         return leagues.map { lg -> league(lg, windows.filter { it.league == lg }, games.filter { it.league == lg }) } + all(windows, games)
     }
 
-    private fun all(windows: List<WindowRecord>, games: List<GameRecord>) = league("ALL", windows, games)
+    private fun all(windows: List<WindowRecord>, games: List<GameRecord>) = league(ALL, windows, games)
+
+    /** The name of the row that totals every league. */
+    const val ALL = "ALL"
 
     private fun league(name: String, w: List<WindowRecord>, g: List<GameRecord>): LeagueTotals {
         val gameIds = (g.map { it.eventId } + w.map { it.eventId }).distinct()
@@ -173,11 +176,11 @@ object BurstStudy {
     }
 
     /**
-     * What the real-money trader needs before it may place an order (Tj, 2026-10-06: "if it is proven I can just turn it on"): the verdict over the windows the trader would
-     * actually act on (the ones that paid at least [minNet] when first seen) must be [BurstVerdict.WORTH_A_TEST], and the delays it was judged at must be MEASURED on this phone,
-     * not assumed. [reason] is null when proved, else why not, in words for Settings.
+     * What the real-money trader needs before it may place an order (Tj, 2026-10-06: "if it is proven I can just turn it on"): the delays the paper trade was judged at must be MEASURED on this
+     * phone, not assumed, and a LEAGUE must have proved itself on its own windows (each league's own row, over the windows that paid at least [minNet] when first seen, must read
+     * [BurstVerdict.WORTH_A_TEST]): football's windows prove nothing about hockey's. [leagues] are the leagues that did; [reason] is null when at least one did, else why not, in words for Settings.
      */
-    class Proof(val verdict: BurstVerdict, val reason: String?) {
+    class Proof(val verdict: BurstVerdict, val reason: String?, val leagues: Set<String> = emptySet()) {
         val proved: Boolean get() = reason == null
     }
 
@@ -186,13 +189,16 @@ object BurstStudy {
             return Proof(BurstVerdict.NEEDS_DATA, "the recorder is still assuming your delays (${latency.roundTrips()} round trips and ${latency.pushDelays()} push delays measured; it needs ${LatencyModel.MIN_SAMPLES} of each)")
         }
         val actable = records.filter { it !is WindowRecord || it.net >= minNet }
-        val all = summarize(actable).lastOrNull() ?: return Proof(BurstVerdict.NEEDS_DATA, "nothing recorded yet")
-        val v = verdict(all)
-        return when (v) {
-            BurstVerdict.WORTH_A_TEST -> Proof(v, null)
-            BurstVerdict.NEEDS_DATA -> Proof(v, "not enough yet: ${all.games} games and ${all.windows} windows that paid at least ${"%.1f".format(Locale.US, minNet * 100)} cents (it needs $MIN_GAMES and $MIN_WINDOWS)")
-            else -> Proof(v, "the recorder's verdict on the windows it would trade is: ${v.label}")
+        val rows = summarize(actable).filter { it.league != ALL }
+        if (rows.isEmpty()) return Proof(BurstVerdict.NEEDS_DATA, "nothing recorded yet")
+        val verdicts = rows.associate { it.league to verdict(it) }
+        val proved = verdicts.filterValues { it == BurstVerdict.WORTH_A_TEST }.keys
+        if (proved.isNotEmpty()) return Proof(BurstVerdict.WORTH_A_TEST, null, proved)
+        val why = rows.joinToString("; ") { t ->
+            val v = verdicts.getValue(t.league)
+            "${t.league}: " + if (v == BurstVerdict.NEEDS_DATA) "not enough yet (${t.games} games and ${t.windows} windows that paid at least ${"%.1f".format(Locale.US, minNet * 100)} cents; it needs $MIN_GAMES and $MIN_WINDOWS)" else v.label
         }
+        return Proof(verdicts.values.maxBy { it.ordinal }, "no league has proved it yet - $why")
     }
 
     /** The report Diagnostics and "Share live burst study" print. [latencyNote]: where the delays came from ([LatencyModel.note]). */
