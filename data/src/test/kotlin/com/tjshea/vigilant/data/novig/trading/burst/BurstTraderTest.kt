@@ -132,7 +132,7 @@ class BurstTraderTest {
         r.own += OwnBid("ml", "ml-b", 0.47)      // a bid of ours on the NO side of the moneyline at 0.47 >= 1 - 0.539: buying YES at 0.539 would trade with it
         r.send(r.window(cover())); step(r)
         r.own.clear()
-        r.rules = on.copy(maxPerDay = 0.5)
+        r.rules = on.copy(maxPerDay = 0.15)      // $0.15 leaves 15 contracts of both legs, under the 20 least
         r.send(r.window(cover())); step(r)
         assertTrue("nothing was sent", r.orders.batches.isEmpty())
         val s = r.trader.status.value.skipped
