@@ -19,8 +19,17 @@ object LowUsageBids {
     const val MIN_BOOKS = 2
     const val MAX_BOOKS = 3
 
-    /** A bid is posted at least this far under the fair (EV at the fair); the setting can raise it, never lower it. */
-    const val MIN_MARGIN = 0.025
+    /**
+     * The lowest margin the setting allows: a bid is posted at least this far under the fair (EV at the fair). Tj, 2026-10-06: "add options for minimum 1.5% positive EV or an
+     * amount I type in" (until v0.70.3 the floor was [DEFAULT_MARGIN]: "at least 2.5% below"). 0.5% is the floor of what is typed: under it the bid's edge is inside the fair's own error.
+     */
+    const val MIN_MARGIN = 0.005
+
+    /** The margin a fresh install posts at (Tj's first spec, 2026-10-05: "at least 2.5% below (positive EV) the fair odds"). */
+    const val DEFAULT_MARGIN = 0.025
+
+    /** The most a typed margin can be (half the fair: a bid that far under almost never fills). */
+    const val MAX_MARGIN = 0.5
 
     /** The longest American odds a bid may be posted at (no long shots); a tighter [ScanSettings.makerMaxOdds] still wins. */
     const val MAX_ODDS = 130
@@ -60,8 +69,23 @@ object LowUsageBids {
     fun gapSeconds(s: ScanSettings, startsMs: Collection<Long>?, now: Long): Int =
         if (s.lowUsagePace == AUTO) autoGapSeconds(startsMs, now, s.makerStopMinutes.coerceAtLeast(0) * 60_000L) else shortestGapSeconds(s)
 
-    /** [ScanSettings.lowUsageMargin]'s choices (2.5% is the floor). */
-    val MARGIN_CHOICES = listOf(MIN_MARGIN, 0.03, 0.035, 0.04)
+    /** [ScanSettings.lowUsageMargin]'s chips (the field beside them takes any other margin from [MIN_MARGIN] to [MAX_MARGIN]). */
+    val MARGIN_CHOICES = listOf(0.015, DEFAULT_MARGIN, 0.03, 0.035, 0.04)
+
+    /**
+     * A margin typed as a percent ("1.5", "1,5", " 2.25 %") as a fraction (0.015), at most two decimals of a percent, or null when it isn't a number or is outside [MIN_MARGIN]..[MAX_MARGIN]
+     * (the field says why and saves nothing).
+     */
+    fun parseMargin(text: String): Double? {
+        val t = text.trim().removeSuffix("%").trim().replace(',', '.')
+        if (t.isEmpty() || !t.all { it.isDigit() || it == '.' } || t.count { it == '.' } > 1) return null
+        val percent = t.toDoubleOrNull() ?: return null
+        val m = Math.round(percent * 100) / 10_000.0
+        return m.takeIf { it >= MIN_MARGIN - 1e-12 && it <= MAX_MARGIN + 1e-12 }
+    }
+
+    /** [m] as the field shows it: a percent with no trailing zeros ("2.5", "3", "1.55"). */
+    fun marginText(m: Double): String = String.format(java.util.Locale.US, "%.2f", m * 100).trimEnd('0').trimEnd('.')
 
     /** The most Novig prices a mode scan reads at least: every prop the picked books quote in the window (a read per prop is a Novig call, never a credit). */
     const val MIN_NOVIG_READS = 1000

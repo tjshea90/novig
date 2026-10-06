@@ -310,7 +310,7 @@ data class ScanSettings(
      */
     val lowUsageBooks: Set<String> = LowUsageBids.DEFAULT_BOOKS,
     val lowUsagePace: Int = LowUsageBids.AUTO,
-    val lowUsageMargin: Double = LowUsageBids.MIN_MARGIN,
+    val lowUsageMargin: Double = LowUsageBids.DEFAULT_MARGIN,
     /**
      * The live burst recorder (Tj, 2026-10-06; RESEARCH.md §95): while a live game of [burstLeagues] is on Novig, the read key's websocket records the cross-line mispricings after plays and
      * paper-trades them at Tj's own measured delays. It never places or cancels anything. Off by default; STOP ALL stops it.
