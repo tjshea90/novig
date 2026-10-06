@@ -1,13 +1,13 @@
-# CHECKPOINT 2625 — read me first, then TASKS.md
+# CHECKPOINT 2626 — read me first, then TASKS.md
 
-**Written:** 2026-10-06T14:39:23Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `954ba48b` (this checkpoint is the commit after it)
+**Written:** 2026-10-06T14:46:37Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `6694f31f` (this checkpoint is the commit after it)
 
 ## Just done
-files re-sent and extracted (loader matches the phone); wave 1 launched, study-overall-edge saved on GitHub; plan.py now takes --running; v0.70.2 gated+pushed, release.yml triggered 14:36Z
+v0.70.2 RELEASED + recorded (Release link in TASKS CX3); study-overall-edge and study-splits-bet-attributes saved on GitHub (EV and time-to-start are the only predictors of CLV; NHL a lead; EV>=2.5% listed <=6h before start +3.01% on 64 closes); study-timing-looks launched
 
 ## Do this next
-as each running agent finishes (study-data-quality, study-splits-bet-attributes, study-splits-process-attributes): save_agent.sh then launch the next from plan.py --running; confirm Release v0.70.2 + record-release.sh; then strategy builders after all 9 study results
+running: study-data-quality, study-splits-process-attributes, study-timing-looks; as each finishes: save_agent.sh then launch next from 'python3 tools/research/study_v0701/plan.py --running <labels>'; then strategy builders once all 9 study results are saved
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ as each running agent finishes (study-data-quality, study-splits-bet-attributes,
 
 ## Last ten checkpoints
 ```
+  ac396409 ckpt 2625: files re-sent and extracted (loader matches the phone); wave 1 launched, stu
   90a3bcf0 ckpt 2624: pre-release: v0.70.2: the Diagnostics file always says whether the live burs
   e6ba9e93 ckpt 2623: built plan.py (wave planner, selftest) + save_agent.sh (bank one agent's res
   2b3b86ab ckpt 2622: Tj's 14:14Z instruction recorded as CY1-CY3 in TASKS.md (max 3 agents in fli
@@ -25,8 +26,7 @@ as each running agent finishes (study-data-quality, study-splits-bet-attributes,
   a67088fd ckpt 2617: launched 14 background analyst agents (phase 1 of the v0.70.1 analysis) in t
   6d988e7b ckpt 2616: v0.70.1 analysis resumed in a NEW container (old workflow lost): files were 
   0039a333 ckpt 2615: Tj sent two files (v0.70.1 diagnostics + scan study, no words): data extract
-  1909ebb8 ckpt 2614: v0.70.1 RELEASED and recorded (v0.70.0 too); RESEARCH 95/96 and NOVIG_API 20
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
