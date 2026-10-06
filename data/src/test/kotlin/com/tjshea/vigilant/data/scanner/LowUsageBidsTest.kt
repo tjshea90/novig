@@ -32,6 +32,47 @@ class LowUsageBidsTest {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val on = ScanSettings(leagues = setOf("NFL"), makerFocus = BidFocus.LOW_USAGE, maker = true)
 
+    // ---- the margin Tj sets (2026-10-06: "add options for minimum 1.5% positive EV or an amount I type in") ------------------------
+
+    @Test
+    fun `the margin has a 1_5 percent chip beside 2_5 percent, which stays the default`() {
+        assertEquals(listOf(0.015, 0.025, 0.03, 0.035, 0.04), LowUsageBids.MARGIN_CHOICES)
+        assertEquals(0.025, ScanSettings().lowUsageMargin, 0.0)
+        assertEquals(0.025, LowUsageBids.DEFAULT_MARGIN, 0.0)
+        assertTrue("every chip is allowed", LowUsageBids.MARGIN_CHOICES.all { it >= LowUsageBids.MIN_MARGIN })
+    }
+
+    @Test
+    fun `a typed margin is a percent from half a percent to fifty, in tenths or hundredths, and anything else is refused`() {
+        assertEquals(0.015, LowUsageBids.parseMargin("1.5")!!, 0.0)
+        assertEquals(0.015, LowUsageBids.parseMargin(" 1,5 % ")!!, 0.0)
+        assertEquals(0.0325, LowUsageBids.parseMargin("3.25")!!, 0.0)
+        assertEquals("rounded to a hundredth of a percent", 0.0155, LowUsageBids.parseMargin("1.549")!!, 0.0)
+        assertEquals(0.02, LowUsageBids.parseMargin("2.")!!, 0.0)
+        assertEquals(0.005, LowUsageBids.parseMargin("0.5")!!, 0.0)
+        assertEquals(0.5, LowUsageBids.parseMargin("50")!!, 0.0)
+        assertNull("under the floor", LowUsageBids.parseMargin("0.4"))
+        assertNull(LowUsageBids.parseMargin("0"))
+        assertNull("over half the fair", LowUsageBids.parseMargin("51"))
+        assertNull(LowUsageBids.parseMargin(""))
+        assertNull(LowUsageBids.parseMargin("."))
+        assertNull(LowUsageBids.parseMargin("1.2.3"))
+        assertNull(LowUsageBids.parseMargin("-1"))
+        assertNull(LowUsageBids.parseMargin("abc"))
+    }
+
+    @Test
+    fun `the field shows the saved margin as a percent with no trailing zeros, and what it shows parses back to it`() {
+        assertEquals("2.5", LowUsageBids.marginText(0.025))
+        assertEquals("3", LowUsageBids.marginText(0.03))
+        assertEquals("1.5", LowUsageBids.marginText(0.015))
+        assertEquals("3.25", LowUsageBids.marginText(0.0325))
+        assertEquals("0.5", LowUsageBids.marginText(0.005))
+        (LowUsageBids.MARGIN_CHOICES + listOf(0.0155, 0.5, 0.005)).forEach { m ->
+            assertEquals(m, LowUsageBids.parseMargin(LowUsageBids.marginText(m))!!, 0.0)
+        }
+    }
+
     // ---- the books Tj picks -----------------------------------------------------------------------------------------------
 
     @Test

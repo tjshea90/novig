@@ -18,6 +18,25 @@ class TrapGuardTest {
     private val x = "over"
     private val y = "under"
 
+    /** Tj, 2026-10-06: "add trap guard option for maximum 12 hours until game time or an amount in hours I type in". */
+    @Test
+    fun `12 hours is a chip, and any whole number of hours from 1 to 999 can be typed`() {
+        assertTrue(12 in TrapGuard.EARLY_CHOICES)
+        assertEquals(9, TrapGuard.parseHours("9"))
+        assertEquals(18, TrapGuard.parseHours(" 18 h "))
+        assertEquals(1, TrapGuard.parseHours("1"))
+        assertEquals(999, TrapGuard.parseHours("999"))
+        assertNull("0 is Off, a chip", TrapGuard.parseHours("0"))
+        assertNull(TrapGuard.parseHours("1000"))
+        assertNull(TrapGuard.parseHours(""))
+        assertNull(TrapGuard.parseHours("1.5"))
+        assertNull(TrapGuard.parseHours("-3"))
+        assertNull(TrapGuard.parseHours("abc"))
+        // A typed window works as a chip's does: 9 h leaves a game 10 h away alone and takes one 8 h away.
+        assertNotNull(TrapGuard.early(now + 10 * h, now, TrapGuard.parseHours("9")!!))
+        assertNull(TrapGuard.early(now + 8 * h, now, TrapGuard.parseHours("9")!!))
+    }
+
     @Test
     fun `a game more than the guard's hours away is too early, one inside it or at it is not, and 0 is off`() {
         assertNotNull(TrapGuard.early(now + 6 * h + 1, now, 6))

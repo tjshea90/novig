@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsOff
@@ -25,7 +26,9 @@ import com.tjshea.vigilant.app.ui.MakerActions
 import com.tjshea.vigilant.app.ui.MakerRulesText
 import com.tjshea.vigilant.app.ui.MakerScreen
 import com.tjshea.vigilant.app.ui.MakerText
+import com.tjshea.vigilant.app.ui.LowUsageText
 import com.tjshea.vigilant.app.ui.MakerUi
+import com.tjshea.vigilant.app.ui.TrapGuardText
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
 import com.tjshea.vigilant.data.novig.trading.maker.MakerDecision
@@ -425,6 +428,50 @@ class MakerUiTest {
         compose.onAllNodesWithText("No limit")[1].performScrollTo().performClick()
         assertEquals(0, st.value.makerMaxOdds)
         compose.onNodeWithTag("makerMaxOddsNote").assertTextContains("No limit", substring = true)
+    }
+
+    /** Tj, 2026-10-06: "for the vigilant auto bid low api usage setting, add options for minimum 1.5% positive EV or an amount I type in". */
+    @Test
+    fun `low API usage's margin has a 1_5 percent chip and a field for any other percent, and a number the mode can't take saves nothing and says so`() {
+        val st = androidx.compose.runtime.mutableStateOf(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE))
+        compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
+        compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
+        compose.onNodeWithTag("lowUsageMarginField").performScrollTo().assertTextContains("2.5")
+        compose.onNodeWithTag("lowUsageMargin-15").performClick()
+        assertEquals(0.015, st.value.lowUsageMargin, 1e-12)
+        compose.onNodeWithTag("lowUsageMarginField").assertTextContains("1.5")
+        compose.onNodeWithTag("lowUsageMarginNote").assertTextContains("1.5% under the fair", substring = true)
+        // A typed amount saves as it becomes a percent the mode takes...
+        compose.onNodeWithTag("lowUsageMarginField").performTextReplacement("1.7")
+        assertEquals(0.017, st.value.lowUsageMargin, 1e-12)
+        assertTrue(MakerRulesText.summary(st.value), MakerRulesText.summary(st.value).contains("1.7% or more under the fair"))
+        // ...and one it can't (under half a percent) saves nothing, flags itself and keeps the last good margin.
+        compose.onNodeWithTag("lowUsageMarginField").performTextReplacement("0.2")
+        assertEquals(0.017, st.value.lowUsageMargin, 1e-12)
+        compose.onNodeWithText(LowUsageText.MARGIN_ERROR).assertExists()
+        compose.onNodeWithTag("lowUsageMarginField").performTextReplacement("3.25")
+        assertEquals(0.0325, st.value.lowUsageMargin, 1e-12)
+        compose.onNodeWithText(LowUsageText.MARGIN_ERROR).assertDoesNotExist()
+        compose.onNodeWithTag("lowUsageMargin-25").performClick()
+        assertEquals(0.025, st.value.lowUsageMargin, 1e-12)
+        compose.onNodeWithTag("lowUsageMarginField").assertTextContains("2.5")
+    }
+
+    /** Tj, 2026-10-06: "add trap guard option for maximum 12 hours until game time or an amount in hours I type in" (the Bids tab's copy of the shared setting). */
+    @Test
+    fun `the Bids tab's trap guard window has a 12 h chip and a field for any whole number of hours`() {
+        val st = androidx.compose.runtime.mutableStateOf(settings)
+        compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
+        compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
+        compose.onNodeWithText("12 h").performScrollTo().performClick()
+        assertEquals(12, st.value.trapEarlyHours)
+        compose.onNodeWithTag("maker-trapEarlyField").assertTextContains("12")
+        compose.onNodeWithTag("maker-trapEarlyField").performTextReplacement("9")
+        assertEquals(9, st.value.trapEarlyHours)
+        compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("more than 9 h off", substring = true)
+        compose.onNodeWithTag("maker-trapEarlyField").performTextReplacement("0")
+        assertEquals("0 saves nothing: Off is its own chip", 9, st.value.trapEarlyHours)
+        compose.onNodeWithText(TrapGuardText.HOURS_ERROR).assertExists()
     }
 
     /** Tj, 2026-10-05: "make an option for a low API usage auto bid feature". */

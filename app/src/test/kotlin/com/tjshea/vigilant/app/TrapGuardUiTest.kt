@@ -9,13 +9,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.CnoDetail
 import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.OpportunityDetail
+import com.tjshea.vigilant.app.ui.TrapGuardSection
 import com.tjshea.vigilant.app.ui.TrapGuardText
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.data.cno.CnoPick
+import com.tjshea.vigilant.data.scanner.ScanSettings
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -75,5 +81,24 @@ class TrapGuardUiTest {
         val o = state.result!!.opportunities.first { it.quote != null && it.fairProbability != null && it.event.startsTs - now > 6 * h }
         screen { OpportunityDetail(o, state.settings.copy(trapEarlyHours = 6), onTrack = {}) }
         compose.onNodeWithTag("trapEarlySheet").assertTextContains("Trap guard", substring = true)
+    }
+
+    /** Tj, 2026-10-06: "add trap guard option for maximum 12 hours until game time or an amount in hours I type in" (Auto-bet and alerts show this section). */
+    @Test
+    fun `the guard's window has a 12 h chip and a field for any whole number of hours, and a number it can't take saves nothing`() {
+        val st = androidx.compose.runtime.mutableStateOf(ScanSettings(trapEarlyHours = 6))
+        screen { TrapGuardSection(st.value, showMove = false, tag = "t") { f -> st.value = f(st.value) } }
+        compose.onNodeWithTag("t-trapEarlyField").assertTextContains("6")
+        compose.onNodeWithText("12 h").performClick()
+        assertEquals(12, st.value.trapEarlyHours)
+        compose.onNodeWithTag("t-trapEarlyField").assertTextContains("12")
+        compose.onNodeWithTag("t-trapEarlyField").performTextReplacement("9")
+        assertEquals(9, st.value.trapEarlyHours)
+        compose.onNodeWithTag("t-trapEarlyNote").assertTextContains("more than 9 h from now", substring = true)
+        compose.onNodeWithTag("t-trapEarlyField").performTextReplacement("0")
+        assertEquals("0 saves nothing: Off is its own chip", 9, st.value.trapEarlyHours)
+        compose.onNodeWithText(TrapGuardText.HOURS_ERROR).assertExists()
+        compose.onNodeWithText("Off").performClick()
+        assertEquals(0, st.value.trapEarlyHours)
     }
 }
