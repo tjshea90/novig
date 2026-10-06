@@ -102,6 +102,9 @@ class BurstTraderTest {
 
     private fun Rig.send(w: WindowOpening) { trader.onOpen(w) }
 
+    /** Lets the attempt run, then moves on past the 2 s a ladder is left alone after one (so a test of several skips doesn't just see the cooldown). */
+    private fun TestScope.step(r: Rig) { runCurrent(); advanceTimeBy(BurstTradeLimits.COOLDOWN_MS + 1); runCurrent() }
+
     // ---- off, and what stops it before an order ---------------------------------------------------------------------------------
 
     @Test
@@ -116,21 +119,21 @@ class BurstTraderTest {
     fun `each reason to hold back is a skip with a name - the gate, a halt, an old window, a cover that no longer pays, a thin net, an own bid, the caps, a cooldown`() = runTest {
         val r = rig()
         r.gate = "STOP ALL is on"
-        r.send(r.window(cover())); runCurrent()
+        r.send(r.window(cover())); step(r)
         r.gate = null
         r.rules = on.copy(halted = "an order's answer was lost")
-        r.send(r.window(cover())); runCurrent()
+        r.send(r.window(cover())); step(r)
         r.rules = on
-        r.send(r.window(cover(), openedAgoMs = 400)); runCurrent()
-        r.send(r.window(cover(), current = null)); runCurrent()
+        r.send(r.window(cover(), openedAgoMs = 400)); step(r)
+        r.send(r.window(cover(), current = null)); step(r)
         r.rules = on.copy(minNet = 0.05)
-        r.send(r.window(cover())); runCurrent()
+        r.send(r.window(cover())); step(r)
         r.rules = on
         r.own += OwnBid("ml", "ml-b", 0.47)      // a bid of ours on the NO side of the moneyline at 0.47 >= 1 - 0.539: buying YES at 0.539 would trade with it
-        r.send(r.window(cover())); runCurrent()
+        r.send(r.window(cover())); step(r)
         r.own.clear()
         r.rules = on.copy(maxPerDay = 0.5)
-        r.send(r.window(cover())); runCurrent()
+        r.send(r.window(cover())); step(r)
         assertTrue("nothing was sent", r.orders.batches.isEmpty())
         val s = r.trader.status.value.skipped
         assertEquals(setOf("STOP ALL is on", "halted", "window too old", "no longer pays", "net under the minimum", "own bid in the way", "limit reached"), s.keys)
