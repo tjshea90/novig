@@ -1,0 +1,574 @@
+{
+ "area": "Step 3, PROCESS attributes of the v0.70.1 scan study (who listed it, screen reason shown vs hidden, minutes-to-start first listed and the 6/12/24 h trap-guard threshold, listed time/gone/last look, hour and day, price drift after the first look, placedByTj, app version/preset, CNO list and fair age, cnoOneWay), one at a time and in pairs, with game-clustered CIs, two date splits, and close-source/kind standardisation",
+ "trust_notes": "UNITS: CLV, ROI in percent in prose; n_bets in findings = bets WITH a close for a CLV claim (n_games = games with a close), all bets for counts. Everything is from 2080 bets, 190 games, ~2.26 days of first-looks (Oct 3 17:56 to Oct 6 00:05 ET); only 683 bets (33%) in 69 games have a close, and the effective sample is those 69 games (9.9 closes a game). WHAT CAN BE TRUSTED: the timing result (first listed within 6 h beats the close, 6-24 h does not): it holds in all four date splits in sign, on each of the three game days, in props and game lines, in every source/hour/version slice inside the 6 h window, and after standardising for close source and kind (adjusted +1.76 [0.96, 2.74] points). WHAT CANNOT: (1) CLOSES ARE UNEVENLY SPREAD. Novig-last-trades closes (341) exist only for games of Oct 3-4 (none for first looks of Oct 5), so the loader's second date half (first look Oct 5-6, 612 bets, 100 games) has only 65 closes (all Tracker/ESPN) and 'holds on the second half' is mostly unanswerable by CLV; I therefore also split by Oct 3 first looks (D1: 373 closes) vs Oct 4-6 (D2: 310 closes) and by game day (Oct 3/4/5), and give every split. (2) THE CLOSE SOURCE CHANGES WITH TIMING. Inside 6 h: 101 Tracker + 54 ESPN + 6 Pinnacle + 95 Novig-trades closes; 6-24 h: 120 + 39 + 11 + 242. Against the soft closes (Tracker = CNO's books read before the start, ESPN = DraftKings) the 6 h gift is +2.15 [1.64, 2.80] (161 closes, 56 games); against Novig's own last trades it is only +0.15 [-0.40, 0.73] (95 closes, 35 games) and the difference to everything later is not significant there (+0.54 [-0.82, 1.87]). Pinnacle (the sharpest close) has 17 closes in all, too few to say. A Novig-trades close is a trade price, the first-listed price is the taker's price, so that source may carry a half-spread handicap (hypothesis, not verified). So the honest reading is: bets listed inside 6 h keep their edge in the books Vigilant devigs and in Tj's own tracker closes; whether that edge is against the SHARP close is not shown. (3) DRIFT, LISTED TIME, GONE, LAST-LOOK are hindsight (known only after the bet's life), so their CLV gaps are partly mechanical: they describe, they are not rules. (4) >24 h has only 15 closes in 5 games and >3 days has none (251 bets): nothing can be said about them beyond 'negative on 15'. (5) Version and preset are 14 contiguous windows (1-17 hours, most 1-3), wholly confounded with date/slate: do not read a version effect. (6) cnoOneWay is False on all 1732 CNO-sourced bets and null on the 348 Vigilant-only ones: it carries no information; and the file holds no ONE_WAY, TOO_GOOD or NOT_A_GAME rows at all. 'shown' (screen null) includes the 290 bets only Vigilant's scan listed (screen is not applicable to them); dropping them moves shown-vs-hidden from +0.87 to +1.07. MULTIPLE COMPARISONS: I looked at 105 single-attribute groups (22 attribute columns; 74 with >=30 closes), 399 pair cells with >=30 closes (66 attribute pairs of 12 dimensions), 66 adjusted level-vs-rest tests, 14 time thresholds x 10 subsets (overlapping), ~40 stratified contrasts and ~70 look-window rows: ~700 numbers, ~480 distinct tests. Of the 473 single+pair tests, 187 had a game-cluster bootstrap p<0.05 (23.7 expected under all-null) but they are strongly correlated through the one timing effect; on the 66 adjusted level-vs-rest tests, 14 distinct groups reach BH q<0.10: <=6h, <2h, 2-6h, 6-24h, the four drift groups (hindsight), version 0.59.0 and preset 'Volume + safe CLV' (the same 2.5-hour window), hour 00-05 (one day), version 0.58.0, listed 6 h+, shown. Everything but the timing result is at the level where one or two lucky/unlucky game days decide it. The bootstrap p-values are anti-conservative with 20-30 games. BIASES: CLV assumes the first-listed price was takeable (median Novig $58 at the price inside 6 h, mean $1,040; 6-24 h median $92); the study never tells what Tj's stake would have moved; same-game bets are correlated (props: ~10 bets a game); first-look time depends on when the phone was scanning (wide read at most every 30 s while the app's CNO list is read); ROI counts 1705 bets with a profit value (9 voids at 0) and is far too noisy to confirm anything (CI half-widths 6-12 points).",
+ "key_numbers": [
+  "First listed within 6 h of the start: 256 closes in 66 games, CLV +1.41% [1.01, 2.00], 66.0% beat the close, ROI +4.82% [-1.28, 11.69] on 899 settled bets (77 games); 938 bets, ~416 listed a day, median Novig $58.5 at the price.",
+  "First listed 6-24 h out: 412 closes in 31 games, CLV -0.37% [-1.31, 0.43], 50.7% beat, ROI -1.36% [-8.44, 6.11] (766 settled). Over 24 h: 15 closes in 5 games, CLV -5.07% [-6.50, -0.31], ROI -15.3% on 40 settled.",
+  "Gap <=6h minus 6-24h: +1.79 [0.94, 2.71] raw, +1.76 [0.96, 2.74] standardised for close source and kind; same sign in all four date splits (first look Oct 3 +2.03 [0.81, 3.33], Oct 4-6 +0.88 [-0.69, 2.44], loader halves +1.54 [0.69, 2.50] and +3.96 [0.79, 6.06]) and on each game day (Oct 3 +1.29, Oct 4 +1.24, Oct 5 +2.29 inside 6 h).",
+  "By close source inside 6 h: Tracker/ESPN/Pinnacle closes +2.15% [1.64, 2.80] (161 closes/56 games) vs Novig-trades closes only +0.15% [-0.40, 0.73] (95/35); Pinnacle alone has 17 closes in total.",
+  "The 24 h guard: <=24h pooled CLV +0.31% [-0.21, 0.83] (668 closes/69 games) vs <=12h +1.07% [0.41, 1.95] (354/68) vs <=6h +1.41%; the 12-24 h slice -0.55% [-1.40, 0.23] (314/28 games), 6-12 h slice +0.19% [-1.44, 2.76] (98/24): 24 h is too loose, 6 h vs 12 h undecided (~170 games with closes in 6-12 h needed).",
+  "Price when a bet first appears inside each window (looks): 0-2h +1.07% [0.71, 1.58] (321 bets/60 games), 2-6h +0.67% [0.14, 1.34] (208/40), 6-12h -0.09% [-1.18, 0.99] (258/26), 12-24h -0.72% [-1.64, 0.12] (325/29).",
+  "Stale listings: entering the 6 h window after 3 h+ on the list -0.04% [-0.75, 0.60] (157 bets/27 games) vs new listings +1.42% [0.94, 2.04] (265/67); gap -1.45 [-2.53, -0.64].",
+  "Shown vs hidden: shown +0.57% [-0.20, 1.40] (384 closes/60 games), hidden -0.30% [-0.83, 0.36] (299/49); standardised gap +1.11 [0.17, 2.17]; inside 6 h shown +1.92% [1.31, 2.73] (136/54) vs hidden +0.83% [0.42, 1.38] (120/44); hidden-by-EV-floor inside 6 h +0.56% [0.25, 0.96] (98/38).",
+  "Price drift (hindsight): 30.8% of bets (640/2080) were later offered a longer price; those closed -1.12% [-1.89, -0.16] (298 closes/47 games) at the first price vs +1.21% [0.74, 1.70] (385/62) for the rest; best price 8%+ better later: -11.38% (18 closes). CLV at first / last / best price: +0.19 / +0.64 / +1.31.",
+  "Tj's own placed bets: inside 6 h CLV +2.39% [1.77, 3.28] (101 closes/38 games), ROI +7.4%; over 6 h out CLV -0.83% [-2.38, 0.74] (128/26) and ROI -16.38% [-27.61, -3.98] (141 settled, 26 games).",
+  "Multiple comparisons: ~480 distinct tests (105 single-attribute groups, 399 pair cells, 66 adjusted tests); only the timing effect (and hindsight drift) is robust after standardising; who listed it, hour, day, version, preset, list freshness, dropped/gone show nothing reliable."
+ ],
+ "findings": [
+  {
+   "claim": "TIMING IS THE DOMINANT PROCESS ATTRIBUTE: bets first listed within 6 h of the start beat the close (+1.41%); 6-24 h ones do not (-0.37%); over 24 h is a thin trap (-5.07% on 15 closes).",
+   "evidence": "<=6h: 938 bets/83 games, 256 closes/66 games, CLV +1.41 [1.01, 2.00], beat the close 66.0%, ROI +4.82% [-1.28, 11.69] (899 settled, 77 games). 6-24h: 811 bets, 412 closes/31 games, CLV -0.37 [-1.31, 0.43], 50.7% beat, ROI -1.36% [-8.44, 6.11] (766). >24h: 331 bets/91 games, 15 closes/5 games, CLV -5.07 [-6.50, -0.31], 27% beat, ROI -15.29% [-63.33, 15.51] (40 settled). Finer: <2h +1.42 [0.94, 2.10] (163/56 games), 2-6h +1.40 [0.72, 2.29] (93/38); every hour bin inside 6 h is positive (<30m +1.36, 30-60m +0.33 on 30 closes, 1-2h +2.28, 2-3h +1.10, 3-4h +1.70, 4-6h +1.72 on 14). Difference <=6h vs 6-24h: raw +1.79 [0.94, 2.71]; standardised for close source x kind +1.76 [0.96, 2.74]; <=6h vs everything later +1.95 [1.05, 2.92]. By game day <=6h: Oct 3 +1.29 [0.57, 2.01] (68 closes/30 games), Oct 4 +1.24 [0.73, 2.10] (150/26), Oct 5 +2.29 [1.40, 3.73] (38/10). Props <=6h +1.60 (149 closes/35 games), game lines +1.15 (107/54). Within the 6 h window it is positive for v-listed +1.04 (73), c-listed(no v) +1.67 (120), w-only +1.35 (63), shown +1.92, hidden +0.83, every first-look hour band, every version group.",
+   "n_bets": 256,
+   "n_games": 66,
+   "effect": "<=6h CLV +1.41% [1.01, 2.00] vs 6-24h -0.37% [-1.31, 0.43]; gap +1.79 [0.94, 2.71], p<0.001",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "Low for the direction (same sign in all four date splits: first-look Oct 3 vs 4-6 gap +2.03 [0.81, 3.33] and +0.88 [-0.69, 2.44]; loader halves +1.54 [0.69, 2.50] and +3.96 [0.79, 6.06] on 36 vs 29 closes; three game days all positive; one of ~480 tests but survives BH q<0.01). The size is soft: ~66 games, three slates, and against Novig-trades closes the <=6h edge is only +0.15 [-0.40, 0.73] (95 closes) while against Tracker/ESPN/Pinnacle closes it is +2.15 [1.64, 2.80] (161). The second loader half has just 65 closes. About 150 more games with closes spread over several weeks and sports would settle the size."
+  },
+  {
+   "claim": "THE 24 h THRESHOLD IS TOO LOOSE; 6 h and 12 h CANNOT BE SEPARATED YET. The 12-24 h slice that the 24 h guard lets through is neutral to mildly negative; over 24 h is negative.",
+   "evidence": "Cumulative first-listed <=T: 3h +1.35 [0.92, 1.95] (211 closes), 6h +1.41 [1.01, 2.00] (256/66 games), 12h +1.07 [0.41, 1.95] (354/68), 24h +0.31 [-0.21, 0.83] (668/69). Slices: 6-12h +0.19 [-1.44, 2.76] (98 closes/24 games, ROI -4.5% on 244), 12-24h -0.55 [-1.40, 0.23] (314/28 games, ROI +0.12% on 522), >24h -5.07 (15/5). Differences <=T vs >T: T=6h +1.95 [1.05, 2.92]; T=12h +1.83 [0.92, 2.81]; T=20h +3.29 [1.01, 5.19]; T=24h +5.38 [-0.20, 7.23] (p=0.059, only because >24h has 15 closes). At the PRICE AT THE MOMENT a bet first appears inside each window (the guard's real decision, from the looks): 0-2h +1.07 [0.71, 1.58] (321 bets/60 games), 2-6h +0.67 [0.14, 1.34] (208/40), 6-12h -0.09 [-1.18, 0.99] (258/26), 12-24h -0.72 [-1.64, 0.12] (325/29; D1 -0.77 on 279, D2 -0.44 on 46), 24h+ -5.07 (15/5); by close source the 12-24h slice is -0.71 (Novig trades, 197) and -0.74 (Tracker/ESPN/Pinnacle, 128). Entering at the first look inside T h: T=6 +0.88 [0.54, 1.29] (422 bets/67 games), T=12 +0.61 [0.02, 1.19] (558/68), T=24 +0.20 [-0.36, 0.83] (680/69). For the bets Vigilant's own scan lists (the auto-bet's pool): <=6h +1.04 [0.50, 2.24] (73 closes/20 games), <=12h +0.95 [-0.31, 2.90] (131/33), <=24h -0.05 [-0.81, 0.73] (361/39), 12-24h -0.84 [-2.09, 0.19] (236/18). Hidden bets 12-24h -1.42 [-2.45, -0.24] (123/28). The code default is 6 h (TrapGuard.DEFAULT_EARLY_HOURS, ScanSettings.trapEarlyHours; choices 0/3/6/12/24); Tj's phone ran 24 h at export (Diagnostics line 'Trap guard ... within 24 h'; its skip counters also list 6 h (303 skips) and 12 h (151) reasons, so the setting was raised over the last days).",
+   "n_bets": 668,
+   "n_games": 69,
+   "effect": "<=24h +0.31% [-0.21, 0.83] vs <=6h +1.41% [1.01, 2.00] vs <=12h +1.07% [0.41, 1.95]; 12-24h slice -0.55% [-1.40, 0.23]; 6-12h slice +0.19% [-1.44, 2.76]",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "Moderate. The <=6h and <=12h edges and the 12-24h deficit have the same sign in D1 and D2 and in both close sources, but the 12-24h slice's own CI includes zero (28 games), and the 6-12h slice (24 games, SE ~1.07 points) cannot choose between 6 h and 12 h. To pin the 6-12 h slice to SE 0.4 points needs ~170 games with closes in that window (7x what exists; roughly 2-3 weeks of NFL-sized slates); to confirm the 12-24 h slice is negative at SE 0.25 needs ~80 games with closes (3x). Over 24 h needs ~80 closes in ~80 games to size at all (15 in 5 games now)."
+  },
+  {
+   "claim": "A LISTING THAT HAS BEEN UP FOR HOURS IS NOT A GIFT WHEN IT ENTERS THE 6 h WINDOW: only new listings carry the edge.",
+   "evidence": "Looks-based, at the first look inside the window with the bet's age = minutes since its first look. Entry <=6h: age <3h 265 bets/67 games CLV +1.42 [0.94, 2.04]; age >=3h 157 bets/27 games -0.04 [-0.75, 0.60]; gap -1.45 [-2.53, -0.64]; standardised for close source x kind -1.46 [-2.55, -0.76] (age >=1h vs <1h: -1.52 [-2.50, -0.85], 163 vs 259). Entry <=12h: new 374/68 games +1.03 [0.33, 1.84] vs stale (>=3h) 184/24 -0.25 [-0.95, 0.42]; gap -1.27 [-2.15, -0.53]. Same direction in every stratum: Novig-trades close new +0.23 (99) vs stale -0.82 (67); Tracker/ESPN/Pinnacle +2.13 (166) vs +0.55 (90); props +1.59 vs -0.04; game lines +1.18 vs -0.02. Date splits: D1 (first look Oct 3) new +1.21 (76) vs stale -0.39 (106); D2 new +1.50 (189) vs stale +0.70 (51, thin). By age inside the <=6h window: 0-1m +1.41 (256), 1-10m +1.47, 10-30m +1.64, 30-60m +2.01 (62), 1-3h +1.57 (69), 3-10h -0.21 (63), 10h+ +0.14 (122). The hindsight version agrees: listed 6h+ -1.38 [-2.47, -0.19] (144 closes/24 games), adjusted -1.28 [-2.07, -0.25] (BH q=0.077); inside 6-24h listed 6h+ -1.02 [-1.96, -0.09] (134) vs 1-6h +0.16 (159).",
+   "n_bets": 422,
+   "n_games": 67,
+   "effect": "stale (listed >=3 h) minus new: -1.45% [-2.53, -0.64] at the <=6 h window; stale -0.04% [-0.75, 0.60]",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "Moderate: sign holds in D1 and D2 and in all four strata, but the stale group is only 27 games (D2: 51 bets), it rests on a hindsight-free but post-selected construction (bets still listed), and it was one of ~25 looks-based cuts. ~100 more games with stale entries would settle it."
+  },
+  {
+   "claim": "TJ'S OPEN QUESTION, HIDDEN BETS: the screened-out bets are not traps inside 6 h (they are positive, about half as good as shown ones); they are mildly negative at 6-24 h and negative over 24 h; the EV floor is where almost all of them are lost.",
+   "evidence": "shown 803 bets/148 games: 384 closes/60 games CLV +0.57 [-0.20, 1.40], 59.1% beat, ROI -0.08% [-7.81, 6.67] (685). hidden 1277 bets/135 games: 299 closes/49 games CLV -0.30 [-0.83, 0.36], 51.8% beat, ROI +2.69% [-2.94, 9.71] (1020). Gap shown-hidden: raw +0.87 [0.07, 1.71] (p=0.032); standardised for timing x close source x kind +1.11 [0.17, 2.17] (p=0.017, BH q=0.077); without the 290 v-listed 'shown' +1.25 [0.22, 2.26]; D1 +0.89 (adj +1.33 [-0.23, 2.81]), D2 +1.28 [0.05, 2.58] (adj +1.41 [0.36, 2.56]), H1 +0.98 [0.14, 1.80], H2 +0.11 on 30 vs 35 closes. Within a window: <=6h shown +1.92 [1.31, 2.73] (136 closes/54 games) vs hidden +0.83 [0.42, 1.38] (120/44); 6-24h shown +0.01 [-1.16, 1.00] (242/25) vs hidden -0.92 [-1.74, -0.03] (170/29); >24h hidden -3.57 (9 closes), shown -7.31 (6). By reason: EV (955 bets; 253 closes/46 games) -0.29 [-0.83, 0.36] and <=6h hidden-EV +0.56 [0.25, 0.96] (98 closes/38 games; D1 +1.10 on 33, D2 +0.28 on 65, listed EV +0.36%); BOOKS 147 bets/13 closes -2.24; ODDS 127/18 +0.29; NOT_LISTED 32/12 +0.80; MISMATCH 16/3 -0.18: the four non-EV reasons have 3-18 closes and cannot be judged. Hidden ROI is higher (+2.69% vs -0.08%) but that is inside its CI (+-6 points): luck. Listed EV: shown +2.31%, hidden +0.54% (EV-hidden +0.36%): the shown/hidden CLV gap is roughly the listed-EV gap.",
+   "n_bets": 299,
+   "n_games": 49,
+   "effect": "shown minus hidden CLV: +0.87 [0.07, 1.71] raw, +1.11 [0.17, 2.17] standardised; hidden <=6h +0.83 [0.42, 1.38]",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "Moderate for 'shown > hidden by about 1 point' (sign in D1, D2, H1, both windows; nominal p 0.017-0.04, one of ~25 contrasts, BH q=0.077; H2 too thin). Low for any single hidden reason (3-18 closes each). Hidden-EV bets inside 6 h look like +0.5% CLV bets, too small to say at ~100 closes; ~300 closes in ~100 games would settle whether lowering the EV floor is worth anything (a loosening: a question for Tj, not an action)."
+  },
+  {
+   "claim": "WHO LISTED IT (CNO / Vigilant / wide read) DOES NOT MATTER ONCE TIMING IS HELD FIXED.",
+   "evidence": "Raw CLV: w-only (880 bets) +0.28 [-0.36, 0.90] (119 closes/46 games); c+w (551) +0.82 [0.27, 1.45] (186/43); c+v+w (252) -0.57 [-1.38, 0.21] (186/28); v-only (238) +0.08 [-1.56, 2.01] (112/27); v+w (121) +0.03 [-1.04, 0.96] (67/20); c-only (35) +2.52 (10 closes) and c+v (3) +4.68 (3) are too thin. lister_v True 614 bets: -0.22 [-1.02, 0.67] (368 closes/39 games) vs False +0.67 [0.26, 1.10] (315/60): raw gap -0.89 [-1.64, -0.04] but standardised +0.29 [-1.14, 2.04] (p=0.80): it is timing mix (v bets are listed earlier). c+v+w minus c+w: raw -1.39 [-2.09, -0.72], standardised -0.34 [-1.12, 0.62]. c+w minus w-only: +0.54 raw, +1.13 [-0.48, 3.64] adjusted. Inside <=6h: c-listed(no v) +1.67 (120), v-listed +1.04 (73), w-only +1.35 (63); inside 6-24h: -0.31, -0.33, -0.76. ROI: v+w +19.86% [3.82, 37.88] (119 settled, 22 games) and v-only -8.62% [-23.32, 4.70] (209) are inside noise next to their CLV (+0.03, +0.08).",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "lister_v minus not: raw -0.89 [-1.64, -0.04]; standardised +0.29 [-1.14, 2.04]",
+   "holds_on_both_date_halves": "no",
+   "luck_risk": "The raw gap looks real (p 0.04) and is not: it disappears once timing is held fixed. Treat as no difference; ~300 closes per source inside the 6 h window would be needed to see a 0.5-point difference."
+  },
+  {
+   "claim": "PRICE DRIFT AFTER THE FIRST LOOK (hindsight): bets whose price later got longer (better for the bettor) closed worse than their first price; bets whose price got shorter closed better. Descriptive, not a rule.",
+   "evidence": "30.8% of bets (640/2080) were later listed at a longer price than the first look; 25.1% (522) ended longer than first, 56.2% (1169) same, 18.7% (389) ended shorter. Share with a later better price: <=6h 20.3%, 6-24h 40.8%, >24h 36.0%. CLV at the first price: best-price-later-longer 298 closes/47 games -1.12 [-1.89, -0.16], ROI -6.87% [-14.6, 1.95] (525) vs best-same 385/62 +1.21 [0.74, 1.70], ROI +5.33% [1.03, 10.12] (1180); standardised gap -2.26 [-3.25, -1.29]. Ending longer 237 closes -1.88 [-2.73, -0.86] vs ending same 266 +0.85 [0.36, 1.35] vs ending shorter 180 +1.94 [1.19, 2.93] (shorter-minus-same standardised +1.41 [0.41, 2.72]). Dose-response: best price 2-4% longer -0.51 (91 closes), 4-8% -3.39 [-4.60, -2.02] (37/16 games), 8%+ -11.38 [-15.57, -7.75] (18/11); last price 4%+ shorter +5.13 [2.18, 9.44] (16/14), 2-4% shorter +2.34 (31), 4%+ longer -6.52 [-8.00, -4.82] (46/20). Mean CLV at first / last / best listed price over the 683 closes: +0.19 / +0.64 / +1.31. At the LATER price the same bets still beat the close: ended-longer bets clvLast +0.71 vs ended-same +0.85. Gap holds by halves: best-longer vs best-same D1 -1.97 (123) vs +0.78 (198), D2 +0.09 (175) vs +1.66 (187). Inside <=6h: -> best-longer +0.36 [-0.28, 1.37] (80) vs same +1.89 [1.45, 2.43] (176). Resting-bid simulation (a bid d under the first price fills when the offer reaches it): d=1% fills 28.7% of bets (196 of 683) with CLV at fill +0.83 [-0.18, 2.01] vs +0.99 [0.58, 1.45] at first price for the 487 never-filled; d=2% fills 21.1% at +0.81 vs +0.94 for the never-filled; inside <=6h d=1% fills 20.3% (52 bets) at +2.31 vs +1.82 for the never-filled.",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "best-price-longer minus same: -2.33 raw [-3.13, -1.47], -2.26 standardised [-3.25, -1.29]",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "The direction is partly mechanical (the later price carries the news that moves the close; a bet cannot be filtered on it at the first look). The sizes hold on both date halves and in both timing windows, but this cannot be turned into an ex-ante rule from this file. The resting-bid result is weak: waiting for a 1% better price misses the 71% of bets that never get there, which average +0.99 at the first price."
+  },
+  {
+   "claim": "HOUR OF DAY AND DAY: no replicable effect; the hour is a proxy for time-to-start and for the slate.",
+   "evidence": "First-look hour bands (CLV, closes/games): 00-05 +1.54 [0.02, 3.16] (89/24, all but 9 closes from Oct 4), 10-12 +0.28 [-1.82, 1.84] (82/25), 13-16 +1.64 [0.26, 3.46] (44/17), 17-19 +0.20 [-0.37, 0.89] (244/61), 20-23 -0.68 [-1.69, 0.30] (224/31); single hours: 23 -2.24 [-4.06, -0.55] (59/22), 3 +4.01 [0.80, 7.68] (33/15), 0 -4.42 (9). Standardised for timing x close x kind: 00-05 +2.43 [0.63, 4.25] (BH q=0.051, one day only), 17-19 -0.87 [-1.66, -0.09] (q=0.14), 20-23 -0.92 [-2.17, 0.34], 13-16 +0.70 [-0.61, 2.45]. Inside <=6h every hour band is positive (10-12 +2.16 [1.44, 2.77] on 50 closes, 13-16 +1.92, 17-19 +1.00 on 142, 20-23 +1.59); inside 6-24h they are -2.04 (10-12), -0.48 (17-19), -0.94 (20-23) and +1.58 for 00-05 (87, Oct 4 only). First-look day: Oct 3 -0.51 [-1.41, 0.39] (373 closes/54 games), Oct 4 +1.15 [0.43, 2.17] (245/32), Oct 5 +0.60 [-0.77, 2.69] (65/10); Oct 3 vs Oct 4-6 raw -1.55 [-2.72, -0.40], standardised -1.34 [-3.29, 0.36]. Game-start day: Oct 3 +1.29 (68), Oct 4 +0.08 [-0.56, 0.73] (536/27), Oct 5 -0.03 (79/12).",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "no hour band stays significant after standardising except 00-05 (+2.43 [0.63, 4.25], one day)",
+   "holds_on_both_date_halves": "no",
+   "luck_risk": "High for any single hour/day claim: 20+ hour/day cells, each 9-30 games, the 00-05 and 03:00 cells come from one night. Day-1 vs later is confounded with the app version (0.57-0.58.4) and the Novig-trades closes."
+  },
+  {
+   "claim": "APP VERSION AND PRESET: cannot be separated from date and slate; no version effect is claimed.",
+   "evidence": "14 versions, each in force for one contiguous window (1-17 hours, most 1-3), only six with >=48 closes: 0.57.0 +0.34 (70 closes), 0.58.0 -0.85 (93), 0.58.2 -0.18 (144), 0.58.3 -1.89 [-3.93, -0.06] (55), 0.59.0 +2.22 [0.70, 4.07] (74/20 games), 0.59.1 +0.93 [0.09, 1.88] (119/25), 0.60.0 +0.61 (48), 0.61.0 -1.24 (32), 0.66/0.67/0.68.0 +2.55/+1.91/+2.41 (17/6/10 closes), 0.68.1 and 0.70.1 no closes. Grouped: V1 (0.57-0.58.4, Oct 3) -1.68 raw, -1.62 adjusted [-3.49, 0.00] (377 closes) vs V2 (0.59-0.60) +1.26 (241); V4 (0.66-0.70) +2.39 on 33. Preset: '2 (Safe CLV)' 1873 bets/599 closes +0.15 [-0.44, 0.81]; 'Volume + safe CLV' 60 bets/33 closes +1.65 [0.59, 2.64] (all inside version 0.59.0: same window as its +2.22); '5 (Super CLV all markets)' 59 bets/28 closes -1.52 [-5.29, 1.39]; '(changed)' variants 21 and 1 closes; preset '3' (8 bets) 2 closes in all. Each version is one contiguous window (1-17 hours, most 1-3), so version is date.",
+   "n_bets": 588,
+   "n_games": 69,
+   "effect": "no estimable version or preset effect",
+   "holds_on_both_date_halves": "no",
+   "luck_risk": "Not testable here: version windows do not overlap in time. A version effect would need the same slate under two settings, which this file cannot give."
+  },
+  {
+   "claim": "FRESHNESS OF THE LISTS (CNO list age, Vigilant's fair age): no sign that fresher is better; if anything the opposite on the CNO list.",
+   "evidence": "CNO list age at the first look (CNO-sourced bets): 0-2s -0.15 (146 closes), 3-5s +0.06 (95), 6-10s +0.53 (89), 11-20s +0.88 [0.18, 1.69] (127), 21-40s +0.48 (40), 41s+ +1.19 (8); >10s vs <=10s +0.82 raw [0.11, 1.54], +0.88 adjusted [0.07, 1.79] (BH q=0.13); inside <=6h: <=10s +1.40 (151) vs >10s +1.36 (70): no difference; inside 6-24h: -0.72 (167) vs +0.59 [0.06, 1.15] (102). Vigilant's own fair age (v-only bets, 348): <=60s +1.12 (22 closes), 61-120s -0.23 (9), 121-180s +2.46 (4), 181-300s +0.13 (85), 301s+ -1.44 [-3.30, 0.40] (58); >300s vs <=300s -1.80 raw [-4.02, 0.31], -1.43 adjusted [-4.14, 1.33]. The study cannot see a stale list: the list age is 0-107 s (median 6 s), never minutes.",
+   "n_bets": 505,
+   "n_games": 60,
+   "effect": "CNO age >10s minus <=10s +0.82 [0.11, 1.54]; fair age >300s minus <=300s -1.80 [-4.02, 0.31]",
+   "holds_on_both_date_halves": "no",
+   "luck_risk": "Likely noise: the CNO result runs against its intuition and fails the BH cut (q=0.13); the fair-age result is 58 closes in a few games. Ages are all fresh (CNO list median 6 s), so there is almost no variation to test."
+  },
+  {
+   "claim": "TJ'S OWN PLACED BETS: the trap guard's origin shows up again; his bets placed more than 6 h before the start lost at the first-listed price.",
+   "evidence": "placedByTj 245 bets/49 games: 229 closes (all Tracker) CLV +0.59 [-0.36, 1.61], 66.4% beat, ROI -6.34% [-16.19, 4.35] (244 settled); not placed 1835 bets CLV -0.01 [-0.60, 0.65] (454 closes). Placed <=6h: 103 bets/38 games CLV +2.39 [1.77, 3.28] (101 closes, 78% beat), ROI +7.40% [-11.30, 29.29]; placed >6h out 142 bets/27 games CLV -0.83 [-2.38, 0.74] (128 closes), ROI -16.38% [-27.61, -3.98] (141 settled, 26 games). Placed minus not placed, standardised +0.27 [-2.88, 1.48] (no selection edge beyond timing: 225 vs 113 matched closes). Mean American price Tj actually took +77.9 vs +74.2 first-listed (he did not take worse prices on average).",
+   "n_bets": 229,
+   "n_games": 48,
+   "effect": "placed <=6h +2.39% [1.77, 3.28]; placed >6h -0.83% [-2.38, 0.74], ROI -16.38% [-27.61, -3.98]",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "ROI -16.4% on 141 bets in 26 games has a CI excluding zero but is one of many looks at ROI; the CLV sign holds in both date splits: placed <=6h D1 +2.24 (24 closes) and D2 +2.43 (77); placed >6h D1 -0.76 (79) and D2 -0.94 (49). It matches the v0.54.0 finding that created the guard (176 bets: <6h +2.2%, 6h+ -0.6%)."
+  },
+  {
+   "claim": "HOW LONG IT STAYED LISTED, WHETHER A SCAN DROPPED IT, AND HOW CLOSE TO THE START ITS LAST LOOK WAS: no usable signal beyond the timing it already encodes (all hindsight).",
+   "evidence": "Listed duration (app lists only; 880 wide-read-only bets have none): 0-1m +1.17 (57 closes), 1-2m +2.91 (6), 2-10m +1.51 [0.62, 2.28] (65/37 games), 10-30m -0.52 (51), 30-60m +2.12 [0.25, 4.43] (30), 1-3h +0.75 (105), 3-6h -0.02 (106), 6h+ -1.38 [-2.47, -0.19] (144/24) (standardised -1.28 [-2.07, -0.25]; inside 6-24h -1.02). Dropped by a scan (678) +0.08 [-0.66, 1.15] (256 closes) vs still listed (522) +0.25 [-0.68, 1.02] (308): gap -0.18 raw, -0.96 [-1.87, 0.32] standardised; inside <=6h dropped +1.26 vs still-listed +1.82, inside 6-24h -0.96 vs -0.02 (same direction in both). Last look minutes before the start: <=0 (listed past the start) +1.10 [0.21, 1.98] (51 closes), 0-10m +0.42 (62), 10-30m -1.08 (33), 30-120m +1.03 (75), 2-6h +0.52 (66), 6-24h -0.21 (277), >24h no closes (163 bets). Number of looks: 1 look +2.73 (32 closes), 65+ looks -1.60 [-3.07, -0.02] (101).",
+   "n_bets": 564,
+   "n_games": 59,
+   "effect": "dropped minus still listed: -0.18 raw [-1.20, 1.18]; listed 6h+ -1.38 [-2.47, -0.19]",
+   "holds_on_both_date_halves": "too-thin",
+   "luck_risk": "Mostly the timing effect seen through long listings; the adjusted listed-6h+ gap (-1.28, q=0.077) is the only piece that is not clearly explained by it and it is hindsight. The forward-looking version is the age finding above."
+  },
+  {
+   "claim": "cnoOneWay IS A CONSTANT: there is nothing to analyse, and the file has no ONE_WAY / TOO_GOOD / NOT_A_GAME rows.",
+   "evidence": "ab_cnoOneWay is False on all 1732 CNO-sourced bets and missing on the 348 Vigilant-only ones. screen takes only EV (955), BOOKS (147), ODDS (127), NOT_LISTED (32), MISMATCH (16) and null (803): none of the screens the READ ME lists as ONE_WAY, TOO_GOOD, NOT_A_GAME occurs, so either the wide read never returns those rows or none appeared in 2.26 days.",
+   "n_bets": 2080,
+   "n_games": 190,
+   "effect": "no estimate possible",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "Not a statistical question: it is a gap in what the log records (see next_logging)."
+  },
+  {
+   "claim": "COUNT OF COMPARISONS AND WHAT SURVIVES: timing is the only process attribute with a robust, standardised, multiply-split effect; hindsight drift groups are strong but not rules; everything else is at noise level.",
+   "evidence": "Single-attribute groups 105 (74 with >=30 closes): 24 with p<0.05 (3.7 expected under all-null), 17 with p<0.01, 18 at BH q<0.05 (22 at q<0.10): <2h, 2-6h, <=6h, the drift groups, 0.59.0/V2/V4 versions, Oct 4 first-look day, lister_v False, c-listed(no v), hour 23, hour 3, 13-16, c+w, cnoAge>10s, Volume preset, listed 6h+. After standardising for timing x close source x kind the survivors (BH q<0.10 of 66 adjusted tests) shrink to: <=6h (+2.00 [1.12, 3.08]), <2h (+1.52), 2-6h (+1.34), 6-24h (-1.22 [-2.29, -0.35]), the drift groups, v0.59.0 (+3.25, one 2.5-hour window), preset Volume (same window), hour 00-05 (+2.43, one night), v0.58.0 (-1.30), listed 6h+ (-1.28), shown (+1.11). Negatives with p<0.05 in the raw singles: hour 23 (-2.24), listed 6h+ (-1.38), best-longer (-1.12), last-longer (-1.88), v0.58.3 (-1.89, 55 closes). GIFTS (>=150 closes, positive on both date halves): only 'first listed <=6h' (256 closes) and its sub-windows; with ~136-150 closes, 'shown & <=6h' (+1.92 [1.31, 2.73], D1 +1.33 on 36, D2 +2.13 on 100). TRAPS (clearly negative): only 'first listed >24h' (15 closes, 5 games, thin) and, hindsight, 'price ended longer' (237 closes); nothing else is clearly negative with >=150 closes (6-24h overall -0.37 is not).",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "see evidence",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "Nominal p-values from a game-cluster bootstrap are anti-conservative at 20-30 games; with ~480 distinct tests and ~24 nominal single-attribute hits, expect a handful of false positives among everything except the timing effect."
+  }
+ ],
+ "candidate_rules": [
+  {
+   "name": "GIFT: first listed within 6 h of the start",
+   "expr": "df.minToStartFirst <= 360",
+   "rationale": "The only process attribute that separates good from bad: bets first listed inside 6 h beat the close; holds on every date split and on both close types in sign (vs tracker/ESPN/Pinnacle closes +2.15, vs Novig-trades closes only +0.15). This is the trap guard at 6 h (the code default, TrapGuard.DEFAULT_EARLY_HOURS).",
+   "bets": 938,
+   "games": 83,
+   "clv": 0.0141,
+   "clv_lo": 0.0101,
+   "clv_hi": 0.02,
+   "roi": 0.0482,
+   "first_half_clv": 0.0125,
+   "second_half_clv": 0.0237,
+   "per_day": 415.8,
+   "extra": {
+    "closes": 256,
+    "games_with_close": 66,
+    "beat_close": 0.66,
+    "roi_settled": 899,
+    "roi_ci": [
+     -0.0128,
+     0.1169
+    ],
+    "first_half_closes": 220,
+    "second_half_closes": 36,
+    "median_available_usd": 58.5,
+    "mean_available_usd": 1040.0
+   }
+  },
+  {
+   "name": "first listed within 3 h of the start",
+   "expr": "df.minToStartFirst <= 180",
+   "rationale": "Tighter window: same CLV as 6 h on fewer bets (no gain from going tighter than 6 h).",
+   "bets": 777,
+   "games": 76,
+   "clv": 0.0135,
+   "clv_lo": 0.0092,
+   "clv_hi": 0.0195,
+   "roi": 0.0352,
+   "first_half_clv": 0.0118,
+   "second_half_clv": 0.0252,
+   "per_day": 344.4,
+   "extra": {
+    "closes": 211,
+    "games_with_close": 60,
+    "beat_close": 0.649,
+    "roi_settled": 744,
+    "roi_ci": [
+     -0.021,
+     0.1109
+    ],
+    "first_half_closes": 185,
+    "second_half_closes": 26,
+    "median_available_usd": 54.0,
+    "mean_available_usd": 1153.0
+   }
+  },
+  {
+   "name": "first listed within 12 h of the start",
+   "expr": "df.minToStartFirst <= 720",
+   "rationale": "Middle option: keeps the 6-12 h slice (98 closes, CLV +0.19, CI -1.44 to +2.76: undecided) and drops the 12-24 h slice.",
+   "bets": 1195,
+   "games": 92,
+   "clv": 0.0107,
+   "clv_lo": 0.0041,
+   "clv_hi": 0.0195,
+   "roi": 0.0283,
+   "first_half_clv": 0.0112,
+   "second_half_clv": 0.0082,
+   "per_day": 529.7,
+   "extra": {
+    "closes": 354,
+    "games_with_close": 68,
+    "beat_close": 0.624,
+    "roi_settled": 1143,
+    "roi_ci": [
+     -0.0197,
+     0.0926
+    ],
+    "first_half_closes": 298,
+    "second_half_closes": 56,
+    "median_available_usd": 63.0,
+    "mean_available_usd": 945.0
+   }
+  },
+  {
+   "name": "CURRENT phone guard: first listed within 24 h",
+   "expr": "df.minToStartFirst <= 1440",
+   "rationale": "What Tj's phone does today (Diagnostics: trap guard 24 h). Admits the 12-24 h slice (CLV -0.55, CI -1.40 to +0.23): the pooled CLV falls to +0.31, CI -0.21 to +0.83, i.e. not distinguishable from zero.",
+   "bets": 1749,
+   "games": 113,
+   "clv": 0.0031,
+   "clv_lo": -0.0021,
+   "clv_hi": 0.0083,
+   "roi": 0.0198,
+   "first_half_clv": 0.0028,
+   "second_half_clv": 0.006,
+   "per_day": 775.2,
+   "extra": {
+    "closes": 668,
+    "games_with_close": 69,
+    "beat_close": 0.566,
+    "roi_settled": 1665,
+    "roi_ci": [
+     -0.0177,
+     0.0664
+    ],
+    "first_half_closes": 603,
+    "second_half_closes": 65,
+    "median_available_usd": 74.0,
+    "mean_available_usd": 788.0
+   }
+  },
+  {
+   "name": "SLICE 6-12 h before the start",
+   "expr": "(df.minToStartFirst > 360) & (df.minToStartFirst <= 720)",
+   "rationale": "Undecided slice: 98 closes in 24 games; ROI -4.5%.",
+   "bets": 257,
+   "games": 35,
+   "clv": 0.0019,
+   "clv_lo": -0.0144,
+   "clv_hi": 0.0276,
+   "roi": -0.045,
+   "first_half_clv": 0.0074,
+   "second_half_clv": -0.0197,
+   "per_day": 113.9,
+   "extra": {
+    "closes": 98,
+    "games_with_close": 24,
+    "beat_close": 0.531,
+    "roi_settled": 244,
+    "roi_ci": [
+     -0.1331,
+     0.0804
+    ],
+    "first_half_closes": 78,
+    "second_half_closes": 20,
+    "median_available_usd": 90.0,
+    "mean_available_usd": 598.0
+   }
+  },
+  {
+   "name": "SLICE 12-24 h before the start",
+   "expr": "(df.minToStartFirst > 720) & (df.minToStartFirst <= 1440)",
+   "rationale": "Neutral to mildly negative slice the 24 h guard lets through.",
+   "bets": 554,
+   "games": 50,
+   "clv": -0.0055,
+   "clv_lo": -0.014,
+   "clv_hi": 0.0023,
+   "roi": 0.0012,
+   "first_half_clv": -0.0054,
+   "second_half_clv": -0.0075,
+   "per_day": 245.6,
+   "extra": {
+    "closes": 314,
+    "games_with_close": 28,
+    "beat_close": 0.5,
+    "roi_settled": 522,
+    "roi_ci": [
+     -0.088,
+     0.0854
+    ],
+    "first_half_closes": 305,
+    "second_half_closes": 9,
+    "median_available_usd": 92.0,
+    "mean_available_usd": 450.0
+   }
+  },
+  {
+   "name": "TRAP (thin): first listed more than 24 h before the start",
+   "expr": "df.minToStartFirst > 1440",
+   "rationale": "Clearly negative on 15 closes in 5 games (every sub-slice negative, ROI -15.3% on 40 settled): already excluded by the 24 h guard; too thin to size, but nothing argues for lifting the guard.",
+   "bets": 331,
+   "games": 91,
+   "clv": -0.0507,
+   "clv_lo": -0.065,
+   "clv_hi": -0.0031,
+   "roi": -0.1529,
+   "first_half_clv": -0.0507,
+   "second_half_clv": null,
+   "per_day": 146.7,
+   "extra": {
+    "closes": 15,
+    "games_with_close": 5,
+    "beat_close": 0.267,
+    "roi_settled": 40,
+    "roi_ci": [
+     -0.6333,
+     0.1551
+    ],
+    "first_half_closes": 15,
+    "second_half_closes": 0,
+    "median_available_usd": 64.0,
+    "mean_available_usd": 335.0
+   }
+  },
+  {
+   "name": "shown by the app list & first listed within 6 h",
+   "expr": "df.shown & (df.minToStartFirst <= 360)",
+   "rationale": "The best group: what the app lists AND is inside 6 h. 136 closes in 54 games.",
+   "bets": 319,
+   "games": 75,
+   "clv": 0.0192,
+   "clv_lo": 0.0131,
+   "clv_hi": 0.0273,
+   "roi": 0.1094,
+   "first_half_clv": 0.0166,
+   "second_half_clv": 0.0352,
+   "per_day": 141.4,
+   "extra": {
+    "closes": 136,
+    "games_with_close": 54,
+    "beat_close": 0.669,
+    "roi_settled": 305,
+    "roi_ci": [
+     -0.0142,
+     0.2274
+    ],
+    "first_half_closes": 117,
+    "second_half_closes": 19,
+    "median_available_usd": 75.0,
+    "mean_available_usd": 529.0
+   }
+  },
+  {
+   "name": "hidden by the app list & first listed within 6 h (Tj's open question)",
+   "expr": "(~df.shown) & (df.minToStartFirst <= 360)",
+   "rationale": "Hidden bets are not traps inside 6 h: positive but about half the shown ones (+0.83 vs +1.92). Their listed EV is only +0.59%.",
+   "bets": 619,
+   "games": 56,
+   "clv": 0.0083,
+   "clv_lo": 0.0042,
+   "clv_hi": 0.0138,
+   "roi": 0.0168,
+   "first_half_clv": 0.0079,
+   "second_half_clv": 0.0108,
+   "per_day": 274.4,
+   "extra": {
+    "closes": 120,
+    "games_with_close": 44,
+    "beat_close": 0.65,
+    "roi_settled": 594,
+    "roi_ci": [
+     -0.0555,
+     0.1145
+    ],
+    "first_half_closes": 103,
+    "second_half_closes": 17,
+    "median_available_usd": 53.0,
+    "mean_available_usd": 1303.0
+   }
+  },
+  {
+   "name": "hidden only because EV is under CNO's floor & first listed within 6 h",
+   "expr": "(df.screen == 'EV') & (df.minToStartFirst <= 360)",
+   "rationale": "The EV-floor question: CLV positive but tiny (+0.56) against a listed EV of +0.36%. Not a proposal to lower the floor (a loosening); this is the number that would have to be settled with more data first.",
+   "bets": 435,
+   "games": 54,
+   "clv": 0.0056,
+   "clv_lo": 0.0025,
+   "clv_hi": 0.0096,
+   "roi": 0.0288,
+   "first_half_clv": 0.0059,
+   "second_half_clv": 0.0029,
+   "per_day": 192.8,
+   "extra": {
+    "closes": 98,
+    "games_with_close": 38,
+    "beat_close": 0.653,
+    "roi_settled": 420,
+    "roi_ci": [
+     -0.0453,
+     0.1143
+    ],
+    "first_half_closes": 87,
+    "second_half_closes": 11,
+    "median_available_usd": 53.0,
+    "mean_available_usd": 1718.0
+   }
+  },
+  {
+   "name": "Vigilant-scan listed (what the auto-bet sees) & first listed within 6 h",
+   "expr": "df.lister_v & (df.minToStartFirst <= 360)",
+   "rationale": "Auto-bet population inside 6 h.",
+   "bets": 155,
+   "games": 27,
+   "clv": 0.0104,
+   "clv_lo": 0.005,
+   "clv_hi": 0.0224,
+   "roi": 0.0654,
+   "first_half_clv": 0.0069,
+   "second_half_clv": 0.0221,
+   "per_day": 68.7,
+   "extra": {
+    "closes": 73,
+    "games_with_close": 20,
+    "beat_close": 0.548,
+    "roi_settled": 148,
+    "roi_ci": [
+     -0.1603,
+     0.2103
+    ],
+    "first_half_closes": 56,
+    "second_half_closes": 17,
+    "median_available_usd": 147.0,
+    "mean_available_usd": 724.0
+   }
+  },
+  {
+   "name": "Vigilant-scan listed & first listed within 12 h",
+   "expr": "df.lister_v & (df.minToStartFirst <= 720)",
+   "rationale": "Auto-bet population inside 12 h.",
+   "bets": 274,
+   "games": 49,
+   "clv": 0.0095,
+   "clv_lo": -0.0031,
+   "clv_hi": 0.029,
+   "roi": 0.0272,
+   "first_half_clv": 0.0091,
+   "second_half_clv": 0.0111,
+   "per_day": 121.4,
+   "extra": {
+    "closes": 131,
+    "games_with_close": 33,
+    "beat_close": 0.557,
+    "roi_settled": 261,
+    "roi_ci": [
+     -0.0993,
+     0.1152
+    ],
+    "first_half_closes": 104,
+    "second_half_closes": 27,
+    "median_available_usd": 138.851875,
+    "mean_available_usd": 716.0
+   }
+  },
+  {
+   "name": "Vigilant-scan listed & first listed within 24 h (current)",
+   "expr": "df.lister_v & (df.minToStartFirst <= 1440)",
+   "rationale": "Auto-bet population under the current 24 h guard: no edge against the close on average (-0.05%).",
+   "bets": 597,
+   "games": 69,
+   "clv": -0.0005,
+   "clv_lo": -0.0081,
+   "clv_hi": 0.0073,
+   "roi": 0.0254,
+   "first_half_clv": -0.0011,
+   "second_half_clv": 0.0065,
+   "per_day": 264.6,
+   "extra": {
+    "closes": 361,
+    "games_with_close": 39,
+    "beat_close": 0.524,
+    "roi_settled": 565,
+    "roi_ci": [
+     -0.0713,
+     0.1081
+    ],
+    "first_half_closes": 331,
+    "second_half_closes": 30,
+    "median_available_usd": 131.0,
+    "mean_available_usd": 552.0
+   }
+  },
+  {
+   "name": "Tj placed it & first listed within 6 h",
+   "expr": "(df.placedByTj == True) & (df.minToStartFirst <= 360)",
+   "rationale": "Tj's own bets inside 6 h.",
+   "bets": 103,
+   "games": 38,
+   "clv": 0.0239,
+   "clv_lo": 0.0177,
+   "clv_hi": 0.0328,
+   "roi": 0.074,
+   "first_half_clv": 0.0234,
+   "second_half_clv": 0.0254,
+   "per_day": 45.7,
+   "extra": {
+    "closes": 101,
+    "games_with_close": 38,
+    "beat_close": 0.782,
+    "roi_settled": 103,
+    "roi_ci": [
+     -0.113,
+     0.2929
+    ],
+    "first_half_closes": 78,
+    "second_half_closes": 23,
+    "median_available_usd": 65.0,
+    "mean_available_usd": 1069.0
+   }
+  },
+  {
+   "name": "Tj placed it & first listed over 6 h out",
+   "expr": "(df.placedByTj == True) & (df.minToStartFirst > 360)",
+   "rationale": "Tj's own bets outside 6 h: ROI at the first-listed price -16.4% (CI -27.6 to -4.0, 141 settled, 26 games).",
+   "bets": 142,
+   "games": 27,
+   "clv": -0.0083,
+   "clv_lo": -0.0238,
+   "clv_hi": 0.0074,
+   "roi": -0.1638,
+   "first_half_clv": -0.0055,
+   "second_half_clv": -0.0242,
+   "per_day": 62.9,
+   "extra": {
+    "closes": 128,
+    "games_with_close": 26,
+    "beat_close": 0.57,
+    "roi_settled": 141,
+    "roi_ci": [
+     -0.2761,
+     -0.0398
+    ],
+    "first_half_closes": 109,
+    "second_half_closes": 19,
+    "median_available_usd": 86.944425,
+    "mean_available_usd": 426.0
+   }
+  }
+ ],
+ "app_changes_implied": [
+  "PROPOSAL (tightening, so not a loosening): Settings › Scanning / ScanSettings.trapEarlyHours (data/scanner/ScanSettings.kt ~l.372; TrapGuard.EARLY_CHOICES 0/3/6/12/24; TrapGuard.DEFAULT_EARLY_HOURS = 6). The phone ran 24 h at export. The data suggests 6 h (the code default) beats 24 h: <=6h +1.41% [1.01, 2.00] (256 closes/66 games) vs <=24h +0.31% [-0.21, 0.83] (668/69), the 12-24 h slice the 24 h setting admits is -0.55% [-1.40, 0.23] (314/28) and the price at the moment those bets first appear is -0.72% [-1.64, 0.12] (325/29), ROI of the 6-24 h bets -1.36% [-8.44, 6.11]. For the auto-bet's own pool the same cut is <=6h +1.04% [0.50, 2.24] (73/20) vs <=24h -0.05% [-0.81, 0.73] (361/39). It would cost (938 vs 1749 listed bets) about 360 listed bets a day of the ~775. Ask Tj; 6 h vs 12 h is undecided (6-12 h slice +0.19% [-1.44, 2.76], 98 closes/24 games) and needs ~170 games with closes in that window.",
+  "PROPOSAL (tightening): add a 'fresh listing' condition to the auto-bet / alerts / bids inside the guard window: skip a bet the study journal first saw >=3 h earlier (data/study StudyJournal firstSeenMs is already stored per bet; the guard already knows the start time). Evidence: at entry <=6h, listings 3 h+ old -0.04% [-0.75, 0.60] (157 bets/27 games) vs new +1.42% [0.94, 2.04] (265/67), gap -1.45 [-2.53, -0.64]; cuts ~37% of entries. Needs Tj's decision and ~100 more games with stale entries to confirm.",
+  "NO CHANGE PROPOSED to CNO's filters (EV floor 1%, odds cap +150, 4+ books, rows 100): hidden bets inside 6 h are positive but small (+0.83% [0.42, 1.38], 120 closes/44 games; EV-floor-hidden +0.56% [0.25, 0.96], 98/38, listed EV +0.36%) and negative at 6-24 h (-0.92% [-1.74, -0.03], 170/29): the filters cost little and save a little. Lowering a floor would be a loosening and a question for Tj only after ~300 closes of hidden-EV bets inside 6 h.",
+  "OPTIONAL (display only): Settings › Scanning › Starts within (v0.61.0 offers 3 h / 6 h) set to 6 h for the lists would match the guard (the Diagnostics health hint 'Early bets (CLV)' points at 24 h today).",
+  "Do NOT build rules on price drift, listed time, 'gone' or last-look time: they are hindsight. The fresh-listing proposal above is the forward-looking form of listed time.",
+  "Presets / versions: no preset or version difference can be claimed from this file; keep the 'Safe CLV' preset as is (nothing in the process attributes argues for a different one)."
+ ],
+ "next_logging": [
+  "Log a CLOSE FOR EVERY STUDY BET, not only Tj's placed ones: a Novig book read (best bid, best ask, last trade) and the CNO/Vigilant fair at 3-5 minutes before the start for every bet whose game starts within 6 h (today 67% of bets have none; Tracker closes exist only for Tj's own 228 bets; Novig-trades closes stop at Oct 4 games). Record the close source for each so CLV by source can be pooled fairly; record the Novig MID next to the last trade so the half-spread handicap of a trades close can be measured.",
+  "Add Pinnacle (ParlayAPI) closes for props where its file lacks them (393 prop closes missing 'not in ParlayAPI's file'); the sharpest close has 17 rows, which is why the timing effect cannot be judged against a sharp close. Even 150 Pinnacle closes inside 6 h and 150 in 12-24 h would settle whether the edge is real against the sharp line.",
+  "Record, per look, the guard window in force (trapEarlyHours) and whether the auto-bet WOULD have acted (all rules) so the auto-bet's actual pool is separable from 'listed'; record the age of the listing (minutes since first sighting by any scanner) as a top-level field, not only through the looks.",
+  "Keep the study running across at least 2-3 weeks and several sports: the 6-12 h slice needs ~170 games with closes, the stale-listing finding ~100 more games, over-24 h needs ~80 closes in ~80 games (15 in 5 games now). Hold the version/preset fixed for whole slates where possible, or log them per look, so a version effect can ever be separated from the date.",
+  "Log the one-way / too-good / futures rows (none appear: screen has no ONE_WAY, TOO_GOOD or NOT_A_GAME) and fill cnoOneWay for Vigilant-listed bets (null on 348); log the number of looks Novig's $ at the price had at the best price (not only available at first look) so size can be tied to the drift groups.",
+  "Record the first-listed price's fill probability: for every bet, the Novig dollars at the price and the minutes it stayed at that price (the file has 'available' at first look only), because 58.5 median dollars at the price inside 6 h (mean $1,040) decides whether the +1.41% gift is tradable at all."
+ ]
+}
