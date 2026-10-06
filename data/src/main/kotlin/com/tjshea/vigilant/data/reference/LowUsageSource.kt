@@ -19,7 +19,7 @@ class LowUsageSource(private val inner: ReferenceSource) : ReferenceSource by in
 
     override suspend fun odds(league: League, settings: ScanSettings, context: ScanContext): RefSnapshot {
         if (settings.lowUsageScan && !hasPropsToBidOn(league, settings, context)) {
-            return RefSnapshot(league.oddsApiSportKey, emptyList(), context.now, provider = inner.id)
+            return RefSnapshot(league.oddsApiSportKey, emptyList(), context.now, provider = inner.id, skipped = true)
         }
         return if (inner.needsCatalog) inner.odds(league, settings, context) else inner.odds(league, settings)
     }

@@ -37,6 +37,8 @@ data class SourceReport(
     val error: String?,
     /** Leagues a fallback source wasn't asked for (the API it backs up had already given them, RESEARCH.md §23), or whose credits are paced. */
     val standingBy: Int = 0,
+    /** Leagues it was not asked for because the scan's window held nothing to read there ([com.tjshea.vigilant.data.reference.LowUsageSource]); not counted in [fetched]. */
+    val skipped: Int = 0,
     /** Why a paced source held back this scan ([com.tjshea.vigilant.data.keys.CreditsHeldBackException]), for Diagnostics. */
     val heldBack: String? = null,
 )
@@ -896,6 +898,7 @@ class Scanner(
         var fetched = 0
         var reused = 0
         var standingBy = 0
+        var skipped = 0
         var error: String? = null
         var heldBack: String? = null
         val requestKey = requestKey(source, settings)
@@ -905,7 +908,8 @@ class Scanner(
             if (!source.supports(league)) continue
             val key = "${source.id}|${league.novigName}"
             val have = synchronized(references) { references[key] }
-            if (have != null && have.requestKey == requestKey && reuseMs > 0 && now - have.snapshot.fetchedAtMs < reuseMs) {
+            // A skipped league (nothing to read in the window) is never re-used: a game may come inside the window before the next scan.
+            if (have != null && have.requestKey == requestKey && reuseMs > 0 && now - have.snapshot.fetchedAtMs < reuseMs && !have.snapshot.skipped) {
                 reused++
                 synchronized(answered) { answered += key }
                 onCall(league)
@@ -933,7 +937,7 @@ class Scanner(
                 synchronized(references) { references[key] = Cached(snap, requestKey) }
                 synchronized(answered) { answered += key }
                 snap.creditsRemaining?.let { creditsRemaining = it }
-                fetched++
+                if (snap.skipped) skipped++ else fetched++
             } catch (e: CancellationException) {
                 throw e
             } catch (e: PartialReferenceException) {
@@ -966,7 +970,7 @@ class Scanner(
             }
             onCall(league)
         }
-        return SourceReport(source.id, source.displayName, fetched, reused, 0, error, standingBy, heldBack)
+        return SourceReport(source.id, source.displayName, fetched, reused, 0, error, standingBy, skipped, heldBack)
     }
 
     /**

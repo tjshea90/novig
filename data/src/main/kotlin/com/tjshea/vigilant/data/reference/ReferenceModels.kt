@@ -111,6 +111,11 @@ data class RefSnapshot(
     /** [ReferenceSource.id] of the provider that produced it. */
     val provider: String = "",
     /**
+     * A league the source was NOT asked for because there was nothing to read (Low API usage: no game with a prop market on Novig inside its window, [LowUsageSource]): an empty
+     * answer that cost nothing. The scan counts it as skipped, not fetched, and never re-uses it (a game may come inside the window a minute later).
+     */
+    val skipped: Boolean = false,
+    /**
      * Novig's own prices as this feed relays them (PropLine, ~20 s behind Novig), the same games with
      * only Novig's quotes. Never a fair line and never coverage: they only order which Novig books a
      * scan reads first (RESEARCH.md §23.6).
