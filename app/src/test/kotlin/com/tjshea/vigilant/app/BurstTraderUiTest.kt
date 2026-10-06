@@ -61,7 +61,7 @@ class BurstTraderUiTest {
     private fun state(settings: ScanSettings, reason: String?, read: Boolean = true) = SampleScan.state().copy(settings = settings, burstProofReason = reason, burstProofRead = read)
 
     @Test
-    fun `locked: the recorder has not proved it - the switch does nothing and the note says why`() {
+    fun `locked when the recorder has not proved it - the switch does nothing and the note says why`() {
         val ui = show(state(ScanSettings(burstRecorder = true), "not enough yet: 1 games and 4 windows that paid at least 1.0 cents (it needs 3 and 10)"))
         compose.onNodeWithTag("burstTradeSwitch").performScrollTo().performClick()
         assertFalse(ui().settings.burstTrade)
@@ -72,7 +72,7 @@ class BurstTraderUiTest {
     }
 
     @Test
-    fun `locked: the recorder itself is off - the note says to switch it on first, whatever the old proof says`() {
+    fun `locked when the recorder itself is off - the note says to switch it on first, whatever the old proof says`() {
         val ui = show(state(ScanSettings(burstRecorder = false), null))
         compose.onNodeWithTag("burstTradeSwitch").performScrollTo().performClick()
         assertFalse(ui().settings.burstTrade)
@@ -88,7 +88,7 @@ class BurstTraderUiTest {
     }
 
     @Test
-    fun `unlocked: the switch asks first in Tj's own numbers, Cancel leaves it off, Turn on switches it on and shows the limits`() {
+    fun `unlocked, the switch asks first in Tj's own numbers, Cancel leaves it off, Turn on switches it on and shows the limits`() {
         val ui = show(state(ScanSettings(burstRecorder = true, burstTradeStake = 2.0, burstTradeMaxGame = 10.0, burstTradeMaxDay = 25.0, burstTradeHaltLoss = 5.0), null))
         compose.onNodeWithTag("burstTradeNote").performScrollTo().assertTextContains("Unlocked", substring = true)
         compose.onNodeWithTag("burstTradeSwitch").performScrollTo().performClick()
