@@ -5307,3 +5307,46 @@ A cover of two neighbouring lines is fair at `1 + P(margin lands between them)`,
 ### 96.3 What to do about it
 - The recorder is on all six leagues by default; leave them all on for a few weeks: **each league's own line in the share file (games, windows, how long they last, paper result at his delays, VERDICT)** is the answer to this question on his setup. Take a league off in Settings only to save battery.
 - **The real-money trader is judged league by league (v0.70.1)**: it trades a league only when that league's OWN windows made the verdict WORTH A TEST (3 games, 10 windows, positive at the slow delay, over the windows of 1¢ or more), so a football proof never unlocks hockey and a league with thin data stays locked. The Settings line names the leagues that have proved themselves; the confirmation dialog says the others are left alone.
+
+## 98. Can Apify (apify.com) supply real-time live scores for Vigilant? (2026-10-06; CZ1; Tj: "research apify.com and if it can be used for real time live scores")
+
+(§97 is reserved for the v0.70.1 scan-study analysis, which is still running.) Every figure below was read on Apify's own pages on 2026-10-06 unless it says otherwise; nothing was run on Apify (this container has no Apify token and no live game).
+
+**In short.** Apify is a hosted scraping platform, not a data feed: it runs other developers' scrapers ("Actors") on demand and hands back what they read. It *can* return live scores, but it cannot make them fresher than the site the Actor reads, it adds a run start-up and a polling interval of its own, and it charges per row. **Not usable for the one thing that would make live data worth money here (seeing a play before Novig's makers price it): the bar is 16.1 s (§95.1) and nothing on Apify's pages claims any latency number at all.** For grading and "is this game live", ESPN read directly is already free and does it. **Recommendation: do not use it for live betting; if Tj wants the open question answered, a cents-sized test exists (98.7) and needs his own Apify token.**
+
+### 98.1 What it is and what it costs (apify.com/pricing)
+Actors run in containers billed in compute units (CU). Free: $0, $5 of monthly prepaid credit, no card. Starter: $19 a month with $19 of credit. Both $0.20 per CU, residential proxy $8 per GB. Scale $199 ($0.16/CU, $7.5/GB), Business $999 ($0.13/CU, $7/GB). Store Actors bill either "pay per event" (the author's fixed price per result) or "pay per usage" (CU, data transfer, storage); both draw on the prepaid credit. (Apify's pricing page says the Free plan allows 5 concurrent runs; its limits page says 25. Unresolved, and irrelevant here.)
+
+### 98.2 The live-score Actors, read from their own pages
+| Actor | What it reads, and how | Price | Users | Freshness claim |
+| :- | :- | :- | :- | :- |
+| `statanow/flashscore-scraper-live` | Flashscore's "All Games" view by **browser automation**; batch runs or Standby; score, status, minute, kick-off, odds, a history of goals / cards / substitutions | "From $0.002 / result" | 579 total, 22 monthly | none: "does not guarantee real-time updates or specify refresh intervals" |
+| `bovi/sofascore-live-events` | Sofascore's web JSON endpoints **through Apify residential proxy, falling back to a browser**; `live` mode returns the in-play events (the whole sport list, then today's schedule when nothing is live); 18+ sports incl. American football, basketball, hockey, baseball; score, period, `live_minute`, status | "$1.84 / 1,000 events" | 121 total, 14 monthly | the page says live scores "reflect real-time page data, making it suitable for in-play betting models"; **no number** |
+| `rl1987/espn-api-scraper` | **ESPN's own** unofficial, public, unauthenticated mobile-app data API; `gameSummary` mode gives one `scoringPlay` row per score, not every play | "from $1.00 / 1,000 output rows" plus usage; "typically a few seconds and well under 0.01 CU per run" | 0 monthly | none; batch only |
+Several more ESPN wrappers (`bright_oven/espn-scoreboards`, `rowfeed/espn-sports-data-scraper`, `mrbridge/...`, `ninhothedev/...`, `aurenic/espn-scraper`) turned up in the Store search at about $0.95-$2.00 per 1,000 rows; I did not open them (search-listing figures only). The Flashscore and SofaScore Actors are community-built and small.
+
+### 98.3 How fresh can it be?
+- **The source's lag is untouched.** The ESPN Actors read the same ESPN API Vigilant already reads free, which published each play a median **40.7 s** after it happened (§95.1). A wrapper cannot be fresher than what it wraps. Flashscore's and Sofascore's lag behind a play is **not measured** (no token, no live game here).
+- **Batch run**: a container start per run; Apify's pages give no start-up figure (the ESPN Actor says "a few seconds" per run). `run-sync` waits up to 300 s and answers 408 after that.
+- **Schedules**: "The minimum interval between runs is 10 seconds; if your next run is scheduled sooner ... the next run will be skipped"; runs fire "within one second of their scheduled time" in most cases. So a polling floor of 10 s before the run even starts.
+- **Standby** (the Actor stays warm as an HTTP server): the docs give a "5 minutes" overall timeout with up to "2 minutes" possibly spent selecting or starting a run before a request is handled; idle runs bill like normal runs until the idle timeout; per-account rate limits answer 429. **No warm-latency number** in the docs or in Apify's launch post.
+- **API**: 60 requests a second per resource, 250,000 a minute global.
+- Chain for one score: the site's own lag + proxy + run or warm HTTP hop (seconds, unspecified) + the poll interval (>= 10 s on a schedule). Nothing here can beat Novig's 16 s median unless the source is far faster than ESPN *and* the hop is a few seconds; neither is shown.
+
+### 98.4 What it would cost to poll like Vigilant would need to (arithmetic on the listed prices, not billed)
+10 live games polled every 10 s is 3,600 rows an hour: Flashscore Actor **$7.20/h**, Sofascore Actor **$6.62/h**, an ESPN wrapper **$3.60/h**, each plus platform usage. A full NFL Sunday (15 games, 13 h, an upper bound since not every game is live all day) is 70,200 rows: about **$140 / $129 / $70**. A Starter plan's $19 would last about 2.6 h at the Flashscore rate. The free ESPN read the app already makes costs nothing. (The `live` mode of the Sofascore Actor returns every in-play event of every sport it is asked for, so real rows could be higher.)
+
+### 98.5 Terms (what I could and could not verify)
+- **Flashscore**: the published terms of Livesport Media Ltd (read on the `.ae` site's page): "Visitors are not authorised to copy, modify, tamper with, distribute, transmit, display, reproduce, transfer, upload, download or otherwise use or alter any of the content" without written authorisation. That page does not name scrapers or offer any API. (Only the `.ae` terms were read.)
+- **Sofascore**: its terms page answered **403** to my fetcher: **not verified.** A search summary said Sofascore bars scraping and does not license an API, but the FAQ page it cited does not say that; I treat it as unknown.
+- **ESPN**: the Actor's own page calls the API "unofficial, public, unauthenticated"; Vigilant already uses it the same way (§90).
+- Apify itself does not clear a source's terms for the user; that is on whoever runs the Actor (not re-fetched here).
+- An Apify token on the phone would be a secret in a public repo's app: it would have to be entered by Tj in Settings like his other keys, never committed.
+
+### 98.6 Where Apify could still help
+Not live betting. Possibly **grading coverage**: the data-quality analyst of the scan study found 62 started bets still PENDING that nothing could grade; if those are leagues ESPN's scoreboard does not carry, a Sofascore-style Actor could fill them. That is a lead only: it waits on the synthesis (CX1/CX2), and a cheaper fix may be a second free grader.
+
+### 98.7 What would settle the one open question (cents, needs Tj, nothing built)
+A free Apify account ($5 credit, no card) and an API token Tj creates himself. During one live game, call the Sofascore and Flashscore Actors (Standby, polling every 10 s) while the existing burst recorder's tape logs when Novig's moneyline moves; compare each source's lag per play with Novig's 16.1 s median, hop included. At a few cents a run it costs a few dollars for a game. If a source's median lag, hop included, is well under 16 s, revisit; if not, stop. **Say "build the feed-lag test" and it becomes a normal task; until then nothing is built, no key is asked for and nothing is spent.**
+
+Sources (fetched 2026-10-06): https://apify.com/pricing , https://docs.apify.com/platform/limits , https://docs.apify.com/api/v2 (rate limiting), https://docs.apify.com/platform/actors/running/standby , https://blog.apify.com/actor-standby-mode/ , https://docs.apify.com/platform/schedules , https://apify.com/statanow/flashscore-scraper-live , https://apify.com/bovi/sofascore-live-events , https://apify.com/rl1987/espn-api-scraper , https://livesport.eu/terms/flashscore_ae .
