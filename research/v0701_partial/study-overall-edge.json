@@ -1,0 +1,262 @@
+{
+ "area": "Step 2: overall edge. Share of bets beating the close, mean CLV and ROI and how they change with sample size, listed EV vs realized CLV (calibration, shrinkage, break-even EV), Vigilant's fair vs CNO's fair, CLV by close source and close_ok, ROI-vs-CLV consistency, outliers, date halves. Data: 2080 bets / 190 games, 683 with a close / 69 games (588 close_ok / 66 games), 1696 settled / 81 games; first-looks Oct 3 17:56 ET - Oct 6 00:05 ET (2.256 days).",
+ "trust_notes": "WHAT CAN BE TRUSTED: my loader numbers reproduce the phone's own summary (2080 bets; 683 closes; CLV +0.19% over 69 games; ROI +1.58% over 81 games; half-widths 0.58-0.59 and 4.1 points). Every CI below is a game-clustered bootstrap (2000-4000 resamples of games) unless it says cluster-t. WHAT CANNOT: (1) Only 683 of 2080 bets (33%) have a close, and they are a selected set: first listed on average 632 min before the start (no-close bets: 1789 min), listed EV 1.60% vs 1.04% for no-close bets; bets for games not yet played have none. CLV is therefore the edge of near-term bets, not of everything the app lists. (2) The close sources are not equivalent. 'Tracker' closes (228) exist only for bets Tj placed (placedByTj) and 211 of them are a fair line 'read before the start' (CNO's books 170, Vigilant's fair 18, unlabelled 23; the other 17 are Novig trades) - the same family of soft-book consensus that produced the listed EV, not an independent sharp close; they beat 66%. ESPN (97) is DraftKings game lines only; Pinnacle has just 17; Novig's last trades (341) is a quantity-weighted trade-price average of the last 30 minutes (95 of them rest on 1-2 trades). CLV on closes independent of CNO's consensus (ESPN + Pinnacle + Novig trades of 3+; 360 bets / 57 games) is -0.04% [-0.65, +0.61]. (3) Time-to-start at first look is a large confound: bets first listed 4 hours or less before the start have CLV +1.39% [+0.95, +1.99] (242 / 63 games), those listed more than 4 h out -0.47% [-1.31, +0.37] (441 / 36 games); later app versions listed more short-horizon bets, so 'version/time improved' is mostly this mix. (4) The study has 2.26 days of first-looks; the loader's date second half (first look Oct 5-6) has only 65 closes / 10 games because most of those bets are for games not yet closed. I therefore also report balanced chronological halves by first-look time, and halves by game start. (5) Bets within a game are heavily clustered (69 games, median 4 bets, max 81): 14 games with 20+ bets hold 485 of the 683 closes. (6) CLV has a fat left tail (kurtosis 13; 23 bets below -10%). (7) ROI is noise at this size: per-bet sd 1.00 unit, so one CI is +-4.1 points while the listed edge is about 1.3 points. (8) The EV I use is the listed EV at the first look of the first lister; for bets listed by both scanners the two scanners' own EVs differ (Vigilant +2.51% vs CNO +1.12% on the same 256 closed bets). (9) Many subgroup cuts were looked at (about 6 EV thresholds, 5 close sources, 3 lister groups, 4 halves schemes); only the pre-specified test 'does listed EV predict CLV' (slope, one test) should be read as confirmatory. BIASES THAT MATTER: close availability (above), Tj-selection of Tracker closes, winner's curse (bets are listed because their EV is high, so the fair is biased up by construction), horizon mix, and the app and presets changing during the period (v0.57.0 to v0.70.1).",
+ "key_numbers": [
+  "Overall: 683 bets with a close, 69 games: mean CLV +0.19% [-0.37%, +0.81%] (cluster-t p=0.52), beat the close 55.9% [51.7%, 61.2%], median CLV +0.48% [+0.09%, +0.89%], 5%-trimmed mean +0.37%. On close_ok (588 bets, 66 games, drops 95 Novig-trade closes of 1-2 trades): +0.19% [-0.35%, +0.81%], beat 56.3%. The mean edge is not distinguishable from zero.",
+  "ROI at the first-listed price: +1.58% [-2.00%, +6.31%] on 1696 settled bets, 81 games (listed EV on the same bets +1.27%); ROI minus listed EV = +0.31 points [-3.25, +5.00] (cluster-t p=0.88). Win rate 52.77% vs price 51.91% (+0.86 points [-0.80, +2.96]). Results cannot confirm or refute a 1.3% edge: about 24,000 settled bets (about 32 days at 750 settled bets a day) would be needed for the ROI CI to be as narrow as the edge itself.",
+  "Does listed EV predict CLV? Yes, partly: regression of CLV on listed EV (683 bets, 69 games) slope 0.66 [0.27, 1.05], p=0.001, intercept -0.87% [-1.56%, -0.17%]; break-even listed EV (where CLV = 0) 1.31% (bootstrap CI [0.29%, 2.29%]). Slope 0.64 [-0.08, 1.36] (p=0.08) on closes independent of CNO's consensus (360 bets, 57 games); 0.64 [0.19, 1.10] with game fixed effects; 0.64 [0.22, 1.05] controlling for time-to-start.",
+  "Shrinkage: listed EV on the 683 closed bets +1.60% became CLV +0.19% (ratio of means 0.12 [-0.25, 0.50]); the listed fair overstates the closing fair by +1.40% of the price [+0.84%, +1.89%] on average (independent closes: +1.34% [+0.71%, +1.88%]). For bets listed at EV >= 2% the ratio is 0.40 [0.10, 0.71] (EV +3.53% -> CLV +1.42%); at EV >= 4% 0.60 [0.09, 1.20].",
+  "By listed EV (closed bets): under 1.5% -> CLV -0.31% [-0.80, +0.28] (410 bets, 56 games); 1.5-2.5% +0.07% (130, 39 games); 2.5-4% +0.80% [-0.52, +2.08] (91, 36 games); 4-6% +4.13% [+1.13, +8.21] (40, 19 games); EV >= 2%: +1.42% [+0.39%, +2.57%] (196 bets, 42 games, beat 64.8%, cluster-t p=0.014); EV >= 2.5%: +1.73% [+0.53%, +3.06%] (144, 39 games); EV >= 4%: +3.37% [+0.54%, +6.62%] (52, 22 games).",
+  "EV >= 2% result by close source: Tracker closes +2.07% [+0.44%, +3.84%] (80 bets, 31 games); independent closes (ESPN, Pinnacle, Novig trades of 3+) only +0.77% [-0.99%, +2.48%] (76 bets, 28 games, p=0.39); Novig trades of 3+ +0.45% (68 bets, 24 games, p=0.66). So the high-EV edge is real against the consensus re-read and positive but unproven against independent closes.",
+  "Both date halves, EV >= 2%: balanced halves by first look +1.04% [-0.35, +2.26] (91 bets, 28 games) then +1.74% [+0.16, +3.65] (105, 32 games); loader date halves +1.38% [+0.37, +2.43] (176, 33 games) then +1.77% [-1.44, +6.06] (20, 10 games); by game start +1.21% (98, 20 games) then +1.62% [+0.25, +3.26] (98, 22 games). Positive on every split. All-bets CLV is NOT positive on every split: balanced halves -0.28% [-1.16, +0.56] (341, 52 games) then +0.66% [-0.08, +1.49] (342, 39 games).",
+  "Convergence: running CLV by first-look time was +0.08% at n=50, -0.21% at n=200, -0.50% [-1.29, +0.26] at n=400, +0.01% at n=500, +0.19% at n=683; CI half-width fell 1.29 -> 0.59 points. It has not converged: the CI excludes zero if the true CLV is +0.5% only after about 93 games (about 920 bets with a close, about 3 days at 303 closed bets a day), +0.2% after about 580 games (about 5,800 bets, about 19 days), +1.0% after about 23 games.",
+  "Fat tail and weighting: 23 bets (3.4% of closes) closed more than 10% worse and sum to -4.30 CLV units against a net total of +1.31; excluding them the mean is +0.85%. Equal-weighting games gives +0.85% [+0.13%, +1.57%] (69 games, 51 positive, sign test p<0.001, t-test p=0.02); the 14 games with 20+ bets (485 bets) are -0.13% [-0.84, +0.58], the other 55 games (198 bets) +0.99% [+0.49, +1.51] beat 64%. Kelly-weighted CLV +0.93% [-0.06, +2.01].",
+  "Close source: ESPN (DraftKings) +0.82% [+0.09, +1.50] (97 bets, 48 games, beat 64%); Tracker +0.57% [-0.40, +1.59] (228, 48 games, beat 66%); Novig last trades -0.23% [-0.93, +0.50] (341, 41 games, beat 47%; 11+ trades -0.69%, 94 bets); Pinnacle -0.01% [-1.66, +3.53] (17, 9 games). Bets Tj placed (229 closes) +0.59% beat 66%; the other 454 -0.01% beat 51%.",
+  "Time to start matters more than anything else in this slice: first listed <= 4 h before the start +1.39% [+0.95, +1.99] (242 bets, 63 games, beat 66%); > 4 h -0.47% [-1.31, +0.37] (441, 36 games). Listed EV >= 2% and <= 4 h: +2.90% [+1.97, +4.07] (75, 34 games); on independent closes only +1.86% [+1.00, +3.04] (23 bets, 16 games).",
+  "Vigilant's fair vs CNO's fair on the same 256 closed bets (31 games, bets listed by both): Vigilant's fair overstates the close by +1.35% [+1.05, +1.66], CNO's by +0.55% [+0.21, +0.87]; Vigilant minus CNO +0.80 points [+0.69, +0.94]. Listed EV +2.51% (Vigilant) vs +1.12% (CNO); CLV at each scanner's price -0.23% [-0.86, +0.40] vs +0.03% [-0.63, +0.75]. In a joint regression CNO's EV carries the CLV (1.19 [0.33, 2.04]) and Vigilant's does not (0.14 [-0.33, 0.60]).",
+  "Outliers: 23 bets listed at EV > 6% (12 with a close, 20 settled; 21 shown, 21 props). Removing them: CLV +0.19% -> +0.18% [-0.35, +0.77] (671 bets, 68 games); ROI +1.58% -> +1.53% [-2.30, +6.25] (1676 bets, 80 games); listed EV 1.22% -> 1.14%; EV-CLV slope rises 0.66 -> 0.81 [0.37, 1.29]. The 12 closed outliers average CLV +0.85% [-7.01, +7.32]. Outliers do not drive any headline number.",
+  "Shown vs hidden: CLV +0.57% [-0.20, +1.37] (384 closes, 60 games) vs -0.30% [-0.80, +0.33] (299, 49 games); gap +0.87 points [+0.07, +1.67] (p=0.033), but conditional on listed EV the gap is -0.74 [-1.92, +0.44]: the filters help by selecting EV, not through anything else. ROI shown -0.08% [-7.75, +7.43] (682 settled) vs hidden +2.70% [-2.96, +9.87] (1014); both consistent with their listed EV (+2.34%, +0.55%): roi minus EV -2.42 [-10.07, +4.68] and +2.15 [-3.60, +9.40]."
+ ],
+ "findings": [
+  {
+   "claim": "The overall mean CLV is positive but statistically zero: Vigilant's lists beat the close more often than not (56%) but by too little to be separated from zero in 2.26 days.",
+   "evidence": "683 closed bets / 69 games: +0.19% [-0.37, +0.81], cluster-t p=0.52; beat 55.9% [51.7, 61.2]; close_ok 588/66 games +0.19% [-0.35, +0.81], beat 56.3%. Halves: loader date split H1 +0.15% [-0.39, +0.75] (618, 65 games), H2 +0.60% [-0.76, +2.62] (65, 10 games); balanced by first look A -0.28% [-1.16, +0.56] (341, 52 games), B +0.66% [-0.08, +1.49] (342, 39 games); by game start early +0.49% [-0.31, +1.16] (353, 43), late -0.13% [-0.82, +0.93] (330, 26); by first-look day Oct 3 -0.51% [-1.37, +0.36] (373), Oct 4 +1.15% [+0.43, +2.24] (245), Oct 5 +0.60% (65).",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "CLV +0.19% [-0.37%, +0.81%]; beat 55.9% [51.7%, 61.2%]",
+   "holds_on_both_date_halves": "no",
+   "luck_risk": "Under a flat prior the probability that the true mean CLV is <= 0 is about 0.26 (cluster-t p=0.52 two-sided). A positive sign on a split is not evidence: signs flip across splits."
+  },
+  {
+   "claim": "The beat-the-close share (56%) overstates the edge because a fat left tail of traps offsets many small wins; median CLV is higher than the mean.",
+   "evidence": "Median +0.48% [+0.09, +0.89]; 5% trimmed mean +0.37%; kurtosis 13.1, skew -0.52; 23 bets with CLV < -10% sum to -4.30 CLV units vs net +1.31; 19 bets above +10%. 42 bets with |CLV| > 10%: 38 props, 25 on Novig-trade closes, 15 Tracker. Dropping the 3 most negative games gives +0.69% [+0.20, +1.14] (540 bets, 66 games); dropping the 3 most positive -0.05% [-0.58, +0.60]: the mean is sensitive to a handful of games.",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "median CLV +0.48% [+0.09%, +0.89%]; mean +0.19%",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "Moderate: mean moves between -0.05% and +0.69% when 3 games are dropped; one game with 81 bets contributes -0.85 CLV units."
+  },
+  {
+   "claim": "Equal-weighting games (rather than bets) shows a positive CLV: games with few listed bets beat the close, games with many listed bets (mostly wide-read props) do not.",
+   "evidence": "Mean of the 69 game means +0.85% [+0.13, +1.57] (t=2.36, p=0.021), 51 of 69 games positive (sign test p<0.001). Games with 20+ closed bets: 14 games, 485 bets, -0.13% [-0.84, +0.58], beat 52.6%; games with under 20: 55 games, 198 bets, +0.99% [+0.49, +1.51], beat 64.1%.",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "game-weighted CLV +0.85% [+0.13%, +1.57%]",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "Post-hoc cut (one of several weightings tried): treat as a hypothesis. Overlaps with the horizon and EV effects (small games are listed closer to the start and at higher EV)."
+  },
+  {
+   "claim": "CLV has not converged: the running mean drifted from +0.08% (n=50) down to -0.50% (n=400) and back to +0.19% (n=683), with a CI that still spans zero; sample-size needs are large.",
+   "evidence": "Running CLV by first-look time (n, games, CLV [CI]): 50, 26, +0.08% [-1.26, +1.33]; 100, 35, -0.11% [-1.09, +0.78]; 200, 48, -0.21% [-1.09, +0.78]; 300, 49, -0.25% [-1.17, +0.60]; 400, 55, -0.50% [-1.29, +0.26]; 500, 57, +0.01% [-0.70, +0.70]; 600, 63, +0.16% [-0.41, +0.74]; 683, 69, +0.19% [-0.35, +0.82]. By game (order of first look): 10 games -0.26%, 30 games +0.02%, 69 games +0.19%. Per-game-unit sd of CLV sums gives (games for the CI to exclude zero if the estimate equals the truth / games for 80% power): true +0.2%: 582 / 1189 (about 5,800 / 11,800 closed bets); +0.5%: 93 / 190 (about 920 / 1,880); +1.0%: 23 / 48 (about 230 / 470). The study logs about 303 closed bets and 31 games a day. Conditional on listed EV and horizon the drift per day is +0.23 points [-0.76, +1.22]: no time trend.",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "running CLV between -0.50% and +0.19% for n >= 100; CI half-width 1.29 -> 0.59 points",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "Not applicable (descriptive); the early negative stretch (first evening, Oct 3, mostly 8-16 h and 16 h+ horizons) is mostly the horizon mix."
+  },
+  {
+   "claim": "Listed EV carries real information about CLV: higher listed EV closes better, but with a large haircut and a negative intercept.",
+   "evidence": "Slope of CLV on listed EV 0.66 [0.27, 1.05] (p=0.001), intercept -0.87% [-1.56, -0.17]; with game fixed effects 0.64 [0.19, 1.10] (665 bets in 51 multi-bet games); adding close-source dummies 0.75 [0.33, 1.16]; adding horizon (log minutes) 0.64 [0.22, 1.05]; adding source + era + prop + shown 0.75 [0.17, 1.33]; dropping EV > 6% 0.81 [0.37, 1.29]; PROP 0.77 [0.28, 1.26] (477), non-prop 0.53 [-0.16, 1.23] (206). On independent closes (ESPN, Pinnacle, Novig 3+) 0.64 [-0.08, 1.36] (p=0.08, 360 bets, 57 games); on Novig-trade closes of 3+ 0.82 [-0.10, 1.74] (246 bets, 34 games); Tracker 0.75 [0.09, 1.42]; ESPN 0.92 [0.17, 1.67]. Balanced halves: first 0.94 [0.24, 1.65] (341), second 0.47 [-0.02, 0.95] (342); date halves 0.68 [0.27, 1.10] (618) and 0.47 [-0.65, 1.58] (65). Break-even listed EV (CLV = 0): 1.31% (bootstrap 95% CI 0.29% to 2.29%); 1.38% on independent closes.",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "slope 0.66 [0.27, 1.05]; break-even EV 1.31% [0.29%, 2.29%]",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "The slope is the one pre-specified test: p=0.001 cluster-t; permuting is not needed. On independent closes alone p=0.08. Likelihood the slope is truly zero: small (about 0.1% cluster-t) on all closes, p=0.08 on independent closes only."
+  },
+  {
+   "claim": "The listed fair overstates the close by about 1.4% of the price on average, so about 1.4 of the 1.6 points of listed EV on closed bets disappear by the close; the overstatement is larger for higher listed EV (winner's curse) but not proportional.",
+   "evidence": "(fair - closeFair)/cost: all closes +1.40% [+0.84, +1.89] (683, 69 games); independent closes +1.34% [+0.71, +1.88] (360, 57); Tracker +1.22% [+0.26, +2.11] (228, 48); EV >= 2% +2.12% [+0.99, +3.12] (196, 42); EV < 2% +1.12% [+0.60, +1.57] (487, 62). Shrinkage ratio sum(CLV)/sum(EV): all 0.12 [-0.25, 0.50]; EV >= 1.5% 0.31 [0.06, 0.60]; EV >= 2% 0.40 [0.10, 0.71]; EV >= 2.5% 0.43 [0.13, 0.74]; EV >= 4% 0.60 [0.09, 1.20]; EV >= 2% on independent closes 0.24 [-0.34, 0.73]; on Tracker closes 0.57 [0.10, 1.06]. Reference: listed EV under 0.25% closes at -0.70% [-1.54, +0.15] (119 bets, 42 games); under 0.5% -0.48% [-1.19, +0.26] (186).",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "fair overstates close by +1.40% [+0.84%, +1.89%]",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "Low: the interval excludes zero on all closes and on independent closes. Part of the gap is mechanical (selection on high EV), part may be the soft-book consensus lagging the close."
+  },
+  {
+   "claim": "Listed EV >= 2% bets beat the close (+1.4%), while bets under 1.5% do not (-0.3%); the edge is concentrated in the higher listed-EV bands, with the 4-6% band best.",
+   "evidence": "Bands (bets, games, listed EV, CLV [CI], beat): <0.25% 121/42 +0.11% -0.63% [-1.47, +0.20] 50%; 0.25-0.5% 68/32 +0.37% -0.10%; 0.5-1% 94/33 +0.75% -0.18%; 1-1.5% 127/37 +1.24% -0.21% [-0.98, +0.62] 54%; 1.5-2% 80/31 +1.74% -0.09%; 2-2.5% 50/24 +2.26% +0.34%; 2.5-3% 45/25 +2.75% +0.53%; 3-4% 46/27 +3.45% +1.07%; 4-6% 40/19 +4.81% +4.13% [+1.13, +8.21] 70%; 6%+ 12/7 +8.21% +0.85% [-7.06, +7.45]. Coarse: under 1.5% 410/56 -0.31% [-0.80, +0.28]; 1.5-2.5% 130/39 +0.07%; 2.5-4% 91/36 +0.80% [-0.52, +2.08]; 4-6% 40/19 +4.13%; quintiles of EV (137 each): -0.40%, -0.43%, -0.10%, +0.18%, +1.70% [+0.44, +3.07] (EV 2.6%-12.2%). Thresholds: EV >= 1.5% +0.95% [+0.18, +1.78] (274/54); >= 2% +1.42% [+0.39, +2.57] (196/42); >= 2.5% +1.73% [+0.53, +3.06] (144/39); >= 3% +2.29% [+0.63, +4.04] (98/34); >= 4% +3.37% [+0.54, +6.62] (52/22).",
+   "n_bets": 196,
+   "n_games": 42,
+   "effect": "EV >= 2%: CLV +1.42% [+0.39%, +2.57%], beat 64.8%",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "Moderate: about 6 thresholds and 10 bands were inspected, so the exact cut is fitted; the monotone trend is not (slope p=0.001). Cluster-t p for EV >= 2%: 0.014; Bonferroni over 6 thresholds about 0.09."
+  },
+  {
+   "claim": "The EV >= 2% edge is concentrated in Tracker (CNO consensus re-read) and ESPN-type closes and in bets first listed within 4 hours of the start; against independent closes it is positive but not proven.",
+   "evidence": "EV >= 2% by close: Tracker +2.07% [+0.44, +3.84] (80/31 games, beat 79%); Novig trades +0.78% [-0.84, +2.25] (108/27; 3+ trades +0.45%, 68/24); independent (ESPN+Pinnacle+Novig 3+) +0.77% [-0.99, +2.48] (76/28, p=0.39); ESPN EV >= 1.5% +3.31% [+1.83, +4.88] (10 bets, 9 games). Horizon: EV >= 2% and <= 4 h +2.90% [+1.97, +4.07] (75/34); EV >= 2% and > 4 h +0.49% [-1.15, +1.87] (121/25). By band on independent closes: <0.5% +0.00%, 0.5-1.5% -0.41%, 1.5-2.5% -0.25%, 2.5-4% +0.31% (33/20), 4%+ +2.88% [-1.73, +6.90] (16/11). Power: to settle +0.77% on independent closes at 80% power needs about 290 games (about 790 bets with an independent close); +1.0% needs about 172 games (about 470 bets).",
+   "n_bets": 196,
+   "n_games": 42,
+   "effect": "independent closes +0.77% [-0.99%, +2.48%] vs Tracker +2.07% [+0.44%, +3.84%]",
+   "holds_on_both_date_halves": "too-thin",
+   "luck_risk": "High on the independent-close version (p=0.39); the Tracker version is not independent of how the EV was made and covers only bets Tj/auto-bet placed."
+  },
+  {
+   "claim": "Time-to-start at first look is the strongest correlate of CLV in this slice, and it explains much of the apparent improvement across app versions and days.",
+   "evidence": "CLV by minutes to start at first look (bets/games/CLV): <30 m 89/43 +1.36% [+0.66, +2.08]; 30-60 30/19 +0.33%; 1-2 h 44/22 +2.28% [+1.46, +4.03]; 2-4 h 79/34 +1.34% [+0.58, +2.38]; 4-8 h 40/19 +0.29%; 8-16 h 221/28 +0.02% [-1.19, +1.25]; 16 h+ 180/26 -1.23% [-2.59, +0.25]. Regression CLV on EV and log minutes: EV 0.64 [0.22, 1.05], log-minutes -0.54 per log unit [-0.78, -0.30]. By app version era (CLV [CI], bets/games): v0.57-0.58 -0.56% [-1.40, +0.29] 377/54; v0.59-0.61 +0.97% [+0.09, +2.05] 273/33; v0.66-0.70 +2.39% [+1.28, +4.17] 33/9; era coefficients vs v0.57-0.58 (conditional on EV and close source) +1.43 [+0.33, +2.53] and +2.23 [+0.92, +3.54] shrink to +1.02 [-0.24, +2.28] and +1.60 [+0.17, +3.04] once horizon is controlled. By close source within <= 4 h: ESPN +1.77% (52), Tracker +2.41% (93), Novig trades +0.15% (92).",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "<= 4 h +1.39% [+0.95%, +1.99%] vs > 4 h -0.47% [-1.31%, +0.37%]",
+   "holds_on_both_date_halves": "yes",
+   "luck_risk": "Low for the <= 4 h vs > 4 h contrast (z=5.0 for <= 4 h), but the Novig-trades closes show only +0.15% in the same bucket, so source and horizon are partly confounded. Timing is another analyst's slice: I use it here only as a confound."
+  },
+  {
+   "claim": "CLV depends strongly on the close source, and the sources that are not Novig's own show the edge while Novig's own last trades do not.",
+   "evidence": "ESPN (DraftKings) 97 bets / 48 games +0.82% [+0.09, +1.50] beat 63.9%; Tracker 228 / 48 +0.57% [-0.40, +1.59] beat 66.2% (sub-types: CNO's books 170 bets +0.52% beat 67%, Vigilant's fair 18, unlabelled 23 +2.70% beat 87%, Novig trades 17); Novig last trades 341 / 41 -0.23% [-0.93, +0.50] beat 47.2% (by trades: 1-2 95 bets +0.17%; 3-5 80 -0.65%; 6-10 72 +0.29%; 11+ 94 -0.69% [-1.84, +0.90]); Pinnacle 17 / 9 -0.01% [-1.66, +3.53]. close_ok (drops 1-2 trade closes) 588 / 66 +0.19%; the dropped 95 closes +0.17% [-1.51, +1.72]. Independent closes (ESPN+Pinnacle+Novig 3+): 360 / 57 -0.04% [-0.65, +0.61], beat 50.0% [44.6, 56.9]. Tracker closes are available only for bets Tj placed (229 of 683 closes; 228 Tracker): placed +0.59% [-0.37, +1.60] beat 66.4% vs not placed 454 bets -0.01% [-0.61, +0.64] beat 50.7%. Excluding Tracker closes: 455 / 61 games +0.00% [-0.59, +0.65].",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "ESPN +0.82% [+0.09%, +1.50%]; Novig trades -0.23% [-0.93%, +0.50%]; independent -0.04% [-0.65%, +0.61%]",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "Source differences are within sampling noise for most pairs (CIs overlap) except Tracker/ESPN vs Novig-trades beat rate (66%/64% vs 47%). Cannot separate source from selection (Tracker = Tj-placed, game lines = ESPN)."
+  },
+  {
+   "claim": "Vigilant's own fair (src v) is further above the close than CNO's fair on the same bets, and CNO's EV, not Vigilant's, predicts CLV where both listed the bet.",
+   "evidence": "256 closes / 31 games listed by both: fair minus close +1.35% [+1.05, +1.66] (Vigilant) vs +0.55% [+0.21, +0.87] (CNO); difference +0.80 points [+0.69, +0.94]; |error| Vigilant minus CNO +0.30 points [+0.16, +0.45]; RMSE 2.97 vs 2.60 points; by close source the gap is +0.79 [+0.72, +0.89] on Novig trades (156 bets, 20 games) and +0.73 [+0.53, +0.96] on Tracker (96, 25). Prices differ by 0.13 points on average. Joint regression CLV on both EVs: CNO 1.19 [0.33, 2.04], Vigilant 0.14 [-0.33, 0.60] (correlation of the EVs 0.32). Groups (closes/games, EV, CLV [CI], fair over close): CNO-only 196/50, +1.97%, +0.91% [+0.36, +1.50] beat 61%, +1.07%; Vigilant-only 112/27, +2.67%, +0.08% [-1.55, +2.10], +2.59% [+0.71, +4.13], slope ratio 0.03; both 256/31, +1.41%, -0.35% [-1.05, +0.40]; wide-read-only 119/46, +0.38%, +0.28% [-0.34, +0.88]. On independent closes CNO-only is -0.08% [-0.77, +0.74] (84 bets, 35 games). Vigilant's fair method of the first lister: MARKET_AVERAGE/WORST_CASE -2.45% [-4.93, -0.11] (49 closes, 22 games, listed EV +3.45%), BLEND/WORST_CASE +0.48% [-1.55, +2.29] (109, 26), SHARP/WORST_CASE +1.42% [-1.71, +6.68] (20, 10).",
+   "n_bets": 256,
+   "n_games": 31,
+   "effect": "Vigilant fair - CNO fair vs the close: +0.80 points [+0.69, +0.94]",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "The tight CI is within-game paired, but only 31 games. Winner's-curse caveat: Vigilant's bets are listed at a higher EV threshold (preset edge >= 2.5%) than CNO's (1%), so its fair is more selected; the paired bets are the ones that cleared both. Treat as a question for Tj, not a result."
+  },
+  {
+   "claim": "Results (ROI) neither confirm nor contradict the CLV: every ROI is consistent with the listed EV, with CLV and with zero.",
+   "evidence": "ROI +1.58% [-2.00, +6.31] (1696 settled, 81 games); minus listed EV (+1.27%): +0.31 points [-3.25, +5.00]. Settled with a close (676, 68 games): ROI +1.41%, CLV +0.19%, ROI minus CLV +1.22 points [-6.26, +9.26]. By listed EV band ROI is not monotone (<0.5% +2.77%, 0.5-1% +4.81%, 1-1.5% +1.22%, 1.5-2.5% +0.28%, 2.5-4% -4.48% [-21.0, +10.2], 4-6% -3.54%, 6%+ +5.95%, each CI +-10 to +45 points); slope of profit on EV -0.21 [-4.72, +3.36] (expected 1). Bets that beat the close: ROI +9.43% [+0.69, +18.30] (378 bets, 63 games) vs -8.76% [-22.28, +6.45] (298, 48): gap +18.2 points vs +7.7 points expected from the CLV gap (3.58% vs -4.10%). By CLV quintile ROI: -14.5%, -0.8%, -2.7%, +23.5%, +1.6%. Running ROI: +10.0% at n=200, +7.1% at 400, +1.2% at 800, +1.6% at 1696. Hidden bets: ROI +2.70% vs CLV -0.30%: roi minus clv +4.10 points [-8.53, +17.64]. Per-bet sd 1.00 unit, so a 1.27% edge needs about 24,000 bets for the ROI CI to be as narrow as the edge.",
+   "n_bets": 1696,
+   "n_games": 81,
+   "effect": "ROI +1.58% [-2.00%, +6.31%] vs listed EV +1.27%",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "Results are almost pure noise at this size: a +4 point ROI swing is a one-sigma event. The ROI gap between bets that beat and did not beat the close (+18 points) is a roughly 1.3-sigma excess over the CLV-implied +7.7."
+  },
+  {
+   "claim": "EV outliers (listed EV above +-6%; in fact only above +6%, the minimum listed EV is 0) do not move any headline number.",
+   "evidence": "23 bets over 6% (12 with a close, 20 settled; 21 shown, 21 props; 12 found by Vigilant's scan only); 5 over 10% (2 closed, at +25.8% and +11.5%). With vs without: CLV +0.19% [-0.37, +0.81] (683 / 69 games) vs +0.18% [-0.35, +0.77] (671 / 68); ROI +1.58% [-2.00, +6.31] (1696 / 81) vs +1.53% [-2.30, +6.25] (1676 / 80); listed EV 1.22% vs 1.14%; shown CLV +0.56% [-0.19, +1.35] (372) and hidden -0.30% unchanged; slope 0.66 -> 0.81 [0.37, 1.29]; EV >= 2% and <= 6%: +1.45% [+0.28, +2.56] (184 bets, 41 games) but only +0.44% [-1.23, +1.94] on independent closes (75, 28 games). The 12 closed outliers: +0.85% [-7.01, +7.32], mixed (7 beat, from -26.7% to +25.8%).",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "CLV with outliers +0.19%, without +0.18%",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "Not a concern for the headline; the 6%+ band is too thin (12 closes) to say whether very high listed EV is real."
+  },
+  {
+   "claim": "The shown (app list) vs hidden (wide read) CLV gap is explained by listed EV, not by anything the filters add.",
+   "evidence": "Shown +0.57% [-0.20, +1.37] (384 closes, 60 games, beat 59.1%, listed EV +2.47%) vs hidden -0.30% [-0.80, +0.33] (299, 49 games, beat 51.8%, listed EV +0.48%); gap +0.87 points [+0.07, +1.67]; with listed EV in the regression the shown coefficient is -0.74 [-1.92, +0.44] and EV 0.81 [0.28, 1.34]. Slope on EV: shown 0.83 [0.25, 1.41], hidden 0.61 [-0.07, 1.30]. ROI shown -0.08% (682) vs hidden +2.70% (1014): hidden minus shown +2.8 points [-8.5, +14.0] (the opposite direction to CLV, and not significant).",
+   "n_bets": 683,
+   "n_games": 69,
+   "effect": "CLV gap shown - hidden +0.87 points [+0.07, +1.67]; conditional on EV -0.74 [-1.92, +0.44]",
+   "holds_on_both_date_halves": "unknown",
+   "luck_risk": "Moderate; the hidden/shown question is another analyst's slice, reported here only as a cross-check."
+  }
+ ],
+ "candidate_rules": [
+  {
+   "name": "R1: listed EV at least 2%",
+   "expr": "df.ev>=0.02",
+   "rationale": "Break-even listed EV is about 1.3% and the CLV slope is 0.66, so the first rule with a clear positive CLV is a 2% floor. Holds on balanced halves, date halves, game-start halves (all positive point estimates). The weakest part is independent closes (CI spans zero). Today's CNO floor is 1% and the preset floor 2.5%; this would drop about 80% of listed bets (398 of 2080 stay) - a question for Tj, evidence about 170 more games (about 790 closed bets) to settle +0.77% on independent closes. The CLV figures rest on the 196 of the rule's 398 bets that have a close (42 games). Date-split halves (loader, by first-look day Oct 3-4 vs Oct 5-6): H1 +1.38% on 176 closes, H2 +1.77% on 20 closes (H2 is thin). CLV on closes independent of CNO's consensus (ESPN, Pinnacle, Novig last trades of 3+): +0.77% [-1.00%, +2.47%] on 76 bets / 28 games. ROI at first-listed price +1.70% [-9.51%, +13.17%] on 343 settled bets (noise). Average Novig dollars available at the price: $350. first_half_clv/second_half_clv fields are the BALANCED chronological halves of the bets with a close (by first-look time), because the loader's date halves leave only 65 closes in H2. per_day = distinct bets first listed per study day (2.256 days), not stakes.",
+   "bets": 398,
+   "games": 92,
+   "clv": 0.01415,
+   "clv_lo": 0.00293,
+   "clv_hi": 0.0253,
+   "roi": 0.01697,
+   "first_half_clv": 0.01044,
+   "second_half_clv": 0.01737,
+   "per_day": 176.4
+  },
+  {
+   "name": "R2: listed EV at least 2.5%",
+   "expr": "df.ev>=0.025",
+   "rationale": "Same logic with a higher floor; CLV higher, fewer bets. 144 closed bets in 39 games; CI excludes zero on all closes and on the balanced second half but not on independent closes. The CLV figures rest on the 144 of the rule's 282 bets that have a close (39 games). Date-split halves (loader, by first-look day Oct 3-4 vs Oct 5-6): H1 +1.75% on 129 closes, H2 +1.59% on 15 closes (H2 is thin). CLV on closes independent of CNO's consensus (ESPN, Pinnacle, Novig last trades of 3+): +1.15% [-0.50%, +2.71%] on 49 bets / 22 games. ROI at first-listed price -2.92% [-16.16%, +9.69%] on 248 settled bets (noise). Average Novig dollars available at the price: $346. first_half_clv/second_half_clv fields are the BALANCED chronological halves of the bets with a close (by first-look time), because the loader's date halves leave only 65 closes in H2. per_day = distinct bets first listed per study day (2.256 days), not stakes.",
+   "bets": 282,
+   "games": 70,
+   "clv": 0.01734,
+   "clv_lo": 0.00559,
+   "clv_hi": 0.03025,
+   "roi": -0.02921,
+   "first_half_clv": 0.01315,
+   "second_half_clv": 0.02041,
+   "per_day": 125.0
+  },
+  {
+   "name": "R3: listed EV at least 1.5%",
+   "expr": "df.ev>=0.015",
+   "rationale": "A looser version that keeps 582 of 2080 bets; CLV lower and CI nearer zero. Included to show the dose-response (EV >= 1.5% +0.95%, >= 2% +1.42%, >= 2.5% +1.73%, >= 4% +3.37%). The CLV figures rest on the 274 of the rule's 582 bets that have a close (54 games). Date-split halves (loader, by first-look day Oct 3-4 vs Oct 5-6): H1 +0.93% on 252 closes, H2 +1.18% on 22 closes (H2 is thin). CLV on closes independent of CNO's consensus (ESPN, Pinnacle, Novig last trades of 3+): +0.35% [-0.76%, +1.56%] on 118 bets / 33 games. ROI at first-listed price -1.21% [-11.63%, +8.97%] on 498 settled bets (noise). Average Novig dollars available at the price: $389. first_half_clv/second_half_clv fields are the BALANCED chronological halves of the bets with a close (by first-look time), because the loader's date halves leave only 65 closes in H2. per_day = distinct bets first listed per study day (2.256 days), not stakes.",
+   "bets": 582,
+   "games": 131,
+   "clv": 0.00948,
+   "clv_lo": 0.00153,
+   "clv_hi": 0.01779,
+   "roi": -0.01211,
+   "first_half_clv": 0.00678,
+   "second_half_clv": 0.01234,
+   "per_day": 258.0
+  },
+  {
+   "name": "R4: listed EV at least 2% and first listed within 4 hours of the start",
+   "expr": "(df.ev>=0.02)&(df.minToStartFirst<=240)",
+   "rationale": "Stacks the two clearest effects (EV and horizon). Fitted on the same data, so the estimate is optimistic; 75 closed bets in 34 games, 62 of them on the balanced second half (the first half has only 13 because early-listed bets rarely have a close yet). The independent-close version (23 bets, 16 games) is +1.86% [+1.00, +3.04]. Needs about 15-20 more days of data to check out of sample. Horizon belongs to the timing analyst's slice. The CLV figures rest on the 75 of the rule's 142 bets that have a close (34 games). Date-split halves (loader, by first-look day Oct 3-4 vs Oct 5-6): H1 +2.66% on 62 closes, H2 +4.05% on 13 closes (H2 is thin). CLV on closes independent of CNO's consensus (ESPN, Pinnacle, Novig last trades of 3+): +1.86% [+1.00%, +3.04%] on 23 bets / 16 games. ROI at first-listed price +12.49% [-5.14%, +30.42%] on 135 settled bets (noise). Average Novig dollars available at the price: $352. first_half_clv/second_half_clv fields are the BALANCED chronological halves of the bets with a close (by first-look time), because the loader's date halves leave only 65 closes in H2. per_day = distinct bets first listed per study day (2.256 days), not stakes.",
+   "bets": 142,
+   "games": 49,
+   "clv": 0.02904,
+   "clv_lo": 0.01971,
+   "clv_hi": 0.04122,
+   "roi": 0.12493,
+   "first_half_clv": 0.02315,
+   "second_half_clv": 0.03027,
+   "per_day": 62.9
+  },
+  {
+   "name": "R5: listed EV at least 2% and shown by the app list",
+   "expr": "(df.ev>=0.02)&df.shown",
+   "rationale": "Shows the filters add nothing once EV is high (345 of the 398 EV >= 2% bets are already shown: 87%). The CLV figures rest on the 190 of the rule's 345 bets that have a close (42 games). Date-split halves (loader, by first-look day Oct 3-4 vs Oct 5-6): H1 +1.35% on 170 closes, H2 +1.77% on 20 closes (H2 is thin). CLV on closes independent of CNO's consensus (ESPN, Pinnacle, Novig last trades of 3+): +0.73% [-1.05%, +2.44%] on 71 bets / 27 games. ROI at first-listed price +2.04% [-11.16%, +14.30%] on 300 settled bets (noise). Average Novig dollars available at the price: $387. first_half_clv/second_half_clv fields are the BALANCED chronological halves of the bets with a close (by first-look time), because the loader's date halves leave only 65 closes in H2. per_day = distinct bets first listed per study day (2.256 days), not stakes.",
+   "bets": 345,
+   "games": 85,
+   "clv": 0.01392,
+   "clv_lo": 0.00284,
+   "clv_hi": 0.02529,
+   "roi": 0.02039,
+   "first_half_clv": 0.01079,
+   "second_half_clv": 0.01674,
+   "per_day": 152.9
+  },
+  {
+   "name": "R6: listed EV between 2% and 6%",
+   "expr": "(df.ev>=0.02)&(df.ev<=0.06)",
+   "rationale": "Check that the EV >= 2% result does not depend on the 23 outliers: CLV +1.45% on 184 closes; independent closes +0.44% [-1.23, +1.94] (75 bets, 28 games). The CLV figures rest on the 184 of the rule's 375 bets that have a close (41 games). Date-split halves (loader, by first-look day Oct 3-4 vs Oct 5-6): H1 +1.41% on 164 closes, H2 +1.77% on 20 closes (H2 is thin). CLV on closes independent of CNO's consensus (ESPN, Pinnacle, Novig last trades of 3+): +0.44% [-1.23%, +1.94%] on 75 bets / 28 games. ROI at first-listed price +1.44% [-10.64%, +12.90%] on 321 settled bets (noise). Average Novig dollars available at the price: $341. first_half_clv/second_half_clv fields are the BALANCED chronological halves of the bets with a close (by first-look time), because the loader's date halves leave only 65 closes in H2. per_day = distinct bets first listed per study day (2.256 days), not stakes.",
+   "bets": 375,
+   "games": 91,
+   "clv": 0.01452,
+   "clv_lo": 0.00277,
+   "clv_hi": 0.02564,
+   "roi": 0.01442,
+   "first_half_clv": 0.00765,
+   "second_half_clv": 0.02096,
+   "per_day": 166.2
+  },
+  {
+   "name": "R7: listed EV at least 4%",
+   "expr": "df.ev>=0.04",
+   "rationale": "Highest dose; 52 closed bets in 22 games, CLV +3.37% [+0.54, +6.62]; independent closes +2.88% [-1.82, +7.25] (16 bets, 11 games). Too thin to pick as a rule; included to show the gradient. The CLV figures rest on the 52 of the rule's 97 bets that have a close (22 games). Date-split halves (loader, by first-look day Oct 3-4 vs Oct 5-6): H1 +3.23% on 48 closes, H2 +5.04% on 4 closes (H2 is thin). CLV on closes independent of CNO's consensus (ESPN, Pinnacle, Novig last trades of 3+): +2.88% [-1.82%, +7.25%] on 16 bets / 11 games. ROI at first-listed price -1.28% [-19.55%, +20.04%] on 87 settled bets (noise). Average Novig dollars available at the price: $348. first_half_clv/second_half_clv fields are the BALANCED chronological halves of the bets with a close (by first-look time), because the loader's date halves leave only 65 closes in H2. per_day = distinct bets first listed per study day (2.256 days), not stakes.",
+   "bets": 97,
+   "games": 38,
+   "clv": 0.03373,
+   "clv_lo": 0.00436,
+   "clv_hi": 0.06526,
+   "roi": -0.01276,
+   "first_half_clv": 0.0291,
+   "second_half_clv": 0.03618,
+   "per_day": 43.0
+  }
+ ],
+ "app_changes_implied": [
+  "PROPOSAL (ask Tj; it changes which bets are placed): raise the minimum listed edge for what the app lists and what auto-bet may take toward 2% (CNO's floor is minEv = 0.01 in data/src/main/kotlin/com/tjshea/vigilant/data/scanner/Presets.kt line 91; Vigilant's own preset floor 'edge >= 2.5%' is already above it). Evidence: EV < 1.5% closes at -0.31% [-0.80, +0.28] (410 bets, 56 games) and EV >= 2% at +1.42% [+0.39, +2.57] (196, 42 games). It tightens, never loosens, a safety rule, but it removes about 80% of all logged bets (398 of 2080 had EV >= 2%) and about 57% of the 803 bets the app's lists showed (345 of them had EV >= 2%) and rests partly on Tracker closes; about 170 more games (about 790 closed bets) would settle it on independent closes.",
+  "PROPOSAL (display only, no placement change): show next to the listed EV an expected CLV of about 0.66 x EV - 0.87 points (break-even listed EV 1.3%), so a +1.2% EV bet reads as roughly -0.1% expected CLV and a +4% bet as about +1.8%. Where: the EV badge in the list rows and the study export's SUMMARY.",
+  "QUESTION FOR TJ (Vigilant's fair): on the 256 bets both scanners listed, Vigilant's fair is 0.80 points [0.69, 0.94] higher than CNO's and 1.35 points above the close; CNO's EV predicted CLV and Vigilant's did not. Possible haircut of about 0.8 points on Vigilant's fair until there are 300+ more both-listed closes; the fair method MARKET_AVERAGE/WORST_CASE closes at -2.45% [-4.93, -0.11] (49 closes). This is a proposal only; nothing should change before Tj decides.",
+  "No safety limit (daily limit, price tolerance, pregame only, trap guard, halt on a lost order, sharp check) is touched by anything in this slice."
+ ],
+ "next_logging": [
+  "Log which close family each CLV used and, for Tracker closes, the minutes before the start of the read (a Tracker close 'read before the start' has no timestamp in the study file); add a field closeAtMs and closeMinToStart for every source.",
+  "Log every bet's CLV against a second, independent close where one exists (Novig mid at the last read before the start, Pinnacle where ParlayAPI has it), so Tracker-only CLV (66% beat) can be compared with an independent close on the same bet; Novig-trade closes should also log the last-trade time and the best bid/ask just before the start.",
+  "Keep a running 'EV bands vs CLV' table in the export (listed EV bands of 0.5 points, CLV, games, split by close family and by horizon <= 4 h / > 4 h) so the next file shows whether the EV >= 2% result survives on independent closes; the numbers to settle it: about 170 games (about 790 closed bets) at 80% power for +0.77%, about 100 games (about 470) for +1.0%.",
+  "Log listed EV and fair from both scanners for every bet listed by both (the vig/cno records already exist) and each scanner's own first price, so the Vigilant-fair vs CNO-fair comparison can be paired without the selection caveat.",
+  "Log the time of first look in minutes before the start in every split heading and a 'games without a close yet' count by start date, so the date half-split is not starved (this file's second date half had 65 closes in 10 games).",
+  "Keep the study running over at least 14 more days and across a full week of game days (this file has 2.26 days of first looks; ROI would need about 24,000 settled bets, about a month, to say anything)."
+ ]
+}
