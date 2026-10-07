@@ -137,4 +137,30 @@ class BetOrBidTest {
         assertTrue(TrackerBreakdown.describe(bets, closed = 3).startsWith("3 bets (0 open) · 2-1"))
         assertTrue(TrackerBreakdown.describe(bids, closed = 2, noun = "bid").contains("EV when bet +4.0%"))
     }
+
+    @Test
+    fun `the bets-and-bids lines give each kind its own record, closing line, open bets, time to start and grading`() {
+        val list = listOf(
+            bet("a", maker = true, ev = 0.06), bet("b", maker = true, ev = 0.02, status = BetStatus.LOST), bet("c", maker = true, status = BetStatus.PENDING),
+            bet("d", ev = 0.03), bet("e", ev = 0.03, status = BetStatus.LOST),
+        )
+        val lines = BetsAndBids.lines(list, now)
+        val bets = lines.takeWhile { !it.startsWith(BetOrBid.BID.group) }
+        val bids = lines.dropWhile { !it.startsWith(BetOrBid.BID.group) }
+        assertTrue(bets.toString(), bets.first().startsWith("${BetOrBid.BET.group}: 2 bets (0 open) · 1-1"))
+        assertTrue(bids.toString(), bids.first().startsWith("${BetOrBid.BID.group}: 3 bids (1 open) · 1-1"))
+        // Each block says what it counts: a bid's EV is the one posted.
+        assertTrue(bids.toString(), bids.any { it.contains("closing line (all time, outliers in)") && it.contains("avg EV at post") })
+        assertTrue(bets.toString(), bets.any { it.contains("closing line (all time, outliers in)") && it.contains("avg EV at bet") })
+        assertTrue(bids.toString(), bids.any { it.startsWith("  open: 1 (0 upcoming, 1 started)") })
+        assertTrue(bids.toString(), bids.any { it.contains("by time to the start when posted") })
+        assertTrue(bets.toString(), bets.any { it.contains("by time to the start when placed") })
+        assertTrue(bids.toString(), bids.any { it.startsWith("  graded by:") })
+        // A bet's group is not a bid's: the first block never mentions the three bids' numbers.
+        assertFalse(bets.toString(), bets.any { it.contains("3 bids") })
+        // No bid yet: said in words, with where to find the bids that never filled. Nothing at all: nothing said.
+        val none = BetsAndBids.lines(listOf(bet("d"), bet("e")), now)
+        assertTrue(none.toString(), none.any { it.startsWith("${BetOrBid.BID.group}: none (no bid has been filled yet") })
+        assertTrue(BetsAndBids.lines(emptyList(), now).isEmpty())
+    }
 }
