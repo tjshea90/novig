@@ -1,6 +1,6 @@
 # Rapid odds and scores: the ten sources Tj sent (workflow wf_6f04c078-2f9)
 
-Raw: `journal.jsonl` (every agent's structured result). Rendered by `tools/research/save_workflow.py` as results arrive.
+One section per agent, scouts first. Raw per-agent files: `results/<label>.json`; each run's raw journal: `journal.<run>.jsonl`. Rendered by `tools/research/save_workflow.py`.
 
 Results saved so far: 3
 

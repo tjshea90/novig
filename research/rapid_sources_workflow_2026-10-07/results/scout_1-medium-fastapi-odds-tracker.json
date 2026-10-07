@@ -1,0 +1,119 @@
+{
+ "label": "scout:1-medium-fastapi-odds-tracker",
+ "agentId": "adad92fcfa3bb13cc",
+ "run": "wf_6f04c078-2f9",
+ "result": {
+  "source_url": "https://medium.com/@ayoubennaoui20/how-to-build-a-real-time-sports-odds-tracker-with-fastapi-websockets-angular-part-1-ff2de71c62d5",
+  "kind": "tutorial",
+  "what_it_is": "A short beginner tutorial (Part 1 only, by Ayoub Ennaoui, published 2025-04-19) on streaming JSON over a FastAPI WebSocket to a future Angular page. The whole backend is one endpoint, /ws/odds, that sends RANDOM numbers for a placeholder \"Team A vs Team B\" every 3 seconds. It uses no odds API, no vendor, no scraper, no database and no real bookmaker data. Part 2 (the Angular client) is announced but I found no sign it was ever published. I read the full body text on 2026-10-07 from the author's public Medium RSS feed (https://medium.com/feed/@ayoubennaoui20, HTTP 200). The article page itself returned a Cloudflare challenge (403) and I did not work around it.",
+  "upstream_data_source": "None. The \"odds\" are generated in the server loop with random.uniform(1.5, 2.5). The author says so: \"To keep things simple and focused on WebSocket functionality, we simulate the odds data instead of calling an external API or accessing a database.\" The code has no HTTP client, no vendor key and no odds provider. load_dotenv() and os are imported but nothing reads an API key. No other upstream is named anywhere in the text.",
+  "push_or_poll": "Server-to-browser PUSH over a WebSocket, but timer-driven rather than change-driven: a per-connection \"while True\" loop does send_json() then asyncio.sleep(3), whether or not anything changed. There is no upstream poll or push because there is no upstream. If a real feed were bolted on, a viewer would see that feed's age plus up to 3 s (INFERRED from the loop).",
+  "claimed_latency_or_refresh": "Only prose and a code comment. Prose: \"Every second matters — the odds are shifting based on goals, red cards, substitutions\". Comment: \"# simulate new odds every 3 seconds\". The article states no latency number for any real feed because it uses none. It also says WebSockets \"Reduce latency and bandwidth usage\", a generic claim that says nothing about how fresh a price is.",
+  "measured_or_verified_age": "None. The payload is {\"match\": ..., \"odds\": {\"Team A\": float, \"Team B\": float}} with no timestamp, no bookmaker and no market id. There is no real price, so it has no age. No third-party measurement exists, because the code is a demo.",
+  "coverage": "None. One hard-coded fake matchup with two random decimal numbers. No sports, leagues, players, props, books or sharp-book prices. No live in-play odds and no scores.",
+  "price_and_free_tier": "Free to read. The code needs only Python 3.9+, fastapi and uvicorn, which are free and open source. There is no data plan or free tier because there is no data vendor. The article mentions Firestore (optional) and Chart.js (optional), neither of which is an odds source. Read 2026-10-07.",
+  "terms_notes": "I did not read Medium's terms of service. Medium's article and profile pages answered this container with a Cloudflare challenge (403, title \"Attention Required! | Cloudflare\"). I did not try to get past it, and I did not use paywall-bypass mirrors. Only the public RSS feed was read, one GET. The tutorial contains no scraping, so scraping clauses do not apply. It carries no data licence, because it has no data. No author repo or licence was found.",
+  "key_claims": [
+   {
+    "claim": "The article is Part 1, published 2025-04-19, and is the author's newest post. The author's feed (built 2026-10-07 23:35 GMT) lists only 3 posts: this one and two Django e-commerce posts from 2024.",
+    "status": "VERIFIED",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20",
+    "quote": "<pubDate>Sat, 19 Apr 2025 17:17:24 GMT</pubDate>"
+   },
+   {
+    "claim": "The odds are simulated. No external odds API is called.",
+    "status": "VERIFIED",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20",
+    "quote": "we simulate the odds data instead of calling an external API or accessing a database."
+   },
+   {
+    "claim": "The only cadence in the tutorial is a fixed 3-second sleep in the send loop.",
+    "status": "VERIFIED",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20",
+    "quote": "await asyncio.sleep(3)  # simulate new odds every 3 seconds"
+   },
+   {
+    "claim": "The payload carries no timestamp, bookmaker or market id, so nothing in it proves the age of a price.",
+    "status": "VERIFIED",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20",
+    "quote": "\"odds\": { \"Team A\": round(random.uniform(1.5, 2.5), 2), \"Team B\": round(random.uniform(1.5, 2.5), 2) }"
+   },
+   {
+    "claim": "The prose says the loop 'sends JSON updates to all connected clients'. The code is a separate loop per connection with no connection manager or broadcast, so each client would see different random numbers.",
+    "status": "CONTRADICTED",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20",
+    "quote": "A loop generates fake odds and sends JSON updates to all connected clients."
+   },
+   {
+    "claim": "Part 2 (Angular client) is promised. I found no evidence it exists: it is absent from the author's RSS feed as of 2026-10-07, and web searches found nothing.",
+    "status": "INFERRED",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20",
+    "quote": "Coming up next: Part 2 — Connecting Angular to the FastAPI WebSocket"
+   },
+   {
+    "claim": "'Every second matters — the odds are shifting based on goals, red cards, substitutions' is an unsupported motivational statement. No feed or speed claim stands behind it.",
+    "status": "CLAIM_ONLY",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20",
+    "quote": "Every second matters — the odds are shifting based on goals, red cards, substitutions, and fan momentum."
+   },
+   {
+    "claim": "The Medium page itself cannot be read from this container: Cloudflare challenge on WebFetch and on curl for the article URL and the author's profile URL.",
+    "status": "VERIFIED",
+    "evidence_url": "https://medium.com/@ayoubennaoui20",
+    "quote": "HTTP/2 403, server: cloudflare, <title>Attention Required! | Cloudflare</title>"
+   }
+  ],
+  "verdict": {
+   "rapid_odds": "not-applicable",
+   "rapid_scores": "not-applicable",
+   "ahead_of_novig_makers": "no",
+   "ahead_of_cno": "no",
+   "cheap_or_free": "free",
+   "usable_in_vigilant": "technique-only",
+   "why": "This is not an odds or scores source. It is a toy WebSocket demo that streams random numbers every 3 seconds, with no vendor, no upstream and no timestamp. It is free only because it has no data, so it cannot beat CNO or the Novig makers. The technique is a FastAPI WebSocket relay that fans a feed out to browsers (Angular). Vigilant is a single-user Android app that can open the upstream sockets or REST polls itself (Polymarket, Sofascore and so on), so a relay would only add a hop, a host and latency. The tutorial's timer loop also decouples send time from change time, the opposite of what the bar needs. Even if a real feed were swapped in, a viewer would see that feed's age plus up to 3 s. Nothing here needs further research and nothing here needs a phone test. The real question is which upstream to relay, and this article does not answer it."
+  },
+  "confidence": "high",
+  "could_not_read": [
+   "The Medium article page itself (https://medium.com/@ayoubennaoui20/...-ff2de71c62d5): Cloudflare challenge, 403 via WebFetch and via curl. I did not work around it. The text was read from the author's public RSS feed, which appears to be the complete body (it ends with the Part 2 teaser and a tracking pixel). Comments and images are not in the feed.",
+   "The author's Medium profile page (https://medium.com/@ayoubennaoui20): 403 Cloudflare. The RSS feed gave the post list instead.",
+   "The author's GitHub or repo: github.com/ayoubennaoui20 and api.github.com both returned this container's proxy message 'sessions are bound to their configured repositories' (403). That is a proxy restriction, not proof the account or repo does not exist. Web searches found no repo, and the article links none.",
+   "Part 2: not found. It is not in the author's RSS feed (3 posts) and searches did not surface it.",
+   "Medium's terms of service: not read, so no claim is made about them."
+  ],
+  "live_probes": [
+   {
+    "request": "WebFetch GET https://medium.com/@ayoubennaoui20/how-to-build-a-real-time-sports-odds-tracker-...-ff2de71c62d5",
+    "result": "HTTP 403 Forbidden, body not retrieved."
+   },
+   {
+    "request": "curl GET the same article URL (2026-10-07 23:34:29 GMT)",
+    "result": "HTTP/2 403, server: cloudflare, 5018-byte page titled 'Attention Required! | Cloudflare'. Stopped there, no bypass."
+   },
+   {
+    "request": "curl GET https://medium.com/@ayoubennaoui20 (profile)",
+    "result": "HTTP 403 Cloudflare challenge."
+   },
+   {
+    "request": "curl GET https://medium.com/feed/@ayoubennaoui20 (public RSS)",
+    "result": "HTTP 200, 30 KB, lastBuildDate Wed, 07 Oct 2026 23:35:25 GMT, 3 items. Item 1 is Part 1 (pubDate 2025-04-19T17:17:24Z) with the full body in content:encoded. No Part 2. Medium requests in total: 4, all GET."
+   },
+   {
+    "request": "GET https://github.com/ayoubennaoui20, https://api.github.com/users/ayoubennaoui20/repos, gh api users/ayoubennaoui20 and search/repositories",
+    "result": "403 from the container proxy ('sessions are bound to their configured repositories'). Author repo existence unknown."
+   },
+   {
+    "request": "Four WebSearch queries (title, handle, 'Part 2' phrase, repo name)",
+    "result": "The search index showed Part 1 only (its metadata dated it about 536 days old). No Part 2, no repo and no live-odds code from this author."
+   }
+  ],
+  "what_the_phone_should_test": [
+   "Nothing for this source. It has no feed to time, so there is nothing for the phone to measure.",
+   "Skip this one and spend the phone's test time on the sources that name a real upstream and carry a timestamp in their payload."
+  ],
+  "open_questions": [
+   "Does the author's GitHub repo exist, and does it differ from the article (for example, did a later commit wire in a real odds API)? Not checkable from this container, and the article links none.",
+   "Was Part 2 ever published? It is not in the author's RSS feed as of 2026-10-07. It is an Angular client in any case and would not change the verdict."
+  ],
+  "other_sources_it_names": []
+ }
+}
