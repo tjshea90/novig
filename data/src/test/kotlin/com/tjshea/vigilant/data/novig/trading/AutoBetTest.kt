@@ -105,7 +105,7 @@ class AutoBetTest {
 
     // ---- which bets pass ----------------------------------------------------------------------------------------
 
-    private fun check(twoSided: Int = 4, agreeing: Int = 3, ev: Double? = 0.02) =
+    private fun check(twoSided: Int = 4, agreeing: Int = 3, ev: Double? = 0.05) =
         CnoBooks.Check(twoSided, 0, 0.51, agreeing, 100, ev, CnoBooks.Verdict.CONFIRMED)
 
     @Test
