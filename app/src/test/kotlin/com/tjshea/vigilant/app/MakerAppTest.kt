@@ -261,7 +261,10 @@ class MakerAppTest {
         // The health checks say it too: picked off, and most fills within two minutes of posting.
         val checks = HealthChecks.of(state, Diagnostics.Extras("t", 1, "d", makerBids = bids, maker = MakerRunner.Status()), now).filter { it.area == "Bids" }
         assertTrue(checks.toString(), checks.any { it.finding == "fills are being picked off" && it.level == HealthChecks.Level.WARN })
-        assertTrue(checks.toString(), checks.any { it.finding == "most fills came within 2 minutes of posting" })
+        // Quick fills alone are not a fault (Tj's v0.70.1 file: 3 of 6 fired a warning against its own split): with no close to judge them by it is information, not a warning.
+        val quick = checks.single { it.finding == "most fills came within 2 minutes of posting" }
+        assertEquals(quick.toString(), HealthChecks.Level.OK, quick.level)
+        assertTrue(quick.toString(), quick.detail.contains("normal while a bid rests only a few minutes"))
         // And once the guard has stopped them, that is the first thing it says.
         val haltedChecks = HealthChecks.of(state.copy(settings = state.settings.copy(makerHalted = "6 of the last 8 fills were picked off")), Diagnostics.Extras("t", 1, "d", makerBids = bids, maker = MakerRunner.Status()), now).filter { it.area == "Bids" }
         assertTrue(haltedChecks.toString(), haltedChecks.any { it.finding == "stopped by the picked-off guard" })
