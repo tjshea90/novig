@@ -234,7 +234,7 @@ class MakerRunner(
         val bids = desk()?.bids().orEmpty()
         val resting = bids.filter { it.resting }.mapTo(HashSet()) { it.outcomeId }
         val busy = bids.filter { it.active && !it.resting }.mapTo(HashSet()) { it.outcomeId }
-        val held = tookBySide(c.tracker.all()) - resting + busy
+        val held = MakerDesk.held(c.tracker.all(), resting) + busy
         val denied = c.makerDenials.outcomes(clock())
         val run = scan()
         val rules = MakerRules.of(settings)
@@ -263,13 +263,6 @@ class MakerRunner(
         val book = c.injuries.book.value
         return { r -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(book, r, now) }
     }
-
-    /**
-     * Sides a bet by hand, the auto-bet, a lock or an import has open (never a bid's own fill: a bid that filled in part is the bid, and the side stays its own to keep or take down).
-     * A pending bet of that kind holds its side even while a bid rests there (the same side is never bought twice, RESEARCH.md §114).
-     */
-    private fun tookBySide(bets: List<TrackedBet>): Set<String> =
-        bets.filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() && !it.isBid }.mapTo(HashSet()) { it.outcomeId }
 
     /**
      * Asks ParlayAPI's injury list about the prop players of [result]'s priced lines that no report covers yet (the +EV list's players are asked by the

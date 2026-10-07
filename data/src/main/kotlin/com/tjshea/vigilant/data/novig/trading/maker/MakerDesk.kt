@@ -267,7 +267,7 @@ class MakerDesk(
         val activeOutcomes = active.mapTo(HashSet()) { it.outcomeId }
         // Busy: a bid on its way down (a fill can still land) or one whose answer was lost. Never a second bid on that side meanwhile.
         val busy = bids.filter { it.status == MakerStatus.CANCELING || (it.status == MakerStatus.SENT && it.orderId == null) }.mapTo(HashSet()) { it.outcomeId }
-        val held = (bets.filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } - activeOutcomes) + busy
+        val held = held(bets, activeOutcomes) + busy
         val refused = bids.filter { it.status == MakerStatus.REFUSED && now - (it.endedAtMs ?: it.postedAtMs) < REFUSED_COOLOFF_MS }.mapTo(HashSet()) { it.outcomeId }
         val decisions = MakerQuote.decideAll(MakerLines.withoutOwn(lines, bids), rules, now, held).map { d ->
             if (d is MakerDecision.Post && d.line.outcomeId in denied) return@map MakerDecision.Skip(d.line, DENIED)
@@ -859,6 +859,16 @@ class MakerDesk(
     private fun money(v: Double) = String.format(java.util.Locale.US, "$%,.2f", v)
 
     companion object {
+        /**
+         * Sides held by an open bet, for [MakerQuote.decide]'s "already bet or bid" (RESEARCH.md §114): every side a bet that is NOT a bid's fill has open (by hand, the auto-bet, a
+         * lock, an import) holds it, a bid resting on it or not; a bid's own fill holds its side only once that bid is over ([activeOutcomes]: the sides bids are up on).
+         * Before, any open bet on a side with a bid resting there was taken for the bid's partial fill, so a taker bet on a side with a bid up left both standing.
+         */
+        fun held(bets: List<TrackedBet>, activeOutcomes: Set<String>): Set<String> {
+            val open = bets.filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }
+            return open.filter { !it.isBid }.mapTo(HashSet()) { it.outcomeId } + open.filter { it.isBid && it.outcomeId !in activeOutcomes }.map { it.outcomeId }
+        }
+
         /** Why a denied side gets no bid. */
         const val DENIED = "You denied this bid (Bids tab › Denied to undo)"
 
