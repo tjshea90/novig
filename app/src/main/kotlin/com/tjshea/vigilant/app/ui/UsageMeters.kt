@@ -105,13 +105,10 @@ private fun ProviderMeter(v: ProviderView, now: Long, history: com.tjshea.vigila
                 Text("No key added.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             v.keys.forEach { KeyRow(v.policy, it, now) }
-            when {
-                v.scansFreeOnly -> Text(
-                    "Free plan: kept for Pinnacle's closing lines (CLV). Scans use ParlayAPI on a paid plan.",
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                v.scanShareToday != null -> Text(
-                    "Scans can spend ${v.scanShareToday} more today (a day's share; unused days carry over; the last 300 are kept for closing lines).",
+            v.scanShareToday?.let { share ->
+                Text(
+                    "Scans can spend $share more today: a paid key's day share (unused days carry over, the last 300 are kept for closing lines), " +
+                        "each free key down to its last ${com.tjshea.vigilant.data.keys.CreditPace.FREE_RESERVE}. Past that, the other feeds carry on until a reset.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }

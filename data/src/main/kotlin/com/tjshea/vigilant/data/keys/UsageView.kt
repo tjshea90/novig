@@ -72,8 +72,7 @@ object UsageViews {
             val minuteFull = policy.perMinute?.let { cap -> u.recent.count { now - it < UsageMeter.MINUTE } >= cap } ?: false
             val state = when {
                 u.refused -> KeyState.REFUSED
-                scanUsable && !activeFound -> KeyState.ACTIVE.also { activeFound = true; scanKeyFound = true }
-                usable && !activeFound && !anyScanKey -> KeyState.ACTIVE.also { activeFound = true }
+                i == activeIndex -> KeyState.ACTIVE
                 usable -> KeyState.STANDBY
                 u.coolUntil != null || minuteFull -> KeyState.COOLING
                 else -> KeyState.SPENT
