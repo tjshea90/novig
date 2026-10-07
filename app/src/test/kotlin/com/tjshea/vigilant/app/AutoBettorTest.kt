@@ -244,6 +244,18 @@ class AutoBettorTest {
         assertEquals(1, bettor(FakeNovig()).run(settings(), state()).placed.size)
     }
 
+    /** A pass places its bets one at a time, so the guard must count each one as it goes (a pass cannot fill a day's share in one go); the pass's own list is pinned. */
+    @Test
+    fun `the guard counts the bets a pass places as it goes, and reads the Tracker once as the pass begins`() {
+        val src = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoBettor.kt").readText()
+        val run = src.substringAfter("suspend fun run(settings: ScanSettings, state: UiState): Report {").substringBefore("suspend fun runPinnacle(")
+        assertTrue(run, run.contains("val guardHistory = ArrayList(if (guardRules.on) PropGuard.history(c.tracker.all(), now) else emptyList())"))
+        assertTrue(run, run.contains("PropGuard.judge(guardRules, guardHistory, guardKey, guardGame, clock())?.let { skip(it); continue }"))
+        assertTrue(run, run.contains("guardHistory += PropGuard.Placed(guardKey, guardGame, clock())"))
+        // The judge sits before the order is built, so a held bet costs no order.
+        assertTrue(run.indexOf("PropGuard.judge(") < run.indexOf("sendOrder(placer, target, stake"))
+    }
+
     @Test
     fun `with the guard off - no share cap and no per-game limit - nothing is held, as before`() = runBlocking {
         repeat(3) { seedAuto("p$it", jefferson.market, eventId = "ev") }
