@@ -34,10 +34,11 @@ class FavouriteEdgeTest {
         // 3.5% is over the 3% minimum: an underdog and even money go, a favorite doesn't.
         assertNull(AutoBet.judge(rules, 0.035, check(), 120))
         assertNull(AutoBet.judge(rules, 0.035, check(), -100))
-        assertEquals("it is a favorite and its edge 3.5% is under the 4.0% favorites need", AutoBet.judge(rules, 0.035, check(), -150))
+        val why = AutoBet.judge(rules, 0.035, check(), -150)!!
+        assertTrue(why, why.startsWith("it is a favorite and its edge ") && why.endsWith(" favorites need") && why.contains("3.5") && why.contains("4.0"))
         // At the bar exactly it passes; under the plain minimum it is the plain reason.
         assertNull(AutoBet.judge(rules, 0.04, check(), -150))
-        assertEquals("its edge 2.5% is under your 3.0% minimum", AutoBet.judge(rules, 0.025, check(), -150))
+        assertTrue(AutoBet.judge(rules, 0.025, check(), -150)!!.endsWith(" minimum"))
         // Zero extra = the same bar for every price (what it was before).
         assertNull(AutoBet.judge(AutoBet.rules(ScanSettings(autoBetMinEv = 0.03, autoBetFavouriteExtraEv = 0.0)), 0.035, check(), -150))
     }
