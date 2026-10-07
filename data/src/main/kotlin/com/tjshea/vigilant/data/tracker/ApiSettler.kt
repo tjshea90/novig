@@ -131,7 +131,7 @@ class ApiSettler(
                                     if (heldBoth != null && heldBoth.any { it.id != bet.id && it.outcomeId != bet.outcomeId && (it.status == BetStatus.LOST || it.id in lostNow) }) {
                                         note(changes, bet, OTHER_SIDE_LOST, now, manual = true); manual++
                                     } else {
-                                        settle(changes, bet, BetStatus.LOST, null, "$SILENT_LOSS (${feed.evidence})", now); settled++; lostNow += bet.id
+                                        settle(changes, bet, BetStatus.LOST, null, "$SILENT_LOSS (${feed.evidence})", now); settled++; lostNow += bet.id; lostByFeed[bet.id] = feed.evidence
                                     }
                                 } else {
                                     note(changes, bet, "Novig shows no payout, but the score feeds say ${feed.status.name.lowercase()} (${feed.evidence}): check Novig", now, manual = true); manual++
