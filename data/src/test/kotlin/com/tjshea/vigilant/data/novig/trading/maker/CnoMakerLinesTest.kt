@@ -81,6 +81,10 @@ class CnoMakerLinesTest {
         assertEquals(4, over.sharpFairs.size)
         assertEquals(listOf("Kalshi", "ProphetX", "FanDuel", "Caesars"), over.basis!!.sharp)
         assertEquals(5, over.bookFairs.size)
+        // The Over is the favorite at every sharp book (its price is the shorter one): its fair is over a half, the Under's under it - the right way round, not just consistent.
+        assertTrue(over.sharpFairs.toString(), over.sharpFairs.all { it > 0.5 })
+        assertTrue(under.sharpFairs.toString(), under.sharpFairs.all { it < 0.5 })
+        assertTrue(over.bookFairs.all { it > 0.5 } && under.bookFairs.all { it < 0.5 })
         // The two sides' fairs add to one (each book's own devig).
         assertEquals(1.0, over.sharpFairs.zip(under.sharpFairs).map { (a, b) -> a + b }.average(), 0.03)
         // Novig's own book: the Over is offered at 1 − the Under's best bid; the Under's queue is its own.
@@ -141,6 +145,9 @@ class CnoMakerLinesTest {
         val under = CnoMakerLines.Page(row(bet = "Pat Under 50.5"), "m1-under", market, book(), view(flip = true), now - 8_000L)
         val b = CnoMakerLines.from(listOf(under), settings, now).lines
         assertEquals(listOf("m1-under", "m1-over"), b.map { it.outcomeId })
+        // Seen from the Under (the page's first line, prices swapped), the Under is still the underdog and the Over the favorite.
+        assertTrue(b[0].sharpFairs.all { it < 0.5 })
+        assertTrue(b[1].sharpFairs.all { it > 0.5 })
         assertEquals(a[0].sharpFairs.sorted(), b[1].sharpFairs.sorted())
         assertEquals(a[1].sharpFairs.sorted(), b[0].sharpFairs.sorted())
     }
