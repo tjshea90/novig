@@ -92,6 +92,8 @@ object AutoBet {
          * setting"): underdogs at least that long only.
          */
         val minOdds: Int = 0,
+        /** A favorite (odds shorter than even money) needs this much more edge than [minEv] ([ScanSettings.autoBetFavouriteExtraEv]); 0 = none. */
+        val favouriteExtraEv: Double = 0.0,
         /** The kinds of bet it places (a preset's, RESEARCH.md §66); every kind = no limit. */
         val kinds: Set<BetKind> = BetKind.entries.toSet(),
     )
@@ -106,8 +108,15 @@ object AutoBet {
         maxOdds = s.autoBetMaxOdds.let { if (it <= 0) 0 else it.coerceAtLeast(MIN_MAX_ODDS) },
         allAgree = s.autoBetAllAgree,
         minOdds = normalizeMinOdds(s.autoBetMinOdds),
+        favouriteExtraEv = s.autoBetFavouriteExtraEv.coerceIn(0.0, 0.2),
         kinds = s.autoBetKinds,
     )
+
+    /** Whether [american] odds are a favorite's: shorter than even money (−101 or shorter). Even money (+100, −100) and every underdog is not. */
+    fun isFavourite(american: Int): Boolean = american < -100
+
+    /** The smallest edge a bet at [american] odds needs: [Rules.minEv], plus [Rules.favouriteExtraEv] for a favorite. */
+    fun evBar(rules: Rules, american: Int): Double = rules.minEv + if (isFavourite(american)) rules.favouriteExtraEv else 0.0
 
     /** The longest a favorite-side shortest-odds limit can be: −100 is even money. A positive limit (+100 or more) means underdogs only. */
     const val MAX_MIN_ODDS = -100
@@ -140,6 +149,8 @@ object AutoBet {
     fun judge(rules: Rules, shownEv: Double, check: CnoBooks.Check, american: Int, kind: BetKind? = null): String? {
         if (kind != null && kind !in rules.kinds) return "${kind.label.lowercase()} aren't among the kinds of bet you auto-bet"
         if (shownEv < rules.minEv - 1e-9) return "its edge ${percent(shownEv)} is under your ${percent(rules.minEv)} minimum"
+        // A favorite needs more (Tj, 2026-10-07): the edge a short price keeps by the close is smaller. Said apart from the plain minimum so the report counts the two on their own.
+        if (shownEv < evBar(rules, american) - 1e-9) return "it is a favorite and its edge ${percent(shownEv)} is under the ${percent(evBar(rules, american))} favorites need"
         if (shownEv > MAX_SANE_EV) return "its edge ${percent(shownEv)} is over ${percent(MAX_SANE_EV)}, which is usually a stale or mismatched price (place it by hand if you trust it)"
         // (No odds in the words: the report counts bets by reason, and each price would be a reason of its own.)
         if (tooLong(rules.maxOdds, american)) return "its odds are longer than your ${Odds.formatAmerican(rules.maxOdds)} limit"

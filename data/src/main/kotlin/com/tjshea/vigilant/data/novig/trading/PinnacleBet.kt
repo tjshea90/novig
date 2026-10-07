@@ -68,6 +68,7 @@ object PinnacleBet {
         if (ev < rules.minEv - 1e-9) return "its edge against Pinnacle is under your minimum"
         if (ev > AutoBet.MAX_SANE_EV) return "its edge against Pinnacle is over ${(AutoBet.MAX_SANE_EV * 100).toInt()}%, which is usually a mismatched line (place it by hand if you trust it)"
         val american = Odds.probabilityToAmerican(q.cost.coerceIn(0.001, 0.999))
+        if (ev < AutoBet.evBar(rules, american) - 1e-9) return "it is a favorite and its edge against Pinnacle is under what favorites need"
         if (AutoBet.tooLong(rules.maxOdds, american)) return "its odds are longer than your limit"
         if (AutoBet.tooShort(rules.minOdds, american)) return "its odds are shorter than your limit"
         if (o.priceIsOld(now)) return "Novig's price for it was read too long ago"

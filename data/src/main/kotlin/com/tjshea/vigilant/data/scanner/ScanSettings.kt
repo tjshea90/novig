@@ -209,6 +209,11 @@ data class ScanSettings(
     val autoBetMaxOdds: Int = 0,
     /** The shortest odds an auto-bet may take, American (−200 = nothing shorter than −200; 0 = no limit): [AUTO_BET_MIN_ODDS_CHOICES]. RESEARCH.md §66. */
     val autoBetMinOdds: Int = 0,
+    /**
+     * How much MORE edge a favorite (odds shorter than even money, −101 or shorter) needs than [autoBetMinEv] (Tj, 2026-10-07, proposal 4 of the v0.70.1 analysis: "a higher EV bar for
+     * favourites"; 0.01 = one point, from the study's price slope: closing edge fell as the price got shorter). 0 = the same bar for every price. [AUTO_BET_FAVOURITE_EV_CHOICES], or typed.
+     */
+    val autoBetFavouriteExtraEv: Double = 0.01,
     /** The kinds of bet the auto-bet places ([BetKind]); every kind by default. A preset narrows it (Tj's game totals lose to the close: RESEARCH.md §65). */
     val autoBetKinds: Set<BetKind> = BetKind.entries.toSet(),
     /**
@@ -919,6 +924,9 @@ data class ScanSettings(
 
         /** [autoBetMinEv]'s choices (Tj, 2026-10-01: "+2%, +2.5, +3, +3.25, +3.5, +3.75, +4, plus an option to manually type in an amount"). */
         val AUTO_BET_MIN_EV_CHOICES = listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04)
+
+        /** [autoBetFavouriteExtraEv]'s choices (probability points above the minimum edge; 0 = none). */
+        val AUTO_BET_FAVOURITE_EV_CHOICES = listOf(0.0, 0.005, 0.01, 0.015, 0.02)
 
         /** The leagues the burst recorder can watch (Novig's league names): the ones with a game clock whose lines Novig lists as a moneyline, spreads and totals. */
         val BURST_LEAGUES = listOf("NFL", "NCAAF", "NBA", "WNBA", "NHL", "MLB")

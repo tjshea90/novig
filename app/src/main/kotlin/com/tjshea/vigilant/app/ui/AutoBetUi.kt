@@ -63,7 +63,19 @@ object AutoBetText {
     fun minOddsLabel(minOdds: Int): String = when {
         minOdds == 0 -> "No limit"
         minOdds < 0 -> "−${-minOdds}"
-        else -> "+$minOdds or longer"
+        else -> "+$minOdds or longer (plus money only)"
+    }
+
+    /** "None", "+1.0 point": the choices for the extra edge a favorite needs. */
+    fun favouriteEvLabel(extra: Double): String = if (extra <= 1e-9) "None" else "+" + trim(extra * 100) + (if (abs(extra * 100 - 1.0) < 1e-9) " point" else " points")
+
+    /** What the favorite bar does at [s]'s settings. */
+    fun favouriteNote(s: ScanSettings): String {
+        val extra = s.autoBetFavouriteExtraEv
+        if (extra <= 1e-9) return "Off: a favorite needs the same edge as any other bet."
+        val bar = s.autoBetMinEv + extra
+        return "A favorite (odds shorter than even money, −101 or shorter) needs ${evLabel(bar)} or more, ${trim(extra * 100)} more than the ${evLabel(s.autoBetMinEv)} minimum. " +
+            "In the first three days of data the edge a bet kept to the close fell as the price got shorter."
     }
 
     /** What each stake choice means, for the confirm and the hint. */
@@ -364,6 +376,10 @@ fun AutoBetSection(
         style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("autoBetMaxOddsHint"),
     )
     Shadowed.autoBetOdds(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetOddsShadowed")) }
+    Text("Extra edge a favorite needs", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.AUTO_BET_FAVOURITE_EV_CHOICES, s.autoBetFavouriteExtraEv, AutoBetText::favouriteEvLabel, equal = { a, b -> abs(a - b) < 1e-9 }) { v -> onUpdate { it.copy(autoBetFavouriteExtraEv = v) } }
+    TypedNumberField(NumberSpecs.percent("extra edge for favorites", 0.0, 20.0), AutoBetText.trim(s.autoBetFavouriteExtraEv * 100), "autoBetFavouriteEvField") { v -> onUpdate { it.copy(autoBetFavouriteExtraEv = v / 100.0) } }
+    Text(AutoBetText.favouriteNote(s), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("autoBetFavouriteNote"))
     Text("Shortest odds to bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_MIN_ODDS_CHOICES, s.autoBetMinOdds, AutoBetText::minOddsLabel) { v -> onUpdate { it.copy(autoBetMinOdds = v) } }
     TypedNumberField(NumberSpecs.SHORTEST_ODDS, oddsShown(s.autoBetMinOdds), "autoBetMinOddsField") { v -> onUpdate { it.copy(autoBetMinOdds = v.toInt()) } }
