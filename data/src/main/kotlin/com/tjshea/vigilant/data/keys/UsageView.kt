@@ -61,12 +61,14 @@ object UsageViews {
     fun build(policy: QuotaPolicy, keys: List<String>, usage: ProviderUsage?, now: Long, pace: CreditPace? = null): ProviderView {
         val today = QuotaPolicy.NOVIG.periodStart(now)
         val fresh = usage?.takeIf { it.dayStart == today }
-        var activeFound = false
+        val rolled = keys.map { policy.roll(usage?.keys?.get(it) ?: KeyUsage(), now) }
+        // The key the next call goes to: the first that can pay and keep its day's share or closing-lines reserve ([CreditPace]); with every
+        // key held back, the first that still has credits (closing lines and the like read it).
+        val firstScan = rolled.indexOfFirst { !it.refused && policy.usable(it, 1 + (pace?.floor(it, now) ?: 0), now) }
+        val activeIndex = if (firstScan >= 0) firstScan else rolled.indexOfFirst { !it.refused && policy.usable(it, 1, now) }
         val rows = keys.mapIndexed { i, key ->
-            val u = policy.roll(usage?.keys?.get(key) ?: KeyUsage(), now)
+            val u = rolled[i]
             val usable = policy.usable(u, 1, now)
-            // The key the next scan call goes to: the first that can pay and keep its day's share or closing-lines reserve ([CreditPace]).
-            val scanUsable = usable && (pace == null || policy.usable(u, 1 + pace.floor(u, now), now))
             val minuteFull = policy.perMinute?.let { cap -> u.recent.count { now - it < UsageMeter.MINUTE } >= cap } ?: false
             val state = when {
                 u.refused -> KeyState.REFUSED
@@ -94,11 +96,10 @@ object UsageViews {
                 serverReported = u.remaining != null,
             )
         }
-        // Paced: what today's scans may still spend, over the keys a scan could use (known plans only; a free one isn't used by scans).
-        val live = keys.map { policy.roll(usage?.keys?.get(it) ?: KeyUsage(), now) }.filter { !it.refused }
-        val freeOnly = pace != null && live.isNotEmpty() && live.all { pace.isFree(it) }
-        val share = if (pace == null || freeOnly || live.none { it.limit != null }) null
-        else live.filter { it.limit != null && !pace.isFree(it) }.sumOf { pace.spendableToday(it, now) }
+        // Paced: what today's scans may still spend, over the keys a scan could use (known plans only): a paid key's day share, a free key down to its reserve.
+        val live = rolled.filter { !it.refused }
+        val share = if (pace == null || live.none { it.limit != null }) null
+        else live.filter { it.limit != null }.sumOf { pace.spendableToday(it, now) }
         val serverResets = live.mapNotNull { it.resetAtMs }
         val serverStarts = live.filter { it.resetAtMs != null }.map { it.periodStart }
         val lefts = rows.filter { it.state != KeyState.REFUSED }.map { it.left }
@@ -115,7 +116,6 @@ object UsageViews {
             throttledToday = fresh?.throttledToday ?: 0,
             lastThrottleMs = usage?.lastThrottleMs,
             scanShareToday = share,
-            scansFreeOnly = freeOnly,
         )
     }
 }
