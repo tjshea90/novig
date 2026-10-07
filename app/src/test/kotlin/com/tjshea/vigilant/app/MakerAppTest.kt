@@ -175,6 +175,29 @@ class MakerAppTest {
     }
 
     @Test
+    fun `a pass takes down the bid on a player who turns out to be out and posts nothing new on him (Tj, 2026-10-07 - "it says Allisha is out ... yet the auto bid feature offered bids on her")`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        runner(novig).run("test")!!
+        val up = novig.orders.values.filter { it.status == "OPEN" }.map { it.outcomeId }.toSet()
+        // A prop among the bids up (the sample scan's props are in the sports the injury reports cover).
+        val props = SampleScan.result().opportunities.filter { it.outcome.outcomeId in up && com.tjshea.vigilant.data.reference.InjuryTags.wantOf(it) != null }
+        assertTrue("a prop among the bids: ${novig.placed}", props.isNotEmpty())
+        val victim = props.first()
+        val want = com.tjshea.vigilant.data.reference.InjuryTags.wantOf(victim)!!
+        val postedOnHim = novig.placed.count { it.startsWith(victim.outcome.outcomeId + " ") }
+        // The report arrives: he's out. The next pass takes his bid down, with the reason, and never posts on him again.
+        app.container.injuries.record(want.sportKey, listOf(com.tjshea.vigilant.data.reference.Injury(want.player, "Out")))
+        runner(novig).run("test")!!
+        runner(novig).run("test")!!
+        assertTrue("his bid is down: ${novig.orders.values.filter { it.outcomeId == victim.outcome.outcomeId }}", novig.orders.values.filter { it.outcomeId == victim.outcome.outcomeId }.none { it.status == "OPEN" })
+        assertEquals("nothing new on him", postedOnHim, novig.placed.count { it.startsWith(victim.outcome.outcomeId + " ") })
+        assertTrue(app.container.makerStore.read().any { it.outcomeId == victim.outcome.outcomeId && it.why?.startsWith("The player is out (") == true })
+        // The other bids are untouched.
+        assertTrue(novig.orders.values.any { it.status == "OPEN" })
+    }
+
+    @Test
     fun `fully automatic posts while a scan is still running, not only at its end (Tj, 2026-10-03 - "it didn't actually make any bids by itself")`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
