@@ -129,13 +129,17 @@ data class ScanSettings(
      * default), $1, the bet's Kelly stake, or [slipCustomStake].
      */
     val slipStake: SlipStake = SlipStake.OFF,
-    /** The dollars "My amount" ([SlipStake.CUSTOM]) fills in. */
+    /**
+     * The dollars "My amount" ([SlipStake.CUSTOM]) fills in, and (Tj, 2026-10-07: "redundant … settings") the one amount the Bet sheet starts from when the choice has none for a bet
+     * (Off, or Kelly with no edge at the price): it replaced the Bet sheet's own amount [apiBetStake], which said the same thing in a second place.
+     */
     val slipCustomStake: Double = 5.0,
     /**
      * Betting through Novig's API (Tj, 2026-09-29): the amount the Bet sheet starts with, the most one bet may be, the most a day's API bets
      * may add up to (the device's day). A bet placed by hand has no minimum edge (Tj, 2026-10-02); `apiMinEv`, which once set one, was removed in v0.46.0
      * (an old settings file that still has it reads fine: unknown keys are ignored).
      */
+    /** Retired in v0.71.0: [slipCustomStake] is the one amount ([migrate] carries a saved value over); nothing reads or shows this any more. */
     val apiBetStake: Double = 5.0,
     val apiMaxStake: Double = 10.0,
     val apiMaxPerDay: Double = 50.0,
@@ -671,6 +675,12 @@ data class ScanSettings(
         // v0.38.0 (Tj, 2026-10-01): the auto-scan interval is in seconds so 15 s, 30 s and 1 min fit; a saved file's minutes carry over.
         if (s.schema < 12) {
             s = s.copy(autoScanSeconds = s.autoScanMinutes.coerceAtLeast(1) * 60, schema = 12)
+        }
+        // v0.71.0 (Tj, 2026-10-07: "redundant … settings"): the Bet sheet's own starting amount and "My amount" were one number in two places; with the choice Off or Kelly the
+        // sheet's amount was the one in use, so it moves to "My amount" (with $1 or My amount chosen, the saved "My amount" already was the one).
+        if (s.schema < 13) {
+            val sheetOwn = s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.OFF || s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.KELLY
+            s = s.copy(slipCustomStake = if (sheetOwn) s.apiBetStake else s.slipCustomStake, schema = 13)
         }
         return s
     }

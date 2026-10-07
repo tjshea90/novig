@@ -252,7 +252,7 @@ object Diagnostics {
         )
         o.appendLine(
             "Betting through the API: ${if (s.betting.enabled) "on" else "off"}" + (s.betting.balance?.let { String.format(Locale.US, " · wallet $%.2f", it) } ?: "") +
-                " · amount $${money(set.apiBetStake)}, most per bet $${money(set.apiMaxStake)}, most per day $${money(set.apiMaxPerDay)}, most on one game ${if (set.apiMaxPerGame > 0.0) "$" + money(set.apiMaxPerGame) else "no limit"}, no minimum edge by hand (auto-bet has its own)",
+                " · amount $${money(set.slipCustomStake)}, most per bet $${money(set.apiMaxStake)}, most per day $${money(set.apiMaxPerDay)}, most on one game ${if (set.apiMaxPerGame > 0.0) "$" + money(set.apiMaxPerGame) else "no limit"}, no minimum edge by hand (auto-bet has its own)",
         )
         o.appendLine(
             "Novig key: ${if (s.novig.connection != null) "connected" else "not connected"} · management key " +

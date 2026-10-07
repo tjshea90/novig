@@ -101,7 +101,7 @@ object BetAmount {
     /**
      * The amount a bet's sheet starts from before the wallet has its say, and why (Tj, 2026-10-01: "Make sure it enters the Kelley value if I
      * select it"): with Kelly chosen for bet slips, the bet's own Kelly stake ([kelly], worked out for its odds and edge) to the cent within
-     * [ScanSettings.apiMaxStake]; with "My amount", that amount; with $1, $1; otherwise (no amount for the slip) Settings' Bet sheet amount ([ScanSettings.apiBetStake]).
+     * [ScanSettings.apiMaxStake]; with "My amount", that amount; with $1, $1; otherwise (no amount for the slip) Settings' "My amount" ([ScanSettings.slipCustomStake]), the one amount.
      */
     fun base(settings: com.tjshea.vigilant.data.scanner.ScanSettings, kelly: Double?): Pair<Double, String?> {
         val max = settings.apiMaxStake
@@ -110,7 +110,7 @@ object BetAmount {
             com.tjshea.vigilant.data.novig.SlipStake.KELLY -> {
                 val k = kelly?.takeIf { it > 0 }?.let { kotlin.math.round(it * 100.0) / 100.0 }?.coerceAtLeast(0.01)
                 when {
-                    k == null -> settings.apiBetStake.coerceIn(0.01, max) to "No Kelly stake for this bet (no edge at this price): Settings' amount instead"
+                    k == null -> settings.slipCustomStake.coerceIn(0.01, max) to "No Kelly stake for this bet (no edge at this price): Settings' amount instead"
                     k > max + 1e-9 -> max to "Kelly says ${money(k)}: held to your ${money(max)} limit per bet"
                     else -> k to "${com.tjshea.vigilant.app.ui.Format.kellyLabel(settings.kellyMultiplier)} of your ${money(settings.bankroll)} bankroll at this bet's odds"
                 }
@@ -118,7 +118,7 @@ object BetAmount {
             com.tjshea.vigilant.data.novig.SlipStake.CUSTOM -> settings.slipCustomStake.coerceIn(0.01, max) to "Your bet slip amount (Settings)"
             // $1 for the bet slip is $1 here too (2026-10-02 ~18:10Z: the sheet used to start at its own amount while the slip said $1).
             com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR -> 1.0.coerceIn(0.01, max) to null
-            else -> settings.apiBetStake.coerceIn(0.01, max) to null
+            else -> settings.slipCustomStake.coerceIn(0.01, max) to null
         }
     }
 
