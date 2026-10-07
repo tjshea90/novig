@@ -135,6 +135,7 @@ object SettingsIndex {
         // The Bids tab (make orders)
         Entry("Fully automatic", null, "Bids: off, recommend each one, or post them by themselves", "bids make orders maker post auto-make recommend", novig, bids = true),
         Entry("Under the fair", null, "How far under the fair each bid is posted (its EV): 2% to 4%, or type your own", "bids maker margin edge ev type custom number 2% 2.5%", novig, bids = true),
+        Entry("Bids priced from", null, "Vigilant's scan (as always) or CrazyNinjaOdds alone, with Vigilant's scan off; how old CNO's data may be for a bid to rest on it", "bids maker source cno crazyninja crazy ninja odds scanner vigilant scan off only age stale data seconds", novig, bids = true),
         Entry("Which bids go up", null, "All bids, Quick & likely to win (no strange props or small markets), or Low API usage", "bids maker focus quick likely low api usage kinds", novig, bids = true),
         Entry("Most one bid may cost", null, "The most any one bid may stake", "bids maker max stake", novig, bids = true),
         Entry("Size of each bid", null, "Kelly, \$1 or your amount per bid", "bids maker stake kelly amount", novig, bids = true),

@@ -674,4 +674,68 @@ class MakerUiTest {
         assertEquals(null, s.makerHalted)
         assertTrue(s.makerGuardFromMs >= before)
     }
+
+    // ---- bids priced from CrazyNinjaOdds (Tj, 2026-10-07; RESEARCH.md §114) ------------------------------------------------------
+
+    private val cnoSettings = settings.copy(makerSource = com.tjshea.vigilant.data.scanner.BidSource.CNO, scanner = ScannerMode.CNO, autoScan = AutoScanMode.CNO)
+
+    private fun cnoUi(s: ScanSettings = cnoSettings, lane: com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status? = com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status(
+        lastStepMs = now - 5_000, rows = 120, candidates = 40, pages = 12, pagesRead = 3, listAgeSec = 14, oldestPageSec = 41,
+    )) = ui(s).copy(cno = lane)
+
+    @Test
+    fun `the rules pick where bids are priced from - Vigilant's scan by default, CrazyNinjaOdds alone with an age limit, and no Low API usage choice`() {
+        var s = settings
+        compose.setContent { VigilantTheme { MakerScreen(ui(s), MakerActions(onUpdate = { f -> s = f(s) })) } }
+        compose.onNodeWithTag("makerRulesToggle").performClick()
+        compose.onNodeWithTag("makerSourceNote").assertTextContains("Vigilant's own scan prices every bid", substring = true)
+        compose.onNodeWithText("CrazyNinjaOdds").performScrollTo().performClick()
+        assertEquals(com.tjshea.vigilant.data.scanner.BidSource.CNO, s.makerSource)
+        // Nothing else was changed by the choice itself (the switch turns on what bids need; this doesn't touch the scanner).
+        assertEquals(settings.scanner, s.scanner)
+        assertEquals(settings.makerCnoMaxAgeSeconds, s.makerCnoMaxAgeSeconds)
+        assertEquals(ScanSettings().makerSource, com.tjshea.vigilant.data.scanner.BidSource.VIGILANT)
+    }
+
+    @Test
+    fun `with CrazyNinjaOdds chosen the tab says what it reads, its age limit is a choice, and Low API usage is not offered`() {
+        var s = cnoSettings
+        compose.setContent { VigilantTheme { MakerScreen(cnoUi(s), MakerActions(onUpdate = { f -> s = f(s) })) } }
+        compose.onNodeWithTag("makerRulesToggle").performClick()
+        compose.onNodeWithTag("makerSourceNote").assertTextContains("Vigilant's scan is not used", substring = true)
+        compose.onNodeWithTag("makerSourceNote").assertTextContains("under 120 s old", substring = true)
+        compose.onNodeWithText("Low API usage").assertDoesNotExist()
+        compose.onNodeWithText("60 s").performScrollTo().performClick()
+        assertEquals(60, s.makerCnoMaxAgeSeconds)
+        compose.onNodeWithTag("makerCnoLine").assertTextContains("its list 14 s old", substring = true)
+        compose.onNodeWithTag("makerCnoLine").assertTextContains("12 game pages held, the oldest line's data 41 s old", substring = true)
+        compose.onNodeWithTag("makerCnoLine").assertTextContains("limit 120 s", substring = true)
+        compose.onNodeWithTag("makerCnoStop").assertDoesNotExist()
+        assertTrue(MakerRulesText.summary(cnoSettings).startsWith("priced from CrazyNinjaOdds (data under 120 s old) · "))
+        // Vigilant's summary is what it was.
+        assertFalse(MakerRulesText.summary(settings).contains("CrazyNinjaOdds"))
+    }
+
+    @Test
+    fun `when the lane stops the bids, the tab says why - and says nothing about it when bids are off or priced from Vigilant's scan`() {
+        val stop = com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status(stop = "CrazyNinjaOdds asked for a pause (busy): bids priced from it come down")
+        compose.setContent { VigilantTheme { MakerScreen(cnoUi(lane = stop), MakerActions()) } }
+        compose.onNodeWithTag("makerCnoStop").assertTextContains("asked for a pause", substring = true)
+        compose.onNodeWithTag("makerCnoLine").assertTextContains("its list not read yet", substring = true)
+        compose.onNodeWithTag("makerCnoLine").assertTextContains("no game page read yet", substring = true)
+    }
+
+    @Test
+    fun `bids off with CrazyNinjaOdds chosen and its scanner off - the tab says what picking a mode turns on`() {
+        val off = cnoSettings.copy(maker = false, makerRecommend = false, scanner = ScannerMode.VIGILANT)
+        compose.setContent { VigilantTheme { MakerScreen(cnoUi(off).copy(vigilantOn = true), MakerActions()) } }
+        compose.onNodeWithText(MakerText.NEEDS_CNO, substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `the Next to post caption names CrazyNinjaOdds, not a scan`() {
+        compose.setContent { VigilantTheme { MakerScreen(cnoUi(), MakerActions()) } }
+        compose.onNodeWithText("From CrazyNinjaOdds' list", substring = true).assertExists()
+        compose.onNodeWithText("No Vigilant scan yet", substring = true).assertDoesNotExist()
+    }
 }
