@@ -39,8 +39,15 @@ class CnoPageTest {
     /** The real dropdowns (read live 2026-10-07, test resource): the form keeps each one's options, and the app's league table has the page's own ids (DI5, RESEARCH.md 85). */
     @Test
     fun `the form keeps the real Sport and League dropdowns' options, and the app's table matches them id for id`() {
-        val html = javaClass.getResource("/cno-page-selects.html")!!.readText()
-        val form = CnoPage.form(html)
+        // The fixture page with its two dropdowns swapped for the live ones.
+        val real = Regex("<select[^>]*?(?:DropDownListSport|DropDownListLeague)\"[^>]*>.*?</select>", RegexOption.DOT_MATCHES_ALL)
+            .findAll(javaClass.getResource("/cno-page-selects.html")!!.readText()).map { it.value }.toList()
+        assertEquals(2, real.size)
+        val ours = Regex("<select[^>]*?(?:DropDownListSport|DropDownListLeague)\"[^>]*>.*?</select>", RegexOption.DOT_MATCHES_ALL)
+        val fixture = CnoFixtures.page()
+        assertEquals(2, ours.findAll(fixture).count())
+        var n = 0
+        val form = CnoPage.form(ours.replace(fixture) { real[n++] })
         assertTrue(form.hasSelect("DropDownListSport"))
         assertTrue(form.hasSelect("DropDownListLeague"))
         assertFalse(form.hasSelect("DropDownListNothing"))
