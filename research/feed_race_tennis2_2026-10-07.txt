@@ -1,0 +1,38 @@
+3191 score records from 2 feeds (poly, sofa); 3303 Novig trades; 273 games
+1709 new scores seen live; 59 seen by two or more feeds
+
+HOW FAR BEHIND THE EARLIEST FEED (s; 0 = it was first) over the scores two or more feeds saw
+  feed     scores  first   median     p25     p75     p90     max
+  sofa         59     45      0.0     0.0     0.0     7.0    15.5
+  poly         59     14      6.7     0.2    21.9    93.6  1182.3
+
+AGAINST NOVIG (moneyline moved 0.03+ from its median of the 30 s before; M - feed > 0 = the feed showed the score BEFORE Novig moved)
+  91 scores on games Novig traded; 13 moved the moneyline
+  Polymarket ODDS (CLOB socket): 620448 quotes; of those 13 Novig moves, 4 had a Polymarket mid that also moved 0.03+
+    Novig move minus Polymarket move (>0: Polymarket odds moved FIRST): before 4 of 4, by 3s+ 4, median 31.8 p10 20.9 p90 97.1
+    Polymarket mid move minus the first score feed (s; its reaction time to the score): median 9.4 p10 -15.0 p90 34.0
+  feed     scores  before  by 3s+   median     p10     p90
+  poly          2       1       1     30.4   -21.0    81.9
+  sofa         13      11      10     27.3    -9.6    64.3
+
+  STALE FILLS A TAKER COULD HAVE HAD at each feed's time (what really traded at the old price after the feed showed the score, before the market settled;
+  a floor on the opportunity: only fills that happened; net of the in-play taker fee; payout dollars = contracts / 100):
+  feed      trades   payout $  net gain $
+  sofa           4    2704.01      260.22
+  poly           0       0.00        0.00
+
+  per score (UTC, game, score, Novig move, then each feed: its time minus the first feed, and M - feed):
+    11:06:27 Mattia Bellucc v Yi Zhou 100-100 move -0.09  sofa:+0.0/+1.1
+    11:11:30 Mattia Bellucc v Yi Zhou 101-100 move +0.08  sofa:+0.0/-9.8
+    11:12:40 Fiona Crawley v Oksana Selekhm 200-200 move -0.05  sofa:+0.0/-9.6
+    11:31:40 Mattia Bellucc v Yi Zhou 104-102 move +0.03  sofa:+0.0/+64.3
+    11:36:22 Fiona Crawley v Oksana Selekhm 203-201 move -0.06  sofa:+0.0/+27.3
+    11:56:45 Mattia Bellucc v Yi Zhou 201-200 move +0.05  sofa:+0.0/+62.9
+    12:06:08 Alina Charaeva v Qinwen Zheng 103-101 move -0.06  sofa:+0.0/+62.0
+    12:17:06 Alina Charaeva v Qinwen Zheng 104-102 move -0.03  sofa:+0.0/+54.8
+    12:28:30 Polina Iatcenk v Dalma Galfi 4-2 move -0.03  poly:+24.2/-21.0 sofa:+0.0/+3.2
+    12:34:48 Mattia Bellucc v Yi Zhou 205-204 move -0.04  sofa:+0.0/+15.8
+    12:43:20 Arthur Fery v Marin Čilić 2-4 move -0.04  poly:+0.3/+81.9 sofa:+0.0/+82.1
+    12:49:21 Mattia Bellucc v Yi Zhou 206-206 move -0.12  sofa:+0.0/+50.8
+    12:55:51 Alina Charaeva v Qinwen Zheng 201-203 move -0.04  sofa:+0.0/+20.4
+request round trip (s): sofa median 0.28
