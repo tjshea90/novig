@@ -68,6 +68,20 @@ object TrapGuard {
     /** Whether [startsAtMs] is past the guard's window at [now] (the cards' and Bids tab's note). */
     fun isEarly(startsAtMs: Long?, now: Long, hours: Int): Boolean = early(startsAtMs, now, hours) != null
 
+    /**
+     * Why a bet first listed at [firstListedMs] is left alone although its game is inside the window now, or null (Tj, 2026-10-07, proposal 2 of the v0.70.1 analysis): its listing
+     * is older than [hours] before the start ([FirstListed]). Bets already listed that long before the start which later enter the window closed at about +0.07% against
+     * +1.29% for ones first listed inside it. Null with no first-listed time (never seen, so no evidence it is old), no start, or the guard off (hours 0).
+     */
+    fun listedEarly(startsAtMs: Long?, firstListedMs: Long?, hours: Int): String? {
+        if (hours <= 0 || startsAtMs == null || firstListedMs == null || firstListedMs <= 0L) return null
+        if (startsAtMs - firstListedMs <= hours * 3_600_000L) return null
+        return listedEarlyReason(hours)
+    }
+
+    /** [listedEarly]'s words for [hours] (one wording per setting, so the auto-bet's report counts them together). */
+    fun listedEarlyReason(hours: Int): String = "it was already listed more than $hours h before the start (trap guard: bets that old close no better than the market)"
+
     /** The kinds of bet the move rule is for: full-game moneylines, spreads and totals. */
     val MOVE_KINDS = setOf(BetKind.MONEYLINE, BetKind.SPREAD, BetKind.TOTAL)
 

@@ -407,6 +407,12 @@ data class ScanSettings(
      * 15 min, isn't bet.
      */
     val trapNovigMove: Boolean = true,
+    /**
+     * The trap guard's third rule ([TrapGuard.listedEarly], Tj, 2026-10-07: "remember a bet's first-listed time"): the auto-bet and the alerts also leave alone a bet that was
+     * already listed more than [trapEarlyHours] before the start, even once its game is inside the window ([FirstListed] remembers when each bet was first seen). Shares the hours
+     * above; off when they are off.
+     */
+    val trapFirstListed: Boolean = true,
     /** Tj's own presets (Tj, 2026-10-02: "make it so I can make my own settings presets"), beside the built-in ones ([Presets]). */
     val presets: List<SavedPreset> = emptyList(),
     /** The preset applied last (a built-in's or one of [presets]' names), null = none; recorded on each bet ([com.tjshea.vigilant.data.tracker.AtBet]). */
