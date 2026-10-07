@@ -374,6 +374,23 @@ data class ScanSettings(
      * player's prop, an alternate line) and gets no bid. [MAKER_QUICK_MIN_BOOKS_CHOICES], or typed; 5 by default (a quarter of the study's props were priced by 5 books or fewer).
      */
     val makerQuickMinBooks: Int = 5,
+    /**
+     * Fill the money the popular bids leave idle with small markets too, under strict safeguards (Tj, 2026-10-07: "If auto bid feature can't find enough bids that are popular, include
+     * obscure bids as well, up to the max amount of money that I selected or that is in the wallet. But prioritize the bids, popular large markets most likely to get a taker first, then
+     * if there is room, obscure bids. But there must be strict safeguards on obscure bids, such as sharp markets must agree and/or the positive EV must be a good margin"). Only with
+     * "Quick & likely" ([QuickLikely]); the popular bids always go up first and a small-market bid comes down to make room for one ([MakerPlan.MADE_ROOM]).
+     */
+    val makerObscureFill: Boolean = true,
+    /** A small-market bid is posted at least this far under the fair (never under the normal [makerMargin]): a wider margin pays for the thinner market. [MAKER_OBSCURE_MARGIN_CHOICES], or typed. */
+    val makerObscureMargin: Double = 0.06,
+    /** Every sharp book's own fair must give a small-market bid at least this edge on its own (the normal sharp veto is [sharpVetoMinEv]). [MAKER_OBSCURE_SHARP_MIN_EV_CHOICES], or typed. */
+    val makerObscureSharpMinEv: Double = 0.03,
+    /** The sharp books' fairs and Vigilant's blend must sit within this many probability points of each other for a small-market bid ("sharp markets must agree"). */
+    val makerObscureAgreePoints: Double = 0.02,
+    /** A small-market line needs at least this many books pricing it (a line one or two books price never gets a bid). */
+    val makerObscureMinBooks: Int = 3,
+    /** A small-market bid stakes this share of what a popular bid would (0.5 = half). */
+    val makerObscureStake: Double = 0.5,
     /** Bid both sides of a market (both filling locks in the two margins) or only the side with the better EV per bid. */
     val makerBothSides: Boolean = true,
     /** The fewest books behind the fair price for a bid to be posted. */
@@ -976,6 +993,21 @@ data class ScanSettings(
 
         /** The shortest-odds chips every odds setting shares (0 = no limit; negative = nothing shorter than it; +100 = underdogs and even money only); any other value is typed. */
         val SHORTEST_ODDS_CHOICES = listOf(0, -300, -250, -200, -150, 100)
+
+        /** [makerObscureMargin]'s chips. */
+        val MAKER_OBSCURE_MARGIN_CHOICES = listOf(0.04, 0.05, 0.06, 0.08, 0.10)
+
+        /** [makerObscureSharpMinEv]'s chips. */
+        val MAKER_OBSCURE_SHARP_MIN_EV_CHOICES = listOf(0.02, 0.03, 0.04, 0.05)
+
+        /** [makerObscureAgreePoints]' chips (probability, 0.02 = 2 points). */
+        val MAKER_OBSCURE_AGREE_CHOICES = listOf(0.01, 0.02, 0.03, 0.05)
+
+        /** [makerObscureMinBooks]' chips. */
+        val MAKER_OBSCURE_MIN_BOOKS_CHOICES = listOf(2, 3, 4, 5)
+
+        /** [makerObscureStake]'s chips (share of a popular bid's stake). */
+        val MAKER_OBSCURE_STAKE_CHOICES = listOf(0.25, 0.5, 0.75, 1.0)
 
         /** [makerQuickMinBooks]' chips. */
         val MAKER_QUICK_MIN_BOOKS_CHOICES = listOf(3, 4, 5, 6, 8)

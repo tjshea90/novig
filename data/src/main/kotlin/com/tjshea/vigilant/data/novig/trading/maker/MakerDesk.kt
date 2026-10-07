@@ -120,6 +120,8 @@ data class MakerBid(
     val fairBooks: List<String> = emptyList(),
     val fairAgeSec: Int? = null,
     val fairNewestAgeSec: Int? = null,
+    /** A small-market bid ([MakerRules.obscureFill]; Tj, 2026-10-07): Diagnostics and the Bids tab split bids and fills by it. */
+    val obscure: Boolean = false,
 ) {
     val active: Boolean get() = !status.ended
 
@@ -370,7 +372,7 @@ class MakerDesk(
 
     private fun restingBid(it: MakerBid) = RestingBid(
         it.orderId!!, it.marketId, it.outcomeId, it.price, (it.contracts - it.filled).coerceAtLeast(0), it.filled, it.expiresAtMs,
-        auto = it.auto, evAtFair = it.evAtFair, leads = it.bestBidAtPost.let { b -> b == null || b < it.price - 1e-9 },
+        auto = it.auto, evAtFair = it.evAtFair, leads = it.bestBidAtPost.let { b -> b == null || b < it.price - 1e-9 }, obscure = it.obscure,
         game = GameRef(it.eventId, it.eventName, it.startsTs, it.league),
     )
 
@@ -490,11 +492,11 @@ class MakerDesk(
             league = line.league, eventName = line.eventName, startsTs = line.startsTs, marketLabel = line.marketLabel, selection = line.selection,
             kind = line.kind, price = post.price, contracts = post.contracts, fair = post.anchorFair ?: line.fair ?: post.price, evAtFair = post.evAtFair,
             blendFair = line.fair, sharpFairAtPost = line.sharpFairs.minOrNull(),
-            margin = rules.margin, books = line.books, source = line.source, gameUrl = line.gameUrl, fairBasis = line.basis, postedAtMs = now,
+            margin = if (post.obscure) maxOf(rules.margin, rules.obscureMargin) else rules.margin, books = line.books, source = line.source, gameUrl = line.gameUrl, fairBasis = line.basis, postedAtMs = now,
             // Never past what it was priced from ([MakerDecision.Post.restUntilMs]: the expiry, the fair's freshness, the stop window before the start).
             expiresAtMs = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, post.restUntilMs), auto = auto,
             bestBidAtPost = line.bestBid, offerAtPost = line.offer, bookAtMs = line.bookAtMs,
-            focus = rules.focus, fairBooks = line.fairBooks,
+            focus = rules.focus, fairBooks = line.fairBooks, obscure = post.obscure,
             fairAgeSec = line.fairAsOfMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() }, fairNewestAgeSec = line.fairNewestMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() },
         )
         val ttl = bid.expiresAtMs!! - now

@@ -114,6 +114,17 @@ data class MakerRules(
     val popularOnly: Boolean = false,
     /** A line priced by fewer books than this is a small market and gets no bid ([ScanSettings.makerQuickMinBooks]; 0 = off). */
     val minLineBooks: Int = 0,
+    /**
+     * Small-market fill ([ScanSettings.makerObscureFill]): a line that fails ONLY the popularity filters above ([smallMarketReason]) is not skipped but becomes a "small-market bid" with
+     * its own, stricter checks (a margin of at least [obscureMargin], every sharp fair giving at least [obscureSharpMinEv], the sharp fairs and the blend within [obscureAgreePoints],
+     * at least [obscureMinBooks] books, a stake of [obscureStake] of the normal one). Every other rule still binds it. Off by default; [MakerRules.of] turns it on with Quick & likely.
+     */
+    val obscureFill: Boolean = false,
+    val obscureMargin: Double = 0.06,
+    val obscureSharpMinEv: Double = 0.03,
+    val obscureAgreePoints: Double = 0.02,
+    val obscureMinBooks: Int = 3,
+    val obscureStake: Double = 0.5,
     /** Which "Which bids go up" choice these rules are ([com.tjshea.vigilant.data.scanner.BidFocus] name): written on every bid, so Diagnostics can split the bids by it. */
     val focus: String = com.tjshea.vigilant.data.scanner.BidFocus.ALL.name,
 ) {
@@ -139,7 +150,11 @@ data class MakerRules(
         fun of(s: ScanSettings): MakerRules = base(s).let { r ->
             when {
                 LowUsage.on(s) -> LowUsage.narrow(r, s).copy(focus = s.makerFocus.name)
-                QuickLikely.on(s) -> QuickLikely.narrow(r, s.makerQuickMinBooks).copy(focus = s.makerFocus.name)
+                QuickLikely.on(s) -> QuickLikely.narrow(r, s.makerQuickMinBooks).copy(
+                    focus = s.makerFocus.name, obscureFill = s.makerObscureFill, obscureMargin = s.makerObscureMargin.coerceIn(0.005, 0.5),
+                    obscureSharpMinEv = s.makerObscureSharpMinEv.coerceIn(0.0, 0.2), obscureAgreePoints = s.makerObscureAgreePoints.coerceIn(0.0, 0.2),
+                    obscureMinBooks = s.makerObscureMinBooks.coerceAtLeast(1), obscureStake = s.makerObscureStake.coerceIn(0.05, 1.0),
+                )
                 else -> r.copy(focus = s.makerFocus.name)
             }
         }
@@ -381,6 +396,8 @@ sealed interface MakerDecision {
         val restUntilMs: Long = Long.MAX_VALUE,
         /** The fair the margin is under ([MakerRules.anchorOf]); null = the line's own fair. */
         val anchorFair: Double? = null,
+        /** A small-market bid ([MakerRules.obscureFill]): goes up only after every popular bid, and comes down to make room for one. */
+        val obscure: Boolean = false,
     ) : MakerDecision {
         val cost: Double get() = contracts * price * EvMath.CONTRACT_PAYOUT_DOLLARS
 
@@ -406,15 +423,18 @@ object MakerQuote {
      * (a post-only bid at or over it would be refused: that side is a bet to take now, the +EV feed's).
      */
     fun decide(line: MakerLine, rules: MakerRules, now: Long, held: Set<String> = emptySet()): MakerDecision {
+        var obscure = false
         val (blendPrice, until) = when (val pre = precheck(line, rules, now, held)) {
             is Pre.No -> return pre.skip
-            is Pre.Price -> pre.price to pre.until
+            is Pre.Price -> { obscure = pre.obscure; pre.price to pre.until }
         }
+        // A small-market bid is posted under a wider margin: never under the normal one.
+        val margin = if (obscure) maxOf(rules.margin, rules.obscureMargin) else rules.margin
         fun skip(why: String) = MakerDecision.Skip(line, why)
         val blend = line.fair!!
         // The margin is under the lower of the blend and the sharpest book's own fair (only lines with their books' fairs worked out get here: [MakerLines.from]).
         val fair = MakerRules.anchorOf(blend, line.sharpFairs, rules.anchorSharp)
-        val price = if (fair < blend - 1e-12) PriceGrid.floor(fair / (1.0 + rules.margin)) ?: return skip("The sharp book's price is too small to bid under") else blendPrice
+        val price = if (fair < blend - 1e-12) PriceGrid.floor(fair / (1.0 + margin)) ?: return skip("The sharp book's price is too small to bid under") else blendPrice
         outsideWindow(price, rules)?.let { return skip(it) }
         if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
         if (rules.requireSharp && line.sharpFairs.isEmpty()) return skip("No sharp book (Pinnacle, Circa, an exchange) prices this both ways, and a sharp book must agree (your setting)")
@@ -428,10 +448,24 @@ object MakerQuote {
                 return skip("A sharp book's own price gives this bid under the sharp veto's ${percent(rules.sharpMinEv)} edge")
             }
         }
-        val stake = stake(fair, price, rules) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
+        // The small-market safeguards (Tj, 2026-10-07: "sharp markets must agree and/or the positive EV must be a good margin"): a sharp book must price the line, every sharp book must give
+        // the bid a real edge on its own, and the sharp books and the blend must sit close together. Each says which one stopped the line.
+        if (obscure) {
+            if (line.sharpFairs.isEmpty()) return skip("A small market gets a bid only where a sharp book (Pinnacle, Circa, an exchange) prices the line both ways")
+            if (line.sharpFairs.any { it / price - 1.0 < rules.obscureSharpMinEv - 1e-9 }) {
+                return skip("A sharp book's own price gives this small-market bid under ${percent(rules.obscureSharpMinEv)} edge (small markets need more)")
+            }
+            val all = line.sharpFairs + blend
+            val spread = all.max() - all.min()
+            if (spread > rules.obscureAgreePoints + 1e-9) {
+                return skip("The sharp books and the blend are ${points(spread)} apart on this small-market line (they must be within ${points(rules.obscureAgreePoints)})")
+            }
+        }
+        val fullStake = stake(fair, price, rules) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
+        val stake = if (obscure) fullStake * rules.obscureStake else fullStake
         val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
         if (contracts < 1) return skip("The stake is too small for one contract")
-        return MakerDecision.Post(line, price, contracts, fair / price - 1.0, until, anchorFair = fair)
+        return MakerDecision.Post(line, price, contracts, fair / price - 1.0, until, anchorFair = fair, obscure = obscure)
     }
 
     /**
@@ -451,7 +485,7 @@ object MakerQuote {
     /** What [precheck] made of a line before the books are asked: no bid (why), or the bid's price and how long it may rest. */
     sealed interface Pre {
         data class No(val skip: MakerDecision.Skip) : Pre
-        data class Price(val price: Double, val until: Long) : Pre
+        data class Price(val price: Double, val until: Long, val obscure: Boolean = false) : Pre
     }
 
     /**
@@ -469,14 +503,13 @@ object MakerQuote {
         line.unavailable?.let { return skip(it) }
         if (line.market.status != "OPEN") return skip("Novig isn't taking orders on this market")
         if (line.kind !in rules.kinds) return skip("${line.kind.label} are off for bids")
-        if (rules.skipObscure && MarketPopularity.measuredObscure(line.league, line.market.marketType)) {
-            return skip("Takers rarely trade this kind of prop on Novig: a bid on it is unlikely to be filled")
-        }
-        if (rules.popularOnly && MarketPopularity.tier(line.league, line.market.marketType, line.books, rules.popularBooks) >= 2) {
-            return skip("A small or unusual market: takers rarely trade this kind of line, so a bid on it is unlikely to be filled quickly")
-        }
-        if (rules.minLineBooks > 0 && line.books < rules.minLineBooks) {
-            return skip("Only ${line.books} book${if (line.books == 1) "" else "s"} price this line (you need ${rules.minLineBooks}): a small market, unlikely to be filled quickly")
+        // The popularity filters: a line that fails one is skipped, or (small-market fill on) becomes a small-market bid under the stricter checks in [decide].
+        val smallMarket = smallMarketReason(line, rules)
+        if (smallMarket != null) {
+            if (!rules.obscureFill) return skip(smallMarket)
+            if (line.books < rules.obscureMinBooks) {
+                return skip("Only ${line.books} book${if (line.books == 1) "" else "s"} price this small-market line (a small-market bid needs ${rules.obscureMinBooks}): too thin to bid on")
+            }
         }
         if (rules.lowUsageBooks.isNotEmpty() && (line.fairBooks.size < LowUsage.MIN_BOOKS || line.fairBooks.any { it !in rules.lowUsageBooks })) {
             return skip(LowUsage.NOT_PRICED)
@@ -489,11 +522,25 @@ object MakerQuote {
         val until = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, seen + Freshness.maxAgeMs(line.startsTs, now))
         if (until - now < rules.minLifeMs) return skip("The fair price goes old within a minute: re-priced at the next scan")
         if (line.outcomeId in held) return skip("Already bet or bid on this side")
-        val price = PriceGrid.floor(fair / (1.0 + rules.margin)) ?: return skip("The fair price is too small to bid under")
+        val price = PriceGrid.floor(fair / (1.0 + (if (smallMarket != null) maxOf(rules.margin, rules.obscureMargin) else rules.margin))) ?: return skip("The fair price is too small to bid under")
         outsideWindow(price, rules)?.let { return skip(it) }
         val offer = line.offer
         if (offer != null && price >= offer - 1e-9) return skip("Novig already offers it at ${percent(offer)}, at or under this bid: take it instead")
-        return Pre.Price(price, until)
+        return Pre.Price(price, until, obscure = smallMarket != null)
+    }
+
+    /**
+     * Why [line] is a small market under the popularity filters ([MakerRules.skipObscure], [MakerRules.popularOnly], [MakerRules.minLineBooks]), or null when it passes all of them. Without
+     * [MakerRules.obscureFill] this is the reason a line gets no bid; with it, the line is a small-market bid under the stricter checks.
+     */
+    fun smallMarketReason(line: MakerLine, rules: MakerRules): String? = when {
+        rules.skipObscure && MarketPopularity.measuredObscure(line.league, line.market.marketType) ->
+            "Takers rarely trade this kind of prop on Novig: a bid on it is unlikely to be filled"
+        rules.popularOnly && MarketPopularity.tier(line.league, line.market.marketType, line.books, rules.popularBooks) >= 2 ->
+            "A small or unusual market: takers rarely trade this kind of line, so a bid on it is unlikely to be filled quickly"
+        rules.minLineBooks > 0 && line.books < rules.minLineBooks ->
+            "Only ${line.books} book${if (line.books == 1) "" else "s"} price this line (you need ${rules.minLineBooks}): a small market, unlikely to be filled quickly"
+        else -> null
     }
 
     /**
@@ -530,6 +577,8 @@ object MakerQuote {
     fun step(price: Double): Double = if (price <= 0.050 + 1e-9 || price >= 0.950 - 1e-9) 0.001 else 0.005
 
     private fun percent(p: Double) = String.format(Locale.US, "%.1f%%", p * 100)
+
+    private fun points(p: Double) = String.format(Locale.US, "%.1f point%s", p * 100, if (Math.round(p * 1000) == 10L) "" else "s")
 }
 
 /** One of Vigilant's bids resting on Novig now (from [MakerStore] and Novig's open orders). */
@@ -548,6 +597,8 @@ data class RestingBid(
     /** The EV at the fair when it was posted, and whether it led its side then: what ranks it when the wallet can't hold every bid and no fresh line judges it. */
     val evAtFair: Double = 0.0,
     val leads: Boolean = true,
+    /** A small-market bid ([MakerRules.obscureFill]): trimmed before any popular bid, and taken down to make room for one ([MakerPlan.MADE_ROOM]). */
+    val obscure: Boolean = false,
     /** The game it is on, for the per-game limit ([MakerRules.maxPerGame]); null = not known (it counts toward no game). */
     val game: GameRef? = null,
 ) {
@@ -642,6 +693,7 @@ object MakerPlan {
         val room = budget + resting.sumOf { it.restingDollars }
         if (kept.sumOf { it.restingDollars } > room + 1e-9) {
             val worth = compareBy<RestingBid> { it.auto }
+                .thenBy { it.obscure }
                 .thenByDescending { byOutcome[it.outcomeId]?.leads ?: it.leads }
                 .thenBy { it.price }
                 .thenByDescending { byOutcome[it.outcomeId]?.evAtFair ?: it.evAtFair }
@@ -678,16 +730,21 @@ object MakerPlan {
         val places = ArrayList<MakerDecision.Post>()
         val waiting = HashMap<String, Int>()
         fun wait(why: String) = waiting.merge(why, 1, Int::plus)
+        // Popular bids that waited for room (the most bids, the most dollars, the wallet): the small-market bids behind them in [priority] are posted only when none waits,
+        // and the small-market bids already up make the room below (Tj, 2026-10-07: popular large markets first, then, if there is room, obscure ones).
+        val needSlots = ArrayList<MakerDecision.Post>()
+        val needMoney = ArrayList<MakerDecision.Post>()
         for (w in wanted.filter { it.line.outcomeId !in covered }.sortedWith(priority(rules))) {
             val credit = freed[w.line.outcomeId] ?: 0.0
             when {
                 wouldTrade(w, onBook) -> wait(WASH)
-                bids >= rules.maxBids -> wait(MAX_BIDS_REACHED.format(rules.maxBids))
+                w.obscure && (needSlots.isNotEmpty() || needMoney.isNotEmpty()) -> wait(POPULAR_WAITING)
+                bids >= rules.maxBids -> { if (!w.obscure) needSlots += w; wait(MAX_BIDS_REACHED.format(rules.maxBids)) }
                 places.size >= rules.postsPerPass -> wait(PASS_FULL.format(rules.postsPerPass))
-                dollars + w.cost > rules.maxDollars + 1e-9 -> wait(MAX_DOLLARS_REACHED.format(money(rules.maxDollars)))
+                dollars + w.cost > rules.maxDollars + 1e-9 -> { if (!w.obscure) needMoney += w; wait(MAX_DOLLARS_REACHED.format(money(rules.maxDollars))) }
                 rules.maxPerGame > 0.0 && GameExposure.check(w.gameItem.game, onGames, w.gameItem.marketId, w.gameItem.outcomeId, w.cost, rules.maxPerGame).blocked ->
                     wait(GAME_REACHED.format(money(rules.maxPerGame)))
-                w.cost > spend + credit + 1e-9 -> wait(BUDGET_REACHED)
+                w.cost > spend + credit + 1e-9 -> { if (!w.obscure) needMoney += w; wait(BUDGET_REACHED) }
                 else -> {
                     if (rules.maxPerGame > 0.0) onGames = onGames + w.gameItem
                     onBook.getOrPut(w.line.marketId) { ArrayList() } += w.line.outcomeId to w.price
@@ -696,6 +753,19 @@ object MakerPlan {
                     dollars += w.cost
                     spend -= (w.cost - credit).coerceAtLeast(0.0)
                 }
+            }
+        }
+        // Popular bids that waited for room make it: the small-market bids up come down, the least valuable first (not leading their side, the least edge), enough for the slots and the
+        // dollars the popular ones need. The popular bids go up on the next pass, once these cancels have landed (a cancelled bid's dollars aren't spendable until then: it can still fill).
+        if ((needSlots.isNotEmpty() || needMoney.isNotEmpty()) && kept.any { it.obscure }) {
+            var slots = needSlots.size
+            var money = needMoney.sumOf { it.cost }
+            for (r in kept.filter { it.obscure }.sortedWith(compareBy<RestingBid> { it.leads }.thenBy { it.evAtFair })) {
+                if (slots <= 0 && money <= 1e-9) break
+                cancels += r to MADE_ROOM
+                kept.remove(r)
+                slots--
+                money -= r.restingDollars
             }
         }
         return MakerActions(cancels, places, kept, waiting, trimmed)
@@ -723,7 +793,9 @@ object MakerPlan {
      * that kind a day; a kind never measured by how many books price the line), then the cheapest and the most EV as before. Never changes which bids qualify, only which
      * go up when the bids, the dollars or the wallet run out.
      */
-    fun priority(rules: MakerRules): Comparator<MakerDecision.Post> = when {
+    fun priority(rules: MakerRules): Comparator<MakerDecision.Post> = compareBy<MakerDecision.Post> { it.obscure }.then(popularPriority(rules))
+
+    private fun popularPriority(rules: MakerRules): Comparator<MakerDecision.Post> = when {
         // Quick & likely to win: leading their side first (takers reach them first), then the kinds takers trade most, then the likeliest fill (the price band's rate),
         // then the most edge against the book that moves first. Not the cheapest: a longshot's bid fills sooner but is not what this is for.
         rules.quick -> compareByDescending<MakerDecision.Post> { it.leads }.thenBy { tierOf(it, rules) }
@@ -742,6 +814,10 @@ object MakerPlan {
     const val GAME_REACHED = "the most at risk on one game (%s) is reached"
     const val WASH = "it would trade with your own bid on the other side of that market (a wash: the two prices add up to \$1 or more); it goes up once that bid is gone"
     const val PASS_FULL = "a pass sends at most %d new bids; the rest go up on the next pass"
+
+    /** A small-market bid waits (popular bids first, Tj 2026-10-07), and a small-market bid already up comes down so a popular one can go up. */
+    const val POPULAR_WAITING = "a popular bid is waiting for the room: small-market bids only go up when there is room left over"
+    const val MADE_ROOM = "Made room for a popular bid (small-market bids go up only with room to spare)"
 
     /** Why a bid that was up came down because the money behind it fell short (the bid's own reason in the Bids tab). */
     const val TRIMMED = "The wallet (or today's limit for API bets) no longer covers it beside the other bids up: taken down"

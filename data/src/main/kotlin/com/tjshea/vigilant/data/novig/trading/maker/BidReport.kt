@@ -56,6 +56,8 @@ object BidReport {
         val fairBooks: List<String> = emptyList(),
         val fairAgeSec: Int? = null,
         val fairNewestAgeSec: Int? = null,
+        /** A small-market bid (Quick & likely's fill of the money popular bids leave idle). */
+        val obscure: Boolean = false,
         // ---- what became of it
         val status: String,
         val why: String? = null,
@@ -97,7 +99,7 @@ object BidReport {
                 bestBid = b.bestBidAtPost, offer = b.offerAtPost, bookAgeSec = b.bookAtMs?.let { ((b.postedAtMs - it) / 1000L).coerceAtLeast(0L) },
                 lifeMin = b.expiresAtMs?.let { ((it - b.postedAtMs) / 60_000L).coerceAtLeast(0L) },
                 basis = b.fairBasis?.group,
-                focus = b.focus, fairBooks = b.fairBooks, fairAgeSec = b.fairAgeSec, fairNewestAgeSec = b.fairNewestAgeSec,
+                focus = b.focus, fairBooks = b.fairBooks, fairAgeSec = b.fairAgeSec, fairNewestAgeSec = b.fairNewestAgeSec, obscure = b.obscure,
                 status = b.status.name, why = b.why.takeIf { b.status.ended }, endedAtMs = b.endedAtMs,
                 restedMin = ((b.endedAtMs ?: now) - b.postedAtMs).coerceAtLeast(0L) / 60_000.0,
                 filled = b.filled, paid = b.paid.takeIf { b.filled > 0 }, firstFillAtMs = fillAt, fillDelaySec = b.fillDelayMs?.let { it / 1000L },
@@ -190,6 +192,12 @@ object BidReport {
             split("which bids go up (Settings › Bids)", null) { focusLabel(it.focus) }
             split("the books behind the fair, low API usage bids", null) { r -> r.takeIf { it.focus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE.name && it.fairBooks.isNotEmpty() }?.fairBooks?.sorted()?.joinToString(" + ") }
             split("age of the oldest sharp price when posted, low API usage bids", AGE_ORDER) { r -> r.takeIf { it.focus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE.name }?.fairAgeSec?.let(::ageBand) }
+        }
+        // Small-market bids (Quick & likely fills the money popular bids leave idle with them, under strict safeguards): shown once any was posted, so Tj sees whether they pay.
+        if (rows.any { it.obscure }) {
+            out += "-- popular and small-market bids --"
+            out += "   posted: ${rows.count { !it.obscure }} popular, ${rows.count { it.obscure }} small-market"
+            split("popular or small market", null) { if (it.obscure) "small market (strict safeguards)" else "popular market" }
         }
         split("league", null) { it.league }
         return out
