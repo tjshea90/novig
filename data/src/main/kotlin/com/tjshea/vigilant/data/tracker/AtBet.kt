@@ -238,12 +238,15 @@ object AtBets {
      * scan study and Diagnostics join them ([com.tjshea.vigilant.data.novig.trading.maker.BidReport]).
      */
     fun bid(b: com.tjshea.vigilant.data.novig.trading.maker.MakerBid, atMs: Long, version: String? = null): AtBet = AtBet(
-        atMs = atMs, version = version, how = AtBet.HOW_BID, scanner = BetTracker.SOURCE_VIGILANT,
+        // The scanner that priced the bid: Vigilant's, or CrazyNinjaOdds' (bids priced from it, RESEARCH.md §114), so the Tracker's Scanner filter and every split by it tell them apart.
+        atMs = atMs, version = version, how = AtBet.HOW_BID, scanner = b.source,
+        cnoListAgeSec = b.listAgeSec?.toLong(), pageAgeSec = b.pageAgeSec?.toLong(),
         league = b.league, sport = SharpVeto.sportOf(b.league).name, kind = b.kind.name, minutesToStart = minutes(b.startsTs, atMs),
         american = Odds.probabilityToAmerican(b.price.coerceIn(0.001, 0.999)), ev = b.evAtFair, fair = b.fair,
         fairMethod = b.fairBasis?.source, fairSharp = b.fairBasis?.sharp.orEmpty(),
         sharpVerdict = if (b.sharpFairAtPost != null) "ANCHORED" else "NO_SHARP", sharpEv = b.sharpFairAtPost?.let { it / b.price - 1.0 },
-        twoSided = b.books.takeIf { it > 0 }, fairAgeSec = secs(b.bookAtMs, b.postedAtMs),
+        // A CNO-priced bid's fair age is its data's (the older of the list's and the page's, when posted); a Vigilant bid keeps its Novig book's age as before.
+        twoSided = b.books.takeIf { it > 0 }, fairAgeSec = if (b.listAgeSec != null || b.pageAgeSec != null) b.fairAgeSec?.toLong() else secs(b.bookAtMs, b.postedAtMs),
         fullKelly = fullKelly(b.fair, b.price), stake = b.paid.takeIf { it > 0.0 } ?: b.cost,
     )
 
