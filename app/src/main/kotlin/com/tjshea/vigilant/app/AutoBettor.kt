@@ -261,7 +261,7 @@ class AutoBettor(
             if (target.market.marketId in openMarkets) { skip("a bet in this Novig market is already open"); continue }
             val game = GameRef(target.market.eventId, target.eventName, target.startsTs, target.league)
             val guardKey = PropGuard.key(row.league, row.market, row.bet)
-            val guardGame = PropGuard.gameKey(target.eventName, target.startsTs)
+            val guardGame = PropGuard.gameKey(target.market.eventId, target.eventName, target.startsTs)
             if (guardKey != null) PropGuard.judge(guardRules, guardHistory, guardKey, guardGame, clock())?.let { skip(it); continue }
             if (settings.apiMaxPerGame > 0.0) {
                 val check = GameExposure.check(game, exposure, target.market.marketId, target.outcomeId, stake, settings.apiMaxPerGame)

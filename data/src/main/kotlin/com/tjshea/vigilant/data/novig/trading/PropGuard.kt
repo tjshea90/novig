@@ -97,13 +97,14 @@ object PropGuard {
         return "$league $stat"
     }
 
-    /** The game a bet is on, as the Tracker and a resolved Novig target both name it. */
-    fun gameKey(event: String, startsTs: Long): String = "${event.trim().lowercase(Locale.US)}|$startsTs"
+    /** The game a bet is on, as the Tracker and a resolved Novig target both name it: Novig's event id when known, else the event's name and start. */
+    fun gameKey(eventId: String?, event: String, startsTs: Long): String =
+        eventId?.takeIf { it.isNotBlank() } ?: "${event.trim().lowercase(Locale.US)}|$startsTs"
 
     /** The auto-bets of the Tracker within [windowMs] of [now] (a filled bid and a lock are not taker bets). */
     fun history(bets: Collection<TrackedBet>, now: Long, windowMs: Long = WINDOW_MS): List<Placed> = bets.asSequence()
         .filter { it.auto && it.lockFor == null && it.atBet?.how != AtBet.HOW_BID && now - it.createdAtMs <= windowMs }
-        .map { Placed(key(it.league, it.marketLabel, it.selection), gameKey(it.eventName, it.startsTs), it.createdAtMs) }
+        .map { Placed(key(it.league, it.marketLabel, it.selection), gameKey(it.eventId, it.eventName, it.startsTs), it.createdAtMs) }
         .toList()
 
     /** Why a bet of kind [key] on [game] waits, or null. [history]: the auto-bets so far in the window (those placed earlier in this pass included). */
