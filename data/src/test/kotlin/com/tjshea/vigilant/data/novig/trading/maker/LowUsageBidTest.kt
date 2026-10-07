@@ -201,13 +201,13 @@ class LowUsageBidTest {
     )
 
     /** What the bid maker makes of the low-usage scan of one prop priced by [quotes]. */
-    private fun bid(vararg quotes: RefBookMarket, settings: ScanSettings = s): MakerDecision {
+    private fun bid(vararg quotes: RefBookMarket, settings: ScanSettings = s, unavailable: (com.tjshea.vigilant.data.scanner.Opportunity) -> String? = { null }): MakerDecision {
         val e = settings.effective()
         val refs = listOf(RefSnapshot("americanfootball_nfl", listOf(RefEvent("r", "americanfootball_nfl", Fixtures.START_MS, "Dallas Cowboys", "Baltimore Ravens", quotes.toList())), now))
         val plan = Planner.plan(listOf(event), listOf(prop), refs, e, now)
         val book = NovigBook("p1", 1, mapOf("o1" to listOf(BidLevel(470, 10_000)), "u1" to listOf(BidLevel(500, 10_000))), now)
         val result = Pricing.price(plan, mapOf("p1" to book), e, now)
-        val lines = MakerLines.from(result, settings, now)
+        val lines = MakerLines.from(result, settings, now, unavailable = unavailable)
         val over = lines.firstOrNull { it.outcomeId == "o1" } ?: error("the over wasn't a line: ${result.opportunities.map { it.fairProbability }}")
         return MakerQuote.decide(over, MakerRules.of(settings), now)
     }
@@ -222,6 +222,25 @@ class LowUsageBidTest {
         assertTrue(100.0 / d.price - 100.0 <= 130.0)
         assertEquals(setOf("Kalshi", "ProphetX"), d.line.fairBooks.toSet())
         assertTrue("under every picked book's own fair", d.line.sharpFairs.all { it > d.price })
+    }
+
+    @Test
+    fun `no bid on a prop whose player the injury reports say is out - end to end from a priced prop (Tj, 2026-10-07)`() {
+        fun book(status: String) = com.tjshea.vigilant.data.reference.InjuryIndex { now }.apply {
+            record("americanfootball_nfl", listOf(com.tjshea.vigilant.data.reference.Injury("Lamar Jackson", status)))
+        }.book.value
+        fun gate(status: String?) = { o: com.tjshea.vigilant.data.scanner.Opportunity ->
+            status?.let { com.tjshea.vigilant.data.reference.PlayerOut.forOpportunity(book(it), o, now) }
+        }
+        // Healthy as far as anyone knows (no report), doubtful, questionable: the bid goes up as before.
+        assertTrue(bid(kalshi, prophetx, unavailable = gate(null)) is MakerDecision.Post)
+        assertTrue(bid(kalshi, prophetx, unavailable = gate("Doubtful")) is MakerDecision.Post)
+        assertTrue(bid(kalshi, prophetx, unavailable = gate("Questionable")) is MakerDecision.Post)
+        // Out, or on injured reserve: no bid, and the reason says why.
+        for (status in listOf("Out", "Injured Reserve")) {
+            val d = bid(kalshi, prophetx, unavailable = gate(status)) as MakerDecision.Skip
+            assertTrue(d.why, d.why.startsWith("The player is out ("))
+        }
     }
 
     @Test
