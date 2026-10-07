@@ -51,6 +51,8 @@ class ApiSettler(
         // Markets held on both sides: one side of each wins, so "both lost" is never an answer ([bothSidesHeld]).
         val bothHeld = bothSidesHeld(all)
         val lostNow = HashSet<String>()
+        // Legs graded lost THIS pass from a score feed's own words (id to the feed's evidence): proof for the other leg of a half-point two-way market ([wonByOtherLeg]).
+        val lostByFeed = HashMap<String, String>()
         val payouts: List<LedgerRow>
         val positions: List<NovigPosition>
         try {
