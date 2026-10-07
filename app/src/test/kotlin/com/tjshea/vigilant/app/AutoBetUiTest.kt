@@ -213,7 +213,7 @@ class AutoBetUiTest {
     fun `the amount per bet offers an eighth, quarter and half Kelly, a dollar, and a typed amount`() {
         show()
         for ((label, stake) in listOf("⅛ Kelly" to AutoBetStake.EIGHTH_KELLY, "¼ Kelly" to AutoBetStake.QUARTER_KELLY, "½ Kelly" to AutoBetStake.HALF_KELLY, "$1" to AutoBetStake.ONE_DOLLAR)) {
-            compose.onNodeWithText(label).performClick()
+            compose.onNodeWithText(label).performScrollTo().performClick()
             assertEquals(stake, settings.autoBetStake)
             compose.onNodeWithTag("autoBetCustomStake").assertDoesNotExist()
         }
@@ -282,7 +282,7 @@ class AutoBetUiTest {
             compose.waitForIdle()
         }
         assertEquals("on by default: 25% of the day's auto-bets, judged from 8, 3 on a game", PropGuard.Rules(0.25, 8, 3), PropGuard.rules(settings))
-        compose.onNodeWithText("Small-prop guard").performScrollTo().assertExists()
+        compose.onNodeWithText("Small-prop guard", ignoreCase = true).performScrollTo().assertExists()
         compose.onNodeWithTag("propGuardNote").performScrollTo().assertTextContains("no kind of player prop over 25%", substring = true)
         compose.onNodeWithTag("propGuardShares").assertTextContains("Last 24 hours:", substring = true)
         compose.onNodeWithText("35%").performScrollTo().performClick()
