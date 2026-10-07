@@ -86,8 +86,6 @@ object MakerSetup {
         if (!next.autoScan.cno) {
             next = next.copy(autoScan = AutoScanMode.CNO)
             on += "the background scan on CrazyNinjaOdds (CNO)"
-        } else if (next.autoScan == AutoScanMode.OFF) {
-            next = next.copy(autoScan = AutoScanMode.CNO)
         }
         if (next.autoScanSeconds > MAX_INTERVAL_SECONDS) {
             next = next.copy(autoScanSeconds = MAX_INTERVAL_SECONDS)
@@ -104,7 +102,7 @@ object MakerSetup {
     fun missing(s: ScanSettings, bettingSetUp: Boolean): String? = when {
         !bettingSetUp -> "betting through Novig's API (Settings › Betting & Novig account): bids are posted from the Vigilant wallet"
         s.makerSource == BidSource.CNO && s.pinnacleOnly -> "Pinnacle only to be off (Settings › Scanning): it reads Novig and Pinnacle alone, so CrazyNinjaOdds is never read for bids"
-        s.leagues.isEmpty() -> "a league to scan (Settings › Leagues)"
+        s.makerSource == BidSource.VIGILANT && s.leagues.isEmpty() -> "a league to scan (Settings › Leagues)"
         s.makerKinds.isEmpty() -> "a kind of bet to bid on (the rules below)"
         else -> null
     }
