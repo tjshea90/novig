@@ -198,11 +198,15 @@ class ObscureFillTest {
         val r = rules(g = { it.copy(maxBids = 10, maxDollars = 6.0) })
         val weak = resting("o1", obscure = true, leads = false, contracts = 500).copy(evAtFair = 0.04)
         val strong = resting("o2", obscure = true, leads = true, contracts = 500).copy(evAtFair = 0.09)
-        val plan = MakerPlan.plan(listOf(post("p", false)), listOf(weak, strong), r, now)
+        // The small-market bids are still wanted (they stay up on their own merits): only the room comes out of them.
+        val wanted = listOf(post("o1", true), post("o2", true))
+        val plan = MakerPlan.plan(listOf(post("p", false)) + wanted, listOf(weak, strong), r, now)
         assertEquals(listOf("o1-over", "o2-over"), plan.cancels.map { it.first.outcomeId })
+        assertTrue(plan.cancels.all { it.second == MakerPlan.MADE_ROOM })
         // A cheaper popular bid ($2.40) needs only one of them gone (the weaker, first).
-        val oneNeeded = MakerPlan.plan(listOf(post("p", false, cost = 500)), listOf(weak, strong), r, now)
+        val oneNeeded = MakerPlan.plan(listOf(post("p", false, cost = 500)) + wanted, listOf(weak, strong), r, now)
         assertEquals(listOf("o1-over"), oneNeeded.cancels.map { it.first.outcomeId })
+        assertEquals(listOf("o2-over"), oneNeeded.kept.map { it.outcomeId })
     }
 
     @Test
