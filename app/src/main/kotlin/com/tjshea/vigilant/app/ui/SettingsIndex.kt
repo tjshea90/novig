@@ -108,6 +108,7 @@ object SettingsIndex {
         Entry("Every book scanned must agree", null, "5 of 5, not 3 of 5", "auto-bet all agree every book", autoBetTab),
         Entry("Longest odds to bet", null, "No long shots past this for auto-bet", "auto-bet max odds longshot", autoBetTab),
         Entry("Extra edge a favorite needs", null, "Favorites (shorter than even money) need more edge than the minimum for auto-bet", "auto-bet favorite favourites extra ev edge higher bar plus money", autoBetTab),
+        Entry("Small-prop guard", null, "Auto-bet: the most one kind of player prop (NHL shots on goal) may take of the last 24 hours' auto-bets, and per game", "auto-bet small prop guard share cap concentration shots on goal nhl volatile obscure per game limit diversification", autoBetTab),
         Entry("Shortest odds to bet", null, "No heavy favorites past this for auto-bet", "auto-bet min odds favorite", autoBetTab),
         Entry("Kinds of bet to place", null, "Props, moneylines, spreads, totals…", "auto-bet kinds markets props", autoBetTab),
         Entry("Sharp-book veto", null, "Skip a bet the sharpest book disagrees with", "auto-bet sharp veto confirm pinnacle kalshi", autoBetTab),

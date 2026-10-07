@@ -247,6 +247,11 @@ object Diagnostics {
                 " · game lines Novig just moved ${if (set.trapNovigMove) "skipped (the auto-bet and game-line bids read Novig's trades first)" else "not checked"}" +
                 " · favorites need ${if (set.autoBetFavouriteExtraEv <= 1e-9) "no extra edge" else "${pct(set.autoBetFavouriteExtraEv)} more edge"} (auto-bet)",
         )
+        // The small-prop guard (RESEARCH.md §109): its limits, and what the last day and week of auto-bets look like by kind of prop, so the next file shows whether one market is carrying the day.
+        o.appendLine(
+            "Small-prop guard (RESEARCH.md §109): ${com.tjshea.vigilant.data.novig.trading.PropGuard.summary(com.tjshea.vigilant.data.novig.trading.PropGuard.rules(set))}" +
+                " · " + com.tjshea.vigilant.app.ui.PropGuardText.shares(s.bets, System.currentTimeMillis()),
+        )
         o.appendLine("Leagues: ${set.leagues.sorted().joinToString(", ").ifEmpty { "none" }} · days ahead ${set.daysAhead} · starts within ${if (set.startsWithinHours <= 0) "any time" else "${set.startsWithinHours} h"} · live games ${if (set.includeLive) "on" else "off"}")
         o.appendLine("Edge shown: ${pct(set.minEvPercent)} to ${pct(set.maxEvPercent)} · max odds +${set.maxOdds} · fair odds ${set.fairSource} / ${set.devigMethod}, at least ${set.minBooks} book${if (set.minBooks == 1) "" else "s"}")
         o.appendLine("Scan size: ${limit(set.maxBooksPerScan)} Novig prices · lines/game ${limit(set.linesPerGame)} · props/game ${limit(set.propsPerGame)} · fill the budget ${if (set.fillBudget) "on" else "off"} · window ${set.effective().scanWindowHours} h")
