@@ -1,0 +1,250 @@
+{
+ "lens": "LUCK AND MULTIPLE COMPARISONS (adversarial verifier)",
+ "rule": "R1 EV-gated window entry: buy at the first c/w look inside 2-360 min of the start where the CNO-family listed EV >= 2.5%",
+ "numbers_reproduced": "REPRODUCED with the shared loader: 184 bets / 44 games; 116 have a close (40 games), 108 close_ok (39 games). CLV at the R1 look price = +2.545% [+1.77%, +3.52%] on 116 closes (builder +2.545% [1.82,3.53]; same point value, CI differs only by bootstrap seed); close_ok +2.67% [1.85,3.72] on 108. Beat-the-close share 76.7%. Same bets at their first c/w look +1.68% [0.90,2.67] (builder 1.68%): matches. Paired R1 minus first look +0.86 pts [0.61,1.12] on 116/40 games: matches. R1 minus other in-window first looks +2.19 pts [1.44,3.12] (262 others, 59 games): matches. In-window first-look CLV of all 378 closed bets +0.82%. Builder's 'halves' are really LOOK-DAY Oct 3 (20 closes, +2.43%) vs Oct 4-5 (96 closes, +2.57%), not equal halves. With the loader's equal-games split (cut Oct 4): first half 98 closes/35 games +2.36% [1.59,3.47]; second half 18 closes/5 games +3.54% [3.15,4.73]. WHAT DOES NOT MATCH THE STORY: the 116 closes are two different yardsticks that never overlap. 75 (65%) are Tracker closes, which exist ONLY for bets Tj placed and are CNO's own books re-read before the start (mean closeFair/listed-fair - 1 = +0.01% over 63 'CNO books' closes; mean EV 3.63% vs CLV 3.54%): CLV +3.49% [2.65,4.63] on 75/29 games, a restatement of the listed EV. The independent closes (ESPN 4, Pinnacle 1, Novig 3+ trades 28) are 33 closes/23 games: CLV +0.81% [-0.04,+2.10]; Novig 3+ trades alone +0.33% [-0.60,+1.67] on 28/19 games; mean drift of those closes from CNO's fair is -2.4% (EV 3.26% listed vs 0.81% realised). Non-placed R1 bets: 41 closes of 105 bets (39%) vs placed 75 of 79 (95%).",
+ "survives": false,
+ "reason": "Not luck in the pooled number, but the pooled number is not independent evidence. (1) POOLED CLV > 0 is beyond chance: game-cluster bootstrap 0 of 200000 draws <= 0, game-level sign-flip p 1e-5, t on 40 game means = 6.7; vs same-size random subsets matched within game x yardstick (100000 draws) null mean +1.39% sd 0.21, observed +2.54%, z 5.5, p 1e-5 (x15 = 1.5e-4, x522 = 0.005). Drop-top-3 games: +2.15% [1.50,3.09]; leave-one-game-out range +2.40% to +2.99%: not driven by one game. (2) BUT 65% of those closes are CNO's own consensus, so CLV tracks EV by construction: against Tracker closes mean CLV by EV band is 1.3%/2.4%/3.3%/3.9%/5.9% for EV 1-2/2-2.5/2.5-3.5/3.5-5/5+% (drift ~0 in every band), while against independent closes it is flat at -0.7%/-0.4%/-0.5%/-0.5%/-0.5% for the 0-1/1-2/2-2.5/2.5-3.5/3.5-5% bands (look level). The pooled gain over 'other entries' (+2.19 pts) is 2.85 pts on Tracker closes and +0.68 pts [-0.18,+1.83] on independent closes (yardstick-standardised +2.03). (3) THE CLEAN YARDSTICK IS NOT SIGNIFICANT AFTER ANY HAUL: independent CLV +0.81% on 33 closes/23 games, p(<=0) 0.037 (bootstrap 200000), 0.049 (sign-flip), 0.028 (t on game means): Bonferroni x15 = 0.55 (boot) / x522 = 1.0. Versus random same-size draws from the same independent universe it is p 0.067 (stratified by game day) and 0.19 (within game): null mean +0.40% sd 0.47. White-style reality check (game-cluster bootstrap over an 810-variant family of threshold x window x source x mode, 391 variants with >=15 independent closes): R1's family-wise p = 0.82; even the best variant (EV>=2.5%, 2-120 min, confirm on 2 looks, +1.36% on 19 closes) has family-wise p 0.067. Fragile: dropping the single best game removes 36% of the CLV sum (+0.53%), top 3 games +0.23%, top 5 games (6 bets) -0.05% [-0.78,+0.67]. (4) THE INCREMENT OVER WHAT THE APP ALREADY DOES IS NOT SHOWN: the builder's +0.86 pts compares with 'first c/w look at any EV', a straw baseline. Taking the first look with EV >= 2.5% at ANY distance (what an EV floor already does) gives the same entry look as R1 for 165 of 184 R1 bets (paired R1 minus that look +0.03 pts [-0.05,+0.13]). The only real difference is skipping 176 bets (80 closed) whose EV first clears 2.5% more than 6 h out: R1 minus unpaired status quo = +0.95 pts [+0.18,+1.97] pooled, +1.70 [+0.60,+3.07] on Tracker closes, but -0.26 pts [-1.48,+0.72] on independent closes (33 vs 55). Window-membership permutation vs status quo: pooled p 0.001 within game x yardstick (0.005 yardstick only), Tracker p 0.0002, independent p 0.36 (within game) / 0.71. The 6 h step itself: on independent closes the CLV of first EV>=2.5% looks 6-24 h out is +0.82% [-2.35,+3.48] on 23 closes (6-12 h -1.18% on 11; 12-24 h +0.82% on 23), R1 minus 6-24 h = -0.01 pts [-2.27,+2.48]; the decay beyond 6 h appears only on Tracker closes (R1 minus 6-24 h +3.79 pts [1.45,6.44]). (5) NO OUT-OF-SAMPLE CHECK EXISTS ON THE CLEAN YARDSTICK: all 33 independent closes are from Oct 3-4 games (Oct 5 games had none; 18 R1 bets have no close because 'Novig publishes this day's trades the next morning'); the 'second half' (18 closes, 5 games) is 100% Tracker. Results: ROI at the R1 look price -6.8% [-22.9%,+11.1%] on 177 settled/43 games, win rate 42.9% vs 46.3% implied by price and 47.8% by listed fair: uninformative (~12000 bets needed to see a 3% edge in ROI). Verdict: default false. R1 is a sensible hypothesis (higher listed EV does track CLV against Novig's own trades in the within-bet comparison: R1 +0.81% vs -0.29% on average over the same 33 bets' in-window looks, paired R1 minus first in-window look +0.98 pts [0.54,1.43], p 2e-5 on 33 bets), but the window and the 'EV-gated entry' as a change to which bets are placed rests on 33 independent closes with family-wise p ~0.07-0.8. Put it to Tj only as a SHADOW-LOG question, not a rule change.",
+ "caveats": [
+  "Every p-value uses game clusters (same-game bets correlated) but the 33 independent closes cover only 23 games over 2 game days, so the bootstrap CI itself is optimistic (few clusters).",
+  "Which closes a bet gets is decided by whether Tj placed it (Tracker, CNO's books) and by Novig having 3+ trades in the last 30 minutes (liquid bets only; 61% of non-placed R1 bets have no close). Missing-close selection cannot be tested; the builder's inverse-closure re-weighting (+2.24%) does not fix a yardstick difference.",
+  "Tracker closes are not worthless: for looks 6-24 h out the same Tracker yardstick shows CNO's fair drifting DOWN (CLV -0.30% for EV>=2.5% entries, 59 closes/22 games), so there is a genuine 'far-ahead CNO EV is stale' signal; what it cannot show is whether the market (Pinnacle/Novig) agrees. 27 independent closes at 6-24 h (+0.82% [-1.60,+3.32]) cannot confirm or deny it.",
+  "The 810-variant family I built (threshold 0.5-6% x 9 windows x c/w/w/c x any/first-only/confirm2) is my approximation of the builder's tried_count 522 (329 variants/15 families); the builder's exact variants are not available, so family-wise p values are indicative. R1 is not the family's maximum, so its own family-wise p (0.82 independent, 0.07 pooled) is a conservative reading; the best variant's (0.067 independent, 0.0002 pooled) is the optimistic one.",
+  "The 2.5% threshold coincides with the app's own edge floor; the CLV-by-threshold curve rises with threshold on both yardsticks (independent +0.19% at 0.5%, +0.45% at 2%, +0.81% at 2.5%, +1.41% at 3% on 18 closes) but every independent CI includes 0 except thresholds >= 4% (7 closes).",
+  "Within-bet slope of CLV on EV is 0.83 [0.70,0.91] (0.89 [0.74,0.95] on independent closes), i.e. buying at local price highs beats the close in the same bets; that is real information but not a window or threshold effect, and it says nothing about whether the better price is actually fillable (another verifier's lens).",
+  "How many to settle it: SE of independent CLV falls as 1/sqrt(games); +0.8% at 80% power needs about 80 games / ~115 independent closes of R1-type entries; showing R1 beats the existing EV gate by 1 pt needs ~65 games per arm (~80 R1 and ~135 status-quo independent closes), and 0.5 pt about 4 times that. At 33 independent closes per 2 game days that is roughly 5-8 more game days IF the next-morning Novig-trades gap and Tracker-only-for-placed-bets gap are closed.",
+  "In fairness to R1: shorter windows look better on the independent yardstick (EV>=2.5% first look within 60 min +1.02% [0.39,1.92] on 22 closes/16 games; within 120 min +1.24% [0.75,1.98] on 25/18; within 240 min +1.07% [0.26,2.28] on 31/22), the direction a real late-entry effect would take, but these are family members chosen after looking and rest on 22-31 closes, so they count toward the multiple-comparison haircut (white-style best-variant p 0.067).",
+  "Any change that skips or delays bets (a window, a wait) decides which bets are placed: it is a question for Tj with this evidence, not an action; no safety limit is touched by this verification."
+ ],
+ "tests": {
+  "pooled_vs_zero": {
+   "n": 116,
+   "games": 40,
+   "clv_pct": 2.545,
+   "ci_pct": [
+    1.77,
+    3.52
+   ],
+   "p_boot_le0": "0/200000",
+   "p_signflip": 1e-05,
+   "t_game_means": 6.7
+  },
+  "independent_vs_zero": {
+   "n": 33,
+   "games": 23,
+   "clv_pct": 0.809,
+   "ci_pct": [
+    -0.04,
+    2.1
+   ],
+   "p_boot_le0": 0.0369,
+   "p_signflip": 0.0492,
+   "t_game_means_p1": 0.0284,
+   "bonf15": 0.55,
+   "bonf522": 1.0
+  },
+  "novig_trades_3plus_only": {
+   "n": 28,
+   "games": 19,
+   "clv_pct": 0.33,
+   "ci_pct": [
+    -0.6,
+    1.67
+   ],
+   "p_boot_le0": 0.251
+  },
+  "tracker_only": {
+   "n": 75,
+   "games": 29,
+   "clv_pct": 3.487,
+   "ci_pct": [
+    2.65,
+    4.63
+   ]
+  },
+  "perm_within_game_x_yardstick_100k": {
+   "pooled": {
+    "obs_pct": 2.54,
+    "null_mean_pct": 1.39,
+    "null_sd_pct": 0.208,
+    "z": 5.54,
+    "p": 1e-05
+   },
+   "independent": {
+    "obs_pct": 0.81,
+    "null_mean_pct": 0.4,
+    "null_sd_pct": 0.467,
+    "z": 0.87,
+    "p": 0.191
+   },
+   "tracker": {
+    "obs_pct": 3.49,
+    "null_mean_pct": 1.9,
+    "null_sd_pct": 0.247,
+    "z": 6.42,
+    "p": 1e-05
+   }
+  },
+  "perm_random_subsets_4000": {
+   "pooled_by_start_day": {
+    "null_mean_pct": 0.84,
+    "null_max_pct": 1.86,
+    "p": 0.00025
+   },
+   "independent_by_start_day": {
+    "null_mean_pct": 0.0,
+    "null_sd_pct": 0.527,
+    "null_p95_pct": 0.88,
+    "p": 0.066
+   }
+  },
+  "perm_ev_labels_shuffled_within_game_x_yardstick_2000": {
+   "pooled": {
+    "null_mean_pct": 1.15,
+    "p": 0.0005
+   },
+   "independent": {
+    "obs_pct": 0.81,
+    "null_mean_pct": -0.24,
+    "null_sd_pct": 0.26,
+    "p": 0.0005
+   },
+   "note": "tests whether the EV label carries information about CLV at the look level (it does, mostly through the price); it does not test the window"
+  },
+  "white_reality_check_810_variants_game_bootstrap_5000": {
+   "independent": {
+    "variants_tested": 391,
+    "r1_t": 1.1,
+    "p_single": 0.154,
+    "p_family_r1": 0.82,
+    "p_family_best_variant": 0.067,
+    "best_variant": "EV>=2.5%, 2-120 min, confirm on two looks, CLV +1.36% on 19 closes"
+   },
+   "tracker": {
+    "variants_tested": 437,
+    "r1_t": 2.87,
+    "p_single": 0.0034,
+    "p_family_r1": 0.089,
+    "p_family_best_variant": 0.0002
+   },
+   "pooled": {
+    "variants_tested": 420,
+    "r1_t": 3.14,
+    "p_single": 0.0014,
+    "p_family_r1": 0.069,
+    "p_family_best_variant": 0.0002
+   }
+  },
+  "leave_one_game_out": {
+   "pooled_range_pct": [
+    2.4,
+    2.99
+   ],
+   "independent_range_pct": [
+    0.53,
+    1.12
+   ]
+  },
+  "drop_top_k_games_by_clv_sum": {
+   "pooled": {
+    "k1": 2.48,
+    "k2": 2.33,
+    "k3": 2.15,
+    "k5": 2.49
+   },
+   "independent": {
+    "k1": 0.53,
+    "k2": 0.36,
+    "k3": 0.23,
+    "k5": -0.05
+   },
+   "independent_k1_share_of_sum_pct": 36
+  },
+  "vs_status_quo_first_look_ev_ge_2_5_any_distance": {
+   "same_entry_look_share": "165 of 184 bets",
+   "paired_r1_minus_sq_pts": 0.03,
+   "unpaired_pooled_pts": [
+    0.95,
+    0.18,
+    1.97
+   ],
+   "unpaired_independent_pts": [
+    -0.26,
+    -1.48,
+    0.72
+   ],
+   "unpaired_tracker_pts": [
+    1.7,
+    0.6,
+    3.07
+   ],
+   "skipped_by_r1": {
+    "bets": 176,
+    "closed": 80,
+    "clv_pooled_pct": 0.25,
+    "clv_independent_pct": 1.55,
+    "clv_tracker_pct": -0.66
+   }
+  },
+  "window_membership_perm_vs_status_quo_100k": {
+   "pooled_within_game_x_yard_p": 0.00108,
+   "pooled_yard_only_p": 0.00517,
+   "tracker_p": 0.00019,
+   "independent_within_game_p": 0.357,
+   "independent_yard_only_p": 0.711
+  },
+  "first_look_ev_ge_2_5_by_distance_independent_closes": {
+   "6_12h": {
+    "n": 11,
+    "clv_pct": -1.18
+   },
+   "12_24h": {
+    "n": 23,
+    "clv_pct": 0.82
+   },
+   "6_24h": {
+    "n": 27,
+    "clv_pct": 0.82,
+    "r1_minus_pts": [
+     -0.01,
+     -2.27,
+     2.48
+    ]
+   }
+  },
+  "by_close_source_clv_pct": {
+   "tracker_cno_books_63": 3.54,
+   "tracker_other_12": 3.2,
+   "novig_trades_all_36": 0.45,
+   "espn_4": 3.79,
+   "pinnacle_1": 2.14
+  },
+  "indep_closes_by_game_day": {
+   "Oct3_4_games": 33,
+   "Oct5_games": 0
+  },
+  "roi_at_r1_look_price": {
+   "settled": 177,
+   "games": 43,
+   "roi_pct": -6.77,
+   "ci_pct": [
+    -22.9,
+    11.1
+   ]
+  },
+  "within_bet_paired_independent": {
+   "r1_minus_first_in_window_look_pts": [
+    0.98,
+    0.54,
+    1.43
+   ],
+   "r1_minus_first_cw_look_pts": [
+    1.04,
+    0.39,
+    1.44
+   ],
+   "r1_pct": 0.81,
+   "same_bets_mean_over_all_inwindow_looks_pct": -0.29,
+   "same_bets_best_look_pct": 1.04
+  }
+ }
+}
