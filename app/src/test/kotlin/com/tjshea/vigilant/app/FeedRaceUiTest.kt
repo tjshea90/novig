@@ -9,9 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.ReportActions
 import com.tjshea.vigilant.app.ui.SettingsPage
 import com.tjshea.vigilant.app.ui.SettingsScreen
@@ -62,6 +64,23 @@ class FeedRaceUiTest {
         compose.onNodeWithTag("shareFeedRace").performScrollTo().assertTextContains("Share live feed test with Claude", substring = true)
         compose.onNodeWithTag("shareFeedRace").performClick()
         assertEquals(1, shared)
+    }
+
+    @Test
+    fun `screenshot - Settings, Diagnostics and about, with the live feed test running`() {
+        val ui = SampleScan.state().copy(
+            settings = SampleScan.state().settings.copy(feedRace = true),
+            feedRaceNote = "Running for 12 min: 3 live games on Novig (tennis), 40 score readings, 210 Novig trades, 7 odds ticks, 88 requests.",
+        )
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    SettingsScreen(ui, {}, page = SettingsPage.HELP, reportActions = ReportActions())
+                }
+            }
+        }
+        compose.onNodeWithTag("feedRaceNote").performScrollTo().assertTextContains("Running for 12 min", substring = true)
+        compose.onRoot().captureRoboImage("screenshots/5q_settings_live_feed_test.png")
     }
 
     @Test
