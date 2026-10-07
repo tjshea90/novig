@@ -1,0 +1,470 @@
+{
+ "lens": "APP FEASIBILITY AND SAFETY (adversarial verifier, label verify-7-feasibility): could today's auto-bet machinery do R2 (plus money only), which exact setting or code, how many bets a day at the caps, does it loosen any safety limit, does it need information the app lacks at decision time, and is a close available for the bets it picks.",
+ "rule": "R2 Plus-money only: R1 (first c/w look inside 2-360 min before the start with listed EV >= 2.5%) and the price at that look is plus money (implied cost < 0.50, American above +100).",
+ "numbers_reproduced": "MATCHES THE BUILDER on the arithmetic. R1 = 184 bets/44 games; R2 = 150 bets/41 games, 66.5 a day over a 2.256-day span, 95 bets with a close in 35 games (55 bets, 37%, have no close): CLV +2.83% [+1.97, +3.91], 79% beat the close. R1 favourites (cost >= 0.50, the bets R2 drops) = 34 bets/19 games, 21 closes/14 games, +1.27% [+0.06, +2.58]. R2 minus R1 favourites = +1.55 pts [+0.34, +3.25] on 40 games (95 vs 21 closes). R2 minus R1 as a whole = +0.28 pts [+0.04, +0.65]. Halves by the shared loader split (cut after Oct 4): first 104 bets/36 games, 79 closes/31 games +2.67% [+1.72, +4.07]; second 46 bets/6 games, 16 closes/4 games +3.58% (the builder's 2.43/2.91 halves do not reproduce under this split). Closes by source: Tracker 66 closes/27 games +3.74% [+2.78, +5.01]; Novig trades 24/16 games +0.17%; ESPN 4; Pinnacle 1; independent (ESPN, Pinnacle, Novig 3+ trades) 26 closes/18 games +0.45% [-0.45, +1.64] (builder +0.45% on 26: reproduced). 70 of the 150 bets were placed by Tj or the app (they alone get a Tracker close). FEASIBILITY NUMBERS (own code): of the 150 R2 bets only 32 (21%) pass every gate the auto-bet applies at the rule's selected look (first failing gate: 40 not in the app's CNO list at that look because the look is a wide-read-only look, 14 wrong kind, 11 odds over +130, 31 no book page yet, 9 book page older than 5 min, 8 fewer than 3 agree, 5 sharp VETOED). A decision-time replay of the app (list look + fresh book page, 2.5-15% EV, -200..+130, prop/moneyline/spread, >=2 two-sided, >=3 agree, check EV>0, sharp not VETOED, first moment all pass) gives: 6 h guard 65 bets/24 games CLV +2.99% on 62 closes; with plus-money only 54 bets/18 games (23.9 a day) CLV +3.35% [+2.62, +4.27] on 51 closes; the 11 favourites dropped (9 games) closed +1.31% [-0.53, +2.97]; plus minus dropped +2.04 pts [+0.46, +4.24]; plus vs the whole base +0.36 pts [+0.08, +0.96]. 24 h guard (what the phone ran): base 105 bets/30 games +2.24%; plus only 83 bets/26 games +2.58% [+1.62, +3.74]; dropped 22 bets/16 games +1.03% [-1.27, +3.07]; plus minus dropped +1.54 pts [-0.72, +4.11] (includes 0); plus vs whole base +0.34 pts [-0.16, +1.11]. THE APP'S OWN RECORD (diagnostics EVERY BET, 63 auto-bets from the CNO list placed in the study window, 29 games): bets judged over +100 = 48 (21.3 a day, $34.7 staked a day), CLV +1.9% [+0.63, +3.25] on 47 closes/25 games, ROI -1.0%; favourites = 15 (6.6 a day, $12.2 a day), CLV +2.66% [+1.05, +4.01] on 14 closes/11 games, ROI +8.1%. Plus minus favourites -0.77 pts [-2.48, +1.2] on 29 games: the wrong sign for the rule. Within 6 h: plus +2.78% on 21/11 games vs favourites +1.84% on 7/5.",
+ "survives": false,
+ "reason": "From the feasibility and safety lens R2 is implementable and only tightens, but it is not a credible improvement to put to Tj as validated, and the version the app can actually run shrinks to a thin add-on. (1) MECHANISM, no engine change: AutoBet.judge already has a 'shortest odds' limit (AutoBet.tooShort; AutoBet.rules coerces it to at most -100, MAX_MIN_ODDS = -100, the comment calls -100 the even-money bound). Setting ScanSettings.autoBetMinOdds = -100 skips any bet shorter than -100 (-101 and shorter), which is 'plus money or even'; it is judged at the live Novig price the auto-bet reads (AutoBettor.run passes item.shown.row.odds). What does not exist is a way to enter it: Settings > Auto-bet 'Shortest odds to bet' offers chips 0, -150, -200, -250, -300 only (ScanSettings.AUTO_BET_MIN_ODDS_CHOICES, AutoBetUi.kt line 362; no typed field, unlike the longest-odds limit), and the hint text there says 'Heavy favorites (-250 and shorter)'. So a one-line chip addition plus hint text plus a test (mutation-checked) is the whole change; autoBetMinOdds is part of PresetRules, so applying a built-in preset (VOLUME/STRICT carry -200) resets it, and he would save his own preset. It is read only by the auto-bet and the Pinnacle-only path: alerts and bids ignore it. The rule's 6 h window is the existing trap-guard setting trapEarlyHours = 6 (not part of any preset), which is ONE setting shared by the auto-bet, alerts and the Bids tab (verify-5-feasibility measured the bids side effect). The 2.5% edge floor is already the phone's setting. (2) SAFETY: neither part loosens a limit. But R2 AS DEFINED is not what the app does, and implementing it literally would loosen several: it has no odds cap (36 of 150 bets, 24%, are over +130, 19 over +150 where CNO's list stops, max +809; Tj's standing limit is +130), no kind limit (10 totals, 7 team totals, 1 period bet, which the preset excludes), no 15% edge ceiling (1 bet over it), and needs no book page (88 of the 150 had no fresh page at the selected look) or sharp check. The only safe reading is R2 AND every existing gate. (3) INFORMATION: no look-ahead (the rule is stateless: current price and clock only; closes only score it). But 41 of the 150 selected looks are wide-read looks the auto-bet never reads, 40 of them for bets absent from the app's list at that moment (4 closes among them); the book page that decides agree/veto exists for only the best ~10 candidates (AUTO_BET_CHECK_TOP = 10), and the plus-money filter is applied after that cut, so favourites still use page-read slots. (4) VOLUME AT THE CAPS: the literal 150 bets would stake about $115 a day at quarter-Kelly capped at the phone's $3.50 (max calendar day $146, max game $46, mean stake $1.73; $5 cap changes it by under $1 a day); the app-feasible replay stakes $45.1 a day at 6 h (max game about $28) and $69.7 a day at 24 h. None of $5 a bet, $500 a day, $70 a game binds; available binds on 6 of 150 bets (4%). The real binding limits are the book-page read, MAX_PER_CYCLE 5, one bet per market, the 60 s pregame lead, the wallet (shared with resting bids) and the per-game limit, which counts resting bids (counter: 378 'game already at its most' skips in 4 days). Realistic volume: the replay says 23.9 a day at 6 h but it over-places 2.6x (recall 90%, precision 35% against the 21 real plus-money auto-bets within 6 h = 9.3 a day, $14.6 a day); the rule's own 66.5 a day is 2.8x to 7x too high. (5) WHAT IT IS WORTH: it drops 11 of 65 replayed bets at 6 h (17%, $8.9 of $54.1 staked a day) and lifts average CLV by +0.36 pts, but CLV dollars fall from $1.564 to $1.428 a day (-9%); at 24 h it drops 22 of 105 bets and CLV dollars fall $1.943 to $1.688 a day (-13%). On the app's real record it would have removed 15 of 63 bets (24%), 26% of the dollars and 35% of the CLV dollars ($0.335 of $0.945 a day), because those favourites closed +2.66% (14 closes/11 games) against +1.9% for the plus-money bets. The dropped bets are all props in the replay (11 of 11 at 6 h, 22 of 22 at 24 h; 31 of 34 in R1), so for moneylines and spreads the rule says nothing. (6) CLOSES: 63% of R2 has a close (95/150); 69% of those (66) are Tracker closes, which exist only for bets that were placed (70 of the 150 were), are CNO's own books read before the start, and give +3.74%; the 80 bets nobody placed closed +0.74% [-0.33, +2.16] on 29 closes/19 games, the 49 Tj placed by hand and the app did not +4.20% on 45/21. Independent closes cover 26 of 150 R2 bets (17%) and 7 of 34 dropped favourites (21%): on them plus +0.45% [-0.45, +1.64] vs favourites +2.15% [+0.49, +5.27] (7 closes/6 games), the opposite sign. 129 of the 150 are props, whose Pinnacle close is not in ParlayAPI (1 Pinnacle close in 129 props). Once the app stops placing the favourites they get no Tracker close, so the dropped arm can be judged afterwards only on the ~20% with an independent close. (7) The cost-per-0.10 slope that motivates the rule is -1.63 pts [-4.40, +1.08] inside R1 (116 closes/40 games), -1.77 [-4.93, +1.52] inside the app-feasible 24 h replay, -2.74 [-5.49, -0.28] at 6 h, +0.29 [-2.49, +4.22] across the app's real auto-bets, and +2.84 [-3.14, +7.75] on R1's independent closes; the ungated first-look universe shows plus minus favourites +1.57 pts [+1.05, +2.05] (274 vs 104 closes) but only +0.98 [-0.17, +1.95] on independent closes (123 vs 66). A price effect is plausible, about +1 pt, but it is not shown inside what the app can place. Put to Tj, if at all, only as a question: 'Do you want a Shortest odds -100 chip to test plus money only? Evidence: about +1 to +2 pts on 9-16 dropped-favourite games in the replay, the opposite sign on your 15 real favourite auto-bets; it would cost about 17-24% of the bets and 9-35% of the CLV dollars.'",
+ "caveats": [
+  "Everything is about 2.26 days and 3 game days on one phone while the app version and presets changed (0.57 to 0.70.1); the second date half is 6 games (16 closes/4 games). 'Out of sample' is the second half of two days.",
+  "The decision-time replay is mine and approximate: it replays c looks (list), k looks (book page, at most 5 minutes old), takes the first moment every gate passes at the list price, ignores cooldown, wallet, per-game exposure, MAX_PER_CYCLE and Tj's hand bets, and over-places about 2.6x at 6 h (54 replayed plus-money bets vs 21 real within 6 h) and 1.7x at 24 h (83 vs 48). It is insensitive to the list-age (7 min vs until dropped) and page-age (5 vs 10 min) assumptions (dropped favourites stay 11 at 6 h and 22 at 24 h); relaxing agree from 3 to 2 (a loosening, tried only as a sensitivity) gives 14 and 25 dropped, same picture (plus vs whole base +0.41 and +0.37 pts).",
+  "The replay's 'dropped favourites' overlap the app's real favourite auto-bets (7 of the 11 at 6 h and 14 of 22 at 24 h were actually auto-placed), so the two checks are not independent samples; the real record is Tracker-closed throughout (same CNO book family that listed the bet), the replay mixes Tracker and Novig-trades closes. Both rest on 9 to 16 favourite games: neither can settle a 1.5-pt gap.",
+  "Concentration: two NFL games hold 52 of the 150 R2 bets (35%) and 24 of the 54 replayed 6 h plus-money bets; removing them leaves R2 at +3.36% [+2.37, +4.25] (98 bets/39 games, 64 closes) and the replay at +3.90% [+3.29, +4.54] (30 bets, 29 closes/16 games). 96 of 150 R2 bets are NFL, 34 NHL.",
+  "Fill price equals the judged price in the app's record (mean absolute gap 0.05 cent; 0 of 48 plus-money-judged bets filled at 0.50 or above), so the planner not re-checking the minimum odds at the book price is not a practical hole. The limit admits exactly -100/+100 (cost 0.50): 2 of R1's 184 entries sit there and R2 excludes them; trivial.",
+  "Book pages: 74 of the 150 R2 bets had any page at the selected look, 62 fresh enough; wide-read-only rows can never be bet by the auto-bet (it reads only CNO-list rows; Vigilant-scan rows are bet only in Pinnacle-only mode, off on the phone).",
+  "To settle plus-money-only: SE of the plus-minus-favourite gap in the app-feasible set is about 1.2 pts (24 h) and 1.0 pt (6 h). Detecting a true +1.5 pts at 80% power needs about 5x the data (about 12 days at the replay's pace, about 80 favourite games), +1.0 pt about 12x (about 27 days, 190 favourite games); with only the ~20% independent closes available for unplaced favourites multiply the calendar by 3 to 5 unless the study back-fills a close for bets the app does not place. A shadow log (keep listing and grading the favourites without changing the bet set) is the way to get it without touching any limit.",
+  "Wallet and per-game exposure are shared with the Bids tab (resting bids count toward the per-game limit and the wallet), so real volume of any auto-bet rule is also limited by what bids already hold; not measured per rule here.",
+  "Every change to which bets are placed is a question for Tj, not an action: nothing here was changed in the repo."
+ ],
+ "numbers": {
+  "span_days": 2.256,
+  "R1": {
+   "bets": 184,
+   "games": 44,
+   "closes": 116,
+   "close_games": 40,
+   "clv_pct": 2.54,
+   "lo": 1.77,
+   "hi": 3.52,
+   "beat_pct": 77.0
+  },
+  "R2": {
+   "bets": 150,
+   "games": 41,
+   "per_day": 66.5,
+   "closes": 95,
+   "close_games": 35,
+   "clv_pct": 2.83,
+   "lo": 1.97,
+   "hi": 3.91,
+   "beat_pct": 79.0
+  },
+  "R1_favourites_dropped": {
+   "bets": 34,
+   "games": 19,
+   "closes": 21,
+   "close_games": 14,
+   "clv_pct": 1.27,
+   "lo": 0.06,
+   "hi": 2.58,
+   "beat_pct": 67.0
+  },
+  "R2_first_half": {
+   "bets": 104,
+   "games": 36,
+   "closes": 79,
+   "close_games": 31,
+   "clv_pct": 2.67,
+   "lo": 1.72,
+   "hi": 4.07,
+   "beat_pct": 76.0
+  },
+  "R2_second_half": {
+   "bets": 46,
+   "games": 6,
+   "closes": 16,
+   "close_games": 4,
+   "clv_pct": 3.58,
+   "lo": 3.32,
+   "hi": 4.56,
+   "beat_pct": 94.0
+  },
+  "R2_vs_R1_nested_diff_pts": {
+   "diff": 0.28,
+   "lo": 0.04,
+   "hi": 0.65,
+   "p_le0": 0.011,
+   "n_sub": 95.0,
+   "n_full": 116.0,
+   "games": 40.0
+  },
+  "R2_minus_R1fav_diff": {
+   "diff": 1.55,
+   "lo": 0.34,
+   "hi": 3.25,
+   "p_le0": 0.00725,
+   "games": 40,
+   "na": 95,
+   "nb": 21
+  },
+  "R2_closes_by_source": {
+   "tracker": {
+    "closes": 66,
+    "close_games": 27,
+    "clv_pct": 3.74,
+    "lo": 2.78,
+    "hi": 5.01,
+    "beat_pct": 89.0
+   },
+   "novig_trades": {
+    "closes": 24,
+    "close_games": 16,
+    "clv_pct": 0.17,
+    "lo": -0.86,
+    "hi": 1.83,
+    "beat_pct": 46.0
+   },
+   "espn": {
+    "closes": 4,
+    "close_games": 4,
+    "clv_pct": 3.79,
+    "lo": 3.41,
+    "hi": 4.1,
+    "beat_pct": 100.0
+   },
+   "pinnacle": {
+    "closes": 1,
+    "close_games": 1,
+    "clv_pct": 2.14,
+    "lo": 2.14,
+    "hi": 2.14,
+    "beat_pct": 100.0
+   },
+   "independent_espn_pinnacle_novig3plus": {
+    "closes": 26,
+    "close_games": 18,
+    "clv_pct": 0.45,
+    "lo": -0.45,
+    "hi": 1.64,
+    "beat_pct": 58.0
+   },
+   "placedByTj_bets": 70,
+   "no_close_bets": 55
+  },
+  "R1fav_closes_by_source": {
+   "tracker": {
+    "closes": 9,
+    "close_games": 7,
+    "clv_pct": 1.62,
+    "lo": -0.19,
+    "hi": 3.23,
+    "beat_pct": 78.0
+   },
+   "novig_trades": {
+    "closes": 12,
+    "close_games": 9,
+    "clv_pct": 1.02,
+    "lo": -0.38,
+    "hi": 2.87,
+    "beat_pct": 58.0
+   },
+   "independent_espn_pinnacle_novig3plus": {
+    "closes": 7,
+    "close_games": 6,
+    "clv_pct": 2.15,
+    "lo": 0.49,
+    "hi": 5.27,
+    "beat_pct": 71.0
+   },
+   "placedByTj_bets": 9,
+   "no_close_bets": 13
+  },
+  "R2_funnel_first_failing_gate_at_selected_look": {
+   "1 not in app list at that look (w only)": 40,
+   "2 kind": 14,
+   "3 odds >+130": 11,
+   "5 no book page yet": 31,
+   "6 book page >5 min old": 9,
+   "8 <3 agree": 8,
+   "9 sharp vetoed": 5,
+   "PASS at the selected look": 32
+  },
+  "R2_selected_look_kind": {
+   "c": 109,
+   "w": 41
+  },
+  "R2_kinds": {
+   "PROP": 129,
+   "TOTAL": 10,
+   "TEAM_TOTAL": 7,
+   "SPREAD": 3,
+   "PERIOD": 1
+  },
+  "R2_american_gt_130": 36,
+  "R2_american_gt_150": 19,
+  "R2_max_american": 809,
+  "R2_le130": {
+   "bets": 114,
+   "closes": 87,
+   "close_games": 34,
+   "clv_pct": 2.79,
+   "lo": 1.98,
+   "hi": 3.9,
+   "beat_pct": 79.0
+  },
+  "R2_gt130": {
+   "bets": 36,
+   "closes": 8,
+   "close_games": 7,
+   "clv_pct": 3.22,
+   "lo": -0.9,
+   "hi": 6.55,
+   "beat_pct": 75.0
+  },
+  "R2_ev_gt_15pct": 1,
+  "sim_6h": {
+   "base": {
+    "bets": 65,
+    "games": 24,
+    "per_day": 28.8,
+    "closes": 62,
+    "close_games": 24,
+    "clv_pct": 2.99,
+    "lo": 2.3,
+    "hi": 3.88,
+    "beat_pct": 85.0,
+    "stake_per_day_cap3_5": 54.1,
+    "stake_per_day_cap5": 54.7,
+    "clv_dollars_per_day_cap3_5": 1.564,
+    "mean_stake": 1.88
+   },
+   "plus_only": {
+    "bets": 54,
+    "games": 18,
+    "per_day": 23.9,
+    "closes": 51,
+    "close_games": 18,
+    "clv_pct": 3.35,
+    "lo": 2.62,
+    "hi": 4.27,
+    "beat_pct": 90.0,
+    "stake_per_day_cap3_5": 45.1,
+    "stake_per_day_cap5": 45.8,
+    "clv_dollars_per_day_cap3_5": 1.428,
+    "mean_stake": 1.89
+   },
+   "dropped_favourites": {
+    "bets": 11,
+    "games": 9,
+    "per_day": 4.9,
+    "closes": 11,
+    "close_games": 9,
+    "clv_pct": 1.31,
+    "lo": -0.53,
+    "hi": 2.97,
+    "beat_pct": 64.0,
+    "stake_per_day_cap3_5": 8.9,
+    "stake_per_day_cap5": 8.9,
+    "clv_dollars_per_day_cap3_5": 0.136,
+    "mean_stake": 1.83,
+    "kinds": {
+     "PROP": 11
+    }
+   },
+   "plus_minus_fav_diff": {
+    "diff": 2.04,
+    "lo": 0.46,
+    "hi": 4.24,
+    "p_le0": 0.00450112528132033,
+    "games": 24,
+    "na": 51,
+    "nb": 11
+   },
+   "plus_vs_base_nested_diff": {
+    "diff": 0.36,
+    "lo": 0.08,
+    "hi": 0.96,
+    "p_le0": 0.005,
+    "n_sub": 51.0,
+    "n_full": 62.0,
+    "games": 24.0
+   }
+  },
+  "sim_24h": {
+   "base": {
+    "bets": 105,
+    "games": 30,
+    "per_day": 46.5,
+    "closes": 100,
+    "close_games": 30,
+    "clv_pct": 2.24,
+    "lo": 1.33,
+    "hi": 3.22,
+    "beat_pct": 83.0,
+    "stake_per_day_cap3_5": 89.4,
+    "stake_per_day_cap5": 90.0,
+    "clv_dollars_per_day_cap3_5": 1.943,
+    "mean_stake": 1.92
+   },
+   "plus_only": {
+    "bets": 83,
+    "games": 26,
+    "per_day": 36.8,
+    "closes": 78,
+    "close_games": 26,
+    "clv_pct": 2.58,
+    "lo": 1.62,
+    "hi": 3.74,
+    "beat_pct": 86.0,
+    "stake_per_day_cap3_5": 69.7,
+    "stake_per_day_cap5": 70.3,
+    "clv_dollars_per_day_cap3_5": 1.688,
+    "mean_stake": 1.89
+   },
+   "dropped_favourites": {
+    "bets": 22,
+    "games": 16,
+    "per_day": 9.8,
+    "closes": 22,
+    "close_games": 16,
+    "clv_pct": 1.03,
+    "lo": -1.27,
+    "hi": 3.07,
+    "beat_pct": 73.0,
+    "stake_per_day_cap3_5": 19.7,
+    "stake_per_day_cap5": 19.7,
+    "clv_dollars_per_day_cap3_5": 0.255,
+    "mean_stake": 2.02,
+    "kinds": {
+     "PROP": 22
+    }
+   },
+   "plus_minus_fav_diff": {
+    "diff": 1.54,
+    "lo": -0.72,
+    "hi": 4.11,
+    "p_le0": 0.08775,
+    "games": 30,
+    "na": 78,
+    "nb": 22
+   },
+   "plus_vs_base_nested_diff": {
+    "diff": 0.34,
+    "lo": -0.16,
+    "hi": 1.11,
+    "p_le0": 0.1,
+    "n_sub": 78.0,
+    "n_full": 100.0,
+    "games": 30.0
+   }
+  },
+  "real_auto_bets_in_window": {
+   "all": {
+    "bets": 63,
+    "games": 29,
+    "per_day": 27.9,
+    "stake_per_day": 46.9,
+    "clv_dollars_per_day": 0.945,
+    "roi_pct": 1.4,
+    "won": 29,
+    "lost": 34,
+    "closes": 61,
+    "close_games": 29,
+    "clv_pct": 2.08,
+    "lo": 1.07,
+    "hi": 3.22,
+    "beat_pct": 84.0
+   },
+   "plus_judged_over_plus100": {
+    "bets": 48,
+    "games": 25,
+    "per_day": 21.3,
+    "stake_per_day": 34.7,
+    "clv_dollars_per_day": 0.61,
+    "roi_pct": -1.0,
+    "won": 21,
+    "lost": 27,
+    "closes": 47,
+    "close_games": 25,
+    "clv_pct": 1.9,
+    "lo": 0.63,
+    "hi": 3.25,
+    "beat_pct": 83.0
+   },
+   "favourites": {
+    "bets": 15,
+    "games": 12,
+    "per_day": 6.6,
+    "stake_per_day": 12.2,
+    "clv_dollars_per_day": 0.335,
+    "roi_pct": 8.1,
+    "won": 8,
+    "lost": 7,
+    "closes": 14,
+    "close_games": 11,
+    "clv_pct": 2.66,
+    "lo": 1.05,
+    "hi": 4.01,
+    "beat_pct": 86.0
+   },
+   "plus_le6h": {
+    "bets": 21,
+    "games": 11,
+    "per_day": 9.3,
+    "stake_per_day": 14.6,
+    "clv_dollars_per_day": 0.439,
+    "roi_pct": -4.3,
+    "won": 9,
+    "lost": 12,
+    "closes": 21,
+    "close_games": 11,
+    "clv_pct": 2.78,
+    "lo": 1.25,
+    "hi": 4.55,
+    "beat_pct": 90.0
+   },
+   "fav_le6h": {
+    "bets": 7,
+    "games": 5,
+    "per_day": 3.1,
+    "stake_per_day": 6.0,
+    "clv_dollars_per_day": 0.137,
+    "roi_pct": -26.3,
+    "won": 2,
+    "lost": 5,
+    "closes": 7,
+    "close_games": 5,
+    "clv_pct": 1.84,
+    "lo": -0.36,
+    "hi": 4.04,
+    "beat_pct": 71.0
+   },
+   "plus_gt6h": {
+    "bets": 27,
+    "games": 18,
+    "per_day": 12.0,
+    "stake_per_day": 20.2,
+    "clv_dollars_per_day": 0.171,
+    "roi_pct": 1.5,
+    "won": 12,
+    "lost": 15,
+    "closes": 26,
+    "close_games": 18,
+    "clv_pct": 1.19,
+    "lo": -0.62,
+    "hi": 3.08,
+    "beat_pct": 77.0
+   },
+   "fav_gt6h": {
+    "bets": 7,
+    "games": 6,
+    "per_day": 3.1,
+    "stake_per_day": 5.6,
+    "clv_dollars_per_day": 0.199,
+    "roi_pct": 56.5,
+    "won": 6,
+    "lost": 1,
+    "closes": 7,
+    "close_games": 6,
+    "clv_pct": 3.49,
+    "lo": 1.89,
+    "hi": 4.77,
+    "beat_pct": 100.0
+   },
+   "plus_filled_at_or_above_0_50": 0,
+   "mean_abs_fill_minus_judged_price": 0.0005,
+   "plus_minus_fav_diff": {
+    "diff": -0.77,
+    "lo": -2.48,
+    "hi": 1.2,
+    "p_le0": 0.78475,
+    "games": 29,
+    "na": 47,
+    "nb": 14
+   },
+   "sim_recall_precision": {
+    "sim6_plus_vs_real_plus_le6h": "recall 19/21 (0.90), precision 19/54 (0.35)",
+    "sim24_plus_vs_real_plus": "recall 40/48 (0.83), precision 40/83 (0.48)"
+   }
+  }
+ }
+}
