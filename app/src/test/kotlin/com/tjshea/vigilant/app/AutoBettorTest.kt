@@ -1071,7 +1071,7 @@ class AutoBettorTest {
     }
 
     @Test
-    fun `the move rule reads nothing for a prop or with the rule off, and a read that fails stops no bet`() = runBlocking {
+    fun `the move rule reads nothing for a prop or with the rule off, and a game line whose trades can't be read is skipped (not bet unchecked), then bet once they read`() = runBlocking {
         val novig = FakeNovig()
         var reads = 0
         // Jefferson is a prop: never read.
@@ -1083,9 +1083,19 @@ class AutoBettorTest {
         assertEquals(1, bettor(novig, trades = { reads++; movedTrades(5_000.0) }).run(off, ohioState(off)).placed.size)
         assertEquals(0, reads)
         app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
-        // On, and Novig doesn't answer: the bet goes on its other checks, recorded as unread.
+        // On, and Novig doesn't answer (Tj, 2026-10-07, proposal 10): the game line is skipped, not bet unchecked, and the report says so.
         val on = settings { it.copy(trapEarlyHours = 12) }
-        assertEquals(1, bettor(novig, trades = { throw java.io.IOException("HTTP 429") }).run(on, ohioState(on)).placed.size)
-        assertTrue(app.container.tracker.all().single().atBet!!.novigMove!!.startsWith("UNREAD"))
+        val failing = bettor(novig, trades = { reads++; throw java.io.IOException("HTTP 429") })
+        val unread = failing.run(on, ohioState(on))
+        assertEquals(0, unread.placed.size)
+        assertEquals(0, novig.orders.get())
+        assertEquals(1, unread.skipped[AutoBettor.MOVE_UNREAD_SKIP])
+        assertTrue(reads > 0)
+        // The next cycle reads again; with the trades back the bet goes through, and its record says what was read.
+        assertEquals(1, bettor(novig, trades = { movedTrades(otherSide = 0.0) }).run(on, ohioState(on)).placed.size)
+        assertTrue(app.container.tracker.all().single().atBet!!.novigMove!!.startsWith("CLEAR"))
+        // A prop never asks, so a failing read can't stop it.
+        app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+        assertEquals(1, bettor(novig, trades = { throw java.io.IOException("HTTP 429") }).run(settings(), state()).placed.size)
     }
 }
