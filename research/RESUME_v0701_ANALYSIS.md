@@ -21,6 +21,7 @@ Then read, in this order: this file, `TASKS.md` (the last 3 sections), `CHECKPOI
 `plan.py` flags: `--running a,b,c` (labels in flight: never suggested again, and they use the 3 slots), `--selftest`.
 
 ## 2. Is the data here? (decides everything)
+At 00:25Z the fifth container (session b67c8afa; uploads dir `/root/.claude/uploads/e9453445-2ec6-5331-bf2e-7407c8761ca0/`, scratch `/tmp/claude-0/-home-user-novig/e9453445-2ec6-5331-bf2e-7407c8761ca0/scratchpad/v0701`) still had the files, extracted and with all prompts generated; Tj also re-sent both files at 00:15Z (identical to the first copies: same sha256). Check before trusting this: containers die.
 ```bash
 ls /root/.claude/uploads/*/                                   # the two uploaded .txt files
 ls /tmp/claude-0/-home-user-novig/*/scratchpad/v0701/prompts | head   # the extracted data + generated prompts

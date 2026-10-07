@@ -1,3 +1,5 @@
+> **RESUMING? Read `research/RESUME_v0701_ANALYSIS.md` FIRST (the clean runbook). This file is only the chronological log.**
+
 # Vigilant v0.70.1 diagnostics + scan study analysis — CHECKPOINT (resume file)
 Written 2026-10-06 ~04:25Z by the session that started it (usage about to run out). Newest status last. TASKS.md has the same job as CX1-CX3.
 

@@ -1,21 +1,25 @@
-# CHECKPOINT 2642 — read me first, then TASKS.md
+# CHECKPOINT 2643 — read me first, then TASKS.md
 
-**Written:** 2026-10-06T22:10:08Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-8a6337ad-qbceu9` · **builds on:** `b08a0ac9` (this checkpoint is the commit after it)
+**Written:** 2026-10-07T00:16:45Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `8685544a` (this checkpoint is the commit after it)
 
 ## Just done
-DA6 feed-race recorder RESTARTED 22:09Z (370 min, ends ~04:20Z) in the 8th container's scratchpad race/night1.ndjson; the 3 hosts all answer through the proxy
+wrote the standalone resume runbook research/RESUME_v0701_ANALYSIS.md (job, first five minutes, data check, the 3-at-a-time save-each loop with the exact agent prompt, phase map + state: 9/9 study, 5/5 diag, 3/3 strategy, 11/30 verifiers saved, deliverables, rules, pitfalls); linked from TASKS DA8 and the old log; Tj re-sent the files (identical sha256 to the extracted copies)
 
 ## Do this next
-after ~04:20Z: python3 tools/research/live_feed_race.py analyze <scratch>/race/night1.ndjson and fill RESEARCH §99.7 (relative lag per feed, lead over Novig's price move, stale fills); if the container is gone rerun the record command from TASKS DA6; verifier workflow wf_2597009f-1d1 still running (see plan.py)
+FIRST read research/RESUME_v0701_ANALYSIS.md; then bash tools/install-hooks.sh; python3 -I tools/research/study_v0701/plan.py (19 verifiers left: verify-4-feasibility, verify-5..10 x 3), launch 3 at a time as background Agents, tools/save_agent.sh after each; then phase 4 (genphase4.py prompts: synth-diagnose, synth-study, synth-strategies, synthesis, critic, final); then research/scan_study_analysis_2026-10-06_v0.70.1.md + RESEARCH.md 97 + the app-fault release + the short-bullet answer to Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M research/RESUME_v0701_ANALYSIS.md
+     M research/scan_study_analysis_2026-10-06_v0.70.1_checkpoint.md
 
 ## Last ten checkpoints
 ```
+  35b62b25 ckpt 2642: DA6 feed-race recorder RESTARTED 22:09Z (370 min, ends ~04:20Z) in the 8th c
   691e51b1 ckpt 2641: added tools/research/study_v0701/genphase4.py (phase 4 prompts: 3 section wr
   913eb393 ckpt 2640: 8th container: Tj re-sent both v0.70.1 files; extracted+prompts generated in
   50e5f7c8 ckpt 2639: v0.70.3 RELEASED and RECORDED (code 121, tag peels to ed80cfeb = ci-v0.70.3,
@@ -27,5 +31,5 @@ after ~04:20Z: python3 tools/research/live_feed_race.py analyze <scratch>/race/n
   9c9950c2 ckpt 2633: phase 2 complete: all 3 strategy builders saved, plan.py wrote candidates.js
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(15 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
