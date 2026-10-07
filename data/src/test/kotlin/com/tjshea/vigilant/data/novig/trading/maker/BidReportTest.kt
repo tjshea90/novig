@@ -182,7 +182,7 @@ class BidReportTest {
 
     @Test
     fun `small-market bids are counted apart and their fills split from the popular ones, only once one was posted (Tj, 2026-10-07)`() {
-        val rows = BidReport.rows(listOf(bid(1), bid(2), bid(3).copy(obscure = true), bid(4).copy(obscure = true, fillDelayMs = null)), emptyList(), now)
+        val rows = BidReport.rows(listOf(bid(1), bid(2), bid(3).copy(obscure = true), bid(4, fillDelayMs = null, status = MakerStatus.EXPIRED, betId = null).copy(obscure = true)), emptyList(), now)
         assertEquals(listOf(false, false, true, true), rows.map { it.obscure })
         val text = BidReport.summary(rows, now).joinToString("\n")
         assertTrue(text, text.contains("posted: 2 popular, 2 small-market"))
