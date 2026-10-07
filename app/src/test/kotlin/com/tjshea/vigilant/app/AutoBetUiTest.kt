@@ -260,6 +260,11 @@ class AutoBetUiTest {
         assertFalse(minus, minus.contains("underdogs only"))
         val none = AutoBetText.criteria(base.copy(autoBetMinOdds = 0))
         assertFalse(none, none.contains("underdogs only") || none.contains("odds no shorter than"))
+        // The favorite note counts the extra in points, not a bare "1 more".
+        val one = AutoBetText.favouriteNote(base.copy(autoBetFavouriteExtraEv = 0.01))
+        assertTrue(one, one.contains("1 point more than the"))
+        val two = AutoBetText.favouriteNote(base.copy(autoBetFavouriteExtraEv = 0.02))
+        assertTrue(two, two.contains("2 points more than the"))
     }
 
     @Test
