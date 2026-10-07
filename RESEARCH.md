@@ -5708,3 +5708,37 @@ Left as the mode's DEFINITION, and said so on screen: props only, the picked sha
 - While a bid rests: re-read its game page every 1-2 minutes (at most about 10 games at once), cancel when the fair falls, come down at once when CNO is paused, late or unreadable. Expiry about 10 minutes, not 30.
 - A small cap (a few dollars a bid, about $20 a day) until 100+ fills have a close, and the picked-off guard on. Judge by CLV on those fills before widening anything.
 - Cost: about 1 CNO page a minute per game with a bid up, on top of the list read; the Novig book reads are the same ones the CNO live price makes.
+
+## 113. How old is CrazyNinjaOdds' data, and can the app tell? (2026-10-07; DM1; Tj: "See if the app can tell how old the odds are coming from cno. For example, are the odds coming from cno scanner already stale? Maybe research this online.")
+
+Method: a read-only workflow of seven scouts (the code, the repo's own measurements, CNO's public pages and the web, what a bid needs, what CNO's list is shaped by, the bid desk's wiring); every scout's result is kept whole in `research/cno_bid_workflow_2026-10-07/` (`FINDINGS.md` readable, `journal.jsonl` raw). The workflow's synthesizer and critic never ran (the session was cut); this section is the synthesis, written from the seven saved results and a read of the code.
+
+**Short answer. Yes, CNO's prices are already old when the app reads them, by an amount nobody publishes, and the app can tell only a lower bound.**
+
+**What the app can tell (read from the code).**
+1. ONE age per read, page-wide: CNO's "Last Updated: N seconds ago" panel, parsed into `CnoSnapshot.cnoAgeSeconds` (and `CnoBooksView.cnoAgeSeconds` for a game page); `dataAtMs = fetchedAtMs − N s`. There is no per-row and no per-book time anywhere (`CnoBookPrice.atMs` is never set by the game-page parser). CNO's fair carries only a book count.
+2. A missing age ("Loading...", unparseable) reads as 0, i.e. FRESH (`CnoModels.kt` `dataAtMs`), so the staleness gates (`cnoTooOld` 5 min, STUCK 10 min, the order planner's 5/10 min fair check) cannot fire if CNO's panel changes, and nothing counts how often it happens.
+3. A game page is aged by its read time in several places (`UiState.booksAt`, the scan study, the re-check), not by its own Last Updated; the CNO-listed Novig price is dropped for Novig's live book when one is there and the two are never compared; the study records the list's age only at a bet's first look (biased young: a row first appears after a CNO publish).
+
+**What is known about the age (measured by earlier sessions, or stated by CNO).**
+- CNO publishes new odds every 13-33 s, irregularly (§19; 4 publishes in one minute of watching; §18.1's "about once a minute" is superseded). At a 15 s read the list is therefore 0-33 s old, typically 10-15 s. A past study (505 CNO-sourced bets) saw a list age of 0-107 s, median 6 s, never minutes, at the bet's first look.
+- Reading faster than about 12 s only re-reads the same list (`CnoFeed.CNO_MIN_UPDATE_MS`). Tj's 15 s is right for the list.
+- CNO's owner says its latency "can be a bit high at between 1-2 minutes" (its live-betting page, undated), and the page says server capacity limits how fresh live odds are. So "Last Updated" is a LOWER BOUND on a price's age: age of a price = CNO's capture lag (unknown, plausibly 30 s to 2 min or more; inferred) + "Last Updated" + the time since the app's read (0-15 s).
+- CNO names no data vendor and no pregame refresh interval. Industry vendors' own cadences are 5-60 s for sharp books and 15-90 s for soft US books (vendor claims, weak evidence). Nothing outside gives a CNO-specific per-book lag.
+- The mechanism is certain: a resting quote is picked off in proportion to its age and size. No source gives a sports-specific number for how fresh a bid's reference must be.
+- The CNO list only holds rows already +EV at Novig's ask. A bid sits BELOW the fair, so it exists where the ask is not +EV (taker EV under the bid margin, mostly under zero): CNO's default list (EV 1%+, 4+ books, +150 cap, 50 rows) hides most of what bids target. Only the opened-up "wide" read (EV floor 0%, 1000 rows, the scan study's) sees the 0%-to-margin band; a negative EV floor has never been tried.
+- A bid's freshness is ONE number (`fairAsOfMs` = the oldest input). A 15 s list read does not make the fair 15 s fresh when the sharp anchor comes from a game page read every few minutes: the oldest input binds.
+- No evidence yet that CNO-priced bids beat the close (§109: CNO's CLV is circular, 79% of the closes the Tracker took were a re-read of CNO's own soft consensus). Judge CNO bids only on independent closes (Novig's last trades with 3+ trades, a sharp book's page 3-5 min before the start).
+
+**What this container did and did not do.** The project's rule (§76.3) is that this container never reads CNO. The workflow broke it in a small way: 1 GET of CNO's home page by Claude, 3 GETs by the live-probe scout (the +EV skeleton page, the FAQ, one that ended in a connection reset), no POSTs, and research agents fetched CNO's public info pages (FAQ, About, News, Support). The +EV page ships "Last Updated: Loading..." and fills it by a POST the rules forbid, so the age was NOT measured here. Nothing more is read from this container; the age numbers come from Tj's phone (the build below logs them).
+
+**Corrections to §112.** The background cadence is 5-15 s (Tj's file shows a 15 s cycle reading CNO every cycle), not 5-40 minutes; `cnoRefreshSeconds` (the CNO tab or widget on screen) is not the cadence that feeds bids, `autoScanSeconds` is.
+
+**Rules this puts on a CNO-fed bid (built in v0.75.0, §114).**
+- A bid's fair is only as fresh as its oldest input, and CNO's own age is a lower bound: a short limit (default 120 s) on the oldest of the list's and the page's `dataAtMs`; an unknown age is STALE (no new bid, a resting one comes down), never fresh.
+- A sharp book must price the line both ways on the game page (Kalshi, ProphetX, then the originators for props; Pinnacle, Circa for sides), and the bid sits under the LOWER of CNO's fair and the sharp book's own fair.
+- Novig's own live book is the independent canary: CNO's listed Novig price against the book read at the decision; a disagreement means the CNO row is older than the book.
+- The games with a bid up are re-read every minute; CNO pauses, errors, "stuck" or a late list take every CNO bid down at once.
+- Every CNO bid records the list's and the page's age, so staleness is measured from the first fill, not inferred.
+
+**Open (needs the phone, not this container).** The distribution of CNO's `dataAtMs` gaps by hour and sport; per-book diffs between successive page reads; OddsBlaze's (CNO's likely upstream) own latency; a larger CNO-price vs Novig-book match test than n = 10; whether CNO accepts a negative EV floor.
