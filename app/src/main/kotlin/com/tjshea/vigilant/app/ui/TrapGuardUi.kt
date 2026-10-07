@@ -79,7 +79,7 @@ object TrapGuardText {
             "Before the auto-bet places a moneyline, spread or game total (or a game-line bid goes up, when the Bids tab takes game lines), Novig's own " +
                 "trades in it are read (one free request). A price that just fell 2¢+ under where it traded this hour while \$100+ was bought on the other " +
                 "side isn't bet or bid on: on Novig such bets lost 2.3¢ to the close, and such bids kept +1.2% a fill instead of +6.5%. Props aren't " +
-                "checked: the same move on a prop isn't a trap."
+                "checked: the same move on a prop isn't a trap. If Novig's trades can't be read (a busy or blocked request) the game line is skipped that time and tried again, never bet unchecked."
         } else {
             "Off: game lines are bet and bid on without reading Novig's recent trades."
         }
