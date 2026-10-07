@@ -407,8 +407,9 @@ class CreditsHeldBackException(message: String) : Exception(message)
  * hold [reserve] plus the share of every day after today (Tj's own day, [zone]), so a busy evening can spend the whole of today's share and
  * anything earlier days left unspent, never tomorrow's. A key first seen part-way through its period spreads the period's credits over the
  * days left in it. Stateless: it reads the meter, so it survives restarts and follows the server's
- * figures. A key whose allowance is [freeLimit] or less (a free plan) isn't paced but held back entirely: its few credits are for [reserve]'s
- * purpose (closing lines).
+ * figures. A key whose allowance is [freeLimit] or less (a free plan) isn't paced: nothing of the day's share applies to it, so scans use it, in
+ * Tj's key order, after the keys before it (Tj, 2026-10-07: "automatically uses each successive key when the last one is depleted"), down to its
+ * last [freeReserve] credits, which stay for closing lines. Credits left on a free key are lost at its reset, never carried over.
  */
 class CreditPace(
     private val policy: QuotaPolicy,
@@ -420,12 +421,14 @@ class CreditPace(
      * morning of 15-minute cycles can't spend the evening's credits (earlier days' leftovers stay open to both).
      */
     private val keepOfDay: Double = 0.0,
+    /** What a free key keeps for closing lines after a scan's call: a few days of closes (they cost 1 to 5 a league a day), the rest is for scans. */
+    val freeReserve: Int = FREE_RESERVE,
 ) {
     /** Credits [u] must still hold after a call at [now]. */
     fun floor(u: KeyUsage, now: Long): Int {
         // Until the server has said what the key's plan is (its first answer's used + remaining), only the reserve: that first call tells.
         val limit = u.limit ?: return reserve
-        if (isFree(u)) return FREE_ONLY
+        if (isFree(u)) return minOf(freeReserve, reserve)
         val start = u.periodStart.takeIf { it > 0 } ?: policy.periodStart(now)
         val reset = u.resetAtMs ?: policy.nextReset(start)
         val z = zone()
@@ -442,15 +445,15 @@ class CreditPace(
         return (limit - allowed + kept).toInt()
     }
 
-    /** A free plan's key (the server said its allowance is [freeLimit] or less): kept for closing lines. */
+    /** A free plan's key (the server said its allowance is [freeLimit] or less): used for scans after the keys before it, down to [freeReserve]. */
     fun isFree(u: KeyUsage): Boolean = u.limit != null && u.limit <= freeLimit
 
     /** Credits [u] may still spend today. */
     fun spendableToday(u: KeyUsage, now: Long): Int = ((u.left(policy) ?: 0) - floor(u, now)).coerceAtLeast(0)
 
     companion object {
-        /** A floor no key reaches: held back from these calls altogether. */
-        const val FREE_ONLY = Int.MAX_VALUE / 4
+        /** Credits a free ParlayAPI key keeps for closing lines (Tj, 2026-10-07: free keys serve scans too; before, all 1,000 were held back). */
+        const val FREE_RESERVE = 100
 
         private const val DAY_MS = 86_400_000L
     }
