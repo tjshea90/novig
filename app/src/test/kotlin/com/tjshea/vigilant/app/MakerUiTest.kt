@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.app
 
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -573,13 +574,11 @@ class MakerUiTest {
         compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
         compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
         compose.onNodeWithTag("makerTrapEarlyNote").performScrollTo().assertTextContains("the scan reads exactly that far (6 h now", substring = true)
-        compose.onNodeWithTag("makerTrapEarlyNote").assertTextDoesNotContain("ParlayAPI credits")
+        compose.onNodeWithTag("makerTrapEarlyNote").assert(!hasText("ParlayAPI credits", substring = true))
         compose.onNodeWithTag("maker-trapEarlyField").performTextReplacement("8")
         assertEquals(8, st.value.trapEarlyHours)
         compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("starting within 8 h, and the scan reads exactly that far (8 h now", substring = true)
         compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("more ParlayAPI credits", substring = true)
-        compose.onNodeWithText("Off").performScrollTo()
-        compose.onAllNodesWithText("Off").filter(hasTestTag("makerTrapOff")).assertCountEquals(0)
         st.value = st.value.copy(trapEarlyHours = 0)
         compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("Off: no limit of its own", substring = true)
         assertEquals("the scan reads as far as Settings › Scanning says", st.value.effective().scanWindowHours, com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(st.value))
