@@ -137,8 +137,11 @@ class BidReportTest {
         assertTrue(text, text.contains("results +10.79 on 40.00 staked (4 settled, ROI +27.0%)") && text.contains("(1 close, 100% beat)"))
         // Nothing posted: nothing said.
         assertTrue(BidReport.summary(emptyList(), now).isEmpty())
-        // Posted but none filled: one line.
-        assertEquals(1, BidReport.summary(BidReport.rows(listOf(bid(9, fillDelayMs = null, status = MakerStatus.EXPIRED)), emptyList(), now), now).size)
+        // Posted but none filled: the count, and how it ended (Tj, 2026-10-07: cancelled, expired and the rest are told apart, with the fill rate).
+        val unfilled = BidReport.summary(BidReport.rows(listOf(bid(9, fillDelayMs = null, status = MakerStatus.EXPIRED)), emptyList(), now), now)
+        assertEquals(2, unfilled.size)
+        assertTrue(unfilled[0], unfilled[0].startsWith("bids: 1 posted · 0 filled (0%)"))
+        assertEquals("  ended without a fill, by how: Expired 1 · fill rate among the bids that are over: 0% (0 of 1)", unfilled[1])
     }
 
     @Test
