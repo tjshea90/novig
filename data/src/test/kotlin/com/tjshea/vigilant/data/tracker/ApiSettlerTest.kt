@@ -414,6 +414,19 @@ class ApiSettlerTest {
         }))
         settler(t4).run()
         assertEquals(BetStatus.PENDING, t4.all().single { it.orderId == "o2" }.status)
+        // Even a tapped result whose note happens to carry a feed's words (a feed grade he then re-tapped) is his, not the feed's.
+        val t4b = tracker(); linePair(t4b)
+        t4b.editMany(mapOf(t4b.all().single { it.orderId == "o1" }.id to { b: TrackedBet ->
+            b.copy(status = BetStatus.LOST, settledAtMs = now, settledBy = BetSettler.BY_YOU, gradeNote = "${ApiSettler.SILENT_LOSS} (Gordon ran for 100 yards)")
+        }))
+        settler(t4b).run()
+        assertEquals(BetStatus.PENDING, t4b.all().single { it.orderId == "o2" }.status)
+        // Two legs on the SAME side: one lost by a feed says nothing for its twin's win (the twin lost too, if anything); only the other side's leg can win.
+        val t7 = tracker(); linePair(t7)
+        runBlocking { t7.logApi(target("c").copy(selection = "Ollie Gordon Under 29.5", marketLabel = "Player Rushing Yards"), "o3", listOf(fill("o3"))) }
+        settler(t7) { b -> if (b.orderId == "o1") BetGrader.Grade.Result(BetStatus.LOST, "Gordon ran for 100 yards") else null }.run()
+        assertEquals(BetStatus.WON, t7.all().single { it.orderId == "o2" }.status)
+        assertEquals(BetStatus.PENDING, t7.all().single { it.orderId == "o3" }.status)
         // A feed that lost both legs: the other-side-lost guard still wins (no win is invented from a misread).
         val t5 = tracker(); linePair(t5)
         val r5 = settler(t5) { BetGrader.Grade.Result(BetStatus.LOST, "Final: misread") }.run()
