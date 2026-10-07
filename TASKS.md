@@ -4133,8 +4133,6 @@ Plan (RESEARCH.md §92; a session cut off mid-way resumes at the first unticked 
 
 ## Tj, 2026-10-07 (after v0.73.0, ~19:35Z): "Make the app bet logging differentiate from bets and bids if it doesn't already do so, so I can see stats and ev filtered my bids as well as bets, and also for the diagnostics and studies sections"
 
-(Also in INBOX at 18:13Z, from another session: a fastboot-over-OTG how-to question. Not this app's work; answered separately if at all.)
-
 - [ ] DJ1 Find out what the app does today (evidence, not memory): how a bet and a bid are each logged (TrackedBet, AtBet.how/HOW_BID, the Tracker's filters and stats, Diagnostics' Tracker/bids sections, the scan study and its export), which records are tagged and which are not (11 older bid fills carry no tag, RESEARCH §109), what is missing for bids that never fill (placed, cancelled, expired), and where a bid is silently counted as a bet. Say plainly what already differentiates and what does not.
 - [ ] DJ2 Every logged record says whether it is a BET (taker: your tap, the bet sheet, the auto-bet, a lock) or a BID (a make order that filled); older untagged bid fills are told apart by the evidence they carry (never guessed silently; the rule written down).
 - [ ] DJ3 Tracker tab: the stats and the EV/CLV/profit numbers can be filtered Bets / Bids / All (chips), saved like its other filters, and every figure says which it covers.

@@ -5351,11 +5351,6 @@ This session's worker process was restarted. If your previous turn was already c
 Resume
 ```
 
-## 2026-10-07T18:13:17Z
-```
-Tell me how to run fastboot commands using a host android phone and a target phone in fastboot mode using an otg cable and another term app
-```
-
 ## 2026-10-07T19:34:56Z
 ```
 Make the app bet logging differentiate from bets and bids if it doesn't already do so, so I can see stats and ev filtered my bids as well as bets, and also for the diagnostics and studies sections
@@ -5366,7 +5361,3 @@ Make the app bet logging differentiate from bets and bids if it doesn't already 
 2% usage left  checkpoint save and allow new session to resume
 ```
 
-## 2026-10-07T19:46:20Z
-```
-Resume this project. Erase anything about fastboot phone stuff that was not supposed to be in this repo
-```
