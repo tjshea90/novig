@@ -74,15 +74,19 @@ class DiagnosticsShareTest {
     }
 
     @Test
-    fun `the report lists the app's own files, biggest first, and no folders`() {
+    fun `the report lists the app's own files and folders, biggest first, a folder once with everything under it`() {
         val made = listOf("zz-small.json" to 10, "zz-big.json" to 5_000, "zz-mid.json" to 600).map { (n, size) -> File(app.filesDir, n).apply { writeBytes(ByteArray(size)) } }
-        File(app.filesDir, "zz-folder").mkdirs()
+        // The scan study sits in a folder (11.2 MB in Tj's v0.70.1 file, while the report's total counted only the files beside it).
+        val folder = File(app.filesDir, "zz-folder").apply { mkdirs() }
+        File(folder, "a.jsonl").writeBytes(ByteArray(1_500))
+        File(folder, "deeper").mkdirs()
+        File(folder, "deeper/b.jsonl").writeBytes(ByteArray(500))
         try {
             val mine = DiagnosticsShare.storage(app).filter { it.first.startsWith("zz-") }
-            assertEquals(listOf("zz-big.json" to 5_000L, "zz-mid.json" to 600L, "zz-small.json" to 10L), mine)
+            assertEquals(listOf("zz-big.json" to 5_000L, "zz-folder/" to 2_000L, "zz-mid.json" to 600L, "zz-small.json" to 10L), mine)
         } finally {
             made.forEach { it.delete() }
-            File(app.filesDir, "zz-folder").delete()
+            folder.deleteRecursively()
         }
     }
 
