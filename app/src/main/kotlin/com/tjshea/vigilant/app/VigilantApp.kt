@@ -934,22 +934,6 @@ class AppContainer(private val app: Application) {
         )
     }
 
-    /**
-     * The score-burst recorder (Tj, 2026-10-06): its connection never places an order. Its connection is the read key's own websocket ([NovigStream] with a listener), its echo probe is a signed `POST /v3/echo`
-     * (free), and it is given no trading client at all, so nothing in it can place or cancel an order whatever the code did.
-     */
-    val burst: com.tjshea.vigilant.data.novig.burst.BurstRecorder by lazy {
-        com.tjshea.vigilant.data.novig.burst.BurstRecorder(
-            scope = appScope,
-            source = novig,
-            newFeed = { listener -> readConnection?.let { NovigStream(http, readKeyClient(it), appScope, idleCloseMs = BURST_IDLE_CLOSE_MS, bookListener = listener) } },
-            echo = { (novig.keyed ?: error("no Novig key")).echo() },
-            trades = { id -> novig.trades(id) },
-            journal = burstJournal,
-            windowSink = burstTrader,
-        )
-    }
-
     /** The feed race's files (RESEARCH.md §106): one journal a day under files/race, appended to, never rewritten. */
     val feedRaceJournal = com.tjshea.vigilant.data.live.FeedRaceJournal(File(app.filesDir, "race"))
 
@@ -986,6 +970,22 @@ class AppContainer(private val app: Application) {
     fun feedRaceTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
         if (s.feedRace && !s.killed) feedRace.start() else if (feedRace.running) feedRace.stop()
+    }
+
+    /**
+     * The score-burst recorder (Tj, 2026-10-06): its connection never places an order. Its connection is the read key's own websocket ([NovigStream] with a listener), its echo probe is a signed `POST /v3/echo`
+     * (free), and it is given no trading client at all, so nothing in it can place or cancel an order whatever the code did.
+     */
+    val burst: com.tjshea.vigilant.data.novig.burst.BurstRecorder by lazy {
+        com.tjshea.vigilant.data.novig.burst.BurstRecorder(
+            scope = appScope,
+            source = novig,
+            newFeed = { listener -> readConnection?.let { NovigStream(http, readKeyClient(it), appScope, idleCloseMs = BURST_IDLE_CLOSE_MS, bookListener = listener) } },
+            echo = { (novig.keyed ?: error("no Novig key")).echo() },
+            trades = { id -> novig.trades(id) },
+            journal = burstJournal,
+            windowSink = burstTrader,
+        )
     }
 
     /** True while the settings carry a halt of the burst trader, so the Resume that clears it is told to the trader once ([burstTick]). */
