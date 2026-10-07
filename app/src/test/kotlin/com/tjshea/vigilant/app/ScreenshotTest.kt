@@ -470,7 +470,7 @@ class ScreenshotTest {
         shoot("5e_settings_feed") { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }, page = SettingsPage.FEED) }
         // Up to 1,200 Novig prices a scan, and props per game up to 24 (v0.18.0).
         for (n in listOf("500", "800", "1200")) compose.onNodeWithText(n).assertExists()
-        compose.onAllNodesWithText("24").assertCountEquals(2) // props per game's chip and its typed box (props credits' and PropLine games per scan's are on the Fair odds tab)
+        compose.onAllNodesWithText("24").assertCountEquals(1) // props per game's (props credits' and PropLine games per scan's are on the Fair odds tab)
         compose.onNodeWithText("300 is about a minute", substring = true).assertExists()
         // +300 at most since v0.18.0 (Tj, 2026-09-28: "Let me choose +200 +150 and +120 and get rid of any option over +300").
         compose.onNodeWithText("Longest odds shown: +300").assertExists()
