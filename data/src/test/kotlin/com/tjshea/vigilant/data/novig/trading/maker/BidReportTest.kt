@@ -217,4 +217,49 @@ class BidReportTest {
         assertFalse(plain.contains("which bids go up"))
         assertFalse(plain.contains("the books behind the fair"))
     }
+
+    // ---- bids priced from CrazyNinjaOdds (Tj, 2026-10-07; RESEARCH.md §114) ------------------------------------------------------
+
+    private fun cnoBid(n: Int, listAge: Int = 10, pageAge: Int = 40, fillDelayMs: Long? = 90_000L) =
+        bid(n, fillDelayMs = fillDelayMs).copy(source = CnoMakerLines.SOURCE, listAgeSec = listAge, pageAgeSec = pageAge, fairAgeSec = maxOf(listAge, pageAge))
+
+    @Test
+    fun `a CNO-priced bid's fill is logged as the Tracker's cno scanner with the ages of CNO's data, and a Vigilant bid's is unchanged`() {
+        val v = bid(1)
+        val c = cnoBid(2, listAge = 10, pageAge = 40)
+        val av = com.tjshea.vigilant.data.tracker.AtBets.bid(v, start)
+        val ac = com.tjshea.vigilant.data.tracker.AtBets.bid(c, start)
+        assertEquals("vigilant", av.scanner)
+        assertNull(av.cnoListAgeSec)
+        assertEquals("cno", ac.scanner)
+        assertEquals(10L, ac.cnoListAgeSec)
+        assertEquals(40L, ac.pageAgeSec)
+        // The fair's age is CNO's data's (the older of the two), not the Novig book's.
+        assertEquals(40L, ac.fairAgeSec)
+        assertEquals(120L, av.fairAgeSec)
+    }
+
+    @Test
+    fun `the report counts CNO-priced bids apart from the first one posted and splits fills by the age of CNO's data`() {
+        val bids = listOf(bid(1), cnoBid(2, pageAge = 20), cnoBid(3, pageAge = 45), cnoBid(4, listAge = 5, pageAge = 100), cnoBid(5, fillDelayMs = null).copy(status = MakerStatus.EXPIRED, why = "expired"))
+        val tracked = bids.filter { it.filled > 0 }.mapIndexed { i, b -> bet(i + 1, b).copy(id = b.betId!!) }
+        val rows = BidReport.rows(bids, tracked, now)
+        assertEquals(listOf("vigilant", "cno", "cno", "cno", "cno"), rows.map { it.source })
+        assertEquals(listOf(null, 10, 10, 5, 10), rows.map { it.listAgeSec })
+        val text = BidReport.summary(rows, now).joinToString("\n")
+        assertTrue(text, text.contains("bids by which scanner priced them: CrazyNinjaOdds 4 posted, 3 filled · Vigilant's scan 1 posted, 1 filled"))
+        assertTrue(text, text.contains("-- fills by which scanner priced the bid --"))
+        assertTrue(text, text.contains("-- fills by age of CrazyNinjaOdds' data when posted (the older of its list and the game page), CNO-priced bids --"))
+        // 20 s → under 30 s, 45 s → 30 to 60 s, 100 s → 1 to 2 min, in that order.
+        val bands = text.substringAfter("CNO-priced bids --").lines().drop(1).takeWhile { it.startsWith("   ") }.map { it.trim().substringBefore(":") }
+        assertEquals(listOf("under 30 s", "30 to 60 s", "1 to 2 min"), bands)
+    }
+
+    @Test
+    fun `with no CNO-priced bid the report is what it was - no scanner lines`() {
+        val rows = BidReport.rows(listOf(bid(1), bid(2)), listOf(bet(1, bid(1)), bet(2, bid(2))), now)
+        val text = BidReport.summary(rows, now).joinToString("\n")
+        assertFalse(text, text.contains("which scanner priced"))
+        assertFalse(text, text.contains("CrazyNinjaOdds"))
+    }
 }
