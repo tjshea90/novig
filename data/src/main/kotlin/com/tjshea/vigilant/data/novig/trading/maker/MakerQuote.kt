@@ -730,42 +730,76 @@ object MakerPlan {
         val places = ArrayList<MakerDecision.Post>()
         val waiting = HashMap<String, Int>()
         fun wait(why: String) = waiting.merge(why, 1, Int::plus)
-        // Popular bids that waited for room (the most bids, the most dollars, the wallet): the small-market bids behind them in [priority] are posted only when none waits,
-        // and the small-market bids already up make the room below (Tj, 2026-10-07: popular large markets first, then, if there is room, obscure ones).
-        val needSlots = ArrayList<MakerDecision.Post>()
-        val needMoney = ArrayList<MakerDecision.Post>()
-        for (w in wanted.filter { it.line.outcomeId !in covered }.sortedWith(priority(rules))) {
-            val credit = freed[w.line.outcomeId] ?: 0.0
-            when {
-                wouldTrade(w, onBook) -> wait(WASH)
-                w.obscure && (needSlots.isNotEmpty() || needMoney.isNotEmpty()) -> wait(POPULAR_WAITING)
-                bids >= rules.maxBids -> { if (!w.obscure) needSlots += w; wait(MAX_BIDS_REACHED.format(rules.maxBids)) }
-                places.size >= rules.postsPerPass -> wait(PASS_FULL.format(rules.postsPerPass))
-                dollars + w.cost > rules.maxDollars + 1e-9 -> { if (!w.obscure) needMoney += w; wait(MAX_DOLLARS_REACHED.format(money(rules.maxDollars))) }
-                rules.maxPerGame > 0.0 && GameExposure.check(w.gameItem.game, onGames, w.gameItem.marketId, w.gameItem.outcomeId, w.cost, rules.maxPerGame).blocked ->
-                    wait(GAME_REACHED.format(money(rules.maxPerGame)))
-                w.cost > spend + credit + 1e-9 -> { if (!w.obscure) needMoney += w; wait(BUDGET_REACHED) }
-                else -> {
-                    if (rules.maxPerGame > 0.0) onGames = onGames + w.gameItem
-                    onBook.getOrPut(w.line.marketId) { ArrayList() } += w.line.outcomeId to w.price
-                    places += w
-                    bids++
-                    dollars += w.cost
-                    spend -= (w.cost - credit).coerceAtLeast(0.0)
+        // What a pass has left to spend on bids: the bids up, the dollars they hold, the wallet, and what each game already has at risk.
+        class Room(var bids: Int, var dollars: Double, var spend: Double, var games: List<GameExposure.Item>)
+        val room = Room(bids, dollars, spend, onGames)
+        /** Why [w] can't go up in [r] (the most bids, the pass's own limit when [passCapped], the most dollars, the per-game limit, the wallet), or null. */
+        fun capacity(w: MakerDecision.Post, r: Room, passCapped: Boolean): String? = when {
+            r.bids >= rules.maxBids -> MAX_BIDS_REACHED.format(rules.maxBids)
+            passCapped && places.size >= rules.postsPerPass -> PASS_FULL.format(rules.postsPerPass)
+            r.dollars + w.cost > rules.maxDollars + 1e-9 -> MAX_DOLLARS_REACHED.format(money(rules.maxDollars))
+            rules.maxPerGame > 0.0 && GameExposure.check(w.gameItem.game, r.games, w.gameItem.marketId, w.gameItem.outcomeId, w.cost, rules.maxPerGame).blocked ->
+                GAME_REACHED.format(money(rules.maxPerGame))
+            w.cost > r.spend + (freed[w.line.outcomeId] ?: 0.0) + 1e-9 -> BUDGET_REACHED
+            else -> null
+        }
+        fun take(w: MakerDecision.Post, r: Room) {
+            if (rules.maxPerGame > 0.0) r.games = r.games + w.gameItem
+            r.bids++
+            r.dollars += w.cost
+            r.spend -= (w.cost - (freed[w.line.outcomeId] ?: 0.0)).coerceAtLeast(0.0)
+        }
+        val ordered = wanted.filter { it.line.outcomeId !in covered }.sortedWith(priority(rules))
+        // The popular bids first (Tj, 2026-10-07: popular large markets first, then, if there is room, obscure ones). A popular bid held up by the room is remembered.
+        val roomShort = ArrayList<MakerDecision.Post>()
+        for (w in ordered.filter { !it.obscure }) {
+            if (wouldTrade(w, onBook)) { wait(WASH); continue }
+            val why = capacity(w, room, passCapped = true)
+            if (why != null) {
+                wait(why)
+                if (why != PASS_FULL.format(rules.postsPerPass)) roomShort += w
+                continue
+            }
+            onBook.getOrPut(w.line.marketId) { ArrayList() } += w.line.outcomeId to w.price
+            places += w
+            take(w, room)
+        }
+        // Which of those waiting popular bids WOULD go up if every small-market bid we placed by ourselves came down? Only they make room: a popular bid that doesn't fit even
+        // then (dearer than the wallet or the dollar limit, held up by its game's limit through other bids) never costs a small-market bid its place or holds the others back.
+        // Then the fewest, least valuable small-market bids that make room for all of those come down (the popular bids go up on the next pass: a cancelled bid's dollars
+        // aren't spendable until the cancel has landed, it can still fill).
+        val removable = kept.filter { it.obscure && it.auto }
+        fun without(down: Collection<RestingBid>): List<MakerDecision.Post> {
+            val r = Room(room.bids - down.size, room.dollars - down.sumOf { it.restingDollars }, room.spend + down.sumOf { it.restingDollars }, room.games.toMutableList().also { g -> down.forEach { d -> d.gameItem?.let { g.remove(it) } } })
+            return roomShort.filter { capacity(it, r, passCapped = false) == null }.also { fit -> /* each one placed uses room the next needs */ }
+                .let { _ -> roomShort.filter { w -> (capacity(w, r, passCapped = false) == null).also { ok -> if (ok) take(w, r) } } }
+        }
+        var popularWaits = false
+        if (roomShort.isNotEmpty() && removable.isNotEmpty()) {
+            val fit = without(removable)
+            if (fit.isNotEmpty()) {
+                popularWaits = true
+                val order = removable.sortedWith(compareBy<RestingBid> { it.leads }.thenBy { it.evAtFair })
+                var n = 0
+                while (n < order.size && without(order.take(n)).size < fit.size) n++
+                for (r in order.take(n)) {
+                    cancels += r to MADE_ROOM
+                    kept.remove(r)
                 }
             }
         }
-        // Popular bids that waited for room make it: the small-market bids up come down, the least valuable first (not leading their side, the least edge), enough for the slots and the
-        // dollars the popular ones need. The popular bids go up on the next pass, once these cancels have landed (a cancelled bid's dollars aren't spendable until then: it can still fill).
-        if ((needSlots.isNotEmpty() || needMoney.isNotEmpty()) && kept.any { it.obscure }) {
-            var slots = needSlots.size
-            var money = needMoney.sumOf { it.cost }
-            for (r in kept.filter { it.obscure }.sortedWith(compareBy<RestingBid> { it.leads }.thenBy { it.evAtFair })) {
-                if (slots <= 0 && money <= 1e-9) break
-                cancels += r to MADE_ROOM
-                kept.remove(r)
-                slots--
-                money -= r.restingDollars
+        // The small-market bids behind them, with what the popular ones left over; held back while a popular bid that could go up waits for room.
+        for (w in ordered.filter { it.obscure }) {
+            when {
+                wouldTrade(w, onBook) -> wait(WASH)
+                popularWaits -> wait(POPULAR_WAITING)
+                else -> {
+                    val why = capacity(w, room, passCapped = true)
+                    if (why != null) { wait(why); continue }
+                    onBook.getOrPut(w.line.marketId) { ArrayList() } += w.line.outcomeId to w.price
+                    places += w
+                    take(w, room)
+                }
             }
         }
         return MakerActions(cancels, places, kept, waiting, trimmed)
