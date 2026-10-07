@@ -5355,3 +5355,8 @@ Resume
 ```
 Tell me how to run fastboot commands using a host android phone and a target phone in fastboot mode using an otg cable and another term app
 ```
+
+## 2026-10-07T19:34:56Z
+```
+Make the app bet logging differentiate from bets and bids if it doesn't already do so, so I can see stats and ev filtered my bids as well as bets, and also for the diagnostics and studies sections
+```
