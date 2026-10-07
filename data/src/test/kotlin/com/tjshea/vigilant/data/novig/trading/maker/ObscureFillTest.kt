@@ -242,6 +242,16 @@ class ObscureFillTest {
         assertNull(plan.cancels.firstOrNull { it.first.outcomeId == "p-over" })
     }
 
+    @Test
+    fun `Diagnostics and the Bids tab say whether small markets fill the rest, with the safeguards, only inside Quick and likely`() {
+        val on = QuickLikely.diagnosticsNote(ScanSettings(makerFocus = BidFocus.QUICK_LIKELY))
+        assertTrue(on, on.contains("small-market fill: on") && on.contains("6% under the fair") && on.contains("3+ books") && on.contains("50% of the stake"))
+        assertEquals(" (small-market fill: off)", QuickLikely.diagnosticsNote(ScanSettings(makerFocus = BidFocus.QUICK_LIKELY, makerObscureFill = false)))
+        assertEquals("", QuickLikely.diagnosticsNote(ScanSettings()))
+        val note = QuickLikely.obscureNote(ScanSettings(makerObscureMinBooks = 4, makerObscureMargin = 0.075))
+        assertTrue(note, note.contains("only after every popular bid") && note.contains("at least 4 books") && note.contains("at least 7.5% under the fair"))
+    }
+
     // ---- the settings carry it -------------------------------------------------------------------------------------------------
 
     @Test
