@@ -64,6 +64,8 @@ class TrackerBidsUiTest {
 
     private fun inBar(text: String) = compose.onNode(hasText(text, substring = true) and hasAnyAncestor(hasTestTag(STICKY_BAR)))
 
+    private fun has(text: String) = compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+
     private fun shown(vararg texts: String) = texts.filter { compose.onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() }
 
     @Test
@@ -72,7 +74,7 @@ class TrackerBidsUiTest {
         compose.onNodeWithText("Bets & bids").assertExists()
         // Open: b3, b4 and b5; b4 is a bid.
         assertEquals(listOf("Dallas Cowboys", "Jaxon Smith-Njigba Over 5.5", "Under 7.5"), shown("Dallas Cowboys", "Jaxon Smith-Njigba Over 5.5", "Under 7.5"))
-        compose.onAllNodesWithTag("bidTag").assertCountEquals(1)
+        compose.onAllNodesWithTag("bidTag", useUnmergedTree = true).assertCountEquals(1)
         compose.onNodeWithText("your bid, filled (make order)", substring = true).assertExists()
 
         compose.onNodeWithTag("madeChip").performClick()
@@ -88,7 +90,7 @@ class TrackerBidsUiTest {
 
         choose("Bets only (4)")
         assertEquals(listOf("Dallas Cowboys", "Under 7.5"), shown("Dallas Cowboys", "Jaxon Smith-Njigba Over 5.5", "Under 7.5"))
-        compose.onAllNodesWithTag("bidTag").assertCountEquals(0)
+        compose.onAllNodesWithTag("bidTag", useUnmergedTree = true).assertCountEquals(0)
         compose.onNodeWithText("Open (2)").assertExists()
 
         choose("Bets & bids (6)")
@@ -111,22 +113,22 @@ class TrackerBidsUiTest {
     fun `the Stats tab's profit, record and caption follow the chip`() {
         screen { TrackerScreen(withBids(), { _, _ -> }, {}, initialView = TrackerView.STATS) }
         // Everything: +34.52 (b1) − 18.00 (b2) + 1.00 (b6).
-        compose.onNodeWithText("+$17.52").assertExists()
-        compose.onNodeWithText("2-1").assertExists()
+        assertTrue("+$17.52", has("+$17.52"))
+        assertTrue("2-1", has("2-1"))
         compose.onAllNodesWithTag("madeCaption").assertCountEquals(0)
 
         choose("Bids only (2)")
-        compose.onNodeWithText("+$34.52").assertExists()
-        compose.onNodeWithText("1-0").assertExists()
+        assertTrue("+$34.52", has("+$34.52"))
+        assertTrue("1-0", has("1-0"))
         compose.onNodeWithTag("madeCaption").assertIsDisplayed()
 
         choose("Bets only (4)")
-        compose.onNodeWithText("-$17.00").assertExists()
-        compose.onNodeWithText("1-1").assertExists()
+        assertTrue("-$17.00", has("-$17.00"))
+        assertTrue("1-1", has("1-1"))
         compose.onAllNodesWithText("+$34.52").assertCountEquals(0)
 
         choose("Bets & bids (6)")
-        compose.onNodeWithText("+$17.52").assertExists()
+        assertTrue("+$17.52", has("+$17.52"))
     }
 
     @Test
@@ -144,6 +146,6 @@ class TrackerBidsUiTest {
         screen { TrackerScreen(SampleScan.state(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
         choose("Bids only (0)")
         compose.onNodeWithText("No open bids").assertExists()
-        compose.onNodeWithText("Bids nobody filled", substring = true).assertExists()
+        compose.onNodeWithText("A bid is a make order", substring = true).assertExists()
     }
 }

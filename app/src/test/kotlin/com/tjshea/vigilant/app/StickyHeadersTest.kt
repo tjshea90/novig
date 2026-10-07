@@ -67,6 +67,9 @@ class StickyHeadersTest {
     /** [text] as drawn inside the pinned bar (the same words are on cards too). */
     private fun inBar(text: String) = compose.onNode(hasText(text, substring = true) and hasAnyAncestor(hasTestTag(STICKY_BAR)))
 
+    /** [text] as the whole text of a node in the pinned bar: "Bets" is the tab, not the "Bets & bids" chip. */
+    private fun inBarExactly(text: String) = compose.onNode(hasText(text) and hasAnyAncestor(hasTestTag(STICKY_BAR)))
+
     /** Forty open bets, each a different player, the first with the biggest stake. */
     private fun manyBets(): UiState {
         val base = SampleScan.state()
@@ -81,7 +84,9 @@ class StickyHeadersTest {
         compose.onNodeWithText("Player 39 Over 1.5", substring = true).assertIsDisplayed()
         // Stats | Bets, Open / Settled / All, Sort and Scanner: all still there, without scrolling back up.
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
-        for (pinned in listOf("Stats", "Bets", "Open (40)", "Settled (0)", "All (40)", "Sort: Needs a look", "Scanner: All")) inBar(pinned).assertIsDisplayed()
+        for (pinned in listOf("Stats", "Bets")) inBarExactly(pinned).assertIsDisplayed()
+        // The Bets / Bids chip (Tj, 2026-10-07) is in the first row, so the bar keeps its two rows.
+        for (pinned in listOf("Open (40)", "Settled (0)", "All (40)", "Bets & bids", "Sort: Needs a look", "Scanner: All")) inBar(pinned).assertIsDisplayed()
     }
 
     @Test
@@ -106,7 +111,8 @@ class StickyHeadersTest {
     fun `the Stats view keeps its period chips pinned too`() {
         screen { TrackerScreen(manyBets(), { _, _ -> }, {}, initialView = TrackerView.STATS) }
         // In the pinned bar (the closing-line card below has its own "Today").
-        for (pinned in listOf("Stats", "Bets", "Today", "7 days", "30 days")) inBar(pinned).assertIsDisplayed()
+        for (pinned in listOf("Stats", "Bets")) inBarExactly(pinned).assertIsDisplayed()
+        for (pinned in listOf("Today", "7 days", "30 days", "Bets & bids")) inBar(pinned).assertIsDisplayed()
         compose.onAllNodes(androidx.compose.ui.test.hasScrollAction()).onFirst().performTouchScrollBy(1_500f)
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
         compose.onNodeWithText("7 days").assertIsDisplayed()
