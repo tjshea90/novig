@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.data.tracker
 
 import com.tjshea.vigilant.engine.Odds
+import java.util.Locale
 
 /**
  * "How well do my +EV bets profit?" (Tj, 2026-09-29: "The goal is to see how well my positive EV bets profit
@@ -52,6 +53,20 @@ object TrackerBreakdown {
         By.LEAD -> BetLedger.keyOf(b, BetLedger.Split.LEAD)
         By.MADE -> BetOrBid.of(b).group
     }
+
+    /**
+     * One group's numbers on a line, for the Diagnostics file and the scan study: how many ([noun]s: "bet" or "bid"), the record, ROI, EV when bet, CLV (on [closed] true
+     * closes) and how often the close was beaten, and what the EVs promised against what was won.
+     */
+    fun describe(st: TrackerStats, closed: Int? = null, noun: String = "bet"): String = listOfNotNull(
+        "${st.bets} $noun${if (st.bets == 1) "" else "s"} (${st.pending} open)",
+        "${st.won}-${st.lost}${if (st.pushed > 0) "-${st.pushed}" else ""}".takeIf { st.settled > 0 },
+        st.roi?.let { String.format(Locale.US, "ROI %+.1f%%", it * 100) },
+        st.averageEv?.let { String.format(Locale.US, "EV when bet %+.1f%%", it * 100) },
+        st.averageClv?.let { String.format(Locale.US, "CLV %+.1f%%", it * 100) + (closed?.let { n -> " on $n" } ?: "") },
+        st.beatClosePercent?.let { String.format(Locale.US, "beat close %.0f%%", it * 100) },
+        String.format(Locale.US, "expected %+.2f vs actual %+.2f", st.expectedProfit, st.profitWithEv).takeIf { st.settledWithEv > 0 },
+    ).joinToString(" · ")
 
     /** The kind of market: moneyline, spread, total, team total, player prop, or the period/set variants. */
     fun marketOf(b: TrackedBet): String = when (val pick = BetGrader.pickOf(b)) {
