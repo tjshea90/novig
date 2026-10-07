@@ -167,7 +167,8 @@ object SettingsSummary {
                 // The veto's bar (v0.56.0, RESEARCH.md §72) is part of what the veto does.
                 (if (s.sharpAlerts == com.tjshea.vigilant.data.scanner.SharpMode.VETO && s.sharpVetoMinEv > 0.0) " under ${AutoBetText.evLabel(s.sharpVetoMinEv)}" else "")
             SettingsPage.CNO -> s.cnoFilters.let { f ->
-                "${f.devig.displayName} · ${f.minBooks}+ books · ${if (f.maxOdds > 0) "up to +${f.maxOdds}" else "any odds"} · ${Format.percent(f.minEv, 0)}+ · every ${secondsLabel(s.cnoRefreshSeconds)}"
+                "${f.devig.displayName} · ${f.minBooks}+ books · ${if (f.maxOdds > 0) "up to +${f.maxOdds}" else "any odds"} · ${Format.percent(f.minEv, 0)}+ · every ${secondsLabel(s.cnoRefreshSeconds)}" +
+                    (CnoScopeText.tabSuffix(f.scope)?.let { " · $it" } ?: "")
             }
             SettingsPage.WIDGET -> (if (s.floatingWidget) "Floating widget" else "Picture-in-picture") + if (s.miniWindow) " · opens when you leave Vigilant" else ""
             SettingsPage.FEED -> "${pctShort(s.minEvPercent)}+ · ${maxOddsLabel(s.maxOdds).let { if (it == "Any") "any odds" else "up to $it" }} · ${s.families.size} market types · ${s.daysAhead} days ahead"

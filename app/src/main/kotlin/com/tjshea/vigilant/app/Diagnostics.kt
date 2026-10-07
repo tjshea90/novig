@@ -257,6 +257,15 @@ object Diagnostics {
         o.appendLine("Scan size: ${limit(set.maxBooksPerScan)} Novig prices · lines/game ${limit(set.linesPerGame)} · props/game ${limit(set.propsPerGame)} · fill the budget ${if (set.fillBudget) "on" else "off"} · window ${set.effective().scanWindowHours} h")
         o.appendLine("Fair-odds sources on: ${set.enabledSources.sorted().joinToString(", ").ifEmpty { "none" }} · sportsbook props ${if (set.useBookProps) "on" else "off"} (credits/scan ${limit(set.bookPropCreditsPerScan)}, PropLine games ${limit(set.propLineGamesPerScan)})")
         o.appendLine("Keys saved: " + ApiProvider.entries.joinToString(" · ") { "${it.displayName} ${s.keysOf(it).size}" })
+        // What the CNO list is read and screened with, scope included (Tj, 2026-10-07: the leagues, kinds, words and caps are his; the next file shows what was in force).
+        set.cnoFilters.let { cf ->
+            val plan = cf.scope.plan(cf.rows, { com.tjshea.vigilant.data.cno.CnoLeagues.byLabel(it)?.id }, { it.id })
+            o.appendLine(
+                "CNO list (RESEARCH.md §85): ${cf.devig.displayName.lowercase()} devig · odds ${if (cf.minOdds != 0) com.tjshea.vigilant.engine.Odds.formatAmerican(cf.minOdds) else "any"} to ${if (cf.maxOdds > 0) "+${cf.maxOdds}" else "any"} · ${cf.minBooks}+ books · edge ≥ ${pct(cf.minEv)} · " +
+                    "${cf.rows} rows${if (plan.askRows > cf.rows) " (${plan.askRows} when the app has to filter)" else ""} · complete book ${if (cf.completeBook) "on" else "off"} · games: " +
+                    (cf.scope.summary().ifEmpty { "every league, every kind" }) + (if (cf.scope.isDefault) "" else " · asked of CNO as " + (plan.leagueId?.let { "league $it" } ?: plan.sportId?.let { "sport $it" } ?: "all leagues (the app filters)")),
+            )
+        }
         o.appendLine("CrazyNinjaOdds: ${if (set.cnoOn) "on" else "off"} · refresh ${when { set.cnoRefreshSeconds == com.tjshea.vigilant.data.cno.CnoFeed.REALTIME -> "real time"; set.cnoRefreshSeconds <= 0 -> "taps only"; else -> "${set.cnoRefreshSeconds} s" }} · only bets the books agree on ${if (set.cnoOnlyAgreed) "on" else "off"} · alerts ≥ ${pct(set.alertMinEv)}")
         o.appendLine(
             "Stakes: bankroll $${money(set.bankroll)} · ${com.tjshea.vigilant.app.ui.Format.kellyLabel(set.kellyMultiplier)} · bet slip amount ${set.slipStake.label}" +
