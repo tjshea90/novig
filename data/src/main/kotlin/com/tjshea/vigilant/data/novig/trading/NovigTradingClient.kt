@@ -142,7 +142,10 @@ open class NovigTradingClient(
         val body = json.encodeToString(JsonObject.serializer(), JsonObject(mapOf("orders" to kotlinx.serialization.json.JsonArray(items))))
         val reply = signer.call("POST", "/v3/orders/batch", body = body)
         val accepted = try {
-            json.decodeFromString(BatchAcceptedDto.serializer(), reply).accepted
+            // Novig's real reply is a bare array `[{clientId, orderId} x N]` (read from Tj's diagnostics files, v0.71.2: "it looked like [{clientId:string,orderId:string}x15]",
+            // 4 times); the docs' `{accepted: [...]}` is read too.
+            if (reply.trimStart().startsWith("[")) json.decodeFromString(kotlinx.serialization.builtins.ListSerializer(AcceptedDto.serializer()), reply)
+            else json.decodeFromString(BatchAcceptedDto.serializer(), reply).accepted
         } catch (e: kotlinx.serialization.SerializationException) {
             // The orders are placed (a refusal is a NovigApiException): say what the reply looked like, keys and kinds only, so the next file can show why it was unreadable.
             throw BatchReplyUnreadable(ReplyShape.of(reply, json), e)
