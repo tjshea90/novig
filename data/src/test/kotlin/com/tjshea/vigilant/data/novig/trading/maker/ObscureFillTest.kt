@@ -176,6 +176,18 @@ class ObscureFillTest {
     }
 
     @Test
+    fun `a small-market bid never takes money a waiting popular bid needs - it waits while any popular bid waits for the wallet`() {
+        // $3 of room: the popular bid ($4.80) does not fit and waits; the small-market bid ($2.40) would fit but waits behind it, so the money stays for the popular bid.
+        val r = rules(g = { it.copy(maxBids = 10, maxDollars = 100.0) })
+        val plan = MakerPlan.plan(listOf(post("o", true, cost = 500), post("p", false)), emptyList(), r, now, budget = 3.0)
+        assertTrue(plan.places.isEmpty())
+        assertEquals(1, plan.waiting[MakerPlan.POPULAR_WAITING])
+        assertEquals(1, plan.waiting[MakerPlan.BUDGET_REACHED])
+        // With room for the popular bid, the small-market one goes up beside it.
+        assertEquals(listOf("p-over", "o-over"), MakerPlan.plan(listOf(post("o", true, cost = 500), post("p", false)), emptyList(), r, now, budget = 10.0).places.map { it.line.outcomeId })
+    }
+
+    @Test
     fun `a small-market bid already up comes down to make room for a popular one, and not when there is room`() {
         val r = rules(g = { it.copy(maxBids = 1, maxDollars = 100.0) })
         val plan = MakerPlan.plan(listOf(post("o", true), post("p", false)), listOf(resting("o", obscure = true)), r, now)

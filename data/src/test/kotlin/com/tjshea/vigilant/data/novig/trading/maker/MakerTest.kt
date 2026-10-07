@@ -494,6 +494,33 @@ class MakerTest {
     private fun oneGame(vararg outcomes: String) = outcomes.map { line(it, fair = 0.52, m = market(it.substringBefore('-')).copy(eventId = "ev-game")) }
 
     @Test
+    fun `a small-market bid is posted wider and stored as one, and the next pass takes it down for a popular bid when only one bid fits (Tj, 2026-10-07)`() = runBlocking {
+        val novig = FakeNovig()
+        val d = desk(novig, tracker())
+        val r = rules.copy(minLineBooks = 5, requireSharp = true, obscureFill = true, maxBids = 1)
+        val small = line("m1-over", fair = 0.52).copy(books = 3, sharpFairs = listOf(0.52))
+        assertEquals(1, d.cycle(listOf(small), r, stop = null, maxPerDay = 50.0, wallet = 100.0).placed)
+        val bid = d.bids().single()
+        assertTrue(bid.obscure)
+        // 6% under the fair 0.52 on the grid (0.490), not the normal 4% (0.500), and half the $5 stake.
+        assertEquals(0.490, bid.price, 1e-9)
+        assertEquals(0.06, bid.margin, 1e-9)
+        assertTrue("paid ${bid.contracts * bid.price * 0.01}", bid.contracts * bid.price * 0.01 in 2.0..2.5 + 1e-9)
+        // The next pass: a popular line wants the only slot, so the small-market bid comes down, with the reason.
+        now += 60_000
+        val popular = line("m2-over", fair = 0.52, books = 8).copy(sharpFairs = listOf(0.52))
+        val again = d.cycle(listOf(small.copy(fairAsOfMs = now - 30_000), popular.copy(fairAsOfMs = now - 30_000)), r, null, 50.0, 100.0)
+        assertEquals(1, again.cancelled)
+        assertEquals(MakerPlan.MADE_ROOM, d.bids().single { it.outcomeId == "m1-over" }.why)
+        // The popular bid goes up on the pass after (the cancel has landed).
+        now += 60_000
+        val third = d.cycle(listOf(small.copy(fairAsOfMs = now - 30_000), popular.copy(fairAsOfMs = now - 30_000)), r, null, 50.0, 100.0)
+        assertEquals(1, third.placed)
+        assertTrue(novig.placed.last()[0] == "m2-over")
+        assertFalse(d.bids().single { it.outcomeId == "m2-over" }.obscure)
+    }
+
+    @Test
     fun `a cycle holds one game to the per-game limit, and the bids still up from the last pass keep holding it`() = runBlocking {
         val novig = FakeNovig()
         val d = desk(novig, tracker())
