@@ -261,6 +261,13 @@ class ApiSettler(
             .groupBy { it.marketId }
             .filterValues { legs -> legs.map { it.outcomeId }.distinct().size == 2 && legs.none { threeWay(it.selection) } }
 
+        /** True when [selection] ends in a half-point line ("Over 29.5", "Ollie Gordon Under 53.5", "Team A -3.5"): nothing on it can push. */
+        internal fun halfPointLine(selection: String): Boolean {
+            val line = Picks.split(selection).second ?: return false
+            val n = Regex("""\d+(?:\.\d+)?""").find(line)?.value?.toDoubleOrNull() ?: return false
+            return kotlin.math.abs(n % 1.0 - 0.5) < 1e-9
+        }
+
         private fun threeWay(selection: String): Boolean = Regex("\\b(draw|tie)\\b", RegexOption.IGNORE_CASE).containsMatchIn(selection)
 
         /** The words of a loss taken from Novig's silence: no payout, no position left. */
