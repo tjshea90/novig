@@ -28,6 +28,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.AutoBetSection
 import com.tjshea.vigilant.app.ui.AutoBetText
+import com.tjshea.vigilant.data.novig.trading.PropGuard
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.data.scanner.AutoBetStake
 import com.tjshea.vigilant.data.scanner.AutoScanMode
@@ -265,6 +266,43 @@ class AutoBetUiTest {
         assertTrue(one, one.contains("1 point more than the"))
         val two = AutoBetText.favouriteNote(base.copy(autoBetFavouriteExtraEv = 0.02))
         assertTrue(two, two.contains("2 points more than the"))
+    }
+
+    /**
+     * Tj, 2026-10-07: "most of the auto bet feature is betting nhl player shots on goal ... set up some type of guard for obscure auto betting on small props like this":
+     * the small-prop guard's chips and boxes are on the Auto-bet tab, Tj's to move or turn off, and the tab says what the last day and week of auto-bets look like.
+     */
+    @Test
+    fun `the small-prop guard has a share chip and box, a sample, a per-game limit, says what it does and what the last day looked like`() {
+        show()
+        assertEquals("on by default: 25% of the day's auto-bets, judged from 8, 3 on a game", PropGuard.Rules(0.25, 8, 3), PropGuard.rules(settings))
+        compose.onNodeWithText("Small-prop guard").performScrollTo().assertExists()
+        compose.onNodeWithTag("propGuardNote").performScrollTo().assertTextContains("no kind of player prop over 25%", substring = true)
+        compose.onNodeWithTag("propGuardShares").assertTextContains("Last 24 hours:", substring = true)
+        compose.onNodeWithText("35%").performScrollTo().performClick()
+        assertEquals(0.35, settings.propGuardShare, 1e-9)
+        compose.onNodeWithTag("propGuardNote").assertTextContains("over 35%", substring = true)
+        type("propGuardShareField", "40"); assertEquals(0.40, settings.propGuardShare, 1e-9)
+        type("propGuardShareField", "0"); assertEquals("0 turns the cap off", 0.0, settings.propGuardShare, 1e-9)
+        compose.onNodeWithTag("propGuardNote").assertTextContains("at most 3 auto-bets on one kind of prop in one game", substring = true)
+        type("propGuardSampleField", "12"); assertEquals(12, settings.propGuardMinSample)
+        type("propGuardPerGameField", "2"); assertEquals(2, settings.propGuardPerGame)
+        compose.onNodeWithTag("propGuardNote").assertTextContains("at most 2 auto-bets", substring = true)
+        type("propGuardPerGameField", "0"); assertEquals("0 turns the per-game limit off", 0, settings.propGuardPerGame)
+        compose.onNodeWithTag("propGuardNote").assertTextContains("off: no cap on how much one kind of player prop may take", substring = true)
+    }
+
+    @Test
+    fun `the guard's line counts the Tracker's auto-bets by kind of prop for the last day and week`() {
+        val now = 1_800_000_000_000L
+        fun bet(id: String, market: String, selection: String, league: String = "NHL", agoH: Double = 2.0) = com.tjshea.vigilant.data.tracker.TrackedBet(
+            id = id, createdAtMs = now - (agoH * 3_600_000L).toLong(), league = league, eventName = "A @ B", startsTs = now + 3_600_000L, marketLabel = market, selection = selection,
+            marketId = "m$id", outcomeId = "o$id", price = 0.4, cost = 0.4, fairAtBet = 0.43, evPercentAtBet = 0.04, stake = 2.0, auto = true, eventId = "e$id",
+        )
+        val bets = List(3) { bet("s$it", "Player Shots On Goal", "P$it Over 2.5") } + bet("y", "Player Receiving Yards", "J Over 50.5", league = "NFL") + bet("old", "Player Shots On Goal", "Z Over 1.5", agoH = 60.0)
+        val line = PropGuardText.shares(bets, now)
+        assertEquals("Last 24 hours: 4 auto-bets: NHL shots on goal 3 (75%), NFL receiving yards 1 (25%). Last 7 days: 5 auto-bets: NHL shots on goal 4 (80%), NFL receiving yards 1 (20%).", line)
+        assertEquals("Last 24 hours: no auto-bets. Last 7 days: no auto-bets.", PropGuardText.shares(emptyList(), now))
     }
 
     @Test
