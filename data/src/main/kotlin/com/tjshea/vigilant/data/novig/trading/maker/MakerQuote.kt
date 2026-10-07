@@ -718,11 +718,11 @@ object MakerPlan {
         // [budget] still counts every bid cancelled this pass as up. A side's replacement may use the dollars its own cancelled bid frees (the desk
         // places a replacement only once that cancel is confirmed gone); no other side may, since a cancel can still be filled before it lands.
         val freed = cancels.associate { (r, _) -> r.outcomeId to r.restingDollars }
-        var bids = kept.size
-        var dollars = kept.sumOf { it.restingDollars }
-        var spend = budget
+        val bids = kept.size
+        val dollars = kept.sumOf { it.restingDollars }
+        val spend = budget
         // One game is one event: what is at risk on each game now (open bets, the bids that stay up) and what this pass adds, market by market.
-        var onGames = if (rules.maxPerGame > 0.0) heldItems + kept.mapNotNull { it.gameItem } else emptyList()
+        val onGames = if (rules.maxPerGame > 0.0) heldItems + kept.mapNotNull { it.gameItem } else emptyList()
         // Every bid of ours that may be on the book while this pass places: the ones up (the ones this pass cancels too: a cancel can fail or lag), the ones coming
         // down, and each bid this pass places. A new bid is held back when it and one of these on the OTHER side of its market add up to $1 or more ([WASH]).
         val onBook = HashMap<String, MutableList<Pair<String, Double>>>()
@@ -732,7 +732,7 @@ object MakerPlan {
         fun wait(why: String) = waiting.merge(why, 1, Int::plus)
         // What a pass has left to spend on bids: the bids up, the dollars they hold, the wallet, and what each game already has at risk.
         class Room(var bids: Int, var dollars: Double, var spend: Double, var games: List<GameExposure.Item>)
-        val room = Room(bids, dollars, spend, onGames)
+        val state = Room(bids, dollars, spend, onGames)
         /** Why [w] can't go up in [r] (the most bids, the pass's own limit when [passCapped], the most dollars, the per-game limit, the wallet), or null. */
         fun capacity(w: MakerDecision.Post, r: Room, passCapped: Boolean): String? = when {
             r.bids >= rules.maxBids -> MAX_BIDS_REACHED.format(rules.maxBids)
@@ -754,7 +754,7 @@ object MakerPlan {
         val roomShort = ArrayList<MakerDecision.Post>()
         for (w in ordered.filter { !it.obscure }) {
             if (wouldTrade(w, onBook)) { wait(WASH); continue }
-            val why = capacity(w, room, passCapped = true)
+            val why = capacity(w, state, passCapped = true)
             if (why != null) {
                 wait(why)
                 if (why != PASS_FULL.format(rules.postsPerPass)) roomShort += w
@@ -762,7 +762,7 @@ object MakerPlan {
             }
             onBook.getOrPut(w.line.marketId) { ArrayList() } += w.line.outcomeId to w.price
             places += w
-            take(w, room)
+            take(w, state)
         }
         // Which of those waiting popular bids WOULD go up if every small-market bid we placed by ourselves came down? Only they make room: a popular bid that doesn't fit even
         // then (dearer than the wallet or the dollar limit, held up by its game's limit through other bids) never costs a small-market bid its place or holds the others back.
@@ -770,9 +770,10 @@ object MakerPlan {
         // aren't spendable until the cancel has landed, it can still fill).
         val removable = kept.filter { it.obscure && it.auto }
         fun without(down: Collection<RestingBid>): List<MakerDecision.Post> {
-            val r = Room(room.bids - down.size, room.dollars - down.sumOf { it.restingDollars }, room.spend + down.sumOf { it.restingDollars }, room.games.toMutableList().also { g -> down.forEach { d -> d.gameItem?.let { g.remove(it) } } })
-            return roomShort.filter { capacity(it, r, passCapped = false) == null }.also { fit -> /* each one placed uses room the next needs */ }
-                .let { _ -> roomShort.filter { w -> (capacity(w, r, passCapped = false) == null).also { ok -> if (ok) take(w, r) } } }
+            val games = state.games.toMutableList()
+            for (d in down) d.gameItem?.let { games.remove(it) }
+            val r = Room(state.bids - down.size, state.dollars - down.sumOf { it.restingDollars }, state.spend + down.sumOf { it.restingDollars }, games)
+            return roomShort.filter { w -> (capacity(w, r, passCapped = false) == null).also { ok -> if (ok) take(w, r) } }
         }
         var popularWaits = false
         if (roomShort.isNotEmpty() && removable.isNotEmpty()) {
@@ -794,11 +795,11 @@ object MakerPlan {
                 wouldTrade(w, onBook) -> wait(WASH)
                 popularWaits -> wait(POPULAR_WAITING)
                 else -> {
-                    val why = capacity(w, room, passCapped = true)
+                    val why = capacity(w, state, passCapped = true)
                     if (why != null) { wait(why); continue }
                     onBook.getOrPut(w.line.marketId) { ArrayList() } += w.line.outcomeId to w.price
                     places += w
-                    take(w, room)
+                    take(w, state)
                 }
             }
         }
