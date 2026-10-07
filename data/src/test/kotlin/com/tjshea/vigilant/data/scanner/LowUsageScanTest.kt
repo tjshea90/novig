@@ -121,6 +121,31 @@ class LowUsageScanTest {
         assertEquals(setOf("NFL", "MLB", "NHL"), kalshi.asked.toSet())
     }
 
+    /**
+     * Tj's v0.70.1 diagnostics: 2 of the 4 ParlayAPI props calls (6 of 40 credits) bought leagues with no game in the window, because the guard above ran in the low-usage mode alone.
+     * [LowUsageSource.windowGuard] is the game-in-window half of it for every scan (the props feed also reads book-only lines Novig has no market for, so a league with a game and no
+     * prop market on Novig is still asked).
+     */
+    @Test
+    fun `a metered feed is not asked for a league with no game in the window in any scan, and one with a game is`() = runTest {
+        val parlay = Feed("parlay_props")
+        val normal = on.copy(makerFocus = BidFocus.ALL)
+        assertFalse(normal.effective().lowUsageScan)
+        val report = Scanner(Board(), clock = { now }).scan(normal, listOf(LowUsageSource(parlay, windowGuard = true)))
+        // NFL's game starts in 3 h and NHL's in 4 h (no prop market on Novig, still a game in the window); MLB's only game is in 2 days.
+        assertEquals(setOf("NFL", "NHL"), parlay.asked.toSet())
+        val r = report.sources.single { it.id == "parlay_props" }
+        assertEquals("asked", 2, r.fetched)
+        assertEquals("not asked, and costing nothing", 1, r.skipped)
+    }
+
+    @Test
+    fun `the window guard is off unless asked for - a plain wrapped feed outside the mode reads every league`() = runTest {
+        val parlay = Feed("parlay_props")
+        Scanner(Board(), clock = { now }).scan(on.copy(makerFocus = BidFocus.ALL), listOf(LowUsageSource(parlay)))
+        assertEquals(setOf("NFL", "MLB", "NHL"), parlay.asked.toSet())
+    }
+
     @Test
     fun `only the feeds the mode enables are read, whoever offered them`() = runTest {
         val kalshi = Feed("kalshi")
