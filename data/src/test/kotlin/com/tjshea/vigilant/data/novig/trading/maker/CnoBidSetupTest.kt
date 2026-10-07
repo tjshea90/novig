@@ -6,6 +6,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -59,7 +60,10 @@ class CnoBidSetupTest {
     // ---- a side held by a bet by hand -----------------------------------------------------------------------------------------
 
     private fun bet(id: String, outcome: String, bid: Boolean, status: BetStatus = BetStatus.PENDING) = TrackedBet(
-        id = id, outcomeId = outcome, status = status, maker = bid, atBet = if (bid) AtBet(how = AtBet.HOW_BID) else null,
+        id = "$id-0000-0000", createdAtMs = 1L, league = "NFL", eventName = "A @ B", startsTs = 2L, marketLabel = "Player Receptions", selection = "Joe Over 4.5", marketId = "m",
+        outcomeId = outcome, price = 0.5, cost = 0.5, fairAtBet = 0.52, evPercentAtBet = 0.04, stake = 1.0, status = status, source = BetTracker.SOURCE_VIGILANT, american = 100,
+        atBet = if (bid) AtBet(atMs = 1L, how = AtBet.HOW_BID, scanner = BetTracker.SOURCE_VIGILANT, league = "NFL", kind = "PROP", minutesToStart = 60, american = 100, ev = 0.04) else null,
+        maker = bid,
     )
 
     @Test
