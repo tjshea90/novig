@@ -64,6 +64,29 @@ object TrackerText {
         return if (hidden) "$bets hidden from the lists and stats (cashed out: paid whatever happens)." else "$bets shown and counted."
     }
 
+    /**
+     * What the Bets / Bids chip is showing (Tj, 2026-10-07): which records every number and list below covers, and how many the choice leaves out. A bid is a make
+     * order Vigilant posted under its fair price that a taker filled; the ones nobody filled are not Tracker records (the Bids tab and Diagnostics count them).
+     */
+    fun madeCaption(made: MadeFilter, shown: Int, left: Int): String = when (made) {
+        MadeFilter.ALL -> ""
+        MadeFilter.BIDS -> "Bids only: $shown bid${if (shown == 1) "" else "s"} a taker filled (make orders Vigilant posted under its fair price). Every number below is for them alone" +
+            (if (left > 0) "; $left bet${if (left == 1) "" else "s"} left out" else "") + ". EV is the edge when the bid was posted. Bids nobody filled are on the Bids tab and in Diagnostics."
+        MadeFilter.BETS -> "Bets only: $shown taker bet${if (shown == 1) "" else "s"} (your taps, the Bet sheet, the auto-bet, locks). Every number below is for them alone" +
+            (if (left > 0) "; $left filled bid${if (left == 1) "" else "s"} left out" else "") + "."
+    }
+
+    /** The Stats tab's empty state: nothing tracked at all, or nothing of this kind (or in this period). */
+    fun emptyStats(made: MadeFilter, allTime: Boolean, nothingTracked: Boolean): String = when {
+        nothingTracked -> if (allTime) "No bets tracked yet" else "No bets in this period"
+        made == MadeFilter.ALL -> if (allTime) "No bets tracked yet" else "No bets in this period"
+        else -> "No ${made.noun} " + if (allTime) "tracked yet" else "in this period"
+    }
+
+    /** The Bets tab's empty state for [filter] ("open", "settled", "all"). */
+    fun emptyList(made: MadeFilter, filter: String, nothingTracked: Boolean): String =
+        if (nothingTracked) "No bets tracked yet" else "No $filter ${if (made == MadeFilter.ALL) "bets" else made.noun}"
+
     /** Under the lock card's numbers: what they count, what's paid, what's still riding, and whether the rest of the Tracker counts them. */
     fun lockCaption(s: com.tjshea.vigilant.data.tracker.LockStats, hidden: Boolean): String = listOfNotNull(
         if (s.markets > 0) {

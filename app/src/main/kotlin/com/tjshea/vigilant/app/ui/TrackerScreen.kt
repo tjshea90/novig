@@ -477,6 +477,15 @@ private fun MenuChip(label: String, active: Boolean, modifier: Modifier = Modifi
     }
 }
 
+/** "BID" after a record's pick: it is a make order a taker filled, not a bet Tj took ([TrackedBet.isBid]). */
+@Composable
+private fun BidTag(modifier: Modifier = Modifier) {
+    val color = MaterialTheme.colorScheme.tertiary
+    Surface(modifier = modifier.testTag("bidTag"), shape = RoundedCornerShape(6.dp), color = color.copy(alpha = 0.16f)) {
+        Text("BID", Modifier.padding(horizontal = 6.dp, vertical = 2.dp), color = color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, maxLines = 1)
+    }
+}
+
 /** The Bets / Bids / both choice ([MadeFilter]) as a menu chip with how many records each holds. */
 @Composable
 private fun MadeChip(made: MadeFilter, counts: Map<MadeFilter, Int>, onMade: (MadeFilter) -> Unit, modifier: Modifier = Modifier) {
