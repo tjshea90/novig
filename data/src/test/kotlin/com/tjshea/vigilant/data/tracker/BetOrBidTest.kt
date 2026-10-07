@@ -79,7 +79,8 @@ class BetOrBidTest {
             ),
         )
         val fresh = BetTracker(file, clock = { now })
-        assertEquals(3, fresh.tagBids(setOf("bid-1", "bid-2")))
+        // The imported one and the one whose record says auto change; the old one has nothing to stamp, the taker bet and the finished one are left alone.
+        assertEquals(2, fresh.tagBids(setOf("bid-1", "bid-2")))
         val byId = fresh.all().associateBy { it.id.take(4) }
         val imp = byId.getValue("imp-")
         assertTrue(imp.maker)
