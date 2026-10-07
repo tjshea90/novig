@@ -79,9 +79,15 @@ class CnoClient(
         val form: CnoPage.Form,
         val fields: LinkedHashMap<String, String>,
         var usedAtMs: Long,
-    )
+    ) {
+        /** The last list read of this session asked for more rows than the list's limit (the app filters what CNO's form can't): if CNO refuses it, the next asks for the limit again. */
+        var widened: Boolean = false
+    }
 
     private var session: Session? = null
+
+    /** When CNO last refused a widened read ([CnoScope.WIDE_ROWS] rows): until [WIDEN_RETRY_MS] after it, the list asks for its own row limit. */
+    private var widenRefusedAtMs: Long = 0L
 
     /** The wide read's own session (its own cookies, form and fields): the list's values are never changed by it. Guarded by [CnoFeed]'s wide mutex. */
     private var wideSession: Session? = null
@@ -188,7 +194,13 @@ class CnoClient(
     /** One +EV list read: the table and CNO's "last updated", plus the state for the next read. [wideRows] set: the study's wide read ([fetchWide]) in [wideSession]. */
     private suspend fun list(s: Session, useTimer: Boolean, filters: CnoFilters, wideRows: Int? = null): CnoSnapshot {
         val asked = if (wideRows != null) applyWide(s, filters, wideRows) else { applyFilters(s, filters); null }
-        val records = postback(s, useTimer)
+        val records = try {
+            postback(s, useTimer)
+        } catch (e: CnoException) {
+            // A longer read CNO answered with an error (or an unreadable page): the next read, on a fresh page, asks for the usual row limit.
+            if (wideRows == null && s.widened && e.retryAfterSeconds == null) widenRefusedAtMs = clock()
+            throw e
+        }
         val grid = records.grid()
         val info = records.firstOrNull { it.type == "updatePanel" && it.id.endsWith("UpdatePanelServerInfo") }
         if (wideRows != null) wideSession = s else session = s
@@ -379,6 +391,9 @@ class CnoClient(
 
         /** Re-use a session this long after its last read; ASP.NET's own timeout is 20 minutes. */
         const val SESSION_MS = 15 * 60_000L
+
+        /** How long after CNO refused a widened read the list goes back to asking for it. */
+        const val WIDEN_RETRY_MS = 10 * 60_000L
 
         /** The least time between two requests of a bulk read ([booksBulk]): two a second at most. */
         const val BULK_GAP_MS = 500L
