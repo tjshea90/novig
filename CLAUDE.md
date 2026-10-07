@@ -359,6 +359,14 @@ Claude to find what beats the close: the READ ME in `data/study/StudyExport.kt` 
 `StudyJournal` is the append-only store, `files/study/study-<day>.jsonl`), wired in `VigilantApp` (`study`, `settleStudy`) and `MainViewModel.shareScanStudy`. It reuses `AtBets`, `BetSettler`,
 `CloseBackfill` and `ClosingLine`; its only request of its own is the wide read (v0.58.0, RESEARCH.md §76: CNO's list read a second time in a session of its own with the filters opened, every row logged and flagged hidden/shown; `CnoFeed.readWide`, paced, switch in Settings), which the app's list, alerts, auto-bet and widget never read. When Tj sends a scan-study file, work from its READ ME and its splits, and ask him before changing any rule it suggests.
 
+## Bids priced from CrazyNinjaOdds — permanent research memory
+
+Settings › Bids › "Bids priced from" (`ScanSettings.makerSource`, v0.75.0, Tj 2026-10-07) lets the bid desk run from CrazyNinjaOdds alone, Vigilant's scan off. `RESEARCH.md` §113 is the
+verdict on how old CNO's data is and what the app can tell (one page-wide "Last Updated", a lower bound; the evidence is `research/cno_bid_workflow_2026-10-07/`), §114 is what was built and what is
+not. Code: `data/.../novig/trading/maker/` `CnoMakerLines` (pure line builder, the age rule), `CnoBidCandidates` (which rows get a page read), `CnoBidLane` (the cycle's reads, the stops);
+`MakerRunner` branches on the source; `AutoScanner.cycle` calls `cnoBids.step`. This container never reads CNO (§76.3): the age numbers must come from Tj's phone (Diagnostics, the BIDS section's
+CNO age bands). Judge CNO-priced bids only on independent closes (§113); don't widen any limit for them before about 100 filled bids have one.
+
 ## Project rules
 
 See `BRIEF.md` for what's decided about this project and what's still open:
