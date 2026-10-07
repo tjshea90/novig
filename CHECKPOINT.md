@@ -1,13 +1,13 @@
-# CHECKPOINT 2651 — read me first, then TASKS.md
+# CHECKPOINT 2652 — read me first, then TASKS.md
 
-**Written:** 2026-10-07T01:28:49Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-c79f7430-lq8xfl` · **builds on:** `f4d05ad5` (this checkpoint is the commit after it)
+**Written:** 2026-10-07T01:30:14Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-c79f7430-lq8xfl` · **builds on:** `b099ca6f` (this checkpoint is the commit after it)
 
 ## Just done
-DB3 tests: client-level rotation to free keys (TheOddsApiClientTest), HISTORICAL_LIMIT 403 leaves the key in use (mutant killed), scanner prices from other feeds when every ParlayAPI key is used up; 55 green
+v0.70.4 candidate: version bump 0.70.4/code 122, PARLAY_API.md section 4a (rotation + fallback), TASKS DB1-DB4 ticked
 
 ## Do this next
-audit ParlayAccount re-reading depleted keys after reset; docs (PARLAY_API.md), BRIEF check, full bash tools/test.sh, ship
+run the full floor (bash tools/test.sh), then ship once CI is green on the commit
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ audit ParlayAccount re-reading depleted keys after reset; docs (PARLAY_API.md), 
 
 ## Last ten checkpoints
 ```
+  54a3ff97 ckpt 2651: DB3 tests: client-level rotation to free keys (TheOddsApiClientTest), HISTOR
   5c08e9e4 ckpt 2650: DB1/DB2/DB4: free ParlayAPI keys now serve scans in Tj's key order after the
   b19f6a41 ckpt 2649: WRAP-UP (usage nearly out): 22/30 verifiers saved on GitHub plus 9/9 study, 
   6ee5134c ckpt 2648: 21/30 verifiers saved: rule 8 (R1: first look inside 6 h with EV>=2.5%) repr
@@ -25,8 +26,7 @@ audit ParlayAccount re-reading depleted keys after reset; docs (PARLAY_API.md), 
   1c6bf9ff ckpt 2644: RESUMED per Tj ('check the last status and checkpoint, then resume'): state 
   a955f73e ckpt 2643: wrote the standalone resume runbook research/RESUME_v0701_ANALYSIS.md (job, 
   35b62b25 ckpt 2642: DA6 feed-race recorder RESTARTED 22:09Z (370 min, ends ~04:20Z) in the 8th c
-  691e51b1 ckpt 2641: added tools/research/study_v0701/genphase4.py (phase 4 prompts: 3 section wr
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
