@@ -1,21 +1,23 @@
-# CHECKPOINT 2696 — read me first, then TASKS.md
+# CHECKPOINT 2697 — read me first, then TASKS.md
 
-**Written:** 2026-10-07T16:51:41Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `828388a5` (this checkpoint is the commit after it)
+**Written:** 2026-10-07T16:59:36Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `47d3b875` (this checkpoint is the commit after it)
 
 ## Just done
-DI3: small-prop guard core: PropGuard (share cap with even-split floor, per-game limit), ScanSettings.propGuard*, AutoBettor hook; PropGuardTest 11 + AutoBettorTest 5, 5 mutants killed
+pre-release: v0.72.4: small-prop guard (share cap with an even-split floor, per-game limit) on the Auto-bet tab, its share line in Diagnostics, RESEARCH 109: NHL shots on goal unproven, concentration the fault (versionCode 130, v0.72.4)
 
 ## Do this next
-Auto-bet tab UI for the guard (chips + typed boxes + 24 h share line), SettingsIndex, Diagnostics line, bids' share cap, RESEARCH 109; then DI5
+wait for CI green on this exact commit with no edits, then ship.sh, release.yml, record-release.sh v0.72.4 130; then DI5 CNO filters
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M research/ACTIVE_LOG_2026-10-07.md
 
 ## Last ten checkpoints
 ```
+  8efd407b ckpt 2696: DI3: small-prop guard core: PropGuard (share cap with even-split floor, per-
   f3b9fbb4 ckpt 2695: pre-release: v0.72.3: Low API usage no longer hard-sets the trap guard windo
   2d31323a ckpt 2694: pre-release: v0.72.3: Low API usage no longer hard-sets the trap guard windo
   b9b0315d ckpt 2693: DI1: Low API usage no longer hard-sets the trap guard window (follows trap h
@@ -25,7 +27,6 @@ Auto-bet tab UI for the guard (chips + typed boxes + 24 h share line), SettingsI
   dfb2cfd8 ckpt 2689: tape 2 analyzed: RESEARCH 106.2 (Sofascore ahead of Novig by 3 s+ in 20 of 2
   061eef3c ckpt 2688: v0.72.2 released and recorded; DH0/1/3/4/5 done
   c7990345 ckpt 2687: pre-release: v0.72.2: a preset now carries the auto-bet's favourite bar; pre
-  4db49a3e ckpt 2686: DH4 + DH5 done: RESEARCH 107, preset favourite bar, plus-money and favourite
 ```
 
 (9 automatic checkpoint(s) since the last deliberate one — the
