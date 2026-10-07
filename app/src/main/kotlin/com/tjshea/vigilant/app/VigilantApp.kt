@@ -754,6 +754,12 @@ class AppContainer(private val app: Application) {
         appScope.launch(Dispatchers.IO) {
             AppExits.takeSavedCrash(app)?.let { (at, text) -> runCatching { problems.add("App crash", text, atMs = at, maxLength = problems.crashLength) } }
         }
+        // Bets and bids told apart (Tj, 2026-10-07; [com.tjshea.vigilant.data.tracker.TrackedBet.isBid]): a record of an order the bid store knows, or that carries one of its
+        // two tags, gets both, so an older fill (an import, one logged before the second tag) reads as a bid in the Tracker, Diagnostics and the scan study.
+        appScope.launch(Dispatchers.IO) {
+            runCatching { tracker.tagBids(makerStore.all().mapNotNullTo(HashSet()) { it.orderId }) }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; runCatching { problems.add("Tracker", "Couldn't tell bids from bets: ${it.message ?: it.javaClass.simpleName}") } }
+        }
     }
 
     private val loadMutex = kotlinx.coroutines.sync.Mutex()
