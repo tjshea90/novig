@@ -139,7 +139,7 @@ class PresetsTest {
     @Test
     fun `a preset in one line`() {
         assertEquals(
-            "edge ≥ 2.5% · 3+ books price both sides, 3+ agree · odds -200 to +150 · player props, moneylines, spreads · ¼ Kelly stakes · sharp check: veto under 1% · " +
+            "edge ≥ 2.5% · 3+ books price both sides, 3+ agree · odds -200 to +150 · favorites +1% more edge · player props, moneylines, spreads · ¼ Kelly stakes · sharp check: veto under 1% · " +
                 "CNO: conservative devig, edge ≥ 1%, odds up to +150, 4+ books, 100 rows · alerts ≥ 2.5% · auto-scan every 30 sec",
             Presets.VOLUME.rules.summary(),
         )
@@ -147,6 +147,29 @@ class PresetsTest {
         val mine = Presets.VOLUME.rules.copy(autoBetMinEv = 0.03, alertMinEv = 0.07).summary()
         assertTrue(mine, mine.startsWith("edge ≥ 3% ·") && mine.contains("alerts ≥ 7% ·"))
         assertTrue(Presets.STRICT.rules.summary().startsWith("edge ≥ 4% ·"))
+    }
+
+    /** Tj, 2026-10-07 (the full tests pass): the favourite bar is an auto-bet rule, so a preset sets and saves it, and the summary says a plus-money-only limit. */
+    @Test
+    fun `a preset carries the favourite bar, and its summary says a plus money only limit`() {
+        val zero = Presets.apply(mine.copy(autoBetFavouriteExtraEv = 0.0), Presets.VOLUME)
+        assertEquals("applying a preset sets the bar", 0.01, zero.autoBetFavouriteExtraEv, 1e-12)
+        assertTrue(Presets.matches(zero, Presets.VOLUME))
+        assertFalse("a changed bar is a change since the preset", Presets.matches(zero.copy(autoBetFavouriteExtraEv = 0.02), Presets.VOLUME))
+        // Saved with the user's own value, and applied back.
+        val saved = Presets.save(zero.copy(autoBetFavouriteExtraEv = 0.02), "Mine")!!
+        assertEquals(0.02, saved.presets.single().rules.autoBetFavouriteExtraEv, 1e-12)
+        assertEquals(0.02, Presets.apply(zero.copy(autoBetFavouriteExtraEv = 0.0), saved.presets.single()).autoBetFavouriteExtraEv, 1e-12)
+        // A preset saved before the bar existed (no field in its JSON) reads as one point.
+        val old = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        val json = old.encodeToString(PresetRules.serializer(), Presets.VOLUME.rules).replace(Regex(",?\"autoBetFavouriteExtraEv\":[0-9.]+"), "")
+        assertFalse(json.contains("autoBetFavouriteExtraEv"))
+        assertEquals(0.01, old.decodeFromString(PresetRules.serializer(), json).autoBetFavouriteExtraEv, 1e-12)
+        // The summary: a favourite bar of zero says nothing, a plus-money-only rule says so.
+        assertFalse(Presets.VOLUME.rules.copy(autoBetFavouriteExtraEv = 0.0).summary().contains("favorites"))
+        val plus = Presets.VOLUME.rules.copy(autoBetMinOdds = 100).summary()
+        assertTrue(plus, plus.contains("odds +100 to +150"))
+        assertTrue(Presets.VOLUME.rules.copy(autoBetMinOdds = 0).summary().contains("odds up to +150"))
     }
 
     /** RESEARCH.md §72: what a bet keeps by the close is about the sharpest book's own edge, so the presets set the veto's bar too. */
