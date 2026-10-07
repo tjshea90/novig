@@ -4160,3 +4160,9 @@ Plan (RESEARCH.md §92; a session cut off mid-way resumes at the first unticked 
 - [x] DK2 (DONE: answered in chat, RESEARCH.md §112) Answer Tj plainly: plausible or not, what it would take, what it would cost in requests, what could go wrong with real money, and the safest design if yes (RESEARCH.md section).
 - [ ] DK3 Only if Tj says yes: build it behind its own switch (default off), tests, release.
 
+## Tj, 2026-10-07 (~20:30Z, during DJ): "Also if auto bid is turned on using vigilant scanner, I want an option for the auto bet feature to only use the cno scanner"
+
+- [ ] DL1 FINDING (read from the code, 2026-10-07; to tell Tj before building anything): the taker auto-bet ALREADY uses only CNO's list. Its candidates are `AlertPicks.cnoChecked` (CNO rows with a books page read) in `AutoBettor.run`, called from the background auto-scan's CNO step; Vigilant's scan never feeds it. The two exceptions: (a) Pinnacle only (`ScanSettings.pinnacleOnly`), where `AutoBettor.runPinnacle` bets Vigilant's scan (Pinnacle's devigged price alone) and the CNO list is not read at all (`cnoOn` false); (b) the BIDS, which use Vigilant's scan and are posted by the bid desk, not the auto-bet. A bid's fill is logged with scanner "Vigilant" and `auto = true` (an auto-make), so in the Tracker it looked like an auto-bet from Vigilant's scanner; v0.74.0 tags it BID and the Bets/Bids chip separates it.
+- [ ] DL2 ASK TJ which he meant: (1) nothing more (he saw bid fills as "Vigilant auto bets"); (2) a visible line on the Auto-bet tab and in Diagnostics saying "Auto-bet reads CrazyNinjaOdds' list only; Vigilant's scan feeds the bids"; (3) a real switch "Auto-bet: CNO only" that stops `runPinnacle` from placing bets even with Pinnacle only on (default off; with Pinnacle only on and the switch on, no auto-bet would run at all, since Pinnacle only reads no CNO list).
+- [ ] DL3 Build what he picks (not started; nothing is built for this yet).
+
