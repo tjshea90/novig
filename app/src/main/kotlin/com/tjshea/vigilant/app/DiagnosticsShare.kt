@@ -109,7 +109,14 @@ object DiagnosticsShare {
 
     const val BURST_PREFIX = "vigilant-burst-study-"
 
-    /** The app's files and their sizes in bytes, largest first (the file listing in the report). */
-    fun storage(context: Context): List<Pair<String, Long>> =
-        context.filesDir.listFiles()?.filter { it.isFile }?.map { it.name to it.length() }?.sortedByDescending { it.second }.orEmpty()
+    /**
+     * The app's files and their sizes in bytes, largest first (the file listing in the report). A folder is listed once, as `name/`, with everything under it: the total used to
+     * count only the files directly in the app's folder and left out the scan study (11.2 MB in Tj's v0.70.1 file, "Total 5651 KB").
+     */
+    fun storage(context: Context): List<Pair<String, Long>> = storageOf(context.filesDir)
+
+    fun storageOf(dir: java.io.File): List<Pair<String, Long>> =
+        dir.listFiles()?.map { f ->
+            if (f.isDirectory) "${f.name}/" to f.walkTopDown().filter { it.isFile }.sumOf { it.length() } else f.name to f.length()
+        }?.sortedByDescending { it.second }.orEmpty()
 }
