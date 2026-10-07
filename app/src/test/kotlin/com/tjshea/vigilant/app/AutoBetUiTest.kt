@@ -226,6 +226,36 @@ class AutoBetUiTest {
         assertEquals(7.25, settings.autoBetCustomStake, 0.0)
     }
 
+    /** Tj, 2026-10-07: "anywhere there are settings for … any number inputs that have options, also put a box where I can manually type in a number to set … make a shortest odds setting as well." */
+    @Test
+    fun `every number option on the tab has a box that sets exactly what was typed, shortest odds taking a minus or a plus`() {
+        show({ it.copy(sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.VETO) })
+        fun type(tag: String, text: String) {
+            compose.onNodeWithTag(tag).performScrollTo().performTextClearance()
+            compose.onNodeWithTag(tag).performTextInput(text)
+            compose.waitForIdle()
+        }
+        type("autoBetBooksField", "9"); assertEquals(9, settings.autoBetBooks)
+        assertEquals("the rule uses what was typed, not a clamp to 5", 9, com.tjshea.vigilant.data.novig.trading.AutoBet.rules(settings).minBooks)
+        type("autoBetTwoSidedField", "6"); assertEquals(6, settings.autoBetTwoSided)
+        assertEquals(6, com.tjshea.vigilant.data.novig.trading.AutoBet.rules(settings).twoSided)
+        type("autoBetMinOddsField", "-180"); assertEquals(-180, settings.autoBetMinOdds)
+        type("autoBetMinOddsField", "-50"); assertEquals("not odds: nothing changes", -180, settings.autoBetMinOdds)
+        type("autoBetMinOddsField", "130"); assertEquals("underdogs only", 130, settings.autoBetMinOdds)
+        assertEquals(130, com.tjshea.vigilant.data.novig.trading.AutoBet.rules(settings).minOdds)
+        type("autoScanSecondsField", "45"); assertEquals(45, settings.autoScanSeconds)
+        type("autoLockMinField", "1.5"); assertEquals(0.015, settings.autoLockMinPercent, 1e-9)
+        type("sharpVetoMinEvField", "0.75"); assertEquals(0.0075, settings.sharpVetoMinEv, 1e-9)
+    }
+
+    @Test
+    fun `a shortest odds longer than the longest says nothing can pass`() {
+        show({ it.copy(autoBetMaxOdds = 130) })
+        compose.onNodeWithTag("autoBetMinOddsField").performScrollTo().performTextClearance()
+        compose.onNodeWithTag("autoBetMinOddsField").performTextInput("200")
+        compose.onNodeWithTag("autoBetOddsRange").performScrollTo().assertTextContains("nothing can pass both", substring = true)
+    }
+
     /** Tj, 2026-10-01: "add an option for longest odds of any auto bet. For example, I don't want it to bet anything that is more of a longshot than +130". */
     @Test
     fun `the longest odds is a preset or typed, has no limit until picked, and the confirm says it`() {

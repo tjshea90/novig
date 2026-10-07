@@ -373,6 +373,50 @@ class MakerUiTest {
         assertTrue(s.makerRequireSharp)
     }
 
+    /** Tj, 2026-10-07: a box wherever a rule has number options, and a shortest odds beside the longest. */
+    @Test
+    fun `every number rule on the Bids tab has a box that sets exactly what was typed, shortest odds and the quick bids' market size included`() {
+        val st = androidx.compose.runtime.mutableStateOf(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY, makerStakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM))
+        compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
+        compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
+        fun type(tag: String, text: String) {
+            compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag(tag))
+            compose.onNodeWithTag(tag).performTextClearance()
+            compose.onNodeWithTag(tag).performTextInput(text)
+            compose.waitForIdle()
+        }
+        type("makerMarginField", "3.1"); assertEquals(0.031, st.value.makerMargin, 1e-9)
+        type("makerMarginField", "0.1"); assertEquals("under 0.5% isn't taken", 0.031, st.value.makerMargin, 1e-9)
+        type("makerStakeField", "7.5"); assertEquals(7.5, st.value.makerStake, 1e-9)
+        type("makerMaxStakeField", "12"); assertEquals(12.0, st.value.makerMaxStake, 1e-9)
+        type("makerMaxBidsField", "33"); assertEquals(33, st.value.makerMaxBids)
+        type("makerMaxDollarsField", "375"); assertEquals(375.0, st.value.makerMaxDollars, 1e-9)
+        type("makerQuickMinBooksField", "7"); assertEquals(7, st.value.makerQuickMinBooks)
+        assertEquals("quick bids use what was typed", 7, MakerRules.of(st.value).minLineBooks)
+        type("makerMaxOddsField", "160"); assertEquals(160, st.value.makerMaxOdds)
+        type("makerMinOddsField", "-210"); assertEquals(-210, st.value.makerMinOdds)
+        type("makerMinOddsField", "120"); assertEquals(120, st.value.makerMinOdds)
+        type("makerMinBooksField", "4"); assertEquals(4, st.value.makerMinBooks)
+        type("makerTtlField", "45"); assertEquals(45, st.value.makerTtlMinutes)
+        type("makerStopField", "20"); assertEquals(20, st.value.makerStopMinutes)
+        compose.onNodeWithTag("makerOddsRange").assertExists() // +120 shortest against +160 longest is fine; flip them
+        type("makerMaxOddsField", "110")
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerOddsRange"))
+        compose.onNodeWithTag("makerOddsRange").assertTextContains("nothing can pass both", substring = true)
+    }
+
+    /** Tj, 2026-10-07: "make sure that the type of bids in the auto bids section are truly the type of bids most likely to be taken quickly, in other words, no strange props or small markets." */
+    @Test
+    fun `quick and likely hides the switches it overrides, and says what it keeps out`() {
+        val st = androidx.compose.runtime.mutableStateOf(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY))
+        compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
+        compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerFocusNote"))
+        compose.onNodeWithTag("makerFocusNote").assertTextContains("never a market only a few books price", substring = true)
+        compose.onNodeWithTag("makerPopularFirst").assertDoesNotExist()
+        compose.onNodeWithTag("makerRequireSharp").assertDoesNotExist()
+    }
+
     /** Tj, 2026-10-05: "an option for unlimited bids up at once" and "only the bets which have the maximum chance of being filled quickly and also are decent chance for me to win". */
     @Test
     fun `the rules offer unlimited bids, a quick and likely focus, the sharp-anchored price and the picked-off guard`() {
