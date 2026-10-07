@@ -270,7 +270,12 @@ object Diagnostics {
         if (st.scannedAtMs == null) {
             o.appendLine("No scan since the app opened.")
         } else {
-            o.appendLine("Finished ${ago(st.scannedAtMs)} (${at(st.scannedAtMs)}) · window ${st.scannedWindowHours ?: "?"} h" + if (st.scanning) " · another is running now" else "")
+            // scannedAtMs is when the scan's result was computed (its start); the file used to print it as the finish, a scan's length too early (Tj's v0.70.1 file: "Finished 3m ago (12:04:46 AM)").
+            val finishedAt = st.timing?.takeIf { it.totalMs > 0 }?.let { st.scannedAtMs + it.totalMs }
+            o.appendLine(
+                (if (finishedAt != null) "Started ${ago(st.scannedAtMs)} (${at(st.scannedAtMs)}), finished ${ago(finishedAt)} (${at(finishedAt)})" else "Started ${ago(st.scannedAtMs)} (${at(st.scannedAtMs)})") +
+                    " · window ${st.scannedWindowHours ?: "?"} h" + if (st.scanning) " · another is running now" else "",
+            )
             st.timing?.let { o.appendLine(ScanTiming.text(it, st.booksFetched, st.booksViaKey, st.booksViaPush, st.keyReadPerSec)) }
             o.appendLine("Novig prices: ${st.booksFetched} read (${st.booksViaKey} through the key, ${st.booksViaPush} pushed), ${st.booksFromCache} shown from the last scan")
             s.result?.stats?.let {
