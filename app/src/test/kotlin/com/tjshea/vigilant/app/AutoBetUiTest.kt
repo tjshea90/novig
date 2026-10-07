@@ -248,6 +248,22 @@ class AutoBetUiTest {
         type("sharpVetoMinEvField", "0.75"); assertEquals(0.0075, settings.sharpVetoMinEv, 1e-9)
     }
 
+    /** DH4 (2026-10-07): "odds no shorter than +130 or longer" read as a favourite limit; a positive limit is plus money only. */
+    @Test
+    fun `the criteria say a plus money shortest odds means underdogs only, and a minus one a favorite limit`() {
+        show({ it.copy(autoBetMinOdds = 110) })
+        val plus = AutoBetText.criteria(settings)
+        assertTrue(plus, plus.contains(", underdogs only (+110 or longer (plus money only))"))
+        assertFalse(plus, plus.contains("odds no shorter than"))
+        show({ it.copy(autoBetMinOdds = -200) })
+        val minus = AutoBetText.criteria(settings)
+        assertTrue(minus, minus.contains(", odds no shorter than −200"))
+        assertFalse(minus, minus.contains("underdogs only"))
+        show({ it.copy(autoBetMinOdds = 0) })
+        val none = AutoBetText.criteria(settings)
+        assertFalse(none, none.contains("underdogs only") || none.contains("odds no shorter than"))
+    }
+
     @Test
     fun `a shortest odds longer than the longest says nothing can pass`() {
         show({ it.copy(autoBetMaxOdds = 130) })
