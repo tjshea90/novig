@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.app.ui
 
+import com.tjshea.vigilant.data.tracker.BetOrBid
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
 
@@ -28,7 +29,19 @@ enum class ScannerFilter(val label: String, val short: String) {
     PINNACLE("Pinnacle only", "Pinnacle only"),
 }
 
+/**
+ * Which kind of record the Tracker shows, in its lists and its stats (Tj, 2026-10-07: "so I can see stats and ev filtered my bids as well as bets"): bets (taker
+ * orders), bids (make orders that a taker filled) or both. [TrackedBet.isBid] decides which a record is ([BetOrBid]).
+ */
+enum class MadeFilter(val label: String, val which: BetOrBid?, val noun: String) {
+    ALL("Bets & bids", null, "bets and bids"),
+    BETS("Bets only", BetOrBid.BET, "bets"),
+    BIDS("Bids only", BetOrBid.BID, "bids"),
+}
+
 object TrackerSort {
+
+    fun inMade(bets: List<TrackedBet>, f: MadeFilter): List<TrackedBet> = BetOrBid.only(bets, f.which)
 
     fun scannerOf(b: TrackedBet): ScannerFilter = when (b.source) {
         BetTracker.SOURCE_CNO -> ScannerFilter.CNO
