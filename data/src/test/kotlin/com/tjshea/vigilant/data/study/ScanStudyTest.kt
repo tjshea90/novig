@@ -664,4 +664,52 @@ class ScanStudyTest {
         StudyExport.write(none, j, emptyList(), meta, now, File(tmp.root, "export.tmp"))
         assertFalse(none.toString().contains("== BIDS"))
     }
+
+    /**
+     * Tj, 2026-10-07: "make the app bet logging differentiate from bets and bids … and also for the diagnostics and studies sections." A scan-listed bet Tj holds as a bid
+     * of Vigilant's that a taker filled is not "placed by Tj"; the file says how the Tracker holds it, and has a block with his bets and his bids apart.
+     */
+    @Test
+    fun `a bid that filled is not marked as Tj's own bet, the split says so, and a block gives bets and bids each their own numbers`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline, total, prop))
+        s.flush()
+        now = start + 4 * 3_600_000L
+        s.settle(FakeScores(), listOf(FakeClose(0.55)), emptyList(), File(tmp.root, "scratch"))
+        val meta = StudyExport.Meta("0.74.0", 132, "moto g", "rules", java.util.TimeZone.getTimeZone("America/New_York"))
+        fun held(id: String, market: String, pick: String, maker: Boolean) = TrackedBet(
+            id = id, createdAtMs = start - 3_600_000L, league = "MLB", eventName = event, startsTs = start, marketLabel = market, selection = pick,
+            marketId = "", outcomeId = "", price = 0.45, cost = 0.45, fairAtBet = 0.5, evPercentAtBet = 0.04, stake = 1.0, american = 122, status = BetStatus.WON, settledAtMs = now,
+            maker = maker, orderId = if (maker) "bid-$id" else null,
+        )
+        val tracked = listOf(held("tap", "Player Total Bases", "Carson Benge Over 1.5", maker = false), held("mm", "Moneyline", "New York Mets", maker = true))
+        val out = StringWriter()
+        StudyExport.write(out, j, tracked, meta, now, File(tmp.root, "export.tmp"))
+        val text = out.toString()
+        val rows = text.substringAfter("<<<JSONL\n").substringBefore("\n>>>").lines().filter { it.isNotBlank() }
+            .map { kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.decodeFromString(StudyExport.StudyRow.serializer(), it) }
+        val taker = rows.first { it.market == "Player Total Bases" }
+        val bid = rows.first { it.market == "Moneyline" }
+        assertTrue(taker.placedByTj)
+        assertEquals("bet", taker.placedAs)
+        assertFalse("a bid of Vigilant's that filled is not Tj's own bet", bid.placedByTj)
+        assertEquals("bid", bid.placedAs)
+        assertEquals(122, bid.placedAmerican)
+        assertNull(rows.first { it.market == "Total Runs" }.placedAs)
+        assertTrue(text, text.contains("-- Tj placed it --"))
+        assertTrue(text, text.contains("yes, as a bet: 1 bets") || text.contains("yes, as a bet"))
+        assertTrue(text, text.contains("no, but Vigilant's bid on it filled"))
+        // The scan-listed splits have no "Bet or bid" (every one is "listed"); Tj's own records do, in a block of their own.
+        assertFalse(text, text.contains("-- Bet or bid --"))
+        val block = text.substringAfter("== BETS AND BIDS APART").substringBefore("\n== ")
+        assertTrue(block, block.contains("Bets (taker orders): 1 bet (0 open)"))
+        assertTrue(block, block.contains("Bids (make orders that filled): 1 bid (0 open)"))
+        assertTrue(text, text.contains("BETS vs BIDS: a BET is a taker order"))
+        assertTrue(text, text.contains("placedAs"))
+        // Nothing held: no block.
+        val none = StringWriter()
+        StudyExport.write(none, j, emptyList(), meta, now, File(tmp.root, "export.tmp"))
+        assertFalse(none.toString().contains("== BETS AND BIDS APART"))
+    }
 }
