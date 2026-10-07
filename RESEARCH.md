@@ -5516,3 +5516,29 @@ The report is `research/scan_study_analysis_2026-10-06_v0.70.1.md` §4 (the numb
 
 **Tests and mutants.** `FirstListedTest`, `AutoScanTest`, `AutoBettorTest`, `PinnacleAutoBetTest`, `AutoBetUiTest` (first-listed, 9 mutants); `FavouriteEdgeTest`, `PinnacleBetTest`, `AutoBetUiTest` (favourites, 6 mutants); `AutoBetTest` (lower edge, 6 mutants); `AutoBettorTest`, `PinnacleAutoBetTest`, `MakerTest`, `MakerAppTest` (unread trades, 5 mutants); `ExchangeClientsTest`, `DiagnosticsTest` (Kalshi pace); `ApiSettlerTest` (lock legs, 7 mutants). Existing fixtures whose books check at +2.99% against a 3% minimum moved to a 2.5% minimum (the new rule judges the lower edge): `AutoBettorTest`, `SharpConfirmAppTest`; Kelly amounts in `AutoBettorTest` now follow the lower fair.
 
+## 105. The v0.71.2 diagnostics file and scan study: only what is new since the v0.70.1 files (2026-10-07; DH3; Tj sent both at 02:58-02:59 EDT)
+
+Scope kept narrow on purpose (Tj: "do not waste any usage on old or stale data ... that you already analyzed"): the v0.70.1 analysis (§97, the 11 proposals) is not redone. Two things were read: (1) the diagnostics file's own ranked findings and its "since the previous report" block, (2) the 729 bets the study logged after the previous export (2026-10-06 00:08 EDT) as an **out-of-sample look at the rules Tj approved**. The raw files stay in the container's uploads (public repo: never committed).
+
+**The new bets are a thin sample.** 729 listed since the last export, **81 with a close** (20 games): most of them are games that had not started when the file was made. Game-clustered bootstrap intervals; nothing here is proof.
+| split (new bets with a close) | n | games | CLV | 95% interval | same split in the old 825 |
+| :- | -: | -: | -: | :- | :- |
+| first listed 6 h or less before the start | 48 | 16 | +1.73% | [+0.54, +2.77] | +1.19% (n=321) |
+| first listed 6-24 h | 33 | 16 | +0.51% | [-1.83, +2.69] | -0.61% (n=477) |
+| plus money (+100 or longer) | 51 | 18 | +2.48% | [+1.19, +3.74] | +0.16% (n=617) |
+| favourites (-101 or shorter) | 30 | 13 | -0.89% | [-3.09, +1.12] | -0.57% (n=208) |
+| 6 h or less AND plus money | 26 | 14 | +2.83% | [+1.75, +4.21] | +1.79% (n=231) |
+| book check EV under 2.5% (recorded) | 8 | 5 | +2.39% | [-0.94, +5.84] | -0.25% (n=92) |
+| book check EV 2.5% or more | 34 | 12 | +2.49% | [+1.47, +3.37] | +0.84% (n=171) |
+Reading: the two splits behind the approved timing and favourites rules (proposals 2 and 4) point the **same way** on the new bets (a recent listing beats an old one; plus money beats favourites), with intervals that overlap the old ones. The book-check split behind proposal 5 has only 8 new bets under 2.5% and they did **not** do worse (+2.39%): this sample neither supports nor contradicts it; it needs the 60 bets the old estimate said it would. Nothing changes from this; nothing new is proposed.
+
+**Faults and findings in the diagnostics file (what was done):**
+1. **Novig's batch-place reply was unreadable four times** ("it looked like [{clientId:string,orderId:string}x15]", batches of 4, 10, 15 and 20): the real reply is a **bare array**, the code read `{accepted: [...]}`. Every run's first batch fell back to one bid per request for the rest of the run (more requests on the 8-a-second `place` bucket, slower bids; the maker step of a cycle took 20 s at its worst). **Fixed**: both shapes are read (`NovigTradingClient.placeOrders`, `MakerOrdersClientTest`); NOVIG_API.md §17 records the verified shape. The burst trader shares the code and would have halted "UNCONFIRMED" on its first live trade for the same reason.
+2. **cloudflare-dns.com and dns.google "100% of calls failed" (FAILURE #1, #2)**: the DNS-over-HTTPS fallback (asked only after the phone's own name lookup fails) could not reach its two resolvers on this connection (the phone says "online: mobile + VPN"; 130 connects each, "Failed to connect to /1.0.0.1:443"). Not an app fault by itself, but each failed lookup waited out two connect timeouts. **Fixed**: after both resolvers fail the fallback is not asked again for 2 minutes (`DnsOverHttps.DOWN_MS`); the two hosts are now a WATCH in the findings, not a FAILURE (`Advisor`).
+3. **Kalshi is the slowest step of a scan (35 s of the 36 s scan), 1,413 calls in a day, p95 321 -> 1,239 ms**: the measured 3-requests-a-second test (proposal 9) is in v0.72.0; its result will be in the next file's Diagnostics line. 
+4. **api.novig.com asked the app to slow down 3,042 times since Oct 1** (Retry-After 1), but only **33 of 12,263 calls today**: it is a WATCH at today's rate, not a fault; nothing changed.
+5. **statsapi.mlb.com's big answers "arrive slowly" (34 KB/s)**: a box score is **13 KB on the wire** (gzip, 170 KB decoded; measured from here), so the slow rate is the phone's mobile+VPN path, not the size. No action.
+6. **The app was ended once for "excessive CPU" in the background at 01:03 AM** (10.1 s of CPU in a 5-minute window, cached state, with the kill switch and pause on). Cause not found from the file (no thread breakdown for that window); the Diagnostics scan CPU line (garbage collector 47% of one core during a scan) is the nearest lead. WATCH; the next kill will have the v0.71.2+ recorder around it.
+7. **The Odds API will run out on Oct 21 at this pace (SHORT)**; ParlayAPI is "tight but lasting" (4,554 of 26,000). The Odds API served 2 matched games for 11 credits in the last scan (it is a fallback behind ParlayAPI and PropLine): see §107 (API audit).
+8. Not faults: the kill switch was ON and the background scan paused when the file was made (so "Auto-bet can't run" and "scan runs nothing" are Tj's own settings); the VPN made Novig answer `ANONYMIZED_NETWORK` to the key on Oct 6 (known, §30.1); 2 lock legs are waiting for a tap (rec 11 grades such legs from v0.72.0 when the market is half-point and a feed graded the other leg).
+
