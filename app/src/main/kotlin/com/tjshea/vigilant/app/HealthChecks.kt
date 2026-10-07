@@ -115,11 +115,28 @@ object HealthChecks {
     }
 
     /**
+     * Bids priced from CrazyNinjaOdds (Tj, 2026-10-07; RESEARCH.md §114): they can't be priced when Pinnacle only is on (it reads no CNO list) or the background scan doesn't read CNO;
+     * the lane says why it stopped them (a pause, a late list, one that doesn't say how old it is); and game pages that keep failing leave the bids on old data until they come down.
+     */
+    private fun MutableList<Check>.cnoBids(s: UiState, x: Diagnostics.Extras) {
+        val set = s.settings
+        if (set.makerSource != com.tjshea.vigilant.data.scanner.BidSource.CNO || !(set.maker || set.makerRecommend)) return
+        val c = x.cnoBids
+        when {
+            set.pinnacleOnly -> add(Check(Level.WARN, "Bids from CrazyNinjaOdds", "Pinnacle only is on", "it reads Novig and Pinnacle alone, so CrazyNinjaOdds is never read and no bid is priced", "Settings › Scanning › Pinnacle only"))
+            !set.autoScansCno -> add(Check(Level.WARN, "Bids from CrazyNinjaOdds", "the background scan doesn't read CrazyNinjaOdds", "scanner ${set.scanner.displayName}, auto-scan ${set.autoScan.displayName}${if (set.paused) ", paused" else ""}: no list, no pages, so no bid is priced", "Bids tab › Turn on (MakerSetup.forCno)"))
+            c?.stop != null -> add(Check(Level.WARN, "Bids from CrazyNinjaOdds", "every bid priced from it is down", c.stop, "CnoBidLane.stopReason"))
+            c != null && c.failed > 0 && c.pagesRead == 0 -> add(Check(Level.WARN, "Bids from CrazyNinjaOdds", "game pages are failing", "${c.failed} failed last cycle${c.lastError?.let { ": $it" }.orEmpty()}: the bids' data goes old and they come down", "Diagnostics › Bids priced from CrazyNinjaOdds"))
+        }
+    }
+
+    /**
      * The bids (Tj, 2026-10-05: "my bids right now are being taken fast and I'm worried they aren't true positive Ev"; RESEARCH.md §88.3): stopped by the picked-off
      * guard; fills being picked off short of the guard's line; fills that lose to the close once enough have one; and a rush of fills inside two minutes.
      */
     private fun MutableList<Check>.bids(s: UiState, x: Diagnostics.Extras, now: Long) {
         val set = s.settings
+        cnoBids(s, x)
         if (!set.maker && x.makerBids.none { it.filled > 0 }) return
         val rows = com.tjshea.vigilant.data.novig.trading.maker.BidReport.rows(x.makerBids, s.bets, now, set.makerAnchorSharp)
         val fills = rows.filter { it.filled > 0 }
