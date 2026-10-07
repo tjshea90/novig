@@ -149,6 +149,9 @@ data class MakerRules(
 
         fun of(s: ScanSettings): MakerRules = base(s).let { r ->
             when {
+                // Bids priced from CrazyNinjaOdds ([CnoMakerLines]): Quick & likely narrows them too, Low API usage (Vigilant's scan on a few books) means nothing without that scan.
+                s.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO ->
+                    CnoMakerLines.narrow(if (QuickLikely.on(s)) QuickLikely.withObscure(QuickLikely.narrow(r, s.makerQuickMinBooks), s) else r).copy(focus = s.makerFocus.name)
                 LowUsage.on(s) -> LowUsage.narrow(r, s).copy(focus = s.makerFocus.name)
                 QuickLikely.on(s) -> QuickLikely.withObscure(QuickLikely.narrow(r, s.makerQuickMinBooks), s).copy(focus = s.makerFocus.name)
                 else -> r.copy(focus = s.makerFocus.name)
