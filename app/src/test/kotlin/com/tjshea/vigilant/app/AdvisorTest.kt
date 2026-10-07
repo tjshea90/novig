@@ -164,7 +164,7 @@ class AdvisorTest {
     }
 
     @Test
-    fun `the DNS fallback's resolvers failing is a watch, not a failure (Tj's v0,71,2 file - 130 connects, all refused, behind a VPN)`() {
+    fun `the DNS fallback's resolvers failing is a watch and not a failure, as in Tj's v0,71,2 file behind a VPN`() {
         val h = host(calls = 130, errors = 130, kinds = mapOf("connect" to 130L), status = emptyMap(), byNet = mapOf("mobile" to 130L))
         val f = byKey(base.copy(net = net("cloudflare-dns.com" to h, "dns.google" to h, "api.example.com" to h))).let { m -> listOf("cloudflare-dns.com", "dns.google").map { m.getValue("net:$it:errors") } }
         assertTrue(f.toString(), f.all { it.kind == "WATCH" && it.title.contains("the DNS fallback couldn't reach it") })
