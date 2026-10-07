@@ -464,6 +464,101 @@ private fun ColumnScope.AlertsPage(state: UiState, onUpdate: SettingsUpdate) {
     }
 }
 
+/**
+ * Which games the CrazyNinjaOdds list looks at (Tj, 2026-10-07: "for the cno only scanner, right now I can't filter sports leagues at all. Make sure the cno scanner has plenty of
+ * filters just like vigilant scanner"): leagues grouped by sport, kinds of bet, pregame only, the fewest dollars available, words in or out, props per game. Nothing picked is
+ * everything; each choice says what it does and how the list is read for it ([CnoScopeText.readAs]).
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ColumnScope.CnoScopeSection(s: ScanSettings, onUpdate: SettingsUpdate) {
+    val scope = s.cnoFilters.scope
+    val onScope: ((CnoScope) -> CnoScope) -> Unit = { t -> onUpdate { it.copy(cnoFilters = it.cnoFilters.copy(scope = t(it.cnoFilters.scope))) } }
+    SectionTitle(CnoScopeText.TITLE)
+    Hint(CnoScopeText.INTRO)
+    Text("Leagues listed", style = MaterialTheme.typography.bodyMedium)
+    FilterChip(
+        selected = scope.leagues.isEmpty(), onClick = { onScope { it.copy(leagues = emptySet()) } }, label = { Text("All leagues") },
+        modifier = Modifier.testTag("cnoScopeAll"),
+    )
+    val picked = scope.pickedLabels()
+    for (sport in CnoLeagues.SPORTS) {
+        val leagues = CnoLeagues.of(sport)
+        val all = leagues.all { l -> picked.any { CnoLeagues.same(it, l.label) } }
+        TextButton(onClick = { onScope { it.toggleSport(sport) } }, modifier = Modifier.testTag("cnoScopeSport-${sport.name}")) {
+            Text(sport.label + if (all) " (all picked: tap to clear)" else " (tap to pick all)", style = MaterialTheme.typography.labelLarge)
+        }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            leagues.forEach { l ->
+                FilterChip(
+                    selected = picked.any { CnoLeagues.same(it, l.label) }, onClick = { onScope { it.toggleLeague(l.label) } }, label = { Text(l.label) },
+                    modifier = Modifier.testTag("cnoScopeLeague-${l.label}"),
+                )
+            }
+        }
+    }
+    // A league CNO has renamed or dropped stays as a chip so it can be taken off.
+    val unknown = picked.filter { CnoLeagues.byLabel(it) == null }
+    if (unknown.isNotEmpty()) FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        unknown.forEach { l -> FilterChip(selected = true, onClick = { onScope { it.toggleLeague(l) } }, label = { Text(l) }, modifier = Modifier.testTag("cnoScopeLeague-$l")) }
+    }
+    Hint(CnoScopeText.readAs(s.cnoFilters, s.cnoViewUrl))
+    Text("Kinds of bet listed", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(selected = scope.kinds.isEmpty(), onClick = { onScope { it.copy(kinds = emptySet()) } }, label = { Text("All kinds") }, modifier = Modifier.testTag("cnoScopeKindAll"))
+        BetKind.entries.forEach { k ->
+            FilterChip(selected = k in scope.kinds, onClick = { onScope { it.toggleKind(k) } }, label = { Text(k.label) }, modifier = Modifier.testTag("cnoScopeKind-${k.name}"))
+        }
+    }
+    Hint("CrazyNinjaOdds has no filter for this: the app drops the kinds you leave out from a longer read of its list.")
+    Shadowed.cnoKinds(s)?.let { Warn(it, "cnoKindsShadowed") }
+    SwitchRow(
+        "Hide live games",
+        "Leave out games already under way. CrazyNinjaOdds' live prices are not as fresh, and Novig charges takers a fee once a game is live that its edge does not subtract; the auto-bet only bets pregame anyway.",
+        scope.hideLive, tag = "cnoHideLive",
+    ) { v -> onScope { it.copy(hideLive = v) } }
+    Text("Fewest dollars available", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    ChoiceChips(CnoScopeText.LIQUIDITY_CHOICES, scope.minLiquidity, CnoScopeText::liquidityLabel) { v -> onScope { it.copy(minLiquidity = v) } }
+    TypedIntField(NumberSpecs.count("dollars", 1, 100_000), scope.minLiquidity, "cnoMinLiquidityField") { v -> onScope { it.copy(minLiquidity = v) } }
+    Hint("The dollars sitting at ${AppBook.name}'s price: a bet with less than this cannot take a real stake. Asked of CrazyNinjaOdds directly. A bet it shows no dollars for stays.")
+    Text("Show only bets with these words", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    TypedWordsField("Teams, players or markets, separated by commas", scope.include, "cnoIncludeField") { v -> onScope { it.copy(include = v) } }
+    Text("Leave out bets with these words", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    TypedWordsField("Teams, players or markets, separated by commas", scope.exclude, "cnoExcludeField") { v -> onScope { it.copy(exclude = v) } }
+    Hint("Looked for in the game, the market and the bet (a team, a player's name, \"Shots On Goal\"); capitals and accents don't matter.")
+    Text("Props per game", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    ChoiceChips(CnoScopeText.PROPS_PER_GAME_CHOICES, scope.propsPerGame, CnoScopeText::propsLabel) { v -> onScope { it.copy(propsPerGame = v) } }
+    TypedIntField(NumberSpecs.count("props a game", 1, 100), scope.propsPerGame, "cnoPropsPerGameField") { v -> onScope { it.copy(propsPerGame = v) } }
+    Hint("At most this many player props from one game, the best edges first (one NHL game lists 20-30 shot lines). Game lines are not counted.")
+}
+
+/** A words box: what is typed saves a moment after typing stops (a list read for every letter would be a request per keystroke), or at once on Done. */
+@Composable
+private fun TypedWordsField(label: String, saved: String, tag: String, onSet: (String) -> Unit) {
+    var text by remember(saved) { mutableStateOf(saved) }
+    LaunchedEffect(text) {
+        if (text != saved) {
+            delay(WORDS_IDLE_MS)
+            onSet(text)
+        }
+    }
+    OutlinedTextField(
+        value = text,
+        onValueChange = { text = it.take(CNO_WORDS_MAX) },
+        label = { Text(label) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { if (text != saved) onSet(text) }),
+        modifier = Modifier.fillMaxWidth().testTag(tag),
+    )
+}
+
+/** How long a words box waits after the last letter before it saves. */
+const val WORDS_IDLE_MS = 700L
+
+/** The most characters a words box takes. */
+const val CNO_WORDS_MAX = 200
+
 /** CrazyNinjaOdds list: what it shows, each bet's book check, refresh. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -472,7 +567,7 @@ private fun ColumnScope.CnoPage(s: ScanSettings, onUpdate: SettingsUpdate) {
     val onCno: ((CnoFilters) -> CnoFilters) -> Unit = { t -> onUpdate { it.copy(cnoFilters = t(it.cnoFilters)) } }
     Intro(
         "CrazyNinjaOdds (CNO) is a website that compares ${AppBook.name}'s odds with many sportsbooks' and lists the bets priced better than their true odds " +
-            "(+EV). These choices decide what that list shows. A preset (Auto-bet tab) can set the first four at once.",
+            "(+EV). These choices decide what that list shows. A preset (Auto-bet tab) sets the list's rules (devig, odds, books, edge, rows) at once, but never the games you pick below.",
     )
     SectionTitle("What the list shows")
     Text("How the true odds are worked out", style = MaterialTheme.typography.bodyMedium)
@@ -517,6 +612,8 @@ private fun ColumnScope.CnoPage(s: ScanSettings, onUpdate: SettingsUpdate) {
         f.completeBook,
     ) { v -> onCno { it.copy(completeBook = v) } }
     Hint("Always left out: an edge over 20% (almost always a stale line), rows CNO worked out from one side only (⚠️), and rows whose edge doesn't follow from their odds.")
+
+    CnoScopeSection(s, onUpdate)
 
     SectionTitle("Checking each bet")
     // One switch with its stricter option under it (2026-10-02 ~18:10Z: "Only bets the books agree on" read the books with the ✓ switch shown off).
