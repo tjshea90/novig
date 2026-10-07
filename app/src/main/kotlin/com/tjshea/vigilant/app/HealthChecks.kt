@@ -143,7 +143,18 @@ object HealthChecks {
         }
         val fast = fills.mapNotNull { it.fillDelaySec }
         if (fast.size >= 6 && fast.count { it < 120 } * 2 >= fast.size) {
-            add(Check(Level.WARN, "Bids", "most fills came within 2 minutes of posting", "${fast.count { it < 120 }} of ${fast.size}: a bid taken that fast is often one the market was already moving away from", "Diagnostics › Bids › fills by how fast they were taken"))
+            // A bid rests only a few minutes, so most fills are quick whatever the market does (Tj's v0.70.1 file: 3 of 6 fired this warning while its fast fills beat the close by more than its slow
+            // ones). It is a warning only when the quick fills did worse than the slow ones against the close; the picked-off check above is the one that judges a fill by the market's move.
+            val quick = fills.filter { (it.fillDelaySec ?: Long.MAX_VALUE) < 120 }.mapNotNull { it.clv }
+            val slow = fills.filter { (it.fillDelaySec ?: 0L) >= 120 }.mapNotNull { it.clv }
+            val worse = quick.size >= 4 && quick.average() < (if (slow.size >= 2) slow.average() else 0.0) - 0.01
+            add(
+                Check(
+                    if (worse) Level.WARN else Level.OK, "Bids", "most fills came within 2 minutes of posting",
+                    "${fast.count { it < 120 }} of ${fast.size}" + if (worse) ": and they did worse against the close than the slower ones: a bid taken that fast is often one the market was already moving away from" else ": normal while a bid rests only a few minutes; the fast ones did no worse than the slow ones against the close",
+                    if (worse) "Diagnostics › Bids › fills by how fast they were taken" else null,
+                ),
+            )
         }
     }
 
