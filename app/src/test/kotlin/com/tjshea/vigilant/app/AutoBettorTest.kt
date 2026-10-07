@@ -305,8 +305,12 @@ class AutoBettorTest {
         assertEquals(0, under.looked)
         assertEquals(0, under.placed.size)
         assertEquals("nothing reached Novig", 0, novig.orders.get())
-        // The same bet with criteria it meets is placed (3 books, a 5.84% edge against 5.0%).
-        assertEquals(1, bettor(novig).run(settings { it.copy(autoBetMinEv = 0.05, autoBetBooks = 3, autoBetTwoSided = 3) }, state()).placed.size)
+        // The same bet with criteria it meets is placed (3 books, a 5.84% edge against 2.5%). The books' own check puts it near 3%, and the LOWER of the two edges is judged
+        // (Tj, 2026-10-07, proposal 5): against a 5% minimum it is not placed, and the report says the books' check is why.
+        assertEquals(1, bettor(novig).run(settings { it.copy(autoBetMinEv = 0.025, autoBetBooks = 3, autoBetTwoSided = 3) }, state()).placed.size)
+        val lower = runBlocking { settings { it.copy(autoBetMinEv = 0.05, autoBetBooks = 3, autoBetTwoSided = 3) }.let { s -> bettor(novig).run(s, state(s)) } }
+        assertEquals(0, lower.placed.size)
+        assertTrue(lower.skipped.keys.toString(), lower.skipped.keys.any { it.startsWith("the books' own check puts its edge at ") })
     }
 
     @Test
@@ -315,7 +319,7 @@ class AutoBettorTest {
         // Under is a prop: Kalshi, then ProphetX decide; Pinnacle doesn't.
         fun withBooks(view: com.tjshea.vigilant.data.cno.CnoBooksView, s: ScanSettings) =
             state(s).let { it.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = view))).indexed(now) }
-        val veto = settings { it.copy(autoBetBooks = 2, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.VETO) }
+        val veto = settings { it.copy(autoBetBooks = 2, autoBetMinEv = 0.01, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.VETO) }
         // Kalshi says no (+105/-135 under Novig's +117): vetoed, nothing reaches Novig, and the report says who.
         val kalshiNo = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "KI") com.tjshea.vigilant.data.cno.CnoBookPrice("KI", 105, 106.0, -135, 13_662.0) else it }) }
         val novig = FakeNovig()
