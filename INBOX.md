@@ -5328,3 +5328,10 @@ Frequently checkpoint and save all progress and data to GitHub and keep an activ
 ```
 This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
 ```
+
+## 2026-10-07T15:18:51Z
+```
+On the auto bid feature, on the low api usage setting, I changed the trap guard setting from 6 hours to 8 hours and then to no trap guard at all, but it is hard set at 6 hours trap guard no matter what I select. Also in low api usage mode it is not filling any obscure props, it is hard set against this. The settings I choose should change whatever I want without hard settings.
+
+Also, right now most of the auto bet feature is betting nhl player shots on goal. This is an obscure market I think. I'm worried it is not betting on sharp information with this type of volatile bet. First see if it is wise to have a lot of player shots on goal nhl bets and if not, set up some type of guard for obscure auto betting on small props like this
+```
