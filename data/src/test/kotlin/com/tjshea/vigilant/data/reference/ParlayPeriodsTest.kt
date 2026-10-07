@@ -131,11 +131,14 @@ class ParlayPeriodsTest {
         assertFalse(src.supports(Leagues.byNovigName("NHL")!!))
         val event = NovigEvent("e1", "FOOTBALL", "NFL", "OPEN_PREGAME", "Pittsburgh Steelers @ Cleveland Browns", now + 86_400_000L)
         fun market(type: String) = NovigMarket("m-$type", "e1", type, "OPEN", "PIT @ CLE $type", now + 86_400_000L, null, emptyList())
-        // Novig lists no 1st-half market: nothing spent.
-        assertTrue(src.odds(nfl, ScanSettings(), ScanContext(listOf(event), listOf(market("SPREAD")))).events.isEmpty())
+        // Novig lists no 1st-half market: nothing spent, and the league is SKIPPED, not "fetched with nothing matching" (Tj's v0.70.1 file: the health check called five such
+        // leagues "answered 5 leagues but matched no Novig game").
+        val noMarket = src.odds(nfl, ScanSettings(), ScanContext(listOf(event), listOf(market("SPREAD"))))
+        assertTrue(noMarket.events.isEmpty())
+        assertTrue(noMarket.skipped)
         // 1st-half lines switched off: nothing spent.
         val half = ScanContext(listOf(event), listOf(market("SPREAD_1H")))
-        assertTrue(src.odds(nfl, ScanSettings(families = setOf(MarketFamily.SPREAD)), half).events.isEmpty())
+        assertTrue(src.odds(nfl, ScanSettings(families = setOf(MarketFamily.SPREAD)), half).skipped)
         assertEquals(0, server.requestCount)
         server.enqueue(MockResponse().setBody(res("parlay-period-markets-nfl-1h.json")).setHeader("x-requests-last", "2"))
         val snap = src.odds(nfl, ScanSettings(), half)
