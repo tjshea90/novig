@@ -1,23 +1,23 @@
-# CHECKPOINT 2708 — read me first, then TASKS.md
+# CHECKPOINT 2709 — read me first, then TASKS.md
 
-**Written:** 2026-10-07T19:58:47Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-f242447d-q6sygj` · **builds on:** `29fe2dd7` (this checkpoint is the commit after it)
+**Written:** 2026-10-07T20:05:24Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-f242447d-q6sygj` · **builds on:** `35419387` (this checkpoint is the commit after it)
 
 ## Just done
-DK1/DK2 done: researched CNO-only auto bids (RESEARCH §112; §111 stub for DJ); BetOrBidTest/BetLedgerTest/TrackerBreakdownTest/PropGuardTest green (28)
+DJ2 + DJ3 done in the tree: bid/bet rule + tagBids wiring, Tracker Bets/Bids chip (lists, stats, CLV card, profit line), BID tag, TrackerBidsUiTest 5 + StickyHeadersTest green
 
 ## Do this next
-answer Tj on CNO-only bids (buildable, unproven, waits for his yes = DK3); continue DJ2 wiring (tagBids at app start, Diagnostics/Study use isBid), then DJ3 Tracker chip
+DJ4: Diagnostics - counts by kind in the Tracker section, 'Bets and bids apart' block via a shared function, MADE in the accuracy and as-placed splits, bid pipeline line (cancelled/expired/refused/voided + fill rate + ROI), then DJ5 study
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M RESEARCH.md
      M TASKS.md
 
 ## Last ten checkpoints
 ```
+  7b4b02b7 ckpt 2708: DK1/DK2 done: researched CNO-only auto bids (RESEARCH §112; §111 stub for 
   29fe2dd7 ckpt 2707: DJ2 data layer written (TrackedBet.isBid, BetTracker.tagBids, BetOrBid, BetL
   544725eb ckpt 2706: DJ1 done: scouted the code (maker flag vs atBet.how, nothing reads both; Tra
   7a473229 ckpt 2705: Erased the off-topic fastboot/OTG question from INBOX.md (2 entries) and TAS
@@ -28,3 +28,6 @@ answer Tj on CNO-only bids (buildable, unproven, waits for his yes = DK3); conti
   0492de95 ckpt 2700: pre-release: v0.73.0: the CrazyNinjaOdds list can be limited to leagues, kin
   4f2b0a24 ckpt 2699: DI5: CnoScopeUiTest green (11): CNO tab league chips, 'reading with your new
 ```
+
+(9 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
