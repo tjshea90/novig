@@ -202,7 +202,7 @@ class DiagnosticsFileTest {
         assertEquals("warning 51", shown.first().msg)
         assertEquals("info 100", shown.last().msg)
         // Not silent: 300 warnings of the day, 250 listed (the file used to cut at 120 while its header said "every warning").
-        assertEquals(50, DiagnosticsFile.timelineLeftOut(warnings + infos, now))
+        assertEquals(50, DiagnosticsFile.timelineLeftOut(warnings + infos, now).size)
     }
 
     @Test
