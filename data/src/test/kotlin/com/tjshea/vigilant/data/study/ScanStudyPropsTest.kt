@@ -204,6 +204,17 @@ class ScanStudyPropsTest {
         assertNotNull(text.lines().firstOrNull { it.trim().startsWith("8. Deliver") })
     }
 
+    /** DI5: a reason the CNO screen can give a bet (the `screen` field of every study line) that the READ ME does not explain is a column Claude cannot read. */
+    @Test
+    fun `the READ ME explains every reason the CNO screen can give a bet`() = runBlocking {
+        val j = journal()
+        logAll(study(j))
+        val text = export(j)
+        val missing = com.tjshea.vigilant.data.cno.CnoChecks.Reason.entries.filter { !text.contains(it.name) }
+        assertTrue("the READ ME does not name $missing", missing.isEmpty())
+        assertTrue(text.contains("NOT_LISTED"))
+    }
+
     @Test
     fun `the sharp edge bands break at 0, 1, 2 and 4 percent`() {
         val base = StudyExport.rowOf(
