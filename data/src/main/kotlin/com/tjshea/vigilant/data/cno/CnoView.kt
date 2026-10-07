@@ -44,11 +44,15 @@ object CnoView {
         "2" to "DraftKings", "1" to "FanDuel", "4" to "BetMGM", "3" to "Caesars", "22" to "Fanatics",
         "21" to "Bet365", "11" to "BetRivers", "19" to "Fliff", "28" to "Bally Bet",
     )
-    private val sports = mapOf("1" to "Baseball", "2" to "Football", "3" to "Hockey", "4" to "Basketball", "5" to "Soccer")
-    private val leagues = mapOf(
-        "1" to "MLB", "2" to "NFL", "3" to "NCAAF", "4" to "NHL", "5" to "NBA", "6" to "NCAAB", "7" to "WNBA",
-        "8" to "NCAAW", "10" to "MLS", "16" to "Premier League",
-    )
+    private val sports = CnoLeagues.Sport.entries.associate { it.id.toString() to it.label }
+    private val leagues = CnoLeagues.ALL.associate { it.id.toString() to it.label }
+
+    /** The league and sport a view's link scopes the list to, as labels ("NFL", "Football"); null for each the link leaves at All. */
+    fun scopeOf(link: String): Pair<String?, String?> {
+        val url = link.toHttpUrlOrNull() ?: return null to null
+        fun q(name: String): String? = url.queryParameter(name)?.trim()?.takeIf { it.isNotEmpty() && it != "0" }
+        return q("league")?.let { leagues[it] ?: "league $it" } to q("sport")?.let { sports[it] ?: "sport $it" }
+    }
 
     /** "Novig · EV ≥ 2% · odds −200 to +300 · $10+ · 3+ books": the filters in a view, for Settings and the CNO tab. */
     fun describe(link: String): String {
