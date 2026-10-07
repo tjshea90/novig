@@ -698,18 +698,18 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
         KeyListEditor(ApiProvider.PROPLINE, state.proplineKeys, keys, "Add a PropLine key")
     }
     // ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43): Pinnacle and 9 more books, a league's props and alternate lines in one call each, and
-    // Pinnacle's closing lines for CLV. Paced to a day's share of the plan; a free key only buys the closes.
+    // Pinnacle's closing lines for CLV. A paid key is paced to a day's share of the plan; free keys serve scans after it, down to their last 100.
     SwitchRow(
         "ParlayAPI",
         if (state.parlayKeys.isEmpty()) "Optional, best on its \$5 plan: Pinnacle, ProphetX, BetOnline, bet365, Bovada and the US books, a " +
             "whole league's player props and alternate lines in one call each, and Pinnacle's closing lines for your CLV. Free key at " +
-            "parlay-api.com (1,000 credits a month: closing lines only); \$5 a month (20,000) for scans too."
+            "parlay-api.com (1,000 credits a month each: add as many as you like, they are used one after another); \$5 a month (20,000) is paced to a day's share."
         else "Pinnacle and 9 more books (3 credits a league; 5 with Pinnacle's alternate lines, bought only when PinnWire and pinnapi are " +
             "off; tennis 3 a tour, with Pinnacle's set lines for set spreads and total sets), every book's player props (3 a league) and 1st-half lines (2 a league, only where Novig lists them) " +
             "each scan, paced to a day's share of your plan (background auto-scans use half of it at most), plus Pinnacle's closing " +
             "lines for your CLV (the last 300 credits are kept for them). Free with it: injury tags on prop bets (1 credit a league when a " +
             "player isn't in its props), Pinnacle's line moves, the credits-a-day chart. Only on a tap: its own picks at Novig (+EV tab, " +
-            "10 a league) and a bet's second opinion (5). A free key is kept for closing lines. Off, spent or gone: the other feeds carry on.",
+            "10 a league) and a bet's second opinion (5). Keys are used in the order listed: each next key once the one before is spent or at its day's share (free keys down to their last 100, kept for closing lines), and again from key 1 whenever credits reset. Off, spent or gone: the other feeds carry on.",
         s.useParlay,
     ) { v -> onUpdate { it.copy(useParlay = v) } }
     if (s.useParlay) {
