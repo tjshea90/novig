@@ -51,7 +51,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w393dp-h3000dp-xxhdpi")
+@Config(sdk = [35], qualifiers = "w393dp-h4200dp-xxhdpi")
 class AutoBetUiTest {
 
     @get:Rule val compose = createComposeRule()

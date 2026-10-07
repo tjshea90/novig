@@ -55,7 +55,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w393dp-h2600dp-xxhdpi")
+@Config(sdk = [35], qualifiers = "w393dp-h4200dp-xxhdpi")
 class MakerUiTest {
 
     @get:Rule val compose = createComposeRule()
@@ -162,8 +162,8 @@ class MakerUiTest {
         assertFalse(s.makerRecommend)
         // The rules: closed, they read as one line; open, a chip sets the margin.
         compose.onNodeWithText(MakerRulesText.summary(settings)).performClick()
-        compose.onNodeWithText("6%").performClick()
-        assertEquals(0.06, s.makerMargin, 1e-9)
+        compose.onNodeWithText("2.5%").performClick()
+        assertEquals(0.025, s.makerMargin, 1e-9)
         compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerSkippedToggle"))
         compose.onNodeWithTag("makerSkippedToggle").performClick()
         compose.onNodeWithTag("makerScreen").performScrollToNode(hasText("Moneylines are off for bids", substring = true))
@@ -352,6 +352,8 @@ class MakerUiTest {
         assertEquals("3.5%", MakerRulesText.pct(0.035))
         assertEquals("3.25%", MakerRulesText.pct(0.0325))
         assertEquals("8%", MakerRulesText.pct(0.08))
+        // Tj, 2026-10-07: "remove the 6% and 8% under the fair options and add 2% and 2.5%".
+        assertEquals(listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.04), ScanSettings.MAKER_MARGIN_CHOICES)
         var s = settings
         compose.setContent {
             VigilantTheme { MakerScreen(ui(), MakerActions(onUpdate = { f -> s = f(s) })) }
