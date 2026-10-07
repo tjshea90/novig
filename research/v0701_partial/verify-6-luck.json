@@ -1,0 +1,259 @@
+{
+ "lens": "LUCK AND MULTIPLE COMPARISONS (permutation within game-day, game-cluster CIs, leave-one-game-out, Bonferroni / family-wise haircut)",
+ "rule": "R7 Wait-and-confirm: after an R1 trigger (first c/w look 2-360 min before the start with EV >= 2.5%) wait 5 minutes and buy only if still listed (any source, freshest listing look <= 7 min old, >= 2 min to the start) with the last c/w price look EV >= 2.5%; price = that look's",
+ "numbers_reproduced": "Reproduced exactly. R1 triggers 184 bets (44 games, 116 with a close). After 5 min: 55 dropped, 36 listed with EV < 2.5%, 16 past/too close to the start, 77 confirmed (28 games). R7 CLV at the T+5 price = +2.93% on 52 closes / 25 games, game-cluster 95% CI [+1.92, +3.79] (builder [+1.99, +3.81], same mean to 12 digits; the CI differs only by bootstrap seed/size); close_ok only +3.08% on 50/24g. Same bets at their trigger price +2.77% (builder baseline 2.7686%). Whole R1 (the parent, buy every trigger at once) +2.54% [+1.77, +3.52] on 116 closes/40 games. Not confirmed +2.36% on 64/32g. Halves by decision day: Oct 3 +1.78% (17 closes/14g, CI [+0.02, +3.91]); Oct 4-5 +3.49% (35/17g, [+2.84, +4.22]); builder 2.32 / 3.06 on a slightly different cut. ROI at the first-listed price -16.8% on 73 settled / 26 games, CI [-45.1, +11.6] (builder -16.1% at the look price). The question for the rule is not CLV vs 0 but confirmed vs the parent R1: +0.41 pts [-1.62, +1.79], bootstrap p(<=0) 0.357 (builder 0.36).",
+ "survives": false,
+ "reason": "The rule's whole CLV (+2.9%) is R1's EV >= 2.5% gate, not the 5-minute confirmation; what the confirmation adds (+0.41 pts per bet, +0.16 pts of it from the T+5 price) cannot be told from luck, and it is the wrong sign on independent closes. (1) Permutation, same-sized subsets of the R1 closed triggers drawn within start day, 5000 draws: null mean 2.49% sd 0.39%; p(null >= observed) = 0.135 at the T+5 price, 0.244 at the trigger price (within trigger day 0.129/0.237; no strata 0.163/0.293). Whole-game redraws (games drawn at random from the 40 R1 games until 52 closes): p 0.255 / 0.335. The observed CLV sits at percentile 86 of the null (builder's permutation p 0.14: reproduced). Against broader universes (random same-size draws from the 378 first-in-window c/w closes, mean +0.82%, or all 683 closed bets, mean +0.19%) p < 0.0002, but that only re-measures the EV gate that R1 already carries. (2) Multiple comparisons: p 0.135-0.24 x 15 hypothesis families = 1.0 (capped); x 522 variants = 1.0. Family-wise test over 32 R7 variants (wait 2,3,5,7,10,15,20,30 min x confirm threshold 2.0,2.5,3.0,3.5%), max-t under within-day shuffles of CLV, 4000 draws: R7's own t = 0.58, family-wise p = 0.92 (the median max-t of the null is 1.65, its 95th percentile 3.20). The best neighbour (wait 3 min, EV >= 3.0%, 35 confirmed closes) has t 2.97, diff +2.0 pts, family-wise p 0.074: not significant either, and it is not R7. Only 22 of 32 variants have a positive difference and 9 have t > 1.64 (about 1.6 expected if the variants were independent, but they overlap heavily; they are all waits of 2-7 minutes); the effect disappears at 10+ minutes (diffs -0.03 to -1.4 pts). (3) Game clustering: CI of the difference [-1.62, +1.79] includes 0; within-game fixed-effect estimate (17 games with both confirmed and not-confirmed closed bets) +1.14 pts [-1.01, +2.49], p(<=0) 0.135. (4) Not driven by one or two games (leave-one-game-out CLV +2.77% to +3.24% over 25 closed games, the largest game holds 9 of the 52 closes; dropping the top 3 games by contribution +2.60% [1.46, 3.73] on 37/22g), but that robustness belongs to R1's level, not to the confirmation. (5) The close source drives the level: of the 52 closes 38 are Tracker closes (a re-read of CNO's own books before the start, i.e. the same consensus that produced the listed EV, so CLV tracks listed EV by construction): +4.14% [+3.22, +4.95], 95% beat. Independent closes (ESPN, Pinnacle, Novig trades with 3+ trades) are 12 closes / 10 games: -0.26% [-1.61, +1.54], 58% beat; 1-2-trade Novig closes 2. On the independent closes confirmed is WORSE than not confirmed: -0.26% (12/10g) vs +1.42% (21/14g), diff -1.68 pts [-3.76, +0.18], p(>=) 0.91; whole R1 on independent closes only +0.81% [-0.04, +2.10] on 33/23g. (6) Halves disagree in sign for the confirmation effect: confirmed minus not confirmed -0.81 pts on Oct 3 (17 vs 14 closes) and +0.96 pts on Oct 4-5 (35 vs 50), neither significant (game-cluster bootstrap p(diff <= 0) 0.73 on Oct 3 and 0.22 on Oct 4-5). (7) Cost: R7 keeps 77 of 184 triggers: 34.1 bets a day vs 81.6 for R1, i.e. 1.00 vs 2.08 CLV-units a day (bets x mean CLV): half the expected edge for +0.4 pts a bet that is not distinguishable from 0. 55 of the 184 triggers (30%) are no longer listed after 5 min; the 107 not-confirmed triggers (64 with a close) still carry +2.36%. (8) What the 5-minute price change adds is tiny: paired T+5-price minus trigger-price CLV +0.16 pts [+0.01, +0.38] over 25 games (sign-flip p 0.048 one-sided, 0.096 two-sided; only 11.5% of the 52 bets changed price, 9.6% better, 1.9% worse): a small gain that rests on 6 of 52 bets changing price (it is the price-improvement tail, not the confirmation). Verdict: not a credible improvement over just buying every R1 trigger; the data suggests the confirmation does nothing detectable, and a Bonferroni-corrected p is 1.0. It would take about 1330 closed R1 triggers per arm (about 2,660 closed triggers, about 52 days at R1's 51 closes a day, ICC about 0 so no design effect) to detect +0.41 pts at 80% power and a two-sided 5% level; about 225 per arm (about 9 days) if the true gain were +1.0 pt.",
+ "caveats": [
+  "Effective sample: 52 closes / 25 games for R7 over ~2.26 days of first-looks (decision days Oct 3-5); 'out of sample' means the second half of ~2 days.",
+  "Builder and I agree to 12 digits on CLV (2.9316%) and on the 77/55/36/16 split when the freshest look of any kind (including book-page 'k' looks) sets the listing age; counting only listing looks gives 76 confirmed (1 bet with no close moves between the stale and confirmed groups).",
+  "The permutation shuffles bets within start day, which ignores game clustering and is lenient (anti-conservative); the game-cluster bootstrap p (0.357) and whole-game redraw p (0.255-0.335) are the more honest ones, and both are weaker. A pattern-swap game-block permutation (13 start-day x game-size classes) was run but its null mean is +0.88 pts (one large 26-bet game cannot move), so it is not used as evidence (one-sided p 0.83).",
+  "R1's per-trigger CLV has intra-game correlation near zero (ICC -0.006, n=116 closes / 40 games), so game clustering matters little for the bet-level tests here.",
+  "Tracker closes are 75 of R1's 116 closes and 38 of R7's 52: a CLV measured against a re-read of the same CNO books is partly circular; the independent-close sample (12 for R7, 33 for R1) is far too small to say R7 is bad, only that nothing supports it.",
+  "tried_count 522 (builder): the family-wise test here covers only the 32 R7 variants, so it understates the true multiplicity; with 15 hypothesis families the corrected p is already capped at 1.0.",
+  "Short waits (2-3 min) show larger confirmed-vs-not differences (+1.2 to +2.0 pts, n = 66-77 closed confirmed) that fade by 10 minutes: a candidate for a pre-registered check on new data, not for the app; family-wise p of the best variant is 0.074.",
+  "ROI is noise at this size (73 settled bets, CI [-45%, +12%]); it neither supports nor refutes the rule.",
+  "Any change to what is bought is a QUESTION FOR TJ, not an action; this rule would only ever remove bets (it loosens no safety limit)."
+ ],
+ "key_numbers": {
+  "R7": {
+   "bets": 77,
+   "games": 28,
+   "closes": 52,
+   "close_games": 25,
+   "clv_T5_price": 0.029316489482745196,
+   "clv_ci": [
+    0.01918596094489976,
+    0.037872471069302464
+   ],
+   "clv_trigger_price": 0.027686385595228808,
+   "clv_close_ok": 0.03084970461761056,
+   "per_day": 34.13,
+   "beat_close": 0.827
+  },
+  "R1": {
+   "bets": 184,
+   "games": 44,
+   "closes": 116,
+   "close_games": 40,
+   "clv": 0.025447580385784527,
+   "ci": [
+    0.017700819388696148,
+    0.035153309038552315
+   ],
+   "per_day": 81.56
+  },
+  "diff_confirmed_vs_not": {
+   "all": {
+    "n_conf": 52,
+    "g_conf": 25,
+    "clv_conf": 0.027686385595228808,
+    "n_not": 64,
+    "g_not": 32,
+    "clv_not": 0.023628551153111046,
+    "diff": 0.004057834442117762,
+    "lo": -0.01623069855173456,
+    "hi": 0.01785183290918351,
+    "p_boot_le0": 0.35675,
+    "p_perm_ge": 0.2436
+   },
+   "tracker": {
+    "n_conf": 38,
+    "g_conf": 23,
+    "clv_conf": 0.03919204569713691,
+    "n_not": 37,
+    "g_not": 17,
+    "clv_not": 0.030440192983218498,
+    "diff": 0.008751852713918415,
+    "lo": -0.01616519631853342,
+    "hi": 0.02680710697800593,
+    "p_boot_le0": 0.28225,
+    "p_perm_ge": 0.1498
+   },
+   "independent": {
+    "n_conf": 12,
+    "g_conf": 10,
+    "clv_conf": -0.0026314923134605575,
+    "n_not": 21,
+    "g_not": 14,
+    "clv_not": 0.014211948719815116,
+    "diff": -0.016843441033275675,
+    "lo": -0.03763870906482489,
+    "hi": 0.001837822542887071,
+    "p_boot_le0": 0.962,
+    "p_perm_ge": 0.914
+   },
+   "Oct3": {
+    "n_conf": 17,
+    "g_conf": 14,
+    "clv_conf": 0.017206476959433514,
+    "n_not": 14,
+    "g_not": 14,
+    "clv_not": 0.025330581065838336,
+    "diff": -0.008124104106404823,
+    "lo": -0.03149758727040629,
+    "hi": 0.01870083178639159,
+    "p_boot_le0": 0.73425,
+    "p_perm_ge": 0.5954
+   },
+   "Oct4+": {
+    "n_conf": 35,
+    "g_conf": 17,
+    "clv_conf": 0.032776626932615086,
+    "n_not": 50,
+    "g_not": 20,
+    "clv_not": 0.023151982777547406,
+    "diff": 0.009624644155067679,
+    "lo": -0.012715923588112573,
+    "hi": 0.023383429632376065,
+    "p_boot_le0": 0.2155,
+    "p_perm_ge": 0.1048
+   }
+  },
+  "perm_R1_universe": {
+   "startDay": {
+    "null_mean": 0.02494928237377171,
+    "null_sd": 0.003880998309142225,
+    "p_at_trigger_price": 0.2438,
+    "p_at_T5_price": 0.1352,
+    "pct_obs0": 0.7562
+   },
+   "firstDay": {
+    "null_mean": 0.024798310385483253,
+    "null_sd": 0.003955131176386775,
+    "p_at_trigger_price": 0.2368,
+    "p_at_T5_price": 0.1294,
+    "pct_obs0": 0.7632
+   },
+   "none": {
+    "null_mean": 0.025483089591666636,
+    "null_sd": 0.0038578244238685736,
+    "p_at_trigger_price": 0.293,
+    "p_at_T5_price": 0.1628,
+    "pct_obs0": 0.707
+   }
+  },
+  "game_redraw_R1": {
+   "null_mean": 0.024899864298940515,
+   "null_sd": 0.005485668635984559,
+   "p_trigger": 0.335,
+   "p_T5": 0.2552
+  },
+  "perm_broad_universes": {
+   "ENTER_closed": {
+    "universe_n": 378,
+    "universe_mean": 0.00822254623328091,
+    "null_mean": 0.00796819688697088,
+    "null_sd": 0.004593675105767786,
+    "null_max": 0.02418829049019159,
+    "p_T5": 0.0,
+    "p_resolution": 0.0002
+   },
+   "all_bets_closed": {
+    "universe_n": 683,
+    "universe_mean": 0.0019152551730908345,
+    "null_mean": 0.002513271284492714,
+    "null_sd": 0.007778736362947923,
+    "null_max": 0.028911419473320384,
+    "p_T5": 0.0,
+    "p_resolution": 0.0002
+   }
+  },
+  "family_wise_32_variants": {
+   "n_variants": 32,
+   "R7_obs_diff": 0.004057834442117762,
+   "R7_obs_t": 0.5770481658266613,
+   "p_single_t": 0.23225,
+   "p_single_diff": 0.23275,
+   "p_familywise_maxt": 0.9165,
+   "p_familywise_maxdiff": 0.94225,
+   "best_observed_variant": [
+    "(3, 0.03)",
+    2.9676807379840198,
+    0.020067362758139418
+   ],
+   "family_maxt_null_median": 1.6471298915303625,
+   "family_maxt_null_95": 3.1954733765526875,
+   "p_familywise_best_variant": 0.07425,
+   "p_single_best_variant_approx": null,
+   "n_variants_obs_diff_positive": 22,
+   "n_variants_obs_t_gt_1_64": 9,
+   "bonferroni_15_families": 1.0,
+   "bonferroni_522": 1.0
+  },
+  "leave_one_game_out": {
+   "min": 0.02770956935398027,
+   "max": 0.03237520789844554,
+   "games": 25,
+   "max_game_closes": 9
+  },
+  "drop_top3": {
+   "drop3_sum": {
+    "n": 37,
+    "games": 22,
+    "clv": 0.02598096982894932,
+    "lo": 0.014572314799532745,
+    "hi": 0.037323591742115615
+   },
+   "drop3_mean": {
+    "n": 48,
+    "games": 22,
+    "clv": 0.025883151680678063,
+    "lo": 0.01576297801403108,
+    "hi": 0.0337280141016006
+   },
+   "drop3_count": {
+    "n": 35,
+    "games": 22,
+    "clv": 0.02760318860207831,
+    "lo": 0.01506936288054516,
+    "hi": 0.04001775770037601
+   }
+  },
+  "by_close_source_confirmed": {
+   "tracker": {
+    "n": 38.0,
+    "games": 23.0,
+    "clv": 0.04142271417479091,
+    "lo": 0.032244282987312606,
+    "hi": 0.0495118550071758,
+    "beat": 0.9473684210526315
+   },
+   "independent": {
+    "n": 12,
+    "games": 10.0,
+    "clv": -0.0026314923134605575,
+    "lo": -0.016066102511207228,
+    "hi": 0.015395827024429366,
+    "beat": 0.5833333333333334
+   }
+  },
+  "paired_price_gain": {
+   "mean": 0.0016301038875163876,
+   "lo": 9.19919326525388e-05,
+   "hi": 0.003789832398829914,
+   "games": 25,
+   "n": 52,
+   "signflip_p_one": 0.0477,
+   "share_better": 0.09615384615384616,
+   "share_worse": 0.019230769230769232
+  },
+  "clv_units_per_day": {
+   "R1": 2.0754446774121322,
+   "R7": 1.0005747359082002
+  },
+  "within_game_fixed_effect": {
+   "fe": 0.01140160238156877,
+   "lo": -0.010059311911988833,
+   "hi": 0.024920451385146706,
+   "p_le0": 0.135,
+   "mixed_games": 17
+  },
+  "power": {
+   "sd_clv_per_bet": 0.0377,
+   "closed_bets_per_arm_for_0.41pt_80pct": 1330,
+   "closed_bets_per_arm_for_1.0pt_80pct": 225,
+   "icc": -0.006
+  }
+ }
+}
