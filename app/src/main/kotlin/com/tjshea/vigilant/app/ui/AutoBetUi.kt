@@ -59,8 +59,12 @@ object AutoBetText {
     /** A longest-odds choice: "+130", or "No limit". */
     fun oddsLabel(maxOdds: Int): String = if (maxOdds <= 0) "No limit" else "+$maxOdds"
 
-    /** "No limit", "−200": the shortest-odds choices. */
-    fun minOddsLabel(minOdds: Int): String = if (minOdds >= 0) "No limit" else "−${-minOdds}"
+    /** "No limit", "−200", "+100 or longer": the shortest-odds choices (a positive one means underdogs only). */
+    fun minOddsLabel(minOdds: Int): String = when {
+        minOdds == 0 -> "No limit"
+        minOdds < 0 -> "−${-minOdds}"
+        else -> "+$minOdds or longer"
+    }
 
     /** What each stake choice means, for the confirm and the hint. */
     fun stakeText(s: ScanSettings): String = when (s.autoBetStake) {

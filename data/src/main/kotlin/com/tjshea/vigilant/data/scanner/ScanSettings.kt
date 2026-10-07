@@ -949,7 +949,7 @@ data class ScanSettings(
         val AUTO_LOCK_MIN_CHOICES = listOf(0.005, 0.01, 0.02, 0.03, 0.05, 0.10)
 
         /** [autoBetMinOdds]' choices (0 = no limit). */
-        val AUTO_BET_MIN_ODDS_CHOICES = listOf(0, -150, -200, -250, -300)
+        val AUTO_BET_MIN_ODDS_CHOICES = listOf(0, -150, -200, -250, -300, 100)
 
         /** [makerMaxOdds]' choices (0 = no limit); a typed amount of +100 or more is also allowed. */
         val MAKER_MAX_ODDS_CHOICES = listOf(100, 110, 120, 130, 140, 150, 175, 200, 250, 300, 0)
