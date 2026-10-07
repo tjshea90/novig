@@ -609,7 +609,10 @@ class DiagnosticsTest {
         val plan = com.tjshea.vigilant.data.scanner.LowUsageBids.feedsFor(com.tjshea.vigilant.data.scanner.LowUsageBids.books(low), setOf("kalshi", "propline_props"))
         val lines = Diagnostics.lowUsageLines(low, plan, 0L)
         val text = lines.joinToString("\n")
-        assertTrue(text, text.contains("ON: Vigilant's scan reads player props only, the next 6 h, from the picked books alone"))
+        assertTrue(text, text.contains("ON: Vigilant's scan reads player props only, the next 6 h (the trap guard's hours; Off = as far as Starts within and Days ahead say), from the picked books alone"))
+        // The trap guard Tj sets is the window the file says (Tj, 2026-10-07).
+        assertTrue(Diagnostics.lowUsageLines(low.copy(trapEarlyHours = 8), plan, 0L).joinToString().contains("the next 8 h (the trap guard's hours"))
+        assertTrue(Diagnostics.lowUsageLines(low.copy(trapEarlyHours = 0, daysAhead = 2), plan, 0L).joinToString().contains("the next 48 h (the trap guard's hours"))
         assertTrue(text, text.contains("books Kalshi, ProphetX, FanDuel"))
         assertTrue(text, text.contains("scan pace at most every 15 min (the usual gap is 4 min)"))
         assertTrue(text, text.contains("at least +3.0% under the fair") || text.contains("at least 3.0% under the fair"))
@@ -618,7 +621,8 @@ class DiagnosticsTest {
         assertTrue("ProphetX has no feed with a key", text.contains("CANNOT BE READ: ProphetX"))
         // Chosen but bids off: said plainly, and the scan is the usual one.
         assertTrue(Diagnostics.lowUsageLines(low.copy(maker = false, makerRecommend = false), plan, 0L).first().contains("chosen but bids are off"))
-        // A tighter limit of Tj's is the one shown.
+        // Any limit of Tj's is the one shown, tighter or longer (it wins since 2026-10-07).
         assertTrue(Diagnostics.lowUsageLines(low.copy(makerMaxOdds = 115), plan, 0L).joinToString().contains("no bid longer than +115"))
+        assertTrue(Diagnostics.lowUsageLines(low.copy(makerMaxOdds = 200), plan, 0L).joinToString().contains("no bid longer than +200"))
     }
 }

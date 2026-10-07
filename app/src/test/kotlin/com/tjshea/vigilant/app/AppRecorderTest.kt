@@ -160,7 +160,7 @@ class AppRecorderTest {
         assertTrue(LU.tabNote(8, 0).contains("reads 8 hours ahead"))
         assertTrue(LU.nothingToRead(com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO, 8, 0).contains("starts in the next 8 hours"))
         assertTrue(LU.tabNote(6, 3).contains("Starts within 3 h is shorter right now"))
-        assertFalse(LU.tabNote(6, 0).contains("Starts within"))
+        assertFalse(LU.tabNote(6, 0).contains("is shorter right now"))
         assertFalse(LU.tabNote(6, 12).contains("is shorter right now"))
         // From the settings: the trap guard's hours, Off = the ordinary reach.
         val on = com.tjshea.vigilant.data.scanner.ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, maker = true)
@@ -218,7 +218,7 @@ class AppRecorderTest {
         val src = File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText()
         val init = src.substringAfter("// The flight recorder: what earlier runs kept comes back first").substringBefore("// Written down as it happens, whatever screen is open")
         assertTrue(init, init.contains("appScope.launch(Dispatchers.IO) {\n            recorder.run(runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName }.getOrNull(), FLUSH_EVERY_MS)"))
-        assertTrue(init, init.contains("runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.collect { run -> run.report?.let { recorder.scanFinished(it, lowUsage = run.settings?.lowUsageNow == true) } }"))
+        assertTrue(init, init.contains("runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.collect { run -> run.report?.let { recorder.scanFinished(it, lowUsage = run.settings?.lowUsageNow == true, lowUsageHours = run.settings?.let { st -> com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(st) } ?: com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS) } }"))
         assertTrue(init, init.contains("cno.state.map { it.pausedUntilMs?.takeIf { p -> p > System.currentTimeMillis() } }.distinctUntilChanged().filterNotNull().collect { until ->\n                recorder.cnoPaused(until, System.currentTimeMillis())"))
         assertTrue(init, init.contains("if (b != null) recorder.settingsChanged(b, s)"))
         assertTrue(src.contains("val recorder = AppRecorder(eventLog, netStats, perf)"))

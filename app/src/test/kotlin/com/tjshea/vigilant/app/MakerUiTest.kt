@@ -563,6 +563,30 @@ class MakerUiTest {
         compose.onNodeWithText(TrapGuardText.HOURS_ERROR).assertExists()
     }
 
+    /**
+     * Tj, 2026-10-07: "on the low api usage setting, I changed the trap guard setting from 6 hours to 8 hours and then to no trap guard at all, but it is hard set at 6 hours trap
+     * guard no matter what I select." The Bids tab's trap guard note in the mode says how far the scan reads, and a bigger window says what it costs.
+     */
+    @Test
+    fun `in low API usage the trap guard note says the scan reads exactly that far - 6 by default, 8, and Off - and what a wider window costs`() {
+        val st = androidx.compose.runtime.mutableStateOf(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE))
+        compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
+        compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
+        compose.onNodeWithTag("makerTrapEarlyNote").performScrollTo().assertTextContains("the scan reads exactly that far (6 h now", substring = true)
+        compose.onNodeWithTag("makerTrapEarlyNote").assertTextDoesNotContain("ParlayAPI credits")
+        compose.onNodeWithTag("maker-trapEarlyField").performTextReplacement("8")
+        assertEquals(8, st.value.trapEarlyHours)
+        compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("starting within 8 h, and the scan reads exactly that far (8 h now", substring = true)
+        compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("more ParlayAPI credits", substring = true)
+        compose.onNodeWithText("Off").performScrollTo()
+        compose.onAllNodesWithText("Off").filter(hasTestTag("makerTrapOff")).assertCountEquals(0)
+        st.value = st.value.copy(trapEarlyHours = 0)
+        compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("Off: no limit of its own", substring = true)
+        assertEquals("the scan reads as far as Settings › Scanning says", st.value.effective().scanWindowHours, com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(st.value))
+        // The summary line carries the same hours.
+        assertTrue(MakerRulesText.summary(st.value.copy(trapEarlyHours = 8)).contains("props in the next 8 h"))
+    }
+
     /** Tj, 2026-10-05: "make an option for a low API usage auto bid feature". */
     @Test
     fun `low API usage is a choice under which bids go up - it picks the books, the pace and the margin, hides what it overrides, and says what it does`() {
@@ -582,8 +606,12 @@ class MakerUiTest {
         compose.onAllNodesWithTag("makerRequireSharp").assertCountEquals(0)
         compose.onNodeWithTag("makerFocusNote").assertTextContains("player props", substring = true)
         compose.onNodeWithTag("lowUsagePriceNote").assertTextContains("+130", substring = true)
-        // The usual longest-odds control stays (a tighter limit is kept), and its note says the mode's cap.
-        compose.onNodeWithTag("makerMaxOddsNote").performScrollTo().assertTextContains("never go longer than +130", substring = true)
+        // The usual longest-odds control stays, and its note says the mode's default: +130 until Tj picks a limit, then his.
+        compose.onNodeWithTag("makerMaxOddsNote").performScrollTo().assertTextContains("nothing longer than +130", substring = true)
+        // Tj, 2026-10-07: the small-market fill switch is his in this mode too (on by default), and so are its safeguards.
+        compose.onNodeWithTag("makerObscureFill").performScrollTo().assertExists()
+        compose.onNodeWithTag("makerObscureNote").assertTextContains("of the 3 you picked", substring = true)
+        compose.onNodeWithTag("makerObscureMarginField").performScrollTo().assertExists()
         // The books: two or three, never fewer or more.
         compose.onNodeWithTag("lowUsageBook-fanduel").performScrollTo().performClick()
         assertEquals(setOf("kalshi", "prophetx"), st.value.lowUsageBooks)
