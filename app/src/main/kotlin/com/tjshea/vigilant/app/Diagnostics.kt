@@ -389,6 +389,10 @@ object Diagnostics {
         val upcoming = open.filter { now < it.startsTs }
         val started = open.filter { now >= it.startsTs }
         o.appendLine("Bets: ${bets.size} (open ${open.size}: ${upcoming.size} upcoming, ${started.size} started; settled ${bets.size - open.size})")
+        // Bets and bids told apart (Tj, 2026-10-07; TrackedBet.isBid): a bid is a make order Vigilant posted that a taker filled. Everything below pools them unless it says otherwise;
+        // "Bets and bids apart" has each alone, and the accuracy and as-placed splits carry a "Bet or bid" split.
+        val bidFills = bets.filter { it.isBid }
+        o.appendLine("By kind: bets ${bets.size - bidFills.size} (open ${open.count { !it.isBid }}) · bids filled ${bidFills.size} (open ${open.count { it.isBid }}) · a bid is a make order Vigilant posted that a taker filled; bids nobody filled are in the Make orders / Bids block above")
         o.appendLine("By scanner: Vigilant ${bets.count { it.source == BetTracker.SOURCE_VIGILANT }}, CNO ${bets.count { it.source == BetTracker.SOURCE_CNO }}, ParlayAPI ${bets.count { it.source == BetTracker.SOURCE_PARLAY }} · placed through the API ${bets.count { it.viaApi }}")
         o.appendLine("Current EV: ${upcoming.count { TrackerText.currentEv(it, now) }} of ${upcoming.size} upcoming bets have one read inside the fair odds' age limit; ${upcoming.count { it.nowEv != null && !TrackerText.currentEv(it, now) }} have an old one; ${upcoming.count { it.nowEv == null }} none")
         val reasons = upcoming.filter { it.nowNote != null && it.nowEv == null }.groupingBy { it.nowNote!! }.eachCount().entries.sortedByDescending { it.value }.take(6)
@@ -433,7 +437,7 @@ object Diagnostics {
         val locks = com.tjshea.vigilant.data.tracker.LockedBets.stats(bets)
         o.appendLine("Locked in: ${TrackerText.lockCaption(locks, s.settings.trackerHideLocked)}" + String.format(Locale.US, " (profit %% %s)", locks.roi?.let { String.format(Locale.US, "%+.1f%%", it * 100) } ?: "–"))
         // Make orders' fills against the close (RESEARCH.md §70.5: judge them by CLV over 200+ fills).
-        val makerFills = bets.filter { it.maker }
+        val makerFills = bets.filter { it.isBid }
         if (makerFills.isNotEmpty()) {
             val mc = com.tjshea.vigilant.data.tracker.ClvStats.of(makerFills, now)
             o.appendLine(
@@ -442,6 +446,11 @@ object Diagnostics {
                     " · CLV ${mc.averageClv?.let { String.format(Locale.US, "%+.1f%%", it * 100) } ?: "–"} on ${mc.closed} with a close, ${mc.beat} beat it",
             )
         }
+        // Bets and bids side by side (Tj, 2026-10-07: "so I can see stats and ev filtered my bids as well as bets, and also for the diagnostics and studies sections").
+        o.appendLine()
+        o.appendLine("== Bets and bids apart (Tracker records only: a bid appears once a taker fills it; EV for a bid is the edge at its fair when it was posted; outliers aside unless said) ==")
+        com.tjshea.vigilant.data.tracker.BetsAndBids.lines(bets, now, zone.toZoneId()) { TrackerText.currentEv(it, now) }.forEach { o.appendLine(it) }
+        o.appendLine()
         // Why open Novig bets have no Novig price now (the Novig-only filter; Tj, 2026-10-02 20:06Z: "many open bets are not finding the current novig odds").
         val novigOpen = com.tjshea.vigilant.data.tracker.NovigNow.open(bets, now)
         o.appendLine("Novig's own price: ${novigOpen.count { com.tjshea.vigilant.data.tracker.NovigNow.note(it) == null }} of ${novigOpen.size} open Novig bets · ${novigOpen.count { it.marketId.isBlank() || it.outcomeId.isBlank() }} without Novig's ids on record")
@@ -452,7 +461,7 @@ object Diagnostics {
         o.appendLine()
         o.appendLine("== Accuracy by scanner and by market (outliers aside; CLV on n = bets with a true close) ==")
         val kept = bets.filterNot { it.isOutlier }
-        for (by in listOf(com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.EV)) {
+        for (by in listOf(com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MADE, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.EV)) {
             com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(bets, by).forEach { row ->
                 val group = kept.filter { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, by) == row.label }
                 o.appendLine("${by.label} ${row.label}: ${breakdownText(row.stats, closedCount(group, now))}")
