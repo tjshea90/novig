@@ -217,7 +217,7 @@ class ApiBettingControllerTest {
     @Test
     fun `with Kelly chosen for bet slips the sheet opens at the bet's Kelly stake, and the wallet still has its say`() {
         val (o, book) = sample()
-        val kellySettings = SampleScan.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY, apiMaxStake = 100.0, apiBetStake = 1.0)
+        val kellySettings = SampleScan.settings.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY, apiMaxStake = 100.0, slipCustomStake = 1.0)
         val state = MutableStateFlow(SampleScan.state(kellySettings).copy(betting = BettingUi(enabled = true, balance = 500.0)))
         val api = controller(state, book, FakeNovig(AtomicInteger()) { _, _ -> null })
         val kelly = o.suggestedStake!!
