@@ -180,6 +180,9 @@ object Advisor {
         "api.the-odds-api.com" to "data/.../reference/TheOddsApiClient.kt",
     )
 
+    /** The two hosts [com.tjshea.vigilant.data.cno.DnsOverHttps] asks when the phone's own DNS has failed. */
+    private val DOH_HOSTS = setOf("cloudflare-dns.com", "dns.google")
+
     private fun network(x: Diagnostics.Extras, now: Long): List<Finding> = buildList {
         for ((host, h) in x.net.hosts) {
             val worstPath = h.paths.entries.filter { it.value.calls >= 3 }.maxByOrNull { it.value.errors.toDouble() / it.value.calls }
@@ -189,7 +192,17 @@ object Advisor {
             val offline = (h.byNet[NetKind.NONE] ?: 0L).coerceAtMost(h.errors)
             val onlineCalls = h.calls - offline
             val onlineRate = if (onlineCalls <= 0) 0.0 else (h.errors - offline).toDouble() / onlineCalls
-            if (onlineCalls >= MIN_CALLS && onlineRate >= 0.10) {
+            if (onlineCalls >= MIN_CALLS && onlineRate >= 0.10 && host in DOH_HOSTS) {
+                // The DNS-over-HTTPS fallback's own resolvers (only asked after the phone's own DNS failed): a VPN or carrier that blocks them is not an app fault.
+                add(
+                    Finding(
+                        "net:$host:errors", "WATCH", "$host: the DNS fallback couldn't reach it (${h.errors - offline} of $onlineCalls tries)",
+                        "only asked when the phone's own name lookup failed" + (h.lastError?.let { "; last: ${ProblemLog.clean(it)} ${h.lastErrorAtMs?.let { t -> Format.age(t, now) } ?: ""}" } ?: ""),
+                        "data/.../cno/CnoNetwork.kt (DnsOverHttps)",
+                        "Not a fault by itself: a VPN or the carrier blocks the resolver. The app stops asking for 2 minutes after both fail.",
+                    ),
+                )
+            } else if (onlineCalls >= MIN_CALLS && onlineRate >= 0.10) {
                 val kinds = (h.kinds.entries.map { "${it.value} ${it.key}" } + h.status.entries.filter { (it.key.toIntOrNull() ?: 0) >= 400 }.map { "${it.value}× HTTP ${it.key}" }).joinToString(", ")
                 add(
                     Finding(

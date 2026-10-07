@@ -164,6 +164,15 @@ class AdvisorTest {
     }
 
     @Test
+    fun `the DNS fallback's resolvers failing is a watch, not a failure (Tj's v0,71,2 file: 130 connects, all refused, behind a VPN)`() {
+        val h = host(calls = 130, errors = 130, kinds = mapOf("connect" to 130L), status = emptyMap(), byNet = mapOf("mobile" to 130L))
+        val f = byKey(base.copy(net = net("cloudflare-dns.com" to h, "dns.google" to h, "api.example.com" to h))).let { m -> listOf("cloudflare-dns.com", "dns.google").map { m.getValue("net:$it:errors") } }
+        assertTrue(f.toString(), f.all { it.kind == "WATCH" && it.title.contains("the DNS fallback couldn't reach it") })
+        // Any other host failing like that is still a failure.
+        assertEquals("FAILURE", byKey(base.copy(net = net("api.example.com" to h))).getValue("net:api.example.com:errors").kind)
+    }
+
+    @Test
     fun `calls made with no network at all aren't the host's failures - Tj's v0,52,0 file called the DNS fallback 100 percent failed`() {
         // All 25 failed with the phone offline: no finding.
         assertTrue(findings(base.copy(net = net("dns.google" to host(calls = 25, errors = 25, kinds = mapOf("connect" to 25L), status = emptyMap(), byNet = mapOf(NetKind.NONE to 25L))))).none { it.key == "net:dns.google:errors" })

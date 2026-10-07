@@ -71,6 +71,25 @@ class CnoNetworkTest {
     }
 
     @Test
+    fun `DNS over HTTPS stops asking for two minutes once neither resolver can be reached, then tries again`() {
+        var asked = 0
+        val down = OkHttpClient.Builder().addInterceptor { asked++; throw java.io.IOException("Failed to connect to /1.0.0.1:443") }.build()
+        var now = 1_000_000L
+        val doh = DnsOverHttps(down, clock = { now })
+        // The first lookup asks both resolvers and fails.
+        assertTrue(runCatching { doh.lookup("crazyninjaodds.com") }.exceptionOrNull() is UnknownHostException)
+        assertEquals(2, asked)
+        // For two minutes nothing is asked, for any host; the failure is immediate.
+        now += DnsOverHttps.DOWN_MS - 1
+        assertTrue(runCatching { doh.lookup("api.novig.com") }.exceptionOrNull() is UnknownHostException)
+        assertEquals(2, asked)
+        // Then it tries again.
+        now += 2
+        assertTrue(runCatching { doh.lookup("api.novig.com") }.exceptionOrNull() is UnknownHostException)
+        assertEquals(4, asked)
+    }
+
+    @Test
     fun `a request on a dead connection is tried once more at once, and goes through`() = runBlocking {
         val server = MockWebServer()
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))

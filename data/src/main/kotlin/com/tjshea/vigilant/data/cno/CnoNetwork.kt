@@ -99,15 +99,26 @@ class DnsOverHttps(
 
     private val answers = ConcurrentHashMap<String, Answer>()
 
+    /**
+     * Both resolvers could not be reached (a VPN or a carrier that blocks 1.1.1.1 and 8.8.8.8, a network with no way out; Tj's v0.71.2 file: 130 connects to each, 100% failed): no
+     * resolver is asked again until this time, so a lookup that already failed once with the phone's own DNS doesn't also wait out two connect timeouts every time.
+     */
+    @Volatile private var downUntilMs = 0L
+
     override fun lookup(hostname: String): List<InetAddress> {
         answers[hostname]?.takeIf { it.untilMs > clock() }?.let { return it.addresses }
+        if (clock() < downUntilMs) throw UnknownHostException("$hostname: DNS over HTTPS was unreachable a moment ago, not asked again yet")
+        var reached = false
         for (url in listOf("https://cloudflare-dns.com/dns-query", "https://dns.google/resolve")) {
             val found = runCatching { ask(url, hostname) }.getOrNull() ?: continue
+            reached = true
             if (found.first.isNotEmpty()) {
                 answers[hostname] = Answer(found.first, clock() + found.second.coerceIn(30, 3_600) * 1000L)
+                downUntilMs = 0L
                 return found.first
             }
         }
+        if (!reached) downUntilMs = clock() + DOWN_MS
         throw UnknownHostException("$hostname: DNS over HTTPS didn't answer either")
     }
 
@@ -122,6 +133,9 @@ class DnsOverHttps(
     }
 
     companion object {
+        /** How long neither resolver is asked after both could not be reached. */
+        const val DOWN_MS = 2 * 60_000L
+
         /** The resolvers' own fixed addresses. */
         private val RESOLVERS = mapOf(
             "cloudflare-dns.com" to listOf("1.1.1.1", "1.0.0.1"),
