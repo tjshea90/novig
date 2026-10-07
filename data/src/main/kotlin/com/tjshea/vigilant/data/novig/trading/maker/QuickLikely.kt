@@ -74,6 +74,14 @@ object QuickLikely {
             "${pct(s.makerObscureStake)} of a popular bid's stake. A small-market bid comes down to make room when a popular bid is waiting. The Bids tab and Diagnostics count them apart."
     }
 
+    /** The line Diagnostics adds to the bids' settings: whether small markets fill the rest, and under which safeguards. Empty outside Quick & likely. */
+    fun diagnosticsNote(s: ScanSettings): String {
+        if (!on(s)) return ""
+        fun pct(v: Double) = String.format(java.util.Locale.US, "%.2f", v * 100).trimEnd('0').trimEnd('.') + "%"
+        return if (!s.makerObscureFill) " (small-market fill: off)" else
+            " (small-market fill: on · ${pct(s.makerObscureMargin)} under the fair · sharp books ≥${pct(s.makerObscureSharpMinEv)} and within ${pct(s.makerObscureAgreePoints)} · ${s.makerObscureMinBooks}+ books · ${pct(s.makerObscureStake)} of the stake)"
+    }
+
     /** What this focus does, in a few sentences for the Bids tab (the numbers above). */
     const val EXPLAINER =
         "Only player props and team totals (they fill: 8-11% of bids within an hour at these prices; game lines 1-2%), only the kinds of market takers actually trade (never a longest-rush or " +

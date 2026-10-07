@@ -181,6 +181,19 @@ class BidReportTest {
     }
 
     @Test
+    fun `small-market bids are counted apart and their fills split from the popular ones, only once one was posted (Tj, 2026-10-07)`() {
+        val rows = BidReport.rows(listOf(bid(1), bid(2), bid(3).copy(obscure = true), bid(4).copy(obscure = true, fillDelayMs = null)), emptyList(), now)
+        assertEquals(listOf(false, false, true, true), rows.map { it.obscure })
+        val text = BidReport.summary(rows, now).joinToString("\n")
+        assertTrue(text, text.contains("posted: 2 popular, 2 small-market"))
+        assertTrue(text, text.contains("popular market: 2 fills"))
+        assertTrue(text, text.contains("small market (strict safeguards): 1 fill"))
+        // With none posted the split is not printed.
+        val plain = BidReport.summary(BidReport.rows(listOf(bid(1), bid(2)), emptyList(), now), now).joinToString("\n")
+        assertFalse(plain.contains("small-market"))
+    }
+
+    @Test
     fun `once a low-usage bid filled the fills are split by the choice, the books behind the fair and the age of their prices`() {
         val rows = BidReport.rows(
             listOf(tagged(1, "LOW_USAGE", listOf("Kalshi", "ProphetX"), 30), tagged(2, "LOW_USAGE", listOf("FanDuel", "Kalshi"), 200), tagged(3, "ALL"), tagged(4, null)),

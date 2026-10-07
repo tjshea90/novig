@@ -214,7 +214,7 @@ object Diagnostics {
         if (bidRows.isNotEmpty()) {
             val guard = com.tjshea.vigilant.data.novig.trading.maker.MakerGuard.check(x.makerBids, set.makerGuardFromMs, set.makerAnchorSharp)
             o.appendLine(
-                "  picked-off guard: ${if (set.makerGuard) "on" else "off"} · price under the sharp book's fair: ${if (set.makerAnchorSharp) "on" else "off"} · focus: ${set.makerFocus.displayName} · most bids ${if (set.makerMaxBids >= ScanSettings.NO_LIMIT) "unlimited" else set.makerMaxBids} · ${guard.text}" +
+                "  picked-off guard: ${if (set.makerGuard) "on" else "off"} · price under the sharp book's fair: ${if (set.makerAnchorSharp) "on" else "off"} · focus: ${set.makerFocus.displayName}${com.tjshea.vigilant.data.novig.trading.maker.QuickLikely.diagnosticsNote(set)} · most bids ${if (set.makerMaxBids >= ScanSettings.NO_LIMIT) "unlimited" else set.makerMaxBids} · ${guard.text}" +
                     (if (guard.tripped && set.makerHalted == null) " · (would stop the bids)" else "") + (set.makerHalted?.let { " · BIDS STOPPED BY THE GUARD: $it" } ?: ""),
             )
             com.tjshea.vigilant.data.novig.trading.maker.BidReport.summary(bidRows, now).forEach { o.appendLine("  $it") }

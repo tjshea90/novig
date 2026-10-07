@@ -480,7 +480,7 @@ object MakerRulesText {
     fun summary(s: ScanSettings): String =
         if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE) LowUsageText.summary(s) else
         "${pct(s.makerMargin)} under the fair${if (s.makerAnchorSharp) " (sharp book's if lower)" else ""} · ${stake(s)} · " +
-            (if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) "quick & likely to win: " else "") +
+            (if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) "quick & likely to win${if (s.makerObscureFill) " (small markets fill the rest)" else ""}: " else "") +
             "${BetKind.entries.filter { it in s.makerKinds }.joinToString(", ") { MakerText.kindLabel(it) }.ifEmpty { "no kinds" }} · " +
             "up to ${s.makerTtlMinutes} min (less if the fair goes old)" + (if (s.trapEarlyHours > 0) " · games within ${s.trapEarlyHours} h" else "") +
                 (if (s.makerMaxOdds > 0) " · no bid longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(s.makerMaxOdds)}" else "")
