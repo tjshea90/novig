@@ -291,6 +291,52 @@ class ExchangeClientsTest {
         assertEquals(2, server.requestCount) // the refused try and the retry
     }
 
+    /**
+     * Tj, 2026-10-07, proposal 9: a measured test of 3 requests a second (a scan from about 32 s to about 23 s): about 300 requests, and at the first 429 Kalshi goes back to
+     * 2 a second for the rest of the session. Diagnostics says how it went.
+     */
+    @Test
+    fun `kalshi's pace test - runs while nothing is refused, passes after its requests, and the first 429 sends it back for the session`() = runBlocking {
+        var refuseNth = 0
+        var served = 0
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                served++
+                if (refuseNth != 0 && served == refuseNth) return MockResponse().setResponseCode(429).setHeader("Retry-After", "0")
+                return MockResponse().setBody(if (request.requestUrl!!.queryParameter("series_ticker") == "KXNFLGAME") ExchangeFixtures.kalshiNflGame else """{"events":[]}""")
+            }
+        }
+        val ml = settings.copy(families = setOf(MarketFamily.MONEYLINE))
+        // Off: the safe pace, and the note says so; no request counts toward the test.
+        var on = false
+        val kalshi = KalshiClient(OkHttpClient(), json, base("/"), fastPace = { on }, trialRequests = 3)
+        kalshi.odds(nfl, ml)
+        assertTrue(kalshi.paceNote(), kalshi.paceNote().startsWith("Kalshi pace test: off"))
+        // On: no request yet is said; then it runs, then it has passed after its requests.
+        on = true
+        assertTrue(kalshi.paceNote(), kalshi.paceNote().contains("no request made yet"))
+        kalshi.odds(nfl, ml)
+        assertTrue(kalshi.paceNote(), kalshi.paceNote().contains("running at 3 a second, 1 of 3 requests so far, none refused"))
+        kalshi.odds(nfl, ml); kalshi.odds(nfl, ml)
+        assertTrue(kalshi.paceNote(), kalshi.paceNote().startsWith("Kalshi pace test: PASSED, 3 requests at 3 a second and none refused"))
+
+        // A refusal at the faster pace: FAILED, with the request number, the retry still reads the series, and it stays failed for the session even with the switch cycled.
+        served = 0; refuseNth = 2
+        val k2 = KalshiClient(OkHttpClient(), json, base("/"), fastPace = { on }, trialRequests = 300)
+        k2.odds(nfl, ml)
+        assertTrue(k2.paceNote(), k2.paceNote().startsWith("Kalshi pace test: FAILED, Kalshi refused request 1"))
+        k2.odds(nfl, ml)
+        assertTrue(k2.paceNote(), k2.paceNote().startsWith("Kalshi pace test: FAILED"))
+        on = false; on = true
+        assertTrue(k2.paceNote(), k2.paceNote().startsWith("Kalshi pace test: FAILED"))
+
+        // A refusal with the test off is nobody's failure: the note stays "off".
+        served = 0; refuseNth = 1; on = false
+        val k3 = KalshiClient(OkHttpClient(), json, base("/"), fastPace = { on }, trialRequests = 3)
+        k3.odds(nfl, ml)
+        assertTrue(k3.paceNote(), k3.paceNote().startsWith("Kalshi pace test: off"))
+    }
+
     /** RESEARCH.md §90.2: Kalshi's docs name a newer host; if the old one is retired (404 / 410) reads go to the new one at once and stay there. */
     @Test
     fun `kalshi moves to the alternate host when the first is retired, and stays there`() = runBlocking {

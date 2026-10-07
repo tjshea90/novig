@@ -57,6 +57,8 @@ class KalshiClient(
      * requests; at the first refusal (a 429) Kalshi goes back to the measured-safe [START_RATE] for the rest of this session ([paceNote] says what happened).
      */
     private val fastPace: () -> Boolean = { false },
+    /** How many requests at the faster pace count as passed ([TRIAL_REQUESTS]; the tests use a few). */
+    private val trialRequests: Int = TRIAL_REQUESTS,
 ) : ReferenceSource {
 
     override val id = BOOK_KEY
@@ -100,7 +102,7 @@ class KalshiClient(
             hit > 0 -> "Kalshi pace test: FAILED, Kalshi refused request $hit at $fast: back to ${START_RATE.toInt()} a second for the rest of this session (the test is the setting Settings › Where fair odds come from › Kalshi)"
             !fastPace() -> "Kalshi pace test: off (${START_RATE.toInt()} a second, the measured-safe pace)"
             n == 0 -> "Kalshi pace test: on, $fast, no request made yet this session"
-            n < TRIAL_REQUESTS -> "Kalshi pace test: running at $fast, $n of $TRIAL_REQUESTS requests so far, none refused"
+            n < trialRequests -> "Kalshi pace test: running at $fast, $n of $trialRequests requests so far, none refused"
             else -> "Kalshi pace test: PASSED, $n requests at $fast and none refused: Kalshi stays at $fast this session (a refusal now would send it back to ${START_RATE.toInt()})"
         }
     }
