@@ -104,7 +104,8 @@ class CnoMakerLinesTest {
         // List updated 8 s before now; the page was read 5 s ago and says it is 10 s old: its data is from 15 s ago, the older.
         val l = lines(page()).lines.first()
         assertEquals(now - 15_000L, l.fairAsOfMs)
-        assertEquals(now - 8_000L, l.fairNewestMs)
+        // The newest news behind the fair is the PAGE's (its books make the fair; a fill is judged against it only once the page was read after the fill), not the list's newer clock.
+        assertEquals(now - 15_000L, l.fairNewestMs)
         assertEquals(now - 8_000L, l.listAtMs)
         assertEquals(now - 15_000L, l.pageAtMs)
         assertFalse(l.fairOld)

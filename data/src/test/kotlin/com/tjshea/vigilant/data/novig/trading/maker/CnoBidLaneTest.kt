@@ -141,6 +141,22 @@ class CnoBidLaneTest {
     }
 
     @Test
+    fun `a bid that filled and has not been judged keeps its game's page read and its line built, so the picked-off guard can judge it - and stops once judged`() {
+        source.listRows = listOf(row(1))
+        listRead(); step()
+        val filled = bidOn(row(1), "m1-under", "Pat1 Under 50.5").copy(status = MakerStatus.FILLED, filled = 10, firstFillAtMs = t - 30_000L)
+        t += 61_000L
+        listRead(); step(listOf(filled))
+        assertEquals(2, source.pageReads.size)
+        assertTrue(lines(bids = listOf(filled)).lines.any { it.outcomeId == "m1-under" && it.fairNewestMs!! >= filled.firstFillAtMs!! })
+        // Judged: no stand-in, no re-read for it (the candidate's own three minutes apply).
+        val judged = filled.copy(fairAtFill = 0.49)
+        t += 61_000L
+        listRead(); step(listOf(judged))
+        assertEquals(2, source.pageReads.size)
+    }
+
+    @Test
     fun `CNO's own fair for a row counts only while the row is on a list now - a row that left it is priced from its page alone`() {
         val low = row(1).copy(fairProbability = 0.30)
         source.listRows = listOf(low)
