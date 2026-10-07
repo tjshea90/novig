@@ -190,6 +190,14 @@ data class TrackedBet(
     /** Bought to lock in another bet's profit ([lockFor]). */
     val isLock: Boolean get() = lockFor != null
 
+    /**
+     * A BID (Tj, 2026-10-07: "differentiate from bets and bids"): a make order Vigilant posted under its fair price that a taker filled, as against a BET, which is
+     * every taker order (your tap, the Bet sheet, the auto-bet, a lock, a ✓ mark, an import). The one rule every screen, stat and file reads ([BetOrBid.of]); the
+     * record carries two tags for it ([maker], set by every fill logged as a make order, and [AtBet.how] = [AtBet.HOW_BID]) because the second came later, and either one
+     * says it. Never decided from the price, the time or the size. [BetTracker.tagBids] gives a record the order's bid store knows the tags it lacks.
+     */
+    val isBid: Boolean get() = maker || atBet?.how == AtBet.HOW_BID
+
     /** Placed through the API: a real order on Novig, never removed by an Undo of a ✓ mark. */
     val viaApi: Boolean get() = orderId != null
 
@@ -607,6 +615,27 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             }
         }
         return logged
+    }
+
+    /**
+     * Gives every bid record both of its tags (Tj, 2026-10-07; [TrackedBet.isBid]): a record whose order is one of [bidOrderIds] (the bid store's: Vigilant posted it) or
+     * that already carries either tag becomes `maker = true` with `atBet.how = "bid"` when it has a record as placed. That catches a fill the Tracker's sync imported
+     * before the desk merged it, and the fills logged before the second tag existed. A record with no record as placed (before v0.45.0) keeps none: nothing is
+     * invented for it. Returns how many records changed.
+     */
+    suspend fun tagBids(bidOrderIds: Set<String>): Int {
+        var changed = 0
+        store.update { list ->
+            changed = 0
+            val next = list.map { b ->
+                if (!(b.isBid || (b.orderId != null && b.orderId in bidOrderIds))) return@map b
+                val fixed = b.copy(maker = true, atBet = b.atBet?.takeUnless { it.how == AtBet.HOW_BID }?.copy(how = AtBet.HOW_BID) ?: b.atBet)
+                if (fixed != b) changed++
+                fixed
+            }
+            if (changed == 0) list else next
+        }
+        return changed
     }
 
     suspend fun settle(id: String, status: BetStatus) {

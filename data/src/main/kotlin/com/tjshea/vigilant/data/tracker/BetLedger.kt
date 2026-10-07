@@ -19,6 +19,8 @@ object BetLedger {
         val id: String,
         val placedAtMs: Long,
         val scanner: String,
+        /** "bet" (a taker order) or "bid" (a make order that filled): [BetOrBid]. Always written, so no reader has to guess what its absence means. */
+        val made: String,
         val auto: Boolean,
         val api: Boolean,
         val league: String,
@@ -63,7 +65,7 @@ object BetLedger {
     private val json = Json { encodeDefaults = false; explicitNulls = false }
 
     fun row(b: TrackedBet, now: Long): Row = Row(
-        id = b.id.take(8), placedAtMs = b.createdAtMs, scanner = b.source, auto = b.auto, api = b.viaApi, league = b.league, event = b.eventName,
+        id = b.id.take(8), placedAtMs = b.createdAtMs, scanner = b.source, made = BetOrBid.of(b).word, auto = b.auto, api = b.viaApi, league = b.league, event = b.eventName,
         market = b.marketLabel, selection = b.selection, startsAtMs = b.startsTs, american = b.american, cost = b.cost, stake = b.stake,
         evAtBet = b.evPercentAtBet, fairAtBet = b.fairAtBet, status = b.status.name, settledAtMs = b.settledAtMs, profit = b.profit,
         clv = ClosingLine.clv(b, now), closeFair = ClosingLine.closeFair(b, now), closeVia = b.closeVia, closeFinal = b.closeFinal,
@@ -78,6 +80,8 @@ object BetLedger {
 
     /** The ways the close and the results are split by the record as placed. */
     enum class Split(val label: String) {
+        /** Bet or bid ([BetOrBid]): needs no record as placed, every record has it. */
+        MADE("Bet or bid"),
         AGREEMENT("Books agreeing"),
         DISSENT("Books saying not +EV"),
         SHARP("Sharp veto"),
@@ -99,8 +103,10 @@ object BetLedger {
         // Every bet knows when it was placed and when its game starts: the time to the start needs no record as placed (RESEARCH.md §71: the
         // strongest split of Tj's closes, and the trap guard's first rule).
         if (split == Split.LEAD) return (b.atBet?.minutesToStart ?: b.startsTs.takeIf { it > 0 }?.let { (it - b.createdAtMs) / 60_000L })?.let(::leadBand) ?: NOT_RECORDED
+        if (split == Split.MADE) return BetOrBid.of(b).group
         val a = b.atBet ?: return NOT_RECORDED
         return when (split) {
+            Split.MADE -> BetOrBid.of(b).group // answered above
             Split.AGREEMENT -> a.agreeing?.let { n -> a.twoSided?.let { t -> if (t > 0 && n == t) "every one ($n of $t)" else if (t > 0) "${t - n} of $t not agreeing" else null } } ?: NOT_RECORDED
             // A record with no book page (a ✓ on a notification) has the counts but not the names: the count says how many disagreed.
             Split.DISSENT -> when (val d = if (a.books.isEmpty() && a.twoSided != null && a.agreeing != null) (a.twoSided - a.agreeing).coerceAtLeast(0) else a.dissent.size) {

@@ -104,7 +104,7 @@ object PropGuard {
 
     /** The auto-bets of the Tracker within [windowMs] of [now] (a filled bid and a lock are not taker bets). */
     fun history(bets: Collection<TrackedBet>, now: Long, windowMs: Long = WINDOW_MS): List<Placed> = bets.asSequence()
-        .filter { it.auto && it.lockFor == null && it.atBet?.how != AtBet.HOW_BID && now - it.createdAtMs <= windowMs }
+        .filter { it.auto && it.lockFor == null && !it.isBid && now - it.createdAtMs <= windowMs }
         .map { Placed(key(it.league, it.marketLabel, it.selection), gameKey(it.eventId, it.eventName, it.startsTs), it.createdAtMs) }
         .toList()
 

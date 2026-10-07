@@ -18,6 +18,9 @@ object TrackerBreakdown {
          * RESEARCH.md §82). The one split here whose rows read in time order, not by the number settled.
          */
         LEAD("Time to start"),
+
+        /** Bet or bid (Tj, 2026-10-07): a taker order against a make order that filled ([BetOrBid]); their EV, CLV and results read apart. */
+        MADE("Bet or bid"),
     }
 
     data class Row(val label: String, val stats: TrackerStats)
@@ -47,6 +50,7 @@ object TrackerBreakdown {
         By.EV -> evBand(b.evPercentAtBet)
         By.ODDS -> oddsBand(b.american ?: Odds.probabilityToAmerican(b.price.coerceIn(0.001, 0.999)))
         By.LEAD -> BetLedger.keyOf(b, BetLedger.Split.LEAD)
+        By.MADE -> BetOrBid.of(b).group
     }
 
     /** The kind of market: moneyline, spread, total, team total, player prop, or the period/set variants. */
