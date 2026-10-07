@@ -1051,7 +1051,7 @@ class AppContainer(private val app: Application) {
         settings.pinnacleOnly -> pinnacleOnlySources(settings, background)
         // Low-usage bids narrow Vigilant's own scan only ([scan]): what prices Tj's open bets, the sharp-book confirmations and the rest read the usual feeds.
         scan && settings.lowUsageNow -> lowUsageSources(settings, background)
-        else -> allReferenceSources(settings, background)
+        else -> allReferenceSources(settings, background, scan)
     }
 
     /**
@@ -1102,7 +1102,7 @@ class AppContainer(private val app: Application) {
         }
     }
 
-    private fun allReferenceSources(settings: ScanSettings, background: Boolean): List<ReferenceSource> = buildList {
+    private fun allReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
         val pinnacleOn = settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())
         if (pinnacleOn) add(pinnacle)
         // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (2 credits a league saved).
@@ -1123,7 +1123,9 @@ class AppContainer(private val app: Application) {
         }
         if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) {
             add(if (background) parlayOddsBackground else parlayOdds)
-            if (settings.useBookProps) add(if (background) parlayPropsBackground else parlayProps)
+            // The scan's own props call is credits (3 a league): not bought for a league with no pregame game inside the window (v0.70.1 diagnostics: 6 of 40 credits went to such boards).
+            // What prices Tj's open bets and the sharp-book confirmations (not [scan]) reads every picked league, as it always did: a bet's game may be past the window.
+            if (settings.useBookProps) add((if (background) parlayPropsBackground else parlayProps).let { if (scan) LowUsageSource(it, windowGuard = true) else it })
             // More books' 1st-half lines (2 credits a league, only where Novig lists a 1st-half spread or total; PARLAY_API.md §6.7).
             add(if (background) parlayHalvesBackground else parlayHalves)
         }
