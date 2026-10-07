@@ -4,7 +4,6 @@ import com.tjshea.vigilant.data.store.JsonFileStore
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.time.Instant
@@ -20,8 +19,17 @@ class KeyRotationTest {
 
     private val utc = ZoneId.of("UTC")
     private var now = Instant.parse("2026-09-10T12:00:00Z").toEpochMilli()
-    private val meter = UsageMeter(JsonFileStore(File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), clock = { now })
+    private val store = JsonFileStore(File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() })
+    private val meter = UsageMeter(store, clock = { now })
+    private val sept1 = Instant.parse("2026-09-01T00:00:00Z").toEpochMilli()
     private val pace = CreditPace(QuotaPolicy.PARLAY, reserve = 300, freeLimit = 1_000, zone = { utc })
+
+    /** The ledger as the server's figures left it before this test's first call: a plan [used] of [limit] credits this month. */
+    private fun plan(used: Int, limit: Int) = KeyUsage(periodStart = sept1, used = used, remaining = limit - used, limit = limit)
+
+    private fun seed(vararg keys: Pair<String, KeyUsage>) {
+        runBlocking { store.update { UsageBook(providers = mapOf("parlay" to ProviderUsage(keys = keys.toMap()))) } }
+    }
 
     /** A fake ParlayAPI: every key's own count of credits used, answered as the real one does (used + remaining on every reply). */
     private class Server(val limits: Map<String, Int>) {
@@ -38,9 +46,7 @@ class KeyRotationTest {
     fun `a paid key's day share spent hands scans to each free key in turn, then the scan waits`() = runBlocking<Unit> {
         val pool = KeyPool(QuotaPolicy.PARLAY, { listOf("paid", "free1", "free2") }, meter)
         // The Starter key is 7,000 used by the 10th: ahead of the pace (6,566 allowed), so nothing more today. The free keys are fresh.
-        meter.recordBalance(QuotaPolicy.PARLAY, "paid", remaining = 13_000, limit = 20_000, used = 7_000)
-        meter.recordBalance(QuotaPolicy.PARLAY, "free1", remaining = 1_000, limit = 1_000, used = 0)
-        meter.recordBalance(QuotaPolicy.PARLAY, "free2", remaining = 1_000, limit = 1_000, used = 0)
+        seed("paid" to plan(7_000, 20_000), "free1" to plan(0, 1_000), "free2" to plan(0, 1_000))
         val server = Server(mapOf("paid" to 20_000, "free1" to 1_000, "free2" to 1_000)).also { it.used["paid"] = 7_000 }
 
         // 100-credit calls (a big scan's): a free key serves while it can pay and keep its last 100, so 9 calls each (1,000 down to 100).
@@ -62,8 +68,7 @@ class KeyRotationTest {
     @Test
     fun `scans are back on the paid key the next day, ahead of the free keys`() = runBlocking<Unit> {
         val pool = KeyPool(QuotaPolicy.PARLAY, { listOf("paid", "free1") }, meter)
-        meter.recordBalance(QuotaPolicy.PARLAY, "paid", remaining = 13_000, limit = 20_000, used = 7_000)
-        meter.recordBalance(QuotaPolicy.PARLAY, "free1", remaining = 1_000, limit = 1_000, used = 0)
+        seed("paid" to plan(7_000, 20_000), "free1" to plan(0, 1_000))
         val server = Server(mapOf("paid" to 20_000, "free1" to 1_000)).also { it.used["paid"] = 7_000 }
         pool.execute(cost = 100, reserve = 300, pace = pace) { k -> server.answer(k, Unit, 100) }
         assertEquals(listOf("free1"), server.calls)
@@ -76,8 +81,7 @@ class KeyRotationTest {
     @Test
     fun `Tj's key order decides which key goes first, a free key listed first is spent first`() = runBlocking<Unit> {
         val pool = KeyPool(QuotaPolicy.PARLAY, { listOf("free1", "paid") }, meter)
-        meter.recordBalance(QuotaPolicy.PARLAY, "free1", remaining = 1_000, limit = 1_000, used = 0)
-        meter.recordBalance(QuotaPolicy.PARLAY, "paid", remaining = 19_000, limit = 20_000, used = 1_000)
+        seed("free1" to plan(0, 1_000), "paid" to plan(1_000, 20_000))
         val server = Server(mapOf("free1" to 1_000, "paid" to 20_000)).also { it.used["paid"] = 1_000 }
         repeat(10) { pool.execute(cost = 100, reserve = 300, pace = pace) { k -> server.answer(k, Unit, 100) } }
         assertEquals(List(9) { "free1" } + "paid", server.calls)
@@ -143,6 +147,6 @@ class KeyRotationTest {
         assertThrows(AllKeysExhaustedException::class.java) { runBlocking { pool.execute(cost = 5) { KeyAttemptResult.Success(Unit) } } }
         now = Instant.parse("2026-10-01T00:00:01Z").toEpochMilli()
         pool.execute(cost = 5) { k -> used = k; KeyAttemptResult.Success(Unit, cost = 5, remaining = 19_990, used = 10) }
-        assertTrue(used == "a" || used == "b")
+        assertEquals("b", used)
     }
 }
