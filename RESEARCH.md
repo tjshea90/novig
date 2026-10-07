@@ -5672,3 +5672,28 @@ Left as the mode's DEFINITION, and said so on screen: props only, the picked sha
 - **Not built:** days ahead (the CNO tab already has Starts within 3h/6h/12h/24h/48h), min/max EV band beyond the existing minimum edge, several leagues in one CNO read (CNO's form cannot do it).
 - **Tests.** `CnoScopeTest` (14: scope, plan, screen and presets), `CnoClientTest` (6: the form posts league/sport/liquidity by the page's own ids, widening, restoring, the 10-minute fallback), `CnoPageTest` (real dropdowns match the table id for id), `CnoViewTest` (all 17 named), `CnoFeedTest` (a league pick is read at once; a switched-off feed reads nothing), `CnoWideTest` (the wide read ignores the picks), `ScanStudyPropsTest` (README names every reason), `CnoScopeUiTest` (13: chips, "reading with your new filters", Settings section, debounce, widget text, screenshots `5r_*`), `AutoBetUiTest`, `DiagnosticsTest`.
 - **What cannot be checked here (needs Tj's phone):** that CNO's refresh postback accepts a changed League value on a reused session, and that it sends 300 rows when asked. Both are guarded: a refused ask falls back to the list's own row limit, and the app's own screen keeps the list right whatever CNO sends.
+
+## 111. Bets and bids told apart (2026-10-07; DJ; Tj: "make the app bet logging differentiate from bets and bids … so I can see stats and ev filtered my bids as well as bets, and also for the diagnostics and studies sections")
+
+*(Stub written first so the number is kept; the full section is written when DJ ships. TASKS.md DJ1 holds the findings and the plan; the rule is `TrackedBet.isBid` = `maker || atBet.how == "bid"`, stamped on older records by `BetTracker.tagBids`, never inferred from price, time or size.)*
+
+## 112. Could auto bids run from CrazyNinjaOdds alone, Vigilant's scanner off? (2026-10-07; DK; Tj: "find positive EV bids based on bets from cno and make bids for them automatically. Is this plausible?")
+
+**Short answer: buildable, because the bid desk takes any list of priced sides; but a worse-informed bid than today's, and unproven. Not built; waits for Tj's yes (TASKS.md DK3).**
+
+**What is already there (read from the code).**
+- `MakerDesk` (post-only orders, expiry, re-quote on a falling fair, fill logging, wallet and per-game limits, the picked-off guard) works on `MakerLine`s and does not care where they come from. Only `MakerLines.from(scan result)` and the start of `MakerRunner.run` are Vigilant-specific: with no Vigilant scan result a pass does fills and expiries only.
+- A CNO row can become a Novig order target today: `AutoBettor.resolveOnNovig` (`NovigBetFinder.find(row)`) finds the market and outcome ids, and `NovigLive` already reads Novig's book for a CNO row (offer and best bid come from `novig.books`).
+- A CNO row carries a fair probability and a book count; CNO's game page, read by the green check (`CnoBooks.check`, one request a game), gives every book's two-sided price, which is exactly what a line's `bookFairs` and `sharpFairs` are (each book devigged the worst way).
+
+**What is missing or different.**
+1. **The fair.** Vigilant's fair is a blend that leans on sharp books, and a bid is priced under the LOWER of it and the sharpest book's own fair (`MakerRules.anchorOf`, §88.3); game lines are refused with no sharp book in the fair (`MakerQuote`). CNO's own fair is a consensus of many mostly soft books. The sharp anchor would have to come from CNO's game page, one request a game, only for the games worth bidding on.
+2. **How old the price is.** A resting bid is hurt exactly when the fair moves (§70.3, §88.3: the stale bid is the one that gets picked off). Vigilant's scan knows each book quote's age (`fairAsOfMs`, the oldest). A CNO list read knows one age, the list's. On screen CNO is read every 15 s; the background auto-scan reads it every 5, 10, 20, 30 or 40 minutes, far too slow for bids that rest up to 30 minutes. It would have to read the games with bids up every minute or two (CNO is a scraped site: 3 s minimum gap, a pause on 403/429/503), or the bids would have to live only a few minutes.
+3. **No evidence.** §109 found CNO's CLV on shots on goal circular: 79% of the 48 closes were the Tracker re-reading CNO's own soft consensus; the 10 independent closes said nothing. A bid's margin is judged against that same fair. Nothing shows CNO-priced bids beat the close; Vigilant-priced bids are still judged by the picked-off guard and the BIDS section.
+
+**Safest design if Tj says yes (one switch, default off).**
+- Its own setting ("Bids from CrazyNinjaOdds"), used only where the Vigilant scan has no line; bids tagged source CNO, so the Tracker's Scanner and Bets/Bids filters (DJ3) and the BIDS section show how they do apart from Vigilant's.
+- Candidates: a CNO row whose game page was read inside the last 2 minutes, with at least one sharp book pricing both sides (Pinnacle/Circa for game lines; Kalshi/ProphetX for props), a sharp book that agrees it is +EV, price = the lower of CNO's fair and the sharp book's fair, less the same margin (4-6%).
+- While a bid rests: re-read its game page every 1-2 minutes (at most about 10 games at once), cancel when the fair falls, come down at once when CNO is paused, late or unreadable. Expiry about 10 minutes, not 30.
+- A small cap (a few dollars a bid, about $20 a day) until 100+ fills have a close, and the picked-off guard on. Judge by CLV on those fills before widening anything.
+- Cost: about 1 CNO page a minute per game with a bid up, on top of the list read; the Novig book reads are the same ones the CNO live price makes.

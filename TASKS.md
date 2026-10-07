@@ -4156,7 +4156,7 @@ Plan (RESEARCH.md §92; a session cut off mid-way resumes at the first unticked 
 
 ## Tj, 2026-10-07 (~20:05Z, during DJ): "See if it is possible to make auto bids using only the cno scanner with vigilant scanner turned off. For example, find positive EV bids based on bets from cno and make bids for them automatically. Is this plausible?"
 
-- [ ] DK1 Research first (no code until Tj says yes): what a bid needs today (MakerLine: fair, sharp book, Novig's book state, ids) and which of it a CNO row can supply with Vigilant's scanner off; what CNO's fair is made of (soft-book consensus: the circularity RESEARCH §109 found), what the sharp anchor and the veto need, and how the auto-bet already turns a CNO row into a Novig order.
-- [ ] DK2 Answer Tj plainly: plausible or not, what it would take, what it would cost in requests, what could go wrong with real money, and the safest design if yes (RESEARCH.md section).
+- [x] DK1 (DONE, RESEARCH.md §112) Research first (no code until Tj says yes): what a bid needs today (MakerLine: fair, sharp book, Novig's book state, ids) and which of it a CNO row can supply with Vigilant's scanner off; what CNO's fair is made of (soft-book consensus: the circularity RESEARCH §109 found), what the sharp anchor and the veto need, and how the auto-bet already turns a CNO row into a Novig order.
+- [x] DK2 (DONE: answered in chat, RESEARCH.md §112) Answer Tj plainly: plausible or not, what it would take, what it would cost in requests, what could go wrong with real money, and the safest design if yes (RESEARCH.md section).
 - [ ] DK3 Only if Tj says yes: build it behind its own switch (default off), tests, release.
 
