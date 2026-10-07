@@ -1,21 +1,23 @@
-# CHECKPOINT 2661 — read me first, then TASKS.md
+# CHECKPOINT 2662 — read me first, then TASKS.md
 
-**Written:** 2026-10-07T02:46:43Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-c79f7430-lq8xfl` · **builds on:** `d559a27e` (this checkpoint is the commit after it)
+**Written:** 2026-10-07T02:47:33Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-c79f7430-lq8xfl` · **builds on:** `12762f70` (this checkpoint is the commit after it)
 
 ## Just done
-v0.71.0 RELEASED and RECORDED (code 123): settings pass DC1-DC5
+TASKS DD1/DD2 written in Tj's words
 
 ## Do this next
-nothing running; open for Tj: the eleven rule proposals (v0.70.1 report section 4), DA7 batch-reply shape log + study-export fixes (CX3), his word on building the in-app feed race (RESEARCH 99.8)
+locate the code of each fault (batch-place parse, StudyExport, timeline cap, HealthChecks lines, NovigStream 451 retry, ParlayAPI props window guard), fix with tests, release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+    M  TASKS.md
 
 ## Last ten checkpoints
 ```
+  20fc2cab ckpt 2661: v0.71.0 RELEASED and RECORDED (code 123): settings pass DC1-DC5
   47402386 ckpt 2660: pre-release: v0.71.0: settings pass: Settings home grouped under four headin
   492f0a75 ckpt 2659: v0.71.0 candidate: settings pass (grouped home, ~45 typed boxes, shortest od
   55087eb7 ckpt 2658: DC1/DC2 UI: typed-number boxes (NumberSpec/TypedNumber.kt) on every numeric 
@@ -25,5 +27,7 @@ nothing running; open for Tj: the eleven rule proposals (v0.70.1 report section 
   eb7495c0 ckpt 2654: v0.70.4 RELEASED and RECORDED (code 122): ParlayAPI key rotation + free keys
   9c967742 ckpt 2653: pre-release: v0.70.4: ParlayAPI keys rotate: a scan goes to the next key whe
   ccdcdbcf ckpt 2652: v0.70.4 candidate: version bump 0.70.4/code 122, PARLAY_API.md section 4a (r
-  54a3ff97 ckpt 2651: DB3 tests: client-level rotation to free keys (TheOddsApiClientTest), HISTOR
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
