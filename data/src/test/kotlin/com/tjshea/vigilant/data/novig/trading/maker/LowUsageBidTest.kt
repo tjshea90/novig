@@ -44,7 +44,7 @@ class LowUsageBidTest {
         assertEquals(setOf(BetKind.PROP), rules.kinds)
         assertEquals(0.025, rules.margin, 0.0)
         assertEquals(130, rules.maxOdds)
-        assertTrue(rules.requireSharp && rules.anchorSharp && rules.sharpVeto && rules.quick && rules.skipObscure)
+        assertTrue(rules.requireSharp && rules.anchorSharp && rules.sharpVeto && rules.quick && rules.skipObscure && rules.obscureFill)
         assertEquals(2, rules.minBooks)
         assertEquals(6, rules.earlyHours)
         assertEquals(0.60, rules.maxPrice, 0.0)
@@ -71,19 +71,57 @@ class LowUsageBidTest {
     }
 
     @Test
-    fun `+130 is the longest, a tighter limit of Tj's stays, a looser one or none is +130`() {
+    fun `+130 is the default longest, and any longest odds Tj picks - tighter or longer - is the one that runs`() {
         assertEquals(130, MakerRules.of(s.copy(makerMaxOdds = 0)).maxOdds)
-        assertEquals(130, MakerRules.of(s.copy(makerMaxOdds = 200)).maxOdds)
+        assertEquals(200, MakerRules.of(s.copy(makerMaxOdds = 200)).maxOdds)
+        assertEquals(300, MakerRules.of(s.copy(makerMaxOdds = 300)).maxOdds)
         assertEquals(130, MakerRules.of(s.copy(makerMaxOdds = 130)).maxOdds)
         assertEquals(120, MakerRules.of(s.copy(makerMaxOdds = 120)).maxOdds)
         assertEquals(100, MakerRules.of(s.copy(makerMaxOdds = 100)).maxOdds)
     }
 
+    /** Tj, 2026-10-07: "The settings I choose should change whatever I want without hard settings": a longest or shortest odds beyond the 30-60% band widens it. */
     @Test
-    fun `the 6 hour window is the trap guard's when that is tighter, and 6 when it is off or longer`() {
-        assertEquals(6, MakerRules.of(s.copy(trapEarlyHours = 0)).earlyHours)
-        assertEquals(6, MakerRules.of(s.copy(trapEarlyHours = 12)).earlyHours)
+    fun `the 30 to 60 percent price band is the default - a longest or shortest odds beyond it widens it`() {
+        assertEquals(0.30, rules.minPrice, 1e-9)
+        assertEquals(0.60, rules.maxPrice, 1e-9)
+        assertEquals("+300 is a 25 cent price", 0.25, MakerRules.of(s.copy(makerMaxOdds = 300)).minPrice, 1e-9)
+        assertEquals("+200 is 33 cents: the band's own 30 stays", 0.30, MakerRules.of(s.copy(makerMaxOdds = 200)).minPrice, 1e-9)
+        assertEquals("-250 is a 71 cent price", 1.0 / 1.4, MakerRules.of(s.copy(makerMinOdds = -250)).maxPrice, 1e-9)
+        assertEquals("-150 is the band's own 60", 0.60, MakerRules.of(s.copy(makerMinOdds = -150)).maxPrice, 1e-9)
+        assertEquals("underdogs only narrows nothing here", 0.60, MakerRules.of(s.copy(makerMinOdds = 110)).maxPrice, 1e-9)
+        // And the usual bids' 10-65% window too: a shortest odds of -300 is a 75 cent price.
+        assertEquals(0.75, MakerRules.of(ScanSettings(makerMinOdds = -300)).maxPrice, 1e-9)
+        assertEquals(0.65, MakerRules.of(ScanSettings()).maxPrice, 1e-9)
+        // A bid at 70 cents is posted when Tj asked for -250, and not when he did not.
+        val wide = MakerRules.of(s.copy(makerMinOdds = -250))
+        assertNull(MakerQuote.outsideWindow(0.70, wide))
+        assertTrue(MakerQuote.outsideWindow(0.70, rules)!!.contains("outside the price window"))
+    }
+
+    /** Tj, 2026-10-07: "I changed the trap guard setting from 6 hours to 8 hours and then to no trap guard at all, but it is hard set at 6 hours trap guard no matter what I select." */
+    @Test
+    fun `the trap guard is Tj's - 6 hours by default, any hours he picks, and Off is no limit`() {
+        assertEquals(6, MakerRules.of(s).earlyHours)
+        assertEquals(0, MakerRules.of(s.copy(trapEarlyHours = 0)).earlyHours)
+        assertEquals(8, MakerRules.of(s.copy(trapEarlyHours = 8)).earlyHours)
+        assertEquals(12, MakerRules.of(s.copy(trapEarlyHours = 12)).earlyHours)
         assertEquals(3, MakerRules.of(s.copy(trapEarlyHours = 3)).earlyHours)
+    }
+
+    @Test
+    fun `a game 7 hours out gets a bid with the trap guard at 8, a game 30 hours out with it Off, and neither at the default 6`() {
+        val l = line()
+        val start = Fixtures.START_MS
+        fun at(hoursOut: Int, r: MakerRules) = MakerQuote.decide(l, r, start - hoursOut * 3_600_000L)
+        val six = MakerRules.of(s)
+        val eight = MakerRules.of(s.copy(trapEarlyHours = 8))
+        val off = MakerRules.of(s.copy(trapEarlyHours = 0))
+        assertTrue((at(7, six) as MakerDecision.Skip).why.contains("Starts in more than 6 h"))
+        assertTrue(at(7, eight) is MakerDecision.Post)
+        assertTrue((at(9, eight) as MakerDecision.Skip).why.contains("Starts in more than 8 h"))
+        assertTrue(at(30, off) is MakerDecision.Post)
+        assertTrue(at(30, six) is MakerDecision.Skip)
     }
 
     // ---- one line -----------------------------------------------------------------------------------------------------------
@@ -166,16 +204,57 @@ class LowUsageBidTest {
     }
 
     @Test
-    fun `a kind of prop takers were measured to trade rarely is skipped, a busy one or an unmeasured one is not`() {
+    fun `with the small-market fill off a kind of prop takers rarely trade is skipped, a busy one or an unmeasured one is not`() {
         // NHL assists: $75 a listed market a day. NHL shots on goal: $780. NBA points: never measured.
-        assertTrue(why(line(type = "ASSISTS", league = "NHL")).startsWith("Takers rarely trade"))
-        assertTrue(MakerQuote.decide(line(type = "SHOTS_ON_GOAL", league = "NHL"), rules, now) is MakerDecision.Post)
-        assertTrue(MakerQuote.decide(line(type = "POINTS", league = "NBA"), rules, now) is MakerDecision.Post)
+        val off = MakerRules.of(s.copy(makerObscureFill = false))
+        assertFalse(off.obscureFill)
+        assertTrue((MakerQuote.decide(line(type = "ASSISTS", league = "NHL"), off, now) as MakerDecision.Skip).why.startsWith("Takers rarely trade"))
+        assertTrue(MakerQuote.decide(line(type = "SHOTS_ON_GOAL", league = "NHL"), off, now) is MakerDecision.Post)
+        assertTrue(MakerQuote.decide(line(type = "POINTS", league = "NBA"), off, now) is MakerDecision.Post)
         assertTrue(MarketPopularity.measuredObscure("NHL", "ASSISTS"))
         assertFalse(MarketPopularity.measuredObscure("NHL", "SHOTS_ON_GOAL"))
         assertFalse(MarketPopularity.measuredObscure("NBA", "POINTS"))
         // The usual bids don't skip them.
         assertTrue(MakerQuote.decide(line(type = "ASSISTS", league = "NHL"), MakerRules.of(ScanSettings()).copy(kinds = setOf(BetKind.PROP)), now) is MakerDecision.Post)
+    }
+
+    /** Tj, 2026-10-07: "in low api usage mode it is not filling any obscure props, it is hard set against this. The settings I choose should change whatever I want." */
+    @Test
+    fun `the small-market fill is Tj's setting in this mode too - on by default it bids on a rarely traded kind under the strict checks, off it does not`() {
+        assertTrue("on by default, as under Quick & likely", rules.obscureFill)
+        assertEquals(0.06, rules.obscureMargin, 1e-9)
+        assertEquals(0.5, rules.obscureStake, 1e-9)
+        // Three picked books price it, each gives the bid its edge: a small-market bid, 6% under the sharp fair, half the stake.
+        val three = line(type = "ASSISTS", league = "NHL", books = listOf("Kalshi", "ProphetX", "FanDuel"), sharp = listOf(0.50, 0.50, 0.505))
+        val p = MakerQuote.decide(three, rules, now) as MakerDecision.Post
+        assertTrue(p.obscure)
+        assertEquals(0.470, p.price, 1e-9)
+        assertTrue(p.evAtFair >= 0.06 - 1e-9)
+        val full = MakerQuote.decide(line(type = "SHOTS_ON_GOAL", league = "NHL"), rules, now) as MakerDecision.Post
+        assertFalse("a busy kind is a popular bid, not a small-market one", full.obscure)
+        assertTrue("half the stake of a popular bid", p.cost < full.cost * 0.6)
+        // The same line with the switch off: skipped as before.
+        val off = MakerRules.of(s.copy(makerObscureFill = false))
+        assertTrue((MakerQuote.decide(three, off, now) as MakerDecision.Skip).why.startsWith("Takers rarely trade"))
+        // The safeguards are Tj's too: a bigger margin, a different agreement, a different book count.
+        val wider = MakerRules.of(s.copy(makerObscureMargin = 0.10, makerObscureSharpMinEv = 0.05, makerObscureAgreePoints = 0.03, makerObscureStake = 0.25))
+        assertEquals(0.10, wider.obscureMargin, 1e-9)
+        assertEquals(0.05, wider.obscureSharpMinEv, 1e-9)
+        assertEquals(0.03, wider.obscureAgreePoints, 1e-9)
+        assertEquals(0.25, wider.obscureStake, 1e-9)
+        assertEquals(0.45, (MakerQuote.decide(three, wider, now) as MakerDecision.Post).price, 1e-9)
+    }
+
+    @Test
+    fun `a small-market line can hold at most the books picked - the book count is held to them, never under 2`() {
+        val two = MakerRules.of(s.copy(lowUsageBooks = setOf("kalshi", "prophetx"), makerObscureMinBooks = 3))
+        assertEquals("3 books asked of a fair built from 2 would never be met", 2, two.obscureMinBooks)
+        assertEquals(3, MakerRules.of(s.copy(makerObscureMinBooks = 5)).obscureMinBooks)
+        assertEquals(2, MakerRules.of(s.copy(makerObscureMinBooks = 1)).obscureMinBooks)
+        assertEquals(3, MakerRules.of(s).obscureMinBooks)
+        val l = line(type = "ASSISTS", league = "NHL", books = listOf("Kalshi", "ProphetX"))
+        assertTrue("two picked books price it: enough", MakerQuote.decide(l, two, now) is MakerDecision.Post)
+        assertTrue("with three picked, a 2-book line is too thin", (MakerQuote.decide(l, rules, now) as MakerDecision.Skip).why.startsWith("Only 2 books price this small-market line"))
     }
 
     @Test

@@ -181,11 +181,34 @@ class LowUsageBidsTest {
         assertEquals(setOf("kalshi", "parlay", "parlay_1h", "parlay_props"), on.copy(lowUsageBooks = setOf("kalshi", "prophetx")).effective().enabledSources)
     }
 
+    /**
+     * Tj, 2026-10-07: "I changed the trap guard setting from 6 hours to 8 hours and then to no trap guard at all, but it is hard set at 6 hours trap guard no matter what I select."
+     * The scan's window is the trap guard's hours (6 by default), never past the ordinary reach, and Off reads as far as the ordinary reach says.
+     */
     @Test
-    fun `a shorter starts-within stays, a longer one is cut to 6 hours`() {
+    fun `the scan's window is the trap guard's hours - 6 by default, any hours he picks, and Off reads as far as the ordinary reach`() {
+        assertEquals(6, LowUsageBids.windowHours(on))
+        assertEquals(6, on.effective().scanWindowHours)
+        // A shorter starts-within stays; a longer one does not widen what the trap guard allows.
         assertEquals(3, on.copy(startsWithinHours = 3).effective().scanWindowHours)
         assertEquals(6, on.copy(startsWithinHours = 24).effective().scanWindowHours)
         assertEquals(6, on.copy(startsWithinHours = 0, daysAhead = 10).effective().scanWindowHours)
+        // The trap guard Tj sets is the window.
+        assertEquals(8, on.copy(trapEarlyHours = 8).effective().scanWindowHours)
+        assertEquals(12, on.copy(trapEarlyHours = 12, startsWithinHours = 0).effective().scanWindowHours)
+        assertEquals(10, on.copy(trapEarlyHours = 12, startsWithinHours = 10).effective().scanWindowHours)
+        assertEquals(3, on.copy(trapEarlyHours = 3).effective().scanWindowHours)
+        // Off has no limit of its own: Days ahead and Starts within decide.
+        assertEquals(7 * 24, on.copy(trapEarlyHours = 0).effective().scanWindowHours)
+        assertEquals(24, on.copy(trapEarlyHours = 0, startsWithinHours = 24).effective().scanWindowHours)
+        assertEquals(24, on.copy(trapEarlyHours = 0, daysAhead = 1).effective().scanWindowHours)
+        // Never past the ordinary reach even when the trap guard is longer (Days ahead 1 = 24 h).
+        assertEquals(24, on.copy(trapEarlyHours = 72, daysAhead = 1).effective().scanWindowHours)
+        // The sportsbook-props horizon is Tj's own ("Games within"), and the window still bounds it.
+        assertEquals(6, on.copy(bookPropHours = 24).effective().bookPropWindowHours)
+        assertEquals(12, on.copy(trapEarlyHours = 12, bookPropHours = 24).effective().bookPropWindowHours)
+        assertEquals(6, on.copy(trapEarlyHours = 12, bookPropHours = 6).effective().bookPropWindowHours)
+        assertEquals("the default window is the trap guard's default", TrapGuard.DEFAULT_EARLY_HOURS, LowUsageBids.WINDOW_HOURS)
     }
 
     @Test
