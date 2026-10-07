@@ -65,6 +65,14 @@ object TrapGuardText {
             "more before a start lost to the close (the books' lines aren't settled that early, and a Novig price that beats them is often the better-informed one)."
     }
 
+    /** What the first-listed rule does (Tj, 2026-10-07: "remember a bet's first-listed time"), at the early rule's [hours]. */
+    fun firstListedNote(on: Boolean, hours: Int): String = when {
+        hours <= 0 -> "Needs the hours above (they are off)."
+        on -> "A bet first seen more than $hours h before its game started is left alone by the auto-bet and the alerts even once the game is inside the window (the lists still show it). " +
+            "In the first three days of data such bets closed at +0.07%, against +1.29% for bets first listed inside the window. Bets listed before this was switched on count from when the app first saw them."
+        else -> "Off: a bet is judged only by how far off its game is now."
+    }
+
     /** What the move rule does. */
     fun moveNote(on: Boolean): String =
         if (on) {
@@ -96,6 +104,17 @@ fun TrapGuardSection(s: ScanSettings, showMove: Boolean, tag: String, onUpdate: 
     }
     TrapEarlyHoursField(s.trapEarlyHours, tag) { v -> onUpdate { it.copy(trapEarlyHours = v) } }
     Text(TrapGuardText.earlyNote(s.trapEarlyHours), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 4.dp).testTag("$tag-trapEarlyNote"))
+    Row(
+        Modifier.fillMaxWidth().toggleable(value = s.trapFirstListed, role = Role.Switch, onValueChange = { v -> onUpdate { it.copy(trapFirstListed = v) } })
+            .padding(top = 8.dp, bottom = 2.dp).testTag("$tag-trapFirstListed"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text("Skip bets listed too early", style = MaterialTheme.typography.bodyMedium)
+        }
+        Switch(checked = s.trapFirstListed, onCheckedChange = null)
+    }
+    Text(TrapGuardText.firstListedNote(s.trapFirstListed, s.trapEarlyHours), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("$tag-trapFirstListedNote"))
     if (showMove) {
         Row(
             Modifier.fillMaxWidth().toggleable(value = s.trapNovigMove, role = Role.Switch, onValueChange = { v -> onUpdate { it.copy(trapNovigMove = v) } })

@@ -112,6 +112,7 @@ object SettingsIndex {
             "Edge the sharpest book must give Novig's price", null, "The sharp veto's bar: skip a bet the sharpest book gives under this edge (1% by default)",
             "auto-bet sharp veto bar minimum edge pinnacle kalshi trap clv", { autoBetTab(it) && it.sharpAutoBet == com.tjshea.vigilant.data.scanner.SharpMode.VETO },
         ),
+        Entry("Skip bets listed too early", null, "Trap guard: skip bets first listed more than the guard's hours before the start, even once the game is inside the window", "auto-bet alerts trap first listed early hours remember old listing", autoBetTab),
         Entry("Skip game lines Novig just moved", null, "Trap guard: skip games too far from the start, and game lines Novig just moved", "auto-bet trap sharp early hours gift steam moved", autoBetTab),
         Entry("Most to stake on one bet", null, "The most one auto-bet may stake", "auto-bet max stake limit", autoBetTab),
         Entry("Amount per bet", null, "Auto-bet's stake: Kelly, \$1 or your amount", "auto-bet stake kelly amount", autoBetTab),
