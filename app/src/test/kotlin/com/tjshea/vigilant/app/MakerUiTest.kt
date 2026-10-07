@@ -720,7 +720,8 @@ class MakerUiTest {
     fun `when the lane stops the bids, the tab says why - and says nothing about it when bids are off or priced from Vigilant's scan`() {
         val stop = com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status(stop = "CrazyNinjaOdds asked for a pause (busy): bids priced from it come down")
         compose.setContent { VigilantTheme { MakerScreen(cnoUi(lane = stop), MakerActions()) } }
-        compose.onNodeWithTag("makerCnoStop").assertTextContains("asked for a pause", substring = true)
+        compose.onNodeWithTag("makerCnoStop").assertIsDisplayed()
+        compose.onNodeWithText("asked for a pause", substring = true).assertIsDisplayed()
         compose.onNodeWithTag("makerCnoLine").assertTextContains("its list not read yet", substring = true)
         compose.onNodeWithTag("makerCnoLine").assertTextContains("no game page read yet", substring = true)
     }
