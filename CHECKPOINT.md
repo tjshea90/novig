@@ -1,23 +1,25 @@
-# CHECKPOINT 2676 — read me first, then TASKS.md
+# CHECKPOINT 2677 — read me first, then TASKS.md
 
-**Written:** 2026-10-07T07:00:46Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `d5934453` (this checkpoint is the commit after it)
+**Written:** 2026-10-07T07:04:56Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `b13a22f6` (this checkpoint is the commit after it)
 
 ## Just done
-DG4 code done (Kalshi 3 req/s test, setting, Diagnostics line, tests); TASKS DH0-DH6 written in Tj's words for his 07:00Z message; active log started; check-ins scheduled 11:01Z and 16:11Z
+v0.72.0 candidate complete: obscure fill + rec 11 + recs 2/4/5/9/10, RESEARCH 102 and 104, version 0.72.0 code 126, floor 2440 green
 
 ## Do this next
-run the floor, tick DG4, DH1 release v0.72.0 (RESEARCH 102/104, version 0.72.0 code 126), then DH2-DH5
+wait for CI green on this exact commit with no file edits, then ship.sh, release.yml, record-release.sh v0.72.0 126; then DH2 feed sources
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
-    ?? research/ACTIVE_LOG_2026-10-07.md
+     M app/build.gradle.kts
+     M research/ACTIVE_LOG_2026-10-07.md
 
 ## Last ten checkpoints
 ```
+  a16d36aa ckpt 2676: DG4 code done (Kalshi 3 req/s test, setting, Diagnostics line, tests); TASKS
   c381f06c ckpt 2675: DG5 done (unread Novig trades skip game-line auto-bet CNO+Pinnacle and game-
   83d81cee ckpt 2674: DG3 done: gate and Kelly size on the lower of CNO's edge and the books' own 
   1e148a6f ckpt 2673: DG2 done: favourites need 1 point more edge (setting, chips, typed box, judg
@@ -27,8 +29,7 @@ run the floor, tick DG4, DH1 release v0.72.0 (RESEARCH 102/104, version 0.72.0 c
   cfc58c12 ckpt 2669: pre-release: v0.71.2: no bid, auto-bet or alert on a player the injury repor
   82e1dde6 ckpt 2668: pre-release: v0.71.2: no bid, auto-bet or alert on a player the injury repor
   33503b81 ckpt 2667: v0.71.1 RELEASED and RECORDED (code 124): DD1 app faults fixed; DE0 ticked
-  07851783 ckpt 2666: pre-release: v0.71.1: the app faults the v0.70.1 analysis found are fixed: t
 ```
 
-(6 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
