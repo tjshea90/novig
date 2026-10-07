@@ -1,0 +1,500 @@
+{
+ "lens": "APP FEASIBILITY AND SAFETY (adversarial verifier, label verify-4-feasibility)",
+ "rule": "6 h trap guard (today 24 h) plus skip when the book page's own edge (ab_checkEv) is 1 point or more under the list's edge (ev); universe: shown, ev>=2.5%, -200..+130, PROP/MONEYLINE/SPREAD, first listed within 24 h, book page read (builder's UJ)",
+ "numbers_reproduced": "MATCHES the builder on every headline. Rule keeps 39 of 75 bets, 20 of 28 games, 17.29 a day over 2.256 days; CLV on 34 closes/18 games +3.30% [+2.04,+4.75] (builder [+2.03,+4.76], seed only), 79% beat, close_ok 31 closes +3.33%; ROI -11.8% on 38 settled; universe 64 closes/25 games +1.38% [-0.04,+3.06]; dropped 36 bets, 30 closes/17 games -0.79% [-3.86,+1.92]. Halves by the shared loader split (cut Oct 4): first 26 closes/14 games +2.94% [+1.48,+4.76], second 8 closes/4 games +4.46% (the builder's 3.62/3.12 do not reproduce under that split). Dollar claims reproduce: placeable set 47 bets (20.8/day) -> 30 (13.3/day); $97.4 -> $62.9 a day at a $5 cap, $41.9 -> $27.1 at quarter-Kelly (cap $3.50); CLV$ 1.14 -> 1.92 a day at the $5 cap. NEW, from my lens: (1) the 75-bet universe is not what the app can place: 28 of 75 fail the app's own rules (3+ agree 15, sharp VETOED 17, book-check EV<=0 6, <2 two-sided 3; union 28). On the 47 placeable bets the rule keeps 30 bets/15 games, 29 closes +3.12% [+1.68,+4.55] vs placeable baseline 45 closes/21 games +1.14% [-0.58,+3.16]; dropped 17 bets/13 games, 16 closes -2.44% [-7.10,+2.03]. (2) The falling-edge half touches 2 of those 47 (2 games, CLV -1.52%): 11 of the 13 first-look flagged bets are already refused by the app (agree<3 or vetoed). The 6 h guard alone on the placeable set: 32 bets/17 games, 31 closes +2.82% [+1.42,+4.24]. (3) The app decides at decision time, not first look: of 57 real auto-bets in the study window that match a study bet, only 20 (35%) are in the first-look universe; 37 were first listed under 2.5% (mean 1.99%) and were placed later at 3.35% (median wait 9 min, mean 83; 23 of 57 at a better price). Real executed CNO auto-bets in the window (Oct 3 17:56 to Oct 5 19:57 ET, 62 bets, 29 games, $104.5 staked = 27.5 bets and $46.3 a day): <=6 h at placement 28 bets/14 games CLV +2.54% [+1.15,+4.19]; >6 h 34 bets/20 games +1.68% [+0.19,+3.18]; gap +0.87 pts [-1.16,+3.29], P(gap<=0)=0.19; the rule keeps 27 bets (+2.59% [+1.13,+4.19]) and drops 35 (+1.67% [+0.24,+3.09]); it drops 35 of 62 bets (56%) and $60.6 of $104.5 staked (58%); the falling-edge clause flags 2 of 62 (3 of 99 incl. Oct 2; CLV +0.95%). Realized CLV$ a day: all $0.945, kept $0.560, dropped $0.386 (dropping them loses 41% of it). (4) Decision-time simulation from the study's looks (list presence from c looks, page from k looks, check EV re-priced at each look's price, current rules incl. 3 agree, 2 two-sided, sharp not VETOED, EV 2.5-15%): it recovers 54 of the 62 real auto bets (45 of the builder's 47 placeable). At the 24 h guard it would place 108 bets/31 games (47.9/day), CLV at the decision price +2.26% [+1.37,+3.24]; with the 6 h guard 76 (+3.05% [+2.39,+3.87]); with 6 h plus the falling-edge gate 73 bets/26 games (32.4/day), 70 closes +3.20% [+2.51,+4.05]; the bets the rule removes: 35 bets/18 games, 33 closes +0.20% [-2.92,+2.58]; kept-minus-dropped +3.01 pts [+0.62,+6.51]; CLV$ a day at quarter-Kelly: baseline $2.00, rule $1.87 (stake $91.5 -> $60.2 a day). The falling-edge gate removes 3 of 76 bets (CLV +1.49, -0.20, -2.83).",
+ "survives": false,
+ "reason": "From the feasibility and safety lens the COMBINED rule is not a credible improvement to put to Tj as one rule; only its 6 h half is feasible, and that half is already an open question with mixed evidence. (1) SAFETY: neither half loosens any limit (both only skip bets: the guard window tightens from 24 h to 6 h, the gate adds a skip reason); no safety limit is touched (daily limit, price tolerance, pregame only, halt on a lost order, sharp veto, trap guard's second rule all unchanged). (2) FEASIBILITY: the 6 h half is a setting that exists today (ScanSettings.trapEarlyHours, chip 6 in TrapGuard.EARLY_CHOICES; default TrapGuard.DEFAULT_EARLY_HOURS=6; the phone is at 24 h; Settings > Scanning trap guard card, Auto-bet tab, Bids tab; NOT part of PresetRules, so applying a preset will not set it). It is applied at decision time by AlertPicks.cnoCandidates (and TrapGuard.isEarly in runPinnacle), before the top-10 book-read cut (AutoScan.AUTO_BET_CHECK_TOP). The falling-edge half has no setting and needs new code: a new clause in AutoBet.judge(rules, shownEv, check, american, kind) using shownEv and check.ev, which the call already receives (AutoBettor.run line ~173), plus an AutoBet.Rules field, a ScanSettings field, a PresetRules field with a default, UI text, Diagnostics and tests; it does not apply to the Pinnacle-only path (runPinnacle has no book check) or to the 12 auto-bets of 74 in the window that carry no CNO record (11 Vigilant-scanner). No look-ahead: both inputs exist at decision time and the app only bets bets whose page it read. (3) THE FALLING-EDGE HALF IS A NEAR NO-OP AND ITS EVIDENCE IS NOT THE APP'S BETS: 11 of the 13 first-look flagged bets are already refused (agree<3 or sharp VETOED); it removes 2 of 47 placeable bets (4%), 2 of 62 real executed bets (3%; 3 of 99), 3 of 76 simulated; the CLV of what it removes rests on 2-3 closes. The builder's 10 within-6 h dropped closes (+3.83) come from bets the auto-bet would not place anyway. (4) THE UNIVERSE IS NOT WHAT THE APP DOES: first-look classification covers 35% of real executed bets; the app waits for the edge to cross 2.5% at the live price and the long-lead bets it executes beat the close by +1.85% (29 closes) at placement against +0.63% had they been bought at first look. The 6 h cut at first look drops all 46 first-listed >6 h bets; in the app 14 of them (30%) are still placed once inside 6 h. (5) THE DOLLAR CLAIM REVERSES AT DECISION TIME: the builder's 'CLV worth $1.96 a day instead of $1.11' needs the dropped bets to lose to the close (-2.44% on 16 closes). Executed, the dropped bets earned +1.67% (34 closes, CI [+0.24,+3.09]); realized CLV$ a day falls from $0.945 to $0.560 (real) or $2.00 to $1.87 (simulated) while bets fall 56% (real) or 32% (simulated) and stake 58% or 34%. The real cut in bets (56%) is 1.6x the builder's 36%. The real-bet kept-minus-dropped gap in the study window is +0.92 pts [-1.12,+3.29] (P<=0 0.18); only Oct 2 pre-window bets (the data that built the guard) give +6.78 [+2.15,+11.84]. (6) SIDE EFFECT: trapEarlyHours is ONE shared setting for auto-bet, alerts and bids; moving it to 6 h also stops maker bids beyond 6 h, and 8 of the 17 filled bids were posted >6 h out (CLV +3.5% on 7 closes vs +1.8% on 9 closes within 6 h; tiny, but nothing in the rule's evidence is about bids). (7) EVALUATION: all 75 universe bets are props; closes: Tracker 43 (only for bets that were placed), Novig trades 20, Pinnacle 1, none 11 (15%). Kept arm: 27 of 34 closes are Tracker (CNO books minutes before the start, the same family as the fair); on the 7 non-Tracker kept closes CLV is +1.50% (6 Novig-trade closes) and +2.14% (1 Pinnacle). Once a rule stops the app placing the dropped bets they get no Tracker close, so the dropped arm can only be measured by Novig-trade closes (>=3 trades). WHAT I WOULD PUT TO TJ INSTEAD (questions, not actions; both only tighten): (a) the trap guard 6 h vs 24 h stays the open question from the previous file, with the executed-bets evidence above (+0.87 pts [-1.16,+3.29] in the window; +1.68% on the 6-24 h executed bets) and the bids side effect; (b) do not build the falling-edge gate (2-3 bets in 2.3 days); (c) no code is needed to settle (a): every auto-bet record already carries minutesToStart, ev and checkEv, so the next file's auto-bets can be split by the rule's flags; if the true gap is 2 pts, about 26 games per arm (3 days at about 8.9 dropped-arm games a day, per-game SD 2.9 pts) to 108 (12 days, SD 5.9 incl. Oct 2 outliers); for 1 pt, 104 to 430 games (12 to 48 days).",
+ "caveats": [
+  "The real-bet evidence (62 executed CNO auto-bets, 29 games, 2.1 days, one phone) overlaps the study's own bets and the kept/dropped CIs rest on 14 and 20 games: it weakens the case, it does not refute the 6 h guard (the guard was built from Tj's earlier 176 bets, RESEARCH.md 71, and the Oct 2 executed bets show +6.78 pts [+2.15,+11.84]).",
+  "Executed-bet CLV is Tracker CLV (CNO's books read before the start for a bet that was placed): the same family of books that produced the fair, so it measures how far CNO's consensus drifted toward Novig's price, not a sharp close; on props there is no Pinnacle close in 74 of 75 universe bets.",
+  "The decision-time simulation is mine: list presence from 'c' looks, page state from 'k' looks, the check fair carried forward and re-priced at each look's price, the sharp verdict taken from the latest 'k' look (not re-judged at a new price); it ignores the wallet, the cooldown, the per-cycle cap, 'a Novig price read in the last minute' and one-order-per-market, so it over-places (108 vs 62 real); it is an upper bound on volume, not a forecast.",
+  "Volume under a 6 h guard may be higher than the first-look 13.3 a day: the guard filters candidates BEFORE the top-10 page-read cut (AutoScan.cnoCandidates then take(10)), so read slots currently spent on 6-24 h bets go to nearer ones; 28 of 76 shown within-6 h bets (37%) never had a page read (12 closes, +2.67% [-0.13,+5.45]); at the placeable share (63%) that is up to about 7.8 more bets a day. The cost in bets is therefore bracketed, 32% (simulated) to 56% (real window).",
+  "The $5 a bet in the builder's 'at the caps' dollars is the API's per-bet cap; the auto-bet's own cap is $3.50 (autoBetMaxStake on the phone; real largest auto stake $2.90 in the window, median $1.60): the quarter-Kelly figures are the realistic ones. The $500 a day and $70 a game caps never bind for auto-bets (real window: $46 a day on average, largest day $57, largest auto exposure on one game $14.3; the larger day and game figures in the diagnostics include hand bets and bids).",
+  "Placement lag matters for every first-look figure in the study: 63 of 80 real auto-bets match a study bet and the median wait from first look to placement is 14.7 min (75th percentile 125 min, 90th 366 min); 18 of the 80 flagged auto (12 auto-bets with no CNO record, 11 of them Vigilant-scanner, and 6 bids) are outside the CNO auto-bet path this rule is about.",
+  "The two halves are unequal: in the placeable set the second half is 7 kept bets/4 games against 3 dropped/2 games (-9.46%, one of them the -30.6% long-lead bet).",
+  "Numbers-only: no bet rows, wallet balance, keys or ids are in this file."
+ ],
+ "claims": [
+  {
+   "id": "C1",
+   "claim": "Builder headline reproduces",
+   "data": {
+    "rule_bets": 39,
+    "rule_games": 20,
+    "closes": 34,
+    "close_games": 18,
+    "clv_pct": 3.3,
+    "ci": [
+     2.04,
+     4.75
+    ],
+    "universe_bets": 75,
+    "universe_clv_pct": 1.38,
+    "universe_ci": [
+     -0.04,
+     3.06
+    ],
+    "per_day": 17.29,
+    "days": 2.256
+   }
+  },
+  {
+   "id": "C2",
+   "claim": "28 of 75 universe bets cannot be placed by the app's own rules",
+   "data": {
+    "agree_lt_3": 15,
+    "sharp_vetoed": 17,
+    "check_ev_le_0": 6,
+    "two_sided_lt_2": 3,
+    "union": 28
+   }
+  },
+  {
+   "id": "C3",
+   "claim": "On the 47 placeable bets the rule is the 6 h guard plus 2 bets",
+   "data": {
+    "placeable": {
+     "bets": 47,
+     "games": 21,
+     "closes": 45,
+     "clv_pct": 1.14,
+     "ci": [
+      -0.58,
+      3.16
+     ]
+    },
+    "rule": {
+     "bets": 30,
+     "games": 15,
+     "closes": 29,
+     "clv_pct": 3.12,
+     "ci": [
+      1.68,
+      4.55
+     ]
+    },
+    "six_h_only": {
+     "bets": 32,
+     "games": 17,
+     "closes": 31,
+     "clv_pct": 2.82,
+     "ci": [
+      1.42,
+      4.24
+     ]
+    },
+    "dropped": {
+     "bets": 17,
+     "games": 13,
+     "closes": 16,
+     "clv_pct": -2.44,
+     "ci": [
+      -7.1,
+      2.03
+     ]
+    },
+    "falling_flag_in_placeable": {
+     "bets": 2,
+     "games": 2,
+     "clv_pct": -1.52
+    },
+    "flagged_first_look_total": 13,
+    "flagged_already_refused_by_app": 11
+   }
+  },
+  {
+   "id": "C4",
+   "claim": "Builder dollar and volume figures reproduce at first look",
+   "data": {
+    "placeable_per_day": 20.83,
+    "rule_per_day": 13.3,
+    "usd_per_day_cap5": [
+     97.4,
+     62.9
+    ],
+    "usd_per_day_quarter_kelly_cap3_5": [
+     41.9,
+     27.1
+    ],
+    "clv_usd_per_day_cap5": [
+     1.14,
+     1.92
+    ],
+    "clv_usd_per_day_qk": [
+     0.52,
+     0.82
+    ]
+   }
+  },
+  {
+   "id": "C5",
+   "claim": "First-look universe covers 35% of what the app really bets",
+   "data": {
+    "real_cno_auto_bets_in_window": 62,
+    "matched_to_study": 57,
+    "in_first_look_universe": 20,
+    "first_look_ev_mean_pct": 1.99,
+    "placed_ev_mean_pct": 3.35,
+    "price_improved": 23,
+    "wait_min_median": 9.1,
+    "wait_min_mean": 82.7,
+    "matched_63_auto_wait_min_quantiles_10_25_50_75_90": [
+     0.1,
+     0.54,
+     14.7,
+     124.6,
+     365.8
+    ]
+   }
+  },
+  {
+   "id": "C6",
+   "claim": "Executed auto-bets in the study window: rule effect at decision time",
+   "data": {
+    "window": "Oct 3 17:56 to Oct 5 19:57 ET",
+    "bets": 62,
+    "games": 29,
+    "stake_usd": 104.5,
+    "per_day_bets": 27.5,
+    "per_day_usd": 46.3,
+    "le6h": {
+     "bets": 28,
+     "games": 14,
+     "clv_pct": 2.54,
+     "ci": [
+      1.15,
+      4.19
+     ]
+    },
+    "gt6h": {
+     "bets": 34,
+     "games": 20,
+     "closes": 33,
+     "clv_pct": 1.68,
+     "ci": [
+      0.19,
+      3.18
+     ]
+    },
+    "gap_pts": 0.87,
+    "gap_ci": [
+     -1.16,
+     3.29
+    ],
+    "p_gap_le_0": 0.19,
+    "rule_keep": {
+     "bets": 27,
+     "games": 14,
+     "clv_pct": 2.59,
+     "ci": [
+      1.13,
+      4.19
+     ],
+     "per_day_bets": 11.97,
+     "per_day_usd": 19.5
+    },
+    "rule_drop": {
+     "bets": 35,
+     "games": 20,
+     "closes": 34,
+     "clv_pct": 1.67,
+     "ci": [
+      0.24,
+      3.09
+     ],
+     "usd": 60.6
+    },
+    "share_bets_dropped": 0.56,
+    "share_usd_dropped": 0.58,
+    "falling_flag": {
+     "window_bets": 2,
+     "all_auto_bets_with_record": 3,
+     "of": 99
+    },
+    "clv_usd_per_day": {
+     "all": 0.945,
+     "kept": 0.56,
+     "dropped": 0.386
+    },
+    "by_day_gap_pts": {
+     "oct3": "kept 4.33 (5) vs dropped 2.40 (11)",
+     "oct4": "kept 0.75 (12) vs dropped 1.23 (20)",
+     "oct5": "kept 3.91 (10) vs dropped 1.91 (3)"
+    },
+    "pre_window_oct2": {
+     "bets": 37,
+     "closes": 34,
+     "gap_pts": 6.78,
+     "gap_ci": [
+      2.15,
+      11.84
+     ]
+    },
+    "all_99": {
+     "le6h": {
+      "bets": 41,
+      "clv_pct": 3.23,
+      "ci": [
+       1.86,
+       4.92
+      ]
+     },
+     "gt6h": {
+      "bets": 58,
+      "clv_pct": 0.22,
+      "ci": [
+       -1.8,
+       1.92
+      ]
+     },
+     "rule_keep": {
+      "bets": 40,
+      "clv_pct": 3.27
+     },
+     "rule_drop": {
+      "bets": 59,
+      "clv_pct": 0.25
+     },
+     "gap_pts": 3.03,
+     "gap_ci": [
+      0.77,
+      5.87
+     ]
+    }
+   }
+  },
+  {
+   "id": "C7",
+   "claim": "Waiting for the edge makes executed long-lead bets better than first-look suggests",
+   "data": {
+    "matched_long_gt6h": {
+     "n": 30,
+     "real_clv_pct": 1.85,
+     "first_look_clv_pct": 0.63,
+     "price_improved": 16,
+     "median_wait_min": 29,
+     "ev_first_pct": 1.81,
+     "ev_placed_pct": 3.5
+    },
+    "matched_short_le6h": {
+     "n": 27,
+     "real_clv_pct": 2.48,
+     "first_look_clv_pct": 1.9,
+     "price_improved": 7,
+     "median_wait_min": 4
+    }
+   }
+  },
+  {
+   "id": "C8",
+   "claim": "Decision-time simulation from the study's looks",
+   "data": {
+    "recovers_real_auto": "54 of 62",
+    "recovers_builder_placeable": "45 of 47",
+    "A_24h": {
+     "bets": 108,
+     "games": 31,
+     "per_day": 47.9,
+     "clv_pct": 2.26,
+     "ci": [
+      1.37,
+      3.24
+     ],
+     "usd_per_day_qk": 91.5,
+     "clv_usd_per_day_qk": 2.0
+    },
+    "B_6h": {
+     "bets": 76,
+     "games": 26,
+     "per_day": 33.7,
+     "clv_pct": 3.05,
+     "ci": [
+      2.39,
+      3.87
+     ]
+    },
+    "C_6h_plus_gate": {
+     "bets": 73,
+     "games": 26,
+     "per_day": 32.4,
+     "closes": 70,
+     "clv_pct": 3.2,
+     "ci": [
+      2.51,
+      4.05
+     ],
+     "usd_per_day_qk": 60.2,
+     "clv_usd_per_day_qk": 1.87
+    },
+    "dropped_A_minus_C": {
+     "bets": 35,
+     "games": 18,
+     "closes": 33,
+     "clv_pct": 0.2,
+     "ci": [
+      -2.92,
+      2.58
+     ],
+     "clv_usd_per_day_qk": 0.09
+    },
+    "kept_minus_dropped_pts": 3.01,
+    "gap_ci": [
+     0.62,
+     6.51
+    ],
+    "p_gap_le_0": 0.005,
+    "gate_removes": {
+     "bets": 3,
+     "clv_each_pct": [
+      1.49,
+      -0.2,
+      -2.83
+     ]
+    },
+    "A_bets_with_decision_lead_gt_6h": 40,
+    "of_which_replaced_within_6h": 8,
+    "first_listed_gt_6h_and_placeable": 46,
+    "of_which_still_placed_under_6h_guard": 14,
+    "halves_loader_cut_Oct4": {
+     "C_first": {
+      "closes": 55,
+      "games": 21,
+      "clv_pct": 3.04
+     },
+     "C_second": {
+      "closes": 15,
+      "games": 5,
+      "clv_pct": 3.79
+     },
+     "dropped_first": {
+      "closes": 28,
+      "clv_pct": 1.06
+     },
+     "dropped_second": {
+      "closes": 5,
+      "games": 2,
+      "clv_pct": -4.61
+     }
+    }
+   }
+  },
+  {
+   "id": "C9",
+   "claim": "Code mapping",
+   "data": {
+    "six_h": "ScanSettings.trapEarlyHours (data/scanner/ScanSettings.kt), TrapGuard.EARLY_CHOICES chip 6 and typed hours, TrapGuard.early/isEarly, applied in AlertPicks.cnoCandidates (app/AutoScan.kt) before take(AUTO_BET_CHECK_TOP=10) and in AutoBettor.runPinnacle; shared by auto-bet, alerts and bids; not in PresetRules (data/scanner/Presets.kt)",
+    "falling_edge": "no setting; new clause in AutoBet.judge (data/novig/trading/AutoBet.kt) comparing check.ev (CnoBooks.check: lower of mean and median of per-company worst-case devigs, judged at Novig's price now) with shownEv (CNO's conservative-devig fair at the live price); AutoBet.judge already requires check.ev>0 and 3 agreeing; needs AutoBet.Rules, ScanSettings, PresetRules (defaulted), AutoBetUi, Diagnostics, tests; not applicable to runPinnacle",
+    "sharp_veto_untouched": "data/scanner/SharpVeto.kt"
+   }
+  },
+  {
+   "id": "C10",
+   "claim": "Caps and stakes",
+   "data": {
+    "auto_bet_cap_usd": 3.5,
+    "api_cap_per_bet_usd": 5.0,
+    "day_cap_usd": 500,
+    "game_cap_usd": 70,
+    "real_largest_auto_stake_usd": 2.9,
+    "real_median_auto_stake_usd": 1.6,
+    "real_avg_staked_per_day_usd_window": 46.3,
+    "real_largest_staked_day_usd_window": 57.1,
+    "real_max_auto_exposure_one_game_usd": 14.3,
+    "first_look_placeable_max_game_usd_qk": 14.0,
+    "first_look_placeable_max_game_usd_cap5": 31,
+    "median_available_usd": 72,
+    "share_placeable_with_available_lt_5": 0.09
+   }
+  },
+  {
+   "id": "C11",
+   "claim": "Closes by arm in the universe (all props)",
+   "data": {
+    "kept": {
+     "tracker": 27,
+     "novig_trades": 6,
+     "pinnacle": 1,
+     "none": 5
+    },
+    "dropped": {
+     "tracker": 16,
+     "novig_trades": 14,
+     "pinnacle": 0,
+     "none": 6
+    },
+    "tracker_clv_kept_pct": 3.74,
+    "tracker_clv_dropped_pct": -1.45,
+    "non_tracker_kept_pct": 1.5,
+    "non_tracker_dropped_pct": -0.02,
+    "tracker_closes_exist_only_for_placed": true,
+    "no_close_share": 0.147
+   }
+  },
+  {
+   "id": "C12",
+   "claim": "Page-read coverage",
+   "data": {
+    "shown_base_within_6h": {
+     "bets": 76,
+     "page_read": 48,
+     "share": 0.63
+    },
+    "shown_base_6_24h": {
+     "bets": 106,
+     "page_read": 27,
+     "share": 0.25
+    },
+    "unread_within_6h_bets": 28,
+    "unread_within_6h_closes": 12,
+    "unread_within_6h_clv_pct": 2.67,
+    "unread_ci": [
+     -0.13,
+     5.45
+    ]
+   }
+  },
+  {
+   "id": "C13",
+   "claim": "Bids side effect of the shared guard",
+   "data": {
+    "filled_bids_with_close": 16,
+    "posted_gt_6h": {
+     "n_closes": 7,
+     "clv_pct": 3.52
+    },
+    "posted_le_6h": {
+     "n_closes": 9,
+     "clv_pct": 1.83
+    }
+   }
+  },
+  {
+   "id": "C14",
+   "claim": "Games needed to settle the 6 h and gate question on executed auto-bets (80% power, one-sided .05)",
+   "data": {
+    "per_game_sd_pts": [
+     2.9,
+     5.9
+    ],
+    "games_per_arm_for_2pts": [
+     26,
+     108
+    ],
+    "games_per_arm_for_1pt": [
+     104,
+     430
+    ],
+    "dropped_arm_games_per_day": 8.9,
+    "days_for_2pts": [
+     3,
+     12
+    ],
+    "days_for_1pt": [
+     12,
+     48
+    ],
+    "needs_no_code": "atBet already records minutesToStart, ev and checkEv for every auto-bet"
+   }
+  }
+ ]
+}
