@@ -1085,14 +1085,15 @@ class AutoBettorTest {
         app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
         // On, and Novig doesn't answer (Tj, 2026-10-07, proposal 10): the game line is skipped, not bet unchecked, and the report says so.
         val on = settings { it.copy(trapEarlyHours = 12) }
-        val failing = bettor(novig, trades = { reads++; throw java.io.IOException("HTTP 429") })
+        val novig3 = FakeNovig()
+        val failing = bettor(novig3, trades = { reads++; throw java.io.IOException("HTTP 429") })
         val unread = failing.run(on, ohioState(on))
         assertEquals(0, unread.placed.size)
-        assertEquals(0, novig.orders.get())
+        assertEquals(0, novig3.orders.get())
         assertEquals(1, unread.skipped[AutoBettor.MOVE_UNREAD_SKIP])
         assertTrue(reads > 0)
         // The next cycle reads again; with the trades back the bet goes through, and its record says what was read.
-        assertEquals(1, bettor(novig, trades = { movedTrades(otherSide = 0.0) }).run(on, ohioState(on)).placed.size)
+        assertEquals(1, bettor(novig3, trades = { movedTrades(otherSide = 0.0) }).run(on, ohioState(on)).placed.size)
         assertTrue(app.container.tracker.all().single().atBet!!.novigMove!!.startsWith("CLEAR"))
         // A prop never asks, so a failing read can't stop it.
         app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
