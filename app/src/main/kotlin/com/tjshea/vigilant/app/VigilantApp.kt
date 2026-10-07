@@ -74,6 +74,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
@@ -693,7 +694,10 @@ class AppContainer(private val app: Application) {
         // switched off or scanning pauses (the background cycle doesn't run while paused, and an empty wallet pauses it).
         appScope.launch {
             runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.filter { it.finished > 0 && !it.scanning }.collect {
-                runCatching { maker.run("after a scan") }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e }
+                // Bids priced from CrazyNinjaOdds have their own pass in the background cycle: a Vigilant scan's end is no reason for one.
+                if (currentSettings().makerSource == com.tjshea.vigilant.data.scanner.BidSource.VIGILANT) {
+                    runCatching { maker.run("after a scan") }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e }
+                }
             }
         }
         // And while a scan runs (Tj, 2026-10-03: "it didn't actually make any bids by itself"): each league's lines are bid on once its fair odds are
@@ -701,7 +705,7 @@ class AppContainer(private val app: Application) {
         appScope.launch {
             runner.state.filter { it.scanning && it.result?.partial == true }.map { it.result }.distinctUntilChanged { a, b -> a === b }.conflate().collect {
                 val s = currentSettings()
-                if (!s.paused && AppBook.isNovig && (s.maker || s.makerRecommend)) {
+                if (!s.paused && AppBook.isNovig && (s.maker || s.makerRecommend) && s.makerSource == com.tjshea.vigilant.data.scanner.BidSource.VIGILANT) {
                     runCatching { maker.run("during a scan") }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e }
                     kotlinx.coroutines.delay(MAKER_SCAN_PASS_MS)
                 }
@@ -718,6 +722,14 @@ class AppContainer(private val app: Application) {
                         .onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Make orders", e.message ?: e.javaClass.simpleName) } }
                     kotlinx.coroutines.delay(WALLET_CHECK_GAP_MS)
                 }
+        }
+        // A new source for bids ([ScanSettings.makerSource]): the bids the old one priced were judged on data the new one doesn't have, so the ones auto-make posted come down (the ones
+        // Tj approved by hand stay); the next pass bids from the new source.
+        appScope.launch {
+            settingsStore.flow.filterNotNull().map { it.makerSource }.distinctUntilChanged().drop(1).collect { source ->
+                runCatching { maker.cancelAuto("Bids are now priced from ${source.displayName}") }
+                    .onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Make orders", e.message ?: e.javaClass.simpleName) } }
+            }
         }
         appScope.launch {
             // Paused (the Pause button, or the wallet ran out): every bid down. Auto-make switched off: the bids it posted down; the ones Tj approved stay.
@@ -1042,6 +1054,31 @@ class AppContainer(private val app: Application) {
 
     /** ESPN's injury list through ParlayAPI (1 credit a league, 10 min apart) for listed or open prop bets no props answer covered. */
     val parlayInjuries = com.tjshea.vigilant.data.reference.ParlayInjuries(parlayOdds, injuries, json, active = { parlayActive() })
+
+    /**
+     * What bids priced from CrazyNinjaOdds read and judge (Tj, 2026-10-07; [com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane], RESEARCH.md §114): the background cycle calls its `step`,
+     * the Make pass its `lines`. Nothing in it runs unless Settings' "Bids priced from" is CrazyNinjaOdds and bids are on.
+     */
+    val cnoBids = com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane(
+        cno = cno,
+        novig = { rows -> live.targetsNow(rows) },
+        urlFor = { s -> UiState(settings = s, loaded = true).cnoUrl },
+        askInjuries = { rows -> askCnoInjuries(rows) },
+        count = { key, n -> eventLog.count(key, n) },
+    )
+
+    /** The prop players of [rows] no injury report covers yet are asked about (one read a sport at most every [com.tjshea.vigilant.data.reference.ParlayInjuries.REUSE_MS], and only with ParlayAPI on). */
+    private fun askCnoInjuries(rows: List<CnoRow>) {
+        val now = System.currentTimeMillis()
+        val book = injuries.book.value
+        val uncovered = HashMap<String, MutableSet<String>>()
+        for (r in rows) {
+            val want = com.tjshea.vigilant.data.reference.InjuryTags.wantOf(r) ?: continue
+            if (want.sportKey !in com.tjshea.vigilant.data.reference.ParlayInjuries.SPORTS || book.covers(want.sportKey, want.player, now)) continue
+            uncovered.getOrPut(want.sportKey) { HashSet() } += want.player
+        }
+        uncovered.forEach { (sport, players) -> appScope.launch { parlayInjuries.fill(sport, players) } }
+    }
 
     /** ParlayAPI's own +EV list at Novig (its /best-bets, 10 credits a league, only on a tap; PARLAY_API.md §6.5). */
     val parlayBestBets = com.tjshea.vigilant.data.reference.ParlayBestBets(parlayOdds, json, active = { parlayActive() })
