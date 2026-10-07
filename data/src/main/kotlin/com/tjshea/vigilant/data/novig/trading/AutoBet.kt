@@ -152,7 +152,7 @@ object AutoBet {
         // The bar a bet must clear (Tj, 2026-10-07, proposals 4 and 5): the minimum, and for a favorite more (the edge a short price keeps by the close is smaller), judged on the LOWER
         // of CNO's edge and the app's own book check's (9 of 99 bets in the first three days had a check edge under 2.5% at a CNO edge over it). Said apart from the plain minimum so
         // the report counts each on its own.
-        val own = check.ev
+        val own = check.ev?.takeIf { it > 0.0 }   // a books' edge at or under zero is the "not +EV" check's below, with its own words
         val bar = evBar(rules, american)
         if (minOf(shownEv, own ?: shownEv) < bar - 1e-9) {
             return if (own != null && own < shownEv - 1e-9) "the books' own check puts its edge at ${percent(own)}, under the ${percent(bar)} it needs (the lower of CNO's and the books' edge is used)"
