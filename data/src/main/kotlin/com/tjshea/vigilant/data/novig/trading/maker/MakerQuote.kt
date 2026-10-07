@@ -457,7 +457,7 @@ object MakerQuote {
             }
             val all = line.sharpFairs + blend
             val spread = all.max() - all.min()
-            if (false) {
+            if (spread > rules.obscureAgreePoints + 1e-9) {
                 return skip("The sharp books and the blend are ${points(spread)} apart on this small-market line (they must be within ${points(rules.obscureAgreePoints)})")
             }
         }
