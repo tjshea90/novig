@@ -28,6 +28,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.CnoScopeText
 import com.tjshea.vigilant.app.ui.CnoScreen
+import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.SettingsPage
 import com.tjshea.vigilant.app.ui.SettingsScreen
 import com.tjshea.vigilant.app.ui.VigilantTheme
