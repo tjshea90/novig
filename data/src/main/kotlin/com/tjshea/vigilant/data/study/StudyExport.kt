@@ -101,7 +101,10 @@ object StudyExport {
         val lastListedMinToStart: Long? = null,
         val gone: Boolean = false,
         val looks: Int,
+        /** Tj placed it himself, as a taker (a bet): not a bid of Vigilant's that a taker filled (see [placedAs]). */
         val placedByTj: Boolean = false,
+        /** How the Tracker holds this line, when it holds one: "bet" (a taker order) or "bid" (Vigilant's make order, filled). Null: not in the Tracker. */
+        val placedAs: String? = null,
         val placedAmerican: Int? = null,
         val marketId: String? = null,
         val outcomeId: String? = null,
@@ -163,7 +166,7 @@ object StudyExport {
             novigClose = b.novigClose,
             listedMin = ended?.let { (it.first - b.createdAtMs) / 60_000L }, lastListedMinToStart = ended?.let { (b.startsTs - it.first) / 60_000L },
             gone = ended?.second?.let { Sight.isAppGone(it.k) } == true,
-            looks = sb.sights.size, placedByTj = own != null, placedAmerican = own?.american,
+            looks = sb.sights.size, placedByTj = own != null && !own.isBid, placedAs = own?.let { BetOrBid.of(it).word }, placedAmerican = own?.american,
             marketId = b.marketId.ifBlank { null }, outcomeId = b.outcomeId.ifBlank { null },
             kind = a?.kind?.ifBlank { null }, sport = a?.sport?.ifBlank { null }, minToStartFirst = a?.minutesToStart, cnoBooks = a?.cnoBooks, booksTwoSided = a?.twoSided,
             booksAgreeing = a?.agreeing, agreeShare = a?.let { x -> x.agreeing?.let { g -> x.twoSided?.takeIf { it > 0 }?.let { n -> (g.toDouble() / n).round(4) } } },
@@ -271,7 +274,7 @@ object StudyExport {
         Extra("How long it stayed listed") { r, _ -> r.listedMin?.let(::listedBand) ?: "?" },
         Extra("Whether a scan dropped it before the start") { r, _ -> if (r.gone) "dropped off the list" else "still listed at its last look" },
         Extra("Hour of day first listed (Eastern)") { r, z -> hourOf(r.firstSeenMs, z) },
-        Extra("Tj placed it") { r, _ -> if (r.placedByTj) "yes" else "no" },
+        Extra("Tj placed it") { r, _ -> if (r.placedByTj) "yes, as a bet" else if (r.placedAs == "bid") "no, but Vigilant's bid on it filled" else "no" },
         Extra("Price moved after the first look (best listed odds vs the first)") { r, _ ->
             val f = r.american
             val bst = r.bestAmerican
@@ -441,7 +444,8 @@ object StudyExport {
         /** Vigilant's own bids (Make orders, files/maker.json): every one posted in the last 14 days, for the BIDS section. */
         bids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid> = emptyList(),
     ): Int {
-        val ownIndex = tracked.filter { !it.isLock && it.createdAtMs < it.startsTs }.groupBy { PlacedIndex.identity(it.eventName, it.marketLabel, it.selection) ?: "" }
+        // A bet Tj took comes before a bid of Vigilant's that filled on the same line (Tj, 2026-10-07: a bid is not Tj's own bet).
+        val ownIndex = tracked.filter { !it.isLock && it.createdAtMs < it.startsTs }.sortedBy { it.isBid }.groupBy { PlacedIndex.identity(it.eventName, it.marketLabel, it.selection) ?: "" }
             .filterKeys { it.isNotEmpty() }
         val all = journal.days().reversed()
         var bytes = 0L
@@ -565,6 +569,7 @@ object StudyExport {
                 out.appendLine("   " + unjudged.line("NOT JUDGED"))
             }
         }
+        betsAndBidsSection(out, tracked, now, meta.zone)
         bidSection(out, bids, tracked, now, meta.zone)
         out.appendLine()
         out.appendLine("== EVERY BET (JSON lines, newest first; $rows bets" + (if (cut > 0) ", $cut more left out of these lines but counted above" else "") + ") ==")
@@ -604,6 +609,18 @@ object StudyExport {
         out.appendLine(">>>")
     }
 
+    /**
+     * BETS AND BIDS APART (Tj, 2026-10-07): Tj's own Tracker records, the bets he took and the bids of Vigilant's that a taker filled, each with its EV, CLV and results.
+     * Not the scan-listed bets above (those are every +EV bet a scan found, one unit each): these are money placed.
+     */
+    private fun betsAndBidsSection(out: java.io.Writer, tracked: List<TrackedBet>, now: Long, zone: TimeZone) {
+        val lines = BetsAndBids.lines(tracked, now, zone.toZoneId())
+        if (lines.isEmpty()) return
+        out.appendLine()
+        out.appendLine("== BETS AND BIDS APART (Tj's own Tracker records: BETS are taker orders he placed, BIDS are Vigilant's make orders that a taker filled. Their stakes are real; a bid's EV is the edge at its fair when it was posted. Judge them apart: a bid is exposed to being picked off, a bet is not. The BIDS section below has every bid posted, filled or not) ==")
+        lines.forEach { out.appendLine(it) }
+    }
+
     private const val MAX_UNFILLED_BID_ROWS = 300
 
     private const val BID_FIELDS =
@@ -628,6 +645,7 @@ object StudyExport {
         "",
         "THE GOAL IS PROFIT: find which bets, bought when, beat the closing line (CLV) and make money. CLV is the leading indicator (it needs far fewer bets than results do); results confirm it slowly.",
         "Tj bets on Novig only, as a taker at the listed price (pregame Novig takers pay no fee) and, with the Bids tab, as a maker posting bids under its fair price.",
+        "BETS vs BIDS: a BET is a taker order (Tj's tap, the Bet sheet, the auto-bet); a BID is a make order Vigilant posted under its fair price that a taker filled. They are different kinds of record with different risks, so read them apart: BETS AND BIDS APART (after the splits) gives each its EV, CLV and results from Tj's Tracker, the BIDS section has every bid posted (filled or not), and a scan-listed bet Tj holds as a bid is marked placedAs = \"bid\" (placedByTj is true only for his own bets).",
         "BIDS: when Vigilant has posted bids (make orders) there is a BIDS section after the splits with every bid added up and split, then every filled bid and the newest unfilled ones as JSON lines. Judge bids by CLV, by how fast they were taken, and by whether the fair on the next scan was still above the price they filled at (evAtFill): a fast fill is a symptom of a stale bid, not a success. Every bid names the choice that posted it (focus: ALL, QUICK_LIKELY or LOW_USAGE), the books its fair was made from (fairBooks) and how old their prices were when it was posted (fairAgeSec, fairNewestAgeSec); LOW_USAGE bids (props only, 2-3 sharp prop books, at least 2.5% under the fair, no longer than +130, a slow scan pace) are split out by books and by the age of the prices, so judge them apart from the other bids.",
         "PINNACLE ONLY: when Tj switches it on (Settings › Scanning), Vigilant's scan prices every Novig bet against Pinnacle's devigged two-sided price ALONE (no other book, the lowest of four devigs) and the auto-bet bets what beats it on a Pinnacle price read within seconds of the order.",
         "Those bets carry atBet.pinnacleOnly = true, atBet.pinnacleAgeSec (how old Pinnacle's price was) and Pinnacle's own two-sided price in atBet.books; two splits (\"Pinnacle only\") separate them. Judge them apart from every other bet: their EV, CLV and profit are against Pinnacle alone.",
@@ -667,7 +685,7 @@ object StudyExport {
         "closeFair · closeAmerican · closeVia · closeNote: the closing line — the side's devigged fair probability at the start (and its odds), its source, and why none was found. Sources: \"ParlayAPI · Pinnacle close\" (the sharpest), \"ESPN\" (DraftKings / ESPN BET game lines only), \"Novig's last trades\" (the last half hour before the start), or \"Tracker · …\" (read before the start for a bet Tj also placed).",
         "clv · clvBest · clvLast: closeFair / cost − 1 at the first-listed price, at the best (longest) odds it was listed at, and at the last listed price. bestAmerican · lastAmerican: those prices. novigClose: Novig's own last price before the start when the Tracker read it.",
         "listedMin · lastListedMinToStart · gone: for the app's own lists (c and v; null for a bet only the wide read found): minutes from the first look to the last, how many minutes before the start the last look was, and whether a scan then dropped it (its edge fell under the filters, or CNO's row limit pushed it out).",
-        "looks · placedByTj · placedAmerican: number of looks; whether Tj also placed this bet (his own Tracker's) and at what price. marketId · outcomeId: Novig's public ids when known.",
+        "looks · placedByTj · placedAs · placedAmerican: number of looks; whether Tj also placed this bet himself as a taker (his own Tracker's), how the Tracker holds the line (placedAs: \"bet\" = a taker order, \"bid\" = Vigilant's make order that filled; placedByTj is false for a bid) and at what price. marketId · outcomeId: Novig's public ids when known.",
         "PROPS splits and the WHAT IF section use atBet.sharpVerdict (PASSED: a sharp-ranked book that prices both sides gives Novig's price the veto's bar or more; VETOED: it gives less; NO_SHARP: none of them prices both sides), atBet.sharpBook (Kalshi, ProphetX, FanDuel, Caesars, DraftKings … the first ranked book that did) and atBet.sharpEv (its own edge at Novig's price): all from the first book page read for the bet.",
         "kind · sport · minToStartFirst · cnoBooks · booksTwoSided · booksAgreeing · agreeShare · available · sharpVerdict: the most used fields of atBet at the top level. cnoBooks = books behind CNO's fair price (on every row); booksTwoSided = companies whose page prices both sides, booksAgreeing = those whose own fair says +EV at Novig's price, agreeShare = booksAgreeing / booksTwoSided (null when the book check wasn't made: only the top few bets get a page read).",
         "atBet: the app's record of the bet as first listed (data/.../tracker/AtBet.kt): league, sport, kind (PROP, MONEYLINE, SPREAD, TOTAL, TEAM_TOTAL, PERIOD, OTHER), minutesToStart, american, otherAmerican (the other side's price), available (Novig dollars at the price), ev, fair, cnoBooks (books behind CNO's fair), cnoOneWay, cnoListAgeSec,",
