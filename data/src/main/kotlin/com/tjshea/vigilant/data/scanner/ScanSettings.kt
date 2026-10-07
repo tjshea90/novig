@@ -325,6 +325,12 @@ data class ScanSettings(
      * paper-trades them at Tj's own measured delays. It never places or cancels anything. Off by default; STOP ALL stops it.
      */
     val burstRecorder: Boolean = false,
+    /**
+     * The live feed test (Tj, 2026-10-07: "test all available sources that can be used as a rapid source of odds or scores"; RESEARCH.md §106): while a game is live on Novig it holds the free
+     * score and odds feeds of it open, stamps each reading, and says which was first and whether any beat Novig's price ([com.tjshea.vigilant.data.live.FeedRaceRunner]). Public reads only: it
+     * places nothing and has no way to. Off by default; STOP ALL stops it.
+     */
+    val feedRace: Boolean = false,
     val burstLeagues: Set<String> = BURST_LEAGUES.toSet(),
     /**
      * The real-money burst trader (Tj, 2026-10-06: "make it good enough so that if it is proven I can just turn it on for actual money betting"; RESEARCH.md §95): OFF by default, and

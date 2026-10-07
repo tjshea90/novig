@@ -612,6 +612,10 @@ class AppContainer(private val app: Application) {
                 if (b != null) recorder.settingsChanged(b, s)
             }
         }
+        // The live feed test follows its switch and STOP ALL (public reads only, no orders; RESEARCH.md §106).
+        appScope.launch {
+            settingsStore.flow.filterNotNull().collect { s -> runCatching { feedRaceTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
+        }
         // The burst recorder follows its switch, the leagues and STOP ALL (no orders; RESEARCH.md §95).
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s -> runCatching { burstTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
@@ -942,6 +946,44 @@ class AppContainer(private val app: Application) {
             journal = burstJournal,
             windowSink = burstTrader,
         )
+    }
+
+    /** The feed race's files (RESEARCH.md §106): one journal a day under files/race, appended to, never rewritten. */
+    val feedRaceJournal = com.tjshea.vigilant.data.live.FeedRaceJournal(File(app.filesDir, "race"))
+
+    /**
+     * The live feed test (Tj, 2026-10-07): it reads the free feeds of the games live on Novig and compares them with Novig's own price. **No order**: it is given no trading client, no key and no
+     * order route, only public reads ([feedRaceFetch], the public trades and catalog).
+     */
+    val feedRace: com.tjshea.vigilant.data.live.FeedRaceRunner by lazy {
+        com.tjshea.vigilant.data.live.FeedRaceRunner(
+            scope = appScope, fetch = ::feedRaceFetch, sockets = com.tjshea.vigilant.data.live.OkHttpFeedSockets(http), liveGames = ::feedRaceGames,
+            novigTrades = { id -> novig.trades(id) }, journal = feedRaceJournal,
+        )
+    }
+
+    private suspend fun feedRaceFetch(url: String): com.tjshea.vigilant.data.live.Fetched? {
+        val t0 = System.currentTimeMillis()
+        return http.newCall(okhttp3.Request.Builder().url(url).header("User-Agent", "Mozilla/5.0").get().build()).await().use { r ->
+            if (!r.isSuccessful) null else com.tjshea.vigilant.data.live.Fetched(r.body?.string().orEmpty(), System.currentTimeMillis() - t0)
+        }
+    }
+
+    /** The games live on Novig now with their moneyline markets: what the feed test follows (one catalog read, then one for the markets, once a minute while it runs). */
+    private suspend fun feedRaceGames(): List<com.tjshea.vigilant.data.live.LiveGame> {
+        val leagues = Leagues.ALL.map { it.novigName }.toSet()
+        val statuses = listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_LIVE)
+        val live = novig.events(leagues, statuses).filter { it.status in statuses }
+        if (live.isEmpty()) return emptyList()
+        val ids = live.mapTo(HashSet()) { it.eventId }
+        val money = novig.markets(leagues, listOf("MONEY", "MONEYLINE_3_WAY_WIN", "1X2"), statuses).filter { it.eventId in ids && it.isOpen }.groupBy { it.eventId }
+        return live.map { e -> com.tjshea.vigilant.data.live.LiveGame(e.eventId, e.description, e.league, e.sport, money[e.eventId]?.firstOrNull()?.marketId) }
+    }
+
+    /** Starts or stops the feed test to match [s]: on, not STOP ALL, the Novig app. Safe to call on every settings change. */
+    fun feedRaceTick(s: ScanSettings) {
+        if (!AppBook.isNovig) return
+        if (s.feedRace && !s.killed) feedRace.start() else if (feedRace.running) feedRace.stop()
     }
 
     /** True while the settings carry a halt of the burst trader, so the Resume that clears it is told to the trader once ([burstTick]). */
