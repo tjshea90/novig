@@ -58,6 +58,10 @@ object BidReport {
         val fairNewestAgeSec: Int? = null,
         /** A small-market bid (Quick & likely's fill of the money popular bids leave idle). */
         val obscure: Boolean = false,
+        /** Which scanner priced it: "vigilant" or "cno" ([ScanSettings.makerSource]); for a CNO bid how old CNO's data behind the list and the page was when it was posted (seconds). */
+        val source: String = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
+        val listAgeSec: Int? = null,
+        val pageAgeSec: Int? = null,
         // ---- what became of it
         val status: String,
         val why: String? = null,
@@ -100,6 +104,7 @@ object BidReport {
                 lifeMin = b.expiresAtMs?.let { ((it - b.postedAtMs) / 60_000L).coerceAtLeast(0L) },
                 basis = b.fairBasis?.group,
                 focus = b.focus, fairBooks = b.fairBooks, fairAgeSec = b.fairAgeSec, fairNewestAgeSec = b.fairNewestAgeSec, obscure = b.obscure,
+                source = b.source, listAgeSec = b.listAgeSec, pageAgeSec = b.pageAgeSec,
                 status = b.status.name, why = b.why.takeIf { b.status.ended }, endedAtMs = b.endedAtMs,
                 restedMin = ((b.endedAtMs ?: now) - b.postedAtMs).coerceAtLeast(0L) / 60_000.0,
                 filled = b.filled, paid = b.paid.takeIf { b.filled > 0 }, firstFillAtMs = fillAt, fillDelaySec = b.fillDelayMs?.let { it / 1000L },
@@ -160,6 +165,11 @@ object BidReport {
         val endedBy = unfilled.groupingBy { r -> MakerStatus.entries.firstOrNull { it.name == r.status }?.label ?: r.status }.eachCount().entries.sortedByDescending { it.value }
         if (endedBy.isNotEmpty()) out += "  ended without a fill, by how: " + endedBy.joinToString(", ") { "${it.key} ${it.value}" } +
             " · fill rate among the bids that are over: ${pctOf(filled.size, filled.size + unfilled.size)} (${filled.size} of ${filled.size + unfilled.size})"
+        // Bids priced from CrazyNinjaOdds (Tj, 2026-10-07; RESEARCH.md §114) are counted from the first one posted, apart from Vigilant's, so their fill rate shows before any close does.
+        val cnoRows = rows.filter { it.source == com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO }
+        if (cnoRows.isNotEmpty()) {
+            out += "bids by which scanner priced them: CrazyNinjaOdds ${cnoRows.size} posted, ${cnoRows.count { it.filled > 0 }} filled · Vigilant's scan ${rows.size - cnoRows.size} posted, ${rows.count { it.source != com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO && it.filled > 0 }} filled"
+        }
         // Small-market bids are counted from the first one posted, before any fill ([rows] split by fill only once there are fills).
         if (rows.any { it.obscure }) out += "small-market bids (Quick & likely's fill of idle money): ${rows.count { it.obscure }} posted, ${rows.count { it.obscure && it.filled > 0 }} filled"
         if (filled.isEmpty()) return out
@@ -193,6 +203,12 @@ object BidReport {
         split("time to the start when posted", null) { BetLedger.leadBand(it.minToStartAtPost) }
         split("picked off or not (the fair on the next scan against the price filled at)", null) { it.pickedOff?.let { p -> if (p) "picked off (fair under the price)" else "still above the price" } }
         split("who posted it", null) { if (it.auto) "auto-make" else "by hand" }
+        // Which scanner priced the bid, and for CrazyNinjaOdds' how old its data was when the bid was posted: the one number that says whether a stale CNO price is what picks a bid off.
+        if (cnoRows.isNotEmpty()) {
+            split("which scanner priced the bid", null) { if (it.source == com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO) "CrazyNinjaOdds" else "Vigilant's scan" }
+            split("age of CrazyNinjaOdds' data when posted (the older of its list and the game page), CNO-priced bids", CNO_AGE_ORDER) { r -> r.takeIf { it.source == com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO }?.fairAgeSec?.let(::cnoAgeBand) }
+            split("age of CrazyNinjaOdds' list when posted, CNO-priced bids", CNO_AGE_ORDER) { r -> r.takeIf { it.source == com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO }?.listAgeSec?.let(::cnoAgeBand) }
+        }
         // Low API usage bids (RESEARCH.md §92): shown once any bid was posted by that mode (or by another one, so the two can be set side by side).
         if (rows.any { it.focus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE.name }) {
             split("which bids go up (Settings › Bids)", null) { focusLabel(it.focus) }
@@ -231,6 +247,16 @@ object BidReport {
     fun focusLabel(focus: String?): String? = focus?.let { f -> com.tjshea.vigilant.data.scanner.BidFocus.entries.firstOrNull { it.name == f }?.displayName ?: f }
 
     private val AGE_ORDER = listOf("under 1 min", "1 to 3 min", "3 to 5 min", "5 min or more")
+
+    private val CNO_AGE_ORDER = listOf("under 30 s", "30 to 60 s", "1 to 2 min", "2 min or more")
+
+    /** CrazyNinjaOdds publishes every 13-33 s (RESEARCH.md §113): bands around that, to the 2-minute limit of the default. */
+    fun cnoAgeBand(sec: Int): String = when {
+        sec < 30 -> "under 30 s"
+        sec < 60 -> "30 to 60 s"
+        sec < 120 -> "1 to 2 min"
+        else -> "2 min or more"
+    }
 
     fun ageBand(sec: Int): String = when {
         sec < 60 -> "under 1 min"
