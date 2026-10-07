@@ -110,6 +110,16 @@ class FeedRaceTest {
     }
 
     @Test
+    fun `a score that does not add up to more than before is not a play - a correction or a swap is not a score`() {
+        val g = FeedRace.Game("A" to "B")
+        g.recs += Sighting("x", "1", "A", "B", 1, 0, 1_000)    // the baseline
+        g.recs += Sighting("x", "1", "A", "B", 0, 1, 2_000)    // same total: a swap or a correction
+        g.recs += Sighting("x", "1", "A", "B", 0, 0, 3_000)    // lower: a correction down
+        g.recs += Sighting("x", "1", "A", "B", 1, 1, 4_000)    // a real play
+        assertEquals(setOf(1 to 1), FeedRace.transitions(g).keys)
+    }
+
+    @Test
     fun `tennis scores are told apart across sets by folding the set number into the games`() {
         // Set 1 ends 6-4 then set 2 starts 0-0: the totals only ever rise, so the new set is a play, not a repeat of 0-0.
         val a = FeedRace.Game("Marco Trungelliti" to "Rei Sakamoto")
