@@ -1963,6 +1963,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             autoBet = c.autoBet.status.value,
             makerBids = g.makerBids,
             maker = c.maker.status.value,
+            cnoBids = c.cnoBids.status.value.takeIf { _state.value.settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO },
             memory = memoryNow(),
             autoScanServiceRunning = AutoScanService.running,
             keepAwakeHeld = AutoScanService.keepAwakeHeld,

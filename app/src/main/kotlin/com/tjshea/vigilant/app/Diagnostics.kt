@@ -44,6 +44,8 @@ object Diagnostics {
         /** Make orders (RESEARCH.md §70): every bid on record and the last pass. */
         val makerBids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid> = emptyList(),
         val maker: MakerRunner.Status = MakerRunner.Status(),
+        /** Bids priced from CrazyNinjaOdds (RESEARCH.md §114): what the lane that reads it for them has read; null with bids priced from Vigilant's scan. */
+        val cnoBids: com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status? = null,
         /** The app's heap and what is held in it (Tj's 2026-10-01 report: an OutOfMemoryError mid-scan). */
         val memory: Memory = Memory(),
         val autoScanServiceRunning: Boolean = false,
@@ -206,6 +208,15 @@ object Diagnostics {
                 (x.maker.lastReport?.waiting?.takeIf { it.isNotEmpty() }?.let { w -> " · held back: " + w.entries.sortedByDescending { it.value }.joinToString("; ") { (why, k) -> "$k because $why" } } ?: "") +
                 (x.maker.problem?.let { " · problem: $it" } ?: ""),
         )
+        x.cnoBids?.takeIf { set.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO }?.let { c ->
+            o.appendLine(
+                "Bids priced from CrazyNinjaOdds (RESEARCH.md §113-§114; Vigilant's scan is not used for them): ${com.tjshea.vigilant.app.ui.MakerText.cnoLine(c, set.makerCnoMaxAgeSeconds)}" +
+                    (c.lastStepMs?.let { " · last read ${com.tjshea.vigilant.app.ui.Format.age(it, now)}" } ?: " · no read yet this run") +
+                    " · wide list ${c.wideRows} rows" +
+                    (c.stop?.let { " · STOPPED: $it" } ?: "") +
+                    (c.skipped.takeIf { it.isNotEmpty() }?.let { sk -> " · no line for: " + sk.entries.sortedByDescending { it.value }.take(4).joinToString("; ") { (why, k) -> "$k × $why" } } ?: ""),
+            )
+        }
         lowUsageLines(set, x.lowUsagePlan, now).forEach { o.appendLine(it) }
         x.burstReport?.let { r -> o.appendLine(); o.append(r) }
         x.feedRace?.let { lines -> o.appendLine(); o.appendLine("== LIVE FEED TEST (which free feed shows a score or odds move before Novig's price; no orders; RESEARCH.md §106) =="); lines.forEach { o.appendLine(it) } }
