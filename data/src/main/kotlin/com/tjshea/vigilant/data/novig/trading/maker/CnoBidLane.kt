@@ -169,12 +169,15 @@ class CnoBidLane(
         return now - h.readAtMs >= rereadMs
     }
 
-    /** The row each of Vigilant's CNO bids was posted from (still known), or a stand-in made from the bid. */
+    /**
+     * The row each of Vigilant's CNO bids was posted from (still known; its page holds the bid's side and its complement, so the listed row serves either), or a stand-in made from
+     * the bid. One row a page: two bids on the two sides of one line are one read.
+     */
     private fun activeBidRows(bids: List<MakerBid>, seen: Map<String, Known>): List<CnoRow> = bids.filter { it.active && it.source == CnoMakerLines.SOURCE }.map { b ->
-        seen.values.firstOrNull { k -> k.row.gameUrl != null && k.row.gameUrl == b.gameUrl && (sameSide(k.row.bet, b.selection) || com.tjshea.vigilant.data.cno.CnoBooks.complement(k.row.bet, b.selection)) }?.row
-            ?.let { if (sameSide(it.bet, b.selection)) it else it.copy(bet = b.selection) }
-            ?: standIn(b)
-    }.distinctBy { it.key + "|" + it.bet }
+        seen.values.firstOrNull { k ->
+            k.row.gameUrl != null && k.row.gameUrl == b.gameUrl && (sameSide(k.row.bet, b.selection) || com.tjshea.vigilant.data.cno.CnoBooks.complement(k.row.bet, b.selection))
+        }?.row ?: standIn(b)
+    }.distinctBy { it.key }
 
     private fun sameSide(a: String, b: String) = a.trim().equals(b.trim(), ignoreCase = true)
 
@@ -204,7 +207,7 @@ class CnoBidLane(
         val listAt = snap?.takeIf { it.cnoAgeSeconds != null }?.dataAtMs
         val seen = known
         val bidRows = activeBidRows(bids, seen)
-        val rows = (picked + bidRows).distinctBy { it.key + "|" + it.bet }.filter { held[pageKey(it)]?.view != null }
+        val rows = (picked + bidRows).distinctBy { it.key }.filter { held[pageKey(it)]?.view != null }
         val got = if (readNovig && rows.isNotEmpty()) novig(rows).also { resolved = it } else resolved
         val missed = rows.count { it.key !in got }
         val pages = ArrayList<CnoMakerLines.Page>()
