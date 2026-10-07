@@ -76,6 +76,8 @@ object AlertPicks {
     fun cno(state: UiState, minEv: Double, now: Long): List<EvAlert> =
         cnoChecked(state, minEv, now).mapNotNull { (pick, shown, check, _, link) ->
             if (check.verdict != CnoBooks.Verdict.CONFIRMED) return@mapNotNull null
+            // A player the injury reports say is out is no bet to alert on (Tj, 2026-10-07).
+            if (com.tjshea.vigilant.data.reference.PlayerOut.forTag(state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(pick.row)]) != null) return@mapNotNull null
             EvAlert(
                 scanner = SCANNER_CNO, key = MiniWindow.cnoKey(pick.row), outcomeId = CnoFeed.outcomeIdOf(link),
                 bet = pick.row.bet, market = pick.row.market, event = pick.row.event, american = shown.row.odds, ev = shown.ev,
@@ -93,6 +95,7 @@ object AlertPicks {
             val ev = o.evPercent ?: return@mapNotNull null
             val quote = o.quote ?: return@mapNotNull null
             if (ev < minEv || o.priceIsOld(now) || now - (o.bookFetchedAtMs ?: 0L) > FRESH_PRICE_MS) return@mapNotNull null
+            if (com.tjshea.vigilant.data.reference.PlayerOut.forTag(state.injuries[o.key]) != null) return@mapNotNull null
             if (TrapGuard.isEarly(o.event.startsTs, now, state.settings.trapEarlyHours)) return@mapNotNull null
             val agreement = Agreement.of(o)
             if (!agreement.agrees) return@mapNotNull null
