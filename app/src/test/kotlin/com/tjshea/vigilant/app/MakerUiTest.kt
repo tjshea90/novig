@@ -399,7 +399,7 @@ class MakerUiTest {
         type("makerMinBooksField", "4"); assertEquals(4, st.value.makerMinBooks)
         type("makerTtlField", "45"); assertEquals(45, st.value.makerTtlMinutes)
         type("makerStopField", "20"); assertEquals(20, st.value.makerStopMinutes)
-        compose.onNodeWithTag("makerOddsRange").assertExists() // +120 shortest against +160 longest is fine; flip them
+        compose.onNodeWithTag("makerOddsRange").assertDoesNotExist() // +120 shortest against +160 longest is fine; then flip them
         type("makerMaxOddsField", "110")
         compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerOddsRange"))
         compose.onNodeWithTag("makerOddsRange").assertTextContains("nothing can pass both", substring = true)
