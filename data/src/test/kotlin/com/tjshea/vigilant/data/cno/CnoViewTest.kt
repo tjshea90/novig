@@ -46,4 +46,16 @@ class CnoViewTest {
         val link = "https://crazyninjaodds.com/site/tools/positive-ev.aspx?sv_title=Props&ev_min=2_PCT_&main=1&league=2&odds_min=-200&odds_max=%2B300&site_id=17&liq_min=%2410&books_min=4"
         assertEquals("“Props” · Novig · NFL · EV ≥ 2% · odds -200 to +300 · \$10+ · 4+ books · main lines", CnoView.describe(link))
     }
+
+    @Test
+    fun `a view's league is named for each of CNO's 17 leagues and its sport when no league is set`() {
+        for (l in CnoLeagues.ALL) {
+            val link = "${CnoView.DEFAULT}&league=${l.id}"
+            assertEquals(l.label, "Novig · ${l.label} · 3+ books", CnoView.describe(link))
+        }
+        for (sp in CnoLeagues.SPORTS) assertEquals(sp.label, "Novig · ${sp.label} · 3+ books", CnoView.describe("${CnoView.DEFAULT}&sport=${sp.id}"))
+        // A league beats a sport; an id CNO added later is shown as it is rather than hidden.
+        assertEquals("Novig · NHL · 3+ books", CnoView.describe("${CnoView.DEFAULT}&sport=2&league=4"))
+        assertEquals("Novig · league 99 · 3+ books", CnoView.describe("${CnoView.DEFAULT}&league=99"))
+    }
 }

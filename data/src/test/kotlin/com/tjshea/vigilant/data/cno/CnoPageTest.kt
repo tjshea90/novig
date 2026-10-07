@@ -35,6 +35,30 @@ class CnoPageTest {
         assertEquals("./positive-ev.aspx?site_id=17&books_min=3", form.action)
     }
 
+    /** The real dropdowns (read live 2026-10-07, test resource): the form keeps each one's options, and the app's league table has the page's own ids (DI5, RESEARCH.md 85). */
+    @Test
+    fun `the form keeps the real Sport and League dropdowns' options, and the app's table matches them id for id`() {
+        val html = javaClass.getResource("/cno-page-selects.html")!!.readText()
+        val form = CnoPage.form(html)
+        assertTrue(form.hasSelect("DropDownListSport"))
+        assertTrue(form.hasSelect("DropDownListLeague"))
+        assertFalse(form.hasSelect("DropDownListNothing"))
+        val sports = form.selects.entries.first { it.key.endsWith("DropDownListSport") }.value
+        val leagues = form.selects.entries.first { it.key.endsWith("DropDownListLeague") }.value
+        assertEquals("All", leagues.first().second)
+        assertEquals("0", leagues.first().first)
+        // Every league the app offers is on CNO's page with the id the app has for it ...
+        for (l in CnoLeagues.ALL) assertEquals(l.label, l.id.toString(), form.optionValue("DropDownListLeague", l.label))
+        for (sp in CnoLeagues.SPORTS) assertEquals(sp.label, sp.id.toString(), form.optionValue("DropDownListSport", sp.label))
+        // ... and CNO offers no league the app doesn't know (a new one means this resource and CnoLeagues need a look).
+        assertEquals(CnoLeagues.ALL.map { it.label }.toSet(), leagues.drop(1).map { it.second }.toSet())
+        assertEquals(CnoLeagues.SPORTS.map { it.label }.toSet(), sports.drop(1).map { it.second }.toSet())
+        // A label's case and spacing don't matter; a league CNO doesn't have has no value.
+        assertEquals("4", form.optionValue("DropDownListLeague", "  nhl "))
+        assertNull(form.optionValue("DropDownListLeague", "ATP"))
+        assertNull(form.optionValue("DropDownListNothing", "NHL"))
+    }
+
     @Test
     fun `a page without the AJAX pieces is reported as changed, not as an empty list`() {
         try {
