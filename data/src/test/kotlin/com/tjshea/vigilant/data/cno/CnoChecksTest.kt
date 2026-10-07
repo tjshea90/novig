@@ -28,6 +28,20 @@ class CnoChecksTest {
         assertEquals(0, s.hiddenCount)
     }
 
+    /** Tj, 2026-10-07: a shortest-odds setting beside the longest one; a row shorter than it is left out and counted under its own reason. */
+    @Test
+    fun `a row shorter than the shortest odds is left out and counted, longer ones and favourites above the limit stay`() {
+        val f = CnoFilters(maxOdds = 0, minOdds = -150, minBooks = 1, minEv = 0.0)
+        val s = CnoChecks.screen(snap(row("heavy", -300, 0.80), row("edge", -150, 0.62), row("dog", 120, 0.48)), f, now)
+        assertEquals(listOf("dog", "edge"), s.picks.map { it.row.bet }.sorted())
+        assertEquals(mapOf(CnoChecks.Reason.SHORT_ODDS to 1), s.hidden)
+        // Underdogs only: every favourite goes.
+        val dogs = CnoChecks.screen(snap(row("fav", -110, 0.54), row("dog", 120, 0.48)), f.copy(minOdds = 100), now)
+        assertEquals(listOf("dog"), dogs.picks.map { it.row.bet })
+        // No limit (the default) keeps them all.
+        assertEquals(3, CnoChecks.screen(snap(row("heavy", -300, 0.80), row("edge", -150, 0.62), row("dog", 120, 0.48)), CnoFilters(maxOdds = 0, minBooks = 1, minEv = 0.0), now).picks.size)
+    }
+
     @Test
     fun `only games are listed - a futures market on CNO's list is left out and counted`() {
         // Tj, 2026-09-29: "I'm not interested in futures bets. Leave those out of the app."

@@ -1,7 +1,5 @@
 package com.tjshea.vigilant.data.novig.trading
 
-import com.tjshea.vigilant.data.cno.CnoChecks
-import com.tjshea.vigilant.data.cno.CnoFilters
 import com.tjshea.vigilant.data.novig.trading.maker.MakerQuote
 import com.tjshea.vigilant.data.novig.trading.maker.MakerRules
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -46,16 +44,14 @@ class ShortestOddsTest {
     fun `the auto-bet skips a price shorter than the limit and says so without the price`() {
         val r = AutoBet.rules(ScanSettings(autoBetMinOdds = -200))
         assertNull(AutoBet.judge(r, 0.04, check(), -200))
-        assertEquals("its odds are shorter than your −200 limit", AutoBet.judge(r, 0.04, check(), -250)?.replace('-', '−'))
+        assertEquals("its odds are shorter than your ${com.tjshea.vigilant.engine.Odds.formatAmerican(-200)} limit", AutoBet.judge(r, 0.04, check(), -250))
         val under = AutoBet.rules(ScanSettings(autoBetMinOdds = 120))
         assertNotNull(AutoBet.judge(under, 0.04, check(), -110))
         assertNotNull(AutoBet.judge(under, 0.04, check(), 119))
         assertNull(AutoBet.judge(under, 0.04, check(), 120))
     }
 
-    private fun check() = com.tjshea.vigilant.data.cno.CnoBooks.Check(
-        verdict = com.tjshea.vigilant.data.cno.CnoBooks.Verdict.PASSED, twoSided = 4, agreeing = 4, ev = 0.05, books = emptyList(),
-    )
+    private fun check() = com.tjshea.vigilant.data.cno.CnoBooks.Check(4, 0, 0.51, 4, 100, 0.05, com.tjshea.vigilant.data.cno.CnoBooks.Verdict.CONFIRMED)
 
     @Test
     fun `the feed hides a price outside either odds limit`() {
@@ -73,18 +69,6 @@ class ShortestOddsTest {
         assertTrue(dogs.withinOdds(cost(250)))
         // None by default.
         assertTrue(ScanSettings().withinMinOdds(0.95))
-    }
-
-    @Test
-    fun `CNO's list drops a row shorter than the limit and counts it by its own reason`() {
-        val f = CnoFilters(maxOdds = 0, minOdds = -150, minBooks = 1, minEv = 0.0)
-        val row = { odds: Int -> com.tjshea.vigilant.data.cno.CnoRowFixtures.row(odds = odds) }
-        val screened = CnoChecks.screen(
-            com.tjshea.vigilant.data.cno.CnoSnapshot(rows = listOf(row(-300), row(-150), row(120)), fetchedAtMs = 0L, updatedAtMs = 0L),
-            f, now = 0L,
-        )
-        assertEquals(mapOf(CnoChecks.Reason.SHORT_ODDS to 1), screened.hidden)
-        assertEquals(2, screened.picks.size)
     }
 
     @Test
