@@ -62,6 +62,18 @@ object QuickLikely {
     /** Whether [s] bids this way. */
     fun on(s: ScanSettings): Boolean = s.makerFocus == BidFocus.QUICK_LIKELY
 
+    /**
+     * The small-market fill in plain words, with Tj's own numbers (Tj, 2026-10-07: "include obscure bids as well, up to the max amount of money ... prioritize the bids, popular large
+     * markets most likely to get a taker first, then if there is room, obscure bids ... strict safeguards").
+     */
+    fun obscureNote(s: ScanSettings): String {
+        fun pct(v: Double) = String.format(java.util.Locale.US, "%.2f", v * 100).trimEnd('0').trimEnd('.') + "%"
+        return "When the popular bids don't use all the money you allow, small markets (a kind takers rarely trade, or a line few books price) get bids too: only after every popular bid, " +
+            "only where a sharp book prices the line both ways, with every sharp book giving the bid at least ${pct(s.makerObscureSharpMinEv)} on its own, the sharp books and the blend within " +
+            "${pct(s.makerObscureAgreePoints)} of each other, at least ${s.makerObscureMinBooks} books pricing the line, the bid at least ${pct(s.makerObscureMargin)} under the fair, and " +
+            "${pct(s.makerObscureStake)} of a popular bid's stake. A small-market bid comes down to make room when a popular bid is waiting. The Bids tab and Diagnostics count them apart."
+    }
+
     /** What this focus does, in a few sentences for the Bids tab (the numbers above). */
     const val EXPLAINER =
         "Only player props and team totals (they fill: 8-11% of bids within an hour at these prices; game lines 1-2%), only the kinds of market takers actually trade (never a longest-rush or " +

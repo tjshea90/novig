@@ -544,6 +544,23 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) {
             RuleChips("Smallest market for quick bids: fewest books that price the line (a line fewer books price is a small market)", ScanSettings.MAKER_QUICK_MIN_BOOKS_CHOICES, s.makerQuickMinBooks, { "$it+" }) { v -> onUpdate { it.copy(makerQuickMinBooks = v) } }
             TypedIntField(NumberSpecs.count("books", 1, 20), s.makerQuickMinBooks, "makerQuickMinBooksField", none = { false }) { v -> onUpdate { it.copy(makerQuickMinBooks = v) } }
+            SwitchRow(
+                "Fill leftover money with small markets",
+                com.tjshea.vigilant.data.novig.trading.maker.QuickLikely.obscureNote(s),
+                s.makerObscureFill, "makerObscureFill", noteTag = "makerObscureNote",
+            ) { on -> onUpdate { it.copy(makerObscureFill = on) } }
+            if (s.makerObscureFill) {
+                RuleChips("Small-market bids: at least this far under the fair", ScanSettings.MAKER_OBSCURE_MARGIN_CHOICES, s.makerObscureMargin, MakerRulesText::pct) { v -> onUpdate { it.copy(makerObscureMargin = v) } }
+                TypedPercentField(NumberSpecs.percent("under the fair", ScanSettings.MAKER_MARGIN_MIN * 100, ScanSettings.MAKER_MARGIN_MAX * 100), s.makerObscureMargin, "makerObscureMarginField") { v -> onUpdate { it.copy(makerObscureMargin = v) } }
+                RuleChips("Every sharp book must give a small-market bid at least this edge on its own", ScanSettings.MAKER_OBSCURE_SHARP_MIN_EV_CHOICES, s.makerObscureSharpMinEv, MakerRulesText::pct) { v -> onUpdate { it.copy(makerObscureSharpMinEv = v) } }
+                TypedPercentField(NumberSpecs.percent("sharp edge", 0.1, 20.0), s.makerObscureSharpMinEv, "makerObscureSharpMinEvField") { v -> onUpdate { it.copy(makerObscureSharpMinEv = v) } }
+                RuleChips("The sharp books and the blend must sit within (points of probability)", ScanSettings.MAKER_OBSCURE_AGREE_CHOICES, s.makerObscureAgreePoints, MakerRulesText::pct) { v -> onUpdate { it.copy(makerObscureAgreePoints = v) } }
+                TypedPercentField(NumberSpecs.percent("points apart", 0.1, 20.0), s.makerObscureAgreePoints, "makerObscureAgreeField") { v -> onUpdate { it.copy(makerObscureAgreePoints = v) } }
+                RuleChips("Fewest books that must price a small-market line", ScanSettings.MAKER_OBSCURE_MIN_BOOKS_CHOICES, s.makerObscureMinBooks, { "$it+" }) { v -> onUpdate { it.copy(makerObscureMinBooks = v) } }
+                TypedIntField(NumberSpecs.count("books", 1, 20), s.makerObscureMinBooks, "makerObscureMinBooksField", none = { false }) { v -> onUpdate { it.copy(makerObscureMinBooks = v) } }
+                RuleChips("A small-market bid stakes this share of a popular bid's", ScanSettings.MAKER_OBSCURE_STAKE_CHOICES, s.makerObscureStake, MakerRulesText::pct) { v -> onUpdate { it.copy(makerObscureStake = v) } }
+                TypedPercentField(NumberSpecs.percent("share of the stake", 5.0, 100.0), s.makerObscureStake, "makerObscureStakeField") { v -> onUpdate { it.copy(makerObscureStake = v) } }
+            }
         }
         if (!lowUsage) {
             Text("Kinds of bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
