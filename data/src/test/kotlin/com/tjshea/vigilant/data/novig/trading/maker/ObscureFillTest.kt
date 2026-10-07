@@ -88,7 +88,7 @@ class ObscureFillTest {
     fun `a small market gets a bid only where a sharp book prices the line - even with the sharp requirement turned off`() {
         assertTrue(why(line("o", small, sharp = emptyList())).contains("a sharp book must agree"))
         val noRequire = rules(g = { it.copy(requireSharp = false) })
-        assertTrue(why(line("o", small, sharp = emptyList()), noRequire).contains("a small market gets a bid only where a sharp book"))
+        assertTrue(why(line("o", small, sharp = emptyList()), noRequire).contains("small market gets a bid only where a sharp book"))
         // A popular line is not held to it (its own rules decide).
         assertTrue(decide(line("p", sharp = emptyList()), noRequire) is MakerDecision.Post)
     }
@@ -194,13 +194,13 @@ class ObscureFillTest {
 
     @Test
     fun `the dollars are made room for too - the least valuable small-market bids come down first, and no more than the popular bid needs`() {
-        // Cap of $6 up: two small-market bids resting (about $2.4 each) and a $4.8 popular bid wanted: both small ones must go.
+        // Cap of $6 up: two small-market bids resting ($2.40 each: 500 contracts at 48 cents) and a $4.80 popular bid wanted: both small ones must go.
         val r = rules(g = { it.copy(maxBids = 10, maxDollars = 6.0) })
-        val weak = resting("o1", obscure = true, leads = false).copy(evAtFair = 0.04)
-        val strong = resting("o2", obscure = true, leads = true).copy(evAtFair = 0.09)
+        val weak = resting("o1", obscure = true, leads = false, contracts = 500).copy(evAtFair = 0.04)
+        val strong = resting("o2", obscure = true, leads = true, contracts = 500).copy(evAtFair = 0.09)
         val plan = MakerPlan.plan(listOf(post("p", false)), listOf(weak, strong), r, now)
         assertEquals(listOf("o1-over", "o2-over"), plan.cancels.map { it.first.outcomeId })
-        // A cheaper popular bid needs only one of them gone (the weaker, first).
+        // A cheaper popular bid ($2.40) needs only one of them gone (the weaker, first).
         val oneNeeded = MakerPlan.plan(listOf(post("p", false, cost = 500)), listOf(weak, strong), r, now)
         assertEquals(listOf("o1-over"), oneNeeded.cancels.map { it.first.outcomeId })
     }
