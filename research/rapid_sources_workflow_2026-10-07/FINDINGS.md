@@ -2,7 +2,7 @@
 
 One section per agent, scouts first. Raw per-agent files: `results/<label>.json`; each run's raw journal: `journal.<run>.jsonl`. Rendered by `tools/research/save_workflow.py`.
 
-Results saved so far: 6
+Results saved so far: 7
 
 
 ## scout:1-medium-fastapi-odds-tracker
@@ -973,3 +973,137 @@ TECHNIQUE: the subscribe, buffer, then snapshot handoff with per-client sequence
   - Nothing needs testing from this source; it should be skipped. Do not run automated polls against oddsportal.com, betexplorer.com or flashscore.com (terms bar automated requests and scraping). Residential proxies buy nothing on a phone, which already has a clean home or carrier IP.
   - Optional, manual and about 3 minutes: put one live NBA or tennis OddsPortal match page next to Novig in split screen and screen-record at 60 fps. Later, count frames between a Novig price move and OddsPortal's displayed move. This is personal viewing, not automation. A lag of 15 s or more confirms it is behind CNO and Novig makers, so stop there.
   - If Tj wants to use the one useful technique on a source that allows it: open Chrome DevTools remote debugging for the phone's browser, filter Network to 'WS', load a public page, and note the socket URL, the frame JSON, and whether frames carry a server timestamp. Compare that timestamp to the response's Date header. Only do this on a feed with no ban on automated access, such as Polymarket, Kalshi or Sofascore, which are already known.
+
+## scout:7-scrapingproxies-websocket-scraping
+
+- **source_url**: https://scrapingproxies.best/blog/web-scraping/websocket-scraping/
+- **kind**: tutorial
+- **what_it_is**: A generic, undated-author SEO article titled "WebSocket Scraping: A Modern Approach to Real-Time Data Collection" on a proxy-review site (scrapingproxies.best). Author "Zack Cohen"; visible "Last updated January 06, 2026"; JSON-LD datePublished 2026-01-06T12:45:44Z, dateModified 2026-01-06T12:51:42Z. I read it in full (WebFetch plus a raw curl, 90,485 bytes, HTTP 200, Date header 2026-10-07 23:51 GMT, and parsed the text myself). It teaches four steps (connect with a WebSocket client, listen, parse JSON, store) and gives one Python class (websocket-client WebSocketApp, reconnect up to 10 times at 5 s, writes JSON every 100 messages) pointed at Binance's BTCUSDT trade stream. Sports betting appears in exactly one bullet in "Common Use Cases" ("Betting sites update odds constantly during matches, and WebSocket scraping can record those changes as they happen") and "live sports scores" in two generic sentences. It names no sportsbook, odds feed, exchange, API vendor, proxy vendor or price. The raw HTML has zero hits for sportsbook, pinnacle, polymarket, kalshi, betfair, kambi or draftkings. It is not a feed and not a vendor.
+- **upstream_data_source**: None. The only upstream in the article is Binance's public crypto stream (wss://stream.binance.com:9443/ws/btcusdt@trade), irrelevant to odds or scores. For the sockets that do matter to Vigilant I traced the upstream myself: Polymarket's market socket is Polymarket's own order book (first-party exchange, verified by a live connection); Kalshi's is its own exchange; Pinnacle's and Betfair's are first-party and closed or account-bound (see key_claims).
+- **push_or_poll**: Push (WebSocket) is the technique. The article's code is a push client, but it adds no server timestamp: it stamps each message with local datetime.now() as 'scraped_at' (receipt time), which proves nothing about the age of the price. A socket removes the poll interval only; the price is as old as the source's own update. Betfair's stream with a delayed key shows this: conflateMs forced to 180000.
+- **claimed_latency_or_refresh**: The article's only speed claim: "WebSocket scraping allows you collect live data the moment it appears." No numbers. (Adjacent marketing seen in search snippets, not verified: pinnapi "15-40 ms" and odds-api.io "<150 ms"; both are vendor claims and out of scope.)
+- **measured_or_verified_age**: Nothing measured for this source itself (it carries no data). Side measurement, 2026-10-07 about 23:55 GMT, from this container: Polymarket's public market socket (wss://ws-subscriptions-clob.polymarket.com/ws/market), no key, HTTP 101 upgrade on the first try. Two 20-25 s connections on the LAD-ATL MLB moneyline tokens gave 41 JSON events in the second (4 book snapshots, 36 price_change, 1 last_trade_price). Receipt time minus the message's own millisecond 'timestamp' field: median 0.02 s, p90 0.03 s, max 0.82 s (the max is the initial book snapshot). The container clock agreed with Cloudflare's Date header to within its 1 s resolution, so treat the sub-second values as 'tens of milliseconds, at most'. This only says Polymarket stamps what it pushes within about 20 ms of sending; it does not say how old the underlying price is relative to the real game (that needs the phone-side comparison with Novig's re-quote). Polymarket was already on the known list; this just confirms it needs no account.
+- **coverage**: None for sports from the source. For the sockets the task asked me to check: (1) Polymarket CLOB market socket and sports score socket: public, free, push, US sports and props listed as markets (the MLB event had moneyline, spread, totals, first-five-innings spreads); sports score socket documented at wss://sports-api.polymarket.com/ws with no subscription frame and no general timestamp field in the payload (only optional finishedAt). (2) Kalshi: socket exists but needs API-key headers even for public channels. (3) Pinnacle: no socket in the official documentation; API closed to the public. (4) Betfair: stream exists, account-bound, not offered in the US as far as I could tell (second-hand). (5) Kambi: B2B feed to operators; no public socket found.
+- **price_and_free_tier**: The article is free to read and its code needs no paid service (no vendor, no pricing on the page). Adjacent prices I did read on primary pages: Betfair live app key activation fee GBP 499, debited from a funded Betfair account (Betfair Application Keys page, version stamped 2026-05-07; one search summary said GBP 299, the page itself says 499, so use 499); Betfair's delayed key is free but delayed 1-180 s (conflateMs 180000 on the stream). Kalshi's rate-limit page (read today) says Basic tier needs "complete account signup" (read 200 tokens/s, write 100 tokens/s); I did not find a price. Pinnacle: bespoke access only by emailing api@pinnacle.com, funded account required, odds endpoints limited to 1 request per 2 minutes per endpoint per sportId. Polymarket sockets: no key, no price, no documented limit.
+- **terms_notes**: The article's own words on rules: "Stay within the rules, avoid placing extra load on servers, and build your scraper responsibly!" and, under challenges, "Many WebSocket services require valid login credentials, and you often must authenticate on the website before you can access the socket stream." It cites no site terms and no legal point. Scraping a sportsbook's consumer socket (what the tutorial implies by DevTools capture) would break: the book's terms of use (not read, and per this task's rules I did not probe any bookmaker's consumer API), session/cookie/token authentication, geolocation checks, per-IP and per-account rate limits and bans (the article's own list), compression/custom framing, and silent protocol changes; a phone app doing it would also put Tj's account at risk. The sanctioned routes all carry conditions: Pinnacle API "closed for the general public since July 23rd, 2025" and requires a funded account; Betfair requires a funded, verified account and a paid live key; Kalshi requires an account key. Site note: scrapingproxies.best has no named operator on its About page and no affiliate disclosure, but reviews paid proxy vendors, so treat it as marketing content (INFERRED).
+- **key_claims**:
+  -
+    - **claim**: The article is a generic technique tutorial; its only socket is Binance BTCUSDT; it names no sportsbook, odds feed or exchange and no vendor or price.
+    - **status**: VERIFIED
+    - **evidence_url**: https://scrapingproxies.best/blog/web-scraping/websocket-scraping/
+    - **quote**: websocket_url = "wss://stream.binance.com:9443/ws/btcusdt@trade" (and zero hits in the raw HTML for sportsbook, pinnacle, polymarket, kalshi, betfair, kambi, draftkings)
+  -
+    - **claim**: Page date and author: published and last modified 2026-01-06; author Zack Cohen.
+    - **status**: VERIFIED
+    - **evidence_url**: https://scrapingproxies.best/blog/web-scraping/websocket-scraping/
+    - **quote**: Last updated January 06, 2026 ... Written by Zack Cohen; JSON-LD dateModified 2026-01-06T12:51:42+00:00
+  -
+    - **claim**: The article says WebSocket scraping can capture live odds movement from betting sites. This is an unsupported assertion with no site named, no code, and no age or latency evidence.
+    - **status**: CLAIM_ONLY
+    - **evidence_url**: https://scrapingproxies.best/blog/web-scraping/websocket-scraping/
+    - **quote**: Betting sites update odds constantly during matches, and WebSocket scraping can record those changes as they happen.
+  -
+    - **claim**: The article itself admits many socket feeds need a login, which rules out a no-account phone app for those feeds.
+    - **status**: VERIFIED
+    - **evidence_url**: https://scrapingproxies.best/blog/web-scraping/websocket-scraping/
+    - **quote**: Many WebSocket services require valid login credentials, and you often must authenticate on the website before you can access the socket stream.
+  -
+    - **claim**: The sample code is not fit for odds work as written: it imports `websocket` (websocket-client) while the text recommends `websockets`; it sets no headers or proxy; and it records only local receipt time ('scraped_at'), never the server's price timestamp, so it cannot show a price's age (the bar for 'rapid').
+    - **status**: VERIFIED
+    - **evidence_url**: https://scrapingproxies.best/blog/web-scraping/websocket-scraping/
+    - **quote**: data['scraped_at'] = datetime.now().isoformat()
+  -
+    - **claim**: Polymarket's market socket needs no account or key: a plain WebSocket upgrade returned 101 and streamed events after one subscribe frame. Messages carry a ms 'timestamp'; receipt minus stamp median 0.02 s, p90 0.03 s, max 0.82 s (n=41 events, one game, one 20 s window, container clock within about 1 s of Cloudflare's Date). Already on the known list.
+    - **status**: VERIFIED
+    - **evidence_url**: https://docs.polymarket.com/market-data/websocket/overview
+    - **quote**: URL wss://ws-subscriptions-clob.polymarket.com/ws/market; subscribe {"assets_ids":[...],"type":"market"}; send the text frame PING every 10 seconds (docs, via fetch-tool extraction); live probe: HTTP/1.1 101 Switching Protocols with no credentials
+  -
+    - **claim**: Polymarket's sports score socket is documented as streaming every game update with no subscription frame and no general timestamp field in the payload (only optional finishedAt); server pings every 5 s. Not probed by me (already known, and a score feed's value is its lead over Novig's re-quote, which only the phone can measure).
+    - **status**: VERIFIED
+    - **evidence_url**: https://docs.polymarket.com/market-data/websocket/overview
+    - **quote**: wss://sports-api.polymarket.com/ws ... "Once connected, the server starts streaming every game update. No subscription frame is required." (docs, via fetch-tool extraction)
+  -
+    - **claim**: Kalshi's WebSocket needs an account's API key even for public-data channels, so a phone app cannot read it anonymously. Messages can carry sending_ts_ms. Channels include ticker, trade, orderbook_delta. This matches RESEARCH.md's earlier note that the app reads Kalshi's public REST instead.
+    - **status**: VERIFIED
+    - **evidence_url**: https://docs.kalshi.com/websockets/websocket-connection
+    - **quote**: "Authentication is required to establish the connection; include API key headers during the WebSocket handshake." / "Some channels carry only public market data, but the connection itself still requires authentication." (via fetch-tool extraction); wss://external-api-ws.kalshi.com
+  -
+    - **claim**: Pinnacle has no public socket. Its official API is closed to the public since 2025-07-23, needs a funded account and HTTP Basic auth, documents only REST snapshot/delta polling (no WebSocket), and limits odds endpoints to 1 request per 2 minutes per endpoint per sportId.
+    - **status**: VERIFIED
+    - **evidence_url**: https://github.com/pinnacleapi/pinnacleapi-documentation
+    - **quote**: "Access to Pinnacle API suite has been closed for the general public since July 23rd, 2025." / "you must have a funded account" / "Request Rate Limit: 1 request per 2 minutes, per endpoint, per sportId." (read raw README, 6,117 bytes)
+  -
+    - **claim**: Betfair's Exchange Stream API is a TLS socket at stream-api.betfair.com:443 that must be authenticated with an app key plus a logged-in session token, so it is not anonymous. A delayed key (the free one) forces conflation of 180000 ms; the live key costs GBP 499 to activate from a funded account, and read-only live access is not permitted.
+    - **status**: VERIFIED
+    - **evidence_url**: https://betfair-developer-docs.atlassian.net/wiki/spaces/1smk3cen4v3lu3yomq5qye0ni/pages/2687396/Exchange+Stream+API
+    - **quote**: "appKey - This is your application key ... session - The session token generated from API login." / "conflateMs ... will be 180000 if you access the Stream API using a Delayed App Key" (read via public Confluence REST; Application Keys page version 2026-05-07: "funded to cover the £499 activation fee")
+  -
+    - **claim**: Betfair is not available to US residents/accounts (no US sports exchange to read).
+    - **status**: CLAIM_ONLY
+    - **evidence_url**: https://blogs.perl.org/users/sillymoose/2013/08/wwwbetfair---a-perl-api-for-the-worlds-largest-betting-exchange.html
+    - **quote**: 2013 developer blog names the US among countries where Betfair was unavailable; I found no current primary statement. Marked second-hand.
+  -
+    - **claim**: Kambi has no public odds socket: its API is sold B2B to operators. The sockets of Kambi-powered consumer sportsbooks are private operator APIs, which I did not probe (task rule).
+    - **status**: CLAIM_ONLY
+    - **evidence_url**: https://odds-api.io/integrations/kambi
+    - **quote**: "Kambi offers a B2B API to their operator partners." (third-party reseller page, undated; I did not find Kambi's own developer docs)
+  -
+    - **claim**: Is a socket faster than polling for Vigilant? Only when the source is public AND stamps its own updates. Of the five asked about, only Polymarket qualifies, and it is already known; Kalshi needs a key; Pinnacle, Betfair and Kambi are closed or paid or delayed.
+    - **status**: INFERRED
+    - **evidence_url**: 
+    - **quote**: From the five primary checks above plus the 20 ms Polymarket stamp-to-receipt measurement.
+- **live_probes**:
+  -
+    - **request**: GET https://scrapingproxies.best/blog/web-scraping/websocket-scraping/ (WebFetch and curl, User-Agent 'Mozilla/5.0 (X11; Linux x86_64) research')
+    - **result**: 200, 90,485 bytes, server nginx, Date 2026-10-07 23:51:11 GMT; no block or challenge. Article text parsed locally.
+  -
+    - **request**: GET https://scrapingproxies.best/about/
+    - **result**: Read. No operator named, no affiliate disclosure, no date.
+  -
+    - **request**: GET https://betfair-developer-docs.atlassian.net/wiki/x/pAEp (short link) then the public Confluence REST pages content/2687396 and content?title=Application+Keys
+    - **result**: Short link and fetch tool returned empty (single-page app); the public REST view returned 200 with the full Exchange Stream API text (53,824 chars) and the Application Keys page (version 2026-05-07).
+  -
+    - **request**: GET https://raw.githubusercontent.com/pinnacleapi/pinnacleapi-documentation/master/README.md
+    - **result**: 200, 6,117 bytes; closure notice, funded-account line, rate-limit line confirmed by grep.
+  -
+    - **request**: GET https://docs.kalshi.com/websockets/websocket-connection and https://docs.kalshi.com/getting_started/rate_limits (WebFetch)
+    - **result**: Read via the fetch tool's extraction (not raw HTML): auth required for the socket; tiers Basic 200/Advanced 300/Premier 1,200/Prime 4,800 read tokens per second.
+  -
+    - **request**: GET https://docs.polymarket.com/market-data/websocket/overview (WebFetch)
+    - **result**: Read via the fetch tool's extraction: market socket URL, PING every 10 s, millisecond timestamp field, sports socket URL. The page does not state in words whether auth is required; the live connection answered that.
+  -
+    - **request**: GET https://gamma-api.polymarket.com/events?active=true&closed=false&limit=20&order=volume24hr&ascending=false (1 request, public documented market-data API)
+    - **result**: 200, 3.28 MB, Date 2026-10-07 23:54:47 GMT; used only to pick the MLB LAD-ATL moneyline token ids.
+  -
+    - **request**: WebSocket upgrade (a GET with Upgrade headers, via the container proxy CONNECT) to wss://ws-subscriptions-clob.polymarket.com/ws/market, 2 connections, 1 subscribe frame each, 20-25 s each, no credentials
+    - **result**: HTTP/1.1 101 Switching Protocols both times (Cloudflare edge IAD). 41 events parsed in the second run; stamp-to-receipt lag median 0.02 s, p90 0.03 s, max 0.82 s. 3 requests to the Polymarket hosts in total, well under the 12 cap. No other host was probed more than 2 times.
+- **verdict**:
+  - **rapid_odds**: not-applicable
+  - **rapid_scores**: not-applicable
+  - **ahead_of_novig_makers**: no
+  - **ahead_of_cno**: no
+  - **cheap_or_free**: free
+  - **usable_in_vigilant**: technique-only
+  - **why**: The page is a generic how-to for reading WebSocket streams, with a crypto (Binance) example and one unsupported sentence about betting odds. It names no feed, so it is not a source of odds or scores, and nothing in it can be built into Vigilant beyond what the app already does (the app already runs sockets, e.g. Novig's). The technique (push over WebSocket) beats polling only when the socket is public and its messages carry the server's own timestamp. Checked from primary pages: Polymarket qualifies (no key, 101 on the first try, messages stamped about 20 ms before I received them; already known), Kalshi does not (API key required even for public channels), Pinnacle has no socket and its API is closed to the public since 2025-07-23, Betfair's stream needs a funded account and is delayed 180 s on the free key and GBP 499 for the live one, Kambi sells B2B only. The page's method of capturing a bookmaker's own site socket in DevTools is a consumer-API scrape that this project's rules forbid and that carries the account and terms risk the article itself lists. So it adds nothing new to the known list; the only free public push sockets remain Polymarket's, and Vigilant already has them.
+- **confidence**: high
+- **could_not_read**:
+  - Betfair Exchange Stream API page via WebFetch and the tinyurl short link: empty (Atlassian single-page app). Read instead through the public Confluence REST endpoint, which worked.
+  - Kambi's own developer documentation: not found publicly. Kambi's status rests on a third-party reseller page (odds-api.io/integrations/kambi, undated) and search snippets; marked CLAIM_ONLY.
+  - Any bookmaker or exchange terms of use: not read, and no bookmaker or consumer socket was probed (task rule).
+  - Kalshi and Polymarket docs were read through the fetch tool's extraction, not raw HTML; Polymarket's page does not say in words whether the market socket needs auth (settled by the live connection).
+  - Whether Betfair serves US-resident accounts today: no current primary statement found.
+  - The scrapingproxies.best Terms page: not read (the site is a blog, not a data source).
+- **other_sources_it_names**:
+  -
+    - **name**: Binance public trade stream (stream.binance.com:9443)
+    - **url**: wss://stream.binance.com:9443/ws/btcusdt@trade
+    - **why_it_matters**: The only socket the article actually connects to. A crypto trade stream, no sports content. Irrelevant to Vigilant except as a proof that a no-key public socket is easy to read.
+- **open_questions**:
+  - Not on the known list and surfaced only through search snippets (not read at primary, not verified): PinnOdds (a sportsapis.dev review snippet says a raw Pinnacle MQTT-frame feed is a $99/month add-on) and OddsPapi (oddspapi.io; its WebSocket docs page names no bookmakers, shows no plan or price, and the key is passed as an API key). Both are leads for whoever covers those sources, not findings of this one.
+  - Kalshi: does a free account key on the socket's `ticker` channel (with `sending_ts_ms`) show a live game's price move earlier than the REST poll the app already runs at 2 a second? Needs Tj's Kalshi key; this container cannot test it.
+  - Polymarket market socket: the 20 ms stamp-to-receipt figure is Polymarket's own clock; how far its price lags the real game, and the lead over Novig's re-quote, can only be measured on the phone against a live match.
+  - Polymarket sports score socket has no general timestamp field in its documented payload, so its age can only be measured by comparing with Sofascore/ESPN stamps on the phone.
+- **what_the_phone_should_test**:
+  - Nothing needs testing for this source itself (it provides no feed).
+  - Cheap, no-key test the page's technique does apply to: open Polymarket's market socket (wss://ws-subscriptions-clob.polymarket.com/ws/market, subscribe with the two clobTokenIds of a live game's moneyline from gamma-api.polymarket.com/events, send the text PING every 10 s) and log for 10 minutes: phone receipt time minus each message's `timestamp` (the container saw median 0.02 s), and the time a `price_change` jumps after a play versus Novig's re-quote of the same game. This is the 'Polymarket CLOB odds socket' already on the known list, so run it only if it has not been measured on the phone yet.
+  - If Tj has a Kalshi API key: connect to wss://external-api-ws.kalshi.com with the key headers, subscribe to `ticker` for one live game market, log `sending_ts_ms` against phone receipt time, and compare the first time its price moves after a play with the app's current REST poll. Do not build anything until that shows a gain of 3 seconds or more.
