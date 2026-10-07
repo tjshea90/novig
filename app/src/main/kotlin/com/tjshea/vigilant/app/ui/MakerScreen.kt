@@ -459,9 +459,9 @@ object MakerRulesText {
 
     /** What the longest-odds setting does, for the line under its chips ([ScanSettings.makerMaxOdds], 0 = no limit). */
     fun maxOddsNote(maxOdds: Int, lowUsage: Boolean = false): String =
-        if (lowUsage && (maxOdds <= 0 || maxOdds >= com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS)) {
-            "Low API usage bids never go longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS)} (a price under " +
-                "${String.format(Locale.US, "%.1f", BidRules.priceAtOdds(com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS) * 100)}¢), whatever is picked here; pick a shorter limit to go tighter."
+        if (lowUsage && maxOdds <= 0) {
+            "No limit picked, so Low API usage bids use their own default: nothing longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS)} (a price under " +
+                "${String.format(Locale.US, "%.1f", BidRules.priceAtOdds(com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS) * 100)}¢). Pick a limit and it is the one that runs, shorter or longer."
         } else if (maxOdds <= 0) "No limit: any bid the price window below allows is posted, however long its odds."
         else "No bid is posted at longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(maxOdds)} (a price under " +
             "${String.format(Locale.US, "%.1f", BidRules.priceAtOdds(maxOdds) * 100)}¢), however good its edge; a bid already up at such a price comes down at the next pass. " +
@@ -505,6 +505,18 @@ object MakerRulesText {
         if (hours <= 0) "Off: bids go up on games however far off." else
             "No bid on a game more than $hours h off: the fair that far out is the least reliable, and most of Novig's prop takers (71% of the dollars) " +
                 "trade in the last 6 h, so the wallet goes where the fills are."
+
+    /**
+     * [earlyNote] in Low API usage: the same hours also set how far its scan reads ([com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours]), because a game the scan never reads can never get
+     * a bid. A wider window means more games and leagues asked of ParlayAPI (3 credits a league a scan), said here so the choice is made knowing it.
+     */
+    fun earlyNoteLowUsage(s: ScanSettings): String {
+        val window = com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(s)
+        val cost = if (window > com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS)
+            " Wider than the usual ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} h reads more games and more leagues each scan: more ParlayAPI credits (3 a league a scan; about +11% a day at 8 h, +30% at 12 h, +85% at 24 h)." else ""
+        return (if (s.trapEarlyHours <= 0) "Off: no limit of its own, so this mode's scan reads as far ahead as Settings › Scanning says (Days ahead, Starts within): $window h now, and bids go up on every game it reads."
+        else "Bids go up only on games starting within ${s.trapEarlyHours} h, and the scan reads exactly that far (${window} h now; Starts within or Days ahead can only make it shorter).") + cost
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
