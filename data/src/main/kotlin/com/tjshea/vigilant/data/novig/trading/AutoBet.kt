@@ -46,6 +46,9 @@ object AutoBet {
      */
     const val MAX_SANE_EV = 0.15
 
+    /** The most books a typed "books agreeing" or "books pricing both sides" count may ask for (a game page lists about a dozen). */
+    const val MAX_BOOKS = 12
+
     /** The shortest a longest-odds limit can be: +100 is even money; under it would mean "favorites only", which isn't what the option is for. */
     const val MIN_MAX_ODDS = 100
 
@@ -94,9 +97,9 @@ object AutoBet {
     )
 
     fun rules(s: ScanSettings) = Rules(
-        minBooks = s.autoBetBooks.coerceIn(2, 5),
+        minBooks = s.autoBetBooks.coerceIn(2, MAX_BOOKS),
         minEv = s.autoBetMinEv.coerceAtLeast(MIN_EV_FLOOR),
-        twoSided = s.autoBetTwoSided.coerceIn(1, 3),
+        twoSided = s.autoBetTwoSided.coerceIn(1, MAX_BOOKS),
         stake = s.autoBetStake,
         customStake = s.autoBetCustomStake.coerceAtLeast(0.0),
         maxStake = s.autoBetMaxStake.coerceAtLeast(0.0),

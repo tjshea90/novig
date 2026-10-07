@@ -309,6 +309,7 @@ fun AutoBetSection(
     }
     Text("Books that each say +EV on their own", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_BOOKS_CHOICES, s.autoBetBooks, AutoBetText::booksLabel, modifier = Modifier.testTag("autoBetBooksChips")) { v -> onUpdate { it.copy(autoBetBooks = v) } }
+    TypedIntField(NumberSpecs.count("books", 2, 12), s.autoBetBooks, "autoBetBooksField", none = { false }) { v -> onUpdate { it.copy(autoBetBooks = v) } }
     Text(
         "Each sportsbook on the bet's page, with its own profit taken out, must say Novig's price beats the true odds. More books agreeing means the edge " +
             "isn't one book's mistake.",
@@ -332,6 +333,7 @@ fun AutoBetSection(
 
     Text("Books that must price both sides", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_TWO_SIDED_CHOICES, s.autoBetTwoSided, { "$it" }, modifier = Modifier.testTag("autoBetTwoSidedChips")) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }
+    TypedIntField(NumberSpecs.count("books", 1, 12), s.autoBetTwoSided, "autoBetTwoSidedField", none = { false }) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }
     Text(
         "Only books that price both sides count: with just one side, a book's profit can't be taken out to check the bet.",
         style = MaterialTheme.typography.bodySmall, color = subtle,
@@ -364,7 +366,12 @@ fun AutoBetSection(
     Shadowed.autoBetOdds(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetOddsShadowed")) }
     Text("Shortest odds to bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_MIN_ODDS_CHOICES, s.autoBetMinOdds, AutoBetText::minOddsLabel) { v -> onUpdate { it.copy(autoBetMinOdds = v) } }
-    Text("Heavy favorites (−250 and shorter) risk a lot to win a little; one bad price wipes out many small wins.", style = MaterialTheme.typography.bodySmall, color = subtle)
+    TypedNumberField(NumberSpecs.SHORTEST_ODDS, oddsShown(s.autoBetMinOdds), "autoBetMinOddsField") { v -> onUpdate { it.copy(autoBetMinOdds = v.toInt()) } }
+    Text(
+        if (s.autoBetMinOdds > 0) "Underdogs only: nothing shorter than ${com.tjshea.vigilant.engine.Odds.formatAmerican(s.autoBetMinOdds)}, so every favorite is skipped. Checked when the bet is found and again on Novig's order book just before the order."
+        else "Heavy favorites (−250 and shorter) risk a lot to win a little; one bad price wipes out many small wins. Checked when the bet is found and again on Novig's order book just before the order.",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
+    )
 
     // The kinds of bet (RESEARCH.md §66: a preset sets them; Tj can change them here).
     Text("Kinds of bet to place", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
@@ -437,6 +444,7 @@ fun AutoBetSection(
     SectionTitle("How often")
     Text("Check every", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_SCAN_SECONDS_CHOICES, s.autoScanSeconds, ScanSettings::intervalLabel) { v -> onUpdate { it.copy(autoScanSeconds = v) } }
+    TypedIntField(NumberSpecs.time("seconds", 5, 3600), s.autoScanSeconds, "autoScanSecondsField", none = { false }) { v -> onUpdate { it.copy(autoScanSeconds = v) } }
     Text(
         "Auto-bet runs inside the background scan, so this is the same setting as Settings › Scanning › Background scan: one choice, two places. Faster " +
             "means a bet is placed sooner after CrazyNinjaOdds lists it, before the price moves.",
@@ -474,6 +482,7 @@ fun AutoBetSection(
     Chips(ScanSettings.AUTO_LOCK_MIN_CHOICES, s.autoLockMinPercent, { "${AutoBetText.trim(it * 100)}%" }, equal = { a, b -> abs(a - b) < 1e-9 }, modifier = Modifier.testTag("autoLockMinChips")) { v ->
         onUpdate { it.copy(autoLockMinPercent = v) }
     }
+    TypedPercentField(NumberSpecs.percent("smallest profit", 0.1, 50.0), s.autoLockMinPercent, "autoLockMinField") { v -> onUpdate { it.copy(autoLockMinPercent = v) } }
     Text(
         "2% on a \$10 bet: it locks once at least \$0.20 profit is guaranteed whichever side wins. Lower locks sooner and more often for less; higher waits " +
             "for a bigger move, which may never come.",
@@ -669,6 +678,7 @@ fun SharpVetoSection(state: UiState, forAlerts: Boolean, onUpdate: ((ScanSetting
             ScanSettings.SHARP_VETO_MIN_EV_CHOICES, s.sharpVetoMinEv, SharpConfirmText::edgeLabel,
             modifier = Modifier.testTag(if (forAlerts) "sharpVetoMinEvAlerts" else "sharpVetoMinEv"),
         ) { v -> onUpdate { it.copy(sharpVetoMinEv = v) } }
+        TypedPercentField(NumberSpecs.percent("edge", 0.1, 10.0), s.sharpVetoMinEv, if (forAlerts) "sharpVetoMinEvAlertsField" else "sharpVetoMinEvField") { v -> onUpdate { it.copy(sharpVetoMinEv = v) } }
         Text(
             SharpConfirmText.vetoBarNote(s.sharpVetoMinEv), style = MaterialTheme.typography.bodySmall, color = subtle,
             modifier = Modifier.padding(top = 4.dp).testTag(if (forAlerts) "sharpVetoBarNoteAlerts" else "sharpVetoBarNote"),
@@ -689,8 +699,10 @@ fun SharpConfirmCriteria(state: UiState, onUpdate: ((ScanSettings) -> ScanSettin
     Chips(SharpBookChoice.entries.toList(), s.sharpConfirmBooks, { it.displayName }) { v -> onUpdate { it.copy(sharpConfirmBooks = v) } }
     Text("Oldest quote allowed", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.SHARP_MAX_AGE_CHOICES, s.sharpConfirmMaxAgeSeconds, SharpConfirmText::ageLabel) { v -> onUpdate { it.copy(sharpConfirmMaxAgeSeconds = v) } }
+    TypedIntField(NumberSpecs.time("seconds", 10, 3600), s.sharpConfirmMaxAgeSeconds, "sharpMaxAgeField", none = { false }) { v -> onUpdate { it.copy(sharpConfirmMaxAgeSeconds = v) } }
     Text("Edge the sharp book must show at Novig's price now", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.SHARP_MIN_EV_CHOICES, s.sharpConfirmMinEv, SharpConfirmText::edgeLabel) { v -> onUpdate { it.copy(sharpConfirmMinEv = v) } }
+    TypedPercentField(NumberSpecs.percent("edge", 0.1, 50.0), s.sharpConfirmMinEv, "sharpConfirmMinEvField") { v -> onUpdate { it.copy(sharpConfirmMinEv = v) } }
     Row(
         Modifier.fillMaxWidth().toggleable(value = s.sharpConfirmViaCno, role = Role.Switch, onValueChange = { v -> onUpdate { it.copy(sharpConfirmViaCno = v) } })
             .padding(top = 8.dp, bottom = 2.dp).testTag("sharpConfirmViaCno"),
