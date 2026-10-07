@@ -253,7 +253,7 @@ class AutoBetUiTest {
     fun `the criteria say a plus money shortest odds means underdogs only, and a minus one a favorite limit`() {
         show({ it.copy(autoBetMinOdds = 110) })
         val plus = AutoBetText.criteria(settings)
-        assertTrue(plus, plus.contains(", underdogs only (+110 or longer (plus money only))"))
+        assertTrue(plus, plus.contains(", underdogs only (odds +110 or longer)"))
         assertFalse(plus, plus.contains("odds no shorter than"))
         show({ it.copy(autoBetMinOdds = -200) })
         val minus = AutoBetText.criteria(settings)
