@@ -32,7 +32,7 @@ class QuickBidFilterTest {
 
     private fun quick(s: ScanSettings = ScanSettings()) = MakerRules.of(s.copy(makerFocus = BidFocus.QUICK_LIKELY))
 
-    private fun skipped(l: MakerLine, r: MakerRules): String? = (MakerQuote.precheck(l, r, now) as? MakerQuote.Pre.No)?.skip?.reason
+    private fun skipped(l: MakerLine, r: MakerRules): String? = (MakerQuote.precheck(l, r, now) as? MakerQuote.Pre.No)?.skip?.why
 
     @Test
     fun `a popular kind priced by enough books gets a bid`() {
