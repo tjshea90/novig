@@ -84,6 +84,8 @@ data class CnoFilters(
     val completeBook: Boolean = true,
     /** Sides a market needs at a book (2 = both sides priced, so the vig can be removed honestly). */
     val minSides: Int = 2,
+    /** Which games the list looks at: leagues, kinds of bet, pregame only, liquidity, words, props per game ([CnoScope]; everything by default). */
+    val scope: CnoScope = CnoScope(),
 )
 
 /** One read of Tj's CNO view. */

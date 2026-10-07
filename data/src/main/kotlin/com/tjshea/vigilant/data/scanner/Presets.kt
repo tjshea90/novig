@@ -2,6 +2,7 @@ package com.tjshea.vigilant.data.scanner
 
 import com.tjshea.vigilant.data.cno.CnoDevig
 import com.tjshea.vigilant.data.cno.CnoFilters
+import com.tjshea.vigilant.data.cno.CnoScope
 import kotlinx.serialization.Serializable
 
 /**
@@ -35,7 +36,9 @@ data class PresetRules(
     fun applyTo(s: ScanSettings, name: String?): ScanSettings = s.copy(
         autoBetMinEv = autoBetMinEv, autoBetBooks = autoBetBooks, autoBetTwoSided = autoBetTwoSided, autoBetAllAgree = autoBetAllAgree,
         autoBetMaxOdds = autoBetMaxOdds, autoBetMinOdds = autoBetMinOdds, autoBetKinds = autoBetKinds, autoBetStake = autoBetStake,
-        sharpAutoBet = sharpAutoBet, sharpAlerts = sharpAlerts, alertMinEv = alertMinEv, cnoFilters = cnoFilters, autoScanSeconds = autoScanSeconds,
+        sharpAutoBet = sharpAutoBet, sharpAlerts = sharpAlerts, alertMinEv = alertMinEv,
+        // The games Tj looks at (CnoScope: leagues, kinds, words…) are his choice of WHAT to watch, not a quality rule: a preset sets the CNO rules and leaves them as they are.
+        cnoFilters = cnoFilters.copy(scope = s.cnoFilters.scope), autoScanSeconds = autoScanSeconds,
         sharpVetoMinEv = sharpVetoMinEv, autoBetFavouriteExtraEv = autoBetFavouriteExtraEv, presetName = name,
     )
 
@@ -62,7 +65,7 @@ data class PresetRules(
         /** The rules [s] has now (the Auto-bet tab › Presets › Save current settings). */
         fun of(s: ScanSettings): PresetRules = PresetRules(
             s.autoBetMinEv, s.autoBetBooks, s.autoBetTwoSided, s.autoBetAllAgree, s.autoBetMaxOdds, s.autoBetMinOdds, s.autoBetKinds, s.autoBetStake,
-            s.sharpAutoBet, s.sharpAlerts, s.alertMinEv, s.cnoFilters, s.autoScanSeconds, s.sharpVetoMinEv, s.autoBetFavouriteExtraEv,
+            s.sharpAutoBet, s.sharpAlerts, s.alertMinEv, s.cnoFilters.copy(scope = CnoScope()), s.autoScanSeconds, s.sharpVetoMinEv, s.autoBetFavouriteExtraEv,
         )
 
         /** "2.5%", "3%" (0.03 × 100 is 3.0000000000000004 in floating point: rounded to tenths first). */
