@@ -413,6 +413,34 @@ class ScanStudyTest {
     }
 
     /**
+     * Tj's v0.70.1 file: "why no close" cut each note at 90 characters, so the last sources' reasons (the biggest: 824 of 1,084 started bets had no Novig outcome id) never
+     * printed; a voided bet was in no count; and "closes found" divided by every bet, including games not on yet. Now each source's own reason is counted, in full, once per bet.
+     */
+    @Test
+    fun `no-close reasons are counted one source at a time and in full, voids are counted, and started bets are the denominator`() = runBlocking {
+        val j = journal()
+        val s = study(j)
+        s.cno(snap(moneyline, total))
+        s.flush()
+        now = start + 4 * 3_600_000L
+        val note = "Novig's trade file for this day isn't out yet; ESPN keeps full-game moneylines, spreads and totals only; no Novig outcome on record for this bet (it was found by the wide read, so its link was never kept)"
+        for (b in j.fold(day).values) j.append(day, listOf(Line(Line.RES, b.id, now, r = StudyResult(closeNote = note))))
+        val voided = j.fold(day).values.first()
+        j.append(day, listOf(Line(Line.RES, voided.id, now, r = StudyResult(status = com.tjshea.vigilant.data.tracker.BetStatus.VOID))))
+        val out = StringWriter()
+        val meta = StudyExport.Meta("0.70.4", 122, "moto g", "edge ≥ 2.5%", java.util.TimeZone.getTimeZone("America/New_York"))
+        StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"))
+        val text = out.toString()
+        assertTrue(text, text.contains("Closes found: 0 of 2 started bets (0%)"))
+        // Each reason on its own line with its count, none cut at 90 characters.
+        assertTrue(text, text.contains("    ×2 Novig's trade file for this day isn't out yet"))
+        assertTrue(text, text.contains("    ×2 ESPN keeps full-game moneylines, spreads and totals only"))
+        assertTrue(text, text.contains("    ×2 no Novig outcome on record for this bet (it was found by the wide read, so its link was never kept)"))
+        // The void is said.
+        assertTrue(text, text.lines().first { it.startsWith("ALL BETS") }.contains("1 void"))
+    }
+
+    /**
      * Tj's v0.58.3 file: a Washington State moneyline of -117 "closed" at +272 (CLV -50%) and dragged the hidden group's CLV from +2.0% to -0.4%. A close the
      * lookup finds that can't be the bet's is left out ([com.tjshea.vigilant.data.tracker.ClosePlausibility]); and the journal, which is append-only, may still
      * hold one from before the matcher was fixed, so the file leaves it out too, with the reason.
@@ -435,7 +463,7 @@ class ScanStudyTest {
         val meta = StudyExport.Meta("0.58.3", 103, "moto g", "edge ≥ 2.5%", java.util.TimeZone.getTimeZone("America/New_York"))
         StudyExport.write(out, j, emptyList(), meta, now, File(tmp.root, "export.tmp"))
         val text = out.toString()
-        assertTrue(text, text.contains("Closes found: 0 of 1"))
+        assertTrue(text, text.contains("Closes found: 0 of 1 started bets (0%)"))
         val row = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }.decodeFromString(
             StudyExport.StudyRow.serializer(), text.substringAfter("<<<JSONL\n").substringBefore("\n>>>").lines().first { it.isNotBlank() },
         )
