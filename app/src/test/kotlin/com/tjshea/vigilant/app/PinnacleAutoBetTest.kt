@@ -150,6 +150,28 @@ class PinnacleAutoBetTest {
     }
 
     @Test
+    fun `the trap guard's first-listed rule - a Pinnacle bet first listed more than its hours before the start is skipped once the game is inside the window (Tj, 2026-10-07)`() = runBlocking {
+        val novig = FakeNovig()
+        val h = 3_600_000L
+        val o = opp(asOf = now - 10_000)
+        val hours = ((o.event.startsTs - now) / h + 1).toInt()   // the game is just inside the window
+        val s = settings { it.copy(trapEarlyHours = hours) }
+        // Seen 3 h before the start: fine.
+        app.container.firstListed.note(listOf(o.key to o.event.startsTs), o.event.startsTs - 2 * h)
+        assertEquals(1, bettor(novig).runPinnacle(s, result(o)) { null }.placed.size)
+        app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+        // A bet first seen far earlier (a second bet of its own key): skipped, and said so.
+        val older = opp(asOf = now - 10_000, second = true)
+        app.container.firstListed.note(listOf(older.key to older.event.startsTs), older.event.startsTs - (hours + 12) * h)
+        val skipped = bettor(novig).runPinnacle(s, result(older)) { null }
+        assertEquals(0, skipped.placed.size)
+        assertEquals(1, skipped.skipped[TrapGuard.listedEarlyReason(hours)])
+        // The switch off: placed.
+        val off = settings { it.copy(trapEarlyHours = hours, trapFirstListed = false) }
+        assertEquals(1, bettor(novig).runPinnacle(off, result(older)) { null }.placed.size)
+    }
+
+    @Test
     fun `a bet under Pinnacle's price read this minute is placed with no re-read, and its record says Pinnacle only`() = runBlocking {
         val novig = FakeNovig()
         var refreshed = 0

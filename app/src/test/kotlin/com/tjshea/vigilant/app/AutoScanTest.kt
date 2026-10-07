@@ -352,6 +352,36 @@ class AutoScanTest {
     }
 
     @Test
+    fun `the trap guard's first-listed rule (Tj, 2026-10-07) - no alert for a bet first listed more than its hours before the start, once the game is inside the window`() {
+        val hours = 24
+        fun cno(first: Map<String, Long>, on: Boolean = true) =
+            SampleCno.withBooks().let { it.copy(firstListed = first, settings = it.settings.copy(trapEarlyHours = hours, trapFirstListed = on)) }.indexed(now)
+        val key = jefferson.key
+        val h = 3_600_000L
+        // Jefferson starts a day off, inside 24 h; first listed an hour ago it alerts.
+        assertEquals(1, AlertPicks.cno(cno(mapOf(key to now - h)), 0.03, now).size)
+        // First listed 30 h ago (54 h before the start): left alone, in the candidates a cycle reads books for too, and counted apart from the plain early rule.
+        val old = cno(mapOf(key to now - 30 * h))
+        assertTrue(AlertPicks.cno(old, 0.03, now).isEmpty())
+        assertTrue(AlertPicks.cnoCandidates(old, 0.03, now).none { it.row.key == key })
+        assertEquals(1, AlertPicks.listedEarly(old, 0.03, now))
+        assertEquals(0, AlertPicks.tooEarly(old, 0.03, now))
+        // Never seen, the switch off, or the hours off: alerts as before.
+        assertEquals(1, AlertPicks.cno(cno(emptyMap()), 0.03, now).size)
+        assertEquals(1, AlertPicks.cno(cno(mapOf(key to now - 30 * h), on = false), 0.03, now).size)
+        assertEquals(0, AlertPicks.listedEarly(cno(mapOf(key to now - 30 * h), on = false), 0.03, now))
+        // Vigilant's own alerts follow the same clock.
+        fun vig(first: Long?, on: Boolean = true): UiState {
+            val base = SampleScan.state().let { it.copy(settings = it.settings.copy(trapEarlyHours = hours, trapFirstListed = on)) }.indexed(now)
+            return base.copy(firstListed = first?.let { f -> base.feed.associate { o -> o.key to f } } ?: emptyMap())
+        }
+        assertTrue(AlertPicks.vigilant(vig(null), 0.02, now).isNotEmpty())
+        assertTrue(AlertPicks.vigilant(vig(now - 40 * h), 0.02, now).isEmpty())
+        assertTrue(AlertPicks.vigilant(vig(now - 40 * h, on = false), 0.02, now).isNotEmpty())
+        assertTrue(AlertPicks.vigilant(vig(now - h), 0.02, now).isNotEmpty())
+    }
+
+    @Test
     fun `a CNO bet whose Novig link is known opens that exact bet slip`() {
         val link = "novigapp://events/out-123/cno"
         val s = SampleCno.withBooks().copy(cnoLinks = mapOf(CnoFeed.linkKey(jefferson) to link)).indexed(now)
