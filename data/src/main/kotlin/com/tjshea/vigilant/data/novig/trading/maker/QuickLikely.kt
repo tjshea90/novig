@@ -56,6 +56,17 @@ object QuickLikely {
         minLineBooks = maxOf(rules.minLineBooks, minLineBooks.coerceAtLeast(0)),
     )
 
+    /**
+     * [rules] with the small-market fill as Tj set it ([ScanSettings.makerObscureFill] and its five safeguards), for every focus that bids on popular markets first: Quick & likely
+     * and Low API usage (Tj, 2026-10-07: "in low api usage mode it is not filling any obscure props, it is hard set against this. The settings I choose should change whatever I
+     * want"). The safeguards are clamped to what a rule can hold; nothing here loosens a rule the focus already set.
+     */
+    fun withObscure(rules: MakerRules, s: ScanSettings): MakerRules = rules.copy(
+        obscureFill = s.makerObscureFill, obscureMargin = s.makerObscureMargin.coerceIn(0.005, 0.5),
+        obscureSharpMinEv = s.makerObscureSharpMinEv.coerceIn(0.0, 0.2), obscureAgreePoints = s.makerObscureAgreePoints.coerceIn(0.0, 0.2),
+        obscureMinBooks = s.makerObscureMinBooks.coerceAtLeast(1), obscureStake = s.makerObscureStake.coerceIn(0.05, 1.0),
+    )
+
     /** Fewest books that price a line for it to be a market takers want (the study's median prop was priced by 7; 5 keeps three quarters of them). */
     const val MIN_LINE_BOOKS = 5
 

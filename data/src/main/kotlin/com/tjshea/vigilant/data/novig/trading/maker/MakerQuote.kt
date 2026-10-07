@@ -150,11 +150,7 @@ data class MakerRules(
         fun of(s: ScanSettings): MakerRules = base(s).let { r ->
             when {
                 LowUsage.on(s) -> LowUsage.narrow(r, s).copy(focus = s.makerFocus.name)
-                QuickLikely.on(s) -> QuickLikely.narrow(r, s.makerQuickMinBooks).copy(
-                    focus = s.makerFocus.name, obscureFill = s.makerObscureFill, obscureMargin = s.makerObscureMargin.coerceIn(0.005, 0.5),
-                    obscureSharpMinEv = s.makerObscureSharpMinEv.coerceIn(0.0, 0.2), obscureAgreePoints = s.makerObscureAgreePoints.coerceIn(0.0, 0.2),
-                    obscureMinBooks = s.makerObscureMinBooks.coerceAtLeast(1), obscureStake = s.makerObscureStake.coerceIn(0.05, 1.0),
-                )
+                QuickLikely.on(s) -> QuickLikely.withObscure(QuickLikely.narrow(r, s.makerQuickMinBooks), s).copy(focus = s.makerFocus.name)
                 else -> r.copy(focus = s.makerFocus.name)
             }
         }
