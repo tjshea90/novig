@@ -32,7 +32,7 @@ class FeedRaceJournal(private val dir: File, private val clock: () -> Long = Sys
         for (s in scores) add(s.atMs, JsonObject(mapOf("k" to JsonPrimitive("s"), "src" to JsonPrimitive(s.src), "id" to JsonPrimitive(s.gameId), "home" to JsonPrimitive(s.home), "away" to JsonPrimitive(s.away), "h" to JsonPrimitive(s.h), "a" to JsonPrimitive(s.a), "t" to JsonPrimitive(s.atMs), "init" to JsonPrimitive(s.init), "live" to JsonPrimitive(s.live), "rtt" to JsonPrimitive(s.rttMs))))
         for (n in trades) add(n.tsMs, JsonObject(mapOf("k" to JsonPrimitive("n"), "ev" to JsonPrimitive(n.event), "mk" to JsonPrimitive(n.marketId), "o" to JsonPrimitive(n.outcomeId), "p" to JsonPrimitive(n.price), "q" to JsonPrimitive(n.qty), "t" to JsonPrimitive(n.tsMs))))
         for (o in odds) add(o.seenMs, JsonObject(mapOf("k" to JsonPrimitive("o"), "ev" to JsonPrimitive(o.event), "o" to JsonPrimitive(o.outcome), "m" to JsonPrimitive(o.mid), "t" to JsonPrimitive(o.seenMs), "sv" to (o.serverMs?.let { JsonPrimitive(it) } ?: JsonPrimitive(null as String?)))))
-        for ((f, text) in byFile) f.appendText(text.toString())
+        for ((f, text) in byFile) f.appendText((if (endsMidLine(f)) "\n" else "") + text.toString())   // a write cut off earlier must not swallow this one's first line
         prune()
     }
 
@@ -61,6 +61,8 @@ class FeedRaceJournal(private val dir: File, private val clock: () -> Long = Sys
         }
         return Tape(scores.sortedBy { it.atMs }, trades.sortedBy { it.tsMs }, odds.sortedBy { it.seenMs })
     }
+
+    private fun endsMidLine(f: File): Boolean = f.length() > 0 && runCatching { java.io.RandomAccessFile(f, "r").use { it.seek(f.length() - 1); it.read() != '\n'.code } }.getOrDefault(false)
 
     /** Day files older than [KEEP_DAYS]. */
     private fun prune() {

@@ -46,5 +46,7 @@ class FeedRaceJournalTest {
         // The same day again appends to the same file.
         j.append(trades = listOf(FeedRace.NovigTick("A @ B", "m", "o", 0.7, 1, now + 1_000)))
         assertEquals(1, d.listFiles()!!.size)
+        // ... and the line written right after the cut-off one is not lost with it.
+        assertEquals(2, j.read(now - day).trades.size)
     }
 }
