@@ -169,6 +169,8 @@ object FeedRace {
         val sightings: Int, val feeds: List<String>, val novigTrades: Int, val games: Int, val newScores: Int, val seenByTwo: Int,
         val lags: List<Lag>, val eventsOnNovig: Int, val moved: Int, val leads: List<Lead>, val stale: List<StaleRow>, val odds: OddsLead?,
         val roundTripMs: Map<String, Double>,
+        /** One line per score that moved Novig's moneyline: when (UTC), the game, the score, Novig's move, then each feed's time after the first feed and its lead over Novig's move. */
+        val detail: List<String> = emptyList(),
     ) {
         /** The verdict in words, for Diagnostics: which feed (if any) showed scores before Novig's price moved, and by how much. Honest when there is not enough data. */
         fun verdict(): String {
@@ -236,7 +238,8 @@ object FeedRace {
         val oddsLeads = ArrayList<Double>()
         var nEv = 0
         var nMv = 0
-        for ((g, _, d) in rows) {
+        val detail = ArrayList<Pair<Long, String>>()
+        for ((g, key, d) in rows) {
             val ser = novigSeries(trades, g.names)
             if (ser.isEmpty()) continue
             nEv++
@@ -250,7 +253,12 @@ object FeedRace {
                 val acc = staleBy.getOrPut(s) { DoubleArray(3) }
                 acc[0] += st.trades.toDouble(); acc[1] += st.payout; acc[2] += st.gain
             }
-            polyMoveSec(odds, g.names, tFirst, jump)?.let { oddsLeads += mv.atSec - it }
+            val polyMove = polyMoveSec(odds, g.names, tFirst, jump)
+            polyMove?.let { oddsLeads += mv.atSec - it }
+            val cells = d.entries.sortedBy { it.key }.joinToString(" ") { (s, tMs) -> "$s:${fmt((tMs / 1000.0) - tFirst)}/${fmt(mv.atSec - tMs / 1000.0)}" }
+            val at = java.time.Instant.ofEpochMilli((tFirst * 1000).toLong()).atZone(java.time.ZoneOffset.UTC).toLocalTime().withNano(0)
+            detail += (tFirst * 1000).toLong() to "$at ${g.names.first.take(16)} v ${g.names.second.take(16)} ${key.first}-${key.second} move ${"%+.2f".format(Locale.US, mv.delta)}  $cells" +
+                (polyMove?.let { "  polyOdds:${fmt(mv.atSec - it)}" } ?: "")
         }
         val leads = leadBy.entries.sortedByDescending { median(it.value) }.map { (s, l) ->
             Lead(s, l.size, l.count { it > 0 }, l.count { it >= 3 }, median(l), q(l, .1), q(l, .9))
@@ -258,7 +266,7 @@ object FeedRace {
         val stale = staleBy.entries.sortedByDescending { it.value[2] }.map { (s, a) -> StaleRow(s, a[0].toInt(), a[1], a[2]) }
         val oddsLead = oddsLeads.takeIf { it.isNotEmpty() }?.let { OddsLead(it.size, it.count { x -> x > 0 }, it.count { x -> x >= 3 }, median(it), q(it, .1), q(it, .9)) }
         val rtt = scores.filter { it.rttMs > 0 }.groupBy { it.src }.mapValues { median(it.value.map { r -> r.rttMs.toDouble() }) }
-        return Report(scores.size, feeds, trades.size, games.size, rows.size, multi.size, lags, nEv, nMv, leads, stale, oddsLead, rtt)
+        return Report(scores.size, feeds, trades.size, games.size, rows.size, multi.size, lags, nEv, nMv, leads, stale, oddsLead, rtt, detail.sortedBy { it.first }.map { it.second })
     }
 
     /** When Polymarket's mid for [names]' game first moved [jump] or more from its median of the 30 s before ([tRef] - 15 s), within 90 s; null when it did not or has no series. */

@@ -64,6 +64,21 @@ class FeedRaceJournal(private val dir: File, private val clock: () -> Long = Sys
 
     private fun endsMidLine(f: File): Boolean = f.length() > 0 && runCatching { java.io.RandomAccessFile(f, "r").use { it.seek(f.length() - 1); it.read() != '\n'.code } }.getOrDefault(false)
 
+    /** Writes every recorded line at or after [sinceMs] to [w], as the files hold them (the share file's raw tape: what the report was made from). Returns how many. */
+    @Synchronized
+    fun copyRaw(w: java.io.Writer, sinceMs: Long): Int {
+        var n = 0
+        val days = (sinceMs / DAY_MS..clock() / DAY_MS).map { file(it * DAY_MS) }.distinct()
+        for (f in days) {
+            if (!f.exists()) continue
+            f.forEachLine { line ->
+                val t = Regex("\"t\":(\\d+)").find(line)?.groupValues?.get(1)?.toLongOrNull() ?: return@forEachLine
+                if (t >= sinceMs && line.startsWith("{") && line.endsWith("}")) { w.write(line); w.write("\n"); n++ }
+            }
+        }
+        return n
+    }
+
     /** Day files older than [KEEP_DAYS]. */
     private fun prune() {
         val cutoff = clock() - KEEP_DAYS * DAY_MS
