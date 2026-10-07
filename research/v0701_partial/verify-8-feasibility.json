@@ -1,0 +1,498 @@
+{
+ "lens": "APP FEASIBILITY AND SAFETY (adversarial verifier, verify-8-feasibility): can today's auto-bet machinery run R1 with an existing setting, how many bets a day at the caps ($5 a bet, $500 a day, $70 a game) given the 'available' dollars, does it loosen any safety limit, does it need information the app lacks at decision time (look-ahead, a close, a page read only for the top ~10), and is a close available for the bets it picks.",
+ "rule": "R1 EV-gated window entry: buy at the first c/w (CNO-family) look inside 2-360 min of the start where the listed EV is at least 2.5%.",
+ "numbers_reproduced": "MATCHES THE BUILDER. Literal R1: 184 bets, 44 games (81.6 a day over 2.256 days). CLV at the entry look's price +2.545% [+1.77%, +3.52%] on 116 closes / 40 games (builder +2.545%); close_ok +2.669% [+1.85%, +3.72%] on 108 / 39. By yardstick: Tracker closes +3.49% [+2.65%, +4.61%] on 75 / 29 games; independent closes (Pinnacle, ESPN, Novig trades of 3+) +0.81% [-0.04%, +2.13%] on 33 / 23 games. Halves (equal-games split, cut after Oct 4): first 130 bets / 98 closes / 35 games +2.36% [+1.56%, +3.49%]; second 54 bets / 18 closes / 5 games +3.54% [+3.13%, +4.73%]. MY OWN RE-SIMULATION of what AutoBettor would do (event-replay of each bet's c/k/xc looks: CNO-list look in the window, EV 2.5-15%, odds -200..+130, prop/moneyline/spread, a book page with >=2 two-sided, >=3 agreeing and check EV>0, sharp not VETOED, 1 min lead, placed at the first event that passes, CLV at that look's price): guard 6 h = 71 bets / 25 games / 31.5 a day, CLV +2.92% [+2.27%, +3.74%] on 68 closes; guard 24 h (what the phone ran) = 107 bets / 30 games / 47.4 a day, +2.22% [+1.32%, +3.21%] on 102 closes (this agrees with verify-5-feasibility's 70 / 106). Entered inside 6 h minus entered 6-24 h (24 h sim): +1.93 pts [-0.46, +4.90], p(<=0) 0.067, 64 vs 38 closes / 30 games.",
+ "survives": false,
+ "reason": "From the feasibility lens R1 is not a new rule the app can run, and what it reduces to is already in front of Tj. (1) MECHANISM: the phone already has the 2.5% floor (autoBetMinEv), and AutoBettor.run re-judges every CNO-list candidate every cycle (AlertPicks.cnoChecked/cnoCandidates drop a game only while it is more than ScanSettings.trapEarlyHours away, so a bet whose EV rises into the bar later, or that enters the window later, is bought at the first cycle that passes: in my 6 h re-simulation 38 of 71 entries are such requalifiers, and 17 of the 30 real auto-bets placed within 6 h were). So R1's timing rule is exactly 'trapEarlyHours = 6' (phone ran 24; code default TrapGuard.DEFAULT_EARLY_HOURS = 6; chips Off/3/6/12/24 plus typed hours since v0.70.3). No code change, it only tightens, nothing is loosened: but it is the same 24-to-6 h question verify-5 and the INBOX already put to Tj, not a distinct improvement. (2) THE LITERAL RULE LOOSENS LIMITS. Of the 184 R1 entries only 146 were in the app's own CNO list at that moment (38 were found only by the wide read, which the auto-bet never reads; 32 of those 38 were hidden by Tj's own book-count and odds-cap filters, BOOKS 16 + ODDS 16), 36 have odds over +130 (19 over +150, max +809) and 2 under -200, 21 are totals / team totals / 1st-half (not among the auto-bet's kinds), 1 is over the 15% stale-price cap, 65 have no book page read at the entry, 27 fail the 2-sided / 3-agree / check-EV test, 20 are sharp-VETOED. Taking R1 as written would bypass the book check, the sharp veto, the odds range, the kinds and the CNO filters. Funnel at the entry look: 184 -> 146 (app list carried it) -> 145 (EV<=15%) -> 131 (odds) -> 115 (kind) -> 93 (a book page) -> 71 (2-sided/3-agree/EV>0) -> 62 (not vetoed). Only 62 of 184 (34%) are bets the app could place at their R1 entry. (3) THE EVIDENCE FOR THE PART THE APP CAN RUN IS THE SOFT YARDSTICK. Of the 68 closes in the 6 h re-simulation 54 are Tracker closes (CNO's own consensus re-read before the start, which exist only for bets placed): CLV +3.53% against listed EV +3.46% (ratio 1.02: 'CNO's fair did not move'); the 11 independent closes (all from bets first listed on Oct 4; 7 games) give +1.01% [+0.15%, +1.46%], the 14 Novig-trades closes of unplaced bets +0.57% [-0.58%, +1.18%] at listed EV +3.0%. Bets the sim picks that nobody placed (20 of 71, 18 of them in games where another bet was placed) closed at +1.10% on 17 closes (all Novig trades, the independent yardstick: not the +2.9% the placed ones show). The window effect inside the feasible set is untestable on independent closes: the >6 h entries have 1 independent close of 38. Against Novig's own last price for the placed bets, entries within 6 h (+3.29% on 24) and beyond (+3.31% on 37) tie. The app's own real auto-bets: <=6 h +2.37% [+1.23%, +3.78%] on 37 closes / 15 games vs 6-24 h +2.00% [+0.61%, +3.23%] on 40 / 22, difference +0.37 pts [-1.28, +2.38]. (4) COST AND SIDE EFFECTS. Volume: 47.4 -> 31.5 a day in the re-simulation (-34%), real auto-bets 35.5 -> 16.4 a day (-54%: 37 placed within 6 h, 43 beyond, in 2.256 days); expected edge at the listed EV $3.29 -> $2.16 a day at the phone's stakes. trapEarlyHours is ONE setting shared by auto-bet, alerts and the Bids tab (MakerQuote.earlyHours): 8 of the 17 bid fills (47%, CLV +3.5% on 7 closes) and 116 of the newest 300 unfilled bids were posted more than 6 h out, so a 6 h chip also moves the bids, which R1's evidence says nothing about; keeping bids at 24 h needs a new auto-bet-only setting (code). (5) WHAT HOLDS: no look-ahead (looks are time-monotone in all 2080 bets; the decision uses only the look's own EV, the clock and the ordinary gates); at the caps nothing binds (below); the entry price was obtainable when the gates passed (29 real auto-bets placed inside the window paid -0.09 pts of cost against the entry-look price, 24 of 29 within 10 minutes of the entry look). I would put it to Tj only as the existing neutral trade-off (tail risk and clean yardstick against half the volume), not as a validated edge, and he should hear it is the setting, not a rule.",
+ "caveats": [
+  "Literal R1 vs the app: R1 takes c and w looks with no other gate; only c looks the app's list carried can be bought (146 of 184), and only 62 pass the app's gates at the entry look (55 if the book page must be under 5 min old). A literal implementation fails the no-loosening test (book check, sharp veto, odds range, kinds, CNO filters, 15% cap).",
+  "The 38 wide-read-only R1 entries have 1 close (3%): R1 selects bets that cannot be evaluated. Overall R1 has a close for 116 of 184 (63%): placed 75 of 79 (95%), unplaced 41 of 105 (39%), app-list-carried 115 of 146 (79%), wide-only 1 of 38, props 98 of 160 (61%), non-props 18 of 24. Of the 68 with no close 62 are props (Pinnacle's prop close is not in ParlayAPI's file). If every unclosed bet had CLV 0 the R1 mean over all 184 would be +1.60%.",
+  "The sim over-places: of its 71 bets at 6 h, 29 were actually auto-placed (precision 41%), 22 were bought by Tj by hand, 20 by nobody; it finds 26 of the 37 real auto-bets placed within 6 h (recall 70%). The per-game limit counts open bets AND resting bids and fired 378 times in 4 days of the app's own counters (per cycle, so inflated): expect about 16 auto-bets a day at 6 h (37 in 2.256 days), not 31.",
+  "Late entries are where the sim over-promises: 35 of 184 R1 entries (19%) and 19 of 71 sim entries (27%) are within 10 minutes of the start, against 6 of 80 real auto-bets (7.5%); of the 19 sim entries within 10 min only 4 were auto-placed (7 by Tj, 8 by nobody). These carry the highest CLV (+3.49% on 18 closes, 6 independent) and are the least reachable.",
+  "Price persistence: after an R1 entry look the price was worse (by 0.5 pt or more) or the bet gone in a median 4 minutes; 36 of 184 within 1 min, 63 within 2, 94 within 5 (51%). Replaying a delay (a worse-of price, unfilled when gone): 93% filled at 60 s, 76% at 120 s, 65% at 300 s; CLV of the filled ones unchanged (+2.26%, +2.58%, +2.25%). The x-looks (xc, xw) are noisy, so read it as a rough bound.",
+  "Caps at \u00bc Kelly stakes held to the phone's $3.50 per-bet maximum: literal R1 stakes $147 a day (mean $1.80, max day $192, max game $56, 8 of 184 stakes above the dollars available, median available $37); the 6 h sim $60.5 a day (mean $1.92, max day $94.5, max game $34.5, 4 short on available). None of $5 a bet, $500 a day, $70 a game binds. At a flat $5 a bet the literal rule would stake $386 a day (max day $483, max game $161, 2 games over $70, 16 entries in one minute against MAX_PER_CYCLE 5 in 2 minutes) and the 6 h sim $149 a day (1 game over $70). The real binding limits are the book check, the top-10 page read (AUTO_BET_CHECK_TOP), MAX_PER_CYCLE 5, one bet per market, the per-game exposure that includes resting bids, the 60 s pregame lead and the wallet shared with bids.",
+  "The book-check coverage is thin: only 314 of 2080 bets ever had a book page read; 22 of the 115 R1 entries that pass the odds/kind/EV gates have none at entry (CLV +1.70% on 15 closes, independent -1.54% on 4).",
+  "CLV at a look's price: R1's headline is at the entry look; the loader's first-listed price gives +1.64% on the same 116 closes. The two are not interchangeable.",
+  "R1 entries not passing the app's gates look no worse (69 bets, +3.35% on 24 closes, 10 independent +2.13%; totals and team totals +3.44% on 16 closes, 9 independent +3.20%), so the gates do not explain the headline; the sample is tiny and it is not a case for loosening anything.",
+  "Second half is not a hold-out: 5 games, 18 closes, all Tracker, zero independent closes; all 11 independent closes of the feasible set are from Oct 4 entries. The study spans 2.256 days, ~78% of closes from the 29 games of Oct 4, 73-79% NFL.",
+  "What would settle 24 h vs 6 h: the gap is ~+1.9 pts with a 95% CI of [-0.5, +4.9] (SE ~1.4); about 165 independent closes / ~115 games for a 0.25 pt SE, ~11 days at today's pace, and it needs a Novig-trades or ESPN close recorded for UNPLACED bets listed 6-24 h out (shadow-log), otherwise the >6 h band has only Tracker closes.",
+  "Every change to which bets are placed is a question for Tj: the one setting is Settings > Auto-bet > trap guard (trapEarlyHours) 24 -> 6 (or 12, which the 12-24 h slice argues for), and it moves the bids with it. Nothing here argues for loosening any limit."
+ ],
+ "feasibility": {
+  "mechanism": "ScanSettings.trapEarlyHours (Settings > Auto-bet > trap guard chips Off/3/6/12/24 or a typed 1-999 h): AlertPicks.cnoCandidates and AlertPicks.tooEarly skip a game more than that many hours away; autoBetMinEv already 2.5% on the phone (preset 2 Safe CLV); code default 6, phone ran 24. Shared with alerts, Vigilant alerts, Pinnacle-only auto-bet and bids (MakerQuote.earlyHours).",
+  "requalifiers_native": {
+   "sim6h_requalifiers": 38,
+   "sim6h_total": 71,
+   "real_auto_le6h_requalifiers": 17,
+   "real_auto_le6h_matched": 30,
+   "sim6h_requalifier_clv": {
+    "n": 36,
+    "games": 17,
+    "clv": 2.99,
+    "lo": 2.21,
+    "hi": 3.67
+   },
+   "sim6h_fresh_clv": {
+    "n": 32,
+    "games": 17,
+    "clv": 2.84,
+    "lo": 1.45,
+    "hi": 4.37
+   }
+  },
+  "funnel_at_entry_look": [
+   [
+    "R1 literal",
+    184,
+    44,
+    116,
+    2.54
+   ],
+   [
+    "app list (c) carried it",
+    146,
+    44,
+    115,
+    2.52
+   ],
+   [
+    "EV<=15%",
+    145,
+    44,
+    115,
+    2.52
+   ],
+   [
+    "odds -200..+130",
+    131,
+    43,
+    107,
+    2.47
+   ],
+   [
+    "prop/moneyline/spread",
+    115,
+    35,
+    92,
+    2.33
+   ],
+   [
+    "a book page at/before the entry",
+    93,
+    28,
+    77,
+    2.46
+   ],
+   [
+    "2-sided>=2, agreeing>=3, check EV>0",
+    71,
+    23,
+    67,
+    2.67
+   ],
+   [
+    "sharp not VETOED",
+    62,
+    23,
+    59,
+    2.84
+   ],
+   [
+    "page under 5 min old",
+    55,
+    22,
+    52,
+    3.0
+   ]
+  ],
+  "funnel_columns": [
+   "step",
+   "bets",
+   "games",
+   "closes",
+   "CLV pct"
+  ],
+  "literal_R1_would_loosen": {
+   "wide_read_only": 38,
+   "hidden_by_books_filter": 16,
+   "hidden_by_odds_cap": 16,
+   "odds_over_130": 36,
+   "odds_over_150": 19,
+   "odds_under_minus200": 2,
+   "kinds_outside": 21,
+   "ev_over_15": 1,
+   "no_book_page": 65,
+   "check_fails": 27,
+   "sharp_vetoed": 20
+  },
+  "placeable_subset_yardsticks": {
+   "sim6h": {
+    "bets": 71,
+    "games": 25,
+    "per_day": 31.5,
+    "closes_all": {
+     "n": 68,
+     "games": 25,
+     "clv": 2.918,
+     "lo": 2.268,
+     "hi": 3.741
+    },
+    "tracker": {
+     "n": 54,
+     "games": 23,
+     "clv": 3.527
+    },
+    "independent": {
+     "n": 11,
+     "games": 7,
+     "clv": 1.005,
+     "lo": 0.145,
+     "hi": 1.463
+    },
+    "novig_trades": {
+     "n": 14,
+     "games": 8,
+     "clv": 0.571,
+     "lo": -0.575,
+     "hi": 1.175
+    },
+    "first_half": {
+     "n": 53,
+     "games": 20,
+     "clv": 2.671
+    },
+    "second_half": {
+     "n": 15,
+     "games": 5,
+     "clv": 3.792
+    },
+    "mean_listed_ev": 3.365
+   },
+   "sim24h": {
+    "bets": 107,
+    "games": 30,
+    "per_day": 47.4,
+    "closes_all": {
+     "n": 102,
+     "games": 30,
+     "clv": 2.22,
+     "lo": 1.315,
+     "hi": 3.206
+    },
+    "tracker": {
+     "n": 87,
+     "clv": 2.5
+    },
+    "independent": {
+     "n": 12,
+     "games": 7,
+     "clv": 0.997
+    },
+    "novig_trades": {
+     "n": 15,
+     "games": 8,
+     "clv": 0.594
+    }
+   },
+   "sim12h": {
+    "bets": 88,
+    "games": 28,
+    "per_day": 39.0,
+    "closes_all": {
+     "n": 85,
+     "games": 28,
+     "clv": 2.259
+    }
+   },
+   "sim3h": {
+    "bets": 65,
+    "games": 24,
+    "per_day": 28.8,
+    "closes_all": {
+     "n": 62,
+     "games": 24,
+     "clv": 2.952
+    }
+   },
+   "sim6h_strict_page_age_5min": {
+    "bets": 65,
+    "games": 24,
+    "closes_all": {
+     "n": 62,
+     "games": 24,
+     "clv": 2.987
+    },
+    "independent": {
+     "n": 10,
+     "games": 6,
+     "clv": 0.857
+    }
+   }
+  },
+  "window_effect_inside_feasible_set": {
+   "entered_le6h": {
+    "n": 64,
+    "games": 24,
+    "clv": 2.937,
+    "lo": 2.247,
+    "hi": 3.863
+   },
+   "entered_gt6h": {
+    "n": 38,
+    "games": 19,
+    "clv": 1.012,
+    "lo": -1.506,
+    "hi": 3.218
+   },
+   "diff_pts": 1.925,
+   "diff_lo": -0.46,
+   "diff_hi": 4.896,
+   "p_le0": 0.067,
+   "gt6h_independent_closes": 1,
+   "gt6h_tracker_closes": 37
+  },
+  "real_auto_bets_in_study_span": {
+   "le6h": {
+    "n": 37,
+    "per_day": 16.4,
+    "staked_per_day": 27.7,
+    "clv": 2.371,
+    "lo": 1.226,
+    "hi": 3.778,
+    "closes": 37,
+    "games": 15
+   },
+   "gt6h": {
+    "n": 43,
+    "per_day": 19.1,
+    "staked_per_day": 33.5,
+    "clv": 2.0,
+    "lo": 0.614,
+    "hi": 3.23,
+    "closes": 40,
+    "games": 22
+   },
+   "diff_pts": 0.372,
+   "diff_lo": -1.283,
+   "diff_hi": 2.379,
+   "all_auto_per_day": 35.5,
+   "max_stake": 2.9,
+   "max_game_all_placed": 46.55,
+   "max_stake_all_placed": 5.0
+  },
+  "novig_own_last_price_yardstick": {
+   "R1_literal": {
+    "n": 48,
+    "games": 21,
+    "clv": 2.76,
+    "lo": 1.29,
+    "hi": 3.96
+   },
+   "sim6h": {
+    "n": 28,
+    "games": 11,
+    "clv": 3.04
+   },
+   "sim24h_entries_le6h": {
+    "n": 24,
+    "games": 8,
+    "clv": 3.29
+   },
+   "sim24h_entries_gt6h": {
+    "n": 37,
+    "games": 19,
+    "clv": 3.31
+   }
+  },
+  "fill_check": {
+   "auto_in_window_n": 29,
+   "paid_minus_entry_cost_pts": -0.09,
+   "within_10min_of_entry_look": 24,
+   "hand_in_window_n": 30,
+   "hand_paid_minus_entry_cost_pts": 0.23,
+   "auto_placed_before_window_n": 7,
+   "auto_placed_before_window_clv_actual": 1.76,
+   "same_bets_clv_at_later_R1_entry": 3.1
+  },
+  "price_persistence": {
+   "median_min_until_worse_or_gone": 4,
+   "worse_or_gone_within_1min": 36,
+   "within_2min": 63,
+   "within_5min": 94,
+   "within_10min": 118,
+   "of": 184,
+   "never_lost_in_log": 26
+  },
+  "latency_replay": {
+   "literal": {
+    "s60": {
+     "filled": 171,
+     "of": 184,
+     "clv": 2.26
+    },
+    "s120": {
+     "filled": 139,
+     "clv": 2.58
+    },
+    "s300": {
+     "filled": 120,
+     "clv": 2.25
+    }
+   },
+   "sim6h": {
+    "s60": {
+     "filled": 66,
+     "of": 71,
+     "clv": 2.87
+    },
+    "s120": {
+     "filled": 57,
+     "clv": 3.15
+    },
+    "s300": {
+     "filled": 46,
+     "clv": 2.88
+    }
+   }
+  },
+  "stakes_and_caps": {
+   "literal_kelly": {
+    "per_day": 81.6,
+    "stake_per_day": 147.0,
+    "mean_stake": 1.8,
+    "max_day": 192.3,
+    "max_game": 56.3,
+    "short_on_available": 8,
+    "median_available": 37.0,
+    "edge_dollars_per_day_at_listed_ev": 5.61
+   },
+   "sim6h_kelly": {
+    "per_day": 31.5,
+    "stake_per_day": 60.5,
+    "mean_stake": 1.92,
+    "max_day": 94.5,
+    "max_game": 34.5,
+    "short_on_available": 4,
+    "median_available": 60.0,
+    "edge_dollars_per_day_at_listed_ev": 2.16
+   },
+   "sim24h_kelly": {
+    "per_day": 47.4,
+    "stake_per_day": 92.8,
+    "max_day": 131.3,
+    "max_game": 36.0,
+    "edge_dollars_per_day_at_listed_ev": 3.29
+   },
+   "literal_flat5": {
+    "stake_per_day": 386.1,
+    "max_day": 483.0,
+    "max_game": 161.0,
+    "games_over_70": 2,
+    "max_entries_same_minute": 16,
+    "minutes_over_5_entries": 2
+   },
+   "sim6h_flat5": {
+    "stake_per_day": 148.9,
+    "max_day": 229.0,
+    "max_game": 86.0,
+    "games_over_70": 1
+   },
+   "caps_bind_at_phone_stakes": false,
+   "real_game_limit_skip_events_4_days": 378,
+   "real_funnel_counters_4_days": {
+    "looked": 6696,
+    "passed": 564,
+    "placed": 111
+   }
+  },
+  "sim_vs_reality": {
+   "sim6h_bets": 71,
+   "auto_placed": 29,
+   "hand_placed_by_tj": 22,
+   "never_placed": 20,
+   "never_placed_in_games_with_another_placed_bet": 18,
+   "never_placed_clv": {
+    "n": 17,
+    "clv_pct": 1.1,
+    "note": "all Novig-trades closes"
+   },
+   "real_auto_le6h": 37,
+   "found_by_sim": 26,
+   "recall_pct": 70,
+   "precision_pct": 41,
+   "by_entry_band_min": {
+    "le10": {
+     "sim": 19,
+     "auto": 4,
+     "hand": 7,
+     "none": 8
+    },
+    "m10_30": {
+     "sim": 14,
+     "auto": 8,
+     "hand": 3,
+     "none": 3
+    },
+    "m30_120": {
+     "sim": 12,
+     "auto": 5,
+     "hand": 4,
+     "none": 3
+    },
+    "m120_360": {
+     "sim": 26,
+     "auto": 12,
+     "hand": 8,
+     "none": 6
+    }
+   }
+  },
+  "close_availability": {
+   "R1": {
+    "bets": 184,
+    "closes": 116,
+    "pct": 63
+   },
+   "placed": {
+    "n": 79,
+    "closes": 75
+   },
+   "unplaced": {
+    "n": 105,
+    "closes": 41
+   },
+   "app_list_carried": {
+    "n": 146,
+    "closes": 115
+   },
+   "wide_only": {
+    "n": 38,
+    "closes": 1
+   },
+   "props": {
+    "n": 160,
+    "closes": 98
+   },
+   "non_props": {
+    "n": 24,
+    "closes": 18
+   },
+   "no_close_props": 62,
+   "bound_mean_if_unclosed_zero_pct": 1.604
+  },
+  "entry_time_bands_R1": {
+   "m2_5": 8,
+   "m5_10": 27,
+   "m10_30": 28,
+   "m30_120": 44,
+   "m120_360": 76
+  },
+  "bids_side_effect": {
+   "fills": 17,
+   "fills_posted_over_6h": 8,
+   "stake_share_pct": 50,
+   "clv_over6h_fills_pct": 3.5,
+   "unfilled_newest_300_posted_over_6h": 116
+  }
+ }
+}
