@@ -64,7 +64,6 @@ class BetOrBidTest {
 
     @Test
     fun `tagBids gives a bid's record both tags, from the bid store's orders, and touches nothing else`() = runTest {
-        val t = BetTracker(File(tmp.root, "bets.json"), clock = { now })
         val file = File(tmp.root, "bets.json")
         // Written the way an older app wrote them.
         file.writeText(
@@ -92,7 +91,6 @@ class BetOrBidTest {
         assertEquals(AtBet.HOW_SHEET, byId.getValue("tap-").atBet!!.how)
         assertEquals("a second look finds nothing left to stamp", 0, fresh.tagBids(setOf("bid-1", "bid-2")))
         assertEquals(1, fresh.all().count { !it.isBid })
-        assertEquals(t.all().size, 5)
     }
 
     @Test

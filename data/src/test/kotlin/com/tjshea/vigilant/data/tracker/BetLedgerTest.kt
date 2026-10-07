@@ -84,7 +84,8 @@ class BetLedgerTest {
         assertEquals("auto", BetLedger.keyOf(bet("a", at(4, 4)), BetLedger.Split.HOW))
         assertEquals("$100-500", BetLedger.keyOf(bet("a", at(4, 4)), BetLedger.Split.LIQUIDITY))
         assertEquals("under 30 s", BetLedger.keyOf(bet("a", at(4, 4)), BetLedger.Split.PAGE_AGE))
-        for (split in BetLedger.Split.entries - BetLedger.Split.LEAD) assertEquals(split.name, BetLedger.NOT_RECORDED, BetLedger.keyOf(bet("old", null), split))
+        // The time to the start and bet-or-bid need no record as placed: every bet knows both.
+        for (split in BetLedger.Split.entries - BetLedger.Split.LEAD - BetLedger.Split.MADE) assertEquals(split.name, BetLedger.NOT_RECORDED, BetLedger.keyOf(bet("old", null), split))
     }
 
     @Test
