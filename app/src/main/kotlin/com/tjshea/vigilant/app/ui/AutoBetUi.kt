@@ -34,6 +34,7 @@ import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.app.WalletAmount
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.novig.trading.AutoBet
+import com.tjshea.vigilant.data.novig.trading.PropGuard
 import com.tjshea.vigilant.data.scanner.AutoBetStake
 import com.tjshea.vigilant.data.scanner.AutoScanMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -420,6 +421,8 @@ fun AutoBetSection(
     SharpVetoSection(state, forAlerts = false, onUpdate = onUpdate)
     // ---- Trap bets (RESEARCH.md §71) --------------------------------------------------------------------
     TrapGuardSection(s, showMove = true, tag = "autoBet", onUpdate = onUpdate)
+    // ---- Small-prop guard (RESEARCH.md §109) --------------------------------------------------------------
+    PropGuardSection(state, onUpdate)
 
     // ---- How much -----------------------------------------------------------------------------------
     SectionTitle("How much")
@@ -562,6 +565,51 @@ fun AutoBetSection(
         )
     }
 
+}
+
+/** The small-prop guard's words, free of Compose so they're testable. */
+object PropGuardText {
+    const val TITLE = "Small-prop guard"
+
+    const val INTRO =
+        "One kind of player prop (a league and a stat, like NHL shots on goal) can fill a whole day: a slate with no football, and an NHL game lists 20-30 shot lines. This limits how much " +
+            "ONE kind may take of the last 24 hours' auto-bets and how many it may have on one game. It bans nothing and raises no bar. Shots on goal was checked and not found unwise (the sharp " +
+            "check passed every one, Novig's takers trade it more than any other NHL skater prop), but its edge is not confirmed either (Kalshi never lists it, ProphetX prices both sides on about " +
+            "half the pages, no independent close shows an edge yet), so no single market should carry the day."
+
+    const val SHARE_LABEL = "Most of the day's auto-bets one kind of prop may take"
+    const val SAMPLE_LABEL = "Judged once the last 24 hours hold this many auto-bets"
+    const val PER_GAME_LABEL = "Most auto-bets on one kind of prop in one game"
+
+    /** What the guard does at [s]'s settings. */
+    fun note(s: ScanSettings): String = "Now: " + PropGuard.summary(PropGuard.rules(s)) + "."
+
+    /** What the last 24 hours and the last 7 days of auto-bets look like by kind of prop, from the Tracker ([now]: the clock). */
+    fun shares(bets: Collection<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): String =
+        "Last 24 hours: " + PropGuard.sharesLine(PropGuard.history(bets, now)) + ". Last 7 days: " + PropGuard.sharesLine(PropGuard.history(bets, now, PropGuard.WEEK_MS)) + "."
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PropGuardSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    val subtle = MaterialTheme.colorScheme.onSurfaceVariant
+    SectionTitle(PropGuardText.TITLE)
+    Text(PropGuardText.INTRO, style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("propGuardIntro"))
+    Text(PropGuardText.SHARE_LABEL, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(PropGuard.SHARE_CHOICES, s.propGuardShare, PropGuard::shareLabel, equal = { a, b -> abs(a - b) < 1e-9 }) { v -> onUpdate { it.copy(propGuardShare = v) } }
+    TypedNumberField(
+        NumberSpecs.percent("share of the day's auto-bets", 0.0, PropGuard.MAX_SHARE * 100), if (s.propGuardShare <= 1e-9) "" else AutoBetText.trim(s.propGuardShare * 100), "propGuardShareField",
+    ) { v -> onUpdate { it.copy(propGuardShare = v / 100.0) } }
+    Text(PropGuardText.SAMPLE_LABEL, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(PropGuard.MIN_SAMPLE_CHOICES, s.propGuardMinSample, { "$it" }) { v -> onUpdate { it.copy(propGuardMinSample = v) } }
+    TypedIntField(NumberSpecs.count("auto-bets", 1, 200), s.propGuardMinSample, "propGuardSampleField", none = { false }) { v -> onUpdate { it.copy(propGuardMinSample = v) } }
+    Text(PropGuardText.PER_GAME_LABEL, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(PropGuard.PER_GAME_CHOICES, s.propGuardPerGame, PropGuard::perGameLabel) { v -> onUpdate { it.copy(propGuardPerGame = v) } }
+    TypedIntField(NumberSpecs.count("bets on one game", 1, 50), s.propGuardPerGame, "propGuardPerGameField") { v -> onUpdate { it.copy(propGuardPerGame = v) } }
+    Text(PropGuardText.note(s), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("propGuardNote"))
+    val now = remember(state.bets) { System.currentTimeMillis() }
+    Text(PropGuardText.shares(state.bets, now), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("propGuardShares"))
 }
 
 @OptIn(ExperimentalLayoutApi::class)
