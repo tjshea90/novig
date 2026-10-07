@@ -69,6 +69,11 @@ data class CnoFilters(
     val devig: CnoDevig = CnoDevig.CONSERVATIVE,
     /** Longest American odds shown (+150 = negative odds up to +150); 0 = no limit. */
     val maxOdds: Int = 150,
+    /**
+     * Shortest American odds shown (Tj, 2026-10-07): negative = no favorite shorter than it (−200), positive = underdogs at least that long only (+110); 0 = no limit.
+     * CNO has no such filter of its own that the app relies on, so it's enforced here ([CnoChecks]) on every row CNO sends.
+     */
+    val minOdds: Int = 0,
     /** Fewest books behind CNO's fair price, 1-4 ([ScanSettings.CNO_MIN_BOOKS_CHOICES]; 1-2-book markets are thin). */
     val minBooks: Int = 4,
     /** Smallest EV shown, as a fraction. */

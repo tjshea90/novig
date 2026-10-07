@@ -135,7 +135,7 @@ data class ScanResult(
                 (waitingFor.isEmpty() || waitKey(o.league.novigName, o.kind == LineKind.PLAYER_PROP) !in waitingFor) &&
                 o.league.novigName in settings.leagues &&
                 ev >= settings.minEvPercent && ev <= settings.maxEvPercent &&
-                settings.withinMaxOdds(o.quote!!.cost) &&
+                settings.withinOdds(o.quote!!.cost) &&
                 (settings.includeLive || !o.isLive) &&
                 MarketFamily.entries.any { it in settings.families && o.market.marketType in it.novigTypes }
         }

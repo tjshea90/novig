@@ -170,7 +170,7 @@ fun UiState.parlayShown(now: Long): List<ParlayPick> = parlayPicks.picks.filter 
     val ev = p.ev ?: return@filter false
     val start = p.row.startsAtMs
     p.found && ev >= settings.minEvPercent && ev <= settings.maxEvPercent &&
-        settings.withinMaxOdds(1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(p.row.odds)) &&
+        settings.withinOdds(1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(p.row.odds)) &&
         (start == null || (start > now && settings.startsInWindow(start, now))) &&
         p.key !in placedKeys &&
         !placedIndex.has(key = p.key, event = p.row.event, market = p.row.market, selection = p.row.bet, startsTs = start, league = p.row.league)
@@ -217,10 +217,10 @@ fun ParlayPicksHeader(state: UiState, shown: Int, now: Long, actions: ParlayPick
                                 // +EV at Novig but longer than Tj's odds cap (home-run props often are): said, not silently dropped.
                                 val s = state.settings
                                 val capped = ui.picks.count { p ->
-                                    p.found && (p.ev ?: -1.0) >= s.minEvPercent && !s.withinMaxOdds(1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(p.row.odds))
+                                    p.found && (p.ev ?: -1.0) >= s.minEvPercent && !s.withinOdds(1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(p.row.odds))
                                 }
                                 "${ui.picks.size} listed · $shown +EV at ${com.tjshea.vigilant.app.AppBook.name} now" +
-                                    (if (capped > 0) " · $capped over your +${s.maxOdds} odds cap" else "") +
+                                    (if (capped > 0) " · $capped outside your odds limits" else "") +
                                     (if (ui.picks.size > found) " · ${ui.picks.size - found} not found there" else "") +
                                     " · read ${Format.age(ui.readAtMs, now)}"
                             }

@@ -472,6 +472,11 @@ data class ScanSettings(
      */
     val maxOdds: Int = 300,
     /**
+     * The feed hides prices shorter than these American odds (Tj, 2026-10-07: "anywhere there is a longest odds setting … make a shortest odds setting as well"):
+     * negative = no favorite shorter than it (−200), positive = underdogs at least that long only (+110); 0 = no limit.
+     */
+    val minOdds: Int = 0,
+    /**
      * Opt-in: leaving Vigilant with a scan running or bets on the feed brings up the widget (or the
      * picture-in-picture window) by itself, and opening Novig's app from a bet floats it over Novig
      * (Tj, 2026-09-26). Off by default since v0.22.0 (Tj, 2026-09-29: "often when I switch from
@@ -753,6 +758,12 @@ data class ScanSettings(
 
     /** Whether a price (cost per $1 payout) is within [maxOdds]. */
     fun withinMaxOdds(cost: Double): Boolean = maxOdds <= 0 || cost >= 100.0 / (100.0 + maxOdds) - 1e-9
+
+    /** Whether a price (cost per $1 payout) is within [minOdds]: no shorter than it (a shorter price costs more). */
+    fun withinMinOdds(cost: Double): Boolean = minOdds == 0 || cost <= 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(minOdds) + 1e-9
+
+    /** Whether a price is inside both odds limits ([minOdds], [maxOdds]). */
+    fun withinOdds(cost: Double): Boolean = withinMaxOdds(cost) && withinMinOdds(cost)
 
     /**
      * Whether a game starting at [startsMs] passes [startsWithinHours] at [now]. Games already under

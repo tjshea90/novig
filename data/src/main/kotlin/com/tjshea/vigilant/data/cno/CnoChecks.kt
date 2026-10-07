@@ -80,6 +80,7 @@ object CnoChecks {
         if (row.oneWay) return Reason.ONE_WAY
         if (row.books != null && row.books < f.minBooks) return Reason.BOOKS
         if (f.maxOdds > 0 && row.odds > f.maxOdds) return Reason.ODDS
+        if (com.tjshea.vigilant.data.novig.trading.AutoBet.tooShort(f.minOdds, row.odds)) return Reason.ODDS
         if (row.ev > MAX_EV) return Reason.TOO_GOOD
         if (row.ev < f.minEv - 1e-9) return Reason.EV
         return null
