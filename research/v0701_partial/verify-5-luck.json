@@ -1,0 +1,1468 @@
+{
+ "lens": "LUCK AND MULTIPLE COMPARISONS (cluster-matched redraw permutation, within-game-day shuffle, cluster sign-flip and max-t FWER, Bonferroni for tried_count=9340, game-clustered CI, leave-one-game-out, drop top games/bets, date halves)",
+ "rule": "First listed within 6 h AND listed EV >= 2.5%: (df.minToStartFirst<=360)&(df.ev>=0.025)",
+ "numbers_reproduced": "Reproduced exactly: 122 bets, 43 games, 54.08 bets/day over 2.256 days; CLV all closes +3.01% [+1.99,+4.37] on 64 closes/31 games (builder +3.01% [+1.99,+4.39]); close_ok +3.36% [+1.96,+5.08] (52/27); independent closes +1.64% [+0.59,+3.42] on 13 closes/10 games; ROI +3.75% [-16.2,+23.7] on 118 settled/42 games (no information); loader halves first +2.70% (52 closes/23 games), second +4.35% (12/8); universe +0.19% all closes, T<=6h parent +1.41% (256 closes/66 games). Rationale claim on the auto-bet universe also reproduced: 120 bets/73 closes/24 games +0.97% at 24 h vs 14 closes/7 games +2.38% at 6 h. Builder p values: all-closes bootstrap <0.001 and max-t FWER 0.007/0.009 reproduce (mine 0.0054 all, 0.0071 ok, 20,000 flips); the builder independent-close bootstrap p<0.001 does NOT survive a permutation (0.12).",
+ "survives": false,
+ "reason": "Luck is NOT what sinks the headline number, but the rule is not established as an improvement. (1) On all closes the effect is far beyond chance: cluster sign-flip vs the universe mean p=5.5e-6 (all) / 2.7e-6 (close_ok), cluster-matched redraw of same-sized subsets (200,000 draws, same game-size profile) p=7.5e-5 (14 of 200,000 draws reach the observed 3.01%) on all closes and 0 of 200,000 on close_ok, source-mix-matched redraw p=1.5e-4, within-game-day shuffle p=1e-4; family-wise (max-t over the builder 5,301/5,074 valid rules) p=0.0054/0.0071; the rule is the 155th/134th by t, not the top; Bonferroni on the sign-flip p x9,340 = 0.051 (all) / 0.026 (ok) and x9,340 on the redraw p = 0.70 (all) / <=0.047 (ok): borderline-to-failing once the whole tried count is charged, and plain Bonferroni over nested rules is too harsh while the exploration outside the grid is not counted. It is robust to leave-one-game-out (min +2.77% all, +3.09% ok), dropping the top 5 games (+2.84% [1.68,4.03] all; +2.49% [1.28,4.49] ok), the top 3 bets (+2.55% [1.51,3.91]), winsorising (+3.09%); 26 of 31 games positive; it is a smooth plateau over T 120-720 min x EV 2-4% and beats the same-day universe on each of the 3 game days. (2) But 61% of the closes (39 of 64) are Tracker reads on Tj-placed bets, mostly CNO own consensus about 50 s before the start: CLV minus listed EV is -0.22 pts there (CLV 3.94% vs EV 4.16%), i.e. persistence of the fair that produced the EV, not new information; CLV rises 0.56-0.71 per point of listed EV on all closes. On closes independent of that read (ESPN/Pinnacle/Novig 3+ trades) the rule has only 13 closes in 10 games: +1.64% bootstrap [0.59,3.42] but cluster-matched redraw p=0.12, source-stratified redraw p=0.12, within-game-day shuffle p=0.12, max-t FWER 0.95 (rank 774 of 5,672), median +0.17%, 7 of 13 beat the close; drop the 3 largest bets (two of them ESPN/one Novig 8.5%) and the mean is -0.001%. The builder luck figure <0.001 on independent closes is a 10-cluster bootstrap artifact. (3) The improvement over the status quo is not separable: on the auto-bet own universe 6 h vs 6-24 h is +1.75 pts [-0.96,+5.18] (14 closes/7 games vs 59/19), one-sided p=0.094; broad universe, rule minus (EV>=2.5% listed later than 6 h) is +2.30 pts [-0.04,+4.94] all closes, +2.83 [+0.42,+5.76] ok, +0.67 [-1.64,+3.63] independent; and the part that is the rule own (EV>=2.5% inside 6 h) adds +2.14 pts [+1.10,+3.47] over T<=6h with EV<2.5% on all closes (within-game permutation p=0.0023) but only +1.18 [-0.18,+3.06] on independent closes (p=0.53). (4) The 6 h component alone is the credible part: it is the code default (RESEARCH.md 71, trapEarlyHours=6 on the v0.54.0 file: Tj bets under 6 h +2.17% CLV vs 6 h+ -0.62%), the phone was at 24 h, and in this sample T<=6h beats later by +1.95 pts [+1.06,+2.95] on all closes and +0.97 [-0.06,+2.03] on independent closes (128 closes/52 games, T<=6h independent CLV +0.58% [+0.02,+1.35]); returning the guard to 6 h is a tightening (fewer bets) and a question for Tj, but the +3.0% headline for this rule should not be quoted: the independent-close expectation is nearer +0.6 to +1.6%. What would settle it: about 50 (delta 1.5 pts) to 112 (1.0 pt) independent closes of rule bets for 80% power, 4 to 9 times today; the rule makes about 5.8 independent closes a day, so about 6 to 17 more logged days; the next export adds at most 20 closes (20 of the 58 closeless bets await Novig next-morning trade file).",
+ "caveats": [
+  "Sample is ~2.26 days of first-looks over 3 game days (Oct 3-5 for the rule); 78% of closes come from the Oct 4 slate; effective independent units are closer to slates/days than the 31 games; the rule beats the same-day universe mean on each of the 3 days (+2.45% vs +1.29%, +2.75% vs +0.08%, +4.35% vs -0.03%) but 3 days cannot support a day-level test.",
+  "Tracker closes exist only for bets Tj/auto-bet placed (placed bets are a further-selected subset: sharp check, books agree); rule closes are 39/40 on placed bets and 25/82 on unplaced; post-stratifying on placed gives +2.35% [+1.44,+3.39] (close_ok +2.39% [+1.42,+4.05]) assuming closes are missing at random within strata, which the data-quality analyst showed is false for kind and close source.",
+  "Sign-flip and bootstrap p values are unreliable at 7-10 games (discrete, ties at zero CLV, exact floor 1/2^G): the second half (8 games) cannot go below 0.0039; the independent set (10 games) gives 0.001-0.013 by sign-flip but 0.12 by redraw; the redraw is the honest one with heavy-tailed single closes (sd 3.7 pts).",
+  "The builder tried_count is 9,340; my rebuild of its grid has 7,715 rules (5,301 valid on all closes, 5,074 on close_ok); the builder also explored outside the grid (ladders, look fits), so true family size is larger; max-t FWER already accounts for nesting and would be the figure to quote.",
+  "The 6 h threshold and the 2.5% floor were not tuned on this sample (code default from RESEARCH.md 71 on the v0.54.0 file, and the auto-bet edge floor), which lowers the effective multiple-comparison burden for the T<=6h component; the incremental EV>=2.5% inside 6 h is the post-hoc part and is the part independent closes cannot yet confirm.",
+  "Closes are first-look CLV at the first-listed price for 1 unit; Novig had only `available` dollars (avg $401 on the rule bets) and many bets stayed listed minutes; ROI (+3.75% on 118 settled) has a CI of [-16%,+24%] and says nothing.",
+  "The rule as specified covers all 2080 logged bets including 26 wide-read-only finds the auto-bet never sees (27 hidden bets, only 2 with a close); only 39 of the 122 were listed by Vigilant itself (17 closes); the auto-bet universe version is 14 closes/7 games."
+ ],
+ "data": {
+  "selection": {
+   "bets": 122,
+   "games": 43,
+   "closes_all": 64,
+   "closes_games_all": 31,
+   "closes_ok": 52,
+   "closes_ok_games": 27,
+   "closes_independent": 13,
+   "closes_independent_games": 10,
+   "per_day": 54.08,
+   "days": 2.256,
+   "share_tracker_closes": 0.609375,
+   "tracker_closes": 39,
+   "novig_trades_closes": 20,
+   "espn_closes": 4,
+   "pinnacle_closes": 1,
+   "placed_bets": 40,
+   "closes_on_placed_bets": 39,
+   "share_of_closes_on_placed_bets": 0.609375,
+   "prop_bets": 103,
+   "nfl_bets": 73,
+   "hidden_bets": 27,
+   "lister_v_bets": 39
+  },
+  "reproduction": {
+   "clv_all": {
+    "mean": 0.030126,
+    "ci": [
+     0.019932,
+     0.043654
+    ],
+    "n": 64,
+    "games": 31,
+    "beat_share": 0.71875
+   },
+   "clv_ok": {
+    "mean": 0.033638,
+    "ci": [
+     0.019629,
+     0.050778
+    ],
+    "n": 52,
+    "games": 27,
+    "beat_share": 0.7885
+   },
+   "clv_independent": {
+    "mean": 0.01641,
+    "ci": [
+     0.005874,
+     0.034172
+    ],
+    "n": 13,
+    "games": 10,
+    "beat_share": 0.5385,
+    "median": 0.00173
+   },
+   "roi": {
+    "mean": 0.037518,
+    "ci": [
+     -0.1622,
+     0.237
+    ],
+    "n": 118,
+    "games": 42
+   },
+   "first_half_loader": {
+    "clv": 0.027045,
+    "n": 52,
+    "games": 23
+   },
+   "second_half_loader": {
+    "clv": 0.043477,
+    "n": 12,
+    "games": 8
+   },
+   "universe_all_closes": {
+    "mean": 0.001915,
+    "n": 683,
+    "games": 69
+   },
+   "universe_T6": {
+    "mean": 0.014108,
+    "n": 256,
+    "games": 66
+   },
+   "matches_builder": true
+  },
+  "yardstick_composition": {
+   "by_source": {
+    "tracker": {
+     "n": 39,
+     "clv": 0.03938,
+     "mean_listed_ev": 0.04159,
+     "clv_minus_ev": -0.0022
+    },
+    "novig_trades": {
+     "n": 20,
+     "clv": 0.01085,
+     "mean_listed_ev": 0.03908,
+     "clv_minus_ev": -0.0282
+    },
+    "espn": {
+     "n": 4,
+     "clv": 0.03848
+    },
+    "pinnacle": {
+     "n": 1,
+     "clv": 0.02141
+    }
+   },
+   "note": "Tracker closes = bets Tj placed; 74.6% are CNO consensus read about 50 s before the start (study-data-quality). CLV minus listed EV is -0.22 pts on them (the fair persisted); CLV on all closes 3.01% vs listed EV 4.07% on the same bets (retention 74%).",
+   "placed_closes_clv": 0.03938,
+   "unplaced_closes_clv": {
+    "mean": 0.015688,
+    "ci": [
+     0.0021,
+     0.0278
+    ],
+    "n": 25,
+    "games": 15
+   },
+   "post_stratified_on_placed": {
+    "clv": 0.023456124690442212,
+    "ci": [
+     0.014418016659699745,
+     0.033901129969189044
+    ],
+    "clv_ok": 0.02394126864602839,
+    "ci_ok": [
+     0.014225639776567574,
+     0.04048629376337743
+    ]
+   }
+  },
+  "single_rule_tests": {
+   "cluster_signflip_vs_universe_mean": {
+    "all_closes": {
+     "t": 3.73720983335274,
+     "p": 5.499998625000344e-06,
+     "flips": 4000000,
+     "hits": 21
+    },
+    "close_ok": {
+     "t": 3.6822313943225553,
+     "p": 2.749999312500172e-06,
+     "flips": 4000000,
+     "hits": 10
+    }
+   },
+   "cluster_signflip_day_centred": {
+    "all_closes": {
+     "excess": 0.027987936515945038,
+     "p": 9.9999950000025e-06
+    },
+    "close_ok": {
+     "excess": 0.03143985496028822,
+     "p": 7.499996250001875e-06
+    },
+    "independent": {
+     "excess": 0.01510611961097898,
+     "p": 0.0126953125,
+     "note": "exact enumeration over 10 games"
+    }
+   },
+   "cluster_matched_redraw_all_universe": {
+    "all_closes": {
+     "P": 200000,
+     "exceed": 14,
+     "p": 7.499962500187499e-05,
+     "null_mean": 0.006529149613472385,
+     "null_max": 0.033702574322303364,
+     "null_p999": 0.02571789529301478
+    },
+    "close_ok": {
+     "P": 200000,
+     "exceed": 0,
+     "p_upper": 4.9999750001249995e-06,
+     "null_mean": 0.006153229296092096,
+     "null_max": 0.033397598960577916,
+     "null_p999": 0.025076627928536075
+    },
+    "independent": {
+     "P": 20000,
+     "p": 0.11964401779911005,
+     "iid_p": 0.11609419529023549,
+     "null_p95": 0.022493313809085494,
+     "univ_mean": -0.00043596648118055523,
+     "univ_n": 360,
+     "univ_games": 57
+    }
+   },
+   "cluster_matched_redraw_within_parent_T6": {
+    "all": 4.999750012499375e-05,
+    "ok": 4.999750012499375e-05,
+    "independent": 0.17969101544922753,
+    "P": 20000,
+    "note": "does EV>=2.5% add anything among bets within 6 h"
+   },
+   "cluster_matched_redraw_within_parent_EV25": {
+    "all": 0.03159842007899605,
+    "ok": 0.004899755012249388,
+    "independent": 0.28113594320283986,
+    "P": 20000,
+    "note": "does T<=6h add anything among bets with EV>=2.5%"
+   },
+   "source_stratified_redraw_all_closes": {
+    "p": 0.00014999250037498125,
+    "composition": {
+     "tracker": 39,
+     "novig_trades": 20,
+     "espn": 4,
+     "pinnacle": 1
+    },
+    "null_mean": 0.0032551259154312254
+   },
+   "source_stratified_redraw_independent": {
+    "p": 0.12099697507562311,
+    "composition": {
+     "novig_trades": 8,
+     "espn": 4,
+     "pinnacle": 1
+    }
+   },
+   "within_gameday_shuffle_iid": {
+    "clv": {
+     "p": 9.99950002499875e-05,
+     "null_sd": 0.007076082278253097,
+     "null_max": 0.030925420982887322
+    },
+    "clv_ok": {
+     "p": 4.999750012499375e-05,
+     "null_sd": 0.007304600409721623,
+     "null_max": 0.028628528257184295
+    },
+    "clv_ind": {
+     "p": 0.12259387030648468,
+     "null_sd": 0.013709651625937786,
+     "null_max": 0.05750316980852686
+    }
+   },
+   "selection_matched": {
+    "placed_closes_vs_all_placed": 4.999750012499375e-05,
+    "placed_closes_vs_placed_within_6h": 0.00024998750062496874,
+    "unplaced_closes_vs_all_unplaced": 0.0968951552422379,
+    "unplaced_closes_vs_unplaced_within_6h": 0.06494675266236688,
+    "unplaced_close_ok_13_vs_all_unplaced_ok": 0.11614419279036048,
+    "novig_trades_closes_20_vs_all_novig_trades": 0.18734063296835157,
+    "tracker_closes_39_vs_all_tracker": 4.999750012499375e-05
+   }
+  },
+  "multiple_comparisons": {
+   "tried_count_builder": 9340,
+   "grid_rebuilt_total_rules": 7715,
+   "grid_valid_all_closes": 5301,
+   "grid_valid_close_ok": 5074,
+   "maxt_fwer_cluster_signflip": {
+    "all_closes": {
+     "p": 0.005399730013499325,
+     "t": 3.73720983335274,
+     "rank_by_t": 155,
+     "null_max_t_95": 3.339347158195343,
+     "null_max_t_99": 3.6334925163888303,
+     "flips": 20000
+    },
+    "close_ok": {
+     "p": 0.007149642517874106,
+     "t": 3.6822313943225553,
+     "rank_by_t": 134,
+     "null_max_t_95": 3.3146311524639165,
+     "null_max_t_99": 3.6319896888881464,
+     "flips": 20000
+    },
+    "independent_min10closes_6games": {
+     "p": 0.9527523623818809,
+     "t": 2.0366490216280346,
+     "rank_by_t": 774,
+     "n_valid": 5672,
+     "note": "the rule has only 13 independent closes: invalid under the builder n>=30 filter"
+    },
+    "TxEV_subfamily_38_rules": {
+     "all": 0.00014999250037498125,
+     "ok": 0.00014999250037498125
+    }
+   },
+   "grid_position": {
+    "all_closes": {
+     "valid": 5301,
+     "rank_by_mean": 111,
+     "rank_by_t": 155,
+     "pct_by_t": 0.9707602339181286,
+     "n_rules_mean_ge": 111
+    },
+    "close_ok": {
+     "valid": 5074,
+     "rank_by_mean": 37,
+     "rank_by_t": 134,
+     "pct_by_t": 0.9735908553409539,
+     "n_rules_mean_ge": 37
+    },
+    "note": "rule is the 155th (all) / 134th (ok) of the valid rules by t; the family top is T<=240..480 alone (t 4.6) -> the 6 h component carries most of the t"
+   },
+   "bonferroni_on_single_rule_signflip_p": {
+    "all_closes": {
+     "bonf_9340": 0.05136998715750322,
+     "bonf_7715": 0.04243248939187765,
+     "bonf_5301": 0.029155492711126826,
+     "sidak_9340": 0.05007298953175199
+    },
+    "close_ok": {
+     "bonf_9340": 0.02568499357875161,
+     "bonf_7715": 0.021216244695938826,
+     "bonf_5074": 0.013953496511625873,
+     "sidak_9340": 0.02535797465659584
+    }
+   },
+   "bonferroni_on_redraw_p": {
+    "all_closes_x9340": 0.7004964975175124,
+    "close_ok_x9340_upper": 0.04669976650116749,
+    "note": "redraw base is stricter than sign-flip on all closes (heavier null tail)"
+   },
+   "forking_paths_note": "The grid is 1-3 condition rules over ~45 conditions; the builder also ran ladders/explorations outside it, so the true tried count is at least 9340. Max-t FWER is the correct (correlation-aware) correction; plain Bonferroni over heavily nested rules is too conservative. The 6 h cut and the 2.5% floor both pre-exist this sample (RESEARCH.md 71: v0.54.0 file, Tj bets under 6 h +2.17% CLV vs 6 h+ -0.62%; auto-bet edge floor 2.5%), so the effective family for this specific rule is small; the incremental EV>=2.5% inside 6 h is the post-hoc part."
+  },
+  "robustness": {
+   "leave_one_game_out": {
+    "all": {
+     "min": 0.027706336062639572,
+     "max": 0.03574154519321636
+    },
+    "ok": {
+     "min": 0.030906333061680683,
+     "max": 0.04363682825286251
+    },
+    "independent": {
+     "min": 0.010531228397191497,
+     "max": 0.0204989471652669
+    }
+   },
+   "drop_top_games": {
+    "clv": {
+     "drop_top1": {
+      "n": 60,
+      "games": 30,
+      "mean": 0.027706336062639565,
+      "lo": 0.01849617032762477,
+      "hi": 0.041109928302874695,
+      "t": 3.7886626645280597,
+      "p_signflip": 1.4999925000374999e-05
+     },
+     "drop_top2": {
+      "n": 45,
+      "games": 29,
+      "mean": 0.03301515106413674,
+      "lo": 0.022120415878717284,
+      "hi": 0.043705694673723525,
+      "t": 3.6761002160194938,
+      "p_signflip": 1.4999925000374999e-05
+     },
+     "drop_top3": {
+      "n": 43,
+      "games": 28,
+      "mean": 0.03095235270649466,
+      "lo": 0.020079529844321455,
+      "hi": 0.041259673259513845,
+      "t": 3.572339836703178,
+      "p_signflip": 5.9999700001499995e-05
+     },
+     "drop_top5": {
+      "n": 37,
+      "games": 26,
+      "mean": 0.028410390220710558,
+      "lo": 0.016833384284071558,
+      "hi": 0.040322996485716384,
+      "t": 3.341564339985594,
+      "p_signflip": 0.00018999905000474998
+     }
+    },
+    "clv_ok": {
+     "drop_top1": {
+      "n": 48,
+      "games": 26,
+      "mean": 0.030906333061680683,
+      "lo": 0.017878588495797505,
+      "hi": 0.048138020855204224,
+      "t": 3.8003506042124635,
+      "p_signflip": 9.999950000249999e-06
+     },
+     "drop_top2": {
+      "n": 46,
+      "games": 25,
+      "mean": 0.028886377292473696,
+      "lo": 0.016296071374326548,
+      "hi": 0.04581197374017232,
+      "t": 3.718925975347987,
+      "p_signflip": 9.999950000249999e-06
+     },
+     "drop_top3": {
+      "n": 43,
+      "games": 24,
+      "mean": 0.027476297929056013,
+      "lo": 0.015060302162877235,
+      "hi": 0.04547479460402829,
+      "t": 3.638542514275468,
+      "p_signflip": 1.4999925000374999e-05
+     },
+     "drop_top5": {
+      "n": 38,
+      "games": 22,
+      "mean": 0.024930697933833207,
+      "lo": 0.012805070740892552,
+      "hi": 0.044891636418404705,
+      "t": 3.4143032329091083,
+      "p_signflip": 9.999950000249999e-05
+     }
+    },
+    "clv_ind": {
+     "drop_top1": {
+      "n": 12,
+      "games": 9,
+      "mean": 0.010531228397191497,
+      "lo": 0.0043520156605589,
+      "hi": 0.020002624277664135,
+      "t": 2.1006556258377316,
+      "p_signflip": 0.001953125
+     },
+     "drop_top2": {
+      "n": 11,
+      "games": 8,
+      "mean": 0.007677423985747364,
+      "lo": 0.0028730603660663684,
+      "hi": 0.013726089043464229,
+      "t": 1.93343175962912,
+      "p_signflip": 0.00390625
+     },
+     "drop_top3": {
+      "n": 7,
+      "games": 7,
+      "mean": 0.007944417975027826,
+      "lo": 0.0010861287595472305,
+      "hi": 0.01601013597515236,
+      "t": 1.6967496581722736,
+      "p_signflip": 0.0078125
+     },
+     "drop_top5": {
+      "n": 5,
+      "games": 5,
+      "mean": 0.0018348964293562141,
+      "lo": -6.337661090989321e-05,
+      "hi": 0.004876056956088459,
+      "t": 1.3593151545807514,
+      "p_signflip": 0.03125
+     }
+    }
+   },
+   "drop_3_biggest_games_by_closes": {
+    "clv": {
+     "n": 41,
+     "games": 28,
+     "mean": 0.03464002884901596,
+     "lo": 0.023056513051183083,
+     "hi": 0.045351417653436095
+    },
+    "clv_ok": {
+     "n": 32,
+     "games": 24,
+     "mean": 0.04027780752424401,
+     "lo": 0.02851745983997577,
+     "hi": 0.05066661305695237
+    },
+    "clv_ind": {
+     "n": 7,
+     "games": 7,
+     "mean": 0.022780997558224127,
+     "lo": 0.004324357312973156,
+     "hi": 0.04737857200408635
+    }
+   },
+   "drop_top3_bets": {
+    "clv": {
+     "n": 61,
+     "games": 31,
+     "mean": 0.025471442462856424,
+     "lo": 0.015126229940751289,
+     "hi": 0.03909412299994941
+    },
+    "clv_ok": {
+     "n": 49,
+     "games": 26,
+     "mean": 0.028639317377454364,
+     "lo": 0.016580465546428558,
+     "hi": 0.04366611352886967
+    },
+    "clv_ind": {
+     "n": 10,
+     "games": 8,
+     "mean": -9.355898140583907e-06,
+     "lo": -0.010160596740517383,
+     "hi": 0.013255449047170987
+    }
+   },
+   "winsor_5_95": {
+    "clv": {
+     "mean": 0.030866407926755934,
+     "lo": 0.021721977707894854,
+     "hi": 0.04311080084625643
+    },
+    "clv_ok": {
+     "mean": 0.033611572697743806,
+     "lo": 0.021476836305121337,
+     "hi": 0.04840951126422066
+    },
+    "clv_ind": {
+     "mean": 0.01859259829469654,
+     "lo": 0.007715248285448826,
+     "hi": 0.034586536744488236
+    }
+   },
+   "median": {
+    "clv": 0.0314887552130968,
+    "clv_ok": 0.04062978490703606,
+    "clv_ind": 0.0017300223572251916
+   },
+   "game_level": {
+    "clv": {
+     "games_pos": 26,
+     "games_zero": 1,
+     "games_neg": 4,
+     "mean_of_game_means": 0.03263600260802244,
+     "ci": [
+      0.02003937825921097,
+      0.04460864752551565
+     ],
+     "cr1_t": 4.7689678352039016,
+     "cr1_p": 2.2350829061767996e-05
+    },
+    "clv_ok": {
+     "games_pos": 24,
+     "games_zero": 2,
+     "games_neg": 1,
+     "mean_of_game_means": 0.038590962244824646,
+     "ci": [
+      0.025145268209797206,
+      0.05022597011141803
+     ],
+     "cr1_t": 3.769126819933989,
+     "cr1_p": 0.0004255883375020586
+    },
+    "clv_ind": {
+     "games_pos": 7,
+     "games_zero": 2,
+     "games_neg": 1,
+     "mean_of_game_means": 0.019170070899190865,
+     "ci": [
+      0.005244682969226611,
+      0.03673771395353929
+     ],
+     "cr1_t": 2.2366860439247307,
+     "cr1_p": 0.026062302727538733
+    }
+   },
+   "share_beating_close": {
+    "rule_all": 0.71875,
+    "universe_all": 0.5593,
+    "rule_ok": 0.7885,
+    "universe_ok": 0.5629,
+    "rule_indep": 0.5385,
+    "universe_indep": 0.5
+   },
+   "independent_drop_top3_bets_mean": -9.355898140583907e-06,
+   "independent_drop_top5_games_mean": 0.0018348964293562141
+  },
+  "halves": {
+   "loader_split_firstDay": {
+    "clv": {
+     "first": {
+      "n": 52,
+      "games": 23,
+      "mean": 0.02704453350461626,
+      "lo": 0.01583045642269268,
+      "hi": 0.043401931095322185,
+      "half_universe_mean": 0.0014851290842848542,
+      "half_univ_n": 618,
+      "t": 3.0115855623867294,
+      "p_signflip": 0.00023499882500587497,
+      "p_kind": "mc",
+      "min_possible_p": 1.1920928955078125e-07
+     },
+     "second": {
+      "n": 12,
+      "games": 8,
+      "mean": 0.04347652817498138,
+      "lo": 0.03114956123320576,
+      "hi": 0.05578131402399874,
+      "half_universe_mean": 0.006004761678969227,
+      "half_univ_n": 65,
+      "t": 2.374041221486423,
+      "p_signflip": 0.0078125,
+      "p_kind": "exact",
+      "min_possible_p": 0.00390625
+     }
+    },
+    "clv_ok": {
+     "first": {
+      "n": 40,
+      "games": 19,
+      "mean": 0.030685989136058613,
+      "lo": 0.015003715160948495,
+      "hi": 0.05302978314809361,
+      "half_universe_mean": 0.0014451851274574466,
+      "half_univ_n": 523,
+      "t": 2.9220735007754435,
+      "p_signflip": 0.00020999895000524998,
+      "p_kind": "mc",
+      "min_possible_p": 1.9073486328125e-06
+     },
+     "second": {
+      "n": 12,
+      "games": 8,
+      "mean": 0.04347652817498138,
+      "lo": 0.03114956123320576,
+      "hi": 0.05578131402399874,
+      "half_universe_mean": 0.006004761678969227,
+      "half_univ_n": 65,
+      "t": 2.374041221486423,
+      "p_signflip": 0.0078125,
+      "p_kind": "exact",
+      "min_possible_p": 0.00390625
+     }
+    },
+    "clv_ind": {
+     "first": {
+      "n": 10,
+      "games": 7,
+      "mean": 0.010135119918646473,
+      "lo": 0.0035758092553215895,
+      "hi": 0.021379491567406546,
+      "half_universe_mean": -0.0012576304520577957,
+      "half_univ_n": 337,
+      "t": 1.8945826100063974,
+      "p_signflip": 0.0078125,
+      "p_kind": "exact",
+      "min_possible_p": 0.0078125
+     },
+     "second": {
+      "n": 3,
+      "games": 3,
+      "mean": 0.037326687772987865,
+      "lo": 0.0,
+      "hi": 0.08695652173913038,
+      "half_universe_mean": 0.011603196918194664,
+      "half_univ_n": 23,
+      "t": 0.9968595429847388,
+      "p_signflip": 0.25,
+      "p_kind": "exact",
+      "min_possible_p": 0.125
+     }
+    }
+   },
+   "game_start_split": {
+    "clv": {
+     "first": {
+      "n": 25,
+      "games": 15,
+      "mean": 0.02884571103866015,
+      "lo": 0.00926451200986779,
+      "hi": 0.0470096438810897,
+      "half_universe_mean": 0.004903636332002031,
+      "half_univ_n": 353,
+      "t": 1.8887076535068972,
+      "p_signflip": 0.019195556640625,
+      "p_kind": "exact",
+      "min_possible_p": 3.0517578125e-05
+     },
+     "second": {
+      "n": 39,
+      "games": 16,
+      "mean": 0.030945930881367146,
+      "lo": 0.019459077102748933,
+      "hi": 0.050240842769924764,
+      "half_universe_mean": -0.001281407096895992,
+      "half_univ_n": 330,
+      "t": 3.218786976882132,
+      "p_signflip": 4.57763671875e-05,
+      "p_kind": "exact",
+      "min_possible_p": 1.52587890625e-05
+     }
+    },
+    "clv_ok": {
+     "first": {
+      "n": 18,
+      "games": 12,
+      "mean": 0.042204346288858725,
+      "lo": 0.01944126596104952,
+      "hi": 0.05813424767750317,
+      "half_universe_mean": 0.005706614122177389,
+      "half_univ_n": 292,
+      "t": 2.1044593694174796,
+      "p_signflip": 0.008056640625,
+      "p_kind": "exact",
+      "min_possible_p": 0.000244140625
+     },
+     "second": {
+      "n": 34,
+      "games": 15,
+      "mean": 0.02910234324537247,
+      "lo": 0.01462760611693172,
+      "hi": 0.05204544824857081,
+      "half_universe_mean": -0.0017573986246032201,
+      "half_univ_n": 296,
+      "t": 3.186692840892921,
+      "p_signflip": 3.0517578125e-05,
+      "p_kind": "exact",
+      "min_possible_p": 3.0517578125e-05
+     }
+    },
+    "clv_ind": {
+     "first": {
+      "n": 4,
+      "games": 4,
+      "mean": 0.00764684606134039,
+      "lo": 0.0007857904149752293,
+      "hi": 0.016492182163241664,
+      "half_universe_mean": 0.0008708685762450952,
+      "half_univ_n": 200,
+      "t": 1.2514181667659778,
+      "p_signflip": 0.1875,
+      "p_kind": "exact",
+      "min_possible_p": 0.0625
+     },
+     "second": {
+      "n": 9,
+      "games": 6,
+      "mean": 0.020304875362229642,
+      "lo": 0.0059849199553177156,
+      "hi": 0.05046544035674468,
+      "half_universe_mean": -0.002069510302962618,
+      "half_univ_n": 160,
+      "t": 1.839670802459626,
+      "p_signflip": 0.015625,
+      "p_kind": "exact",
+      "min_possible_p": 0.015625
+     }
+    }
+   },
+   "by_start_day": [
+    {
+     "day": "2026-10-03",
+     "bets": 11,
+     "games": 9,
+     "clv": [
+      8,
+      0.024538912153553305,
+      7
+     ],
+     "clv_ok": [
+      7,
+      0.02945689968502276,
+      7
+     ],
+     "clv_ind": [
+      2,
+      0.01450790170770555,
+      2
+     ]
+    },
+    {
+     "day": "2026-10-04",
+     "bets": 66,
+     "games": 21,
+     "clv": [
+      44,
+      0.02750010102299135,
+      16
+     ],
+     "clv_ok": [
+      33,
+      0.030946705080217733,
+      12
+     ],
+     "clv_ind": [
+      8,
+      0.009041924471381704,
+      5
+     ]
+    },
+    {
+     "day": "2026-10-05",
+     "bets": 45,
+     "games": 13,
+     "clv": [
+      12,
+      0.04347652817498138,
+      8
+     ],
+     "clv_ok": [
+      12,
+      0.04347652817498138,
+      8
+     ],
+     "clv_ind": [
+      3,
+      0.037326687772987865,
+      3
+     ]
+    }
+   ],
+   "note": "second half by first-look day: 12 closes / 8 games: exact sign-flip floor is 1/256=0.0039 (observed 0.0078); builder p=0.004 is that floor. Game-start split: second 39 closes/16 games +3.09% p=4.6e-5, first 25/15 +2.88% p=0.019; independent closes 4 and 9."
+  },
+  "incremental": {
+   "rule_minus_T6_ev_below_2_5": {
+    "clv": {
+     "obs": 0.02135727671784487,
+     "lo": 0.011003498940114494,
+     "hi": 0.03470361884088064,
+     "p_le0": 0.0,
+     "na": 64,
+     "nb": 192,
+     "ga": 31,
+     "gb": 59
+    },
+    "clv_ok": {
+     "obs": 0.02567932443008631,
+     "lo": 0.012659137200264707,
+     "hi": 0.04254800600615472,
+     "p_le0": 0.0,
+     "na": 52,
+     "nb": 177,
+     "ga": 27,
+     "gb": 57
+    },
+    "clv_ind": {
+     "obs": 0.011765254119650424,
+     "lo": -0.001792871506419556,
+     "hi": 0.03061534718396672,
+     "p_le0": 0.046352317615880795,
+     "na": 13,
+     "nb": 115,
+     "ga": 10,
+     "gb": 50
+    }
+   },
+   "rule_minus_EV25_later_than_6h": {
+    "clv": {
+     "obs": 0.023018799589004317,
+     "lo": -0.00042082078626864977,
+     "hi": 0.04935131796624321,
+     "p_le0": 0.0269,
+     "na": 64,
+     "nb": 80,
+     "ga": 31,
+     "gb": 21
+    },
+    "clv_ok": {
+     "obs": 0.028286983360070142,
+     "lo": 0.0041697886064942956,
+     "hi": 0.05761420584571141,
+     "p_le0": 0.0118,
+     "na": 52,
+     "nb": 60,
+     "ga": 27,
+     "gb": 20
+    },
+    "clv_ind": {
+     "obs": 0.006722597041867725,
+     "lo": -0.01638322527377027,
+     "hi": 0.036274951279977145,
+     "p_le0": 0.2884,
+     "na": 13,
+     "nb": 36,
+     "ga": 10,
+     "gb": 15
+    }
+   },
+   "T6_minus_not_T6": {
+    "clv": {
+     "obs": 0.01950200098170836,
+     "lo": 0.010555270707445058,
+     "hi": 0.029513035998835018,
+     "p_le0": 5e-05,
+     "na": 256,
+     "nb": 427,
+     "ga": 66,
+     "gb": 31
+    },
+    "clv_ok": {
+     "obs": 0.01939289610612964,
+     "lo": 0.010650109021253908,
+     "hi": 0.02941642447714877,
+     "p_le0": 5e-05,
+     "na": 229,
+     "nb": 359,
+     "ga": 61,
+     "gb": 31
+    },
+    "clv_ind": {
+     "obs": 0.009738183256850648,
+     "lo": -0.0006057375296408395,
+     "hi": 0.02027950365013455,
+     "p_le0": 0.03165,
+     "na": 128,
+     "nb": 232,
+     "ga": 52,
+     "gb": 30
+    }
+   },
+   "EV25_minus_below": {
+    "clv": {
+     "obs": 0.01954223338789936,
+     "lo": 0.0062551310058209415,
+     "hi": 0.03301992846902279,
+     "p_le0": 0.00225,
+     "na": 144,
+     "nb": 539,
+     "ga": 39,
+     "gb": 64
+    },
+    "clv_ok": {
+     "obs": 0.020425206473964508,
+     "lo": 0.007275426215787547,
+     "hi": 0.03424175099872372,
+     "p_le0": 0.00165,
+     "na": 112,
+     "nb": 476,
+     "ga": 36,
+     "gb": 63
+    },
+    "clv_ind": {
+     "obs": 0.01378303721951373,
+     "lo": -0.005207648432784016,
+     "hi": 0.029432628564627812,
+     "p_le0": 0.0704,
+     "na": 49,
+     "nb": 311,
+     "ga": 22,
+     "gb": 56
+    }
+   },
+   "within_game_label_permutation_EV_inside_T6": {
+    "clv": {
+     "obs": 0.02135727671784487,
+     "p": 0.0022998850057497125,
+     "null_sd": 0.004651953287722969,
+     "n_in": 64,
+     "n_out": 192,
+     "mixed_games": 24
+    },
+    "clv_ok": {
+     "obs": 0.02567932443008631,
+     "p": 0.0023998800059997,
+     "null_sd": 0.005041743692942831,
+     "n_in": 52,
+     "n_out": 177,
+     "mixed_games": 23
+    },
+    "clv_ind": {
+     "obs": 0.011765254119650424,
+     "p": 0.5312734363281836,
+     "null_sd": 0.007122692954036518,
+     "n_in": 13,
+     "n_out": 115,
+     "mixed_games": 8
+    }
+   },
+   "slope_clv_on_listed_ev": {
+    "clv": {
+     "T6": {
+      "slope": 0.5554619831380302,
+      "lo": 0.20851243289617177,
+      "hi": 1.0545907280977418,
+      "n": 256,
+      "games": 66.0
+     },
+     "all": {
+      "slope": 0.6619014277895389,
+      "lo": 0.27004114012560676,
+      "hi": 1.0337126921818585,
+      "n": 683,
+      "games": 69.0
+     }
+    },
+    "clv_ok": {
+     "T6": {
+      "slope": 0.635070097354682,
+      "lo": 0.0991762406017716,
+      "hi": 1.242731221369302,
+      "n": 229,
+      "games": 61.0
+     },
+     "all": {
+      "slope": 0.7132577302243951,
+      "lo": 0.252799690523596,
+      "hi": 1.1593995732966669,
+      "n": 588,
+      "games": 66.0
+     }
+    },
+    "clv_ind": {
+     "T6": {
+      "slope": 0.36902757193769886,
+      "lo": -0.02178701556618048,
+      "hi": 0.8558286994919048,
+      "n": 128,
+      "games": 52.0
+     },
+     "all": {
+      "slope": 0.6417389756161941,
+      "lo": -0.13167284012839975,
+      "hi": 1.18498981619233,
+      "n": 360,
+      "games": 57.0
+     }
+    }
+   }
+  },
+  "auto_bet_universe": {
+   "def_": "Vigilant-listed, -200..+130, PROP/MONEYLINE/SPREAD, EV>=2.5%, first look <=24h",
+   "bets_24h": 120,
+   "bets_per_day_24h": 53.2,
+   "closes_24h": 73,
+   "games_24h": 24,
+   "clv_24h": 0.009657078447108123,
+   "ci_24h": [
+    -0.011802189269295249,
+    0.030947699427498372
+   ],
+   "closes_6h": 14,
+   "games_6h": 7,
+   "clv_6h": 0.023802808859003013,
+   "ci_6h": [
+    0.015201414174398242,
+    0.04232705207372661
+   ],
+   "closes_6_24h": 59,
+   "games_6_24h": 19,
+   "clv_6_24h": 0.006300464451065267,
+   "diff_6h_minus_6to24h": {
+    "obs": 0.017502344407937746,
+    "lo": -0.009562717127490098,
+    "hi": 0.0518330959635806,
+    "p_le0": 0.09442360590147537,
+    "na": 14,
+    "nb": 59,
+    "ga": 7,
+    "gb": 19
+   },
+   "diff_ok": {
+    "obs": 0.018547970351265243,
+    "lo": -0.00642215925788037,
+    "hi": 0.051187015102872664,
+    "p_le0": 0.0741556167125344,
+    "na": 12,
+    "nb": 42,
+    "ga": 6,
+    "gb": 17
+   },
+   "diff_indep": {
+    "obs": 0.010005036659956563,
+    "lo": -0.020693809979787224,
+    "hi": 0.04209199836452922,
+    "p_le0": 0.2772538860103627,
+    "na": 4,
+    "nb": 28,
+    "ga": 3,
+    "gb": 13
+   },
+   "independent_6h": {
+    "n": 4,
+    "games": 3,
+    "clv": 0.014377016072907173
+   },
+   "note": "reproduces the rule rationale (121 bets/29 within 6h; +2.38% on 14 closes/7 games vs +0.97% on 73/24); difference +1.75 pts CI [-0.96,+5.18], one-sided p 0.094"
+  },
+  "plateau": {
+   "all_closes_clv_by_T_and_EV": {
+    "T120_E0.01": {
+     "clv": 0.018619281493535846,
+     "n": 88,
+     "games": 42,
+     "bets": 239,
+     "clv_ok": 0.017711329053797922,
+     "n_ok": 78,
+     "clv_ind": 0.00489285024652491,
+     "n_ind": 43
+    },
+    "T180_E0.01": {
+     "clv": 0.01856181421530379,
+     "n": 117,
+     "games": 48,
+     "bets": 314,
+     "clv_ok": 0.018232187548702088,
+     "n_ok": 99,
+     "clv_ind": 0.008012633294695039,
+     "n_ind": 51
+    },
+    "T240_E0.01": {
+     "clv": 0.019810654331606774,
+     "n": 133,
+     "games": 51,
+     "bets": 354,
+     "clv_ok": 0.019540976581005825,
+     "n_ok": 114,
+     "clv_ind": 0.008041265652011648,
+     "n_ind": 56
+    },
+    "T360_E0.01": {
+     "clv": 0.019998744904005765,
+     "n": 144,
+     "games": 55,
+     "bets": 396,
+     "clv_ok": 0.020104897161847136,
+     "n_ok": 123,
+     "clv_ind": 0.009029166955563453,
+     "n_ind": 58
+    },
+    "T480_E0.01": {
+     "clv": 0.018526836793367397,
+     "n": 153,
+     "games": 56,
+     "bets": 427,
+     "clv_ok": 0.01846327691816524,
+     "n_ok": 130,
+     "clv_ind": 0.010381502478331021,
+     "n_ind": 61
+    },
+    "T720_E0.01": {
+     "clv": 0.015886077266794356,
+     "n": 193,
+     "games": 60,
+     "bets": 509,
+     "clv_ok": 0.013637037622131348,
+     "n_ok": 161,
+     "clv_ind": 0.007580041580123882,
+     "n_ind": 78
+    },
+    "T1440_E0.01": {
+     "clv": 0.007001603766517954,
+     "n": 396,
+     "games": 62,
+     "bets": 822,
+     "clv_ok": 0.007189957666081382,
+     "n_ok": 324,
+     "clv_ind": 0.0008693156235758195,
+     "n_ind": 186
+    },
+    "T120_E0.02": {
+     "clv": 0.030277228252936883,
+     "n": 47,
+     "games": 25,
+     "bets": 89,
+     "clv_ok": 0.030025869511699207,
+     "n_ok": 41,
+     "clv_ind": 0.013417536685458524,
+     "n_ind": 16
+    },
+    "T180_E0.02": {
+     "clv": 0.027443068178099505,
+     "n": 62,
+     "games": 30,
+     "bets": 119,
+     "clv_ok": 0.030271973450767636,
+     "n_ok": 51,
+     "clv_ind": 0.01843830797839315,
+     "n_ind": 20
+    },
+    "T240_E0.02": {
+     "clv": 0.029037974475810878,
+     "n": 75,
+     "games": 34,
+     "bets": 142,
+     "clv_ok": 0.0314261667402031,
+     "n_ok": 63,
+     "clv_ind": 0.018594108654305653,
+     "n_ind": 23
+    },
+    "T360_E0.02": {
+     "clv": 0.030119597473411218,
+     "n": 79,
+     "games": 34,
+     "bets": 161,
+     "clv_ok": 0.03272987914548159,
+     "n_ok": 66,
+     "clv_ind": 0.018594108654305653,
+     "n_ind": 23
+    },
+    "T480_E0.02": {
+     "clv": 0.028807260470398558,
+     "n": 83,
+     "games": 36,
+     "bets": 174,
+     "clv_ok": 0.030934975760743187,
+     "n_ok": 69,
+     "clv_ind": 0.01962519878116393,
+     "n_ind": 25
+    },
+    "T720_E0.02": {
+     "clv": 0.02519278751635743,
+     "n": 102,
+     "games": 39,
+     "bets": 214,
+     "clv_ok": 0.022002810752509365,
+     "n_ok": 83,
+     "clv_ind": 0.01318405809309305,
+     "n_ind": 30
+    },
+    "T1440_E0.02": {
+     "clv": 0.015378022124980097,
+     "n": 194,
+     "games": 42,
+     "bets": 360,
+     "clv_ok": 0.015925228554794356,
+     "n_ok": 154,
+     "clv_ind": 0.009103985051652016,
+     "n_ind": 75
+    },
+    "T120_E0.025": {
+     "clv": 0.0317696840409989,
+     "n": 39,
+     "games": 23,
+     "bets": 68,
+     "clv_ok": 0.03172874544516943,
+     "n_ok": 33,
+     "clv_ind": 0.011488612796936177,
+     "n_ind": 11
+    },
+    "T180_E0.025": {
+     "clv": 0.026987088929273453,
+     "n": 50,
+     "games": 28,
+     "bets": 91,
+     "clv_ok": 0.030557817061811605,
+     "n_ok": 39,
+     "clv_ind": 0.017777605208785695,
+     "n_ind": 12
+    },
+    "T240_E0.025": {
+     "clv": 0.028773899427102522,
+     "n": 60,
+     "games": 31,
+     "bets": 107,
+     "clv_ok": 0.03201702825659451,
+     "n_ok": 49,
+     "clv_ind": 0.01641009711580218,
+     "n_ind": 13
+    },
+    "T360_E0.025": {
+     "clv": 0.030125532505309725,
+     "n": 64,
+     "games": 31,
+     "bets": 122,
+     "clv_ok": 0.03363765199119463,
+     "n_ok": 52,
+     "clv_ind": 0.01641009711580218,
+     "n_ind": 13
+    },
+    "T480_E0.025": {
+     "clv": 0.027620012341717928,
+     "n": 66,
+     "games": 33,
+     "bets": 132,
+     "clv_ok": 0.030445271069549668,
+     "n_ok": 54,
+     "clv_ind": 0.014060154522111599,
+     "n_ind": 14
+    },
+    "T720_E0.025": {
+     "clv": 0.028195467356755016,
+     "n": 78,
+     "games": 35,
+     "bets": 157,
+     "clv_ok": 0.024542484864856128,
+     "n_ok": 62,
+     "clv_ind": 0.014546932996950104,
+     "n_ind": 17
+    },
+    "T1440_E0.025": {
+     "clv": 0.019057761450942432,
+     "n": 142,
+     "games": 39,
+     "bets": 258,
+     "clv_ok": 0.020725703943628736,
+     "n_ok": 110,
+     "clv_ind": 0.013752893813295976,
+     "n_ind": 48
+    },
+    "T120_E0.03": {
+     "clv": 0.03761578953388263,
+     "n": 26,
+     "games": 14,
+     "bets": 41,
+     "clv_ok": 0.03518761010812829,
+     "n_ok": 22,
+     "clv_ind": 0.011938438865577638,
+     "n_ind": 5
+    },
+    "T180_E0.03": {
+     "clv": 0.03505760693048907,
+     "n": 32,
+     "games": 18,
+     "bets": 55,
+     "clv_ok": 0.034888430967785135,
+     "n_ok": 26,
+     "clv_ind": 0.02444145267783643,
+     "n_ind": 6
+    },
+    "T240_E0.03": {
+     "clv": 0.036750794729493316,
+     "n": 40,
+     "games": 22,
+     "bets": 68,
+     "clv_ok": 0.036920222722543986,
+     "n_ok": 34,
+     "clv_ind": 0.020949816581002652,
+     "n_ind": 7
+    },
+    "T360_E0.03": {
+     "clv": 0.037116131804905965,
+     "n": 41,
+     "games": 23,
+     "bets": 76,
+     "clv_ok": 0.03734334821108307,
+     "n_ok": 35,
+     "clv_ind": 0.020949816581002652,
+     "n_ind": 7
+    },
+    "T480_E0.03": {
+     "clv": 0.03294530553987687,
+     "n": 43,
+     "games": 25,
+     "bets": 84,
+     "clv_ok": 0.03248388977301266,
+     "n_ok": 37,
+     "clv_ind": 0.01626995210889408,
+     "n_ind": 8
+    },
+    "T720_E0.03": {
+     "clv": 0.03507792985658263,
+     "n": 53,
+     "games": 27,
+     "bets": 103,
+     "clv_ok": 0.025280948985459316,
+     "n_ok": 44,
+     "clv_ind": 0.01641957404634018,
+     "n_ind": 11
+    },
+    "T1440_E0.03": {
+     "clv": 0.022921734232519416,
+     "n": 98,
+     "games": 34,
+     "bets": 179,
+     "clv_ok": 0.022805141022878603,
+     "n_ok": 77,
+     "clv_ind": 0.0178118554788661,
+     "n_ind": 31
+    },
+    "T120_E0.04": {
+     "clv": 0.03693156295755994,
+     "n": 17,
+     "games": 10,
+     "bets": 23,
+     "clv_ok": 0.03545287596134097,
+     "n_ok": 15,
+     "clv_ind": 0.020324701122013566,
+     "n_ind": 3
+    },
+    "T180_E0.04": {
+     "clv": 0.03361566744155947,
+     "n": 19,
+     "games": 11,
+     "bets": 28,
+     "clv_ok": 0.03545287596134097,
+     "n_ok": 15,
+     "clv_ind": 0.020324701122013566,
+     "n_ind": 3
+    },
+    "T240_E0.04": {
+     "clv": 0.039947154273593556,
+     "n": 22,
+     "games": 14,
+     "bets": 34,
+     "clv_ok": 0.04288515844719682,
+     "n_ok": 18,
+     "clv_ind": 0.020324701122013566,
+     "n_ind": 3
+    },
+    "T360_E0.04": {
+     "clv": 0.04045943516697696,
+     "n": 23,
+     "games": 15,
+     "bets": 38,
+     "clv_ok": 0.043350656151102875,
+     "n_ok": 19,
+     "clv_ind": 0.020324701122013566,
+     "n_ind": 3
+    },
+    "T480_E0.04": {
+     "clv": 0.04045943516697696,
+     "n": 23,
+     "games": 15,
+     "bets": 42,
+     "clv_ok": 0.043350656151102875,
+     "n_ok": 19,
+     "clv_ind": 0.020324701122013566,
+     "n_ind": 3
+    },
+    "T720_E0.04": {
+     "clv": 0.05619483538272439,
+     "n": 26,
+     "games": 16,
+     "bets": 51,
+     "clv_ok": 0.04110684337779431,
+     "n_ok": 20,
+     "clv_ind": 0.014862126012743032,
+     "n_ind": 4
+    },
+    "T1440_E0.04": {
+     "clv": 0.03373040866033433,
+     "n": 52,
+     "games": 22,
+     "bets": 94,
+     "clv_ok": 0.03245773092499529,
+     "n_ok": 38,
+     "clv_ind": 0.02882594050843003,
+     "n_ind": 16
+    }
+   },
+   "reading": "CLV is a smooth plateau: T 120..720 min x EV>=2..4% all +2.5..+5.6% (23-102 closes); no isolated spike at 360/2.5%; and the EV axis is monotone (1% +2.0, 2% +3.0, 3% +3.7, 4% +4.1 at T<=360)."
+  },
+  "power": {
+   "independent_closes_needed_80pct_power": {
+    "T6_universe_delta_0.5pct": 448,
+    "delta_1.0pct": 112,
+    "delta_1.5pct": 50
+   },
+   "T6_independent_now": {
+    "n": 128,
+    "games": 52,
+    "clv": 0.00584,
+    "ci": [
+     0.0002,
+     0.0135
+    ]
+   },
+   "rule_independent_rate_per_day": 5.762411347517731,
+   "pending_for_rule": {
+    "bets_without_close": 58,
+    "awaiting_novig_next_morning_file": 20,
+    "no_novig_outcome_on_record": 33,
+    "bets_in_games_not_started": 0
+   },
+   "next_export_adds_up_to_closes": 20
+  }
+ }
+}
