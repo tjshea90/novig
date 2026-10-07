@@ -262,9 +262,10 @@ private fun FeedSummary(
         }
         // "Starts within" widened since the last scan, which read only its window: the new games need a scan.
         val scannedWindow = state.status.scannedWindowHours
-        if (!state.status.scanning && state.result != null && scannedWindow != null && state.settings.scanWindowHours > scannedWindow) {
+        val windowNow = state.settings.effective().scanWindowHours
+        if (!state.status.scanning && state.result != null && scannedWindow != null && windowNow > scannedWindow) {
             Banner(
-                "The last scan read games starting in ${windowLabel(scannedWindow)}. Scan to add the rest of ${windowLabel(state.settings.scanWindowHours)}.",
+                "The last scan read games starting in ${windowLabel(scannedWindow)}. Scan to add the rest of ${windowLabel(windowNow)}.",
                 action = "Scan",
                 onAction = onScan,
             )
