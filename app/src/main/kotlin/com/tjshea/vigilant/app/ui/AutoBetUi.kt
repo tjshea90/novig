@@ -417,6 +417,14 @@ fun AutoBetSection(
         style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 8.dp),
     )
 
+    // The games Tj picked for CrazyNinjaOdds' list (CNO tab › league chips, Settings › CrazyNinjaOdds list) are the only games the auto-bet ever sees: said here, never silently.
+    CnoScopeText.tabSuffix(s.cnoFilters.scope)?.let {
+        Text(
+            "CrazyNinjaOdds' list is limited to: $it. The auto-bet only sees these games (CNO tab › league chips, Settings › CrazyNinjaOdds list › Which games).",
+            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(top = 8.dp).testTag("autoBetCnoScope"),
+        )
+    }
+
     // ---- The sharp books' say ---------------------------------------------------------------------------
     SharpVetoSection(state, forAlerts = false, onUpdate = onUpdate)
     // ---- Trap bets (RESEARCH.md §71) --------------------------------------------------------------------

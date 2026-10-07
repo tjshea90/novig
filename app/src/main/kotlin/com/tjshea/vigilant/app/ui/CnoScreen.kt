@@ -252,6 +252,13 @@ fun CnoScreen(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        // Filters were changed since this list was read (a league chip, a preset): the list shown is the old read, screened under the new picks, until the re-read lands.
+                        if (on && snap?.filters != null && snap.filters != state.settings.cnoFilters && !state.settings.paused) {
+                            Text(
+                                "Reading CrazyNinjaOdds with your new filters…",
+                                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("cnoReadPending"),
+                            )
+                        }
                         if (state.settings.killed) KilledBanner() else if (state.settings.paused) PausedBanner({ onPause(false) })
                         if (snap != null && CnoChecks.stuck(snap, now)) {
                             Banner("CrazyNinjaOdds hasn't updated its odds in ${Format.age(snap.dataAtMs, now).removeSuffix(" ago")} (it may be down). These prices are likely gone.")
