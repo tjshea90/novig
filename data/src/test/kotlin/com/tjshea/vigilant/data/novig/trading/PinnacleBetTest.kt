@@ -108,6 +108,16 @@ class PinnacleBetTest {
     }
 
     @Test
+    fun `a favorite against Pinnacle needs the extra edge too (Tj, 2026-10-07)`() {
+        val fav = rules.copy(favouriteExtraEv = 0.05)
+        // 0.70 cost, fair 0.74: a -233 favorite with +5.7% edge, over the 2% minimum but under minimum + 5 points.
+        assertEquals("it is a favorite and its edge against Pinnacle is under what favorites need", PinnacleBet.judge(fav, opp(cost = 0.70, fairP = 0.74), now, maxAge))
+        assertNull(PinnacleBet.judge(rules, opp(cost = 0.70, fairP = 0.74), now, maxAge))
+        // An underdog (0.48 = +108) is judged on the plain minimum.
+        assertNull(PinnacleBet.judge(fav, opp(), now, maxAge))
+    }
+
+    @Test
     fun `the kinds and the odds limits of auto-bet apply`() {
         assertEquals("player props aren't among the kinds of bet you auto-bet", PinnacleBet.judge(rules.copy(kinds = setOf(BetKind.MONEYLINE)), opp(), now, maxAge))
         // 0.48 is +108: a +100 cap refuses it, a -200 floor (shortest) does not.
