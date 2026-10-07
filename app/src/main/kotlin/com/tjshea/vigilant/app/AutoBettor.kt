@@ -12,6 +12,7 @@ import com.tjshea.vigilant.data.cno.NovigBetFinder
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.trading.ApiBetPlacer
 import com.tjshea.vigilant.data.novig.trading.AutoBet
+import com.tjshea.vigilant.data.novig.trading.PropGuard
 import com.tjshea.vigilant.data.novig.trading.BetLimits
 import com.tjshea.vigilant.data.novig.trading.BetTarget
 import com.tjshea.vigilant.data.novig.trading.PinnacleBet
@@ -218,6 +219,10 @@ class AutoBettor(
         var stopped: String? = null
         var walletEmpty = false
         var halted = false
+        // The small-prop guard (Tj, 2026-10-07; RESEARCH.md §109): how much of the last 24 hours' auto-bets each kind of player prop already holds, as this pass began; the bets this pass
+        // places are added as they go, so a pass cannot fill a day's share in one go.
+        val guardRules = PropGuard.rules(settings)
+        val guardHistory = ArrayList(if (guardRules.on) PropGuard.history(c.tracker.all(), now) else emptyList())
 
         // When the wallet or the cycle's cap can't take every bet, the money goes first to the edges most likely to hold (RESEARCH.md §72): the sharpest
         // book's own edge where its veto priced the bet, else 70% of the shown edge ([AutoBet.credibleEv]). Ties keep the shown edge's order.
@@ -255,6 +260,9 @@ class AutoBettor(
             if (priced != null && priced != target.outcomeId) { cooldown[row.key] = now + NOT_FOUND_COOLDOWN_MS; skip("Novig's price and its bet slip name different outcomes"); continue }
             if (target.market.marketId in openMarkets) { skip("a bet in this Novig market is already open"); continue }
             val game = GameRef(target.market.eventId, target.eventName, target.startsTs, target.league)
+            val guardKey = PropGuard.key(row.league, row.market, row.bet)
+            val guardGame = PropGuard.gameKey(target.eventName, target.startsTs)
+            if (guardKey != null) PropGuard.judge(guardRules, guardHistory, guardKey, guardGame, clock())?.let { skip(it); continue }
             if (settings.apiMaxPerGame > 0.0) {
                 val check = GameExposure.check(game, exposure, target.market.marketId, target.outcomeId, stake, settings.apiMaxPerGame)
                 if (check.blocked) { noteGameLimit(check); skip(AutoBet.GAME_LIMIT_SKIP); continue }
@@ -268,6 +276,7 @@ class AutoBettor(
                 is Sent.Placed -> {
                     val bet = sent.bet
                     placed += bet
+                    guardHistory += PropGuard.Placed(guardKey, guardGame, clock())
                     openMarkets += target.market.marketId
                     balance -= bet.stake
                     withContext(NonCancellable) { markPlaced(c, target, sent.result, clock()) }
