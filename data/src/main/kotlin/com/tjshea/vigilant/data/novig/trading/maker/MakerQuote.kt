@@ -38,6 +38,11 @@ data class MakerRules(
      * (auto-make, a recommendation, a re-post, quick & likely) and the resting bids the plan keeps or takes down agree on it.
      */
     val maxOdds: Int = 0,
+    /**
+     * The shortest American odds a bid may be posted at ([ScanSettings.makerMinOdds]; 0 = no limit; negative: nothing shorter than −X, positive: underdogs at least +X): a bid
+     * priced over [priceAtShortest] of it is skipped, judged in [MakerQuote.outsideWindow] beside [maxOdds].
+     */
+    val minOdds: Int = 0,
     val bothSides: Boolean,
     val minBooks: Int,
     val stakeMode: com.tjshea.vigilant.data.scanner.AutoBetStake = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM,
@@ -120,6 +125,9 @@ data class MakerRules(
         /** The price (cost of a $1 payout) at which a bid pays American odds of [odds]: +140 pays $1.40 on $1, so $1 / $2.40 = 0.4167. 0 (no limit) = no floor. */
         fun priceAtOdds(odds: Int): Double = if (odds <= 0) 0.0 else 100.0 / (100.0 + odds)
 
+        /** The price at which a bid pays [odds], either sign (−200 pays $0.50 on $1.00 staked: $1 / $1.50 = 0.6667). The ceiling a shortest-odds limit puts on a bid's price. */
+        fun priceAtShortest(odds: Int): Double = if (odds == 0) 1.0 else 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(odds)
+
         fun of(s: ScanSettings): MakerRules = base(s).let { r ->
             when {
                 LowUsage.on(s) -> LowUsage.narrow(r, s).copy(focus = s.makerFocus.name)
@@ -139,6 +147,7 @@ data class MakerRules(
             minPrice = s.makerMinPrice.coerceIn(0.001, 0.999),
             maxPrice = s.makerMaxPrice.coerceIn(0.001, 0.999),
             maxOdds = s.makerMaxOdds.let { if (it <= 0) 0 else it.coerceAtLeast(MIN_MAX_ODDS) },
+            minOdds = com.tjshea.vigilant.data.novig.trading.AutoBet.normalizeMinOdds(s.makerMinOdds),
             bothSides = s.makerBothSides,
             minBooks = s.makerMinBooks.coerceAtLeast(1),
             stakeMode = s.makerStakeMode,
@@ -412,6 +421,8 @@ object MakerQuote {
     fun outsideWindow(price: Double, rules: MakerRules): String? = when {
         rules.maxOdds > 0 && price < MakerRules.priceAtOdds(rules.maxOdds) - 1e-9 ->
             "A bid at that price would be at longer odds than your ${Odds.formatAmerican(rules.maxOdds)} limit for bids"
+        rules.minOdds != 0 && price > MakerRules.priceAtShortest(rules.minOdds) + 1e-9 ->
+            "A bid at that price would be at shorter odds than your ${Odds.formatAmerican(rules.minOdds)} limit for bids"
         price < rules.minPrice - 1e-9 || price > rules.maxPrice + 1e-9 ->
             "A bid at ${percent(price)} is outside the price window (${percent(rules.minPrice)}-${percent(rules.maxPrice)})"
         else -> null

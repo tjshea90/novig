@@ -360,6 +360,11 @@ data class ScanSettings(
      * auto-bet's [autoBetMaxOdds] is the same idea for bets taken. [MAKER_MAX_ODDS_CHOICES], or typed.
      */
     val makerMaxOdds: Int = 0,
+    /**
+     * The shortest odds a bid may be posted at, American (Tj, 2026-10-07: "make a shortest odds setting as well"): −200 = no bid priced over 66.7¢ (nothing shorter than −200),
+     * +110 = underdogs at least that long only; 0 = no limit. [makerMaxOdds] is the longest. [MAKER_MIN_ODDS_CHOICES], or typed.
+     */
+    val makerMinOdds: Int = 0,
     /** Bid both sides of a market (both filling locks in the two margins) or only the side with the better EV per bid. */
     val makerBothSides: Boolean = true,
     /** The fewest books behind the fair price for a bid to be posted. */
