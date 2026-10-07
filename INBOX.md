@@ -5365,3 +5365,8 @@ Make the app bet logging differentiate from bets and bids if it doesn't already 
 ```
 2% usage left  checkpoint save and allow new session to resume
 ```
+
+## 2026-10-07T19:46:20Z
+```
+Resume this project. Erase anything about fastboot phone stuff that was not supposed to be in this repo
+```
