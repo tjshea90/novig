@@ -111,7 +111,8 @@ object CnoMakerLines {
             if (!first && !second) { skip(NOT_ON_PAGE); continue }
             val pageAt = pageAt(view)
             val asOf = fairAsOf(p.listAtMs, pageAt)
-            val newest = p.listAtMs?.let { maxOf(it, pageAt) } ?: pageAt
+            // The newest news behind the fair is the PAGE's: its books make the fair, so a fill is judged against it only once the page was read after the fill (the list's newer clock says nothing of the books).
+            val newest = pageAt
             val old = asOf == null || now - asOf > limit
             // Side 0 is the row's own; side 1 its complement. A row that is the page's second line flips every price pair.
             for (side in 0..1) {

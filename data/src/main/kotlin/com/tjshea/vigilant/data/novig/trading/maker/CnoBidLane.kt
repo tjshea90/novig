@@ -110,7 +110,7 @@ class CnoBidLane(
         val current = seen.values.map { it.row }
         // Rows seen before stay a while (a row that leaves the list is still a game to judge a bid on); they no longer vouch for CNO's fair of the row.
         for ((k, v) in known) if (k !in seen && now - v.seenMs <= KNOWN_KEEP_MS) seen[k] = Known(v.row, v.seenMs, current = false)
-        val bidRows = activeBidRows(bids, seen)
+        val bidRows = activeBidRows(bids, seen, now)
         for (r in bidRows) seen.putIfAbsent(pageKey(r), Known(r, now, current = false))
         known = seen
         picked = CnoBidCandidates.pick(current, s.cnoFilters, rules, now)
@@ -171,13 +171,17 @@ class CnoBidLane(
 
     /**
      * The row each of Vigilant's CNO bids was posted from (still known; its page holds the bid's side and its complement, so the listed row serves either), or a stand-in made from
-     * the bid. One row a page: two bids on the two sides of one line are one read.
+     * the bid. One row a page: two bids on the two sides of one line are one read. A bid that filled and has not yet been judged against a later fair ([unjudged]: the picked-off
+     * guard, RESEARCH.md §88.3) keeps its page read until it is, as Vigilant's own scan keeps a filled side's books worked out.
      */
-    private fun activeBidRows(bids: List<MakerBid>, seen: Map<String, Known>): List<CnoRow> = bids.filter { it.active && it.source == CnoMakerLines.SOURCE }.map { b ->
+    private fun activeBidRows(bids: List<MakerBid>, seen: Map<String, Known>, now: Long): List<CnoRow> = bids.filter { it.source == CnoMakerLines.SOURCE && (it.active || unjudged(it, now)) }.map { b ->
         seen.values.firstOrNull { k ->
             k.row.gameUrl != null && k.row.gameUrl == b.gameUrl && (sameSide(k.row.bet, b.selection) || com.tjshea.vigilant.data.cno.CnoBooks.complement(k.row.bet, b.selection))
         }?.row ?: standIn(b)
     }.distinctBy { it.key }
+
+    /** A bid that filled whose fill no later fair has judged yet, inside the window the desk judges in ([MakerDesk.JUDGE_WITHIN_MS]). */
+    private fun unjudged(b: MakerBid, now: Long): Boolean = b.filled > 0 && b.fairAtFill == null && b.firstFillAtMs?.let { now - it < MakerDesk.JUDGE_WITHIN_MS } == true
 
     private fun sameSide(a: String, b: String) = a.trim().equals(b.trim(), ignoreCase = true)
 
@@ -206,7 +210,7 @@ class CnoBidLane(
         val snap = cno.state.value.snapshot
         val listAt = snap?.takeIf { it.cnoAgeSeconds != null }?.dataAtMs
         val seen = known
-        val bidRows = activeBidRows(bids, seen)
+        val bidRows = activeBidRows(bids, seen, now)
         val rows = (picked + bidRows).distinctBy { it.key }.filter { held[pageKey(it)]?.view != null }
         val got = if (readNovig && rows.isNotEmpty()) novig(rows).also { resolved = it } else resolved
         val missed = rows.count { it.key !in got }
