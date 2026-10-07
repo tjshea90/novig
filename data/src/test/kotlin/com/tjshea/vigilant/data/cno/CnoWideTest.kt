@@ -89,6 +89,23 @@ class CnoWideTest {
         assertFalse(asked, "VIEWSTATE" in asked)
     }
 
+    /** Tj, 2026-10-07 (DI5): the list's league/sport/liquidity picks narrow what CNO is asked for; the study's wide read must still see every row, and only carries the scope for the app's screen to label each one. */
+    @Test
+    fun `the wide read ignores the list's which-games picks, so the study still sees every league, and carries them for the screen`() = runBlocking {
+        val scoped = tj.copy(scope = CnoScope(leagues = setOf("NHL"), minLiquidity = 100, hideLive = true, include = "bruins"))
+        server.enqueue(MockResponse().setBody(CnoFixtures.page(liquidity = "25")).addHeader("Set-Cookie", "ASP.NET_SessionId=wide2; path=/; HttpOnly"))
+        server.enqueue(reply("wide+three=="))
+        val snap = client.fetchWide(url, scoped, 1000)!!
+        server.takeRequest()
+        val f = form(server.takeRequest())
+        assertEquals("every league: the dropdown stays as the view had it", "0", f.v("DropDownListLeague"))
+        assertEquals("0", f.v("DropDownListSport"))
+        assertEquals("the page's own liquidity stays untouched", "25", f.v("TextBoxMinimumLiquidity"))
+        assertEquals("1000", f.v("TextBoxMaximumResultCount"))
+        assertEquals(scoped, snap.filters)
+        assertTrue(snap.wide)
+    }
+
     @Test
     fun `the wide read keeps every column CNO printed, and the list's own reads don't`() = runBlocking {
         server.enqueue(page("w"))
