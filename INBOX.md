@@ -5361,3 +5361,8 @@ Make the app bet logging differentiate from bets and bids if it doesn't already 
 2% usage left  checkpoint save and allow new session to resume
 ```
 
+
+## 2026-10-07T19:57:04Z
+```
+See if it is possible to make auto bids using only the cno scanner with vigilant scanner turned off. For example, find positive EV bids based on bets from cno and make bids for them automatically. Is this plausible?
+```
