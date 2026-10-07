@@ -86,7 +86,7 @@ object NumberSpecs {
  * a typed value saves as soon as it is one [spec] takes, anything else saves nothing and says why. [tag] is the box's test tag.
  */
 @Composable
-fun TypedNumberField(spec: NumberSpec, shown: String, tag: String, onSet: (Double) -> Unit, modifier: Modifier = Modifier) {
+fun TypedNumberField(spec: NumberSpec, shown: String, tag: String, modifier: Modifier = Modifier, onSet: (Double) -> Unit) {
     var text by remember(shown) { mutableStateOf(shown) }
     val bad = text.isNotEmpty() && spec.parse(text) == null
     OutlinedTextField(
@@ -117,7 +117,7 @@ fun TypedIntField(spec: NumberSpec, value: Int, tag: String, none: (Int) -> Bool
 /** A dollar setting. */
 @Composable
 fun TypedDollarField(spec: NumberSpec, value: Double, tag: String, onSet: (Double) -> Unit) =
-    TypedNumberField(spec, if (value > 0.0) spec.show(value) else "", tag, onSet)
+    TypedNumberField(spec, if (value > 0.0) spec.show(value) else "", tag, onSet = onSet)
 
 /** The American odds [limit] as the box shows it (blank = no limit). */
 fun oddsShown(limit: Int): String = if (limit == 0) "" else limit.toString()
