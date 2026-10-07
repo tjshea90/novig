@@ -144,7 +144,10 @@ class CnoBidLaneTest {
     fun `CNO asked for a pause - nothing is read and every bid from it must come down`() {
         source.listRows = listOf(row(1))
         listRead()
-        feed.javaClass.getDeclaredMethod("pauseFor", CnoException::class.java, String::class.java).apply { isAccessible = true }.invoke(feed, CnoException("busy", retryAfterSeconds = 120), "test")
+        // CNO answers the next read with a 429: the feed pauses every lane for the 120 s it asked.
+        source.failList = CnoException("CrazyNinjaOdds is busy (HTTP 429)", retryAfterSeconds = 120)
+        t += 4_000L
+        listRead()
         step()
         assertTrue(source.pageReads.isEmpty())
         val stop = lane.stopReason(t)
@@ -161,9 +164,6 @@ class CnoBidLaneTest {
         assertTrue(source.pageReads.isEmpty())
         assertEquals(1, lane.status.value.failed)
         assertEquals(1L, counts["cno.bid.page.failed"])
-        // Other errors: two failures end the step too.
-        val s2 = FakeSource { this }
-        assertNull(s2.failPage)
     }
 
     // ---- the stops ---------------------------------------------------------------------------------------------------------
