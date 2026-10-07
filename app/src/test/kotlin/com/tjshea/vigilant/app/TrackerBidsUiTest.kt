@@ -179,6 +179,11 @@ class TrackerBidsUiTest {
         screen { TrackerScreen(withBids(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
         compose.onRoot().captureRoboImage("screenshots/4q_tracker_bets_and_bids.png")
         choose("Bids only (2)")
+        // The menu's closing animation and the list's change both finish before the picture is taken (a frame taken mid-way showed the old list under the new chip).
+        compose.mainClock.advanceTimeBy(1_000)
+        compose.waitForIdle()
+        compose.onNodeWithTag("madeCaption").assertTextContains("Bids only: 2 bids a taker filled", substring = true)
+        assertEquals(listOf("Jaxon Smith-Njigba Over 5.5"), shown("Dallas Cowboys", "Jaxon Smith-Njigba Over 5.5", "Under 7.5"))
         compose.onRoot().captureRoboImage("screenshots/4q_tracker_bids_only.png")
         compose.onNodeWithText("Stats").performClick()
         compose.onRoot().captureRoboImage("screenshots/4q_tracker_bids_only_stats.png")
