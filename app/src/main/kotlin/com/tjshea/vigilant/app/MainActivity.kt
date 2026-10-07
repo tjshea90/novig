@@ -953,5 +953,6 @@ private fun CnoTab(
         onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
         opening = openingBet,
         onPause = vm::setPaused,
+        onScope = { t -> vm.updateSettings { s -> s.copy(cnoFilters = s.cnoFilters.copy(scope = t(s.cnoFilters.scope))) } },
     )
 }

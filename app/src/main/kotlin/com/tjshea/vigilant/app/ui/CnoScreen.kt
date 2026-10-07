@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import com.tjshea.vigilant.data.cno.CnoScope
+import com.tjshea.vigilant.data.cno.CnoLeagues
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -126,6 +129,8 @@ fun CnoScreen(
     onPause: (Boolean) -> Unit = {},
     /** Pull to refresh: [onRefresh] that also resumes a paused scanner (Tj, 2026-10-02). */
     onPull: () -> Unit = onRefresh,
+    /** The league chips: change which games the list looks at (Tj, 2026-10-07; [CnoScope]). */
+    onScope: ((CnoScope) -> CnoScope) -> Unit = {},
 ) {
     val now = rememberNow(5_000)
     val cno = state.cno
@@ -235,6 +240,8 @@ fun CnoScreen(
                             }
                             // Tj, 2026-09-27: "select the time periods 12h 24h 48h and anytime for the cno scanner … as well".
                             if (on) StartsWithinRow(state.settings.startsWithinHours, onStartsWithin)
+                            // Tj, 2026-10-07: "right now I can't filter sports leagues at all" in CNO only: the league chips the +EV tab has, for CrazyNinjaOdds' own list.
+                            if (on) CnoLeagueChips(state.settings.cnoFilters.scope, onScope)
                         }
                     }
                 }
@@ -411,7 +418,30 @@ fun cnoFiltersLabel(f: CnoFilters): String = listOfNotNull(
     if (f.maxOdds > 0) "to +${f.maxOdds}" else "any odds",
     "${f.minBooks}+ books",
     if (f.minEv > 0) "≥${Format.percent(f.minEv, 0)} EV" else null,
+    CnoScopeText.tabSuffix(f.scope),
 ).joinToString(" · ")
+
+/**
+ * The league chips on the CNO tab (Tj, 2026-10-07): "All leagues", then CNO's 17, in a row that scrolls sideways. Tapping one picks it (several can be picked); taking the last one off
+ * is "all" again. The list re-reads at once (the filters changed) and the screen screens the rows it has under the new pick until the read lands.
+ */
+@Composable
+fun CnoLeagueChips(scope: CnoScope, onScope: ((CnoScope) -> CnoScope) -> Unit) {
+    val picked = scope.pickedLabels()
+    val labels = CnoLeagues.ALL.map { it.label } + picked.filter { CnoLeagues.byLabel(it) == null }
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("cnoLeagues"),
+        horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FilterChip(selected = scope.leagues.isEmpty(), onClick = { onScope { it.copy(leagues = emptySet()) } }, label = { Text("All leagues") }, modifier = Modifier.testTag("cnoLeagueAll"))
+        labels.forEach { l ->
+            FilterChip(
+                selected = picked.any { CnoLeagues.same(it, l) }, onClick = { onScope { it.toggleLeague(l) } }, label = { Text(l) },
+                modifier = Modifier.testTag("cnoLeague-$l"),
+            )
+        }
+    }
+}
 
 /** "; 2 you placed or removed" (nothing when none). */
 fun setAsideText(n: Int): String = if (n <= 0) "" else "; $n you placed or removed"

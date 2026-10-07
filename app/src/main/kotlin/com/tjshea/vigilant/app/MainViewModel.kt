@@ -289,7 +289,7 @@ data class UiState(
      * shows in Vigilant only mode too, and an old CNO list mustn't keep rosters loading behind it).
      */
     val cnoTeamRows: List<CnoRow>
-        get() = if (!settings.cnoPlayerTeams || !settings.cnoOn) emptyList() else cno.snapshot?.takeIf { it.url == cnoUrl }?.rows ?: emptyList()
+        get() = if (!settings.cnoPlayerTeams || !settings.cnoOn) emptyList() else cno.snapshot?.takeIf { it.url == cnoUrl }?.rows?.filter { settings.cnoFilters.scope.allows(it.league) } ?: emptyList()
 
     /** Whether CNO bets' books are read: for the green check, or for "only bets the books agree on". */
     val cnoReadsBooks: Boolean get() = settings.cnoCheckBooks || settings.cnoOnlyAgreed
