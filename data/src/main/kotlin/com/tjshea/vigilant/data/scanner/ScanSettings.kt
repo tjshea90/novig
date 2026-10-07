@@ -214,6 +214,13 @@ data class ScanSettings(
      * favourites"; 0.01 = one point, from the study's price slope: closing edge fell as the price got shorter). 0 = the same bar for every price. [AUTO_BET_FAVOURITE_EV_CHOICES], or typed.
      */
     val autoBetFavouriteExtraEv: Double = 0.01,
+    /**
+     * The small-prop guard ([com.tjshea.vigilant.data.novig.trading.PropGuard]; Tj, 2026-10-07): the most one kind of player prop (league + stat: NHL shots on goal) may take of the last 24 hours'
+     * auto-bets, once there are [propGuardMinSample] of them (0 = no share cap), and the most auto-bets on one kind of prop in one game ([propGuardPerGame]; 0 = no limit).
+     */
+    val propGuardShare: Double = 0.25,
+    val propGuardMinSample: Int = 8,
+    val propGuardPerGame: Int = 3,
     /** The kinds of bet the auto-bet places ([BetKind]); every kind by default. A preset narrows it (Tj's game totals lose to the close: RESEARCH.md §65). */
     val autoBetKinds: Set<BetKind> = BetKind.entries.toSet(),
     /**
