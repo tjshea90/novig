@@ -5040,3 +5040,8 @@ Then resume
   Settling it would take about 12 days of data for a 1.5 pt gap (about 27 days for 1 pt), and 3 to 5 times longer if only independent closes are available. A shadow log would do it without touching any limit.
 </agent-message>
 ```
+
+## 2026-10-07T00:55:54Z
+```
+There is only 6% usage left, start wrapping up this session and save all progress plus make a report that tells the next session exactly how to resume even if it is a cold session with no context 
+```
