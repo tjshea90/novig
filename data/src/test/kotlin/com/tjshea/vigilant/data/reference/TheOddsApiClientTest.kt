@@ -224,4 +224,41 @@ class TheOddsApiClientTest {
         assertEquals(null, first.requestUrl!!.queryParameter("apiKey"))
         assertEquals("fresh", server.takeRequest().getHeader("X-API-Key"))
     }
+
+    /** Tj, 2026-10-07: a Starter key past its day's share and free keys added: the free keys take the scans, one after another. */
+    @Test
+    fun `ParlayAPI scans go on to each free key in turn once the paid key can't pay`() = runTest {
+        val store = JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() })
+        val month = QuotaPolicy.PARLAY.periodStart(System.currentTimeMillis())
+        store.update {
+            UsageBook(providers = mapOf("parlay" to com.tjshea.vigilant.data.keys.ProviderUsage(keys = mapOf(
+                // 100 of 20,000 left: whatever the day, below the reserve a scan leaves for closing lines.
+                "paid" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 19_900, remaining = 100, limit = 20_000),
+                "free1" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 0, remaining = 1_000, limit = 1_000),
+                "free2" to com.tjshea.vigilant.data.keys.KeyUsage(periodStart = month, used = 0, remaining = 1_000, limit = 1_000),
+            ))))
+        }
+        val c = TheOddsApiClient(
+            httpClient = OkHttpClient(),
+            pool = KeyPool(QuotaPolicy.PARLAY, { listOf("paid", "free1", "free2") }, UsageMeter(store)),
+            json = json, baseUrl = server.url("/v1").toString().trimEnd('/'), clock = { 42L }, minIntervalMs = 0, feed = OddsFeed.PARLAY,
+        )
+        // free1 answers twice, the second leaving it below its last-100 reserve: the third scan call goes to free2.
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "900").setHeader("x-requests-used", "100").setHeader("x-requests-last", "3"))
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "99").setHeader("x-requests-used", "901").setHeader("x-requests-last", "3"))
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "997").setHeader("x-requests-used", "3").setHeader("x-requests-last", "3"))
+        repeat(3) { assertFalse(c.fetch("americanfootball_nfl", listOf("pinnacle")).events.isEmpty()) }
+        assertEquals(listOf("free1", "free1", "free2"), List(3) { server.takeRequest().getHeader("X-API-Key") })
+    }
+
+    /** A free key reaches back 48 hours: a call asking for more is that call's fault (HTTP 403 HISTORICAL_LIMIT), never the key's. */
+    @Test
+    fun `a ParlayAPI call past the plan's history fails alone and leaves the key in use`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(403).setBody("""{"error":"HISTORICAL_LIMIT","message":"Your plan reaches back 48 hours"}"""))
+        server.enqueue(MockResponse().setBody(Fixtures.oddsApi))
+        val c = parlay(listOf("free"))
+        assertThrows(TheOddsApiException::class.java) { runBlocking { c.fetch("americanfootball_nfl", listOf("pinnacle")) } }
+        assertFalse(meter.flow.value.providers.getValue("parlay").keys.getValue("free").refused)
+        assertFalse(c.fetch("americanfootball_nfl", listOf("pinnacle")).events.isEmpty())
+    }
 }

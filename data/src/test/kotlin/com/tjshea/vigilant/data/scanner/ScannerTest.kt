@@ -418,6 +418,23 @@ class ScannerTest {
         assertTrue(r.errors.none { it.contains("ParlayAPI") })
         assertTrue(r.result!!.opportunities.isNotEmpty())
     }
+    /** Tj, 2026-10-07: with every ParlayAPI key used up (no key left to rotate to), the other feeds price and the scan says why, without failing. */
+    @Test
+    fun `every ParlayAPI key used up leaves the other feeds pricing, with the reason shown`() = runTest {
+        val log = java.util.Collections.synchronizedList(ArrayList<String>())
+        val spent = object : ReferenceSource {
+            override val id = "parlay"
+            override val displayName = "ParlayAPI"
+            override val metered = true
+            override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot =
+                throw AllKeysExhaustedException("All 3 ParlayAPI keys are used up until Nov 1.")
+        }
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(spent, FakeFirst(log)))
+        assertEquals("All 3 ParlayAPI keys are used up until Nov 1.", r.sources.single { it.id == "parlay" }.error)
+        assertEquals(1, r.sources.single { it.id == "propline" }.matched)
+        assertTrue(r.result!!.opportunities.isNotEmpty())
+    }
+
     /**
      * Tj's v0.59.1 file, 2026-10-04: a game kicks off while a long scan is still reading its plan, and Novig answers 404 for every one of its markets (a
      * pregame book is gone at the start). The pump asks only for games that haven't started.
