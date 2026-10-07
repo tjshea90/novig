@@ -141,7 +141,13 @@ class ApiSettler(
                                     // Silence alone is never a loss when both sides are held (Tj, 2026-10-05: Ollie Gordon's Over 29.5 won with 100 yards and was
                                     // graded lost, so the locked market read as losing both legs): left to the payout, the feeds or a tap.
                                     if (heldBoth != null) {
-                                        note(changes, bet, BOTH_HELD_SILENT, now, manual = true); manual++
+                                        // Unless the market is a half-point two-way one whose other leg a score feed graded lost: then this leg won (Tj, 2026-10-07, rec 11).
+                                        val proof = wonByOtherLeg(bet, heldBoth, lostByFeed)
+                                        if (proof != null) {
+                                            settle(changes, bet, BetStatus.WON, null, "$INFERRED_WON ($proof)", now); settled++
+                                        } else {
+                                            note(changes, bet, BOTH_HELD_SILENT, now, manual = true); manual++
+                                        }
                                     } else {
                                         settle(changes, bet, BetStatus.LOST, null, SILENT_LOSS, now); settled++; lostNow += bet.id
                                     }
