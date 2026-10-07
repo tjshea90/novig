@@ -1,0 +1,182 @@
+{
+ "label": "scout:4-scraperly-oddsshark",
+ "agentId": "a7d4f1eb4000bc575",
+ "run": "wf_6f04c078-2f9",
+ "result": {
+  "source_url": "https://scraperly.com/recipe/odds-shark/tutorial",
+  "kind": "tutorial",
+  "what_it_is": "The page is a templated \"How to Scrape Odds Shark\" recipe (difficulty 4/5, 60 min) on Scraperly, which calls itself \"an independent web scraping reference database\" covering 683+ sites. Scraperly is not a service: its About page says \"Scraperly is not a proxy company or a scraping-as-a-service provider.\" The recipe gives no endpoint, no proxy settings and no real code. Its only commands are an `npm install claude-code` line, a garbled `mkdir` line, and `npx claude-code --task \"Launch Puppeteer to load Odds Shark NFL page and extract current moneylines and spreads\"`. Its only output is a one-line example JSON of NFL moneylines and spreads. It says the endpoint and proxy details are omitted and tells the reader to use an official API or authorized access and to stop on any 403 or challenge. The companion page https://scraperly.com/scrape/odds-shark adds two generic code examples (requests+BeautifulSoup on the oddsshark.com homepage, and a Scrapy spider with ROBOTSTXT_OBEY) and says \"Odds Shark serves mostly static HTML\". The key finding is that the target no longer exists as a standalone odds site. Every oddsshark.com URL I tested returns an HTTP 301 to covers.com, so the recipe describes a site that has been absorbed into Covers.",
+  "upstream_data_source": "Not found for OddsShark. Neither Scraperly, Covers nor any search result names an odds feed vendor. Covers' odds page says only \"Odds are supplied by sportsbooks and are subject to a small delay\", \"Opening odds are from a reputable international sportsbook with the highest limits\", and \"Consensus numbers are powered by Covers Contests\". Facts I did find. (1) oddsshark.com now redirects to Covers: `www.oddsshark.com/` goes to `covers.com/oddsshark#oddsshark`, `/nfl/odds` goes to `covers.com/sport/football/nfl/odds#oddsshark`, and `/nba/odds` goes to the NBA equivalent. covers.com/oddsshark says \"Odds Shark is now part of Covers.\" (2) Covers' footer reads \"Copyright © 1995 - 2026 Genius Sports\", its ToS names \"CS Media Limited\", and news reports Genius Sports bought Legend (Covers.com, Casino.org, Casino Guru) for up to $1.2B, announced 5 Feb 2026 and closed 1 May 2026. The Wikipedia page on Covers says Covers \"was included in a $1.2 billion acquisition by Genius Sports in February 2026\". (3) The Covers odds page is server-rendered HTML with each price in a `<td class=\"liveOddsCell\" data-book data-game data-type data-date>`. Each cell carries a betslip `lineId` and `sideId`, which suggests an internal line database. The CSP header on robots.txt allows `wss://*.covers.com` and `wss://*.nssmp.com/websocket`, but I did not find any odds-related socket in the page scripts I read. Who feeds that database (a Genius/Betgenius product, scrapers of each book, or deep-link affiliate feeds) is unproven. The nine books shown are all US soft books.",
+  "push_or_poll": "Poll only, and the poll is a full-page GET. Covers' NFL odds page is rendered on the server at load. The page's own scripts that I read (odds-page.js and sport-bundle.js, 9 KB and 5 KB) contain no setInterval, WebSocket, EventSource or fetch loop. Their only network call is an $.ajax that swaps in HTML when you change the odds scope. Each page load is about 3.4 MB. There is no push channel to a client. I did not read the other scripts on the page (betslip.js, footer-include.js, AffScript.js).",
+  "claimed_latency_or_refresh": "Scraperly (second-hand, undated, uncited): \"Odds Shark implemented real-time line tracking in 2026, updating odds every 3 seconds across sportsbooks.\" Covers: \"real-time betting lines\" and \"live betting odds for every league\" (no interval given), plus \"Odds are supplied by sportsbooks and are subject to a small delay.\" Marketing only; none of it is a measurement.",
+  "measured_or_verified_age": "I made three GETs of https://www.covers.com/sport/football/nfl/odds on 2026-10-07. The page prints \"Last updated <time> ET\" to the minute. Compared with the HTTP Date header: fetch 1 had Date 23:40:13 UTC (7:40 PM ET) and stamp 7:38 PM, so the snapshot was about 2 min old. Fetch 2 had Date 23:43:17 and stamp 7:43 PM. Fetch 3 had Date 23:44:19 and stamp 7:44 PM. So the page snapshot was 0 to 2 min behind my request, and the stamp is mostly the render time, not a proof of when each price was seen. Fetch 1 lacked bet365 changes already stamped 23:38:15 and 23:39:15 that fetch 2 contained, so that snapshot really was at least 2 min behind the data. Each odds cell also has an undocumented `data-date` epoch. It is INFERRED to be the time that line last changed. In fetch 3 the youngest stamps were 65 s, 65 s, 65 s, 180 s and 217 s old and the median spread cell was about 12.7 h old. Changed stamps cluster on bet365 at :14 or :15 past the minute (23:38:15, 23:39:15, 23:43:14), which hints at roughly one-minute polling of that book. Six cells changed between fetches 1 and 2 (3 min apart) and four between 2 and 3. A 3-second refresh is not visible in any of this, and the page's own code has no refresh loop. For Vigilant, the usable age is a snapshot that is 0 to 2 min old, plus however old each book's own price is. I could not measure the age of the underlying book prices, because the site has no per-price \"seen at\" field, only a last-change time.",
+  "coverage": "The Scraperly recipe is NFL moneylines and spreads only, pre-game, with no scores, props or live odds. Covers' NFL odds page (the real target) has 29 games on it, with moneyline, spread and total tabs plus full game, half and quarter filters, in American, decimal and fractional formats. Nine columns: BetMGM, bet365, DraftKings, FanDuel, Fanatics Sportsbook, BetRivers, Caesars, theScore Bet and Hard Rock Bet, plus an \"Open\" column from one unnamed \"reputable international sportsbook with the highest limits\". No Pinnacle, Circa, Kalshi, ProphetX, Sporttrade or Novig odds columns. Those names appear in the HTML only as affiliate promo-code menu links, 5 to 10 times each. Covers has other league pages, and a /oddsshark hub, which I did not fetch. Player props exist only as \"Projections\" or \"player-props\" links, not as an odds table I could see. No live or in-play odds and no live scores were found on the page. I did not test tennis or college pages. The table has a \"See more books\" expander that I did not open.",
+  "price_and_free_tier": "Scraperly: free. The recipe is described as \"Free forever\" and Scraperly sells nothing, so no credits or limits exist. Covers' odds page: free and public, no key (page read and fetched 2026-10-07). The only paid layer I found is second-hand, a scraping vendor's page for oddsshark.com, https://spider.cloud/scrapers/odds-shark-scraper/ (captured Aug 7, 2026, read Oct 7). It quotes \"1 GB of transfer costs $1, plus $0.0001 per CPU minute, and failed requests cost $0\", about $0.81 per 1,000 pages, a free signup balance with no card, and a flat \"Unlimited plan\". That is a middleman over the same HTML. The page's \"HTTP 200 in 106 ms\" is a response time, not a data age. Scraperly's generic proxy ranges (residential $5-15/GB, datacenter $1-5/GB, ISP $10-25/GB, mobile $15-40/GB) are not tied to any vendor.",
+  "terms_notes": "Scraperly: the terms (last updated 7 Oct 2026) have no automated-access section and say \"It is your responsibility to ensure your scraping activities comply with the terms of service of any website you scrape.\" The recipe says: \"Use an official API or another route you are explicitly authorized to automate, and stop on any denial or challenge\" and \"A 403, challenge, or other access denial is a signal to stop, not to change identity or infrastructure.\" Covers ToS, https://www.covers.com/terms, last updated 5 August 2026, entity \"CS Media Limited\": there is no clause that mentions robots, spiders, scrapers or data mining. Section 2 says \"you may not distribute, modify, republish, or publicly display any of the Content or Services\" and describes the site as provided \"for your non-commercial entertainment and enjoyment\". Section 11(j) bars \"reproduce, republish, download, post, transmit, distribute, copy, publicly display or otherwise use any Content\". Section 19 says \"You agree not to access the Services by any means other than through the interface\", which on a plain reading (INFERRED) forbids automated reads. Section 21 says \"'Deep Linking' to internal pages of the Website is expressly prohibited.\" There is no API or data-licensing clause. Covers' robots.txt (read 2026-10-07) does not disallow /sport/football/nfl/odds. It does disallow `*/betting/matcher`, `/go/`, `*/api/geolocation`, `/sport/*/matchup/*/tab` and `/*v2*`, among others. Scraping it would put Tj's app against ToS section 19 and would redistribute a Genius Sports-owned property's content. For a personal app, that risk is the ToS, not a technical block. I did not probe any undocumented Covers endpoint, in line with the rule on sites whose terms look hostile.",
+  "key_claims": [
+   {
+    "claim": "Scraperly is a reference site, not a scraping service, and sells nothing.",
+    "status": "VERIFIED",
+    "evidence_url": "https://scraperly.com/about",
+    "quote": "Scraperly is not a proxy company or a scraping-as-a-service provider."
+   },
+   {
+    "claim": "The tutorial gives no JSON endpoint and no working code; endpoint and proxy details are omitted and the commands shown are generic or garbled.",
+    "status": "VERIFIED",
+    "evidence_url": "https://scraperly.com/recipe/odds-shark/tutorial",
+    "quote": "npx claude-code --task \"Launch Puppeteer to load Odds Shark NFL page and extract current moneylines and spreads\""
+   },
+   {
+    "claim": "Odds Shark updates odds every 3 seconds across sportsbooks.",
+    "status": "CLAIM_ONLY",
+    "evidence_url": "https://scraperly.com/scrape/odds-shark",
+    "quote": "Odds Shark implemented real-time line tracking in 2026, updating odds every 3 seconds across sportsbooks."
+   },
+   {
+    "claim": "The 3-second claim is not borne out on the page where Odds Shark's lines now live: the odds are server-rendered with no refresh loop, snapshots were 0 to 2 min old, and price changes arrived about a minute apart.",
+    "status": "CONTRADICTED",
+    "evidence_url": "https://www.covers.com/sport/football/nfl/odds",
+    "quote": "Last updated Oct 07, 2026, 7:38 PM ET (Date header 23:40:13 GMT); \"Odds are supplied by sportsbooks and are subject to a small delay.\""
+   },
+   {
+    "claim": "oddsshark.com no longer serves odds; its URLs 301-redirect to covers.com, so the recipe's target page is a redirect.",
+    "status": "VERIFIED",
+    "evidence_url": "https://www.oddsshark.com/nfl/odds",
+    "quote": "HTTP/2 301 location: https://www.covers.com/sport/football/nfl/odds#oddsshark (also / -> covers.com/oddsshark#oddsshark and /nba/odds -> covers.com/sport/basketball/nba/odds#oddsshark)"
+   },
+   {
+    "claim": "Odds Shark is now part of Covers.",
+    "status": "VERIFIED",
+    "evidence_url": "https://www.covers.com/oddsshark",
+    "quote": "Odds Shark is now part of Covers"
+   },
+   {
+    "claim": "Covers is owned by Genius Sports via the Legend acquisition (announced 5 Feb 2026, closed 1 May 2026).",
+    "status": "VERIFIED",
+    "evidence_url": "https://www.businesswire.com/news/home/20260205730912/en/Genius-Sports-Enters-into-Definitive-Agreement-to-Acquire-Legend-Creating-a-Digital-Sports-and-Gaming-Media-Powerhouse",
+    "quote": "Legend ... owned and operated digital properties including Covers.com, Casino.org and Casino Guru; Covers footer: \"Copyright © 1995 - 2026 Genius Sports\""
+   },
+   {
+    "claim": "Covers' NFL odds table covers only nine US soft books and has no sharp-book, exchange or prediction-market columns.",
+    "status": "VERIFIED",
+    "evidence_url": "https://www.covers.com/sport/football/nfl/odds",
+    "quote": "data-book values: BetMGM, bet365, DraftKings, FanDuel, Fanatics Sportsbook, BetRivers, Caesars Odds, theScore Bet, Hard Rock Bet (116 cells each in the raw HTML)"
+   },
+   {
+    "claim": "The per-cell data-date attribute is the time that line last changed.",
+    "status": "INFERRED",
+    "evidence_url": "https://www.covers.com/sport/football/nfl/odds",
+    "quote": "Inferred from values that range from 65 s to days old and from cells that changed between my fetches; no documentation."
+   },
+   {
+    "claim": "Covers' ToS does not mention scrapers but restricts access to 'the interface' and bars copying and republishing.",
+    "status": "VERIFIED",
+    "evidence_url": "https://www.covers.com/terms",
+    "quote": "You agree not to access the Services by any means other than through the interface"
+   },
+   {
+    "claim": "Who supplies Odds Shark's or Covers' odds is unknown.",
+    "status": "CLAIM_ONLY",
+    "evidence_url": "https://www.covers.com/sport/football/nfl/odds",
+    "quote": "No provider is named on the page; the page says only that \"Odds are supplied by sportsbooks\"."
+   },
+   {
+    "claim": "A hosted scraper (Spider) sells reads of oddsshark.com at about $0.81 per 1,000 pages.",
+    "status": "CLAIM_ONLY",
+    "evidence_url": "https://spider.cloud/scrapers/odds-shark-scraper/",
+    "quote": "1 GB of transfer costs $1, plus $0.0001 per CPU minute, and failed requests cost $0."
+   }
+  ],
+  "verdict": {
+   "rapid_odds": "no",
+   "rapid_scores": "not-applicable",
+   "ahead_of_novig_makers": "no",
+   "ahead_of_cno": "no",
+   "cheap_or_free": "free",
+   "usable_in_vigilant": "no",
+   "why": "This source is a thin tutorial about a target that has since disappeared. The Scraperly recipe is generic, has no endpoint, and its \"3 seconds\" claim is uncited. Odds Shark itself now 301-redirects to covers.com. Covers' odds page is a server-rendered HTML snapshot with no refresh loop, and I measured it 0 to 2 minutes behind my own request, with price changes landing about a minute apart. Its nine columns are all US soft books (no Pinnacle, Circa, Kalshi, ProphetX, Sporttrade or Novig). The data carries no per-price age beyond an undocumented last-change stamp. That is at best the same age as CNO (13-33 s cadence plus 1-2 min of lag) and from less useful books, so it cannot beat CNO's fair price or Novig's makers (16 s after a play). It is not a score source. It is also free only in cash: ToS section 19 says \"You agree not to access the Services by any means other than through the interface\", and the owner is Genius Sports. The technique it teaches (headless-browser or HTML scraping of a cached page) is worse than a free public socket or JSON feed Vigilant already has, since a phone app can read the plain HTML with a GET anyway. Nothing here beats Polymarket's socket, Kalshi, Sofascore REST or CNO. The one detail worth keeping: Covers gives a page-level \"Last updated\" and per-cell epoch stamps. That is only a lead if Tj ever wants a cross-check of soft-book lines, not a rapid feed."
+  },
+  "confidence": "high",
+  "could_not_read": [
+   "https://www.oddsshark.com/robots.txt returned HTTP 410 with body {} (CloudFront), so there is no OddsShark robots or terms to read; every other oddsshark.com URL I tried returned a 301 to covers.com.",
+   "Covers odds page via WebFetch was truncated (read only 0-100,000 of 139,221 characters); I read the full 3.4 MB raw HTML with curl instead.",
+   "Covers scripts betslip.js, footer-include.js and AffScript.js were not read, so a socket or refresh loop in them is not ruled out. The CSP allows wss://*.covers.com and wss://*.nssmp.com/websocket, but I could not tie either to odds.",
+   "The Covers 'Line Movement' modal data source and the 'See more books' expander were not probed (undocumented endpoints; I did not guess at them).",
+   "Which feed vendor supplies Covers/Odds Shark odds: no primary page names one, and every search result about it was spam or auto-generated.",
+   "No pricing or free-tier page exists for Scraperly itself (it sells nothing). The Odds Shark to Covers merger date is not on any page I read; only the Genius/Legend deal dates are sourced.",
+   "Live scores and in-play odds on Covers were not tested (nothing was live when I read it)."
+  ],
+  "coverage_note_unused": "",
+  "other_sources_it_names": [
+   {
+    "name": "OddsShark (oddsshark.com)",
+    "url": "https://www.oddsshark.com/",
+    "why_it_matters": "The recipe's target. All tested URLs 301 to covers.com, so the recipe's target is a redirect."
+   },
+   {
+    "name": "Covers.com / Odds Shark by Covers",
+    "url": "https://www.covers.com/oddsshark",
+    "why_it_matters": "Where OddsShark's odds pages actually live now. 9 US soft books, HTML snapshot 0-2 min old, owned by Genius Sports. Not a rapid or sharp source."
+   },
+   {
+    "name": "cloudscraper (GitHub, venomous)",
+    "url": "https://github.com/venomous/cloudscraper",
+    "why_it_matters": "Named on the Scraperly page as a Cloudflare-evading HTTP library. Using it would be a bot-protection bypass, which is out of scope and unnecessary here."
+   },
+   {
+    "name": "httpx (GitHub, encode)",
+    "url": "https://github.com/encode/httpx",
+    "why_it_matters": "Generic Python HTTP client named on the Scraperly page. No relevance to Vigilant."
+   },
+   {
+    "name": "Spider.cloud Odds Shark Scraper",
+    "url": "https://spider.cloud/scrapers/odds-shark-scraper/",
+    "why_it_matters": "A paid hop over the same Covers/OddsShark HTML at about $0.81 per 1,000 pages (vendor claim). It adds a hop and no fresher data."
+   },
+   {
+    "name": "Genius Sports (parent of Covers via Legend)",
+    "url": "https://www.businesswire.com/news/home/20260205730912/en/Genius-Sports-Enters-into-Definitive-Agreement-to-Acquire-Legend-Creating-a-Digital-Sports-and-Gaming-Media-Powerhouse",
+    "why_it_matters": "Owner of Covers since 1 May 2026. It is an official data distributor, so any paid feed would be enterprise-priced, not cheap."
+   }
+  ],
+  "live_probes": [
+   {
+    "request": "GET https://www.oddsshark.com/robots.txt",
+    "result": "HTTP 410, body {}, CloudFront (x-cache Error from cloudfront), Date Wed 07 Oct 2026 23:38:08 GMT. No robots or terms to read."
+   },
+   {
+    "request": "GET https://www.oddsshark.com/nfl/odds, https://www.oddsshark.com/ and https://www.oddsshark.com/nba/odds (not followed)",
+    "result": "All HTTP 301. Locations: https://www.covers.com/sport/football/nfl/odds#oddsshark, https://www.covers.com/oddsshark#oddsshark, https://www.covers.com/sport/basketball/nba/odds#oddsshark. 4 requests to the oddsshark.com host in total."
+   },
+   {
+    "request": "GET https://www.covers.com/robots.txt",
+    "result": "HTTP 200. Generic User-agent * block; no Disallow on /sport/football/nfl/odds; Disallows include */betting/matcher, /go/, /sport/*/matchup/*/tab, */api/geolocation, /*v2*. CSP header lists wss://*.covers.com and wss://*.nssmp.com/websocket."
+   },
+   {
+    "request": "GET https://www.covers.com/sport/football/nfl/odds three times (about 3 and 1 min apart, plus one WebFetch read earlier)",
+    "result": "HTTP 200, about 3.4 MB each, no challenge. Date vs 'Last updated': 23:40:13 vs 7:38 PM ET (about 2 min old), 23:43:17 vs 7:43 PM, 23:44:19 vs 7:44 PM. 29 games, 9 books. Per-cell data-date epochs: youngest 65 s old, median spread cell about 12.7 h. 6 cells changed between fetches 1 and 2, 4 between 2 and 3."
+   },
+   {
+    "request": "GET https://www.covers.com/sport/js/odds-page.js and the page's sport-bundle.js",
+    "result": "HTTP 200, 9,135 and 5,123 bytes. No setInterval, WebSocket, EventSource or fetch loop; the only network call is a jQuery $.ajax HTML swap when the odds scope changes."
+   },
+   {
+    "request": "WebFetch https://www.covers.com/terms and https://www.covers.com/oddsshark; WebFetch of scraperly.com recipe, /scrape/odds-shark, /about, /terms; WebFetch of spider.cloud Odds Shark scraper and en.wikipedia.org/wiki/Covers.com",
+    "result": "All read. 9 requests to covers.com in total (under the 12-per-host cap). Nothing was posted, no key used, no bypass attempted. Scratch files are in the session scratchpad, not in /home/user/novig."
+   }
+  ],
+  "open_questions": [
+   "What feed supplies Covers/Odds Shark odds, and does data-date mean 'last line change'? No primary source answers either.",
+   "Do Covers game pages or the Line Movement modal expose a documented JSON feed with timestamps? This was not probed (undocumented).",
+   "Do Covers pages show live (in-play) odds or live scores during games? Nothing was live when I read it.",
+   "Does Covers' 'See more books' expander include any sharp books (the 'Open' column source is unnamed)?",
+   "When did the OddsShark to Covers redirect begin? The Genius/Legend close date (1 May 2026) is the only dated anchor I found."
+  ],
+  "what_the_phone_should_test": [
+   "Skip building on this. If Tj wants a 5-minute check anyway: from the phone (no proxy), GET https://www.covers.com/sport/football/nfl/odds on a Sunday slate every 30 s for 10 minutes. Record the HTTP Date header, the 'Last updated' text, and the data-date value for one live game's DraftKings cell. Pass bar: the stamp should trail Date by no more than a few seconds. My run in this container showed 0 to 2 minutes.",
+   "During that same window, compare when a DraftKings or FanDuel line moves in their own app against when Covers' data-date and cell value change. If Covers lags by more than about 60 s, it is not useful as a price age check.",
+   "In a phone browser with DevTools remote debugging (Network, Fetch/XHR), open one Covers game page and the Line Movement modal and see whether a documented-looking JSON call with timestamps appears. Only note it; do not rely on it without checking Covers' terms.",
+   "Check whether covers.com blocks the phone's request differently from this container (the container got no challenge). If it works, the page shape is a plain GET returning server-rendered HTML."
+  ]
+ }
+}
