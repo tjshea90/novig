@@ -150,7 +150,7 @@ def main():
     once = "--once" in sys.argv
     run = os.path.basename(os.path.normpath(wf))
     journal = os.path.join(wf, "journal.jsonl")
-    t0, last_note, last_trace = time.time(), None, 0.0
+    t0, last_trace = time.time(), 0.0
     while True:
         starts, results = load_journal(journal)
         # 1. every finished agent's result, one file per label (never removed)
@@ -205,11 +205,9 @@ def main():
         status += ["", "RESUME: see RESUME.md in this folder (a new session, any account: `python3 tools/research/rapid_resume.py` prints the Workflow args)."]
         write(os.path.join(outdir, "STATUS.md"), "\n".join(status) + "\n")
         note = f"{len(have)} results, {len(inflight)} running"
-        if note != last_note or any(True for _ in [0]):
-            res = bank(outdir, note)
-            if res != "nothing new":
-                print(f"{time.strftime('%H:%M:%S')} {note}: {res}", flush=True)
-            last_note = note
+        res = bank(outdir, note)
+        if res != "nothing new":
+            print(f"{time.strftime('%H:%M:%S')} {note}: {res}", flush=True)
         if once or "final" in have or time.time() - t0 > 8 * 3600:
             print("saver done:", len(have), "results", flush=True)
             return
