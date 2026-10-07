@@ -203,7 +203,7 @@ object LowUsageBids {
             includeLive = false,
             startsWithinHours = windowHours(s),
             // The sportsbook-props horizon is Tj's own ("Games within"); [ScanSettings.bookPropWindowHours] already never goes past the scan's window.
-            bookPropHours = s.bookPropHours,
+            bookPropHours = minOf(s.bookPropHours, WINDOW_HOURS),
             propsPerGame = ScanSettings.NO_LIMIT, propLineGamesPerScan = ScanSettings.NO_LIMIT, maxBooksPerScan = maxOf(s.maxBooksPerScan, MIN_NOVIG_READS),
             lowUsageScan = true,
         )
