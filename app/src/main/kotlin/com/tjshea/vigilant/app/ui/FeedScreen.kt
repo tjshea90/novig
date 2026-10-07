@@ -311,7 +311,7 @@ private fun FeedSummary(
             )
             state.settings.lowUsageNow && result.stats.marketsPriced == 0 -> EmptyState(
                 LowUsageText.NOTHING_TO_READ_TITLE,
-                LowUsageText.nothingToRead(state.settings.lowUsagePace),
+                LowUsageText.nothingToRead(state.settings.lowUsagePace, com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(state.settings), state.settings.startsWithinHours),
             )
             result.stats.matchedEvents == 0 && result.games.isNotEmpty() -> EmptyState(
                 "No fair odds for these games",
@@ -337,9 +337,9 @@ private fun FeedSummary(
             state.feed.isEmpty() -> EmptyState(
                 "No +EV right now",
                 "${result.stats.outcomesWithFair} prices checked across ${result.stats.matchedEvents} games " +
-                    "starting in ${windowLabel(state.settings.scanWindowHours)}. " +
+                    "starting in ${windowLabel(state.settings.effective().scanWindowHours)}. " +
                     "Nothing at or above ${Format.percent(state.settings.minEvPercent)} EV. Scan again for fresh prices." +
-                    (if (state.settings.lowUsageNow) " ${LowUsageText.TAB_NOTE}" else "") +
+                    (if (state.settings.lowUsageNow) " ${LowUsageText.tabNote(state.settings)}" else "") +
                     laterGamesText(result.stats.laterGames, state.settings),
                 action = if (result.stats.laterGames > 0) (if (state.settings.scanWindowHours < state.settings.daysAhead * 24) "Any time" else "Days ahead") else null,
                 onAction = { if (state.settings.scanWindowHours < state.settings.daysAhead * 24) onStartsWithin(0) else onOpenSettings() },

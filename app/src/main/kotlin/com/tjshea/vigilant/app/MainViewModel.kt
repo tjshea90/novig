@@ -986,7 +986,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     keyReadPerSec = c.novig.limits?.readPerSec,
                     sources = report.sources,
                     unscanned = emptySet(),
-                    scannedWindowHours = settings.scanWindowHours,
+                    scannedWindowHours = settings.effective().scanWindowHours,
                 ),
             )
         }
