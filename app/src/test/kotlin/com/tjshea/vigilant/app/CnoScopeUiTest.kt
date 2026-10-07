@@ -226,6 +226,15 @@ class CnoScopeUiTest {
     }
 
     @Test
+    fun `an empty widget under a games pick says what it is limited to, and says what it did before when nothing is picked`() {
+        fun text(scope: CnoScope) = com.tjshea.vigilant.app.ui.emptyText(
+            SampleCno.state(SampleScan.state().copy(settings = ScanSettings(scanner = ScannerMode.CNO, cnoFilters = CnoFilters(scope = scope)))), floating = true, now = now,
+        )
+        assertEquals("No +EV on CrazyNinjaOdds right now", text(CnoScope()))
+        assertEquals("No +EV on CrazyNinjaOdds right now · limited to WNBA · pregame only", text(CnoScope(leagues = setOf("WNBA"), hideLive = true)))
+    }
+
+    @Test
     fun `a screenshot of the new section`() {
         settingsPage(ScanSettings(scanner = ScannerMode.CNO, cnoFilters = CnoFilters(scope = CnoScope(leagues = setOf("NHL", "WNBA"), kinds = setOf(BetKind.PROP), minLiquidity = 50, propsPerGame = 4))))
         compose.onNodeWithText(CnoScopeText.TITLE, ignoreCase = true).performScrollTo()
