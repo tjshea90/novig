@@ -244,7 +244,8 @@ object StudyExport {
             val roi = if (staked > 0) "ROI ${pct(profit / staked)} (${"%+.1f".format(Locale.US, profit)}u on ${staked.toInt()}u$roiBand)" else "no result yet"
             val clv = if (clvN > 0) "CLV ${pct(clvSum / clvN)}$clvBand on $clvN closes, beat the close ${Math.round(100.0 * clvBeat / clvN)}%" else "no close yet"
             val ev = if (evN > 0) "EV listed ${pct(evSum / evN)}" else "no EV"
-            return "$label · $n bets · $won-$lost-$pushed (W-L-P)${if (open > 0) " · $open open" else ""} · $roi · $clv · $ev"
+            // VOID is said when there is one (a voided bet is neither won nor lost, and it was in no count before: Tj's v0.70.1 file, 9 voids unprinted).
+            return "$label · $n bets · $won-$lost-$pushed (W-L-P)${if (voided > 0) " · $voided void" else ""}${if (open > 0) " · $open open" else ""} · $roi · $clv · $ev"
         }
 
         private fun pct(v: Double) = String.format(Locale.US, "%+.2f%%", v * 100)
@@ -463,6 +464,8 @@ object StudyExport {
         val closeReasons = HashMap<String, Int>()
         val closeVia = HashMap<String, Int>()
         var withCloseCount = 0
+        // The bets a close can be asked of: started, or already holding one (the share of those that have one is the coverage; the whole file's count includes games not yet on).
+        var closable = 0
         var rows = 0
         var cut = 0
         var written = 0L
@@ -502,8 +505,13 @@ object StudyExport {
                         val (kept, dropped, unjudged) = whatIf[i]
                         when (rule.keeps(row)) { true -> kept; false -> dropped; null -> unjudged }.add(row)
                     }
+                    if (sb.bet.startsTs < now || row.clv != null) closable++
                     if (row.clv != null) { withCloseCount++; closeVia.merge(closeSource(row.closeVia), 1, Int::plus) }
-                    else if (sb.bet.startsTs < now && row.closeNote != null) closeReasons.merge(row.closeNote.take(90), 1, Int::plus)
+                    else if (sb.bet.startsTs < now && row.closeNote != null) {
+                        // Each source's own reason, counted once per bet: a bet's note joins every source's ("Novig's file isn't out yet; ESPN keeps no line for props; no Novig outcome on
+                        // record"), and cut at 90 characters the last ones, often the biggest, were lost (v0.70.1: 824 of 1,084 started bets had no Novig outcome id, never printed).
+                        row.closeNote.split("; ").map { it.trim() }.filter { it.isNotEmpty() }.distinct().forEach { closeReasons.merge(it.take(160), 1, Int::plus) }
+                    }
                 }
             }
         }
@@ -527,10 +535,10 @@ object StudyExport {
         out.appendLine(shown.line("shown by the app's lists (screen = none)"))
         out.appendLine(hidden.line("hidden from the app's lists (screen set: the wide read's extra finds)"))
         out.appendLine(noOutliers.line("without outliers (EV listed over ±6%)"))
-        out.appendLine("Closes found: $withCloseCount of ${overall.n}" + (closeVia.takeIf { it.isNotEmpty() }?.entries?.sortedByDescending { it.value }?.joinToString(", ", " (", ")") { "${it.key} ${it.value}" } ?: ""))
+        out.appendLine("Closes found: $withCloseCount of $closable started bets (${if (closable > 0) Math.round(100.0 * withCloseCount / closable) else 0}%)" + (if (overall.n > closable) " · ${overall.n - closable} not started yet" else "") + (closeVia.takeIf { it.isNotEmpty() }?.entries?.sortedByDescending { it.value }?.joinToString(", ", " (", ")") { "${it.key} ${it.value}" } ?: ""))
         if (closeReasons.isNotEmpty()) {
-            out.appendLine("Why started bets have no close yet, most common first:")
-            closeReasons.entries.sortedByDescending { it.value }.take(8).forEach { out.appendLine("    ×${it.value} ${it.key}") }
+            out.appendLine("Why started bets have no close yet, most common first (each source's own reason; a bet counts under every one that applies):")
+            closeReasons.entries.sortedByDescending { it.value }.take(10).forEach { out.appendLine("    ×${it.value} ${it.key}") }
         }
         out.appendLine()
         out.appendLine("== SPLITS (each group: bets · W-L-P · ROI · CLV · EV listed; a group needs ~200+ bets with a close before its CLV says much) ==")
