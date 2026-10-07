@@ -312,7 +312,7 @@ class MakerUiTest {
         }
         compose.onNodeWithTag("makerRulesToggle").performClick()
         compose.waitForIdle()
-        for (e in com.tjshea.vigilant.app.ui.SettingsIndex.entries.filter { it.bids }) {
+        for (e in com.tjshea.vigilant.app.ui.SettingsIndex.entries.filter { it.bids && it.shown(settings) }) {
             assertTrue(
                 "\"${e.title}\" should be on the Bids tab",
                 compose.onAllNodesWithText(e.title, substring = true, ignoreCase = true).fetchSemanticsNodes().isNotEmpty(),
