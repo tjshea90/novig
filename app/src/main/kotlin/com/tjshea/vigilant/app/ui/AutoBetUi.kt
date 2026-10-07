@@ -101,7 +101,7 @@ object AutoBetText {
         val agreeing = if (r.allAgree) "every book that prices both sides agreeing it's +EV on their own (and at least ${r.minBooks} of them)"
         else "at least ${r.minBooks} book${if (r.minBooks == 1) "" else "s"} agreeing it's +EV on their own"
         return "$agreeing, ${r.twoSided} pricing both sides, an edge of " +
-            "${evLabel(r.minEv)} or more at Novig's price now" + (if (r.maxOdds > 0) ", odds no longer than ${oddsLabel(r.maxOdds)}" else "") +
+            "${evLabel(r.minEv)} or more at Novig's price now (the lower of CNO's edge and the books' own check)" + (if (r.favouriteExtraEv > 1e-9) ", ${evLabel(r.minEv + r.favouriteExtraEv)} or more for a favorite" else "") + (if (r.maxOdds > 0) ", odds no longer than ${oddsLabel(r.maxOdds)}" else "") +
             (if (r.minOdds < 0) ", odds no shorter than ${minOddsLabel(r.minOdds)}" else "") +
             (if (r.kinds.size < BetKind.entries.size) ", only ${r.kinds.sortedBy { it.ordinal }.joinToString(", ") { it.label.lowercase() }}" else "") +
             (if (s.sharpAutoBet == SharpMode.VETO) (if (s.sharpVetoMinEv <= 0.0) ", unless the sharpest book for it says it isn't +EV" else ", unless the sharpest book for it gives it under ${evLabel(s.sharpVetoMinEv)}") else if (s.sharpAutoBet == SharpMode.CONFIRM) ", confirmed by a sharp book" else "") +
@@ -306,7 +306,8 @@ fun AutoBetSection(
 
     Text(
         "EV (expected value) is how much a bet should return over time above break-even: 3% is about 3¢ per \$1 bet in the long run. Estimated edges run " +
-            "high, so a little room above the edge you want keeps the real one positive.",
+            "high, so a little room above the edge you want keeps the real one positive. The bet is judged, and a Kelly stake sized, on the LOWER of CNO's edge and the edge " +
+            "Vigilant's own check of the books gives (in the first three days 9 of 99 bets had a check edge under 2.5% at a CNO edge over it).",
         style = MaterialTheme.typography.bodySmall, color = subtle,
     )
     Shadowed.autoBetEdge(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetEdgeShadowed")) }
