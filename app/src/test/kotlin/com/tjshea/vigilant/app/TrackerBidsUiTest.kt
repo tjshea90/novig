@@ -149,4 +149,25 @@ class TrackerBidsUiTest {
         compose.onNodeWithText("No open bids").assertExists()
         compose.onNodeWithText("A bid is a make order", substring = true).assertExists()
     }
+
+    @Test
+    fun `the closing-line card follows the chip too`() {
+        // b1 (a bid) was bet at 0.42 and closed at 0.50: it beat the close. b2 (a bet) was bet at 0.51 and closed at 0.50: it didn't.
+        val state = withBids().let { s ->
+            s.copy(bets = s.bets.map { b ->
+                when (b.id) {
+                    "b1" -> b.copy(closingFair = 0.50, closingSeenAtMs = b.startsTs - 60_000L)
+                    "b2" -> b.copy(closingFair = 0.50, closingSeenAtMs = b.startsTs - 60_000L)
+                    else -> b
+                }
+            })
+        }
+        screen { TrackerScreen(state, { _, _ -> }, {}, initialView = TrackerView.STATS) }
+        fun clv() = compose.onNodeWithTag("clvValues").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.ContentDescription].joinToString()
+        assertTrue(clv(), clv().startsWith("Beat the close 50% (1 of 2)"))
+        choose("Bids only (2)")
+        assertTrue(clv(), clv().startsWith("Beat the close 100% (1 of 1)"))
+        choose("Bets only (4)")
+        assertTrue(clv(), clv().startsWith("Beat the close 0% (0 of 1)"))
+    }
 }
