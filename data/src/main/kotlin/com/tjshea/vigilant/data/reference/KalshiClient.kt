@@ -52,6 +52,11 @@ class KalshiClient(
     private val clock: () -> Long = System::currentTimeMillis,
     private val usage: UsageMeter? = null,
     sleep: suspend (Long) -> Unit = { delay(it) },
+    /**
+     * Try the faster pace ([TRIAL_RATE] a second, Tj, 2026-10-07, proposal 9)? Read on every request, so the switch takes effect at once. The test runs for about [TRIAL_REQUESTS]
+     * requests; at the first refusal (a 429) Kalshi goes back to the measured-safe [START_RATE] for the rest of this session ([paceNote] says what happened).
+     */
+    private val fastPace: () -> Boolean = { false },
 ) : ReferenceSource {
 
     override val id = BOOK_KEY
@@ -65,10 +70,40 @@ class KalshiClient(
      * 4 a second and 3 of 36 at 6 on 2026-09-29, though a light `limit=1` market read took 20 a second for 300 requests
      * (RESEARCH.md §36.2). So the pace stays at the measured-safe 2 a second; [PARALLEL] only hides a reply's own delay.
      */
-    private val gate = RateGate(
+    private val slowGate = RateGate(
         ratePerSecond = START_RATE, burst = START_BURST, sleep = sleep, minRate = MIN_RATE,
         maxRate = MAX_RATE, rampEvery = RAMP_EVERY, rampStep = RAMP_STEP,
     )
+
+    /** The pace of the measured test ([fastPace]): [TRIAL_RATE] a second until the first refusal. */
+    private val fastGate = RateGate(
+        ratePerSecond = TRIAL_RATE, burst = START_BURST, sleep = sleep, minRate = MIN_RATE,
+        maxRate = TRIAL_RATE, rampEvery = RAMP_EVERY, rampStep = RAMP_STEP,
+    )
+
+    /** How the pace test has gone this session. */
+    private val sent = java.util.concurrent.atomic.AtomicInteger(0)
+    private val refusedAt = java.util.concurrent.atomic.AtomicInteger(0)
+
+    /** The gate this request waits at: the faster one while the test is on and nothing has been refused at it, else the measured-safe pace. */
+    private fun activeGate(): RateGate = if (fastPace() && refusedAt.get() == 0) fastGate else slowGate
+
+    /**
+     * The pace test in a line for Diagnostics: off, still running (requests so far), passed (requests at the faster pace with none refused) or failed (the request Kalshi
+     * refused, back to [START_RATE] for the rest of the session).
+     */
+    fun paceNote(): String {
+        val n = sent.get()
+        val hit = refusedAt.get()
+        val fast = "${TRIAL_RATE.toInt()} a second"
+        return when {
+            hit > 0 -> "Kalshi pace test: FAILED, Kalshi refused request $hit at $fast: back to ${START_RATE.toInt()} a second for the rest of this session (the test is the setting Settings › Where fair odds come from › Kalshi)"
+            !fastPace() -> "Kalshi pace test: off (${START_RATE.toInt()} a second, the measured-safe pace)"
+            n == 0 -> "Kalshi pace test: on, $fast, no request made yet this session"
+            n < TRIAL_REQUESTS -> "Kalshi pace test: running at $fast, $n of $TRIAL_REQUESTS requests so far, none refused"
+            else -> "Kalshi pace test: PASSED, $n requests at $fast and none refused: Kalshi stays at $fast this session (a refusal now would send it back to ${START_RATE.toInt()})"
+        }
+    }
 
     /**
      * Game lines first (Tj, 2026-09-28: "now it is reading the API very slow"): 57 series at 2/s is ~28 s, and since
@@ -180,7 +215,10 @@ class KalshiClient(
                     addQueryParameter("limit", "200")
                     cursor?.let { addQueryParameter("cursor", it) }
                 }.build()
+                val gate = activeGate()
+                val fastRequest = gate === fastGate
                 gate.acquire()
+                if (fastRequest) sent.incrementAndGet()
                 val result = try {
                     http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
                         val body = response.body?.string().orEmpty()
@@ -188,7 +226,10 @@ class KalshiClient(
                         when {
                             response.code == 429 -> {
                                 val wait = response.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000) ?: 2_000L
-                                gate.pause(System.currentTimeMillis() + wait)
+                                // The first refusal at the faster pace ends the test for this session: both gates wait, and every request after goes at the safe pace.
+                                if (fastRequest) refusedAt.compareAndSet(0, sent.get().coerceAtLeast(1))
+                                slowGate.pause(System.currentTimeMillis() + wait)
+                                if (fastRequest) fastGate.pause(System.currentTimeMillis() + wait)
                                 gate.slowDown()
                                 null
                             }
@@ -236,6 +277,10 @@ class KalshiClient(
         const val START_BURST = 4
         const val RAMP_EVERY = 40
         const val RAMP_STEP = 0.5
+
+        /** The measured test (Tj, 2026-10-07, proposal 9): requests a second, and how many requests count as passed. */
+        const val TRIAL_RATE = 3.0
+        const val TRIAL_REQUESTS = 300
 
         /** Series read at once, and tries per page (a 429 waits Retry-After, then tries again). */
         const val PARALLEL = 2

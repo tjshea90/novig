@@ -439,6 +439,11 @@ data class ScanSettings(
     val usePolymarket: Boolean = true,
     /** Kalshi's public game markets. Free, no key. */
     val useKalshi: Boolean = true,
+    /**
+     * Test Kalshi at 3 requests a second instead of 2 (Tj, 2026-10-07, proposal 9: a scan of its 57 series from about 32 s to about 23 s if it holds): about 300 requests, and at
+     * the first refusal (429) it goes back to 2 for the rest of the session. Settings › Diagnostics says how it went ([KalshiClient.paceNote]).
+     */
+    val kalshiFastPace: Boolean = true,
     /** The Odds API (500 credits/month free). */
     val useOddsApi: Boolean = true,
     /** ParlayAPI (The Odds API's format with Pinnacle and 14 more books, props included; RESEARCH.md §43). Needs a key in Settings. */

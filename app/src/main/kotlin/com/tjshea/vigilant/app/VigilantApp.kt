@@ -963,7 +963,10 @@ class AppContainer(private val app: Application) {
     }
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
-    private val kalshi = KalshiClient(http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage)
+    private val kalshi = KalshiClient(http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage, fastPace = { settingsStore.flow.value?.kalshiFastPace ?: true })
+
+    /** How the Kalshi 3-requests-a-second test has gone this session (Diagnostics). */
+    fun kalshiPaceNote(): String = kalshi.paceNote()
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage), json)
 
     /** ParlayAPI's degraded-mode check (free): books it says aren't keeping up don't price from it. */

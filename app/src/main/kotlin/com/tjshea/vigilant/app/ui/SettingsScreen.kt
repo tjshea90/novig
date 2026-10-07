@@ -728,6 +728,13 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
     }
     SwitchRow("Polymarket", "Free. NFL, college football, NBA, WNBA, MLB, NHL, UFC.", s.usePolymarket) { v -> onUpdate { it.copy(usePolymarket = v) } }
     SwitchRow("Kalshi", "Free. NFL, college football, MLB, NBA, NHL, UFC, tennis (match winners).", s.useKalshi) { v -> onUpdate { it.copy(useKalshi = v) } }
+    if (s.useKalshi) {
+        SwitchRow(
+            "Test Kalshi at 3 requests a second",
+            "A scan of its series takes about 23 s instead of 32 s if it holds. About 300 requests; at the first refusal it goes back to 2 a second for the rest of the session. Settings › Diagnostics says how it went.",
+            s.kalshiFastPace,
+        ) { v -> onUpdate { it.copy(kalshiFastPace = v) } }
+    }
     SwitchRow(
         "PropLine",
         if (state.proplineKeys.isEmpty()) "Your sportsbooks below (Pinnacle, DraftKings, FanDuel, BetMGM…) in one feed. Free key at prop-line.com: 1,000 requests a day."
