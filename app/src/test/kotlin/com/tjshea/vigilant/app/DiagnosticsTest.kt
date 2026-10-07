@@ -58,6 +58,14 @@ class DiagnosticsTest {
     }
 
     @Test
+    fun `the live feed test has its own section when it recorded something, and none when it never ran`() {
+        val text = report(x = extras.copy(feedRace = listOf("Running for 12 min: 3 live games on Novig (tennis).", "54 score readings from 2 feeds (poly, sofa); 210 Novig trades; 9 games")))
+        assertTrue(text, text.contains("== LIVE FEED TEST (which free feed shows a score or odds move before Novig's price; no orders; RESEARCH.md §106) =="))
+        assertTrue(text.contains("54 score readings from 2 feeds (poly, sofa)"))
+        assertFalse(report().contains("LIVE FEED TEST"))
+    }
+
+    @Test
     fun `it says what the background scan really runs at each scanner choice`() {
         fun runs(scanner: ScannerMode, auto: AutoScanMode) = Diagnostics.runsText(SampleScan.settings.copy(scanner = scanner, autoScan = auto))
         assertEquals("CNO + Vigilant", runs(ScannerMode.BOTH, AutoScanMode.BOTH))
