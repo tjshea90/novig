@@ -1,21 +1,24 @@
-# CHECKPOINT 2693 — read me first, then TASKS.md
+# CHECKPOINT 2694 — read me first, then TASKS.md
 
-**Written:** 2026-10-07T16:26:50Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `1c3f71ef` (this checkpoint is the commit after it)
+**Written:** 2026-10-07T16:29:58Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `bcf017e3` (this checkpoint is the commit after it)
 
 ## Just done
-DI1: Low API usage no longer hard-sets the trap guard window (follows trap hours, Off = ordinary reach), the small-market fill follows Tj's switch and safeguards, longest/shortest odds win; tests + 8 mutants killed
+pre-release: v0.72.3: Low API usage no longer hard-sets the trap guard window, the small-market fill, the longest odds or the price band; what Tj picks wins (versionCode 129, v0.72.3)
 
 ## Do this next
-DI3 small-prop guard (share cap, sharp rule, stake factor) after the SOG skeptic result; DI5 CNO filters from the design workflow
+wait for CI green on this exact commit with no edits, then ship.sh, release.yml, record-release.sh v0.72.3 129; then DI3 small-prop guard and DI5 CNO filters
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M research/ACTIVE_LOG_2026-10-07.md
 
 ## Last ten checkpoints
 ```
+  b9b0315d ckpt 2693: DI1: Low API usage no longer hard-sets the trap guard window (follows trap h
   ffcbecc9 ckpt 2692: Tj's CNO-only scanner filter request written into TASKS.md (DI5)
   d9e9d0d4 ckpt 2691: Tj's new request written into TASKS.md (DI1-DI4): Low API usage hard-set tra
   1293d0d4 ckpt 2690: TASKS cleanup: DA6, DE1/2/5, DG7, DG8 closed with evidence
@@ -25,8 +28,7 @@ DI3 small-prop guard (share cap, sharp rule, stake factor) after the SOG skeptic
   4db49a3e ckpt 2686: DH4 + DH5 done: RESEARCH 107, preset favourite bar, plus-money and favourite
   7e0563fd ckpt 2685: pre-release: v0.72.1: live feed test (opt-in, reads only, no orders) for sco
   1ce250f7 ckpt 2684: v0.72.1 candidate: live feed test in the app (off by default), batch reply a
-  bdb94219 ckpt 2683: DH2 app side: live feed test (ScanSettings.feedRace OFF by default, Vigilant
 ```
 
-(29 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
