@@ -142,7 +142,7 @@ object BidReport {
             parts += "EV at post ${pct(evPost / fills)}"
             parts += if (judged > 0) "EV at fill ${pct(evFill / judged)} ($judged judged, ${Math.round(100.0 * picked / judged)}% picked off)" else "EV at fill: none judged yet"
             parts += if (clvN > 0) "CLV ${pct(clvSum / clvN)} ($clvN close${if (clvN == 1) "" else "s"}, ${Math.round(100.0 * beat / clvN)}% beat)" else "CLV: no close yet"
-            if (settled > 0) parts += "results ${money(profit)} on ${String.format(Locale.US, "%.2f", staked)} staked ($settled settled)"
+            if (settled > 0) parts += "results ${money(profit)} on ${String.format(Locale.US, "%.2f", staked)} staked ($settled settled, ROI ${if (staked > 0) pct(profit / staked) else "–"})"
             if (delayN > 0) parts += "mean wait ${secs(delaySum / delayN)}"
             return "$label: " + parts.joinToString(" · ")
         }
@@ -156,6 +156,10 @@ object BidReport {
         val unfilled = rows.filter { it.filled == 0L && it.status != MakerStatus.RESTING.name && it.status != MakerStatus.SENT.name && it.status != MakerStatus.CANCELING.name }
         out += "bids: ${rows.size} posted · ${filled.size} filled (${pctOf(filled.size, rows.size)}) · ${rows.count { it.status == MakerStatus.RESTING.name || it.status == MakerStatus.SENT.name }} resting now · " +
             "${unfilled.size} ended without a fill · auto-make ${rows.count { it.auto }}, by hand ${rows.count { !it.auto }}"
+        // How the bids that never filled ended, and the fill rate among the bids that are over (Tj, 2026-10-07: bids shown beside bets, with what happened to the rest).
+        val endedBy = unfilled.groupingBy { r -> MakerStatus.entries.firstOrNull { it.name == r.status }?.label ?: r.status }.eachCount().entries.sortedByDescending { it.value }
+        if (endedBy.isNotEmpty()) out += "  ended without a fill, by how: " + endedBy.joinToString(", ") { "${it.key} ${it.value}" } +
+            " · fill rate among the bids that are over: ${pctOf(filled.size, filled.size + unfilled.size)} (${filled.size} of ${filled.size + unfilled.size})"
         // Small-market bids are counted from the first one posted, before any fill ([rows] split by fill only once there are fills).
         if (rows.any { it.obscure }) out += "small-market bids (Quick & likely's fill of idle money): ${rows.count { it.obscure }} posted, ${rows.count { it.obscure && it.filled > 0 }} filled"
         if (filled.isEmpty()) return out
