@@ -42,7 +42,9 @@ class DiagnosticsTest {
         // The sample keeps it off (its games are 8 h+ off); the default is 6 h with the game-line check on.
         assertTrue(report().contains("Trap guard (RESEARCH.md §71): auto-bet, alerts and bids only on games starting within any time (off)"))
         val on = report(SampleScan.state().let { it.copy(settings = it.settings.copy(trapEarlyHours = 6, trapNovigMove = true)) })
-        assertTrue(on, on.contains("only on games starting within 6 h · game lines Novig just moved skipped (the auto-bet and game-line bids read Novig's trades first)"))
+        assertTrue(on, on.contains("only on games starting within 6 h · bets first listed more than that many hours before the start skipped (auto-bet and alerts) · game lines Novig just moved skipped (the auto-bet and game-line bids read Novig's trades first) · favorites need 1.0% more edge (auto-bet)"))
+        val off = report(SampleScan.state().let { it.copy(settings = it.settings.copy(trapEarlyHours = 6, trapFirstListed = false, autoBetFavouriteExtraEv = 0.0)) })
+        assertTrue(off, off.contains("not skipped · game lines") && off.contains("favorites need no extra edge"))
         // The sample's bets have no record as placed: their time to the start is split all the same.
         assertTrue(on, on.lines().any { it.startsWith("Time to the start ") && !it.startsWith("Time to the start not recorded") })
     }
