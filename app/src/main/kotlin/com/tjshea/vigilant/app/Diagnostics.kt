@@ -238,7 +238,9 @@ object Diagnostics {
         o.appendLine(
             "Trap guard (RESEARCH.md §71): auto-bet, alerts and bids only on games starting within " +
                 (if (set.trapEarlyHours <= 0) "any time (off)" else "${set.trapEarlyHours} h") +
-                " · game lines Novig just moved ${if (set.trapNovigMove) "skipped (the auto-bet and game-line bids read Novig's trades first)" else "not checked"}",
+                " · bets first listed more than that many hours before the start ${if (set.trapFirstListed && set.trapEarlyHours > 0) "skipped (auto-bet and alerts)" else "not skipped"}" +
+                " · game lines Novig just moved ${if (set.trapNovigMove) "skipped (the auto-bet and game-line bids read Novig's trades first)" else "not checked"}" +
+                " · favorites need ${if (set.autoBetFavouriteExtraEv <= 1e-9) "no extra edge" else "${pct(set.autoBetFavouriteExtraEv)} more edge"} (auto-bet)",
         )
         o.appendLine("Leagues: ${set.leagues.sorted().joinToString(", ").ifEmpty { "none" }} · days ahead ${set.daysAhead} · starts within ${if (set.startsWithinHours <= 0) "any time" else "${set.startsWithinHours} h"} · live games ${if (set.includeLive) "on" else "off"}")
         o.appendLine("Edge shown: ${pct(set.minEvPercent)} to ${pct(set.maxEvPercent)} · max odds +${set.maxOdds} · fair odds ${set.fairSource} / ${set.devigMethod}, at least ${set.minBooks} book${if (set.minBooks == 1) "" else "s"}")
