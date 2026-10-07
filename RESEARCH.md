@@ -5567,3 +5567,34 @@ Reading: the two splits behind the approved timing and favourites rules (proposa
 - **How to use it**: switch it on (Settings › Diagnostics & about) before an evening of live games; a day or two later share the file. A verdict of "worth a closer look" is the only thing that would justify building a live trigger (§99.5.2); nothing in the app acts on it.
 - **Tests**: `FeedRaceTest`, `FeedParsersTest` (real payload samples), `FeedRaceRunnerTest` (faked networks), `FeedRaceJournalTest`, `FeedRaceExportTest`, `FeedRaceUiTest`, `DiagnosticsTest`; 10 mutants killed.
 
+
+
+## 107. API usage audit and the full tests pass: what is efficient, what is waste, what is unused (2026-10-07; DH4, DH5; Tj: "Make sure the API usage is efficient, as fast as allowed by the apis, and not wasteful. Make sure the apis are used to their full abilities for the app. Make sure the filters and presets work correctly. Make sure all the math and logic is sound.")
+
+Read from Tj's v0.71.2 diagnostics (six days, Oct 1-7, one phone) and the code; nothing here is a guess about a limit that was not measured. Per host: calls, refusals, speed.
+
+| API | calls (6 days) | failed | what the numbers say | verdict |
+| :- | -: | -: | :- | :- |
+| Novig, signed (`/v3/catalog/markets/{id}/…`, `/v3/orders…`) | 184,000 | 1.0% (dns 501, 451 verdicts 314+375) | 522 requests a scan: 822 prices came pushed, 510 through the key; the key's limit is 16 a second and **it was never refused** | at its allowed pace; see "unused" below |
+| Novig, public (`/v3/public/catalog/markets/…`) | 18,598 | **7.3% refused (429)** | the pace probes upward from 4 to 6 a second and every refusal halves it and is remembered for 10 minutes (§66): about 230 refusals a day for the speed | by design; each refusal costs one request |
+| CrazyNinjaOdds | 31,203 | 1.9% | at its 3 s floor; 16,284 game pages (910 ms) and 14,841 lists | at its allowed pace |
+| Kalshi (two hosts) | 13,232 | 0.1-1.8% (dns only) | 69 requests a scan at 2 a second = 35 s of a 36 s scan; one 429 in six days | v0.72.0 tests 3 a second (§104) |
+| ParlayAPI | 4,726 | 6.7% | NFL props: 209 calls, **63 failed (503 and timeouts), 9.4 s to the first byte**; MLB props 20 of 113; `meta/movers` 2,267 free calls (one a scan); 4,554 of 26,000 credits used this month | the props route is the unreliable one: failed calls are not known to be free (credit effect unknown) |
+| PropLine | 1,973 | 1.0% | p95 2.9 s, 8.6 GB; 198 of 3,000 a day | fine |
+| The Odds API | 891 | 0.1% | **1,067 of 3,500 credits used, the last goes Oct 21**; the last scan spent 11 credits for 2 matched games | the fallback source is the budget's problem: see "to decide" |
+| Pinnacle (PinnWire, pinnapi) | 1,084 | 0.3% | 145 of 600 a day; PinnWire key 1 spent until 8 PM | fine |
+| Polymarket gamma | 2,048 | 0.4% | 10 requests a scan | fine |
+| ESPN (scoreboard, core) | 1,876 | 1.6% | grading and injuries | fine |
+| data.novig.com (trade CSVs, range reads) | 3,965 | 0.2% | 3,809 range requests of 206 for four daily files: 64 KB-class chunks | works; a larger chunk would mean fewer requests (not a limit) |
+| MLB statsapi | 47 | 0 | a box score is 13 KB on the wire (§105) | fine |
+| DoH resolvers | 260 | 100% | only after the phone's own DNS failed; behind a VPN both refuse | fixed in v0.72.1 (2-minute breaker) |
+
+**Waste found and fixed in this pass:** (1) the DNS fallback waited out two connect timeouts on every lookup while its resolvers were unreachable (now asked at most once per 2 minutes); (2) **every run's first batch of bids went out as a failed batch and then one request per bid**, because Novig's reply is a bare array and the code read an object: the batch route (up to 256 orders a request, one `place` token each) is now actually used (§105); (3) nothing else was found repeating a request whose answer the app already held (the scan's per-source memo, the 60 s early-read memo, the book cache and the 2-minute trades cache do their jobs).
+
+**Unused capabilities, listed for Tj (none changes by itself):**
+- **Keep Novig's book websocket open between scans.** A scan re-subscribes (8 s wait for the `stream` bucket) while reading the first ~500 prices through the key; the connection closes after 2 idle minutes and scans start every 4. Keeping it up and subscribed would start the next scan with the books pushed (about 500 fewer key requests a scan, the first bet earlier than 22 s). Cost: one open socket, and Novig's own rule on subscriptions (NOVIG_API.md §27). Not built: a decision for Tj.
+- **ParlayAPI's props route fails 30% for NFL**: a retry after a short wait, or asking for fewer markets per call, might cut the failures; whether a failed call costs credits is unknown (the first thing to read from the next file's credit counts around a 503).
+- **The Odds API** as a *last* fallback: it spent 11 credits for 2 matched games in the last scan. If ParlayAPI and PropLine already cover a league, its call could be skipped for that league (the `needed` rule already does so for the leagues they carry; the 2 games it matched were not covered elsewhere).
+- **Polymarket's CLOB odds socket** (free push, 1,667 quotes in 25 s for one match, no timestamp lag): carried as the live feed test's odds feed; not used by scans (they read fair odds, not live odds).
+
+**The full tests pass.** Floor `bash tools/test.sh`: engine 44, data 1,483 (23 skipped), app 922 green (exit 0); `-Pscreenshots` renders all 116 screens, and I looked at the ones this work touches (Auto-bet tab, presets, Bids tab, Settings › Diagnostics & about with the live feed test, the Diagnostics file). Found and fixed, each with a named test: **a preset did not carry the auto-bet's favourite bar** (a saved or applied preset left it as it was; now part of `PresetRules`: `PresetsTest`); **a preset's one-line summary and the auto-bet's confirm text said nothing of a plus-money-only limit** (`odds up to +150` for a +100 to +150 rule; the summary now says "odds +100 to +150" and the criteria say "underdogs only (odds +110 or longer)": `PresetsTest`, `AutoBetUiTest`); **the favourite note read "1 more than the +3% minimum"** (now "1 point more": `AutoBetUiTest`). Math and logic read again against the code: `EvQuote` (EV = fair / cost - 1, Kelly = (p - c) / (1 - c), fee in the cost), `PriceGrid.floor` (0.001 steps to 0.050, 0.005 steps 0.055-0.945, 0.001 above), the Kelly caps (the lowest of CNO's, the sharp book's and the books' fair), the trap guard's three rules, the grading rules (a payout in the ledger always wins) and the maker plan's room-making: no fault found beyond the three above.
