@@ -1,6 +1,8 @@
 package com.tjshea.vigilant.data.novig.stream
 
 import com.tjshea.vigilant.data.novig.NovigBook
+import com.tjshea.vigilant.data.novig.NovigPublicClient
+import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -75,7 +77,8 @@ interface PushedBooks {
  * 2,048 cap with lines no fair source quotes.
  *
  * It lives only while scans use it: closed [idleCloseMs] after the last [watch] or [live], and on any
- * failure (then not retried for [retryAfterFailureMs]; the key's REST route reads meanwhile). OkHttp
+ * failure (then not retried for [retryAfterFailureMs], or for [networkRetryMs] when Novig judged the network's address, the same 2 minutes the key's REST route waits; the REST route reads
+ * meanwhile). OkHttp
  * answers Novig's 15 s pings and pings back, so a dead connection fails instead of serving old books.
  */
 class NovigStream(
@@ -89,6 +92,8 @@ class NovigStream(
     maxMarkets: Int = MAX_MARKETS,
     private val idleCloseMs: Long = IDLE_CLOSE_MS,
     private val retryAfterFailureMs: Long = RETRY_AFTER_FAILURE_MS,
+    /** After a 451 about the network's address: the key's REST route is back after this, and a live feed that waited longer left two scans 16-29 s long (v0.70.1 diagnostics). */
+    private val networkRetryMs: Long = NovigPublicClient.NETWORK_RETRY_MS,
     /** Told of every book change as it arrives: the burst recorder's own connection (RESEARCH.md §95). A scan's stream has none. */
     bookListener: BookListener? = null,
 ) : PushedBooks {
@@ -139,6 +144,9 @@ class NovigStream(
     private var tokensAt = 0L
     private var lastUsedMs = 0L
     private var failedAtMs: Long? = null
+
+    /** How long after [failedAtMs] the feed isn't tried again: the last failure's own wait. */
+    private var retryDelayMs: Long = retryAfterFailureMs
     private var problem: String? = null
 
     /**
@@ -158,7 +166,7 @@ class NovigStream(
         synchronized(this) {
             lastUsedMs = clock()
             wanted = marketIds.distinct()
-            start = socket == null && failedAtMs.let { it == null || clock() - it >= retryAfterFailureMs }
+            start = socket == null && failedAtMs.let { it == null || clock() - it >= retryDelayMs }
         }
         if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
     }
@@ -166,7 +174,7 @@ class NovigStream(
     override fun open() {
         val start = synchronized(this) {
             lastUsedMs = clock()
-            (socket == null && failedAtMs.let { it == null || clock() - it >= retryAfterFailureMs }).also { fresh ->
+            (socket == null && failedAtMs.let { it == null || clock() - it >= retryDelayMs }).also { fresh ->
                 // A new connection wants nothing until a scan hands it its markets: the last scan's list (kept after an idle close) would
                 // spend the one bulk subscribe the bucket allows on lines that scan already read.
                 if (fresh) wanted = emptyList()
@@ -408,17 +416,23 @@ class NovigStream(
             },
         )
 
-        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) = dropped(
-            webSocket,
-            when (response?.code) {
-                401 -> "Novig refused the key for its live feed (401)."
-                403 -> "This key can't open Novig's live feed (403)."
-                // Novig's code says whether it judged the network's address or the phone's location check.
-                451 -> com.tjshea.vigilant.data.novig.signing.NovigApiException(451, refusalCode(response), null).brief
-                423 -> com.tjshea.vigilant.data.novig.signing.NovigApiException(423, refusalCode(response), null).advice
-                else -> "Novig's live feed dropped (${t.message ?: t.javaClass.simpleName})."
-            },
-        )
+        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            val status = response?.code
+            // Novig's code says whether it judged the network's address or the phone's location check (the body can be read once).
+            val refusal = if (status == 451 || status == 423) NovigApiException(status, refusalCode(response), null) else null
+            dropped(
+                webSocket,
+                when {
+                    status == 401 -> "Novig refused the key for its live feed (401)."
+                    status == 403 -> "This key can't open Novig's live feed (403)."
+                    refusal != null && status == 451 -> refusal.brief
+                    refusal != null -> refusal.advice
+                    else -> "Novig's live feed dropped (${t.message ?: t.javaClass.simpleName})."
+                },
+                // The key's REST route comes back after a network refusal in 2 minutes; the feed waits the same, not the 5 of a feed that broke some other way.
+                retryMs = if (refusal?.networkRefusal == true) networkRetryMs else retryAfterFailureMs,
+            )
+        }
     }
 
     /** The `code` in a refused upgrade's JSON body, if it has one. */
@@ -426,15 +440,16 @@ class NovigStream(
         (json.parseToJsonElement(response?.body?.string().orEmpty()) as? JsonObject)?.get("code")?.jsonPrimitive?.content
     }.getOrNull()
 
-    private fun fail(message: String) {
+    private fun fail(message: String, retryMs: Long = retryAfterFailureMs) {
         synchronized(this) {
             failedAtMs = clock()
+            retryDelayMs = retryMs
             problem = message
         }
         _state.value = StreamState.Failed(message, clock())
     }
 
-    private fun dropped(webSocket: WebSocket, message: String) {
+    private fun dropped(webSocket: WebSocket, message: String, retryMs: Long = retryAfterFailureMs) {
         val jobs = synchronized(this) {
             // Not the connection in use (closed on purpose, or replaced): nothing was dropped.
             if (socket !== webSocket) return
@@ -445,7 +460,7 @@ class NovigStream(
         }
         books.clear()
         jobs.forEach { it?.cancel() }
-        fail(message)
+        fail(message, retryMs)
     }
 
     companion object {
