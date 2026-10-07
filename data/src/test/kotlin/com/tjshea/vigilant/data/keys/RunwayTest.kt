@@ -197,19 +197,17 @@ class RunwayTest {
 
     /** Tj's v0.70.1 diagnostics: "Runway ParlayAPI: SHORT, the last of it goes Oct 31" was a straight average, and ParlayAPI's pacer holds it to a day's share. */
     @Test
-    fun `a paced provider's straight-line overrun is a watch, never a short, and a spent one still is`() {
-        val month = QuotaPolicy.PARLAY.periodStart(now)
-        // Eighteen days in, 16,000 of 20,000 used: at that pace 28,000 by the month's end.
-        val fast = KeyUsage(periodStart = month, used = 16_000, remaining = 4_000, limit = 20_000, firstSeenMs = month, lastCallMs = now - 60_000)
-        val v = UsageViews.build(QuotaPolicy.PARLAY, listOf("k"), ProviderUsage(keys = mapOf("k" to fast)), now + 17 * DAY_MS)
-        val line = Runway.line(v, now + 17 * DAY_MS)!!
+    fun `a paced provider's straight-line overrun is a watch, never a short, and an unpaced one still is`() {
+        val t = at("2026-09-19T12:00:00Z")
+        val month = QuotaPolicy.PARLAY.periodStart(t)
+        // 18.5 days into September, 16,000 of 20,000 used: at that pace about 26,000 by the month's end.
+        val fast = KeyUsage(periodStart = month, used = 16_000, remaining = 4_000, limit = 20_000, firstSeenMs = month, lastCallMs = t - 60_000)
+        val line = Runway.line(UsageViews.build(QuotaPolicy.PARLAY, listOf("k"), ProviderUsage(keys = mapOf("k" to fast)), t), t)!!
         assertEquals(RunwayLevel.WATCH, line.level)
         assertTrue(line.text, line.text.contains("pacer holds a paid key to a day's share"))
-        // An unpaced provider running out is still short.
-        val odds = KeyUsage(periodStart = QuotaPolicy.ODDS_API.periodStart(now), used = 400, remaining = 100, limit = 500, firstSeenMs = QuotaPolicy.ODDS_API.periodStart(now), lastCallMs = now - 60_000)
-        val ov = UsageViews.build(QuotaPolicy.ODDS_API, listOf("o"), ProviderUsage(keys = mapOf("o" to odds)), now + 10 * DAY_MS)
-        assertEquals(RunwayLevel.SHORT, Runway.line(ov, now + 10 * DAY_MS)!!.level)
+        // An unpaced provider on the same line is still short.
+        val odds = KeyUsage(periodStart = month, used = 400, remaining = 100, limit = 500, firstSeenMs = month, lastCallMs = t - 60_000)
+        assertEquals(RunwayLevel.SHORT, Runway.line(UsageViews.build(QuotaPolicy.ODDS_API, listOf("o"), ProviderUsage(keys = mapOf("o" to odds)), t), t)!!.level)
     }
 
-    private val DAY_MS = 86_400_000L
 }
