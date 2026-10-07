@@ -5168,3 +5168,9 @@ This session's worker process was restarted. If your previous turn was already c
 ```
 Look at the screenshot, it says allisha is out for the game, so a bet of over 1.5 wouldn't make any sense. Actually any bet on this player would not make sense because she isn't playing. Yet the auto bid feature offered bids on her. Fix this
 ```
+
+## 2026-10-07T05:37:50Z
+```
+Finish the obscure-bid fill I asked about. Put it in the app. Then tell me your progress on making my own websocket type feed to get odds/scores rapidly for live betting 
+Tell me the eleven recommendations again
+```
