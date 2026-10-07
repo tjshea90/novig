@@ -734,6 +734,13 @@ class MakerUiTest {
     }
 
     @Test
+    fun `before CrazyNinjaOdds' list is read the caption says so - not that no Vigilant scan has run`() {
+        compose.setContent { VigilantTheme { MakerScreen(cnoUi().copy(scanAtMs = null), MakerActions()) } }
+        compose.onNodeWithText("No CrazyNinjaOdds list read yet", substring = true).assertExists()
+        compose.onNodeWithText("No Vigilant scan yet", substring = true).assertDoesNotExist()
+    }
+
+    @Test
     fun `the Next to post caption names CrazyNinjaOdds, not a scan`() {
         compose.setContent { VigilantTheme { MakerScreen(cnoUi(), MakerActions()) } }
         compose.onNodeWithText("From CrazyNinjaOdds' list", substring = true).assertExists()
