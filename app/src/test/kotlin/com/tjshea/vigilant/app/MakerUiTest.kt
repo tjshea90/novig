@@ -570,7 +570,7 @@ class MakerUiTest {
      */
     @Test
     fun `in low API usage the trap guard note says the scan reads exactly that far - 6 by default, 8, and Off - and what a wider window costs`() {
-        val st = androidx.compose.runtime.mutableStateOf(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE))
+        val st = androidx.compose.runtime.mutableStateOf(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, trapEarlyHours = 6))
         compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
         compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
         compose.onNodeWithTag("makerTrapEarlyNote").performScrollTo().assertTextContains("the scan reads exactly that far (6 h now", substring = true)
