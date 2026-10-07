@@ -266,7 +266,7 @@ class ApiSettler(
         internal fun halfPointLine(selection: String): Boolean {
             val line = Picks.split(selection).second ?: return false
             val n = Regex("""\d+(?:\.\d+)?""").find(line)?.value?.toDoubleOrNull() ?: return false
-            return true
+            return kotlin.math.abs(n % 1.0 - 0.5) < 1e-9
         }
 
         private fun threeWay(selection: String): Boolean = Regex("\\b(draw|tie)\\b", RegexOption.IGNORE_CASE).containsMatchIn(selection)
