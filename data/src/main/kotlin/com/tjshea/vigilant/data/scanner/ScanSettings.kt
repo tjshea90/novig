@@ -72,6 +72,13 @@ enum class BidFocus(val displayName: String) {
     LOW_USAGE("Low API usage"),
 }
 
+/**
+ * Where bids get their fair price (Tj, 2026-10-07: "make auto bids using only the cno scanner with vigilant scanner turned off", DM3; RESEARCH.md §113-§114).
+ * [VIGILANT]: Vigilant's own scan prices every bid (today's way). [CNO]: CrazyNinjaOdds' list and game pages price them, Novig's books are the offer and the
+ * queue, and Vigilant's scan is not used for bids at all (it may be off). Never chosen by a preset or a restart.
+ */
+enum class BidSource(val displayName: String) { VIGILANT("Vigilant's scan"), CNO("CrazyNinjaOdds") }
+
 /** How the +EV feed is ordered (OddsJam offers the same two). */
 enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
 
@@ -319,6 +326,14 @@ data class ScanSettings(
      * favorites and small underdogs … positive EV and the best chance at beating clv"): [BidFocus.ALL] (every bid the rules allow) or [BidFocus.QUICK_LIKELY].
      */
     val makerFocus: BidFocus = BidFocus.ALL,
+    /** Where bids are priced from ([BidSource]; default Vigilant's scan). Only [BidSource.CNO] reads CrazyNinjaOdds for bids (see [bidsFromCno]). */
+    val makerSource: BidSource = BidSource.VIGILANT,
+    /**
+     * CNO-priced bids only ([BidSource.CNO]): the oldest the data behind a bid's fair may be, in seconds, measured from the OLDER of the list's and the game page's own
+     * "Last Updated" ([MAKER_CNO_MAX_AGE_CHOICES]). A bid is posted only inside it and comes down when its data goes past it (RESEARCH.md §113: CNO publishes every 13-33 s and its
+     * "Last Updated" is a lower bound on a price's age, so 5 minutes, the app's rule for Vigilant's scan, is far too slow for a resting bid).
+     */
+    val makerCnoMaxAgeSeconds: Int = MAKER_CNO_MAX_AGE_DEFAULT,
     /**
      * Low API usage ([BidFocus.LOW_USAGE]): the 2-3 sharp prop books the fair is built from ([LowUsageBids.books] makes sure of two or three), how often Vigilant's own
      * scan runs while it is on ([lowUsagePace]: [LowUsageBids.AUTO] or minutes, [LowUsageBids.PACE_CHOICES]), and the margin each bid is posted under the fair (never under
@@ -765,7 +780,13 @@ data class ScanSettings(
      * Bids are on ([maker] or [makerRecommend]) and set to [BidFocus.LOW_USAGE], and Pinnacle only isn't (that mode already reads Novig and Pinnacle alone and wins): Vigilant's
      * own scan is the low-usage scan ([effective]) and runs at the pace [lowUsagePace] says ([LowUsageBids.gapSeconds]).
      */
-    val lowUsageNow: Boolean get() = makerFocus == BidFocus.LOW_USAGE && (maker || makerRecommend) && !pinnacleOnly
+    val lowUsageNow: Boolean get() = makerFocus == BidFocus.LOW_USAGE && (maker || makerRecommend) && !pinnacleOnly && makerSource == BidSource.VIGILANT
+
+    /**
+     * Bids are priced from CrazyNinjaOdds ([makerSource]) and are on ([maker] or [makerRecommend]), and Pinnacle only isn't (it wins, and reads no CNO list): the background cycle reads
+     * CNO's list, the wide list and the games' pages for them ([com.tjshea.vigilant.data.novig.trading.maker.CnoMakerLines]), whatever alerts and auto-bet are set to.
+     */
+    val bidsFromCno: Boolean get() = makerSource == BidSource.CNO && (maker || makerRecommend) && !pinnacleOnly
 
     /**
      * The shortest gap between two background runs of Vigilant's own scan: the usual [AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS], or the low-usage pace ([LowUsageBids.shortestGapSeconds];
@@ -971,6 +992,10 @@ data class ScanSettings(
 
         /** A kind of market the popularity study didn't measure is popular when this many books or more price the line ([makerPopularFirst]). */
         const val MAKER_POPULAR_BOOKS = 6
+
+        /** [makerCnoMaxAgeSeconds]'s choices: 1 to 5 minutes (the app's own limit for any fair is 5, [Freshness.MAX_QUOTE_AGE_MS]); a page is re-read about every minute for a game with a bid up. */
+        val MAKER_CNO_MAX_AGE_CHOICES = listOf(60, 90, 120, 180, 300)
+        const val MAKER_CNO_MAX_AGE_DEFAULT = 120
 
         /** [makerStake]'s and [makerMaxStake]'s choices, dollars. */
         val MAKER_STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 25.0)
