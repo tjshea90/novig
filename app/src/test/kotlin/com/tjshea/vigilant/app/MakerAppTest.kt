@@ -175,7 +175,7 @@ class MakerAppTest {
     }
 
     @Test
-    fun `a pass takes down the bid on a player who turns out to be out and posts nothing new on him (Tj, 2026-10-07: the card says Allisha is out yet the auto bids offered bids on her)`() = runBlocking {
+    fun `a pass takes down the bid on a player who turns out to be out and posts nothing new on him (Tj, 2026-10-07 - the card said Allisha was out yet the auto bids offered bids on her)`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
         runner(novig).run("test")!!
