@@ -251,16 +251,14 @@ class AutoBetUiTest {
     /** DH4 (2026-10-07): "odds no shorter than +130 or longer" read as a favourite limit; a positive limit is plus money only. */
     @Test
     fun `the criteria say a plus money shortest odds means underdogs only, and a minus one a favorite limit`() {
-        show({ it.copy(autoBetMinOdds = 110) })
-        val plus = AutoBetText.criteria(settings)
+        val base = ScanSettings(autoScan = AutoScanMode.CNO)
+        val plus = AutoBetText.criteria(base.copy(autoBetMinOdds = 110))
         assertTrue(plus, plus.contains(", underdogs only (odds +110 or longer)"))
         assertFalse(plus, plus.contains("odds no shorter than"))
-        show({ it.copy(autoBetMinOdds = -200) })
-        val minus = AutoBetText.criteria(settings)
+        val minus = AutoBetText.criteria(base.copy(autoBetMinOdds = -200))
         assertTrue(minus, minus.contains(", odds no shorter than −200"))
         assertFalse(minus, minus.contains("underdogs only"))
-        show({ it.copy(autoBetMinOdds = 0) })
-        val none = AutoBetText.criteria(settings)
+        val none = AutoBetText.criteria(base.copy(autoBetMinOdds = 0))
         assertFalse(none, none.contains("underdogs only") || none.contains("odds no shorter than"))
     }
 
