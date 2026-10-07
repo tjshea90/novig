@@ -113,6 +113,14 @@ object Runway {
             projected * 5 > allowance * 4 -> RunwayLevel.WATCH
             else -> RunwayLevel.OK
         }
+        if (level == RunwayLevel.SHORT && policy.id == QuotaPolicy.PARLAY.id) {
+            // A paced provider can't overspend: the daily share holds a paid key to its month, and a free key is used down to its last credits on purpose, the other feeds carrying on
+            // after (Tj's v0.70.1 file: "SHORT" for ParlayAPI at +0.8% over its allowance while the pacer capped it at 635 a day). A straight average ignores that, so it can only watch.
+            return RunwayLine(
+                policy.id, policy.displayName, RunwayLevel.WATCH,
+                "$head · at this pace the allowance would be gone ${whenAt(now + runsOutIn, now)}: its pacer holds a paid key to a day's share, free keys run down to their last credits (the other feeds carry on), WATCH$refusedNote",
+            )
+        }
         val pace = if (level == RunwayLevel.SHORT) {
             "at this pace the last of it goes ${whenAt(now + runsOutIn, now)}, before the reset: SHORT (add keys, or scan less)"
         } else {
