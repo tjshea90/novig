@@ -1007,20 +1007,20 @@ class AutoBettorTest {
     fun `the trap guard's first-listed rule - a bet first listed more than its hours before the start isn't placed once the game is inside the window, the report counts it, and the switch turns it off`() = runBlocking {
         val novig = FakeNovig()
         val h = 3_600_000L
-        val s = settings { it.copy(trapEarlyHours = 24) }
+        val s = settings { it.copy(trapEarlyHours = 36) }
         fun withFirst(t: Long?, set: ScanSettings = s) = state(set).let { st -> st.copy(firstListed = t?.let { mapOf(jefferson.key to it) } ?: emptyMap()) }
-        // First listed 30 h ago, the game 24 h off: left alone, and said so.
+        // First listed 30 h ago, the game 24 h off (54 h before the start, over 36): left alone, and said so.
         val old = bettor(novig).run(s, withFirst(now - 30 * h))
         assertEquals(0, novig.orders.get())
-        assertEquals(1, old.skipped[TrapGuard.listedEarlyReason(24)])
-        assertEquals(null, old.skipped[TrapGuard.earlyReason(24)])
+        assertEquals(1, old.skipped[TrapGuard.listedEarlyReason(36)])
+        assertEquals(null, old.skipped[TrapGuard.earlyReason(36)])
         // First listed an hour ago, or never seen: placed.
         assertEquals(1, bettor(novig).run(s, withFirst(now - h)).placed.size)
         app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
         assertEquals(1, bettor(novig).run(s, withFirst(null)).placed.size)
         app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
         // The switch off: the old listing is placed.
-        val off = settings { it.copy(trapEarlyHours = 24, trapFirstListed = false) }
+        val off = settings { it.copy(trapEarlyHours = 36, trapFirstListed = false) }
         assertEquals(1, bettor(novig).run(off, withFirst(now - 30 * h, off)).placed.size)
     }
 

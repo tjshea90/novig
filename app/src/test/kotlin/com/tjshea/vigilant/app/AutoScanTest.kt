@@ -353,14 +353,14 @@ class AutoScanTest {
 
     @Test
     fun `the trap guard's first-listed rule (Tj, 2026-10-07) - no alert for a bet first listed more than its hours before the start, once the game is inside the window`() {
-        val hours = 24
+        val hours = 36
         fun cno(first: Map<String, Long>, on: Boolean = true) =
             SampleCno.withBooks().let { it.copy(firstListed = first, settings = it.settings.copy(trapEarlyHours = hours, trapFirstListed = on)) }.indexed(now)
         val key = jefferson.key
         val h = 3_600_000L
-        // Jefferson starts a day off, inside 24 h; first listed an hour ago it alerts.
+        // Jefferson starts a day off, inside 36 h; first listed an hour ago (25 h before the start) it alerts.
         assertEquals(1, AlertPicks.cno(cno(mapOf(key to now - h)), 0.03, now).size)
-        // First listed 30 h ago (54 h before the start): left alone, in the candidates a cycle reads books for too, and counted apart from the plain early rule.
+        // First listed 30 h ago (54 h before the start, over 36): left alone, in the candidates a cycle reads books for too, and counted apart from the plain early rule.
         val old = cno(mapOf(key to now - 30 * h))
         assertTrue(AlertPicks.cno(old, 0.03, now).isEmpty())
         assertTrue(AlertPicks.cnoCandidates(old, 0.03, now).none { it.row.key == key })

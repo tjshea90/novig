@@ -38,11 +38,11 @@ class FirstListedTest {
     @Test
     fun `an entry goes 12 hours after its game's start, one with no known start after 3 days, and the file only changes when something is new or gone`() = runBlocking {
         val f = FirstListed(file())
-        f.note(listOf("old" to now - 1 * hour, "keep" to now + 30 * hour, "nostart" to 0L), now)
+        f.note(listOf("old" to now - 1 * hour, "keep" to now + 100 * hour, "nostart" to 0L), now)
         // 13 hours on: "old" (started 14 h ago) is gone, "keep" and "nostart" stay.
-        f.note(listOf("keep" to now + 30 * hour), now + 13 * hour)
+        f.note(listOf("keep" to now + 100 * hour), now + 13 * hour)
         assertEquals(setOf("keep", "nostart"), f.snapshot().keys)
-        f.note(listOf("keep" to now + 30 * hour), now + 4 * 24 * hour)
+        f.note(listOf("keep" to now + 100 * hour), now + 4 * 24 * hour)
         assertEquals(setOf("keep"), f.snapshot().keys)
         assertEquals(0, f.note(emptyList(), now + 4 * 24 * hour + 1))
         assertEquals(0, f.note(listOf("" to 0L), now + 4 * 24 * hour + 2))
