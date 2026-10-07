@@ -78,6 +78,7 @@ import com.tjshea.vigilant.data.cno.CnoDevig
 import com.tjshea.vigilant.data.cno.CnoFilters
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.DevigMethod
+import com.tjshea.vigilant.engine.Odds
 import com.tjshea.vigilant.engine.FairSettings
 import com.tjshea.vigilant.engine.FairSource
 import java.util.Locale
@@ -400,6 +401,7 @@ private fun ColumnScope.ScanningPage(s: ScanSettings, onUpdate: SettingsUpdate) 
     if (AppBook.isNovig) {
         Text("Games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
         ChoiceChips(ScanSettings.STARTS_WITHIN_CHOICES, s.startsWithinHours, ::startsWithinLabel) { v -> onUpdate { it.copy(startsWithinHours = v) } }
+        TypedIntField(NumberSpecs.time("hours", 1, 720), s.startsWithinHours, "startsWithinField") { v -> onUpdate { it.copy(startsWithinHours = v) } }
         Hint(
             "Every list (+EV, CNO, Games and the widgets) shows only games starting within this window, and Vigilant's scan reads only these games. " +
                 "Games already under way still show when live games are on.",
@@ -423,6 +425,7 @@ private fun ColumnScope.AlertsPage(state: UiState, onUpdate: SettingsUpdate) {
     SectionTitle("When to alert")
     Text("Smallest edge (EV) to alert on", style = MaterialTheme.typography.bodyMedium)
     ChoiceChips(ScanSettings.ALERT_MIN_EV_CHOICES, s.alertMinEv, ::alertLabel) { v -> onUpdate { it.copy(alertMinEv = v) } }
+    TypedPercentField(NumberSpecs.percent("smallest edge", 0.1, 50.0), s.alertMinEv, "alertMinEvField") { v -> onUpdate { it.copy(alertMinEv = v) } }
     Hint(alertHint(s))
     Shadowed.alertEdge(s)?.let { Warn(it, "alertShadowed") }
     if (s.alertMinEv > 0.0 && !BackgroundScan.on(s)) {
@@ -465,15 +468,28 @@ private fun ColumnScope.CnoPage(s: ScanSettings, onUpdate: SettingsUpdate) {
     )
     Text("Longest odds", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.CNO_MAX_ODDS_CHOICES, f.maxOdds, { if (it <= 0) "No cap" else "+$it" }) { v -> onCno { it.copy(maxOdds = v) } }
+    TypedIntField(NumberSpecs.LONGEST_ODDS, f.maxOdds, "cnoMaxOddsField") { v -> onCno { it.copy(maxOdds = v) } }
     Hint(
         if (f.maxOdds > 0) "Favorites and underdogs up to +${f.maxOdds} only. Long shots are where fake edges hide (a small pricing error looks like a big edge)."
         else "Any odds, long shots included. Long shots are where fake edges hide.",
     )
+    Text("Shortest odds", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    ChoiceChips(ScanSettings.SHORTEST_ODDS_CHOICES, f.minOdds, AutoBetText::minOddsLabel) { v -> onCno { it.copy(minOdds = v) } }
+    TypedNumberField(NumberSpecs.SHORTEST_ODDS, oddsShown(f.minOdds), "cnoMinOddsField") { v -> onCno { it.copy(minOdds = v.toInt()) } }
+    Hint(
+        when {
+            f.minOdds < 0 -> "No favorite shorter than ${Odds.formatAmerican(f.minOdds)}: heavy favorites risk a lot to win a little. Applied to every row CNO sends."
+            f.minOdds > 0 -> "Underdogs only: ${Odds.formatAmerican(f.minOdds)} or longer. Every favorite and shorter price is left out."
+            else -> "No limit: favorites of any size are listed."
+        },
+    )
     Text("Fewest books behind the true odds", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.CNO_MIN_BOOKS_CHOICES, f.minBooks, { "$it+" }) { v -> onCno { it.copy(minBooks = v) } }
+    TypedIntField(NumberSpecs.count("books", 1, 12), f.minBooks, "cnoMinBooksField", none = { false }) { v -> onCno { it.copy(minBooks = v) } }
     Hint("How many sportsbooks' prices the true odds are built from. One or two books can be one book's mistake; more books, more trustworthy.")
     Text("Smallest edge (EV) listed", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.CNO_MIN_EV_CHOICES, f.minEv, { Format.percent(it, 0) }) { v -> onCno { it.copy(minEv = v) } }
+    TypedPercentField(NumberSpecs.percent("smallest edge", 0.0, 50.0), f.minEv, "cnoMinEvField") { v -> onCno { it.copy(minEv = v) } }
     Hint("EV (expected value): how much a bet should return over time, per dollar, above break-even. 3% means about 3¢ per \$1 bet in the long run.")
     SwitchRow(
         "Require a complete sportsbook",
@@ -517,9 +533,11 @@ private fun ColumnScope.CnoPage(s: ScanSettings, onUpdate: SettingsUpdate) {
     SectionTitle("Refresh")
     Text("Read the list every", style = MaterialTheme.typography.bodyMedium)
     ChoiceChips(CnoFeed.REFRESH_CHOICES, s.cnoRefreshSeconds, ::secondsLabel) { v -> onUpdate { it.copy(cnoRefreshSeconds = v) } }
+    TypedIntField(NumberSpecs.time("seconds", 5, 3600), s.cnoRefreshSeconds, "cnoRefreshField") { v -> onUpdate { it.copy(cnoRefreshSeconds = v) } }
     Hint(refreshHint(s))
     Text("Rows per read", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.CNO_ROWS_CHOICES, f.rows, { "$it" }) { v -> onCno { it.copy(rows = v) } }
+    TypedIntField(NumberSpecs.count("rows", 10, 200), f.rows, "cnoRowsField", none = { false }) { v -> onCno { it.copy(rows = v) } }
     Hint("CNO sends its best bets first; more rows means more candidates for the book checks and auto-bet.")
 
     SectionTitle("Advanced")
@@ -572,6 +590,7 @@ private fun ColumnScope.WidgetPage(s: ScanSettings, onUpdate: SettingsUpdate) {
     if (s.scannerNow == ScannerMode.BOTH) {
         Text("Vigilant's scan again while the widget is open", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
         ChoiceChips(ScanSettings.WIDGET_RESCAN_CHOICES, s.widgetRescanMinutes, { if (it <= 0) "Off" else "$it min" }) { v -> onUpdate { it.copy(widgetRescanMinutes = v) } }
+        TypedIntField(NumberSpecs.time("minutes", 1, 240), s.widgetRescanMinutes, "widgetRescanField") { v -> onUpdate { it.copy(widgetRescanMinutes = v) } }
         Hint(
             "The widget lists Vigilant's bets and CNO's together, best edge first; a bet both list shows once. " +
                 (if (s.widgetRescanMinutes > 0) "Vigilant scans again every ${s.widgetRescanMinutes} min while the widget or CNO's tab is on screen. Each scan spends API credits (Pinnacle / The Odds API keys)."
@@ -648,6 +667,7 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
 
     Text("Fewest books for an average: ${s.minBooks}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
     ChoiceChips((1..5).toList(), s.minBooks, { it.toString() }) { v -> onUpdate { it.copy(minBooks = v) } }
+    TypedIntField(NumberSpecs.count("books", 1, 20), s.minBooks, "fairMinBooksField", none = { false }) { v -> onUpdate { it.copy(minBooks = v) } }
     Hint("An average of one or two books can be one book's mistake: a line with fewer books than this is skipped.")
     SwitchRow(
         "Outlier guard",
@@ -754,12 +774,14 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
             if (MarketFamily.PLAYER_PROPS !in s.families) Hint("Turn on Player props under Markets below to use these.")
             Text("Only games starting within", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             ChoiceChips(ScanSettings.BOOK_PROP_HOURS_CHOICES, s.bookPropHours, { if (it >= ScanSettings.NO_LIMIT) "All" else "${it}h" }) { v -> onUpdate { it.copy(bookPropHours = v) } }
+            TypedIntField(NumberSpecs.time("hours", 1, 720), s.bookPropHours, "bookPropHoursField", none = { it <= 0 || it >= ScanSettings.NO_LIMIT }) { v -> onUpdate { it.copy(bookPropHours = v) } }
             if (s.bookPropHours >= ScanSettings.NO_LIMIT) Hint("All: every game the scan reads (${windowLabel(s.scanWindowHours)} now).")
             if (s.usePropLine) {
                 Text("PropLine props: most games per scan", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.PROPLINE_GAMES_CHOICES, s.propLineGamesPerScan, { if (it >= ScanSettings.NO_LIMIT) "No limit" else it.toString() }) { v ->
                     onUpdate { it.copy(propLineGamesPerScan = v) }
                 }
+                TypedIntField(NumberSpecs.count("games", 1, 1000), s.propLineGamesPerScan, "propLineGamesField", none = { it <= 0 || it >= ScanSettings.NO_LIMIT }) { v -> onUpdate { it.copy(propLineGamesPerScan = v) } }
                 Hint(propLineGamesHint(s))
             }
             if (s.useOddsApi) {
@@ -769,6 +791,7 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
                 ChoiceChips(ScanSettings.BOOK_PROP_CREDIT_CHOICES, s.bookPropCreditsPerScan, { if (it == 0) "None" else if (it >= ScanSettings.NO_LIMIT) "No limit" else it.toString() }) { v ->
                     onUpdate { it.copy(bookPropCreditsPerScan = v) }
                 }
+                TypedIntField(NumberSpecs.count("credits", 1, 5000), s.bookPropCreditsPerScan, "bookPropCreditsField", none = { it <= 0 || it >= ScanSettings.NO_LIMIT }) { v -> onUpdate { it.copy(bookPropCreditsPerScan = v) } }
                 Text("Re-use a game's props for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
                 ChoiceChips(ScanSettings.BOOK_PROP_REUSE_CHOICES, (s.bookPropReuseMs / 60_000L).toInt(), ::minutesLabel) { v ->
                     onUpdate { it.copy(bookPropReuseMinutes = v) }
@@ -814,8 +837,14 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
         valueRange = 0f..10f,
         steps = 19,
     )
+    TypedPercentField(NumberSpecs.percent("smallest edge", 0.0, 50.0), s.minEvPercent, "feedMinEvField") { v -> onUpdate { it.copy(minEvPercent = v) } }
     Text("Longest odds shown: ${maxOddsLabel(s.maxOdds)}", style = MaterialTheme.typography.bodyMedium)
     ChoiceChips(ScanSettings.MAX_ODDS_CHOICES, s.maxOdds, ::maxOddsLabel) { v -> onUpdate { it.copy(maxOdds = v) } }
+    TypedIntField(NumberSpecs.LONGEST_ODDS, s.maxOdds, "feedMaxOddsField", none = { it <= 0 }) { v -> onUpdate { it.copy(maxOdds = v) } }
+    Text("Shortest odds shown: ${AutoBetText.minOddsLabel(s.minOdds)}", style = MaterialTheme.typography.bodyMedium)
+    ChoiceChips(ScanSettings.SHORTEST_ODDS_CHOICES, s.minOdds, AutoBetText::minOddsLabel) { v -> onUpdate { it.copy(minOdds = v) } }
+    TypedNumberField(NumberSpecs.SHORTEST_ODDS, oddsShown(s.minOdds), "feedMinOddsField") { v -> onUpdate { it.copy(minOdds = v.toInt()) } }
+    Hint("Heavy favorites (-300 and shorter) risk a lot to win a little; +100 keeps only underdogs and even money.")
     Hint("Fair odds are least reliable on longshots, which is where most fake edges show up.")
     Text("Markets", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -832,14 +861,17 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     if (AppBook.exchange) {
     Text("Alternate lines per game: ${allLabel(s.linesPerGame)}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.LINES_PER_GAME_CHOICES, s.linesPerGame, ::allLabel) { v -> onUpdate { it.copy(linesPerGame = v) } }
+    TypedIntField(NumberSpecs.count("lines", 1, 100), s.linesPerGame, "linesPerGameField", none = { it >= ScanSettings.NO_LIMIT }) { v -> onUpdate { it.copy(linesPerGame = v) } }
     Hint("Per spread, total and team total (full game and 1st half). Every line is one Novig request per scan: fewer lines scan faster and stay well under Novig's rate limit.")
     if (MarketFamily.PLAYER_PROPS in s.families) {
         Text("Player props per game: ${allLabel(s.propsPerGame)}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
         ChoiceChips(ScanSettings.PROPS_PER_GAME_CHOICES, s.propsPerGame, ::allLabel) { v -> onUpdate { it.copy(propsPerGame = v) } }
+        TypedIntField(NumberSpecs.count("props", 1, 100), s.propsPerGame, "propsPerGameField", none = { it <= 0 || it >= ScanSettings.NO_LIMIT }) { v -> onUpdate { it.copy(propsPerGame = v) } }
         Hint("NFL, MLB and WNBA props that Pinnacle, Kalshi or the sportsbooks also price, on the same line. The best-covered ones are checked first.")
     }
     Text("Most Novig prices per scan: ${limitLabel(s.maxBooksPerScan)}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.MAX_BOOKS_CHOICES, s.maxBooksPerScan, ::limitLabel) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
+    TypedIntField(NumberSpecs.count("prices", 10, 100_000), s.maxBooksPerScan, "maxBooksField", none = { it >= ScanSettings.NO_LIMIT }) { v -> onUpdate { it.copy(maxBooksPerScan = v) } }
     Hint(scanSizeHint(s.maxBooksPerScan))
     SwitchRow(
         "Fill the scan with every quoted line",
@@ -853,6 +885,7 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     }
     Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.DAYS_AHEAD_CHOICES, s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
+    TypedIntField(NumberSpecs.time("days", 1, 30), s.daysAhead, "daysAheadField", none = { false }) { v -> onUpdate { it.copy(daysAhead = v) } }
     Hint(
         "Games starting within this many days are scanned, soonest first. A week takes in the next college Saturday and NFL Sunday." +
             (Shadowed.daysAhead(s)?.let { " $it" } ?: ""),
@@ -912,6 +945,7 @@ private fun ColumnScope.BettingTab(
     Hint("Your bankroll: the money you set aside for betting. Kelly stakes are a share of it.")
     Text("Kelly fraction for suggested stakes", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.KELLY_CHOICES, s.kellyMultiplier, Format::kellyLabel) { v -> onUpdate { it.copy(kellyMultiplier = v) } }
+    TypedNumberField(NumberSpecs.KELLY, NumberSpecs.KELLY.show(s.kellyMultiplier), "kellyField") { v -> onUpdate { it.copy(kellyMultiplier = v) } }
     Hint(
         "Kelly is a formula that sizes a bet by how big its edge is: a bigger edge, a bigger bet. Full Kelly swings hard; most bettors use ¼ Kelly because " +
             "edges are estimates. Used for the stake each card suggests and for \"Kelly\" below. (Auto-bet has its own stake rule, on its tab.) " +
@@ -943,6 +977,7 @@ private fun ColumnScope.BettingTab(
         if (state.betting.enabled && StakeText.sheetAmountUsed(s)) {
             Text(StakeText.sheetAmountTitle(s), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             ChoiceChips(STAKE_AMOUNT_CHOICES, s.apiBetStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiBetStake = v) } }
+            TypedDollarField(NumberSpecs.dollars("amount"), s.apiBetStake, "apiBetStakeField") { v -> onUpdate { it.copy(apiBetStake = v) } }
         }
     }
     if (!AppBook.isNovig) {
@@ -1130,6 +1165,7 @@ private fun ColumnScope.BackgroundScanSection(s: ScanSettings, onUpdate: ((ScanS
     if (on) {
         Text("Every", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
         ChoiceChips(ScanSettings.AUTO_SCAN_SECONDS_CHOICES, s.autoScanSeconds, ScanSettings::intervalLabel) { v -> onUpdate { it.copy(autoScanSeconds = v) } }
+        TypedIntField(NumberSpecs.time("seconds", 5, 3600), s.autoScanSeconds, "autoScanField", none = { false }) { v -> onUpdate { it.copy(autoScanSeconds = v) } }
     }
     Hint(autoScanHint(s))
     if (on) {
