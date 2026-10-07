@@ -273,6 +273,9 @@ class ApiSettler(
         /** The words of a loss taken from Novig's silence: no payout, no position left. */
         const val SILENT_LOSS = "Novig paid nothing for it and no longer holds the position: a loss"
 
+        /** The words of a win worked out from the other leg: a half-point two-way market held on both sides, the other leg graded lost by a score feed. */
+        const val INFERRED_WON = "You hold both sides of this half-point market and a score feed graded the other side lost, so this one won (Novig shows no payout for it yet)"
+
         const val OTHER_SIDE_LOST = "You hold both sides of this market and the other side lost, so this one can't have: Novig shows no payout for it yet, check it in the Novig app"
 
         const val BOTH_HELD_SILENT = "You hold both sides of this market, so one of them won: Novig shows no payout for either and the score feeds can't say which, check it in the Novig app"
