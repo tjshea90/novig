@@ -403,6 +403,8 @@ class TheOddsApiClient(
             401, 403 -> when {
                 body.contains("OUT_OF_USAGE_CREDITS") || body.contains("quota", ignoreCase = true) || body.contains("credit_limit_exceeded") ->
                     KeyAttemptResult.Depleted("monthly credits used up")
+                // Asked past the plan's history window (a free key reaches back 48 hours): the call's fault, never the key's, which stays in use.
+                body.contains("HISTORICAL_LIMIT") -> throw TheOddsApiException("${feed.title} can't reach that far back on this plan ($what)")
                 else -> KeyAttemptResult.Invalid(reason = "HTTP ${response.code}" + errorCode(body)?.let { " $it" }.orEmpty() + requestNote)
             }
             // An out-of-season sport or a finished game isn't the key's fault, and costs nothing.
