@@ -228,6 +228,11 @@ data class MakerLine(
     val bidLevels: List<com.tjshea.vigilant.data.novig.BidLevel> = emptyList(),
     /** What Novig's newest trades say about this side's price now ([MakerRules.novigMove]; game lines only); null = not read. */
     val novigMove: com.tjshea.vigilant.data.scanner.TrapGuard.Move? = null,
+    /**
+     * Why nobody should bid on this line, or null: the player is out ([com.tjshea.vigilant.data.reference.PlayerOut], Tj 2026-10-07: "she isn't playing ... yet the
+     * auto bid feature offered bids on her"). [MakerQuote.precheck] skips it, so no bid goes up and the plan takes down any that already did.
+     */
+    val unavailable: String? = null,
 ) {
     val marketId: String get() = market.marketId
 }
@@ -261,7 +266,14 @@ object MakerLines {
      * runs every 20 s while a scan does). [always]: sides whose books' fairs are worked out whatever precheck says (the ones Vigilant has a bid or a fill on, so a
      * fill is judged against the sharp books too).
      */
-    fun from(result: com.tjshea.vigilant.data.scanner.ScanResult?, settings: ScanSettings, now: Long, always: Set<String> = emptySet()): List<MakerLine> {
+    fun from(
+        result: com.tjshea.vigilant.data.scanner.ScanResult?,
+        settings: ScanSettings,
+        now: Long,
+        always: Set<String> = emptySet(),
+        /** Why a side must not be bid on (a player who is out: [com.tjshea.vigilant.data.reference.PlayerOut.forOpportunity]), or null. */
+        unavailable: (com.tjshea.vigilant.data.scanner.Opportunity) -> String? = { null },
+    ): List<MakerLine> {
         result ?: return emptyList()
         val rules = MakerRules.of(settings)
         return result.opportunities.filter { o ->
@@ -275,7 +287,7 @@ object MakerLines {
                 fairAsOfMs = o.fairAsOfMs, fairNewestMs = o.fair?.usedUpdates?.first, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0,
                 fairBooks = o.fair?.booksUsed.orEmpty(), offer = o.quote?.price,
                 bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
-                basis = FairBasis.of(o), bookAtMs = o.bookFetchedAtMs, bidLevels = o.bidLevels,
+                basis = FairBasis.of(o), bookAtMs = o.bookFetchedAtMs, bidLevels = o.bidLevels, unavailable = unavailable(o),
             )
             // Each book's own fair only where a bid could follow: every other line is skipped before [MakerQuote.decide] asks for them.
             if (line.outcomeId !in always && MakerQuote.precheck(line, rules, now) is MakerQuote.Pre.No) line
@@ -454,6 +466,7 @@ object MakerQuote {
         if (com.tjshea.vigilant.data.scanner.TrapGuard.isEarly(line.startsTs, now, rules.earlyHours)) {
             return skip("Starts in more than ${rules.earlyHours} h: no bids this early (trap guard)")
         }
+        line.unavailable?.let { return skip(it) }
         if (line.market.status != "OPEN") return skip("Novig isn't taking orders on this market")
         if (line.kind !in rules.kinds) return skip("${line.kind.label} are off for bids")
         if (rules.skipObscure && MarketPopularity.measuredObscure(line.league, line.market.marketType)) {
