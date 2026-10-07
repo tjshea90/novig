@@ -806,6 +806,7 @@ private fun VigilantRoot(
                 }
                 Tab.BIDS -> {
                     val status by vm.makerStatus.collectAsStateWithLifecycle()
+                    val cnoLane by vm.cnoBidStatus.collectAsStateWithLifecycle()
                     val bids by vm.makerBids.collectAsStateWithLifecycle()
                     val denied by vm.makerDenied.collectAsStateWithLifecycle()
                     val now = com.tjshea.vigilant.app.ui.rememberNow(30_000)

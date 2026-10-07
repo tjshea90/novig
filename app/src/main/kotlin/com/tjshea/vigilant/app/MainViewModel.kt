@@ -1434,6 +1434,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** The last pass and the bids each line would get ([MakerRunner.status]). */
     val makerStatus get() = c.maker.status
 
+    /** What the lane that reads CrazyNinjaOdds for bids priced from it has read and why it stops them ([com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.status]). */
+    val cnoBidStatus get() = c.cnoBids.status
+
     /** Every bid on record ([com.tjshea.vigilant.data.novig.trading.maker.MakerStore]); null until first read. */
     val makerBids get() = c.makerStore.flow
 
