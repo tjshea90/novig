@@ -111,6 +111,27 @@ class MakerOrdersClientTest {
         assertTrue(refused.toString(), refused is com.tjshea.vigilant.data.novig.signing.NovigApiException && (refused as com.tjshea.vigilant.data.novig.signing.NovigApiException).status == 422)
     }
 
+    /**
+     * Tj's v0.71.2 diagnostics file (2026-10-07), four times: "Novig's answer to a batch of 15 bids couldn't be read (it looked like [{clientId:string,orderId:string}x15])" and every bid
+     * after went one at a time. The real reply is a bare array; it is read like the documented object, by client id.
+     */
+    @Test
+    fun `a batch reply that is a bare array of client id and order id is read, by client id and by position`() = runBlocking {
+        val a = NovigTradingClient.newClientId()
+        val b = NovigTradingClient.newClientId()
+        val orders = listOf(NovigTradingClient.NewOrder("out-1", 0.485, 1_030, "PO", a, 1_800_000), NovigTradingClient.NewOrder("out-2", 0.45, 200, "PO", b, 600_000))
+        server.enqueue(MockResponse().setResponseCode(201).setBody("""[{"clientId":"$b","orderId":"o-1"},{"clientId":"$a","orderId":"o-2"}]"""))
+        assertEquals(mapOf(a to "o-2", b to "o-1"), client().placeOrders(orders))
+        server.takeRequest()
+        // No client ids echoed: the order sent.
+        server.enqueue(MockResponse().setResponseCode(201).setBody("""[{"orderId":"p-1"},{"orderId":"p-2"}]"""))
+        assertEquals(mapOf(a to "p-1", b to "p-2"), client().placeOrders(orders))
+        server.takeRequest()
+        // A bare array of something else is still reported with its shape.
+        server.enqueue(MockResponse().setResponseCode(201).setBody("""["x","y"]"""))
+        assertTrue(runCatching { client().placeOrders(orders) }.exceptionOrNull() is NovigTradingClient.BatchReplyUnreadable)
+    }
+
     /** v0.70.4: Novig's batch reply was unreadable 3 of 3 times in the v0.70.1 file and nothing recorded its shape. */
     @Test
     fun `a batch reply the app cannot read is reported with its shape - keys and kinds of value, never a value`() = runBlocking {
