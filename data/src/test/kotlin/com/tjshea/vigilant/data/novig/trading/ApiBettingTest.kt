@@ -605,6 +605,21 @@ class ApiBettingTest {
         assertTrue(placer(tracker()).placeAuto(target(), 5.0, autoLimits.copy(maxOdds = 117), expectedPrice = 0.46) is PlaceResult.Placed)
     }
 
+    /** Tj, 2026-10-07: "make sure the settings do what they say": the shortest-odds limit was judged only when the bet was found; it is now checked on the book read just before the order too. */
+    @Test
+    fun `a shortest-odds limit is checked on the book read just before the order`() = runBlocking {
+        novig(Scenario())
+        val t = tracker()
+        // The book's price is +117 (0.46). A limit of +120 (underdogs at least that long) refuses it: +117 is shorter.
+        val tooShort = placer(t).placeAuto(target(), 5.0, autoLimits.copy(minOdds = 120), expectedPrice = 0.46) as PlaceResult.Refused
+        assertEquals("Novig's best price is now +117, shorter than your +120 limit.", tooShort.reason)
+        assertTrue("nothing was sent", requests.none { it.method == "POST" })
+        assertTrue(t.all().isEmpty())
+        // At the limit it is bet; a limit that only keeps favourites out (−200) lets +117 through.
+        assertTrue(placer(tracker()).placeAuto(target(), 5.0, autoLimits.copy(minOdds = 117), expectedPrice = 0.46) is PlaceResult.Placed)
+        assertTrue(placer(tracker()).placeAuto(target(), 5.0, autoLimits.copy(minOdds = -200), expectedPrice = 0.46) is PlaceResult.Placed)
+    }
+
     @Test
     fun `the longest-odds limit is the planner's, so a bet by hand is never held to it`() {
         val long = BetLimits(maxStake = 20.0, maxPerDay = 50.0, minEv = 0.0, maxOdds = 110)
