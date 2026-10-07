@@ -155,7 +155,13 @@ data class MakerRules(
             }
         }
 
-        private fun base(s: ScanSettings) = MakerRules(
+        private fun base(s: ScanSettings): MakerRules {
+            val maxOdds = s.makerMaxOdds.let { if (it <= 0) 0 else it.coerceAtLeast(MIN_MAX_ODDS) }
+            val minOdds = com.tjshea.vigilant.data.novig.trading.AutoBet.normalizeMinOdds(s.makerMinOdds)
+            return baseRules(s, maxOdds, minOdds)
+        }
+
+        private fun baseRules(s: ScanSettings, maxOdds: Int, minOdds: Int) = MakerRules(
             margin = s.makerMargin.coerceIn(0.005, 0.5),
             customStake = s.makerStake.coerceAtLeast(0.01),
             maxBids = s.makerMaxBids.coerceAtLeast(0),
@@ -163,10 +169,11 @@ data class MakerRules(
             kinds = s.makerKinds,
             ttlMs = s.makerTtlMinutes.coerceIn(1, 24 * 60) * 60_000L,
             stopMs = s.makerStopMinutes.coerceAtLeast(0) * 60_000L,
-            minPrice = s.makerMinPrice.coerceIn(0.001, 0.999),
-            maxPrice = s.makerMaxPrice.coerceIn(0.001, 0.999),
-            maxOdds = s.makerMaxOdds.let { if (it <= 0) 0 else it.coerceAtLeast(MIN_MAX_ODDS) },
-            minOdds = com.tjshea.vigilant.data.novig.trading.AutoBet.normalizeMinOdds(s.makerMinOdds),
+            // The price window (10-65%) has no control of its own: a longest or shortest odds Tj picked beyond it widens it, so the chip he taps is never a dead one.
+            minPrice = s.makerMinPrice.coerceIn(0.001, 0.999).let { if (maxOdds > 0) minOf(it, priceAtOdds(maxOdds)) else it },
+            maxPrice = s.makerMaxPrice.coerceIn(0.001, 0.999).let { if (minOdds != 0) maxOf(it, priceAtShortest(minOdds).coerceAtMost(0.999)) else it },
+            maxOdds = maxOdds,
+            minOdds = minOdds,
             bothSides = s.makerBothSides,
             minBooks = s.makerMinBooks.coerceAtLeast(1),
             stakeMode = s.makerStakeMode,

@@ -45,8 +45,10 @@ object QuickLikely {
     /** [rules] as this focus makes them: the narrower of Tj's window and ours, only our kinds, and a sharp book required. Nothing is ever loosened. */
     fun narrow(rules: MakerRules, minLineBooks: Int = MIN_LINE_BOOKS): MakerRules = rules.copy(
         kinds = rules.kinds.intersect(KINDS),
-        minPrice = maxOf(rules.minPrice, MIN_PRICE),
-        maxPrice = minOf(rules.maxPrice, MAX_PRICE),
+        // The 30-60% band is the research's default, not a wall: a longest or shortest odds Tj picked beyond it wins (Tj, 2026-10-07: "The settings I choose should change whatever I
+        // want without hard settings"): +300 lets bids go down to 25%, -250 up to 71%. With no limit of his the band is exactly the research's.
+        minPrice = maxOf(rules.minPrice, if (rules.maxOdds > 0) minOf(MIN_PRICE, MakerRules.priceAtOdds(rules.maxOdds)) else MIN_PRICE),
+        maxPrice = minOf(rules.maxPrice, if (rules.minOdds != 0) maxOf(MAX_PRICE, MakerRules.priceAtShortest(rules.minOdds)) else MAX_PRICE),
         requireSharp = true,
         popularFirst = true,
         quick = true,
