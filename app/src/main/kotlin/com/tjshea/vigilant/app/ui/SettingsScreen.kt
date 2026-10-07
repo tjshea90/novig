@@ -979,27 +979,13 @@ private fun ColumnScope.BettingTab(
         // "Amount a bet starts at"): the bet slip and Vigilant's own Bet sheet.
         Text("Amount a bet starts at", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 12.dp))
         ChoiceChips(com.tjshea.vigilant.data.novig.SlipStake.entries.toList(), s.slipStake, { it.label }) { v -> onUpdate { it.copy(slipStake = v) } }
-        if (s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.CUSTOM) {
-            var custom by remember(s.slipCustomStake) { mutableStateOf(com.tjshea.vigilant.data.novig.NovigLinks.amountText(s.slipCustomStake)) }
-            OutlinedTextField(
-                value = custom,
-                onValueChange = { t ->
-                    custom = t.filter { it.isDigit() || it == '.' }.take(8)
-                    custom.toDoubleOrNull()?.takeIf { it > 0 }?.let { v -> onUpdate { it.copy(slipCustomStake = v) } }
-                },
-                label = { Text("Amount $") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth().testTag("slipCustomStake"),
-            )
+        // One amount (Tj, 2026-10-07: "redundant … settings"): "My amount" is the start when it is chosen, and the Bet sheet's start when the choice has none for a bet.
+        if (StakeText.amountShown(s, state.betting.enabled)) {
+            Text(StakeText.amountTitle(s), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            ChoiceChips(STAKE_AMOUNT_CHOICES, s.slipCustomStake, { Format.money(it) }) { v -> onUpdate { it.copy(slipCustomStake = v) } }
+            TypedDollarField(NumberSpecs.dollars("amount"), s.slipCustomStake, "slipCustomStake") { v -> onUpdate { it.copy(slipCustomStake = v) } }
         }
         Hint(StakeText.startHint(s))
-        // The Bet sheet's own amount: used only when the choice above has none for a bet (2026-10-02 ~18:10Z: shown only then).
-        if (state.betting.enabled && StakeText.sheetAmountUsed(s)) {
-            Text(StakeText.sheetAmountTitle(s), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-            ChoiceChips(STAKE_AMOUNT_CHOICES, s.apiBetStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiBetStake = v) } }
-            TypedDollarField(NumberSpecs.dollars("amount"), s.apiBetStake, "apiBetStakeField") { v -> onUpdate { it.copy(apiBetStake = v) } }
-        }
     }
     if (!AppBook.isNovig) {
         // BetMGM's sites are per state: its bet-slip links need Tj's (BetMgmLinks).
@@ -1032,12 +1018,18 @@ object StakeText {
         com.tjshea.vigilant.data.novig.SlipStake.CUSTOM -> "Every bet starts at this amount: in Novig's bet slip and in Vigilant's Bet sheet."
     } + " You can always change it before you confirm."
 
-    /** Whether the Bet sheet's own amount ([ScanSettings.apiBetStake]) is ever used at this choice. */
-    fun sheetAmountUsed(s: ScanSettings): Boolean =
-        s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.OFF || s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.KELLY
+    /** Whether the one amount ([ScanSettings.slipCustomStake]) is used at this choice: always, except with "$1" (nothing to set). The Bet sheet's own start only matters with betting on. */
+    fun amountShown(s: ScanSettings, bettingEnabled: Boolean): Boolean = when (s.slipStake) {
+        com.tjshea.vigilant.data.novig.SlipStake.CUSTOM -> true
+        com.tjshea.vigilant.data.novig.SlipStake.OFF, com.tjshea.vigilant.data.novig.SlipStake.KELLY -> bettingEnabled
+        com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR -> false
+    }
 
-    fun sheetAmountTitle(s: ScanSettings): String =
-        if (s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.KELLY) "When a bet has no Kelly stake (no edge at its price), start at" else "Bet sheet starts at"
+    fun amountTitle(s: ScanSettings): String = when (s.slipStake) {
+        com.tjshea.vigilant.data.novig.SlipStake.CUSTOM -> "My amount"
+        com.tjshea.vigilant.data.novig.SlipStake.KELLY -> "When a bet has no Kelly stake (no edge at its price), start at"
+        else -> "Bet sheet starts at"
+    }
 }
 
 /** The Bet sheet's starting amounts. */
