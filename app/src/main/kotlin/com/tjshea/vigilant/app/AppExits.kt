@@ -144,8 +144,16 @@ object AppExits {
         ApplicationExitInfo.REASON_PERMISSION_CHANGE -> "a permission changed"
         ApplicationExitInfo.REASON_DEPENDENCY_DIED -> "a dependency died"
         ApplicationExitInfo.REASON_OTHER -> "other (often Android freeing memory or an update)"
+        // 14-16 are Android 12's (the constants need API 31; the app runs on 30 and up): the report printed "reason 16" for every app update (Tj's v0.70.1 file).
+        REASON_FREEZER -> "frozen by Android (cached app freezer)"
+        REASON_PACKAGE_STATE_CHANGE -> "the app's state changed (disabled or its storage cleared)"
+        REASON_PACKAGE_UPDATED -> "the app was updated"
         else -> "reason $reason"
     }
+
+    private const val REASON_FREEZER = 14
+    private const val REASON_PACKAGE_STATE_CHANGE = 15
+    private const val REASON_PACKAGE_UPDATED = 16
 
     private const val MAX_CRASH_CHARS = 6_000
     private const val STACK_LINES = 12

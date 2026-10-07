@@ -51,6 +51,11 @@ class AppExitsTest {
     fun `exits that went wrong are told from ordinary ones`() {
         assertEquals("not responding", AppExits.reasonName(android.app.ApplicationExitInfo.REASON_ANR))
         assertEquals("crash", AppExits.reasonName(android.app.ApplicationExitInfo.REASON_CRASH))
+        // Android 12's three, which used to print as "reason 14", "reason 15", "reason 16" (an app update is 16).
+        assertEquals("the app was updated", AppExits.reasonName(16))
+        assertEquals("frozen by Android (cached app freezer)", AppExits.reasonName(14))
+        assertEquals("the app's state changed (disabled or its storage cleared)", AppExits.reasonName(15))
+        assertEquals("reason 99", AppExits.reasonName(99))
         assertTrue(AppExits.Exit(0, "not responding", null, true, 300).bad)
         assertTrue(AppExits.Exit(0, "low memory", null, false, null).bad)
         assertTrue(!AppExits.Exit(0, "closed by you", null, false, null).bad)
