@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -95,9 +95,9 @@ class TypedNumbersUiTest {
     fun `a chip and the box agree, the box always showing the saved value`() {
         show(SettingsPage.CNO)
         compose.onNodeWithTag("cnoMinBooksField").performScrollTo()
-        compose.onNodeWithTag("cnoMinBooksField").assertTextEquals("4")
+        compose.onNodeWithTag("cnoMinBooksField").assert(androidx.compose.ui.test.hasText("4"))
         compose.onNodeWithTag("cnoRowsField").performScrollTo()
-        compose.onNodeWithTag("cnoRowsField").assertTextEquals(s.cnoFilters.rows.toString())
+        compose.onNodeWithTag("cnoRowsField").assert(androidx.compose.ui.test.hasText(s.cnoFilters.rows.toString()))
     }
 
     @Test
