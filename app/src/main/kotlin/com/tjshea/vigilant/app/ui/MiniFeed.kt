@@ -402,7 +402,8 @@ internal fun emptyText(state: UiState, floating: Boolean = false, now: Long = Sy
         laterCount(state, now) > 0 -> "Nothing starting within ${state.settings.startsWithinHours}h · ${laterCount(state, now)} later"
         !MiniWindow.showsVigilant(state.settings) -> when {
             cno.refreshing -> "Reading CrazyNinjaOdds…"
-            cno.snapshot != null -> "No +EV on CrazyNinjaOdds right now"
+            // Games Tj picked for the list (DI5): an empty window under a pick says what it is limited to, not that CNO has nothing.
+            cno.snapshot != null -> "No +EV on CrazyNinjaOdds right now" + (CnoScopeText.tabSuffix(state.settings.cnoFilters.scope)?.let { " · limited to $it" } ?: "")
             cno.error != null -> cno.error.orEmpty()
             state.settings.cnoRefreshSeconds == 0 -> "$tap Refresh"
             else -> "Waiting for CrazyNinjaOdds…"
