@@ -28,6 +28,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.AutoBetSection
 import com.tjshea.vigilant.app.ui.AutoBetText
+import com.tjshea.vigilant.app.ui.PropGuardText
 import com.tjshea.vigilant.data.novig.trading.PropGuard
 import com.tjshea.vigilant.app.ui.VigilantTheme
 import com.tjshea.vigilant.data.scanner.AutoBetStake
@@ -275,6 +276,11 @@ class AutoBetUiTest {
     @Test
     fun `the small-prop guard has a share chip and box, a sample, a per-game limit, says what it does and what the last day looked like`() {
         show()
+        fun type(tag: String, text: String) {
+            compose.onNodeWithTag(tag).performScrollTo().performTextClearance()
+            compose.onNodeWithTag(tag).performTextInput(text)
+            compose.waitForIdle()
+        }
         assertEquals("on by default: 25% of the day's auto-bets, judged from 8, 3 on a game", PropGuard.Rules(0.25, 8, 3), PropGuard.rules(settings))
         compose.onNodeWithText("Small-prop guard").performScrollTo().assertExists()
         compose.onNodeWithTag("propGuardNote").performScrollTo().assertTextContains("no kind of player prop over 25%", substring = true)
