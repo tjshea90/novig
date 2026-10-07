@@ -96,6 +96,31 @@ class NovigLive(
         now
     }
 
+    /** A CNO row's exact Novig market, its outcome and the book read for it: what a CNO-priced bid is judged from ([targetsNow]). */
+    class Resolved(val market: NovigMarket, val outcomeId: String, val book: NovigBook?)
+
+    /**
+     * The Novig market, outcome and current book of every one of [rows] (whatever book CNO listed it at), read now: the offer and the resting bids of a bid priced from CNO
+     * (RESEARCH.md §114). Markets the catalog can't pin down are left out (asked again after [RETRY_MS]); one request for all the books (Novig answers "not modified" for the
+     * unchanged ones). Rows not in [rows] beyond [KEEP_TARGETS] are dropped, oldest first.
+     */
+    suspend fun targetsNow(rows: List<CnoRow>): Map<String, Resolved> = mutex.withLock {
+        val list = rows.distinctBy { it.key }
+        for (row in list) {
+            if (row.key in targets || missedAt[row.key]?.let { clock() - it < RETRY_MS } == true) continue
+            val t = resolve(row)
+            if (t != null) targets[row.key] = t.also { missedAt.remove(row.key) } else missedAt[row.key] = clock()
+        }
+        read(list.mapNotNull { targets[it.key]?.marketId }.distinct())
+        val out = list.mapNotNull { row ->
+            val t = targets[row.key] ?: return@mapNotNull null
+            val market = markets[t.marketId] ?: return@mapNotNull null
+            row.key to Resolved(market, t.outcomeId, books[t.marketId])
+        }.toMap()
+        prune(list)
+        out
+    }
+
     /** Runs until cancelled; the caller runs it only while CNO's list is on screen. */
     suspend fun keepFresh(rows: Flow<List<CnoRow>>, top: Int = LIVE_TOP, everyMs: Long = LIVE_EVERY_MS) {
         rows.map { list -> list.filter { it.book.equals("Novig", ignoreCase = true) }.take(top) }
@@ -170,7 +195,7 @@ class NovigLive(
         /** A live price older than this isn't shown (the widget went quiet, or Novig didn't answer). */
         const val FRESH_MS = 60_000L
 
-        private const val KEEP_TARGETS = 300
+        const val KEEP_TARGETS = 300
 
         /** A bet the catalog couldn't pin down is looked up again after this long. */
         const val RETRY_MS = 60_000L

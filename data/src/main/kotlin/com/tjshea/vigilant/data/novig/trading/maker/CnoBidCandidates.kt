@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.match.Picks
 import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.TrapGuard
+import com.tjshea.vigilant.engine.PriceGrid
 
 /**
  * Which CNO rows are worth a game-page read for a bid (RESEARCH.md §113-§114), pure. CNO's list holds only sides that are +EV at Novig's ask; a bid sits under the fair, so the rows
