@@ -12,7 +12,22 @@ object CnoFixtures {
     const val GRID_PANEL = "${P}UpdatePanelGridView"
     const val SCRIPT_MANAGER = "${P}ScriptManager1"
 
-    fun page(action: String = "./positive-ev.aspx?site_id=17&amp;books_min=3", maxOdds: String = "", minBooks: String = "3") = """
+    /** CNO's Sport dropdown as the live page lists it (2026-10-07), with [selected] chosen. */
+    fun sportOptions(selected: String = "0") = listOf("0" to "All", "1" to "Baseball", "4" to "Basketball", "2" to "Football", "3" to "Hockey", "5" to "Soccer").options(selected)
+
+    /** CNO's League dropdown as the live page lists it (2026-10-07), with [selected] chosen. */
+    fun leagueOptions(selected: String = "0") = listOf(
+        "0" to "All", "1" to "MLB", "2" to "NFL", "3" to "NCAAF", "4" to "NHL", "5" to "NBA", "6" to "NCAAB", "7" to "WNBA", "8" to "NCAAW", "9" to "FIFA World Cup", "10" to "MLS (USA)",
+        "11" to "Serie A (Brazil)", "12" to "Liga MX (Mexico)", "13" to "LaLiga (Spain)", "14" to "Bundesliga (Germany)", "15" to "Ligue 1 (France)", "16" to "Premier League (England)",
+        "17" to "Serie A (Italy)",
+    ).options(selected)
+
+    private fun List<Pair<String, String>>.options(selected: String) =
+        joinToString("\n            ") { (v, l) -> """<option ${if (v == selected) "selected=\"selected\" " else ""}value="$v">$l</option>""" }
+
+    fun page(
+        action: String = "./positive-ev.aspx?site_id=17&amp;books_min=3", maxOdds: String = "", minBooks: String = "3", league: String = "0", sport: String = "0", liquidity: String = "",
+    ) = """
         <!DOCTYPE html><html><head><title>Positive EV - CrazyNinjaOdds</title></head><body>
         <form method="post" action="$action" id="form1">
         <div class="aspNetHidden">
@@ -32,10 +47,13 @@ object CnoFixtures {
             <option selected="selected" value="17">Novig</option>
             <option value="20">Pinnacle</option>
         </select>
-        <select name="${P}ctl03${'$'}DropDownListSport" id="sport">
-            <option value="0">All</option>
-            <option value="2">Football</option>
+        <select name="${P}ctl03${'$'}WebUserControl_FilterSport${'$'}DropDownListSport" id="sport">
+            ${sportOptions(sport)}
         </select>
+        <select name="${P}ctl03${'$'}WebUserControl_FilterLeague${'$'}DropDownListLeague" id="league">
+            ${leagueOptions(league)}
+        </select>
+        <input name="${P}ctl03${'$'}TextBoxMinimumLiquidity" type="text" value="$liquidity" id="liq" />
         <input name="${P}ctl03${'$'}TextBoxMinimumOdds" type="text" id="oddsmin" />
         <input id="live" type="checkbox" name="${P}ctl03${'$'}CheckBoxIsLive" />
         <input id="main" type="checkbox" name="${P}ctl03${'$'}CheckBoxIsMain" checked="checked" />

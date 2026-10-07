@@ -174,6 +174,105 @@ class CnoClientTest {
         check(form(server.takeRequest())) // the Refresh postback carries them too
     }
 
+    // ---- the games Tj looks at (CnoScope, 2026-10-07) ----------------------------------------------------------------------------------------------
+
+    private fun posted(f: Map<String, String>, suffix: String) = f.entries.first { it.key.endsWith(suffix) }.value
+
+    @Test
+    fun `one league is posted to CNO's own League dropdown, with the page's own id and the row limit as it is`() = runBlocking {
+        server.enqueue(page())
+        server.enqueue(reply())
+        client.fetch(url, CnoFilters(rows = 50, scope = CnoScope(leagues = setOf("NHL"))))
+        server.takeRequest()
+        val f = form(server.takeRequest())
+        assertEquals("4", posted(f, "DropDownListLeague"))
+        assertEquals("0", posted(f, "DropDownListSport"))
+        assertEquals("50", posted(f, "TextBoxMaximumResultCount"))
+    }
+
+    @Test
+    fun `a league's id is read from the page's own options, never assumed - a dropdown renumbered by CNO still works`() = runBlocking {
+        val renumbered = CnoFixtures.page().replace("""<option value="4">NHL</option>""", """<option value="44">NHL</option>""")
+        assertTrue(renumbered.contains("""value="44">NHL"""))
+        server.enqueue(MockResponse().setBody(renumbered))
+        server.enqueue(reply())
+        client.fetch(url, CnoFilters(scope = CnoScope(leagues = setOf("NHL"))))
+        server.takeRequest()
+        assertEquals("44", posted(form(server.takeRequest()), "DropDownListLeague"))
+    }
+
+    @Test
+    fun `every league of one sport posts the sport, leagues of several sports post nothing and the read is longer, and clearing the pick puts the page's own values back`() = runBlocking {
+        server.enqueue(page())
+        server.enqueue(reply()); server.enqueue(reply()); server.enqueue(reply())
+        client.fetch(url, CnoFilters(rows = 50, scope = CnoScope(leagues = setOf("NFL", "NCAAF"))))
+        server.takeRequest()
+        val football = form(server.takeRequest())
+        assertEquals("2", posted(football, "DropDownListSport"))
+        assertEquals("0", posted(football, "DropDownListLeague"))
+        assertEquals("50", posted(football, "TextBoxMaximumResultCount"))
+        // Leagues of two sports: nothing for CNO's dropdowns, and 300 rows so the app's screen has something to choose from.
+        now += 5_000
+        client.fetch(url, CnoFilters(rows = 50, scope = CnoScope(leagues = setOf("NHL", "WNBA"))))
+        val mixed = form(server.takeRequest())
+        assertEquals("0", posted(mixed, "DropDownListSport"))
+        assertEquals("0", posted(mixed, "DropDownListLeague"))
+        assertEquals("300", posted(mixed, "TextBoxMaximumResultCount"))
+        // The pick is cleared: the same session posts what the page began with, not the last pick.
+        client.fetch(url, CnoFilters(rows = 50, scope = CnoScope(leagues = setOf("NHL"))))
+        assertEquals("4", posted(form(server.takeRequest()), "DropDownListLeague"))
+        server.enqueue(reply())
+        now += 5_000
+        client.fetch(url, CnoFilters(rows = 50))
+        val cleared = form(server.takeRequest())
+        assertEquals("0", posted(cleared, "DropDownListLeague"))
+        assertEquals("0", posted(cleared, "DropDownListSport"))
+        assertEquals("50", posted(cleared, "TextBoxMaximumResultCount"))
+    }
+
+    @Test
+    fun `a Shared View link that already scopes the list wins - the picks are not posted over it`() = runBlocking {
+        server.enqueue(MockResponse().setBody(CnoFixtures.page(league = "2", sport = "2")))
+        server.enqueue(reply())
+        client.fetch(url, CnoFilters(scope = CnoScope(leagues = setOf("NHL"))))
+        server.takeRequest()
+        val f = form(server.takeRequest())
+        assertEquals("the link's NFL stays", "2", posted(f, "DropDownListLeague"))
+        assertEquals("2", posted(f, "DropDownListSport"))
+    }
+
+    @Test
+    fun `the fewest dollars is posted to CNO's own box, a stricter minimum in the link wins, and nothing is posted when it is 0`() = runBlocking {
+        server.enqueue(page())
+        server.enqueue(reply())
+        client.fetch(url, CnoFilters(scope = CnoScope(minLiquidity = 50)))
+        server.takeRequest()
+        assertEquals("\$50", posted(form(server.takeRequest()), "TextBoxMinimumLiquidity"))
+        server.enqueue(MockResponse().setBody(CnoFixtures.page(liquidity = "\$200")))
+        server.enqueue(reply())
+        val other = CnoClient(okhttp3.OkHttpClient(), clock = { now }, pace = CnoPace(0), bulkPace = CnoPace(0))
+        other.fetch(server.url("/site/tools/positive-ev.aspx?site_id=17").toString(), CnoFilters(scope = CnoScope(minLiquidity = 50)))
+        server.takeRequest()
+        assertEquals("the link's \$200 is stricter", "\$200", posted(form(server.takeRequest()), "TextBoxMinimumLiquidity"))
+    }
+
+    @Test
+    fun `an app-side filter widens the read to 300 rows, and when CNO refuses a widened read the next read asks for the usual limit`() = runBlocking {
+        server.enqueue(page())
+        server.enqueue(MockResponse().setBody(CnoFixtures.delta(Triple("error", "500", "Too big"))))
+        server.enqueue(page())
+        server.enqueue(reply())
+        val f = CnoFilters(rows = 50, scope = CnoScope(hideLive = true))
+        try { client.fetch(url, f); fail("expected CnoException") } catch (e: CnoException) { assertTrue(e.message!!.contains("Too big")) }
+        server.takeRequest()
+        assertEquals("300", posted(form(server.takeRequest()), "TextBoxMaximumResultCount"))
+        // The fresh read after the refusal asks for the list's own limit.
+        now += 5_000
+        client.fetch(url, f)
+        server.takeRequest()
+        assertEquals("50", posted(form(server.takeRequest()), "TextBoxMaximumResultCount"))
+    }
+
     @Test
     fun `a stricter odds cap in the Shared View link wins, but the fewest books is always the app's`() = runBlocking {
         server.enqueue(MockResponse().setBody(CnoFixtures.page(maxOdds = "+120", minBooks = "8")))
