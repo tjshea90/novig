@@ -28,20 +28,24 @@ data class PresetRules(
     val autoScanSeconds: Int,
     /** The sharp veto's bar ([ScanSettings.sharpVetoMinEv]); a preset saved before v0.56.0 has none and reads as the default (1%). */
     val sharpVetoMinEv: Double = SharpVeto.DEFAULT_MIN_EV,
+    /** How much more edge a favorite needs ([ScanSettings.autoBetFavouriteExtraEv], v0.72.0); a preset saved before it reads as the default (one point). */
+    val autoBetFavouriteExtraEv: Double = 0.01,
 ) {
     /** [s] with these rules in force, named [name] ([ScanSettings.presetName]). */
     fun applyTo(s: ScanSettings, name: String?): ScanSettings = s.copy(
         autoBetMinEv = autoBetMinEv, autoBetBooks = autoBetBooks, autoBetTwoSided = autoBetTwoSided, autoBetAllAgree = autoBetAllAgree,
         autoBetMaxOdds = autoBetMaxOdds, autoBetMinOdds = autoBetMinOdds, autoBetKinds = autoBetKinds, autoBetStake = autoBetStake,
         sharpAutoBet = sharpAutoBet, sharpAlerts = sharpAlerts, alertMinEv = alertMinEv, cnoFilters = cnoFilters, autoScanSeconds = autoScanSeconds,
-        sharpVetoMinEv = sharpVetoMinEv, presetName = name,
+        sharpVetoMinEv = sharpVetoMinEv, autoBetFavouriteExtraEv = autoBetFavouriteExtraEv, presetName = name,
     )
 
     /** These rules in one line, for Settings, the bet's record and Diagnostics. */
     fun summary(): String = buildList {
         add("edge ≥ ${pct(autoBetMinEv)}")
         add("$autoBetTwoSided+ books price both sides, $autoBetBooks+ agree" + if (autoBetAllAgree) ", every one" else "")
-        add("odds " + (if (autoBetMinOdds < 0) "${autoBetMinOdds} to " else "up to ") + (if (autoBetMaxOdds > 0) "+$autoBetMaxOdds" else "any"))
+        // A negative shortest odds is "no favorite shorter than it", a positive one is "underdogs only: nothing shorter than +N" (plus money only at +100).
+        add("odds " + (if (autoBetMinOdds < 0) "${autoBetMinOdds} to " else if (autoBetMinOdds > 0) "+$autoBetMinOdds to " else "up to ") + (if (autoBetMaxOdds > 0) "+$autoBetMaxOdds" else "any"))
+        if (autoBetFavouriteExtraEv > 1e-9) add("favorites +${pct(autoBetFavouriteExtraEv)} more edge")
         add(if (autoBetKinds.size == BetKind.entries.size) "every kind of bet" else autoBetKinds.sortedBy { it.ordinal }.joinToString(", ") { it.label.lowercase() })
         add(autoBetStake.label + " stakes")
         add("sharp check: " + sharpAutoBet.displayName.lowercase() + if (sharpAutoBet == SharpMode.VETO && sharpVetoMinEv > 0.0) " under ${pct(sharpVetoMinEv)}" else "")
@@ -58,7 +62,7 @@ data class PresetRules(
         /** The rules [s] has now (the Auto-bet tab › Presets › Save current settings). */
         fun of(s: ScanSettings): PresetRules = PresetRules(
             s.autoBetMinEv, s.autoBetBooks, s.autoBetTwoSided, s.autoBetAllAgree, s.autoBetMaxOdds, s.autoBetMinOdds, s.autoBetKinds, s.autoBetStake,
-            s.sharpAutoBet, s.sharpAlerts, s.alertMinEv, s.cnoFilters, s.autoScanSeconds, s.sharpVetoMinEv,
+            s.sharpAutoBet, s.sharpAlerts, s.alertMinEv, s.cnoFilters, s.autoScanSeconds, s.sharpVetoMinEv, s.autoBetFavouriteExtraEv,
         )
 
         /** "2.5%", "3%" (0.03 × 100 is 3.0000000000000004 in floating point: rounded to tenths first). */
