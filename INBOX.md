@@ -5163,3 +5163,8 @@ If auto bid feature can't find enough bids that are popular, include obscure bid
 ```
 This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
 ```
+
+## 2026-10-07T05:19:16Z
+```
+Look at the screenshot, it says allisha is out for the game, so a bet of over 1.5 wouldn't make any sense. Actually any bet on this player would not make sense because she isn't playing. Yet the auto bid feature offered bids on her. Fix this
+```
