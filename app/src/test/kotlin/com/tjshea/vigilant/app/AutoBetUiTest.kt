@@ -438,6 +438,22 @@ class AutoBetUiTest {
     }
 
     @Test
+    fun `the favorite bar is under the shortest-odds chips - one point by default, a chip or a typed percent changes it, and the plus money chip says so (Tj, 2026-10-07)`() {
+        show()
+        compose.onNodeWithTag("autoBetFavouriteNote").performScrollTo().assertTextContains("needs", substring = true)
+        compose.onNodeWithText("+1 point").performScrollTo().assertExists()
+        compose.onNodeWithText("+2 points").performScrollTo().performClick()
+        assertEquals(0.02, settings.autoBetFavouriteExtraEv, 1e-9)
+        compose.onNodeWithText("None").performScrollTo().performClick()
+        assertEquals(0.0, settings.autoBetFavouriteExtraEv, 1e-9)
+        compose.onNodeWithTag("autoBetFavouriteNote").assertTextContains("Off", substring = true)
+        compose.onNodeWithTag("autoBetFavouriteEvField").performScrollTo().performTextInput("1.5")
+        assertEquals(0.015, settings.autoBetFavouriteExtraEv, 1e-9)
+        compose.onNodeWithText("+100 or longer (plus money only)").performScrollTo().performClick()
+        assertEquals(100, settings.autoBetMinOdds)
+    }
+
+    @Test
     fun `the first-listed rule has its own switch in the trap guard, on by default, with a note that follows it (Tj, 2026-10-07)`() {
         show()
         compose.onNodeWithTag("autoBet-trapFirstListedNote").performScrollTo().assertTextContains("first seen more than 6 h before", substring = true)
