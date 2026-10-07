@@ -245,7 +245,7 @@ class ScanStudyPropsTest {
         val text = export(j)
         val found = text.lines().first { it.startsWith("Closes found:") }
         // One source, however many trades: not "Novig's last trades (2) 1, (3) 1".
-        assertEquals("Closes found: 2 of 7 (Novig's last trades 2)", found)
+        assertEquals("Closes found: 2 of 7 started bets (29%) (Novig's last trades 2)", found)
         val by = section(text, "-- Close source")
         assertEquals(1, count(by, "Novig's last trades: 1-2 trades (noisy)"))
         assertEquals(1, count(by, "Novig's last trades: 3-5 trades"))

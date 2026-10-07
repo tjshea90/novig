@@ -531,7 +531,8 @@ class ScanStudyTest {
         assertTrue(text.contains("== HOW THIS DATA WAS COLLECTED, AND WHAT IT CAN'T SAY =="))
         // The sums: 3 bets, 2 won and 1 lost at the first-listed price; the close beaten on all three.
         assertTrue(text, text.contains("ALL BETS · 3 bets · 2-1-0 (W-L-P)"))
-        assertTrue(text, text.contains("Closes found: 3 of 3 (Fake 3)"))
+        // Tj's v0.70.1 file printed 683 of 2,080 (32.8%) though 313 of those bets had not started: the share is of the bets a close can be asked of.
+        assertTrue(text, text.contains("Closes found: 3 of 3 started bets (100%) (Fake 3)"))
         assertTrue(text.contains("-- Books agreeing --") && text.contains("-- Kind of bet --") && text.contains("-- Time to the start --") && text.contains("-- League --"))
         assertTrue(text, text.contains("Moneylines · 1 bets") || text.contains("Moneyline"))
         // The lines.
