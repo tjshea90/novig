@@ -1701,8 +1701,13 @@ class MakerTest {
         assertTrue(why(sharp.copy(kind = BetKind.MONEYLINE)).contains("are off for bids"))
         assertTrue(why(sharp.copy(kind = BetKind.PERIOD)).contains("are off for bids"))
         assertTrue(MakerQuote.decide(sharp.copy(kind = BetKind.TEAM_TOTAL), quick, now) is MakerDecision.Post)
-        // A line few books price is a small market: no quick bid (Tj, 2026-10-07: "no strange props or small markets").
-        assertTrue(why(sharp.copy(books = 3)).contains("Only 3 books price this line"))
+        // A line few books price is a small market: no quick bid with the small-market fill off (Tj, 2026-10-07: "no strange props or small markets") ...
+        val quickA = quick.copy(obscureFill = false)
+        assertTrue((MakerQuote.decide(sharp.copy(books = 3), quickA, now) as MakerDecision.Skip).why.contains("Only 3 books price this line"))
+        // ... and, with the fill on (Quick & likely's default), a small-market bid at a wider margin (ObscureFillTest has every safeguard).
+        val small = MakerQuote.decide(sharp.copy(books = 3), quick, now) as MakerDecision.Post
+        assertTrue(small.obscure)
+        assertTrue(small.price < 0.480 - 1e-9)
     }
 
     @Test
