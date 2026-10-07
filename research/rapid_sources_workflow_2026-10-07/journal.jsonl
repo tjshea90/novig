@@ -1,0 +1,3 @@
+{"type":"launched"}
+{"type":"started","key":"v2:50d36491ba95a5b4b67af8521acfcabf453540746fbd6ca6cec353a320546295","agentId":"adad92fcfa3bb13cc","label":"scout:1-medium-fastapi-odds-tracker","phase":"Scout"}
+{"type":"started","key":"v2:6f0ec3ca7aa2d39df10e117be7b564ca33049ae4cd2e001bea8c9beb9e8379f9","agentId":"ab6a8d1f9af9dda4f","label":"scout:2-bksignal-odds","phase":"Scout"}
