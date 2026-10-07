@@ -597,7 +597,7 @@ class AppContainer(private val app: Application) {
         }
         // What happened to the Vigilant scan, in one line each: its length, what it read, what failed.
         appScope.launch {
-            runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.collect { run -> run.report?.let { recorder.scanFinished(it, lowUsage = run.settings?.lowUsageNow == true) } }
+            runner.state.distinctUntilChanged { a, b -> a.finished == b.finished }.collect { run -> run.report?.let { recorder.scanFinished(it, lowUsage = run.settings?.lowUsageNow == true, lowUsageHours = run.settings?.let { st -> com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(st) } ?: com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS) } }
         }
         // CNO asked the app to wait (its 403/429 backoff): when, and a count.
         appScope.launch {
