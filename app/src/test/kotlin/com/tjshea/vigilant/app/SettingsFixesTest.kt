@@ -120,13 +120,13 @@ class SettingsFixesTest {
             }
         }
         compose.onNodeWithTag("cnoCheckBooks").performScrollTo().assertIsOn()
-        compose.onNodeWithTag("cnoOnlyAgreed").assertIsOn().performClick()
+        compose.onNodeWithTag("cnoOnlyAgreed").performScrollTo().assertIsOn().performClick()
         assertFalse(s.cnoOnlyAgreed)
         assertTrue("the ✓ it was showing stays on", s.cnoCheckBooks)
-        compose.onNodeWithTag("cnoCheckBooks").assertIsOn()
+        compose.onNodeWithTag("cnoCheckBooks").performScrollTo().assertIsOn()
         // The ✓ off takes its child with it.
-        compose.onNodeWithTag("cnoOnlyAgreed").performClick()
-        compose.onNodeWithTag("cnoCheckBooks").performClick()
+        compose.onNodeWithTag("cnoOnlyAgreed").performScrollTo().performClick()
+        compose.onNodeWithTag("cnoCheckBooks").performScrollTo().performClick()
         assertFalse(s.cnoCheckBooks || s.cnoOnlyAgreed)
         compose.onNodeWithTag("cnoOnlyAgreed").assertDoesNotExist()
     }
