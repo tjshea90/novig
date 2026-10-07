@@ -4180,3 +4180,21 @@ Plan (RESEARCH.md §92; a session cut off mid-way resumes at the first unticked 
 - [x] DM4 (DONE 2026-10-07: v0.75.0 RELEASED https://github.com/tjshea90/novig/releases/tag/v0.75.0, code 133, recorded in BUILDLOG; 23 mutants killed, screenshots app/screenshots/4r+4s (gitignored), floor green 2575, CI green on 6a80d377, release.yml green on 38267e0b) Tests that fail on the old code, mutants, screenshots, floor green, CI green on the exact commit, ship.sh, release.yml, record-release.sh, RESEARCH.md §113-§114.
 - [x] DM5 (answer sent in chat; DL2 asked again) Answer Tj in short bullets with the Release link as plain text, and ask DL2 again.
 - [ ] DN1 FOLLOW-UPS from DM (not started; none is needed for v0.75.0 to work): (a) read a market's whole game-page grid once and parse every line from it (one read per market, not per bet): cuts page reads several-fold for props; (b) try a NEGATIVE EV floor once in the wide read from the phone (fetchWide posts "0%"): sides that are -EV on both sides at Novig are invisible now; (c) from Tj's phone, log CNO's dataAtMs gaps by hour and sport and per-book diffs between successive page reads (RESEARCH §113 open list); (d) confirm Tracker closes for source "cno" bids are split by closeVia so the CNO-consensus ones (circular) stay out of any verdict; (e) the Release body text in release.yml still says picking a bid mode turns on Vigilant's scanner (true for Vigilant-priced bids only).
+
+## Tj, 2026-10-07 (~23:29Z, same session as v0.75.0): "Research each of the following sources to see if a rapid source of odds or scores can be built or if any of the apis can be used for rapid odds or scores either cheap or free:" (ten links)
+
+1. https://medium.com/@ayoubennaoui20/how-to-build-a-real-time-sports-odds-tracker-with-fastapi-websockets-angular-part-1-ff2de71c62d5
+2. https://odds.bksignal.com/
+3. https://dev.to/drengregious/stop-scraping-betting-sites-how-to-build-a-real-time-sports-tracker-in-python-46i9
+4. https://scraperly.com/recipe/odds-shark/tutorial
+5. https://surebetfusion.com/
+6. https://roundproxies.com/blog/scrape-sports-betting-sites/
+7. https://scrapingproxies.best/blog/web-scraping/websocket-scraping/
+8. https://dev.to/pulsescore/how-to-fetch-live-sports-odds-via-api-with-typescript-bet365-paddy-power-more-o58
+9. https://github.com/merlinfachetti/odds-stream-engine
+10. https://www.pulsescore.net/
+
+- [ ] DO1 RESEARCH (workflow, read-only, every result saved to GitHub as it arrives: research/rapid_sources_workflow_2026-10-07/): for each of the ten sources: what it is, where its odds/scores really come from, push or poll, the age of what it relays (verified on its own pages or measured, never taken from its marketing), coverage (US sports, props, sharp books, exchanges), price and free-tier limits, terms, whether it is just a tutorial about a technique, and whether it is ahead of Novig's makers (RESEARCH.md §99/§106 bar: a feed that shows a score or a sharp price >= 3 s before Novig's price moves) or ahead of CNO's 13-33 s. Each scout's claims are re-checked by two independent skeptics (one on the claims and latency, one on fit, terms and cost). No sign-ups, no payments, no keys, GET only, nothing from CNO, no betting-site scraping.
+- [ ] DO2 SYNTHESIS + completeness critic (+ gap-fill agents for what the critic finds missing), then RESEARCH.md §115 with a ranked verdict per source and what could be built into Vigilant from them (free or cheap only; Tj decides any key or plan).
+- [ ] DO3 Answer Tj in short bullets: for each of the ten, one line (useful / not / why), and the one or two things worth building or testing on his phone, if any. (DL2 is still unanswered; ask it again.)
+
