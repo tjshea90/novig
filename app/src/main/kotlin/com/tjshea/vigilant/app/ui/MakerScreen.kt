@@ -82,7 +82,12 @@ data class MakerUi(
     val waiting: Map<String, Int> = emptyMap(),
     /** What the last pass did, in words ("3 posted, 1 cancelled · scan running"); null before the first. */
     val lastPass: String? = null,
+    /** Bids priced from CrazyNinjaOdds ([ScanSettings.makerSource]): what the lane reads for them and why it stops them; null with bids priced from Vigilant's scan. */
+    val cno: com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status? = null,
 ) {
+    /** Bids are priced from CrazyNinjaOdds ([ScanSettings.makerSource]). */
+    val fromCno: Boolean get() = settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO
+
     val mode: BidMode get() = BidMode.of(settings)
 
     /** Bids up on Novig, and ones on their way down (a fill can still land until Novig confirms). */
@@ -158,6 +163,31 @@ object MakerText {
             "+1.3% to +4% a fill; game lines only pay with a fair that leads Novig, so they're off by default."
 
     const val NEEDS_VIGILANT = "Bids need Vigilant's own scan for their fair prices (Settings › Scanner: Both or Vigilant only): CrazyNinjaOdds only lists bets to take."
+
+    const val NEEDS_CNO = "Bids priced from CrazyNinjaOdds need its scanner and its background scan (Settings › Scanner: Both or CNO only; Auto-scan: CNO or CNO + Vigilant). Picking Recommend or Fully automatic turns them on; Vigilant's own scan is not used."
+
+    /** Under "Bids priced from": what each source reads and how old its data may be. */
+    fun sourceNote(s: ScanSettings): String = when (s.makerSource) {
+        com.tjshea.vigilant.data.scanner.BidSource.VIGILANT ->
+            "Vigilant's own scan prices every bid (the fair of the books it reads, sharp books weighted), as bids always did. CrazyNinjaOdds is not read for bids."
+        com.tjshea.vigilant.data.scanner.BidSource.CNO ->
+            "CrazyNinjaOdds prices every bid and Vigilant's scan is not used (it can be off). Each background cycle reads CNO's list, a wider list (sides at 0% EV and up, not only the +EV top 50) and the game pages of the " +
+                "games worth a bid, every book's price for the bet and its other side; a sharp book on the page must agree, and the bid sits under the lower of CNO's fair and the sharp book's own. A bid rests only while " +
+                "the data behind it is under ${s.makerCnoMaxAgeSeconds} s old by CNO's own clock (an odds age CNO doesn't state counts as old), is read again about every minute, and comes down at once when CNO pauses, goes late or can't be read."
+    }
+
+    /** One line under the status: what the CNO lane has read for bids ("CrazyNinjaOdds' list 14 s old · 12 game pages held, the oldest 41 s · 3 read last cycle"). */
+    fun cnoLine(c: com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status, limitSeconds: Int): String {
+        val list = when {
+            c.listAgeUnknown -> "its list doesn't say how old it is"
+            c.listAgeSec != null -> "its list ${c.listAgeSec} s old"
+            else -> "its list not read yet"
+        }
+        val pages = if (c.pages == 0) "no game page read yet" else "${c.pages} game page${if (c.pages == 1) "" else "s"} held" + (c.oldestPageSec?.let { ", the oldest line's data $it s old" } ?: "")
+        val read = c.pagesRead.takeIf { it > 0 }?.let { " · $it read last cycle" }.orEmpty()
+        val bad = if (c.failed > 0) " · ${c.failed} failed${c.lastError?.let { ": $it" }.orEmpty()}" else ""
+        return "CrazyNinjaOdds: $list · $pages$read$bad · ${c.candidates} candidates of ${c.rows} rows · limit $limitSeconds s"
+    }
 
     /** What each mode does, under the choice. */
     fun modeText(mode: BidMode): String = when (mode) {
@@ -315,6 +345,9 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                 SectionTitle(if (ui.settings.maker) "Next to post (${ready.size})" else "Recommended: approve or deny (${ready.size})")
                 Muted(
                     when {
+                        ui.fromCno && ui.scanAtMs == null -> "No CrazyNinjaOdds list read yet: the background scan (CNO) reads it and the games' pages, then prices the bids."
+                        ui.fromCno && ui.settings.maker -> "From CrazyNinjaOdds' list ${Format.age(ui.scanAtMs!!, ui.now)}. Fully automatic posts these by itself at each background cycle, cheapest (underdog) first; Post now doesn't wait."
+                        ui.fromCno -> "From CrazyNinjaOdds' list ${Format.age(ui.scanAtMs!!, ui.now)}. Approve re-checks the bid on the latest prices before posting it; Deny skips that side until its game."
                         ui.scanAtMs == null -> "No Vigilant scan yet: scan (or let the background scan run) to price lines to bid on."
                         ui.settings.maker -> "From the scan ${Format.age(ui.scanAtMs, ui.now)}. Fully automatic posts these by itself at the next pass (every 20-30 s), cheapest (underdog) first; Post now doesn't wait."
                         else -> "From the scan ${Format.age(ui.scanAtMs, ui.now)}. Approve re-checks the bid on the latest prices before posting it; Deny skips that side until its game."
@@ -417,8 +450,17 @@ private fun MakerHead(ui: MakerUi, actions: MakerActions) {
                 Modifier.padding(top = 10.dp).testTag("makerNeeds"), action = "Turn on",
                 onAction = { if (MakerSetup.set(ui.settings, ui.mode).startsAutoBet) confirming = ui.mode else apply(ui.mode) },
             )
-        } else if (!ui.vigilantOn && ui.mode == BidMode.OFF) {
+        } else if (ui.fromCno && ui.mode == BidMode.OFF && !ui.settings.cnoOn) {
+            Muted(MakerText.NEEDS_CNO)
+        } else if (!ui.fromCno && !ui.vigilantOn && ui.mode == BidMode.OFF) {
             Muted(MakerText.NEEDS_VIGILANT + " Picking Recommend or Fully automatic turns it on.")
+        }
+        // Bids priced from CrazyNinjaOdds: what its lane has read, and why every bid from it is down when it is (paused, late, unreadable).
+        if (ui.fromCno) {
+            ui.cno?.stop?.takeIf { ui.mode != BidMode.OFF }?.let { why ->
+                Banner(why, Modifier.padding(top = 10.dp).testTag("makerCnoStop"), color = MaterialTheme.colorScheme.error)
+            }
+            ui.cno?.let { Text(MakerText.cnoLine(it, ui.settings.makerCnoMaxAgeSeconds), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp).testTag("makerCnoLine")) }
         }
         // The picked-off guard stopped the bids (Tj, 2026-10-05; RESEARCH.md §88.3): said first, with the way back.
         ui.settings.makerHalted?.takeIf { ui.settings.maker }?.let { why ->
@@ -480,7 +522,10 @@ object MakerRulesText {
 
     /** "4% under the fair · $5 a bid · Props, 1st half / inning, Team totals · expire after 30 min". */
     fun summary(s: ScanSettings): String =
-        if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE) LowUsageText.summary(s) else
+        if (s.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO) "priced from CrazyNinjaOdds (data under ${s.makerCnoMaxAgeSeconds} s old) · " + summaryOf(s) else summaryOf(s)
+
+    private fun summaryOf(s: ScanSettings): String =
+        if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE && s.makerSource == com.tjshea.vigilant.data.scanner.BidSource.VIGILANT) LowUsageText.summary(s) else
         "${pct(s.makerMargin)} under the fair${if (s.makerAnchorSharp) " (sharp book's if lower)" else ""} · ${stake(s)} · " +
             (if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) "quick & likely to win${if (s.makerObscureFill) " (small markets fill the rest)" else ""}: " else "") +
             "${BetKind.entries.filter { it in s.makerKinds }.joinToString(", ") { MakerText.kindLabel(it) }.ifEmpty { "no kinds" }} · " +
@@ -522,8 +567,15 @@ object MakerRulesText {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
-    val lowUsage = s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE
+    val fromCno = s.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO
+    // Low API usage is Vigilant's scan on a few books: with bids priced from CrazyNinjaOdds it means nothing, and its panel and rules are not shown.
+    val lowUsage = s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE && !fromCno
     Column(Modifier.testTag("makerRules")) {
+        RuleChips("Bids priced from", com.tjshea.vigilant.data.scanner.BidSource.entries.toList(), s.makerSource, { it.displayName }) { v -> onUpdate { it.copy(makerSource = v) } }
+        Text(MakerText.sourceNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("makerSourceNote"))
+        if (fromCno) {
+            RuleChips("Oldest data a bid may rest on (CNO's own clock, the older of its list and the game page)", ScanSettings.MAKER_CNO_MAX_AGE_CHOICES, s.makerCnoMaxAgeSeconds, { "$it s" }) { v -> onUpdate { it.copy(makerCnoMaxAgeSeconds = v) } }
+        }
         if (!lowUsage) {
             RuleChips("Under the fair (the EV each bid is posted at): more fills at 2-2.5%, more per fill at 4% and up", ScanSettings.MAKER_MARGIN_CHOICES, s.makerMargin, MakerRulesText::pct) { v -> onUpdate { it.copy(makerMargin = v) } }
             TypedPercentField(NumberSpecs.percent("under the fair", ScanSettings.MAKER_MARGIN_MIN * 100, ScanSettings.MAKER_MARGIN_MAX * 100), s.makerMargin, "makerMarginField") { v -> onUpdate { it.copy(makerMargin = v) } }
@@ -545,11 +597,11 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         }
         RuleChips("Most dollars up at once (the wallet must cover them)", ScanSettings.MAKER_MAX_DOLLARS_CHOICES, s.makerMaxDollars, MakerRulesText::dollarsLabel) { v -> onUpdate { it.copy(makerMaxDollars = v) } }
         TypedDollarField(NumberSpecs.dollars("most dollars up", 1.0, 1_000_000.0), if (s.makerMaxDollars >= ScanSettings.MAKER_NO_DOLLAR_LIMIT) 0.0 else s.makerMaxDollars, "makerMaxDollarsField") { v -> onUpdate { it.copy(makerMaxDollars = v) } }
-        RuleChips("Which bids go up", com.tjshea.vigilant.data.scanner.BidFocus.entries.toList(), s.makerFocus, { it.displayName }) { v -> onUpdate { it.copy(makerFocus = v) } }
+        RuleChips("Which bids go up", com.tjshea.vigilant.data.scanner.BidFocus.entries.filter { !fromCno || it != com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }, s.makerFocus, { it.displayName }) { v -> onUpdate { it.copy(makerFocus = v) } }
         Text(
             when (s.makerFocus) {
                 com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY -> com.tjshea.vigilant.data.novig.trading.maker.QuickLikely.EXPLAINER
-                com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE -> com.tjshea.vigilant.data.novig.trading.maker.LowUsage.EXPLAINER
+                com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE -> if (fromCno) MakerRulesText.ALL_BIDS_NOTE else com.tjshea.vigilant.data.novig.trading.maker.LowUsage.EXPLAINER
                 else -> MakerRulesText.ALL_BIDS_NOTE
             },
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("makerFocusNote"),
