@@ -36,6 +36,8 @@ import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.keys.UsageDelta
 import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.novig.NovigPublicClient
+import com.tjshea.vigilant.data.await
+import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.novig.signing.NovigConnection
 import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import com.tjshea.vigilant.data.novig.stream.NovigStream
