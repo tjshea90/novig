@@ -356,7 +356,7 @@ class AutoBettorTest {
         val small = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "KI") com.tjshea.vigilant.data.cno.CnoBookPrice("KI", 108, 106.0, -124, 13_662.0) else it }) }
         val ev = com.tjshea.vigilant.data.scanner.SharpVeto.judge(small, jefferson.league, jefferson.market, jefferson.bet, 117, false, 0.0).ev!!
         assertTrue("Kalshi's own edge here is small but positive: $ev", ev > 0.0 && ev < 0.01)
-        val bar = settings { it.copy(autoBetBooks = 2, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.VETO) }
+        val bar = settings { it.copy(autoBetBooks = 2, autoBetMinEv = 0.01, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.VETO) }
         assertEquals(0.01, bar.sharpVetoMinEv, 0.0)
         val novig = FakeNovig()
         val underBefore = app.container.eventLog.counters()[AutoBettor.SHARP_BAR_COUNTER] ?: 0L
@@ -390,7 +390,7 @@ class AutoBettorTest {
         fun withBooks(view: com.tjshea.vigilant.data.cno.CnoBooksView, s: ScanSettings) =
             state(s).let { it.copy(books = mapOf(jefferson.key to com.tjshea.vigilant.data.cno.CnoBooksState(view = view))).indexed(now) }
         // The sharp veto off: the one book saying no is Kalshi, the sharpest for props, which would veto it (the next test's subject).
-        val loose = settings { it.copy(autoBetBooks = 2, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF) }
+        val loose = settings { it.copy(autoBetBooks = 2, autoBetMinEv = 0.01, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF) }
         val check = AlertPicks.cnoChecked(withBooks(split, loose), 0.03, now).single().check
         assertEquals("the fixture: 2 of 3 agree and the consensus is still +EV", 3 to 2, check.twoSided to check.agreeing)
         assertTrue(check.ev!! > 0.0)
@@ -465,13 +465,13 @@ class AutoBettorTest {
 
     @Test
     fun `Kelly stakes follow the bet's odds, are held to the per-bet maximum, and bet no more than the order book fills`() = runBlocking {
-        // 1/8 Kelly of $1,000: fair 0.4878 at +117 (price 0.46083): (0.4878 - 0.46083) / (1 - 0.46083) = 0.050; x 0.125 x 1000 = $6.25. (Sharp veto off
-        // here: CNO's fair alone; with the veto on, the next block.)
+        // 1/8 Kelly of $1,000: CNO's fair 0.4878 at +117 (price 0.46083) would be (0.4878 - 0.46083) / (1 - 0.46083) = 0.050; x 0.125 x 1000 = $6.25. But the stake is sized on
+        // the LOWEST of the fairs (Tj, 2026-10-07, proposal 5): here the books' own check (+2.99% at +117, fair about 0.4746): about half, $3.2. (Sharp veto off here.)
         val s = settings { it.copy(autoBetStake = AutoBetStake.EIGHTH_KELLY, bankroll = 1000.0, autoBetMaxStake = 100.0, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF) }
         val novig = FakeNovig()
         bettor(novig, placer = placer(novig, limits = BetLimits(100.0, 500.0, 0.01))).run(s, state(s))
         val cost = novig.last!!.let { (_, price, qty) -> qty * price * 0.01 }
-        assertTrue("about \$6.25 of contracts, never more: $cost", cost in 6.0..6.25)
+        assertTrue("about \$3.2 of contracts (the books' own fair), never CNO's \$6.25: $cost", cost in 3.0..3.25)
         // The veto on (the default): Kalshi, the sharpest prop book on the page, backs less (its own fair ~0.474, +2.9% at +117), so the stake is sized
         // on Kalshi's fair, about half (RESEARCH.md §72: never more edge than the sharp book backs).
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
@@ -651,13 +651,13 @@ class AutoBettorTest {
     /** Tj, 2026-10-01: "I don't want a $1 minimum bet for the auto bet feature. It can bet as low as 1 cent … Usually it will be a Kelly number and often under $1". */
     @Test
     fun `a Kelly stake under a dollar is placed as it is, and so is one cent`() = runBlocking {
-        // Jefferson is +117 at a 5.84% edge: full Kelly about 5% of the bankroll, so 1/4 Kelly of $20 is about 25 cents (CNO's fair: the sharp veto off).
+        // Jefferson is +117 at a 5.84% edge by CNO and about 3% by the books' own check (the lower is sized): full Kelly about 2.4% of the bankroll, so 1/4 Kelly of $20 is about 12 cents.
         val s = settings { it.copy(autoBetStake = AutoBetStake.QUARTER_KELLY, bankroll = 20.0, sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.OFF) }
         val novig = FakeNovig()
         val r = bettor(novig).run(s, state(s))
         assertEquals(r.skipped.toString(), 1, r.placed.size)
         val bet = r.placed.single()
-        assertTrue("about 25 cents, not a dollar: ${bet.stake}", bet.stake in 0.2..0.26)
+        assertTrue("about 12 cents, not a dollar: ${bet.stake}", bet.stake in 0.09..0.15)
         // One cent: one cent's worth of contracts (two at 46 cents).
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
         val penny = settings { it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 0.01) }
