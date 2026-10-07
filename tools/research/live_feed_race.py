@@ -189,6 +189,15 @@ def sofa_feed(sport, every=2.5):
         for e in d.get('events', []):
             hs, as_ = e.get('homeScore', {}), e.get('awayScore', {})
             h, a = hs.get('current'), as_.get('current')
+            if sport == 'tennis':
+                # the score that changes every game: games in the current set, the set number folded in (set 2's 0-0 is not set 1's)
+                ps = [k for k in hs if re.match(r'^period\d+$', k) and k in as_]
+                if ps:
+                    k = max(ps, key=lambda x: int(x[6:]))
+                    sn = int(k[6:])
+                    h, a = (sn - 1) * 100 + int(hs[k]), (sn - 1) * 100 + int(as_[k])
+                else:
+                    h, a = 0, 0
             if h is None or a is None:
                 continue
             tr.see(e['id'], e['homeTeam']['name'], e['awayTeam']['name'], h, a, (t0 + t1) / 2, t1 - t0, dict(age=age, lg=(e.get('tournament') or {}).get('name')))
@@ -198,6 +207,9 @@ def sofa_feed(sport, every=2.5):
 def ssl_ctx():
     cafile = '/root/.ccr/ca-bundle.crt'
     return ssl.create_default_context(cafile=cafile if os.path.exists(cafile) else None)
+
+
+POLY_GAMES = {}   # gameId -> (home, away, league): what the score socket is carrying, for the odds feed to look up
 
 
 def poly_feed():
@@ -222,10 +234,89 @@ def poly_feed():
                         mt = re.match(r'^(\d+)-(\d+)$', str(d.get('score', '')))
                         if not mt or not d.get('homeTeam') or not d.get('awayTeam'):
                             continue
-                        tr.see(d.get('gameId') or d.get('slug'), d['homeTeam'], d['awayTeam'], int(mt.group(1)), int(mt.group(2)), t, 0.0,
+                        POLY_GAMES[d.get('gameId')] = (d['homeTeam'], d['awayTeam'], d.get('leagueAbbreviation'))
+                        hh, aa = int(mt.group(1)), int(mt.group(2))
+                        pm = re.match(r'^S(\d+)$', str(d.get('period', '')))
+                        if pm and d.get('leagueAbbreviation') in ('atp', 'wta', 'itf', 'challenger'):
+                            sn = int(pm.group(1))
+                            hh, aa = (sn - 1) * 100 + hh, (sn - 1) * 100 + aa
+                        tr.see(d.get('gameId') or d.get('slug'), d['homeTeam'], d['awayTeam'], hh, aa, t, 0.0,
                                dict(lg=d.get('leagueAbbreviation'), per=d.get('period'), el=d.get('elapsed')), live=bool(d.get('live')))
             except Exception as e:
                 print('  poly ws error', type(e).__name__, str(e)[:80], file=sys.stderr, flush=True)
+                await asyncio.sleep(3)
+    asyncio.run(run())
+
+
+def polyclob_feed(leagues):
+    """Polymarket's ODDS (a push channel, no key): for each live Novig game of `leagues`, the Polymarket match-winner market's best bid / ask as they change
+    (wss://ws-subscriptions-clob.polymarket.com/ws/market; gamma-api.polymarket.com finds the tokens by player/team names).  Emits k='pm' records: the server's own
+    timestamp (ms) and our arrival time, so the odds feed's own latency and its lead over Novig's trades can both be read."""
+    import websockets
+    subscribed = {}   # token -> (title, outcome name, names)
+    done = set()
+    leagues_l = {x.lower() for x in leagues}
+
+    def discover():
+        for gid, (home, away, lg) in list(POLY_GAMES.items()):
+            if gid in done or lg not in leagues_l:
+                continue
+            done.add(gid)
+            r = http(f'https://gamma-api.polymarket.com/events?game_id={gid}')
+            if not r or not r[0]:
+                continue
+            ev = r[0][0]
+            m = (ev.get('markets') or [None])[0]
+            if not m:
+                continue
+            try:
+                toks = json.loads(m['clobTokenIds']); outs = json.loads(m['outcomes'])
+            except Exception:
+                continue
+            for tk, o in zip(toks, outs):
+                subscribed[tk] = (ev.get('title', ''), o, (home, away))
+            time.sleep(0.2)
+
+    async def run():
+        while not _stop.is_set():
+            await asyncio.get_running_loop().run_in_executor(None, discover)
+            if not subscribed:
+                await asyncio.sleep(30)
+                continue
+            try:
+                async with websockets.connect('wss://ws-subscriptions-clob.polymarket.com/ws/market', ssl=ssl_ctx(), proxy=os.environ.get('HTTPS_PROXY') or None, open_timeout=15) as ws:
+                    await ws.send(json.dumps({'assets_ids': list(subscribed), 'type': 'market'}))
+                    print('  poly clob connected', len(subscribed), 'tokens', file=sys.stderr, flush=True)
+                    t_resub = now() + 120
+                    while not _stop.is_set() and now() < t_resub:
+                        try:
+                            m = await asyncio.wait_for(ws.recv(), 20)
+                        except asyncio.TimeoutError:
+                            continue
+                        t = now()
+                        try:
+                            d = json.loads(m)
+                        except ValueError:
+                            continue
+                        for fr in (d if isinstance(d, list) else [d]):
+                            ts = fr.get('timestamp')
+                            changes = fr.get('price_changes') or ([fr] if fr.get('event_type') == 'book' or 'bids' in fr else [])
+                            for c in changes:
+                                tk = c.get('asset_id') or fr.get('asset_id')
+                                if tk not in subscribed:
+                                    continue
+                                try:
+                                    if 'best_bid' in c:
+                                        bid, ask = float(c['best_bid']), float(c['best_ask'])
+                                    else:
+                                        bids = [float(x['price']) for x in fr.get('bids', [])]; asks = [float(x['price']) for x in fr.get('asks', [])]
+                                        bid, ask = max(bids), min(asks)
+                                except Exception:
+                                    continue
+                                tm = subscribed[tk]
+                                emit(dict(k='pm', ev=tm[0], o=tm[1], bid=bid, ask=ask, ts=int(ts or fr.get('timestamp') or 0) / 1000.0 if (ts or fr.get('timestamp')) else None, seen=round(t, 3)))
+            except Exception as e:
+                print('  poly clob error', type(e).__name__, str(e)[:80], file=sys.stderr, flush=True)
                 await asyncio.sleep(3)
     asyncio.run(run())
 
@@ -339,6 +430,8 @@ def record(a):
         start(poly_feed)
     if a.novig:
         start(novig_feed, [x.strip() for x in a.novig.split(',') if x.strip()])
+        if a.poly:
+            start(polyclob_feed, [x.strip() for x in a.novig.split(',') if x.strip()])
     print(f'recording {len(threads)} feeds for {a.minutes} min into {a.out}', file=sys.stderr, flush=True)
     end = now() + a.minutes * 60
     try:
