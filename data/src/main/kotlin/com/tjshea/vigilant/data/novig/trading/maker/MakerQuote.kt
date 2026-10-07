@@ -253,6 +253,17 @@ data class MakerLine(
      * auto bid feature offered bids on her"). [MakerQuote.precheck] skips it, so no bid goes up and the plan takes down any that already did.
      */
     val unavailable: String? = null,
+    /**
+     * The longest the oldest data behind [fair] may be, in ms, for a CNO-priced line ([CnoMakerLines], [ScanSettings.makerCnoMaxAgeSeconds]); null = the app's freshness rule for
+     * Vigilant's scan ([Freshness.maxAgeMs]). [MakerQuote.precheck] caps a bid's life at [fairAsOfMs] + this.
+     */
+    val fairMaxAgeMs: Long? = null,
+    /**
+     * CNO-priced lines: when CNO's list, and the game page whose books made the fair, were last updated on CNO's own side (their "Last Updated", [com.tjshea.vigilant.data.cno.CnoSnapshot.dataAtMs]);
+     * null = not from that read. [fairAsOfMs] is the older of the two. A bid keeps the ages it was posted with ([MakerBid.listAgeSec]).
+     */
+    val listAtMs: Long? = null,
+    val pageAtMs: Long? = null,
 ) {
     val marketId: String get() = market.marketId
 }
@@ -538,7 +549,7 @@ object MakerQuote {
         if (line.fairOld) return skip("The fair price is too old to bid on")
         val seen = line.fairAsOfMs ?: return skip("The fair price's age isn't known: no bid on it")
         // A bid never outlives what it was priced from: the fair's own freshness, the stop window before the start, and the expiry setting.
-        val until = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, seen + Freshness.maxAgeMs(line.startsTs, now))
+        val until = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, seen + (line.fairMaxAgeMs ?: Freshness.maxAgeMs(line.startsTs, now)))
         if (until - now < rules.minLifeMs) return skip("The fair price goes old within a minute: re-priced at the next scan")
         if (line.outcomeId in held) return skip("Already bet or bid on this side")
         val price = PriceGrid.floor(fair / (1.0 + (if (smallMarket != null) maxOf(rules.margin, rules.obscureMargin) else rules.margin))) ?: return skip("The fair price is too small to bid under")

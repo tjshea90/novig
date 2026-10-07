@@ -122,6 +122,12 @@ data class MakerBid(
     val fairNewestAgeSec: Int? = null,
     /** A small-market bid ([MakerRules.obscureFill]; Tj, 2026-10-07): Diagnostics and the Bids tab split bids and fills by it. */
     val obscure: Boolean = false,
+    /**
+     * A CNO-priced bid ([source] "cno", [CnoMakerLines]): how old CNO's own data was when it was posted, in seconds, for the list that found the side and for the game page whose
+     * books made the fair (CNO's "Last Updated" at the read plus the time since the read). What the BIDS section splits picked-off rates by (RESEARCH.md §113). Null for every other bid.
+     */
+    val listAgeSec: Int? = null,
+    val pageAgeSec: Int? = null,
 ) {
     val active: Boolean get() = !status.ended
 
@@ -498,6 +504,7 @@ class MakerDesk(
             bestBidAtPost = line.bestBid, offerAtPost = line.offer, bookAtMs = line.bookAtMs,
             focus = rules.focus, fairBooks = line.fairBooks, obscure = post.obscure,
             fairAgeSec = line.fairAsOfMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() }, fairNewestAgeSec = line.fairNewestMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() },
+            listAgeSec = line.listAtMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() }, pageAgeSec = line.pageAtMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() },
         )
         val ttl = bid.expiresAtMs!! - now
         // Worked out a moment ago: if that window has closed since, nothing is sent.
