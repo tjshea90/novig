@@ -192,6 +192,9 @@ class MakerUiTest {
         assertEquals("Bid -122 · fair -106 · +4.0% EV at the fair · \$5.49 (1,000 contracts)", MakerText.bidLine(0.549, 0.515, 0.04, 1_000).replace('−', '-'))
         assertEquals("Outside the price window", MakerText.reasonGroup("A bid at 76.5% is outside the price window (10.0%-65.0%)"))
         assertEquals("Too few books behind the fair price", MakerText.reasonGroup("Only 1 book behind the fair price (fewest: 2)"))
+        // The small-market reasons say the measured gap, which would make every value its own group: one line each.
+        assertEquals(MakerText.reasonGroup("The sharp books and the blend are 2.5 points apart on this small-market line (they must be within 2.0 points)"), MakerText.reasonGroup("The sharp books and the blend are 4.0 points apart on this small-market line (they must be within 2.0 points)"))
+        assertEquals("Small market: a sharp book's own edge is too thin", MakerText.reasonGroup("A sharp book's own price gives this small-market bid under 3.0% edge (small markets need more)"))
         val filled = bid("f-1", MakerStatus.FILLED, filled = 1_098)
         assertTrue(MakerText.fillLine(filled, null, now).startsWith("Filled 1,098 of 1,098 at"))
         assertEquals("1 fill · +4.2% EV at the fair", MakerText.fillSummary(ui(bids = listOf(filled))))

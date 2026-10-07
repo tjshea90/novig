@@ -188,6 +188,9 @@ class BidReportTest {
         assertTrue(text, text.contains("posted: 2 popular, 2 small-market"))
         assertTrue(text, text.contains("popular market: 2 fills"))
         assertTrue(text, text.contains("small market (strict safeguards): 1 fill"))
+        // Posted but not yet filled: the count still shows (the fill split waits for a fill).
+        val unfilled = BidReport.summary(BidReport.rows(listOf(bid(1, fillDelayMs = null, status = MakerStatus.RESTING, betId = null).copy(obscure = true)), emptyList(), now), now).joinToString("\n")
+        assertTrue(unfilled, unfilled.contains("small-market bids (Quick & likely's fill of idle money): 1 posted, 0 filled"))
         // With none posted the split is not printed.
         val plain = BidReport.summary(BidReport.rows(listOf(bid(1), bid(2)), emptyList(), now), now).joinToString("\n")
         assertFalse(plain.contains("small-market"))
