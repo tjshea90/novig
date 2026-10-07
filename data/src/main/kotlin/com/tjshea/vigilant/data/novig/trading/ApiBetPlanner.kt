@@ -41,14 +41,16 @@ data class BetTarget(
 )
 
 /**
- * The limits Tj sets in Settings, all in dollars except [minEv] and [maxOdds] (the longest American odds the order book's best price may be,
- * checked on the book read just before an order: only an auto-bet sets it, 0 = no limit).
+ * The limits Tj sets in Settings, all in dollars except [minEv], [maxOdds] and [minOdds] (the longest and shortest American odds the order book's best price may be,
+ * checked on the book read just before an order: only an auto-bet sets them, 0 = no limit).
  */
 data class BetLimits(
     val maxStake: Double,
     val maxPerDay: Double,
     val minEv: Double = 0.0,
     val maxOdds: Int = 0,
+    /** The shortest American odds the order book's best price may be, as [maxOdds] (only an auto-bet sets it, 0 = no limit; negative: no favorite shorter than it, positive: underdogs at least that long). */
+    val minOdds: Int = 0,
     /** Where [minEv] is set, for a refusal that names it. */
     val minEvWhere: String = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
     /**
@@ -154,6 +156,9 @@ object ApiBetPlanner {
         val best = levels.firstOrNull() ?: return no("Nobody is offering this side on Novig right now.")
         if (AutoBet.tooLong(limits.maxOdds, Odds.probabilityToAmerican(best.price.coerceIn(0.001, 0.999)))) {
             return no("Novig's best price is now ${american(best.price)}, longer than your ${Odds.formatAmerican(limits.maxOdds)} limit.")
+        }
+        if (AutoBet.tooShort(limits.minOdds, Odds.probabilityToAmerican(best.price.coerceIn(0.001, 0.999)))) {
+            return no("Novig's best price is now ${american(best.price)}, shorter than your ${Odds.formatAmerican(limits.minOdds)} limit.")
         }
         val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = false)
         if (!limits.manual && bestQuote.evPercent < limits.minEv - 1e-9) {

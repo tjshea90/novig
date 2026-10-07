@@ -203,7 +203,7 @@ class AutoBettor(
         // One bet per Novig market (either side) while any is open: the other side of a line is never bet after the first.
         val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
         val limits = BetLimits(
-            maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds, maxPerGame = settings.apiMaxPerGame,
+            maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds, minOdds = rules.minOdds, maxPerGame = settings.apiMaxPerGame,
             minEvWhere = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
         )
         // One game is one event (Tj, 2026-10-04: "auto bet placed bets on a team at +5, then the same team at +6, then the same team at +10"): what is at risk
@@ -350,7 +350,7 @@ class AutoBettor(
 
         val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
         val limits = BetLimits(
-            maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds, maxPerGame = settings.apiMaxPerGame,
+            maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds, minOdds = rules.minOdds, maxPerGame = settings.apiMaxPerGame,
             minEvWhere = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
         )
         val exposure = if (settings.apiMaxPerGame > 0.0) GameExposure.items(c.tracker.all()) + GameExposure.bidItems(c.makerStore.all()) else emptyList()

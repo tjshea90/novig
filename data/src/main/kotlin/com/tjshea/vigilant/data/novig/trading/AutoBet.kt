@@ -84,7 +84,10 @@ object AutoBet {
         val maxOdds: Int = 0,
         /** Every book that prices both sides must say +EV on its own ("5 of 5"), as well as [minBooks]. */
         val allAgree: Boolean = false,
-        /** The shortest American odds to bet (−200); 0 = no limit. */
+        /**
+         * The shortest American odds to bet; 0 = no limit. Negative: no favorite shorter than it (−200); positive (+110, Tj 2026-10-07: "make a shortest odds
+         * setting"): underdogs at least that long only.
+         */
         val minOdds: Int = 0,
         /** The kinds of bet it places (a preset's, RESEARCH.md §66); every kind = no limit. */
         val kinds: Set<BetKind> = BetKind.entries.toSet(),
@@ -99,15 +102,29 @@ object AutoBet {
         maxStake = s.autoBetMaxStake.coerceAtLeast(0.0),
         maxOdds = s.autoBetMaxOdds.let { if (it <= 0) 0 else it.coerceAtLeast(MIN_MAX_ODDS) },
         allAgree = s.autoBetAllAgree,
-        minOdds = s.autoBetMinOdds.let { if (it >= 0) 0 else it.coerceAtMost(MAX_MIN_ODDS) },
+        minOdds = normalizeMinOdds(s.autoBetMinOdds),
         kinds = s.autoBetKinds,
     )
 
-    /** The longest a shortest-odds limit can be: −100 is even money; past it would be "underdogs only". */
+    /** The longest a favorite-side shortest-odds limit can be: −100 is even money. A positive limit (+100 or more) means underdogs only. */
     const val MAX_MIN_ODDS = -100
 
-    /** Whether [american] odds are shorter than the [minOdds] limit (0 = no limit): −250 is shorter than −200; an underdog never is. */
-    fun tooShort(minOdds: Int, american: Int): Boolean = minOdds < 0 && american < 0 && american < minOdds
+    /** [minOdds] as a rule: 0 = none, a negative one at most −100, a positive one at least +100 (anything between is even money's own side). */
+    fun normalizeMinOdds(minOdds: Int): Int = when {
+        minOdds == 0 -> 0
+        minOdds < 0 -> minOdds.coerceAtMost(MAX_MIN_ODDS)
+        else -> minOdds.coerceAtLeast(MIN_MAX_ODDS)
+    }
+
+    /**
+     * Whether [american] odds are shorter than the [minOdds] limit (0 = no limit): with −200, −250 is shorter and an underdog never is; with +110 (underdogs only),
+     * every favorite and any underdog under +110 is.
+     */
+    fun tooShort(minOdds: Int, american: Int): Boolean = when {
+        minOdds == 0 -> false
+        minOdds < 0 -> american < 0 && american < minOdds
+        else -> american < minOdds
+    }
 
     /** Whether [american] odds are longer than the [maxOdds] limit (0 = no limit). A favorite's negative odds never are. */
     fun tooLong(maxOdds: Int, american: Int): Boolean = maxOdds > 0 && american > maxOdds
