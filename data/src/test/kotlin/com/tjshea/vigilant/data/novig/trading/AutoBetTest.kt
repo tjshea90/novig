@@ -90,9 +90,12 @@ class AutoBetTest {
     }
 
     @Test
-    fun `the rules clamp what was typed, books 2-5, both sides 1-3, an edge never under 0_5 percent`() {
+    fun `the rules clamp what was typed, books 2-12, both sides 1-12, an edge never under 0_5 percent`() {
         val r = AutoBet.rules(ScanSettings(autoBetBooks = 9, autoBetTwoSided = 0, autoBetMinEv = 0.0001, autoBetCustomStake = -3.0, autoBetMaxStake = -1.0))
-        assertEquals(5, r.minBooks)
+        // Tj, 2026-10-07: a typed number of books is used as typed (it was clamped to 5 and 3 whatever was typed), up to what a game page lists.
+        assertEquals(9, r.minBooks)
+        assertEquals(AutoBet.MAX_BOOKS, AutoBet.rules(ScanSettings(autoBetBooks = 40, autoBetTwoSided = 40)).minBooks)
+        assertEquals(AutoBet.MAX_BOOKS, AutoBet.rules(ScanSettings(autoBetBooks = 40, autoBetTwoSided = 40)).twoSided)
         assertEquals(1, r.twoSided)
         assertEquals(AutoBet.MIN_EV_FLOOR, r.minEv, 0.0)
         assertEquals(0.0, r.customStake, 0.0)

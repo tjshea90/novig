@@ -220,7 +220,7 @@ fun ParlayPicksHeader(state: UiState, shown: Int, now: Long, actions: ParlayPick
                                     p.found && (p.ev ?: -1.0) >= s.minEvPercent && !s.withinOdds(1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(p.row.odds))
                                 }
                                 "${ui.picks.size} listed · $shown +EV at ${com.tjshea.vigilant.app.AppBook.name} now" +
-                                    (if (capped > 0) " · $capped outside your odds limits" else "") +
+                                    (if (capped > 0) (if (s.minOdds == 0) " · $capped over your +${s.maxOdds} odds cap" else " · $capped outside your odds limits") else "") +
                                     (if (ui.picks.size > found) " · ${ui.picks.size - found} not found there" else "") +
                                     " · read ${Format.age(ui.readAtMs, now)}"
                             }

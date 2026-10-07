@@ -178,7 +178,7 @@ class AutoScanTest {
                     autoScan = AutoScanMode.BOTH, scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, autoScanSeconds = 60, leagues = setOf("NFL"),
                     maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE,
                     // The current schema: an older one is migrated, which puts the interval back to the minutes a v0.19 file held.
-                    schema = 12,
+                    schema = 13,
                 )
             }
         }
@@ -273,9 +273,9 @@ class AutoScanTest {
         val old = json.decodeFromString(ScanSettings.serializer(), """{"autoScan":"BOTH","autoScanMinutes":20,"schema":11}""")
         val moved = old.migrate()
         assertEquals(1200, moved.autoScanSeconds)
-        assertEquals(12, moved.schema)
+        assertEquals(13, moved.schema)
         assertEquals(AutoScanMode.BOTH, moved.autoScan)
-        // Saved at schema 12 with 15 s picked: loading and migrating again changes nothing.
+        // Saved at schema 13 with 15 s picked: loading and migrating again changes nothing.
         val picked = moved.copy(autoScanSeconds = 15)
         val again = json.decodeFromString(ScanSettings.serializer(), json.encodeToString(ScanSettings.serializer(), picked)).migrate()
         assertEquals(15, again.autoScanSeconds)

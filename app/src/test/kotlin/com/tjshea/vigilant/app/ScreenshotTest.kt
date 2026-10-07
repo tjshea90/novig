@@ -470,7 +470,7 @@ class ScreenshotTest {
         shoot("5e_settings_feed") { SettingsScreen(SampleScan.state(), { t -> picked = t(SampleScan.settings) }, page = SettingsPage.FEED) }
         // Up to 1,200 Novig prices a scan, and props per game up to 24 (v0.18.0).
         for (n in listOf("500", "800", "1200")) compose.onNodeWithText(n).assertExists()
-        compose.onAllNodesWithText("24").assertCountEquals(1) // props per game's (props credits' and PropLine games per scan's are on the Fair odds tab)
+        compose.onAllNodesWithText("24").assertCountEquals(2) // props per game's chip and its typed box (props credits' and PropLine games per scan's are on the Fair odds tab)
         compose.onNodeWithText("300 is about a minute", substring = true).assertExists()
         // +300 at most since v0.18.0 (Tj, 2026-09-28: "Let me choose +200 +150 and +120 and get rid of any option over +300").
         compose.onNodeWithText("Longest odds shown: +300").assertExists()
@@ -485,7 +485,7 @@ class ScreenshotTest {
         // The Fair odds tab: the outlier guard, props credits' 24 and PropLine games per scan's 24 (v0.19.6).
         openSettingsTab(SettingsPage.FAIR)
         compose.onNodeWithText("Outlier guard").assertExists()
-        compose.onAllNodesWithText("24").assertCountEquals(2)
+        compose.onAllNodesWithText("24").assertCountEquals(4) // the props credits' and PropLine games per scan's chips, each with its typed box beside it
     }
 
     /** Tj, 2026-09-28: "There are way more than 7 total games for it to scan". The feed says what it covered. */
@@ -825,7 +825,7 @@ class ScreenshotTest {
         compose.onNodeWithText("4+").assertIsSelected()
         compose.onAllNodesWithText("5+").assertCountEquals(0)
         compose.onAllNodesWithText("10+").assertCountEquals(0)
-        compose.onNodeWithText("50").assertExists()
+        compose.onAllNodesWithText("50").assertCountEquals(2) // the rows chip and the rows typed box
         compose.onAllNodesWithText("${'$'}it", substring = true).assertCountEquals(0)
         compose.onNodeWithText("Real time").assertExists()
         compose.onNodeWithText("Tap only").assertExists()
@@ -896,7 +896,7 @@ class ScreenshotTest {
         compose.onNodeWithText("Keep awake (screen stays off)").assertExists()
         compose.onNodeWithText("On: the screen can stay off and locked, but the CPU stays awake", substring = true).assertExists()
         compose.onNodeWithText("Uses more battery (best plugged in)", substring = true).assertExists()
-        compose.onNodeWithText("Keep awake (screen stays off)").performClick()
+        compose.onNodeWithText("Keep awake (screen stays off)").performScrollTo().performClick()
         assert(picked?.autoScanKeepAwake == false) { "picked $picked" }
         // The battery setting: Robolectric's phone isn't on the allow-list, so the prompt and the way to Android's own page show.
         compose.onNodeWithText("Let Vigilant run in the background").assertExists()
