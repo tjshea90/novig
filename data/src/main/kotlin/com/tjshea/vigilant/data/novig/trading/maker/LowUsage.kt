@@ -37,7 +37,7 @@ object LowUsage {
         val picked = LowUsageBids.books(s).size
         q.copy(
             // Its fair is two or three books by design, so a small-market line can hold at most the books picked: a setting above that would never be met (a 3 with two books picked).
-            obscureMinBooks = q.obscureMinBooks.coerceIn(MIN_BOOKS, maxOf(MIN_BOOKS, picked)),
+            obscureMinBooks = q.obscureMinBooks,
             margin = s.lowUsageMargin.coerceIn(LowUsageBids.MIN_MARGIN, LowUsageBids.MAX_MARGIN),
             kinds = q.kinds.intersect(setOf(BetKind.PROP)),
             // +130 is the mode's default when Tj has set no longest odds (No limit); any longest odds he picks, tighter or looser, is the one that runs.
