@@ -5407,3 +5407,8 @@ https://dev.to/pulsescore/how-to-fetch-live-sports-odds-via-api-with-typescript-
 https://github.com/merlinfachetti/odds-stream-engine
 https://www.pulsescore.net/
 ```
+
+## 2026-10-07T23:43:27Z
+```
+Save all findings already made to GitHub, and make sure to save each agent's findings to GitHub because Claude usage can run out and interrupt you at any second. Do what you need to do now in anticipation of a usage break to ensure all progress is saved as this session is going and a new session on a different claude account can resume the research with no data loss
+```
