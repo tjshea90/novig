@@ -1,0 +1,206 @@
+{
+ "label": "scout:6-roundproxies-scrape-sportsbooks",
+ "agentId": "ad48cf1b484913721",
+ "run": "wf_6f04c078-2f9",
+ "result": {
+  "source_url": "https://roundproxies.com/blog/scrape-sports-betting-sites/",
+  "kind": "blog-or-guide",
+  "what_it_is": "A proxy vendor's SEO tutorial (\"How to scrape Sports Betting sites in 2026: 3 methods\"), by Marius Bernard of Roundproxies. It was published 6 Jan 2026 and updated 3 Sep 2026. I fetched the raw HTML on 7 Oct 2026 and read all of it, including every code block. It teaches three routes: (1) find hidden JSON endpoints in DevTools and call them with python requests, (2) headless Selenium on OddsPortal, (3) Playwright on BetExplorer. It adds proxy rotation, user-agent and fingerprint randomising, CAPTCHA handling, a two-way arbitrage formula, SQLite/CSV storage, and a 12-line \"WebSocket monitoring\" snippet that logs frames from a placeholder URL (betting-site.com/live). It ships no data and no real fast feed. It contains no timestamp handling for the odds themselves. The code reads `commence_time` (the game's start time) and stamps its own local `scraped_at`, so it never records the age of a price. Its Flashscore scraper (`scrape_flashscore`) is referenced in `MultiBookmakerScraper` but never written. The only real endpoint-level facts in it are the Pinnacle closure (verified below) and the three scrape targets. All three targets belong to Livesport s.r.o. and forbid scraping in their terms.",
+  "upstream_data_source": "None. The article is a technique guide. The odds in its examples would come from (a) OddsPortal and BetExplorer, which are aggregators showing public odds from roughly 20-30 bookmakers (OddsPortal FAQ: \"about 30 bookmakers\", varying by user location), and (b) Flashscore, whose own FAQ says \"For football, we use Opta as the primary data provider\" and \"For the 40+ other sports, it's a variety of providers and sources\". Anything scraped from these is a scrape-of-a-scrape. The odds are not the sharp books' own prices, and the sharp books (Pinnacle, Circa, Kalshi, ProphetX, Sporttrade, Novig) are not named in the OddsPortal FAQ. OddsPortal, BetExplorer and Flashscore are all run by Livesport s.r.o. (their terms are signed by it). I know this from the three terms pages and from trademark records for Flashscore and BetExplorer found by search. The generic endpoints in the article (/api/sports/events?..., /v2/odds/upcoming?market=1x2) are made-up illustrations, not real vendor endpoints.",
+  "push_or_poll": "Poll. Every working example (requests, Selenium, Playwright) is a page load or HTTP GET on a random 1-3 s delay. The one push example, Playwright logging WebSocket frames for 10 s, points at a fake host. It names no real socket and no frame format.",
+  "claimed_latency_or_refresh": "Article: odds \"change every second\", and \"Can I scrape live betting odds in real-time? Yes, using WebSocket interception or frequent polling.\" It gives no latency figure for any named source. Its poll delay is random.uniform(1, 3) s. For the sources it names, OddsPortal's own FAQ (undated) says \"All match pages and their betting odds are updated every 15 seconds\" and that in-play odds have \"on average, a delay of only a few seconds\". An OddsPortal news item dated 04 Jun 2009 says bookmaker odds appear \"as early as 15 seconds after the bookmaker amends its odds\", and that \"Some bookmakers do not enable us to reach their odds more frequently than once per minute or even once per 7 minutes\". BetExplorer and Flashscore state no refresh rate. Flashscore's FAQ states no seconds figure; a third-party search surfaced only qualitative \"faster than TV\" marketing and a commissioned perception survey.",
+  "measured_or_verified_age": "None. I measured nothing, and the article proves nothing about age. Its own code never reads a source timestamp. Nothing I found gives a measured age for OddsPortal, BetExplorer or Flashscore; search found no independent measurement. The only age indicator OddsPortal shows is a colour stripe with 10-minute resolution: green means \"updated within the last 10 minutes\", red 10-60 minutes, black over an hour. That cannot prove a few-second age. Its \"15 seconds\" line is dated 2009 in the news item I could read.",
+  "coverage": "Read in full: the source article (HTML plus extracted text), its author and update dates, its pricing menu, Roundproxies' pricing pages for residential and mobile, its ToS and llms.txt, and its Kalshi sibling article. The Livesport sites' terms (OddsPortal, BetExplorer, Flashscore), robots.txt for OddsPortal and BetExplorer, OddsPortal's FAQ and 2009 news item, the Flashscore data FAQ, and Pinnacle's official API notice on GitHub were also read. Search was used for the court-ruling claim, the Pinnacle closure, third-party freshness measurements, and the FanDuel/DraftKings API claim. Not done by design: no odds or score endpoints probed, no CNO requests, and no sign-ups or payments.",
+  "price_and_free_tier": "The article is free. Roundproxies pricing, read 7 Oct 2026. Residential is one-time traffic packs, shown at a 50% sale (code RP50, list price is double): 1 GB $3.50 ($7 list), 2 GB $6, 5 GB $13.75, 10 GB $25.13, 50 GB $125, 100 GB $237.50, 250 GB $512.50, 1000 GB $1,575 ($1.58/GB). Datacenter: \"Starting at $0.30/IP\" in the menu and from $6/mo on the pricing page. ISP: from $1.00/IP, or $14/mo. Mobile: Trial $0 for 1 IP; Starter $400 for 5 IPs; Professional $750 for 10; Business $1,750 for 25; Enterprise $3,250 for 50, advertised \"unlimited bandwidth\". High-bandwidth from $79/mo. No free trial is listed except the mobile $0 1-IP tier. The vendor contradicts itself on residential expiry: the product page says \"Unused traffic does not roll over\", while /llms.txt says \"Traffic expiry: Never expires\". INFERRED cost (assumed 20 KB per poll, not measured): polling one JSON every 2.5 s is about 0.7 GB a day, roughly $1.7-2.5 a day at $2.5-3.5/GB, which is $50-75 a month. Tj's phone needs none of this, since a single phone IP polling a public feed is far below the article's own \"100 requests per second\" block scenario.",
+  "terms_notes": "Roundproxies Terms of Service (help.roundproxies.com, \"Updated this week\", no date): lists prohibited use as \"fraud, hacking, spamming, or any illegal activity\". It says nothing on gambling, scraping or third-party site terms. \"All sales are final. We do not offer refunds\", with an exception only if the service is \"completely non-functional within the first 24 hours\". What the article's routes would break: the three sites it teaches scraping on are all run by Livesport s.r.o. Their terms, which I read, say: OddsPortal 2.11 \"You must not burden our server on which the Website is hosted with automated requests\" and no \"embedding, aggregating, scraping or recreating it\"; 2.2 \"You may not use the Website or our content for commercial purposes\"; 2.10 \"no extraction (copying) or exploitation... of the Database Content\" without consent (dated 09.10.2023). BetExplorer has the same clauses (09.10.2023). Flashscore 2.10 and 2.2 carry the same wording (dated 1 Apr 2023). Robots.txt: OddsPortal disallows `*/ajax-event-last-results/*`, `*/ajax-nextgames-odds/*` and `/ajax-widget/`; BetExplorer disallows /ad/, /redirect/ and /bookmaker/. The article itself says \"Most betting sites explicitly prohibit automated data collection\" and that ToS breach \"create[s] civil liability\". Betting off a scraped feed is arguably \"indirect economic gain\" (INFERRED). A search result describes Swish Analytics suing OddsJam in California state court in Jan 2025 for scraping and reselling odds; that is an allegation, not a ruling. I did not probe any API or endpoint of these sites, because their terms bar automated requests.",
+  "key_claims": [
+   {
+    "claim": "Article is by Marius Bernard (Roundproxies), published 6 Jan 2026, updated 3 Sep 2026",
+    "status": "VERIFIED",
+    "evidence_url": "https://roundproxies.com/blog/scrape-sports-betting-sites/",
+    "quote": "It was most recently updated in September 2026."
+   },
+   {
+    "claim": "The code's endpoints and WebSocket URL are placeholders and no real fast feed is named",
+    "status": "VERIFIED",
+    "evidence_url": "https://roundproxies.com/blog/scrape-sports-betting-sites/",
+    "quote": "page.goto('https://betting-site.com/live')"
+   },
+   {
+    "claim": "The article's odds code never captures a source timestamp or price age (only commence_time and a local scraped_at)",
+    "status": "VERIFIED",
+    "evidence_url": "https://roundproxies.com/blog/scrape-sports-betting-sites/",
+    "quote": "df['scraped_at'] = datetime.now().isoformat()"
+   },
+   {
+    "claim": "Pinnacle closed its public API in July 2025 and restricts it to select partners",
+    "status": "VERIFIED",
+    "evidence_url": "https://github.com/pinnacleapi/pinnacleapi-documentation",
+    "quote": "Access to Pinnacle API suite has been closed for the general public since July 23rd, 2025."
+   },
+   {
+    "claim": "Pinnacle's own docs rate-limit odds endpoints to 1 request per 2 minutes per endpoint per sportId (so the official route is not rapid even for those with access)",
+    "status": "VERIFIED",
+    "evidence_url": "https://github.com/pinnacleapi/pinnacleapi-documentation",
+    "quote": "1 request per 2 minutes, per endpoint, per sportId (WebFetch paraphrase)"
+   },
+   {
+    "claim": "OddsPortal, BetExplorer and Flashscore all forbid scraping, aggregating and automated requests, and are operated by Livesport s.r.o.",
+    "status": "VERIFIED",
+    "evidence_url": "https://www.oddsportal.com/terms/",
+    "quote": "embedding, aggregating, scraping or recreating it without our express consent"
+   },
+   {
+    "claim": "OddsPortal says pages refresh every 15 s and in-play lags only a few seconds",
+    "status": "CLAIM_ONLY",
+    "evidence_url": "https://www.oddsportal.com/faq/",
+    "quote": "All match pages and their betting odds are updated every 15 seconds"
+   },
+   {
+    "claim": "OddsPortal's age indicator can only show 'updated within 10 minutes', not seconds",
+    "status": "VERIFIED",
+    "evidence_url": "https://www.oddsportal.com/faq/",
+    "quote": "The Green stripe indicates that odds have been updated within the last 10 minutes."
+   },
+   {
+    "claim": "OddsPortal's 'as early as 15 seconds' line comes from a 2009 news item, and some bookmakers are read only once per minute or once per 7 minutes",
+    "status": "VERIFIED",
+    "evidence_url": "https://www.oddsportal.com/news/odds-get-updated-every-minute-4/",
+    "quote": "Some bookmakers do not enable us to reach their odds more frequently than once per minute or even once per 7 minutes."
+   },
+   {
+    "claim": "Flashscore scores come from Opta (football) and a variety of providers elsewhere, with no stated latency, API or licence",
+    "status": "VERIFIED",
+    "evidence_url": "https://www.flashscore.com/faq/data",
+    "quote": "For football, we use Opta as the primary data provider."
+   },
+   {
+    "claim": "A 2024 US District Court decision extended hiQ reasoning to publicly accessible sports data",
+    "status": "CLAIM_ONLY",
+    "evidence_url": "https://roundproxies.com/blog/scrape-sports-betting-sites/",
+    "quote": "a landmark 2024 U.S. District Court decision extended that reasoning to publicly accessible sports data"
+   },
+   {
+    "claim": "FanDuel, DraftKings and Betfair provide developer APIs",
+    "status": "CLAIM_ONLY",
+    "evidence_url": "https://roundproxies.com/blog/scrape-sports-betting-sites/",
+    "quote": "FanDuel, DraftKings, and Betfair provide developer APIs."
+   },
+   {
+    "claim": "Datacenter IPs 'get blocked immediately' and 100 requests/s triggers 'immediate blocking'",
+    "status": "CLAIM_ONLY",
+    "evidence_url": "https://roundproxies.com/blog/scrape-sports-betting-sites/",
+    "quote": "Datacenter IPs get blocked immediately."
+   },
+   {
+    "claim": "Odds 'change every second'",
+    "status": "CLAIM_ONLY",
+    "evidence_url": "https://roundproxies.com/blog/scrape-sports-betting-sites/",
+    "quote": "Odds change every second."
+   },
+   {
+    "claim": "Roundproxies pricing: residential from $3.50 for 1 GB (sale, list $7), mobile Starter $400 for 5 IPs",
+    "status": "VERIFIED",
+    "evidence_url": "https://roundproxies.com/pricing/residential-proxies-pool/",
+    "quote": "1 GB $7 -> $3.50"
+   },
+   {
+    "claim": "The vendor's own sources disagree on whether residential traffic expires",
+    "status": "CONTRADICTED",
+    "evidence_url": "https://roundproxies.com/llms.txt",
+    "quote": "Traffic expiry: Never expires (vs product page: Unused traffic does not roll over)"
+   },
+   {
+    "claim": "Roundproxies sibling article on Kalshi adds nothing beyond what is known (public REST/WS, no key for read-only market data)",
+    "status": "CLAIM_ONLY",
+    "evidence_url": "https://roundproxies.com/blog/scrape-kalshi/",
+    "quote": "No authentication is required for read-only market data. (WebFetch paraphrase; not re-researched)"
+   }
+  ],
+  "live_probes": [
+   {
+    "request": "GET https://roundproxies.com/blog/scrape-sports-betting-sites/ (curl through the container proxy, full HTML saved to scratch)",
+    "result": "HTTP/2 200, Date: Wed, 07 Oct 2026 23:47:53 GMT, cache-control: public, max-age=0, server cloudflare, 261 KB. Page text read in full. It contains no odds data to age."
+   },
+   {
+    "request": "GET https://roundproxies.com/llms.txt",
+    "result": "200; confirms the pricing table and the 'never expires' residential traffic statement, which conflicts with the product page."
+   },
+   {
+    "request": "GET (via WebFetch) robots.txt of oddsportal.com and betexplorer.com, and their terms and FAQ pages",
+    "result": "All read fine. These are documentation reads only; I probed none of their odds endpoints because their terms bar automated requests. BetExplorer's /terms/ path 404s; the real path is /terms-of-service.php."
+   },
+   {
+    "request": "Any odds or score endpoint",
+    "result": "None probed. The article names no real, documented, keyless endpoint, and its example hosts are fictional."
+   }
+  ],
+  "verdict": {
+   "rapid_odds": "no",
+   "rapid_scores": "no",
+   "ahead_of_novig_makers": "no",
+   "ahead_of_cno": "no",
+   "cheap_or_free": "unknown",
+   "usable_in_vigilant": "technique-only",
+   "why": "This is a how-to for scraping slow, public odds-comparison sites, not a data source. It names no feed with a timestamp, no real socket, and no sharp book. Its three targets (OddsPortal, BetExplorer, Flashscore) are one company's sites. Their best claim is a 15-second page refresh, but some books are read only once per minute or per 7 minutes. That is not ahead of CNO's 13-33 s cadence plus its 1-2 minute lag, and nowhere near Novig makers, who re-quote about 16 s after a play. Their age indicator has 10-minute resolution, so a price's age can never be proven. Scraping them would break Livesport's terms (automated requests, 'scraping', 'aggregating', commercial use) and robots.txt. Proxies, stealth and CAPTCHA tips solve a problem a phone polling a few public JSON feeds does not have. Browser automation does not suit an Android app. The only useful technique is DevTools hunting for the XHR or WebSocket a public site already uses (the Network tab's WS filter shows the socket URL and frame format), and that only helps on a site whose terms allow it. The article's one verified, relevant fact (Pinnacle's public API closed 23 Jul 2025, and its odds endpoints are limited to 1 request per 2 minutes per sport even for approved users) matches what the project already knows. Proxy cost is low, but there is nothing worth buying proxies for here."
+  },
+  "confidence": "high",
+  "could_not_read": [
+   "Nothing on the source page was blocked or paywalled; the whole article was read from the raw HTML.",
+   "WebFetch returns a small-model summary of a page, so every terms, FAQ and pricing item above is a second-hand condensation of the primary page, quoted in short fragments; the raw article HTML was read directly by curl.",
+   "The 2009 OddsPortal news item: its 'Odds Get Updated Every Minute' body text was not in the page I got, only the 'Updating Delays Shortened' item dated 04 Jun 2009.",
+   "The legal citations: I could not find the '2024 U.S. District Court decision' on sports data. The closest is Meta v. Bright Data (N.D. Cal., Jan 2024), which concerns Facebook and Instagram, not sports.",
+   "Whether FanDuel or DraftKings offer any developer API: only third-party vendors who sell alternatives said no, and I found no primary source either way.",
+   "Whether OddsPortal covers any US sharp book (Pinnacle, Kalshi, Novig): the FAQ names none and I did not load a live OddsPortal match page, to stay within their terms."
+  ],
+  "open_questions": [
+   "Does any public socket on OddsPortal or Flashscore carry a per-message timestamp? Unknown, and not testable under their terms.",
+   "What is OddsPortal's real lag against a sharp book? Nobody has published a measurement; only the vendor's 15 s claim, which dates from a 2009 news item.",
+   "Is the '2024 US District Court' sports-data ruling real? Not found; do not rely on the article's legal section."
+  ],
+  "other_sources_it_names": [
+   {
+    "name": "OddsPortal",
+    "url": "https://www.oddsportal.com/",
+    "why_it_matters": "Selenium target. Aggregates about 30 bookmakers. Claims a 15 s page refresh (undated FAQ, 2009 news item), but some bookmakers are read only once a minute or once per 7 minutes. Age shown only as a stripe with 10-minute buckets. Terms ban scraping and commercial use. No sharp US book is named."
+   },
+   {
+    "name": "BetExplorer",
+    "url": "https://www.betexplorer.com/",
+    "why_it_matters": "Playwright target. Same operator (Livesport s.r.o.) and same terms. Homepage claims live odds from 20+ bookmakers but states no refresh rate."
+   },
+   {
+    "name": "Flashscore",
+    "url": "https://www.flashscore.com/",
+    "why_it_matters": "Named as a scraper in an undefined function. Scores come from Opta (football) and 'a variety of providers'. No public API or licence found, and terms bar scraping."
+   },
+   {
+    "name": "Pinnacle API (closed)",
+    "url": "https://github.com/pinnacleapi/pinnacleapi-documentation",
+    "why_it_matters": "Verified: closed to the public 23 Jul 2025. Odds endpoints limited to 1 request per 2 minutes per sportId even for approved users."
+   },
+   {
+    "name": "Bet365",
+    "why_it_matters": "Used only as an arbitrage example. No endpoint or latency given, and a consumer-site scrape is off-limits under this project's rules."
+   },
+   {
+    "name": "FanDuel / DraftKings / Betfair",
+    "why_it_matters": "The article says they 'provide developer APIs'. Unconfirmed; third-party vendors say FanDuel and DraftKings have none. Betfair's exchange API is a different, keyed product and not researched here."
+   },
+   {
+    "name": "Roundproxies Kalshi scraping guide",
+    "url": "https://roundproxies.com/blog/scrape-kalshi/",
+    "why_it_matters": "Describes Kalshi's public REST and WebSocket, which Vigilant already uses. No new information."
+   },
+   {
+    "name": "2Captcha / playwright_stealth",
+    "why_it_matters": "CAPTCHA and anti-detection tools. Out of bounds for this project's rules (no bot-protection bypass) and irrelevant to an app reading documented public feeds."
+   }
+  ],
+  "what_the_phone_should_test": [
+   "Nothing needs testing from this source; it should be skipped. Do not run automated polls against oddsportal.com, betexplorer.com or flashscore.com (terms bar automated requests and scraping). Residential proxies buy nothing on a phone, which already has a clean home or carrier IP.",
+   "Optional, manual and about 3 minutes: put one live NBA or tennis OddsPortal match page next to Novig in split screen and screen-record at 60 fps. Later, count frames between a Novig price move and OddsPortal's displayed move. This is personal viewing, not automation. A lag of 15 s or more confirms it is behind CNO and Novig makers, so stop there.",
+   "If Tj wants to use the one useful technique on a source that allows it: open Chrome DevTools remote debugging for the phone's browser, filter Network to 'WS', load a public page, and note the socket URL, the frame JSON, and whether frames carry a server timestamp. Compare that timestamp to the response's Date header. Only do this on a feed with no ban on automated access, such as Polymarket, Kalshi or Sofascore, which are already known."
+  ]
+ }
+}
