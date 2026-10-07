@@ -5360,3 +5360,8 @@ Tell me how to run fastboot commands using a host android phone and a target pho
 ```
 Make the app bet logging differentiate from bets and bids if it doesn't already do so, so I can see stats and ev filtered my bids as well as bets, and also for the diagnostics and studies sections
 ```
+
+## 2026-10-07T19:43:39Z
+```
+2% usage left  checkpoint save and allow new session to resume
+```
