@@ -134,7 +134,7 @@ class BidReportTest {
         // How fast: 2 of the 4 fills inside 2 minutes.
         assertTrue(text, text.contains("50% within 2 minutes of posting"))
         // Results are added up for the settled ones.
-        assertTrue(text, text.contains("results +10.79 on 40.00 staked (4 settled)") && text.contains("(1 close, 100% beat)"))
+        assertTrue(text, text.contains("results +10.79 on 40.00 staked (4 settled, ROI +27.0%)") && text.contains("(1 close, 100% beat)"))
         // Nothing posted: nothing said.
         assertTrue(BidReport.summary(emptyList(), now).isEmpty())
         // Posted but none filled: one line.
