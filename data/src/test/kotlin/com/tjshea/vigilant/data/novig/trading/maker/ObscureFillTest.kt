@@ -335,4 +335,10 @@ class ObscureFillTest {
             assertTrue("chip $chip: small-market ${obscure.cost} is about half of ${popular.cost}", obscure.cost >= popular.cost * 0.5 - 1.0)
         }
     }
+
+    @Test
+    fun `recommendations (auto-make off) list popular bids before any small-market one even when the small-market bid is cheaper`() {
+        val order = listOf(post("o", true, price = 0.20), post("p", false, price = 0.55), post("p2", false, price = 0.40)).sortedWith(MakerPlan.RECOMMEND_ORDER).map { it.line.outcomeId }
+        assertEquals(listOf("p2-over", "p-over", "o-over"), order)
+    }
 }

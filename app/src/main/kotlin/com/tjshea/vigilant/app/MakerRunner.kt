@@ -352,7 +352,7 @@ class MakerRunner(
         val cap = c.settingsStore.flow.value?.apiMaxPerGame ?: 0.0
         val onGames = if (cap > 0.0) GameExposure.items(c.tracker.all()) + GameExposure.bidItems(c.makerStore.all()) else emptyList()
         val withRoom = if (cap <= 0.0) posts else posts.filterNot { p -> GameExposure.check(p.gameItem.game, onGames, p.gameItem.marketId, p.gameItem.outcomeId, p.cost, cap).blocked }
-        val pick = withRoom.filter { it.line.outcomeId in fresh }.sortedWith(compareBy({ it.obscure }, { it.price }, { -it.evAtFair })).take(minOf(MAX_RECOMMENDED, room))
+        val pick = withRoom.filter { it.line.outcomeId in fresh }.sortedWith(com.tjshea.vigilant.data.novig.trading.maker.MakerPlan.RECOMMEND_ORDER).take(minOf(MAX_RECOMMENDED, room))
         if (pick.isEmpty()) return
         pick.forEach { MakerNotes.recommend(app, it) }
         c.makerRecommended.mark(pick.map { it.line.outcomeId to it.line.startsTs }, clock())

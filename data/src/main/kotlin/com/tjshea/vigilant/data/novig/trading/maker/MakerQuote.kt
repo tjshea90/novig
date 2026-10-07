@@ -809,6 +809,9 @@ object MakerPlan {
         return MakerActions(cancels, places, kept, waiting, trimmed)
     }
 
+    /** Which new bids are recommended first (auto-make off): popular ones before any small-market one, then the cheapest, then the most edge. */
+    val RECOMMEND_ORDER: Comparator<MakerDecision.Post> = compareBy<MakerDecision.Post> { it.obscure }.thenBy { it.price }.thenByDescending { it.evAtFair }
+
     /**
      * Whether [w] would trade with a bid of ours on the other side of its market ([onBook]: market to (outcome, price)): a buyer of one side at P is a seller of
      * the other at 1 − P, so two bids on the two sides that add up to $1 or more meet (a wash: Novig sends a fill, the position doesn't change, NOVIG_API.md §17;
