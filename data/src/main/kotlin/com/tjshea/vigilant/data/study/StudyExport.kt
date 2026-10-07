@@ -4,6 +4,8 @@ import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.SharpVeto
 import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.data.tracker.BetLedger
+import com.tjshea.vigilant.data.tracker.BetOrBid
+import com.tjshea.vigilant.data.tracker.BetsAndBids
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.CloseLookup
 import com.tjshea.vigilant.data.tracker.ClosePlausibility
@@ -461,7 +463,7 @@ object StudyExport {
         val shown = Agg()
         val hidden = Agg()
         val noOutliers = Agg()
-        val splits = BetLedger.Split.entries.associateWith { LinkedHashMap<String, Agg>() }
+        val splits = STUDY_SPLITS.associateWith { LinkedHashMap<String, Agg>() }
         val extras = extraSplits.associate { it.name to LinkedHashMap<String, Agg>() }
         // Props only: for each what-if rule, the bets it would keep, drop and can't judge.
         val whatIf = whatIfRules.map { Triple(Agg(), Agg(), Agg()) }
@@ -503,7 +505,7 @@ object StudyExport {
                     overall.add(row)
                     (if (row.screen == null) shown else hidden).add(row)
                     if (!sb.bet.isOutlier) noOutliers.add(row)
-                    for (split in BetLedger.Split.entries) splits.getValue(split).getOrPut(BetLedger.keyOf(sb.bet, split)) { Agg() }.add(row)
+                    for (split in STUDY_SPLITS) splits.getValue(split).getOrPut(BetLedger.keyOf(sb.bet, split)) { Agg() }.add(row)
                     for (x in extraSplits) x.key(row, meta.zone)?.let { k -> extras.getValue(x.name).getOrPut(k) { Agg() }.add(row) }
                     if (isProp(row)) whatIfRules.forEachIndexed { i, rule ->
                         val (kept, dropped, unjudged) = whatIf[i]
@@ -546,7 +548,7 @@ object StudyExport {
         }
         out.appendLine()
         out.appendLine("== SPLITS (each group: bets · W-L-P · ROI · CLV · EV listed; a group needs ~200+ bets with a close before its CLV says much) ==")
-        for (split in BetLedger.Split.entries) {
+        for (split in STUDY_SPLITS) {
             val groups = splits.getValue(split)
             if (groups.isEmpty()) continue
             out.appendLine("-- ${split.label} --")
@@ -620,6 +622,12 @@ object StudyExport {
         out.appendLine("== BETS AND BIDS APART (Tj's own Tracker records: BETS are taker orders he placed, BIDS are Vigilant's make orders that a taker filled. Their stakes are real; a bid's EV is the edge at its fair when it was posted. Judge them apart: a bid is exposed to being picked off, a bet is not. The BIDS section below has every bid posted, filled or not) ==")
         lines.forEach { out.appendLine(it) }
     }
+
+    /**
+     * The ledger's splits for the scan-listed bets: not "Bet or bid" ([BetLedger.Split.MADE]), which says nothing of a bet nobody placed (every one is "listed"); the bets Tj
+     * holds are split by it in BETS AND BIDS APART.
+     */
+    private val STUDY_SPLITS = BetLedger.Split.entries - BetLedger.Split.MADE
 
     private const val MAX_UNFILLED_BID_ROWS = 300
 
