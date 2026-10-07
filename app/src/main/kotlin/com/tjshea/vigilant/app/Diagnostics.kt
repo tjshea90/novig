@@ -459,7 +459,7 @@ object Diagnostics {
 
         // Where the edge is real (Tj, 2026-09-30: "know … how to improve the app … accuracy"): the same numbers split, then open bets' edge now.
         o.appendLine()
-        o.appendLine("== Accuracy by scanner and by market (outliers aside; CLV on n = bets with a true close) ==")
+        o.appendLine("== Accuracy by bet or bid, scanner and market (outliers aside; CLV on n = bets with a true close) ==")
         val kept = bets.filterNot { it.isOutlier }
         for (by in listOf(com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MADE, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.EV)) {
             com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(bets, by).forEach { row ->
@@ -538,19 +538,12 @@ object Diagnostics {
     }
 
     /** One breakdown row: bets, record, ROI, EV when bet, CLV on how many true closes and how often it beat the close. */
-    private fun breakdownText(st: com.tjshea.vigilant.data.tracker.TrackerStats, closed: Int? = null): String = listOfNotNull(
-        "${st.bets} bet${if (st.bets == 1) "" else "s"} (${st.pending} open)",
-        "${st.won}-${st.lost}${if (st.pushed > 0) "-${st.pushed}" else ""}".takeIf { st.settled > 0 },
-        st.roi?.let { String.format(Locale.US, "ROI %+.1f%%", it * 100) },
-        st.averageEv?.let { String.format(Locale.US, "EV when bet %+.1f%%", it * 100) },
-        st.averageClv?.let { String.format(Locale.US, "CLV %+.1f%%", it * 100) + (closed?.let { n -> " on $n" } ?: "") },
-        st.beatClosePercent?.let { String.format(Locale.US, "beat close %.0f%%", it * 100) },
-        String.format(Locale.US, "expected %+.2f vs actual %+.2f", st.expectedProfit, st.profitWithEv).takeIf { st.settledWithEv > 0 },
-    ).joinToString(" · ")
+    private fun breakdownText(st: com.tjshea.vigilant.data.tracker.TrackerStats, closed: Int? = null): String =
+        com.tjshea.vigilant.data.tracker.TrackerBreakdown.describe(st, closed)
 
     /** How many of [bets] have a true close (the n behind a CLV average). */
     private fun closedCount(bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, now: Long): Int =
-        bets.count { it.status != BetStatus.VOID && com.tjshea.vigilant.data.tracker.ClosingLine.clv(it, now) != null }
+        com.tjshea.vigilant.data.tracker.BetsAndBids.closedCount(bets, now)
 
     /** One Novig league's games in the last scan (futures aside), how many matched a fair-odds source, and a few that didn't. */
     data class LeagueMatch(val league: String, val games: Int, val matched: Int, val unmatched: List<String>)
