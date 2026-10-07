@@ -1,24 +1,22 @@
-# CHECKPOINT 2686 — read me first, then TASKS.md
+# CHECKPOINT 2687 — read me first, then TASKS.md
 
-**Written:** 2026-10-07T12:00:12Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `8ac83efb` (this checkpoint is the commit after it)
+**Written:** 2026-10-07T12:09:52Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `4db49a3e` (this checkpoint is the commit after it)
 
 ## Just done
-DH4 + DH5 done: RESEARCH 107, preset favourite bar, plus-money and favourite-note wording, live feed test screenshot, floor 2471 green; version 0.72.2 code 128
+pre-release: v0.72.2: a preset now carries the auto-bet's favourite bar; preset summaries and the auto-bet criteria say a plus-money limit means underdogs only; the favourite note counts in points; API audit and full-tests write-up (RESEARCH 107) (versionCode 128, v0.72.2)
 
 ## Do this next
-wait for CI green on this exact commit with no edits, then ship.sh, release.yml, record-release.sh v0.72.2 128, then tape2 analysis near 13:05Z
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.72.2), then run: bash tools/record-release.sh v0.72.2 128 "v0.72.2: a preset now carries the auto-bet's favourite bar; preset summaries and the auto-bet criteria say a plus-money limit means underdogs only; the favourite note counts in points; API audit and full-tests write-up (RESEARCH 107)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M RESEARCH.md
-     M TASKS.md
-     M research/ACTIVE_LOG_2026-10-07.md
 
 ## Last ten checkpoints
 ```
+  4db49a3e ckpt 2686: DH4 + DH5 done: RESEARCH 107, preset favourite bar, plus-money and favourite
   7e0563fd ckpt 2685: pre-release: v0.72.1: live feed test (opt-in, reads only, no orders) for sco
   1ce250f7 ckpt 2684: v0.72.1 candidate: live feed test in the app (off by default), batch reply a
   bdb94219 ckpt 2683: DH2 app side: live feed test (ScanSettings.feedRace OFF by default, Vigilant
@@ -28,8 +26,4 @@ wait for CI green on this exact commit with no edits, then ship.sh, release.yml,
   4eee78e0 ckpt 2679: DH3: batch-place reply array shape fixed (4 occurrences in Tj's file), DoH c
   7ff1919e ckpt 2678: pre-release: v0.72.0: small-market bid fill behind the popular bids (Quick &
   92453213 ckpt 2677: v0.72.0 candidate complete: obscure fill + rec 11 + recs 2/4/5/9/10, RESEARC
-  a16d36aa ckpt 2676: DG4 code done (Kalshi 3 req/s test, setting, Diagnostics line, tests); TASKS
 ```
-
-(12 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
