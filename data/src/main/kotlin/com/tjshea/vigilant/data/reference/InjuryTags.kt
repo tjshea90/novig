@@ -30,6 +30,21 @@ object InjuryTags {
 
     private fun teamsOf(event: String): List<String> = NovigText.parseMatchup(event)?.let { listOf(it.away, it.home) } ?: Picks.sides(event)
 
+    /** [o]'s injury look-up: a player prop in a sport the injury feeds cover (its [Want.key] is [Opportunity.key]), else null. */
+    fun wantOf(o: Opportunity): Want? {
+        if (o.kind != LineKind.PLAYER_PROP || !o.league.oddsApiListed) return null
+        val player = o.lineKey?.subject ?: (BetGrader.pickOf(o.marketLabel, o.selection) as? BetGrader.Pick.Prop)?.player ?: return null
+        return Want(o.key, o.league.oddsApiSportKey, player, teamsOf(o.event.description))
+    }
+
+    /** [r]'s injury look-up (a CNO player bet; [espnTeam]: ESPN's team for the row when known), else null. */
+    fun wantOf(r: CnoRow, espnTeam: String? = null): Want? {
+        if (!r.market.trim().startsWith("Player", ignoreCase = true)) return null
+        val player = Picks.split(r.bet).first.trim().takeIf { it.isNotEmpty() } ?: return null
+        val sport = sportOf(r.league) ?: return null
+        return Want(cnoKey(r), sport, player, listOfNotNull(espnTeam) + teamsOf(r.event))
+    }
+
     /** The prop bets among [feed], [cnoRows] (with ESPN's [cnoTeams] by row key) and [bets] (open ones) to look up. */
     fun wants(
         feed: List<Opportunity>,
@@ -41,17 +56,8 @@ object InjuryTags {
         parlayRows: List<CnoRow> = emptyList(),
     ): List<Want> {
         val out = ArrayList<Want>()
-        for (o in feed) {
-            if (o.kind != LineKind.PLAYER_PROP || !o.league.oddsApiListed) continue
-            val player = o.lineKey?.subject ?: (BetGrader.pickOf(o.marketLabel, o.selection) as? BetGrader.Pick.Prop)?.player ?: continue
-            out += Want(o.key, o.league.oddsApiSportKey, player, teamsOf(o.event.description))
-        }
-        for (r in cnoRows) {
-            if (!r.market.trim().startsWith("Player", ignoreCase = true)) continue
-            val player = Picks.split(r.bet).first.trim().takeIf { it.isNotEmpty() } ?: continue
-            val sport = sportOf(r.league) ?: continue
-            out += Want(cnoKey(r), sport, player, listOfNotNull(cnoTeams[r.key]) + teamsOf(r.event))
-        }
+        for (o in feed) wantOf(o)?.let { out += it }
+        for (r in cnoRows) wantOf(r, cnoTeams[r.key])?.let { out += it }
         for (r in parlayRows) {
             val player = Picks.split(r.bet).first.trim().takeIf { it.isNotEmpty() } ?: continue
             val sport = sportOf(r.league) ?: continue
