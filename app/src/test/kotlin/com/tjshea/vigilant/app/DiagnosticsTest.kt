@@ -50,6 +50,14 @@ class DiagnosticsTest {
     }
 
     @Test
+    fun `it says how the Kalshi 3-requests-a-second test has gone, in the API usage section (Tj, 2026-10-07)`() {
+        val note = "Kalshi pace test: PASSED, 312 requests at 3 a second and none refused: Kalshi stays at 3 a second this session"
+        val text = report(x = extras.copy(kalshiPace = note))
+        assertTrue(text, text.substringAfter("== API usage").contains(note))
+        assertFalse(report().contains("Kalshi pace test"))
+    }
+
+    @Test
     fun `it says what the background scan really runs at each scanner choice`() {
         fun runs(scanner: ScannerMode, auto: AutoScanMode) = Diagnostics.runsText(SampleScan.settings.copy(scanner = scanner, autoScan = auto))
         assertEquals("CNO + Vigilant", runs(ScannerMode.BOTH, AutoScanMode.BOTH))
