@@ -142,6 +142,35 @@ class CnoFeedTest {
         job.cancel()
     }
 
+    /** Tj, 2026-10-07 (DI5): picking a league (or any other "which games" rule) changes what CNO is asked for, so it is read at once and the saved list is for the new pick. */
+    @Test
+    fun `a league pick or any scope change is read at once and carried to CNO, a switched-off feed reads nothing`() = runTest {
+        val source = FakeSource { currentTime }
+        val feed = CnoFeed(source, clock = { currentTime })
+        val config = MutableStateFlow(CnoConfig(true, "u1", 300))
+        val job = launch { feed.watch(config) }
+        runCurrent()
+        advanceTimeBy(5_000)
+        config.value = CnoConfig(true, "u1", 300, CnoFilters(scope = CnoScope(leagues = setOf("NHL"))))
+        runCurrent()
+        assertEquals(listOf("u1" to 0L, "u1" to 5_000L), source.reads)
+        assertEquals(setOf("NHL"), source.filtersSeen.last().scope.leagues)
+        assertEquals(setOf("NHL"), feed.state.value.snapshot!!.filters!!.scope.leagues)
+        assertTrue(feed.isCurrent(config.value))
+        // The same list under another scope is not the saved one.
+        assertFalse(feed.isCurrent(CnoConfig(true, "u1", 300, CnoFilters(scope = CnoScope(leagues = setOf("NFL"))))))
+        advanceTimeBy(5_000)
+        config.value = CnoConfig(true, "u1", 300, CnoFilters(scope = CnoScope(leagues = setOf("NHL"), hideLive = true)))
+        runCurrent()
+        assertEquals(3, source.reads.size)
+        // Switched off: a scope change reads nothing.
+        config.value = CnoConfig(false, "u1", 300, CnoFilters(scope = CnoScope(leagues = setOf("MLB"))))
+        advanceTimeBy(600_000)
+        runCurrent()
+        assertEquals(3, source.reads.size)
+        job.cancel()
+    }
+
     @Test
     fun `failed reads keep the last list, show why, and back off 5, 10, 20 seconds`() = runTest {
         val source = FakeSource { currentTime }
