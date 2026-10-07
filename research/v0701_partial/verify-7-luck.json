@@ -1,0 +1,687 @@
+{
+ "lens": "LUCK AND MULTIPLE COMPARISONS (permutation within start day / decision day / game, same-sized random subsets, family-wise max-t over the cost-cut grid, Bonferroni for 15 families / ~25 price-level variants / 522 variants, game-cluster CIs, leave-one-game-out, drop top 3 games, close-source split)",
+ "rule": "R2 Plus-money only: R1 (first c/w look 2-360 min before the start with EV >= 2.5%) and implied cost < 0.50 (American above +100)",
+ "numbers_reproduced": "Reproduced exactly from the loader. R2: 150 bets / 41 games; 95 with a close / 35 games; CLV +2.826% (builder 0.028256059883746715, same to 12 digits) game-cluster 95% CI [+1.97, +3.91] (builder [+1.97, +3.99]; the top differs only by bootstrap seed); close_ok 92 closes / 34 games +2.81% [+1.95, +3.95]; beat the close 79%; 66.49 bets a day. R1 (parent): 184 bets / 44 games, 116 closes / 40 games, +2.54% [+1.77, +3.52]; R1 favourites (cost >= 0.50): 34 bets, 21 closes / 14 games, +1.27%. Halves by decision day (the builder's split): Oct 3 +2.43% (16 plus closes / 13 games), Oct 4-5 +2.91% (79 / 22): matches the builder's 2.43 / 2.91. By first-look day (loader split_by_date, cut Oct 4): +2.67% (79 closes / 31 games) vs +3.58% (16 closes / 4 games). ROI at the look price -3.41% on 144 settled (builder -3.39%); at the first-listed price -3.9% [-25.7, +19.1] on 145 / 40 games: noise. Builder's luck numbers reproduced: bootstrap p(R2 <= R1 favourites) 0.006-0.007 (builder 0.008); permutation of plus-money vs random R1 closes within start/decision day p 0.056-0.059 (builder 0.060). Broad rationale reproduced: EV-adjusted cost slope -0.94 pts per +0.10 (SE 0.21, 378 closes / 59 games; builder -0.95, SE 0.22); dog minus favourite +1.57 [+1.06, +2.05].",
+ "survives": false,
+ "reason": "From the luck lens the rule cannot be told from chance as a RULE, although the underlying price gradient is probably not luck. (1) What R2 adds to R1 is small and borderline: R2 minus R1 mean CLV +0.28 pts per bet (95% game-cluster CI [+0.05, +0.66]); plus-money minus favourites inside R1 = +1.55 pts (SE 0.74, 21 favourite closes in 14 games vs 95 in 35). Permutation p for that gap: 0.046 (labels shuffled over all R1 closes), 0.058 (within start day), 0.058 (within decision day), 0.018 (within game); same-sized random 95-of-116 subsets of R1 closes: p 0.046 / 0.056 / 0.059 (null mean +2.55%, sd 0.16-0.17). The bootstrap p of 0.006-0.007 is the optimistic one (21 favourite closes). (2) Multiple comparisons: cut family (13 cost cuts 0.44-0.58 with >= 12 closes each side, max-t under cost-label permutation): the observed t at 0.50 (2.09) is the best of the grid, family-wise p 0.074 (no strata), 0.084 (within start day), 0.155 (within game); null median max-t 0.83-1.24, 95th percentile 2.28-2.62. The gap is not monotone in the cut: D at 0.46/0.47/0.48/0.49/0.50/0.51 = +0.66/+0.94/+1.08/+0.82/+1.55/+1.72 pts (t 0.66/1.34/1.57/1.13/2.09/1.95). Bonferroni: raw 0.046-0.058 x 15 families = 0.69-0.87; x ~25 price-level variants (20 EV-gate x price-band cells + cut variants in the builder's registry) and x 522 = 1 (capped); even the optimistic bootstrap 0.007 x 15 = 0.10. (3) The CI excluding zero ([+1.97, +3.91]) is R1's EV gate, not the price cut: R1 with no price cut is +2.54% [+1.77, +3.52]; same-sized draws from all 378 first-in-window closes (null mean +0.85%, sd 0.31) give p < 0.0002 but that only re-measures the EV >= 2.5% gate. (4) Close-source confound: 66 of R2's 95 closes (69%) are Tracker closes (56 of them CNO's own books re-read before the start, the same consensus that produced the listed EV; CLV minus listed EV = +0.1 pts there), mean +3.74%; the 26 independent closes (ESPN 4, Pinnacle 1, Novig trades with >= 3 trades 21) are +0.45% [-0.45, +1.64], p(<=0) 0.18, and Novig trades with >= 3 trades alone -0.27% (21 closes / 14 games). Within R1 only 26.5% of favourites have a Tracker close vs 44% of plus-money bets, so the source mix alone feeds the gap: with a Tracker dummy the plus-money effect falls to +0.88 (SE 0.67, p 0.20), with EV also +0.72 (SE 0.70, p 0.31); source-standardised +1.28 [+0.05, +2.96]. On independent closes inside R1 the sign is WRONG: plus +0.45% (26) vs favourites +2.15% (7), D -1.70 [-4.96, +0.62]. (5) Time: the gap lives on one game day. By decision day: Oct 3 D -0.02 [-2.30, +2.23] (16 vs 4 closes), Oct 4 +2.03 [+0.44, +4.87] (63 vs 15, 18 games), Oct 5 +0.39 [-1.74, +2.70] (16 vs 2). The builder's 'second half 2.9%' is a level on 79 closes, not evidence of a price effect; the favourite sample in the second half is 17 closes. (6) Not driven by one game but fragile to three: leave-one-game-out D +1.26 to +1.98 and level +2.66 to +3.35 over 40 games; dropping the 3 games whose removal lowers D most (three games with 2-3 closes each, 8 closes in all) leaves D +0.76 [-0.33, +2.17] on 108 closes / 37 games; dropping the 3 games that contribute most plus-money CLV leaves the level at +3.14% [+2.20, +4.04] (60 closes / 32 games), so the LEVEL is robust, the GAP is not. (7) What is probably real: the broad gradient. On all 378 first-in-window closes (59 games) dog minus favourite +1.57 [+1.06, +2.05], permutation p for the gap 0.0002 (the 5000-draw floor) globally, within start day and within game; EV-adjusted slope p 0.0002 / 0.0006 / 0.003 (global / within start day / within game); it replicates on the 262 closes NOT in R1 (53 games): +1.39 [+0.48, +2.16], slope -0.92 (SE 0.22); with close-source dummies and EV it is still +1.03 (SE 0.34, p 0.004); the gap is +1.5 to +2.0 pts at every EV gate from 0 to 3.5%. But its size by close source: Tracker +1.67 [+0.39, +3.43] (134 vs 27, circular), ESPN+Pinnacle +2.00 [+0.31, +3.60] (45 vs 24) which is partly a devig artefact (those closes use Devig.multiplicative, CNO's listed fair is the worst case of four methods; multiplicative adds +0.5 to +0.8% to a +0.45 side and subtracts 0.4 to 0.6% from a 0.55 side at 4.5% vig: a mechanical +0.9 to +1.4 pts dog-minus-favourite for a 0.45 vs 0.55 pair, about +0.7 for R1's actual 0.466 vs 0.528), and Novig trades with >= 3 trades +0.39 [-1.13, +1.52] (78 vs 42, slope -0.31, SE 0.20, p 0.13), i.e. about a third of the headline. The slope-implied gap inside R1 (mean cost 0.466 vs 0.528) is only +0.58 pts, not +1.55. (8) Cost: R2 keeps 66.5 of 81.6 R1 bets a day but CLV-units a day (bets x mean CLV) fall from 207.5 to 187.9 (-9.5%); it only pays if the daily limit binds. Verdict: the data suggests plus-money sides beat favourites against books/consensus closes, but R2 as an add-on to R1 is a +0.3 pt effect that is borderline before multiplicity (p 0.02-0.06), not significant after it (family-wise 0.07-0.16, Bonferroni-15 0.69+), resting on circular/mechanically biased closes, absent or reversed on independent closes, and present on one game day. Put to Tj only as a question (favourites need a higher EV bar), not as a recommended rule.",
+ "caveats": [
+  "Only about 2.26 days of first looks and 40 games in R1 closes; 79% of R2 closes are Oct 4 games; 'second half' is Oct 4-5 decision days (or Oct 5 starts: 16 plus closes in 4 games and 2 favourite closes), too thin to check a price effect.",
+  "Only 21 favourite closes (14 games; 9 of them Tracker) carry the comparison inside R1; 34 of 184 R1 bets are favourites and 13 of them have no close.",
+  "A within-game paired comparison (9 games with both a plus-money and a favourite close, 40 vs 15 closes) is positive in all 9 games (sign-flip p 0.002; mean +4.2 pts equal-weighted, +2.9 harmonic-weighted), but 9 games is tiny, one game holds 22 of the plus closes, and the pairs mix close sources (Tracker vs Novig trades).",
+  "Permutation nulls here ignore partial within-game correlation except in the within-game version; the game-cluster bootstrap p (0.006-0.007) is optimistic for 21 favourite closes; the permutation p (0.018-0.058) is the honest range.",
+  "The 0.50 cut was declared pre-look by the builder but cannot be audited; the cut grid test assumes it was one of 13 cuts, the builder also tried cuts 0.48/0.52/0.55 and ~25 price-level variants in total (522 variants tried overall, 15 families, per the builder).",
+  "ESPN/Pinnacle closes are devigged multiplicatively (data/tracker/HistoricalCloses.kt line 167 and ParlayCloses.kt line 238), CNO's listed fair is the worst case of four methods: a CLV measured against those closes favours longshots mechanically. Tracker closes re-read CNO's own books, so CLV = listed EV + consensus drift by construction (drift +0.1 pts on plus-money Tracker closes, -1.4 on 9 favourite ones).",
+  "ROI is noise at this size: R2 -3.9% [-25.7, +19.1] on 145 settled / 40 games, R1 -7.2% [-23.5, +10.5] on 178 / 43, R1 favourites -22.0% [-58.5, +12.9] on 33 / 18.",
+  "What would settle it: if the true gap inside R1 is the slope-implied +0.58 pts, about 10x the current data (~22 days, ~950 plus-money and ~210 favourite closes, ~400 games) for 80% power; if it is +1.55 pts about 1.4x (~3 days, 56 games); if it is the source-adjusted +0.88 about 4.4x (~10 days, ~175 games). Pinnacle (not multiplicative-devig-biased against the listing) or Novig >= 3-trade closes on the favourite side would be the decisive logging."
+ ],
+ "tests": {
+  "permutation_label_gap": {
+   "observed_D": 1.5514,
+   "null_sd": [
+    0.91,
+    0.93,
+    0.93,
+    0.75
+   ],
+   "p": {
+    "global_": 0.04635,
+    "start_day": 0.0582,
+    "decision_day": 0.0584,
+    "within_game": 0.018
+   },
+   "draws": 20000
+  },
+  "random_subset_95_of_116": {
+   "observed": 2.8256,
+   "null_mean": [
+    2.5456604316135714,
+    2.5583165256648632
+   ],
+   "p": {
+    "global_": 0.04575,
+    "start_day": 0.05595,
+    "decision_day": 0.05915
+   },
+   "pct": 94.405
+  },
+  "enter_universe_draw": {
+   "null_mean": 0.8458493911657726,
+   "sd": 0.31101726333505864,
+   "p": 0.0
+  },
+  "within_game_paired": {
+   "games": 9,
+   "est": 4.2262638801046295,
+   "p_sign_flip": 0.00208,
+   "lo": 2.2604448381219457,
+   "hi": 6.544700999400358,
+   "pos_games": 9,
+   "neg_games": 0,
+   "weighted_harmonic": {
+    "games": 9,
+    "est": 2.9361267907124002,
+    "p_sign_flip": 0.00158,
+    "lo": 1.4273355791401436,
+    "hi": 5.689350534022668,
+    "pos_games": 9,
+    "neg_games": 0
+   }
+  },
+  "cut_family": {
+   "cuts": [
+    {
+     "cut": 0.44,
+     "n_plus": 10,
+     "n_fav": 106,
+     "D": NaN,
+     "t": NaN
+    },
+    {
+     "cut": 0.46,
+     "n_plus": 24,
+     "n_fav": 92,
+     "D": 0.6567,
+     "t": 0.6641
+    },
+    {
+     "cut": 0.47,
+     "n_plus": 56,
+     "n_fav": 60,
+     "D": 0.9416,
+     "t": 1.3413
+    },
+    {
+     "cut": 0.48,
+     "n_plus": 68,
+     "n_fav": 48,
+     "D": 1.078,
+     "t": 1.5717
+    },
+    {
+     "cut": 0.49,
+     "n_plus": 85,
+     "n_fav": 31,
+     "D": 0.823,
+     "t": 1.1316
+    },
+    {
+     "cut": 0.5,
+     "n_plus": 95,
+     "n_fav": 21,
+     "D": 1.5514,
+     "t": 2.0915
+    },
+    {
+     "cut": 0.51,
+     "n_plus": 100,
+     "n_fav": 16,
+     "D": 1.7147,
+     "t": 1.9497
+    },
+    {
+     "cut": 0.52,
+     "n_plus": 107,
+     "n_fav": 9,
+     "D": NaN,
+     "t": NaN
+    },
+    {
+     "cut": 0.53,
+     "n_plus": 108,
+     "n_fav": 8,
+     "D": NaN,
+     "t": NaN
+    },
+    {
+     "cut": 0.54,
+     "n_plus": 111,
+     "n_fav": 5,
+     "D": NaN,
+     "t": NaN
+    },
+    {
+     "cut": 0.55,
+     "n_plus": 114,
+     "n_fav": 2,
+     "D": NaN,
+     "t": NaN
+    },
+    {
+     "cut": 0.56,
+     "n_plus": 114,
+     "n_fav": 2,
+     "D": NaN,
+     "t": NaN
+    },
+    {
+     "cut": 0.58,
+     "n_plus": 115,
+     "n_fav": 1,
+     "D": NaN,
+     "t": NaN
+    }
+   ],
+   "family_wise": {
+    "none": {
+     "p_famwise_t_at_050": 0.0743,
+     "p_famwise_D_at_050": 0.1262,
+     "obs_t050": 2.091534906687572,
+     "obs_max_t": 2.091534906687572,
+     "p_famwise_for_best_cut": 0.0743,
+     "null_median_max_t": 0.8313822214084341,
+     "null_95_max_t": 2.2781525533885287,
+     "cuts": 13
+    },
+    "start_day": {
+     "p_famwise_t_at_050": 0.0839,
+     "p_famwise_D_at_050": 0.143,
+     "obs_t050": 2.091534906687572,
+     "obs_max_t": 2.091534906687572,
+     "p_famwise_for_best_cut": 0.0839,
+     "null_median_max_t": 0.8664354125369131,
+     "null_95_max_t": 2.3317705064649066,
+     "cuts": 13
+    },
+    "game": {
+     "p_famwise_t_at_050": 0.1545,
+     "p_famwise_D_at_050": 0.1452,
+     "obs_t050": 2.091534906687572,
+     "obs_max_t": 2.091534906687572,
+     "p_famwise_for_best_cut": 0.1545,
+     "null_median_max_t": 1.236206425641328,
+     "null_95_max_t": 2.6182529412538447,
+     "cuts": 13
+    }
+   }
+  },
+  "bonferroni": {
+   "raw_perm_range": [
+    0.046,
+    0.058
+   ],
+   "x15": [
+    0.69,
+    0.87
+   ],
+   "x25": 1.0,
+   "x522": 1.0,
+   "raw_bootstrap": 0.007,
+   "bootstrap_x15": 0.105
+  },
+  "level_by_source": {
+   "tracker": {
+    "n": 66,
+    "games": 27,
+    "clv": 3.742569386333108,
+    "lo": 2.774964832184355,
+    "hi": 5.024773104987752,
+    "p_le0": 0.0
+   },
+   "independent": {
+    "n": 26,
+    "games": 18,
+    "clv": 0.44818161499653025,
+    "lo": -0.44858780593449626,
+    "hi": 1.6437175995236715,
+    "p_le0": 0.17985
+   },
+   "novig_ge3": {
+    "n": 21,
+    "games": 14,
+    "clv": -0.2695983356161079,
+    "lo": -1.1851133957453759,
+    "hi": 0.7956499482855874,
+    "p_le0": 0.72105
+   },
+   "close_ok": {
+    "n": 92,
+    "games": 34,
+    "clv": 2.8115467553032056,
+    "lo": 1.952076760359307,
+    "hi": 3.9494450275607504,
+    "p_le0": 0.0
+   }
+  },
+  "leave_one_game_out": {
+   "level_min": 2.657881068543395,
+   "level_max": 3.348936726421631,
+   "D_min": 1.2623038398803716,
+   "D_max": 1.9807573695785385,
+   "games": 40,
+   "worst_D": 1.2623038398803716
+  },
+  "drop_top3_D": {
+   "n": 108,
+   "D": 0.7564552600599614,
+   "lo": -0.32916238348412336,
+   "hi": 2.1740222451531115,
+   "p_le0": 0.082,
+   "level": 2.781388252504163
+  },
+  "drop_top3_level": {
+   "n": 60,
+   "games": 32,
+   "clv": 3.137002487946173,
+   "lo": 2.1962376103107846,
+   "hi": 4.035568270728151
+  },
+  "halves_first_day": {
+   "first": {
+    "plus_n": 79,
+    "plus_games": 31,
+    "level": 2.6720722714688416,
+    "lo": 1.729929640214327,
+    "hi": 4.073339886577474,
+    "fav_n": 19,
+    "fav_level": 1.0723367568562012,
+    "D": 1.5997355146126417,
+    "D_lo": 0.22192078001175888,
+    "D_hi": 3.6177116069423363,
+    "D_p_le0": 0.0125
+   },
+   "second": {
+    "plus_n": 16,
+    "plus_games": 4,
+    "level": 3.5836787155972027,
+    "lo": 3.318201324996632,
+    "hi": 4.560455875407901,
+    "fav_n": 2,
+    "fav_level": 3.1924825996194395,
+    "D": 0.39119611597776327,
+    "D_lo": -1.7444194854831014,
+    "D_hi": 2.697897583468815,
+    "D_p_le0": 0.3518065743004618
+   }
+  },
+  "by_decision_day": {
+   "decisionDay_2026-10-03": {
+    "plus_n": 16,
+    "plus_level": 2.4254891239473273,
+    "fav_n": 4,
+    "fav_level": 2.444327349666459,
+    "D": -0.01883822571913152
+   },
+   "decisionDay_2026-10-04": {
+    "plus_n": 63,
+    "plus_level": 2.734696562902878,
+    "fav_n": 15,
+    "fav_level": 0.7064725987734659,
+    "D": 2.0282239641294124
+   },
+   "decisionDay_2026-10-05": {
+    "plus_n": 16,
+    "plus_level": 3.5836787155972027,
+    "fav_n": 2,
+    "fav_level": 3.1924825996194395,
+    "D": 0.39119611597776327
+   }
+  },
+  "decision_day_halves": {
+   "first_oct3": {
+    "plus_n": 16,
+    "plus_games": 13,
+    "plus": 2.4254891239473273,
+    "fav_n": 4,
+    "fav": 2.444327349666459,
+    "D": -0.01883822571913152,
+    "lo": -2.297487640340541,
+    "hi": 2.233891951493468,
+    "p_le0": 0.5094577553593947
+   },
+   "second_oct4_5": {
+    "plus_n": 79,
+    "plus_games": 22,
+    "plus": 2.9066423153472982,
+    "fav_n": 17,
+    "fav": 0.9989443635788746,
+    "D": 1.9076979517684236,
+    "lo": 0.4196049116195629,
+    "hi": 4.139160419825978,
+    "p_le0": 0.0035
+   }
+  },
+  "close_source_regressions": {
+   "R1: v ~ plus": {
+    "plus": {
+     "b": 1.551350579826733,
+     "se": 0.7391418195927435,
+     "p": 0.0423542730770774
+    }
+   },
+   "R1: v ~ plus + tracker": {
+    "plus": {
+     "b": 0.8819942771394763,
+     "se": 0.6735795909526114,
+     "p": 0.19805635162168178
+    },
+    "trk": {
+     "b": 2.5148132276103192,
+     "se": 0.6198829284325376,
+     "p": 0.00023091299591659897
+    }
+   },
+   "R1: v ~ plus + tracker + ev": {
+    "plus": {
+     "b": 0.7180101948226887,
+     "se": 0.6951712094497721,
+     "p": 0.30803500244710325
+    },
+    "trk": {
+     "b": 2.449503114621395,
+     "se": 0.5718808560191934,
+     "p": 0.00011635399721798834
+    },
+    "ev": {
+     "b": 27.715870226436465,
+     "se": 74.69101744986587,
+     "p": 0.7125908439933992
+    }
+   },
+   "ENTER: v ~ plus": {
+    "plus": {
+     "b": 1.569189974637743,
+     "se": 0.2429650240539061,
+     "p": 2.3645383873116543e-08
+    }
+   },
+   "ENTER: v ~ plus + source dummies": {
+    "plus": {
+     "b": 1.28745931466135,
+     "se": 0.2838070773045485,
+     "p": 2.9266069078159873e-05
+    },
+    "trk": {
+     "b": 2.0491892071993645,
+     "se": 0.34886124964037485,
+     "p": 2.1975497888071516e-07
+    },
+    "espn_pin": {
+     "b": 1.8282363772777357,
+     "se": 0.4597705867373553,
+     "p": 0.00019644150541475724
+    },
+    "nov12": {
+     "b": 1.5273402718005595,
+     "se": 0.6669307528127815,
+     "p": 0.02567070956173656
+    }
+   },
+   "ENTER: v ~ plus + source dummies + ev": {
+    "plus": {
+     "b": 1.0255296843602595,
+     "se": 0.34432562955046675,
+     "p": 0.004225146064915419
+    },
+    "trk": {
+     "b": 1.691845638846975,
+     "se": 0.32031525603704036,
+     "p": 2.0071027082568804e-06
+    },
+    "espn_pin": {
+     "b": 2.066567871337491,
+     "se": 0.4556132617999621,
+     "p": 2.9326982220467812e-05
+    },
+    "nov12": {
+     "b": 1.3092732107508176,
+     "se": 0.6787136273589081,
+     "p": 0.05862233620252222
+    },
+    "ev": {
+     "b": 64.33877600109011,
+     "se": 32.32780329480344,
+     "p": 0.051289324476888165
+    }
+   },
+   "tracker_share_all_bets": {
+    "plus": 0.44,
+    "fav": 0.2647058823529412
+   },
+   "D_source_standardised_R1": 1.2760381133430097,
+   "D_source_standardised_R1_ci": [
+    0.05151136803526679,
+    2.9624428133972227,
+    0.020255063765941484
+   ],
+   "R2_minus_R1": {
+    "est": 0.2808479497962191,
+    "lo": 0.04948620612516732,
+    "hi": 0.6554174639673709,
+    "p_le0": 0.0072
+   },
+   "units": {
+    "days": 2.2560730439814813,
+    "r1_bets_day": 81.5576430430106,
+    "r2_bets_day": 66.48720900245429,
+    "r1_units": 207.54446774121323,
+    "r2_units": 187.8666559076532
+   },
+   "decday_first(Oct3)": {
+    "plus_n": 16,
+    "plus_games": 13,
+    "plus": 2.4254891239473273,
+    "fav_n": 4,
+    "fav": 2.444327349666459,
+    "D": -0.01883822571913152,
+    "lo": -2.297487640340541,
+    "hi": 2.233891951493468,
+    "p_le0": 0.5094577553593947
+   },
+   "decday_second(Oct4-5)": {
+    "plus_n": 79,
+    "plus_games": 22,
+    "plus": 2.9066423153472982,
+    "fav_n": 17,
+    "fav": 0.9989443635788746,
+    "D": 1.9076979517684236,
+    "lo": 0.4196049116195629,
+    "hi": 4.139160419825978,
+    "p_le0": 0.0035
+   }
+  },
+  "broad_universe": {
+   "enter_all": {
+    "n": 378,
+    "games": 59,
+    "plus_n": 274,
+    "plus": 1.2539894311649307,
+    "minus_n": 104,
+    "minus": -0.31520054347281357,
+    "D": 1.5691899746377442,
+    "lo": 1.0612501816051905,
+    "hi": 2.054159833937875,
+    "slope": -0.9435407397959394,
+    "slope_se": 0.2110826212463752,
+    "slope_p": 3.68804435881831e-05
+   },
+   "not_in_R1": {
+    "n": 262,
+    "games": 53,
+    "plus_n": 184,
+    "plus": 0.7725063087448725,
+    "minus_n": 78,
+    "minus": -0.6184758071450012,
+    "D": 1.3909821158898736,
+    "lo": 0.4803707388791139,
+    "hi": 2.1568549092489513,
+    "slope": -0.9202022304677022,
+    "slope_se": 0.22394081860366807,
+    "slope_p": 0.00014124468182430405
+   },
+   "in_R1": {
+    "n": 116,
+    "games": 40,
+    "plus_n": 90,
+    "plus": 2.2383549258903823,
+    "minus_n": 26,
+    "minus": 0.594625247543749,
+    "D": 1.6437296783466333,
+    "lo": 0.3905889244734787,
+    "hi": 3.2518630844282734,
+    "slope": -1.1094806637744408,
+    "slope_se": 1.2327230765625659,
+    "slope_p": 0.3736314165582304
+   },
+   "permutation": {
+    "none": {
+     "p_slope_le": 0.0002,
+     "p_D_ge": 0.0002,
+     "null_sd_slope": 0.2644066454542905,
+     "null_sd_D": 0.4020952250043414
+    },
+    "start_day": {
+     "p_slope_le": 0.0006,
+     "p_D_ge": 0.0002,
+     "null_sd_slope": 0.26296836634741133,
+     "null_sd_D": 0.40746663735008054
+    },
+    "game": {
+     "p_slope_le": 0.003,
+     "p_D_ge": 0.0002,
+     "null_sd_slope": 0.2673360181887066,
+     "null_sd_D": 0.38039562427035883
+    }
+   }
+  },
+  "gate_plateau": [
+   {
+    "gate": 0.0,
+    "closes": 378,
+    "games": 59,
+    "plus_n": 274,
+    "fav_n": 104,
+    "plus": 1.2539894312,
+    "fav": -0.3152005435,
+    "D": 1.5691899746,
+    "lo": 1.0612501816,
+    "hi": 2.0535031451,
+    "p_boot": 0.0,
+    "p_perm_day": 0.00025,
+    "p_perm_game": 0.0
+   },
+   {
+    "gate": 0.01,
+    "closes": 244,
+    "games": 53,
+    "plus_n": 192,
+    "fav_n": 52,
+    "plus": 1.873891046,
+    "fav": 0.3036050901,
+    "D": 1.570285956,
+    "lo": 0.8025238657,
+    "hi": 2.3559069946,
+    "p_boot": 0.0,
+    "p_perm_day": 0.003,
+    "p_perm_game": 0.005
+   },
+   {
+    "gate": 0.015,
+    "closes": 196,
+    "games": 48,
+    "plus_n": 159,
+    "fav_n": 37,
+    "plus": 2.1540332024,
+    "fav": 0.6264662337,
+    "D": 1.5275669687,
+    "lo": 0.6278033395,
+    "hi": 2.7169490251,
+    "p_boot": 0.0,
+    "p_perm_day": 0.0085,
+    "p_perm_game": 0.0165
+   },
+   {
+    "gate": 0.02,
+    "closes": 153,
+    "games": 40,
+    "plus_n": 125,
+    "fav_n": 28,
+    "plus": 2.448311791,
+    "fav": 0.765757314,
+    "D": 1.682554477,
+    "lo": 0.6477190703,
+    "hi": 2.9737790837,
+    "p_boot": 0.0003333333,
+    "p_perm_day": 0.01325,
+    "p_perm_game": 0.008
+   },
+   {
+    "gate": 0.025,
+    "closes": 116,
+    "games": 40,
+    "plus_n": 95,
+    "fav_n": 21,
+    "plus": 2.8256059884,
+    "fav": 1.2742554085,
+    "D": 1.5513505798,
+    "lo": 0.3188597094,
+    "hi": 3.215274892,
+    "p_boot": 0.0066666667,
+    "p_perm_day": 0.06075,
+    "p_perm_game": 0.01375
+   },
+   {
+    "gate": 0.03,
+    "closes": 78,
+    "games": 31,
+    "plus_n": 66,
+    "fav_n": 12,
+    "plus": 3.4918760173,
+    "fav": 1.8874195413,
+    "D": 1.604456476,
+    "lo": 0.0658348529,
+    "hi": 3.3567160403,
+    "p_boot": 0.022,
+    "p_perm_day": 0.1145,
+    "p_perm_game": 0.07725
+   },
+   {
+    "gate": 0.035,
+    "closes": 53,
+    "games": 25,
+    "plus_n": 46,
+    "fav_n": 7,
+    "plus": 3.9048808943,
+    "fav": 1.9182078617,
+    "D": 1.9866730326,
+    "lo": 0.3442589486,
+    "hi": 4.5924139231,
+    "p_boot": 0.0100233879,
+    "p_perm_day": 0.139,
+    "p_perm_game": 0.115
+   }
+  ],
+  "sample_to_settle": {
+   "mean_cost_plus": 0.46569712704653027,
+   "mean_cost_fav": 0.5277119098974693,
+   "D_slope_implied": 0.5829389587988268,
+   "observed 1.55": {
+    "multiple_of_current_data": 1.4075143433922994,
+    "days": 3.175352358693027,
+    "plus_closes": 133.71386262226844,
+    "fav_closes": 29.55780121123829,
+    "games": 56.30057373569198
+   },
+   "slope-implied": {
+    "multiple_of_current_data": 9.95107647273837,
+    "days": 22.44962852249776,
+    "plus_closes": 945.3522649101451,
+    "fav_closes": 208.97260592750575,
+    "games": 398.0430589095348
+   },
+   "source-standardised 0.88": {
+    "multiple_of_current_data": 4.366675116219007,
+    "days": 9.851219062190077,
+    "plus_closes": 414.8341360408056,
+    "fav_closes": 91.70017744059913,
+    "games": 174.66700464876027
+   }
+  },
+  "devig_artefact_pts": {
+   "note": "multiplicative minus power devig, relative fair, 4.5% vig: +0.76% at side 0.45, -0.61% at 0.55",
+   "mech_dog_minus_fav_pts": [
+    0.9,
+    1.4
+   ]
+  }
+ }
+}
