@@ -74,7 +74,7 @@ class FeedRaceTest {
         assertEquals(1, r.leads.single { it.src == "fast" }.by3s)
         assertEquals(0, r.leads.single { it.src == "slow" }.by3s)
         assertEquals(2, r.stale.single { it.src == "fast" }.trades)
-        assertEquals(1, r.stale.single { it.src == "slow" }.trades)
+        assertEquals(0, r.stale.single { it.src == "slow" }.trades)   // 207 s is after the old price was gone
         assertTrue(r.lines().joinToString("\n"), r.lines().any { it.contains("fast") && it.contains("by 3 s+ 1") })
     }
 
