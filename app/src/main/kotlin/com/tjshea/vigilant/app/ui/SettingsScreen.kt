@@ -25,6 +25,13 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import com.tjshea.vigilant.data.scanner.BetKind
+import com.tjshea.vigilant.data.cno.CnoScope
+import com.tjshea.vigilant.data.cno.CnoLeagues
+import kotlinx.coroutines.delay
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -1389,6 +1396,13 @@ object Shadowed {
         return if (auto == 0 || Odds.americanToDecimal(cno) > Odds.americanToDecimal(auto))
             "CrazyNinjaOdds' list (Settings › CrazyNinjaOdds list) already drops odds shorter than ${Odds.formatAmerican(cno)}, so auto-bet never sees them."
         else null
+    }
+
+    /** The CNO list's kinds and the auto-bet's kinds that share nothing: the list shows bets the auto-bet will never place (said where the list is set). */
+    fun cnoKinds(s: ScanSettings): String? {
+        val shown = s.cnoFilters.scope.kinds
+        if (!s.cnoOn || shown.isEmpty() || s.autoBetKinds.isEmpty()) return null
+        return if (shown.none { it in s.autoBetKinds }) "None of these kinds is one the auto-bet places (Auto-bet tab › Kinds of bet to place), so it will place nothing from this list." else null
     }
 
     /** Days ahead past the start window: the window decides. */
