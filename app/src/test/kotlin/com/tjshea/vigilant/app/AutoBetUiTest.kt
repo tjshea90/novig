@@ -438,6 +438,17 @@ class AutoBetUiTest {
     }
 
     @Test
+    fun `the first-listed rule has its own switch in the trap guard, on by default, with a note that follows it (Tj, 2026-10-07)`() {
+        show()
+        compose.onNodeWithTag("autoBet-trapFirstListedNote").performScrollTo().assertTextContains("first seen more than 6 h before", substring = true)
+        compose.onNodeWithTag("autoBet-trapFirstListed").performScrollTo().performClick()
+        assertFalse(settings.trapFirstListed)
+        compose.onNodeWithTag("autoBet-trapFirstListedNote").assertTextContains("Off", substring = true)
+        compose.onNodeWithTag("autoBet-trapFirstListed").performClick()
+        assertTrue(settings.trapFirstListed)
+    }
+
+    @Test
     fun `every setting search sends to the Auto-bet tab is on it`() {
         ui = SampleScan.state().copy(betting = BettingUi(enabled = true, balance = 25.0), settings = ScanSettings(autoScan = AutoScanMode.CNO))
         compose.setContent {
