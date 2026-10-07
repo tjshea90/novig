@@ -46,7 +46,7 @@ class QuickBidFilterTest {
     fun `a kind takers were measured to trade rarely gets no bid however many books price it`() {
         val r = quick()
         for (obscure in listOf("LONGEST_RECEPTION", "LONGEST_RUSH", "KICKING_POINTS", "RUSHING_AND_RECEIVING_YARDS")) {
-            assertTrue("$obscure", skipped(line(obscure, books = 12), r)!!.startsWith("A small or unusual market"))
+            assertTrue("$obscure", skipped(line(obscure, books = 12), r)!!.contains("rarely trade"))
         }
         // The same kind is still a bid under "All bids".
         assertEquals(null, skipped(line("LONGEST_RECEPTION", books = 12), MakerRules.of(ScanSettings())))

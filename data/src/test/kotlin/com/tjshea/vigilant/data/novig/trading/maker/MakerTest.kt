@@ -1669,17 +1669,19 @@ class MakerTest {
         assertFalse(all.requireSharp)
         // The decisions, at the quick rules with the margin 4% under a sharp fair of 0.50 (the bid is 0.480):
         fun why(l: MakerLine) = (MakerQuote.decide(l, quick, now) as MakerDecision.Skip).why
-        val sharp = line(fair = 0.50, offer = 0.56).copy(sharpFairs = listOf(0.50))
+        val sharp = line(fair = 0.50, offer = 0.56, books = 8).copy(sharpFairs = listOf(0.50))
         assertEquals(0.480, (MakerQuote.decide(sharp, quick, now) as MakerDecision.Post).price, 1e-9)
         // A longshot (bid 0.2) and a heavy favorite (bid 0.7) are outside the window.
-        assertTrue(why(line(fair = 0.21, offer = 0.30).copy(sharpFairs = listOf(0.21))).contains("outside the price window"))
-        assertTrue(why(line(fair = 0.73, offer = 0.80).copy(sharpFairs = listOf(0.73))).contains("outside the price window"))
+        assertTrue(why(line(fair = 0.21, offer = 0.30, books = 8).copy(sharpFairs = listOf(0.21))).contains("outside the price window"))
+        assertTrue(why(line(fair = 0.73, offer = 0.80, books = 8).copy(sharpFairs = listOf(0.73))).contains("outside the price window"))
         // No sharp book: no bid, in the sharp-required words.
-        assertTrue(why(line(fair = 0.50, offer = 0.56)).contains("a sharp book must agree"))
+        assertTrue(why(line(fair = 0.50, offer = 0.56, books = 8)).contains("a sharp book must agree"))
         // A game line or a period line isn't a quick bid.
         assertTrue(why(sharp.copy(kind = BetKind.MONEYLINE)).contains("are off for bids"))
         assertTrue(why(sharp.copy(kind = BetKind.PERIOD)).contains("are off for bids"))
         assertTrue(MakerQuote.decide(sharp.copy(kind = BetKind.TEAM_TOTAL), quick, now) is MakerDecision.Post)
+        // A line few books price is a small market: no quick bid (Tj, 2026-10-07: "no strange props or small markets").
+        assertTrue(why(sharp.copy(books = 3)).contains("Only 3 books price this line"))
     }
 
     @Test
