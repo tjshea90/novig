@@ -37,6 +37,18 @@ class DiagnosticsTest {
         assertTrue(text, text.contains("Current EV: 2 of 3 upcoming bets have one read inside the fair odds' age limit"))
     }
 
+    /** Tj, 2026-10-07: the small-prop guard's limits and what the last day and week of auto-bets look like by kind of prop, so the next file shows whether one market carries the day. */
+    @Test
+    fun `it says what the small-prop guard is set to and which kinds of prop the last day's auto-bets were`() {
+        val text = report()
+        assertTrue(text, text.contains("Small-prop guard (RESEARCH.md §109): no kind of player prop over 25% of the last 24 h's auto-bets (once there are 8; never under an even split of the kinds being bet) · at most 3 auto-bets on one kind of prop in one game · Last 24 hours:"))
+        assertTrue(text, text.contains("Last 7 days:"))
+        val off = report(SampleScan.state().let { it.copy(settings = it.settings.copy(propGuardShare = 0.0, propGuardPerGame = 0)) })
+        assertTrue(off, off.contains("Small-prop guard (RESEARCH.md §109): off: no cap on how much one kind of player prop may take"))
+        val two = report(SampleScan.state().let { it.copy(settings = it.settings.copy(propGuardShare = 0.35, propGuardMinSample = 12, propGuardPerGame = 0)) })
+        assertTrue(two, two.contains("no kind of player prop over 35% of the last 24 h's auto-bets (once there are 12; never under an even split of the kinds being bet) · Last 24 hours:"))
+    }
+
     @Test
     fun `it says what the trap guard is set to, and splits every bet by its time to the start, recorded as placed or not (RESEARCH 71)`() {
         // The sample keeps it off (its games are 8 h+ off); the default is 6 h with the game-line check on.
