@@ -569,4 +569,109 @@ class MakerAppTest {
         assertTrue(!MakerRunner.overWallet(listOf(bid.copy(status = MakerStatus.CANCELING)), reading))
         assertTrue(!MakerRunner.overWallet(listOf(bid.copy(status = MakerStatus.CANCELED)), reading))
     }
+
+    // ---- bids priced from CrazyNinjaOdds (Tj, 2026-10-07; RESEARCH.md §114) --------------------------------------------------------
+
+    /** A CNO game page's lines (the Over listed, the Under its complement) as the lane would hand them to a pass: data 8 s (list) and 15 s (page) old. */
+    private fun cnoSet(stop: String? = null): com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.LineSet {
+        val start = now + 3 * 3_600_000L
+        val market = com.tjshea.vigilant.data.novig.NovigMarket(
+            "mc1", "evc", "RECEIVING_YARDS", "OPEN", "Player Receiving Yards", start, com.tjshea.vigilant.engine.MarketFee.GAME,
+            listOf(com.tjshea.vigilant.data.novig.NovigOutcome("mc1-over", "Over 50.5", "TBD"), com.tjshea.vigilant.data.novig.NovigOutcome("mc1-under", "Under 50.5", "TBD")),
+        )
+        val row = com.tjshea.vigilant.data.cno.CnoRow(
+            ev = 0.02, startsAtMs = start, league = "NFL", event = "A @ B", market = "Player Receiving Yards", bet = "Pat Over 50.5", odds = 100, book = "Novig",
+            fairProbability = 0.55, books = 8, gameUrl = "https://x/game.aspx?game_id=1&market_id=2&side_id=7",
+        )
+        val view = com.tjshea.vigilant.data.cno.CnoBooksView(
+            bet = "Pat Over 50.5", otherBet = "Pat Under 50.5", fetchedAtMs = now - 5_000L, cnoAgeSeconds = 10,
+            prices = listOf(
+                com.tjshea.vigilant.data.cno.CnoBookPrice("KI", -115, otherOdds = -105), com.tjshea.vigilant.data.cno.CnoBookPrice("PX", -112, otherOdds = -108),
+                com.tjshea.vigilant.data.cno.CnoBookPrice("FD", -118, otherOdds = -102), com.tjshea.vigilant.data.cno.CnoBookPrice("DK", -125, otherOdds = 105),
+            ),
+        )
+        val book = com.tjshea.vigilant.data.novig.NovigBook(
+            "mc1", 1L, mapOf("mc1-over" to listOf(com.tjshea.vigilant.data.novig.BidLevel(450, 100)), "mc1-under" to listOf(com.tjshea.vigilant.data.novig.BidLevel(400, 100))), now - 1_000L,
+        )
+        val built = com.tjshea.vigilant.data.novig.trading.maker.CnoMakerLines.from(
+            listOf(com.tjshea.vigilant.data.novig.trading.maker.CnoMakerLines.Page(row, "mc1-over", market, book, view, now - 8_000L)), settingsCno(), now,
+        )
+        return com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.LineSet(if (stop == null) built.lines else built.lines, stop, now - 8_000L, built.skipped)
+    }
+
+    private fun settingsCno() = SampleScan.settings.copy(maker = true, makerSource = com.tjshea.vigilant.data.scanner.BidSource.CNO)
+
+    /** A runner whose bids come from [set] and which fails if it looks at Vigilant's scan. */
+    private fun cnoRunner(novig: FakeNovig, set: () -> com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.LineSet) = MakerRunner(
+        app, app.container, clock = { now }, scan = { error("bids priced from CrazyNinjaOdds never look at Vigilant's scan") },
+        desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
+        cnoLines = { _, _, _, _ -> set() },
+    )
+
+    @Test
+    fun `bids priced from CNO are posted from the lane's lines, never read Vigilant's scan, and carry source cno and the ages of CNO's data`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        app.container.settingsStore.update { settingsCno() }
+        val report = cnoRunner(novig) { cnoSet() }.run("background cycle")
+        assertTrue(report != null && report.placed >= 1)
+        val bids = app.container.makerStore.all()
+        assertTrue(bids.isNotEmpty())
+        assertTrue(bids.all { it.source == "cno" })
+        // The list's data was 8 s old and the page's 15 s: the bid keeps both, and the fair's age is the older.
+        assertTrue(bids.all { it.listAgeSec == 8 && it.pageAgeSec == 15 && it.fairAgeSec == 15 })
+        assertTrue(bids.all { it.fairBasis?.source == "CNO" })
+        // It rests no longer than the data stays fresh (120 s from the page's own time, less the 15 s already gone), not the 30-minute setting.
+        assertTrue(bids.all { (it.expiresAtMs!! - it.postedAtMs) in 1..105_000L })
+    }
+
+    @Test
+    fun `the lane's stop takes every CNO bid down, and nothing is posted while it holds`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        app.container.settingsStore.update { settingsCno() }
+        var stop: String? = null
+        val run = cnoRunner(novig) { cnoSet(stop) }
+        run.run("background cycle")
+        assertTrue(novig.placed.isNotEmpty())
+        stop = "CrazyNinjaOdds asked for a pause (busy): bids priced from it come down"
+        val report = run.run("background cycle")!!
+        assertEquals(0, report.placed)
+        assertTrue(report.cancelled >= 1)
+        assertTrue(novig.orders.values.all { it.status == "CANCELED" })
+        assertTrue(app.container.makerStore.all().none { it.active })
+    }
+
+    @Test
+    fun `a bet by hand on a side with a bid resting there takes the bid down (before, it was taken for the bid's part-fill)`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        app.container.settingsStore.update { settingsCno() }
+        val run = cnoRunner(novig) { cnoSet() }
+        run.run("background cycle")
+        val up = app.container.makerStore.all().first { it.active }
+        val taker = TrackedBetsForTest.bet(up.outcomeId, now)
+        app.container.tracker.addAll(listOf(taker))
+        val report = run.run("background cycle")!!
+        assertTrue("the bid on the side Tj bet is cancelled: ${report.decisions.map { it.line.outcomeId }}", report.cancelled >= 1)
+        assertTrue(app.container.makerStore.all().none { it.outcomeId == up.outcomeId && it.active })
+    }
+
+    @Test
+    fun `with bids priced from CNO a Vigilant scan's end is no reason for a pass - the background cycle runs them`() {
+        val container = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText()
+        assertTrue(container.contains("makerSource == com.tjshea.vigilant.data.scanner.BidSource.VIGILANT"))
+        val cycle = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
+        assertTrue(cycle.contains("c.cnoBids.step(settings"))
+        assertTrue(cycle.contains("(!scanned || fromCno)"))
+    }
+}
+
+/** A pending bet by hand on a side (not a bid's fill), for the tests above. */
+private object TrackedBetsForTest {
+    fun bet(outcomeId: String, now: Long) = com.tjshea.vigilant.data.tracker.TrackedBet(
+        id = "hand-0000-0000", createdAtMs = now, league = "NFL", eventName = "A @ B", startsTs = now + 3 * 3_600_000L, marketLabel = "Player Receiving Yards", selection = "Pat",
+        marketId = "mc1", outcomeId = outcomeId, price = 0.5, cost = 0.5, fairAtBet = 0.52, evPercentAtBet = 0.04, stake = 1.0, status = com.tjshea.vigilant.data.tracker.BetStatus.PENDING,
+        source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_CNO, american = 100,
+    )
 }
