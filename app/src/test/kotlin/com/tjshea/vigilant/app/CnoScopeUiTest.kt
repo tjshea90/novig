@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -214,7 +215,7 @@ class CnoScopeUiTest {
         val line = com.tjshea.vigilant.app.ui.SettingsSummary.of(SettingsPage.CNO, state)
         assertTrue(line, line.endsWith(" · NHL"))
         assertFalse(com.tjshea.vigilant.app.ui.SettingsSummary.of(SettingsPage.CNO, SampleScan.state()).contains(" · NHL"))
-        val titles = com.tjshea.vigilant.app.ui.SettingsIndex.entries(state.settings).map { it.title }
+        val titles = com.tjshea.vigilant.app.ui.SettingsIndex.entries.map { it.title }
         for (t in listOf("Leagues listed", "Kinds of bet listed", "Hide live games", "Fewest dollars available", "Show only bets with these words", "Leave out bets with these words", "Props per game")) {
             assertTrue(t, t in titles)
         }
