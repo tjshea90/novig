@@ -64,9 +64,9 @@ object LowUsage {
 
     /** What this focus does, in a few sentences for the Bids tab (the design is RESEARCH.md §92, §93). */
     const val EXPLAINER =
-        "Reads as little as it can: only player props, only games starting in the next 6 hours, only the 2-3 sharp prop books picked below, only when there is a game to bid on, " +
+        "Reads as little as it can: only player props, only games starting within your trap guard's hours (6 by default; Off reads as far as Settings › Scanning says), only the 2-3 sharp prop books picked below, only when there is a game to bid on, " +
             "and Vigilant's scan runs at the pace chosen (Auto: just before the bids' prices go old, so they stay up). The fair is those books' own two-sided prices devigged, at least two of them, each fresh " +
             "(5 minutes, 10 for a game over 3 hours away) and quoting BOTH sides of the exact line; fewer than two and there is no bid. Each bid is posted at least the margin " +
-            "under that fair (2.5% unless you pick 1.5% or type your own, never under 0.5%), and under the lowest picked book's own fair, at no longer than +130, priced 30-60% (over that a bid almost never fills), on the " +
-            "kinds of prop takers trade most, the likeliest to fill first. A bid never outlives the fair behind it, so a fixed pace slower than Auto means bids are up part of the time."
+            "under that fair (2.5% unless you pick 1.5% or type your own, never under 0.5%), and under the lowest picked book's own fair, at no longer than +130 unless you pick another longest odds, priced 30-60% (a longest or shortest odds you pick beyond that widens it), on the " +
+            "kinds of prop takers trade most, the likeliest to fill first; small markets fill the leftover money when the switch below is on. A bid never outlives the fair behind it, so a fixed pace slower than Auto means bids are up part of the time."
 }
