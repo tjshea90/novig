@@ -1964,6 +1964,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             autoScanServiceRunning = AutoScanService.running,
             keepAwakeHeld = AutoScanService.keepAwakeHeld,
             kalshiPace = runCatching { c.kalshiPaceNote() }.getOrNull(),
+            feedRace = runCatching {
+                val st = c.feedRace.status.value
+                (c.feedRace.lastReport ?: kotlinx.coroutines.runBlocking { c.feedRace.makeReport() }).takeIf { st.readings > 0 || it.sightings > 0 }?.let { r ->
+                    listOf(FeedRaceText.note(st, System.currentTimeMillis())) + r.lines()
+                }
+            }.getOrNull(),
             sharpFeeds = runCatching { com.tjshea.vigilant.data.reference.SharpBooks.feedsAmong(c.referenceSources(_state.value.settings, background = true)) }.getOrDefault(emptyList()),
             lowUsagePlan = _state.value.settings.takeIf { it.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }?.let { runCatching { c.lowUsagePlan(it) }.getOrNull() },
             burstReport = runCatching {
