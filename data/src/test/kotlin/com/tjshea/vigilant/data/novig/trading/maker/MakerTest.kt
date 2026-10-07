@@ -770,8 +770,19 @@ class MakerTest {
         // The rule off: posted (and nothing is wanted for reading).
         assertTrue(MakerQuote.decide(judged, ml.copy(novigMove = false), now) is MakerDecision.Post)
         assertTrue(MakerLines.moveWanted(listOf(game), ml.copy(novigMove = false), now).isEmpty())
-        // No trades read for that market: judged without the rule, posted.
+        // No trades read for that market (not tried this pass, e.g. past the pass's read limit): judged without the rule, posted.
         assertTrue(MakerQuote.decide(MakerLines.withMoves(listOf(game), wanted, emptyMap(), now).single(), ml, now) is MakerDecision.Post)
+        // A read that was TRIED and failed (429, 451, no route; Tj, 2026-10-07, proposal 10): no bid on that game line, with its own words, and the rule off posts it anyway.
+        val failed = MakerLines.withMoves(listOf(game), wanted, emptyMap(), now, unread = setOf("m1")).single()
+        assertTrue(failed.moveUnread)
+        assertEquals(MakerQuote.MOVE_UNREAD, (MakerQuote.decide(failed, ml, now) as MakerDecision.Skip).why)
+        assertTrue(MakerQuote.decide(failed, ml.copy(novigMove = false), now) is MakerDecision.Post)
+        // Another market's failed read doesn't touch this one, and trades that did arrive win over a stale failure.
+        assertFalse(MakerLines.withMoves(listOf(game), wanted, emptyMap(), now, unread = setOf("other")).single().moveUnread)
+        assertFalse(MakerLines.withMoves(listOf(game), wanted, mapOf("m1" to emptyList()), now, unread = setOf("m1")).single().moveUnread)
+        // A prop never carries the flag (it is never wanted for a read).
+        val prop0 = line().copy(sharpFairs = listOf(0.53))
+        assertFalse(MakerLines.withMoves(listOf(prop0), wanted, emptyMap(), now, unread = setOf("m1")).single().moveUnread)
         // A quiet market (no money on the other side): posted.
         val quiet = (1..3).map { com.tjshea.vigilant.data.scanner.TrapGuard.Trade("m1-under", 0.42, 10, now - it * 60_000L) }
         assertTrue(MakerQuote.decide(MakerLines.withMoves(listOf(game), wanted, mapOf("m1" to quiet), now).single(), ml, now) is MakerDecision.Post)
