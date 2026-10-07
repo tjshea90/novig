@@ -12,7 +12,8 @@ import java.time.ZoneId
 
 /**
  * Tj's ParlayAPI Starter plan (2026-09-30: 20,000 credits a month, "take full advantage of the paid API"): scans spend a day's share at
- * most, unused days carry over, the last 300 are kept for closing lines, and a free key (1,000 credits) is kept for the closes alone.
+ * most, unused days carry over, the last 300 are kept for closing lines; a free key (1,000 credits) serves scans after the keys before it (Tj,
+ * 2026-10-07), down to its last 100.
  */
 class CreditPaceTest {
 
@@ -46,9 +47,9 @@ class CreditPaceTest {
     }
 
     @Test
-    fun `a free key is kept for the closing lines, and a key not yet heard from only keeps the reserve`() {
+    fun `a free key keeps only its closing-lines reserve, and a key not yet heard from keeps the pool's`() {
         val now = Instant.parse("2026-09-10T12:00:00Z").toEpochMilli()
-        assertEquals(CreditPace.FREE_ONLY, pace.floor(KeyUsage(periodStart = sept1, used = 10, remaining = 990, limit = 1_000), now))
+        assertEquals(CreditPace.FREE_RESERVE, pace.floor(KeyUsage(periodStart = sept1, used = 10, remaining = 990, limit = 1_000), now))
         assertEquals(300, pace.floor(KeyUsage(), now))
     }
 
@@ -76,28 +77,47 @@ class CreditPaceTest {
     }
 
     @Test
-    fun `a free key says why scans leave it alone`() = runBlocking<Unit> {
+    fun `a free key alone serves scans down to its reserve, then says what it is kept for`() = runBlocking<Unit> {
         val pool = KeyPool(QuotaPolicy.PARLAY, { listOf("f") }, meter())
         pool.execute(cost = 1) { KeyAttemptResult.Success(Unit, cost = 1, remaining = 950, used = 50) }
+        var scans = 0
+        repeat(3) { pool.execute(cost = 5, reserve = 300, pace = pace) { scans++; KeyAttemptResult.Success(Unit, cost = 5, remaining = 945 - 5 * scans, used = 55 + 5 * scans) } }
+        assertEquals(3, scans)
+        // 930 left: the last 100 are the closes', so a scan goes on until 105 is left, then waits.
+        pool.execute(cost = 5, reserve = 300, pace = pace) { scans++; KeyAttemptResult.Success(Unit, cost = 5, remaining = 102, used = 898) }
         val e = assertThrows(CreditsHeldBackException::class.java) {
             runBlocking { pool.execute(cost = 5, reserve = 300, pace = pace) { KeyAttemptResult.Success(Unit) } }
         }
-        assertEquals("ParlayAPI is on its free plan: its credits are kept for closing lines (scans use a paid plan's).", e.message)
+        assertEquals("Your ParlayAPI key is down to the last 100 credits, kept for closing lines: back at the reset.", e.message)
+        // The closes (no reserve, no pace) still read it.
+        var closes = false
+        pool.execute(cost = 5) { closes = true; KeyAttemptResult.Success(Unit, cost = 5, remaining = 97, used = 903) }
+        assertTrue(closes)
     }
 
     @Test
-    fun `the meter says what scans can still spend today, or that a free key is for closes`() {
+    fun `the meter says what scans can still spend today, paid and free keys together`() {
         val now = Instant.parse("2026-09-10T12:00:00Z").toEpochMilli()
-        val book = ProviderUsage(keys = mapOf("a" to starter(5_000), "f" to KeyUsage(periodStart = sept1, used = 10, remaining = 990, limit = 1_000)))
+        val free = KeyUsage(periodStart = sept1, used = 10, remaining = 990, limit = 1_000)
+        val book = ProviderUsage(keys = mapOf("a" to starter(5_000), "f" to free))
         val both = UsageViews.build(QuotaPolicy.PARLAY, listOf("a", "f"), book, now, pace)
-        assertEquals(15_000 - (20_000 - 19_700 * 10 / 30), both.scanShareToday)
-        assertEquals(false, both.scansFreeOnly)
-        val free = UsageViews.build(QuotaPolicy.PARLAY, listOf("f"), book, now, pace)
-        assertEquals(true, free.scansFreeOnly)
-        assertEquals(null, free.scanShareToday)
+        assertEquals(15_000 - (20_000 - 19_700 * 10 / 30) + (990 - CreditPace.FREE_RESERVE), both.scanShareToday)
+        val onlyFree = UsageViews.build(QuotaPolicy.PARLAY, listOf("f"), book, now, pace)
+        assertEquals(990 - CreditPace.FREE_RESERVE, onlyFree.scanShareToday)
         // Not heard from yet: no figure to show.
         assertEquals(null, UsageViews.build(QuotaPolicy.PARLAY, listOf("new"), book, now, pace).scanShareToday)
         assertEquals(null, UsageViews.build(QuotaPolicy.ODDS_API, listOf("a"), book, now).scanShareToday)
+    }
+
+    @Test
+    fun `the meter marks the key a scan will use, not a paid key resting for the day`() {
+        val now = Instant.parse("2026-09-10T12:00:00Z").toEpochMilli()
+        val free = KeyUsage(periodStart = sept1, used = 10, remaining = 990, limit = 1_000)
+        val book = ProviderUsage(keys = mapOf("paid" to starter(7_000), "free" to free))
+        val v = UsageViews.build(QuotaPolicy.PARLAY, listOf("paid", "free"), book, now, pace)
+        assertEquals(listOf(KeyState.STANDBY, KeyState.ACTIVE), v.keys.map { it.state })
+        // With nothing paced the first key with credits is the one in use, as before.
+        assertEquals(listOf(KeyState.ACTIVE, KeyState.STANDBY), UsageViews.build(QuotaPolicy.PARLAY, listOf("paid", "free"), book, now).keys.map { it.state })
     }
 
     @Test
