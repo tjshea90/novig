@@ -464,7 +464,8 @@ object Diagnostics {
         for (by in listOf(com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MADE, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.SCANNER, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.EV)) {
             com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(bets, by).forEach { row ->
                 val group = kept.filter { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, by) == row.label }
-                o.appendLine("${by.label} ${row.label}: ${breakdownText(row.stats, closedCount(group, now))}")
+                val noun = if (by == com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MADE && row.label == com.tjshea.vigilant.data.tracker.BetOrBid.BID.group) "bid" else "bet"
+                o.appendLine("${by.label} ${row.label}: ${com.tjshea.vigilant.data.tracker.TrackerBreakdown.describe(row.stats, closedCount(group, now), noun)}")
             }
         }
 
