@@ -319,7 +319,8 @@ class AutoBetUiTest {
     fun `the Auto-bet tab says when CNO's list is limited to some games, and says nothing when it is not`() {
         show()
         compose.onAllNodesWithTag("autoBetCnoScope").assertCountEquals(0)
-        show(configure = { it.copy(cnoFilters = it.cnoFilters.copy(scope = CnoScope(leagues = setOf("NHL"), hideLive = true))) })
+        ui = ui.copy(settings = settings.copy(cnoFilters = settings.cnoFilters.copy(scope = CnoScope(leagues = setOf("NHL"), hideLive = true))))
+        compose.waitForIdle()
         compose.onNodeWithTag("autoBetCnoScope").performScrollTo()
             .assertTextContains("CrazyNinjaOdds' list is limited to: NHL · pregame only. The auto-bet only sees these games", substring = true)
     }
