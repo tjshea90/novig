@@ -405,6 +405,46 @@ class MakerUiTest {
         compose.onNodeWithTag("makerOddsRange").assertTextContains("nothing can pass both", substring = true)
     }
 
+    /** Tj, 2026-10-07: "include obscure bids as well ... prioritize ... popular ... first ... strict safeguards" - the switch and every safeguard are settings, each with a box. */
+    @Test
+    fun `quick and likely's small-market fill has a switch, a box for every safeguard, and says in words what it does with Tj's numbers`() {
+        val st = androidx.compose.runtime.mutableStateOf(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY))
+        compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
+        compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
+        fun show(tag: String) { compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag(tag)) }
+        fun type(tag: String, text: String) { show(tag); compose.onNodeWithTag(tag).performTextClearance(); compose.onNodeWithTag(tag).performTextInput(text); compose.waitForIdle() }
+        // On by default, with the rule in words and Tj's own numbers.
+        show("makerObscureFill")
+        compose.onNodeWithTag("makerObscureFill").assertIsOn()
+        show("makerObscureNote")
+        compose.onNodeWithTag("makerObscureNote").assertTextContains("only after every popular bid", substring = true)
+        compose.onNodeWithTag("makerObscureNote").assertTextContains("at least 3 books", substring = true)
+        // Every number has a box that sets exactly what was typed.
+        type("makerObscureMarginField", "7.5"); assertEquals(0.075, st.value.makerObscureMargin, 1e-9)
+        type("makerObscureSharpMinEvField", "4"); assertEquals(0.04, st.value.makerObscureSharpMinEv, 1e-9)
+        type("makerObscureAgreeField", "1.5"); assertEquals(0.015, st.value.makerObscureAgreePoints, 1e-9)
+        type("makerObscureMinBooksField", "4"); assertEquals(4, st.value.makerObscureMinBooks)
+        type("makerObscureStakeField", "40"); assertEquals(0.40, st.value.makerObscureStake, 1e-9)
+        // What was typed reaches the bid rules.
+        val r = MakerRules.of(st.value)
+        assertTrue(r.obscureFill)
+        assertEquals(listOf(0.075, 0.04, 0.015, 4, 0.40), listOf(r.obscureMargin, r.obscureSharpMinEv, r.obscureAgreePoints, r.obscureMinBooks, r.obscureStake))
+        // The note follows the numbers.
+        show("makerObscureNote")
+        compose.onNodeWithTag("makerObscureNote").assertTextContains("at least 4 books", substring = true)
+        // Off: the safeguards disappear and the rules carry no fill.
+        show("makerObscureFill")
+        compose.onNodeWithTag("makerObscureFill").performClick()
+        assertFalse(st.value.makerObscureFill)
+        compose.onNodeWithTag("makerObscureMarginField").assertDoesNotExist()
+        assertFalse(MakerRules.of(st.value).obscureFill)
+        // Not Quick & likely: neither the switch nor the safeguards are shown (they only mean something there).
+        val all = androidx.compose.runtime.mutableStateOf(settings)
+        compose.runOnUiThread { st.value = all.value }
+        compose.waitForIdle()
+        compose.onNodeWithTag("makerObscureFill").assertDoesNotExist()
+    }
+
     /** Tj, 2026-10-07: "make sure that the type of bids in the auto bids section are truly the type of bids most likely to be taken quickly, in other words, no strange props or small markets." */
     @Test
     fun `quick and likely hides the switches it overrides, and says what it keeps out`() {
