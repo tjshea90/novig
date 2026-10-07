@@ -465,6 +465,8 @@ class ApiBettingController(
                 toasts.tryEmit("Couldn't read Novig's fills: ${(e as? NovigApiException)?.advice ?: e.message ?: e.javaClass.simpleName}")
                 return@launch
             }
+            // A fill the sync added may be one of Vigilant's own bids: it reads as a bid in the Tracker from now on ([com.tjshea.vigilant.data.tracker.TrackedBet.isBid]).
+            if (report.added > 0) withContext(Dispatchers.IO) { runCatching { c.tracker.tagBids(c.makerStore.all().mapNotNullTo(HashSet()) { it.orderId }) } }
             toasts.tryEmit(
                 when {
                     report.added == 0 && report.unknown == 0 -> "The Tracker already has every bet Novig filled"
