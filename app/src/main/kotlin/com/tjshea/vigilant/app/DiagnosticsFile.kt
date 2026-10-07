@@ -119,7 +119,7 @@ object DiagnosticsFile {
         if (!o.endsWith("\n")) o.appendLine()
 
         connections(x, now, zone, o)
-        apiIssues(x, now, o)
+        apiIssues(x, now, zone, o)
         performance(s, x, o)
         counters(x, now, o)
         timeline(x, now, zone, o)
@@ -187,12 +187,18 @@ object DiagnosticsFile {
         }
     }
 
-    private fun apiIssues(x: Diagnostics.Extras, now: Long, o: StringBuilder) {
+    private fun apiIssues(x: Diagnostics.Extras, now: Long, zone: TimeZone, o: StringBuilder) {
+        // The counts are the connection log's: kept about two days, so a total here is not "now" (Tj's v0.70.1 file read a two-day count as the current state).
+        val since = x.net.sinceMs?.let { SimpleDateFormat("MMM d, h:mm a", Locale.US).apply { timeZone = zone }.format(Date(it)) } ?: "the app opened"
         o.appendLine()
-        o.appendLine("== API ISSUES (what the providers said back) ==")
+        o.appendLine("== API ISSUES (what the providers said back; every count is since $since, not today) ==")
         val hosts = x.net.hosts
         val limited = hosts.filter { it.value.limits > 0 }
         if (limited.isEmpty()) o.appendLine("No host has asked the app to slow down (no 429, no 403 with a Retry-After).")
+        // 451 is a refusal too (Novig judging the network's address or region), though no rate limit: counted here, with the hosts' own words.
+        hosts.entries.mapNotNull { (h, v) -> v.status["451"]?.takeIf { it > 0 }?.let { h to it } }.forEach { (h, n) ->
+            o.appendLine("$h: refused $n call${if (n == 1L) "" else "s"} with HTTP 451 (Novig's verdict on the network's address or region, not a rate limit; the app tries again after 2 minutes)")
+        }
         limited.forEach { (h, v) -> o.appendLine("$h: ${v.limits} rate-limit answers; last ${v.lastLimitAtMs?.let { Format.age(it, now) } ?: "?"}: ${v.lastLimit?.let(::clean)}") }
         val kinds = hosts.values.flatMap { it.kinds.entries }.groupBy({ it.key }, { it.value }).mapValues { it.value.sum() }
         o.appendLine("Calls that failed before an answer, by kind: " + kinds.entries.sortedByDescending { it.value }.joinToString(", ") { "${it.key} ${it.value}" }.ifEmpty { "none" })

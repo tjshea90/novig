@@ -194,13 +194,24 @@ class DiagnosticsFileTest {
     }
 
     @Test
-    fun `only the newest hundred and twenty warnings of the day are listed when there are more`() {
+    fun `only the newest two hundred and fifty warnings of the day are listed when there are more, and the file says how many were left out`() {
         val warnings = (1..300).map { Event(now - (400 - it) * 60_000L, "W", Level.WARN, "warning $it") }
         val infos = (1..100).map { Event(now - (100 - it) * 1_000L, "I", Level.INFO, "info $it") }
         val shown = DiagnosticsFile.timelineEvents(warnings + infos, now)
         assertEquals(DiagnosticsFile.MAX_IMPORTANT + DiagnosticsFile.MAX_RECENT, shown.size)
-        assertEquals("warning 181", shown.first().msg)
+        assertEquals("warning 51", shown.first().msg)
         assertEquals("info 100", shown.last().msg)
+        // Not silent: 300 warnings of the day, 250 listed (the file used to cut at 120 while its header said "every warning").
+        assertEquals(50, DiagnosticsFile.timelineLeftOut(warnings + infos, now))
+    }
+
+    @Test
+    fun `a 451 is counted as a refusal, and every count in API ISSUES says since when`() {
+        val novig = HostStat(calls = 500, errors = 0, status = mapOf("200" to 355L, "451" to 145L))
+        val issues = file(extras().copy(net = NetBook(mapOf("api.novig.com" to novig), now - 86_400_000L))).substringAfter("== API ISSUES").substringBefore("== PERFORMANCE")
+        assertTrue(issues, issues.contains("api.novig.com: refused 145 calls with HTTP 451"))
+        assertTrue(issues, issues.contains("every count is since "))
+        assertTrue(issues, issues.contains("No host has asked the app to slow down"))
     }
 
     @Test
