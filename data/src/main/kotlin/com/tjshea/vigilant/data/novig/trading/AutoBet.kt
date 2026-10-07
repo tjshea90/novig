@@ -149,8 +149,15 @@ object AutoBet {
     fun judge(rules: Rules, shownEv: Double, check: CnoBooks.Check, american: Int, kind: BetKind? = null): String? {
         if (kind != null && kind !in rules.kinds) return "${kind.label.lowercase()} aren't among the kinds of bet you auto-bet"
         if (shownEv < rules.minEv - 1e-9) return "its edge ${percent(shownEv)} is under your ${percent(rules.minEv)} minimum"
-        // A favorite needs more (Tj, 2026-10-07): the edge a short price keeps by the close is smaller. Said apart from the plain minimum so the report counts the two on their own.
-        if (shownEv < evBar(rules, american) - 1e-9) return "it is a favorite and its edge ${percent(shownEv)} is under the ${percent(evBar(rules, american))} favorites need"
+        // The bar a bet must clear (Tj, 2026-10-07, proposals 4 and 5): the minimum, and for a favorite more (the edge a short price keeps by the close is smaller), judged on the LOWER
+        // of CNO's edge and the app's own book check's (9 of 99 bets in the first three days had a check edge under 2.5% at a CNO edge over it). Said apart from the plain minimum so
+        // the report counts each on its own.
+        val own = check.ev
+        val bar = evBar(rules, american)
+        if (minOf(shownEv, own ?: shownEv) < bar - 1e-9) {
+            return if (own != null && own < shownEv - 1e-9) "the books' own check puts its edge at ${percent(own)}, under the ${percent(bar)} it needs (the lower of CNO's and the books' edge is used)"
+            else "it is a favorite and its edge ${percent(shownEv)} is under the ${percent(bar)} favorites need"
+        }
         if (shownEv > MAX_SANE_EV) return "its edge ${percent(shownEv)} is over ${percent(MAX_SANE_EV)}, which is usually a stale or mismatched price (place it by hand if you trust it)"
         // (No odds in the words: the report counts bets by reason, and each price would be a reason of its own.)
         if (tooLong(rules.maxOdds, american)) return "its odds are longer than your ${Odds.formatAmerican(rules.maxOdds)} limit"
@@ -182,12 +189,12 @@ object AutoBet {
      * odds of every bet. [sharpFair]: the sharpest book's own fair for this side when its veto priced the bet; the Kelly fair is never above it
      * (RESEARCH.md §72: what a bet keeps is about the sharp book's edge, and Kelly on an edge overestimated by more than 2× loses money: Benter).
      */
-    fun stake(rules: Rules, row: CnoRow, bankroll: Double, balance: Double, sharpFair: Double? = null): Stake {
+    fun stake(rules: Rules, row: CnoRow, bankroll: Double, balance: Double, sharpFair: Double? = null, checkFair: Double? = null): Stake {
         if (balance < MIN_STAKE - 1e-9) return Stake.WalletEmpty
         val wanted = when (rules.stake) {
             AutoBetStake.ONE_DOLLAR -> 1.0
             AutoBetStake.CUSTOM -> rules.customStake
-            else -> kellyStake(row, bankroll, rules.stake.kelly ?: return Stake.Skip("no Kelly fraction"), sharpFair) ?: return Stake.Skip("it has no Kelly stake (no edge at this price, or its fair odds are missing, or no bankroll is set)")
+            else -> kellyStake(row, bankroll, rules.stake.kelly ?: return Stake.Skip("no Kelly fraction"), sharpFair, checkFair) ?: return Stake.Skip("it has no Kelly stake (no edge at this price, or its fair odds are missing, or no bankroll is set)")
         }
         return cap(rules, wanted, balance)
     }
@@ -212,10 +219,11 @@ object AutoBet {
      * The Kelly stake in dollars at [fraction] of full Kelly; null when there's no edge, no fair probability or no bankroll. The fair is CNO's, or
      * [sharpFair] (the sharpest book's own) when that is lower: never more than the sharp book backs.
      */
-    fun kellyStake(row: CnoRow, bankroll: Double, fraction: Double, sharpFair: Double? = null): Double? {
+    fun kellyStake(row: CnoRow, bankroll: Double, fraction: Double, sharpFair: Double? = null, checkFair: Double? = null): Double? {
         if (!(bankroll > 0.0)) return null
         val cno = CnoChecks.fairProbability(row) ?: return null
-        val fair = if (sharpFair != null && sharpFair > 0.0 && sharpFair < cno) sharpFair else cno
+        // The lowest of the three fairs: CNO's, the sharpest book's and the app's own book check's (Tj, 2026-10-07: size on the lower edge too, not only gate on it).
+        val fair = listOfNotNull(cno, sharpFair?.takeIf { it > 0.0 }, checkFair?.takeIf { it > 0.0 }).min()
         val price = 1.0 / Odds.americanToDecimal(row.odds)
         val stake = EvMath.suggestedStake(EvQuote(fair, price, 0.0), bankroll, fraction, row.available)
         return stake.takeIf { it > 0.0 }

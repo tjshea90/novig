@@ -232,7 +232,7 @@ class AutoBettor(
             val row = item.pick.row
             // A Kelly stake is never sized on more edge than the sharpest book backs (its own fair, where its veto priced the bet: RESEARCH.md §72).
             val sharpFair = vetoSaid[row.key]?.takeIf { v -> vetoOn && v.verdict == SharpVeto.Verdict.PASSED }?.fair
-            val stake = when (val s = AutoBet.stake(rules, item.shown.row, settings.bankroll, balance, sharpFair)) {
+            val stake = when (val s = AutoBet.stake(rules, item.shown.row, settings.bankroll, balance, sharpFair, item.check.fairProbability)) {
                 is AutoBet.Stake.WalletEmpty -> { walletEmpty = true; stopped = "the wallet has ${money(balance)}, under a cent"; break }
                 is AutoBet.Stake.Skip -> { skip(s.reason); continue }
                 is AutoBet.Stake.Amount -> s.dollars
