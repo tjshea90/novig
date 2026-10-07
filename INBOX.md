@@ -5366,3 +5366,8 @@ Make the app bet logging differentiate from bets and bids if it doesn't already 
 ```
 See if it is possible to make auto bids using only the cno scanner with vigilant scanner turned off. For example, find positive EV bids based on bets from cno and make bids for them automatically. Is this plausible?
 ```
+
+## 2026-10-07T20:19:36Z
+```
+Also if auto bid is turned on using vigilant scanner, I want an option for the auto bet feature to only use the cno scanner
+```
