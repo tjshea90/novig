@@ -30,7 +30,8 @@ class QuickBidFilterTest {
         fair = fair, fairAsOfMs = now - 30_000, fairOld = false, books = books, offer = 0.55, bestBid = null, live = false, source = BetTracker.SOURCE_VIGILANT,
     )
 
-    private fun quick(s: ScanSettings = ScanSettings()) = MakerRules.of(s.copy(makerFocus = BidFocus.QUICK_LIKELY))
+    /** Quick & likely with the small-market fill OFF: the popular-only filters as they were (tier A). [ObscureFillTest] is the fill. */
+    private fun quick(s: ScanSettings = ScanSettings()) = MakerRules.of(s.copy(makerFocus = BidFocus.QUICK_LIKELY, makerObscureFill = false))
 
     private fun skipped(l: MakerLine, r: MakerRules): String? = (MakerQuote.precheck(l, r, now) as? MakerQuote.Pre.No)?.skip?.why
 
