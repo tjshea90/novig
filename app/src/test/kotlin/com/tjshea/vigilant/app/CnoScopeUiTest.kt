@@ -226,5 +226,7 @@ class CnoScopeUiTest {
         settingsPage(ScanSettings(scanner = ScannerMode.CNO, cnoFilters = CnoFilters(scope = CnoScope(leagues = setOf("NHL", "WNBA"), kinds = setOf(BetKind.PROP), minLiquidity = 50, propsPerGame = 4))))
         compose.onNodeWithText(CnoScopeText.TITLE, ignoreCase = true).performScrollTo()
         compose.onRoot().captureRoboImage("screenshots/5r_settings_cno_which_games.png")
+        compose.onNodeWithTag("cnoPropsPerGameField").performScrollTo()
+        compose.onRoot().captureRoboImage("screenshots/5r_settings_cno_which_games_more.png")
     }
 }
