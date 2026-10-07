@@ -1,0 +1,291 @@
+{
+ "label": "verify-6-feasibility",
+ "lens": "APP FEASIBILITY AND SAFETY",
+ "rule": "R7 Wait-and-confirm: after an R1 trigger wait 5 minutes and buy only if the bet is still listed with EV still at least 2.5% (NO GAIN)",
+ "survives": false,
+ "reason": "Fails on feasibility and on what it can honestly claim. (1) It is not a setting: AutoBettor.run is stateless per cycle (its only memory is the refusal cooldown map), so R7 is a new feature (a first-passed time per bet, a hold, a ScanSettings/PresetRules field, tests). (2) The 77 'confirmed' bets are not bets the app can place: re-judged with the auto-bet's own criteria at the confirm moment only 24 of 77 (31%) pass (18 are not in the app's own CNO list at that time, only the study's wide read or the Vigilant scan lists them; 11 have no book check; 9 have under 3 books agreeing; 5 a book check older than 5 min; 4 odds outside -200/+130; 2 vetoed ...). So the builder's 34 bets a day is about 10.6 a day on the app's machinery, and at the app's real volume (about 28 CNO auto-bets a day) R7 would cut it by about 63%: only 23 of the 63 auto-bets matched to the study (58 CNO, 5 Vigilant scan) were still listed with EV >= 2.5% 5 minutes after it bought them. (3) No cap binds (idealised R7 uses 12% of the $500 day, app-feasible 4%; biggest game $26.74 of $70), so every dropped bet is forgone edge: expected CLV dollars a day fall from about $3.66 to $1.76 (idealised) and from $1.63 to $0.78 (app-feasible); the 107 bets R7 drops still beat the close by +2.36% on 64 closes. (4) The gain cannot be evaluated cleanly: 25 of 77 (32%) have no close (24 props, 22 never placed); of the 52 closes 38 are Tracker closes (the app's own CNO-books read near the start, 63 of the 75 Tracker closes across R1 are labelled CNO's books: the same source as the EV the rule confirms) at +4.14%, and the 14 independent closes (Novig trades, Pinnacle) are -0.35% [-1.51,+1.13] against +1.43% on 27 for the unconfirmed: gap -1.78 pts [-3.69,-0.03]. Confirmed has 73% Tracker closes against 58% for unconfirmed: adjusted for close source the gap is -0.07 pt [-2.12,+1.31]. The raw gap is +0.41 pt [-1.59,+1.83], p(<=0) 0.37. (5) It does not loosen any safety limit (it is a pure tightening) and uses no look-ahead or closing line, which is why the verdict rests on points 1-4, not on safety.",
+ "numbers_reproduced": "Re-implemented from the expr with the shared loader (own code). R1: 184 bets, 44 games, 116 closes/40 games, CLV +2.54% [+1.77,+3.52]. R7 after 5 min: 53 not listed by any source, 18 with under 2 minutes to the start at T, 36 listed under 2.5%, 77 confirmed (the builder splits the same 71 as 55 dropped + 16 past start; total identical). Confirmed: 77 bets, 28 games, 52 closes/25 games, CLV +2.93% [+1.92,+3.79] (builder 0.029316, CI +1.99..+3.81: identical point value; my CI differs by the bootstrap draw), same bets at their trigger price +2.77% (identical to the builder's baseline 0.027686), not confirmed 107 bets/38 games, 64 closes +2.36% [+1.13,+3.99]; raw gap +0.41 pt [-1.59,+1.83], p(<=0) 0.37 (builder +0.41 [-1.68,+1.81], 0.36). Per day 34.1 (77 over 2.256 study days). Halves: builder-style split by decision day (Oct 3 | Oct 4+) +2.32% on 9 closes/7 games | +3.06% on 43 closes/18 games (identical to the builder); the loader's date split (cut Oct 4) H1 58 bets/25 games/46 closes +2.80% [+1.74,+3.73], H2 19 bets/4 games/6 closes/3 games +3.95% (3 games: carries no weight); confirmed minus not-confirmed is +0.5 pt in H1 and +0.6 pt in H2 (6 vs 12 closes). Luck: random 77-of-184 subsets reach +2.77% with p 0.29 (+2.93% p 0.18), within-game label shuffle p 0.11. All match the builder; the rule reproduces and shows no gain.",
+ "evidence": {
+  "study_days": 2.256,
+  "machinery": {
+   "is_a_setting": false,
+   "needed_change": "new state in app/.../AutoBettor.kt run() (the judge loop near lines 172-181; the only memory today is `cooldown`, line 125, for refused bets): a first-passed time per CnoRow.key, skip while now - first < 5 min, drop the key when a cycle no longer passes, then re-judge at the live Novig price with PRICE_TOLERANCE as today; plus a ScanSettings field, PresetRules and Presets summary, migration, tests. data/.../AutoBet.judge() is pure and has no time dimension.",
+   "book_check_gate": "AutoScan.kt AUTO_BET_CHECK_TOP = 10 (line 473): only the 10 best candidates get a book page read, re-read after 4 min; a read older than Freshness.MAX_QUOTE_AGE_MS (5 min) drops the bet from cnoChecked. A held bet that falls out of the top 10 during the wait cannot pass.",
+   "wide_read_is_study_only": "CnoFeed.readWide is called only from StudySync.kt (line 44): 'Never shown in the app'. The app's auto-bet reads the CNO list under Tj's filters plus Novig's live price plus the book check.",
+   "min_lead": "the app's MIN_LEAD_MS is 60 s (AutoBettor.kt line 711); the rule used 2 min",
+   "limits_loosened": "none: R7 only adds a condition; judge(), PRICE_TOLERANCE 0.03, pregame only, MAX_PER_CYCLE 5, per-day $500, per-game $70, halt on a lost order, sharp veto, trap guard all stay. Safe only if it buys at the live price at confirm time, never at the earlier price."
+  },
+  "idealised_R7_vs_R1": {
+   "R1": {
+    "bets": 184,
+    "games": 44,
+    "per_day": 81.6,
+    "stake_per_day_usd": 143.8,
+    "mean_stake_usd": 1.76,
+    "daily_cap_use_pct": 28.8,
+    "max_game_stake_usd": 55.69,
+    "games_over_70": 0,
+    "bets_per_game_max": 33
+   },
+   "R7": {
+    "bets": 77,
+    "games": 28,
+    "per_day": 34.1,
+    "stake_per_day_usd": 60.1,
+    "mean_stake_usd": 1.76,
+    "daily_cap_use_pct": 12.0,
+    "max_game_stake_usd": 26.74,
+    "games_over_70": 0,
+    "bets_per_game_max": 15,
+    "share_stake_limited_by_available": 0.052,
+    "median_available_usd_at_confirm": 28.0,
+    "median_available_usd_at_trigger": 37.0
+   },
+   "stake_rule": "1/4 Kelly on the bankroll setting at the look's price and CNO fair, capped at $3.50 a bet and at the dollars available at the price",
+   "expected_clv_usd_per_day": {
+    "R1": 3.66,
+    "R7": 1.76,
+    "dropped_by_R7": 2.01
+   }
+  },
+  "app_can_place_at_confirm_time": {
+   "of_77_confirmed": 24,
+   "refused_by_unchanged_rules": {
+    "not_in_app_list": 18,
+    "no_book_check": 11,
+    "under_3_books_agree": 9,
+    "book_check_older_than_5min": 5,
+    "odds_outside_-200_to_+130": 4,
+    "kind_not_prop_ml_spread": 2,
+    "sharp_veto": 2,
+    "ev_low": 1,
+    "under_2_books_two_sided": 1
+   },
+   "confirmed_listed_only_by_wide_or_vigilant_at_T": 18,
+   "confirmation_look_age_min": {
+    "older_than_2": 37,
+    "older_than_3": 30,
+    "max": 5.0
+   },
+   "price_unchanged_over_the_5_minutes": 0.909,
+   "mean_ev_at_trigger_pct": 3.39,
+   "mean_ev_at_confirm_pct": 3.43,
+   "R1_triggers_passing_app_criteria_at_trigger": 40,
+   "of_which_still_passing_5_min_later": 15
+  },
+  "app_feasible_variant_first_app_eligible_trigger": {
+   "definition": "first moment the bet is in the app's CNO list with EV 2.5-15%, a book check no older than 5 min with 2+ books two-sided, 3+ agreeing, no sharp veto, kind prop/moneyline/spread, odds -200..+130, 1 min..6 h to the start; R7 = still passing 5 min later",
+   "triggers": 62,
+   "games": 24,
+   "per_day": 27.5,
+   "matches_actual_auto_bet_volume_per_day": 27.9,
+   "all_clv": {
+    "closes": 59,
+    "clv_pct": 3.2,
+    "ci_pct": [
+     2.63,
+     3.88
+    ]
+   },
+   "confirmed": {
+    "bets": 24,
+    "games": 14,
+    "per_day": 10.6,
+    "stake_per_day_usd": 19.8,
+    "daily_cap_use_pct": 4.0,
+    "max_game_stake_usd": 7.73,
+    "clv_at_confirm_price_pct": 3.95,
+    "ci_pct": [
+     3.18,
+     4.7
+    ],
+    "clv_at_trigger_price_pct": 3.84,
+    "tracker_closes": 20,
+    "independent_closes": 4,
+    "independent_clv_pct": 0.18
+   },
+   "not_confirmed": {
+    "bets": 38,
+    "games": 17,
+    "closes": 35,
+    "clv_pct": 2.76,
+    "ci_pct": [
+     1.85,
+     3.9
+    ],
+    "independent_closes": 8,
+    "independent_clv_pct": 0.51
+   },
+   "gap_pts": 1.09,
+   "gap_ci_pts": [
+    -0.4,
+    2.28
+   ],
+   "p_gap_le_0": 0.077,
+   "not_in_list_at_5min": 27,
+   "of_which_back_in_list_later": 7,
+   "ev_low_at_5min": 7,
+   "too_close": 3,
+   "expected_clv_usd_per_day": {
+    "at_trigger": 1.63,
+    "R7": 0.78,
+    "dropped_by_R7": 0.85
+   },
+   "R1_trigger_based_cross_check": {
+    "app_passing": 40,
+    "games": 17,
+    "confirmed": 15,
+    "confirmed_clv_pct": 3.7,
+    "not_confirmed": 25,
+    "not_confirmed_clv_pct": 2.39
+   },
+   "why_not_credible": "20 of 24 confirmed closes are Tracker closes (CNO's own books near the start); the 4 independent closes are +0.18% against +0.51% on 8; the bets the app really placed show the opposite sign (below); 522 variants were tried."
+  },
+  "what_actually_happened_to_placed_bets": {
+   "auto_placed_since_study_start": 80,
+   "of_which_cno": 63,
+   "of_which_vigilant_scan": 17,
+   "auto_cno_per_day": 27.9,
+   "matched_auto_bets": 63,
+   "matched_auto_cno": 58,
+   "matched_auto_vigilant_scan": 5,
+   "would_be_confirmed_5min_after_placement": 23,
+   "share": 0.365,
+   "not_confirmed_because": {
+    "not_listed_in_app_list": 29,
+    "listed_but_ev_under_2.5": 9,
+    "under_2_min_to_start": 2
+   },
+   "stake_total_usd": 108.52,
+   "stake_on_confirmed_usd": 40.62,
+   "auto_clv_confirmed_pct": 1.42,
+   "auto_clv_confirmed_closes": 21,
+   "auto_clv_not_confirmed_pct": 2.48,
+   "auto_clv_not_confirmed_closes": 39,
+   "auto_gap_pts": -1.05,
+   "auto_gap_ci_pts": [
+    -3.93,
+    1.23
+   ],
+   "hand_placed_matched": 58,
+   "hand_confirmed": 19,
+   "hand_clv_confirmed_pct": 3.94,
+   "hand_clv_not_confirmed_pct": 1.37,
+   "pooled_121_placed_gap_pts": 0.65,
+   "pooled_gap_ci_pts": [
+    -2.32,
+    2.65
+   ],
+   "pooled_confirmed": 40,
+   "pooled_not_confirmed": 72,
+   "reading": "opposite signs in auto and hand-placed bets; the pooled gap is noise"
+  },
+  "closes": {
+   "R7_77_no_close": 25,
+   "no_close_kinds": {
+    "PROP": 24,
+    "TOTAL": 1
+   },
+   "no_close_never_placed": 22,
+   "R7_closes_by_source": {
+    "tracker": 38,
+    "novig_trades": 13,
+    "pinnacle": 1
+   },
+   "tracker_close_is": "the app's own re-read of CNO's books before the start for a bet Tj/auto also placed (63 of the 75 Tracker closes across R1 say CNO's books): not independent of the CNO EV the rule confirms",
+   "clv_tracker_pct": 4.14,
+   "clv_tracker_ci_pct": [
+    3.22,
+    4.95
+   ],
+   "clv_independent_pct": -0.35,
+   "clv_independent_closes": 14,
+   "clv_independent_games": 11,
+   "clv_independent_ci_pct": [
+    -1.51,
+    1.13
+   ],
+   "clv_independent_close_ok_pct": -0.26,
+   "close_ok_closes": 12,
+   "clv_close_ok_all_pct": 3.08,
+   "close_ok_n": 50,
+   "R1_independent_pct": 0.82,
+   "R1_independent_n": 41,
+   "unconfirmed_independent_pct": 1.43,
+   "unconfirmed_independent_n": 27,
+   "gap_independent_pts": -1.78,
+   "gap_independent_ci_pts": [
+    -3.69,
+    -0.03
+   ],
+   "tracker_share_of_closes": {
+    "confirmed": 0.731,
+    "not_confirmed": 0.578
+   },
+   "gap_adjusted_for_close_source_pts": -0.07,
+   "gap_adjusted_ci_pts": [
+    -2.12,
+    1.31
+   ]
+  },
+  "listing_noise": {
+   "continuous_listing_confirm": {
+    "bets": 65,
+    "closes": 44,
+    "games": 22,
+    "clv_pct": 2.71,
+    "ci_pct": [
+     1.66,
+     3.7
+    ]
+   },
+   "next_qualifying_look_at_or_after_5min": {
+    "bets": 69,
+    "closes": 47,
+    "clv_pct": 3.11,
+    "ci_pct": [
+     2.13,
+     4.31
+    ],
+    "same_bets_at_trigger_pct": 2.56,
+    "median_wait_min": 6.0,
+    "share_wait_over_10min": 0.275
+   },
+   "dropped_at_T_listed_again_later": {
+    "of_dropped": 53,
+    "back": 21
+   }
+  },
+  "luck_check": {
+   "random_77_of_184_p": 0.29,
+   "at_T_price_p": 0.18,
+   "within_game_label_shuffle_p": 0.11,
+   "builder_perm_p": 0.14
+  },
+  "what_would_settle_it": {
+   "sd_clv_per_bet_pct": 3.77,
+   "icc_within_game": -0.006,
+   "closes_per_arm_for_gap": {
+    "0.5pt": 893,
+    "1.0pt": 223,
+    "1.5pt": 99
+   },
+   "independent_closes_per_arm_for_gap": {
+    "0.5pt": 724,
+    "1.0pt": 181,
+    "1.5pt": 80
+   },
+   "independent_closes_per_day_in_R1": 18.2,
+   "days_for_1pt_on_independent_closes": 20
+  }
+ },
+ "caveats": [
+  "Every number is from about 2.26 days of first-looks; the second date half of R7 is 4 games (3 with closes) and carries no weight.",
+  "My app-eligibility replay (app_ok) approximates the auto-bet's judge() from the study's looks (list look, book-check look, kind, odds, EV band, 6 h window); it is validated by volume (62 eligible triggers = 27.5 a day against 27.9 a day for the 63 CNO auto-bets actually placed since the study began) but not by bet-for-bet identity: 48 of the 62 were placed by Tj or the auto-bet.",
+  "The app-feasible variant shows a +1.09 pt gap (p 0.08, CI -0.40..+2.28) in R7's favour. It is not corroborated: 20 of 24 closes are Tracker closes, 4 independent closes show +0.18% vs +0.51%, and the real auto-bets show -1.05 pts. With 522 variants tried it is a candidate for a shadow test, not a rule.",
+  "The 5-minute placement check on real bets uses the study's looks (a look at least every 5 minutes while listed), so 'still listed' is known to within a few minutes; 21 of 53 'dropped' bets reappear later, so the list state is noisy (CNO's 100-row limit, read gaps).",
+  "Stakes use 1/4 Kelly at the look's price and CNO's fair, capped at $3.50 and at the dollars available; the real auto-bet also applies the sharp veto's fair and per-game exposure, so real stakes can only be smaller.",
+  "Independent closes are 14 (11 games) for R7 and 41 for R1: too few to call the -1.78 pt gap real; it says only that the confirmation signal has no independent support.",
+  "Proposal for Tj, not an action: if he wants the persistence idea tested, log a 'would have confirmed at +5 min' flag in the study (the looks already carry it) and revisit with about 180 independent closes per arm (about 20 days at the current pace); do not build the hold into the auto-bet now."
+ ]
+}
