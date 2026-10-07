@@ -149,13 +149,27 @@ class AppRecorderTest {
 
     @Test
     fun `the +EV tab's words for a Low API usage scan that had nothing to read`() {
-        val auto = com.tjshea.vigilant.app.ui.LowUsageText.nothingToRead(com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO)
+        val LU = com.tjshea.vigilant.app.ui.LowUsageText
+        val auto = LU.nothingToRead(com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO, 6, 0)
         assertTrue(auto, auto.contains("starts in the next 6 hours") && auto.contains("spent nothing") && auto.contains("every few minutes"))
-        assertTrue(com.tjshea.vigilant.app.ui.LowUsageText.nothingToRead(10).contains("every 10 min at most"))
-        assertTrue(com.tjshea.vigilant.app.ui.LowUsageText.TAB_NOTE.contains("Bids tab"))
-        // Tj, 2026-10-06: "I also set the scan to any time instead of next 6 hours and it still did the one second scan": the mode's window is its own rule, and the screen says so.
-        assertTrue(com.tjshea.vigilant.app.ui.LowUsageText.TAB_NOTE.contains("Starts within: Any time does not widen it"))
-        assertTrue(auto, auto.contains("Starts within: Any time does not widen it"))
+        assertTrue(LU.nothingToRead(10, 6, 0).contains("every 10 min at most"))
+        assertTrue(LU.tabNote(6, 0).contains("Bids tab"))
+        // Tj, 2026-10-06: "I also set the scan to any time instead of next 6 hours and it still did the one second scan": the screen says what sets the window. Since 2026-10-07 that is
+        // the trap guard's hours, not a fixed 6: the words carry the hours the scan really reads.
+        assertTrue(LU.tabNote(6, 0).contains("reads 6 hours ahead") && LU.tabNote(6, 0).contains("trap guard"))
+        assertTrue(LU.tabNote(8, 0).contains("reads 8 hours ahead"))
+        assertTrue(LU.nothingToRead(com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO, 8, 0).contains("starts in the next 8 hours"))
+        assertTrue(LU.tabNote(6, 3).contains("Starts within 3 h is shorter right now"))
+        assertFalse(LU.tabNote(6, 0).contains("Starts within"))
+        assertFalse(LU.tabNote(6, 12).contains("is shorter right now"))
+        // From the settings: the trap guard's hours, Off = the ordinary reach.
+        val on = com.tjshea.vigilant.data.scanner.ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, maker = true)
+        assertTrue(LU.tabNote(on).contains("reads 6 hours ahead"))
+        assertTrue(LU.tabNote(on.copy(trapEarlyHours = 0, daysAhead = 2)).contains("reads 48 hours ahead"))
+        // The scan line says the mode's own hours.
+        val none = com.tjshea.vigilant.data.scanner.ScanResult(emptyList(), emptyList(), com.tjshea.vigilant.data.scanner.ScanStats(23, 0, 0, 0, 0, 152), 0L)
+        val empty = report(timing = ScanTiming(totalMs = 400)).copy(result = none, booksFetched = 0, booksViaKey = 0)
+        assertTrue(AppRecorder.scanLine(empty, lowUsage = true, lowUsageHours = 8).contains("in the next 8 h, so no feed was asked"))
     }
 
     // ---- CNO's pause and Tj's switches ---------------------------------------------------------------------------------------
