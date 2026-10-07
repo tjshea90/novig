@@ -954,6 +954,12 @@ data class ScanSettings(
         /** [makerMaxOdds]' choices (0 = no limit); a typed amount of +100 or more is also allowed. */
         val MAKER_MAX_ODDS_CHOICES = listOf(100, 110, 120, 130, 140, 150, 175, 200, 250, 300, 0)
 
+        /** The shortest-odds chips every odds setting shares (0 = no limit; negative = nothing shorter than it; +100 = underdogs and even money only); any other value is typed. */
+        val SHORTEST_ODDS_CHOICES = listOf(0, -300, -250, -200, -150, 100)
+
+        /** [makerMinOdds]' chips. */
+        val MAKER_MIN_ODDS_CHOICES = SHORTEST_ODDS_CHOICES
+
         /** [autoBetMaxOdds]' choices (0 = no limit); a typed amount of +100 or more is also allowed. */
         val AUTO_BET_MAX_ODDS_CHOICES = listOf(100, 110, 120, 130, 150, 200, 300, 0)
 
