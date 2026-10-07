@@ -116,7 +116,7 @@ class PropGuardTest {
     fun `only the last 24 hours count`() {
         val old = List(10) { placed(sog, "g$it", agoH = 30.0) }
         assertNull("30 hours ago is not in the window: no sample, no share", PropGuard.judge(rules, old, sog, "new", now))
-        val mixed = List(6) { placed(yards, "o$it") } + List(2) { placed(sog, "s$it", agoH = 23.0) }
+        val mixed = List(6) { placed("NFL|STAT$it", "o$it") } + List(2) { placed(sog, "s$it", agoH = 23.0) }
         assertNotNull("23 hours ago is", PropGuard.judge(rules, mixed, sog, "new", now))
     }
 
