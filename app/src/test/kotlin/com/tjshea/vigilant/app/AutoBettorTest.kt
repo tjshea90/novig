@@ -126,7 +126,7 @@ class AutoBettorTest {
 
     /** On, CNO scanning in the background, 3 books agreeing, 3% edge, 2 books both sides, $1 a bet; the trap guard off (the sample games are 8 h+ off: TrapGuardAppTest). */
     private fun settings(f: (ScanSettings) -> ScanSettings = { it }) =
-        f(ScanSettings(autoBet = true, autoScan = AutoScanMode.CNO, autoBetBooks = 3, autoBetMinEv = 0.03, autoBetTwoSided = 2, autoBetStake = AutoBetStake.ONE_DOLLAR, autoBetMaxStake = 10.0, apiMaxPerDay = 50.0, trapEarlyHours = 0))
+        f(ScanSettings(autoBet = true, autoScan = AutoScanMode.CNO, autoBetBooks = 3, autoBetMinEv = 0.025, autoBetTwoSided = 2, autoBetStake = AutoBetStake.ONE_DOLLAR, autoBetMaxStake = 10.0, apiMaxPerDay = 50.0, trapEarlyHours = 0))
 
     /** Jefferson Under 69.5 (+117, 5.8% EV, 3 of 3 books agree) with Novig's price read 5 s ago, as a background cycle leaves it. */
     private fun state(s: ScanSettings = settings(), row: CnoRow = jefferson, live: LivePrice? = LivePrice(117, 88.0, 0.0584, now - 5_000, "mkt", "out-jj")): UiState {
