@@ -85,6 +85,8 @@ class AutoBettor(
     private val failBackoffMs: Long = FAIL_BACKOFF_MS,
     /** A Novig market's newest trades (public, one request): what the trap guard's move rule reads before a game line is bet ([TrapGuard.move]). */
     private val recentTrades: suspend (String) -> List<TrapGuard.Trade> = { id -> withContext(Dispatchers.IO) { c.novig.trades(id) } },
+    /** The injury reports as they are now: a bet on a player they say is out is never placed ([com.tjshea.vigilant.data.reference.PlayerOut]; Tj, 2026-10-07). */
+    private val injuries: () -> com.tjshea.vigilant.data.reference.InjuryBook = { c.injuries.book.value },
 ) {
 
     /** What the last [run] did, for Settings, Diagnostics and the tests. */
@@ -175,7 +177,8 @@ class AutoBettor(
                 item.pick.live || startsAt == null || startsAt - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 item.live == null -> skip("no Novig price read in the last minute")
                 (cooldown[row.key] ?: 0L) > now -> skip("tried a moment ago")
-                else -> AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet))?.let(::skip)
+                else -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(injuries(), row, now, state.teams[row.key])?.let(::skip)
+                    ?: AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet))?.let(::skip)
                     ?: sharpReason(item, settings, state, now)?.let(::skip)
                     ?: passing.add(item)
             }
@@ -326,7 +329,8 @@ class AutoBettor(
             when {
                 (cooldown[o.key] ?: 0L) > judgedAt -> skip("tried a moment ago")
                 TrapGuard.isEarly(o.event.startsTs, judgedAt, settings.trapEarlyHours) -> skip(TrapGuard.earlyReason(settings.trapEarlyHours))
-                else -> PinnacleBet.judge(rules, o, judgedAt, maxAge)?.let(::skip) ?: passing.add(o)
+                else -> com.tjshea.vigilant.data.reference.PlayerOut.forOpportunity(injuries(), o, judgedAt)?.let(::skip)
+                    ?: PinnacleBet.judge(rules, o, judgedAt, maxAge)?.let(::skip) ?: passing.add(o)
             }
         }
         if (passing.isEmpty()) {
