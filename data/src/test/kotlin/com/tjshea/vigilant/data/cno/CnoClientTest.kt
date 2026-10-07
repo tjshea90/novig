@@ -250,7 +250,7 @@ class CnoClientTest {
         assertEquals("\$50", posted(form(server.takeRequest()), "TextBoxMinimumLiquidity"))
         server.enqueue(MockResponse().setBody(CnoFixtures.page(liquidity = "\$200")))
         server.enqueue(reply())
-        val other = CnoClient(okhttp3.OkHttpClient(), clock = { now }, pace = CnoPace(0), bulkPace = CnoPace(0))
+        val other = CnoClient(OkHttpClient(), clock = { now })
         other.fetch(server.url("/site/tools/positive-ev.aspx?site_id=17").toString(), CnoFilters(scope = CnoScope(minLiquidity = 50)))
         server.takeRequest()
         assertEquals("the link's \$200 is stricter", "\$200", posted(form(server.takeRequest()), "TextBoxMinimumLiquidity"))
