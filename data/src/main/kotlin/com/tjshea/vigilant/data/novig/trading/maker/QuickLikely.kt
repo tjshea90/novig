@@ -2,6 +2,7 @@ package com.tjshea.vigilant.data.novig.trading.maker
 
 import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.BidFocus
+import com.tjshea.vigilant.data.scanner.LowUsageBids
 import com.tjshea.vigilant.data.scanner.ScanSettings
 
 /**
@@ -81,15 +82,18 @@ object QuickLikely {
      */
     fun obscureNote(s: ScanSettings): String {
         fun pct(v: Double) = String.format(java.util.Locale.US, "%.2f", v * 100).trimEnd('0').trimEnd('.') + "%"
-        return "When the popular bids don't use all the money you allow, small markets (a kind takers rarely trade, or a line few books price) get bids too: only after every popular bid, " +
+        val low = LowUsage.on(s)
+        // Low API usage prices a line from the 2-3 books picked, so a line can hold at most that many: the count is clamped to them ([LowUsage.narrow]).
+        val minBooks = if (low) s.makerObscureMinBooks.coerceIn(LowUsage.MIN_BOOKS, maxOf(LowUsage.MIN_BOOKS, LowUsageBids.books(s).size)) else s.makerObscureMinBooks
+        return "When the popular bids don't use all the money you allow, small markets (a kind takers rarely trade" + (if (low) "" else ", or a line few books price") + ") get bids too: only after every popular bid, " +
             "only where a sharp book prices the line both ways, with every sharp book giving the bid at least ${pct(s.makerObscureSharpMinEv)} on its own, the sharp books and the blend within " +
-            "${pct(s.makerObscureAgreePoints)} of each other, at least ${s.makerObscureMinBooks} books pricing the line, the bid at least ${pct(s.makerObscureMargin)} under the fair, and " +
+            "${pct(s.makerObscureAgreePoints)} of each other, at least $minBooks books pricing the line" + (if (low) " (of the ${LowUsageBids.books(s).size} you picked)" else "") + ", the bid at least ${pct(s.makerObscureMargin)} under the fair, and " +
             "${pct(s.makerObscureStake)} of a popular bid's stake. A small-market bid comes down to make room when a popular bid is waiting. The Bids tab and Diagnostics count them apart."
     }
 
-    /** The line Diagnostics adds to the bids' settings: whether small markets fill the rest, and under which safeguards. Empty outside Quick & likely. */
+    /** The line Diagnostics adds to the bids' settings: whether small markets fill the rest, and under which safeguards. Empty outside Quick & likely and Low API usage. */
     fun diagnosticsNote(s: ScanSettings): String {
-        if (!on(s)) return ""
+        if (!on(s) && !LowUsage.on(s)) return ""
         fun pct(v: Double) = String.format(java.util.Locale.US, "%.2f", v * 100).trimEnd('0').trimEnd('.') + "%"
         return if (!s.makerObscureFill) " (small-market fill: off)" else
             " (small-market fill: on · ${pct(s.makerObscureMargin)} under the fair · sharp books ≥${pct(s.makerObscureSharpMinEv)} and within ${pct(s.makerObscureAgreePoints)} · ${s.makerObscureMinBooks}+ books · ${pct(s.makerObscureStake)} of the stake)"
