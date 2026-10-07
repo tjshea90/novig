@@ -21,7 +21,7 @@ email removed. Probing with Tj's key spends his credits: say what a probe costs 
 
 ParlayAPI is The Odds API's format (`/v1/sports/{sport_key}/odds`, the same sport keys) plus a lot more: a whole league's player props in
 one call, Pinnacle's closing lines, prediction markets, injuries, period markets, line movement, and its own +EV tools. Auth is the
-`X-API-Key` header. Tj is on the **$5 Starter plan: 20,000 credits a calendar month (UTC), no per-second cap, 7 days of history**. Vigilant
+`X-API-Key` header. Tj is on the **$5 Starter plan: 20,000 credits a calendar month (UTC), no per-second cap, 7 days of history**, plus any free keys he adds (1,000 a month each, used after it; §4a). Vigilant
 uses it for scans (game lines and props from Pinnacle, ProphetX, BetOnline, bet365, Bovada and the US books), Pinnacle's closing lines for
 CLV, the key's own credit count for the meter, and (since v0.29.0) as Check odds now's backup when CrazyNinjaOdds can't price a bet.
 
@@ -54,7 +54,8 @@ from /line-movement is still charged** (2 credits each, seen 3 times).
   `top_endpoints` (`endpoint` like `props:baseball_mlb`, `credits`, `requests`) are right. Sample: `parlay-meta-usage.json`.
 - Code: `data/.../reference/ParlayAccount.kt` (reads /v1/usage, falls back to the key check, at most once a minute a key;
   `historyDays()` from the tier), `data/.../keys/Usage.kt` (`QuotaPolicy.PARLAY`, `CreditPace`: a day's share, a new plan spread over the
-  days left in its month, the last 300 kept for closing lines, background auto-scans keep half a day's share), `data/.../keys/CreditHeaders.kt`.
+  days left in its month, the last 300 kept for closing lines, background auto-scans keep half a day's share; **a free key (allowance ≤ 1,000)
+  isn't paced by day: it serves scans down to its last 100 (`CreditPace.FREE_RESERVE`, kept for closing lines)** — see §4a), `data/.../keys/CreditHeaders.kt`.
 
 ## 3. What Vigilant calls today (all verified live 2026-09-30)
 
@@ -80,6 +81,26 @@ Pinnacle feed is on). Settings switch: `ScanSettings.useParlay`; keys: `ApiProvi
 `app/.../ui/UsageMeters.kt` (`PARLAY_PACE`), Settings text: `app/.../ui/SettingsScreen.kt` (search "ParlayAPI"), Diagnostics:
 `app/.../Diagnostics.kt` (`parlayAccounts`). Refresh of the account: scan start, Settings › API usage opened, Diagnostics, key added
 (`MainViewModel.refreshBalances`).
+
+### 4a. Several keys: rotation and fallback (Tj, 2026-10-07, TASKS.md DB1–DB5)
+Tj's report: a Starter key's day share was spent and free keys had been added, yet the app said "ParlayAPI has spent today's share of its credits: back
+tomorrow" and read nothing more. Cause: `CreditPace.floor` gave every free key (allowance ≤ 1,000) a floor no key reaches, so scans never touched it
+(the old rule: "a free key is for closing lines only"). Now:
+- `KeyPool.execute` takes the **first key in Tj's list order that can pay and still keep its floor**, per call: a paid key's floor is its day's share
+  (+ the 300 reserve), a free key's is its last 100 credits (`CreditPace.freeReserve`); a key the server refuses as spent (`credit_limit_exceeded`)
+  hands the same call to the next. So a spent day on key 1 moves scans to key 2, then 3, … and **key 1 is tried first again on every call**, which is how
+  a reset (the next day for a paid key's share, the 1st UTC or the key's own billing date for credits) puts the keys back in order without anything to do.
+- Closing lines, the account reads and the other calls that pass no floor still see every key's credits (paid first).
+- When no key can pay, `CreditsHeldBackException` (some key still has credits but is at its floor: the message says which) or `AllKeysExhaustedException`
+  (every key spent, with the reset date) is thrown; the scanner treats both as "this source has nothing this scan" and **prices from the other feeds**
+  (PropLine, The Odds API as PropLine's fallback, PinnWire/pinnapi's Pinnacle (tennis included), Kalshi, Polymarket), `SharpBooks` skips it for the next
+  feed that carries Pinnacle, and `CloseBackfill` asks ESPN and Novig's trades for the close. ParlayAPI-only extras (1st-half lines, injury tags, its picks,
+  second opinions, the Check odds now backup) are simply off until a key can pay.
+- A 403 `HISTORICAL_LIMIT` (asked past the plan's history; a free key reaches back 48 h) fails that one call and never marks the key refused for the month.
+- Tests: `KeyRotationTest` (order, day share, free reserve, reset per provider, a plan's own billing date), `CreditPaceTest`, `TheOddsApiClientTest`
+  (HTTP-level rotation onto free keys, HISTORICAL_LIMIT), `ScannerTest` (every key used up: other feeds still price).
+- Meter (Settings › API usage): the "in use" key is the one a scan will use now, not a paid key resting for the day; the line under the keys says what
+  scans may still spend today, paid and free together.
 
 ## 5. Things learned the hard way
 
