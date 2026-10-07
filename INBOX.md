@@ -5174,3 +5174,10 @@ Look at the screenshot, it says allisha is out for the game, so a bet of over 1.
 Finish the obscure-bid fill I asked about. Put it in the app. Then tell me your progress on making my own websocket type feed to get odds/scores rapidly for live betting 
 Tell me the eleven recommendations again
 ```
+
+## 2026-10-07T06:06:27Z
+```
+Implement recommendations 2, 4, 5, 9, 10: yes,  11:yes.
+
+Then build the feed race test to see if you can find any source that has rapid odds and/or scores
+```
