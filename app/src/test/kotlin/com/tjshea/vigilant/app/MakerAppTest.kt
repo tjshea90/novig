@@ -596,7 +596,7 @@ class MakerAppTest {
         val built = com.tjshea.vigilant.data.novig.trading.maker.CnoMakerLines.from(
             listOf(com.tjshea.vigilant.data.novig.trading.maker.CnoMakerLines.Page(row, "mc1-over", market, book, view, now - 8_000L)), settingsCno(), now,
         )
-        return com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.LineSet(if (stop == null) built.lines else built.lines, stop, now - 8_000L, built.skipped)
+        return com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.LineSet(built.lines, stop, now - 8_000L, built.skipped)
     }
 
     private fun settingsCno() = SampleScan.settings.copy(maker = true, makerSource = com.tjshea.vigilant.data.scanner.BidSource.CNO)
