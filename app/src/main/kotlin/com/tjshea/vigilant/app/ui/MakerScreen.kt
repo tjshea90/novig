@@ -558,6 +558,8 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) {
             RuleChips("Smallest market for quick bids: fewest books that price the line (a line fewer books price is a small market)", ScanSettings.MAKER_QUICK_MIN_BOOKS_CHOICES, s.makerQuickMinBooks, { "$it+" }) { v -> onUpdate { it.copy(makerQuickMinBooks = v) } }
             TypedIntField(NumberSpecs.count("books", 1, 20), s.makerQuickMinBooks, "makerQuickMinBooksField", none = { false }) { v -> onUpdate { it.copy(makerQuickMinBooks = v) } }
+        }
+        if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY || lowUsage) {
             SwitchRow(
                 "Fill leftover money with small markets",
                 com.tjshea.vigilant.data.novig.trading.maker.QuickLikely.obscureNote(s),
@@ -607,7 +609,7 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         ) { v -> onUpdate { it.copy(trapEarlyHours = v) } }
         TrapEarlyHoursField(s.trapEarlyHours, "maker") { v -> onUpdate { it.copy(trapEarlyHours = v) } }
         Text(
-            MakerRulesText.earlyNote(s.trapEarlyHours), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            if (lowUsage) MakerRulesText.earlyNoteLowUsage(s) else MakerRulesText.earlyNote(s.trapEarlyHours), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.testTag("makerTrapEarlyNote"),
         )
         // Game-line bids get the trap guard's move rule (v0.56.0, RESEARCH.md §72.3): the auto-bet's same switch, shown here once game lines get bids.
