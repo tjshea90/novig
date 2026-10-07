@@ -287,11 +287,34 @@ class DiagnosticsTest {
         val base = SampleScan.state()
         val bets = base.bets.map { if (it.status == BetStatus.PENDING && it.nowEv != null) it.copy(nowFair = (it.fairAtBet ?: 0.5) + 0.01, nowAtMs = now) else it }
         val text = report(base.copy(bets = bets), extras.copy(phone = Diagnostics.Phone(true, true, true, false, false, true, "Wi-Fi")))
-        listOf("== Accuracy by scanner and by market (outliers aside; CLV on n = bets with a true close) ==", "== Each scanner by market ==", "== Bets by what made their fair odds (recorded from v0.36.0) ==", "== Vigilant's own bets against the close (newest 30) ==", "== Open bets: edge now vs when bet (pregame, current reads only) ==", "== Phone ==", "== Recent problems (saved across restarts, newest first) ==")
+        listOf("== Accuracy by bet or bid, scanner and market (outliers aside; CLV on n = bets with a true close) ==", "== Each scanner by market ==", "== Bets by what made their fair odds (recorded from v0.36.0) ==", "== Vigilant's own bets against the close (newest 30) ==", "== Open bets: edge now vs when bet (pregame, current reads only) ==", "== Phone ==", "== Recent problems (saved across restarts, newest first) ==")
             .forEach { assertTrue("$it in:\n$text", text.contains(it)) }
         assertTrue(text, text.contains("Scanner Vigilant:") || text.contains("Scanner CNO:"))
         assertTrue(text, text.contains("Notifications yes · exact alarms yes · battery unrestricted yes · draw over apps NO · Data Saver off · online yes (Wi-Fi)"))
         assertTrue(text, text.contains("None recorded."))
+    }
+
+    /** Tj, 2026-10-07: "so I can see stats and ev filtered my bids as well as bets, and also for the diagnostics and studies sections." */
+    @Test
+    fun `the report counts bets and bids apart, splits accuracy by bet or bid, and has a block for each kind`() {
+        val base = SampleScan.state()
+        // b1 (settled, a win) and b4 (open) are bids; b2, b3, b5 and b6 are taker bets.
+        val bets = base.bets.map { if (it.id == "b1" || it.id == "b4") it.copy(maker = true, orderId = "bid-${it.id}") else it }
+        val text = report(base.copy(bets = bets), extras)
+        assertTrue(text, text.contains("By kind: bets 4 (open 2) · bids filled 2 (open 1)"))
+        assertTrue(text, text.contains("== Bets and bids apart"))
+        val apart = text.substringAfter("== Bets and bids apart").substringBefore("\n== ")
+        assertTrue(apart, apart.contains("Bets (taker orders): 4 bets"))
+        assertTrue(apart, apart.contains("Bids (make orders that filled): 2 bids"))
+        assertTrue(apart, apart.contains("avg EV at post"))
+        assertTrue(apart, apart.contains("avg EV at bet"))
+        // The accuracy split has both kinds, and the as-placed split's first key is the same one.
+        assertTrue(text, text.contains("Bet or bid Bids (make orders that filled): 2 bids"))
+        assertTrue(text, text.contains("Bet or bid Bets (taker orders): 4 bets"))
+        // With no bid filled the block says so, in plain words.
+        val none = report(base, extras)
+        assertTrue(none, none.contains("Bids (make orders that filled): none"))
+        assertTrue(none, none.contains("By kind: bets 6 (open 3) · bids filled 0 (open 0)"))
     }
 
     @Test
