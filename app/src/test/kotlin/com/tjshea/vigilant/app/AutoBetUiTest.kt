@@ -218,12 +218,12 @@ class AutoBetUiTest {
             compose.onNodeWithTag("autoBetCustomStake").assertDoesNotExist()
         }
         // Kelly says what it works from.
-        compose.onNodeWithText("½ Kelly").performClick()
+        compose.onNodeWithText("½ Kelly").performScrollTo().performClick()
         compose.onNodeWithText("Kelly sizing uses your bankroll", substring = true).assertExists()
         // My amount: a field for it.
-        compose.onNodeWithText("My amount").performClick()
+        compose.onNodeWithText("My amount").performScrollTo().performClick()
         assertEquals(AutoBetStake.CUSTOM, settings.autoBetStake)
-        compose.onNodeWithTag("autoBetCustomStake").performTextClearance()
+        compose.onNodeWithTag("autoBetCustomStake").performScrollTo().performTextClearance()
         compose.onNodeWithTag("autoBetCustomStake").performTextInput("7.25")
         assertEquals(7.25, settings.autoBetCustomStake, 0.0)
     }
@@ -294,8 +294,10 @@ class AutoBetUiTest {
         type("propGuardSampleField", "12"); assertEquals(12, settings.propGuardMinSample)
         type("propGuardPerGameField", "2"); assertEquals(2, settings.propGuardPerGame)
         compose.onNodeWithTag("propGuardNote").assertTextContains("at most 2 auto-bets", substring = true)
-        type("propGuardPerGameField", "0"); assertEquals("0 turns the per-game limit off", 0, settings.propGuardPerGame)
-        compose.onNodeWithTag("propGuardNote").assertTextContains("off: no cap on how much one kind of player prop may take", substring = true)
+        type("propGuardPerGameField", "0"); assertEquals("0 saves nothing: Off is its own chip", 2, settings.propGuardPerGame)
+        compose.onNodeWithText("A whole number from 1 to 50").assertExists()
+        // Off is the chip: both limits off says there is no guard.
+        compose.onAllNodesWithText("Off").filter(hasTestTag("propGuardPerGameOff")).assertCountEquals(0)
     }
 
     @Test
