@@ -16,7 +16,9 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.STICKY_BAR
@@ -169,5 +171,15 @@ class TrackerBidsUiTest {
         assertTrue(clv(), clv().startsWith("Beat the close 100% (1 of 1)"))
         choose("Bets only (4)")
         assertTrue(clv(), clv().startsWith("Beat the close 0% (0 of 1)"))
+    }
+
+    @Test
+    fun `screenshot - the Tracker's Bets tab and Stats tab with the Bids chip`() {
+        screen { TrackerScreen(withBids(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
+        compose.onRoot().captureRoboImage("screenshots/4q_tracker_bets_and_bids.png")
+        choose("Bids only (2)")
+        compose.onRoot().captureRoboImage("screenshots/4q_tracker_bids_only.png")
+        compose.onNodeWithText("Stats").performClick()
+        compose.onRoot().captureRoboImage("screenshots/4q_tracker_bids_only_stats.png")
     }
 }
