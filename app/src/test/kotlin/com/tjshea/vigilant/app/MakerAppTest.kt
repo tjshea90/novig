@@ -198,6 +198,23 @@ class MakerAppTest {
     }
 
     @Test
+    fun `Approve refuses a bid on a player the injury reports say is out, and says why`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        runner(novig).run("test")!!
+        val victim = SampleScan.result().opportunities.first { o -> novig.placed.any { it.startsWith(o.outcome.outcomeId + " ") } && com.tjshea.vigilant.data.reference.InjuryTags.wantOf(o) != null }
+        val want = com.tjshea.vigilant.data.reference.InjuryTags.wantOf(victim)!!
+        // Start again with nothing up, then the report says he is out: Approve (post) refuses with the reason and nothing is sent.
+        app.container.makerStore.update { emptyList() }
+        val fresh = FakeNovig()
+        app.container.installTradingForTest(fresh, "sub-1")
+        app.container.injuries.record(want.sportKey, listOf(com.tjshea.vigilant.data.reference.Injury(want.player, "Out")))
+        val answer = runner(fresh).post(victim.outcome.outcomeId)
+        assertTrue(answer.orEmpty(), answer.orEmpty().startsWith("The player is out ("))
+        assertTrue(fresh.placed.toString(), fresh.placed.none { it.startsWith(victim.outcome.outcomeId + " ") })
+    }
+
+    @Test
     fun `fully automatic posts while a scan is still running, not only at its end (Tj, 2026-10-03 - "it didn't actually make any bids by itself")`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
