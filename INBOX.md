@@ -4712,3 +4712,8 @@ Can you finish the session that was interrupted
 ```
 @"/root/.claude/uploads/3c75108e-62c2-59d6-844d-2d419f3025ab/09b06b69-vigilant-diagnostics-v0.70.1-2026-10-06-0008.txt" @"/root/.claude/uploads/3c75108e-62c2-59d6-844d-2d419f3025ab/e1a20d2e-vigilant-scan-study-v0.70.1-2026-10-06-0008.txt" 
 ```
+
+## 2026-10-07T00:14:19Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
