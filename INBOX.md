@@ -5153,3 +5153,8 @@ Changes to the app:
 ```
 Also, fix any app faults found from your last analysis, and list to me simply the eleven rule proposals
 ```
+
+## 2026-10-07T03:05:59Z
+```
+If auto bid feature can't find enough bids that are popular, include obscure bids as well, up to the max amount of money that I selected or that is in the wallet. But prioritize the bids, popular large markets most likely to get a taker first, then if there is room, obscure bids. But there must be strict safeguards on obscure bids, such as sharp markets must agree and/or the positive EV must be a good margin. Log this as a task and just start planning because Claude usage is almost out.
+```
