@@ -99,7 +99,7 @@ object BidReport {
                 bestBid = b.bestBidAtPost, offer = b.offerAtPost, bookAgeSec = b.bookAtMs?.let { ((b.postedAtMs - it) / 1000L).coerceAtLeast(0L) },
                 lifeMin = b.expiresAtMs?.let { ((it - b.postedAtMs) / 60_000L).coerceAtLeast(0L) },
                 basis = b.fairBasis?.group,
-                focus = b.focus, fairBooks = b.fairBooks, fairAgeSec = b.fairAgeSec, fairNewestAgeSec = b.fairNewestAgeSec, obscure = b.obscure,
+                focus = b.focus, fairBooks = b.fairBooks, fairAgeSec = b.fairAgeSec, fairNewestAgeSec = b.fairNewestAgeSec,
                 status = b.status.name, why = b.why.takeIf { b.status.ended }, endedAtMs = b.endedAtMs,
                 restedMin = ((b.endedAtMs ?: now) - b.postedAtMs).coerceAtLeast(0L) / 60_000.0,
                 filled = b.filled, paid = b.paid.takeIf { b.filled > 0 }, firstFillAtMs = fillAt, fillDelaySec = b.fillDelayMs?.let { it / 1000L },
