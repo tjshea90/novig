@@ -69,7 +69,8 @@ class FeedRaceTest {
         assertEquals(1, r.lags.single { it.src == "fast" }.first)
         assertEquals(1, r.moved)
         assertEquals(5.0, r.leads.single { it.src == "fast" }.median, 1e-9)
-        assertEquals(2.0, r.leads.single { it.src == "slow" }.median, 1e-9)
+        assertEquals(-2.0, r.leads.single { it.src == "slow" }.median, 1e-9)   // the slow feed showed it at 207 s, after Novig moved at 205 s
+        assertEquals(0, r.leads.single { it.src == "slow" }.before)
         assertEquals(1, r.leads.single { it.src == "fast" }.by3s)
         assertEquals(0, r.leads.single { it.src == "slow" }.by3s)
         assertEquals(2, r.stale.single { it.src == "fast" }.trades)
