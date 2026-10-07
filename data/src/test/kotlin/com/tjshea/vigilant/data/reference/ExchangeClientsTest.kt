@@ -321,7 +321,7 @@ class ExchangeClientsTest {
         assertTrue(kalshi.paceNote(), kalshi.paceNote().startsWith("Kalshi pace test: PASSED, 3 requests at 3 a second and none refused"))
 
         // A refusal at the faster pace: FAILED, with the request number, the retry still reads the series, and it stays failed for the session even with the switch cycled.
-        served = 0; refuseNth = 2
+        served = 0; refuseNth = 1
         val k2 = KalshiClient(OkHttpClient(), json, base("/"), fastPace = { on }, trialRequests = 300)
         k2.odds(nfl, ml)
         assertTrue(k2.paceNote(), k2.paceNote().startsWith("Kalshi pace test: FAILED, Kalshi refused request 1"))
