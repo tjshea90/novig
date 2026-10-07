@@ -164,6 +164,25 @@ class ApiSettler(
     }
 
     /**
+     * The score feeds' evidence that [bet] won, or null: the market is held on both sides ([heldBoth]), every leg is on a half-point line (so nothing can push and the
+     * market has exactly two outcomes), and another leg, on the other outcome, was graded lost WITH a score feed's own words ([SILENT_LOSS] plus the evidence in brackets, now or
+     * earlier this pass in [lostByFeed]), never from Novig's silence alone and never by a tap of Tj's. One side of such a market won, so the leg whose own wording the feeds
+     * can't read (an imported lock's "Over 29.5") won. Whole-number lines, moneylines and three-way markets are left to the payout or a tap, as before.
+     */
+    private fun wonByOtherLeg(bet: TrackedBet, heldBoth: List<TrackedBet>, lostByFeed: Map<String, String>): String? {
+        if (heldBoth.any { !halfPointLine(it.selection) }) return null
+        for (other in heldBoth) {
+            if (other.id == bet.id || other.outcomeId == bet.outcomeId) continue
+            lostByFeed[other.id]?.let { return it }
+            val note = other.gradeNote ?: continue
+            if (other.status == BetStatus.LOST && other.settledBy == BetSettler.BY_NOVIG && note.startsWith("$SILENT_LOSS (") && note.endsWith(")")) {
+                return note.removePrefix("$SILENT_LOSS (").removeSuffix(")")
+            }
+        }
+        return null
+    }
+
+    /**
      * A market held on both sides ([bothSidesHeld]) pays one side whichever wins, so every leg graded lost is a wrong grade. The ones worked out
      * from Novig's silence alone ([SILENT_LOSS], no score feed behind them) are the doubtful ones: taken back, with a note to check, and the rule
      * above keeps them from being graded lost again. A result Tj tapped is left. Returns how many were taken back.
