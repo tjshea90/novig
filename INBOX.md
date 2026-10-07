@@ -5137,3 +5137,14 @@ Stop the analysis once the ones already started are finished, but only if you th
   Any change to this setting is a question for Tj. Nothing here argues for loosening a limit.
 </agent-message>
 ```
+
+## 2026-10-07T01:57:25Z
+```
+Changes to the app: 
+
+1) organize the settings and simplify them. Sometimes it's hard for me to find things because there are so many settings. Look for and fix redundant settings or contradictory settings. Make the settings intuitive and logical.
+2) anywhere there are settings for minimum/maximum EV, odds, times, or basically any number inputs that have options, also put a box where I can manually type in a number to set. Also anywhere there is a longest odds setting in the app, make a shortest odds setting as well. Make sure the settings do what they say. The more customizable the better. 
+3) for the auto bids function, remove the 6% and 8% under the fair options and add 2% and 2.5%
+4) make sure that the type of bids in the auto bids section are truly the type of bids most likely to be taken quickly, in other words, no strange props or small markets. 
+5) tell me the status on the research and building of the websocket/fast feeds feature for live betting. Is it built?
+```
