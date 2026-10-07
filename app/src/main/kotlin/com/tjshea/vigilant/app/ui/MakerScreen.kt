@@ -700,7 +700,7 @@ private fun LowUsagePanel(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSett
                 FilterChip(selected = m == s.lowUsagePace, onClick = { onUpdate { it.copy(lowUsagePace = m) } }, label = { Text(LowUsageText.paceLabel(m)) }, modifier = Modifier.testTag("lowUsagePace-$m"))
             }
         }
-        TypedIntField(NumberSpecs.time("minutes", 2, 240), s.lowUsagePace, "lowUsagePaceField", none = { it == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO }) { v -> onUpdate { it.copy(lowUsagePace = v) } }
+        TypedIntField(NumberSpecs.time("minutes", com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MINUTES, 240), s.lowUsagePace, "lowUsagePaceField", none = { it == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO }) { v -> onUpdate { it.copy(lowUsagePace = v) } }
         Text(LowUsageText.paceNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("lowUsagePaceNote"))
         Text("Under the fair (the +EV each bid is posted at): more bids and fills at 1.5%, more per fill higher", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -755,14 +755,21 @@ object LowUsageText {
     const val NOTHING_TO_READ_TITLE = "Low API usage: nothing to read right now"
 
     /** What the +EV tab says when the mode's scan had no market in its window (Tj, 2026-10-05: "it said it scanned but I don't think it did because it only took 1 second"). */
-    fun nothingToRead(pace: Int): String =
-        "No game with a player-prop market on ${com.tjshea.vigilant.app.AppBook.name} starts in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} hours (games already under way aren't bid on), so this scan asked no " +
+    fun nothingToRead(pace: Int, hours: Int, startsWithin: Int): String =
+        "No game with a player-prop market on ${com.tjshea.vigilant.app.AppBook.name} starts in the next $hours hours (games already under way aren't bid on), so this scan asked no " +
             "feed and spent nothing: that is why it took a second. It reads again " +
-            (if (pace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "every few minutes" else "every $pace min at most") + " and starts as soon as a game comes inside the window. " + TAB_NOTE
+            (if (pace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "every few minutes" else "every $pace min at most") + " and starts as soon as a game comes inside the window. " + tabNote(hours, startsWithin)
 
-    /** This tab lists bets to TAKE at Novig's price now; Low API usage posts bids UNDER the fair, which are on the Bids tab and never listed here. */
-    const val TAB_NOTE = "Low API usage bids are on: this tab lists bets to take at Novig's price; the bids are on the Bids tab. " +
-        "The scan is always the next 6 hours (Starts within: Any time does not widen it); for a scan further out, set Bids › Which bids go up to All bids."
+    /**
+     * This tab lists bets to TAKE at Novig's price now; Low API usage posts bids UNDER the fair, which are on the Bids tab and never listed here. The scan's reach is the trap guard's
+     * hours ([hours], [LowUsageBids.windowHours]): 6 by default, any hours Tj picks, or as far as Starts within and Days ahead say when the trap guard is Off.
+     */
+    fun tabNote(hours: Int, startsWithin: Int): String = "Low API usage bids are on: this tab lists bets to take at Novig's price; the bids are on the Bids tab. " +
+        "The scan reads $hours hours ahead: the Bids tab's trap guard hours set it (Off: as far as Settings › Scanning says), and Starts within or Days ahead can only make it shorter" +
+        (if (startsWithin in 1 until hours) " (Starts within $startsWithin h is shorter right now)" else "") + "."
+
+    /** [tabNote] for [s]. */
+    fun tabNote(s: ScanSettings): String = tabNote(com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(s), s.startsWithinHours)
 
     /** A feed's name for the screens and Diagnostics. */
     fun feedName(feed: String): String = when (feed) {
@@ -781,7 +788,7 @@ object LowUsageText {
 
     /** How the pace trades against bids being up, in the app's own freshness rule (RESEARCH.md §93). */
     fun paceNote(s: ScanSettings): String {
-        val skip = "A league with no game in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} hours with a prop market on Novig isn't read at all."
+        val skip = "A league with no game in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(s)} hours with a prop market on Novig isn't read at all."
         if (s.lowUsagePace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) {
             return "Auto: a scan starts ${com.tjshea.vigilant.data.scanner.LowUsageBids.NEAR_GAP_SECONDS / 60} min after the last while a game is inside 3 hours of its start (a bid ends when its books' prices are 5 minutes old, " +
                 "so it is re-posted from the fresh scan before it does), ${com.tjshea.vigilant.data.scanner.LowUsageBids.FAR_GAP_SECONDS / 60} min while every game is further off (10-minute limit). Bids stay up. " +
@@ -796,17 +803,17 @@ object LowUsageText {
     /** One line for the rules' summary. */
     fun summary(s: ScanSettings): String =
         "low API usage: ${com.tjshea.vigilant.data.scanner.LowUsageBids.names(com.tjshea.vigilant.data.scanner.LowUsageBids.books(s))} · scan ${if (s.lowUsagePace == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO) "pace Auto" else "every ${s.lowUsagePace} min"} · " +
-            "props in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} h · ${MakerRulesText.pct(s.lowUsageMargin.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MARGIN))} or more under the fair · " +
+            "props in the next ${com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(s)} h · ${MakerRulesText.pct(s.lowUsageMargin.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MARGIN))} or more under the fair · " +
             "no bid longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(lowUsageMaxOdds(s))} · ${MakerRulesText.stake(s)}"
 
-    /** The longest odds the mode posts at: +130, or a tighter limit of Tj's. */
+    /** The longest odds the mode posts at: the limit Tj picked, or +130 when he picked none. */
     fun lowUsageMaxOdds(s: ScanSettings): Int =
-        if (s.makerMaxOdds in BidRules.MIN_MAX_ODDS until com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS) s.makerMaxOdds else com.tjshea.vigilant.data.scanner.LowUsageBids.MAX_ODDS
+        com.tjshea.vigilant.data.novig.trading.maker.LowUsage.maxOdds(if (s.makerMaxOdds <= 0) 0 else s.makerMaxOdds.coerceAtLeast(BidRules.MIN_MAX_ODDS))
 
     /** The line at the foot of the rules in the mode: what the price window is. */
     fun priceNote(s: ScanSettings): String =
-        "Bids are priced between ${Format.american(0.6)} and ${Format.american(BidRules.priceAtOdds(lowUsageMaxOdds(s)))} (no longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(lowUsageMaxOdds(s))}; " +
-            "favorites shorter than -150 almost never fill), player props only, with at least 2 of the picked books each pricing the bid +EV on their own, pregame only."
+        "Bids are priced between ${Format.american(com.tjshea.vigilant.data.novig.trading.maker.MakerRules.of(s).maxPrice)} and ${Format.american(BidRules.priceAtOdds(lowUsageMaxOdds(s)))} (no longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(lowUsageMaxOdds(s))}; " +
+            "favorites shorter than -150 almost never fill, so that is the band unless you pick a shortest odds), player props only, with at least 2 of the picked books each pricing the bid +EV on their own, pregame only."
 }
 
 /**
