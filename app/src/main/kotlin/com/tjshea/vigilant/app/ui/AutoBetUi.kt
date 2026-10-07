@@ -74,7 +74,7 @@ object AutoBetText {
         val extra = s.autoBetFavouriteExtraEv
         if (extra <= 1e-9) return "Off: a favorite needs the same edge as any other bet."
         val bar = s.autoBetMinEv + extra
-        return "A favorite (odds shorter than even money, −101 or shorter) needs ${evLabel(bar)} or more, ${trim(extra * 100)} more than the ${evLabel(s.autoBetMinEv)} minimum. " +
+        return "A favorite (odds shorter than even money, −101 or shorter) needs ${evLabel(bar)} or more, ${trim(extra * 100)} ${if (abs(extra * 100 - 1.0) < 1e-9) "point" else "points"} more than the ${evLabel(s.autoBetMinEv)} minimum. " +
             "In the first three days of data the edge a bet kept to the close fell as the price got shorter."
     }
 
