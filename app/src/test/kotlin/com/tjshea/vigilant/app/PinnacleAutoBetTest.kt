@@ -124,8 +124,10 @@ class PinnacleAutoBetTest {
     private fun placer(novig: FakeNovig) =
         ApiBetPlacer(novig, app.container.tracker, books = { id -> book(id) }, limits = { BetLimits(10.0, 50.0, 0.01) }, clock = { now }, pause = { }, lock = app.container.orderLock)
 
-    private fun bettor(novig: FakeNovig, wallet: Double? = 25.0, injuries: com.tjshea.vigilant.data.reference.InjuryBook = com.tjshea.vigilant.data.reference.InjuryBook.EMPTY) =
-        AutoBettor(app, app.container, clock = { now }, placer = { placer(novig) }, wallet = { wallet }, recentTrades = { emptyList() }, injuries = { injuries })
+    private fun bettor(
+        novig: FakeNovig, wallet: Double? = 25.0, injuries: com.tjshea.vigilant.data.reference.InjuryBook = com.tjshea.vigilant.data.reference.InjuryBook.EMPTY,
+        trades: suspend (String) -> List<TrapGuard.Trade> = { emptyList() },
+    ) = AutoBettor(app, app.container, clock = { now }, placer = { placer(novig) }, wallet = { wallet }, recentTrades = trades, injuries = { injuries })
 
     private fun settings(f: (ScanSettings) -> ScanSettings = { it }) = f(
         ScanSettings(
@@ -170,6 +172,24 @@ class PinnacleAutoBetTest {
         // The switch off: placed.
         val off = settings { it.copy(trapEarlyHours = hours, trapFirstListed = false) }
         assertEquals(1, bettor(novig).runPinnacle(off, result(older)) { null }.placed.size)
+    }
+
+    @Test
+    fun `a Pinnacle game line whose Novig trades can't be read is skipped, a prop never asks, and a quiet read places it (Tj, 2026-10-07, proposal 10)`() = runBlocking {
+        val novig = FakeNovig()
+        val spread = opp(asOf = now - 10_000).let { it.copy(marketLabel = "Spread", selection = "Team A -3.5") }
+        var asked = 0
+        val failing = bettor(novig, trades = { asked++; throw java.io.IOException("HTTP 429") }).runPinnacle(settings(), result(spread)) { null }
+        assertEquals(0, failing.placed.size)
+        assertEquals(0, novig.orders.get())
+        assertEquals(1, failing.skipped[AutoBettor.MOVE_UNREAD_SKIP])
+        assertEquals(1, asked)
+        // A prop is never read, so a failing read can't stop it.
+        assertEquals(1, bettor(novig, trades = { asked++; throw java.io.IOException("HTTP 429") }).runPinnacle(settings(), result(opp(asOf = now - 10_000))) { null }.placed.size)
+        assertEquals(1, asked)
+        app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+        // The trades read (quiet): the game line goes through.
+        assertEquals(1, bettor(novig, trades = { emptyList() }).runPinnacle(settings(), result(spread)) { null }.placed.size)
     }
 
     @Test
