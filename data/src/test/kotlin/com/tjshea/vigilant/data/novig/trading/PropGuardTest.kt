@@ -25,9 +25,9 @@ class PropGuardTest {
 
     private fun placed(key: String?, game: String = "g", agoH: Double = 1.0) = PropGuard.Placed(key, game, now - (agoH * hour).toLong())
 
-    /** [n] bets of [key], each on its own game (the share rule alone), and [others] of other kinds. */
-    private fun history(key: String, n: Int, others: Int, otherKey: String? = yards) =
-        List(n) { placed(key, "g$it") } + List(others) { placed(otherKey, "o$it") }
+    /** [n] bets of [key], each on its own game (the share rule alone), and [others] bets each of a kind of its own (so no other kind holds a share). */
+    private fun history(key: String, n: Int, others: Int) =
+        List(n) { placed(key, "g$it") } + List(others) { placed("NFL|STAT$it", "o$it") }
 
     // ---- the kind of prop a bet is ------------------------------------------------------------------------------------------------
 
@@ -72,22 +72,44 @@ class PropGuardTest {
 
     @Test
     fun `the cap bites on a day one market fills, and costs little on a spread-out one`() {
-        // Oct 6's day: 16 SOG of 34. Placing them in order, the guard lets in the first 8 (no sample yet) then holds SOG back until the others catch up.
+        // Oct 6's day: half the candidates were SOG (16 of 34 placed), the rest spread over five other kinds. The guard holds SOG to about a quarter of what is placed.
+        val others = listOf(yards, "NHL|ASSISTS", "NHL|GOALS", "NHL|POINTS", "NHL|SAVES")
         val hist = ArrayList<PropGuard.Placed>()
         var sogPlaced = 0
-        repeat(34) { i ->
-            val key = if (i % 2 == 0) sog else if (i % 4 == 1) yards else "NHL|ASSISTS"
+        var sogHeld = 0
+        repeat(60) { i ->
+            val key = if (i % 2 == 0) sog else others[(i / 2) % others.size]
             val game = "g${i / 3}"
-            if (PropGuard.judge(rules, hist, key, game, now) == null) { hist += placed(key, game); if (key == sog) sogPlaced++ }
+            if (PropGuard.judge(rules, hist, key, game, now) == null) { hist += placed(key, game); if (key == sog) sogPlaced++ } else if (key == sog) sogHeld++
         }
-        assertTrue("SOG held under about a quarter of the day's auto-bets: $sogPlaced of ${hist.size}", sogPlaced.toDouble() / hist.size <= 0.36)
-        assertTrue("and fewer than the 16 it would have taken", sogPlaced < 16)
+        assertTrue("SOG held to about a quarter of the day's auto-bets: $sogPlaced of ${hist.size}", sogPlaced.toDouble() / hist.size <= 0.30)
+        assertTrue("some SOG bets were held: $sogHeld", sogHeld > 5)
+        assertTrue("every other kind went through: ${hist.size - sogPlaced} of 30", hist.size - sogPlaced == 30)
         // Spread across six kinds the cap never touches anything.
         val keys = listOf(sog, yards, "NFL|RECEPTIONS", "NBA|POINTS", "MLB|PITCHER_STRIKEOUTS", "NHL|ASSISTS")
         val spread = ArrayList<PropGuard.Placed>()
         var held = 0
         repeat(36) { i -> val k = keys[i % keys.size]; if (PropGuard.judge(rules, spread, k, "g$i", now) == null) spread += placed(k, "g$i") else held++ }
         assertEquals(0, held)
+    }
+
+    /** A cap of 25% cannot be met with three kinds in play: held to it, the auto-bet would stop. It is never stricter than an even split plus one bet. */
+    @Test
+    fun `with few kinds in play the cap is an even split, never a stop`() {
+        // Three kinds, 3 each (n = 9): a fourth of any would be 40%, over 25%, but within one bet of the even third: goes.
+        val even = listOf(sog, yards, "NHL|ASSISTS").flatMap { k -> List(3) { placed(k, "g${k}$it") } }
+        listOf(sog, yards, "NHL|ASSISTS").forEach { assertNull(it, PropGuard.judge(rules, even, it, "new", now)) }
+        // One kind far ahead is held: 6 SOG against 2 and 1 (n = 9).
+        val lopsided = List(6) { placed(sog, "s$it") } + List(2) { placed(yards, "y$it") } + placed("NHL|ASSISTS", "a")
+        assertNotNull(PropGuard.judge(rules, lopsided, sog, "new", now))
+        assertNull(PropGuard.judge(rules, lopsided, yards, "new", now))
+        // Two kinds only: an even split is half each.
+        val two = List(5) { placed(sog, "s$it") } + List(5) { placed(yards, "y$it") }
+        assertNull(PropGuard.judge(rules, two, sog, "new", now))
+        assertNotNull(PropGuard.judge(rules, List(8) { placed(sog, "s$it") } + List(2) { placed(yards, "y$it") }, sog, "new", now))
+        // A game-line bet is one more "kind": 6 props of two kinds and 4 spreads are three groups.
+        val withLines = List(3) { placed(sog, "s$it") } + List(3) { placed(yards, "y$it") } + List(4) { placed(null, "l$it") }
+        assertNull(PropGuard.judge(rules, withLines, sog, "new", now))
     }
 
     @Test
@@ -157,7 +179,7 @@ class PropGuardTest {
         assertEquals(3, h.size)
         assertEquals(listOf(sog, yards, null), h.map { it.key })
         assertEquals("the game is Novig's event id", "ev1", h.first().game)
-        assertEquals("NHL shots on goal 1 (33%), NFL receiving yards 1 (33%)", PropGuard.sharesLine(h, 3).substringAfter(": "))
+        assertEquals("NFL receiving yards 1 (33%), NHL shots on goal 1 (33%)", PropGuard.sharesLine(h, 3).substringAfter(": "))
         assertEquals("no auto-bets", PropGuard.sharesLine(emptyList()))
     }
 
@@ -169,6 +191,6 @@ class PropGuardTest {
         assertEquals(0.0, PropGuard.rules(ScanSettings(propGuardShare = -1.0)).share, 1e-9)
         assertEquals(1, PropGuard.rules(ScanSettings(propGuardMinSample = 0)).minSample)
         assertEquals(0, PropGuard.rules(ScanSettings(propGuardPerGame = -2)).perGame)
-        assertEquals("no kind of player prop over 25% of the last 24 h's auto-bets (once there are 8) · at most 3 auto-bets on one kind of prop in one game", PropGuard.summary(d))
+        assertEquals("no kind of player prop over 25% of the last 24 h's auto-bets (once there are 8; never under an even split of the kinds being bet) · at most 3 auto-bets on one kind of prop in one game", PropGuard.summary(d))
     }
 }

@@ -19,7 +19,8 @@ import java.util.Locale
  * it, raising its edge bar or special-casing any market: it is diversification, not an edge filter, and it says so.
  *
  *  - **Share** ([ScanSettings.propGuardShare], 25% by default, 0 = off): once the last 24 hours hold [ScanSettings.propGuardMinSample] auto-bets (8), a bet that would take one kind of
- *    prop above this share of them waits. A back-test on the 178 taker auto-bets: 25% from the 6th bet holds back only the SOG-heavy days (Oct 3, 5, 6).
+ *    prop above this share of them waits ([effectiveShare]: never stricter than an even split of the kinds being bet, or a day with three kinds of prop would stop the auto-bet). A
+ *    back-test on the 178 taker auto-bets: 25% from the 6th bet holds back only the SOG-heavy days (Oct 3, 5, 6).
  *  - **Per game** ([ScanSettings.propGuardPerGame], 3 by default, 0 = off): at most this many auto-bets on one kind of prop in one game (two games had four SOG bets).
  *
  * Only player props are held to it (a spread or a total has its own sharp books and its own caps); the history is the Tracker's auto-bets (a filled bid is not a taker bet).
@@ -113,10 +114,20 @@ object PropGuard {
         val recent = history.filter { now - it.atMs <= WINDOW_MS }
         if (r.shareOn && recent.size >= r.minSample) {
             val same = recent.count { it.key == key }
-            if ((same + 1).toDouble() / (recent.size + 1) > r.share + 1e-9) return shareReason(key, r.share)
+            if ((same + 1).toDouble() / (recent.size + 1) > effectiveShare(r.share, recent, key) + 1e-9) return shareReason(key, r.share)
         }
         if (r.perGameOn && history.count { it.key == key && it.game == game } >= r.perGame) return perGameReason(key, r.perGame)
         return null
+    }
+
+    /**
+     * The cap as it is applied: [share], but never under an even split of the kinds being bet plus one bet. A cap of 25% cannot be met when only three kinds are in play (each is a third
+     * of the day), and holding every bet back would stop the auto-bet altogether, which is not what a diversification guard is for. Every bet that is not a player prop counts as one more
+     * kind (null), so a day of game lines and a few props is not held to a share it cannot reach either.
+     */
+    fun effectiveShare(share: Double, recent: List<Placed>, key: String): Double {
+        val kinds = (recent.map { it.key } + key).toSet().size
+        return maxOf(share, 1.0 / kinds + 1.0 / (recent.size + 1))
     }
 
     fun shareReason(key: String, share: Double): String =
@@ -142,7 +153,7 @@ object PropGuard {
     fun summary(r: Rules): String = when {
         !r.on -> "off: no cap on how much one kind of player prop may take"
         else -> listOfNotNull(
-            if (r.shareOn) "no kind of player prop over ${percent(r.share)} of the last 24 h's auto-bets (once there are ${r.minSample})" else null,
+            if (r.shareOn) "no kind of player prop over ${percent(r.share)} of the last 24 h's auto-bets (once there are ${r.minSample}; never under an even split of the kinds being bet)" else null,
             if (r.perGameOn) "at most ${r.perGame} auto-bets on one kind of prop in one game" else null,
         ).joinToString(" · ")
     }
