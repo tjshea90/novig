@@ -693,7 +693,6 @@ object MakerPlan {
         val room = budget + resting.sumOf { it.restingDollars }
         if (kept.sumOf { it.restingDollars } > room + 1e-9) {
             val worth = compareBy<RestingBid> { it.auto }
-                .thenBy { it.obscure }
                 .thenByDescending { byOutcome[it.outcomeId]?.leads ?: it.leads }
                 .thenBy { it.price }
                 .thenByDescending { byOutcome[it.outcomeId]?.evAtFair ?: it.evAtFair }
