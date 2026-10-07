@@ -5323,3 +5323,8 @@ Also schedule an automatic check in 9 hours and 10 minutes from now. If anything
 
 Frequently checkpoint and save all progress and data to GitHub and keep an active log so the next Claude session can pick up where you were interrupted by usage running out.
 ```
+
+## 2026-10-07T11:02:14Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
