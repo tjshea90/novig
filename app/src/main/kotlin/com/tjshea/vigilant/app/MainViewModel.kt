@@ -189,6 +189,8 @@ data class UiState(
     val studyNote: String? = null,
     /** The live burst recorder's one line (RESEARCH.md §95), refreshed while Settings › Diagnostics & about is open. */
     val burstNote: String? = null,
+    /** The live feed test's line (Settings › Diagnostics & about; RESEARCH.md §106): what it is doing and its verdict, refreshed while that page is open. */
+    val feedRaceNote: String? = null,
     /** Why the real-money burst trader is locked (the recorder's proof, in words), or null when it has proved itself; null too until the page asked. */
     val burstProofReason: String? = null,
     /** True once the page has read the proof (so a null [burstProofReason] means proved, not unread). */
@@ -1795,6 +1797,47 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val proof = runCatching { c.burstProof(force = true) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
             val trade = c.burstTrader.status.value
             _state.update { it.copy(burstNote = note, burstProofReason = proof?.reason ?: if (proof == null) "the proof could not be read" else null, burstProofRead = true, burstProvedLeagues = proof?.leagues.orEmpty(), burstTrade = trade) }
+        }
+    }
+
+    /** Reads the live feed test's line for Settings › Diagnostics & about (the page asks every few seconds while it is open). */
+    fun refreshFeedRace() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val note = runCatching { FeedRaceText.note(c.feedRace.status.value, System.currentTimeMillis()) }.getOrNull() ?: return@launch
+            _state.update { it.copy(feedRaceNote = note) }
+        }
+    }
+
+    /** Settings › Diagnostics & about › Share live feed test with Claude (Tj, 2026-10-07): the verdict, the table, every score that moved Novig and the raw tape, as one file saved to Downloads/Vigilant and shared. */
+    fun shareFeedRace() {
+        viewModelScope.launch {
+            _toasts.tryEmit("Making the live feed test file…")
+            val intent = try {
+                withContext(Dispatchers.IO) {
+                    val now = System.currentTimeMillis()
+                    val app = getApplication<Application>()
+                    val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
+                    val report = c.feedRace.makeReport()
+                    val status = c.feedRace.status.value
+                    val meta = com.tjshea.vigilant.data.live.FeedRaceExport.Meta(
+                        info?.versionName ?: "?", "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})", status.sports, c.feedRace.running,
+                    )
+                    val file = DiagnosticsShare.writeFeedRace(app, com.tjshea.vigilant.data.live.FeedRaceExport.fileName(meta.versionName, now)) { w ->
+                        com.tjshea.vigilant.data.live.FeedRaceExport.write(w, report, status, meta, c.feedRaceJournal, now)
+                    }
+                    runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
+                        .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}") }
+                        .onFailure { e -> _toasts.tryEmit("Couldn't save it to Downloads (${e.message ?: e.javaClass.simpleName})") }
+                    c.eventLog.info("DIAG", "live feed test file made (${file.length() / 1024} KB)")
+                    DiagnosticsShare.feedRaceIntent(app, file, meta.versionName)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                c.eventLog.error("DIAG", "couldn't make the live feed test file", e)
+                null
+            }
+            if (intent == null) _toasts.tryEmit("Couldn't make the live feed test file") else shares.send(intent)
         }
     }
 

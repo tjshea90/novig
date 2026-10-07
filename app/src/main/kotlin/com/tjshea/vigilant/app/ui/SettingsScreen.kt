@@ -1127,6 +1127,19 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
         }
     }
 
+    // ---- The live feed test (Tj, 2026-10-07): which free feed shows a score or an odds move before Novig's price; no orders; RESEARCH.md §106 ------------------------------
+    if (AppBook.isNovig) {
+        SectionTitle("Live feed test")
+        val feedShown by androidx.compose.runtime.rememberUpdatedState(reportActions.onFeedRaceShown)
+        androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { feedShown(); kotlinx.coroutines.delay(5_000) } }
+        Hint(com.tjshea.vigilant.app.FeedRaceText.HINT)
+        SwitchRow(com.tjshea.vigilant.app.FeedRaceText.SWITCH_TITLE, com.tjshea.vigilant.app.FeedRaceText.SWITCH_SUB, state.settings.feedRace, tag = "feedRaceSwitch") { v -> onUpdate { it.copy(feedRace = v) } }
+        state.feedRaceNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("feedRaceNote")) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+            androidx.compose.material3.Button(onClick = reportActions.onShareFeedRace, modifier = Modifier.testTag("shareFeedRace")) { Text(com.tjshea.vigilant.app.FeedRaceText.BUTTON) }
+        }
+    }
+
     SectionTitle("About")
     Hint(
         (if (AppBook.isNovig) "Vigilant ${BuildConfig.VERSION_NAME} · Novig prices: api.novig.com"

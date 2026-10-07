@@ -39,6 +39,9 @@ data class ReportActions(
     /** The live burst recorder (Tj, 2026-10-06): make its study file and share it, and read the line that says what it is doing. */
     val onShareBurst: () -> Unit = {},
     val onBurstShown: () -> Unit = {},
+    /** The live feed test (Tj, 2026-10-07): make its file and share it, and read the line that says what it is doing. */
+    val onShareFeedRace: () -> Unit = {},
+    val onFeedRaceShown: () -> Unit = {},
 )
 
 /** A report in a dialog: the text to select or copy, and Copy / Close. */
