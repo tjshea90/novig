@@ -34,7 +34,7 @@ class AutoBetTest {
     ) = AutoBet.rules(
         ScanSettings(
             autoBetStake = stake, autoBetCustomStake = custom, autoBetMaxStake = max, autoBetBooks = books, autoBetMinEv = ev, autoBetTwoSided = twoSided, autoBetMaxOdds = maxOdds,
-            autoBetAllAgree = allAgree,
+            autoBetAllAgree = allAgree, autoBetFavouriteExtraEv = 0.0,
         ),
     )
 

@@ -628,13 +628,6 @@ class AppContainer(private val app: Application) {
         appScope.launch {
             cno.state.map { it.error }.distinctUntilChanged().filterNotNull().collect { runCatching { problems.add("CrazyNinjaOdds", it) } }
         }
-        // The scan study (Tj, 2026-10-03; [ScanStudy]): each CNO read, each finished Vigilant scan and each book page the green check read is logged from what it
-        // already holds (no request of its own), on the scan's background-priority threads so it never competes with the screen.
-        scanScope.launch {
-            cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
-                studySync.list(snap)
-            }
-        }
         // Each bet's first-listed time (the trap guard's third rule; Tj, 2026-10-07): written down from what each CNO read and each Vigilant scan already hold, no request of its own.
         scanScope.launch {
             cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
@@ -646,6 +639,13 @@ class AppContainer(private val app: Application) {
             runner.state.map { it.result }.distinctUntilChanged { a, b -> a === b }.filterNotNull().collect { r ->
                 runCatching { firstListed.note(r.feed(currentSettings()).map { it.key to it.event.startsTs }, System.currentTimeMillis()) }
                     .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
+        }
+        // The scan study (Tj, 2026-10-03; [ScanStudy]): each CNO read, each finished Vigilant scan and each book page the green check read is logged from what it
+        // already holds (no request of its own), on the scan's background-priority threads so it never competes with the screen.
+        scanScope.launch {
+            cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
+                studySync.list(snap)
             }
         }
         // The wide read (Tj, 2026-10-03: "log all cno finds on every scan … even if these bets don't meet my criteria"): the study's one request of its own, after a live list
