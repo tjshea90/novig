@@ -782,7 +782,7 @@ class MakerTest {
         assertFalse(MakerLines.withMoves(listOf(game), wanted, mapOf("m1" to emptyList()), now, unread = setOf("m1")).single().moveUnread)
         // A prop never carries the flag (it is never wanted for a read).
         val prop0 = line().copy(sharpFairs = listOf(0.53))
-        assertFalse(MakerLines.withMoves(listOf(prop0), wanted, emptyMap(), now, unread = setOf("m1")).single().moveUnread)
+        assertFalse(MakerLines.withMoves(listOf(prop0), MakerLines.moveWanted(listOf(prop0), ml, now), emptyMap(), now, unread = setOf("m1")).single().moveUnread)
         // A quiet market (no money on the other side): posted.
         val quiet = (1..3).map { com.tjshea.vigilant.data.scanner.TrapGuard.Trade("m1-under", 0.42, 10, now - it * 60_000L) }
         assertTrue(MakerQuote.decide(MakerLines.withMoves(listOf(game), wanted, mapOf("m1" to quiet), now).single(), ml, now) is MakerDecision.Post)
