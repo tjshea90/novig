@@ -90,19 +90,19 @@ class CnoScopeUiTest {
     @Test
     fun `tapping a league picks it, several can be picked, and taking the last one off is all leagues again`() {
         val settings = cnoTab()
-        compose.onNodeWithTag("cnoLeague-NHL").performClick()
+        compose.onNodeWithTag("cnoLeague-NHL").performScrollTo().performClick()
         assertEquals(setOf("NHL"), settings().cnoFilters.scope.leagues)
         compose.onNodeWithTag("cnoLeague-NHL").assertIsSelected()
         compose.onNodeWithTag("cnoLeagueAll").assertIsNotSelected()
         compose.onNodeWithTag("cnoLeague-MLS (USA)").performScrollTo().performClick()
         assertEquals(setOf("NHL", "MLS (USA)"), settings().cnoFilters.scope.leagues)
-        compose.onNodeWithTag("cnoLeague-NHL").performClick()
-        compose.onNodeWithTag("cnoLeague-MLS (USA)").performClick()
+        compose.onNodeWithTag("cnoLeague-NHL").performScrollTo().performClick()
+        compose.onNodeWithTag("cnoLeague-MLS (USA)").performScrollTo().performClick()
         assertTrue(settings().cnoFilters.scope.isDefault)
         compose.onNodeWithTag("cnoLeagueAll").assertIsSelected()
         // All clears a pick in one tap.
-        compose.onNodeWithTag("cnoLeague-NFL").performClick()
-        compose.onNodeWithTag("cnoLeagueAll").performClick()
+        compose.onNodeWithTag("cnoLeague-NFL").performScrollTo().performClick()
+        compose.onNodeWithTag("cnoLeagueAll").performScrollTo().performClick()
         assertTrue(settings().cnoFilters.scope.isDefault)
     }
 
