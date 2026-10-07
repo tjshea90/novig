@@ -40,7 +40,11 @@ object FeedRace {
 
     // ---- names ----------------------------------------------------------------------------------------------------------------
 
-    private val STOP = setOf("fc", "cf", "sc", "ac", "the", "de", "of", "city", "united", "real", "club", "st", "saint", "a", "and", "los", "angeles", "la", "new", "york", "ny", "san", "north", "south", "west", "east")
+    private val STOP = setOf(
+        "fc", "cf", "sc", "ac", "the", "de", "of", "city", "united", "real", "club", "st", "saint", "a", "and", "los", "angeles", "la", "new", "york", "ny", "san", "north", "south", "west", "east",
+        // Novig's tennis names end in the round ("Marco Trungelliti Round of 128"): never a reason for two players to be one team.
+        "round", "128", "64", "32", "16", "quarterfinal", "semifinal", "final", "qualifying",
+    )
 
     fun tokens(name: String): Set<String> =
         Normalizer.normalize(name, Normalizer.Form.NFKD).filter { it.code < 128 }.lowercase(Locale.US).replace(Regex("[^a-z0-9 ]"), " ").split(' ')
