@@ -260,11 +260,21 @@ object DiagnosticsFile {
         return (important + recent).distinct().sortedBy { it.atMs }
     }
 
+    /** The warnings and errors of the last day that [timelineEvents] leaves out (the older ones, past [MAX_IMPORTANT]). */
+    fun timelineLeftOut(events: List<Event>, now: Long): List<Event> =
+        events.filter { it.level != Level.INFO && now - it.lastMs < Advisor.DAY_MS }.dropLast(MAX_IMPORTANT)
+
     private fun timeline(x: Diagnostics.Extras, now: Long, zone: TimeZone, o: StringBuilder) {
         o.appendLine()
-        o.appendLine("== EVENT TIMELINE (oldest first: every warning and error of the last day, then the newest events) ==")
+        // The heading used to say "every warning and error of the last day" while a 120-line cap silently dropped the older ones (Tj's v0.70.1 file: 49 of 64 errors missing).
+        o.appendLine("== EVENT TIMELINE (oldest first: the warnings and errors of the last day, the newest $MAX_IMPORTANT at most with any left out counted below, then the newest events) ==")
         val clock = SimpleDateFormat("MM-dd HH:mm:ss", Locale.US).apply { timeZone = zone }
         val events = timelineEvents(x.events, now)
+        val left = timelineLeftOut(x.events, now)
+        if (left.isNotEmpty()) {
+            val byKind = left.groupBy { "${it.cat}: ${clean(it.msg).take(80)}" }.mapValues { (_, v) -> v.sumOf { it.n.coerceAtLeast(1) } }.entries.sortedByDescending { it.value }
+            o.appendLine("NOT LISTED: ${left.size} older warnings and errors of the last day (${left.sumOf { it.n.coerceAtLeast(1) }} occurrences). Most common: " + byKind.take(6).joinToString("; ") { "${it.key} ×${it.value}" })
+        }
         if (events.isEmpty()) o.appendLine("No events yet.")
         events.forEach { e ->
             o.appendLine(
@@ -327,7 +337,7 @@ object DiagnosticsFile {
 
     const val MAX_FINDINGS = 25
     const val MAX_PATHS = 5
-    const val MAX_IMPORTANT = 120
+    const val MAX_IMPORTANT = 250
     const val MAX_RECENT = 60
     const val MAX_FILES = 14
 }
