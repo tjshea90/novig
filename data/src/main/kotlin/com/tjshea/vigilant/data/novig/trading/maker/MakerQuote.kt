@@ -243,6 +243,8 @@ data class MakerLine(
     val bidLevels: List<com.tjshea.vigilant.data.novig.BidLevel> = emptyList(),
     /** What Novig's newest trades say about this side's price now ([MakerRules.novigMove]; game lines only); null = not read. */
     val novigMove: com.tjshea.vigilant.data.scanner.TrapGuard.Move? = null,
+    /** The read of Novig's trades for this side's market was tried and FAILED (429, 451, no route): [MakerQuote.decide] skips it with the move rule on (Tj, 2026-10-07, proposal 10). */
+    val moveUnread: Boolean = false,
     /**
      * Why nobody should bid on this line, or null: the player is out ([com.tjshea.vigilant.data.reference.PlayerOut], Tj 2026-10-07: "she isn't playing ... yet the
      * auto bid feature offered bids on her"). [MakerQuote.precheck] skips it, so no bid goes up and the plan takes down any that already did.
@@ -351,13 +353,20 @@ object MakerLines {
      * [lines] with what [trades] (Novig's newest, by market) say about each side in [wanted] at Novig's price to take it now ([MakerLine.offer]): the move
      * rule judges the price the market shows, not the bid under it. A market with no trades read is left as it was (judged without the rule).
      */
-    fun withMoves(lines: List<MakerLine>, wanted: List<MakerLine>, trades: Map<String, List<com.tjshea.vigilant.data.scanner.TrapGuard.Trade>>, now: Long): List<MakerLine> {
+    fun withMoves(
+        lines: List<MakerLine>, wanted: List<MakerLine>, trades: Map<String, List<com.tjshea.vigilant.data.scanner.TrapGuard.Trade>>, now: Long, unread: Set<String> = emptySet(),
+    ): List<MakerLine> {
         if (wanted.isEmpty()) return lines
         val ids = wanted.mapTo(HashSet()) { it.outcomeId }
         return lines.map { l ->
             val got = trades[l.marketId]
             val offer = l.offer
-            if (l.outcomeId !in ids || got == null || offer == null) l else l.copy(novigMove = com.tjshea.vigilant.data.scanner.TrapGuard.move(got, l.outcomeId, offer, now))
+            when {
+                l.outcomeId !in ids -> l
+                got == null -> if (l.marketId in unread) l.copy(moveUnread = true) else l
+                offer == null -> l
+                else -> l.copy(novigMove = com.tjshea.vigilant.data.scanner.TrapGuard.move(got, l.outcomeId, offer, now))
+            }
         }
     }
 
@@ -417,6 +426,9 @@ sealed interface MakerDecision {
 
 object MakerQuote {
 
+    /** The words of a game line left without a bid because Novig's recent trades couldn't be read (the trap guard's move rule has nothing to judge it on). */
+    const val MOVE_UNREAD = "Novig's recent trades couldn't be read, so this game line gets no bid (trap guard)"
+
     /**
      * The bid for [line] under [rules] at [now], or why there's none. [held]: outcomes already held or bet and still open (a filled bid is a bet;
      * the same side is never bought twice, like the auto-bet). The bid is fair / (1 + margin) floored to Novig's grid; it must stay under Novig's offer
@@ -441,6 +453,7 @@ object MakerQuote {
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
         val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
         if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
+        if (rules.novigMove && line.moveUnread) return skip(MOVE_UNREAD)
         if (rules.novigMove) line.novigMove?.let { m -> com.tjshea.vigilant.data.scanner.TrapGuard.moveReason(line.kind, m)?.let { return skip(it) } }
         if (rules.sharpVeto) {
             if (line.sharpFairs.any { it <= price + 1e-9 }) return skip("A sharp book's own price says this bid isn't +EV")

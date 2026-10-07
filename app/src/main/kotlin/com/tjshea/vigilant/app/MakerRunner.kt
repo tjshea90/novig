@@ -69,13 +69,15 @@ class MakerRunner(
     /**
      * [lines] with what Novig's own trades say about each game-line side about to get a bid ([MakerRules.novigMove], [MakerLines.moveWanted], RESEARCH.md
      * §72): one public request per market, kept [MOVE_READ_MS], at most [MAX_MOVE_READS] a pass ([read] false: only what's kept, no request; the tab's
-     * preview). A read that fails stops nothing (that line is judged without it). Game lines are off for bids by default, so by default this reads nothing.
+     * preview). A read that fails marks its lines ([MakerLine.moveUnread]): they get no bid this pass (Tj, 2026-10-07, proposal 10; before, they were judged without the
+     * rule). Game lines are off for bids by default, so by default this reads nothing.
      */
     private suspend fun withMoves(lines: List<com.tjshea.vigilant.data.novig.trading.maker.MakerLine>, rules: MakerRules, now: Long, read: Boolean):
         List<com.tjshea.vigilant.data.novig.trading.maker.MakerLine> {
         val wanted = MakerLines.moveWanted(lines, rules, now)
         if (wanted.isEmpty()) return lines
         moveReads.entries.removeIf { now - it.value.first > MOVE_READ_MS }
+        val unread = HashSet<String>()
         if (read) {
             for (id in wanted.sortedBy { it.startsTs }.map { it.marketId }.distinct().filter { !moveReads.containsKey(it) }.take(MAX_MOVE_READS)) {
                 val trades = try {
@@ -84,12 +86,13 @@ class MakerRunner(
                     throw e
                 } catch (e: Exception) {
                     c.eventLog.count("maker.move.unread")
+                    unread += id
                     continue
                 }
                 moveReads[id] = now to trades
             }
         }
-        return MakerLines.withMoves(lines, wanted, moveReads.mapValues { it.value.second }, now)
+        return MakerLines.withMoves(lines, wanted, moveReads.mapValues { it.value.second }, now, unread)
     }
 
     /**

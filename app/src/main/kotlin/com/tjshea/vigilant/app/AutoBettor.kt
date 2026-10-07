@@ -554,8 +554,8 @@ class AutoBettor(
 
     /**
      * Why the trap guard's move rule stops [item] (a stable reason, counted by the report), or null. Only full-game moneylines, spreads and totals
-     * ([TrapGuard.MOVE_KINDS]) with [ScanSettings.trapNovigMove] on are read; a read that fails stops nothing (the guard adds a check, it never
-     * blocks betting on a hiccup) and is recorded as UNREAD.
+     * ([TrapGuard.MOVE_KINDS]) with [ScanSettings.trapNovigMove] on are read. A read that fails (429, 451, no route) skips the bet ([MOVE_UNREAD_SKIP]; Tj, 2026-10-07,
+     * proposal 10: before, it went through unchecked) and is recorded as UNREAD; the next cycle reads again.
      */
     private suspend fun novigMove(item: AlertPicks.CnoChecked, target: BetTarget, settings: ScanSettings): String? {
         val row = item.shown.row
@@ -572,7 +572,7 @@ class AutoBettor(
         } catch (e: Exception) {
             moveSaid[key] = "UNREAD · ${(e.message ?: e.javaClass.simpleName).take(REASON_CHARS)}"
             c.eventLog.count("trap.move.UNREAD")
-            return null
+            return MOVE_UNREAD_SKIP
         }
         val verdict = when {
             move.level == null -> "NO LEVEL"
@@ -669,6 +669,9 @@ class AutoBettor(
         const val SHARP_BAR_ALERT_COUNTER = "sharpbar.alerts.under"
 
         /** The report's reason for a game line the trap guard's move rule stopped (one wording, so the report counts them together). */
+        /** The words of a game line left alone because Novig's recent trades couldn't be read (the trap guard's move rule has nothing to judge it on). */
+        const val MOVE_UNREAD_SKIP = "Novig's recent trades couldn't be read, so this game line isn't bet (trap guard)"
+
         const val MOVE_SKIP = "Novig just moved: its price fell 2¢+ under this hour's level as the other side was bought (trap guard)"
 
         /** How many sharp-check answers are kept for the pop-ups before they're dropped (a run's bets are a handful). */
