@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.tjshea.vigilant.data.novig.signing.NovigApiException
+import com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane
 import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
 import com.tjshea.vigilant.data.novig.trading.maker.MakerDecision
 import com.tjshea.vigilant.data.novig.trading.maker.MakerDesk
@@ -11,6 +12,7 @@ import com.tjshea.vigilant.data.novig.trading.maker.MakerGuard
 import com.tjshea.vigilant.data.novig.trading.maker.MakerLines
 import com.tjshea.vigilant.data.novig.trading.maker.MakerQuote
 import com.tjshea.vigilant.data.novig.trading.maker.MakerRules
+import com.tjshea.vigilant.data.scanner.BidSource
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.GameExposure
@@ -44,6 +46,12 @@ class MakerRunner(
     /** A Novig market's newest trades (public, one request): what the trap guard's move rule reads before a game line gets a bid ([withMoves]). */
     private val recentTrades: suspend (String) -> List<com.tjshea.vigilant.data.scanner.TrapGuard.Trade> =
         { id -> kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { c.novig.trades(id) } },
+    /**
+     * The lines of bids priced from CrazyNinjaOdds ([BidSource.CNO]; RESEARCH.md §114): settings, now, the desk's bids, whether Novig's books are read now (a pass) or the last read's
+     * (the tab). Vigilant's scan isn't used for them at all.
+     */
+    private val cnoLines: suspend (ScanSettings, Long, List<MakerBid>, Boolean) -> CnoBidLane.LineSet =
+        { s, now, bids, read -> c.cnoBids.lines(s, now, bids, read, unavailable = cnoPlayerOut(now)) },
 ) {
     /** What the Make tab shows: the last pass and the bids each line would get now. */
     data class Status(
@@ -114,17 +122,21 @@ class MakerRunner(
             return@withLock null
         }
         val run = scan()
-        val result = run.result
+        // Bids priced from CrazyNinjaOdds never look at Vigilant's scan (it may be off): their lines are the lane's, and a pass has no "scan" to be partial.
+        val cnoSource = s.makerSource == BidSource.CNO
+        val result = if (cnoSource) null else run.result
         _status.update { it.copy(running = true) }
         try {
             val now = clock()
-            val stop = stopReason(s)
+            val localStop = stopReason(s)
+            val cnoSet = if (cnoSource && localStop == null) cnoLines(s, now, desk.bids(), true) else null
+            val stop = localStop ?: cnoSet?.stop
             // No scan yet in this process: only fills and expiries. A scan still running is judged as far as it got (Tj, 2026-10-03: "I had auto make
             // bids turned on, but it didn't actually make any bids by itself": a scan took 8 minutes and every pass waited for its end, by when the fair
             // prices it read first were going old): its finished leagues' lines are bid on, and a bid whose line it hasn't judged yet stays up.
             val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
             val rules = MakerRules.of(s)
-            if (result == null && stop == null) {
+            if (result == null && stop == null && !cnoSource) {
                 // No lines to judge by, but the bids up still have to fit the wallet (a bet by hand or an auto-bet since they went up: Tj, 2026-10-04).
                 val report = desk.fit(rules, s.apiMaxPerDay, wallet)
                 notifyFills(report.fills, desk.bids())
@@ -137,8 +149,9 @@ class MakerRunner(
             askInjuries(result, s, now)
             // The sides Vigilant has a bid on, or a fill not yet judged, get their books' fairs worked out whatever the precheck says (a fill is judged against them).
             val mine = desk.bids().filter { it.active || (it.filled > 0 && it.fairAtFill == null) }.mapTo(HashSet()) { it.outcomeId }
+            val lines = if (cnoSource) cnoSet?.lines.orEmpty() else MakerLines.from(result, s, now, always = mine, unavailable = playerOut(now))
             val report = desk.cycle(
-                withMoves(MakerLines.from(result, s, now, always = mine, unavailable = playerOut(now)), rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
+                withMoves(lines, rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,
             )
             notifyFills(report.fills, desk.bids())
@@ -162,7 +175,7 @@ class MakerRunner(
             _status.update {
                 it.copy(
                     running = false, lastAtMs = now, lastReport = report, problem = report.problems.firstOrNull(),
-                    decisions = report.decisions, decisionsAtMs = now, scanAtMs = result?.computedAtMs,
+                    decisions = report.decisions, decisionsAtMs = now, scanAtMs = if (cnoSource) cnoSet?.listAtMs else result?.computedAtMs,
                 )
             }
             if (!s.maker && stop == null && s.makerRecommend) recommend(report.decisions)
@@ -221,15 +234,17 @@ class MakerRunner(
         val bids = desk()?.bids().orEmpty()
         val resting = bids.filter { it.resting }.mapTo(HashSet()) { it.outcomeId }
         val busy = bids.filter { it.active && !it.resting }.mapTo(HashSet()) { it.outcomeId }
-        val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } - resting + busy
+        val held = tookBySide(c.tracker.all()) - resting + busy
         val denied = c.makerDenials.outcomes(clock())
         val run = scan()
         val rules = MakerRules.of(settings)
-        val lines = withMoves(MakerLines.withoutOwn(MakerLines.from(run.result, settings, now, unavailable = playerOut(now)), bids), rules, now, read = false)
+        val cnoSet = if (settings.makerSource == BidSource.CNO) cnoLines(settings, now, bids, false) else null
+        val base = cnoSet?.lines ?: MakerLines.from(run.result, settings, now, unavailable = playerOut(now))
+        val lines = withMoves(MakerLines.withoutOwn(base, bids), rules, now, read = false)
         val decisions = MakerQuote.decideAll(lines, rules, now, held).map { d ->
             if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, MakerDesk.DENIED) else d
         }
-        _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = run.result?.computedAtMs) }
+        _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = if (cnoSet != null) cnoSet.listAtMs else run.result?.computedAtMs) }
         return decisions
     }
 
@@ -242,6 +257,19 @@ class MakerRunner(
         val book = c.injuries.book.value
         return { o -> com.tjshea.vigilant.data.reference.PlayerOut.forOpportunity(book, o, now) }
     }
+
+    /** [playerOut] for a CNO row (bids priced from CrazyNinjaOdds): the injury reports say its player is out. */
+    private fun cnoPlayerOut(now: Long): (com.tjshea.vigilant.data.cno.CnoRow) -> String? {
+        val book = c.injuries.book.value
+        return { r -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(book, r, now) }
+    }
+
+    /**
+     * Sides a bet by hand, the auto-bet, a lock or an import has open (never a bid's own fill: a bid that filled in part is the bid, and the side stays its own to keep or take down).
+     * A pending bet of that kind holds its side even while a bid rests there (the same side is never bought twice, RESEARCH.md §114).
+     */
+    private fun tookBySide(bets: List<TrackedBet>): Set<String> =
+        bets.filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() && !it.isBid }.mapTo(HashSet()) { it.outcomeId }
 
     /**
      * Asks ParlayAPI's injury list about the prop players of [result]'s priced lines that no report covers yet (the +EV list's players are asked by the
@@ -279,7 +307,11 @@ class MakerRunner(
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } +
             bids.filter { it.active }.map { it.outcomeId }
         val rules = MakerRules.of(s)
-        val line = withMoves(MakerLines.withoutOwn(MakerLines.from(scan().result, s, now, unavailable = playerOut(now)).filter { it.outcomeId == outcomeId }, bids), rules, now, read = true)
+        // Bids priced from CNO: the stop (CNO paused, late, unreadable) is a reason not to post by hand either.
+        val cnoSet = if (s.makerSource == BidSource.CNO) cnoLines(s, now, bids, true) else null
+        cnoSet?.stop?.let { return it }
+        val base = cnoSet?.lines ?: MakerLines.from(scan().result, s, now, unavailable = playerOut(now))
+        val line = withMoves(MakerLines.withoutOwn(base.filter { it.outcomeId == outcomeId }, bids), rules, now, read = true)
             .firstOrNull() ?: return "That line isn't in the latest scan any more"
         val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
         return when (val d = MakerQuote.decide(line, rules, now, held)) {
