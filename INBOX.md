@@ -5335,3 +5335,8 @@ On the auto bid feature, on the low api usage setting, I changed the trap guard 
 
 Also, right now most of the auto bet feature is betting nhl player shots on goal. This is an obscure market I think. I'm worried it is not betting on sharp information with this type of volatile bet. First see if it is wise to have a lot of player shots on goal nhl bets and if not, set up some type of guard for obscure auto betting on small props like this
 ```
+
+## 2026-10-07T15:25:17Z
+```
+Also for the cno only scanner, right now I can't filter sports leagues at all. Make sure the cno scanner has plenty of filters just like vigilant scanner. 
+```
