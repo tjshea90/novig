@@ -17,7 +17,7 @@ import org.junit.Test
 /** Switching on bids priced from CrazyNinjaOdds (Tj, 2026-10-07; RESEARCH.md §114) turns on what they need - not Vigilant's scan - and a side held by a bet by hand stays held. */
 class CnoBidSetupTest {
 
-    private val cno = ScanSettings(makerSource = BidSource.CNO, scanner = ScannerMode.VIGILANT, autoScan = AutoScanMode.OFF, autoScanSeconds = 600, paused = true, pausedByHand = true)
+    private val cno = ScanSettings(makerSource = BidSource.CNO, scanner = ScannerMode.VIGILANT, autoScan = AutoScanMode.OFF, autoScanSeconds = 600, pausedByHand = true)
 
     @Test
     fun `bids from CNO turn on CNO's scanner and CNO's background scan, never Vigilant's`() {
