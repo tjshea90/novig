@@ -141,6 +141,22 @@ class CnoBidLaneTest {
     }
 
     @Test
+    fun `CNO's own fair for a row counts only while the row is on a list now - a row that left it is priced from its page alone`() {
+        val low = row(1).copy(fairProbability = 0.30)
+        source.listRows = listOf(low)
+        listRead(); step()
+        val listed = lines().lines.first { it.outcomeId == "m1-over" }
+        assertEquals(0.30, listed.fair!!, 1e-9)
+        // The list lets it go; a bid is up on it, so its page is read again and judged without CNO's old fair for the row.
+        val bid = bidOn(low, "m1-over", "Pat1 Over 50.5")
+        t += 61_000L
+        source.listRows = emptyList()
+        listRead(); step(listOf(bid))
+        val after = lines(bids = listOf(bid)).lines.first { it.outcomeId == "m1-over" }
+        assertTrue("fair ${after.fair}", after.fair!! > 0.45)
+    }
+
+    @Test
     fun `CNO asked for a pause - nothing is read and every bid from it must come down`() {
         source.listRows = listOf(row(1))
         listRead()
