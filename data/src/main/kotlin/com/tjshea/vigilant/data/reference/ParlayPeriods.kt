@@ -49,11 +49,14 @@ class ParlayPeriodSource(private val client: TheOddsApiClient, private val json:
     override suspend fun odds(league: League, settings: ScanSettings, context: ScanContext): RefSnapshot {
         val sport = league.oddsApiSportKey
         val none = RefSnapshot(sport, emptyList(), System.currentTimeMillis(), provider = id)
-        val period = PERIODS[sport] ?: return none
-        if (MarketFamily.FIRST_HALF !in settings.families) return none
-        if (sport in PINNACLE_ONLY && pinnacleFeedOn) return none
+        // Nothing asked of ParlayAPI is a skipped league, not a fetched one with nothing matching: the health check read "answered 5 leagues but matched no Novig game" (Tj's v0.70.1 file)
+        // for leagues whose Novig board had no 1st-half market to match.
+        val skipped = none.copy(skipped = true)
+        val period = PERIODS[sport] ?: return skipped
+        if (MarketFamily.FIRST_HALF !in settings.families) return skipped
+        if (sport in PINNACLE_ONLY && pinnacleFeedOn) return skipped
         val events = context.novigEvents.filter { it.league == league.novigName }.mapTo(HashSet()) { it.eventId }
-        if (context.novigMarkets.none { it.eventId in events && it.marketType in NOVIG_TYPES }) return none
+        if (context.novigMarkets.none { it.eventId in events && it.marketType in NOVIG_TYPES }) return skipped
         val answer = client.parlayGet("/sports/$sport/live/period_markets", listOf("period" to period), cost = COST, what = "${league.displayName} 1st half")
         val reply = answer.value
         if (reply.busy) throw ReferenceException("ParlayAPI's 1st-half lines are busy")
