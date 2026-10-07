@@ -26,9 +26,9 @@ class ObscureFillTest {
     private val start = now + 3 * 3_600_000L
 
     /** [marketType] decides popular (NFL RECEIVING_YARDS, $490 a day) or small (NFL LONGEST_RECEPTION, $51 a day); [id] makes the market and the side distinct. */
-    private fun line(id: String, marketType: String = "RECEIVING_YARDS", books: Int = 8, fair: Double = 0.50, sharp: List<Double> = listOf(0.50), bestBid: Double? = null) = MakerLine(
+    private fun line(id: String, marketType: String = "RECEIVING_YARDS", books: Int = 8, fair: Double = 0.50, sharp: List<Double> = listOf(0.50), bestBid: Double? = null, game: String? = null) = MakerLine(
         market = NovigMarket(
-            marketId = "m-$id", eventId = "ev-$id", marketType = marketType, status = "OPEN", description = marketType, startsTs = start, fee = MarketFee.GAME,
+            marketId = "m-$id", eventId = "ev-${game ?: id}", marketType = marketType, status = "OPEN", description = marketType, startsTs = start, fee = MarketFee.GAME,
             outcomes = listOf(NovigOutcome("$id-over", "Over 50.5", "TBD"), NovigOutcome("$id-under", "Under 50.5", "TBD")),
         ),
         outcomeId = "$id-over", startsTs = start, league = "NFL", eventName = "A @ B", marketLabel = marketType, selection = "Player Over 50.5", kind = BetKind.PROP,
@@ -150,11 +150,12 @@ class ObscureFillTest {
 
     // ---- order and room ---------------------------------------------------------------------------------------------------------
 
-    private fun post(id: String, obscure: Boolean, price: Double = 0.48, leads: Boolean = true, cost: Long = 1_000) =
-        MakerDecision.Post(line(id, if (obscure) small else "RECEIVING_YARDS", bestBid = if (leads) null else price + 0.01), price, cost, 0.04, obscure = obscure)
+    private fun post(id: String, obscure: Boolean, price: Double = 0.48, leads: Boolean = true, cost: Long = 1_000, game: String? = null) =
+        MakerDecision.Post(line(id, if (obscure) small else "RECEIVING_YARDS", bestBid = if (leads) null else price + 0.01, game = game), price, cost, 0.04, obscure = obscure)
 
-    private fun resting(id: String, obscure: Boolean, price: Double = 0.48, leads: Boolean = true, contracts: Long = 1_000) =
-        RestingBid("o-$id", "m-$id", "$id-over", price, contracts, 0, now + 20 * 60_000L, evAtFair = 0.05, leads = leads, obscure = obscure)
+    private fun resting(id: String, obscure: Boolean, price: Double = 0.48, leads: Boolean = true, contracts: Long = 1_000, game: String? = null) =
+        RestingBid("o-$id", "m-$id", "$id-over", price, contracts, 0, now + 20 * 60_000L, evAtFair = 0.05, leads = leads, obscure = obscure,
+            game = game?.let { com.tjshea.vigilant.data.tracker.GameRef("ev-$it", "A @ B", start, "NFL") })
 
     @Test
     fun `popular bids go up before any small-market bid whatever else ranks them`() {
@@ -184,13 +185,21 @@ class ObscureFillTest {
     }
 
     @Test
-    fun `a small-market bid never takes money a waiting popular bid needs - it waits while any popular bid waits for the wallet`() {
-        // $3 of room: the popular bid ($4.80) does not fit and waits; the small-market bid ($2.40) would fit but waits behind it, so the money stays for the popular bid.
+    fun `a small-market bid goes up with the money a popular bid is too big for, and waits only for a popular bid that could go up`() {
+        // $3 of wallet: the popular bid ($4.80) does not fit and never will with this wallet; the small-market bid ($2.40) uses what is left (Tj: fill the idle money).
         val r = rules(g = { it.copy(maxBids = 10, maxDollars = 100.0) })
         val plan = MakerPlan.plan(listOf(post("o", true, cost = 500), post("p", false)), emptyList(), r, now, budget = 3.0)
-        assertTrue(plan.places.isEmpty())
-        assertEquals(1, plan.waiting[MakerPlan.POPULAR_WAITING])
+        assertEquals(listOf("o-over"), plan.places.map { it.line.outcomeId })
+        assertNull(plan.waiting[MakerPlan.POPULAR_WAITING])
         assertEquals(1, plan.waiting[MakerPlan.BUDGET_REACHED])
+        // The same wallet with the small-market bid already up: $3 free + its $2.40 = $5.40 would fit the popular bid, so it comes down for it, and new small-market bids wait.
+        val up = MakerPlan.plan(listOf(post("o", true, cost = 500), post("p", false), post("o2", true, cost = 500)), listOf(resting("o", true, contracts = 500)), r, now, budget = 3.0)
+        assertEquals(listOf(MakerPlan.MADE_ROOM), up.cancels.map { it.second })
+        assertTrue(up.places.isEmpty())
+        assertEquals(1, up.waiting[MakerPlan.POPULAR_WAITING])
+        // $1 free + $2.40 = $3.40 still doesn't fit a $4.80 popular bid even with it gone: the small-market bid stays up (no flapping for a bid that can't go up).
+        val noFit = MakerPlan.plan(listOf(post("o", true, cost = 500), post("p", false)), listOf(resting("o", true, contracts = 500)), r, now, budget = 1.0)
+        assertTrue(noFit.cancels.isEmpty())
         // With room for the popular bid, the small-market one goes up beside it.
         assertEquals(listOf("p-over", "o-over"), MakerPlan.plan(listOf(post("o", true, cost = 500), post("p", false)), emptyList(), r, now, budget = 10.0).places.map { it.line.outcomeId })
     }
@@ -269,5 +278,61 @@ class ObscureFillTest {
         val old = json.decodeFromString(ScanSettings.serializer(), "{\"makerFocus\":\"QUICK_LIKELY\",\"maker\":true}")
         assertTrue(old.makerObscureFill)
         assertEquals(0.5, old.makerObscureStake, 1e-12)
+    }
+
+    // ---- the adversarial review's confirmed defects (2026-10-07) -------------------------------------------------------------
+
+    @Test
+    fun `a popular bid held up by its game's limit anyway never takes a small-market bid down - no flapping`() {
+        // Two bids up (the most), a $6 limit on the game: the popular bid K ($4.80) is up and wanted, so another popular bid P on K's game can't go up even with the small-market bid gone.
+        val r = rules(g = { it.copy(maxBids = 2, maxDollars = 100.0, maxPerGame = 6.0) })
+        val k = post("k", false, game = "g"); val o = post("o", true, cost = 500)
+        val plan = MakerPlan.plan(listOf(k, o, post("p", false, game = "g")), listOf(resting("k", false, game = "g"), resting("o", true, contracts = 500)), r, now)
+        assertTrue(plan.cancels.isEmpty())
+        assertNull(plan.waiting[MakerPlan.POPULAR_WAITING])
+    }
+
+    @Test
+    fun `a small-market bid that holds a popular bid's game over the limit comes down for it`() {
+        // $6 a game: the small-market bid ($2.40) on the game leaves no room for a popular bid ($4.80) on it: the popular bid is the priority.
+        val r = rules(g = { it.copy(maxBids = 10, maxDollars = 100.0, maxPerGame = 6.0) })
+        val plan = MakerPlan.plan(listOf(post("o", true, cost = 500, game = "g"), post("p", false, game = "g")), listOf(resting("o", true, contracts = 500, game = "g")), r, now)
+        assertEquals(listOf("o-over" to MakerPlan.MADE_ROOM), plan.cancels.map { it.first.outcomeId to it.second })
+        assertTrue(plan.places.isEmpty())
+        // Another game's small-market bid is none of its business.
+        val other = MakerPlan.plan(listOf(post("o", true, cost = 500, game = "h"), post("p", false, game = "g")), listOf(resting("o", true, contracts = 500, game = "h")), r, now)
+        assertTrue(other.cancels.isEmpty())
+        assertEquals(listOf("p-over"), other.places.map { it.line.outcomeId })
+    }
+
+    @Test
+    fun `only as many small-market bids come down as the popular bid needs, counting the room already free`() {
+        // $12 of dollars: a popular bid K ($4.80) and two small-market bids ($2.40 each) are up = $9.60; popular P ($4.80) needs $2.40 more: ONE small-market bid comes down, not both.
+        val r = rules(g = { it.copy(maxBids = 10, maxDollars = 12.0) })
+        val weak = resting("o1", true, leads = false, contracts = 500).copy(evAtFair = 0.04)
+        val strong = resting("o2", true, leads = true, contracts = 500).copy(evAtFair = 0.09)
+        val plan = MakerPlan.plan(listOf(post("k", false), post("o1", true, cost = 500), post("o2", true, cost = 500), post("p", false)), listOf(resting("k", false), weak, strong), r, now)
+        assertEquals(listOf("o1-over"), plan.cancels.map { it.first.outcomeId })
+    }
+
+    @Test
+    fun `a bid Tj approved by hand is never taken down to make room`() {
+        val r = rules(g = { it.copy(maxBids = 1, maxDollars = 100.0) })
+        val hand = resting("o", true).copy(auto = false)
+        val plan = MakerPlan.plan(listOf(post("o", true), post("p", false)), listOf(hand), r, now)
+        assertTrue(plan.cancels.isEmpty())
+        assertEquals(1, plan.kept.size)
+    }
+
+    @Test
+    fun `half stake is half of a popular bid's under Kelly too, at every margin chip`() {
+        // Quarter Kelly sizes by the edge: a wider margin is a bigger edge, so sizing at the small-market bid's own price would stake MORE than half (the review: 0.74x at 6%, 1.18x at 10%).
+        for (chip in listOf(0.06, 0.08, 0.10)) {
+            val r = rules(g = { it.copy(stakeMode = AutoBetStake.QUARTER_KELLY, bankroll = 200.0, maxStake = 100.0, obscureMargin = chip) })
+            val popular = decide(line("p", fair = 0.50), r) as MakerDecision.Post
+            val obscure = decide(line("o", small, fair = 0.50), r) as MakerDecision.Post
+            assertTrue("chip $chip: small-market ${obscure.cost} vs popular ${popular.cost}", obscure.cost <= popular.cost * 0.5 + 0.5)
+            assertTrue("chip $chip: small-market ${obscure.cost} is about half of ${popular.cost}", obscure.cost >= popular.cost * 0.5 - 1.0)
+        }
     }
 }
