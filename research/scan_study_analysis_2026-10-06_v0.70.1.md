@@ -11,7 +11,7 @@ Written 2026-10-07 from the saved agent results in `research/v0701_partial/` (nu
 - **Hidden bets (what CNO's filters drop) are not where the profit is**: CLV lower than shown bets by about what their lower EV predicts; 31% of them were listed later at a better price. Leave CNO's three filters as they are.
 - **Props do not need a sharp book to be bet**: PASSED vs VETOED props differ by +0.88 [-1.05, +2.8], the sign flips by date half, and time to start explains most of it. No change to the veto.
 - **Bids**: 17 fills (6 games) beat the close by +2.6% per fill, but the sample cannot say bids add an edge. A bid fills only while it leads its side; Quick & likely bids sit 18-23 h out where no fill has ever been recorded.
-- **Diagnostics file**: the app is stable (no crash, ANR, memory kill, frozen frame; 9 late cycles of 7,328). Money is not at risk from anything in it except one app fault (Novig's batch-place reply is unreadable; section 3) and the known Novig 451 windows.
+- **Diagnostics file**: the app is stable (no crash, ANR, memory kill, frozen frame; 9 late cycles of 7,328). Nothing in it puts money at risk except the Novig 451 windows (bids can be neither posted nor cancelled while refused), one fail-open check (an unread Novig-trades look lets a game-line auto-bet through; 0 of 5 reads failed) and one app fault (Novig's batch-place reply is unreadable; section 3).
 - **ParlayAPI**: its credits buy about 16 full scans a day (40 credits a scan against a 635 a day pace); a slow, flaky provider (8.5% of calls failed). v0.70.4 now spends free keys too and rotates keys (PARLAY_API.md §4a).
 
 ## 2. The strategy candidates and the verdicts (default: refuted)
