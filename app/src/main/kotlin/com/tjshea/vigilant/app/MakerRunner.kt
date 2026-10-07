@@ -125,10 +125,9 @@ class MakerRunner(
             if (s.makerRecommend && !s.paused && AppBook.isNovig) recommend(decisions)
             return@withLock null
         }
-        val run = scan()
         // Bids priced from CrazyNinjaOdds never look at Vigilant's scan (it may be off): their lines are the lane's, and a pass has no "scan" to be partial.
         val cnoSource = s.makerSource == BidSource.CNO
-        val result = if (cnoSource) null else run.result
+        val result = if (cnoSource) null else scan().result
         _status.update { it.copy(running = true) }
         try {
             val now = clock()
@@ -240,15 +239,15 @@ class MakerRunner(
         val busy = bids.filter { it.active && !it.resting }.mapTo(HashSet()) { it.outcomeId }
         val held = MakerDesk.held(c.tracker.all(), resting) + busy
         val denied = c.makerDenials.outcomes(clock())
-        val run = scan()
         val rules = MakerRules.of(settings)
         val cnoSet = if (settings.makerSource == BidSource.CNO) cnoLines(settings, now, bids, false) else null
-        val base = cnoSet?.lines ?: MakerLines.from(run.result, settings, now, unavailable = playerOut(now))
+        val result = if (cnoSet == null) scan().result else null
+        val base = cnoSet?.lines ?: MakerLines.from(result, settings, now, unavailable = playerOut(now))
         val lines = withMoves(MakerLines.withoutOwn(base, bids), rules, now, read = false)
         val decisions = MakerQuote.decideAll(lines, rules, now, held).map { d ->
             if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, MakerDesk.DENIED) else d
         }
-        _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = if (cnoSet != null) cnoSet.listAtMs else run.result?.computedAtMs) }
+        _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = if (cnoSet != null) cnoSet.listAtMs else result?.computedAtMs) }
         return decisions
     }
 
