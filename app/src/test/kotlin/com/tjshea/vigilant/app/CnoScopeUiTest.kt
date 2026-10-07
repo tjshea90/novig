@@ -229,4 +229,10 @@ class CnoScopeUiTest {
         compose.onNodeWithTag("cnoPropsPerGameField").performScrollTo()
         compose.onRoot().captureRoboImage("screenshots/5r_settings_cno_which_games_more.png")
     }
+
+    @Test
+    fun `a screenshot of the CNO tab with a league picked`() {
+        cnoTab(ScanSettings(scanner = ScannerMode.CNO, cnoFilters = CnoFilters(scope = CnoScope(leagues = setOf("NCAAF")))))
+        compose.onRoot().captureRoboImage("screenshots/5r_cno_tab_league_chips.png")
+    }
 }
