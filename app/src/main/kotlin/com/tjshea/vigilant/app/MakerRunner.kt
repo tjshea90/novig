@@ -121,7 +121,8 @@ class MakerRunner(
         val s = c.currentSettings()
         val any = desk.bids().any { it.active }
         if (!s.maker && !any) {
-            val decisions = preview(s)
+            // Recommend (or off): the lines are still judged, and bids priced from CNO read Novig's books now (no pass ever does when auto-make is off, and the tab reads none).
+            val decisions = preview(s, readNovig = true)
             if (s.makerRecommend && !s.paused && AppBook.isNovig) recommend(decisions)
             return@withLock null
         }
@@ -231,7 +232,7 @@ class MakerRunner(
     }
 
     /** The bids each line of the latest scan would get now, posting nothing (the tab with auto-make off, or between passes). */
-    suspend fun preview(s: ScanSettings? = null): List<MakerDecision> {
+    suspend fun preview(s: ScanSettings? = null, readNovig: Boolean = false): List<MakerDecision> {
         val settings = s ?: c.currentSettings()
         val now = clock()
         val bids = desk()?.bids().orEmpty()
@@ -240,7 +241,7 @@ class MakerRunner(
         val held = MakerDesk.held(c.tracker.all(), resting) + busy
         val denied = c.makerDenials.outcomes(clock())
         val rules = MakerRules.of(settings)
-        val cnoSet = if (settings.makerSource == BidSource.CNO) cnoLines(settings, now, bids, false) else null
+        val cnoSet = if (settings.makerSource == BidSource.CNO) cnoLines(settings, now, bids, readNovig) else null
         val result = if (cnoSet == null) scan().result else null
         val base = cnoSet?.lines ?: MakerLines.from(result, settings, now, unavailable = playerOut(now))
         val lines = withMoves(MakerLines.withoutOwn(base, bids), rules, now, read = false)

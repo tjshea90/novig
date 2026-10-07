@@ -658,6 +658,26 @@ class MakerAppTest {
     }
 
     @Test
+    fun `recommending bids priced from CNO reads Novig's books at the cycle's pass - the lines are judged, nothing is posted`() = runBlocking {
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        app.container.settingsStore.update { settingsCno().copy(maker = false, makerRecommend = true) }
+        val reads = java.util.concurrent.CopyOnWriteArrayList<Boolean>()
+        val run = MakerRunner(
+            app, app.container, clock = { now }, scan = { error("never") },
+            desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
+            cnoLines = { _, _, _, read -> reads += read; cnoSet() },
+        )
+        assertNull(run.run("background cycle"))
+        assertEquals(listOf(true), reads)
+        assertTrue(run.status.value.decisions.filterIsInstance<com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Post>().isNotEmpty())
+        assertTrue(novig.placed.isEmpty())
+        // The tab's own preview reads no Novig book.
+        run.preview()
+        assertEquals(listOf(true, false), reads)
+    }
+
+    @Test
     fun `with bids priced from CNO a Vigilant scan's end is no reason for a pass - the background cycle runs them`() {
         val container = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText()
         assertTrue(container.contains("makerSource == com.tjshea.vigilant.data.scanner.BidSource.VIGILANT"))
