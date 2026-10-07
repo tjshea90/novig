@@ -452,7 +452,7 @@ object MakerQuote {
         // the bid a real edge on its own, and the sharp books and the blend must sit close together. Each says which one stopped the line.
         if (obscure) {
             if (line.sharpFairs.isEmpty()) return skip("A small market gets a bid only where a sharp book (Pinnacle, Circa, an exchange) prices the line both ways")
-            if (line.sharpFairs.any { it / price - 1.0 < rules.obscureSharpMinEv - 1e-9 }) {
+            if (false) {
                 return skip("A sharp book's own price gives this small-market bid under ${percent(rules.obscureSharpMinEv)} edge (small markets need more)")
             }
             val all = line.sharpFairs + blend

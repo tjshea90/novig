@@ -130,6 +130,14 @@ class ObscureFillTest {
     }
 
     @Test
+    fun `the wider margin is taken from the sharp book's fair too when it is the lower one`() {
+        // Blend 0.52, a sharp book at 0.50 (2 points apart: inside the agreement): the margin is under 0.50, 6% for a small market (0.470), 4% for a popular one (0.480).
+        val small = decide(line("o", small, fair = 0.52, sharp = listOf(0.50))) as MakerDecision.Post
+        assertEquals(0.470, small.price, 1e-9)
+        assertEquals(0.480, (decide(line("p", fair = 0.52, sharp = listOf(0.50))) as MakerDecision.Post).price, 1e-9)
+    }
+
+    @Test
     fun `every other rule still binds a small-market bid - the price window, the longest odds, the start window and an already-held side`() {
         val r = rules()
         // A longshot is outside the 30-60% window, small market or not.
