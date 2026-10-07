@@ -49,6 +49,7 @@ class FeedRaceRunnerTest {
     @Test
     fun `with a live game it reads the feeds, writes what changed, answers the socket's ping, and never places anything`() = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val t0 = System.currentTimeMillis()
         val sofaCalls = AtomicInteger()
         val urls = CopyOnWriteArrayList<String>()
         val sockets = FakeSockets()
@@ -66,7 +67,7 @@ class FeedRaceRunnerTest {
             },
             sockets = sockets,
             liveGames = { listOf(LiveGame("e1", "Tomas Machac @ Zhizhen Zhang Round of 16", "ATP", "TENNIS", "m1")) },
-            novigTrades = { listOf(TrapGuard.Trade("o1", 0.55, 100, System.currentTimeMillis() - 1_000), TrapGuard.Trade("o2", 0.45, 50, System.currentTimeMillis() - 900)).also { tradeCalls.incrementAndGet() } },
+            novigTrades = { listOf(TrapGuard.Trade("o1", 0.55, 100, t0 - 1_000), TrapGuard.Trade("o2", 0.45, 50, t0 - 900)).also { tradeCalls.incrementAndGet() } },   // the same trades every read, as Novig lists them
             journal = journal, pollMs = 60, discoverMs = 120, reportMs = 300,
         )
         runner.start()
