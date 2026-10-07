@@ -1,22 +1,22 @@
-# CHECKPOINT 2656 — read me first, then TASKS.md
+# CHECKPOINT 2657 — read me first, then TASKS.md
 
-**Written:** 2026-10-07T01:57:44Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-c79f7430-lq8xfl` · **builds on:** `c7467b10` (this checkpoint is the commit after it)
+**Written:** 2026-10-07T02:06:45Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-c79f7430-lq8xfl` · **builds on:** `b24e3a1e` (this checkpoint is the commit after it)
 
 ## Just done
-TASKS DC1-DC5 written in Tj's words (settings reorganize, typed numbers + shortest odds, bid margin chips 2/2.5 replacing 6/8, auto-bid kinds that fill fast, fast-feed status)
+DC2/DC3/DC4 data layer: shortest odds for the feed (minOdds), CNO (minOdds, SHORT_ODDS reason), bids (makerMinOdds) and the auto-bet generalized (positive = underdogs only) and now also checked on the order book just before the order; bid margin chips 2/2.5/3/3.25/3.5/4 (6 and 8 gone); Quick & likely now FILTERS obscure kinds and lines priced by fewer than makerQuickMinBooks (5) books; tests ShortestOddsTest, QuickBidFilterTest, CnoChecksTest, ApiBettingTest
 
 ## Do this next
-explore settings code (SettingsScreen/SettingsIndex, ScanSettings), then DC3 (small), DC4, DC2, DC1; answer DC5 from RESEARCH 95-99
+UI: generic typed-number field, wire it to every numeric chip group, new shortest-odds rows, quick min books + margin typed; then reorganize Settings (DC1); mutation checks; full floor; ship v0.71.0
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    M  TASKS.md
 
 ## Last ten checkpoints
 ```
+  201ddd1b ckpt 2656: TASKS DC1-DC5 written in Tj's words (settings reorganize, typed numbers + sh
   a73f862c ckpt 2655: v0.70.1 analysis STOPPED at Tj's cost call after the 3 started verifiers fin
   eb7495c0 ckpt 2654: v0.70.4 RELEASED and RECORDED (code 122): ParlayAPI key rotation + free keys
   9c967742 ckpt 2653: pre-release: v0.70.4: ParlayAPI keys rotate: a scan goes to the next key whe
@@ -26,8 +26,7 @@ explore settings code (SettingsScreen/SettingsIndex, ScanSettings), then DC3 (sm
   b19f6a41 ckpt 2649: WRAP-UP (usage nearly out): 22/30 verifiers saved on GitHub plus 9/9 study, 
   6ee5134c ckpt 2648: 21/30 verifiers saved: rule 8 (R1: first look inside 6 h with EV>=2.5%) repr
   c391db77 ckpt 2647: 18/30 verifiers saved (rules 1-6 complete except rule 6 feasibility running;
-  2c16c8de ckpt 2646: container restarted at ~00:35Z (new VM, data and prompts survived): verify-6
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(12 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
