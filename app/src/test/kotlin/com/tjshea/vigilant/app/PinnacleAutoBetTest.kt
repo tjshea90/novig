@@ -123,8 +123,8 @@ class PinnacleAutoBetTest {
     private fun placer(novig: FakeNovig) =
         ApiBetPlacer(novig, app.container.tracker, books = { id -> book(id) }, limits = { BetLimits(10.0, 50.0, 0.01) }, clock = { now }, pause = { }, lock = app.container.orderLock)
 
-    private fun bettor(novig: FakeNovig, wallet: Double? = 25.0) =
-        AutoBettor(app, app.container, clock = { now }, placer = { placer(novig) }, wallet = { wallet }, recentTrades = { emptyList() })
+    private fun bettor(novig: FakeNovig, wallet: Double? = 25.0, injuries: com.tjshea.vigilant.data.reference.InjuryBook = com.tjshea.vigilant.data.reference.InjuryBook.EMPTY) =
+        AutoBettor(app, app.container, clock = { now }, placer = { placer(novig) }, wallet = { wallet }, recentTrades = { emptyList() }, injuries = { injuries })
 
     private fun settings(f: (ScanSettings) -> ScanSettings = { it }) = f(
         ScanSettings(
@@ -134,6 +134,20 @@ class PinnacleAutoBetTest {
     )
 
     private fun notifications() = shadowOf(app.getSystemService(NotificationManager::class.java)).allNotifications
+
+    @Test
+    fun `a Pinnacle bet on a player the injury reports say is out is not placed, a questionable one is (Tj, 2026-10-07)`() = runBlocking {
+        fun reports(status: String) = com.tjshea.vigilant.data.reference.InjuryIndex { now }.apply {
+            record("americanfootball_nfl", listOf(com.tjshea.vigilant.data.reference.Injury("Player", status)))
+        }.book.value
+        val novig = FakeNovig()
+        val out = bettor(novig, injuries = reports("Out")).runPinnacle(settings(), result(opp(asOf = now - 10_000))) { null }
+        assertEquals(0, out.placed.size)
+        assertEquals("nothing reached Novig", 0, novig.orders.get())
+        assertTrue(out.skipped.keys.joinToString(), out.skipped.keys.any { it.startsWith("The player is out (") })
+        val maybe = bettor(novig, injuries = reports("Questionable")).runPinnacle(settings(), result(opp(asOf = now - 10_000))) { null }
+        assertEquals(1, maybe.placed.size)
+    }
 
     @Test
     fun `a bet under Pinnacle's price read this minute is placed with no re-read, and its record says Pinnacle only`() = runBlocking {

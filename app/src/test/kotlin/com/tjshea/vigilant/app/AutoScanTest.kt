@@ -387,6 +387,18 @@ class AutoScanTest {
     }
 
     @Test
+    fun `a Vigilant bet on a player the injury reports say is out does not alert, a questionable one does (Tj, 2026-10-07)`() {
+        val s = SampleScan.state().indexed(now)
+        val first = AlertPicks.vigilant(s, 0.02, now).first()
+        fun tagged(status: String) = s.copy(injuries = mapOf(first.key to com.tjshea.vigilant.data.reference.Injury("Anyone", status)))
+        assertTrue(AlertPicks.vigilant(tagged("Out"), 0.02, now).none { it.key == first.key })
+        assertTrue(AlertPicks.vigilant(tagged("Suspended"), 0.02, now).none { it.key == first.key })
+        assertTrue(AlertPicks.vigilant(tagged("Questionable"), 0.02, now).any { it.key == first.key })
+        // The others are untouched.
+        assertEquals(AlertPicks.vigilant(s, 0.02, now).size - 1, AlertPicks.vigilant(tagged("Out"), 0.02, now).size)
+    }
+
+    @Test
     fun `a Vigilant bet already placed never alerts`() {
         val s = SampleScan.state().indexed(now)
         val first = AlertPicks.vigilant(s, 0.02, now).first()
