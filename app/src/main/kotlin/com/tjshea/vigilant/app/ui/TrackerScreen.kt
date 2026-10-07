@@ -152,6 +152,8 @@ fun TrackerScreen(
     var sort by rememberSaveable { mutableStateOf(BetSort.DEFAULT) }
     var sortReversed by rememberSaveable { mutableStateOf(false) }
     var scanner by rememberSaveable { mutableStateOf(ScannerFilter.ALL) }
+    // Bets, bids or both (Tj, 2026-10-07): one choice for the lists and the stats, kept like the others.
+    var made by rememberSaveable { mutableStateOf(MadeFilter.ALL) }
     var breakdownBy by rememberSaveable { mutableStateOf(TrackerBreakdown.By.LEAGUE) }
     // The closing-line card's own period and outlier switch (Tj, 2026-09-29).
     var clvPeriod by rememberSaveable { mutableStateOf(ClvPeriod.ALL) }
@@ -173,14 +175,17 @@ fun TrackerScreen(
     val lockedIds = remember(priced) { LockedBets.ids(priced) }
     val bets = remember(priced, hideLocked, lockedIds) { if (hideLocked && lockedIds.isNotEmpty()) priced.filterNot { it.id in lockedIds } else priced }
     val minute = now / 60_000L
-    val scoped = remember(bets, scanner) { TrackerSort.inScanner(bets, scanner) }
+    // Bets, bids or both: everything below (the lists, the counts, every stat, the closing-line card, the profit line) reads these.
+    val kindBets = remember(bets, made) { TrackerSort.inMade(bets, made) }
+    val madeCounts = remember(bets) { MadeFilter.entries.associateWith { f -> TrackerSort.inMade(bets, f).size } }
+    val scoped = remember(kindBets, scanner) { TrackerSort.inScanner(kindBets, scanner) }
     val counts = remember(scoped) { BetFilter.entries.associateWith { f -> filtered(scoped, f).size } }
-    val scannerCounts = remember(bets, filter) { ScannerFilter.entries.associateWith { s -> TrackerSort.inScanner(filtered(bets, filter), s).size } }
+    val scannerCounts = remember(kindBets, filter) { ScannerFilter.entries.associateWith { s -> TrackerSort.inScanner(filtered(kindBets, filter), s).size } }
     val shown = remember(scoped, filter, minute, sort, sortReversed) {
         TrackerSort.sorted(filtered(scoped, filter), sort, sortReversed) { ordered(it, filter, now) }
     }
-    val periodBets = remember(bets, period, minute) { inPeriod(bets, period, now) }
-    val lockStats = remember(priced, period, minute) { LockedBets.stats(inPeriod(priced, period, now), priced) }
+    val periodBets = remember(kindBets, period, minute) { inPeriod(kindBets, period, now) }
+    val lockStats = remember(priced, period, minute, made) { LockedBets.stats(inPeriod(TrackerSort.inMade(priced, made), period, now), priced) }
     // The "Check odds now" counter: open bets re-read since the last check began (0 again at each new one), live as batches are saved; a game
     // that starts drops out within the minute.
     val checkStart = state.checkStartedAtMs
@@ -192,7 +197,7 @@ fun TrackerScreen(
     // composition, and one restored after a rotation, keep their place.
     val listState = rememberLazyListState()
     var shownKey by remember { mutableStateOf<List<Any>?>(null) }
-    val listKey = listOf(view, period, filter, sort, sortReversed, scanner)
+    val listKey = listOf(view, period, filter, sort, sortReversed, scanner, made)
     LaunchedEffect(listKey) {
         if (shownKey != null && shownKey != listKey) listState.scrollToItem(0)
         shownKey = listKey
@@ -296,16 +301,24 @@ fun TrackerScreen(
                     // One row, so the pinned bar stays compact; what it counts is said just below, in the list.
                     if (checkStats != null) CheckOddsCounter(checkStats)
                     when (view) {
-                        TrackerView.STATS -> Row(Modifier.padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            TrackerPeriod.entries.forEach { p ->
-                                FilterChip(selected = period == p, onClick = { period = p }, label = { Text(p.label) })
+                        TrackerView.STATS -> Column(Modifier.padding(vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                TrackerPeriod.entries.forEach { p ->
+                                    FilterChip(selected = period == p, onClick = { period = p }, label = { Text(p.label) })
+                                }
+                            }
+                            // Bets, bids or both for every number below (Tj, 2026-10-07); the Bets tab has the same chip.
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                MadeChip(made, madeCounts, { made = it }, Modifier.width(210.dp))
                             }
                         }
                         TrackerView.BETS -> Column(Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 BetFilter.entries.forEach { f ->
                                     FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text("${f.label} (${counts[f] ?: 0})") })
                                 }
+                                // Bets, bids or both, in the first row so the pinned bar keeps its two rows (StickyHeadersTest).
+                                MadeChip(made, madeCounts, { made = it }, Modifier.weight(1f))
                             }
                             // Sort and scanner are menus here, so the bar stays two chip rows tall while it is pinned (wrapped chips took a third of the screen).
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -331,6 +344,16 @@ fun TrackerScreen(
                     }
                 }
             }
+            if (made != MadeFilter.ALL) {
+                item(key = "madeCaption") {
+                    Text(
+                        TrackerText.madeCaption(made, kindBets.size, bets.size - kindBets.size),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp).testTag("madeCaption"),
+                    )
+                }
+            }
             if (checkStats != null && checkStart != null) {
                 item(key = "checkCaption") {
                     Text(
@@ -344,14 +367,14 @@ fun TrackerScreen(
             when (view) {
                 TrackerView.STATS -> {
                     if (periodBets.isEmpty() && !lockStats.any) {
-                        item(key = "empty") { EmptyState("No bets ${if (period == TrackerPeriod.ALL) "tracked yet" else "in this period"}", EMPTY_HINT) }
+                        item(key = "empty") { EmptyState(TrackerText.emptyStats(made, period == TrackerPeriod.ALL, bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT) }
                     } else {
                         // The locks' own numbers (Tj, 2026-10-02 20:06Z: "a stat tracker for amount and percentage of bets locked in and the total profit and
                         // percentage of profit for those bets"), shown whether or not they're hidden from the rest.
                         if (lockStats.any) item(key = "locks") { LockStatsCard(lockStats, hideLocked) }
                         if (periodBets.isNotEmpty()) item(key = "stats") {
                             StatsCards(periodBets, breakdownBy, onBreakdown = { breakdownBy = it }) {
-                                ClosingLineCard(bets, now, clvPeriod, { clvPeriod = it }, clvHideOutliers, { clvHideOutliers = it })
+                                ClosingLineCard(kindBets, now, clvPeriod, { clvPeriod = it }, clvHideOutliers, { clvHideOutliers = it })
                             }
                         }
                     }
@@ -375,7 +398,7 @@ fun TrackerScreen(
                     }
                     if (shown.isEmpty()) {
                         item(key = "empty") {
-                            EmptyState(if (bets.isEmpty()) "No bets tracked yet" else "No ${filter.label.lowercase()} bets", EMPTY_HINT)
+                            EmptyState(TrackerText.emptyList(made, filter.label.lowercase(), bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT)
                         }
                     }
                     items(shown, key = { it.id }) { bet ->
@@ -428,6 +451,8 @@ fun TrackerScreen(
     editPrice?.let { bet -> PriceDialog(bet, onSave = { actions.onPrice(bet.id, it); editPrice = null }, onDismiss = { editPrice = null }) }
 }
 
+private const val BIDS_HINT = "A bid is a make order Vigilant posted under its fair price (the Bids tab); it shows here as a bid once a taker fills it. Bids nobody filled are counted on the Bids tab and in Diagnostics."
+
 private const val EMPTY_HINT = "Tap ✓ on a bet in the widget or the CNO tab (or Track on a +EV card, or ✓ Placed on a +EV alert) and it's logged here, \$1 unless you change it."
 
 private fun filtered(bets: List<TrackedBet>, f: BetFilter) = when (f) {
@@ -449,6 +474,14 @@ private fun MenuChip(label: String, active: Boolean, modifier: Modifier = Modifi
             modifier = Modifier.fillMaxWidth(),
         )
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) { items { open = false } }
+    }
+}
+
+/** The Bets / Bids / both choice ([MadeFilter]) as a menu chip with how many records each holds. */
+@Composable
+private fun MadeChip(made: MadeFilter, counts: Map<MadeFilter, Int>, onMade: (MadeFilter) -> Unit, modifier: Modifier = Modifier) {
+    MenuChip(made.label, active = made != MadeFilter.ALL, modifier = modifier.testTag("madeChip")) { close ->
+        MadeFilter.entries.forEach { f -> MenuChoice("${f.label} (${counts[f] ?: 0})", selected = made == f, onClick = { onMade(f); close() }) }
     }
 }
 
@@ -656,6 +689,7 @@ private fun BetCard(
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(bet.selection, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (bet.isBid) { Spacer(Modifier.width(6.dp)); BidTag() }
                         if (open) injury?.let { Spacer(Modifier.width(6.dp)); InjuryTag(it) }
                     }
                     Text(
@@ -671,7 +705,7 @@ private fun BetCard(
                         TrackerSort.scannerOf(bet).short +
                             " · placed ${Format.placedAt(bet.createdAtMs)}" +
                             (if (bet.book != AppBook.name) " · ${bet.book}" else "") +
-                            (if (bet.viaApi) (if (bet.imported) " · found in Novig's fills" else if (bet.maker) " · your bid, filled (make order)" else if (bet.auto) " · auto-bet through Novig's API" else " · placed through Novig's API") else "") +
+                            (if (bet.isBid) " · your bid, filled (make order)" + (if (bet.imported) " · found in Novig's fills" else "") else if (bet.viaApi) (if (bet.imported) " · found in Novig's fills" else if (bet.auto) " · auto-bet through Novig's API" else " · placed through Novig's API") else "") +
                             (if (bet.imported && !bet.viaApi) " · from an earlier ✓" else ""),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -697,7 +731,7 @@ private fun BetCard(
                 if (bet.viaApi) LabeledValue("Stake", Format.money(bet.stake))
                 else LabeledValue("Stake ✎", Format.money(bet.stake), Modifier.clickable(onClickLabel = "Change the stake", onClick = onStake))
                 LabeledValue("Price", bet.american?.let { Odds.formatAmerican(it) } ?: Format.american(bet.price))
-                LabeledValue("EV at bet", bet.evPercentAtBet?.let { Format.evPercent(it) } ?: "—")
+                LabeledValue(if (bet.isBid) "EV posted" else "EV at bet", bet.evPercentAtBet?.let { Format.evPercent(it) } ?: "—")
                 // The true CLV once the game has started with a close read just before it; until then the "now" line below is the one to watch.
                 val clv = ClosingLine.clv(bet, now)
                 LabeledValue("CLV", clv?.let { Format.evPercent(it) } ?: "—", valueColor = clv?.let { moneyColor(it) } ?: Color.Unspecified)
