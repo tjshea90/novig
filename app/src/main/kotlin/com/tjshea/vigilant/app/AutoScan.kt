@@ -271,6 +271,11 @@ class AutoScanner(
                         }
                     }.onFailure { if (it is CancellationException) throw it; errors += "Tracker: ${it.message ?: it.javaClass.simpleName}" }
                 }
+                // Bids priced from CrazyNinjaOdds (Tj, 2026-10-07; RESEARCH.md §114): the wide list and the games' pages that are due, read here whatever alerts and auto-bet are set to.
+                if (settings.bidsFromCno && settings.autoScansCno && !settings.paused && AppBook.isNovig) {
+                    _status.update { it.copy(step = "Reading CNO for bids") }
+                    runCatching { timed("cnobids") { c.cnoBids.step(settings, c.makerDesk()?.bids().orEmpty()) } }.onFailure { if (it is CancellationException) throw it; errors += "CNO bids: ${it.message ?: it.javaClass.simpleName}" }
+                }
                 // Locks on the bets already placed (Tj, 2026-10-02 ~18:50Z), whatever the scanner: only Novig's books for the markets the subaccount holds.
                 if (settings.autoLocksNow) {
                     _status.update { it.copy(step = "Auto-lock") }
@@ -285,9 +290,11 @@ class AutoScanner(
                 }
                 // Make orders (RESEARCH.md §70): fills, expiries, the start coming up and fair prices going old are checked every cycle; a cycle that
                 // scanned has its pass from the scan's end ([AppContainer]).
-                if (!settings.paused && AppBook.isNovig && (settings.maker || settings.makerRecommend) && !scanned) {
+                // Bids priced from CrazyNinjaOdds are not Vigilant's scan's: every cycle has its pass, scanned or not, and the 15-second gap that keeps a scan's own passes apart doesn't apply.
+                val fromCno = settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO
+                if (!settings.paused && AppBook.isNovig && (settings.maker || settings.makerRecommend) && (!scanned || fromCno)) {
                     _status.update { it.copy(step = "Make orders") }
-                    runCatching { timed("maker") { c.maker.run("background cycle", minGapMs = MakerRunner.BACKGROUND_GAP_MS) } }.onFailure { if (it is CancellationException) throw it; errors += "Make orders: ${it.message ?: it.javaClass.simpleName}" }
+                    runCatching { timed("maker") { c.maker.run("background cycle", minGapMs = if (fromCno) 0L else MakerRunner.BACKGROUND_GAP_MS) } }.onFailure { if (it is CancellationException) throw it; errors += "Make orders: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 val sent = send(alerts)
                 _status.update { it.copy(lastFound = alerts.distinctBy { a -> a.dedupeKey }.size, lastAlerts = sent) }
