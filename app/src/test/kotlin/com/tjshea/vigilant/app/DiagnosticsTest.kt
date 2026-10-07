@@ -673,4 +673,41 @@ class DiagnosticsTest {
         assertTrue(Diagnostics.lowUsageLines(low.copy(makerMaxOdds = 115), plan, 0L).joinToString().contains("no bid longer than +115"))
         assertTrue(Diagnostics.lowUsageLines(low.copy(makerMaxOdds = 200), plan, 0L).joinToString().contains("no bid longer than +200"))
     }
+
+    // ---- bids priced from CrazyNinjaOdds (Tj, 2026-10-07; RESEARCH.md §114) ------------------------------------------------------
+
+    private val cnoLane = com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status(
+        lastStepMs = now - 5_000, rows = 120, candidates = 40, pages = 12, pagesRead = 3, listAgeSec = 14, oldestPageSec = 41, wideRows = 300,
+        skipped = mapOf("No book on CNO's page prices both sides" to 7),
+    )
+
+    @Test
+    fun `Diagnostics has a line for bids priced from CrazyNinjaOdds - the ages, the pages, the stop and why rows got no line - and none for Vigilant's scan`() {
+        val base = SampleScan.state()
+        val cnoSet = base.settings.copy(makerSource = com.tjshea.vigilant.data.scanner.BidSource.CNO, maker = true, scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO, autoScan = AutoScanMode.CNO)
+        val on = report(base.copy(settings = cnoSet), extras.copy(cnoBids = cnoLane.copy(stop = "CrazyNinjaOdds asked for a pause (busy): bids priced from it come down")))
+        assertTrue(on, on.contains("Bids priced from CrazyNinjaOdds (RESEARCH.md §113-§114; Vigilant's scan is not used for them): CrazyNinjaOdds: its list 14 s old · 12 game pages held, the oldest line's data 41 s old"))
+        assertTrue(on, on.contains("limit 120 s"))
+        assertTrue(on, on.contains("wide list 300 rows"))
+        assertTrue(on, on.contains("STOPPED: CrazyNinjaOdds asked for a pause"))
+        assertTrue(on, on.contains("no line for: 7 × No book on CNO's page prices both sides"))
+        val vig = report(base, extras)
+        assertFalse(vig, vig.contains("Bids priced from CrazyNinjaOdds"))
+    }
+
+    @Test
+    fun `health checks say when bids from CrazyNinjaOdds cannot be priced or are stopped, and say nothing for Vigilant's bids or when bids are off`() {
+        val base = SampleScan.state()
+        fun checks(set: com.tjshea.vigilant.data.scanner.ScanSettings, lane: com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status? = cnoLane) =
+            HealthChecks.of(base.copy(settings = set), extras.copy(cnoBids = lane), now).filter { it.area == "Bids from CrazyNinjaOdds" }
+        val cno = base.settings.copy(makerSource = com.tjshea.vigilant.data.scanner.BidSource.CNO, maker = true, scanner = com.tjshea.vigilant.data.scanner.ScannerMode.CNO, autoScan = AutoScanMode.CNO, pausedByHand = false)
+        assertTrue(checks(cno).isEmpty())
+        assertTrue(checks(cno.copy(pinnacleOnly = true)).single().finding.contains("Pinnacle only"))
+        assertTrue(checks(cno.copy(autoScan = AutoScanMode.OFF)).single().finding.contains("background scan doesn't read CrazyNinjaOdds"))
+        assertEquals("every bid priced from it is down", checks(cno, cnoLane.copy(stop = "CrazyNinjaOdds hasn't been read yet")).single().finding)
+        assertTrue(checks(cno, cnoLane.copy(failed = 2, pagesRead = 0, lastError = "CrazyNinjaOdds is busy (HTTP 429)")).single().evidence!!.contains("HTTP 429"))
+        // Vigilant-priced bids, or bids off: nothing about CrazyNinjaOdds.
+        assertTrue(checks(cno.copy(makerSource = com.tjshea.vigilant.data.scanner.BidSource.VIGILANT)).isEmpty())
+        assertTrue(checks(cno.copy(maker = false, makerRecommend = false, pinnacleOnly = true)).isEmpty())
+    }
 }
