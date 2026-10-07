@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.tracker
 
+import com.tjshea.vigilant.data.match.Picks
 import com.tjshea.vigilant.data.novig.NovigSource
 import com.tjshea.vigilant.data.novig.trading.BetTarget
 import com.tjshea.vigilant.data.novig.trading.LedgerRow
