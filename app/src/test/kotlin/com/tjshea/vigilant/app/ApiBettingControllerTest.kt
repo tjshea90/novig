@@ -121,7 +121,7 @@ class ApiBettingControllerTest {
         assertNotNull(state.value.betSheet)
         waitFor("a plan") { state.value.betSheet?.plan != null }
         val plan = state.value.betSheet!!.plan!!
-        assertTrue(plan.contracts > 0 && plan.expectedCost <= state.value.settings.apiBetStake + 1e-9)
+        assertTrue(plan.contracts > 0 && plan.expectedCost <= state.value.settings.slipCustomStake + 1e-9)
         api.setStake(1.0)
         waitFor("the plan for \$1") { state.value.betSheet?.plan?.let { it.expectedCost <= 1.0 + 1e-9 && it.contracts < plan.contracts } == true }
         api.dismiss()
@@ -318,7 +318,7 @@ class ApiBettingControllerTest {
         api.bet(o)
         // The sheet opens at the 10 cents the wallet holds (BetAmount.starting); Tj picks more than that.
         assertEquals(0.10, state.value.betSheet!!.stake, 1e-9)
-        api.setStake(state.value.settings.apiBetStake.coerceAtLeast(1.0))
+        api.setStake(state.value.settings.slipCustomStake.coerceAtLeast(1.0))
         waitFor("an answer") { state.value.betSheet?.let { it.stakeChosen && (it.plan != null || it.refusal != null) } == true }
         val sheet = state.value.betSheet!!
         assertNotNull("refused: ${sheet.refusal}", sheet.plan)

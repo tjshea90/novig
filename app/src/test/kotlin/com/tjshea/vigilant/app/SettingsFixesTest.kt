@@ -134,16 +134,19 @@ class SettingsFixesTest {
     // ---- (a) the starting amount: one choice for the bet slip and the Bet sheet --------------------------------------------
 
     @Test
-    fun `the Bet sheet's own amount shows only when something uses it, and says when`() {
-        assertTrue(StakeText.sheetAmountUsed(base.copy(slipStake = SlipStake.OFF)))
-        assertTrue(StakeText.sheetAmountUsed(base.copy(slipStake = SlipStake.KELLY))) // a bet with no Kelly stake
-        assertFalse(StakeText.sheetAmountUsed(base.copy(slipStake = SlipStake.ONE_DOLLAR)))
-        assertFalse(StakeText.sheetAmountUsed(base.copy(slipStake = SlipStake.CUSTOM)))
-        assertEquals("When a bet has no Kelly stake (no edge at its price), start at", StakeText.sheetAmountTitle(base.copy(slipStake = SlipStake.KELLY)))
-        assertEquals("Bet sheet starts at", StakeText.sheetAmountTitle(base.copy(slipStake = SlipStake.OFF)))
+    fun `there is one amount, shown when something uses it, and it says when`() {
+        // Tj, 2026-10-07 ("redundant … settings"): "Bet sheet starts at" and "My amount" were one number in two places; "My amount" is the only one now.
+        assertTrue(StakeText.amountShown(base.copy(slipStake = SlipStake.OFF), bettingEnabled = true)) // the Bet sheet's start
+        assertFalse(StakeText.amountShown(base.copy(slipStake = SlipStake.OFF), bettingEnabled = false)) // no Bet sheet without betting
+        assertTrue(StakeText.amountShown(base.copy(slipStake = SlipStake.KELLY), bettingEnabled = true)) // a bet with no Kelly stake
+        assertFalse(StakeText.amountShown(base.copy(slipStake = SlipStake.ONE_DOLLAR), bettingEnabled = true))
+        assertTrue(StakeText.amountShown(base.copy(slipStake = SlipStake.CUSTOM), bettingEnabled = false))
+        assertEquals("When a bet has no Kelly stake (no edge at its price), start at", StakeText.amountTitle(base.copy(slipStake = SlipStake.KELLY)))
+        assertEquals("Bet sheet starts at", StakeText.amountTitle(base.copy(slipStake = SlipStake.OFF)))
+        assertEquals("My amount", StakeText.amountTitle(base.copy(slipStake = SlipStake.CUSTOM)))
         assertTrue(StakeText.startHint(base.copy(slipStake = SlipStake.ONE_DOLLAR)).contains("in Novig's bet slip and in Vigilant's Bet sheet"))
         // And the amount it starts at agrees: $1 is $1 in the sheet too.
-        assertEquals(1.0, BetAmount.base(base.copy(slipStake = SlipStake.ONE_DOLLAR, apiBetStake = 5.0), 3.0).first, 0.0)
+        assertEquals(1.0, BetAmount.base(base.copy(slipStake = SlipStake.ONE_DOLLAR, slipCustomStake = 5.0), 3.0).first, 0.0)
     }
 
     // ---- (e)/(f) a setting another one makes moot says so ----------------------------------------------------------------

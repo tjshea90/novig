@@ -48,7 +48,7 @@ class BetAmountTest {
     @Test
     fun `with Kelly chosen the sheet starts at the bet's own Kelly stake, to the cent, within the per-bet limit`() {
         val s = com.tjshea.vigilant.data.scanner.ScanSettings(
-            bankroll = 1_000.0, kellyMultiplier = 0.25, slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY, apiBetStake = 1.0, apiMaxStake = 10.0,
+            bankroll = 1_000.0, kellyMultiplier = 0.25, slipStake = com.tjshea.vigilant.data.novig.SlipStake.KELLY, slipCustomStake = 1.0, apiMaxStake = 10.0,
         )
         val (amount, note) = BetAmount.base(s, kelly = 4.3719)
         assertEquals(4.37, amount, 0.0)
@@ -64,7 +64,7 @@ class BetAmountTest {
         // "My amount" for bet slips: that amount. "$1": $1 in the Bet sheet too, whatever its own amount says (v0.46.0: it used to start the sheet at
         // its own amount while the slip said $1). Off ("I type it"): the Bet sheet's own amount, no note.
         assertEquals(7.5, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.CUSTOM, slipCustomStake = 7.5), 4.37).first, 0.0)
-        assertEquals(1.0 to null, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR, apiBetStake = 5.0), 4.37))
-        assertEquals(2.0 to null, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.OFF, apiBetStake = 2.0), 4.37))
+        assertEquals(1.0 to null, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.ONE_DOLLAR, slipCustomStake = 5.0), 4.37))
+        assertEquals(2.0 to null, BetAmount.base(s.copy(slipStake = com.tjshea.vigilant.data.novig.SlipStake.OFF, slipCustomStake = 2.0), 4.37))
     }
 }
