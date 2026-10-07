@@ -7,6 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -86,7 +87,7 @@ class TrackerBidsUiTest {
         compose.onNodeWithText("Bids only").assertExists()
         compose.onNodeWithText("Open (1)").assertExists() // the list counts follow the choice
         compose.onNodeWithTag("madeCaption").assertIsDisplayed()
-        assertTrue(compose.onNodeWithTag("madeCaption").fetchSemanticsNode().toString().contains("Bids only: 2 bids a taker filled"))
+        compose.onNodeWithTag("madeCaption").assertTextContains("Bids only: 2 bids a taker filled", substring = true)
 
         choose("Bets only (4)")
         assertEquals(listOf("Dallas Cowboys", "Under 7.5"), shown("Dallas Cowboys", "Jaxon Smith-Njigba Over 5.5", "Under 7.5"))
@@ -123,7 +124,7 @@ class TrackerBidsUiTest {
         compose.onNodeWithTag("madeCaption").assertIsDisplayed()
 
         choose("Bets only (4)")
-        assertTrue("-$17.00", has("-$17.00"))
+        assertTrue("−$17.00", has("−$17.00")) // Format.money writes a minus sign, not a hyphen
         assertTrue("1-1", has("1-1"))
         compose.onAllNodesWithText("+$34.52").assertCountEquals(0)
 
