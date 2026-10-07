@@ -86,37 +86,48 @@ import kotlin.math.roundToInt
 
 
 /**
+ * The headings the Settings home list is split under (Tj, 2026-10-07: "organize the settings and simplify them. Sometimes it's hard for me to find things because there are so many
+ * settings"): what Vigilant does with a bet it found comes first (the Auto-bet and Bids tabs open from here too), then how it finds them, then the screen, then the data and help.
+ */
+enum class SettingsGroup(val title: String, val about: String) {
+    BET("Betting & alerts", "What happens when a +EV bet is found: alerts, auto-bet, bids, your Novig account and limits"),
+    FIND("Finding bets", "What Vigilant and CrazyNinjaOdds scan, how fair odds are worked out, and what the lists show"),
+    SCREEN("On screen", "The floating widget"),
+    DATA("Data & help", "Feed keys and credits, diagnostics, version"),
+}
+
+/**
  * The Settings pages (Tj, 2026-10-02 ~17:55Z: "the settings menu in this app is getting very large and confusing. organize the settings menu intuitively.
  * make it so everything is clear and easy to find"): a home list of these, each with a one-line summary of what it's set to now, opening a page with a
  * back arrow (Android's own Settings works this way). Auto-bet has its own bottom tab ([AutoBetScreen]); the home list links to it.
  */
-enum class SettingsPage(val title: String, val about: String) {
-    /** Pause, which scanner, which games, the background scan. */
-    SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background"),
-
+enum class SettingsPage(val title: String, val about: String, val group: SettingsGroup) {
     /** Push alerts for new +EV bets, and the sharp books' say over them. */
-    ALERTS("Alerts", "A notification when a new bet is good enough"),
-
-    /** CrazyNinjaOdds' list: its filters, refresh, and each bet's book check. */
-    CNO("CrazyNinjaOdds list", "What CNO's +EV list shows and how often it refreshes"),
-
-    /** The floating widget and the picture-in-picture window. */
-    WIDGET("Widget & mini window", "The small window that floats over other apps"),
-
-    /** What Vigilant's own +EV feed shows and how much a scan reads. */
-    FEED("+EV feed & scan size", "Vigilant's own scan: what it shows and how much it reads"),
-
-    /** How fair odds are worked out, and where they come from (with keys). */
-    FAIR("Fair odds & sources", "How the true odds are worked out, and from which feeds"),
+    ALERTS("Alerts", "A notification when a new bet is good enough", SettingsGroup.BET),
 
     /** The Novig key, the wallet, bet amounts, limits, bankroll. */
-    BETTING("Betting & Novig account", "Your Novig key, wallet, bet amounts and limits"),
+    BETTING("Betting & Novig account", "Your Novig key, wallet, bet amounts and limits", SettingsGroup.BET),
+
+    /** Pause, which scanner, which games, the background scan. */
+    SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background", SettingsGroup.FIND),
+
+    /** CrazyNinjaOdds' list: its filters, refresh, and each bet's book check. */
+    CNO("CrazyNinjaOdds list", "What CNO's +EV list shows and how often it refreshes", SettingsGroup.FIND),
+
+    /** What Vigilant's own +EV feed shows and how much a scan reads. */
+    FEED("+EV feed & scan size", "Vigilant's own scan: what it shows and how much it reads", SettingsGroup.FIND),
+
+    /** How fair odds are worked out, and where they come from (with keys). */
+    FAIR("Fair odds & sources", "How the true odds are worked out, and from which feeds", SettingsGroup.FIND),
+
+    /** The floating widget and the picture-in-picture window. */
+    WIDGET("Widget & mini window", "The small window that floats over other apps", SettingsGroup.SCREEN),
 
     /** Each feed's usage meter, and the keys backup. */
-    USAGE("API usage & keys", "Credits left on each feed, and a backup of your keys"),
+    USAGE("API usage & keys", "Credits left on each feed, and a backup of your keys", SettingsGroup.DATA),
 
     /** Diagnostics, the grading check, About. */
-    HELP("Diagnostics & about", "Send Claude a report, check grading, version"),
+    HELP("Diagnostics & about", "Send Claude a report, check grading, version", SettingsGroup.DATA),
     ;
 
     /** Pages for a scanner that's asleep are hidden (CNO only hides Vigilant's scan and its feeds; Vigilant only hides CNO's list). */
@@ -319,24 +330,32 @@ private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> U
         }
         return
     }
-    if (AppBook.isNovig && s.cnoOn && onOpenAutoBet != null) {
-        SettingsRow(
-            title = "Auto-bet & presets",
-            summary = "Its own tab · ${SettingsSummary.autoBet(s)}",
-            tag = "settingsRow-AUTOBET",
-            onClick = onOpenAutoBet,
-        )
-    }
-    if (AppBook.isNovig && onOpenBids != null) {
-        SettingsRow(
-            title = "Bids (make orders)",
-            summary = "Its own tab · ${com.tjshea.vigilant.data.novig.trading.maker.BidMode.of(s).label} · ${MakerRulesText.summary(s)}",
-            tag = "settingsRow-BIDS",
-            onClick = onOpenBids,
-        )
-    }
-    SettingsPage.shown(s).forEach { p ->
-        SettingsRow(title = p.title, summary = "${p.about}\n${SettingsSummary.of(p, state)}", tag = "settingsRow-${p.name}", onClick = { onOpen(p) })
+    val shown = SettingsPage.shown(s)
+    SettingsGroup.entries.forEach { g ->
+        val rows = shown.filter { it.group == g }
+        val autoBet = g == SettingsGroup.BET && AppBook.isNovig && s.cnoOn && onOpenAutoBet != null
+        val bids = g == SettingsGroup.BET && AppBook.isNovig && onOpenBids != null
+        if (rows.isEmpty() && !autoBet && !bids) return@forEach
+        SectionTitle(g.title, Modifier.testTag("settingsGroup-${g.name}"))
+        if (autoBet) {
+            SettingsRow(
+                title = "Auto-bet & presets",
+                summary = "Its own tab · ${SettingsSummary.autoBet(s)}",
+                tag = "settingsRow-AUTOBET",
+                onClick = onOpenAutoBet!!,
+            )
+        }
+        if (bids) {
+            SettingsRow(
+                title = "Bids (make orders)",
+                summary = "Its own tab · ${com.tjshea.vigilant.data.novig.trading.maker.BidMode.of(s).label} · ${MakerRulesText.summary(s)}",
+                tag = "settingsRow-BIDS",
+                onClick = onOpenBids!!,
+            )
+        }
+        rows.forEach { p ->
+            SettingsRow(title = p.title, summary = "${p.about}\n${SettingsSummary.of(p, state)}", tag = "settingsRow-${p.name}", onClick = { onOpen(p) })
+        }
     }
 }
 
