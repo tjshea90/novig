@@ -131,10 +131,11 @@ class MakerRunner(
                 return@withLock null
             }
             val partial = result?.partial == true
+            askInjuries(result, s, now)
             // The sides Vigilant has a bid on, or a fill not yet judged, get their books' fairs worked out whatever the precheck says (a fill is judged against them).
             val mine = desk.bids().filter { it.active || (it.filled > 0 && it.fairAtFill == null) }.mapTo(HashSet()) { it.outcomeId }
             val report = desk.cycle(
-                withMoves(MakerLines.from(result, s, now, always = mine), rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
+                withMoves(MakerLines.from(result, s, now, always = mine, unavailable = playerOut(now)), rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,
             )
             notifyFills(report.fills, desk.bids())
@@ -221,12 +222,44 @@ class MakerRunner(
         val denied = c.makerDenials.outcomes(clock())
         val run = scan()
         val rules = MakerRules.of(settings)
-        val lines = withMoves(MakerLines.withoutOwn(MakerLines.from(run.result, settings, now), bids), rules, now, read = false)
+        val lines = withMoves(MakerLines.withoutOwn(MakerLines.from(run.result, settings, now, unavailable = playerOut(now)), bids), rules, now, read = false)
         val decisions = MakerQuote.decideAll(lines, rules, now, held).map { d ->
             if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, MakerDesk.DENIED) else d
         }
         _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = run.result?.computedAtMs) }
         return decisions
+    }
+
+    /**
+     * Why a side must not be bid on: the injury reports say its player is out ([com.tjshea.vigilant.data.reference.PlayerOut]; Tj, 2026-10-07: "it says
+     * Allisha is out for the game ... yet the auto bid feature offered bids on her"). Reads the reports as they are at this pass; a line that turns
+     * "out" is skipped by [MakerQuote.precheck], so the plan also takes down any bid already up on it.
+     */
+    private fun playerOut(now: Long): (com.tjshea.vigilant.data.scanner.Opportunity) -> String? {
+        val book = c.injuries.book.value
+        return { o -> com.tjshea.vigilant.data.reference.PlayerOut.forOpportunity(book, o, now) }
+    }
+
+    /**
+     * Asks ParlayAPI's injury list about the prop players of [result]'s priced lines that no report covers yet (the +EV list's players are asked by the
+     * Positive EV tab; bids go on lines that list never shows). One read a sport at most every
+     * [com.tjshea.vigilant.data.reference.ParlayInjuries.REUSE_MS], only while ParlayAPI is on with a key ([com.tjshea.vigilant.data.reference.ParlayInjuries.fill]
+     * gates it): a player no report names is treated as playing, so a bid can go up on the first pass and come down on the next once the list answers.
+     */
+    private fun askInjuries(result: com.tjshea.vigilant.data.scanner.ScanResult?, s: ScanSettings, now: Long) {
+        result ?: return
+        val book = c.injuries.book.value
+        val uncovered = HashMap<String, MutableSet<String>>()
+        val seen = HashSet<String>()
+        for (o in result.opportunities) {
+            if (o.kind != com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP || o.isLive || !o.league.oddsApiListed || o.league.novigName !in s.leagues) continue
+            val sport = o.league.oddsApiSportKey
+            if (sport !in com.tjshea.vigilant.data.reference.ParlayInjuries.SPORTS) continue
+            val player = o.lineKey?.subject ?: continue
+            if (!seen.add("$sport|$player") || book.covers(sport, player, now)) continue
+            uncovered.getOrPut(sport) { HashSet() } += player
+        }
+        uncovered.forEach { (sport, players) -> c.appScope.launch { c.parlayInjuries.fill(sport, players) } }
     }
 
     /**
@@ -243,7 +276,7 @@ class MakerRunner(
         val held = c.tracker.all().filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }.mapTo(HashSet()) { it.outcomeId } +
             bids.filter { it.active }.map { it.outcomeId }
         val rules = MakerRules.of(s)
-        val line = withMoves(MakerLines.withoutOwn(MakerLines.from(scan().result, s, now).filter { it.outcomeId == outcomeId }, bids), rules, now, read = true)
+        val line = withMoves(MakerLines.withoutOwn(MakerLines.from(scan().result, s, now, unavailable = playerOut(now)).filter { it.outcomeId == outcomeId }, bids), rules, now, read = true)
             .firstOrNull() ?: return "That line isn't in the latest scan any more"
         val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
         return when (val d = MakerQuote.decide(line, rules, now, held)) {
