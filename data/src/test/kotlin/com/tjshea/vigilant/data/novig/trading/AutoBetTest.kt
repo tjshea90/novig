@@ -199,6 +199,45 @@ class AutoBetTest {
         }
     }
 
+    // ---- the lower of CNO's edge and the books' own (Tj, 2026-10-07, proposal 5) -----------------------------------------------
+
+    @Test
+    fun `the gate judges the LOWER of CNO's edge and the books' own check, and says which one stopped it`() {
+        val r = rules(books = 3, ev = 0.03, twoSided = 2)
+        // CNO shows 5.8%, the books' check says 2.4%: under a 3% minimum on the books' number.
+        val why = judge(r, 0.058, check(ev = 0.024))!!
+        assertTrue(why, why.startsWith("the books' own check puts its edge at +2.40%, under the +3.00% it needs"))
+        // The books' check at or over the minimum lets it through; so does a books' check higher than CNO's (CNO's number is the lower then).
+        assertNull(judge(r, 0.058, check(ev = 0.03)))
+        assertNull(judge(r, 0.035, check(ev = 0.09)))
+        // CNO's own edge under the minimum keeps its plain words first.
+        assertTrue(judge(r, 0.02, check(ev = 0.09))!!.contains("under your +3.00% minimum"))
+        // A books' edge at or under zero (or none) is the not +EV check's, with its own words.
+        assertTrue(judge(r, 0.058, check(ev = -0.01))!!.contains("not +EV"))
+        assertTrue(judge(r, 0.058, check(ev = null))!!.contains("not +EV"))
+        // The favorite bar applies to the lower edge too.
+        val fav = AutoBet.rules(ScanSettings(autoBetMinEv = 0.03, autoBetFavouriteExtraEv = 0.01))
+        assertTrue(AutoBet.judge(fav, 0.058, check(ev = 0.036), -150)!!.startsWith("the books' own check puts its edge at +3.60%, under the +4.00% it needs"))
+        assertNull(AutoBet.judge(fav, 0.058, check(ev = 0.041), -150))
+        assertNull(AutoBet.judge(fav, 0.058, check(ev = 0.036), 130))
+    }
+
+    @Test
+    fun `the Kelly stake is sized on the lowest of CNO's fair, the sharpest book's and the books' own check`() {
+        // +100 (price 0.5): CNO's fair 0.54 would be full Kelly 0.08, 1/4 of $1,000 = $20; the books' fair 0.52 is 0.04 = $10; the sharp book's 0.51 is 0.02 = $5.
+        val even = row(100, 0.54)
+        val q = rules(AutoBetStake.QUARTER_KELLY, max = 100.0)
+        assertEquals(20.0, amount(AutoBet.stake(q, even, 1000.0, 500.0)), 1e-9)
+        assertEquals(10.0, amount(AutoBet.stake(q, even, 1000.0, 500.0, checkFair = 0.52)), 1e-9)
+        assertEquals(5.0, amount(AutoBet.stake(q, even, 1000.0, 500.0, sharpFair = 0.51, checkFair = 0.52)), 1e-9)
+        assertEquals(5.0, amount(AutoBet.stake(q, even, 1000.0, 500.0, sharpFair = 0.51, checkFair = 0.53)), 1e-9)
+        // A books' fair ABOVE CNO's never raises it, and a missing or zero one is ignored.
+        assertEquals(20.0, amount(AutoBet.stake(q, even, 1000.0, 500.0, checkFair = 0.60)), 1e-9)
+        assertEquals(20.0, amount(AutoBet.stake(q, even, 1000.0, 500.0, checkFair = 0.0)), 1e-9)
+        // A books' fair at or under the price leaves no edge: no stake.
+        assertTrue(skip(AutoBet.stake(q, even, 1000.0, 500.0, checkFair = 0.5)).contains("no Kelly stake"))
+    }
+
     // ---- the stake ----------------------------------------------------------------------------------------------
 
     @Test
