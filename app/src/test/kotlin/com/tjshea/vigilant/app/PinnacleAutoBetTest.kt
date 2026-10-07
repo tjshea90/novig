@@ -27,6 +27,7 @@ import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.OutcomeTarget
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.TrapGuard
 import com.tjshea.vigilant.data.scanner.ScanStats
 import com.tjshea.vigilant.data.tracker.AtBet
 import com.tjshea.vigilant.engine.BookFair
