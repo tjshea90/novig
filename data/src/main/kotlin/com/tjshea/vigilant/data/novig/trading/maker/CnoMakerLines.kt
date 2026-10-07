@@ -102,24 +102,28 @@ object CnoMakerLines {
         fun skip(why: String, n: Int = 1) = skipped.merge(why, n, Int::plus)
         val out = ArrayList<MakerLine>()
         for (p in pages) {
-            val view = p.view ?: run { skip(NO_PAGE); return@run null } ?: continue
-            val book = p.book ?: run { skip(NO_BOOK); return@run null } ?: continue
+            val view = p.view
+            if (view == null) { skip(NO_PAGE); continue }
+            val book = p.book
+            if (book == null) { skip(NO_BOOK); continue }
             val first = nameEq(view.bet, p.row.bet)
             val second = !first && view.otherBet != null && nameEq(view.otherBet!!, p.row.bet)
             if (!first && !second) { skip(NOT_ON_PAGE); continue }
-            val other = p.market.otherOutcome(p.outcomeId)
             val pageAt = pageAt(view)
             val asOf = fairAsOf(p.listAtMs, pageAt)
             val newest = p.listAtMs?.let { maxOf(it, pageAt) } ?: pageAt
             val old = asOf == null || now - asOf > limit
-            // Side 0 is the row's own; side 1 its complement. A page oriented as the row's side being the page's second line flips every price pair.
+            // Side 0 is the row's own; side 1 its complement. A row that is the page's second line flips every price pair.
             for (side in 0..1) {
-                val outcomeId = if (side == 0) p.outcomeId else other?.outcomeId ?: run { skip(NO_OTHER_SIDE); null } ?: continue
-                val name = if (side == 0) p.row.bet else (if (first) view.otherBet else view.bet) ?: continue
+                val outcomeId = if (side == 0) p.outcomeId else p.market.otherOutcome(p.outcomeId)?.outcomeId
+                if (outcomeId == null) { skip(NO_OTHER_SIDE); continue }
+                val name = if (side == 0) p.row.bet else (if (first) view.otherBet else view.bet)
+                if (name == null) { skip(NOT_ON_PAGE); continue }
                 val flipped = (side == 0) != first
                 val kind = BetKind.of(p.row.market, name)
                 val fair = fairsOf(view, flipped, SharpVeto.ranking(kind, SharpVeto.sportOf(p.row.league)).toSet())
-                val blend = fair.blend ?: run { skip(NO_PRICES); null } ?: continue
+                val blend = fair.blend
+                if (blend == null) { skip(NO_PRICES); continue }
                 val own = if (side == 0) CnoChecks.fairProbability(p.row) else null
                 val lineFair = if (own != null) minOf(blend, own) else blend
                 val offer = book.takeLadder(p.market, outcomeId).minOfOrNull { it.price }
