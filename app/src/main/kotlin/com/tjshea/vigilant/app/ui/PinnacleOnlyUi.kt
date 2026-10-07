@@ -89,6 +89,7 @@ fun PinnacleOnlyRows(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings)
                 )
             }
         }
+        TypedIntField(NumberSpecs.time("seconds", 10, 900), s.pinnacleMaxAgeSeconds, "pinnacleOnlyAgeField", none = { false }) { v -> onUpdate { it.copy(pinnacleMaxAgeSeconds = v) } }
         Text(
             PinnacleOnlyText.ageNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(vertical = 4.dp),

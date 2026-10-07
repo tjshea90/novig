@@ -90,4 +90,6 @@ private fun DollarChips(title: String, choices: List<Double>, selected: Double, 
             FilterChip(selected = d == selected, onClick = { onPick(d) }, label = { Text("$" + d.toInt()) }, modifier = Modifier.testTag("$tag-${d.toInt()}"))
         }
     }
+    // Any other amount typed in (Tj, 2026-10-07: a box wherever a setting has number options).
+    TypedDollarField(NumberSpecs.dollars(title.lowercase(), 1.0, 10_000.0), selected, "$tag-field", onPick)
 }

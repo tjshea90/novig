@@ -293,8 +293,10 @@ fun NovigBettingSection(
     Text("Limits", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 12.dp))
     Text("Most for one bet you place", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
     ChoiceChips(MAX_STAKE_CHOICES, settings.apiMaxStake, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxStake = v, apiBetStake = minOf(it.apiBetStake, v)) } }
+    TypedDollarField(NumberSpecs.dollars("most for one bet"), settings.apiMaxStake, "apiMaxStakeField") { v -> onUpdate { it.copy(apiMaxStake = v, apiBetStake = minOf(it.apiBetStake, v)) } }
     Text("Most in a day (your bets and auto-bets together)", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(DAY_CHOICES, settings.apiMaxPerDay, { Format.money(it) }) { v -> onUpdate { it.copy(apiMaxPerDay = v) } }
+    TypedDollarField(NumberSpecs.dollars("most in a day"), settings.apiMaxPerDay, "apiMaxPerDayField") { v -> onUpdate { it.copy(apiMaxPerDay = v) } }
     // One game is one event (Tj, 2026-10-04): the alternate spreads, totals and props of a game win and lose together.
     PerGameLimit(settings.apiMaxPerGame) { v -> onUpdate { it.copy(apiMaxPerGame = v) } }
     Text(
