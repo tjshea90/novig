@@ -45,8 +45,6 @@ data class ProviderView(
     val lastThrottleMs: Long?,
     /** A paced provider ([CreditPace], ParlayAPI): credits its scans may still spend today; null when not paced or not known yet. */
     val scanShareToday: Int? = null,
-    /** A paced provider whose every key is on a free plan: its credits are kept for closing lines, never scans. */
-    val scansFreeOnly: Boolean = false,
     /** When the current period began, to match [nextReset]. */
     val periodStart: Long? = null,
 ) {
@@ -67,10 +65,13 @@ object UsageViews {
         val rows = keys.mapIndexed { i, key ->
             val u = policy.roll(usage?.keys?.get(key) ?: KeyUsage(), now)
             val usable = policy.usable(u, 1, now)
+            // The key the next scan call goes to: the first that can pay and keep its day's share or closing-lines reserve ([CreditPace]).
+            val scanUsable = usable && (pace == null || policy.usable(u, 1 + pace.floor(u, now), now))
             val minuteFull = policy.perMinute?.let { cap -> u.recent.count { now - it < UsageMeter.MINUTE } >= cap } ?: false
             val state = when {
                 u.refused -> KeyState.REFUSED
-                usable && !activeFound -> KeyState.ACTIVE.also { activeFound = true }
+                scanUsable && !activeFound -> KeyState.ACTIVE.also { activeFound = true; scanKeyFound = true }
+                usable && !activeFound && !anyScanKey -> KeyState.ACTIVE.also { activeFound = true }
                 usable -> KeyState.STANDBY
                 u.coolUntil != null || minuteFull -> KeyState.COOLING
                 else -> KeyState.SPENT
