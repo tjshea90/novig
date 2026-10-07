@@ -79,6 +79,13 @@ object TrapGuard {
         return listedEarlyReason(hours)
     }
 
+    /**
+     * Why a bet is left alone for being too early, by either clock: its game starts more than [hours] from [now] ([early]), or (with [firstListedOn]) it was first listed more than
+     * [hours] before the start ([listedEarly]). Null = fine.
+     */
+    fun tooEarly(startsAtMs: Long?, now: Long, hours: Int, firstListedMs: Long?, firstListedOn: Boolean): String? =
+        early(startsAtMs, now, hours) ?: if (firstListedOn) listedEarly(startsAtMs, firstListedMs, hours) else null
+
     /** [listedEarly]'s words for [hours] (one wording per setting, so the auto-bet's report counts them together). */
     fun listedEarlyReason(hours: Int): String = "it was already listed more than $hours h before the start (trap guard: bets that old close no better than the market)"
 

@@ -168,6 +168,7 @@ class AutoBettor(
         val all = AlertPicks.cnoChecked(state, rules.minEv, now)
         // The trap guard's first rule: games too far off were left out of the candidates (their books weren't even read); counted here.
         AlertPicks.tooEarly(state, rules.minEv, now).takeIf { it > 0 }?.let { n -> skipped[TrapGuard.earlyReason(settings.trapEarlyHours)] = n }
+        AlertPicks.listedEarly(state, rules.minEv, now).takeIf { it > 0 }?.let { n -> skipped[TrapGuard.listedEarlyReason(settings.trapEarlyHours)] = n }
         val passing = ArrayList<AlertPicks.CnoChecked>()
         for (item in all.distinctBy { it.pick.row.key }.sortedByDescending { it.shown.ev }) {
             val row = item.pick.row
@@ -328,7 +329,8 @@ class AutoBettor(
         for (o in looking) {
             when {
                 (cooldown[o.key] ?: 0L) > judgedAt -> skip("tried a moment ago")
-                TrapGuard.isEarly(o.event.startsTs, judgedAt, settings.trapEarlyHours) -> skip(TrapGuard.earlyReason(settings.trapEarlyHours))
+                TrapGuard.tooEarly(o.event.startsTs, judgedAt, settings.trapEarlyHours, c.firstListed.at(o.key), settings.trapFirstListed) != null ->
+                    skip(TrapGuard.tooEarly(o.event.startsTs, judgedAt, settings.trapEarlyHours, c.firstListed.at(o.key), settings.trapFirstListed)!!)
                 else -> com.tjshea.vigilant.data.reference.PlayerOut.forOpportunity(injuries(), o, judgedAt)?.let(::skip)
                     ?: PinnacleBet.judge(rules, o, judgedAt, maxAge)?.let(::skip) ?: passing.add(o)
             }

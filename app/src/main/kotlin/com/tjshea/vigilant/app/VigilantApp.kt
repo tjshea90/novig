@@ -546,6 +546,9 @@ class AppContainer(private val app: Application) {
     val makerStore = com.tjshea.vigilant.data.novig.trading.maker.MakerStore(File(app.filesDir, "maker.json"))
     val makerDenials = com.tjshea.vigilant.data.novig.trading.maker.MakerDenials(File(app.filesDir, "maker_denied.json"))
     val makerRecommended = MakerRecommended(File(app.filesDir, "maker_recommended.json"))
+
+    /** When each listed bet was first seen (files/first_listed.json): the trap guard skips a bet that was already listed too far off the start ([com.tjshea.vigilant.data.scanner.FirstListed]). */
+    val firstListed = com.tjshea.vigilant.data.scanner.FirstListed(File(app.filesDir, "first_listed.json"))
     @Volatile private var makerDeskCache: Pair<NovigTradingClient, com.tjshea.vigilant.data.novig.trading.maker.MakerDesk>? = null
 
     /** The make-orders desk on the Vigilant wallet, sharing the one order lock; null when betting through the API isn't set up. */
@@ -630,6 +633,19 @@ class AppContainer(private val app: Application) {
         scanScope.launch {
             cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
                 studySync.list(snap)
+            }
+        }
+        // Each bet's first-listed time (the trap guard's third rule; Tj, 2026-10-07): written down from what each CNO read and each Vigilant scan already hold, no request of its own.
+        scanScope.launch {
+            cno.state.map { it.snapshot }.distinctUntilChanged { a, b -> a?.fetchedAtMs == b?.fetchedAtMs }.filterNotNull().collect { snap ->
+                runCatching { firstListed.note(snap.rows.map { it.key to (it.startsAtMs ?: 0L) }, snap.fetchedAtMs.takeIf { it > 0L } ?: System.currentTimeMillis()) }
+                    .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
+        }
+        scanScope.launch {
+            runner.state.map { it.result }.distinctUntilChanged { a, b -> a === b }.filterNotNull().collect { r ->
+                runCatching { firstListed.note(r.feed(currentSettings()).map { it.key to it.event.startsTs }, System.currentTimeMillis()) }
+                    .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
             }
         }
         // The wide read (Tj, 2026-10-03: "log all cno finds on every scan … even if these bets don't meet my criteria"): the study's one request of its own, after a live list

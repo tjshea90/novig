@@ -162,6 +162,8 @@ data class UiState(
      * item's key ([com.tjshea.vigilant.data.reference.InjuryTags]: a +EV bet's own key, "cno:<row key>", "bet:<id>").
      */
     val injuries: Map<String, com.tjshea.vigilant.data.reference.Injury> = emptyMap(),
+    /** When each listed bet was first seen, by key (a CNO row's key, a Vigilant bet's key): what the trap guard's "first listed" rule reads ([com.tjshea.vigilant.data.scanner.FirstListed]). */
+    val firstListed: Map<String, Long> = emptyMap(),
     /** Pinnacle's biggest moneyline moves in the picked leagues, by sport key (ParlayAPI's movers; PARLAY_API.md §6.3). */
     val movers: Map<String, com.tjshea.vigilant.data.reference.MoversBoard> = emptyMap(),
     /** The listed and open team bets whose game moved at Pinnacle, by item key ([com.tjshea.vigilant.data.reference.LineMoves]). */

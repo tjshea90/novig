@@ -41,14 +41,24 @@ object AlertPicks {
     fun cnoCandidates(state: UiState, minEv: Double, now: Long): List<CnoPick> {
         if (minEv <= 0.0) return emptyList()
         val hours = state.settings.trapEarlyHours
-        // The trap guard's first rule ([TrapGuard.early]): a game too far off is neither alerted on nor bet, so its books aren't read for either.
-        return state.cnoCandidates(now).filter { state.livePick(it, now).ev >= minEv && !TrapGuard.isEarly(it.row.startsAtMs, now, hours) }
+        // The trap guard's first rule ([TrapGuard.early]): a game too far off is neither alerted on nor bet, so its books aren't read for either; nor (the third rule,
+        // [TrapGuard.listedEarly]) a bet that was already listed that far off.
+        return state.cnoCandidates(now).filter { state.livePick(it, now).ev >= minEv && TrapGuard.tooEarly(it.row.startsAtMs, now, hours, state.firstListed[it.row.key], state.settings.trapFirstListed) == null }
     }
 
     /** CNO's bets at or over [minEv] that the trap guard leaves alone for starting too far off (the auto-bet's report counts them). */
     fun tooEarly(state: UiState, minEv: Double, now: Long): Int {
         if (minEv <= 0.0 || state.settings.trapEarlyHours <= 0) return 0
         return state.cnoCandidates(now).count { TrapGuard.isEarly(it.row.startsAtMs, now, state.settings.trapEarlyHours) && state.livePick(it, now).ev >= minEv }
+    }
+
+    /** CNO's bets at or over [minEv] whose game is inside the window now but that were first listed too far off ([TrapGuard.listedEarly]): left alone too, counted apart. */
+    fun listedEarly(state: UiState, minEv: Double, now: Long): Int {
+        if (minEv <= 0.0 || state.settings.trapEarlyHours <= 0 || !state.settings.trapFirstListed) return 0
+        return state.cnoCandidates(now).count {
+            !TrapGuard.isEarly(it.row.startsAtMs, now, state.settings.trapEarlyHours) &&
+                TrapGuard.listedEarly(it.row.startsAtMs, state.firstListed[it.row.key], state.settings.trapEarlyHours) != null && state.livePick(it, now).ev >= minEv
+        }
     }
 
     /**
@@ -96,7 +106,7 @@ object AlertPicks {
             val quote = o.quote ?: return@mapNotNull null
             if (ev < minEv || o.priceIsOld(now) || now - (o.bookFetchedAtMs ?: 0L) > FRESH_PRICE_MS) return@mapNotNull null
             if (com.tjshea.vigilant.data.reference.PlayerOut.forTag(state.injuries[o.key]) != null) return@mapNotNull null
-            if (TrapGuard.isEarly(o.event.startsTs, now, state.settings.trapEarlyHours)) return@mapNotNull null
+            if (TrapGuard.tooEarly(o.event.startsTs, now, state.settings.trapEarlyHours, state.firstListed[o.key], state.settings.trapFirstListed) != null) return@mapNotNull null
             val agreement = Agreement.of(o)
             if (!agreement.agrees) return@mapNotNull null
             val link = AppBook.betLink(o.outcome.outcomeId, o.outcome.bookRef, state.settings.bookState)
@@ -331,6 +341,7 @@ class AutoScanner(
         settings = settings,
         loaded = true,
         cno = c.cno.state.value,
+        firstListed = c.firstListed.snapshot(),
         books = c.cno.books.value,
         placed = (c.placed.flow.value ?: runCatching { c.placed.load() }.getOrNull())?.bets.orEmpty(),
         bets = runCatching { c.tracker.all() }.getOrDefault(emptyList()),
