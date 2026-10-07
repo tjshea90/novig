@@ -49,6 +49,19 @@ class DiagnosticsTest {
         assertTrue(two, two.contains("no kind of player prop over 35% of the last 24 h's auto-bets (once there are 12; never under an even split of the kinds being bet) · Last 24 hours:"))
     }
 
+    /** DI5 (Tj, 2026-10-07): the next file says what the CNO list was read and screened with, the games he picked included, and what was asked of CNO for them. */
+    @Test
+    fun `it says what CNO's list is read with, and what the games picked asked of CNO`() {
+        val plain = report()
+        assertTrue(plain, plain.contains("CNO list (RESEARCH.md §85): conservative devig · odds any to +150 · 4+ books · edge ≥ 1.0% · 50 rows · complete book on · games: every league, every kind"))
+        assertFalse(plain, plain.contains("asked of CNO as"))
+        fun scoped(scope: com.tjshea.vigilant.data.cno.CnoScope) = report(SampleScan.state().let { it.copy(settings = it.settings.copy(cnoFilters = it.settings.cnoFilters.copy(scope = scope))) })
+        val one = scoped(com.tjshea.vigilant.data.cno.CnoScope(leagues = setOf("NHL"), hideLive = true))
+        assertTrue(one, one.contains("games: NHL · pregame only · asked of CNO as league 4"))
+        val several = scoped(com.tjshea.vigilant.data.cno.CnoScope(leagues = setOf("NHL", "NFL"), propsPerGame = 4))
+        assertTrue(several, several.contains("(300 when the app has to filter)") && several.contains("asked of CNO as all leagues (the app filters)"))
+    }
+
     @Test
     fun `it says what the trap guard is set to, and splits every bet by its time to the start, recorded as placed or not (RESEARCH 71)`() {
         // The sample keeps it off (its games are 8 h+ off); the default is 6 h with the game-line check on.

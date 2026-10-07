@@ -37,10 +37,13 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import org.junit.Assert.assertEquals
+import com.tjshea.vigilant.data.cno.CnoScope
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.onAllNodesWithTag
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -309,6 +312,16 @@ class AutoBetUiTest {
         val line = PropGuardText.shares(bets, now)
         assertEquals("Last 24 hours: 4 auto-bets: NHL shots on goal 3 (75%), NFL receiving yards 1 (25%). Last 7 days: 5 auto-bets: NHL shots on goal 4 (80%), NFL receiving yards 1 (20%).", line)
         assertEquals("Last 24 hours: no auto-bets. Last 7 days: no auto-bets.", PropGuardText.shares(emptyList(), now))
+    }
+
+    /** DI5 (Tj, 2026-10-07): the games picked for CNO's list are the only ones the auto-bet sees, and the Auto-bet tab says so only when something is picked. */
+    @Test
+    fun `the Auto-bet tab says when CNO's list is limited to some games, and says nothing when it is not`() {
+        show()
+        compose.onAllNodesWithTag("autoBetCnoScope").assertCountEquals(0)
+        show { it.copy(cnoFilters = it.cnoFilters.copy(scope = CnoScope(leagues = setOf("NHL"), hideLive = true))) }
+        compose.onNodeWithTag("autoBetCnoScope").performScrollTo()
+            .assertTextContains("CrazyNinjaOdds' list is limited to: NHL · pregame only. The auto-bet only sees these games", substring = true)
     }
 
     @Test
