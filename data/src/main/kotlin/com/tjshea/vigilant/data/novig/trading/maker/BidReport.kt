@@ -156,6 +156,8 @@ object BidReport {
         val unfilled = rows.filter { it.filled == 0L && it.status != MakerStatus.RESTING.name && it.status != MakerStatus.SENT.name && it.status != MakerStatus.CANCELING.name }
         out += "bids: ${rows.size} posted · ${filled.size} filled (${pctOf(filled.size, rows.size)}) · ${rows.count { it.status == MakerStatus.RESTING.name || it.status == MakerStatus.SENT.name }} resting now · " +
             "${unfilled.size} ended without a fill · auto-make ${rows.count { it.auto }}, by hand ${rows.count { !it.auto }}"
+        // Small-market bids are counted from the first one posted, before any fill ([rows] split by fill only once there are fills).
+        if (rows.any { it.obscure }) out += "small-market bids (Quick & likely's fill of idle money): ${rows.count { it.obscure }} posted, ${rows.count { it.obscure && it.filled > 0 }} filled"
         if (filled.isEmpty()) return out
         val all = Agg().also { a -> filled.forEach(a::add) }
         out += all.line("ALL FILLS")

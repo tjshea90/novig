@@ -252,6 +252,8 @@ object MakerText {
         why.startsWith("Novig already offers it") -> "Novig already offers it under the bid: take it instead (the +EV feed)"
         why.startsWith("Only ") && why.contains("book") -> "Too few books behind the fair price"
         why.startsWith("Starts within") -> "Starts too soon"
+        why.startsWith("The sharp books and the blend are") -> "Small market: the sharp books and the blend disagree"
+        why.startsWith("A sharp book's own price gives this small-market bid") -> "Small market: a sharp book's own edge is too thin"
         else -> why
     }
 
