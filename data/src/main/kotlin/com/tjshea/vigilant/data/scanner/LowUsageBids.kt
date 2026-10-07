@@ -12,8 +12,20 @@ import com.tjshea.vigilant.engine.FairSource
  */
 object LowUsageBids {
 
-    /** Only games starting inside this many hours are read or bid on. */
-    const val WINDOW_HOURS = 6
+    /**
+     * The window a fresh install reads and bids on: the next 6 hours, which is [TrapGuard.DEFAULT_EARLY_HOURS]. It is only the default: the window the mode really uses is
+     * [windowHours], which follows the trap guard Tj sets (Tj, 2026-10-07: "I changed the trap guard setting from 6 hours to 8 hours and then to no trap guard at all, but it is
+     * hard set at 6 hours trap guard no matter what I select").
+     */
+    const val WINDOW_HOURS = TrapGuard.DEFAULT_EARLY_HOURS
+
+    /**
+     * The hours ahead the mode reads, and bids may go up on: the trap guard's hours ([ScanSettings.trapEarlyHours]; 6 h by default), never past the ordinary reach of Vigilant's scan
+     * ([ScanSettings.scanWindowHours]: Days ahead, or Starts within when that is shorter). The trap guard Off (0) means no limit of its own, so the scan reads as far as the ordinary
+     * reach says. A scan reads exactly what a bid could be posted on, so no feed is asked for a game no bid may go on, and the trap guard Tj sets is the one that runs.
+     */
+    fun windowHours(s: ScanSettings): Int =
+        (if (s.trapEarlyHours > 0) minOf(s.trapEarlyHours, s.scanWindowHours) else s.scanWindowHours).coerceAtLeast(1)
 
     /** Two or three sharp books: a fair needs at least [MIN_BOOKS] of them, and more than [MAX_BOOKS] would be more feeds to pay for. */
     const val MIN_BOOKS = 2
@@ -174,7 +186,7 @@ object LowUsageBids {
     }
 
     /**
-     * [s] as the scan reads it while the mode is on ([ScanSettings.effective]): props only; the next [WINDOW_HOURS] h (a shorter "starts within" is kept); the fair is the
+     * [s] as the scan reads it while the mode is on ([ScanSettings.effective]): props only; the next [windowHours] h (the trap guard's hours, 6 by default; a shorter "starts within" is kept); the fair is the
      * picked sharp books' alone, each devigged the worst way, at least two of them, quotes past the freshness limit dropped before the devig; Polymarket, The Odds API and
      * the soft books are off, the feeds that carry the picked books on (the app offers only the cheapest that cover them, [feedsFor]); live games off; every prop the books
      * quote is priced (Novig's own reads are not a credit). The scanner choice, the leagues, and every betting setting are Tj's own.
@@ -189,8 +201,9 @@ object LowUsageBids {
             referenceBooks = picked.filter { it != KALSHI }, usePinnacle = FEED_PINNACLE in carried, usePolymarket = false, useKalshi = FEED_KALSHI in carried,
             useOddsApi = false, useParlay = FEED_PARLAY in carried, usePropLine = FEED_PROPLINE in carried, useBookProps = true,
             includeLive = false,
-            startsWithinHours = if (s.startsWithinHours in 1..WINDOW_HOURS) s.startsWithinHours else WINDOW_HOURS,
-            bookPropHours = minOf(s.bookPropHours, WINDOW_HOURS),
+            startsWithinHours = windowHours(s),
+            // The sportsbook-props horizon is Tj's own ("Games within"); [ScanSettings.bookPropWindowHours] already never goes past the scan's window.
+            bookPropHours = s.bookPropHours,
             propsPerGame = ScanSettings.NO_LIMIT, propLineGamesPerScan = ScanSettings.NO_LIMIT, maxBooksPerScan = maxOf(s.maxBooksPerScan, MIN_NOVIG_READS),
             lowUsageScan = true,
         )

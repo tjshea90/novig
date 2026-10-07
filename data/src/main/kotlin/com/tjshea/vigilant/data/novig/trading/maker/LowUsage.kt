@@ -16,7 +16,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
  *  - **Price**: the margin Tj set ([ScanSettings.lowUsageMargin]: 2.5% by default, 1.5% or a typed amount from [LowUsageBids.MIN_MARGIN]) or more under that fair, and under the lowest picked book's own fair ([MakerRules.anchorSharp]), so each picked book gives the bid the edge.
  *  - **Odds**: no longer than +[LowUsageBids.MAX_ODDS] (a tighter setting wins), no bid priced over 0.60 (it almost never fills).
  *  - **Likely to fill**: [QuickLikely]'s rules (props, leads their side, hottest market first, likeliest fill first) and not the kinds of prop takers were measured to trade
- *    rarely ([MarketPopularity.measuredObscure]); only games inside [LowUsageBids.WINDOW_HOURS] h.
+ *    rarely ([MarketPopularity.measuredObscure]), unless the small-market fill is on ([QuickLikely.withObscure]); only games inside the trap guard's hours ([LowUsageBids.windowHours], 6 by default).
  */
 object LowUsage {
 
@@ -40,7 +40,7 @@ object LowUsage {
             maxOdds = if (rules.maxOdds in MakerRules.MIN_MAX_ODDS until LowUsageBids.MAX_ODDS) rules.maxOdds else LowUsageBids.MAX_ODDS,
             minBooks = maxOf(rules.minBooks, MIN_BOOKS),
             sharpVeto = true, anchorSharp = true, requireSharp = true,
-            earlyHours = if (rules.earlyHours in 1..LowUsageBids.WINDOW_HOURS) rules.earlyHours else LowUsageBids.WINDOW_HOURS,
+            // The trap guard is Tj's: 6 h by default, any hours he picks, or Off ([LowUsageBids.windowHours] reads exactly as far as it lets a bid go).
             skipObscure = true,
             // Its fair is two or three books by design: "how many books price the line" would call every line small.
             popularOnly = false, minLineBooks = 0,
