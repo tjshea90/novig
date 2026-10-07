@@ -482,21 +482,18 @@ class KeyPool(
         val tried = HashSet<String>()
         var lastProblem: String? = null
         var shortWaits = 0
-        val held: (KeyUsage, Long) -> Int = if (reserve <= 0 && pace == null) UsageMeter.NO_FLOOR else { u, now -> maxOf(reserve, pace?.floor(u, now) ?: 0) }
+        // A pace sets each key's own floor (a paid key's day share, a free key's small closing-lines reserve); with none, every key keeps [reserve].
+        val held: (KeyUsage, Long) -> Int = when {
+            pace != null -> { u, now -> maxOf(pace.floor(u, now), 0) }
+            reserve > 0 -> { _, _ -> reserve }
+            else -> UsageMeter.NO_FLOOR
+        }
         while (true) {
             val all = keys()
             val open = all.filter { it !in tried }
             val key = meter.pick(policy, open, cost, held)
                 ?: if (held !== UsageMeter.NO_FLOOR && open.isNotEmpty() && meter.pick(policy, open, cost) != null) {
-                    // Past the reserve only when a key could pay and keep it: then it's the day's pace holding back.
-                    val paced = pace != null && meter.pick(policy, open, cost) { _, _ -> reserve } != null
-                    val usages = open.mapNotNull { meter.flow.value.providers[policy.id]?.keys?.get(it) }
-                    val free = pace != null && usages.size == open.size && usages.all { pace.isFree(it) }
-                    throw CreditsHeldBackException(
-                        if (free) "${policy.displayName} is on its free plan: its ${policy.unit} are kept for closing lines (scans use a paid plan's)."
-                        else if (paced) "${policy.displayName} has spent today's share of its ${policy.unit}: back tomorrow (unused days carry over)."
-                        else "The last $reserve ${policy.unit} on ${if (all.size == 1) "your ${policy.displayName} key" else "each ${policy.displayName} key"} are kept for closing lines.",
-                    )
+                    throw CreditsHeldBackException(heldBackMessage(all, open, cost, reserve, pace))
                 } else {
                     throw AllKeysExhaustedException(meter.exhaustedMessage(policy, all, lastProblem))
                 }
@@ -527,6 +524,26 @@ class KeyPool(
                     tried += key
                 }
             }
+        }
+    }
+
+    /**
+     * Why no key could take a call that some key has the credits for: a paid key's day share is spent (and what the free keys are down to), the free
+     * keys are all down to their closing-lines reserve, or every key is down to [reserve]. The scan reads this and the other feeds price meanwhile.
+     */
+    private suspend fun heldBackMessage(all: List<String>, open: List<String>, cost: Int, reserve: Int, pace: CreditPace?): String {
+        val name = policy.displayName
+        val usage = { k: String -> meter.flow.value.providers[policy.id]?.keys?.get(k) }
+        val free = if (pace == null) emptyList() else open.filter { k -> usage(k)?.let { pace.isFree(it) } == true }
+        // A paid key that could pay keeping only the reserve: it's the day's pace holding it back.
+        val paced = pace != null && meter.pick(policy, open - free.toSet(), cost) { _, _ -> reserve } != null
+        val freeLeft = pace?.let { " The last ${it.freeReserve} credits on a free key are kept for closing lines." }.orEmpty()
+        return when {
+            paced -> "$name has spent today's share of its ${policy.unit}: back tomorrow (unused days carry over)." + if (free.isNotEmpty()) freeLeft else ""
+            pace != null && free.isNotEmpty() && free.size == open.size ->
+                (if (all.size == 1) "Your $name key is" else "All ${all.size} $name keys are") + " down to the last ${pace.freeReserve} ${policy.unit}, kept for closing lines: back at the reset."
+            pace != null && free.isNotEmpty() -> "$name's keys are spent or down to their closing-lines reserve: back when they reset." + freeLeft
+            else -> "The last $reserve ${policy.unit} on ${if (all.size == 1) "your $name key" else "each $name key"} are kept for closing lines."
         }
     }
 
