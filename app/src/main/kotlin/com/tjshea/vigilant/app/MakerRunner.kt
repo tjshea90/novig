@@ -51,7 +51,11 @@ class MakerRunner(
      * (the tab). Vigilant's scan isn't used for them at all.
      */
     private val cnoLines: suspend (ScanSettings, Long, List<MakerBid>, Boolean) -> CnoBidLane.LineSet =
-        { s, now, bids, read -> c.cnoBids.lines(s, now, bids, read, unavailable = cnoPlayerOut(now)) },
+        { s, now, bids, read ->
+            // A prop on a player the injury reports say is out gets no bid ([com.tjshea.vigilant.data.reference.PlayerOut]).
+            val book = c.injuries.book.value
+            c.cnoBids.lines(s, now, bids, read, unavailable = { r -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(book, r, now) })
+        },
 ) {
     /** What the Make tab shows: the last pass and the bids each line would get now. */
     data class Status(
@@ -256,12 +260,6 @@ class MakerRunner(
     private fun playerOut(now: Long): (com.tjshea.vigilant.data.scanner.Opportunity) -> String? {
         val book = c.injuries.book.value
         return { o -> com.tjshea.vigilant.data.reference.PlayerOut.forOpportunity(book, o, now) }
-    }
-
-    /** [playerOut] for a CNO row (bids priced from CrazyNinjaOdds): the injury reports say its player is out. */
-    private fun cnoPlayerOut(now: Long): (com.tjshea.vigilant.data.cno.CnoRow) -> String? {
-        val book = c.injuries.book.value
-        return { r -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(book, r, now) }
     }
 
     /**
