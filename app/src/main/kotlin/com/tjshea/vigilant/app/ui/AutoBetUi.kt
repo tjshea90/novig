@@ -102,7 +102,7 @@ object AutoBetText {
         else "at least ${r.minBooks} book${if (r.minBooks == 1) "" else "s"} agreeing it's +EV on their own"
         return "$agreeing, ${r.twoSided} pricing both sides, an edge of " +
             "${evLabel(r.minEv)} or more at Novig's price now (the lower of CNO's edge and the books' own check)" + (if (r.favouriteExtraEv > 1e-9) ", ${evLabel(r.minEv + r.favouriteExtraEv)} or more for a favorite" else "") + (if (r.maxOdds > 0) ", odds no longer than ${oddsLabel(r.maxOdds)}" else "") +
-            (if (r.minOdds < 0) ", odds no shorter than ${minOddsLabel(r.minOdds)}" else if (r.minOdds > 0) ", underdogs only (${minOddsLabel(r.minOdds)})" else "") +
+            (if (r.minOdds < 0) ", odds no shorter than ${minOddsLabel(r.minOdds)}" else if (r.minOdds > 0) ", underdogs only (odds +${r.minOdds} or longer)" else "") +
             (if (r.kinds.size < BetKind.entries.size) ", only ${r.kinds.sortedBy { it.ordinal }.joinToString(", ") { it.label.lowercase() }}" else "") +
             (if (s.sharpAutoBet == SharpMode.VETO) (if (s.sharpVetoMinEv <= 0.0) ", unless the sharpest book for it says it isn't +EV" else ", unless the sharpest book for it gives it under ${evLabel(s.sharpVetoMinEv)}") else if (s.sharpAutoBet == SharpMode.CONFIRM) ", confirmed by a sharp book" else "") +
             ", staking ${stakeText(s)} (never over ${Format.money(r.maxStake)})"
