@@ -5391,3 +5391,19 @@ Save the wiring agent findings to github
 ```
 Resume
 ```
+
+## 2026-10-07T23:29:30Z
+```
+Research each of the following sources to see if a rapid source of odds or scores can be built or if any of the apis can be used for rapid odds or scores either cheap or free: 
+
+https://medium.com/@ayoubennaoui20/how-to-build-a-real-time-sports-odds-tracker-with-fastapi-websockets-angular-part-1-ff2de71c62d5
+https://odds.bksignal.com/
+https://dev.to/drengregious/stop-scraping-betting-sites-how-to-build-a-real-time-sports-tracker-in-python-46i9
+https://scraperly.com/recipe/odds-shark/tutorial
+https://surebetfusion.com/
+https://roundproxies.com/blog/scrape-sports-betting-sites/
+https://scrapingproxies.best/blog/web-scraping/websocket-scraping/
+https://dev.to/pulsescore/how-to-fetch-live-sports-odds-via-api-with-typescript-bet365-paddy-power-more-o58
+https://github.com/merlinfachetti/odds-stream-engine
+https://www.pulsescore.net/
+```
