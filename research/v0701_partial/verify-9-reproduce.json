@@ -1,0 +1,437 @@
+{
+ "lens": "REPRODUCE AND DATE-SPLIT (verifier 9)",
+ "rule": "Trap guard 6 h: only bets first listed within 6 h of the start (today 24 h). Mask: shown & ev>=0.025 & -200<=american<=130 & kind in PROP/MONEYLINE/SPREAD & minToStartFirst<=1440 & ~(minToStartFirst>360)",
+ "numbers_reproduced": "REPRODUCED from the expr with the shared loader (own code): rule 76 bets, 32 games (only 27 games have a close), 33.69 bets/day; CLV all closes +2.586% on 51 closes/27 games, game-cluster CI [+1.45, +4.15] (builder +2.586 [+1.45, +4.14]: match; t-based robust CI [+1.09, +4.08]), beat close 70.6%; close_ok +2.877% on 43 closes/23 games [+1.60, +4.53]; ROI -2.22% on 74 settled/31 games [-29.0, +22.7] (match); baseline (same expr without the 6 h cut) 182 bets/39 games, CLV +1.366% on 120 closes/35 games [+0.06, +2.85] (match), close_ok +1.509% on 94; dropped 106 bets/22 games, CLV +0.464% on 69 closes/20 games [-2.19, +2.77], close_ok +0.355% on 51. Mask identical with <=360, no NaN in any gate column, 0 rows lost. HALVES DO NOT MATCH the builder under the shared split_by_date (cut after firstDay Oct 4): rule first half 52 bets/25 games, CLV +2.210% on 40 closes/20 games [+0.93, +4.18]; second half 24 bets/7 games, CLV +3.952% on 11 closes/7 games [+2.62, +4.69 bootstrap; +2.67, +5.23 t with 6 df]; ROI first -8.9% (50 bets), second +11.7% (24 bets, CI [-53.6, +43.1]). Builder's +2.803% / +2.457% are reproduced only by sorting the 51 closes by startsAtMs and cutting at 19 / 32 closes (not a date cut, no games balance); direction is the same (both halves positive). Baseline halves: first 149 bets/27 closed games +1.403%, second 33 bets/8 games, 14 closes +1.079% [-1.94, +4.72]. THE TEST THAT MATTERS (kept minus dropped inside the app's universe, game-cluster bootstrap of the difference over 35 games): +2.12 pts [-0.58, +5.23], one-sided p 0.066 (wild-cluster 0.078, two-sided 0.151; cluster-robust OLS SE 1.50 pts, p 0.166); close_ok +2.52 pts [-0.37, +5.67], wild one-sided 0.054. First half +1.30 [-1.37, +4.22] over 27 games (one-sided p 0.156). Second half: only 9 dropped bets/3 games/3 closes in 2 games (CLV -9.46%, driven by one -30.6% close): the difference cannot be tested on the second half. WIDER UNIVERSE W (all bets lead<=24 h, any screen/EV/odds/kind): rationale numbers reproduce: kept +1.41% on 256 closes vs dropped -0.37% on 412, diff +1.79 [+0.93, +2.72] over 69 games; within-game +2.56 over 28 games, 82% positive. W by date half: first +1.54 [+0.67, +2.51] (61 games), second +3.96 [+0.79, +6.04] (10 games; 36 vs 29 closes). W by first-look day: Oct 3 +2.03 [+0.89, +3.28] (53 games), Oct 4 +0.00 [-1.57, +1.46] (28 games; 144 vs 97 closes), Oct 5 +3.96 (10 games); W without the Oct 3 cohort +0.88 [-0.69, +2.44] over 36 games.",
+ "survives": false,
+ "reason": "Not refuted, but not shown from this file in the universe the rule would act on. (1) Every number the builder reports reproduces (bets, games, CLV, CI, ROI, baseline, W), except the half split: the shared date split gives +2.21% (40 closes, 20 games) and +3.95% (11 closes, 7 games), not +2.80/+2.46. (2) The only valid comparison is kept vs dropped (the rule is nested in the baseline): +2.12 pts, CI [-0.58, +5.23] over 35 closed games, two-sided p about 0.15-0.17. The dropped bets did NOT lose to the close in this universe (+0.46%, CI [-2.19, +2.77]); the kept CLV is high, the dropped is merely indistinguishable from zero and from the kept. (3) The gap is one cohort. 66 of the 69 dropped closes are games of Oct 4 and 50 of 69 were first listed on Oct 3 (one football-prop slate; 93 of 106 dropped bets are football); drop that first-look day and the difference is +0.16 pts (44 vs 19 closes). Within first-look days the sign flips: Oct 3 +3.4 pts (7 vs 50 closes), Oct 4 -2.5 pts (33 vs 16 closes: the >6 h bets beat the kept ones, +4.55% vs +2.01%), Oct 5 +13.4 pts (11 vs 3 closes in 2 games). With day dummies the kept coefficient is +1.30 pts (SE 2.65, p 0.63). (4) 34 of the 51 kept closes are Tracker closes of bets Tj placed (+3.41%, 18 games); the 17 other kept closes are +0.95% [-0.22, +2.42] vs 0.56% for the 47 other dropped closes: the non-tracker difference is +0.4 pts. (5) No dose-response in this universe: 0-60 min +2.72 (18 closes), 1-3 h +1.99 (21), 3-6 h +3.43 (12), 6-12 h +1.85 (12, CI [-6.9, +13.5]), 12-16 h -1.46 (33), 16-24 h +2.42 (24 closes, 12 games, CI [+0.11, +3.78]); the only losing bucket is 12-16 h. (6) The second half cannot confirm it: 11 kept closes in 7 games, and 3 dropped closes in 2 games. (7) Within-game in this universe: 12 games have closes in both groups, mean +3.8 pts, 7 of 12 (58%) positive, CI [-0.24, +8.34], Wilcoxon p 0.151. What does hold: on the wide universe W the same cut shows +1.79 pts [+0.93, +2.72] over 69 games, positive on both date halves (+1.54 over 61 games, +3.96 over 10 games) and monotone by lead bucket (+1.10, +1.67, +1.71, +0.19, -0.27, -0.76), and the 6 h is the repo's pre-set default (TrapGuard.DEFAULT_EARLY_HOURS) from earlier files, so no look-ahead or threshold fitting. But W loses most of its size without the Oct 3 cohort (+0.88 [-0.69, +2.44]) and is 0.00 on the Oct 4 cohort. Verdict: a question for Tj worth asking only on the W evidence plus the earlier files; as a result of this file's app universe it is not distinguishable from luck. To settle it inside the app's universe: about 190 games with closes (about 650 closes, 5x today's 35 games/120 closes; roughly 10 more days at the study's pace of about 15 closed games a day), or reading W's weekday slates outside the NFL Sunday slate.",
+ "caveats": [
+  "Builder reports 'games 32' next to a CLV CI that is computed over 27 games (rule bets without a close add games but no CLV).",
+  "Builder's first/second half CLVs (+2.803% / +2.457%) are a startsAtMs-ordered split at 19/32 closes, not the shared split_by_date: the rule's halves are +2.210% (40 closes, 20 games) and +3.952% (11 closes, 7 games).",
+  "A percentile cluster bootstrap on the second half (7 games) is too narrow ([+2.62, +4.69]); the t interval on 6 df is [+2.67, +5.23] on a robust SE of 0.52 pts. Both rest on 7 games and 11 closes, 9 of them Tracker closes.",
+  "Second-half dropped group: 9 bets, 3 games, 3 closes in 2 games (CLV -9.46%, one -30.6% close). Excluding only that close, the kept-minus-dropped difference falls from +2.12 to +0.92; but the dropped group also holds a +47.8% close, and clipping all closes at +-10% leaves +2.12 (median difference +1.91, excluding all |CLV|>=20% +2.02), so the result is not an outlier artifact.",
+  "Leave-one-game-out the difference stays within +1.49 to +2.89 pts (no single game decides it); leave-one-first-look-day-out it ranges +0.16 (drop Oct 3), +4.41 (drop Oct 4), +1.30 (drop Oct 5).",
+  "Closes by source differ between groups: kept 34 Tracker (Tj-placed) / 14 Novig-trades / 2 ESPN / 1 Pinnacle; dropped 22 Tracker / 47 Novig-trades. Tracker closes exist only for bets Tj placed, so 67% of kept closes (32% of dropped) come from his selection. Tracker-close timing before the start is not in the file.",
+  "Versions differ between groups: dropped bets are mostly v0.57.0-0.61.0 (Oct 3-4), kept bets mostly v0.59.1-0.67.0; the lead-time cut is confounded with version, preset and date.",
+  "Sharp-verdict cell: among PASSED, kept +2.90% (34 closes, 20 games) vs dropped -2.57% (14 closes, 10 games); among the rest kept +1.95% (17) vs dropped +1.24% (55). Another small cell, same direction.",
+  "Threshold: kept CLV with cut at 3 h +2.33 (39 closes), 4 h +2.38, 5-6 h +2.59 (51), 8 h +2.29, 10 h +3.10, 12 h +2.44 (63), 16 h +1.10; dropped CLV +0.90, +0.71, +0.46, +0.63, -0.26, +0.17, +2.42: the data cannot tell 6 h from anything between 3 and 12 h.",
+  "Re-entry check: dropped bets with a CNO-list look inside 6 h that still pass EV and odds: 3 (5 counting Vigilant-scan looks); matches the builder's 3.",
+  "No look-ahead found: all gate fields (shown, ev, american, kind, minToStartFirst) are first-look; minToStartFirst equals the first look's minutes (0 mismatches over 2080 rows); the 6 h threshold predates this file (TrapGuard.DEFAULT_EARLY_HOURS, RESEARCH.md 71/82). First looks are left-censored at the study start (7 kept and 7 dropped bets first seen within 60 min of it), a small effect.",
+  "ROI is noise at this size (kept -2.22%, dropped -4.78%, baseline -3.70%, all CIs span +-20 pts); do not read it as support.",
+  "Dollar and bets-a-day claims (feasibility lens) were not re-derived here; the per-day figure 33.69 kept / 47.0 dropped bets (study span 2.256 days) does reproduce."
+ ],
+ "raw": {
+  "rule": {
+   "bets": 76,
+   "games": 32,
+   "games_with_close": 27,
+   "closes": 51,
+   "per_day": 33.687,
+   "clv": 0.025856,
+   "ci": [
+    0.014454,
+    0.041479
+   ],
+   "t_ci": [
+    0.0109,
+    0.0408
+   ],
+   "beat": 0.7059,
+   "close_ok_n": 43,
+   "close_ok_games": 23,
+   "close_ok_clv": 0.028769,
+   "close_ok_ci": [
+    0.01604,
+    0.045251
+   ],
+   "roi": -0.022232,
+   "roi_n": 74,
+   "roi_games": 31,
+   "roi_ci": [
+    -0.2903,
+    0.2267
+   ],
+   "ev_listed": 0.03721
+  },
+  "baseline": {
+   "bets": 182,
+   "games": 39,
+   "closes": 120,
+   "closed_games": 35,
+   "clv": 0.013655,
+   "ci": [
+    0.000574,
+    0.028479
+   ],
+   "close_ok_n": 94,
+   "close_ok_clv": 0.015087,
+   "roi": -0.036954,
+   "roi_n": 174,
+   "ev_listed": 0.03972
+  },
+  "dropped": {
+   "bets": 106,
+   "games": 22,
+   "closes": 69,
+   "closed_games": 20,
+   "clv": 0.004637,
+   "ci": [
+    -0.02189,
+    0.027718
+   ],
+   "close_ok_n": 51,
+   "close_ok_clv": 0.003551,
+   "roi": -0.047848,
+   "roi_n": 100,
+   "ev_listed": 0.04152
+  },
+  "halves_shared_split_by_date_cut_Oct4": {
+   "rule_h1": {
+    "bets": 52,
+    "games": 25,
+    "closes": 40,
+    "closed_games": 20,
+    "clv": 0.022098,
+    "ci": [
+     0.009342,
+     0.041808
+    ],
+    "roi": -0.088965
+   },
+   "rule_h2": {
+    "bets": 24,
+    "games": 7,
+    "closes": 11,
+    "closed_games": 7,
+    "clv": 0.039524,
+    "boot_ci": [
+     0.026187,
+     0.046926
+    ],
+    "t_ci": [
+     0.0267,
+     0.0523
+    ],
+    "roi": 0.116796,
+    "roi_ci": [
+     -0.5362,
+     0.431
+    ]
+   },
+   "baseline_h1_clv": 0.014033,
+   "baseline_h2_clv": 0.010793,
+   "baseline_h2_closes": 14,
+   "dropped_h1": {
+    "bets": 97,
+    "closes": 66,
+    "closed_games": 18,
+    "clv": 0.009146
+   },
+   "dropped_h2": {
+    "bets": 9,
+    "games": 3,
+    "closes": 3,
+    "closed_games": 2,
+    "clv": -0.094556
+   }
+  },
+  "builder_halves_reproduced_only_by": "closes sorted by startsAtMs, cut at 19 / 32 closes (+2.803% / +2.457%)",
+  "diff_kept_minus_dropped_app_universe": {
+   "all": {
+    "diff": 0.021219,
+    "ci": [
+     -0.005833,
+     0.052323
+    ],
+    "p_boot_le0": 0.066,
+    "wild_one_sided": 0.0776,
+    "wild_two_sided": 0.1505,
+    "ols_se": 0.015,
+    "ols_p": 0.166,
+    "games": 35
+   },
+   "close_ok": {
+    "diff": 0.025218,
+    "ci": [
+     -0.003693,
+     0.056727
+    ],
+    "wild_one_sided": 0.0536,
+    "wild_two_sided": 0.1083,
+    "games": 33
+   },
+   "h1": {
+    "diff": 0.012952,
+    "ci": [
+     -0.013712,
+     0.042207
+    ],
+    "p_boot_le0": 0.156,
+    "games": 27
+   },
+   "h2": "not testable: 3 dropped closes in 2 games",
+   "within_game": {
+    "games": 12,
+    "mean_diff": 0.03822,
+    "weighted": 0.05039,
+    "boot_ci": [
+     -0.002449,
+     0.083385
+    ],
+    "share_positive": 0.583,
+    "wilcoxon_p": 0.1514
+   }
+  },
+  "by_first_day_app_universe": {
+   "2026-10-03": {
+    "kept_closes": 7,
+    "kept_games": 7,
+    "kept_clv": 0.03141,
+    "dropped_closes": 50,
+    "dropped_games": 16,
+    "dropped_clv": -0.0025
+   },
+   "2026-10-04": {
+    "kept_closes": 33,
+    "kept_games": 13,
+    "kept_clv": 0.02012,
+    "dropped_closes": 16,
+    "dropped_games": 13,
+    "dropped_clv": 0.0455
+   },
+   "2026-10-05": {
+    "kept_closes": 11,
+    "kept_games": 7,
+    "kept_clv": 0.03952,
+    "dropped_closes": 3,
+    "dropped_games": 2,
+    "dropped_clv": -0.09456
+   }
+  },
+  "leave_one_first_day_out_diff": {
+   "drop_2026-10-03": 0.0016,
+   "drop_2026-10-04": 0.0441,
+   "drop_2026-10-05": 0.013
+  },
+  "same_start_day_Oct4": {
+   "kept_closes": 34,
+   "kept_clv": 0.020156,
+   "dropped_closes": 66,
+   "dropped_clv": 0.009146,
+   "games": 21,
+   "diff_ci": [
+    -0.0163,
+    0.0418
+   ],
+   "p_boot_le0": 0.196
+  },
+  "close_source_split": {
+   "kept_tracker": {
+    "closes": 34,
+    "games": 18,
+    "clv": 0.0341,
+    "ci": [
+     0.0181,
+     0.0533
+    ]
+   },
+   "kept_non_tracker": {
+    "closes": 17,
+    "games": 11,
+    "clv": 0.0095,
+    "ci": [
+     -0.0022,
+     0.0242
+    ]
+   },
+   "dropped_tracker": {
+    "closes": 22,
+    "games": 16,
+    "clv": 0.0025,
+    "ci": [
+     -0.0385,
+     0.0381
+    ]
+   },
+   "dropped_non_tracker": {
+    "closes": 47,
+    "games": 15,
+    "clv": 0.0056,
+    "ci": [
+     -0.0248,
+     0.0343
+    ]
+   }
+  },
+  "ols_cluster_robust_kept_coef_pts": {
+   "none": [
+    2.12,
+    1.5,
+    0.166
+   ],
+   "tracker+football+passed": [
+    2.38,
+    1.91,
+    0.222
+   ],
+   "day_dummies": [
+    1.3,
+    2.65,
+    0.627
+   ],
+   "all_controls": [
+    0.92,
+    2.86,
+    0.75
+   ],
+   "log_lead_alone_per_log_minute": [
+    -0.6,
+    0.34,
+    0.085
+   ]
+  },
+  "lead_buckets_app_universe_clv_pct": {
+   "0-60": [
+    18,
+    14,
+    2.72
+   ],
+   "60-180": [
+    21,
+    12,
+    1.99
+   ],
+   "180-360": [
+    12,
+    8,
+    3.43
+   ],
+   "360-720": [
+    12,
+    9,
+    1.85
+   ],
+   "720-960": [
+    33,
+    11,
+    -1.46
+   ],
+   "960-1440": [
+    24,
+    12,
+    2.42
+   ]
+  },
+  "lead_buckets_W_clv_pct": {
+   "0-60": [
+    119,
+    48,
+    1.1
+   ],
+   "60-180": [
+    92,
+    41,
+    1.67
+   ],
+   "180-360": [
+    45,
+    23,
+    1.71
+   ],
+   "360-720": [
+    98,
+    24,
+    0.19
+   ],
+   "720-960": [
+    134,
+    17,
+    -0.27
+   ],
+   "960-1440": [
+    180,
+    24,
+    -0.76
+   ]
+  },
+  "W": {
+   "kept_closes": 256,
+   "dropped_closes": 412,
+   "kept_clv": 0.0141,
+   "dropped_clv": -0.0037,
+   "diff": 0.0179,
+   "ci": [
+    0.0093,
+    0.0272
+   ],
+   "games": 69,
+   "close_ok_diff": 0.0174,
+   "h1_diff": 0.0154,
+   "h1_games": 61,
+   "h2_diff": 0.0396,
+   "h2_ci": [
+    0.0079,
+    0.0604
+   ],
+   "h2_games": 10,
+   "oct3_diff": 0.0203,
+   "oct4_diff": 0.0,
+   "oct4_ci": [
+    -0.0157,
+    0.0146
+   ],
+   "oct5_diff": 0.0396,
+   "without_oct3_diff": 0.0088,
+   "without_oct3_ci": [
+    -0.0069,
+    0.0244
+   ],
+   "without_oct3_games": 36,
+   "within_game_diff": 0.0256,
+   "within_game_games": 28,
+   "within_game_share_positive": 0.821,
+   "shown_diff": 0.0191,
+   "hidden_diff": 0.0176
+  },
+  "outlier_checks": {
+   "median_diff": 0.0191,
+   "clip_10pct_diff": 0.0212,
+   "excl_abs20_diff": 0.0202,
+   "excl_only_minus30_diff": 0.0092,
+   "leave_one_game_out_range": [
+    0.0149,
+    0.0289
+   ]
+  },
+  "threshold_sensitivity_kept_clv_pct_closes": {
+   "180": [
+    2.33,
+    39
+   ],
+   "240": [
+    2.38,
+    47
+   ],
+   "360": [
+    2.59,
+    51
+   ],
+   "480": [
+    2.29,
+    53
+   ],
+   "600": [
+    3.1,
+    58
+   ],
+   "720": [
+    2.44,
+    63
+   ],
+   "960": [
+    1.1,
+    96
+   ]
+  },
+  "games_needed_to_settle": "about 190 games with closes (about 650 closes) in the app's universe to give 80% power for a 1.8-point difference at the current 1.5-point cluster SE with 35 games"
+ }
+}
