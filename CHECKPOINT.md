@@ -1,22 +1,23 @@
-# CHECKPOINT 2703 — read me first, then TASKS.md
+# CHECKPOINT 2704 — read me first, then TASKS.md
 
-**Written:** 2026-10-07T19:35:39Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `633b74a5` (this checkpoint is the commit after it)
+**Written:** 2026-10-07T19:43:52Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b67c8afa-h14i94` · **builds on:** `78a6c712` (this checkpoint is the commit after it)
 
 ## Just done
-Tj's bets-vs-bids logging request written into TASKS.md (DJ1-DJ6)
+DJ (bets vs bids logging): TASKS.md DJ1-DJ6 written; scouting workflow wf_ecd174a8-7fd launched (data model, Tracker UI, Diagnostics, scan study + critic/design); facts so far: TrackedBet.maker + AtBet.HOW_BID exist, Tracker card says 'your bid, filled', StudyExport has bidSection, BidReport exists; no code changed yet
 
 ## Do this next
-DJ1: scout how bets and bids are logged, shown (Tracker stats/EV filters), in Diagnostics and in the scan study; then design and build
+DJ1: read the scouting result (journal.jsonl of wf_ecd174a8-7fd, or re-scout), pick the single BET-vs-BID classifier (incl. the 11 untagged older fills), then build Tracker Bets/Bids/All chip + stats, Diagnostics split + bids section, study rows/splits + README; tests, floor, CI, ship, release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M research/ACTIVE_LOG_2026-10-07.md
 
 ## Last ten checkpoints
 ```
+  0e535d34 ckpt 2703: Tj's bets-vs-bids logging request written into TASKS.md (DJ1-DJ6)
   6195d011 ckpt 2702: v0.73.0 released and recorded; DI1-DI5 all done (v0.72.3, v0.72.4, v0.73.0)
   d800e268 ckpt 2701: pre-release: v0.73.0: the CrazyNinjaOdds list can be limited to leagues, kin
   0492de95 ckpt 2700: pre-release: v0.73.0: the CrazyNinjaOdds list can be limited to leagues, kin
@@ -26,8 +27,7 @@ DJ1: scout how bets and bids are logged, shown (Tracker stats/EV filters), in Di
   8efd407b ckpt 2696: DI3: small-prop guard core: PropGuard (share cap with even-split floor, per-
   f3b9fbb4 ckpt 2695: pre-release: v0.72.3: Low API usage no longer hard-sets the trap guard windo
   2d31323a ckpt 2694: pre-release: v0.72.3: Low API usage no longer hard-sets the trap guard windo
-  b9b0315d ckpt 2693: DI1: Low API usage no longer hard-sets the trap guard window (follows trap h
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
