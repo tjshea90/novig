@@ -87,7 +87,7 @@ class CnoBidLaneTest {
 
     private fun listRead() = runBlocking { feed.refresh("view", settings.cnoFilters) }
     private fun step(bids: List<MakerBid> = emptyList()) = runBlocking { lane.step(settings, bids) }
-    private fun lines(read: Boolean = true) = runBlocking { lane.lines(settings, t, emptyList(), read) }
+    private fun lines(read: Boolean = true, bids: List<MakerBid> = emptyList()) = runBlocking { lane.lines(settings, t, bids, read) }
 
     // ---- which pages are read ----------------------------------------------------------------------------------------------
 
@@ -135,7 +135,7 @@ class CnoBidLaneTest {
         source.listRows = emptyList()
         listRead(); step(listOf(bid))
         assertTrue(source.pageReads.last().startsWith("Pat7"))
-        val set = lines()
+        val set = lines(bids = listOf(bid))
         // The stand-in's page gives the bid's side (and its complement) lines, from the same page.
         assertTrue(set.lines.any { it.outcomeId == "m7-under" })
     }
