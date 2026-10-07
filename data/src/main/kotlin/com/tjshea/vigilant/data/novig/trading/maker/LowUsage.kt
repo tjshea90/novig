@@ -33,7 +33,7 @@ object LowUsage {
      * [rules] as this focus makes them: [QuickLikely]'s narrowing, props alone, the margin Tj set (2.5% by default, never under [LowUsageBids.MIN_MARGIN]), nothing longer than +130
      * unless he picked a longer limit, the sharp rules all on, two books or more, games within 6 h. Nothing is ever loosened.
      */
-    fun narrow(rules: MakerRules, s: ScanSettings): MakerRules = QuickLikely.withObscure(QuickLikely.narrow(rules), s).let { q ->
+    fun narrow(rules: MakerRules, s: ScanSettings): MakerRules = QuickLikely.narrow(rules).let { q ->
         val picked = LowUsageBids.books(s).size
         q.copy(
             // Its fair is two or three books by design, so a small-market line can hold at most the books picked: a setting above that would never be met (a 3 with two books picked).
