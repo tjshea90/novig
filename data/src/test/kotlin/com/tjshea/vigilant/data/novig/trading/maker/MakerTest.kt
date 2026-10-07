@@ -202,6 +202,27 @@ class MakerTest {
         assertTrue(plan.places.isEmpty())
     }
 
+    @Test
+    fun `no bid on a player who is out, and a bid already up on him comes down with that reason (Tj, 2026-10-07)`() {
+        val out = "The player is out (OUT): no bet or bid on a player who isn't playing"
+        val lines = listOf(line("m1-over").copy(unavailable = out), line("m2-over"))
+        val decisions = MakerQuote.decideAll(lines, rules, now, emptySet())
+        // The line with the player out is skipped with the reason, however good its fair is; the other is bid on as before.
+        assertEquals(out, decisions.filterIsInstance<MakerDecision.Skip>().single { it.line.outcomeId == "m1-over" }.why)
+        assertTrue(decisions.single { it.line.outcomeId == "m2-over" } is MakerDecision.Post)
+        // Resting bids on both: the one on the player who is out is cancelled with the reason, the other stays, and nothing is posted on him.
+        val plan = MakerPlan.plan(
+            wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = listOf(resting("m1-over", 0.500), resting("m2-over", 0.500)), rules = rules, now = now,
+            skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why },
+        )
+        assertEquals(listOf("o-m1-over"), plan.cancels.map { it.first.orderId })
+        assertEquals(out, plan.cancels.single().second)
+        assertEquals(listOf("o-m2-over"), plan.kept.map { it.orderId })
+        assertTrue(plan.places.none { it.line.outcomeId == "m1-over" })
+        // A line with nothing said about its player is not blocked.
+        assertTrue(MakerQuote.decide(line("m1-over"), rules, now) is MakerDecision.Post)
+    }
+
     // ---- resting bids against the bids wanted ---------------------------------------------------------------------------
 
     private fun post(outcome: String, price: Double, contracts: Long = 1_000) =

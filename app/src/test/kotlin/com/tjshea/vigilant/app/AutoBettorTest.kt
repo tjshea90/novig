@@ -120,7 +120,9 @@ class AutoBettorTest {
         resolve: suspend (CnoRow) -> BetTarget? = { targetOf(it) },
         // Never Novig's real /trades from a test: the trap guard's move rule reads this instead.
         trades: suspend (String) -> List<TrapGuard.Trade> = { emptyList() },
-    ) = AutoBettor(app, app.container, clock = { now }, placer = { placer }, wallet = { wallet }, resolve = resolve, recentTrades = trades)
+        // The injury reports: none by default (the sample player is healthy as far as the bettor knows).
+        injuries: com.tjshea.vigilant.data.reference.InjuryBook = com.tjshea.vigilant.data.reference.InjuryBook.EMPTY,
+    ) = AutoBettor(app, app.container, clock = { now }, placer = { placer }, wallet = { wallet }, resolve = resolve, recentTrades = trades, injuries = { injuries })
 
     /** On, CNO scanning in the background, 3 books agreeing, 3% edge, 2 books both sides, $1 a bet; the trap guard off (the sample games are 8 h+ off: TrapGuardAppTest). */
     private fun settings(f: (ScanSettings) -> ScanSettings = { it }) =
@@ -266,6 +268,32 @@ class AutoBettorTest {
     }
 
     // ---- the criteria -------------------------------------------------------------------------------------------
+
+    private fun injuryBook(status: String) = com.tjshea.vigilant.data.reference.InjuryIndex { now }.apply {
+        record("americanfootball_nfl", listOf(com.tjshea.vigilant.data.reference.Injury("Justin Jefferson", status)))
+    }.book.value
+
+    @Test
+    fun `a bet on a player the injury reports say is out is never placed, and the report says why (Tj, 2026-10-07)`() = runBlocking {
+        for (status in listOf("Out", "Injured Reserve", "Suspended")) {
+            val novig = FakeNovig()
+            val report = bettor(novig, injuries = injuryBook(status)).run(settings(), state())
+            assertEquals(status, 0, report.placed.size)
+            assertEquals("$status: nothing reached Novig", 0, novig.orders.get())
+            assertTrue(report.skipped.keys.joinToString(), report.skipped.keys.any { it.startsWith("The player is out (") })
+            assertTrue(app.container.tracker.all().isEmpty())
+        }
+    }
+
+    @Test
+    fun `a doubtful or questionable player is still bet - only a player who is certainly out is blocked`() = runBlocking {
+        for (status in listOf("Doubtful", "Questionable")) {
+            app.container.tracker.all().forEach { app.container.tracker.delete(it.id) }
+            val novig = FakeNovig()
+            assertEquals(status, 1, bettor(novig, injuries = injuryBook(status)).run(settings(), state()).placed.size)
+            assertEquals(1, novig.orders.get())
+        }
+    }
 
     @Test
     fun `a bet outside Tj's criteria is not placed, and the report says which one`() = runBlocking {

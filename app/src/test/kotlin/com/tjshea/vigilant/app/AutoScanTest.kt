@@ -290,6 +290,17 @@ class AutoScanTest {
     private val jefferson = SampleCno.rows[1]
 
     @Test
+    fun `a CNO bet on a player the injury reports say is out does not alert, a questionable one does (Tj, 2026-10-07)`() {
+        val s = SampleCno.withBooks().indexed(now)
+        val key = com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(jefferson)
+        fun withTag(status: String) = s.copy(injuries = mapOf(key to com.tjshea.vigilant.data.reference.Injury("Justin Jefferson", status)))
+        assertEquals(1, AlertPicks.cno(s, 0.03, now).size)
+        assertTrue(AlertPicks.cno(withTag("Out"), 0.03, now).isEmpty())
+        assertTrue(AlertPicks.cno(withTag("Injured Reserve"), 0.03, now).isEmpty())
+        assertEquals(1, AlertPicks.cno(withTag("Questionable"), 0.03, now).size)
+    }
+
+    @Test
     fun `a CNO bet at or over the minimum that the books agree on alerts`() {
         val s = SampleCno.withBooks().indexed(now)
         val alerts = AlertPicks.cno(s, 0.03, now)
