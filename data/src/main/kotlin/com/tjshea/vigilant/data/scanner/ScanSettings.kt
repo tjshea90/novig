@@ -365,6 +365,11 @@ data class ScanSettings(
      * +110 = underdogs at least that long only; 0 = no limit. [makerMaxOdds] is the longest. [MAKER_MIN_ODDS_CHOICES], or typed.
      */
     val makerMinOdds: Int = 0,
+    /**
+     * Quick & likely to win bids go only where takers are (Tj, 2026-10-07: "no strange props or small markets"): a line priced by fewer books than this is a small market (a backup
+     * player's prop, an alternate line) and gets no bid. [MAKER_QUICK_MIN_BOOKS_CHOICES], or typed; 5 by default (a quarter of the study's props were priced by 5 books or fewer).
+     */
+    val makerQuickMinBooks: Int = 5,
     /** Bid both sides of a market (both filling locks in the two margins) or only the side with the better EV per bid. */
     val makerBothSides: Boolean = true,
     /** The fewest books behind the fair price for a bid to be posted. */
@@ -895,10 +900,15 @@ data class ScanSettings(
         val API_MAX_PER_GAME_CHOICES = listOf(5.0, 10.0, 25.0, 50.0, 100.0, 0.0)
 
         /**
-         * [makerMargin]'s choices: 3% fills more, 6-8% earns more per fill (RESEARCH.md §70.2). 3.25% and 3.5% (Tj, 2026-10-04: "consider lowering the EV to 3.5 or
-         * 3.25%") are offered, not made the default: on Novig's 0.5¢ grid they usually land on the same price as 3% or 4% (§81.4).
+         * [makerMargin]'s choices: 2% and 2.5% fill the most, 4% earns the most per fill (RESEARCH.md §70.2). Tj, 2026-10-07: "remove the 6% and 8% under the fair options and add 2%
+         * and 2.5%" (a 6% or 8% margin already saved stays, and any other margin can be typed). 3.25% and 3.5% (Tj, 2026-10-04) usually land on the same price as 3% or 4% on Novig's
+         * 0.5¢ grid (§81.4).
          */
-        val MAKER_MARGIN_CHOICES = listOf(0.03, 0.0325, 0.035, 0.04, 0.06, 0.08)
+        val MAKER_MARGIN_CHOICES = listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.04)
+
+        /** The most a typed bid margin may be (a bid's price must stay well above nothing) and the least (a margin under 0.5% isn't an edge). */
+        const val MAKER_MARGIN_MIN = 0.005
+        const val MAKER_MARGIN_MAX = 0.5
 
         /** A kind of market the popularity study didn't measure is popular when this many books or more price the line ([makerPopularFirst]). */
         const val MAKER_POPULAR_BOOKS = 6
@@ -956,6 +966,9 @@ data class ScanSettings(
 
         /** The shortest-odds chips every odds setting shares (0 = no limit; negative = nothing shorter than it; +100 = underdogs and even money only); any other value is typed. */
         val SHORTEST_ODDS_CHOICES = listOf(0, -300, -250, -200, -150, 100)
+
+        /** [makerQuickMinBooks]' chips. */
+        val MAKER_QUICK_MIN_BOOKS_CHOICES = listOf(3, 4, 5, 6, 8)
 
         /** [makerMinOdds]' chips. */
         val MAKER_MIN_ODDS_CHOICES = SHORTEST_ODDS_CHOICES

@@ -106,6 +106,14 @@ data class MakerRules(
     val lowUsageBooks: Set<String> = emptySet(),
     /** Skip the kinds of prop Novig's takers were measured to trade rarely ([MarketPopularity.measuredObscure]): the least likely to be filled. */
     val skipObscure: Boolean = false,
+    /**
+     * Quick & likely's filter on market size (Tj, 2026-10-07: "no strange props or small markets"): only kinds of market in the popular tiers ([MarketPopularity.tier] 0 or 1: measured at
+     * [MarketPopularity.POPULAR] dollars a listed market a day or more, or never measured and priced by [popularBooks] books or more), never an obscure one. Orders nothing: it decides
+     * which lines qualify. Off for low-usage bids, whose fair comes from two or three books by design.
+     */
+    val popularOnly: Boolean = false,
+    /** A line priced by fewer books than this is a small market and gets no bid ([ScanSettings.makerQuickMinBooks]; 0 = off). */
+    val minLineBooks: Int = 0,
     /** Which "Which bids go up" choice these rules are ([com.tjshea.vigilant.data.scanner.BidFocus] name): written on every bid, so Diagnostics can split the bids by it. */
     val focus: String = com.tjshea.vigilant.data.scanner.BidFocus.ALL.name,
 ) {
@@ -131,7 +139,7 @@ data class MakerRules(
         fun of(s: ScanSettings): MakerRules = base(s).let { r ->
             when {
                 LowUsage.on(s) -> LowUsage.narrow(r, s).copy(focus = s.makerFocus.name)
-                QuickLikely.on(s) -> QuickLikely.narrow(r).copy(focus = s.makerFocus.name)
+                QuickLikely.on(s) -> QuickLikely.narrow(r, s.makerQuickMinBooks).copy(focus = s.makerFocus.name)
                 else -> r.copy(focus = s.makerFocus.name)
             }
         }
@@ -450,6 +458,12 @@ object MakerQuote {
         if (line.kind !in rules.kinds) return skip("${line.kind.label} are off for bids")
         if (rules.skipObscure && MarketPopularity.measuredObscure(line.league, line.market.marketType)) {
             return skip("Takers rarely trade this kind of prop on Novig: a bid on it is unlikely to be filled")
+        }
+        if (rules.popularOnly && MarketPopularity.tier(line.league, line.market.marketType, line.books, rules.popularBooks) >= 2) {
+            return skip("A small or unusual market: takers rarely trade this kind of line, so a bid on it is unlikely to be filled quickly")
+        }
+        if (rules.minLineBooks > 0 && line.books < rules.minLineBooks) {
+            return skip("Only ${line.books} book${if (line.books == 1) "" else "s"} price this line (you need ${rules.minLineBooks}): a small market, unlikely to be filled quickly")
         }
         if (rules.lowUsageBooks.isNotEmpty() && (line.fairBooks.size < LowUsage.MIN_BOOKS || line.fairBooks.any { it !in rules.lowUsageBooks })) {
             return skip(LowUsage.NOT_PRICED)

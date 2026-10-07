@@ -43,21 +43,29 @@ object QuickLikely {
     }
 
     /** [rules] as this focus makes them: the narrower of Tj's window and ours, only our kinds, and a sharp book required. Nothing is ever loosened. */
-    fun narrow(rules: MakerRules): MakerRules = rules.copy(
+    fun narrow(rules: MakerRules, minLineBooks: Int = MIN_LINE_BOOKS): MakerRules = rules.copy(
         kinds = rules.kinds.intersect(KINDS),
         minPrice = maxOf(rules.minPrice, MIN_PRICE),
         maxPrice = minOf(rules.maxPrice, MAX_PRICE),
         requireSharp = true,
         popularFirst = true,
         quick = true,
+        // "No strange props or small markets" (Tj, 2026-10-07): a filter, not only an order. Obscure kinds and thinly priced lines get no bid at all.
+        skipObscure = true,
+        popularOnly = true,
+        minLineBooks = maxOf(rules.minLineBooks, minLineBooks.coerceAtLeast(0)),
     )
+
+    /** Fewest books that price a line for it to be a market takers want (the study's median prop was priced by 7; 5 keeps three quarters of them). */
+    const val MIN_LINE_BOOKS = 5
 
     /** Whether [s] bids this way. */
     fun on(s: ScanSettings): Boolean = s.makerFocus == BidFocus.QUICK_LIKELY
 
     /** What this focus does, in a few sentences for the Bids tab (the numbers above). */
     const val EXPLAINER =
-        "Only player props and team totals (they fill: 8-11% of bids within an hour at these prices; game lines 1-2%), only bids priced 30-60% (your side wins about that " +
+        "Only player props and team totals (they fill: 8-11% of bids within an hour at these prices; game lines 1-2%), only the kinds of market takers actually trade (never a longest-rush or " +
+            "kicking-points prop, never a market only a few books price), only bids priced 30-60% (your side wins about that " +
             "often: no longshots, and past 60% a bid almost never fills), only where a sharp book (Pinnacle, Circa, an exchange) prices the line both ways, with the " +
             "price taken under that book's fair. Bids that lead their side go up first. Fewer bids than All bids; the ones that go up fill sooner and win more often."
 }

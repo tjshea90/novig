@@ -42,6 +42,8 @@ object LowUsage {
             sharpVeto = true, anchorSharp = true, requireSharp = true,
             earlyHours = if (rules.earlyHours in 1..LowUsageBids.WINDOW_HOURS) rules.earlyHours else LowUsageBids.WINDOW_HOURS,
             skipObscure = true,
+            // Its fair is two or three books by design: "how many books price the line" would call every line small.
+            popularOnly = false, minLineBooks = 0,
             lowUsageBooks = LowUsageBids.books(s).mapNotNullTo(LinkedHashSet()) { key -> LowUsageBids.BOOKS.firstOrNull { it.key == key }?.title },
         )
     }
