@@ -268,9 +268,37 @@ class CnoClient(
         val ev = maxOf(f.minEv * 100, number("TextBoxMinimumEVPercentage") ?: 0.0)
         put("TextBoxMinimumEVPercentage", (if (ev == Math.floor(ev)) ev.toInt().toString() else String.format(java.util.Locale.US, "%.1f", ev)) + "%")
         put("TextBoxMinimumSubMarketSideCount", maxOf(f.minSides, number("TextBoxMinimumSubMarketSideCount")?.toInt() ?: 0).toString())
-        put("TextBoxMaximumResultCount", f.rows.toString())
+        // The games Tj looks at (CnoScope, 2026-10-07). League and sport reach CNO's form only when ONE league or ONE sport covers the pick, so its row limit (best edge first, cut BEFORE
+        // the app drops anything) is spent on those games; anything the form can't say, the app's own screen does, from a longer read.
+        val plan = f.scope.plan(f.rows, { label -> s.form.optionValue("DropDownListLeague", label)?.toIntOrNull() ?: builtInLeague(s, label) }, { sport -> s.form.optionValue("DropDownListSport", sport.label)?.toIntOrNull() ?: builtInSport(s, sport) })
+        val linkLeague = linkValue(s, "DropDownListLeague")
+        val linkSport = linkValue(s, "DropDownListSport")
+        val linkScopes = (linkLeague != null && linkLeague != "0") || (linkSport != null && linkSport != "0")
+        if (linkScopes && (plan.leagueId != null || plan.sportId != null)) {
+            // The Shared View link already scopes the list: it wins (as a stricter odds cap does), and the app's own screen intersects it with the picks.
+        } else {
+            // Written back every time: the session lives 15 minutes and keeps what was posted last, so a pick Tj cleared must go back to what the page began with.
+            put("DropDownListLeague", plan.leagueId?.toString() ?: linkLeague ?: "0")
+            put("DropDownListSport", plan.sportId?.toString() ?: linkSport ?: "0")
+        }
+        val liquidity = f.scope.minLiquidity
+        if (liquidity > 0) {
+            val linkMin = number("TextBoxMinimumLiquidity")?.toInt() ?: 0
+            put("TextBoxMinimumLiquidity", "\$${maxOf(liquidity, linkMin)}")
+        }
+        val widened = plan.askRows > f.rows && clock() - widenRefusedAtMs > WIDEN_RETRY_MS
+        put("TextBoxMaximumResultCount", (if (widened) plan.askRows else f.rows).toString())
+        s.widened = widened
         if (f.completeBook) s.form.checkboxes.firstOrNull { it.endsWith("CheckBoxRequireACompleteSportsbook") }?.let { fields[it] = "on" }
     }
+
+    /** What the page began with for the dropdown whose name ends with [suffix] (the Shared View link's own pick, or its default), from the form as first read. */
+    private fun linkValue(s: Session, suffix: String): String? = s.form.fields.firstOrNull { it.first.endsWith(suffix) }?.second
+
+    /** The League dropdown's id for [label] from the built-in table, only when the page has no such dropdown to ask (a page this build doesn't know) is it not used: a value the page doesn't render is refused. */
+    private fun builtInLeague(s: Session, label: String): Int? = if (s.form.hasSelect("DropDownListLeague")) null else CnoLeagues.byLabel(label)?.id
+
+    private fun builtInSport(s: Session, sport: CnoLeagues.Sport): Int? = if (s.form.hasSelect("DropDownListSport")) null else sport.id
 
     /**
      * The wide read's form: Tj's devig method, and every numeric filter CNO has opened up, in this session's own fields. What the view's link scopes (book, sport,

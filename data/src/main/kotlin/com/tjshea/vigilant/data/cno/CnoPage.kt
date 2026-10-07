@@ -29,7 +29,18 @@ object CnoPage {
         val action: String?,
         /** Every checkbox's name, ticked or not (an unticked one isn't in [fields], but can be ticked). */
         val checkboxes: List<String> = emptyList(),
-    )
+        /** Each dropdown's options as the page rendered them: its name to (value, label) pairs. What a league or sport pick is posted as must be one of these (ASP.NET refuses any other value). */
+        val selects: Map<String, List<Pair<String, String>>> = emptyMap(),
+    ) {
+        /** The value of the option labelled [label] in the dropdown whose name ends with [suffix] ("DropDownListLeague"), or null when the page has no such dropdown or option. */
+        fun optionValue(suffix: String, label: String): String? {
+            val options = selects.entries.firstOrNull { it.key.endsWith(suffix) }?.value ?: return null
+            return options.firstOrNull { CnoLeagues.same(it.second, label) }?.first
+        }
+
+        /** Whether the page has a dropdown whose name ends with [suffix] at all. */
+        fun hasSelect(suffix: String): Boolean = selects.keys.any { it.endsWith(suffix) }
+    }
 
     /** One `length|type|id|content|` record of a delta reply. */
     data class Record(val type: String, val id: String, val content: String)
@@ -41,6 +52,7 @@ object CnoPage {
         val body = html.substring(start.range.last + 1, end)
         val fields = mutableListOf<Pair<String, String>>()
         val checkboxes = mutableListOf<String>()
+        val selects = LinkedHashMap<String, List<Pair<String, String>>>()
         var button: Pair<String, String>? = null
         // Inputs, selects and textareas in document order, as a browser serializes them.
         val tag = Regex("""<(input|select|textarea)\b([^>]*)>""", RegexOption.IGNORE_CASE)
@@ -69,6 +81,7 @@ object CnoPage {
                         .map { attributes(it.groupValues[1]) to text(it.groupValues[2]) }.toList()
                     val chosen = options.firstOrNull { "selected" in it.first } ?: options.firstOrNull()
                     if (chosen != null) fields += name to (chosen.first["value"] ?: chosen.second)
+                    selects[name] = options.map { (it.first["value"] ?: it.second) to it.second.trim() }
                     at = close
                 }
                 "textarea" -> {
@@ -86,7 +99,7 @@ object CnoPage {
         val timer = Regex("""Sys\.UI\._Timer,\s*\{[^}]*"uniqueID":"([^"]+)"""").find(html)?.groupValues?.get(1)
         val action = attributes(start.value.removePrefix("<form").removeSuffix(">"))["action"]
         if (timer == null && button == null) throw changed("no way to load the table")
-        return Form(fields, scriptManager, gridPanel, timer, button, action, checkboxes)
+        return Form(fields, scriptManager, gridPanel, timer, button, action, checkboxes, selects)
     }
 
     /**
