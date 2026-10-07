@@ -624,7 +624,9 @@ class MakerUiTest {
         compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerUnlimitedNote"))
         compose.onNodeWithTag("makerUnlimitedNote").assertTextContains("the wallet", substring = true)
         compose.onNodeWithTag("makerFocusNote").assertTextContains("player props and team totals", substring = true)
-        assertTrue(MakerRulesText.summary(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY)).contains("quick & likely to win: "))
+        // The summary says so when small markets fill the rest (on by default), and is the old words with that off.
+        assertTrue(MakerRulesText.summary(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY)).contains("quick & likely to win (small markets fill the rest): "))
+        assertTrue(MakerRulesText.summary(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY, makerObscureFill = false)).contains("quick & likely to win: "))
     }
 
     @Test
