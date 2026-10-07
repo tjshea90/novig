@@ -216,6 +216,27 @@ class MakerUiTest {
     }
 
     @Test
+    fun `screenshot - the Bids tab priced from CrazyNinjaOdds`() {
+        val up = com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status(
+            lastStepMs = now - 5_000, rows = 312, candidates = 41, pages = 12, pagesRead = 3, listAgeSec = 14, oldestPageSec = 41, wideRows = 300,
+        )
+        compose.setContent {
+            VigilantTheme { MakerScreen(cnoUi(lane = up).copy(bids = listOf(bid("rest-1", MakerStatus.RESTING))), MakerActions()) }
+        }
+        compose.onRoot().captureRoboImage("screenshots/4r_bids_tab_cno.png")
+    }
+
+    @Test
+    fun `screenshot - the Bids rules with CrazyNinjaOdds chosen and the lane stopped`() {
+        val stop = com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status(lastStepMs = now - 5_000, rows = 312, candidates = 41, pages = 12, listAgeSec = 14, stop = "CrazyNinjaOdds asked for a pause (busy): bids priced from it come down")
+        compose.setContent {
+            VigilantTheme { MakerScreen(cnoUi(lane = stop), MakerActions()) }
+        }
+        compose.onNodeWithTag("makerRulesToggle").performClick()
+        compose.onRoot().captureRoboImage("screenshots/4s_bids_rules_cno.png")
+    }
+
+    @Test
     fun `Approve and Deny on a recommendation, Undo on a denied side, and switching auto-make on asks first`() {
         var posted: String? = null
         var denied: String? = null
