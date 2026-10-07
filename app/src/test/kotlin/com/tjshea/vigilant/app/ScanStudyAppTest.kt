@@ -192,7 +192,13 @@ class ScanStudyAppTest {
         assertEquals(sortedSetOf("MainViewModel.kt", "StudySync.kt", "StudyText.kt", "VigilantApp.kt"), readers)
         val data = File("../data/src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }
             .filter { f -> f.readText().let { "readWide(" in it || "fetchWide(" in it } }.map { it.name }.toSortedSet()
-        assertEquals(sortedSetOf("CnoClient.kt", "CnoFeed.kt"), data)
+        // One more reader since v0.75.0: the lane that reads CNO for bids priced from it (CnoBidLane, RESEARCH.md §114) asks for the wide read as a source of candidate sides; the background cycle calls it only
+        // with bids on and "Bids priced from" set to CrazyNinjaOdds (below), so with that off nothing in the app reads or asks for the wide read.
+        assertEquals(sortedSetOf("CnoBidLane.kt", "CnoClient.kt", "CnoFeed.kt"), data)
+        val cycle = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
+        assertTrue(cycle.contains("if (settings.bidsFromCno && settings.autoScansCno && !settings.paused && AppBook.isNovig) {"))
+        val callers = File("src/main/kotlin/com/tjshea/vigilant/app").walkTopDown().filter { it.isFile && it.extension == "kt" && "cnoBids.step(" in it.readText() }.map { it.name }.toList()
+        assertEquals(listOf("AutoScan.kt"), callers)
     }
 
     private fun source(path: String) = File("src/main/kotlin/com/tjshea/vigilant/app/$path").readText()
