@@ -334,9 +334,12 @@ class FeedRaceRunner(
     }
 
     /** The report over the last [WINDOW_MS] of the journal, now (off the main thread); also what Diagnostics and the share file print. */
-    suspend fun makeReport(): FeedRace.Report = withContext(Dispatchers.Default) {
+    suspend fun makeReport(): FeedRace.Report = withContext(Dispatchers.Default) { computeReport() }
+
+    /** [makeReport] without a coroutine (blocking: reads the journal and works the report out), for the Diagnostics file that is built on a worker thread already. */
+    fun computeReport(): FeedRace.Report {
         val tape = journal.read(clock() - WINDOW_MS)
-        FeedRace.report(tape.scores, tape.trades, tape.odds).also {
+        return FeedRace.report(tape.scores, tape.trades, tape.odds).also {
             lastReport = it
             _status.value = _status.value.copy(verdict = it.verdict(), reportAtMs = clock(), requests = requests.get())
         }

@@ -1966,7 +1966,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             kalshiPace = runCatching { c.kalshiPaceNote() }.getOrNull(),
             feedRace = runCatching {
                 val st = c.feedRace.status.value
-                (c.feedRace.lastReport ?: kotlinx.coroutines.runBlocking { c.feedRace.makeReport() }).takeIf { st.readings > 0 || it.sightings > 0 }?.let { r ->
+                (c.feedRace.lastReport ?: c.feedRace.computeReport()).takeIf { st.readings > 0 || it.sightings > 0 }?.let { r ->
                     listOf(FeedRaceText.note(st, System.currentTimeMillis())) + r.lines()
                 }
             }.getOrNull(),
