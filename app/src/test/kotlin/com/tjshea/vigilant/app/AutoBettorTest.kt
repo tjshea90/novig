@@ -22,6 +22,7 @@ import com.tjshea.vigilant.data.novig.trading.AutoBet
 import com.tjshea.vigilant.data.novig.trading.BetTarget
 import com.tjshea.vigilant.data.novig.trading.BetLimits
 import com.tjshea.vigilant.data.novig.trading.NovigFill
+import com.tjshea.vigilant.data.novig.trading.PropGuard
 import com.tjshea.vigilant.data.novig.trading.NovigOrder
 import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
 import com.tjshea.vigilant.data.novig.trading.maker.MakerBid
@@ -193,6 +194,66 @@ class AutoBettorTest {
     }
 
     private val tenDollars = { it: ScanSettings -> it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 10.0, apiMaxPerGame = 25.0) }
+
+    // ---- the small-prop guard (Tj, 2026-10-07: "most of the auto bet feature is betting nhl player shots on goal": RESEARCH.md §109) -------------------------
+
+    /** An auto-bet already in the Tracker (as the bettor left it) on [marketLabel] in the game [eventId], placed [agoMs] ago: the guard's history. */
+    private suspend fun seedAuto(id: String, marketLabel: String, eventId: String, agoMs: Long = 3_600_000L, league: String = jefferson.league) {
+        val t = targetOf(jefferson).let {
+            it.copy(
+                market = it.market.copy(marketId = "m-$id", eventId = eventId), outcomeId = "out-$id", league = league, marketLabel = marketLabel, selection = "Player $id Over 1.5",
+                eventName = "Home $eventId vs Away $eventId", auto = true,
+            )
+        }
+        app.container.tracker.logApi(t, "o-$id", listOf(NovigFill("f-$id", "o-$id", null, "m-$id", "out-$id", 200L, 1.0, true, 0.0, now - agoMs)))!!
+    }
+
+    private val jeffersonKind get() = PropGuard.key(jefferson.league, jefferson.market, jefferson.bet)!!
+
+    @Test
+    fun `a fourth auto-bet on one kind of prop in one game is held by the small-prop guard, before anything is sent`() = runBlocking {
+        // Three auto-bets on the same kind of prop in Jefferson's own game ("ev"): the limit of 3 is reached.
+        repeat(3) { seedAuto("p$it", jefferson.market, eventId = "ev") }
+        val novig = FakeNovig()
+        val report = bettor(novig).run(settings(), state())
+        assertEquals(0, report.placed.size)
+        assertEquals("nothing reached Novig", 0, novig.orders.get())
+        assertEquals(mapOf(PropGuard.perGameReason(jeffersonKind, 3) to 1), report.skipped)
+        // The same pass with the limit off, or at 4, places it: the number is Tj's.
+        assertEquals(1, bettor(FakeNovig()).run(settings { it.copy(propGuardPerGame = 0) }, state()).placed.size)
+    }
+
+    @Test
+    fun `a kind of prop that already holds its share of the day's auto-bets waits, another kind goes, and the share is Tj's to move`() = runBlocking {
+        // 8 auto-bets in the last 24 hours on other games: 2 of Jefferson's kind, 6 each of a kind of its own.
+        repeat(2) { seedAuto("k$it", jefferson.market, eventId = "g$it") }
+        repeat(6) { seedAuto("o$it", "Player Stat $it", eventId = "o$it") }
+        val novig = FakeNovig()
+        val report = bettor(novig).run(settings(), state())
+        assertEquals(0, report.placed.size)
+        assertEquals(0, novig.orders.get())
+        assertEquals(mapOf(PropGuard.shareReason(jeffersonKind, 0.25) to 1), report.skipped)
+        // 50% lets it through (3 of 9 is under half), and so does turning the cap off.
+        assertEquals(1, bettor(FakeNovig()).run(settings { it.copy(propGuardShare = 0.5) }, state()).placed.size)
+    }
+
+    @Test
+    fun `the guard counts the last 24 hours only, and a filled bid or a hand bet is not an auto-bet of its kind`() = runBlocking {
+        // Eight on Jefferson's kind, but 30 hours ago: no share, no limit.
+        repeat(8) { seedAuto("old$it", jefferson.market, eventId = "ev", agoMs = 30 * 3_600_000L) }
+        assertEquals(1, bettor(FakeNovig()).run(settings(), state()).placed.size)
+    }
+
+    @Test
+    fun `with the guard off - no share cap and no per-game limit - nothing is held, as before`() = runBlocking {
+        repeat(3) { seedAuto("p$it", jefferson.market, eventId = "ev") }
+        repeat(2) { seedAuto("k$it", jefferson.market, eventId = "g$it") }
+        repeat(6) { seedAuto("o$it", "Player Stat $it", eventId = "o$it") }
+        val off = settings { it.copy(propGuardShare = 0.0, propGuardPerGame = 0) }
+        val novig = FakeNovig()
+        assertEquals(1, bettor(novig).run(off, state(off)).placed.size)
+        assertEquals(1, novig.orders.get())
+    }
 
     @Test
     fun `a bet that would take its game past the per-game limit is skipped under one reason, before anything is read or sent`() = runBlocking {
