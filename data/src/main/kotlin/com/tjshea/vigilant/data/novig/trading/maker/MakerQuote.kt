@@ -461,7 +461,10 @@ object MakerQuote {
                 return skip("The sharp books and the blend are ${points(spread)} apart on this small-market line (they must be within ${points(rules.obscureAgreePoints)})")
             }
         }
-        val fullStake = stake(fair, price, rules) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
+        // A small-market bid stakes [MakerRules.obscureStake] of what a POPULAR bid on the line would (sized at the popular bid's own price: Kelly sized at the wider margin's lower
+        // price would see a bigger edge and stake more, 0.74x of a popular bid at the default margin and 1.18x at the widest chip, not half).
+        val popularPrice = if (obscure) maxOf(price, PriceGrid.floor(fair / (1.0 + rules.margin)) ?: price) else price
+        val fullStake = stake(fair, popularPrice, rules) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
         val stake = if (obscure) fullStake * rules.obscureStake else fullStake
         val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
         if (contracts < 1) return skip("The stake is too small for one contract")
