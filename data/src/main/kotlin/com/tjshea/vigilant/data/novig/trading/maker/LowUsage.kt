@@ -31,7 +31,7 @@ object LowUsage {
 
     /**
      * [rules] as this focus makes them: [QuickLikely]'s narrowing, props alone, the margin Tj set (2.5% by default, never under [LowUsageBids.MIN_MARGIN]), nothing longer than +130
-     * (a tighter limit of his stays), the sharp rules all on, two books or more, games within 6 h. Nothing is ever loosened.
+     * unless he picked a longer limit, the sharp rules all on, two books or more, games within 6 h. Nothing is ever loosened.
      */
     fun narrow(rules: MakerRules, s: ScanSettings): MakerRules = QuickLikely.withObscure(QuickLikely.narrow(rules), s).let { q ->
         val picked = LowUsageBids.books(s).size
@@ -40,7 +40,8 @@ object LowUsage {
             obscureMinBooks = q.obscureMinBooks.coerceIn(MIN_BOOKS, maxOf(MIN_BOOKS, picked)),
             margin = s.lowUsageMargin.coerceIn(LowUsageBids.MIN_MARGIN, LowUsageBids.MAX_MARGIN),
             kinds = q.kinds.intersect(setOf(BetKind.PROP)),
-            maxOdds = if (rules.maxOdds in MakerRules.MIN_MAX_ODDS until LowUsageBids.MAX_ODDS) rules.maxOdds else LowUsageBids.MAX_ODDS,
+            // +130 is the mode's default when Tj has set no longest odds (No limit); any longest odds he picks, tighter or looser, is the one that runs.
+            maxOdds = maxOdds(rules.maxOdds),
             minBooks = maxOf(rules.minBooks, MIN_BOOKS),
             sharpVeto = true, anchorSharp = true, requireSharp = true,
             // The trap guard is Tj's: 6 h by default, any hours he picks, or Off ([LowUsageBids.windowHours] reads exactly as far as it lets a bid go).
@@ -50,6 +51,9 @@ object LowUsage {
             lowUsageBooks = LowUsageBids.books(s).mapNotNullTo(LinkedHashSet()) { key -> LowUsageBids.BOOKS.firstOrNull { it.key == key }?.title },
         )
     }
+
+    /** The longest odds a bid may be posted at in this mode: Tj's own limit when he set one ([chosen] > 0), else the mode's default [LowUsageBids.MAX_ODDS]. */
+    fun maxOdds(chosen: Int): Int = if (chosen > 0) chosen else LowUsageBids.MAX_ODDS
 
     /**
      * The Novig markets Vigilant has a bid resting on: the low-usage scan reads them first ([ScanSettings.lowUsageNow]; the scan's read order puts a line by its EV at Novig's TAKE
