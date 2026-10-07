@@ -637,7 +637,8 @@ class MakerUiTest {
         assertEquals(0.035, st.value.lowUsageMargin, 1e-12)
         compose.onNodeWithTag("lowUsageMargin-25").performClick()
         assertEquals(0.025, st.value.lowUsageMargin, 1e-12)
-        // The summary says it.
+        // The summary says it: the window is the trap guard's hours (this fixture has the trap guard Off, so the ordinary reach would be the window: set the usual 6 h).
+        st.value = st.value.copy(trapEarlyHours = 6)
         val summary = MakerRulesText.summary(st.value)
         assertTrue(summary, summary.startsWith("low API usage: Kalshi, ProphetX, Pinnacle · scan every 15 min · props in the next 6 h · 2.5% or more under the fair · no bid longer than +130"))
         // Going back to All bids brings the usual controls back.
