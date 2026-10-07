@@ -2,7 +2,7 @@
 
 One section per agent, scouts first. Raw per-agent files: `results/<label>.json`; each run's raw journal: `journal.<run>.jsonl`. Rendered by `tools/research/save_workflow.py`.
 
-Results saved so far: 4
+Results saved so far: 5
 
 
 ## scout:1-medium-fastapi-odds-tracker
@@ -582,3 +582,228 @@ In short, it is unmeasured and probably not ahead of the sources Vigilant alread
   - During that same window, compare when a DraftKings or FanDuel line moves in their own app against when Covers' data-date and cell value change. If Covers lags by more than about 60 s, it is not useful as a price age check.
   - In a phone browser with DevTools remote debugging (Network, Fetch/XHR), open one Covers game page and the Line Movement modal and see whether a documented-looking JSON call with timestamps appears. Only note it; do not rely on it without checking Covers' terms.
   - Check whether covers.com blocks the phone's request differently from this container (the container got no challenge). If it works, the page shape is a plain GET returning server-rendered HTML.
+
+## scout:5-surebetfusion
+
+- **source_url**: https://surebetfusion.com/
+- **kind**: vendor-api
+- **what_it_is**: SureBetFusion is a B2B odds and betting-analytics API (GraphQL plus a WebSocket hub). It has a consumer arbitrage/EV+ web app at app.surebetfusion.com and a partner portal at partners.surebetfusion.com. The home page headlines "The fastest odds feed on the market" and "Sub-second odds updates from over 200 sportsbooks and prediction markets". Extras are devig/EV and surebet endpoints and a server-side backtest "simulator". The home page is a static marketing page, last modified 2026-08-20 and read 2026-10-07. The real developer docs (Scalar, OpenAPI plus AsyncAPI) at developer.surebetfusion.com were last modified 2026-09-30. The docs tell a much narrower story than the marketing page.
+- **upstream_data_source**: Not stated by the vendor. Two pieces of evidence point to a resold third-party feed.
+
+1. VERIFIED text: the B2B openapi.json (altLines) says "Groups are normalized to `total` and `spread` (sport-specific OpticOdds markets are mapped under those names)". INFERRED from that: the odds are a hop on OpticOdds, which is on the known list (SSE, sales-led).
+2. The consumer app's GraphQL carries a per-line field named `odds_jam_run` next to `last_run`. INFERRED: OddsJam lineage, since the field name is the only evidence. I found no vendor statement of it.
+
+The docs also refer to "producers" and a "first warm cycle", and the consumer help text says "when Surebetfusion last checked these bets". INFERRED, weakly: the pipeline is cyclic ingest, then normalize, then hub, rather than a book's own socket. Scores upstream: not found. The consumer app uses espncdn.com only for team-logo images, which does not mean ESPN is the score source.
+- **push_or_poll**: The docs describe PUSH for main-market odds and scores. WebSocket hub `wss://events.surebetfusion.com` (auth message, then subscribe to channels like `odds/live/tennis/*` or `scores/live/soccer/*`). It sends change-only deltas with event_id, stream_id and a per-client sequence. Odds events are limited to moneyline, total and spread. Player props, alt lines and snapshots are POLL-only via `POST https://api.surebetfusion.com/graphql`, with a Bearer key and rate limits of 30 to 3,000 requests per minute by plan.
+
+The marketing page's code tab shows a different transport: a GraphQL `onPriceChange` subscription at `wss://api.surebetfusion.com/graphql/realtime`. The docs say live data is NOT available via /graphql. The two pages disagree.
+
+Consumer app (JS bundle): AppSync subscriptions `onLeagueUpdated` and `onScoresUpdated`, plus socket.io `live-score-update` events. The odds list refetches on a league notice at most once every 3 s (constant `Fz=3e3`), a UI throttle.
+- **claimed_latency_or_refresh**: MARKETING (CLAIM_ONLY, do not treat as measurements):
+- "Sub-second odds update latency, book to socket".
+- "Odds changes are captured, normalized, priced and pushed to your socket in under a second end to end" (FAQ).
+- "214 ms round-trip" and "LIVE · 3,184 PRICE UPDATES IN THE LAST SECOND".
+- Comparison table: "Sub-second odds push over WebSocket: Every paid plan".
+
+PRICING PAGE:
+- Pro $399: "Live odds WebSocket (30s delay)".
+- Growth $799: "Real-time zero-delay WebSocket".
+- Scale $1,499: "Sub-second live updates".
+
+DOCS (LIVE_EVENTS.md plan table): Pro odds delay is 30 seconds. Growth, Scale, High Volume and Enterprise are "realtime". "Only odds.* events are delayed; scores.* stay realtime."
+
+CONSUMER APP help text: "SurebetFusion updates bets in realtime 24/7", but its own worked example shows odds "updated from the sports books last (in this case 16 minutes ago and 15 minutes ago)" and "Updated: 2m".
+- **measured_or_verified_age**: None. I measured nothing and found no third-party measurement, forum thread or GitHub issue about this product's latency.
+
+What I could verify:
+- No keyless data endpoint exists, so I could not compare a payload time to a Date header. Every data route needs a key: the GraphQL needs a Bearer key, and the WebSocket needs an auth message after "hello".
+- The documented socket envelope `timestamp` is "Producer-hub emission time in Unix seconds". That is when the hub sent the event, not when the book's price was set, so it cannot prove the age of the underlying price.
+- The documented B2B GraphQL line fields are only `id sportsbook price decimalPrice`. There is no per-line updated-at or last-checked field in the B2B API.
+- The consumer app's internal GraphQL does have per-line `last_run` and `odds_jam_run`. The UI formats it as seconds, minutes or hours ("Ns/Nm/Nh") from epoch seconds. That timestamp is not in the documented B2B schema.
+- The home-page "214 ms" and "3,184 updates/s" readouts are random: site.js sets `latency = 180 + Math.round(Math.random()*90)` and `live = 2600 + Math.round(Math.random()*1400)` every 1.1 s, and the ticker prices are a random walk of plus or minus 5. They are decoration, not measurements.
+- **coverage**: Claimed on the home page (CLAIM_ONLY): 200+ books including Pinnacle, Circa Sports, Kalshi, Polymarket, Novig, Prophet X, Sporttrade, DraftKings, FanDuel and others. Sports are NFL, NBA, MLB, NHL, NCAAF, NCAAB, WNBA, EPL, UCL, MLS, UFC, ATP/WTA and golf, each tagged "live" with "markets" counts, plus player props and futures.
+
+Verified in the docs:
+- Live odds over the socket are main markets only (moneyline, total, spread). Props and alt lines need GraphQL polling (`playerProps`, `altLines`, `isLive` needs the `live` scope).
+- The socket is capped on books per subscription, by plan: sandbox 2, Pro 5, Growth 10, Scale 10, High Volume 15, Enterprise 20. Connections per key: 1, 2, 5, 8, 15, 20.
+- Live scores: channel `scores/live/{sport}[/{league}]`, not filtered by book, scope `live` ("Starter+").
+- The playground presets only list tennis and soccer for odds and scores. That is not proof of a limit, but nothing in the docs shows NFL/NBA live odds on the socket.
+- The actual sportsbook and sport lists sit behind a key (`sportsbooks { name }`), so I could not confirm Novig, Pinnacle, Circa, Kalshi, ProphetX or Sporttrade are really in the live feed.
+- Live scores are included per the docs, but the sports and score source are unverified.
+- **price_and_free_tier**: Read 2026-10-07 on surebetfusion.com. The annual toggle in site.js is price x 0.58, i.e. 42% off. Overage is $0.50 per 1,000 extra calls.
+
+- Sandbox $0, no card: 5,000 requests/day, 30/min. Lists "Catalog GraphQL query access, Reference metadata, Pre-match odds". No live odds.
+- Docs plan table for sandbox: 1 socket connection, 2 books, "— (no odds WS)".
+- Docs scope table: Scores need `live` ("Starter+"), odds need `live` + `odds`, "Pro / Enterprise only — Starter is scores-only". "Starter" is not a tier on the pricing page. Whether the free sandbox key carries the `live` scope (and so a free scores socket) is NOT stated anywhere I could read. It is the one open free-tier question.
+- Pro $399/mo, 7-day trial: 500,000/day, 300/min, live odds WebSocket with a 30 s delay, 2 connections, 5 books, 30-day history.
+- Growth $799/mo: 1.5M/day, 600/min, zero-delay WebSocket, 5 connections, 10 books.
+- Scale $1,499/mo: 5M/day, 1,200/min, "Sub-second live updates".
+- High Volume $2,999/mo. Enterprise: custom.
+- Consumer app plans (CLAIM_ONLY, second-hand via a search summary of a GoHighLevel preview page that returned 403 to me): Free (prematch arbs, limited EV+), Basic $69.99/mo, Premium $99.99/mo (adds live arb/EV+). That is a web app, not an API or stream.
+- **terms_notes**: No terms of service are published. The footer "Terms" and "Status" links are `href="#"`, and https://surebetfusion.com/terms.html returns 404. robots.txt is "Allow: /". The partner portal may hold terms behind a login, which I did not enter.
+
+The only licensing text is the FAQ: "Growth, Scale and High Volume include display rights inside your own product. Redistribution to third parties, white-label feeds and regional exclusivity are handled on Enterprise." The footer says "Odds data is provided for informational purposes. 21+."
+
+Nothing addresses automated betting on the data. The Pro tier is pitched at "arbitrage tools and professional bettors". The keys are `sk_live_` partner keys with per-key rate limits, connection caps and forced revalidation within 30 s. Any use would sit under whatever the portal terms say, which I could not read.
+- **key_claims**:
+  -
+    - **claim**: The home-page latency readout (214 ms round-trip) and the live counter (3,184 price updates/s) are real measurements.
+    - **status**: CONTRADICTED
+    - **evidence_url**: https://surebetfusion.com/assets/site.js
+    - **quote**: var latency = 180 + Math.round(Math.random() * 90); var live = 2600 + Math.round(Math.random() * 1400);
+  -
+    - **claim**: Sub-second odds push over WebSocket on every paid plan (comparison table).
+    - **status**: CONTRADICTED
+    - **evidence_url**: https://developer.surebetfusion.com/LIVE_EVENTS.md
+    - **quote**: Plan limits table: pro | 2 | 5 | **30 seconds** (odds delay); growth, scale, high_volume, enterprise = realtime. Pricing card: Pro "Live odds WebSocket (30s delay)"
+  -
+    - **claim**: Growth ($799) delivers zero-delay live odds; Scale ($1,499) delivers sub-second live updates.
+    - **status**: CLAIM_ONLY
+    - **evidence_url**: https://surebetfusion.com/
+    - **quote**: Growth: "Real-time zero-delay WebSocket"; Scale: "Sub-second live updates"
+  -
+    - **claim**: The live odds socket carries only main markets (moneyline, total, spread), as change-only deltas; props need GraphQL polling.
+    - **status**: VERIFIED
+    - **evidence_url**: https://developer.surebetfusion.com/LIVE_EVENTS.md
+    - **quote**: Main markets only for odds: moneyline / total / spread (change-only deltas).
+  -
+    - **claim**: The socket timestamp does not prove the age of the underlying book price.
+    - **status**: VERIFIED
+    - **evidence_url**: https://developer.surebetfusion.com/asyncapi.json
+    - **quote**: "timestamp": "Producer-hub emission time in Unix seconds." B2B odds lines expose only `id sportsbook price decimalPrice`.
+  -
+    - **claim**: A documented live scores socket exists, with scores always real-time and scoped separately from odds.
+    - **status**: VERIFIED
+    - **evidence_url**: https://developer.surebetfusion.com/LIVE_EVENTS.md
+    - **quote**: Scores | `live` (Starter+) ... Only `odds.*` events are delayed; `scores.*` stay realtime. (Real-time speed itself is CLAIM_ONLY; the score source is unstated.)
+  -
+    - **claim**: The free sandbox key can use the scores socket.
+    - **status**: INFERRED
+    - **evidence_url**: https://developer.surebetfusion.com/LIVE_EVENTS.md
+    - **quote**: Plan table has a sandbox row (1 connection, 2 books, "— (no odds WS)") and "Starter is scores-only", but the pricing page lists sandbox as "Pre-match odds" with no live scope and has no tier called Starter.
+  -
+    - **claim**: The upstream is a resold OpticOdds feed.
+    - **status**: INFERRED
+    - **evidence_url**: https://developer.surebetfusion.com/openapi.json
+    - **quote**: altLines: "(sport-specific OpticOdds markets are mapped under those names)". Also the consumer GraphQL field `odds_jam_run` next to `last_run` in https://app.surebetfusion.com/assets/index-BsGtDP9u.js
+  -
+    - **claim**: The marketing page and the docs disagree on how live data is delivered.
+    - **status**: VERIFIED
+    - **evidence_url**: https://surebetfusion.com/assets/site.js
+    - **quote**: site.js code tab: wss://api.surebetfusion.com/graphql/realtime with subscription onPriceChange; docs: "This is **not** GraphQL and is **not** available via `POST /graphql`" (hub: wss://events.surebetfusion.com)
+  -
+    - **claim**: The consumer app itself treats multi-minute-old odds as normal and refreshes its list at most every 3 s.
+    - **status**: VERIFIED
+    - **evidence_url**: https://app.surebetfusion.com/assets/index-BsGtDP9u.js
+    - **quote**: help text: "when the odds were updated from the sports books last (in this case 16 minutes ago and 15 minutes ago) ... \"Updated: 2m\""; code: Fz=3e3 refetch throttle; zz() formats odds_jam_run as Ns / Nm / Nh
+  -
+    - **claim**: No terms of use or status page are published.
+    - **status**: VERIFIED
+    - **evidence_url**: https://surebetfusion.com/terms.html
+    - **quote**: HTTP 404; footer links "Status" and "Terms" are href="#"
+  -
+    - **claim**: The comparison table was left with an internal note.
+    - **status**: VERIFIED
+    - **evidence_url**: https://surebetfusion.com/
+    - **quote**: Compiled from each provider's public documentation and pricing pages, August 2026. Competitor capabilities are frequently tier-gated ... Verify before publishing.
+  -
+    - **claim**: 200+ books including Pinnacle, Circa, Kalshi, Polymarket, Novig, ProphetX and Sporttrade are covered.
+    - **status**: CLAIM_ONLY
+    - **evidence_url**: https://surebetfusion.com/
+    - **quote**: "COVERAGE · 200+ BOOKS AND PREDICTION MARKETS" (marquee of names); the real `sportsbooks` list is behind a key
+  -
+    - **claim**: Socket book caps by plan (2 / 5 / 10 / 10 / 15 / 20) and connection caps (1 / 2 / 5 / 8 / 15 / 20).
+    - **status**: VERIFIED
+    - **evidence_url**: https://developer.surebetfusion.com/LIVE_EVENTS.md
+    - **quote**: Plan limits (WebSocket) table: sandbox 1/2, pro 2/5, growth 5/10, scale 8/10, high_volume 15/15, enterprise 20/20
+  -
+    - **claim**: Consumer app pricing: Free, Basic $69.99, Premium $99.99 (live arb/EV+ in Premium only).
+    - **status**: CLAIM_ONLY
+    - **evidence_url**: https://sites.leadconnectorhq.com/preview/HBbxKVjF5NNhfdMWMg8W
+    - **quote**: Second-hand only: a web-search summary of this preview page. My own fetch returned 403, so I read nothing there.
+- **live_probes**:
+  -
+    - **request**: GET https://surebetfusion.com/ and /assets/site.js, /contact.html, /terms.html, /robots.txt, /sitemap.xml (6 requests, >1 s apart)
+    - **result**: 200 on all except /terms.html (404). Static site (S3 + CloudFront), last-modified 2026-08-20. No data endpoint. site.js shows the latency and counter readouts are Math.random(). Contact form is a mailto to info@surebetfusion.com.
+  -
+    - **request**: GET https://developer.surebetfusion.com/ plus playground.html, asyncapi.json, openapi.json, LIVE_EVENTS.md, examples/listen_ec2_events.py, playground.js, playground.css (8 requests, >1 s apart)
+    - **result**: All 200, nginx, last-modified 2026-09-30. Public docs only. Sources of the plan table, socket protocol, scopes, the OpticOdds mention and the per-line field list.
+  -
+    - **request**: GET https://partners.surebetfusion.com/ (1 request)
+    - **result**: 200, Next.js shell showing only "Checking session…". Login-gated; not explored. No sign-up was attempted.
+  -
+    - **request**: GET https://app.surebetfusion.com/ and its public JS bundle /assets/index-BsGtDP9u.js (2 requests)
+    - **result**: 200. Public front-end code: AppSync GraphQL subscriptions, socket.io score events, the 3 s refetch throttle, the per-line last_run / odds_jam_run fields, and help text. I did not call the app's backend and recorded no keys or IDs.
+  -
+    - **request**: Not probed on purpose: POST https://api.surebetfusion.com/graphql and wss://events.surebetfusion.com
+    - **result**: Both need a partner key (Bearer, or an auth message after "hello"). No keyless route is documented, so per the rules I made no calls.
+  -
+    - **request**: WebFetch https://sites.leadconnectorhq.com/preview/HBbxKVjF5NNhfdMWMg8W (consumer-plan landing page, reached via a redirect from app.gohighlevel.com)
+    - **result**: 403 Forbidden; stopped there, no workaround.
+  -
+    - **request**: Web searches for "SureBetFusion" latency, reviews, Reddit, HN
+    - **result**: No review, Reddit or HN thread, GitHub issue or independent latency measurement found. The only third-party pages were a coupon listing (colormango, no speed information) and a search summary of the 403 landing page.
+- **verdict**:
+  - **rapid_odds**: no
+  - **rapid_scores**: maybe
+  - **ahead_of_novig_makers**: unknown
+  - **ahead_of_cno**: unknown
+  - **cheap_or_free**: expensive
+  - **usable_in_vigilant**: no
+  - **why**: ODDS: not a cheap or free rapid source.
+- The free sandbox has no live odds, only pre-match.
+- The cheapest paid tier with a live odds socket is Pro at $399/mo, and the docs say it is delayed 30 seconds, which is no better than CNO's 13-33 s cadence.
+- "Real-time" odds start at Growth, $799/mo. That is CLAIM_ONLY and has no usable timestamp. The socket timestamp is hub emission time, and the B2B lines carry no per-line age field.
+- The socket gives main markets only and caps the book list at 10 even on Growth.
+- The upstream is a repackaged feed, apparently OpticOdds (INFERRED from the docs' wording). That is already on the known list as sales-led and SSE, so this adds a hop and its own 30 s throttle rather than a fresher source.
+- The headline numbers (214 ms, 3,184 updates/s) are random numbers generated in the page's JavaScript. The "sub-second on every paid plan" table row is contradicted by the vendor's own pricing and docs.
+- Compared with known sources: Polymarket's CLOB socket and Kalshi are free and push. The Odds API, ParlayAPI and PropLine are also cheaper. SportsGameOdds (from $49 a month) and TheRundown (Ultra, $399 for WebSocket) are cheaper or equal for the same kind of claim.
+- No terms are published, and there is no stated right to bet automatically on the data.
+
+SCORES: the only live lead.
+- The docs describe a push scores channel (`scores/live/{sport}`) with no 30 s delay, and the plan table has a sandbox row.
+- Unresolved: (a) whether the free key has the `live` scope (the docs call the entry tier "Starter", which the pricing page does not list); (b) what the score source is; (c) how old a score is when the hub emits it.
+- If it exists it is a free key plus a socket. But the presets only mention tennis and soccer, and the bar is a lead of 3 s or more before Novig's re-quote (median 16 s). Sofascore REST at 2.5 s already shows a 15-27 s median lead, so this must beat Sofascore to matter.
+- Prior: a vendor hub fed by cyclic producers is unlikely to beat Sofascore polling, but nobody has measured it.
+
+TECHNIQUE: the subscribe, buffer, then snapshot handoff with per-client sequence plus event_id dedupe is sound, but Vigilant already does the equivalent on its Polymarket sockets. Nothing to port.
+- **confidence**: medium
+- **open_questions**:
+  - Does the free sandbox key carry the `live` scope, which would mean a free `scores/live/*` socket? The docs say scores need `live` ("Starter+") and "Starter is scores-only". The pricing page shows no live access and no tier named Starter. Answerable only with a key.
+  - What feeds the scores channel, and how old is a score when `scores.updated` is emitted? The docs give no source and no source-time field, only hub emission time.
+  - Which sports does the live socket really cover? The playground presets show only tennis and soccer, while the marketing page tags NFL, NBA, MLB and NHL as live.
+  - Are Novig, Pinnacle, Circa, Kalshi, ProphetX and Sporttrade really in the live feed? The `sportsbooks` list is behind a key and the marquee is CLAIM_ONLY.
+  - Do paid odds payloads (`odds.coef_changed`) carry any source-time field? The docs show none.
+  - What do the terms in the partner portal say about betting on the data and about automated use? No public terms exist.
+- **could_not_read**:
+  - https://sites.leadconnectorhq.com/preview/HBbxKVjF5NNhfdMWMg8W (SureBetFusion's consumer-plan landing page): 403 Forbidden to this container. Consumer pricing is therefore second-hand, from a web-search summary.
+  - https://api.surebetfusion.com/graphql: needs a partner key (POST, Bearer). I made no calls: no sign-up and no key, per the rules.
+  - wss://events.surebetfusion.com: needs an auth message with a key after "hello". Not connected, because no keyless route is documented.
+  - https://partners.surebetfusion.com/ (account, key issuance, any in-portal terms): login-gated Next.js app, shows only "Checking session…". Not signed in.
+  - Catalog lists (`sports`, `leagues`, `sportsbooks`, `markets`) and the real response payloads: behind a key.
+  - Terms of service and status page: not published (links are "#"; /terms.html is 404).
+  - Any independent latency measurement, review, Reddit or HN thread, or GitHub repo: none found by web search.
+- **other_sources_it_names**:
+  -
+    - **name**: OpticOdds
+    - **url**: https://opticodds.com/
+    - **why_it_matters**: Named in the B2B docs ("sport-specific OpticOdds markets"), so it is the apparent upstream (INFERRED). On the known list already as SSE and sales-led. SureBetFusion adds a hop and, on Pro, a 30 s delay.
+  -
+    - **name**: OddsJam
+    - **why_it_matters**: The consumer GraphQL field `odds_jam_run` is a per-line timestamp that suggests OddsJam lineage. Inference from a field name only. A search summary says OddsJam's API has no public price or free tier. I did not read OddsJam's own pages.
+  -
+    - **name**: SportsGameOdds
+    - **why_it_matters**: In the comparison table. The table claims SGO Pusher streaming only on its AllStar tier (beta, custom price), while the context says SGO streaming is from $49 a month. The vendor's own comparison cells are unreliable ("Verify before publishing").
+  -
+    - **name**: The Rundown
+    - **why_it_matters**: In the comparison table: "Ultra $399+" for WebSocket, matching the known $399 note. Already known.
+  -
+    - **name**: The Odds API
+    - **why_it_matters**: In the comparison table. Already known (500 credits a month).
+  -
+    - **name**: Kalshi / Polymarket (as books in its schema)
+    - **why_it_matters**: Already known free push sources. Cheaper and fresher than the same venues relayed through a paid 30 s-delayed hub.
+  -
+    - **name**: OddsPapi (oddspapi.io)
+    - **url**: https://oddspapi.io/
+    - **why_it_matters**: LEAD ONLY. A search snippet from a competitor-affiliated blog says it has a free tier and a per-price freshness field named `changedAt`. I did not read the primary pages, so this is unverified and is not among the known sources.
