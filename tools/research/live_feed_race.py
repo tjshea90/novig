@@ -447,13 +447,47 @@ def record(a):
 # ---------------------------------------------------------------------------------------------------------------------------------- analyze
 def load(path):
     scores, trades, frames = [], [], []
+    global PM
+    PM = []
     for line in open(path):
         try:
             r = json.loads(line)
         except ValueError:
             continue
+        if r.get('k') == 'pm':
+            PM.append(r)
+            continue
         {'s': scores, 'n': trades, 'f': frames}.get(r.get('k'), []).append(r)
     return scores, trades, frames
+
+
+PM = []
+
+
+def poly_move(names, t_ref, jump, lookback=30.0, pre=15.0, horizon=90.0):
+    """When Polymarket's mid for this game's outcomes first moved `jump`+ from its pre-score median (None if never / no series)."""
+    mine = collections.defaultdict(list)
+    for r in PM:
+        title = r['ev'].split(': ')[-1]
+        parts = re.split(r' vs\.? ', title)
+        if len(parts) < 2 or not same_game((parts[0], parts[1]), names):
+            continue
+        mid = (r['bid'] + r['ask']) / 2.0
+        if r['ask'] - r['bid'] > 0.10:
+            continue
+        mine[r['o']].append((r.get('ts') or r['seen'], mid))
+    best = None
+    for o, pts in mine.items():
+        pts.sort()
+        before = [m for t, m in pts if t_ref - pre - lookback <= t < t_ref - pre]
+        if len(before) < 2:
+            continue
+        ref = statistics.median(before)
+        for t, m in pts:
+            if t >= t_ref - pre and t - t_ref <= horizon and abs(m - ref) >= jump:
+                best = t if best is None else min(best, t)
+                break
+    return best
 
 
 def cluster(scores):
@@ -603,6 +637,19 @@ def analyze(a):
                 st[2] += gain
             detail.append((t_first, names, key, mv, d))
         print(f'  {n_ev} scores on games Novig traded; {n_mv} moved the moneyline')
+        pl = []
+        n_poly_series = 0
+        for t_first, names, key, mv, d in detail:
+            pm = poly_move(names, t_first, a.jump)
+            if pm is not None:
+                pl.append((mv[0] - pm, pm - t_first))
+        if PM:
+            print(f'  Polymarket ODDS (CLOB socket): {len(PM)} quotes; of those {n_mv} Novig moves, {len(pl)} had a Polymarket mid that also moved {a.jump:.2f}+')
+            if pl:
+                L = [x for x, _ in pl]
+                print(f'    Novig move minus Polymarket move (>0: Polymarket odds moved FIRST): before {sum(1 for x in L if x > 0)} of {len(L)}, by 3s+ {sum(1 for x in L if x >= 3)}, median {statistics.median(L):.1f} p10 {q(L, .1):.1f} p90 {q(L, .9):.1f}')
+                R = [y for _, y in pl]
+                print(f'    Polymarket mid move minus the first score feed (s; its reaction time to the score): median {statistics.median(R):.1f} p10 {q(R, .1):.1f} p90 {q(R, .9):.1f}')
         print(f'  {"feed":8} {"scores":>6} {"before":>7} {"by 3s+":>7} {"median":>8} {"p10":>7} {"p90":>7}')
         for s_ in sorted(lead, key=lambda s_: -statistics.median(lead[s_])):
             L = lead[s_]
