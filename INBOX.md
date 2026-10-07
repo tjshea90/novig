@@ -5350,3 +5350,8 @@ This session's worker process was restarted. If your previous turn was already c
 ```
 Resume
 ```
+
+## 2026-10-07T18:13:17Z
+```
+Tell me how to run fastboot commands using a host android phone and a target phone in fastboot mode using an otg cable and another term app
+```
