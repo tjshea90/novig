@@ -156,9 +156,9 @@ class CnoFeedTest {
         assertEquals(listOf("u1" to 0L, "u1" to 5_000L), source.reads)
         assertEquals(setOf("NHL"), source.filtersSeen.last().scope.leagues)
         assertEquals(setOf("NHL"), feed.state.value.snapshot!!.filters!!.scope.leagues)
-        assertTrue(feed.isCurrent(config.value))
+        assertTrue(feed.matches(feed.state.value.snapshot, config.value))
         // The same list under another scope is not the saved one.
-        assertFalse(feed.isCurrent(CnoConfig(true, "u1", 300, CnoFilters(scope = CnoScope(leagues = setOf("NFL"))))))
+        assertFalse(feed.matches(feed.state.value.snapshot, CnoConfig(true, "u1", 300, CnoFilters(scope = CnoScope(leagues = setOf("NFL"))))))
         advanceTimeBy(5_000)
         config.value = CnoConfig(true, "u1", 300, CnoFilters(scope = CnoScope(leagues = setOf("NHL"), hideLive = true)))
         runCurrent()
