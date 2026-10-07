@@ -129,10 +129,11 @@ class LowUsageScanTest {
     @Test
     fun `a metered feed is not asked for a league with no game in the window in any scan, and one with a game is`() = runTest {
         val parlay = Feed("parlay_props")
-        val normal = on.copy(makerFocus = BidFocus.ALL)
+        val normal = on.copy(makerFocus = BidFocus.ALL, startsWithinHours = 24)
         assertFalse(normal.effective().lowUsageScan)
+        assertEquals(24, normal.scanWindowHours)
         val report = Scanner(Board(), clock = { now }).scan(normal, listOf(LowUsageSource(parlay, windowGuard = true)))
-        // NFL's game starts in 3 h and NHL's in 4 h (no prop market on Novig, still a game in the window); MLB's only game is in 2 days.
+        // A 24 h window: NFL's game starts in 3 h and NHL's in 4 h (no prop market on Novig, still a game in the window); MLB's only game is in 2 days.
         assertEquals(setOf("NFL", "NHL"), parlay.asked.toSet())
         val r = report.sources.single { it.id == "parlay_props" }
         assertEquals("asked", 2, r.fetched)
