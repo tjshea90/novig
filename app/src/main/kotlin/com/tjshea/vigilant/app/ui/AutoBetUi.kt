@@ -373,6 +373,9 @@ fun AutoBetSection(
         style = MaterialTheme.typography.bodySmall, color = subtle,
     )
 
+    (Shadowed.oddsRange(s.autoBetMinOdds, s.autoBetMaxOdds) ?: Shadowed.autoBetShortOdds(s))?.let {
+        Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetOddsRange"))
+    }
     // The kinds of bet (RESEARCH.md §66: a preset sets them; Tj can change them here).
     Text("Kinds of bet to place", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("autoBetKinds")) {

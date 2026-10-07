@@ -502,6 +502,7 @@ private fun ColumnScope.CnoPage(s: ScanSettings, onUpdate: SettingsUpdate) {
             else -> "No limit: favorites of any size are listed."
         },
     )
+    Shadowed.oddsRange(f.minOdds, f.maxOdds)?.let { Warn(it, "cnoOddsRange") }
     Text("Fewest books behind the true odds", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.CNO_MIN_BOOKS_CHOICES, f.minBooks, { "$it+" }) { v -> onCno { it.copy(minBooks = v) } }
     TypedIntField(NumberSpecs.count("books", 1, 12), f.minBooks, "cnoMinBooksField", none = { false }) { v -> onCno { it.copy(minBooks = v) } }
@@ -864,6 +865,7 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     ChoiceChips(ScanSettings.SHORTEST_ODDS_CHOICES, s.minOdds, AutoBetText::minOddsLabel) { v -> onUpdate { it.copy(minOdds = v) } }
     TypedNumberField(NumberSpecs.SHORTEST_ODDS, oddsShown(s.minOdds), "feedMinOddsField") { v -> onUpdate { it.copy(minOdds = v.toInt()) } }
     Hint("Heavy favorites (-300 and shorter) risk a lot to win a little; +100 keeps only underdogs and even money.")
+    Shadowed.oddsRange(s.minOdds, s.maxOdds)?.let { Warn(it, "feedOddsRange") }
     Hint("Fair odds are least reliable on longshots, which is where most fake edges show up.")
     Text("Markets", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1261,6 +1263,22 @@ object Shadowed {
         if (!s.cnoOn || cno <= 0) return null
         return if (s.autoBetMaxOdds <= 0 || s.autoBetMaxOdds > cno)
             "CrazyNinjaOdds' list (Settings › CrazyNinjaOdds list) stops at +$cno, so auto-bet never sees longer odds than that."
+        else null
+    }
+
+    /** A shortest odds longer than the longest odds beside it: nothing can pass both (a typed +200 against a +150 limit). */
+    fun oddsRange(min: Int, max: Int): String? =
+        if (min != 0 && max > 0 && com.tjshea.vigilant.data.novig.trading.AutoBet.tooShort(min, max))
+            "Your shortest odds (${Odds.formatAmerican(min)}) are longer than your longest (+$max): nothing can pass both."
+        else null
+
+    /** CNO's shortest odds past the auto-bet's: CNO never lists the shorter ones. */
+    fun autoBetShortOdds(s: ScanSettings): String? {
+        val cno = s.cnoFilters.minOdds
+        if (!s.cnoOn || cno == 0) return null
+        val auto = s.autoBetMinOdds
+        return if (auto == 0 || Odds.americanToDecimal(cno) > Odds.americanToDecimal(auto))
+            "CrazyNinjaOdds' list (Settings › CrazyNinjaOdds list) already drops odds shorter than ${Odds.formatAmerican(cno)}, so auto-bet never sees them."
         else null
     }
 

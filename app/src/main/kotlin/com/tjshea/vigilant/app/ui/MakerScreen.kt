@@ -816,6 +816,9 @@ private fun MakerMinOdds(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetti
     RuleChips("Shortest odds a bid may be posted at", ScanSettings.MAKER_MIN_ODDS_CHOICES, s.makerMinOdds, AutoBetText::minOddsLabel) { v -> onUpdate { it.copy(makerMinOdds = v) } }
     TypedNumberField(NumberSpecs.SHORTEST_ODDS, oddsShown(s.makerMinOdds), "makerMinOddsField") { v -> onUpdate { it.copy(makerMinOdds = v.toInt()) } }
     Text(MakerRulesText.minOddsNote(s.makerMinOdds), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("makerMinOddsNote"))
+    Shadowed.oddsRange(s.makerMinOdds, s.makerMaxOdds)?.let {
+        Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("makerOddsRange"))
+    }
 }
 
 @Composable
