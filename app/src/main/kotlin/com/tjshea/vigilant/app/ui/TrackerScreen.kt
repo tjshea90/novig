@@ -319,7 +319,7 @@ fun TrackerScreen(
                                     FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text("${f.label} (${counts[f] ?: 0})") })
                                 }
                                 // Bets, bids or both, in the first row so the pinned bar keeps its two rows (StickyHeadersTest).
-                                MadeChip(made, madeCounts, { made = it }, Modifier.weight(1f))
+                                MadeChip(made, madeCounts, { made = it }, Modifier.weight(1f), compact = true)
                             }
                             // Sort and scanner are menus here, so the bar stays two chip rows tall while it is pinned (wrapped chips took a third of the screen).
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -489,8 +489,9 @@ private fun BidTag(modifier: Modifier = Modifier) {
 
 /** The Bets / Bids / both choice ([MadeFilter]) as a menu chip with how many records each holds. */
 @Composable
-private fun MadeChip(made: MadeFilter, counts: Map<MadeFilter, Int>, onMade: (MadeFilter) -> Unit, modifier: Modifier = Modifier) {
-    MenuChip(made.label, active = made != MadeFilter.ALL, modifier = modifier.testTag("madeChip")) { close ->
+private fun MadeChip(made: MadeFilter, counts: Map<MadeFilter, Int>, onMade: (MadeFilter) -> Unit, modifier: Modifier = Modifier, compact: Boolean = false) {
+    // [compact]: the Bets tab's first row has room for four letters, not "Bets & bids" (it read "Bets …" at 393 dp); the menu always has the full words.
+    MenuChip(if (compact) made.short else made.label, active = made != MadeFilter.ALL, modifier = modifier.testTag("madeChip")) { close ->
         MadeFilter.entries.forEach { f -> MenuChoice("${f.label} (${counts[f] ?: 0})", selected = made == f, onClick = { onMade(f); close() }) }
     }
 }

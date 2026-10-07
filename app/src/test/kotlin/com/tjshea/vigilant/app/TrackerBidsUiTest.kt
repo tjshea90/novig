@@ -74,7 +74,8 @@ class TrackerBidsUiTest {
     @Test
     fun `the Bets tab lists bets, bids or both, each choice with its count, and a BID tag marks the bids`() {
         screen { TrackerScreen(withBids(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
-        compose.onNodeWithText("Bets & bids").assertExists()
+        // Short on this tab (four letters fit beside Open / Settled / All at 393 dp), the whole words in its menu.
+        compose.onNodeWithText("Both").assertExists()
         // Open: b3, b4 and b5; b4 is a bid.
         assertEquals(listOf("Dallas Cowboys", "Jaxon Smith-Njigba Over 5.5", "Under 7.5"), shown("Dallas Cowboys", "Jaxon Smith-Njigba Over 5.5", "Under 7.5"))
         compose.onAllNodesWithTag("bidTag", useUnmergedTree = true).assertCountEquals(1)
@@ -86,7 +87,7 @@ class TrackerBidsUiTest {
         compose.onNodeWithText("Bids only (2)").assertExists()
         compose.onNodeWithText("Bids only (2)").performClick()
         assertEquals(listOf("Jaxon Smith-Njigba Over 5.5"), shown("Dallas Cowboys", "Jaxon Smith-Njigba Over 5.5", "Under 7.5"))
-        compose.onNodeWithText("Bids only").assertExists()
+        compose.onNodeWithText("Bids").assertExists()
         compose.onNodeWithText("Open (1)").assertExists() // the list counts follow the choice
         compose.onNodeWithTag("madeCaption").assertIsDisplayed()
         compose.onNodeWithTag("madeCaption").assertTextContains("Bids only: 2 bids a taker filled", substring = true)
@@ -140,7 +141,7 @@ class TrackerBidsUiTest {
         inBar("Bets & bids").assertIsDisplayed()
         choose("Bids only (2)")
         compose.onNodeWithText("Bets", useUnmergedTree = false).performClick() // the Stats | Bets switch
-        inBar("Bids only").assertIsDisplayed()
+        compose.onNode(hasText("Bids") and hasAnyAncestor(hasTestTag(STICKY_BAR))).assertIsDisplayed()
         assertEquals(listOf("Jaxon Smith-Njigba Over 5.5"), shown("Dallas Cowboys", "Jaxon Smith-Njigba Over 5.5", "Under 7.5"))
     }
 

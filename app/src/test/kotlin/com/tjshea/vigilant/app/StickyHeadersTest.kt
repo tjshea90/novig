@@ -85,8 +85,9 @@ class StickyHeadersTest {
         // Stats | Bets, Open / Settled / All, Sort and Scanner: all still there, without scrolling back up.
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
         for (pinned in listOf("Stats", "Bets")) inBarExactly(pinned).assertIsDisplayed()
-        // The Bets / Bids chip (Tj, 2026-10-07) is in the first row, so the bar keeps its two rows.
-        for (pinned in listOf("Open (40)", "Settled (0)", "All (40)", "Bets & bids", "Sort: Needs a look", "Scanner: All")) inBar(pinned).assertIsDisplayed()
+        // The Bets / Bids chip (Tj, 2026-10-07) is in the first row, so the bar keeps its two rows; it is short there ("Both"), whole in full on the Stats tab.
+        inBarExactly("Both").assertIsDisplayed()
+        for (pinned in listOf("Open (40)", "Settled (0)", "All (40)", "Sort: Needs a look", "Scanner: All")) inBar(pinned).assertIsDisplayed()
     }
 
     @Test

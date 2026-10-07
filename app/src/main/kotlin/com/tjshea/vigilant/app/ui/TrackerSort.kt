@@ -33,10 +33,10 @@ enum class ScannerFilter(val label: String, val short: String) {
  * Which kind of record the Tracker shows, in its lists and its stats (Tj, 2026-10-07: "so I can see stats and ev filtered my bids as well as bets"): bets (taker
  * orders), bids (make orders that a taker filled) or both. [TrackedBet.isBid] decides which a record is ([BetOrBid]).
  */
-enum class MadeFilter(val label: String, val which: BetOrBid?, val noun: String) {
-    ALL("Bets & bids", null, "bets and bids"),
-    BETS("Bets only", BetOrBid.BET, "bets"),
-    BIDS("Bids only", BetOrBid.BID, "bids"),
+enum class MadeFilter(val label: String, val short: String, val which: BetOrBid?, val noun: String) {
+    ALL("Bets & bids", "Both", null, "bets and bids"),
+    BETS("Bets only", "Bets", BetOrBid.BET, "bets"),
+    BIDS("Bids only", "Bids", BetOrBid.BID, "bids"),
 }
 
 object TrackerSort {
