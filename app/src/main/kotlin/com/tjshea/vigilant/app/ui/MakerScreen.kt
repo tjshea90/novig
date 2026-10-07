@@ -465,6 +465,15 @@ object MakerRulesText {
             "${String.format(Locale.US, "%.1f", BidRules.priceAtOdds(maxOdds) * 100)}¢), however good its edge; a bid already up at such a price comes down at the next pass. " +
             "Favorites always pass. The odds are the bid's own price, a margin under the fair, so a fair of +157 with a 4% margin posts near +170."
 
+    /** What the shortest-odds setting does, for the line under its box ([ScanSettings.makerMinOdds], 0 = no limit). */
+    fun minOddsNote(minOdds: Int): String = when {
+        minOdds == 0 -> "No limit: favorites of any size are bid on, if the price window below allows."
+        minOdds < 0 -> "No bid is posted at shorter than ${com.tjshea.vigilant.engine.Odds.formatAmerican(minOdds)} (a price over " +
+            "${String.format(Locale.US, "%.1f", com.tjshea.vigilant.data.novig.trading.maker.MakerRules.priceAtShortest(minOdds) * 100)}¢); a bid already up at such a price comes down at the next pass."
+        else -> "Underdogs only: no bid at shorter than ${com.tjshea.vigilant.engine.Odds.formatAmerican(minOdds)} (a price over " +
+            "${String.format(Locale.US, "%.1f", com.tjshea.vigilant.data.novig.trading.maker.MakerRules.priceAtShortest(minOdds) * 100)}¢); every favorite is skipped."
+    }
+
     const val ALL_BIDS_NOTE = "Every bid the rules below allow. Quick & likely to win keeps only the ones most likely to fill soon and to win."
 
     /** "4% under the fair · $5 a bid · Props, 1st half / inning, Team totals · expire after 30 min". */
@@ -501,20 +510,27 @@ object MakerRulesText {
 private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val lowUsage = s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE
     Column(Modifier.testTag("makerRules")) {
-        if (!lowUsage) RuleChips("Under the fair (the EV each bid is posted at): more fills at 3%, more per fill at 6-8%", ScanSettings.MAKER_MARGIN_CHOICES, s.makerMargin, MakerRulesText::pct) { v -> onUpdate { it.copy(makerMargin = v) } }
+        if (!lowUsage) {
+            RuleChips("Under the fair (the EV each bid is posted at): more fills at 2-2.5%, more per fill at 4% and up", ScanSettings.MAKER_MARGIN_CHOICES, s.makerMargin, MakerRulesText::pct) { v -> onUpdate { it.copy(makerMargin = v) } }
+            TypedPercentField(NumberSpecs.percent("under the fair", ScanSettings.MAKER_MARGIN_MIN * 100, ScanSettings.MAKER_MARGIN_MAX * 100), s.makerMargin, "makerMarginField") { v -> onUpdate { it.copy(makerMargin = v) } }
+        }
         RuleChips(
             "Size of each bid (a filled bid is a bet): fractional Kelly on your ${Format.money(s.bankroll)} bankroll, like auto-bet and the pros (RESEARCH.md §69)",
             com.tjshea.vigilant.data.scanner.AutoBetStake.entries.toList(), s.makerStakeMode, { it.label },
         ) { v -> onUpdate { it.copy(makerStakeMode = v) } }
         if (s.makerStakeMode == com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM) {
             RuleChips("My amount", ScanSettings.MAKER_STAKE_CHOICES, s.makerStake, Format::money) { v -> onUpdate { it.copy(makerStake = v) } }
+            TypedDollarField(NumberSpecs.dollars("amount per bid"), s.makerStake, "makerStakeField") { v -> onUpdate { it.copy(makerStake = v) } }
         }
         RuleChips("Most one bid may cost (never over your ${Format.money(s.apiMaxStake)} per-bet limit)", ScanSettings.MAKER_STAKE_CHOICES, s.makerMaxStake, Format::money) { v -> onUpdate { it.copy(makerMaxStake = v) } }
+        TypedDollarField(NumberSpecs.dollars("most per bid"), s.makerMaxStake, "makerMaxStakeField") { v -> onUpdate { it.copy(makerMaxStake = v) } }
         RuleChips("Most bids up at once", ScanSettings.MAKER_MAX_BIDS_CHOICES, s.makerMaxBids, MakerRulesText::bidsLabel) { v -> onUpdate { it.copy(makerMaxBids = v) } }
+        TypedIntField(NumberSpecs.count("bids", 1, 1000), s.makerMaxBids, "makerMaxBidsField", none = { it >= ScanSettings.NO_LIMIT || it <= 0 }) { v -> onUpdate { it.copy(makerMaxBids = v) } }
         if (s.makerMaxBids == ScanSettings.NO_LIMIT) {
             Text(MakerRulesText.UNLIMITED_NOTE, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("makerUnlimitedNote"))
         }
         RuleChips("Most dollars up at once (the wallet must cover them)", ScanSettings.MAKER_MAX_DOLLARS_CHOICES, s.makerMaxDollars, MakerRulesText::dollarsLabel) { v -> onUpdate { it.copy(makerMaxDollars = v) } }
+        TypedDollarField(NumberSpecs.dollars("most dollars up", 1.0, 1_000_000.0), if (s.makerMaxDollars >= ScanSettings.MAKER_NO_DOLLAR_LIMIT) 0.0 else s.makerMaxDollars, "makerMaxDollarsField") { v -> onUpdate { it.copy(makerMaxDollars = v) } }
         RuleChips("Which bids go up", com.tjshea.vigilant.data.scanner.BidFocus.entries.toList(), s.makerFocus, { it.displayName }) { v -> onUpdate { it.copy(makerFocus = v) } }
         Text(
             when (s.makerFocus) {
@@ -525,6 +541,10 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("makerFocusNote"),
         )
         if (lowUsage) LowUsagePanel(s, onUpdate)
+        if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) {
+            RuleChips("Smallest market for quick bids: fewest books that price the line (a line fewer books price is a small market)", ScanSettings.MAKER_QUICK_MIN_BOOKS_CHOICES, s.makerQuickMinBooks, { "$it+" }) { v -> onUpdate { it.copy(makerQuickMinBooks = v) } }
+            TypedIntField(NumberSpecs.count("books", 1, 20), s.makerQuickMinBooks, "makerQuickMinBooksField", none = { false }) { v -> onUpdate { it.copy(makerQuickMinBooks = v) } }
+        }
         if (!lowUsage) {
             Text("Kinds of bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -543,8 +563,13 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             )
         }
         MakerMaxOdds(s, onUpdate)
+        MakerMinOdds(s, onUpdate)
+        RuleChips("Books that must each say the bid is +EV on their own", listOf(1, 2, 3, 4, 5), s.makerMinBooks, { "$it+" }) { v -> onUpdate { it.copy(makerMinBooks = v) } }
+        TypedIntField(NumberSpecs.count("books", 1, 12), s.makerMinBooks, "makerMinBooksField", none = { false }) { v -> onUpdate { it.copy(makerMinBooks = v) } }
         RuleChips("Each bid expires after (re-posted while it's still good)", ScanSettings.MAKER_TTL_CHOICES, s.makerTtlMinutes, { if (it < 60) "$it min" else "${it / 60} h" }) { v -> onUpdate { it.copy(makerTtlMinutes = v) } }
+        TypedIntField(NumberSpecs.time("minutes", 1, 1440), s.makerTtlMinutes, "makerTtlField", none = { false }) { v -> onUpdate { it.copy(makerTtlMinutes = v) } }
         RuleChips("No bids this close to the start", ScanSettings.MAKER_STOP_CHOICES, s.makerStopMinutes, { "$it min" }) { v -> onUpdate { it.copy(makerStopMinutes = v) } }
+        TypedIntField(NumberSpecs.time("minutes", 1, 720), s.makerStopMinutes, "makerStopField", none = { false }) { v -> onUpdate { it.copy(makerStopMinutes = v) } }
         RuleChips(
             "Trap guard: only games starting within (shared with auto-bet and alerts)", com.tjshea.vigilant.data.scanner.TrapGuard.EARLY_CHOICES, s.trapEarlyHours,
             TrapGuardText::hoursLabel,
@@ -587,12 +612,12 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
                 " on its own price (the Auto-bet tab's veto bar: a filled bid keeps about the sharp book's edge).",
             s.makerSharpVeto, "makerSharpVeto",
         ) { on -> onUpdate { it.copy(makerSharpVeto = on) } }
-        if (!lowUsage) SwitchRow(
+        if (!lowUsage && s.makerFocus != com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) SwitchRow(
             "Popular markets first",
             "When the wallet or the most bids can't take every bid, the ones on the kinds of market Novig's takers trade most (touchdowns, rushing attempts, receptions, pitcher outs, shots on goal) go up before the obscure ones (longest reception, hits, assists), after the ones that lead their side. Measured on Novig's own volume (RESEARCH.md §81.4).",
             s.makerPopularFirst, "makerPopularFirst",
         ) { on -> onUpdate { it.copy(makerPopularFirst = on) } }
-        if (!lowUsage) SwitchRow(
+        if (!lowUsage && s.makerFocus != com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) SwitchRow(
             "Require a sharp book to agree",
             "No bid unless a sharp book (Pinnacle, Circa, an exchange) prices the line both ways and agrees it is +EV. Off: a bid on a prop no sharp book prices is allowed (the veto still stops one a sharp book says no to). Too little data yet to say it pays (RESEARCH.md §81.4).",
             s.makerRequireSharp, "makerRequireSharp",
@@ -642,6 +667,7 @@ private fun LowUsagePanel(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSett
                 FilterChip(selected = m == s.lowUsagePace, onClick = { onUpdate { it.copy(lowUsagePace = m) } }, label = { Text(LowUsageText.paceLabel(m)) }, modifier = Modifier.testTag("lowUsagePace-$m"))
             }
         }
+        TypedIntField(NumberSpecs.time("minutes", 2, 240), s.lowUsagePace, "lowUsagePaceField", none = { it == com.tjshea.vigilant.data.scanner.LowUsageBids.AUTO }) { v -> onUpdate { it.copy(lowUsagePace = v) } }
         Text(LowUsageText.paceNote(s), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("lowUsagePaceNote"))
         Text("Under the fair (the +EV each bid is posted at): more bids and fills at 1.5%, more per fill higher", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -778,6 +804,18 @@ private fun MakerMaxOdds(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetti
         MakerRulesText.maxOddsNote(s.makerMaxOdds, s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.testTag("makerMaxOddsNote"),
     )
+}
+
+/**
+ * The shortest odds a bid may be posted at (Tj, 2026-10-07: "anywhere there is a longest odds setting … make a shortest odds setting as well"): −200 = no bid priced over 66.7¢,
+ * +110 = underdogs at least that long only, or any other value typed; No limit leaves the price window as the only limit.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun MakerMinOdds(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    RuleChips("Shortest odds a bid may be posted at", ScanSettings.MAKER_MIN_ODDS_CHOICES, s.makerMinOdds, AutoBetText::minOddsLabel) { v -> onUpdate { it.copy(makerMinOdds = v) } }
+    TypedNumberField(NumberSpecs.SHORTEST_ODDS, oddsShown(s.makerMinOdds), "makerMinOddsField") { v -> onUpdate { it.copy(makerMinOdds = v.toInt()) } }
+    Text(MakerRulesText.minOddsNote(s.makerMinOdds), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("makerMinOddsNote"))
 }
 
 @Composable
