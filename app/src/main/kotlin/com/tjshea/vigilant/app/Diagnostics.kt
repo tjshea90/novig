@@ -53,6 +53,8 @@ object Diagnostics {
         val sharpFeeds: List<String> = emptyList(),
         /** Low API usage bids (RESEARCH.md §92): the feeds the picked books need and the picked books nothing can read; null when that isn't the bids' choice. */
         val lowUsagePlan: com.tjshea.vigilant.data.scanner.LowUsageBids.Plan? = null,
+        /** How the Kalshi 3-requests-a-second test has gone this session ([com.tjshea.vigilant.data.reference.KalshiClient.paceNote]); null when not asked. */
+        val kalshiPace: String? = null,
         /** The live burst recorder (no orders; RESEARCH.md §95): its status line and its report from the journal; null when it was never on and has recorded nothing. */
         val burstReport: String? = null,
         val sharpCalls: Int = 0,
@@ -300,6 +302,7 @@ object Diagnostics {
         o.appendLine()
         o.appendLine("== API usage (each provider's own allowance) ==")
         if (s.usage.providers.isEmpty()) o.appendLine("Nothing counted yet.")
+        x.kalshiPace?.let { o.appendLine(it) }
         for ((id, p) in s.usage.providers.toSortedMap()) {
             o.appendLine("$id: ${p.callsToday} calls today, ${p.throttledToday} refused/throttled" + (p.lastThrottleMs?.let { ", last throttle ${ago(it)}" } ?: ""))
             for ((key, u) in p.keys) {
