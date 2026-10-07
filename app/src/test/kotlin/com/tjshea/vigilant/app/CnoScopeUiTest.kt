@@ -5,6 +5,7 @@ package com.tjshea.vigilant.app
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -65,13 +66,15 @@ class CnoScopeUiTest {
     private fun cnoTab(initial: ScanSettings = ScanSettings(scanner = ScannerMode.CNO), onScope: (CnoScope) -> Unit = {}): () -> ScanSettings {
         var s by mutableStateOf(initial)
         compose.setContent {
-            VigilantTheme(darkTheme = true) {
+            CompositionLocalProvider(LocalClock provides { now }) {
+              VigilantTheme(darkTheme = true) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     CnoScreen(
                         SampleCno.state(SampleScan.state().copy(settings = s)), {}, {},
                         onScope = { t -> s = s.copy(cnoFilters = s.cnoFilters.copy(scope = t(s.cnoFilters.scope))); onScope(s.cnoFilters.scope) },
                     )
                 }
+              }
             }
         }
         return { s }
