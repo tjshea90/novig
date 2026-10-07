@@ -84,10 +84,10 @@ class NovigStreamTest {
         return NovigSignedClient(OkHttpClient(), Json, vault.signer("read", keyId), server.url("").toString().trimEnd('/'))
     }
 
-    private fun stream(refillPerSec: Double = 4_000.0, maxMarkets: Int = 2_000, idleCloseMs: Long = 60_000) =
+    private fun stream(refillPerSec: Double = 4_000.0, maxMarkets: Int = 2_000, idleCloseMs: Long = 60_000, clock: () -> Long = System::currentTimeMillis) =
         NovigStream(
             OkHttpClient(), signer(), scope, wsUrl = server.url("/v3/ws").toString().replace("http", "ws"),
-            refillPerSec = refillPerSec, maxMarkets = maxMarkets, idleCloseMs = idleCloseMs,
+            refillPerSec = refillPerSec, maxMarkets = maxMarkets, idleCloseMs = idleCloseMs, clock = clock,
         )
 
     private val plan = (1..300).map { "m$it" }
@@ -235,6 +235,47 @@ class NovigStreamTest {
         delay(300)
         assertEquals(1, server.requestCount)
         assertTrue(stream.live(plan).isEmpty())
+    }
+
+    /**
+     * The v0.70.1 diagnostics: after Novig's 451 ANONYMIZED_NETWORK the live feed waited 5 minutes while the key's REST route came back in 2, so two scans ran 16-29 s long. A refusal about
+     * the network's address is tried again as soon as the REST route is (2 minutes); a feed that broke some other way keeps its 5.
+     */
+    @Test
+    fun `a network refusal is tried again in 2 minutes like the key route, any other failure in 5`() = runBlocking {
+        var now = 1_000_000L
+        server.enqueue(MockResponse().setResponseCode(451).setBody("""{"code":"ANONYMIZED_NETWORK"}"""))
+        val stream = stream(clock = { now })
+        stream.watch(plan)
+        until { stream.state.value is StreamState.Failed }
+        assertEquals(1, server.requestCount)
+
+        // 119 s later it still isn't knocked; 121 s later it is.
+        now += 119_000
+        stream.watch(plan)
+        delay(300)
+        assertEquals("not before the 2 minutes", 1, server.requestCount)
+        server.enqueue(MockResponse().setResponseCode(451).setBody("""{"code":"RESTRICTED_NETWORK_REGION"}"""))
+        now += 2_000
+        stream.watch(plan)
+        until { server.requestCount == 2 }
+
+        // A different failure (the upgrade refused 403) waits the full 5 minutes.
+        until { (stream.state.value as? StreamState.Failed)?.message?.contains("Novig") == true }
+        now += 10_000
+        server.enqueue(MockResponse().setResponseCode(403))
+        now += 111_000
+        stream.watch(plan) // 2 min after the second 451: through
+        until { server.requestCount == 3 }
+        until { (stream.state.value as? StreamState.Failed)?.message?.contains("403") == true }
+        now += 121_000
+        stream.watch(plan)
+        delay(300)
+        assertEquals("a 403 is not retried at 2 minutes", 3, server.requestCount)
+        server.enqueue(MockResponse().setResponseCode(403))
+        now += 180_000
+        stream.watch(plan)
+        until { server.requestCount == 4 }
     }
 
     @Test

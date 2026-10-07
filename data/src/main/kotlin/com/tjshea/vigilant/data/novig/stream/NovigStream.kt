@@ -419,7 +419,7 @@ class NovigStream(
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
             val status = response?.code
             // Novig's code says whether it judged the network's address or the phone's location check (the body can be read once).
-            val refusal = if (status == 451 || status == 423) NovigApiException(status, refusalCode(response), null) else null
+            val refusal = if (status != null && (status == 451 || status == 423)) NovigApiException(status, refusalCode(response), null) else null
             dropped(
                 webSocket,
                 when {
