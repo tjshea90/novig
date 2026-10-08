@@ -40,6 +40,7 @@ class PinnSocketTest {
         val ponged = CountDownLatch(1)
         @Volatile var socket: WebSocket? = null
         override fun onOpen(webSocket: WebSocket, response: Response) { socket = webSocket }
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) { webSocket.close(code, null) }
         override fun onMessage(webSocket: WebSocket, text: String) {
             received += text
             if (text.contains("\"subscribe\"")) subscribed.countDown()

@@ -3,6 +3,7 @@ package com.tjshea.vigilant.data.pinnodds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -90,7 +91,8 @@ class PinnSocket(
 
     private suspend fun loop() {
         var backoff = 1_000L
-        while (scope.isActive && job?.isActive == true) {
+        // The coroutine's own state, not the [job] field: the loop can start running before start() has assigned it.
+        while (currentCoroutineContext().isActive) {
             val k = key()?.trim().orEmpty()
             if (k.isEmpty()) {
                 _state.value = PinnSocketState.Down("No Pinnodds key saved (Settings › Pinnodds live).", clock(), null)
@@ -144,7 +146,7 @@ class PinnSocket(
             val e = try { ended.await() } finally { watchdog.cancel() }
             socket = null
             val wasLive = _state.value is PinnSocketState.Live
-            if (job?.isActive != true) break
+            if (!currentCoroutineContext().isActive) break
             val (message, wait) = explain(e)
             val now = clock()
             if (wait == null) {
