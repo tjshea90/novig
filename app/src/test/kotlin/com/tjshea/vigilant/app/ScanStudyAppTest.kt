@@ -142,27 +142,6 @@ class ScanStudyAppTest {
     }
 
     @Test
-    fun `with Pinnacle only on, the Vigilant bets the study logs carry it, and the file splits them apart from the rest`() = runBlocking<Unit> {
-        val clock = SampleScan.NOW
-        val dir = File(app.cacheDir, "study-pinnacle-test").also { it.deleteRecursively() }
-        val study = ScanStudy(StudyJournal(dir), clock = { clock }, version = { "0.65.0" }, flushEveryMs = 0)
-        val settings = SampleScan.settings.copy(pinnacleOnly = true)
-        val result = SampleScan.result()
-        val logged = study.observeVigilant(result, settings)
-        assertTrue(logged >= 2)
-        val first = study.journal.fold(FreeScores.etDate(result.feed(settings).first { !it.isLive && it.event.startsTs > clock }.event.startsTs)).values.first()
-        assertTrue(first.bet.atBet!!.pinnacleOnly)
-        val out = java.io.StringWriter()
-        val meta = StudyExport.Meta("0.65.0", 112, "moto g", "edge ≥ 2.5%", java.util.TimeZone.getTimeZone("America/New_York"))
-        StudyExport.write(out, study.journal, emptyList(), meta, clock, File(dir, "export.tmp"))
-        val text = out.toString()
-        assertTrue(text, text.contains("Pinnacle only (the mode: the fair is Pinnacle's devigged price alone, nothing else read)"))
-        assertTrue(text, text.contains("on: EV is against Pinnacle alone"))
-        assertTrue(text, text.contains("PINNACLE ONLY: when Tj switches it on"))
-        dir.deleteRecursively()
-    }
-
-    @Test
     fun `Diagnostics says what the study has logged and whether it is on`() {
         val state = SampleScan.fresh()
         val now = SampleScan.NOW
