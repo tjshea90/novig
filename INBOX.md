@@ -5513,3 +5513,8 @@ How important is it when using auto bid or auto bet that other sports books pric
 ```
 Does the auto bid feature also make sure that books price both sides 
 ```
+
+## 2026-10-08T05:46:07Z
+```
+The pinnodds live is not making any bets. There is a live bet pause after a score on novig. Research other ways to profit by taking advantage of the speed of the websocket. Consider the research you did before and the burst scoring. Does this ruin that?
+```
