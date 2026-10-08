@@ -28,7 +28,7 @@ data class LiveRules(
     val pregame: Boolean = false,
     /** What counts as a lag (see [LiveTrigger]). */
     val trigger: LiveTrigger = LiveTrigger.SCORE,
-    /** [LiveTrigger.SCORE]: the game's score must have changed within this long (Pinnacle's score frame comes a median 1.8 s before its reprice). */
+    /** [LiveTrigger.SCORE]: the game's score must have changed within this long (Pinnacle's score frame comes a median 2.1 s before its reprice). */
     val scoreWindowMs: Long = 20_000L,
     /** [LiveTrigger.STANDING]: Pinnacle's price must have sat unchanged this long (a price still in flux is not a standing view). */
     val standingMs: Long = 30_000L,
