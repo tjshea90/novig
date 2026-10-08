@@ -5770,6 +5770,31 @@ Method: a read-only workflow of seven scouts (the code, the repo's own measureme
 - Novig's listed price against CNO's own Novig column is a weak staleness canary (Novig's book moves on its own) and is not a gate; a counter is the first step (`cno.bid.listage.unknown`, `cno.bid.page.failed`, `cno.bid.page.read`).
 - No evidence yet that CNO-priced bids beat the close (§109, §113). Judge them only by independent closes, split by CNO age (BIDS section), before widening any limit; Tj's existing caps apply (they are not lowered for this source).
 
+## 115. The ten "rapid source" links Tj sent (2026-10-07 ~23:29Z): none is a faster source than what the app already has (written 2026-10-08; DO1-DO3)
+
+(Evidence: `research/rapid_sources_workflow_2026-10-07/results/`: 10 scout reports and 10 skeptic checks (five sources checked twice); the second skeptic pass for sources 6-10 was cut off and was NOT run: sources 7 and 9 are plainly not data sources, 6 is a scraping guide, and 8 and 10 are the same vendor as 3, whose two checks are in. Nothing was bought, signed up for or scraped; GET reads of public pages only.)
+
+**In short.** Of ten links, **three are not data** (1: a FastAPI demo that sends random numbers; 7: a generic WebSocket how-to with a crypto example; 9: a simulated betting site whose prices are `Math.random()`), **one is a dead target** (4: OddsShark now redirects to Covers, a cached HTML page minutes old, soft US books only), **one is a scraping guide** (6: OddsPortal, BetExplorer and Flashscore, all one company's sites that forbid scraping, 10-minute age resolution), and **four are vendors**, three of them the same vendor. None shows a price or a score that is fresher than Novig's makers, and none beats the sources the app already holds.
+
+| # | Source | What it is | Verdict |
+| :- | :- | :- | :- |
+| 1 | Medium FastAPI tracker | tutorial, random numbers every 3 s | Not a source. |
+| 2 | odds.bksignal.com | anonymous reseller of 22 Russian/CIS/crypto books, HTTP poll, $5 / 30 days a line, no terms | No sharp or US book, main markets only; its `updated_at` is its own copy time. Its live `scores` block (Fonbet / Ligastavok / Winline carry tennis) is the one thing that could be tested for $5; unproven and anonymous. Skip. |
+| 3, 8, 10 | PulseScore (dev.to ad, dev.to TypeScript ad, pulsescore.net) | scraper of 58 bookmakers' public boards, REST + 1 Hz socket, EUR 0 / 20 / 79 / 149 / 249 | The only plausible one, and still no: sockets need PRO (EUR 79); the free key is REST only (500 requests ≈ 8 min at 1/s; the pricing page's "free socket" is contradicted by the docs); the vendor's own words are "not a sub-second feed"; the only age stamp (`updatedAt`) is a scrape-pass time and the Stream API drops it. Its Pinnacle-family book (PS3838) is a scrape of what Pinnodds sends first-hand. |
+| 4 | Scraperly: OddsShark | recipe for a site that is now Covers | No. |
+| 5 | SureBetFusion | OpticOdds-derived feed, sandbox has no live odds, Pro $399 delayed 30 s, "real-time" $799 | No. |
+| 6 | Roundproxies | scraping guide | No (and Pinnacle's public API closed 2025-07-23). |
+| 7 | scrapingproxies WebSocket how-to | generic | No. |
+| 9 | odds-stream-engine (GitHub) | simulation | No data. One idea worth keeping: a 4 s market lock after a score, which is what Novig seems to do (§118). |
+
+**Why this settles the odds question for now.** Pinnacle's own prices already reach the app first-hand over the Pinnodds WebSocket (hub frames reach this container a median 17-22 ms after their stamp, §116.1); every reseller above is a slower copy of that or of the soft books. The scores the app can already race are Pinnodds' own score frames (2.0 s ahead of Pinnacle's reprice, §116.4), Polymarket's sports socket, Sofascore's REST (22 of 29 Novig-moving scores 3+ s early, §106.2) and ESPN. **The binding limit is no longer the speed of the feed: it is Novig's pause after a score (§118)**, which makes a faster score worth little until the post-score study (v0.77.0) says how long the pause lasts and how big the gap is when it ends.
+
+**Plan (in order, cheapest first; nothing here spends money):**
+1. Read the v0.77.0 Diagnostics block "Post-score study" and "Orders by timing" after one evening of paper decisions. They settle the pause length on Tj's phone.
+2. Add Pinnodds' score changes as a contestant in the in-app feed race (`data/live/FeedRace`; the runner already sees every score change, so no second Pinnodds connection is needed: a second connection evicts the first). Pass bar from §99: a feed ahead of Novig's price by 3 s or more on a clear share of scores.
+3. If PulseScore is still wanted: ONE free-key test, no purchase: poll PS3838 live tennis at 1 request a second for 150 requests during a match and compare its price changes with Pinnodds' (the same books, first-hand). If PS3838 is not behind Pinnodds by less than 1 s, stop. Expected to fail.
+4. Decide the Pinnodds plan (PW10, EUR/USD 198 a month from 2026-10-10 23:34Z) only after step 1 and one filled live order. The trial ends before most of this evidence exists; a one-month plan is the price of finding out.
+
 ## 116. Pinnacle's live price on the Pinnodds WebSocket against Novig's live books: does Novig lag, does the edge hold, and what was built (2026-10-08; v0.76.0; PW1-PW8; Tj: "research and implement a live betting feature … compare the pinnacle web socket to the novig web socket … auto bet all odds on novig that lag fair devigged live odds … ensure that it only bets truly positive EV")
 
 (§115 is reserved for the paused ten-sources research, DO1-DO3. The API itself is in `PINNODDS_API.md`; Novig's re-read is `NOVIG_API.md` §21; the study tools are `tools/research/pinnodds_tape.py` and `pinn_novig_lag.py`; the tapes are in `research/pinnodds_2026-10-08/`.)
