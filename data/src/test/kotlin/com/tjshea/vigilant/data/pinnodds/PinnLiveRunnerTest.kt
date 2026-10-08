@@ -78,7 +78,7 @@ class PinnLiveRunnerTest {
 
     private class Rig(val scope: TestScope, val feed: Feed, val pinn: Pinn, val runner: PinnLiveRunner, val trader: PinnLiveTrader, val orders: NoOrders, val follows: DayJournal<LiveFollow>, val journal: DayJournal<LiveRecord>)
 
-    private fun TestScope.rig(withKey: Boolean = true, bet: Boolean = false, markets: List<NovigMarket> = listOf(ml, farSpread), rules: LiveRules = LiveRules(trigger = LiveTrigger.MOVE)): Rig {
+    private fun TestScope.rig(withKey: Boolean = true, bet: Boolean = false, markets: List<NovigMarket> = listOf(ml, farSpread), rules: LiveRules = LiveRules(trigger = LiveTrigger.MOVE), reopen: DayJournal<ReopenProbe>? = null): Rig {
         val feed = Feed()
         val pinn = Pinn()
         val orders = NoOrders()
@@ -92,7 +92,7 @@ class PinnLiveRunnerTest {
         val runner = PinnLiveRunner(
             scope = backgroundScope, source = Source(listOf(event), markets), newFeed = { l -> if (withKey) feed.also { it.listener = l } else null },
             openFeed = { cb -> pinn.also { it.onFrame = cb } }, trader = trader, config = { LiveConfig(rules, DevigMethod.MULTIPLICATIVE, setOf("NBA")) },
-            followJournal = follows, clock = { base + currentTime }, discoverEveryMs = 30_000L, tickMs = 100L,
+            followJournal = follows, reopenJournal = reopen, clock = { base + currentTime }, discoverEveryMs = 30_000L, tickMs = 100L,
         )
         return Rig(this, feed, pinn, runner, trader, orders, follows, journal)
     }
@@ -266,5 +266,22 @@ class PinnLiveRunnerTest {
         assertTrue(!r.pinn.started)
         assertEquals(false, r.runner.status.value.running)
         assertNotNull(r.runner.status.value)
+    }
+
+    @Test
+    fun `a score on a matched game reads its moneyline at once and at each offset after, sending no order`() = runTest {
+        val reopen = DayJournal(tmp.newFolder("r" + System.nanoTime()), "pinn-reopen", ReopenProbe.serializer()) { it.atMs }
+        val r = rig(reopen = reopen)
+        r.runner.start(); runCurrent()
+        r.stale()
+        r.send(live(score = 0 to 0, markets = arrayOf(money(1, -110, -110))))
+        advanceTimeBy(6_000); runCurrent()
+        r.send(live(score = 1 to 0, markets = arrayOf(money(1, -110, -110))))
+        advanceTimeBy(35_000); runCurrent()
+        val rows = reopen.readAll().filter { it.marketId == "ml" }
+        assertEquals(ReopenStudy.OFFSETS, rows.map { it.offsetSec }.sorted())
+        assertTrue("the ask for the cheaper side is read from Novig's book", rows.all { it.askHome != null || it.askAway != null })
+        assertTrue(r.orders.placed.isEmpty())
+        r.runner.stop()
     }
 }

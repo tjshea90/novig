@@ -61,4 +61,16 @@ class PinnReportTest {
         assertTrue(lines.any { it.contains("no score in the last 2 min: 1 sent · 1 filled") })
         assertTrue(lines.any { it.contains("Novig status DELAYED: 1 sent") })
     }
+
+    @Test
+    fun `the post-score study says how big the gap is and how soon Novig's ask moves`() {
+        fun p(off: Int, askH: Double, fairH: Double = 0.57) = ReopenProbe(1_000L + off * 1000L, 1_000L, off, "ev", "NBA", "m", fairHome = fairH, fairAway = 1 - fairH, askHome = askH, askAway = 1 - askH + 0.02)
+        val rows = listOf(p(0, 0.50), p(1, 0.50), p(3, 0.50), p(8, 0.56), p(20, 0.57))
+        val lines = ReopenStudy.lines(rows)
+        assertTrue(lines.toString(), lines.first().startsWith("After a score (1 moneyline readings of 1 games"))
+        assertTrue(lines.toString(), lines.any { it.contains("+ 0 s: 1 read · best gap median +7.0 pts") })
+        assertTrue(lines.toString(), lines.any { it.contains("+ 3 s") && it.contains("Novig's ask had moved in 0%") })
+        assertTrue(lines.toString(), lines.any { it.contains("+ 8 s") && it.contains("Novig's ask had moved in 100%") })
+        assertTrue(ReopenStudy.lines(emptyList()).single().startsWith("No score has been probed yet"))
+    }
 }
