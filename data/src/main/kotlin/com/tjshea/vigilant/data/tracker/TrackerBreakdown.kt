@@ -27,7 +27,6 @@ object TrackerBreakdown {
     data class Row(val label: String, val stats: TrackerStats)
 
     /** The [By.SCANNER] group of the bets made with Pinnacle only on. */
-    const val PINNACLE_ONLY = "Pinnacle only"
 
     /** [bets] grouped by [by], the most-settled groups first; a group with no bet counted (all outliers) is left out. */
     fun of(bets: List<TrackedBet>, by: By): List<Row> = bets
@@ -44,8 +43,7 @@ object TrackerBreakdown {
             BetTracker.SOURCE_CNO -> "CNO"
             BetTracker.SOURCE_PARLAY -> "ParlayAPI"
             BetTracker.SOURCE_PINNODDS -> "Pinnodds live"
-            // Made with Pinnacle only on (Tj, 2026-10-05): their EV, CLV and profit are against Pinnacle's devigged price alone, so they read apart from Vigilant's other bets.
-            else -> if (b.atBet?.pinnacleOnly == true) PINNACLE_ONLY else "Vigilant"
+            else -> "Vigilant"
         }
         By.LEAGUE -> b.league.trim().ifEmpty { "Unknown" }
         By.MARKET -> marketOf(b)

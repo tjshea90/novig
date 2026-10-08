@@ -861,7 +861,7 @@ class Scanner(
      * RESEARCH.md §92).
      */
     private fun readable(offered: List<ReferenceSource>, settings: ScanSettings): List<ReferenceSource> =
-        if (settings.pinnacleOnly || settings.lowUsageScan) offered.filter { it.id in settings.enabledSources } else offered
+        if (settings.lowUsageScan) offered.filter { it.id in settings.enabledSources } else offered
 
     /**
      * What source [firstId] gave this scan, as a fallback's [ScanContext]: the leagues it answered

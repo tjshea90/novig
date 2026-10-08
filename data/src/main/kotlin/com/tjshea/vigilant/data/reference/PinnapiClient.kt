@@ -88,7 +88,7 @@ class PinnapiClient(
         // Only sports whose props Pinnacle is read for ask for its specials (tennis has none mapped).
         val props = MarketFamily.PLAYER_PROPS in settings.families && PinnacleProps.hasProps(sport)
         // Pinnacle only bets on this board (Tj, 2026-10-05: "make sure the Pinnacle odds are as current as possible"): shared for a few seconds, not a minute.
-        val share = if (settings.pinnacleOnly) minOf(shareMs, PINNACLE_ONLY_SHARE_MS) else shareMs
+        val share = shareMs
         val board = mutex.withLock { boardFor(sport, props, share) }
         return RefSnapshot(league.oddsApiSportKey, parse(board.events, league, board.fetchedAtMs), board.fetchedAtMs, provider = ID)
     }
@@ -162,7 +162,6 @@ class PinnapiClient(
         const val ID = "pinnacle"
 
         /** How long Pinnacle only shares one sport's board between reads (RESEARCH.md §88.5): shorter than the usual minute, still a read of the free key's 100 a day. */
-        const val PINNACLE_ONLY_SHARE_MS = 20_000L
         const val PINNAPI_URL = "https://pinnapi.com/kit/v1"
         const val PINNWIRE_URL = "https://pinnwire.com/kit/v1"
 
