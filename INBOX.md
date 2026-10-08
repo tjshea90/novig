@@ -5550,3 +5550,8 @@ Review the screenshots for the auto bids  stats. It seems to be profitable. How 
 5) tell me which apis to add many free API keys to have extended background auto bid
 6) make any changes or optimizations necessary to make the auto bid feature able to continue for hours without wasting too much api usage but also not sacrificing accuracy or quality of bids
 ```
+
+## 2026-10-08T13:16:05Z
+```
+What happened to the cno   only option for auto bid?
+```
