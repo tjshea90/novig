@@ -5582,3 +5582,8 @@ Can vigilant actually tell how old odds are from other sports books? How?
 ```
 How accurate is the vigilant stats tracker on whether bets Beat clv.
 ```
+
+## 2026-10-08T14:59:40Z
+```
+My take bets are bad after 6 hours, shouldn't my make bids be good after 6 hours because I'm on the other side of this
+```
