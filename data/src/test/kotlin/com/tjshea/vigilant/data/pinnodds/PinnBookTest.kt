@@ -120,7 +120,7 @@ class PinnBookTest {
         assertEquals(now - 0.5, l.moveOver(PinnSide.HOME, 20_000, 12_000)!!, 1e-9)
         // Over a window that starts after the change there is no move.
         assertEquals(0.0, l.moveOver(PinnSide.HOME, 1_000, 12_000)!!, 1e-9)
-        assertEquals(-(now - 0.5), l.moveOver(PinnSide.AWAY, 20_000, 12_000)!! * -1.0 * -1.0 * -1.0 * -1.0 * -1.0 * -1.0 * 1.0 * -1.0, 1e-9)
+        assertEquals(-(now - 0.5), l.moveOver(PinnSide.AWAY, 20_000, 12_000)!!, 1e-9)
     }
 
     @Test
