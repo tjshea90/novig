@@ -457,7 +457,7 @@ def simulate(a):
             k = bisect.bisect_right(ts, o['t']) - 1
             if k < 0: continue
             pr = series[k]
-            if o['t'] - pr['t'] < 500: continue
+            if o['t'] - pr['t'] < a.settle: continue
             if pr['vig'] > 0.09: continue
             if pr.get('lim') is not None and pr['lim'] < 100: continue
             names = list(bb.keys())
@@ -524,6 +524,6 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser(); sp = ap.add_subparsers(dest='cmd', required=True)
     r = sp.add_parser('record'); r.add_argument('--out', required=True); r.add_argument('--minutes', type=float, default=60); r.add_argument('--leagues', default=LEAGUES)
     z = sp.add_parser('analyze'); z.add_argument('path'); z.add_argument('--min-ev', type=float, default=0.01)
-    y = sp.add_parser('simulate'); y.add_argument('path'); y.add_argument('--min-ev', type=float, default=0.03); y.add_argument('--min-move', type=float, default=0.015)
+    y = sp.add_parser('simulate'); y.add_argument('path'); y.add_argument('--min-ev', type=float, default=0.03); y.add_argument('--min-move', type=float, default=0.015); y.add_argument('--settle', type=int, default=500)
     a = ap.parse_args()
     {'record': record, 'analyze': analyze, 'simulate': simulate}[a.cmd](a)
