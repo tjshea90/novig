@@ -5555,3 +5555,10 @@ Review the screenshots for the auto bids  stats. It seems to be profitable. How 
 ```
 What happened to the cno   only option for auto bid?
 ```
+
+## 2026-10-08T14:22:54Z
+```
+In this screenshot, I only see the odds from other sports books for the same side as my bet. Does this mean those sports books only offer the one side? Or is the other side just not displayed? 
+
+I'm getting decent volume on auto bids. I want to make sure they are actually safe bids. Is the auto bid feature requiring: 1) fresh odds from other books as a fair source? 2) is it getting fair odds from other books that price both sides of bets or can it derive fair odds from books that only offer one side of a bet
+```
