@@ -206,9 +206,9 @@ class PinnLiveRunnerTest {
         r.runner.start(); runCurrent()
         r.stale()
         // Only a prematch (not live) Pinnacle matchup exists for the teams; the Novig game is live.
-        r.send(live(isLive = false, channel = "pre", start = "2026-10-08T23:00:00Z", markets = arrayOf(money(1, -110, -110))))
+        r.send(live(isLive = false, channel = "pre", start = "2026-10-08T03:00:00Z", markets = arrayOf(money(1, -110, -110))))
         advanceTimeBy(1_000); runCurrent()
-        r.send(live(isLive = false, channel = "pre", start = "2026-10-08T23:00:00Z", markets = arrayOf(money(2, -150, 125))))
+        r.send(live(isLive = false, channel = "pre", start = "2026-10-08T03:00:00Z", markets = arrayOf(money(2, -150, 125))))
         advanceTimeBy(6_000); runCurrent()
         assertTrue(r.trader.records().isEmpty())
         assertEquals(0, r.runner.status.value.matched)
@@ -225,6 +225,33 @@ class PinnLiveRunnerTest {
         r.send(live(isLive = false, channel = "pre", start = "2026-10-08T23:00:00Z", markets = arrayOf(money(1, -110, -110))))
         advanceTimeBy(2_000); runCurrent()
         assertEquals("not read at all with pregame off", 0, r.runner.status.value.pinnEvents)
+        r.runner.stop()
+    }
+
+    @Test
+    fun `any-edge mode needs no Pinnacle move - a steady Pinnacle price and a stale Novig ask is a bet after 30 seconds`() = runTest {
+        val r = rig(rules = LiveRules(trigger = LiveTrigger.STANDING))
+        r.runner.start(); runCurrent()
+        r.stale()
+        r.send(live(markets = arrayOf(money(1, -150, 125))))
+        advanceTimeBy(10_000); runCurrent()
+        assertTrue("Pinnacle's price has not been steady for 30 s yet", r.trader.records().isEmpty())
+        advanceTimeBy(25_000); runCurrent()
+        assertEquals(1, r.trader.records().size)
+        r.runner.stop()
+    }
+
+    @Test
+    fun `a Novig book change on a game Pinnacle has not moved is not judged unless any-edge is on`() = runTest {
+        val r = rig(rules = LiveRules(trigger = LiveTrigger.MOVE))
+        r.runner.start(); runCurrent()
+        r.send(live(markets = arrayOf(money(1, -150, 125))))
+        advanceTimeBy(30_000); runCurrent()
+        val before = r.runner.status.value.evaluations
+        r.stale()
+        r.feed.listener!!.onChange("ml", base + currentTime, emptyList())
+        advanceTimeBy(3_000); runCurrent()
+        assertEquals("nothing armed: nothing judged", before, r.runner.status.value.evaluations)
         r.runner.stop()
     }
 

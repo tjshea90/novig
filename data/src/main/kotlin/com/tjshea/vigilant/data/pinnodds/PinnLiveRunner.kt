@@ -134,6 +134,7 @@ class PinnLiveRunner(
     private var lastRematchMs = 0L
     private var lastEventCount = -1
     private var catalogDirty = false
+    private var lastStandingMs = 0L
 
     private fun reset() {
         book = PinnBook(config().method)
@@ -223,7 +224,8 @@ class PinnLiveRunner(
 
     private fun onNovigBook(marketId: String, now: Long, novig: PushedBooks) {
         val t = targetsByMarket[marketId] ?: return
-        if ((armedUntil[t.pinnEventId] ?: 0L) < now) return
+        // A Novig change is judged at once when Pinnacle moved lately (the lag tests), or in "any edge" mode, which has no move to wait for.
+        if ((armedUntil[t.pinnEventId] ?: 0L) < now && config().rules.trigger != LiveTrigger.STANDING) return
         evaluate(t, now, novig)
     }
 
@@ -234,6 +236,11 @@ class PinnLiveRunner(
             val (eventId, until) = armed.next()
             if (until < now) { armed.remove(); continue }
             targetsByEvent[eventId]?.forEach { t -> evaluate(t, now, novig) }
+        }
+        // "Any edge" has no Pinnacle move to arm on: every matched game is looked at once a second.
+        if (config().rules.trigger == LiveTrigger.STANDING && now - lastStandingMs >= STANDING_EVERY_MS) {
+            lastStandingMs = now
+            targetsByEvent.values.forEach { ts -> ts.forEach { t -> evaluate(t, now, novig) } }
         }
         while (follows.isNotEmpty() && follows.peek().dueMs <= now) capture(follows.poll(), now, novig)
         val events = book.events.size
@@ -393,6 +400,7 @@ class PinnLiveRunner(
         const val DISCOVER_MS = 30_000L
         const val TICK_MS = 100L
         const val STATUS_EVERY_MS = 1_000L
+        const val STANDING_EVERY_MS = 1_000L
 
         /** A bet still on offer is handed to the trader again no sooner than this (it is busy or on cooldown for longer anyway). */
         const val REOFFER_MS = 1_000L
