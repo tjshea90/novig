@@ -518,6 +518,8 @@ def simulate(a):
     uniq = {}
     for r in standing: uniq.setdefault((r['mid'], r['sel'], round(r['fair'], 3)), r)
     summ('STANDING disagreements (EV, no recent move; one per quote)', list(uniq.values()))
+    if getattr(a, 'dump', None):
+        json.dump({'fired': fired, 'standing': list(uniq.values())}, open(a.dump, 'w'))
     if fired:
         print(f'the rule fires about {len(fired)/hours:.1f} times an hour on this slate' if hours else '')
         bl = collections.Counter(r['league'] for r in fired)
@@ -557,6 +559,6 @@ if __name__ == '__main__':
     r = sp.add_parser('record'); r.add_argument('--out', required=True); r.add_argument('--minutes', type=float, default=60); r.add_argument('--leagues', default=LEAGUES)
     z = sp.add_parser('analyze'); z.add_argument('path'); z.add_argument('--min-ev', type=float, default=0.01)
     w = sp.add_parser('scorelag'); w.add_argument('path')
-    y = sp.add_parser('simulate'); y.add_argument('path'); y.add_argument('--min-ev', type=float, default=0.03); y.add_argument('--min-move', type=float, default=0.015); y.add_argument('--settle', type=int, default=500)
+    y = sp.add_parser('simulate'); y.add_argument('path'); y.add_argument('--min-ev', type=float, default=0.03); y.add_argument('--min-move', type=float, default=0.015); y.add_argument('--settle', type=int, default=500); y.add_argument('--dump')
     a = ap.parse_args()
     {'record': record, 'analyze': analyze, 'simulate': simulate, 'scorelag': scorelag}[a.cmd](a)
