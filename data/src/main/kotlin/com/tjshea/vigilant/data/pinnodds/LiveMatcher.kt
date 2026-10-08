@@ -57,7 +57,7 @@ object LiveMatcher {
         val named = pinn.filter { it.regular && it.home.isNotBlank() && it.away.isNotBlank() }
         // A tennis match's Games child never stands for the match: it is found beside the Sets child that does (same groupId).
         val usable = named.filter { it.units != "Games" }
-        val gamesByGroup = named.filter { it.units == "Games" && it.sportId == PinnBook.TENNIS_SPORT_ID }.associateBy { it.groupId }
+        val gamesByGroup = named.filter { it.units == "Games" && it.sportId == PinnBook.TENNIS_SPORT_ID }.groupBy { it.groupId }
         val used = HashSet<Long>()
         val out = ArrayList<Pair>()
         for (n in novig) {
@@ -86,7 +86,7 @@ object LiveMatcher {
             if (best != null) {
                 used += best.id
                 val tennis = best.sportId == PinnBook.TENNIS_SPORT_ID
-                out += if (tennis) Pair(best.id, n, bestSwapped, gamesByGroup[best.groupId]?.id, true) else Pair(best.id, n, bestSwapped)
+                out += if (tennis) Pair(best.id, n, bestSwapped, gamesByGroup[best.groupId]?.filter { it.live == best.live }?.maxByOrNull { it.lastFrameAtMs }?.id, true) else Pair(best.id, n, bestSwapped)
             }
         }
         return out
