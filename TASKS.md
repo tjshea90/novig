@@ -4225,3 +4225,10 @@ Tj's words: "Because I'll be using real money with this feature tonight, make su
 - [ ] PX3 BUILD the pregame mode (Pinnacle prematch line moves on the socket's `pre` frames vs a stale Novig pregame book; pregame is fee-free on Novig): trigger, thresholds, time-to-start bounds, staleness guards, paper by default, settings, tests.
 - [ ] PX4 floor green, CI green, ship, release v0.77.0, tell Tj plainly what should (not) be switched on tonight, safe defaults, and what could not be tested here (no Novig key in this container; in-play order delay unmeasured).
 
+
+## Tj, 2026-10-08 (~06:00Z): "The pinnodds live is not making any bets. There is a live bet pause after a score on novig. Research other ways to profit by taking advantage of the speed of the websocket. Consider the research you did before and the burst scoring. Does this ruin that?"
+
+- [x] PY1 RESEARCH written as RESEARCH.md §118 (what the tapes can and cannot say about a post-score pause; which uses of the socket survive it; the burst trader). Done 2026-10-08.
+- [x] PY2 DIAGNOSTICS that settle the pause question on Tj's own orders: each live order records the seconds since the game's last score and Novig's event status; the Pinnodds block splits sent/filled/missed by timing and by status (`PinnReport`, test: `PinnReportTest`).
+- [ ] PY3 After Tj sends the next Diagnostics file (v0.76.4+ with real orders): read "Orders by timing". If orders within 20 s of a score fill far less than the rest, the pause is real: add a hold-off (no live order for N seconds after a score, N from the data) and build the "reopen quote" option (RESEARCH.md §118.4). If they fill alike, the misses are phantom standing quotes: drop "Any edge" for real money.
+- [ ] PY4 PX3 pregame mode stays the best use of the socket that a live pause cannot touch (RESEARCH.md §118.3); needs a recorder run (tools/research/pinn_pregame.py) that must NOT run while Tj's phone holds the one Pinnodds connection.
