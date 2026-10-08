@@ -116,6 +116,7 @@ class LiveFeedService : Service() {
         val keys = container.keyStore.current(com.tjshea.vigilant.data.keys.ApiProvider.PINNODDS).size
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_scan)
+            .withWallet(this)
             .setContentTitle("Pinnodds live · " + if (s.pinnLiveBet && s.pinnLiveHalted == null) "real bets" else if (s.pinnLiveHalted != null) "stopped" else "paper")
             .setContentText(PinnText.statusLine(container.pinnRunner.status.value, container.pinnTrader.status.value, s, keys))
             .setOngoing(true)
