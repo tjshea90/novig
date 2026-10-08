@@ -1,13 +1,13 @@
-# CHECKPOINT 2737 — read me first, then TASKS.md
+# CHECKPOINT 2738 — read me first, then TASKS.md
 
-**Written:** 2026-10-08T04:17:18Z · **tests:** all 4 fast checks green
-**Branch:** `claude/tennis-live-betting-match-o0nzub` · **builds on:** `e0554219` (this checkpoint is the commit after it)
+**Written:** 2026-10-08T04:27:36Z · **tests:** all 4 fast checks green
+**Branch:** `claude/tennis-live-betting-match-o0nzub` · **builds on:** `c65db13a` (this checkpoint is the commit after it)
 
 ## Just done
-Live trader no longer halts on every in-play order: order wait 2.5s -> 20s (Novig's in-play delay leaves orders PENDING), slower polling after 2s, clearer halt text
+pre-release: v0.76.2: Pinnodds live matches tennis (Sets+Games children, sets-line guard); live orders wait up to 20 s for Novig's in-play delay instead of halting at 2.5 s (versionCode 136, v0.76.2)
 
 ## Do this next
-Tell Tj: tap Resume on the halt, then check Novig orders / Tracker Sync for the bets that were pending; ship in next release
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.76.2), then run: bash tools/record-release.sh v0.76.2 136 "v0.76.2: Pinnodds live matches tennis (Sets+Games children, sets-line guard); live orders wait up to 20 s for Novig's in-play delay instead of halting at 2.5 s"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Tell Tj: tap Resume on the halt, then check Novig orders / Tracker Sync for the 
 
 ## Last ten checkpoints
 ```
+  eff874f5 ckpt 2737: Live trader no longer halts on every in-play order: order wait 2.5s -> 20s (
   4b8aead5 ckpt 2736: Fixed Pinnodds live not matching tennis: Pinnacle books tennis as Sets (winn
   d1e4537b ckpt 2735: Audit made resumable by another session: tools/research/pinnodds_audit_workf
   d6215c3e ckpt 2734: Added tools/research/pinn_pregame.py (pregame recorder+analyzer, exits on ev
