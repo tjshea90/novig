@@ -2,7 +2,7 @@
 
 One section per agent, scouts first. Raw per-agent files: `results/<label>.json`; each run's raw journal: `journal.<run>.jsonl`. Rendered by `tools/research/save_workflow.py`.
 
-Results saved so far: 9
+Results saved so far: 10
 
 
 ## scout:1-medium-fastapi-odds-tracker
@@ -1378,3 +1378,85 @@ TECHNIQUE: the subscribe, buffer, then snapshot handoff with per-client sequence
   - Nothing needs testing against this repo; it has no feed to measure. Do not spend phone time on it.
   - The only useful action is a code check in Vigilant (no phone needed): confirm that each socket client (Polymarket score, Polymarket CLOB, Kalshi, Novig) (a) replays a full snapshot on reconnect, (b) uses capped backoff with jitter, and (c) has a stale watchdog that flags a feed after N seconds with no message even when the TCP connection is still open. This demo's client lacks (b) and (c).
   - If the Diagnostics screen does not already show it, add a per-feed 'age of last message / age of price stamp' line. This is the number every real candidate in the other nine sources has to be judged on when Tj runs them on the phone.
+
+## verify-claims:medium-fastapi-odds-tracker
+
+- **lens**: claims-and-latency
+- **claim_checks**:
+  -
+    - **claim**: The article is Part 1 of a series, published 2025-04-19, and is the author's newest post; the author's feed lists only 3 posts (this one and two 2024 Django e-commerce posts).
+    - **verdict**: confirmed
+    - **quote**: <pubDate>Sat, 19 Apr 2025 17:17:24 GMT</pubDate> (also atom:updated 2025-04-19T17:17:24.359Z); other items pubDate 26 May 2024 and 22 Feb 2024. Re-fetched by me 2026-10-08 00:04 UTC, HTTP 200, 3 items, lastBuildDate Thu, 08 Oct 2026 00:04:04 GMT.
+    - **evidence_url**: https://medium.com/feed/@ayoubennaoui20
+  -
+    - **claim**: The odds are simulated and no external odds API, vendor or database is used (the upstream is nothing).
+    - **verdict**: confirmed
+    - **quote**: "To keep things simple and focused on WebSocket functionality, we simulate the odds data instead of calling an external API or accessing a database." Code: "round(random.uniform(1.5, 2.5), 2)". I re-read the full body from the RSS content:encoded field and found no HTTP client, no vendor name and no data source anywhere.
+    - **evidence_url**: https://medium.com/feed/@ayoubennaoui20
+  -
+    - **claim**: The only cadence is a fixed 3-second sleep in a per-connection while-True send loop (timer-driven, not change-driven).
+    - **verdict**: confirmed
+    - **quote**: await asyncio.sleep(3)  # simulate new odds every 3 seconds. The prose adds "asyncio.sleep(3) ensures updates feel like a live match stream" (the scout did not quote this one; it confirms the 3 s is a pacing device for realism, not a data-freshness figure).
+    - **evidence_url**: https://medium.com/feed/@ayoubennaoui20
+  -
+    - **claim**: The payload carries no timestamp, bookmaker or market id, so nothing in it proves a price's age.
+    - **verdict**: confirmed
+    - **quote**: {"match": "Team A vs Team B", "odds": {"Team A": round(random.uniform(1.5, 2.5), 2), "Team B": round(random.uniform(1.5, 2.5), 2)}} - no time field, book field or id.
+    - **evidence_url**: https://medium.com/feed/@ayoubennaoui20
+  -
+    - **claim**: The prose says the loop 'sends JSON updates to all connected clients' but the code is a separate loop per connection with no connection manager or broadcast (labelled CONTRADICTED by the scout).
+    - **verdict**: confirmed
+    - **quote**: Prose: "A loop generates fake odds and sends JSON updates to all connected clients." Code: the loop lives inside @app.websocket("/ws/odds") async def websocket_endpoint(websocket), so each connection runs its own loop and draws its own random numbers. The inconsistency is real; it is the article's prose that is wrong, which the scout's wording left slightly ambiguous.
+    - **corrected_statement**: The prose and the code disagree; the code is per-connection, so two clients would see different random numbers. Irrelevant to the verdict because the numbers are random anyway.
+    - **evidence_url**: https://medium.com/feed/@ayoubennaoui20
+  -
+    - **claim**: 'Every second matters - the odds are shifting based on goals, red cards, substitutions' is a motivational claim with no feed or speed claim behind it (CLAIM_ONLY).
+    - **verdict**: confirmed
+    - **quote**: "Every second matters — the odds are shifting based on goals, red cards, substitutions, and fan momentum." The article defines no age, source or measurement. Two further marketing phrases the scout did not list: WebSockets "Reduce latency and bandwidth usage" and, in the Part 2 teaser, "reflects them instantly in the UI". Neither states a number or an age.
+    - **evidence_url**: https://medium.com/feed/@ayoubennaoui20
+  -
+    - **claim**: Part 2 (Angular client) was promised and I found no evidence it exists.
+    - **verdict**: confirmed
+    - **quote**: Teaser: "Coming up next: Part 2 — Connecting Angular to the FastAPI WebSocket". Absent from the author's RSS feed as read 2026-10-08 00:04 UTC (3 items only). Two more WebSearch queries (title plus 'Part 2'; handle plus github) found no Part 2 and no author repo. Absence from a search index and RSS is INFERRED evidence, not proof; it does not matter, because an Angular client cannot make random numbers real.
+    - **evidence_url**: https://medium.com/feed/@ayoubennaoui20
+  -
+    - **claim**: The Medium article and profile pages return a Cloudflare 403 to this container.
+    - **verdict**: confirmed
+    - **quote**: WebFetch of the article URL on 2026-10-08: 'The server returned HTTP 403 Forbidden.' The Medium terms page (policy.medium.com/medium-terms-of-service-9db0094a1e0f) also returned 403 to WebFetch. I did not work around either; I did not re-run curl on the article URL because the scout already recorded the Cloudflare challenge. Medium's terms on automated access are therefore unread by both scout and me.
+    - **evidence_url**: https://medium.com/@ayoubennaoui20/how-to-build-a-real-time-sports-odds-tracker-with-fastapi-websockets-angular-part-1-ff2de71c62d5
+  -
+    - **claim**: Code needs only Python 3.9+, fastapi and uvicorn, all free (so it is 'free' to use).
+    - **verdict**: overstated
+    - **quote**: Article: "Make sure you have Python 3.9+ installed ... pip install fastapi uvicorn". But the article's 'final' main.py also does `from dotenv import load_dotenv` and `load_dotenv()`, and python-dotenv is not in the pip install line, so the code as printed raises ModuleNotFoundError until you add it. 'Free' is vacuous: it costs nothing because it carries no data.
+    - **corrected_statement**: Free software, but the printed install line is incomplete (python-dotenv missing), and 'cheap or free' does not apply because there is no data to buy.
+    - **evidence_url**: https://medium.com/feed/@ayoubennaoui20
+  -
+    - **claim**: Scout: 'the search index showed Part 1 only (its metadata dated it about 536 days old)' and 'web searches found nothing'.
+    - **verdict**: could-not-check
+    - **quote**: My two standard WebSearch queries did not surface Part 1 at all (only unrelated vendor docs and other tutorials); the 536-day figure cannot be reproduced. It is arithmetically plausible (2025-04-19 to 2026-10-07 is about 536 days) and immaterial.
+    - **evidence_url**: 
+  -
+    - **claim**: Scout's verdict that rapid_odds and rapid_scores are 'not-applicable', usable_in_vigilant is 'technique-only'.
+    - **verdict**: overstated
+    - **quote**: The article is not an odds or scores source: no upstream, no timestamp, random numbers. 'technique-only' is generous. The one technique (a FastAPI relay that fans a feed out to browsers) is a pattern Vigilant does not need, because the Android app opens the upstream sockets or REST polls itself, so a relay would add a hop and a host. The article's timer loop (send every 3 s whether or not anything changed) would also add up to 3 s of sampling delay to any real change-driven feed, which is the wrong direction for the bar (>= 3 s ahead of Novig's makers; fresher than CNO's 13-33 s).
+    - **corrected_statement**: Not an odds or scores source and nothing worth borrowing; use none of it. Rapid-odds: no. Rapid-scores: no.
+    - **evidence_url**: https://medium.com/feed/@ayoubennaoui20
+- **corrected_verdict**: Not a rapid odds or scores source for Vigilant, free or cheap. It is a beginner WebSocket demo (published 2025-04-19, Part 1 of a series whose Part 2 I could not find) that sends random decimal numbers for a fake 'Team A vs Team B' every 3 seconds. It has no upstream, no vendor, no bookmaker, no timestamp and no market id, so no price in it has an age and nothing in it can beat CNO or Novig's makers. 'Free' is vacuous because there is no data. The scout's conclusion stands. The only softening I would make is to drop 'technique-only': a FastAPI fan-out relay adds a hop and a host to a single-user Android app that can open upstream sockets itself, and a fixed 3 s timer loop is a worse pattern than push-on-change. Do not spend phone test time or further research on this source.
+- **verdict_changed_from_scout**: False
+- **confidence**: high
+- **contrary_evidence**:
+  -
+    - **what**: No contrary evidence found that would rehabilitate the article as a data source. Two more web searches (title plus 'Part 2'; handle plus github odds tracker) returned no Part 2, no author repo and no later commit wiring in a real feed. Absence is INFERRED only: github.com/ayoubennaoui20 is unreachable from this container (proxy restricts GitHub to configured repos) and Medium's pages are Cloudflare-blocked, so I cannot rule out an unlinked repo, but the article links none and its own text says the data is simulated.
+  -
+    - **what**: Search results around the topic surfaced real vendor material (docs.odds-api.io websocket page, oddspapi.io blog on polling vs WebSockets). The search summary says Odds-API.io's WebSocket is an add-on and allows one connection per API key. I did not open those pages; this is search-engine summary text only, out of scope for this source, and Odds-API.io is already on the known-and-not-to-be-re-researched list.
+    - **url**: https://docs.odds-api.io/api-reference/websocket
+- **details**:
+  - **free_tier_limits**: None apply. There is no data vendor, plan or quota. Software is free (fastapi, uvicorn; the code also needs python-dotenv, which the printed install line omits). Read 2026-10-08.
+  - **websocket_or_live_included_free**: A WebSocket endpoint (ws://localhost:8000/ws/odds) you would run yourself, pushing every 3 s on a timer whether or not anything changed. The pushed content is random.uniform(1.5, 2.5) numbers, so it is not live data of any kind. VERIFIED from the RSS body, https://medium.com/feed/@ayoubennaoui20.
+  - **sharp_books_or_exchanges_covered**: None. One hard-coded 'Team A vs Team B'; no bookmaker or exchange is named anywhere in the text.
+  - **us_sports_and_props_coverage**: None. The intro mentions a soccer match in passing; the code has no sport, league, player or prop. No scores.
+  - **duplicates_what_the_app_already_has**: Partly pointless rather than duplicate: Vigilant already opens upstream sockets and REST polls directly (Polymarket, Sofascore REST, Kalshi and others). A FastAPI relay would only add a hop; the 3 s sleep loop would add up to 3 s of sampling delay to any real change-driven feed.
+  - **android_phone_feasibility**: Not applicable. The server code is Python and would need a host; the phone would connect to it as a WebSocket client, which only adds latency compared with connecting to the real upstream. Nothing for the phone to measure.
+  - **terms_of_use**: The article has no data and so no data licence. Medium's terms of service could not be read (policy.medium.com returned 403 to WebFetch on 2026-10-08); I made no claim about them. The only Medium request I made was one GET of the public RSS feed, which returned HTTP 200. I did not bypass the Cloudflare challenge on the article or profile pages.
+  - **betting_use_or_automated_use_allowed**: Not applicable: no data or API to be allowed or forbidden. Nothing in the article restricts betting use.
+  - **signup_friction**: None: no account, key or sign-up in the article. To read the article page itself the container hits a Cloudflare 403; the public RSS feed works without a login.
