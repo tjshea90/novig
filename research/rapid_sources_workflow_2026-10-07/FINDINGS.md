@@ -2,7 +2,7 @@
 
 One section per agent, scouts first. Raw per-agent files: `results/<label>.json`; each run's raw journal: `journal.<run>.jsonl`. Rendered by `tools/research/save_workflow.py`.
 
-Results saved so far: 16
+Results saved so far: 17
 
 
 ## scout:1-medium-fastapi-odds-tracker
@@ -2223,3 +2223,103 @@ Probe record: 6 GETs to odds.bksignal.com (/, /docs, /robots.txt, /terms, /priva
   - **websocket_or_live_included_free**: A WebSocket exists, but it is the author's own toy endpoint at ws://localhost:8000/ws/odds (VERIFIED from the article: 'You now have a live WebSocket server at ws://localhost:8000/ws/odds streaming randomized odds!'). It is not a hosted service, nothing is publicly reachable, and the stream is timer-driven random data every 3 s, so it carries no live odds and no live scores. Free because there is nothing there.
   - **duplicates_what_the_app_already_has**: It adds nothing and duplicates nothing real. It is not a reseller of any of the known sources (it resells nothing). Against the known list it is strictly worse than every entry (Polymarket sockets, Kalshi, Sofascore, ESPN, ParlayAPI, PropLine, PinnWire, The Odds API), since all of those carry real prices or scores. The only overlap is the generic pattern 'push a feed over a WebSocket', which Vigilant already uses against Novig's own websocket (NOVIG_API.md section 6) from a foreground service (BRIEF.md: ScanService, AutoScanService) with OkHttp.
   - **android_phone_feasibility**: No feed to read, so nothing for the phone to consume. Could Vigilant read it directly? There is nothing hosted to connect to; the endpoint exists only on the reader's own machine. Would it need a server? The pattern itself is a server (FastAPI, Python 3.9+); a phone would only ever be a client of it. Running one would mean either a hosted always-on box (INFERRED: a cost, a host to keep alive, an extra hop and a possible 3 s timer delay on top of the real feed's age) or Python-on-Android (INFERRED: pointless, as the app can already call upstream sockets and REST polls itself). Rate, battery and key storage: moot, as nothing is polled and no key exists. Network block: the Cloudflare 403 seen here applies only to Medium's HTML pages (and its ToS/licence pages), not to any data feed, and Vigilant would never read Medium at runtime, so the phone-versus-container network question does not arise.
+
+## verify-fit:scraperly-oddsshark
+
+- **lens**: fit-terms-and-cost
+- **claim_checks**:
+  -
+    - **claim**: Scraperly is a reference site, not a scraping service, and sells nothing.
+    - **verdict**: confirmed
+    - **quote**: Scraperly terms (read 2026-10-08): lists guides, categories, a free proxy list, a proxy comparison and a proxy checker, but no paid API or data offering; "No provider relationship or compensation assertion is made by these terms."
+    - **evidence_url**: https://scraperly.com/terms
+  -
+    - **claim**: Scraperly's recipe is 'Free forever'.
+    - **verdict**: could-not-check
+    - **corrected_statement**: My read of the recipe page found no price, credit or 'free forever' text at all (it names no paid service). Moot: Scraperly provides no data, so 'free' describes a tutorial, not a feed.
+    - **evidence_url**: https://scraperly.com/recipe/odds-shark/tutorial
+  -
+    - **claim**: The tutorial gives no endpoint and no working code.
+    - **verdict**: confirmed
+    - **quote**: npx claude-code --task "Launch Puppeteer to load Odds Shark NFL page and extract current moneylines and spreads"; page also says "Use official APIs or other authorized access" and "stop if the endpoint denies or challenges the request".
+    - **evidence_url**: https://scraperly.com/recipe/odds-shark/tutorial
+  -
+    - **claim**: Scraperly says Odds Shark 'updates odds every 3 seconds' (and 'uses Cloudflare for bot detection').
+    - **verdict**: unsupported
+    - **quote**: "Odds Shark implemented real-time line tracking in 2026, updating odds every 3 seconds across sportsbooks." and "Odds Shark uses Cloudflare for bot detection." Neither has a date or a citation; the same page says 'mostly static HTML'.
+    - **corrected_statement**: CLAIM_ONLY and internally inconsistent. The Cloudflare statement is contradicted by what I saw: oddsshark.com answers a CloudFront 301 (via ...cloudfront.net, x-amzn-requestid) and covers.com answers CloudFront/Kestrel with no challenge. Treat the Scraperly page as templated and stale.
+    - **evidence_url**: https://scraperly.com/scrape/odds-shark
+  -
+    - **claim**: Scout: the 3-second claim is CONTRADICTED by Covers (snapshots 0-2 min old, price changes about a minute apart).
+    - **verdict**: overstated
+    - **corrected_statement**: The claim is about oddsshark.com, which no longer exists, so it cannot be contradicted directly; it is just unsupported. On its successor my own GET at Date 2026-10-08 00:20:33 GMT showed 'Last updated Oct 07, 2026, 8:20 PM ET' (lag under 1 min, consistent with the scout's 0 to 2 min). The youngest per-cell data-date stamps were 146 s, 279 s, 279 s old (a quiet Wednesday night), median about 13 h. The scout's 'about a minute apart' rests on three bet365 stamps (n=3). Safe wording: no sign of a 3 s refresh; page stamps are minute-resolution and up to 2 min behind the request; true price age is unknowable.
+    - **evidence_url**: https://www.covers.com/sport/football/nfl/odds
+  -
+    - **claim**: oddsshark.com 301-redirects to covers.com.
+    - **verdict**: confirmed
+    - **quote**: My GET of https://www.oddsshark.com/nfl/odds on 2026-10-08: HTTP/2 301, location: https://www.covers.com/sport/football/nfl/odds#oddsshark, content-length 2. A WebSearch summary claimed no redirect exists, but it admitted it could not load the live site; direct observation wins.
+    - **evidence_url**: https://www.oddsshark.com/nfl/odds
+  -
+    - **claim**: Odds Shark is now part of Covers; Covers is Genius Sports-owned.
+    - **verdict**: confirmed
+    - **quote**: covers.com/oddsshark: "Odds Shark is now part of Covers"; footer "Copyright © 1995 - 2026 Genius Sports". Ownership via Legend deal (close 1 May 2026) appears in news/SEC search results; I did not open the BusinessWire page myself.
+    - **evidence_url**: https://www.covers.com/oddsshark
+  -
+    - **claim**: Covers' NFL odds table has only nine US soft books; no sharp, exchange or prediction-market columns.
+    - **verdict**: confirmed
+    - **quote**: My GET counted data-book values: BetMGM, bet365, DraftKings, FanDuel, Fanatics Sportsbook, BetRivers, Caesars Odds, theScore Bet, Hard Rock Bet, 116 cells each; zero hits for Pinnacle, Circa, Sporttrade. Novig/Kalshi/ProphetX appear only as nav links, e.g. data-linkcont="Menu - Prediction Markets - Novig Promo Code".
+    - **evidence_url**: https://www.covers.com/sport/football/nfl/odds
+  -
+    - **claim**: Covers' ToS bars access other than through the interface and bars copying/using content.
+    - **verdict**: confirmed
+    - **quote**: s.19: "You agree not to access the Services by any means other than through the interface that is provided by Covers.com for use in accessing the Services." s.11(j): "reproduce, republish, download, post, transmit, distribute, copy, publicly display or otherwise use any Content or any derivative works..." s.2: "provided for your non-commercial entertainment and enjoyment"; "you may download certain Content ... to a single personal computing device for your use and entertainment. However, you may not distribute, modify, republish, or publicly display any of the Content or Services unless you have the prior written permission of Covers.com". s.21: "'Deep Linking' to internal pages of the Website is expressly prohibited." Last updated: 5 August 2026.
+    - **evidence_url**: https://www.covers.com/terms
+  -
+    - **claim**: Covers' ToS has no scraper clause and robots.txt does not block the NFL odds path.
+    - **verdict**: confirmed
+    - **quote**: No hit for robots, spider, scrap, data mining or API in the terms text (35,582 chars). robots.txt: User-agent * with Disallow lines for */betting/matcher, */api/geolocation, /sport/*/matchup/*/tab, /sport/*/matchup/*/stats-analysis/, /go/, /*v2*, /account/* and others; nothing for /sport/football/nfl/odds. A robots.txt gap is not a licence; s.19 and s.11(j) still apply to a bot that fetches the page.
+    - **evidence_url**: https://www.covers.com/robots.txt
+  -
+    - **claim**: Per-cell data-date is the time a line last changed.
+    - **verdict**: unsupported
+    - **corrected_statement**: INFERRED only: no doc, no vendor statement. Values range from 146 s to days old across 816 stamped cells. It may be a 'last changed' stamp or a 'last written to Covers' DB' stamp; neither says when the sportsbook itself quoted the price.
+    - **evidence_url**: https://www.covers.com/sport/football/nfl/odds
+  -
+    - **claim**: Hosted scraper Spider sells oddsshark.com reads at about $0.81 per 1,000 pages.
+    - **verdict**: confirmed
+    - **quote**: "1 GB of transfer costs $1, plus $0.0001 per CPU minute, and failed requests cost $0." "Free balance on signup, no card." Demo runner shows "no key · 4/min". "The Unlimited plan is a flat monthly rate" (no dollar figure on the page). Captured Aug 7, 2026; page says it 'respects robots'. The $0.81 figure is the scout's arithmetic, not a quote; it is plausible only if metered on compressed bytes: the real odds page is 3,472,681 B raw but 442,626 B brotli-compressed in my GET (about 0.44 MB, about $0.44 per 1,000 loads at $1/GB before CPU time).
+    - **evidence_url**: https://spider.cloud/scrapers/odds-shark-scraper/
+  -
+    - **claim**: A plain HTTP GET (no browser, no proxy) reads Covers' odds page.
+    - **verdict**: confirmed
+    - **quote**: Mine: HTTP/2 200 from curl, no challenge, 3 odds-page GETs total across scout and me. Third party: Apify actor "runs HTTP-only with no proxy and no browser" and "reads the same public Covers pages your browser does" (priced about $7 per 1,000 games / $8.90 per 1,000 league boards, i.e. a paid hop over the same HTML).
+    - **evidence_url**: https://apify.com/parseforge/covers-scraper
+  -
+    - **claim**: Covers or Genius Sells/Licenses an odds API for outsiders.
+    - **verdict**: could-not-check
+    - **corrected_statement**: Not found: covers.com/oddsshark and the terms mention no API or data feed; a web search for a Covers odds feed/licence returned nothing. Genius Sports data/odds products are sportsbook-and-league licensing (enterprise), not a cheap developer key. Absence of evidence, not proof.
+- **corrected_verdict**: NO - unchanged. usable_in_vigilant = no. The recipe is a generic tutorial for a site that now 301-redirects to covers.com. Covers serves a free, public, server-rendered HTML board of nine US soft books, a page snapshot 0-2 min behind the request with no provable per-price age, and no sharp books, no scores, no websocket. It is no fresher than CNO and shows nothing the known sources lack. Reading it from the app or via a paid scraper hop would run against Covers' ToS s.19, s.11(j) and s.2 (Genius Sports-owned), and no licensed API route exists. Only 'free' (in cash) and 'phone can GET it' survive; neither is the problem. At most a technique note: pages that stamp each cell with an epoch are the kind of age evidence worth asking for from a real vendor.
+- **verdict_changed_from_scout**: False
+- **confidence**: high
+- **details**:
+  - **terms_of_use**: Read Covers' ToS (CS Media Limited, 'Last updated: 5 August 2026', read 2026-10-08) and robots.txt (read the same day). There is no clause that names bots, spiders, scraping, data mining or APIs. The binding clauses are general: s.19 'You agree not to access the Services by any means other than through the interface that is provided by Covers.com' (INFERRED to bar a bot or an app parsing the HTML); s.19 (caps) 'EXCEPT AS EXPRESSLY AUTHORIZED BY COVERS.COM ... YOU AGREE NOT TO REPRODUCE, REPUBLISH, UPLOAD POST, TRANSMIT, DISTRIBUTE, COPY, PUBLICLY DISPLAY OR OTHERWISE USE ANY CONTENT OR ANY DERIVATIVE WORKS'; s.11(j) the same list including 'download ... or otherwise use any Content'; s.11(h) 'interfere with or disrupt the Website ... or servers' (relevant to tight polling); s.2 'provided for your non-commercial entertainment and enjoyment ... you may download certain Content ... to a single personal computing device for your use and entertainment' but not 'distribute, modify, republish, or publicly display' without prior written permission 'which permission may be withheld at Covers.com's sole discretion'; s.21 'Deep Linking ... is expressly prohibited'; s.16 Covers may bar access 'for any reason'. What each route breaks: (a) Vigilant on the phone GETting the HTML and parsing prices: breaks s.19 and s.11(j), strains s.2 because the use is profit-seeking bet placement rather than 'entertainment' (INFERRED, not legal advice); robots.txt is not violated because /sport/football/nfl/odds is not disallowed, but robots is not a licence. (b) A hosted scraper (Spider, Apify actor, a Scraperly-style Puppeteer job): same ToS; Spider says it 'respects robots', the Apify actor puts it on the user ('responsible for using the output in line with Covers' terms'); a hop changes who sends the request, not what the terms say. (c) Official/licensed route: none found (no API or data-licence page; the owner is Genius Sports, whose odds products are enterprise). (d) cloudscraper/proxy tricks named on Scraperly: not needed (no challenge seen) and would be bypass - out of scope. Scraperly's own terms (last updated 7 October 2026) have no automated-access section: 'It is your responsibility to ensure your scraping activities comply with the terms of service of any website you scrape.' Its recipe says to use official APIs or authorized access and to stop on denial. oddsshark.com robots/terms: not readable (scout got HTTP 410 with body {}; my GET of /nfl/odds returned a 301 with a 2-byte JSON body).
+  - **free_tier_limits**: No key, no quota, no published rate limit: Covers' odds page is public HTML and Scraperly sells nothing, so 'free tier' does not exist as a concept. Hidden limit: Covers may block or throttle at its discretion (s.16; edge is CloudFront); none seen in 5 covers.com requests of mine plus the scout's 9. Paid hops: Spider $1 per GB + $0.0001 per CPU-minute, free signup balance, no card, flat 'Unlimited plan' with no price shown, demo runner 'no key · 4/min' (captured Aug 7, 2026). Apify Covers actor about $7 per 1,000 games or $8.90 per 1,000 league boards (page gives both figures). Measured page weight: 3,472,681 bytes raw, 442,626 bytes brotli, 1.04 s. Cost sketch, INFERRED: one sport polled every 30 s through Spider is about 2,880 loads a day, about 1.3 GB a day compressed (about $1.3 a day, about $38 a month) before CPU time; direct from the phone costs $0 in cash.
+  - **websocket_or_live_included_free**: No push channel in what I could read: the odds page HTML has zero WebSocket, EventSource, setInterval or /api/ references (the scout read odds-page.js and sport-bundle.js, 9 KB and 5 KB, with no refresh loop; betslip.js, footer-include.js and AffScript.js unread). The CSP header allows wss://*.covers.com, wss://*.nssmp.com/websocket and https://gb-proxy-covers-prod.nssmp.com plus many sportradar.com hosts, but nothing ties any of these to the odds table (INFERRED: betslip/ads/widgets). Live scores: none. In-play odds: not tested (nothing live when read); the Apify vendor says Covers 'publishes upcoming and in-progress games' (CLAIM_ONLY). Player props: only links, no odds table seen.
+  - **us_sports_and_props_coverage**: Page I read: NFL only, 9 US soft books (BetMGM, bet365, DraftKings, FanDuel, Fanatics Sportsbook, BetRivers, Caesars, theScore Bet, Hard Rock Bet) plus an 'Open' column from 'a reputable international sportsbook with the highest limits' (unnamed). Moneyline, spread, total tabs. Apify vendor says Covers covers 12 leagues (NFL, NCAAF, CFL, NBA, NCAAB, WNBA, MLB, NHL, MLS, EPL, UCL, UFC/MMA) - CLAIM_ONLY, tennis not listed. No player props odds table.
+  - **sharp_books_or_exchanges_covered**: None. Pinnacle, Circa and Sporttrade have zero hits in the 3.4 MB page. Kalshi, ProphetX and Novig appear only as navigation links (data-linkcont="Menu - Prediction Markets - Novig Promo Code", Kalshi and ProphetX likewise) - affiliate promo-code pages, not prices. 'Consensus numbers are powered by Covers Contests' (a user contest, not a market).
+  - **duplicates_what_the_app_already_has**: Yes, strictly worse. It is a soft-book board from an affiliate/media site; The Odds API, ParlayAPI and PropLine already carry US soft-book prices through licensed keyed APIs with documented timestamps (INFERRED from the context list; I did not re-verify those vendors), CNO's consensus already folds those books in, and Vigilant's sharp references (Kalshi, Pinnacle, Polymarket) are absent here. The only distinctive feature is the undocumented per-cell epoch (data-date), which is not a proof of the book's quote time. Covers/OddsShark does not generate scores, and Sofascore/Polymarket/ESPN already beat anything here on scores.
+  - **android_phone_feasibility**: Technically yes, practically pointless. A Kotlin background service can GET the page directly (plain HTML; no key to store; no browser needed - corroborated by the Apify actor's 'HTTP-only with no proxy and no browser' and by my curl getting 200 with no challenge). Costs: about 0.44 MB over the wire and about 3.5 MB of HTML to parse per sport per poll; Tj's 'data and storage are not a constraint' rule covers data, but parsing 3.5 MB of HTML every 30-60 s is real battery and CPU for a feed that is 0-2 min behind and soft-book only. No server is needed. Whether a phone's mobile IP avoids a block is untestable here: this container saw no block, so there is no block to avoid (INFERRED). The real obstacle is the ToS (s.19, s.11(j)), not the network.
+  - **betting_use_or_automated_use_allowed**: Not licensed. Covers' ToS grants personal, non-commercial 'entertainment' use via 'the interface' only and reserves all republication/use rights; it has no data-licence or API clause and no scraping permission; automated access sits in a ToS grey zone that s.19 reads against (INFERRED). Using it to price real-money bets on Novig is a profit use, which fits poorly with s.2. Scraperly itself puts compliance on the reader and tells them to use an official API or authorized route and to stop on any 403 or challenge. The repo's own rule (no bookmaker/consumer private API scraping; read terms, record the term) is met by recording it and not building on it.
+  - **signup_friction**: None for the page (no account, no key, no card, no approval). Spider: free signup balance with no card (page claim, not tested). Apify: pay-per-event, account needed (not tested). Covers sets a __gb_visitorId tracking cookie but did not require it. No official signup route exists because no official API was found.
+- **contrary_evidence**:
+  -
+    - **what**: Evidence that favours the source: a plain HTTP GET works with no key, no challenge and no proxy (my curl: HTTP/2 200; Apify actor describes 'HTTP-only with no proxy and no browser'); the odds page stamps 'Last updated ... ET' to the minute and each cell carries a data-date epoch; robots.txt does not disallow the odds path. My own GET at Date 00:20:33 GMT showed a stamp of 8:20 PM ET (lag under 1 min), better than the scout's worst case of about 2 min. If the app only needed a free, keyless soft-book cross-check, the access itself would not be hard.
+    - **url**: https://www.covers.com/sport/football/nfl/odds
+  -
+    - **what**: Covers' ToS has no explicit anti-scraping clause, so the s.19 'interface' reading is an INFERENCE; a lawyer or Covers could read it more narrowly. The risk to a personal app is account/IP blocking and a ToS breach claim, not a technical barrier, and I did not find any enforcement history.
+    - **url**: https://www.covers.com/terms
+  -
+    - **what**: A web search summary said it found no evidence of an Odds Shark/Covers merger or a redirect, and described Odds Shark as standalone. It admitted it could not load the live site; my direct GET of oddsshark.com/nfl/odds returned HTTP/2 301 to covers.com/sport/football/nfl/odds#oddsshark, and covers.com/oddsshark says 'Odds Shark is now part of Covers'. Primary evidence wins; the summary is stale.
+    - **url**: https://www.oddsshark.com/nfl/odds
+  -
+    - **what**: Measured limits of my evidence: one slate night (Wednesday, no NFL game until Thursday), 3 odds-page GETs between scout and me, no in-play board seen, no underlying book timestamp. I cannot rule out that Covers refreshes faster than a minute on a game day; I only show that nothing visible proves it and that the page stamp trails the request by up to 2 min.
