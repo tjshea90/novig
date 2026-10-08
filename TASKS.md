@@ -4255,3 +4255,9 @@ Tj's six asks: 1) figure out how the auto bid feature is profitable and build on
 - [x] BA3 (DONE: §119.4-§119.5; PropLine, PinnWire/pinnapi, then ParlayAPI free keys) MAP the API usage of a bid cycle (who is read, credits, per-hour burn) and which sources overlap; rank the free keys worth adding.
 - [x] BA4 (DONE v0.78.0: LongRunBids lean scan + 8 min far pace, far-last bid order, BidReport.funnel; LongRunBidsTest 11, BidReportTest +2, MakerUiTest +1, 5 mutants killed, floor green) BUILD what the data supports (usage-aware pacing for long runs, key rotation if the data says it helps, window/league choices), tests, floor green.
 - [x] BA5 (DONE: v0.78.0 released) ship, release, tell Tj plainly what was found, what changed, which keys to add.
+
+## Tj, 2026-10-08 (~16:00Z): "Research how long novig pauses live betting after a team scores and if there is a profitable strategy to bet as soon as the betting resumes. Research if it is normal to get a lot of unavailable errors on parlayapi and how to fix it. Research how to best take advantage of my Pinnacle websocket and novig websocket to make profit"
+
+- [ ] QA1 RESEARCH how long Novig pauses live betting after a score, and whether betting the moment it reopens is profitable (start from RESEARCH.md §116 and §118; check what the v0.77.0 post-score study can say).
+- [ ] QA2 RESEARCH whether many "unavailable" answers from ParlayAPI are normal and how to fix them (PARLAY_API.md 503 notes; the app's own counters).
+- [ ] QA3 RESEARCH the best use of the Pinnodds (Pinnacle) websocket and Novig's websocket for profit (§116, §118, NOVIG_API.md §21).
