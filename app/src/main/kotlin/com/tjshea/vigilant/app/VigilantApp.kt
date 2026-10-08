@@ -1121,6 +1121,7 @@ class AppContainer(private val app: Application) {
         if (!AppBook.isNovig) return
         if (!s.pinnLive || s.killed) {
             if (pinnRunner.running) pinnRunner.stop(if (s.killed) "stopped by STOP ALL" else null)
+            LiveFeedService.stop(app)
             return
         }
         ensureLoaded()
@@ -1128,9 +1129,12 @@ class AppContainer(private val app: Application) {
         if (s.pinnLiveBet) runCatching { wallet.fresh() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
         if (keyStore.current(ApiProvider.PINNODDS).isEmpty()) {
             if (pinnRunner.running) pinnRunner.stop("No Pinnodds key saved (Settings › Pinnodds live).")
+            LiveFeedService.stop(app)
             return
         }
         pinnRunner.start()
+        // The foreground service holds the process and the CPU awake with the screen off (allowed from the screen, a boot or an update; refused quietly otherwise).
+        LiveFeedService.start(app)
     }
 
     private val polymarket = PolymarketClient(http, json, usage = usage)

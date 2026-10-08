@@ -78,6 +78,16 @@
                 android:value="Scans sports odds on a schedule the user picks and alerts on new +EV bets" />
         </service>
 
+        <!-- Pinnodds live (Tj, 2026-10-08): holds the process and the CPU awake while the live feed is on, so Pinnacle's prices keep reaching it with the screen off. -->
+        <service
+            android:name=".LiveFeedService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the Pinnodds live odds connection running in the background so live bets can react to price moves" />
+        </service>
+
         <!-- The +EV alert's "✓ Placed" and the confirmation's "Undo": run in the background, no screen. -->
         <receiver
             android:name=".AlertActionReceiver"
