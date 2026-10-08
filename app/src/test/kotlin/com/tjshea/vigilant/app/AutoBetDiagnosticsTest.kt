@@ -49,8 +49,6 @@ class AutoBetDiagnosticsTest {
         assertTrue(line, line.contains("Last check 30s ago: placed 1 (\$1.00)"))
     }
 
-    private fun pinnacleChecks(s: UiState, x: Diagnostics.Extras = extras) = HealthChecks.of(s, x, now).filter { it.area == "Pinnacle only" }
-
     private fun lowChecks(s: UiState, x: Diagnostics.Extras = extras) = HealthChecks.of(s, x, now).filter { it.area == "Low API usage bids" }
 
     @Test
