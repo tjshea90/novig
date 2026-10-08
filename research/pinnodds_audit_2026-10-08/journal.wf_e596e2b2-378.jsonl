@@ -1,0 +1,3 @@
+{"type":"launched"}
+{"type":"started","key":"v2:[key redacted …c7db]","agentId":"a9758e2618837051b","label":"audit:wrong-side","phase":"Audit"}
+{"type":"started","key":"v2:[key redacted …17c9]","agentId":"a1acab503df828b62","label":"audit:ev-fee-math","phase":"Audit"}
