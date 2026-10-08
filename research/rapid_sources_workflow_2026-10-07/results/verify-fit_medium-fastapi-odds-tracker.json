@@ -1,0 +1,97 @@
+{
+ "label": "verify-fit:medium-fastapi-odds-tracker",
+ "agentId": "aa0d296687225cbdf",
+ "run": "wf_6f04c078-2f9",
+ "result": {
+  "lens": "fit-terms-and-cost",
+  "claim_checks": [
+   {
+    "claim": "Article is Part 1, published 2025-04-19, newest of only 3 posts on the author's feed.",
+    "verdict": "confirmed",
+    "quote": "<pubDate>Sat, 19 Apr 2025 17:17:24 GMT</pubDate> (other two items: 26 May 2024 and 22 Feb 2024; feed lastBuildDate Thu, 08 Oct 2026 00:04:04 GMT)",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20"
+   },
+   {
+    "claim": "The odds are simulated; no external odds API is called.",
+    "verdict": "confirmed",
+    "quote": "we simulate the odds data instead of calling an external API or accessing a database.",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20"
+   },
+   {
+    "claim": "The only cadence is a fixed 3 s sleep in a per-connection loop.",
+    "verdict": "confirmed",
+    "quote": "await asyncio.sleep(3)  # simulate new odds every 3 seconds",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20"
+   },
+   {
+    "claim": "Payload carries no timestamp, bookmaker or market id.",
+    "verdict": "confirmed",
+    "quote": "\"odds\": { \"Team A\": round(random.uniform(1.5, 2.5), 2), \"Team B\": round(random.uniform(1.5, 2.5), 2) }",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20"
+   },
+   {
+    "claim": "Prose says updates go 'to all connected clients' but the code is a separate loop per connection with no broadcast (prose contradicts code).",
+    "verdict": "confirmed",
+    "quote": "A loop generates fake odds and sends JSON updates to all connected clients. (code: @app.websocket(\"/ws/odds\") ... await websocket.accept() / while True: ... send_json)",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20"
+   },
+   {
+    "claim": "RSS content:encoded is the complete article body (nothing hidden behind the Cloudflare-blocked page).",
+    "verdict": "confirmed",
+    "quote": "Ends with: 'Coming up next: Part 2 - Connecting Angular to the FastAPI WebSocket ... Ready to dive into the frontend? Let's roll!' I re-read the full body text; no vendor, URL, repo link or API name appears anywhere.",
+    "evidence_url": "https://medium.com/feed/@ayoubennaoui20"
+   },
+   {
+    "claim": "Part 2 was never published.",
+    "verdict": "overstated",
+    "corrected_statement": "Part 2 is absent from the author's 3-item RSS feed as of 2026-10-08 00:04 GMT (VERIFIED). That it was never written anywhere (e.g. under a publication, or drafts) is INFERRED only. It is an Angular client and would not change the verdict either way."
+   },
+   {
+    "claim": "Medium's terms of service were not read; so no terms claim is made.",
+    "verdict": "confirmed",
+    "quote": "I retried: GET https://policy.medium.com/medium-terms-of-service-9db0ca1c6c72 and https://medium.com/license.xml both returned HTTP 403, 5019-byte Cloudflare page titled 'Attention Required! | Cloudflare'. Stopped, no bypass. Medium's terms and licence text remain unread.",
+    "evidence_url": "https://policy.medium.com/medium-terms-of-service-9db0ca1c6c72"
+   },
+   {
+    "claim": "Scout recorded no robots.txt clause. (Gap in dossier.)",
+    "verdict": "could-not-check",
+    "corrected_statement": "I read https://medium.com/robots.txt (HTTP 200, 884 bytes, 2026-10-08). For all agents it disallows /m/, /me/, /media/, /r/, /trending and search paths, but not /feed/ or /@handle. A separate block names Amazonbot, Applebot-Extended, Bytespider, ClaudeBot, FacebookBot, GoogleOther, GPTBot and meta-externalagent with 'Disallow: /' (allow only /about, /business, /earn, /gift, /membership, /partner-program, /verified-authors). The feed read used curl's default user agent, not those crawlers, and was one user-directed GET of a public RSS URL, but the AI-crawler disallow is a stated term to record: Medium does not want those crawlers bulk-reading its pages. Irrelevant to Vigilant's runtime, since the app would never read Medium.",
+    "evidence_url": "https://medium.com/robots.txt",
+    "quote": "User-Agent: ClaudeBot ... Disallow: /"
+   },
+   {
+    "claim": "Author's repo/licence not found, so there is no code licence.",
+    "verdict": "could-not-check",
+    "corrected_statement": "No repo is linked in the article body (VERIFIED from the feed text). GitHub is not reachable from this container by design (proxy bound to configured repositories), so a repo with a LICENSE file cannot be ruled in or out. Without a stated licence, Medium article text and code are the author's copyright by default (INFERRED). Moot: the code is about 15 lines of a standard FastAPI WebSocket loop, and Vigilant would not copy it."
+   },
+   {
+    "claim": "Scout verdict: usable_in_vigilant = technique-only.",
+    "verdict": "overstated",
+    "corrected_statement": "Technique-only suggests something transferable. Nothing transfers: Vigilant already has a phone-side foreground service that holds sockets (BRIEF.md: ScanService/AutoScanService; NOVIG_API.md section 6: Novig websocket since v0.19.0) and OkHttp in app/build.gradle.kts. A FastAPI fan-out relay solves a many-browsers problem Vigilant does not have. Corrected verdict: no."
+   }
+  ],
+  "corrected_verdict": "no (usable_in_vigilant). This is not an odds or scores source. It is a 15-line demo whose WebSocket sends random decimals every 3 seconds, with no upstream, no timestamp and no vendor, so it has no price age to beat CNO's 13-33 s cadence or the Novig makers' 16 s re-quote. It is free only because it carries no data. Its one idea, relaying a feed over a FastAPI WebSocket to browsers, is worse than what Vigilant already does (a single-user Android foreground service opening upstream sockets and REST polls directly): a relay adds a hop, a host to pay for and keep running, and up to 3 s of timer latency on top of the real feed's age. Nothing to build, nothing to test on the phone, nothing to spend credits on. The only open question worth asking is which upstream to connect, and this article does not answer it; that belongs to the other nine sources and the already-known list.",
+  "verdict_changed_from_scout": true,
+  "confidence": "high",
+  "contrary_evidence": [
+   {
+    "what": "The best case for keeping the scout's 'technique-only': a small always-on relay could hold an upstream vendor key off the phone and let several devices share one socket. Weak for Vigilant: it is a single-user app, BRIEF.md and NOVIG_API.md already have the phone hold its own trading::read key, and a hosted relay costs money (INFERRED: always-on hosting is not free), adds a hop, and must sit on a network the phone does not control. The tutorial also shows no key handling beyond a python-dotenv import that nothing uses.",
+    "url": "https://medium.com/feed/@ayoubennaoui20"
+   },
+   {
+    "what": "The RSS body is the full article and links nothing else, so there is no hidden second source (repo, vendor, API) behind the Cloudflare-blocked page that could change this verdict. Part 2 is announced but absent from the feed.",
+    "url": "https://medium.com/feed/@ayoubennaoui20"
+   }
+  ],
+  "details": {
+   "terms_of_use": "Medium terms of service NOT READ: https://policy.medium.com/medium-terms-of-service-9db0ca1c6c72 and https://medium.com/license.xml both returned HTTP 403 (Cloudflare 'Attention Required!', retried 2026-10-08, no bypass). No claim is made about what they say. robots.txt (VERIFIED, https://medium.com/robots.txt, HTTP 200, 884 bytes, read 2026-10-08): all agents are disallowed from /m/, /me/, /media/, /r/, /trending and search query paths but not from /feed/ or /@handle; a named list of AI crawlers (Amazonbot, Applebot-Extended, Bytespider, ClaudeBot, FacebookBot, GoogleOther, GPTBot, meta-externalagent) is 'Disallow: /' except about/business/earn/gift/membership/partner-program/verified-authors. The RSS read (one GET each of the feed and robots.txt, default curl UA) was a user-directed fetch of a public feed. The tutorial has no scraping, no data licence and no terms of its own: it has no data. No code licence found (no repo linked). The article's code is trivial and Vigilant would not copy it, so copyright is moot. Betting use or automated use: not applicable, since there is no data to bet on; the article says nothing about betting. Routes and what each would break: (a) reading Medium pages by script: blocked by Cloudflare here, and robots.txt asks AI crawlers to stay out, so do not; (b) using the author's code: no licence stated, though the idea is generic and re-implementable; (c) using the feed as odds: impossible, it is random numbers.",
+   "free_tier_limits": "not found. There is no API, no plan and no quota; the tutorial calls no vendor. The only free things are the open-source packages it names (fastapi, uvicorn; the scout states they are free and open source, I did not read their licence texts). Medium's own RSS feed answered HTTP 200 with the full article body, no login. Reading the article page itself returned Cloudflare 403 from this container.",
+   "signup_friction": "None for the tutorial: no account, key or card is requested anywhere. There is also no key to obtain because there is no data vendor. The only 'key' mention is a generic python-dotenv tip with nothing reading it.",
+   "us_sports_and_props_coverage": "none. One hard-coded fake matchup 'Team A vs Team B' with two random decimals between 1.5 and 2.5 (random.uniform). No leagues, no US sports, no props, no in-play or pregame distinction, no scores. The intro mentions soccer events (goals, red cards) only as motivation.",
+   "sharp_books_or_exchanges_covered": "none. No Pinnacle, Circa, Kalshi, ProphetX, Sporttrade, Novig or any other book or exchange is named anywhere in the article.",
+   "websocket_or_live_included_free": "A WebSocket exists, but it is the author's own toy endpoint at ws://localhost:8000/ws/odds (VERIFIED from the article: 'You now have a live WebSocket server at ws://localhost:8000/ws/odds streaming randomized odds!'). It is not a hosted service, nothing is publicly reachable, and the stream is timer-driven random data every 3 s, so it carries no live odds and no live scores. Free because there is nothing there.",
+   "duplicates_what_the_app_already_has": "It adds nothing and duplicates nothing real. It is not a reseller of any of the known sources (it resells nothing). Against the known list it is strictly worse than every entry (Polymarket sockets, Kalshi, Sofascore, ESPN, ParlayAPI, PropLine, PinnWire, The Odds API), since all of those carry real prices or scores. The only overlap is the generic pattern 'push a feed over a WebSocket', which Vigilant already uses against Novig's own websocket (NOVIG_API.md section 6) from a foreground service (BRIEF.md: ScanService, AutoScanService) with OkHttp.",
+   "android_phone_feasibility": "No feed to read, so nothing for the phone to consume. Could Vigilant read it directly? There is nothing hosted to connect to; the endpoint exists only on the reader's own machine. Would it need a server? The pattern itself is a server (FastAPI, Python 3.9+); a phone would only ever be a client of it. Running one would mean either a hosted always-on box (INFERRED: a cost, a host to keep alive, an extra hop and a possible 3 s timer delay on top of the real feed's age) or Python-on-Android (INFERRED: pointless, as the app can already call upstream sockets and REST polls itself). Rate, battery and key storage: moot, as nothing is polled and no key exists. Network block: the Cloudflare 403 seen here applies only to Medium's HTML pages (and its ToS/licence pages), not to any data feed, and Vigilant would never read Medium at runtime, so the phone-versus-container network question does not arise."
+  }
+ }
+}
