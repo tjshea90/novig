@@ -779,13 +779,13 @@ data class ScanSettings(
     }
 
     /**
-     * Bids are on ([maker] or [makerRecommend]) and set to [BidFocus.LOW_USAGE], and Pinnacle only isn't (that mode already reads Novig and Pinnacle alone and wins): Vigilant's
+     * Bids are on ([maker] or [makerRecommend]) and set to [BidFocus.LOW_USAGE]: Vigilant's
      * own scan is the low-usage scan ([effective]) and runs at the pace [lowUsagePace] says ([LowUsageBids.gapSeconds]).
      */
     val lowUsageNow: Boolean get() = makerFocus == BidFocus.LOW_USAGE && (maker || makerRecommend) && makerSource == BidSource.VIGILANT
 
     /**
-     * Bids are priced from CrazyNinjaOdds ([makerSource]) and are on ([maker] or [makerRecommend]), and Pinnacle only isn't (it wins, and reads no CNO list): the background cycle reads
+     * Bids are priced from CrazyNinjaOdds ([makerSource]) and are on ([maker] or [makerRecommend]): the background cycle reads
      * CNO's list, the wide list and the games' pages for them ([com.tjshea.vigilant.data.novig.trading.maker.CnoMakerLines]), whatever alerts and auto-bet are set to.
      */
     val bidsFromCno: Boolean get() = makerSource == BidSource.CNO && (maker || makerRecommend)
