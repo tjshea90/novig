@@ -480,7 +480,7 @@ def simulate(a):
                 st = score_ts.get(m['pid'], [])
                 si = bisect.bisect_right(st, o['t']) - 1
                 recent_score = si >= 0 and o['t'] - st[si] <= 15000
-                rec = {'score': recent_score, 't': o['t'], 'mid': mid, 'league': match[m['pid']]['league'] if m['pid'] in match else '', 'sel': x, 'ask': ask, 'fair': fair, 'ev': ev, 'move': move, 'depth': depth}
+                rec = {'score': recent_score, 't': o['t'], 'mid': mid, 'league': match[m['pid']]['league'] if m['pid'] in match else '', 'sel': x, 'ask': ask, 'fair': fair, 'ev': ev, 'move': move, 'depth': depth, 'bid': bb[x][0], 'obid': bb[other][0], 'age': (o['t'] - pr['t']) / 1000.0}
                 for sec in (30, 120):
                     kk = bisect.bisect_right(ts, o['t'] + sec * 1000) - 1
                     if series[kk]['t'] + 0 < o['t'] - 1: kk = k
