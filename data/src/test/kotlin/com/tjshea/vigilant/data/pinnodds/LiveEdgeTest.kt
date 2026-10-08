@@ -89,7 +89,7 @@ class LiveEdgeTest {
     fun `the fee is part of the price - the same ask is a bet pregame and not in play`() {
         val (_, e, l) = moved(isLive = false)
         val fair = l.fair.getValue(PinnSide.HOME)
-        // An ask whose EV is 3.2% with no fee and about 2.5% with the in-play fee.
+        // An ask whose EV is 3.2% with no fee and under 2% with the in-play fee.
         val ask = fair / 1.032
         val r = rules.copy(pregame = true)
         assertTrue(judge(e, l, 2_000, listOf(TakeLevel(ask, 1_000)), r, live = false) is LiveVerdict.Bet)
@@ -107,7 +107,7 @@ class LiveEdgeTest {
     fun `a price that has not settled, a danger zone, a closed line and a wide margin each stop it`() {
         val (b, e, l) = moved()
         assertSkip(LiveSkip.SETTLING, judge(e, l, 1_300, stale))
-        b.apply(parse(live(channel = "dz", markets = emptyArray())), 2_000)
+        b.apply(parse(live(channel = "dz", markets = emptyArray<String>())), 2_000)
         assertSkip(LiveSkip.VOLATILE, judge(e, l, 3_000, stale))
         assertTrue("the danger zone passes", judge(e, l, 2_000 + PinnBook.VOLATILE_MS + 1, stale) is LiveVerdict.Bet)
         val (_, e2, l2) = moved(from = -110 to -110, to = -190 to 150)

@@ -87,10 +87,10 @@ class PinnBookTest {
     fun `a period that is no longer open closes all of its markets, and a deleted matchup is dropped`() {
         val b = book()
         b.feed(live(markets = arrayOf(money(10, -150, 125), spread(10, -3.5, -110, -110))), 1_000)
-        val closed = b.feed(live(periods = """[{"period":0,"status":"closed"}]""", markets = emptyArray()), 2_000)
+        val closed = b.feed(live(periods = """[{"period":0,"status":"closed"}]""", markets = emptyArray<String>()), 2_000)
         assertEquals(2, closed.count { it.kind == PinnChange.Kind.CLOSED })
         assertTrue(b.events.getValue(1).lines.values.none { it.open })
-        val gone = b.feed(live(op = "del", markets = emptyArray()), 3_000)
+        val gone = b.feed(live(op = "del", markets = emptyArray<String>()), 3_000)
         assertEquals(listOf(PinnChange.Kind.GONE), gone.map { it.kind })
         assertTrue(b.events.isEmpty())
     }
