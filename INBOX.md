@@ -5641,3 +5641,8 @@ Permanently save the study and research findings in GitHub for possible implemen
 ```
 For the deep analysis, also "think outside the box" for patterns people wouldn't normally see
 ```
+
+## 2026-10-08T23:53:19Z
+```
+Also include the possibility of "make" orders (bids). This may be profitable
+```
