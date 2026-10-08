@@ -1,0 +1,43 @@
+# Pre-audit analysis by the main session, 2026-10-08 ~02:50Z (52-minute pool, 12 games; small samples, overlapping triggers: read as direction, not proof)
+
+## settle-time grid (simulate --min-ev 0.05 --min-move 0.03)
+### settle 500 ms
+THE RULE (move + EV): n=44  EV at decision +10.24%  same ask vs Pinnacle fair +30s +3.35% (n=44)  +120s +1.36% (n=44)  Pinnacle kept the move 34%  Novig followed by +120s 46%  median depth 51592
+  ... with a score change in the last 15 s: n=20  EV at decision +8.95%  same ask vs Pinnacle fair +30s +3.02% (n=20)  +120s +6.22% (n=20)  Pinnacle kept the move 40%  Novig followed by +120s 42%  median depth 17686
+  ... with no score change (a price move alone): n=24  EV at decision +11.30%  same ask vs Pinnacle fair +30s +3.62% (n=24)  +120s -2.69% (n=24)  Pinnacle kept the move 29%  Novig followed by +120s 50%  median depth 76063
+STANDING disagreements (EV, no recent move; one per quote): n=144  EV at decision +94.00%  same ask vs Pinnacle fair +30s +86.47% (n=144)  +120s +83.87% (n=144)  Pinnacle kept the move 49%  Novig followed by +120s 41%  median depth 69167
+### settle 2000 ms
+THE RULE (move + EV): n=37  EV at decision +10.37%  same ask vs Pinnacle fair +30s +4.52% (n=37)  +120s -0.09% (n=37)  Pinnacle kept the move 35%  Novig followed by +120s 50%  median depth 52684
+  ... with a score change in the last 15 s: n=15  EV at decision +9.10%  same ask vs Pinnacle fair +30s +4.52% (n=15)  +120s +3.60% (n=15)  Pinnacle kept the move 40%  Novig followed by +120s 43%  median depth 13771
+  ... with no score change (a price move alone): n=22  EV at decision +11.24%  same ask vs Pinnacle fair +30s +4.53% (n=22)  +120s -2.60% (n=22)  Pinnacle kept the move 32%  Novig followed by +120s 55%  median depth 76063
+STANDING disagreements (EV, no recent move; one per quote): n=134  EV at decision +99.51%  same ask vs Pinnacle fair +30s +92.75% (n=134)  +120s +89.87% (n=134)  Pinnacle kept the move 52%  Novig followed by +120s 43%  median depth 69722
+### settle 4000 ms
+THE RULE (move + EV): n=30  EV at decision +10.51%  same ask vs Pinnacle fair +30s +3.83% (n=30)  +120s +0.10% (n=30)  Pinnacle kept the move 37%  Novig followed by +120s 46%  median depth 48672
+  ... with a score change in the last 15 s: n=12  EV at decision +8.44%  same ask vs Pinnacle fair +30s +6.03% (n=12)  +120s +6.23% (n=12)  Pinnacle kept the move 42%  Novig followed by +120s 45%  median depth 11536
+  ... with no score change (a price move alone): n=18  EV at decision +11.89%  same ask vs Pinnacle fair +30s +2.37% (n=18)  +120s -3.99% (n=18)  Pinnacle kept the move 33%  Novig followed by +120s 47%  median depth 55412
+STANDING disagreements (EV, no recent move; one per quote): n=109  EV at decision +118.96%  same ask vs Pinnacle fair +30s +113.36% (n=109)  +120s +111.71% (n=109)  Pinnacle kept the move 61%  Novig followed by +120s 46%  median depth 69444
+### settle 8000 ms
+THE RULE (move + EV): n=18  EV at decision +11.64%  same ask vs Pinnacle fair +30s -0.99% (n=18)  +120s -6.37% (n=18)  Pinnacle kept the move 28%  Novig followed by +120s 44%  median depth 51687
+  ... with a score change in the last 15 s: n=6  EV at decision +6.57%  same ask vs Pinnacle fair +30s -0.61% (n=6)  +120s -0.19% (n=6)  Pinnacle kept the move 33%  Novig followed by +120s 60%  median depth 73768
+  ... with no score change (a price move alone): n=12  EV at decision +14.18%  same ask vs Pinnacle fair +30s -1.19% (n=12)  +120s -9.46% (n=12)  Pinnacle kept the move 25%  Novig followed by +120s 36%  median depth 51592
+STANDING disagreements (EV, no recent move; one per quote): n=85  EV at decision +149.77%  same ask vs Pinnacle fair +30s +144.39% (n=85)  +120s +143.39% (n=85)  Pinnacle kept the move 71%  Novig followed by +120s 53%  median depth 50000
+
+## realized EV (the SAME ask against Pinnacle's own fair 30 s / 120 s later, fee in) by EV at decision, rule min-ev 3% min-move 1.5pt
+fired 85
+  EV  3-  5%: n= 36  realized vs Pinnacle fair +30s   +0.3%  +120s   +1.4%
+  EV  5-  8%: n= 21  realized vs Pinnacle fair +30s   +0.9%  +120s   +0.9%
+  EV  8- 12%: n= 16  realized vs Pinnacle fair +30s   +8.8%  +120s   +4.5%
+  EV 12- 20%: n= 10  realized vs Pinnacle fair +30s   +4.7%  +120s   -1.2%
+  EV 20- 40%: n=  1  realized vs Pinnacle fair +30s  -14.9%  +120s  -28.1%
+  EV 40-900%: n=  1  realized vs Pinnacle fair +30s  -29.1%  +120s  -42.0%
+standing 191
+  EV  3-  5%: n= 75  realized vs Pinnacle fair +30s   +1.6%  +120s   -0.2%
+  EV  5-  8%: n= 38  realized vs Pinnacle fair +30s   +3.5%  +120s   +2.4%
+  EV  8- 12%: n= 43  realized vs Pinnacle fair +30s   +4.4%  +120s   +1.5%
+  EV 12- 20%: n= 14  realized vs Pinnacle fair +30s   +2.5%  +120s   +1.4%
+  EV 20- 40%: n= 10  realized vs Pinnacle fair +30s  +10.7%  +120s   +4.3%
+  EV 40-900%: n= 10  realized vs Pinnacle fair +30s  +59.0%  +120s  +45.7%
+
+## gaps between frames that re-send an OPEN main market of a LIVE game (tape2, 172 s only): p50 4.7 s, p90 25.5 s, p99 56.4 s, p99.9 139.9 s
+
+## Novig live books are wide: standing rows (Pinnacle price stable >= 30 s, both outcomes bid): |Novig mid - Pinnacle fair| p50 5.6 pts, p75 15.1, p90 24.1, p95 28.3; Pinnacle fair inside Novig [bid, ask]: 49% (57.8% with 1pt slack, 68.4% with 3pts)
