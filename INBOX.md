@@ -5625,3 +5625,14 @@ And use the novig websocket with this key:
 
 Study live games, match them, and see if anything can be exploited on novig based on Pinnacle odds in real time
 ```
+
+## 2026-10-08T23:42:44Z
+```
+As you are doing the recording, look for anything exploitable at all for profit and how to take advantage of the websocket speed. Consider all options for profit, beating clv, positive EV. This may include live odds, pregame odds, or any patterns you find such as stale odds or novig lag. 
+
+Keep in mind that novig may enforce a live betting pause for a few seconds after a score. 
+
+After the recording is complete, do deep analysis, look for patterns, odds anomalies, novig stale odds or late adjustments, and any other way to profit using the web socket, whether live or pregame. 
+
+Permanently save the study and research findings in GitHub for possible implementation in vigilant app
+```
