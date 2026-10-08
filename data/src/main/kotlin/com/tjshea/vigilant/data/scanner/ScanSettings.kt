@@ -379,8 +379,9 @@ data class ScanSettings(
     val pinnLiveMaxDay: Double = 25.0,
     val pinnLiveHaltLoss: Double = 10.0,
     val pinnLiveHalted: String? = null,
-    val pinnLiveMinEv: Double = 0.03,
-    val pinnLiveMinMove: Double = 0.015,
+    /** The defaults come from replaying the rule over 46 minutes of tape (RESEARCH.md §116): score-driven moves of 3+ points with 5%+ edge held up two minutes later (+8%, n=15); smaller edges and price-only moves did not. */
+    val pinnLiveMinEv: Double = 0.05,
+    val pinnLiveMinMove: Double = 0.03,
     val pinnLiveDevig: DevigMethod = DevigMethod.WORST_CASE,
     /** What counts as a lag ([com.tjshea.vigilant.data.pinnodds.LiveTrigger]): a score-driven Pinnacle move (default), any move, or any steady edge. */
     val pinnLiveTrigger: com.tjshea.vigilant.data.pinnodds.LiveTrigger = com.tjshea.vigilant.data.pinnodds.LiveTrigger.SCORE,

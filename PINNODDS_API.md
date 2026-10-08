@@ -63,12 +63,13 @@ docs and the running API disagree, the running API wins (the docs say so). **Nev
 `PinnSocket` (the one connection) → `PinnBook` (state, devig, history) → `LiveMatcher` (Pinnacle matchup ↔ Novig game ↔ markets) → `LiveEdge.judge` (the rule) → `PinnLiveTrader` (one `IOC` order, caps, journal, Tracker)
 inside `PinnLiveRunner` (one consumer coroutine; ticks every 100 ms; follow-ups at 30 s and 120 s). Settings › **Pinnodds live**: key, Test key, feed switch (paper), "Place real bets" switch, limits.
 - **The rule** (all must hold): Pinnacle line open, game live (or pregame if on), no `dz` frame in the last 3 s, price unchanged ≥ 0.5 s, Pinnacle margin ≤ 9%, Pinnacle's own limit ≥ $100, fair in [8%, 92%],
-  Pinnacle's fair for the side **rose** ≥ 1.5 points within 20 s (the lag test), EV after Novig's in-play taker fee ≥ 3% at the ask, ≥ 20 contracts on offer at ≥ 3%. Main lines only, half-point spreads/totals only,
-  full game only. One bet per Pinnacle move per outcome. Orders are `IOC` at the worst price that still clears the EV, never resting, sized by the stake and the caps.
+  the trigger (default **a score-driven move**: Pinnacle's fair for the side rose ≥ 3 points within 20 s AND the game's score changed in the last 20 s; alternatives: any move, or any steady edge), EV after Novig's in-play
+  taker fee ≥ 5% at the ask, ≥ 20 contracts on offer at ≥ 5%. Main lines only, half-point spreads/totals only, full game only. One bet per Pinnacle move per outcome. Orders are `IOC` at the worst price that still clears the EV,
+  never resting, sized by the stake and the caps. The defaults come from the replay in RESEARCH.md §116.
 - Real bets are OFF by default (the feed alone is PAPER: it journals what it would have bet). Every decision, real or paper, is followed up 30 s and 120 s later with Pinnacle's fair and Novig's ask
   (`files/pinn-live/pinn-live-<day>.jsonl`, `pinn-follow-<day>.jsonl`); Diagnostics prints the verdict (`PinnReport`).
 
 ## 6. What is NOT known (update when verified)
 - Novig's **in-play order delay** and whether `IOC` is accepted on every live game line: no real in-play order has ever been sent by this app (this container has no Novig key). The first real order is the test.
-- Whether the edge exists after Pinnacle's spikes are accounted for: see RESEARCH.md §116. Early replay of the rule over a 7-minute tape: the rule fired 6–7 times and Pinnacle's price held 2 minutes later in only about a third of them.
+- Whether the edge is real: RESEARCH.md §116. Replay over 46 minutes of tape (12 games): score-driven moves held up two minutes later, price-only moves did not; the sample is small and the outcome (win/loss) of a bet is not in it.
 - Pregame: `pre` frames give Pinnacle's prematch moves in real time; whether Novig's pregame quotes lag them is untested (off by default).
