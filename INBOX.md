@@ -5592,3 +5592,8 @@ My take bets are bad after 6 hours, shouldn't my make bids be good after 6 hours
 ```
 Is there anything in the auto bid feature that prevents auto bidding on an identical bet multiple times
 ```
+
+## 2026-10-08T15:27:56Z
+```
+My metro by t Mobile often gets flagged by novig as an anonymous network. What is the best and cheapest way to fix this
+```
