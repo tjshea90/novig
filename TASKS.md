@@ -4254,4 +4254,4 @@ Tj's six asks: 1) figure out how the auto bid feature is profitable and build on
 - [x] BA2 (DONE: §119.2; 12 h+ unproven, ranked last, funnel added to settle it) ANALYZE bids by hours to start (0-3, 3-6, 6-12, 12+): fill rate, CLV, profit, to answer the 12h+ question.
 - [x] BA3 (DONE: §119.4-§119.5; PropLine, PinnWire/pinnapi, then ParlayAPI free keys) MAP the API usage of a bid cycle (who is read, credits, per-hour burn) and which sources overlap; rank the free keys worth adding.
 - [x] BA4 (DONE v0.78.0: LongRunBids lean scan + 8 min far pace, far-last bid order, BidReport.funnel; LongRunBidsTest 11, BidReportTest +2, MakerUiTest +1, 5 mutants killed, floor green) BUILD what the data supports (usage-aware pacing for long runs, key rotation if the data says it helps, window/league choices), tests, floor green.
-- [ ] BA5 ship, release, tell Tj plainly what was found, what changed, which keys to add.
+- [x] BA5 (DONE: v0.78.0 released) ship, release, tell Tj plainly what was found, what changed, which keys to add.
