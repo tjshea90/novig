@@ -4232,3 +4232,11 @@ Tj's words: "Because I'll be using real money with this feature tonight, make su
 - [x] PY2 DIAGNOSTICS that settle the pause question on Tj's own orders: each live order records the seconds since the game's last score and Novig's event status; the Pinnodds block splits sent/filled/missed by timing and by status (`PinnReport`, test: `PinnReportTest`).
 - [ ] PY3 After Tj sends the next Diagnostics file (v0.76.4+ with real orders): read "Orders by timing". If orders within 20 s of a score fill far less than the rest, the pause is real: add a hold-off (no live order for N seconds after a score, N from the data) and build the "reopen quote" option (RESEARCH.md §118.4). If they fill alike, the misses are phantom standing quotes: drop "Any edge" for real money.
 - [ ] PY4 PX3 pregame mode stays the best use of the socket that a live pause cannot touch (RESEARCH.md §118.3); needs a recorder run (tools/research/pinn_pregame.py) that must NOT run while Tj's phone holds the one Pinnodds connection.
+
+## Tj, 2026-10-08 (~06:10Z): "Build all the new features you mentioned and remove the "Pinnacle only" feature from the app entirely"
+
+- [ ] PZ1 REMOVE "Pinnacle only" (ScanSettings.pinnacleOnly and everything that exists only for it: scanner mode, UI, auto-bet branch, texts, tests; saved settings still load). Not Pinnodds live, not the sharp-book veto.
+- [ ] PZ2 BUILD pregame steam mode (PX3): Pinnacle prematch moves on `pre` frames vs Novig's stale pregame book, fee-free, time-to-start bounds, staleness guards, paper by default.
+- [ ] PZ3 BUILD hold-off after a score (setting: seconds, default off until the diagnostics show the pause) and the cancel-on-danger-frame guard.
+- [ ] PZ4 BUILD the first-maker-after-reopen option (post-only bid at Pinnacle fair minus margin when a live market reopens; paper by default; cancel on next score/dz).
+- [ ] PZ5 floor green, CI green, release v0.77.0, tell Tj what is on by default.
