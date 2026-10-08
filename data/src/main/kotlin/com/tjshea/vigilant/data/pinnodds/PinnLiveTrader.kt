@@ -335,7 +335,7 @@ class PinnLiveTrader(
         }
         if (o?.terminal != true) return null
         var fills = try { orders.fills(orderId) } catch (e: CancellationException) { throw e } catch (e: Exception) { emptyList() }
-        if (fills.isEmpty() && o.qty - o.remaining > 0) {
+        if (fills.isEmpty() && o.status == "FILLED") {
             // The order says it filled and its fills have not shown yet.
             pause(600)
             fills = try { orders.fills(orderId) } catch (e: CancellationException) { throw e } catch (e: Exception) { emptyList() }

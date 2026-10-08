@@ -168,7 +168,7 @@ class PinnLiveTraderTest {
         val rec = r.trader.attempt(candidate())!!
         assertEquals("UNCONFIRMED", rec.outcome)
         assertEquals(1, r.halts.size)
-        now += LiveTradeLimits.OUTCOME_COOLDOWN_MS + 1
+        now += 1_000
         assertNull("halted until Resume", r.trader.attempt(candidate("ml-b")))
         assertEquals(1, r.trader.status.value.skipped["halted"])
     }
