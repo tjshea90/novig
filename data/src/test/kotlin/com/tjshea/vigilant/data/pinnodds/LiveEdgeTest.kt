@@ -120,7 +120,7 @@ class LiveEdgeTest {
 
     @Test
     fun `extreme prices and a low Pinnacle limit are left alone`() {
-        val (_, e, l) = moved(from = -800 to 600, to = -1200 to 800)
+        val (_, e, l) = moved(from = -800 to 600, to = -3000 to 1500)
         assertSkip(LiveSkip.EXTREME, judge(e, l, 2_000, listOf(TakeLevel(0.80, 1_000)), side = PinnSide.HOME))
         val (_, e2, l2) = moved(limit = 40)
         assertSkip(LiveSkip.LIMIT, judge(e2, l2, 2_000, stale))

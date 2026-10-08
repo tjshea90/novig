@@ -144,7 +144,7 @@ class PinnBookTest {
     // ---- the real frames captured from the feed ----------------------------------------------------------------------------------
 
     @Test
-    fun `real basketball frames - the Pacers moneyline moved from -386 to -414 and the fair rose`() {
+    fun `real basketball frames - the Pacers moneyline moved from -386 to -414 and the devigged fair is read`() {
         val f = PinnTestFrames.real()
         val b = book()
         b.apply(f.getValue("sport3-before"), 1_000)
@@ -156,11 +156,13 @@ class PinnBookTest {
         val e = b.events.getValue(1637874622)
         val after = e.lines.getValue("s;0;m")
         assertEquals(-414.0, after.american.getValue(PinnSide.HOME), 0.0)
-        assertTrue(after.fair.getValue(PinnSide.HOME) > fairBefore)
+        // Both prices shortened (the margin grew), so the devigged home chance dipped a little rather than rose: the vig moves too.
+        assertEquals(0.7578, fairBefore, 0.001)
+        assertEquals(0.7522, after.fair.getValue(PinnSide.HOME), 0.001)
         assertEquals("Indiana Pacers", e.home)
         assertTrue(e.live)
         assertNotNull("the score comes from the parent matchup for basketball", e.score)
-        assertTrue(after.moveOver(PinnSide.HOME, 20_000, 7_000)!! > 0.0)
+        assertEquals(0.7522 - 0.7578, after.moveOver(PinnSide.HOME, 20_000, 7_000)!!, 0.001)
         // Every line kept is one of the three types and carries a fair that is a probability.
         assertTrue(e.lines.values.all { l -> l.fair.values.all { it > 0.0 && it < 1.0 } })
     }

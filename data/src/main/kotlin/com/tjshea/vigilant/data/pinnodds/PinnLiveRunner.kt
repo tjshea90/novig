@@ -264,15 +264,15 @@ class PinnLiveRunner(
         for (p in pairs) {
             val pe = book.events[p.pinnEventId] ?: continue
             val mains = pe.lines.values.filter { it.period == 0 && !it.alternate && it.open }.associateBy { it.type }
-            val ts = LiveMatcher.targets(p, catalogMarkets).filter { t ->
-                when (t.type) {
-                    PinnLineType.MONEYLINE -> true
-                    PinnLineType.SPREAD -> mains[PinnLineType.SPREAD]?.points?.let { abs((if (t.swapped) -it else it) - t.strike!!) <= WATCH_BAND } == true
-                    PinnLineType.TOTAL -> mains[PinnLineType.TOTAL]?.points?.let { abs(it - t.strike!!) <= WATCH_BAND } == true
-                }
+            // How far a spread's or total's line is from Pinnacle's own main line (null: Pinnacle has no such line, so nothing prices it).
+            fun distance(t: LiveTarget): Double? = when (t.type) {
+                PinnLineType.MONEYLINE -> 0.0
+                PinnLineType.SPREAD -> mains[PinnLineType.SPREAD]?.points?.let { abs((if (t.swapped) -it else it) - t.strike!!) }
+                PinnLineType.TOTAL -> mains[PinnLineType.TOTAL]?.points?.let { abs(it - t.strike!!) }
             }
+            val ts = LiveMatcher.targets(p, catalogMarkets).filter { t -> distance(t)?.let { it <= WATCH_BAND } == true }
             byEvent[p.pinnEventId] = ts
-            for (t in ts) ordered += (if (t.type == PinnLineType.MONEYLINE) 0.0 else 1.0 + abs(t.strike ?: 0.0)) to t.market.marketId
+            for (t in ts) ordered += (if (t.type == PinnLineType.MONEYLINE) 0.0 else 1.0 + distance(t)!!) to t.market.marketId
         }
         targetsByEvent.clear(); targetsByEvent.putAll(byEvent)
         targetsByMarket.clear()
@@ -388,7 +388,7 @@ class PinnLiveRunner(
 
         /** A bet still on offer is handed to the trader again no sooner than this (it is busy or on cooldown for longer anyway). */
         const val REOFFER_MS = 1_000L
-        const val REMATCH_MS = 5_000L
+        const val REMATCH_MS = 1_000L
 
         /** A game stays armed this long past the move window: the settle time and a Novig book change can land just after it. */
         const val EXTRA_ARM_MS = 2_000L
