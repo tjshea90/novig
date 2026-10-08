@@ -30,6 +30,12 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
      * (Tj, 2026-09-30, RESEARCH.md §43). Free key 1,000 credits a month; paid from $5.
      */
     PARLAY("parlay", "ParlayAPI"),
+
+    /**
+     * pinnodds.com: Pinnacle's own push feed (a raw WebSocket, REST, SSE drops), the sharp live price the live-betting feature compares Novig with (Tj, 2026-10-08). One key, one
+     * WebSocket per account; the WebSocket is a paid add-on (a 3-day full demo is granted on request).
+     */
+    PINNODDS("pinnodds", "Pinnodds"),
 }
 
 /** Tj's own API keys per provider, in the order [KeyPool] tries them. */

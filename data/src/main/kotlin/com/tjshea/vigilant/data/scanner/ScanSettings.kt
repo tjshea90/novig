@@ -367,6 +367,24 @@ data class ScanSettings(
     val burstTradeHaltLoss: Double = 3.0,
     val burstTradeHalted: String? = null,
     /**
+     * Pinnodds live (Tj, 2026-10-08; RESEARCH.md §116): Pinnacle's live price on the Pinnodds WebSocket, devigged, against Novig's live books. [pinnLive] switches the feed on: it reads, judges and
+     * journals what it WOULD bet (paper) and sends nothing. [pinnLiveBet] makes it bet for real: one immediate-or-cancel order at Novig's ask when the price lags Pinnacle's fair by at least
+     * [pinnLiveMinEv] after Novig's fee AND Pinnacle's fair for that side just rose by at least [pinnLiveMinMove] (a lag, not a standing disagreement). At most [pinnLiveStake] dollars a bet,
+     * [pinnLiveMaxGame] a game, [pinnLiveMaxDay] a day; a day's settled loss of [pinnLiveHaltLoss] halts it ([pinnLiveHalted] says why until Tj resumes it). STOP ALL stops it.
+     */
+    val pinnLive: Boolean = false,
+    val pinnLiveBet: Boolean = false,
+    val pinnLiveStake: Double = 2.0,
+    val pinnLiveMaxGame: Double = 5.0,
+    val pinnLiveMaxDay: Double = 25.0,
+    val pinnLiveHaltLoss: Double = 10.0,
+    val pinnLiveHalted: String? = null,
+    val pinnLiveMinEv: Double = 0.03,
+    val pinnLiveMinMove: Double = 0.015,
+    val pinnLiveDevig: DevigMethod = DevigMethod.WORST_CASE,
+    /** Also act on prematch lines (Pinnacle's push moves against Novig's pregame quotes; Novig charges no taker fee before the game starts). Off by default. */
+    val pinnLivePregame: Boolean = false,
+    /**
      * Set only by [effective]: these settings are the low-usage scan's ([LowUsageBids.profile]). The scanner and the feeds read it (quotes past the freshness limit are
      * dropped before the devig, a league with no game in the window isn't asked); never saved, so a saved file can't switch it on.
      */
@@ -969,6 +987,14 @@ data class ScanSettings(
 
         /** The leagues the burst recorder can watch (Novig's league names): the ones with a game clock whose lines Novig lists as a moneyline, spreads and totals. */
         val BURST_LEAGUES = listOf("NFL", "NCAAF", "NBA", "WNBA", "NHL", "MLB")
+
+        /** Pinnodds live's choices: a bet's stake and the game, day and loss caps (dollars), the least edge after the fee (probability) and the least Pinnacle move (probability points). */
+        val PINN_LIVE_STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0)
+        val PINN_LIVE_MAX_GAME_CHOICES = listOf(5.0, 10.0, 25.0)
+        val PINN_LIVE_MAX_DAY_CHOICES = listOf(10.0, 25.0, 50.0, 100.0)
+        val PINN_LIVE_HALT_LOSS_CHOICES = listOf(5.0, 10.0, 25.0, 50.0)
+        val PINN_LIVE_MIN_EV_CHOICES = listOf(0.02, 0.03, 0.04, 0.05)
+        val PINN_LIVE_MIN_MOVE_CHOICES = listOf(0.01, 0.015, 0.02, 0.03)
 
         /** The real-money burst trader's choices (dollars): a leg's stake, a game's and a day's total (both legs of every attempt, fees in), and legs held alone that halt it. No "no limit" here. */
         val BURST_TRADE_STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0)
