@@ -4246,3 +4246,12 @@ Tj's words: "Because I'll be using real money with this feature tonight, make su
 - [x] PV1 Finished the ten-sources research (DO1-DO3): RESEARCH.md §115 (verdicts, why none beats the app's own sources, the plan).
 - [ ] PV2 Add Pinnodds' score changes as a contestant in the in-app feed race (no second Pinnodds connection: the runner already sees the score frames). Wait for Tj's go.
 - [ ] PV3 Read the v0.77.0 "Post-score study" and "Orders by timing" from Tj's next Diagnostics before any further feed work (PY3).
+
+## Tj, 2026-10-08 (~06:35Z): "Looking at my auto bids, so far they seem very profitable. I want the app to optimize the auto bid feature. I want to be able to leave the app on and background auto bid for hours, but I'm worried about api usage running out too fast. I can get many free API keys for different apis if needed."
+Tj's six asks: 1) figure out how the auto bid feature is profitable and build on its success. 2) see if it is profitable to auto bid games 12+ hours away. 3) optimize auto bid for max +EV, beating CLV and profit, with a high likelihood of being taken. 4) best way to let auto bid run for hours without wasting/depleting API usage (scan frequency, leagues, bid types, which APIs overlap and can share scanning usage). 5) tell me which APIs to add many free keys to for extended background auto bid. 6) make the changes needed so auto bid runs for hours without wasting API usage and without sacrificing accuracy or quality.
+
+- [ ] BA1 ANALYZE Tj's v0.77.0 Diagnostics + scan study: what the filled bids made, split by league/market/kind/price/margin/hours-to-start/fair source/CLV (RESEARCH.md §119).
+- [ ] BA2 ANALYZE bids by hours to start (0-3, 3-6, 6-12, 12+): fill rate, CLV, profit, to answer the 12h+ question.
+- [ ] BA3 MAP the API usage of a bid cycle (who is read, credits, per-hour burn) and which sources overlap; rank the free keys worth adding.
+- [ ] BA4 BUILD what the data supports (usage-aware pacing for long runs, key rotation if the data says it helps, window/league choices), tests, floor green.
+- [ ] BA5 ship, release, tell Tj plainly what was found, what changed, which keys to add.
