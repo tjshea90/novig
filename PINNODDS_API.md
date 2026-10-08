@@ -66,6 +66,7 @@ inside `PinnLiveRunner` (one consumer coroutine; ticks every 100 ms; follow-ups 
   the trigger (default **a score-driven move**: Pinnacle's fair for the side rose ≥ 3 points within 20 s AND the game's score changed in the last 20 s; alternatives: any move, or any steady edge), EV after Novig's in-play
   taker fee ≥ 5% at the ask, ≥ 20 contracts on offer at ≥ 5%. Main lines only, half-point spreads/totals only, full game only. One bet per Pinnacle move per outcome. Orders are `IOC` at the worst price that still clears the EV,
   never resting, sized by the stake and the caps. The defaults come from the replay in RESEARCH.md §116.
+- **Background (v0.76.1)**: `LiveFeedService` is a foreground service (type specialUse) that exists exactly as long as the feed switch is on: a partial wake lock renewed every 5 s (60 s timeout), one quiet notification with Stop and STOP ALL, stopped by the switch, STOP ALL or the app's kill switch. Without it Android freezes a backgrounded app and its sockets.
 - Real bets are OFF by default (the feed alone is PAPER: it journals what it would have bet). Every decision, real or paper, is followed up 30 s and 120 s later with Pinnacle's fair and Novig's ask
   (`files/pinn-live/pinn-live-<day>.jsonl`, `pinn-follow-<day>.jsonl`); Diagnostics prints the verdict (`PinnReport`).
 

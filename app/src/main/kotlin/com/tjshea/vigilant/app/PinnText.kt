@@ -14,7 +14,7 @@ object PinnText {
         "16 seconds after a play, so for a few seconds after Pinnacle moves, Novig's quote can be stale. This devigs Pinnacle's price into a fair chance and buys on Novig only when the fair beats " +
         "Novig's ask by the minimum edge AFTER Novig's in-play fee, AND (by default) Pinnacle repriced because the SCORE changed (a measured test: Pinnacle moves with no score behind them often " +
         "reverted within two minutes), AND Pinnacle's price has sat still for half a second. One immediate-or-cancel order per Pinnacle move, never resting. Real bets start OFF: watch the paper numbers first. Only one Pinnodds connection is allowed per account: no other app or " +
-        "script may use the key while this is on."
+        "script may use the key while this is on. While it is on a quiet notification keeps it running with the screen off (Stop and STOP ALL are on it)."
     const val KEY_LABEL = "Add the Pinnodds key"
     const val TEST_BUTTON = "Test key"
     const val FEED_TITLE = "Pinnodds live feed"
