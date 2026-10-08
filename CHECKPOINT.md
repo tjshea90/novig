@@ -1,22 +1,24 @@
-# CHECKPOINT 2753 — read me first, then TASKS.md
+# CHECKPOINT 2754 — read me first, then TASKS.md
 
-**Written:** 2026-10-08T07:32:02Z · **tests:** all 4 fast checks green
-**Branch:** `claude/auto-bid-optimization-api-kdjbe4` · **builds on:** `07bb3649` (this checkpoint is the commit after it)
+**Written:** 2026-10-08T20:53:57Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-1dbf7537-vyxqtx` · **builds on:** `646b8cd9` (this checkpoint is the commit after it)
 
 ## Just done
-v0.78.0 released and recorded
+QA1-QA3: researched Novig post-score pause, ParlayAPI 503s, websockets; RESEARCH.md §120
 
 ## Do this next
-read the next Diagnostics: Last rounds, funnel rows, ParlayAPI runway
+read Tj's next Diagnostics: Orders by timing, Post-score study, ParlayAPI failure counters
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M RESEARCH.md
      M TASKS.md
 
 ## Last ten checkpoints
 ```
+  c5a86527 ckpt 2753: v0.78.0 released and recorded
   cc96ff68 ckpt 2752: v0.78.0 shipped, release.yml triggered
   9016a666 ckpt 2751: pre-release: v0.78.0: long-run saver for bids (lean background scan for Quic
   6bff6cfe ckpt 2750: v0.78.0 version bump; floor green (2663+1 tests); MakerUiTest for the saver 
@@ -26,5 +28,7 @@ read the next Diagnostics: Last rounds, funnel rows, ParlayAPI runway
   6ddff6df ckpt 2746: pre-release: v0.77.0: Pinnacle only removed entirely; Pinnodds live pregame 
   80dd594c ckpt 2745: pre-ship: v0.77.0: Pinnacle only removed entirely; Pinnodds live pregame ste
   5c280e8b ckpt 2744: PZ1 done: 'Pinnacle only' removed entirely (setting, scanner mode, auto-bet 
-  e1c9e841 ckpt 2743: Researched Novig post-score pause vs Pinnodds lag trade and burst (RESEARCH.
 ```
+
+(10 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
