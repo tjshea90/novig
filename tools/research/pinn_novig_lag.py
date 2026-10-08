@@ -301,9 +301,9 @@ def record(a):
         loop.call_soon_threadsafe(stop.set); out.f.flush(); out.f.close()
 
 
-def analyze(a):
-    pin = collections.defaultdict(list); nov = collections.defaultdict(list); matches = {}; scores = []; closes = []
-    for line in open(a.path):
+def load(path):
+    pin = collections.defaultdict(list); nov = collections.defaultdict(list); mkt = {}; match = {}; scores = collections.defaultdict(list); closes = []
+    for line in open(path):
         try:
             d = json.loads(line)
         except Exception:
@@ -311,45 +311,126 @@ def analyze(a):
         k = d['k']
         if k == 'pin': pin[(d['pid'], d['key'])].append(d)
         elif k == 'nov': nov[d['mid']].append(d)
-        elif k == 'match': matches[d['pid']] = d
-        elif k == 'score': scores.append(d)
+        elif k == 'mkt': mkt[d['mid']] = d
+        elif k == 'match': match[d['pid']] = d
+        elif k == 'score': scores[d['pid']].append(d)
         elif k == 'close': closes.append(d)
-    print(f'matched games {len(matches)}, pinnacle series {len(pin)}, novig markets {len(nov)}, pinnacle score changes {len(scores)}, closes {len(closes)}')
-    # the Novig MONEY books against the Pinnacle moneyline (key s;0;m); spreads/totals by strike
-    rows = []
+    return pin, nov, mkt, match, scores, closes
+
+
+def pin_series(pin, m):
+    """The Pinnacle devigged series that corresponds to Novig market m (a 'mkt' record): list of (t, {side: fair}, record), sides home/away or over/under."""
+    pid, mt, strike = m['pid'], m['mt'], m.get('strike')
+    out = []
+    for (p, key), v in pin.items():
+        if p != pid: continue
+        if mt == 'MONEY' and key == 's;0;m': out += v
+        elif mt == 'TOTAL' and key.startswith('s;0;ou') and v and v[0]['by'].get('over'):
+            out += [x for x in v if abs(float(x['by']['over'][1]) - float(strike)) < 1e-9]
+        elif mt == 'SPREAD' and key.startswith('s;0;s;') and v and v[0]['by'].get('home'):
+            out += [x for x in v if abs(float(x['by']['home'][1]) - float(strike)) < 1e-9]
+    out.sort(key=lambda x: x['t'])
+    return out
+
+
+def side_map(m):
+    """Novig outcome name -> 'home'|'away'|'over'|'under'."""
+    outs = m['outs']; mt = m['mt']
+    if mt == 'TOTAL':
+        return {o: ('over' if o.lower().startswith('over') else 'under') for o in outs}
+    if mt == 'MONEY':
+        away, home = [x.strip() for x in m['desc'].split('@')]
+        return {o: ('home' if o == home else 'away') for o in outs}
+    home = m['desc'].split()[0]
+    return {o: ('home' if o.startswith(home + ' ') else 'away') for o in outs}
+
+
+def fee_of(p, live=True):
+    return FEE_C * p * (1 - p) if live else 0.0
+
+
+def analyze(a):
+    pin, nov, mkt, match, scores, closes = load(a.path)
+    span = [d['t'] for v in nov.values() for d in v]
+    print(f'games matched {len(match)}; pinnacle series {len(pin)}; novig markets {len(nov)} ({len(mkt)} described); pinnacle score changes {sum(len(v) for v in scores.values())}; closes/reopens {len(closes)}')
+    if span: print(f'novig reads {sum(len(v) for v in nov.values())} over {(max(span)-min(span))/60000:.0f} min')
+    rows = []   # one row per (novig read, outcome)
     for mid, obs in nov.items():
-        o0 = obs[0]; pid = o0['pid']; mt = o0['mt']
-        if mt == 'MONEY':
-            series = pin.get((pid, 's;0;m'), [])
-        elif mt == 'TOTAL':
-            series = [p for k, v in pin.items() if k[0] == pid and k[1].startswith('s;0;ou') for p in v if p['by'].get('over') and abs(float(p['by']['over'][1]) - float(o0['strike'])) < 1e-9]
-            series.sort(key=lambda x: x['t'])
-        else:
-            series = [p for k, v in pin.items() if k[0] == pid and k[1].startswith('s;0;s;') for p in v if p['by'].get('home') and abs(float(p['by']['home'][1]) - float(o0['strike'])) < 1e-9]
-            series.sort(key=lambda x: x['t'])
-        if not series:
-            continue
-        j = 0
+        m = mkt.get(mid)
+        if not m: continue
+        series = pin_series(pin, m); sm = side_map(m)
+        if not series: continue
+        ts = [x['t'] for x in series]
+        import bisect
         for o in obs:
-            while j + 1 < len(series) and series[j + 1]['t'] <= o['t']:
-                j += 1
-            if series[j]['t'] > o['t']:
-                continue
-            p = series[j]; age = o['t'] - p['t']
-            names = list(o['bb'].keys())
-            if len(names) != 2 or None in o['bb'].values():
-                continue
-            # map novig outcome names to pinnacle sides
-            def side(nm):
-                nm_l = nm.lower()
-                if mt == 'TOTAL': return 'over' if nm_l.startswith('over') else 'under'
-                m = matches[pid]
-                for sname, who in ((m['ph'], 'home'), (m['pa'], 'away')):
-                    pass
-                return None
-            rows.append((mid, o, p, age))
-    print('paired observations', len(rows))
+            bb = o['bb']
+            if len(bb) != 2 or any(v is None for v in bb.values()): continue
+            k = bisect.bisect_right(ts, o['t']) - 1
+            if k < 0: continue
+            pr = series[k]; age = (o['t'] - pr['t']) / 1000.0
+            names = list(bb.keys())
+            for x in names:
+                side = sm.get(x)
+                if side not in pr['fairp']: continue
+                other = [n for n in names if n != x][0]
+                ask = 1.0 - bb[other][0]; depth = bb[other][1]
+                fair = pr['fairp'][side]; fee = fee_of(ask)
+                rows.append({'mid': mid, 'mt': m['mt'], 't': o['t'], 'x': x, 'side': side, 'ask': ask, 'depth': depth, 'fair': fair, 'age': age, 'ev': fair / (ask + fee) - 1.0,
+                             'fairm': pr['fair'][side], 'pt': pr['t'], 'pid': m['pid'], 'k': k, 'n': len(series), 'bid_x': bb[x][0], 'league': match[m['pid']]['league'] if m['pid'] in match else ''})
+    print(f'paired (read x outcome) rows: {len(rows)}')
+    if not rows: return
+    # 1. how often is there an edge, by size, and how stale was the Pinnacle price
+    print('\n[1] EV of taking Novig at its ask against Pinnacle power-devigged fair, fee in (rows = Novig reads x outcomes; fresh = Pinnacle changed <= 10 s before the read)')
+    for lo in (0.0, 0.01, 0.02, 0.03, 0.05, 0.10):
+        sel = [r for r in rows if r['ev'] >= lo]; fr = [r for r in sel if r['age'] <= 10]
+        print(f'  ev >= {lo:4.0%}: {len(sel):6d} rows ({len(sel)/len(rows):5.1%}), fresh {len(fr):5d}, median depth {statistics.median([r["depth"] for r in sel]) if sel else 0:8.0f} contracts')
+    # 2. is the edge a lag (it appears right after a Pinnacle move and decays) or a standing disagreement?
+    print('\n[2] by seconds since Pinnacle last changed that line: share of rows with ev >= 2%, and the median ev')
+    for lo, hi in ((0, 2), (2, 5), (5, 10), (10, 20), (20, 60), (60, 1e9)):
+        sel = [r for r in rows if lo <= r['age'] < hi]
+        if sel: print(f'  {lo:3.0f}-{hi:4.0f}s: n={len(sel):6d}  ev>=2%: {sum(r["ev"]>=0.02 for r in sel)/len(sel):6.1%}  median ev {statistics.median([r["ev"] for r in sel]):+.3%}')
+    # 3. lead-lag after a Pinnacle jump (fair moved >= 3 points in one change): how long until Novig's mid has moved most of the way?
+    print('\n[3] after a Pinnacle jump of >= 3 fair points (moneyline): seconds until Novig\'s mid covers 50% / 90% of the gap')
+    gaps = []
+    for mid, obs in nov.items():
+        m = mkt.get(mid)
+        if not m or m['mt'] != 'MONEY': continue
+        series = pin_series(pin, m); sm = side_map(m); home_name = [n for n, s in sm.items() if s == 'home']
+        if not series or not home_name: continue
+        hn = home_name[0]; an = [n for n in sm if n != hn][0]
+        mids = []
+        for o in obs:
+            bb = o['bb']
+            if bb.get(hn) is None or bb.get(an) is None: continue
+            mids.append((o['t'], (bb[hn][0] + (1 - bb[an][0])) / 2.0))
+        if len(mids) < 5: continue
+        for a_, b_ in zip(series, series[1:]):
+            d = b_['fairp']['home'] - a_['fairp']['home']
+            if abs(d) < 0.03: continue
+            before = [v for t, v in mids if t <= b_['t']]
+            if not before: continue
+            start = before[-1]; target = b_['fairp']['home']; gap = target - start
+            if abs(gap) < 0.02: continue   # novig had already moved (or Pinnacle moved toward it)
+            t50 = t90 = None
+            for t, v in mids:
+                if t < b_['t']: continue
+                if t - b_['t'] > 120000: break
+                frac = (v - start) / gap
+                if t50 is None and frac >= 0.5: t50 = (t - b_['t']) / 1000
+                if t90 is None and frac >= 0.9: t90 = (t - b_['t']) / 1000; break
+            gaps.append((pin_age_label(b_), gap, t50, t90))
+    if gaps:
+        t50s = [g[2] for g in gaps if g[2] is not None]; t90s = [g[3] for g in gaps if g[3] is not None]
+        print(f'  jumps with a novig gap >= 2 points: {len(gaps)}; novig covered 50% within 120 s in {len(t50s)}, 90% in {len(t90s)}')
+        if t50s: print(f'  t50: median {statistics.median(t50s):.1f}s  p25 {sorted(t50s)[len(t50s)//4]:.1f}s  p75 {sorted(t50s)[3*len(t50s)//4]:.1f}s')
+        if t90s: print(f'  t90: median {statistics.median(t90s):.1f}s')
+    else:
+        print('  none yet')
     return rows
+
+
+def pin_age_label(p):
+    return p['t']
 
 
 if __name__ == '__main__':
