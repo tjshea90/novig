@@ -2,7 +2,7 @@
 
 One section per agent, scouts first. Raw per-agent files: `results/<label>.json`; each run's raw journal: `journal.<run>.jsonl`. Rendered by `tools/research/save_workflow.py`.
 
-Results saved so far: 10
+Results saved so far: 11
 
 
 ## scout:1-medium-fastapi-odds-tracker
@@ -99,6 +99,153 @@ Results saved so far: 10
   - Does the author's GitHub repo exist, and does it differ from the article (for example, did a later commit wire in a real odds API)? Not checkable from this container, and the article links none.
   - Was Part 2 ever published? It is not in the author's RSS feed as of 2026-10-07. It is an Angular client in any case and would not change the verdict.
 - **other_sources_it_names**: []
+
+## scout:10-pulsescore-net
+
+- **source_url**: https://www.pulsescore.net/
+- **kind**: vendor-api
+- **what_it_is**: PulseScore is a young (blog posts from Feb-Mar 2026, Stream API live "since mid-September", terms updated 2026-10-07) paid REST + WebSocket API. It re-serves odds, scores and match clocks that it scrapes from 58 bookmakers' public sites in one normalized JSON schema. Its own homepage says "scraped from top bookmakers". It started as a Bet365 odds API (Product Hunt maker: Emil Mitev; the terms name no legal entity, only a gmail contact). It carries no licensed or official data. Scores are only whatever each book's own board shows, and some books are odds-only.
+- **upstream_data_source**: The vendor's own scraper reading the bookmakers' public boards. Not a licensed feed, and not a reseller of another API vendor. How I know: (1) homepage 2026-10-08: "Live betting odds from soccer and tennis - scraped from top bookmakers and updated every second"; (2) PS3838 Swagger spec at api.pulsescore.net/api/ps3838/doc: "The scraper rewrites every event it still tracks on each pass"; (3) Terms s.1 "aggregated publicly available sports betting odds data", s.6 "aggregates odds data from third-party bookmaker sources"; (4) results are a "live-mirror" of the book's in-play board ("last score and match clock the book published"). PS3838 is a Pinnacle-family brand by second-hand reports; Kalshi odds are "derived from the last traded price plus the current best bid/ask", so they are not the raw order book. The scrape cycle time is not stated anywhere.
+- **push_or_poll**: Both, but push needs a paid plan. REST polling (X-Secret header): 1 req/s per bookmaker on BASIC and PRO, 1 req/min on STARTER, 3/s on MAX, 6/s on ULTRA, 15/s absolute cap per key. Push (PRO or higher only, per the docs): (a) legacy wss://api.pulsescore.net/api/{book}/ws/live?key=..&sport=.. sends a full snapshot of every live event for the sport about once a second; (b) the beta Stream API, wss://api.pulsescore.net/api/stream/ws, sends one snapshot, then delta frames batched once per second per stream. Both push at 1 Hz, so the server itself quantizes to 1 s. Inference: PRO's REST limit of 1 req/s per book matches the socket's 1 frame/s, so the socket saves requests but adds no speed.
+- **claimed_latency_or_refresh**: Marketing: "Live in-play betting odds refreshed every ~1 second" (homepage), "one frame every second". Product Hunt maker: goal of "under 1 second" live and pre-match refresh "up to 60 seconds" (stated as goals, not results). Most candid vendor statement, in the Stream API docs: "a delta typically arrives 1-2 seconds after the bookmaker's write; this is not a sub-second feed". It is ambiguous whether "bookmaker's write" means the book's change or PulseScore's database write for that book. No percentiles, no benchmark, no scrape-interval figure anywhere.
+- **measured_or_verified_age**: None measured. A keyed payload could not be read (no sign-up, no key), so payload time versus Date header was not compared. What is verified: (1) Only the PS3838 spec documents a per-event updatedAt, defined as "the time the feed last wrote that document... a freshness stamp for the document rather than as the moment a price last moved". It is therefore a scrape-pass time and understates price age. I found the same field documented for no other book. (2) The Stream API docs say updatedAt, markets[].updatedAt and oddsSig are "never sent". (3) The legacy socket frame's `timestamp` (epoch ms) and the stream delta's `ts` (undefined in the docs) have no documented meaning as data age. So for the socket feeds, the age of a price cannot be proven from the response. The public capabilities JSON (Date 2026-10-08 00:02:36 GMT, discoveredAt 55 s earlier) is metadata, not odds.
+- **coverage**: VERIFIED from the keyless /api/stream/capabilities JSON: 58 bookmakers, no Circa, ProphetX, Sporttrade or Novig. Sharp or relevant ones: ps3838, kalshi, polymarket, plus US books fanduel, draftkings, betmgm, betrivers, hardrock, betparx, borgata, bovada, betonline. There is no Pinnacle by name and no Caesars. Live sports for ps3838: american-football, baseball, basketball, esports, soccer, tennis (hockey is prematch only). Kalshi live: american-football, baseball, basketball, ice-hockey, tennis, plus cricket, esports, soccer, volleyball. DraftKings live: american-football, baseball, basketball, golf, ice-hockey, soccer, table-tennis, tennis. FanDuel live: american-football, baseball, basketball, ice-hockey, soccer, table-tennis, tennis. The sport keys are generic, so NFL versus college is unspecified. In-play odds and scores are included, and scores appear "when the bookmaker provides them". Player props: the pricing page says "Full market boards including player props", but the PS3838, Kalshi and DraftKings specs never mention "player" and a third-party directory says "No player props". Unverified. Kalshi results carry no score. Esports on PS3838 has no score.
+- **price_and_free_tier**: Read 2026-10-08. BASIC free: 500 requests/month, 1 req/s per bookmaker, all bookmakers, results, deep links. STARTER EUR 20/mo: 30,000 requests/month, 1 req/min per bookmaker. PRO EUR 79/mo (7-day free trial, monthly billing only): unlimited requests, 1 req/s per bookmaker, 1 live socket per bookmaker, Stream API 1 connection and 1 sport. MAX EUR 149/mo: 3 req/s, 3 sockets, Stream API 2 connections and 3 sports. ULTRA EUR 249/mo: 6 req/s, 6 sockets, Stream API 3 connections and all sports. 6-month plans cost 5 months (EUR 395 for PRO), 12-month plans cost 9 months (EUR 711 for PRO). Free-tier sockets: the pricing and home pages list "Live WebSocket connections" and "Stream API (delta streams)" under BASIC and STARTER. The docs rate table says "WebSocket None", the docs connection-limits table says "0 (REST only)", and the PS3838, Kalshi and DraftKings specs say "BASIC and STARTER plans are rejected with close code 4003". The stream docs say it is for PRO, MAX and ULTRA only and that other plans get HTTP 402. A dev.to article by PulseScore (Apr 10) and a third-party review also say no sockets on Basic and Starter. So the free tier is REST only, and 500 requests last about 8 minutes at 1 req/s. The only plan with a push socket and no per-minute REST cap is PRO at EUR 79.
+- **terms_notes**: https://www.pulsescore.net/terms, "Last updated: October 7, 2026" (one day before I read it), read verbatim from the raw page. Acceptable use s.5, "You agree not to": "Resell, redistribute, or sublicense the data obtained through the API without prior written consent." "Scrape, crawl, or systematically extract data from the API beyond your plan's intended usage." "Use the service to facilitate illegal gambling operations in any jurisdiction." "Attempt to circumvent rate limits, authentication, or any security measures." s.4: "Regardless of plan, an absolute maximum of 15 requests per second per API key applies to all API usage." s.6: "we make no guarantees regarding real-time accuracy, completeness, or availability... You use the data entirely at your own risk." s.2: paid plans are non-refundable once any API call has been made, with a 24-hour refund window only if no call was made. s.3: the 7-day trial is PRO monthly only, and plans auto-renew. s.7: they can terminate without notice. There is no clause against personal betting use, and no commercial-use clause or governing-law clause. Docs say not to put the key in client-side code, which matters for an on-device Android app. They also confirm the upstream is scraping, so the books' own terms, not PulseScore's, are the exposure, and PulseScore could be blocked or vanish. The repo is public, so never commit the key.
+- **key_claims**:
+  -
+    - **claim**: BASIC free tier is 500 requests a month at 1 req/s per bookmaker; STARTER is EUR 20 for 30,000 a month at 1 req/min; PRO EUR 79 is the cheapest plan with unlimited requests and a socket.
+    - **status**: VERIFIED
+    - **evidence_url**: https://www.pulsescore.net/pricing
+    - **quote**: BASIC Free ... 500 req/month ... 1 req/sec per bookmaker
+  -
+    - **claim**: The free plan includes a live WebSocket and the Stream API.
+    - **status**: CONTRADICTED
+    - **evidence_url**: https://api.pulsescore.net/api/ps3838/doc
+    - **quote**: BASIC and STARTER plans are rejected with close code `4003`; docs table: BASIC 0 (REST only); stream docs: Available on PRO, MAX and ULTRA only. The pricing page text says 'Live WebSocket connections' under BASIC.
+  -
+    - **claim**: The data is scraped from the bookmakers, not licensed.
+    - **status**: VERIFIED
+    - **evidence_url**: https://www.pulsescore.net/
+    - **quote**: scraped from top bookmakers and updated every second
+  -
+    - **claim**: The one documented timestamp (PS3838 updatedAt) is a scrape-pass stamp, not the age of a price.
+    - **status**: VERIFIED
+    - **evidence_url**: https://api.pulsescore.net/api/ps3838/doc/swagger-ui-init.js
+    - **quote**: The scraper rewrites every event it still tracks on each pass, so read it as a freshness stamp for the document rather than as the moment a price last moved.
+  -
+    - **claim**: The Stream API never sends updatedAt, markets[].updatedAt or oddsSig, so a streamed price's age cannot be proven from the frame.
+    - **status**: VERIFIED
+    - **evidence_url**: https://www.pulsescore.net/docs/stream-api
+    - **quote**: Never sent, never diffed: _id, createdAt, updatedAt, markets[].updatedAt, markets[].oddsSig.
+  -
+    - **claim**: Live odds refresh about every 1 second and the socket pushes 1 frame a second.
+    - **status**: CLAIM_ONLY
+    - **evidence_url**: https://www.pulsescore.net/docs
+    - **quote**: Server pushes a frame every ~1 second containing every live event for the subscribed sport.
+  -
+    - **claim**: Deltas arrive 1-2 seconds after the bookmaker's write, and it is not sub-second.
+    - **status**: CLAIM_ONLY
+    - **evidence_url**: https://www.pulsescore.net/docs/stream-api
+    - **quote**: a delta typically arrives 1-2 seconds after the bookmaker's write; this is not a sub-second feed
+  -
+    - **claim**: The 58-book list has PS3838, Kalshi, Polymarket, FanDuel and DraftKings, and none of Circa, ProphetX, Sporttrade or Novig.
+    - **status**: VERIFIED
+    - **evidence_url**: https://api.pulsescore.net/api/stream/capabilities
+    - **quote**: JSON with 58 bookmaker ids incl. ps3838, kalshi, polymarket, fanduel, draftkings; fetched 2026-10-08 00:02:36 GMT, no key
+  -
+    - **claim**: Scores are just the book's own board, a mirror and not an independent score feed.
+    - **status**: VERIFIED
+    - **evidence_url**: https://api.pulsescore.net/api/draftkings/doc
+    - **quote**: every event that goes live is written here ... with the last score and match clock the board published
+  -
+    - **claim**: Kalshi prices are derived from the last traded price plus the best bid/ask, not the raw book.
+    - **status**: VERIFIED
+    - **evidence_url**: https://api.pulsescore.net/api/kalshi/doc
+    - **quote**: every selection carries decimal odds derived from the last traded price plus the current best bid/ask
+  -
+    - **claim**: Full boards include player props.
+    - **status**: CLAIM_ONLY
+    - **evidence_url**: https://www.pulsescore.net/pricing
+    - **quote**: Full market boards including player props
+  -
+    - **claim**: The product is a young reseller with no independent latency measurement, review thread or status page.
+    - **status**: INFERRED
+    - **evidence_url**: https://sportsapis.dev/apis/pulsescore
+    - **quote**: No measured latency figures are given (the review suggests you evaluate the WebSocket latency yourself); I found no Reddit, HN or Trustpilot threads in three searches
+  -
+    - **claim**: The terms bar resale and over-plan scraping, say nothing against personal betting use, and disclaim real-time accuracy.
+    - **status**: VERIFIED
+    - **evidence_url**: https://www.pulsescore.net/terms
+    - **quote**: we make no guarantees regarding real-time accuracy, completeness, or availability
+  -
+    - **claim**: The 7-day free trial is PRO monthly only, and paid plans are non-refundable after any API call.
+    - **status**: VERIFIED
+    - **evidence_url**: https://www.pulsescore.net/terms
+    - **quote**: The 7-day free trial is available only on PRO billed monthly.
+- **live_probes**:
+  -
+    - **request**: GET https://api.pulsescore.net/api/stream/capabilities (documented as needing no key)
+    - **result**: 200, application/json, 37 KB, cache-control no-store, Date Thu 08 Oct 2026 00:02:36 GMT, discoveredAt 2026-10-08T02:01:41+02:00 (55 s earlier). Lists 58 bookmakers with live and prematch sport lists. This is metadata, not odds.
+  -
+    - **request**: GET https://api.pulsescore.net/api/{draftkings,ps3838,kalshi}/doc and /doc/swagger-ui-init.js (public Swagger UI linked from the homepage; 5 requests to this host, 2+ s apart)
+    - **result**: 200 each. The embedded OpenAPI specs hold the prose quoted above, including the PS3838 updatedAt definition and the 'BASIC and STARTER ... rejected with close code 4003' text. The specs define no response schemas.
+  -
+    - **request**: GET www.pulsescore.net /, /pricing, /docs, /docs/stream-api, /terms, /stream-api, /sport-availability, /blog (8 by fetch tool, 5 by curl, so about 13 requests to this host, 1 s or more apart)
+    - **result**: 200 on all, Vercel-hosted, public pages. /sport-availability hides its per-book detail behind hover, so it was unreadable. The homepage live demo is labelled 'Example data'. No keyed data endpoint was called, so no payload-versus-Date comparison was possible.
+- **verdict**:
+  - **rapid_odds**: maybe
+  - **rapid_scores**: no
+  - **ahead_of_novig_makers**: unknown
+  - **ahead_of_cno**: unknown
+  - **cheap_or_free**: expensive
+  - **usable_in_vigilant**: yes-with-work
+  - **why**: Odds: PulseScore is a scraper-reseller. Its fastest honest figure is that the socket batches at 1 Hz and a delta arrives 1-2 s after a write that is never defined. It publishes no scrape-cycle time and no price-age stamp. The one updatedAt, on PS3838, is a scrape-pass stamp that understates price age, and the socket and stream feeds omit it. So 'fresher than CNO's 13-33 s plus 1-2 min lag' is plausible if the claim holds, but nothing proves it, and a book's price scraped at 1 Hz cannot beat a direct socket. Cheapness: the free plan (500 requests/month, REST only, sockets rejected with 4003 despite the pricing page) covers about 8 minutes of 1 req/s polling. STARTER at EUR 20 is capped at 1 req/min per book, slower than CNO. Only PRO at EUR 79/mo gives 1 req/s per book plus a socket, which is above the under-50 bar. Versus the known sources: Kalshi and Polymarket odds are free and direct, and PulseScore's Kalshi is derived from last trade, so worse. The only candidate edge is Pinnacle-family prices via PS3838 for NFL/NBA/MLB/tennis live, with no live hockey, and no Circa, ProphetX, Sporttrade or Novig. Scores: this relays each book's own board, only where the book offers one. It is not an independent score source and has no evidence of leading Sofascore's free 2.5 s REST poll, which showed 22 of 29 Novig-moving scores 3 s or more early. Use in Vigilant: technically easy (keyed JSON and WebSocket). It is worth it only if a short free-tier measurement shows PS3838 data aged under about 3 s; otherwise no. The ToS and key-on-device caveats apply.
+- **confidence**: medium
+- **open_questions**:
+  - How often does the scraper pass each book, and does 'the bookmaker's write' mean the book's own change or PulseScore's database write? Neither is stated.
+  - Is a streamed price's real age ever visible? REST on bet365, DraftKings and FanDuel may or may not carry updatedAt; only the PS3838 spec documents it, and the stream docs say it is never sent.
+  - Does a BASIC key really get close code 4003 on the sockets, as the specs and docs say, or a socket as the pricing page says? Do 401, 429 and empty-page calls count toward the 500?
+  - Do the PS3838, DraftKings and FanDuel boards actually carry player props? The vendor says yes, a directory says no, and the specs never say 'player'.
+  - Does the PRO 7-day trial need a card at checkout? The terms say refunds end after any API call.
+  - Does a book's scoreboard through PulseScore ever lead Sofascore or ESPN on tennis, NBA or MLB plays, or is it as slow as the book's own board? Untested.
+  - Who operates this? The terms name no company or governing law, and the only contact is a gmail address. Its continuity and its books' tolerance of scraping are unknown.
+- **could_not_read**:
+  - /sport-availability per-bookmaker hover details (sports, live and socket support per book): JavaScript hover content, not in the fetched text; I used the keyless capabilities JSON instead.
+  - Any keyed data endpoint (live-events, ws/live, stream): no sign-up or key allowed, so no real payload, no updatedAt example, no payload-vs-Date comparison, and no check that a free key is refused by the sockets.
+  - The RapidAPI listing (rapidapi.com/pulsescore/api/bet365data): not fetched, and not surfaced by search.
+  - The three blog posts (Feb-Mar 2026, all Bet365-centred): only their titles and teasers were read.
+  - The Stream API protocol doc at api.pulsescore.net/api/stream/doc and the reference clients (apply.js, apply.py): not fetched; I read the same material on /docs/stream-api.
+  - The Telegram and X channels (stated to carry status updates): not read.
+  - No status page was found on the site.
+- **other_sources_it_names**:
+  -
+    - **name**: api.pulsescore.net per-bookmaker Swagger docs
+    - **url**: https://api.pulsescore.net/api/ps3838/doc
+    - **why_it_matters**: Public and keyless to read; the only primary text defining updatedAt (a scrape-pass stamp) and stating that BASIC and STARTER sockets are rejected.
+  -
+    - **name**: Stream API capabilities endpoint
+    - **url**: https://api.pulsescore.net/api/stream/capabilities
+    - **why_it_matters**: Keyless list of the 58 books and their live sports; proves Circa, ProphetX, Sporttrade and Novig are absent.
+  -
+    - **name**: RapidAPI bet365data listing
+    - **url**: https://rapidapi.com/pulsescore/api/bet365data
+    - **why_it_matters**: Alternate billing route (the specs mention x-rapidapi-proxy-secret); not read.
+  -
+    - **name**: sportsapis.dev PulseScore review (affiliate directory)
+    - **url**: https://sportsapis.dev/apis/pulsescore
+    - **why_it_matters**: Only third-party writeup; no measured latency, undated, partly stale (Ultra 5 req/s, 'no player props'), and a different location of the same figures.
+  -
+    - **name**: Product Hunt launch thread
+    - **url**: https://www.producthunt.com/p/pulsescore/pulsescore
+    - **why_it_matters**: Maker's 'under 1 second' and 60-second pre-match refresh are goals, and it names no data method.
+- **what_the_phone_should_test**:
+  - Free account (Tj signs up, I did not): run `npx wscat` or any WebSocket client against wss://api.pulsescore.net/api/ps3838/ws/live?key=KEY&sport=tennis. Expect close code 4003. This settles the pricing-page versus docs contradiction for free.
+  - During one live ATP or WTA match or an NBA game, poll GET https://api.pulsescore.net/api/ps3838/live-events?sport=tennis&limit=30 with header X-Secret at 1 req/s for about 150 requests (30% of the 500 monthly). Log per event: response Date minus updatedAt, the score, the odds, and the time each price changes. Pass bar: median age under 3 s and p95 under 10 s. Remember updatedAt is a scrape-pass stamp, so also check that a price actually changes within a few seconds of the same match moving on Novig.
+  - Run Novig and PS3838 side by side on that match: how many seconds before Novig's price move did PS3838's move arrive? If PS3838 is not ahead of Novig's makers by 3 s or more, stop here, because the fair-price use fails whatever the plumbing.
+  - Only if steps 2-3 pass, score check: log when the `score` field changes through PulseScore versus a Sofascore REST poll at 2.5 s on the same match, and count plays where PulseScore leads by 3 s or more. Expect little, since the score is the book's own board.
+  - Props check: GET /api/ps3838/basketball/events/{eventId} (or draftkings/fanduel) with the key and count markets whose rawName contains a player name, to settle the vendor-versus-directory conflict.
+  - Last, and only if all of the above passes: use the PRO 7-day trial (monthly billing only; check whether a card is needed first, and note no refund after any API call). Compare the socket frame `timestamp` and Stream API `ts` against the REST updatedAt, and confirm the socket is no faster than 1 req/s REST.
 
 ## scout:2-bksignal-odds
 
