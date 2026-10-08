@@ -5587,3 +5587,8 @@ How accurate is the vigilant stats tracker on whether bets Beat clv.
 ```
 My take bets are bad after 6 hours, shouldn't my make bids be good after 6 hours because I'm on the other side of this
 ```
+
+## 2026-10-08T15:25:20Z
+```
+Is there anything in the auto bid feature that prevents auto bidding on an identical bet multiple times
+```
