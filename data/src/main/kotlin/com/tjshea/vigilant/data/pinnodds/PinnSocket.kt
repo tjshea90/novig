@@ -45,10 +45,11 @@ class PinnSocket(
     private val url: String = "wss://pinnodds.com/ws/feed",
     private val clock: () -> Long = System::currentTimeMillis,
 ) : PinnFeedSource {
+    // An APPLICATION interceptor: OkHttp does not run network interceptors for a WebSocket call (RealCall: `if (!forWebSocket) interceptors += networkInterceptors`), and the offer is added before the call.
     private val client: OkHttpClient = http.newBuilder()
         .pingInterval(0, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.SECONDS)
-        .addNetworkInterceptor { chain -> chain.proceed(chain.request().newBuilder().removeHeader("Sec-WebSocket-Extensions").build()) }
+        .addInterceptor { chain -> chain.proceed(chain.request().newBuilder().removeHeader("Sec-WebSocket-Extensions").build()) }
         .build()
 
     private val _state = MutableStateFlow<PinnSocketState>(PinnSocketState.Off)

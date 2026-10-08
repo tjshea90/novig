@@ -33,7 +33,7 @@ docs and the running API disagree, the running API wins (the docs say so). **Nev
 - **Heartbeat**: the server sends `{"type":"ping","ts":…,"buffered_max_bytes":N}` every 30 s (measured: 30.0 s apart); reply `{"type":"pong"}` or it closes after ~75 s (`1001 "stale"`).
   `buffered_max_bytes` is the server-side send backlog for your socket (0 = draining as fast as sent); at 128 MB you are dropped (`1011 "deregistered: slow_consumer"`, retry at once).
 - **Compression: off.** `permessage-deflate` is negotiated by the *client*; it serialises frames and the docs measured a p99 of 1241 ms against 187 ms without. OkHttp offers it on every upgrade, so
-  `PinnSocket` removes the `Sec-WebSocket-Extensions` request header in a network interceptor. Max message 8 MB (2 MB minimum); snapshots are chunked ≤ 512 KB (`seq`, `final`; a single-frame snapshot has neither).
+  `PinnSocket` removes the `Sec-WebSocket-Extensions` request header in an APPLICATION interceptor (OkHttp does not run network interceptors for a WebSocket call; `PinnSocketTest` pins it). Max message 8 MB (2 MB minimum); snapshots are chunked ≤ 512 KB (`seq`, `final`; a single-frame snapshot has neither).
 - Close codes: `1001` evicted/stale/server shutdown, `1011 deregistered:` (match the prefix; retry immediately), `1006` (an oversized frame). Reconnect 1, 2, 4 … 30 s and subscribe again (nothing is kept server-side).
 - HTTP errors: 401 `missing_key`/`invalid_key`; 403 `plan_lacks_ws`/`plan_lacks_sse`; 429 `rate_limited` (+ `Retry-After`; also on connection floods); 503 `prematch_disabled`.
 - Key sharing/resale is detected by connection counts per key; a phone using Tj's own key is the intended use. More connections = more accounts (email info@pinnodds.com; support @ArbitrageXpro on Telegram).
