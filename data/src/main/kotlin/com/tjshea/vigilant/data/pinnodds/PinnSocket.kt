@@ -103,9 +103,9 @@ class PinnSocket(
             val request = Request.Builder().url(url).header("x-api-key", k).build()
             val ws = client.newWebSocket(request, object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
-                    webSocket.send("""{"type":"subscribe","streams":["live"],"sport_ids":[${sports.joinToString(",")}]}""")
                     lastFrameAtMs = clock()
                     _state.value = PinnSocketState.Live(clock())
+                    webSocket.send("""{"type":"subscribe","streams":["live"],"sport_ids":[${sports.joinToString(",")}]}""")
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
