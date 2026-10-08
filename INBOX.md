@@ -5572,3 +5572,8 @@ So as an example review the screenshot:
 3) how old are the odds from the other books when it shows in the list? 
 4) how confident is the app that these are truly positive ev bets
 ```
+
+## 2026-10-08T14:36:10Z
+```
+Can vigilant actually tell how old odds are from other sports books? How?
+```
