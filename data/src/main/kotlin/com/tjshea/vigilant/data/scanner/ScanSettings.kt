@@ -287,6 +287,12 @@ data class ScanSettings(
      */
     val makerPopularFirst: Boolean = true,
     /**
+     * Tj, 2026-10-08: "leave the app on and background auto bid for hours … worried about api usage running out too fast … without sacrificing accuracy or quality of bids".
+     * The long-run saver ([LongRunBids], RESEARCH.md §119): the background scan reads only what Quick & likely bids go on and waits 8 minutes, not 4, while every game is
+     * far off. No bid rule changes. On by default.
+     */
+    val makerLongRun: Boolean = true,
+    /**
      * Tj, 2026-10-04: "Maybe a sharp book should be required to agree on the positive EV". A bid is posted only when a sharp book (Pinnacle, Circa, the exchanges)
      * prices the line both ways and agrees: the veto ([makerSharpVeto]) stays a veto when one says no, and with this on, none pricing it is a no too. Off by
      * default: Tj's own bets with no sharp book on the page had a CLV of -1.9% (12 closes) against +3.5% (62) with one, but the study's props went the
@@ -383,6 +389,8 @@ data class ScanSettings(
      * dropped before the devig, a league with no game in the window isn't asked); never saved, so a saved file can't switch it on.
      */
     @Transient val lowUsageScan: Boolean = false,
+    /** Set only by the background scan ([LongRunBids.leanApplies]) and read by [effective]: this scan is the lean one. Never saved. */
+    @Transient val leanScan: Boolean = false,
     /** Set only by [effective]: the fewest sharp books a sharp fair is built from ([com.tjshea.vigilant.engine.FairSettings.minSharp]). Never saved. */
     @Transient val minSharpBooks: Int = 1,
     /**
@@ -777,6 +785,8 @@ data class ScanSettings(
         // Low API usage (RESEARCH.md §92): Vigilant's own scan reads the picked sharp prop books' props for the next 6 hours and nothing else. A bets-only pass ([forBets]:
         // Check odds now, pricing Tj's open bets of every kind) is not narrowed: it asks for the games he holds.
         lowUsageNow && !forBets -> LowUsageBids.profile(this)
+        // The long-run saver's lean background scan (RESEARCH.md §119): the families a bid can go on, nothing else. Tj's own scans never carry the flag.
+        leanScan && !forBets -> LongRunBids.profile(this)
         else -> this
     }
 
