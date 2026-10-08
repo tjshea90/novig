@@ -871,7 +871,7 @@ object MakerPlan {
     /**
      * A game this far from its start (hours) is "far" for the order: its bid goes up after every nearer one when the wallet, the dollar limit or the most bids can't take them
      * all (RESEARCH.md §119.3). Tj's own bids: 30 min-2 h CLV +3.6% (10 closes), 6-24 h +2.7% (14); Novig's trade files (§72.3): a bid's EV per quote is +0.040% at 6-12 h and
-     * +0.014% at 12-25 h with 1% filling; takers' CLV on props 12 h or more out -0.7% against +1.5% inside 6 h (n=272 and 190). It never decides which bids qualify.
+     * +0.014% at 12-25 h with 1% filling; takers' CLV on props 12-24 h out -0.7% (n=272) against +1.6% at 1-6 h (n=190). It never decides which bids qualify.
      */
     const val FAR_HOURS = 12
 
