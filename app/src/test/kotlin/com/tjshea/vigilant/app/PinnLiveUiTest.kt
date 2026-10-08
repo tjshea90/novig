@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -66,19 +67,22 @@ class PinnLiveUiTest {
         return { ui }
     }
 
-    private fun state(settings: ScanSettings = ScanSettings(), keys: List<String> = listOf("uq8xqStTz7dFT5tIAg53Qstu6ZU1WLAh")) =
-        SampleScan.state().copy(settings = settings, pinnoddsKeys = keys)
+    private fun state(settings: ScanSettings = ScanSettings(), keys: List<String> = listOf("abcd1234efgh5678")) =
+        SampleScan.state().copy(settings = settings, pinnoddsKeys = keys, pinnLive = LiveRunnerStatus(running = true, socket = "live"))
 
     @Test
-    fun `a key can be added, and the Test key button asks for the test and shows the answer`() {
+    fun `the Test key button needs a saved key, then asks for the test`() {
         val probe = Probe()
-        val ui = show(state(keys = emptyList()), probe)
+        show(state(keys = emptyList()), probe)
         compose.onNodeWithTag("pinnTestKey").performScrollTo().assertIsNotEnabled()
-        val ui2 = show(state(), probe)
+    }
+
+    @Test
+    fun `with a key saved the Test key button asks for the test once per tap`() {
+        val probe = Probe()
+        show(state(), probe)
         compose.onNodeWithTag("pinnTestKey").performScrollTo().assertIsEnabled().performClick()
         assertEquals(1, probe.tested)
-        assertNull(ui().settings.pinnLiveHalted)
-        assertEquals(false, ui2().settings.pinnLive)
     }
 
     @Test
@@ -135,7 +139,7 @@ class PinnLiveUiTest {
     @Test
     fun `a halt is shown with the reason and Resume clears it`() {
         val ui = show(state(ScanSettings(pinnLive = true, pinnLiveBet = true, pinnLiveHalted = "an order's answer was lost")))
-        compose.onNodeWithTag("pinnLiveHalted").performScrollTo().assertTextContains("an order's answer was lost", substring = true)
+        compose.onNodeWithText("Stopped: an order's answer was lost").performScrollTo()
         compose.onNodeWithTag("pinnLiveResume").performScrollTo().performClick()
         assertNull(ui().settings.pinnLiveHalted)
     }

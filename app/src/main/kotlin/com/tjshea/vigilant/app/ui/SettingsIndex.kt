@@ -34,7 +34,7 @@ object SettingsIndex {
         // Scanning
         Entry("Pinnodds key", SettingsPage.PINNODDS, "Your pinnodds.com key for Pinnacle's live WebSocket, with a button that tests it", "pinnodds pinnacle websocket key test live", novig),
         Entry("Pinnodds live feed", SettingsPage.PINNODDS, "Compare Pinnacle's live prices with Novig's live books; paper unless real bets are on", "pinnodds pinnacle live feed paper lag in-play", novig),
-        Entry("Place real bets on live games", SettingsPage.PINNODDS, "Bet on Novig when its price lags Pinnacle's fair after the fee; stake, game, day and loss limits", "pinnodds live real bets stake limit lag in-play", novig),
+        Entry("Place real bets", SettingsPage.PINNODDS, "On live games, bet on Novig when its price lags Pinnacle's fair after the fee; stake, game, day and loss limits", "pinnodds live real bets stake limit lag in-play", novig),
         Entry("Pause all scanning", SettingsPage.SCANNING, "Stop every read until you switch it back on", "stop pause"),
         Entry("Which scanner", SettingsPage.SCANNING, "CrazyNinjaOdds' list, Vigilant's own scan, or both", "cno vigilant scanner mode both"),
         Entry("Pinnacle only", SettingsPage.SCANNING, "Compare Novig with Pinnacle's devigged price alone; read nothing else", "pinnacle only sharp devig compare auto-bet fresh age", novig),
