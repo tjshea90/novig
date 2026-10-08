@@ -43,7 +43,6 @@ import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import com.tjshea.vigilant.data.novig.stream.NovigStream
 import com.tjshea.vigilant.data.reference.KalshiClient
 import com.tjshea.vigilant.data.reference.LowUsageSource
-import com.tjshea.vigilant.data.reference.PinnacleBackup
 import com.tjshea.vigilant.data.reference.PinnapiClient
 import com.tjshea.vigilant.data.reference.PolymarketClient
 import com.tjshea.vigilant.data.reference.PropLineClient
@@ -751,21 +750,6 @@ class AppContainer(private val app: Application) {
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Make orders", e.message ?: e.javaClass.simpleName) } }
             }
         }
-        // Pinnacle only (RESEARCH.md §88.5): when a Vigilant scan ends, the auto-bet bets what it found against Pinnacle's devigged price, on a Pinnacle price read again first
-        // if the scan's is past a third of Settings' age limit. One pass at a time, after every scan whoever started it; nothing here runs unless Pinnacle only and auto-bet are on.
-        appScope.launch {
-            var seen = runner.state.value.finished
-            runner.state.collect { st ->
-                if (st.scanning || st.finished <= seen) return@collect
-                seen = st.finished
-                val s = currentSettings()
-                val result = st.result
-                if (!AppBook.isNovig || !com.tjshea.vigilant.data.novig.trading.PinnacleBet.passDue(s, result)) return@collect
-                runCatching {
-                    autoBet.runPinnacle(s, result!!) { leagues -> scanner.refreshFair(s, referenceSources(s, background = true), leagues) }
-                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; runCatching { problems.add("Auto-bet (Pinnacle only)", e.message ?: e.javaClass.simpleName) } }
-            }
-        }
         // A crash saved as the last process went down ([AppExits.install]): into Recent problems at the time it happened.
         appScope.launch(Dispatchers.IO) {
             AppExits.takeSavedCrash(app)?.let { (at, text) -> runCatching { problems.add("App crash", text, atMs = at, maxLength = problems.crashLength) } }
@@ -1267,7 +1251,6 @@ class AppContainer(private val app: Application) {
      * every call, so adding or removing a key takes effect on the next scan.
      */
     fun referenceSources(settings: ScanSettings, background: Boolean = false, scan: Boolean = false): List<ReferenceSource> = when {
-        settings.pinnacleOnly -> pinnacleOnlySources(settings, background)
         // Low-usage bids narrow Vigilant's own scan only ([scan]): what prices Tj's open bets, the sharp-book confirmations and the rest read the usual feeds.
         scan && settings.lowUsageNow -> lowUsageSources(settings, background)
         else -> allReferenceSources(settings, background, scan)
@@ -1298,27 +1281,6 @@ class AppContainer(private val app: Application) {
             if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) add(LowUsageBids.FEED_PARLAY)
         }
         return LowUsageBids.feedsFor(LowUsageBids.books(settings), available)
-    }
-
-    /**
-     * Pinnacle only (Tj, 2026-10-05; RESEARCH.md §88.5): Pinnacle's own feeds first (PinnWire, then pinnapi), and ONE backup for the leagues they don't answer: PropLine
-     * (a free daily allowance of requests, Pinnacle's book alone asked) if it has a key and is switched on, else ParlayAPI (credits, paced) if it does. Never The Odds
-     * API, Kalshi or Polymarket, and not both backups: [PinnacleBackup] says when each is asked at all.
-     */
-    private fun pinnacleOnlySources(settings: ScanSettings, background: Boolean): List<ReferenceSource> = buildList {
-        val pinnacleOn = keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty()
-        if (pinnacleOn) add(pinnacle)
-        parlayOdds.alternates = !pinnacleOn
-        parlayOddsBackground.alternates = !pinnacleOn
-        parlayHalves.pinnacleFeedOn = pinnacleOn
-        parlayHalvesBackground.pinnacleFeedOn = pinnacleOn
-        when {
-            settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty() -> {
-                add(PinnacleBackup(propLine))
-                if (settings.useBookProps) add(PinnacleBackup(propLineProps))
-            }
-            settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty() -> add(PinnacleBackup(if (background) parlayOddsBackground else parlayOdds))
-        }
     }
 
     private fun allReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
