@@ -81,6 +81,12 @@ class PinnEvent(val id: Long) {
 
     /** False for Pinnacle's special books on a match (corners and the like): their lines are not the game's. */
     var regular: Boolean = true
+
+    /** Pinnacle's `units`: "Regular", or for tennis "Sets" (the match: its moneyline is the winner) and "Games" (its spread and total are in games). */
+    var units: String = "Regular"
+
+    /** One match's matchups share this (a live child's parent, or the prematch matchup itself): the tennis Sets and Games children of a match have the same one. */
+    val groupId: Long get() = parentId ?: id
     var score: Pair<Int, Int>? = null
 
     /** The phone's clock when the score last CHANGED (0 = not seen to change). */
@@ -138,7 +144,11 @@ class PinnBook(var method: DevigMethod = DevigMethod.WORST_CASE) {
         if (sport != 0) e.sportId = sport
         (rec["parentId"] as? JsonPrimitive)?.longOrNull?.let { e.parentId = it }
         (rec["isLive"] as? JsonPrimitive)?.booleanOrNull?.let { e.live = it }
-        (rec["units"] as? JsonPrimitive)?.contentOrNull?.let { e.regular = it == "Regular" }
+        (rec["units"] as? JsonPrimitive)?.contentOrNull?.let { u ->
+            e.units = u
+            // Tennis is booked as two children of one match: "Sets" (match winner) and "Games" (games spread and total). Both are the match's own lines, not specials (2026-10-08 tape).
+            e.regular = u == "Regular" || (e.sportId == TENNIS_SPORT_ID && (u == "Sets" || u == "Games"))
+        }
         (rec["startTime"] as? JsonPrimitive)?.contentOrNull?.let { s -> runCatching { java.time.Instant.parse(s).toEpochMilli() }.getOrNull()?.let { e.startMs = it } }
         (rec["league"] as? JsonObject)?.get("name")?.let { (it as? JsonPrimitive)?.contentOrNull }?.let { e.league = it }
         val parts = rec["participants"] as? JsonArray
@@ -146,8 +156,8 @@ class PinnBook(var method: DevigMethod = DevigMethod.WORST_CASE) {
             val o = p as? JsonObject ?: return@forEach
             val name = (o["name"] as? JsonPrimitive)?.contentOrNull ?: return@forEach
             when ((o["alignment"] as? JsonPrimitive)?.contentOrNull) {
-                "home" -> e.home = name
-                "away" -> e.away = name
+                "home" -> e.home = name.removeSuffix(GAMES_SUFFIX)
+                "away" -> e.away = name.removeSuffix(GAMES_SUFFIX)
             }
         }
         readScore(rec)?.let { s ->
@@ -156,6 +166,8 @@ class PinnBook(var method: DevigMethod = DevigMethod.WORST_CASE) {
                 if (e.score != null) {
                     out += PinnChange(id, null, PinnChange.Kind.SCORE, nowMs)
                     e.scoreAtMs = nowMs
+                    // A tennis game won moves the Sets child's match winner as much as the Games child's lines.
+                    if (e.sportId == TENNIS_SPORT_ID) for (o in events.values) if (o.groupId == e.groupId) o.scoreAtMs = nowMs
                 }
                 e.score = s
             }
@@ -269,6 +281,8 @@ class PinnBook(var method: DevigMethod = DevigMethod.WORST_CASE) {
     companion object {
         /** How long a danger-zone frame marks its matchup too jumpy to bet. */
         const val VOLATILE_MS = 3_000L
+        const val TENNIS_SPORT_ID = 2
+        const val GAMES_SUFFIX = " (Games)"
         const val HISTORY_MAX = 64
         const val HISTORY_MS = 120_000L
 

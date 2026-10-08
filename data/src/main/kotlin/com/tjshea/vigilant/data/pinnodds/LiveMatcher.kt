@@ -18,9 +18,16 @@ data class LiveTarget(
     val swapped: Boolean,
     val outcomeBySide: Map<PinnSide, String>,
 ) {
+    /** Tennis: the match winner comes from the Sets child, the games spread and total from the Games child, so a target only reads the lines its own child may price. */
+    private fun priced(e: PinnEvent, l: PinnLine): Boolean = when (e.units) {
+        "Sets" -> type == PinnLineType.MONEYLINE
+        "Games" -> type != PinnLineType.MONEYLINE
+        else -> true
+    }
+
     /** The Pinnacle line that prices this market now, or null when Pinnacle has none for it (the line moved off this strike, the market is not offered). */
     fun line(e: PinnEvent): PinnLine? = e.lines.values.firstOrNull { l ->
-        l.period == 0 && l.type == type && !l.alternate && l.fair.keys.none { it == PinnSide.DRAW } && when (type) {
+        l.period == 0 && l.type == type && priced(e, l) && !l.alternate && l.fair.keys.none { it == PinnSide.DRAW } && when (type) {
             PinnLineType.MONEYLINE -> true
             PinnLineType.SPREAD -> l.points?.let { abs(it - (if (swapped) -strike!! else strike!!)) < 1e-9 } == true
             PinnLineType.TOTAL -> l.points?.let { abs(it - strike!!) < 1e-9 } == true
@@ -33,14 +40,24 @@ object LiveMatcher {
     const val MAX_START_GAP_MS = 5 * 3_600_000L
 
     /** A matched pair: [swapped] when Novig's home team is Pinnacle's away. */
-    data class Pair(val pinnEventId: Long, val event: NovigEvent, val swapped: Boolean)
+    data class Pair(
+        val pinnEventId: Long,
+        val event: NovigEvent,
+        val swapped: Boolean,
+        /** Where the spread and total come from: the matchup itself, or for tennis its Games child (null: a tennis match with no Games child, so no spread or total target). */
+        val linesEventId: Long? = pinnEventId,
+        val tennis: Boolean = false,
+    )
 
     /**
      * For each Novig game, the Pinnacle matchup that is it: the best name match (both teams must fit), starting near the same time, preferring a live and recently heard-from matchup (one fixture
      * can have a stale re-issued child beside the live one, docs: "key by rec.id"). Games with no clear match are left out, never guessed.
      */
     fun matchEvents(pinn: Collection<PinnEvent>, novig: Collection<NovigEvent>, nowMs: Long, accept: (PinnEvent, NovigEvent) -> Boolean = { _, _ -> true }): List<Pair> {
-        val usable = pinn.filter { it.regular && it.home.isNotBlank() && it.away.isNotBlank() }
+        val named = pinn.filter { it.regular && it.home.isNotBlank() && it.away.isNotBlank() }
+        // A tennis match's Games child never stands for the match: it is found beside the Sets child that does (same groupId).
+        val usable = named.filter { it.units != "Games" }
+        val gamesByGroup = named.filter { it.units == "Games" && it.sportId == PinnBook.TENNIS_SPORT_ID }.associateBy { it.groupId }
         val used = HashSet<Long>()
         val out = ArrayList<Pair>()
         for (n in novig) {
@@ -68,7 +85,8 @@ object LiveMatcher {
             }
             if (best != null) {
                 used += best.id
-                out += Pair(best.id, n, bestSwapped)
+                val tennis = best.sportId == PinnBook.TENNIS_SPORT_ID
+                out += if (tennis) Pair(best.id, n, bestSwapped, gamesByGroup[best.groupId]?.id, true) else Pair(best.id, n, bestSwapped)
             }
         }
         return out
@@ -79,11 +97,23 @@ object LiveMatcher {
         if (m.eventId != pair.event.eventId || !m.isOpen || m.outcomes.size != 2) return@mapNotNull null
         when (m.marketType) {
             "MONEY" -> money(pair, m)
-            "SPREAD" -> spread(pair, m)
-            "TOTAL" -> total(pair, m)
+            "SPREAD" -> if (pair.tennis && !gamesLine(m, 3.5)) null else spread(pair, m)
+            "TOTAL" -> if (pair.tennis && !gamesLine(m, 12.0)) null else total(pair, m)
             else -> null
         }
     }
+
+    /**
+     * Novig's tennis spread and total are not told apart from a SETS spread or total by their market type, and Pinnacle's SETS lines (±1.5, 2.5 sets) must never price a games market.
+     * A games line is accepted only when the market does not say sets and its line is out of any sets line's reach (sets spreads are at most ±2.5, total sets at most 4.5; [min] is the floor).
+     */
+    private fun gamesLine(m: NovigMarket, min: Double): Boolean {
+        if (SETS_WORD.containsMatchIn(m.description) || m.outcomes.any { SETS_WORD.containsMatchIn(it.name) }) return false
+        val line = m.strike ?: m.outcomes.firstNotNullOfOrNull { trailingNumber(it.name) } ?: return false
+        return abs(line) >= min
+    }
+
+    private val SETS_WORD = Regex("""\bsets?\b""", RegexOption.IGNORE_CASE)
 
     private fun side(novigHome: Boolean, swapped: Boolean): PinnSide = if (novigHome != swapped) PinnSide.HOME else PinnSide.AWAY
 
@@ -103,7 +133,7 @@ object LiveMatcher {
         val homeIdx = nums.indexOfFirst { abs(it - strike) < 1e-9 }
         if (homeIdx < 0 || nums[1 - homeIdx] != -nums[homeIdx]) return null
         val map = mapOf(side(true, pair.swapped) to m.outcomes[homeIdx].outcomeId, side(false, pair.swapped) to m.outcomes[1 - homeIdx].outcomeId)
-        return LiveTarget(pair.pinnEventId, pair.event, m, PinnLineType.SPREAD, strike, pair.swapped, map)
+        return LiveTarget(pair.linesEventId ?: return null, pair.event, m, PinnLineType.SPREAD, strike, pair.swapped, map)
     }
 
     private fun total(pair: Pair, m: NovigMarket): LiveTarget? {
@@ -111,7 +141,7 @@ object LiveMatcher {
         if (strike % 1.0 == 0.0) return null
         val over = m.outcomes.firstOrNull { it.name.startsWith("Over", ignoreCase = true) } ?: return null
         val under = m.outcomes.firstOrNull { it.name.startsWith("Under", ignoreCase = true) } ?: return null
-        return LiveTarget(pair.pinnEventId, pair.event, m, PinnLineType.TOTAL, strike, pair.swapped, mapOf(PinnSide.OVER to over.outcomeId, PinnSide.UNDER to under.outcomeId))
+        return LiveTarget(pair.linesEventId ?: return null, pair.event, m, PinnLineType.TOTAL, strike, pair.swapped, mapOf(PinnSide.OVER to over.outcomeId, PinnSide.UNDER to under.outcomeId))
     }
 
     private val NUMBER = Regex("""([+-]?\d+(?:\.\d+)?)\s*$""")
