@@ -543,8 +543,6 @@ class AutoBettor(
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
     companion object {
-        /** The Pinnacle-only pass looks at bets this far (EV, a point) under the minimum: a fresher Pinnacle price can lift one over it. */
-        const val LOOK_BELOW = 0.01
 
         /** Auto-bet bets the sharp veto stopped only for its bar (the sharpest book gave a positive edge under [ScanSettings.sharpVetoMinEv]). */
         const val SHARP_BAR_COUNTER = "sharpbar.autobet.under"
@@ -631,9 +629,9 @@ class AutoBettor(
         }
 
         /** A line for Settings and Diagnostics: what the last run did. */
-        fun line(s: Status, now: Long, pinnacleOnly: Boolean = false): String {
+        fun line(s: Status, now: Long): String {
             val r = s.last
-            if (s.lastRunMs == null) return if (pinnacleOnly) "No check yet: it runs when the next Vigilant scan ends." else "No check yet: it runs with the next background CNO scan."
+            if (s.lastRunMs == null) return "No check yet: it runs with the next background CNO scan."
             val at = "Last check ${com.tjshea.vigilant.app.ui.Format.age(s.lastRunMs, now)}"
             s.blocker?.let { return "$at: $it" }
             val parts = listOfNotNull(
@@ -733,28 +731,6 @@ object AutoBetNotes {
             .setContentIntent(EvAlerts.openVigilant(app, ID_PLACED))
             .build()
         // Its own notification each (the bet's id is the tag): two bets in one cycle never replace one another.
-        runCatching { NotificationManagerCompat.from(app).notify(bet.id, ID_PLACED, n) }
-    }
-
-    /** "Auto-bet $4.20 · +3.4% EV · Over 5.5" with Pinnacle's price age: a bet placed in Pinnacle only (the EV is against Pinnacle's devigged price alone). */
-    fun placedPinnacle(app: Application, target: BetTarget, bet: TrackedBet, pinnacleAgeSec: Long?, walletLeft: Double? = null) {
-        if (!ScanService.canNotify(app)) return
-        ensureChannel(app)
-        val odds = bet.american?.let { if (it > 0) "+$it" else "$it" } ?: "?"
-        val left = walletLeft?.let { " · wallet ${String.format(Locale.US, "$%.2f", it.coerceAtLeast(0.0))} left" }.orEmpty()
-        val age = pinnacleAgeSec?.let { " · Pinnacle's price ${it}s old" }.orEmpty()
-        val text = "$odds · vs Pinnacle devigged$age · ${target.marketLabel} · ${target.eventName}$left"
-        val n = NotificationCompat.Builder(app, CHANNEL_BET)
-            .setSmallIcon(R.drawable.ic_scan)
-            .withWallet(app)
-            .setContentTitle(title(bet, target))
-            .setContentText(text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_STATUS)
-            .setAutoCancel(true)
-            .setContentIntent(EvAlerts.openVigilant(app, ID_PLACED))
-            .build()
         runCatching { NotificationManagerCompat.from(app).notify(bet.id, ID_PLACED, n) }
     }
 
