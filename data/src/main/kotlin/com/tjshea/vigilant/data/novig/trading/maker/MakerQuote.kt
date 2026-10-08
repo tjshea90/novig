@@ -728,6 +728,8 @@ object MakerPlan {
             val worth = compareBy<RestingBid> { it.auto }
                 .thenBy { it.obscure }
                 .thenByDescending { byOutcome[it.outcomeId]?.leads ?: it.leads }
+                // Far games' bids come down first when the money falls short: a bid 12 h or more out fills about a third as often per quote (RESEARCH.md §119.3).
+                .thenBy { farOf(byOutcome[it.outcomeId]?.line?.startsTs ?: it.game?.startsTs, now) }
                 .thenBy { it.price }
                 .thenByDescending { byOutcome[it.outcomeId]?.evAtFair ?: it.evAtFair }
             var left = room
@@ -782,7 +784,7 @@ object MakerPlan {
             r.dollars += w.cost
             r.spend -= (w.cost - (freed[w.line.outcomeId] ?: 0.0)).coerceAtLeast(0.0)
         }
-        val ordered = wanted.filter { it.line.outcomeId !in covered }.sortedWith(priority(rules))
+        val ordered = wanted.filter { it.line.outcomeId !in covered }.sortedWith(priority(rules, now))
         // The popular bids first (Tj, 2026-10-07: popular large markets first, then, if there is room, obscure ones). A popular bid held up by the room is remembered.
         val roomShort = ArrayList<MakerDecision.Post>()
         for (w in ordered.filter { !it.obscure }) {
@@ -864,15 +866,25 @@ object MakerPlan {
      * that kind a day; a kind never measured by how many books price the line), then the cheapest and the most EV as before. Never changes which bids qualify, only which
      * go up when the bids, the dollars or the wallet run out.
      */
-    fun priority(rules: MakerRules): Comparator<MakerDecision.Post> = compareBy<MakerDecision.Post> { it.obscure }.then(popularPriority(rules))
+    fun priority(rules: MakerRules, now: Long = System.currentTimeMillis()): Comparator<MakerDecision.Post> = compareBy<MakerDecision.Post> { it.obscure }.then(popularPriority(rules, now))
 
-    private fun popularPriority(rules: MakerRules): Comparator<MakerDecision.Post> = when {
-        // Quick & likely to win: leading their side first (takers reach them first), then the kinds takers trade most, then the likeliest fill (the price band's rate),
-        // then the most edge against the book that moves first. Not the cheapest: a longshot's bid fills sooner but is not what this is for.
-        rules.quick -> compareByDescending<MakerDecision.Post> { it.leads }.thenBy { tierOf(it, rules) }
+    /**
+     * A game this far from its start (hours) is "far" for the order: its bid goes up after every nearer one when the wallet, the dollar limit or the most bids can't take them
+     * all (RESEARCH.md §119.3). Tj's own bids: 30 min-2 h CLV +3.6% (10 closes), 6-24 h +2.7% (14); Novig's trade files (§72.3): a bid's EV per quote is +0.040% at 6-12 h and
+     * +0.014% at 12-25 h with 1% filling; takers' CLV on props 12 h or more out -0.7% against +1.5% inside 6 h (n=272 and 190). It never decides which bids qualify.
+     */
+    const val FAR_HOURS = 12
+
+    /** 1 for a game [FAR_HOURS] or more from its start at [now], else 0 (an unknown start counts as near: nothing is held back for a time nobody knows). */
+    fun farOf(startsTs: Long?, now: Long): Int = if (startsTs != null && startsTs - now >= FAR_HOURS * 3_600_000L) 1 else 0
+
+    private fun popularPriority(rules: MakerRules, now: Long): Comparator<MakerDecision.Post> = when {
+        // Quick & likely to win: leading their side first (takers reach them first), then the games that start soonest (far ones last), then the kinds takers trade most, then the
+        // likeliest fill (the price band's rate), then the most edge against the book that moves first. Not the cheapest: a longshot's bid fills sooner but is not what this is for.
+        rules.quick -> compareByDescending<MakerDecision.Post> { it.leads }.thenBy { farOf(it.line.startsTs, now) }.thenBy { tierOf(it, rules) }
             .thenByDescending { QuickLikely.fillChancePerHour(it.price) }.thenByDescending { it.evAtFair }
-        !rules.popularFirst -> PRIORITY
-        else -> compareByDescending<MakerDecision.Post> { it.leads }.thenBy { tierOf(it, rules) }.thenBy { it.price }.thenByDescending { it.evAtFair }
+        !rules.popularFirst -> compareByDescending<MakerDecision.Post> { it.leads }.thenBy { farOf(it.line.startsTs, now) }.thenBy { it.price }.thenByDescending { it.evAtFair }
+        else -> compareByDescending<MakerDecision.Post> { it.leads }.thenBy { farOf(it.line.startsTs, now) }.thenBy { tierOf(it, rules) }.thenBy { it.price }.thenByDescending { it.evAtFair }
     }
 
     /** [MarketPopularity.tier] of the market a bid is on. */
