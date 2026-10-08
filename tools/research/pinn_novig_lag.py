@@ -41,6 +41,8 @@ def http(url, etag=None, timeout=15):
         if e.code == 304:
             return 304, None, etag
         return e.code, None, e.headers.get('Retry-After')
+    except Exception as e:   # a dropped connection, an SSL EOF, a timeout: a read that did not happen, never the end of the recording
+        return 0, None, None
 
 
 def norm(s):
