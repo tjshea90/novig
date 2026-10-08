@@ -526,10 +526,37 @@ def simulate(a):
             print(f"  t={time.strftime('%H:%M:%S', time.gmtime(r['t']/1000))} {r['league']:5s} {r['sel']:>12s} ask {r['ask']:.3f} fair {r['fair']:.3f} EV {r['ev']:+.1%} move {r['move']:+.3f} depth {r['depth']:.0f} -> fair+120s {r['fair120'] if r['fair120'] is None else round(r['fair120'],3)} ask+120s {r['ask120'] if r['ask120'] is None else round(r['ask120'],3)}")
 
 
+def scorelag(a):
+    """Pinnacle's score frame against its first moneyline price change: is a score an earlier signal than the price?"""
+    import bisect
+    pin, nov, mkt, match, scores, closes = load(a.path)
+    deltas = []; jumps = []
+    for pid, sc in scores.items():
+        ser = pin.get((pid, 's;0;m'))
+        if not ser: continue
+        ts = [x['t'] for x in ser]
+        for s_ in sc:
+            if s_.get('old') is None: continue
+            k = bisect.bisect_left(ts, s_['t'] - 50)
+            nxt = [x for x in ser[k:k + 6] if x['t'] >= s_['t'] - 50]
+            if not nxt: continue
+            deltas.append(nxt[0]['t'] - s_['t'])
+            prev = ser[k - 1] if k > 0 else None
+            after = [x for x in ser[k:] if x['t'] - s_['t'] <= 10000]
+            if prev and after: jumps.append(abs(after[-1]['fairp']['home'] - prev['fairp']['home']))
+    if not deltas:
+        print('no score changes with a following reprice'); return
+    deltas.sort(); jumps.sort(); q = lambda l, f: l[min(len(l) - 1, int(len(l) * f))]
+    print(f'score frame -> first Pinnacle moneyline price change: n={len(deltas)}  median {q(deltas,.5)} ms  p25 {q(deltas,.25)}  p75 {q(deltas,.75)}  p90 {q(deltas,.9)}')
+    print(f'same frame (<= 50 ms): {sum(1 for d in deltas if d <= 50)} of {len(deltas)}')
+    if jumps: print(f'fair move within 10 s of a score: median {q(jumps,.5):.3f}  p75 {q(jumps,.75):.3f}  max {jumps[-1]:.3f}  (>= 1.5 pts in {sum(1 for j in jumps if j >= 0.015)} of {len(jumps)})')
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(); sp = ap.add_subparsers(dest='cmd', required=True)
     r = sp.add_parser('record'); r.add_argument('--out', required=True); r.add_argument('--minutes', type=float, default=60); r.add_argument('--leagues', default=LEAGUES)
     z = sp.add_parser('analyze'); z.add_argument('path'); z.add_argument('--min-ev', type=float, default=0.01)
+    w = sp.add_parser('scorelag'); w.add_argument('path')
     y = sp.add_parser('simulate'); y.add_argument('path'); y.add_argument('--min-ev', type=float, default=0.03); y.add_argument('--min-move', type=float, default=0.015); y.add_argument('--settle', type=int, default=500)
     a = ap.parse_args()
-    {'record': record, 'analyze': analyze, 'simulate': simulate}[a.cmd](a)
+    {'record': record, 'analyze': analyze, 'simulate': simulate, 'scorelag': scorelag}[a.cmd](a)
