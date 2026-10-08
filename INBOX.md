@@ -5538,3 +5538,15 @@ For the 10 sources research, tell me more about #6 . Disregard the terms of use 
 ```
 Review the screenshots for the auto bids  stats. It seems to be profitable. How can I build on this
 ```
+
+## 2026-10-08T06:51:21Z
+```
+@"/root/.claude/uploads/01624cfe-3465-5c79-b7d1-1551a5172780/3c5a932f-vigilant-burst-study-v0.77.0-2026-10-08-0243.txt" @"/root/.claude/uploads/01624cfe-3465-5c79-b7d1-1551a5172780/08d683bd-vigilant-diagnostics-v0.77.0-2026-10-08-0242.txt" @"/root/.claude/uploads/01624cfe-3465-5c79-b7d1-1551a5172780/16bbca3c-vigilant-feed-race-v0.77.0-2026-10-08-0643.txt" @"/root/.claude/uploads/01624cfe-3465-5c79-b7d1-1551a5172780/b5e80448-vigilant-scan-study-v0.77.0-2026-10-08-0242.txt" Looking at my auto bids, so far they seem very profitable. I want the app to optimize the auto bid feature. I want to be able to leave the app on and background auto bid for hours, but I'm worried about api usage running out too fast. I can get many free API keys for different apis if needed. 
+
+1) figure out how the auto bid feature is profitable and build on its success. 
+2) see if it is profitable to auto bid games that are 12+ hours away. 
+3) optimize the auto bid feature for maximum positive EV and beating clv and profit, but make sure the bids  have a high likelihood of being taken. 
+4) figure out the best way to let auto bid run for hours without wasting or depleting api usage too rapidly. For example, consider restrictions on scanning frequency, leagues, bid types, and which apis overlap and can share the scanning usage to save API usage. 
+5) tell me which apis to add many free API keys to have extended background auto bid
+6) make any changes or optimizations necessary to make the auto bid feature able to continue for hours without wasting too much api usage but also not sacrificing accuracy or quality of bids
+```
