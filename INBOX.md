@@ -5597,3 +5597,12 @@ Is there anything in the auto bid feature that prevents auto bidding on an ident
 ```
 My metro by t Mobile often gets flagged by novig as an anonymous network. What is the best and cheapest way to fix this
 ```
+
+## 2026-10-08T20:53:00Z
+```
+Research how long novig pauses live betting after a team scores and if there is a profitable strategy to bet as soon as the betting resumes.
+
+Research if it is normal to get a lot of unavailable errors on parlayapi and how to fix it. 
+
+Research how to best take advantage of my Pinnacle websocket and novig websocket to make profit
+```
