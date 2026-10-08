@@ -5468,3 +5468,8 @@ It is not mandatory that this is a live only mode. Is profit can be made by find
 Continue but frequently save all progress and checkpoint in anticipation of usage running out
 Pause the audit and save progress at the next best opportunity. Make a checkpoint so it can resume in another session
 ```
+
+## 2026-10-08T04:10:50Z
+```
+The new feature isn't matching tennis for live betting. See if you can make it
+```
