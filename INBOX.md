@@ -5636,3 +5636,8 @@ After the recording is complete, do deep analysis, look for patterns, odds anoma
 
 Permanently save the study and research findings in GitHub for possible implementation in vigilant app
 ```
+
+## 2026-10-08T23:51:11Z
+```
+For the deep analysis, also "think outside the box" for patterns people wouldn't normally see
+```
