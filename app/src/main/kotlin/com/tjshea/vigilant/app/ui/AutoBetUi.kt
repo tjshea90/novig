@@ -112,9 +112,7 @@ object AutoBetText {
     /** The confirm's whole text. */
     fun confirm(s: ScanSettings, balance: Double?): String =
         "Vigilant will place REAL bets from your Vigilant wallet" + (balance?.let { " (${Format.money(it)})" } ?: "") + " with nobody asking you, " +
-            (if (s.pinnacleOnly) "each time a Vigilant scan finds a bet at Novig that beats Pinnacle's devigged price by ${evLabel(AutoBet.rules(s).minEv)} or more, on a Pinnacle price read within " +
-                "${PinnacleOnlyText.ageLabel(s.pinnacleMaxAgeSeconds)} of the order (Pinnacle only is on)"
-            else "each time CrazyNinjaOdds' background scan finds a bet with ${criteria(s)}") + ". It never bets a game that has started, never more than " +
+            "each time CrazyNinjaOdds' background scan finds a bet with ${criteria(s)}" + ". It never bets a game that has started, never more than " +
             "${Format.money(s.apiMaxPerDay)} in a day across API bets${if (s.apiMaxPerGame > 0.0) " and never more than ${Format.money(s.apiMaxPerGame)} at risk on one game" else ""}, and stops when the wallet is empty (under a cent) or if an order's answer is lost. " +
             "Every bet is tracked like one you placed yourself, and you get a notification for each."
 
@@ -127,7 +125,7 @@ object AutoBetText {
             s.autoBetHalted != null -> "Stopped: ${s.autoBetHalted}"
             s.killed -> "Everything is stopped by the STOP button: auto-bet waits for Resume (the red bar at the bottom)."
             s.paused -> "Scanning is paused (the ⏸ button): auto-bet waits for it."
-            s.scanner == ScannerMode.VIGILANT && !s.pinnacleOnly -> "The scanner is Vigilant only, so CrazyNinjaOdds is asleep and auto-bet has nothing to read."
+            s.scanner == ScannerMode.VIGILANT -> "The scanner is Vigilant only, so CrazyNinjaOdds is asleep and auto-bet has nothing to read."
             s.autoScan == AutoScanMode.OFF -> "The background scan is off, and auto-bet runs inside it."
             else -> null
         }
@@ -145,7 +143,7 @@ object AutoBetText {
             // The kill switch has its own Resume on the red bar; ▶ here can't lift it.
             s.killed -> null
             s.paused -> Fix.RESUME_SCANNING
-            s.scanner == ScannerMode.VIGILANT && !s.pinnacleOnly -> Fix.SCANNER
+            s.scanner == ScannerMode.VIGILANT -> Fix.SCANNER
             s.autoScan == AutoScanMode.OFF -> Fix.BACKGROUND_SCAN
             else -> null
         }
@@ -153,11 +151,6 @@ object AutoBetText {
 
     /** What it does at these settings, when it's running. */
     fun running(s: ScanSettings): String =
-        if (s.pinnacleOnly) {
-            "Running in Pinnacle only with the background scan, every ${ScanSettings.intervalLabel(s.autoScanSeconds)}: after each Vigilant scan, each bet that beats Pinnacle's devigged price by " +
-                "${evLabel(AutoBet.rules(s).minEv)} or more at Novig's price now is placed, best edge first, up to ${AutoBet.MAX_PER_CYCLE} a pass, on a Pinnacle price no older than " +
-                "${PinnacleOnlyText.ageLabel(s.pinnacleMaxAgeSeconds)}."
-        } else
         "Running with the background CNO scan, every ${ScanSettings.intervalLabel(s.autoScanSeconds)}: each bet that passes is placed best edge first, up to ${AutoBet.MAX_PER_CYCLE} a check."
 
     /** The Kelly sizing note, when a Kelly stake is chosen. */
@@ -193,13 +186,11 @@ fun AutoBetSection(
     val balance = state.betting.balance ?: state.autoBetStatus.balance
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
     Text(
-        (if (s.pinnacleOnly) "Places each Novig bet that beats Pinnacle's devigged price and passes your rules for you"
-        else "Places each CrazyNinjaOdds bet that passes your rules for you") +
+        "Places each CrazyNinjaOdds bet that passes your rules for you" +
             ", through Novig's API from your Vigilant wallet, with nobody confirming: in the " +
             "background, with Vigilant open or closed. Pregame only. Once on, it stays on until you turn it off (only a phone restart turns it off by itself).",
         style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp),
     )
-    PinnacleOnlyRows(s, onUpdate)
     Row(
         Modifier.fillMaxWidth().toggleable(
             value = s.autoBet, role = Role.Switch, enabled = state.betting.enabled || s.autoBet,
@@ -268,7 +259,7 @@ fun AutoBetSection(
     val status = state.autoBetStatus
     if (s.autoBet || status.lastRunMs != null) {
         val now = remember(status) { System.currentTimeMillis() }
-        Text(AutoBettor.line(status, now, s.pinnacleOnly), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStatus"))
+        Text(AutoBettor.line(status, now), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStatus"))
         // What the sharp-book check said, bet by bet (Tj, 2026-10-02 16:05Z: "Is it getting sharp book pricing?").
         if (s.sharpAutoBet != SharpMode.OFF) {
             AutoBettor.sharpLine(status, s.sharpConfirmBooks.displayName)?.let {
@@ -313,14 +304,6 @@ fun AutoBetSection(
     )
     Shadowed.autoBetEdge(s)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetEdgeShadowed")) }
 
-    if (s.pinnacleOnly) {
-        // The three book-count rules below judge CrazyNinjaOdds' bets by the books on their game page; with Pinnacle the one book, they don't apply.
-        Text(
-            "Pinnacle only is on: the book-count rules below (books agreeing, every book, books pricing both sides) don't apply, because Pinnacle is the one book. " +
-                "What applies is your smallest edge above, the odds limits, the kinds of bet, how much, and the most on one game or in a day.",
-            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(top = 8.dp).testTag("autoBetPinnacleNote"),
-        )
-    }
     Text("Books that each say +EV on their own", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_BOOKS_CHOICES, s.autoBetBooks, AutoBetText::booksLabel, modifier = Modifier.testTag("autoBetBooksChips")) { v -> onUpdate { it.copy(autoBetBooks = v) } }
     TypedIntField(NumberSpecs.count("books", 2, 12), s.autoBetBooks, "autoBetBooksField", none = { false }) { v -> onUpdate { it.copy(autoBetBooks = v) } }
@@ -735,12 +718,6 @@ fun SharpVetoSection(state: UiState, forAlerts: Boolean, onUpdate: ((ScanSetting
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
     val mode = if (forAlerts) s.sharpAlerts else s.sharpAutoBet
     SectionTitle(if (forAlerts) "Sharp-book veto for alerts" else "Sharp-book veto")
-    if (s.pinnacleOnly && !forAlerts) {
-        Text(
-            "Pinnacle only is on: the auto-bet doesn't ask this veto, because every bet is already judged on Pinnacle's own price. It still applies to CrazyNinjaOdds' alerts and the bids.",
-            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(vertical = 4.dp).testTag("pinnacleVetoNote"),
-        )
-    }
     Text(SharpConfirmText.sharpIntro(), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
     Chips(SharpMode.entries.toList(), mode, { it.displayName }, modifier = Modifier.testTag(if (forAlerts) "sharpAlerts" else "sharpAutoBet")) { v ->
         onUpdate { if (forAlerts) it.copy(sharpAlerts = v) else it.copy(sharpAutoBet = v) }
