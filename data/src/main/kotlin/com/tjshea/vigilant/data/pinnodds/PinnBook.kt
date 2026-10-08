@@ -82,6 +82,8 @@ class PinnEvent(val id: Long) {
     /** False for Pinnacle's special books on a match (corners and the like): their lines are not the game's. */
     var regular: Boolean = true
     var score: Pair<Int, Int>? = null
+
+    /** The phone's clock when the score last CHANGED (0 = not seen to change). */
     var scoreAtMs: Long = 0L
     var clock: String? = null
     var lastFrameAtMs: Long = 0L
@@ -150,9 +152,12 @@ class PinnBook(var method: DevigMethod = DevigMethod.WORST_CASE) {
         }
         readScore(rec)?.let { s ->
             if (s != e.score) {
-                if (e.score != null) out += PinnChange(id, null, PinnChange.Kind.SCORE, nowMs)
+                // The first sighting of a score (a snapshot, a new connection) is not a score being made.
+                if (e.score != null) {
+                    out += PinnChange(id, null, PinnChange.Kind.SCORE, nowMs)
+                    e.scoreAtMs = nowMs
+                }
                 e.score = s
-                e.scoreAtMs = nowMs
             }
         }
         e.clock = clockText(rec) ?: e.clock

@@ -382,6 +382,8 @@ data class ScanSettings(
     val pinnLiveMinEv: Double = 0.03,
     val pinnLiveMinMove: Double = 0.015,
     val pinnLiveDevig: DevigMethod = DevigMethod.WORST_CASE,
+    /** What counts as a lag ([com.tjshea.vigilant.data.pinnodds.LiveTrigger]): a score-driven Pinnacle move (default), any move, or any steady edge. */
+    val pinnLiveTrigger: com.tjshea.vigilant.data.pinnodds.LiveTrigger = com.tjshea.vigilant.data.pinnodds.LiveTrigger.SCORE,
     /** Also act on prematch lines (Pinnacle's push moves against Novig's pregame quotes; Novig charges no taker fee before the game starts). Off by default. */
     val pinnLivePregame: Boolean = false,
     /**

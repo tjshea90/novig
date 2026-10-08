@@ -26,9 +26,28 @@ data class LiveRules(
     val minContracts: Long = 20L,
     /** Also act on prematch lines (Novig charges no fee before the game starts). */
     val pregame: Boolean = false,
-    /** Off = a bet may rest on a standing disagreement with no recent Pinnacle move. Left on, the lag is required. */
-    val requireMove: Boolean = true,
+    /** What counts as a lag (see [LiveTrigger]). */
+    val trigger: LiveTrigger = LiveTrigger.SCORE,
+    /** [LiveTrigger.SCORE]: the game's score must have changed within this long (Pinnacle's score frame comes a median 1.8 s before its reprice). */
+    val scoreWindowMs: Long = 20_000L,
+    /** [LiveTrigger.STANDING]: Pinnacle's price must have sat unchanged this long (a price still in flux is not a standing view). */
+    val standingMs: Long = 30_000L,
 )
+
+/**
+ * What makes a Pinnacle/Novig difference a lag worth betting (RESEARCH.md §116; measured 2026-10-08 on a 9-minute tape): a move with NO score behind it often reverted within two minutes
+ * (Pinnacle's own spikes: the same ask was -13.8% against Pinnacle's fair 120 s later, n=10), so the default needs a score.
+ */
+enum class LiveTrigger(val label: String, val blurb: String) {
+    /** Pinnacle's fair for the side rose by the minimum move within the window AND the score changed in the last [LiveRules.scoreWindowMs]: a real event, repriced. */
+    SCORE("After a score", "Pinnacle repriced because the score changed, and Novig has not followed"),
+
+    /** Pinnacle's fair for the side rose by the minimum move within the window, whatever caused it (a spike included). */
+    MOVE("Any Pinnacle move", "Pinnacle moved toward this side, and Novig has not followed (spikes that revert are included)"),
+
+    /** No move needed: Pinnacle's price has been stable for [LiveRules.standingMs] and Novig's ask is still above it by the minimum edge. */
+    STANDING("Any edge", "Novig's ask is off a steady Pinnacle price by the minimum edge, moved or not"),
+}
 
 /** The reasons a line is passed over: fixed words, counted in the status. */
 object LiveSkip {
@@ -40,6 +59,8 @@ object LiveSkip {
     const val EXTREME = "price too extreme"
     const val LIMIT = "Pinnacle limit too low"
     const val NO_MOVE = "no recent Pinnacle move toward this side"
+    const val NO_SCORE = "no score behind the move"
+    const val IN_FLUX = "Pinnacle price still changing"
     const val NO_OFFER = "no offer on Novig"
     const val EV = "EV too small"
     const val THIN = "too thin"
@@ -82,7 +103,14 @@ object LiveEdge {
         val fair = line.fair[side] ?: return LiveVerdict.Skip(LiveSkip.NO_FAIR)
         if (fair < rules.minFair || fair > rules.maxFair) return LiveVerdict.Skip(LiveSkip.EXTREME)
         val move = line.moveOver(side, rules.moveWindowMs, nowMs)
-        if (rules.requireMove && (move == null || move < rules.minMove)) return LiveVerdict.Skip(LiveSkip.NO_MOVE)
+        when (rules.trigger) {
+            LiveTrigger.SCORE -> {
+                if (move == null || move < rules.minMove) return LiveVerdict.Skip(LiveSkip.NO_MOVE)
+                if (event.scoreAtMs <= 0L || nowMs - event.scoreAtMs > rules.scoreWindowMs) return LiveVerdict.Skip(LiveSkip.NO_SCORE)
+            }
+            LiveTrigger.MOVE -> if (move == null || move < rules.minMove) return LiveVerdict.Skip(LiveSkip.NO_MOVE)
+            LiveTrigger.STANDING -> if (stable < rules.standingMs) return LiveVerdict.Skip(LiveSkip.IN_FLUX)
+        }
         val levels = ladder.sortedBy { it.price }.filter { it.price > 0.0 && it.price < 1.0 && it.contracts > 0L }
         val best = levels.firstOrNull() ?: return LiveVerdict.Skip(LiveSkip.NO_OFFER)
         val quote = EvMath.quote(fair, best.price, fee, novigLive)
