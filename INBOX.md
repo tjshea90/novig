@@ -5488,3 +5488,8 @@ Run the release
 ```
 It is missing all the live bets. Consider other ways to profit from the Pinnacle Web socket, maybe stale live bets that people leave up which have the odds before a score 
 ```
+
+## 2026-10-08T04:49:42Z
+```
+Which diagnostic would help
+```
