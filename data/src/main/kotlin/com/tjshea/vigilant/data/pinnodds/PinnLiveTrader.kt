@@ -102,6 +102,9 @@ data class LiveCandidate(
     val decidedAtMs: Long,
     /** Pinnacle's last change to the line, the phone's clock: how long it took from that change to this decision. */
     val pinnChangedAtMs: Long,
+    /** How long since the game's score last changed on Pinnacle's feed (-1: no change seen), and Novig's status for the game: what the post-score pause shows up against. */
+    val scoreAgeMs: Long = -1L,
+    val eventStatus: String = "",
 )
 
 /** One decision, as journaled. [mode] BET or PAPER; [outcome] FILLED, PARTIAL, MISSED (nothing filled), REFUSED, UNCONFIRMED or PAPER. */
@@ -134,6 +137,9 @@ data class LiveRecord(
     val feePaid: Double = 0.0,
     val decisionMs: Long = 0,
     val sendToEndMs: Long = 0,
+    /** See [LiveCandidate.scoreAgeMs] and [LiveCandidate.eventStatus]. */
+    val scoreAgeMs: Long = -1L,
+    val eventStatus: String = "",
     val score: String? = null,
     val clock: String? = null,
     val message: String = "",
@@ -281,7 +287,7 @@ class PinnLiveTrader(
         marketId = c.target.market.marketId, outcomeId = c.outcomeId, market = c.betTarget.marketLabel, selection = c.betTarget.selection, side = c.side.name, lineKey = c.lineKey,
         fair = c.verdict.fair, ask = c.verdict.ask, limitPrice = c.verdict.limitPrice, fee = c.verdict.fee, ev = c.verdict.ev, move = c.verdict.move, stableMs = c.verdict.stableMs,
         overround = c.verdict.overround, contracts = qty, filled = filled, paid = paid, feePaid = feePaid, decisionMs = c.decidedAtMs - c.pinnChangedAtMs, sendToEndMs = endMs,
-        score = c.score, clock = c.clock, message = message,
+        scoreAgeMs = c.scoreAgeMs, eventStatus = c.eventStatus, score = c.score, clock = c.clock, message = message,
     )
 
     private fun paper(c: LiveCandidate, qty: Long): LiveRecord {

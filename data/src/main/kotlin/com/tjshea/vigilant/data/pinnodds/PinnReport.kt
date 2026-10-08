@@ -70,6 +70,18 @@ object PinnReport {
                 out += "Order time, all orders: median ${endAll[endAll.size / 2]} ms · slowest ${endAll.last()} ms" +
                     (if (missedRecs.isNotEmpty()) " · missed with no Pinnacle move behind them ${missedRecs.count { (it.move ?: 0.0) < 0.005 }} of ${missedRecs.size}" else "")
             }
+            // The post-score pause test: do orders sent within 20 s of a score fill less than the rest?
+            fun split(name: String, l: List<LiveRecord>) {
+                if (l.isNotEmpty()) out += "  $name: ${l.size} sent · ${l.count { it.outcome == "FILLED" || it.outcome == "PARTIAL" }} filled · ${l.count { it.outcome == "MISSED" }} missed · ${l.count { it.outcome == "UNCONFIRMED" }} unconfirmed"
+            }
+            val sentWithAge = bets.filter { it.scoreAgeMs >= 0 }
+            if (sentWithAge.isNotEmpty() || bets.any { it.eventStatus.isNotEmpty() }) {
+                out += "Orders by timing (the post-score pause test):"
+                split("within 20 s of a score", bets.filter { it.scoreAgeMs in 0..20_000 })
+                split("20 s to 2 min after a score", bets.filter { it.scoreAgeMs in 20_001..120_000 })
+                split("no score in the last 2 min", bets.filter { it.scoreAgeMs < 0 || it.scoreAgeMs > 120_000 })
+                bets.groupBy { it.eventStatus }.filterKeys { it.isNotEmpty() }.forEach { (st, l) -> split("Novig status $st", l) }
+            }
             out += String.format(Locale.US, "Spent: $%.2f on %d contracts (fees $%.2f)", filled.sumOf { it.paid }, filled.sumOf { it.filled }, filled.sumOf { it.feePaid })
         }
         out += "By league: " + records.groupBy { it.league }.entries.sortedByDescending { it.value.size }.take(6).joinToString(" · ") { "${it.key} ${it.value.size}" }

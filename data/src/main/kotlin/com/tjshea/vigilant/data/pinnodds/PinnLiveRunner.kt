@@ -359,7 +359,7 @@ class PinnLiveRunner(
                 fairBooks = listOf("Pinnacle"), fairSharp = listOf("Pinnacle"),
             ),
         )
-        return LiveCandidate(t, side, outcomeId, v, line.key, line.points, target, fee, score, pe.clock, now, line.changedAtMs)
+        return LiveCandidate(t, side, outcomeId, v, line.key, line.points, target, fee, score, pe.clock, now, line.changedAtMs, if (pe.scoreAtMs > 0L) now - pe.scoreAtMs else -1L, t.event.status)
     }
 
     private fun signed(x: Double): String = (if (x > 0) "+" else "") + (if (x == Math.floor(x)) x.toInt().toString() else x.toString())
