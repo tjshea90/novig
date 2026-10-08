@@ -1,3 +1,20 @@
 {"type":"launched"}
 {"type":"started","key":"v2:[key redacted …c7db]","agentId":"a9758e2618837051b","label":"audit:wrong-side","phase":"Audit"}
 {"type":"started","key":"v2:[key redacted …17c9]","agentId":"a1acab503df828b62","label":"audit:ev-fee-math","phase":"Audit"}
+{"type":"failed","key":"v2:[key redacted …c7db]","agentId":"a9758e2618837051b"}
+{"type":"started","key":"v2:[key redacted …cc63]","agentId":"a0c53a71bbba3fbc7","label":"audit:stale-pinnacle","phase":"Audit"}
+{"type":"failed","key":"v2:[key redacted …cc63]","agentId":"a0c53a71bbba3fbc7"}
+{"type":"started","key":"v2:[key redacted …f4c2]","agentId":"a2d38782c52e22f70","label":"audit:stale-novig","phase":"Audit"}
+{"type":"failed","key":"v2:[key redacted …f4c2]","agentId":"a2d38782c52e22f70"}
+{"type":"started","key":"v2:[key redacted …850d]","agentId":"afd4bbfd574bd245c","label":"audit:trader-safety","phase":"Audit"}
+{"type":"failed","key":"v2:[key redacted …850d]","agentId":"afd4bbfd574bd245c"}
+{"type":"started","key":"v2:[key redacted …470a]","agentId":"a1fff4e892d18030b","label":"audit:market-equivalence","phase":"Audit"}
+{"type":"failed","key":"v2:[key redacted …470a]","agentId":"a1fff4e892d18030b"}
+{"type":"started","key":"v2:[key redacted …6099]","agentId":"a212a3e42c91c6f7d","label":"audit:pinnbook-parsing","phase":"Audit"}
+{"type":"failed","key":"v2:[key redacted …6099]","agentId":"a212a3e42c91c6f7d"}
+{"type":"started","key":"v2:[key redacted …e72b]","agentId":"a8acd12a758545ceb","label":"audit:wiring-and-gates","phase":"Audit"}
+{"type":"failed","key":"v2:[key redacted …e72b]","agentId":"a8acd12a758545ceb"}
+{"type":"started","key":"v2:[key redacted …3271]","agentId":"a21d1a8771a8a6d94","label":"audit:statistics","phase":"Audit"}
+{"type":"failed","key":"v2:[key redacted …3271]","agentId":"a21d1a8771a8a6d94"}
+{"type":"started","key":"v2:[key redacted …8cf5]","agentId":"ac39a24ca711431fb","label":"audit:pregame-design","phase":"Audit"}
+{"type":"failed","key":"v2:[key redacted …8cf5]","agentId":"ac39a24ca711431fb"}
