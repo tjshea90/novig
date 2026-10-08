@@ -474,17 +474,4 @@ class ScannerTest {
 
     // ---- Pinnacle only (Tj, 2026-10-05; RESEARCH.md §88.5) -------------------------------------------------------------------------------------
 
-    /** Pinnacle's feed, faked: counts its reads. */
-    private class FakePinnacle(val dal: Double, val bal: Double) : ReferenceSource {
-        var calls = 0
-        override val id = "pinnacle"
-        override val displayName = "Pinnacle"
-        override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
-            calls++
-            val ev = RefEvent("pin-1", league.oddsApiSportKey, Fixtures.START_MS, home = "Cowboys", away = "Ravens",
-                markets = listOf(RefBookMarket("pinnacle", "Pinnacle", LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, bal, null), RefQuote(Side.HOME, dal, null)), null)))
-            return RefSnapshot(league.oddsApiSportKey, listOf(ev), 0)
-        }
-    }
-
 }
