@@ -126,4 +126,66 @@ class LiveMatcherTest {
         val swapped = spread.copy(swapped = true, strike = 3.5)
         assertEquals("s;0;s;-3.5", swapped.line(e)!!.key)
     }
+
+    // Tennis (2026-10-08 tape): Pinnacle books a match as a "Sets" child (the winner) and a "Games" child (games spread and total, names suffixed " (Games)") under one parent.
+    private fun tennisChild(id: Long, units: String, group: Long = 500, live: Boolean = true) =
+        PinnEvent(id).also {
+            it.home = "Carolina Alves"; it.away = "Luisina Giovannini"; it.live = live; it.startMs = start; it.lastFrameAtMs = now
+            it.sportId = PinnBook.TENNIS_SPORT_ID; it.units = units; it.regular = true; it.parentId = group
+        }
+
+    private val atp = NovigEvent("ev3", "TENNIS", "WTA", NovigEvent.STATUS_LIVE, "Luisina Giovannini @ Carolina Alves", start)
+
+    @Test
+    fun `a tennis match takes its winner from the Sets child and its spread and total from the Games child`() {
+        val sets = tennisChild(1, "Sets")
+        val games = tennisChild(2, "Games")
+        val pair = LiveMatcher.matchEvents(listOf(games, sets), listOf(atp), now).single()
+        assertEquals(1L, pair.pinnEventId)
+        assertEquals(2L, pair.linesEventId)
+        val ts = LiveMatcher.targets(
+            pair,
+            listOf(
+                market("ml", "MONEY", "Carolina Alves", "Luisina Giovannini", 0.0, eventId = "ev3"),
+                market("tot", "TOTAL", "Over 21.5", "Under 21.5", 21.5, eventId = "ev3"),
+            ),
+        ).associateBy { it.type }
+        assertEquals(1L, ts.getValue(PinnLineType.MONEYLINE).pinnEventId)
+        assertEquals(2L, ts.getValue(PinnLineType.TOTAL).pinnEventId)
+    }
+
+    @Test
+    fun `a tennis sets spread or total is never priced from games lines`() {
+        val pair = LiveMatcher.matchEvents(listOf(tennisChild(1, "Sets"), tennisChild(2, "Games")), listOf(atp), now).single()
+        val setMarkets = listOf(
+            market("tot", "TOTAL", "Over 2.5", "Under 2.5", 2.5, eventId = "ev3"),
+            market("sp", "SPREAD", "Carolina Alves -1.5", "Luisina Giovannini +1.5", -1.5, eventId = "ev3"),
+        )
+        assertTrue(LiveMatcher.targets(pair, setMarkets).isEmpty())
+    }
+
+    @Test
+    fun `a tennis match with no Games child gets a winner target and no spread or total`() {
+        val pair = LiveMatcher.matchEvents(listOf(tennisChild(1, "Sets")), listOf(atp), now).single()
+        val ts = LiveMatcher.targets(
+            pair,
+            listOf(market("ml", "MONEY", "Carolina Alves", "Luisina Giovannini", 0.0, eventId = "ev3"), market("tot", "TOTAL", "Over 21.5", "Under 21.5", 21.5, eventId = "ev3")),
+        )
+        assertEquals(listOf(PinnLineType.MONEYLINE), ts.map { it.type })
+    }
+
+    @Test
+    fun `the book keeps tennis Sets and Games children and strips the Games suffix from the names`() {
+        val book = PinnBook()
+        val frame = live(id = 7, home = "Carolina Alves (Games)", away = "Luisina Giovannini (Games)", units = "Games", markets = arrayOf(PinnTestFrames.total(1, 21.5, -110, -110)))
+            .replace("\"sport_id\":3", "\"sport_id\":2")
+        book.apply(parse(frame), now)
+        val e = book.events.getValue(7L)
+        assertTrue(e.regular)
+        assertEquals("Carolina Alves", e.home)
+        assertEquals("Games", e.units)
+        // Other sports' non-Regular books stay special.
+        book.apply(parse(live(id = 8, units = "Corners", markets = arrayOf(PinnTestFrames.total(1, 9.5, -110, -110)))), now)
+        assertTrue(!book.events.getValue(8L).regular)
+    }
 }
