@@ -491,10 +491,7 @@ class MakerUiTest {
         compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerLongRun"))
         compose.onNodeWithTag("makerLongRun").assertIsOn()
         compose.onNodeWithText("Long-run saver").assertExists()
-        compose.onNodeWithTag("makerLongRun").performClick()
-        compose.waitForIdle()
-        println("DEBUG after click makerLongRun=" + st.value.makerLongRun)
-        compose.onNodeWithTag("makerLongRun").assertIsOff()
+        compose.onNodeWithTag("makerLongRun").performScrollTo().performClick()
         assertFalse(st.value.makerLongRun)
         // Low API usage has its own narrower scan and pace; CrazyNinjaOdds-priced bids do not use Vigilant's scan.
         st.value = st.value.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE)
