@@ -63,6 +63,13 @@ object PinnReport {
             out += "Orders: ${bets.size} sent · ${filled.size} filled · $missed missed (the offer was gone) · ${bets.count { it.outcome == "REFUSED" }} refused · ${bets.count { it.outcome == "UNCONFIRMED" }} unconfirmed" +
                 (if (ms.isNotEmpty()) " · send-to-fill median ${ms[ms.size / 2]} ms" else "") +
                 " · Pinnacle move to decision median ${bets.map { it.decisionMs }.sorted()[bets.size / 2]} ms"
+            // Why orders miss: how long they took to end (the in-play delay shows here) and whether the missed ones were lags at all (a move of 0 is a standing disagreement).
+            val missedRecs = bets.filter { it.outcome == "MISSED" }
+            val endAll = bets.filter { it.sendToEndMs > 0 }.map { it.sendToEndMs }.sorted()
+            if (endAll.isNotEmpty()) {
+                out += "Order time, all orders: median ${endAll[endAll.size / 2]} ms · slowest ${endAll.last()} ms" +
+                    (if (missedRecs.isNotEmpty()) " · missed with no Pinnacle move behind them ${missedRecs.count { (it.move ?: 0.0) < 0.005 }} of ${missedRecs.size}" else "")
+            }
             out += String.format(Locale.US, "Spent: $%.2f on %d contracts (fees $%.2f)", filled.sumOf { it.paid }, filled.sumOf { it.filled }, filled.sumOf { it.feePaid })
         }
         out += "By league: " + records.groupBy { it.league }.entries.sortedByDescending { it.value.size }.take(6).joinToString(" · ") { "${it.key} ${it.value.size}" }
