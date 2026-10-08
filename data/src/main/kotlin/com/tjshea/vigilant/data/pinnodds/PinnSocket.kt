@@ -44,7 +44,7 @@ class PinnSocket(
     private val sports: List<Int> = DEFAULT_SPORTS,
     private val url: String = "wss://pinnodds.com/ws/feed",
     private val clock: () -> Long = System::currentTimeMillis,
-) {
+) : PinnFeedSource {
     private val client: OkHttpClient = http.newBuilder()
         .pingInterval(0, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.SECONDS)
@@ -52,7 +52,7 @@ class PinnSocket(
         .build()
 
     private val _state = MutableStateFlow<PinnSocketState>(PinnSocketState.Off)
-    val state: StateFlow<PinnSocketState> = _state.asStateFlow()
+    override val state: StateFlow<PinnSocketState> = _state.asStateFlow()
 
     @Volatile
     private var job: Job? = null
@@ -61,7 +61,7 @@ class PinnSocket(
     private var socket: WebSocket? = null
 
     @Volatile
-    var lastFrameAtMs: Long = 0L
+    override var lastFrameAtMs: Long = 0L
         private set
 
     @Volatile
@@ -71,13 +71,13 @@ class PinnSocket(
     val running: Boolean get() = job?.isActive == true
 
     @Synchronized
-    fun start() {
+    override fun start() {
         if (running) return
         job = scope.launch { loop() }
     }
 
     @Synchronized
-    fun stop() {
+    override fun stop() {
         job?.cancel()
         job = null
         socket?.close(1000, "stopped")

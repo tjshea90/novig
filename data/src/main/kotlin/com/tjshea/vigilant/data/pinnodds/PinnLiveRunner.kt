@@ -137,7 +137,7 @@ class PinnLiveRunner(
     private fun reset() {
         book = PinnBook(config().method)
         catalogEvents = emptyList(); catalogMarkets = emptyList(); targetsByEvent.clear(); targetsByMarket.clear(); armedUntil.clear(); follows.clear()
-        evaluations = 0; candidates = 0; skips.clear(); lastCandidate = null; watched = 0; matchedGames = 0; lastRematchMs = 0; lastEventCount = -1; catalogDirty = false
+        evaluations = 0; candidates = 0; skips.clear(); lastOffer.clear(); lastCandidate = null; watched = 0; matchedGames = 0; lastRematchMs = 0; lastEventCount = -1; catalogDirty = false
     }
 
     private suspend fun runLoop() {
@@ -149,6 +149,8 @@ class PinnLiveRunner(
             return
         }
         val pinn = openFeed { text, at -> queue.trySend(Msg.Frame(text, at)) }
+        feedSource = pinn
+        pending = queue
         val helpers = ArrayList<Job>()
         try {
             pinn.start()
@@ -157,6 +159,8 @@ class PinnLiveRunner(
             consume(queue, novig, pinn)
         } finally {
             helpers.forEach { it.cancel() }
+            feedSource = null
+            pending = null
             runCatching { pinn.stop() }
             runCatching { novig.close() }
         }
@@ -222,11 +226,11 @@ class PinnLiveRunner(
 
     private fun onTick(now: Long, novig: PushedBooks, pinn: PinnFeedSource) {
         // Armed games: judged on every tick (the settle time passes between a Pinnacle change and its first judgment).
-        val it = armedUntil.entries.iterator()
-        while (it.hasNext()) {
-            val (eventId, until) = it.next()
-            if (until < now) { it.remove(); continue }
-            targetsByEvent[eventId]?.forEach { evaluate(it, now, novig) }
+        val armed = armedUntil.entries.iterator()
+        while (armed.hasNext()) {
+            val (eventId, until) = armed.next()
+            if (until < now) { armed.remove(); continue }
+            targetsByEvent[eventId]?.forEach { t -> evaluate(t, now, novig) }
         }
         while (follows.isNotEmpty() && follows.peek().dueMs <= now) capture(follows.poll(), now, novig)
         val events = book.events.size
@@ -240,7 +244,10 @@ class PinnLiveRunner(
         return novig.problemSince(_status.value.sinceMs ?: 0L)?.let { "Novig live feed problem" }
     }
 
-    private var feedSource: PinnFeedSource? = null
+    @Volatile private var feedSource: PinnFeedSource? = null
+
+    /** When each Novig outcome was last handed to the trader: a bet that stays on offer is not handed over again every tick. */
+    private val lastOffer = HashMap<String, Long>()
 
     /** Which Novig games are which Pinnacle matchups, and which of their markets are worth holding open (the moneyline, and the spreads and totals near Pinnacle's own lines). */
     private fun rematch(novig: PushedBooks, now: Long) {
@@ -299,6 +306,8 @@ class PinnLiveRunner(
             when (val v = LiveEdge.judge(pe, line, side, now, ladder, fee, live, cfg.rules)) {
                 is LiveVerdict.Skip -> count(v.reason)
                 is LiveVerdict.Bet -> {
+                    if (now - (lastOffer[outcomeId] ?: 0L) < REOFFER_MS) continue
+                    lastOffer[outcomeId] = now
                     candidates++
                     val cand = candidate(t, pe, line, side, outcomeId, v, fee, now, cfg)
                     lastCandidate = "${cand.betTarget.selection} @ ${"%.3f".format(Locale.US, v.ask)} · fair ${"%.3f".format(Locale.US, v.fair)} · ${"%.1f".format(Locale.US, v.ev * 100)}% EV"
@@ -375,6 +384,9 @@ class PinnLiveRunner(
         const val DISCOVER_MS = 30_000L
         const val TICK_MS = 100L
         const val STATUS_EVERY_MS = 1_000L
+
+        /** A bet still on offer is handed to the trader again no sooner than this (it is busy or on cooldown for longer anyway). */
+        const val REOFFER_MS = 1_000L
         const val REMATCH_MS = 5_000L
 
         /** A game stays armed this long past the move window: the settle time and a Novig book change can land just after it. */

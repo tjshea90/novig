@@ -43,6 +43,7 @@ object TrackerBreakdown {
         By.SCANNER -> when (b.source) {
             BetTracker.SOURCE_CNO -> "CNO"
             BetTracker.SOURCE_PARLAY -> "ParlayAPI"
+            BetTracker.SOURCE_PINNODDS -> "Pinnodds live"
             // Made with Pinnacle only on (Tj, 2026-10-05): their EV, CLV and profit are against Pinnacle's devigged price alone, so they read apart from Vigilant's other bets.
             else -> if (b.atBet?.pinnacleOnly == true) PINNACLE_ONLY else "Vigilant"
         }

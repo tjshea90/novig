@@ -11,7 +11,6 @@ import com.tjshea.vigilant.engine.Fees
 import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -192,7 +191,6 @@ class PinnLiveTrader(
     private val pause: suspend (Long) -> Unit = { delay(it) },
     private val newClientId: () -> String = { NovigTradingClient.newClientId() },
     private val lock: Mutex? = null,
-    private val ioContext: kotlin.coroutines.CoroutineContext = Dispatchers.IO,
 ) {
     private val _status = MutableStateFlow(LiveTradeStatus())
     val status: StateFlow<LiveTradeStatus> = _status.asStateFlow()
@@ -270,7 +268,7 @@ class PinnLiveTrader(
         id = id, atMs = c.decidedAtMs, mode = mode, outcome = outcome, league = c.betTarget.league, event = c.betTarget.eventName, eventId = c.target.event.eventId,
         marketId = c.target.market.marketId, outcomeId = c.outcomeId, market = c.betTarget.marketLabel, selection = c.betTarget.selection, side = c.side.name, lineKey = c.lineKey,
         fair = c.verdict.fair, ask = c.verdict.ask, limitPrice = c.verdict.limitPrice, fee = c.verdict.fee, ev = c.verdict.ev, move = c.verdict.move, stableMs = c.verdict.stableMs,
-        overround = c.verdict.overround, contracts = qty, filled = filled, paid = paid, feePaid = feePaid, decisionMs = clock() - c.decidedAtMs - 0, sendToEndMs = endMs,
+        overround = c.verdict.overround, contracts = qty, filled = filled, paid = paid, feePaid = feePaid, decisionMs = c.decidedAtMs - c.pinnChangedAtMs, sendToEndMs = endMs,
         score = c.score, clock = c.clock, message = message,
     )
 
@@ -305,15 +303,16 @@ class PinnLiveTrader(
             return r
         }
         val (order, fills) = settled
-        val filled = fills.sumOf { it.qty }.takeIf { it > 0 } ?: (order.qty - order.remaining).coerceAtLeast(0L).takeIf { order.status == "FILLED" || it > 0 } ?: 0L
+        // The fills are the truth. An order that says FILLED while its fills have not shown is a fill we cannot price exactly: counted at its limit price (a ceiling), and not logged.
+        val filled = fills.sumOf { it.qty }.takeIf { it > 0 } ?: (if (order.status == "FILLED") order.qty else 0L)
         if (filled <= 0L) {
             val r = base(c, "BET", "MISSED", qty, clientId, "Nobody was selling at that price any more: no bet, no money moved.", endMs = endMs)
             record(r)
             _status.value = _status.value.copy(missed = _status.value.missed + 1, last = "MISSED · ${r.selection} (${endMs} ms)")
             return r
         }
-        val paid = fills.sumOf { it.cost }
-        val fee = fills.sumOf { it.fee }
+        val paid = if (fills.isNotEmpty()) fills.sumOf { it.cost } else filled * c.verdict.limitPrice * EvMath.CONTRACT_PAYOUT_DOLLARS
+        val fee = if (fills.isNotEmpty()) fills.sumOf { it.fee } else filled * Fees.takerFee(c.verdict.limitPrice.coerceIn(0.001, 0.999), c.fee, true) * EvMath.CONTRACT_PAYOUT_DOLLARS
         val logged = fills.isNotEmpty() && runCatching { logFills(c.betTarget, orderId, fills) }.getOrDefault(false)
         val outcome = if (filled >= qty) "FILLED" else "PARTIAL"
         val r = base(
