@@ -311,17 +311,6 @@ data class ScanSettings(
     /** Fills before this time (epoch ms) aren't looked at by the guard: set to the moment Tj resumed, so the same fills can't stop the bids twice. */
     val makerGuardFromMs: Long = 0L,
     /**
-     * Pinnacle only (Tj, 2026-10-05: "an option … for only comparing current novig odds on any market and any sport to the current pinnacle devigged odds for the same
-     * bet. Make sure it only scans novig and pinnacle when this option is on so as not to waste usage of other apis. Make sure the Pinnacle odds are as current as
-     * possible"; RESEARCH.md §88.5). Vigilant's own scan prices every Novig market against Pinnacle's two-sided price for the same bet and nothing else
-     * ([effective]): the fair is Pinnacle's, devigged the worst way, no Kalshi, Polymarket, The Odds API or other book is read, CrazyNinjaOdds is asleep, and ParlayAPI
-     * and PropLine are asked (for Pinnacle's book alone) only for a league Pinnacle's own feeds (PinnWire, pinnapi) couldn't answer. The auto-bet then bets what that
-     * scan finds, on Pinnacle's price re-read within [pinnacleMaxAgeSeconds] of the order. Off by default.
-     */
-    val pinnacleOnly: Boolean = false,
-    /** The oldest a Pinnacle quote may be and still be bet on in [pinnacleOnly] ([PINNACLE_MAX_AGE_CHOICES]; never over the app's 5-minute limit, [Freshness.MAX_QUOTE_AGE_MS]). */
-    val pinnacleMaxAgeSeconds: Int = 90,
-    /**
      * Which bids go up (Tj, 2026-10-05: "only the bets which have the maximum chance of being filled quickly and also are decent chance for me to win the bet …
      * favorites and small underdogs … positive EV and the best chance at beating clv"): [BidFocus.ALL] (every bid the rules allow) or [BidFocus.QUICK_LIKELY].
      */
@@ -770,27 +759,19 @@ data class ScanSettings(
     /** The dollars a bet's Novig slip opens with, for a bet whose Kelly stake is [kelly]; null = none. */
     fun slipStakeFor(kelly: Double?): Double? = NovigLinks.stake(slipStake, slipCustomStake, kelly)
 
-    /** CrazyNinjaOdds' list is read (both scanners, or CNO only); never in [pinnacleOnly], which reads Novig and Pinnacle alone. */
-    val cnoOn: Boolean get() = scanner != ScannerMode.VIGILANT && !pinnacleOnly
+    /** CrazyNinjaOdds' list is read (both scanners, or CNO only). */
+    val cnoOn: Boolean get() = scanner != ScannerMode.VIGILANT
 
-    /** Vigilant's own scan, and the APIs behind it, can run (both scanners, or Vigilant only, or [pinnacleOnly], which is Vigilant's scan on Pinnacle alone). */
-    val vigilantOn: Boolean get() = scanner != ScannerMode.CNO || pinnacleOnly
+    /** Vigilant's own scan, and the APIs behind it, can run (both scanners, or Vigilant only). */
+    val vigilantOn: Boolean get() = scanner != ScannerMode.CNO
 
-    /** The scanner choice as it runs: [pinnacleOnly] is Vigilant's own scan alone, whatever [scanner] says. */
-    val scannerNow: ScannerMode get() = if (pinnacleOnly) ScannerMode.VIGILANT else scanner
+    /** The scanner choice as it runs. */
+    val scannerNow: ScannerMode get() = scanner
 
     /**
-     * These settings as the scan reads them (RESEARCH.md §88.5). Unchanged unless [pinnacleOnly]; then the fair is Pinnacle's two-sided price devigged the worst way (the
-     * most conservative of the four methods, as the sharp confirm judges it: [com.tjshea.vigilant.data.cno.CnoBooks.fairFor]) with no fall-back to an average, one book is
-     * enough, only Pinnacle's book is asked of the feeds that carry several, and the exchanges (Kalshi, Polymarket) and The Odds API are off. Your own choices of leagues,
-     * markets, edge limits and Pinnacle keys stay. Applied at the scanner's door ([Scanner]) and where the feeds are picked, so nothing else can read another book.
+     * These settings as the scan reads them: unchanged, except under Low API usage bids (RESEARCH.md §92).
      */
     fun effective(forBets: Boolean = false): ScanSettings = when {
-        pinnacleOnly -> copy(
-            scanner = ScannerMode.VIGILANT,
-            fairSource = FairSource.SHARP, devigMethod = DevigMethod.WORST_CASE, sharpBooks = PINNACLE_BOOKS, fallbackToAverage = false, minBooks = 1,
-            referenceBooks = listOf("pinnacle"), usePinnacle = true, usePolymarket = false, useKalshi = false, useOddsApi = false,
-        )
         // Low API usage (RESEARCH.md §92): Vigilant's own scan reads the picked sharp prop books' props for the next 6 hours and nothing else. A bets-only pass ([forBets]:
         // Check odds now, pricing Tj's open bets of every kind) is not narrowed: it asks for the games he holds.
         lowUsageNow && !forBets -> LowUsageBids.profile(this)
@@ -801,13 +782,13 @@ data class ScanSettings(
      * Bids are on ([maker] or [makerRecommend]) and set to [BidFocus.LOW_USAGE], and Pinnacle only isn't (that mode already reads Novig and Pinnacle alone and wins): Vigilant's
      * own scan is the low-usage scan ([effective]) and runs at the pace [lowUsagePace] says ([LowUsageBids.gapSeconds]).
      */
-    val lowUsageNow: Boolean get() = makerFocus == BidFocus.LOW_USAGE && (maker || makerRecommend) && !pinnacleOnly && makerSource == BidSource.VIGILANT
+    val lowUsageNow: Boolean get() = makerFocus == BidFocus.LOW_USAGE && (maker || makerRecommend) && makerSource == BidSource.VIGILANT
 
     /**
      * Bids are priced from CrazyNinjaOdds ([makerSource]) and are on ([maker] or [makerRecommend]), and Pinnacle only isn't (it wins, and reads no CNO list): the background cycle reads
      * CNO's list, the wide list and the games' pages for them ([com.tjshea.vigilant.data.novig.trading.maker.CnoMakerLines]), whatever alerts and auto-bet are set to.
      */
-    val bidsFromCno: Boolean get() = makerSource == BidSource.CNO && (maker || makerRecommend) && !pinnacleOnly
+    val bidsFromCno: Boolean get() = makerSource == BidSource.CNO && (maker || makerRecommend)
 
     /**
      * The shortest gap between two background runs of Vigilant's own scan: the usual [AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS], or the low-usage pace ([LowUsageBids.shortestGapSeconds];
@@ -829,7 +810,7 @@ data class ScanSettings(
      * A background cycle places bets: auto-bet is on, not halted, and the CNO scanner runs in the background ([autoScansCno]: CNO on, auto-scan on
      * CNO or Both, not paused). Whether betting through the API is set up is the app's to know ([com.tjshea.vigilant.app.AutoBettor]).
      */
-    val autoBetsNow: Boolean get() = autoBet && autoBetHalted == null && (autoScansCno || (pinnacleOnly && autoScansVigilant))
+    val autoBetsNow: Boolean get() = autoBet && autoBetHalted == null && autoScansCno
 
     /** A background cycle locks profits ([autoLock]): on, with the background scan running (any scanner) and not paused. */
     val autoLocksNow: Boolean get() = autoLock && !paused && autoScan != AutoScanMode.OFF
@@ -838,7 +819,7 @@ data class ScanSettings(
     val makerNow: Boolean get() = maker && !paused && makerHalted == null
 
     /** A background cycle runs Vigilant's own scan (spending its APIs' credits): auto-scan on Both, not paused, and the Vigilant scanner on (never on CNO only). */
-    val autoScansVigilant: Boolean get() = !paused && (autoScan.vigilant || (pinnacleOnly && autoScan != AutoScanMode.OFF)) && vigilantOn
+    val autoScansVigilant: Boolean get() = !paused && autoScan.vigilant && vigilantOn
 
     /**
      * How far ahead Vigilant's scan reads, in hours: [daysAhead], or [startsWithinHours] when that's shorter (Tj,
@@ -1049,12 +1030,6 @@ data class ScanSettings(
 
         /** [makerKinds]' default: where a bid earns even with no edge on Novig's own price (RESEARCH.md §70.2). */
         val MAKER_DEFAULT_KINDS = setOf(BetKind.PROP, BetKind.PERIOD, BetKind.TEAM_TOTAL)
-
-        /** [pinnacleMaxAgeSeconds]' choices. */
-        val PINNACLE_MAX_AGE_CHOICES = listOf(30, 60, 90, 120, 180)
-
-        /** The one book [pinnacleOnly] prices from (The Odds API's key for it). */
-        val PINNACLE_BOOKS: Set<String> = setOf("pinnacle")
 
         /** [sharpConfirmMaxAgeSeconds]' choices. */
         val SHARP_MAX_AGE_CHOICES = listOf(60, 120, 180, 300)
