@@ -146,3 +146,4 @@ day that changes.
 | v0.76.1 | code 135 | 2026-10-08T02:40Z | v0.76.1: Pinnodds live runs in the background with the screen off (LiveFeedService: foreground service, wake lock renewed every 5 s, notification with Stop and STOP ALL); doubleheader-safe game matching; alternate-line moves no longer wake the engine
 | v0.76.2 | code 136 | 2026-10-08T04:38Z | v0.76.2: Pinnodds live matches tennis (Sets+Games children, sets-line guard); live orders wait up to 20 s for Novig's in-play delay instead of halting at 2.5 s
 | v0.76.3 | code 137 | 2026-10-08T05:14Z | v0.76.3: Pinnodds live Stale orders trigger (ask still at Pinnacle's earlier price, no score needed), 40% edge cap refusing probable mismatches, order-time diagnostics
+| v0.77.0 | code 138 | 2026-10-08T06:27Z | v0.77.0: Pinnacle only removed entirely; Pinnodds live pregame steam (stale prematch orders, no fee), hold-off after a score, 40% edge cap kept, post-score study in Diagnostics
