@@ -4261,3 +4261,9 @@ Tj's six asks: 1) figure out how the auto bid feature is profitable and build on
 - [x] QA1 (DONE: §120, §120.1 read from the v0.78.0 files: live orders answer in ~5.3 s; no score probed yet) RESEARCH how long Novig pauses live betting after a score, and whether betting the moment it reopens is profitable (start from RESEARCH.md §116 and §118; check what the v0.77.0 post-score study can say).
 - [x] QA2 (DONE: §120; needs Tj's ParlayAPI counters) RESEARCH whether many "unavailable" answers from ParlayAPI are normal and how to fix them (PARLAY_API.md 503 notes; the app's own counters).
 - [x] QA3 (DONE: §120) RESEARCH the best use of the Pinnodds (Pinnacle) websocket and Novig's websocket for profit (§116, §118, NOVIG_API.md §21).
+
+## Tj, 2026-10-08 (~23:40Z): "As you are doing the recording, look for anything exploitable at all for profit and how to take advantage of the websocket speed. Consider all options for profit, beating clv, positive EV (live odds, pregame odds, stale odds, novig lag, patterns). Keep in mind novig may enforce a live betting pause for a few seconds after a score. After the recording is complete, do deep analysis, look for patterns, odds anomalies, novig stale odds or late adjustments, and any other way to profit using the web socket, live or pregame. Permanently save the study and research findings in GitHub for possible implementation in vigilant app"
+
+- [ ] QB1 RECORD live Pinnacle (Pinnodds socket) against Novig's public books, 60 min from 23:33Z (tools/research/pinn_novig_lag.py record); key from the environment only, never saved.
+- [ ] QB2 DEEP ANALYSIS of the tape: lag by cause (score / price-only), by sport, stale asks, late adjustments, pause after a score, anomalies, pregame (`pre` frames) vs Novig.
+- [ ] QB3 SAVE the study permanently: research/pinnodds_2026-10-08b/ (trimmed tape + analysis output) and RESEARCH.md §120.2+ with implementation ideas for Vigilant; checkpoint and push. Never the key.
