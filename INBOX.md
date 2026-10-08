@@ -5611,3 +5611,17 @@ Research how to best take advantage of my Pinnacle websocket and novig websocket
 ```
 @"/root/.claude/uploads/f36ef45c-e072-599a-a9c9-b91ee94fe110/ae7523fa-vigilant-burst-study-v0.78.0-2026-10-08-1703.txt" @"/root/.claude/uploads/f36ef45c-e072-599a-a9c9-b91ee94fe110/c11ecebb-vigilant-diagnostics-v0.78.0-2026-10-08-1702.txt" @"/root/.claude/uploads/f36ef45c-e072-599a-a9c9-b91ee94fe110/9a375340-vigilant-feed-race-v0.78.0-2026-10-08-2103.txt" @"/root/.claude/uploads/f36ef45c-e072-599a-a9c9-b91ee94fe110/07070eb7-vigilant-scan-study-v0.78.0-2026-10-08-1703.txt" 
 ```
+
+## 2026-10-08T23:31:54Z
+```
+Use the Pinnodds websocket with this key: 
+
+[key redacted …WLAh]
+
+And use the novig websocket with this key: 
+
+[key redacted …8db9]
+
+
+Study live games, match them, and see if anything can be exploited on novig based on Pinnacle odds in real time
+```
