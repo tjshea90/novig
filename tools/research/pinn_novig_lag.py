@@ -230,6 +230,9 @@ class Novig:
                                     if mt == 'SPREAD' and v['type'] == 'spread' and 'home' in v['by']:
                                         keep = keep or (strike is not None and abs(float(strike) - float(v['by']['home'][1])) < 1e-9)
                         if keep:
+                            if m['marketId'] not in self.targets:
+                                self.out({'k': 'mkt', 't': int(time.time() * 1000), 'mid': m['marketId'], 'pid': pid, 'nid': ne['eventId'], 'mt': mt, 'strike': strike, 'desc': m.get('description'),
+                                          'outs': [o['name'] for o in m['outcomes']], 'fee': m.get('fee'), 'status': m.get('status')})
                             targets[m['marketId']] = {'pid': pid, 'nid': ne['eventId'], 'mt': mt, 'strike': strike, 'outs': [(o['outcomeId'], o['name']) for o in m['outcomes']], 'fee': m.get('fee')}
                     break
         self.targets = targets
