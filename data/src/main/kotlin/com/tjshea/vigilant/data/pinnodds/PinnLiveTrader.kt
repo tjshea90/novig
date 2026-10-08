@@ -197,6 +197,9 @@ class PinnLiveTrader(
 
     private val mutex = Mutex()
     private val lastTry = HashMap<String, Long>()
+
+    /** The Pinnacle price change each outcome was last bet (or tried) on: one bet per move, never a second on the same quote because Novig has still not followed. */
+    private val lastMove = HashMap<String, Long>()
     private val blacklist = HashMap<String, Long>()
     private val history = ArrayList<LiveRecord>().also { it.addAll(runCatching { journal.readAll() }.getOrDefault(emptyList())) }
     private var standDownUntil = 0L
@@ -223,12 +226,14 @@ class PinnLiveTrader(
         if (r.bet && start < standDownUntil) return skip("stood down")
         if (r.bet) gate()?.let { return skip(it) }
         if (start - (lastTry[c.outcomeId] ?: 0L) < LiveTradeLimits.OUTCOME_COOLDOWN_MS) return skip("cooldown")
+        if ((lastMove[c.outcomeId] ?: Long.MIN_VALUE) >= c.pinnChangedAtMs) return skip("already bet this move")
         if ((blacklist[c.target.market.marketId] ?: 0L) > start) return skip("market refused lately")
         if (clashesWithOwnBid(c)) return skip("own bid in the way")
         if (!mutex.tryLock()) return skip("busy")
         if (lock != null && !lock.tryLock()) { mutex.unlock(); return skip("busy") }
         try {
             lastTry[c.outcomeId] = start
+            lastMove[c.outcomeId] = c.pinnChangedAtMs
             val limit = lossLimitHit(r)
             if (limit != null) {
                 haltNow(limit)

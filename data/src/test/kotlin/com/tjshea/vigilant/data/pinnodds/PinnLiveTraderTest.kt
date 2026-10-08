@@ -193,6 +193,17 @@ class PinnLiveTraderTest {
     }
 
     @Test
+    fun `one bet per Pinnacle move - the same quote is not bet again until Pinnacle moves again`() = runTest {
+        val r = rig(scope = backgroundScope)
+        val c = candidate()
+        assertNotNull(r.trader.attempt(c))
+        now += LiveTradeLimits.OUTCOME_COOLDOWN_MS + 1
+        assertNull("same Pinnacle change, cooldown over", r.trader.attempt(c))
+        assertEquals(1, r.trader.status.value.skipped["already bet this move"])
+        assertNotNull("a newer Pinnacle change is a new move", r.trader.attempt(candidate(at = now)))
+    }
+
+    @Test
     fun `the per-game and per-day caps cut the size and then stop it`() = runTest {
         val r = rig(LiveTradeRules(enabled = true, bet = true, stake = 5.0, maxPerGame = 3.0, maxPerDay = 25.0, haltLoss = 0.0), scope = backgroundScope)
         val first = r.trader.attempt(candidate())!!
