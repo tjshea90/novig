@@ -35,6 +35,11 @@ def med(xs):
     return statistics.median(xs) if xs else None
 
 
+def med100(xs):
+    m = med(xs)
+    return None if m is None else 100 * m
+
+
 def pct(xs, q):
     xs = sorted(x for x in xs if x is not None)
     return xs[min(len(xs) - 1, int(q * len(xs)))] if xs else None
@@ -106,17 +111,17 @@ def main():
     for g, rs in sorted(groups.items(), key=lambda kv: (kv[0][0] != 'ALL', kv[0])):
         sel = [r for r in rs if r['ev'] >= min_ev]
         if len(rs) < 30: continue
-        print(f'  {g[0]:11s} {g[1]:6s} rows {len(rs):6d}  edge rows {len(sel):5d} ({len(sel) / len(rs):5.1%})  median EV all {fmt(100 * med([r["ev"] for r in rs]), "{:+.2f}")}%  '
-              f'edge rows: EV now {fmt(100 * med([r["ev"] for r in sel]), "{:+.1f}")}%  +30s {fmt(100 * med([r["ev30"] for r in sel]), "{:+.1f}")}% (n={sum(r["ev30"] is not None for r in sel)})  '
-              f'+120s {fmt(100 * med([r["ev120"] for r in sel]), "{:+.1f}")}% (n={sum(r["ev120"] is not None for r in sel)})  median depth {fmt(med([r["depth"] for r in sel]), "{:.0f}")}')
+        print(f'  {g[0]:11s} {g[1]:6s} rows {len(rs):6d}  edge rows {len(sel):5d} ({len(sel) / len(rs):5.1%})  median EV all {fmt(med100([r["ev"] for r in rs]), "{:+.2f}")}%  '
+              f'edge rows: EV now {fmt(med100([r["ev"] for r in sel]), "{:+.1f}")}%  +30s {fmt(med100([r["ev30"] for r in sel]), "{:+.1f}")}% (n={sum(r["ev30"] is not None for r in sel)})  '
+              f'+120s {fmt(med100([r["ev120"] for r in sel]), "{:+.1f}")}% (n={sum(r["ev120"] is not None for r in sel)})  median depth {fmt(med([r["depth"] for r in sel]), "{:.0f}")}')
     print('  by seconds since Pinnacle last changed the line (ALL): share of rows with EV >= min, median EV at +120 s for those rows')
     for lo, hi in ((0, 2), (2, 5), (5, 10), (10, 20), (20, 60), (60, 1e9)):
         sel = [r for r in rows if lo <= r['age'] < hi]; e = [r for r in sel if r['ev'] >= min_ev]
-        if sel: print(f'    {lo:3.0f}-{hi:5.0f}s  n {len(sel):6d}  edge {len(e) / len(sel):6.1%}  EV+120s median {fmt(100 * med([r["ev120"] for r in e]), "{:+.1f}")}% (n={sum(r["ev120"] is not None for r in e)})')
+        if sel: print(f'    {lo:3.0f}-{hi:5.0f}s  n {len(sel):6d}  edge {len(e) / len(sel):6.1%}  EV+120s median {fmt(med100([r["ev120"] for r in e]), "{:+.1f}")}% (n={sum(r["ev120"] is not None for r in e)})')
     print('  by Pinnacle limit (a small limit is a soft quote):')
     for lo, hi in ((0, 100), (100, 500), (500, 2000), (2000, 1e12)):
         sel = [r for r in rows if r['lim'] is not None and lo <= r['lim'] < hi]; e = [r for r in sel if r['ev'] >= min_ev]
-        if sel: print(f'    limit {lo:5.0f}-{hi:12.0f}  n {len(sel):6d}  edge {len(e) / len(sel):6.1%}  EV+120s median {fmt(100 * med([r["ev120"] for r in e]), "{:+.1f}")}% (n={sum(r["ev120"] is not None for r in e)})')
+        if sel: print(f'    limit {lo:5.0f}-{hi:12.0f}  n {len(sel):6d}  edge {len(e) / len(sel):6.1%}  EV+120s median {fmt(med100([r["ev120"] for r in e]), "{:+.1f}")}% (n={sum(r["ev120"] is not None for r in e)})')
 
     # ---- C runs of edge
     print(f'\n[C] runs of consecutive novig reads on one outcome with EV >= {min_ev:.0%}: how long they last and whether they began with a Pinnacle move')
@@ -207,7 +212,7 @@ def main():
         print(f'  first novig best-bid change after the score: median {fmt(med([r["nov_first"] for r in ev_rows]))} s  p25 {fmt(pct([r["nov_first"] for r in ev_rows], .25))}  p75 {fmt(pct([r["nov_first"] for r in ev_rows], .75))} (n={sum(r["nov_first"] is not None for r in ev_rows)} of {len(ev_rows)})')
         print(f'  Pinnacle market suspended within -5..+15 s of the score: {sum(r["susp"] for r in ev_rows)} of {len(ev_rows)}')
         print(f'  novig reads in the 10 s before / after the score (per market, all markets of the game): {sum(r["rb"] for r in ev_rows)} / {sum(r["ra"] for r in ev_rows)}  (a pause that stopped quoting would show fewer after)')
-        print(f'  novig book spread (1 - bidA - bidB) median before {fmt(100 * med([r["sp_b"] for r in ev_rows]), "{:.2f}")} pts, +2..12 s after {fmt(100 * med([r["sp_a"] for r in ev_rows]), "{:.2f}")} pts; depth before {fmt(med([r["d_b"] for r in ev_rows]), "{:.0f}")}, after {fmt(med([r["d_a"] for r in ev_rows]), "{:.0f}")}')
+        print(f'  novig book spread (1 - bidA - bidB) median before {fmt(med100([r["sp_b"] for r in ev_rows]), "{:.2f}")} pts, +2..12 s after {fmt(med100([r["sp_a"] for r in ev_rows]), "{:.2f}")} pts; depth before {fmt(med([r["d_b"] for r in ev_rows]), "{:.0f}")}, after {fmt(med([r["d_a"] for r in ev_rows]), "{:.0f}")}')
         for s in sorted({r['sport'] for r in ev_rows}):
             ss = [r for r in ev_rows if r['sport'] == s]
             print(f'    {s:11s} scores {len(ss):3d}  novig first change median {fmt(med([r["nov_first"] for r in ss]))} s  pinnacle first reprice median {fmt(med([r["pin_first"] for r in ss]))} s')
