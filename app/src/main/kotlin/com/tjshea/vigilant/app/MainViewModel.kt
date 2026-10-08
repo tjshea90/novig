@@ -2012,7 +2012,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             sharpFeeds = runCatching { com.tjshea.vigilant.data.reference.SharpBooks.feedsAmong(c.referenceSources(_state.value.settings, background = true)) }.getOrDefault(emptyList()),
             lowUsagePlan = _state.value.settings.takeIf { it.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }?.let { runCatching { c.lowUsagePlan(it) }.getOrNull() },
             pinnReport = runCatching {
-                PinnText.diagnostics(_state.value.settings, c.pinnRunner.status.value, c.pinnTrader.status.value, c.pinnJournal.readAll(), c.pinnFollowJournal.readAll(), c.pinnRunner.running)
+                PinnText.diagnostics(_state.value.settings, c.pinnRunner.status.value, c.pinnTrader.status.value, c.pinnJournal.readAll(), c.pinnFollowJournal.readAll(), c.pinnRunner.running, c.pinnReopenJournal.readAll())
             }.getOrNull(),
             burstReport = runCatching {
                 BurstText.diagnostics(

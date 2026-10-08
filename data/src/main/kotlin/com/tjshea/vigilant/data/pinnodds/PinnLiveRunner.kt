@@ -76,6 +76,8 @@ class PinnLiveRunner(
     private val trader: PinnLiveTrader,
     private val config: () -> LiveConfig,
     private val followJournal: DayJournal<LiveFollow>,
+    /** Where the post-score probes of the moneyline go ([ReopenStudy]); null = none are taken. */
+    private val reopenJournal: DayJournal<ReopenProbe>? = null,
     private val clock: () -> Long = System::currentTimeMillis,
     private val discoverEveryMs: Long = DISCOVER_MS,
     private val tickMs: Long = TICK_MS,
@@ -117,6 +119,9 @@ class PinnLiveRunner(
 
     private class Follow(val dueMs: Long, val record: LiveRecord, val candidate: LiveCandidate, val offsetSec: Int)
 
+    /** One reading of a moneyline [offsetSec] after a score at [scoreAtMs]. */
+    private class Probe(val dueMs: Long, val target: LiveTarget, val scoreAtMs: Long, val offsetSec: Int)
+
     // ---- consumer state (touched only by the consumer) ----------------------------------------------------------------------------
     private var book = PinnBook()
     private var catalogEvents: List<NovigEvent> = emptyList()
@@ -125,6 +130,7 @@ class PinnLiveRunner(
     private val targetsByMarket = HashMap<String, LiveTarget>()
     private val armedUntil = HashMap<Long, Long>()
     private val follows = PriorityQueue<Follow>(compareBy { it.dueMs })
+    private val probes = PriorityQueue<Probe>(compareBy { it.dueMs })
     private var evaluations = 0L
     private var candidates = 0L
     private val skips = HashMap<String, Int>()
@@ -138,7 +144,7 @@ class PinnLiveRunner(
 
     private fun reset() {
         book = PinnBook(config().method)
-        catalogEvents = emptyList(); catalogMarkets = emptyList(); targetsByEvent.clear(); targetsByMarket.clear(); armedUntil.clear(); follows.clear()
+        catalogEvents = emptyList(); catalogMarkets = emptyList(); targetsByEvent.clear(); targetsByMarket.clear(); armedUntil.clear(); follows.clear(); probes.clear()
         evaluations = 0; candidates = 0; skips.clear(); lastOffer.clear(); lastCandidate = null; watched = 0; matchedGames = 0; lastRematchMs = 0; lastEventCount = -1; catalogDirty = false
     }
 
@@ -217,6 +223,7 @@ class PinnLiveRunner(
             when (c.kind) {
                 // Only a MAIN line's change arms a game: an alternate line moves constantly and is not what the targets are priced from.
                 PinnChange.Kind.PRICE -> if (book.events[c.eventId]?.lines?.get(c.key)?.alternate != true) armedUntil[c.eventId] = msg.atMs + (if (book.events[c.eventId]?.live == false) cfg.rules.preMoveWindowMs else cfg.rules.moveWindowMs) + EXTRA_ARM_MS
+                PinnChange.Kind.SCORE -> scheduleProbes(c.eventId, msg.atMs)
                 PinnChange.Kind.GONE -> { armedUntil.remove(c.eventId); targetsByEvent.remove(c.eventId)?.forEach { targetsByMarket.remove(it.market.marketId) } }
                 else -> {}
             }
@@ -244,6 +251,7 @@ class PinnLiveRunner(
             targetsByEvent.values.forEach { ts -> ts.forEach { t -> evaluate(t, now, novig) } }
         }
         while (follows.isNotEmpty() && follows.peek().dueMs <= now) capture(follows.poll(), now, novig)
+        while (probes.isNotEmpty() && probes.peek().dueMs <= now) probe(probes.poll(), now, novig)
         val events = book.events.size
         if (catalogDirty || events != lastEventCount && now - lastRematchMs > REMATCH_MS) rematch(novig, now)
         if (now % 30_000L < tickMs) book.prune(now)
@@ -369,6 +377,32 @@ class PinnLiveRunner(
         for (s in LiveTradeLimits.FOLLOW_UP_SECONDS) follows += Follow(base + s * 1000L, m.record, m.candidate, s)
     }
 
+    /** A score changed in [eventId]'s game: its matched moneylines are read at once and at each of [ReopenStudy.OFFSETS] after (no order is sent). */
+    private fun scheduleProbes(eventId: Long, atMs: Long) {
+        if (reopenJournal == null || probes.size > MAX_PROBES) return
+        val group = book.events[eventId]?.groupId ?: return
+        for (ts in targetsByEvent.values) for (t in ts) {
+            if (t.type != PinnLineType.MONEYLINE || book.events[t.pinnEventId]?.groupId != group) continue
+            for (off in ReopenStudy.OFFSETS) probes += Probe(atMs + off * 1000L, t, atMs, off)
+        }
+    }
+
+    private fun probe(p: Probe, now: Long, novig: PushedBooks) {
+        val journal = reopenJournal ?: return
+        val t = p.target
+        val line = book.events[t.pinnEventId]?.let { t.line(it) }
+        val mb = novig.live(listOf(t.market.marketId))[t.market.marketId]
+        fun ask(side: PinnSide): Double? = t.outcomeBySide[side]?.let { oid -> mb?.takeLadder(t.market, oid)?.minOfOrNull { it.price } }
+        runCatching {
+            journal.append(
+                ReopenProbe(
+                    atMs = now, scoreAtMs = p.scoreAtMs, offsetSec = p.offsetSec, eventId = t.event.eventId, league = t.event.league, marketId = t.market.marketId,
+                    fairHome = line?.fair?.get(PinnSide.HOME), fairAway = line?.fair?.get(PinnSide.AWAY), askHome = ask(PinnSide.HOME), askAway = ask(PinnSide.AWAY), lineOpen = line?.open == true,
+                ),
+            )
+        }
+    }
+
     /** What the same line says now, for the bet's verdict against the later price. */
     private fun capture(f: Follow, now: Long, novig: PushedBooks) {
         val t = f.candidate.target
@@ -418,6 +452,9 @@ class PinnLiveRunner(
 
         /** A game stays armed this long past the move window: the settle time and a Novig book change can land just after it. */
         const val EXTRA_ARM_MS = 2_000L
+
+        /** The most post-score readings waiting at once (a busy night of scores cannot grow the queue without end). */
+        const val MAX_PROBES = 4_000
 
         /** A Pinnacle matchup silent this long is not matched (a kicked-off or pulled one stops being sent). */
         const val MATCH_FRESH_MS = 10 * 60_000L

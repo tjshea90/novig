@@ -44,13 +44,13 @@ object PinnText {
             "$mode: ${t.bets} bets, ${t.paper} paper, ${t.missed} missed" + (t.last?.let { " · last: $it" } ?: "") + (r.problem?.let { " · $it" } ?: "")
     }
 
-    fun diagnostics(s: ScanSettings, r: LiveRunnerStatus, t: LiveTradeStatus, records: List<LiveRecord>, follows: List<LiveFollow>, running: Boolean): String {
+    fun diagnostics(s: ScanSettings, r: LiveRunnerStatus, t: LiveTradeStatus, records: List<LiveRecord>, follows: List<LiveFollow>, running: Boolean, reopen: List<com.tjshea.vigilant.data.pinnodds.ReopenProbe> = emptyList()): String {
         val o = StringBuilder()
         o.appendLine("PINNODDS LIVE (RESEARCH.md §116)")
         o.appendLine(
             "Feed: ${if (s.pinnLive) "ON" else "off"} · ${running.let { if (it) "running" else "not running" }} · real bets ${if (s.pinnLiveBet) "ON" else "off (paper)"}" +
                 (s.pinnLiveHalted?.let { " · HALTED: $it" } ?: "") + " · stake ${money(s.pinnLiveStake)}, game ${money(s.pinnLiveMaxGame)}, day ${money(s.pinnLiveMaxDay)}, halt at ${money(s.pinnLiveHaltLoss)} lost · " +
-                "min EV ${pct(s.pinnLiveMinEv)}, min move ${pts(s.pinnLiveMinMove)}, trigger ${s.pinnLiveTrigger.label}, devig ${s.pinnLiveDevig.displayName}, pregame ${if (s.pinnLivePregame) "on" else "off"}",
+                "min EV ${pct(s.pinnLiveMinEv)}, min move ${pts(s.pinnLiveMinMove)}, trigger ${s.pinnLiveTrigger.label}, devig ${s.pinnLiveDevig.displayName}, pregame ${if (s.pinnLivePregame) "on" else "off"}, hold-off after a score ${if (s.pinnLiveHoldoffSeconds == 0) "off" else "${s.pinnLiveHoldoffSeconds} s"}",
         )
         o.appendLine(
             "Engine: socket ${r.socket} · Pinnacle matchups ${r.pinnEvents} (${r.pinnLive} live) · Novig live games ${r.novigGames} · matched ${r.matched} · markets held ${r.watched} · frames ${r.frames} · " +
@@ -60,6 +60,8 @@ object PinnText {
         if (t.skipped.isNotEmpty()) o.appendLine("Trader held back: " + t.skipped.entries.sortedByDescending { it.value }.take(6).joinToString(" · ") { "${it.key} ${it.value}" })
         o.appendLine("Trader this run: ${t.bets} bets · ${t.paper} paper · ${t.missed} missed · ${t.refused} refused · spent ${money(t.spent)}" + (t.last?.let { " · last: $it" } ?: ""))
         PinnReport.lines(records, follows).forEach { o.appendLine(it) }
+        o.appendLine("Post-score study (the pause after a score; reads only, sends nothing):")
+        com.tjshea.vigilant.data.pinnodds.ReopenStudy.lines(reopen).forEach { o.appendLine("  $it") }
         return o.toString()
     }
 }

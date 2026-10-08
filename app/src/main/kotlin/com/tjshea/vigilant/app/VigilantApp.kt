@@ -1016,6 +1016,7 @@ class AppContainer(private val app: Application) {
 
     /** Decisions (real and paper) and their 30 s / 120 s follow-ups: one file a day each, appended to, never rewritten. */
     val pinnJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "pinn-live"), "pinn-live", com.tjshea.vigilant.data.pinnodds.LiveRecord.serializer()) { it.atMs }
+    val pinnReopenJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "pinn-live"), "pinn-reopen", com.tjshea.vigilant.data.pinnodds.ReopenProbe.serializer()) { it.atMs }
     val pinnFollowJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "pinn-live"), "pinn-follow", com.tjshea.vigilant.data.pinnodds.LiveFollow.serializer()) { it.atMs }
 
     /** What the live trader sends orders through: whatever betting client is connected at that moment (the gate has checked there is one; a key removed mid-way fails the order, which halts it). */
@@ -1094,7 +1095,7 @@ class AppContainer(private val app: Application) {
             scope = appScope, source = novig,
             newFeed = { listener -> readConnection?.let { NovigStream(http, readKeyClient(it), appScope, idleCloseMs = BURST_IDLE_CLOSE_MS, bookListener = listener) } },
             openFeed = { onFrame -> com.tjshea.vigilant.data.pinnodds.PinnSocket(http, { keyStore.current(ApiProvider.PINNODDS).firstOrNull() }, appScope, onFrame) },
-            trader = pinnTrader, config = ::pinnConfig, followJournal = pinnFollowJournal,
+            trader = pinnTrader, config = ::pinnConfig, followJournal = pinnFollowJournal, reopenJournal = pinnReopenJournal,
         )
     }
 
