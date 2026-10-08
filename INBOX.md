@@ -5417,3 +5417,27 @@ Save all findings already made to GitHub, and make sure to save each agent's fin
 ```
 This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
 ```
+
+## 2026-10-08T00:49:11Z
+```
+For now, keep the prior project on this app on pause for another session and start on this instead: 
+
+I was given a 3 day trial of pinnodds.com websocket.
+read the docs regarding the websocket thoroughly at this address: 
+https://pinnodds.com/docs
+
+you may use and test the API and web socket with this key:
+[key redacted …WLAh]
+
+research and implement a live betting feature in vigilant app that will take advantage of the real time odds movement for live games and make a feature for vigilant to compare the pinnacle web socket to the novig web socket using both apis and auto bet all odds on novig that lag fair devigged live odds from pinnodds that make the live bet odds favorable and positive EV on novig.
+the betting must be fast to react to the odds movement. also see if it is possible to implement the research you already found about burst scoring odds inefficiency using the pinnodds web socket 
+all sports may be read and auto bet in real time. 
+ensure that it only bets truly positive EV odds based on live betting inefficiencies and opportunities. 
+figure out how to take full advantage of the novig and pinnodds apis for maximum profit and positive EV opportunities. 
+if opportunities also exist outside of live betting using the Web socket, incorporate this as well. 
+make sure you thoroughly research the pinnodds API docs for the correct commands and maximum use and speed, but also make sure to follow any usage rules or guidelines. 
+also review the novig API docs for web socket use and proper usage and see if anything has changed or updated regarding proper usage and commands.
+the goal is to make full use of novig api and pinnodds API to find positive EV and profit.
+this will require a setting for me to input the pinnodds API key and a button to test the key. 
+you may do all testing of the pinnodds API needed using the key I provided to ensure correct usage and commands 
+```
