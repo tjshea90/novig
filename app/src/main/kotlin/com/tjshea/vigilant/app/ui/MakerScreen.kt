@@ -707,6 +707,11 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
             "No bid unless a sharp book (Pinnacle, Circa, an exchange) prices the line both ways and agrees it is +EV. Off: a bid on a prop no sharp book prices is allowed (the veto still stops one a sharp book says no to). Too little data yet to say it pays (RESEARCH.md §81.4).",
             s.makerRequireSharp, "makerRequireSharp",
         ) { on -> onUpdate { it.copy(makerRequireSharp = on) } }
+        if (!lowUsage && s.makerSource == com.tjshea.vigilant.data.scanner.BidSource.VIGILANT) SwitchRow(
+            "Long-run saver",
+            com.tjshea.vigilant.data.scanner.LongRunBids.EXPLAINER,
+            s.makerLongRun, "makerLongRun",
+        ) { on -> onUpdate { it.copy(makerLongRun = on) } }
         SwitchRow(
             "Recommend bids when auto-make is off", "A notification for each new bid worth posting, with Approve and Deny (a few a cycle at most).",
             s.makerRecommend, "makerRecommend",
