@@ -147,3 +147,4 @@ day that changes.
 | v0.76.2 | code 136 | 2026-10-08T04:38Z | v0.76.2: Pinnodds live matches tennis (Sets+Games children, sets-line guard); live orders wait up to 20 s for Novig's in-play delay instead of halting at 2.5 s
 | v0.76.3 | code 137 | 2026-10-08T05:14Z | v0.76.3: Pinnodds live Stale orders trigger (ask still at Pinnacle's earlier price, no score needed), 40% edge cap refusing probable mismatches, order-time diagnostics
 | v0.77.0 | code 138 | 2026-10-08T06:27Z | v0.77.0: Pinnacle only removed entirely; Pinnodds live pregame steam (stale prematch orders, no fee), hold-off after a score, 40% edge cap kept, post-score study in Diagnostics
+| v0.78.0 | code 139 | 2026-10-08T07:31Z | v0.78.0: long-run saver for bids (lean background scan, 8 min pace while every game is far off), far games' bids ranked last, bid funnel in Diagnostics
