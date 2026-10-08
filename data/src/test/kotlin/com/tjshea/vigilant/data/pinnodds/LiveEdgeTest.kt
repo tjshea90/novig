@@ -186,4 +186,42 @@ class LiveEdgeTest {
         assertSkip(LiveSkip.TOO_GOOD, judge(e, l, 2_000, listOf(TakeLevel(0.10, 5_000))))
         assertTrue("the same rule with the cap lifted would have bet", judge(e, l, 2_000, listOf(TakeLevel(0.10, 5_000)), rules.copy(maxEv = 100.0)) is LiveVerdict.Bet)
     }
+
+    @Test
+    fun `a prematch move is a bet only inside the lead window, on a stale ask, and with no fee`() {
+        val (_, e, l) = moved(isLive = false)
+        val r = rules.copy(pregame = true)
+        val now = 10_000L
+        e.startMs = now + 3_600_000L
+        val v = judge(e, l, now, stale, r) as LiveVerdict.Bet
+        assertEquals("no taker fee before the game starts", 0.0, v.fee, 0.0)
+        assertEquals(0.50, v.ask, 0.0)
+        // Off by default.
+        assertSkip(LiveSkip.PREGAME, judge(e, l, now, stale, rules))
+        // Lead window: about to start, too far off, no start time.
+        e.startMs = now + 60_000L
+        assertSkip(LiveSkip.TOO_CLOSE, judge(e, l, now, stale, r))
+        e.startMs = now + 7 * 3_600_000L
+        assertSkip(LiveSkip.TOO_FAR, judge(e, l, now, stale, r))
+        e.startMs = 0L
+        assertSkip(LiveSkip.NO_START, judge(e, l, now, stale, r))
+        e.startMs = now + 3_600_000L
+        // A wide book whose ask is not any earlier Pinnacle price is not a stale order.
+        assertSkip(LiveSkip.NOT_STALE, judge(e, l, now, listOf(TakeLevel(0.40, 5_000)), r))
+        // A price that has not sat still, and a move too old for the window.
+        assertSkip(LiveSkip.SETTLING, judge(e, l, 2_000L, stale, r))
+        assertSkip(LiveSkip.NO_MOVE, judge(e, l, now, stale, r.copy(preMoveWindowMs = 1_000L, preMinMove = 0.5)))
+        // The edge cap holds before the game too.
+        assertSkip(LiveSkip.TOO_GOOD, judge(e, l, now, listOf(TakeLevel(0.10, 5_000)), r))
+    }
+
+    @Test
+    fun `the hold-off after a score blocks live bets for its seconds and then lets them through`() {
+        val (_, e, l) = moved()
+        e.scoreAtMs = 1_500L
+        val r = rules.copy(holdoffMs = 5_000L)
+        assertSkip(LiveSkip.HOLD_OFF, judge(e, l, 3_000L, stale, r))
+        assertTrue("past the hold-off", judge(e, l, 7_000L, stale, r) is LiveVerdict.Bet)
+        assertTrue("off by default", judge(e, l, 3_000L, stale, rules) is LiveVerdict.Bet)
+    }
 }
