@@ -4235,8 +4235,8 @@ Tj's words: "Because I'll be using real money with this feature tonight, make su
 
 ## Tj, 2026-10-08 (~06:10Z): "Build all the new features you mentioned and remove the "Pinnacle only" feature from the app entirely"
 
-- [ ] PZ1 REMOVE "Pinnacle only" (ScanSettings.pinnacleOnly and everything that exists only for it: scanner mode, UI, auto-bet branch, texts, tests; saved settings still load). Not Pinnodds live, not the sharp-book veto.
-- [ ] PZ2 BUILD pregame steam mode (PX3): Pinnacle prematch moves on `pre` frames vs Novig's stale pregame book, fee-free, time-to-start bounds, staleness guards, paper by default.
-- [ ] PZ3 BUILD hold-off after a score (setting: seconds, default off until the diagnostics show the pause) and the cancel-on-danger-frame guard.
-- [ ] PZ4 BUILD the first-maker-after-reopen option (post-only bid at Pinnacle fair minus margin when a live market reopens; paper by default; cancel on next score/dz).
-- [ ] PZ5 floor green, CI green, release v0.77.0, tell Tj what is on by default.
+- [x] PZ1 REMOVED "Pinnacle only" entirely (v0.77.0): ScanSettings.pinnacleOnly / pinnacleMaxAgeSeconds, the scanner's single-book mode, the auto-bet pass (AutoBettor.runPinnacle, PinnacleBet), PinnacleBackup, the refresh/forget plumbing (Scanner.refreshFair, ReferenceSource.forget), the Settings and Auto-bet rows, the Feed banner, the Tracker chip, the Diagnostics block and health check, AtBet.pinnacleOnly/pinnacleAgeSec, the scan study's Pinnacle only splits; old settings and bets load (unknown keys are ignored). Tests for it removed; floor green.
+- [x] PZ2 BUILT pregame steam (LiveEdge.pregame): Pinnacle's prematch fair +2 points within 15 min, game 5 min to 6 h from the start, price still 3 s, ask still at an earlier Pinnacle price (stale order), no taker fee, 40% edge cap; 20-minute prematch history; arming window 15 min. Switch: Settings › Pinnodds live › Also pregame moves (still off by default, paper unless real bets are on). Tests: LiveEdgeTest.
+- [x] PZ3 BUILT hold-off after a score (Settings › Pinnodds live, Off / 3 / 5 / 8 / 12 / 20 s, default off) and the 40% edge cap. The cancel-on-danger-frame guard has nothing to cancel: the app places no resting live order, so it is NOT built (RESEARCH.md §118.2).
+- [x] PZ4 BUILT the post-score study (ReopenStudy): every score on a matched game reads its moneyline at +0..30 s and the Diagnostics say how big the gap to Pinnacle's fair is and when Novig's ask moves. The first-maker-after-reopen ORDER is NOT built: unmeasured (needs these numbers first, RESEARCH.md §118.2.3).
+- [ ] PZ5 ship v0.77.0 (floor, CI, release.yml, record), tell Tj what is on by default (nothing new is on).
