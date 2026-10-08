@@ -1024,6 +1024,111 @@ class AppContainer(private val app: Application) {
         burst.start(s.burstLeagues, s.apiMaxStake)
     }
 
+    // ---- Pinnodds live (Tj, 2026-10-08; RESEARCH.md §116): Pinnacle's live price on the Pinnodds WebSocket against Novig's live books -----------------------------------
+
+    /** Decisions (real and paper) and their 30 s / 120 s follow-ups: one file a day each, appended to, never rewritten. */
+    val pinnJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "pinn-live"), "pinn-live", com.tjshea.vigilant.data.pinnodds.LiveRecord.serializer()) { it.atMs }
+    val pinnFollowJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "pinn-live"), "pinn-follow", com.tjshea.vigilant.data.pinnodds.LiveFollow.serializer()) { it.atMs }
+
+    /** What the live trader sends orders through: whatever betting client is connected at that moment (the gate has checked there is one; a key removed mid-way fails the order, which halts it). */
+    private val pinnOrders = object : com.tjshea.vigilant.data.pinnodds.LiveOrders {
+        private fun client() = trading ?: error("no betting key connected")
+        override suspend fun place(outcomeId: String, price: Double, qty: Long, clientId: String) = client().placeOrder(outcomeId, price, qty, "IOC", clientId)
+        override suspend fun order(orderId: String) = client().order(orderId)
+        override suspend fun fills(orderId: String) = client().fills(orderId)
+    }
+
+    /** Tj's limits for the live trader, read at each decision. A stake is never over his per-bet maximum for the API. */
+    private fun pinnTradeRules(): com.tjshea.vigilant.data.pinnodds.LiveTradeRules {
+        val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(false, false, 0.0, 0.0, 0.0, 0.0)
+        return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(
+            enabled = AppBook.isNovig && s.pinnLive && !s.killed, bet = s.pinnLiveBet,
+            stake = if (s.apiMaxStake > 0.0) minOf(s.pinnLiveStake, s.apiMaxStake) else s.pinnLiveStake,
+            maxPerGame = s.pinnLiveMaxGame, maxPerDay = s.pinnLiveMaxDay, haltLoss = s.pinnLiveHaltLoss, halted = s.pinnLiveHalted,
+        )
+    }
+
+    /** Why a REAL bet must not be made now (words are counted in the status), or null. Paper decisions need none of it. */
+    private suspend fun pinnGate(): String? {
+        val s = settingsStore.flow.value ?: return "settings not loaded"
+        val stake = pinnTradeRules().stake
+        val wallet = wallet.flow.value?.dollars
+        return when {
+            s.killed -> "STOP ALL is on"
+            s.pausedByHand -> "scanning is paused"
+            trading == null -> "no betting key connected"
+            wallet == null -> "wallet not read yet"
+            wallet < stake * 1.2 -> "wallet too low"
+            else -> null
+        }
+    }
+
+    /** Dollars lost today on settled live bets (positive = loss): the day's halt. */
+    private suspend fun pinnLossToday(): Double {
+        val from = ApiBetPlacer.localMidnight(System.currentTimeMillis())
+        val net = tracker.all().filter { it.source == BetTracker.SOURCE_PINNODDS && (it.settledAtMs ?: 0L) >= from }.sumOf { it.profit ?: 0.0 }
+        return (-net).coerceAtLeast(0.0)
+    }
+
+    val pinnTrader: com.tjshea.vigilant.data.pinnodds.PinnLiveTrader by lazy {
+        com.tjshea.vigilant.data.pinnodds.PinnLiveTrader(
+            orders = pinnOrders, scope = appScope, rules = ::pinnTradeRules, gate = ::pinnGate,
+            ownBids = { makerStore.flow.value.orEmpty().filter { it.resting }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) } },
+            journal = pinnJournal,
+            onHalt = { why ->
+                eventLog.warn("PINNLIVE", "trader halted: $why")
+                appScope.launch {
+                    withContext(kotlinx.coroutines.NonCancellable) {
+                        runCatching { settingsStore.update { if (it.pinnLiveHalted == null) it.copy(pinnLiveHalted = why) else it } }
+                        runCatching { AutoBetNotes.stopped(app, "Live betting stopped", why) }
+                    }
+                }
+            },
+            logFills = { target, orderId, fills -> tracker.logApi(target, orderId, fills) != null },
+            lossToday = ::pinnLossToday, lock = orderLock,
+        )
+    }
+
+    private fun pinnConfig(): com.tjshea.vigilant.data.pinnodds.LiveConfig {
+        val s = settingsStore.flow.value ?: ScanSettings()
+        return com.tjshea.vigilant.data.pinnodds.LiveConfig(
+            rules = com.tjshea.vigilant.data.pinnodds.LiveRules(minEv = s.pinnLiveMinEv, minMove = s.pinnLiveMinMove, pregame = s.pinnLivePregame),
+            method = s.pinnLiveDevig, leagues = Leagues.ALL.map { it.novigName }.toSet(),
+        )
+    }
+
+    /**
+     * The live engine: one Pinnodds socket (the account allows one) and one Novig book feed on the connected key, judging Pinnacle's price against Novig's lagging quote. Nothing is sent unless
+     * Settings › Pinnodds live › "Place real bets" is on; the trader is the only thing that can place an order, and it takes the app's one-order lock.
+     */
+    val pinnRunner: com.tjshea.vigilant.data.pinnodds.PinnLiveRunner by lazy {
+        com.tjshea.vigilant.data.pinnodds.PinnLiveRunner(
+            scope = appScope, source = novig,
+            newFeed = { listener -> readConnection?.let { NovigStream(http, readKeyClient(it), appScope, idleCloseMs = BURST_IDLE_CLOSE_MS, bookListener = listener) } },
+            openFeed = { onFrame -> com.tjshea.vigilant.data.pinnodds.PinnSocket(http, { keyStore.current(ApiProvider.PINNODDS).firstOrNull() }, appScope, onFrame) },
+            trader = pinnTrader, config = ::pinnConfig, followJournal = pinnFollowJournal,
+        )
+    }
+
+    @Volatile private var pinnSawHalt = false
+
+    /** Starts or stops the live engine to match [s]: on, a Pinnodds key saved, a Novig key connected, STOP ALL not pressed, the Novig app. Safe to call on every settings change. */
+    suspend fun pinnTick(s: ScanSettings) {
+        if (!AppBook.isNovig) return
+        if (!s.pinnLive || s.killed) {
+            if (pinnRunner.running) pinnRunner.stop(if (s.killed) "stopped by STOP ALL" else null)
+            return
+        }
+        ensureLoaded()
+        if (s.pinnLiveHalted != null) pinnSawHalt = true else if (pinnSawHalt) { pinnSawHalt = false; pinnTrader.resumed() }
+        if (s.pinnLiveBet) runCatching { wallet.fresh() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+        if (keyStore.current(ApiProvider.PINNODDS).isEmpty()) {
+            if (pinnRunner.running) pinnRunner.stop("No Pinnodds key saved (Settings › Pinnodds live).")
+            return
+        }
+        pinnRunner.start()
+    }
+
     private val polymarket = PolymarketClient(http, json, usage = usage)
     private val kalshi = KalshiClient(http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage, fastPace = { settingsStore.flow.value?.kalshiFastPace ?: true })
 
