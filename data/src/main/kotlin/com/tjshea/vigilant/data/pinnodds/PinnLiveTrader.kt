@@ -35,9 +35,16 @@ object LiveTradeLimits {
     /** The same outcome is not tried again within this long (the first try's fill or miss has not shown in the book yet). */
     const val OUTCOME_COOLDOWN_MS = 15_000L
 
-    /** How long a placed order may take to end (an `IOC` ends at once); past it nothing is assumed and the trader halts. */
-    const val ORDER_WAIT_MS = 2_500L
+    /**
+     * How long a placed order may take to end; past it nothing is assumed and the trader halts. An in-play order waits out Novig's in-play delay (`PENDING`) before it fills or is
+     * rejected, so 2.5 s halted nearly every live bet (Tj, 2026-10-08: "an order had not ended"); 20 s covers a long delay.
+     */
+    const val ORDER_WAIT_MS = 20_000L
     const val POLL_MS = 80L
+
+    /** After [FAST_POLL_WINDOW_MS] the order is polled this often (a pending in-play order does not need 12 reads a second). */
+    const val SLOW_POLL_MS = 400L
+    const val FAST_POLL_WINDOW_MS = 2_000L
 
     /** A market Novig refused to trade in play (`NOT_LIVE_TRADABLE`, a price band, closed ...) is left alone this long. */
     const val BLACKLIST_MS = 10 * 60_000L
@@ -304,7 +311,7 @@ class PinnLiveTrader(
         if (settled == null) {
             val r = base(c, "BET", "UNCONFIRMED", qty, clientId, "The order had not ended after ${LiveTradeLimits.ORDER_WAIT_MS} ms.", endMs = endMs)
             record(r)
-            haltNow("an order had not ended: check Novig and the Tracker, then Resume")
+            haltNow("an order was still pending after ${LiveTradeLimits.ORDER_WAIT_MS / 1000} s, so its result is unknown: check Novig's orders and the Tracker (Sync with Novig), then Resume")
             return r
         }
         val (order, fills) = settled
@@ -336,7 +343,7 @@ class PinnLiveTrader(
         while (clock() - started < LiveTradeLimits.ORDER_WAIT_MS) {
             o = try { orders.order(orderId) } catch (e: CancellationException) { throw e } catch (e: Exception) { null }
             if (o?.terminal == true) break
-            pause(LiveTradeLimits.POLL_MS)
+            pause(if (clock() - started < LiveTradeLimits.FAST_POLL_WINDOW_MS) LiveTradeLimits.POLL_MS else LiveTradeLimits.SLOW_POLL_MS)
         }
         if (o?.terminal != true) return null
         var fills = try { orders.fills(orderId) } catch (e: CancellationException) { throw e } catch (e: Exception) { emptyList() }
