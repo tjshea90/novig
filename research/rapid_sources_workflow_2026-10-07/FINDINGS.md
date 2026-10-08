@@ -2,7 +2,7 @@
 
 One section per agent, scouts first. Raw per-agent files: `results/<label>.json`; each run's raw journal: `journal.<run>.jsonl`. Rendered by `tools/research/save_workflow.py`.
 
-Results saved so far: 12
+Results saved so far: 13
 
 
 ## scout:1-medium-fastapi-odds-tracker
@@ -1607,6 +1607,160 @@ TECHNIQUE: the subscribe, buffer, then snapshot handoff with per-client sequence
   - **terms_of_use**: The article has no data and so no data licence. Medium's terms of service could not be read (policy.medium.com returned 403 to WebFetch on 2026-10-08); I made no claim about them. The only Medium request I made was one GET of the public RSS feed, which returned HTTP 200. I did not bypass the Cloudflare challenge on the article or profile pages.
   - **betting_use_or_automated_use_allowed**: Not applicable: no data or API to be allowed or forbidden. Nothing in the article restricts betting use.
   - **signup_friction**: None: no account, key or sign-up in the article. To read the article page itself the container hits a Cloudflare 403; the public RSS feed works without a login.
+
+## verify-fit:bksignal-odds
+
+- **lens**: fit-terms-and-cost
+- **claim_checks**:
+  -
+    - **claim**: Service is an HTTP JSON odds API for 22 named bookmakers, priced $5 per 30 days per sport/category line
+    - **verdict**: confirmed
+    - **evidence_url**: https://odds.bksignal.com/
+    - **quote**: Fonbet odds data API ... Supported: Live odds / Prematch odds ... Basketball $5 / 30 days
+    - **corrected_statement**: Confirmed (read 2026-10-08, page has no date stamp and no Last-Modified header). My count of the home page: 64 priced lines, all $5 / 30 days: 40 Live + 24 Upcoming. Fonbet, Ligastavok and Winline have 6 live + 6 upcoming each; Bwin, Stake and Bcgame have 2 live + 2 upcoming (basketball, volleyball); the other 16 books have 1 live basketball line each. Buying every live line is about $200 a month and every line about $320. Live tennis exists on only 3 lines ($15). Whether one $5 line is one key, or whether each line needs its own key, is not stated.
+  -
+    - **claim**: Poll only, no websocket/push; incremental updateVersion
+    - **verdict**: confirmed
+    - **evidence_url**: https://odds.bksignal.com/docs
+    - **quote**: If provided server returns only records where updated_at > updateVersion (UTC). Next request take result.updateVersion from the response and use it as the next updateVersion.
+    - **corrected_statement**: Confirmed. A case-insensitive search of the home and docs HTML for websocket, sse, stream, push and webhook found 0 hits (absence on those two pages, not proof that no socket exists).
+  -
+    - **claim**: Rate limit 1 request per second; test endpoint 1 per 30 s and 2 events
+    - **verdict**: confirmed
+    - **evidence_url**: https://odds.bksignal.com/docs
+    - **quote**: Rate limit: no more than 1 request per second. Recommended polling: every 2-5 seconds for Live odds and every 30 seconds for Upcoming odds.
+    - **corrected_statement**: Confirmed. Test endpoint: 'returns up to 2 current events (if available) for all supported bookmakers. Rate limit: no more than 1 request per 30 second.' No per-month or per-day quota is stated anywhere; the only cap is 1 request per second per key, which is a ceiling of 86,400 calls a day.
+  -
+    - **claim**: updated_at is BkSignal's own stamp, not the bookmaker's or the play's
+    - **verdict**: confirmed
+    - **evidence_url**: https://odds.bksignal.com/docs
+    - **quote**: updated_at - when the event was updated according to our data (UTC).
+    - **corrected_statement**: Confirmed. The docs give no field that carries the bookmaker's or the play's time, so even with a key the age of the underlying price cannot be proven.
+  -
+    - **claim**: Only main markets, no player props
+    - **verdict**: confirmed
+    - **evidence_url**: https://odds.bksignal.com/docs
+    - **quote**: markets - universal structure that describes supported markets (currently main markets only).
+    - **corrected_statement**: Confirmed. Home FAQ: 'Currently supported from the main table: Win/Draw, Totals, and Handicaps.' Market keys in the docs are group/period/target/type/edge only (win, draw, handicap, total over/under); nothing for props.
+  -
+    - **claim**: Live scores are not guaranteed
+    - **verdict**: confirmed
+    - **evidence_url**: https://odds.bksignal.com/
+    - **quote**: Is the event score available? Not always. If the score is present in the bookmaker main table, then it is supported.
+    - **corrected_statement**: Confirmed. Docs: 'Score block may be absent if bookmaker does not provide live score.' The score schema (target > period > unit, units p=points and s=sets, period keys e, eo, o, p1..p9) has no field for the in-game tennis point (15/30/40) or the server. INFERRED: tennis scores would be sets and games at best, which is coarser than the per-point moves that re-quote Novig.
+  -
+    - **claim**: The key is bound to one IP address
+    - **verdict**: confirmed
+    - **evidence_url**: https://odds.bksignal.com/docs
+    - **quote**: ip_locked: Requests are allowed only from the bound IP. If you try from a new IP, wait for the cooldown 1 minute and retry.
+    - **corrected_statement**: Confirmed, with a nuance the scout missed. 'Wait for the cooldown 1 minute and retry' could mean the key rebinds to a new IP after a one-minute cooldown, not that it is locked forever. The docs do not say how the bind is created (first call, dashboard) or how often it can change. For a phone whose IP changes with Wi-Fi and cell handoffs, even a rebind-after-1-minute rule means repeated outages.
+  -
+    - **claim**: Free trial exists but is limited to two events
+    - **verdict**: confirmed
+    - **evidence_url**: https://odds.bksignal.com/
+    - **quote**: Can I try the sports odds API for free? Yes. A free trial is available, but the number of events is limited to two.
+    - **corrected_statement**: Confirmed. The only documented free path is the test endpoint, which still needs {ApiKey} in the path and polls at 1 per 30 s. That rate is slower than the 16 s median Novig re-quote in RESEARCH.md, so the free tier cannot measure the thing that matters (a >= 3 s lead). At best it shows whether a tennis scores block exists.
+  -
+    - **claim**: No US sharp or US-regulated book, no baseball, no NFL/college, no props
+    - **verdict**: overstated
+    - **evidence_url**: https://odds.bksignal.com/docs
+    - **quote**: {Discipline} allowed values: Football, Basketball, Tennis, Volleyball, IceHockey, TableTennis
+    - **corrected_statement**: Books, baseball and props are confirmed absent: no US-regulated book and none of Pinnacle, Circa, Kalshi, ProphetX, Sporttrade or Novig is on the 22-book list, no baseball discipline, main markets only. 'No NFL/college' cannot be verified: 'Football' is not defined, the docs have no football example, and basketball competitions are named globally (the example is 'Indonesia IBL'), so NBA or NCAA basketball is neither shown nor excluded. INFERRED: 'Football' means soccer, because the books are Russian/CIS/crypto and the markets include a draw.
+  -
+    - **claim**: 'Live Realtime odds' means fresh data
+    - **verdict**: unsupported
+    - **evidence_url**: https://odds.bksignal.com/
+    - **quote**: Live / Realtime odds
+    - **corrected_statement**: CLAIM_ONLY, as the scout said. 'Realtime odds' is a section label. No latency figure, no data-age figure and no bookmaker timestamp is given anywhere.
+  -
+    - **claim**: Upstream is a scrape of each bookmaker's public site/app, not a licensed feed
+    - **verdict**: unsupported
+    - **evidence_url**: https://odds.bksignal.com/docs
+    - **quote**: opponents - array of opponents in the same order as on the bookmaker website.
+    - **corrected_statement**: INFERRED, stays INFERRED. The page names no data licence, partner or upstream. The home FAQ says 'If the score is present in the bookmaker main table, then it is supported', which also points at reading bookmaker pages. Not proven.
+  -
+    - **claim**: Domain registered 2022-07-30 at Namecheap, last changed 2026-06-30, expires 2027-07-30
+    - **verdict**: confirmed
+    - **evidence_url**: https://rdap.verisign.com/com/v1/domain/bksignal.com
+    - **quote**: registration 2022-07-30T18:38:39Z; expiration 2027-07-30T18:38:39Z; last changed 2026-06-30T18:34:25Z; registrar NameCheap, Inc.
+    - **corrected_statement**: Confirmed on the Verisign RDAP record (reached through rdap.org, read 2026-10-08). Nameservers are Namecheap's default DNS. The record says nothing about when the API itself launched; the doc examples carry January 2026 dates, so INFERRED the API is under about a year old.
+  -
+    - **claim**: bksignal.com (apex) serves the same page
+    - **verdict**: false
+    - **evidence_url**: https://bksignal.com/
+    - **quote**: HTTP 302 Location: https://odds.bksignal.com. Body: 'Visit telegram BkSignal or contact me ... the bot notifies about the appearance of the game in prematch on different bookmakers, according to your filters'
+    - **corrected_statement**: The apex returns a 302 redirect to odds.bksignal.com, and its body is a one-line Telegram note, served by Apache/2.4.25 (the odds host is Apache/2.4.61). The apex shows a Telegram notifier bot, so the brand's 'signal' product is a bot that pings when a game appears in prematch at a bookmaker. The odds API looks like a side product of a one-person operation.
+  -
+    - **claim**: The operator offers no contact other than the sign-up Telegram field
+    - **verdict**: false
+    - **evidence_url**: https://bksignal.com/
+    - **quote**: Visit telegram ... or contact me
+    - **corrected_statement**: The apex page gives a Telegram bot and a personal Telegram contact for the operator (handle not copied here). That is still no company, address, terms, SLA or support channel beyond one person's Telegram.
+  -
+    - **claim**: Register form is email + password + Telegram username
+    - **verdict**: overstated
+    - **evidence_url**: https://odds.bksignal.com/register
+    - **quote**: input name="login" required; password required; password_confirmation required; telegram_username (no required attribute)
+    - **corrected_statement**: The first field is named 'login', not typed as an email. The Telegram username is optional. No card field, no terms checkbox and no payment step on the registration page. Where and how $5 is paid is not stated; the home page carries a <meta name="heleket"> tag, and Heleket is a crypto payment processor with merchant domain verification and moderation (ForkLog and Heleket docs, found by search), so crypto payment is INFERRED, not shown.
+  -
+    - **claim**: There are no terms of service, privacy policy, or acceptable-use text
+    - **verdict**: confirmed
+    - **evidence_url**: https://odds.bksignal.com/robots.txt
+    - **quote**: robots.txt body: 'User-agent: *  Disallow:'. GET /terms and GET /privacy both returned HTTP 404.
+    - **corrected_statement**: Confirmed. The home, docs and register pages have no terms, privacy, refund, licence or contact section or link; the only links are home, docs, register, login. robots.txt allows everything. No clause on scraping, redistribution, betting use or commercial use exists to quote.
+  -
+    - **claim**: Cyrillic team names in the docs suggest the Football discipline is soccer
+    - **verdict**: unsupported
+    - **evidence_url**: https://odds.bksignal.com/docs
+    - **quote**: Examples (Volleyball) ... "Тайбей Ист Пауэр": { "e": { "s": 1, "p": 80 }
+    - **corrected_statement**: The Cyrillic names sit in the Volleyball example, not football; the docs have no football example. The soccer reading rests on the books being Russian/CIS and on the draw market (INFERRED). The docs' examples look illustrative, not captured data: the 'Volleyball' example lists four set scores (23-25, 25-19, 19-25, 13-15) that give one set to the first team and three to the second, but states sets won as 1 and 2, and the Basketball 'upcoming' example carries full-time scores. Treat the schema as indicative.
+- **corrected_verdict**: usable_in_vigilant = no (unchanged from the scout). BkSignal cannot become a free or cheap part of Vigilant, for these reasons.
+
+ODDS: none of the 22 books is a sharp or US book, so they cannot anchor a Novig fair price. The books are Russian/CIS/European retail and crypto casinos, with main markets only, no props and no baseball. The age of a price is never provable, because the only timestamp is BkSignal's own updated_at.
+
+SCORES: this is the one thing worth thinking about, and it is unproven and probably structurally too coarse. The schema has no in-game tennis point. The score block is optional ('Not always'). The free test endpoint (2 events, 1 call per 30 s) is slower than the Novig re-quote it would have to beat, so it cannot measure a lead. Sofascore REST at 2.5 s already holds the measured result (median 6.4 s ahead of Polymarket's socket, 22 of 29 Novig-moving scores >= 3 s early), so BkSignal adds nothing known to exist.
+
+COST: $5 per line looks cheap, but the real cost is the fixed-IP relay VPS the IP-bound key requires, a crypto payment (INFERRED), and your time. The 2-event free trial still needs an account.
+
+TERMS: there are none. Nothing forbids betting use or automation, and nothing grants rights to the data either. robots.txt allows all. Tj has already chosen to ignore CNO's no-bots terms, so the missing terms are not what disqualifies it. Fit is. The things a skeptic should flag are a sole anonymous operator with a personal Telegram contact, no SLA, no licence, likely unlicensed scraped upstreams (INFERRED; the project forbids scraping bookmakers' consumer APIs itself), and sanctions/payment-compliance exposure that I did not research.
+
+WHAT SURVIVES: a speculative $5 Fonbet-tennis probe through a fixed-IP relay, only if Tj wants to close the question. It is not worth building toward. 'Technique-only' gives nothing either, because an updateVersion cursor for incremental polling is a generic pattern.
+
+Corrections to the scout:
+- bksignal.com redirects (302) to odds.bksignal.com rather than serving the same page, and its body names a Telegram notifier bot and a personal contact.
+- The register form's first field is 'login' and the Telegram field is optional.
+- 'No NFL/college' is unverifiable, because 'Football' is undefined.
+- The Cyrillic names are in the volleyball example, not football.
+- ip_locked may mean rebind after a 1-minute cooldown.
+- The free test endpoint cannot measure latency.
+- I counted 64 priced lines (40 live, 24 upcoming).
+
+Probe record: 6 GETs to odds.bksignal.com (/, /docs, /robots.txt, /terms, /privacy, /register), 1 GET to bksignal.com, 2 to rdap.org/Verisign RDAP, 2 web searches. All were at least 1 s apart. No key, no sign-up, no POST, nothing to crazyninjaodds.com. The apex 302 is the only redirect I saw on the vendor's hosts.
+- **verdict_changed_from_scout**: False
+- **confidence**: high
+- **contrary_evidence**:
+  -
+    - **what**: Cheap and a sensible shape: $5 per 30 days per line, plain HTTPS JSON, 1 request per second allowed, incremental updateVersion polling, and a per-event updated_at stamp (though it is BkSignal's own). Live tennis on Fonbet, Ligastavok and Winline would cost $15 a month for all three.
+    - **url**: https://odds.bksignal.com/
+  -
+    - **what**: No terms exist, so nothing in the vendor's text forbids automated or betting use. robots.txt allows everything. Tj has already decided to disregard CNO's anti-bot terms (BRIEF.md ~line 484), so a missing terms page is not a disqualifier by itself.
+    - **url**: https://odds.bksignal.com/robots.txt
+  -
+    - **what**: The score schema defines a 's' (sets) unit and tennis is offered on three books, so a tennis score block is not ruled out. Only a keyed call would show whether one is actually returned. This is the only upside, and it is unmeasured.
+    - **url**: https://odds.bksignal.com/docs
+  -
+    - **what**: The ip_locked wording ('wait for the cooldown 1 minute and retry') may allow rebinding to a new IP, so a roaming phone might be only an interruption, not a permanent block. The docs do not say.
+    - **url**: https://odds.bksignal.com/docs
+- **details**:
+  - **terms_of_use**: Not found. GET /terms and /privacy both return 404; the home, docs and register pages have no terms, privacy, refund, licence or contact section or link (only home, docs, register, login links). robots.txt (read 2026-10-08) is exactly 'User-agent: *  Disallow:', i.e. everything allowed. No clause on scraping, redistribution, betting use or commercial use exists to quote, so each route breaks nothing in BkSignal's text: (a) Calling BkSignal's API directly with a paid key breaks no stated term, but there is also no licence, no SLA and no data-rights statement from an anonymous operator (domain on Namecheap; apex page shows only a Telegram bot and a personal Telegram contact). (b) Redistributing or caching its data: nothing stated either way. (c) Building the same thing yourself (scraping Fonbet, Winline, Ligastavok and the rest) would break this project's rule never to scrape a bookmaker's consumer API; those books' own terms I did not read (out of scope). INFERRED: using BkSignal is the same data supply with the scraping outsourced, which is a policy call for Tj, not a legal finding.
+  - **free_tier_limits**: Only a 'free trial limited to two events' (home FAQ, quoted above) via the documented test endpoint https://odds.bksignal.com/{ApiKey}/odds/v1/test/{Discipline}/{Category}: up to 2 current events (if available) for all supported bookmakers, 1 request per 30 seconds (2 per minute). It still needs {ApiKey} in the path, i.e. an account. No monthly or daily request quota is stated for the paid plan; the only cap is 1 request per second per key (86,400 calls a day maximum), with the recommended poll 2 to 5 s (Live) and 30 s (Upcoming). Error 'not_paid' ('No paid products / subscription is inactive') suggests an unpaid key gets nothing on production endpoints; whether the test endpoint works without a paid product is not stated.
+  - **websocket_or_live_included_free**: No websocket, SSE or push exists at any price: the docs mention none (0 hits for websocket/sse/stream/push/webhook on the home and docs HTML). Live odds ('Live / Realtime odds') and Upcoming ('Prematch odds') are separate $5 / 30 days items per bookmaker x sport (INFERRED separate products). Live scores are an optional 'scores' block, 'Not always' present; whether a free-trial call returns live scores for tennis is unknown (no payload read, no key). The free test endpoint's 1 call per 30 s is too slow to measure freshness.
+  - **signup_friction**: Account registration is required for any key, including the trial (GET /register read, not submitted). The form has fields 'login' (required), password, password confirmation, and 'telegram_username' (optional, no required attribute). No card field, terms checkbox or approval step appears on the registration page. How the $5 is paid is not stated anywhere; a <meta name="heleket"> tag is present on the home page, and Heleket is a crypto payment processor with merchant domain verification and moderation (found by search), so crypto payment is INFERRED. Whether a card or any manual approval is needed after sign-up: not found. I did not sign up.
+  - **us_sports_and_props_coverage**: Sports: Football (undefined, INFERRED soccer), Basketball, Tennis, Volleyball, IceHockey, TableTennis. No baseball, no explicit American football. Live tennis only on Fonbet, Ligastavok and Winline; live hockey on the same three; every other book is live basketball only (Bwin, Stake and Bcgame also volleyball). Main markets only (win/draw, totals, handicaps): no player props, no alt-lines catalog. Whether NBA, NHL, ATP or WTA are inside these books' lists is not stated (competition names are global, e.g. 'Indonesia IBL'; no league index is published). Both live (in-play) and upcoming (prematch) are offered.
+  - **sharp_books_or_exchanges_covered**: None. The 22 books are Fonbet, Olimp, Leonbets, Ligastavok, Winline, Baltbet, Bwin, Zenit, Betboom, Maxline, 1Win, Nordicbet, 1xbet, Vbet, WinlineKz, Vave, Cloudbet, Stake, Bcgame, Cryptorino, Roobet and Bcgame (Ru lang). No Pinnacle, Circa, Kalshi, ProphetX, Sporttrade or Novig, and no US-regulated book. They are Russian/CIS/European retail and crypto casino-sportsbooks (INFERRED from names, not from any page statement of their type); none is known as a sharp reference for a Novig price.
+  - **duplicates_what_the_app_already_has**: Odds: it gives no price the app lacks that is useful as a fair-price anchor; the books are different but retail, and the app's fair prices already come from Pinnacle, Kalshi, Polymarket, The Odds API, ParlayAPI and PropLine. Scores: it would only duplicate Sofascore REST (2.5 s poll, measured median 6.4 s ahead of Polymarket's score socket, 22 of 29 Novig-moving tennis scores >= 3 s early), ESPN and Polymarket, with a score block that is optional, coarse for tennis (INFERRED: no in-game point field) and age-unprovable. It does not appear to resell any of the known sources; I could not check whether it resells another aggregator, because the upstream is not stated.
+  - **android_phone_feasibility**: Technically easy to read but a poor fit directly. It is plain HTTPS GET with the key in the URL path, so no special protocol is needed. Problems: (1) the key is bound to one IP (ip_locked), and a phone's IP changes between Wi-Fi and cellular and with carrier NAT, so it would effectively need a fixed-IP relay server, which adds a VPS and a service the phone-only app does not have; (2) polling every 2 to 5 s means roughly 17,000 to 43,000 calls a day with the radio kept awake, which on Android means a foreground service and still fights Doze (Tj said data and storage are not constraints, battery was not mentioned); (3) the key sits in the URL, so it will show in any proxy or HTTP logs and needs Keystore-backed storage; never commit it (repo is public); (4) matching: names come in the book's own language (the doc example shows Cyrillic), so team and player matching to Novig and ESPN names would be needed; (5) this container's reach is not the issue: all my GETs returned 200 (the scout's single first-call reset was the egress proxy), so the phone's network avoids nothing here and gains nothing. The real block is ip_locked, which the phone would hit.
+  - **betting_use_or_automated_use_allowed**: Not found. No terms exist, so no stated prohibition or permission of automated access, scraping, redistribution, betting use or commercial use, and no data licence. The vendor is anonymous (no company or address; a personal Telegram contact and a notifier bot on the apex). INFERRED: the underlying data is likely scraped from bookmakers' consumer sites, whose own terms I did not read; the data's rights are therefore unknown and the project's no-scraping rule on bookmakers' consumer APIs covers the same data. Sanctions or payment-compliance exposure from paying an anonymous operator that serves Russian-book feeds is not researched here.
 
 ## verify-fit:medium-fastapi-odds-tracker
 
