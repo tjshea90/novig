@@ -376,6 +376,8 @@ data class ScanSettings(
     val pinnLiveTrigger: com.tjshea.vigilant.data.pinnodds.LiveTrigger = com.tjshea.vigilant.data.pinnodds.LiveTrigger.SCORE,
     /** Also act on prematch lines (Pinnacle's push moves against Novig's pregame quotes; Novig charges no taker fee before the game starts). Off by default. */
     val pinnLivePregame: Boolean = false,
+    /** No live bet for this many seconds after the game's score changes (0 = off): Novig pauses live betting after a score. [PINN_HOLDOFF_CHOICES]. */
+    val pinnLiveHoldoffSeconds: Int = 0,
     /**
      * Set only by [effective]: these settings are the low-usage scan's ([LowUsageBids.profile]). The scanner and the feeds read it (quotes past the freshness limit are
      * dropped before the devig, a league with no game in the window isn't asked); never saved, so a saved file can't switch it on.
@@ -1030,6 +1032,9 @@ data class ScanSettings(
 
         /** [makerKinds]' default: where a bid earns even with no edge on Novig's own price (RESEARCH.md §70.2). */
         val MAKER_DEFAULT_KINDS = setOf(BetKind.PROP, BetKind.PERIOD, BetKind.TEAM_TOTAL)
+
+        /** [pinnLiveHoldoffSeconds]' choices. */
+        val PINN_HOLDOFF_CHOICES = listOf(0, 3, 5, 8, 12, 20)
 
         /** [sharpConfirmMaxAgeSeconds]' choices. */
         val SHARP_MAX_AGE_CHOICES = listOf(60, 120, 180, 300)

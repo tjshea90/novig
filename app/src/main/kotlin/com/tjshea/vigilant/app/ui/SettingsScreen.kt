@@ -1789,7 +1789,14 @@ private fun PinnLiveSection(state: UiState, keys: KeyActions, reportActions: Rep
                 androidx.compose.material3.FilterChip(selected = m == s.pinnLiveDevig, onClick = { onUpdate { it.copy(pinnLiveDevig = m) } }, label = { Text(m.displayName) }, modifier = Modifier.testTag("pinnDevig-${m.name}"))
             }
         }
-        SwitchRow("Also pregame moves", "Act when Pinnacle moves a line before the game starts and Novig has not followed. Novig charges no fee before the game starts. Unproven: leave off until the numbers say.", s.pinnLivePregame, tag = "pinnPregameSwitch") { v -> onUpdate { it.copy(pinnLivePregame = v) } }
+        Text("Hold off after a score", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ScanSettings.PINN_HOLDOFF_CHOICES.forEach { v ->
+                androidx.compose.material3.FilterChip(selected = v == s.pinnLiveHoldoffSeconds, onClick = { onUpdate { it.copy(pinnLiveHoldoffSeconds = v) } }, label = { Text(if (v == 0) "Off" else "$v s") }, modifier = Modifier.testTag("pinnHoldoff-$v"))
+            }
+        }
+        Text("Novig pauses live betting for a moment after a score. With this on, no live bet is sent for that many seconds after the game's score changes. Diagnostics › Orders by timing shows how long the pause is on your phone.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SwitchRow("Also pregame moves", "Pregame steam: when Pinnacle's prematch line moves toward a side by 2 points or more in the last 15 minutes, the game is 5 minutes to 6 hours from its start, and Novig's ask is still at the price Pinnacle had before it moved (an order left up), it buys at Novig's ask. Novig charges no fee before the game starts. Paper unless real bets are on.", s.pinnLivePregame, tag = "pinnPregameSwitch") { v -> onUpdate { it.copy(pinnLivePregame = v) } }
     }
     if (confirming) {
         androidx.compose.material3.AlertDialog(
