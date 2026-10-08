@@ -5518,3 +5518,8 @@ Does the auto bid feature also make sure that books price both sides
 ```
 The pinnodds live is not making any bets. There is a live bet pause after a score on novig. Research other ways to profit by taking advantage of the speed of the websocket. Consider the research you did before and the burst scoring. Does this ruin that?
 ```
+
+## 2026-10-08T05:59:31Z
+```
+Build all the new features you mentioned and remove the "Pinnacle only" feature from the app entirely
+```
