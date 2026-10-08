@@ -339,7 +339,7 @@ def side_map(m):
     if mt == 'TOTAL':
         return {o: ('over' if o.lower().startswith('over') else 'under') for o in outs}
     if mt == 'MONEY':
-        away, home = [x.strip() for x in m['desc'].split('@')]
+        home = m['desc'].split('@')[-1].strip()   # a MONEY market's description is the HOME side's abbreviation
         return {o: ('home' if o == home else 'away') for o in outs}
     home = m['desc'].split()[0]
     return {o: ('home' if o.startswith(home + ' ') else 'away') for o in outs}
