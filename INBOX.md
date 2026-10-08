@@ -5523,3 +5523,8 @@ The pinnodds live is not making any bets. There is a live bet pause after a scor
 ```
 Build all the new features you mentioned and remove the "Pinnacle only" feature from the app entirely
 ```
+
+## 2026-10-08T06:20:45Z
+```
+Continue the research and planning that is already in this repo in an earlier checkpoint regarding building or scraping a rapid source of scores and odds
+```
