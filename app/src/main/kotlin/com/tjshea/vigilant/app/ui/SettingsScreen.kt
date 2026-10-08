@@ -144,7 +144,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR, USAGE -> s.vigilantOn
-        ALERTS -> AppBook.isNovig
+        ALERTS, PINNODDS -> AppBook.isNovig
         else -> true
     }
 
