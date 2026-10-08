@@ -207,8 +207,10 @@ class PinnLiveRunner(
     }
 
     private fun onFrame(msg: Msg.Frame, novig: PushedBooks) {
-        val obj = parsePinnFrame(msg.text) ?: return
         val cfg = config()
+        // 65% of the frames on a busy night are prematch price updates (topic ending /pre): with pregame off they are not even parsed (battery).
+        if (!cfg.rules.pregame && isPrematchFrame(msg.text)) return
+        val obj = parsePinnFrame(msg.text) ?: return
         if (book.method != cfg.method) book.method = cfg.method
         for (c in book.apply(obj, msg.atMs)) {
             when (c.kind) {
@@ -382,6 +384,12 @@ class PinnLiveRunner(
     }
 
     companion object {
+        /** True for a `live` envelope whose topic ends in `/pre` (read from the first 160 characters: the envelope puts `topic` before the record). */
+        internal fun isPrematchFrame(text: String): Boolean {
+            val head = text.substring(0, minOf(160, text.length))
+            return head.contains("\"topic\":\"") && head.contains("/pre\"")
+        }
+
         const val DISCOVER_MS = 30_000L
         const val TICK_MS = 100L
         const val STATUS_EVERY_MS = 1_000L

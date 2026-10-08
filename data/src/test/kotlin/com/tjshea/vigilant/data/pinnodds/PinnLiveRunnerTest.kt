@@ -216,6 +216,19 @@ class PinnLiveRunnerTest {
     }
 
     @Test
+    fun `a prematch frame is recognised from its topic, a live one is not, and pregame off skips them unparsed`() = runTest {
+        assertTrue(PinnLiveRunner.isPrematchFrame(live(isLive = false, channel = "pre", markets = arrayOf(money(1, -110, -110)))))
+        assertTrue(!PinnLiveRunner.isPrematchFrame(live(markets = arrayOf(money(1, -110, -110)))))
+        assertTrue(!PinnLiveRunner.isPrematchFrame("""{"type":"ping","ts":1}"""))
+        val r = rig()
+        r.runner.start(); runCurrent()
+        r.send(live(isLive = false, channel = "pre", start = "2026-10-08T23:00:00Z", markets = arrayOf(money(1, -110, -110))))
+        advanceTimeBy(2_000); runCurrent()
+        assertEquals("not read at all with pregame off", 0, r.runner.status.value.pinnEvents)
+        r.runner.stop()
+    }
+
+    @Test
     fun `stop closes both feeds and the status says off`() = runTest {
         val r = rig()
         r.runner.start(); runCurrent()
