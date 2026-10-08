@@ -48,4 +48,17 @@ class PinnReportTest {
         assertNotNull(lines.firstOrNull { it.startsWith("Last decisions:") })
         assertEquals(listOf("No decisions yet."), PinnReport.lines(emptyList(), emptyList()))
     }
+
+    @Test
+    fun `orders are split by time since the last score so a post-score pause shows up`() {
+        val near = rec("n1", mode = "BET", outcome = "MISSED").copy(scoreAgeMs = 4_000, eventStatus = "OPEN_INGAME", sendToEndMs = 900)
+        val near2 = rec("n2", mode = "BET", outcome = "MISSED").copy(scoreAgeMs = 9_000, eventStatus = "OPEN_INGAME", sendToEndMs = 1_100)
+        val far = rec("f1", mode = "BET", outcome = "FILLED").copy(scoreAgeMs = 70_000, eventStatus = "OPEN_INGAME", sendToEndMs = 300, filled = 5, paid = 2.0)
+        val none = rec("x1", mode = "BET", outcome = "FILLED").copy(scoreAgeMs = -1, eventStatus = "DELAYED", sendToEndMs = 400, filled = 5, paid = 2.0)
+        val lines = PinnReport.lines(listOf(near, near2, far, none), emptyList())
+        assertTrue(lines.any { it.contains("within 20 s of a score: 2 sent · 0 filled · 2 missed") })
+        assertTrue(lines.any { it.contains("20 s to 2 min after a score: 1 sent · 1 filled") })
+        assertTrue(lines.any { it.contains("no score in the last 2 min: 1 sent · 1 filled") })
+        assertTrue(lines.any { it.contains("Novig status DELAYED: 1 sent") })
+    }
 }
