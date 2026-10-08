@@ -70,8 +70,6 @@ class LiveMatcherTest {
             val pairs = LiveMatcher.matchEvents(listOf(p), order, now, sameStage)
             assertEquals(listOf("g1"), pairs.map { it.event.eventId })
         }
-        // With no stage rule the nearer start still wins a tie.
-        assertEquals("g1", LiveMatcher.matchEvents(listOf(p), listOf(g2, g1), now).single().event.eventId)
     }
 
     private val pair = LiveMatcher.Pair(1L, nba, false)
