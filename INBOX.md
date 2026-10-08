@@ -5562,3 +5562,13 @@ In this screenshot, I only see the odds from other sports books for the same sid
 
 I'm getting decent volume on auto bids. I want to make sure they are actually safe bids. Is the auto bid feature requiring: 1) fresh odds from other books as a fair source? 2) is it getting fair odds from other books that price both sides of bets or can it derive fair odds from books that only offer one side of a bet
 ```
+
+## 2026-10-08T14:28:00Z
+```
+So as an example review the screenshot: 
+
+1) each of the listed other sports books have the other side of the bet priced but hidden? 
+2) the app is calculating the fair odds for each listed sports book? 
+3) how old are the odds from the other books when it shows in the list? 
+4) how confident is the app that these are truly positive ev bets
+```
