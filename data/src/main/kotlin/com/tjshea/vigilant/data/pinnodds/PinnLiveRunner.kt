@@ -226,7 +226,7 @@ class PinnLiveRunner(
     private fun onNovigBook(marketId: String, now: Long, novig: PushedBooks) {
         val t = targetsByMarket[marketId] ?: return
         // A Novig change is judged at once when Pinnacle moved lately (the lag tests), or in "any edge" mode, which has no move to wait for.
-        if ((armedUntil[t.pinnEventId] ?: 0L) < now && config().rules.trigger != LiveTrigger.STANDING) return
+        if ((armedUntil[t.pinnEventId] ?: 0L) < now && !config().rules.trigger.sweeps) return
         evaluate(t, now, novig)
     }
 
@@ -239,7 +239,7 @@ class PinnLiveRunner(
             targetsByEvent[eventId]?.forEach { t -> evaluate(t, now, novig) }
         }
         // "Any edge" has no Pinnacle move to arm on: every matched game is looked at once a second.
-        if (config().rules.trigger == LiveTrigger.STANDING && now - lastStandingMs >= STANDING_EVERY_MS) {
+        if (config().rules.trigger.sweeps && now - lastStandingMs >= STANDING_EVERY_MS) {
             lastStandingMs = now
             targetsByEvent.values.forEach { ts -> ts.forEach { t -> evaluate(t, now, novig) } }
         }
