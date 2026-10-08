@@ -4258,6 +4258,6 @@ Tj's six asks: 1) figure out how the auto bid feature is profitable and build on
 
 ## Tj, 2026-10-08 (~16:00Z): "Research how long novig pauses live betting after a team scores and if there is a profitable strategy to bet as soon as the betting resumes. Research if it is normal to get a lot of unavailable errors on parlayapi and how to fix it. Research how to best take advantage of my Pinnacle websocket and novig websocket to make profit"
 
-- [x] QA1 (DONE: RESEARCH.md §120; pause length unknown, needs Tj's Diagnostics) RESEARCH how long Novig pauses live betting after a score, and whether betting the moment it reopens is profitable (start from RESEARCH.md §116 and §118; check what the v0.77.0 post-score study can say).
+- [x] QA1 (DONE: §120, §120.1 read from the v0.78.0 files: live orders answer in ~5.3 s; no score probed yet) RESEARCH how long Novig pauses live betting after a score, and whether betting the moment it reopens is profitable (start from RESEARCH.md §116 and §118; check what the v0.77.0 post-score study can say).
 - [x] QA2 (DONE: §120; needs Tj's ParlayAPI counters) RESEARCH whether many "unavailable" answers from ParlayAPI are normal and how to fix them (PARLAY_API.md 503 notes; the app's own counters).
 - [x] QA3 (DONE: §120) RESEARCH the best use of the Pinnodds (Pinnacle) websocket and Novig's websocket for profit (§116, §118, NOVIG_API.md §21).
