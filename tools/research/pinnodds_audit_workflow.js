@@ -144,8 +144,8 @@ const done = results.filter(Boolean)
 const survivors = done.flatMap(r => (r.verified || []).filter(v => v.survives).map(v => ({ lens: r.lens, ...v.finding, votes: v.votes.map(x => x.verdict + '/' + x.corrected_severity + ': ' + x.reasoning.slice(0, 400)), better_fix: v.votes.map(x => x.better_fix).filter(Boolean) })))
 const lows = done.flatMap(r => (r.findings || []).filter(f => f.severity === 'low').map(f => ({ lens: r.lens, ...f })))
 log('surviving medium+ findings: ' + survivors.length + '; low: ' + lows.length)
-const plan = await agent(
+const plan = await run('synthesize',
   CONTEXT + '\n\nYou are the synthesizer. Below are the VERIFIED findings (medium or higher, confirmed by skeptics), the low findings, each lens summary, and what each lens found sound. Produce ONE deduplicated, prioritized implementation plan for the engineers: group duplicates, order by real-money risk (critical first), give for each item the exact files/functions to change, the precise rule or threshold to implement (with the data-backed numbers the lenses gave), and the test that proves it. Separately give: (1) the recommended safe defaults for tonight, (2) the full spec for the pregame mode, (3) anything that should make Tj NOT turn real bets on tonight. Be concrete and complete.\n\nSURVIVING FINDINGS:\n' + JSON.stringify(survivors, null, 1) + '\n\nLOW:\n' + JSON.stringify(lows, null, 1) + '\n\nLENS SUMMARIES AND CHECKED-OK:\n' + JSON.stringify(done.map(r => ({ lens: r.lens, summary: r.summary, checked_ok: r.checked_ok })), null, 1),
-  { label: 'synthesize', phase: 'Synthesize' },
+  undefined, 'Synthesize',
 )
 return { plan, survivors, lows, lenses: done.map(r => ({ lens: r.lens, summary: r.summary, n: (r.findings || []).length, checked_ok: r.checked_ok, refuted: (r.verified || []).filter(v => !v.survives).map(v => ({ title: v.finding.title, severity: v.finding.severity, votes: v.votes.map(x => x.verdict + ': ' + x.reasoning.slice(0, 300)) })) })) }
