@@ -24,6 +24,7 @@ enum class ScannerFilter(val label: String, val short: String) {
     VIGILANT("Vigilant", "Vigilant"),
     CNO("CNO", "CNO"),
     PARLAY("ParlayAPI", "ParlayAPI"),
+    PINNODDS("Pinnodds live", "Pinnodds"),
 
     /** The bets made with Pinnacle only on (Tj, 2026-10-05): judged against Pinnacle's devigged price alone, so their EV, CLV and profit read as that alone ([com.tjshea.vigilant.data.tracker.AtBet.pinnacleOnly]). */
     PINNACLE("Pinnacle only", "Pinnacle only"),
@@ -46,6 +47,7 @@ object TrackerSort {
     fun scannerOf(b: TrackedBet): ScannerFilter = when (b.source) {
         BetTracker.SOURCE_CNO -> ScannerFilter.CNO
         BetTracker.SOURCE_PARLAY -> ScannerFilter.PARLAY
+        BetTracker.SOURCE_PINNODDS -> ScannerFilter.PINNODDS
         else -> ScannerFilter.VIGILANT
     }
 

@@ -1206,6 +1206,9 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
     SwitchRow(StudyText.SWITCH_TITLE, StudyText.SWITCH_SUB, state.settings.scanStudy, tag = "scanStudySwitch") { v -> onUpdate { it.copy(scanStudy = v) } }
     SwitchRow(StudyText.HIDDEN_TITLE, StudyText.HIDDEN_SUB, state.settings.scanStudyHidden, tag = "scanStudyHiddenSwitch") { v -> onUpdate { it.copy(scanStudyHidden = v) } }
 
+    // ---- Pinnodds live (Tj, 2026-10-08): Pinnacle's live price against Novig's lagging quote; RESEARCH.md §116 --------------------------------------------------------
+    if (AppBook.isNovig) PinnLiveSection(state, keys, reportActions, onUpdate)
+
     // ---- The live burst recorder (Tj, 2026-10-06): no orders; RESEARCH.md §95 ----------------------------------------------------------
     if (AppBook.isNovig) {
         SectionTitle("Live burst recorder")
@@ -1707,4 +1710,98 @@ private fun KeyListEditor(provider: ApiProvider, keys: List<String>, actions: Ke
             Button(onClick = { actions.add(provider, newKey); newKey = "" }, enabled = newKey.length >= 8) { Text("Add") }
         }
     }
+}
+
+/** Settings › Pinnodds live: the key and its test, the two switches (feed = paper, real bets), the limits, and the engine's status. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PinnLiveSection(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    SectionTitle("Pinnodds live (Pinnacle vs Novig)")
+    val shown by androidx.compose.runtime.rememberUpdatedState(reportActions.onPinnShown)
+    androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(1_500) } }
+    Hint(com.tjshea.vigilant.app.PinnText.HINT)
+    KeyListEditor(ApiProvider.PINNODDS, state.pinnoddsKeys, keys, com.tjshea.vigilant.app.PinnText.KEY_LABEL)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        Button(onClick = reportActions.onTestPinnKey, enabled = state.pinnoddsKeys.isNotEmpty() && !state.pinnKeyBusy, modifier = Modifier.testTag("pinnTestKey")) {
+            Text(if (state.pinnKeyBusy) "Testing…" else com.tjshea.vigilant.app.PinnText.TEST_BUTTON)
+        }
+    }
+    state.pinnKeyNote?.let {
+        Text(
+            it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("pinnKeyNote"),
+            color = if (state.pinnKeyOk == true) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+        )
+    }
+    SwitchRow(com.tjshea.vigilant.app.PinnText.FEED_TITLE, com.tjshea.vigilant.app.PinnText.FEED_SUB, s.pinnLive, tag = "pinnLiveSwitch") { v -> onUpdate { it.copy(pinnLive = v) } }
+    s.pinnLiveHalted?.let { why ->
+        Column(Modifier.padding(vertical = 4.dp).testTag("pinnLiveHalted")) {
+            Text("Stopped: $why", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            Button(onClick = { onUpdate { it.copy(pinnLiveHalted = null) } }, modifier = Modifier.testTag("pinnLiveResume")) { Text(com.tjshea.vigilant.app.PinnText.RESUME) }
+        }
+    }
+    var confirming by remember { mutableStateOf(false) }
+    Row(
+        Modifier.fillMaxWidth().toggleable(
+            value = s.pinnLiveBet, role = Role.Switch,
+            onValueChange = { v -> if (!v) onUpdate { it.copy(pinnLiveBet = false) } else if (s.pinnLive) confirming = true },
+        ).padding(vertical = 6.dp).testTag("pinnLiveBetSwitch"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(com.tjshea.vigilant.app.PinnText.BET_TITLE, style = MaterialTheme.typography.bodyMedium)
+            Text(com.tjshea.vigilant.app.PinnText.BET_SUB, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        androidx.compose.material3.Switch(checked = s.pinnLiveBet, onCheckedChange = null, enabled = s.pinnLive || s.pinnLiveBet)
+    }
+    Text(
+        com.tjshea.vigilant.app.PinnText.statusLine(state.pinnLive, state.pinnTrade, s, state.pinnoddsKeys.size),
+        style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("pinnLiveNote"),
+    )
+    if (s.pinnLive) {
+        PinnDollarChips("A bet's stake", ScanSettings.PINN_LIVE_STAKE_CHOICES, s.pinnLiveStake, "pinnStake") { v -> onUpdate { it.copy(pinnLiveStake = v) } }
+        PinnDollarChips("Most spent on one game", ScanSettings.PINN_LIVE_MAX_GAME_CHOICES, s.pinnLiveMaxGame, "pinnGame") { v -> onUpdate { it.copy(pinnLiveMaxGame = v) } }
+        PinnDollarChips("Most spent in a day", ScanSettings.PINN_LIVE_MAX_DAY_CHOICES, s.pinnLiveMaxDay, "pinnDay") { v -> onUpdate { it.copy(pinnLiveMaxDay = v) } }
+        PinnDollarChips("Stop for the day when settled bets lose", ScanSettings.PINN_LIVE_HALT_LOSS_CHOICES, s.pinnLiveHaltLoss, "pinnHalt") { v -> onUpdate { it.copy(pinnLiveHaltLoss = v) } }
+        Text("Least edge after Novig's fee", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ScanSettings.PINN_LIVE_MIN_EV_CHOICES.forEach { v ->
+                androidx.compose.material3.FilterChip(selected = v == s.pinnLiveMinEv, onClick = { onUpdate { it.copy(pinnLiveMinEv = v) } }, label = { Text(com.tjshea.vigilant.app.PinnText.pct(v)) }, modifier = Modifier.testTag("pinnEv-${(v * 1000).toInt()}"))
+            }
+        }
+        Text("Least Pinnacle move toward the side (within 20 s)", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ScanSettings.PINN_LIVE_MIN_MOVE_CHOICES.forEach { v ->
+                androidx.compose.material3.FilterChip(selected = v == s.pinnLiveMinMove, onClick = { onUpdate { it.copy(pinnLiveMinMove = v) } }, label = { Text(com.tjshea.vigilant.app.PinnText.pts(v)) }, modifier = Modifier.testTag("pinnMove-${(v * 1000).toInt()}"))
+            }
+        }
+        Text("How Pinnacle's margin is removed", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(com.tjshea.vigilant.engine.DevigMethod.WORST_CASE, com.tjshea.vigilant.engine.DevigMethod.POWER, com.tjshea.vigilant.engine.DevigMethod.MULTIPLICATIVE).forEach { m ->
+                androidx.compose.material3.FilterChip(selected = m == s.pinnLiveDevig, onClick = { onUpdate { it.copy(pinnLiveDevig = m) } }, label = { Text(m.displayName) }, modifier = Modifier.testTag("pinnDevig-${m.name}"))
+            }
+        }
+        SwitchRow("Also pregame moves", "Act when Pinnacle moves a line before the game starts and Novig has not followed. Novig charges no fee before the game starts. Unproven: leave off until the numbers say.", s.pinnLivePregame, tag = "pinnPregameSwitch") { v -> onUpdate { it.copy(pinnLivePregame = v) } }
+    }
+    if (confirming) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirming = false },
+            title = { Text(com.tjshea.vigilant.app.PinnText.CONFIRM_TITLE) },
+            text = { Text(com.tjshea.vigilant.app.PinnText.confirm(s)) },
+            confirmButton = { androidx.compose.material3.TextButton(onClick = { confirming = false; onUpdate { it.copy(pinnLiveBet = true, pinnLiveHalted = null) } }, modifier = Modifier.testTag("pinnLiveConfirm")) { Text("Turn on") } },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { confirming = false }, modifier = Modifier.testTag("pinnLiveCancel")) { Text("Cancel") } },
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PinnDollarChips(title: String, choices: List<Double>, selected: Double, tag: String, onPick: (Double) -> Unit) {
+    Text(title, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        choices.forEach { d ->
+            androidx.compose.material3.FilterChip(selected = d == selected, onClick = { onPick(d) }, label = { Text("$" + d.toInt()) }, modifier = Modifier.testTag("$tag-${d.toInt()}"))
+        }
+    }
+    TypedDollarField(NumberSpecs.dollars(title.lowercase(), 1.0, 10_000.0), selected, "$tag-field", onPick)
 }

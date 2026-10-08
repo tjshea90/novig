@@ -861,6 +861,8 @@ private fun VigilantRoot(
                         onStudyShown = vm::refreshStudy,
                         onShareBurst = vm::shareBurstStudy,
                         onBurstShown = vm::refreshBurst,
+                        onPinnShown = vm::refreshPinnLive,
+                        onTestPinnKey = vm::testPinnoddsKey,
                         onShareFeedRace = vm::shareFeedRace,
                         onFeedRaceShown = vm::refreshFeedRace,
                     ),
