@@ -2,7 +2,7 @@
 
 One section per agent, scouts first. Raw per-agent files: `results/<label>.json`; each run's raw journal: `journal.<run>.jsonl`. Rendered by `tools/research/save_workflow.py`.
 
-Results saved so far: 7
+Results saved so far: 8
 
 
 ## scout:1-medium-fastapi-odds-tracker
@@ -1107,3 +1107,116 @@ TECHNIQUE: the subscribe, buffer, then snapshot handoff with per-client sequence
   - Nothing needs testing for this source itself (it provides no feed).
   - Cheap, no-key test the page's technique does apply to: open Polymarket's market socket (wss://ws-subscriptions-clob.polymarket.com/ws/market, subscribe with the two clobTokenIds of a live game's moneyline from gamma-api.polymarket.com/events, send the text PING every 10 s) and log for 10 minutes: phone receipt time minus each message's `timestamp` (the container saw median 0.02 s), and the time a `price_change` jumps after a play versus Novig's re-quote of the same game. This is the 'Polymarket CLOB odds socket' already on the known list, so run it only if it has not been measured on the phone yet.
   - If Tj has a Kalshi API key: connect to wss://external-api-ws.kalshi.com with the key headers, subscribe to `ticker` for one live game market, log `sending_ts_ms` against phone receipt time, and compare the first time its price moves after a play with the app's current REST poll. Do not build anything until that shows a gain of 3 seconds or more.
+
+## scout:9-github-odds-stream-engine
+
+- **source_url**: https://github.com/merlinfachetti/odds-stream-engine
+- **kind**: open-source-code
+- **what_it_is**: "OddsStream": a Node.js demo of an online betting site, titled "A demo online sports-betting platform with real-time odds streamed over WebSocket". It has an Express + ws server, an in-memory betting service with a fake R$ 1,000 wallet, and a zero-build browser page. Its "odds engine" is a SIMULATION: a timer that random-walks made-up prices and fakes goals and baskets. It does not read any real odds or scores. Commits are authored "claude", on a branch named like a Claude Code web session branch (claude/betting-app-websocket-EVVNt). Read 2026-10-07.
+- **upstream_data_source**: None. There is no upstream feed at all. The prices come from `server/engine.js` (header comment: "applying a simulation step"), seeded from 7 invented fixtures in `server/data.js` and moved by Math.random(). I know this because: (1) the server code has no outbound HTTP/fetch/API-key/env usage except PORT (grep of all server files; the only fetch() calls are the browser calling its own /api/bets); (2) package.json dependencies are only express, ws and nanoid; (3) the README says "an odds simulation engine". The seeded events (Flamengo v Palmeiras, Lakers v Celtics, Alcaraz v Sinner) are fiction, not mirrored from any real match.
+- **push_or_poll**: Push. The server holds a WebSocket at ws://host/stream?userId=... and sends a `snapshot` on connect, then an `updates` message every tick, plus `event:finished`, `balance` and `bet:settled`. Plain REST (GET /api/events, POST /api/bets) sits alongside it. There is no SSE and no queue; the "pipeline" is a Node EventEmitter inside one process. The browser reconnects with exponential backoff (1s, 2s, 4s ... capped at 30s, no jitter). The server pings every 30 s and drops sockets that miss a pong.
+- **claimed_latency_or_refresh**: README: "every ~1.5s the engine ticks and pushes deltas to all connected clients". Code: `TICK_MS = 1500`, `SUSPEND_MS = 4000` (markets lock 4 s after a fake goal). This is the demo's own timer cadence, not the age of any real price.
+- **measured_or_verified_age**: None. There is no real price to age. Every price is generated server-side at tick time, and the event object carries no per-price timestamp (only startTime and suspendedUntil). Even for its own fake data the client could not tell how old a price is. Nothing here could meet the bar of a price "with a TIMESTAMP that proves its age".
+- **coverage**: No real coverage. Fiction only: 7 seeded events across soccer (Brasileirao, Premier League, La Liga), basketball ("NBA") and tennis ("ATP Masters"). Markets are match winner, totals (2.5 goals / 210.5 points), both-teams-to-score and total sets, in decimal odds with Portuguese labels. There are no US sports in the sense Vigilant needs (no NFL/MLB/NHL/college), no player props, no real books (no Pinnacle/Circa/Kalshi/ProphetX/Sporttrade/Novig), and no real in-play odds or live scores. The in-play and score data are simulated (a basketball "basket" on ~55% of ticks, a soccer goal ~4%, a tennis set ~6%, with 1 tick = 1 in-game minute).
+- **price_and_free_tier**: Free to read and run; there is no pricing page and no vendor. There is nothing to buy because there is no data product. Running it costs only a Node process.
+- **terms_notes**: No LICENSE file (raw LICENSE returned 404), no `license` field in package.json, and the repo page shows no licence. By default that means all rights reserved, so copying the code verbatim is not clearly permitted (INFERRED from the absence of a licence). Patterns and ideas are fine to reimplement. There are no data terms because there is no upstream. The README itself warns: "No authentication. x-user-id is trusted as-is. Do not expose this service to the public internet." Fake money only, so it has no bearing on real betting.
+- **key_claims**:
+  -
+    - **claim**: Upstream odds source: none; prices are simulated
+    - **status**: VERIFIED
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/server/engine.js
+    - **quote**: A timer fires every TICK_MS and walks the events, applying a simulation step
+  -
+    - **claim**: Price model is random noise plus a score-based bias, with hand-picked constants
+    - **status**: VERIFIED
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/server/engine.js
+    - **quote**: const noise = (Math.random() - 0.5) * 0.06;
+  -
+    - **claim**: Tick cadence is 1.5 s and the post-score market lock is 4 s
+    - **status**: VERIFIED
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/server/engine.js
+    - **quote**: const TICK_MS = 1500; const SUSPEND_MS = 4000;
+  -
+    - **claim**: README says 'real-time odds' and 'realistic price behavior' that 'mimics real bookmakers'
+    - **status**: CLAIM_ONLY
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/README.md
+    - **quote**: A demo online sports-betting platform with real-time odds streamed over WebSocket.
+  -
+    - **claim**: README says the server 'pushes deltas' of 'events that changed'; the code sends every live event as a full object each tick
+    - **status**: CONTRADICTED
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/server/engine.js
+    - **quote**: updates.push(clone(evt));  // inside tick(), for every live, unfinished event, whether or not it changed
+  -
+    - **claim**: The event/price payload has no per-price timestamp, so its age cannot be proven
+    - **status**: VERIFIED
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/README.md
+    - **quote**: Data model lists startTime, live, finished, score, clock, suspendedUntil, markets[selections{id,name,price}]; no updatedAt/ts field
+  -
+    - **claim**: WebSocket protocol: snapshot on connect, then typed JSON messages; 30 s server ping/pong; client backoff 1s doubling to 30s
+    - **status**: VERIFIED
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/server/index.js
+    - **quote**: ping/pong every 30s; sockets that haven't responded since the last ping are terminated
+  -
+    - **claim**: Price-change protection: a bet carries expectedPrice and is rejected with 409 plus newPrice if the live price moved more than 5%
+    - **status**: VERIFIED
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/README.md
+    - **quote**: { "error": "Cotação mudou de 2.10 para 2.45.", "newPrice": 2.45 }
+  -
+    - **claim**: No licence
+    - **status**: VERIFIED
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/LICENSE
+    - **quote**: 404: Not Found (also no license field in package.json; repo page shows no licence)
+  -
+    - **claim**: No tests
+    - **status**: VERIFIED
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/package.json
+    - **quote**: scripts: only "start" and "dev"; dependencies express, ws, nanoid; no test directory in the file listing
+  -
+    - **claim**: Activity: 2 commits, both 25 May 2026 (authored 'claude'), one branch, 0 stars / 0 forks / 0 watching; no main branch (raw main/README.md = 404)
+    - **status**: VERIFIED
+    - **evidence_url**: https://github.com/merlinfachetti/odds-stream-engine/commits/claude/betting-app-websocket-EVVNt
+    - **quote**: b29e1b0 'Initial OddsStream betting platform with real-time WebSocket odds'; 1bf7b6c 'Rewrite README in English and translate/expand inline code comments'. These were read through WebFetch's summarizer; exact commit times were not shown.
+  -
+    - **claim**: The browser client has no stale-feed watchdog; it only reconnects on close/error
+    - **status**: VERIFIED
+    - **evidence_url**: https://raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/public/app.js
+    - **quote**: Only setTimeout use is the reconnect timer and toast removal; no setInterval or last-message-age check (grep)
+  -
+    - **claim**: Nobody else has written about or measured this repo
+    - **status**: VERIFIED
+    - **evidence_url**: 
+    - **quote**: WebSearch for "odds-stream-engine" merlinfachetti returned no page about it (two result sets, all unrelated)
+- **verdict**:
+  - **rapid_odds**: no
+  - **rapid_scores**: no
+  - **ahead_of_novig_makers**: no
+  - **ahead_of_cno**: no
+  - **cheap_or_free**: free
+  - **usable_in_vigilant**: technique-only
+  - **why**: This is not a source of anything. The repo is a two-commit, zero-star, unlicensed, untested demo (25 May 2026, authored by a Claude session) whose odds and scores are invented by Math.random() on a 1.5 s timer. It has no upstream feed, no real books, no US sports and no timestamps. 'Free' applies only to reading the code, since there is no data to be free. It cannot be ahead of CNO (13-33 s plus 1-2 min lag) or of Novig's makers (16 s median after ESPN's stamp), because it carries no information about the real world. Nothing in it competes with the known sources (Polymarket socket, Kalshi, Sofascore REST, ESPN, statsapi, PinnWire, etc.). Patterns worth copying into a Kotlin client, none of which is new or needs this repo: (1) snapshot-then-updates with full snapshot replay on every reconnect, so the client never reconciles partial state (Vigilant's Polymarket and Kalshi sockets should already work this way); (2) heartbeat plus capped exponential backoff (on the phone, OkHttp pingInterval; add jitter, which this demo lacks); (3) expectedPrice sent with each order and rejected with the live newPrice if it moved by more than a threshold, which is the same idea as Vigilant refusing to take a stale bid; (4) a market 'suspension window' after a score event (their 4 s lock), which Vigilant could mirror by treating the moments after a score as 'do not post or take', given Novig's makers re-quote ~5-16 s later; (5) engine and betting service decoupled through events. Demo-only parts to ignore: the whole price model and its hand-picked shock constants, the sped-up clocks, the in-memory wallet, the lack of auth, and the README's 'deltas' (the code sends whole events every tick). A real gap to avoid: no per-price timestamp and no client stale watchdog, the exact thing Tj's bar demands. In Vigilant, every pushed price should carry its source timestamp, and the feed should show 'age since last message' with a watchdog.
+- **confidence**: high
+- **coverage_note_placeholder**: unused
+- **could_not_read**:
+  - api.github.com/repos/merlinfachetti/odds-stream-engine: HTTP 403 from the session's own repo allowlist (message: GitHub access to this repository is not enabled for this session, use add_repo). I did not add the repo or work around it. The github MCP tools were refused for the same reason. Repo metadata (stars, forks, commits, branches) therefore came from WebFetch summaries of the public github.com pages, and the code from raw.githubusercontent.com.
+  - Exact commit timestamps (the page showed only the date 25 May 2026) and issue / pull-request counts (not displayed on the page)
+  - Alternative licence filenames (LICENSE.md, COPYING) were not probed individually; the root file listing shows none
+- **live_probes**:
+  -
+    - **request**: GET https://api.github.com/repos/merlinfachetti/odds-stream-engine
+    - **result**: 403 from the session policy (repo not enabled for this session); stopped there
+  -
+    - **request**: GET raw.githubusercontent.com/merlinfachetti/odds-stream-engine/claude/betting-app-websocket-EVVNt/{README.md, package.json, server/engine.js, server/data.js, server/index.js, server/bets.js, public/app.js}
+    - **result**: 7 files, all 200 (README 16,307 B; engine.js 10,123 B; app.js 18,395 B); read in full
+  -
+    - **request**: GET raw.githubusercontent.com/.../main/README.md and .../LICENSE
+    - **result**: both 404 (no main branch; no LICENSE file)
+  -
+    - **request**: WebFetch github.com/merlinfachetti/odds-stream-engine, /commits/claude/betting-app-websocket-EVVNt, /branches
+    - **result**: 200; 0 stars, 0 forks, 0 watching; 2 commits both 25 May 2026; one branch only (the default), updated 25 May 2026
+  -
+    - **request**: WebSearch "odds-stream-engine" merlinfachetti
+    - **result**: no page about the repo or its author; unrelated results only
+- **what_the_phone_should_test**:
+  - Nothing needs testing against this repo; it has no feed to measure. Do not spend phone time on it.
+  - The only useful action is a code check in Vigilant (no phone needed): confirm that each socket client (Polymarket score, Polymarket CLOB, Kalshi, Novig) (a) replays a full snapshot on reconnect, (b) uses capped backoff with jitter, and (c) has a stale watchdog that flags a feed after N seconds with no message even when the TCP connection is still open. This demo's client lacks (b) and (c).
+  - If the Diagnostics screen does not already show it, add a per-feed 'age of last message / age of price stamp' line. This is the number every real candidate in the other nine sources has to be judged on when Tj runs them on the phone.
