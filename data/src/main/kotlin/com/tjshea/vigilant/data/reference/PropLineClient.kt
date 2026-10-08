@@ -66,9 +66,7 @@ class PropLineClient(
     override fun supports(league: League) = league.oddsApiSportKey in SPORTS
 
     /**
-     * PropLine's own pregame refresh is about a minute: scans closer together than this re-use the last board. In Pinnacle only, where this feed is the backup for
-     * Pinnacle's own price (RESEARCH.md §88.5), a board is re-used for 30 s at most: Pinnacle's lines there are a few seconds old (PropLine's `/v1/freshness`,
-     * RESEARCH.md §90.3), so a re-read is worth a request of its free 1,000 a day.
+     * PropLine's own pregame refresh is about a minute: scans closer together than this re-use the last board.
      */
     override fun reuseMs(settings: ScanSettings): Long = REUSE_MS
 
@@ -188,8 +186,6 @@ class PropLineClient(
         )
 
         const val REUSE_MS = 2 * 60_000L
-
-        /** [REUSE_MS] in Pinnacle only. */
 
         /** Novig's key on PropLine: asked for alongside the books, never one of them. */
         const val NOVIG = "novig"

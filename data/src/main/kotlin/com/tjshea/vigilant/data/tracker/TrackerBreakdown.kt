@@ -26,8 +26,6 @@ object TrackerBreakdown {
 
     data class Row(val label: String, val stats: TrackerStats)
 
-    /** The [By.SCANNER] group of the bets made with Pinnacle only on. */
-
     /** [bets] grouped by [by], the most-settled groups first; a group with no bet counted (all outliers) is left out. */
     fun of(bets: List<TrackedBet>, by: By): List<Row> = bets
         .groupBy { keyOf(it, by) }
