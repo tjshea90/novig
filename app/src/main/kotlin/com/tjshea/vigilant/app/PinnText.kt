@@ -12,8 +12,8 @@ import java.util.Locale
 object PinnText {
     const val HINT = "Pinnacle is the sharpest sportsbook, and Pinnodds streams its live prices over one WebSocket in about a tenth of a second. Novig's market makers re-quote a median " +
         "16 seconds after a play, so for a few seconds after Pinnacle moves, Novig's quote can be stale. This devigs Pinnacle's price into a fair chance and buys on Novig only when the fair beats " +
-        "Novig's ask by the minimum edge AFTER Novig's in-play fee, AND Pinnacle's fair for that side has just risen by the minimum move (a lag, not a standing disagreement), AND Pinnacle's price " +
-        "has sat still for half a second (not a spike). One immediate-or-cancel order per Pinnacle move, never resting. Only one Pinnodds connection is allowed per account: no other app or " +
+        "Novig's ask by the minimum edge AFTER Novig's in-play fee, AND (by default) Pinnacle repriced because the SCORE changed (a measured test: Pinnacle moves with no score behind them often " +
+        "reverted within two minutes), AND Pinnacle's price has sat still for half a second. One immediate-or-cancel order per Pinnacle move, never resting. Real bets start OFF: watch the paper numbers first. Only one Pinnodds connection is allowed per account: no other app or " +
         "script may use the key while this is on."
     const val KEY_LABEL = "Add the Pinnodds key"
     const val TEST_BUTTON = "Test key"
@@ -50,7 +50,7 @@ object PinnText {
         o.appendLine(
             "Feed: ${if (s.pinnLive) "ON" else "off"} · ${running.let { if (it) "running" else "not running" }} · real bets ${if (s.pinnLiveBet) "ON" else "off (paper)"}" +
                 (s.pinnLiveHalted?.let { " · HALTED: $it" } ?: "") + " · stake ${money(s.pinnLiveStake)}, game ${money(s.pinnLiveMaxGame)}, day ${money(s.pinnLiveMaxDay)}, halt at ${money(s.pinnLiveHaltLoss)} lost · " +
-                "min EV ${pct(s.pinnLiveMinEv)}, min move ${pts(s.pinnLiveMinMove)}, devig ${s.pinnLiveDevig.displayName}, pregame ${if (s.pinnLivePregame) "on" else "off"}",
+                "min EV ${pct(s.pinnLiveMinEv)}, min move ${pts(s.pinnLiveMinMove)}, trigger ${s.pinnLiveTrigger.label}, devig ${s.pinnLiveDevig.displayName}, pregame ${if (s.pinnLivePregame) "on" else "off"}",
         )
         o.appendLine(
             "Engine: socket ${r.socket} · Pinnacle matchups ${r.pinnEvents} (${r.pinnLive} live) · Novig live games ${r.novigGames} · matched ${r.matched} · markets held ${r.watched} · frames ${r.frames} · " +

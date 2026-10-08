@@ -1096,7 +1096,7 @@ class AppContainer(private val app: Application) {
     private fun pinnConfig(): com.tjshea.vigilant.data.pinnodds.LiveConfig {
         val s = settingsStore.flow.value ?: ScanSettings()
         return com.tjshea.vigilant.data.pinnodds.LiveConfig(
-            rules = com.tjshea.vigilant.data.pinnodds.LiveRules(minEv = s.pinnLiveMinEv, minMove = s.pinnLiveMinMove, pregame = s.pinnLivePregame),
+            rules = com.tjshea.vigilant.data.pinnodds.LiveRules(minEv = s.pinnLiveMinEv, minMove = s.pinnLiveMinMove, pregame = s.pinnLivePregame, trigger = s.pinnLiveTrigger),
             method = s.pinnLiveDevig, leagues = Leagues.ALL.map { it.novigName }.toSet(),
         )
     }

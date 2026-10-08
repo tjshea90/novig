@@ -13,7 +13,8 @@ import org.junit.Test
 
 /** The rule that decides a bet: every skip is pinned on its own (change one input and only that reason fires). */
 class LiveEdgeTest {
-    private val rules = LiveRules()
+    /** The old behaviour (any Pinnacle move) for the tests of the rest of the rule; the trigger modes have their own tests below. */
+    private val rules = LiveRules(trigger = LiveTrigger.MOVE)
     private val fee = MarketFee.GAME
 
     /** Pinnacle moved the home moneyline from -110/-110 to -150/+125 at t=1,000; the book has been quiet since. */
@@ -63,8 +64,8 @@ class LiveEdgeTest {
         assertSkip(LiveSkip.NO_MOVE, judge(e, l, 31_000, stale))
         // The side that Pinnacle moved away from.
         assertSkip(LiveSkip.NO_MOVE, judge(e, l, 2_000, stale, side = PinnSide.AWAY))
-        // Standing disagreements are allowed only when Tj turns the requirement off.
-        assertTrue(judge(e, l, 31_000, stale, rules.copy(requireMove = false)) is LiveVerdict.Bet)
+        // Standing disagreements are allowed only when Tj picks that trigger (and Pinnacle's price has been steady for 30 s).
+        assertTrue(judge(e, l, 31_000, stale, rules.copy(trigger = LiveTrigger.STANDING)) is LiveVerdict.Bet)
     }
 
     @Test
@@ -138,5 +139,32 @@ class LiveEdgeTest {
         val (_, _, lw) = moved(method = DevigMethod.WORST_CASE)
         val (_, _, lm) = moved(method = DevigMethod.MULTIPLICATIVE)
         assertTrue(lw.fair.getValue(PinnSide.HOME) <= lm.fair.getValue(PinnSide.HOME) + 1e-12)
+    }
+
+    @Test
+    fun `the score trigger needs a score change in the last 20 seconds as well as the move`() {
+        val (b, e, l) = moved()
+        val score = rules.copy(trigger = LiveTrigger.SCORE)
+        assertSkip(LiveSkip.NO_SCORE, judge(e, l, 2_000, stale, score))
+        // A first sighting of a score is not a score being made.
+        b.apply(parse(live(score = 40 to 38, markets = emptyArray<String>())), 1_500)
+        assertSkip(LiveSkip.NO_SCORE, judge(e, l, 2_000, stale, score))
+        b.apply(parse(live(score = 42 to 38, markets = emptyArray<String>())), 1_800)
+        assertTrue(judge(e, l, 2_000, stale, score) is LiveVerdict.Bet)
+        // 25 s after the score the window has passed (the move window would also have ended).
+        assertSkip(LiveSkip.NO_MOVE, judge(e, l, 27_000, stale, score))
+        // A score with no move behind it is not a lag either.
+        val (b2, e2, l2) = moved(from = -150 to 125, to = -151 to 126)
+        b2.apply(parse(live(score = 40 to 38, markets = emptyArray<String>())), 1_500)
+        b2.apply(parse(live(score = 42 to 38, markets = emptyArray<String>())), 1_800)
+        assertSkip(LiveSkip.NO_MOVE, judge(e2, l2, 2_000, stale, score))
+    }
+
+    @Test
+    fun `the standing trigger needs a steady Pinnacle price and no move`() {
+        val (_, e, l) = moved()
+        val standing = rules.copy(trigger = LiveTrigger.STANDING)
+        assertSkip(LiveSkip.IN_FLUX, judge(e, l, 2_000, stale, standing))
+        assertTrue(judge(e, l, 1_000 + 31_000, stale, standing) is LiveVerdict.Bet)
     }
 }

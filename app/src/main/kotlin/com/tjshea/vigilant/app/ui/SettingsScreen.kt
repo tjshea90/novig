@@ -1782,6 +1782,13 @@ private fun PinnLiveSection(state: UiState, keys: KeyActions, reportActions: Rep
                 androidx.compose.material3.FilterChip(selected = v == s.pinnLiveMinMove, onClick = { onUpdate { it.copy(pinnLiveMinMove = v) } }, label = { Text(com.tjshea.vigilant.app.PinnText.pts(v)) }, modifier = Modifier.testTag("pinnMove-${(v * 1000).toInt()}"))
             }
         }
+        Text("What counts as Novig lagging", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            com.tjshea.vigilant.data.pinnodds.LiveTrigger.entries.forEach { t ->
+                androidx.compose.material3.FilterChip(selected = t == s.pinnLiveTrigger, onClick = { onUpdate { it.copy(pinnLiveTrigger = t) } }, label = { Text(t.label) }, modifier = Modifier.testTag("pinnTrigger-${t.name}"))
+            }
+        }
+        Text(s.pinnLiveTrigger.blurb, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text("How Pinnacle's margin is removed", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(com.tjshea.vigilant.engine.DevigMethod.WORST_CASE, com.tjshea.vigilant.engine.DevigMethod.POWER, com.tjshea.vigilant.engine.DevigMethod.MULTIPLICATIVE).forEach { m ->

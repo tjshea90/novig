@@ -78,7 +78,7 @@ class PinnLiveRunnerTest {
 
     private class Rig(val scope: TestScope, val feed: Feed, val pinn: Pinn, val runner: PinnLiveRunner, val trader: PinnLiveTrader, val orders: NoOrders, val follows: DayJournal<LiveFollow>, val journal: DayJournal<LiveRecord>)
 
-    private fun TestScope.rig(withKey: Boolean = true, bet: Boolean = false, markets: List<NovigMarket> = listOf(ml, farSpread), rules: LiveRules = LiveRules()): Rig {
+    private fun TestScope.rig(withKey: Boolean = true, bet: Boolean = false, markets: List<NovigMarket> = listOf(ml, farSpread), rules: LiveRules = LiveRules(trigger = LiveTrigger.MOVE)): Rig {
         val feed = Feed()
         val pinn = Pinn()
         val orders = NoOrders()
@@ -202,7 +202,7 @@ class PinnLiveRunnerTest {
 
     @Test
     fun `a stale prematch matchup is never traded against a game already under way`() = runTest {
-        val r = rig(rules = LiveRules(pregame = true))
+        val r = rig(rules = LiveRules(pregame = true, trigger = LiveTrigger.MOVE))
         r.runner.start(); runCurrent()
         r.stale()
         // Only a prematch (not live) Pinnacle matchup exists for the teams; the Novig game is live.
