@@ -26,8 +26,6 @@ enum class ScannerFilter(val label: String, val short: String) {
     PARLAY("ParlayAPI", "ParlayAPI"),
     PINNODDS("Pinnodds live", "Pinnodds"),
 
-    /** The bets made with Pinnacle only on (Tj, 2026-10-05): judged against Pinnacle's devigged price alone, so their EV, CLV and profit read as that alone ([com.tjshea.vigilant.data.tracker.AtBet.pinnacleOnly]). */
-    PINNACLE("Pinnacle only", "Pinnacle only"),
 }
 
 /**
@@ -53,7 +51,6 @@ object TrackerSort {
 
     fun inScanner(bets: List<TrackedBet>, f: ScannerFilter): List<TrackedBet> = when (f) {
         ScannerFilter.ALL -> bets
-        ScannerFilter.PINNACLE -> bets.filter { it.atBet?.pinnacleOnly == true }
         else -> bets.filter { scannerOf(it) == f }
     }
 

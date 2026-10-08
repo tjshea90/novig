@@ -57,8 +57,6 @@ class AppRecorder(private val events: EventLog, private val net: NetStats, priva
         flip("paused", before.pausedByHand, after.pausedByHand)
         flip("kill switch", before.killed, after.killed)
         flip("scanner", before.scanner, after.scanner)
-        flip("Pinnacle only", before.pinnacleOnly, after.pinnacleOnly)
-        flip("Pinnacle only age limit (s)", before.pinnacleMaxAgeSeconds, after.pinnacleMaxAgeSeconds)
         flip("which bids go up", before.makerFocus, after.makerFocus)
         flip("low API usage books", before.lowUsageBooks, after.lowUsageBooks)
         flip("low API usage scan pace (min, 0 = Auto)", before.lowUsagePace, after.lowUsagePace)
