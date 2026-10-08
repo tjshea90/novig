@@ -482,6 +482,22 @@ class MakerUiTest {
         compose.onNodeWithTag("makerRequireSharp").assertDoesNotExist()
     }
 
+    /** Tj, 2026-10-08: "leave the app on and background auto bid for hours … worried about api usage running out too fast": the long-run saver's switch (RESEARCH.md §119). */
+    @Test
+    fun `the long-run saver has a switch, on by default, that says what it costs, and is hidden for the modes with their own scan`() {
+        val st = androidx.compose.runtime.mutableStateOf(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY))
+        compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
+        compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
+        compose.onNodeWithTag("makerScreen").performScrollToNode(hasTestTag("makerLongRun"))
+        compose.onNodeWithTag("makerLongRun").assertIsOn()
+        compose.onNodeWithText("Long-run saver").assertExists()
+        compose.onNodeWithTag("makerLongRun").performClick()
+        assertFalse(st.value.makerLongRun)
+        // Low API usage has its own narrower scan and pace; CrazyNinjaOdds-priced bids do not use Vigilant's scan.
+        st.value = st.value.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE)
+        compose.onNodeWithTag("makerLongRun").assertDoesNotExist()
+    }
+
     /** Tj, 2026-10-05: "an option for unlimited bids up at once" and "only the bets which have the maximum chance of being filled quickly and also are decent chance for me to win". */
     @Test
     fun `the rules offer unlimited bids, a quick and likely focus, the sharp-anchored price and the picked-off guard`() {
