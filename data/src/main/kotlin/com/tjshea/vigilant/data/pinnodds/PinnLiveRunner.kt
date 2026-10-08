@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -167,7 +168,7 @@ class PinnLiveRunner(
     }
 
     private suspend fun discover(queue: Channel<Msg>) {
-        while (isActive) {
+        while (currentCoroutineContext().isActive) {
             try {
                 val cfg = config()
                 val statuses = buildList {
