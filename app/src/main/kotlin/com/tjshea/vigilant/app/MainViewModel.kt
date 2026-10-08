@@ -130,6 +130,7 @@ data class UiState(
     val pinnwireKeys: List<String> = emptyList(),
     val proplineKeys: List<String> = emptyList(),
     val parlayKeys: List<String> = emptyList(),
+    val pinnoddsKeys: List<String> = emptyList(),
     /** Every provider's usage ledger, updated after each call (the meters). */
     val usage: UsageBook = UsageBook(),
     val bets: List<TrackedBet> = emptyList(),
@@ -199,6 +200,12 @@ data class UiState(
     val burstProvedLeagues: Set<String> = emptySet(),
     /** What the burst trader has done this run ([com.tjshea.vigilant.data.novig.trading.burst.BurstTradeStatus]). */
     val burstTrade: com.tjshea.vigilant.data.novig.trading.burst.BurstTradeStatus = com.tjshea.vigilant.data.novig.trading.burst.BurstTradeStatus(),
+    /** Pinnodds live (RESEARCH.md §116): the engine's status, the trader's, and the Test key answer (null = not tested; [pinnKeyOk] says whether it passed), refreshed while Settings is open. */
+    val pinnLive: com.tjshea.vigilant.data.pinnodds.LiveRunnerStatus = com.tjshea.vigilant.data.pinnodds.LiveRunnerStatus(),
+    val pinnTrade: com.tjshea.vigilant.data.pinnodds.LiveTradeStatus = com.tjshea.vigilant.data.pinnodds.LiveTradeStatus(),
+    val pinnKeyNote: String? = null,
+    val pinnKeyOk: Boolean? = null,
+    val pinnKeyBusy: Boolean = false,
 ) {
     /**
      * The +EV feed as of [now]: without EVs whose other books' prices are over a few minutes old
@@ -233,6 +240,7 @@ data class UiState(
         ApiProvider.PINNWIRE -> pinnwireKeys
         ApiProvider.PROPLINE -> proplineKeys
         ApiProvider.PARLAY -> parlayKeys
+        ApiProvider.PINNODDS -> pinnoddsKeys
     }
 
     /** This state with [provider]'s keys replaced. */
@@ -242,6 +250,7 @@ data class UiState(
         ApiProvider.PINNWIRE -> copy(pinnwireKeys = keys)
         ApiProvider.PROPLINE -> copy(proplineKeys = keys)
         ApiProvider.PARLAY -> copy(parlayKeys = keys)
+        ApiProvider.PINNODDS -> copy(pinnoddsKeys = keys)
     }
 
     /** Novig's live price for [row], when that setting is on and it was read in the last minute (never in Vigilant MGM). */
@@ -1280,6 +1289,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         setKeys(provider, keysFor(provider) + trimmed)
         // A new ParlayAPI key: its plan and credits from the key itself, at once (free).
         if (provider == ApiProvider.PARLAY) refreshBalances(force = true)
+        // A new Pinnodds key: the live engine starts at once if it is on.
+        if (provider == ApiProvider.PINNODDS) viewModelScope.launch { runCatching { c.pinnTick(_state.value.settings) } }
     }
 
     /**
@@ -1803,6 +1814,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** The live engine's status for Settings › Pinnodds live (the page asks every second or two while it is open). */
+    fun refreshPinnLive() {
+        _state.update { it.copy(pinnLive = c.pinnRunner.status.value, pinnTrade = c.pinnTrader.status.value) }
+    }
+
+    /**
+     * Settings › Pinnodds live › Test key: one request to Pinnodds (`GET /panel/api/me`), no WebSocket (the account allows one connection and a test must not evict the live feed's). Says the
+     * plan, when it ends and whether the WebSocket add-on is on.
+     */
+    fun testPinnoddsKey() {
+        val key = keysFor(ApiProvider.PINNODDS).firstOrNull().orEmpty()
+        _state.update { it.copy(pinnKeyBusy = true, pinnKeyNote = null, pinnKeyOk = null) }
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val r = runCatching { com.tjshea.vigilant.data.pinnodds.PinnKeyTest.run(c.http, key) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
+            val (note, ok) = when (r) {
+                is com.tjshea.vigilant.data.pinnodds.PinnKeyTest.Result.Ok -> r.summary(now) to r.canStream(now)
+                is com.tjshea.vigilant.data.pinnodds.PinnKeyTest.Result.Bad -> r.message to false
+                null -> "The test could not run." to false
+            }
+            _state.update { it.copy(pinnKeyBusy = false, pinnKeyNote = note, pinnKeyOk = ok) }
+        }
+    }
+
     /** Reads the live feed test's line for Settings › Diagnostics & about (the page asks every few seconds while it is open). */
     fun refreshFeedRace() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -1976,6 +2011,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }.getOrNull(),
             sharpFeeds = runCatching { com.tjshea.vigilant.data.reference.SharpBooks.feedsAmong(c.referenceSources(_state.value.settings, background = true)) }.getOrDefault(emptyList()),
             lowUsagePlan = _state.value.settings.takeIf { it.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }?.let { runCatching { c.lowUsagePlan(it) }.getOrNull() },
+            pinnReport = runCatching {
+                PinnText.diagnostics(_state.value.settings, c.pinnRunner.status.value, c.pinnTrader.status.value, c.pinnJournal.readAll(), c.pinnFollowJournal.readAll(), c.pinnRunner.running)
+            }.getOrNull(),
             burstReport = runCatching {
                 BurstText.diagnostics(
                     c.burst.status.value, c.burstJournal.readAll(), c.burst.latency.note(), _state.value.settings, c.burst.running,
