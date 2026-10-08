@@ -397,6 +397,12 @@ class PinnLiveRunner(
             return head.contains("\"topic\":\"") && head.contains("/pre\"")
         }
 
+        /**
+         * Novig leagues beyond Vigilant's own eleven that Pinnacle also prices live (Tj, 2026-10-08: "all sports may be read and auto bet"): soccer's moneyline is a three-way market that is not
+         * matched yet, but its spreads and totals are; the rest have a plain two-way moneyline. The study recorder used the same names against Novig's catalog without a refusal.
+         */
+        val EXTRA_LEAGUES = setOf("NCAAWB", "CFL", "MLS", "EPL", "Bundesliga", "Serie A", "La Liga", "Ligue 1", "Champions League", "Europa League", "KBO", "NPB")
+
         const val DISCOVER_MS = 30_000L
         const val TICK_MS = 100L
         const val STATUS_EVERY_MS = 1_000L
