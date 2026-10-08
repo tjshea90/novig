@@ -50,8 +50,7 @@ class CnoBidSetupTest {
     }
 
     @Test
-    fun `what still blocks - Pinnacle only reads no CNO list, and bids from CNO need no Vigilant league`() {
-        assertTrue(MakerSetup.missing(cno.copy(pinnacleOnly = true), bettingSetUp = true)!!.contains("Pinnacle only to be off"))
+    fun `what still blocks - bids from CNO need no Vigilant league`() {
         // Vigilant's scan needs a league; CNO's scope is the CNO scanner's.
         assertNull(MakerSetup.missing(cno.copy(leagues = emptySet()), bettingSetUp = true))
         assertTrue(MakerSetup.missing(ScanSettings(leagues = emptySet()), bettingSetUp = true)!!.contains("league"))

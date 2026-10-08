@@ -212,12 +212,11 @@ class LowUsageBidsTest {
     }
 
     @Test
-    fun `the scan is the mode's only while bids are on and Pinnacle only isn't, and a bets-only pass is never narrowed`() {
+    fun `the scan is the mode's only while bids are on, and a bets-only pass is never narrowed`() {
         assertTrue(on.lowUsageNow)
         assertFalse("bids off: the whole scan", on.copy(maker = false, makerRecommend = false).lowUsageNow)
         assertTrue("recommending bids counts", on.copy(maker = false, makerRecommend = true).lowUsageNow)
         assertFalse("another focus", on.copy(makerFocus = BidFocus.QUICK_LIKELY).lowUsageNow)
-        assertFalse("Pinnacle only wins", on.copy(pinnacleOnly = true).lowUsageNow)
         assertEquals(on.copy(maker = false, makerRecommend = false), on.copy(maker = false, makerRecommend = false).effective())
         // Check odds now prices Tj's open bets of every kind: the families and sources are his.
         val bets = on.effective(forBets = true)

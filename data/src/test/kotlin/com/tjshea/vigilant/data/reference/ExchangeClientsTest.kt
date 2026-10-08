@@ -412,29 +412,6 @@ class ExchangeClientsTest {
     }
 
     @Test
-    fun `Pinnacle only shares a board for 20 seconds instead of a minute, and a forgotten board is read again at once`() = runBlocking {
-        repeat(4) { server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball)) }
-        var now = 1_000L
-        val c = PinnapiClient(OkHttpClient(), json, pinnPool(listOf("k")), base("/kit/v1"), clock = { now })
-        c.odds(nfl, settings)
-        now += 25_000
-        c.odds(nfl, settings) // 25 s on: still the minute's board in the usual mode
-        assertEquals(1, server.requestCount)
-        c.odds(nfl, settings.copy(pinnacleOnly = true)) // but too old for Pinnacle only
-        assertEquals(2, server.requestCount)
-        now += 5_000
-        c.odds(nfl, settings.copy(pinnacleOnly = true))
-        assertEquals("5 s old: shared", 2, server.requestCount)
-        c.forget(nfl)
-        c.odds(nfl, settings.copy(pinnacleOnly = true))
-        assertEquals("forgotten: read again", 3, server.requestCount)
-        // NFL and NCAAF share a board, so forgetting one forgets both; another sport's is left alone.
-        c.forget(Leagues.byNovigName("NCAAF")!!)
-        c.odds(nfl, settings.copy(pinnacleOnly = true))
-        assertEquals(4, server.requestCount)
-    }
-
-    @Test
     fun `a pinnacle daily 429 rests that key until pinnapi's retry time and rotates to the next`() {
         server.enqueue(MockResponse().setResponseCode(429).setBody("""{"error":"rate_limited","window":"day","limit":100,"retry_after_ms":7200000}"""))
         server.enqueue(MockResponse().setBody(ExchangeFixtures.pinnapiFootball))

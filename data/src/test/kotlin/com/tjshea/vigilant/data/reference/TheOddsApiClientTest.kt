@@ -194,8 +194,6 @@ class TheOddsApiClientTest {
         val books = c.booksFor(ScanSettings(referenceBooks = listOf("draftkings")))
         assertEquals("pinnacle", books.first())
         assertFalse("novig" in books)
-        // Pinnacle only asks for Pinnacle's book alone, from either feed.
-        assertEquals(listOf("pinnacle"), c.booksFor(ScanSettings(pinnacleOnly = true)))
         // Its docs: "Every response includes x-requests-used, x-requests-remaining, and x-requests-last" (parlay-api.com/docs, 2026-09-30).
         // A Starter key (20,000 a month), early in its month.
         server.enqueue(MockResponse().setBody(Fixtures.oddsApi).setHeader("x-requests-remaining", "19970").setHeader("x-requests-used", "30").setHeader("x-requests-last", "1"))

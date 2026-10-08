@@ -220,7 +220,6 @@ class CnoMakerLinesTest {
         assertFalse(ScanSettings(makerSource = BidSource.CNO, maker = false, makerRecommend = false).bidsFromCno)
         assertTrue(ScanSettings(makerSource = BidSource.CNO, maker = true).bidsFromCno)
         assertTrue(ScanSettings(makerSource = BidSource.CNO, maker = false, makerRecommend = true).bidsFromCno)
-        assertFalse(ScanSettings(makerSource = BidSource.CNO, maker = true, pinnacleOnly = true).bidsFromCno)
         // Never on by default: no preset or restart turns it on.
         assertEquals(BidSource.VIGILANT, ScanSettings().makerSource)
     }

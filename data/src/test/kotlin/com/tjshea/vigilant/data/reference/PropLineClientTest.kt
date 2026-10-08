@@ -366,11 +366,4 @@ class PropLineClientTest {
         assertEquals(160, readableError(long).length)
     }
 
-    @Test
-    fun `a board is re-used for two minutes, and for 30 seconds in Pinnacle only where this feed backs up Pinnacle's own price`() {
-        val c = client()
-        assertEquals(PropLineClient.REUSE_MS, c.reuseMs(com.tjshea.vigilant.data.scanner.ScanSettings()))
-        assertEquals(PropLineClient.PINNACLE_ONLY_REUSE_MS, c.reuseMs(com.tjshea.vigilant.data.scanner.ScanSettings(pinnacleOnly = true)))
-        assertTrue(PropLineClient.PINNACLE_ONLY_REUSE_MS < PropLineClient.REUSE_MS)
-    }
 }
