@@ -145,9 +145,7 @@ class Pinn:
                 continue
             old = e['mk'].get(key)
             e['mk'][key] = {'status': 'open', 'by': by, 'alt': mk.get('isAlternate'), 'type': mk.get('type'), 'lim': (mk.get('limits') or [{}])[0].get('amount')}
-            if old and old.get('status') == 'closed':
-                pass
-            if (not mk.get('isAlternate')) and e['pid_matched'] if False else (not mk.get('isAlternate')):
+            if not mk.get('isAlternate'):
                 names = list(by.keys())
                 probs = [am2p(by[n][0]) for n in names]
                 self.emit({'k': 'pin', 't': t, 'ts': m.get('ts'), 'pid': rec['id'], 'ch': ch, 'key': key, 'type': mk.get('type'), 'alt': bool(mk.get('isAlternate')),
@@ -285,14 +283,12 @@ def record(a):
     key = os.environ.get('PINNODDS_KEY', '')
     if not key:
         sys.exit('set PINNODDS_KEY')
-    out = Out(a.out); pn = Pinn(lambda d: (out(d), pn.__dict__.setdefault('hot', {}) if False else None))
-    nv = Novig(pn, out, a.leagues.split(','))
-    inner = pn.emit
+    out = Out(a.out); holder = {}
     def emit(d):
-        inner(d)
-        if d['k'] == 'pin':
-            nv.hot[d['pid']] = time.time()
-    pn.emit = emit
+        out(d)
+        if d['k'] == 'pin' and 'nv' in holder:
+            holder['nv'].hot[d['pid']] = time.time()
+    pn = Pinn(emit); nv = Novig(pn, out, a.leagues.split(',')); holder['nv'] = nv
     stop = asyncio.Event(); loop = asyncio.new_event_loop()
     th = threading.Thread(target=lambda: loop.run_until_complete(pinn_task(pn, key, stop, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])), daemon=True); th.start()
     time.sleep(8)   # the snapshot
