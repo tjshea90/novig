@@ -623,6 +623,10 @@ class AppContainer(private val app: Application) {
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s -> runCatching { burstTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
         }
+        // Pinnodds live follows its switch, the Pinnodds key, the Novig key and STOP ALL (paper unless "Place real bets" is on; RESEARCH.md §116).
+        appScope.launch {
+            settingsStore.flow.filterNotNull().collect { s -> runCatching { pinnTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
+        }
         // Written down as it happens, whatever screen is open: a finished scan's errors and failed fair-odds sources, and CNO's errors
         // (the background scan's own are added where it ends: [AutoScanner]).
         appScope.launch {
