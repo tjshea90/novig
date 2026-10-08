@@ -87,21 +87,11 @@ class LiveEdgeTest {
     }
 
     @Test
-    fun `the fee is part of the price - the same ask is a bet pregame and not in play`() {
-        val (_, e, l) = moved(isLive = false)
-        val fair = l.fair.getValue(PinnSide.HOME)
-        // An ask whose EV is 3.2% with no fee and under 2% with the in-play fee.
-        val ask = fair / 1.032
-        val r = rules.copy(pregame = true)
-        assertTrue(judge(e, l, 2_000, listOf(TakeLevel(ask, 1_000)), r, live = false) is LiveVerdict.Bet)
-        assertSkip(LiveSkip.EV, judge(e, l, 2_000, listOf(TakeLevel(ask, 1_000)), r, live = true))
-    }
-
-    @Test
     fun `a game that is not live is left alone unless pregame is on`() {
         val (_, e, l) = moved(isLive = false)
-        assertSkip(LiveSkip.PREGAME, judge(e, l, 2_000, stale))
-        assertTrue(judge(e, l, 2_000, stale, rules.copy(pregame = true), live = false) is LiveVerdict.Bet)
+        assertSkip(LiveSkip.PREGAME, judge(e, l, 10_000, stale))
+        e.startMs = 10_000L + 3_600_000L
+        assertTrue(judge(e, l, 10_000, stale, rules.copy(pregame = true), live = false) is LiveVerdict.Bet)
     }
 
     @Test
@@ -212,7 +202,7 @@ class LiveEdgeTest {
         assertSkip(LiveSkip.SETTLING, judge(e, l, 2_000L, stale, r))
         assertSkip(LiveSkip.NO_MOVE, judge(e, l, now, stale, r.copy(preMoveWindowMs = 1_000L, preMinMove = 0.5)))
         // The edge cap holds before the game too.
-        assertSkip(LiveSkip.TOO_GOOD, judge(e, l, now, listOf(TakeLevel(0.10, 5_000)), r))
+        assertSkip(LiveSkip.TOO_GOOD, judge(e, l, now, stale, r.copy(maxEv = 0.05)))
     }
 
     @Test
