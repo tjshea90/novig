@@ -71,5 +71,5 @@ inside `PinnLiveRunner` (one consumer coroutine; ticks every 100 ms; follow-ups 
 
 ## 6. What is NOT known (update when verified)
 - Novig's **in-play order delay** and whether `IOC` is accepted on every live game line: no real in-play order has ever been sent by this app (this container has no Novig key). The first real order is the test.
-- Whether the edge is real: RESEARCH.md §116. Replay over 46 minutes of tape (12 games): score-driven moves held up two minutes later, price-only moves did not; the sample is small and the outcome (win/loss) of a bet is not in it.
+- Whether the edge is real: RESEARCH.md §116. Replay over 52 minutes of tape (12 games): at the app's defaults score-driven moves were +6.2% against Pinnacle's own fair two minutes later (n=20) and price-only moves -2.7% (n=24); the sample is small and the outcome (win/loss) of a bet is not in it.
 - Pregame: `pre` frames give Pinnacle's prematch moves in real time; whether Novig's pregame quotes lag them is untested (off by default).

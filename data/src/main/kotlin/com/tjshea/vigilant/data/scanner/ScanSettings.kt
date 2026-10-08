@@ -379,7 +379,7 @@ data class ScanSettings(
     val pinnLiveMaxDay: Double = 25.0,
     val pinnLiveHaltLoss: Double = 10.0,
     val pinnLiveHalted: String? = null,
-    /** The defaults come from replaying the rule over 46 minutes of tape (RESEARCH.md §116): score-driven moves of 3+ points with 5%+ edge held up two minutes later (+8%, n=15); smaller edges and price-only moves did not. */
+    /** The defaults come from replaying the rule over 52 minutes of tape (RESEARCH.md §116): score-driven moves of 3+ points with 5%+ edge held up two minutes later (+6.2%, n=20); price-only moves did not (-2.7%, n=24). */
     val pinnLiveMinEv: Double = 0.05,
     val pinnLiveMinMove: Double = 0.03,
     val pinnLiveDevig: DevigMethod = DevigMethod.WORST_CASE,

@@ -5776,10 +5776,10 @@ Method: a read-only workflow of seven scouts (the code, the repo's own measureme
 
 **In short.**
 1. **The socket works and is fast.** Tj's key is on the 3-day full demo (WebSocket add-on on, ends 2026-10-10 23:34Z). One connection per account; ~51 frames a second across 13 sports at the evening peak; Pinnacle's scores and clocks come on it; the hub's frames reach this container a median 17-22 ms after their own stamp.
-2. **Novig does lag Pinnacle, for seconds.** On 81 Pinnacle jumps of 3+ points (moneyline, with Novig 2+ points behind), Novig's mid covered half the gap in a **median 6.6 s (p25 3.6, p75 14.4)** and 90% in 12 s. That is the window.
-3. **But most of the "lag" is not an edge.** Replaying the app's rule over 46 minutes of tape: a Pinnacle move with NO score behind it is worth +9.0% at decision and **-1.7% against Pinnacle's own fair two minutes later** (n=38; Pinnacle spikes, then comes back; a 92% spike fell to 78% while Novig's ask was already 77.5%). A move **caused by a score** held: +6.2% at decision, **+1.7% two minutes later (n=29), +4.9% with a 3-point move (n=25), +8.2% with a 3-point move and 5% edge (n=15)**. So the default trigger is a score-driven move of 3+ points with 5%+ edge after Novig's fee.
-4. **A score arrives before the price.** Pinnacle's score update reaches the socket a **median 2.1 s before** its first moneyline reprice (n=234; p25 1.0 s, p75 3.7 s; only 7 of 234 in the same frame). The score is an earlier signal than the price; without a model of how much a score moves the fair price (not built, and not honest to guess) it cannot be traded before Pinnacle reprices. It is used as the filter that separates real moves from spikes.
-5. **Not proven.** 12 games, one evening, overlapping triggers, a judgment against Pinnacle's later price (CLV-style), not against bet outcomes. A bet that passes can still lose. Real bets are therefore OFF by default; the app runs in PAPER and follows every decision up at 30 s and 120 s, so Tj's own phone builds the sample (Diagnostics › PINNODDS LIVE).
+2. **Novig does lag Pinnacle, for seconds.** On 101 Pinnacle jumps of 3+ points (moneyline, with Novig 2+ points behind), Novig's mid covered half the gap in a **median 6.6 s (p25 4.1, p75 15.3)** and 90% in about 12 s. That is the window.
+3. **Most of the "lag" is not an edge, and what is left is thin.** Replaying the app's rule over 52 minutes of tape (12 games, 85 triggers at the loosest setting): the edge at decision (+7.7%) shrinks to +0.7% against Pinnacle's own fair two minutes later, because Pinnacle comes back (it held its move only 39% of the time; a 92% spike fell to 78% while Novig's ask was already 77.5%). The split that matters is the cause: with larger thresholds a move **caused by a score** held (**+6.2% two minutes later at 5% edge and 3 points, n=20**; +3.5% at 3%/3 points, n=31) while a **price-only move did not (-2.7%, n=24)**. At loose thresholds the two are alike (+1.0% and +0.5%). So the default trigger is a score-driven move of 3+ points with 5%+ edge after Novig's fee.
+4. **A score arrives before the price.** Pinnacle's score update reaches the socket a **median 2.0 s before** its first moneyline reprice (n=285; p25 1.0 s, p75 3.6 s; only 11 of 285 in the same frame). The score is an earlier signal than the price; without a model of how much a score moves the fair price (not built, and not honest to guess) it cannot be traded before Pinnacle reprices. It is used as the filter that separates real moves from spikes.
+5. **Not proven.** 12 games over 52 minutes, one evening, overlapping triggers, a judgment against Pinnacle's later price (CLV-style), not against bet outcomes. A bet that passes can still lose. Real bets are therefore OFF by default; the app runs in PAPER and follows every decision up at 30 s and 120 s, so Tj's own phone builds the sample (Diagnostics › PINNODDS LIVE).
 6. **Cost.** The WebSocket needs a paid REST plan plus the $99 add-on: **at least $198 a month** (Pro $99 + $99). After 2026-10-10 23:34Z the key falls back to the free trial and the socket answers `403 plan_lacks_ws`. At Tj's stakes ($1-$10 a bet) the expected gain per bet is cents; the feature pays for $198 a month only if the edge is real AND the stakes are raised.
 
 ### 116.1 What was measured on the socket (tapes 2026-10-08 00:50-01:50Z; this container, through the agent proxy)
@@ -5788,19 +5788,20 @@ Method: a read-only workflow of seven scouts (the code, the repo's own measureme
 - A Pinnacle price is American; both sides can shorten at once (a margin change): one real frame pair, the Pacers -386/+294 to -414/+277, took the devigged home chance from 75.8% to 75.2% although the favourite's price got "better".
 - The same fixture has a parent and re-issued live children; `rec.version` is frozen once a game is in play: only `markets[i].version` orders prices. All of it is handled in `PinnBook` and pinned on the real frames (`data/src/test/resources/pinnodds-frames.jsonl`).
 
-### 116.2 The replay of the rule (`pinn_novig_lag.py simulate`, pooled tape: 46 min, 12 games, 4,054 Novig book reads)
+### 116.2 The replay of the rule (`pinn_novig_lag.py simulate`, pooled tape: 52 min, 12 games, 5,085 Novig book reads; output in `research/pinnodds_2026-10-08/simulate_grid.txt`)
 "Same ask vs Pinnacle's fair +120 s" = the EV the price paid at decision would have had against Pinnacle's own devigged fair two minutes later (fee in). Python uses the power devig; the app's default is WORST_CASE (more conservative), so the app fires less.
 | rule (edge after fee, Pinnacle move) | trigger | n | EV at decision | vs Pinnacle +30 s | vs Pinnacle +120 s | Pinnacle kept the move |
 | :- | :- | -: | -: | -: | -: | -: |
-| 3%, 1.5 pts | any move | 67 | +7.8% | +3.2% | -0.2% | 36% |
-| 3%, 1.5 pts | **score-driven** | 29 | +6.2% | +2.3% | +1.7% | 38% |
-| 3%, 1.5 pts | price only | 38 | +9.0% | +3.8% | **-1.7%** | 34% |
-| 3%, 3 pts | score-driven | 25 | +6.3% | +5.0% | +4.9% | 44% |
-| 5%, 3 pts | **score-driven (the app's default)** | 15 | +8.4% | +5.4% | **+8.2%** | 40% |
-| 5%, 3 pts | price only | 18 | +12.1% | +5.0% | **-3.1%** | 22% |
-| 8%, 3 pts | score-driven | 7 | +13.0% | +13.5% | +7.2% | 29% |
-| 12%, 1.5 pts | price only | 7 | +21.8% | -1.7% | **-13.0%** | 14% |
-The settle time (0.5 / 2 / 4 / 8 s) changed nothing worth keeping. A first 9-minute sample had said the opposite about price-only moves in one half and the same in the other: samples this small swing, which is why the numbers above are pooled and why nothing here is a verdict. The "standing disagreement" rows of the replay (Novig off a steady Pinnacle price) include finished games whose last Pinnacle price is stale (+100% "EV") and are not reported.
+| 3%, 1.5 pts | any move | 85 | +7.7% | +2.0% | +0.7% | 39% |
+| 3%, 1.5 pts | score-driven | 35 | +6.6% | +1.1% | +1.0% | 37% |
+| 3%, 1.5 pts | price only | 50 | +8.6% | +2.7% | +0.5% | 40% |
+| 3%, 3 pts | score-driven | 31 | +6.7% | +3.1% | +3.5% | 42% |
+| 3%, 3 pts | price only | 40 | +8.4% | +2.5% | +1.1% | 42% |
+| 5%, 3 pts | **score-driven (the app's default)** | 20 | +9.0% | +3.0% | **+6.2%** | 40% |
+| 5%, 3 pts | price only | 24 | +11.3% | +3.6% | **-2.7%** | 29% |
+| 8%, 3 pts | score-driven | 11 | +12.7% | +6.9% | +4.2% | 27% |
+| 8%, 3 pts | price only | 14 | +15.0% | +6.2% | -2.1% | 36% |
+The settle time (0.5 / 2 / 4 / 8 s) changed nothing worth keeping. Early samples swung hard (a first 10-trigger cut read -14% for price-only moves, the next 11-trigger cut +12%): the numbers above are pooled, still small and overlapping, and nothing here is a verdict. The "standing disagreement" rows of the replay (Novig off a steady Pinnacle price) include finished games whose last Pinnacle price is stale (+100% "EV") and are not reported.
 
 ### 116.3 What the burst-scoring research gets from the socket (Tj: "see if it is possible to implement the research you already found about burst scoring odds inefficiency")
 - §95's cross-line cover (YES at the lower line + NOT at the higher, both stale after a play) needs no Pinnacle data: the burst recorder finds it in Novig's own books. Pinnacle adds nothing to a risk-free cover.
