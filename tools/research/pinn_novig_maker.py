@@ -135,7 +135,7 @@ def sim(trades_path, paths, ttl=60.0, live=True, post_lat=0.3, cancel_lat=2.0):
     def fm(x, f='{:+.2f}'):
         return 'n/a' if x is None else f.format(100 * x)
     print(f'maker simulation: ttl {ttl:.0f}s, post latency {post_lat}s, cancel latency {cancel_lat}s, {"live (maker credit on)" if live else "pregame (no credit)"}; bid prices from Pinnacle power-devigged fair / (1+margin)')
-    print('columns: sport margin variant | bids, bid-hours | fills optimistic (rate per 100 bid-hours) EV at fill / +30 s / +120 s (median, % of price) | strict fills (rate) EV +120 s')
+    print('columns: sport margin variant | bids, bid-hours | fills optimistic (per bid-hour of one resting bid) EV at fill / +30 s / +120 s (median, % of price) | strict fills (rate) EV +120 s')
     allr = collections.defaultdict(lambda: {'bids': 0, 'bid_s': 0.0, 'fills': [], 'fills_strict': []})
     for (sp, mg, v), r in res.items():
         for key in ((sp, mg, v), ('ALL', mg, v)):
@@ -144,7 +144,7 @@ def sim(trades_path, paths, ttl=60.0, live=True, post_lat=0.3, cancel_lat=2.0):
         h = r['bid_s'] / 3600.0
         if r['bids'] < 20: continue
         f, fs = r['fills'], r['fills_strict']
-        print(f'  {sp:11s} {mg:4.0%} {v:10s} | bids {r["bids"]:5d} {h:5.1f} h | fills {len(f):4d} ({len(f) / h if h else 0:5.1f}/100h... per hour {len(f) / h if h else 0:5.1f})  EV {fm(med([x["ev0"] for x in f]))}% / {fm(med([x["ev30"] for x in f]))}% / {fm(med([x["ev120"] for x in f]))}% '
+        print(f'  {sp:11s} {mg:4.0%} {v:10s} | bids {r["bids"]:5d} {h:5.1f} h | fills {len(f):4d} ({len(f) / h if h else 0:5.1f}/bid-hour)  EV {fm(med([x["ev0"] for x in f]))}% / {fm(med([x["ev30"] for x in f]))}% / {fm(med([x["ev120"] for x in f]))}% '
               f'| strict {len(fs):4d} ({len(fs) / h if h else 0:4.1f}/h) +120s {fm(med([x["ev120"] for x in fs]))}%')
 
 

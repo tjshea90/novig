@@ -4270,3 +4270,7 @@ Tj's six asks: 1) figure out how the auto bid feature is profitable and build on
 
 Tj, 2026-10-08 (~00:00Z, same job): "For the deep analysis, also 'think outside the box' for patterns people wouldn't normally see"
 - [x] QB4a (tool built, section [G] of pinn_novig_deep.py; the final run on the finished tapes is QB2) OUTSIDE-THE-BOX patterns added to pinn_novig_deep.py section [G] and run on the finished tapes: who leads whom (Novig vs Pinnacle cross-correlation), order-book imbalance as a predictor, Pinnacle vig/limit changes before moves, jump reversion and flicker, market-type order after a score, price-tick rounding, outcomes the score already decided, a score-effect model, and the break-even order delay after a score.
+
+Tj, 2026-10-08 (same job): "Also include the possibility of 'make' orders (bids). This may be profitable"
+- [x] QB5a (tool built: tools/research/pinn_novig_maker.py; fetch = Novig's public trade history for the matched markets, sim = resting bids at Pinnacle fair/(1+margin), live with the 50% maker credit and pregame without, with cancel-on-Pinnacle-move and score guards). First cut on 11 min of tape: the cancel-on-move guard keeps the fill's EV at +120 s (2% margin: +3.2% at fill, +3.4% at +120 s) while unguarded bids decay (+3.0% -> +1.5% at +30 s): n is ~25-50 fills, nothing proven.
+- [ ] QB5b run it on the finished live tapes and the pregame tape; write RESEARCH.md 120.3 (can a Pinnacle-priced live bid beat Vigilant's Pinnacle-less pregame bids; what the cancel guard is worth; fills per bid-hour).
