@@ -4267,3 +4267,6 @@ Tj's six asks: 1) figure out how the auto bid feature is profitable and build on
 - [ ] QB1 RECORD live Pinnacle (Pinnodds socket) against Novig's public books, 60 min from 23:33Z (tools/research/pinn_novig_lag.py record); key from the environment only, never saved.
 - [ ] QB2 DEEP ANALYSIS of the tape: lag by cause (score / price-only), by sport, stale asks, late adjustments, pause after a score, anomalies, pregame (`pre` frames) vs Novig.
 - [ ] QB3 SAVE the study permanently: research/pinnodds_2026-10-08b/ (trimmed tape + analysis output) and RESEARCH.md §120.2+ with implementation ideas for Vigilant; checkpoint and push. Never the key.
+
+Tj, 2026-10-08 (~00:00Z, same job): "For the deep analysis, also 'think outside the box' for patterns people wouldn't normally see"
+- [ ] QB4 OUTSIDE-THE-BOX patterns added to pinn_novig_deep.py section [G] and run on the finished tapes: who leads whom (Novig vs Pinnacle cross-correlation), order-book imbalance as a predictor, Pinnacle vig/limit changes before moves, jump reversion and flicker, market-type order after a score, price-tick rounding, outcomes the score already decided, a score-effect model, and the break-even order delay after a score.
