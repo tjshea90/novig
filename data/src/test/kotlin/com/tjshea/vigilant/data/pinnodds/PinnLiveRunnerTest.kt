@@ -234,9 +234,10 @@ class PinnLiveRunnerTest {
         r.runner.start(); runCurrent()
         r.stale()
         r.send(live(markets = arrayOf(money(1, -150, 125))))
-        advanceTimeBy(10_000); runCurrent()
+        repeat(2) { advanceTimeBy(5_000); r.pinn.lastFrameAtMs = base + currentTime; runCurrent() }
         assertTrue("Pinnacle's price has not been steady for 30 s yet", r.trader.records().isEmpty())
-        advanceTimeBy(25_000); runCurrent()
+        // The server's heartbeat (every 30 s) keeps the feed current while nothing else is said.
+        repeat(5) { advanceTimeBy(5_000); r.pinn.lastFrameAtMs = base + currentTime; runCurrent() }
         assertEquals(1, r.trader.records().size)
         r.runner.stop()
     }

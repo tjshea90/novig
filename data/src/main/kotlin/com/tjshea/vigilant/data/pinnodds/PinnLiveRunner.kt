@@ -412,8 +412,8 @@ class PinnLiveRunner(
         /** A Pinnacle matchup silent this long is not matched (a kicked-off or pulled one stops being sent). */
         const val MATCH_FRESH_MS = 10 * 60_000L
 
-        /** The feed is "quiet" when nothing, not even a heartbeat, came for this long. */
-        const val FEED_STALE_MS = 20_000L
+        /** The feed is "quiet" when nothing, not even a heartbeat, came for this long (the server pings every 30 s, so a healthy feed is never quiet longer than that). */
+        const val FEED_STALE_MS = 45_000L
 
         /** Spreads and totals this close to Pinnacle's own line are held open on the Novig feed; farther ones can't be priced by Pinnacle's main line. */
         const val WATCH_BAND = 3.0
