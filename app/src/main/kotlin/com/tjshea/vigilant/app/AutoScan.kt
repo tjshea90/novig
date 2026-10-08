@@ -422,8 +422,11 @@ class AutoScanner(
      * wasn't read and auto-bet placed nothing. Tj's own scan may be running already: then its end is this one's.
      */
     /** The gap between two Vigilant scans now: the usual one, or the low-usage bids' (Auto: the freshness limit less the bids' re-post window, for the games the last scan saw). */
-    private fun vigilantGap(settings: ScanSettings): Int =
-        if (settings.lowUsageNow) com.tjshea.vigilant.data.scanner.LowUsageBids.gapSeconds(settings, gameStarts(), clock()) else settings.vigilantGapSeconds
+    private fun vigilantGap(settings: ScanSettings): Int = when {
+        settings.lowUsageNow -> com.tjshea.vigilant.data.scanner.LowUsageBids.gapSeconds(settings, gameStarts(), clock())
+        // The long-run saver (RESEARCH.md §119): 8 minutes, not 4, while no game is inside the 3-hour reach; the usual gap otherwise.
+        else -> com.tjshea.vigilant.data.scanner.LongRunBids.gapSeconds(settings, gameStarts(), clock())
+    }
 
     private suspend fun vigilantScan(settings: ScanSettings) {
         val before = c.runner.state.value.finished

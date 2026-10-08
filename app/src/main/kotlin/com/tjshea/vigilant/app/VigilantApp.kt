@@ -793,8 +793,10 @@ class AppContainer(private val app: Application) {
      * prices, and the usage counters are saved.
      */
     /** [background]: a background auto-scan's cycle, not a scan Tj started (paced feeds leave part of the day for his: [referenceSources]). */
-    fun startVigilantScan(settings: ScanSettings, bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, background: Boolean = false): Boolean {
+    fun startVigilantScan(requested: ScanSettings, bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, background: Boolean = false): Boolean {
         val now = System.currentTimeMillis()
+        // The long-run saver (RESEARCH.md §119): the background scan reads only the families Quick & likely bids go on; Tj's own scan never does.
+        val settings = if (background && com.tjshea.vigilant.data.scanner.LongRunBids.leanApplies(requested)) requested.copy(leanScan = true) else requested
         val pinned = bets.filter { it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
         // Low API usage bids: the markets a bid of ours rests on are read first, so each is re-posted from this scan's fair before its old one ends (RESEARCH.md §93).
         if (settings.lowUsageNow) pinned += com.tjshea.vigilant.data.novig.trading.maker.LowUsage.restingMarkets(makerStore.flow.value.orEmpty())
