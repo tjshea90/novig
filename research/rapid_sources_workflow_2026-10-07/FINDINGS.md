@@ -2,7 +2,7 @@
 
 One section per agent, scouts first. Raw per-agent files: `results/<label>.json`; each run's raw journal: `journal.<run>.jsonl`. Rendered by `tools/research/save_workflow.py`.
 
-Results saved so far: 15
+Results saved so far: 16
 
 
 ## scout:1-medium-fastapi-odds-tracker
@@ -2021,6 +2021,131 @@ Probe record: 6 GETs to odds.bksignal.com (/, /docs, /robots.txt, /terms, /priva
   - **duplicates_what_the_app_already_has**: Odds: it gives no price the app lacks that is useful as a fair-price anchor; the books are different but retail, and the app's fair prices already come from Pinnacle, Kalshi, Polymarket, The Odds API, ParlayAPI and PropLine. Scores: it would only duplicate Sofascore REST (2.5 s poll, measured median 6.4 s ahead of Polymarket's score socket, 22 of 29 Novig-moving tennis scores >= 3 s early), ESPN and Polymarket, with a score block that is optional, coarse for tennis (INFERRED: no in-game point field) and age-unprovable. It does not appear to resell any of the known sources; I could not check whether it resells another aggregator, because the upstream is not stated.
   - **android_phone_feasibility**: Technically easy to read but a poor fit directly. It is plain HTTPS GET with the key in the URL path, so no special protocol is needed. Problems: (1) the key is bound to one IP (ip_locked), and a phone's IP changes between Wi-Fi and cellular and with carrier NAT, so it would effectively need a fixed-IP relay server, which adds a VPS and a service the phone-only app does not have; (2) polling every 2 to 5 s means roughly 17,000 to 43,000 calls a day with the radio kept awake, which on Android means a foreground service and still fights Doze (Tj said data and storage are not constraints, battery was not mentioned); (3) the key sits in the URL, so it will show in any proxy or HTTP logs and needs Keystore-backed storage; never commit it (repo is public); (4) matching: names come in the book's own language (the doc example shows Cyrillic), so team and player matching to Novig and ESPN names would be needed; (5) this container's reach is not the issue: all my GETs returned 200 (the scout's single first-call reset was the egress proxy), so the phone's network avoids nothing here and gains nothing. The real block is ip_locked, which the phone would hit.
   - **betting_use_or_automated_use_allowed**: Not found. No terms exist, so no stated prohibition or permission of automated access, scraping, redistribution, betting use or commercial use, and no data licence. The vendor is anonymous (no company or address; a personal Telegram contact and a notifier bot on the apex). INFERRED: the underlying data is likely scraped from bookmakers' consumer sites, whose own terms I did not read; the data's rights are therefore unknown and the project's no-scraping rule on bookmakers' consumer APIs covers the same data. Sanctions or payment-compliance exposure from paying an anonymous operator that serves Russian-book feeds is not researched here.
+
+## verify-fit:devto-stop-scraping
+
+- **lens**: fit-terms-and-cost
+- **claim_checks**:
+  -
+    - **claim**: The article is an undisclosed vendor ad written by PulseScore.
+    - **verdict**: confirmed
+    - **evidence_url**: https://dev.to/drengregious/stop-scraping-betting-sites-how-to-build-a-real-time-sports-tracker-in-python-46i9
+    - **quote**: Body has no disclosure line and ends 'head over to pulsescore.net, spin up a free plan (gives you 500 requests/mo right away)'. JSON-LD: author E. Mitev, datePublished = dateModified = 2026-05-21T13:06:54Z. dev.to API list (read 2026-10-08): 8 posts from the account, all 0 reactions and 0 comments.
+  -
+    - **claim**: A later post by the same account discloses the authorship.
+    - **verdict**: confirmed
+    - **evidence_url**: https://dev.to/drengregious/build-your-own-terminal-odds-monitor-with-python-and-pulsescore-stream-api-489i
+    - **quote**: 'Disclosure: We build PulseScore. This tutorial uses our Stream API, currently in Beta.' (published 2026-10-06T13:30:00Z)
+  -
+    - **claim**: The article's free key gives live WebSocket streaming and free-plan live in-play odds.
+    - **verdict**: overstated
+    - **evidence_url**: https://pulsescore.net/pricing
+    - **quote**: BASIC lists 'Live WebSocket connections' and 'Stream API (delta streams)' as not included. Stream doc: '402 plan without WebSocket access: WebSocket streaming requires a PRO, MAX, or ULTRA plan'. But the same pricing page lists 'Live in-play odds' under 'Same on every plan'.
+    - **corrected_statement**: The WebSocket part is false for a free key (PRO or above only). Live in-play odds are included on the free plan, but only over REST at 500 requests a month, so the scout was too strong in calling the whole claim contradicted.
+  -
+    - **claim**: The article's code matches the vendor's current API.
+    - **verdict**: confirmed
+    - **evidence_url**: https://pulsescore.net/docs
+    - **quote**: Article uses https://api.pulsescore.net/v1/odds/bet365 and wss://ws.pulsescore.net/live?secret=. Current docs use /api/v3/bet365/... and wss://api.pulsescore.net/api/{bookmaker}/ws/live?key=...&sport=... . The snippets would not run as written.
+  -
+    - **claim**: Live events update every 1 second.
+    - **verdict**: unsupported
+    - **evidence_url**: https://pulsescore.net/docs/stream-api
+    - **quote**: 'Changes are batched once per second per stream, so a delta typically arrives 1-2 seconds after the bookmaker's write; this is not a sub-second feed.' And (Oct post): 'This cadence is not a guarantee that every bookmaker price reaches your application within one second.' Nothing states the age of the price at the bookmaker.
+    - **corrected_statement**: 1 s is a delivery batch interval from PulseScore's own database to the client. It is not the age of the price.
+  -
+    - **claim**: The data is scraped from bookmaker consumer sites by the vendor.
+    - **verdict**: confirmed
+    - **evidence_url**: https://dev.to/drengregious/5-things-we-didnt-expect-while-building-a-real-time-sports-odds-api-d5
+    - **quote**: Vendor post body: 'we thought the biggest challenge would be scraping bookmaker websites' ... 'Then a bookmaker changes its frontend. One endpoint disappears. Cloudflare gets updated.' Homepage: 'scraped from top bookmakers and updated every second'.
+  -
+    - **claim**: updatedAt is a document-rewrite stamp, not the age of a price, and the stream drops it.
+    - **verdict**: confirmed
+    - **evidence_url**: https://api.pulsescore.net/api/ps3838/doc
+    - **quote**: 'The scraper rewrites every event it still tracks on each pass, so read it as a freshness stamp for the document rather than as the moment a price last moved.' Stream doc: 'Never sent, never diffed: _id, createdAt, updatedAt, markets[].updatedAt, markets[].oddsSig.'
+  -
+    - **claim**: Cheapest plan with a live push is PRO at EUR 79 a month; STARTER (EUR 20) is REST only at 1 request/min per bookmaker.
+    - **verdict**: confirmed
+    - **evidence_url**: https://pulsescore.net/terms
+    - **quote**: 'STARTER (EUR 20/mo): 30,000 requests per month, 1 request per minute per bookmaker. PRO (EUR 79/mo): Unlimited requests, 1 request per second per bookmaker.' Terms last updated October 7, 2026.
+    - **corrected_statement**: Also, PRO's Stream API is 1 connection and 1 sport in total (pricing page and capabilities JSON: pro {connections 1, sports 1}), and PRO has 1 legacy socket per bookmaker. Covering NFL, NBA, MLB and tennis needs MAX (EUR 149, 3 sports) or ULTRA (EUR 249, all sports). The scout's table had this but the verdict did not draw it out.
+  -
+    - **claim**: Only PS3838, Kalshi and Polymarket overlap Vigilant's sharp list; no Circa, ProphetX, Sporttrade or Novig.
+    - **verdict**: confirmed
+    - **evidence_url**: https://api.pulsescore.net/api/stream/capabilities
+    - **quote**: Re-fetched 2026-10-08T00:16Z: 58 bookmaker ids; pinnacle, circa, prophetx, sporttrade, novig, caesars, espnbet, fanatics all absent; ps3838, kalshi, polymarket, fanduel, draftkings, betmgm, betrivers, hardrock, bovada, betonline present.
+  -
+    - **claim**: PS3838 is Pinnacle's price (scout: INFERRED, PulseScore never says Pinnacle).
+    - **verdict**: overstated
+    - **evidence_url**: https://pulsescore.net/
+    - **quote**: Homepage keyword meta lists 'Pinnacle(PS3838) API'; a third-party help centre (brokerstorm.zohodesk.eu) says PS3838 'operates under the Pinnacle brand'. The PS3838 landing page calls it 'the offshore reference for sharp pricing'.
+    - **corrected_statement**: Upgrade from INFERRED to CLAIM_ONLY (vendor SEO keyword plus a third-party note). Nothing measures that PS3838 prices equal Pinnacle's own at the same instant.
+  -
+    - **claim**: PS3838 live sports are american-football, baseball, basketball, esports, soccer, tennis; hockey is prematch only.
+    - **verdict**: overstated
+    - **evidence_url**: https://api.pulsescore.net/api/stream/capabilities
+    - **quote**: ps3838 liveSports = [american-football, baseball, basketball, soccer, tennis]; liveSportsOffered additionally lists esports and ice-hockey; prematchSports includes ice-hockey.
+    - **corrected_statement**: Esports is not in PS3838's liveSports list. NHL live is not served as live; hockey is prematch. Tennis, NFL, NBA and MLB live are listed.
+  -
+    - **claim**: Player props are not documented for the US books.
+    - **verdict**: overstated
+    - **evidence_url**: https://pulsescore.net/pricing
+    - **quote**: 'Same on every plan ... Full market boards including player props'. The PS3838 landing page lists Asian Handicap and Over/Under ladders only and mentions no props.
+    - **corrected_statement**: Props are claimed site-wide (CLAIM_ONLY). No prop market is shown for any US book or for PS3838 on any page read. Unproven, not documented-as-absent.
+  -
+    - **claim**: Terms allow personal use but forbid resale/redistribution and disclaim real-time accuracy.
+    - **verdict**: confirmed
+    - **evidence_url**: https://pulsescore.net/terms
+    - **quote**: 'Resell, redistribute, or sublicense the data obtained through the API without prior written consent.' ... 'we make no guarantees regarding real-time accuracy, completeness, or availability ... You use the data entirely at your own risk.' Nothing in the terms mentions automated betting; the only gambling clause is 'facilitate illegal gambling operations'.
+    - **corrected_statement**: Add: committing real PulseScore responses as test fixtures in this public repo would be redistribution under section 5 (use synthetic fixtures), and the key must be typed into Settings, never shipped in the APK.
+  -
+    - **claim**: Free signup needs no credit card.
+    - **verdict**: confirmed
+    - **evidence_url**: https://pulsescore.net/
+    - **quote**: 'Start pulling real-time odds data in minutes. No credit card required.'
+  -
+    - **claim**: Scores come from the book's own scoreboard and cannot lead the book's price or Novig.
+    - **verdict**: confirmed
+    - **evidence_url**: https://pulsescore.net/ps3838-api
+    - **quote**: Results are 'the last score and match clock PS3838 published'; homepage: 'Some books publish odds only, so treat these fields as optional.' (the conclusion that this cannot beat Sofascore at 2.5 s is INFERRED)
+  -
+    - **claim**: No independent latency or reliability evidence for PulseScore exists.
+    - **verdict**: confirmed
+    - **evidence_url**: https://sportsapis.dev/apis/pulsescore
+    - **quote**: Two searches on 2026-10-08 returned only the vendor's own posts, a directory review, a Product Hunt listing and a mirror of the vendor blog; no measurement. The vendor's own Oct post: 'This tutorial does not report a live latency benchmark.'
+  -
+    - **claim**: PS3838's own terms on automated access.
+    - **verdict**: could-not-check
+    - **corrected_statement**: A web search found no PS3838 terms text. Whether PulseScore's scraping of PS3838 is allowed is unknown to me. The legal exposure sits mainly with PulseScore, but section 7 lets them cut access without notice.
+- **corrected_verdict**: no. Not usable in Vigilant now, same as the scout, with these refinements. (1) The terms do not stand in the way: personal use inside the app looks permitted (nothing bans betting on the data, only resale or redistribution, so no fixtures of real answers in the public repo and no key in the APK). The blockers are cost and proof. (2) The free tier is REST only (500 requests a month, about 16 a day). It includes live in-play odds but cannot run a scan or a socket. (3) The only live push is PRO at EUR 79 a month, and PRO is one sport on the Stream API and one socket per bookmaker. Vigilant's NFL, NBA, MLB and tennis would need MAX (EUR 149) or ULTRA (EUR 249). That is above the under-50-dollar line in every billing option (the 12-month price is still EUR 59.25 a month, paid upfront, non-refundable after any call). (4) The data is a scrape of consumer sites, and the vendor's own docs say the stream is 'not a sub-second feed' and that updatedAt does not show when a price moved, so no price age is provable. A 1-2 s batch on top of an unstated scrape pass cannot be shown to beat CNO or Novig's makers, and the repo's RESEARCH.md section 21 already reasons that even a true live Pinnacle copy leaves only a 1-2 s window. (5) What it would add is already in the app: Pinnacle through PinnWire/pinnapi and ParlayAPI, Kalshi and Polymarket directly. The one gap it touches is a LIVE Pinnacle-brand price, which the repo records as paid elsewhere (pinnapi Edge 149 dollars a month; ParlayAPI Business 40 dollars with WebSocket/SSE, per the repo's own notes, not re-checked today). A paid PRO trial is the only path that could change this, and it still fails the cheap line. Classification: no. The delta-stream pattern (snapshot, keyed deltas, seq, resume) is a sound technique but Vigilant's existing sockets already do the job.
+- **verdict_changed_from_scout**: False
+- **confidence**: high
+- **contrary_evidence**:
+  -
+    - **url**: https://pulsescore.net/pricing
+    - **what**: Live in-play odds, all 58 bookmakers, 35+ sports and 'full market boards including player props' are listed as included on every plan, so the free plan does give live odds over REST (only the count, 500 a month, is the limit). The scout's 'free tier cannot be rapid' holds, but 'free has no live odds' would be wrong.
+  -
+    - **url**: https://pulsescore.net/
+    - **what**: Homepage keyword meta names 'Pinnacle(PS3838) API' and a third-party note says PS3838 'operates under the Pinnacle brand', so a live PS3838 push at EUR 79 would be a cheaper route to a Pinnacle-brand live price than pinnapi Edge at 149 dollars. That is the one real selling point, but it is unmeasured and one sport only.
+  -
+    - **url**: https://pulsescore.net/terms
+    - **what**: The terms do not forbid using the data for your own betting or from a phone app, and there is no geo or IP restriction wording on the terms, pricing or docs pages. Legal friction is low for personal use.
+  -
+    - **url**: https://api.pulsescore.net/api/stream/capabilities
+    - **what**: This container reached api.pulsescore.net (Cloudflare, HTTP 200 on the keyless route, 401 JSON on keyed routes) with no challenge, so reachability is not a blocker; the only 403 seen in the batch was Product Hunt.
+  -
+    - **url**: https://pulsescore.net/ps3838-api
+    - **what**: The vendor presents PS3838 as 'the offshore reference for sharp pricing' with full Asian Handicap ladders; if the lines really equal Pinnacle's, the content is sharp even though the age is unproven.
+- **details**:
+  - **terms_of_use**: Read 2026-10-08; Terms 'Last updated: October 7, 2026' (https://pulsescore.net/terms). VERIFIED quotes. Sec 1: 'aggregated publicly available sports betting odds data from multiple bookmakers'. Sec 5: 'You agree not to: Resell, redistribute, or sublicense the data obtained through the API without prior written consent. Scrape, crawl, or systematically extract data from the API beyond your plan's intended usage. Use the service to facilitate illegal gambling operations in any jurisdiction. Attempt to circumvent rate limits, authentication, or any security measures.' Sec 6: 'we make no guarantees regarding real-time accuracy, completeness, or availability ... You use the data entirely at your own risk.' Sec 7: access can be suspended 'at any time, without prior notice' if they find a violation. Sec 8: changes are emailed 14 days ahead. Sec 9: no liability for 'loss of profits'. Sec 2: paid plans non-refundable 'once any API call has been made'; refund within 24 h only if no calls. robots.txt (https://pulsescore.net/robots.txt): 'Allow: /' with Disallow for /dashboard, /live, /admin; nothing about the API or automated clients; I did not fetch /dashboard. What each route breaks: (a) Free or paid REST polling inside the plan rate breaks nothing; looping past 500 requests or past the per-bookmaker rate gives 429s and, after ten 429s in ten seconds, a 60 s pause (docs); circumventing limits (second key, rotation) would breach sec 5. (b) PRO socket: allowed for one phone; a second client with the same key kicks the first (close code 4012). (c) Committing real PulseScore answers as test fixtures in this public repo would breach the redistribution clause (the repo does this for ParlayAPI; do not copy that here); a key inside the APK would also breach it in effect. (d) Rebuilding the scrape ourselves (the 'build' route) is not something the hard rules allow, and the targets (Bet365, FanDuel, DraftKings) are soft books, so useless as a fair price. (e) Upstream: PS3838's own terms on automated access: not found (could-not-check). Risk on PulseScore's side: the vendor's own blog says endpoints vanish and Cloudflare changes break scrapers (VERIFIED), so the feed can stop without notice and sec 7 and sec 9 leave no recourse.
+  - **betting_use_or_automated_use_allowed**: Nothing in the Terms bans using the data to place your own bets or from an automated app; the only gambling clause is 'facilitate illegal gambling operations in any jurisdiction' (no legal view given on Novig's status per state). Automated polling within the plan limit is the intended use. Not allowed: reselling or passing the data to other users. No accuracy warranty (sec 6), so for a money-betting app a stale scraped price has no remedy.
+  - **free_tier_limits**: VERIFIED pricing page and Terms sec 4 (2026-10-08): BASIC free, 500 requests a month, 1 request/s per bookmaker; absolute cap 15 requests/s per key on any plan. No WebSocket, no Stream API (docs: 'BASIC and STARTER plans are rejected with close code 4003'; Stream HTTP 402). About 16 requests a day, enough to read payload shape and run a short spot test, not a scan. STARTER EUR 20 a month: 30,000 requests a month, 1 request/min per bookmaker (about 1,000 a day, and one poll a minute is slower than CNO's 13-33 s), no sockets. PRO EUR 79 (EUR 395 per 6 months, EUR 711 per 12 months): unlimited requests, 1 request/s per bookmaker, 1 legacy socket per bookmaker, Stream API 1 connection and 1 sport total. MAX EUR 149: 3 requests/s, 3 sockets per bookmaker, Stream 2 connections and 3 sports. ULTRA EUR 249: 6 requests/s, 6 sockets, Stream 3 connections and all sports. Stream API is Beta.
+  - **websocket_or_live_included_free**: Live in-play odds: yes, over REST only (pricing page 'Same on every plan: Live in-play odds'), within 500 requests a month. WebSocket and Stream API: no, PRO and above only (close code 4003 / HTTP 402). Live scores: only as the bookmaker's own scoreboard fields where the book publishes them ('Some books publish odds only'), also REST-only on free. The only live push is PRO (EUR 79) for one sport. The article's own WebSocket example therefore cannot work on the free key it tells readers to get.
+  - **signup_friction**: Free BASIC: an account made on pulsescore.net/dashboard through a hosted sign-in widget (Clerk per the page source); homepage says 'No credit card required'. Email verification or any approval step is not stated, and I did not sign up. PRO has a 7-day free trial on monthly billing only (Terms sec 3: 'The 7-day free trial is available only on PRO billed monthly'); whether a card is collected is not stated (INFERRED yes, since plans renew automatically and Stream returns 402 'Update payment' for inactive subscriptions). Billed in euros, charged upfront, auto-renewing, non-refundable after any API call. A RapidAPI listing also exists (not readable).
+  - **sharp_books_or_exchanges_covered**: 58 books (capabilities JSON, 2026-10-08T00:16Z). Sharp or exchange: PS3838 (vendor keyword meta 'Pinnacle(PS3838)'; CLAIM_ONLY that it equals Pinnacle), Kalshi (price derived from last trade plus bid/ask, per the vendor's Swagger text; CLAIM_ONLY), Polymarket. Others present are soft or offshore: Bet365, FanDuel, DraftKings, BetMGM, BetRivers, Hard Rock, BetPARX, Borgata, Bovada, BetOnline. Absent: Circa, ProphetX, Sporttrade, Novig, Caesars, ESPN Bet, Fanatics. Pre-match and in-play both. PS3838 live is american-football, baseball, basketball, soccer, tennis; hockey and esports are prematch or only 'offered'.
+  - **us_sports_and_props_coverage**: Sport level only: NFL, NBA, MLB, tennis live at PS3838; NHL is prematch only at PS3838 (Hard Rock Bet and FanDuel/DraftKings list ice-hockey live). College leagues not identified; league lists need a key. Player props: claimed for the whole site ('Full market boards including player props', CLAIM_ONLY), not shown for any US book or for PS3838 on any page read; PS3838 pages show Asian Handicap and Over/Under ladders. Not found: any US prop market, any sample payload (every odds route needs a key).
+  - **duplicates_what_the_app_already_has**: Mostly yes. Per BRIEF.md, RESEARCH.md sections 21-22 and PARLAY_API.md: Pinnacle already comes from PinnWire/pinnapi (free key, 100 requests a day, prematch, includes props), ParlayAPI Starter (Pinnacle, `include_live=true`, live coverage listed for NFL, NCAAF, NBA, NHL, MLB, WNBA, MLS) and CNO's PN and CS columns; Kalshi and Polymarket are read directly (free, and Polymarket is a push socket). PulseScore's Kalshi and Polymarket are a derived second hand copy. Unique pieces: a live PS3838 push at about 1 batch a second, which the repo records as paid elsewhere (pinnapi live 99 to 229 dollars, Edge 149; ParlayAPI Business 40 dollars with WebSocket/SSE) and which section 21 judges to leave only a 1-2 s window against Novig's makers. The scores add nothing (the book's own scoreboard, cannot lead Sofascore's REST poll or Polymarket's socket). Price per sport, no age stamp and a scrape upstream make it a weaker version of what Tj already owns.
+  - **android_phone_feasibility**: Technically easy, no server needed. The app already has OkHttp 4.12.0 (gradle/libs.versions.toml) and runs Novig/Polymarket sockets. REST: GET with header X-Secret and Accept-Encoding gzip (OkHttp inflates gzip itself; the docs say a board shrinks 6-14x). WebSocket: wss://api.pulsescore.net/api/{bookmaker}/ws/live?key=...&sport=... pushes the whole live board for one sport about every second (the stream doc contrasts 'a few KB/s' of deltas with 'hundreds'); Stream API wss://api.pulsescore.net/api/stream/ws sends ~1 MB snapshot pages, then deltas; prematch snapshots are 20-450 MB, so declare kinds=live only. Battery and CPU: parsing a full live board each second in a background service is the main cost; Tj ruled out data and storage limits. Reconnect needs backoff and the 'since' resume (120 s window); close codes 4001, 4003, 4010, 4013 must stop retries. Key storage: the key goes in Settings via the existing key store (repo is public, never commit it); it travels in the WebSocket URL query, so keep it out of logs. Network: this container reached api.pulsescore.net (Cloudflare) with no challenge; no geo restriction found in docs, terms or pricing; the phone's mobile network is not expected to be blocked (INFERRED). One key, one connection on PRO: the phone and any test harness would knock each other off (4012). Not tested: permessage-deflate on OkHttp (INFERRED supported) and any real frame.
 
 ## verify-fit:medium-fastapi-odds-tracker
 

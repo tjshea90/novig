@@ -1,6 +1,6 @@
 # STATUS of Rapid odds and scores: the ten sources Tj sent (workflow wf_6f04c078-2f9)
 
-Run `wf_6f04c078-2f9`. Finished agents with a saved result: 15.
+Run `wf_6f04c078-2f9`. Finished agents with a saved result: 16.
 
 FINISHED (results/<label>.json):
 - scout:1-medium-fastapi-odds-tracker
@@ -17,10 +17,11 @@ FINISHED (results/<label>.json):
 - verify-claims:devto-stop-scraping
 - verify-claims:medium-fastapi-odds-tracker
 - verify-fit:bksignal-odds
+- verify-fit:devto-stop-scraping
 - verify-fit:medium-fastapi-odds-tracker
 
 IN FLIGHT when last saved (partial/<label>.md has what each had read):
-- verify-fit:devto-stop-scraping
 - verify-claims:scraperly-oddsshark
+- verify-fit:scraperly-oddsshark
 
 RESUME: see RESUME.md in this folder (a new session, any account: `python3 tools/research/rapid_resume.py` prints the Workflow args).
