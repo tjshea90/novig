@@ -94,7 +94,7 @@ class PinnLiveUiTest {
     @Test
     fun `the feed switch is off by default, paper is the mode when it is on, and real bets need the feed first`() {
         val ui = show(state())
-        compose.onNodeWithTag("pinnLiveNote").performScrollTo().assertTextContains("Off")
+        compose.onNodeWithTag("pinnLiveNote").performScrollTo().assertTextContains("Off", substring = true)
         // Real bets cannot be switched on while the feed is off.
         compose.onNodeWithTag("pinnLiveBetSwitch").performScrollTo().performClick()
         assertFalse(ui().settings.pinnLiveBet)

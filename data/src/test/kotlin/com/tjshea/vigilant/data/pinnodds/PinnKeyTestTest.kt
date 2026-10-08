@@ -18,7 +18,7 @@ class PinnKeyTestTest {
 
     /** The shape of the real answer (2026-10-08), with the account's email left out. */
     private fun me(wsActive: Boolean = true, wsUntil: Long = 1_791_675_281_105L, label: String = "Trial · 3-day full demo") =
-        """{"id":1,"api_key_prefix":"uq8xqStT","plan":{"id":"trial_demo","label":"$label","limits":{"perSec":10},"days":3,"price":0},"plan_expires_at":1791675281105,"status":"active",
+        """{"id":1,"api_key_prefix":"abcd1234","plan":{"id":"trial_demo","label":"$label","limits":{"perSec":10},"days":3,"price":0},"plan_expires_at":1791675281105,"status":"active",
         "usage":{"sec":1,"min":1,"hour":1,"day":3},"ws_addon":{"eligible":false,"active":$wsActive,"until":$wsUntil,"monthly_usd":99}}"""
 
     @Test
