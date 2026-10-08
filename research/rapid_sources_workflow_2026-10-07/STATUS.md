@@ -26,5 +26,14 @@ FINISHED (results/<label>.json):
 IN FLIGHT when last saved (partial/<label>.md has what each had read):
 - verify-fit:surebetfusion
 - verify-claims:roundproxies-scrape-sportsbooks
+- verify-fit:roundproxies-scrape-sportsbooks
+- verify-claims:scrapingproxies-websocket-scraping
+- verify-fit:scrapingproxies-websocket-scraping
+- verify-claims:github-odds-stream-engine
+- verify-fit:github-odds-stream-engine
+- verify-claims:devto-pulsescore-typescript
+- verify-fit:devto-pulsescore-typescript
+- verify-claims:pulsescore-net
+- verify-fit:pulsescore-net
 
 RESUME: see RESUME.md in this folder (a new session, any account: `python3 tools/research/rapid_resume.py` prints the Workflow args).
