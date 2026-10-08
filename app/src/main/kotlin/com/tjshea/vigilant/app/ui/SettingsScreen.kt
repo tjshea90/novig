@@ -115,6 +115,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The Novig key, the wallet, bet amounts, limits, bankroll. */
     BETTING("Betting & Novig account", "Your Novig key, wallet, bet amounts and limits", SettingsGroup.BET),
 
+    /** Pinnacle's live price on the Pinnodds WebSocket against Novig's lagging quote: the key, the switches and the limits (Tj, 2026-10-08). */
+    PINNODDS("Pinnodds live", "Pinnacle's live price against Novig: key, paper or real bets, limits", SettingsGroup.BET),
+
     /** Pause, which scanner, which games, the background scan. */
     SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background", SettingsGroup.FIND),
 
@@ -186,6 +189,13 @@ object SettingsSummary {
                 "bankroll ${Format.money(s.bankroll)}",
                 Format.kellyLabel(s.kellyMultiplier),
             ).joinToString(" · ")
+            SettingsPage.PINNODDS -> when {
+                state.pinnoddsKeys.isEmpty() -> "No Pinnodds key saved"
+                !s.pinnLive -> "Off"
+                s.pinnLiveHalted != null -> "Stopped"
+                s.pinnLiveBet -> "On: real bets, ${com.tjshea.vigilant.app.PinnText.money(s.pinnLiveStake)} a bet"
+                else -> "On: paper only (nothing is sent)"
+            }
             SettingsPage.USAGE -> {
                 val keys = state.pinnwireKeys.size + state.pinnapiKeys.size + state.proplineKeys.size + state.parlayKeys.size + state.oddsApiKeys.size
                 if (keys == 0) "No feed keys saved" else "$keys feed key${if (keys == 1) "" else "s"} saved"
@@ -301,6 +311,7 @@ fun SettingsScreen(
                 SettingsPage.FEED -> FeedTab(s, onUpdate)
                 SettingsPage.FAIR -> FairOddsTab(state, keys, onUpdate)
                 SettingsPage.BETTING -> BettingTab(state, onUpdate, onNovigConnect, onNovigTest, onNovigDisconnect, bettingActions, onOpenAutoBet)
+                SettingsPage.PINNODDS -> PinnLiveSection(state, keys, reportActions, onUpdate)
                 SettingsPage.USAGE -> UsageTab(state, keys)
                 SettingsPage.HELP -> ToolsTab(state, reportActions, onUpdate)
             }
@@ -1206,9 +1217,6 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
     SwitchRow(StudyText.SWITCH_TITLE, StudyText.SWITCH_SUB, state.settings.scanStudy, tag = "scanStudySwitch") { v -> onUpdate { it.copy(scanStudy = v) } }
     SwitchRow(StudyText.HIDDEN_TITLE, StudyText.HIDDEN_SUB, state.settings.scanStudyHidden, tag = "scanStudyHiddenSwitch") { v -> onUpdate { it.copy(scanStudyHidden = v) } }
 
-    // ---- Pinnodds live (Tj, 2026-10-08): Pinnacle's live price against Novig's lagging quote; RESEARCH.md §116 --------------------------------------------------------
-    if (AppBook.isNovig) PinnLiveSection(state, keys, reportActions, onUpdate)
-
     // ---- The live burst recorder (Tj, 2026-10-06): no orders; RESEARCH.md §95 ----------------------------------------------------------
     if (AppBook.isNovig) {
         SectionTitle("Live burst recorder")
@@ -1717,10 +1725,9 @@ private fun KeyListEditor(provider: ApiProvider, keys: List<String>, actions: Ke
 @Composable
 private fun PinnLiveSection(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val s = state.settings
-    SectionTitle("Pinnodds live (Pinnacle vs Novig)")
     val shown by androidx.compose.runtime.rememberUpdatedState(reportActions.onPinnShown)
     androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(1_500) } }
-    Hint(com.tjshea.vigilant.app.PinnText.HINT)
+    Intro(com.tjshea.vigilant.app.PinnText.HINT)
     KeyListEditor(ApiProvider.PINNODDS, state.pinnoddsKeys, keys, com.tjshea.vigilant.app.PinnText.KEY_LABEL)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
         Button(onClick = reportActions.onTestPinnKey, enabled = state.pinnoddsKeys.isNotEmpty() && !state.pinnKeyBusy, modifier = Modifier.testTag("pinnTestKey")) {
