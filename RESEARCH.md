@@ -5769,3 +5769,54 @@ Method: a read-only workflow of seven scouts (the code, the repo's own measureme
 - CNO has never been asked for a negative EV floor, so sides that are negative EV on BOTH sides at Novig (the ordinary state of an efficient market) are invisible. Try it once from the phone (`fetchWide` posts "0%").
 - Novig's listed price against CNO's own Novig column is a weak staleness canary (Novig's book moves on its own) and is not a gate; a counter is the first step (`cno.bid.listage.unknown`, `cno.bid.page.failed`, `cno.bid.page.read`).
 - No evidence yet that CNO-priced bids beat the close (§109, §113). Judge them only by independent closes, split by CNO age (BIDS section), before widening any limit; Tj's existing caps apply (they are not lowered for this source).
+
+## 116. Pinnacle's live price on the Pinnodds WebSocket against Novig's live books: does Novig lag, does the edge hold, and what was built (2026-10-08; v0.76.0; PW1-PW8; Tj: "research and implement a live betting feature … compare the pinnacle web socket to the novig web socket … auto bet all odds on novig that lag fair devigged live odds … ensure that it only bets truly positive EV")
+
+(§115 is reserved for the paused ten-sources research, DO1-DO3. The API itself is in `PINNODDS_API.md`; Novig's re-read is `NOVIG_API.md` §21; the study tools are `tools/research/pinnodds_tape.py` and `pinn_novig_lag.py`; the tapes are in `research/pinnodds_2026-10-08/`.)
+
+**In short.**
+1. **The socket works and is fast.** Tj's key is on the 3-day full demo (WebSocket add-on on, ends 2026-10-10 23:34Z). One connection per account; ~51 frames a second across 13 sports at the evening peak; Pinnacle's scores and clocks come on it; the hub's frames reach this container a median 17-22 ms after their own stamp.
+2. **Novig does lag Pinnacle, for seconds.** On 81 Pinnacle jumps of 3+ points (moneyline, with Novig 2+ points behind), Novig's mid covered half the gap in a **median 6.6 s (p25 3.6, p75 14.4)** and 90% in 12 s. That is the window.
+3. **But most of the "lag" is not an edge.** Replaying the app's rule over 46 minutes of tape: a Pinnacle move with NO score behind it is worth +9.0% at decision and **-1.7% against Pinnacle's own fair two minutes later** (n=38; Pinnacle spikes, then comes back; a 92% spike fell to 78% while Novig's ask was already 77.5%). A move **caused by a score** held: +6.2% at decision, **+1.7% two minutes later (n=29), +4.9% with a 3-point move (n=25), +8.2% with a 3-point move and 5% edge (n=15)**. So the default trigger is a score-driven move of 3+ points with 5%+ edge after Novig's fee.
+4. **A score arrives before the price.** Pinnacle's score update reaches the socket a **median 1.8 s before** its first moneyline reprice (n=120; p25 0.8 s, p90 4.3 s; only 6 of 120 in the same frame). The score is an earlier signal than the price; without a model of how much a score moves the fair price (not built, and not honest to guess) it cannot be traded before Pinnacle reprices. It is used as the filter that separates real moves from spikes.
+5. **Not proven.** 12 games, one evening, overlapping triggers, a judgment against Pinnacle's later price (CLV-style), not against bet outcomes. A bet that passes can still lose. Real bets are therefore OFF by default; the app runs in PAPER and follows every decision up at 30 s and 120 s, so Tj's own phone builds the sample (Diagnostics › PINNODDS LIVE).
+6. **Cost.** The WebSocket needs a paid REST plan plus the $99 add-on: **at least $198 a month** (Pro $99 + $99). After 2026-10-10 23:34Z the key falls back to the free trial and the socket answers `403 plan_lacks_ws`. At Tj's stakes ($1-$10 a bet) the expected gain per bet is cents; the feature pays for $198 a month only if the edge is real AND the stakes are raised.
+
+### 116.1 What was measured on the socket (tapes 2026-10-08 00:50-01:50Z; this container, through the agent proxy)
+- Frames by channel on a busy night: `pre` 65% (prematch updates on the same stream), `both` 19%, `ld` 12%, `dz` 3%. Heartbeat: a ping every 30.0 s; `buffered_max_bytes` 0. Snapshots at 00:50Z: soccer 168 live matchups, tennis 96, hockey 19, basketball 16, football 2, baseball 2.
+- Scores and clocks are on the socket (`participants[].state.score` on the child for soccer/tennis, on `parent.participants[].state` with `parent.state.quarter/timeRemainingInQtr` for basketball/hockey). REST `/kit` is not needed for them.
+- A Pinnacle price is American; both sides can shorten at once (a margin change): one real frame pair, the Pacers -386/+294 to -414/+277, took the devigged home chance from 75.8% to 75.2% although the favourite's price got "better".
+- The same fixture has a parent and re-issued live children; `rec.version` is frozen once a game is in play: only `markets[i].version` orders prices. All of it is handled in `PinnBook` and pinned on the real frames (`data/src/test/resources/pinnodds-frames.jsonl`).
+
+### 116.2 The replay of the rule (`pinn_novig_lag.py simulate`, pooled tape: 46 min, 12 games, 4,054 Novig book reads)
+"Same ask vs Pinnacle's fair +120 s" = the EV the price paid at decision would have had against Pinnacle's own devigged fair two minutes later (fee in). Python uses the power devig; the app's default is WORST_CASE (more conservative), so the app fires less.
+| rule (edge after fee, Pinnacle move) | trigger | n | EV at decision | vs Pinnacle +30 s | vs Pinnacle +120 s | Pinnacle kept the move |
+| :- | :- | -: | -: | -: | -: | -: |
+| 3%, 1.5 pts | any move | 67 | +7.8% | +3.2% | -0.2% | 36% |
+| 3%, 1.5 pts | **score-driven** | 29 | +6.2% | +2.3% | +1.7% | 38% |
+| 3%, 1.5 pts | price only | 38 | +9.0% | +3.8% | **-1.7%** | 34% |
+| 3%, 3 pts | score-driven | 25 | +6.3% | +5.0% | +4.9% | 44% |
+| 5%, 3 pts | **score-driven (the app's default)** | 15 | +8.4% | +5.4% | **+8.2%** | 40% |
+| 5%, 3 pts | price only | 18 | +12.1% | +5.0% | **-3.1%** | 22% |
+| 8%, 3 pts | score-driven | 7 | +13.0% | +13.5% | +7.2% | 29% |
+| 12%, 1.5 pts | price only | 7 | +21.8% | -1.7% | **-13.0%** | 14% |
+The settle time (0.5 / 2 / 4 / 8 s) changed nothing worth keeping. A first 9-minute sample had said the opposite about price-only moves in one half and the same in the other: samples this small swing, which is why the numbers above are pooled and why nothing here is a verdict. The "standing disagreement" rows of the replay (Novig off a steady Pinnacle price) include finished games whose last Pinnacle price is stale (+100% "EV") and are not reported.
+
+### 116.3 What the burst-scoring research gets from the socket (Tj: "see if it is possible to implement the research you already found about burst scoring odds inefficiency")
+- §95's cross-line cover (YES at the lower line + NOT at the higher, both stale after a play) needs no Pinnacle data: the burst recorder finds it in Novig's own books. Pinnacle adds nothing to a risk-free cover.
+- What Pinnacle adds is a **direction**: after a play it says WHICH side of a stale Novig quote is wrong and by how much, which turns "stale" into a +EV single-leg bet (not risk-free). That is the live engine: the score-driven trigger is the same event §95 trades, seen on the sharp price.
+- The lead the socket gives is small: the score precedes Pinnacle's reprice by ~1.8 s and Novig's makers re-quote 6.6 s (median, from Pinnacle's jump) to ~16 s (§95, from the play) after. The order's own delay in play is still unmeasured (§116.6).
+
+### 116.4 What was built (v0.76.0; `data/.../pinnodds/`, 72 tests, 30 mutants killed)
+`PinnSocket` (docs-compliant connection: key in a header, no compression, subscribe at once, pong, backoff, eviction and `plan_lacks_ws` told) → `PinnBook` (matchups, versions, `ld` vs `dz`, closes, scores, devig, history) → `LiveMatcher` (Pinnacle matchup ↔ Novig game, including swapped players; moneylines, half-point spreads and totals) → `LiveEdge.judge` (the rule: open line, live, no danger zone, settled 0.5 s, margin ≤ 9%, Pinnacle limit ≥ $100, fair 8-92%, the trigger, EV after fee, depth) → `PinnLiveTrader` (one `IOC` order at the worst price that still clears the edge; one bet per Pinnacle move per outcome; caps; wash check; halts on a lost answer or a day's loss; Tracker via `logApi`, source "Pinnodds live") inside `PinnLiveRunner` (one consumer coroutine, 100 ms ticks, follow-ups at 30 s and 120 s) with `PinnReport` (Diagnostics). Settings › **Pinnodds live**: key, **Test key** (one `GET /panel/api/me`, never the socket), feed switch (paper), "Place real bets" behind a confirmation, stake/game/day/loss chips, edge, move, trigger and devig chips. Real bets and pregame are OFF by default; STOP ALL stops it.
+- Defaults: stake $2, $5 a game, $25 a day, halt at $10 lost, edge 5%, move 3 points, score-driven, WORST_CASE devig.
+- **Outside live (Tj: "if opportunities also exist outside of live betting")**: the same engine runs on prematch lines (`pre` frames; Novig charges no taker fee before the game) behind "Also pregame moves" (off): untested, because the study recorded live games only. Prematch is 65% of the frames, so with it off they are not even parsed.
+- Found by the tests: OkHttp runs no network interceptors for a WebSocket call (the compression offer is stripped by an application interceptor); a start race in the socket loop; "any edge" mode could never fire (games were judged only while armed by a Pinnacle change); a stage-match test that matched nothing; the feed-quiet limit (20 s) was shorter than the server's 30 s heartbeat.
+
+### 116.5 Novig's API (NOVIG_API.md §21)
+The changelog page is empty; 138 doc pages. New: **`place`, `cancel`, `cancel_all` verbs on the websocket** (no per-request signature; fills on the `orders` channel) and an optional `X-Novig-WS-Compress: deflate`. Not adopted in v0.76.0: orders go through REST `POST /v3/orders` (the verified path); an order over the open socket is a follow-up (PW9) to be tried at $1 once the REST path has met a real in-play order.
+
+### 116.6 What is not known, and what Tj's phone will say
+- **The in-play order delay** and whether `IOC` works on every live game line: no real in-play order has been sent. The first real order, or the first MISSED rate in Diagnostics ("the offer was gone"), says it.
+- Whether the edge survives outcomes: only graded bets (Tracker, source "Pinnodds live") can say; CLV against the close comes from the Tracker's own closing-line capture.
+- Whether this container's tape (a proxied path, one evening, preseason basketball and college football) matches the phone's. The app's PAPER follow-ups are the replacement for the tape: run it on the phone through the trial, then share Diagnostics.

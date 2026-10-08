@@ -367,6 +367,13 @@ not. Code: `data/.../novig/trading/maker/` `CnoMakerLines` (pure line builder, t
 `MakerRunner` branches on the source; `AutoScanner.cycle` calls `cnoBids.step`. This container never reads CNO (§76.3): the age numbers must come from Tj's phone (Diagnostics, the BIDS section's
 CNO age bands). Judge CNO-priced bids only on independent closes (§113); don't widen any limit for them before about 100 filled bids have one.
 
+## Pinnodds (Pinnacle's live push feed) — permanent research memory
+
+Tj's 3-day Pinnodds trial (2026-10-08, WebSocket add-on, ends 2026-10-10 23:34Z) is documented in **`PINNODDS_API.md`**: the API, its rules (ONE WebSocket per account, pong every 30 s, no compression, key in a header), the real frame shapes, the plans
+and what they cost (WebSocket = a REST plan + $99 add-on, at least $198 a month), and how Vigilant uses it (`data/.../pinnodds/`, Settings › Pinnodds live, v0.76.0). **`RESEARCH.md` §116 is the study** (does Novig lag Pinnacle: yes, a median 6.6 s;
+does the edge hold: score-driven moves yes, price-only moves no; the replay tools are `tools/research/pinn_novig_lag.py` and `pinnodds_tape.py`). Never commit a Pinnodds key. **A study recorder and the app must never run at once** (a second
+connection evicts the first, and they would kick each other in a loop): stop `pinn_novig_lag.py` before the app's feed is on. Novig's websocket also has `place`/`cancel` verbs now (`NOVIG_API.md` §21), not yet used.
+
 ## Project rules
 
 See `BRIEF.md` for what's decided about this project and what's still open:
