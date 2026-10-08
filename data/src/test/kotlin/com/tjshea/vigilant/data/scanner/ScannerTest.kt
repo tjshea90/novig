@@ -471,7 +471,4 @@ class ScannerTest {
         Scanner(early, clock = { now }).scan(settings, listOf(FakeOddsApi()))
         assertEquals("the same game, not yet started, is read", 1, early.bookCalls)
     }
-
-    // ---- Pinnacle only (Tj, 2026-10-05; RESEARCH.md §88.5) -------------------------------------------------------------------------------------
-
 }
