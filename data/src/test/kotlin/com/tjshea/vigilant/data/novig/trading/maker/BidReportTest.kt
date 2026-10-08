@@ -262,4 +262,40 @@ class BidReportTest {
         assertFalse(text, text.contains("which scanner priced"))
         assertFalse(text, text.contains("CrazyNinjaOdds"))
     }
+
+    // ---- the funnel (RESEARCH.md §119.2): every bid posted, filled or not -------------------------------------------------------------
+
+    @Test
+    fun `the funnel counts every bid posted, its bid-hours and fills per 100 bid-hours by time to the start, side and league - unfilled bids included`() {
+        // Four bids 15 h out (two fill, one an Under), two bids 3 h out (one fills), each resting 30 min unless it filled sooner.
+        val far = (1..4).map { n -> bid(n, postedBefore = 15 * 3_600_000L, fillDelayMs = if (n <= 2) 600_000L else null, status = if (n <= 2) MakerStatus.FILLED else MakerStatus.CANCELED).let { if (n == 1) it.copy(selection = "Player 1 Under 50.5") else it } }
+        val near = (5..6).map { n -> bid(n, postedBefore = 3 * 3_600_000L, fillDelayMs = if (n == 5) 600_000L else null, status = if (n == 5) MakerStatus.FILLED else MakerStatus.CANCELED) }
+        val bids = far + near
+        val rows = BidReport.rows(bids, bids.filter { it.filled > 0 }.map { bet(it.clientId.removePrefix("c").toInt(), it, closeFair = 0.50) }, now)
+        val lines = BidReport.funnel(rows)
+        val farLine = lines.single { it.trim().startsWith("12-24 h:") }
+        assertTrue(farLine, farLine.contains("4 posted") && farLine.contains("2 filled"))
+        // Two bids rested 10 min (filled), two 30 min: 100 minutes = 1.7 bid-hours; 2 fills = 120 per 100 bid-hours.
+        assertTrue(farLine, farLine.contains("1.7 bid-hours") && farLine.contains("120.0 fills per 100 bid-hours"))
+        val nearLine = lines.single { it.trim().startsWith("2-6 h:") }
+        assertTrue(nearLine, nearLine.contains("2 posted") && nearLine.contains("1 filled"))
+        assertTrue(lines.single { it.trim().startsWith("Under:") }.contains("1 posted"))
+        assertTrue(lines.single { it.trim().startsWith("Over:") }.contains("5 posted"))
+        assertTrue(lines.any { it.trim().startsWith("NFL:") && it.contains("6 posted") })
+        // The summary carries it, so a file with no fill yet still says how long bids rested.
+        assertTrue(BidReport.summary(BidReport.rows(listOf(far[2]), emptyList(), now), now).any { it.contains("every bid posted, by time to the start when posted") })
+    }
+
+    @Test
+    fun `the funnel bands and sides`() {
+        assertEquals("under 2 h", BidReport.startBand(119))
+        assertEquals("2-6 h", BidReport.startBand(120))
+        assertEquals("6-12 h", BidReport.startBand(360))
+        assertEquals("12-24 h", BidReport.startBand(720))
+        assertEquals("24 h or more", BidReport.startBand(1440))
+        assertEquals("Under", BidReport.sideOf("Emeka Egbuka Under 34.5"))
+        assertEquals("Over", BidReport.sideOf("Tampa Bay Lightning Over 3.5"))
+        assertEquals("other", BidReport.sideOf("Cleveland Browns -3.5"))
+        assertEquals("a name that merely contains the word is not a side", "other", BidReport.sideOf("Overton Underwood -1.5"))
+    }
 }
