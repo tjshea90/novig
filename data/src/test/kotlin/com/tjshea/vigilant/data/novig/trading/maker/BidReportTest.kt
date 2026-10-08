@@ -139,9 +139,11 @@ class BidReportTest {
         assertTrue(BidReport.summary(emptyList(), now).isEmpty())
         // Posted but none filled: the count, and how it ended (Tj, 2026-10-07: cancelled, expired and the rest are told apart, with the fill rate).
         val unfilled = BidReport.summary(BidReport.rows(listOf(bid(9, fillDelayMs = null, status = MakerStatus.EXPIRED)), emptyList(), now), now)
-        assertEquals(2, unfilled.size)
         assertTrue(unfilled[0], unfilled[0].startsWith("bids: 1 posted · 0 filled (0%)"))
         assertEquals("  ended without a fill, by how: Expired 1 · fill rate among the bids that are over: 0% (0 of 1)", unfilled[1])
+        // Then only the funnel (every bid posted, how long they rested): nothing that needs a fill.
+        assertTrue(unfilled.drop(2).first(), unfilled[2].startsWith("-- every bid posted, by time to the start when posted"))
+        assertTrue(unfilled.drop(2).none { it.startsWith("-- fills by") || it.startsWith("ALL FILLS") })
     }
 
     @Test
@@ -275,8 +277,8 @@ class BidReportTest {
         val lines = BidReport.funnel(rows)
         val farLine = lines.single { it.trim().startsWith("12-24 h:") }
         assertTrue(farLine, farLine.contains("4 posted") && farLine.contains("2 filled"))
-        // Two bids rested 10 min (filled), two 30 min: 100 minutes = 1.7 bid-hours; 2 fills = 120 per 100 bid-hours.
-        assertTrue(farLine, farLine.contains("1.7 bid-hours") && farLine.contains("120.0 fills per 100 bid-hours"))
+        // Two bids rested 10 min (filled), two 30 min: 80 minutes = 1.3 bid-hours; 2 fills = 150 per 100 bid-hours.
+        assertTrue(farLine, farLine.contains("1.3 bid-hours") && farLine.contains("150.0 fills per 100 bid-hours"))
         val nearLine = lines.single { it.trim().startsWith("2-6 h:") }
         assertTrue(nearLine, nearLine.contains("2 posted") && nearLine.contains("1 filled"))
         assertTrue(lines.single { it.trim().startsWith("Under:") }.contains("1 posted"))

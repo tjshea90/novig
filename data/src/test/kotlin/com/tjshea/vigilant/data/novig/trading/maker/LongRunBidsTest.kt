@@ -136,7 +136,7 @@ class LongRunBidsTest {
     fun `a bid on a game 12 hours or more out goes up after every nearer bid, whatever else ranks it`() {
         // The far bid is the likeliest fill and has the most edge; the near ones still go first.
         val far = post("far", 20.0, price = 0.40, ev = 0.09)
-        val near = post("near", 2.0, price = 0.55, ev = 0.03)
+        val near = post("near", 2.0, price = 0.45, ev = 0.03)
         val mid = post("mid", 11.5, price = 0.50, ev = 0.03)
         val order = listOf(far, mid, near).sortedWith(MakerPlan.priority(rules, now)).map { it.line.outcomeId }
         assertEquals(listOf("near-over", "mid-over", "far-over"), order)
@@ -161,15 +161,15 @@ class LongRunBidsTest {
         val r = rules
         val far = post("far", 20.0, ev = 0.09)
         val near = post("near", 2.0, ev = 0.03)
-        // Money for one 480-dollar... one bid (1,000 contracts at 0.48 = $480): the near one goes up.
-        val one = MakerPlan.plan(listOf(far, near), emptyList(), r, now, budget = 480.0)
+        // Money for one bid (1,000 contracts at 0.48 is $4.80): the near one goes up.
+        val one = MakerPlan.plan(listOf(far, near), emptyList(), r, now, budget = 4.8)
         assertEquals(listOf("near-over"), one.places.map { it.line.outcomeId })
         // Both rest, then the wallet falls short for one: the far one comes down.
         fun rest(id: String, inHours: Double) = RestingBid(
             "o-$id", "m-$id", "$id-over", 0.48, 1_000, 0, now + 20 * 60_000L, evAtFair = 0.04, leads = true,
             game = GameRef("ev-$id", "A @ B", now + (inHours * hour).toLong(), "NFL"),
         )
-        val trim = MakerPlan.plan(listOf(far, near), listOf(rest("far", 20.0), rest("near", 2.0)), r, now, budget = -480.0)
+        val trim = MakerPlan.plan(listOf(far, near), listOf(rest("far", 20.0), rest("near", 2.0)), r, now, budget = -4.8)
         assertEquals(listOf("o-far"), trim.cancels.map { it.first.orderId })
         assertEquals(listOf("o-near"), trim.kept.map { it.orderId })
     }
