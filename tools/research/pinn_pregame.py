@@ -63,12 +63,10 @@ def start_ms(iso):
 
 
 def health_clients(key):
+    """How many sockets are open on the key (0 = free). None = could not tell. Needs L.http() to have run once (it builds the proxy-aware opener)."""
     import urllib.request
     try:
-        r = L._opener.open(urllib.request.Request('https://pinnodds.com/health', headers={'x-api-key': key, **L.UA}), timeout=15) if L._opener else None
-        if r is None:
-            L.http('https://example.invalid')   # builds the opener
-            r = L._opener.open(urllib.request.Request('https://pinnodds.com/health', headers={'x-api-key': key, **L.UA}), timeout=15)
+        r = L._opener.open(urllib.request.Request('https://pinnodds.com/health', headers={'x-api-key': key, **L.UA}), timeout=15)
         return json.load(r).get('connected_clients')
     except Exception as ex:
         print('health check failed:', type(ex).__name__, file=sys.stderr)
