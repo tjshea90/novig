@@ -5462,3 +5462,9 @@ I'm not sure what you are doing with the three hour study, but I would like to u
 Because I'll be using real money with this feature tonight, make sure it is catching truly positive EV odds live on novig and that there are safeguards to refuse any bets that are negative EV or stale
 It is not mandatory that this is a live only mode. Is profit can be made by finding prematch odds movement on pinnodds web socket before novig reacts and novig's odds are stale making one side positive EV on novig, this is also a good strategy for the app to incorporate
 ```
+
+## 2026-10-08T02:54:02Z
+```
+Continue but frequently save all progress and checkpoint in anticipation of usage running out
+Pause the audit and save progress at the next best opportunity. Make a checkpoint so it can resume in another session
+```
