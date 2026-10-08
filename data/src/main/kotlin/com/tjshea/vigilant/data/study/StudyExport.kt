@@ -286,19 +286,6 @@ object StudyExport {
         Extra("Close source, for the bets that have one (never pool across them; Novig's trades split by how many trades are behind the close)") { r, _ ->
             if (r.clv == null) null else closeSource(r.closeVia).let { src -> novigTrades(r.closeVia)?.let { n -> "$src: ${tradesBand(n)}" } ?: src }
         },
-        // Tj, 2026-10-05: "keep track of all betting information used with this Pinnacle only setting on so I can track how well bets do clv and EV and profit when only compared to Pinnacle".
-        Extra("Pinnacle only (the mode: the fair is Pinnacle's devigged price alone, nothing else read)") { r, _ ->
-            if (r.src != "v") null else if (r.atBet?.pinnacleOnly == true) "on: EV is against Pinnacle alone" else "off: Vigilant's usual fair"
-        },
-        Extra("Pinnacle only: how old Pinnacle's price was when the bet was first listed") { r, _ ->
-            if (r.atBet?.pinnacleOnly != true) null else when (val age = r.atBet.pinnacleAgeSec) {
-                null -> "not recorded"
-                in 0..30 -> "30 s or under"
-                in 31..60 -> "31 to 60 s"
-                in 61..90 -> "61 to 90 s"
-                else -> "over 90 s"
-            }
-        },
         Extra("Where it closed against its price (CLV)") { r, _ ->
             r.clv?.let { if (it > 0.05) "CLV over +5%" else if (it > 0.0) "CLV 0 to +5%" else if (it > -0.05) "CLV 0 to -5%" else "CLV under -5%" } ?: "no close"
         },
@@ -658,8 +645,6 @@ object StudyExport {
         "BIDS: when Vigilant has posted bids (make orders) there is a BIDS section after the splits with every bid added up and split, then every filled bid and the newest unfilled ones as JSON lines. Judge bids by CLV, by how fast they were taken, and by whether the fair on the next scan was still above the price they filled at (evAtFill): a fast fill is a symptom of a stale bid, not a success. Every bid names the choice that posted it (focus: ALL, QUICK_LIKELY or LOW_USAGE), the books its fair was made from (fairBooks) and how old their prices were when it was posted (fairAgeSec, fairNewestAgeSec); LOW_USAGE bids (props only, 2-3 sharp prop books, at least 2.5% under the fair, no longer than +130, a slow scan pace) are split out by books and by the age of the prices, so judge them apart from the other bids.",
         "BIDS PRICED FROM CRAZYNINJAODDS (v0.75.0): with Settings › Bids › \"Bids priced from\" set to CrazyNinjaOdds, Vigilant's scan is NOT used for bids: CNO's list, a wider CNO list and its game pages (every book's price for the bet and its other side) price them. Such a bid has source \"cno\", and listAgeSec / pageAgeSec say how old CNO's own data was when it was posted (CNO's \"Last Updated\" is a LOWER BOUND on a price's age: its owner says latency can be 1-2 minutes).",
         "Judge them apart from Vigilant's: split by source, then by the age bands (the BIDS section prints them), and judge by evAtFill (picked off) and by independent closes only (Novig's own last trades, a sharp book's page just before the start): CNO's close is CNO's own consensus, which is circular (RESEARCH.md §109, §113). Do not widen any limit for them until about 100 filled CNO bids have an independent close.",
-        "PINNACLE ONLY: when Tj switches it on (Settings › Scanning), Vigilant's scan prices every Novig bet against Pinnacle's devigged two-sided price ALONE (no other book, the lowest of four devigs) and the auto-bet bets what beats it on a Pinnacle price read within seconds of the order.",
-        "Those bets carry atBet.pinnacleOnly = true, atBet.pinnacleAgeSec (how old Pinnacle's price was) and Pinnacle's own two-sided price in atBet.books; two splits (\"Pinnacle only\") separate them. Judge them apart from every other bet: their EV, CLV and profit are against Pinnacle alone.",
         "",
         "YOUR TASK — be thorough, and analyze ALL of the data for patterns and for profitable bet strategies:",
         " 1. Check the data first: counts by status and by close source, bets with no close and why, duplicates, odd values. Say what you can and can't trust. Parse the JSON lines with code (python/pandas); do not read them by eye.",

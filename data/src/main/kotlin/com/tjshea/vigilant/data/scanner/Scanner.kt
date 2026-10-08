@@ -175,7 +175,7 @@ class Scanner(
          */
         onPartial: (ScanResult) -> Unit,
     ): ScanReport = mutex.withLock {
-        // Pinnacle only reads Novig and Pinnacle and nothing else ([ScanSettings.effective]): applied here, once, so no part of the scan can read another book.
+        // The settings as the scan reads them ([ScanSettings.effective]): applied here, once.
         val settings = requested.effective(forBets = betsOnly)
         val sources = readable(offered, settings)
         this.pinned = pinned

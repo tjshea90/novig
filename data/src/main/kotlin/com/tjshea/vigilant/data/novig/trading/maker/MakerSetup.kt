@@ -101,7 +101,6 @@ object MakerSetup {
     /** What bids still lack that this switch can't turn on: null when nothing. */
     fun missing(s: ScanSettings, bettingSetUp: Boolean): String? = when {
         !bettingSetUp -> "betting through Novig's API (Settings › Betting & Novig account): bids are posted from the Vigilant wallet"
-        s.makerSource == BidSource.CNO && s.pinnacleOnly -> "Pinnacle only to be off (Settings › Scanning): it reads Novig and Pinnacle alone, so CrazyNinjaOdds is never read for bids"
         s.makerSource == BidSource.VIGILANT && s.leagues.isEmpty() -> "a league to scan (Settings › Leagues)"
         s.makerKinds.isEmpty() -> "a kind of bet to bid on (the rules below)"
         else -> null
