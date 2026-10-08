@@ -226,6 +226,221 @@ def main():
     cnt = collections.Counter((r['sport'], r['mt']) for r in big)
     print('   by sport/market:', dict(cnt.most_common(6)))
     print('  edge rows by novig depth (contracts at the ask): ' + ', '.join(f'<{lo}: {sum(1 for r in rows if r["ev"] >= min_ev and r["depth"] < lo)}' for lo in (100, 1000, 10000, 100000)))
+    outside_box(pin, nov, mkt, match, scores, closes, rows, sport_of, t1)
+
+
+def corr(a, b):
+    try:
+        return statistics.correlation(a, b) if len(a) > 5 else None
+    except Exception:
+        return None
+
+
+def outside_box(pin, nov, mkt, match, scores, closes, rows, sport_of, t1):
+    """[G] patterns people do not normally look for."""
+    print('\n[G] OUTSIDE THE BOX')
+    # G1 who leads whom: correlation of Pinnacle's fair change with Novig's mid change, both ways, on a 5 s grid (10 s changes)
+    print('  [G1] lead-lag: corr( change in Pinnacle home fair over 10 s at t , change in Novig home mid over 10 s at t+lag ). A peak at a positive lag = Novig follows Pinnacle; at a negative lag = Novig leads')
+    pairs = collections.defaultdict(lambda: ([], []))
+    for mid, obs in nov.items():
+        m = mkt.get(mid)
+        if not m or m['mt'] != 'MONEY' or m['pid'] not in match: continue
+        series = L.pin_series(pin, m); sm = L.side_map(m); hn = [n for n, sd in sm.items() if sd == 'home']
+        if len(series) < 3 or len(obs) < 8 or not hn: continue
+        hn = hn[0]; an = [n for n in sm if n != hn][0]
+        ts = [x['t'] for x in series]; ot = [o['t'] for o in obs]
+        lo = max(ts[0], ot[0]); hi = min(ts[-1], ot[-1])
+        grid = list(range(int(lo), int(hi), 5000))
+        if len(grid) < 12: continue
+        def pv(t):
+            k = bisect.bisect_right(ts, t) - 1; return series[k]['fairp']['home'] if k >= 0 else None
+        def nv(t):
+            k = bisect.bisect_right(ot, t) - 1
+            if k < 0: return None
+            bb = obs[k]['bb']
+            if bb.get(hn) is None or bb.get(an) is None: return None
+            return (bb[hn][0] + (1 - bb[an][0])) / 2.0
+        P = [pv(t) for t in grid]; N = [nv(t) for t in grid]
+        dP = [(P[i] - P[i - 2]) if P[i] is not None and P[i - 2] is not None else None for i in range(len(grid))]
+        dN = [(N[i] - N[i - 2]) if N[i] is not None and N[i - 2] is not None else None for i in range(len(grid))]
+        for lag in range(-6, 7):
+            for i in range(2, len(grid)):
+                j = i + lag
+                if 2 <= j < len(grid) and dP[i] is not None and dN[j] is not None:
+                    pairs[(sport_of.get(m['pid'], '?'), lag * 5)][0].append(dP[i]); pairs[(sport_of.get(m['pid'], '?'), lag * 5)][1].append(dN[j])
+                    pairs[('ALL', lag * 5)][0].append(dP[i]); pairs[('ALL', lag * 5)][1].append(dN[j])
+    for sp in sorted({k[0] for k in pairs}, key=lambda x: (x != 'ALL', x)):
+        line = [(lag, corr(*pairs[(sp, lag)])) for lag in range(-30, 31, 5) if (sp, lag) in pairs]
+        line = [(l, c) for l, c in line if c is not None]
+        if line:
+            best = max(line, key=lambda x: x[1])
+            print(f'    {sp:11s} n={len(pairs[(sp, 0)][0]):5d}  corr by lag(s): ' + ' '.join(f'{l:+d}:{c:.2f}' for l, c in line) + f'   peak at {best[0]:+d} s')
+
+    # G2 order-book imbalance as a predictor
+    print('  [G2] Novig order-book imbalance (bid size on home minus away, as a share) vs what Novig and Pinnacle do next 30 s')
+    xs = []; yn = []; yp = []
+    for mid, obs in nov.items():
+        m = mkt.get(mid)
+        if not m or m['mt'] != 'MONEY' or m['pid'] not in match: continue
+        series = L.pin_series(pin, m); sm = L.side_map(m); hn = [n for n, sd in sm.items() if sd == 'home']
+        if len(series) < 3 or len(obs) < 8 or not hn: continue
+        hn = hn[0]; an = [n for n in sm if n != hn][0]; ts = [x['t'] for x in series]; ot = [o['t'] for o in obs]
+        for i, o in enumerate(obs):
+            bb = o['bb']
+            if bb.get(hn) is None or bb.get(an) is None or o['t'] + 30000 > t1: continue
+            tot = bb[hn][1] + bb[an][1]
+            if tot <= 0: continue
+            j = bisect.bisect_right(ot, o['t'] + 30000) - 1
+            if j <= i: continue
+            b2 = obs[j]['bb']
+            if b2.get(hn) is None or b2.get(an) is None: continue
+            k0 = bisect.bisect_right(ts, o['t']) - 1; k1 = bisect.bisect_right(ts, o['t'] + 30000) - 1
+            if k0 < 0 or k1 < 0: continue
+            xs.append((bb[hn][1] - bb[an][1]) / tot)
+            yn.append((b2[hn][0] + 1 - b2[an][0]) / 2 - (bb[hn][0] + 1 - bb[an][0]) / 2)
+            yp.append(series[k1]['fairp']['home'] - series[k0]['fairp']['home'])
+    c1, c2 = corr(xs, yn), corr(xs, yp)
+    print(f'    n={len(xs)}  corr(imbalance, next Novig mid change) {fmt(c1, "{:+.2f}")}  corr(imbalance, next Pinnacle fair change) {fmt(c2, "{:+.2f}")}')
+    big = [(x, y) for x, y in zip(xs, yp) if abs(x) > 0.6]
+    if big: print(f'    |imbalance| > 0.6: n={len(big)}, Pinnacle moved the way the heavy bid side points in {sum(1 for x, y in big if x * y > 0)} of {sum(1 for x, y in big if x * y != 0)} moves')
+
+    # G3 Pinnacle's own margin and limit as a warning
+    print('  [G3] Pinnacle margin (vig) or limit change as a warning of a move in the next 60 s')
+    dv_big = []; dv_small = []; lim_drop = []; lim_ok = []
+    for (pid, key), v in pin.items():
+        if pid not in match or not key.startswith('s;0;') or len(v) < 3: continue
+        for i in range(1, len(v) - 1):
+            a, b = v[i - 1], v[i]
+            nxt = [x for x in v[i + 1:] if x['t'] - b['t'] <= 60000]
+            if not nxt: continue
+            side = next(iter(b['fairp'])); mv = abs(nxt[-1]['fairp'].get(side, b['fairp'][side]) - b['fairp'][side])
+            (dv_big if (b['vig'] - a['vig']) > 0.01 else dv_small).append(mv)
+            if a.get('lim') and b.get('lim'): (lim_drop if b['lim'] < a['lim'] else lim_ok).append(mv)
+    print(f'    margin widened by > 1 pt: n={len(dv_big)} mean |next-60 s fair move| {fmt(None if not dv_big else 100 * statistics.mean(dv_big), "{:.2f}")} pts; otherwise n={len(dv_small)} {fmt(None if not dv_small else 100 * statistics.mean(dv_small), "{:.2f}")} pts')
+    print(f'    limit cut: n={len(lim_drop)} mean next-60 s move {fmt(None if not lim_drop else 100 * statistics.mean(lim_drop), "{:.2f}")} pts; limit not cut n={len(lim_ok)} {fmt(None if not lim_ok else 100 * statistics.mean(lim_ok), "{:.2f}")} pts')
+
+    # G4 jump reversion and flicker
+    print('  [G4] after a Pinnacle moneyline jump of >= 2 fair points: how much of it is still there later; split by whether a score came in the 10 s before')
+    out = collections.defaultdict(list)
+    for (pid, key), v in pin.items():
+        if pid not in match or key != 's;0;m' or len(v) < 3: continue
+        sc = [x['t'] for x in scores.get(pid, [])]
+        for i in range(1, len(v)):
+            d = v[i]['fairp']['home'] - v[i - 1]['fairp']['home']
+            if abs(d) < 0.02 or v[i]['t'] + 120000 > t1: continue
+            cause = 'score' if any(0 <= v[i]['t'] - t <= 10000 for t in sc) else 'price-only'
+            ts = [x['t'] for x in v]
+            def at(sec):
+                k = bisect.bisect_right(ts, v[i]['t'] + sec * 1000) - 1
+                return v[k]['fairp']['home']
+            kept = {sec: (at(sec) - v[i - 1]['fairp']['home']) / d for sec in (5, 10, 30, 120)}
+            out[cause].append(kept)
+    for cause, l in out.items():
+        print(f'    {cause:10s} jumps {len(l):3d}  share of the jump still there after 5 s {fmt(100 * med([x[5] for x in l]), "{:.0f}")}%  10 s {fmt(100 * med([x[10] for x in l]), "{:.0f}")}%  30 s {fmt(100 * med([x[30] for x in l]), "{:.0f}")}%  120 s {fmt(100 * med([x[120] for x in l]), "{:.0f}")}%  (median)  flicker (>=50% undone within 10 s) {sum(1 for x in l if x[10] < 0.5)}')
+
+    # G5 market-type order after a score, G9 break-even delay
+    print('  [G5] after a score, which novig market re-quotes first (seconds to the first best-bid change, median by market type)')
+    first = collections.defaultdict(list)
+    delays = (2.0, 3.5, 5.3, 8.0, 12.0)
+    ev_at = collections.defaultdict(list); gap_at = collections.defaultdict(list)
+    for pid, sl in scores.items():
+        if pid not in match: continue
+        for s in sl:
+            if s['old'] is None or s['new'] == s['old']: continue
+            scorer_home = (s['new'][0] or 0) > (s['old'][0] or 0); scorer_away = (s['new'][1] or 0) > (s['old'][1] or 0)
+            if scorer_home == scorer_away: continue
+            for mid, m in mkt.items():
+                if m['pid'] != pid or mid not in nov: continue
+                obs = nov[mid]; ot = [o['t'] for o in obs]; i = bisect.bisect_right(ot, s['t']) - 1
+                if i < 0 or s['t'] - ot[i] > 15000: continue
+                base = {k: v[0] for k, v in obs[i]['bb'].items() if v}
+                for o in obs[i + 1:]:
+                    cur = {k: v[0] for k, v in o['bb'].items() if v}
+                    if any(abs(cur.get(k, 0) - base.get(k, 0)) >= 0.005 for k in base):
+                        first[m['mt']].append((o['t'] - s['t']) / 1000.0); break
+                    if o['t'] - s['t'] > 60000: break
+                if m['mt'] != 'MONEY': continue
+                series = L.pin_series(pin, m); sm = L.side_map(m)
+                if not series: continue
+                ts = [x['t'] for x in series]
+                if s['t'] + 45000 > t1: continue
+                kf = bisect.bisect_right(ts, s['t'] + 30000) - 1
+                if kf < 0: continue
+                fair_later = series[kf]['fairp']
+                hn = [n for n, sd in sm.items() if sd == 'home']
+                if not hn: continue
+                hn = hn[0]; an = [n for n in sm if n != hn][0]
+                buy = hn if scorer_home else an; other = an if scorer_home else hn
+                for d in delays:
+                    j = bisect.bisect_left(ot, s['t'] + d * 1000)
+                    if j >= len(ot) or ot[j] - s['t'] > (d + 6) * 1000: continue
+                    bb = obs[j]['bb']
+                    if bb.get(other) is None: continue
+                    ask = 1 - bb[other][0]; fee = L.fee_of(ask)
+                    fl = fair_later['home' if buy == hn else 'away']
+                    ev_at[d].append(fl / (ask + fee) - 1.0)
+    for mt, l in sorted(first.items()):
+        print(f'    {mt:7s} markets {len(l):3d}  first change median {fmt(med(l))} s  p25 {fmt(pct(l, .25))}  p75 {fmt(pct(l, .75))}')
+    print('  [G9] THE ORDER-DELAY TEST: buy the team that just scored (moneyline) at novig\'s ask as it stood d seconds after the score, judged against Pinnacle\'s fair 30 s after the score (fee in)')
+    for d in delays:
+        l = ev_at.get(d, [])
+        if l: print(f'    order lands {d:4.1f} s after the score: n={len(l):3d}  median EV {fmt(100 * med(l), "{:+.1f}")}%  mean {fmt(100 * statistics.mean(l), "{:+.1f}")}%  share with EV > 0: {sum(1 for x in l if x > 0) / len(l):.0%}  share >= 2%: {sum(1 for x in l if x >= 0.02) / len(l):.0%}')
+
+    # G6 price-grid rounding
+    print('  [G6] novig price grid: EV of the ask by tick (the ask is 1 - best bid; a half-cent tick rounds in someone\'s favour)')
+    tick = collections.defaultdict(list)
+    for r in rows:
+        tick['half-cent (x.5)' if abs((r['ask'] * 100) % 1 - 0.5) < 1e-6 else 'whole cent'].append(r['ev'])
+    for k, l in tick.items(): print(f'    {k:16s} rows {len(l):5d}  median EV {fmt(100 * med(l), "{:+.2f}")}%  share >= 2%: {sum(1 for x in l if x >= 0.02) / len(l):.1%}')
+
+    # G7 outcomes the score already decided
+    print('  [G7] totals the score has already decided: an Over whose strike is below the points scored should cost ~$1; an Under should be worthless')
+    dead = []; seen_t = 0
+    for mid, obs in nov.items():
+        m = mkt.get(mid)
+        if not m or m['mt'] != 'TOTAL' or m['pid'] not in match: continue
+        series = L.pin_series(pin, m)
+        sc_series = [(x['t'], x.get('score')) for x in pin.get((m['pid'], 's;0;m'), []) if x.get('score')] or [(x['t'], x.get('score')) for x in series if x.get('score')]
+        if not sc_series: continue
+        ts = [t for t, _ in sc_series]; sm = L.side_map(m)
+        for o in obs:
+            k = bisect.bisect_right(ts, o['t']) - 1
+            if k < 0: continue
+            sc = sc_series[k][1]
+            if not sc or sc[0] is None or sc[1] is None: continue
+            pts = sc[0] + sc[1]; strike = float(m.get('strike') or 0)
+            seen_t += 1
+            if pts > strike:
+                for name, v in o['bb'].items():
+                    if v is None: continue
+                    if sm.get(name) == 'over':
+                        other = [n for n in o['bb'] if n != name]
+                        if other and o['bb'][other[0]]:
+                            ask = 1 - o['bb'][other[0]][0]
+                            if ask < 0.97: dead.append((m['pid'], strike, pts, round(ask, 3), o['t']))
+    print(f'    total reads checked {seen_t}; Over already decided and still offered under 97 cents: {len(dead)}' + (f' (first: {dead[:3]})' if dead else ''))
+
+    # G8 score-effect model
+    print('  [G8] what a score does to the moneyline fair (scorer\'s win chance, points, 10 s after), by sport and by whether the scorer was leading, tied or trailing')
+    eff = collections.defaultdict(list)
+    for pid, sl in scores.items():
+        if pid not in match: continue
+        v = pin.get((pid, 's;0;m'), [])
+        if len(v) < 3: continue
+        ts = [x['t'] for x in v]
+        for s in sl:
+            if s['old'] is None: continue
+            dh = (s['new'][0] or 0) - (s['old'][0] or 0); da = (s['new'][1] or 0) - (s['old'][1] or 0)
+            if (dh > 0) == (da > 0) or s['t'] + 12000 > t1: continue
+            k0 = bisect.bisect_right(ts, s['t'] - 500) - 1; k1 = bisect.bisect_right(ts, s['t'] + 10000) - 1
+            if k0 < 0 or k1 < 0: continue
+            home = dh > 0; a = v[k0]['fairp']['home']; b = v[k1]['fairp']['home']
+            gain = (b - a) if home else -(b - a)
+            lead = (s['old'][0] or 0) - (s['old'][1] or 0); lead = lead if home else -lead
+            state = 'tied' if lead == 0 else ('leading' if lead > 0 else 'trailing')
+            eff[(sport_of.get(pid, '?'), state)].append(gain)
+    for k, l in sorted(eff.items()):
+        print(f'    {k[0]:11s} scorer {k[1]:8s} n={len(l):3d}  median gain {fmt(100 * med(l), "{:+.1f}")} pts  p25 {fmt(100 * pct(l, .25), "{:+.1f}")}  p75 {fmt(100 * pct(l, .75), "{:+.1f}")}')
 
 
 if __name__ == '__main__':
