@@ -60,6 +60,20 @@ class LiveMatcherTest {
         assertEquals("m-b", t.outcomeBySide.getValue(PinnSide.AWAY))
     }
 
+    @Test
+    fun `a doubleheader - the live game goes with the live matchup, whichever order Novig lists them in`() {
+        val g1 = NovigEvent("g1", "BASEBALL", "MLB", NovigEvent.STATUS_LIVE, "Milwaukee Bucks @ Oklahoma City Thunder", start)
+        val g2 = NovigEvent("g2", "BASEBALL", "MLB", NovigEvent.STATUS_PREGAME, "Milwaukee Bucks @ Oklahoma City Thunder", start + 3 * 3_600_000L)
+        val p = pinn(1, "Oklahoma City Thunder", "Milwaukee Bucks")
+        val sameStage = { pe: PinnEvent, ne: NovigEvent -> if (pe.live) ne.status != NovigEvent.STATUS_PREGAME else ne.status == NovigEvent.STATUS_PREGAME }
+        for (order in listOf(listOf(g1, g2), listOf(g2, g1))) {
+            val pairs = LiveMatcher.matchEvents(listOf(p), order, now, sameStage)
+            assertEquals(listOf("g1"), pairs.map { it.event.eventId })
+        }
+        // With no stage rule the nearer start still wins a tie.
+        assertEquals("g1", LiveMatcher.matchEvents(listOf(p), listOf(g2, g1), now).single().event.eventId)
+    }
+
     private val pair = LiveMatcher.Pair(1L, nba, false)
 
     @Test

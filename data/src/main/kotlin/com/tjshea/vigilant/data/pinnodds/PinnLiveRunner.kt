@@ -215,7 +215,8 @@ class PinnLiveRunner(
         if (book.method != cfg.method) book.method = cfg.method
         for (c in book.apply(obj, msg.atMs)) {
             when (c.kind) {
-                PinnChange.Kind.PRICE -> armedUntil[c.eventId] = msg.atMs + cfg.rules.moveWindowMs + EXTRA_ARM_MS
+                // Only a MAIN line's change arms a game: an alternate line moves constantly and is not what the targets are priced from.
+                PinnChange.Kind.PRICE -> if (book.events[c.eventId]?.lines?.get(c.key)?.alternate != true) armedUntil[c.eventId] = msg.atMs + cfg.rules.moveWindowMs + EXTRA_ARM_MS
                 PinnChange.Kind.GONE -> { armedUntil.remove(c.eventId); targetsByEvent.remove(c.eventId)?.forEach { targetsByMarket.remove(it.market.marketId) } }
                 else -> {}
             }
@@ -265,8 +266,7 @@ class PinnLiveRunner(
         lastRematchMs = now
         lastEventCount = book.events.size
         val cfg = config()
-        val pairs = LiveMatcher.matchEvents(book.events.values.filter { eligibleNow(it, now, cfg.rules) }, catalogEvents, now)
-            .filter { p -> book.events[p.pinnEventId]?.let { pe -> sameStage(pe, p.event) } == true }
+        val pairs = LiveMatcher.matchEvents(book.events.values.filter { eligibleNow(it, now, cfg.rules) }, catalogEvents, now) { pe, ne -> sameStage(pe, ne) }
         matchedGames = pairs.size
         val byEvent = HashMap<Long, List<LiveTarget>>()
         val ordered = ArrayList<Pair<Double, String>>()

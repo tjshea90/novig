@@ -39,7 +39,7 @@ object LiveMatcher {
      * For each Novig game, the Pinnacle matchup that is it: the best name match (both teams must fit), starting near the same time, preferring a live and recently heard-from matchup (one fixture
      * can have a stale re-issued child beside the live one, docs: "key by rec.id"). Games with no clear match are left out, never guessed.
      */
-    fun matchEvents(pinn: Collection<PinnEvent>, novig: Collection<NovigEvent>, nowMs: Long): List<Pair> {
+    fun matchEvents(pinn: Collection<PinnEvent>, novig: Collection<NovigEvent>, nowMs: Long, accept: (PinnEvent, NovigEvent) -> Boolean = { _, _ -> true }): List<Pair> {
         val usable = pinn.filter { it.regular && it.home.isNotBlank() && it.away.isNotBlank() }
         val used = HashSet<Long>()
         val out = ArrayList<Pair>()
@@ -49,14 +49,16 @@ object LiveMatcher {
             var bestScore = 0.0
             var bestSwapped = false
             for (p in usable) {
-                if (p.id in used) continue
+                if (p.id in used || !accept(p, n)) continue
                 if (p.startMs > 0 && n.startsTs > 0 && abs(p.startMs - n.startsTs) > MAX_START_GAP_MS) continue
                 val straight = TeamMatcher.gameScore(m.home, m.away, p.home, p.away)
                 val swapped = TeamMatcher.gameScore(m.home, m.away, p.away, p.home)
                 val score = maxOf(straight, swapped)
                 if (score <= 0.0) continue
                 // A live, recently heard-from matchup beats a stale one with the same teams.
-                val rank = score + (if (p.live) 0.25 else 0.0) + (if (nowMs - p.lastFrameAtMs < 60_000L) 0.1 else 0.0)
+                // The nearer start wins a tie (a doubleheader's two games have the same teams a few hours apart).
+                val gapPenalty = if (p.startMs > 0 && n.startsTs > 0) abs(p.startMs - n.startsTs) / 3_600_000.0 * 0.01 else 0.0
+                val rank = score + (if (p.live) 0.25 else 0.0) + (if (nowMs - p.lastFrameAtMs < 60_000L) 0.1 else 0.0) - gapPenalty
                 val bestRank = bestScore
                 if (best == null || rank > bestRank) {
                     best = p
