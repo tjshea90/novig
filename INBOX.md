@@ -5503,3 +5503,8 @@ Which diagnostic would help
 ```
 Yes. 
 ```
+
+## 2026-10-08T05:34:26Z
+```
+How important is it when using auto bid or auto bet that other sports books price both sides of a bet. If other books only price the side I'm taking, does this make it riskier or less profitable
+```
