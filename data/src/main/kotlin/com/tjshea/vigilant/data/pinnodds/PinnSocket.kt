@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -86,7 +85,7 @@ class PinnSocket(
         _state.value = PinnSocketState.Off
     }
 
-    private class Ended(val code: Int, val reason: String, val httpStatus: Int?, val failure: String?)
+    internal class Ended(val code: Int, val reason: String, val httpStatus: Int?, val failure: String?)
 
     private suspend fun loop() {
         var backoff = 1_000L
@@ -141,8 +140,7 @@ class PinnSocket(
                     }
                 }
             }
-            val e = withTimeoutOrNull(Long.MAX_VALUE) { ended.await() } ?: break
-            watchdog.cancel()
+            val e = try { ended.await() } finally { watchdog.cancel() }
             socket = null
             val wasLive = _state.value is PinnSocketState.Live
             if (job?.isActive != true) break
