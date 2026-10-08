@@ -40,7 +40,15 @@ class LiveFeedServiceTest {
         runBlocking { app.container.settingsStore.update { ScanSettings() } }
     }
 
-    private fun settle(seconds: Long = 6) = shadowOf(Looper.getMainLooper()).idleFor(seconds, TimeUnit.SECONDS)
+    /** Real time for the disk, virtual seconds for the service's delays: the settings store writes on another thread and needs this (main) thread to be free to resume. */
+    private fun waitFor(what: String, cond: () -> Boolean) {
+        repeat(1500) {
+            shadowOf(Looper.getMainLooper()).idleFor(1, TimeUnit.SECONDS)
+            if (cond()) return
+            Thread.sleep(10)
+        }
+        throw AssertionError("never happened: $what; running=${LiveFeedService.running} held=${LiveFeedService.keepAwakeHeld}")
+    }
 
     private fun start(action: String? = null) =
         Robolectric.buildService(LiveFeedService::class.java, Intent(app, LiveFeedService::class.java).apply { this.action = action }).create().startCommand(0, 1)
@@ -49,9 +57,8 @@ class LiveFeedServiceTest {
     fun `with the feed on the service is a foreground service holding the CPU awake`() {
         val c = start()
         try {
-            settle()
+            waitFor("the CPU lock") { LiveFeedService.keepAwakeHeld }
             assertTrue(LiveFeedService.running)
-            assertTrue("the CPU lock is held", LiveFeedService.keepAwakeHeld)
             assertTrue("a foreground notification is up", shadowOf(c.get()).lastForegroundNotification != null)
         } finally {
             c.destroy()
@@ -63,29 +70,38 @@ class LiveFeedServiceTest {
     @Test
     fun `switching the feed off stops the service and releases the lock`() {
         val c = start()
-        settle()
-        assertTrue(LiveFeedService.keepAwakeHeld)
-        runBlocking { app.container.settingsStore.update { it.copy(pinnLive = false) } }
-        settle()
-        assertFalse("the lock is let go", LiveFeedService.keepAwakeHeld)
-        assertTrue("the service stopped itself", shadowOf(c.get()).isStoppedBySelf)
+        try {
+            waitFor("the CPU lock") { LiveFeedService.keepAwakeHeld }
+            runBlocking { app.container.settingsStore.update { it.copy(pinnLive = false) } }
+            waitFor("the lock is let go") { !LiveFeedService.keepAwakeHeld }
+            assertTrue("the service stopped itself", shadowOf(c.get()).isStoppedBySelf)
+        } finally {
+            c.destroy()
+        }
     }
 
     @Test
     fun `STOP ALL stops it too`() {
         val c = start()
-        settle()
-        runBlocking { app.container.settingsStore.update { it.copy(killed = true) } }
-        settle()
-        assertFalse(LiveFeedService.keepAwakeHeld)
-        assertTrue(shadowOf(c.get()).isStoppedBySelf)
+        try {
+            waitFor("the CPU lock") { LiveFeedService.keepAwakeHeld }
+            runBlocking { app.container.settingsStore.update { it.copy(killed = true) } }
+            waitFor("the lock is let go") { !LiveFeedService.keepAwakeHeld }
+            assertTrue(shadowOf(c.get()).isStoppedBySelf)
+        } finally {
+            c.destroy()
+        }
     }
 
     @Test
     fun `the notification's Stop turns the feed off in the settings`() {
         val c = start(LiveFeedService.ACTION_STOP)
-        settle()
-        assertEquals(false, app.container.settingsStore.flow.value?.pinnLive)
-        assertTrue(shadowOf(c.get()).isStoppedBySelf)
+        try {
+            waitFor("the feed is off in the settings") { app.container.settingsStore.flow.value?.pinnLive == false }
+            waitFor("the service stopped itself") { shadowOf(c.get()).isStoppedBySelf }
+            assertEquals(false, app.container.settingsStore.flow.value?.pinnLive)
+        } finally {
+            c.destroy()
+        }
     }
 }
