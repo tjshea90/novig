@@ -127,7 +127,11 @@ class PinnLiveUiTest {
         compose.onNodeWithTag("pinnEv-50").performScrollTo().performClick()
         compose.onNodeWithTag("pinnMove-30").performScrollTo().performClick()
         compose.onNodeWithTag("pinnTrigger-STANDING").performScrollTo().performClick()
+        compose.onNodeWithTag("pinnTrigger-STALE").performScrollTo().performClick()
+        compose.onNodeWithTag("pinnTrigger-STANDING").performScrollTo().performClick()
+        compose.onNodeWithTag("pinnHoldoff-5").performScrollTo().performClick()
         val s = ui().settings
+        assertEquals(5, s.pinnLiveHoldoffSeconds)
         assertEquals(5.0, s.pinnLiveStake, 0.0)
         assertEquals(25.0, s.pinnLiveMaxGame, 0.0)
         assertEquals(100.0, s.pinnLiveMaxDay, 0.0)
