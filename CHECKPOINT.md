@@ -1,13 +1,13 @@
-# CHECKPOINT 2736 — read me first, then TASKS.md
+# CHECKPOINT 2737 — read me first, then TASKS.md
 
-**Written:** 2026-10-08T04:16:07Z · **tests:** all 4 fast checks green
-**Branch:** `claude/tennis-live-betting-match-o0nzub` · **builds on:** `6bea1aac` (this checkpoint is the commit after it)
+**Written:** 2026-10-08T04:17:18Z · **tests:** all 4 fast checks green
+**Branch:** `claude/tennis-live-betting-match-o0nzub` · **builds on:** `e0554219` (this checkpoint is the commit after it)
 
 ## Just done
-Fixed Pinnodds live not matching tennis: Pinnacle books tennis as Sets (winner) + Games (spread/total) children with units != Regular, which PinnBook dropped. Now both kept, Games suffix stripped, targets read their own child, sets-line guard, tests in LiveMatcherTest (77 pinnodds tests green)
+Live trader no longer halts on every in-play order: order wait 2.5s -> 20s (Novig's in-play delay leaves orders PENDING), slower polling after 2s, clearer halt text
 
 ## Do this next
-Tell Tj tennis now matches; tennis socket frames carried no score in the tape so the default 'After a score' trigger will not fire for tennis (use a price-move trigger); then resume PX2/PX3 and ship via release.yml
+Tell Tj: tap Resume on the halt, then check Novig orders / Tracker Sync for the bets that were pending; ship in next release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Tell Tj tennis now matches; tennis socket frames carried no score in the tape so
 
 ## Last ten checkpoints
 ```
+  4b8aead5 ckpt 2736: Fixed Pinnodds live not matching tennis: Pinnacle books tennis as Sets (winn
   d1e4537b ckpt 2735: Audit made resumable by another session: tools/research/pinnodds_audit_workf
   d6215c3e ckpt 2734: Added tools/research/pinn_pregame.py (pregame recorder+analyzer, exits on ev
   62e0fc93 ckpt 2733: Wrote Tj's real-money safeguards + pregame request into TASKS.md (PX1-PX4); 
@@ -26,5 +27,5 @@ Tell Tj tennis now matches; tennis socket frames carried no score in the tape so
   61095455 ckpt 2728: Pinnodds live: UI test + settings search entries, MockWebServer tests for th
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
