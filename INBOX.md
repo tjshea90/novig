@@ -5528,3 +5528,8 @@ Build all the new features you mentioned and remove the "Pinnacle only" feature 
 ```
 Continue the research and planning that is already in this repo in an earlier checkpoint regarding building or scraping a rapid source of scores and odds
 ```
+
+## 2026-10-08T06:26:30Z
+```
+For the 10 sources research, tell me more about #6 . Disregard the terms of use because I can get approval from the companies
+```
