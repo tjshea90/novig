@@ -167,4 +167,23 @@ class LiveEdgeTest {
         assertSkip(LiveSkip.IN_FLUX, judge(e, l, 2_000, stale, standing))
         assertTrue(judge(e, l, 1_000 + 31_000, stale, standing) is LiveVerdict.Bet)
     }
+
+    @Test
+    fun `a stale order is an ask still at Pinnacle's earlier price, caught after the 20 s window and with no score`() {
+        val (_, e, l) = moved()
+        val r = rules.copy(trigger = LiveTrigger.STALE)
+        // Pinnacle fair was 0.50 before the move; the order at 0.50 was left up. 31 s later the MOVE trigger's window has passed, STALE still sees it.
+        assertTrue(judge(e, l, 31_000, stale, r) is LiveVerdict.Bet)
+        // A wide book whose ask is nowhere near any earlier Pinnacle price is not evidence of a stale order.
+        assertSkip(LiveSkip.NOT_STALE, judge(e, l, 31_000, listOf(TakeLevel(0.40, 5_000)), r))
+        // The side Pinnacle moved away from has no earlier price below its fair now.
+        assertSkip(LiveSkip.NOT_STALE, judge(e, l, 31_000, stale, r, side = PinnSide.AWAY))
+    }
+
+    @Test
+    fun `an edge too large to be real is refused as a probable mismatch whatever the trigger`() {
+        val (_, e, l) = moved()
+        assertSkip(LiveSkip.TOO_GOOD, judge(e, l, 2_000, listOf(TakeLevel(0.10, 5_000))))
+        assertTrue("the same rule with the cap lifted would have bet", judge(e, l, 2_000, listOf(TakeLevel(0.10, 5_000)), rules.copy(maxEv = 100.0)) is LiveVerdict.Bet)
+    }
 }
