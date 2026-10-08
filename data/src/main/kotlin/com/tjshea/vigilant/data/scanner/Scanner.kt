@@ -771,32 +771,6 @@ class Scanner(
         Pricing.price(planFor(cat, settings, now, youngFairOnly = true), books, settings, now, fairMemo)
     }
 
-    /**
-     * The fair-odds boards of [leagues] read again now, nothing re-used (the scanner's windows are dropped for them; a feed's own few-second share of a board still
-     * stands), the first choices first and the fallbacks only for the leagues those didn't answer, as a scan does; then the books already read are re-priced with
-     * them. Pinnacle only calls it right before it bets, so the price it bets on is a read of this minute (RESEARCH.md §88.5). Null before any scan.
-     */
-    override suspend fun refreshFair(requested: ScanSettings, offered: List<ReferenceSource>, leagues: Set<String>): ScanResult? = mutex.withLock {
-        val settings = requested.effective(forBets = betsOnly)
-        val sources = readable(offered, settings)
-        val cat = catalog ?: return@withLock null
-        val picked = settings.selectedLeagues.filter { it.novigName in leagues }
-        if (picked.isEmpty() || sources.isEmpty()) return@withLock null
-        val now = clock()
-        val errors = ArrayList<String>()
-        val ordered = sources.sortedBy { SOURCE_ORDER.indexOf(it.id).let { i -> if (i < 0) Int.MAX_VALUE else i } }
-        synchronized(references) { for (l in picked) for (src in ordered) references.remove("${src.id}|${l.novigName}") }
-        for (l in picked) for (src in ordered) src.forget(l)
-        synchronized(answered) { answered.clear() }
-        val board = ScanContext(cat.events, cat.markets, now)
-        for (source in ordered.filter { it.fallbackFor == null }) {
-            fetchSource(source, picked, settings, now, errors, board.takeIf { source.needsCatalog }, fallback = false) {}
-        }
-        for (source in ordered.filter { it.fallbackFor != null }) {
-            fetchSource(source, picked, settings, now, errors, covering(source.fallbackFor!!, picked, board), fallback = true) {}
-        }
-        Pricing.price(planFor(cat, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS), books, settings, now, fairMemo)
-    }
 
     /** Leagues selected now that the last scan didn't load: they need a scan to show anything. */
     override suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = mutex.withLock {
@@ -856,8 +830,7 @@ class Scanner(
     }
 
     /**
-     * The sources a scan may read: all that were offered, except in Pinnacle only (where a source the settings don't switch on, [ScanSettings.effective]: not the exchanges,
-     * not The Odds API, is never asked, whoever offered it: RESEARCH.md §88.5) and in low-usage bids (the same, for the feeds that don't carry a picked sharp prop book:
+     * The sources a scan may read: all that were offered, except in low-usage bids (a source the settings don't switch on, for the feeds that don't carry a picked sharp prop book:
      * RESEARCH.md §92).
      */
     private fun readable(offered: List<ReferenceSource>, settings: ScanSettings): List<ReferenceSource> =

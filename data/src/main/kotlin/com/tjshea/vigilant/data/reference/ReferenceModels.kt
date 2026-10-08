@@ -186,11 +186,6 @@ interface ReferenceSource {
      */
     suspend fun needed(league: League, settings: ScanSettings, context: ScanContext): Boolean = true
 
-    /**
-     * Drops whatever this source holds back to re-use for [league] (a feed's own share of one board between scans), so the next [odds] reads the feed again.
-     * Pinnacle only calls it right before it bets, to bet on a price of this minute (RESEARCH.md §88.5). Nothing to do for a source that keeps no board of its own.
-     */
-    suspend fun forget(league: League) {}
 }
 
 /** What a scan already knows when a [ReferenceSource.needsCatalog] source (or a fallback) runs. */

@@ -1067,9 +1067,6 @@ data class FairBasis(val source: String, val sharp: List<String> = emptyList(), 
     /** Pinnacle is among the sharp books this fair was worked out from. */
     val hasPinnacle: Boolean get() = sharp.any { it.equals("pinnacle", ignoreCase = true) }
 
-    /** Pinnacle is the whole fair: its devigged two-sided price, no other book (Pinnacle only, RESEARCH.md §88.5). */
-    val pinnacleAlone: Boolean get() = hasPinnacle && sharp.all { it.equals("pinnacle", ignoreCase = true) } && books == 1
-
     /** A short group name: "Pinnacle-anchored", "exchange only (Kalshi)", "books' average", "CNO". */
     val group: String get() = when {
         source == SOURCE_CNO || source == SOURCE_PARLAY || source == SOURCE_PINNODDS -> source
