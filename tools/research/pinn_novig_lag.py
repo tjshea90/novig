@@ -442,6 +442,7 @@ def simulate(a):
     import bisect
     pin, nov, mkt, match, scores, closes = load(a.path)
     fired = []; standing = []
+    score_ts = {pid: sorted(x['t'] for x in v if x.get('old') is not None) for pid, v in scores.items()}
     for mid, obs in nov.items():
         m = mkt.get(mid)
         if not m: continue
@@ -476,7 +477,10 @@ def simulate(a):
                 ref = series[max(0, k0)]
                 move = fair - ref['fairp'][side]
                 key = (mid, side, pr['t'])
-                rec = {'t': o['t'], 'mid': mid, 'league': match[m['pid']]['league'] if m['pid'] in match else '', 'sel': x, 'ask': ask, 'fair': fair, 'ev': ev, 'move': move, 'depth': depth}
+                st = score_ts.get(m['pid'], [])
+                si = bisect.bisect_right(st, o['t']) - 1
+                recent_score = si >= 0 and o['t'] - st[si] <= 15000
+                rec = {'score': recent_score, 't': o['t'], 'mid': mid, 'league': match[m['pid']]['league'] if m['pid'] in match else '', 'sel': x, 'ask': ask, 'fair': fair, 'ev': ev, 'move': move, 'depth': depth}
                 for sec in (30, 120):
                     kk = bisect.bisect_right(ts, o['t'] + sec * 1000) - 1
                     if series[kk]['t'] + 0 < o['t'] - 1: kk = k
@@ -508,6 +512,8 @@ def simulate(a):
     hours = (max(span) - min(span)) / 3.6e6 if span else 0
     print(f'tape: {hours:.2f} h, {len(match)} games')
     summ('THE RULE (move + EV)', fired)
+    summ('  ... with a score change in the last 15 s', [r for r in fired if r['score']])
+    summ('  ... with no score change (a price move alone)', [r for r in fired if not r['score']])
     # collapse the "standing" rows to one per (market, side, pinnacle change) so repeated reads of the same quote are not counted many times
     uniq = {}
     for r in standing: uniq.setdefault((r['mid'], r['sel'], round(r['fair'], 3)), r)
