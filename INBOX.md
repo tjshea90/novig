@@ -5446,3 +5446,8 @@ you may do all testing of the pinnodds API needed using the key I provided to en
 ```
 I'm not sure what you are doing with the three hour study, but I would like to use the feature soon, before the study
 ```
+
+## 2026-10-08T01:32:14Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
