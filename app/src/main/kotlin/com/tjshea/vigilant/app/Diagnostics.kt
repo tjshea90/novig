@@ -169,7 +169,7 @@ object Diagnostics {
 
         o.appendLine()
         o.appendLine("== Settings ==")
-        o.appendLine("Scanner: ${if (set.pinnacleOnly) "Pinnacle only (${set.scanner.displayName} underneath)" else set.scanner.displayName} · paused: ${if (set.paused) "YES" else "no"}" + (if (set.killed) " · STOPPED by the STOP button" else ""))
+        o.appendLine("Scanner: ${set.scanner.displayName} · paused: ${if (set.paused) "YES" else "no"}" + (if (set.killed) " · STOPPED by the STOP button" else ""))
         // The kill switch (Tj, 2026-10-05): saved with the settings and in a second copy; what it stops and since when.
         o.appendLine(
             "Kill switch (STOP ALL): ${if (set.killed) "ON" + (set.killedAtMs?.let { " since ${at(it)}" } ?: "") + " · scanning, CNO, auto-bet, auto-lock, bids and the background scan are all held; only RESUME on the red bar lifts it" else "off"}",
@@ -188,8 +188,8 @@ object Diagnostics {
         )
         o.appendLine(
             "Auto-bet (Tj, 2026-10-01): " + if (!set.autoBet) "off" else {
-                "ON · ${if (set.pinnacleOnly) "Pinnacle only: beats Pinnacle's devigged price by ${com.tjshea.vigilant.app.ui.AutoBetText.evLabel(com.tjshea.vigilant.data.novig.trading.AutoBet.rules(set).minEv)} or more, Pinnacle's price within ${com.tjshea.vigilant.app.ui.PinnacleOnlyText.ageLabel(set.pinnacleMaxAgeSeconds)}" else com.tjshea.vigilant.app.ui.AutoBetText.criteria(set)} · most a day ${"$%.0f".format(java.util.Locale.US, set.apiMaxPerDay)} · most on one game ${if (set.apiMaxPerGame > 0.0) "$%.0f".format(java.util.Locale.US, set.apiMaxPerGame) else "no limit"} · bankroll ${"$%.0f".format(java.util.Locale.US, set.bankroll)} · " +
-                    (set.autoBetHalted?.let { "HALTED: $it" } ?: "not halted") + " · ${AutoBettor.line(x.autoBet, now, set.pinnacleOnly)}"
+                "ON · ${com.tjshea.vigilant.app.ui.AutoBetText.criteria(set)} · most a day ${"$%.0f".format(java.util.Locale.US, set.apiMaxPerDay)} · most on one game ${if (set.apiMaxPerGame > 0.0) "$%.0f".format(java.util.Locale.US, set.apiMaxPerGame) else "no limit"} · bankroll ${"$%.0f".format(java.util.Locale.US, set.bankroll)} · " +
+                    (set.autoBetHalted?.let { "HALTED: $it" } ?: "not halted") + " · ${AutoBettor.line(x.autoBet, now)}"
             },
         )
         o.appendLine(
@@ -506,10 +506,6 @@ object Diagnostics {
         o.appendLine()
         o.appendLine("== Bets by what made their fair odds (recorded from v0.36.0) ==")
         basisLines(kept, now).forEach { o.appendLine(it) }
-        // Pinnacle only (Tj, 2026-10-05): EV, CLV and profit of the bets found and judged against Pinnacle's devigged price alone.
-        o.appendLine()
-        o.appendLine("== Pinnacle only: bets made against Pinnacle's devigged price alone (RESEARCH.md §88.5) ==")
-        pinnacleOnlyLines(bets, s.settings, x.autoBet, now, x.counters).forEach { o.appendLine(it) }
         o.appendLine()
         o.appendLine("== Vigilant's own bets against the close (newest ${MAX_CLOSE_ROWS}) ==")
         closeRows(kept, now, zone).forEach { o.appendLine(it) }
@@ -599,53 +595,6 @@ object Diagnostics {
             "at least ${pct(set.lowUsageMargin.coerceAtLeast(com.tjshea.vigilant.data.scanner.LowUsageBids.MIN_MARGIN))} under the fair · no bid longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(com.tjshea.vigilant.app.ui.LowUsageText.lowUsageMaxOdds(set))}"
         out += "    feeds asked: $feeds · a league with no game in the window and a prop market on Novig is not asked · what the last scan cost each API is under \"Last Vigilant scan\" below"
         plan?.unreachable?.takeIf { it.isNotEmpty() }?.let { out += "    CANNOT BE READ: ${titles(it)} (no feed that carries it has a key and a switch on in Settings › Fair odds & sources): lines needing two of the picked books get no bid" }
-        return out
-    }
-
-    /**
-     * Pinnacle only's report (Tj, 2026-10-05: "make the diagnostics scan logging keep track of all betting information used with this Pinnacle only setting on so I can
-     * track how well bets do clv and EV and profit when only compared to Pinnacle"): whether it is on and how its auto-bet pass went, then every bet made with it on
-     * ([com.tjshea.vigilant.data.tracker.AtBet.pinnacleOnly]) as a group: results and profit (outliers included, like the Tracker's Profit), EV when bet against Pinnacle, CLV
-     * and the share that beat the close, then the same split by the age of Pinnacle's price at the bet, by kind of market, and where the closes came from.
-     */
-    internal fun pinnacleOnlyLines(
-        bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>,
-        set: com.tjshea.vigilant.data.scanner.ScanSettings,
-        autoBet: AutoBettor.Status,
-        now: Long,
-        counters: Map<String, Long> = emptyMap(),
-    ): List<String> {
-        val out = ArrayList<String>()
-        out += if (set.pinnacleOnly) "On: age limit ${com.tjshea.vigilant.app.ui.PinnacleOnlyText.ageLabel(set.pinnacleMaxAgeSeconds)} · reads Novig and Pinnacle only (PinnWire, then pinnapi; PropLine or ParlayAPI for a league those can't answer) · devig: the lowest of four"
-        else "Off (switch it on in Settings › Scanning or the Auto-bet tab)."
-        if (set.pinnacleOnly) {
-            out += "Auto-bet's last pass: ${AutoBettor.line(autoBet, now, true)}"
-            out += "Pinnacle re-reads before betting: ${counters["pinnacle.refresh.ok"] ?: 0} read, ${counters["pinnacle.refresh.failed"] ?: 0} failed · bets placed this run: ${counters["pinnacle.autobet.placed"] ?: 0}"
-        }
-        val mine = bets.filter { it.atBet?.pinnacleOnly == true && it.status != BetStatus.VOID && it.atBet?.how != com.tjshea.vigilant.data.tracker.AtBet.HOW_STUDY }
-        if (mine.isEmpty()) return out + "No bet made with it on yet: the first ones appear here with their EV against Pinnacle, CLV and profit."
-        val st = BetTracker.stats(mine)
-        out += "Bets: ${mine.size} (${st.pending} open) · " + breakdownText(st, closedCount(mine.filterNot { it.isOutlier }, now))
-        out += String.format(Locale.US, "Profit (every settled bet): %+.2f on %.2f staked", st.profitAll, st.stakedAll) + (st.roiAll?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "")
-        val kept = mine.filterNot { it.isOutlier }
-        fun band(b: com.tjshea.vigilant.data.tracker.TrackedBet): String = when (val age = b.atBet?.pinnacleAgeSec) {
-            null -> "age not recorded"
-            in 0..30 -> "Pinnacle's price ≤30 s old"
-            in 31..60 -> "Pinnacle's price 31–60 s old"
-            in 61..90 -> "Pinnacle's price 61–90 s old"
-            else -> "Pinnacle's price over 90 s old"
-        }
-        kept.groupBy(::band).toSortedMap().forEach { (label, g) -> out += "$label: ${breakdownText(BetTracker.stats(g), closedCount(g, now))}" }
-        com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(kept, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET).forEach { row ->
-            val g = kept.filter { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.MARKET) == row.label }
-            out += "Market ${row.label}: ${breakdownText(row.stats, closedCount(g, now))}"
-        }
-        com.tjshea.vigilant.data.tracker.TrackerBreakdown.of(kept, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.LEAD).forEach { row ->
-            val g = kept.filter { com.tjshea.vigilant.data.tracker.TrackerBreakdown.keyOf(it, com.tjshea.vigilant.data.tracker.TrackerBreakdown.By.LEAD) == row.label }
-            out += "Time to start ${row.label}: ${breakdownText(row.stats, closedCount(g, now))}"
-        }
-        val closes = kept.mapNotNull { b -> com.tjshea.vigilant.data.tracker.ClosingLine.closeOf(b, now)?.second }
-        if (closes.isNotEmpty()) out += "Closes came from: " + closes.groupingBy { com.tjshea.vigilant.data.tracker.ClosingLine.sourceLabel(it) }.eachCount().entries.sortedByDescending { it.value }.joinToString(", ") { "${it.key} ${it.value}" }
         return out
     }
 
