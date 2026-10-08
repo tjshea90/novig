@@ -1,21 +1,23 @@
-# CHECKPOINT 2748 — read me first, then TASKS.md
+# CHECKPOINT 2749 — read me first, then TASKS.md
 
-**Written:** 2026-10-08T07:05:58Z · **tests:** all 4 fast checks green
-**Branch:** `claude/auto-bid-optimization-api-kdjbe4` · **builds on:** `b3128df3` (this checkpoint is the commit after it)
+**Written:** 2026-10-08T07:07:23Z · **tests:** all 4 fast checks green
+**Branch:** `claude/auto-bid-optimization-api-kdjbe4` · **builds on:** `684a73b6` (this checkpoint is the commit after it)
 
 ## Just done
-BA: long-run saver built (LongRunBids lean scan + 8 min far pace + far-last bid order + bid funnel in Diagnostics), tests + 5 mutants green; RESEARCH §119 next
+RESEARCH.md §119 written (analysis for BA1-BA3, build notes)
 
 ## Do this next
-write RESEARCH.md §119 (analysis), run the full floor (bash tools/test.sh), ship + release, tell Tj
+run the full floor, bump version (BUILDLOG/ship), CI, release v0.78.0, tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+    M  RESEARCH.md
 
 ## Last ten checkpoints
 ```
+  684a73b6 ckpt 2748: BA: long-run saver built (LongRunBids lean scan + 8 min far pace + far-last 
   41f46ab0 ckpt 2747: Finished the ten-sources rapid-feed research inline (RESEARCH.md §115, DO1-
   6ddff6df ckpt 2746: pre-release: v0.77.0: Pinnacle only removed entirely; Pinnodds live pregame 
   80dd594c ckpt 2745: pre-ship: v0.77.0: Pinnacle only removed entirely; Pinnodds live pregame ste
@@ -24,6 +26,3 @@ write RESEARCH.md §119 (analysis), run the full floor (bash tools/test.sh), shi
   df9febd3 ckpt 2742: pre-release: v0.76.3: Pinnodds live Stale orders trigger (ask still at Pinna
   828922f5 ckpt 2741: pre-ship: v0.76.3: Pinnodds live Stale orders trigger (ask still at Pinnacle
 ```
-
-(14 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
