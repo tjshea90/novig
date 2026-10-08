@@ -1,0 +1,6 @@
+frames by type {'snapshot': 13, 'subscribed': 13, 'live': 2975, 'ping': 2}
+live ops {'upd': 2975}
+live channels {'pre': 2050, 'ld': 367, 'dz': 79, 'both': 479}
+live frames per sport {3: 716, 2: 81, 5: 115, 4: 824, 1: 802, 6: 435, 11: 1, 10: 1}
+span 58.9s, 51.0 frames/s
+recv - frame.ts ms  n=2975 p50=32 p90=1567 p99=2027 max=2064

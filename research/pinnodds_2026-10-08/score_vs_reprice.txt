@@ -1,0 +1,3 @@
+score frame -> first Pinnacle moneyline price change: n=285  median 1973 ms  p25 993  p75 3564  p90 125435
+same frame (<= 50 ms): 11 of 285
+fair move within 10 s of a score: median 0.018  p75 0.059  max 0.351  (>= 1.5 pts in 128 of 241)

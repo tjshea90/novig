@@ -1,0 +1,68 @@
+### simulate --min-ev 0.03 --min-move 0.015
+tape: 0.87 h, 12 games
+THE RULE (move + EV): n=85  EV at decision +7.74%  same ask vs Pinnacle fair +30s +2.03% (n=85)  +120s +0.70% (n=85)  Pinnacle kept the move 39%  Novig followed by +120s 45%  median depth 60000
+  ... with a score change in the last 15 s: n=35  EV at decision +6.55%  same ask vs Pinnacle fair +30s +1.10% (n=35)  +120s +1.02% (n=35)  Pinnacle kept the move 37%  Novig followed by +120s 41%  median depth 52739
+  ... with no score change (a price move alone): n=50  EV at decision +8.57%  same ask vs Pinnacle fair +30s +2.69% (n=50)  +120s +0.48% (n=50)  Pinnacle kept the move 40%  Novig followed by +120s 48%  median depth 73484
+STANDING disagreements (EV, no recent move; one per quote): n=191  EV at decision +71.12%  same ask vs Pinnacle fair +30s +65.88% (n=191)  +120s +63.19% (n=191)  Pinnacle kept the move 51%  Novig followed by +120s 45%  median depth 72190
+the rule fires about 97.8 times an hour on this slate
+by league: {'NBA': 66, 'WNBA': 10, 'NCAAF': 7, 'NHL': 1, 'MLB': 1}
+  t=01:29:27 WNBA            NY ask 0.180 fair 0.275 EV +49.2% move +0.064 depth 500 -> fair+120s 0.107 ask+120s 0.105
+  t=01:00:06 WNBA            NY ask 0.275 fair 0.351 EV +24.9% move +0.025 depth 20000 -> fair+120s 0.202 ask+120s 0.205
+  t=01:28:14 WNBA            NY ask 0.240 fair 0.289 EV +17.9% move +0.066 depth 50500 -> fair+120s 0.097 ask+120s 0.085
+  t=01:26:18 NCAAF         KENN ask 0.775 fair 0.918 EV +17.6% move +0.141 depth 1558900 -> fair+120s 0.777 ask+120s 0.78
+  t=01:44:39 NBA            MEM ask 0.310 fair 0.367 EV +16.1% move +0.047 depth 289973 -> fair+120s 0.296 ask+120s 0.25
+  t=01:01:25 NBA            MEM ask 0.305 fair 0.357 EV +14.6% move +0.067 depth 4007 -> fair+120s 0.333 ask+120s 0.305
+  t=01:44:45 NBA            MEM ask 0.310 fair 0.362 EV +14.4% move +0.041 depth 289973 -> fair+120s 0.207 ask+120s 0.25
+  t=01:48:47 NBA            MEM ask 0.255 fair 0.297 EV +14.1% move +0.058 depth 303758 -> fair+120s 0.257 ask+120s 0.24
+
+### simulate --min-ev 0.05 --min-move 0.03
+tape: 0.87 h, 12 games
+THE RULE (move + EV): n=44  EV at decision +10.24%  same ask vs Pinnacle fair +30s +3.35% (n=44)  +120s +1.36% (n=44)  Pinnacle kept the move 34%  Novig followed by +120s 46%  median depth 51592
+  ... with a score change in the last 15 s: n=20  EV at decision +8.95%  same ask vs Pinnacle fair +30s +3.02% (n=20)  +120s +6.22% (n=20)  Pinnacle kept the move 40%  Novig followed by +120s 42%  median depth 17686
+  ... with no score change (a price move alone): n=24  EV at decision +11.30%  same ask vs Pinnacle fair +30s +3.62% (n=24)  +120s -2.69% (n=24)  Pinnacle kept the move 29%  Novig followed by +120s 50%  median depth 76063
+STANDING disagreements (EV, no recent move; one per quote): n=144  EV at decision +94.00%  same ask vs Pinnacle fair +30s +86.47% (n=144)  +120s +83.87% (n=144)  Pinnacle kept the move 49%  Novig followed by +120s 41%  median depth 69167
+the rule fires about 50.6 times an hour on this slate
+by league: {'NBA': 37, 'WNBA': 5, 'NHL': 1, 'NCAAF': 1}
+  t=01:29:27 WNBA            NY ask 0.180 fair 0.275 EV +49.2% move +0.064 depth 500 -> fair+120s 0.107 ask+120s 0.105
+  t=01:28:14 WNBA            NY ask 0.240 fair 0.289 EV +17.9% move +0.066 depth 50500 -> fair+120s 0.097 ask+120s 0.085
+  t=01:26:18 NCAAF         KENN ask 0.775 fair 0.918 EV +17.6% move +0.141 depth 1558900 -> fair+120s 0.777 ask+120s 0.78
+  t=01:44:39 NBA            MEM ask 0.310 fair 0.367 EV +16.1% move +0.047 depth 289973 -> fair+120s 0.296 ask+120s 0.25
+  t=01:01:25 NBA            MEM ask 0.305 fair 0.357 EV +14.6% move +0.067 depth 4007 -> fair+120s 0.333 ask+120s 0.305
+  t=01:44:45 NBA            MEM ask 0.310 fair 0.362 EV +14.4% move +0.041 depth 289973 -> fair+120s 0.207 ask+120s 0.25
+  t=01:48:47 NBA            MEM ask 0.255 fair 0.297 EV +14.1% move +0.058 depth 303758 -> fair+120s 0.257 ask+120s 0.24
+  t=01:47:17 NBA            CHI ask 0.280 fair 0.324 EV +13.2% move +0.044 depth 324922 -> fair+120s 0.32 ask+120s 0.3
+
+### simulate --min-ev 0.08 --min-move 0.03
+tape: 0.87 h, 12 games
+THE RULE (move + EV): n=25  EV at decision +13.99%  same ask vs Pinnacle fair +30s +6.50% (n=25)  +120s +0.64% (n=25)  Pinnacle kept the move 32%  Novig followed by +120s 45%  median depth 52739
+  ... with a score change in the last 15 s: n=11  EV at decision +12.69%  same ask vs Pinnacle fair +30s +6.93% (n=11)  +120s +4.16% (n=11)  Pinnacle kept the move 27%  Novig followed by +120s 30%  median depth 52739
+  ... with no score change (a price move alone): n=14  EV at decision +15.01%  same ask vs Pinnacle fair +30s +6.17% (n=14)  +120s -2.12% (n=14)  Pinnacle kept the move 36%  Novig followed by +120s 58%  median depth 51750
+STANDING disagreements (EV, no recent move; one per quote): n=106  EV at decision +126.68%  same ask vs Pinnacle fair +30s +118.16% (n=106)  +120s +114.22% (n=106)  Pinnacle kept the move 47%  Novig followed by +120s 36%  median depth 81394
+the rule fires about 28.8 times an hour on this slate
+by league: {'NBA': 21, 'WNBA': 3, 'NCAAF': 1}
+  t=01:29:27 WNBA            NY ask 0.180 fair 0.275 EV +49.2% move +0.064 depth 500 -> fair+120s 0.107 ask+120s 0.105
+  t=01:39:23 NBA            MEM ask 0.225 fair 0.279 EV +21.2% move +0.038 depth 3080 -> fair+120s 0.204 ask+120s 0.22
+  t=01:28:14 WNBA            NY ask 0.240 fair 0.289 EV +17.9% move +0.066 depth 50500 -> fair+120s 0.097 ask+120s 0.085
+  t=01:26:18 NCAAF         KENN ask 0.775 fair 0.918 EV +17.6% move +0.141 depth 1558900 -> fair+120s 0.777 ask+120s 0.78
+  t=01:44:39 NBA            MEM ask 0.310 fair 0.367 EV +16.1% move +0.047 depth 289973 -> fair+120s 0.296 ask+120s 0.25
+  t=01:01:25 NBA            MEM ask 0.305 fair 0.357 EV +14.6% move +0.067 depth 4007 -> fair+120s 0.333 ask+120s 0.305
+  t=01:44:45 NBA            MEM ask 0.310 fair 0.362 EV +14.4% move +0.041 depth 289973 -> fair+120s 0.207 ask+120s 0.25
+  t=01:48:47 NBA            MEM ask 0.255 fair 0.297 EV +14.1% move +0.058 depth 303758 -> fair+120s 0.257 ask+120s 0.24
+
+### simulate --min-ev 0.03 --min-move 0.03
+tape: 0.87 h, 12 games
+THE RULE (move + EV): n=71  EV at decision +7.67%  same ask vs Pinnacle fair +30s +2.76% (n=71)  +120s +2.16% (n=71)  Pinnacle kept the move 42%  Novig followed by +120s 48%  median depth 58139
+  ... with a score change in the last 15 s: n=31  EV at decision +6.67%  same ask vs Pinnacle fair +30s +3.10% (n=31)  +120s +3.49% (n=31)  Pinnacle kept the move 42%  Novig followed by +120s 43%  median depth 52739
+  ... with no score change (a price move alone): n=40  EV at decision +8.44%  same ask vs Pinnacle fair +30s +2.49% (n=40)  +120s +1.12% (n=40)  Pinnacle kept the move 42%  Novig followed by +120s 51%  median depth 61320
+STANDING disagreements (EV, no recent move; one per quote): n=204  EV at decision +67.11%  same ask vs Pinnacle fair +30s +61.49% (n=204)  +120s +58.56% (n=204)  Pinnacle kept the move 50%  Novig followed by +120s 43%  median depth 81394
+the rule fires about 81.7 times an hour on this slate
+by league: {'NBA': 60, 'WNBA': 7, 'NCAAF': 2, 'NHL': 1, 'MLB': 1}
+  t=01:29:27 WNBA            NY ask 0.180 fair 0.275 EV +49.2% move +0.064 depth 500 -> fair+120s 0.107 ask+120s 0.105
+  t=01:28:14 WNBA            NY ask 0.240 fair 0.289 EV +17.9% move +0.066 depth 50500 -> fair+120s 0.097 ask+120s 0.085
+  t=01:26:18 NCAAF         KENN ask 0.775 fair 0.918 EV +17.6% move +0.141 depth 1558900 -> fair+120s 0.777 ask+120s 0.78
+  t=01:44:39 NBA            MEM ask 0.310 fair 0.367 EV +16.1% move +0.047 depth 289973 -> fair+120s 0.296 ask+120s 0.25
+  t=01:01:25 NBA            MEM ask 0.305 fair 0.357 EV +14.6% move +0.067 depth 4007 -> fair+120s 0.333 ask+120s 0.305
+  t=01:44:45 NBA            MEM ask 0.310 fair 0.362 EV +14.4% move +0.041 depth 289973 -> fair+120s 0.207 ask+120s 0.25
+  t=01:48:47 NBA            MEM ask 0.255 fair 0.297 EV +14.1% move +0.058 depth 303758 -> fair+120s 0.257 ask+120s 0.24
+  t=01:47:17 NBA            CHI ask 0.280 fair 0.324 EV +13.2% move +0.044 depth 324922 -> fair+120s 0.32 ask+120s 0.3
+

@@ -1,0 +1,24 @@
+games matched 12; pinnacle series 1134; novig markets 107 (109 described); pinnacle score changes 892; closes/reopens 0
+novig reads 5085 over 52 min
+paired (read x outcome) rows: 8756
+
+[1] EV of taking Novig at its ask against Pinnacle power-devigged fair, fee in (rows = Novig reads x outcomes; fresh = Pinnacle changed <= 10 s before the read)
+  ev >=   0%:   2024 rows (23.1%), fresh   986, median depth    95000 contracts
+  ev >=   1%:   1526 rows (17.4%), fresh   701, median depth    96317 contracts
+  ev >=   2%:   1136 rows (13.0%), fresh   498, median depth   100000 contracts
+  ev >=   3%:    970 rows (11.1%), fresh   405, median depth   100000 contracts
+  ev >=   5%:    666 rows ( 7.6%), fresh   256, median depth    95000 contracts
+  ev >=  10%:    382 rows ( 4.4%), fresh    96, median depth    83484 contracts
+
+[2] by seconds since Pinnacle last changed that line: share of rows with ev >= 2%, and the median ev
+    0-   2s: n=   838  ev>=2%:  15.0%  median ev -3.834%
+    2-   5s: n=  1348  ev>=2%:  14.2%  median ev -3.784%
+    5-  10s: n=  1698  ev>=2%:  10.6%  median ev -3.495%
+   10-  20s: n=  2378  ev>=2%:   8.9%  median ev -3.749%
+   20-  60s: n=  1180  ev>=2%:  10.9%  median ev -7.923%
+   60-1000000000s: n=  1314  ev>=2%:  22.6%  median ev -20.313%
+
+[3] after a Pinnacle jump of >= 3 fair points (moneyline): seconds until Novig's mid covers 50% / 90% of the gap
+  jumps with a novig gap >= 2 points: 101; novig covered 50% within 120 s in 74, 90% in 57
+  t50: median 6.6s  p25 4.1s  p75 15.3s
+  t90: median 12.5s
