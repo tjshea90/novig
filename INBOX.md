@@ -5606,3 +5606,8 @@ Research if it is normal to get a lot of unavailable errors on parlayapi and how
 
 Research how to best take advantage of my Pinnacle websocket and novig websocket to make profit
 ```
+
+## 2026-10-08T21:04:34Z
+```
+@"/root/.claude/uploads/f36ef45c-e072-599a-a9c9-b91ee94fe110/ae7523fa-vigilant-burst-study-v0.78.0-2026-10-08-1703.txt" @"/root/.claude/uploads/f36ef45c-e072-599a-a9c9-b91ee94fe110/c11ecebb-vigilant-diagnostics-v0.78.0-2026-10-08-1702.txt" @"/root/.claude/uploads/f36ef45c-e072-599a-a9c9-b91ee94fe110/9a375340-vigilant-feed-race-v0.78.0-2026-10-08-2103.txt" @"/root/.claude/uploads/f36ef45c-e072-599a-a9c9-b91ee94fe110/07070eb7-vigilant-scan-study-v0.78.0-2026-10-08-1703.txt" 
+```
