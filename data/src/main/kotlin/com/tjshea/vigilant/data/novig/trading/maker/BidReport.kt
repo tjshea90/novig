@@ -172,6 +172,7 @@ object BidReport {
         }
         // Small-market bids are counted from the first one posted, before any fill ([rows] split by fill only once there are fills).
         if (rows.any { it.obscure }) out += "small-market bids (Quick & likely's fill of idle money): ${rows.count { it.obscure }} posted, ${rows.count { it.obscure && it.filled > 0 }} filled"
+        out += funnel(rows)
         if (filled.isEmpty()) return out
         val all = Agg().also { a -> filled.forEach(a::add) }
         out += all.line("ALL FILLS")
@@ -223,6 +224,55 @@ object BidReport {
         }
         split("league", null) { it.league }
         return out
+    }
+
+    /**
+     * Every bid posted, filled or not, split three ways (RESEARCH.md §119.2; Tj, 2026-10-08: "see if it is profitable to auto bid games that are 12+ hours away"): by the time to the
+     * start when posted, by side (Over / Under) and by league. Each line: how many bids went up, the bid-hours they rested, the fills, the fills per 100 bid-hours (the rate a fill
+     * costs in time, which is what a wallet that can only hold so many bids spends) and the CLV of the fills that have a close. The splits of fills alone can't say whether a
+     * group fills rarely or was just posted rarely; this one can. Empty when nothing rested.
+     */
+    fun funnel(rows: List<Row>): List<String> {
+        val posted = rows.filter { it.restedMin != null }
+        if (posted.isEmpty()) return emptyList()
+        val out = ArrayList<String>()
+        fun split(title: String, order: List<String>?, key: (Row) -> String?) {
+            val groups = LinkedHashMap<String, MutableList<Row>>()
+            for (r in posted) key(r)?.let { groups.getOrPut(it) { ArrayList() } += r }
+            if (groups.isEmpty()) return
+            out += "-- every bid posted, by $title (bid-hours = time the bids rested) --"
+            val sorted = if (order != null) groups.entries.sortedBy { order.indexOf(it.key).let { i -> if (i < 0) Int.MAX_VALUE else i } } else groups.entries.sortedByDescending { it.value.size }
+            for ((label, g) in sorted) {
+                val hours = g.sumOf { it.restedMin ?: 0.0 } / 60.0
+                val fills = g.count { it.filled > 0 }
+                val clv = g.filter { it.filled > 0 }.mapNotNull { it.clv }
+                out += "   $label: ${g.size} posted · ${String.format(Locale.US, "%.1f", hours)} bid-hours · $fills filled · " +
+                    (if (hours >= 1.0) "${String.format(Locale.US, "%.1f", 100.0 * fills / hours)} fills per 100 bid-hours" else "under 1 bid-hour") +
+                    " · " + (if (clv.isNotEmpty()) "CLV ${pct(clv.average())} (${clv.size} close${if (clv.size == 1) "" else "s"})" else "CLV: no close yet")
+            }
+        }
+        split("time to the start when posted", START_ORDER) { startBand(it.minToStartAtPost) }
+        split("side", null) { sideOf(it.selection) }
+        split("league", null) { it.league }
+        return out
+    }
+
+    private val START_ORDER = listOf("under 2 h", "2-6 h", "6-12 h", "12-24 h", "24 h or more")
+
+    /** The finer bands of the funnel: the 12 h line is the one Tj asked about. */
+    fun startBand(minutes: Long): String = when {
+        minutes < 120 -> "under 2 h"
+        minutes < 360 -> "2-6 h"
+        minutes < 720 -> "6-12 h"
+        minutes < 1440 -> "12-24 h"
+        else -> "24 h or more"
+    }
+
+    /** "Over", "Under", or "other" (a moneyline, a spread, a yes/no prop) from a selection's text. */
+    fun sideOf(selection: String): String = when {
+        Regex("\\bUnder\\b", RegexOption.IGNORE_CASE).containsMatchIn(selection) -> "Under"
+        Regex("\\bOver\\b", RegexOption.IGNORE_CASE).containsMatchIn(selection) -> "Over"
+        else -> "other"
     }
 
     /** The newest [limit] fills as one line each, for Diagnostics: when, what, how fast, the price and fairs, the EV then and at the fill, the close and the result. */
