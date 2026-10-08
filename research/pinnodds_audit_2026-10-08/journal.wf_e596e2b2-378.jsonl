@@ -23,3 +23,9 @@
 {"type":"started","key":"v2:[key redacted …2441]","agentId":"ac17eff558c1f2995","label":"verify:ev-fee-math:0:1","phase":"Verify"}
 {"type":"failed","key":"v2:[key redacted …379e]","agentId":"a9643c3673cfd9fa3"}
 {"type":"started","key":"v2:[key redacted …2a45]","agentId":"aa760dbfcde5e80f7","label":"verify:ev-fee-math:1:0","phase":"Verify"}
+{"type":"failed","key":"v2:[key redacted …2441]","agentId":"ac17eff558c1f2995"}
+{"type":"started","key":"v2:[key redacted …3147]","agentId":"ad484d69e5277eb5b","label":"verify:ev-fee-math:1:1","phase":"Verify"}
+{"type":"failed","key":"v2:[key redacted …2a45]","agentId":"aa760dbfcde5e80f7"}
+{"type":"failed","key":"v2:[key redacted …3147]","agentId":"ad484d69e5277eb5b"}
+{"type":"started","key":"v2:[key redacted …2d3f]","agentId":"a1b0fcc8438e303e9","label":"synthesize","phase":"Synthesize"}
+{"type":"failed","key":"v2:[key redacted …2d3f]","agentId":"a1b0fcc8438e303e9"}

@@ -18,5 +18,7 @@ IN FLIGHT when last saved (partial/<label>.md has what each had read):
 - verify:ev-fee-math:0:0
 - verify:ev-fee-math:0:1
 - verify:ev-fee-math:1:0
+- verify:ev-fee-math:1:1
+- synthesize
 
 RESUME: see RESUME.md in this folder (a new session, any account: `python3 tools/research/rapid_resume.py` prints the Workflow args).
