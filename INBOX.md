@@ -5441,3 +5441,8 @@ the goal is to make full use of novig api and pinnodds API to find positive EV a
 this will require a setting for me to input the pinnodds API key and a button to test the key. 
 you may do all testing of the pinnodds API needed using the key I provided to ensure correct usage and commands 
 ```
+
+## 2026-10-08T01:02:04Z
+```
+I'm not sure what you are doing with the three hour study, but I would like to use the feature soon, before the study
+```
