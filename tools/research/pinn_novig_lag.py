@@ -435,9 +435,95 @@ def pin_age_label(p):
     return p['t']
 
 
+def simulate(a):
+    """Replays the app's rule (LiveEdge) over a recorded tape: when would it have bet, and did Pinnacle keep the move?
+    Rule: Pinnacle's fair for the side rose >= min-move within 20 s, the price has sat >= 0.5 s, EV after Novig's fee >= min-ev at the ask, fair in [0.08, 0.92], overround <= 9%,
+    >= 20 contracts at the ask; one bet per Pinnacle change per outcome.  Then: Pinnacle's fair 30 s and 120 s later, and Novig's ask 30 s and 120 s later."""
+    import bisect
+    pin, nov, mkt, match, scores, closes = load(a.path)
+    fired = []; standing = []
+    for mid, obs in nov.items():
+        m = mkt.get(mid)
+        if not m: continue
+        series = pin_series(pin, m); sm = side_map(m)
+        if not series: continue
+        ts = [x['t'] for x in series]
+        obs = sorted(obs, key=lambda o: o['t'])
+        ot = [o['t'] for o in obs]
+        done = set()
+        for idx, o in enumerate(obs):
+            bb = o['bb']
+            if len(bb) != 2 or any(v is None for v in bb.values()): continue
+            k = bisect.bisect_right(ts, o['t']) - 1
+            if k < 0: continue
+            pr = series[k]
+            if o['t'] - pr['t'] < 500: continue
+            if pr['vig'] > 0.09: continue
+            if pr.get('lim') is not None and pr['lim'] < 100: continue
+            names = list(bb.keys())
+            for x in names:
+                side = sm.get(x)
+                if side not in pr['fairp']: continue
+                fair = pr['fairp'][side]
+                if not (0.08 <= fair <= 0.92): continue
+                other = [n for n in names if n != x][0]
+                ask = 1.0 - bb[other][0]; depth = bb[other][1]
+                if depth < 20: continue
+                ev = fair / (ask + fee_of(ask)) - 1.0
+                if ev < a.min_ev: continue
+                # Pinnacle's fair for the side 20 s before
+                k0 = bisect.bisect_right(ts, o['t'] - 20000) - 1
+                ref = series[max(0, k0)]
+                move = fair - ref['fairp'][side]
+                key = (mid, side, pr['t'])
+                rec = {'t': o['t'], 'mid': mid, 'league': match[m['pid']]['league'] if m['pid'] in match else '', 'sel': x, 'ask': ask, 'fair': fair, 'ev': ev, 'move': move, 'depth': depth}
+                for sec in (30, 120):
+                    kk = bisect.bisect_right(ts, o['t'] + sec * 1000) - 1
+                    if series[kk]['t'] + 0 < o['t'] - 1: kk = k
+                    later = series[kk]['fairp'].get(side)
+                    rec[f'fair{sec}'] = later
+                    j = bisect.bisect_left(ot, o['t'] + sec * 1000)
+                    if j < len(obs) and obs[j]['bb'].get(other) is not None:
+                        rec[f'ask{sec}'] = 1.0 - obs[j]['bb'][other][0]
+                    else:
+                        rec[f'ask{sec}'] = None
+                if move >= a.min_move:
+                    if key in done: continue
+                    done.add(key); fired.append(rec)
+                else:
+                    if (mid, side, 'standing') in done and o['t'] - 0 < 0: continue
+                    standing.append(rec)
+    def summ(name, l):
+        if not l:
+            print(f'{name}: none'); return
+        def mean(xs): xs = [x for x in xs if x is not None]; return sum(xs) / len(xs) if xs else None
+        n = len(l)
+        ev30 = [r['fair30'] / (r['ask'] + fee_of(r['ask'])) - 1 for r in l if r['fair30']]
+        ev120 = [r['fair120'] / (r['ask'] + fee_of(r['ask'])) - 1 for r in l if r['fair120']]
+        held = [r['fair120'] >= r['fair'] - 0.01 for r in l if r['fair120']]
+        fol = [r['ask120'] > r['ask'] + 0.004 for r in l if r['ask120'] is not None]
+        f = lambda x: 'n/a' if x is None else f'{x:+.2%}'
+        print(f'{name}: n={n}  EV at decision {mean([r["ev"] for r in l]):+.2%}  same ask vs Pinnacle fair +30s {f(mean(ev30))} (n={len(ev30)})  +120s {f(mean(ev120))} (n={len(ev120)})  Pinnacle kept the move {sum(held)/len(held) if held else float("nan"):.0%}  Novig followed by +120s {sum(fol)/len(fol) if fol else float("nan"):.0%}  median depth {statistics.median([r["depth"] for r in l]):.0f}')
+    span = [o['t'] for v in nov.values() for o in v]
+    hours = (max(span) - min(span)) / 3.6e6 if span else 0
+    print(f'tape: {hours:.2f} h, {len(match)} games')
+    summ('THE RULE (move + EV)', fired)
+    # collapse the "standing" rows to one per (market, side, pinnacle change) so repeated reads of the same quote are not counted many times
+    uniq = {}
+    for r in standing: uniq.setdefault((r['mid'], r['sel'], round(r['fair'], 3)), r)
+    summ('STANDING disagreements (EV, no recent move; one per quote)', list(uniq.values()))
+    if fired:
+        print(f'the rule fires about {len(fired)/hours:.1f} times an hour on this slate' if hours else '')
+        bl = collections.Counter(r['league'] for r in fired)
+        print('by league:', dict(bl.most_common(6)))
+        for r in sorted(fired, key=lambda r: -r['ev'])[:8]:
+            print(f"  t={time.strftime('%H:%M:%S', time.gmtime(r['t']/1000))} {r['league']:5s} {r['sel']:>12s} ask {r['ask']:.3f} fair {r['fair']:.3f} EV {r['ev']:+.1%} move {r['move']:+.3f} depth {r['depth']:.0f} -> fair+120s {r['fair120'] if r['fair120'] is None else round(r['fair120'],3)} ask+120s {r['ask120'] if r['ask120'] is None else round(r['ask120'],3)}")
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(); sp = ap.add_subparsers(dest='cmd', required=True)
     r = sp.add_parser('record'); r.add_argument('--out', required=True); r.add_argument('--minutes', type=float, default=60); r.add_argument('--leagues', default=LEAGUES)
     z = sp.add_parser('analyze'); z.add_argument('path'); z.add_argument('--min-ev', type=float, default=0.01)
+    y = sp.add_parser('simulate'); y.add_argument('path'); y.add_argument('--min-ev', type=float, default=0.03); y.add_argument('--min-move', type=float, default=0.015)
     a = ap.parse_args()
-    record(a) if a.cmd == 'record' else analyze(a)
+    {'record': record, 'analyze': analyze, 'simulate': simulate}[a.cmd](a)
