@@ -245,7 +245,8 @@ class PinnBook(var method: DevigMethod = DevigMethod.WORST_CASE) {
         l.fair = order.zip(fairList).toMap()
         l.changedAtMs = nowMs
         l.history.addLast(PinnSnap(nowMs, l.fair))
-        while (l.history.size > HISTORY_MAX || (l.history.size > 1 && nowMs - l.history.first().atMs > HISTORY_MS)) l.history.removeFirst()
+        val keepMs = if (e.live) HISTORY_MS else PRE_HISTORY_MS
+        while (l.history.size > HISTORY_MAX || (l.history.size > 1 && nowMs - l.history.first().atMs > keepMs)) l.history.removeFirst()
         out += PinnChange(e.id, key, PinnChange.Kind.PRICE, nowMs)
     }
 
@@ -285,6 +286,9 @@ class PinnBook(var method: DevigMethod = DevigMethod.WORST_CASE) {
         const val GAMES_SUFFIX = " (Games)"
         const val HISTORY_MAX = 64
         const val HISTORY_MS = 120_000L
+
+        /** A prematch line moves slowly: its readings are kept 20 minutes, not 2. */
+        const val PRE_HISTORY_MS = 1_200_000L
 
         /** A Pinnacle American price as the probability it implies (vig in), or null for a price that can't be one. */
         fun impliedProbability(american: Double): Double? = when {

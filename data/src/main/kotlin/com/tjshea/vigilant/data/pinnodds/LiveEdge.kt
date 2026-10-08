@@ -30,6 +30,19 @@ data class LiveRules(
      * 100-800%. Applied to every trigger.
      */
     val maxEv: Double = 0.40,
+    /**
+     * Hold-off: no live bet for this long after the game's score changes (0 = off). Novig pauses live betting after a score (Tj, 2026-10-08), and an order sent into the pause finds
+     * nothing; the Diagnostics' "Orders by timing" says how long it lasts for this phone, and this is that number.
+     */
+    val holdoffMs: Long = 0L,
+    /** Pregame ("steam"): Pinnacle's prematch fair for the side must have risen by this much within [preMoveWindowMs]. Prematch moves are slow and the books have no score. */
+    val preMinMove: Double = 0.02,
+    val preMoveWindowMs: Long = 900_000L,
+    /** Pregame: Pinnacle's price must have sat still this long. */
+    val preSettleMs: Long = 3_000L,
+    /** Pregame: no bet in the last [preMinLeadMs] before the start (the book is about to go live and its quotes change) or more than [preMaxLeadMs] ahead (a far-off game's price is not settled). */
+    val preMinLeadMs: Long = 300_000L,
+    val preMaxLeadMs: Long = 6 * 3_600_000L,
     /** [LiveTrigger.STALE]: how near (probability) Novig's ask must sit to an EARLIER Pinnacle fair for the ask to count as an order left up from before the move. */
     val staleTolerance: Double = 0.015,
     /** Also act on prematch lines (Novig charges no fee before the game starts). */
@@ -86,6 +99,10 @@ object LiveSkip {
     const val NO_FAIR = "no fair price"
     const val NOT_STALE = "ask is not an old Pinnacle price"
     const val TOO_GOOD = "edge too large to be real (probable mismatch)"
+    const val HOLD_OFF = "held off: the score just changed"
+    const val NO_START = "no start time to judge a prematch bet by"
+    const val TOO_CLOSE = "game about to start"
+    const val TOO_FAR = "game too far off"
 }
 
 sealed interface LiveVerdict {
@@ -107,6 +124,39 @@ sealed interface LiveVerdict {
 }
 
 object LiveEdge {
+    /**
+     * A prematch bet ("steam"): Pinnacle's prematch fair for the side rose by [LiveRules.preMinMove] within [LiveRules.preMoveWindowMs], the game is between [LiveRules.preMinLeadMs] and
+     * [LiveRules.preMaxLeadMs] from its start, and Novig's ask is still at a price Pinnacle itself had BEFORE the move (an order left up: the only evidence that separates a stale quote
+     * from a wide book). Novig charges no taker fee before the game starts, so [fee] is not applied. Every other guard is the live one.
+     */
+    private fun pregame(event: PinnEvent, line: PinnLine, side: PinnSide, nowMs: Long, ladder: List<TakeLevel>, fee: MarketFee, rules: LiveRules): LiveVerdict {
+        if (event.startMs <= 0L) return LiveVerdict.Skip(LiveSkip.NO_START)
+        val lead = event.startMs - nowMs
+        if (lead < rules.preMinLeadMs) return LiveVerdict.Skip(LiveSkip.TOO_CLOSE)
+        if (lead > rules.preMaxLeadMs) return LiveVerdict.Skip(LiveSkip.TOO_FAR)
+        val stable = nowMs - line.changedAtMs
+        if (stable < rules.preSettleMs) return LiveVerdict.Skip(LiveSkip.SETTLING)
+        if (line.overround > rules.maxOverround) return LiveVerdict.Skip(LiveSkip.OVERROUND)
+        val limit = line.maxRisk
+        if (limit != null && limit < rules.minPinnLimit) return LiveVerdict.Skip(LiveSkip.LIMIT)
+        val fair = line.fair[side] ?: return LiveVerdict.Skip(LiveSkip.NO_FAIR)
+        if (fair < rules.minFair || fair > rules.maxFair) return LiveVerdict.Skip(LiveSkip.EXTREME)
+        val move = line.moveOver(side, rules.preMoveWindowMs, nowMs)
+        if (move == null || move < rules.preMinMove) return LiveVerdict.Skip(LiveSkip.NO_MOVE)
+        val levels = ladder.sortedBy { it.price }.filter { it.price > 0.0 && it.price < 1.0 && it.contracts > 0L }
+        val best = levels.firstOrNull() ?: return LiveVerdict.Skip(LiveSkip.NO_OFFER)
+        if (!staleAsk(line, side, best.price, fair, rules.copy(minMove = rules.preMinMove))) return LiveVerdict.Skip(LiveSkip.NOT_STALE)
+        val quote = EvMath.quote(fair, best.price, fee, false)
+        if (quote.evPercent < rules.minEv) return LiveVerdict.Skip(LiveSkip.EV)
+        if (quote.evPercent > rules.maxEv) return LiveVerdict.Skip(LiveSkip.TOO_GOOD)
+        val depth = EvMath.positiveDepth(levels, fair, fee, false, rules.minEv)
+        if (depth.contracts < rules.minContracts) return LiveVerdict.Skip(LiveSkip.THIN)
+        return LiveVerdict.Bet(
+            side = side, fair = fair, ask = best.price, fee = quote.fee, ev = quote.evPercent, move = move, stableMs = stable, overround = line.overround,
+            contracts = depth.contracts, limitPrice = depth.worstPrice ?: best.price,
+        )
+    }
+
     /** True when [ask] sits within the tolerance of a Pinnacle fair the line HAD earlier, and the fair has since risen by at least the minimum move: an order left up from before the move. */
     internal fun staleAsk(line: PinnLine, side: PinnSide, ask: Double, fair: Double, rules: LiveRules): Boolean =
         line.history.any { snap -> snap.fair[side]?.let { old -> abs(ask - old) <= rules.staleTolerance && fair - old >= rules.minMove } == true }
@@ -118,6 +168,8 @@ object LiveEdge {
     fun judge(event: PinnEvent, line: PinnLine, side: PinnSide, nowMs: Long, ladder: List<TakeLevel>, fee: MarketFee, novigLive: Boolean, rules: LiveRules): LiveVerdict {
         if (!line.open) return LiveVerdict.Skip(LiveSkip.CLOSED)
         if (!event.live && !rules.pregame) return LiveVerdict.Skip(LiveSkip.PREGAME)
+        if (!event.live) return pregame(event, line, side, nowMs, ladder, fee, rules)
+        if (rules.holdoffMs > 0 && event.scoreAtMs > 0 && nowMs - event.scoreAtMs < rules.holdoffMs) return LiveVerdict.Skip(LiveSkip.HOLD_OFF)
         if (event.live && nowMs < event.volatileUntilMs) return LiveVerdict.Skip(LiveSkip.VOLATILE)
         val stable = nowMs - line.changedAtMs
         if (stable < rules.settleMs) return LiveVerdict.Skip(LiveSkip.SETTLING)

@@ -216,7 +216,7 @@ class PinnLiveRunner(
         for (c in book.apply(obj, msg.atMs)) {
             when (c.kind) {
                 // Only a MAIN line's change arms a game: an alternate line moves constantly and is not what the targets are priced from.
-                PinnChange.Kind.PRICE -> if (book.events[c.eventId]?.lines?.get(c.key)?.alternate != true) armedUntil[c.eventId] = msg.atMs + cfg.rules.moveWindowMs + EXTRA_ARM_MS
+                PinnChange.Kind.PRICE -> if (book.events[c.eventId]?.lines?.get(c.key)?.alternate != true) armedUntil[c.eventId] = msg.atMs + (if (book.events[c.eventId]?.live == false) cfg.rules.preMoveWindowMs else cfg.rules.moveWindowMs) + EXTRA_ARM_MS
                 PinnChange.Kind.GONE -> { armedUntil.remove(c.eventId); targetsByEvent.remove(c.eventId)?.forEach { targetsByMarket.remove(it.market.marketId) } }
                 else -> {}
             }
