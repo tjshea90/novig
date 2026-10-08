@@ -5483,3 +5483,8 @@ Also it keeps saying halted an order had not ended. I don't know what this means
 ```
 Run the release
 ```
+
+## 2026-10-08T04:45:20Z
+```
+It is missing all the live bets. Consider other ways to profit from the Pinnacle Web socket, maybe stale live bets that people leave up which have the odds before a score 
+```
