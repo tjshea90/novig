@@ -2087,7 +2087,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }.getOrNull(),
             sgoReport = runCatching {
                 val keys = keysFor(ApiProvider.SPORTSGAMEODDS).size
-                if (keys == 0 && !_state.value.settings.sgoPro) null else buildList {
+                if (keys == 0 && !_state.value.settings.sgoPro) null else buildList<String> {
                     val st = _state.value.settings
                     add("switch ${if (st.sgoPro) "ON" else "off"} · $keys key${if (keys == 1) "" else "s"} · extra books ${if (st.sgoExtraBooks) "on" else "off"} · alternate lines ${if (st.sgoAltLines) "on" else "off"} · active now: ${c.sgoActive(st)}")
                     add("health: ${c.sgoClient.health()}")
