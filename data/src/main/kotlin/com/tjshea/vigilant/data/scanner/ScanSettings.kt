@@ -923,6 +923,8 @@ data class ScanSettings(
             if (useParlay && useBookProps) add("parlay_props")
             if (usePropLine) add("propline")
             if (usePropLine && useBookProps) add("propline_props")
+            // SGO Pro prices through its own two sources (SPORTSGAMEODDS_API.md §5); off, this set is exactly what it was.
+            if (sgoPro) { add("sgo"); if (useBookProps) add("sgo-props") }
         }
 
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }
