@@ -5834,3 +5834,8 @@ Confirm that research mode saves data even if the switch is toggled on and off
 ```
 The app is using a lot of my battery and mobile data. This isn't really a problem I just want to know if there is any way to outsource any of the processing and Internet bandwidth either free or cheap. For example  can GitHub do any of it
 ```
+
+## 2026-10-09T18:54:29Z
+```
+Where in the settings can I cache kalshi longer
+```
