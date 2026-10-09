@@ -1378,7 +1378,8 @@ class AppContainer(private val app: Application) {
      */
     fun referenceSources(settings: ScanSettings, background: Boolean = false, scan: Boolean = false): List<ReferenceSource> = when {
         // Low-usage bids narrow Vigilant's own scan only ([scan]): what prices Tj's open bets, the sharp-book confirmations and the rest read the usual feeds.
-        scan && settings.lowUsageNow -> lowUsageSources(settings, background)
+        // SportsGameOdds Pro has no per-call budget to save (unlimited events), so low-usage bids narrow nothing while it answers.
+        scan && settings.lowUsageNow && !sgoActive(settings) -> lowUsageSources(settings, background)
         else -> allReferenceSources(settings, background, scan)
     }
 
