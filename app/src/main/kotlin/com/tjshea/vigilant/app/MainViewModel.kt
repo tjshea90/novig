@@ -1867,7 +1867,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     status += LabText.note(c.lab.status.value, now)
                     val (up, filledOpen, posted) = c.bidLab.counts()
                     status += "paper bids: $posted posted so far, $up resting, $filledOpen filled and waiting for their close or result, ${c.bidLab.filled} fills"
-                    runCatching { status += "Pinnodds live: " + c.pinnRunner.status.value.let { "${it.socket}, ${it.matched} games matched, ${it.evaluations} evaluations, ${it.candidates} candidates" } }
+                    status += "Pinnodds: dormant (Tj, 2026-10-09)"
                     runCatching { status += "live feed test: " + FeedRaceText.note(c.feedRace.status.value, now) }
                     runCatching { status += "burst recorder: " + c.burst.status.value.let { "${if (it.running) "running" else "not running"}, ${it.games} games, ${it.windows} windows" } }
                     val file = DiagnosticsShare.writeResearch(app, com.tjshea.vigilant.data.novig.lab.LabExport.fileName(meta.versionName, now)) { w ->

@@ -1087,7 +1087,7 @@ class AppContainer(private val app: Application) {
     private fun pinnTradeRules(): com.tjshea.vigilant.data.pinnodds.LiveTradeRules {
         val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(false, false, 0.0, 0.0, 0.0, 0.0)
         return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(
-            enabled = AppBook.isNovig && (s.pinnLive || s.researchMode) && !s.killed, bet = s.pinnLive && s.pinnLiveBet,
+            enabled = AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS && s.pinnLive && !s.killed, bet = s.pinnLiveBet,
             stake = if (s.apiMaxStake > 0.0) minOf(s.pinnLiveStake, s.apiMaxStake) else s.pinnLiveStake,
             maxPerGame = s.pinnLiveMaxGame, maxPerDay = s.pinnLiveMaxDay, haltLoss = s.pinnLiveHaltLoss, halted = s.pinnLiveHalted,
         )
@@ -1160,7 +1160,7 @@ class AppContainer(private val app: Application) {
     /** Starts or stops the live engine to match [s]: on, a Pinnodds key saved, a Novig key connected, STOP ALL not pressed, the Novig app. Safe to call on every settings change. */
     suspend fun pinnTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        if (!(s.pinnLive || s.researchMode) || s.killed) {
+        if (com.tjshea.vigilant.data.scanner.Dormant.PINNODDS || !s.pinnLive || s.killed) {   // dormant (Tj, 2026-10-09): never opened
             if (pinnRunner.running) pinnRunner.stop(if (s.killed) "stopped by STOP ALL" else null)
             LiveFeedService.stop(app)
             return

@@ -9,10 +9,10 @@ import com.tjshea.vigilant.data.novig.lab.LabStatus
 object LabText {
     const val SWITCH_TITLE = "Paper lab: ladders, late-game tail, alternate lines"
     const val SWITCH_SUB = "While a game is live on Novig, reads its totals, spread and moneyline books and writes down (no order, ever) would-be bets: a cover across lines, a far strike the game has all but decided, and an alternate line priced under Pinnacle's. Graded from Novig's own settled markets."
-    const val HINT = "Research only. It needs live games (NFL, NCAAF, NBA, NHL, MLB); the Pinnodds feed adds the alternate-line check. Settings › Diagnostics has what it found."
+    const val HINT = "Research only. It needs live games (NFL, NCAAF, NBA, NHL, MLB). Settings › Diagnostics & about has what it found."
 
     const val RESEARCH_TITLE = "Research mode (turn everything on)"
-    const val RESEARCH_SUB = "One switch for every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bids, and Pinnodds live in paper mode (if a Pinnodds key is saved). Never turns on real-money betting."
+    const val RESEARCH_SUB = "One switch for every recorder that places nothing: the live feed test, the burst recorder, the paper lab and the paper bids. Never turns on real-money betting."
     const val RESEARCH_HINT = "Leave the app open (plugged in) through games, evenings and a few days of pregame, then tap the button and send the file."
     const val RESEARCH_BUTTON = "Share research file with Claude"
 

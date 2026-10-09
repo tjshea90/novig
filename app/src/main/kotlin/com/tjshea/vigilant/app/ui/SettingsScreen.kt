@@ -133,6 +133,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The floating widget and the picture-in-picture window. */
     WIDGET("Widget & mini window", "The small window that floats over other apps", SettingsGroup.SCREEN),
 
+    /** Research mode: one switch for every recorder that places nothing, the paper lab, and the one file to send Claude (Tj, 2026-10-09). */
+    RESEARCH("Research mode", "One switch for every recorder that places nothing, and the file to send Claude", SettingsGroup.DATA),
+
     /** Each feed's usage meter, and the keys backup. */
     USAGE("API usage & keys", "Credits left on each feed, and a backup of your keys", SettingsGroup.DATA),
 
@@ -144,7 +147,8 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR, USAGE -> s.vigilantOn
-        ALERTS, PINNODDS -> AppBook.isNovig
+        ALERTS, RESEARCH -> AppBook.isNovig
+        PINNODDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
     }
 
@@ -196,6 +200,7 @@ object SettingsSummary {
                 s.pinnLiveBet -> "On: real bets, ${com.tjshea.vigilant.app.PinnText.money(s.pinnLiveStake)} a bet"
                 else -> "On: paper only (nothing is sent)"
             }
+            SettingsPage.RESEARCH -> if (s.researchMode) "On: every recorder (nothing is bet)" else if (s.altLab) "Paper lab on" else "Off"
             SettingsPage.USAGE -> {
                 val keys = state.pinnwireKeys.size + state.pinnapiKeys.size + state.proplineKeys.size + state.parlayKeys.size + state.oddsApiKeys.size
                 if (keys == 0) "No feed keys saved" else "$keys feed key${if (keys == 1) "" else "s"} saved"
@@ -312,6 +317,7 @@ fun SettingsScreen(
                 SettingsPage.FAIR -> FairOddsTab(state, keys, onUpdate)
                 SettingsPage.BETTING -> BettingTab(state, onUpdate, onNovigConnect, onNovigTest, onNovigDisconnect, bettingActions, onOpenAutoBet)
                 SettingsPage.PINNODDS -> PinnLiveSection(state, keys, reportActions, onUpdate)
+                SettingsPage.RESEARCH -> ResearchPage(state, reportActions, onUpdate)
                 SettingsPage.USAGE -> UsageTab(state, keys)
                 SettingsPage.HELP -> ToolsTab(state, reportActions, onUpdate)
             }
@@ -1178,6 +1184,25 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
     }
 }
 
+/** Research: the master switch, the one file to send, and the paper lab (Tj, 2026-10-09: "I don't see the paper lab setting"). */
+@Composable
+private fun ColumnScope.ResearchPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    Intro("Leave the app open, plugged in, through the games; then tap the button and send Claude the file. Nothing here places an order.")
+    SectionTitle("Research mode")
+    Hint(com.tjshea.vigilant.app.LabText.RESEARCH_HINT)
+    SwitchRow(com.tjshea.vigilant.app.LabText.RESEARCH_TITLE, com.tjshea.vigilant.app.LabText.RESEARCH_SUB, state.settings.researchMode, tag = "researchSwitch") { v -> onUpdate { it.copy(researchMode = v) } }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+        androidx.compose.material3.Button(onClick = reportActions.onShareResearch, modifier = Modifier.testTag("shareResearch")) { Text(com.tjshea.vigilant.app.LabText.RESEARCH_BUTTON) }
+    }
+    val labShown by androidx.compose.runtime.rememberUpdatedState(reportActions.onFeedRaceShown)
+    androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { labShown(); kotlinx.coroutines.delay(5_000) } }
+    SectionTitle("Paper lab")
+    Hint(com.tjshea.vigilant.app.LabText.HINT)
+    SwitchRow(com.tjshea.vigilant.app.LabText.SWITCH_TITLE, com.tjshea.vigilant.app.LabText.SWITCH_SUB, state.settings.altLab, tag = "altLabSwitch") { v -> onUpdate { it.copy(altLab = v) } }
+    state.labNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("altLabNote")) }
+    Hint("The live burst recorder and the live feed test are on Diagnostics & about; Research mode switches them on too.")
+}
+
 /** Tools: Diagnostics, the grading check, About. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -1235,24 +1260,6 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
             androidx.compose.material3.Button(onClick = reportActions.onShareBurst, modifier = Modifier.testTag("shareBurstStudy")) { Text(com.tjshea.vigilant.app.BurstText.BUTTON) }
         }
-    }
-
-    // ---- Research mode (Tj, 2026-10-09): one switch for every recorder that places nothing, one button for one file ---------------------------------------------------
-    if (AppBook.isNovig) {
-        SectionTitle("Research mode")
-        Hint(com.tjshea.vigilant.app.LabText.RESEARCH_HINT)
-        SwitchRow(com.tjshea.vigilant.app.LabText.RESEARCH_TITLE, com.tjshea.vigilant.app.LabText.RESEARCH_SUB, state.settings.researchMode, tag = "researchSwitch") { v -> onUpdate { it.copy(researchMode = v) } }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
-            androidx.compose.material3.Button(onClick = reportActions.onShareResearch, modifier = Modifier.testTag("shareResearch")) { Text(com.tjshea.vigilant.app.LabText.RESEARCH_BUTTON) }
-        }
-    }
-
-    // ---- The paper lab (Tj, 2026-10-09): ladder covers, late-game tail strikes, alternate lines; no orders; RESEARCH.md §120.6 ------------------------------------------
-    if (AppBook.isNovig) {
-        SectionTitle("Paper lab")
-        Hint(com.tjshea.vigilant.app.LabText.HINT)
-        SwitchRow(com.tjshea.vigilant.app.LabText.SWITCH_TITLE, com.tjshea.vigilant.app.LabText.SWITCH_SUB, state.settings.altLab, tag = "altLabSwitch") { v -> onUpdate { it.copy(altLab = v) } }
-        state.labNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("altLabNote")) }
     }
 
     // ---- The live feed test (Tj, 2026-10-07): which free feed shows a score or an odds move before Novig's price; no orders; RESEARCH.md §106 ------------------------------
