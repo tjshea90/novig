@@ -4326,3 +4326,7 @@ Tj, 2026-10-09 (~04:30Z): "Make an ongoing rule permanent for this repo saved to
 ## SGO re-check (Tj, 2026-10-09 ~16:00Z: "Read the following sites and make sure the sportsgameodds feature is correctly set up and takes full advantage of all the features")
 - [x] SI1 Re-read docs/openapi/league/player-props/pinnacle/novig pages: OpenAPI unchanged; added bookmakerID filter (SGO-listed ids only), alternate PROP lines, closes' book filter, 504 chains, Test key timing of 5 query shapes + oddID-honored check (SPORTSGAMEODDS_API.md §8b). Tests: SgoClientTest.
 - [x] SI2 (DONE v0.83.2: Tj's sample shows oddID honored, oddID+bookmakerID+alternates fastest = the shape in use; SPORTSGAMEODDS_API.md §10) After Tj's sample: pick the fastest query shape from the Test key timing; confirm `oddID` is honored (else switch to `oddIDs`); confirm Pinnacle/Circa/bet365 appear on Pro and their lastUpdatedAt ages.
+
+## Bids keep posting all day on SGO (Tj, 2026-10-09 ~16:40Z: "Right now, the auto bid feature using sgo will post bids after I manually scan odds, then after a little while it takes the bids down. I want it to keep posting new bids all day in the background based on automatic scans every few minutes and fresh odds")
+- [ ] SJ1 Find why bids come down and no new ones follow: auto-scan not running / interval / SGO source in the auto-scan cycle / bid life vs fair age (Freshness) / MakerRunner stops.
+- [ ] SJ2 Fix so that with SGO Pro on, the background auto-scan re-reads SGO every few minutes and the bid desk re-posts from the fresh fair, all day; test; ship.
