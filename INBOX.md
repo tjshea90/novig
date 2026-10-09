@@ -5819,3 +5819,8 @@ https://ctrk.klclick.com/l/01M4GKMMDWVVRX40D9VAYTK9XC_0
 ```
 Right now, the auto bid feature using sgo will post bids after I manually scan odds, then after a little while it takes the bids down. I want it to keep posting new bids all day in the background based on automatic scans every few minutes and fresh odds
 ```
+
+## 2026-10-09T17:48:47Z
+```
+@"/root/.claude/uploads/f36ef45c-e072-599a-a9c9-b91ee94fe110/14cac566-vigilant-diagnostics-v0.83.4-2026-10-09-1347.txt" Make an option to turn all notifications off except notifications of actual money bet or bids filled. Make a notification feature that shows at all times in the notifications how many open bids there are. Make bids go up in smaller batches because they are getting rejected sometimes. Make sure the amount of time bids stay up is optimal, it seems like they are being taken down quickly and then there are stretches with no bids up at all. Review the screenshot and diagnostic file to see if anything needs to be changed
+```
