@@ -66,6 +66,7 @@ class SportsGameOddsClient(
             pages++
             out += page.events
             notice = page.notice ?: notice
+            if (page.notice != null) lastNotice = page.notice
             cursor = page.nextCursor?.takeIf { it.isNotBlank() } ?: break
         }
         return SgoPages(out, notice, pages)
@@ -91,6 +92,19 @@ class SportsGameOddsClient(
     @Volatile private var failures = 0
     @Volatile private var lastOkMs = 0L
 
+    /** Requests made, answers read and the last plan notice (Diagnostics). */
+    @Volatile var requests = 0
+        private set
+    @Volatile var lastNotice: String? = null
+        private set
+
+    /** What each source last read, by league (Diagnostics): games, markets, books, how old the prices were. */
+    val lastReads = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    /** One line for Diagnostics: is it answering, and how long ago. */
+    fun health(now: Long = clock()): String =
+        if (lastOkMs == 0L) "no answer yet" else if (down(now)) "DOWN (the replaced feeds are back)" else "answering (last good answer ${(now - lastOkMs) / 1000L}s ago, $requests requests)"
+
     /**
      * Whether SGO has stopped answering: two failures in a row and nothing good for [DOWN_AFTER_MS]. While it is down the feeds Vigilant stood down for SGO Pro (see `AppContainer.referenceSources`)
      * are asked again for the leagues SGO carries, so an outage costs no scan; one good answer ends it.
@@ -98,6 +112,7 @@ class SportsGameOddsClient(
     fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS
 
     private suspend fun get(path: String, params: List<Pair<String, String>>): String = try {
+        requests++
         getWithRetry(path, params).also { failures = 0; lastOkMs = clock() }
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e

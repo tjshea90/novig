@@ -34,6 +34,7 @@ class SgoGamesSource(private val client: SportsGameOddsClient, private val clock
         val events = pages.events
             .filter { settings.includeLive || (!it.started && !it.live) }
             .mapNotNull { SgoConvert.toRef(it, league.oddsApiSportKey, wanted, props = false) }
+        client.lastReads["games ${league.novigName}"] = describe(events, clock())
         return RefSnapshot(league.oddsApiSportKey, events, clock(), provider = ID)
     }
 
@@ -85,6 +86,7 @@ class SgoPropsSource(private val client: SportsGameOddsClient, private val clock
         val events = pages.events
             .filter { !it.started && !it.live }
             .mapNotNull { SgoConvert.toRef(it, league.oddsApiSportKey, wanted, props = true) }
+        client.lastReads["props ${league.novigName}"] = describe(events, clock())
         return RefSnapshot(league.oddsApiSportKey, events, clock(), provider = ID)
     }
 
@@ -100,3 +102,14 @@ class SgoPropsSource(private val client: SportsGameOddsClient, private val clock
         }
     }
 }
+
+/** "14 games, 3210 markets, 9 books, prices 12s to 4m old (median 41s)": what a read brought, for Diagnostics. */
+internal fun describe(events: List<RefEvent>, now: Long): String {
+    val markets = events.flatMap { it.markets }
+    val ages = markets.mapNotNull { m -> m.lastUpdateMs?.let { ((now - it) / 1000L).coerceAtLeast(0) } }.sorted()
+    val books = markets.map { it.bookKey }.toSet().size
+    val age = if (ages.isEmpty()) "no update times" else "prices ${fmtAge(ages.first())} to ${fmtAge(ages.last())} old (median ${fmtAge(ages[ages.size / 2])})"
+    return "${events.size} games, ${markets.size} markets, $books books, $age"
+}
+
+private fun fmtAge(s: Long) = if (s < 120) "${s}s" else if (s < 7200) "${s / 60}m" else "${s / 3600}h"

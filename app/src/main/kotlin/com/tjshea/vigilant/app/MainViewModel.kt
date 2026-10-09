@@ -2085,6 +2085,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     listOf(FeedRaceText.note(st, System.currentTimeMillis())) + r.lines()
                 }
             }.getOrNull(),
+            sgoReport = runCatching {
+                val keys = keysFor(ApiProvider.SPORTSGAMEODDS).size
+                if (keys == 0 && !_state.value.settings.sgoPro) null else buildList {
+                    val st = _state.value.settings
+                    add("switch ${if (st.sgoPro) "ON" else "off"} · $keys key${if (keys == 1) "" else "s"} · extra books ${if (st.sgoExtraBooks) "on" else "off"} · alternate lines ${if (st.sgoAltLines) "on" else "off"} · active now: ${c.sgoActive(st)}")
+                    add("health: ${c.sgoClient.health()}")
+                    c.sgoClient.lastNotice?.let { add("plan notice: $it") }
+                    c.sgoClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
+                    runCatching { c.sgoClient.usage()?.summary() }.getOrNull()?.let { add("limits now: $it") }
+                }
+            }.getOrNull(),
             labReport = runCatching {
                 val st = c.lab.status.value
                 val recs = c.lab.records()
