@@ -5868,3 +5868,18 @@ Make it so I'm sgo mode ( the sgo toggle on) it uses sgo to its full benefit but
 ```
 Confirm that pinnodds still works for the rest of the app. When I told you stop using pinnodds I meant I didn't want Claude to use the API because I was using it at that time and it only allows one connection. I still want to use it in the app
 ```
+
+## 2026-10-09T20:57:43Z
+```
+I will get a free trial of the next best api to test. Figure out which is the best api to test for a free trial that I don't already have. Then:
+
+Carefully research the full docs, specifically for what the free trial offers.
+
+Put a setting into vigilant for me to enter API keys for the new api, using the same logic and rotation methods as all the other API keys. 
+
+Do thorough research of the api's docs for the proper usage, commands, addresses, rates and limits, etc. for the free trial subscription. optimize it to take full advantage of the subscription, which is faster and has more usage than lower tiers. Make a toggle in vigilant settings to use this API. When this toggle is on, vigilant should take full advantage of the new API and all of its features, including but not limited to, current odds across sports books, the EV feature, live betting, fast speed on scanning odds, extra sports books, clv values and closing lines including clv for any non graded bets already in the app, historical odds and clv, current ev of my bets, grading bets as win and loss, real time odds for markets and props, and everything else the API offers that can speed up or benefit vigilant's accuracy and data. When the api's toggle is on, every feature and function in the vigilant app that can use it will use it to its full power, and redundant apis that do the same thing as it should be turned off to save their usage. Only use other apis at the same time as the sportsgamesodds pro toggle if they are free or significantly add to the data, speed, or accuracy of vigilant, such as pinnodds which can get fresh odds from Pinnacle. The goal is to make full use of the API across all parts of vigilant app that can use it  while saving other apis usage that are not needed while new api is toggled on. 
+
+Finally, make sure the new api function and toggle is separate from what the app already does, and preserve how the app already functions so that if the toggle is turned off, the app functions exactly the same as though the feature were never installed. Do tests on the finished app to make sure it works as designed without breaking anything else in the app. Do thorough testing and analyze that the new api feature in the app uses the full power of the  subscription in all parts of the vigilant app that can benefit from it. Double check all commands and usage methods that they are exactly to spec with the docs
+
+If you need anything from me, such as the api key or anything else, let me know. I will probably sign up for the free trial after my sgo free trial runs out. But I want the option to use it ready to go
+```
