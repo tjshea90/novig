@@ -30,7 +30,9 @@ time, not the truth). CLV = the last fair seen before the start / price - 1. ROI
 Do: (1) rank the recipes by fills per bid-hour x CLV and say which (margin, rest time, guard) to make the app's default; (2) check the slices (kind, side, hours to start, league, books behind the fair) for a pattern worth a rule;
 (3) check the live recipes: did the guard keep the edge? (4) check the paper lab's graded would-be bets: does any kind have a real edge after fees?; (5) say what to log next.
 Rules that stand: never loosen a limit or turn on real money without Tj's word; the repo is public (no keys); say 'the data suggests' on small samples; MIN 30 fills before calling a recipe better.
-The raw sections below are JSON lines: LAB RECORDS, LAB GRADES, BID LAB BIDS, BID LAB EVENTS (FILL/CANCEL/CLOSE/GRADE by bid id).
+The raw sections below are JSON lines: LAB RECORDS, LAB GRADES, BID LAB BIDS, BID LAB EVENTS (FILL/CANCEL/CLOSE/GRADE by bid id). The tables are from everything; a file from the GitHub lab
+keeps only the newest raw lines (the full journals, the EDGE LOG of every Novig price against the outside fair, the SGO TAPE of every book's refreshes and the SGO closing lines are beside it on the lab-data branch).
+Fair odds now come from SportsGameOdds Pro (82 books, each price with its own update time) where Tj has it on, otherwise from Vigilant's other feeds; the live recipes use SportsGameOdds' alternate lines, not Pinnodds (dormant).
 """
 
     /**
@@ -52,13 +54,13 @@ The raw sections below are JSON lines: LAB RECORDS, LAB GRADES, BID LAB BIDS, BI
         BidLabReport.lines(bids, events).forEach { w.appendLine(it) }
         w.appendLine()
         w.appendLine("== LAB RECORDS (JSON lines) ==")
-        records.forEach { w.appendLine(json.encodeToString(LabRecord.serializer(), it)) }
+        records.takeLast(rawLimit).forEach { w.appendLine(json.encodeToString(LabRecord.serializer(), it)) }
         w.appendLine("== LAB GRADES (JSON lines) ==")
-        grades.forEach { w.appendLine(json.encodeToString(LabGrade.serializer(), it)) }
+        grades.takeLast(rawLimit).forEach { w.appendLine(json.encodeToString(LabGrade.serializer(), it)) }
         w.appendLine("== BID LAB BIDS (JSON lines) ==")
-        bids.forEach { w.appendLine(json.encodeToString(BidLabBid.serializer(), it)) }
+        bids.takeLast(rawLimit).forEach { w.appendLine(json.encodeToString(BidLabBid.serializer(), it)) }
         w.appendLine("== BID LAB EVENTS (JSON lines) ==")
-        events.forEach { w.appendLine(json.encodeToString(BidLabEvent.serializer(), it)) }
+        events.takeLast(rawLimit).forEach { w.appendLine(json.encodeToString(BidLabEvent.serializer(), it)) }
         w.appendLine("== END OF FILE ==")
     }
 }

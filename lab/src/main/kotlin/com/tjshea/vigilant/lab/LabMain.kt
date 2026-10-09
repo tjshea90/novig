@@ -158,11 +158,11 @@ fun main(args: Array<String>) = runBlocking {
         if (keys.isNotEmpty()) addAll(tape.report()) else add("SportsGameOdds: no key this run")
         addAll(notes.takeLast(40))
     }
-    val file = File(out, LabExport.fileName("github", now).replace("vigilant-research-", "github-lab-"))
+    val file = File(out, "github-lab-" + java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmm").withZone(java.time.ZoneOffset.UTC).format(Instant.ofEpochMilli(now)) + ".txt")
     file.bufferedWriter().use { w ->
         LabExport.write(
             w, LabExport.Meta("github-actions", "GitHub Actions (ubuntu), no phone", "GitHub lab · SportsGameOdds ${if (keys.isNotEmpty()) "ON (${keys.size} key${if (keys.size == 1) "" else "s"})" else "off"} · Novig public API only, no orders"),
-            status, labJ.readAll(), gradeJ.readAll(), bidJ.readAll(), eventJ.readAll(), now,
+            status, labJ.readAll(), gradeJ.readAll(), bidJ.readAll(), eventJ.readAll(), now, rawLimit = 20_000,
         )
     }
     note("report written: ${file.path}")

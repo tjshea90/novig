@@ -1,0 +1,112 @@
+name: Research lab (GitHub)
+
+# Tj, 2026-10-09: "copy as much of the research lab into GitHub as possible that can be accurately measured on GitHub without a phone". This runs Vigilant's OWN scanner, paper lab and paper bid lab
+# (the `lab` module, the same Kotlin code the phone runs) against public data: Novig's public API and trade tape, ESPN, Kalshi, Polymarket and, with the SGO_API_KEY secret, SportsGameOdds Pro.
+# It places NO order (the public Novig client only; no trading key exists here). Output goes to the `lab-data` branch (a single snapshot commit of the last 7 days, no history to grow):
+#   latest.txt            the newest report (same format as the phone's research file: tables, then the newest raw lines)
+#   state/*.jsonl         the small journals the next run restores, so paper bids and graded would-be bets carry across runs
+#   archive/<date>/*.gz   every run's full journals: the EDGE LOG, the SGO TAPE, the SGO CLOSES, paper bids and lab records
+# Send nothing: Claude reads the branch. Needs one repository secret: SGO_API_KEY (SportsGameOdds key; several may be comma-separated). Without it the lab still runs, on public data only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "How long to record (max 330)"
+        default: "330"
+      leagues:
+        description: "Novig league names, comma separated (default NFL,NCAAF,NBA,WNBA,NCAAB,NHL,MLB)"
+        default: ""
+  schedule:
+    # Every 6 hours: back to back (a run is 5.5 h), so the lab is on around the clock.
+    - cron: "11 0,6,12,18 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lab-record
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Restore the lab's state from the last run
+        id: prev
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: lab-data
+          path: data
+          fetch-depth: 1
+
+      - name: Put the state where the lab reads it
+        run: |
+          mkdir -p out/lab
+          if [ -d data/state ]; then cp data/state/*.jsonl out/lab/ 2>/dev/null || true; fi
+          ls out/lab | head -50 || true
+
+      - name: Record
+        env:
+          SGO_API_KEY: ${{ secrets.SGO_API_KEY }}
+          MINUTES: ${{ github.event.inputs.minutes || '330' }}
+          LEAGUES: ${{ github.event.inputs.leagues }}
+        run: |
+          ARGS="--minutes $MINUTES --out out"
+          if [ -n "$LEAGUES" ]; then ARGS="$ARGS --leagues $LEAGUES"; fi
+          ./gradlew :lab:run --no-daemon -q --args="$ARGS"
+
+      - name: Summary
+        if: always()
+        run: |
+          F=$(ls out/github-lab-*.txt 2>/dev/null | tail -1)
+          if [ -n "$F" ]; then
+            { echo '### Research lab'; echo '```'; sed -n '/== STATUS ==/,/== PAPER LAB/p' "$F" | head -60; sed -n '/== PAPER BIDS ==/,/== LAB RECORDS/p' "$F" | head -30; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lab-report
+          path: out/github-lab-*.txt
+          retention-days: 30
+
+      - name: Save to the lab-data branch
+        if: always()
+        run: |
+          set -e
+          D="$(date -u +%Y-%m-%d)"; T="$(date -u +%H%M)"
+          mkdir -p snap/state snap/archive
+          # keep the last 7 days of what was there
+          if [ -d data/archive ]; then cp -r data/archive/. snap/archive/ 2>/dev/null || true; fi
+          if [ -d data/state ]; then cp data/state/*.jsonl snap/state/ 2>/dev/null || true; fi
+          # this run
+          F=$(ls out/github-lab-*.txt 2>/dev/null | tail -1 || true)
+          if [ -n "$F" ]; then cp "$F" snap/latest.txt; fi
+          for p in lab lab-grade bidlab bidlab-event sgo-close; do cp out/lab/$p-*.jsonl snap/state/ 2>/dev/null || true; done
+          mkdir -p "snap/archive/$D"
+          for f in out/lab/*.jsonl; do [ -f "$f" ] && gzip -9 -c "$f" > "snap/archive/$D/$(basename "$f" .jsonl)-$T.jsonl.gz"; done
+          # prune: archives and state older than 7 days
+          find snap/archive -mindepth 1 -maxdepth 1 -type d -mtime +7 -exec rm -rf {} + 2>/dev/null || true
+          for d in snap/archive/*/; do n=$(basename "$d"); if [ "$n" \< "$(date -u -d '7 days ago' +%Y-%m-%d)" ]; then rm -rf "$d"; fi; done
+          find snap/state -name '*.jsonl' | while read -r f; do day=$(echo "$f" | grep -o '20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]' | tail -1); if [ -n "$day" ] && [ "$day" \< "$(date -u -d '7 days ago' +%Y-%m-%d)" ]; then rm -f "$f"; fi; done
+          cd snap
+          git init -q
+          git config user.name "lab-recorder"
+          git config user.email "actions@users.noreply.github.com"
+          git checkout -q --orphan lab-data
+          git add -A
+          git commit -q -m "research lab $D $T"
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git push -q -f origin lab-data
