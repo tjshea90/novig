@@ -33,7 +33,11 @@ Rules that stand: never loosen a limit or turn on real money without Tj's word; 
 The raw sections below are JSON lines: LAB RECORDS, LAB GRADES, BID LAB BIDS, BID LAB EVENTS (FILL/CANCEL/CLOSE/GRADE by bid id).
 """
 
-    fun write(w: Writer, meta: Meta, status: List<String>, records: List<LabRecord>, grades: List<LabGrade>, bids: List<BidLabBid>, events: List<BidLabEvent>, now: Long) {
+    /**
+     * [rawLimit]: the raw JSON sections keep the NEWEST this many lines each (the tables above them are always from everything given). The phone's file keeps all (default); the GitHub lab, which can
+     * run for days, caps it and keeps the full journals beside the report.
+     */
+    fun write(w: Writer, meta: Meta, status: List<String>, records: List<LabRecord>, grades: List<LabGrade>, bids: List<BidLabBid>, events: List<BidLabEvent>, now: Long, rawLimit: Int = Int.MAX_VALUE) {
         w.appendLine("VIGILANT RESEARCH FILE · version ${meta.versionName} · ${meta.device} · made ${Instant.ofEpochMilli(now)}")
         w.appendLine()
         w.appendLine(README)
