@@ -25,7 +25,7 @@ class SgoGamesSource(private val client: SportsGameOddsClient, private val clock
         val ids = oddIds(settings.families, SgoConvert.Sport.of(leagueId))
         if (ids.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
         val wanted = SgoBooks.wanted(settings.referenceBooks, settings.sgoExtraBooks)
-        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","))
+        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","), until(settings))
         val pages = readLeague(client, base, wanted, settings.sgoAltLines)
         val events = pages.events
             .filter { settings.includeLive || (!it.started && !it.live) }
@@ -33,6 +33,8 @@ class SgoGamesSource(private val client: SportsGameOddsClient, private val clock
         client.lastReads["games ${league.novigName}"] = describe(events, clock())
         return RefSnapshot(league.oddsApiSportKey, events, clock(), provider = ID)
     }
+
+    private fun until(settings: ScanSettings) = untilParam(settings, clock())
 
     companion object {
         const val ID = "sgo"
@@ -83,7 +85,7 @@ class SgoPropsSource(
         val ids = oddIds(sport)
         if (ids.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
         val wanted = SgoBooks.wanted(settings.referenceBooks, settings.sgoExtraBooks)
-        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","))
+        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","), until(settings))
         // Alternate prop lines too (SGO: "85+ sportsbooks compared side by side on every prop, including alternate lines"), lightest query first.
         val pages = readLeague(client, base, wanted, settings.sgoAltLines)
         val events = pages.events
@@ -154,3 +156,10 @@ internal suspend fun readLeague(client: SportsGameOddsClient, base: List<Pair<St
     }
     throw last ?: ReferenceException("SportsGameOdds: no query to try")
 }
+
+/**
+ * `startsBefore` for a scan: the scan window plus a day (loose kickoff times), in unix ms. Measured on Tj's key (2026-10-09): `oddsAvailable=true` alone returns the WHOLE future schedule (100 NFL events a
+ * page, weeks ahead, 6 pages deep); with the window it returns the 13 games that matter in one page, 349 KB instead of 1.1 MB a page.
+ */
+internal fun untilParam(settings: ScanSettings, now: Long): Pair<String, String> =
+    "startsBefore" to (com.tjshea.vigilant.data.scanner.Planner.horizon(settings, now) + 24 * 3_600_000L).toString()
