@@ -156,3 +156,4 @@ day that changes.
 | v0.82.0 | code 146 | 2026-10-09T07:42Z | v0.82.0: SportsGameOdds Pro (keys, switch, scan/bids/closes/grading, paid feeds rest, paper lab)
 | v0.83.0 | code 147 | 2026-10-09T08:20Z | v0.83.0: GitHub research lab, SGO spec fixes, SGO injuries/other books, toggle-off tests
 | v0.83.1 | code 148 | 2026-10-09T15:39Z | v0.83.1: SGO re-check against the docs (book filter, alternate props, closes filter, 504 chains, Test key timings)
+| v0.83.2 | code 149 | 2026-10-09T16:18Z | v0.83.2: SGO prices the scan, book ids, usage parser, paged reads
