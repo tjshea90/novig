@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tools/test.sh — run Gradle's tests and print a short summary instead of Gradle's whole log.
 #
-#   bash tools/test.sh                                   the floor: :engine:test :data:test :app:testDebugUnitTest
+#   bash tools/test.sh                                   the floor: :engine:test :data:test :lab:test :app:testDebugUnitTest
 #   bash tools/test.sh :data:test                        one module
 #   bash tools/test.sh :data:test --tests '*CnoChecksTest'
 #   bash tools/test.sh -Pscreenshots :app:testDebugUnitTest      PNGs of every screen in app/screenshots/
@@ -42,7 +42,7 @@ if [ -d "$ANDROID_HOME/platforms" ]; then
   # The floor is `test`, exactly what CI runs: every module's unit tests (app's are debug only).
   [ "$HAS_TASK" = 0 ] && ARGS=(test "${ARGS[@]}")
 else
-  [ "$HAS_TASK" = 0 ] && ARGS=(:engine:test :data:test :app:testDebugUnitTest "${ARGS[@]}")
+  [ "$HAS_TASK" = 0 ] && ARGS=(:engine:test :data:test :lab:test :app:testDebugUnitTest "${ARGS[@]}")
   KEPT=()
   DROPPED=0
   for a in "${ARGS[@]}"; do
