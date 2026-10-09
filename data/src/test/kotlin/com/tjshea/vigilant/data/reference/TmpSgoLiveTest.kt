@@ -19,7 +19,7 @@ class TmpSgoLiveTest {
         val key = System.getenv("SGO_KEY_TMP"); Assume.assumeTrue(key != null)
         val json = Json { ignoreUnknownKeys = true }
         val http = com.tjshea.vigilant.data.vigilantHttpClient()
-        val usage = UsageMeter(JsonFileStore(java.io.File.createTempFile("u", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }, json))
+        val usage = UsageMeter(JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }, json))
         val sgo = SportsGameOddsClient(http, KeyPool(QuotaPolicy.SGO, { listOf(key!!) }, usage), json)
         val games = SgoGamesSource(sgo)
         val nfl = Leagues.byNovigName("NFL")!!
