@@ -42,7 +42,7 @@ data class SgoOdd(
     val fairAmerican: Double?,
 )
 
-data class SgoPlayer(val id: String, val name: String)
+data class SgoPlayer(val id: String, val name: String, val status: String? = null, val statusDetails: String? = null)
 
 /** One game as SGO sends it, with the parts Vigilant reads. */
 data class SgoEvent(
@@ -98,7 +98,7 @@ object SgoParser {
         val players = o.obj("players")?.entries?.mapNotNull { (k, v) ->
             val p = v as? JsonObject ?: return@mapNotNull null
             val name = p.str("name") ?: listOfNotNull(p.str("firstName"), p.str("lastName")).joinToString(" ").takeIf { it.isNotBlank() } ?: return@mapNotNull null
-            k to SgoPlayer(p.str("playerID") ?: k, name)
+            k to SgoPlayer(p.str("playerID") ?: k, name, p.str("status"), p.str("statusDetails"))
         }?.toMap().orEmpty()
         // A game with no teams can't be matched to anything.
         if (name(home).isBlank() || name(away).isBlank()) return null

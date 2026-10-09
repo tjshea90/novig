@@ -64,7 +64,12 @@ class SgoGamesSource(private val client: SportsGameOddsClient, private val clock
  * over/under per player with its own update time. Props have no alternate lines asked for yet (heavy; SPORTSGAMEODDS_API.md §7). A prop SGO sends as a Yes/No (anytime touchdown) is read as
  * Over/Under 0.5, the way Novig lists it.
  */
-class SgoPropsSource(private val client: SportsGameOddsClient, private val clock: () -> Long = System::currentTimeMillis) : ReferenceSource {
+class SgoPropsSource(
+    private val client: SportsGameOddsClient,
+    private val clock: () -> Long = System::currentTimeMillis,
+    /** Where each player's injury status goes, free with every answer (SGO's `players.*.status`); the paid injury read of ParlayAPI is not made while SGO answers. */
+    private val injuries: InjuryIndex? = null,
+) : ReferenceSource {
     override val id = ID
     override val displayName = "SportsGameOdds props"
     override val metered = true
@@ -87,10 +92,28 @@ class SgoPropsSource(private val client: SportsGameOddsClient, private val clock
             .filter { !it.started && !it.live }
             .mapNotNull { SgoConvert.toRef(it, league.oddsApiSportKey, wanted, props = true) }
         client.lastReads["props ${league.novigName}"] = describe(events, clock())
+        injuries?.let { index -> record(index, league.oddsApiSportKey, pages.events.filter { !it.started && !it.live }) }
         return RefSnapshot(league.oddsApiSportKey, events, clock(), provider = ID)
     }
 
     companion object {
+        /** SGO's player statuses as the injury index reads them ([Injury.levelOf]); "active" and "probable" are not reports. */
+        fun injuryStatus(status: String?): String? = when (status?.trim()?.lowercase()) {
+            "ir" -> "Injured Reserve"
+            "out" -> "Out"
+            "suspended" -> "Suspended"
+            "doubtful" -> "Doubtful"
+            "questionable" -> "Questionable"
+            else -> null
+        }
+
+        /** Every player the answer names: the ones with a report are recorded, the rest are marked as having nothing to report (so nothing asks about them). */
+        fun record(index: InjuryIndex, sportKey: String, events: List<SgoEvent>) {
+            val all = events.flatMap { it.players.values }
+            val hurt = all.mapNotNull { p -> injuryStatus(p.status)?.let { Injury(p.name, it, comment = p.statusDetails) } }
+            index.record(sportKey, hurt, asked = all.map { it.name })
+        }
+
         const val ID = "sgo-props"
         const val REUSE_MS = 45_000L
 

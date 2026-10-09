@@ -393,7 +393,7 @@ class AppContainer(private val app: Application) {
      */
     val sgoClient = com.tjshea.vigilant.data.reference.SportsGameOddsClient(http, KeyPool(QuotaPolicy.SGO, { keyStore.current(ApiProvider.SPORTSGAMEODDS) }, usage), json)
     val sgoGames = com.tjshea.vigilant.data.reference.SgoGamesSource(sgoClient)
-    val sgoProps = com.tjshea.vigilant.data.reference.SgoPropsSource(sgoClient)
+    val sgoProps = com.tjshea.vigilant.data.reference.SgoPropsSource(sgoClient, injuries = injuries)
 
     /** SportsGameOdds Pro is on, a key is saved and it is answering: the scan, bids and open-bet pricing read it, and the feeds it replaces rest. */
     fun sgoActive(s: ScanSettings): Boolean = AppBook.isNovig && s.sgoPro && keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() && !sgoClient.down()
