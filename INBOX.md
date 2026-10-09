@@ -5679,3 +5679,8 @@ Stop using the pinnodds API
 ```
 Even the new version is crashing automatically as soon as I open it
 ```
+
+## 2026-10-09T04:37:35Z
+```
+The app is released but it still crashes when I open it
+```
