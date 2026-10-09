@@ -67,7 +67,10 @@ class OpCloses(
         val fkey = "${tournament.id}|${from / 3600}|${to / 3600}"
         val list = fixtures[fkey]?.takeIf { clock() - it.atMs < KEEP_MS }?.value
             ?: OpParser.fixtures(client.get("/fixtures", listOf("tournamentId" to tournament.id.toString(), "startTimeFrom" to from.toString(), "startTimeTo" to to.toString()))).also { fixtures[fkey] = Kept(clock(), it) }
-        val game = ParlayCloses.bestGame(m.home, m.away, b.startsTs, list.filter { f -> f.startMs?.let { abs(it - b.startsTs) <= GAP_MS } == true }, { it.p1 }, { it.p2 }, { it.startMs })
+        val near = list.filter { f -> f.startMs?.let { abs(it - b.startsTs) <= GAP_MS } == true }
+        // OddsPapi's participant 1 is not always the home team (its NFL example lists the visitor first): the game is looked for in either order.
+        val game = ParlayCloses.bestGame(m.home, m.away, b.startsTs, near, { it.p1 }, { it.p2 }, { it.startMs })
+            ?: ParlayCloses.bestGame(m.away, m.home, b.startsTs, near, { it.p1 }, { it.p2 }, { it.startMs })
             ?: return CloseLookup.None("Not in OddsPapi")
         if (!game.started && !game.finished) return CloseLookup.Later("The game has not started")
         val markets = feed.marketsFor(league)

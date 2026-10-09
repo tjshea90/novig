@@ -214,7 +214,9 @@ class OtherBooks(
     private suspend fun opLines(sport: String, pick: BetGrader.Pick.Prop, home: String, away: String, startsTs: Long?): List<Line> {
         val league = Leagues.ALL.firstOrNull { it.oddsApiSportKey == sport && OpBooks.supports(it) } ?: return emptyList()
         val events = op!!(league)
-        val game = gameOf(events.map { Triple(it.home, it.away, it.commenceMs) }, home, away, startsTs) ?: return emptyList()
+        // OddsPapi's participant 1 is not always the home team: the game is looked for in either order (a player's line is the same).
+        val listed = events.map { Triple(it.home, it.away, it.commenceMs) }
+        val game = gameOf(listed, home, away, startsTs) ?: gameOf(listed, away, home, startsTs) ?: return emptyList()
         val event = events.firstOrNull { sameGame(it.home, it.away, it.commenceMs, game) } ?: return emptyList()
         return event.markets.filter { m ->
             m.kind == LineKind.PLAYER_PROP && m.stat == pick.stat && m.line?.let { abs(it - pick.line) < 1e-6 } == true && m.subject?.let { PlayerNames.same(it, pick.player) } == true
