@@ -658,6 +658,10 @@ class AppContainer(private val app: Application) {
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s -> runCatching { feedRaceTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
         }
+        // SportsGameOdds Pro's closes and scores follow its switch (Tj, 2026-10-09).
+        appScope.launch {
+            settingsStore.flow.filterNotNull().collect { s -> runCatching { syncSgo(s.migrate()) } }
+        }
         // The paper lab follows its switch and STOP ALL (no orders; RESEARCH.md §120.6).
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s -> runCatching { labTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
