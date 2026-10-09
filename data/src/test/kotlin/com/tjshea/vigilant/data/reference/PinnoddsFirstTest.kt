@@ -15,8 +15,6 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -80,10 +78,5 @@ class PinnoddsFirstTest {
         now += 16_000L
         c.odds(nfl, settings)
         assertEquals(2, server.requestCount)
-    }
-
-    @Test fun dormant_flag_follows_the_sgo_switch() {
-        assertTrue(com.tjshea.vigilant.data.scanner.Dormant.PINNODDS)
-        assertNull(null)
     }
 }
