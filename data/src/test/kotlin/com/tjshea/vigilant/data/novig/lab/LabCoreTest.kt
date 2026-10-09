@@ -53,11 +53,11 @@ class LabCoreTest {
     }
 
     @Test
-    fun `a pair costing 99 cents pays before the game (no fee) and not in play (the fee is more than the cent)`() {
+    fun `a pair costing 98.5 cents pays before the game (no fee) and not in play (the fee is more than the cent)`() {
         val ladder = listOf(point("t1", 52.5, underBid = 550 to 1_000L), point("t2", 53.5, overBid = 540 to 1_000L))   // 0.45 + 0.46 = 0.91
         assertEquals(1, LadderScan.scan(ladder, live = false).single().covers.size)
-        val tight = listOf(point("t1", 52.5, underBid = 520 to 1_000L), point("t2", 53.5, overBid = 500 to 1_000L))   // 0.48 + 0.50 = 0.98
-        assertEquals("pregame: 2 cents clear of the fee-free floor", 1, LadderScan.scan(tight, live = false).single().covers.size)
+        val tight = listOf(point("t1", 52.5, underBid = 515 to 1_000L), point("t2", 53.5, overBid = 500 to 1_000L))   // 0.485 + 0.50 = 0.985
+        assertEquals("pregame: a cent and a half clear of the fee-free floor", 1, LadderScan.scan(tight, live = false).single().covers.size)
         assertEquals("in play: the fees (about 1.5 cents) take it under the floor", 0, LadderScan.scan(tight, live = true).single().covers.size)
     }
 
