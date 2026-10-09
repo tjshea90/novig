@@ -105,7 +105,7 @@ class OddsPapiFeed(private val client: OddsPapiClient, private val clock: () -> 
             if (wantProps) resolveNames(source)
             val sportKey = league.oddsApiSportKey
             val ref = OpConvert.toRef(source, markets, sportKey, wanted, now, names, games = true, props = wantProps, appKeyOf = appKeyOf) ?: continue
-            val g = ref.copy(markets = ref.markets.filter { it.kind != LineKind.PLAYER_PROP && allowed(it, settings) && (settings.opAltLines || deep.not() || true) })
+            val g = ref.copy(markets = ref.markets.filter { it.kind != LineKind.PLAYER_PROP && allowed(it, settings) })
             val p = ref.copy(markets = ref.markets.filter { it.kind == LineKind.PLAYER_PROP && allowed(it, settings) })
             if (g.markets.isNotEmpty()) games += g
             if (p.markets.isNotEmpty()) props += p
