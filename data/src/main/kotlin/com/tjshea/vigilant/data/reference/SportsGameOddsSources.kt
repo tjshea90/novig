@@ -39,7 +39,7 @@ class SgoGamesSource(private val client: SportsGameOddsClient, private val clock
      * then without the alternates, then without the book filter (SGO's errors page lists `includeAltLines` and `bookmakerID` among what makes a query time out: a 504 drops them in that order).
      */
     private suspend fun readLeague(base: List<Pair<String, String>>, wanted: Set<String>, alts: Boolean): SportsGameOddsClient.SgoPages {
-        val books = if (wanted.isEmpty()) emptyList() else listOf("bookmakerID" to wanted.sorted().joinToString(","))
+        val books = SgoBooks.filter(wanted).let { if (it.isEmpty()) emptyList() else listOf("bookmakerID" to it) }
         val attempts = buildList {
             add(base + books + (if (alts) listOf("includeAltLines" to "true") else emptyList()))
             if (alts) add(base + books)
@@ -106,7 +106,7 @@ class SgoPropsSource(
         val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","))
         // The book filter first (small replies), the full book list if SGO times out on it.
         val pages = try {
-            client.eventsAll(if (wanted.isEmpty()) base else base + ("bookmakerID" to wanted.sorted().joinToString(",")))
+            client.eventsAll(SgoBooks.filter(wanted).let { f -> if (f.isEmpty()) base else base + ("bookmakerID" to f) })
         } catch (e: SgoTooHeavyException) {
             client.eventsAll(base)
         }

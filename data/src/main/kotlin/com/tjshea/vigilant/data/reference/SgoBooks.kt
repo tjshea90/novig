@@ -39,6 +39,19 @@ object SgoBooks {
     fun wanted(referenceBooks: List<String>, extra: Boolean): Set<String> =
         (referenceBooks.map { sgoId(it) } + (if (extra) EXTRA else emptyList())).filter { it !in EXCLUDED }.toSet()
 
+    /** Every bookmakerID SGO's docs list (data-types/bookmakers, checked 2026-10-09): the only ones sent in a `bookmakerID` filter, so a book SGO does not carry (Hard Rock) can never turn a request into a 400. */
+    val KNOWN = setOf(
+        "1xbet", "888sport", "ballybet", "barstool", "bet365", "betanysports", "betclic", "betfairexchange", "betfairsportsbook", "betfred", "betmgm", "betonline", "betparx", "betrivers", "betrsportsbook",
+        "betsafe", "betsson", "betus", "betvictor", "betway", "bluebet", "bodog", "bookmakereu", "boombet", "bovada", "boylesports", "caesars", "casumo", "circa", "coolbet", "coral", "draftkings", "espnbet",
+        "everygame", "fanatics", "fanduel", "fliff", "fourwinds", "foxbet", "grosvenor", "gtbets", "hotstreak", "kalshi", "ladbrokes", "leovegas", "livescorebet", "lowvig", "marathonbet", "matchbook",
+        "mrgreen", "mybookie", "neds", "nordicbet", "northstarbets", "novig", "paddypower", "parlayplay", "pinnacle", "playup", "pointsbet", "polymarket", "primesports", "prizepicks", "prophetexchange", "si",
+        "skybet", "sleeper", "sportsbet", "sportsbetting_ag", "sporttrade", "stake", "sugarhouse", "superbook", "suprabets", "tab", "tabtouch", "thescorebet", "tipico", "topsport", "underdog", "unibet",
+        "virginbet", "williamhill", "windcreek", "wynnbet",
+    )
+
+    /** The `bookmakerID` filter for a request: [wanted] books SGO lists, sorted; empty = no filter (ask for every book). */
+    fun filter(wanted: Set<String>): String = wanted.filter { it in KNOWN }.sorted().joinToString(",")
+
     /** SGO's leagueID for a Vigilant league, or null when SGO has no usable feed for it here (tennis, soccer: other feeds keep those). */
     fun leagueId(league: League): String? = LEAGUES[league.novigName]
 
