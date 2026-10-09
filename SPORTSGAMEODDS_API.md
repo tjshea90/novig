@@ -75,3 +75,45 @@ stricter); they are logged for comparison only.
 3. Whether Novig-as-a-book is on the Pro plan (the books list says yes) and how stale it is: useful as a cross-check, never a fair source.
 4. Pro-plan object/request headroom in practice, and `notice` text when something is filtered.
 5. The price: $299 or $499 for Pro (the pages disagree).
+
+## 8. Spec audit (2026-10-09, v0.83.0): every request Vigilant makes, against the docs
+Source of truth: `openapi.json` (parameters), the errors / rate-limit / best-practices / data-batches / consensus-odds pages. Where two doc pages disagree the OpenAPI wins (marked ⚠).
+| Call | What Vigilant sends | Spec check |
+|---|---|---|
+| Auth | header `x-api-key: <key>` (never the URL) | ✓ cheat-sheet/setup: header or `apiKey` query; header chosen so keys never reach a log or URL |
+| Games scan | `GET /v2/events?leagueID=NFL&oddsAvailable=true&limit=100&oddID=<list>[&includeAltLines=true]` | ✓ all four are OpenAPI params; `oddID` (singular, comma list) per OpenAPI ⚠ (the response-speed page says `oddIDs`, the OpenAPI/cheat-sheet say `oddID`); ✓ filtering by `oddID` is SGO's own speed advice; ✓ `limit` 100 ≤ the 25-100 events cap and < 300; `includeAltLines` is on SGO's slow list, so a 504 retries without it |
+| Props scan | same with `oddID=<stat>-PLAYER_ID-game-ou-over,...-under` (+ `-yn-yes/no` for touchdowns, double-doubles, home runs) | ✓ `PLAYER_ID` wildcard is documented (response-speed page); both sides listed explicitly so `includeOpposingOdds` is not needed |
+| Paging | `cursor=<nextCursor>` unchanged, all other params repeated; stops at `nextCursor` null, at most 6 pages | ✓ data-batches page |
+| Closes (CLV) | `leagueID`, `startsAfter=<unix ms>`, `startsBefore=<unix ms>`, `includeOpenCloseOdds=true`, `oddID=<list>` | ✓ date params accept ISO or unix ms (errors page); ✓ `includeOpenCloseOdds` gives `closeOdds/closeSpread/closeOverUnder` per book; ⚠ `startsAfter/Before` + many params are on SGO's slow list → on 504 the `oddID` filter is dropped and it is asked again |
+| Scores | `startsAfter/startsBefore` for an Eastern day, `oddID=points-home-game-ml-home` (smallest reply); a box score by `eventID=<id>&expandResults=true` | ✓ `eventID` alone is the fastest query (best-practices); `expandResults` is an OpenAPI param; ✓ `teams.*.score` and `status.finalized` per the schema |
+| Other books on a tapped prop | `leagueID`, window of ±6 h, `oddID=<stat>-PLAYER_ID-game-ou-over,..-under`, `includeAltLines=true` | ✓ as above |
+| Key test | `GET /v2/account/usage`, then `GET /v2/events?leagueID=..&oddsAvailable=true&limit=2&includeAltLines=true&includeOpenCloseOdds=true` | ✓ `/account/usage` returns `rateLimits.<interval>.{maxRequestsPerInterval,maxEntitiesPerInterval,currentIntervalRequests,currentIntervalEntities,currentIntervalEndTime}` |
+| Errors | 401 key refused (rotate to the next key); **403 is that call's failure only** (plan/feature: stream is All-Star); 429 key rests 60 s (docs: "wait up to a minute") or until `Retry-After`; 500/503/non-JSON/no-`success` body → ONE retry after 2-5 s, no loop; 504 → lighter query once | ✓ errors page, rate-limit page |
+| Rate | calls spaced 220 ms (≤ 272/min of the Pro 300); the meter also caps 270/min per key; hourly/daily default caps (50k req, 300k objects per hour) are far above use | ✓ rate-limit page |
+| Polling | game lines reused 25 s, props 45 s, the lab's board 25 s; never faster than SGO refreshes ("polling faster than 30 s wastes quota") | ✓ best-practices "Polling Too Frequently" |
+| Not used | `/stream/events` (All-Star only), `fairOdds`/`bookOdds` as the fair line (Vigilant devigs each book itself), `deeplink`, `/teams /players /sports /leagues /stats /markets` (static; the schema is in this file) | — |
+
+### What "full power" covers (feature by feature, SGO on)
+| Vigilant feature | Reads SGO? | How |
+|---|---|---|
+| +EV scan (game lines, alternates, 1st-half/F5/first inning, team totals, props) | yes | `SgoGamesSource`, `SgoPropsSource` lead the source list |
+| Extra sportsbooks | yes | Circa, SuperBook, bet365 join the fair line (`sgoExtraBooks`) |
+| Live games | yes | `includeLive` honoured; ~30 s refresh; each price's own age gates it |
+| Bid desk (make orders) | yes | prices from the same scan; the bid desk's fair is SGO's |
+| Open-bet EV ("Check odds now", Tracker) | yes | `OpenBetPricer` uses `referenceSources` |
+| CLV / closing lines, incl. bets already in the Tracker, historical | yes | `SgoCloses` first (Pinnacle, then Circa), then ParlayAPI/ESPN/Novig trades only for what SGO lacked |
+| Grading win/loss | yes | `SgoScores` first (final only when `finalized`), ESPN/MLB behind; a prop's box score prefers the free feed |
+| Tapped bet's "other books" | yes | `OtherBooks` asks SGO alone (every book it carries, alternates included) |
+| Injury tags | yes | SGO `players.*.status` fills `InjuryIndex` free; ParlayAPI's paid injury read stands down |
+| Paper lab (live alternate lines) | yes | `SgoAltQuotes` replaces dormant Pinnodds |
+| GitHub lab | yes | `lab-record.yml` with the `SGO_API_KEY` secret: scan, paper bids, EDGE LOG, SGO TAPE, SGO closes |
+| Low-usage bids | stands down | SGO has no per-call budget to save |
+| ParlayAPI second opinion / its picks | no (taps only) | ParlayAPI-specific features, spent only when Tj taps them |
+| CrazyNinjaOdds, Kalshi, Polymarket, ESPN | unchanged | free or not replaceable |
+
+## 9. The GitHub lab (v0.83.0)
+`lab/` is a plain JVM program (`./gradlew :lab:run --args="--minutes 60 --out out"`) running Vigilant's own `Scanner`, `LabRecorder` and `BidLab` on public data; `.github/workflows/lab-record.yml` runs it every 6 hours (and on demand).
+Output on the `lab-data` branch: `latest.txt` (the phone's research-file format), `state/` (what the next run restores), `archive/<date>/*.gz` (every journal: `edge` = every Novig price against the outside fair on change; `sgo-tick` = every
+book's main-line price change with SGO's own update time; `sgo-close` = each book's price at the start; plus `lab`, `lab-grade`, `bidlab`, `bidlab-event`). Only one secret is needed: `SGO_API_KEY`. It places no order.
+What it measures that the phone cannot: how often SGO really refreshes each book and how old a price is when read (the SGO TAPE), around the clock including when the phone is off; what it cannot: your phone's network (Novig may treat a
+datacenter IP differently), your wallet and your own bids' queue position.
