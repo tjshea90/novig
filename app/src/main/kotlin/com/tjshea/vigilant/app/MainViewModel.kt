@@ -131,6 +131,7 @@ data class UiState(
     val proplineKeys: List<String> = emptyList(),
     val parlayKeys: List<String> = emptyList(),
     val pinnoddsKeys: List<String> = emptyList(),
+    val sgoKeys: List<String> = emptyList(),
     /** Every provider's usage ledger, updated after each call (the meters). */
     val usage: UsageBook = UsageBook(),
     val bets: List<TrackedBet> = emptyList(),
@@ -242,6 +243,7 @@ data class UiState(
         ApiProvider.PROPLINE -> proplineKeys
         ApiProvider.PARLAY -> parlayKeys
         ApiProvider.PINNODDS -> pinnoddsKeys
+        ApiProvider.SPORTSGAMEODDS -> sgoKeys
     }
 
     /** This state with [provider]'s keys replaced. */
@@ -252,6 +254,7 @@ data class UiState(
         ApiProvider.PROPLINE -> copy(proplineKeys = keys)
         ApiProvider.PARLAY -> copy(parlayKeys = keys)
         ApiProvider.PINNODDS -> copy(pinnoddsKeys = keys)
+        ApiProvider.SPORTSGAMEODDS -> copy(sgoKeys = keys)
     }
 
     /** Novig's live price for [row], when that setting is on and it was read in the last minute (never in Vigilant MGM). */
