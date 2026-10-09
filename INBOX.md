@@ -5655,3 +5655,8 @@ Also, look at these screenshots. This game is live. There seems to be wild discr
 
 Do strange odds like these offer any value? Maybe the app should analyze real time alternate odds at other books vs alternate odds live on novig such as alternate spreads and totals
 ```
+
+## 2026-10-09T02:17:55Z
+```
+Build all three. This app is in 100% research and development. Research any possible ways to profit using the novig api
+```
