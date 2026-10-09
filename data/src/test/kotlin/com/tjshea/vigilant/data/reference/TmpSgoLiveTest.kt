@@ -28,6 +28,10 @@ class TmpSgoLiveTest {
         println("TMP sgo events=${snap.events.size} markets=${snap.events.sumOf { it.markets.size }} books=${snap.events.flatMap { it.markets }.map { it.bookKey }.toSet()}")
         println("TMP sgo ages(s) median=" + snap.events.flatMap { it.markets }.mapNotNull { it.lastUpdateMs }.map { (snap.fetchedAtMs - it) / 1000 }.sorted().let { it[it.size / 2] })
         val novig = NovigPublicClient(http, json, usage = usage)
+        val nev = novig.events(setOf("NFL"), listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME, com.tjshea.vigilant.data.novig.NovigEvent.STATUS_LIVE))
+        println("TMP novig events=${nev.size}: " + nev.take(4).map { it.description + " @" + it.startsTs })
+        val m = com.tjshea.vigilant.data.scanner.Planner.matchEvents(nev, listOf(snap))
+        println("TMP matched=${m.count { it.refEvent != null }} of ${m.size}; sgo sample=" + snap.events.take(3).map { it.home + " v " + it.away + " @" + it.commenceMs })
         val rep = Scanner(novig).scan(s, listOf(games))
         val ops = rep.result?.games.orEmpty().flatMap { it.outcomes }
         println("TMP scan outcomes=${ops.size} withFair=${ops.count { it.fairProbability != null }} booksDist=${ops.filter { it.fair != null }.groupBy { it.fair!!.booksUsed.size }.mapValues { it.value.size }}")
