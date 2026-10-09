@@ -177,6 +177,7 @@ class Scanner(
     ): ScanReport = mutex.withLock {
         // The settings as the scan reads them ([ScanSettings.effective]): applied here, once.
         val settings = requested.effective(forBets = betsOnly)
+        Freshness.sgoMode = settings.sgoPro
         val sources = readable(offered, settings)
         this.pinned = pinned
         // What a bets-only pass fetched was asked for these bets' games alone: never re-used for the next pass's bets (a board that

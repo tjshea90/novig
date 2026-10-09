@@ -410,6 +410,7 @@ class AppContainer(private val app: Application) {
         val on = AppBook.isNovig && s.sgoPro
         sgoCloses.enabled = on
         sgoScores.enabled = on
+        com.tjshea.vigilant.data.scanner.Freshness.sgoMode = on
     }
 
     /** The free score feeds (ESPN, MLB): one instance, so its per-day and box-score caches serve the Tracker's grading and the scan study's alike. */
