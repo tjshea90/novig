@@ -96,10 +96,8 @@ async def pinn_task(pn, key, stop, sports, state):
             print('pinn socket:', type(ex).__name__, code, str(ex)[:120], file=sys.stderr, flush=True)
             if code in (1001, 1008) or (code or 0) >= 4000 or 'evicted' in str(ex).lower():
                 state['evicted'] = True; stop.set(); return   # someone else (Tj's phone) took the socket: step aside, never reconnect
-            fails += 1
-            if fails >= 4:
-                state['evicted'] = True; stop.set(); return
-            await asyncio.sleep(min(30, 2 ** fails))
+            fails += 1   # an abnormal drop (no close frame) is the network or the agent proxy (about every 7 minutes in 2026-10-08/09), not an eviction: reconnect and keep recording
+            await asyncio.sleep(min(30, 2 ** min(fails, 5)))
 
 
 class PreNovig:
