@@ -5789,3 +5789,8 @@ https://www.npmjs.com/package/sports-odds-api-mcp
 ```
 I added the sgo secret key to the repo
 ```
+
+## 2026-10-09T16:11:10Z
+```
+Research sportsgamesodds policy and see if I cancel the free trial on day 1 so I don't get charged on my credit card, can I still use the full trial until it runs out or does it cancel immediately and I can't use the api
+```
