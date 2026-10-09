@@ -5824,3 +5824,8 @@ Right now, the auto bid feature using sgo will post bids after I manually scan o
 ```
 @"/root/.claude/uploads/f36ef45c-e072-599a-a9c9-b91ee94fe110/14cac566-vigilant-diagnostics-v0.83.4-2026-10-09-1347.txt" Make an option to turn all notifications off except notifications of actual money bet or bids filled. Make a notification feature that shows at all times in the notifications how many open bids there are. Make bids go up in smaller batches because they are getting rejected sometimes. Make sure the amount of time bids stay up is optimal, it seems like they are being taken down quickly and then there are stretches with no bids up at all. Review the screenshot and diagnostic file to see if anything needs to be changed
 ```
+
+## 2026-10-09T18:14:56Z
+```
+Confirm that research mode saves data even if the switch is toggled on and off 
+```
