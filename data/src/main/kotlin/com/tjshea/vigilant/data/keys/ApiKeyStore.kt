@@ -36,6 +36,12 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
      * WebSocket per account; the WebSocket is a paid add-on (a 3-day full demo is granted on request).
      */
     PINNODDS("pinnodds", "Pinnodds"),
+
+    /**
+     * sportsgameodds.com (SPORTSGAMEODDS_API.md): 82 books incl. Pinnacle, Circa and bet365, game lines, alternates, 1st-half lines and props in one feed, each price with its update time,
+     * plus closing lines and results. Pro: 300 requests a minute, unlimited objects (Tj's trial, 2026-10-09).
+     */
+    SPORTSGAMEODDS("sportsgameodds", "SportsGameOdds"),
 }
 
 /** Tj's own API keys per provider, in the order [KeyPool] tries them. */

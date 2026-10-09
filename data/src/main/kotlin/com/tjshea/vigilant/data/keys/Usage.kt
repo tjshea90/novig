@@ -104,11 +104,15 @@ data class QuotaPolicy(
             "parlay", "ParlayAPI", "credits", keyed = true, period = QuotaPeriod.MONTH_UTC, defaultLimit = 1000,
             rule = "Free keys: 1,000 credits a month each, used for scans in key order once the keys before them are spent or at their day's share, down to their last 100 (kept for closing lines). Paid (\$5: 20,000; \$20: 100,000): a day's share at most, the last 300 kept for closing lines. When no key can pay, the other feeds carry on. Game lines 3 credits a league (5 with Pinnacle's alternate lines, bought only when PinnWire and pinnapi are off); a league's props 3; 1st-half lines 2 (only where Novig lists them); injuries 1 (only for players its props didn't cover); closes 1 to 5 a day; on a tap only: its picks at Novig 10 a league (then Vigilant's own read of them, a league's props 3), a pick's books when CrazyNinjaOdds doesn't list it (that market's props for the league 3, shared 2 minutes), a second opinion 5. Credits reset on the 1st (UTC), read from ParlayAPI.",
         )
+        val SGO = QuotaPolicy(
+            "sgo", "SportsGameOdds", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, perMinute = 270,
+            rule = "Pro: 300 requests a minute (Vigilant keeps to 270), unlimited events a month (a request is billed per game it returns, not per market or book). Several keys are tried in order; a key at its limit rests until the minute rolls. Free (Amateur) keys: 10 requests a minute and 2,500 events a month, with 10-minute-old odds: Vigilant refuses a quote that old, so only Rookie and up are of use.",
+        )
         val NOVIG = QuotaPolicy("novig", "Novig", "requests", keyed = false, rule = "Read at 4 a second (2 at a time) to stay under Novig's per-network limit.")
         val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No key needed. Allows 300 requests per 10 seconds.")
         val KALSHI = QuotaPolicy("kalshi", "Kalshi", "requests", keyed = false, rule = "No key needed. Allows 20 requests a second.")
 
-        val ALL = listOf(PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI)
+        val ALL = listOf(SGO, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI)
     }
 }
 
