@@ -60,13 +60,22 @@ class SgoCloses(
         val to = bets.maxOf { it.startsTs } + GAP_MS
         val cacheKey = "$leagueId|$from|$to|${ids.hashCode()}"
         kept[cacheKey]?.takeIf { clock() - it.atMs < KEEP_MS }?.let { return it.events }
-        val params = listOf("leagueID" to leagueId, "startsAfter" to from.toString(), "startsBefore" to to.toString(), "includeOpenCloseOdds" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","))
-        // SGO's own advice for a 504 is fewer parameters: the market filter goes first (the answer is bigger, but it comes).
-        val events = try {
-            client.eventsAll(params, maxPages = 4).events
-        } catch (e: com.tjshea.vigilant.data.reference.SgoTooHeavyException) {
-            client.eventsAll(params.filter { it.first != "oddID" }, maxPages = 4).events
+        val params = listOf(
+            "leagueID" to leagueId, "startsAfter" to from.toString(), "startsBefore" to to.toString(), "includeOpenCloseOdds" to "true",
+            "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","), "bookmakerID" to BOOKS.joinToString(","),
+        )
+        // SGO's own advice for a 504 is fewer parameters: the market filter goes first, then the book filter (the answer is bigger each time, but it comes).
+        var events: List<SgoEvent>? = null
+        var heavy: com.tjshea.vigilant.data.reference.SgoTooHeavyException? = null
+        for (attempt in listOf(params, params.filter { it.first != "oddID" }, params.filter { it.first != "oddID" && it.first != "bookmakerID" })) {
+            try {
+                events = client.eventsAll(attempt, maxPages = 4).events
+                break
+            } catch (e: com.tjshea.vigilant.data.reference.SgoTooHeavyException) {
+                heavy = e
+            }
         }
+        if (events == null) throw heavy ?: IllegalStateException("no query")
         kept[cacheKey] = Kept(clock(), events)
         return events
     }

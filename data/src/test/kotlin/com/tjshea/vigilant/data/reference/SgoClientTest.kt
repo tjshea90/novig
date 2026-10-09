@@ -70,6 +70,9 @@ class SgoClientTest {
         assertEquals("true", r.requestUrl!!.queryParameter("oddsAvailable"))
         assertEquals("true", r.requestUrl!!.queryParameter("includeAltLines"))
         assertTrue(r.requestUrl!!.queryParameter("oddID")!!.contains("points-home-game-sp-home"))
+        // only books SGO lists, and none it does not (Hard Rock is Vigilant's key, not an SGO id)
+        val filter = r.requestUrl!!.queryParameter("bookmakerID")!!.split(',')
+        assertTrue(filter.toString(), "pinnacle" in filter && "circa" in filter && filter.all { it in SgoBooks.KNOWN } && "hardrock" !in filter && "hardrockbet" !in filter)
         assertFalse("the key never travels in the URL", r.requestUrl.toString().contains("k1"))
         assertEquals("sgo", snap.provider)
         assertEquals(1, snap.events.size)
@@ -91,6 +94,7 @@ class SgoClientTest {
         assertEquals(2, requests.size)
         assertNotNull(requests[0].requestUrl!!.queryParameter("includeAltLines"))
         assertNull(requests[1].requestUrl!!.queryParameter("includeAltLines"))
+        assertNotNull("the book filter stays when only the alternates were too heavy", requests[1].requestUrl!!.queryParameter("bookmakerID"))
         assertEquals(1, snap.events.size)
     }
 
@@ -260,5 +264,21 @@ class SgoClientTest {
         val req = requests.single().requestUrl!!
         assertEquals("NFL", req.queryParameter("leagueID"))
         assertTrue(req.queryParameter("oddID")!!.contains("passing_yards-PLAYER_ID-game-ou-over"))
+    }
+
+    @Test fun aQueryStillTooHeavyWithoutAlternatesDropsTheBookFilterToo() = runTest {
+        handler = { r -> if (r.requestUrl!!.queryParameter("bookmakerID") != null) MockResponse().setResponseCode(504).setBody("""{"success":false,"error":"timeout"}""") else ok(sample.replace("\"n.123.abc\"", "null")) }
+        val snap = SgoGamesSource(client(), { clockMs }).odds(nfl, settings)
+        assertEquals(listOf(true, false, false), requests.map { it.requestUrl!!.queryParameter("bookmakerID") != null } + listOf(false).take(3 - requests.size).map { false }.let { emptyList() } .let { listOf(true, false, false).take(requests.size) }.let { requests.map { r -> r.requestUrl!!.queryParameter("bookmakerID") != null } })
+        assertNull(requests.last().requestUrl!!.queryParameter("bookmakerID"))
+        assertEquals(1, snap.events.size)
+    }
+
+    @Test fun theKeyTestTimesEachWayOfAskingAndSaysIfTheOddIdFilterWasHonored() = runTest {
+        handler = { ok(sample.replace("\"n.123.abc\"", "null")) }
+        val r = SgoKeyTest.run(client(), SgoParser.ms("2026-10-09T18:01:00.000Z")!!)
+        assertTrue(r.summary, r.summary.contains("Timing, 2 games of NFL"))
+        assertTrue(r.summary, r.summary.contains("oddID + bookmakerID + alternates") && r.summary.contains("no filters at all"))
+        assertTrue(r.summary, r.summary.contains("oddID filter"))
     }
 }
