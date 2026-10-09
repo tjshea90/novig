@@ -291,7 +291,7 @@ def record(a):
     out = Out(a.out); holder = {}
     def emit(d):
         out(d)
-        if d['k'] == 'pin' and 'nv' in holder:
+        if d['k'] == 'pin' and not d.get('alt') and 'nv' in holder:
             holder['nv'].hot[d['pid']] = time.time()
     pn = Pinn(emit); nv = Novig(pn, out, a.leagues.split(',')); holder['nv'] = nv
     stop = asyncio.Event(); loop = asyncio.new_event_loop()
