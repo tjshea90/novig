@@ -284,4 +284,19 @@ class SgoClientTest {
         assertTrue(r.summary, r.summary.contains("oddID + bookmakerID + alternates") && r.summary.contains("no filters at all"))
         assertTrue(r.summary, r.summary.contains("oddID filter"))
     }
+
+    @Test fun aPlayerWhoNeverPlayedIsNotInTheBoxScoreEvenThoughSgoListsHimAtZero() = runTest {
+        val body = """{"success":true,"data":[{"eventID":"E9","sportID":"FOOTBALL","leagueID":"NFL","teams":{"home":{"names":{"long":"Kansas City Chiefs"},"score":27},"away":{"names":{"long":"Las Vegas Raiders"},"score":20}},
+          "status":{"startsAt":"2026-10-11T17:00:00.000Z","started":true,"ended":true,"finalized":true},
+          "players":{"PATRICK_MAHOMES_1_NFL":{"playerID":"PATRICK_MAHOMES_1_NFL","name":"Patrick Mahomes"},"BACKUP_QB_1_NFL":{"playerID":"BACKUP_QB_1_NFL","name":"Backup Qb"}},
+          "results":{"game":{"home":{"points":27},"away":{"points":20},
+            "PATRICK_MAHOMES_1_NFL":{"passing_yards":301,"passing_attempts":34,"passing_touchdowns":3,"rushing_yards":0},
+            "BACKUP_QB_1_NFL":{"passing_yards":0,"passing_attempts":0,"passing_touchdowns":0,"rushing_yards":0}}},"odds":{}}]}"""
+        handler = { ok(body) }
+        val sgo = SgoScores(client(), { true }, { clockMs }).also { it.enabled = true }
+        val lines = sgo.players(GameScore("sgo:E9", "NFL", "Kansas City Chiefs", "Las Vegas Raiders", 0L, true, false, 27, 20))!!
+        assertEquals(listOf("Patrick Mahomes"), lines.map { it.name })
+        assertEquals(301.0, lines.single().stats["PASSING_YARDS"]!!, 0.0)
+        assertEquals("expandResults asked, the event alone", "true", requests.single().requestUrl!!.queryParameter("expandResults"))
+    }
 }

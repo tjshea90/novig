@@ -56,7 +56,7 @@ object SgoKeyTest {
     private suspend fun variants(client: SportsGameOddsClient, league: String): List<String> {
         val ids = SgoGamesSource.oddIds(setOf(com.tjshea.vigilant.data.scanner.MarketFamily.MONEYLINE, com.tjshea.vigilant.data.scanner.MarketFamily.SPREAD, com.tjshea.vigilant.data.scanner.MarketFamily.TOTAL), SgoConvert.Sport.of(league)).joinToString(",")
         val books = SgoBooks.filter(SgoBooks.wanted(com.tjshea.vigilant.data.scanner.ScanSettings().referenceBooks, true))
-        val base = listOf("leagueID" to league, "oddsAvailable" to "true", "limit" to "2")
+        val base = listOf("leagueID" to league, "oddsAvailable" to "true", "limit" to "2", "startsBefore" to (System.currentTimeMillis() + 3 * 86_400_000L).toString())
         val tries = listOf(
             "oddID only" to base + ("oddID" to ids),
             "oddID + bookmakerID" to base + ("oddID" to ids) + ("bookmakerID" to books),

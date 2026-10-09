@@ -64,7 +64,9 @@ class SgoScores(
             if (entity == "home" || entity == "away" || entity == "all") return@mapNotNull null
             val name = e.players[entity]?.name ?: SgoProps.nameFromId(entity) ?: return@mapNotNull null
             val mapped = stats.mapNotNull { (k, v) -> back[k]?.let { it to v } }.toMap()
-            if (mapped.isEmpty()) null else PlayerLine(name, mapped)
+            // SGO lists EVERY player of the game with every stat, a player who never played at zero across the board (measured 2026-10-09: 72 players, all stats, for an NFL game). A line of nothing but
+            // zeros is "not in the box score", as a football box score treats him: the grader waits or leaves it to Tj instead of calling an Under on a player who did not play (Novig voids that bet).
+            if (mapped.isEmpty() || stats.values.none { it != 0.0 }) null else PlayerLine(name, mapped)
         }
     }
 
