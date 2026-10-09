@@ -162,3 +162,4 @@ day that changes.
 | v0.83.5 | code 152 | 2026-10-09T18:14Z | v0.83.5: quiet notifications, bids count in notifications, batches of 10, SGO age guard option, alt rung cap
 | v0.83.6 | code 153 | 2026-10-09T20:24Z | v0.83.6: SGO mode wakes Pinnodds, fresh Pinnacle board first
 | v0.83.7 | code 154 | 2026-10-09T20:46Z | v0.83.7: Pinnodds awake in the app
+| v0.84.0 | code 155 | 2026-10-09T22:01Z | v0.84.0: OddsPapi v5 ready to switch on
