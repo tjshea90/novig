@@ -408,7 +408,8 @@ Tj's SportsGameOdds Pro trial (2026-10-09) is documented in **`SPORTSGAMEODDS_AP
 every field the app reads, and a watch list of what is not verified. **Nothing in it has been run against a live key yet**: the parser was written from the OpenAPI examples. Settings › SportsGameOdds Pro › "Test and share sample" saves the key's real answer
 to Downloads/Vigilant; when Tj sends it, check `SgoParser`/`SgoConvert` against it and fix the doc. Code: `data/.../reference/Sgo*.kt` + `SportsGameOddsClient.kt` (client, 220 ms spacing, one retry, 504 -> no alternates), `tracker/SgoCloses.kt` (CLV from `includeOpenCloseOdds`, old bets
 included), `tracker/SgoScores.kt` (grading, `ChainedScores` with the free feeds), `novig/lab/SgoAltQuotes.kt` (the paper lab's outside quotes, replacing dormant Pinnodds). `ScanSettings.sgoPro` switches it on: `AppContainer.allReferenceSources` puts SGO first and
-rests the paid feeds it replaces (`OutsideSgo`: tennis keeps them), and brings them back by themselves if SGO stops answering (`SportsGameOddsClient.down`). Never commit a key.
+rests the paid feeds it replaces (`OutsideSgo`: tennis keeps them), and brings them back by themselves if SGO stops answering (`SportsGameOddsClient.down`). With the switch OFF the app is what it was: `SgoWiringTest` proves the source list, closes, grader and meters are unchanged and that nothing is sent to SGO.
+**The GitHub lab** (`lab/` JVM module, `.github/workflows/lab-record.yml`, every 6 h): Vigilant's own Scanner, paper lab and paper bids on public data + SGO (secret `SGO_API_KEY`), no phone, no orders. Read its output on the **`lab-data` branch** (`latest.txt`, `archive/<date>/*.gz`: `edge`, `sgo-tick`, `sgo-close`, `bidlab*`, `lab*`) together with the phone's research file (same format). SPORTSGAMEODDS_API.md §8 audits every request against the docs, §9 describes the lab. Never commit a key.
 
 ## Project rules
 
