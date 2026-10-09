@@ -192,6 +192,7 @@ data class UiState(
     val burstNote: String? = null,
     /** The live feed test's line (Settings › Diagnostics & about; RESEARCH.md §106): what it is doing and its verdict, refreshed while that page is open. */
     val feedRaceNote: String? = null,
+    val labNote: String? = null,
     /** Why the real-money burst trader is locked (the recorder's proof, in words), or null when it has proved itself; null too until the page asked. */
     val burstProofReason: String? = null,
     /** True once the page has read the proof (so a null [burstProofReason] means proved, not unread). */
@@ -1842,7 +1843,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshFeedRace() {
         viewModelScope.launch(Dispatchers.IO) {
             val note = runCatching { FeedRaceText.note(c.feedRace.status.value, System.currentTimeMillis()) }.getOrNull() ?: return@launch
-            _state.update { it.copy(feedRaceNote = note) }
+            val lab = runCatching { LabText.note(c.lab.status.value, System.currentTimeMillis()) }.getOrNull()
+            _state.update { it.copy(feedRaceNote = note, labNote = lab) }
         }
     }
 
@@ -2008,6 +2010,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 (c.feedRace.lastReport ?: c.feedRace.computeReport()).takeIf { st.readings > 0 || it.sightings > 0 }?.let { r ->
                     listOf(FeedRaceText.note(st, System.currentTimeMillis())) + r.lines()
                 }
+            }.getOrNull(),
+            labReport = runCatching {
+                val st = c.lab.status.value
+                val recs = c.lab.records()
+                if (!_state.value.settings.altLab && recs.isEmpty()) null else LabText.diagnostics(st, recs, c.lab.grades(), System.currentTimeMillis())
             }.getOrNull(),
             sharpFeeds = runCatching { com.tjshea.vigilant.data.reference.SharpBooks.feedsAmong(c.referenceSources(_state.value.settings, background = true)) }.getOrDefault(emptyList()),
             lowUsagePlan = _state.value.settings.takeIf { it.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }?.let { runCatching { c.lowUsagePlan(it) }.getOrNull() },

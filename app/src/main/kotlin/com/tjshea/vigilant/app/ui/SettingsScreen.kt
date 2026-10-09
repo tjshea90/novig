@@ -1237,6 +1237,14 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
         }
     }
 
+    // ---- The paper lab (Tj, 2026-10-09): ladder covers, late-game tail strikes, alternate lines; no orders; RESEARCH.md §120.6 ------------------------------------------
+    if (AppBook.isNovig) {
+        SectionTitle("Paper lab")
+        Hint(com.tjshea.vigilant.app.LabText.HINT)
+        SwitchRow(com.tjshea.vigilant.app.LabText.SWITCH_TITLE, com.tjshea.vigilant.app.LabText.SWITCH_SUB, state.settings.altLab, tag = "altLabSwitch") { v -> onUpdate { it.copy(altLab = v) } }
+        state.labNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("altLabNote")) }
+    }
+
     // ---- The live feed test (Tj, 2026-10-07): which free feed shows a score or an odds move before Novig's price; no orders; RESEARCH.md §106 ------------------------------
     if (AppBook.isNovig) {
         SectionTitle("Live feed test")

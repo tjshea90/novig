@@ -59,6 +59,8 @@ object Diagnostics {
         val kalshiPace: String? = null,
         /** The live feed test (RESEARCH.md §106): its status line and report's table, null when it was never on and has recorded nothing. */
         val feedRace: List<String>? = null,
+        /** The paper lab (RESEARCH.md §120.6): its status line, its would-be bets graded; null when it was never on and recorded nothing. */
+        val labReport: List<String>? = null,
         /** The live burst recorder (no orders; RESEARCH.md §95): its status line and its report from the journal; null when it was never on and has recorded nothing. */
         val burstReport: String? = null,
         val pinnReport: String? = null,
@@ -222,6 +224,7 @@ object Diagnostics {
         x.burstReport?.let { r -> o.appendLine(); o.append(r) }
         x.pinnReport?.let { r -> o.appendLine(); o.append(r) }
         x.feedRace?.let { lines -> o.appendLine(); o.appendLine("== LIVE FEED TEST (which free feed shows a score or odds move before Novig's price; no orders; RESEARCH.md §106) =="); lines.forEach { o.appendLine(it) } }
+        x.labReport?.let { lines -> o.appendLine(); o.appendLine("== PAPER LAB (ladder covers, late-game tail strikes, alternate lines; no orders; RESEARCH.md §120.6) =="); lines.forEach { o.appendLine(it) } }
         MakerStats.line(x.makerBids, now)?.let { o.appendLine("  $it") }
         MakerStats.recent(x.makerBids, now).forEach { o.appendLine("  $it") }
         x.makerBids.filter { it.status.ended }.groupingBy { it.status.label + (it.why?.let { w -> ": $w" } ?: "") }.eachCount().entries.sortedByDescending { it.value }.take(5)

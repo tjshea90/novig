@@ -141,6 +141,9 @@ class AppContainer(private val app: Application) {
 
         /** A leg of the burst trader is never staked under or over these, whatever the saved settings say. */
         const val BURST_TRADE_MIN_STAKE = 0.5
+
+        /** The leagues the paper lab reads: the ones ESPN's scoreboard can give a clock for. */
+        val LAB_LEAGUES = setOf("NFL", "NCAAF", "NBA", "WNBA", "NCAAB", "NHL", "MLB")
         const val BURST_TRADE_MAX_STAKE = 10.0
 
         /** CNO game pages read at once in "Check odds now" (the client's bulk pace keeps them to two requests a second). */
