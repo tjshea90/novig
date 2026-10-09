@@ -348,6 +348,12 @@ data class ScanSettings(
      * places nothing and has no way to. Off by default; STOP ALL stops it.
      */
     val feedRace: Boolean = false,
+    /**
+     * The paper lab (Tj, 2026-10-09: "Build all three. This app is in 100% research and development"; RESEARCH.md §120.6): while a game is live on Novig it reads the totals, spread and moneyline books and writes down
+     * would-be bets (ladder covers, late-game tail strikes, alternate lines against Pinnacle's) and grades them from the settled markets ([com.tjshea.vigilant.data.novig.lab.LabRecorder]). It places nothing and
+     * is given no way to. Off by default; STOP ALL stops it.
+     */
+    val altLab: Boolean = false,
     val burstLeagues: Set<String> = BURST_LEAGUES.toSet(),
     /**
      * The real-money burst trader (Tj, 2026-10-06: "make it good enough so that if it is proven I can just turn it on for actual money betting"; RESEARCH.md §95): OFF by default, and

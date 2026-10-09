@@ -618,6 +618,10 @@ class AppContainer(private val app: Application) {
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s -> runCatching { feedRaceTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
         }
+        // The paper lab follows its switch and STOP ALL (no orders; RESEARCH.md §120.6).
+        appScope.launch {
+            settingsStore.flow.filterNotNull().collect { s -> runCatching { labTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
+        }
         // The burst recorder follows its switch, the leagues and STOP ALL (no orders; RESEARCH.md §95).
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s -> runCatching { burstTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
@@ -972,6 +976,27 @@ class AppContainer(private val app: Application) {
         val ids = live.mapTo(HashSet()) { it.eventId }
         val money = novig.markets(leagues, listOf("MONEY", "MONEYLINE_3_WAY_WIN", "1X2"), statuses).filter { it.eventId in ids && it.isOpen }.groupBy { it.eventId }
         return live.map { e -> com.tjshea.vigilant.data.live.LiveGame(e.eventId, e.description, e.league, e.sport, money[e.eventId]?.firstOrNull()?.marketId) }
+    }
+
+    /** The paper lab's files (RESEARCH.md §120.6): one journal a day each for the would-be bets and their grades, appended to, never rewritten. */
+    val labJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "lab", com.tjshea.vigilant.data.novig.lab.LabRecord.serializer()) { it.atMs }
+    val labGradeJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "lab-grade", com.tjshea.vigilant.data.novig.lab.LabGrade.serializer()) { it.atMs }
+
+    /**
+     * The paper lab (Tj, 2026-10-09): ladder covers, late-game tail strikes and alternate lines, all on paper. **No order**: it is given the public Novig source, ESPN's public scoreboard and Pinnacle's alternate
+     * lines from the Pinnodds feed when that is on, and no trading client or key.
+     */
+    val lab: com.tjshea.vigilant.data.novig.lab.LabRecorder by lazy {
+        com.tjshea.vigilant.data.novig.lab.LabRecorder(
+            scope = appScope, source = novig, fetch = ::feedRaceFetch, altQuotes = { ev -> pinnRunner.altQuotes(ev.eventId) },
+            journal = labJournal, gradeJournal = labGradeJournal,
+        )
+    }
+
+    /** Starts or stops the paper lab to match [s]: on, not STOP ALL, the Novig app. Safe to call on every settings change. */
+    fun labTick(s: ScanSettings) {
+        if (!AppBook.isNovig) return
+        if (s.altLab && !s.killed) lab.start(LAB_LEAGUES) else if (lab.running) lab.stop()
     }
 
     /** Starts or stops the feed test to match [s]: on, not STOP ALL, the Novig app. Safe to call on every settings change. */
