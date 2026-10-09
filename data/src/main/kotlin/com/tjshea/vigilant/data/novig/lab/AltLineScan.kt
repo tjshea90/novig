@@ -56,10 +56,13 @@ data class AltCandidate(
  * the mean and the median across three or more books), the fair must come from at least [AltRules.minBooks] books that agree within [AltRules.maxDisagreement], and the Novig ask (plus the in-play fee)
  * must be under it by [AltRules.minEdge]. Pure; the quotes come from whichever feeds the caller has.
  */
+/** One Novig strike with the outside books' fair for it: [yes]/[no] are the two sides' fair probabilities, [books] how many fresh two-sided books made them. */
+data class StrikeFair(val point: LadderPoint, val yes: Double, val no: Double, val books: Int, val oldestAgeSec: Int)
+
 object AltLineScan {
-    /** [sideOf] says whether a margin ladder's reference team (Novig's name for it) is the HOME or the AWAY side; null skips that ladder. */
-    fun scan(points: List<LadderPoint>, quotes: List<AltQuote>, now: Long, startsAtMs: Long?, live: Boolean, rules: AltRules = AltRules(), sideOf: (String) -> String? = { null }): List<AltCandidate> {
-        val out = ArrayList<AltCandidate>()
+    /** The fair of every Novig strike that has at least [AltRules.minBooks] fresh two-sided outside books at the SAME strike, agreeing within [AltRules.maxDisagreement]. */
+    fun strikeFairs(points: List<LadderPoint>, quotes: List<AltQuote>, now: Long, startsAtMs: Long?, rules: AltRules = AltRules(), sideOf: (String) -> String? = { null }): List<StrikeFair> {
+        val out = ArrayList<StrikeFair>()
         for (p in points) {
             val line = p.line
             val matching = quotes.filter { q ->
@@ -75,10 +78,21 @@ object AltLineScan {
             val perBook = fair.perBook.map { it.fairProbabilities[0] }
             if (perBook.isEmpty() || perBook.max() - perBook.min() > rules.maxDisagreement) continue
             val oldest = matching.mapNotNull { it.seenAtMs }.minOrNull()?.let { ((now - it) / 1000L).toInt().coerceAtLeast(0) } ?: 0
+            out += StrikeFair(p, fair.probabilities[0], fair.probabilities[1], matching.size, oldest)
+        }
+        return out
+    }
+
+    /** [sideOf] says whether a margin ladder's reference team (Novig's name for it) is the HOME or the AWAY side; null skips that ladder. */
+    fun scan(points: List<LadderPoint>, quotes: List<AltQuote>, now: Long, startsAtMs: Long?, live: Boolean, rules: AltRules = AltRules(), sideOf: (String) -> String? = { null }): List<AltCandidate> {
+        val out = ArrayList<AltCandidate>()
+        for (sf in strikeFairs(points, quotes, now, startsAtMs, rules, sideOf)) {
+            val p = sf.point
+            val line = p.line
             for (yes in booleanArrayOf(true, false)) {
                 val leg = CoverMath.leg(p.book, line, yes) ?: continue
                 if (leg.contracts < rules.minContracts || leg.price > rules.maxAsk) continue
-                val pWin = fair.probabilities[if (yes) 0 else 1]
+                val pWin = if (yes) sf.yes else sf.no
                 val fee = Fees.takerFee(leg.price, line.fee, eventLive = live)
                 val edge = pWin / (leg.price + fee) - 1.0
                 if (edge < rules.minEdge) continue
@@ -86,7 +100,7 @@ object AltLineScan {
                 out += AltCandidate(
                     line.marketId, line.eventId, if (yes) line.yesOutcomeId else line.noOutcomeId, line.label,
                     if (total) (if (yes) "OVER" else "UNDER") else (if (yes) "YES" else "NO"),
-                    line.threshold, leg.price, pWin, edge, leg.contracts, matching.size, oldest,
+                    line.threshold, leg.price, pWin, edge, leg.contracts, sf.books, sf.oldestAgeSec,
                 )
             }
         }

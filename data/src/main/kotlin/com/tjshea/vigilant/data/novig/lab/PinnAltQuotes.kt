@@ -37,7 +37,13 @@ object PinnAltQuotes {
                     out += AltQuote("pinnacle", "Pinnacle", LadderKind.MARGIN, homeSide, -pts, home, away, seen)
                     out += AltQuote("pinnacle", "Pinnacle", LadderKind.MARGIN, awaySide, pts, away, home, seen)
                 }
-                PinnLineType.MONEYLINE -> {}
+                PinnLineType.MONEYLINE -> {
+                    if (PinnSide.DRAW in l.american) continue
+                    val home = l.american[PinnSide.HOME]?.let(::decimal) ?: continue
+                    val away = l.american[PinnSide.AWAY]?.let(::decimal) ?: continue
+                    out += AltQuote("pinnacle", "Pinnacle", LadderKind.MARGIN, if (swapped) "AWAY" else "HOME", 0.0, home, away, seen)
+                    out += AltQuote("pinnacle", "Pinnacle", LadderKind.MARGIN, if (swapped) "HOME" else "AWAY", 0.0, away, home, seen)
+                }
             }
         }
         return out
