@@ -151,8 +151,8 @@ class SgoClientTest {
      }}]}"""
 
     private fun bet(selection: String, market: String, id: String = "b1") = TrackedBet(
-        id = id, key = id, source = "VIGILANT", league = "NFL", eventName = "Las Vegas Raiders @ Kansas City Chiefs", marketLabel = market, selection = selection,
-        startsTs = java.time.Instant.parse("2026-10-11T17:00:00Z").toEpochMilli(),
+        id = id, createdAtMs = 1L, league = "NFL", eventName = "Las Vegas Raiders @ Kansas City Chiefs", startsTs = java.time.Instant.parse("2026-10-11T17:00:00Z").toEpochMilli(),
+        marketLabel = market, selection = selection, marketId = "m", outcomeId = "o", price = 0.5, cost = 0.5, fairAtBet = 0.52, evPercentAtBet = 4.0, stake = 10.0,
     )
 
     @Test fun closeIsPinnaclesPriceAtTheStartDevigged() = runTest {
