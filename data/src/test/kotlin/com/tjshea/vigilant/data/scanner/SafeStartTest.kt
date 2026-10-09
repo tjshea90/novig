@@ -1,8 +1,8 @@
 package com.tjshea.vigilant.data.scanner
 
-import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Test
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 class SafeStartTest {
     private val loud = ScanSettings(researchMode = true, altLab = true, feedRace = true, burstRecorder = true, autoBet = true, maker = true)
