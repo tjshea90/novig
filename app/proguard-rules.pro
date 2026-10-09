@@ -21,3 +21,7 @@
 # mapping.txt.gz for exact lines (R8 may inline): `retrace mapping.txt stack.txt`.
 -keepattributes SourceFile,LineNumberTable
 -keepnames class com.tjshea.vigilant.** { *; }
+
+# v0.81.3 (Tj's crash file, 2026-10-09): R8's optimizer produced code the phone's verifier rejected ("VerifyError ... AutoScanner.cycle ... register v1 has type Conflict"), which crashed the app the moment
+# auto-bid started its service. Shrinking and the rest stay on; the optimizer is off, so no method is rewritten into something the verifier can refuse.
+-dontoptimize
