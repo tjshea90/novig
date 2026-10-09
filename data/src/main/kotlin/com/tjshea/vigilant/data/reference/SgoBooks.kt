@@ -24,7 +24,7 @@ object SgoBooks {
 
     /**
      * Books SGO's Pro plan carries that Vigilant's default list does not (Tj, 2026-10-09: "extra sports books"): Circa and SuperBook (Nevada sharp shops), bet365. Added to the
-     * fair line while SGO Pro is on ([ScanSettingsSgo]); each still has to price both sides and be fresh, like every book.
+     * fair line while SGO Pro is on (`ScanSettings.sgoExtraBooks`); each still has to price both sides and be fresh, like every book.
      */
     val EXTRA = listOf("circa", "superbook", "bet365")
 

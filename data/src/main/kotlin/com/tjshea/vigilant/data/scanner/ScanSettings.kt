@@ -355,6 +355,17 @@ data class ScanSettings(
      */
     val altLab: Boolean = false,
     /**
+     * SportsGameOdds Pro (Tj, 2026-10-09: "take full advantage of the sportsgamesodds pro API ... redundant apis that do the same thing should be turned off"; SPORTSGAMEODDS_API.md): the one feed that
+     * carries Pinnacle, Circa, bet365 and the US books, game lines, alternates, 1st-half lines and props, each with its update time. While it is on (and a key is saved) the scan, the bid desk, the
+     * open-bet pricing and the closing lines read it, and the paid feeds that sell the same thing (PinnWire/pinnapi, PropLine, The Odds API, ParlayAPI's odds/props/halves) are not called for the
+     * leagues it carries. Off by default.
+     */
+    val sgoPro: Boolean = false,
+    /** SGO Pro: also price the fair line with the books Vigilant's list lacks (Circa, SuperBook, bet365: [SgoBooks.EXTRA]). */
+    val sgoExtraBooks: Boolean = true,
+    /** SGO Pro: ask for every book's alternate lines with the game lines (heavier replies; dropped for a league whose query times out). */
+    val sgoAltLines: Boolean = true,
+    /**
      * Research mode (Tj, 2026-10-09: "just make it simple for me to run"): ONE switch that turns on every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bid lab
      * and (with a Pinnodds key saved) Pinnodds live in PAPER mode. It never turns on a real-money feature. Off by default; STOP ALL stops it.
      */

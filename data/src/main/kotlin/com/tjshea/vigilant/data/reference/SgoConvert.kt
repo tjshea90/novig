@@ -39,7 +39,7 @@ object SgoConvert {
             var subject: String? = null
             var stat: String? = null
             when {
-                a.statId == "points" && a.betType == "ml" && a.entityId == "home" -> { if (totalOnly) continue; kind = LineKind.MONEYLINE }
+                a.statId == "points" && a.betType == "ml" && a.entityId == "home" -> { if (totalOnly || p != 0) continue; kind = LineKind.MONEYLINE }
                 a.statId == "points" && a.betType == "sp" && a.entityId == "home" -> { if (totalOnly) continue; kind = LineKind.SPREAD }
                 a.statId == "points" && a.betType == "ou" && a.entityId == "all" -> kind = LineKind.TOTAL
                 a.statId == "points" && a.betType == "ou" && (a.entityId == "home" || a.entityId == "away") -> {
