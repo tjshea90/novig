@@ -5665,3 +5665,12 @@ Build all three. This app is in 100% research and development. Research any poss
 ```
 Make as many tests and loggers as needed and just tell me how to run them. Your goal is to find any way to profit, even creative ways, look for patterns, algorithms, stale odds, live betting, pregame betting, live make bids, pregame make bids, etc. spend a fair amount of research on make bids. So far my make bids have been more profitable than take bids. You take control of the research and development. Just make it simple for me to run and tell me what to run and what to send you
 ```
+
+## 2026-10-09T03:40:53Z
+```
+Make an ongoing rule permanent for this repo saved to GitHub that every future Claude session immediately sees: 
+
+Use all available free GitHub tools and features that work just as well or better than Claude code  that Claude can access to either speed up or improve this project in any way and especially to save Claude usage. No accuracy or quality should be sacrificed for this rule.
+I don't see the paper lab setting 
+Stop using the pinnodds API 
+```
