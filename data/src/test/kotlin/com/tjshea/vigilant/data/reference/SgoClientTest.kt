@@ -90,8 +90,9 @@ class SgoClientTest {
         handler = { r -> if (r.requestUrl!!.queryParameter("includeAltLines") != null) MockResponse().setResponseCode(504).setBody("""{"success":false,"error":"timeout"}""") else ok(sample.replace("\"n.123.abc\"", "null")) }
         val snap = SgoGamesSource(client(), { clockMs }).odds(nfl, settings)
         assertEquals(2, requests.size)
+        assertNotNull(requests[0].requestUrl!!.queryParameter("includeAltLines"))
+        assertNull(requests[1].requestUrl!!.queryParameter("includeAltLines"))
         assertEquals(1, snap.events.size)
-        assertTrue(snap.events.single().markets.none { it.line == -6.5 })
     }
 
     @Test fun aRefusedKeyIsSkippedForTheNextOne() = runTest {

@@ -75,12 +75,14 @@ class SgoCloses(
             { it.home }, { it.away }, { it.startsMs },
         ) ?: return CloseLookup.None("Not in SportsGameOdds")
         if (!game.started && !game.ended && !game.finalized) return CloseLookup.Later("The game has not started")
+        // Pinnacle's close first, Circa's if Pinnacle has none; when neither has one, the reason is Pinnacle's (the book Tj's CLV is measured against).
+        var first: CloseLookup? = null
         for (book in BOOKS) {
             val r = closeAt(game, pick, book)
             if (r is CloseLookup.Found) return r
-            if (book == BOOKS.last()) return r
+            if (first == null) first = r
         }
-        return CloseLookup.None("No close")
+        return first ?: CloseLookup.None("No close")
     }
 
     private fun closeAt(g: SgoEvent, pick: BetGrader.Pick, book: String): CloseLookup {
