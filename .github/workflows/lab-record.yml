@@ -112,3 +112,24 @@ jobs:
           git commit -q -m "research lab $D $T"
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git push -q -f origin lab-data
+
+      # Permanent storage (Tj, 2026-10-09: "save the data and research to GitHub ... no data is lost"). The lab-data branch above is a force-pushed 7-day snapshot; THIS is the archive: every run's
+      # gzipped journals and report as assets of one Release a day. A public repo's releases are free and have no total size limit. Marked prerelease and not "latest", so the app's real
+      # releases stay the latest. Never delete these (research/lab/STEWARD.md). A failure here must not fail the run.
+      - name: Archive the raw journals to a lab-archive Release
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          D="$(date -u +%Y-%m-%d)"; T="$(date -u +%H%M)"; TAG="lab-archive-$D"
+          mkdir -p arch
+          for f in out/lab/*.jsonl; do [ -f "$f" ] && gzip -9 -c "$f" > "arch/$(basename "$f" .jsonl)-$T.jsonl.gz"; done
+          F=$(ls out/github-lab-*.txt 2>/dev/null | tail -1 || true)
+          if [ -n "$F" ]; then gzip -9 -c "$F" > "arch/report-$T.txt.gz"; fi
+          ls -la arch
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "Research lab archive $D" --prerelease --latest=false --target main --notes "Raw research-lab journals of $D (UTC), one set per run (suffix = run end HHMM): edge, sgo-tick, sgo-close, bidlab, bidlab-event, lab, lab-grade, report. Permanent: see research/lab/STEWARD.md. Do not delete."
+          fi
+          gh release upload "$TAG" arch/* --clobber
