@@ -147,7 +147,7 @@ class Pinn:
                 continue
             old = e['mk'].get(key)
             e['mk'][key] = {'status': 'open', 'by': by, 'alt': mk.get('isAlternate'), 'type': mk.get('type'), 'lim': (mk.get('limits') or [{}])[0].get('amount')}
-            if not mk.get('isAlternate'):
+            if True:   # alternates are recorded too (RESEARCH.md 120.6): the 'alt' flag says which; pin_series picks a line by its strike
                 names = list(by.keys())
                 probs = [am2p(by[n][0]) for n in names]
                 self.emit({'k': 'pin', 't': t, 'ts': m.get('ts'), 'pid': rec['id'], 'ch': ch, 'key': key, 'type': mk.get('type'), 'alt': bool(mk.get('isAlternate')),
@@ -225,7 +225,7 @@ class Novig:
                             keep = True
                         else:
                             for k, v in pmk.items():
-                                if v.get('status') == 'open' and not v.get('alt') and v.get('by'):
+                                if v.get('status') == 'open' and v.get('by'):
                                     if mt == 'TOTAL' and v['type'] == 'total':
                                         pts = next(iter(v['by'].values()))[1]
                                         keep = keep or (strike is not None and abs(float(strike) - float(pts)) < 1e-9)
