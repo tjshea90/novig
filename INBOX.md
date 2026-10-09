@@ -5708,3 +5708,20 @@ Should I turn on the research now even though there are no live games
 ```
 Does the research cover make bids? I want to focus on them
 ```
+
+## 2026-10-09T06:34:06Z
+```
+A couple questions: 
+
+1) if I intermittently turn on and off both research mode switches, does the app delete the data in between or does it save all data? 
+
+2) study https://sportsgameodds.com/docs
+And https://sportsgameodds.com/docs/info/ai-vibe-coding
+And 
+https://sportsgameodds.com/llms.txt
+
+And
+https://sportsgameodds.com/llms-full.txt
+
+This seems like an all in one solution to everything vigilant app does. If I was to get a trial of the pro subscription, do you think it would be significantly better than the apis vigilant already uses
+```
