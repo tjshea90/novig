@@ -92,7 +92,7 @@ class SgoPropsSource(
         val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to PROPS_PAGE.toString(), "oddID" to ids.joinToString(","), until(settings))
         // Alternate prop lines too (SGO: "85+ sportsbooks compared side by side on every prop, including alternate lines"), lightest query first, a few games a page (a page of props is 0.5-1 MB a game).
         val events = readLeague(
-            client, base, wanted, settings.sgoAltLines,
+            client, base, wanted, settings.sgoAltLines, maxPages = 30,
             onPage = { page -> injuries?.let { index -> record(index, league.oddsApiSportKey, page.events.filter { !it.started && !it.live }) } },
         ) { e -> if (e.started || e.live) null else SgoConvert.toRef(e, league.oddsApiSportKey, wanted, props = true) }
         client.lastReads["props ${league.novigName}"] = describe(events, clock())
@@ -150,7 +150,7 @@ private fun fmtAge(s: Long) = if (s < 120) "${s}s" else if (s < 7200) "${s / 60}
  */
 internal suspend fun readLeague(
     client: SportsGameOddsClient, base: List<Pair<String, String>>, wanted: Set<String>, alts: Boolean,
-    onPage: (SgoPage) -> Unit = {}, convert: (SgoEvent) -> RefEvent?,
+    maxPages: Int = SportsGameOddsClient.MAX_PAGES, onPage: (SgoPage) -> Unit = {}, convert: (SgoEvent) -> RefEvent?,
 ): List<RefEvent> {
     val books = SgoBooks.filter(wanted).let { if (it.isEmpty()) emptyList() else listOf("bookmakerID" to it) }
     val attempts = buildList {
@@ -161,7 +161,7 @@ internal suspend fun readLeague(
     var last: SgoTooHeavyException? = null
     for (a in attempts) try {
         val out = ArrayList<RefEvent>()
-        client.forEachPage(a) { page ->
+        client.forEachPage(a, maxPages) { page ->
             onPage(page)
             page.events.forEach { e -> convert(e)?.let { out += it } }
         }
