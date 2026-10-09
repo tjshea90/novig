@@ -251,7 +251,10 @@ class AppContainer(private val app: Application) {
      * Lives as long as the process, not a screen: a scan Tj starts keeps going when he switches
      * apps or backs out of Vigilant. [ScanService] keeps the process alive while one runs.
      */
-    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + kotlinx.coroutines.CoroutineExceptionHandler { _, e ->
+        // A background job that dies is logged, not allowed to take the whole app down (v0.81.1: Tj's "crashing as soon as I open it").
+        runCatching { eventLog.error("APP", "a background job died: ${e.javaClass.simpleName}", e) }
+    })
 
     /**
      * Where Vigilant's scan runs: as long as the process, like [appScope], but on [ScanThreads] (background priority), so the scan's parsing and
@@ -982,8 +985,8 @@ class AppContainer(private val app: Application) {
     }
 
     /** The paper lab's files (RESEARCH.md §120.6): one journal a day each for the would-be bets and their grades, appended to, never rewritten. */
-    val labJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "lab", com.tjshea.vigilant.data.novig.lab.LabRecord.serializer()) { it.atMs }
-    val labGradeJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "lab-grade", com.tjshea.vigilant.data.novig.lab.LabGrade.serializer()) { it.atMs }
+    val labJournal by lazy { com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "lab", com.tjshea.vigilant.data.novig.lab.LabRecord.serializer()) { it.atMs } }
+    val labGradeJournal by lazy { com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "lab-grade", com.tjshea.vigilant.data.novig.lab.LabGrade.serializer()) { it.atMs } }
 
     /**
      * The paper lab (Tj, 2026-10-09): ladder covers, late-game tail strikes and alternate lines, all on paper. **No order**: it is given the public Novig source, ESPN's public scoreboard and Pinnacle's alternate
@@ -997,8 +1000,8 @@ class AppContainer(private val app: Application) {
     }
 
     /** The paper bid lab's files (RESEARCH.md §122): the paper bids when they went up and what happened to them. */
-    val bidLabBidJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "bidlab", com.tjshea.vigilant.data.novig.lab.BidLabBid.serializer()) { it.atMs }
-    val bidLabEventJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "bidlab-event", com.tjshea.vigilant.data.novig.lab.BidLabEvent.serializer()) { it.atMs }
+    val bidLabBidJournal by lazy { com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "bidlab", com.tjshea.vigilant.data.novig.lab.BidLabBid.serializer()) { it.atMs } }
+    val bidLabEventJournal by lazy { com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "bidlab-event", com.tjshea.vigilant.data.novig.lab.BidLabEvent.serializer()) { it.atMs } }
 
     /** Paper bids on every line the bid desk looks at and on Pinnacle-priced live lines: **no order**, public trades and markets only. */
     val bidLab: com.tjshea.vigilant.data.novig.lab.BidLab by lazy {
