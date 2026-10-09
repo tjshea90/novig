@@ -365,6 +365,8 @@ data class ScanSettings(
     val sgoExtraBooks: Boolean = true,
     /** SGO Pro: ask for every book's alternate lines with the game lines (heavier replies; dropped for a league whose query times out). */
     val sgoAltLines: Boolean = true,
+    /** Only notifications about money: a bet placed, a bid filled (Tj, 2026-10-09: "turn all notifications off except notifications of actual money bet or bids filled"). The running-service and open-bids notice stays: Android requires it. */
+    val quietNotifications: Boolean = false,
     /**
      * Research mode (Tj, 2026-10-09: "just make it simple for me to run"): ONE switch that turns on every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bid lab
      * and (with a Pinnodds key saved) Pinnodds live in PAPER mode. It never turns on a real-money feature. Off by default; STOP ALL stops it.

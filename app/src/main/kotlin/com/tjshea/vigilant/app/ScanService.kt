@@ -156,6 +156,7 @@ class ScanService : Service() {
 
     private fun notify(id: Int, notification: Notification) {
         if (!canNotify(this)) return
+        if (id == DONE_ID && !NotifyGate.allow()) return
         runCatching { NotificationManagerCompat.from(this).notify(id, notification) }
     }
 

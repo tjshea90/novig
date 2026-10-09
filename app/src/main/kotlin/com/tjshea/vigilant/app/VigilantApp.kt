@@ -410,6 +410,7 @@ class AppContainer(private val app: Application) {
         val on = AppBook.isNovig && s.sgoPro
         sgoCloses.enabled = on
         sgoScores.enabled = on
+        NotifyGate.quiet = s.quietNotifications
         com.tjshea.vigilant.data.scanner.Freshness.sgoMode = on
     }
 

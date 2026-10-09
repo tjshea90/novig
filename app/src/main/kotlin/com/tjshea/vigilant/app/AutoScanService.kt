@@ -505,7 +505,7 @@ class AutoScanService : Service() {
 
         /** Android wouldn't let auto-scan start from the background: one note to reopen Vigilant. */
         fun notifyPaused(context: Context) {
-            if (!ScanService.canNotify(context)) return
+            if (!ScanService.canNotify(context) || !NotifyGate.allow()) return
             ensureChannel(context)
             val n = NotificationCompat.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_scan)

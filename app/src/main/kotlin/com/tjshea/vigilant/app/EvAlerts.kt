@@ -108,7 +108,7 @@ object EvAlerts {
     }
 
     private fun postDone(context: Context, a: EvAlert, title: String, text: String, undo: Boolean) {
-        if (!ScanService.canNotify(context)) return
+        if (!ScanService.canNotify(context) || !NotifyGate.allow()) return
         ensureChannel(context)
         val n = NotificationCompat.Builder(context, DONE_CHANNEL)
             .setSmallIcon(R.drawable.ic_scan)
@@ -141,7 +141,7 @@ object EvAlerts {
 
     /** Posts [alerts]; returns how many went out (none when notifications aren't allowed). */
     fun post(context: Context, alerts: List<EvAlert>, now: Long = System.currentTimeMillis()): Int {
-        if (!ScanService.canNotify(context)) return 0
+        if (!ScanService.canNotify(context) || !NotifyGate.allow()) return 0
         ensureChannel(context)
         val nm = NotificationManagerCompat.from(context)
         var posted = 0

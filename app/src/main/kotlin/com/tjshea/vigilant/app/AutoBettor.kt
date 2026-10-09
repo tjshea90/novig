@@ -774,7 +774,7 @@ object AutoBetNotes {
     }
 
     fun stopped(app: Application, title: String, text: String) {
-        if (!ScanService.canNotify(app)) return
+        if (!ScanService.canNotify(app) || !NotifyGate.allow()) return
         ensureChannel(app)
         val n = NotificationCompat.Builder(app, CHANNEL)
             .setSmallIcon(R.drawable.ic_scan)

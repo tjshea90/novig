@@ -513,7 +513,7 @@ object MakerNotes {
     }
 
     fun recommend(app: Application, d: MakerDecision.Post, now: Long = System.currentTimeMillis()) {
-        if (!ScanService.canNotify(app)) return
+        if (!ScanService.canNotify(app) || !NotifyGate.allow()) return
         ensureChannel(app)
         val text = recommendText(d, now)
         val n = NotificationCompat.Builder(app, CHANNEL_RECOMMEND)
@@ -544,7 +544,7 @@ object MakerNotes {
 
     /** What came of an Approve from the notification: "Bid posted …" or why not (the same notification, replaced). */
     fun approved(app: Application, outcomeId: String, selection: String, why: String?) {
-        if (!ScanService.canNotify(app)) return
+        if (!ScanService.canNotify(app) || !NotifyGate.allow()) return
         ensureChannel(app)
         val title = if (why == null) "Bid posted · $selection" else "Not posted · $selection"
         val text = why ?: "Post-only: it rests on Novig until someone takes it, and comes down when its fair moves against it. A fill is a bet in the Tracker."

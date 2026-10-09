@@ -296,8 +296,11 @@ class MakerDesk(
         if (batching && queue.size >= 2) {
             val rest = ArrayList<MakerDecision.Post>()
             var lost = false
-            for (chunk in queue.chunked(NovigTradingClient.MAX_BATCH)) {
+            var first = true
+            for (chunk in queue.chunked(PLACE_CHUNK)) {
                 if (!keepPosting()) { lost = true; break }
+                if (!first) pause(PLACE_PAUSE_MS)
+                first = false
                 when (val r = withContext(NonCancellable) { placeBatch(chunk, rules, auto = true, problems) }) {
                     is Batch.Placed -> placed += r.n
                     is Batch.Singly -> rest += r.posts

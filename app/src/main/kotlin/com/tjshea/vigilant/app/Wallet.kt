@@ -73,6 +73,15 @@ class WalletBalance(
     }
 }
 
+/**
+ * Which notifications may be posted (Tj, 2026-10-09: "an option to turn all notifications off except notifications of actual money bet or bids filled"). [quiet] follows
+ * `ScanSettings.quietNotifications` ([AppContainer.syncSgo]); a notification about money (a bet placed, a bid filled, the sample test) passes [allow] with `money = true`.
+ */
+object NotifyGate {
+    @Volatile var quiet: Boolean = false
+    fun allow(money: Boolean = false): Boolean = money || !quiet
+}
+
 /** The wallet line every notification carries ([withWallet]). Pure, so it's tested. */
 object WalletNote {
     /** Past this, the line says how old the balance is. */
@@ -84,6 +93,10 @@ object WalletNote {
         now - r.atMs < SAY_AGE_AFTER_MS -> "Wallet ${Format.money(r.dollars)}"
         else -> "Wallet ${Format.money(r.dollars)} (${Format.age(r.atMs, now)})"
     }
+
+    /** "Wallet $123.08 · 8 bids up ($9.86)": the open bids on every notification, always ("No bids up" when none; Tj, 2026-10-09). */
+    fun withBids(line: String, bids: Int, bidDollars: Double): String =
+        line + " · " + if (bids <= 0) "no bids up" else "$bids bid${if (bids == 1) "" else "s"} up (${Format.money(bidDollars)})"
 }
 
 /**
@@ -91,6 +104,8 @@ object WalletNote {
  * screen, silent or not). `WalletNotificationsTest` checks that no notification is built without it.
  */
 fun NotificationCompat.Builder.withWallet(context: Context, now: Long = System.currentTimeMillis()): NotificationCompat.Builder {
-    val wallet = (context.applicationContext as? VigilantApp)?.container?.wallet ?: return this
-    return setSubText(WalletNote.line(wallet.last, wallet.isSetUp, now))
+    val container = (context.applicationContext as? VigilantApp)?.container ?: return this
+    val wallet = container.wallet
+    val up = runCatching { container.makerStore.flow.value.orEmpty().filter { it.resting } }.getOrDefault(emptyList())
+    return setSubText(WalletNote.withBids(WalletNote.line(wallet.last, wallet.isSetUp, now), up.size, up.sumOf { it.restingDollars }))
 }
