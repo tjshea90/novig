@@ -152,3 +152,4 @@ day that changes.
 | v0.80.0 | code 141 | 2026-10-09T03:38Z | v0.80.0: Research mode (one switch for every recorder that places nothing), paper bid lab (14 make-bid recipes, pregame and live, filled from Novig's trade tape), one research file to share; RESEARCH.md 122, RUN_RESEARCH.md
 | v0.81.0 | code 142 | 2026-10-09T04:04Z | v0.81.0: Research mode page in Settings (paper lab found), Pinnodds dormant everywhere, free-GitHub-first standing rule, Dependabot and an Actions research recorder
 | v0.81.1 | code 143 | 2026-10-09T04:37Z | v0.81.1: crash-on-open hotfix: background research can no longer take the app down, paper-bid journal writes batched, last crash copied to Downloads/Vigilant
+| v0.81.3 | code 145 | 2026-10-09T05:11Z | v0.81.3: crash on open fixed (R8 optimizer off after VerifyError in AutoScanner.cycle) plus safe start
