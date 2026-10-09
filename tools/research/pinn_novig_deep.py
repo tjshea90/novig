@@ -101,7 +101,7 @@ def main():
                 f30, f120 = later(30), later(120)
                 rows.append({'mid': mid, 'pid': m['pid'], 'mt': m['mt'], 'x': x, 'side': side, 't': o['t'], 'ask': ask, 'depth': depth, 'fair': fair, 'age': age,
                              'ev': fair / (ask + fee) - 1.0, 'ev30': None if f30 is None else f30 / (ask + fee) - 1.0, 'ev120': None if f120 is None else f120 / (ask + fee) - 1.0,
-                             'sport': sport_of.get(m['pid'], '?'), 'lim': pr.get('lim'), 'vig': pr.get('vig'), 'bidx': bb[x][0], 'spread': 1.0 - bb[names[0]][0] - bb[names[1]][0]})
+                             'alt': bool(pr.get('alt')), 'sport': sport_of.get(m['pid'], '?'), 'lim': pr.get('lim'), 'vig': pr.get('vig'), 'bidx': bb[x][0], 'spread': 1.0 - bb[names[0]][0] - bb[names[1]][0]})
     far_rows = [r for r in rows if abs(r['fair'] - r['ask']) > 0.15]
     rows = [r for r in rows if abs(r['fair'] - r['ask']) <= 0.15]   # a 15-point gap is a wrong line match, a finished game or a stale quote: reported in [F], never in the edge numbers
     print(f'\nrows (novig read x outcome): {len(rows)} (+ {len(far_rows)} with novig and Pinnacle more than 15 points apart, left out and listed in [F])')
@@ -109,7 +109,7 @@ def main():
     # ---- B edge by sport / market, with the follow-up
     print(f'\n[B] rows with EV >= {min_ev:.0%} at the ask (fee in) against Pinnacle power-devigged fair, and the same ask against Pinnacle 30 s / 120 s later (only rows where Pinnacle moved again)')
     groups = collections.defaultdict(list)
-    for r in rows: groups[(r['sport'], r['mt'])].append(r); groups[('ALL', r['mt'])].append(r); groups[('ALL', 'ALL')].append(r)
+    for r in rows: groups[(r['sport'], r['mt'])].append(r); groups[('ALL', r['mt'])].append(r); groups[('ALL', 'ALL')].append(r); groups[('ALL', 'ALT lines' if r['alt'] else 'MAIN lines')].append(r); groups[(r['sport'], 'ALT' if r['alt'] else 'MAIN')].append(r)
     for g, rs in sorted(groups.items(), key=lambda kv: (kv[0][0] != 'ALL', kv[0])):
         sel = [r for r in rs if r['ev'] >= min_ev]
         if len(rs) < 30: continue
