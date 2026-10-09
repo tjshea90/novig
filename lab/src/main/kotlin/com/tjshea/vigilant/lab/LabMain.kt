@@ -114,7 +114,7 @@ fun main(args: Array<String>) = runBlocking {
             val t0 = System.currentTimeMillis()
             runCatching {
                 val report = scanner.scan(settings, sources)
-                val ops = report.result.opportunities.let { _ -> report.result.games.flatMap { it.outcomes } }
+                val ops = report.result?.games.orEmpty().flatMap { it.outcomes }
                 val (lines, rows) = feedLab(ops, bidLab, edge, System.currentTimeMillis())
                 lastLines = lines; lastEdge = rows; scans++
                 note("scan $scans: ${ops.size} priced outcomes, $lines paper-bid lines, $rows edge rows (${(System.currentTimeMillis() - t0) / 1000}s)")
