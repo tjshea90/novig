@@ -319,4 +319,42 @@ class SettingsPagesTest {
         assertEquals("Off (key saved)", SettingsSummary.of(SettingsPage.SGO, withKey))
         assertTrue(SettingsSummary.of(SettingsPage.SGO, withKey.copy(settings = withKey.settings.copy(sgoPro = true))).startsWith("On: 1 key"))
     }
+
+    // ---- OddsPapi (Tj, 2026-10-09) -----------------------------------------------------------------------------------------------
+
+    @Test
+    fun `the OddsPapi page takes keys, tests them and has the one switch that turns the feed on`() {
+        var settings by mutableStateOf(SampleScan.state().settings)
+        val tests = ArrayList<Boolean>()
+        val state = SampleScan.state().copy(opKeys = listOf("op-key-aaaa-1111"), opKeyNote = "NFL: 14 games read", opKeyOk = true)
+        screen(state) {
+            SettingsScreen(
+                it.copy(settings = settings), { f -> settings = f(settings) },
+                keys = com.tjshea.vigilant.app.ui.KeyActions(add = { _, _ -> }),
+                reportActions = com.tjshea.vigilant.app.ui.ReportActions(onTestOpKey = { share -> tests += share }),
+                page = SettingsPage.ODDSPAPI, onPage = {},
+            )
+        }
+        compose.onNodeWithTag("oddsPapiSwitch").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("opKeyNote").performScrollTo().assertTextContains("14 games", substring = true)
+        compose.onNodeWithTag("opTestKey").performScrollTo().performClick()
+        compose.onNodeWithTag("opShareSample").performScrollTo().performClick()
+        assertEquals(listOf(false, true), tests)
+        assertTrue("the switch starts off", !settings.oddsPapi)
+        compose.onNodeWithTag("oddsPapiSwitch").performScrollTo().performClick()
+        compose.waitForIdle()
+        assertTrue(settings.oddsPapi)
+        compose.onNodeWithTag("opExtraSwitch").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("opAltSwitch").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun `the OddsPapi row says what it is set to and is a Novig page`() {
+        val base = SampleScan.state()
+        assertEquals("No key saved", SettingsSummary.of(SettingsPage.ODDSPAPI, base))
+        val withKey = base.copy(opKeys = listOf("k-1111-2222-3333"))
+        assertEquals("Off (key saved)", SettingsSummary.of(SettingsPage.ODDSPAPI, withKey))
+        assertTrue(SettingsSummary.of(SettingsPage.ODDSPAPI, withKey.copy(settings = withKey.settings.copy(oddsPapi = true))).startsWith("On: 1 key"))
+        assertTrue(SettingsPage.ODDSPAPI in SettingsPage.shown(base.settings))
+    }
 }
