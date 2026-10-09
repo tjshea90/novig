@@ -5839,3 +5839,22 @@ The app is using a lot of my battery and mobile data. This isn't really a proble
 ```
 Where in the settings can I cache kalshi longer
 ```
+
+## 2026-10-09T19:54:41Z
+```
+Research all of the following apis and tell me which ones would work well with the vigilant app. I'm considering getting as many free trials as possible, many of which include web socket. Tell me which ones to try and to skip:
+
+https://www.thesports.com/solutions/data-feeds
+
+https://www.sportmonks.com/
+
+https://sportradar.com/media-tech/data-content/sports-data-api/?lang=en-us
+
+https://oddsmatrix.com/odds-service/live-sports/
+
+https://sportsdata.io/free-trial
+
+https://api-sports.io/
+
+https://bigballsdata.com/pricing
+```
