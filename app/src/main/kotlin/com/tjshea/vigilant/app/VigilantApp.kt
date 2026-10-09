@@ -1369,8 +1369,8 @@ class AppContainer(private val app: Application) {
     )
     private val pinnoddsHost = PinnapiClient.pinnodds(KeyPool(QuotaPolicy.PINNODDS, { keyStore.current(ApiProvider.PINNODDS) }, usage))
 
-    /** SGO Pro is on and a Pinnodds key is saved: Pinnodds is no longer dormant and its Pinnacle board prices the scan before any other Pinnacle feed. */
-    fun pinnoddsActive(s: ScanSettings): Boolean = AppBook.isNovig && s.sgoPro && keyStore.current(ApiProvider.PINNODDS).isNotEmpty()
+    /** SGO Pro or OddsPapi is on and a Pinnodds key is saved: Pinnodds is no longer dormant and its Pinnacle board prices the scan before any other Pinnacle feed. */
+    fun pinnoddsActive(s: ScanSettings): Boolean = AppBook.isNovig && (s.sgoPro || s.oddsPapi) && keyStore.current(ApiProvider.PINNODDS).isNotEmpty()
 
     /** For Diagnostics: which feed's Pinnacle board the last scan used. */
     fun pinnacleFeedNote(now: Long = System.currentTimeMillis()): String =
