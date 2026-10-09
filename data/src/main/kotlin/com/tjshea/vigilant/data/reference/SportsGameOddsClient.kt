@@ -98,6 +98,25 @@ class SportsGameOddsClient(
         return SgoPages(out, notice, pages)
     }
 
+    /**
+     * Pages of [params] handed to [each] one at a time and dropped (memory stays at one page, not the league): a league\'s props with alternate lines are 9 MB of JSON for 13 NFL games and 70 MB for a college
+     * football slate (measured on Tj\'s key, 2026-10-09), which as one tree would end a phone\'s app. Returns the pages read and the plan\'s last `notice`.
+     */
+    suspend fun forEachPage(params: List<Pair<String, String>>, maxPages: Int = MAX_PAGES, each: suspend (SgoPage) -> Unit): Pair<Int, String?> {
+        var cursor: String? = null
+        var notice: String? = null
+        var pages = 0
+        while (pages < maxPages) {
+            val page = events(if (cursor == null) params else params + ("cursor" to cursor))
+            pages++
+            each(page)
+            notice = page.notice ?: notice
+            if (page.notice != null) lastNotice = page.notice
+            cursor = page.nextCursor?.takeIf { it.isNotBlank() } ?: break
+        }
+        return pages to notice
+    }
+
     /** `/account/usage`: the key's limits and what it has used (free: it does not count as an object). */
     suspend fun usage(): SgoUsage? = readUsage()?.also { lastUsage = it.summary() }
 
@@ -197,7 +216,7 @@ class SportsGameOddsClient(
         const val DOWN_AFTER_MS = 120_000L
 
         /** Pages read per league at most (each page is one request of the 300 a minute). */
-        const val MAX_PAGES = 6
+        const val MAX_PAGES = 12
 
         /** Events a page asks for; SGO caps the real number at 25-100 by query and answers with the cap. */
         const val PAGE = 100

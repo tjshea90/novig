@@ -25,11 +25,10 @@ class SgoGamesSource(private val client: SportsGameOddsClient, private val clock
         val ids = oddIds(settings.families, SgoConvert.Sport.of(leagueId))
         if (ids.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
         val wanted = SgoBooks.wanted(settings.referenceBooks, settings.sgoExtraBooks)
-        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","), until(settings))
-        val pages = readLeague(client, base, wanted, settings.sgoAltLines)
-        val events = pages.events
-            .filter { settings.includeLive || (!it.started && !it.live) }
-            .mapNotNull { SgoConvert.toRef(it, league.oddsApiSportKey, wanted, props = false) }
+        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to GAMES_PAGE.toString(), "oddID" to ids.joinToString(","), until(settings))
+        val events = readLeague(client, base, wanted, settings.sgoAltLines) { e ->
+            if (!settings.includeLive && (e.started || e.live)) null else SgoConvert.toRef(e, league.oddsApiSportKey, wanted, props = false)
+        }
         client.lastReads["games ${league.novigName}"] = describe(events, clock())
         return RefSnapshot(league.oddsApiSportKey, events, clock(), provider = ID)
     }
@@ -39,6 +38,9 @@ class SgoGamesSource(private val client: SportsGameOddsClient, private val clock
     companion object {
         const val ID = "sgo"
         const val REUSE_MS = 25_000L
+
+        /** Events a page asks for with alternate lines (SGO caps a page at 25-100 by query): a page is parsed whole, so it stays a few MB. */
+        const val GAMES_PAGE = 25
 
         /** The oddIDs a scan asks for: only the markets [families] price, so the reply stays small and fast (SGO's own speed advice). */
         fun oddIds(families: Set<MarketFamily>, sport: SgoConvert.Sport): List<String> = buildList {
@@ -87,14 +89,13 @@ class SgoPropsSource(
         val ids = oddIds(sport)
         if (ids.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
         val wanted = SgoBooks.wanted(settings.referenceBooks, settings.sgoExtraBooks)
-        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","), until(settings))
-        // Alternate prop lines too (SGO: "85+ sportsbooks compared side by side on every prop, including alternate lines"), lightest query first.
-        val pages = readLeague(client, base, wanted, settings.sgoAltLines)
-        val events = pages.events
-            .filter { !it.started && !it.live }
-            .mapNotNull { SgoConvert.toRef(it, league.oddsApiSportKey, wanted, props = true) }
+        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to PROPS_PAGE.toString(), "oddID" to ids.joinToString(","), until(settings))
+        // Alternate prop lines too (SGO: "85+ sportsbooks compared side by side on every prop, including alternate lines"), lightest query first, a few games a page (a page of props is 0.5-1 MB a game).
+        val events = readLeague(
+            client, base, wanted, settings.sgoAltLines,
+            onPage = { page -> injuries?.let { index -> record(index, league.oddsApiSportKey, page.events.filter { !it.started && !it.live }) } },
+        ) { e -> if (e.started || e.live) null else SgoConvert.toRef(e, league.oddsApiSportKey, wanted, props = true) }
         client.lastReads["props ${league.novigName}"] = describe(events, clock())
-        injuries?.let { index -> record(index, league.oddsApiSportKey, pages.events.filter { !it.started && !it.live }) }
         return RefSnapshot(league.oddsApiSportKey, events, clock(), provider = ID)
     }
 
@@ -119,6 +120,9 @@ class SgoPropsSource(
         const val ID = "sgo-props"
         const val REUSE_MS = 45_000L
 
+        /** Games a props page asks for: 13 NFL games of props with alternates are 9 MB of JSON, so a few at a time. */
+        const val PROPS_PAGE = 5
+
         val ALL_TYPES: Set<String> = SgoConvert.Sport.entries.flatMap { s -> SgoProps.statIds(s).mapNotNull { SgoProps.novigStat(s, it) } }.toSet()
 
         fun oddIds(sport: SgoConvert.Sport): List<String> = SgoProps.statIds(sport).flatMap { stat ->
@@ -141,9 +145,13 @@ private fun fmtAge(s: Long) = if (s < 120) "${s}s" else if (s < 7200) "${s / 60}
 
 /**
  * One league's pages, lightest to heaviest SGO will bear: the books Vigilant uses only (`bookmakerID`: SGO's league pages advise it to keep replies small; 82 books are sent otherwise) with alternate lines,
- * then without the alternates, then without the book filter (SGO's errors page lists `includeAltLines` and `bookmakerID` among what makes a query time out: a 504 drops them in that order).
+ * then without the alternates, then without the book filter (SGO's errors page lists `includeAltLines` and `bookmakerID` among what makes a query time out: a 504 drops them in that order). Each page is
+ * turned into reference events as it arrives ([convert]) and dropped, so a league never sits in memory whole; a failed attempt starts its list over.
  */
-internal suspend fun readLeague(client: SportsGameOddsClient, base: List<Pair<String, String>>, wanted: Set<String>, alts: Boolean): SportsGameOddsClient.SgoPages {
+internal suspend fun readLeague(
+    client: SportsGameOddsClient, base: List<Pair<String, String>>, wanted: Set<String>, alts: Boolean,
+    onPage: (SgoPage) -> Unit = {}, convert: (SgoEvent) -> RefEvent?,
+): List<RefEvent> {
     val books = SgoBooks.filter(wanted).let { if (it.isEmpty()) emptyList() else listOf("bookmakerID" to it) }
     val attempts = buildList {
         add(base + books + (if (alts) listOf("includeAltLines" to "true") else emptyList()))
@@ -152,7 +160,12 @@ internal suspend fun readLeague(client: SportsGameOddsClient, base: List<Pair<St
     }.distinct()
     var last: SgoTooHeavyException? = null
     for (a in attempts) try {
-        return client.eventsAll(a)
+        val out = ArrayList<RefEvent>()
+        client.forEachPage(a) { page ->
+            onPage(page)
+            page.events.forEach { e -> convert(e)?.let { out += it } }
+        }
+        return out
     } catch (e: SgoTooHeavyException) {
         last = e
     }
