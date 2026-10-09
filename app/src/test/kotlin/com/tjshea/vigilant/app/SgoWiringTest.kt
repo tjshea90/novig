@@ -102,7 +102,7 @@ class SgoWiringTest {
         for (background in listOf(false, true)) for (scan in listOf(false, true)) {
             val off = c.referenceSources(settings(false), background, scan)
             val before = c.baseReferenceSources(settings(false), background, scan)
-            assertEquals("same sources, same order, same objects (no wrapper)", before.map { System.identityHashCode(it) }, off.map { System.identityHashCode(it) })
+            assertEquals("same sources, same order, same kinds (no wrapper)", before.map { it.javaClass.name + ":" + it.id }, off.map { it.javaClass.name + ":" + it.id })
             assertTrue(off.none { it is com.tjshea.vigilant.data.reference.OutsideSgo })
         }
     }

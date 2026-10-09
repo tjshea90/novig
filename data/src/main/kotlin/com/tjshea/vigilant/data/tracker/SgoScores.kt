@@ -48,7 +48,7 @@ class SgoScores(
     }
 
     override suspend fun players(game: GameScore): List<PlayerLine>? {
-        if (!game.id.startsWith(PREFIX)) return null
+        if (!enabled || !hasKey() || !game.id.startsWith(PREFIX)) return null
         val eventId = game.id.removePrefix(PREFIX)
         val e = boxes[eventId]?.takeIf { clock() - it.atMs < KEEP_MS }?.events?.firstOrNull() ?: try {
             client.eventsAll(listOf("eventID" to eventId, "expandResults" to "true", "oddID" to "points-home-game-ml-home")).events.firstOrNull()?.also { boxes[eventId] = Kept(clock(), listOf(it)) }
