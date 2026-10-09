@@ -72,4 +72,21 @@ class SisterRowsTest {
             BookTableText.footnote(p.take(2), CnoBooks.NOVIG),
         )
     }
+
+    @Test
+    fun `a quote too wide to trust is shown as such, not counted, and named in the footnote`() {
+        val p = listOf(
+            CnoBookPrice("PX", odds = -140, otherOdds = -113), CnoBookPrice("NV", odds = 108, otherOdds = -113), CnoBookPrice("DK", odds = -112, otherOdds = -110),
+        )
+        val cells = BookTableText.fairCells(p, CnoBooks.NOVIG)
+        assertEquals(listOf("wide, not used", "judged", "50.2%"), cells)
+        val note = BookTableText.footnote(p, CnoBooks.NOVIG)
+        assertTrue(note, note.contains("Too wide to trust, so not used: ProphetX"))
+        com.tjshea.vigilant.engine.WideQuotes.enabled = false
+        try {
+            assertEquals("off: ProphetX counts as before", "52.4%", BookTableText.fairCells(p, CnoBooks.NOVIG)[0])
+        } finally {
+            com.tjshea.vigilant.engine.WideQuotes.enabled = true
+        }
+    }
 }
