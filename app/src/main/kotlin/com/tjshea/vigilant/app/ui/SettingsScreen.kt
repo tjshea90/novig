@@ -130,6 +130,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** How fair odds are worked out, and where they come from (with keys). */
     FAIR("Fair odds & sources", "How the true odds are worked out, and from which feeds", SettingsGroup.FIND),
 
+    /** SportsGameOdds Pro: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). */
+    SGO("SportsGameOdds Pro", "One paid feed for odds, props, closing lines and results; the feeds it replaces rest", SettingsGroup.FIND),
+
     /** The floating widget and the picture-in-picture window. */
     WIDGET("Widget & mini window", "The small window that floats over other apps", SettingsGroup.SCREEN),
 
@@ -147,7 +150,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR, USAGE -> s.vigilantOn
-        ALERTS, RESEARCH -> AppBook.isNovig
+        ALERTS, RESEARCH, SGO -> AppBook.isNovig
         PINNODDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
     }
@@ -199,6 +202,11 @@ object SettingsSummary {
                 s.pinnLiveHalted != null -> "Stopped"
                 s.pinnLiveBet -> "On: real bets, ${com.tjshea.vigilant.app.PinnText.money(s.pinnLiveStake)} a bet"
                 else -> "On: paper only (nothing is sent)"
+            }
+            SettingsPage.SGO -> when {
+                state.sgoKeys.isEmpty() -> "No key saved"
+                s.sgoPro -> "On: ${state.sgoKeys.size} key${if (state.sgoKeys.size == 1) "" else "s"}, the paid feeds it replaces rest"
+                else -> "Off (key saved)"
             }
             SettingsPage.RESEARCH -> if (s.researchMode) "On: every recorder (nothing is bet)" else if (s.altLab) "Paper lab on" else "Off"
             SettingsPage.USAGE -> {
@@ -318,6 +326,7 @@ fun SettingsScreen(
                 SettingsPage.BETTING -> BettingTab(state, onUpdate, onNovigConnect, onNovigTest, onNovigDisconnect, bettingActions, onOpenAutoBet)
                 SettingsPage.PINNODDS -> PinnLiveSection(state, keys, reportActions, onUpdate)
                 SettingsPage.RESEARCH -> ResearchPage(state, reportActions, onUpdate)
+                SettingsPage.SGO -> SgoPage(state, keys, reportActions, onUpdate)
                 SettingsPage.USAGE -> UsageTab(state, keys)
                 SettingsPage.HELP -> ToolsTab(state, reportActions, onUpdate)
             }
@@ -1181,6 +1190,37 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = { exporter.launch("vigilant-keys.json") }) { Text("Export keys") }
         OutlinedButton(onClick = { importer.launch(arrayOf("application/json", "text/plain", "*/*")) }) { Text("Import keys") }
+    }
+}
+
+/**
+ * Settings › SportsGameOdds Pro (Tj, 2026-10-09; SPORTSGAMEODDS_API.md): the key list (rotated like every provider's), a Test key that says what the key really carries and saves a sample for
+ * Claude, and the one switch. On, the scan, bids, open-bet pricing and closing lines read SGO and the paid feeds that sell the same thing rest (tennis keeps them).
+ */
+@Composable
+private fun ColumnScope.SgoPage(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    Intro(com.tjshea.vigilant.app.SgoText.INTRO)
+    KeyListEditor(ApiProvider.SPORTSGAMEODDS, state.sgoKeys, keys, "Add a SportsGameOdds key")
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        Button(onClick = { reportActions.onTestSgoKey(false) }, enabled = state.sgoKeys.isNotEmpty() && !state.sgoKeyBusy, modifier = Modifier.testTag("sgoTestKey")) {
+            Text(if (state.sgoKeyBusy) "Testing…" else "Test key")
+        }
+        androidx.compose.material3.OutlinedButton(onClick = { reportActions.onTestSgoKey(true) }, enabled = state.sgoKeys.isNotEmpty() && !state.sgoKeyBusy, modifier = Modifier.testTag("sgoShareSample")) {
+            Text("Test and share sample")
+        }
+    }
+    state.sgoKeyNote?.let {
+        Text(
+            it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("sgoKeyNote"),
+            color = if (state.sgoKeyOk == true) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+        )
+    }
+    SwitchRow(com.tjshea.vigilant.app.SgoText.SWITCH_TITLE, com.tjshea.vigilant.app.SgoText.switchSub(state.sgoKeys.isNotEmpty()), s.sgoPro, tag = "sgoProSwitch") { v -> onUpdate { it.copy(sgoPro = v) } }
+    if (s.sgoPro) {
+        SwitchRow("Extra books: Circa, SuperBook, bet365", "Price the fair line with them too (each must show both sides and be fresh, like every book).", s.sgoExtraBooks, tag = "sgoExtraSwitch") { v -> onUpdate { it.copy(sgoExtraBooks = v) } }
+        SwitchRow("Alternate lines", "Every book's alternate spreads and totals with the game lines (heavier replies; Pro handles them).", s.sgoAltLines, tag = "sgoAltSwitch") { v -> onUpdate { it.copy(sgoAltLines = v) } }
+        Hint(com.tjshea.vigilant.app.SgoText.REPLACES)
     }
 }
 

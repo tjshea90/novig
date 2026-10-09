@@ -42,6 +42,8 @@ data class ReportActions(
     /** Settings › Pinnodds live is on screen: refresh its status line. */
     val onPinnShown: () -> Unit = {},
     val onTestPinnKey: () -> Unit = {},
+    /** SportsGameOdds Pro: test the key (and, with true, share the sample it saved). */
+    val onTestSgoKey: (Boolean) -> Unit = {},
     /** The live feed test (Tj, 2026-10-07): make its file and share it, and read the line that says what it is doing. */
     val onShareFeedRace: () -> Unit = {},
     val onShareResearch: () -> Unit = {},
