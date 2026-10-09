@@ -22,14 +22,16 @@ object PinnAltQuotes {
         val seen = e.lastFrameAtMs.takeIf { it > 0L }
         for (l in e.lines.values) {
             if (!l.open || l.period != 0) continue
-            val pts = l.points ?: continue
+            val pts = l.points
             when (l.type) {
                 PinnLineType.TOTAL -> {
+                    if (pts == null) continue
                     val over = l.american[PinnSide.OVER]?.let(::decimal) ?: continue
                     val under = l.american[PinnSide.UNDER]?.let(::decimal) ?: continue
                     out += AltQuote("pinnacle", "Pinnacle", LadderKind.TOTAL, "", pts, over, under, seen)
                 }
                 PinnLineType.SPREAD -> {
+                    if (pts == null) continue
                     val home = l.american[PinnSide.HOME]?.let(::decimal) ?: continue
                     val away = l.american[PinnSide.AWAY]?.let(::decimal) ?: continue
                     val homeSide = if (swapped) "AWAY" else "HOME"
