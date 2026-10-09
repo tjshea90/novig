@@ -68,6 +68,15 @@ What it means, every session, before the work:
    workflow exists.
 5. **Look for more, every time.** At the start of a task, spend one minute on "what here could Actions, Dependabot or scanning already do?" and tell Tj when you find something worth adding.
 
+## Research lab on GitHub: ONE steward, every byte archived (Tj, 2026-10-09, permanent, read before touching it)
+
+**Standing instruction from Tj (2026-10-09, verbatim):** "Schedule daily check ins with GitHub and save the data and research to GitHub so that other sessions can see the research and no data is lost. Make this a permanent rule for the repo so that other Claude sessions see it and immediately abide by it, but I think only one Claude account needs to actively manage the GitHub. Figure out how to share it between 3 different Claude accounts but on the same repo."
+- The full protocol is **`research/lab/STEWARD.md`**; the running findings are **`research/lab/NOTES.md`**; who the steward is, and when it last checked in, is **`research/lab/STEWARD.json`** (`resume.sh` prints one `LAB` line from it at every session start).
+- **Only the steward** triggers, cancels, disables or edits `lab-record.yml` and runs the daily check-in. Every other session or account **reads** NOTES.md, the `lab-data` branch and the `lab-archive-YYYY-MM-DD` Releases, and may append findings to NOTES.md. A session is the steward only if its routine/prompt carries the current `claimId`.
+- **If the steward goes quiet** (`lastCheckinAt` older than `leaseHours`, 36), any session takes over by writing a new `claimId` into STEWARD.json and creating the daily routine; an old routine that fires later sees a different claimId and does nothing. That is how three Claude accounts share one lab without seeing each other's routines.
+- **No data is lost:** `lab-data` is a force-pushed 7-day snapshot, not storage. Storage is the `lab-archive-*` Releases (written by `lab-record.yml`'s archive step and, as a safety net, daily by `lab-archive-sweep.yml`): never delete one, never shorten what a run records. A new recorder or study that writes data must archive it the same way.
+- Never put a key in a lab file or in NOTES.md (public repo). The lab places no orders and must never be given a trading key.
+
 ## Mobile data and storage are not a constraint
 
 Tj, 2026-09-30: "My mobile data is fast and unlimited and my phone storage is large. Choose accuracy and speed over mobile data or phone
