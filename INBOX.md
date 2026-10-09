@@ -5646,3 +5646,12 @@ For the deep analysis, also "think outside the box" for patterns people wouldn't
 ```
 Also include the possibility of "make" orders (bids). This may be profitable
 ```
+
+## 2026-10-09T01:53:03Z
+```
+I'm not using the web socket so whatever is causing it to stop is on your side. 
+
+Also, look at these screenshots. This game is live. There seems to be wild discrepancies in the odds offered. For example, under 52.5 is 99.9% and under 54.5 is 99.9%, yet under 53.5 is 90%.
+
+Do strange odds like these offer any value? Maybe the app should analyze real time alternate odds at other books vs alternate odds live on novig such as alternate spreads and totals
+```
