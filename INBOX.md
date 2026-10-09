@@ -5660,3 +5660,8 @@ Do strange odds like these offer any value? Maybe the app should analyze real ti
 ```
 Build all three. This app is in 100% research and development. Research any possible ways to profit using the novig api
 ```
+
+## 2026-10-09T03:13:39Z
+```
+Make as many tests and loggers as needed and just tell me how to run them. Your goal is to find any way to profit, even creative ways, look for patterns, algorithms, stale odds, live betting, pregame betting, live make bids, pregame make bids, etc. spend a fair amount of research on make bids. So far my make bids have been more profitable than take bids. You take control of the research and development. Just make it simple for me to run and tell me what to run and what to send you
+```
