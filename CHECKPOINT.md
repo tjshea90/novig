@@ -1,23 +1,23 @@
-# CHECKPOINT 2768 — read me first, then TASKS.md
+# CHECKPOINT 2769 — read me first, then TASKS.md
 
-**Written:** 2026-10-09T03:40:20Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-1dbf7537-vyxqtx` · **builds on:** `da3c4a7a` (this checkpoint is the commit after it)
+**Written:** 2026-10-09T03:40:37Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-1dbf7537-vyxqtx` · **builds on:** `5ab289b7` (this checkpoint is the commit after it)
 
 ## Just done
-QB: bigger live sample analysed (RESEARCH.md 120.7): guard keeps make-bid edge on paper, hockey 20 s lag not confirmed
+RESEARCH.md 120.7: hockey wording corrected (first re-quote 4.6 s, full adjustment about 20 s)
 
 ## Do this next
-16:50Z pregame run if the session is awake; Tj runs Research mode and sends the research file
+Tj runs Research mode and sends the research file
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M RESEARCH.md
-     M TASKS.md
+    M  RESEARCH.md
 
 ## Last ten checkpoints
 ```
+  5ab289b7 ckpt 2768: QB: bigger live sample analysed (RESEARCH.md 120.7): guard keeps make-bid ed
   800bcabe ckpt 2767: pre-release: v0.80.0: Research mode (one switch for every recorder that plac
   b424db07 ckpt 2766: pre-ship: v0.80.0: Research mode (one switch for every recorder that places 
   9f91a262 ckpt 2765: pre-release: v0.79.0: paper lab (ladder covers, late-game tail strikes, alte
@@ -27,8 +27,4 @@ QB: bigger live sample analysed (RESEARCH.md 120.7): guard keeps make-bid edge o
   52dd99b5 ckpt 2761: QC: alternate lines recorded + analysed (RESEARCH.md 120.6), ladder tool, re
   9a241650 ckpt 2760: QB: pregame tape too thin (7 min), saved; second live recording running to 0
   1afcb4af ckpt 2759: QB: first live study saved (research/pinnodds_2026-10-08b/, RESEARCH.md 120.
-  3c089c8f ckpt 2758: QB5a: pinn_novig_maker.py (resting-bid simulation from Pinnacle fair + Novig
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
