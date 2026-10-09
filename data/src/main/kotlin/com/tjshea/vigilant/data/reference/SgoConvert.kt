@@ -67,7 +67,7 @@ object SgoConvert {
                     continue
                 }
                 val seen = HashSet<Long>()
-                for (x in aLines) {
+                for (x in nearMain(aLines)) {
                     val pointX = (x.point ?: if (yesNo) 0.5 else null) ?: continue
                     // The other side's number: a spread mirrors (home -3.5 / away +3.5), a total or prop repeats.
                     val want = if (kind == LineKind.SPREAD) -pointX else pointX
@@ -83,6 +83,19 @@ object SgoConvert {
         }
         return RefEvent(PREFIX + e.eventId, sportKey, start, e.home, e.away, markets)
     }
+
+    /**
+     * The main line and the alternates closest to it, at most [MAX_LINES] a book and market. SGO sends every alternate rung (hundreds a book: 37,636 markets for one NCAAF slate in Tj's file,
+     * with the heap at 487 of 512 MB and a scan cut short); the rungs far from the main line are the ones no bid or bet is priced on.
+     */
+    private fun nearMain(lines: List<SgoLine>): List<SgoLine> {
+        if (lines.size <= MAX_LINES) return lines
+        val main = lines.first()
+        val at = main.point ?: return lines.take(MAX_LINES)
+        return listOf(main) + lines.drop(1).sortedBy { kotlin.math.abs((it.point ?: Double.MAX_VALUE) - at) }.take(MAX_LINES - 1)
+    }
+
+    const val MAX_LINES = 13
 
     private fun abs100(d: Double) = kotlin.math.abs(d) < 0.005
     private fun older(x: SgoLine, y: SgoLine): Long? = if (x.updatedMs != null && y.updatedMs != null) minOf(x.updatedMs, y.updatedMs) else null
