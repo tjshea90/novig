@@ -108,10 +108,11 @@ class ChainedScores(private val primary: ScoreSource, private val secondary: Sco
     }
 
     override suspend fun players(game: GameScore): List<PlayerLine>? {
-        if (!game.id.startsWith(SgoScores.PREFIX)) return secondary.players(game) ?: primary.players(game)
+        if (!game.id.startsWith(SgoScores.PREFIX) && !game.id.startsWith(OpScores.PREFIX)) return secondary.players(game) ?: primary.players(game)
         val date = Instant.ofEpochMilli(game.startMs).atZone(ZoneId.of("America/New_York")).toLocalDate()
         val twin = secondary.games(game.league, date)?.firstOrNull { g ->
-            abs(g.startMs - game.startMs) <= 4 * 3_600_000L && TeamMatcher.whichOf(game.home, g.home, g.away) == 1 && TeamMatcher.whichOf(game.away, g.home, g.away) == 2
+            // The twin may list the teams the other way round (OddsPapi's participant 1 is not always the home team); a player's line is the same either way.
+            abs(g.startMs - game.startMs) <= 4 * 3_600_000L && TeamMatcher.whichOf(game.home, g.home, g.away).let { h -> TeamMatcher.whichOf(game.away, g.home, g.away).let { a -> h != 0 && a != 0 && h != a } }
         }
         return twin?.let { secondary.players(it) } ?: primary.players(game)
     }
