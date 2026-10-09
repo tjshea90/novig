@@ -100,7 +100,8 @@ class SgoConvertTest {
     }
 
     @Test fun bookKeysTranslateBothWays() {
-        assertEquals("williamhill_us", SgoBooks.appKey("williamhill")); assertEquals("williamhill", SgoBooks.sgoId("williamhill_us"))
+        assertEquals("williamhill_us", SgoBooks.appKey("caesars")); assertEquals("caesars", SgoBooks.sgoId("williamhill_us"))
+        assertEquals("the UK William Hill is not Caesars", "williamhill", SgoBooks.appKey("williamhill")); assertEquals("hardrockbet", SgoBooks.appKey("hardrockbet"))
         assertEquals("betonlineag", SgoBooks.appKey("betonline"))
         assertEquals("Circa Sports", SgoBooks.title("circa"))
     }

@@ -8,10 +8,11 @@ import com.tjshea.vigilant.data.scanner.League
  */
 object SgoBooks {
     /** SGO id -> Vigilant's book key, where they differ. */
+    // Measured on Tj\'s Pro key (2026-10-09): SGO\'s "caesars" is the US Caesars Sportsbook, which Vigilant\'s keys (The Odds API\'s) call "williamhill_us"; SGO\'s "williamhill" is the UK William Hill, a
+    // different book. SGO\'s "hardrockbet", "espnbet" and "fanatics" are already Vigilant\'s keys.
     private val TO_APP = mapOf(
-        "williamhill" to "williamhill_us",
+        "caesars" to "williamhill_us",
         "betonline" to "betonlineag",
-        "hardrock" to "hardrockbet",
         "mybookie" to "mybookieag",
     )
     private val FROM_APP = TO_APP.entries.associate { (k, v) -> v to k }
@@ -43,7 +44,7 @@ object SgoBooks {
     val KNOWN = setOf(
         "1xbet", "888sport", "ballybet", "barstool", "bet365", "betanysports", "betclic", "betfairexchange", "betfairsportsbook", "betfred", "betmgm", "betonline", "betparx", "betrivers", "betrsportsbook",
         "betsafe", "betsson", "betus", "betvictor", "betway", "bluebet", "bodog", "bookmakereu", "boombet", "bovada", "boylesports", "caesars", "casumo", "circa", "coolbet", "coral", "draftkings", "espnbet",
-        "everygame", "fanatics", "fanduel", "fliff", "fourwinds", "foxbet", "grosvenor", "gtbets", "hotstreak", "kalshi", "ladbrokes", "leovegas", "livescorebet", "lowvig", "marathonbet", "matchbook",
+        "everygame", "fanatics", "fanduel", "fliff", "fourwinds", "foxbet", "grosvenor", "gtbets", "hardrockbet", "hotstreak", "kalshi", "ladbrokes", "leovegas", "livescorebet", "lowvig", "marathonbet", "matchbook",
         "mrgreen", "mybookie", "neds", "nordicbet", "northstarbets", "novig", "paddypower", "parlayplay", "pinnacle", "playup", "pointsbet", "polymarket", "primesports", "prizepicks", "prophetexchange", "si",
         "skybet", "sleeper", "sportsbet", "sportsbetting_ag", "sporttrade", "stake", "sugarhouse", "superbook", "suprabets", "tab", "tabtouch", "thescorebet", "tipico", "topsport", "underdog", "unibet",
         "virginbet", "williamhill", "windcreek", "wynnbet",

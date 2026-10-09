@@ -23,7 +23,7 @@ class TmpSgoLiveTest {
         val sgo = SportsGameOddsClient(http, KeyPool(QuotaPolicy.SGO, { listOf(key!!) }, usage), json)
         val games = SgoGamesSource(sgo)
         val nfl = Leagues.byNovigName("NFL")!!
-        val s = ScanSettings(leagues = setOf("NFL"), sgoPro = true, includeLive = true)
+        val s = ScanSettings(leagues = setOf("NFL"), sgoPro = true, includeLive = true, daysAhead = 4, startsWithinHours = 0)
         val snap = games.odds(nfl, s)
         println("TMP sgo events=${snap.events.size} markets=${snap.events.sumOf { it.markets.size }} books=${snap.events.flatMap { it.markets }.map { it.bookKey }.toSet()}")
         println("TMP sgo ages(s) median=" + snap.events.flatMap { it.markets }.mapNotNull { it.lastUpdateMs }.map { (snap.fetchedAtMs - it) / 1000 }.sorted().let { it[it.size / 2] })

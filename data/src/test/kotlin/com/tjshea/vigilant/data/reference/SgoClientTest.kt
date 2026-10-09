@@ -72,7 +72,7 @@ class SgoClientTest {
         assertTrue(r.requestUrl!!.queryParameter("oddID")!!.contains("points-home-game-sp-home"))
         // only books SGO lists, and none it does not (Hard Rock is Vigilant's key, not an SGO id)
         val filter = r.requestUrl!!.queryParameter("bookmakerID")!!.split(',')
-        assertTrue(filter.toString(), "pinnacle" in filter && "circa" in filter && filter.all { it in SgoBooks.KNOWN } && "hardrock" !in filter && "hardrockbet" !in filter)
+        assertTrue(filter.toString(), "pinnacle" in filter && "circa" in filter && filter.all { it in SgoBooks.KNOWN } && "hardrock" !in filter && "hardrockbet" in filter && "caesars" in filter && "williamhill" !in filter)
         assertFalse("the key never travels in the URL", r.requestUrl.toString().contains("k1"))
         assertEquals("sgo", snap.provider)
         assertEquals(1, snap.events.size)
