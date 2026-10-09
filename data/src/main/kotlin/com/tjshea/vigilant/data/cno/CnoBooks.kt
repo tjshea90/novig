@@ -64,6 +64,13 @@ object CnoBooks {
     fun <K> perCompany(byBook: List<Pair<K, Double>>, companyOf: (K) -> String): List<Double> =
         byBook.groupBy({ companyOf(it.first) }, { it.second }).values.map { it.average() }
 
+    /** Whether a CNO column is an exchange (ProphetX, Kalshi, Novig, Sporttrade): its two asks add up by its spread, so it gets the stricter wide-quote limit. */
+    fun isExchange(code: String): Boolean = code == "PX" || code == "KI" || code == NOVIG || code.startsWith("ST-")
+
+    /** Whether [p] prices both sides but is too wide to be a source of fair odds ([WideQuotes]). */
+    fun isWide(p: CnoBookPrice): Boolean =
+        p.twoSided && WideQuotes.enabled && WideQuotes.tooWide(WideQuotes.holdOfAmerican(p.odds!!, p.otherOdds!!), isExchange(p.code))
+
     /** CNO's column code for a book as its +EV list names it ("Novig" → NV, "ProphetX" → PX). */
     fun codeFor(book: String): String? =
         names.entries.firstOrNull { it.value.equals(book, true) }?.key
@@ -199,7 +206,7 @@ object CnoBooks {
         val usable = view.prices.filter { usableForFair(it.code, judged) }
         val pairs = usable.filter { it.twoSided }
         // One vote a company: Hard Rock's four state sites, Sporttrade's five or BetMGM's two are one desk's line, averaged into one (Tj, 2026-10-02).
-        val fairs = perCompany(pairs.mapNotNull { p -> fairFor(p.odds!!, p.otherOdds!!)?.let { p.code to it } }, ::company)
+        val fairs = perCompany(pairs.mapNotNull { p -> fairFor(p.odds!!, p.otherOdds!!, p.code)?.let { p.code to it } }, ::company)
         val twoSidedCompanies = pairs.mapTo(HashSet()) { company(it.code) }
         val oneSided = usable.filter { !it.twoSided }.mapTo(HashSet()) { company(it.code) }.count { it !in twoSidedCompanies }
         val fair = consensus(fairs)
@@ -228,10 +235,12 @@ object CnoBooks {
     fun consensus(fairs: List<Double>): Double? = if (fairs.isEmpty()) null else minOf(fairs.average(), median(fairs))
 
     /** One book's fair probability for the first side: worst-case devig, or plain normalizing when there's no vig to remove. */
-    fun fairFor(odds: Int, otherOdds: Int): Double? {
+    fun fairFor(odds: Int, otherOdds: Int, code: String? = null): Double? {
         if (odds == 0 || otherOdds == 0) return null
         val raw = listOf(1.0 / Odds.americanToDecimal(odds), 1.0 / Odds.americanToDecimal(otherOdds))
         val sum = raw.sum()
+        // The wide-quote guard: a quote whose two sides add up to too much is no source of fair odds (null = not counted, like a one-sided book).
+        if (WideQuotes.enabled && WideQuotes.tooWide(sum - 1.0, code != null && isExchange(code))) return null
         return if (sum <= 1.0) raw[0] / sum else Devig.worstCase(raw)[0]
     }
 

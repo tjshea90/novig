@@ -423,6 +423,7 @@ class AppContainer(private val app: Application) {
 
     /** Follows Settings: the closes and scores read OddsPapi only while its switch is on. Safe to call on every settings change; off, nothing is asked. */
     fun syncOp(s: ScanSettings) {
+        com.tjshea.vigilant.engine.WideQuotes.enabled = s.ignoreWideQuotes
         val on = AppBook.isNovig && s.oddsPapi
         opCloses.enabled = on
         opScores.enabled = on

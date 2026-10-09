@@ -43,6 +43,8 @@ data class FairSettings(
      * built from at least two sharp prop books: RESEARCH.md §92).
      */
     val minSharp: Int = 1,
+    /** Leave out a book whose two sides add up to too much ([WideQuotes]): off here so every engine caller that never asked is as it was; `ScanSettings` turns it on by default. */
+    val wideGuard: Boolean = false,
 ) {
     init {
         require(sharpWeight in 0.0..1.0) { "sharpWeight must be in [0,1], got $sharpWeight" }
@@ -178,6 +180,7 @@ object FairValue {
         // A book whose own sides imply arbitrage (hold < 0) is stale or mis-quoted. Power and
         // Shin can't solve it, and averaging it in would drag the fair line toward garbage.
         if (hold < 0.0) return null
+        if (settings.wideGuard && WideQuotes.tooWide(hold, WideQuotes.isExchangeKey(book.bookKey))) return null
         val fair = runCatching { Devig.devig(raw, settings.method) }.getOrNull() ?: return null
         if (fair.any { it <= 0.0 || it >= 1.0 || !it.isFinite() }) return null
         return BookFair(book, fair, hold, isSharp = book.bookKey in settings.sharpBooks)

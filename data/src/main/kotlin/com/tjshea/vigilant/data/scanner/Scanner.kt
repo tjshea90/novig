@@ -178,6 +178,7 @@ class Scanner(
         // The settings as the scan reads them ([ScanSettings.effective]): applied here, once.
         val settings = requested.effective(forBets = betsOnly)
         Freshness.sgoMode = settings.sgoPro
+        com.tjshea.vigilant.engine.WideQuotes.enabled = settings.ignoreWideQuotes
         Freshness.sgoMaxAgeMs = settings.sgoMaxAgeMinutes.coerceIn(10, 30) * 60_000L
         val sources = readable(offered, settings)
         this.pinned = pinned

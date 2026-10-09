@@ -375,6 +375,11 @@ data class ScanSettings(
      * Odds API, ParlayAPI, and SGO's own sources when SGO Pro is off) rest for the leagues it carries; the free feeds and Pinnodds stay. Off by default; off, the app is exactly what it was.
      */
     val oddsPapi: Boolean = false,
+    /**
+     * Leave a quote out of every fair line when its two sides add up to too much (a book above 10% hold, an exchange above 8%: [com.tjshea.vigilant.engine.WideQuotes]); Tj, 2026-10-09: ProphetX at
+     * -140 / -113 on a total (11.4%) was counted as a view of the price. On by default.
+     */
+    val ignoreWideQuotes: Boolean = true,
     /** OddsPapi: also price the fair line with the books Vigilant's list lacks (Circa, SuperBook, bet365: [com.tjshea.vigilant.data.reference.OpBooks.EXTRA]). */
     val opExtraBooks: Boolean = true,
     /** OddsPapi: read every game in depth for its alternate lines (one request a game); off, the main lines of a whole tournament come in one request. */
@@ -904,6 +909,7 @@ data class ScanSettings(
         minBooks = minBooks.coerceAtLeast(1),
         outlierGuard = outlierGuard,
         minSharp = minSharpBooks.coerceAtLeast(1),
+        wideGuard = ignoreWideQuotes,
     )
 
     /** Whether a price (cost per $1 payout) is within [maxOdds]. */
