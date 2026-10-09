@@ -5814,3 +5814,8 @@ https://ctrk.klclick.com/l/01M4GKMMDWVVRX40D9VAYTK9XC_2
 
 https://ctrk.klclick.com/l/01M4GKMMDWVVRX40D9VAYTK9XC_0
 ```
+
+## 2026-10-09T16:54:19Z
+```
+Right now, the auto bid feature using sgo will post bids after I manually scan odds, then after a little while it takes the bids down. I want it to keep posting new bids all day in the background based on automatic scans every few minutes and fresh odds
+```
