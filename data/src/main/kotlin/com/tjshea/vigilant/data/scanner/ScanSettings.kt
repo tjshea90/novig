@@ -370,6 +370,16 @@ data class ScanSettings(
     /** SGO Pro: the odds-age guard in minutes (the app drops a quote older than this): 10 as Tj set it ([SGO_MAX_AGE_CHOICES]); SGO's props refresh about every 10 minutes, so a longer guard leaves fewer gaps between bids. */
     val sgoMaxAgeMinutes: Int = 10,
     /**
+     * OddsPapi v5 (Tj, 2026-10-09: "the next best api ... a toggle ... with it on use it to full power everywhere"; ODDSPAPI_API.md): sharp and US books with each price's own change time. While it is on (and
+     * a key is saved and answering) the scan, the bid desk, open-bet pricing, closing lines (CLV for any bet) and grading read it, and the feeds that sell the same thing (PinnWire/pinnapi, PropLine, The
+     * Odds API, ParlayAPI, and SGO's own sources when SGO Pro is off) rest for the leagues it carries; the free feeds and Pinnodds stay. Off by default; off, the app is exactly what it was.
+     */
+    val oddsPapi: Boolean = false,
+    /** OddsPapi: also price the fair line with the books Vigilant's list lacks (Circa, SuperBook, bet365: [com.tjshea.vigilant.data.reference.OpBooks.EXTRA]). */
+    val opExtraBooks: Boolean = true,
+    /** OddsPapi: read every game in depth for its alternate lines (one request a game); off, the main lines of a whole tournament come in one request. */
+    val opAltLines: Boolean = true,
+    /**
      * Research mode (Tj, 2026-10-09: "just make it simple for me to run"): ONE switch that turns on every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bid lab
      * and (with a Pinnodds key saved) Pinnodds live in PAPER mode. It never turns on a real-money feature. Off by default; STOP ALL stops it.
      */
@@ -935,6 +945,8 @@ data class ScanSettings(
             if (usePropLine && useBookProps) add("propline_props")
             // SGO Pro prices through its own two sources (SPORTSGAMEODDS_API.md §5); off, this set is exactly what it was.
             if (sgoPro) { add("sgo"); add("sgo-props") }
+            // OddsPapi prices through its own two sources (ODDSPAPI_API.md §6); off, this set is exactly what it was.
+            if (oddsPapi) { add("oddspapi"); add("oddspapi-props") }
         }
 
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }
