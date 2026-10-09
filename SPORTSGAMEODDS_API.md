@@ -125,3 +125,13 @@ datacenter IP differently), your wallet and your own bids' queue position.
 - **New:** the closes read asks `bookmakerID=pinnacle,circa` only; its 504 chain drops `oddID`, then the book filter.
 - **New:** "Test key" times five ways of asking on the real key (oddID only; + bookmakerID; + alternates; alternates without the book filter; no filters) and says whether `oddID` was honored, so the order can be tuned from the sample.
 - Noted, not built: Pinnacle is "Pro and above" and "refreshes within seconds" (the sample's `lastUpdatedAt` will say how true); Novig is a bookmaker on Rookie and above (`bookmakerID=novig`: a possible independent check of Novig's own price against its public API, never a fair source); an optional WebSocket exists only on All-Star.
+
+## 10. Verified live (2026-10-09, Tj's Pro key and his "Test and share sample" file)
+- `/account/usage` is hyphenated: `data.tier`, `data.rateLimits["per-minute"|"per-hour"|"per-day"|...]` with `max-requests`, `current-requests`, `max-entities`, `current-entities` ("unlimited" is a string). Parsed by `SgoUsage.parse`.
+- Header `x-api-key` works; Python-urllib's default User-Agent gets a 403, OkHttp's is fine.
+- `oddID` filter is honored (`oddIDs` also works). Tj's sample, 2 NFL games: oddID only 1867 ms/95 KB/60 books; oddID+bookmakerID 238 ms/46 KB; + alternates 198 ms/310 KB; oddID+alternates all books 326 ms/709 KB; no filters 1032 ms/2.9 MB (2460 markets). **Vigilant's shape (oddID + bookmakerID + alternates) is the fastest.**
+- `startsBefore` cuts an NFL read from 100 events/page to the 13 games of the week. A 13-game NFL props read with alternates is 9.4 MB, so pages stay small (`PROPS_PAGE` 5).
+- Book ids: `caesars` = US Caesars (Vigilant's `williamhill_us`), `williamhill` = UK William Hill, `hardrockbet`, `espnbet`, `fanatics`, `pinnacle`, `circa`, `bet365` all present on Pro. Sample listed 62 books.
+- Freshness: pregame prices are 3-6 minutes old when read (sample: draftkings 187 s, fanduel 185 s, pinnacle 296 s, circa 319 s). SGO's pregame refresh is about 5 minutes, not seconds. Vigilant's Freshness rule (5 min, 3 min effective inside 3 h) therefore drops some SGO quotes on near games: Tj decides whether to loosen it; nothing was loosened.
+- `results` lists every player, zeros for non-players (dropped when grading).
+- Bug found by running it: the scanner priced nothing from SGO because `ScanSettings.enabledSources` and `Scanner.SOURCE_ORDER` lacked `sgo`/`sgo-props` (fixed v0.83.2; `SgoEnabledSourcesTest`).

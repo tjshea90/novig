@@ -4325,4 +4325,4 @@ Tj, 2026-10-09 (~04:30Z): "Make an ongoing rule permanent for this repo saved to
 
 ## SGO re-check (Tj, 2026-10-09 ~16:00Z: "Read the following sites and make sure the sportsgameodds feature is correctly set up and takes full advantage of all the features")
 - [x] SI1 Re-read docs/openapi/league/player-props/pinnacle/novig pages: OpenAPI unchanged; added bookmakerID filter (SGO-listed ids only), alternate PROP lines, closes' book filter, 504 chains, Test key timing of 5 query shapes + oddID-honored check (SPORTSGAMEODDS_API.md §8b). Tests: SgoClientTest.
-- [ ] SI2 After Tj's sample: pick the fastest query shape from the Test key timing; confirm `oddID` is honored (else switch to `oddIDs`); confirm Pinnacle/Circa/bet365 appear on Pro and their lastUpdatedAt ages.
+- [x] SI2 (DONE v0.83.2: Tj's sample shows oddID honored, oddID+bookmakerID+alternates fastest = the shape in use; SPORTSGAMEODDS_API.md §10) After Tj's sample: pick the fastest query shape from the Test key timing; confirm `oddID` is honored (else switch to `oddIDs`); confirm Pinnacle/Circa/bet365 appear on Pro and their lastUpdatedAt ages.
