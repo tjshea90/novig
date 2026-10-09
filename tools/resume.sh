@@ -148,6 +148,22 @@ BRIEF="$(
     NAUTO="$(git log --oneline --grep='^auto-checkpoint:' 2>/dev/null | wc -l | tr -d ' ')"
     if [ -n "$LASTAUTO" ]; then
       echo "  OK    auto-checkpointing is live ($NAUTO so far, most recent $LASTAUTO)."
+    fi
+    # RESEARCH LAB STEWARD (Tj, 2026-10-09, permanent): one session manages the GitHub lab; the rest read research/lab/NOTES.md. One line, so the briefing stays under its cap.
+    if [ -f research/lab/STEWARD.json ]; then
+      python3 - <<'PYLAB' 2>/dev/null
+import json, datetime
+try:
+    d = json.load(open("research/lab/STEWARD.json"))
+    t = datetime.datetime.strptime(d["lastCheckinAt"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+    age = (datetime.datetime.now(datetime.timezone.utc) - t).total_seconds() / 3600
+    lease = d.get("leaseHours", 36)
+    state = "STEWARD QUIET %.0fh > %dh: take over (research/lab/STEWARD.md rule 3)" % (age, lease) if age > lease else "steward checked in %.0fh ago, do not touch the lab" % age
+    print("  LAB   %s; read research/lab/NOTES.md" % state)
+except Exception:
+    print("  LAB   see research/lab/STEWARD.md")
+PYLAB
+    if false; then :
     else
       echo "  NOTE  no auto-checkpoint commits yet. If this session makes edits and"
       echo "        none appear over a few tool calls, the hooks are not firing —"
