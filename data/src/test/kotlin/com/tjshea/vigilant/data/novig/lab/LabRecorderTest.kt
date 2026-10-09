@@ -105,9 +105,9 @@ class LabRecorderTest {
         rec.cycleOnce(setOf("NFL"))
         val r = rec.records()
         assertTrue("no ESPN answer: no clock, no tail bets", r.none { it.kind == LabKind.TAIL })
-        val cover = r.single { it.kind == LabKind.COVER }
-        assertEquals(0.85, cover.ask, 1e-9)
-        assertEquals(1, rec.status.value.covers)
+        val covers = r.filter { it.kind == LabKind.COVER }
+        assertTrue("the 52.5 Over at 0.45 with the 53.5 Under at 0.40 (and the lower liquid Overs with that Under, which also cost under a dollar)", covers.any { Math.abs(it.ask - 0.85) < 1e-9 })
+        assertEquals(covers.size, rec.status.value.covers)
         assertEquals(0, rec.status.value.withState)
     }
 }
