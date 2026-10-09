@@ -1,0 +1,445 @@
+{
+ "success": true,
+ "data": [
+  {
+   "eventID": "EVT1",
+   "sportID": "FOOTBALL",
+   "leagueID": "NFL",
+   "type": "match",
+   "teams": {
+    "home": {
+     "teamID": "KANSAS_CITY_CHIEFS_NFL",
+     "names": {
+      "long": "Kansas City Chiefs",
+      "medium": "Chiefs",
+      "short": "KC"
+     },
+     "statEntityID": "home",
+     "score": 7
+    },
+    "away": {
+     "teamID": "LAS_VEGAS_RAIDERS_NFL",
+     "names": {
+      "long": "Las Vegas Raiders",
+      "medium": "Raiders",
+      "short": "LV"
+     },
+     "statEntityID": "away",
+     "score": 3
+    }
+   },
+   "status": {
+    "startsAt": "2026-10-11T17:00:00.000Z",
+    "started": false,
+    "ended": false,
+    "live": false,
+    "finalized": false,
+    "cancelled": false,
+    "currentPeriodID": "",
+    "displayShort": "",
+    "oddsAvailable": true
+   },
+   "players": {
+    "PATRICK_MAHOMES_1_NFL": {
+     "playerID": "PATRICK_MAHOMES_1_NFL",
+     "name": "Patrick Mahomes",
+     "teamID": "KANSAS_CITY_CHIEFS_NFL"
+    },
+    "TRAVIS_KELCE_1_NFL": {
+     "playerID": "TRAVIS_KELCE_1_NFL",
+     "firstName": "Travis",
+     "lastName": "Kelce"
+    }
+   },
+   "odds": {
+    "points-home-game-ml-home": {
+     "oddID": "points-home-game-ml-home",
+     "opposingOddID": "points-away-game-ml-away",
+     "statID": "points",
+     "statEntityID": "home",
+     "periodID": "game",
+     "betTypeID": "ml",
+     "sideID": "home",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-150",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      },
+      "draftkings": {
+       "odds": "-155",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      },
+      "circa": {
+       "odds": "-148",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      },
+      "novig": {
+       "odds": "-152",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      },
+      "unknown": {
+       "odds": "-150",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      }
+     }
+    },
+    "points-away-game-ml-away": {
+     "oddID": "points-away-game-ml-away",
+     "opposingOddID": "points-home-game-ml-home",
+     "statID": "points",
+     "statEntityID": "away",
+     "periodID": "game",
+     "betTypeID": "ml",
+     "sideID": "away",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "+130",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      },
+      "draftkings": {
+       "odds": "+135",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      },
+      "circa": {
+       "odds": "+128",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      },
+      "novig": {
+       "odds": "+132",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      },
+      "unknown": {
+       "odds": "+130",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      }
+     }
+    },
+    "points-home-game-sp-home": {
+     "oddID": "points-home-game-sp-home",
+     "opposingOddID": "points-away-game-sp-away",
+     "statID": "points",
+     "statEntityID": "home",
+     "periodID": "game",
+     "betTypeID": "sp",
+     "sideID": "home",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-110",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "spread": "-3.5",
+       "altLines": [
+        {
+         "odds": "+150",
+         "spread": "-6.5",
+         "available": true,
+         "lastUpdatedAt": "2026-10-09T18:00:00.000Z"
+        },
+        {
+         "odds": "-300",
+         "spread": "+0.5",
+         "available": true,
+         "lastUpdatedAt": "2026-10-09T18:00:00.000Z"
+        }
+       ]
+      },
+      "draftkings": {
+       "odds": "-112",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "spread": "-3.5"
+      },
+      "fanduel": {
+       "odds": "-108",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": false,
+       "spread": "-3"
+      }
+     }
+    },
+    "points-away-game-sp-away": {
+     "oddID": "points-away-game-sp-away",
+     "opposingOddID": "points-home-game-sp-home",
+     "statID": "points",
+     "statEntityID": "away",
+     "periodID": "game",
+     "betTypeID": "sp",
+     "sideID": "away",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-110",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "spread": "+3.5",
+       "altLines": [
+        {
+         "odds": "-190",
+         "spread": "+6.5",
+         "available": true,
+         "lastUpdatedAt": "2026-10-09T18:00:00.000Z"
+        },
+        {
+         "odds": "+240",
+         "spread": "-0.5",
+         "available": true,
+         "lastUpdatedAt": "2026-10-09T17:59:00.000Z"
+        }
+       ]
+      },
+      "draftkings": {
+       "odds": "-108",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "spread": "+3.5"
+      },
+      "fanduel": {
+       "odds": "-112",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "spread": "+3"
+      }
+     }
+    },
+    "points-all-game-ou-over": {
+     "oddID": "points-all-game-ou-over",
+     "opposingOddID": "points-all-game-ou-under",
+     "statID": "points",
+     "statEntityID": "all",
+     "periodID": "game",
+     "betTypeID": "ou",
+     "sideID": "over",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-105",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "overUnder": "47.5"
+      },
+      "draftkings": {
+       "odds": "-110",
+       "lastUpdatedAt": "2026-10-09T17:50:00.000Z",
+       "available": true,
+       "overUnder": "47.5"
+      }
+     }
+    },
+    "points-all-game-ou-under": {
+     "oddID": "points-all-game-ou-under",
+     "opposingOddID": "points-all-game-ou-over",
+     "statID": "points",
+     "statEntityID": "all",
+     "periodID": "game",
+     "betTypeID": "ou",
+     "sideID": "under",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-115",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "overUnder": "47.5"
+      },
+      "draftkings": {
+       "odds": "-110",
+       "lastUpdatedAt": "2026-10-09T17:55:00.000Z",
+       "available": true,
+       "overUnder": "47.5"
+      }
+     }
+    },
+    "points-home-game-ou-over": {
+     "oddID": "points-home-game-ou-over",
+     "opposingOddID": "points-home-game-ou-under",
+     "statID": "points",
+     "statEntityID": "home",
+     "periodID": "game",
+     "betTypeID": "ou",
+     "sideID": "over",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-120",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "overUnder": "24.5"
+      }
+     }
+    },
+    "points-home-game-ou-under": {
+     "oddID": "points-home-game-ou-under",
+     "opposingOddID": "points-home-game-ou-over",
+     "statID": "points",
+     "statEntityID": "home",
+     "periodID": "game",
+     "betTypeID": "ou",
+     "sideID": "under",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "+100",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "overUnder": "24.5"
+      }
+     }
+    },
+    "points-home-1h-sp-home": {
+     "oddID": "points-home-1h-sp-home",
+     "opposingOddID": "points-away-1h-sp-away",
+     "statID": "points",
+     "statEntityID": "home",
+     "periodID": "1h",
+     "betTypeID": "sp",
+     "sideID": "home",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-105",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "spread": "-1.5"
+      }
+     }
+    },
+    "points-away-1h-sp-away": {
+     "oddID": "points-away-1h-sp-away",
+     "opposingOddID": "points-home-1h-sp-home",
+     "statID": "points",
+     "statEntityID": "away",
+     "periodID": "1h",
+     "betTypeID": "sp",
+     "sideID": "away",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-115",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "spread": "+1.5"
+      }
+     }
+    },
+    "points-home-1h-ml-home": {
+     "oddID": "points-home-1h-ml-home",
+     "opposingOddID": "points-away-1h-ml-away",
+     "statID": "points",
+     "statEntityID": "home",
+     "periodID": "1h",
+     "betTypeID": "ml",
+     "sideID": "home",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-130",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      }
+     }
+    },
+    "points-away-1h-ml-away": {
+     "oddID": "points-away-1h-ml-away",
+     "opposingOddID": "points-home-1h-ml-home",
+     "statID": "points",
+     "statEntityID": "away",
+     "periodID": "1h",
+     "betTypeID": "ml",
+     "sideID": "away",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "+110",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      }
+     }
+    },
+    "passing_yards-PATRICK_MAHOMES_1_NFL-game-ou-over": {
+     "oddID": "passing_yards-PATRICK_MAHOMES_1_NFL-game-ou-over",
+     "opposingOddID": "passing_yards-PATRICK_MAHOMES_1_NFL-game-ou-under",
+     "statID": "passing_yards",
+     "statEntityID": "PATRICK_MAHOMES_1_NFL",
+     "periodID": "game",
+     "betTypeID": "ou",
+     "sideID": "over",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-115",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "overUnder": "275.5"
+      },
+      "draftkings": {
+       "odds": "-110",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "overUnder": "274.5"
+      }
+     }
+    },
+    "passing_yards-PATRICK_MAHOMES_1_NFL-game-ou-under": {
+     "oddID": "passing_yards-PATRICK_MAHOMES_1_NFL-game-ou-under",
+     "opposingOddID": "passing_yards-PATRICK_MAHOMES_1_NFL-game-ou-over",
+     "statID": "passing_yards",
+     "statEntityID": "PATRICK_MAHOMES_1_NFL",
+     "periodID": "game",
+     "betTypeID": "ou",
+     "sideID": "under",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-105",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "overUnder": "275.5"
+      },
+      "draftkings": {
+       "odds": "-110",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true,
+       "overUnder": "274.5"
+      }
+     }
+    },
+    "touchdowns-TRAVIS_KELCE_1_NFL-game-yn-yes": {
+     "oddID": "touchdowns-TRAVIS_KELCE_1_NFL-game-yn-yes",
+     "opposingOddID": "touchdowns-TRAVIS_KELCE_1_NFL-game-yn-no",
+     "statID": "touchdowns",
+     "statEntityID": "TRAVIS_KELCE_1_NFL",
+     "periodID": "game",
+     "betTypeID": "yn",
+     "sideID": "yes",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "+120",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      }
+     }
+    },
+    "touchdowns-TRAVIS_KELCE_1_NFL-game-yn-no": {
+     "oddID": "touchdowns-TRAVIS_KELCE_1_NFL-game-yn-no",
+     "opposingOddID": "touchdowns-TRAVIS_KELCE_1_NFL-game-yn-yes",
+     "statID": "touchdowns",
+     "statEntityID": "TRAVIS_KELCE_1_NFL",
+     "periodID": "game",
+     "betTypeID": "yn",
+     "sideID": "no",
+     "byBookmaker": {
+      "pinnacle": {
+       "odds": "-150",
+       "lastUpdatedAt": "2026-10-09T18:00:00.000Z",
+       "available": true
+      }
+     }
+    }
+   }
+  },
+  {
+   "eventID": "BAD"
+  }
+ ],
+ "nextCursor": "n.123.abc",
+ "notice": "Response is missing 1 events"
+}
