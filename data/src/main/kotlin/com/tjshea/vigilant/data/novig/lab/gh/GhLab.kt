@@ -65,7 +65,7 @@ class SgoTape(private val client: SportsGameOddsClient, private val journal: Day
     private val closed = HashSet<String>()
 
     /** Per book: reads, price changes, the age of the price at each read (seconds). */
-    class BookStats { var reads = 0L; var changes = 0L; var ageSum = 0L; var ageMax = 0L; var intervalSum = 0L; var intervals = 0L }
+    class BookStats { var reads = 0L; var changes = 0L; var ageSum = 0L; var ageMax = 0L; var intervalSum = 0L; var intervals = 0L; val ages = ArrayDeque<Long>() }
     val books = java.util.concurrent.ConcurrentHashMap<String, BookStats>()
     @Volatile var ticks = 0L
         private set
@@ -85,8 +85,11 @@ class SgoTape(private val client: SportsGameOddsClient, private val journal: Day
                 val l = lines.firstOrNull() ?: continue
                 val st = books.getOrPut(book) { BookStats() }
                 val age = l.updatedMs?.let { ((now - it) / 1000L).coerceAtLeast(0) }
-                st.reads++
-                if (age != null) { st.ageSum += age; if (age > st.ageMax) st.ageMax = age }
+                // Only a price a bettor could take counts toward how fresh SGO is (an unavailable line keeps its old stamp).
+                if (l.available) {
+                    st.reads++
+                    if (age != null) { st.ageSum += age; if (age > st.ageMax) st.ageMax = age; st.ages.addLast(age); if (st.ages.size > 2000) st.ages.removeFirst() }
+                }
                 val tick = SgoTick(now, name, e.eventId, e.live, o.oddId, book, l.american, l.point, l.updatedMs, l.available)
                 val key = "${e.eventId}|${o.oddId}|$book"
                 val prev = last[key]
@@ -133,9 +136,11 @@ class SgoTape(private val client: SportsGameOddsClient, private val journal: Day
     fun report(): List<String> = buildList {
         add("SGO tape: $ticks price changes written")
         books.entries.sortedByDescending { it.value.reads }.take(25).forEach { (b, s) ->
-            val mean = if (s.reads == 0L) 0 else s.ageSum / s.reads
+            val sorted = s.ages.sorted()
+            val median = sorted.getOrNull(sorted.size / 2) ?: 0
+            val p90 = sorted.getOrNull((sorted.size * 9) / 10) ?: 0
             val every = if (s.intervals == 0L) "n/a" else "${s.intervalSum / s.intervals}s"
-            add("  $b: ${s.reads} reads, ${s.changes} price changes, price ${mean}s old when read (max ${s.ageMax}s), refreshes every $every on average")
+            add("  $b: ${s.reads} reads, ${s.changes} price changes, price ${median}s old when read (median; 90% within ${p90}s, max ${s.ageMax}s), refreshes every $every on average")
         }
     }
 }
