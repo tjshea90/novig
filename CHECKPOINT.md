@@ -1,13 +1,13 @@
-# CHECKPOINT 2802 — read me first, then TASKS.md
+# CHECKPOINT 2803 — read me first, then TASKS.md
 
-**Written:** 2026-10-09T21:23:37Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-1dbf7537-vyxqtx` · **builds on:** `74aeac5d` (this checkpoint is the commit after it)
+**Written:** 2026-10-09T21:35:44Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-1dbf7537-vyxqtx` · **builds on:** `aae27253` (this checkpoint is the commit after it)
 
 ## Just done
-OddsPapi data layer built and compiling (client, parser, markets, books, convert, feed/sources, key test, closes, scores) + app wiring, Settings page, test button, Diagnostics; app compiles
+pre-release: v0.84.0: OddsPapi v5 ready to switch on: keys (rotated), toggle, scan/props/alternates, CLV for any bet, scores, tapped-bet books, redundant feeds rest (Pinnodds and free feeds stay); off = unchanged (versionCode 155, v0.84.0)
 
 ## Do this next
-Write OddsPapi tests (parser, convert, books/markets, client, feed, closes, scores, OpWiringTest toggle-off, size test), run full floor, docs (CLAUDE.md, ODDSPAPI_API.md), ship
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.84.0), then run: bash tools/record-release.sh v0.84.0 155 "v0.84.0: OddsPapi v5 ready to switch on: keys (rotated), toggle, scan/props/alternates, CLV for any bet, scores, tapped-bet books, redundant feeds rest (Pinnodds and free feeds stay); off = unchanged"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Write OddsPapi tests (parser, convert, books/markets, client, feed, closes, scor
 
 ## Last ten checkpoints
 ```
+  903d944c ckpt 2802: OddsPapi data layer built and compiling (client, parser, markets, books, con
   1029e4c0 ckpt 2801: pre-release: v0.83.7: Pinnodds awake in the app again (it was only Claude's 
   5e983eb0 ckpt 2800: pre-ship: v0.83.7: Pinnodds awake in the app again (it was only Claude's ses
   59f603ba ckpt 2799: pre-release: v0.83.6: SGO mode wakes Pinnodds: its fresh Pinnacle board pric
@@ -25,8 +26,7 @@ Write OddsPapi tests (parser, convert, books/markets, client, feed, closes, scor
   da564486 ckpt 2795: pre-release: v0.83.4: SGO bids keep posting: with SGO Pro on the background 
   5bfa9ee2 ckpt 2794: pre-ship: v0.83.4: SGO bids keep posting: with SGO Pro on the background Vig
   89bf0ab1 ckpt 2793: pre-release: v0.83.3: SGO Pro mode freshness: 10-minute guard for every game
-  48eb86db ckpt 2792: pre-ship: v0.83.3: SGO Pro mode freshness: 10-minute guard for every game wh
 ```
 
-(26 automatic checkpoint(s) since the last deliberate one — the
+(10 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
