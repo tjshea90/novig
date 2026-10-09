@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.match.TeamMatcher
 import com.tjshea.vigilant.data.novig.NovigText
 import com.tjshea.vigilant.data.scanner.Freshness
+import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.PropStats
 import com.tjshea.vigilant.data.tracker.BetGrader
