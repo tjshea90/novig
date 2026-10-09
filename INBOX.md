@@ -5888,3 +5888,14 @@ If you need anything from me, such as the api key or anything else, let me know.
 ```
 Research what other apis are worth trying the free trial and anything else that is either free or cheap to help the app, whether API or any other type of service
 ```
+
+## 2026-10-09T22:30:20Z
+```
+I just found prop line api streaming lite plan. At the price it looks very cheap compared to other companies and it offers web socket. Read about the streaming lite plan. https://prop-line.com
+
+1) is prop line a good API in the app so far? Based on the diagnostics reports has prop line ran smoothly? 
+
+2) is this plan a good deal for 39 dollars a month? 
+
+3) are the features it offers good for vigilant?
+```
