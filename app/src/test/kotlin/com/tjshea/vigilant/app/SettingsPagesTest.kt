@@ -122,11 +122,11 @@ class SettingsPagesTest {
     fun `each scanner hides the pages it doesn't use, and a page that goes away falls back to the list`() {
         val base = SampleScan.state()
         assertEquals(
-            listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.SGO, SettingsPage.WIDGET, SettingsPage.RESEARCH, SettingsPage.HELP),
+            listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.PINNODDS, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.SGO, SettingsPage.WIDGET, SettingsPage.RESEARCH, SettingsPage.HELP),
             SettingsPage.shown(base.settings.copy(scanner = ScannerMode.CNO)),
         )
-        assertEquals(SettingsPage.entries.filter { it != SettingsPage.CNO && it != SettingsPage.PINNODDS }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.VIGILANT)))
-        assertEquals(SettingsPage.entries.filter { it != SettingsPage.PINNODDS }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.BOTH)))
+        assertEquals(SettingsPage.entries.filter { it != SettingsPage.CNO }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.VIGILANT)))
+        assertEquals(SettingsPage.entries.toList(), SettingsPage.shown(base.settings.copy(scanner = ScannerMode.BOTH)))
         screen(base.copy(settings = base.settings.copy(scanner = ScannerMode.CNO))) { SettingsScreen(it, {}, page = SettingsPage.FAIR) }
         compose.onNodeWithTag("settingsPage-HOME").assertExists()
         compose.onAllNodesWithTag("settingsRow-FAIR").assertCountEquals(0)
