@@ -149,3 +149,4 @@ day that changes.
 | v0.77.0 | code 138 | 2026-10-08T06:27Z | v0.77.0: Pinnacle only removed entirely; Pinnodds live pregame steam (stale prematch orders, no fee), hold-off after a score, 40% edge cap kept, post-score study in Diagnostics
 | v0.78.0 | code 139 | 2026-10-08T07:31Z | v0.78.0: long-run saver for bids (lean background scan, 8 min pace while every game is far off), far games' bids ranked last, bid funnel in Diagnostics
 | v0.79.0 | code 140 | 2026-10-09T03:13Z | v0.79.0: paper lab (ladder covers, late-game tail strikes, alternate lines vs Pinnacle's, graded from settled markets), Settings > Paper lab, Diagnostics block; research tools and RESEARCH.md 120-121
+| v0.80.0 | code 141 | 2026-10-09T03:38Z | v0.80.0: Research mode (one switch for every recorder that places nothing), paper bid lab (14 make-bid recipes, pregame and live, filled from Novig's trade tape), one research file to share; RESEARCH.md 122, RUN_RESEARCH.md
