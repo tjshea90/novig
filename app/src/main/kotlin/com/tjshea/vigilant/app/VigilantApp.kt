@@ -405,8 +405,32 @@ class AppContainer(private val app: Application) {
     val sgoCloses = com.tjshea.vigilant.data.tracker.SgoCloses(sgoClient, { keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() })
     val sgoScores = com.tjshea.vigilant.data.tracker.SgoScores(sgoClient, { keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() })
 
+    /**
+     * OddsPapi v5 (Tj, 2026-10-09; ODDSPAPI_API.md): its client, rotated across Tj's keys like every provider's, and the one shared read the games source and the props source take their share of.
+     * Used only while [opActive].
+     */
+    val opClient = com.tjshea.vigilant.data.reference.OddsPapiClient(http, KeyPool(QuotaPolicy.ODDSPAPI, { keyStore.current(ApiProvider.ODDSPAPI) }, usage))
+    val opFeed = com.tjshea.vigilant.data.reference.OddsPapiFeed(opClient)
+    val opGames = com.tjshea.vigilant.data.reference.OpGamesSource(opFeed)
+    val opProps = com.tjshea.vigilant.data.reference.OpPropsSource(opFeed)
+
+    /** OddsPapi is on, a key is saved and it is answering: the scan, bids and open-bet pricing read it, and the feeds it replaces rest. */
+    fun opActive(s: ScanSettings): Boolean = AppBook.isNovig && s.oddsPapi && keyStore.current(ApiProvider.ODDSPAPI).isNotEmpty() && !opClient.down()
+
+    /** Closing lines (CLV for any bet, graded or not) and final scores from OddsPapi: asked only while it is switched on (see [syncOp]). */
+    val opCloses = com.tjshea.vigilant.data.tracker.OpCloses(opClient, opFeed, { keyStore.current(ApiProvider.ODDSPAPI).isNotEmpty() })
+    val opScores = com.tjshea.vigilant.data.tracker.OpScores(opClient, opFeed, { keyStore.current(ApiProvider.ODDSPAPI).isNotEmpty() })
+
+    /** Follows Settings: the closes and scores read OddsPapi only while its switch is on. Safe to call on every settings change; off, nothing is asked. */
+    fun syncOp(s: ScanSettings) {
+        val on = AppBook.isNovig && s.oddsPapi
+        opCloses.enabled = on
+        opScores.enabled = on
+    }
+
     /** Follows Settings: the closes and scores read SportsGameOdds only while Pro is on. Safe to call on every settings change. */
     fun syncSgo(s: ScanSettings) {
+        syncOp(s)
         val on = AppBook.isNovig && s.sgoPro
         sgoCloses.enabled = on
         sgoScores.enabled = on
@@ -418,8 +442,8 @@ class AppContainer(private val app: Application) {
     /** The free score feeds (ESPN, MLB): one instance, so its per-day and box-score caches serve the Tracker's grading and the scan study's alike. */
     val freeScores = FreeScores(http, json)
 
-    /** SportsGameOdds' final scores first while Pro is on ([syncSgo]), the free feeds behind them (and for a prop's box score). */
-    val scores: com.tjshea.vigilant.data.tracker.ScoreSource = com.tjshea.vigilant.data.tracker.ChainedScores(sgoScores, freeScores)
+    /** OddsPapi's final scores first while it is on ([syncOp]), then SportsGameOdds' while Pro is on ([syncSgo]), the free feeds behind them (and for a prop's box score). */
+    val scores: com.tjshea.vigilant.data.tracker.ScoreSource = com.tjshea.vigilant.data.tracker.ChainedScores(opScores, com.tjshea.vigilant.data.tracker.ChainedScores(sgoScores, freeScores))
     val settler = BetSettler(tracker, scores, leaveApiBets = { trading != null })
 
     /**
@@ -437,7 +461,7 @@ class AppContainer(private val app: Application) {
 
     /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when ParlayAPI is on and Tj has a key; nothing otherwise. */
     val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, parlayPool, json, historyDays = { parlayAccount.historyDays() })
-    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(sgoCloses, parlayCloses, espnCloses, novigCloses))
+    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(sgoCloses, opCloses, parlayCloses, espnCloses, novigCloses))
 
     /**
      * The scan study (Tj, 2026-10-03: "on every cno scan, the vigilant app saves logs on all kinds of information … when those bets are final, it logs whether
@@ -466,7 +490,7 @@ class AppContainer(private val app: Application) {
     }
 
     private val studyCloses = listOf<com.tjshea.vigilant.data.tracker.CloseSource>(
-        sgoCloses, com.tjshea.vigilant.data.study.GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses,
+        sgoCloses, opCloses, com.tjshea.vigilant.data.study.GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses,
     )
 
     /**
@@ -1061,12 +1085,14 @@ class AppContainer(private val app: Application) {
         val s = currentSettings()
         // Pinnodds' live Pinnacle lines first when its socket is running (Tj, 2026-10-09: the app still uses Pinnodds; "stop" meant Claude's own connections), then SGO's.
         val pinn = if (!com.tjshea.vigilant.data.scanner.Dormant.PINNODDS && pinnRunner.running) runCatching { pinnRunner.altQuotes(ev.eventId) }.getOrDefault(emptyList()) else emptyList()
-        if (!sgoActive(s)) return pinn
+        val useSgo = sgoActive(s)
+        val useOp = !useSgo && opActive(s)
+        if (!useSgo && !useOp) return pinn
         val league = com.tjshea.vigilant.data.scanner.Leagues.byNovigName(ev.league) ?: return pinn
-        if (!com.tjshea.vigilant.data.reference.SgoBooks.supports(league)) return pinn
+        if (!(if (useSgo) com.tjshea.vigilant.data.reference.SgoBooks.supports(league) else com.tjshea.vigilant.data.reference.OpBooks.supports(league))) return pinn
         val now = System.currentTimeMillis()
         val snap = labBoards[league.novigName]?.takeIf { now - it.first < LAB_BOARD_MS }?.second
-            ?: sgoGames.odds(league, s.copy(includeLive = true)).also { labBoards[league.novigName] = now to it }
+            ?: (if (useSgo) sgoGames.odds(league, s.copy(includeLive = true)) else opGames.odds(league, s.copy(includeLive = true, opAltLines = true))).also { labBoards[league.novigName] = now to it }
         val match = com.tjshea.vigilant.data.scanner.Planner.matchEvents(listOf(ev), listOf(snap)).firstOrNull()?.refEvent ?: return pinn
         val novigHome = com.tjshea.vigilant.data.novig.NovigText.parseMatchup(ev.description)?.home.orEmpty()
         val swapped = com.tjshea.vigilant.data.match.TeamMatcher.whichOf(novigHome, match.home, match.away) == 2
@@ -1367,13 +1393,17 @@ class AppContainer(private val app: Application) {
         val s = currentSettings()
         // SportsGameOdds Pro carries every book these three do, in one read: while it answers it is the only one asked (and falls back to them if it is down).
         val sgo = s.vigilantOn && sgoActive(s)
+        // OddsPapi likewise (its props are the scan's own read): the paid three rest while it answers.
+        val op = s.vigilantOn && opActive(s) && !sgo
+        val rest = !sgo && !op
         com.tjshea.vigilant.data.reference.OtherBooks.Sources(
-            parlay = !sgo && s.vigilantOn && parlayActive(),
-            propLine = !sgo && s.vigilantOn && s.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty(),
-            oddsApi = !sgo && s.vigilantOn && s.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty(),
+            parlay = rest && s.vigilantOn && parlayActive(),
+            propLine = rest && s.vigilantOn && s.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty(),
+            oddsApi = rest && s.vigilantOn && s.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty(),
             sgo = sgo,
+            op = op,
         )
-    }, sgo = sgoClient)
+    }, sgo = sgoClient, op = { league -> opFeed.read(league, currentSettings().let { it.copy(families = it.families + com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS) }).props })
 
     /**
      * Moves keys saved by v0.6.0 and earlier (encrypted with a Keystore key, which a backup
@@ -1399,7 +1429,7 @@ class AppContainer(private val app: Application) {
     fun referenceSources(settings: ScanSettings, background: Boolean = false, scan: Boolean = false): List<ReferenceSource> = when {
         // Low-usage bids narrow Vigilant's own scan only ([scan]): what prices Tj's open bets, the sharp-book confirmations and the rest read the usual feeds.
         // SportsGameOdds Pro has no per-call budget to save (unlimited events), so low-usage bids narrow nothing while it answers.
-        scan && settings.lowUsageNow && !sgoActive(settings) -> lowUsageSources(settings, background)
+        scan && settings.lowUsageNow && !sgoActive(settings) && !opActive(settings) -> lowUsageSources(settings, background)
         else -> allReferenceSources(settings, background, scan)
     }
 
@@ -1433,13 +1463,25 @@ class AppContainer(private val app: Application) {
     private fun allReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> {
         val all = baseReferenceSources(settings, background, scan)
         // SportsGameOdds Pro (Tj, 2026-10-09): one feed prices what the paid ones sell; they rest for every league it carries (tennis keeps them), and come back if SGO stops answering.
-        if (!sgoActive(settings)) return all
+        val sgoOn = sgoActive(settings)
+        val opOn = opActive(settings)
+        if (!sgoOn && !opOn) return all
         val replaced = setOfNotNull(
             pinnacle.id.takeUnless { pinnoddsActive(settings) },   // Pinnodds' Pinnacle board prices every league, SGO's included
             propLine.id, propLineProps.id, oddsApi.id, bookProps.id, parlayOdds.id, parlayOddsBackground.id, parlayProps.id, parlayPropsBackground.id, parlayHalves.id, parlayHalvesBackground.id,
         )
-        val rest = all.map { if (it.id in replaced) com.tjshea.vigilant.data.reference.OutsideSgo(it) else it }
-        return listOf<ReferenceSource>(sgoGames) + (if (com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families) listOf(sgoProps) else emptyList()) + rest
+        // Each feed that answers rests the paid ones for the leagues it carries (tennis keeps them); both on: both rest them, and the earlier in SOURCE_ORDER (SGO) wins a book both send.
+        val props = com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families
+        val rest = all.map { src ->
+            var r = src
+            if (src.id in replaced) {
+                if (sgoOn) r = com.tjshea.vigilant.data.reference.OutsideSgo(r)
+                if (opOn) r = com.tjshea.vigilant.data.reference.OutsideOp(r)
+            }
+            r
+        }
+        return (if (sgoOn) listOf<ReferenceSource>(sgoGames) + (if (props) listOf(sgoProps) else emptyList()) else emptyList()) +
+            (if (opOn) listOf<ReferenceSource>(opGames) + (if (props) listOf(opProps) else emptyList()) else emptyList()) + rest
     }
 
     internal fun baseReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
