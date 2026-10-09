@@ -25,10 +25,21 @@ data class TailRules(
     /** A strike is "liquid" (it says where the game is centred) when its two sides are within this of each other. */
     val maxSpread: Double = 0.06,
     val maxAsk: Double = 0.985,
-)
+    /** Which rule set this is, written on each would-be bet so the paper record can say which one was right. */
+    val name: String = "cons",
+) {
+    companion object {
+        /**
+         * The best-estimate rules for the paper study: no widening of the spread, no shift of the centre, a lower fair floor. Not for money: it is how the paper record learns whether the margins of the
+         * conservative rules (which turn away Tj's own 90% Under 53.5 at halftime, fair about 86% with them against about 94% without) are worth what they cost.
+         */
+        val EXPLORE = TailRules(minFair = 0.85, sdMult = 1.0, centreShift = 0.0, name = "explore")
+    }
+}
 
 /** One would-be bet: [side] is "UNDER"/"OVER" for a total, "YES"/"NO" for a margin line; [fair] is the conservative probability the bet wins. */
 data class TailCandidate(
+    val rule: String,
     val marketId: String,
     val eventId: String,
     val outcomeId: String,
@@ -100,7 +111,7 @@ object TailScan {
             if (edge < rules.minEdge) continue
             val total = p.line.kind == LadderKind.TOTAL
             out += TailCandidate(
-                p.line.marketId, p.line.eventId, if (yes) p.line.yesOutcomeId else p.line.noOutcomeId, p.line.label,
+                rules.name, p.line.marketId, p.line.eventId, if (yes) p.line.yesOutcomeId else p.line.noOutcomeId, p.line.label,
                 if (total) (if (yes) "OVER" else "UNDER") else (if (yes) "YES" else "NO"),
                 p.line.threshold, leg.price, pWin, edge, leg.contracts, centre, state.fractionLeft,
             )

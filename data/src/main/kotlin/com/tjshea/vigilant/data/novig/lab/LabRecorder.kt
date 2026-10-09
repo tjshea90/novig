@@ -120,10 +120,10 @@ class LabRecorder(
             val st = if (game != null && sport != null && frac != null) GameState(sport, game.homeScore, game.awayScore, frac) else null
             if (game != null && st != null) {
                 withState++
-                for (c in TailScan.scan(points, st, { ref -> game.marginOf(ref) })) {
+                for (rules in listOf(TailRules(), TailRules.EXPLORE)) for (c in TailScan.scan(points, st, { ref -> game.marginOf(ref) }, rules)) {
                     tail++
                     record(LabRecord(id(), now, LabKind.TAIL, ev.eventId, ev.description, ev.league, c.marketId, c.outcomeId, c.label, c.side, c.strike, c.ask, c.fair, c.edge, c.contracts, 0,
-                        "score ${st.homeScore}-${st.awayScore}, ${"%.0f".format(java.util.Locale.US, st.fractionLeft * 100)}% left, centre ${"%.1f".format(java.util.Locale.US, c.centre)}"))
+                        "${c.rule} · score ${st.homeScore}-${st.awayScore}, ${"%.0f".format(java.util.Locale.US, st.fractionLeft * 100)}% left, centre ${"%.1f".format(java.util.Locale.US, c.centre)}"))
                 }
             }
             val quotes = runCatching { altQuotes(ev) }.getOrDefault(emptyList())
@@ -143,7 +143,7 @@ class LabRecorder(
 
     /** Writes [r] unless the same would-be bet was written within [REPEAT_MS] at a price no better than a cent below. */
     private fun record(r: LabRecord) {
-        val key = r.kind + "|" + r.outcomeId + (if (r.kind == LabKind.COVER) "|" + r.note else "")
+        val key = r.kind + "|" + r.outcomeId + (if (r.kind == LabKind.COVER) "|" + r.note else "|" + r.note.substringBefore(" ·"))
         val prev = lastSeen[key]
         if (prev != null && r.atMs - prev.first < REPEAT_MS && r.ask > prev.second - 0.01) return
         lastSeen[key] = r.atMs to r.ask
