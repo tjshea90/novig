@@ -36,12 +36,12 @@ class WideQuoteGuardTest {
     @Test fun theWideProphetXQuoteIsLeftOutOfTheFairLineByDefault() {
         val on = CnoBooks.check(page(), 108)
         assertEquals("DraftKings, Hard Rock (one company) and Fliff: three votes", 3, on.twoSided)
-        assertEquals(0.4987, on.fair!!, 0.0005)
+        assertEquals(0.4987, on.fairProbability!!, 0.0005)
         assertEquals(0.037, on.ev!!, 0.002)
         WideQuotes.enabled = false
         val off = CnoBooks.check(page(), 108)
         assertEquals("with the guard off ProphetX votes too, as before", 4, off.twoSided)
-        assertEquals(0.5010, off.fair!!, 0.0005)
+        assertEquals(0.5010, off.fairProbability!!, 0.0005)
         assertEquals(0.0422, off.ev!!, 0.002)
     }
 
