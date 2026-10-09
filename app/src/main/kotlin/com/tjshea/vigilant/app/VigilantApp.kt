@@ -143,6 +143,7 @@ class AppContainer(private val app: Application) {
         const val BURST_TRADE_MIN_STAKE = 0.5
 
         /** The leagues the paper lab reads: the ones ESPN's scoreboard can give a clock for. */
+        const val LAB_BOARD_MS = 25_000L
         val LAB_LEAGUES = setOf("NFL", "NCAAF", "NBA", "WNBA", "NCAAB", "NHL", "MLB")
         const val BURST_TRADE_MAX_STAKE = 10.0
 
@@ -1037,9 +1038,31 @@ class AppContainer(private val app: Application) {
      */
     val lab: com.tjshea.vigilant.data.novig.lab.LabRecorder by lazy {
         com.tjshea.vigilant.data.novig.lab.LabRecorder(
-            scope = appScope, source = novig, fetch = ::feedRaceFetch, altQuotes = { ev -> pinnRunner.altQuotes(ev.eventId) },
+            scope = appScope, source = novig, fetch = ::feedRaceFetch, altQuotes = ::labAltQuotes,
             journal = labJournal, gradeJournal = labGradeJournal, bidLab = bidLab,
         )
+    }
+
+    /** The lab's SportsGameOdds boards by league: one read serves every game of the league for [LAB_BOARD_MS] (SGO refreshes about every 30 s). */
+    private val labBoards = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, com.tjshea.vigilant.data.reference.RefSnapshot>>()
+
+    /**
+     * The paper lab's outside alternate lines for a Novig game (Tj, 2026-10-09: "incorporate sportsgamesodds pro into the research labs"): SportsGameOdds' main and alternate spreads and totals of the game,
+     * every book, live games included, matched to the Novig game by teams and start. Nothing while SGO Pro is off or has no key (Pinnodds is dormant): the lab then has no outside quotes and records only
+     * the ladder covers and tail strikes.
+     */
+    private suspend fun labAltQuotes(ev: com.tjshea.vigilant.data.novig.NovigEvent): List<com.tjshea.vigilant.data.novig.lab.AltQuote> {
+        val s = currentSettings()
+        if (!sgoActive(s)) return emptyList()
+        val league = com.tjshea.vigilant.data.scanner.Leagues.byNovigName(ev.league) ?: return emptyList()
+        if (!com.tjshea.vigilant.data.reference.SgoBooks.supports(league)) return emptyList()
+        val now = System.currentTimeMillis()
+        val snap = labBoards[league.novigName]?.takeIf { now - it.first < LAB_BOARD_MS }?.second
+            ?: sgoGames.odds(league, s.copy(includeLive = true)).also { labBoards[league.novigName] = now to it }
+        val match = com.tjshea.vigilant.data.scanner.Planner.matchEvents(listOf(ev), listOf(snap)).firstOrNull()?.refEvent ?: return emptyList()
+        val novigHome = com.tjshea.vigilant.data.novig.NovigText.parseMatchup(ev.description)?.home.orEmpty()
+        val swapped = com.tjshea.vigilant.data.match.TeamMatcher.whichOf(novigHome, match.home, match.away) == 2
+        return com.tjshea.vigilant.data.novig.lab.SgoAltQuotes.quotes(match, swapped)
     }
 
     /** The paper bid lab's files (RESEARCH.md §122): the paper bids when they went up and what happened to them. */
