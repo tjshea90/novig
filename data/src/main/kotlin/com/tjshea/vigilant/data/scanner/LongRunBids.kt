@@ -51,7 +51,7 @@ object LongRunBids {
     }
 
     /** Whether the slow far pace applies: the saver is active (any focus but low usage). */
-    fun slowFarApplies(s: ScanSettings): Boolean = active(s)
+    fun slowFarApplies(s: ScanSettings): Boolean = active(s) && !s.sgoPro   // SGO Pro spends no credits, and its 10-minute guard leaves no room for an 8-minute gap
 
     /**
      * The gap between two background runs of Vigilant's own scan now: [LowUsageBids.FAR_GAP_SECONDS] while no game a bid could still go on ([ScanSettings.makerStopMinutes]

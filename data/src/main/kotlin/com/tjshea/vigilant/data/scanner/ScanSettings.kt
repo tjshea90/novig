@@ -835,7 +835,13 @@ data class ScanSettings(
      * The shortest gap between two background runs of Vigilant's own scan: the usual [AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS], or the low-usage pace ([LowUsageBids.shortestGapSeconds];
      * the Auto pace's gap is longer while every game is far off, [LowUsageBids.gapSeconds], which the background scan asks).
      */
-    val vigilantGapSeconds: Int get() = if (lowUsageNow) LowUsageBids.shortestGapSeconds(this) else AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS
+    val vigilantGapSeconds: Int get() = when {
+        lowUsageNow -> LowUsageBids.shortestGapSeconds(this)
+        // SGO Pro (Tj, 2026-10-09: bids "keep posting new bids all day ... automatic scans every few minutes and fresh odds"): its reads cost no credits, and its prices refresh about every 5 minutes, so a bid
+        // priced from a 6-minute-old quote lives only 4 more minutes under the 10-minute guard: a scan every 4+ minutes left holes between a bid coming down and the next one going up.
+        sgoPro -> SGO_SCAN_GAP_SECONDS
+        else -> AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS
+    }
 
     /** What background auto-scan does now: [autoScan], or nothing while [paused]. */
     val activeAutoScan: AutoScanMode get() = if (autoScansCno || autoScansVigilant) autoScan else AutoScanMode.OFF
@@ -993,6 +999,9 @@ data class ScanSettings(
 
         /** Vigilant's own scan (API credits) starts at most this often inside a background cycle, however fast the cycles are ([AutoScanner]). */
         const val AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS = 240
+
+        /** The same gap while SGO Pro is on: every 2 minutes (see [vigilantGapSeconds]). */
+        const val SGO_SCAN_GAP_SECONDS = 120
 
         /** How often a background cycle really runs Vigilant's own scan at [autoScanSeconds] (every cycle, or every few of them when cycles are faster than the gap: [gapSeconds], the one above or [ScanSettings.vigilantGapSeconds]'s low-usage pace). */
         fun vigilantEverySeconds(autoScanSeconds: Int, gapSeconds: Int = AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS): Int {
