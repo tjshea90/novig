@@ -4298,4 +4298,8 @@ Tj, 2026-10-09 (~04:30Z): "Make an ongoing rule permanent for this repo saved to
 - [x] QF1 RULE: CLAUDE.md section + bootstrap.sh's start-of-session rules; first uses: .github/dependabot.yml, .github/workflows/research-record.yml (hours-long public recorder on Actions, tape to the research-data branch).
 - [x] QF2 PAPER LAB SETTING: it was buried at the bottom of Diagnostics & about; now a Settings page of its own, "Research mode" (Data & help group), with the switch, the share button and the paper lab; search finds "research", "paper lab".
 - [x] QF3 PINNODDS DORMANT: Dormant.PINNODDS; page and search entries hidden, never opened (not by Research mode either); CLAUDE.md standing instruction; scheduled pregame trigger deleted; key file deleted; no recorder running.
-- [ ] QF4 floor green, ship v0.81.0, trigger research-record once to prove the workflow.
+- [x] QF4 floor green, ship v0.81.0, trigger research-record once to prove the workflow.
+
+## Crash on open (Tj, 2026-10-09 ~04:06Z: "Even the new version is crashing automatically as soon as I open it")
+- [x] CR1 Hotfix v0.81.1: lab loop catches Throwable; appScope has a CoroutineExceptionHandler (logs, no crash); paper-bid journals append in one batch (one fsync) and cap at 4000 bids in flight; lab journals lazy; a crash saved by the last run is copied to Downloads/Vigilant/vigilant-last-crash.txt at startup. Root cause NOT proven (no trace; v0.81.0 R8 dex has all serializers; Robolectric launches fine).
+- [ ] CR2 If v0.81.1 still crashes: Tj sends Downloads/Vigilant/vigilant-last-crash.txt; fix the real cause from its stack.
