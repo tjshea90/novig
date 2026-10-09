@@ -1424,7 +1424,7 @@ class AppContainer(private val app: Application) {
         return listOf<ReferenceSource>(sgoGames) + (if (com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families) listOf(sgoProps) else emptyList()) + rest
     }
 
-    private fun baseReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
+    internal fun baseReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
         val pinnacleOn = settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())
         if (pinnacleOn) add(pinnacle)
         // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (2 credits a league saved).

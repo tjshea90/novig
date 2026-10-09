@@ -92,4 +92,43 @@ class SgoWiringTest {
         assertFalse(c.sgoCloses.active)
         assertFalse(c.sgoScores.covers("NFL"))
     }
+
+    // ---- the switch off = the app as it was ------------------------------------------------------------------------------------
+
+    @Test
+    fun `off, the source list is exactly the one the app built before SportsGameOdds existed`() = runBlocking {
+        val c = app.container
+        keys(c)
+        for (background in listOf(false, true)) for (scan in listOf(false, true)) {
+            val off = c.referenceSources(settings(false), background, scan)
+            val before = c.baseReferenceSources(settings(false), background, scan)
+            assertEquals("same sources, same order, same objects (no wrapper)", before.map { System.identityHashCode(it) }, off.map { System.identityHashCode(it) })
+            assertTrue(off.none { it is com.tjshea.vigilant.data.reference.OutsideSgo })
+        }
+    }
+
+    @Test
+    fun `off, nothing is ever sent to SportsGameOdds whatever the app does`() = runBlocking {
+        val c = app.container
+        keys(c)
+        c.syncSgo(settings(false))
+        assertTrue(c.sgoCloses.closes(listOf(bet())).isEmpty())
+        assertEquals(null, c.sgoScores.games("NFL", java.time.LocalDate.of(2026, 10, 11)))
+        assertEquals(null, c.sgoScores.players(com.tjshea.vigilant.data.tracker.GameScore("sgo:E1", "NFL", "A", "B", 0L, true, false, 1, 0)))
+        assertEquals(0, c.sgoClient.requests)
+        // the tapped bet's other-books sheet leans on none of it
+        assertFalse(c.sgoActive(settings(false)))
+    }
+
+    @Test
+    fun `off, the usage page has no SportsGameOdds card until there is a key`() {
+        val s = com.tjshea.vigilant.app.SampleScan.state()
+        assertFalse(com.tjshea.vigilant.app.ui.meterViews(s, 0L).any { it.policy.id == com.tjshea.vigilant.data.keys.QuotaPolicy.SGO.id })
+        assertTrue(com.tjshea.vigilant.app.ui.meterViews(s.copy(sgoKeys = listOf("k-1111-2222")), 0L).any { it.policy.id == com.tjshea.vigilant.data.keys.QuotaPolicy.SGO.id })
+    }
+
+    private fun bet() = com.tjshea.vigilant.data.tracker.TrackedBet(
+        id = "b", createdAtMs = 1L, league = "NFL", eventName = "A @ B", startsTs = 1L, marketLabel = "Money", selection = "B",
+        marketId = "m", outcomeId = "o", price = 0.5, cost = 0.5, fairAtBet = 0.5, evPercentAtBet = 1.0, stake = 1.0,
+    )
 }
