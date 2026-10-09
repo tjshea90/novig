@@ -4322,3 +4322,7 @@ Tj, 2026-10-09 (~04:30Z): "Make an ongoing rule permanent for this repo saved to
 - [x] SH3 FULL POWER: find every place the app still spends a redundant API while SGO is on (tapped bet's other books, injury tags, ...) and route it to SGO.
 - [x] SH4 GITHUB LAB: a JVM `lab` module running the same paper lab code (ladders, tail, alternate lines vs SGO, paper bids, SGO speed/freshness tape) in Actions, saving to `research-data`; `lab-record.yml`; secrets Tj must add: SGO_API_KEY.
 - [x] SH5 floor green, ship v0.83.0, tell Tj exactly what to do.
+
+## SGO re-check (Tj, 2026-10-09 ~16:00Z: "Read the following sites and make sure the sportsgameodds feature is correctly set up and takes full advantage of all the features")
+- [x] SI1 Re-read docs/openapi/league/player-props/pinnacle/novig pages: OpenAPI unchanged; added bookmakerID filter (SGO-listed ids only), alternate PROP lines, closes' book filter, 504 chains, Test key timing of 5 query shapes + oddID-honored check (SPORTSGAMEODDS_API.md §8b). Tests: SgoClientTest.
+- [ ] SI2 After Tj's sample: pick the fastest query shape from the Test key timing; confirm `oddID` is honored (else switch to `oddIDs`); confirm Pinnacle/Circa/bet365 appear on Pro and their lastUpdatedAt ages.
