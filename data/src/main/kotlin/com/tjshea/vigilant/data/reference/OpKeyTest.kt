@@ -27,7 +27,6 @@ object OpKeyTest {
             val hint = if (m.contains("401")) "\nVigilant speaks OddsPapi v5 (v5.oddspapi.io), which comes from a trial or contract arranged with contact@55-tech.com. A key from the self-serve plan builder (api.oddspapi.io/v4) is a different product and is refused here." else ""
             return Result(false, "Could not read the key's books: $m$hint", sample.toString())
         }
-        val mapped = catalog.mapNotNull { b -> OpBooks.appKey(b.slug, b.name)?.let { b.slug to it } }
         val ours = OpBooks.wanted(ScanSettings().referenceBooks, true)
         val found = catalog.filter { OpBooks.appKey(it.slug, it.name) in ours }
         val missing = ours.filter { k -> found.none { OpBooks.appKey(it.slug, it.name) == k } }
