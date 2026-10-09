@@ -5883,3 +5883,8 @@ Finally, make sure the new api function and toggle is separate from what the app
 
 If you need anything from me, such as the api key or anything else, let me know. I will probably sign up for the free trial after my sgo free trial runs out. But I want the option to use it ready to go
 ```
+
+## 2026-10-09T22:19:37Z
+```
+Research what other apis are worth trying the free trial and anything else that is either free or cheap to help the app, whether API or any other type of service
+```
