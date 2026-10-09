@@ -80,7 +80,7 @@ class WalletNotificationsTest {
         AutoBetNotes.stopped(app, "Auto-bet stopped", "Novig refused an order")
         val posted = shadowOf(app.getSystemService(NotificationManager::class.java)).allNotifications
         assertTrue(posted.size >= 2)
-        for (n in posted) assertEquals("Wallet \$42.17", n.extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString())
+        for (n in posted) assertEquals("Wallet \$42.17 · no bids up", n.extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString())
     }
 
     @Test

@@ -33,3 +33,18 @@ class SgoBidPaceTest {
         assertEquals(ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS, bids.copy(sgoPro = false).vigilantGapSeconds)
     }
 }
+
+class SgoGuardTest {
+    @org.junit.After fun reset() { Freshness.sgoMode = false; Freshness.sgoMaxAgeMs = Freshness.FAR_OFF_AGE_MS }
+
+    @Test fun the_guard_follows_the_setting_and_the_headroom_is_a_minute() {
+        Freshness.sgoMode = true; Freshness.sgoMaxAgeMs = 15 * 60_000L
+        assertEquals(15 * 60_000L, Freshness.maxAgeMs(null, 0L))
+        assertEquals(60_000L, Freshness.MIN_SHOWN_MS)
+        assertEquals("over 15 minutes", Freshness.LIMIT_TEXT)
+        Freshness.sgoMode = false
+        assertEquals(2 * 60_000L, Freshness.MIN_SHOWN_MS)
+        assertEquals(10, ScanSettings().sgoMaxAgeMinutes)
+        assertFalse(ScanSettings().quietNotifications)
+    }
+}
