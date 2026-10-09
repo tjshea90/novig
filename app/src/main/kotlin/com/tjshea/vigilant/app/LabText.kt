@@ -11,6 +11,11 @@ object LabText {
     const val SWITCH_SUB = "While a game is live on Novig, reads its totals, spread and moneyline books and writes down (no order, ever) would-be bets: a cover across lines, a far strike the game has all but decided, and an alternate line priced under Pinnacle's. Graded from Novig's own settled markets."
     const val HINT = "Research only. It needs live games (NFL, NCAAF, NBA, NHL, MLB); the Pinnodds feed adds the alternate-line check. Settings › Diagnostics has what it found."
 
+    const val RESEARCH_TITLE = "Research mode (turn everything on)"
+    const val RESEARCH_SUB = "One switch for every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bids, and Pinnodds live in paper mode (if a Pinnodds key is saved). Never turns on real-money betting."
+    const val RESEARCH_HINT = "Leave the app open (plugged in) through games, evenings and a few days of pregame, then tap the button and send the file."
+    const val RESEARCH_BUTTON = "Share research file with Claude"
+
     private fun duration(ms: Long): String {
         val m = ms / 60_000L
         return if (m < 60) "${m} min" else "${m / 60} h ${m % 60} min"

@@ -1020,7 +1020,7 @@ class AppContainer(private val app: Application) {
         // The paper bid lab's tape reader: every 45 s while research is on (its lines come from the Bids passes and the paper lab).
         if (on && bidLabJob?.isActive != true) {
             bidLabJob = appScope.launch {
-                while (kotlinx.coroutines.isActive(coroutineContext = kotlin.coroutines.coroutineContext)) {
+                while (true) {
                     runCatching { bidLab.poll(System.currentTimeMillis()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
                     kotlinx.coroutines.delay(45_000L)
                 }

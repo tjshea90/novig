@@ -1237,6 +1237,16 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
         }
     }
 
+    // ---- Research mode (Tj, 2026-10-09): one switch for every recorder that places nothing, one button for one file ---------------------------------------------------
+    if (AppBook.isNovig) {
+        SectionTitle("Research mode")
+        Hint(com.tjshea.vigilant.app.LabText.RESEARCH_HINT)
+        SwitchRow(com.tjshea.vigilant.app.LabText.RESEARCH_TITLE, com.tjshea.vigilant.app.LabText.RESEARCH_SUB, state.settings.researchMode, tag = "researchSwitch") { v -> onUpdate { it.copy(researchMode = v) } }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+            androidx.compose.material3.Button(onClick = reportActions.onShareResearch, modifier = Modifier.testTag("shareResearch")) { Text(com.tjshea.vigilant.app.LabText.RESEARCH_BUTTON) }
+        }
+    }
+
     // ---- The paper lab (Tj, 2026-10-09): ladder covers, late-game tail strikes, alternate lines; no orders; RESEARCH.md §120.6 ------------------------------------------
     if (AppBook.isNovig) {
         SectionTitle("Paper lab")

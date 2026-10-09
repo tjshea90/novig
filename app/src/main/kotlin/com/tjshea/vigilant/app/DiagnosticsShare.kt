@@ -123,6 +123,20 @@ object DiagnosticsShare {
 
     const val FEED_RACE_PREFIX = "vigilant-feed-race-"
 
+    /** The one research file (RESEARCH.md §122), kept like the others: the newest [KEEP]. */
+    fun writeResearch(context: Context, name: String, fill: (java.io.Writer) -> Unit): File {
+        val dir = dir(context).apply { mkdirs() }
+        val file = File(dir, name)
+        file.bufferedWriter().use(fill)
+        dir.listFiles { f -> f.isFile && f.name.startsWith(RESEARCH_PREFIX) }?.sortedByDescending { it.lastModified() }?.drop(KEEP)?.forEach { runCatching { it.delete() } }
+        return file
+    }
+
+    fun researchIntent(context: Context, file: File, versionName: String): Intent =
+        share(context, file, "Vigilant research file (v$versionName)", com.tjshea.vigilant.data.novig.lab.LabExport.PROMPT, "Share research file")
+
+    const val RESEARCH_PREFIX = "vigilant-research-"
+
     /**
      * The app's files and their sizes in bytes, largest first (the file listing in the report). A folder is listed once, as `name/`, with everything under it: the total used to
      * count only the files directly in the app's folder and left out the scan study (11.2 MB in Tj's v0.70.1 file, "Total 5651 KB").

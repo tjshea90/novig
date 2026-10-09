@@ -139,7 +139,7 @@ class LabRecorder(
                 record(LabRecord(id(), now, LabKind.ALT, ev.eventId, ev.description, ev.league, c.marketId, c.outcomeId, c.label, c.side, c.strike, c.ask, c.fair, c.edge, c.contracts, c.books, "oldest quote ${c.oldestAgeSec}s"))
             }
         }
-        bidLab?.let { it.observe(liveLabLines, now); runCatching { it.poll(now) } }
+        bidLab?.observe(liveLabLines, now)   // the app's own loop reads the trade tape (BidLab.poll)
         cycle++
         val s = _status.value
         _status.value = s.copy(games = live.size, cycles = s.cycles + 1, ladders = LadderScan.summary(reports), withState = withState, tail = s.tail + tail, alt = s.alt + alt, covers = s.covers + covers, lastCycleMs = now)

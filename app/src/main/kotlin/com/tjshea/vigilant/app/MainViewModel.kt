@@ -1849,6 +1849,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** Settings › Diagnostics & about › Share live feed test with Claude (Tj, 2026-10-07): the verdict, the table, every score that moved Novig and the raw tape, as one file saved to Downloads/Vigilant and shared. */
+    /** One file with everything the research recorders found (RESEARCH.md §122): the status of each, the paper lab and paper bid tables and their raw journals. */
+    fun shareResearch() {
+        viewModelScope.launch {
+            _toasts.tryEmit("Making the research file…")
+            val intent = try {
+                withContext(Dispatchers.IO) {
+                    val now = System.currentTimeMillis()
+                    val app = getApplication<Application>()
+                    val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
+                    val s = _state.value.settings
+                    val meta = com.tjshea.vigilant.data.novig.lab.LabExport.Meta(
+                        info?.versionName ?: "?", "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})",
+                        "research mode ${if (s.researchMode) "ON" else "off"} · paper lab ${if (s.altLab) "ON" else "off"} · live feed test ${if (s.feedRace) "ON" else "off"} · burst recorder ${if (s.burstRecorder) "ON" else "off"} · Pinnodds live ${if (s.pinnLive) "ON" else "off"} · Bids ${if (s.maker) "ON" else "off"}",
+                    )
+                    val status = ArrayList<String>()
+                    status += LabText.note(c.lab.status.value, now)
+                    val (up, filledOpen, posted) = c.bidLab.counts()
+                    status += "paper bids: $posted posted so far, $up resting, $filledOpen filled and waiting for their close or result, ${c.bidLab.filled} fills"
+                    runCatching { status += "Pinnodds live: " + c.pinnRunner.status.value.let { "${it.socket}, ${it.matched} games matched, ${it.evaluations} evaluations, ${it.candidates} candidates" } }
+                    runCatching { status += "live feed test: " + FeedRaceText.note(c.feedRace.status.value, now) }
+                    runCatching { status += "burst recorder: " + c.burst.status.value.let { "${if (it.running) "running" else "not running"}, ${it.games} games, ${it.windows} windows" } }
+                    val file = DiagnosticsShare.writeResearch(app, com.tjshea.vigilant.data.novig.lab.LabExport.fileName(meta.versionName, now)) { w ->
+                        com.tjshea.vigilant.data.novig.lab.LabExport.write(w, meta, status, c.lab.records(), c.lab.grades(), c.bidLabBidJournal.readAll(), c.bidLabEventJournal.readAll(), now)
+                    }
+                    runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
+                        .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}") }
+                        .onFailure { e -> _toasts.tryEmit("Couldn't save it to Downloads (${e.message ?: e.javaClass.simpleName})") }
+                    c.eventLog.info("DIAG", "research file made (${file.length() / 1024} KB)")
+                    DiagnosticsShare.researchIntent(app, file, meta.versionName)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                c.eventLog.error("DIAG", "couldn't make the research file", e)
+                null
+            }
+            if (intent == null) _toasts.tryEmit("Couldn't make the research file") else shares.send(intent)
+        }
+    }
+
     fun shareFeedRace() {
         viewModelScope.launch {
             _toasts.tryEmit("Making the live feed test file…")
@@ -2014,7 +2054,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             labReport = runCatching {
                 val st = c.lab.status.value
                 val recs = c.lab.records()
-                if (!_state.value.settings.altLab && recs.isEmpty()) null else LabText.diagnostics(st, recs, c.lab.grades(), System.currentTimeMillis())
+                if (!_state.value.settings.altLab && !_state.value.settings.researchMode && recs.isEmpty()) null else LabText.diagnostics(st, recs, c.lab.grades(), System.currentTimeMillis()) + com.tjshea.vigilant.data.novig.lab.BidLabReport.lines(c.bidLabBidJournal.readAll(), c.bidLabEventJournal.readAll())
             }.getOrNull(),
             sharpFeeds = runCatching { com.tjshea.vigilant.data.reference.SharpBooks.feedsAmong(c.referenceSources(_state.value.settings, background = true)) }.getOrDefault(emptyList()),
             lowUsagePlan = _state.value.settings.takeIf { it.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }?.let { runCatching { c.lowUsagePlan(it) }.getOrNull() },
