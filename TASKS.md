@@ -4332,8 +4332,8 @@ Tj, 2026-10-09 (~04:30Z): "Make an ongoing rule permanent for this repo saved to
 - [x] SJ2 (v0.83.4: SGO on = Vigilant scan every 2 min, no slow far pace; SgoBidPaceTest) Fix so that with SGO Pro on, the background auto-scan re-reads SGO every few minutes and the bid desk re-posts from the fresh fair, all day; test; ship.
 
 ## Notifications, open-bids notification, smaller bid batches, bid lifetime (Tj, 2026-10-09 ~17:50Z, with a screenshot and vigilant-diagnostics-v0.83.4-2026-10-09-1347.txt)
-- [ ] SK1 "Make an option to turn all notifications off except notifications of actual money bet or bids filled."
-- [ ] SK2 "Make a notification feature that shows at all times in the notifications how many open bids there are."
-- [ ] SK3 "Make bids go up in smaller batches because they are getting rejected sometimes."
-- [ ] SK4 "Make sure the amount of time bids stay up is optimal, it seems like they are being taken down quickly and then there are stretches with no bids up at all."
-- [ ] SK5 "Review the screenshot and diagnostic file to see if anything needs to be changed" (screenshot: "stopped reading early because the app's memory was nearly full (heap 487 of 512 MB (95%))"; odds 7 min old).
+- [x] SK1 (v0.83.5: Settings › Alerts 'Only money notifications' (NotifyGate; QuietNotificationsTest)) "Make an option to turn all notifications off except notifications of actual money bet or bids filled."
+- [x] SK2 (v0.83.5: every notification's header says '· N bids up ($x)' / 'no bids up'; the auto-scan notice is always up) "Make a notification feature that shows at all times in the notifications how many open bids there are."
+- [x] SK3 (v0.83.5: new bids go up 10 to a request, 300 ms apart (MakerDesk.PLACE_CHUNK)) "Make bids go up in smaller batches because they are getting rejected sometimes."
+- [x] SK4 (v0.83.5: SGO props refresh ~10 min so a 10-min guard leaves gaps: new setting 'Drop odds older than' 10/12/15/20 (default 10), headroom 1 min in SGO mode) "Make sure the amount of time bids stay up is optimal, it seems like they are being taken down quickly and then there are stretches with no bids up at all."
+- [x] SK5 (v0.83.5: memory: alternate rungs capped to the 13 nearest the main line (SgoConvert.MAX_LINES); sofascore 403s are the research feed race only) "Review the screenshot and diagnostic file to see if anything needs to be changed" (screenshot: "stopped reading early because the app's memory was nearly full (heap 487 of 512 MB (95%))"; odds 7 min old).
