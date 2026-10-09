@@ -8,5 +8,7 @@ package com.tjshea.vigilant.data.scanner
  * `pinnodds_tape.py`) or schedules anything that does. To revive it (only when Tj asks): set [PINNODDS] false, and re-read `PINNODDS_API.md` and RESEARCH.md §116-§118, §120.
  */
 object Dormant {
-    const val PINNODDS = true
+    /** True = dormant. A variable only so the (kept) Pinnodds UI tests can wake it for their own run and put it back. */
+    @Volatile
+    var PINNODDS: Boolean = true
 }
