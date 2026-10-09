@@ -944,15 +944,17 @@ internal object BookTableText {
 
     /** One Fair cell per row of [prices]: a counted book's devigged fair, "same co." for a sister site after its company's first, "judged", or "—". */
     fun fairCells(prices: List<CnoBookPrice>, judged: String): List<String> {
-        val counted = prices.filter { CnoBooks.usableForFair(it.code, judged) && it.twoSided }
+        val counted = prices.filter { CnoBooks.usableForFair(it.code, judged) && it.twoSided && !CnoBooks.isWide(it) }
         val byCompany = counted.groupBy { CnoBooks.company(it.code) }
         val shown = HashSet<String>()
         return prices.map { p ->
             when {
                 p.code == judged -> "judged"
+                // Two-sided but too wide to trust (the wide-quote guard): shown, not counted.
+                CnoBooks.usableForFair(p.code, judged) && CnoBooks.isWide(p) -> "wide, not used"
                 p !in counted -> "—"
                 !shown.add(CnoBooks.company(p.code)) -> "same co."
-                else -> byCompany.getValue(CnoBooks.company(p.code)).mapNotNull { CnoBooks.fairFor(it.odds!!, it.otherOdds!!) }
+                else -> byCompany.getValue(CnoBooks.company(p.code)).mapNotNull { CnoBooks.fairFor(it.odds!!, it.otherOdds!!, it.code) }
                     .takeIf { it.isNotEmpty() }?.average()?.let { Format.percent(it) } ?: ""
             }
         }
@@ -960,9 +962,11 @@ internal object BookTableText {
 
     /** What the column means, and which sister sites count as one when the table has any. */
     fun footnote(prices: List<CnoBookPrice>, judged: String): String {
-        val sisters = prices.filter { CnoBooks.usableForFair(it.code, judged) && it.twoSided }.groupBy { CnoBooks.company(it.code) }.values.filter { it.size > 1 }
+        val sisters = prices.filter { CnoBooks.usableForFair(it.code, judged) && it.twoSided && !CnoBooks.isWide(it) }.groupBy { CnoBooks.company(it.code) }.values.filter { it.size > 1 }
         val once = sisters.joinToString("; ") { g -> g.joinToString(" and ") { it.name } }
-        return "Fair = that book's odds devigged worst case. Only books pricing both sides count; ${CnoBooks.name(judged)} is the price being judged." +
+        val wide = prices.filter { CnoBooks.usableForFair(it.code, judged) && CnoBooks.isWide(it) }
+        val wideNote = if (wide.isEmpty()) "" else " Too wide to trust, so not used: ${wide.joinToString(", ") { it.name }} (its two sides add up to far more than 100%)."
+        return "Fair = that book's odds devigged worst case. Only books pricing both sides count; ${CnoBooks.name(judged)} is the price being judged." + wideNote +
             (if (once.isEmpty()) "" else " One company's sites count once, at their average: $once.")
     }
 }

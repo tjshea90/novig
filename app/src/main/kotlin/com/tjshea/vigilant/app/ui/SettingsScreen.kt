@@ -832,6 +832,11 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
         "With 3 or more books, use the lower of their average and median, so one stale book can't create a fake edge.",
         s.outlierGuard,
     ) { v -> onUpdate { it.copy(outlierGuard = v) } }
+    SwitchRow(
+        "Ignore wide quotes",
+        "A book or exchange whose two sides add up to too much (a book above 10%, an exchange such as ProphetX or Kalshi above 8%) is thin or careless: it is left out of every fair line and shown as \"wide\" in the books table.",
+        s.ignoreWideQuotes, tag = "wideQuotesSwitch",
+    ) { v -> onUpdate { it.copy(ignoreWideQuotes = v) } }
 
     SectionTitle("Devig method (advanced)")
     Hint("How the sportsbooks' profit is taken out of a pair of odds. The methods differ most on long shots; Power is a good default.")
