@@ -5771,3 +5771,11 @@ curl -H "Accept: text/markdown" https://sportsgameodds.com/docs/basics/quickstar
 curl https://sportsgameodds.com/docs/basics/quickstart.mdx
 curl https://sportsgameodds.com/leagues/nfl-odds-api.md
 ```
+
+## 2026-10-09T15:39:52Z
+```
+This is a Claude command it told me to run
+
+claude mcp add sports-game-odds --env SPORTS_ODDS_API_KEY_HEADER="[key redacted …59de]" -- npx -y sports-odds-api-mcp
+https://www.npmjs.com/package/sports-odds-api-mcp
+```
