@@ -469,6 +469,10 @@ private fun ColumnScope.AlertsPage(state: UiState, onUpdate: SettingsUpdate) {
         "A notification on your phone for each new bet at least this good, from CrazyNinjaOdds' list (checked by the background scan, or while a list is " +
             "open). Each bet alerts once. Tap it to open Vigilant, or ✓ Placed to track it without opening the app.",
     )
+    SwitchRow(
+        "Only money notifications", "Off: every alert and message. On: only a bet placed and a bid filled (plus the one notice Android needs while Vigilant runs, which also shows how many bids are up).",
+        s.quietNotifications, tag = "quietNotificationsSwitch",
+    ) { v -> onUpdate { it.copy(quietNotifications = v) } }
     SectionTitle("When to alert")
     Text("Smallest edge (EV) to alert on", style = MaterialTheme.typography.bodyMedium)
     ChoiceChips(ScanSettings.ALERT_MIN_EV_CHOICES, s.alertMinEv, ::alertLabel) { v -> onUpdate { it.copy(alertMinEv = v) } }
@@ -1220,6 +1224,9 @@ private fun ColumnScope.SgoPage(state: UiState, keys: KeyActions, reportActions:
     if (s.sgoPro) {
         SwitchRow("Extra books: Circa, SuperBook, bet365", "Price the fair line with them too (each must show both sides and be fresh, like every book).", s.sgoExtraBooks, tag = "sgoExtraSwitch") { v -> onUpdate { it.copy(sgoExtraBooks = v) } }
         SwitchRow("Alternate lines", "Every book's alternate spreads and totals with the game lines (heavier replies; Pro handles them).", s.sgoAltLines, tag = "sgoAltSwitch") { v -> onUpdate { it.copy(sgoAltLines = v) } }
+        Text("Drop odds older than", style = MaterialTheme.typography.bodyMedium)
+        ChoiceChips(ScanSettings.SGO_MAX_AGE_CHOICES.map { it.toDouble() }, s.sgoMaxAgeMinutes.toDouble(), { "${it.toInt()} min" }) { v -> onUpdate { it.copy(sgoMaxAgeMinutes = v.toInt()) } }
+        Hint("A bet or bid is dropped once the odds behind it are this old (SGO Pro only; off, the app's own 5/10-minute rule). SGO refreshes game lines about every 5 minutes and props about every 10, so with 10 minutes there can be gaps with no bids; 15 closes most of them.")
         Hint(com.tjshea.vigilant.app.SgoText.REPLACES)
     }
 }
