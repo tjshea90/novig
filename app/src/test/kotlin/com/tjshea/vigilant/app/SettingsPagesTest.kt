@@ -106,7 +106,8 @@ class SettingsPagesTest {
         val s = SampleScan.state()
         for (p in SettingsPage.shown(s.settings)) {
             compose.onNodeWithTag("settingsRow-${p.name}").performScrollTo().assertTextContains(p.title, substring = true)
-            compose.onNodeWithText(SettingsSummary.of(p, s), substring = true).assertExists()
+            // two pages can say the same thing ("No key saved": SportsGameOdds, OddsPapi)
+            assertTrue(compose.onAllNodesWithText(SettingsSummary.of(p, s), substring = true).fetchSemanticsNodes().isNotEmpty())
         }
         // The order: as the enum lists them.
         val shown = texts().filter { t -> SettingsPage.entries.any { it.title == t } }   // the hidden pages are not on the list
@@ -122,7 +123,7 @@ class SettingsPagesTest {
     fun `each scanner hides the pages it doesn't use, and a page that goes away falls back to the list`() {
         val base = SampleScan.state()
         assertEquals(
-            listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.PINNODDS, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.SGO, SettingsPage.WIDGET, SettingsPage.RESEARCH, SettingsPage.HELP),
+            listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.PINNODDS, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.SGO, SettingsPage.ODDSPAPI, SettingsPage.WIDGET, SettingsPage.RESEARCH, SettingsPage.HELP),
             SettingsPage.shown(base.settings.copy(scanner = ScannerMode.CNO)),
         )
         assertEquals(SettingsPage.entries.filter { it != SettingsPage.CNO }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.VIGILANT)))
