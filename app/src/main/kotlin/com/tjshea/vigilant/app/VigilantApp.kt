@@ -388,6 +388,9 @@ class AppContainer(private val app: Application) {
         apiSync = ApiBetSync(tracker, client, novig)
     }
 
+    /** Players' injury reports (Tj, 2026-09-30, PARLAY_API.md §6.1): free from every ParlayAPI props answer, and its /injuries list. */
+    val injuries = com.tjshea.vigilant.data.reference.InjuryIndex()
+
     /**
      * SportsGameOdds Pro (Tj, 2026-10-09; SPORTSGAMEODDS_API.md): its client, rotated across Tj's keys like every provider's. Used only while [sgoActive].
      */
@@ -1266,9 +1269,6 @@ class AppContainer(private val app: Application) {
     /** Whether ParlayAPI is on and has a key: its extra calls (injuries, the Check odds now backup, …) are made only then. */
     private suspend fun parlayActive(): Boolean = keyStore.current(ApiProvider.PARLAY).isNotEmpty() && currentSettings().useParlay
 
-    /** Players' injury reports (Tj, 2026-09-30, PARLAY_API.md §6.1): free from every ParlayAPI props answer, and its /injuries list. */
-    val injuries = com.tjshea.vigilant.data.reference.InjuryIndex()
-
     /** A whole league's player props in one 3-credit call (RESEARCH.md §43). */
     private val parlayProps = com.tjshea.vigilant.data.reference.ParlayPropsSource(parlayOdds, injuries)
 
@@ -1276,7 +1276,7 @@ class AppContainer(private val app: Application) {
     val parlayMovers = com.tjshea.vigilant.data.reference.ParlayMovers(http, json)
 
     /** ESPN's injury list through ParlayAPI (1 credit a league, 10 min apart) for listed or open prop bets no props answer covered. */
-    val parlayInjuries = com.tjshea.vigilant.data.reference.ParlayInjuries(parlayOdds, injuries, json, active = { parlayActive() })
+    val parlayInjuries = com.tjshea.vigilant.data.reference.ParlayInjuries(parlayOdds, injuries, json, active = { parlayActive() && !sgoActive(currentSettings()) })
 
     /**
      * What bids priced from CrazyNinjaOdds read and judge (Tj, 2026-10-07; [com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane], RESEARCH.md §114): the background cycle calls its `step`,
