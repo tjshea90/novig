@@ -4293,3 +4293,9 @@ Tj, 2026-10-09 (~03:30Z): "Make as many tests and loggers as needed and just tel
 - [x] QE3 ONE FILE: Settings > Research mode > "Share research file with Claude" (LabExport: README for Claude, status, tables, raw journals).
 - [x] QE4 (floor 2663 green; v0.80.0) floor green, ship v0.80.0, tell Tj in 5 lines what to run and send.
 - [x] QE5 (RESEARCH.md 122, RUN_RESEARCH.md) RESEARCH.md 122: make-bid research plan and what the real bids say (90 fills; 6-24 h CLV +3.2% on 19), the questions the paper bid lab answers, the decision rules (30 fills per recipe).
+
+Tj, 2026-10-09 (~04:30Z): "Make an ongoing rule permanent for this repo saved to GitHub that every future Claude session immediately sees: Use all available free GitHub tools and features that work just as well or better than Claude code that Claude can access to either speed up or improve this project in any way and especially to save Claude usage. No accuracy or quality should be sacrificed for this rule. / I don't see the paper lab setting / Stop using the pinnodds API"
+- [x] QF1 RULE: CLAUDE.md section + bootstrap.sh's start-of-session rules; first uses: .github/dependabot.yml, .github/workflows/research-record.yml (hours-long public recorder on Actions, tape to the research-data branch).
+- [x] QF2 PAPER LAB SETTING: it was buried at the bottom of Diagnostics & about; now a Settings page of its own, "Research mode" (Data & help group), with the switch, the share button and the paper lab; search finds "research", "paper lab".
+- [x] QF3 PINNODDS DORMANT: Dormant.PINNODDS; page and search entries hidden, never opened (not by Research mode either); CLAUDE.md standing instruction; scheduled pregame trigger deleted; key file deleted; no recorder running.
+- [ ] QF4 floor green, ship v0.81.0, trigger research-record once to prove the workflow.

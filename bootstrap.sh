@@ -115,6 +115,13 @@ cat <<'SHORT'
   Ship at milestones:     bash ship.sh "note"               (full gate)
 - Write new requests into TASKS.md, in Tj's own words, before writing any
   code — see CLAUDE.md's "When Tj asks for something new".
+- FREE GITHUB FIRST (Tj, 2026-10-09, permanent): before spending Claude usage on anything
+  mechanical (long test/build runs, recorders, scans, polling, data crunching, waiting),
+  use a free GitHub feature that does it as well or better (Actions, scheduled workflows,
+  Dependabot, code/secret scanning, Pages, Issues); never at the cost of accuracy or
+  quality. CLAUDE.md has the list.
+- PINNODDS IS DORMANT (Tj, 2026-10-09): never open its API, use its key, run its
+  recorders or schedule anything that does (data/.../scanner/Dormant.kt).
 - Skills (.claude/skills/): load the matching one before the work — compose-
   state-and-effects, compose-performance, kotlin-concurrency-and-flow,
   compose-ui-testing-patterns; test-protocols for light/full tests (CLAUDE.md

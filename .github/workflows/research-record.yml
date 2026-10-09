@@ -1,0 +1,55 @@
+name: Research recorder
+
+# Public-read recorders that run for hours with no phone and no Claude session (CLAUDE.md "Use every free GitHub tool ..." rule, Tj 2026-10-09; RESEARCH.md §121):
+# Novig against Kalshi on the same live games, read about every 3 seconds on both venues (no key, no orders, no Pinnodds: that API is dormant). Each run saves its tape to the
+# `research-data` branch under research/data/<date>/ and as a workflow artifact, so a session reads it instead of running it.
+# Run it from the Actions tab ("Run workflow", minutes = how long) or let the schedule do the evening games.
+
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "How long to record (max 300)"
+        default: "120"
+  schedule:
+    # 23:00 UTC every day = 7 PM Eastern: NFL/NBA/NHL/MLB evening games.
+    - cron: "0 23 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research-record
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record Novig vs Kalshi on live games
+        env:
+          MINUTES: ${{ github.event.inputs.minutes || '180' }}
+        run: |
+          mkdir -p out
+          python3 tools/research/xvenue_novig_kalshi.py fast --minutes "$MINUTES" --out out/xvenue.ndjson || true
+          ls -la out
+          gzip -9 -f out/xvenue.ndjson || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: research-tape
+          path: out/
+          retention-days: 30
+      - name: Save to the research-data branch
+        run: |
+          D="research/data/$(date -u +%Y-%m-%d)"
+          git config user.name "research-recorder"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin research-data:research-data 2>/dev/null || true
+          if git show-ref --verify --quiet refs/heads/research-data; then git checkout research-data; else git checkout --orphan research-data && git rm -rf . >/dev/null 2>&1 || true; fi
+          mkdir -p "$D"
+          cp out/xvenue.ndjson.gz "$D/xvenue-$(date -u +%H%M).ndjson.gz" 2>/dev/null || true
+          git add research/data
+          git commit -m "research tape $(date -u +%Y-%m-%dT%H:%MZ)" || echo "nothing to commit"
+          git push origin research-data

@@ -41,6 +41,34 @@ What that means in practice:
 - **To revive it** (only when Tj asks): build with `-Pmgm`, add `mgm` back to `release.yml`'s build and
   signature check, and re-read RESEARCH.md §25.
 
+## Pinnodds is dormant — never use its API
+
+**Standing instruction from Tj (2026-10-09, verbatim):** "Stop using the pinnodds API".
+- **No session uses it:** no connection to `pinnodds.com`, no key, no recorder (`tools/research/pinn_*.py`, `pinnodds_tape.py`), no scheduled trigger or workflow that does. Pinnacle's prices are still reachable
+  through the other feeds (PinnWire, pinnapi, PropLine, ParlayAPI) that the app already uses.
+- **The app never opens it either:** `Dormant.PINNODDS` (`data/.../scanner/Dormant.kt`) keeps the live feed, its paper mode, Research mode and the paper lab's Pinnacle alternate lines off, and hides the
+  Settings page and search entries. The code and the studies (RESEARCH.md §116-§118, §120; `PINNODDS_API.md`) stay for a revival: only when Tj asks (flip the flag).
+- A key Tj pastes into a chat is never stored by a session again (it was kept in a scratchpad file on 2026-10-09 and deleted): it goes to nothing but the one command that needs it, and only when he has asked for that use.
+
+## Use every free GitHub tool that is as good or better — save Claude usage (permanent)
+
+**Standing instruction from Tj (2026-10-09, verbatim):** "Use all available free GitHub tools and features that work just as well or better than Claude code that Claude can access to either speed up or improve
+this project in any way and especially to save Claude usage. No accuracy or quality should be sacrificed for this rule."
+What it means, every session, before the work:
+1. **Ask first: can a free GitHub feature do this unattended?** If a task is mechanical (a long test or build run, a recorder that must outlive the session, a scan, a data crunch, a poll, a formatting or lint pass,
+   a dependency bump, waiting for CI), hand it to GitHub and read the result, instead of spending Claude turns on it. A session that polls in a loop is spending usage on waiting: trigger the workflow, end the turn or
+   do other work, read the result when it lands (a `send_later` check-in or a PR/Actions event wakes the session).
+2. **What is available (the repo is public, so standard runners and these features are free):** GitHub Actions (CI `ci.yml`, `release.yml`, and `research-record.yml`: public-read recorders that run for hours with no
+   phone and no Claude session), `workflow_dispatch` for on-demand runs, scheduled workflows, artifacts and the `research-data` branch for their output, Dependabot (`.github/dependabot.yml`), secret scanning
+   and push protection, code scanning (CodeQL) when it fits, GitHub Pages for reports, Issues and Projects for tasks, Releases for APKs, the Actions cache for Gradle. Tools Claude has: the GitHub MCP tools
+   (`mcp__github__*`: actions_run_trigger/list/get, get_job_logs, search_code, run_secret_scanning, issues, PRs). `gh` is not installed here.
+3. **Never at the cost of accuracy or quality.** A free feature replaces Claude only when it does the job as well or better; the result is still read and checked (a green run is evidence, not proof), the repo's own
+   tests stay the authority, and a feature that needs a secret or a paid plan is Tj's decision (ask once, in one line). Anything that sends data out of the repo, spends money or changes Tj's accounts is not "free
+   tooling": it needs his word like everything else.
+4. **Record what you used.** When a session moves work onto GitHub, say so in the checkpoint ("ran X on Actions, read the result") so the next session reuses it, and add a line to the list in point 2 when a new
+   workflow exists.
+5. **Look for more, every time.** At the start of a task, spend one minute on "what here could Actions, Dependabot or scanning already do?" and tell Tj when you find something worth adding.
+
 ## Mobile data and storage are not a constraint
 
 Tj, 2026-09-30: "My mobile data is fast and unlimited and my phone storage is large. Choose accuracy and speed over mobile data or phone

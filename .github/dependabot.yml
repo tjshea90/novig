@@ -1,0 +1,14 @@
+# Free dependency and workflow-action updates, as pull requests (CLAUDE.md "Use every free GitHub tool ..." rule, Tj 2026-10-09).
+# A bump is merged only after CI is green; nothing here changes the app's behaviour by itself.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
