@@ -256,7 +256,7 @@ class ParlayCloses(
          * a close from a guess could be another game's (Tj's scan-study file, 2026-10-03: Washington State -117 "closed" at +272). Order [games] so the
          * preferred one of equal starts comes first.
          */
-        private fun <G> bestGame(mHome: String, mAway: String, startsTs: Long, games: List<G>, home: (G) -> String, away: (G) -> String, start: (G) -> Long?): G? {
+        internal fun <G> bestGame(mHome: String, mAway: String, startsTs: Long, games: List<G>, home: (G) -> String, away: (G) -> String, start: (G) -> Long?): G? {
             val scored = games.mapNotNull { g -> TeamMatcher.gameScore(mHome, mAway, home(g), away(g)).takeIf { it > 0.0 }?.let { g to it } }
             val top = scored.maxOfOrNull { it.second } ?: return null
             val tied = scored.filter { it.second >= top - 1e-9 }.map { it.first }
