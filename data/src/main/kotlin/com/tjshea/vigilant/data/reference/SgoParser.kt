@@ -96,6 +96,8 @@ object SgoParser {
             val name = p.str("name") ?: listOfNotNull(p.str("firstName"), p.str("lastName")).joinToString(" ").takeIf { it.isNotBlank() } ?: return@mapNotNull null
             k to SgoPlayer(p.str("playerID") ?: k, name)
         }?.toMap().orEmpty()
+        // A game with no teams can't be matched to anything.
+        if (name(home).isBlank() || name(away).isBlank()) return null
         return SgoEvent(
             eventId = id,
             leagueId = o.str("leagueID").orEmpty(),
