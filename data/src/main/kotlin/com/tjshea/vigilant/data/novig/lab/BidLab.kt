@@ -101,6 +101,7 @@ class BidLab(
                 val a = it.next()
                 lastFairOf[a.bid.outcomeId]?.let { a.lastFair = it }
                 if (a.filledAtMs != null) {
+                    if (now > a.bid.startsTs + FORGET_MS) { byKey.remove(key(a.variant, a.bid.outcomeId)); it.remove(); continue }
                     if (!a.closed && now >= a.bid.startsTs) { a.closed = true; events += BidLabEvent(a.bid.id, now, "CLOSE", a.lastFair) }
                     continue
                 }
@@ -147,8 +148,7 @@ class BidLab(
                 for (a in active.values) {
                     if (a.bid.marketId != m || a.filledAtMs != null) continue
                     val t = tape.filter { it.outcomeId == a.bid.outcomeId && it.atMs > a.bid.atMs + LATENCY_MS && it.atMs <= minOf(a.bid.expiresMs, now) && it.price <= a.bid.price + 1e-9 }.minByOrNull { it.atMs } ?: continue
-                    a.filledAtMs = t.atMs
-                    byKey.remove(key(a.variant, a.bid.outcomeId))
+                    a.filledAtMs = t.atMs   // the side stays held (no second bid on it) until the fill is graded, as the real desk holds a filled side
                     filled++
                     events += BidLabEvent(a.bid.id, t.atMs, "FILL", t.price, strict = t.price < a.bid.price - 1e-9)
                 }
@@ -162,7 +162,7 @@ class BidLab(
             val status = mk.outcomes.firstOrNull { it.outcomeId == a.bid.outcomeId }?.status?.trim().orEmpty()
             if (status.isEmpty() || status.equals("TBD", true)) continue
             eventJournal.append(BidLabEvent(a.bid.id, now, "GRADE", text = status))
-            synchronized(lock) { active.remove(a.bid.id) }
+            synchronized(lock) { active.remove(a.bid.id); byKey.remove(key(a.variant, a.bid.outcomeId)) }
         }
     }
 
@@ -181,6 +181,9 @@ class BidLab(
         const val GRADE_AFTER_MS = 3 * 3_600_000L
         const val MAX_MARKETS = 25
         const val MAX_GRADE = 20
+
+        /** A filled bid whose market never settles for the lab is forgotten this long after the start. */
+        const val FORGET_MS = 48 * 3_600_000L
 
         /**
          * Pregame: how far under the fair (2-6%), how long a bid rests (30 min as the app's default, 2 h to see what waiting buys), with and without the guard. Live: 1-4% under Pinnacle's fair, resting two
