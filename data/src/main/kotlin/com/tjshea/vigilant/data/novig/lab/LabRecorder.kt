@@ -115,8 +115,10 @@ class LabRecorder(
                 record(LabRecord(id(), now, LabKind.COVER, ev.eventId, ev.description, ev.league, c.lo.marketId, c.lo.yesOutcomeId, "${c.lo.label} YES + ${c.hi.label} NOT", "COVER", c.lo.threshold, c.cost, 1.0, c.net, c.contracts, 0, "hi=${c.hi.marketId}"))
             }
             val game = state(ev, now)
-            val st = game?.let { g -> TailSport.let { LabClock.sportOf(ev.league) }?.let { sport -> LabClock.fractionLeft(ev.league, g.period, g.clockSec)?.let { GameState(sport, g.homeScore, g.awayScore, it) } } }
-            if (st != null) {
+            val sport = LabClock.sportOf(ev.league)
+            val frac = game?.let { LabClock.fractionLeft(ev.league, it.period, it.clockSec) }
+            val st = if (game != null && sport != null && frac != null) GameState(sport, game.homeScore, game.awayScore, frac) else null
+            if (game != null && st != null) {
                 withState++
                 for (c in TailScan.scan(points, st, { ref -> game.marginOf(ref) })) {
                     tail++
@@ -141,7 +143,7 @@ class LabRecorder(
 
     /** Writes [r] unless the same would-be bet was written within [REPEAT_MS] at a price no better than a cent below. */
     private fun record(r: LabRecord) {
-        val key = r.kind + "|" + r.outcomeId + "|" + r.note.substringBefore(",").takeIf { r.kind == LabKind.COVER }.orEmpty()
+        val key = r.kind + "|" + r.outcomeId + (if (r.kind == LabKind.COVER) "|" + r.note else "")
         val prev = lastSeen[key]
         if (prev != null && r.atMs - prev.first < REPEAT_MS && r.ask > prev.second - 0.01) return
         lastSeen[key] = r.atMs to r.ask
