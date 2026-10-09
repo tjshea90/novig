@@ -280,4 +280,43 @@ class SettingsPagesTest {
         open(SettingsPage.BETTING)
         compose.onNodeWithTag("walletBlock").performScrollTo().assertIsDisplayed()
     }
+
+    // ---- SportsGameOdds Pro (Tj, 2026-10-09) ---------------------------------------------------------------------------------
+
+    @Test
+    fun `the SportsGameOdds page takes keys, tests them and has the one switch that turns the feed on`() {
+        var settings = SampleScan.state().settings
+        val tests = ArrayList<Boolean>()
+        val keysAdded = ArrayList<String>()
+        val state = SampleScan.state().copy(sgoKeys = listOf("sgo-key-aaaa-1111"), sgoKeyNote = "NFL: 14 games read", sgoKeyOk = true)
+        screen(state) {
+            SettingsScreen(
+                it.copy(settings = settings), { f -> settings = f(settings) },
+                keys = com.tjshea.vigilant.app.ui.KeyActions(add = { _, k -> keysAdded += k }),
+                reportActions = com.tjshea.vigilant.app.ui.ReportActions(onTestSgoKey = { share -> tests += share }),
+                page = SettingsPage.SGO, onPage = {},
+            )
+        }
+        compose.onNodeWithTag("sgoProSwitch").assertIsDisplayed()
+        compose.onNodeWithTag("sgoKeyNote").assertTextContains("14 games", substring = true)
+        compose.onNodeWithTag("sgoTestKey").performClick()
+        compose.onNodeWithTag("sgoShareSample").performClick()
+        assertEquals(listOf(false, true), tests)
+        assertTrue("the switch starts off", !settings.sgoPro)
+        compose.onNodeWithTag("sgoProSwitch").performClick()
+        compose.waitForIdle()
+        assertTrue(settings.sgoPro)
+        // the extras appear once it is on
+        compose.onNodeWithTag("sgoExtraSwitch").assertIsDisplayed()
+        compose.onNodeWithTag("sgoAltSwitch").assertIsDisplayed()
+    }
+
+    @Test
+    fun `the SportsGameOdds row says what it is set to`() {
+        val base = SampleScan.state()
+        assertEquals("No key saved", SettingsSummary.of(SettingsPage.SGO, base))
+        val withKey = base.copy(sgoKeys = listOf("k-1111-2222-3333"))
+        assertEquals("Off (key saved)", SettingsSummary.of(SettingsPage.SGO, withKey))
+        assertTrue(SettingsSummary.of(SettingsPage.SGO, withKey.copy(settings = withKey.settings.copy(sgoPro = true))).startsWith("On: 1 key"))
+    }
 }
