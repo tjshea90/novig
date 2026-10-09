@@ -41,19 +41,13 @@ What that means in practice:
 - **To revive it** (only when Tj asks): build with `-Pmgm`, add `mgm` back to `release.yml`'s build and
   signature check, and re-read RESEARCH.md §25.
 
-## Pinnodds is dormant — never use its API, EXCEPT in SGO Pro mode (Tj, 2026-10-09, later: "turn on the pinnodds API" with the SGO toggle)
+## Pinnodds: the APP uses it; Claude's sessions never open its API (Tj, 2026-10-09, clarified)
 
-**Exception (v0.83.6):** while Settings › SportsGameOdds Pro is ON (`ScanSettings.sgoPro`) the app wakes Pinnodds (`Dormant.PINNODDS` follows the switch, `AppContainer.syncSgo`), shows its Settings page, and with a Pinnodds key saved asks its REST
-board (`/kit/v1/markets`, the same data as its WebSocket) FIRST for Pinnacle's prices in every scan, bid and EV (`PinnapiClient` `first` host; PinnWire/pinnapi carry on if it fails, and rest for SGO leagues only when it is not active). The
-WebSocket live engine and any real bets stay behind their own switches (off). SGO off = dormant again, exactly as below. Sessions still never touch the API themselves.
-
-
-**Standing instruction from Tj (2026-10-09, verbatim):** "Stop using the pinnodds API".
-- **No session uses it:** no connection to `pinnodds.com`, no key, no recorder (`tools/research/pinn_*.py`, `pinnodds_tape.py`), no scheduled trigger or workflow that does. Pinnacle's prices are still reachable
-  through the other feeds (PinnWire, pinnapi, PropLine, ParlayAPI) that the app already uses.
-- **The app never opens it either:** `Dormant.PINNODDS` (`data/.../scanner/Dormant.kt`) keeps the live feed, its paper mode, Research mode and the paper lab's Pinnacle alternate lines off, and hides the
-  Settings page and search entries. The code and the studies (RESEARCH.md §116-§118, §120; `PINNODDS_API.md`) stay for a revival: only when Tj asks (flip the flag).
-- A key Tj pastes into a chat is never stored by a session again (it was kept in a scratchpad file on 2026-10-09 and deleted): it goes to nothing but the one command that needs it, and only when he has asked for that use.
+**Standing instruction from Tj (2026-10-09, verbatim):** "Stop using the pinnodds API", and then, to clear up what he meant: "When I told you stop using pinnodds I meant I didn't want Claude to use the API because I was using it at that time and it only allows one connection. I still want to use it in the app".
+- **No session uses it:** no connection to `pinnodds.com` (the account allows ONE WebSocket, and a second connection evicts the app's), no key, no recorder (`tools/research/pinn_*.py`, `pinnodds_tape.py`), no scheduled trigger or workflow that does. Reading its public docs is fine.
+- **The app uses it as built:** `Dormant.PINNODDS` is false. Settings › Pinnodds live (key, Test key, the live feed's paper and real-bet switches, limits), the live engine, the paper lab's Pinnacle alternate lines and the feed race all work. With SGO Pro on, its REST Pinnacle board
+  (`/kit/v1/markets`) is also asked FIRST for Pinnacle's prices in every scan, bid and EV (`PinnapiClient` `first` host, v0.83.6); PinnWire/pinnapi carry on if it fails. The studies stay in RESEARCH.md §116-§118, §120 and `PINNODDS_API.md`.
+- A key Tj pastes into a chat is never stored by a session (it was kept in a scratchpad file on 2026-10-09 and deleted): it goes to nothing but the one command that needs it, and only when he has asked for that use.
 
 ## Use every free GitHub tool that is as good or better — save Claude usage (permanent)
 

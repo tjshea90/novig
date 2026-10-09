@@ -1,16 +1,15 @@
 package com.tjshea.vigilant.data.scanner
 
 /**
- * Features Tj has put to sleep: their code stays (a revival is cheap) but nothing runs and nothing is shown.
+ * Features that can be put to sleep: their code stays and nothing runs or is shown while the flag is set.
  *
- * **Exception (Tj, 2026-10-09, later): SGO Pro mode wakes Pinnodds** ([PINNODDS] follows `ScanSettings.sgoPro`; its REST Pinnacle board then prices the scan first, `PinnapiClient`).
- *
- * **Pinnodds is dormant (Tj, 2026-10-09: "Stop using the pinnodds API").** No Pinnodds connection is opened by the app (the live feed, its paper mode, Research mode and the paper lab's
- * Pinnacle alternate lines all stay off), its Settings page and search entries are hidden, and no Claude session uses the API, its key or its recorders (`tools/research/pinn_*.py`,
- * `pinnodds_tape.py`) or schedules anything that does. To revive it (only when Tj asks): set [PINNODDS] false, and re-read `PINNODDS_API.md` and RESEARCH.md §116-§118, §120.
+ * **Pinnodds is AWAKE in the app** (Tj, 2026-10-09, clarified: "When I told you stop using pinnodds I meant I didn't want Claude to use the API because I was using it at that time and it only
+ * allows one connection. I still want to use it in the app"). [PINNODDS] stays false; the earlier "dormant" wording was only ever about Claude's sessions: **a session never opens a Pinnodds connection,
+ * uses its key or runs its recorders** (`tools/research/pinn_*.py`, `pinnodds_tape.py`), because the account allows ONE WebSocket and Tj's app is using it. In the app, Settings › Pinnodds live,
+ * the live feed and its switches work as built; with SGO Pro on, its REST Pinnacle board also prices the scan first (`PinnapiClient`).
  */
 object Dormant {
-    /** True = dormant. A variable only so the (kept) Pinnodds UI tests can wake it for their own run and put it back. */
+    /** True = asleep. False (awake) for the app; a variable so a test can put it to sleep for its own run. */
     @Volatile
-    var PINNODDS: Boolean = true
+    var PINNODDS: Boolean = false
 }

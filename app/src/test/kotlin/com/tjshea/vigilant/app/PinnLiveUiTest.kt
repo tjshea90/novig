@@ -46,7 +46,7 @@ import org.robolectric.annotation.GraphicsMode
 class PinnLiveUiTest {
     // Pinnodds is dormant in the app (Tj, 2026-10-09); these tests keep its code honest, so they wake it for their own run only.
     @org.junit.Before fun wake() { com.tjshea.vigilant.data.scanner.Dormant.PINNODDS = false }
-    @org.junit.After fun sleep() { com.tjshea.vigilant.data.scanner.Dormant.PINNODDS = true }
+    @org.junit.After fun sleep() { com.tjshea.vigilant.data.scanner.Dormant.PINNODDS = false }
 
     @get:Rule val compose = createComposeRule()
 

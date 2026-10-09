@@ -411,8 +411,6 @@ class AppContainer(private val app: Application) {
         sgoCloses.enabled = on
         sgoScores.enabled = on
         NotifyGate.quiet = s.quietNotifications
-        // Pinnodds sleeps (Tj, 2026-10-09: "Stop using the pinnodds API") except in SGO Pro mode (Tj, later the same day: "turn on the pinnodds API" with the SGO toggle).
-        com.tjshea.vigilant.data.scanner.Dormant.PINNODDS = !(AppBook.isNovig && s.sgoPro)
         com.tjshea.vigilant.data.scanner.Freshness.sgoMaxAgeMs = s.sgoMaxAgeMinutes.coerceIn(10, 30) * 60_000L
         com.tjshea.vigilant.data.scanner.Freshness.sgoMode = on
     }
@@ -1061,16 +1059,18 @@ class AppContainer(private val app: Application) {
      */
     private suspend fun labAltQuotes(ev: com.tjshea.vigilant.data.novig.NovigEvent): List<com.tjshea.vigilant.data.novig.lab.AltQuote> {
         val s = currentSettings()
-        if (!sgoActive(s)) return emptyList()
-        val league = com.tjshea.vigilant.data.scanner.Leagues.byNovigName(ev.league) ?: return emptyList()
-        if (!com.tjshea.vigilant.data.reference.SgoBooks.supports(league)) return emptyList()
+        // Pinnodds' live Pinnacle lines first when its socket is running (Tj, 2026-10-09: the app still uses Pinnodds; "stop" meant Claude's own connections), then SGO's.
+        val pinn = if (!com.tjshea.vigilant.data.scanner.Dormant.PINNODDS && pinnRunner.running) runCatching { pinnRunner.altQuotes(ev.eventId) }.getOrDefault(emptyList()) else emptyList()
+        if (!sgoActive(s)) return pinn
+        val league = com.tjshea.vigilant.data.scanner.Leagues.byNovigName(ev.league) ?: return pinn
+        if (!com.tjshea.vigilant.data.reference.SgoBooks.supports(league)) return pinn
         val now = System.currentTimeMillis()
         val snap = labBoards[league.novigName]?.takeIf { now - it.first < LAB_BOARD_MS }?.second
             ?: sgoGames.odds(league, s.copy(includeLive = true)).also { labBoards[league.novigName] = now to it }
-        val match = com.tjshea.vigilant.data.scanner.Planner.matchEvents(listOf(ev), listOf(snap)).firstOrNull()?.refEvent ?: return emptyList()
+        val match = com.tjshea.vigilant.data.scanner.Planner.matchEvents(listOf(ev), listOf(snap)).firstOrNull()?.refEvent ?: return pinn
         val novigHome = com.tjshea.vigilant.data.novig.NovigText.parseMatchup(ev.description)?.home.orEmpty()
         val swapped = com.tjshea.vigilant.data.match.TeamMatcher.whichOf(novigHome, match.home, match.away) == 2
-        return com.tjshea.vigilant.data.novig.lab.SgoAltQuotes.quotes(match, swapped)
+        return pinn + com.tjshea.vigilant.data.novig.lab.SgoAltQuotes.quotes(match, swapped)
     }
 
     /** The paper bid lab's files (RESEARCH.md §122): the paper bids when they went up and what happened to them. */
