@@ -5,6 +5,8 @@ it sets, what was measured on its real socket, and how Vigilant uses it. Canonic
 docs and the running API disagree, the running API wins (the docs say so). **Never commit a Pinnodds key** (this repo is public; the key lives in the app's key store and in a gitignored `.env`).
 `RESEARCH.md` §116 holds the study (does Novig lag Pinnacle, and does the edge hold up).
 
+> **2026-10-09 (v0.83.6):** in SGO Pro mode the app also reads the REST board `GET /kit/v1/markets?sport_id=&event_type=prematch&include_specials=1` (same shape as PinnWire's; parsed by `PinnapiClient`, host "Pinnodds", re-used 15 s) for Pinnacle's prices in every scan. REST needs a REST-bearing plan (Pro $99/mo; the full demo ends 2026-10-10 23:34Z, the free trial tier is 100 requests a day), the WebSocket add-on is NOT needed for it.
+
 ## 1. What it is
 - Pinnacle's own push feed (its MQTT), re-served four ways: **REST** `/kit/v1/*` (snapshots), **`/api/drops`** (a queryable buffer of recent price drops), **SSE** `/odds-drop` and
   `/odds-drop-prematch` (drops ≥ 5% by default, `min_drop` floor 1%), and the **WebSocket passthrough** `wss://pinnodds.com/ws/feed` (every raw Pinnacle frame, byte-identical, in a thin envelope).

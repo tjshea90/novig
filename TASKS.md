@@ -4340,6 +4340,6 @@ Tj, 2026-10-09 (~04:30Z): "Make an ongoing rule permanent for this repo saved to
 
 ## SGO mode also turns on Pinnodds for fresh Pinnacle (Tj, 2026-10-09 ~20:00Z: "Make it so I'm sgo mode (the sgo toggle on) it uses sgo to its full benefit but also turns on the pinnodds API because pinnodds has the websocket. Make sure the app uses the full sgo and gets fresh pinnacle odds for the scanners from pinnodds API simultaneously. The app should use the fresh pinnacle odds from pinnodds instead of any other API when doing the EV analysis")
 This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earlier) at Tj's explicit request, for SGO mode only.
-- [ ] SL1 Read the Pinnodds code (data/.../pinnodds/, Dormant.kt, ReferenceSource?) and what the scanner can take as a Pinnacle source.
-- [ ] SL2 With sgoPro on: Dormant.PINNODDS lifts, the socket runs, Pinnodds' Pinnacle prices feed the scan as the Pinnacle source, ahead of PinnWire/pinnapi/PropLine/ParlayAPI/SGO's own pinnacle (SGO's other books stay).
-- [ ] SL3 Toggle off = exactly as before (Pinnodds dormant again); tests; update CLAUDE.md dormancy note; ship.
+- [x] SL1 (read: PinnapiClient already parses the same /kit/v1 board; prematch socket frames are unverified) Read the Pinnodds code (data/.../pinnodds/, Dormant.kt, ReferenceSource?) and what the scanner can take as a Pinnacle source.
+- [x] SL2 (v0.83.6: SGO mode un-dormants Pinnodds; its REST board is the first Pinnacle host (PinnoddsFirstTest); WebSocket live switches untouched) With sgoPro on: Dormant.PINNODDS lifts, the socket runs, Pinnodds' Pinnacle prices feed the scan as the Pinnacle source, ahead of PinnWire/pinnapi/PropLine/ParlayAPI/SGO's own pinnacle (SGO's other books stay).
+- [x] SL3 (v0.83.6: toggle off = dormant + old hosts; CLAUDE.md, Dormant.kt, PINNODDS_API.md updated) Toggle off = exactly as before (Pinnodds dormant again); tests; update CLAUDE.md dormancy note; ship.

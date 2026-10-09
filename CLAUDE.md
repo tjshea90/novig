@@ -41,7 +41,12 @@ What that means in practice:
 - **To revive it** (only when Tj asks): build with `-Pmgm`, add `mgm` back to `release.yml`'s build and
   signature check, and re-read RESEARCH.md §25.
 
-## Pinnodds is dormant — never use its API
+## Pinnodds is dormant — never use its API, EXCEPT in SGO Pro mode (Tj, 2026-10-09, later: "turn on the pinnodds API" with the SGO toggle)
+
+**Exception (v0.83.6):** while Settings › SportsGameOdds Pro is ON (`ScanSettings.sgoPro`) the app wakes Pinnodds (`Dormant.PINNODDS` follows the switch, `AppContainer.syncSgo`), shows its Settings page, and with a Pinnodds key saved asks its REST
+board (`/kit/v1/markets`, the same data as its WebSocket) FIRST for Pinnacle's prices in every scan, bid and EV (`PinnapiClient` `first` host; PinnWire/pinnapi carry on if it fails, and rest for SGO leagues only when it is not active). The
+WebSocket live engine and any real bets stay behind their own switches (off). SGO off = dormant again, exactly as below. Sessions still never touch the API themselves.
+
 
 **Standing instruction from Tj (2026-10-09, verbatim):** "Stop using the pinnodds API".
 - **No session uses it:** no connection to `pinnodds.com`, no key, no recorder (`tools/research/pinn_*.py`, `pinnodds_tape.py`), no scheduled trigger or workflow that does. Pinnacle's prices are still reachable
