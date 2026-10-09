@@ -53,7 +53,7 @@ class LabCoreTest {
     }
 
     @Test
-    fun `a pair costing 98.5 cents pays before the game (no fee) and not in play (the fee is more than the cent)`() {
+    fun `a pair costing 98 and a half cents pays before the game (no fee) and not in play (the fee is more than the cent)`() {
         val ladder = listOf(point("t1", 52.5, underBid = 550 to 1_000L), point("t2", 53.5, overBid = 540 to 1_000L))   // 0.45 + 0.46 = 0.91
         assertEquals(1, LadderScan.scan(ladder, live = false).single().covers.size)
         val tight = listOf(point("t1", 52.5, underBid = 515 to 1_000L), point("t2", 53.5, overBid = 500 to 1_000L))   // 0.485 + 0.50 = 0.985
