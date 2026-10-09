@@ -862,6 +862,12 @@ class MakerDesk(
     private fun money(v: Double) = String.format(java.util.Locale.US, "$%,.2f", v)
 
     companion object {
+        /** New bids go up this many to a request (Novig's batch is all or nothing: one refused bid costs only its own ten, not a whole pass of them; Tj, 2026-10-09: "smaller batches because they are getting rejected sometimes"). */
+        const val PLACE_CHUNK = 10
+
+        /** Between two requests of new bids (Novig answered 'slow down' 7,138 times in Tj's file). */
+        const val PLACE_PAUSE_MS = 300L
+
         /**
          * Sides held by an open bet, for [MakerQuote.decide]'s "already bet or bid" (RESEARCH.md §114): every side a bet that is NOT a bid's fill has open (by hand, the auto-bet, a
          * lock, an import) holds it, a bid resting on it or not; a bid's own fill holds its side only once that bid is over ([activeOutcomes]: the sides bids are up on).

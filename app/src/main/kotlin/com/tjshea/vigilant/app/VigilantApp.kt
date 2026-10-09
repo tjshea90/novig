@@ -411,6 +411,7 @@ class AppContainer(private val app: Application) {
         sgoCloses.enabled = on
         sgoScores.enabled = on
         NotifyGate.quiet = s.quietNotifications
+        com.tjshea.vigilant.data.scanner.Freshness.sgoMaxAgeMs = s.sgoMaxAgeMinutes.coerceIn(10, 30) * 60_000L
         com.tjshea.vigilant.data.scanner.Freshness.sgoMode = on
     }
 

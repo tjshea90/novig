@@ -367,6 +367,8 @@ data class ScanSettings(
     val sgoAltLines: Boolean = true,
     /** Only notifications about money: a bet placed, a bid filled (Tj, 2026-10-09: "turn all notifications off except notifications of actual money bet or bids filled"). The running-service and open-bids notice stays: Android requires it. */
     val quietNotifications: Boolean = false,
+    /** SGO Pro: the odds-age guard in minutes (the app drops a quote older than this): 10 as Tj set it ([SGO_MAX_AGE_CHOICES]); SGO's props refresh about every 10 minutes, so a longer guard leaves fewer gaps between bids. */
+    val sgoMaxAgeMinutes: Int = 10,
     /**
      * Research mode (Tj, 2026-10-09: "just make it simple for me to run"): ONE switch that turns on every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bid lab
      * and (with a Pinnodds key saved) Pinnodds live in PAPER mode. It never turns on a real-money feature. Off by default; STOP ALL stops it.
@@ -1001,6 +1003,9 @@ data class ScanSettings(
 
         /** Vigilant's own scan (API credits) starts at most this often inside a background cycle, however fast the cycles are ([AutoScanner]). */
         const val AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS = 240
+
+        /** [sgoMaxAgeMinutes]'s choices. */
+        val SGO_MAX_AGE_CHOICES = listOf(10, 12, 15, 20)
 
         /** The same gap while SGO Pro is on: every 2 minutes (see [vigilantGapSeconds]). */
         const val SGO_SCAN_GAP_SECONDS = 120
