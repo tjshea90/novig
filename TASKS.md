@@ -4291,5 +4291,5 @@ Tj, 2026-10-09 (~03:30Z): "Make as many tests and loggers as needed and just tel
 - [x] QE1 RESEARCH MODE: one Settings switch that turns on every recorder that places nothing (feed test, burst recorder, paper lab, paper bids, Pinnodds live in PAPER); never real money. (ScanSettings.researchMode)
 - [x] QE2 PAPER BID LAB (BidLab): 14 bid recipes (margin x rest time x cancel-guard, pregame and live) on every line the bid desk looks at and on Pinnacle-priced live lines, filled from Novig's public trade tape, followed to the close and the settled result; BidLabReport tables + slices. 5 tests.
 - [x] QE3 ONE FILE: Settings > Research mode > "Share research file with Claude" (LabExport: README for Claude, status, tables, raw journals).
-- [ ] QE4 floor green, ship v0.80.0, tell Tj in 5 lines what to run and send.
-- [ ] QE5 RESEARCH.md 122: make-bid research plan and what the real bids say (90 fills; 6-24 h CLV +3.2% on 19), the questions the paper bid lab answers, the decision rules (30 fills per recipe).
+- [x] QE4 (floor 2663 green; v0.80.0) floor green, ship v0.80.0, tell Tj in 5 lines what to run and send.
+- [x] QE5 (RESEARCH.md 122, RUN_RESEARCH.md) RESEARCH.md 122: make-bid research plan and what the real bids say (90 fills; 6-24 h CLV +3.2% on 19), the questions the paper bid lab answers, the decision rules (30 fills per recipe).
