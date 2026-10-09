@@ -5829,3 +5829,8 @@ Right now, the auto bid feature using sgo will post bids after I manually scan o
 ```
 Confirm that research mode saves data even if the switch is toggled on and off 
 ```
+
+## 2026-10-09T18:46:00Z
+```
+The app is using a lot of my battery and mobile data. This isn't really a problem I just want to know if there is any way to outsource any of the processing and Internet bandwidth either free or cheap. For example  can GitHub do any of it
+```
