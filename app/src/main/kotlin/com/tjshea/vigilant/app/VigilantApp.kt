@@ -1075,6 +1075,8 @@ class AppContainer(private val app: Application) {
     /** Paper bids on every line the bid desk looks at and on Pinnacle-priced live lines: **no order**, public trades and markets only. */
     val bidLab: com.tjshea.vigilant.data.novig.lab.BidLab by lazy {
         com.tjshea.vigilant.data.novig.lab.BidLab(trades = { id -> novig.trades(id, 60) }, market = { id -> novig.market(id) }, bidJournal = bidLabBidJournal, eventJournal = bidLabEventJournal)
+            // Bids still resting and fills still waiting for their result come back from the journals after a stop or a restart (the journals themselves are never touched).
+            .also { runCatching { it.restore(bidLabBidJournal.readAll(), bidLabEventJournal.readAll(), System.currentTimeMillis()) } }
     }
     @Volatile private var bidLabJob: kotlinx.coroutines.Job? = null
 
