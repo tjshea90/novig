@@ -65,6 +65,10 @@ data class SgoEvent(
     val displayShort: String,
     val odds: List<SgoOdd>,
     val players: Map<String, SgoPlayer>,
+    /** `results.<periodID>.<statEntityID>.<statID>` as numbers: the score by period, and with `expandResults` every player's stats. */
+    val results: Map<String, Map<String, Map<String, Double>>> = emptyMap(),
+    /** The game is postponed or delayed (SGO's `status.delayed`). */
+    val delayed: Boolean = false,
 )
 
 /** A page of events: the next cursor, and the plan's `notice` when it filtered something out. */
@@ -109,8 +113,24 @@ object SgoParser {
             live = status.bool("live") == true, started = status.bool("started") == true, ended = status.bool("ended") == true,
             finalized = status.bool("finalized") == true, cancelled = status.bool("cancelled") == true,
             periodId = status.str("currentPeriodID").orEmpty(), displayShort = status.str("displayShort").orEmpty(),
-            odds = odds, players = players,
+            odds = odds, players = players, results = results(o.obj("results")), delayed = status.bool("delayed") == true,
         )
+    }
+
+    private fun results(r: JsonObject?): Map<String, Map<String, Map<String, Double>>> {
+        if (r == null) return emptyMap()
+        val out = LinkedHashMap<String, Map<String, Map<String, Double>>>()
+        for ((period, v) in r) {
+            val byEntity = v as? JsonObject ?: continue
+            val m = LinkedHashMap<String, Map<String, Double>>()
+            for ((entity, stats) in byEntity) {
+                val so = stats as? JsonObject ?: continue
+                val d = so.entries.mapNotNull { (k, x) -> (x as? JsonPrimitive)?.contentOrNull?.toDoubleOrNull()?.let { k to it } }.toMap()
+                if (d.isNotEmpty()) m[entity] = d
+            }
+            if (m.isNotEmpty()) out[period] = m
+        }
+        return out
     }
 
     private fun name(team: JsonObject?): String {
