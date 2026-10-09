@@ -158,3 +158,4 @@ day that changes.
 | v0.83.1 | code 148 | 2026-10-09T15:39Z | v0.83.1: SGO re-check against the docs (book filter, alternate props, closes filter, 504 chains, Test key timings)
 | v0.83.2 | code 149 | 2026-10-09T16:18Z | v0.83.2: SGO prices the scan, book ids, usage parser, paged reads
 | v0.83.3 | code 150 | 2026-10-09T16:33Z | v0.83.3: SGO Pro mode freshness 10-minute guard
+| v0.83.4 | code 151 | 2026-10-09T17:09Z | v0.83.4: SGO bids re-priced every 2 min
