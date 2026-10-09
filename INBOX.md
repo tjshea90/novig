@@ -5909,3 +5909,8 @@ Research the very best way for me to spend around 50 dollars or less per month t
 ```
 Look at the prophetx odds, they seem opposite everything else. I see this a lot. Check that vigilant is not showing the opposite side of the market for prophetx
 ```
+
+## 2026-10-09T23:04:24Z
+```
+Add the rule to discount any quote from any exchange or book if the quote is too wide and should not be trusted as a source for fair odds. This should be on by default
+```
