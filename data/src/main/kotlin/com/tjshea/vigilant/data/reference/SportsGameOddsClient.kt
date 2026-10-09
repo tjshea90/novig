@@ -21,6 +21,31 @@ class SgoTooHeavyException(message: String) : ReferenceException(message)
 data class SgoUsage(val intervals: List<Interval>, val tier: String? = null) {
     data class Interval(val name: String, val maxRequests: Long?, val maxObjects: Long?, val requests: Long?, val objects: Long?, val endsAtMs: Long?)
 
+    companion object {
+        private val lenient = Json { ignoreUnknownKeys = true; isLenient = true }
+
+        /**
+         * Real answer (Tj\'s Pro key, 2026-10-09): `{"tier":"pro","rateLimits":{"per-minute":{"max-requests":300,"current-requests":0,"max-entities":"unlimited"},"per-hour":{"max-requests":50000,"max-entities":250000,
+         * "current-entities":0},...}}`; the docs\' sample names the same figures maxRequestsPerInterval/currentIntervalRequests, so both spellings are read.
+         */
+        fun parse(raw: String): SgoUsage? {
+            val data = (runCatching { lenient.parseToJsonElement(raw) }.getOrNull() as? JsonObject)?.get("data") as? JsonObject ?: return null
+            val limits = data["rateLimits"] as? JsonObject ?: return null
+            fun JsonObject.str(k: String) = (this[k] as? JsonPrimitive)?.contentOrNull
+            fun JsonObject.long(k: String) = str(k)?.toDoubleOrNull()?.toLong()
+            return SgoUsage(
+                limits.entries.mapNotNull { (name, v) ->
+                    val o = v as? JsonObject ?: return@mapNotNull null
+                    Interval(
+                        name, o.long("max-requests") ?: o.long("maxRequestsPerInterval"), o.long("max-entities") ?: o.long("maxEntitiesPerInterval"),
+                        o.long("current-requests") ?: o.long("currentIntervalRequests"), o.long("current-entities") ?: o.long("currentIntervalEntities"), SgoParser.ms(o.str("currentIntervalEndTime")),
+                    )
+                },
+                tier = data.str("tier"),
+            )
+        }
+    }
+
     /** One line for the key test and Diagnostics: the figures that matter on Pro (requests a minute, objects a month). */
     fun summary(): String {
         fun Interval?.part(label: String, unit: String): String? = this?.let { i ->
@@ -76,22 +101,7 @@ class SportsGameOddsClient(
     /** `/account/usage`: the key's limits and what it has used (free: it does not count as an object). */
     suspend fun usage(): SgoUsage? = readUsage()?.also { lastUsage = it.summary() }
 
-    private suspend fun readUsage(): SgoUsage? {
-        val raw = get("/account/usage", emptyList())
-        val data = ((runCatching { json.parseToJsonElement(raw) }.getOrNull() as? JsonObject)?.get("data") as? JsonObject)?.get("rateLimits") as? JsonObject ?: return null
-        // Real answer (Tj's Pro key, 2026-10-09): {"tier":"pro","rateLimits":{"per-minute":{"max-requests":300,"current-requests":0,"max-entities":"unlimited"},"per-hour":{"max-requests":50000,"max-entities":250000,
-        // "current-entities":0},...}}; the docs' sample names the same figures maxRequestsPerInterval/currentIntervalRequests, so both spellings are read.
-        return SgoUsage(
-            data.entries.mapNotNull { (name, v) ->
-                val o = v as? JsonObject ?: return@mapNotNull null
-                SgoUsage.Interval(
-                    name, o.long("max-requests") ?: o.long("maxRequestsPerInterval"), o.long("max-entities") ?: o.long("maxEntitiesPerInterval"),
-                    o.long("current-requests") ?: o.long("currentIntervalRequests"), o.long("current-entities") ?: o.long("currentIntervalEntities"), SgoParser.ms(o.str("currentIntervalEndTime")),
-                )
-            },
-            tier = ((runCatching { json.parseToJsonElement(raw) }.getOrNull() as? JsonObject)?.get("data") as? JsonObject)?.str("tier"),
-        )
-    }
+    private suspend fun readUsage(): SgoUsage? = SgoUsage.parse(get("/account/usage", emptyList()))
 
     /** The reply body as SGO sent it, for a sample saved to Downloads (Settings › SportsGameOdds › Test key). */
     suspend fun raw(path: String, params: List<Pair<String, String>>): String = get(path, params)
