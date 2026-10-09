@@ -59,7 +59,7 @@ class SgoClientTest {
         OkHttpClient(), KeyPool(QuotaPolicy.SGO, { keys }, meter), json, server.url("/v2").toString().trimEnd('/'), clock = { clockMs }, minIntervalMs = 0, retryDelayMs = { 0L },
     )
     private fun ok(body: String) = MockResponse().setResponseCode(200).setBody(body)
-    private val settings = ScanSettings(referenceBooks = listOf("pinnacle", "draftkings"), families = MarketFamily.entries.toSet())
+    private val settings = ScanSettings(referenceBooks = listOf("pinnacle", "draftkings", "williamhill_us", "hardrockbet"), families = MarketFamily.entries.toSet())
 
     @Test fun gamesSourceAsksOnePageWithTheKeyInTheHeaderAndConvertsIt() = runTest {
         handler = { ok(sample.replace("\"nextCursor\": \"n.123.abc\"", "\"nextCursor\": null")) }
