@@ -100,7 +100,7 @@ object SharpConfirm {
             }
         }
         val judged = mine.mapNotNull { q ->
-            val fair = CnoBooks.fairFor(q.odds, q.otherOdds) ?: return@mapNotNull null
+            val fair = CnoBooks.fairFor(q.odds, q.otherOdds, q.code) ?: return@mapNotNull null
             val age = q.atMs?.let { now - it }
             Judged(q, fair, CnoBooks.evAt(fair, novigOdds, live), age, fresh = age != null && age >= -CLOCK_SKEW_MS && age <= rules.maxAgeMs)
         }
