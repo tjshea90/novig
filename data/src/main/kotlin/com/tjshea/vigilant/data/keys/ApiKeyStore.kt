@@ -42,6 +42,12 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
      * plus closing lines and results. Pro: 300 requests a minute, unlimited objects (Tj's trial, 2026-10-09).
      */
     SPORTSGAMEODDS("sportsgameodds", "SportsGameOdds"),
+
+    /**
+     * oddspapi.io v5 (ODDSPAPI_API.md): sharp and US books (Pinnacle, Circa, DraftKings, FanDuel…) with each price's own change time, alternates, props, per-book freshness, a CLV endpoint for any bet, history
+     * and settlement. Trial or contract by email to contact@55-tech.com; 10 odds requests a second, 100 other requests a minute.
+     */
+    ODDSPAPI("oddspapi", "OddsPapi"),
 }
 
 /** Tj's own API keys per provider, in the order [KeyPool] tries them. */

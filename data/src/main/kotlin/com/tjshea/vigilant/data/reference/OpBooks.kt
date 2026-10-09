@@ -74,7 +74,7 @@ object OpBooks {
         "NHL" to listOf("nhl"),
     )
 
-    private val NOT_THE_LEAGUE = Regex("women|wnba|\\(w\\)|nit|cbi|g league|gleague|preseason|pre-season|summer|exhibition|all-star|allstar|futures|special|cup|division ii|d2|d3|fcs")
+    private val NOT_THE_LEAGUE = Regex("women|wnba|\\(w\\)|\\bnit\\b|\\bcbi\\b|g league|gleague|preseason|pre-season|summer|exhibition|all-star|allstar|futures|special|\\bcup\\b|division ii|\\bd2\\b|\\bd3\\b|\\bfcs\\b")
 
     /**
      * The tournament of [tournaments] (a sport's `/tournaments`) that is [league]: category USA (or none), the name exactly one of the league's names, then the first name that merely contains one.
