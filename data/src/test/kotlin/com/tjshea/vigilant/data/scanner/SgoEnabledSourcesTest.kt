@@ -1,9 +1,9 @@
 package com.tjshea.vigilant.data.scanner
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 /** Found live (2026-10-09): the scan read SGO but priced nothing from it because "sgo" was not an enabled source, so the plan never saw its snapshot. */
 class SgoEnabledSourcesTest {
