@@ -149,7 +149,7 @@ object SharpVeto {
         val prices = view?.prices.orEmpty().filter { it.twoSided && it.code != judged }
         for (code in ranking(kind, sport)) {
             val p = prices.firstOrNull { CnoBooks.company(it.code) == code } ?: continue
-            val fair = CnoBooks.fairFor(p.odds!!, p.otherOdds!!) ?: continue
+            val fair = CnoBooks.fairFor(p.odds!!, p.otherOdds!!, p.code) ?: continue
             val ev = CnoBooks.evAt(fair, novigOdds, live)
             return Result(if (passes(ev, bar)) Verdict.PASSED else Verdict.VETOED, kind, code, fair, ev, bar)
         }

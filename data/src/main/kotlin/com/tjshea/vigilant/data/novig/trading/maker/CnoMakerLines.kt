@@ -163,7 +163,7 @@ object CnoMakerLines {
     fun fairsOf(view: CnoBooksView, flipped: Boolean, sharpCodes: Set<String>): Fairs {
         class One(val price: CnoBookPrice, val fair: Double)
         val ones = view.prices.filter { CnoBooks.usableForFair(it.code) && it.twoSided }.mapNotNull { p ->
-            val f = (if (flipped) CnoBooks.fairFor(p.otherOdds!!, p.odds!!) else CnoBooks.fairFor(p.odds!!, p.otherOdds!!)) ?: return@mapNotNull null
+            val f = (if (flipped) CnoBooks.fairFor(p.otherOdds!!, p.odds!!, p.code) else CnoBooks.fairFor(p.odds!!, p.otherOdds!!, p.code)) ?: return@mapNotNull null
             One(p, f)
         }
         val byCompany = ones.groupBy { CnoBooks.company(it.price.code) }

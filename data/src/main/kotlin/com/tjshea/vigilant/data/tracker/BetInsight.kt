@@ -53,7 +53,7 @@ data class BetInsight(
             fun isOwn(name: String) = name.equals(own, ignoreCase = true)
             fun counts(l: BookLine) = l.twoSided && !isOwn(l.name) && !l.name.startsWith("PrizePicks", ignoreCase = true)
             val rows = b.books.map { l ->
-                val fair = if (l.twoSided) CnoBooks.fairFor(l.odds!!, l.other!!) else null
+                val fair = if (l.twoSided) CnoBooks.fairFor(l.odds!!, l.other!!, CnoBooks.codeFor(l.name)) else null
                 BookRow(l.name, l.odds, l.other, fair, fair?.let { it / b.cost - 1.0 }, counts(l), isOwn(l.name))
             }
             val counted = rows.filter { it.counted }

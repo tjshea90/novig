@@ -3,6 +3,7 @@ package com.tjshea.vigilant.data.cno
 import com.tjshea.vigilant.engine.Devig
 import com.tjshea.vigilant.engine.Fees
 import com.tjshea.vigilant.engine.MarketFee
+import com.tjshea.vigilant.engine.WideQuotes
 import com.tjshea.vigilant.engine.Odds
 
 /**

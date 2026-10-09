@@ -163,11 +163,11 @@ object AtBets {
         val v = veto ?: SharpVeto.judge(view, row.league, row.market, row.bet, american, live, s.sharpVetoMinEv)
         val usable = view?.prices.orEmpty().filter { CnoBooks.usableForFair(it.code) }
         val books = view?.prices.orEmpty().map { p ->
-            val fair = if (p.twoSided) CnoBooks.fairFor(p.odds!!, p.otherOdds!!) else null
+            val fair = if (p.twoSided) CnoBooks.fairFor(p.odds!!, p.otherOdds!!, p.code) else null
             AtBetBook(CnoBooks.name(p.code), p.odds, p.otherOdds, fair, fair?.let { CnoBooks.evAt(it, american, live) })
         }
         val dissent = usable.filter { it.twoSided }.mapNotNull { p ->
-            val fair = CnoBooks.fairFor(p.odds!!, p.otherOdds!!) ?: return@mapNotNull null
+            val fair = CnoBooks.fairFor(p.odds!!, p.otherOdds!!, p.code) ?: return@mapNotNull null
             p.name.takeIf { CnoBooks.evAt(fair, american, live) <= 0.0 }
         }
         val fair = CnoChecks.fairProbability(row)
