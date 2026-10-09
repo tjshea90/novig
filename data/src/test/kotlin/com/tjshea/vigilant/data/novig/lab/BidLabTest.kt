@@ -109,4 +109,37 @@ class BidLabTest {
     fun `with no bids the report says what it needs`() {
         assertTrue(BidLabReport.lines(emptyList(), emptyList()).single().startsWith("no paper bids yet"))
     }
+
+    @Test
+    fun `after a stop the journals bring back the bids still resting and the fills still waiting for their result`() {
+        val (l, bj, ej) = lab(trades = listOf(TrapGuard.Trade("o1", 0.47, 10.0, t0 + 5_000)))
+        l.observe(listOf(line(), line(outcome = "o2")), t0)
+        runBlocking { l.poll(t0 + 10_000) }                      // o1's bids that sit at or above 0.47 fill
+        val bids = bj.readAll()
+        val events = ej.readAll()
+        assertTrue(events.any { it.type == "FILL" })
+        val (fresh, _, _) = lab()
+        fresh.restore(bids, events, t0 + 20_000)
+        val (resting, filledWaiting, posted) = fresh.counts()
+        assertEquals(bids.size.toLong(), posted)
+        assertTrue("some filled and waiting for their close", filledWaiting > 0)
+        assertEquals("the rest still rest", bids.size - filledWaiting, resting)
+        // a restored recipe does not post a second bid on the same side
+        fresh.observe(listOf(line()), t0 + 21_000)
+        assertEquals(bids.size.toLong(), fresh.counts().third - 0L)
+    }
+
+    @Test
+    fun `restore leaves out what is over - expired unfilled bids, cancelled ones and graded fills`() {
+        val (l, bj, ej) = lab()
+        l.observe(listOf(line()), t0)
+        val bids = bj.readAll()
+        val (fresh, _, _) = lab()
+        fresh.restore(bids, emptyList(), t0 + 3 * 3_600_000L)       // all expired by then (30 min to 2 h)
+        assertEquals(0, fresh.counts().first)
+        val cancelled = listOf(BidLabEvent(bids.first().id, t0 + 1, "CANCEL", 0.4))
+        val (b, _, _) = lab()
+        b.restore(bids, cancelled, t0 + 1_000)
+        assertEquals(bids.size - 1, b.counts().first)
+    }
 }
