@@ -37,9 +37,9 @@ object SettingsIndex {
         Entry("Share research file with Claude", SettingsPage.RESEARCH, "One file with what every recorder found, to send to Claude", "research share file send claude export", novig),
         Entry("Paper lab: ladders, late-game tail, alternate lines", SettingsPage.RESEARCH, "Writes down would-be bets while games are live (no orders) and grades them", "paper lab tail alternate ladder cover research", novig),
         // Scanning
-        Entry("Pinnodds key", SettingsPage.PINNODDS, "Your pinnodds.com key for Pinnacle's live WebSocket, with a button that tests it", "pinnodds pinnacle websocket key test live", novigdormantPinn),
-        Entry("Pinnodds live feed", SettingsPage.PINNODDS, "Compare Pinnacle's live prices with Novig's live books; paper unless real bets are on", "pinnodds pinnacle live feed paper lag in-play", novigdormantPinn),
-        Entry("Place real bets", SettingsPage.PINNODDS, "On live games, bet on Novig when its price lags Pinnacle's fair after the fee; stake, game, day and loss limits", "pinnodds live real bets stake limit lag in-play", novigdormantPinn),
+        Entry("Pinnodds key", SettingsPage.PINNODDS, "Your pinnodds.com key for Pinnacle's live WebSocket, with a button that tests it", "pinnodds pinnacle websocket key test live", dormantPinn),
+        Entry("Pinnodds live feed", SettingsPage.PINNODDS, "Compare Pinnacle's live prices with Novig's live books; paper unless real bets are on", "pinnodds pinnacle live feed paper lag in-play", dormantPinn),
+        Entry("Place real bets", SettingsPage.PINNODDS, "On live games, bet on Novig when its price lags Pinnacle's fair after the fee; stake, game, day and loss limits", "pinnodds live real bets stake limit lag in-play", dormantPinn),
         Entry("Pause all scanning", SettingsPage.SCANNING, "Stop every read until you switch it back on", "stop pause"),
         Entry("Which scanner", SettingsPage.SCANNING, "CrazyNinjaOdds' list, Vigilant's own scan, or both", "cno vigilant scanner mode both"),
         Entry("Games starting within", SettingsPage.SCANNING, "Only games starting within a few hours", "window hours time start soon", novig),
