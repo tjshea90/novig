@@ -24,18 +24,34 @@ class SgoGamesSource(private val client: SportsGameOddsClient, private val clock
         val leagueId = SgoBooks.leagueId(league) ?: return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
         val ids = oddIds(settings.families, SgoConvert.Sport.of(leagueId))
         if (ids.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
-        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","))
-        val pages = try {
-            client.eventsAll(if (settings.sgoAltLines) base + ("includeAltLines" to "true") else base)
-        } catch (e: SgoTooHeavyException) {
-            client.eventsAll(base)   // the alternates made the query too heavy: the main lines still price
-        }
         val wanted = SgoBooks.wanted(settings.referenceBooks, settings.sgoExtraBooks)
+        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","))
+        val pages = readLeague(base, wanted, settings.sgoAltLines)
         val events = pages.events
             .filter { settings.includeLive || (!it.started && !it.live) }
             .mapNotNull { SgoConvert.toRef(it, league.oddsApiSportKey, wanted, props = false) }
         client.lastReads["games ${league.novigName}"] = describe(events, clock())
         return RefSnapshot(league.oddsApiSportKey, events, clock(), provider = ID)
+    }
+
+    /**
+     * One league's pages, lightest to heaviest SGO will bear: the books Vigilant uses only (`bookmakerID`: SGO's league pages advise it to keep replies small; 82 books are sent otherwise) with alternate lines,
+     * then without the alternates, then without the book filter (SGO's errors page lists `includeAltLines` and `bookmakerID` among what makes a query time out: a 504 drops them in that order).
+     */
+    private suspend fun readLeague(base: List<Pair<String, String>>, wanted: Set<String>, alts: Boolean): SportsGameOddsClient.SgoPages {
+        val books = if (wanted.isEmpty()) emptyList() else listOf("bookmakerID" to wanted.sorted().joinToString(","))
+        val attempts = buildList {
+            add(base + books + (if (alts) listOf("includeAltLines" to "true") else emptyList()))
+            if (alts) add(base + books)
+            if (books.isNotEmpty()) add(base)
+        }.distinct()
+        var last: SgoTooHeavyException? = null
+        for (a in attempts) try {
+            return client.eventsAll(a)
+        } catch (e: SgoTooHeavyException) {
+            last = e
+        }
+        throw last ?: ReferenceException("SportsGameOdds: no query to try")
     }
 
     companion object {
@@ -86,8 +102,14 @@ class SgoPropsSource(
         val sport = SgoConvert.Sport.of(leagueId)
         val ids = oddIds(sport)
         if (ids.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
-        val pages = client.eventsAll(listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(",")))
         val wanted = SgoBooks.wanted(settings.referenceBooks, settings.sgoExtraBooks)
+        val base = listOf("leagueID" to leagueId, "oddsAvailable" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","))
+        // The book filter first (small replies), the full book list if SGO times out on it.
+        val pages = try {
+            client.eventsAll(if (wanted.isEmpty()) base else base + ("bookmakerID" to wanted.sorted().joinToString(",")))
+        } catch (e: SgoTooHeavyException) {
+            client.eventsAll(base)
+        }
         val events = pages.events
             .filter { !it.started && !it.live }
             .mapNotNull { SgoConvert.toRef(it, league.oddsApiSportKey, wanted, props = true) }
