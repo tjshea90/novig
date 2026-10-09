@@ -108,6 +108,11 @@ data class QuotaPolicy(
             "sgo", "SportsGameOdds", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, perMinute = 270,
             rule = "Pro: 300 requests a minute (Vigilant keeps to 270), unlimited events a month (a request is billed per game it returns, not per market or book). Several keys are tried in order; a key at its limit rests until the minute rolls. Free (Amateur) keys: 10 requests a minute and 2,500 events a month, with 10-minute-old odds: Vigilant refuses a quote that old, so only Rookie and up are of use.",
         )
+        /** Pinnodds' REST board (not in [ALL]: no meter of its own; the feed's own 429s and `Retry-After` say when to wait). Full demo / Pro: 10 requests a second; the free trial tier 100 a day. */
+        val PINNODDS = QuotaPolicy(
+            "pinnodds_rest", "Pinnacle (Pinnodds)", "requests", keyed = true, period = QuotaPeriod.DAY_UTC,
+            rule = "Pro and the full demo: 10 requests a second, no daily cap; the free trial tier: 100 a day (a 429 says so and the other Pinnacle feeds carry on). About 1 per sport per scan.",
+        )
         val NOVIG = QuotaPolicy("novig", "Novig", "requests", keyed = false, rule = "Read at 4 a second (2 at a time) to stay under Novig's per-network limit.")
         val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No key needed. Allows 300 requests per 10 seconds.")
         val KALSHI = QuotaPolicy("kalshi", "Kalshi", "requests", keyed = false, rule = "No key needed. Allows 20 requests a second.")

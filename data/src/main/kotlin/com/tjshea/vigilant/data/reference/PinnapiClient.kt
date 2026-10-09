@@ -48,6 +48,11 @@ class PinnapiClient(
     private val hosts: List<Host>,
     private val clock: () -> Long = System::currentTimeMillis,
     private val shareMs: Long = 60_000,
+    /**
+     * A feed asked BEFORE [hosts] when it returns one (SGO Pro mode with a Pinnodds key: Tj, 2026-10-09, "the app should use the fresh pinnacle odds from pinnodds instead of any other API when doing the EV
+     * analysis"). Its board is re-used only [FIRST_SHARE_MS]; if it fails the next feed answers, as ever. Null = the feeds as they were.
+     */
+    private val first: () -> Host? = { null },
 ) : ReferenceSource {
 
     /** One Pinnacle feed: where it is, how it takes a key, and whether its keys get player props. */
@@ -72,11 +77,17 @@ class PinnapiClient(
     override val id = ID
     override val displayName = "Pinnacle"
     override val metered = true
-    override val extraPropTypes: Set<String> get() = if (hosts.any { it.props }) PinnacleProps.STATS else emptySet()
+    override val extraPropTypes: Set<String> get() = if (hosts.any { it.props } || first()?.props == true) PinnacleProps.STATS else emptySet()
+
+    /** Which feed answered the last board, and when (Diagnostics): "Pinnodds", "PinnWire", "pinnapi"; null before one has. */
+    @Volatile var lastHost: String? = null
+        private set
+    @Volatile var lastBoardAtMs: Long = 0L
+        private set
 
     override fun supports(league: League) = league.pinnacleSportId != null
 
-    private data class Board(val events: List<JsonObject>, val fetchedAtMs: Long)
+    private data class Board(val events: List<JsonObject>, val fetchedAtMs: Long, val host: String = "")
 
     private val mutex = Mutex()
 
@@ -92,9 +103,9 @@ class PinnapiClient(
     }
 
     private suspend fun boardFor(sport: Int, props: Boolean, share: Long = shareMs): Board {
-        boards[sport to props]?.takeIf { clock() - it.fetchedAtMs < share }?.let { return it }
+        boards[sport to props]?.takeIf { clock() - it.fetchedAtMs < (if (it.host == FIRST_NAME) minOf(share, FIRST_SHARE_MS) else share) }?.let { return it }
         var problem: String? = null
-        for (host in hosts) {
+        for (host in listOfNotNull(first()) + hosts) {
             if (host.pool.keyCount() == 0) continue
             val events = try {
                 fetch(host, sport, props && host.props)
@@ -112,7 +123,7 @@ class PinnapiClient(
                 if (problem == null) problem = e.message ?: "Pinnacle (${host.name}): ${e.javaClass.simpleName}"
                 continue
             }
-            return Board(events, clock()).also { boards[sport to props] = it }
+            return Board(events, clock(), host.name).also { boards[sport to props] = it; lastHost = host.name; lastBoardAtMs = it.fetchedAtMs }
         }
         throw ReferenceException(problem ?: "No Pinnacle key. Add a free PinnWire or pinnapi key in Settings.")
     }
@@ -155,9 +166,17 @@ class PinnapiClient(
 
         const val PINNAPI_URL = "https://pinnapi.com/kit/v1"
         const val PINNWIRE_URL = "https://pinnwire.com/kit/v1"
+        const val PINNODDS_URL = "https://pinnodds.com/kit/v1"
+
+        /** The host name of Pinnodds' board, and how long one is re-used (it is fresh to the second: a scan every two minutes asks again). */
+        const val FIRST_NAME = "Pinnodds"
+        const val FIRST_SHARE_MS = 15_000L
 
         fun pinnapi(pool: KeyPool, baseUrl: String = PINNAPI_URL) = Host("pinnapi", pool, baseUrl, "x-portal-apikey", props = false)
         fun pinnwire(pool: KeyPool, baseUrl: String = PINNWIRE_URL) = Host("PinnWire", pool, baseUrl, "x-api-key", props = true)
+
+        /** Pinnodds' REST board: the same `/kit/v1/markets` answer as PinnWire's (its docs: one request a sport, specials with `include_specials=1`), from Pinnacle's own push store, written under a second behind Pinnacle. */
+        fun pinnodds(pool: KeyPool, baseUrl: String = PINNODDS_URL) = Host(FIRST_NAME, pool, baseUrl, "x-api-key", props = true)
 
         /**
          * Pinnacle's league names for each Novig league (their public naming). Compared

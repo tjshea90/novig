@@ -411,6 +411,8 @@ class AppContainer(private val app: Application) {
         sgoCloses.enabled = on
         sgoScores.enabled = on
         NotifyGate.quiet = s.quietNotifications
+        // Pinnodds sleeps (Tj, 2026-10-09: "Stop using the pinnodds API") except in SGO Pro mode (Tj, later the same day: "turn on the pinnodds API" with the SGO toggle).
+        com.tjshea.vigilant.data.scanner.Dormant.PINNODDS = !(AppBook.isNovig && s.sgoPro)
         com.tjshea.vigilant.data.scanner.Freshness.sgoMaxAgeMs = s.sgoMaxAgeMinutes.coerceIn(10, 30) * 60_000L
         com.tjshea.vigilant.data.scanner.Freshness.sgoMode = on
     }
@@ -1336,7 +1338,17 @@ class AppContainer(private val app: Application) {
             PinnapiClient.pinnwire(KeyPool(QuotaPolicy.PINNWIRE, { keyStore.current(ApiProvider.PINNWIRE) }, usage)),
             PinnapiClient.pinnapi(KeyPool(QuotaPolicy.PINNAPI, { keyStore.current(ApiProvider.PINNAPI) }, usage)),
         ),
+        // SGO Pro mode with a Pinnodds key (Tj, 2026-10-09): Pinnodds' board is asked first, so Pinnacle's price in every scan, bid and EV is the fresh one; the others carry on if it fails.
+        first = { if (pinnoddsActive(currentSettings())) pinnoddsHost else null },
     )
+    private val pinnoddsHost = PinnapiClient.pinnodds(KeyPool(QuotaPolicy.PINNODDS, { keyStore.current(ApiProvider.PINNODDS) }, usage))
+
+    /** SGO Pro is on and a Pinnodds key is saved: Pinnodds is no longer dormant and its Pinnacle board prices the scan before any other Pinnacle feed. */
+    fun pinnoddsActive(s: ScanSettings): Boolean = AppBook.isNovig && s.sgoPro && keyStore.current(ApiProvider.PINNODDS).isNotEmpty()
+
+    /** For Diagnostics: which feed's Pinnacle board the last scan used. */
+    fun pinnacleFeedNote(now: Long = System.currentTimeMillis()): String =
+        pinnacle.lastHost?.let { "$it, ${(now - pinnacle.lastBoardAtMs) / 1000L}s old when read" } ?: "no board read yet"
 
     /** Thirty sportsbooks' lines (per league) and props (per game) through one free PropLine key. */
     private val propLine = PropLineClient(
@@ -1422,15 +1434,16 @@ class AppContainer(private val app: Application) {
         val all = baseReferenceSources(settings, background, scan)
         // SportsGameOdds Pro (Tj, 2026-10-09): one feed prices what the paid ones sell; they rest for every league it carries (tennis keeps them), and come back if SGO stops answering.
         if (!sgoActive(settings)) return all
-        val replaced = setOf(
-            pinnacle.id, propLine.id, propLineProps.id, oddsApi.id, bookProps.id, parlayOdds.id, parlayOddsBackground.id, parlayProps.id, parlayPropsBackground.id, parlayHalves.id, parlayHalvesBackground.id,
+        val replaced = setOfNotNull(
+            pinnacle.id.takeUnless { pinnoddsActive(settings) },   // Pinnodds' Pinnacle board prices every league, SGO's included
+            propLine.id, propLineProps.id, oddsApi.id, bookProps.id, parlayOdds.id, parlayOddsBackground.id, parlayProps.id, parlayPropsBackground.id, parlayHalves.id, parlayHalvesBackground.id,
         )
         val rest = all.map { if (it.id in replaced) com.tjshea.vigilant.data.reference.OutsideSgo(it) else it }
         return listOf<ReferenceSource>(sgoGames) + (if (com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families) listOf(sgoProps) else emptyList()) + rest
     }
 
     internal fun baseReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
-        val pinnacleOn = settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())
+        val pinnacleOn = settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty() || pinnoddsActive(settings))
         if (pinnacleOn) add(pinnacle)
         // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (2 credits a league saved).
         parlayOdds.alternates = !pinnacleOn
