@@ -5755,3 +5755,19 @@ Also incorporate sportsgamesodds pro into the research labs if it can help in th
 After you are done building the sportsgamesodds pro, copy as much of the research lab into GitHub as possible that can be accurately measured on GitHub without a phone. It can work in tandem with my phone. Claude will be able to get research data both from whatever GitHub finds, as well as the data from my phone logs. Put as much in GitHub as possible, and tell me what you need me to do, such as enter api keys 
 Finally, make sure the sportsgamesodds pro api function and toggle is separate from what the app already does, and preserve how the app already functions so that if the toggle is turned off, the app functions exactly the same as though the feature were never installed. Do tests on the finished app to make sure it works as designed without breaking anything else in the app. Do thorough testing and analyze that the sportsgamesodds pro feature in the app uses the full power of the pro subscription in all parts of the vigilant app that can benefit from it. Double check all commands and usage methods that they are exactly to spec with the docs 
 ```
+
+## 2026-10-09T15:19:04Z
+```
+Read the following sites and make sure the sportsgameodds feature is correctly set up and takes full advantage of all the features:
+
+https://sportsgameodds.com/docs?_kx=[key redacted …zn-Y].TwX928
+
+https://sportsgameodds.com/openapi.json
+
+# Content negotiation (acceptmarkdown.com)
+curl -H "Accept: text/markdown" https://sportsgameodds.com/docs/basics/quickstart
+
+# Or append .md / .mdx to the URL
+curl https://sportsgameodds.com/docs/basics/quickstart.mdx
+curl https://sportsgameodds.com/leagues/nfl-odds-api.md
+```
