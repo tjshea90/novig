@@ -5914,3 +5914,9 @@ Look at the prophetx odds, they seem opposite everything else. I see this a lot.
 ```
 Add the rule to discount any quote from any exchange or book if the quote is too wide and should not be trusted as a source for fair odds. This should be on by default
 ```
+
+## 2026-10-09T23:21:17Z
+```
+By discount I mean don't count that as a source at all if it is too wide
+How long should I run the research lab in the app for before there is enough data for you to start with. Can I send it in different batches at different times for Claude to analyze? Is the GitHub research still going? How long should that go before we stop it? Can you manage the GitHub research such as watching it and stopping it when needed?
+```
