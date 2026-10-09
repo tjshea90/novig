@@ -97,7 +97,7 @@ class OddsPapiClosesTest {
         assertTrue("schedule times are seconds", list.queryParameter("startTimeFrom")!!.toLong() < startMs / 1000L && list.queryParameter("startTimeTo")!!.toLong() > startMs / 1000L)
         val c = requests.single { it.requestUrl!!.encodedPath == "/en/fixtures/odds/clv" }.requestUrl!!
         assertEquals(fx, c.queryParameter("fixtureId")); assertEquals("pinnacle", c.queryParameter("bookmakers"))
-        assertEquals("$fx:pinnacle:141:0,$fx:pinnacle:142:0", c.queryParameter("oddsIds"))
+        assertEquals("the bet's own outcome first", "$fx:pinnacle:142:0,$fx:pinnacle:141:0", c.queryParameter("oddsIds"))
     }
 
     @Test fun aSpreadIsClosedOnlyAtTheExactNumberAndInParticipantOnesTerms() = runTest {
