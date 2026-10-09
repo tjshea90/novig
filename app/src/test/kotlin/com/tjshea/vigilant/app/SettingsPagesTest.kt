@@ -74,6 +74,7 @@ class SettingsPagesTest {
         SettingsPage.FAIR to listOf("FAIR ODDS METHOD", "DEVIG METHOD (ADVANCED)", "WHERE FAIR ODDS COME FROM", "SPORTSBOOKS FOR FAIR ODDS"),
         SettingsPage.BETTING to listOf("NOVIG API KEY", "BET AMOUNTS"),
         SettingsPage.USAGE to listOf("API USAGE", "KEYS BACKUP"),
+        SettingsPage.RESEARCH to listOf("RESEARCH MODE", "PAPER LAB"),
         SettingsPage.HELP to listOf("DIAGNOSTICS", "ABOUT"),
     )
 
@@ -85,7 +86,7 @@ class SettingsPagesTest {
     @Test
     fun `every section is on exactly one page`() {
         screen()
-        for (page in SettingsPage.entries) {
+        for (page in SettingsPage.shown(SampleScan.state().settings)) {   // Pinnodds' page is dormant and hidden (Tj, 2026-10-09)
             open(page)
             for ((home, titles) in sections) {
                 for (title in titles) {
@@ -108,7 +109,7 @@ class SettingsPagesTest {
             compose.onNodeWithText(SettingsSummary.of(p, s), substring = true).assertExists()
         }
         // The order: as the enum lists them.
-        val shown = texts().filter { t -> SettingsPage.entries.any { it.title == t } }
+        val shown = texts().filter { t -> SettingsPage.entries.any { it.title == t } }   // the hidden pages are not on the list
         assertEquals(SettingsPage.shown(s.settings).map { it.title }, shown)
         open(SettingsPage.FAIR)
         compose.onNodeWithText("Fair odds & sources").assertIsDisplayed() // the top bar
@@ -121,11 +122,11 @@ class SettingsPagesTest {
     fun `each scanner hides the pages it doesn't use, and a page that goes away falls back to the list`() {
         val base = SampleScan.state()
         assertEquals(
-            listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.PINNODDS, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.WIDGET, SettingsPage.HELP),
+            listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.WIDGET, SettingsPage.RESEARCH, SettingsPage.HELP),
             SettingsPage.shown(base.settings.copy(scanner = ScannerMode.CNO)),
         )
-        assertEquals(SettingsPage.entries.filter { it != SettingsPage.CNO }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.VIGILANT)))
-        assertEquals(SettingsPage.entries.toList(), SettingsPage.shown(base.settings.copy(scanner = ScannerMode.BOTH)))
+        assertEquals(SettingsPage.entries.filter { it != SettingsPage.CNO && it != SettingsPage.PINNODDS }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.VIGILANT)))
+        assertEquals(SettingsPage.entries.filter { it != SettingsPage.PINNODDS }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.BOTH)))
         screen(base.copy(settings = base.settings.copy(scanner = ScannerMode.CNO))) { SettingsScreen(it, {}, page = SettingsPage.FAIR) }
         compose.onNodeWithTag("settingsPage-HOME").assertExists()
         compose.onAllNodesWithTag("settingsRow-FAIR").assertCountEquals(0)
