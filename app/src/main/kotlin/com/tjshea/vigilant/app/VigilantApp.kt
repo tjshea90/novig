@@ -387,8 +387,32 @@ class AppContainer(private val app: Application) {
         apiSync = ApiBetSync(tracker, client, novig)
     }
 
+    /**
+     * SportsGameOdds Pro (Tj, 2026-10-09; SPORTSGAMEODDS_API.md): its client, rotated across Tj's keys like every provider's. Used only while [sgoActive].
+     */
+    val sgoClient = com.tjshea.vigilant.data.reference.SportsGameOddsClient(http, KeyPool(QuotaPolicy.SGO, { keyStore.current(ApiProvider.SPORTSGAMEODDS) }, usage), json)
+    val sgoGames = com.tjshea.vigilant.data.reference.SgoGamesSource(sgoClient)
+    val sgoProps = com.tjshea.vigilant.data.reference.SgoPropsSource(sgoClient)
+
+    /** SportsGameOdds Pro is on, a key is saved and it is answering: the scan, bids and open-bet pricing read it, and the feeds it replaces rest. */
+    fun sgoActive(s: ScanSettings): Boolean = AppBook.isNovig && s.sgoPro && keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() && !sgoClient.down()
+
+    /** Closing lines (CLV, including bets already in the Tracker) and final scores from SportsGameOdds: asked only while it is switched on (see [syncSgo]). */
+    val sgoCloses = com.tjshea.vigilant.data.tracker.SgoCloses(sgoClient, { keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() })
+    val sgoScores = com.tjshea.vigilant.data.tracker.SgoScores(sgoClient, { keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() })
+
+    /** Follows Settings: the closes and scores read SportsGameOdds only while Pro is on. Safe to call on every settings change. */
+    fun syncSgo(s: ScanSettings) {
+        val on = AppBook.isNovig && s.sgoPro
+        sgoCloses.enabled = on
+        sgoScores.enabled = on
+    }
+
     /** The free score feeds (ESPN, MLB): one instance, so its per-day and box-score caches serve the Tracker's grading and the scan study's alike. */
-    val scores = FreeScores(http, json)
+    val freeScores = FreeScores(http, json)
+
+    /** SportsGameOdds' final scores first while Pro is on ([syncSgo]), the free feeds behind them (and for a prop's box score). */
+    val scores: com.tjshea.vigilant.data.tracker.ScoreSource = com.tjshea.vigilant.data.tracker.ChainedScores(sgoScores, freeScores)
     val settler = BetSettler(tracker, scores, leaveApiBets = { trading != null })
 
     /**
@@ -406,7 +430,7 @@ class AppContainer(private val app: Application) {
 
     /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when ParlayAPI is on and Tj has a key; nothing otherwise. */
     val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, parlayPool, json, historyDays = { parlayAccount.historyDays() })
-    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(parlayCloses, espnCloses, novigCloses))
+    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(sgoCloses, parlayCloses, espnCloses, novigCloses))
 
     /**
      * The scan study (Tj, 2026-10-03: "on every cno scan, the vigilant app saves logs on all kinds of information … when those bets are final, it logs whether
@@ -435,7 +459,7 @@ class AppContainer(private val app: Application) {
     }
 
     private val studyCloses = listOf<com.tjshea.vigilant.data.tracker.CloseSource>(
-        com.tjshea.vigilant.data.study.GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses,
+        sgoCloses, com.tjshea.vigilant.data.study.GuardedCloses(parlayCloses) { parlayCreditsPlentiful() }, espnCloses, novigCloses,
     )
 
     /**
@@ -445,6 +469,7 @@ class AppContainer(private val app: Application) {
     suspend fun settleStudy() {
         try {
             parlayCloses.enabled = currentSettings().useParlay
+            syncSgo(currentSettings())
             study.settle(scores, studyCloses, runCatching { tracker.all() }.getOrDefault(emptyList()), File(app.cacheDir, "study-grading"), yieldTo = { trackerClosing.get() > 0 })
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
@@ -480,6 +505,7 @@ class AppContainer(private val app: Application) {
         trackerClosing.incrementAndGet()
         try {
             parlayCloses.enabled = currentSettings().useParlay
+            syncSgo(currentSettings())
             lastBackfill = closeBackfill.run(heavyOk = true, force = force)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
@@ -1221,16 +1247,6 @@ class AppContainer(private val app: Application) {
 
     /** Pinnacle's biggest moneyline moves per league (ParlayAPI's public /v1/meta/movers: free, no key; PARLAY_API.md §6.3). */
     val parlayMovers = com.tjshea.vigilant.data.reference.ParlayMovers(http, json)
-
-    /**
-     * SportsGameOdds Pro (Tj, 2026-10-09; SPORTSGAMEODDS_API.md): its client, rotated across Tj's keys like every provider's. Used only while [sgoActive].
-     */
-    val sgoClient = com.tjshea.vigilant.data.reference.SportsGameOddsClient(http, KeyPool(QuotaPolicy.SGO, { keyStore.current(ApiProvider.SPORTSGAMEODDS) }, usage), json)
-    val sgoGames = com.tjshea.vigilant.data.reference.SgoGamesSource(sgoClient)
-    val sgoProps = com.tjshea.vigilant.data.reference.SgoPropsSource(sgoClient)
-
-    /** SportsGameOdds Pro is on, a key is saved and it is answering: the scan, bids and open-bet pricing read it, and the feeds it replaces rest. */
-    fun sgoActive(s: ScanSettings): Boolean = AppBook.isNovig && s.sgoPro && keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() && !sgoClient.down()
 
     /** ESPN's injury list through ParlayAPI (1 credit a league, 10 min apart) for listed or open prop bets no props answer covered. */
     val parlayInjuries = com.tjshea.vigilant.data.reference.ParlayInjuries(parlayOdds, injuries, json, active = { parlayActive() })
