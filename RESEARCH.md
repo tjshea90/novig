@@ -6050,3 +6050,16 @@ Bids 90 (49 open) · 26-15 · ROI +32.5% (1.7 sigma of luck over expectation, §
 
 ### 122.4 How Tj runs it (also in RUN_RESEARCH.md)
 1. Settings > Research mode > turn on the switch. 2. Leave the app open and the phone charging through games and a few days of pregame (nothing is bet: it places no orders). 3. Whenever you like (best after 2-3 evenings): Settings > Research mode > "Share research file with Claude" and send me the file; also tap the existing "Share diagnostics" and send that one. That is all.
+
+### 120.7 The bigger live sample (4 tapes, 153 minutes of clock, about 51 minutes of recording; 21 matched games: football 5, basketball 5, hockey 9, baseball 1; 10,754 clean rows) and what it changed
+- **Re-quote latency after a Pinnacle move of 1.5+ points: median 4.2 s (p25 2.0, p75 9.0, p90 17.0; n=359, 25 with no change within 60 s)**: basketball 3.9 s (239), football 5.0 s (96; 15 of them unchanged in 60 s), hockey 4.6 s (14), baseball 3.6 s (10). **The 20 s hockey lag of §120.2 is not confirmed**: it came from a correlation on 9 moves; on 14 moves hockey re-quotes in 4.6 s like the others. (The correlation peak was an artefact of few moves and 5 s bins.)
+- **The order-delay test, n=87-90 scores (all but a few basketball baskets): buying the scorer at Novig's ask d seconds after the score, against Pinnacle's fair 30 s later: 2 s -1.4% median (mean -2.9%), 3.5 s -0.1%, 5.3 s -0.7%, 8 s -0.8%, 12 s -1.0%; 34-37% of orders >= +2%.** Same answer as §120.2: no taker edge after a score at any delay.
+- **Edge rows against Pinnacle: 11.0% of rows are +2% or better (1,185), +4.5% now, +2.5% at +30 s and +120 s (n=679/849)**: unchanged.
+- **Make orders on the bigger tape (trade tape restored for the early games from the saved file; 907-1,034 paper bids per recipe over about 14.5 bid-hours, 38-82 fills a recipe), ttl 60 s:** the guard keeps the edge, the unguarded bid loses it by +120 s.
+  | margin | no guard: fills/bid-hour, EV at fill / +30 s / +120 s | guard on a Pinnacle move: same | guard + no posting within 30 s of a score |
+  | :- | :- | :- | :- |
+  | 2% | 5.4, +3.0% / +1.4% / +0.1% (82 strict -0.6%) | 3.9, +3.2% / +3.1% / +1.4% (strict +1.2%) | 4.4, +3.2% / +3.2% / +1.4% |
+  | 3% | 5.6, +4.0% / +3.0% / +1.9% (strict -1.8%) | 4.1, +4.3% / +4.2% / +3.5% (strict +2.5%) | 5.1, +4.3% / +4.2% / +3.5% (strict +3.0%) |
+  | 4% | 4.5, +4.7% / +1.9% / +1.1% (strict +0.3%) | 3.0, +5.2% / +4.4% / +3.7% (strict +3.5%) | 3.3, +5.2% / +5.0% / +4.3% (strict +5.1%) |
+  So with 45-82 fills a row: **at +120 s a guarded 3-4% bid is worth +3.5-4.3% against +1.1-1.9% unguarded (a gain of 2-3 points for about a third of the fills)**; strictly-through fills agree (+2.5..+5.1% vs -1.8..+0.3%). This is the strongest make-bid result so far, and it is on PAPER: the queue, Novig's acceptance during a pause and the guard's real latency are not in it. (ttl 30 s and 180 s: `maker_union_ttl30.txt`, `maker_union_ttl180.txt`, same shape.)
+- Files: `research/pinnodds_2026-10-08b/` (`deep_all_4tapes.txt`, `maker_union_*.txt`, `trades_union.ndjson.gz`). The pregame tape (7 minutes) still says nothing; a US-daytime pregame run is still to do (scheduled 16:50Z, which needs the session awake; the in-app paper bids cover pregame without it).
