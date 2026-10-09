@@ -75,7 +75,7 @@ class LabRecorder(
                     _status.value = _status.value.copy(problem = null)
                 } catch (e: CancellationException) {
                     throw e
-                } catch (e: Exception) {
+                } catch (e: Throwable) {   // an Error too: a paper recorder must never take the app down
                     _status.value = _status.value.copy(problem = e.message ?: e.javaClass.simpleName)
                 }
                 delay(cycleMs)

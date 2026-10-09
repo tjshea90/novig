@@ -115,6 +115,7 @@ class BidLab(
                 val offer = l.offer ?: continue
                 for (v in variants) {
                     if (v.live != l.live || key(v, l.outcomeId) in byKey) continue
+                    if (active.size >= MAX_ACTIVE) continue
                     if (l.startsTs - now < MIN_TO_START_MS && !l.live) continue
                     val p = PriceGrid.floor(l.fair / (1.0 + v.margin)) ?: continue
                     if (p < MIN_PRICE || p > MAX_PRICE || p >= offer - TICK) continue
@@ -128,8 +129,8 @@ class BidLab(
             }
             posted += out.size
         }
-        out.forEach { bidJournal.append(it) }
-        events.forEach { eventJournal.append(it) }
+        runCatching { bidJournal.appendAll(out) }
+        runCatching { eventJournal.appendAll(events) }
     }
 
     private fun key(v: BidVariant, outcomeId: String) = v.name + "|" + outcomeId
@@ -153,7 +154,7 @@ class BidLab(
                     events += BidLabEvent(a.bid.id, t.atMs, "FILL", t.price, strict = t.price < a.bid.price - 1e-9)
                 }
             }
-            events.forEach { eventJournal.append(it) }
+            runCatching { eventJournal.appendAll(events) }
         }
         val toGrade: List<Active>
         synchronized(lock) { toGrade = active.values.filter { it.filledAtMs != null && now > it.bid.startsTs + GRADE_AFTER_MS }.take(MAX_GRADE) }
@@ -181,6 +182,9 @@ class BidLab(
         const val GRADE_AFTER_MS = 3 * 3_600_000L
         const val MAX_MARKETS = 25
         const val MAX_GRADE = 20
+
+        /** Paper bids in flight at most (memory and the journal stay small however many lines the desk reads). */
+        const val MAX_ACTIVE = 4000
 
         /** A filled bid whose market never settles for the lab is forgotten this long after the start. */
         const val FORGET_MS = 48 * 3_600_000L

@@ -161,6 +161,20 @@ class DayJournal<T>(private val dir: File, private val prefix: String, private v
         FileOutputStream(f, true).use { out -> out.write(line.toByteArray()); out.fd.sync() }
     }
 
+    /** Many records with ONE open and ONE sync (a paper-bid pass can add thousands; a sync each would stall the phone's storage for minutes). */
+    @Synchronized
+    fun appendAll(rs: List<T>) {
+        if (rs.isEmpty()) return
+        dir.mkdirs()
+        val byFile = rs.groupBy { r -> File(dir, "$prefix-${java.time.Instant.ofEpochMilli(timeOf(r)).atZone(java.time.ZoneId.of("America/New_York")).toLocalDate()}.jsonl") }
+        for ((f, group) in byFile) {
+            val sb = StringBuilder()
+            if (f.exists() && f.length() > 0 && !endsWithNewline(f)) sb.append('\n')
+            for (r in group) sb.append(json.encodeToString(serializer, r)).append('\n')
+            FileOutputStream(f, true).use { out -> out.write(sb.toString().toByteArray()); out.fd.sync() }
+        }
+    }
+
     fun readAll(): List<T> = (dir.listFiles { f -> f.isFile && f.name.startsWith("$prefix-") }?.sortedBy { it.name }.orEmpty()).flatMap { f ->
         f.useLines { ls -> ls.filter { it.isNotBlank() }.mapNotNull { runCatching { json.decodeFromString(serializer, it) }.getOrNull() }.toList() }
     }
