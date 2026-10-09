@@ -116,4 +116,18 @@ class SgoConvertTest {
         assertEquals("Patrick Mahomes", SgoProps.nameFromId("PATRICK_MAHOMES_1_NFL"))
         assertNull(SgoProps.nameFromId("X_1_NFL"))
     }
+
+    @Test fun labAltQuotesCarryEveryBooksMainAndAlternateLinesInNovigsConvention() {
+        val q = com.tjshea.vigilant.data.novig.lab.SgoAltQuotes.quotes(ref, swapped = false)
+        val totals = q.filter { it.kind == com.tjshea.vigilant.data.novig.burst.LadderKind.TOTAL && it.bookKey == "pinnacle" }
+        assertEquals(listOf(47.5), totals.map { it.threshold })
+        val home = q.filter { it.kind == com.tjshea.vigilant.data.novig.burst.LadderKind.MARGIN && it.refSide == "HOME" && it.bookKey == "pinnacle" && it.threshold != 0.0 }
+        // home -3.5 and the alternate -6.5: home covers when its margin is over 3.5 / 6.5
+        assertEquals(setOf(3.5, 6.5, -0.5), home.map { it.threshold }.toSet())
+        val away = q.filter { it.kind == com.tjshea.vigilant.data.novig.burst.LadderKind.MARGIN && it.refSide == "AWAY" && it.bookKey == "pinnacle" && it.threshold != 0.0 }
+        assertTrue(-3.5 in away.map { it.threshold })
+        assertTrue(q.all { it.seenAtMs != null })
+        val swapped = com.tjshea.vigilant.data.novig.lab.SgoAltQuotes.quotes(ref, swapped = true)
+        assertTrue(swapped.any { it.refSide == "AWAY" && it.threshold == 3.5 })
+    }
 }
