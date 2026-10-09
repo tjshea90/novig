@@ -5920,3 +5920,8 @@ Add the rule to discount any quote from any exchange or book if the quote is too
 By discount I mean don't count that as a source at all if it is too wide
 How long should I run the research lab in the app for before there is enough data for you to start with. Can I send it in different batches at different times for Claude to analyze? Is the GitHub research still going? How long should that go before we stop it? Can you manage the GitHub research such as watching it and stopping it when needed?
 ```
+
+## 2026-10-09T23:56:45Z
+```
+Schedule daily check ins with GitHub and save the data and research to GitHub so that other sessions can see the research and no data is lost. Make this a permanent rule for the repo so that other Claude sessions see it and immediately abide by it, but I think only one Claude account needs to actively manage the GitHub. Figure out how to share it between 3 different Claude accounts but on the same repo
+```
