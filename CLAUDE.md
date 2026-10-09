@@ -402,6 +402,14 @@ and what they cost (WebSocket = a REST plan + $99 add-on, at least $198 a month)
 does the edge hold: score-driven moves yes, price-only moves no; the replay tools are `tools/research/pinn_novig_lag.py` and `pinnodds_tape.py`). Never commit a Pinnodds key. **A study recorder and the app must never run at once** (a second
 connection evicts the first, and they would kick each other in a loop): stop `pinn_novig_lag.py` before the app's feed is on. Novig's websocket also has `place`/`cancel` verbs now (`NOVIG_API.md` §21), not yet used.
 
+## SportsGameOdds Pro — permanent research memory
+
+Tj's SportsGameOdds Pro trial (2026-10-09) is documented in **`SPORTSGAMEODDS_API.md`**: plans and limits (the docs disagree on price: $299 or $499; Pro = 300 requests a minute, unlimited events, **no WebSocket**: that is All-Star), the `/v2/events` schema,
+every field the app reads, and a watch list of what is not verified. **Nothing in it has been run against a live key yet**: the parser was written from the OpenAPI examples. Settings › SportsGameOdds Pro › "Test and share sample" saves the key's real answer
+to Downloads/Vigilant; when Tj sends it, check `SgoParser`/`SgoConvert` against it and fix the doc. Code: `data/.../reference/Sgo*.kt` + `SportsGameOddsClient.kt` (client, 220 ms spacing, one retry, 504 -> no alternates), `tracker/SgoCloses.kt` (CLV from `includeOpenCloseOdds`, old bets
+included), `tracker/SgoScores.kt` (grading, `ChainedScores` with the free feeds), `novig/lab/SgoAltQuotes.kt` (the paper lab's outside quotes, replacing dormant Pinnodds). `ScanSettings.sgoPro` switches it on: `AppContainer.allReferenceSources` puts SGO first and
+rests the paid feeds it replaces (`OutsideSgo`: tennis keeps them), and brings them back by themselves if SGO stops answering (`SportsGameOddsClient.down`). Never commit a key.
+
 ## Project rules
 
 See `BRIEF.md` for what's decided about this project and what's still open:
