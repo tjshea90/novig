@@ -1,6 +1,5 @@
 package com.tjshea.vigilant.data.novig.lab
 
-import com.tjshea.vigilant.data.match.TeamMatcher
 import com.tjshea.vigilant.data.novig.burst.CoverMath
 import com.tjshea.vigilant.data.novig.burst.LadderKind
 import com.tjshea.vigilant.data.scanner.Freshness
@@ -12,13 +11,14 @@ import com.tjshea.vigilant.engine.Fees
 
 /**
  * One outside book's two-sided price at one alternate line, in Novig's own convention so it can be laid against a Novig line: a TOTAL's [threshold] is the strike and YES is the Over; a MARGIN line's
- * [ref] is the team whose margin is measured, [threshold] is Novig's (a spread of X -k is k, X +k is -k) and YES is "that team covers". [seenAtMs] is when the feed last saw the price (null: unknown).
+ * [refSide] is the side whose margin is measured, [threshold] is Novig's (a spread of X -k is k, X +k is -k) and YES is "that team covers". [seenAtMs] is when the feed last saw the price (null: unknown).
  */
 data class AltQuote(
     val bookKey: String,
     val bookTitle: String,
     val kind: LadderKind,
-    val ref: String,
+    /** A MARGIN line: "HOME" or "AWAY", the side whose margin is measured (Novig's name for it is resolved by the caller: Novig says "TB", a book says "Tampa Bay"); "" for a total. */
+    val refSide: String,
     val threshold: Double,
     val yesDecimal: Double,
     val noDecimal: Double,
@@ -57,13 +57,14 @@ data class AltCandidate(
  * must be under it by [AltRules.minEdge]. Pure; the quotes come from whichever feeds the caller has.
  */
 object AltLineScan {
-    fun scan(points: List<LadderPoint>, quotes: List<AltQuote>, now: Long, startsAtMs: Long?, live: Boolean, rules: AltRules = AltRules()): List<AltCandidate> {
+    /** [sideOf] says whether a margin ladder's reference team (Novig's name for it) is the HOME or the AWAY side; null skips that ladder. */
+    fun scan(points: List<LadderPoint>, quotes: List<AltQuote>, now: Long, startsAtMs: Long?, live: Boolean, rules: AltRules = AltRules(), sideOf: (String) -> String? = { null }): List<AltCandidate> {
         val out = ArrayList<AltCandidate>()
         for (p in points) {
             val line = p.line
             val matching = quotes.filter { q ->
                 q.kind == line.kind && Math.abs(q.threshold - line.threshold) < 1e-9 &&
-                    (line.kind == LadderKind.TOTAL || TeamMatcher.similarity(q.ref, line.ref) >= 0.5) &&
+                    (line.kind == LadderKind.TOTAL || (q.refSide.isNotEmpty() && q.refSide == sideOf(line.ref))) &&
                     q.yesDecimal > 1.0 && q.noDecimal > 1.0 && Freshness.fresh(q.seenAtMs, now, startsAtMs)
             }.distinctBy { it.bookKey }
             if (matching.size < rules.minBooks) continue

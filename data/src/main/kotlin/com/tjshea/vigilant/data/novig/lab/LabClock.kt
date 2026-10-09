@@ -21,6 +21,15 @@ data class EspnGame(
     val period: Int,
     val clockSec: Double,
 ) {
+    /** "HOME" or "AWAY" for the team Novig calls [ref] (its abbreviation, or a name); null when it matches neither. */
+    fun sideOf(ref: String): String? = when {
+        ref.equals(homeAbbr, true) -> "HOME"
+        ref.equals(awayAbbr, true) -> "AWAY"
+        TeamMatcher.similarity(ref, home) >= 0.5 && TeamMatcher.similarity(ref, away) < 0.5 -> "HOME"
+        TeamMatcher.similarity(ref, away) >= 0.5 && TeamMatcher.similarity(ref, home) < 0.5 -> "AWAY"
+        else -> null
+    }
+
     /** The score as a lead for the team Novig calls [ref] (its abbreviation, or a name); null when [ref] matches neither side. */
     fun marginOf(ref: String): Int? = when {
         ref.equals(homeAbbr, true) -> homeScore - awayScore
