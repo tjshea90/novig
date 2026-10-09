@@ -127,7 +127,7 @@ class LabRecorder(
                 }
             }
             val quotes = runCatching { altQuotes(ev) }.getOrDefault(emptyList())
-            if (quotes.isNotEmpty()) for (c in AltLineScan.scan(points, quotes, now, ev.startsTs, live = true)) {
+            if (quotes.isNotEmpty()) for (c in AltLineScan.scan(points, quotes, now, ev.startsTs, live = true, sideOf = { ref -> game?.sideOf(ref) ?: sideByName(ev, ref) })) {
                 alt++
                 record(LabRecord(id(), now, LabKind.ALT, ev.eventId, ev.description, ev.league, c.marketId, c.outcomeId, c.label, c.side, c.strike, c.ask, c.fair, c.edge, c.contracts, c.books, "oldest quote ${c.oldestAgeSec}s"))
             }
@@ -149,6 +149,14 @@ class LabRecorder(
         lastSeen[key] = r.atMs to r.ask
         if (lastSeen.size > 4_000) lastSeen.entries.removeAll { r.atMs - it.value.first > REPEAT_MS }
         journal.append(r)
+    }
+
+    /** HOME or AWAY for the team Novig calls [ref] by matching it against the game's own names (no ESPN game to ask); null when it can't tell. */
+    private fun sideByName(ev: NovigEvent, ref: String): String? {
+        val m = ev.matchup ?: return null
+        val h = TeamMatcher.similarity(ref, m.home)
+        val a = TeamMatcher.similarity(ref, m.away)
+        return when { h >= 0.5 && a < 0.5 -> "HOME"; a >= 0.5 && h < 0.5 -> "AWAY"; else -> null }
     }
 
     /** ESPN's scoreboard for [ev]'s league (cached 15 s), then the game whose two teams match [ev]'s description. */

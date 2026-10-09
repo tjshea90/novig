@@ -124,6 +124,9 @@ class PinnLiveRunner(
 
     // ---- consumer state (touched only by the consumer) ----------------------------------------------------------------------------
     private var book = PinnBook()
+    private var matchedPairs: List<LiveMatcher.Pair> = emptyList()
+    private var lastAltMs = 0L
+    @Volatile private var altMap: Map<String, List<com.tjshea.vigilant.data.novig.lab.AltQuote>> = emptyMap()
     private var catalogEvents: List<NovigEvent> = emptyList()
     private var catalogMarkets: List<NovigMarket> = emptyList()
     private val targetsByEvent = HashMap<Long, List<LiveTarget>>()
@@ -255,7 +258,11 @@ class PinnLiveRunner(
         val events = book.events.size
         if (catalogDirty || events != lastEventCount && now - lastRematchMs > REMATCH_MS) rematch(novig, now)
         if (now % 30_000L < tickMs) book.prune(now)
+        if (now - lastAltMs >= ALT_EVERY_MS) { lastAltMs = now; altMap = matchedPairs.mapNotNull { p -> (book.events[p.linesEventId ?: p.pinnEventId])?.let { p.event.eventId to com.tjshea.vigilant.data.novig.lab.PinnAltQuotes.quotes(it, p.swapped) } }.toMap() }
     }
+
+    /** Pinnacle's live main and alternate spreads and totals for the Novig game [novigEventId] as the lab recorder reads them (a snapshot taken every few seconds on the consumer; empty when the game is not matched). */
+    fun altQuotes(novigEventId: String): List<com.tjshea.vigilant.data.novig.lab.AltQuote> = altMap[novigEventId].orEmpty()
 
     private fun feedProblem(now: Long, novig: PushedBooks, pinn: PinnFeedSource): String? {
         if (pinn.state.value !is PinnSocketState.Live) return "Pinnodds feed not connected"
@@ -276,6 +283,7 @@ class PinnLiveRunner(
         val cfg = config()
         val pairs = LiveMatcher.matchEvents(book.events.values.filter { eligibleNow(it, now, cfg.rules) }, catalogEvents, now) { pe, ne -> sameStage(pe, ne) }
         matchedGames = pairs.size
+        matchedPairs = pairs
         val byEvent = HashMap<Long, List<LiveTarget>>()
         val ordered = ArrayList<Pair<Double, String>>()
         for (p in pairs) {
@@ -429,6 +437,9 @@ class PinnLiveRunner(
     }
 
     companion object {
+        /** How often the alternate-line snapshot for the lab is rebuilt. */
+        const val ALT_EVERY_MS = 5_000L
+
         /** True for a `live` envelope whose topic ends in `/pre` (read from the first 160 characters: the envelope puts `topic` before the record). */
         internal fun isPrematchFrame(text: String): Boolean {
             val head = text.substring(0, minOf(160, text.length))
