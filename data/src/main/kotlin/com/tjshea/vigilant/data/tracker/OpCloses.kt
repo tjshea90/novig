@@ -71,7 +71,7 @@ class OpCloses(
             ?: return CloseLookup.None("Not in OddsPapi")
         if (!game.started && !game.finished) return CloseLookup.Later("The game has not started")
         val markets = feed.marketsFor(league)
-        val cls = classOf(pick, game, markets, league) ?: return CloseLookup.None("OddsPapi has no market for this bet")
+        val cls = classOf(pick, game, markets) ?: return CloseLookup.None("OddsPapi has no market for this bet")
         val catalog = runCatching { feed.bookCatalog() }.getOrDefault(emptyList())
         var first: CloseLookup? = null
         for (book in BOOKS) {
@@ -83,12 +83,8 @@ class OpCloses(
         return first ?: CloseLookup.None("No close")
     }
 
-    /** The market (and for a spread the side) [pick] is on, in participant 1/2 terms, plus which of its two outcomes is the bet. */
-    private class Chosen(val cls: OpClass, val mine: Long, val other: Long)
-    private class Target(val chosen: Chosen?, val why: String?)
-
-    private fun classOf(pick: BetGrader.Pick, game: OpFixture, markets: com.tjshea.vigilant.data.reference.OpMarkets, league: League): OpClass? {
-        val l = league.novigName
+    /** The catalogue market [pick] is on (a spread's number is participant 1's). */
+    private fun classOf(pick: BetGrader.Pick, game: OpFixture, markets: com.tjshea.vigilant.data.reference.OpMarkets): OpClass? {
         fun period(p: BetGrader.Period): Int? = when (p) {
             BetGrader.Period.GAME -> 0
             BetGrader.Period.FIRST_HALF -> 1
@@ -106,7 +102,7 @@ class OpCloses(
                 val side = TeamMatcher.whichOf(pick.team, game.p1, game.p2).takeIf { it != 0 } ?: return null
                 markets.find(LineKind.TEAM_TOTAL, 0, pick.line, team = side)
             }
-            is BetGrader.Pick.Prop -> OpProps.stat(l, "").let { markets.classes.firstOrNull { it.kind == LineKind.PLAYER_PROP && it.stat == pick.stat && abs((it.point ?: -1.0) - pick.line) < 1e-6 } }
+            is BetGrader.Pick.Prop -> markets.find(LineKind.PLAYER_PROP, 0, pick.line, stat = pick.stat)
             is BetGrader.Pick.FirstSet -> null
         }
     }
