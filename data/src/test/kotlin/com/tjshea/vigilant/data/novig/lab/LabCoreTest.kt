@@ -222,11 +222,11 @@ class LabCoreTest {
             Ladders.line(NovigMarket(id, "ev", "SPREAD", "OPEN", "d", 0L, MarketFee.GAME, listOf(NovigOutcome("$id-a", "TB -4.5", "TBD"), NovigOutcome("$id-b", "DAL +4.5", "TBD")), thr))!!,
             NovigBook(id, 1L, mapOf("$id-a" to emptyList(), "$id-b" to listOf(BidLevel(600, 1_000L))), 0L),   // buying TB -4.5 costs 0.40
         )
-        val p = spread("sp", 4.5)
-        fun q(book: String, side: String) = AltQuote(book, book, LadderKind.MARGIN, side, 4.5, 1.80, 2.05, now)
+        val p = spread("sp", 4.5)   // Novig sorts the two names: the ladder's reference team is DAL (alphabetically first), so DAL +4.5 is "margin over -4.5" and TB -4.5 is its NOT
+        fun q(book: String, side: String) = AltQuote(book, book, LadderKind.MARGIN, side, -4.5, 1.80, 2.05, now)
         val quotes = listOf(q("a", "HOME"), q("b", "HOME"))
-        assertEquals("TB is the home side here", 1, AltLineScan.scan(listOf(p), quotes, now, null, true, sideOf = { if (it == "TB") "HOME" else null }).size)
-        assertTrue("TB resolved as the away side: those quotes are not its line", AltLineScan.scan(listOf(p), quotes, now, null, true, sideOf = { if (it == "TB") "AWAY" else null }).isEmpty())
+        assertEquals("DAL is the home side here: TB -4.5 costs 0.40 against a fair near 0.47", 1, AltLineScan.scan(listOf(p), quotes, now, null, true, sideOf = { if (it == "DAL") "HOME" else null }).size)
+        assertTrue("DAL resolved as the away side: those quotes are not its line", AltLineScan.scan(listOf(p), quotes, now, null, true, sideOf = { if (it == "DAL") "AWAY" else null }).isEmpty())
         assertTrue("no resolver: skipped", AltLineScan.scan(listOf(p), quotes, now, null, true).isEmpty())
     }
 
