@@ -28,3 +28,6 @@ dependencies {
 application {
     mainClass.set("com.tjshea.vigilant.lab.LabMainKt")
 }
+
+// `--out out` means <repo>/out, whatever directory Gradle runs the program from (it defaulted to lab/).
+tasks.named<JavaExec>("run") { workingDir = rootProject.projectDir }

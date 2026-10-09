@@ -94,7 +94,7 @@ jobs:
           if [ -d labstate/state ]; then cp labstate/state/*.jsonl snap/state/ 2>/dev/null || true; fi
           # this run
           F=$(ls out/github-lab-*.txt 2>/dev/null | tail -1 || true)
-          if [ -n "$F" ]; then cp "$F" snap/latest.txt; fi
+          if [ -n "$F" ]; then cp "$F" snap/latest.txt; else echo "::error::the lab wrote no report"; fi
           for p in lab lab-grade bidlab bidlab-event sgo-close; do cp out/lab/$p-*.jsonl snap/state/ 2>/dev/null || true; done
           mkdir -p "snap/archive/$D"
           for f in out/lab/*.jsonl; do [ -f "$f" ] && gzip -9 -c "$f" > "snap/archive/$D/$(basename "$f" .jsonl)-$T.jsonl.gz"; done
