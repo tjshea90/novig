@@ -358,4 +358,17 @@ class SettingsPagesTest {
         assertTrue(SettingsSummary.of(SettingsPage.ODDSPAPI, withKey.copy(settings = withKey.settings.copy(oddsPapi = true))).startsWith("On: 1 key"))
         assertTrue(SettingsPage.ODDSPAPI in SettingsPage.shown(base.settings))
     }
+
+    @Test
+    fun `the Fair odds page has the wide-quote switch, on by default`() {
+        var settings by mutableStateOf(SampleScan.state().settings)
+        screen(SampleScan.state()) {
+            SettingsScreen(it.copy(settings = settings), { f -> settings = f(settings) }, page = SettingsPage.FAIR, onPage = {})
+        }
+        assertTrue(settings.ignoreWideQuotes)
+        compose.onNodeWithTag("wideQuotesSwitch").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("wideQuotesSwitch").performScrollTo().performClick()
+        compose.waitForIdle()
+        assertTrue(!settings.ignoreWideQuotes)
+    }
 }
