@@ -65,7 +65,7 @@ jobs:
         run: |
           ARGS="--minutes $MINUTES --out out"
           if [ -n "$LEAGUES" ]; then ARGS="$ARGS --leagues $LEAGUES"; fi
-          ./gradlew :lab:run --no-daemon -q --args="$ARGS"
+          ./gradlew :data:jar :lab:run --no-daemon --no-configure-on-demand --console=plain --args="$ARGS" | tail -n 400
 
       - name: Summary
         if: always()
@@ -107,6 +107,7 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git checkout -q --orphan lab-data
           git add -A
+          if git diff --cached --quiet; then echo "nothing to save"; exit 0; fi
           git commit -q -m "research lab $D $T"
           git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git push -q -f origin lab-data

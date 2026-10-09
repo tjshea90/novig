@@ -6,6 +6,10 @@ plugins {
     application
 }
 
+// :data (and :engine under it) are configured first: on a fresh GitHub runner `:lab:run` alone otherwise failed to find :data's variants ("No variants exist").
+evaluationDependsOn(":engine")
+evaluationDependsOn(":data")
+
 kotlin {
     jvmToolchain(21)
 }
