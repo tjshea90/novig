@@ -1,23 +1,23 @@
-# CHECKPOINT 2786 — read me first, then TASKS.md
+# CHECKPOINT 2787 — read me first, then TASKS.md
 
-**Written:** 2026-10-09T08:42:02Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-1dbf7537-vyxqtx` · **builds on:** `61e5c25b` (this checkpoint is the commit after it)
+**Written:** 2026-10-09T08:52:33Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-1dbf7537-vyxqtx` · **builds on:** `0d1e8da1` (this checkpoint is the commit after it)
 
 ## Just done
-lab: run in the repo root so out/ is where the workflow looks
+v0.83.0 shipped; GitHub lab proven end to end (run 37906589603 wrote lab-data: latest.txt, archive, state)
 
 ## Do this next
-re-run lab-record
+wait for Tj's SGO key in the SGO_API_KEY secret + his Test-and-share sample; then fix parser/doc against the real answer (SG7)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
-     M .github/workflows/lab-record.yml
      M CHECKPOINT.md
-     M lab/build.gradle.kts
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  0d1e8da1 ckpt 2786: lab: run in the repo root so out/ is where the workflow looks
   61e5c25b ckpt 2785: lab workflow: state checkout moved off the :data directory (it emptied the m
   afa164c1 ckpt 2784: lab workflow fix: evaluationDependsOn(:data), --no-configure-on-demand, save
   8b211e22 ckpt 2783: pre-release: v0.83.0: GitHub research lab (lab module + lab-record.yml: scan
@@ -27,5 +27,4 @@ re-run lab-record
   439fbb03 ckpt 2779: SGO: research doc SPORTSGAMEODDS_API.md, parser/convert/client/sources + 13 
   4c91521d ckpt 2778: pre-release: v0.81.3: fixes the crash on open (R8 optimizer produced AutoSca
   f7cfc329 ckpt 2777: pre-ship: v0.81.3: fixes the crash on open (R8 optimizer produced AutoScanne
-  b2597ee9 ckpt 2776: pre-release: v0.81.2: safe start: research recorders are switched off at eve
 ```

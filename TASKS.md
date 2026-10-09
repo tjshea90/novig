@@ -4321,4 +4321,4 @@ Tj, 2026-10-09 (~04:30Z): "Make an ongoing rule permanent for this repo saved to
 - [x] SH2 SPEC AUDIT against the docs (param names, limits, error handling): 403 must not refuse the key; 429 waits up to a minute; closes query falls back when too heavy; document each check in SPORTSGAMEODDS_API.md §8.
 - [x] SH3 FULL POWER: find every place the app still spends a redundant API while SGO is on (tapped bet's other books, injury tags, ...) and route it to SGO.
 - [x] SH4 GITHUB LAB: a JVM `lab` module running the same paper lab code (ladders, tail, alternate lines vs SGO, paper bids, SGO speed/freshness tape) in Actions, saving to `research-data`; `lab-record.yml`; secrets Tj must add: SGO_API_KEY.
-- [ ] SH5 floor green, ship v0.83.0, tell Tj exactly what to do.
+- [x] SH5 floor green, ship v0.83.0, tell Tj exactly what to do.
