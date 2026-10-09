@@ -63,34 +63,33 @@ def main():
         for league, series in SERIES.items():
             kev = kalshi_games(series)
             if not kev: continue
+            index = {}   # a game is the same game only when the SET of team abbreviations is the same on both venues ("Green Bay" and "Tampa Bay" share a word)
+            for ke in kev:
+                mk = ke.get('markets') or []
+                if len(mk) == 2: index[frozenset(m['ticker'].rsplit('-', 1)[-1].upper() for m in mk)] = (ke, mk)
             for e, status in novig_games(league):
-                na, nh = e['description'].split(' @ ', 1)
-                for ke in kev:
-                    mk = ke.get('markets') or []
-                    if len(mk) != 2: continue
-                    subs = [m.get('yes_sub_title', '') for m in mk]
-                    if not ((L.same_team(nh, subs[0]) and L.same_team(na, subs[1])) or (L.same_team(nh, subs[1]) and L.same_team(na, subs[0]))): continue
-                    nm = novig_money(e['eventId'])
-                    if not nm: break
-                    mid, names, asks, bids = nm
-                    # Novig outcome names are abbreviations: tie each to a Kalshi market by team name, via the event's description order is not reliable, so use the abbreviation's letters
-                    for kmk in mk:
-                        team = kmk.get('yes_sub_title', '')
-                        abbr = kmk['ticker'].rsplit('-', 1)[-1]
-                        n_out = next((n for n in names if n.upper() == abbr.upper()), None)
-                        if n_out is None: continue
-                        other = [n for n in names if n != n_out][0]
-                        yes_ask, yes_bid, no_ask, no_bid = f(kmk.get('yes_ask_dollars')), f(kmk.get('yes_bid_dollars')), f(kmk.get('no_ask_dollars')), f(kmk.get('no_bid_dollars'))
-                        live = status == 'OPEN_INGAME'
-                        # cover A: buy team on Novig + NOT team on Kalshi; cover B: buy the other on Novig + team (YES) on Kalshi
-                        for label, nov_price, k_price in (('NOVIG ' + n_out + ' + KALSHI NO', asks.get(n_out), no_ask), ('NOVIG ' + other + ' + KALSHI YES ' + n_out, asks.get(other), yes_ask)):
-                            if nov_price is None or k_price is None: continue
-                            fee_n = 0.03 * nov_price * (1 - nov_price) if live else 0.0
-                            fee_k = 0.07 * k_price * (1 - k_price)
-                            rows.append({'t': int(time.time() * 1000), 'league': league, 'event': e['description'], 'live': live, 'cover': label, 'novig': round(nov_price, 4), 'kalshi': round(k_price, 4), 'cost': round(nov_price + k_price, 4),
-                                         'net': round(1 - nov_price - k_price - fee_n - fee_k, 4), 'gap_mid': None if yes_bid is None or yes_ask is None else round((yes_bid + yes_ask) / 2, 4),
-                                         'novig_depth': (bids[other] or [0, 0])[1] if label.startswith('NOVIG ' + n_out) else (bids[n_out] or [0, 0])[1], 'kalshi_size': f(kmk.get('yes_ask_size_fp' if 'YES' in label else 'yes_bid_size_fp'))})
-                    break
+                if status == 'OPEN_PREGAME' and e.get('startsTs', 0) - time.time() * 1000 > 30 * 3600_000: continue
+                nm = novig_money(e['eventId'])
+                if not nm: continue
+                mid, names, asks, bids = nm
+                hit = index.get(frozenset(n.upper() for n in names))
+                if not hit: continue
+                ke, mk = hit
+                for kmk in mk:
+                    abbr = kmk['ticker'].rsplit('-', 1)[-1]
+                    n_out = next((n for n in names if n.upper() == abbr.upper()), None)
+                    if n_out is None: continue
+                    other = [n for n in names if n != n_out][0]
+                    yes_ask, yes_bid, no_ask, no_bid = f(kmk.get('yes_ask_dollars')), f(kmk.get('yes_bid_dollars')), f(kmk.get('no_ask_dollars')), f(kmk.get('no_bid_dollars'))
+                    live = status == 'OPEN_INGAME'
+                    # cover A: buy the team on Novig + NOT the team on Kalshi; cover B: buy the other team on Novig + the team (YES) on Kalshi
+                    for label, nov_price, k_price in (('NOVIG ' + n_out + ' + KALSHI NO', asks.get(n_out), no_ask), ('NOVIG ' + other + ' + KALSHI YES ' + n_out, asks.get(other), yes_ask)):
+                        if nov_price is None or k_price is None: continue
+                        fee_n = 0.03 * nov_price * (1 - nov_price) if live else 0.0
+                        fee_k = 0.07 * k_price * (1 - k_price)
+                        rows.append({'t': int(time.time() * 1000), 'league': league, 'event': e['description'], 'live': live, 'cover': label, 'novig': round(nov_price, 4), 'kalshi': round(k_price, 4), 'cost': round(nov_price + k_price, 4),
+                                     'net': round(1 - nov_price - k_price - fee_n - fee_k, 4), 'gap_mid': None if yes_bid is None or yes_ask is None else round((yes_bid + yes_ask) / 2, 4),
+                                     'novig_depth': (bids[other] or [0, 0])[1] if label.startswith('NOVIG ' + n_out) else (bids[n_out] or [0, 0])[1], 'kalshi_size': f(kmk.get('yes_ask_size_fp' if 'YES' in label else 'yes_bid_size_fp'))})
         if out:
             for r in rows: out.write(json.dumps(r) + '\n')
             out.flush()
