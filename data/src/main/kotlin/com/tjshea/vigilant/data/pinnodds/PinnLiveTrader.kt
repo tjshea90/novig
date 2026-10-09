@@ -175,7 +175,10 @@ class DayJournal<T>(private val dir: File, private val prefix: String, private v
         }
     }
 
-    fun readAll(): List<T> = (dir.listFiles { f -> f.isFile && f.name.startsWith("$prefix-") }?.sortedBy { it.name }.orEmpty()).flatMap { f ->
+    /** A day's file is `<prefix>-YYYY-MM-DD.jsonl`: "lab" must not read "lab-grade"'s files, which also start with "lab-". */
+    private val fileName = Regex("^" + Regex.escape(prefix) + "-\\d{4}-\\d{2}-\\d{2}\\.jsonl$")
+
+    fun readAll(): List<T> = (dir.listFiles { f -> f.isFile && fileName.matches(f.name) }?.sortedBy { it.name }.orEmpty()).flatMap { f ->
         f.useLines { ls -> ls.filter { it.isNotBlank() }.mapNotNull { runCatching { json.decodeFromString(serializer, it) }.getOrNull() }.toList() }
     }
 
