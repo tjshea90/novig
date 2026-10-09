@@ -18,7 +18,7 @@ import okhttp3.Request
 class SgoTooHeavyException(message: String) : ReferenceException(message)
 
 /** What `/v2/account/usage` says about a key: the per-interval request and object limits and how much of each is used. */
-data class SgoUsage(val intervals: List<Interval>) {
+data class SgoUsage(val intervals: List<Interval>, val tier: String? = null) {
     data class Interval(val name: String, val maxRequests: Long?, val maxObjects: Long?, val requests: Long?, val objects: Long?, val endsAtMs: Long?)
 
     /** One line for the key test and Diagnostics: the figures that matter on Pro (requests a minute, objects a month). */
@@ -28,10 +28,11 @@ data class SgoUsage(val intervals: List<Interval>) {
             val used = if (unit == "requests") i.requests else i.objects
             "$label ${used ?: "?"}/${cap ?: "unlimited"} $unit"
         }
-        return listOfNotNull(
+        return (listOfNotNull(tier?.let { "plan $it" }) + listOfNotNull(
             intervals.firstOrNull { it.name == "per-minute" }.part("this minute", "requests"),
+            intervals.firstOrNull { it.name == "per-hour" }.part("this hour", "objects"),
             intervals.firstOrNull { it.name == "per-month" }.part("this month", "objects"),
-        ).joinToString(" · ").ifEmpty { "no limits listed" }
+        )).joinToString(" · ").ifEmpty { "no limits listed" }
     }
 }
 
@@ -78,11 +79,17 @@ class SportsGameOddsClient(
     private suspend fun readUsage(): SgoUsage? {
         val raw = get("/account/usage", emptyList())
         val data = ((runCatching { json.parseToJsonElement(raw) }.getOrNull() as? JsonObject)?.get("data") as? JsonObject)?.get("rateLimits") as? JsonObject ?: return null
+        // Real answer (Tj's Pro key, 2026-10-09): {"tier":"pro","rateLimits":{"per-minute":{"max-requests":300,"current-requests":0,"max-entities":"unlimited"},"per-hour":{"max-requests":50000,"max-entities":250000,
+        // "current-entities":0},...}}; the docs' sample names the same figures maxRequestsPerInterval/currentIntervalRequests, so both spellings are read.
         return SgoUsage(
             data.entries.mapNotNull { (name, v) ->
                 val o = v as? JsonObject ?: return@mapNotNull null
-                SgoUsage.Interval(name, o.long("maxRequestsPerInterval"), o.long("maxEntitiesPerInterval"), o.long("currentIntervalRequests"), o.long("currentIntervalEntities"), SgoParser.ms(o.str("currentIntervalEndTime")))
+                SgoUsage.Interval(
+                    name, o.long("max-requests") ?: o.long("maxRequestsPerInterval"), o.long("max-entities") ?: o.long("maxEntitiesPerInterval"),
+                    o.long("current-requests") ?: o.long("currentIntervalRequests"), o.long("current-entities") ?: o.long("currentIntervalEntities"), SgoParser.ms(o.str("currentIntervalEndTime")),
+                )
             },
+            tier = ((runCatching { json.parseToJsonElement(raw) }.getOrNull() as? JsonObject)?.get("data") as? JsonObject)?.str("tier"),
         )
     }
 

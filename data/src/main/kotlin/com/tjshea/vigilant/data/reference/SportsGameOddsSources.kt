@@ -74,6 +74,8 @@ class SgoPropsSource(
     override val propsOnly = true
     override val extraPropTypes: Set<String> get() = ALL_TYPES
 
+    private fun until(settings: ScanSettings) = untilParam(settings, clock())
+
     override fun supports(league: League): Boolean = SgoBooks.leagueId(league)?.let { SgoProps.statIds(SgoConvert.Sport.of(it)).isNotEmpty() } == true
 
     override fun reuseMs(settings: ScanSettings): Long = REUSE_MS
