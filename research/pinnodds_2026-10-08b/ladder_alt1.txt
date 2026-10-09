@@ -1,0 +1,4 @@
+games with 2+ total strikes: 6; ladder snapshots (3+ strikes read within 6 s): 95
+prices per side per strike read: {'over priced': 471, 'under priced': 471, 'over NO price': 24, 'under NO price': 24} -> 48 of 990 sides (5%) show no price (the app's 99.9%)
+snapshots where exactly one strike has any price: 1
+cover pairs checked 975; locked-profit covers (Over j + Under k, j <= k, asks sum < $1): 0; j < k covers under $1.01: 0
