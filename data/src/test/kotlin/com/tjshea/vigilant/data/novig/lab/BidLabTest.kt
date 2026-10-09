@@ -112,7 +112,7 @@ class BidLabTest {
 
     @Test
     fun `after a stop the journals bring back the bids still resting and the fills still waiting for their result`() {
-        val (l, bj, ej) = lab(trades = listOf(TrapGuard.Trade("o1", 0.47, 10.0, t0 + 5_000)))
+        val (l, bj, ej) = lab(trades = listOf(TrapGuard.Trade("o1", 0.47, 10, t0 + 5_000)))
         l.observe(listOf(line(), line(outcome = "o2")), t0)
         runBlocking { l.poll(t0 + 10_000) }                      // o1's bids that sit at or above 0.47 fill
         val bids = bj.readAll()
