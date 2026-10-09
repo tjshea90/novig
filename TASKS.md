@@ -4330,3 +4330,10 @@ Tj, 2026-10-09 (~04:30Z): "Make an ongoing rule permanent for this repo saved to
 ## Bids keep posting all day on SGO (Tj, 2026-10-09 ~16:40Z: "Right now, the auto bid feature using sgo will post bids after I manually scan odds, then after a little while it takes the bids down. I want it to keep posting new bids all day in the background based on automatic scans every few minutes and fresh odds")
 - [x] SJ1 (cause: a bid lives only until its SGO quote stamp + 10 min, the stamp is 3-6 min old when read, and the background Vigilant scan ran every 4 min (8 min with far games): holes between bids) Find why bids come down and no new ones follow: auto-scan not running / interval / SGO source in the auto-scan cycle / bid life vs fair age (Freshness) / MakerRunner stops.
 - [x] SJ2 (v0.83.4: SGO on = Vigilant scan every 2 min, no slow far pace; SgoBidPaceTest) Fix so that with SGO Pro on, the background auto-scan re-reads SGO every few minutes and the bid desk re-posts from the fresh fair, all day; test; ship.
+
+## Notifications, open-bids notification, smaller bid batches, bid lifetime (Tj, 2026-10-09 ~17:50Z, with a screenshot and vigilant-diagnostics-v0.83.4-2026-10-09-1347.txt)
+- [ ] SK1 "Make an option to turn all notifications off except notifications of actual money bet or bids filled."
+- [ ] SK2 "Make a notification feature that shows at all times in the notifications how many open bids there are."
+- [ ] SK3 "Make bids go up in smaller batches because they are getting rejected sometimes."
+- [ ] SK4 "Make sure the amount of time bids stay up is optimal, it seems like they are being taken down quickly and then there are stretches with no bids up at all."
+- [ ] SK5 "Review the screenshot and diagnostic file to see if anything needs to be changed" (screenshot: "stopped reading early because the app's memory was nearly full (heap 487 of 512 MB (95%))"; odds 7 min old).
