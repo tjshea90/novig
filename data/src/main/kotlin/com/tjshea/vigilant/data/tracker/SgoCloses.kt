@@ -61,7 +61,12 @@ class SgoCloses(
         val cacheKey = "$leagueId|$from|$to|${ids.hashCode()}"
         kept[cacheKey]?.takeIf { clock() - it.atMs < KEEP_MS }?.let { return it.events }
         val params = listOf("leagueID" to leagueId, "startsAfter" to from.toString(), "startsBefore" to to.toString(), "includeOpenCloseOdds" to "true", "limit" to SportsGameOddsClient.PAGE.toString(), "oddID" to ids.joinToString(","))
-        val events = client.eventsAll(params, maxPages = 4).events
+        // SGO's own advice for a 504 is fewer parameters: the market filter goes first (the answer is bigger, but it comes).
+        val events = try {
+            client.eventsAll(params, maxPages = 4).events
+        } catch (e: com.tjshea.vigilant.data.reference.SgoTooHeavyException) {
+            client.eventsAll(params.filter { it.first != "oddID" }, maxPages = 4).events
+        }
         kept[cacheKey] = Kept(clock(), events)
         return events
     }

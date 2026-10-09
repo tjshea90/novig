@@ -142,10 +142,12 @@ class SportsGameOddsClient(
                     val retryMs = response.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000)
                     when {
                         response.code == 401 -> KeyAttemptResult.Invalid("HTTP 401, key refused")
-                        response.code == 403 -> KeyAttemptResult.Invalid("HTTP 403: ${errorOf(body) ?: "that needs a paid plan or an active subscription"}")
+                        // 403 is "this key may not use THIS data or endpoint" (a plan feature, or a cancelled/unpaid subscription): the docs' errors page lists both. It must not refuse the key for the calls
+                        // it CAN make, so it is this call's failure; repeated, SGO counts as down and the replaced feeds return.
+                        response.code == 403 -> throw ReferenceException("SportsGameOdds HTTP 403: ${errorOf(body) ?: "your plan or subscription does not allow this"}")
                         response.code == 429 && body.contains("month", ignoreCase = true) && body.contains("object", ignoreCase = true) ->
                             KeyAttemptResult.Depleted("monthly objects used up", retryMs)
-                        response.code == 429 -> KeyAttemptResult.RateLimited(retryMs ?: 15_000L, "rate limit (HTTP 429)")
+                        response.code == 429 -> KeyAttemptResult.RateLimited(retryMs ?: 60_000L, "rate limit (HTTP 429)")   // the docs: "try waiting up to a minute"
                         response.code == 504 -> throw SgoTooHeavyException("SportsGameOdds timed out (HTTP 504): query too heavy")
                         response.code in 500..599 -> throw ReferenceException("SportsGameOdds HTTP ${response.code}")
                         !response.isSuccessful -> throw ReferenceException("SportsGameOdds HTTP ${response.code}: ${errorOf(body) ?: "refused the request"}")
