@@ -8,7 +8,6 @@ import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.store.JsonFileStore
-import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.ChainedScores
 import com.tjshea.vigilant.data.tracker.CloseLookup
 import com.tjshea.vigilant.data.tracker.GameScore
@@ -206,5 +205,62 @@ class SgoClientTest {
         assertEquals("a prop's box score comes from the free feed that has the game", 300.0, chain.players(g)!!.single().stats["PASSING_YARDS"]!!, 0.0)
         sgo.enabled = false
         assertEquals("espn:1", chain.games("NFL", LocalDate.of(2026, 10, 11))!!.single().id)
+    }
+
+    // ---- the docs' error rules (SPORTSGAMEODDS_API.md §2) ------------------------------------------------------------------------
+
+    @Test fun a403IsThatCallsFailureAndDoesNotRefuseTheKeyForTheCallsItCanMake() = runTest {
+        handler = { r -> if (r.requestUrl!!.encodedPath.endsWith("/stream/events")) MockResponse().setResponseCode(403).setBody("""{"success":false,"error":"AllStar only"}""") else ok(sample) }
+        val c = client()
+        val e = runCatching { c.raw("/stream/events", emptyList()) }.exceptionOrNull()
+        assertTrue(e.toString(), e is ReferenceException && e.message!!.contains("AllStar only"))
+        assertEquals("the same key still works for events", 1, c.events(listOf("leagueID" to "NFL")).events.size)
+    }
+
+    @Test fun a429RestsTheKeyForAMinuteAndThenItWorksAgain() = runTest {
+        var limited = true
+        handler = { if (limited) MockResponse().setResponseCode(429).setBody("""{"success":false,"error":"rate limit"}""") else ok(sample) }
+        val c = client()
+        assertTrue(runCatching { c.events(listOf("leagueID" to "NFL")) }.isFailure)
+        limited = false
+        assertTrue("still resting inside the minute", runCatching { c.events(listOf("leagueID" to "NFL")) }.isFailure)
+        clockMs += 61_000L
+        assertEquals(1, c.events(listOf("leagueID" to "NFL")).events.size)
+    }
+
+    @Test fun aClosesReadThatTimesOutIsAskedAgainWithoutTheMarketFilter() = runTest {
+        handler = { r -> if (r.requestUrl!!.queryParameter("oddID") != null) MockResponse().setResponseCode(504).setBody("""{"success":false,"error":"timeout"}""") else ok(closeEvent()) }
+        val c = SgoCloses(client(), { true }, { clockMs }).also { it.enabled = true }
+        val r = c.closes(listOf(bet("Kansas City Chiefs", "Money")))["b1"]
+        assertTrue(r.toString(), r is CloseLookup.Found)
+        assertNull(requests.last().requestUrl!!.queryParameter("oddID"))
+    }
+
+    @Test fun propsAnswersFillTheInjuryIndexForFree() = runTest {
+        val body = sample.replace("\"n.123.abc\"", "null").replace(
+            "\"teamID\":\"KANSAS_CITY_CHIEFS_NFL\"}", "\"teamID\":\"KANSAS_CITY_CHIEFS_NFL\",\"status\":\"questionable\",\"statusDetails\":\"Knee\"}",
+        )
+        handler = { ok(body) }
+        val index = InjuryIndex({ clockMs })
+        SgoPropsSource(client(), { clockMs }, index).odds(nfl, settings)
+        val inj = index.book.value.sports["americanfootball_nfl"]!!.byKey.values.flatten().map { it.injury }
+        assertEquals(listOf("Questionable"), inj.map { it.status })
+        assertEquals("Patrick Mahomes", inj.single().player)
+        // the player with no report is marked as having nothing to report
+        assertTrue(index.book.value.sports["americanfootball_nfl"]!!.absent.isNotEmpty())
+    }
+
+    @Test fun theTappedBetsOtherBooksComeFromSgoAloneWhileItIsOn() = runTest {
+        handler = { ok(sample.replace("\"n.123.abc\"", "null")) }
+        val c = client()
+        val others = OtherBooks(null, null, null, json, on = { OtherBooks.Sources(parlay = false, propLine = false, oddsApi = false, sgo = true) }, clock = { SgoParser.ms("2026-10-09T18:01:00.000Z")!! }, sgo = c)
+        val start = SgoParser.ms("2026-10-11T17:00:00.000Z")!!
+        val r = others.view("NFL", "Las Vegas Raiders @ Kansas City Chiefs", start, "Player Passing Yards", "Patrick Mahomes Over 275.5")
+        assertEquals(listOf("SportsGameOdds"), r.sources)
+        val books = r.view!!.prices.map { it.book }
+        assertTrue(books.toString(), books.isNotEmpty())
+        val req = requests.single().requestUrl!!
+        assertEquals("NFL", req.queryParameter("leagueID"))
+        assertTrue(req.queryParameter("oddID")!!.contains("passing_yards-PLAYER_ID-game-ou-over"))
     }
 }
