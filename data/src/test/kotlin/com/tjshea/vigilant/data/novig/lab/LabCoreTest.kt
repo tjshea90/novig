@@ -6,6 +6,10 @@ import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigOutcome
 import com.tjshea.vigilant.data.novig.burst.LadderKind
 import com.tjshea.vigilant.data.novig.burst.Ladders
+import com.tjshea.vigilant.data.pinnodds.PinnEvent
+import com.tjshea.vigilant.data.pinnodds.PinnLine
+import com.tjshea.vigilant.data.pinnodds.PinnLineType
+import com.tjshea.vigilant.data.pinnodds.PinnSide
 import com.tjshea.vigilant.engine.MarketFee
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -177,6 +181,53 @@ class LabCoreTest {
         val points = listOf(point("alt", 55.5, underBid = 600 to 1_000L))
         val split = listOf(quote("a", 55.5, 1.60, 2.40, now), quote("b", 55.5, 2.40, 1.60, now))
         assertTrue(AltLineScan.scan(points, split, now, null, live = true).isEmpty())
+    }
+
+
+    // ---- Pinnacle's alternate lines as quotes ---------------------------------------------------------------------------------
+
+    private fun pinnLine(e: PinnEvent, key: String, type: PinnLineType, pts: Double, prices: Map<PinnSide, Double>, alt: Boolean = true, open: Boolean = true, period: Int = 0) {
+        val l = PinnLine(e.id, key, period, type, alt)
+        l.points = pts; l.american = prices; l.open = open
+        e.lines[key] = l
+    }
+
+    @Test
+    fun `Pinnacle's open full-game alternate totals and spreads become quotes in Novig's convention, both teams' views, swapped when the teams are`() {
+        val e = PinnEvent(1L).also { it.lastFrameAtMs = 5_000L }
+        pinnLine(e, "s;0;ou;55.5", PinnLineType.TOTAL, 55.5, mapOf(PinnSide.OVER to 150.0, PinnSide.UNDER to -180.0))
+        pinnLine(e, "s;0;s;-4.5", PinnLineType.SPREAD, -4.5, mapOf(PinnSide.HOME to -110.0, PinnSide.AWAY to -110.0))
+        pinnLine(e, "s;0;ou;40.5", PinnLineType.TOTAL, 40.5, mapOf(PinnSide.OVER to -120.0, PinnSide.UNDER to 100.0), open = false)
+        pinnLine(e, "s;1;ou;20.5", PinnLineType.TOTAL, 20.5, mapOf(PinnSide.OVER to -120.0, PinnSide.UNDER to 100.0), period = 1)
+        val q = PinnAltQuotes.quotes(e, swapped = false)
+        assertEquals("one total + the spread from both teams' sides; the closed line and the half are left out", 3, q.size)
+        val total = q.single { it.kind == LadderKind.TOTAL }
+        assertEquals(55.5, total.threshold, 0.0)
+        assertEquals(2.5, total.yesDecimal, 1e-9)
+        assertEquals(1.0 + 100.0 / 180.0, total.noDecimal, 1e-9)
+        assertEquals(5_000L, total.seenAtMs)
+        val home = q.single { it.refSide == "HOME" }
+        val away = q.single { it.refSide == "AWAY" }
+        assertEquals("home -4.5 covers when the home margin is over 4.5", 4.5, home.threshold, 0.0)
+        assertEquals("away +4.5 covers when the away margin is over -4.5", -4.5, away.threshold, 0.0)
+        assertEquals(setOf("AWAY", "HOME"), PinnAltQuotes.quotes(e, swapped = true).filter { it.kind == LadderKind.MARGIN }.map { it.refSide }.toSet())
+        assertEquals("swapped: Pinnacle's home line is Novig's AWAY team's", 4.5, PinnAltQuotes.quotes(e, swapped = true).single { it.refSide == "AWAY" }.threshold, 0.0)
+        assertNull(PinnAltQuotes.decimal(50.0))
+    }
+
+    @Test
+    fun `a margin alternate is matched to a Novig ladder by the side the caller resolves, never by name`() {
+        val now = 1_000_000L
+        fun spread(id: String, thr: Double) = LadderPoint(
+            Ladders.line(NovigMarket(id, "ev", "SPREAD", "OPEN", "d", 0L, MarketFee.GAME, listOf(NovigOutcome("$id-a", "TB -4.5", "TBD"), NovigOutcome("$id-b", "DAL +4.5", "TBD")), thr))!!,
+            NovigBook(id, 1L, mapOf("$id-a" to emptyList(), "$id-b" to listOf(BidLevel(600, 1_000L))), 0L),   // buying TB -4.5 costs 0.40
+        )
+        val p = spread("sp", 4.5)
+        fun q(book: String, side: String) = AltQuote(book, book, LadderKind.MARGIN, side, 4.5, 1.80, 2.05, now)
+        val quotes = listOf(q("a", "HOME"), q("b", "HOME"))
+        assertEquals("TB is the home side here", 1, AltLineScan.scan(listOf(p), quotes, now, null, true, sideOf = { if (it == "TB") "HOME" else null }).size)
+        assertTrue("TB resolved as the away side: those quotes are not its line", AltLineScan.scan(listOf(p), quotes, now, null, true, sideOf = { if (it == "TB") "AWAY" else null }).isEmpty())
+        assertTrue("no resolver: skipped", AltLineScan.scan(listOf(p), quotes, now, null, true).isEmpty())
     }
 
     // ---- LabClock + LabPaper ----------------------------------------------------------------------------------------------------
