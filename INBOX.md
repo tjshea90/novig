@@ -5794,3 +5794,10 @@ I added the sgo secret key to the repo
 ```
 Research sportsgamesodds policy and see if I cancel the free trial on day 1 so I don't get charged on my credit card, can I still use the full trial until it runs out or does it cancel immediately and I can't use the api
 ```
+
+## 2026-10-09T16:17:36Z
+```
+Optimize the app's freshness rule to match what sgo offers without dropping bets, but keep a guard that drops bets if the odds are 10 minutes old or older. This should apply only when sgo mode is toggled on. 
+
+Tell me exactly how to start the GitHub lab you made
+```
