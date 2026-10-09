@@ -762,6 +762,11 @@ class AppContainer(private val app: Application) {
         }
         // A crash saved as the last process went down ([AppExits.install]): into Recent problems at the time it happened.
         appScope.launch(Dispatchers.IO) {
+            // A copy in Downloads/Vigilant first, so a crash on open can be sent to Claude from the Files app (v0.81.1).
+            runCatching {
+                val saved = File(app.filesDir, "last_crash.txt")
+                if (saved.exists()) { val copy = File(app.cacheDir, "vigilant-last-crash.txt"); saved.copyTo(copy, overwrite = true); DiagnosticsShare.saveToDownloads(app.contentResolver, copy) }
+            }
             AppExits.takeSavedCrash(app)?.let { (at, text) -> runCatching { problems.add("App crash", text, atMs = at, maxLength = problems.crashLength) } }
         }
         // Bets and bids told apart (Tj, 2026-10-07; [com.tjshea.vigilant.data.tracker.TrackedBet.isBid]): a record of an order the bid store knows, or that carries one of its
