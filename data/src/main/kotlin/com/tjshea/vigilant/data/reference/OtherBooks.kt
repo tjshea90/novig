@@ -48,9 +48,11 @@ class OtherBooks(
     private val clock: () -> Long = System::currentTimeMillis,
     /** SportsGameOdds Pro (Tj, 2026-10-09): while it is on it is the one source asked, with every book it carries (the paid ones rest: [Sources.sgo]). */
     private val sgo: SportsGameOddsClient? = null,
+    /** OddsPapi (Tj, 2026-10-09): a league's player-prop events as OddsPapi has them now (the scan's own read, shared); while it is on it is the one source asked ([Sources.op]). */
+    private val op: (suspend (League) -> List<RefEvent>)? = null,
 ) {
     /** Which sources may be asked now (on in Settings, with a key). */
-    data class Sources(val parlay: Boolean, val propLine: Boolean, val oddsApi: Boolean, val sgo: Boolean = false)
+    data class Sources(val parlay: Boolean, val propLine: Boolean, val oddsApi: Boolean, val sgo: Boolean = false, val op: Boolean = false)
 
     /** One book's price for the bet and its other side (American; null = not offered there), where it came from and when it was seen. */
     data class Line(val book: String, val odds: Int?, val otherOdds: Int?, val source: String, val seenAtMs: Long?) {
@@ -102,7 +104,8 @@ class OtherBooks(
             val a = if (s.parlay && parlay != null) async { attempt(PARLAY) { parlayLines(sport, pick, game.home, game.away, startsTs, marketKey) } } else null
             val b = if (s.propLine && propLine != null) async { attempt(PROPLINE) { propLineLines(sport, pick, game.home, game.away, startsTs) } } else null
             val c = if (s.sgo && sgo != null) async { attempt(SGO) { sgoLines(sport, pick, game.home, game.away, startsTs) } } else null
-            listOfNotNull(a?.await(), b?.await(), c?.await())
+            val d = if (s.op && op != null) async { attempt(OP) { opLines(sport, pick, game.home, game.away, startsTs) } } else null
+            listOfNotNull(a?.await(), b?.await(), c?.await(), d?.await())
         }
         val tried = first.toMutableList()
         // The Odds API costs credits per call: only when neither found another book.
@@ -205,6 +208,24 @@ class OtherBooks(
         }
     }
 
+    // ---- OddsPapi: that player's over/under at every book it carries, the scan's own read ---------------------------------------------------
+
+    private suspend fun opLines(sport: String, pick: BetGrader.Pick.Prop, home: String, away: String, startsTs: Long?): List<Line> {
+        val league = Leagues.ALL.firstOrNull { it.oddsApiSportKey == sport && OpBooks.supports(it) } ?: return emptyList()
+        val events = op!!(league)
+        val game = gameOf(events.map { Triple(it.home, it.away, it.commenceMs) }, home, away, startsTs) ?: return emptyList()
+        val event = events.firstOrNull { sameGame(it.home, it.away, it.commenceMs, game) } ?: return emptyList()
+        return event.markets.filter { m ->
+            m.kind == LineKind.PLAYER_PROP && m.stat == pick.stat && m.line?.let { abs(it - pick.line) < 1e-6 } == true && m.subject?.let { PlayerNames.same(it, pick.player) } == true
+        }.mapNotNull { m ->
+            val over = m.quotes.firstOrNull { it.side == Side.OVER }?.decimalOdds?.let { Odds.decimalToAmerican(it) }
+            val under = m.quotes.firstOrNull { it.side == Side.UNDER }?.decimalOdds?.let { Odds.decimalToAmerican(it) }
+            val mine = if (pick.over) over else under
+            val other = if (pick.over) under else over
+            if (mine == null && other == null) null else Line(m.bookKey, mine, other, OP, m.lastUpdateMs)
+        }
+    }
+
     // ---- PropLine: the game's board for that market, every sportsbook it carries --------------------------------------------------------------
 
     private suspend fun propLineLines(sport: String, pick: BetGrader.Pick.Prop, home: String, away: String, startsTs: Long?): List<Line> {
@@ -234,6 +255,7 @@ class OtherBooks(
 
     companion object {
         const val SGO = "SportsGameOdds"
+        const val OP = "OddsPapi"
         private const val SGO_WINDOW_MS = 6 * 3_600_000L
         const val PARLAY = "ParlayAPI"
         const val PROPLINE = "PropLine"
