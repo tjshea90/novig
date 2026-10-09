@@ -73,7 +73,9 @@ class SportsGameOddsClient(
     }
 
     /** `/account/usage`: the key's limits and what it has used (free: it does not count as an object). */
-    suspend fun usage(): SgoUsage? {
+    suspend fun usage(): SgoUsage? = readUsage()?.also { lastUsage = it.summary() }
+
+    private suspend fun readUsage(): SgoUsage? {
         val raw = get("/account/usage", emptyList())
         val data = ((runCatching { json.parseToJsonElement(raw) }.getOrNull() as? JsonObject)?.get("data") as? JsonObject)?.get("rateLimits") as? JsonObject ?: return null
         return SgoUsage(
@@ -96,6 +98,10 @@ class SportsGameOddsClient(
     @Volatile var requests = 0
         private set
     @Volatile var lastNotice: String? = null
+        private set
+
+    /** The key's limits as `/account/usage` last said them ([SgoUsage.summary]). */
+    @Volatile var lastUsage: String? = null
         private set
 
     /** What each source last read, by league (Diagnostics): games, markets, books, how old the prices were. */

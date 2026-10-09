@@ -2093,7 +2093,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     add("health: ${c.sgoClient.health()}")
                     c.sgoClient.lastNotice?.let { add("plan notice: $it") }
                     c.sgoClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
-                    runCatching { c.sgoClient.usage()?.summary() }.getOrNull()?.let { add("limits now: $it") }
+                    c.sgoClient.lastUsage?.let { add("limits at the last key test: $it") }
                 }
             }.getOrNull(),
             labReport = runCatching {
