@@ -1,0 +1,62 @@
+maker simulation: ttl 180s, post latency 0.3s, cancel latency 2.0s, live (maker credit on); bid prices from Pinnacle power-devigged fair / (1+margin)
+columns: sport margin variant | bids, bid-hours | fills optimistic (per bid-hour of one resting bid) EV at fill / +30 s / +120 s (median, % of price) | strict fills (rate) EV +120 s
+  ALL           1% none       | bids   496  21.5 h | fills  109 (  5.1/bid-hour)  EV +2.02% / +1.90% / +0.86% | strict   96 ( 4.5/h) +120s -0.37%
+  ALL           1% pin        | bids   740  21.7 h | fills   77 (  3.5/bid-hour)  EV +2.41% / +2.43% / +2.19% | strict   56 ( 2.6/h) +120s +2.26%
+  ALL           1% pin+score  | bids   621  14.4 h | fills   65 (  4.5/bid-hour)  EV +2.41% / +2.41% / +2.19% | strict   47 ( 3.3/h) +120s +2.38%
+  ALL           2% none       | bids   504  22.7 h | fills   91 (  4.0/bid-hour)  EV +3.21% / +1.91% / +0.75% | strict   79 ( 3.5/h) +120s -0.04%
+  ALL           2% pin        | bids   662  23.1 h | fills   63 (  2.7/bid-hour)  EV +3.48% / +3.48% / +2.91% | strict   46 ( 2.0/h) +120s +2.74%
+  ALL           2% pin+score  | bids   569  15.4 h | fills   57 (  3.7/bid-hour)  EV +3.40% / +3.43% / +2.91% | strict   42 ( 2.7/h) +120s +2.80%
+  ALL           3% none       | bids   517  23.3 h | fills   90 (  3.9/bid-hour)  EV +4.03% / +3.29% / +1.95% | strict   67 ( 2.9/h) +120s +0.92%
+  ALL           3% pin        | bids   635  23.9 h | fills   60 (  2.5/bid-hour)  EV +4.38% / +4.21% / +3.66% | strict   36 ( 1.5/h) +120s +3.04%
+  ALL           3% pin+score  | bids   561  16.2 h | fills   60 (  3.7/bid-hour)  EV +4.35% / +4.21% / +3.54% | strict   36 ( 2.2/h) +120s +3.04%
+  ALL           4% none       | bids   512  23.8 h | fills   69 (  2.9/bid-hour)  EV +3.48% / +2.56% / +1.08% | strict   58 ( 2.4/h) +120s +0.21%
+  ALL           4% pin        | bids   602  24.3 h | fills   45 (  1.9/bid-hour)  EV +5.08% / +5.08% / +3.87% | strict   32 ( 1.3/h) +120s +3.68%
+  ALL           4% pin+score  | bids   545  16.7 h | fills   46 (  2.8/bid-hour)  EV +5.23% / +5.26% / +4.34% | strict   30 ( 1.8/h) +120s +4.63%
+  Baseball      1% none       | bids    24   0.9 h | fills    7 (  7.7/bid-hour)  EV +1.81% / -17.31% / -17.04% | strict    7 ( 7.7/h) +120s -17.04%
+  Baseball      1% pin        | bids    39   1.0 h | fills    5 (  5.1/bid-hour)  EV +2.98% / -2.31% / -3.53% | strict    3 ( 3.0/h) +120s -3.53%
+  Baseball      1% pin+score  | bids    32   0.5 h | fills    3 (  6.4/bid-hour)  EV +2.98% / -2.31% / -19.76% | strict    0 ( 0.0/h) +120s n/a%
+  Baseball      2% none       | bids    29   1.0 h | fills   12 ( 12.5/bid-hour)  EV +3.29% / -2.31% / -10.36% | strict   12 (12.5/h) +120s -9.99%
+  Baseball      2% pin        | bids    41   1.0 h | fills   10 (  9.5/bid-hour)  EV +3.35% / +2.10% / -1.69% | strict    8 ( 7.6/h) +120s -1.19%
+  Baseball      2% pin+score  | bids    34   0.5 h | fills    9 ( 18.5/bid-hour)  EV +3.24% / +2.57% / -16.58% | strict    7 (14.4/h) +120s -16.58%
+  Baseball      3% none       | bids    35   1.0 h | fills   17 ( 16.7/bid-hour)  EV +4.21% / +3.87% / +3.04% | strict   13 (12.8/h) +120s +2.50%
+  Baseball      3% pin        | bids    46   1.1 h | fills   15 ( 13.9/bid-hour)  EV +4.21% / +3.87% / +3.54% | strict   10 ( 9.3/h) +120s +3.04%
+  Baseball      3% pin+score  | bids    43   0.5 h | fills   17 ( 31.1/bid-hour)  EV +4.21% / +3.87% / +3.04% | strict   12 (22.0/h) +120s +2.77%
+  Baseball      4% none       | bids    29   1.1 h | fills   10 (  9.2/bid-hour)  EV +4.04% / +2.96% / +3.06% | strict    7 ( 6.5/h) +120s -1.82%
+  Baseball      4% pin        | bids    35   1.1 h | fills    7 (  6.4/bid-hour)  EV +4.74% / +3.87% / +3.87% | strict    4 ( 3.7/h) +120s +3.06%
+  Baseball      4% pin+score  | bids    34   0.6 h | fills    8 ( 13.1/bid-hour)  EV +4.83% / +4.15% / +3.61% | strict    4 ( 6.6/h) +120s +3.06%
+  Basketball    1% none       | bids   151   6.9 h | fills   25 (  3.6/bid-hour)  EV +2.08% / +2.08% / +1.79% | strict   23 ( 3.3/h) +120s +1.79%
+  Basketball    1% pin        | bids   216   6.9 h | fills   10 (  1.5/bid-hour)  EV +3.27% / +4.43% / +2.94% | strict    9 ( 1.3/h) +120s +2.48%
+  Basketball    1% pin+score  | bids   148   1.7 h | fills    4 (  2.3/bid-hour)  EV +2.16% / +2.78% / +1.83% | strict    4 ( 2.3/h) +120s +5.09%
+  Basketball    2% none       | bids   154   7.0 h | fills   26 (  3.7/bid-hour)  EV +3.29% / +2.53% / +2.12% | strict   22 ( 3.1/h) +120s +1.74%
+  Basketball    2% pin        | bids   198   7.1 h | fills   11 (  1.6/bid-hour)  EV +3.55% / +3.94% / +2.68% | strict    6 ( 0.9/h) +120s +2.51%
+  Basketball    2% pin+score  | bids   149   1.8 h | fills    6 (  3.3/bid-hour)  EV +3.34% / +4.05% / +3.56% | strict    2 ( 1.1/h) +120s +3.56%
+  Basketball    3% none       | bids   152   7.2 h | fills   21 (  2.9/bid-hour)  EV +2.94% / +3.94% / +2.31% | strict   15 ( 2.1/h) +120s +1.31%
+  Basketball    3% pin        | bids   191   7.3 h | fills    7 (  1.0/bid-hour)  EV +4.34% / +4.34% / +4.01% | strict    5 ( 0.7/h) +120s +3.40%
+  Basketball    3% pin+score  | bids   153   1.9 h | fills    5 (  2.6/bid-hour)  EV +4.34% / +4.34% / +5.75% | strict    4 ( 2.1/h) +120s +6.83%
+  Basketball    4% none       | bids   153   7.3 h | fills   17 (  2.3/bid-hour)  EV -1.48% / -0.62% / +0.79% | strict   17 ( 2.3/h) +120s +0.79%
+  Basketball    4% pin        | bids   187   7.3 h | fills    7 (  1.0/bid-hour)  EV +5.06% / +5.11% / +4.01% | strict    5 ( 0.7/h) +120s +4.01%
+  Basketball    4% pin+score  | bids   162   2.0 h | fills    6 (  3.0/bid-hour)  EV +5.27% / +6.27% / +6.47% | strict    4 ( 2.0/h) +120s +5.87%
+  Football      1% none       | bids   155   6.1 h | fills   52 (  8.5/bid-hour)  EV +2.07% / +1.86% / -0.85% | strict   46 ( 7.5/h) +120s -2.11%
+  Football      1% pin        | bids   219   6.1 h | fills   40 (  6.5/bid-hour)  EV +2.38% / +2.42% / +2.19% | strict   27 ( 4.4/h) +120s +1.87%
+  Football      1% pin+score  | bids   213   5.8 h | fills   38 (  6.5/bid-hour)  EV +2.42% / +2.46% / +2.19% | strict   27 ( 4.7/h) +120s +1.87%
+  Football      2% none       | bids   155   6.8 h | fills   38 (  5.6/bid-hour)  EV +2.20% / +0.83% / -0.19% | strict   33 ( 4.9/h) +120s -1.13%
+  Football      2% pin        | bids   213   6.8 h | fills   28 (  4.1/bid-hour)  EV +3.51% / +3.41% / +3.26% | strict   20 ( 2.9/h) +120s +1.92%
+  Football      2% pin+score  | bids   209   6.3 h | fills   29 (  4.6/bid-hour)  EV +3.48% / +3.39% / +3.13% | strict   21 ( 3.3/h) +120s +1.02%
+  Football      3% none       | bids   161   7.0 h | fills   39 (  5.6/bid-hour)  EV +1.86% / +0.92% / +0.56% | strict   32 ( 4.6/h) +120s -2.11%
+  Football      3% pin        | bids   205   7.1 h | fills   25 (  3.5/bid-hour)  EV +4.46% / +4.27% / +3.13% | strict   14 ( 2.0/h) +120s +1.47%
+  Football      3% pin+score  | bids   202   6.8 h | fills   25 (  3.7/bid-hour)  EV +4.44% / +4.16% / +1.82% | strict   13 ( 1.9/h) +120s +1.87%
+  Football      4% none       | bids   162   7.2 h | fills   35 (  4.9/bid-hour)  EV +3.48% / +1.49% / +0.85% | strict   27 ( 3.8/h) +120s -3.18%
+  Football      4% pin        | bids   197   7.4 h | fills   24 (  3.2/bid-hour)  EV +5.03% / +4.87% / +2.89% | strict   17 ( 2.3/h) +120s +3.13%
+  Football      4% pin+score  | bids   193   7.0 h | fills   25 (  3.6/bid-hour)  EV +5.30% / +4.93% / +3.13% | strict   16 ( 2.3/h) +120s +2.97%
+  Hockey        1% none       | bids   166   7.7 h | fills   25 (  3.3/bid-hour)  EV +2.02% / +2.05% / +2.07% | strict   20 ( 2.6/h) +120s +2.15%
+  Hockey        1% pin        | bids   266   7.7 h | fills   22 (  2.9/bid-hour)  EV +2.37% / +2.37% / +2.26% | strict   17 ( 2.2/h) +120s +2.38%
+  Hockey        1% pin+score  | bids   228   6.4 h | fills   20 (  3.1/bid-hour)  EV +2.41% / +2.42% / +2.35% | strict   16 ( 2.5/h) +120s +2.39%
+  Hockey        2% none       | bids   166   8.0 h | fills   15 (  1.9/bid-hour)  EV +3.43% / +3.61% / +2.80% | strict   12 ( 1.5/h) +120s +3.11%
+  Hockey        2% pin        | bids   210   8.1 h | fills   14 (  1.7/bid-hour)  EV +3.65% / +4.03% / +3.35% | strict   12 ( 1.5/h) +120s +3.82%
+  Hockey        2% pin+score  | bids   177   6.8 h | fills   13 (  1.9/bid-hour)  EV +3.86% / +4.21% / +3.43% | strict   12 ( 1.8/h) +120s +3.82%
+  Hockey        3% none       | bids   169   8.2 h | fills   13 (  1.6/bid-hour)  EV +4.44% / +4.73% / +3.54% | strict    7 ( 0.9/h) +120s +1.14%
+  Hockey        3% pin        | bids   193   8.4 h | fills   13 (  1.6/bid-hour)  EV +4.44% / +5.11% / +4.21% | strict    7 ( 0.8/h) +120s +4.21%
+  Hockey        3% pin+score  | bids   163   6.9 h | fills   13 (  1.9/bid-hour)  EV +4.44% / +5.11% / +4.21% | strict    7 ( 1.0/h) +120s +4.21%
+  Hockey        4% none       | bids   168   8.3 h | fills    7 (  0.8/bid-hour)  EV +6.10% / +6.10% / +1.14% | strict    7 ( 0.8/h) +120s +1.14%
+  Hockey        4% pin        | bids   183   8.4 h | fills    7 (  0.8/bid-hour)  EV +6.10% / +6.10% / +6.16% | strict    6 ( 0.7/h) +120s +5.61%
+  Hockey        4% pin+score  | bids   156   7.1 h | fills    7 (  1.0/bid-hour)  EV +6.10% / +6.10% / +6.16% | strict    6 ( 0.8/h) +120s +5.61%

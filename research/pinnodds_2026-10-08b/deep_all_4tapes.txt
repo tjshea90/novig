@@ -1,0 +1,119 @@
+tapes 4 · span 153 min · matched games 21 · novig markets 182 · pinnacle series 1258 · score changes 667 · closes 0
+
+[A] coverage by sport (matched games, novig markets read, novig reads, pinnacle changes on matched games)
+  Football     games   5  markets  55  novig reads   2392  pinnacle changes   1803
+  Basketball   games   5  markets  83  novig reads   2289  pinnacle changes   3257
+  Hockey       games   9  markets  34  novig reads   1583  pinnacle changes   1307
+  Baseball     games   1  markets  10  novig reads    343  pinnacle changes    332
+
+rows (novig read x outcome): 10754 (+ 1302 with novig and Pinnacle more than 15 points apart, left out and listed in [F])
+
+[B] rows with EV >= 2% at the ask (fee in) against Pinnacle power-devigged fair, and the same ask against Pinnacle 30 s / 120 s later (only rows where Pinnacle moved again)
+  ALL         ALL    rows  10754  edge rows  1185 (11.0%)  median EV all -3.58%  edge rows: EV now +4.5%  +30s +2.5% (n=679)  +120s +2.5% (n=849)  median depth 142956
+  ALL         ALT lines rows   1791  edge rows   235 (13.1%)  median EV all -4.02%  edge rows: EV now +5.9%  +30s +2.8% (n=97)  +120s -3.6% (n=131)  median depth 84000
+  ALL         MAIN lines rows   8963  edge rows   950 (10.6%)  median EV all -3.54%  edge rows: EV now +4.4%  +30s +2.0% (n=582)  +120s +2.5% (n=718)  median depth 174800
+  ALL         MONEY  rows   4340  edge rows   576 (13.3%)  median EV all -1.98%  edge rows: EV now +3.9%  +30s +1.5% (n=478)  +120s +2.1% (n=547)  median depth 270236
+  ALL         SPREAD rows   3562  edge rows   260 ( 7.3%)  median EV all -4.93%  edge rows: EV now +4.9%  +30s +2.5% (n=101)  +120s +4.4% (n=162)  median depth 84000
+  ALL         TOTAL  rows   2852  edge rows   349 (12.2%)  median EV all -3.98%  edge rows: EV now +9.5%  +30s +2.8% (n=100)  +120s +4.6% (n=140)  median depth 63000
+  Baseball    ALT    rows    284  edge rows    38 (13.4%)  median EV all -2.75%  edge rows: EV now +47.5%  +30s n/a% (n=0)  +120s n/a% (n=0)  median depth 50000
+  Baseball    MAIN   rows    263  edge rows     6 ( 2.3%)  median EV all -2.63%  edge rows: EV now +2.2%  +30s +1.4% (n=2)  +120s +1.0% (n=5)  median depth 81954
+  Baseball    MONEY  rows    135  edge rows     1 ( 0.7%)  median EV all -1.87%  edge rows: EV now +2.2%  +30s +2.7% (n=1)  +120s +1.3% (n=1)  median depth 189700
+  Baseball    SPREAD rows    171  edge rows    18 (10.5%)  median EV all -2.63%  edge rows: EV now +74.4%  +30s n/a% (n=0)  +120s n/a% (n=0)  median depth 67421
+  Baseball    TOTAL  rows    241  edge rows    25 (10.4%)  median EV all -2.93%  edge rows: EV now +31.7%  +30s +0.1% (n=1)  +120s +1.0% (n=4)  median depth 50000
+  Basketball  ALT    rows     75  edge rows     2 ( 2.7%)  median EV all -19.10%  edge rows: EV now +5.7%  +30s n/a% (n=0)  +120s n/a% (n=0)  median depth 79950
+  Basketball  MAIN   rows   3265  edge rows   636 (19.5%)  median EV all -5.72%  edge rows: EV now +4.6%  +30s +1.5% (n=417)  +120s +2.4% (n=500)  median depth 159750
+  Basketball  MONEY  rows   1804  edge rows   444 (24.6%)  median EV all -2.36%  edge rows: EV now +4.0%  +30s +1.2% (n=389)  +120s +1.5% (n=430)  median depth 250000
+  Basketball  SPREAD rows    874  edge rows    73 ( 8.4%)  median EV all -11.48%  edge rows: EV now +5.2%  +30s +2.4% (n=11)  +120s +6.2% (n=47)  median depth 58100
+  Basketball  TOTAL  rows    662  edge rows   121 (18.3%)  median EV all -12.06%  edge rows: EV now +12.0%  +30s +6.0% (n=17)  +120s +6.0% (n=23)  median depth 50000
+  Football    ALT    rows   1316  edge rows   195 (14.8%)  median EV all -3.82%  edge rows: EV now +3.6%  +30s +2.8% (n=97)  +120s -3.6% (n=131)  median depth 125493
+  Football    MAIN   rows   2827  edge rows   253 ( 8.9%)  median EV all -2.56%  edge rows: EV now +5.5%  +30s +1.8% (n=131)  +120s +3.1% (n=165)  median depth 371547
+  Football    MONEY  rows   1373  edge rows   118 ( 8.6%)  median EV all -1.86%  edge rows: EV now +3.9%  +30s +2.4% (n=82)  +120s +6.8% (n=103)  median depth 803212
+  Football    SPREAD rows   1455  edge rows   161 (11.1%)  median EV all -3.77%  edge rows: EV now +4.2%  +30s +2.5% (n=86)  +120s +3.1% (n=111)  median depth 123040
+  Football    TOTAL  rows   1315  edge rows   169 (12.9%)  median EV all -3.44%  edge rows: EV now +8.5%  +30s +2.8% (n=60)  +120s -2.4% (n=82)  median depth 125493
+  Hockey      ALT    rows    116  edge rows     0 ( 0.0%)  median EV all -4.47%  edge rows: EV now n/a%  +30s n/a% (n=0)  +120s n/a% (n=0)  median depth n/a
+  Hockey      MAIN   rows   2608  edge rows    55 ( 2.1%)  median EV all -3.43%  edge rows: EV now +3.0%  +30s +3.4% (n=32)  +120s +5.4% (n=48)  median depth 35000
+  Hockey      MONEY  rows   1028  edge rows    13 ( 1.3%)  median EV all -1.95%  edge rows: EV now +2.7%  +30s +3.0% (n=6)  +120s +2.1% (n=13)  median depth 418600
+  Hockey      SPREAD rows   1062  edge rows     8 ( 0.8%)  median EV all -4.54%  edge rows: EV now +3.1%  +30s +3.0% (n=4)  +120s +4.1% (n=4)  median depth 72136
+  Hockey      TOTAL  rows    634  edge rows    34 ( 5.4%)  median EV all -3.61%  edge rows: EV now +3.0%  +30s +4.4% (n=22)  +120s +6.6% (n=31)  median depth 10000
+  by seconds since Pinnacle last changed the line (ALL): share of rows with EV >= min, median EV at +120 s for those rows
+      0-    2s  n   1042  edge  11.8%  EV+120s median +2.1% (n=113)
+      2-    5s  n   1704  edge  11.1%  EV+120s median +2.1% (n=175)
+      5-   10s  n   2533  edge   9.1%  EV+120s median +2.2% (n=218)
+     10-   20s  n   3220  edge   7.9%  EV+120s median +2.5% (n=223)
+     20-   60s  n   1390  edge   8.1%  EV+120s median +3.2% (n=62)
+     60-1000000000s  n    865  edge  31.9%  EV+120s median +14.5% (n=58)
+  by Pinnacle limit (a small limit is a soft quote):
+    limit   100-         500  n    966  edge  15.9%  EV+120s median +3.5% (n=54)
+    limit   500-        2000  n   2713  edge  19.3%  EV+120s median +1.7% (n=458)
+    limit  2000-1000000000000  n   7075  edge   7.2%  EV+120s median +3.8% (n=337)
+
+[C] runs of consecutive novig reads on one outcome with EV >= 2%: how long they last and whether they began with a Pinnacle move
+  runs 277: begin within 10 s of a Pinnacle move 181 (median length 13.7 s, p90 44.3 s); begin later (standing disagreement) 96 (median 12.1 s, p90 116.2 s)
+  longest runs: [212, 222, 301, 358, 359, 388, 484, 734] s · single-read runs (not takeable in 4.5 s): 90 of 277
+
+[D] after a Pinnacle move of >= 1.5 fair points on a matched market: seconds until Novig's best bid on either side changes (reads are ~4.5 s apart, so the floor is about 2 s)
+  ALL         moves  359  no change within 60 s  25  re-quote latency median 4.2 s  p25 2.0  p75 9.0  p90 17.0
+  Basketball  moves  239  no change within 60 s  10  re-quote latency median 3.9 s  p25 1.9  p75 9.4  p90 17.5
+  Football    moves   96  no change within 60 s  15  re-quote latency median 5.0 s  p25 2.1  p75 9.6  p90 17.1
+  Hockey      moves   14  no change within 60 s   0  re-quote latency median 4.6 s  p25 1.9  p75 6.4  p90 12.7
+  Baseball    moves   10  no change within 60 s   0  re-quote latency median 3.6 s  p25 2.4  p75 4.3  p90 4.6
+
+[E] around a Pinnacle score change: novig reads per second, book spread, first novig change, and Pinnacle suspend / first reprice
+  scores on matched games with novig reads before and after: 146
+  first Pinnacle reprice after the score: median 1.9 s (n=129)
+  first novig best-bid change after the score: median 3.6 s  p25 1.7  p75 6.0 (n=109 of 146)
+  Pinnacle market suspended within -5..+15 s of the score: 0 of 146
+  novig reads in the 10 s before / after the score (per market, all markets of the game): 488 / 443  (a pause that stopped quoting would show fewer after)
+  novig book spread (1 - bidA - bidB) median before 7.13 pts, +2..12 s after 6.00 pts; depth before 70000, after 75000
+    Baseball    scores   2  novig first change median 7.3 s  pinnacle first reprice median 6.3 s
+    Basketball  scores 139  novig first change median 3.6 s  pinnacle first reprice median 1.9 s
+    Football    scores   2  novig first change median 65.0 s  pinnacle first reprice median 89.0 s
+    Hockey      scores   3  novig first change median n/a s  pinnacle first reprice median 78.8 s
+
+[F] anomalies
+  novig books crossed or locked (bidA + bidB >= 1: a free cover if real): 0 rows; wide books (spread > 8 pts): 1580 rows (14.7%)
+  rows where novig ask and Pinnacle fair differ by more than 15 points: 1302 (likely a wrong match, a finished game or a stale quote; never trade these)
+   by sport/market: {('Basketball', 'TOTAL'): 640, ('Basketball', 'SPREAD'): 210, ('Football', 'TOTAL'): 111, ('Football', 'SPREAD'): 93, ('Hockey', 'TOTAL'): 80, ('Baseball', 'TOTAL'): 75}
+  edge rows by novig depth (contracts at the ask): <100: 0, <1000: 7, <10000: 108, <100000: 524
+
+[G] OUTSIDE THE BOX
+  [G1] lead-lag: corr( change in Pinnacle home fair over 10 s at t , change in Novig home mid over 10 s at t+lag ). A peak at a positive lag = Novig follows Pinnacle; at a negative lag = Novig leads
+    ALL         n=12717  corr by lag(s): -30:-0.00 -25:0.01 -20:-0.01 -15:-0.03 -10:0.00 -5:0.07 +0:0.12 +5:0.13 +10:0.27 +15:0.49 +20:0.40 +25:0.10 +30:-0.01   peak at +15 s
+    Baseball    n=  252  corr by lag(s): -30:-0.01 -25:-0.01 -20:-0.06 -15:-0.10 -10:0.14 -5:0.56 +0:0.59 +5:0.27 +10:0.07 +15:0.05 +20:0.04 +25:0.01 +30:-0.01   peak at +0 s
+    Basketball  n= 5013  corr by lag(s): -30:-0.00 -25:0.01 -20:-0.02 -15:-0.05 -10:-0.02 -5:0.06 +0:0.12 +5:0.12 +10:0.34 +15:0.57 +20:0.26 +25:-0.04 +30:-0.02   peak at +15 s
+    Football    n= 5741  corr by lag(s): -30:-0.00 -25:0.00 -20:0.01 -15:0.01 -10:0.02 -5:0.04 +0:0.09 +5:0.16 +10:0.17 +15:0.42 +20:0.68 +25:0.34 +30:0.00   peak at +20 s
+    Hockey      n= 1711  corr by lag(s): -30:0.01 -25:0.00 -20:0.00 -15:0.01 -10:-0.01 -5:-0.02 +0:0.03 +5:0.06 +10:0.07 +15:0.27 +20:0.41 +25:0.19 +30:0.00   peak at +20 s
+  [G2] Novig order-book imbalance (bid size on home minus away, as a share) vs what Novig and Pinnacle do next 30 s
+    n=2004  corr(imbalance, next Novig mid change) -0.02  corr(imbalance, next Pinnacle fair change) -0.05
+    |imbalance| > 0.6: n=892, Pinnacle moved the way the heavy bid side points in 293 of 648 moves
+  [G3] Pinnacle margin (vig) or limit change as a warning of a move in the next 60 s
+    margin widened by > 1 pt: n=31 mean |next-60 s fair move| 1.98 pts; otherwise n=4959 1.88 pts
+    limit cut: n=141 mean next-60 s move 1.61 pts; limit not cut n=4849 1.89 pts
+  [G4] after a Pinnacle moneyline jump of >= 2 fair points: how much of it is still there later; split by whether a score came in the 10 s before
+    score      jumps 125  share of the jump still there after 5 s 100%  10 s 100%  30 s 55%  120 s 34%  (median)  flicker (>=50% undone within 10 s) 23
+    price-only jumps 151  share of the jump still there after 5 s 100%  10 s 100%  30 s 100%  120 s 88%  (median)  flicker (>=50% undone within 10 s) 21
+  [G5] after a score, which novig market re-quotes first (seconds to the first best-bid change, median by market type)
+    MONEY   markets 107  first change median 4.5 s  p25 2.5  p75 8.6
+    SPREAD  markets  65  first change median 4.8 s  p25 2.3  p75 13.9
+    TOTAL   markets  69  first change median 4.5 s  p25 3.2  p75 12.1
+  [G9] THE ORDER-DELAY TEST: buy the team that just scored (moneyline) at novig's ask as it stood d seconds after the score, judged against Pinnacle's fair 30 s after the score (fee in)
+    order lands  2.0 s after the score: n= 89  median EV -1.4%  mean -2.9%  share with EV > 0: 46%  share >= 2%: 37%
+    order lands  3.5 s after the score: n= 87  median EV -0.1%  mean -2.2%  share with EV > 0: 49%  share >= 2%: 36%
+    order lands  5.3 s after the score: n= 89  median EV -0.7%  mean -3.0%  share with EV > 0: 48%  share >= 2%: 34%
+    order lands  8.0 s after the score: n= 88  median EV -0.8%  mean -3.4%  share with EV > 0: 47%  share >= 2%: 34%
+    order lands 12.0 s after the score: n= 90  median EV -1.0%  mean -3.7%  share with EV > 0: 42%  share >= 2%: 32%
+  [G6] novig price grid: EV of the ask by tick (the ask is 1 - best bid; a half-cent tick rounds in someone's favour)
+    whole cent       rows  6446  median EV -3.45%  share >= 2%: 11.0%
+    half-cent (x.5)  rows  4308  median EV -3.79%  share >= 2%: 11.1%
+  [G7] totals the score has already decided: an Over whose strike is below the points scored should cost ~$1; an Under should be worthless
+    total reads checked 2133; Over already decided and still offered under 97 cents: 0
+  [G8] what a score does to the moneyline fair (scorer's win chance, points, 10 s after), by sport and by whether the scorer was leading, tied or trailing
+    Baseball    scorer tied     n=  1  median gain +0.0 pts  p25 +0.0  p75 +0.0
+    Baseball    scorer trailing n=  1  median gain +13.3 pts  p25 +13.3  p75 +13.3
+    Basketball  scorer leading  n= 58  median gain +1.5 pts  p25 -0.0  p75 +4.4
+    Basketball  scorer tied     n= 12  median gain +2.3 pts  p25 -0.0  p75 +4.5
+    Basketball  scorer trailing n= 68  median gain +3.7 pts  p25 -0.0  p75 +6.8
+    Football    scorer leading  n=  1  median gain +0.0 pts  p25 +0.0  p75 +0.0
+    Football    scorer tied     n=  1  median gain -0.0 pts  p25 -0.0  p75 -0.0
+    Hockey      scorer leading  n=  2  median gain +0.0 pts  p25 +0.0  p75 +0.0
+    Hockey      scorer trailing n=  1  median gain -0.0 pts  p25 -0.0  p75 -0.0
