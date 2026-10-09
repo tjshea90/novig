@@ -269,7 +269,8 @@ class SgoClientTest {
     @Test fun aQueryStillTooHeavyWithoutAlternatesDropsTheBookFilterToo() = runTest {
         handler = { r -> if (r.requestUrl!!.queryParameter("bookmakerID") != null) MockResponse().setResponseCode(504).setBody("""{"success":false,"error":"timeout"}""") else ok(sample.replace("\"n.123.abc\"", "null")) }
         val snap = SgoGamesSource(client(), { clockMs }).odds(nfl, settings)
-        assertEquals(listOf(true, false, false), requests.map { it.requestUrl!!.queryParameter("bookmakerID") != null } + listOf(false).take(3 - requests.size).map { false }.let { emptyList() } .let { listOf(true, false, false).take(requests.size) }.let { requests.map { r -> r.requestUrl!!.queryParameter("bookmakerID") != null } })
+        // with alternates + books, then books only, then neither: three requests, the last without the book filter
+        assertEquals(3, requests.size)
         assertNull(requests.last().requestUrl!!.queryParameter("bookmakerID"))
         assertEquals(1, snap.events.size)
     }
