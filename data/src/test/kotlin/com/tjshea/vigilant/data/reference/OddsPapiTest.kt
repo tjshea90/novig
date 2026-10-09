@@ -302,7 +302,7 @@ class OddsPapiTest {
         handler = { r -> if (r.getHeader("X-API-Key") == "k1") MockResponse().setResponseCode(429).setHeader("Retry-After", "1").setBody("""{"error":429,"code":"rate_limited","retryAfterSec":1}""") else ok(catalog) }
         val books = client(listOf("k1", "k2")).bookmakers()
         assertEquals(6, books.size)
-        assertEquals(listOf("k1", "k2"), requests.map { it.getHeader("X-API-Key") })
+        assertEquals("a 1-second limit is waited out once on the same key, then the key rests and the next one answers", listOf("k1", "k1", "k2"), requests.map { it.getHeader("X-API-Key") })
     }
 
     @Test fun anInvalidKeyIsRefusedAndAForbiddenEndpointIsNotRetriedNorRefusesTheKey() = runTest {
@@ -311,7 +311,7 @@ class OddsPapiTest {
         assertNotNull(e)
         requests.clear()
         handler = { MockResponse().setResponseCode(403).setBody("""{"error":403,"code":"channel_not_allowed"}""") }
-        val f = runCatching { client().get("/fixtures/odds/clv") }.exceptionOrNull()
+        val f = runCatching { client(listOf("k9")).get("/fixtures/odds/clv") }.exceptionOrNull()
         assertTrue(f.toString(), f is ReferenceException && f.message!!.contains("403") && f.message!!.contains("channel_not_allowed"))
         assertEquals("a 403 is final: asked once", 1, requests.size)
     }
