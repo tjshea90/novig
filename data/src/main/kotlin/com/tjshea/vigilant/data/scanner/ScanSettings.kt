@@ -354,6 +354,11 @@ data class ScanSettings(
      * is given no way to. Off by default; STOP ALL stops it.
      */
     val altLab: Boolean = false,
+    /**
+     * Research mode (Tj, 2026-10-09: "just make it simple for me to run"): ONE switch that turns on every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bid lab
+     * and (with a Pinnodds key saved) Pinnodds live in PAPER mode. It never turns on a real-money feature. Off by default; STOP ALL stops it.
+     */
+    val researchMode: Boolean = false,
     val burstLeagues: Set<String> = BURST_LEAGUES.toSet(),
     /**
      * The real-money burst trader (Tj, 2026-10-06: "make it good enough so that if it is proven I can just turn it on for actual money betting"; RESEARCH.md §95): OFF by default, and

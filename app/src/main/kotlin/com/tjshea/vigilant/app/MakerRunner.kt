@@ -154,6 +154,7 @@ class MakerRunner(
             // The sides Vigilant has a bid on, or a fill not yet judged, get their books' fairs worked out whatever the precheck says (a fill is judged against them).
             val mine = desk.bids().filter { it.active || (it.filled > 0 && it.fairAtFill == null) }.mapTo(HashSet()) { it.outcomeId }
             val lines = if (cnoSource) cnoSet?.lines.orEmpty() else MakerLines.from(result, s, now, always = mine, unavailable = playerOut(now))
+            if (!cnoSource && c.researchOn()) runCatching { c.bidLab.observe(lines.mapNotNull { com.tjshea.vigilant.data.novig.lab.labLineOf(it, now) }, now) }
             val report = desk.cycle(
                 withMoves(lines, rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,

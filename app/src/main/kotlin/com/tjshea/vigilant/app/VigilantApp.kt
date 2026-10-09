@@ -992,20 +992,46 @@ class AppContainer(private val app: Application) {
     val lab: com.tjshea.vigilant.data.novig.lab.LabRecorder by lazy {
         com.tjshea.vigilant.data.novig.lab.LabRecorder(
             scope = appScope, source = novig, fetch = ::feedRaceFetch, altQuotes = { ev -> pinnRunner.altQuotes(ev.eventId) },
-            journal = labJournal, gradeJournal = labGradeJournal,
+            journal = labJournal, gradeJournal = labGradeJournal, bidLab = bidLab,
         )
+    }
+
+    /** The paper bid lab's files (RESEARCH.md §122): the paper bids when they went up and what happened to them. */
+    val bidLabBidJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "bidlab", com.tjshea.vigilant.data.novig.lab.BidLabBid.serializer()) { it.atMs }
+    val bidLabEventJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "bidlab-event", com.tjshea.vigilant.data.novig.lab.BidLabEvent.serializer()) { it.atMs }
+
+    /** Paper bids on every line the bid desk looks at and on Pinnacle-priced live lines: **no order**, public trades and markets only. */
+    val bidLab: com.tjshea.vigilant.data.novig.lab.BidLab by lazy {
+        com.tjshea.vigilant.data.novig.lab.BidLab(trades = { id -> novig.trades(id, 60) }, market = { id -> novig.market(id) }, bidJournal = bidLabBidJournal, eventJournal = bidLabEventJournal)
+    }
+    @Volatile private var bidLabJob: kotlinx.coroutines.Job? = null
+
+    /** Whether research (the paper lab and paper bids) is on now: the master switch or the lab's own, not STOP ALL, the Novig app. */
+    fun researchOn(): Boolean {
+        val s = settingsStore.flow.value ?: return false
+        return AppBook.isNovig && (s.researchMode || s.altLab) && !s.killed
     }
 
     /** Starts or stops the paper lab to match [s]: on, not STOP ALL, the Novig app. Safe to call on every settings change. */
     fun labTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        if (s.altLab && !s.killed) lab.start(LAB_LEAGUES) else if (lab.running) lab.stop()
+        val on = (s.altLab || s.researchMode) && !s.killed
+        if (on) lab.start(LAB_LEAGUES) else if (lab.running) lab.stop()
+        // The paper bid lab's tape reader: every 45 s while research is on (its lines come from the Bids passes and the paper lab).
+        if (on && bidLabJob?.isActive != true) {
+            bidLabJob = appScope.launch {
+                while (kotlinx.coroutines.isActive(coroutineContext = kotlin.coroutines.coroutineContext)) {
+                    runCatching { bidLab.poll(System.currentTimeMillis()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                    kotlinx.coroutines.delay(45_000L)
+                }
+            }
+        } else if (!on) { bidLabJob?.cancel(); bidLabJob = null }
     }
 
     /** Starts or stops the feed test to match [s]: on, not STOP ALL, the Novig app. Safe to call on every settings change. */
     fun feedRaceTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        if (s.feedRace && !s.killed) feedRace.start() else if (feedRace.running) feedRace.stop()
+        if ((s.feedRace || s.researchMode) && !s.killed) feedRace.start() else if (feedRace.running) feedRace.stop()
     }
 
     /**
@@ -1030,7 +1056,7 @@ class AppContainer(private val app: Application) {
     /** Starts or stops the burst recorder to match [s]: on, a key connected, STOP ALL not pressed, the Novig app. Safe to call on every settings change. */
     suspend fun burstTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        if (!s.burstRecorder || s.killed) {
+        if (!(s.burstRecorder || s.researchMode) || s.killed) {
             if (burst.running) burst.stop(if (s.killed) "stopped by STOP ALL" else null)
             return
         }
@@ -1061,7 +1087,7 @@ class AppContainer(private val app: Application) {
     private fun pinnTradeRules(): com.tjshea.vigilant.data.pinnodds.LiveTradeRules {
         val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(false, false, 0.0, 0.0, 0.0, 0.0)
         return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(
-            enabled = AppBook.isNovig && s.pinnLive && !s.killed, bet = s.pinnLiveBet,
+            enabled = AppBook.isNovig && (s.pinnLive || s.researchMode) && !s.killed, bet = s.pinnLive && s.pinnLiveBet,
             stake = if (s.apiMaxStake > 0.0) minOf(s.pinnLiveStake, s.apiMaxStake) else s.pinnLiveStake,
             maxPerGame = s.pinnLiveMaxGame, maxPerDay = s.pinnLiveMaxDay, haltLoss = s.pinnLiveHaltLoss, halted = s.pinnLiveHalted,
         )
@@ -1134,7 +1160,7 @@ class AppContainer(private val app: Application) {
     /** Starts or stops the live engine to match [s]: on, a Pinnodds key saved, a Novig key connected, STOP ALL not pressed, the Novig app. Safe to call on every settings change. */
     suspend fun pinnTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        if (!s.pinnLive || s.killed) {
+        if (!(s.pinnLive || s.researchMode) || s.killed) {
             if (pinnRunner.running) pinnRunner.stop(if (s.killed) "stopped by STOP ALL" else null)
             LiveFeedService.stop(app)
             return

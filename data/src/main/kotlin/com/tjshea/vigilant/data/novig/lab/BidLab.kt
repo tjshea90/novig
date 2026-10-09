@@ -195,3 +195,11 @@ class BidLab(
                 listOf(0.01, 0.02, 0.03, 0.04).flatMap { m -> listOf(false, true).map { g -> BidVariant(m, 120_000L, g, live = true) } }
     }
 }
+
+/** A pregame [com.tjshea.vigilant.data.novig.trading.maker.MakerLine] as a paper-bid line, or null when it has no usable fair (none, old, the player is out, fewer than two books) or nothing on offer. */
+fun labLineOf(l: com.tjshea.vigilant.data.novig.trading.maker.MakerLine, now: Long): LabLine? {
+    val fair = l.fair ?: return null
+    if (l.fairOld || l.live || l.unavailable != null || l.books < 2) return null
+    val offer = l.offer ?: return null
+    return LabLine(l.outcomeId, l.market.marketId, l.market.eventId, l.eventName, l.league, l.kind.name, l.selection, l.startsTs, false, fair, offer, l.bestBid, l.books, l.fairAsOfMs?.let { ((now - it) / 1000L).toInt().coerceAtLeast(0) } ?: 0)
+}
