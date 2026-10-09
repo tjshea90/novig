@@ -155,6 +155,19 @@ BRIEF="$(
       echo "        working unprotected."
     fi
 
+    # RESEARCH LAB STEWARD (Tj, 2026-10-09, permanent): one session manages the GitHub lab; the rest read research/lab/NOTES.md. One line, so the briefing stays under its cap.
+    if [ -f research/lab/STEWARD.json ]; then
+      python3 - <<'PYLAB' 2>/dev/null || echo "  LAB   see research/lab/STEWARD.md"
+import json, datetime
+d = json.load(open("research/lab/STEWARD.json"))
+t = datetime.datetime.strptime(d["lastCheckinAt"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+age = (datetime.datetime.now(datetime.timezone.utc) - t).total_seconds() / 3600
+lease = d.get("leaseHours", 36)
+state = "STEWARD QUIET %.0fh > %dh: take over (research/lab/STEWARD.md rule 3)" % (age, lease) if age > lease else "steward checked in %.0fh ago, do not touch the lab" % age
+print("  LAB   %s; read research/lab/NOTES.md" % state)
+PYLAB
+    fi
+
     # WAS THE LAST SESSION CUT OFF MID-CHANGE?
     # This is the question CHECKPOINT.md cannot answer about itself. The
     # autosave hook commits after every edit, so a session killed by a usage
