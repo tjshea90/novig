@@ -1222,6 +1222,16 @@ class AppContainer(private val app: Application) {
     /** Pinnacle's biggest moneyline moves per league (ParlayAPI's public /v1/meta/movers: free, no key; PARLAY_API.md §6.3). */
     val parlayMovers = com.tjshea.vigilant.data.reference.ParlayMovers(http, json)
 
+    /**
+     * SportsGameOdds Pro (Tj, 2026-10-09; SPORTSGAMEODDS_API.md): its client, rotated across Tj's keys like every provider's. Used only while [sgoActive].
+     */
+    val sgoClient = com.tjshea.vigilant.data.reference.SportsGameOddsClient(http, KeyPool(QuotaPolicy.SGO, { keyStore.current(ApiProvider.SPORTSGAMEODDS) }, usage), json)
+    val sgoGames = com.tjshea.vigilant.data.reference.SgoGamesSource(sgoClient)
+    val sgoProps = com.tjshea.vigilant.data.reference.SgoPropsSource(sgoClient)
+
+    /** SportsGameOdds Pro is on, a key is saved and it is answering: the scan, bids and open-bet pricing read it, and the feeds it replaces rest. */
+    fun sgoActive(s: ScanSettings): Boolean = AppBook.isNovig && s.sgoPro && keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() && !sgoClient.down()
+
     /** ESPN's injury list through ParlayAPI (1 credit a league, 10 min apart) for listed or open prop bets no props answer covered. */
     val parlayInjuries = com.tjshea.vigilant.data.reference.ParlayInjuries(parlayOdds, injuries, json, active = { parlayActive() })
 
@@ -1356,7 +1366,18 @@ class AppContainer(private val app: Application) {
         return LowUsageBids.feedsFor(LowUsageBids.books(settings), available)
     }
 
-    private fun allReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
+    private fun allReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> {
+        val all = baseReferenceSources(settings, background, scan)
+        // SportsGameOdds Pro (Tj, 2026-10-09): one feed prices what the paid ones sell; they rest for every league it carries (tennis keeps them), and come back if SGO stops answering.
+        if (!sgoActive(settings)) return all
+        val replaced = setOf(
+            pinnacle.id, propLine.id, propLineProps.id, oddsApi.id, bookProps.id, parlayOdds.id, parlayOddsBackground.id, parlayProps.id, parlayPropsBackground.id, parlayHalves.id, parlayHalvesBackground.id,
+        )
+        val rest = all.map { if (it.id in replaced) com.tjshea.vigilant.data.reference.OutsideSgo(it) else it }
+        return listOf<ReferenceSource>(sgoGames) + (if (com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families) listOf(sgoProps) else emptyList()) + rest
+    }
+
+    private fun baseReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
         val pinnacleOn = settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())
         if (pinnacleOn) add(pinnacle)
         // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (2 credits a league saved).

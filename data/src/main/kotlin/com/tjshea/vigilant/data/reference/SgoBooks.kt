@@ -48,3 +48,11 @@ object SgoBooks {
 
     fun supports(league: League): Boolean = leagueId(league) != null
 }
+
+/**
+ * A feed that rests for every league SportsGameOdds carries (Tj, 2026-10-09: "redundant apis that do the same thing as sportsgamesodds pro should be turned off to save their usage"). It is
+ * asked only for the leagues SGO has no feed for (tennis), so nothing it sells is bought twice.
+ */
+class OutsideSgo(private val inner: ReferenceSource) : ReferenceSource by inner {
+    override fun supports(league: League): Boolean = inner.supports(league) && !SgoBooks.supports(league)
+}

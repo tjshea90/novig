@@ -88,7 +88,25 @@ class SportsGameOddsClient(
 
     class SgoPages(val events: List<SgoEvent>, val notice: String?, val pages: Int)
 
-    private suspend fun get(path: String, params: List<Pair<String, String>>, canRetry: Boolean = true): String {
+    @Volatile private var failures = 0
+    @Volatile private var lastOkMs = 0L
+
+    /**
+     * Whether SGO has stopped answering: two failures in a row and nothing good for [DOWN_AFTER_MS]. While it is down the feeds Vigilant stood down for SGO Pro (see `AppContainer.referenceSources`)
+     * are asked again for the leagues SGO carries, so an outage costs no scan; one good answer ends it.
+     */
+    fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS
+
+    private suspend fun get(path: String, params: List<Pair<String, String>>): String = try {
+        getWithRetry(path, params).also { failures = 0; lastOkMs = clock() }
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        failures++
+        throw e
+    }
+
+    private suspend fun getWithRetry(path: String, params: List<Pair<String, String>>, canRetry: Boolean = true): String {
         spacing.withLock {
             val wait = lastCallAt + minIntervalMs - clock()
             if (wait > 0) delay(wait)
@@ -126,7 +144,7 @@ class SportsGameOddsClient(
         }
         if (!canRetry) throw failure
         delay(retryDelayMs())
-        return get(path, params, canRetry = false)
+        return getWithRetry(path, params, canRetry = false)
     }
 
     private fun errorOf(body: String): String? = (runCatching { json.parseToJsonElement(body) }.getOrNull() as? JsonObject)?.str("error")
@@ -135,6 +153,9 @@ class SportsGameOddsClient(
     private fun JsonObject.long(k: String): Long? = (this[k] as? JsonPrimitive)?.contentOrNull?.toDoubleOrNull()?.toLong()
 
     companion object {
+        /** SGO counts as down when it has failed twice running and answered nothing for this long. */
+        const val DOWN_AFTER_MS = 120_000L
+
         /** Pages read per league at most (each page is one request of the 300 a minute). */
         const val MAX_PAGES = 6
 
