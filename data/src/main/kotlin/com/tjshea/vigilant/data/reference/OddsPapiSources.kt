@@ -100,6 +100,8 @@ class OddsPapiFeed(private val client: OddsPapiClient, private val clock: () -> 
                     startMs = full.startMs ?: m.startMs, books = full.books.ifEmpty { m.books },
                 )
             }
+            // Alternates off: a deep read (brought in for the props) keeps only each book's main game lines; props keep every line.
+            if (!settings.opAltLines && source !== m) source = source.copy(prices = source.prices.filter { it.mainLine || it.playerId != 0L })
             if (wantProps) resolveNames(source)
             val sportKey = league.oddsApiSportKey
             val ref = OpConvert.toRef(source, markets, sportKey, wanted, now, names, games = true, props = wantProps, appKeyOf = appKeyOf) ?: continue
