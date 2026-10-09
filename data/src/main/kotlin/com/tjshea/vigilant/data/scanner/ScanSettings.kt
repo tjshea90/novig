@@ -705,6 +705,13 @@ data class ScanSettings(
      * Brings settings saved by an older version up to date. v0.6.0 (schema 2) made Polymarket and
      * Kalshi sharp by default; a saved v0.5 file still says Pinnacle only, so they're added once.
      */
+    /** The settings an app start begins with: every research recorder off; after a crash ([crashed]) the bids, auto-bet and live feed off as well. Nothing else is touched. */
+    fun safeStart(crashed: Boolean): ScanSettings {
+        var s = copy(researchMode = false, altLab = false, feedRace = false, burstRecorder = false)
+        if (crashed) s = s.copy(autoBet = false, maker = false, pinnLive = false)
+        return s
+    }
+
     fun migrate(): ScanSettings {
         var s = this
         if (s.schema < 2) s = s.copy(sharpBooks = s.sharpBooks + setOf("polymarket", "kalshi"), schema = 2)

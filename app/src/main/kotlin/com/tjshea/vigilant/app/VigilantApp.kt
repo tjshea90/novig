@@ -268,6 +268,14 @@ class AppContainer(private val app: Application) {
         private set
 
     init {
+        // SAFE START (Tj, 2026-10-09: "Can't you just make it turn everything off as soon as it starts"): the research recorders are off at every start, and after a crash the bids and auto-bet are
+        // off too, so a pile of switches that crashes the app can never crash it again before Settings opens. Done before anything reads the settings.
+        runCatching {
+            val crashed = File(app.filesDir, "last_crash.txt").exists()
+            kotlinx.coroutines.runBlocking {
+                settingsStore.update { it.safeStart(crashed) }
+            }
+        }
         // The closing capture's alarm follows the open bets (Tj, 2026-09-29: true closing lines): armed for the next start, moved when a bet is
         // added, settled or deleted, cancelled when none is left to close ([ClosingAlarm]). Whatever started this process: a screen, an alert's
         // ✓, a worker.
