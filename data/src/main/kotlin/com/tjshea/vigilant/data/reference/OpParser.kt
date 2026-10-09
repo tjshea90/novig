@@ -223,6 +223,29 @@ object OpParser {
         return out
     }
 
+    /** One entry of a price's timeline (`/fixtures/odds/historical`). */
+    data class OpTick(val book: String, val outcomeId: Long, val playerId: Long, val changedMs: Long, val decimal: Double?, val active: Boolean)
+
+    /** `/fixtures/odds/historical`: `odds.<book>.<oddsId>.{"<changedAt>": {price, active, changedAt, marketActive}}`. */
+    fun historical(raw: String): List<OpTick> {
+        val out = ArrayList<OpTick>()
+        for (fx in rows(parse(raw))) {
+            (fx["odds"].obj())?.forEach { (book, byId) ->
+                (byId.obj())?.forEach { (oddsId, timeline) ->
+                    val (outcome, player) = idsOf(oddsId)
+                    val oc = outcome ?: return@forEach
+                    (timeline.obj())?.forEach { (at, v) ->
+                        val row = v.obj() ?: return@forEach
+                        val ms = (row.dbl("changedAt") ?: at.toDoubleOrNull())?.let { ms(it) } ?: return@forEach
+                        val dec = row.dbl("price")?.takeIf { it > 1.0 } ?: row.dbl("priceAmerican")?.let { decimalFromAmerican(it) }
+                        out += OpTick(book, oc, player ?: 0L, ms, dec, (row.bool("active") ?: true) && (row.bool("marketActive") ?: true))
+                    }
+                }
+            }
+        }
+        return out
+    }
+
     /** The error text an OddsPapi failure body carries (`{"error":429,"code":"rate_limited",...}`), or null. */
     fun errorCode(raw: String): String? = parse(raw).obj()?.let { it.str("code") ?: it.str("message") ?: it.str("error") }
 

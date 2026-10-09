@@ -39,6 +39,14 @@ class OpMarkets(markets: List<OpMarket>, private val league: String) {
     /** The market an outcome id belongs to (a price that does not say its `marketId`). */
     fun marketOf(outcomeId: Long): Long? = byOutcome[outcomeId]
 
+    /** Every market of the catalogue Vigilant can read, for finding the one a bet was on ([find]). */
+    val classes: List<OpClass> by lazy { raw.keys.sorted().mapNotNull { classify(it) } }
+
+    /** The market a bet was on: its [kind], [period], exact number [point] (the HOME / participant 1 number for a spread), [team] (team totals) and [stat] (props). Null when the catalogue has none. */
+    fun find(kind: LineKind, period: Int, point: Double?, team: Int? = null, stat: String? = null): OpClass? =
+        classes.filter { it.kind == kind && it.period == period && it.team == team && it.stat == stat && (point == null || it.point?.let { p -> kotlin.math.abs(p - point) < 1e-6 } == true) }
+            .let { hits -> hits.firstOrNull { !it.fallback } ?: hits.firstOrNull() }
+
     fun classify(marketId: Long): OpClass? = byId.getOrPut(marketId) { raw[marketId]?.let { classifyOne(it) } }
 
     private fun isProp(m: OpMarket) = m.playerProp || m.type.startsWith("players-") || m.type.startsWith("playertotals-")
