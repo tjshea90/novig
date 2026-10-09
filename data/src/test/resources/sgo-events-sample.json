@@ -43,7 +43,9 @@
     "PATRICK_MAHOMES_1_NFL": {
      "playerID": "PATRICK_MAHOMES_1_NFL",
      "name": "Patrick Mahomes",
-     "teamID": "KANSAS_CITY_CHIEFS_NFL"
+     "teamID": "KANSAS_CITY_CHIEFS_NFL",
+     "status": "questionable",
+     "statusDetails": "Knee"
     },
     "TRAVIS_KELCE_1_NFL": {
      "playerID": "TRAVIS_KELCE_1_NFL",

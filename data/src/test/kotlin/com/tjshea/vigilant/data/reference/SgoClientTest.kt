@@ -237,9 +237,7 @@ class SgoClientTest {
     }
 
     @Test fun propsAnswersFillTheInjuryIndexForFree() = runTest {
-        val body = sample.replace("\"n.123.abc\"", "null").replace(
-            "\"teamID\":\"KANSAS_CITY_CHIEFS_NFL\"}", "\"teamID\":\"KANSAS_CITY_CHIEFS_NFL\",\"status\":\"questionable\",\"statusDetails\":\"Knee\"}",
-        )
+        val body = sample.replace("\"n.123.abc\"", "null")
         handler = { ok(body) }
         val index = InjuryIndex({ clockMs })
         SgoPropsSource(client(), { clockMs }, index).odds(nfl, settings)
@@ -257,7 +255,7 @@ class SgoClientTest {
         val start = SgoParser.ms("2026-10-11T17:00:00.000Z")!!
         val r = others.view("NFL", "Las Vegas Raiders @ Kansas City Chiefs", start, "Player Passing Yards", "Patrick Mahomes Over 275.5")
         assertEquals(listOf("SportsGameOdds"), r.sources)
-        val books = r.view!!.prices.map { it.book }
+        val books = r.view!!.prices.map { it.code }
         assertTrue(books.toString(), books.isNotEmpty())
         val req = requests.single().requestUrl!!
         assertEquals("NFL", req.queryParameter("leagueID"))
