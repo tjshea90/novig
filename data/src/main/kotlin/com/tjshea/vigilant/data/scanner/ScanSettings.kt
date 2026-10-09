@@ -376,7 +376,7 @@ data class ScanSettings(
      */
     val oddsPapi: Boolean = false,
     /**
-     * Leave a quote out of every fair line when its two sides add up to too much (a book above 10% hold, an exchange above 8%: [com.tjshea.vigilant.engine.WideQuotes]); Tj, 2026-10-09: ProphetX at
+     * Leave a quote out of every fair line when its two sides add up to too much (a book above 12% hold, an exchange above 10%: [com.tjshea.vigilant.engine.WideQuotes]); Tj, 2026-10-09: ProphetX at
      * -140 / -113 on a total (11.4%) was counted as a view of the price. On by default.
      */
     val ignoreWideQuotes: Boolean = true,

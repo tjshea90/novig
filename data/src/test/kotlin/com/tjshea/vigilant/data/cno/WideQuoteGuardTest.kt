@@ -46,13 +46,15 @@ class WideQuoteGuardTest {
     }
 
     @Test fun anExchangeGetsTheStricterLimitAndABookTheLooserOne() {
-        // -125 / -125: 55.6% + 55.6% = 11.1% hold: too wide for anyone. -118 / -118: 8.3%: too wide for an exchange, fine for a book.
-        assertNull(CnoBooks.fairFor(-125, -125))
-        assertNull(CnoBooks.fairFor(-125, -125, "DK"))
-        assertNotNull(CnoBooks.fairFor(-118, -118, "DK"))
-        assertNull(CnoBooks.fairFor(-118, -118, "PX"))
-        assertNull(CnoBooks.fairFor(-118, -118, "KI"))
-        assertNull(CnoBooks.fairFor(-118, -118, "ST-NJ"))
+        // -135 / -135: 57.4% x 2 = 14.9% hold: too wide for anyone. -125 / -125: 11.1%: too wide for an exchange, fine for a book. -118 / -118: 8.3%: fine for both.
+        assertNull(CnoBooks.fairFor(-135, -135))
+        assertNull(CnoBooks.fairFor(-135, -135, "DK"))
+        assertNotNull(CnoBooks.fairFor(-125, -125, "DK"))
+        assertNull(CnoBooks.fairFor(-125, -125, "PX"))
+        assertNull(CnoBooks.fairFor(-125, -125, "KI"))
+        assertNull(CnoBooks.fairFor(-125, -125, "ST-NJ"))
+        assertNotNull(CnoBooks.fairFor(-118, -118, "PX"))
+        assertNotNull("a real ProphetX prop page sits near 8%: counted", CnoBooks.fairFor(-107, -129, "PX"))
         assertNotNull("an ordinary -110 / -110", CnoBooks.fairFor(-110, -110, "PX"))
         assertEquals(0.5, CnoBooks.fairFor(-110, -110, "DK")!!, 1e-9)
         assertTrue(CnoBooks.isExchange("PX") && CnoBooks.isExchange("KI") && CnoBooks.isExchange("NV") && CnoBooks.isExchange("ST-CO") && !CnoBooks.isExchange("DK"))
@@ -60,7 +62,7 @@ class WideQuoteGuardTest {
 
     @Test fun offMeansEveryQuoteCountsAsBefore() {
         WideQuotes.enabled = false
-        assertNotNull(CnoBooks.fairFor(-125, -125, "PX"))
+        assertNotNull(CnoBooks.fairFor(-135, -135, "PX"))
         assertFalse(CnoBooks.isWide(price("PX", -140, -113)))
     }
 

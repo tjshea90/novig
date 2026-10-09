@@ -834,7 +834,7 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
     ) { v -> onUpdate { it.copy(outlierGuard = v) } }
     SwitchRow(
         "Ignore wide quotes",
-        "A book or exchange whose two sides add up to too much (a book above 10%, an exchange such as ProphetX or Kalshi above 8%) is thin or careless: it is left out of every fair line and shown as \"wide\" in the books table.",
+        "A book or exchange whose two sides add up to too much (a book above 12%, an exchange such as ProphetX or Kalshi above 10%) is thin or careless: it is left out of every fair line and shown as \"wide\" in the books table.",
         s.ignoreWideQuotes, tag = "wideQuotesSwitch",
     ) { v -> onUpdate { it.copy(ignoreWideQuotes = v) } }
 
