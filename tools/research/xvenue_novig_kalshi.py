@@ -99,5 +99,70 @@ def main():
         time.sleep(20)
 
 
+
+
+def fast(minutes, outpath):
+    """Matched LIVE games only, each read about every 3 s on both venues (one Novig book + one Kalshi event per game): how long does a locked cover last, and how big is it?"""
+    out = open(outpath, 'a')
+    until = time.time() + minutes * 60
+    matched = {}; last_match = 0
+    while time.time() < until:
+        if time.time() - last_match > 90:
+            matched = {}
+            for league, series in SERIES.items():
+                kev = kalshi_games(series)
+                index = {}
+                for ke in kev:
+                    mk = ke.get('markets') or []
+                    if len(mk) == 2: index[frozenset(m['ticker'].rsplit('-', 1)[-1].upper() for m in mk)] = ke
+                for e, status in novig_games(league):
+                    if status != 'OPEN_INGAME': continue
+                    nm = novig_money(e['eventId'])
+                    if not nm: continue
+                    mid, names, asks, bids = nm
+                    ke = index.get(frozenset(n.upper() for n in names))
+                    if ke: matched[e['eventId']] = (league, e['description'], mid, names, ke['event_ticker'])
+            last_match = time.time()
+            print(f"[{time.strftime('%H:%M:%S')}] matched live games: {[v[1][:30] for v in matched.values()]}", flush=True)
+        n_locked = 0
+        for eid, (league, desc, mid, names, kticker) in matched.items():
+            t0 = time.time()
+            st, bk, _ = L.http(f"{L.NOVIG}/catalog/markets/{mid}/book")
+            st2, kd, _ = L.http(f'{KALSHI}/markets?event_ticker={kticker}&limit=5')
+            if st != 200 or not bk or st2 != 200 or not kd: continue
+            t1 = time.time()
+            m = None
+            stm, md, _ = L.http(f"{L.NOVIG}/catalog/markets/{mid}") if False else (0, None, None)
+            bids = {}
+            for oid, lv in (bk.get('orders') or {}).items():
+                if lv: bids[oid] = (max(float(x['price']) for x in lv), sum(int(x['qty']) for x in lv if abs(float(x['price']) - max(float(y['price']) for y in lv)) < 1e-9))
+            # outcome ids -> names come from the market read at matching time: refetch lazily once
+            if 'ids' not in globals(): globals()['ids'] = {}
+            if mid not in ids:
+                s3, md, _ = L.http(f"{L.NOVIG}/catalog/markets/{mid}")
+                ids[mid] = {o['outcomeId']: o['name'] for o in md['outcomes']} if md else {}
+            nb = {ids[mid].get(oid): v for oid, v in bids.items()}
+            for kmk in kd.get('markets', []):
+                abbr = kmk['ticker'].rsplit('-', 1)[-1].upper()
+                n_out = next((n for n in names if n.upper() == abbr), None)
+                if n_out is None: continue
+                other = [n for n in names if n != n_out][0]
+                yes_ask, no_ask = f(kmk.get('yes_ask_dollars')), f(kmk.get('no_ask_dollars'))
+                for label, bidside, k_price, ksize in (('NOVIG ' + n_out + ' + KALSHI NO', other, no_ask, f(kmk.get('yes_bid_size_fp'))), ('NOVIG ' + other + ' + KALSHI YES ' + n_out, n_out, yes_ask, f(kmk.get('yes_ask_size_fp')))):
+                    b = nb.get(bidside)
+                    if b is None or k_price is None: continue
+                    nov_price = 1 - b[0]
+                    fee_n = 0.03 * nov_price * (1 - nov_price); fee_k = 0.07 * k_price * (1 - k_price)
+                    net = 1 - nov_price - k_price - fee_n - fee_k
+                    n_locked += net > 0
+                    out.write(json.dumps({'t': int(t0 * 1000), 'span_ms': int((t1 - t0) * 1000), 'league': league, 'event': desc, 'cover': label, 'novig': round(nov_price, 4), 'kalshi': k_price, 'net': round(net, 4), 'novig_depth': b[1], 'kalshi_size': ksize}) + '\n')
+        out.flush()
+        time.sleep(1.5)
+    print('done')
+
+
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == 'fast':
+        fast(float(sys.argv[sys.argv.index('--minutes') + 1]), sys.argv[sys.argv.index('--out') + 1])
+    else:
+        main()
