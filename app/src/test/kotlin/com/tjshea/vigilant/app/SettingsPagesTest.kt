@@ -285,7 +285,7 @@ class SettingsPagesTest {
 
     @Test
     fun `the SportsGameOdds page takes keys, tests them and has the one switch that turns the feed on`() {
-        var settings = SampleScan.state().settings
+        var settings by mutableStateOf(SampleScan.state().settings)
         val tests = ArrayList<Boolean>()
         val keysAdded = ArrayList<String>()
         val state = SampleScan.state().copy(sgoKeys = listOf("sgo-key-aaaa-1111"), sgoKeyNote = "NFL: 14 games read", sgoKeyOk = true)
