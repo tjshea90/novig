@@ -50,6 +50,8 @@ class LabRecorder(
     private val clock: () -> Long = System::currentTimeMillis,
     private val cycleMs: Long = CYCLE_MS,
     private val gradeEvery: Int = GRADE_EVERY,
+    /** The paper bid lab, when there is one: it is handed the live lines (a Novig strike with Pinnacle's price at the same strike) every pass and polls the trade tape. */
+    private val bidLab: BidLab? = null,
 ) {
     private val _status = MutableStateFlow(LabStatus())
     val status: StateFlow<LabStatus> = _status.asStateFlow()
@@ -105,6 +107,7 @@ class LabRecorder(
         var alt = 0
         var covers = 0
         var withState = 0
+        val liveLabLines = ArrayList<LabLine>()
         for (ev in live) {
             val points = markets.filter { it.eventId == ev.eventId }.mapNotNull { m -> Ladders.line(m)?.let { LadderPoint(it, books[m.marketId]) } }
             if (points.isEmpty()) continue
@@ -127,15 +130,34 @@ class LabRecorder(
                 }
             }
             val quotes = runCatching { altQuotes(ev) }.getOrDefault(emptyList())
+            if (bidLab != null && quotes.isNotEmpty()) {
+                val side = { ref: String -> game?.sideOf(ref) ?: sideByName(ev, ref) }
+                for (sf in AltLineScan.strikeFairs(points, quotes, now, ev.startsTs, AltRules(minBooks = 1, maxDisagreement = 1.0), side)) liveLabLines += liveLines(ev, sf)
+            }
             if (quotes.isNotEmpty()) for (c in AltLineScan.scan(points, quotes, now, ev.startsTs, live = true, sideOf = { ref -> game?.sideOf(ref) ?: sideByName(ev, ref) })) {
                 alt++
                 record(LabRecord(id(), now, LabKind.ALT, ev.eventId, ev.description, ev.league, c.marketId, c.outcomeId, c.label, c.side, c.strike, c.ask, c.fair, c.edge, c.contracts, c.books, "oldest quote ${c.oldestAgeSec}s"))
             }
         }
+        bidLab?.let { it.observe(liveLabLines, now); runCatching { it.poll(now) } }
         cycle++
         val s = _status.value
         _status.value = s.copy(games = live.size, cycles = s.cycles + 1, ladders = LadderScan.summary(reports), withState = withState, tail = s.tail + tail, alt = s.alt + alt, covers = s.covers + covers, lastCycleMs = now)
         if (cycle % gradeEvery == 0) grade(now)
+    }
+
+    /** Both sides of a Novig strike as paper-bid lines: Pinnacle's fair, Novig's ask (what a bid must stay under) and its best bid. */
+    private fun liveLines(ev: NovigEvent, sf: StrikeFair): List<LabLine> {
+        val line = sf.point.line
+        val kind = if (line.kind == com.tjshea.vigilant.data.novig.burst.LadderKind.TOTAL) "TOTAL" else if (line.threshold == 0.0) "MONEYLINE" else "SPREAD"
+        return listOf(true, false).mapNotNull { yes ->
+            val ask = com.tjshea.vigilant.data.novig.burst.CoverMath.leg(sf.point.book, line, yes) ?: return@mapNotNull null
+            val other = com.tjshea.vigilant.data.novig.burst.CoverMath.leg(sf.point.book, line, !yes)
+            LabLine(
+                if (yes) line.yesOutcomeId else line.noOutcomeId, line.marketId, ev.eventId, ev.description, ev.league, kind, line.label + if (yes) " YES" else " NO",
+                ev.startsTs, true, if (yes) sf.yes else sf.no, ask.price, other?.let { 1.0 - it.price }, sf.books, sf.oldestAgeSec,
+            )
+        }
     }
 
     private var seq = 0L
