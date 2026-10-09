@@ -124,6 +124,8 @@ class SgoClientTest {
         val snap = SgoPropsSource(client(), { clockMs }).odds(nfl, settings)
         val ids = requests.single().requestUrl!!.queryParameter("oddID")!!
         assertTrue("passing_yards-PLAYER_ID-game-ou-over" in ids)
+        assertEquals("alternate prop lines are asked for too", "true", requests.single().requestUrl!!.queryParameter("includeAltLines"))
+        assertNotNull(requests.single().requestUrl!!.queryParameter("bookmakerID"))
         assertTrue(snap.events.single().markets.any { it.kind == LineKind.PLAYER_PROP && it.stat == "PASSING_YARDS" })
         assertTrue(SgoPropsSource(client(), { clockMs }).supports(nfl))
     }
