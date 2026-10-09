@@ -410,6 +410,17 @@ included), `tracker/SgoScores.kt` (grading, `ChainedScores` with the free feeds)
 rests the paid feeds it replaces (`OutsideSgo`: tennis keeps them), and brings them back by themselves if SGO stops answering (`SportsGameOddsClient.down`). With the switch OFF the app is what it was: `SgoWiringTest` proves the source list, closes, grader and meters are unchanged and that nothing is sent to SGO.
 **The GitHub lab** (`lab/` JVM module, `.github/workflows/lab-record.yml`, every 6 h): Vigilant's own Scanner, paper lab and paper bids on public data + SGO (secret `SGO_API_KEY`), no phone, no orders. Read its output on the **`lab-data` branch** (`latest.txt`, `archive/<date>/*.gz`: `edge`, `sgo-tick`, `sgo-close`, `bidlab*`, `lab*`) together with the phone's research file (same format). SPORTSGAMEODDS_API.md §8 audits every request against the docs, §9 describes the lab. Never commit a key.
 
+## OddsPapi v5 — permanent research memory
+
+Tj's OddsPapi trial (to be arranged by email to contact@55-tech.com; Tj, 2026-10-09: "I will probably sign up for the free trial after my sgo free trial runs out. But I want the option to use it ready to go") is documented in **`ODDSPAPI_API.md`**: why it was
+chosen over the other candidates, v5 vs the different self-serve v4 product (Vigilant speaks v5 only), the two rate limits (odds endpoints 10 a second, the rest 100 a minute), every endpoint Vigilant uses with its parameters (all checked against the OpenAPI document), the shapes, and
+what is NOT known. **Nothing in it has been run against a live key yet**: the parser, market table and book names were written from the docs' examples. Settings › OddsPapi › "Test and share sample" saves the key's real answers to Downloads/Vigilant; when Tj sends it, check
+`OpParser`, `OpMarkets`/`OpProps` (the football, baseball and basketball prop `marketType` tails are guesses; hockey's are documented), `OpBooks` (slugs, tournament names) against it and fix the doc (TASKS.md SN7). Code: `data/.../reference/` `OddsPapiClient` (header `X-API-Key`, two spacing gates, 429/403/401 handling,
+`down()`), `OpParser`, `OpMarkets`/`OpProps`, `OpBooks`/`OutsideOp`, `OpConvert` (a main line of a connected book is as fresh as the read; any other line keeps its `changedAt`; `staleOdds`/`suspended`/`participantsRotated` books give nothing), `OddsPapiFeed` + `OpGamesSource`/`OpPropsSource`
+(one `/fixtures/odds/main` per tournament, then `/fixtures/odds` per game for alternates and props; the two sources share one read), `OpKeyTest`; `tracker/OpCloses` (`/fixtures/odds/clv`, a live-stamped close replaced by `/fixtures/odds/historical`'s last price before the start; any bet, graded or not), `tracker/OpScores`
+(final and period scores; a prop's box score is the free feeds'); `OtherBooks` takes OddsPapi's props as the tapped bet's other books. `ScanSettings.oddsPapi` switches it on: `AppContainer.allReferenceSources` leads with it and rests the paid feeds for the leagues it carries (`OutsideOp`; tennis keeps them; free feeds and Pinnodds stay;
+SGO Pro on too = both read, SGO wins a book both send), and brings them back if it stops answering (`OddsPapiClient.down`). With the switch OFF the app is what it was: `OpWiringTest` proves the source list, closes and grader are unchanged and nothing is sent to OddsPapi. Never commit a key.
+
 ## Project rules
 
 See `BRIEF.md` for what's decided about this project and what's still open:
