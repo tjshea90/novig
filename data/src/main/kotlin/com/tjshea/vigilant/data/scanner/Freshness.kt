@@ -31,7 +31,7 @@ object Freshness {
     /**
      * SportsGameOdds Pro mode (Tj, 2026-10-09: "match what sgo offers without dropping bets, but keep a guard that drops bets if the odds are 10 minutes old or older"). SGO refreshes pregame prices
      * about every 5 minutes (measured, SPORTSGAMEODDS_API.md §10), so its quotes are 3-6 minutes old when read: the 5-minute limit for a game inside 3 hours would drop them. While SGO Pro is on,
-     * every game gets [FAR_OFF_AGE_MS] (10 minutes) as the limit, and a quote 10 minutes old or older is dropped. Set from `ScanSettings.sgoPro` at the start of each scan and when the switch
+     * every game gets [FAR_OFF_AGE_MS] (10 minutes) as the limit, and a quote older than that is dropped (a scan prices only with quotes under 8 minutes old, [MIN_SHOWN_MS] of headroom). Set from `ScanSettings.sgoPro` at the start of each scan and when the switch
      * changes; off, every function here is exactly what it was.
      */
     @Volatile var sgoMode: Boolean = false
@@ -52,5 +52,5 @@ object Freshness {
     const val MAX_REUSE_MS = 2 * 60_000L
 
     /** Whether a quote the feed last saw at [seenAtMs], on a game starting at [startsAtMs], is still fresh at [now]; unknown counts as fresh. */
-    fun fresh(seenAtMs: Long?, now: Long, startsAtMs: Long? = null): Boolean = seenAtMs == null || now - seenAtMs < maxAgeMs(startsAtMs, now) + (if (sgoMode) 0L else 1L)
+    fun fresh(seenAtMs: Long?, now: Long, startsAtMs: Long? = null): Boolean = seenAtMs == null || now - seenAtMs <= maxAgeMs(startsAtMs, now)
 }
