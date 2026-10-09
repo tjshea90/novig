@@ -136,6 +136,36 @@ class BidLab(
     private fun key(v: BidVariant, outcomeId: String) = v.name + "|" + outcomeId
 
     /**
+     * Picks the paper bids back up from the journals after a stop or restart (Tj, 2026-10-09: "if I intermittently turn on and off both research mode switches, does the app delete the data in between"): the
+     * journals were never touched, but the bids still resting and the fills waiting for their close and result lived in memory only. A bid that was neither filled nor over is put back up; a fill that
+     * has no GRADE yet goes back to waiting for its close and result. Call once before [observe]; a second call adds nothing already known.
+     */
+    fun restore(bids: List<BidLabBid>, events: List<BidLabEvent>, now: Long) {
+        val byId = events.groupBy { it.id }
+        val named = variants.associateBy { it.name }
+        synchronized(lock) {
+            for (b in bids) {
+                if (b.id in active) continue
+                val v = named[b.variant] ?: continue
+                val evs = byId[b.id].orEmpty()
+                if (evs.any { it.type == "CANCEL" || it.type == "GRADE" }) continue
+                val fill = evs.firstOrNull { it.type == "FILL" }
+                val a = Active(b, v)
+                if (fill != null) {
+                    if (now > b.startsTs + FORGET_MS) continue
+                    a.filledAtMs = fill.atMs
+                    evs.lastOrNull { it.type == "CLOSE" }?.let { a.closed = true; it.value?.let { f -> a.lastFair = f } }
+                } else if (now >= b.expiresMs) continue
+                active[b.id] = a
+                byKey[key(v, b.outcomeId)] = b.id
+            }
+            posted = maxOf(posted, bids.size.toLong())
+            filled = maxOf(filled, events.count { it.type == "FILL" }.toLong())
+            seq = maxOf(seq, bids.size.toLong())
+        }
+    }
+
+    /**
      * Reads the trade tape of up to [maxMarkets] markets that have bids up (the most bids first) and fills the bids a trade went through; then grades the filled bids whose game is over by reading the
      * market's own settled status. Public reads only; safe to call from one coroutine at a time.
      */
