@@ -115,6 +115,13 @@ class OddsPapiFeed(private val client: OddsPapiClient, private val clock: () -> 
         return LeagueRead(now, games, props)
     }
 
+    /** Names of [ids] (cached for good; the ones OddsPapi does not answer for are simply missing). */
+    suspend fun playerNames(ids: Collection<Long>): Map<Long, String> {
+        val missing = ids.filter { it !in names }
+        if (missing.isNotEmpty()) names += client.players(missing)
+        return ids.mapNotNull { id -> names[id]?.let { id to it } }.toMap()
+    }
+
     private suspend fun resolveNames(f: OpFixture) {
         val missing = f.prices.map { it.playerId }.filter { it != 0L && it !in names }.toSet()
         if (missing.isEmpty()) return
