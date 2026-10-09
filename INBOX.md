@@ -5730,3 +5730,22 @@ This seems like an all in one solution to everything vigilant app does. If I was
 ```
 Can you run the entire research lab full time 24/7 in GitHub actions just as well as it would run on my phone
 ```
+
+## 2026-10-09T06:57:24Z
+```
+I will get a free trial of the pro version of this: 
+
+https://sportsgameodds.com/llms-full.txt
+
+https://sportsgameodds.com/docs/info/ai-vibe-coding
+
+https://sportsgameodds.com/docs
+
+Carefully research the full docs, especially the llm and vibe coding docs.
+
+Put a setting into vigilant for me to enter API keys for sportsgamesodds, using the same logic and rotation methods as all the other API keys. 
+
+Do thorough research of the sportsgamesodds docs for the proper usage, commands, addresses, rates and limits, etc. for the pro subscription. optimize it to take full advantage of the pro subscription, which is faster and has more usage than lower tiers. Make a toggle in vigilant settings to use sportsgamesodds pro API. When this toggle is on, vigilant should take full advantage of the sportsgamesodds pro API and all of its features, including but not limited to, current odds across sports books, the EV feature, live betting, fast speed on scanning odds, extra sports books, clv values and closing lines including clv for any non graded bets already in the app, historical odds and clv, current ev of my bets, grading bets as win and loss, real time odds for markets and props, and everything else the API offers that can speed up or benefit vigilant's accuracy and data. When the sportsgamesodds pro toggle is on, every feature and function in the vigilant app that can use it will use it to its full power, and redundant apis that do the same thing as sportsgamesodds pro should be turned off to save their usage. Only use other apis at the same time as the sportsgamesodds pro toggle if they are free or significantly add to the data, speed, or accuracy of vigilant. The goal is to make full use of the pro API across all parts of vigilant app that can use it  while saving other apis usage that are not needed while sportsgamesodds pro is toggled on. 
+
+Also incorporate sportsgamesodds pro into the research labs if it can help in the research in any way.
+```
