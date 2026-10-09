@@ -33,8 +33,8 @@ object SettingsIndex {
 
     val entries: List<Entry> = listOf(
         // SportsGameOdds Pro (Tj, 2026-10-09)
-        Entry("SportsGameOdds Pro (one feed for everything)", SettingsPage.SGO, "One paid feed for odds, props, closing lines and results; the feeds it replaces rest", "sportsgameodds sgo pro odds api feed key paid replace", novig),
-        Entry("SportsGameOdds key", SettingsPage.SGO, "Add, order and test your SportsGameOdds keys", "sportsgameodds sgo key api rotate test", novig),
+        Entry("Use SportsGameOdds Pro", SettingsPage.SGO, "One paid feed for odds, props, closing lines and results; the feeds it replaces rest", "sportsgameodds sgo pro odds api feed key paid replace", novig),
+        Entry("Add a SportsGameOdds key", SettingsPage.SGO, "Add, order and test your SportsGameOdds keys", "sportsgameodds sgo key api rotate test", novig),
         // Research (Tj, 2026-10-09)
         Entry("Research mode (turn everything on)", SettingsPage.RESEARCH, "One switch for every recorder that places nothing: feed test, burst recorder, paper lab, paper bids", "research record log paper lab test study", novig),
         Entry("Share research file with Claude", SettingsPage.RESEARCH, "One file with what every recorder found, to send to Claude", "research share file send claude export", novig),

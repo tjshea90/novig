@@ -298,8 +298,8 @@ class ScreenshotTest {
         compose.onRoot().captureRoboImage("screenshots/5c_parlay_usage_chart.png")
     }
 
-    // Tall enough for every meter card (ParlayAPI's joined them in v0.27.0).
-    @Config(qualifiers = "w393dp-h1300dp-xxhdpi")
+    // Tall enough for every meter card (ParlayAPI's joined them in v0.27.0, SportsGameOdds' in v0.82.0).
+    @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
     @Test fun theMetersShowWhatsLeftPerKeyAndWhichKeyIsInUse() {
         screen { com.tjshea.vigilant.app.ui.UsageSection(SampleScan.state()) }
         compose.onNodeWithText("688 credits left", substring = true).assertIsDisplayed()

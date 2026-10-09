@@ -122,7 +122,7 @@ class SettingsPagesTest {
     fun `each scanner hides the pages it doesn't use, and a page that goes away falls back to the list`() {
         val base = SampleScan.state()
         assertEquals(
-            listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.WIDGET, SettingsPage.RESEARCH, SettingsPage.HELP),
+            listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.SGO, SettingsPage.WIDGET, SettingsPage.RESEARCH, SettingsPage.HELP),
             SettingsPage.shown(base.settings.copy(scanner = ScannerMode.CNO)),
         )
         assertEquals(SettingsPage.entries.filter { it != SettingsPage.CNO && it != SettingsPage.PINNODDS }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.VIGILANT)))
