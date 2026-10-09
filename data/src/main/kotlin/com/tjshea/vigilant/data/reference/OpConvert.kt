@@ -26,7 +26,6 @@ object OpConvert {
     ): RefEvent? {
         val start = f.startMs ?: return null
         if (f.p1.isBlank() || f.p2.isBlank() || f.cancelled) return null
-        class Key(val book: String, val market: Long, val player: Long)
         val groups = LinkedHashMap<Triple<String, Long, Long>, MutableList<OpPrice>>()
         for (p in f.prices) {
             val market = p.marketId ?: markets.marketOf(p.outcomeId) ?: continue
@@ -67,9 +66,7 @@ object OpConvert {
                     val name = names[playerId]?.let { OpProps.displayName(it) } ?: continue
                     RefBookMarket(book, title, cls.kind, listOf(RefQuote(Side.OVER, da, point ?: continue), RefQuote(Side.UNDER, db, point)), updated, period = 0, subject = name, stat = cls.stat)
                 }
-                LineKind.MONEYLINE.let { LineKind.MONEYLINE } -> continue
             }
-            if (cls.fallback) mainOf["$book|fb"] = true
             out += if (cls.fallback) m.copy(bookEventId = FALLBACK) else m
             if (a.mainLine && b.mainLine) mainOf["$book|${m.coverage}|${m.subject}|${m.line}"] = true
         }
