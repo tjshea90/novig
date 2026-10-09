@@ -5863,3 +5863,8 @@ https://bigballsdata.com/pricing
 ```
 Make it so I'm sgo mode ( the sgo toggle on) it uses sgo to its full benefit but also turns on the pinnodds API because pinnodds has the websocket. Make sure the app uses the full sgo and gets fresh pinnacle odds for the scanners from pinnodds API simultaneously. The app should use the fresh pinnacle odds from pinnodds instead of any other API when doing the EV analysis
 ```
+
+## 2026-10-09T20:30:03Z
+```
+Confirm that pinnodds still works for the rest of the app. When I told you stop using pinnodds I meant I didn't want Claude to use the API because I was using it at that time and it only allows one connection. I still want to use it in the app
+```
