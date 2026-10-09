@@ -297,18 +297,18 @@ class SettingsPagesTest {
                 page = SettingsPage.SGO, onPage = {},
             )
         }
-        compose.onNodeWithTag("sgoProSwitch").assertIsDisplayed()
-        compose.onNodeWithTag("sgoKeyNote").assertTextContains("14 games", substring = true)
-        compose.onNodeWithTag("sgoTestKey").performClick()
-        compose.onNodeWithTag("sgoShareSample").performClick()
+        compose.onNodeWithTag("sgoProSwitch").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("sgoKeyNote").performScrollTo().assertTextContains("14 games", substring = true)
+        compose.onNodeWithTag("sgoTestKey").performScrollTo().performClick()
+        compose.onNodeWithTag("sgoShareSample").performScrollTo().performClick()
         assertEquals(listOf(false, true), tests)
         assertTrue("the switch starts off", !settings.sgoPro)
-        compose.onNodeWithTag("sgoProSwitch").performClick()
+        compose.onNodeWithTag("sgoProSwitch").performScrollTo().performClick()
         compose.waitForIdle()
         assertTrue(settings.sgoPro)
         // the extras appear once it is on
-        compose.onNodeWithTag("sgoExtraSwitch").assertIsDisplayed()
-        compose.onNodeWithTag("sgoAltSwitch").assertIsDisplayed()
+        compose.onNodeWithTag("sgoExtraSwitch").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("sgoAltSwitch").performScrollTo().assertIsDisplayed()
     }
 
     @Test
