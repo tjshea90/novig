@@ -48,13 +48,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: lab-data
-          path: data
+          path: labstate   # NOT "data": that is the :data module, and checkout empties its path
           fetch-depth: 1
 
       - name: Put the state where the lab reads it
         run: |
           mkdir -p out/lab
-          if [ -d data/state ]; then cp data/state/*.jsonl out/lab/ 2>/dev/null || true; fi
+          if [ -d labstate/state ]; then cp labstate/state/*.jsonl out/lab/ 2>/dev/null || true; fi
           ls out/lab | head -50 || true
 
       - name: Record
@@ -65,7 +65,8 @@ jobs:
         run: |
           ARGS="--minutes $MINUTES --out out"
           if [ -n "$LEAGUES" ]; then ARGS="$ARGS --leagues $LEAGUES"; fi
-          ./gradlew :data:jar :lab:run --no-daemon --no-configure-on-demand --console=plain --args="$ARGS" | tail -n 400
+          set -o pipefail
+          ./gradlew :lab:run --no-daemon --no-configure-on-demand --console=plain --args="$ARGS" 2>&1 | tail -n 400
 
       - name: Summary
         if: always()
@@ -89,8 +90,8 @@ jobs:
           D="$(date -u +%Y-%m-%d)"; T="$(date -u +%H%M)"
           mkdir -p snap/state snap/archive
           # keep the last 7 days of what was there
-          if [ -d data/archive ]; then cp -r data/archive/. snap/archive/ 2>/dev/null || true; fi
-          if [ -d data/state ]; then cp data/state/*.jsonl snap/state/ 2>/dev/null || true; fi
+          if [ -d labstate/archive ]; then cp -r labstate/archive/. snap/archive/ 2>/dev/null || true; fi
+          if [ -d labstate/state ]; then cp labstate/state/*.jsonl snap/state/ 2>/dev/null || true; fi
           # this run
           F=$(ls out/github-lab-*.txt 2>/dev/null | tail -1 || true)
           if [ -n "$F" ]; then cp "$F" snap/latest.txt; fi
