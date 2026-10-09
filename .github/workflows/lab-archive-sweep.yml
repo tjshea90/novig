@@ -1,0 +1,52 @@
+name: Lab archive sweep
+
+# Tj, 2026-10-09: "save the data and research to GitHub ... no data is lost". The lab-data branch keeps only 7 days. lab-record.yml uploads every run's journals to a lab-archive-YYYY-MM-DD Release as it
+# finishes; THIS sweep is the safety net underneath it: once a day (and on demand) it uploads whatever the lab-data branch holds (archive/<date>/*.gz, state/*.jsonl as a gzip, latest.txt) to the
+# release of its date, --clobber so a re-run is harmless. Nothing is ever deleted. Rules: research/lab/STEWARD.md.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "37 7 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lab-archive-sweep
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: lab-data
+          fetch-depth: 1
+      - name: Upload what the lab-data branch holds to the lab-archive releases
+        run: |
+          set -e
+          TODAY="$(date -u +%Y-%m-%d)"; NOW="$(date -u +%H%M)"
+          mkdir -p sweep
+          # every archive day on the branch
+          for d in archive/*/; do
+            [ -d "$d" ] || continue
+            day="$(basename "$d")"
+            tag="lab-archive-$day"
+            if ! gh release view "$tag" >/dev/null 2>&1; then
+              gh release create "$tag" --title "Research lab archive $day" --prerelease --latest=false --target main --notes "Raw research-lab journals of $day (UTC). Permanent: see research/lab/STEWARD.md. Do not delete."
+            fi
+            gh release upload "$tag" "$d"* --clobber
+          done
+          # the state journals and the newest report, under today's release, as a dated gzip
+          tag="lab-archive-$TODAY"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --title "Research lab archive $TODAY" --prerelease --latest=false --target main --notes "Raw research-lab journals of $TODAY (UTC). Permanent: see research/lab/STEWARD.md. Do not delete."
+          fi
+          if [ -d state ]; then tar -czf "sweep/state-$TODAY-$NOW.tar.gz" state; fi
+          if [ -f latest.txt ]; then gzip -9 -c latest.txt > "sweep/report-sweep-$TODAY-$NOW.txt.gz"; fi
+          if ls sweep/* >/dev/null 2>&1; then gh release upload "$tag" sweep/* --clobber; fi
+          gh release list --limit 20
