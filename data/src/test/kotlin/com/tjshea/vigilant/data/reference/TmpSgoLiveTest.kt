@@ -31,7 +31,7 @@ class TmpSgoLiveTest {
         val rep = Scanner(novig).scan(s, listOf(games))
         val ops = rep.result?.games.orEmpty().flatMap { it.outcomes }
         println("TMP scan outcomes=${ops.size} withFair=${ops.count { it.fairProbability != null }} booksDist=${ops.filter { it.fair != null }.groupBy { it.fair!!.booksUsed.size }.mapValues { it.value.size }}")
-        println("TMP report errors: ${rep.errors}  notes: ${rep.notes}")
+        println("TMP report errors: ${rep.errors} sources: ${rep.sources}")
         ops.filter { it.fair != null }.take(4).forEach { println("TMP ${it.eventName} ${it.selection} fair=${it.fairProbability} books=${it.fair!!.booksUsed} asof=${it.fairAsOfMs}") }
     }
 }
