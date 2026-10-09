@@ -5684,3 +5684,12 @@ Even the new version is crashing automatically as soon as I open it
 ```
 The app is released but it still crashes when I open it
 ```
+
+## 2026-10-09T04:38:04Z
+```
+There is still no research mode in settings
+I turned too many things on and now the app is crashing. I can't even open it now because it crashes as soon as I open it. I need a fix because I can't even access any settings because as soon as I open it it closes again. I think it is because I turned on all the research settings first then I turned on auto bid 
+It happened when I turned all the research toggles on then immediately after I toggled on auto bid
+I think it was just too much stuff running at the same time and it tries to run it all again on start up
+Can't you just make it turn everything off as soon as it starts 
+```
