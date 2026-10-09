@@ -46,9 +46,11 @@ class OtherBooks(
     private val json: Json,
     private val on: suspend () -> Sources,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** SportsGameOdds Pro (Tj, 2026-10-09): while it is on it is the one source asked, with every book it carries (the paid ones rest: [Sources.sgo]). */
+    private val sgo: SportsGameOddsClient? = null,
 ) {
     /** Which sources may be asked now (on in Settings, with a key). */
-    data class Sources(val parlay: Boolean, val propLine: Boolean, val oddsApi: Boolean)
+    data class Sources(val parlay: Boolean, val propLine: Boolean, val oddsApi: Boolean, val sgo: Boolean = false)
 
     /** One book's price for the bet and its other side (American; null = not offered there), where it came from and when it was seen. */
     data class Line(val book: String, val odds: Int?, val otherOdds: Int?, val source: String, val seenAtMs: Long?) {
@@ -99,7 +101,8 @@ class OtherBooks(
         val first = coroutineScope {
             val a = if (s.parlay && parlay != null) async { attempt(PARLAY) { parlayLines(sport, pick, game.home, game.away, startsTs, marketKey) } } else null
             val b = if (s.propLine && propLine != null) async { attempt(PROPLINE) { propLineLines(sport, pick, game.home, game.away, startsTs) } } else null
-            listOfNotNull(a?.await(), b?.await())
+            val c = if (s.sgo && sgo != null) async { attempt(SGO) { sgoLines(sport, pick, game.home, game.away, startsTs) } } else null
+            listOfNotNull(a?.await(), b?.await(), c?.await())
         }
         val tried = first.toMutableList()
         // The Odds API costs credits per call: only when neither found another book.
@@ -169,6 +172,39 @@ class OtherBooks(
             .filter { it.odds != null || it.otherOdds != null }
     }
 
+    // ---- SportsGameOdds: that player's over/under at every book it carries, main and alternate lines -----------------------------------------
+
+    private suspend fun sgoLines(sport: String, pick: BetGrader.Pick.Prop, home: String, away: String, startsTs: Long?): List<Line> {
+        val client = sgo!!
+        val league = Leagues.ALL.firstOrNull { it.oddsApiSportKey == sport && SgoBooks.supports(it) } ?: return emptyList()
+        val leagueId = SgoBooks.leagueId(league) ?: return emptyList()
+        val kind = SgoConvert.Sport.of(leagueId)
+        val stat = SgoProps.statIds(kind).firstOrNull { SgoProps.novigStat(kind, it) == pick.stat } ?: return emptyList()
+        val now = clock()
+        val from = (startsTs ?: now) - SGO_WINDOW_MS
+        val to = (startsTs ?: now) + (if (startsTs == null) 3 * 86_400_000L else SGO_WINDOW_MS)
+        val events = client.eventsAll(
+            listOf("leagueID" to leagueId, "startsAfter" to from.toString(), "startsBefore" to to.toString(), "limit" to SportsGameOddsClient.PAGE.toString(), "includeAltLines" to "true",
+                "oddID" to "$stat-PLAYER_ID-game-ou-over,$stat-PLAYER_ID-game-ou-under"),
+            maxPages = 2,
+        ).events
+        val game = gameOf(events.map { Triple(it.home, it.away, it.startsMs) }, home, away, startsTs) ?: return emptyList()
+        val event = events.firstOrNull { sameGame(it.home, it.away, it.startsMs, game) } ?: return emptyList()
+        val player = event.players.values.firstOrNull { PlayerNames.same(it.name, pick.player) } ?: return emptyList()
+        val over = event.odds.firstOrNull { it.statId == stat && it.entityId == player.id && it.betType == "ou" && it.sideId == "over" }
+        val under = event.odds.firstOrNull { it.statId == stat && it.entityId == player.id && it.betType == "ou" && it.sideId == "under" }
+        fun SgoOdd?.at(book: String): SgoLine? = this?.byBook?.get(book)?.firstOrNull { it.available && it.american != null && it.point?.let { p -> abs(p - pick.line) < 1e-6 } == true }
+        return (over?.byBook?.keys.orEmpty() + under?.byBook?.keys.orEmpty()).toSet().filter { it !in SgoBooks.EXCLUDED }.mapNotNull { book ->
+            val o = over.at(book)
+            val u = under.at(book)
+            val mine = if (pick.over) o else u
+            val other = if (pick.over) u else o
+            if (mine == null && other == null) return@mapNotNull null
+            val seen = listOfNotNull(mine?.updatedMs, other?.updatedMs).minOrNull()
+            Line(SgoBooks.appKey(book), mine?.american?.let { it.roundToInt() }, other?.american?.let { it.roundToInt() }, SGO, seen)
+        }
+    }
+
     // ---- PropLine: the game's board for that market, every sportsbook it carries --------------------------------------------------------------
 
     private suspend fun propLineLines(sport: String, pick: BetGrader.Pick.Prop, home: String, away: String, startsTs: Long?): List<Line> {
@@ -197,6 +233,8 @@ class OtherBooks(
     }
 
     companion object {
+        const val SGO = "SportsGameOdds"
+        private const val SGO_WINDOW_MS = 6 * 3_600_000L
         const val PARLAY = "ParlayAPI"
         const val PROPLINE = "PropLine"
         const val ODDS_API = "The Odds API"

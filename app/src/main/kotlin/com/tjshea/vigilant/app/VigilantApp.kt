@@ -1348,12 +1348,15 @@ class AppContainer(private val app: Application) {
      */
     val otherBooks = com.tjshea.vigilant.data.reference.OtherBooks(parlayOdds, propLine, oddsApi, json, on = {
         val s = currentSettings()
+        // SportsGameOdds Pro carries every book these three do, in one read: while it answers it is the only one asked (and falls back to them if it is down).
+        val sgo = s.vigilantOn && sgoActive(s)
         com.tjshea.vigilant.data.reference.OtherBooks.Sources(
-            parlay = s.vigilantOn && parlayActive(),
-            propLine = s.vigilantOn && s.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty(),
-            oddsApi = s.vigilantOn && s.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty(),
+            parlay = !sgo && s.vigilantOn && parlayActive(),
+            propLine = !sgo && s.vigilantOn && s.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty(),
+            oddsApi = !sgo && s.vigilantOn && s.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty(),
+            sgo = sgo,
         )
-    })
+    }, sgo = sgoClient)
 
     /**
      * Moves keys saved by v0.6.0 and earlier (encrypted with a Keystore key, which a backup
