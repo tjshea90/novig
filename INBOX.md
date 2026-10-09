@@ -5703,3 +5703,8 @@ Can't you just make it turn everything off as soon as it starts
 ```
 Should I turn on the research now even though there are no live games
 ```
+
+## 2026-10-09T05:44:34Z
+```
+Does the research cover make bids? I want to focus on them
+```
