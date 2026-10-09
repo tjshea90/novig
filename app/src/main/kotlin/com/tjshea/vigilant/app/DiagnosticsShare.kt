@@ -132,6 +132,20 @@ object DiagnosticsShare {
         return file
     }
 
+    /** The SportsGameOdds key test's sample (summary + the raw answer), kept like the others: the newest [KEEP]. */
+    fun writeSgoSample(context: Context, name: String, text: String): File {
+        val dir = dir(context).apply { mkdirs() }
+        val file = File(dir, name)
+        file.writeText(text)
+        dir.listFiles { f -> f.isFile && f.name.startsWith(SGO_PREFIX) }?.sortedByDescending { it.lastModified() }?.drop(KEEP)?.forEach { runCatching { it.delete() } }
+        return file
+    }
+
+    fun sgoIntent(context: Context, file: File, versionName: String): Intent =
+        share(context, file, "Vigilant SportsGameOdds sample (v$versionName)", "This is the SportsGameOdds key test's sample from Vigilant: a summary, then SGO's raw answer for two games. Please check Vigilant's SGO parser against it (SPORTSGAMEODDS_API.md §7).", "Share SportsGameOdds sample")
+
+    const val SGO_PREFIX = "vigilant-sgo-sample-"
+
     fun researchIntent(context: Context, file: File, versionName: String): Intent =
         share(context, file, "Vigilant research file (v$versionName)", com.tjshea.vigilant.data.novig.lab.LabExport.PROMPT, "Share research file")
 

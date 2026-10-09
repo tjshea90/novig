@@ -208,6 +208,10 @@ data class UiState(
     val pinnKeyNote: String? = null,
     val pinnKeyOk: Boolean? = null,
     val pinnKeyBusy: Boolean = false,
+    /** SportsGameOdds Pro's Test key (Settings › SportsGameOdds Pro): the answer (null = not tested), whether it passed, and that a test is running. */
+    val sgoKeyNote: String? = null,
+    val sgoKeyOk: Boolean? = null,
+    val sgoKeyBusy: Boolean = false,
 ) {
     /**
      * The +EV feed as of [now]: without EVs whose other books' prices are over a few minutes old
@@ -1839,6 +1843,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 null -> "The test could not run." to false
             }
             _state.update { it.copy(pinnKeyBusy = false, pinnKeyNote = note, pinnKeyOk = ok) }
+        }
+    }
+
+    /**
+     * Settings › SportsGameOdds Pro › Test key: the key's real limits and one small read of two games (alternates and open/close odds on), said in words; the raw answer is kept as a sample in
+     * Downloads/Vigilant (and shared when [share]) so the parser can be checked against what the key really returns (SPORTSGAMEODDS_API.md §7).
+     */
+    fun testSgoKey(share: Boolean = false) {
+        _state.update { it.copy(sgoKeyBusy = true, sgoKeyNote = null, sgoKeyOk = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching { com.tjshea.vigilant.data.reference.SgoKeyTest.run(c.sgoClient) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }.getOrNull()
+            val error = if (r == null) "The test could not run." else null
+            if (r != null && r.sample.isNotEmpty()) {
+                val app = getApplication<Application>()
+                val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
+                val intent = withContext(Dispatchers.IO) {
+                    runCatching {
+                        val file = DiagnosticsShare.writeSgoSample(app, DiagnosticsShare.SGO_PREFIX + java.time.Instant.now().toString().replace(':', '-') + ".txt", r.summary + "\n\n----- raw answer -----\n" + r.sample.take(600_000))
+                        runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
+                        DiagnosticsShare.sgoIntent(app, file, info?.versionName ?: "?")
+                    }.getOrNull()
+                }
+                if (share && intent != null) shares.send(intent)
+            }
+            _state.update { it.copy(sgoKeyBusy = false, sgoKeyNote = r?.summary ?: error, sgoKeyOk = r?.ok == true) }
         }
     }
 
