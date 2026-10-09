@@ -864,6 +864,7 @@ private fun VigilantRoot(
                         onPinnShown = vm::refreshPinnLive,
                         onTestPinnKey = vm::testPinnoddsKey,
                         onTestSgoKey = { share -> vm.testSgoKey(share) },
+                        onTestOpKey = { share -> vm.testOpKey(share) },
                         onShareFeedRace = vm::shareFeedRace,
                         onShareResearch = vm::shareResearch,
                         onFeedRaceShown = vm::refreshFeedRace,

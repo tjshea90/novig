@@ -146,6 +146,20 @@ object DiagnosticsShare {
 
     const val SGO_PREFIX = "vigilant-sgo-sample-"
 
+    /** The OddsPapi key test's sample (summary + the raw answers), kept like the others: the newest [KEEP]. */
+    fun writeOpSample(context: Context, name: String, text: String): File {
+        val dir = dir(context).apply { mkdirs() }
+        val file = File(dir, name)
+        file.writeText(text)
+        dir.listFiles { f -> f.isFile && f.name.startsWith(OP_PREFIX) }?.sortedByDescending { it.lastModified() }?.drop(KEEP)?.forEach { runCatching { it.delete() } }
+        return file
+    }
+
+    fun opIntent(context: Context, file: File, versionName: String): Intent =
+        share(context, file, "Vigilant OddsPapi sample (v$versionName)", "This is the OddsPapi key test's sample from Vigilant: a summary, then OddsPapi's raw answers (books, a league's main lines, one game in depth, the closing-line endpoint). Please check Vigilant's OddsPapi parser and market table against it (ODDSPAPI_API.md §8).", "Share OddsPapi sample")
+
+    const val OP_PREFIX = "vigilant-oddspapi-sample-"
+
     fun researchIntent(context: Context, file: File, versionName: String): Intent =
         share(context, file, "Vigilant research file (v$versionName)", com.tjshea.vigilant.data.novig.lab.LabExport.PROMPT, "Share research file")
 

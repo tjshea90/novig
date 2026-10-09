@@ -133,6 +133,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** SportsGameOdds Pro: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). */
     SGO("SportsGameOdds Pro", "One paid feed for odds, props, closing lines and results; the feeds it replaces rest", SettingsGroup.FIND),
 
+    /** OddsPapi v5: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). */
+    ODDSPAPI("OddsPapi", "A second paid feed for odds, props, closing lines (CLV for any bet) and results; the feeds it replaces rest", SettingsGroup.FIND),
+
     /** The floating widget and the picture-in-picture window. */
     WIDGET("Widget & mini window", "The small window that floats over other apps", SettingsGroup.SCREEN),
 
@@ -150,7 +153,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR, USAGE -> s.vigilantOn
-        ALERTS, RESEARCH, SGO -> AppBook.isNovig
+        ALERTS, RESEARCH, SGO, ODDSPAPI -> AppBook.isNovig
         PINNODDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
     }
@@ -206,6 +209,11 @@ object SettingsSummary {
             SettingsPage.SGO -> when {
                 state.sgoKeys.isEmpty() -> "No key saved"
                 s.sgoPro -> "On: ${state.sgoKeys.size} key${if (state.sgoKeys.size == 1) "" else "s"}, the paid feeds it replaces rest"
+                else -> "Off (key saved)"
+            }
+            SettingsPage.ODDSPAPI -> when {
+                state.opKeys.isEmpty() -> "No key saved"
+                s.oddsPapi -> "On: ${state.opKeys.size} key${if (state.opKeys.size == 1) "" else "s"}, the paid feeds it replaces rest"
                 else -> "Off (key saved)"
             }
             SettingsPage.RESEARCH -> if (s.researchMode) "On: every recorder (nothing is bet)" else if (s.altLab) "Paper lab on" else "Off"
@@ -327,6 +335,7 @@ fun SettingsScreen(
                 SettingsPage.PINNODDS -> PinnLiveSection(state, keys, reportActions, onUpdate)
                 SettingsPage.RESEARCH -> ResearchPage(state, reportActions, onUpdate)
                 SettingsPage.SGO -> SgoPage(state, keys, reportActions, onUpdate)
+                SettingsPage.ODDSPAPI -> OddsPapiPage(state, keys, reportActions, onUpdate)
                 SettingsPage.USAGE -> UsageTab(state, keys)
                 SettingsPage.HELP -> ToolsTab(state, reportActions, onUpdate)
             }
@@ -1228,6 +1237,37 @@ private fun ColumnScope.SgoPage(state: UiState, keys: KeyActions, reportActions:
         ChoiceChips(ScanSettings.SGO_MAX_AGE_CHOICES.map { it.toDouble() }, s.sgoMaxAgeMinutes.toDouble(), { "${it.toInt()} min" }) { v -> onUpdate { it.copy(sgoMaxAgeMinutes = v.toInt()) } }
         Hint("A bet or bid is dropped once the odds behind it are this old (SGO Pro only; off, the app's own 5/10-minute rule). SGO refreshes game lines about every 5 minutes and props about every 10, so with 10 minutes there can be gaps with no bids; 15 closes most of them.")
         Hint(com.tjshea.vigilant.app.SgoText.REPLACES)
+    }
+}
+
+/**
+ * Settings › OddsPapi (Tj, 2026-10-09; ODDSPAPI_API.md): the key list (rotated like every provider's), a Test key that says what the key really carries and saves a sample for Claude, and the one
+ * switch. On, the scan, bids, open-bet pricing, closing lines (CLV for any bet) and grading read OddsPapi and the paid feeds that sell the same thing rest (tennis keeps them). Off: the app as it was.
+ */
+@Composable
+private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    Intro(com.tjshea.vigilant.app.OpText.INTRO)
+    KeyListEditor(ApiProvider.ODDSPAPI, state.opKeys, keys, "Add an OddsPapi key")
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        Button(onClick = { reportActions.onTestOpKey(false) }, enabled = state.opKeys.isNotEmpty() && !state.opKeyBusy, modifier = Modifier.testTag("opTestKey")) {
+            Text(if (state.opKeyBusy) "Testing…" else "Test key")
+        }
+        androidx.compose.material3.OutlinedButton(onClick = { reportActions.onTestOpKey(true) }, enabled = state.opKeys.isNotEmpty() && !state.opKeyBusy, modifier = Modifier.testTag("opShareSample")) {
+            Text("Test and share sample")
+        }
+    }
+    state.opKeyNote?.let {
+        Text(
+            it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("opKeyNote"),
+            color = if (state.opKeyOk == true) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+        )
+    }
+    SwitchRow(com.tjshea.vigilant.app.OpText.SWITCH_TITLE, com.tjshea.vigilant.app.OpText.switchSub(state.opKeys.isNotEmpty()), s.oddsPapi, tag = "oddsPapiSwitch") { v -> onUpdate { it.copy(oddsPapi = v) } }
+    if (s.oddsPapi) {
+        SwitchRow("Extra books: Circa, SuperBook, bet365", "Price the fair line with them too (each must show both sides and be fresh, like every book).", s.opExtraBooks, tag = "opExtraSwitch") { v -> onUpdate { it.copy(opExtraBooks = v) } }
+        SwitchRow("Alternate lines", "Read every game in depth for each book's alternate spreads and totals (one request a game). Off: the main lines of a whole league come in one request.", s.opAltLines, tag = "opAltSwitch") { v -> onUpdate { it.copy(opAltLines = v) } }
+        Hint(com.tjshea.vigilant.app.OpText.REPLACES)
     }
 }
 

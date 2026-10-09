@@ -132,6 +132,7 @@ data class UiState(
     val parlayKeys: List<String> = emptyList(),
     val pinnoddsKeys: List<String> = emptyList(),
     val sgoKeys: List<String> = emptyList(),
+    val opKeys: List<String> = emptyList(),
     /** Every provider's usage ledger, updated after each call (the meters). */
     val usage: UsageBook = UsageBook(),
     val bets: List<TrackedBet> = emptyList(),
@@ -212,6 +213,9 @@ data class UiState(
     val sgoKeyNote: String? = null,
     val sgoKeyOk: Boolean? = null,
     val sgoKeyBusy: Boolean = false,
+    val opKeyNote: String? = null,
+    val opKeyOk: Boolean? = null,
+    val opKeyBusy: Boolean = false,
 ) {
     /**
      * The +EV feed as of [now]: without EVs whose other books' prices are over a few minutes old
@@ -248,6 +252,7 @@ data class UiState(
         ApiProvider.PARLAY -> parlayKeys
         ApiProvider.PINNODDS -> pinnoddsKeys
         ApiProvider.SPORTSGAMEODDS -> sgoKeys
+        ApiProvider.ODDSPAPI -> opKeys
     }
 
     /** This state with [provider]'s keys replaced. */
@@ -259,6 +264,7 @@ data class UiState(
         ApiProvider.PARLAY -> copy(parlayKeys = keys)
         ApiProvider.PINNODDS -> copy(pinnoddsKeys = keys)
         ApiProvider.SPORTSGAMEODDS -> copy(sgoKeys = keys)
+        ApiProvider.ODDSPAPI -> copy(opKeys = keys)
     }
 
     /** Novig's live price for [row], when that setting is on and it was read in the last minute (never in Vigilant MGM). */
@@ -1873,6 +1879,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Settings › OddsPapi › Test key: the key's books, the tournaments and markets it carries, one league's main lines and one game in depth, said in words; the raw answers are kept as a sample in
+     * Downloads/Vigilant (and shared when [share]) so the parser can be checked against what the key really returns (ODDSPAPI_API.md §8).
+     */
+    fun testOpKey(share: Boolean = false) {
+        _state.update { it.copy(opKeyBusy = true, opKeyNote = null, opKeyOk = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching { com.tjshea.vigilant.data.reference.OpKeyTest.run(c.opClient) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }.getOrNull()
+            val error = if (r == null) "The test could not run." else null
+            if (r != null && r.sample.isNotEmpty()) {
+                val app = getApplication<Application>()
+                val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
+                val intent = withContext(Dispatchers.IO) {
+                    runCatching {
+                        val file = DiagnosticsShare.writeOpSample(app, DiagnosticsShare.OP_PREFIX + java.time.Instant.now().toString().replace(':', '-') + ".txt", r.summary + "\n\n----- raw answers -----\n" + r.sample.take(900_000))
+                        runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
+                        DiagnosticsShare.opIntent(app, file, info?.versionName ?: "?")
+                    }.getOrNull()
+                }
+                if (share && intent != null) shares.send(intent)
+            }
+            _state.update { it.copy(opKeyBusy = false, opKeyNote = r?.summary ?: error, opKeyOk = r?.ok == true) }
+        }
+    }
+
     /** Reads the live feed test's line for Settings › Diagnostics & about (the page asks every few seconds while it is open). */
     fun refreshFeedRace() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -2095,6 +2128,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     c.sgoClient.lastNotice?.let { add("plan notice: $it") }
                     c.sgoClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
                     c.sgoClient.lastUsage?.let { add("limits at the last key test: $it") }
+                }
+            }.getOrNull(),
+            opReport = runCatching {
+                val keys = keysFor(ApiProvider.ODDSPAPI).size
+                if (keys == 0 && !_state.value.settings.oddsPapi) null else buildList<String> {
+                    val st = _state.value.settings
+                    add("switch ${if (st.oddsPapi) "ON" else "off"} · $keys key${if (keys == 1) "" else "s"} · extra books ${if (st.opExtraBooks) "on" else "off"} · alternate lines ${if (st.opAltLines) "on" else "off"} · active now: ${c.opActive(st)}")
+                    add("health: ${c.opClient.health()}")
+                    c.opClient.lastRemaining?.let { add("rate limit left (last answer): $it") }
+                    c.opClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
                 }
             }.getOrNull(),
             labReport = runCatching {

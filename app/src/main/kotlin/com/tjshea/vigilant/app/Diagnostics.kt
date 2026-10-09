@@ -63,6 +63,8 @@ object Diagnostics {
         val labReport: List<String>? = null,
         /** SportsGameOdds Pro (SPORTSGAMEODDS_API.md): the switch, the keys, whether it is answering and what each league's last read brought. Null when no key is saved. */
         val sgoReport: List<String>? = null,
+        /** OddsPapi (ODDSPAPI_API.md): the switch, the keys, whether it is answering and what each league's last read brought. Null when no key is saved. */
+        val opReport: List<String>? = null,
         /** The live burst recorder (no orders; RESEARCH.md §95): its status line and its report from the journal; null when it was never on and has recorded nothing. */
         val burstReport: String? = null,
         val pinnReport: String? = null,
@@ -227,6 +229,7 @@ object Diagnostics {
         x.pinnReport?.let { r -> o.appendLine(); o.append(r) }
         x.feedRace?.let { lines -> o.appendLine(); o.appendLine("== LIVE FEED TEST (which free feed shows a score or odds move before Novig's price; no orders; RESEARCH.md §106) =="); lines.forEach { o.appendLine(it) } }
         x.sgoReport?.let { lines -> o.appendLine(); o.appendLine("== SPORTSGAMEODDS PRO (SPORTSGAMEODDS_API.md) =="); lines.forEach { o.appendLine(it) } }
+        x.opReport?.let { lines -> o.appendLine(); o.appendLine("== ODDSPAPI (ODDSPAPI_API.md) =="); lines.forEach { o.appendLine(it) } }
         x.labReport?.let { lines -> o.appendLine(); o.appendLine("== PAPER LAB (ladder covers, late-game tail strikes, alternate lines; no orders; RESEARCH.md §120.6) =="); lines.forEach { o.appendLine(it) } }
         MakerStats.line(x.makerBids, now)?.let { o.appendLine("  $it") }
         MakerStats.recent(x.makerBids, now).forEach { o.appendLine("  $it") }

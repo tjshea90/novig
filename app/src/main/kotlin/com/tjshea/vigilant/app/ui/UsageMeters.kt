@@ -42,6 +42,7 @@ fun providerFor(policy: QuotaPolicy): ApiProvider? = when (policy.id) {
     QuotaPolicy.PROPLINE.id -> ApiProvider.PROPLINE
     QuotaPolicy.PARLAY.id -> ApiProvider.PARLAY
     QuotaPolicy.SGO.id -> ApiProvider.SPORTSGAMEODDS
+    QuotaPolicy.ODDSPAPI.id -> ApiProvider.ODDSPAPI
     else -> null
 }
 
@@ -59,6 +60,7 @@ fun meterViews(state: UiState, now: Long): List<ProviderView> =
     // SportsGameOdds' card appears only once there is a key or the switch is on: with the feature unused the page is exactly what it was.
     QuotaPolicy.ALL.filter { AppBook.isNovig || it.id != QuotaPolicy.NOVIG.id }
         .filter { it.id != QuotaPolicy.SGO.id || state.sgoKeys.isNotEmpty() || state.settings.sgoPro }
+        .filter { it.id != QuotaPolicy.ODDSPAPI.id || state.opKeys.isNotEmpty() || state.settings.oddsPapi }
         .map { p -> UsageViews.build(p, keysFor(state, p), state.usage.providers[p.id], now, if (p.id == QuotaPolicy.PARLAY.id) PARLAY_PACE else null) }
 
 /** ParlayAPI's scans spend a day's share at most (Tj's Starter plan, RESEARCH.md §43): the meter says how much is left today. */

@@ -44,6 +44,8 @@ data class ReportActions(
     val onTestPinnKey: () -> Unit = {},
     /** SportsGameOdds Pro: test the key (and, with true, share the sample it saved). */
     val onTestSgoKey: (Boolean) -> Unit = {},
+    /** OddsPapi: test the key (and, with true, share the sample it saved). */
+    val onTestOpKey: (Boolean) -> Unit = {},
     /** The live feed test (Tj, 2026-10-07): make its file and share it, and read the line that says what it is doing. */
     val onShareFeedRace: () -> Unit = {},
     val onShareResearch: () -> Unit = {},
