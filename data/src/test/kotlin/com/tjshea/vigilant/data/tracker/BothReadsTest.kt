@@ -34,7 +34,8 @@ class BothReadsTest {
 
     @get:Rule val tmp = TemporaryFolder()
     private var now = Fixtures.START_MS - 86_400_000L
-    private val settings = ScanSettings(fairSource = FairSource.SHARP, minEvPercent = 0.0)
+    // The wide-quote guard is off here: this test swaps one side of Pinnacle's price for 1.60 on its own, which is a 24% hold (the test is about reads, not about quotes).
+    private val settings = ScanSettings(fairSource = FairSource.SHARP, minEvPercent = 0.0, ignoreWideQuotes = false)
 
     private fun scan(pinDal: Double = 2.45): ScanResult {
         val event = NovigEvent(Fixtures.EVENT_ID, "FOOTBALL", "NFL", "OPEN_PREGAME", "Baltimore Ravens @ Dallas Cowboys", Fixtures.START_MS)
