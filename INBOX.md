@@ -5985,3 +5985,8 @@ Build a live bid feature for live betting on novig. The feature must have strong
 ```
 I want to run this very soon with real money, but it will be ⅛ Kelly or something small. Build it for real money
 ```
+
+## 2026-10-10T05:14:38Z
+```
+It isn't posting any live bids at all
+```
