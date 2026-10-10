@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.LiveBidText
+import com.tjshea.vigilant.app.TailText
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.livebid.LiveAutopilot
 import com.tjshea.vigilant.data.livebid.LiveBidLimits
@@ -70,7 +71,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
         (if (pilot) "In force" + (if (LiveAutopilot.real(s)) ": REAL orders." else ": paper (nothing is sent).") else "Not in force: the two engines are set separately below and in Pinnodds live.") ,
         style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 4.dp).testTag("liveAutopilotState"),
     )
-    Text(LiveBidText.autopilotStatus(s, state.pinnTrade, state.liveBidStatus, state.pinnLive), style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("liveAutopilotStatus"))
+    Text(LiveBidText.autopilotStatus(s, state.pinnTrade, state.liveBidStatus, state.pinnLive, state.tailTrade, state.labStatus), style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("liveAutopilotStatus"))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         OutlinedButton(onClick = { onUpdate { LiveAutopilot.apply(it, real = false) } }, modifier = Modifier.testTag("liveAutopilotPaper")) { Text("Autopilot: paper") }
         Button(onClick = { confirmingPilot = true }, modifier = Modifier.testTag("liveAutopilotReal")) { Text("Autopilot: real money") }
@@ -118,6 +119,46 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     }
     Text(LiveBidText.detail(s, state.liveBidStatus, state.pinnLive), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp).testTag("liveBidDetail"))
     if (state.pinnoddsKeys.isEmpty()) Text("No Pinnodds key is saved: add it in Settings › Pinnodds live. Live bids use the same feed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidNoKey"))
+
+    // ---- live tail bets ----------------------------------------------------------------------------------------------------------------------------------------------------------
+    var confirmingTail by remember { mutableStateOf(false) }
+    SectionTitle(TailText.TITLE)
+    LbHint(TailText.HINT)
+    LbSwitch("Look for tail bets", "Reads the live games' strikes and writes down what it would buy (paper). Needs no Pinnodds key.", s.tailLive, "tailLiveSwitch") { v -> onUpdate { it.copy(tailLive = v, tailLiveBet = it.tailLiveBet && v) } }
+    s.tailLiveHalted?.let { why ->
+        Column(Modifier.padding(vertical = 4.dp).testTag("tailLiveHalted")) {
+            Text("Stopped: $why", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            Button(onClick = { onUpdate { it.copy(tailLiveHalted = null) } }, modifier = Modifier.testTag("tailLiveResume")) { Text(LiveBidText.RESUME) }
+        }
+    }
+    Row(
+        Modifier.fillMaxWidth().toggleable(
+            value = s.tailLiveBet, role = Role.Switch,
+            onValueChange = { v -> if (!v) onUpdate { it.copy(tailLiveBet = false) } else if (s.tailLive) confirmingTail = true },
+        ).padding(vertical = 6.dp).testTag("tailLiveRealSwitch"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text("Buy tail bets with real money", style = MaterialTheme.typography.bodyMedium)
+            Text("One immediate-or-cancel order per bet, sized by the stake below and held to the caps below.", style = MaterialTheme.typography.bodySmall, color = subtle)
+        }
+        Switch(checked = s.tailLiveBet, onCheckedChange = null, enabled = s.tailLive || s.tailLiveBet)
+    }
+    Text(TailText.statusLine(s, state.tailTrade, state.labStatus), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("tailLiveNote"))
+    LbDollars("Tail bet stake", listOf(1.0, 2.0, 3.0, 5.0), s.tailLiveStake, "tailLiveStake", 1.0, 25.0) { v -> onUpdate { it.copy(tailLiveStake = v) } }
+    LbDollars("Most on one game", listOf(2.0, 3.0, 5.0, 10.0, 25.0), s.tailLiveMaxGame, "tailLiveMaxGame", 1.0, 1_000.0) { v -> onUpdate { it.copy(tailLiveMaxGame = v) } }
+    LbDollars("Most in a day", listOf(5.0, 10.0, 20.0, 40.0, 100.0), s.tailLiveMaxDay, "tailLiveMaxDay", 1.0, 10_000.0) { v -> onUpdate { it.copy(tailLiveMaxDay = v) } }
+    LbDollars("Stop for the day when settled tail bets lose", listOf(3.0, 5.0, 10.0, 25.0), s.tailLiveHaltLoss, "tailLiveHaltLoss", 1.0, 10_000.0) { v -> onUpdate { it.copy(tailLiveHaltLoss = v) } }
+    LbPercent("Smallest edge after Novig's fee", listOf(0.03, 0.05, 0.07, 0.10), s.tailLiveMinEdge, "tailLiveMinEdge", 1.0, 30.0) { v -> onUpdate { it.copy(tailLiveMinEdge = v) } }
+    if (confirmingTail) {
+        AlertDialog(
+            onDismissRequest = { confirmingTail = false },
+            title = { Text(TailText.CONFIRM_TITLE) },
+            text = { Text(TailText.confirm(s)) },
+            confirmButton = { TextButton(onClick = { confirmingTail = false; onUpdate { it.copy(tailLiveBet = true, tailLiveHalted = null) } }, modifier = Modifier.testTag("tailLiveRealConfirm")) { Text("Turn on") } },
+            dismissButton = { TextButton(onClick = { confirmingTail = false }, modifier = Modifier.testTag("tailLiveRealCancel")) { Text("Cancel") } },
+        )
+    }
 
     // ---- presets ----------------------------------------------------------------------------------------------------------------------------------------------------------------
     SectionTitle("Live bid presets")

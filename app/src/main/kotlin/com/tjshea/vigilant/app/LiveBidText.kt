@@ -155,22 +155,27 @@ object LiveBidText {
     // ---- the live autopilot ----------------------------------------------------------------------------------------------------------------------------------------------------
 
     const val AUTOPILOT_TITLE = "Live autopilot"
-    const val AUTOPILOT_HINT = "One tap runs both live engines together on the Pinnacle feed, across every live game it can match: the taker buys Novig prices that lag Pinnacle's fair by 4% or more after Novig's fee (after a score, or an order left up at Pinnacle's earlier price), and the bid desk keeps as many bids up at 3% under Pinnacle's fair as the wallet carries. Your stakes, game and day caps and loss halts stay as you set them."
+    const val AUTOPILOT_HINT = "One tap runs all three live engines together, across every live game they can match: the taker buys Novig prices that lag Pinnacle's fair by 4% or more after Novig's fee (after a score, or an order left up at Pinnacle's earlier price), the bid desk keeps as many bids up at 3% under Pinnacle's fair as the wallet carries, and the tail bettor buys far strikes a nearly decided game still has on offer (it needs no Pinnacle price). Your stakes, game and day caps and loss halts stay as you set them."
     const val AUTOPILOT_CONFIRM_TITLE = "Run the live autopilot with real money?"
 
     fun autopilotConfirm(s: ScanSettings): String {
         val l = s.liveBidLimits
         return "Both live engines will place real orders on Novig by themselves. The taker buys at most ${money(s.pinnLiveStake)} a bet, ${money(s.pinnLiveMaxGame)} a game and ${money(s.pinnLiveMaxDay)} a day; it stops if live bets lose ${money(s.pinnLiveHaltLoss)}. " +
             "The bid desk fills the wallet with bids (${l.stakeMode.label} of your ${money(s.bankroll)} bankroll, ${money(l.minStake)}-${money(l.maxStake)} a bid, keeping ${money(l.walletReserve)} in the wallet) and stops if live bids lose ${money(l.haltLoss)}. " +
-            "Pinnacle's price is an estimate of the true chance, so any single bet can lose; each is positive expected value, not a sure thing, and a 3% edge is thin. The live Pinnodds feed it all depends on ends with your trial tonight (23:34Z). " +
+            "The tail bettor buys at most ${money(s.tailLiveStake)} a bet, ${money(s.tailLiveMaxGame)} a game and ${money(s.tailLiveMaxDay)} a day and stops if tail bets lose ${money(s.tailLiveHaltLoss)}. " +
+            "Pinnacle's price is an estimate of the true chance, so any single bet can lose; each is positive expected value, not a sure thing, and a 3% edge is thin. The taker and the bids depend on the live Pinnodds feed, which ends with your trial tonight (23:34Z); the tail bettor does not. " +
             "Orders take about 5 s to land in play, which is why takers miss; the page shows what filled and why not. Start small."
     }
 
     /** The one-glance status of the autopilot: each engine, what it has done, and where it stands. */
-    fun autopilotStatus(s: ScanSettings, taker: com.tjshea.vigilant.data.pinnodds.LiveTradeStatus, d: LiveBidDeskStatus, r: LiveRunnerStatus): String = buildString {
+    fun autopilotStatus(
+        s: ScanSettings, taker: com.tjshea.vigilant.data.pinnodds.LiveTradeStatus, d: LiveBidDeskStatus, r: LiveRunnerStatus,
+        tail: com.tjshea.vigilant.data.pinnodds.LiveTradeStatus = com.tjshea.vigilant.data.pinnodds.LiveTradeStatus(), lab: com.tjshea.vigilant.data.novig.lab.LabStatus = com.tjshea.vigilant.data.novig.lab.LabStatus(),
+    ): String = buildString {
         val takerMode = when { !s.pinnLive -> "off"; s.pinnLiveHalted != null -> "STOPPED: ${s.pinnLiveHalted}"; s.pinnLiveBet -> "REAL"; else -> "paper" }
         appendLine("Taker: $takerMode · ${taker.bets} bought, ${taker.missed} missed, ${taker.paper} paper, spent ${money(taker.spent)}" + (taker.last?.let { " · last: $it" } ?: ""))
         appendLine("Bids: " + statusLine(d, s))
+        appendLine("Tail: " + TailText.statusLine(s, tail, lab))
         append("Feed: ${r.socket}, ${r.pinnLive} live Pinnacle games, ${r.matched} matched to Novig, ${r.bidTargets} lines watched for bids")
     }
 

@@ -17,7 +17,7 @@ object TailText {
 
     fun confirm(s: ScanSettings): String =
         "The app will buy live tail strikes by itself: at most ${money(s.tailLiveStake)} a bet, ${money(s.tailLiveMaxGame)} a game and ${money(s.tailLiveMaxDay)} a day, only when the model's fair is 92% or more and the edge after Novig's fee is ${pct(s.tailLiveMinEdge)} or more. " +
-            "It stops for the day if tail bets lose ${money(s.tailLiveHaltLoss)}. The model is a rough one (a score or clock from ESPN can be a little behind the game), so a decided-looking bet can still lose; on the paper record the same rules won 18 of 18, but on three games. Start small."
+            "It stops for the day if tail bets lose ${money(s.tailLiveHaltLoss)}. The model is a rough one (a score or clock from ESPN can be a little behind the game), so a decided-looking bet can still lose, and the paper record behind it covers only a handful of games, so there is no real track record yet. Start small."
 
     fun statusLine(s: ScanSettings, t: LiveTradeStatus, lab: LabStatus): String {
         if (!s.tailLive) return "Off."
