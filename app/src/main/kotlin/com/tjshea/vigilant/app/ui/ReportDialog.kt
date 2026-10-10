@@ -52,6 +52,7 @@ data class ReportActions(
     /** The live feed test (Tj, 2026-10-07): make its file and share it, and read the line that says what it is doing. */
     val onShareFeedRace: () -> Unit = {},
     val onShareResearch: () -> Unit = {},
+    val onShareResearchAll: () -> Unit = {},
     val onFeedRaceShown: () -> Unit = {},
 )
 

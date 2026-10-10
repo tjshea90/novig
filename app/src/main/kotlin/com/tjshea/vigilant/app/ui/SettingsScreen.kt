@@ -1295,7 +1295,9 @@ private fun ColumnScope.ResearchPage(state: UiState, reportActions: ReportAction
     SwitchRow(com.tjshea.vigilant.app.LabText.RESEARCH_TITLE, com.tjshea.vigilant.app.LabText.RESEARCH_SUB, state.settings.researchMode, tag = "researchSwitch") { v -> onUpdate { it.copy(researchMode = v) } }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
         androidx.compose.material3.Button(onClick = reportActions.onShareResearch, modifier = Modifier.testTag("shareResearch")) { Text(com.tjshea.vigilant.app.LabText.RESEARCH_BUTTON) }
+        OutlinedButton(onClick = reportActions.onShareResearchAll, modifier = Modifier.testTag("shareResearchAll")) { Text("Share ALL research data") }
     }
+    Hint("Share research file sends only what was recorded since the last time you shared it (the first time: the last 3 days), so it stays under the 30 MB a chat takes. Share ALL sends everything the phone holds and can be much larger.")
     val labShown by androidx.compose.runtime.rememberUpdatedState(reportActions.onFeedRaceShown)
     androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { labShown(); kotlinx.coroutines.delay(5_000) } }
     SectionTitle("Paper lab")

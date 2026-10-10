@@ -1961,9 +1961,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Settings › Diagnostics & about › Share live feed test with Claude (Tj, 2026-10-07): the verdict, the table, every score that moved Novig and the raw tape, as one file saved to Downloads/Vigilant and shared. */
     /** One file with everything the research recorders found (RESEARCH.md §122): the status of each, the paper lab and paper bid tables and their raw journals. */
-    fun shareResearch() {
+    /**
+     * Settings › Research › Share research file with Claude. Only what was recorded SINCE THE LAST SHARE goes in (Tj, 2026-10-10: the whole file was over the 30 MB a chat accepts, and Claude had
+     * already read the older days); [shareResearchAll] sends everything the journals hold. The very first share is the last 3 days.
+     */
+    fun shareResearch() = makeResearch(all = false)
+    fun shareResearchAll() = makeResearch(all = true)
+
+    private fun makeResearch(all: Boolean) {
         viewModelScope.launch {
-            _toasts.tryEmit("Making the research file…")
+            _toasts.tryEmit(if (all) "Making the research file (everything)…" else "Making the research file (since the last share)…")
             val intent = try {
                 withContext(Dispatchers.IO) {
                     val now = System.currentTimeMillis()
@@ -1981,9 +1988,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     status += "Pinnodds: dormant (Tj, 2026-10-09)"
                     runCatching { status += "live feed test: " + FeedRaceText.note(c.feedRace.status.value, now) }
                     runCatching { status += "burst recorder: " + c.burst.status.value.let { "${if (it.running) "running" else "not running"}, ${it.games} games, ${it.windows} windows" } }
+                    val marker = File(app.filesDir, "research-last-share.txt")
+                    val since = if (all) 0L else (runCatching { marker.readText().trim().toLong() }.getOrNull() ?: (now - 3 * 86_400_000L))
+                    status += if (since > 0L) "this file holds what was recorded since ${java.time.Instant.ofEpochMilli(since)} (the last share); the older days were in the earlier file, or press 'Share ALL research data'" else "this file holds EVERYTHING the journals hold"
+                    val recs = c.lab.records().filter { it.atMs >= since }
+                    val keepIds = recs.mapTo(HashSet()) { it.id }
                     val file = DiagnosticsShare.writeResearch(app, com.tjshea.vigilant.data.novig.lab.LabExport.fileName(meta.versionName, now)) { w ->
-                        com.tjshea.vigilant.data.novig.lab.LabExport.write(w, meta, status, c.lab.records(), c.lab.grades(), c.bidLabBidJournal.readAll(), c.bidLabEventJournal.readAll(), now)
+                        com.tjshea.vigilant.data.novig.lab.LabExport.write(
+                            w, meta, status, recs, c.lab.grades().filter { it.atMs >= since || it.id in keepIds },
+                            c.bidLabBidJournal.readAll().filter { it.atMs >= since }, c.bidLabEventJournal.readAll().filter { it.atMs >= since }, now,
+                        )
                     }
+                    runCatching { marker.writeText(now.toString()) }
                     runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
                         .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}") }
                         .onFailure { e -> _toasts.tryEmit("Couldn't save it to Downloads (${e.message ?: e.javaClass.simpleName})") }

@@ -869,6 +869,7 @@ private fun VigilantRoot(
                         onTestOpKey = { share -> vm.testOpKey(share) },
                         onShareFeedRace = vm::shareFeedRace,
                         onShareResearch = vm::shareResearch,
+                        onShareResearchAll = vm::shareResearchAll,
                         onFeedRaceShown = vm::refreshFeedRace,
                     ),
                     onNovigConnect = { typed -> vm.connectNovig(typed) },
