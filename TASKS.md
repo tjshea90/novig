@@ -4443,3 +4443,7 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 
 ## TE: "How can I send you the research mode research file because it is over 30mb" (Tj, 2026-10-10 ~07:45Z)
 - [x] TE1 v0.85.7: Settings › Research › Share research file now sends only what was recorded since the last share (first time: last 3 days); "Share ALL research data" keeps the old everything file. Until it is installed: zip the file (Files app > Compress) and upload it on github.com to the repo (research/uploads/2026-10-10/, Add file > Upload files, up to 25 MB) or attach the zip here.
+
+## TF: Tj attached the research file v0.85.5 (zipped, 2026-10-10 ~07:48Z, no message)
+- [x] TF1 Analysed: research/research_file_2026-10-10/ANALYSIS.md (upload archived in research/uploads/2026-10-10/).
+- [ ] TF2 Offer Tj (with TD2): pregame bids margin ~3%, rest ~2 h, only 1-6 h before the start. Nothing applied until he says.

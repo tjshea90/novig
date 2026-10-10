@@ -20,3 +20,5 @@
 - Old fills in the journals are graded on the next pass once the phone/lab runs v0.84.2 (the GitHub lab restores them from its journals).
 
 - 2026-10-10 (scan study v0.85.3, analysed): `research/scan_study_2026-10-10/ANALYSIS.md`. Against sharp closes the lists find real edge (CLV +1.18%, EV>=2% & start<=6h: +5.2% on 62 bets/46 games, both halves); against Novig's own closes (NFL/MLB props) CLV is -1.2%. Bids: CLV +2.1% (126), 1% picked off, but 12-24 h bids burn 62% of bid-hours for 15% of fills (CLV -0.7%). Decisions for Tj listed in section 6; none applied.
+
+- 2026-10-10 (research file v0.85.5, analysed): `research/research_file_2026-10-10/ANALYSIS.md`. Pregame paper bids: margin 3% resting 2 h = most fills x CLV (126 fills, +3.1%, 13 games); longer rest = 1.7x fills at the same CLV; guard changes nothing; bids 12 h+ out almost never fill (0.6%). Live paper recipes rest on 6 games: nothing to rank. CLV is against the app's own fair: EV at post ~ CLV, so not an independent test.
