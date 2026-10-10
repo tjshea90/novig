@@ -242,4 +242,40 @@ class NovigBetFinderTest {
         // A market whose fee can't be read has none: it's never priced as if it were free.
         assertEquals(null, markets.first().novig?.fee)
     }
+
+    // ---- the second route: the outcome CNO's own link names (Tj, 2026-10-10) ----------------------------------------------------------------
+
+    @Test
+    fun `a market the name match cannot read is found through the outcome CNO's own link, as Open in Novig does`() = runBlocking {
+        val f = finder()
+        // "Combined Score Thing" is no market type the matcher knows: by name it finds only the game.
+        val byName = row("Under 32.5", "Combined Score Thing")
+        assertEquals(NovigBetFinder.Found.Game("E1"), f.find(byName))
+        assertEquals("no one outcome matched the bet's market, side and line by name", f.attempt(byName).why)
+        // With CNO's link on the row (a desktop https link, as CNO hands it out) the exact outcome is found, with its market.
+        val linked = byName.copy(betUrl = "https://novig.com/events/tot-u/cno")
+        val found = f.attempt(linked).found as NovigBetFinder.Found.Bet
+        assertEquals("tot-u", found.outcomeId); assertEquals("m9", found.marketId); assertEquals("E1", found.eventId)
+        // The app's own link memory works the same when the row carries no link.
+        val g = finder().apply { linkHint = { "tot-o" } }
+        assertEquals("tot-o", (g.find(byName) as NovigBetFinder.Found.Bet).outcomeId)
+    }
+
+    @Test
+    fun `the link route also finds a game the teams do not match, among the games near the start`() = runBlocking {
+        val f = finder()
+        // CNO writes the teams a way Novig's catalog does not ("Seahawks" and "Commanders" alone do not match two full names closely enough).
+        val odd = row("Under 32.5", "Total Points").copy(event = "Seahawks @ Commanders", betUrl = "novigapp://events/tot-u/cno")
+        assertEquals("tot-u", (f.find(odd) as NovigBetFinder.Found.Bet).outcomeId)
+    }
+
+    @Test
+    fun `a link naming an outcome that is in no nearby game is no exact bet, and says why`() = runBlocking {
+        val f = finder()
+        val r = row("Under 32.5", "Combined Score Thing").copy(betUrl = "novigapp://events/not-an-outcome/cno")
+        val a = f.attempt(r)
+        assertEquals(NovigBetFinder.Found.Game("E1"), a.found)
+        assertTrue(a.why.orEmpty(), a.why.orEmpty().contains("CNO's link names an outcome that isn't in the games' markets"))
+        assertTrue(f.misses.isNotEmpty())
+    }
 }
