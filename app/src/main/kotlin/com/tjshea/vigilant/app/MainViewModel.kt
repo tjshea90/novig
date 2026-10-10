@@ -1872,28 +1872,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (intent == null) {
                 job.cancel()
                 c.eventLog.error("DIAG", "the diagnostics file took over ${DIAG_TIMEOUT_MS / 1000} s, stuck at: $stage", RuntimeException("timeout"))
-                _toasts.tryEmit("The diagnostics file took over ${DIAG_TIMEOUT_MS / 1000} s, stuck while $stage. Tap 'Clear old recorder data' in Diagnostics & about, then try again.")
+                _toasts.tryEmit("The diagnostics file took over ${DIAG_TIMEOUT_MS / 1000} s, stuck while $stage. Tap 'Reset diagnostics' in Settings › Diagnostics & about, then try again.")
             } else shares.send(intent)
-        }
-    }
-
-    /**
-     * Settings › Diagnostics & about › Clear old recorder data (Tj, 2026-10-10: "cleared of old data that Claude already analyzed"): the recorders' day files (paper lab, bid lab, Pinnodds live,
-     * live bids) older than the newest [KEEP_DAYS] days are deleted. The Diagnostics file only ever reads the last [DIAG_DAYS]; the research file reads them all, so share that first if it matters.
-     */
-    fun pruneOldRecorderData() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val r = runCatching {
-                val results = listOf(
-                    c.labJournal.prune(KEEP_DAYS), c.labGradeJournal.prune(KEEP_DAYS), c.bidLabBidJournal.prune(KEEP_DAYS), c.bidLabEventJournal.prune(KEEP_DAYS),
-                    c.pinnJournal.prune(KEEP_DAYS), c.pinnFollowJournal.prune(KEEP_DAYS), c.pinnReopenJournal.prune(KEEP_DAYS), c.liveBidJournal.prune(KEEP_DAYS),
-                )
-                results.sumOf { it.first } to results.sumOf { it.second }
-            }
-            r.onSuccess { (files, bytes) ->
-                c.eventLog.info("DIAG", "cleared old recorder data: $files files, ${bytes / 1024} KB")
-                _toasts.tryEmit(if (files == 0) "Nothing older than $KEEP_DAYS days to clear" else "Cleared $files old recorder files (${bytes / 1_048_576} MB)")
-            }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; _toasts.tryEmit("Couldn't clear the old data (${e.message ?: e.javaClass.simpleName})") }
         }
     }
 

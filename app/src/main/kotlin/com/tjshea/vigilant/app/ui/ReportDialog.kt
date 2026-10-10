@@ -33,7 +33,6 @@ data class ReportActions(
     val onCopied: () -> Unit = {},
     /** Make the diagnostics file and open Android's share sheet (Tj, 2026-10-02): "Share diagnostics with Claude". */
     val onShare: () -> Unit = {},
-    val onPruneOld: () -> Unit = {},
     /** Reset diagnostics and Clear scan study (Tj, 2026-10-10). */
     val onResetDiagnostics: () -> Unit = {},
     val onClearStudy: () -> Unit = {},

@@ -651,6 +651,17 @@ class AppContainer(private val app: Application) {
         appScope.launch(Dispatchers.IO) {
             if (killMarker.on) runCatching { settingsStore.update { KillSwitch.reconcile(it, killMarker) } }
         }
+        // Housekeeping (Tj, 2026-10-10: the app lagged and the diagnostics grew too big to load): the recorders' day files older than 2 days (the scan study: 7), anything over a folder's cap
+        // and the leftovers of a crashed save are deleted at start and every few hours. Pure file work, off the main thread, a minute after start so the first screen is not competing.
+        appScope.launch(Dispatchers.IO) {
+            delay(60_000)
+            while (true) {
+                runCatching { com.tjshea.vigilant.data.diag.DataKeeper.sweep(app.filesDir, System.currentTimeMillis()) }.onSuccess { r ->
+                    if (r.files > 0) eventLog.info("DIAG", "housekeeping: " + com.tjshea.vigilant.data.diag.DataKeeper.line(r))
+                }
+                delay(com.tjshea.vigilant.data.diag.DataKeeper.EVERY_MS)
+            }
+        }
         // The flight recorder: what earlier runs kept comes back first, then events and connection stats are written out every half minute.
         appScope.launch(Dispatchers.IO) {
             recorder.run(runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName }.getOrNull(), FLUSH_EVERY_MS)
