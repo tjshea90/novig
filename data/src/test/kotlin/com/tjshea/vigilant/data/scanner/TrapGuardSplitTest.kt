@@ -26,7 +26,7 @@ class TrapGuardSplitTest {
         assertEquals(0, MakerRules.of(s.copy(trapBidHours = 0)).earlyHours)
         assertEquals(24, MakerRules.of(s.copy(trapBidHours = 0)).let { s.trapEarlyHours })
         // Low API usage reads as far as the BIDS' hours, never the auto-bet's.
-        assertEquals(6, LowUsageBids.windowHours(s.copy(scanWindowHours = 48)))
-        assertEquals(24, LowUsageBids.windowHours(s.copy(trapBidHours = 24, trapEarlyHours = 6, scanWindowHours = 48)))
+        assertEquals(6, LowUsageBids.windowHours(s.copy(daysAhead = 2)))
+        assertEquals(24, LowUsageBids.windowHours(s.copy(trapBidHours = 24, trapEarlyHours = 6, daysAhead = 2)))
     }
 }
