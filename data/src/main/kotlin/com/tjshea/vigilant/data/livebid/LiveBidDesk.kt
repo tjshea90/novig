@@ -120,7 +120,7 @@ data class LiveBidDeskStatus(
 class LiveBidDesk(
     private val scope: CoroutineScope,
     private val orders: LiveBidOrders?,
-    private val store: LiveBidStore,
+    private val store: LiveBidPersistence,
     private val journal: DayJournal<LiveBidEvent>?,
     private val config: () -> LiveBidConfig,
     /** The wallet in dollars, or null while unread. */

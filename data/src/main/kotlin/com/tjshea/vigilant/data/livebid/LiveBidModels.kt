@@ -137,11 +137,17 @@ data class LiveBid(
     }
 }
 
+/** Where the live bids are kept between runs (a file in the app, memory in tests). */
+interface LiveBidPersistence {
+    suspend fun all(): List<LiveBid>
+    suspend fun replace(list: List<LiveBid>)
+}
+
 /** Every live bid, newest last; ended ones are kept [KEEP_MS] for the numbers. */
-class LiveBidStore(file: File) {
+class LiveBidStore(file: File) : LiveBidPersistence {
     private val store = JsonFileStore(file, ListSerializer(LiveBid.serializer()), { emptyList() })
-    suspend fun all(): List<LiveBid> = store.read()
-    suspend fun replace(list: List<LiveBid>) = store.update { list }
+    override suspend fun all(): List<LiveBid> = store.read()
+    override suspend fun replace(list: List<LiveBid>) { store.update { list } }
 
     companion object {
         const val KEEP_MS = 14 * 24 * 3_600_000L
