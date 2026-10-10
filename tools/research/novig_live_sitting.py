@@ -15,7 +15,7 @@ What it computes (a ladder = every strike of one game's TOTAL, or one team's SPR
   * persistence (watch): the flagged resting ORDERS are followed by orderId (the public book lists each resting order), so how long a flagged quote sat, and whether it was
     taken or pulled, is measured, not guessed.
 """
-import argparse, json, math, os, sys, time, urllib.parse, urllib.request, urllib.error
+import argparse, json, math, os, re, sys, time, urllib.parse, urllib.request, urllib.error
 from collections import defaultdict
 
 API = 'https://api.novig.com/v3/public/catalog'
@@ -114,22 +114,31 @@ def unlogit(x):
 
 
 def ladders(recs):
-    """Group TOTAL (by game), TEAM_TOTAL (by game + team prefix) and SPREAD (by game + team) markets into ladders of (strike, P(first outcome YES), rec)."""
+    """Group TOTAL (by game), TEAM_TOTAL (by game + team) and SPREAD (by game + the alphabetically first team) markets into ladders of (threshold, rec, idx), where idx is the outcome
+    that gets LESS likely as the threshold rises (the Over; the team that has to cover a bigger margin).  Outcome order in the API is not fixed, so it is found by name."""
     g = defaultdict(list)
     for r in recs:
         if r['strike'] is None:
             continue
-        a, b = r['o']
-        if r['type'] == 'TOTAL':
-            g[(r['eventId'], 'TOTAL')].append((r['strike'], r, 0))     # outcome 0 = Over
-        elif r['type'] == 'TEAM_TOTAL':
-            key = r['desc'].rsplit(' ', 1)[0]
-            g[(r['eventId'], 'TT:' + key)].append((r['strike'], r, 0))
+        names = [o['name'] for o in r['o']]
+        if r['type'] in ('TOTAL', 'TEAM_TOTAL'):
+            idx = next((i for i, n in enumerate(names) if n.startswith('Over')), None)
+            if idx is None:
+                continue
+            key = 'TOTAL' if r['type'] == 'TOTAL' else 'TT:' + r['desc'].split(' TEAM_TOTAL')[0]
+            g[(r['eventId'], key)].append((r['strike'], r, idx))
         elif r['type'] == 'SPREAD':
-            # outcome 0 = the team named first; key by that team and orient so a higher strike is a harder cover for it
-            team = a['name'].rsplit(' ', 1)[0]
-            line = float(a['name'].rsplit(' ', 1)[1])
-            g[(r['eventId'], 'SP:' + team)].append((-line, r, 0))       # team -x covers if margin > x: threshold x = -line
+            parsed = []
+            for i, n in enumerate(names):
+                m = re.match(r'^(.*) ([+-]\d+(?:\.\d+)?)$', n)
+                if not m:
+                    parsed = []
+                    break
+                parsed.append((m.group(1), float(m.group(2)), i))
+            if len(parsed) != 2:
+                continue
+            team, line, idx = sorted(parsed)[0]          # the alphabetically first team's outcome; it covers if its margin beats -line
+            g[(r['eventId'], 'SP:' + team)].append((-line, r, idx))
     return g
 
 
@@ -175,7 +184,7 @@ def flags(recs):
             sd = sides(r)
             # orientation: for TOTAL / TEAM_TOTAL outcome 0 = Over (YES rises as the strike FALLS); for SPREAD the same with the threshold encoding above, so P(outcome 0) falls as thr rises.
             for k in (0, 1):
-                pw = p if k == 0 else 1 - p
+                pw = p if k == i else 1 - p
                 ask = sd[k]['ask']
                 if ask is None or sd[k]['askQty'] < 100:
                     continue
