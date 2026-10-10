@@ -321,6 +321,20 @@ class ScanStudy(
     /** Writes whatever is waiting to the journal now. */
     suspend fun flush() = mutex.withLock { flushLocked(clock()) }
 
+    /**
+     * Forgets the whole study (Settings › Diagnostics & about › Clear scan study; Tj, 2026-10-10): every day's journal is deleted, what the index held and what was waiting to be written goes
+     * with it, and the counts start at zero. The Tracker's bets are NOT touched (a study bet is only in the Tracker once Tj places it). Returns the files and bytes removed.
+     */
+    suspend fun clear(): Pair<Int, Long> = mutex.withLock {
+        settleLock.withLock {
+            active.clear(); byIdentity.clear(); pending.clear(); pendingCount = 0
+            lastCnoAt = Long.MIN_VALUE; lastCnoBaseline = null; lastWideAt = Long.MIN_VALUE; lastWideBaseline = null; lastVigAt = Long.MIN_VALUE; lastVigBaseline = null
+            hydrated = true
+            betsLogged = 0; sightsLogged = 0; lastLoggedAtMs = null; lastProblem = null
+            withContext(io) { journal.clear() }
+        }
+    }
+
     // ---- the in-memory index ---------------------------------------------------------------------------------------------
 
     private fun find(identity: String?, league: String, starts: Long, fallback: String): Active? {

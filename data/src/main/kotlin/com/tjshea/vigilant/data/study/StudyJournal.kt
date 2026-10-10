@@ -70,6 +70,15 @@ class StudyJournal(private val dir: File) {
         return out
     }
 
+    /** Deletes every day's journal; returns how many files and bytes went. */
+    @Synchronized
+    fun clear(): Pair<Int, Long> {
+        var n = 0
+        var bytes = 0L
+        dir.listFiles { f -> f.isFile && f.name.startsWith(PREFIX) && f.name.endsWith(SUFFIX) }?.forEach { f -> val len = f.length(); if (f.delete()) { n++; bytes += len } }
+        return n to bytes
+    }
+
     /** The bytes of every journal (Diagnostics' storage line). */
     fun bytes(): Long = dir.listFiles { f -> f.isFile && f.name.startsWith(PREFIX) }?.sumOf { it.length() } ?: 0L
 
