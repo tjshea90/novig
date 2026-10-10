@@ -170,3 +170,4 @@ day that changes.
 | v0.85.2 | code 162 | 2026-10-10T06:27Z | v0.85.2: live bid engine survives a bad message and says why it is not judging
 | v0.85.3 | code 163 | 2026-10-10T06:57Z | v0.85.3: live bid desk loop heartbeat and a Details block on the Live bids page
 | v0.85.4 | code 164 | 2026-10-10T07:14Z | v0.85.4: the live bid desk now actually starts (it never did in v0.85.0-0.85.3)
+| v0.85.5 | code 165 | 2026-10-10T07:21Z | v0.85.5: diagnostics file reads the last 3 days of each recorder, says where it is stuck, and old recorder data can be cleared
