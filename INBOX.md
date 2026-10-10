@@ -5945,3 +5945,8 @@ Fix the grading. I think some of my apis have grading, maybe even sgo
 ```
 When I switch apps then come back to vigilant after a couple minutes, the research options are turned off
 ```
+
+## 2026-10-10T01:17:53Z
+```
+Is there any way to keep vigilant running even when backgrounded
+```
