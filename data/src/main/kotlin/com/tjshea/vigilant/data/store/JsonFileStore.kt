@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
 import java.io.File
 
 /**
@@ -64,9 +65,11 @@ class JsonFileStore<T>(
     private suspend fun writeLocked(value: T) = withContext(Dispatchers.IO) {
         file.parentFile?.mkdirs()
         val tmp = File(file.parentFile, file.name + ".tmp")
-        java.io.FileOutputStream(tmp).use { out ->
-            out.write(json.encodeToString(serializer, value).toByteArray())
-            out.fd.sync()
+        // Straight to the file in a buffer, not through a whole String and then a whole ByteArray: a big document (a bid list) otherwise made two copies of itself on
+        // every save, and the garbage collector's work was felt as lag across the whole app.
+        java.io.FileOutputStream(tmp).use { fos ->
+            java.io.BufferedOutputStream(fos, 64 * 1024).use { out -> @OptIn(kotlinx.serialization.ExperimentalSerializationApi::class) json.encodeToStream(serializer, value, out) }
+            fos.fd.sync()
         }
         if (!tmp.renameTo(file)) {
             // Some filesystems refuse rename-over; fall back to delete + rename.

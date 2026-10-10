@@ -149,7 +149,10 @@ data class LiveRecord(
 @Serializable
 data class LiveFollow(val id: String, val atMs: Long, val offsetSec: Int, val fair: Double? = null, val ask: Double? = null, val closed: Boolean = false)
 
-/** An append-only journal, one JSON line a record, one file a day (Eastern, like the other journals), never rewritten. */
+/**
+ * An append-only journal, one JSON line a record, one file a day (Eastern, like the other journals), never rewritten. No sync per write (Tj, 2026-10-10: the app lagged): it is
+ * research data, the operating system writes it out within seconds, and a sync each stalled the phone's storage for every thread that touched it.
+ */
 class DayJournal<T>(private val dir: File, private val prefix: String, private val serializer: KSerializer<T>, private val timeOf: (T) -> Long) {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
@@ -158,7 +161,7 @@ class DayJournal<T>(private val dir: File, private val prefix: String, private v
         dir.mkdirs()
         val f = File(dir, "$prefix-${java.time.Instant.ofEpochMilli(timeOf(r)).atZone(java.time.ZoneId.of("America/New_York")).toLocalDate()}.jsonl")
         val line = (if (f.exists() && f.length() > 0 && !endsWithNewline(f)) "\n" else "") + json.encodeToString(serializer, r) + "\n"
-        FileOutputStream(f, true).use { out -> out.write(line.toByteArray()); out.fd.sync() }
+        FileOutputStream(f, true).use { out -> out.write(line.toByteArray()) }
     }
 
     /** Many records with ONE open and ONE sync (a paper-bid pass can add thousands; a sync each would stall the phone's storage for minutes). */
@@ -171,7 +174,7 @@ class DayJournal<T>(private val dir: File, private val prefix: String, private v
             val sb = StringBuilder()
             if (f.exists() && f.length() > 0 && !endsWithNewline(f)) sb.append('\n')
             for (r in group) sb.append(json.encodeToString(serializer, r)).append('\n')
-            FileOutputStream(f, true).use { out -> out.write(sb.toString().toByteArray()); out.fd.sync() }
+            FileOutputStream(f, true).use { out -> out.write(sb.toString().toByteArray()) }
         }
     }
 

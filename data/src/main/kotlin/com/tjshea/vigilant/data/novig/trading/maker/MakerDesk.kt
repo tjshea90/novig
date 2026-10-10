@@ -174,9 +174,9 @@ class MakerStore(file: File) {
 
         /** An ended bid that is past its keep window. */
         fun expired(b: MakerBid, now: Long): Boolean =
-            b.status.ended && (it(b) < now - (if (b.filled > 0) KEEP_FILLED_MS else KEEP_MS))
+            b.status.ended && (endedOrPosted(b) < now - (if (b.filled > 0) KEEP_FILLED_MS else KEEP_MS))
 
-        private fun it(b: MakerBid) = b.endedAtMs ?: b.postedAtMs
+        private fun endedOrPosted(b: MakerBid) = b.endedAtMs ?: b.postedAtMs
     }
 }
 
