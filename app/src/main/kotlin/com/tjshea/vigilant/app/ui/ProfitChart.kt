@@ -7,7 +7,6 @@ import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -145,6 +143,7 @@ fun ProfitChartCard(bets: List<TrackedBet>, modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets: List<TrackedBet>, now: Long, range: ProfitSeries.Range, onRange: (ProfitSeries.Range) -> Unit, tall: Boolean, onFull: (() -> Unit)?) {
     val points = remember(bets) { ProfitSeries.points(bets) }
@@ -167,7 +166,8 @@ private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets:
         Text("Profit", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
         if (onFull != null) TextButton(onClick = onFull, modifier = Modifier.testTag("profitFullScreen")) { Text("Full screen") }
     }
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    // Wrapped, not a scrolling row: every range is on screen (a chip off the edge is a control nobody finds).
+    androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         ProfitSeries.Range.entries.forEach { r ->
             FilterChip(selected = r == range && !touched, onClick = { touched = false; onRange(r); if (r == range) { startMs = preset.start; endMs = preset.end } }, label = { Text(r.label, maxLines = 1) }, modifier = Modifier.testTag("profitRange-${r.name}"))
         }
