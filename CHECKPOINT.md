@@ -1,13 +1,13 @@
-# CHECKPOINT 2905 — read me first, then TASKS.md
+# CHECKPOINT 2906 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T21:06:02Z · **tests:** all 4 fast checks green
-**Branch:** `claude/new-session-mng5sq` · **builds on:** `dca9aadb` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T21:14:17Z · **tests:** all 4 fast checks green
+**Branch:** `claude/new-session-mng5sq` · **builds on:** `8b1a267b` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.88.10: Pinnodds live page shows why the taker has bought nothing (looks and top reasons) (versionCode 183, v0.88.10)
+v0.88.10 released+recorded (taker 'passed on' line on the Pinnodds live page)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.88.10), then run: bash tools/record-release.sh v0.88.10 183 "v0.88.10: Pinnodds live page shows why the taker has bought nothing (looks and top reasons)"
+Tj installs v0.88.10 + taps Autopilot real money (2% margin) and sends the Pinnodds live page: read 'Taker looked N times, passed on:' to see which rule blocks the taker (TP2g); then TP2f
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  8e064504 ckpt 2905: pre-release: v0.88.10: Pinnodds live page shows why the taker has bought not
   dca9aadb ckpt 2904: pre-ship: v0.88.10: Pinnodds live page shows why the taker has bought nothin
   19e7e08e ckpt 2903: pre-release: v0.88.9: live bids and Autopilot use a 2% margin under Pinnacle
   2816b7e4 ckpt 2902: pre-ship: v0.88.9: live bids and Autopilot use a 2% margin under Pinnacle's 
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   b16d7aa1 ckpt 2898: pre-ship: v0.88.8: live engine shares the app's one Novig stream (a second c
   56744e2b ckpt 2897: v0.88.7 released+recorded (live book refusal fix + reason words)
   61d6de37 ckpt 2896: pre-release: v0.88.7: live bids: a market Novig refuses no longer shuts the 
-  9e16ef7f ckpt 2895: pre-ship: v0.88.7: live bids: a market Novig refuses no longer shuts the liv
 ```
