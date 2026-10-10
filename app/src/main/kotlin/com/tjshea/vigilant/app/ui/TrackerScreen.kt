@@ -82,7 +82,6 @@ import androidx.compose.material3.Switch
 import com.tjshea.vigilant.data.tracker.ClvStats
 import com.tjshea.vigilant.data.tracker.ClvPeriod
 import com.tjshea.vigilant.data.tracker.ClosingLine
-import com.tjshea.vigilant.data.tracker.LockStats
 import com.tjshea.vigilant.data.tracker.LockedBets
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.TrackedBet
@@ -186,7 +185,6 @@ fun TrackerScreen(
         TrackerSort.sorted(filtered(scoped, filter), sort, sortReversed) { ordered(it, filter, now) }
     }
     val periodBets = remember(kindBets, period, minute) { inPeriod(kindBets, period, now) }
-    val lockStats = remember(priced, period, minute, made) { LockedBets.stats(inPeriod(TrackerSort.inMade(priced, made), period, now), priced) }
     // The "Check odds now" counter: open bets re-read since the last check began (0 again at each new one), live as batches are saved; a game
     // that starts drops out within the minute.
     val checkStart = state.checkStartedAtMs
@@ -367,12 +365,9 @@ fun TrackerScreen(
             }
             when (view) {
                 TrackerView.STATS -> {
-                    if (periodBets.isEmpty() && !lockStats.any) {
+                    if (periodBets.isEmpty()) {
                         item(key = "empty") { EmptyState(TrackerText.emptyStats(made, period == TrackerPeriod.ALL, bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT) }
                     } else {
-                        // The locks' own numbers (Tj, 2026-10-02 20:06Z: "a stat tracker for amount and percentage of bets locked in and the total profit and
-                        // percentage of profit for those bets"), shown whether or not they're hidden from the rest.
-                        if (lockStats.any) item(key = "locks") { LockStatsCard(lockStats, hideLocked) }
                         if (periodBets.isNotEmpty()) item(key = "stats") {
                             StatsCards(periodBets, breakdownBy, onBreakdown = { breakdownBy = it }) {
                                 ClosingLineCard(kindBets, now, clvPeriod, { clvPeriod = it }, clvHideOutliers, { clvHideOutliers = it })
@@ -543,20 +538,6 @@ private fun CardTitle(text: String) {
 @Composable
 internal fun Caption(text: String) {
     Text(text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-}
-
-/** The locks' numbers ([LockStats]): bets locked in and their share, the profit locked and its share of what was staked in those markets. */
-@Composable
-private fun LockStatsCard(stats: LockStats, hidden: Boolean) {
-    StatsCard(Modifier.testTag("lockStats")) {
-        CardTitle("Locked in")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            LabeledValue("Bets locked", "${stats.lockedBets}" + (stats.share?.let { " (${Format.percent(it, 0)})" } ?: ""))
-            LabeledValue("Profit locked", Format.signedMoney(stats.profit), valueColor = moneyColor(stats.profit))
-            LabeledValue("Profit %", stats.roi?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(stats.roi ?: 0.0))
-        }
-        Caption(TrackerText.lockCaption(stats, hidden))
-    }
 }
 
 @Composable

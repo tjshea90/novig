@@ -83,21 +83,13 @@ class TrackerLocksTest {
     }
 
     @Test
-    fun `the Locked in card counts the bets locked, their share, and the profit locked on what both sides staked`() {
+    fun `there is no Locked in card (Tj, 2026-10-10), and Hide locked bets still decides what the open money counts`() {
         var hide by mutableStateOf(true)
         show({ hide }, { hide = it }, TrackerView.STATS)
-        compose.onNodeWithTag("lockStats").assertExists()
-        // 1 of 2 picks (the lock isn't a pick); $0.50 on $9.50 staked on both sides.
-        compose.onNodeWithText("1 (50%)").assertExists()
-        compose.onNodeWithText("+\$0.50").assertExists()
-        compose.onNodeWithText("+\$0.50 on \$9.50 staked on both sides", substring = true).assertExists()
-        compose.onNodeWithText("+5.26%", substring = true).assertExists()
-        compose.onNodeWithText("Hidden from the other numbers", substring = true).assertExists()
-        compose.onRoot().captureRoboImage("screenshots/4l_tracker_locked_in.png")
+        compose.onNodeWithTag("lockStats").assertDoesNotExist()
         // Hidden: only Team C's $4.00 is open money; shown, both picks (the lock is in the money, not the picks).
         compose.onNodeWithText("The 1 open bet", substring = true).assertExists()
         hide = false
         compose.onNodeWithText("The 2 open bets", substring = true).assertExists()
-        compose.onNodeWithText("Also counted in the other numbers", substring = true).assertExists()
     }
 }
