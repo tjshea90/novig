@@ -133,3 +133,24 @@ jobs:
             gh release create "$TAG" --title "Research lab archive $D" --prerelease --latest=false --target main --notes "Raw research-lab journals of $D (UTC), one set per run (suffix = run end HHMM): edge, sgo-tick, sgo-close, bidlab, bidlab-event, lab, lab-grade, report. Permanent: see research/lab/STEWARD.md. Do not delete."
           fi
           gh release upload "$TAG" arch/* --clobber
+
+      # The readable part of every run (STATUS, paper lab, paper bids tables; about 17 KB) on its own branch with its whole history kept (never force-pushed), so the findings of a
+      # month are one `git log lab-digest` away even when the raw journals are in Releases. Never delete this branch.
+      - name: Append the report's tables to the lab-digest branch
+        if: always()
+        continue-on-error: true
+        run: |
+          set -e
+          D="$(date -u +%Y-%m-%d)"; T="$(date -u +%H%M)"
+          F="$(ls out/github-lab-*.txt 2>/dev/null | tail -1 || true)"
+          [ -n "$F" ] || { echo "no report"; exit 0; }
+          RPT="$PWD/$F"
+          git config --global user.name "lab-recorder"; git config --global user.email "actions@users.noreply.github.com"
+          rm -rf digest && mkdir digest && cd digest && git init -q
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git fetch -q --depth=1 origin lab-digest 2>/dev/null; then git checkout -q -b lab-digest FETCH_HEAD; else git checkout -q --orphan lab-digest; fi
+          mkdir -p digests
+          awk '/^== LAB RECORDS/{exit} {print}' "$RPT" > "digests/$D-$T.txt"
+          git add -A
+          git commit -q -m "lab digest $D $T"
+          git push -q origin lab-digest
