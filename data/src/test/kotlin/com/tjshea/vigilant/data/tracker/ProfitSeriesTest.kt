@@ -12,10 +12,8 @@ class ProfitSeriesTest {
     private val zone = ZoneId.of("America/New_York")
     private fun at(y: Int, m: Int, d: Int, h: Int = 12) = LocalDate.of(y, m, d).atTime(h, 0).atZone(zone).toInstant().toEpochMilli()
 
-    private fun bet(id: String, t: Long, status: BetStatus, stake: Double = 1.0, profit: Double? = null) =
-        TrackedBet(id, 0, "NFL", "A @ B", t, "Moneyline", "A", "m", "o", 0.5, 0.5, 0.52, 0.04, stake, status, source = BetTracker.SOURCE_CNO).let { b ->
-            if (profit == null) b else b.copy(settledProfit = profit)
-        }
+    private fun bet(id: String, t: Long, status: BetStatus, stake: Double = 1.0) =
+        TrackedBet(id, 0, "NFL", "A @ B", t, "Moneyline", "A", "m", "o", 0.5, 0.5, 0.52, 0.04, stake, status, source = BetTracker.SOURCE_CNO)
 
     @Test
     fun `the curve is the Tracker's profit by time - settled bets only, voids and open ones never, and the last point is Profit`() {
