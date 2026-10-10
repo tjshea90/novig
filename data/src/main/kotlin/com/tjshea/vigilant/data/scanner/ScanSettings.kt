@@ -439,6 +439,19 @@ data class ScanSettings(
     val liveBidPresetName: String? = "Balanced",
     val liveBidPresets: List<com.tjshea.vigilant.data.livebid.SavedLiveBidPreset> = emptyList(),
     /**
+     * Live tail bets (Tj, 2026-10-10: "I want to live bet today"; RESEARCH.md §125): buys, immediate-or-cancel, a far strike the late-game model (ESPN score and clock, Novig's own centre, the CONSERVATIVE
+     * rules) calls decided while Novig still offers it under that fair by [tailLiveMinEdge] after its fee. Needs no outside price. [tailLive] switches it on (paper: it decides and journals and sends nothing),
+     * [tailLiveBet] makes it buy for real: at most [tailLiveStake] dollars a bet, [tailLiveMaxGame] a game, [tailLiveMaxDay] a day; a day's settled loss of [tailLiveHaltLoss] halts it ([tailLiveHalted]).
+     */
+    val tailLive: Boolean = false,
+    val tailLiveBet: Boolean = false,
+    val tailLiveStake: Double = 1.0,
+    val tailLiveMaxGame: Double = 3.0,
+    val tailLiveMaxDay: Double = 10.0,
+    val tailLiveHaltLoss: Double = 5.0,
+    val tailLiveMinEdge: Double = 0.05,
+    val tailLiveHalted: String? = null,
+    /**
      * Set only by [effective]: these settings are the low-usage scan's ([LowUsageBids.profile]). The scanner and the feeds read it (quotes past the freshness limit are
      * dropped before the devig, a league with no game in the window isn't asked); never saved, so a saved file can't switch it on.
      */
@@ -760,7 +773,7 @@ data class ScanSettings(
      * minutes, the research options are turned off".
      */
     fun safeStart(crashed: Boolean): ScanSettings =
-        if (!crashed) this else copy(researchMode = false, altLab = false, feedRace = false, burstRecorder = false, autoBet = false, maker = false, pinnLive = false, liveBid = false, liveBidReal = false)
+        if (!crashed) this else copy(researchMode = false, altLab = false, feedRace = false, burstRecorder = false, autoBet = false, maker = false, pinnLive = false, liveBid = false, liveBidReal = false, tailLive = false, tailLiveBet = false)
 
     fun migrate(): ScanSettings {
         var s = this
