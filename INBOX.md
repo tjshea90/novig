@@ -6170,3 +6170,8 @@ What about when the trial runs out? Is this a free or cheap alternative?
 ```
 Tell me exactly what to do right now to test the Pinnacle source and what to send you
 ```
+
+## 2026-10-10T18:57:17Z
+```
+I have 3 more days of pinnodds. The live betting feature is still not working. No bids or bets are going through
+```
