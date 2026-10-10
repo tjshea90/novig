@@ -4510,3 +4510,8 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 - [x] TN9 (done in chat: compare run showed the cache; website feed blocked for real orders in v0.88.5) Read Tj's Diagnostics PINNACLE WEBSITE FEED block (compare run, before 23:34Z) and decide: website feed as the live source, or not.
 - [ ] TO1 Live Pinnacle after the Pinnodds trial (23:34Z): the free website API is cached, so the options are Pinnodds paid (>= $198/mo), OddsCorp trial (Telegram @oddscorp, ask NCAAF/NFL coverage and currency), or the tail bettor alone (no Pinnacle). Tj decides; nothing to build until he does.
 
+## TP: Tj, 2026-10-10 ~19:00Z: "I have 3 more days of pinnodds. The live betting feature is still not working. No bids or bets are going through"
+- [x] TP1 Cause found from his screenshots: the bar reads "Scanning paused" (a hand pause or the wallet-ran-out auto-pause; it blocks every live order: `liveBidConfig.on` needs `!paused`, `pinnGate` says "scanning is paused") and the wallet was $52.40 with 42 pregame bids holding $52.28 (nothing left for live bids: `LiveBidDesk.budget` counts `otherRestingDollars`).
+- [x] TP2 v0.88.6: `LiveBidLimits.pregameLeavesShare` (Live bids page › limits; autopilot sets 50%): the pregame make-order desk sees only the rest of the wallet while live bids are on, and trims its bids to it.
+- [ ] TP3 Tj resumes scanning, sends the Live bids page top (status, why-line, Details) and Diagnostics; read LIVE BIDS "Why so few fills" and the taker's "Held back" counts.
+
