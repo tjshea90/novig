@@ -231,7 +231,7 @@ class NovigStreamTest {
         )
         val stream = stream()
         stream.watch(plan.take(40))
-        until { stream.live(plan).size >= 39 }
+        until { stream.live(plan).size >= 39 && stream.bookGap("m7")?.startsWith("Novig refused") == true }
         assertNull(stream.live(plan)["m7"])
         assertEquals("Novig refused the live book (MARKET_NOT_FOUND)", stream.bookGap("m7"))
         stream.close()
