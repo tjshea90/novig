@@ -265,8 +265,11 @@ class NovigBetFinderTest {
     fun `the link route also finds a game the teams do not match, among the games near the start`() = runBlocking {
         val f = finder()
         // CNO writes the teams a way Novig's catalog does not ("Seahawks" and "Commanders" alone do not match two full names closely enough).
-        val odd = row("Under 32.5", "Total Points").copy(event = "Seahawks @ Commanders", betUrl = "novigapp://events/tot-u/cno")
+        val odd = row("Under 32.5", "Total Points").copy(event = "Sea @ Was", betUrl = "novigapp://events/tot-u/cno")
+        assertNull(NovigBetFinder.matchEvent(odd, listOf(event)))
         assertEquals("tot-u", (f.find(odd) as NovigBetFinder.Found.Bet).outcomeId)
+        // Without the link the same row finds nothing at all.
+        assertNull(finder().find(odd.copy(betUrl = null)))
     }
 
     @Test
