@@ -126,7 +126,8 @@ object LiveBidText {
             "Limits: ${l.stakeMode.label}${if (l.stakeMode == com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM) " ${money(l.customStake)}" else ""} on a ${money(s.bankroll)} bankroll · stake ${money(l.minStake)}-${money(l.maxStake)} · " +
                 "${l.maxBids} bids, ${l.maxBidsPerGame} a game · ${money(l.maxPerGame)} a game · ${money(l.maxPerDay)} a day · halt at ${money(l.haltLoss)} lost · wallet reserve ${money(l.walletReserve)}",
         )
-        o.appendLine("Engine: lines judged for bids ${r.bidTargets} · socket ${r.socket} · Pinnacle live ${r.pinnLive} · matched ${r.matched}")
+        o.appendLine("Engine: running ${r.running} · lines watched for bids ${r.bidTargets} · judgments made ${r.bidJudged} · socket ${r.socket} · Pinnacle live ${r.pinnLive} · matched ${r.matched} · Novig markets watched ${r.watched}" +
+            (r.bidGate?.let { " · JUDGE NOT RUNNING: $it" } ?: "") + (r.bidError?.let { " · JUDGE ERROR: $it" } ?: "") + (r.problem?.let { " · feed problem: $it" } ?: ""))
         LiveBidReport.lines(bids, d).forEach { o.appendLine(it) }
         return o.toString()
     }
