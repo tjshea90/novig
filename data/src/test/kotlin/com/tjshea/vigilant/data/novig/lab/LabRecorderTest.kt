@@ -53,6 +53,9 @@ class LabRecorderTest {
         {"homeAway":"home","score":"10","team":{"displayName":"Dallas Cowboys","abbreviation":"DAL"}},
         {"homeAway":"away","score":"7","team":{"displayName":"Tampa Bay Buccaneers","abbreviation":"TB"}}]}]}]}"""
 
+    /** The same game with two minutes left in the fourth quarter: the ladder's strikes far above the score are all but decided. */
+    private val espnLate = espn.replace(""""period":2,"displayClock":"0:00"""", """"period":4,"displayClock":"2:00"""")
+
     private fun recorder(source: NovigSource, now: () -> Long, fetchBody: String? = espn, onTail: ((TailOffer) -> Unit)? = null, tailOnly: () -> Boolean = { false }): LabRecorder {
         val dir = tmp.newFolder()
         return LabRecorder(
@@ -117,7 +120,7 @@ class LabRecorderTest {
         // Under 53.5 offered at 0.70 against a model fair far above it: both rule sets see it.
         val cheap = books() + ("far" to NovigBook("far", 1, mapOf("far-b" to listOf(BidLevel(300, 5_000))), 0))
         val offers = ArrayList<TailOffer>()
-        val rec = recorder(Fake(event, ids.map { market(it.first, it.second) }, cheap), { now }, onTail = { offers += it })
+        val rec = recorder(Fake(event, ids.map { market(it.first, it.second) }, cheap), { now }, fetchBody = espnLate, onTail = { offers += it })
         rec.cycleOnce(setOf("NFL"))
         assertTrue("the conservative rules find it", offers.isNotEmpty())
         assertTrue(offers.all { it.candidate.rule == TailTaker.CONSERVATIVE })
@@ -139,7 +142,7 @@ class LabRecorderTest {
             "far" to NovigBook("far", 1, mapOf("far-b" to listOf(BidLevel(300, 1_000))), 0),
         )
         val offers = ArrayList<TailOffer>()
-        val rec = recorder(Fake(event, ids.map { market(it.first, it.second) }, coverBooks), { now }, onTail = { offers += it }, tailOnly = { true })
+        val rec = recorder(Fake(event, ids.map { market(it.first, it.second) }, coverBooks), { now }, fetchBody = espnLate, onTail = { offers += it }, tailOnly = { true })
         rec.cycleOnce(setOf("NFL"))
         assertTrue(offers.isNotEmpty())
         assertTrue("no cover recorded in tail-only mode", rec.records().none { it.kind == LabKind.COVER })
