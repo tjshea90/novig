@@ -721,6 +721,6 @@ What is new here is the account/execution half of the API, which Vigilant has ne
 
 ## 22. Live catalog read, 2026-10-10 ~03:15-03:30Z (public routes, 462 live books; RESEARCH.md §123)
 - **`fee.coefficient` is 0.06 on every NCAAF game market** (MONEY, SPREAD, TOTAL, TEAM_TOTAL, the 1H markets; 390 read, `makerCredit 0.5`, `charged WHEN_LIVE`) and 0.03 on WNBA (72 read). §8's "game markets 0.03" and the simulations of RESEARCH.md §116-§122 assumed 0.03. Read `fee` per market (the app does).
-- Live books are thin off the main lines: moneylines are tight (0.7 points), only 47% of SPREAD and 26% of TOTAL markets are two-sided within 6 points, 84% of TEAM_TOTAL sides have no price; two-sided spreads average 30 points on totals and 19 on spreads.
+- Live books are thin off the main lines: moneylines are tight (0.7 points), only 47% of SPREAD and 17% of TOTAL markets are two-sided within 6 points, 84% of TEAM_TOTAL sides have no price; two-sided spreads average 30 points on totals and 19 on spreads.
 - A resting order stays on the book a median of tens of seconds (80% still there after 5-8 s, 36% after 60 s; top of book 69% / 24%); the public book lists each order by id, so a quote's age is readable.
 - The app's "order time" for live IOC orders (median 5,330 ms, slowest 5,716) is send-to-terminal with 80/400 ms polling: about 4.9 s is Novig's, against 94 ms pregame. Undocumented in-play delay; whether `PO` and cancel share it is unmeasured (TASKS.md SV6).
