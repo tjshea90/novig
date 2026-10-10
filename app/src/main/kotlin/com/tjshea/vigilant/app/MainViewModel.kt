@@ -478,13 +478,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             c.cno.state.collect { cno -> _state.update { it.copy(cno = cno) } }
         }
         viewModelScope.launch {
-            c.cno.books.collect { b -> _state.update { it.copy(books = b) } }
+            // At most once a second: a book read finishes many times a second mid-scan, and each reached every screen (Tj, 2026-10-10: laggy).
+            followThrottled(c.cno.books, MIRROR_SLOW_MS) { b -> _state.update { it.copy(books = b) } }
         }
         viewModelScope.launch {
             c.cno.links.collect { l -> _state.update { it.copy(cnoLinks = l) } }
         }
         viewModelScope.launch {
-            c.live.prices.collect { p -> _state.update { it.copy(novigLive = p) } }
+            followThrottled(c.live.prices, MIRROR_SLOW_MS) { p -> _state.update { it.copy(novigLive = p) } }
         }
         viewModelScope.launch {
             val marks = runCatching { c.placed.load() }.getOrNull()
@@ -2497,6 +2498,9 @@ internal const val SCAN_MIRROR_MS = 350L
 
 /** How often, at most, the API usage count reaches the screen (the meters in Settings). */
 internal const val USAGE_MIRROR_MS = 1_000L
+
+/** How often, at most, the books and Novig-price maps of CNO's list reach the screen ([followThrottled]). */
+internal const val MIRROR_SLOW_MS = 1_000L
 
 /**
  * Hands [runs]' newest value to [onRun] no more often than every [everyMs]. A StateFlow keeps only its latest value while the collector
