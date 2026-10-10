@@ -1070,7 +1070,7 @@ class AppContainer(private val app: Application) {
     val lab: com.tjshea.vigilant.data.novig.lab.LabRecorder by lazy {
         com.tjshea.vigilant.data.novig.lab.LabRecorder(
             scope = appScope, source = novig, fetch = ::feedRaceFetch, altQuotes = ::labAltQuotes,
-            journal = labJournal, gradeJournal = labGradeJournal, bidLab = bidLab,
+            journal = labJournal, gradeJournal = labGradeJournal, bidLab = bidLab, grader = labGrader,
         )
     }
 
@@ -1101,12 +1101,14 @@ class AppContainer(private val app: Application) {
     }
 
     /** The paper bid lab's files (RESEARCH.md §122): the paper bids when they went up and what happened to them. */
+    /** Grades the paper lab from final scores (SGO, OddsPapi, ESPN, MLB): Novig drops a settled market, so its own status never arrives. */
+    val labGrader by lazy { com.tjshea.vigilant.data.novig.lab.LabGrader(scores) }
     val bidLabBidJournal by lazy { com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "bidlab", com.tjshea.vigilant.data.novig.lab.BidLabBid.serializer()) { it.atMs } }
     val bidLabEventJournal by lazy { com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "lab"), "bidlab-event", com.tjshea.vigilant.data.novig.lab.BidLabEvent.serializer()) { it.atMs } }
 
     /** Paper bids on every line the bid desk looks at and on Pinnacle-priced live lines: **no order**, public trades and markets only. */
     val bidLab: com.tjshea.vigilant.data.novig.lab.BidLab by lazy {
-        com.tjshea.vigilant.data.novig.lab.BidLab(trades = { id -> novig.trades(id, 60) }, market = { id -> novig.market(id) }, bidJournal = bidLabBidJournal, eventJournal = bidLabEventJournal)
+        com.tjshea.vigilant.data.novig.lab.BidLab(trades = { id -> novig.trades(id, 60) }, market = { id -> novig.market(id) }, bidJournal = bidLabBidJournal, eventJournal = bidLabEventJournal, grader = labGrader)
             // Bids still resting and fills still waiting for their result come back from the journals after a stop or a restart (the journals themselves are never touched).
             .also { runCatching { it.restore(bidLabBidJournal.readAll(), bidLabEventJournal.readAll(), System.currentTimeMillis()) } }
     }

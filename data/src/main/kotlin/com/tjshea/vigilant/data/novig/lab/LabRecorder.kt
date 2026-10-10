@@ -98,6 +98,8 @@ class LabRecorder(
         val live = source.events(leagues, listOf(NovigEvent.STATUS_LIVE, NovigEvent.STATUS_DELAYED)).sortedBy { it.startsTs }.take(MAX_GAMES)
         if (live.isEmpty()) {
             _status.value = _status.value.copy(games = 0, cycles = _status.value.cycles + 1, lastCycleMs = now)
+            cycle++
+            if (cycle % gradeEvery == 0) grade(now)   // games end and the lab goes quiet: that is when the results are in
             return
         }
         val ids = live.map { it.eventId }.toSet()
