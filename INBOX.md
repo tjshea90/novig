@@ -5940,3 +5940,8 @@ You said something about the data being erased every week. Save add much data an
 ```
 Fix the grading. I think some of my apis have grading, maybe even sgo
 ```
+
+## 2026-10-10T01:13:29Z
+```
+When I switch apps then come back to vigilant after a couple minutes, the research options are turned off
+```
