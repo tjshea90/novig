@@ -162,9 +162,10 @@ private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets:
     val inView = remember(points, startMs, endMs) { ProfitSeries.window(points, startMs, endMs) }
     val change = inView.profit
 
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    // The card has its own title and the full-screen button; the full-screen view has a title bar already.
+    if (onFull != null) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text("Profit", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-        if (onFull != null) TextButton(onClick = onFull, modifier = Modifier.testTag("profitFullScreen")) { Text("Full screen") }
+        TextButton(onClick = onFull, modifier = Modifier.testTag("profitFullScreen")) { Text("Full screen") }
     }
     // Wrapped, not a scrolling row: every range is on screen (a chip off the edge is a control nobody finds).
     androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -172,11 +173,11 @@ private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets:
             FilterChip(selected = r == range && !touched, onClick = { touched = false; onRange(r); if (r == range) { startMs = preset.start; endMs = preset.end } }, label = { Text(r.label, maxLines = 1) }, modifier = Modifier.testTag("profitRange-${r.name}"))
         }
     }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        LabeledValue("Profit in view", Format.signedMoney(change), valueColor = moneyColor(change), modifier = Modifier.testTag("profitInView"))
-        LabeledValue("Profit %", inView.roi?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(inView.roi ?: 0.0))
-        LabeledValue("Staked", Format.money(inView.staked))
-        LabeledValue("Bets", "${inView.bets}")
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        LabeledValue("Profit in view", Format.signedMoney(change), valueColor = moneyColor(change), modifier = Modifier.weight(1.3f).testTag("profitInView"))
+        LabeledValue("Profit %", inView.roi?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(inView.roi ?: 0.0), modifier = Modifier.weight(1f))
+        LabeledValue("Staked", Format.money(inView.staked), modifier = Modifier.weight(1f))
+        LabeledValue("Bets", "${inView.bets}", modifier = Modifier.weight(0.6f))
     }
     val sel = selected
     Text(
