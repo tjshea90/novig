@@ -1988,7 +1988,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     status += "Pinnodds: dormant (Tj, 2026-10-09)"
                     runCatching { status += "live feed test: " + FeedRaceText.note(c.feedRace.status.value, now) }
                     runCatching { status += "burst recorder: " + c.burst.status.value.let { "${if (it.running) "running" else "not running"}, ${it.games} games, ${it.windows} windows" } }
-                    val marker = File(app.filesDir, "research-last-share.txt")
+                    val marker = java.io.File(app.filesDir, "research-last-share.txt")
                     val since = if (all) 0L else (runCatching { marker.readText().trim().toLong() }.getOrNull() ?: (now - 3 * 86_400_000L))
                     status += if (since > 0L) "this file holds what was recorded since ${java.time.Instant.ofEpochMilli(since)} (the last share); the older days were in the earlier file, or press 'Share ALL research data'" else "this file holds EVERYTHING the journals hold"
                     val recs = c.lab.records().filter { it.atMs >= since }
