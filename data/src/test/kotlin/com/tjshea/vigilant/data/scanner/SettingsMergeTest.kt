@@ -18,7 +18,7 @@ class SettingsMergeTest {
         assertEquals(5.0, ScanSettings(slipStake = SlipStake.ONE_DOLLAR, apiBetStake = 10.0, slipCustomStake = 5.0, schema = 12).migrate().slipCustomStake, 0.0)
         // Once migrated, it isn't done again.
         val once = ScanSettings(slipStake = SlipStake.OFF, apiBetStake = 10.0, slipCustomStake = 5.0, schema = 12).migrate()
-        assertEquals(13, once.schema)
+        assertEquals(14, once.schema)
         assertEquals(10.0, once.copy(apiBetStake = 99.0).migrate().slipCustomStake, 0.0)
     }
 }

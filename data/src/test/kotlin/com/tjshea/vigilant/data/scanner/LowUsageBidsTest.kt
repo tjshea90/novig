@@ -194,20 +194,20 @@ class LowUsageBidsTest {
         assertEquals(6, on.copy(startsWithinHours = 24).effective().scanWindowHours)
         assertEquals(6, on.copy(startsWithinHours = 0, daysAhead = 10).effective().scanWindowHours)
         // The trap guard Tj sets is the window.
-        assertEquals(8, on.copy(trapEarlyHours = 8).effective().scanWindowHours)
-        assertEquals(12, on.copy(trapEarlyHours = 12, startsWithinHours = 0).effective().scanWindowHours)
-        assertEquals(10, on.copy(trapEarlyHours = 12, startsWithinHours = 10).effective().scanWindowHours)
-        assertEquals(3, on.copy(trapEarlyHours = 3).effective().scanWindowHours)
+        assertEquals(8, on.copy(trapBidHours = 8).effective().scanWindowHours)
+        assertEquals(12, on.copy(trapBidHours = 12, startsWithinHours = 0).effective().scanWindowHours)
+        assertEquals(10, on.copy(trapBidHours = 12, startsWithinHours = 10).effective().scanWindowHours)
+        assertEquals(3, on.copy(trapBidHours = 3).effective().scanWindowHours)
         // Off has no limit of its own: Days ahead and Starts within decide.
-        assertEquals(7 * 24, on.copy(trapEarlyHours = 0).effective().scanWindowHours)
-        assertEquals(24, on.copy(trapEarlyHours = 0, startsWithinHours = 24).effective().scanWindowHours)
-        assertEquals(24, on.copy(trapEarlyHours = 0, daysAhead = 1).effective().scanWindowHours)
+        assertEquals(7 * 24, on.copy(trapBidHours = 0).effective().scanWindowHours)
+        assertEquals(24, on.copy(trapBidHours = 0, startsWithinHours = 24).effective().scanWindowHours)
+        assertEquals(24, on.copy(trapBidHours = 0, daysAhead = 1).effective().scanWindowHours)
         // Never past the ordinary reach even when the trap guard is longer (Days ahead 1 = 24 h).
-        assertEquals(24, on.copy(trapEarlyHours = 72, daysAhead = 1).effective().scanWindowHours)
+        assertEquals(24, on.copy(trapBidHours = 72, daysAhead = 1).effective().scanWindowHours)
         // The sportsbook-props horizon is Tj's own ("Games within"), and the window still bounds it.
         assertEquals(6, on.copy(bookPropHours = 24).effective().bookPropWindowHours)
-        assertEquals(12, on.copy(trapEarlyHours = 12, bookPropHours = 24).effective().bookPropWindowHours)
-        assertEquals(6, on.copy(trapEarlyHours = 12, bookPropHours = 6).effective().bookPropWindowHours)
+        assertEquals(12, on.copy(trapBidHours = 12, bookPropHours = 24).effective().bookPropWindowHours)
+        assertEquals(6, on.copy(trapBidHours = 12, bookPropHours = 6).effective().bookPropWindowHours)
         assertEquals("the default window is the trap guard's default", TrapGuard.DEFAULT_EARLY_HOURS, LowUsageBids.WINDOW_HOURS)
     }
 

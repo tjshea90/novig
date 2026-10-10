@@ -630,7 +630,7 @@ class DiagnosticsTest {
         val text = lines.joinToString("\n")
         assertTrue(text, text.contains("ON: Vigilant's scan reads player props only, the next 6 h (the trap guard's hours; Off = as far as Starts within and Days ahead say), from the picked books alone"))
         // The trap guard Tj sets is the window the file says (Tj, 2026-10-07).
-        assertTrue(Diagnostics.lowUsageLines(low.copy(trapEarlyHours = 8), plan, 0L).joinToString().contains("the next 8 h (the trap guard's hours"))
+        assertTrue(Diagnostics.lowUsageLines(low.copy(trapBidHours = 8), plan, 0L).joinToString().contains("the next 8 h (the trap guard's hours"))
         assertTrue(Diagnostics.lowUsageLines(low.copy(trapEarlyHours = 0, daysAhead = 2), plan, 0L).joinToString().contains("the next 48 h (the trap guard's hours"))
         assertTrue(text, text.contains("books Kalshi, ProphetX, FanDuel"))
         assertTrue(text, text.contains("scan pace at most every 15 min (the usual gap is 4 min)"))

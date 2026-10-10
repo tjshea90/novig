@@ -177,7 +177,7 @@ class AppRecorderTest {
         // From the settings: the trap guard's hours, Off = the ordinary reach.
         val on = com.tjshea.vigilant.data.scanner.ScanSettings(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, maker = true)
         assertTrue(LU.tabNote(on).contains("reads 6 hours ahead"))
-        assertTrue(LU.tabNote(on.copy(trapEarlyHours = 0, daysAhead = 2)).contains("reads 48 hours ahead"))
+        assertTrue(LU.tabNote(on.copy(trapBidHours = 0, daysAhead = 2)).contains("reads 48 hours ahead"))
         // The scan line says the mode's own hours.
         val none = com.tjshea.vigilant.data.scanner.ScanResult(emptyList(), emptyList(), com.tjshea.vigilant.data.scanner.ScanStats(23, 0, 0, 0, 0, 152), 0L)
         val empty = report(timing = ScanTiming(totalMs = 400)).copy(result = none, booksFetched = 0, booksViaKey = 0)

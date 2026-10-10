@@ -138,7 +138,7 @@ class MakerAppTest {
         // Game lines on (the sample's moneylines have Pinnacle in the fair): their markets are read, a few a pass; the ones whose read fails get no bid (Tj, 2026-10-07,
         // proposal 10), the rest (props, and game lines past the pass's read limit) go up as before.
         app.container.makerStore.update { emptyList() }
-        app.container.settingsStore.update { it.copy(makerKinds = it.makerKinds + BetKind.MONEYLINE, trapEarlyHours = 0) }
+        app.container.settingsStore.update { it.copy(makerKinds = it.makerKinds + BetKind.MONEYLINE, trapBidHours = 0) }
         val r = runner(fail = true).run("game lines on")!!
         assertTrue("read $asked", asked.isNotEmpty() && asked.size <= MakerRunner.MAX_MOVE_READS)
         assertTrue(r.problems.toString(), r.placed > 0)

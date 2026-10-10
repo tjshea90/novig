@@ -39,7 +39,7 @@ class MoreBooksTest {
     fun `settings saved before get the new books once, lose LowVig only beside BetOnline, and keep what Tj picked`() {
         val oldDefault = listOf("pinnacle", "betonlineag", "lowvig", "draftkings", "fanduel", "betmgm", "williamhill_us", "espnbet", "fanatics", "betrivers")
         val moved = ScanSettings(referenceBooks = oldDefault, schema = 10).migrate()
-        assertEquals(13, moved.schema)
+        assertEquals(14, moved.schema)
         assertFalse("lowvig" in moved.referenceBooks)
         assertTrue(moved.referenceBooks.containsAll(listOf("hardrockbet", "bovada", "fliff")))
         assertTrue(moved.referenceBooks.containsAll(oldDefault - "lowvig"))

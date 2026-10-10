@@ -203,7 +203,7 @@ class MakerUiTest {
             "4% under the fair (sharp book's if lower) · ¼ Kelly of \$1,000.00, up to \$10.00 a bid · Props, Team totals, 1st half / inning · up to 30 min (less if the fair goes old) · games within 6 h",
             MakerRulesText.summary(ScanSettings()),
         )
-        assertTrue(MakerRulesText.summary(ScanSettings(trapEarlyHours = 0)).endsWith("(less if the fair goes old)"))
+        assertTrue(MakerRulesText.summary(ScanSettings(trapBidHours = 0)).endsWith("(less if the fair goes old)"))
         assertEquals("\$5.00 a bid", MakerRulesText.stake(ScanSettings(makerStakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM)))
     }
 
@@ -344,7 +344,7 @@ class MakerUiTest {
             )
         }
         compose.onNodeWithText("12 h", useUnmergedTree = true).performScrollTo().performClick()
-        assertEquals(12, s.trapEarlyHours)
+        assertEquals(12, s.trapBidHours)
     }
 
     /** v0.56.0 put the trap guard's move rule over game-line bids (RESEARCH.md §72.3): the Bids tab shows that switch once game lines get bids. */
@@ -591,13 +591,13 @@ class MakerUiTest {
         compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
         compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
         compose.onNodeWithText("12 h").performScrollTo().performClick()
-        assertEquals(12, st.value.trapEarlyHours)
+        assertEquals(12, st.value.trapBidHours)
         compose.onNodeWithTag("maker-trapEarlyField").assertTextContains("12")
         compose.onNodeWithTag("maker-trapEarlyField").performTextReplacement("9")
-        assertEquals(9, st.value.trapEarlyHours)
+        assertEquals(9, st.value.trapBidHours)
         compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("more than 9 h off", substring = true)
         compose.onNodeWithTag("maker-trapEarlyField").performTextReplacement("0")
-        assertEquals("0 saves nothing: Off is its own chip", 9, st.value.trapEarlyHours)
+        assertEquals("0 saves nothing: Off is its own chip", 9, st.value.trapBidHours)
         compose.onNodeWithText(TrapGuardText.HOURS_ERROR).assertExists()
     }
 
@@ -607,20 +607,20 @@ class MakerUiTest {
      */
     @Test
     fun `in low API usage the trap guard note says the scan reads exactly that far - 6 by default, 8, and Off - and what a wider window costs`() {
-        val st = androidx.compose.runtime.mutableStateOf(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, trapEarlyHours = 6))
+        val st = androidx.compose.runtime.mutableStateOf(settings.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, trapBidHours = 6))
         compose.setContent { VigilantTheme { MakerScreen(ui(st.value), MakerActions(onUpdate = { f -> st.value = f(st.value) })) } }
         compose.onNodeWithText(MakerRulesText.summary(st.value)).performClick()
         compose.onNodeWithTag("makerTrapEarlyNote").performScrollTo().assertTextContains("the scan reads exactly that far (6 h now", substring = true)
         compose.onNodeWithTag("makerTrapEarlyNote").assert(!hasText("ParlayAPI credits", substring = true))
         compose.onNodeWithTag("maker-trapEarlyField").performTextReplacement("8")
-        assertEquals(8, st.value.trapEarlyHours)
+        assertEquals(8, st.value.trapBidHours)
         compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("starting within 8 h, and the scan reads exactly that far (8 h now", substring = true)
         compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("more ParlayAPI credits", substring = true)
-        st.value = st.value.copy(trapEarlyHours = 0)
+        st.value = st.value.copy(trapBidHours = 0)
         compose.onNodeWithTag("makerTrapEarlyNote").assertTextContains("Off: no limit of its own", substring = true)
         assertEquals("the scan reads as far as Settings › Scanning says", st.value.effective().scanWindowHours, com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(st.value))
         // The summary line carries the same hours.
-        assertTrue(MakerRulesText.summary(st.value.copy(trapEarlyHours = 8)).contains("props in the next 8 h"))
+        assertTrue(MakerRulesText.summary(st.value.copy(trapBidHours = 8)).contains("props in the next 8 h"))
     }
 
     /** Tj, 2026-10-05: "make an option for a low API usage auto bid feature". */
@@ -675,7 +675,7 @@ class MakerUiTest {
         compose.onNodeWithTag("lowUsageMargin-25").performClick()
         assertEquals(0.025, st.value.lowUsageMargin, 1e-12)
         // The summary says it: the window is the trap guard's hours (this fixture has the trap guard Off, so the ordinary reach would be the window: set the usual 6 h).
-        st.value = st.value.copy(trapEarlyHours = 6)
+        st.value = st.value.copy(trapBidHours = 6)
         val summary = MakerRulesText.summary(st.value)
         assertTrue(summary, summary.startsWith("low API usage: Kalshi, ProphetX, Pinnacle · scan every 15 min · props in the next 6 h · 2.5% or more under the fair · no bid longer than +130"))
         // Going back to All bids brings the usual controls back.

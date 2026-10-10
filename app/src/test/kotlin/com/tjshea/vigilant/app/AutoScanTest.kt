@@ -273,7 +273,7 @@ class AutoScanTest {
         val old = json.decodeFromString(ScanSettings.serializer(), """{"autoScan":"BOTH","autoScanMinutes":20,"schema":11}""")
         val moved = old.migrate()
         assertEquals(1200, moved.autoScanSeconds)
-        assertEquals(13, moved.schema)
+        assertEquals(14, moved.schema)
         assertEquals(AutoScanMode.BOTH, moved.autoScan)
         // Saved at schema 13 with 15 s picked: loading and migrating again changes nothing.
         val picked = moved.copy(autoScanSeconds = 15)

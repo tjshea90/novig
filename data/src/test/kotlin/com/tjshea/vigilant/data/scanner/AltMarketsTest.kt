@@ -202,9 +202,9 @@ class AltMarketsTest {
         // v0.19.1 schema 8 (a week ahead), v0.19.3 schema 9 (CNO's fewest books 1-4), v0.22.0 schema 10 (the widget
         // opens only from its button), v0.35.0 schema 11 (Hard Rock, Bovada, Fliff read; LowVig beside BetOnline dropped),
         // v0.38.0 schema 12 (the auto-scan interval in seconds).
-        assertEquals(13, picked.schema)
+        assertEquals(14, picked.schema)
         // A current file is left alone.
-        assertEquals(ScanSettings(propsPerGame = 4, schema = 13), ScanSettings(propsPerGame = 4, schema = 13).migrate())
+        assertEquals(ScanSettings(propsPerGame = 4, schema = 14), ScanSettings(propsPerGame = 4, schema = 13).migrate())
     }
 
     // ---- sources --------------------------------------------------------------------------------

@@ -88,7 +88,7 @@ class MakerTest {
         assertTrue(MakerQuote.decide(line(m = far), rules6.copy(earlyHours = 0), now) is MakerDecision.Post)
         // The settings carry it: 6 h by default.
         assertEquals(6, MakerRules.of(ScanSettings()).earlyHours)
-        assertEquals(0, MakerRules.of(ScanSettings(trapEarlyHours = 0)).earlyHours)
+        assertEquals(0, MakerRules.of(ScanSettings(trapBidHours = 0)).earlyHours)
     }
 
     @Test
