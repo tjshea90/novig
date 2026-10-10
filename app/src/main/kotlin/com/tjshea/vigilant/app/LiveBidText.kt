@@ -55,7 +55,7 @@ object LiveBidText {
                 "Pinnacle is silent 15 s or its price has sat 30 s, held off 30 s after a score and 15 s after a danger frame, pulled when 2% of edge is left. Stops itself on 3 picked-off fills out of 5, " +
                 "or when a pull takes over 10 s. Fewest bids."
         LiveBidPresets.BALANCED.name ->
-            "More bids, still positive on the tapes: a 5% margin (the best fills times edge on the grid), may be the best bid on a thin line, Pinnacle's limit \$500 or more and margin under 8%, " +
+            "More bids, still positive on the tapes: a 5% margin (the middle of the range where fills times edge were flat on the grid), may be the best bid on a thin line, Pinnacle's limit \$500 or more and margin under 8%, " +
                 "a 30 s hold after a score, pulled when 1% is left. Stops itself on 4 picked-off fills out of 6, or when a pull takes over 12 s."
         LiveBidPresets.PAPER_WIDE.name ->
             "For watching, not for money: a 4% margin and bids that rest 60 s kept only about +1% a fill on the tapes, which is inside the noise of a 20-fill sample. Applying it turns real bids off."

@@ -157,7 +157,7 @@ object LiveBidPresets {
     )
 
     /**
-     * More bids, still positive on the tapes: a 5% margin (best fills-times-EV on the grid), may lead a thin book, fair price 12-88%, Pinnacle's margin at most 8% and limit at least $500, a
+     * More bids, still positive on the tapes: a 5% margin (the flat part of fills-times-EV on the grid runs 3-6%: the middle of it), may lead a thin book, fair price 12-88%, Pinnacle's margin at most 8% and limit at least $500, a
      * 30 s hold after a score, pulled at 1% left.
      */
     val BALANCED = SavedLiveBidPreset("Balanced", LiveBidQuality())
