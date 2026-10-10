@@ -5980,3 +5980,8 @@ I see wildly mispriced odds on live betting on novig everyday. Investigate how t
 ```
 Build a live bid feature for live betting on novig. The feature must have strong safeguards in place to make sure the live bids don't get stale and that the live bids are truly EV. Give me a good slate of options for this setting to fine tune it, including presets I can save and manual fields to type my own numbers. Give a couple default presets that are safe positive EV live bid presets based on your research
 ```
+
+## 2026-10-10T03:50:07Z
+```
+I want to run this very soon with real money, but it will be ⅛ Kelly or something small. Build it for real money
+```
