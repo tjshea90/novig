@@ -1303,7 +1303,10 @@ private fun ColumnScope.ResearchPage(state: UiState, reportActions: ReportAction
     androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { labShown(); kotlinx.coroutines.delay(5_000) } }
     SectionTitle("Paper lab")
     Hint(com.tjshea.vigilant.app.LabText.HINT)
-    SwitchRow(com.tjshea.vigilant.app.LabText.SWITCH_TITLE, com.tjshea.vigilant.app.LabText.SWITCH_SUB, state.settings.altLab, tag = "altLabSwitch") { v -> onUpdate { it.copy(altLab = v) } }
+    // Research mode runs every recorder whatever their own switches say, so under it they read ON and cannot be turned off here (they used to read OFF while running: Tj, 2026-10-10 settings audit).
+    val master = state.settings.researchMode
+    val viaMaster = " Running because Research mode is on."
+    SwitchRow(com.tjshea.vigilant.app.LabText.SWITCH_TITLE, com.tjshea.vigilant.app.LabText.SWITCH_SUB + if (master) viaMaster else "", state.settings.altLab || master, tag = "altLabSwitch", enabled = !master) { v -> onUpdate { it.copy(altLab = v) } }
     state.labNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("altLabNote")) }
     Hint("Research mode switches the recorders below on too.")
 
@@ -1313,8 +1316,8 @@ private fun ColumnScope.ResearchPage(state: UiState, reportActions: ReportAction
         val burstShown by androidx.compose.runtime.rememberUpdatedState(reportActions.onBurstShown)
         androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { burstShown(); kotlinx.coroutines.delay(5_000) } }
         Hint(com.tjshea.vigilant.app.BurstText.HINT)
-        SwitchRow(com.tjshea.vigilant.app.BurstText.SWITCH_TITLE, com.tjshea.vigilant.app.BurstText.SWITCH_SUB, state.settings.burstRecorder, tag = "burstSwitch") { v -> onUpdate { it.copy(burstRecorder = v) } }
-        if (state.settings.burstRecorder) {
+        SwitchRow(com.tjshea.vigilant.app.BurstText.SWITCH_TITLE, com.tjshea.vigilant.app.BurstText.SWITCH_SUB + if (master) viaMaster else "", state.settings.burstRecorder || master, tag = "burstSwitch", enabled = !master) { v -> onUpdate { it.copy(burstRecorder = v) } }
+        if (state.settings.burstRecorder || master) {
             Text(com.tjshea.vigilant.app.BurstText.LEAGUES_TITLE, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ScanSettings.BURST_LEAGUES.forEach { lg ->
@@ -1339,7 +1342,7 @@ private fun ColumnScope.ResearchPage(state: UiState, reportActions: ReportAction
         val feedShown by androidx.compose.runtime.rememberUpdatedState(reportActions.onFeedRaceShown)
         androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { feedShown(); kotlinx.coroutines.delay(5_000) } }
         Hint(com.tjshea.vigilant.app.FeedRaceText.HINT)
-        SwitchRow(com.tjshea.vigilant.app.FeedRaceText.SWITCH_TITLE, com.tjshea.vigilant.app.FeedRaceText.SWITCH_SUB, state.settings.feedRace, tag = "feedRaceSwitch") { v -> onUpdate { it.copy(feedRace = v) } }
+        SwitchRow(com.tjshea.vigilant.app.FeedRaceText.SWITCH_TITLE, com.tjshea.vigilant.app.FeedRaceText.SWITCH_SUB + if (master) viaMaster else "", state.settings.feedRace || master, tag = "feedRaceSwitch", enabled = !master) { v -> onUpdate { it.copy(feedRace = v) } }
         state.feedRaceNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("feedRaceNote")) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
             androidx.compose.material3.Button(onClick = reportActions.onShareFeedRace, modifier = Modifier.testTag("shareFeedRace")) { Text(com.tjshea.vigilant.app.FeedRaceText.BUTTON) }
@@ -1671,10 +1674,10 @@ private fun Hint(text: String) {
 }
 
 @Composable
-private fun SwitchRow(title: String, subtitle: String, checked: Boolean, tag: String? = null, onChange: (Boolean) -> Unit) {
+private fun SwitchRow(title: String, subtitle: String, checked: Boolean, tag: String? = null, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
     // The whole row toggles (a bigger target than the switch alone, and one control for TalkBack).
     Row(
-        Modifier.fillMaxWidth().toggleable(value = checked, role = Role.Switch, onValueChange = onChange).padding(vertical = 6.dp)
+        Modifier.fillMaxWidth().toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onChange).padding(vertical = 6.dp)
             .let { if (tag != null) it.testTag(tag) else it },
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1682,7 +1685,7 @@ private fun SwitchRow(title: String, subtitle: String, checked: Boolean, tag: St
             Text(title, style = MaterialTheme.typography.bodyMedium)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Switch(checked = checked, onCheckedChange = null)
+        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }
 
