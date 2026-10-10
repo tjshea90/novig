@@ -116,6 +116,12 @@ class NetStats(private val store: JsonFileStore<NetBook>, private val clock: () 
 
     fun snapshot(): NetBook = synchronized(lock) { book }
 
+    /** Starts the connection log again from now (Settings › Diagnostics › Reset). */
+    suspend fun reset() {
+        val fresh = synchronized(lock) { book = NetBook(sinceMs = clock()); loaded = true; dirty = false; flushedAtMs = clock(); book }
+        runCatching { store.update { fresh } }
+    }
+
     suspend fun load() {
         val saved = runCatching { store.read() }.getOrDefault(NetBook())
         synchronized(lock) {
@@ -176,6 +182,6 @@ class NetStats(private val store: JsonFileStore<NetBook>, private val clock: () 
         const val MAX_PATHS = 14
         const val BPS_MIN_BYTES = 8_192L
         const val MIN_FLUSH_GAP_MS = 30_000L
-        const val WINDOW_MS = 14L * 24 * HOUR_MS
+        const val WINDOW_MS = 2L * 24 * HOUR_MS
     }
 }

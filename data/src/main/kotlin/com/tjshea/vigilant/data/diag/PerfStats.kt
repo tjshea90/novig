@@ -22,6 +22,11 @@ class PerfStats {
         series.getOrPut(name) { RollingSamples(CAP) }.add(value)
     }
 
+    /** Forgets this run's timings (Settings › Diagnostics › Reset). */
+    fun clear() {
+        series.clear()
+    }
+
     fun summary(name: String): SampleSummary = series[name]?.summary() ?: SampleSummary.EMPTY
 
     fun summaries(): Map<String, SampleSummary> = series.mapValues { it.value.summary() }.toSortedMap()

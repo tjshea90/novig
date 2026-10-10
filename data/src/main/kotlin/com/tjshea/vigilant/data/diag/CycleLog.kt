@@ -62,6 +62,13 @@ class CycleLog(private val store: JsonFileStore<CycleBook>, private val clock: (
         }
     }
 
+    /** Starts the schedule's record again (Settings › Diagnostics › Reset). */
+    suspend fun reset() = mutex.withLock {
+        val fresh = CycleBook()
+        book = fresh
+        save(fresh, clock())
+    }
+
     suspend fun summary(): CycleBook = mutex.withLock { book ?: store.read().also { book = it } }
 
     private suspend fun save(next: CycleBook, now: Long) {

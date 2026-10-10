@@ -43,6 +43,11 @@ class ProblemLog(
         }
     }
 
+    /** Forgets every problem (Settings › Diagnostics › Reset). */
+    suspend fun clear() {
+        store.update { ProblemBook() }
+    }
+
     /** Newest first. */
     suspend fun recent(): List<Problem> = store.read().items.asReversed().sortedByDescending { it.lastAtMs }
 

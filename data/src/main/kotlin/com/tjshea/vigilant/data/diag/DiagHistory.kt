@@ -23,6 +23,11 @@ class DiagHistory(private val store: JsonFileStore<DiagBook>) {
         runCatching { store.update { DiagBook((it.snaps + snap).takeLast(KEEP)) } }
     }
 
+    /** Forgets every earlier report (Settings › Diagnostics › Reset): the next file has nothing to compare with. */
+    suspend fun clear() {
+        runCatching { store.update { DiagBook() } }
+    }
+
     companion object {
         const val KEEP = 12
     }

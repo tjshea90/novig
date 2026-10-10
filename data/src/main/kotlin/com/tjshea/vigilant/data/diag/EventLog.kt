@@ -97,7 +97,9 @@ class EventLog(private val store: JsonFileStore<EventBook>, private val clock: (
             loaded = true
             val mine = events.toList()
             events.clear()
-            events += (book.events + mine).takeLast(keep)
+            // Nothing older than the window comes back (Tj, 2026-10-10: logs older than 2 days are cleared): the log is about now.
+            val cutoff = clock() - WINDOW_MS
+            events += (book.events.filter { it.lastMs >= cutoff } + mine).takeLast(keep)
             book.counters.forEach { (k, v) -> counters.merge(k, v, Long::plus) }
             sinceMs = listOfNotNull(book.sinceMs, sinceMs).minOrNull()
             // A record older than [WINDOW_MS] starts again: the counters are about recent behaviour.
@@ -107,6 +109,15 @@ class EventLog(private val store: JsonFileStore<EventBook>, private val clock: (
                 sinceMs = clock()
             }
         }
+    }
+
+    /** Throws every event and counter away and starts again from now (Settings › Diagnostics › Reset). */
+    suspend fun reset() {
+        val book = synchronized(lock) {
+            events.clear(); counters.clear(); sinceMs = clock(); loaded = true; dirty = false; flushedAtMs = clock()
+            EventBook(emptyList(), emptyMap(), sinceMs)
+        }
+        runCatching { store.update { book } }
     }
 
     /** Writes what changed to the file. [force]: even if it was written a moment ago (an error, the report). */
@@ -126,7 +137,7 @@ class EventLog(private val store: JsonFileStore<EventBook>, private val clock: (
         const val MAX_KEY = 120
         const val MERGE_MS = 60_000L
         const val MIN_FLUSH_GAP_MS = 5_000L
-        const val WINDOW_MS = 14L * 24 * 3_600_000L
+        const val WINDOW_MS = 2L * 24 * 3_600_000L
 
         /**
          * Where an exception came from: the first three frames of the app's own code ("com.tjshea.vigilant.app.AutoScanner.cycle(AutoScan.kt:231)"), else the first

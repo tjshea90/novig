@@ -37,6 +37,11 @@ class FrameStats {
         c.samples.add(durationMs)
     }
 
+    /** Forgets this run's frames (Settings › Diagnostics › Reset). */
+    fun clear() {
+        counters.clear()
+    }
+
     fun snapshot(): Map<String, Bucket> = counters.mapValues { (_, c) -> synchronized(c) { Bucket(c.frames, c.slow, c.frozen, c.samples.summary()) } }.toSortedMap()
 
     companion object {
