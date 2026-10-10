@@ -229,7 +229,7 @@ object DiagnosticsFile {
         o.appendLine("== EVERY BET (JSON lines, newest first: only the open bets and those placed in the last $BET_DAYS days, see the note after it; the bet, atBet = its record as placed, its close and its result; ${shown.size} of ${s.bets.size} bets) ==")
         o.appendLine("<<<JSONL")
         shown.forEach { o.appendLine(mask(com.tjshea.vigilant.data.tracker.BetLedger.line(it, now))) }
-        if (recent.size > shown.size) o.appendLine("[… ${recent.size - shown.size} more recent bets not listed]")
+        if (recent.size > shown.size) o.appendLine("(${recent.size - shown.size} more recent bets are not listed)")
         o.appendLine(">>>")
         if (s.bets.size > recent.size) o.appendLine("(${s.bets.size - recent.size} older bets are not listed: the Tracker and accuracy sections above sum them, the scan study file has each in detail.)")
     }
