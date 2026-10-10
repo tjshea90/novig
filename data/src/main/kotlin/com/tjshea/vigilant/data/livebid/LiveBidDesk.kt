@@ -456,9 +456,15 @@ class LiveBidDesk(
     /** The most real bids one minute can honestly hold: every bid up renewed as often as its life allows, twice over, and a few more. */
     private fun perMinuteCap(cfg: LiveBidConfig): Int {
         val q = cfg.quality
-        val cycleSec = maxOf(maxOf(q.ttlSec, MIN_TTL_SEC) - q.refreshBeforeSec, 5)
+        val cycleSec = maxOf((ttlMs(q) - refreshMs(q)) / 1000.0, 5.0)
         return (cfg.limits.maxBids * (60.0 / cycleSec) * 2.0 + 10.0).toInt()
     }
+
+    /** A bid's life: the setting, never under the floor (a bid that lives under about ten seconds could be gone before Novig's in-play delay has let it land). */
+    private fun ttlMs(q: LiveBidQuality): Long = maxOf(q.ttlSec, MIN_TTL_SEC) * 1000L
+
+    /** How long before a bid ends its successor goes up: the setting, but never more than half the life, so a misconfigured pair cannot make every bid renew the moment it is posted. */
+    private fun refreshMs(q: LiveBidQuality): Long = minOf(q.refreshBeforeSec * 1000L, ttlMs(q) / 2)
 
     private sealed interface Decision {
         data class Skip(val why: String, val count: Boolean = true) : Decision
@@ -477,7 +483,7 @@ class LiveBidDesk(
             // A bid is up. Its replacement goes up before it ends, when asked for, once.
             val old = onOutcome.singleOrNull() ?: return Decision.Skip("a bid is already up here", count = false)
             val q = cfg.quality
-            val dueMs = old.expiresAtMs - q.refreshBeforeSec * 1000L
+            val dueMs = old.expiresAtMs - refreshMs(q)
             if (old.status == LiveBidStatus.CANCELING || old.status == LiveBidStatus.SENDING || now < dueMs || old.clientId in replaced) return Decision.Skip("a bid is already up here", count = false)
             if (!q.overlapRepost && now < old.expiresAtMs) return Decision.Skip("waiting for the bid to end", count = false)
             replacing = old
@@ -511,7 +517,7 @@ class LiveBidDesk(
     private fun post(w: LiveBidWant, contracts: Long, cfg: LiveBidConfig, now: Long, replacing: LiveBid?): Boolean {
         val q = cfg.quality
         val v = w.verdict
-        val ttlMs = maxOf(q.ttlSec, MIN_TTL_SEC) * 1000L
+        val ttlMs = ttlMs(q)
         val real = cfg.real
         val bid = LiveBid(
             clientId = NovigTradingClient.newClientId(), mode = if (real) LiveBid.MODE_REAL else LiveBid.MODE_PAPER, marketId = w.marketId, eventId = w.eventId, outcomeId = w.outcomeId,
