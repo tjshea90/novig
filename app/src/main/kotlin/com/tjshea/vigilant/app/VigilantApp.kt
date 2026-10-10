@@ -708,7 +708,12 @@ class AppContainer(private val app: Application) {
         }
         // Pinnodds live follows its switch, the Pinnodds key, the Novig key and STOP ALL (paper unless "Place real bets" is on; RESEARCH.md §116).
         appScope.launch {
-            settingsStore.flow.filterNotNull().collect { s -> runCatching { pinnTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
+            settingsStore.flow.filterNotNull().collect { s ->
+                // The live bid desk is started here too, not only at init: this block runs while the class is still being built, when `liveBidDesk`'s own inputs (declared further down) may not exist yet,
+                // so its first start can fail without a trace (v0.85.0-0.85.3: "loop steps 0"). `start()` does nothing when it has already started.
+                runCatching { liveBidDesk.start() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                runCatching { pinnTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
         }
         // The live bid desk runs for the life of the app (cheap when nothing is up): bids left from a run that ended come down at once, and a fill that lands after the switch is turned off is still recorded.
         appScope.launch { runCatching { liveBidDesk.start() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
