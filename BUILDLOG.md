@@ -187,3 +187,4 @@ day that changes.
 | v0.88.6 | code 179 | 2026-10-10T19:14Z | v0.88.6: pregame make-order bids leave a share of the wallet for the live engines (autopilot sets 50%), so live bids have money to post from
 | v0.88.7 | code 180 | 2026-10-10T19:55Z | v0.88.7: live bids: a market Novig refuses no longer shuts the live book connection out (batch halved down to it), and 'no current Novig book' now says why
 | v0.88.8 | code 181 | 2026-10-10T20:23Z | v0.88.8: live engine shares the app's one Novig stream (a second connection starved on the key's shared stream bucket), its markets pinned ahead of scans'
+| v0.88.9 | code 182 | 2026-10-10T21:06Z | v0.88.9: live bids and Autopilot use a 2% margin under Pinnacle's fair (was 3%): more fills
