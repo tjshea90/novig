@@ -41,7 +41,9 @@ object PinnText {
         val age = r.frameAgeMs?.let { if (it < 2_000) "just now" else "${it / 1000} s ago" } ?: "no frame yet"
         val mode = if (s.pinnLiveBet && s.pinnLiveHalted == null) "REAL BETS" else if (s.pinnLiveHalted != null) "HALTED" else "paper"
         return "${if (s.pinnWebsite.website) "Pinnacle website feed" else "Pinnodds feed"} ${r.socket}, last frame $age · ${r.pinnLive} live matchups, ${r.matched} matched to Novig, ${r.watched} Novig markets held · ${r.candidates} candidates · " +
-            "$mode: ${t.bets} bets, ${t.paper} paper, ${t.missed} missed" + (t.last?.let { " · last: $it" } ?: "") + (r.problem?.let { " · $it" } ?: "")
+            "$mode: ${t.bets} bets, ${t.paper} paper, ${t.missed} missed" + (t.last?.let { " · last: $it" } ?: "") + (r.problem?.let { " · $it" } ?: "") +
+            // Why the taker has bought nothing, on the page itself (Tj, 2026-10-10: "there is no held back list"): the counts were only in the Diagnostics file.
+            (if (r.evaluations > 0) "\nTaker looked ${r.evaluations} times" + (if (r.skips.isEmpty()) "." else ", passed on: " + r.skips.entries.sortedByDescending { it.value }.take(5).joinToString(" · ") { "${it.key} ×${it.value}" }) else "")
     }
 
     fun diagnostics(s: ScanSettings, r: LiveRunnerStatus, t: LiveTradeStatus, records: List<LiveRecord>, follows: List<LiveFollow>, running: Boolean, reopen: List<com.tjshea.vigilant.data.pinnodds.ReopenProbe> = emptyList()): String {
