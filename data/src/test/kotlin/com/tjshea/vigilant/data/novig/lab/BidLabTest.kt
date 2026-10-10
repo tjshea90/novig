@@ -88,6 +88,28 @@ class BidLabTest {
     }
 
     @Test
+    fun `a settled market that Novig has dropped is graded from the final score`() = runBlocking {
+        val dir = tmp.newFolder()
+        val bj = DayJournal(dir, "bids", BidLabBid.serializer()) { it.atMs }
+        val ej = DayJournal(dir, "events", BidLabEvent.serializer()) { it.atMs }
+        val start = t0 + 2 * 3_600_000L
+        val feed = object : com.tjshea.vigilant.data.tracker.ScoreSource {
+            override suspend fun games(league: String, date: java.time.LocalDate) =
+                listOf(com.tjshea.vigilant.data.tracker.GameScore("g", "NHL", "Vegas Golden Knights", "Toronto Maple Leafs", start, true, false, 6, 4))
+            override suspend fun players(game: com.tjshea.vigilant.data.tracker.GameScore) = null
+            override fun covers(league: String) = true
+        }
+        val l = BidLab({ listOf(TrapGuard.Trade("o1", 0.40, 500, t0 + 60_000)) }, { null }, bj, ej, grader = LabGrader(feed))
+        l.observe(listOf(LabLine("o1", "m1", "e1", "Toronto Maple Leafs @ Vegas Golden Knights", "NHL", "TOTAL", "Total 9.5 YES", start, false, 0.50, 0.52, 0.45, 4)), t0)
+        l.poll(t0 + 120_000)
+        l.observe(emptyList(), start + 1)
+        l.poll(start + BidLab.GRADE_AFTER_MS + 1)
+        val grades = ej.readAll().filter { it.type == "GRADE" }
+        assertEquals(pre.size, grades.size)
+        assertTrue(grades.all { it.text == "WIN" })   // 10 goals: over 9.5
+    }
+
+    @Test
     fun `a filled bid is followed to the last fair before the start and graded from the settled market, and the report says it`() = runBlocking {
         val (l, bj, ej) = lab(listOf(TrapGuard.Trade("o1", 0.40, 500, t0 + 60_000)), status = "WIN")
         l.observe(listOf(line(startsIn = 2 * 3_600_000L)), t0)
