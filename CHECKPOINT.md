@@ -1,21 +1,24 @@
-# CHECKPOINT 2899 — read me first, then TASKS.md
+# CHECKPOINT 2900 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T20:16:46Z · **tests:** all 4 fast checks green
-**Branch:** `claude/new-session-mng5sq` · **builds on:** `b16d7aa1` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T20:24:03Z · **tests:** all 4 fast checks green
+**Branch:** `claude/new-session-mng5sq` · **builds on:** `1de50b99` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.88.8: live engine shares the app's one Novig stream (a second connection starved on the key's shared stream bucket: 'live book not subscribed yet'), its markets pinned ahead of scans' (versionCode 181, v0.88.8)
+v0.88.8 released+recorded (live engine shares the one Novig stream)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.88.8), then run: bash tools/record-release.sh v0.88.8 181 "v0.88.8: live engine shares the app's one Novig stream (a second connection starved on the key's shared stream bucket: 'live book not subscribed yet'), its markets pinned ahead of scans'"
+Wait for Tj's Live bids page top after installing v0.88.8 (TP2c/TP2d): reason words name any remaining blocker
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+    ?? research/uploads/2026-10-10/525d3974-image.png
+    ?? research/uploads/2026-10-10/f3600b9b-image.png
 
 ## Last ten checkpoints
 ```
+  f73920e0 ckpt 2899: pre-release: v0.88.8: live engine shares the app's one Novig stream (a secon
   b16d7aa1 ckpt 2898: pre-ship: v0.88.8: live engine shares the app's one Novig stream (a second c
   56744e2b ckpt 2897: v0.88.7 released+recorded (live book refusal fix + reason words)
   61d6de37 ckpt 2896: pre-release: v0.88.7: live bids: a market Novig refuses no longer shuts the 
@@ -25,5 +28,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   4e3604c0 ckpt 2892: pre-release: v0.88.5: Pinnacle website feed measured as cached (90-400 s old
   d636d96a ckpt 2891: pre-release: v0.88.4: feed race counts one sample per update (not per market
   45d02b7c ckpt 2890: pre-release: v0.88.3: Pinnacle compare run says whether the socket and the w
-  54922bf6 ckpt 2889: pre-release: v0.88.2: Pinnacle website compare run shows what its own book r
 ```
