@@ -325,6 +325,9 @@ class LiveBidWhyTest {
         assertTrue(run(live.copy(socket = "connecting"))!!.contains("connecting"))
         assertTrue(run(live.copy(pinnLive = 0))!!.contains("no live game"))
         assertTrue(run(live.copy(matched = 0))!!.contains("none of them"))
+        assertTrue(run(live.copy(bidError = "boom"))!!.contains("boom"))
+        assertTrue(run(live.copy(bidGate = "the Pinnodds feed is not open"))!!.contains("not open"))
+        assertTrue(run(live.copy(bidTargets = 0, watched = 12))!!.contains("none of their lines"))
         assertNull("a bid is up: nothing to explain", run(live, LiveBidDeskStatus(active = 1)))
     }
 

@@ -225,15 +225,22 @@ class PinnLiveRunner(
         var lastStatusMs = 0L
         for (msg in queue) {
             val now = clock()
-            when (msg) {
-                is Msg.Frame -> onFrame(msg, novig)
-                is Msg.Book -> onNovigBook(msg.marketId, now, novig, msg.changes)
-                is Msg.Catalog -> { catalogEvents = msg.events; catalogMarkets = msg.markets; catalogDirty = true; rematch(novig, now) }
-                is Msg.Recorded -> scheduleFollows(msg)
-                is Msg.Tick -> {
-                    onTick(now, novig, pinn)
-                    if (now - lastStatusMs >= STATUS_EVERY_MS) { lastStatusMs = now; publish(pinn, novig, now) }
+            // A message that throws is dropped and shown (status problem), never the end of the engine: the consumer owns every matched game's state, and the live orders depend on it.
+            try {
+                when (msg) {
+                    is Msg.Frame -> onFrame(msg, novig)
+                    is Msg.Book -> onNovigBook(msg.marketId, now, novig, msg.changes)
+                    is Msg.Catalog -> { catalogEvents = msg.events; catalogMarkets = msg.markets; catalogDirty = true; rematch(novig, now) }
+                    is Msg.Recorded -> scheduleFollows(msg)
+                    is Msg.Tick -> {
+                        onTick(now, novig, pinn)
+                        if (now - lastStatusMs >= STATUS_EVERY_MS) { lastStatusMs = now; publish(pinn, novig, now) }
+                    }
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                loopError = "${msg.javaClass.simpleName}: ${e.javaClass.simpleName} ${e.message ?: ""}".trim()
             }
         }
     }
@@ -399,6 +406,7 @@ class PinnLiveRunner(
     private var lastBidJudgeMs = 0L
     private var bidTargetsNow = 0
     @Volatile private var bidGate: String? = null
+    @Volatile private var loopError: String? = null
     @Volatile private var bidError: String? = null
     private var bidJudged = 0L
 
@@ -582,7 +590,7 @@ class PinnLiveRunner(
             running = job?.isActive == true, socket = socket, pinnEvents = book.events.size, pinnLive = book.events.values.count { it.live }, novigGames = catalogEvents.size, matched = matchedGames,
             targets = targetsByMarket.size, watched = watched, frames = book.frames, frameAgeMs = pinn.lastFrameAtMs.takeIf { it > 0 }?.let { now - it }, evaluations = evaluations,
             candidates = candidates, skips = skips.toMap(), lastCandidate = lastCandidate, bidTargets = bidTargetsNow, bidJudged = bidJudged, bidGate = bidGate, bidError = bidError,
-            problem = (pinn.state.value as? PinnSocketState.Down)?.message ?: novig.problemSince(_status.value.sinceMs ?: 0L),
+            problem = (pinn.state.value as? PinnSocketState.Down)?.message ?: novig.problemSince(_status.value.sinceMs ?: 0L) ?: loopError?.let { "engine error (carried on): $it" },
         )
     }
 

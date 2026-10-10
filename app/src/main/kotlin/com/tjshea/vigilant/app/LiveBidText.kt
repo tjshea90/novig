@@ -95,9 +95,12 @@ object LiveBidText {
         if (r.socket != "live") return "The Pinnodds feed is ${r.socket}" + (r.problem?.let { " ($it)" } ?: "") + "."
         if (r.pinnLive == 0) return "Connected, but Pinnacle has no live game on right now."
         if (r.matched == 0) return "Connected: ${r.pinnLive} live Pinnacle games, none of them is also a live game on Novig right now."
+        r.bidError?.let { return "The bid judge hit an error and carried on: $it" }
+        r.bidGate?.let { return "Games are matched but the bid judge is not running: $it." }
+        if (r.bidTargets == 0) return "${r.matched} live games are matched to Novig, but none of their lines can be priced from Pinnacle's main lines yet (${r.watched} Novig markets watched)."
         val q = s.liveBidQuality
         val top = d.skips.entries.sortedByDescending { it.value }.take(3)
-        val head = "${r.matched} live games matched to Novig, ${r.bidTargets} lines judged. "
+        val head = "${r.matched} live games matched to Novig, ${r.bidTargets} lines watched, ${r.bidJudged} judgments made. "
         if (top.isEmpty()) return head + "No look has been judged yet."
         val tennisHint = if (!q.tennis && top.any { it.key == com.tjshea.vigilant.data.livebid.LiveBidSkip.TENNIS_OFF }) " Tennis is off (Tennis switch below); most live games at some hours are tennis." else ""
         return head + "None passed. Most common reasons: " + top.joinToString(" · ") { "${it.key} ×${it.value}" } + "." + tennisHint
