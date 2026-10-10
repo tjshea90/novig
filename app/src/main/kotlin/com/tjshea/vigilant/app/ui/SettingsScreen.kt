@@ -1323,6 +1323,13 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
         // The ledger check needs the betting key: Novig's own record of each API bet against what the Tracker did with it.
         if (AppBook.isNovig && state.betting.enabled) OutlinedButton(onClick = reportActions.onGradingCheck) { Text("Grading check") }
     }
+    // Tj, 2026-10-10: the file hung once the recorders' journals had grown for days. It reads only the last 3 days now; this deletes the older day files (research file: share that first if it matters).
+    var confirmClear by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    OutlinedButton(
+        onClick = { if (confirmClear) { confirmClear = false; reportActions.onPruneOld() } else confirmClear = true },
+        modifier = Modifier.testTag("pruneOld"),
+    ) { Text(if (confirmClear) "Tap again: delete recorder data older than 3 days" else "Clear old recorder data") }
+    Hint("Deletes the paper lab, bid lab, Pinnodds live and live-bid day files older than 3 days. The Diagnostics file reads only the last 3 days; the research file (Settings › Research) reads all of them, so share that first if you want it.")
     if (AppBook.isNovig && state.betting.enabled) {
         Hint("Grading check: what Novig's ledger and positions say about each bet you placed through the API, beside how the Tracker graded it. Run it after a game ends.")
     }
