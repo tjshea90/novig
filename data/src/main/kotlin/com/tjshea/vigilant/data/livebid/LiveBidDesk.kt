@@ -291,7 +291,7 @@ class LiveBidDesk(
             started = true
         }
         worker = scope.launch {
-            recover()
+            guarded("starting up") { recover() }
             run()
         }
     }
