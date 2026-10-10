@@ -4440,3 +4440,6 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 ## TD: Tj sent the scan study v0.85.3 (2026-10-10 ~07:25Z, no message with it)
 - [x] TD1 Analysed (research/scan_study_2026-10-10/ANALYSIS.md; archived upload research/uploads/2026-10-10/5d6ed178-*). Findings and the decisions that are Tj's are in its section 6.
 - [ ] TD2 ASK Tj which of ANALYSIS.md section 6 to apply: (1) bids only within ~12 h of the start, (2) auto-bet only within 6 h, (3) edge-floor test at 2%, (4) skip bets listed 1 h+, (5) no sharp-book requirement for props. Nothing is changed until he says.
+
+## TE: "How can I send you the research mode research file because it is over 30mb" (Tj, 2026-10-10 ~07:45Z)
+- [x] TE1 v0.85.7: Settings › Research › Share research file now sends only what was recorded since the last share (first time: last 3 days); "Share ALL research data" keeps the old everything file. Until it is installed: zip the file (Files app > Compress) and upload it on github.com to the repo (research/uploads/2026-10-10/, Add file > Upload files, up to 25 MB) or attach the zip here.
