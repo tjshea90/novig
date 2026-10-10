@@ -440,6 +440,8 @@ data class ScanSettings(
     val liveBidPresets: List<com.tjshea.vigilant.data.livebid.SavedLiveBidPreset> = emptyList(),
     /** Live tail bets ([TailLiveSettings]; RESEARCH.md §125). */
     val tailLive: TailLiveSettings = TailLiveSettings(),
+    /** The Pinnacle website feed switch and its pace ([PinnWebsiteSettings]; RESEARCH.md §127). */
+    val pinnWebsite: PinnWebsiteSettings = PinnWebsiteSettings(),
     /**
      * Set only by [effective]: these settings are the low-usage scan's ([LowUsageBids.profile]). The scanner and the feeds read it (quotes past the freshness limit are
      * dropped before the devig, a league with no game in the window isn't asked); never saved, so a saved file can't switch it on.
