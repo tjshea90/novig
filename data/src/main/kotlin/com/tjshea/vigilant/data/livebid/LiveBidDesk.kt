@@ -104,6 +104,10 @@ data class LiveBidDeskStatus(
     val timing: String = "",
     val last: String? = null,
     val problem: String? = null,
+    /** The desk's own loop: how many steps it has run, what it was doing last, and when it last began one (0 = never). A loop that is not turning, or is stuck in one part, shows here. */
+    val steps: Long = 0,
+    val stage: String = "",
+    val stepAtMs: Long = 0,
 )
 
 /**
@@ -180,6 +184,9 @@ class LiveBidDesk(
     private var started = false
 
     @Volatile private var settling: Job? = null
+    @Volatile private var steps = 0L
+    @Volatile private var stage = "not started"
+    @Volatile private var stepAt = 0L
     @Volatile private var worker: Job? = null
     private val signals = Channel<Unit>(Channel.CONFLATED)
     private val _status = MutableStateFlow(LiveBidDeskStatus())
@@ -377,6 +384,10 @@ class LiveBidDesk(
     private suspend fun step() {
         val now = clock()
         val cfg = config()
+        steps++
+        stepAt = now
+        stage = "starting"
+        publish(now, cfg)
         val up = cfg.on && cfg.halted == null && synchronized(mu) { halted == null }
         val modeReal = cfg.real
         // 1. What must come down, whatever else is true.
@@ -413,10 +424,12 @@ class LiveBidDesk(
         // 3. New bids.
         if (up && (!modeReal || cfg.blockedWhy == null)) guarded("posting") { postWanted(now, cfg) }
         guarded("saving") { persist(now) }
+        stage = "idle"
         publish(now, cfg)
     }
 
     private suspend fun guarded(what: String, block: suspend () -> Unit) {
+        stage = what
         try {
             block()
         } catch (e: CancellationException) {
@@ -1088,7 +1101,7 @@ class LiveBidDesk(
             LiveBidDeskStatus(
                 mode = if (!cfg.on) "off" else if (cfg.real) "real" else "paper", active = active.size, restingDollars = active.sumOf { it.restingDollars }, posted = today.size,
                 fills = today.count { it.filled > 0 }, paid = today.sumOf { it.paid }, pulls = pullCounts.toMap(), skips = skipCounts.toMap(), refused = refused, halted = halted ?: cfg.halted,
-                standDown = if (now < standDownUntil) standDownWhy else null, timing = timingLine(), last = last, problem = problem,
+                standDown = if (now < standDownUntil) standDownWhy else null, timing = timingLine(), last = last, problem = problem, steps = steps, stage = stage, stepAtMs = stepAt,
             )
         }
         _status.value = s

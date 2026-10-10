@@ -87,7 +87,7 @@ object LiveBidText {
      * Why nothing is up, in words (Tj, 2026-10-10: "It isn't posting any live bids at all"): the first thing in the chain that is not there (key, feed, a matched game), else what the judge said
      * no to most. Null when a bid is up or nothing needs saying. [r] is the runner's status, [hasKey] whether a Pinnodds key is saved.
      */
-    fun whyNone(s: ScanSettings, d: LiveBidDeskStatus, r: LiveRunnerStatus, hasKey: Boolean): String? {
+    fun whyNone(s: ScanSettings, d: LiveBidDeskStatus, r: LiveRunnerStatus, hasKey: Boolean, nowMs: Long = System.currentTimeMillis()): String? {
         if (!s.liveBid || s.liveBidHalted != null || d.active > 0) return null
         if (s.paused) return "Nothing runs while STOP ALL or the pause is on."
         if (!hasKey) return "No Pinnodds key is saved, so there is no Pinnacle price to bid from (Settings › Pinnodds live)."
@@ -98,6 +98,8 @@ object LiveBidText {
         r.bidError?.let { return "The bid judge hit an error and carried on: $it" }
         r.bidGate?.let { return "Games are matched but the bid judge is not running: $it." }
         if (r.bidTargets == 0) return "${r.matched} live games are matched to Novig, but none of their lines can be priced from Pinnacle's main lines yet (${r.watched} Novig markets watched)."
+        if (d.steps == 0L) return "The bid desk's own loop has never run (${r.bidJudged} judgments were made and none reached it): it did not start."
+        if (nowMs - d.stepAtMs > 5_000L) return "The bid desk's loop stopped turning: it was last in '${d.stage}', ${(nowMs - d.stepAtMs) / 1000} s ago."
         val q = s.liveBidQuality
         val top = d.skips.entries.sortedByDescending { it.value }.take(3)
         val head = "${r.matched} live games matched to Novig, ${r.bidTargets} lines watched, ${r.bidJudged} judgments made. "
@@ -105,6 +107,19 @@ object LiveBidText {
         val tennisHint = if (!q.tennis && top.any { it.key == com.tjshea.vigilant.data.livebid.LiveBidSkip.TENNIS_OFF }) " Tennis is off (Tennis switch below); most live games at some hours are tennis." else ""
         return head + "None passed. Most common reasons: " + top.joinToString(" · ") { "${it.key} ×${it.value}" } + "." + tennisHint
     }
+
+    /** Everything the page knows, in a few lines a screenshot can carry (Tj's Share button did nothing, 2026-10-10). */
+    fun detail(s: ScanSettings, d: LiveBidDeskStatus, r: LiveRunnerStatus, nowMs: Long = System.currentTimeMillis()): String = buildString {
+        appendLine("feed: running ${r.running} · socket ${r.socket} · Pinnacle live ${r.pinnLive} · matched ${r.matched} · watched ${r.watched} · judgments ${r.bidJudged}")
+        r.bidGate?.let { appendLine("judge not running: $it") }
+        r.bidError?.let { appendLine("judge error: $it") }
+        r.problem?.let { appendLine("feed problem: $it") }
+        appendLine("desk: mode ${d.mode} · loop steps ${d.steps} · last stage '${d.stage}' ${if (d.stepAtMs > 0) "${(nowMs - d.stepAtMs) / 1000} s ago" else "never"} · up ${d.active} · posted today ${d.posted}")
+        d.problem?.let { appendLine("desk problem: $it") }
+        d.standDown?.let { appendLine("stood down: $it") }
+        if (d.skips.isNotEmpty()) appendLine("skips: " + d.skips.entries.sortedByDescending { it.value }.take(6).joinToString(" · ") { "${it.key} ×${it.value}" })
+        if (d.pulls.isNotEmpty()) append("pulls: " + d.pulls.entries.sortedByDescending { it.value }.take(4).joinToString(" · ") { "${it.key} ×${it.value}" })
+    }.trimEnd()
 
     fun diagnostics(s: ScanSettings, d: LiveBidDeskStatus, r: LiveRunnerStatus, bids: List<LiveBid>, running: Boolean): String {
         val o = StringBuilder()

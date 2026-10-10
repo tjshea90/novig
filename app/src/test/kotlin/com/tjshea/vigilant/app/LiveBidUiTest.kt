@@ -315,7 +315,8 @@ private object SettingsSummaryProbe {
 
 class LiveBidWhyTest {
     private val on = ScanSettings(liveBid = true)
-    private fun run(r: com.tjshea.vigilant.data.pinnodds.LiveRunnerStatus, d: LiveBidDeskStatus = LiveBidDeskStatus(), key: Boolean = true, s: ScanSettings = on) = LiveBidText.whyNone(s, d, r, key)
+    private val turning = LiveBidDeskStatus(steps = 10, stage = "idle", stepAtMs = System.currentTimeMillis())
+    private fun run(r: com.tjshea.vigilant.data.pinnodds.LiveRunnerStatus, d: LiveBidDeskStatus = turning, key: Boolean = true, s: ScanSettings = on) = LiveBidText.whyNone(s, d, r, key)
     private val live = com.tjshea.vigilant.data.pinnodds.LiveRunnerStatus(running = true, socket = "live", pinnLive = 424, matched = 15, bidTargets = 40)
 
     @Test fun `each missing link in the chain is named in turn`() {
@@ -328,11 +329,13 @@ class LiveBidWhyTest {
         assertTrue(run(live.copy(bidError = "boom"))!!.contains("boom"))
         assertTrue(run(live.copy(bidGate = "the Pinnodds feed is not open"))!!.contains("not open"))
         assertTrue(run(live.copy(bidTargets = 0, watched = 12))!!.contains("none of their lines"))
+        assertTrue(run(live, LiveBidDeskStatus())!!.contains("never run"))
+        assertTrue(run(live, LiveBidDeskStatus(steps = 3, stage = "posting", stepAtMs = System.currentTimeMillis() - 60_000L))!!.contains("'posting'"))
         assertNull("a bid is up: nothing to explain", run(live, LiveBidDeskStatus(active = 1)))
     }
 
     @Test fun `with games matched it says what the judge said no to, and points at tennis when that is why`() {
-        val d = LiveBidDeskStatus(skips = mapOf("tennis is off" to 900, "Pinnacle limit too low" to 40))
+        val d = turning.copy(skips = mapOf("tennis is off" to 900, "Pinnacle limit too low" to 40))
         val t = run(live, d)!!
         assertTrue(t, t.contains("15 live games matched") && t.contains("tennis is off ×900"))
         assertTrue(t, t.contains("Tennis switch"))

@@ -89,6 +89,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     LiveBidText.whyNone(s, state.liveBidStatus, state.pinnLive, state.pinnoddsKeys.isNotEmpty())?.let { why ->
         Text(why, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(top = 2.dp).testTag("liveBidWhy"))
     }
+    Text(LiveBidText.detail(s, state.liveBidStatus, state.pinnLive), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp).testTag("liveBidDetail"))
     if (state.pinnoddsKeys.isEmpty()) Text("No Pinnodds key is saved: add it in Settings › Pinnodds live. Live bids use the same feed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidNoKey"))
 
     // ---- presets ----------------------------------------------------------------------------------------------------------------------------------------------------------------
