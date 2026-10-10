@@ -517,14 +517,14 @@ class LiveBidDesk(
     private fun post(w: LiveBidWant, contracts: Long, cfg: LiveBidConfig, now: Long, replacing: LiveBid?): Boolean {
         val q = cfg.quality
         val v = w.verdict
-        val ttlMs = ttlMs(q)
+        val lifeMs = ttlMs(q)
         val real = cfg.real
         val bid = LiveBid(
             clientId = NovigTradingClient.newClientId(), mode = if (real) LiveBid.MODE_REAL else LiveBid.MODE_PAPER, marketId = w.marketId, eventId = w.eventId, outcomeId = w.outcomeId,
             pinnEventId = w.pinnEventId, league = w.league, eventName = w.eventName, startsTs = w.startsTs, marketLabel = w.marketLabel, selection = w.selection, price = v.price,
             contracts = contracts, fair = v.fair, ev = v.ev, mid = v.mid, bestBid = v.bestBid, offer = v.offer, leads = v.leads, overround = v.overround, pinnLimit = v.limit,
             feeCoefficient = w.fee?.coefficient ?: 0.0, makerCredit = w.fee?.makerCredit ?: 0.0, score = w.score, clock = w.clock, rules = q.summary(), preset = cfg.preset,
-            postedAtMs = now, activeFromMs = if (real) now else now + PAPER_LATENCY_MS, expiresAtMs = now + ttlMs, status = if (real) LiveBidStatus.SENDING else LiveBidStatus.RESTING,
+            postedAtMs = now, activeFromMs = if (real) now else now + PAPER_LATENCY_MS, expiresAtMs = now + lifeMs, status = if (real) LiveBidStatus.SENDING else LiveBidStatus.RESTING,
             openAtMs = if (real) null else now + PAPER_LATENCY_MS,
         )
         synchronized(mu) {
@@ -535,7 +535,7 @@ class LiveBidDesk(
             last = "${if (real) "BID" else "PAPER"} · ${w.selection} @ ${"%.3f".format(Locale.US, v.price)} · fair ${"%.3f".format(Locale.US, v.fair)} · ${"%.1f".format(Locale.US, v.ev * 100)}% EV"
         }
         event("POST", bid)
-        if (real && orders != null) scope.launch { place(bid, ttlMs) }
+        if (real && orders != null) scope.launch { place(bid, lifeMs) }
         return true
     }
 
