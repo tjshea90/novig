@@ -1304,48 +1304,7 @@ private fun ColumnScope.ResearchPage(state: UiState, reportActions: ReportAction
     Hint(com.tjshea.vigilant.app.LabText.HINT)
     SwitchRow(com.tjshea.vigilant.app.LabText.SWITCH_TITLE, com.tjshea.vigilant.app.LabText.SWITCH_SUB, state.settings.altLab, tag = "altLabSwitch") { v -> onUpdate { it.copy(altLab = v) } }
     state.labNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("altLabNote")) }
-    Hint("The live burst recorder and the live feed test are on Diagnostics & about; Research mode switches them on too.")
-}
-
-/** Tools: Diagnostics, the grading check, About. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
-    Intro("When something looks wrong, Share with Claude makes one file with everything the app recorded, for Claude to diagnose and fix.")
-    // ---- Diagnostics ---------------------------------------------------------------------
-    SectionTitle("Diagnostics")
-    Hint(
-        "Tap Share with Claude: it makes one file with everything the app has recorded (errors with the code that threw them, every call's speed and failures by host, API usage, " +
-            "scan and cycle timings, what auto-bet and the sharp check decided, the app's own log) and a ranked list of what to fix and speed up, then opens Android's Share sheet: " +
-            "pick Claude. The next file is compared with this one, so each upload shows whether the last change worked. It never has a key in it.",
-    )
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        androidx.compose.material3.Button(onClick = reportActions.onShare, modifier = Modifier.testTag("shareDiagnostics")) { Text("Share with Claude") }
-        OutlinedButton(onClick = reportActions.onDiagnostics) { Text("Show report") }
-        // The ledger check needs the betting key: Novig's own record of each API bet against what the Tracker did with it.
-        if (AppBook.isNovig && state.betting.enabled) OutlinedButton(onClick = reportActions.onGradingCheck) { Text("Grading check") }
-    }
-    // Tj, 2026-10-10: the file hung once the recorders' journals had grown for days. It reads only the last 3 days now; this deletes the older day files (research file: share that first if it matters).
-    var confirmClear by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-    OutlinedButton(
-        onClick = { if (confirmClear) { confirmClear = false; reportActions.onPruneOld() } else confirmClear = true },
-        modifier = Modifier.testTag("pruneOld"),
-    ) { Text(if (confirmClear) "Tap again: delete recorder data older than 3 days" else "Clear old recorder data") }
-    Hint("Deletes the paper lab, bid lab, Pinnodds live and live-bid day files older than 3 days. The Diagnostics file reads only the last 3 days; the research file (Settings › Research) reads all of them, so share that first if you want it.")
-    if (AppBook.isNovig && state.betting.enabled) {
-        Hint("Grading check: what Novig's ledger and positions say about each bet you placed through the API, beside how the Tracker graded it. Run it after a game ends.")
-    }
-
-    // ---- The scan study (Tj, 2026-10-03): every bet a scan lists, logged and graded, for Claude to find what beats the close -------------
-    val studyShown by androidx.compose.runtime.rememberUpdatedState(reportActions.onStudyShown)
-    androidx.compose.runtime.LaunchedEffect(Unit) { studyShown() }
-    Hint(StudyText.HINT)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        androidx.compose.material3.Button(onClick = reportActions.onShareStudy, modifier = Modifier.testTag("shareScanStudy")) { Text(StudyText.BUTTON) }
-    }
-    state.studyNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("scanStudyNote")) }
-    SwitchRow(StudyText.SWITCH_TITLE, StudyText.SWITCH_SUB, state.settings.scanStudy, tag = "scanStudySwitch") { v -> onUpdate { it.copy(scanStudy = v) } }
-    SwitchRow(StudyText.HIDDEN_TITLE, StudyText.HIDDEN_SUB, state.settings.scanStudyHidden, tag = "scanStudyHiddenSwitch") { v -> onUpdate { it.copy(scanStudyHidden = v) } }
+    Hint("Research mode switches the recorders below on too.")
 
     // ---- The live burst recorder (Tj, 2026-10-06): no orders; RESEARCH.md §95 ----------------------------------------------------------
     if (AppBook.isNovig) {
@@ -1385,6 +1344,57 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
             androidx.compose.material3.Button(onClick = reportActions.onShareFeedRace, modifier = Modifier.testTag("shareFeedRace")) { Text(com.tjshea.vigilant.app.FeedRaceText.BUTTON) }
         }
     }
+}
+
+/** Tools: Diagnostics, the grading check, About. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    Intro("When something looks wrong, Share with Claude makes one file (kept under a size cap) with what the app recorded, for Claude to diagnose and fix.")
+    // ---- Diagnostics ---------------------------------------------------------------------
+    SectionTitle("Diagnostics")
+    Hint(
+        "Tap Share with Claude: it makes one file with everything the app has recorded (errors with the code that threw them, every call's speed and failures by host, API usage, " +
+            "scan and cycle timings, what auto-bet and the sharp check decided, the app's own log) and a ranked list of what to fix and speed up, then opens Android's Share sheet: " +
+            "pick Claude. The next file is compared with this one, so each upload shows whether the last change worked. It never has a key in it.",
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        androidx.compose.material3.Button(onClick = reportActions.onShare, modifier = Modifier.testTag("shareDiagnostics")) { Text("Share with Claude") }
+        OutlinedButton(onClick = reportActions.onDiagnostics) { Text("Show report") }
+        // The ledger check needs the betting key: Novig's own record of each API bet against what the Tracker did with it.
+        if (AppBook.isNovig && state.betting.enabled) OutlinedButton(onClick = reportActions.onGradingCheck) { Text("Grading check") }
+    }
+    // Tj, 2026-10-10: "make a button for me to reset it. This will clear everything in the diagnostics log and start fresh."
+    var confirmReset by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    OutlinedButton(
+        onClick = { if (confirmReset) { confirmReset = false; reportActions.onResetDiagnostics() } else confirmReset = true },
+        modifier = Modifier.testTag("resetDiagnostics"),
+    ) { Text(if (confirmReset) "Tap again: clear the diagnostics and start fresh" else "Reset diagnostics") }
+    Hint(
+        "Reset clears the event log, connection log, problems, timings and the recorders' journals (paper lab, bid lab, live bids, Pinnodds live, burst) and starts fresh. Your bets, settings, keys, bids and the scan study are not touched. " +
+            "Nothing needs resetting to keep it small: recorder logs older than ${com.tjshea.vigilant.data.diag.DataKeeper.JOURNAL_DAYS} days (the scan study: ${com.tjshea.vigilant.data.diag.DataKeeper.STUDY_DAYS}) are deleted by themselves every few hours, " +
+            "and the file is capped in size.",
+    )
+    if (AppBook.isNovig && state.betting.enabled) {
+        Hint("Grading check: what Novig's ledger and positions say about each bet you placed through the API, beside how the Tracker graded it. Run it after a game ends.")
+    }
+
+    // ---- The scan study (Tj, 2026-10-03): every bet a scan lists, logged and graded, for Claude to find what beats the close -------------
+    val studyShown by androidx.compose.runtime.rememberUpdatedState(reportActions.onStudyShown)
+    androidx.compose.runtime.LaunchedEffect(Unit) { studyShown() }
+    Hint(StudyText.HINT)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        androidx.compose.material3.Button(onClick = reportActions.onShareStudy, modifier = Modifier.testTag("shareScanStudy")) { Text(StudyText.BUTTON) }
+    }
+    state.studyNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("scanStudyNote")) }
+    var confirmStudy by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    OutlinedButton(
+        onClick = { if (confirmStudy) { confirmStudy = false; reportActions.onClearStudy() } else confirmStudy = true },
+        modifier = Modifier.testTag("clearScanStudy"),
+    ) { Text(if (confirmStudy) "Tap again: delete the whole scan study" else "Clear scan study") }
+    Hint("Clear scan study deletes every bet the study logged and graded, and starts it again from now. It is not in your Tracker, so no bet of yours is touched. Share it with Claude first if you want it analysed.")
+    SwitchRow(StudyText.SWITCH_TITLE, StudyText.SWITCH_SUB, state.settings.scanStudy, tag = "scanStudySwitch") { v -> onUpdate { it.copy(scanStudy = v) } }
+    SwitchRow(StudyText.HIDDEN_TITLE, StudyText.HIDDEN_SUB, state.settings.scanStudyHidden, tag = "scanStudyHiddenSwitch") { v -> onUpdate { it.copy(scanStudyHidden = v) } }
 
     SectionTitle("About")
     Hint(

@@ -123,9 +123,11 @@ object SettingsIndex {
         Entry("Keys backup", SettingsPage.USAGE, "Export or import your keys", "export import backup keys"),
         // Diagnostics & about
         Entry("Share with Claude", SettingsPage.HELP, "Make the diagnostics file for Claude", "diagnostics report bug claude share"),
+        Entry("Reset diagnostics", SettingsPage.HELP, "Clear the logs and recorders' journals and start fresh", "diagnostics reset clear delete logs fresh clean"),
+        Entry("Clear scan study", SettingsPage.HELP, "Delete the scan study's whole log and start it again", "scan study clear delete reset fresh clean"),
         Entry("Share scan study with Claude", SettingsPage.HELP, "Every bet a scan listed, graded, with its close, for Claude to find patterns", "scan study log patterns clv close profit claude share analyze"),
-        Entry("Test live score and odds feeds", SettingsPage.HELP, "Which free feed shows a score or an odds move before Novig's price moves (reads only, no orders)", "live feed race test sofascore polymarket espn nhl mlb scores odds rapid websocket latency"),
-        Entry("Share live feed test with Claude", SettingsPage.HELP, "The live feed test's verdict, table and tape as one file for Claude", "live feed race test share claude file scores odds"),
+        Entry("Test live score and odds feeds", SettingsPage.RESEARCH, "Which free feed shows a score or an odds move before Novig's price moves (reads only, no orders)", "live feed race test sofascore polymarket espn nhl mlb scores odds rapid websocket latency"),
+        Entry("Share live feed test with Claude", SettingsPage.RESEARCH, "The live feed test's verdict, table and tape as one file for Claude", "live feed race test share claude file scores odds"),
         Entry("Log every scan for the study", SettingsPage.HELP, "Switch the scan study's logging off or on", "scan study log switch"),
         Entry("Also log what your CNO filters hide", SettingsPage.HELP, "The scan study also logs the CNO rows your filters hide from the app (still hidden there)", "scan study hidden filtered cno wide log all finds"),
         Entry("About", SettingsPage.HELP, "Version and where the data comes from", "version about"),
