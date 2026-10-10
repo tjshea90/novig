@@ -262,12 +262,12 @@ class LiveBidUiTest {
     @Test
     fun `the pick-off stop is chosen as a pair and each half can be typed`() {
         val ui = show(state())
-        tap("liveBidPickOff-3")   // 4 of 6
+        tap("liveBidPickOff-4")   // 4 of 6
         assertEquals(4, ui().settings.liveBidQuality.pickOffLimit)
         assertEquals(6, ui().settings.liveBidQuality.pickOffWindow)
         tap("liveBidPickOff-0")   // off
         assertEquals(0, ui().settings.liveBidQuality.pickOffLimit)
-        type("liveBidPickOffLimit-field".removeSuffix("-field"), "2")
+        type("liveBidPickOffLimit", "2")
         assertEquals(2, ui().settings.liveBidQuality.pickOffLimit)
     }
 
