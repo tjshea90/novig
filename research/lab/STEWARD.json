@@ -1,10 +1,10 @@
 {
-  "claimId": "steward-20261009-be4c75",
+  "claimId": "stopped-20261010",
   "stewardSession": "https://claude.ai/code/session_01CNZcNjhdH5GeKj5PKmtTtC",
   "claimedAt": "2026-10-09T23:55:00Z",
   "lastCheckinAt": "2026-10-10T13:32:46Z",
   "leaseHours": 36,
-  "routine": "deleted 2026-10-10",
+  "routine": "NOT on this account: trig_01Ks2vjbokaZdSuTrpoz4m9i belongs to the steward's own Claude account (delete_trigger here says not found). Its claimId no longer matches, so when it fires its session stops at step 1 and does nothing. Delete it from that account (claude.ai/code > Routines) to stop even that.",
   "stopAfter": "2026-10-19",
   "stopRule": "On or after stopAfter, once the archive release for the last run is complete and READY FOR ANALYSIS is in NOTES.md: remove the schedule trigger from .github/workflows/lab-record.yml, cancel any running lab run, tell Tj. Tj can move stopAfter or say 'keep running'.",
   "routineId": "trig_01Ks2vjbokaZdSuTrpoz4m9i",
