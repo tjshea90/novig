@@ -176,3 +176,4 @@ day that changes.
 | v0.85.8 | code 168 | 2026-10-10T08:13Z | v0.85.8: the diagnostics file reads each source with its own deadline and leaves out (and names) any that is too slow
 | v0.86.0 | code 169 | 2026-10-10T15:07Z | v0.86.0: cleanup. Diagnostics reset button, automatic 2-day retention and a 350 KB file cap, bid store pruned (was 15 MB rewritten whole), Games tab and Locked in card removed, auto-bet finds bets through CNO's own link, scan study clear button, settings tidied
 | v0.86.1 | code 170 | 2026-10-10T15:29Z | v0.86.1: trap guard hours split (auto-bet vs bids), profit graph with ranges, pinch zoom, scroll and full screen, heap census and per-game JSON parsing for SGO and PropLine (memory), Sofascore backs off
+| v0.87.0 | code 171 | 2026-10-10T16:18Z | v0.87.0: live autopilot (taker + bids together), More fills preset, fill-the-wallet limits, score-or-stale trigger, why-so-few-fills report
