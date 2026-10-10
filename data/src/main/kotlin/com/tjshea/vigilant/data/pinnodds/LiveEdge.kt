@@ -153,7 +153,7 @@ object LiveEdge {
         if (depth.contracts < rules.minContracts) return LiveVerdict.Skip(LiveSkip.THIN)
         return LiveVerdict.Bet(
             side = side, fair = fair, ask = best.price, fee = quote.fee, ev = quote.evPercent, move = move, stableMs = stable, overround = line.overround,
-            contracts = depth.contracts, limitPrice = depth.worstPrice ?: best.price,
+            contracts = depth.contracts, limitPrice = reachPrice(fair, depth.worstPrice ?: best.price, fee, event.live && novigLive, rules.minEv),
         )
     }
 
@@ -199,7 +199,7 @@ object LiveEdge {
         if (depth.contracts < rules.minContracts) return LiveVerdict.Skip(LiveSkip.THIN)
         return LiveVerdict.Bet(
             side = side, fair = fair, ask = best.price, fee = quote.fee, ev = quote.evPercent, move = move, stableMs = stable, overround = line.overround,
-            contracts = depth.contracts, limitPrice = depth.worstPrice ?: best.price,
+            contracts = depth.contracts, limitPrice = reachPrice(fair, depth.worstPrice ?: best.price, fee, event.live && novigLive, rules.minEv),
         )
     }
 }
