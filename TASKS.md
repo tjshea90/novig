@@ -4489,3 +4489,9 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
   - [x] TLb v0.87.0 shipped and recorded (code 171), link + honest answer to point 4 sent to Tj.
   - [x] TLc (v0.87.1; tests: TailTakerTest, LabRecorderTest onTail/tailOnly, LiveBidUiTest tail, LiveBidPresetsTest autopilot): TailTaker, TailLiveSettings, VigilantApp wiring, Live bids page section, autopilot includes tail, Diagnostics LIVE TAIL BETS block, Tracker source `tail`. Phase B was: real tail taker (ESPN state + Novig ladders, TailRules CONSERVATIVE, $1 stakes, day cap, IOC with reach limit, off by default behind a confirmation) so live betting survives the Pinnodds expiry (TG2).
   - [ ] TLd Next session: read Tj's Diagnostics LIVE BIDS "Why so few fills" + taker "Orders by timing" and tune FILL (RESEARCH.md §125).
+
+## TM: Tj, 2026-10-10 ~16:35Z (verbatim in INBOX.md): research 15 odds-scraper/API sources for a free or cheap, fresh, accurate multi-book odds source for Vigilant (live betting, live odds, grading, props, CLV, EV); research only, ignore ToS; note free trials
+- [ ] TM1 Fetch and read each of the 15 URLs (declanwalpole/sportsbook-odds-scraper, Bright Data, ScrapingBee, ScrapeHero Odds Portal, WebHarvy Flashscore, Paul Connolly +EV scraper, ParseHub, Quantum Proxies, flashscore-scraper (socket.dev), pyjpboatrace (irrelevant: boat racing), BowTiedBettor scraper, OddsShopper, Decodo, Zyte, OddsCorp API, npm sports-odds-api).
+- [ ] TM2 Write research/odds_sources_2026-10-10.md (verdict per source, combos, free trials, what Vigilant could build) + RESEARCH.md §126 + a line in research/lab/NOTES.md; tell Tj the shortlist.
+- [ ] TM3 (v0.87.1 release confirmation is pending via send_later check-in; do it first when it fires.)
+
