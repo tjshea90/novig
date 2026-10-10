@@ -29,8 +29,8 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.TrapGuard
 
 /**
- * The trap guard's words (Tj, 2026-10-03: "find these trap bets and avoid them"; RESEARCH.md §71), free of Compose so they're testable. One setting
- * shared by the auto-bet, the alerts and the bids: each place it's shown says so.
+ * The trap guard's words (Tj, 2026-10-03: "find these trap bets and avoid them"; RESEARCH.md §71), free of Compose so they're testable. The hours are two
+ * settings since 2026-10-10: the auto-bet's (shared with the alerts) and the bids'; each place it's shown says which.
  */
 object TrapGuardText {
 
@@ -44,24 +44,24 @@ object TrapGuardText {
         "Skips the \"gifts\" the market later proves wrong. A price that beats the books often means someone on Novig knows something the books " +
             "haven't caught up to; these two rules come from your own closes and Novig's own trades."
 
-    /** What the early rule does at [hours] (the setting the three places share). */
+    /** What the early rule does at [hours] for the auto-bet and the alerts (the bids have their own hours, on the Bids tab). */
     fun earlyNote(hours: Int): String =
         if (hours <= 0) {
-            "Off: the auto-bet, alerts and bids take games however far off. Your own bets placed 6 h or more before the start lost to the close " +
+            "Off: the auto-bet and alerts take games however far off. Your own bets placed 6 h or more before the start lost to the close " +
                 "to Oct 3 (−0.6%, 46% beat it); those under 6 h beat it (+2.2%, 78%)."
         } else {
-            "The auto-bet, alerts and bids leave alone any game starting more than $hours h from now (the lists still show it). Your own bets placed 6 h " +
+            "The auto-bet and alerts leave alone any game starting more than $hours h from now (the lists still show it; the bids have their own hours on the Bids tab). Your own bets placed 6 h " +
                 "or more before the start lost to the close to Oct 3 (−0.6%, 46% beat it; −9.8% returned); those under 6 h beat it (+2.2%, 78%; +8.3% returned)."
         }
 
     /**
      * The bet sheet's warning for a game further off than the guard's [hours] at [now] (RESEARCH.md §71), or null. The lists still show such a bet; the
-     * sheet says why the auto-bet, the alerts and the bids leave it alone, so a bet by hand is a choice made knowing it.
+     * sheet says why the auto-bet and the alerts leave it alone, so a bet by hand is a choice made knowing it.
      */
     fun sheetNote(startsAtMs: Long?, now: Long, hours: Int): String? {
         if (!TrapGuard.isEarly(startsAtMs, now, hours)) return null
         val left = ((startsAtMs!! - now) / 3_600_000L).coerceAtLeast(1)
-        return "Trap guard: this game starts in about $left h, more than $hours h off, so auto-bet, alerts and bids leave it alone. Your bets placed 6 h or " +
+        return "Trap guard: this game starts in about $left h, more than $hours h off, so auto-bet and alerts leave it alone. Your bets placed 6 h or " +
             "more before a start lost to the close (the books' lines aren't settled that early, and a Novig price that beats them is often the better-informed one)."
     }
 
@@ -94,7 +94,7 @@ object TrapGuardText {
 @Composable
 fun TrapGuardSection(s: ScanSettings, showMove: Boolean, tag: String, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
-    SectionTitle("Trap guard")
+    SectionTitle("Trap guard (auto-bet and alerts)")
     Text(TrapGuardText.INTRO, style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
     Text("Only games starting within", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("$tag-trapEarly")) {
