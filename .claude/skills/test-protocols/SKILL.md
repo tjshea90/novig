@@ -18,8 +18,7 @@ unless Tj asks).
 
 **The app's real surface (v0.4.0+), so "sweep the whole app" is concrete:**
 
-- **Tabs:** +EV feed (`FeedScreen` + `OpportunitySheet` detail), CNO (`CnoScreen`), Games
-  (`GamesScreen`: board + per-game line table), Auto-bet (`AutoBetScreen`, v0.46.0: Novig with CNO on), Bids (`MakerScreen`, v0.51.0+: make orders,
+- **Tabs:** +EV feed (`FeedScreen` + `OpportunitySheet` detail), CNO (`CnoScreen`), Auto-bet (`AutoBetScreen`, v0.46.0: Novig with CNO on), Bids (`MakerScreen`, v0.51.0+: make orders,
   Off · Recommend · Automatic, `data/novig/trading/maker/`: `MakerQuote`, `MakerDesk`, `MakerPlan`; `app/MakerRunner`; RESEARCH.md §70), Tracker
   (`TrackerScreen`: P/L, ROI, CLV), Settings (`SettingsScreen`: a home list with search, then one page each, below; its home has rows for the Auto-bet
   and Bids tabs, and search finds their settings: `SettingsIndex.Entry.bids`). The wallet strip (`WalletStrip`) sits above the tabs.

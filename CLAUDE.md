@@ -431,6 +431,15 @@ what is NOT known. **Nothing in it has been run against a live key yet**: the pa
 (final and period scores; a prop's box score is the free feeds'); `OtherBooks` takes OddsPapi's props as the tapped bet's other books. `ScanSettings.oddsPapi` switches it on: `AppContainer.allReferenceSources` leads with it and rests the paid feeds for the leagues it carries (`OutsideOp`; tennis keeps them; free feeds and Pinnodds stay;
 SGO Pro on too = both read, SGO wins a book both send), and brings them back if it stops answering (`OddsPapiClient.down`). With the switch OFF the app is what it was: `OpWiringTest` proves the source list, closes and grader are unchanged and nothing is sent to OddsPapi. Never commit a key.
 
+## Diagnostics, retention and the file's size cap (Tj, 2026-10-10, permanent)
+
+**Standing instruction from Tj (2026-10-10):** the diagnostics "should never get too big that it can't load or it crashes … maybe it should automatically clear logs over 2 days old", with a button to reset it, and the app was laggy.
+- `data/diag/DataKeeper` deletes the recorders' day files older than 2 days (the scan study: 7) and any folder over its cap, every 6 h (VigilantApp init). `MakerStore`/`LiveBidStore` keep ended bids 2 days (filled ones 7); the event log and connection log window is 2 days.
+  A new recorder or journal MUST get a rule in `DataKeeper.RULES` (a folder of `name-YYYY-MM-DD.jsonl` files) or it grows for ever.
+- `DiagnosticsFile.build` is capped at 350 KB by `fit()` (protected sections whole, the biggest others halved, newest kept); EVERY BET lists only open bets and the last 3 days. A new section must stay small or be cuttable. The in-app "Show report" window shows `preview()` (60 KB), never the whole file.
+- A JSON document store (`JsonFileStore`) is rewritten WHOLE on every change: never let one grow without a prune (the 15 MB maker.json was a main cause of lag). Append-only journals (`DayJournal`) do not fsync per line.
+- Settings › Diagnostics & about has Reset diagnostics and Clear scan study (two taps each); the burst recorder and live feed test live on the Research page.
+
 ## Project rules
 
 See `BRIEF.md` for what's decided about this project and what's still open:
