@@ -6071,3 +6071,10 @@ Yes, stop the lab and remove the routine
 ```
 Yes, stop research-record too
 ```
+
+## 2026-10-10T14:48:11Z
+```
+See if there is a way to fix this memory issue. Can it be more efficient? Can the memory allocation be increased if needed? Can any of this be outsourced to the cloud? Consider how major apps like oddsjam are able to handle large amounts of scanning in the app without memory issues or lag.
+
+Then run another full tests protocol on the app. I want everything to run smoothly and the code to be well written and low lag in the app.
+```
