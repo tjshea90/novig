@@ -13,3 +13,8 @@
 - 57,753 paper bids, 823 fills, 717 closes, 0 graded. **Grading is broken** (both phone and GitHub lab): Novig's catalog drops settled markets, so `BidLab.grade` never sees a result. Fix = grade from final scores (TASKS SS1).
 - Best default so far: margin 3 points, rest 120 min (4.5% fill, CLV +3.0%). The guard shows no effect. Props and team totals fill; moneylines/spreads/totals barely. Unders fill 2x Overs at equal CLV. Nothing beyond 12 h before the start fills.
 - CLV is mostly the margin (the fair is Vigilant's own); 17 games with fills. Not a profit claim.
+
+## 2026-10-10 — grading fixed (v0.84.2)
+- Cause: Novig drops a settled market, so the status BidLab/LabRecorder waited for never came (0 GRADE events). Now graded from final scores (`LabGrader`: SGO, OddsPapi, ESPN, MLB via `BetGrader`); live YES/NO ladder sides, pregame bids, TAIL/ALT records (covers are not graded).
+- Props: stat type kept in the FILL event text from v0.84.2; older prop fills stay ungraded. Period markets are not graded (name does not say which period).
+- Old fills in the journals are graded on the next pass once the phone/lab runs v0.84.2 (the GitHub lab restores them from its journals).
