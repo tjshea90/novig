@@ -1407,7 +1407,7 @@ class AppContainer(private val app: Application) {
     val pinnRunner: com.tjshea.vigilant.data.pinnodds.PinnLiveRunner by lazy {
         com.tjshea.vigilant.data.pinnodds.PinnLiveRunner(
             scope = appScope, source = novig,
-            newFeed = { listener -> readConnection?.let { NovigStream(http, readKeyClient(it), appScope, idleCloseMs = BURST_IDLE_CLOSE_MS, bookListener = listener) } },
+            newFeed = { listener -> readConnection?.let { com.tjshea.vigilant.data.novig.stream.SharedStreamView({ novig.stream as? NovigStream }, listener) } },
             openFeed = { onFrame ->
                 // The feed is read at each start of the engine; changing it in Settings restarts the engine (pinnTick).
                 if (settingsStore.flow.value?.pinnWebsite?.website == true) {

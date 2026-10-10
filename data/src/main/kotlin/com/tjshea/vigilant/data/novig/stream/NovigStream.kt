@@ -229,17 +229,7 @@ class NovigStream(
         return out
     }
 
-    /**
-     * The live engine's handle on THIS stream (one connection for the whole app: the key's `stream` bucket is per key, so a second connection starved on it, "Novig live book not
-     * subscribed yet", Tj 2026-10-10). Its markets are pinned ahead of a scan's, its listener hears every change, and closing it takes both away without closing the stream.
-     */
-    fun liveView(listener: BookListener): PushedBooks = object : PushedBooks {
-        init { books.addListener(listener) }
-        override fun watch(marketIds: Collection<String>) = watchLive(marketIds)
-        override fun watchLive(marketIds: Collection<String>) = this@NovigStream.watchLive(marketIds)
-        override fun open() = this@NovigStream.open()
-        override fun live(marketIds: Collection<String>) = this@NovigStream.live(marketIds)
-        override fun bookGap(marketId: String) = this@NovigStream.bookGap(marketId)
+    override fun bookGap(marketId: String) = this@NovigStream.bookGap(marketId)
         override fun problemSince(sinceMs: Long) = this@NovigStream.problemSince(sinceMs)
         override fun close() {
             books.removeListener(listener)
@@ -550,5 +540,48 @@ class NovigStream(
 
         /** After a failure, scans read by REST this long before the feed is tried again. */
         const val RETRY_AFTER_FAILURE_MS = 5 * 60_000L
+    }
+}
+
+
+/**
+ * The live engine's handle on the app's ONE stream, found fresh on every call (a reconnected key makes a new one): the key's `stream` bucket is per key, so a second connection of
+ * its own starved on it ("Novig live book not subscribed yet" on every main line, Tj 2026-10-10). Its markets are pinned ahead of a scan's, [listener] hears every change, and
+ * [close] takes both away without closing the stream.
+ */
+class SharedStreamView(private val provider: () -> NovigStream?, private val listener: BookListener) : PushedBooks {
+    private var bound: NovigStream? = null
+    private var pinned: List<String> = emptyList()
+
+    @Synchronized
+    private fun stream(): NovigStream? {
+        val now = provider()
+        if (now !== bound) {
+            bound?.books?.removeListener(listener)
+            now?.books?.addListener(listener)
+            bound = now
+            if (now != null && pinned.isNotEmpty()) now.watchLive(pinned)
+        }
+        return now
+    }
+
+    override fun watch(marketIds: Collection<String>) = watchLive(marketIds)
+
+    override fun watchLive(marketIds: Collection<String>) {
+        pinned = marketIds.distinct()
+        stream()?.watchLive(pinned)
+    }
+
+    override fun open() { stream()?.open() }
+    override fun live(marketIds: Collection<String>): Map<String, NovigBook> = stream()?.live(marketIds).orEmpty()
+    override fun bookGap(marketId: String): String? = stream()?.bookGap(marketId) ?: "Novig live feed is not connected (no key)"
+    override fun problemSince(sinceMs: Long): String? = stream()?.problemSince(sinceMs)
+
+    @Synchronized
+    override fun close() {
+        bound?.books?.removeListener(listener)
+        bound?.watchLive(emptyList())
+        bound = null
+        pinned = emptyList()
     }
 }
