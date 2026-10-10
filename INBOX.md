@@ -5995,3 +5995,8 @@ It isn't posting any live bids at all
 ```
 How can I get all these missed bets to actually fill
 ```
+
+## 2026-10-10T06:09:31Z
+```
+It says no look has been judged yet
+```
