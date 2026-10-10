@@ -213,12 +213,18 @@ private fun ProfitCanvas(
     val label = MaterialTheme.colorScheme.onSurfaceVariant
     val labelPx = with(androidx.compose.ui.platform.LocalDensity.current) { 11.dp.toPx() }
     val zone = remember { ZoneId.systemDefault() }
+    // The gesture detectors must not restart while a gesture changes the view (a key on it would cancel the drag that made the change): they read the newest values through these.
+    val transform by androidx.compose.runtime.rememberUpdatedState(onTransform)
+    val tap by androidx.compose.runtime.rememberUpdatedState(onTap)
+    val reset by androidx.compose.runtime.rememberUpdatedState(onReset)
+    val liveView by androidx.compose.runtime.rememberUpdatedState(view)
+    val livePoints by androidx.compose.runtime.rememberUpdatedState(points)
     val desc = "Profit graph from ${SimpleDateFormat("MMM d h:mm a", Locale.US).format(Date(view.start))} to ${SimpleDateFormat("MMM d h:mm a", Locale.US).format(Date(view.end))}"
     Box(
         modifier
             .semantics { contentDescription = desc }
             .testTag("profitCanvas")
-            .pointerInput(view, minT, maxT) {
+            .pointerInput(Unit) {
                 // Pinch (two fingers) and a sideways drag (one finger) belong to the chart; an up-and-down drag is left to the list, so the Stats tab still scrolls over the graph.
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
@@ -234,7 +240,7 @@ private fun ProfitCanvas(
                             val pan = event.calculatePan()
                             val c = event.calculateCentroid()
                             if (z != 1f || pan.x != 0f) {
-                                onTransform((c.x / size.width).toDouble(), pan.x / size.width, z)
+                                transform((c.x / size.width).toDouble(), pan.x / size.width, z)
                                 event.changes.forEach { if (it.positionChange() != Offset.Zero) it.consume() }
                             }
                             panning = true
@@ -243,19 +249,19 @@ private fun ProfitCanvas(
                             val d = ch.positionChange()
                             totalX += d.x; totalY += d.y
                             if (!panning && abs(totalX) > slop && abs(totalX) > abs(totalY)) panning = true
-                            if (panning && d.x != 0f) { onTransform((ch.position.x / size.width).toDouble(), d.x / size.width, 1f); ch.consume() }
+                            if (panning && d.x != 0f) { transform((ch.position.x / size.width).toDouble(), d.x / size.width, 1f); ch.consume() }
                         }
                     } while (event.changes.any { it.pressed })
                 }
             }
-            .pointerInput(points, view) {
+            .pointerInput(Unit) {
                 detectTapGestures(
-                    onDoubleTap = { onReset() },
+                    onDoubleTap = { reset() },
                     onTap = { pos ->
-                        val t = view.start + (pos.x / size.width) * view.span
-                        val i = ProfitSeries.firstAtOrAfter(points, t.toLong())
-                        val near = listOfNotNull(points.getOrNull(i - 1), points.getOrNull(i)).minByOrNull { abs(it.tMs - t) }
-                        onTap(near)
+                        val t = liveView.start + (pos.x / size.width) * liveView.span
+                        val i = ProfitSeries.firstAtOrAfter(livePoints, t.toLong())
+                        val near = listOfNotNull(livePoints.getOrNull(i - 1), livePoints.getOrNull(i)).minByOrNull { abs(it.tMs - t) }
+                        tap(near)
                     },
                 )
             },
