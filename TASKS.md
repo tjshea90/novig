@@ -4454,3 +4454,15 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 
 ## TH: "Figure out why the diagnosis share with Claude stopped working. See if anything may have affected it in the last few versions. Or maybe it holds too much data to make a file" (Tj, 2026-10-10 ~08:05Z)
 - [x] TH1 Last versions: only two touched the diagnostics path (v0.84.1 wide-quote guard, v0.85.0 a LIVE BIDS block that reads only in-memory status), so no code change broke it; what changed is DATA: the scan study's journal (36 MB over 12 days; `ScanStudy.overview()` re-reads every day's file on each share), the burst and paper-lab journals (read in full), and the Pinnodds live journals grew all day. v0.85.5 cut the lab/pinn journals to 3 days; v0.85.8 puts EVERY disk read on its own coroutine with a 20 s deadline (parallel), leaves a slow one out and names it under "LEFT OUT OF THIS FILE" at the top of the report, so the file is always made. Not confirmed on the phone: if it still fails after v0.85.8 the toast now names the stage.
+
+## TI: Cleanup job (Tj, 2026-10-10 ~14:06Z, verbatim in INBOX.md): "This app needs a clean up ... laggy ... diagnostics share fails" (NOTE: the screenshots Tj mentioned did NOT reach the session: no new files in uploads; items 5-7 are worked from the code)
+- [ ] TI1 Diagnostics: a Reset button (clear the whole diagnostics log, start fresh); recode so it can never get too big (auto-clear older than 2 days, hard size caps, bounded reads); check the last versions for anything that broke it; make the file useful for Claude (smart, small, actionable).
+- [ ] TI2 Full-tests sweep (test-protocols skill): find bloated code and features that make the app laggy; fix or remove them (ui, speed, accuracy, efficiency).
+- [ ] TI3 Auto-bet "can't find the bet, open in Novig instead": why does the deep link find it but auto-bet doesn't; fix so auto-bet finds bets more accurately.
+- [ ] TI4 Screenshot: styling cuts off words: fix (screenshot not received: find truncated text in the UI by code, ask Tj which screen if not found).
+- [ ] TI5 Remove the Tracker's "Locked in" card.
+- [ ] TI6 "Are the edges real?" shows a loss while the graph shows a profit: find why the numbers differ; fix if wrong.
+- [ ] TI7 Settings: a button to clear the scan study data.
+- [ ] TI8 Settings: organise, remove unused settings, find and fix contradictory settings.
+- [ ] TI9 Remove the "Games" tab.
+- [ ] TI10 Look at the research running on GitHub (lab-record etc.): does it need maintaining, should it be stopped and studied? Report to Tj (the steward lease: research/lab/STEWARD.md).
