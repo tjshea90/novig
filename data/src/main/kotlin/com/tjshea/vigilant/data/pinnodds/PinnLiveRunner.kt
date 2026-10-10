@@ -1,8 +1,19 @@
 package com.tjshea.vigilant.data.pinnodds
 
+import com.tjshea.vigilant.data.livebid.LiveBidBookView
+import com.tjshea.vigilant.data.livebid.LiveBidConfig
+import com.tjshea.vigilant.data.livebid.LiveBidDesk
+import com.tjshea.vigilant.data.livebid.LiveBidFair
+import com.tjshea.vigilant.data.livebid.LiveBidJudge
+import com.tjshea.vigilant.data.livebid.LiveBidKeep
+import com.tjshea.vigilant.data.livebid.LiveBidSkip
+import com.tjshea.vigilant.data.livebid.LiveBidVerdict
+import com.tjshea.vigilant.data.livebid.LiveBidView
+import com.tjshea.vigilant.data.livebid.LiveBidWant
 import com.tjshea.vigilant.data.novig.NovigEvent
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.NovigSource
+import com.tjshea.vigilant.data.novig.stream.BookChange
 import com.tjshea.vigilant.data.novig.stream.BookListener
 import com.tjshea.vigilant.data.novig.stream.PushedBooks
 import com.tjshea.vigilant.data.novig.trading.BetTarget
@@ -28,8 +39,8 @@ import java.util.Locale
 import java.util.PriorityQueue
 import kotlin.math.abs
 
-/** What the runner is told each time it looks: Tj's rules and the leagues he wants (Novig's names). */
-data class LiveConfig(val rules: LiveRules, val method: DevigMethod, val leagues: Set<String>)
+/** What the runner is told each time it looks: Tj's rules and the leagues he wants (Novig's names). [takerOn]: the lag taker judges and trades; off, the feed runs only for the live bids. */
+data class LiveConfig(val rules: LiveRules, val method: DevigMethod, val leagues: Set<String>, val takerOn: Boolean = true)
 
 /** The Pinnodds source of frames: the socket in the app, a fake in tests. */
 interface PinnFeedSource {
@@ -56,6 +67,8 @@ data class LiveRunnerStatus(
     val skips: Map<String, Int> = emptyMap(),
     val problem: String? = null,
     val lastCandidate: String? = null,
+    /** Live bids: Novig lines judged for a bid (both sides count), and why not (words, counts). */
+    val bidTargets: Int = 0,
 )
 
 /**
@@ -78,6 +91,9 @@ class PinnLiveRunner(
     private val followJournal: DayJournal<LiveFollow>,
     /** Where the post-score probes of the moneyline go ([ReopenStudy]); null = none are taken. */
     private val reopenJournal: DayJournal<ReopenProbe>? = null,
+    /** The live bid desk ([LiveBidDesk]): told which bids are justified, vouched for and pulled, from this runner's one Pinnodds feed and one Novig feed. Null = no live bids. */
+    private val bids: LiveBidDesk? = null,
+    private val bidConfig: () -> LiveBidConfig = { LiveBidConfig.OFF },
     private val clock: () -> Long = System::currentTimeMillis,
     private val discoverEveryMs: Long = DISCOVER_MS,
     private val tickMs: Long = TICK_MS,
@@ -111,7 +127,7 @@ class PinnLiveRunner(
 
     private sealed interface Msg {
         class Frame(val text: String, val atMs: Long) : Msg
-        class Book(val marketId: String, val atMs: Long) : Msg
+        class Book(val marketId: String, val atMs: Long, val changes: List<BookChange>) : Msg
         class Catalog(val events: List<NovigEvent>, val markets: List<NovigMarket>, val atMs: Long) : Msg
         class Recorded(val record: LiveRecord, val candidate: LiveCandidate) : Msg
         class Tick(val atMs: Long) : Msg
@@ -148,13 +164,13 @@ class PinnLiveRunner(
     private fun reset() {
         book = PinnBook(config().method)
         catalogEvents = emptyList(); catalogMarkets = emptyList(); targetsByEvent.clear(); targetsByMarket.clear(); armedUntil.clear(); follows.clear(); probes.clear()
-        evaluations = 0; candidates = 0; skips.clear(); lastOffer.clear(); lastCandidate = null; watched = 0; matchedGames = 0; lastRematchMs = 0; lastEventCount = -1; catalogDirty = false
+        evaluations = 0; candidates = 0; skips.clear(); lastOffer.clear(); lastBidBookMs.clear(); lastBidJudgeMs = 0L; bidTargetsNow = 0; lastCandidate = null; watched = 0; matchedGames = 0; lastRematchMs = 0; lastEventCount = -1; catalogDirty = false
     }
 
     private suspend fun runLoop() {
         reset()
         val queue = Channel<Msg>(Channel.UNLIMITED)
-        val novig = newFeed { marketId, atMs, _ -> queue.trySend(Msg.Book(marketId, atMs)) }
+        val novig = newFeed { marketId, atMs, changes -> queue.trySend(Msg.Book(marketId, atMs, changes)) }
         if (novig == null) {
             _status.value = _status.value.copy(running = false, socket = "off", problem = "No Novig key is connected: the live feed needs a key's live books (Settings › Betting & Novig account).")
             return
@@ -170,6 +186,8 @@ class PinnLiveRunner(
             consume(queue, novig, pinn)
         } finally {
             helpers.forEach { it.cancel() }
+            // The feed that justified the live bids is gone: they come down (Novig removes any that this misses at their ttl).
+            withContext(NonCancellable) { runCatching { bids?.stopAll("the live feed stopped") } }
             feedSource = null
             pending = null
             runCatching { pinn.stop() }
@@ -205,7 +223,7 @@ class PinnLiveRunner(
             val now = clock()
             when (msg) {
                 is Msg.Frame -> onFrame(msg, novig)
-                is Msg.Book -> onNovigBook(msg.marketId, now, novig)
+                is Msg.Book -> onNovigBook(msg.marketId, now, novig, msg.changes)
                 is Msg.Catalog -> { catalogEvents = msg.events; catalogMarkets = msg.markets; catalogDirty = true; rematch(novig, now) }
                 is Msg.Recorded -> scheduleFollows(msg)
                 is Msg.Tick -> {
@@ -222,25 +240,46 @@ class PinnLiveRunner(
         if (!cfg.rules.pregame && isPrematchFrame(msg.text)) return
         val obj = parsePinnFrame(msg.text) ?: return
         if (book.method != cfg.method) book.method = cfg.method
+        val rejudge = HashSet<Long>()
         for (c in book.apply(obj, msg.atMs)) {
+            // The live bids are re-judged at once on anything that can change what a bid is worth: a price, a score, a danger frame, a closed line (a pull must not wait for the next tick).
+            if (c.kind != PinnChange.Kind.GONE) rejudge += c.eventId
             when (c.kind) {
                 // Only a MAIN line's change arms a game: an alternate line moves constantly and is not what the targets are priced from.
                 PinnChange.Kind.PRICE -> if (book.events[c.eventId]?.lines?.get(c.key)?.alternate != true) armedUntil[c.eventId] = msg.atMs + (if (book.events[c.eventId]?.live == false) cfg.rules.preMoveWindowMs else cfg.rules.moveWindowMs) + EXTRA_ARM_MS
                 PinnChange.Kind.SCORE -> scheduleProbes(c.eventId, msg.atMs)
-                PinnChange.Kind.GONE -> { armedUntil.remove(c.eventId); targetsByEvent.remove(c.eventId)?.forEach { targetsByMarket.remove(it.market.marketId) } }
+                PinnChange.Kind.GONE -> {
+                    armedUntil.remove(c.eventId)
+                    targetsByEvent.remove(c.eventId)?.forEach { t ->
+                        targetsByMarket.remove(t.market.marketId)
+                        t.outcomeBySide.values.forEach { o -> bids?.pull(o, LiveBidSkip.NOT_LIVE) }
+                    }
+                }
                 else -> {}
             }
         }
+        if (rejudge.isNotEmpty() && bids != null) judgeBids(msg.atMs, novig, only = rejudge)
     }
 
-    private fun onNovigBook(marketId: String, now: Long, novig: PushedBooks) {
+    private fun onNovigBook(marketId: String, now: Long, novig: PushedBooks, changes: List<BookChange>) {
         val t = targetsByMarket[marketId] ?: return
+        if (bids != null) {
+            // Trades on this market are what a paper bid is filled by; a real bid's own fill is looked for at once.
+            bids.onBook(marketId, now, changes)
+            if (now - (lastBidBookMs[marketId] ?: 0L) >= BID_BOOK_GAP_MS) {
+                lastBidBookMs[marketId] = now
+                judgeBids(now, novig, only = setOf(t.pinnEventId), market = marketId)
+            }
+        }
+        if (!config().takerOn) return
         // A Novig change is judged at once when Pinnacle moved lately (the lag tests), or in "any edge" mode, which has no move to wait for.
         if ((armedUntil[t.pinnEventId] ?: 0L) < now && !config().rules.trigger.sweeps) return
         evaluate(t, now, novig)
     }
 
     private fun onTick(now: Long, novig: PushedBooks, pinn: PinnFeedSource) {
+        // Live bids: every matched line is judged twice a second, so a bid is vouched for (or pulled) at least that often.
+        if (bids != null && now - lastBidJudgeMs >= BID_EVERY_MS) { lastBidJudgeMs = now; judgeBids(now, novig) }
         // Armed games: judged on every tick (the settle time passes between a Pinnacle change and its first judgment).
         val armed = armedUntil.entries.iterator()
         while (armed.hasNext()) {
@@ -320,6 +359,7 @@ class PinnLiveRunner(
         if (pe.live) ne.status == NovigEvent.STATUS_LIVE || ne.status == NovigEvent.STATUS_DELAYED else ne.status == NovigEvent.STATUS_PREGAME
 
     private fun evaluate(t: LiveTarget, now: Long, novig: PushedBooks) {
+        if (!config().takerOn) return
         val pe = book.events[t.pinnEventId] ?: return
         val line = t.line(pe) ?: return
         val cfg = config()
