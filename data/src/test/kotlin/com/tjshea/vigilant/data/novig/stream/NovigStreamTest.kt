@@ -238,6 +238,26 @@ class NovigStreamTest {
     }
 
     @Test
+    fun `the live engine's markets stay subscribed when a scan replaces its own list, on the one connection`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        val stream = stream()
+        val heard = CopyOnWriteArrayList<String>()
+        val view = SharedStreamView({ stream }, BookListener { id, _, _ -> heard += id })
+        view.watchLive(listOf("live1", "live2"))
+        stream.watch(listOf("a1", "a2"))
+        until { stream.live(listOf("live1", "live2", "a1", "a2")).size == 4 }
+        // A later scan wants other markets: the live ones are not dropped.
+        stream.watch(listOf("b1"))
+        until { stream.live(listOf("b1")).size == 1 }
+        assertEquals(2, view.live(listOf("live1", "live2")).size)
+        assertTrue("the view's listener heard the books", heard.any { it == "live1" })
+        assertEquals(1, server.requestCount)
+        view.close()
+        until { stream.live(listOf("live1")).isEmpty() }
+        stream.close()
+    }
+
+    @Test
     fun `a refused upgrade says why, and scans read by REST until the retry time`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(451).setBody("""{"code":"ANONYMIZED_NETWORK"}"""))
         val stream = stream()
