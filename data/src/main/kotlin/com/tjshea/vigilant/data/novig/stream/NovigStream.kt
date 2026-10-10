@@ -56,6 +56,12 @@ interface PushedBooks {
     /** Why [marketId] has no pushed book right now, in fixed words (null = no reason known, or it has one). The live bids count these, so a page full of "no book" says which. */
     fun bookGap(marketId: String): String? = null
 
+    /**
+     * The live engines' own markets, kept apart from [watch]'s list: a scan's [watch] REPLACES what is wanted every cycle and would drop the live games' books. These are
+     * subscribed first and stay until the next [watchLive], whatever [watch] says.
+     */
+    fun watchLive(marketIds: Collection<String>) = watch(marketIds)
+
     /** Why pushing stopped, if it did at or after [sinceMs]. */
     fun problemSince(sinceMs: Long): String?
 
@@ -132,6 +138,11 @@ class NovigStream(
     /** Wanted markets, most important first. */
     private var wanted: List<String> = emptyList()
 
+    /** The live engines' markets ([watchLive]): always ahead of [wanted] in what is subscribed. */
+    private var livePinned: List<String> = emptyList()
+
+    private fun allWanted(): List<String> = if (livePinned.isEmpty()) wanted else (livePinned + wanted).distinct()
+
     /**
      * Markets Novig refused for a reason other than a limit, and until when they are not asked for again; [chunk] is how many one subscribe may carry after such a refusal (halved each
      * time, so a request poisoned by one unresolvable market is narrowed down to it instead of shutting the whole connection out, as `limit = subscribed.size` did: Tj, 2026-10-10,
@@ -183,6 +194,16 @@ class NovigStream(
         if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
     }
 
+    override fun watchLive(marketIds: Collection<String>) {
+        val start: Boolean
+        synchronized(this) {
+            lastUsedMs = clock()
+            livePinned = marketIds.distinct()
+            start = socket == null && failedAtMs.let { it == null || clock() - it >= retryDelayMs }
+        }
+        if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
+    }
+
     override fun open() {
         val start = synchronized(this) {
             lastUsedMs = clock()
@@ -206,6 +227,24 @@ class NovigStream(
             books.book(id)?.let { out[id] = it.copy(fetchedAtMs = now) }
         }
         return out
+    }
+
+    /**
+     * The live engine's handle on THIS stream (one connection for the whole app: the key's `stream` bucket is per key, so a second connection starved on it, "Novig live book not
+     * subscribed yet", Tj 2026-10-10). Its markets are pinned ahead of a scan's, its listener hears every change, and closing it takes both away without closing the stream.
+     */
+    fun liveView(listener: BookListener): PushedBooks = object : PushedBooks {
+        init { books.addListener(listener) }
+        override fun watch(marketIds: Collection<String>) = watchLive(marketIds)
+        override fun watchLive(marketIds: Collection<String>) = this@NovigStream.watchLive(marketIds)
+        override fun open() = this@NovigStream.open()
+        override fun live(marketIds: Collection<String>) = this@NovigStream.live(marketIds)
+        override fun bookGap(marketId: String) = this@NovigStream.bookGap(marketId)
+        override fun problemSince(sinceMs: Long) = this@NovigStream.problemSince(sinceMs)
+        override fun close() {
+            books.removeListener(listener)
+            this@NovigStream.watchLive(emptyList())
+        }
     }
 
     override fun bookGap(marketId: String): String? = synchronized(this) {
@@ -286,7 +325,7 @@ class NovigStream(
                 if (socket == null) return
                 val now = clock()
                 refusedUntil.values.removeAll { it <= now }
-                val want = wanted.filter { it !in refusedUntil }.take(limit.coerceAtLeast(0))
+                val want = allWanted().filter { it !in refusedUntil }.take(limit.coerceAtLeast(0))
                 val wantSet = want.toHashSet()
                 val drop = subscribed.filter { it !in wantSet }
                 val room = limit - (subscribed.size - drop.size)

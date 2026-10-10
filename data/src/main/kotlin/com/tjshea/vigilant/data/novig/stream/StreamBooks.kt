@@ -41,6 +41,14 @@ class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {
     @Volatile
     var listener: BookListener? = null
 
+    private val extras = java.util.concurrent.CopyOnWriteArrayList<BookListener>()
+    private val fan = BookListener { id, at, ch -> listener?.onChange(id, at, ch); extras.forEach { it.onChange(id, at, ch) } }
+    private fun sink(): BookListener? = if (listener != null || extras.isNotEmpty()) fan else null
+
+    /** More listeners beside [listener]: the live engine's view of the app's one stream (it must not open a second connection, the key's `stream` bucket is shared). */
+    fun addListener(l: BookListener) { extras += l }
+    fun removeListener(l: BookListener) { extras -= l }
+
     private class Order(val outcome: String, val priceMilli: Int, val qty: Long)
 
     private class Market(var seq: Long, val orders: LinkedHashMap<String, Order>, var stale: Boolean, var updatedAtMs: Long)
@@ -65,7 +73,7 @@ class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {
             }
         }
         markets[marketId] = Market(seq, orders, stale = false, updatedAtMs = clock())
-        listener?.let { l ->
+        sink()?.let { l ->
             l.onChange(marketId, clock(), listOf(BookChange(BookChange.Kind.CLEAR)) + orders.values.map { BookChange(BookChange.Kind.ADD, it.outcome, it.priceMilli, it.qty) })
         }
     }
@@ -82,17 +90,17 @@ class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {
             Market(0, LinkedHashMap(), stale = false, updatedAtMs = clock()).also { markets[marketId] = it }
         } else {
             markets[marketId] = Market(seq, LinkedHashMap(), stale = true, updatedAtMs = clock())
-            listener?.onChange(marketId, clock(), listOf(BookChange(BookChange.Kind.STALE)))
+            sink()?.onChange(marketId, clock(), listOf(BookChange(BookChange.Kind.STALE)))
             return false
         }
         if (m.stale) return false
         if (seq <= m.seq) return true // already covered by a newer snapshot
         if (seq != m.seq + 1) {
             m.stale = true
-            listener?.onChange(marketId, clock(), listOf(BookChange(BookChange.Kind.STALE)))
+            sink()?.onChange(marketId, clock(), listOf(BookChange(BookChange.Kind.STALE)))
             return false
         }
-        val changes = if (listener != null) ArrayList<BookChange>() else null
+        val changes = if (sink() != null) ArrayList<BookChange>() else null
         (book["deltas"] as? JsonArray)?.forEach { el ->
             val d = el.jsonObject
             val order = d["order"]?.jsonPrimitive?.content ?: return@forEach
@@ -111,7 +119,7 @@ class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {
         }
         m.seq = seq
         m.updatedAtMs = clock()
-        if (changes != null && changes.isNotEmpty()) listener?.onChange(marketId, clock(), changes)
+        if (changes != null && changes.isNotEmpty()) sink()?.onChange(marketId, clock(), changes)
         return true
     }
 
