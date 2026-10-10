@@ -227,6 +227,9 @@ class LiveBidDesk(
         latestFair[outcomeId] = fair to atMs
     }
 
+    /** Every bid on record right now, newest last. */
+    fun bidsNow(): List<LiveBid> = synchronized(mu) { bids.values.toList() }
+
     /** The bid up on [outcomeId], as the judge needs it, or null. */
     fun held(outcomeId: String): LiveBidHeld? = synchronized(mu) {
         bids.values.lastOrNull { it.active && it.outcomeId == outcomeId && it.status != LiveBidStatus.CANCELING }?.let { LiveBidHeld(it.price, it.postedAtMs, it.mid) }
