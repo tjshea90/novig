@@ -62,7 +62,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
 
     Text(LiveBidText.HINT, style = MaterialTheme.typography.bodyMedium, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
     Text(LiveBidText.EVIDENCE, style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp).testTag("liveBidEvidence"))
-    LbSwitch(LiveBidText.FEED_TITLE, LiveBidText.FEED_SUB, s.liveBid, "liveBidSwitch") { v -> onUpdate { it.copy(liveBid = v, liveBidReal = it.liveBidReal && v) } }
+    LbSwitch(LiveBidText.FEED_TITLE, LiveBidText.feedSub(s.liveBidReal), s.liveBid, "liveBidSwitch") { v -> onUpdate { it.copy(liveBid = v, liveBidReal = it.liveBidReal && v) } }
     s.liveBidHalted?.let { why ->
         Column(Modifier.padding(vertical = 4.dp).testTag("liveBidHalted")) {
             Text("Stopped: $why", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)

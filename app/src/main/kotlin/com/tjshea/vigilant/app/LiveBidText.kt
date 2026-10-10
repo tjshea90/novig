@@ -17,12 +17,14 @@ object LiveBidText {
         "flags a danger zone or goes quiet, its price falls toward the bid, the line closes, a feed drops, or anything stops vouching for it. Each order also carries an expiry Novig enforces " +
         "by itself, so a phone that dies cannot leave a bid up. It uses the same Pinnodds socket as Pinnodds live (one connection per account): the Pinnodds key goes in Settings › Pinnodds live."
     const val EVIDENCE = "Evidence so far: replaying 21 games (about 50 minutes) of stored Pinnacle and Novig tapes with Novig's measured 5.3 s in-play order delay, a bid 5% under the fair kept about +4% " +
-        "per fill two minutes later (3% kept under +1%). That is a small sample, queue position is not in it, and no live post-only bid has been sent to Novig yet: the app measures how long a bid takes " +
+        "per fill two minutes later (3% kept under +1%). That is a small sample and queue position is not in it: the app measures how long a bid takes " +
         "to land and to be pulled on your phone, shows it in Diagnostics, and stops itself if a pull is too slow. Watch paper first."
     const val FEED_TITLE = "Live bids"
-    const val FEED_SUB = "Judges every live game Pinnacle and Novig both carry and writes down the bids it WOULD post (paper), pulls them the way a real one would, and follows each paper fill. Nothing is sent."
+    /** What the Live bids switch does, said for the state of the real-money switch below it (it used to say "Nothing is sent" with real money on: a contradiction on the same screen). */
+    fun feedSub(real: Boolean): String = "Judges every live game Pinnacle and Novig both carry and pulls its bids the way a real one would, following each fill. " +
+        if (real) "Real money is ON below: the bids it finds are posted on Novig." else "Real money is off: it writes down the bids it WOULD post (paper) and sends nothing."
     const val REAL_TITLE = "Bid with real money"
-    const val REAL_SUB = "Posts the bids on Novig, sized by the stake rule below and held to the limits below. Starts off."
+    const val REAL_SUB = "Posts the bids on Novig, sized by the stake rule below and held to the limits below."
     const val RESUME = "Resume"
     const val CONFIRM_TITLE = "Bid with real money on live games?"
 
