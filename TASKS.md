@@ -4493,7 +4493,7 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 ## TM: Tj, 2026-10-10 ~16:35Z (verbatim in INBOX.md): research 15 odds-scraper/API sources for a free or cheap, fresh, accurate multi-book odds source for Vigilant (live betting, live odds, grading, props, CLV, EV); research only, ignore ToS; note free trials
 - [x] TM1 Fetch and read each of the 15 URLs (declanwalpole/sportsbook-odds-scraper, Bright Data, ScrapingBee, ScrapeHero Odds Portal, WebHarvy Flashscore, Paul Connolly +EV scraper, ParseHub, Quantum Proxies, flashscore-scraper (socket.dev), pyjpboatrace (irrelevant: boat racing), BowTiedBettor scraper, OddsShopper, Decodo, Zyte, OddsCorp API, npm sports-odds-api).
 - [x] TM2 Write research/odds_sources_2026-10-10.md (verdict per source, combos, free trials, what Vigilant could build) + RESEARCH.md §126 + a line in research/lab/NOTES.md; tell Tj the shortlist.
-- [ ] TM3 (v0.87.1 release confirmation is pending via send_later check-in; do it first when it fires.)
+- [x] TM3 v0.87.1 released and recorded (code 172).
 - [ ] TM4 (needs Tj's word) Pinnacle guest REST as the live fair after Pinnodds ends: first a 5-minute freshness test on the phone (log market `version` change times next to Novig), then `PinnArcadiaPoller` feeding `PinnBook` behind a feed switch (research/odds_sources_2026-10-10.md "Combinations" 1).
 - [ ] TM5 (needs Tj's word) soft-book board from the phone (Bovada works keyless; DK/Caesars/Kambi/BetMGM/Superbook endpoints in the research file) for the other-books list and stale-soft-line spotting.
 - [ ] TM6 Tj may start trials: OddsShopper 7 days (benchmark our EVs), OddsCorp 2 weeks via Telegram @oddscorp (ask NCAAF/NFL coverage and the price currency).
