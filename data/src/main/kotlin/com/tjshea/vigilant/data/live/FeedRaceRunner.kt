@@ -160,15 +160,20 @@ class FeedRaceRunner(
 
     private suspend fun sofascoreLoop() {
         val tr = tracker("sofa")
+        // Sofascore answers this phone HTTP 403 on every call (Tj's v0.83.4 file: 6,120 calls, 6,120 refused, one every 2.5 s for as long as the test ran): after a run of refusals it is asked
+        // once every [SOFA_RETRY_MS], so a day that opens up is noticed and a day that does not costs nothing.
+        var refused = 0
         while (true) {
             val t = clock()
             for (sport in games.mapNotNull { sofaSport(it.sport) }.distinct()) {
                 val sent = clock()
-                val f = get("https://api.sofascore.com/api/v1/sport/$sport/events/live") ?: continue
+                val f = get("https://api.sofascore.com/api/v1/sport/$sport/events/live")
+                if (f == null) { refused++; continue }
+                refused = 0
                 see(tr, FeedParsers.sofascore(f.body, sport), f, sent)
                 delay(GAP_MS)
             }
-            delay((pollMs - (clock() - t)).coerceAtLeast(MIN_WAIT_MS))
+            delay(if (refused >= SOFA_GIVE_UP_AFTER) SOFA_RETRY_MS else (pollMs - (clock() - t)).coerceAtLeast(MIN_WAIT_MS))
         }
     }
 
@@ -366,6 +371,10 @@ class FeedRaceRunner(
 
         const val POLY_SCORES_URL = "wss://sports-api.polymarket.com/ws"
         const val POLY_ODDS_URL = "wss://ws-subscriptions-clob.polymarket.com/ws/market"
+
+        /** Refusals in a row after which Sofascore is asked only every [SOFA_RETRY_MS]. */
+        const val SOFA_GIVE_UP_AFTER = 8
+        const val SOFA_RETRY_MS = 15 * 60_000L
 
         /** Novig's sport name to Sofascore's `sport/<x>/events/live`; null = not read. */
         fun sofaSport(novigSport: String): String? = when (novigSport.uppercase()) {
