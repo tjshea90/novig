@@ -192,6 +192,23 @@ class LiveEdgeTest {
     }
 
     @Test
+    fun `the either trigger bets on a score-driven lag or on a stale order, and on nothing else`() {
+        val (b, e, l) = moved()
+        val either = rules.copy(trigger = LiveTrigger.EITHER)
+        val off = listOf(TakeLevel(0.45, 5_000))
+        // No score yet, and the ask (0.45) is not an old Pinnacle price: neither reason.
+        assertSkip(LiveSkip.NOT_STALE, judge(e, l, 2_000, off, either))
+        // An ask at Pinnacle's earlier price (0.50) is a stale order, with no score and after the 20 s window.
+        assertTrue(judge(e, l, 31_000, stale, either) is LiveVerdict.Bet)
+        // A score inside the window makes the lag real whatever the ask is.
+        b.apply(parse(live(score = 40 to 38, markets = emptyArray<String>())), 1_500)
+        b.apply(parse(live(score = 42 to 38, markets = emptyArray<String>())), 1_800)
+        assertTrue(judge(e, l, 2_000, off, either) is LiveVerdict.Bet)
+        // It is judged on the regular sweep too, not only just after a Pinnacle change.
+        assertTrue(LiveTrigger.EITHER.sweeps)
+    }
+
+    @Test
     fun `an edge too large to be real is refused as a probable mismatch whatever the trigger`() {
         val (_, e, l) = moved()
         assertSkip(LiveSkip.TOO_GOOD, judge(e, l, 2_000, listOf(TakeLevel(0.10, 5_000))))

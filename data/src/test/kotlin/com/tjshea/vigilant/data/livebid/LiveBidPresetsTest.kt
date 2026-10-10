@@ -124,4 +124,61 @@ class LiveBidPresetsTest {
         assertEquals("2.5%", LiveBidQuality.pct(0.025))
         assertEquals("5%", LiveBidQuality.pct(0.05))
     }
+
+    @Test
+    fun `More fills is thinner on the margin and looser on position than Balanced, but every guard that pulls a bid stays`() {
+        val f = LiveBidPresets.FILL.quality
+        val b = LiveBidPresets.BALANCED.quality
+        assertTrue(f.margin < b.margin && f.margin >= 0.03)
+        assertTrue(f.bothSides && !f.neverLead && f.countCredit)
+        assertTrue(f.settleSec <= b.settleSec && f.scoreHoldSec <= b.scoreHoldSec)
+        assertTrue("pulls on a score, a danger frame, silence, a fading edge, Novig's move", f.pullOnScore && f.dangerHoldSec > 0 && f.maxQuietSec > 0 && f.pullBelowEv > 0.0 && f.novigMovePull > 0.0)
+        assertTrue("the self-checks stay on", f.pickOffLimit > 0 && f.maxCancelSec > 0 && f.maxPlaceSec > 0)
+        assertTrue(f.ttlSec in 10..60)
+        assertFalse(LiveBidPresets.FILL.paperOnly)
+        assertTrue(LiveBidPresets.builtIn("More fills"))
+        assertEquals(4, LiveBidPresets.BUILT_IN.size)
+    }
+
+    @Test
+    fun `fill the wallet lifts the counts and the dollars to the wallet and never lowers what he set`() {
+        val set = LiveBidLimits(maxBids = 8, maxBidsPerGame = 3, maxPerGame = 10.0, maxPerDay = 40.0)
+        assertEquals("off: the numbers are the limits", set, set.effective(200.0))
+        val fill = set.copy(fillWallet = true)
+        val e = fill.effective(200.0)
+        assertEquals(LiveBidLimits.WALLET_MAX_BIDS, e.maxBids)
+        assertEquals(LiveBidLimits.WALLET_MAX_PER_GAME_BIDS, e.maxBidsPerGame)
+        assertEquals(50.0, e.maxPerGame, 1e-9)
+        assertEquals(400.0, e.maxPerDay, 1e-9)
+        assertEquals("the loss stop and the reserve are untouched", fill.haltLoss, e.haltLoss, 0.0)
+        assertEquals(fill.walletReserve, e.walletReserve, 0.0)
+        // A bigger number he set himself is kept.
+        assertEquals(500.0, fill.copy(maxPerDay = 500.0).effective(200.0).maxPerDay, 0.0)
+        // Wallet unknown: nothing is lifted.
+        assertEquals(fill, fill.effective(null))
+        assertEquals(fill, fill.effective(0.0))
+    }
+
+    @Test
+    fun `the autopilot sets both engines, keeps his money, and says when it is in force`() {
+        val mine = ScanSettings(liveBidLimits = LiveBidLimits(maxStake = 7.0, haltLoss = 9.0), pinnLiveStake = 3.0, pinnLiveHaltLoss = 8.0, liveBidHalted = "x", pinnLiveHalted = "y")
+        val paper = LiveAutopilot.apply(mine, real = false)
+        assertTrue(LiveAutopilot.inForce(paper))
+        assertFalse(LiveAutopilot.real(paper))
+        assertTrue(paper.liveBid && paper.pinnLive && !paper.liveBidReal && !paper.pinnLiveBet)
+        assertEquals(com.tjshea.vigilant.data.pinnodds.LiveTrigger.EITHER, paper.pinnLiveTrigger)
+        assertEquals("halts cleared", null, paper.liveBidHalted)
+        assertEquals(null, paper.pinnLiveHalted)
+        assertEquals("his money stays", 7.0, paper.liveBidLimits.maxStake, 0.0)
+        assertEquals(9.0, paper.liveBidLimits.haltLoss, 0.0)
+        assertEquals(3.0, paper.pinnLiveStake, 0.0)
+        assertEquals(8.0, paper.pinnLiveHaltLoss, 0.0)
+        assertTrue(paper.liveBidLimits.fillWallet)
+        val real = LiveAutopilot.apply(mine, real = true)
+        assertTrue(LiveAutopilot.real(real) && real.liveBidReal && real.pinnLiveBet)
+        assertFalse("changing one rule takes it out of force", LiveAutopilot.inForce(real.copy(liveBidQuality = real.liveBidQuality.copy(margin = 0.05))))
+        val off = LiveAutopilot.off(real)
+        assertFalse(LiveAutopilot.real(off) || off.liveBid || off.pinnLive)
+        assertEquals("the rules stay for next time", real.liveBidQuality, off.liveBidQuality)
+    }
 }
