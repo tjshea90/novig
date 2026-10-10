@@ -369,7 +369,7 @@ fun TrackerScreen(
                         item(key = "empty") { EmptyState(TrackerText.emptyStats(made, period == TrackerPeriod.ALL, bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT) }
                     } else {
                         if (periodBets.isNotEmpty()) item(key = "stats") {
-                            StatsCards(periodBets, breakdownBy, onBreakdown = { breakdownBy = it }) {
+                            StatsCards(periodBets, kindBets, breakdownBy, onBreakdown = { breakdownBy = it }) {
                                 ClosingLineCard(kindBets, now, clvPeriod, { clvPeriod = it }, clvHideOutliers, { clvHideOutliers = it })
                             }
                         }
@@ -543,6 +543,8 @@ internal fun Caption(text: String) {
 @Composable
 private fun StatsCards(
     bets: List<TrackedBet>,
+    /** Every bet the profit graph may show (bets or bids as chosen), not only the top period's. */
+    chartBets: List<TrackedBet>,
     by: TrackerBreakdown.By,
     onBreakdown: (TrackerBreakdown.By) -> Unit,
     /** The closing-line card's own filters, and every bet (it runs over all time, whatever the period at the top). */
@@ -554,16 +556,9 @@ private fun StatsCards(
         if (stats.outliers > 0) {
             Caption(TrackerText.outlierNote(stats.outliers))
         }
-        StatsCard {
-            // Money is every settled bet, outliers too, so it reads the same with the "Novig only" filter on or off (Tj, 2026-10-05).
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                LabeledValue("Profit", Format.signedMoney(stats.profitAll), valueColor = moneyColor(stats.profitAll))
-                LabeledValue("Profit %", stats.roiAll?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(stats.roiAll ?: 0.0))
-                LabeledValue("Staked", Format.money(stats.stakedAll))
-            }
-            ProfitLine(bets)
-            Caption("Profit % is profit over money staked on settled bets (ROI): it runs with every result. Profit, Staked and the line count every settled bet, the same whichever way the Tracker is filtered.")
-        }
+        // The profit graph has its own time ranges and zoom (Tj, 2026-10-10), over every bet (bets or bids, whatever the period at the top says): the numbers above it are what happened inside the view.
+        ProfitChartCard(chartBets)
+        Caption("Profit counts every settled bet, outliers and locks too (it ends at the bankroll's real result); the edge numbers below leave the outliers out. Profit % is profit over money staked.")
         clv()
         StatsCard {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -639,26 +634,6 @@ private fun BreakdownCard(bets: List<TrackedBet>, by: TrackerBreakdown.By, onBy:
             }
         }
         Caption("Profit and profit % (ROI) per group, outliers aside (so the rows can add up to less or more than Profit above, which counts every bet). A group of a few bets says little: look at the big ones, and at CLV, which needs far fewer bets than profit.")
-    }
-}
-
-/** Running profit, one step per settled bet in the order the games were played (every bet, outliers too: it ends at Profit): green above zero, red below. */
-@Composable
-private fun ProfitLine(bets: List<TrackedBet>) {
-    val points = remember(bets) { BetTracker.profitLine(bets) }
-    if (points.isEmpty()) return
-    val color = if (points.last() >= 0) Edge.colors.positive else Edge.colors.negative
-    val axis = MaterialTheme.colorScheme.outlineVariant
-    Canvas(Modifier.fillMaxWidth().height(72.dp).semantics { contentDescription = "Running profit over ${points.size - 1} settled bets" }) {
-        val lo = minOf(0.0, points.min())
-        val hi = maxOf(0.0, points.max())
-        val span = (hi - lo).takeIf { it > 0 } ?: 1.0
-        fun y(v: Double) = (size.height * (1 - (v - lo) / span)).toFloat()
-        val dx = size.width / (points.size - 1)
-        drawLine(axis, Offset(0f, y(0.0)), Offset(size.width, y(0.0)), strokeWidth = 1.dp.toPx())
-        val path = Path()
-        points.forEachIndexed { i, v -> if (i == 0) path.moveTo(0f, y(v)) else path.lineTo(i * dx, y(v)) }
-        drawPath(path, color, style = Stroke(width = 2.dp.toPx()))
     }
 }
 
