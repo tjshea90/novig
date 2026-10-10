@@ -51,6 +51,8 @@ class LiveBidDeskTest {
         override suspend fun find(clientId: String, outcomeId: String): NovigOrder? = found
         override suspend fun order(orderId: String): NovigOrder? = records[orderId]
         override suspend fun fills(orderId: String): List<NovigFill> = fillsBy[orderId].orEmpty()
+        var fillsOfCalls = 0
+        override suspend fun fillsOf(orderIds: Collection<String>, startsAfterMs: Long): Map<String, List<NovigFill>> { fillsOfCalls++; return orderIds.associateWith { fillsBy[it].orEmpty() } }
 
         /** The order is resting on Novig's book with [remaining] contracts left. */
         fun rest(p: Placed, remaining: Long = p.qty, at: Long = 0L) {
@@ -452,6 +454,60 @@ class LiveBidDeskTest {
         assertEquals(LiveBidStatus.FILLED, r.only().status)
         assertEquals(1, r.logged.size)
         assertEquals(1052L, r.only().filled)
+    }
+
+    @Test
+    fun `real - several bids that end together are read in one request, not one each`() = runTest {
+        val r = rig(limits = LiveBidLimits(maxStake = 2.0, walletReserve = 0.0, maxBids = 10, maxBidsPerGame = 10, maxPerGame = 100.0, maxPerDay = 100.0))
+        r.wallet = 1000.0
+        val ps = r.upMany(Triple("a1", "ma1", "eA"), Triple("b1", "mb1", "eB"), Triple("c1", "mc1", "eC"))
+        r.fake.fillsOfCalls = 0
+        r.desk.stopAll("test")
+        r.tick(100)
+        ps.forEach { r.fake.drop(it) }
+        r.tick(1_300)
+        assertTrue(r.bids().all { it.status == LiveBidStatus.CANCELED })
+        assertEquals("one fills read for all three", 1, r.fake.fillsOfCalls)
+    }
+
+    @Test
+    fun `real - a fill that showed up late, after the bid was written down as pulled with none, is found and recorded`() = runTest {
+        val r = rig()
+        val p = r.up()
+        r.desk.pull("oa", "test")
+        r.tick(100)
+        r.fake.drop(p)
+        r.tick(1_300)
+        assertEquals(LiveBidStatus.CANCELED, r.only().status)
+        assertEquals(0L, r.only().filled)
+        assertTrue(r.logged.isEmpty())
+        // Novig's fills list catches up a few seconds after the order ended.
+        r.fake.fillsBy[p.orderId] = listOf(fill("late1", p.orderId, 300, ts = r.now))
+        r.tick(6_000)
+        assertEquals(300L, r.only().filled)
+        assertEquals(1, r.logged.size)
+        assertEquals("bet1", r.only().betId)
+        assertTrue(r.only().why!!.contains("late"))
+        r.tick(20_000)
+        assertEquals("recorded once", 1, r.logged.size)
+    }
+
+    @Test
+    fun `real - the wallet counts the bid being replaced too, so a successor waits until the money covers both`() = runTest {
+        val r = rig(quality = LiveBidQuality(ttlSec = 30, refreshBeforeSec = 8), limits = LiveBidLimits(maxStake = 5.0, walletReserve = 0.0))
+        r.wallet = 9.5   // one bid is $5.00: two would be $9.99
+        val first = r.up()
+        r.hold(18_000, "oa")
+        r.desk.want(want(r.now))
+        r.hold(1_500, "oa")
+        r.desk.want(want(r.now))
+        r.hold(1_500, "oa")
+        assertEquals("the wallet cannot cover both for a moment: the successor is not sent", 1, r.fake.placed.size)
+        r.wallet = 50.0
+        r.desk.want(want(r.now))
+        r.hold(1_500, "oa")
+        assertEquals(2, r.fake.placed.size)
+        assertTrue(first.orderId != r.fake.placed[1].orderId)
     }
 
     @Test

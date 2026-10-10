@@ -647,6 +647,22 @@ class MakerTest {
     }
 
     @Test
+    fun `a post-only order that belongs to another desk (the live bids) is not a stray and is left alone`() = runBlocking {
+        val novig = FakeNovig()
+        val d = MakerDesk(
+            novig, tracker(), MakerStore(File.createTempFile("maker", ".json").also { it.delete() }), clock = { now }, dayStart = { now - 3_600_000L }, pause = {},
+            otherDesks = { MakerDesk.OtherOrders(setOf("live-1"), setOf("c-live-2")) },
+        )
+        novig.orders["live-1"] = NovigOrder("live-1", "c-live-1", "m9", "m9-over", 0.4, 100, 100, "PO", "OPEN", now)
+        novig.orders["live-x"] = NovigOrder("live-x", "c-live-2", "m9", "m9-under", 0.4, 100, 100, "PO", "OPEN", now)
+        novig.orders["stray"] = NovigOrder("stray", "c-x", "m8", "m8-over", 0.4, 100, 100, "PO", "OPEN", now)
+        d.cycle(emptyList(), rules, null, 50.0, 100.0)
+        assertTrue("stray" in novig.cancelled)
+        assertFalse("another desk's order, known by its Novig id, is not touched", "live-1" in novig.cancelled)
+        assertFalse("nor one known only by the id it was sent with", "live-x" in novig.cancelled)
+    }
+
+    @Test
     fun `a lost answer is never sent again - the next cycle finds the order by its clientId - and an open bet's side gets no bid`() = runBlocking {
         val novig = FakeNovig()
         val t = tracker()
