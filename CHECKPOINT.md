@@ -1,7 +1,7 @@
-# CHECKPOINT 2854 — read me first, then TASKS.md
+# CHECKPOINT 2855 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T08:00:26Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-bab5067e-obkelv` · **builds on:** `288c7c78` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T08:03:52Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-bab5067e-obkelv` · **builds on:** `5f5e2fdc` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: v0.85.8: the diagnostics file reads each source with its own deadline and leaves out (and names) any that is too slow
@@ -13,11 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
+     M app/src/test/kotlin/com/tjshea/vigilant/app/AppRecorderTest.kt
 
 ## Last ten checkpoints
 ```
+  5f5e2fdc ckpt 2854: pre-ship: v0.85.8: the diagnostics file reads each source with its own deadl
   df3915a5 ckpt 2853: v0.85.7 released and recorded
   951b7eae ckpt 2852: TG1: tail 18-0 is 3 games of one repeated bet under the explore rules
   e52fb5d6 ckpt 2851: Analysed Tj's research file v0.85.5 (research/research_file_2026-10-10/ANALY
@@ -27,8 +27,4 @@ ship.sh gates and releases this
   569b60bd ckpt 2847: scan study analysis: corrected the prop sharp-book claim (kept CLV +0.49 vs 
   6a0447ef ckpt 2846: Analysed Tj's scan study v0.85.3: research/scan_study_2026-10-10/ANALYSIS.md
   d12bc1de ckpt 2845: pre-release: v0.85.6: live bids say why a line has no Pinnacle price (altern
-  0f4e884b ckpt 2844: pre-ship: v0.85.6: live bids say why a line has no Pinnacle price (alternate
 ```
-
-(4 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)

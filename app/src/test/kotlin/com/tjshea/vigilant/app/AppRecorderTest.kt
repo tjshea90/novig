@@ -228,7 +228,7 @@ class AppRecorderTest {
     @Test
     fun `what the recorder holds goes into the report`() {
         val src = File("src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt").readText()
-        for (line in listOf("net = c.netStats.snapshot(),", "events = c.eventLog.events(),", "counters = c.eventLog.counters(),", "eventsSinceMs = c.eventLog.sinceMs(),", "perf = c.perf.summaries(),", "coldStartMs = c.perf.coldStartMs,", "previous = runCatching { c.diagHistory.all().lastOrNull() }.getOrNull(),")) {
+        for (line in listOf("net = c.netStats.snapshot(),", "events = c.eventLog.events(),", "counters = c.eventLog.counters(),", "eventsSinceMs = c.eventLog.sinceMs(),", "perf = c.perf.summaries(),", "coldStartMs = c.perf.coldStartMs,", "bg { c.diagHistory.all().lastOrNull() }")) {
             assertTrue(line, src.contains(line))
         }
     }
