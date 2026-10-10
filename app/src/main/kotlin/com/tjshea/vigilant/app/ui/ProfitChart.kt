@@ -177,7 +177,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets:
         LabeledValue("Profit in view", Format.signedMoney(change), valueColor = moneyColor(change), modifier = Modifier.weight(1.3f).testTag("profitInView"))
         LabeledValue("Profit %", inView.roi?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(inView.roi ?: 0.0), modifier = Modifier.weight(1f))
         LabeledValue("Staked", Format.money(inView.staked), modifier = Modifier.weight(1f))
-        LabeledValue("Bets", "${inView.bets}", modifier = Modifier.weight(0.6f))
+        LabeledValue("Settled", "${inView.bets}", modifier = Modifier.weight(0.6f))
     }
     val sel = selected
     Text(
