@@ -164,3 +164,4 @@ day that changes.
 | v0.83.7 | code 154 | 2026-10-09T20:46Z | v0.83.7: Pinnodds awake in the app
 | v0.84.0 | code 155 | 2026-10-09T22:01Z | v0.84.0: OddsPapi v5 ready to switch on
 | v0.84.1 | code 156 | 2026-10-09T23:43Z | v0.84.1: wide-quote guard
+| v0.84.4 | code 159 | 2026-10-10T01:41Z | v0.84.4: Research running foreground service; also carries v0.84.2 lab grading and v0.84.3 research-switch fix
