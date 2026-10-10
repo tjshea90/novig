@@ -27,3 +27,4 @@
 
 - 2026-10-10 (Tj): **LAB STOPPED.** "Stop the lab and remove the routine." The cron is gone from lab-record.yml (manual `workflow_dispatch` still works) and the daily check-in routine is deleted. Run 9 (12:24Z) was left to finish so its journals are archived; after it ends, check that `lab-archive-2026-10-10` has its assets. Nine runs in all: findings in the two ANALYSIS.md files above. Not done: `research-record.yml` (the older daily Novig-vs-Kalshi recorder, 23:00 UTC) is a separate workflow and still scheduled.
 - The routine could not be deleted from this account (it lives on the steward's account): STEWARD.json's claimId was changed to `stopped-20261010`, so the routine's session stops at step 1. Tj can delete it in Routines on that account.
+- 2026-10-10 (Tj): `research-record.yml` stopped too: its daily 23:00 UTC cron is removed (manual runs still work). Both GitHub recorders are now manual-only.

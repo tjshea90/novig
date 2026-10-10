@@ -11,9 +11,7 @@ on:
       minutes:
         description: "How long to record (max 300)"
         default: "120"
-  schedule:
-    # 23:00 UTC every day = 7 PM Eastern: NFL/NBA/NHL/MLB evening games.
-    - cron: "0 23 * * *"
+  # The 23:00 UTC daily schedule was removed on 2026-10-10 at Tj's word ("stop research-record too"). Run it by hand (workflow_dispatch) if more is wanted.
 
 permissions:
   contents: write

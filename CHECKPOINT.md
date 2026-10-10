@@ -1,23 +1,24 @@
-# CHECKPOINT 2863 — read me first, then TASKS.md
+# CHECKPOINT 2864 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T14:39:04Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `d4775908` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T14:43:40Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `8a5cc547` (this checkpoint is the commit after it)
 
 ## Just done
-Lab stopped at Tj's word: cron removed from lab-record.yml, steward claim retired (routine is on another account, now inert)
+research-record.yml schedule removed at Tj's word
 
 ## Do this next
-wait for CI on 820f62d8, release v0.86.0 (check-in trigger set); after run 9 ends confirm lab-archive-2026-10-10
+release v0.86.0 after CI
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
+     M .github/workflows/research-record.yml
      M CHECKPOINT.md
      M research/lab/NOTES.md
-     M research/lab/STEWARD.json
 
 ## Last ten checkpoints
 ```
+  f9f95ea4 ckpt 2863: Lab stopped at Tj's word: cron removed from lab-record.yml, steward claim re
   820f62d8 ckpt 2862: pre-release: v0.86.0: cleanup. Diagnostics reset button, automatic 2-day ret
   ff036059 ckpt 2861: TI3: auto-bet/Bet sheet find the bet through CNO's own link outcome (NovigBe
   b5805899 ckpt 2860: TI: Games tab + Locked in card removed, Bids rules text fixed, edges-real re
@@ -27,8 +28,7 @@ wait for CI on 820f62d8, release v0.86.0 (check-in trigger set); after run 9 end
   f018273d ckpt 2856: pre-release: v0.85.8: the diagnostics file reads each source with its own de
   0f9f6c05 ckpt 2855: pre-ship: v0.85.8: the diagnostics file reads each source with its own deadl
   5f5e2fdc ckpt 2854: pre-ship: v0.85.8: the diagnostics file reads each source with its own deadl
-  df3915a5 ckpt 2853: v0.85.7 released and recorded
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
