@@ -75,7 +75,7 @@ data class WebsiteStats(
  * [PinnBook] already reads, and the rest of the engine (matcher, judge, trader, bid desk) cannot tell the two feeds apart. How it works:
  *  - **discovery** every [DISCOVER_MS]: each sport's matchup list (football, basketball, hockey, baseball; cut into elements by [JsonSplit] so a megabyte list never becomes a tree), keeping the live regular
  *    matchups, up to `maxGames`;
- *  - **polling** every `pollMs` for each live game: its markets (every cycle) and the game with its parent (the score and the clock; every second cycle). Only markets whose `version` rose, or whose status
+ *  - **polling** every `pollMs` for each live game: its markets (every cycle) and the game with its parent (the score and the clock; every third cycle). Only markets whose `version` rose, or whose status
  *    changed, are sent on, so the engine sees what the socket's `upd` frames would;
  *  - `liveMode` `danger_zone` becomes a `dz` frame (a volatility signal, no price), `both` a `both` frame, `live_delay` an `ld` frame; the period list is dropped (on the website it reads `closed` for a game in
  *    play whose markets are open: each market's own status closes it);
@@ -120,6 +120,7 @@ class PinnWebsiteFeed(
     private var polls = 0L
     private var failures = 0L
     private var rateLimited = 0L
+    private var throttled = 0L
     private var frames = 0L
     private var changes = 0L
     private var lastError: String? = null
@@ -209,7 +210,7 @@ class PinnWebsiteFeed(
     }
 
     private suspend fun pollGame(g: Game): Boolean {
-        val needRec = g.rec == null || g.polls % 2 == 0
+        val needRec = g.rec == null || g.polls % 3 == 0
         g.polls++
         var recOut: JsonObject? = null
         if (needRec) {
@@ -284,7 +285,14 @@ class PinnWebsiteFeed(
         when {
             r.code == 200 -> { lastFrameAtMs = clock() }
             r.code == 429 -> { rateLimited++; failures++; slowUntilMs = clock() + SLOW_MS; lastError = "Pinnacle's website said too many requests (429): polling slows for a while." }
-            r.code == 401 || r.code == 403 -> { failures++; lastError = "Pinnacle's website refused the request (${r.code}): its public key may have changed (Settings › Pinnodds live › Pinnacle website › key)." }
+            // A 403 among answers that keep coming is the site throttling a burst (seen 2026-10-10: 110 of 1,401 requests at 24 games and a 1 s pace), not a changed key: polling slows. Only when nothing has been answered lately is it the key.
+            r.code == 401 || r.code == 403 -> {
+                failures++
+                if (clock() - lastFrameAtMs < THROTTLE_WINDOW_MS) {
+                    throttled++; slowUntilMs = clock() + SLOW_MS
+                    lastError = "Pinnacle's website refused some requests (${r.code}) while answering others: it is throttling, so polling slows for a while (a longer pause or fewer games helps)."
+                } else lastError = "Pinnacle's website refused the request (${r.code}) and nothing has been answered lately: its public key may have changed (Settings › Pinnodds live › Website key)."
+            }
             r.code == 0 -> { failures++; lastError = "No answer from Pinnacle's website (${r.message})." }
             else -> { failures++; lastError = "Pinnacle's website answered ${r.code}." }
         }
@@ -296,7 +304,7 @@ class PinnWebsiteFeed(
         latencySum += cycleMs
         latencyN++
         _stats.value = WebsiteStats(
-            sinceMs = since, polls = polls, failures = failures, rateLimited = rateLimited, games = games.size, frames = frames, changes = changes, lastLatencyMs = cycleMs,
+            sinceMs = since, polls = polls, failures = failures, rateLimited = rateLimited + throttled, games = games.size, frames = frames, changes = changes, lastLatencyMs = cycleMs,
             avgLatencyMs = if (latencyN > 0) latencySum / latencyN else 0L, lastCycleMs = cycleMs, lastError = lastError, pollMs = config().pollMs.toLong(),
         )
     }
@@ -316,6 +324,7 @@ class PinnWebsiteFeed(
         const val CONCURRENCY = 4
         const val MIN_GAP_MS = 200L
         const val SLOW_MS = 30_000L
+        const val THROTTLE_WINDOW_MS = 10_000L
         private val LIVE_TRUE = Regex("\"isLive\"\\s*:\\s*true")
     }
 }

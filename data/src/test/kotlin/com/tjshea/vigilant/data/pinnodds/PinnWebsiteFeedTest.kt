@@ -86,14 +86,16 @@ class PinnWebsiteFeedTest {
     }
 
     @Test
-    fun `an unchanged market is not sent twice, a market whose version rose is, and the score and clock ride every second poll`() = runTest {
+    fun `an unchanged market is not sent twice, a market whose version rose is, and the score and clock ride every third poll`() = runTest {
         val r = rig(backgroundScope)
         r.feed.discover(24)
         r.feed.pollOnce(0L)
         r.frames.clear()
         r.feed.pollOnce(0L)   // odd poll: markets only, none changed
         assertTrue("nothing changed and no score read due", r.frames.isEmpty())
-        r.feed.pollOnce(0L)   // even poll: the record (score, clock) again
+        r.feed.pollOnce(0L)   // odd poll: markets only again
+        assertTrue(r.frames.isEmpty())
+        r.feed.pollOnce(0L)   // every third poll: the record (score, clock) again
         assertEquals(1, r.frames.size)
         assertEquals(0, Json.parseToJsonElement(r.frames[0]).jsonObject.getValue("rec").jsonObject.getValue("markets").jsonArray.size)
         r.frames.clear()
@@ -130,6 +132,7 @@ class PinnWebsiteFeedTest {
         assertFalse("periods read closed on a game in play: not passed on", r.frames[0].contains("\"periods\""))
         r.frames.clear()
         r.fake.relatedOverride = { arr -> JsonArray(arr.map { el -> val o = el.jsonObject; if ((o["id"] as JsonPrimitive).longOrNull == gameId) JsonObject(o + ("isLive" to JsonPrimitive(false))) else o }) }
+        r.feed.pollOnce(0L)
         r.feed.pollOnce(0L)
         r.feed.pollOnce(0L)
         val del = Json.parseToJsonElement(r.frames.last()).jsonObject
@@ -182,5 +185,17 @@ class PinnWebsiteFeedTest {
         assertTrue(race.lines().first().contains("2 price versions"))
         race.reset()
         assertEquals(0, race.report().paired)
+    }
+
+    @Test
+    fun `a 403 among answers that keep coming is throttling, not a changed key`() = runTest {
+        val r = rig(backgroundScope)
+        r.feed.discover(24)
+        r.feed.pollOnce(0L)   // answered: lastFrameAt is now
+        r.fake.status = 403
+        r.feed.pollOnce(0L)
+        r.feed.publishForTest()
+        assertTrue(r.feed.stats.value.lastError!!.contains("throttling"))
+        assertTrue(r.feed.stats.value.rateLimited > 0)
     }
 }
