@@ -53,7 +53,7 @@ class LongRunBidsTest {
 
     @Test
     fun `the lean profile drops the game-line boards and the window follows what a bid could be posted on`() {
-        val lean = quick.copy(leanScan = true, trapEarlyHours = 12, startsWithinHours = 24)
+        val lean = quick.copy(leanScan = true, trapBidHours = 12, startsWithinHours = 24)
         val read = lean.effective()
         assertEquals(setOf(MarketFamily.PLAYER_PROPS, MarketFamily.TEAM_TOTAL), read.families)
         // The feeds buy a game-line board only for these families (TheOddsApiClient.marketsFor), so none is bought.

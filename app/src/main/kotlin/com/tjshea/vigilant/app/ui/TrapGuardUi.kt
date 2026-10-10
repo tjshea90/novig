@@ -94,7 +94,7 @@ object TrapGuardText {
 @Composable
 fun TrapGuardSection(s: ScanSettings, showMove: Boolean, tag: String, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
-    SectionTitle("Trap guard (auto-bet and alerts)")
+    SectionTitle("Trap guard")
     Text(TrapGuardText.INTRO, style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
     Text("Only games starting within", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("$tag-trapEarly")) {

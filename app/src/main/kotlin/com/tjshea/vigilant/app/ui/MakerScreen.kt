@@ -660,7 +660,7 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         RuleChips("No bids this close to the start", ScanSettings.MAKER_STOP_CHOICES, s.makerStopMinutes, { "$it min" }) { v -> onUpdate { it.copy(makerStopMinutes = v) } }
         TypedIntField(NumberSpecs.time("minutes", 1, 720), s.makerStopMinutes, "makerStopField", none = { false }) { v -> onUpdate { it.copy(makerStopMinutes = v) } }
         RuleChips(
-            "Trap guard for bids: only games starting within (the auto-bet has its own, in Settings › Betting)", com.tjshea.vigilant.data.scanner.TrapGuard.EARLY_CHOICES, s.trapBidHours,
+            "Trap guard: only games starting within (bids only: the auto-bet has its own)", com.tjshea.vigilant.data.scanner.TrapGuard.EARLY_CHOICES, s.trapBidHours,
             TrapGuardText::hoursLabel,
         ) { v -> onUpdate { it.copy(trapBidHours = v) } }
         TrapEarlyHoursField(s.trapBidHours, "maker") { v -> onUpdate { it.copy(trapBidHours = v) } }

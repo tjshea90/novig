@@ -103,10 +103,10 @@ class LowUsageBidTest {
     @Test
     fun `the trap guard is Tj's - 6 hours by default, any hours he picks, and Off is no limit`() {
         assertEquals(6, MakerRules.of(s).earlyHours)
-        assertEquals(0, MakerRules.of(s.copy(trapEarlyHours = 0)).earlyHours)
-        assertEquals(8, MakerRules.of(s.copy(trapEarlyHours = 8)).earlyHours)
-        assertEquals(12, MakerRules.of(s.copy(trapEarlyHours = 12)).earlyHours)
-        assertEquals(3, MakerRules.of(s.copy(trapEarlyHours = 3)).earlyHours)
+        assertEquals(0, MakerRules.of(s.copy(trapBidHours = 0)).earlyHours)
+        assertEquals(8, MakerRules.of(s.copy(trapBidHours = 8)).earlyHours)
+        assertEquals(12, MakerRules.of(s.copy(trapBidHours = 12)).earlyHours)
+        assertEquals(3, MakerRules.of(s.copy(trapBidHours = 3)).earlyHours)
     }
 
     @Test
@@ -115,8 +115,8 @@ class LowUsageBidTest {
         val start = Fixtures.START_MS
         fun at(hoursOut: Int, r: MakerRules) = MakerQuote.decide(l, r, start - hoursOut * 3_600_000L)
         val six = MakerRules.of(s)
-        val eight = MakerRules.of(s.copy(trapEarlyHours = 8))
-        val off = MakerRules.of(s.copy(trapEarlyHours = 0))
+        val eight = MakerRules.of(s.copy(trapBidHours = 8))
+        val off = MakerRules.of(s.copy(trapBidHours = 0))
         assertTrue((at(7, six) as MakerDecision.Skip).why.contains("Starts in more than 6 h"))
         assertTrue(at(7, eight) is MakerDecision.Post)
         assertTrue((at(9, eight) as MakerDecision.Skip).why.contains("Starts in more than 8 h"))
