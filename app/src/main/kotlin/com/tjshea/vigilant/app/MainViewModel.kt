@@ -1714,6 +1714,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setReplacing(id: String?) = _state.update { it.copy(replacingBet = id) }
 
     /** Settings › Diagnostics & about: one page of settings, the last scan, API usage, the background scan and the Tracker, to copy (Tj, 2026-09-29). */
+    /** Who holds the heap now: the app container's fields and the UI state's, walked by [HeapCensus] (approximate, bounded; Tj, 2026-10-10). */
+    fun heapCensus(): HeapCensus.Result = HeapCensus.run(HeapCensus.rootsOf("", c) + HeapCensus.rootsOf("ui.", _state.value))
+
     /** The heap and what the app holds in it, for Diagnostics (counts, not bytes: a scan result, the boards kept between scans, the books pages). */
     private fun memoryNow(): Diagnostics.Memory {
         val r = _state.value.result
@@ -1765,6 +1768,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val pinnReport: String? = null,
         val labReport: List<String>? = null,
         val burstReport: String? = null,
+        /** Who holds the heap ([HeapCensus]), read on its own with a deadline: it is the only part of the file that walks the app's memory. */
+        val census: String? = null,
         val skipped: List<String> = emptyList(),
     )
 
@@ -1801,6 +1806,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (!settings.altLab && !settings.researchMode && recs.isEmpty()) null
             else LabText.diagnostics(st, recs, c.lab.gradesRecent(DIAG_DAYS), System.currentTimeMillis()) + com.tjshea.vigilant.data.novig.lab.BidLabReport.lines(c.bidLabBidJournal.readRecent(DIAG_DAYS), c.bidLabEventJournal.readRecent(DIAG_DAYS))
         }
+        val census = bg { heapCensus().line() }
         val burstProofNow = take("burst recorder's proof", burstProof)
         val burst = bg {
             BurstText.diagnostics(
@@ -1821,6 +1827,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             pinnReport = take("Pinnodds live journals", pinn),
             labReport = take("paper lab journals", lab),
             burstReport = take("burst recorder journals", burst),
+            census = take("heap census", census),
             skipped = skipped.toList(),
         )
     }
@@ -2232,7 +2239,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             makerBids = g.makerBids,
             maker = c.maker.status.value,
             cnoBids = c.cnoBids.status.value.takeIf { _state.value.settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO },
-            memory = memoryNow(),
+            memory = memoryNow().let { m -> inputs.census?.let { m.copy(lines = m.lines + it) } ?: m },
             autoScanServiceRunning = AutoScanService.running,
             keepAwakeHeld = AutoScanService.keepAwakeHeld,
             kalshiPace = runCatching { c.kalshiPaceNote() }.getOrNull(),
