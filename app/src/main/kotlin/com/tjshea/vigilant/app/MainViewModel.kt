@@ -1773,7 +1773,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun gatherDiag(): DiagInputs {
         val skipped = java.util.Collections.synchronizedList(ArrayList<String>())
         val start = System.currentTimeMillis()
-        fun <T> bg(block: () -> T) = viewModelScope.async(Dispatchers.IO) { runCatching(block) }
+        fun <T> bg(block: suspend () -> T) = viewModelScope.async(Dispatchers.IO) { runCatching { block() } }
         suspend fun <T> take(what: String, d: kotlinx.coroutines.Deferred<Result<T>>): T? {
             val left = (DIAG_ITEM_MS - (System.currentTimeMillis() - start)).coerceAtLeast(1_000L)
             val r = kotlinx.coroutines.withTimeoutOrNull(left) { d.await() }
