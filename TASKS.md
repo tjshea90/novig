@@ -4379,3 +4379,4 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 
 ## ST: Research switches survive Android ending the app (Tj, 2026-10-10)
 - [x] ST1 "When I switch apps then come back to vigilant after a couple minutes, the research options are turned off": cause was `safeStart` switching research off at EVERY process start (Android ends a backgrounded app). Now only after a crash. v0.84.3, `SafeStartTest`.
+- [x] ST2 (Tj 2026-10-10 "Build it") `ResearchService`: a foreground service (notification "Research running", Stop / STOP ALL) held while research mode or the paper lab is on, started from `labTick`; v0.84.4, `ResearchServiceTest`. Unrestricted battery setting still advised.
