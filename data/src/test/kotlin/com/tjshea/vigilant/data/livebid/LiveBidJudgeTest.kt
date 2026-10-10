@@ -47,9 +47,9 @@ class LiveBidJudgeTest {
     @Test
     fun `a wider margin bids lower and never over what it asked for`() {
         for (m in listOf(0.02, 0.04, 0.05, 0.06, 0.08)) {
-            val p = LiveBidJudge.want(view(fair = 0.62), q.copy(margin = m)) as LiveBidVerdict.Post
+            val p = LiveBidJudge.want(view(fair = 0.50), q.copy(margin = m)) as LiveBidVerdict.Post
             assertTrue("margin $m: the edge is at least the margin", p.ev >= m - 1e-9)
-            assertTrue("never above fair / (1 + margin)", p.price <= 0.62 / (1.0 + m) + 1e-9)
+            assertTrue("never above fair / (1 + margin)", p.price <= 0.50 / (1.0 + m) + 1e-9)
         }
     }
 

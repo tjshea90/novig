@@ -333,9 +333,12 @@ class LiveBidDesk(
                 var nb = b
                 if (b.active) {
                     if (b.real) {
-                        // A real bid left over from a run that ended: it comes down. Its order id may be unknown (an answer that never came): looked for by client id below.
-                        nb = b.copy(status = if (b.orderId != null) LiveBidStatus.CANCELING else LiveBidStatus.SENT, cancelSentAtMs = now, why = "the app restarted", lostAtMs = b.lostAtMs ?: if (b.orderId == null) now else null)
-                        if (b.orderId != null) ids += b.clientId
+                        // A real bid left over from a run that ended: it comes down. Its order id may be unknown (an answer that never came): looked for by client id.
+                        if (b.orderId != null) {
+                            ids += b.clientId
+                        } else {
+                            nb = b.copy(status = LiveBidStatus.SENT, why = "the app restarted", lostAtMs = b.lostAtMs ?: now)
+                        }
                     } else {
                         nb = b.copy(status = LiveBidStatus.CANCELED, endedAtMs = now, why = "the app restarted")
                     }
@@ -594,6 +597,7 @@ class LiveBidDesk(
                 else -> {
                     val nb = b.copy(status = LiveBidStatus.CANCELING, cancelSentAtMs = now, why = why)
                     bids[clientId] = nb
+                    cancelTriedAt[clientId] = now
                     send = nb
                 }
             }
@@ -620,6 +624,7 @@ class LiveBidDesk(
                     else -> {
                         val nb = b.copy(status = LiveBidStatus.CANCELING, cancelSentAtMs = now, why = why)
                         bids[id] = nb
+                        cancelTriedAt[id] = now
                         sends += nb
                         pullCounts[why] = (pullCounts[why] ?: 0) + 1
                     }

@@ -575,7 +575,7 @@ class LiveBidDeskTest {
 
     @Test
     fun `real - a run of picked-off fills halts everything and tells the app`() = runTest {
-        val r = rig(quality = LiveBidQuality(pickOffWindow = 3, pickOffLimit = 2, coolOffSec = 0), limits = LiveBidLimits(maxStake = 2.0, walletReserve = 0.0, maxBids = 10, maxBidsPerGame = 10, maxPerGame = 100.0, maxPerDay = 100.0))
+        val r = rig(quality = LiveBidQuality(pickOffWindow = 3, pickOffLimit = 2), limits = LiveBidLimits(maxStake = 2.0, walletReserve = 0.0, maxBids = 10, maxBidsPerGame = 10, maxPerGame = 100.0, maxPerDay = 100.0))
         r.wallet = 1000.0
         val ps = r.upMany(Triple("a1", "m-a1", "e-a1"), Triple("a2", "m-a2", "e-a2"), Triple("a3", "m-a3", "e-a3"))
         for (p in ps) {
