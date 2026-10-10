@@ -270,10 +270,10 @@ object Diagnostics {
         o.appendLine(
             "Trap guard (RESEARCH.md §71): auto-bet and alerts only on games starting within " +
                 (if (set.trapEarlyHours <= 0) "any time (off)" else "${set.trapEarlyHours} h") +
-                " · bids only on games starting within ${if (set.trapBidHours <= 0) "any time (off)" else "${set.trapBidHours} h"} (their own setting since v0.86.1)" +
                 " · bets first listed more than that many hours before the start ${if (set.trapFirstListed && set.trapEarlyHours > 0) "skipped (auto-bet and alerts)" else "not skipped"}" +
                 " · game lines Novig just moved ${if (set.trapNovigMove) "skipped (the auto-bet and game-line bids read Novig's trades first)" else "not checked"}" +
-                " · favorites need ${if (set.autoBetFavouriteExtraEv <= 1e-9) "no extra edge" else "${pct(set.autoBetFavouriteExtraEv)} more edge"} (auto-bet)",
+                " · favorites need ${if (set.autoBetFavouriteExtraEv <= 1e-9) "no extra edge" else "${pct(set.autoBetFavouriteExtraEv)} more edge"} (auto-bet)" +
+                " · bids only on games starting within ${if (set.trapBidHours <= 0) "any time (off)" else "${set.trapBidHours} h"} (their own setting since v0.86.1)",
         )
         // The small-prop guard (RESEARCH.md §109): its limits, and what the last day and week of auto-bets look like by kind of prop, so the next file shows whether one market is carrying the day.
         o.appendLine(
