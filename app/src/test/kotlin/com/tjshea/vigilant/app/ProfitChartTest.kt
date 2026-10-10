@@ -21,6 +21,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.github.takahirom.roborazzi.captureRoboImage
+import androidx.compose.ui.test.onRoot
 import com.tjshea.vigilant.app.ui.ChartView
 import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.ProfitChartCard
@@ -127,6 +129,7 @@ class ProfitChartTest {
         show()
         fun window(): String = compose.onNodeWithTag("profitCanvas").fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription)!!.first()
         val before = window()
+        compose.onRoot().captureRoboImage("screenshots/4t_profit_chart.png")
         compose.onNodeWithTag("profitCanvas").performTouchInput { pinch(Offset(centerX - 40f, centerY), Offset(centerX - 200f, centerY), Offset(centerX + 40f, centerY), Offset(centerX + 200f, centerY)) }
         compose.waitForIdle()
         val zoomed = window()
@@ -145,6 +148,7 @@ class ProfitChartTest {
         show()
         compose.onNodeWithTag("profitFullScreen").performClick()
         compose.onNodeWithTag("profitChartFull").assertIsDisplayed()
+        compose.onRoot().captureRoboImage("screenshots/4u_profit_chart_full.png")
         compose.onNodeWithTag("profitChartClose").performClick()
         compose.onNodeWithTag("profitChartFull").assertDoesNotExist()
     }
