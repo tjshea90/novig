@@ -1238,7 +1238,10 @@ class AppContainer(private val app: Application) {
     val pinnTrader: com.tjshea.vigilant.data.pinnodds.PinnLiveTrader by lazy {
         com.tjshea.vigilant.data.pinnodds.PinnLiveTrader(
             orders = pinnOrders, scope = appScope, rules = ::pinnTradeRules, gate = ::pinnGate,
-            ownBids = { makerStore.flow.value.orEmpty().filter { it.resting }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) } },
+            ownBids = {
+                makerStore.flow.value.orEmpty().filter { it.resting }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) } +
+                    liveBidDesk.bidsNow().filter { it.active }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) }
+            },
             journal = pinnJournal,
             onHalt = { why ->
                 eventLog.warn("PINNLIVE", "trader halted: $why")
@@ -1334,6 +1337,14 @@ class AppContainer(private val app: Application) {
 
         override suspend fun order(orderId: String) = client().order(orderId)
         override suspend fun fills(orderId: String) = client().fills(orderId)
+
+        // One read for many orders: every fill on games that started after the earliest of theirs, less a day (a read costs the `history` bucket 8 + 1 per 50 rows).
+        override suspend fun fillsOf(orderIds: Collection<String>, startsAfterMs: Long): Map<String, List<com.tjshea.vigilant.data.novig.trading.NovigFill>> {
+            val c = client()
+            if (orderIds.size <= 1) return orderIds.associateWith { c.fills(it) }
+            val wanted = orderIds.toSet()
+            return c.fillsStartingAfter(startsAfterMs).filter { it.orderId in wanted }.groupBy { it.orderId }
+        }
     }
 
     /** Tj's live bid switches, rules and limits as the desk reads them at each look. STOP ALL and the Pause button switch it off (everything comes down); a real bid also needs the betting key. */

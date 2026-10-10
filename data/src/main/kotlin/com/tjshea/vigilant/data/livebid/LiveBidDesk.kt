@@ -45,6 +45,12 @@ interface LiveBidOrders {
 
     suspend fun order(orderId: String): NovigOrder?
     suspend fun fills(orderId: String): List<NovigFill>
+
+    /**
+     * The fills of [orderIds], by order id, in as few reads as the client can (Novig's `history` bucket costs 8 tokens a read, 4 a second: one read an ended bid would run it dry). [startsAfterMs] is the
+     * earliest start of their games, less a day.
+     */
+    suspend fun fillsOf(orderIds: Collection<String>, startsAfterMs: Long): Map<String, List<NovigFill>> = orderIds.associateWith { fills(it) }
 }
 
 /** What the desk is told each time it looks: Tj's switches and limits, read fresh so a change takes effect at once. [blockedWhy] is why REAL bids must not go up now (STOP ALL, a pause, no key). */
@@ -149,6 +155,8 @@ class LiveBidDesk(
     private val marketBlockedUntil = HashMap<String, Long>()
     private val replaced = HashSet<String>()
     private val cancelTriedAt = HashMap<String, Long>()
+    private val audits = HashMap<String, Int>()
+    private val persistLock = Mutex()
     private val latestFair = ConcurrentHashMap<String, Pair<Double, Long>>()
     private val skipCounts = HashMap<String, Int>()
     private val pullCounts = HashMap<String, Int>()
@@ -464,19 +472,20 @@ class LiveBidDesk(
     /** Why a bid costing [cost] must not go up, or null. Inside [mu]. Every bid not yet over counts as if it fills. */
     private fun budget(w: LiveBidWant, cost: Double, cfg: LiveBidConfig, now: Long, replacing: LiveBid?, spent: Double): String? {
         val lim = cfg.limits
-        val others = bids.values.filter { it.active && it.clientId != replacing?.clientId && it.clientId !in replaced }
+        // Counts of bids leave out a bid that is being replaced (it is the same bid, renewed); the MONEY counts every bid not yet over, that one too: both can fill for a moment.
+        val live = bids.values.filter { it.active }
+        val others = live.filter { it.clientId != replacing?.clientId && it.clientId !in replaced }
         if (others.size >= lim.maxBids) return "at the most bids up (${lim.maxBids})"
-        val inGame = others.filter { it.eventId == w.eventId }
-        if (inGame.size >= lim.maxBidsPerGame) return "at the most bids up in one game (${lim.maxBidsPerGame})"
+        if (others.count { it.eventId == w.eventId } >= lim.maxBidsPerGame) return "at the most bids up in one game (${lim.maxBidsPerGame})"
         val day = ApiBetPlacer.localMidnight(now)
-        val gameDollars = inGame.sumOf { it.restingDollars } + bids.values.filter { it.eventId == w.eventId && it.postedAtMs >= day }.sumOf { it.paid }
+        val gameDollars = live.filter { it.eventId == w.eventId }.sumOf { it.restingDollars } + bids.values.filter { it.eventId == w.eventId && it.postedAtMs >= day }.sumOf { it.paid }
         if (gameDollars + cost > lim.maxPerGame + 1e-9) return "at the most for one game (${money(lim.maxPerGame)})"
-        val dayDollars = others.sumOf { it.restingDollars } + bids.values.filter { it.postedAtMs >= day }.sumOf { it.paid }
+        val dayDollars = live.sumOf { it.restingDollars } + bids.values.filter { it.postedAtMs >= day }.sumOf { it.paid }
         if (dayDollars + cost > lim.maxPerDay + 1e-9) return "at the most for a day (${money(lim.maxPerDay)})"
         if (cfg.real) {
-            if (spent + others.sumOf { it.restingDollars } + cost > dayLimit() + 1e-9) return "at the day's limit for API bets"
+            if (spent + live.sumOf { it.restingDollars } + cost > dayLimit() + 1e-9) return "at the day's limit for API bets"
             val w0 = wallet() ?: return "wallet not read yet"
-            val up = others.filter { it.real }.sumOf { it.restingDollars } + otherRestingDollars()
+            val up = live.filter { it.real }.sumOf { it.restingDollars } + otherRestingDollars()
             if (w0 - lim.walletReserve - up < cost) return "the wallet cannot cover it beside the bids up"
         }
         return null
@@ -745,19 +754,64 @@ class LiveBidDesk(
                 else -> reads += b to rec
             }
         }
+        // Bids that ended with no fill are looked at again for a late one (the fills list can lag the order's end).
+        val audit = synchronized(mu) {
+            bids.values.filter { b ->
+                val ended = b.endedAtMs ?: return@filter false
+                val age = now - ended
+                b.real && b.status.ended && b.filled == 0L && b.orderId != null && (b.status == LiveBidStatus.CANCELED || b.status == LiveBidStatus.EXPIRED) && age in AUDIT_FIRST_MS..AUDIT_END_MS &&
+                    (audits[b.clientId] ?: 0) < (if (age >= AUDIT_SECOND_MS) 2 else 1)
+            }
+        }
+        val ids = (reads.mapNotNull { it.first.orderId } + audit.mapNotNull { it.orderId }).distinct()
+        if (ids.isEmpty()) { checkTiming(); return }
+        val startsAfter = (reads.map { it.first.startsTs } + audit.map { it.startsTs }).minOrNull()?.minus(FILLS_LOOKBACK_MS) ?: 0L
+        val fillsBy = try {
+            o.fillsOf(ids, startsAfter)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            synchronized(mu) { problem = "Novig's fills: ${(e as? NovigApiException)?.brief ?: e.message ?: e.javaClass.simpleName} (read again in a moment)" }
+            return
+        }
         for ((b, ord) in reads) {
             val id = b.orderId ?: continue
-            val fills = try {
-                o.fills(id)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                synchronized(mu) { problem = "Novig's fills: ${(e as? NovigApiException)?.brief ?: e.message ?: e.javaClass.simpleName} (read again in a moment)" }
-                continue
-            }
-            finish(b.clientId, ord, ended = ord == null || ord.terminal, fills = fills)
+            finish(b.clientId, ord, ended = ord == null || ord.terminal, fills = fillsBy[id].orEmpty())
+        }
+        for (b in audit) {
+            val id = b.orderId ?: continue
+            val age = now - (b.endedAtMs ?: now)
+            synchronized(mu) { audits[b.clientId] = if (age >= AUDIT_SECOND_MS) 2 else 1 }
+            val late = fillsBy[id].orEmpty()
+            if (late.isNotEmpty()) lateFill(b.clientId, late)
         }
         checkTiming()
+    }
+
+    /** A fill that showed up after its bid was written down as over with none: recorded, the bid corrected. */
+    private suspend fun lateFill(clientId: String, fills: List<NovigFill>) {
+        val all = fills.distinctBy { it.fillId }
+        val qty = all.sumOf { it.qty }
+        if (qty <= 0L) return
+        val now = clock()
+        var snapshot: LiveBid? = null
+        synchronized(mu) {
+            val b = bids[clientId] ?: return
+            if (b.filled >= qty) return
+            val nb = b.copy(
+                filled = qty, paid = all.sumOf { it.cost }, firstFillAtMs = b.firstFillAtMs ?: all.map { it.ts }.filter { it > 0 }.minOrNull() ?: now,
+                status = if (qty >= b.contracts) LiveBidStatus.FILLED else b.status, why = (b.why ?: b.status.label) + " (a fill showed up late)",
+            )
+            bids[clientId] = nb
+            coolUntil[nb.outcomeId] = now + config().quality.coolOffSec * 1000L
+            dirty = true
+            snapshot = nb
+        }
+        val nb = snapshot ?: return
+        event("FILL", nb, value = nb.filled.toDouble(), text = "late: ${nb.filled} of ${nb.contracts} for ${money(nb.paid)}")
+        val orderId = nb.orderId ?: return
+        val betId = runCatching { logFills(nb.target(version), orderId, all) }.getOrNull()
+        if (betId != null) synchronized(mu) { bids[clientId]?.let { bids[clientId] = it.copy(betId = betId) }; dirty = true }
     }
 
     /** A bid whose answer was lost: found by its client id (in any status), else called gone after a while. */
@@ -971,19 +1025,21 @@ class LiveBidDesk(
         }
     }
 
-    private suspend fun persist(now: Long, force: Boolean = false) {
+    private suspend fun persist(now: Long, force: Boolean = false) = persistLock.withLock {
         val list = synchronized(mu) {
-            if (!force && (!dirty || now - lastPersistMs < PERSIST_EVERY_MS)) return
+            if (!force && (!dirty || now - lastPersistMs < PERSIST_EVERY_MS)) return@withLock
             dirty = false
             lastPersistMs = now
             val keep = bids.values.filter { it.active || (it.endedAtMs ?: it.postedAtMs) >= now - LiveBidStore.KEEP_MS }
             if (keep.size != bids.size) { bids.clear(); keep.forEach { bids[it.clientId] = it } }
             replaced.retainAll(bids.keys)
             cancelTriedAt.keys.retainAll(bids.keys)
+            audits.keys.retainAll(bids.keys)
             keep.toList()
         }
         _bids.value = list
         runCatching { store.replace(list) }
+        Unit
     }
 
     private fun publish(now: Long, cfg: LiveBidConfig) {
@@ -1018,8 +1074,10 @@ class LiveBidDesk(
         const val CLAIM_TTL_MS = 3_500L
 
         /** A wanted bid older than this is no longer wanted. */
-        const val WANT_TTL_MS = 3_500L
-        const val MAX_POSTS_PER_STEP = 3
+        const val WANT_TTL_MS = 2_000L
+
+        /** New orders per 250 ms step: Novig's `place` bucket refills 8 a second. */
+        const val MAX_POSTS_PER_STEP = 2
         const val MIN_CONTRACTS = 5L
         const val MIN_TTL_SEC = 10
 
@@ -1040,6 +1098,11 @@ class LiveBidDesk(
         /** A queued order (PENDING, or not yet listed) is waited for this long before it is called lost. */
         const val QUEUE_WAIT_MS = 30_000L
         const val LOSS_EVERY_MS = 60_000L
+        /** A bid that ended with no fill is looked at again for a late one at these ages (the fills list can lag the order's end). */
+        const val AUDIT_FIRST_MS = 3_000L
+        const val AUDIT_SECOND_MS = 15_000L
+        const val AUDIT_END_MS = 60_000L
+        const val FILLS_LOOKBACK_MS = 24 * 3_600_000L
         const val TIMING_KEEP = 10
         const val TIMING_MIN = 5
     }
