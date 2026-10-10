@@ -2,6 +2,7 @@ package com.tjshea.vigilant.data.livebid
 
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.novig.trading.BetTarget
+import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.SharpVeto
 import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.tracker.AtBet
@@ -124,7 +125,7 @@ data class LiveBid(
         basis = FairBasis(FairBasis.SOURCE_PINNODDS, listOf("Pinnacle"), 1), auto = true,
         atBet = AtBet(
             atMs = firstFillAtMs ?: postedAtMs, version = version, how = AtBet.HOW_BID, scanner = "Live bids", preset = preset, rules = rules, league = league,
-            sport = SharpVeto.sportOf(league).name, kind = marketLabel, live = true, american = Odds.probabilityToAmerican(price.coerceIn(0.001, 0.999)), ev = ev, fair = fair,
+            sport = SharpVeto.sportOf(league).name, kind = when (marketLabel) { "Moneyline" -> BetKind.MONEYLINE; "Spread" -> BetKind.SPREAD; "Total" -> BetKind.TOTAL; else -> BetKind.OTHER }.name, live = true, american = Odds.probabilityToAmerican(price.coerceIn(0.001, 0.999)), ev = ev, fair = fair,
             fairAmerican = Odds.probabilityToAmerican(fair.coerceIn(0.001, 0.999)), fairMethod = "Pinnacle live, devigged", fairBooks = listOf("Pinnacle"), fairSharp = listOf("Pinnacle"),
             stake = paid.takeIf { it > 0.0 } ?: cost, novigAgeSec = null,
         ),

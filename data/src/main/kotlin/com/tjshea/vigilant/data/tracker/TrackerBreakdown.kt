@@ -41,6 +41,7 @@ object TrackerBreakdown {
             BetTracker.SOURCE_CNO -> "CNO"
             BetTracker.SOURCE_PARLAY -> "ParlayAPI"
             BetTracker.SOURCE_PINNODDS -> "Pinnodds live"
+            BetTracker.SOURCE_LIVEBID -> "Live bids"
             else -> "Vigilant"
         }
         By.LEAGUE -> b.league.trim().ifEmpty { "Unknown" }

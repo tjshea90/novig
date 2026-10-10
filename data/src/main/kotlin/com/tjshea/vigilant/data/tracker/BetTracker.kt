@@ -957,6 +957,9 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         /** Bets the Pinnodds live feed placed: Pinnacle's live price, devigged, against Novig's lagging quote (Tj, 2026-10-08). */
         const val SOURCE_PINNODDS = "pinnodds"
 
+        /** Fills of the live bids (post-only bids on Novig's live lines priced from Pinnacle's live fair; Tj, 2026-10-10; RESEARCH.md §123-§124). */
+        const val SOURCE_LIVEBID = "livebid"
+
         /** [TrackedBet.nowVia]: whose fair line the current EV rests on. */
         const val VIA_CNO = "cno"
         const val VIA_VIGILANT = "vigilant"
