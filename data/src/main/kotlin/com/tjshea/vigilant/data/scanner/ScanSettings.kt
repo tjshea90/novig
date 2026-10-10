@@ -509,6 +509,12 @@ data class ScanSettings(
      */
     val trapEarlyHours: Int = TrapGuard.DEFAULT_EARLY_HOURS,
     /**
+     * The same rule for the BIDS on their own (Tj, 2026-10-10: "separate the auto bid and auto bet trap guards"): [trapEarlyHours] is the auto-bet's and the alerts' from now on, this is
+     * the bids': they go up only on games starting within this many hours ([TrapGuard.EARLY_CHOICES]; 0 = off), and in Low API usage it is also how far the scan reads. Saved settings start
+     * with the value the one shared number had (schema 14), so nothing changes until Tj changes it.
+     */
+    val trapBidHours: Int = TrapGuard.DEFAULT_EARLY_HOURS,
+    /**
      * The trap guard's second rule ([TrapGuard.move]): before the auto-bet places a moneyline, spread or game total, Novig's own trades in the market
      * are read (one public request); a price that just moved 2¢+ under where it traded this hour, with $100+ bought on the other side in the last
      * 15 min, isn't bet.
@@ -824,6 +830,10 @@ data class ScanSettings(
         if (s.schema < 13) {
             val sheetOwn = s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.OFF || s.slipStake == com.tjshea.vigilant.data.novig.SlipStake.KELLY
             s = s.copy(slipCustomStake = if (sheetOwn) s.apiBetStake else s.slipCustomStake, schema = 13)
+        }
+        // v0.86.1 (Tj, 2026-10-10): the trap guard's hours split in two, the auto-bet's and the bids'. Both start at the number the one setting held.
+        if (s.schema < 14) {
+            s = s.copy(trapBidHours = s.trapEarlyHours, schema = 14)
         }
         return s
     }

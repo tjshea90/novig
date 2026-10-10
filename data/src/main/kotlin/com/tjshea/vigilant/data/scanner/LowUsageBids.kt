@@ -20,12 +20,12 @@ object LowUsageBids {
     const val WINDOW_HOURS = TrapGuard.DEFAULT_EARLY_HOURS
 
     /**
-     * The hours ahead the mode reads, and bids may go up on: the trap guard's hours ([ScanSettings.trapEarlyHours]; 6 h by default), never past the ordinary reach of Vigilant's scan
+     * The hours ahead the mode reads, and bids may go up on: the bids' trap guard hours ([ScanSettings.trapBidHours]; 6 h by default), never past the ordinary reach of Vigilant's scan
      * ([ScanSettings.scanWindowHours]: Days ahead, or Starts within when that is shorter). The trap guard Off (0) means no limit of its own, so the scan reads as far as the ordinary
      * reach says. A scan reads exactly what a bid could be posted on, so no feed is asked for a game no bid may go on, and the trap guard Tj sets is the one that runs.
      */
     fun windowHours(s: ScanSettings): Int =
-        (if (s.trapEarlyHours > 0) minOf(s.trapEarlyHours, s.scanWindowHours) else s.scanWindowHours).coerceAtLeast(1)
+        (if (s.trapBidHours > 0) minOf(s.trapBidHours, s.scanWindowHours) else s.scanWindowHours).coerceAtLeast(1)
 
     /** Two or three sharp books: a fair needs at least [MIN_BOOKS] of them, and more than [MAX_BOOKS] would be more feeds to pay for. */
     const val MIN_BOOKS = 2

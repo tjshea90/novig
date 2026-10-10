@@ -533,7 +533,7 @@ object MakerRulesText {
         "${pct(s.makerMargin)} under the fair${if (s.makerAnchorSharp) " (sharp book's if lower)" else ""} · ${stake(s)} · " +
             (if (s.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.QUICK_LIKELY) "quick & likely to win${if (s.makerObscureFill) " (small markets fill the rest)" else ""}: " else "") +
             "${BetKind.entries.filter { it in s.makerKinds }.joinToString(", ") { MakerText.kindLabel(it) }.ifEmpty { "no kinds" }} · " +
-            "up to ${s.makerTtlMinutes} min (less if the fair goes old)" + (if (s.trapEarlyHours > 0) " · games within ${s.trapEarlyHours} h" else "") +
+            "up to ${s.makerTtlMinutes} min (less if the fair goes old)" + (if (s.trapBidHours > 0) " · games within ${s.trapBidHours} h" else "") +
                 (if (s.makerMaxOdds > 0) " · no bid longer than ${com.tjshea.vigilant.engine.Odds.formatAmerican(s.makerMaxOdds)}" else "")
 
     /** "¼ Kelly, up to $10 a bid" / "$5 a bid". */
@@ -563,8 +563,8 @@ object MakerRulesText {
         val window = com.tjshea.vigilant.data.scanner.LowUsageBids.windowHours(s)
         val cost = if (window > com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS)
             " Wider than the usual ${com.tjshea.vigilant.data.scanner.LowUsageBids.WINDOW_HOURS} h reads more games and more leagues each scan: more ParlayAPI credits (3 a league a scan; about +11% a day at 8 h, +30% at 12 h, +85% at 24 h)." else ""
-        return (if (s.trapEarlyHours <= 0) "Off: no limit of its own, so this mode's scan reads as far ahead as Settings › Scanning says (Days ahead, Starts within): $window h now, and bids go up on every game it reads."
-        else "Bids go up only on games starting within ${s.trapEarlyHours} h, and the scan reads exactly that far (${window} h now; Starts within or Days ahead can only make it shorter).") + cost
+        return (if (s.trapBidHours <= 0) "Off: no limit of its own, so this mode's scan reads as far ahead as Settings › Scanning says (Days ahead, Starts within): $window h now, and bids go up on every game it reads."
+        else "Bids go up only on games starting within ${s.trapBidHours} h, and the scan reads exactly that far (${window} h now; Starts within or Days ahead can only make it shorter).") + cost
     }
 }
 
@@ -660,12 +660,12 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         RuleChips("No bids this close to the start", ScanSettings.MAKER_STOP_CHOICES, s.makerStopMinutes, { "$it min" }) { v -> onUpdate { it.copy(makerStopMinutes = v) } }
         TypedIntField(NumberSpecs.time("minutes", 1, 720), s.makerStopMinutes, "makerStopField", none = { false }) { v -> onUpdate { it.copy(makerStopMinutes = v) } }
         RuleChips(
-            "Trap guard: only games starting within (shared with auto-bet and alerts)", com.tjshea.vigilant.data.scanner.TrapGuard.EARLY_CHOICES, s.trapEarlyHours,
+            "Trap guard for bids: only games starting within (the auto-bet has its own, in Settings › Betting)", com.tjshea.vigilant.data.scanner.TrapGuard.EARLY_CHOICES, s.trapBidHours,
             TrapGuardText::hoursLabel,
-        ) { v -> onUpdate { it.copy(trapEarlyHours = v) } }
-        TrapEarlyHoursField(s.trapEarlyHours, "maker") { v -> onUpdate { it.copy(trapEarlyHours = v) } }
+        ) { v -> onUpdate { it.copy(trapBidHours = v) } }
+        TrapEarlyHoursField(s.trapBidHours, "maker") { v -> onUpdate { it.copy(trapBidHours = v) } }
         Text(
-            if (lowUsage) MakerRulesText.earlyNoteLowUsage(s) else MakerRulesText.earlyNote(s.trapEarlyHours), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            if (lowUsage) MakerRulesText.earlyNoteLowUsage(s) else MakerRulesText.earlyNote(s.trapBidHours), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.testTag("makerTrapEarlyNote"),
         )
         // Game-line bids get the trap guard's move rule (v0.56.0, RESEARCH.md §72.3): the auto-bet's same switch, shown here once game lines get bids.

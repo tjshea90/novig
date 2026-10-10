@@ -185,7 +185,7 @@ data class MakerRules(
             bankroll = s.bankroll,
             sharpVeto = s.makerSharpVeto,
             sharpMinEv = s.sharpVetoMinEv.coerceIn(0.0, MAX_SHARP_MIN_EV),
-            earlyHours = s.trapEarlyHours.coerceAtLeast(0),
+            earlyHours = s.trapBidHours.coerceAtLeast(0),
             novigMove = s.trapNovigMove,
             maxPerGame = s.apiMaxPerGame.coerceAtLeast(0.0),
             popularFirst = s.makerPopularFirst,
