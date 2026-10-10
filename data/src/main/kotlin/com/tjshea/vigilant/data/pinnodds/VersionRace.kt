@@ -28,7 +28,8 @@ class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
         if (source == Source.SOCKET) socketNotes++ else websiteNotes++
         ids.getValue(source).let { if (it.size < MAX_IDS) it.add(matchupId) }
         latest["${source.tag}$matchupId"] = Triple(key, version, atMs)
-        val k = "$matchupId|$key|$version"
+        // One sample per UPDATE (matchup + version), not per market: an update rewrites every market of the game at once with the same version, and counting each would turn one observation into thirty.
+        val k = "$matchupId|$version"
         val first = seen[k]
         if (first == null) {
             seen[k] = First(source, atMs)
@@ -84,7 +85,7 @@ class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
         val r = report()
         if (r.paired == 0) return overlapLines() + listOf("Feed race: no price version has been seen by both feeds yet. Versions reported: socket ${r.socketNotes}, website ${r.websiteNotes} (a socket count of 0 means the Pinnodds socket is not delivering prices: check its status line above; the website's first poll reports every market once, so it starts high).")
         return overlapLines() + listOf(
-            "Feed race (website minus socket, ${r.paired} price versions both saw): median ${r.medianLagMs} ms, 90th percentile ${r.p90LagMs} ms · website later on ${r.websiteLater}, first on ${r.websiteFirst}",
+            "Feed race (website minus socket, ${r.paired} updates both saw): median ${r.medianLagMs} ms, 90th percentile ${r.p90LagMs} ms · website later on ${r.websiteLater}, first on ${r.websiteFirst}",
             "  the socket also saw ${r.socketOnly} versions the website skipped (it polls: it sees only the latest) and the website ${r.websiteOnly} the socket never reported",
         )
     }

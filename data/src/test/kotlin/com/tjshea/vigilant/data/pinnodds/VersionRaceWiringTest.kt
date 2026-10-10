@@ -18,7 +18,7 @@ class VersionRaceWiringTest {
         val r = race.report()
         assertTrue("some versions came in through the real frames: $r", r.socketNotes > 0 && r.websiteNotes > 0)
         assertEquals(r.socketNotes, r.websiteNotes)
-        assertEquals(r.paired.toLong(), r.socketNotes)
+        assertTrue("one sample per update, not per market: ${r.paired} of ${r.socketNotes}", r.paired > 0 && r.paired <= r.socketNotes)
         assertEquals(2_000L, r.medianLagMs)
     }
 

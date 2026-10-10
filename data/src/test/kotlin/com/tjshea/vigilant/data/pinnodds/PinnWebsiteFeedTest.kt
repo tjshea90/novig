@@ -182,7 +182,7 @@ class PinnWebsiteFeedTest {
         assertEquals(1, r.websiteLater)
         assertEquals(1, r.websiteFirst)
         assertEquals(2_500L, r.medianLagMs)
-        assertTrue(race.lines().any { it.contains("2 price versions") })
+        assertTrue(race.lines().any { it.contains("2 updates") })
         race.reset()
         assertEquals(0, race.report().paired)
     }
