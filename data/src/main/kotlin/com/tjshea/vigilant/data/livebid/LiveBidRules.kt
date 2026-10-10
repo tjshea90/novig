@@ -132,7 +132,32 @@ data class LiveBidLimits(
     val haltLoss: Double = 15.0,
     /** Dollars of the wallet that bids never touch (every resting bid is counted against the wallet: Novig holds nothing back for them, NOVIG_API.md §17). */
     val walletReserve: Double = 5.0,
-)
+    /**
+     * Fill the wallet (Tj, 2026-10-10: "make sure the auto bid feature fills up with bids up to the wallet balance. I want as many bids up as possible as long as each bid is clearly positive EV"):
+     * the counts and the per-game and per-day dollars above stop being the ceiling and the wallet is ([effective]). Every bid still has to pass the quality rules, the stake rule and the wallet
+     * (reserve kept, every resting bid counted); [haltLoss] still stops the day. Off: the numbers above are the limits.
+     */
+    val fillWallet: Boolean = false,
+) {
+    /**
+     * The limits the desk enforces right now. With [fillWallet] on: bids up at once and in a game are lifted to [WALLET_MAX_BIDS] / [WALLET_MAX_PER_GAME_BIDS] (the wallet check, which counts every
+     * resting bid, is the real ceiling; the count only guards against a runaway loop), a game may hold [WALLET_GAME_SHARE] of the wallet and a day twice the wallet (fills return money to the
+     * wallet only when they settle). Never lower than what Tj set.
+     */
+    fun effective(wallet: Double?): LiveBidLimits {
+        if (!fillWallet || wallet == null || wallet <= 0.0) return this
+        return copy(
+            maxBids = maxOf(maxBids, WALLET_MAX_BIDS), maxBidsPerGame = maxOf(maxBidsPerGame, WALLET_MAX_PER_GAME_BIDS),
+            maxPerGame = maxOf(maxPerGame, wallet * WALLET_GAME_SHARE), maxPerDay = maxOf(maxPerDay, wallet * 2.0),
+        )
+    }
+
+    companion object {
+        const val WALLET_MAX_BIDS = 60
+        const val WALLET_MAX_PER_GAME_BIDS = 6
+        const val WALLET_GAME_SHARE = 0.25
+    }
+}
 
 /** One of the presets, built in or Tj's own. [paperOnly]: the rules are too thin to risk money on; applying it turns real bets off. */
 @Serializable
