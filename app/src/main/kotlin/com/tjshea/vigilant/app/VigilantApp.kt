@@ -269,7 +269,7 @@ class AppContainer(private val app: Application) {
         private set
 
     init {
-        // SAFE START (Tj, 2026-10-09: "Can't you just make it turn everything off as soon as it starts"): the research recorders are off at every start, and after a crash the bids and auto-bet are
+        // SAFE START (Tj, 2026-10-09): after a CRASH the research recorders, bids and auto-bet are off (not at every start: Android ends a backgrounded app and the next open would switch research off, Tj 2026-10-10)
         // off too, so a pile of switches that crashes the app can never crash it again before Settings opens. Done before anything reads the settings.
         runCatching {
             val crashed = File(app.filesDir, "last_crash.txt").exists()

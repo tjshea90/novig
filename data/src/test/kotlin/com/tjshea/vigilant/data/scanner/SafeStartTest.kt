@@ -7,14 +7,13 @@ import org.junit.Assert.assertTrue
 class SafeStartTest {
     private val loud = ScanSettings(researchMode = true, altLab = true, feedRace = true, burstRecorder = true, autoBet = true, maker = true)
 
-    @Test fun researchIsOffAtEveryStartButBidsStayWithoutACrash() {
+    @Test fun aNormalStartKeepsEverythingOnSoAnAppAndroidEndedComesBackAsItWas() {
         val s = loud.safeStart(crashed = false)
-        assertFalse(s.researchMode || s.altLab || s.feedRace || s.burstRecorder)
-        assertTrue(s.autoBet && s.maker)
+        assertTrue(s.researchMode && s.altLab && s.feedRace && s.burstRecorder && s.autoBet && s.maker)
     }
 
     @Test fun afterACrashTheBidsAndAutoBetAreOffToo() {
         val s = loud.safeStart(crashed = true)
-        assertFalse(s.researchMode || s.autoBet || s.maker)
+        assertFalse(s.researchMode || s.altLab || s.feedRace || s.burstRecorder || s.autoBet || s.maker)
     }
 }
