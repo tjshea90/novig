@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -50,6 +51,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
@@ -336,14 +338,14 @@ private fun DeskDesign(bets: List<Bet>) {
             bets.forEachIndexed { i, b ->
                 Column(Modifier.background(if (i == 0) Desk.amber.copy(alpha = 0.06f) else Color.Transparent)) {
                     Row(Modifier.padding(horizontal = 14.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.width(60.dp)) {
+                        Column(Modifier.width(60.dp)) {
+                            DeskText(pct(b.ev), 13.sp, Desk.green, FontWeight.Bold)
                             // A bar under the number: the longer, the bigger the edge (10% fills it).
-                            Box(Modifier.height(20.dp).fillMaxWidth((b.ev / 0.10).toFloat().coerceIn(0.08f, 0.92f)).background(Desk.green.copy(alpha = 0.16f), RoundedCornerShape(2.dp)))
-                            DeskText(pct(b.ev), 13.sp, Desk.green, FontWeight.Bold, modifier = Modifier.align(Alignment.CenterStart).padding(start = 3.dp))
+                            Box(Modifier.padding(top = 3.dp, end = 8.dp).height(3.dp).fillMaxWidth((b.ev / 0.10).toFloat().coerceIn(0.06f, 1f)).background(Desk.green.copy(alpha = 0.55f), RoundedCornerShape(2.dp)))
                         }
                         Column(Modifier.weight(1f).padding(start = 4.dp)) {
-                            DeskText(b.pick, 14.sp, Desk.text, FontWeight.SemiBold, family = Fonts.inter)
-                            DeskText("${b.league} ${b.start.uppercase()} │ ${b.market}", 9.5.sp, Desk.dim)
+                            DeskText(b.pick, 13.5.sp, Desk.text, FontWeight.SemiBold, family = Fonts.inter)
+                            DeskText("${b.market.uppercase()} │ ${b.league} ${b.start.uppercase()}", 9.5.sp, Desk.dim)
                         }
                         DeskText(b.price, 14.sp, Desk.text, FontWeight.Bold, modifier = Modifier.width(52.dp), align = TextAlign.End)
                         DeskText(b.fair, 12.sp, Desk.dim, modifier = Modifier.width(48.dp), align = TextAlign.End)
@@ -415,7 +417,7 @@ private fun ExpressiveDesign(bets: List<Bet>) {
                 }
                 Spacer(Modifier.height(14.dp))
                 Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LEAGUES.take(4).forEach { (e, l) ->
+                    LEAGUES.take(3).forEach { (e, l) ->
                         FilterChip(
                             selected = l in PICKED, onClick = {}, shape = CircleShape,
                             label = { Text("$e $l", fontFamily = Fonts.inter, fontWeight = FontWeight.SemiBold) },
@@ -720,7 +722,7 @@ private fun DaylightDesign(bets: List<Bet>) {
             }
             Spacer(Modifier.height(10.dp))
             Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LEAGUES.take(5).forEach { (e, l) ->
+                LEAGUES.take(4).forEach { (e, l) ->
                     val on = l in PICKED
                     Box(Modifier.background(if (on) Day.ink else Color.Transparent, CircleShape).border(1.dp, if (on) Day.ink else Day.line, CircleShape).padding(horizontal = 12.dp, vertical = 7.dp)) {
                         DayText("$e $l", 13.sp, if (on) Color.White else Day.ink, FontWeight.SemiBold)
@@ -731,8 +733,8 @@ private fun DaylightDesign(bets: List<Bet>) {
                 DayText("${bets.size} bets", 17.sp, Day.ink, FontWeight.ExtraBold, Modifier.weight(1f))
                 DayText("Sort: Best EV ▾", 13.sp, Day.dim, FontWeight.SemiBold)
             }
-            Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                Column(Modifier.fillMaxWidth().background(Day.card, RoundedCornerShape(24.dp)).padding(vertical = 4.dp)) {
+            Box(Modifier.weight(1f).fillMaxWidth().clipToBounds().padding(horizontal = 16.dp)) {
+                Column(Modifier.wrapContentHeight(Alignment.Top, unbounded = true).fillMaxWidth().background(Day.card, RoundedCornerShape(24.dp)).padding(vertical = 4.dp)) {
                     bets.forEachIndexed { i, b ->
                         Row(Modifier.padding(horizontal = 14.dp, vertical = 11.dp), verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(40.dp).background(Day.bg, CircleShape), contentAlignment = Alignment.Center) { Text(b.emoji, fontSize = 18.sp) }
@@ -839,7 +841,8 @@ private fun NeonDesign(bets: List<Bet>) {
             }
         }
         // A floating glass bar.
-        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
+        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent, Neon.bottom, Neon.bottom)))) {
+            Spacer(Modifier.height(28.dp))
             Row(
                 Modifier.padding(horizontal = 20.dp).fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(Color(0xCC120A24))
                     .border(1.dp, Neon.rim, RoundedCornerShape(28.dp)).padding(vertical = 10.dp),
