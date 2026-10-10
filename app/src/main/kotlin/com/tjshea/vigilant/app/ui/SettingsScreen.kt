@@ -1898,7 +1898,7 @@ private fun PinnFeedChooser(state: UiState, onUpdate: ((ScanSettings) -> ScanSet
     state.pinnWebsiteStats?.let { st ->
         Text(
             "Website feed: ${st.games} live games followed · ${st.polls} requests (${st.failures} failed, ${st.rateLimited} rate-limited) · a full cycle takes ${st.lastCycleMs} ms (average ${st.avgLatencyMs} ms) · ${st.changes} price changes seen" +
-                (st.lastError?.let { " · last problem: $it" } ?: ""),
+                (if (w.compare && !w.website) " · compare book: ${st.shadowMatchups} matchups, ${st.shadowFrames} frames, ${st.shadowVersions} price changes" else "") + (st.lastError?.let { " · last problem: $it" } ?: ""),
             style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("pinnWebsiteStats"),
         )
     }

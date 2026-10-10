@@ -67,6 +67,10 @@ data class WebsiteStats(
     val lastCycleMs: Long = 0L,
     val lastError: String? = null,
     val pollMs: Long = 0L,
+    /** Compare mode: what the feed's own book holds (matchups, frames applied, markets with a version taken in): proves the frames reach it. */
+    val shadowMatchups: Int = 0,
+    val shadowFrames: Long = 0L,
+    val shadowVersions: Long = 0L,
 )
 
 /**
@@ -123,6 +127,7 @@ class PinnWebsiteFeed(
     private var throttled = 0L
     private var frames = 0L
     private var changes = 0L
+    private var shadowVersions = 0L
     private var lastError: String? = null
     private var slowUntilMs = 0L
     private var since = 0L
@@ -274,7 +279,7 @@ class PinnWebsiteFeed(
     private fun send(frame: JsonObject, atMs: Long) {
         frames++
         val book = shadow
-        if (book != null) { runCatching { book.apply(frame, atMs) }; return }
+        if (book != null) { runCatching { shadowVersions += book.apply(frame, atMs).count { it.kind == PinnChange.Kind.PRICE } }.onFailure { lastError = "the compare book could not take a frame: ${it.message ?: it.javaClass.simpleName}" }; return }
         onFrame(frame.toString(), atMs)
     }
 
@@ -306,6 +311,7 @@ class PinnWebsiteFeed(
         _stats.value = WebsiteStats(
             sinceMs = since, polls = polls, failures = failures, rateLimited = rateLimited + throttled, games = games.size, frames = frames, changes = changes, lastLatencyMs = cycleMs,
             avgLatencyMs = if (latencyN > 0) latencySum / latencyN else 0L, lastCycleMs = cycleMs, lastError = lastError, pollMs = config().pollMs.toLong(),
+            shadowMatchups = shadow?.events?.size ?: 0, shadowFrames = shadow?.frames ?: 0L, shadowVersions = shadowVersions,
         )
     }
 
