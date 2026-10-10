@@ -53,7 +53,7 @@ class LabRecorderTest {
         {"homeAway":"home","score":"10","team":{"displayName":"Dallas Cowboys","abbreviation":"DAL"}},
         {"homeAway":"away","score":"7","team":{"displayName":"Tampa Bay Buccaneers","abbreviation":"TB"}}]}]}]}"""
 
-    private fun recorder(source: NovigSource, now: () -> Long, fetchBody: String? = espn): LabRecorder {
+    private fun recorder(source: NovigSource, now: () -> Long, fetchBody: String? = espn, onTail: ((TailOffer) -> Unit)? = null, tailOnly: () -> Boolean = { false }): LabRecorder {
         val dir = tmp.newFolder()
         return LabRecorder(
             scope = TestScope(), source = source,
@@ -61,7 +61,7 @@ class LabRecorderTest {
             altQuotes = { emptyList() },
             journal = DayJournal(dir, "lab", LabRecord.serializer()) { it.atMs },
             gradeJournal = DayJournal(dir, "lab-grade", LabGrade.serializer()) { it.atMs },
-            clock = now, gradeEvery = 1,
+            clock = now, gradeEvery = 1, onTail = onTail, tailOnly = tailOnly,
         )
     }
 
@@ -109,5 +109,40 @@ class LabRecorderTest {
         assertTrue("the 52.5 Over at 0.45 with the 53.5 Under at 0.40 (and the lower liquid Overs with that Under, which also cost under a dollar)", covers.any { Math.abs(it.ask - 0.85) < 1e-9 })
         assertEquals(covers.size, rec.status.value.covers)
         assertEquals(0, rec.status.value.withState)
+    }
+
+    @Test
+    fun `the conservative tail bets are handed to the taker with their market, fee and Tracker record, and the explore ones are not`() = runBlocking {
+        val now = 1_800_000_000_000L
+        // Under 53.5 offered at 0.70 against a model fair far above it: both rule sets see it.
+        val cheap = books() + ("far" to NovigBook("far", 1, mapOf("far-b" to listOf(BidLevel(300, 5_000))), 0))
+        val offers = ArrayList<TailOffer>()
+        val rec = recorder(Fake(event, ids.map { market(it.first, it.second) }, cheap), { now }, onTail = { offers += it })
+        rec.cycleOnce(setOf("NFL"))
+        assertTrue("the conservative rules find it", offers.isNotEmpty())
+        assertTrue(offers.all { it.candidate.rule == TailTaker.CONSERVATIVE })
+        val o = offers.first { it.candidate.strike == 53.5 }
+        assertEquals("UNDER", o.candidate.side)
+        assertEquals("far", o.target.market.marketId)
+        assertEquals("far-a", o.target.outcomeId)
+        assertEquals(com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_TAIL, o.target.source)
+        assertEquals("Total", o.target.marketLabel)
+        assertTrue(o.target.atBet!!.live && o.target.auto)
+        assertTrue(o.state, o.state.contains("10-7") || o.state.contains("7-10"))
+    }
+
+    @Test
+    fun `with only the tail taker wanting the lab it reads the games and offers tails but writes no covers and asks for no outside quotes`() = runBlocking {
+        val now = 1_800_000_000_000L
+        val coverBooks = books() + mapOf(
+            "dead" to NovigBook("dead", 1, mapOf("dead-a" to listOf(BidLevel(550, 1_000))), 0),
+            "far" to NovigBook("far", 1, mapOf("far-b" to listOf(BidLevel(300, 1_000))), 0),
+        )
+        val offers = ArrayList<TailOffer>()
+        val rec = recorder(Fake(event, ids.map { market(it.first, it.second) }, coverBooks), { now }, onTail = { offers += it }, tailOnly = { true })
+        rec.cycleOnce(setOf("NFL"))
+        assertTrue(offers.isNotEmpty())
+        assertTrue("no cover recorded in tail-only mode", rec.records().none { it.kind == LabKind.COVER })
+        assertEquals(1, rec.status.value.games)
     }
 }
