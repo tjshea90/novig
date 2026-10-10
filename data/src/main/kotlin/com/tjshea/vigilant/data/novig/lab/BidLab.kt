@@ -72,11 +72,14 @@ class BidLab(
     private val eventJournal: DayJournal<BidLabEvent>,
     private val clock: () -> Long = System::currentTimeMillis,
     private val variants: List<BidVariant> = VARIANTS,
+    /** Grades a fill from the game's final score once the market itself says nothing (Novig drops a settled market: 0 GRADE events in 21 h before this). */
+    private val grader: LabGrader? = null,
 ) {
     private class Active(val bid: BidLabBid, val variant: BidVariant) {
         var lastFair: Double = bid.fair
         var filledAtMs: Long? = null
         var closed = false
+        var statType: String? = null
     }
 
     private val lock = Any()
@@ -154,6 +157,7 @@ class BidLab(
                 if (fill != null) {
                     if (now > b.startsTs + FORGET_MS) continue
                     a.filledAtMs = fill.atMs
+                    a.statType = fill.text
                     evs.lastOrNull { it.type == "CLOSE" }?.let { a.closed = true; it.value?.let { f -> a.lastFair = f } }
                 } else if (now >= b.expiresMs) continue
                 active[b.id] = a
@@ -184,14 +188,25 @@ class BidLab(
                     events += BidLabEvent(a.bid.id, t.atMs, "FILL", t.price, strict = t.price < a.bid.price - 1e-9)
                 }
             }
+            // A prop's stat is only in its market (the bid's selection is "Player Over 9.5"), and the market is gone once it settles: keep its type with the fill.
+            if (grader != null && events.isNotEmpty() && synchronized(lock) { events.any { e -> active[e.id]?.bid?.kind == "PROP" } }) {
+                val type = runCatching { market(m) }.getOrNull()?.marketType
+                if (type != null) {
+                    synchronized(lock) { events.forEachIndexed { i, e -> active[e.id]?.takeIf { it.bid.kind == "PROP" }?.let { it.statType = type; events[i] = e.copy(text = type) } } }
+                }
+            }
             runCatching { eventJournal.appendAll(events) }
         }
         val toGrade: List<Active>
         synchronized(lock) { toGrade = active.values.filter { it.filledAtMs != null && now > it.bid.startsTs + GRADE_AFTER_MS }.take(MAX_GRADE) }
         for (a in toGrade) {
-            val mk = runCatching { market(a.bid.marketId) }.getOrNull() ?: continue
-            val status = mk.outcomes.firstOrNull { it.outcomeId == a.bid.outcomeId }?.status?.trim().orEmpty()
-            if (status.isEmpty() || status.equals("TBD", true)) continue
+            val mk = runCatching { market(a.bid.marketId) }.getOrNull()
+            var status = mk?.outcomes?.firstOrNull { it.outcomeId == a.bid.outcomeId }?.status?.trim().orEmpty()
+            if (status.isEmpty() || status.equals("TBD", true)) {
+                val b = a.bid
+                status = grader?.let { g -> runCatching { g.grade(LabGrader.Target(b.event, b.league, b.startsTs, b.kind, b.selection, a.statType)) }.getOrNull() }.orEmpty()
+                if (status.isEmpty()) continue
+            }
             eventJournal.append(BidLabEvent(a.bid.id, now, "GRADE", text = status))
             synchronized(lock) { active.remove(a.bid.id); byKey.remove(key(a.variant, a.bid.outcomeId)) }
         }

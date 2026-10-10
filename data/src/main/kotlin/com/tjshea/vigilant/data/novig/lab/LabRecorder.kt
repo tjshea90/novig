@@ -52,6 +52,8 @@ class LabRecorder(
     private val gradeEvery: Int = GRADE_EVERY,
     /** The paper bid lab, when there is one: it is handed the live lines (a Novig strike with Pinnacle's price at the same strike) every pass and polls the trade tape. */
     private val bidLab: BidLab? = null,
+    /** Grades a would-be bet from the final score when Novig's market no longer says (it drops a settled market). */
+    private val grader: LabGrader? = null,
 ) {
     private val _status = MutableStateFlow(LabStatus())
     val status: StateFlow<LabStatus> = _status.asStateFlow()
@@ -198,10 +200,11 @@ class LabRecorder(
         val graded = gradeJournal.readAll().map { it.id }.toHashSet()
         val todo = journal.readAll().filter { it.kind != LabKind.COVER && it.id !in graded && now - it.atMs > GRADE_AFTER_MS }
         for ((marketId, rs) in todo.groupBy { it.marketId }.entries.take(GRADE_BATCH)) {
-            val m: NovigMarket = source.market(marketId) ?: continue
+            val m: NovigMarket? = source.market(marketId)
             for (r in rs) {
-                val status = m.outcomes.firstOrNull { it.outcomeId == r.outcomeId }?.status?.trim()
-                if (status.isNullOrEmpty() || status.equals("TBD", true)) continue
+                var status = m?.outcomes?.firstOrNull { it.outcomeId == r.outcomeId }?.status?.trim()
+                if (status.isNullOrEmpty() || status.equals("TBD", true)) status = grader?.let { g -> runCatching { g.gradeRecord(r) }.getOrNull() }
+                if (status.isNullOrEmpty()) continue
                 gradeJournal.append(LabGrade(r.id, now, status))
             }
         }

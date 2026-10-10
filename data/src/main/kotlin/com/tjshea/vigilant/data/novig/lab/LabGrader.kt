@@ -24,10 +24,10 @@ class LabGrader(private val scores: ScoreSource) {
 
     /** WIN, LOSS or PUSH (a void is a refund: PUSH), or null while it can't be told. */
     suspend fun grade(t: Target): String? {
-        val m = NovigText.parseMatchup(t.event) ?: return null
+        NovigText.parseMatchup(t.event) ?: return null
         val league = t.league.uppercase()
         if (!scores.covers(league)) return null
-        val game = findGame(t, league, m.away, m.home) ?: return null
+        val game = findGame(t, league) ?: return null
         if (!game.final) return null
         val pick = pickOf(t, game) ?: return null
         val box = if (pick is BetGrader.Pick.Prop) scores.players(game) else null
@@ -40,7 +40,7 @@ class LabGrader(private val scores: ScoreSource) {
         }
     }
 
-    private suspend fun findGame(t: Target, league: String, away: String, home: String): GameScore? {
+    private suspend fun findGame(t: Target, league: String): GameScore? {
         val probe = com.tjshea.vigilant.data.tracker.TrackedBet(
             "lab", t.startsTs, league, t.event, t.startsTs, "", "", "", "", 0.5, 0.0, null, null, 0.0,
         )
@@ -48,7 +48,6 @@ class LabGrader(private val scores: ScoreSource) {
         for (date in listOf(day, day.minusDays(1), day.plusDays(1))) {
             val games = scores.games(league, date) ?: continue
             BetGrader.gameOf(probe, games)?.let { return it }
-            if (games.isNotEmpty() && date == day && away.isNotBlank() && home.isNotBlank()) continue
         }
         return null
     }
