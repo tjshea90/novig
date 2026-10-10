@@ -53,6 +53,9 @@ interface PushedBooks {
     /** The books held current right now among [marketIds]: only those already pushed. */
     fun live(marketIds: Collection<String>): Map<String, NovigBook>
 
+    /** Why [marketId] has no pushed book right now, in fixed words (null = no reason known, or it has one). The live bids count these, so a page full of "no book" says which. */
+    fun bookGap(marketId: String): String? = null
+
     /** Why pushing stopped, if it did at or after [sinceMs]. */
     fun problemSince(sinceMs: Long): String?
 
@@ -129,6 +132,15 @@ class NovigStream(
     /** Wanted markets, most important first. */
     private var wanted: List<String> = emptyList()
 
+    /**
+     * Markets Novig refused for a reason other than a limit, and until when they are not asked for again; [chunk] is how many one subscribe may carry after such a refusal (halved each
+     * time, so a request poisoned by one unresolvable market is narrowed down to it instead of shutting the whole connection out, as `limit = subscribed.size` did: Tj, 2026-10-10,
+     * live bids with "no current Novig book" on every main line).
+     */
+    private val refusedUntil = HashMap<String, Long>()
+    private var chunk = Int.MAX_VALUE
+    private var lastRefusal: String? = null
+
     /** Asked for on this connection (acknowledged or not). */
     private val subscribed = HashSet<String>()
 
@@ -196,6 +208,15 @@ class NovigStream(
         return out
     }
 
+    override fun bookGap(marketId: String): String? = synchronized(this) {
+        when {
+            _state.value !is StreamState.Live -> "Novig live feed is not connected"
+            marketId in refusedUntil -> "Novig refused the live book (${lastRefusal ?: "unknown"})"
+            marketId !in subscribed -> "Novig live book not subscribed yet"
+            else -> "Novig live book subscribed, no snapshot yet"
+        }
+    }
+
     override fun problemSince(sinceMs: Long): String? = synchronized(this) { problem?.takeIf { (failedAtMs ?: return null) >= sinceMs } }
 
     fun book(marketId: String): NovigBook? = live(listOf(marketId))[marketId]
@@ -215,6 +236,8 @@ class NovigStream(
         tokens = capacity - UPGRADE_COST
         tokensAt = clock()
         subscribeRequests = 0
+        chunk = Int.MAX_VALUE
+        refusedUntil.clear()
         firstSent = false
         limit = maxMarkets
         socket = http.newWebSocket(request, Listener())
@@ -261,11 +284,13 @@ class NovigStream(
         while (scope.isActive) {
             val (drop, add) = synchronized(this) {
                 if (socket == null) return
-                val want = wanted.take(limit.coerceAtLeast(0))
+                val now = clock()
+                refusedUntil.values.removeAll { it <= now }
+                val want = wanted.filter { it !in refusedUntil }.take(limit.coerceAtLeast(0))
                 val wantSet = want.toHashSet()
                 val drop = subscribed.filter { it !in wantSet }
                 val room = limit - (subscribed.size - drop.size)
-                drop to want.filter { it !in subscribed }.take(room.coerceAtLeast(0))
+                drop to want.filter { it !in subscribed }.take(minOf(room.coerceAtLeast(0), chunk))
             }
             if (drop.isNotEmpty()) {
                 // 1 token a subject, never more than the bucket (like any request): uncapped, a big drop waited minutes and left the
@@ -368,8 +393,11 @@ class NovigStream(
                 "RATE_LIMIT_EXCEEDED" -> { tokens = 0.0; tokensAt = clock() }
                 // Held fewer than we thought possible: ask for half of what was refused next time.
                 "SUBSCRIPTION_LIMIT_EXCEEDED" -> limit = subscribed.size + lost.size / 2
-                // Anything else won't pass by asking again: this connection adds nothing more (REST reads the rest).
-                else -> if (lost.isNotEmpty()) limit = subscribed.size
+                // Anything else: one market (or all of them) was refused. A lone market is left alone for a while; a batch is asked for again in halves until the bad one stands alone.
+                else -> if (lost.isNotEmpty()) {
+                    lastRefusal = code
+                    if (lost.size == 1) lost.forEach { refusedUntil[it] = clock() + REFUSED_PAUSE_MS } else chunk = maxOf(1, lost.size / 2)
+                }
             }
         }
         scheduleSync()
