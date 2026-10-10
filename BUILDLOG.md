@@ -185,3 +185,4 @@ day that changes.
 | v0.88.4 | code 177 | 2026-10-10T18:34Z | v0.88.4: feed race counts one sample per update (not per market), so the lag numbers are not inflated by one update rewriting thirty markets
 | v0.88.5 | code 178 | 2026-10-10T18:56Z | v0.88.5: Pinnacle website feed measured as cached (90-400 s old): real live orders are blocked while it is selected and its description says so
 | v0.88.6 | code 179 | 2026-10-10T19:14Z | v0.88.6: pregame make-order bids leave a share of the wallet for the live engines (autopilot sets 50%), so live bids have money to post from
+| v0.88.7 | code 180 | 2026-10-10T19:55Z | v0.88.7: live bids: a market Novig refuses no longer shuts the live book connection out (batch halved down to it), and 'no current Novig book' now says why
