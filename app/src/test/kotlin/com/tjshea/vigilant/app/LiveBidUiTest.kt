@@ -128,10 +128,51 @@ class LiveBidUiTest {
         compose.onNodeWithTag("liveBidNoKey").performScrollTo().assertIsDisplayed()
     }
 
+    // ---- the autopilot ----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    @Test
+    fun `the autopilot in paper turns both engines on with nothing sent`() {
+        val ui = show(state())
+        compose.onNodeWithTag("liveAutopilotState").performScrollTo().assertTextContains("Not in force", substring = true)
+        tap("liveAutopilotPaper")
+        val s = ui().settings
+        assertTrue(s.liveBid && s.pinnLive)
+        assertFalse(s.liveBidReal || s.pinnLiveBet)
+        assertTrue(s.liveBidLimits.fillWallet)
+        compose.onNodeWithTag("liveAutopilotState").performScrollTo().assertTextContains("In force: paper", substring = true)
+        compose.onNodeWithTag("liveAutopilotStatus").performScrollTo().assertTextContains("Taker: paper", substring = true)
+    }
+
+    @Test
+    fun `the autopilot with real money asks first and names the caps, and Cancel changes nothing`() {
+        val ui = show(state())
+        tap("liveAutopilotReal")
+        compose.onNodeWithTag("liveAutopilotCancel").assertIsDisplayed()
+        compose.onNodeWithTag("liveAutopilotCancel").performClick()
+        assertFalse(ui().settings.liveBid || ui().settings.pinnLive)
+        tap("liveAutopilotReal")
+        compose.onNodeWithTag("liveAutopilotConfirm").performClick()
+        val s = ui().settings
+        assertTrue(s.liveBidReal && s.pinnLiveBet)
+        compose.onNodeWithTag("liveAutopilotState").performScrollTo().assertTextContains("REAL", substring = true)
+        tap("liveAutopilotOff")
+        assertFalse(ui().settings.liveBid || ui().settings.liveBidReal || ui().settings.pinnLive || ui().settings.pinnLiveBet)
+        val text = LiveBidText.autopilotConfirm(ScanSettings(bankroll = 300.0, pinnLiveStake = 2.0, pinnLiveMaxGame = 5.0, pinnLiveMaxDay = 25.0))
+        assertTrue(text, text.contains("\$2 a bet") && text.contains("\$25 a day") && text.contains("23:34Z"))
+    }
+
+    @Test
+    fun `fill the wallet is a switch in the limits`() {
+        val ui = show(state())
+        assertFalse(ui().settings.liveBidLimits.fillWallet)
+        tap("liveBidFillWallet")
+        assertTrue(ui().settings.liveBidLimits.fillWallet)
+    }
+
     // ---- presets ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     @Test
-    fun `three built-in presets are listed, Balanced is in force on a fresh install, and Apply puts Careful's rules in force`() {
+    fun `the built-in presets are listed, Balanced is in force on a fresh install, and Apply puts Careful's rules in force`() {
         val ui = show(state())
         for (p in LiveBidPresets.BUILT_IN) compose.onNodeWithTag("liveBidPreset:${p.name}").performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag("liveBidPresetInForce").performScrollTo().assertTextContains("In force: Balanced", substring = true)
