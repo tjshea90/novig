@@ -5925,3 +5925,8 @@ How long should I run the research lab in the app for before there is enough dat
 ```
 Schedule daily check ins with GitHub and save the data and research to GitHub so that other sessions can see the research and no data is lost. Make this a permanent rule for the repo so that other Claude sessions see it and immediately abide by it, but I think only one Claude account needs to actively manage the GitHub. Figure out how to share it between 3 different Claude accounts but on the same repo
 ```
+
+## 2026-10-10T00:08:42Z
+```
+You said something about the data being erased every week. Save add much data and research as possible into the GitHub repo and make sure other Claude sessions do so as well
+```
