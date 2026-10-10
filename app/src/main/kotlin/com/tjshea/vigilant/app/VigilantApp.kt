@@ -1126,8 +1126,72 @@ class AppContainer(private val app: Application) {
         com.tjshea.vigilant.data.novig.lab.LabRecorder(
             scope = appScope, source = novig, fetch = ::feedRaceFetch, altQuotes = ::labAltQuotes,
             journal = labJournal, gradeJournal = labGradeJournal, bidLab = bidLab, grader = labGrader,
+            // The tail taker's door: the lab hands over what its conservative rules find and places nothing itself. With only the tail switch on, the lab does only the tail's work.
+            onTail = { tailTaker.offer(it) },
+            tailOnly = { settingsStore.flow.value?.let { s -> s.tailLive && !(s.altLab || s.researchMode) } == true },
         )
     }
+
+    // ---- Live tail bets (Tj, 2026-10-10; RESEARCH.md §125): a far strike the late-game model calls decided, taken while Novig still offers it under that fair ---------------------
+
+    val tailJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "pinn-live"), "tail-live", com.tjshea.vigilant.data.pinnodds.LiveRecord.serializer()) { it.atMs }
+
+    /** Tj's limits for the tail taker, read at each decision. A stake is never over his per-bet maximum for the API. */
+    private fun tailTradeRules(): com.tjshea.vigilant.data.pinnodds.LiveTradeRules {
+        val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(false, false, 0.0, 0.0, 0.0, 0.0)
+        return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(
+            enabled = AppBook.isNovig && s.tailLive && !s.killed, bet = s.tailLiveBet,
+            stake = if (s.apiMaxStake > 0.0) minOf(s.tailLiveStake, s.apiMaxStake) else s.tailLiveStake,
+            maxPerGame = s.tailLiveMaxGame, maxPerDay = s.tailLiveMaxDay, haltLoss = s.tailLiveHaltLoss, halted = s.tailLiveHalted,
+        )
+    }
+
+    private suspend fun tailGate(): String? {
+        val s = settingsStore.flow.value ?: return "settings not loaded"
+        val stake = tailTradeRules().stake
+        val wallet = wallet.flow.value?.dollars
+        return when {
+            s.killed -> "STOP ALL is on"
+            s.pausedByHand -> "scanning is paused"
+            trading == null -> "no betting key connected"
+            wallet == null -> "wallet not read yet"
+            wallet < stake * 1.2 -> "wallet too low"
+            else -> null
+        }
+    }
+
+    /** Dollars lost today on settled tail bets (positive = loss): the day's halt. */
+    private suspend fun tailLossToday(): Double {
+        val from = ApiBetPlacer.localMidnight(System.currentTimeMillis())
+        val net = tracker.all().filter { it.source == BetTracker.SOURCE_TAIL && (it.settledAtMs ?: 0L) >= from }.sumOf { it.profit ?: 0.0 }
+        return (-net).coerceAtLeast(0.0)
+    }
+
+    val tailTaker: com.tjshea.vigilant.data.novig.lab.TailTaker by lazy {
+        com.tjshea.vigilant.data.novig.lab.TailTaker(
+            orders = pinnOrders, scope = appScope, rules = ::tailTradeRules, minEdge = { settingsStore.flow.value?.tailLiveMinEdge ?: com.tjshea.vigilant.data.novig.lab.TailTradeLimits.DEFAULT_MIN_EDGE },
+            gate = ::tailGate,
+            ownBids = {
+                makerStore.flow.value.orEmpty().filter { it.resting }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) } +
+                    liveBidDesk.bidsNow().filter { it.active }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) }
+            },
+            journal = tailJournal,
+            onHalt = { why ->
+                eventLog.warn("TAILLIVE", "tail taker halted: $why")
+                appScope.launch {
+                    withContext(kotlinx.coroutines.NonCancellable) {
+                        runCatching { settingsStore.update { if (it.tailLiveHalted == null) it.copy(tailLiveHalted = why) else it } }
+                        runCatching { AutoBetNotes.stopped(app, "Live tail betting stopped", why) }
+                    }
+                }
+            },
+            logFills = { target, orderId, fills -> tracker.logApi(target, orderId, fills) != null },
+            lossToday = ::tailLossToday, lock = orderLock,
+        )
+    }
+
+    @Volatile private var tailSawHalt = false
+    @Volatile private var tailWalletRead = false
 
     /** The lab's SportsGameOdds boards by league: one read serves every game of the league for [LAB_BOARD_MS] (SGO refreshes about every 30 s). */
     private val labBoards = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, com.tjshea.vigilant.data.reference.RefSnapshot>>()
@@ -1178,7 +1242,10 @@ class AppContainer(private val app: Application) {
     /** Starts or stops the paper lab to match [s]: on, not STOP ALL, the Novig app. Safe to call on every settings change. */
     fun labTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        val on = (s.altLab || s.researchMode) && !s.killed
+        val on = (s.altLab || s.researchMode || s.tailLive) && !s.killed
+        if (s.tailLiveHalted != null) tailSawHalt = true else if (tailSawHalt) { tailSawHalt = false; tailTaker.resumed() }
+        // A real tail bet needs the wallet read once before its first order (the gate says "wallet not read yet" otherwise).
+        if (s.tailLive && s.tailLiveBet && !s.killed) { if (!tailWalletRead) { tailWalletRead = true; appScope.launch { runCatching { wallet.fresh() } } } } else tailWalletRead = false
         if (on) lab.start(LAB_LEAGUES) else if (lab.running) lab.stop()
         // A foreground service holds the process while research is on (Tj, 2026-10-10), so Android does not end it a few minutes after he leaves.
         if (on) ResearchService.start(app) else ResearchService.stop(app)
