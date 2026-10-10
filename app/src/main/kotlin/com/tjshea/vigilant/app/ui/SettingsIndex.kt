@@ -50,7 +50,7 @@ object SettingsIndex {
         Entry("Live bids", SettingsPage.LIVEBIDS, "Post-only bids on Novig's live lines priced under Pinnacle's live fair; paper first", "live bids bid make maker in-play pinnacle pinnodds paper", dormantPinn),
         Entry("Bid with real money", SettingsPage.LIVEBIDS, "Real live bids, sized by Kelly and held to your limits", "live bids real money kelly eighth stake", dormantPinn),
         Entry("Live bid presets", SettingsPage.LIVEBIDS, "Careful, Balanced, a paper-only study preset, and your own", "live bids preset careful balanced save own", dormantPinn),
-        Entry("Live bid margin under Pinnacle's fair", SettingsPage.LIVEBIDS, "How far under the fair a live bid sits: its edge when posted", "live bids margin edge ev price type custom number", dormantPinn),
+        Entry("Margin under Pinnacle's fair", SettingsPage.LIVEBIDS, "How far under the fair a live bid sits: its edge when posted", "live bids margin edge ev price type custom number", dormantPinn),
         Entry("Live bid stake rule", SettingsPage.LIVEBIDS, "Eighth, quarter or half Kelly, a dollar, or your own amount, and the biggest and smallest stake", "live bids kelly stake size bankroll max min type custom number", dormantPinn),
         Entry("Live bid limits", SettingsPage.LIVEBIDS, "Most bids up, per game, per day, the loss that stops the day, and the wallet reserve", "live bids limit game day loss halt reserve wallet type custom number", dormantPinn),
         Entry("Live bid freshness", SettingsPage.LIVEBIDS, "How quiet, old or unsettled Pinnacle's price may be, its margin and limit", "live bids stale quiet fresh settle overround limit gap type custom number", dormantPinn),

@@ -197,7 +197,7 @@ class SettingsPagesTest {
         assertTrue(SettingsIndex.search("devig method", cnoOnly).isEmpty()) // Vigilant's fair odds page is hidden
         assertTrue(SettingsIndex.search("true odds worked", cnoOnly).isNotEmpty()) // CNO's is there
         val vigilantOnly = SampleScan.settings.copy(scanner = ScannerMode.VIGILANT)
-        assertTrue(SettingsIndex.search("preset", vigilantOnly).isEmpty()) // no Auto-bet tab without CNO
+        assertTrue(SettingsIndex.search("preset", vigilantOnly).none { it.page == null }) // no Auto-bet tab without CNO (the live bid presets are on their own page)
         assertTrue(SettingsIndex.search("  ", SampleScan.settings).isEmpty())
         // Every word must match.
         assertEquals(listOf("Longest odds to bet"), SettingsIndex.search("longest bet", SampleScan.settings).map { it.title })

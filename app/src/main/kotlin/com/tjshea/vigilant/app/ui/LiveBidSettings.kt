@@ -89,7 +89,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     if (state.pinnoddsKeys.isEmpty()) Text("No Pinnodds key is saved: add it in Settings › Pinnodds live. Live bids use the same feed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidNoKey"))
 
     // ---- presets ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-    SectionTitle("Presets")
+    SectionTitle("Live bid presets")
     Text("A preset sets every rule below except your money (the stake rule and the limits). Careful is the one to start real money with.", style = MaterialTheme.typography.bodySmall, color = subtle)
     Text(LiveBidText.inForce(s), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 4.dp).testTag("liveBidPresetInForce"))
     val active = LiveBidPresets.active(s)
@@ -107,9 +107,9 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     Button(onClick = { onUpdate { LiveBidPresets.save(it, name) ?: it }; name = "" }, enabled = trimmed.isNotEmpty() && !taken, modifier = Modifier.testTag("liveBidPresetSave")) { Text("Save these rules as a preset") }
 
     // ---- the money ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-    SectionTitle("Your money (a preset never changes this)")
+    SectionTitle("Live bid limits (your money: a preset never changes it)")
     LbHint("A bid's size is a fraction of full Kelly on your bankroll (Settings › Betting & Novig account: ${LiveBidText.money(s.bankroll)}) for that bid's own price and edge, raised to the smallest stake and held to the biggest and to Settings' per-bet maximum. Makers pay no fee.")
-    LbTitle("Stake rule")
+    LbTitle("Live bid stake rule")
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         AutoBetStake.entries.forEach { m ->
             FilterChip(selected = m == lim.stakeMode, onClick = { setL { it.copy(stakeMode = m) } }, label = { Text(m.label) }, modifier = Modifier.testTag("liveBidStake-${m.name}"))
@@ -164,7 +164,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     }
 
     // ---- fresh --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    SectionTitle("How fresh Pinnacle's price must be")
+    SectionTitle("Live bid freshness: how fresh Pinnacle's price must be")
     LbHint("A live bid is only as good as the price behind it. These keep a bid from resting on a price that has gone old, and from trusting a price Pinnacle itself does not stand behind.")
     LbSeconds("Pinnacle silent too long (no bid, and a bid up is pulled)", listOf(0, 10, 15, 20, 30, 45, 60), q.maxQuietSec, "liveBidQuiet", 300) { v -> setQ { it.copy(maxQuietSec = v) } }
     LbSeconds("The price has not changed for (too old; 0 = no limit)", listOf(0, 20, 30, 60, 120, 300), q.maxFairAgeSec, "liveBidFairAge", 3_600) { v -> setQ { it.copy(maxFairAgeSec = v) } }
@@ -181,7 +181,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     LbSwitch("Put the replacement up before the old one ends", "A live order takes seconds to land, so waiting leaves a gap. For a moment both can fill.", q.overlapRepost, "liveBidOverlap") { v -> setQ { it.copy(overlapRepost = v) } }
 
     // ---- pulls ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    SectionTitle("When a bid comes down")
+    SectionTitle("Live bid pulls: when a bid comes down")
     LbPercent("Pull when its edge falls under", listOf(0.005, 0.01, 0.015, 0.02, 0.03), q.pullBelowEv, "liveBidPullEv", 0.1, 20.0) { v -> setQ { it.copy(pullBelowEv = v) } }
     LbSwitch("Pull when the score changes", "Pinnacle's score reaches the feed about 2 s before its price moves.", q.pullOnScore, "liveBidPullScore") { v -> setQ { it.copy(pullOnScore = v) } }
     LbSeconds("No new bid for this long after a score", listOf(0, 10, 20, 30, 45, 60), q.scoreHoldSec, "liveBidScoreHold", 600) { v -> setQ { it.copy(scoreHoldSec = v) } }
@@ -190,7 +190,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     LbSeconds("No new bid on a side for this long after a fill", listOf(0, 15, 30, 60, 120, 300), q.coolOffSec, "liveBidCoolOff", 3_600) { v -> setQ { it.copy(coolOffSec = v) } }
 
     // ---- self checks ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-    SectionTitle("Self-checks that stop everything")
+    SectionTitle("Live bid self-checks that stop everything")
     LbHint("Real-money safeguards. Each stops the whole feature and takes every bid down until you tap Resume.")
     LbTitle("Stop after picked-off fills")
     val pickOffChoices = listOf(Triple(0, 0, "Off"), Triple(2, 3, "2 of 3"), Triple(3, 5, "3 of 5"), Triple(4, 6, "4 of 6"), Triple(5, 8, "5 of 8"))

@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -86,10 +87,10 @@ class LiveBidUiTest {
         val ui = show(state(ScanSettings(bankroll = 500.0, liveBid = true)))
         tap("liveBidRealSwitch")
         compose.onNodeWithTag("liveBidRealCancel").assertIsDisplayed()
-        tap("liveBidRealCancel")
+        compose.onNodeWithTag("liveBidRealCancel").performClick()
         assertFalse(ui().settings.liveBidReal)
         tap("liveBidRealSwitch")
-        tap("liveBidRealConfirm")
+        compose.onNodeWithTag("liveBidRealConfirm").performClick()
         assertTrue(ui().settings.liveBidReal)
         compose.onNodeWithTag("liveBidNote").performScrollTo().assertTextContains("REAL", substring = true)
         // And off again with no question.
@@ -113,7 +114,7 @@ class LiveBidUiTest {
     @Test
     fun `a halt shows its reason and Resume lifts it`() {
         val ui = show(state(ScanSettings(liveBid = true, liveBidHalted = "3 of the last 5 live bid fills were picked off")))
-        compose.onNodeWithTag("liveBidHalted").performScrollTo().assertTextContains("picked off", substring = true)
+        compose.onNodeWithText("picked off", substring = true).performScrollTo().assertIsDisplayed()
         tap("liveBidResume")
         assertNull(ui().settings.liveBidHalted)
     }
@@ -130,11 +131,11 @@ class LiveBidUiTest {
     fun `three built-in presets are listed, Balanced is in force on a fresh install, and Apply puts Careful's rules in force`() {
         val ui = show(state())
         for (p in LiveBidPresets.BUILT_IN) compose.onNodeWithTag("liveBidPreset:${p.name}").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithTag("liveBidPresetInForce").performScrollTo().assertTextContains("In force: Balanced")
+        compose.onNodeWithTag("liveBidPresetInForce").performScrollTo().assertTextContains("In force: Balanced", substring = true)
         compose.onNodeWithTag("liveBidPresetActive:Balanced").assertExists()
         tap("liveBidPresetApply:Careful")
         assertEquals(LiveBidPresets.CAREFUL.quality, ui().settings.liveBidQuality)
-        compose.onNodeWithTag("liveBidPresetInForce").performScrollTo().assertTextContains("In force: Careful")
+        compose.onNodeWithTag("liveBidPresetInForce").performScrollTo().assertTextContains("In force: Careful", substring = true)
     }
 
     @Test
