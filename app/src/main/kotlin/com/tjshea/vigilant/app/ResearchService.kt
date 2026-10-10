@@ -113,6 +113,7 @@ class ResearchService : Service() {
         val text = "Paper lab: ${st?.games ?: 0} live game${if ((st?.games ?: 0) == 1) "" else "s"}, ${st?.cycles ?: 0} passes · paper bids: $posted up, $filled filled. Nothing is bet."
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_scan)
+            .withWallet(this)
             .setContentTitle("Research running")
             .setContentText(text)
             .setOngoing(true)
