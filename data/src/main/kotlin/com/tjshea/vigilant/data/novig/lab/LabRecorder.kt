@@ -216,6 +216,10 @@ class LabRecorder(
     fun records(): List<LabRecord> = journal.readAll()
     fun grades(): List<LabGrade> = gradeJournal.readAll()
 
+    /** The newest [days] days only: what the Diagnostics file reads (the research file reads everything). */
+    fun recordsRecent(days: Int): List<LabRecord> = journal.readRecent(days)
+    fun gradesRecent(days: Int): List<LabGrade> = gradeJournal.readRecent(days)
+
     companion object {
         const val MAX_GAMES = 4
         const val CYCLE_MS = 20_000L

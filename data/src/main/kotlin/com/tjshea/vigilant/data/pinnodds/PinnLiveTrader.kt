@@ -183,6 +183,29 @@ class DayJournal<T>(private val dir: File, private val prefix: String, private v
     }
 
     private fun endsWithNewline(f: File): Boolean = java.io.RandomAccessFile(f, "r").use { r -> r.seek(r.length() - 1); r.read() == '\n'.code }
+
+    private fun dayFiles(): List<File> = dir.listFiles { f -> f.isFile && fileName.matches(f.name) }?.sortedBy { it.name }.orEmpty()
+
+    /**
+     * The newest [days] day files only (Tj, 2026-10-10: the diagnostics file hung once these journals had grown for days): what a report about now needs, not every record since the recorder was
+     * first switched on. Older days stay on disk for the research file ([readAll]).
+     */
+    fun readRecent(days: Int): List<T> = dayFiles().takeLast(days.coerceAtLeast(1)).flatMap { f ->
+        f.useLines { ls -> ls.filter { it.isNotBlank() }.mapNotNull { runCatching { json.decodeFromString(serializer, it) }.getOrNull() }.toList() }
+    }
+
+    /** Bytes on disk across every day. */
+    fun sizeBytes(): Long = dayFiles().sumOf { it.length() }
+
+    /** Deletes the day files older than the newest [keepDays] (by the date in the name); returns how many files and bytes went. */
+    @Synchronized
+    fun prune(keepDays: Int): Pair<Int, Long> {
+        var n = 0
+        var bytes = 0L
+        val keep = dayFiles().takeLast(keepDays.coerceAtLeast(1)).toSet()
+        for (f in dayFiles()) if (f !in keep) { val len = f.length(); if (f.delete()) { n++; bytes += len } }
+        return n to bytes
+    }
 }
 
 data class LiveTradeStatus(
