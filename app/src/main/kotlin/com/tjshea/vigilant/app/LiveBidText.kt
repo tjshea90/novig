@@ -60,8 +60,8 @@ object LiveBidText {
             "More bids, still positive on the tapes: a 5% margin (the middle of the range where fills times edge were flat on the grid), may be the best bid on a thin line, Pinnacle's limit \$500 or more and margin under 8%, " +
                 "a 30 s hold after a score, pulled when 1% is left. Stops itself on 4 picked-off fills out of 6, or when a pull takes over 12 s."
         LiveBidPresets.FILL.name ->
-            "For fills: a 3% margin, may lead the book, both sides of a market, shorter holds (15 s after a score, 6 s after a danger frame), Pinnacle's limit \$250 or more and margin under 9%, the maker credit counted. " +
-                "A bid is still pulled the moment a score, a danger frame, Pinnacle's silence, a fading edge or Novig's middle says so. A 3% edge is thin: keep the stakes small until the Diagnostics show fills that held."
+            "For fills: a 2% margin, may lead the book, both sides of a market, shorter holds (15 s after a score, 6 s after a danger frame), Pinnacle's limit \$250 or more and margin under 9%, the maker credit counted. " +
+                "A bid is still pulled the moment a score, a danger frame, Pinnacle's silence, a fading edge or Novig's middle says so. A 2% edge is thin: keep the stakes small until the Diagnostics show fills that held."
         LiveBidPresets.PAPER_WIDE.name ->
             "For watching, not for money: a 4% margin and bids that rest 60 s kept only about +1% a fill on the tapes, which is inside the noise of a 20-fill sample. Applying it turns real bids off."
         else -> null
@@ -163,7 +163,7 @@ object LiveBidText {
         return "Both live engines will place real orders on Novig by themselves. The taker buys at most ${money(s.pinnLiveStake)} a bet, ${money(s.pinnLiveMaxGame)} a game and ${money(s.pinnLiveMaxDay)} a day; it stops if live bets lose ${money(s.pinnLiveHaltLoss)}. " +
             "The bid desk fills the wallet with bids (${l.stakeMode.label} of your ${money(s.bankroll)} bankroll, ${money(l.minStake)}-${money(l.maxStake)} a bid, keeping ${money(l.walletReserve)} in the wallet) and stops if live bids lose ${money(l.haltLoss)}. " +
             "The tail bettor buys at most ${money(s.tailLive.stake)} a bet, ${money(s.tailLive.maxGame)} a game and ${money(s.tailLive.maxDay)} a day and stops if tail bets lose ${money(s.tailLive.haltLoss)}. " +
-            "Pinnacle's price is an estimate of the true chance, so any single bet can lose; each is positive expected value, not a sure thing, and a 3% edge is thin. The taker and the bids depend on the live Pinnodds feed, which ends with your trial tonight (23:34Z); the tail bettor does not. " +
+            "Pinnacle's price is an estimate of the true chance, so any single bet can lose; each is positive expected value, not a sure thing, and a 2% edge is thin. The taker and the bids depend on the live Pinnodds feed, which ends with your trial tonight (23:34Z); the tail bettor does not. " +
             "Orders take about 5 s to land in play, which is why takers miss; the page shows what filled and why not. Start small."
     }
 

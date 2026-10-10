@@ -8,7 +8,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
  * on live games that are under the fair odds ... rugged guards; fill up with bids up to the wallet balance"). One tap sets ALL THREE live engines to work together on the same Pinnacle feed:
  *  - the live TAKER (Settings › Pinnodds live) buys, immediate-or-cancel, a Novig price that lags Pinnacle's fair by 4% or more after Novig's fee, after a score OR when the ask is an order left
  *    up at Pinnacle's earlier price ([LiveTrigger.EITHER]), across every live game it can match;
- *  - the live BID desk posts post-only bids at 3% under Pinnacle's fair on the main lines ([LiveBidPresets.FILL]), as many as the wallet carries ([LiveBidLimits.fillWallet]), each pulled the
+ *  - the live BID desk posts post-only bids at 2% under Pinnacle's fair on the main lines ([LiveBidPresets.FILL]), as many as the wallet carries ([LiveBidLimits.fillWallet]), each pulled the
  *    moment a score, a danger frame, silence, a fading edge or a moving Novig middle says so.
  *  - the live TAIL bettor ([ScanSettings.tailLive]) buys far strikes the late-game model calls decided (ESPN score and clock, Novig's own prices): it needs no outside price, so it carries on after the
  *    Pinnodds trial ends.
