@@ -6165,3 +6165,8 @@ What about when the trial runs out? Is this a free or cheap alternative?
 ```
 @"/root/.claude/uploads/7cdd94fc-4f39-5c03-87f5-68c9bdf3f70a/c24cf8d1-socket-dev-pypi-package-flashscore-scraper.txt" Can this help
 ```
+
+## 2026-10-10T17:29:32Z
+```
+Tell me exactly what to do right now to test the Pinnacle source and what to send you
+```
