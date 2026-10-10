@@ -308,7 +308,7 @@ private fun FeedSummary(
             )
             result.stats.matchedEvents == 0 && result.games.isNotEmpty() -> EmptyState(
                 "No fair odds for these games",
-                "${AppBook.name}'s prices for ${result.games.size} games are on the Games tab, but none of your fair-odds " +
+                "${AppBook.name}'s prices for ${result.games.size} games were read, but none of your fair-odds " +
                     "sources listed them this scan. Check the sources in Settings (a Pinnacle or PropLine key " +
                     "covers the most leagues).",
                 action = "Fair odds settings",
