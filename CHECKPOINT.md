@@ -1,23 +1,22 @@
-# CHECKPOINT 2844 — read me first, then TASKS.md
+# CHECKPOINT 2845 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T07:23:45Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-bab5067e-obkelv` · **builds on:** `91aabf87` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T07:30:14Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-bab5067e-obkelv` · **builds on:** `094bc2f2` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v0.85.6: live bids say why a line has no Pinnacle price (alternate strike, no main line, three-way)
+pre-release: v0.85.6: live bids say why a line has no Pinnacle price (alternate strike, no main line, three-way) (versionCode 166, v0.85.6)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.85.6), then run: bash tools/record-release.sh v0.85.6 166 "v0.85.6: live bids say why a line has no Pinnacle price (alternate strike, no main line, three-way)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  0f4e884b ckpt 2844: pre-ship: v0.85.6: live bids say why a line has no Pinnacle price (alternate
   f6cb07f8 ckpt 2843: v0.85.5 released and recorded
   1b1245d5 ckpt 2842: pre-release: v0.85.5: diagnostics file reads the last 3 days of each recorde
   51ceaeea ckpt 2841: pre-ship: v0.85.5: diagnostics file reads the last 3 days of each recorder, 
@@ -27,7 +26,6 @@ ship.sh gates and releases this
   f132d60f ckpt 2837: pre-release: v0.85.3: live bid desk loop heartbeat and a Details block on th
   6245fed7 ckpt 2836: pre-ship: v0.85.3: live bid desk loop heartbeat and a Details block on the L
   6a173fb1 ckpt 2835: v0.85.2 released and recorded
-  144549fd ckpt 2834: pre-release: v0.85.2: live bid engine survives a bad message and says why it
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
