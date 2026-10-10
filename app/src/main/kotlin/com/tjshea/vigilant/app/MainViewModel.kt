@@ -212,6 +212,9 @@ data class UiState(
     /** Live bids (RESEARCH.md §123-§124): the desk's status and every bid on record, refreshed while Settings › Live bids is open. */
     val liveBidStatus: com.tjshea.vigilant.data.livebid.LiveBidDeskStatus = com.tjshea.vigilant.data.livebid.LiveBidDeskStatus(),
     val liveBids: List<com.tjshea.vigilant.data.livebid.LiveBid> = emptyList(),
+    /** Live tail bets (RESEARCH.md §125): the taker's status and the lab's (games read, tail strikes seen), refreshed with the live bids page. */
+    val tailTrade: com.tjshea.vigilant.data.pinnodds.LiveTradeStatus = com.tjshea.vigilant.data.pinnodds.LiveTradeStatus(),
+    val labStatus: com.tjshea.vigilant.data.novig.lab.LabStatus = com.tjshea.vigilant.data.novig.lab.LabStatus(),
     /** SportsGameOdds Pro's Test key (Settings › SportsGameOdds Pro): the answer (null = not tested), whether it passed, and that a test is running. */
     val sgoKeyNote: String? = null,
     val sgoKeyOk: Boolean? = null,
@@ -1911,7 +1914,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** The live bid desk's status for Settings › Live bids (the page asks every second or two while it is open). */
     fun refreshLiveBid() {
-        _state.update { it.copy(liveBidStatus = c.liveBidDesk.status.value, liveBids = c.liveBidDesk.bidsNow(), pinnLive = c.pinnRunner.status.value) }
+        _state.update { it.copy(liveBidStatus = c.liveBidDesk.status.value, liveBids = c.liveBidDesk.bidsNow(), pinnLive = c.pinnRunner.status.value, tailTrade = c.tailTaker.status.value, labStatus = c.lab.status.value, pinnTrade = c.pinnTrader.status.value) }
     }
 
     /**
@@ -2276,7 +2279,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             lowUsagePlan = _state.value.settings.takeIf { it.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }?.let { runCatching { c.lowUsagePlan(it) }.getOrNull() },
             pinnReport = g.pinnReport,
             liveBidReport = runCatching {
-                LiveBidText.diagnostics(_state.value.settings, c.liveBidDesk.status.value, c.pinnRunner.status.value, c.liveBidDesk.bidsNow(), c.pinnRunner.running)
+                LiveBidText.diagnostics(_state.value.settings, c.liveBidDesk.status.value, c.pinnRunner.status.value, c.liveBidDesk.bidsNow(), c.pinnRunner.running) +
+                    "\n" + TailText.diagnostics(_state.value.settings, c.tailTaker.status.value, c.lab.status.value, c.tailTaker.records())
             }.getOrNull(),
             burstReport = g.burstReport,
             skipped = g.skipped,
