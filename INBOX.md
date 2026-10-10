@@ -6090,3 +6090,15 @@ Then for the stats/profit graph, let me filter the graph. For example let me sel
 ```
 Make sure you still complete all prior prompts even if I interrupt with new prompts. 
 ```
+
+## 2026-10-10T15:56:09Z
+```
+Reconsider the live bidding and live betting features. Very few of my live bets and bids are actually filled. I want to live bet and bid today. Here's what I want: 
+
+One feature that can handle all of the following simultaneously:
+
+1) look for stale or mispriced live odds across all live games. Auto bet live odds that are offered at unreasonable positive EV due to stale bids after scoring or mispriced probabilities
+2) make automatic bids on live games that are under the fair odds for bids that are most likely to fill, such as popular game markets. Make rugged guards to cancel bets that become stale or negative EV
+3) make sure the auto bid feature fills up with bids up to the wallet balance. I want as many bids up as possible as long as each bid is clearly positive EV for me.
+4) figure out why I don't get a lot of action on live bets and bids. I want them to fill
+```
