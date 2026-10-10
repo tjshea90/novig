@@ -26,6 +26,7 @@ enum class ScannerFilter(val label: String, val short: String) {
     PARLAY("ParlayAPI", "ParlayAPI"),
     PINNODDS("Pinnodds live", "Pinnodds"),
     LIVEBID("Live bids", "Live bids"),
+    TAIL("Live tail", "Tail"),
 
 }
 
@@ -48,6 +49,7 @@ object TrackerSort {
         BetTracker.SOURCE_PARLAY -> ScannerFilter.PARLAY
         BetTracker.SOURCE_PINNODDS -> ScannerFilter.PINNODDS
         BetTracker.SOURCE_LIVEBID -> ScannerFilter.LIVEBID
+        BetTracker.SOURCE_TAIL -> ScannerFilter.TAIL
         else -> ScannerFilter.VIGILANT
     }
 

@@ -967,6 +967,9 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         /** Fills of the live bids (post-only bids on Novig's live lines priced from Pinnacle's live fair; Tj, 2026-10-10; RESEARCH.md §123-§124). */
         const val SOURCE_LIVEBID = "livebid"
 
+        /** Bets the live tail taker placed: a far strike the late-game model calls decided (ESPN score and clock, Novig's own centre), taken while Novig still offers it under that fair (Tj, 2026-10-10; RESEARCH.md §125). */
+        const val SOURCE_TAIL = "tail"
+
         /** [TrackedBet.nowVia]: whose fair line the current EV rests on. */
         const val VIA_CNO = "cno"
         const val VIA_VIGILANT = "vigilant"
@@ -1084,7 +1087,7 @@ data class FairBasis(val source: String, val sharp: List<String> = emptyList(), 
 
     /** A short group name: "Pinnacle-anchored", "exchange only (Kalshi)", "books' average", "CNO". */
     val group: String get() = when {
-        source == SOURCE_CNO || source == SOURCE_PARLAY || source == SOURCE_PINNODDS -> source
+        source == SOURCE_CNO || source == SOURCE_PARLAY || source == SOURCE_PINNODDS || source == SOURCE_TAIL -> source
         // The fair line names its books by title ("Pinnacle"), the tests and older bets by key ("pinnacle"): either is Pinnacle.
         hasPinnacle -> "Pinnacle in the fair"
         sharp.isNotEmpty() -> "exchange sharp only (${sharp.joinToString("+") { com.tjshea.vigilant.data.reference.TheOddsApiClient.bookTitle(it) }})"
@@ -1095,6 +1098,7 @@ data class FairBasis(val source: String, val sharp: List<String> = emptyList(), 
         const val SOURCE_CNO = "CNO"
         const val SOURCE_PARLAY = "ParlayAPI"
         const val SOURCE_PINNODDS = "Pinnodds live"
+        const val SOURCE_TAIL = "Live tail model"
 
         /** [o]'s fair line as it was when bet; null when it has none. */
         fun of(o: com.tjshea.vigilant.data.scanner.Opportunity): FairBasis? = o.fair?.let { f ->
