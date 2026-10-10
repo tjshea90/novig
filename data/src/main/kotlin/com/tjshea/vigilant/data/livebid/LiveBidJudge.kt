@@ -120,8 +120,8 @@ object LiveBidJudge {
 
     fun keep(v: LiveBidView, q: LiveBidQuality, held: LiveBidHeld): LiveBidKeep {
         common(v, q)?.let { return LiveBidKeep.Pull(it) }
-        if (q.pullOnScore && v.scoreAgeMs != null && v.nowMs - v.scoreAgeMs >= 0 && v.nowMs - v.scoreAgeMs > held.postedAtMs - 1) return LiveBidKeep.Pull(LiveBidSkip.SCORED)
-        if (v.scoreAgeMs != null && q.scoreHoldSec > 0 && v.scoreAgeMs < q.scoreHoldSec * 1000L && v.nowMs - v.scoreAgeMs > held.postedAtMs - 1) return LiveBidKeep.Pull(LiveBidSkip.SCORED)
+        // The score changed after this bid was decided on: its price was worked out before the play, and Pinnacle's reprice (a median 2 s later) has not necessarily arrived.
+        if (q.pullOnScore && v.scoreAgeMs != null && v.nowMs - v.scoreAgeMs > held.postedAtMs) return LiveBidKeep.Pull(LiveBidSkip.SCORED)
         val fair = v.fair ?: return LiveBidKeep.Pull(LiveBidSkip.NO_FAIR)
         val ev = fair / held.price - 1.0 + (if (q.countCredit) credit(v.fee, held.price) else 0.0)
         if (ev < q.pullBelowEv - 1e-9) return LiveBidKeep.Pull(LiveBidSkip.EV)
