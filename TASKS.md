@@ -4498,3 +4498,10 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 - [ ] TM5 (needs Tj's word) soft-book board from the phone (Bovada works keyless; DK/Caesars/Kambi/BetMGM/Superbook endpoints in the research file) for the other-books list and stale-soft-line spotting.
 - [ ] TM6 Tj may start trials: OddsShopper 7 days (benchmark our EVs), OddsCorp 2 weeks via Telegram @oddscorp (ask NCAAF/NFL coverage and the price currency).
 
+## TN: Tj, 2026-10-10 ~16:45Z (verbatim in INBOX.md): "Yes, build the Pinnacle website feed behind a switch. Then consider if any of the sources I already listed can replace the free trials I have or can be better than the apis I already use"
+- [ ] TN1 Read PinnSocket/PinnLiveRunner/pinnTick (how the feed, key and status plug in); design `PinnArcadiaFeed` (REST poller: sports/matchups for discovery, per-game markets for live, emits the same frames `PinnBook.apply` reads), no key needed.
+- [ ] TN2 Build it + settings switch "Pinnacle feed: Pinnodds socket | Pinnacle website (free)" (Settings › Pinnodds live), keyless run (pinnTick/gates/Test), status/diagnostics (poll latency, version-change ages, errors), memory-safe (JsonSplit), tests with fixture frames.
+- [ ] TN3 Freshness measurement built in (per-market version change time vs Novig), shown in Diagnostics, so Tj's phone answers the open question.
+- [ ] TN4 Ship (v0.88.0), Release link to Tj.
+- [ ] TN5 Research: can any of the 15 listed sources replace the trials Tj holds (SGO Pro, OddsPapi, Pinnodds) or beat the APIs already used? Write research/odds_replace_trials_2026-10-10.md (+RESEARCH.md §127) and tell Tj.
+

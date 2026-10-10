@@ -1,13 +1,13 @@
-# CHECKPOINT 2881 — read me first, then TASKS.md
+# CHECKPOINT 2882 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T16:39:22Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `30445682` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T16:49:56Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `e0d8ef34` (this checkpoint is the commit after it)
 
 ## Just done
-v0.87.1 released+recorded; TM research done
+TN written (Pinnacle website feed + trial replacement research)
 
 ## Do this next
-wait for Tj: install v0.87.1, send Diagnostics; decide TM4/TM5 (Pinnacle guest feed test)
+TN1 read PinnSocket/Runner
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ wait for Tj: install v0.87.1, send Diagnostics; decide TM4/TM5 (Pinnacle guest f
 
 ## Last ten checkpoints
 ```
+  c703ca54 ckpt 2881: v0.87.1 released+recorded; TM research done
   98ae1984 ckpt 2880: TM1-TM2 done: odds sources research written (research file, RESEARCH §126, 
   567a7dd2 ckpt 2879: TM request written (odds source research)
   84153559 ckpt 2878: pre-release: v0.87.1: live tail bettor (decided games, no Pinnacle price nee
@@ -26,5 +27,7 @@ wait for Tj: install v0.87.1, send Diagnostics; decide TM4/TM5 (Pinnacle guest f
   e022e1ef ckpt 2874: TL Phase A UI+tests green; RESEARCH §125 written
   1a98f6da ckpt 2873: TL3 Phase A core: FILL preset, fillWallet limits, EITHER trigger, LiveAutopi
   bec190df ckpt 2872: TL1 evidence read; plan A1-A5/B
-  958f2b71 ckpt 2871: TL written
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
