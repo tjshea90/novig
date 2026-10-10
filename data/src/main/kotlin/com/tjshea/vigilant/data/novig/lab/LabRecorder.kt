@@ -54,6 +54,13 @@ class LabRecorder(
     private val bidLab: BidLab? = null,
     /** Grades a would-be bet from the final score when Novig's market no longer says (it drops a settled market). */
     private val grader: LabGrader? = null,
+    /**
+     * The tail taker's door (Tj, 2026-10-10): every tail bet the CONSERVATIVE rules find is handed to it. The recorder itself still places nothing and holds no trading client; what is done with an offer is
+     * the taker's own business, behind its own switches and limits. Null = a paper-only lab.
+     */
+    private val onTail: ((TailOffer) -> Unit)? = null,
+    /** True while ONLY the tail taker wants the lab (no research switch is on): more games, and none of the paper lab's other work (covers, outside quotes, paper bids, grading). */
+    private val tailOnly: () -> Boolean = { false },
 ) {
     private val _status = MutableStateFlow(LabStatus())
     val status: StateFlow<LabStatus> = _status.asStateFlow()
@@ -95,11 +102,12 @@ class LabRecorder(
     /** One pass: read the live ladders, scan, record. Public so a test (or a "scan now") can drive it without the loop. */
     suspend fun cycleOnce(leagues: Set<String>) {
         val now = clock()
-        val live = source.events(leagues, listOf(NovigEvent.STATUS_LIVE, NovigEvent.STATUS_DELAYED)).sortedBy { it.startsTs }.take(MAX_GAMES)
+        val light = tailOnly()
+        val live = source.events(leagues, listOf(NovigEvent.STATUS_LIVE, NovigEvent.STATUS_DELAYED)).sortedBy { it.startsTs }.take(if (light) MAX_GAMES_TAIL else MAX_GAMES)
         if (live.isEmpty()) {
             _status.value = _status.value.copy(games = 0, cycles = _status.value.cycles + 1, lastCycleMs = now)
             cycle++
-            if (cycle % gradeEvery == 0) grade(now)   // games end and the lab goes quiet: that is when the results are in
+            if (cycle % gradeEvery == 0 && !light) grade(now)   // games end and the lab goes quiet: that is when the results are in
             return
         }
         val ids = live.map { it.eventId }.toSet()
@@ -115,7 +123,7 @@ class LabRecorder(
         for (ev in live) {
             val points = markets.filter { it.eventId == ev.eventId }.mapNotNull { m -> Ladders.line(m)?.let { LadderPoint(it, books[m.marketId]) } }
             if (points.isEmpty()) continue
-            val rs = LadderScan.scan(points, live = true)
+            val rs = if (light) emptyList() else LadderScan.scan(points, live = true)
             reports += rs
             for (c in rs.flatMap { it.covers }) {
                 covers++
@@ -129,11 +137,12 @@ class LabRecorder(
                 withState++
                 for (rules in listOf(TailRules(), TailRules.EXPLORE)) for (c in TailScan.scan(points, st, { ref -> game.marginOf(ref) }, rules)) {
                     tail++
+                    if (rules.name == TailTaker.CONSERVATIVE) tailOffer(ev, markets, points, st, c, now)?.let { o -> runCatching { onTail?.invoke(o) } }
                     record(LabRecord(id(), now, LabKind.TAIL, ev.eventId, ev.description, ev.league, c.marketId, c.outcomeId, c.label, c.side, c.strike, c.ask, c.fair, c.edge, c.contracts, 0,
                         "${c.rule} · score ${st.homeScore}-${st.awayScore}, ${"%.0f".format(java.util.Locale.US, st.fractionLeft * 100)}% left, centre ${"%.1f".format(java.util.Locale.US, c.centre)}"))
                 }
             }
-            val quotes = runCatching { altQuotes(ev) }.getOrDefault(emptyList())
+            val quotes = if (light) emptyList() else runCatching { altQuotes(ev) }.getOrDefault(emptyList())
             if (bidLab != null && quotes.isNotEmpty()) {
                 val side = { ref: String -> game?.sideOf(ref) ?: sideByName(ev, ref) }
                 for (sf in AltLineScan.strikeFairs(points, quotes, now, ev.startsTs, AltRules(minBooks = 1, maxDisagreement = 1.0), side)) liveLabLines += liveLines(ev, sf)
@@ -147,7 +156,30 @@ class LabRecorder(
         cycle++
         val s = _status.value
         _status.value = s.copy(games = live.size, cycles = s.cycles + 1, ladders = LadderScan.summary(reports), withState = withState, tail = s.tail + tail, alt = s.alt + alt, covers = s.covers + covers, lastCycleMs = now)
-        if (cycle % gradeEvery == 0) grade(now)
+        if (cycle % gradeEvery == 0 && !light) grade(now)
+    }
+
+    /** A tail candidate as the taker needs it: the Novig market it is on, the Tracker's record of it, the market's own fee. Null when the market or its fee can't be found. */
+    private fun tailOffer(ev: NovigEvent, markets: List<NovigMarket>, points: List<LadderPoint>, st: GameState, c: TailCandidate, now: Long): TailOffer? {
+        if (onTail == null) return null
+        val market = markets.firstOrNull { it.marketId == c.marketId } ?: return null
+        val fee = points.firstOrNull { it.line.marketId == c.marketId }?.line?.fee ?: return null
+        val total = c.side == "OVER" || c.side == "UNDER"
+        val marketLabel = if (total) "Total" else if (c.strike == 0.0) "Moneyline" else "Spread"
+        val selection = "${c.label} ${c.side.lowercase()}"
+        val american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(c.ask.coerceIn(0.001, 0.999))
+        val target = com.tjshea.vigilant.data.novig.trading.BetTarget(
+            market = market, outcomeId = c.outcomeId, league = ev.league, eventName = ev.description, startsTs = ev.startsTs, marketLabel = marketLabel, selection = selection,
+            fair = c.fair, fairAsOfMs = now, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_TAIL,
+            basis = com.tjshea.vigilant.data.tracker.FairBasis(com.tjshea.vigilant.data.tracker.FairBasis.SOURCE_TAIL, emptyList(), 0), auto = true,
+            atBet = com.tjshea.vigilant.data.tracker.AtBet(
+                atMs = now, how = com.tjshea.vigilant.data.tracker.AtBet.HOW_AUTO, scanner = "Live tail", league = ev.league, live = true, american = american, ev = c.edge, fair = c.fair,
+                fairAmerican = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(c.fair.coerceIn(0.001, 0.999)), fairMethod = "Late-game tail model (ESPN score and clock, Novig's own centre)",
+                fairBooks = emptyList(), fairSharp = emptyList(),
+            ),
+        )
+        val note = "${st.homeScore}-${st.awayScore}, ${"%.0f".format(java.util.Locale.US, st.fractionLeft * 100)}% left, centre ${"%.1f".format(java.util.Locale.US, c.centre)}"
+        return TailOffer(c, target, fee, note, now)
     }
 
     /** Both sides of a Novig strike as paper-bid lines: Pinnacle's fair, Novig's ask (what a bid must stay under) and its best bid. */
@@ -222,6 +254,9 @@ class LabRecorder(
 
     companion object {
         const val MAX_GAMES = 4
+
+        /** Games read per pass when ONLY the tail taker wants the lab: the oldest first (the furthest along are the ones that can be decided). */
+        const val MAX_GAMES_TAIL = 8
         const val CYCLE_MS = 20_000L
         const val GRADE_EVERY = 15
         const val GRADE_AFTER_MS = 30 * 60_000L
