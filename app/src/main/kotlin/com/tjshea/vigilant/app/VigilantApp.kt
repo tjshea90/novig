@@ -706,6 +706,16 @@ class AppContainer(private val app: Application) {
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s -> runCatching { pinnTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
         }
+        // The live bid desk runs for the life of the app (cheap when nothing is up): bids left from a run that ended come down at once, and a fill that lands after the switch is turned off is still recorded.
+        appScope.launch { runCatching { liveBidDesk.start() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
+        // While real live bids are on, the wallet is read once a minute and after every fill: bids are sized against the money that is really there.
+        appScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(60_000L)
+                val s = settingsStore.flow.value
+                if (s != null && s.liveBid && s.liveBidReal && !s.paused) runCatching { wallet.fresh() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
+        }
         // Written down as it happens, whatever screen is open: a finished scan's errors and failed fair-odds sources, and CNO's errors
         // (the background scan's own are added where it ends: [AutoScanner]).
         appScope.launch {

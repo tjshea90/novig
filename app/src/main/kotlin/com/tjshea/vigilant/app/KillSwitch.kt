@@ -41,7 +41,7 @@ class KillMarker(private val prefs: SharedPreferences) {
  *     the books aren't read, no background cycle runs, and the auto-bet, auto-lock and auto-make refuse to place anything, even a pass already under way
  *     (its next order asks the saved settings again).
  *  2. The scan under way stops, its notification goes, the background auto-scan's alarm and service stop, and Novig's live feed closes.
- *  3. Every bid resting on Novig comes down (one cancel-all, then each confirmed): a bid is a standing offer of real money, so "stopped" includes taking it back.
+ *  3. Every bid resting on Novig comes down (the live bids by their own desk, then one cancel-all, then each confirmed): a bid is a standing offer of real money, so "stopped" includes taking it back.
  * What it keeps: Tj's switches (auto-bet, auto-make, auto-scan, the interval, every limit), so Resume puts things back exactly as they were. What it does
  * not touch: bets already placed (they're his; the Tracker still grades them) and a bet placed by hand from the Bet sheet.
  */
@@ -84,6 +84,8 @@ object KillSwitch {
         runCatching { ScanService.cancelDone(app) }
         runCatching { AutoScanService.stop(app) }
         runCatching { c.novig.stream?.close() }
+        // The live bids first: they rest for seconds and are re-vouched for every half second, so they are the ones a stopped feed must not leave behind.
+        runCatching { c.liveBidDesk.stopAll(CANCEL_WHY) }
         // 3. Every bid down.
         val cancelled = try {
             c.maker.cancelAll(CANCEL_WHY)?.let { n -> maxOf(n, (upBefore ?: 0) - (c.makerDesk()?.bids()?.count { it.active } ?: 0)) }

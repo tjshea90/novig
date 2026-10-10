@@ -58,7 +58,7 @@ class LiveFeedService : Service() {
         }
         when (intent?.action) {
             ACTION_STOP -> scope.launch {
-                runCatching { container.settingsStore.update { it.copy(pinnLive = false) } }
+                runCatching { container.settingsStore.update { it.copy(pinnLive = false, liveBid = false) } }
                 stopNow()
             }
             ACTION_KILL -> container.appScope.launch { KillSwitch.engage(application, container, "the live feed notification's Stop all") }
@@ -71,7 +71,7 @@ class LiveFeedService : Service() {
     private suspend fun follow() {
         while (scope.isActive) {
             val s = runCatching { container.currentSettings() }.getOrNull()
-            if (s == null || !s.pinnLive || s.killed) {
+            if (s == null || !(s.pinnLive || s.liveBid) || s.killed) {
                 stopNow()
                 return
             }
@@ -117,8 +117,14 @@ class LiveFeedService : Service() {
         return NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_scan)
             .withWallet(this)
-            .setContentTitle("Pinnodds live · " + if (s.pinnLiveBet && s.pinnLiveHalted == null) "real bets" else if (s.pinnLiveHalted != null) "stopped" else "paper")
-            .setContentText(PinnText.statusLine(container.pinnRunner.status.value, container.pinnTrader.status.value, s, keys))
+            .setContentTitle(
+                (if (s.pinnLive) "Pinnodds live · " + (if (s.pinnLiveBet && s.pinnLiveHalted == null) "real bets" else if (s.pinnLiveHalted != null) "stopped" else "paper") else "Live bids") +
+                    (if (s.liveBid) (if (s.pinnLive) " · bids " else " · ") + (if (s.liveBidHalted != null) "halted" else if (s.liveBidReal) "real" else "paper") else ""),
+            )
+            .setContentText(
+                (if (s.liveBid) LiveBidText.statusLine(container.liveBidDesk.status.value, s) + (if (s.pinnLive) " · " else "") else "") +
+                    (if (s.pinnLive) PinnText.statusLine(container.pinnRunner.status.value, container.pinnTrader.status.value, s, keys) else ""),
+            )
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
