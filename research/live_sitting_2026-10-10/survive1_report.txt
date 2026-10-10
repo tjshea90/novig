@@ -1,0 +1,9 @@
+orders resting at the start: 161; book reads 744; reads where the best bid on either side changed vs the previous read: 320 (43%)
+all                n=161   >=   5s  80%  >=  10s  75%  >=  30s  65%  >=  60s  36%  >= 120s  10%
+top of book        n=62    >=   5s  69%  >=  10s  61%  >=  30s  44%  >=  60s  24%  >= 120s  11%
+behind the top     n=99    >=   5s  87%  >=  10s  84%  >=  30s  78%  >=  60s  43%  >= 120s   9%
+size >= 50k        n=102   >=   5s  76%  >=  10s  70%  >=  30s  59%  >=  60s  23%  >= 120s   7%
+size < 50k         n=59    >=   5s  86%  >=  10s  85%  >=  30s  75%  >=  60s  59%  >= 120s  15%
+price 0.05-0.95    n=125   >=   5s  82%  >=  10s  78%  >=  30s  65%  >=  60s  36%  >= 120s   4%
+price <0.05/>0.95  n=36    >=   5s  72%  >=  10s  64%  >=  30s  64%  >=  60s  36%  >= 120s  31%
+watch span 243 s; "alive" counts an order still there at the last read (censored)

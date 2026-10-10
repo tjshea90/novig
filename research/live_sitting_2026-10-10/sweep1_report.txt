@@ -1,0 +1,32 @@
+books read: 462 in 5 games (NCAAF, WNBA)
+
+kind        markets  two-sided  liquid(<=6pt)  empty  sides with no price   mean spread (two-sided)
+TEAM_TOTAL      103          6             0     76        173 of 206      59.1 pts
+TOTAL           178        118            31     22         82 of 356      30.2 pts
+SPREAD          176        145            83     13         44 of 352      18.8 pts
+MONEY             5          5             5      0          0 of 10        0.7 pts
+
+flagged sitting quotes (ladder fair beats ask + live fee by 3%+, size >= 100 contracts, not a liquid strike, between two liquid strikes): 22
+{'NCAAF TOTAL': 6, 'NCAAF SPREAD': 16}
+  NCAAF  Iowa @ Washington          TOTAL      Under 43.5         ask 0.006 x194200  ladder fair 0.026 edge +305.2% between (0.06, 7)
+  NCAAF  Iowa @ Washington          TOTAL      Under 42.5         ask 0.009 x50000   ladder fair 0.019 edge +100.1% between (0.06, 7)
+  NCAAF  Iowa @ Washington          TOTAL      Under 45.5         ask 0.029 x137700  ladder fair 0.045 edge +46.8% between (0.06, 7)
+  NCAAF  Wyoming @ San Jose State   SPREAD     WYO +2.5           ask 0.220 x87100   ladder fair 0.302 edge +31.3% between (0.13, 27)
+  NCAAF  Iowa @ Washington          SPREAD     WASH +6.5          ask 0.047 x50000   ladder fair 0.063 edge +26.7% between (0.11, 18)
+  NCAAF  Iowa @ Washington          TOTAL      Under 40.5         ask 0.008 x50000   ladder fair 0.010 edge +18.3% between (0.06, 7)
+  NCAAF  Wyoming @ San Jose State   SPREAD     WYO +1.5           ask 0.215 x4774    ladder fair 0.264 edge +17.3% between (0.13, 27)
+  NCAAF  Wyoming @ San Jose State   SPREAD     SJSU -14.5         ask 0.170 x207900  ladder fair 0.199 edge +11.6% between (0.13, 27)
+  NCAAF  Iowa State @ BYU           SPREAD     BYU -14.5          ask 0.445 x100000  ladder fair 0.500 edge +8.8% between (0.12, 13)
+  NCAAF  Wyoming @ San Jose State   SPREAD     WYO +6.5           ask 0.425 x50000   ladder fair 0.475 edge +8.0% between (0.13, 27)
+  NCAAF  Wyoming @ San Jose State   TOTAL      Under 35.5         ask 0.690 x50000   ladder fair 0.749 edge +6.6% between (0.21, 9)
+  NCAAF  Wyoming @ San Jose State   SPREAD     WYO +3.5           ask 0.310 x455000  ladder fair 0.343 edge +6.3% between (0.13, 27)
+  NCAAF  Wyoming @ San Jose State   SPREAD     SJSU -21.5         ask 0.045 x338200  ladder fair 0.051 edge +6.3% between (0.13, 27)
+  NCAAF  Wyoming @ San Jose State   TOTAL      Over 46.5          ask 0.060 x373200  ladder fair 0.067 edge +6.2% between (0.21, 9)
+  NCAAF  Iowa @ Washington          SPREAD     WASH +5.5          ask 0.047 x50000   ladder fair 0.053 edge +5.8% between (0.11, 18)
+  NCAAF  Wyoming @ San Jose State   SPREAD     SJSU -11.5         ask 0.280 x93554   ladder fair 0.307 edge +5.1% between (0.13, 27)
+  NCAAF  Iowa @ Washington          SPREAD     IOWA -21.5         ask 0.530 x5000    ladder fair 0.572 edge +5.0% between (0.11, 18)
+  NCAAF  Washington State @ Utah St SPREAD     USU -3.5           ask 0.095 x4419    ladder fair 0.105 edge +4.5% between (0.05, 18)
+  NCAAF  Wyoming @ San Jose State   SPREAD     WYO +5.5           ask 0.400 x50000   ladder fair 0.430 edge +3.7% between (0.13, 27)
+  NCAAF  Wyoming @ San Jose State   SPREAD     SJSU -8.5          ask 0.405 x738823  ladder fair 0.435 edge +3.7% between (0.13, 27)
+  NCAAF  Iowa @ Washington          SPREAD     WASH +9.5          ask 0.095 x32603   ladder fair 0.104 edge +3.5% between (0.11, 18)
+  NCAAF  Wyoming @ San Jose State   SPREAD     SJSU -7.5          ask 0.450 x199454  ladder fair 0.480 edge +3.3% between (0.13, 27)

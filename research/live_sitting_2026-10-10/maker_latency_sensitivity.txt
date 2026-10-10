@@ -1,0 +1,60 @@
+=== place latency 0.3 s, cancel latency 2.0 s, ttl 60 s
+maker simulation: ttl 60s, post latency 0.3s, cancel latency 2.0s, live (maker credit on); bid prices from Pinnacle power-devigged fair / (1+margin)
+columns: sport margin variant | bids, bid-hours | fills optimistic (per bid-hour of one resting bid) EV at fill / +30 s / +120 s (median, % of price) | strict fills (rate) EV +120 s
+  ALL           1% none       | bids   868  13.5 h | fills   91 (  6.7/bid-hour)  EV +1.89% / +1.54% / -0.73% | strict   66 ( 4.9/h) +120s -2.49%
+  ALL           1% pin        | bids  1080  13.5 h | fills   69 (  5.1/bid-hour)  EV +2.16% / +1.93% / +1.40% | strict   41 ( 3.0/h) +120s +1.59%
+  ALL           1% pin+score  | bids   877  10.0 h | fills   57 (  5.7/bid-hour)  EV +2.24% / +2.11% / +1.09% | strict   33 ( 3.3/h) +120s +1.10%
+  ALL           2% none       | bids   907  14.3 h | fills   77 (  5.4/bid-hour)  EV +3.04% / +1.43% / +0.11% | strict   65 ( 4.5/h) +120s -0.63%
+  ALL           2% pin        | bids  1034  14.4 h | fills   56 (  3.9/bid-hour)  EV +3.24% / +3.06% / +1.38% | strict   42 ( 2.9/h) +120s +1.16%
+  ALL           2% pin+score  | bids   849  10.8 h | fills   48 (  4.4/bid-hour)  EV +3.24% / +3.23% / +1.38% | strict   35 ( 3.2/h) +120s +1.09%
+  ALL           3% none       | bids   937  14.7 h | fills   82 (  5.6/bid-hour)  EV +4.03% / +3.01% / +1.94% | strict   55 ( 3.7/h) +120s -1.79%
+  ALL           3% pin        | bids  1034  14.8 h | fills   61 (  4.1/bid-hour)  EV +4.27% / +4.15% / +3.45% | strict   32 ( 2.2/h) +120s +2.50%
+  ALL           3% pin+score  | bids   857  11.2 h | fills   57 (  5.1/bid-hour)  EV +4.27% / +4.20% / +3.49% | strict   27 ( 2.4/h) +120s +3.04%
+  ALL           4% none       | bids   939  15.0 h | fills   67 (  4.5/bid-hour)  EV +4.74% / +1.85% / +1.08% | strict   51 ( 3.4/h) +120s +0.31%
+  ALL           4% pin        | bids  1021  15.0 h | fills   45 (  3.0/bid-hour)  EV +5.17% / +4.42% / +3.65% | strict   24 ( 1.6/h) +120s +3.50%
+  ALL           4% pin+score  | bids   849  11.5 h | fills   38 (  3.3/bid-hour)  EV +5.18% / +5.00% / +4.34% | strict   20 ( 1.7/h) +120s +5.08%
+=== place latency 5.3 s, cancel latency 5.3 s, ttl 60 s
+maker simulation: ttl 60s, post latency 5.3s, cancel latency 5.3s, live (maker credit on); bid prices from Pinnacle power-devigged fair / (1+margin)
+columns: sport margin variant | bids, bid-hours | fills optimistic (per bid-hour of one resting bid) EV at fill / +30 s / +120 s (median, % of price) | strict fills (rate) EV +120 s
+  ALL           1% none       | bids   859  12.4 h | fills   81 (  6.5/bid-hour)  EV +1.81% / +1.16% / -0.73% | strict   58 ( 4.7/h) +120s -2.49%
+  ALL           1% pin        | bids  1058  12.2 h | fills   58 (  4.7/bid-hour)  EV +2.09% / +2.03% / +1.65% | strict   35 ( 2.9/h) +120s +1.86%
+  ALL           1% pin+score  | bids   861   9.1 h | fills   48 (  5.3/bid-hour)  EV +2.18% / +2.22% / +1.56% | strict   29 ( 3.2/h) +120s +1.32%
+  ALL           2% none       | bids   900  13.1 h | fills   68 (  5.2/bid-hour)  EV +2.94% / +1.28% / +0.11% | strict   59 ( 4.5/h) +120s -0.57%
+  ALL           2% pin        | bids  1022  13.1 h | fills   49 (  3.7/bid-hour)  EV +3.22% / +2.97% / +1.16% | strict   38 ( 2.9/h) +120s +1.16%
+  ALL           2% pin+score  | bids   842   9.9 h | fills   40 (  4.0/bid-hour)  EV +3.23% / +3.16% / +1.09% | strict   32 ( 3.2/h) +120s +1.02%
+  ALL           3% none       | bids   931  13.5 h | fills   74 (  5.5/bid-hour)  EV +3.90% / +1.97% / +1.82% | strict   51 ( 3.8/h) +120s -1.82%
+  ALL           3% pin        | bids  1025  13.5 h | fills   54 (  4.0/bid-hour)  EV +4.29% / +4.02% / +3.04% | strict   31 ( 2.3/h) +120s +1.93%
+  ALL           3% pin+score  | bids   850  10.3 h | fills   49 (  4.8/bid-hour)  EV +4.27% / +4.16% / +3.22% | strict   25 ( 2.4/h) +120s +2.50%
+  ALL           4% none       | bids   935  13.7 h | fills   63 (  4.6/bid-hour)  EV +3.36% / +1.42% / +0.97% | strict   50 ( 3.7/h) +120s +0.20%
+  ALL           4% pin        | bids  1014  13.7 h | fills   43 (  3.1/bid-hour)  EV +5.11% / +3.48% / +3.06% | strict   23 ( 1.7/h) +120s +3.35%
+  ALL           4% pin+score  | bids   842  10.5 h | fills   36 (  3.4/bid-hour)  EV +5.17% / +4.85% / +4.46% | strict   20 ( 1.9/h) +120s +5.08%
+=== place latency 5.3 s, cancel latency 5.3 s, ttl 20 s
+maker simulation: ttl 20s, post latency 5.3s, cancel latency 5.3s, live (maker credit on); bid prices from Pinnacle power-devigged fair / (1+margin)
+columns: sport margin variant | bids, bid-hours | fills optimistic (per bid-hour of one resting bid) EV at fill / +30 s / +120 s (median, % of price) | strict fills (rate) EV +120 s
+  ALL           1% none       | bids  1531   6.1 h | fills   50 (  8.1/bid-hour)  EV +2.08% / +1.84% / +1.70% | strict   29 ( 4.7/h) +120s -0.19%
+  ALL           1% pin        | bids  1605   6.0 h | fills   41 (  6.8/bid-hour)  EV +2.27% / +1.90% / +1.81% | strict   22 ( 3.7/h) +120s +0.83%
+  ALL           1% pin+score  | bids  1258   4.6 h | fills   31 (  6.7/bid-hour)  EV +2.27% / +2.11% / +1.80% | strict   16 ( 3.5/h) +120s -0.25%
+  ALL           2% none       | bids  1626   6.5 h | fills   42 (  6.4/bid-hour)  EV +3.23% / +2.57% / +0.81% | strict   30 ( 4.6/h) +120s +0.85%
+  ALL           2% pin        | bids  1672   6.5 h | fills   37 (  5.7/bid-hour)  EV +3.24% / +2.91% / +0.93% | strict   27 ( 4.2/h) +120s +1.02%
+  ALL           2% pin+score  | bids  1318   5.0 h | fills   30 (  6.0/bid-hour)  EV +3.23% / +2.93% / +0.85% | strict   23 ( 4.6/h) +120s +0.85%
+  ALL           3% none       | bids  1686   6.8 h | fills   50 (  7.4/bid-hour)  EV +4.02% / +3.67% / +2.50% | strict   22 ( 3.2/h) +120s -1.93%
+  ALL           3% pin        | bids  1727   6.7 h | fills   44 (  6.5/bid-hour)  EV +4.15% / +3.87% / +3.54% | strict   18 ( 2.7/h) +120s +2.50%
+  ALL           3% pin+score  | bids  1365   5.2 h | fills   39 (  7.5/bid-hour)  EV +4.15% / +3.87% / +3.04% | strict   15 ( 2.9/h) +120s +2.50%
+  ALL           4% none       | bids  1717   6.9 h | fills   33 (  4.7/bid-hour)  EV +5.20% / +2.50% / +2.94% | strict   18 ( 2.6/h) +120s +0.83%
+  ALL           4% pin        | bids  1757   6.9 h | fills   27 (  3.9/bid-hour)  EV +5.38% / +3.36% / +4.05% | strict   14 ( 2.0/h) +120s +5.55%
+  ALL           4% pin+score  | bids  1387   5.4 h | fills   24 (  4.5/bid-hour)  EV +5.23% / +4.60% / +4.34% | strict   12 ( 2.2/h) +120s +5.95%
+=== place latency 5.3 s, cancel latency 5.3 s, ttl 120 s
+maker simulation: ttl 120s, post latency 5.3s, cancel latency 5.3s, live (maker credit on); bid prices from Pinnacle power-devigged fair / (1+margin)
+columns: sport margin variant | bids, bid-hours | fills optimistic (per bid-hour of one resting bid) EV at fill / +30 s / +120 s (median, % of price) | strict fills (rate) EV +120 s
+  ALL           1% none       | bids   622  18.0 h | fills  101 (  5.6/bid-hour)  EV +1.88% / +1.81% / +0.85% | strict   79 ( 4.4/h) +120s +0.09%
+  ALL           1% pin        | bids   848  17.6 h | fills   70 (  4.0/bid-hour)  EV +2.37% / +2.24% / +2.12% | strict   47 ( 2.7/h) +120s +2.31%
+  ALL           1% pin+score  | bids   703  12.3 h | fills   55 (  4.5/bid-hour)  EV +2.43% / +2.38% / +2.07% | strict   38 ( 3.1/h) +120s +2.43%
+  ALL           2% none       | bids   639  18.9 h | fills   81 (  4.3/bid-hour)  EV +3.06% / +2.57% / +0.80% | strict   71 ( 3.8/h) +120s +0.06%
+  ALL           2% pin        | bids   778  18.8 h | fills   57 (  3.0/bid-hour)  EV +3.40% / +3.19% / +2.79% | strict   43 ( 2.3/h) +120s +1.89%
+  ALL           2% pin+score  | bids   661  13.4 h | fills   50 (  3.7/bid-hour)  EV +3.39% / +3.10% / +2.81% | strict   39 ( 2.9/h) +120s +2.35%
+  ALL           3% none       | bids   660  19.5 h | fills   82 (  4.2/bid-hour)  EV +4.01% / +2.96% / +1.94% | strict   64 ( 3.3/h) +120s +1.15%
+  ALL           3% pin        | bids   764  19.4 h | fills   57 (  2.9/bid-hour)  EV +4.36% / +4.03% / +3.04% | strict   40 ( 2.1/h) +120s +2.23%
+  ALL           3% pin+score  | bids   655  13.9 h | fills   57 (  4.1/bid-hour)  EV +4.36% / +4.17% / +3.54% | strict   38 ( 2.7/h) +120s +2.50%
+  ALL           4% none       | bids   652  19.6 h | fills   67 (  3.4/bid-hour)  EV +4.57% / +3.35% / +2.53% | strict   55 ( 2.8/h) +120s +0.20%
+  ALL           4% pin        | bids   745  19.6 h | fills   47 (  2.4/bid-hour)  EV +5.06% / +3.78% / +3.13% | strict   31 ( 1.6/h) +120s +2.76%
+  ALL           4% pin+score  | bids   638  14.1 h | fills   44 (  3.1/bid-hour)  EV +5.00% / +4.50% / +3.87% | strict   30 ( 2.1/h) +120s +4.48%
