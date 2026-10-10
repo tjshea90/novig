@@ -1,13 +1,13 @@
-# CHECKPOINT 2815 — read me first, then TASKS.md
+# CHECKPOINT 2816 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T01:24:44Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-1dbf7537-vyxqtx` · **builds on:** `a4effd21` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T02:13:21Z · **tests:** all 4 fast checks green
+**Branch:** `claude/persistent-setup-rules-2skrwf` · **builds on:** `c884e4a7` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.84.4: Research running foreground service keeps the paper lab alive in the background (carries v0.84.2 grading, v0.84.3 switch fix) (versionCode 159, v0.84.4)
+Added Tj's standing setup rules (2026-10-10: use plugins/skills/connectors, Android 16, interruption-proof ladder + cold resume) to CLAUDE.md and the session-start briefing
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.84.4), then run: bash tools/record-release.sh v0.84.4 159 "v0.84.4: Research running foreground service keeps the paper lab alive in the background (carries v0.84.2 grading, v0.84.3 switch fix)"
+Nothing pending from this request; continue from TASKS.md. Rule text is identical in all 5 repos - edit all five to change it
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  51d99f74 ckpt 2815: pre-release: v0.84.4: Research running foreground service keeps the paper la
   a4effd21 ckpt 2814: pre-ship: v0.84.4: Research running foreground service keeps the paper lab a
   6e74c425 ckpt 2813: pre-ship: v0.84.4: Research running foreground service keeps the paper lab a
   f6d25eb0 ckpt 2812: pre-release: v0.84.3: research switches stay on when Android ends the app; s
@@ -25,5 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   62de3c1e ckpt 2808: archive everything: uploads to research/uploads, lab-digest branch, CLAUDE.m
   a09c68cf ckpt 2807: lab steward routine created, archive verified
   f7e985d0 ckpt 2806: lab steward protocol + permanent archive (release step, sweep workflow), CLA
-  8a1c6370 ckpt 2805: pre-release: v0.84.1: wide-quote guard: a book or exchange quote whose two s
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
