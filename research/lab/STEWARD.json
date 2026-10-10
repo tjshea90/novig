@@ -2,9 +2,10 @@
   "claimId": "steward-20261009-be4c75",
   "stewardSession": "https://claude.ai/code/session_01CNZcNjhdH5GeKj5PKmtTtC",
   "claimedAt": "2026-10-09T23:55:00Z",
-  "lastCheckinAt": "2026-10-09T23:55:00Z",
+  "lastCheckinAt": "2026-10-10T00:05:00Z",
   "leaseHours": 36,
   "routine": "daily 08:47 America/New_York, one fresh session per fire (create_trigger, create_new_session_on_fire)",
   "stopAfter": "2026-10-19",
-  "stopRule": "On or after stopAfter, once the archive release for the last run is complete and READY FOR ANALYSIS is in NOTES.md: remove the schedule trigger from .github/workflows/lab-record.yml, cancel any running lab run, tell Tj. Tj can move stopAfter or say 'keep running'."
+  "stopRule": "On or after stopAfter, once the archive release for the last run is complete and READY FOR ANALYSIS is in NOTES.md: remove the schedule trigger from .github/workflows/lab-record.yml, cancel any running lab run, tell Tj. Tj can move stopAfter or say 'keep running'.",
+  "routineId": "trig_01Ks2vjbokaZdSuTrpoz4m9i"
 }

@@ -4365,5 +4365,5 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 ## SQ: Research lab steward and permanent archive (Tj, 2026-10-09: "Schedule daily check ins with GitHub and save the data and research to GitHub so that other sessions can see the research and no data is lost. Make this a permanent rule ... only one Claude account needs to actively manage the GitHub. Figure out how to share it between 3 different Claude accounts")
 - [x] SQ1 Protocol, steward lease and notes: `research/lab/STEWARD.md`, `STEWARD.json`, `NOTES.md`; CLAUDE.md rule; `resume.sh` prints a LAB line (proved by `tools/test_resume.sh`).
 - [x] SQ2 Permanent archive: `lab-record.yml` archive step (Release per day) + `lab-archive-sweep.yml` (daily, uploads what lab-data holds).
-- [ ] SQ3 Daily steward routine created (08:47 ET, fresh session per fire) and first check-in read; confirm today's `lab-archive-*` release has assets.
+- [x] SQ3 Daily steward routine created (trig_01Ks2vjbokaZdSuTrpoz4m9i, 08:47 ET, fresh session per fire; it has NO connectors, so its first fire (2026-10-10 12:47Z) must be read: did it get the repo and the GitHub tools?). `lab-archive-2026-10-09` verified: 14 assets incl. sgo-tick 15.9 MB (sweep run 38007075086).
 - [ ] SQ4 About 2026-10-16 write READY FOR ANALYSIS in NOTES.md; 2026-10-19 stop rule (STEWARD.json `stopRule`).

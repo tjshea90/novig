@@ -5,3 +5,5 @@
 - SGO tape, same run: DraftKings prices read about 523 s old (median), refreshing about every 329 s; 1.75 M price changes written.
 - Retention fixed today: the `lab-data` branch is a 7-day snapshot only, so the workflow now also uploads every run's raw journals to a `lab-archive-YYYY-MM-DD` Release (never pruned).
 - Not analysed yet. READY FOR ANALYSIS target: about 2026-10-16 (7 days, 30+ fills per recipe), stop 2026-10-19.
+
+- 2026-10-10 00:05Z: archive backfilled by the first sweep run (38007075086): release `lab-archive-2026-10-09` has 14 assets (bidlab, bidlab-event, edge, lab, sgo-close, sgo-tick; runs ending 08:51, 18:02, 23:35). Daily steward routine trig_01Ks2vjbokaZdSuTrpoz4m9i created (08:47 ET).
