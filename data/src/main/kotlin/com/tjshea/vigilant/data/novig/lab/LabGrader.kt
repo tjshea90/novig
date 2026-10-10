@@ -40,6 +40,23 @@ class LabGrader(private val scores: ScoreSource) {
         }
     }
 
+    /** A lab record's result (a cover pays whatever happens: null). The record is of a live game, so its own time stands in for the start. */
+    suspend fun gradeRecord(r: LabRecord): String? {
+        if (r.kind == LabKind.COVER) return null
+        NovigText.parseMatchup(r.event) ?: return null
+        val league = r.league.uppercase()
+        if (!scores.covers(league)) return null
+        val game = findGame(Target(r.event, league, r.atMs, r.kind, r.label), league) ?: return null
+        if (!game.final) return null
+        val pick = pickOfRecord(r.label, r.side, game) ?: return null
+        return when (BetGrader.grade(pick, game)) {
+            BetStatus.WON -> "WIN"
+            BetStatus.LOST -> "LOSS"
+            BetStatus.PUSH, BetStatus.VOID -> "PUSH"
+            else -> null
+        }
+    }
+
     private suspend fun findGame(t: Target, league: String): GameScore? {
         val probe = com.tjshea.vigilant.data.tracker.TrackedBet(
             "lab", t.startsTs, league, t.event, t.startsTs, "", "", "", "", 0.5, 0.0, null, null, 0.0,
