@@ -398,7 +398,7 @@ class LiveBidDesk(
         }
         for ((id, why) in down) cancelOne(id, why)
         // 2. What Novig says happened (a poll of the open orders, a read of fills); its own coroutine so a slow answer never holds a pull.
-        val real = synchronized(mu) { bids.values.any { it.real && it.active } }
+        val real = synchronized(mu) { bids.values.any { (it.real && it.active) || auditDue(it, now) } }
         if (real && orders != null && settling?.isActive != true && (pokeSettle || now - lastPollMs >= POLL_MS)) {
             lastPollMs = now
             pokeSettle = false
@@ -755,14 +755,7 @@ class LiveBidDesk(
             }
         }
         // Bids that ended with no fill are looked at again for a late one (the fills list can lag the order's end).
-        val audit = synchronized(mu) {
-            bids.values.filter { b ->
-                val ended = b.endedAtMs ?: return@filter false
-                val age = now - ended
-                b.real && b.status.ended && b.filled == 0L && b.orderId != null && (b.status == LiveBidStatus.CANCELED || b.status == LiveBidStatus.EXPIRED) && age in AUDIT_FIRST_MS..AUDIT_END_MS &&
-                    (audits[b.clientId] ?: 0) < (if (age >= AUDIT_SECOND_MS) 2 else 1)
-            }
-        }
+        val audit = synchronized(mu) { bids.values.filter { auditDue(it, now) } }
         val ids = (reads.mapNotNull { it.first.orderId } + audit.mapNotNull { it.orderId }).distinct()
         if (ids.isEmpty()) { checkTiming(); return }
         val startsAfter = (reads.map { it.first.startsTs } + audit.map { it.startsTs }).minOrNull()?.minus(FILLS_LOOKBACK_MS) ?: 0L
@@ -786,6 +779,14 @@ class LiveBidDesk(
             if (late.isNotEmpty()) lateFill(b.clientId, late)
         }
         checkTiming()
+    }
+
+    /** Whether [b] ended with no fill and is due another look for a late one (once at [AUDIT_FIRST_MS] after it ended, once at [AUDIT_SECOND_MS]). Inside [mu]. */
+    private fun auditDue(b: LiveBid, now: Long): Boolean {
+        val ended = b.endedAtMs ?: return false
+        val age = now - ended
+        return b.real && b.status.ended && b.filled == 0L && b.orderId != null && (b.status == LiveBidStatus.CANCELED || b.status == LiveBidStatus.EXPIRED) && age in AUDIT_FIRST_MS..AUDIT_END_MS &&
+            (audits[b.clientId] ?: 0) < (if (age >= AUDIT_SECOND_MS) 2 else 1)
     }
 
     /** A fill that showed up after its bid was written down as over with none: recorded, the bid corrected. */
