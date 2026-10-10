@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -121,7 +122,7 @@ class ProfitChartTest {
     @Test
     fun `pinching in narrows the window and dragging moves it`() {
         show()
-        fun window(): String = compose.onNodeWithTag("profitCanvas").fetchSemantics().config.getOrNull(SemanticsProperties.ContentDescription)!!.first()
+        fun window(): String = compose.onNodeWithTag("profitCanvas").fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription)!!.first()
         val before = window()
         compose.onNodeWithTag("profitCanvas").performTouchInput { pinch(Offset(centerX - 40f, centerY), Offset(centerX - 200f, centerY), Offset(centerX + 40f, centerY), Offset(centerX + 200f, centerY)) }
         compose.waitForIdle()
