@@ -368,9 +368,19 @@ object Advisor {
 
     private fun storage(x: Diagnostics.Extras): List<Finding> {
         val total = x.storage.sumOf { it.second }
-        val big = x.storage.filter { it.second >= BIG_FILE }
         return buildList {
-            big.forEach { (name, bytes) -> add(Finding("storage:$name", "WATCH", "$name is ${bytes / 1_048_576} MB", "the app's files total ${total / 1_048_576} MB", "the store that writes $name", "Storage is not a constraint, but a file that keeps growing is a leak: check that the store prunes it.")) }
+            // A document store (a .json file) is rewritten WHOLE on every change, so its size is app-wide lag, not just disk (Tj, 2026-10-10: maker.json reached 15 MB, flagged only at 20, and the
+            // app lagged): over 4 MB is an OPTIMIZE. A recorder folder over its [DataKeeper] cap means the housekeeping is not running: a BUG.
+            x.storage.filter { it.first.endsWith(".json") && it.second >= BIG_DOCUMENT }.forEach { (name, bytes) ->
+                add(Finding("storage:$name", "OPTIMIZE", "$name is ${bytes / 1_048_576} MB and is rewritten whole on every change", "the app's files total ${total / 1_048_576} MB; a big document rewritten often is garbage-collector load felt as lag everywhere", "the store that writes $name (JsonFileStore)", "Prune what it keeps (the oldest ended records) or move the bulk to an append-only day journal."))
+            }
+            com.tjshea.vigilant.data.diag.DataKeeper.RULES.forEach { rule ->
+                val bytes = x.storage.firstOrNull { it.first == rule.dir + "/" }?.second ?: return@forEach
+                if (bytes > rule.maxBytes * 3 / 2) add(Finding("storage:${rule.dir}", "BUG", "${rule.dir}/ holds ${bytes / 1_048_576} MB, over its ${rule.maxBytes / 1_048_576} MB cap", "DataKeeper sweeps every ${com.tjshea.vigilant.data.diag.DataKeeper.EVERY_MS / 3_600_000L} h and should have trimmed it", "data/diag/DataKeeper.kt, the sweep loop in VigilantApp's init", "Find why the sweep did not run or could not delete (a read-only file, an exception swallowed by runCatching)."))
+            }
+            x.storage.filter { it.second >= BIG_FILE && it.first.endsWith("/").not() && !it.first.endsWith(".json") }.forEach { (name, bytes) ->
+                add(Finding("storage:$name", "WATCH", "$name is ${bytes / 1_048_576} MB", "the app's files total ${total / 1_048_576} MB", "the store that writes $name", "Storage is not a constraint, but a file that keeps growing is a leak: check that the store prunes it."))
+            }
         }
     }
 
@@ -414,4 +424,5 @@ object Advisor {
     private const val COLD_START_SLOW_MS = 2_500L
     private const val REPEATS = 20
     private const val BIG_FILE = 20L * 1_048_576
+    private const val BIG_DOCUMENT = 4L * 1_048_576
 }

@@ -99,6 +99,11 @@ object DiagnosticsFile {
         val snap = Advisor.snap(s, x, now, findings)
         val o = StringBuilder()
         o.appendLine("VIGILANT DIAGNOSTICS FILE · version ${x.versionName} · ${fileName(x.versionName, now, zone)}")
+        // What this file covers, so a reader never mistakes a short window for the whole history (logs are cleared after 2 days, by hand with Reset, and the file is capped).
+        o.appendLine(
+            "Covers: events and counters since ${x.eventsSinceMs?.let { SimpleDateFormat("MMM d, h:mm a", Locale.US).apply { timeZone = zone }.format(Date(it)) } ?: "this run"} (the log keeps 2 days and Reset starts it again); " +
+                "recorders: the last ${com.tjshea.vigilant.data.diag.DataKeeper.JOURNAL_DAYS} days; bets: the open ones and the last $BET_DAYS days (older ones are summed in the Tracker sections and in the scan study file); file capped at ${MAX_CHARS / 1000} KB.",
+        )
         o.appendLine()
         o.appendLine("== READ ME FIRST (for Claude) ==")
         readMe(x, now, zone).forEach { o.appendLine(it) }

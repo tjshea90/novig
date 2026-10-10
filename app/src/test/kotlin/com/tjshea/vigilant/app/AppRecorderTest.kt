@@ -59,6 +59,18 @@ class AppRecorderTest {
     // ---- the start and the files --------------------------------------------------------------------------------------------
 
     @Test
+    fun `events older than two days are not brought back, and a reset starts the log again`() = runBlocking {
+        val now = System.currentTimeMillis()
+        eventStore.update { EventBook(listOf(Event(now - 3 * 86_400_000L, "OLD", Level.WARN, "three days ago"), Event(now - 3_600_000L, "NEW", Level.WARN, "an hour ago")), mapOf("k" to 1L), now - 3_600_000L) }
+        val events = EventLog(eventStore)
+        events.load()
+        assertEquals(listOf("an hour ago"), events.events().map { it.msg })
+        events.reset()
+        assertTrue(events.events().isEmpty() && events.counters().isEmpty())
+        assertTrue(eventStore.read().events.isEmpty())
+    }
+
+    @Test
     fun `a process start brings back what earlier runs kept, notes the start after it, and writes both files on its timer`() = runBlocking {
         // An earlier run left an event, a counter and a host's stats.
         eventStore.update { EventBook(listOf(Event(System.currentTimeMillis() - 3_600_000L, "OLD", Level.WARN, "from the last run")), mapOf("x.count" to 5L), System.currentTimeMillis() - 3_600_000L) }
