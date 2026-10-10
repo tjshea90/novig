@@ -347,7 +347,7 @@ class DiagnosticsFileTest {
         // Only the open bets and the last days' are listed, newest first, and the file says that older ones are not.
         val listed = text.substringAfter("== EVERY BET (JSON lines").substringBefore(">>>").lines().count { it.startsWith("{") }
         assertTrue("$listed bet lines", listed in 1..DiagnosticsFile.MAX_BET_LINES)
-        assertTrue(text.contains("older bets are not listed"))
+        assertTrue(text.contains("more recent bets are not listed"))
     }
 
     @Test
