@@ -22,7 +22,7 @@ object LiveAutopilot {
     fun apply(s: ScanSettings, real: Boolean): ScanSettings =
         LiveBidPresets.apply(s, LiveBidPresets.FILL).copy(
             liveBid = true, liveBidReal = real, liveBidHalted = null,
-            liveBidLimits = s.liveBidLimits.copy(fillWallet = true),
+            liveBidLimits = s.liveBidLimits.copy(fillWallet = true, pregameLeavesShare = maxOf(s.liveBidLimits.pregameLeavesShare, LiveBidLimits.AUTOPILOT_LEAVES)),
             pinnLive = true, pinnLiveBet = real, pinnLiveHalted = null,
             tailLive = s.tailLive.copy(on = true, bet = real, halted = null),
             pinnLiveTrigger = LiveTrigger.EITHER, pinnLiveMinEv = TAKER_MIN_EV, pinnLiveMinMove = TAKER_MIN_MOVE,

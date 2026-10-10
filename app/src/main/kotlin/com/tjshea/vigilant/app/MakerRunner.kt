@@ -138,7 +138,7 @@ class MakerRunner(
             // No scan yet in this process: only fills and expiries. A scan still running is judged as far as it got (Tj, 2026-10-03: "I had auto make
             // bids turned on, but it didn't actually make any bids by itself": a scan took 8 minutes and every pass waited for its end, by when the fair
             // prices it read first were going old): its finished leagues' lines are bid on, and a bid whose line it hasn't judged yet stays up.
-            val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+            val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()?.let { forBids(it, s) }
             val rules = MakerRules.of(s)
             if (result == null && stop == null && !cnoSource) {
                 // No lines to judge by, but the bids up still have to fit the wallet (a bet by hand or an auto-bet since they went up: Tj, 2026-10-04).
@@ -202,11 +202,14 @@ class MakerRunner(
      * bids the wallet (or the day's limit) can't cover come down ([MakerDesk.fit]). The container calls it whenever a balance reading or the bids change and
      * the bids up add up to more than the reading ([overWallet]), whatever auto-make is set to. Null when nothing needed doing or betting isn't set up.
      */
+    /** The wallet as the pregame desk may use it: less the share it leaves for the live engines while live bids are on (RESEARCH.md §125; Tj, 2026-10-10: the pregame bids held the whole wallet). */
+    private fun forBids(wallet: Double, s: ScanSettings): Double = if (s.liveBid) wallet * (1.0 - s.liveBidLimits.pregameLeavesShare.coerceIn(0.0, 0.95)) else wallet
+
     suspend fun fitToWallet(why: String): MakerDesk.Report? = passes.withLock {
         val desk = desk() ?: return@withLock null
         if (desk.bids().none { it.resting && it.orderId != null }) return@withLock null
         val s = c.currentSettings()
-        val wallet = runCatching { c.wallet.fresh(maxAgeMs = GUARD_FRESH_MS)?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+        val wallet = runCatching { c.wallet.fresh(maxAgeMs = GUARD_FRESH_MS)?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()?.let { forBids(it, s) }
         try {
             val report = desk.fit(MakerRules.of(s), s.apiMaxPerDay, wallet)
             notifyFills(report.fills, desk.bids())
@@ -305,7 +308,7 @@ class MakerRunner(
         val base = cnoSet?.lines ?: MakerLines.from(scan().result, s, now, unavailable = playerOut(now))
         val line = withMoves(MakerLines.withoutOwn(base.filter { it.outcomeId == outcomeId }, bids), rules, now, read = true)
             .firstOrNull() ?: return "That line isn't in the latest scan any more"
-        val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()
+        val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()?.let { forBids(it, s) }
         return when (val d = MakerQuote.decide(line, rules, now, held)) {
             is MakerDecision.Skip -> d.why
             is MakerDecision.Post -> when {

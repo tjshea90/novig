@@ -138,6 +138,11 @@ data class LiveBidLimits(
      * (reserve kept, every resting bid counted); [haltLoss] still stops the day. Off: the numbers above are the limits.
      */
     val fillWallet: Boolean = false,
+    /**
+     * The share of the wallet the pregame make-order desk leaves alone while live bids are on (Tj, 2026-10-10: "no bids or bets are going through"; 42 pregame bids held $52 of a $52 wallet, so a live bid had nothing to
+     * be posted from). 0 = the pregame desk may use all of it (as before). The live engines take their money from what the pregame bids leave.
+     */
+    val pregameLeavesShare: Double = 0.0,
 ) {
     /**
      * The limits the desk enforces right now. With [fillWallet] on: bids up at once and in a game are lifted to [WALLET_MAX_BIDS] / [WALLET_MAX_PER_GAME_BIDS] (the wallet check, which counts every
@@ -156,6 +161,9 @@ data class LiveBidLimits(
         const val WALLET_MAX_BIDS = 60
         const val WALLET_MAX_PER_GAME_BIDS = 6
         const val WALLET_GAME_SHARE = 0.25
+
+        /** What the autopilot keeps from the pregame bids for the live engines. */
+        const val AUTOPILOT_LEAVES = 0.5
     }
 }
 
