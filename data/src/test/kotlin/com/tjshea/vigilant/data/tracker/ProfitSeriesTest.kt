@@ -58,6 +58,6 @@ class ProfitSeriesTest {
         assertEquals(first, ProfitSeries.Range.ALL.bounds(now, first, zone).first)
         // With no bets before today, All time still shows at least a day.
         assertTrue(ProfitSeries.Range.ALL.bounds(now, now, zone).first <= now - ProfitSeries.DAY_MS)
-        assertNotNull(ProfitSeries.Range.entries.firstOrNull { it.label == "This week" })
+        assertNotNull(ProfitSeries.Range.entries.firstOrNull { it.long == "This week, from Monday" })
     }
 }
