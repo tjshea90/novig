@@ -5975,3 +5975,8 @@ Use the best android UI plugins to come up with different designs and ui for thi
 ```
 I see wildly mispriced odds on live betting on novig everyday. Investigate how to incorporate a novig live betting feature that finds positive EV in sitting live bets available and also a system to auto bid live make bets that rapidly post and cancel and maintain positive EV 
 ```
+
+## 2026-10-10T03:34:58Z
+```
+Build a live bid feature for live betting on novig. The feature must have strong safeguards in place to make sure the live bids don't get stale and that the live bids are truly EV. Give me a good slate of options for this setting to fine tune it, including presets I can save and manual fields to type my own numbers. Give a couple default presets that are safe positive EV live bid presets based on your research
+```
