@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class PinnFeedChoice(val label: String, val blurb: String) {
     SOCKET("Pinnodds socket", "Pinnacle's prices pushed by the Pinnodds WebSocket (your Pinnodds key; the trial ends 2026-10-10 23:34Z, then at least \$198 a month)."),
-    WEBSITE("Pinnacle website (free)", "Pinnacle's own website feed, polled every couple of seconds from your phone: no key, no account, no cost. Same prices as the socket, but seconds old instead of tens of milliseconds."),
+    WEBSITE("Pinnacle website (free)", "Pinnacle's own website API, polled from your phone: no key, no account, no cost. MEASURED 2026-10-10: Pinnacle serves it through a cache (Cloudflare, up to 15 minutes), and the answers were 90-400 seconds old, with no way around it. It is NOT fresh enough for live betting, so real live orders are blocked while it is selected; paper only."),
 }
 
 /**

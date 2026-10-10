@@ -4504,8 +4504,9 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 - [x] TN3 Freshness measurement built in (per-market version change time vs Novig), shown in Diagnostics, so Tj's phone answers the open question.
 - [x] TN4 Ship (v0.88.0), Release link to Tj.
 - [x] TN5 Research: can any of the 15 listed sources replace the trials Tj holds (SGO Pro, OddsPapi, Pinnodds) or beat the APIs already used? Write research/odds_replace_trials_2026-10-10.md (+RESEARCH.md §127) and tell Tj.
-- [ ] TN6 (after the compare numbers) make the Pinnacle website feed the FIRST Pinnacle source of the pregame scan, bids and EV (replacing PinnWire/pinnapi's daily caps): `/sports/{id}/matchups` + `/markets/straight`, JsonSplit, memory-safe.
+- [ ] TN6 ON HOLD (RESEARCH.md §127 addendum: the website API is cached 90-400 s, up to 15 min; pregame only, if at all) (after the compare numbers) make the Pinnacle website feed the FIRST Pinnacle source of the pregame scan, bids and EV (replacing PinnWire/pinnapi's daily caps): `/sports/{id}/matchups` + `/markets/straight`, JsonSplit, memory-safe.
 - [ ] TN7 Pinnacle closing line for CLV from the website: poll each open bet's game in its last minutes, keep the last price before `cutoffAt`.
 - [ ] TN8 Pinnacle specials (`withSpecials=true`, player props) as a sharp props fair beside PropLine; measure coverage and freshness first.
-- [ ] TN9 Read Tj's Diagnostics PINNACLE WEBSITE FEED block (compare run, before 23:34Z) and decide: website feed as the live source, or not.
+- [x] TN9 (done in chat: compare run showed the cache; website feed blocked for real orders in v0.88.5) Read Tj's Diagnostics PINNACLE WEBSITE FEED block (compare run, before 23:34Z) and decide: website feed as the live source, or not.
+- [ ] TO1 Live Pinnacle after the Pinnodds trial (23:34Z): the free website API is cached, so the options are Pinnodds paid (>= $198/mo), OddsCorp trial (Telegram @oddscorp, ask NCAAF/NFL coverage and currency), or the tail bettor alone (no Pinnacle). Tj decides; nothing to build until he does.
 

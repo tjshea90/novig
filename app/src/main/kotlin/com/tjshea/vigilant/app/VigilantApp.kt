@@ -1333,6 +1333,7 @@ class AppContainer(private val app: Application) {
         return when {
             s.killed -> "STOP ALL is on"
             s.pausedByHand -> "scanning is paused"
+            s.pinnWebsite.website -> "the free Pinnacle website feed is minutes old (cached): real live bets need the Pinnodds socket"
             trading == null -> "no betting key connected"
             wallet == null -> "wallet not read yet"
             wallet < stake * 1.2 -> "wallet too low"
@@ -1492,7 +1493,12 @@ class AppContainer(private val app: Application) {
     private fun liveBidConfig(): com.tjshea.vigilant.data.livebid.LiveBidConfig {
         val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.livebid.LiveBidConfig.OFF
         val on = AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS && s.liveBid && !s.paused
-        val blocked = if (s.liveBidReal && trading == null) "no betting key connected" else null
+        val blocked = when {
+            s.liveBidReal && trading == null -> "no betting key connected"
+            // Pinnacle's website feed is served from a cache and was measured 90-400 s old (RESEARCH.md §127): never a basis for a real order.
+            s.liveBidReal && s.pinnWebsite.website -> "the free Pinnacle website feed is minutes old (cached): real live bids need the Pinnodds socket"
+            else -> null
+        }
         val preset = com.tjshea.vigilant.data.livebid.LiveBidPresets.active(s)?.name ?: s.liveBidPresetName?.let { "$it (changed)" }
         return com.tjshea.vigilant.data.livebid.LiveBidConfig(
             on = on, real = s.liveBidReal, quality = s.liveBidQuality, limits = s.liveBidLimits.effective(wallet.flow.value?.dollars), bankroll = s.bankroll, apiMaxStake = s.apiMaxStake, preset = preset,
