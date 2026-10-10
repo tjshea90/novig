@@ -6160,3 +6160,8 @@ These services can't be used in place of an API to get fresh odds?
 
 What about when the trial runs out? Is this a free or cheap alternative?
 ```
+
+## 2026-10-10T17:04:49Z
+```
+@"/root/.claude/uploads/7cdd94fc-4f39-5c03-87f5-68c9bdf3f70a/c24cf8d1-socket-dev-pypi-package-flashscore-scraper.txt" Can this help
+```
