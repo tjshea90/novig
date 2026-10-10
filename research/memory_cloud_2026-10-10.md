@@ -1,0 +1,25 @@
+# The heap at 91%, what was done, and whether a server should do the scanning (2026-10-10, Tj's question)
+
+Tj's screenshot: "Novig prices: stopped reading early because the app's memory was nearly full (heap 467 of 512 MB (91%))". He asked: can it be more efficient, can the allocation be raised, can any of it go to the cloud, and how do OddsJam-sized apps do it.
+
+## Facts
+- **The ceiling cannot be raised.** `android:largeHeap="true"` is already on (AndroidManifest). 512 MB is what Android gives an app on this phone with it; there is no setting above it. Memory outside the heap (native, files, `mmap`) is not capped the same way but nothing in this app's data model lives there.
+- **The cost of a JSON tree.** Measured (JVM probe, SGO-shaped JSON): 30.5 MB of raw JSON became a **252 MB** `JsonElement` tree (8.3x). The app's average reply sizes (v0.83.4 Diagnostics, per call): PropLine **4.2 MB**, SportsGameOdds **1.7 MB**, PinnWire 313 KB, Polymarket 313 KB, Kalshi 376 KB, ParlayAPI 56 KB, CNO 42 KB, Novig 6 KB. The big two were parsed as one tree per reply, so one PropLine board is a 35 MB tree (a 13 MB one 110 MB) on top of the 4 MB string, and two or three at once, plus the scan result and the caches, is how a 512 MB heap fills.
+- The 213 MB heap in the v0.83.4 file (42%) had no SGO and no live bids; 467 MB came after SGO Pro, live bids, the Pinnodds feed and the recorders were added. Nothing in the repo can say which of them holds what without a measurement from the phone.
+
+## What changed (v0.86.1)
+1. `JsonSplit`: SGO's `data` array and PropLine's board are cut into one game's text at a time (positions only, no tree); only one game is a tree at once. Anything it cannot split falls back to the old whole-tree parse. Equivalence is tested against the full parse (random nested documents).
+2. **HeapCensus** (`app/HeapCensus.kt`): a bounded reflective walk (1.5 M objects, 6 s, 8 MB of its own) that adds up approximate retained bytes per owner (every field of the app container and of the UI state). It runs (a) inside every Diagnostics file, under "Memory", and (b) by itself, at most once an hour, when the heap is still over 65% after a forced collection: the event log gets a `MEMORY` line naming the biggest owners. So the next file Tj sends says who holds the heap, and the next fix is aimed.
+3. Earlier in v0.86.0: the 15.5 MB `maker.json` (rewritten whole on every change, never pruned below 14 days) now keeps 2 days (fills 7); JSON saves stream to the file instead of building a String and a ByteArray (two more copies of the whole document each save); recorder journals are cleaned every 6 h; two fast state mirrors are throttled to 1 s.
+
+## How OddsJam-sized apps do it
+They do not scan on the phone. Their servers poll the sportsbooks continuously, compute fair odds and EV once for everyone, and the app receives a small, ready list (a few hundred KB of JSON, or a push). The phone does display and the order hand-off. That is the whole answer to "no memory issues": the heavy data never reaches the phone.
+
+## Could Vigilant do the same?
+Yes in principle, and it is the structural fix if the on-device work is not enough. What it would be:
+- A small always-on service (a Cloudflare Worker / Cloud Run / Fly instance, about $0-5 a month at this size) that holds the provider keys (SGO, PropLine, Pinnacle feeds, Kalshi, Polymarket), reads them on its own schedule, builds the fair lines (`engine` + `data/scanner` are plain Kotlin/JVM and could run there unchanged), and serves `GET /fair?league=NFL` as a slim JSON of fair probabilities per line (with the sources and ages the app's freshness rules need). The phone keeps Novig's books (its own key, live feed) and orders; it prices Novig against the served fair.
+- Costs and risks, none of them free: (1) money and an account (needs Tj's word per CLAUDE.md); (2) the provider keys leave the phone for a server: provider terms and a leak surface on a PUBLIC repo (secrets only in the host's secret store, never committed); (3) one more thing to keep running, and an outage stops all pricing; (4) +1 network hop (tens of ms, irrelevant for fair lines with a 5-minute freshness rule, relevant for the live bids); (5) every freshness, veto and trap-guard rule would have to be the same code on both sides.
+- **Free-GitHub variant (checked and rejected):** Actions can write a `fair.json` to Pages every few minutes, but cron runs at a 5-minute minimum with delays of 10+ minutes, and the app refuses any fair price over 5 minutes old (10 for far games), so most of what it served would be refused; it also cannot serve live bids.
+
+## Recommendation
+Do not build a server yet. The on-device causes found are fixed and the census will name whatever is left on the next file; if the heap still passes 75% after v0.86.1, the biggest owner named by the census is moved off the phone first (for example the SGO/PropLine reads), not the whole scan. Tj decides whether any server is wanted; nothing is built or paid for without his word.

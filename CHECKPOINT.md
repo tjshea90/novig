@@ -1,22 +1,24 @@
-# CHECKPOINT 2866 — read me first, then TASKS.md
+# CHECKPOINT 2867 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T15:06:52Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `8d5289f2` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T15:15:27Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `588eae45` (this checkpoint is the commit after it)
 
 ## Just done
-TK1 trap guard split done (bids vs auto-bet), TJ2 HeapCensus + JsonSplit (SGO/PropLine streamed per game) done; floor green except nothing pending
+TK2 profit graph (ranges, pinch zoom, scroll, full screen) done; TJ4 memo written
 
 ## Do this next
-confirm v0.86.0 Release + record; TK2 profit graph; cloud memo; full tests #2; ship v0.86.1
+TJ5 full tests #2: resource/battery review, compose-performance pass, floor+screenshots; then ship v0.86.1
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
+    ?? research/memory_cloud_2026-10-10.md
 
 ## Last ten checkpoints
 ```
+  08dfe7fa ckpt 2866: TK1 trap guard split done (bids vs auto-bet), TJ2 HeapCensus + JsonSplit (SG
   9f1d520a ckpt 2865: TJ written; release v0.86.0 triggered (run 38061298709)
   b5bbb409 ckpt 2864: research-record.yml schedule removed at Tj's word
   f9f95ea4 ckpt 2863: Lab stopped at Tj's word: cron removed from lab-record.yml, steward claim re
@@ -26,8 +28,7 @@ confirm v0.86.0 Release + record; TK2 profit graph; cloud memo; full tests #2; s
   5674414e ckpt 2859: TI request written into TASKS.md
   1c48380e ckpt 2858: steward check-in 2026-10-10 13:35Z done by hand; the routine session has no 
   241eda8b ckpt 2857: v0.85.8 released and recorded
-  f018273d ckpt 2856: pre-release: v0.85.8: the diagnostics file reads each source with its own de
 ```
 
-(21 automatic checkpoint(s) since the last deliberate one — the
+(13 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
