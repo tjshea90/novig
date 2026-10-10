@@ -6146,3 +6146,10 @@ Yes, build the Pinnacle website feed behind a switch
 
 Then consider if any of the sources I already listed can replace the free trials I have or can be better than the apis I already use
 ```
+
+## 2026-10-10T16:50:25Z
+```
+You said "Bright Data, ScrapingBee, Decodo, Zyte, ParseHub, WebHarvy, ScrapeHero and Quantum Proxies are scraper or proxy vendors. They would only matter if a book blocked your phone's IP"
+
+These services can't be used in place of an API to get fresh odds?
+```
