@@ -272,7 +272,8 @@ class PinnWebsiteFeed(
 
     private fun send(frame: JsonObject, atMs: Long) {
         frames++
-        if (shadow != null) { runCatching { shadow.apply(frame, atMs) }; return }
+        val book = shadow
+        if (book != null) { runCatching { book.apply(frame, atMs) }; return }
         onFrame(frame.toString(), atMs)
     }
 
