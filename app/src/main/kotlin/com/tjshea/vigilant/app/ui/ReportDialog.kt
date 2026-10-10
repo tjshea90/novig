@@ -34,6 +34,9 @@ data class ReportActions(
     /** Make the diagnostics file and open Android's share sheet (Tj, 2026-10-02): "Share diagnostics with Claude". */
     val onShare: () -> Unit = {},
     val onPruneOld: () -> Unit = {},
+    /** Reset diagnostics and Clear scan study (Tj, 2026-10-10). */
+    val onResetDiagnostics: () -> Unit = {},
+    val onClearStudy: () -> Unit = {},
     /** Make the scan study's file and open the share sheet (Tj, 2026-10-03), and read the line that says what's logged when the page opens. */
     val onShareStudy: () -> Unit = {},
     val onStudyShown: () -> Unit = {},

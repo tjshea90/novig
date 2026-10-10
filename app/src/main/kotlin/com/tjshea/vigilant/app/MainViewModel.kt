@@ -2173,6 +2173,40 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Settings › Diagnostics & about › Reset diagnostics (Tj, 2026-10-10: "clear everything in the diagnostics log and start fresh"): the event log and its counters, the connection log,
+     * recent problems, the cycle log, every earlier report's snapshot, this run's timings and frames, the recorders' day journals (paper lab, bid lab, Pinnodds live, live bids, burst, race)
+     * and the saved report files. NOT touched: the Tracker's bets, the settings and keys, the bids on Novig, and the scan study (it has its own Clear button).
+     */
+    fun resetDiagnostics() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val r = runCatching {
+                c.eventLog.reset(); c.netStats.reset(); c.problems.clear(); c.cycleLog.reset(); c.diagHistory.clear(); c.perf.clear(); c.frames.clear()
+                val app = getApplication<Application>()
+                DiagnosticsShare.dir(app).deleteRecursively()
+                com.tjshea.vigilant.data.diag.DataKeeper.clear(app.filesDir)
+            }
+            r.onSuccess { res ->
+                c.eventLog.info("DIAG", "diagnostics reset by hand: ${com.tjshea.vigilant.data.diag.DataKeeper.line(res).replace("swept", "cleared")}")
+                c.eventLog.flush(force = true)
+                _toasts.tryEmit("Diagnostics reset: logs cleared" + if (res.files > 0) ", ${res.files} recorder files (${res.bytes / 1_048_576} MB) deleted" else "")
+            }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; _toasts.tryEmit("Couldn't reset the diagnostics (${e.message ?: e.javaClass.simpleName})") }
+        }
+    }
+
+    /** Settings › Diagnostics & about › Clear scan study (Tj, 2026-10-10): the whole study log goes ([com.tjshea.vigilant.data.study.ScanStudy.clear]); the Tracker is not touched. */
+    fun clearScanStudy() {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { c.study.clear() }
+                .onSuccess { (files, bytes) ->
+                    c.eventLog.info("DIAG", "scan study cleared by hand: $files files, ${bytes / 1_048_576} MB")
+                    _toasts.tryEmit(if (files == 0) "The scan study was already empty" else "Scan study cleared ($files days, ${bytes / 1_048_576} MB)")
+                    readStudyNote()
+                }
+                .onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; _toasts.tryEmit("Couldn't clear the scan study (${e.message ?: e.javaClass.simpleName})") }
+        }
+    }
+
     /** What Android allows Vigilant on this phone, for Diagnostics' health checks (each null where it couldn't be read). */
     private fun phoneNow(app: Application): Diagnostics.Phone {
         val cm = app.getSystemService(android.net.ConnectivityManager::class.java)

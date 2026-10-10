@@ -85,6 +85,21 @@ object DataKeeper {
         return Result(n, bytes, if (n > 0) mapOf("leftovers" to bytes) else emptyMap())
     }
 
+    /** The recorders' journals that are not the scan study: what "Reset diagnostics" empties. */
+    val RECORDER_DIRS: List<String> = RULES.map { it.dir }.filter { it != "study" }
+
+    /** Deletes every day file in [dirs] (all days, today's too). */
+    fun clear(filesDir: File, dirs: List<String> = RECORDER_DIRS): Result {
+        var n = 0
+        var bytes = 0L
+        val by = HashMap<String, Long>()
+        for (d in dirs) File(filesDir, d).listFiles { f -> f.isFile && dayOf(f.name) != null }?.forEach { f ->
+            val len = f.length()
+            if (f.delete()) { n++; bytes += len; by.merge(d, len, Long::plus) }
+        }
+        return Result(n, bytes, by)
+    }
+
     /** One line for the event log and Diagnostics: "swept 12 files (31 MB): lab 20 MB, study 11 MB". */
     fun line(r: Result): String =
         if (r.files == 0) "nothing to sweep" else "swept ${r.files} file${if (r.files == 1) "" else "s"} (${r.bytes / MB} MB): " + r.byDir.entries.sortedByDescending { it.value }.joinToString(", ") { "${it.key} ${it.value / MB} MB" }

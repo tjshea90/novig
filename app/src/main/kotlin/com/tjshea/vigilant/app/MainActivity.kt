@@ -855,6 +855,8 @@ private fun VigilantRoot(
                         onShare = vm::shareDiagnostics,
                         onPruneOld = vm::pruneOldRecorderData,
                         onShareStudy = vm::shareScanStudy,
+                        onResetDiagnostics = vm::resetDiagnostics,
+                        onClearStudy = vm::clearScanStudy,
                         onStudyShown = vm::refreshStudy,
                         onShareBurst = vm::shareBurstStudy,
                         onBurstShown = vm::refreshBurst,
