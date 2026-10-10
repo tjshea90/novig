@@ -174,3 +174,4 @@ day that changes.
 | v0.85.6 | code 166 | 2026-10-10T07:38Z | v0.85.6: live bids say why a line has no Pinnacle price (alternate strike, no main line, three-way)
 | v0.85.7 | code 167 | 2026-10-10T07:54Z | v0.85.7: research share sends only what is new since the last share (under 30 MB), with a Share ALL button
 | v0.85.8 | code 168 | 2026-10-10T08:13Z | v0.85.8: the diagnostics file reads each source with its own deadline and leaves out (and names) any that is too slow
+| v0.86.0 | code 169 | 2026-10-10T15:07Z | v0.86.0: cleanup. Diagnostics reset button, automatic 2-day retention and a 350 KB file cap, bid store pruned (was 15 MB rewritten whole), Games tab and Locked in card removed, auto-bet finds bets through CNO's own link, scan study clear button, settings tidied
