@@ -170,7 +170,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets:
     // Wrapped, not a scrolling row: every range is on screen (a chip off the edge is a control nobody finds).
     androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         ProfitSeries.Range.entries.forEach { r ->
-            FilterChip(selected = r == range && !touched, onClick = { touched = false; onRange(r); if (r == range) { startMs = preset.start; endMs = preset.end } }, label = { Text(r.label, maxLines = 1) }, modifier = Modifier.testTag("profitRange-${r.name}"))
+            FilterChip(selected = r == range && !touched, onClick = { touched = false; onRange(r); if (r == range) { startMs = preset.start; endMs = preset.end } }, label = { Text(r.label, maxLines = 1) }, modifier = Modifier.testTag("profitRange-${r.name}").semantics { contentDescription = r.long })
         }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -182,7 +182,8 @@ private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets:
     val sel = selected
     Text(
         if (sel != null) "${SimpleDateFormat("EEE MMM d, h:mm a", Locale.US).format(Date(sel.tMs))} · profit so far ${Format.signedMoney(sel.cum)} · this bet ${Format.signedMoney(sel.profit)} on ${Format.money(sel.stake)}"
-        else "Pinch to zoom, drag to scroll, tap a point to read it, double-tap to reset. Profit so far: ${Format.signedMoney(ProfitSeries.valueAt(points, endMs))}.",
+        else (if (touched) "Zoomed or scrolled" else range.long) + ": ${SimpleDateFormat("MMM d h:mm a", Locale.US).format(Date(startMs))} to ${SimpleDateFormat("MMM d h:mm a", Locale.US).format(Date(endMs))}. " +
+            "Pinch to zoom, drag to scroll, tap a point to read it, double-tap to reset. Profit so far: ${Format.signedMoney(ProfitSeries.valueAt(points, endMs))}.",
         style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitChartReadout"),
     )
     if (points.size < 2) {

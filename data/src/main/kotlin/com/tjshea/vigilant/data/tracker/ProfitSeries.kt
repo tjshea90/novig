@@ -66,8 +66,11 @@ object ProfitSeries {
     }
 
     /** The quick ranges, as a stock chart has them. Calendar days are the phone's own (midnight to midnight); "this week" starts on Monday. */
-    enum class Range(val label: String) {
-        TODAY("Today"), YESTERDAY("Yesterday"), TWO_DAYS("2 days"), THREE_DAYS("3 days"), THIS_WEEK("This week"), WEEK("7 days"), MONTH("30 days"), ALL("All time");
+    enum class Range(val label: String, val long: String) {
+        // Short, stock-chart labels: the words Today, 7 days, 30 days and All time are already chips for the Tracker's period and the closing-line card, and two chips with one name and two meanings would
+        // be a trap. [long] is what a screen reader says and what the readout line spells out.
+        TODAY("1D", "Today"), YESTERDAY("Yest", "Yesterday"), TWO_DAYS("2D", "Yesterday and today"), THREE_DAYS("3D", "The last 3 days"), THIS_WEEK("Wk", "This week, from Monday"),
+        WEEK("7D", "The last 7 days"), MONTH("30D", "The last 30 days"), ALL("Max", "All time");
 
         /** The window this range shows at [now], with [firstMs] the time of the first bet (what All time starts at). Ends are exclusive of the next period. */
         fun bounds(now: Long, firstMs: Long, zone: ZoneId = ZoneId.systemDefault()): Pair<Long, Long> {
