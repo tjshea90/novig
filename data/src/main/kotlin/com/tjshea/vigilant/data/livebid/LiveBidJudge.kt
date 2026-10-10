@@ -125,7 +125,9 @@ object LiveBidJudge {
         val fair = v.fair ?: return LiveBidKeep.Pull(LiveBidSkip.NO_FAIR)
         val ev = fair / held.price - 1.0 + (if (q.countCredit) credit(v.fee, held.price) else 0.0)
         if (ev < q.pullBelowEv - 1e-9) return LiveBidKeep.Pull(LiveBidSkip.EV)
-        if (q.novigMovePull > 0.0 && held.midAtPost != null && v.mid != null && v.mid <= held.midAtPost - q.novigMovePull + 1e-9) return LiveBidKeep.Pull(LiveBidSkip.NOVIG_MOVED)
+        val mid = v.mid
+        val midThen = held.midAtPost
+        if (q.novigMovePull > 0.0 && midThen != null && mid != null && mid <= midThen - q.novigMovePull + 1e-9) return LiveBidKeep.Pull(LiveBidSkip.NOVIG_MOVED)
         return LiveBidKeep.Keep
     }
 
@@ -145,7 +147,8 @@ object LiveBidJudge {
         }
         val fair = v.fair ?: return LiveBidSkip.NO_FAIR
         if (fair < q.minFair || fair > q.maxFair) return LiveBidSkip.EXTREME
-        if (q.maxBookGap > 0.0 && v.mid != null && abs(fair - v.mid) > q.maxBookGap) return LiveBidSkip.MISMATCH
+        val mid = v.mid
+        if (q.maxBookGap > 0.0 && mid != null && abs(fair - mid) > q.maxBookGap) return LiveBidSkip.MISMATCH
         return null
     }
 
