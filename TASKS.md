@@ -4400,3 +4400,12 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 - [ ] SV9 BUILD (S3) Live Maker at $1: short-ttl (15 s) re-posted `PO` bids, pulls on fair move / score / danger zone / anchor move / stale feed, per-game net exposure cap, day loss halt, STOP ALL, one league. Only after SV6 and SV7 gates.
 - [ ] SV10 (S4, only if SV6 shows REST is the bottleneck) `place`/`cancel` over the open Novig websocket (NOVIG_API.md §21, PW9).
 - [ ] SV11 ASK developers@novig.com (Tj's word first) whether a high cancel-to-fill ratio from API bids is acceptable, and whether the in-play order delay is documented anywhere; the docs read so far say neither.
+
+
+## SW: Live bids on Novig, built (Tj, 2026-10-10: "Build a live bid feature for live betting on novig. The feature must have strong safeguards in place to make sure the live bids don't get stale and that the live bids are truly EV. Give me a good slate of options for this setting to fine tune it, including presets I can save and manual fields to type my own numbers. Give a couple default presets that are safe positive EV live bid presets based on your research")
+- [ ] SW1 READ the code the feature sits on: MakerDesk/MakerQuote/MakerPlan + app MakerRunner (pregame bids), PinnLiveRunner/LiveEdge/PinnBook/LiveMatcher (live Pinnacle fair), NovigTradingClient (PO, ttl, cancel, fills), the presets machinery (PresetRules/Presets), Settings screens, Diagnostics, Tracker logApi. Write the design into this section.
+- [ ] SW2 PURE CORE (data/.../livebid/): `LiveBidRules` (every option), `LiveBidPresets` (built-in safe presets + user presets store), `LiveBidQuote` (price, size, ttl, every staleness/EV guard as a named skip reason), `LiveBidPull` (what cancels a resting bid), exposure/halts. Tests first.
+- [ ] SW3 ENGINE: `LiveBidRunner` (post, re-post on a timer, pull, read fills, accounting, halts) on an order port; PAPER and REAL modes (real OFF by default, behind a confirmation); fills into the Tracker as "Live bids"; order timing recorded (place/cancel/201).
+- [ ] SW4 UI: Settings section "Live bids" (switch, mode, preset chips, saved presets, manual fields for every number), status line, Diagnostics block, STOP ALL covers it.
+- [ ] SW5 Wire in AppContainer / VigilantApp, shared Pinnodds feed (no second socket), tests, `bash tools/test.sh`, ship via `bash ship.sh`, release.yml, Release link to Tj.
+- [ ] SW6 Tell Tj plainly: what was verified (tests, fakes), what was NOT (no real in-play PO yet: the first real order is the test), the safe presets and why.
