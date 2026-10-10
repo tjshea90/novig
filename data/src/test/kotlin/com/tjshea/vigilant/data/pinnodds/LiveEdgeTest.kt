@@ -46,7 +46,27 @@ class LiveEdgeTest {
         assertEquals(1_000L, v.stableMs)
         // Both levels are still +EV at the minimum, so both are offered, and the limit is the dearer one.
         assertEquals(10_000L, v.contracts)
-        assertEquals(0.52, v.limitPrice, 0.0)
+        assertTrue("the limit is at least the dearest displayed level it covers", v.limitPrice >= 0.52 - 1e-9)
+        assertReach(v, fair)
+    }
+
+    /** The limit is the last grid price that still clears the minimum edge: one step up would not. */
+    private fun assertReach(v: LiveVerdict.Bet, fair: Double) {
+        val min = LiveRules().minEv
+        assertTrue("EV at the limit ${v.limitPrice} is still at the minimum", EvMath.quote(fair, v.limitPrice, fee, true).evPercent >= min - 1e-12)
+        val step = if (v.limitPrice < 0.050 - 1e-9 || v.limitPrice >= 0.950 - 1e-9) 0.001 else 0.005
+        assertTrue("one step dearer is under the minimum", EvMath.quote(fair, v.limitPrice + step, fee, true).evPercent < min)
+    }
+
+    @Test
+    fun `the order may pay up to the dearest price that still clears the minimum edge, so a re-quote up a step does not make it miss`() {
+        val f = fee
+        val lim = LiveEdge.reachPrice(0.57, 0.50, f, true, 0.05)
+        assertTrue("moved up from the ask", lim > 0.50)
+        assertTrue(EvMath.quote(0.57, lim, f, true).evPercent >= 0.05)
+        assertTrue(EvMath.quote(0.57, lim + 0.005, f, true).evPercent < 0.05)
+        assertEquals("no room at all: stays where it is", 0.55, LiveEdge.reachPrice(0.57, 0.55, f, true, 0.30), 0.0)
+        assertEquals("grid steps are 0.001 near the ends", 0.0, LiveEdge.reachPrice(0.02, 0.03, f, true, 0.50) - 0.03, 1e-9)
     }
 
     @Test
@@ -54,7 +74,8 @@ class LiveEdgeTest {
         val (_, e, l) = moved()
         val v = judge(e, l, 2_000, listOf(TakeLevel(0.50, 3_000), TakeLevel(0.60, 9_000))) as LiveVerdict.Bet
         assertEquals("the 0.60 level is not +EV enough", 3_000L, v.contracts)
-        assertEquals(0.50, v.limitPrice, 0.0)
+        assertTrue("never at the 0.60 level that is not +EV enough", v.limitPrice < 0.60)
+        assertReach(v, l.fair.getValue(PinnSide.HOME))
     }
 
     @Test
