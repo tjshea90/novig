@@ -297,7 +297,7 @@ object Advisor {
             add(Finding("perf:coldstart", "OPTIMIZE", "The screen took $it ms to appear after the process started", "this run only", "app/MainActivity.kt, VigilantApp.kt (AppContainer's eager work)", "Move whatever runs before the first frame (store loads, receivers) off the main thread or after the first frame.", weight = it / 1000.0))
         }
         if (x.memory.fraction >= 0.7) {
-            add(Finding("perf:heap", "OPTIMIZE", "The heap is ${Math.round(x.memory.fraction * 100)}% full (${x.memory.usedMb} of ${x.memory.maxMb} MB)", x.memory.lines.take(3).joinToString("; "), "data/.../MemoryGuard.kt and what the Memory block lists", "Release what is held longest (see the Memory block's biggest items); an OutOfMemoryError ends the app.", weight = x.memory.fraction * 10))
+            add(Finding("perf:heap", "OPTIMIZE", "The heap is ${Math.round(x.memory.fraction * 100)}% full (${x.memory.usedMb} of ${x.memory.maxMb} MB)", (x.memory.lines.take(3) + x.memory.lines.filter { it.startsWith("Heap census") }.take(1)).joinToString("; "), "data/.../MemoryGuard.kt and what the Memory block lists", "Release what is held longest (see the Memory block's biggest items); an OutOfMemoryError ends the app.", weight = x.memory.fraction * 10))
         }
     }
 

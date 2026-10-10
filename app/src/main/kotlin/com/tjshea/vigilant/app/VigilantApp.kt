@@ -668,6 +668,25 @@ class AppContainer(private val app: Application) {
                 delay(com.tjshea.vigilant.data.diag.DataKeeper.EVERY_MS)
             }
         }
+        // The heap watch (Tj, 2026-10-10: "stopped reading early because the app's memory was nearly full"): every 20 s, over 70% of the heap is collected once and, if it is still
+        // over 65%, [HeapCensus] walks the container and the event log says who holds it. At most once an hour, in the background, so the next Diagnostics file names the owners even when it is
+        // made later at a quiet moment.
+        appScope.launch(Dispatchers.IO) {
+            var lastCensusMs = 0L
+            while (true) {
+                delay(20_000)
+                val now = System.currentTimeMillis()
+                if (now - lastCensusMs < 3_600_000L || com.tjshea.vigilant.data.MemoryGuard.fraction() < 0.70) continue
+                runCatching {
+                    Runtime.getRuntime().gc()
+                    if (com.tjshea.vigilant.data.MemoryGuard.fraction() >= 0.65) {
+                        lastCensusMs = now
+                        eventLog.warn("MEMORY", "${com.tjshea.vigilant.data.MemoryGuard.text()} after a collection. " + HeapCensus.run(HeapCensus.rootsOf("", this@AppContainer)).line(8))
+                        eventLog.flush(force = true)
+                    }
+                }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
+        }
         // The flight recorder: what earlier runs kept comes back first, then events and connection stats are written out every half minute.
         appScope.launch(Dispatchers.IO) {
             recorder.run(runCatching { app.packageManager.getPackageInfo(app.packageName, 0).versionName }.getOrNull(), FLUSH_EVERY_MS)
