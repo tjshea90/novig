@@ -101,6 +101,8 @@ class PinnLiveRunner(
     private val clock: () -> Long = System::currentTimeMillis,
     private val discoverEveryMs: Long = DISCOVER_MS,
     private val tickMs: Long = TICK_MS,
+    /** Told of every market version the runner's book takes in (the feed race's view of THIS feed). */
+    private val onVersion: ((Long, String, Long, Long) -> Unit)? = null,
 ) {
     private val _status = MutableStateFlow(LiveRunnerStatus())
     val status: StateFlow<LiveRunnerStatus> = _status.asStateFlow()
@@ -167,6 +169,7 @@ class PinnLiveRunner(
 
     private fun reset() {
         book = PinnBook(config().method)
+        book.versionListener = onVersion
         catalogEvents = emptyList(); catalogMarkets = emptyList(); targetsByEvent.clear(); targetsByMarket.clear(); armedUntil.clear(); follows.clear(); probes.clear()
         evaluations = 0; candidates = 0; skips.clear(); lastOffer.clear(); lastBidBookMs.clear(); lastBidJudgeMs = 0L; bidTargetsNow = 0; bidJudged = 0L; bidGate = null; bidError = null; lastCandidate = null; watched = 0; matchedGames = 0; lastRematchMs = 0; lastEventCount = -1; catalogDirty = false
     }

@@ -109,6 +109,12 @@ class PinnEvent(val id: Long) {
 class PinnBook(var method: DevigMethod = DevigMethod.WORST_CASE) {
     val events = HashMap<Long, PinnEvent>()
 
+    /**
+     * Told of every market version this book takes in for the first time (matchup id, market key, version, the phone's clock): the feed race ([VersionRace]) times two feeds against each other
+     * with it. Called from [apply]'s thread; keep it quick.
+     */
+    @Volatile var versionListener: ((matchupId: Long, key: String, version: Long, atMs: Long) -> Unit)? = null
+
     var frames = 0L
         private set
 
@@ -213,6 +219,7 @@ class PinnBook(var method: DevigMethod = DevigMethod.WORST_CASE) {
         // A danger-zone frame is not a price.
         if (channel == "dz") return
         if (line != null && version != null && version <= line.version) return
+        if (version != null) versionListener?.invoke(e.id, key, version, nowMs)
         val sides = LinkedHashMap<PinnSide, Double>()
         var points: Double? = null
         (m["prices"] as? JsonArray)?.forEach { p ->
