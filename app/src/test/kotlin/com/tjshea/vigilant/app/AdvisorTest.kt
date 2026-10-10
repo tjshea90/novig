@@ -260,8 +260,18 @@ class AdvisorTest {
         assertTrue(all.getValue("logcat:jank").action.contains("compose-performance"))
         assertEquals("WATCH", all.getValue("logcat:error:OkHttp").kind)
         assertTrue(all.getValue("logcat:error:OkHttp").title.contains("2 error lines from 'OkHttp'"))
-        assertEquals("WATCH", all.getValue("storage:events.json").kind)
+        assertEquals("OPTIMIZE", all.getValue("storage:events.json").kind)   // a document rewritten whole: lag, not just disk
         assertFalse(all.containsKey("storage:bets.json"))
+    }
+
+    @Test
+    fun `a 15 MB bid file is an OPTIMIZE, and a recorder folder far over its cap says the housekeeping is not running`() {
+        val x = base.copy(storage = listOf("maker.json" to 15L * 1_048_576, "lab/" to 90L * 1_048_576, "race/" to 5L * 1_048_576, "study/" to 20L * 1_048_576))
+        val all = byKey(x)
+        assertEquals("OPTIMIZE", all.getValue("storage:maker.json").kind)
+        assertEquals("BUG", all.getValue("storage:lab").kind)          // 90 MB against a 40 MB cap
+        assertFalse(all.containsKey("storage:race"))
+        assertFalse(all.containsKey("storage:study"))                  // under its 24 MB cap (and the week it keeps)
     }
 
     // ---- order, keys, numbers ---------------------------------------------------------------------------------------------
