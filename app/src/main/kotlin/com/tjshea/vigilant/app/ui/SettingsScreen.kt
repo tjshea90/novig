@@ -1286,7 +1286,8 @@ private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportAct
     }
 }
 
-/** Research: the master switch, the one file to send, and the paper lab (Tj, 2026-10-09: "I don't see the paper lab setting"). */
+/** Research: the master switch, the one file to send, the paper lab (Tj, 2026-10-09: "I don't see the paper lab setting"), and the other recorders (burst, live feed test). */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.ResearchPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     Intro("Leave the app open, plugged in, through the games; then tap the button and send Claude the file. Nothing here places an order.")
