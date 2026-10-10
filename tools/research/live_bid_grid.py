@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pinn_novig_lag as L
 from pinn_novig_maker import tapes_load, floor_tick
 
-MARGINS = (0.02, 0.03, 0.04, 0.05)
+MARGINS = (0.02, 0.03, 0.04, 0.05, 0.06, 0.08, 0.10)
 TTLS = (15.0, 30.0, 60.0)
 FLOORS = (0.0, 0.01, 0.02)
 HOLDS = (0, 15, 30)
