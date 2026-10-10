@@ -426,6 +426,19 @@ data class ScanSettings(
     /** No live bet for this many seconds after the game's score changes (0 = off): Novig pauses live betting after a score. [PINN_HOLDOFF_CHOICES]. */
     val pinnLiveHoldoffSeconds: Int = 0,
     /**
+     * Live bids (Tj, 2026-10-10: "Build a live bid feature for live betting on novig … strong safeguards … presets I can save and manual fields"; RESEARCH.md §123-§124): post-only bids on Novig's live
+     * lines, priced under Pinnacle's live fair on the Pinnodds socket, resting seconds at a time and pulled the moment anything that justified them changes. [liveBid] switches the engine on: it judges,
+     * journals and follows up what it WOULD bid (paper) and sends nothing. [liveBidReal] makes it bid with real money, sized by [liveBidLimits] (⅛ Kelly by default) and held to them. The rules are
+     * [liveBidQuality] (a preset sets them, [liveBidPresetName] says which); [liveBidHalted] says why it stopped until Tj resumes it. STOP ALL and a crash switch both off.
+     */
+    val liveBid: Boolean = false,
+    val liveBidReal: Boolean = false,
+    val liveBidHalted: String? = null,
+    val liveBidQuality: com.tjshea.vigilant.data.livebid.LiveBidQuality = com.tjshea.vigilant.data.livebid.LiveBidQuality(),
+    val liveBidLimits: com.tjshea.vigilant.data.livebid.LiveBidLimits = com.tjshea.vigilant.data.livebid.LiveBidLimits(),
+    val liveBidPresetName: String? = "Balanced",
+    val liveBidPresets: List<com.tjshea.vigilant.data.livebid.SavedLiveBidPreset> = emptyList(),
+    /**
      * Set only by [effective]: these settings are the low-usage scan's ([LowUsageBids.profile]). The scanner and the feeds read it (quotes past the freshness limit are
      * dropped before the devig, a league with no game in the window isn't asked); never saved, so a saved file can't switch it on.
      */
@@ -741,7 +754,7 @@ data class ScanSettings(
      * minutes, the research options are turned off".
      */
     fun safeStart(crashed: Boolean): ScanSettings =
-        if (!crashed) this else copy(researchMode = false, altLab = false, feedRace = false, burstRecorder = false, autoBet = false, maker = false, pinnLive = false)
+        if (!crashed) this else copy(researchMode = false, altLab = false, feedRace = false, burstRecorder = false, autoBet = false, maker = false, pinnLive = false, liveBid = false, liveBidReal = false)
 
     fun migrate(): ScanSettings {
         var s = this
