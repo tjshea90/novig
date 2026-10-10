@@ -47,6 +47,13 @@ interface PushedBooks {
      */
     fun watch(marketIds: Collection<String>)
 
+    /**
+     * The live engines' own markets, kept apart from [watch]'s list: a scan's [watch] REPLACES what is wanted every cycle, so with the background scan running it dropped the live
+     * games' books a moment after the live runner asked for them (Tj, 2026-10-10: "no current Novig book" on every main line, 0 live bids). These are subscribed first and stay
+     * until the next [watchLive] call, whatever [watch] says.
+     */
+    fun watchLive(marketIds: Collection<String>) = watch(marketIds)
+
     /** Connects (if it isn't already) without changing what is watched. */
     fun open() {}
 
@@ -129,6 +136,11 @@ class NovigStream(
     /** Wanted markets, most important first. */
     private var wanted: List<String> = emptyList()
 
+    /** The live engines' markets ([watchLive]): always ahead of [wanted] in what is subscribed. */
+    private var livePinned: List<String> = emptyList()
+
+    private fun allWanted(): List<String> = if (livePinned.isEmpty()) wanted else (livePinned + wanted).distinct()
+
     /** Asked for on this connection (acknowledged or not). */
     private val subscribed = HashSet<String>()
 
@@ -166,6 +178,16 @@ class NovigStream(
         synchronized(this) {
             lastUsedMs = clock()
             wanted = marketIds.distinct()
+            start = socket == null && failedAtMs.let { it == null || clock() - it >= retryDelayMs }
+        }
+        if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
+    }
+
+    override fun watchLive(marketIds: Collection<String>) {
+        val start: Boolean
+        synchronized(this) {
+            lastUsedMs = clock()
+            livePinned = marketIds.distinct()
             start = socket == null && failedAtMs.let { it == null || clock() - it >= retryDelayMs }
         }
         if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
@@ -261,7 +283,7 @@ class NovigStream(
         while (scope.isActive) {
             val (drop, add) = synchronized(this) {
                 if (socket == null) return
-                val want = wanted.take(limit.coerceAtLeast(0))
+                val want = allWanted().take(limit.coerceAtLeast(0))
                 val wantSet = want.toHashSet()
                 val drop = subscribed.filter { it !in wantSet }
                 val room = limit - (subscribed.size - drop.size)

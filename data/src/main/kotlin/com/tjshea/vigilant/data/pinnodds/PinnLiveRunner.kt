@@ -361,7 +361,7 @@ class PinnLiveRunner(
         byEvent.values.flatten().forEach { targetsByMarket[it.market.marketId] = it }
         val ids = ordered.sortedBy { it.first }.map { it.second }
         watched = ids.size
-        if (ids.isNotEmpty()) novig.watch(ids)
+        novig.watchLive(ids)
     }
 
     /** A Pinnacle matchup worth matching now: heard from lately, one of the game's own books, and (live) live or (prematch) not yet started. */
