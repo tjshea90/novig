@@ -6000,3 +6000,8 @@ How can I get all these missed bets to actually fill
 ```
 It says no look has been judged yet
 ```
+
+## 2026-10-10T06:42:49Z
+```
+I pressed share the diagnostic with Claude but it did nothing
+```
