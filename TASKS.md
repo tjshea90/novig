@@ -4371,3 +4371,8 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 ## SR: Save as much data and research as possible in the repo (Tj, 2026-10-09: "You said something about the data being erased every week. Save as much data and research as possible into the GitHub repo and make sure other Claude sessions do so as well")
 - [x] SR1 The weekly erasure was the `lab-data` branch (7-day force-pushed snapshot) and Actions artifacts (30 days): raw journals now go to `lab-archive-*` Releases (permanent); readable tables to the append-only `lab-digest` branch; CLAUDE.md rule.
 - [x] SR2 Everything Tj uploads is copied to `research/uploads/<date>/` by `tools/archive-uploads.sh` (run by capture_inbox.sh on every message and by resume.sh at session start); 15 existing files saved (3.7 MB).
+
+## SS: Lab grading and first findings (steward, 2026-10-10, from Tj's phone research file)
+- [ ] SS1 Grade the paper bids, would-be bets and lab records from final scores (ESPN/MLB via `ScoreSource`/`BetGrader`), not from Novig's public market (it drops settled markets: 0 GRADE events in 21 h on the phone and 16 h+ on GitHub). Test with a finished game.
+- [ ] SS2 Add an independent close (SGO/Pinnacle close from `sgo-close`) to each paper fill's CLV; report game-level CLV.
+- [ ] SS3 About 2026-10-16: re-rank recipes on graded results + independent closes; only then propose Bids defaults (candidate: margin 3, rest 120 min, no guard needed).
