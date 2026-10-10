@@ -166,3 +166,4 @@ day that changes.
 | v0.84.1 | code 156 | 2026-10-09T23:43Z | v0.84.1: wide-quote guard
 | v0.84.4 | code 159 | 2026-10-10T01:41Z | v0.84.4: Research running foreground service; also carries v0.84.2 lab grading and v0.84.3 research-switch fix
 | v0.85.0 | code 160 | 2026-10-10T05:02Z | v0.85.0: live bids on Novig (Settings › Live bids)
+| v0.85.1 | code 161 | 2026-10-10T05:33Z | v0.85.1: live bids say why none is up; live orders may pay up to the minimum edge
