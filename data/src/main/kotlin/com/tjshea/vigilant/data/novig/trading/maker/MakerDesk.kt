@@ -214,7 +214,16 @@ class MakerDesk(
     private val clock: () -> Long = System::currentTimeMillis,
     private val dayStart: (Long) -> Long = { ApiBetPlacer.localMidnight(it) },
     private val pause: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) },
+    /** Post-only orders that belong to another desk (the live bids): not this desk's to cancel as strays. */
+    private val otherDesks: () -> OtherOrders = { OtherOrders.NONE },
 ) {
+    /** The ids of the orders another desk placed: [orderIds] by Novig's id, [clientIds] by the id they were sent with (an order whose answer never came has only that one). */
+    data class OtherOrders(val orderIds: Set<String>, val clientIds: Set<String>) {
+        companion object {
+            val NONE = OtherOrders(emptySet(), emptySet())
+        }
+    }
+
     /** What a cycle did. [fills]: Tracker bets that are new or grew this cycle. */
     data class Report(
         val placed: Int,
@@ -757,8 +766,9 @@ class MakerDesk(
         val known = store.all()
         val knownIds = known.mapNotNullTo(HashSet()) { it.orderId }
         val knownClients = known.mapTo(HashSet()) { it.clientId }
+        val other = otherDesks()
         for (o in open) {
-            if (o.tif == "PO" && o.orderId !in knownIds && o.clientId !in knownClients) {
+            if (o.tif == "PO" && o.orderId !in knownIds && o.clientId !in knownClients && o.orderId !in other.orderIds && o.clientId !in other.clientIds) {
                 try {
                     trading.cancelOrder(o.orderId)
                 } catch (e: CancellationException) {

@@ -629,7 +629,11 @@ class AppContainer(private val app: Application) {
     fun makerDesk(): com.tjshea.vigilant.data.novig.trading.maker.MakerDesk? {
         val t = trading ?: return null
         makerDeskCache?.takeIf { it.first === t }?.let { return it.second }
-        return com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(t, tracker, makerStore, lock = orderLock).also { makerDeskCache = t to it }
+        return com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(
+            t, tracker, makerStore, lock = orderLock,
+            // The live bids are post-only orders this desk has no record of; they are the live bid desk's, never strays.
+            otherDesks = { liveBidDesk.bidsNow().let { l -> com.tjshea.vigilant.data.novig.trading.maker.MakerDesk.OtherOrders(l.mapNotNull { it.orderId }.toSet(), l.map { it.clientId }.toSet()) } },
+        ).also { makerDeskCache = t to it }
     }
 
     /** Make orders: the passes and the Make tab's state ([MakerRunner]). */
