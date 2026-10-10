@@ -9,7 +9,9 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -106,11 +108,12 @@ class ProfitChartTest {
         show()
         compose.onNodeWithTag("profitRange-ALL").assertIsSelected()
         // All time: 10 bets, 5 won and 5 lost: profit 0.
-        compose.onNodeWithTag("profitInView").assertTextContains("0", substring = true)
+        compose.onAllNodesWithText("Profit in view").assertCountEquals(1)
+        compose.onNodeWithText("+\$1.00").assertDoesNotExist()
         compose.onNodeWithTag("profitRange-WEEK").performClick()
         compose.onNodeWithTag("profitRange-WEEK").assertIsSelected()
         // The last 7 days hold the bets from 0..6 days ago: 7 bets, 4 won (+4) and 3 lost (-3) = +$1.00.
-        compose.onNodeWithTag("profitInView").assertTextContains("+\$1.00", substring = true)
+        compose.onNodeWithText("+\$1.00").assertExists()
         compose.onNodeWithTag("profitRange-TODAY").performClick()
         compose.onNodeWithTag("profitRange-YESTERDAY").assertExists()
         compose.onNodeWithTag("profitRange-THIS_WEEK").assertExists()
