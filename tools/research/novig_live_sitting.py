@@ -170,29 +170,81 @@ def ladder_fair(points, thr, idx_of):
     return unlogit(logit(p0) + w * (logit(p1) - logit(p0))), (s0, s1)
 
 
-def flags(recs):
+
+def probit(p):
+    p = min(max(p, 1e-4), 1 - 1e-4)
+    lo, hi = -6.0, 6.0
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if 0.5 * math.erfc(-mid / math.sqrt(2)) < p:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+def normcdf(z):
+    return 0.5 * math.erfc(-z / math.sqrt(2))
+
+
+def fit_ladder(points, maxspread=0.12):
+    """Least-squares line probit(P) = a - b*threshold through the two-sided, reasonably tight books (weights 1/spread); returns (a, b, rms, n) or None.  P is the middle of the
+    book for the ladder's own outcome.  A normal margin / total is exactly a line in probit space, so this is a one-parameter-pair model of the whole ladder."""
+    xs, ys, ws = [], [], []
+    for sthr, r, i in points:
+        sd = sides(r)[i]
+        if sd['ask'] is None or sd['bid'] is None:
+            continue
+        sp = sd['ask'] - sd['bid']
+        mid = (sd['ask'] + sd['bid']) / 2
+        if sp > maxspread or not 0.03 < mid < 0.97:
+            continue
+        xs.append(sthr); ys.append(probit(mid)); ws.append(1.0 / max(sp, 0.01))
+    if len(xs) < 5:
+        return None
+    sw = sum(ws); mx = sum(w * x for w, x in zip(ws, xs)) / sw; my = sum(w * y for w, y in zip(ws, ys)) / sw
+    sxx = sum(w * (x - mx) ** 2 for w, x in zip(ws, xs))
+    if sxx <= 0:
+        return None
+    sxy = sum(w * (x - mx) * (y - my) for w, x, y in zip(ws, xs, ys))
+    b = -sxy / sxx
+    a = my + b * mx
+    if b <= 0:
+        return None
+    rms = math.sqrt(sum(w * (y - (a - b * x)) ** 2 for w, x, y in zip(ws, xs, ys)) / sw)
+    return a, b, rms, len(xs)
+
+
+def flags(recs, model='fit'):
     out = []
     for key, pts in ladders(recs).items():
         pts.sort(key=lambda x: x[0])
-        for s, r, i in pts:
-            if liquid_mid(r, i) is not None:
-                continue     # a liquid strike defines the ladder; it is not judged against itself
-            lf = ladder_fair(pts, s, i)
-            if not lf:
-                continue
-            p, nb = lf
+        fit = fit_ladder(pts) if model == 'fit' else None
+        if model == 'fit' and (not fit or fit[2] > 0.25):
+            continue    # no usable fit (too few tight books, or the tight books disagree with a line)
+        for sthr, r, i in pts:
             sd = sides(r)
-            # orientation: for TOTAL / TEAM_TOTAL outcome 0 = Over (YES rises as the strike FALLS); for SPREAD the same with the threshold encoding above, so P(outcome 0) falls as thr rises.
+            if model == 'fit':
+                a, b, rms, n = fit
+                p = normcdf(a - b * sthr)
+                nb = (round(rms, 2), n)
+            else:
+                if liquid_mid(r, i) is not None:
+                    continue
+                lf = ladder_fair(pts, sthr, i)
+                if not lf:
+                    continue
+                p, nb = lf
             for k in (0, 1):
                 pw = p if k == i else 1 - p
                 ask = sd[k]['ask']
-                if ask is None or sd[k]['askQty'] < 100:
+                if ask is None or sd[k]['askQty'] < 100 or ask > 0.985:
                     continue
                 fe = fee(ask, r['fee'])
                 edge = pw / (ask + fe) - 1
                 if edge >= EDGE:
-                    out.append({'marketId': r['marketId'], 'event': r['event'], 'league': r['league'], 'type': r['type'], 'strike': s, 'name': sd[k]['name'], 'outcomeId': sd[k]['id'],
-                                'ask': ask, 'askQty': sd[k]['askQty'], 'ladderFair': round(pw, 4), 'edge': round(edge, 4), 'neighbours': nb, 'ladder': key[1], 'fee': fe})
+                    out.append({'marketId': r['marketId'], 'event': r['event'], 'league': r['league'], 'type': r['type'], 'strike': sthr, 'name': sd[k]['name'], 'outcomeId': sd[k]['id'],
+                                'ask': ask, 'askQty': sd[k]['askQty'], 'ladderFair': round(pw, 4), 'edge': round(edge, 4), 'neighbours': nb, 'ladder': key[1], 'fee': fe, 'model': model})
     return sorted(out, key=lambda x: -x['edge'])
 
 
