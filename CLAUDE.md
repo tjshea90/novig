@@ -438,6 +438,7 @@ SGO Pro on too = both read, SGO wins a book both send), and brings them back if 
   A new recorder or journal MUST get a rule in `DataKeeper.RULES` (a folder of `name-YYYY-MM-DD.jsonl` files) or it grows for ever.
 - `DiagnosticsFile.build` is capped at 350 KB by `fit()` (protected sections whole, the biggest others halved, newest kept); EVERY BET lists only open bets and the last 3 days. A new section must stay small or be cuttable. The in-app "Show report" window shows `preview()` (60 KB), never the whole file.
 - A JSON document store (`JsonFileStore`) is rewritten WHOLE on every change: never let one grow without a prune (the 15 MB maker.json was a main cause of lag). Append-only journals (`DayJournal`) do not fsync per line.
+- **Memory (Tj, 2026-10-10: heap 467 of 512 MB):** a `JsonElement` tree costs about 8x its JSON. Never parse a reply of a megabyte or more as one tree: cut its array into one element at a time with `data/JsonSplit` (SGO's `data`, PropLine's board do), and never keep a whole reply or league in memory. `app/HeapCensus` names who holds the heap (Diagnostics › Memory, and a `MEMORY` event when the heap stays over 65% after a collection): read it before guessing. `largeHeap` is already on and 512 MB is the ceiling. `research/memory_cloud_2026-10-10.md` has the cloud option (not built, Tj's call).
 - Settings › Diagnostics & about has Reset diagnostics and Clear scan study (two taps each); the burst recorder and live feed test live on the Research page.
 
 ## Project rules
