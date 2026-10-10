@@ -173,3 +173,4 @@ day that changes.
 | v0.85.5 | code 165 | 2026-10-10T07:21Z | v0.85.5: diagnostics file reads the last 3 days of each recorder, says where it is stuck, and old recorder data can be cleared
 | v0.85.6 | code 166 | 2026-10-10T07:38Z | v0.85.6: live bids say why a line has no Pinnacle price (alternate strike, no main line, three-way)
 | v0.85.7 | code 167 | 2026-10-10T07:54Z | v0.85.7: research share sends only what is new since the last share (under 30 MB), with a Share ALL button
+| v0.85.8 | code 168 | 2026-10-10T08:13Z | v0.85.8: the diagnostics file reads each source with its own deadline and leaves out (and names) any that is too slow
