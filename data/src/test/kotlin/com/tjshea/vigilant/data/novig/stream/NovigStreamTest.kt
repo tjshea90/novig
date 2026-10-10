@@ -221,7 +221,7 @@ class NovigStreamTest {
     }
 
     @Test
-    fun `one market Novig refuses does not shut the connection out: the batch is halved down to it and the rest go live`() = runBlocking {
+    fun `one market Novig refuses does not shut the connection out, the batch is halved down to it and the rest go live`() = runBlocking {
         server.enqueue(
             MockResponse().withWebSocketUpgrade(
                 novigSide { nonce, markets, _ ->
