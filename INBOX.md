@@ -6180,3 +6180,8 @@ I have 3 more days of pinnodds. The live betting feature is still not working. N
 ```
 Lower the margin to 2%, so far no bids have been taken. Investigate. Also why haven't any regular take bets been placed
 ```
+
+## 2026-10-10T21:03:17Z
+```
+There is no held back list
+```
