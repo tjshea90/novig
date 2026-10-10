@@ -6102,3 +6102,40 @@ One feature that can handle all of the following simultaneously:
 3) make sure the auto bid feature fills up with bids up to the wallet balance. I want as many bids up as possible as long as each bid is clearly positive EV for me.
 4) figure out why I don't get a lot of action on live bets and bids. I want them to fill
 ```
+
+## 2026-10-10T16:34:37Z
+```
+Read and research each of the following websites and services. Look for any service or tool or information that you can use or build on that will help vigilant app in any way, including but not limited to, live betting, live odds, grading bets, props, clv, EV. See if any of the sources can provide or help Claude make a free or cheap source of accurate odds across sports books, especially fresh odds. Combinations of services are fine too. This is research only so ignore terms of service and policies, I can contact companies for approval if needed. Also consider if any of the sites or services have free trials worth using:
+
+https://github.com/declanwalpole/sportsbook-odds-scraper
+
+https://brightdata.com/products/web-scraper/odds-scraper
+
+https://www.scrapingbee.com/scrapers/odds-api/
+
+https://www.scrapehero.com/scraping-odds-portal/
+
+https://www.webharvy.com/articles/scraping-flashscore.html
+
+https://paulconnollywriter.medium.com/create-your-own-positive-expected-value-odds-scraper-using-python-part-1-5d599a3a1dae
+
+https://www.parsehub.com/blog/scrapping-betting-websites/
+
+https://quantumproxies.io/blog/scrape-sports-odds-betting-data
+
+https://socket.dev/pypi/package/flashscore-scraper
+
+https://deepwiki.com/hmasdev/pyjpboatrace/4.2-odds-scrapers
+
+https://www.blog.bowtiedbettor.com/p/build-your-first-odds-scraper
+
+https://www.oddsshopper.com/subscribe
+
+https://decodo.com/scraping/web/odds-scraper-api
+
+https://www.zyte.com/zyte-api/
+
+https://oddscorp.com/en/solutions/api
+
+https://www.npmjs.com/package/sports-odds-api
+```
