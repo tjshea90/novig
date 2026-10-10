@@ -1,23 +1,23 @@
-# CHECKPOINT 2900 — read me first, then TASKS.md
+# CHECKPOINT 2901 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T20:24:03Z · **tests:** all 4 fast checks green
-**Branch:** `claude/new-session-mng5sq` · **builds on:** `1de50b99` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T20:46:23Z · **tests:** all 4 fast checks green
+**Branch:** `claude/new-session-mng5sq` · **builds on:** `42c0e068` (this checkpoint is the commit after it)
 
 ## Just done
-v0.88.8 released+recorded (live engine shares the one Novig stream)
+Tj's 4:45 screenshots: live bids post for real on v0.88.8, 0 fills so far (TP2e)
 
 ## Do this next
-Wait for Tj's Live bids page top after installing v0.88.8 (TP2c/TP2d): reason words name any remaining blocker
+Tj decides fill levers (margin below 3%, lead the book); TP2f: remaining 'not subscribed yet' and tail bets with 0 score+clock games
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    ?? research/uploads/2026-10-10/525d3974-image.png
-    ?? research/uploads/2026-10-10/f3600b9b-image.png
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  42c0e068 ckpt 2900: v0.88.8 released+recorded (live engine shares the one Novig stream)
   f73920e0 ckpt 2899: pre-release: v0.88.8: live engine shares the app's one Novig stream (a secon
   b16d7aa1 ckpt 2898: pre-ship: v0.88.8: live engine shares the app's one Novig stream (a second c
   56744e2b ckpt 2897: v0.88.7 released+recorded (live book refusal fix + reason words)
@@ -27,5 +27,4 @@ Wait for Tj's Live bids page top after installing v0.88.8 (TP2c/TP2d): reason wo
   8db65eba ckpt 2893: v0.88.5 released+recorded; website feed ruled out for live (cached); waiting
   4e3604c0 ckpt 2892: pre-release: v0.88.5: Pinnacle website feed measured as cached (90-400 s old
   d636d96a ckpt 2891: pre-release: v0.88.4: feed race counts one sample per update (not per market
-  45d02b7c ckpt 2890: pre-release: v0.88.3: Pinnacle compare run says whether the socket and the w
 ```
