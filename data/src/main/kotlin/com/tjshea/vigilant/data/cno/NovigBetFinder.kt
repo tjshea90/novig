@@ -87,14 +87,81 @@ class NovigBetFinder(
     var requests = 0
         private set
 
+    /**
+     * The Novig outcome CNO's own link names for a row, when the app has it ([linkHint], then the row's own `betUrl`): `novigapp://events/<outcomeId>`. It is what "Open in Novig" opens,
+     * so it needs no name matching (Tj, 2026-10-10: "it can find the exact bet inside Novig with no problem" while the Bet sheet and the auto-bet said they could not).
+     */
+    @Volatile
+    var linkHint: (CnoRow) -> String? = { null }
+
+    private fun hintedOutcome(row: CnoRow): String? =
+        runCatching { linkHint(row) }.getOrNull()?.takeIf { it.isNotBlank() }
+            ?: CnoFeed.outcomeIdOf(row.betUrl?.let { CnoFeed.appLink(it) })
+
+    /** What one look for a bet came to: what it found, and when it found no exact bet, why. */
+    data class Attempt(val found: Found?, val why: String? = null)
+
+    /** Why lookups found no exact bet, by reason, since the app opened (Diagnostics' COUNTERS carry the same through the callers). */
+    val misses = java.util.concurrent.ConcurrentHashMap<String, Int>()
+
     /** [row] on Novig: the bet, the game, or null (not found, or Novig out of reach). */
-    suspend fun find(row: CnoRow): Found? {
-        val league = novigLeague(row.league) ?: return null
-        val event = eventsOf(league)?.let { matchEvent(row, it) } ?: return null
-        val list = marketsOf(event.id) ?: return Found.Game(event.id, searched = false)
-        val outcome = matchOutcome(row, event, list) ?: return Found.Game(event.id)
-        val market = list.firstOrNull { m -> m.outcomes.any { it.id == outcome.id } }
-        return Found.Bet(outcome.id, event.id, market?.id, market?.novig)
+    suspend fun find(row: CnoRow): Found? = attempt(row).found
+
+    /**
+     * [row]'s exact bet, by two routes (Tj, 2026-10-10: "how can it find the bet so easily using the open novig link?"): the strict name match first (game by its teams, then one outcome whose
+     * player or team, line and side all agree), and when that finds no exact outcome, the outcome CNO's own link names, looked up in the markets of the games around the start. The second
+     * route is what "Open in Novig" opens, so a bet CNO links is a bet the app can place. Whatever it finds is still checked against Novig's book before any money moves (the placer's price and
+     * edge checks, and the auto-bet's "price and slip name the same outcome").
+     */
+    suspend fun attempt(row: CnoRow): Attempt {
+        val hint = hintedOutcome(row)
+        val league = novigLeague(row.league) ?: return miss("the league has no Novig name", hint, row)
+        val events = eventsOf(league)
+        val event = events?.let { matchEvent(row, it) }
+        var strict: Found? = null
+        var why: String? = null
+        if (events == null) why = "Novig's events weren't read"
+        else if (event == null) why = "game not matched by its teams and start time"
+        else {
+            val list = marketsOf(event.id)
+            if (list == null) { strict = Found.Game(event.id, searched = false); why = "the game's markets weren't read" }
+            else {
+                val outcome = matchOutcome(row, event, list)
+                if (outcome != null) {
+                    val market = list.firstOrNull { m -> m.outcomes.any { it.id == outcome.id } }
+                    return Attempt(Found.Bet(outcome.id, event.id, market?.id, market?.novig))
+                }
+                strict = Found.Game(event.id)
+                why = "no one outcome matched the bet's market, side and line by name"
+            }
+        }
+        if (hint != null && events != null) {
+            byOutcome(row, hint, event, events)?.let { return Attempt(it) }
+            why = "$why; CNO's link names an outcome that isn't in the games' markets near the start"
+        }
+        misses.merge(why ?: "unknown", 1, Int::plus)
+        return Attempt(strict, why)
+    }
+
+    private fun miss(why: String, hint: String?, row: CnoRow): Attempt {
+        misses.merge(why, 1, Int::plus)
+        return Attempt(null, why)
+    }
+
+    /**
+     * The market holding [outcomeId]: in [event]'s markets when the game was matched, else in each game of the league starting near CNO's start (nearest first, [MAX_SCAN_EVENTS] at most;
+     * each game's markets are kept [KEEP_MS], so a second bet of the same game costs nothing).
+     */
+    private suspend fun byOutcome(row: CnoRow, outcomeId: String, event: Event?, events: List<Event>): Found.Bet? {
+        val start = row.startsAtMs
+        val near = events.filter { e -> e != event && (start == null || e.startsTs == 0L || abs(e.startsTs - start) <= START_SLACK_MS) }
+            .sortedBy { e -> if (start == null || e.startsTs == 0L) 0L else abs(e.startsTs - start) }.take(MAX_SCAN_EVENTS)
+        for (e in listOfNotNull(event) + near) {
+            val list = marketsOf(e.id) ?: continue
+            val market = list.firstOrNull { m -> m.outcomes.any { it.id == outcomeId } } ?: continue
+            return Found.Bet(outcomeId, e.id, market.id, market.novig)
+        }
+        return null
     }
 
     /** Where a tracked bet is in Novig's catalog ([locate]): its market and side, or why it isn't there now. */
@@ -180,6 +247,9 @@ class NovigBetFinder(
     companion object {
         /** Catalog answers are kept this long (a tap on the next bet of the same game costs nothing). */
         const val KEEP_MS = 5 * 60_000L
+
+        /** The most games looked through for an outcome CNO's link names when the game was not matched by its teams. */
+        const val MAX_SCAN_EVENTS = 12
 
         /** The least time between two of its reads. */
         const val MIN_GAP_MS = 350L
