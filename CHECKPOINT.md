@@ -1,13 +1,13 @@
-# CHECKPOINT 2823 — read me first, then TASKS.md
+# CHECKPOINT 2824 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T04:04:56Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-bab5067e-obkelv` · **builds on:** `8fc6b016` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T04:14:06Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-bab5067e-obkelv` · **builds on:** `af51503f` (this checkpoint is the commit after it)
 
 ## Just done
-SW2-SW3 in progress: data/livebid/ (LiveBidRules+presets Careful/Balanced/Paper wide, LiveBidJudge pure, LiveBidDesk engine over an order port, LiveBid models), PinnLiveRunner judges live bids (takerOn flag), ScanSettings liveBid fields, Tracker source LIVEBID; tools/research/live_bid_grid.py (preset grid). data compiles; no tests yet
+SW2/SW3: data/livebid done + 54 tests green (LiveBidJudgeTest, LiveBidPresetsTest, LiveBidDeskTest); desk fixes: recover, duplicate cancels, PENDING orders not called over
 
 ## Do this next
-Next: unit tests (judge, presets, desk with fake orders, runner), then app wiring (VigilantApp desk+orders adapter+pinnTick), Settings page, Diagnostics, kill switch, docs, version, ship
+Next: runner integration test (PinnLiveRunnerBidTest), then app wiring (VigilantApp desk+orders adapter+pinnTick+LiveFeedService+KillSwitch), Settings 'Live bids' page, Diagnostics, docs, version, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Next: unit tests (judge, presets, desk with fake orders, runner), then app wirin
 
 ## Last ten checkpoints
 ```
+  7290f89d ckpt 2823: SW2-SW3 in progress: data/livebid/ (LiveBidRules+presets Careful/Balanced/Pa
   8b61f214 ckpt 2822: SW1: logged Tj's live-bid build request (TASKS.md SW)
   32ada719 ckpt 2821: SV done: investigation of live betting on Novig. RESEARCH.md §123 + NOVIG_A
   91487752 ckpt 2820: SV1: logged Tj's live-betting investigation request (TASKS.md SV); read RESE
@@ -25,8 +26,7 @@ Next: unit tests (judge, presets, desk with fake orders, runner), then app wirin
   51247364 ckpt 2816: Added Tj's standing setup rules (2026-10-10: use plugins/skills/connectors, 
   51d99f74 ckpt 2815: pre-release: v0.84.4: Research running foreground service keeps the paper la
   a4effd21 ckpt 2814: pre-ship: v0.84.4: Research running foreground service keeps the paper lab a
-  6e74c425 ckpt 2813: pre-ship: v0.84.4: Research running foreground service keeps the paper lab a
 ```
 
-(14 automatic checkpoint(s) since the last deliberate one — the
+(8 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
