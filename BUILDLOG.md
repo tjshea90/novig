@@ -188,3 +188,4 @@ day that changes.
 | v0.88.7 | code 180 | 2026-10-10T19:55Z | v0.88.7: live bids: a market Novig refuses no longer shuts the live book connection out (batch halved down to it), and 'no current Novig book' now says why
 | v0.88.8 | code 181 | 2026-10-10T20:23Z | v0.88.8: live engine shares the app's one Novig stream (a second connection starved on the key's shared stream bucket), its markets pinned ahead of scans'
 | v0.88.9 | code 182 | 2026-10-10T21:06Z | v0.88.9: live bids and Autopilot use a 2% margin under Pinnacle's fair (was 3%): more fills
+| v0.88.10 | code 183 | 2026-10-10T21:14Z | v0.88.10: Pinnodds live page shows why the taker has bought nothing (looks and top reasons)
