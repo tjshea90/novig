@@ -114,7 +114,7 @@ class LiveBidUiTest {
     @Test
     fun `a halt shows its reason and Resume lifts it`() {
         val ui = show(state(ScanSettings(liveBid = true, liveBidHalted = "3 of the last 5 live bid fills were picked off")))
-        compose.onNodeWithText("picked off", substring = true).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Stopped: 3 of the last 5", substring = true).performScrollTo().assertIsDisplayed()
         tap("liveBidResume")
         assertNull(ui().settings.liveBidHalted)
     }
