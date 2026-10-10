@@ -6005,3 +6005,8 @@ It says no look has been judged yet
 ```
 I pressed share the diagnostic with Claude but it did nothing
 ```
+
+## 2026-10-10T07:07:12Z
+```
+Now figure out why the diagnosis button does nothing. It used to work. It says making the file but nothing happens. It may be too large of a file. Can it be broken down or cleared of old data that Claude already analyzed?
+```
