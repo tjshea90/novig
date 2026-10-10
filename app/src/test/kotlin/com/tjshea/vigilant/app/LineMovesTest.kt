@@ -12,7 +12,6 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.tjshea.vigilant.app.ui.GamesScreen
 import com.tjshea.vigilant.app.ui.LINE_MOVES_CARD
 import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.OpportunityCard
@@ -84,20 +83,5 @@ class LineMovesTest {
         val o = s.result!!.opportunities.first { it.key in s.lineMoves && it.quote != null && it.fairProbability != null }
         screen { OpportunityCard(o, s.settings, now, onOpen = false, move = s.lineMoves[o.key]) {} }
         compose.onNodeWithText(moveText(s.lineMoves.getValue(o.key))).assertExists()
-    }
-
-    @Test
-    fun `the Games tab lists the biggest moves with the side the money went to`() {
-        screen { GamesScreen(state(), onOpen = {}, onToggleLeague = {}) }
-        compose.onNodeWithText("Line moves at Pinnacle · last 6 h").assertExists()
-        // The game is named in the card and again in the games list under it.
-        compose.onAllNodesWithText("Baltimore Ravens @ Dallas Cowboys").assertCountEquals(2)
-        compose.onNodeWithText("Money on Dallas Cowboys: -160 → -175 (+2.1 pts)").assertExists()
-    }
-
-    @Test
-    fun `with ParlayAPI off the Games tab has no moves card`() {
-        screen { GamesScreen(state().let { it.copy(settings = it.settings.copy(useParlay = false)) }, onOpen = {}, onToggleLeague = {}) }
-        compose.onNodeWithTag(LINE_MOVES_CARD).assertDoesNotExist()
     }
 }

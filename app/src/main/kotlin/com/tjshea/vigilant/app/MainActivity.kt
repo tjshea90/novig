@@ -48,7 +48,6 @@ import com.tjshea.vigilant.app.ui.CnoScreen
 import com.tjshea.vigilant.app.ui.FeedScreen
 import com.tjshea.vigilant.app.ui.FloatingActions
 import com.tjshea.vigilant.app.ui.FloatingWindow
-import com.tjshea.vigilant.app.ui.GamesScreen
 import com.tjshea.vigilant.app.ui.LocalOpenNovig
 import com.tjshea.vigilant.app.ui.MiniFeed
 import com.tjshea.vigilant.app.ui.OpportunitySheet
@@ -579,7 +578,6 @@ class MainActivity : ComponentActivity() {
 internal enum class Tab(val label: String, val icon: ImageVector? = null, val drawable: Int? = null) {
     EV("+EV", Icons.Filled.Star),
     CNO("CNO", drawable = R.drawable.ic_cno),
-    GAMES("Games", Icons.Filled.DateRange),
     /** Its own tab since 2026-10-02 (Tj: "maybe make the auto bet feature its own section instead of buried in the settings"). */
     AUTOBET("Auto-bet", drawable = R.drawable.ic_autobet),
     /** Make orders (Tj, 2026-10-03: "It may need a separate section in the app"; RESEARCH.md §70): bids posted under Vigilant's fair. */
@@ -590,7 +588,7 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
 
     /** Whether the tab exists in this scanner mode: CNO only hides what needs Vigilant's scanner. */
     fun shownIn(mode: ScannerMode): Boolean = when (this) {
-        EV, GAMES -> mode != ScannerMode.CNO
+        EV -> mode != ScannerMode.CNO
         CNO -> mode != ScannerMode.VIGILANT
         // Auto-bet bets CrazyNinjaOdds' list through Novig's API.
         AUTOBET -> AppBook.isNovig && mode != ScannerMode.VIGILANT
@@ -776,7 +774,6 @@ private fun VigilantRoot(
                     onScanner = { m -> vm.updateSettings { it.copy(scanner = m) } },
                     openingBet = openingBet,
                 )
-                Tab.GAMES -> GamesScreen(state, onOpen = { detail = it }, onToggleLeague = vm::toggleLeague, onScan = onScan, onPull = onPull)
                 Tab.TRACKER -> TrackerScreen(
                     state, onSettle = vm::settleBet, onDelete = vm::deleteBet, onStake = vm::setStake,
                     onCheckOdds = vm::checkOdds, onShown = { vm.settleBets(); vm.scanLocks(); if (state.settings.trackerNovigOnly) vm.refreshNovigOnly() },

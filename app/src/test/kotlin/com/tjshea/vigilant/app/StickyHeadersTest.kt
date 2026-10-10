@@ -27,7 +27,6 @@ import androidx.compose.ui.test.performScrollToKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.CnoScreen
 import com.tjshea.vigilant.app.ui.FeedScreen
-import com.tjshea.vigilant.app.ui.GamesScreen
 import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.STICKY_BAR
 import com.tjshea.vigilant.app.ui.TrackerScreen
@@ -128,17 +127,6 @@ class StickyHeadersTest {
         scrollToKey(shown.last().key)
         compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
         compose.onNodeWithText("Starts within").assertIsDisplayed()
-        inBar("NFL").assertIsDisplayed()
-    }
-
-    @Test
-    fun `the Games tab keeps its league chips pinned`() {
-        val state = SampleScan.state()
-        screen { GamesScreen(state, {}, {}) }
-        val games = state.gamesAt(now)
-        assertTrue(games.isNotEmpty())
-        scrollToKey(games.last().event.eventId)
-        compose.onNodeWithTag(STICKY_BAR).assertIsDisplayed()
         inBar("NFL").assertIsDisplayed()
     }
 

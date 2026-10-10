@@ -127,7 +127,6 @@ class AutoResumeAppTest {
         assertTrue(main.contains("onCheckOdds = vm::checkOdds"))
         val feed = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/ui/FeedScreen.kt").readText()
         assertTrue(feed.contains("onRefresh = onPull,"))
-        assertTrue(java.io.File("src/main/kotlin/com/tjshea/vigilant/app/ui/GamesScreen.kt").readText().contains("onRefresh = onPull,"))
         assertTrue(java.io.File("src/main/kotlin/com/tjshea/vigilant/app/ui/CnoScreen.kt").readText().contains("onRefresh = onPull,"))
     }
 }

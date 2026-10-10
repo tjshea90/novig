@@ -21,7 +21,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.CnoScreen
 import com.tjshea.vigilant.app.ui.GameBetsChip
-import com.tjshea.vigilant.app.ui.GamesScreen
 import com.tjshea.vigilant.app.ui.TrackerScreen
 import com.tjshea.vigilant.app.ui.TrackerView
 import com.tjshea.vigilant.app.ui.GameBetsDetail
@@ -219,18 +218,5 @@ class GameBetsUiTest {
         compose.onAllNodesWithTag("gameBetsChip").assertCountEquals(4)
         compose.onNodeWithText("Settled (3)").performClick()
         compose.onAllNodesWithTag("gameBetsChip").assertCountEquals(0)
-    }
-
-    @Test
-    fun `the Games tab shows it on a game he has money on`() {
-        val state = SampleScan.state()
-        val game = state.result!!.games.first()
-        val bet = TrackedBet(
-            "g1", now - 60_000, game.event.league, game.event.description, game.event.startsTs, "Moneyline", "Somebody", "gm", "go", 0.5, 0.5, 0.52, 0.04, 7.0,
-            american = 100, eventId = game.event.eventId,
-        )
-        screen { CompositionLocalProvider(LocalGameBets provides GameBetsView(GameBets.of(listOf(bet), emptyList()))) { GamesScreen(state, onOpen = {}, onToggleLeague = {}) } }
-        compose.onAllNodesWithTag("gameBetsChip").assertCountEquals(1)
-        compose.onNodeWithTag("gameBetsChip").assertTextContains("\$7.00 in game", substring = true)
     }
 }

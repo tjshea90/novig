@@ -41,7 +41,6 @@ import androidx.compose.foundation.layout.size
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.FeedScreen
-import com.tjshea.vigilant.app.ui.GamesScreen
 import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.MiniFeed
 import com.tjshea.vigilant.app.ui.OpportunityDetail
@@ -129,9 +128,7 @@ class ScreenshotTest {
         shoot("2_detail") { OpportunityDetail(s.feed.first(), s.settings) {} }
     }
 
-    @Test fun games() = shoot("3_games") { GamesScreen(SampleScan.state(), {}, {}) }
 
-    @Test fun gamesBeforeFirstScan() = shoot("3b_games_before_scan") { GamesScreen(SampleScan.fresh(), {}, {}) }
 
 
     /** The home list as the app shows it: with the rows that open the Auto-bet and Bids tabs. */
