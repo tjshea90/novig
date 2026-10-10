@@ -501,6 +501,8 @@ class NovigStream(
         const val MAX_WATCHED = 2_048
 
         /** A margin under [MAX_WATCHED]. */
+        /** A market Novig refused (not for a limit) is left alone this long. */
+        const val REFUSED_PAUSE_MS = 10 * 60_000L
         const val MAX_MARKETS = 2_000
 
         /** Closed this long after a scan last used it: rechecks right after a scan are instant. */

@@ -472,7 +472,7 @@ class PinnLiveRunner(
         if (pe.sportId == PinnBook.TENNIS_SPORT_ID && !q.tennis) return off(LiveBidSkip.TENNIS_OFF)
         if (q.onlyLeagues.isNotEmpty() && t.event.league !in q.onlyLeagues) return off(LiveBidSkip.LEAGUE_OFF)
         val line = t.line(pe) ?: return off(noLineReason(t, pe))
-        val mb = novig.live(listOf(t.market.marketId))[t.market.marketId] ?: return off(LiveBidSkip.NO_BOOK)
+        val mb = novig.live(listOf(t.market.marketId))[t.market.marketId] ?: return off(novig.bookGap(t.market.marketId) ?: LiveBidSkip.NO_BOOK)
         val own = desk.ownLevels()
         val scoreAge = if (pe.scoreAtMs > 0L) now - pe.scoreAtMs else null
         val dangerAge = if (pe.volatileUntilMs > 0L) now - (pe.volatileUntilMs - PinnBook.VOLATILE_MS) else null
