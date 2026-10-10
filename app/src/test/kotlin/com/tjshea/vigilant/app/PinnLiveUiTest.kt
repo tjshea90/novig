@@ -76,7 +76,7 @@ class PinnLiveUiTest {
 
     @Test
     fun `the Pinnacle website feed is a choice beside the socket, needs no key, and shows its counters and the race`() {
-        val ui = show(state(keys = emptyList()).copy(pinnWebsiteStats = com.tjshea.vigilant.data.pinnodds.WebsiteStats(games = 7, polls = 120, failures = 1, changes = 33, lastCycleMs = 410, avgLatencyMs = 380), pinnRaceLines = listOf("Feed race (website minus socket, 12 price versions both saw): median 1800 ms")))
+        val ui = show(state(ScanSettings(pinnLive = true), keys = emptyList()).copy(pinnWebsiteStats = com.tjshea.vigilant.data.pinnodds.WebsiteStats(games = 7, polls = 120, failures = 1, changes = 33, lastCycleMs = 410, avgLatencyMs = 380), pinnRaceLines = listOf("Feed race (website minus socket, 12 price versions both saw): median 1800 ms")))
         compose.onNodeWithTag("pinnFeed-SOCKET").performScrollTo().assertExists()
         compose.onNodeWithTag("pinnFeed-WEBSITE").performScrollTo().performClick()
         assertTrue(ui().settings.pinnWebsite.website)
