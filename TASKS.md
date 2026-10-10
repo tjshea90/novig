@@ -4486,6 +4486,6 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 - [ ] TL2 NOTE the live fair comes ONLY from the Pinnodds socket, whose trial ends 2026-10-10 23:34Z (SW8): the feature must keep working after (SGO/Pinnacle REST/own model) or say plainly it cannot.
 - [ ] TL3 Build/fix per Tj's four points, real money, small stakes first; tests; ship today.
   - [x] TLa (v0.87.0, tests: LiveBidPresetsTest, LiveEdgeTest either-trigger, LiveBidReportTest, LiveBidUiTest autopilot): FILL preset, fillWallet limits, EITHER trigger, LiveAutopilot card, whyFew report. Rest-on-miss dropped (RESEARCH.md §125).
-  - [ ] TLb ship v0.87.0 (floor, bump 171, ship.sh, release.yml, record-release, link to Tj with the honest answer to point 4).
-  - [ ] TLc Phase B: real tail taker (ESPN state + Novig ladders, TailRules CONSERVATIVE, $1 stakes, day cap, IOC with reach limit, off by default behind a confirmation) so live betting survives the Pinnodds expiry (TG2).
+  - [x] TLb v0.87.0 shipped and recorded (code 171), link + honest answer to point 4 sent to Tj.
+  - [ ] TLc (IN PROGRESS: TailTaker.kt + test, LabRecorder onTail/tailOnly, SOURCE_TAIL done and green; still: ScanSettings tailLive* fields + safeStart, VigilantApp wiring (tailTaker, labTick incl. tailLive, tailOnly, gate, loss, halt/resume), Live bids page tail section, autopilot includes tail, Diagnostics block, UI/tracker tests, ship v0.87.1) Phase B: real tail taker (ESPN state + Novig ladders, TailRules CONSERVATIVE, $1 stakes, day cap, IOC with reach limit, off by default behind a confirmation) so live betting survives the Pinnodds expiry (TG2).
   - [ ] TLd Next session: read Tj's Diagnostics LIVE BIDS "Why so few fills" + taker "Orders by timing" and tune FILL (RESEARCH.md §125).
