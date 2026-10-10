@@ -6032,3 +6032,8 @@ the late-game tail bets went 18-0 over 6 games.
 
 How can I replicate this in the app with real money
 ```
+
+## 2026-10-10T07:57:00Z
+```
+Figure out why the diagnosis share with Claude stopped working. See if anything may have affected it in the last few versions. Or maybe it holds too much data to make a file
+```
