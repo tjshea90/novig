@@ -150,7 +150,7 @@ class LiveBidStore(file: File) : LiveBidPersistence {
     override suspend fun replace(list: List<LiveBid>) { store.update { list } }
 
     companion object {
-        const val KEEP_MS = 14 * 24 * 3_600_000L
+        const val KEEP_MS = 2 * 24 * 3_600_000L
     }
 }
 

@@ -165,7 +165,18 @@ class MakerStore(file: File) {
     suspend fun update(transform: (List<MakerBid>) -> List<MakerBid>) = store.update(transform)
 
     companion object {
-        const val KEEP_MS = 14 * 24 * 3_600_000L
+        /**
+         * Ended bids that never filled leave after 2 days; ones that filled after a week (Tj, 2026-10-10: the file was 15 MB, rewritten whole on every change, and
+         * made the whole app lag; the fills themselves live on in the Tracker for good).
+         */
+        const val KEEP_MS = 2 * 24 * 3_600_000L
+        const val KEEP_FILLED_MS = 7 * 24 * 3_600_000L
+
+        /** An ended bid that is past its keep window. */
+        fun expired(b: MakerBid, now: Long): Boolean =
+            b.status.ended && (it(b) < now - (if (b.filled > 0) KEEP_FILLED_MS else KEEP_MS))
+
+        private fun it(b: MakerBid) = b.endedAtMs ?: b.postedAtMs
     }
 }
 
@@ -699,8 +710,8 @@ class MakerDesk(
         val now = clock()
         val bids = store.all()
         // Ended bids past the keep window leave the list.
-        if (bids.any { it.status.ended && (it.endedAtMs ?: it.postedAtMs) < now - MakerStore.KEEP_MS }) {
-            store.update { list -> list.filterNot { it.status.ended && (it.endedAtMs ?: it.postedAtMs) < now - MakerStore.KEEP_MS } }
+        if (bids.any { MakerStore.expired(it, now) }) {
+            store.update { list -> list.filterNot { MakerStore.expired(it, now) } }
         }
         val active = store.all().filter { it.active }
         val open = try {
