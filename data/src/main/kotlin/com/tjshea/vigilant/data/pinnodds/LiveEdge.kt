@@ -74,10 +74,13 @@ enum class LiveTrigger(val label: String, val blurb: String) {
      * 20 s), and Novig's ask still sits at the price Pinnacle itself had before it moved. Needs no score, so it also covers sports whose feed carries none (tennis), and an order that stays up
      * after the 20-second window. The ask matching an earlier Pinnacle price is the evidence it is stale rather than just a wide book.
      */
-    STALE("Stale orders", "Novig's ask is still at the price Pinnacle had before it moved (a resting order nobody has taken or pulled)");
+    STALE("Stale orders", "Novig's ask is still at the price Pinnacle had before it moved (a resting order nobody has taken or pulled)"),
+
+    /** Either of the two lags with a reason behind them (Tj, 2026-10-10: "stale bids after scoring or mispriced probabilities"): a score-driven Pinnacle move, or an ask left at Pinnacle's earlier price. */
+    EITHER("Score or stale order", "A score-driven Pinnacle move Novig has not followed, or an order left up at Pinnacle's earlier price");
 
     /** Triggers with no short arming window: judged on every Novig change and on a regular sweep, not only just after a Pinnacle change. */
-    val sweeps: Boolean get() = this == STANDING || this == STALE
+    val sweeps: Boolean get() = this == STANDING || this == STALE || this == EITHER
 }
 
 /** The reasons a line is passed over: fixed words, counted in the status. */
@@ -205,11 +208,15 @@ object LiveEdge {
             LiveTrigger.MOVE -> if (move == null || move < rules.minMove) return LiveVerdict.Skip(LiveSkip.NO_MOVE)
             LiveTrigger.STANDING -> if (stable < rules.standingMs) return LiveVerdict.Skip(LiveSkip.IN_FLUX)
             // Judged against the ask below.
-            LiveTrigger.STALE -> {}
+            LiveTrigger.STALE, LiveTrigger.EITHER -> {}
         }
         val levels = ladder.sortedBy { it.price }.filter { it.price > 0.0 && it.price < 1.0 && it.contracts > 0L }
         val best = levels.firstOrNull() ?: return LiveVerdict.Skip(LiveSkip.NO_OFFER)
         if (rules.trigger == LiveTrigger.STALE && !staleAsk(line, side, best.price, fair, rules)) return LiveVerdict.Skip(LiveSkip.NOT_STALE)
+        if (rules.trigger == LiveTrigger.EITHER) {
+            val scored = move != null && move >= rules.minMove && event.scoreAtMs > 0L && nowMs - event.scoreAtMs <= rules.scoreWindowMs
+            if (!scored && !staleAsk(line, side, best.price, fair, rules)) return LiveVerdict.Skip(LiveSkip.NOT_STALE)
+        }
         val quote = EvMath.quote(fair, best.price, fee, novigLive)
         if (quote.evPercent < rules.minEv) return LiveVerdict.Skip(LiveSkip.EV)
         if (quote.evPercent > rules.maxEv) return LiveVerdict.Skip(LiveSkip.TOO_GOOD)
