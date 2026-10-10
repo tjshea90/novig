@@ -6025,3 +6025,10 @@ How can I send you the research mode research file because it is over 30mb
 ```
 @"/root/.claude/uploads/e24cce0e-cdce-51ce-b7d7-f01dce035d93/24d7e4e3-vigilant-research-v0.85.5-2026-10-10-0337.zip" 
 ```
+
+## 2026-10-10T07:53:11Z
+```
+the late-game tail bets went 18-0 over 6 games. 
+
+How can I replicate this in the app with real money
+```
