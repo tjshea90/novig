@@ -4376,3 +4376,6 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 - [x] SS1 (v0.84.2: `LabGrader` over the SGO/OddsPapi/ESPN/MLB score chain + `BetGrader`; BidLab and LabRecorder fall back to it when Novig's market is gone; a prop's stat type is kept in its FILL event; the GitHub lab uses SGO + free scores; tests `LabGraderTest`, `BidLabTest`. Props filled before v0.84.2 have no stat type and stay ungraded; rest grade on the next pass) Grade the paper bids, would-be bets and lab records from final scores (ESPN/MLB via `ScoreSource`/`BetGrader`), not from Novig's public market (it drops settled markets: 0 GRADE events in 21 h on the phone and 16 h+ on GitHub). Test with a finished game.
 - [ ] SS2 Add an independent close (SGO/Pinnacle close from `sgo-close`) to each paper fill's CLV; report game-level CLV.
 - [ ] SS3 About 2026-10-16: re-rank recipes on graded results + independent closes; only then propose Bids defaults (candidate: margin 3, rest 120 min, no guard needed).
+
+## ST: Research switches survive Android ending the app (Tj, 2026-10-10)
+- [x] ST1 "When I switch apps then come back to vigilant after a couple minutes, the research options are turned off": cause was `safeStart` switching research off at EVERY process start (Android ends a backgrounded app). Now only after a crash. v0.84.3, `SafeStartTest`.
