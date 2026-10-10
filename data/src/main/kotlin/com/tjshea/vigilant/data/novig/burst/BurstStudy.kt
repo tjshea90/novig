@@ -77,7 +77,7 @@ class BurstJournal(private val dir: File) {
         val text = StringBuilder()
         if (f.exists() && f.length() > 0 && !endsWithNewline(f)) text.append('\n')
         for (l in lines) text.append(json.encodeToString(BurstLine.serializer(), l)).append('\n')
-        FileOutputStream(f, true).use { out -> out.write(text.toString().toByteArray()); out.fd.sync() }
+        FileOutputStream(f, true).use { out -> out.write(text.toString().toByteArray()) }
     }
 
     /** Every record, oldest day first; a line that can't be read is skipped. */
