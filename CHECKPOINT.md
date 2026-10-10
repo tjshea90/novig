@@ -1,13 +1,13 @@
-# CHECKPOINT 2891 — read me first, then TASKS.md
+# CHECKPOINT 2892 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T18:25:56Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `609a86de` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T18:49:36Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `6c6499a4` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.88.4: feed race counts one sample per update (not per market), so the lag numbers are not inflated by one update rewriting thirty markets (versionCode 177, v0.88.4)
+pre-release: v0.88.5: Pinnacle website feed measured as cached (90-400 s old): real live orders are blocked while it is selected and its description says so (versionCode 178, v0.88.5)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.88.4), then run: bash tools/record-release.sh v0.88.4 177 "v0.88.4: feed race counts one sample per update (not per market), so the lag numbers are not inflated by one update rewriting thirty markets"
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.88.5), then run: bash tools/record-release.sh v0.88.5 178 "v0.88.5: Pinnacle website feed measured as cached (90-400 s old): real live orders are blocked while it is selected and its description says so"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  d636d96a ckpt 2891: pre-release: v0.88.4: feed race counts one sample per update (not per market
   45d02b7c ckpt 2890: pre-release: v0.88.3: Pinnacle compare run says whether the socket and the w
   54922bf6 ckpt 2889: pre-release: v0.88.2: Pinnacle website compare run shows what its own book r
   a7a8121a ckpt 2888: pre-release: v0.88.1: Pinnacle website feed treats a 403 among answers as th
@@ -25,7 +26,6 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   7aa68f72 ckpt 2884: TN2/TN3 built: website feed wired (feed choice, compare race, UI, diagnostic
   f9e16fc5 ckpt 2883: TN2 core: PinnWebsiteFeed + VersionRace + PinnWebsiteSettings + PinnBook.ver
   5ce7c2e5 ckpt 2882: TN written (Pinnacle website feed + trial replacement research)
-  c703ca54 ckpt 2881: v0.87.1 released+recorded; TM research done
 ```
 
 (2 automatic checkpoint(s) since the last deliberate one — the
