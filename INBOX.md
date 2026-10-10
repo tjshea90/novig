@@ -6185,3 +6185,8 @@ Lower the margin to 2%, so far no bids have been taken. Investigate. Also why ha
 ```
 There is no held back list
 ```
+
+## 2026-10-10T22:36:27Z
+```
+I notice that I never see tennis bets or bids in the app. Are they set up correctly?
+```
