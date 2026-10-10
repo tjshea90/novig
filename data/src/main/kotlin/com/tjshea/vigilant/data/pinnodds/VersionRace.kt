@@ -8,7 +8,7 @@ package com.tjshea.vigilant.data.pinnodds
 class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
     enum class Source(val tag: Char) { SOCKET('S'), WEBSITE('W') }
 
-    data class Report(val paired: Int, val websiteLater: Int, val websiteFirst: Int, val medianLagMs: Long?, val p90LagMs: Long?, val socketOnly: Int, val websiteOnly: Int, val sinceMs: Long)
+    data class Report(val paired: Int, val websiteLater: Int, val websiteFirst: Int, val medianLagMs: Long?, val p90LagMs: Long?, val socketOnly: Int, val websiteOnly: Int, val sinceMs: Long, val socketNotes: Long = 0, val websiteNotes: Long = 0)
 
     private class First(val source: Source, val atMs: Long)
 
@@ -17,10 +17,13 @@ class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
     private var socketOnly = 0
     private var websiteOnly = 0
     private var notes = 0L
+    private var socketNotes = 0L
+    private var websiteNotes = 0L
     private var since = clock()
 
     @Synchronized
     fun note(source: Source, matchupId: Long, key: String, version: Long, atMs: Long) {
+        if (source == Source.SOCKET) socketNotes++ else websiteNotes++
         val k = "$matchupId|$key|$version"
         val first = seen[k]
         if (first == null) {
@@ -47,7 +50,7 @@ class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
 
     @Synchronized
     fun reset() {
-        seen.clear(); lags.clear(); socketOnly = 0; websiteOnly = 0; notes = 0; since = clock()
+        seen.clear(); lags.clear(); socketOnly = 0; websiteOnly = 0; notes = 0; socketNotes = 0; websiteNotes = 0; since = clock()
     }
 
     @Synchronized
@@ -56,14 +59,14 @@ class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
         val sorted = lags.sorted()
         return Report(
             paired = sorted.size, websiteLater = sorted.count { it > 0 }, websiteFirst = sorted.count { it < 0 }, medianLagMs = sorted.getOrNull(sorted.size / 2),
-            p90LagMs = sorted.getOrNull((0.9 * (sorted.size - 1)).toInt()), socketOnly = socketOnly, websiteOnly = websiteOnly, sinceMs = since,
+            p90LagMs = sorted.getOrNull((0.9 * (sorted.size - 1)).toInt()), socketOnly = socketOnly, websiteOnly = websiteOnly, sinceMs = since, socketNotes = socketNotes, websiteNotes = websiteNotes,
         )
     }
 
     /** The race in words for Settings and Diagnostics. */
     fun lines(): List<String> {
         val r = report()
-        if (r.paired == 0) return listOf("Feed race: no price version has been seen by both feeds yet (${r.socketOnly} only by the socket, ${r.websiteOnly} only by the website).")
+        if (r.paired == 0) return listOf("Feed race: no price version has been seen by both feeds yet. Versions reported: socket ${r.socketNotes}, website ${r.websiteNotes} (a socket count of 0 means the Pinnodds socket is not delivering prices: check its status line above; the website's first poll reports every market once, so it starts high).")
         return listOf(
             "Feed race (website minus socket, ${r.paired} price versions both saw): median ${r.medianLagMs} ms, 90th percentile ${r.p90LagMs} ms · website later on ${r.websiteLater}, first on ${r.websiteFirst}",
             "  the socket also saw ${r.socketOnly} versions the website skipped (it polls: it sees only the latest) and the website ${r.websiteOnly} the socket never reported",
