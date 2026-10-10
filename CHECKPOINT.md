@@ -1,23 +1,23 @@
-# CHECKPOINT 2867 — read me first, then TASKS.md
+# CHECKPOINT 2868 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T15:15:27Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `588eae45` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T15:22:33Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `56885fcd` (this checkpoint is the commit after it)
 
 ## Just done
-TK2 profit graph (ranges, pinch zoom, scroll, full screen) done; TJ4 memo written
+pre-ship: v0.86.1: trap guard hours split (auto-bet vs bids), profit graph with ranges, pinch zoom, scroll and full screen, heap census and per-game JSON parsing for SGO and PropLine (memory), Sofascore backs off
 
 ## Do this next
-TJ5 full tests #2: resource/battery review, compose-performance pass, floor+screenshots; then ship v0.86.1
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
-    ?? research/memory_cloud_2026-10-10.md
 
 ## Last ten checkpoints
 ```
+  2fe38e40 ckpt 2867: TK2 profit graph (ranges, pinch zoom, scroll, full screen) done; TJ4 memo wr
   08dfe7fa ckpt 2866: TK1 trap guard split done (bids vs auto-bet), TJ2 HeapCensus + JsonSplit (SG
   9f1d520a ckpt 2865: TJ written; release v0.86.0 triggered (run 38061298709)
   b5bbb409 ckpt 2864: research-record.yml schedule removed at Tj's word
@@ -27,8 +27,7 @@ TJ5 full tests #2: resource/battery review, compose-performance pass, floor+scre
   b5805899 ckpt 2860: TI: Games tab + Locked in card removed, Bids rules text fixed, edges-real re
   5674414e ckpt 2859: TI request written into TASKS.md
   1c48380e ckpt 2858: steward check-in 2026-10-10 13:35Z done by hand; the routine session has no 
-  241eda8b ckpt 2857: v0.85.8 released and recorded
 ```
 
-(13 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
