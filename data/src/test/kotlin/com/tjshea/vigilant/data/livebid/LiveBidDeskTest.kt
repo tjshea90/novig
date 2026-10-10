@@ -667,6 +667,23 @@ class LiveBidDeskTest {
     }
 
     @Test
+    fun `real - bids posted far faster than the limits explain halt the feature (a loop is caught before it costs money)`() = runTest {
+        val r = rig(limits = LiveBidLimits(maxStake = 1.0, walletReserve = 0.0, maxBids = 2, maxBidsPerGame = 2, maxPerGame = 1_000.0, maxPerDay = 100_000.0))
+        r.wallet = 100_000.0
+        // Novig ends every order at once, so a new one is always wanted: 20 bids a minute is what two bids can honestly come to; this goes faster.
+        for (i in 1..40) {
+            r.desk.want(want(r.now, "x$i", "m$i", "e$i"))
+            r.tick(300)
+            val p = r.fake.placed.lastOrNull { it.outcomeId == "x$i" } ?: break
+            r.fake.records[p.orderId] = NovigOrder(p.orderId, p.clientId, "m$i", "x$i", p.price, p.qty, p.qty, "PO", "CANCELED", 0L, null)
+            r.tick(1_000)
+            if (r.halts.isNotEmpty()) break
+        }
+        assertEquals(1, r.halts.size)
+        assertTrue(r.halts[0], r.halts[0].contains("far faster"))
+    }
+
+    @Test
     fun `real - a bad day halts at the loss limit`() = runTest {
         val r = rig(limits = LiveBidLimits(haltLoss = 10.0))
         r.loss = 11.0

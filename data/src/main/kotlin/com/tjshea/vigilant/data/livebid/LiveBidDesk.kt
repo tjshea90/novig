@@ -156,6 +156,7 @@ class LiveBidDesk(
     private val replaced = HashSet<String>()
     private val cancelTriedAt = HashMap<String, Long>()
     private val audits = HashMap<String, Int>()
+    private val postTimes = ArrayDeque<Long>()
     private val persistLock = Mutex()
     private val latestFair = ConcurrentHashMap<String, Pair<Double, Long>>()
     private val skipCounts = HashMap<String, Int>()
@@ -437,10 +438,26 @@ class LiveBidDesk(
                     val cost = contracts * w.verdict.price * EvMath.CONTRACT_PAYOUT_DOLLARS
                     val blocked = synchronized(mu) { budget(w, cost, cfg, now, decision.replacing, spent) }
                     if (blocked != null) { count(blocked); continue }
+                    // A runaway guard: more real bids in a minute than the limits and the bids' lives can explain means something is wrong (a loop, an order Novig keeps ending): stop and say so.
+                    if (cfg.real) {
+                        val overRate = synchronized(mu) {
+                            while (postTimes.isNotEmpty() && now - postTimes.first() > 60_000L) postTimes.removeFirst()
+                            postTimes.size >= perMinuteCap(cfg)
+                        }
+                        if (overRate) { halt("live bids are being posted far faster than the limits explain (${perMinuteCap(cfg)} in a minute): check Novig's orders"); return }
+                        synchronized(mu) { postTimes.addLast(now) }
+                    }
                     if (post(w, contracts, cfg, now, decision.replacing)) posts++
                 }
             }
         }
+    }
+
+    /** The most real bids one minute can honestly hold: every bid up renewed as often as its life allows, twice over, and a few more. */
+    private fun perMinuteCap(cfg: LiveBidConfig): Int {
+        val q = cfg.quality
+        val cycleSec = maxOf(maxOf(q.ttlSec, MIN_TTL_SEC) - q.refreshBeforeSec, 5)
+        return (cfg.limits.maxBids * (60.0 / cycleSec) * 2.0 + 10.0).toInt()
     }
 
     private sealed interface Decision {
@@ -865,6 +882,8 @@ class LiveBidDesk(
                     now >= nb.expiresAtMs - EXPIRY_SLACK_MS -> LiveBidStatus.EXPIRED
                     else -> LiveBidStatus.CANCELED
                 }
+                // An order Novig ended on its own (not our pull, not its expiry, no fill) is not put straight back.
+                if (status == LiveBidStatus.CANCELED && nb.why == null && filled == 0L) coolUntil[nb.outcomeId] = maxOf(coolUntil[nb.outcomeId] ?: 0L, now + UNEXPLAINED_COOLOFF_MS)
                 val why = when (status) {
                     LiveBidStatus.REFUSED -> "Novig refused it (a post-only bid that would have taken, or the order itself)"
                     LiveBidStatus.CANCELED -> nb.why ?: "Novig ended it"
@@ -1087,6 +1106,7 @@ class LiveBidDesk(
         const val PAPER_LATENCY_MS = 5_300L
         const val REFUSED_COOLOFF_MS = 5 * 60_000L
         const val PULL_COOLOFF_MS = 10_000L
+        const val UNEXPLAINED_COOLOFF_MS = 30_000L
         const val BACKOFF_MS = 10_000L
         const val CANCEL_RETRY_MS = 2_500L
         const val LOST_LOOKUP_MS = 2_000L
