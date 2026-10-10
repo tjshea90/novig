@@ -1,23 +1,24 @@
-# CHECKPOINT 2897 — read me first, then TASKS.md
+# CHECKPOINT 2898 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T19:55:38Z · **tests:** all 4 fast checks green
-**Branch:** `claude/new-session-mng5sq` · **builds on:** `04cd648c` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T20:13:52Z · **tests:** all 4 fast checks green
+**Branch:** `claude/new-session-mng5sq` · **builds on:** `604c7aea` (this checkpoint is the commit after it)
 
 ## Just done
-v0.88.7 released+recorded (live book refusal fix + reason words)
+pre-ship: v0.88.8: live engine shares the app's one Novig stream (a second connection starved on the key's shared stream bucket: 'live book not subscribed yet'), its markets pinned ahead of scans'
 
 ## Do this next
-Wait for Tj's Live bids page top after installing v0.88.7 (TP2c): the new no-book reason words name the cause if the refusal bug was not it
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    ?? research/uploads/2026-10-10/9cba20cf-image.png
-    ?? research/uploads/2026-10-10/c2b4637e-image.png
+     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  56744e2b ckpt 2897: v0.88.7 released+recorded (live book refusal fix + reason words)
   61d6de37 ckpt 2896: pre-release: v0.88.7: live bids: a market Novig refuses no longer shuts the 
   9e16ef7f ckpt 2895: pre-ship: v0.88.7: live bids: a market Novig refuses no longer shuts the liv
   12ce33df ckpt 2894: pre-release: v0.88.6: pregame make-order bids leave a share of the wallet fo
@@ -27,5 +28,7 @@ Wait for Tj's Live bids page top after installing v0.88.7 (TP2c): the new no-boo
   45d02b7c ckpt 2890: pre-release: v0.88.3: Pinnacle compare run says whether the socket and the w
   54922bf6 ckpt 2889: pre-release: v0.88.2: Pinnacle website compare run shows what its own book r
   a7a8121a ckpt 2888: pre-release: v0.88.1: Pinnacle website feed treats a 403 among answers as th
-  0b82c1a0 ckpt 2887: TN5 done: trial-replacement research (research file, RESEARCH 128); TN6-TN9 
 ```
+
+(5 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
