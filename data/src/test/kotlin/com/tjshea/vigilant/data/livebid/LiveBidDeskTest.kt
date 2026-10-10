@@ -228,19 +228,34 @@ class LiveBidDeskTest {
 
     @Test
     fun `real - the most bids, the most per game and the most per game in dollars each hold`() = runTest {
-        val r = rig(limits = LiveBidLimits(maxStake = 2.0, minStake = 1.0, maxBids = 3, maxBidsPerGame = 2, maxPerGame = 3.0, maxPerDay = 100.0, walletReserve = 0.0))
-        r.wallet = 1000.0
-        // Game A: two bids of $2 would be $4 over the $3 game limit; game B: one; game C: one more than the three allowed overall.
-        r.desk.want(want(r.now, "a1", "ma1", "eA"))
-        r.desk.want(want(r.now, "a2", "ma2", "eA"))
-        r.desk.want(want(r.now, "b1", "mb1", "eB"))
-        r.desk.want(want(r.now, "c1", "mc1", "eC"))
-        r.desk.want(want(r.now, "c2", "mc2", "eC"))
-        r.tick(800)
-        val byGame = r.bids().groupBy { it.eventId }.mapValues { it.value.size }
-        assertEquals("game A: the second bid would take it over $3", 1, byGame["eA"])
-        assertTrue("never more than three up", r.fake.placed.size <= 3)
-        assertTrue(r.desk.status.value.skips.keys.any { it.contains("most") })
+        val wide = LiveBidLimits(maxStake = 2.0, minStake = 1.0, maxBids = 10, maxBidsPerGame = 10, maxPerGame = 100.0, maxPerDay = 100.0, walletReserve = 0.0)
+        // Dollars in one game: two $2 bids would be $4 over a $3 limit.
+        val dollars = rig(limits = wide.copy(maxPerGame = 3.0))
+        dollars.wallet = 1000.0
+        dollars.desk.want(want(dollars.now, "a1", "ma1", "eA"))
+        dollars.desk.want(want(dollars.now, "a2", "ma2", "eA"))
+        dollars.tick(800)
+        assertEquals(1, dollars.fake.placed.size)
+        assertTrue(dollars.desk.status.value.skips.keys.any { it.contains("the most for one game") })
+        // Bids in one game.
+        val perGame = rig(limits = wide.copy(maxBidsPerGame = 2))
+        perGame.wallet = 1000.0
+        listOf("a1", "a2", "a3").forEach { perGame.desk.want(want(perGame.now, it, "m$it", "eA")) }
+        perGame.tick(800)
+        assertEquals(2, perGame.fake.placed.size)
+        // Bids in all.
+        val all = rig(limits = wide.copy(maxBids = 2))
+        all.wallet = 1000.0
+        listOf("a1", "b1", "c1").forEach { all.desk.want(want(all.now, it, "m$it", "e$it")) }
+        all.tick(800)
+        assertEquals(2, all.fake.placed.size)
+        assertTrue(all.desk.status.value.skips.keys.any { it.contains("the most bids up") })
+        // Dollars in a day.
+        val day = rig(limits = wide.copy(maxPerDay = 3.0))
+        day.wallet = 1000.0
+        listOf("a1", "b1").forEach { day.desk.want(want(day.now, it, "m$it", "e$it")) }
+        day.tick(800)
+        assertEquals(1, day.fake.placed.size)
     }
 
     @Test
@@ -283,6 +298,16 @@ class LiveBidDeskTest {
         fake.rest(p, at = now)
         hold(1_200, outcome)
         return p
+    }
+
+    /** Several bids up at once, all vouched for while they rest (one at a time, an earlier one would go unvouched for long enough to be pulled). */
+    private suspend fun Rig.upMany(vararg specs: Triple<String, String, String>): List<Placed> {
+        specs.forEach { desk.want(want(now, it.first, it.second, it.third)) }
+        tick(600)
+        val ps = specs.map { s -> fake.placed.last { it.outcomeId == s.first } }
+        ps.forEach { fake.rest(it, at = now) }
+        hold(1_500, *specs.map { it.first }.toTypedArray())
+        return ps
     }
 
     @Test
@@ -376,8 +401,7 @@ class LiveBidDeskTest {
     fun `stopAll cancels every bid in one request and says how many were up`() = runTest {
         val r = rig(limits = LiveBidLimits(maxStake = 2.0, walletReserve = 0.0))
         r.wallet = 1000.0
-        val a = r.up("a1", "ma1", "eA")
-        val b = r.up("b1", "mb1", "eB")
+        val (a, b) = r.upMany(Triple("a1", "ma1", "eA"), Triple("b1", "mb1", "eB"))
         val n = r.desk.stopAll("the live feed stopped")
         r.tick(100)
         assertEquals(2, n)
@@ -553,7 +577,7 @@ class LiveBidDeskTest {
     fun `real - a run of picked-off fills halts everything and tells the app`() = runTest {
         val r = rig(quality = LiveBidQuality(pickOffWindow = 3, pickOffLimit = 2, coolOffSec = 0), limits = LiveBidLimits(maxStake = 2.0, walletReserve = 0.0, maxBids = 10, maxBidsPerGame = 10, maxPerGame = 100.0, maxPerDay = 100.0))
         r.wallet = 1000.0
-        val ps = listOf("a1", "a2", "a3").map { r.up(it, "m-$it", "e-$it") }
+        val ps = r.upMany(Triple("a1", "m-a1", "e-a1"), Triple("a2", "m-a2", "e-a2"), Triple("a3", "m-a3", "e-a3"))
         for (p in ps) {
             r.fake.drop(p)
             r.fake.fillsBy[p.orderId] = listOf(fill("f-${p.orderId}", p.orderId, 400, ts = r.now, outcome = p.outcomeId))
@@ -569,14 +593,15 @@ class LiveBidDeskTest {
         r.tick(800)
         assertEquals("nothing is posted while halted", 3, r.fake.placed.size)
         r.desk.resumed()
-        assertNull(r.desk.status.value.halted.takeIf { false })
+        r.tick(500)
+        assertNull("Resume lifts it", r.desk.status.value.halted)
     }
 
     @Test
     fun `real - a pull that measures too slow halts everything`() = runTest {
         val r = rig(quality = LiveBidQuality(maxCancelSec = 1, coolOffSec = 0), limits = LiveBidLimits(maxStake = 1.0, walletReserve = 0.0, maxBids = 10, maxBidsPerGame = 10, maxPerGame = 100.0, maxPerDay = 100.0))
         r.wallet = 1000.0
-        val ps = (1..6).map { r.up("c$it", "m-c$it", "e-c$it") }
+        val ps = r.upMany(*(1..6).map { Triple("c$it", "m-c$it", "e-c$it") }.toTypedArray())
         r.desk.stopAll("test")
         r.tick(3_000)   // Novig keeps them on the book for 3 s after the cancel
         ps.forEach { r.fake.drop(it) }
@@ -620,10 +645,10 @@ class LiveBidDeskTest {
         val first = r.up()
         r.hold(18_000, "oa")
         r.desk.want(want(r.now))
-        r.hold(4_000, "oa")
-        assertEquals("the replacement is not sent before the last 8 s", 1, r.fake.placed.size)
+        r.hold(1_500, "oa")
+        assertEquals("the replacement is not sent before the last 8 s of the bid's life", 1, r.fake.placed.size)
         r.desk.want(want(r.now))
-        r.tick(800)
+        r.hold(1_500, "oa")
         assertEquals("the successor went up while the first is still resting", 2, r.fake.placed.size)
         assertEquals(2, r.bids().count { it.active })
         r.desk.want(want(r.now))
