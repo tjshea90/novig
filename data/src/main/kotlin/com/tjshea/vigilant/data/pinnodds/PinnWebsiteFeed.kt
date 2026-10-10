@@ -290,6 +290,8 @@ class PinnWebsiteFeed(
         }
     }
 
+    internal fun publishForTest() = publish(0L)
+
     private fun publish(cycleMs: Long) {
         latencySum += cycleMs
         latencyN++

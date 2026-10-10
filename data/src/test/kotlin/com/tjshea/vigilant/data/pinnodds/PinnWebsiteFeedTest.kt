@@ -151,15 +151,19 @@ class PinnWebsiteFeedTest {
     }
 
     @Test
-    fun `a refused key or too many requests is counted and said, and 429 slows the polling`() = runTest {
+    fun `a refused key or too many requests is counted and said, and a 429 slows the polling`() = runTest {
         val r = rig(backgroundScope)
         r.fake.status = 429
         r.feed.discover(24)
-        val s1 = r.feed.stats.value
         assertTrue(r.feed.games.isEmpty())
+        r.feed.publishForTest()
+        assertTrue(r.feed.stats.value.rateLimited > 0)
+        assertTrue(r.feed.stats.value.lastError!!.contains("429"))
         r.fake.status = 403
         r.feed.discover(24)
-        assertNull(null)
+        r.feed.publishForTest()
+        assertTrue(r.feed.stats.value.lastError!!.contains("refused"))
+        assertTrue(r.feed.stats.value.failures >= 2)
     }
 
     @Test
