@@ -75,7 +75,13 @@ fun main(args: Array<String>) = runBlocking {
     val tickJ = DayJournal(dir, "sgo-tick", SgoTick.serializer()) { it.atMs }
     val closeJ = DayJournal(dir, "sgo-close", SgoCloseRow.serializer()) { it.atMs }
 
-    val bidLab = BidLab(trades = { id -> novig.trades(id, 60) }, market = { id -> novig.market(id) }, bidJournal = bidJ, eventJournal = eventJ)
+    // Results from final scores (SGO when there is a key, then ESPN and MLB): Novig drops a settled market, so its own status never arrives.
+    val freeScores = com.tjshea.vigilant.data.tracker.FreeScores(http, json)
+    val scores: com.tjshea.vigilant.data.tracker.ScoreSource =
+        if (keys.isEmpty()) freeScores
+        else com.tjshea.vigilant.data.tracker.ChainedScores(com.tjshea.vigilant.data.tracker.SgoScores(sgo, { true }).also { it.enabled = true }, freeScores)
+    val grader = com.tjshea.vigilant.data.novig.lab.LabGrader(scores)
+    val bidLab = BidLab(trades = { id -> novig.trades(id, 60) }, market = { id -> novig.market(id) }, bidJournal = bidJ, eventJournal = eventJ, grader = grader)
     // Paper bids still resting or waiting for a result in the journals of earlier runs (restored by the workflow) carry on.
     bidLab.restore(bidJ.readAll(), eventJ.readAll(), System.currentTimeMillis())
     val edge = EdgeLog(edgeJ)
@@ -95,7 +101,7 @@ fun main(args: Array<String>) = runBlocking {
         scope = scope, source = novig,
         fetch = { url -> espn(http, url) },
         altQuotes = { ev -> if (keys.isEmpty()) emptyList() else boards.quotes(ev) },
-        journal = labJ, gradeJournal = gradeJ, bidLab = bidLab,
+        journal = labJ, gradeJournal = gradeJ, bidLab = bidLab, grader = grader,
     )
     val started = System.currentTimeMillis()
     val until = started + a.minutes * 60_000L
