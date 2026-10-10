@@ -6175,3 +6175,8 @@ Tell me exactly what to do right now to test the Pinnacle source and what to sen
 ```
 I have 3 more days of pinnodds. The live betting feature is still not working. No bids or bets are going through
 ```
+
+## 2026-10-10T20:53:02Z
+```
+Lower the margin to 2%, so far no bids have been taken. Investigate. Also why haven't any regular take bets been placed
+```
