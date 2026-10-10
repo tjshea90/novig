@@ -41,6 +41,8 @@ data class ReportActions(
     val onBurstShown: () -> Unit = {},
     /** Settings › Pinnodds live is on screen: refresh its status line. */
     val onPinnShown: () -> Unit = {},
+    /** Settings › Live bids is open: refresh the desk's status (asked every second or two). */
+    val onLiveBidShown: () -> Unit = {},
     val onTestPinnKey: () -> Unit = {},
     /** SportsGameOdds Pro: test the key (and, with true, share the sample it saved). */
     val onTestSgoKey: (Boolean) -> Unit = {},

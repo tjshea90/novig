@@ -68,6 +68,7 @@ object Diagnostics {
         /** The live burst recorder (no orders; RESEARCH.md §95): its status line and its report from the journal; null when it was never on and has recorded nothing. */
         val burstReport: String? = null,
         val pinnReport: String? = null,
+        val liveBidReport: String? = null,
         val sharpCalls: Int = 0,
         val sharpFailures: Int = 0,
         val sharpAnswers: Map<String, Int> = emptyMap(),
@@ -227,6 +228,7 @@ object Diagnostics {
         lowUsageLines(set, x.lowUsagePlan, now).forEach { o.appendLine(it) }
         x.burstReport?.let { r -> o.appendLine(); o.append(r) }
         x.pinnReport?.let { r -> o.appendLine(); o.append(r) }
+        x.liveBidReport?.let { r -> o.appendLine(); o.append(r) }
         x.feedRace?.let { lines -> o.appendLine(); o.appendLine("== LIVE FEED TEST (which free feed shows a score or odds move before Novig's price; no orders; RESEARCH.md §106) =="); lines.forEach { o.appendLine(it) } }
         x.sgoReport?.let { lines -> o.appendLine(); o.appendLine("== SPORTSGAMEODDS PRO (SPORTSGAMEODDS_API.md) =="); lines.forEach { o.appendLine(it) } }
         x.opReport?.let { lines -> o.appendLine(); o.appendLine("== ODDSPAPI (ODDSPAPI_API.md) =="); lines.forEach { o.appendLine(it) } }

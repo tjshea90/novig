@@ -62,6 +62,9 @@ object LiveBidText {
         else -> null
     }
 
+    /** The preset in force, as the home list says it. */
+    fun preset(s: ScanSettings): String = LiveBidPresets.active(s)?.name ?: (s.liveBidPresetName?.let { "$it (changed)" } ?: "your own rules")
+
     fun inForce(s: ScanSettings): String {
         val active = LiveBidPresets.active(s)
         return when {

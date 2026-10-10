@@ -255,7 +255,7 @@ private fun <T> LbChoices(title: String, choices: List<T>, isSelected: (T) -> Bo
 
 @Composable
 private fun LbPercent(title: String, choices: List<Double>, value: Double, tag: String, min: Double, max: Double, unit: String = "%", zeroLabel: String = "Off", onSet: (Double) -> Unit) {
-    fun show(v: Double) = if (v <= 0.0) zeroLabel else LiveBidQuality.pct(v).removeSuffix("%") + unit.let { if (it == "%") "%" else it }
+    fun show(v: Double) = if (v <= 0.0) zeroLabel else LiveBidQuality.pct(v).removeSuffix("%") + unit
     LbChoices(title, choices, { kotlin.math.abs(it - value) < 1e-9 }, ::show, tag, onSet)
     TypedPercentField(NumberSpecs.percent(title.substringBefore(" ("), min, max), value, "$tag-field", onSet)
 }

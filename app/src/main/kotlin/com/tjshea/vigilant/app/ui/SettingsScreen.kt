@@ -118,6 +118,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** Pinnacle's live price on the Pinnodds WebSocket against Novig's lagging quote: the key, the switches and the limits (Tj, 2026-10-08). */
     PINNODDS("Pinnodds live", "Pinnacle's live price against Novig: key, paper or real bets, limits", SettingsGroup.BET),
 
+    /** Post-only bids on Novig's live lines, priced under Pinnacle's live fair: paper, then real money, with presets and every number as a chip or a box (Tj, 2026-10-10). */
+    LIVEBIDS("Live bids", "Bids on live games, kept fresh and pulled fast: presets, stake and every safeguard", SettingsGroup.BET),
+
     /** Pause, which scanner, which games, the background scan. */
     SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background", SettingsGroup.FIND),
 
@@ -154,7 +157,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
         CNO -> s.cnoOn
         FEED, FAIR, USAGE -> s.vigilantOn
         ALERTS, RESEARCH, SGO, ODDSPAPI -> AppBook.isNovig
-        PINNODDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
+        PINNODDS, LIVEBIDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
     }
 
@@ -205,6 +208,12 @@ object SettingsSummary {
                 s.pinnLiveHalted != null -> "Stopped"
                 s.pinnLiveBet -> "On: real bets, ${com.tjshea.vigilant.app.PinnText.money(s.pinnLiveStake)} a bet"
                 else -> "On: paper only (nothing is sent)"
+            }
+            SettingsPage.LIVEBIDS -> when {
+                !s.liveBid -> "Off"
+                s.liveBidHalted != null -> "Stopped"
+                s.liveBidReal -> "On: real money, ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
+                else -> "On: paper only (nothing is sent), ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
             }
             SettingsPage.SGO -> when {
                 state.sgoKeys.isEmpty() -> "No key saved"
@@ -333,6 +342,7 @@ fun SettingsScreen(
                 SettingsPage.FAIR -> FairOddsTab(state, keys, onUpdate)
                 SettingsPage.BETTING -> BettingTab(state, onUpdate, onNovigConnect, onNovigTest, onNovigDisconnect, bettingActions, onOpenAutoBet)
                 SettingsPage.PINNODDS -> PinnLiveSection(state, keys, reportActions, onUpdate)
+                SettingsPage.LIVEBIDS -> LiveBidPage(state, reportActions, onUpdate)
                 SettingsPage.RESEARCH -> ResearchPage(state, reportActions, onUpdate)
                 SettingsPage.SGO -> SgoPage(state, keys, reportActions, onUpdate)
                 SettingsPage.ODDSPAPI -> OddsPapiPage(state, keys, reportActions, onUpdate)
