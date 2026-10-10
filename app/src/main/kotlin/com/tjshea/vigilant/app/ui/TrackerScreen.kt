@@ -595,6 +595,18 @@ private fun StatsCards(
             }
             Text(TrackerText.luckMessage(stats), style = MaterialTheme.typography.bodySmall)
             stats.averageEv?.let { Text("Average EV when bet: ${Format.evPercent(it)} (these ${stats.bets} bets, outliers aside).", style = MaterialTheme.typography.bodySmall) }
+            // Why Profit above is a different number (Tj, 2026-10-10): it counts bets this card leaves out.
+            if (kotlin.math.abs(stats.profitAll - stats.profitWithEv) >= 0.005) {
+                Text(
+                    "Profit above (${Format.signedMoney(stats.profitAll)}) also counts bets this card leaves out: " +
+                        listOfNotNull(
+                            "${stats.outliers} outlier bets ${Format.signedMoney(stats.profitOutliers)}".takeIf { stats.outliers > 0 },
+                            "locks ${Format.signedMoney(stats.profitLocks)}".takeIf { stats.locks > 0 },
+                            "bets with no EV on record, pushes and fair-value settlements ${Format.signedMoney(stats.profitOther)}".takeIf { kotlin.math.abs(stats.profitOther) >= 0.005 },
+                        ).joinToString(", ") + ". Not an error: different sets of bets.",
+                    style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("edgesReconcile"),
+                )
+            }
             Caption("Both numbers count the same ${stats.settledWithEv} won and lost bet${if (stats.settledWithEv == 1) "" else "s"}: what their EVs promised, and what they actually paid. Bets with no EV on record, pushes and voids aren't in either.")
         }
         BreakdownCard(bets, by, onBreakdown)

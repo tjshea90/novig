@@ -279,6 +279,13 @@ data class TrackerStats(
      */
     val profitAll: Double = 0.0,
     val stakedAll: Double = 0.0,
+    /**
+     * Where [profitAll] and [profitWithEv] part (Tj, 2026-10-10: "Are the edges real?" read -$0.27 while Profit read +$18.70): [profitAll] =
+     * [profitWithEv] + [profitOutliers] + [profitLocks] + [profitOther] (pushes' zero, bets with no EV on record, imported bets).
+     */
+    val profitOutliers: Double = 0.0,
+    val profitLocks: Double = 0.0,
+    val profitOther: Double = 0.0,
     /** Locks ([TrackedBet.isLock]): in the stakes and profit above, not in the record, EV or closing line. */
     val locks: Int = 0,
 ) {
@@ -1030,6 +1037,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 val p = (b.fairAtBet ?: 0.0).coerceIn(0.0, 1.0)
                 b.stake * b.stake * p * (1.0 - p) / (b.cost * b.cost)
             }
+            val profitAll = all.filter(decided).sumOf { it.profit ?: 0.0 }
             return TrackerStats(
                 bets = bets.size,
                 pending = open.size,
@@ -1052,8 +1060,12 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 profitWithEv = judged.sumOf { it.profit ?: 0.0 },
                 settledWithEv = judged.size,
                 expectedSd = kotlin.math.sqrt(variance),
-                profitAll = all.filter(decided).sumOf { it.profit ?: 0.0 },
+                profitAll = profitAll,
                 stakedAll = all.filter(decided).sumOf { it.stake },
+                profitOutliers = all.filter { it.isOutlier && decided(it) }.sumOf { it.profit ?: 0.0 },
+                profitLocks = settledMoney.filter { it.isLock }.sumOf { it.profit ?: 0.0 },
+                profitOther = profitAll - judged.sumOf { it.profit ?: 0.0 } -
+                    all.filter { it.isOutlier && decided(it) }.sumOf { it.profit ?: 0.0 } - settledMoney.filter { it.isLock }.sumOf { it.profit ?: 0.0 },
                 locks = money.count { it.isLock },
             )
         }
