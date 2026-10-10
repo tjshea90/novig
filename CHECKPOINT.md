@@ -1,22 +1,24 @@
-# CHECKPOINT 2901 — read me first, then TASKS.md
+# CHECKPOINT 2902 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T20:46:23Z · **tests:** all 4 fast checks green
-**Branch:** `claude/new-session-mng5sq` · **builds on:** `42c0e068` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T20:54:27Z · **tests:** all 4 fast checks green
+**Branch:** `claude/new-session-mng5sq` · **builds on:** `74db24d7` (this checkpoint is the commit after it)
 
 ## Just done
-Tj's 4:45 screenshots: live bids post for real on v0.88.8, 0 fills so far (TP2e)
+pre-ship: v0.88.9: live bids and Autopilot use a 2% margin under Pinnacle's fair (was 3%): more fills
 
 ## Do this next
-Tj decides fill levers (margin below 3%, lead the book); TP2f: remaining 'not subscribed yet' and tail bets with 0 score+clock games
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  d47da744 ckpt 2901: Tj's 4:45 screenshots: live bids post for real on v0.88.8, 0 fills so far (T
   42c0e068 ckpt 2900: v0.88.8 released+recorded (live engine shares the one Novig stream)
   f73920e0 ckpt 2899: pre-release: v0.88.8: live engine shares the app's one Novig stream (a secon
   b16d7aa1 ckpt 2898: pre-ship: v0.88.8: live engine shares the app's one Novig stream (a second c
@@ -26,5 +28,7 @@ Tj decides fill levers (margin below 3%, lead the book); TP2f: remaining 'not su
   12ce33df ckpt 2894: pre-release: v0.88.6: pregame make-order bids leave a share of the wallet fo
   8db65eba ckpt 2893: v0.88.5 released+recorded; website feed ruled out for live (cached); waiting
   4e3604c0 ckpt 2892: pre-release: v0.88.5: Pinnacle website feed measured as cached (90-400 s old
-  d636d96a ckpt 2891: pre-release: v0.88.4: feed race counts one sample per update (not per market
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
