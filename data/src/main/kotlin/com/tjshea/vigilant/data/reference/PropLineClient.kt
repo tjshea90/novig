@@ -236,6 +236,12 @@ class PropLineClient(
         /** A league board, read once: the books' games, and Novig's prices for them apart. */
         fun parseBoard(raw: String, json: Json, sportKey: String): Board {
             val lenient = lenient(json)
+            // One game at a time, never the whole board as a tree (about eight times the JSON's size; PropLine's answers average 4 MB: Tj, 2026-10-10, heap 91%).
+            com.tjshea.vigilant.data.JsonSplit.elements(raw)?.let { split ->
+                val events = ArrayList<PlEvent>(split.size)
+                for (i in 0 until split.size) runCatching { lenient.decodeFromString(PlEvent.serializer(), split.element(i)) }.getOrNull()?.let { events += it }
+                return Board(events.mapNotNull { it.toDomain(sportKey) }, events.mapNotNull { it.novigDomain(sportKey) })
+            }
             val items = lenient.parseToJsonElement(raw) as? kotlinx.serialization.json.JsonArray ?: return Board(emptyList(), emptyList())
             val events = items.mapNotNull { e -> runCatching { lenient.decodeFromJsonElement(PlEvent.serializer(), e) }.getOrNull() }
             return Board(events.mapNotNull { it.toDomain(sportKey) }, events.mapNotNull { it.novigDomain(sportKey) })

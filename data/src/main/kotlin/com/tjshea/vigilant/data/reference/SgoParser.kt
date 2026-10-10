@@ -82,6 +82,13 @@ object SgoParser {
     private val lenient = Json { ignoreUnknownKeys = true; isLenient = true }
 
     fun page(raw: String): SgoPage {
+        // One game at a time, never the whole reply as a tree (a tree is about eight times the JSON's size: Tj, 2026-10-10, heap 91%). A reply that cannot be split falls through to the whole parse.
+        com.tjshea.vigilant.data.JsonSplit.elements(raw, "data")?.let { split ->
+            val rest = runCatching { lenient.parseToJsonElement(split.rest) }.getOrNull() as? JsonObject
+            val events = ArrayList<SgoEvent>(split.size)
+            for (i in 0 until split.size) runCatching { event(lenient.parseToJsonElement(split.element(i))) }.getOrNull()?.let { events += it }
+            return SgoPage(events, rest.str("nextCursor"), rest.str("notice"))
+        }
         val root = (runCatching { lenient.parseToJsonElement(raw) }.getOrNull() as? JsonObject) ?: return SgoPage(emptyList(), null, null)
         val data = root["data"] as? JsonArray ?: return SgoPage(emptyList(), root.str("nextCursor"), root.str("notice"))
         return SgoPage(data.mapNotNull { runCatching { event(it) }.getOrNull() }, root.str("nextCursor"), root.str("notice"))
