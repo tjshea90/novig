@@ -1249,6 +1249,8 @@ class AppContainer(private val app: Application) {
         return com.tjshea.vigilant.data.pinnodds.LiveConfig(
             rules = com.tjshea.vigilant.data.pinnodds.LiveRules(minEv = s.pinnLiveMinEv, minMove = s.pinnLiveMinMove, pregame = s.pinnLivePregame, trigger = s.pinnLiveTrigger, holdoffMs = s.pinnLiveHoldoffSeconds * 1000L),
             method = s.pinnLiveDevig, leagues = Leagues.ALL.map { it.novigName }.toSet() + com.tjshea.vigilant.data.pinnodds.PinnLiveRunner.EXTRA_LEAGUES,
+            // The lag taker judges only while its own switch is on; with only the live bids on the feed runs for them alone.
+            takerOn = s.pinnLive,
         )
     }
 
@@ -1262,22 +1264,141 @@ class AppContainer(private val app: Application) {
             newFeed = { listener -> readConnection?.let { NovigStream(http, readKeyClient(it), appScope, idleCloseMs = BURST_IDLE_CLOSE_MS, bookListener = listener) } },
             openFeed = { onFrame -> com.tjshea.vigilant.data.pinnodds.PinnSocket(http, { keyStore.current(ApiProvider.PINNODDS).firstOrNull() }, appScope, onFrame) },
             trader = pinnTrader, config = ::pinnConfig, followJournal = pinnFollowJournal, reopenJournal = pinnReopenJournal,
+            bids = liveBidDesk, bidConfig = ::liveBidConfig,
+        )
+    }
+
+    // ---- Live bids (Tj, 2026-10-10; RESEARCH.md §123-§124): post-only bids on Novig's live lines, priced under Pinnacle's live fair --------------------------------------------
+
+    /** Every thing the live bid desk did (posted, pulled, filled, followed up, halted), one file a day, appended to, never rewritten: the research record. */
+    val liveBidJournal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "live-bids"), "livebid", com.tjshea.vigilant.data.livebid.LiveBidEvent.serializer()) { it.atMs }
+
+    /** What the desk sends orders through: whatever betting client is connected at that moment (a real bid does not go up without one: [liveBidConfig]'s `blockedWhy`). */
+    private val liveBidOrders = object : com.tjshea.vigilant.data.livebid.LiveBidOrders {
+        private fun client() = trading ?: error("no betting key connected")
+        override suspend fun place(outcomeId: String, price: Double, qty: Long, ttlMs: Long, clientId: String) = client().placeOrder(outcomeId, price, qty, "PO", clientId, ttlMs)
+
+        override suspend fun cancel(orderIds: List<String>): Map<String, String?> {
+            val c = client()
+            if (orderIds.size > 1 && c.batchOrders) {
+                try {
+                    val r = c.cancelOrdersBatch(orderIds)
+                    return orderIds.associateWith { id -> if (id in r.canceled) "OPEN" else r.notCanceled[id]?.takeIf { it == "FILLED" } }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // One by one below.
+                }
+            }
+            val out = HashMap<String, String?>()
+            var failure: Exception? = null
+            for (id in orderIds) {
+                try {
+                    out[id] = c.cancelOrder(id)
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    if (failure == null) failure = e
+                }
+            }
+            failure?.let { throw it }
+            return out
+        }
+
+        override suspend fun open() = client().orders("OPEN")
+
+        override suspend fun find(clientId: String, outcomeId: String): com.tjshea.vigilant.data.novig.trading.NovigOrder? {
+            val c = client()
+            for (status in listOf("OPEN", "PENDING", "FILLED", "CANCELED", "REJECTED")) {
+                val hit = try {
+                    c.orders(status, outcomeId = outcomeId).firstOrNull { it.clientId == clientId }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    null
+                }
+                if (hit != null) return hit
+            }
+            return null
+        }
+
+        override suspend fun order(orderId: String) = client().order(orderId)
+        override suspend fun fills(orderId: String) = client().fills(orderId)
+    }
+
+    /** Tj's live bid switches, rules and limits as the desk reads them at each look. STOP ALL and the Pause button switch it off (everything comes down); a real bid also needs the betting key. */
+    private fun liveBidConfig(): com.tjshea.vigilant.data.livebid.LiveBidConfig {
+        val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.livebid.LiveBidConfig.OFF
+        val on = AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS && s.liveBid && !s.paused
+        val blocked = if (s.liveBidReal && trading == null) "no betting key connected" else null
+        val preset = com.tjshea.vigilant.data.livebid.LiveBidPresets.active(s)?.name ?: s.liveBidPresetName?.let { "$it (changed)" }
+        return com.tjshea.vigilant.data.livebid.LiveBidConfig(
+            on = on, real = s.liveBidReal, quality = s.liveBidQuality, limits = s.liveBidLimits, bankroll = s.bankroll, apiMaxStake = s.apiMaxStake, preset = preset,
+            halted = s.liveBidHalted, blockedWhy = blocked,
+        )
+    }
+
+    /** Dollars of API bets filled today across every desk, locks left out (as the Bet sheet's and the bid desk's daily limit count them). */
+    private suspend fun liveBidSpentToday(): Double {
+        val from = ApiBetPlacer.localMidnight(System.currentTimeMillis())
+        return tracker.all().filter { it.orderId != null && !it.isLock && it.createdAtMs >= from }.sumOf { it.stake }
+    }
+
+    /** Dollars lost today on settled live bids (positive = a loss): the day's halt. */
+    private suspend fun liveBidLossToday(): Double {
+        val from = ApiBetPlacer.localMidnight(System.currentTimeMillis())
+        val net = tracker.all().filter { it.source == BetTracker.SOURCE_LIVEBID && (it.settledAtMs ?: 0L) >= from }.sumOf { it.profit ?: 0.0 }
+        return (-net).coerceAtLeast(0.0)
+    }
+
+    /**
+     * The live bid desk: it owns the orders (post-only, a ttl, pulled the moment the runner stops vouching for them) and answers for the money at risk. Real orders take the app's one-order lock
+     * only while being placed; a pull never waits for it. Fills go to the Tracker as "Live bids".
+     */
+    val liveBidDesk: com.tjshea.vigilant.data.livebid.LiveBidDesk by lazy {
+        com.tjshea.vigilant.data.livebid.LiveBidDesk(
+            scope = appScope, orders = liveBidOrders, store = com.tjshea.vigilant.data.livebid.LiveBidStore(File(app.filesDir, "live-bids.json")), journal = liveBidJournal, config = ::liveBidConfig,
+            wallet = { wallet.flow.value?.dollars },
+            otherRestingDollars = { makerStore.flow.value.orEmpty().filter { it.resting }.sumOf { it.restingDollars } },
+            spentToday = ::liveBidSpentToday, dayLimit = { settingsStore.flow.value?.apiMaxPerDay ?: 0.0 }, lossToday = ::liveBidLossToday,
+            logFills = { target, orderId, fills ->
+                val bet = tracker.logMakerFills(target, orderId, fills)
+                // The wallet changed: read it again, so the next bid is sized against the money that is really there.
+                if (bet != null) appScope.launch { runCatching { wallet.fresh() } }
+                bet?.id
+            },
+            onHalt = { why ->
+                eventLog.warn("LIVEBID", "live bids halted: $why")
+                appScope.launch {
+                    withContext(kotlinx.coroutines.NonCancellable) {
+                        runCatching { settingsStore.update { if (it.liveBidHalted == null) it.copy(liveBidHalted = why) else it } }
+                        runCatching { AutoBetNotes.stopped(app, "Live bids stopped", why) }
+                    }
+                }
+            },
+            lock = orderLock, version = BuildConfig.VERSION_NAME,
         )
     }
 
     @Volatile private var pinnSawHalt = false
+    @Volatile private var liveBidSawHalt = false
 
-    /** Starts or stops the live engine to match [s]: on, a Pinnodds key saved, a Novig key connected, STOP ALL not pressed, the Novig app. Safe to call on every settings change. */
+    /**
+     * Starts or stops the live engine to match [s]: on (the lag taker, the live bids, or both), a Pinnodds key saved, a Novig key connected, STOP ALL not pressed, the Novig app. The one Pinnodds socket and
+     * the one Novig book feed serve both. Safe to call on every settings change.
+     */
     suspend fun pinnTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        if (com.tjshea.vigilant.data.scanner.Dormant.PINNODDS || !s.pinnLive || s.killed) {   // dormant (Tj, 2026-10-09): never opened
+        val wanted = s.pinnLive || s.liveBid
+        if (com.tjshea.vigilant.data.scanner.Dormant.PINNODDS || !wanted || s.killed) {   // dormant (Tj, 2026-10-09): never opened
             if (pinnRunner.running) pinnRunner.stop(if (s.killed) "stopped by STOP ALL" else null)
             LiveFeedService.stop(app)
             return
         }
         ensureLoaded()
         if (s.pinnLiveHalted != null) pinnSawHalt = true else if (pinnSawHalt) { pinnSawHalt = false; pinnTrader.resumed() }
-        if (s.pinnLiveBet) runCatching { wallet.fresh() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+        if (s.liveBidHalted != null) liveBidSawHalt = true else if (liveBidSawHalt) { liveBidSawHalt = false; liveBidDesk.resumed() }
+        if (s.pinnLiveBet || (s.liveBid && s.liveBidReal)) runCatching { wallet.fresh() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
         if (keyStore.current(ApiProvider.PINNODDS).isEmpty()) {
             if (pinnRunner.running) pinnRunner.stop("No Pinnodds key saved (Settings › Pinnodds live).")
             LiveFeedService.stop(app)
