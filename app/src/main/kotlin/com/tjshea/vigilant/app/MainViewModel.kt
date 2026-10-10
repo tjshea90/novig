@@ -2201,7 +2201,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 .onSuccess { (files, bytes) ->
                     c.eventLog.info("DIAG", "scan study cleared by hand: $files files, ${bytes / 1_048_576} MB")
                     _toasts.tryEmit(if (files == 0) "The scan study was already empty" else "Scan study cleared ($files days, ${bytes / 1_048_576} MB)")
-                    readStudyNote()
+                    refreshStudy()
                 }
                 .onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; _toasts.tryEmit("Couldn't clear the scan study (${e.message ?: e.javaClass.simpleName})") }
         }
