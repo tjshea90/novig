@@ -6139,3 +6139,10 @@ https://oddscorp.com/en/solutions/api
 
 https://www.npmjs.com/package/sports-odds-api
 ```
+
+## 2026-10-10T16:49:38Z
+```
+Yes, build the Pinnacle website feed behind a switch
+
+Then consider if any of the sources I already listed can replace the free trials I have or can be better than the apis I already use
+```
