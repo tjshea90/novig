@@ -2239,7 +2239,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             makerBids = g.makerBids,
             maker = c.maker.status.value,
             cnoBids = c.cnoBids.status.value.takeIf { _state.value.settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO },
-            memory = memoryNow().let { m -> inputs.census?.let { m.copy(lines = m.lines + it) } ?: m },
+            memory = memoryNow().let { m -> g.census?.let { m.copy(lines = m.lines + it) } ?: m },
             autoScanServiceRunning = AutoScanService.running,
             keepAwakeHeld = AutoScanService.keepAwakeHeld,
             kalshiPace = runCatching { c.kalshiPaceNote() }.getOrNull(),
