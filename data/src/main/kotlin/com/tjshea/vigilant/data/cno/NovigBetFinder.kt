@@ -115,7 +115,7 @@ class NovigBetFinder(
      */
     suspend fun attempt(row: CnoRow): Attempt {
         val hint = hintedOutcome(row)
-        val league = novigLeague(row.league) ?: return miss("the league has no Novig name", hint, row)
+        val league = novigLeague(row.league) ?: return miss("the league has no Novig name")
         val events = eventsOf(league)
         val event = events?.let { matchEvent(row, it) }
         var strict: Found? = null
@@ -143,7 +143,7 @@ class NovigBetFinder(
         return Attempt(strict, why)
     }
 
-    private fun miss(why: String, hint: String?, row: CnoRow): Attempt {
+    private fun miss(why: String): Attempt {
         misses.merge(why, 1, Int::plus)
         return Attempt(null, why)
     }

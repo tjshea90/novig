@@ -622,7 +622,13 @@ class AutoBettor(
 
         /** [row]'s exact bet on Novig, as the Bet sheet finds it ([NovigBetFinder]), with its market; null unless the outcome is in that market. */
         suspend fun resolveOnNovig(c: AppContainer, row: CnoRow): BetTarget? {
-            val found = withContext(Dispatchers.IO) { runCatching { c.betFinder.find(row) }.getOrNull() } as? NovigBetFinder.Found.Bet ?: return null
+            val attempt = withContext(Dispatchers.IO) { runCatching { c.betFinder.attempt(row) }.getOrNull() }
+            val found = attempt?.found as? NovigBetFinder.Found.Bet
+            if (found == null) {
+                // Why, by reason, in Diagnostics' counters (Tj, 2026-10-10: "many times it says it can't find a bet"): the next file says which step failed.
+                c.eventLog.count("autobet.notfound." + (attempt?.why ?: "the lookup itself failed").take(90))
+                return null
+            }
             val market = found.market ?: found.marketId?.let { id -> withContext(Dispatchers.IO) { runCatching { c.novig.market(id) }.getOrNull() } } ?: return null
             if (market.outcomes.none { it.outcomeId == found.outcomeId }) return null
             return ApiBetTargets.of(row, found, market, c.cno.state.value.snapshot?.dataAtMs)

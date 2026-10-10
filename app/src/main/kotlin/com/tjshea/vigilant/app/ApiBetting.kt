@@ -561,7 +561,9 @@ class ApiBettingController(
         checkWallet()
         betJob?.cancel()
         betJob = scope.launch {
-            val found = withContext(Dispatchers.IO) { runCatching { c.betFinder.find(row) }.getOrNull() } as? NovigBetFinder.Found.Bet
+            val attempt = withContext(Dispatchers.IO) { runCatching { c.betFinder.attempt(row) }.getOrNull() }
+            val found = attempt?.found as? NovigBetFinder.Found.Bet
+            if (found == null) c.eventLog.count("betsheet.notfound." + (attempt?.why ?: "the lookup itself failed").take(90))
             val market = found?.let { f -> f.market ?: f.marketId?.let { id -> withContext(Dispatchers.IO) { runCatching { c.novig.market(id) }.getOrNull() } } }
             val t = (if (found != null && market != null) target(found, market) else null)?.let { t ->
                 // The bet as found (its book page, Novig's price, CNO's numbers): kept on the bet once it fills ([BetRecord]).
@@ -569,7 +571,7 @@ class ApiBettingController(
                 t.copy(atBet = runCatching { BetRecord.cno(state.value, row, live, com.tjshea.vigilant.data.tracker.AtBet.HOW_SHEET, t.source, clock()) }.getOrNull())
             }
             if (t == null) {
-                state.update { it.copy(betSheet = it.betSheet?.copy(resolving = false, refusal = "Novig's exact bet couldn't be found for this one (its market or line isn't listed the way $lister names it): use Open in Novig instead.")) }
+                state.update { it.copy(betSheet = it.betSheet?.copy(resolving = false, refusal = "Novig's exact bet couldn't be found for this one (${attempt?.why ?: "Novig didn't answer"}; its market or line may not be listed the way $lister names it): use Open in Novig instead.")) }
                 return@launch
             }
             state.update { it.copy(betSheet = it.betSheet?.copy(target = t, resolving = false)) }

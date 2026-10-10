@@ -306,6 +306,12 @@ class AppContainer(private val app: Application) {
         catalog = { row -> if (AppBook.isNovig) (betFinder.find(row) as? NovigBetFinder.Found.Bet)?.link else null },
     )
 
+    init {
+        // The outcome CNO's own link names is a second way to find a bet's Novig market (what "Open in Novig" opens): the Bet sheet, the auto-bet and every price read use it when the
+        // name match finds no exact outcome (Tj, 2026-10-10).
+        betFinder.linkHint = { row -> CnoFeed.outcomeIdOf(cno.links.value[CnoFeed.linkKey(row)]) }
+    }
+
     /**
      * Written once the ✓ marks from before the Tracker kept them were moved into it: the move runs
      * once, so a bet deleted in the Tracker doesn't come back from its old mark.
