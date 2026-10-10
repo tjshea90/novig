@@ -69,6 +69,8 @@ object Diagnostics {
         val burstReport: String? = null,
         val pinnReport: String? = null,
         val liveBidReport: String? = null,
+        /** Parts of the file left out because reading them took too long or failed, and why (Tj, 2026-10-10). */
+        val skipped: List<String> = emptyList(),
         val sharpCalls: Int = 0,
         val sharpFailures: Int = 0,
         val sharpAnswers: Map<String, Int> = emptyMap(),
@@ -166,6 +168,7 @@ object Diagnostics {
         o.appendLine("Version ${x.versionName} (code ${x.versionCode})" + (x.installedAtMs?.let { " installed ${at(it)}" } ?: "") + " · ${x.device}")
         // For whoever reads it next (Tj pastes it to Claude): where the code is, and how the report is laid out.
         o.appendLine("For Claude: code at github.com/tjshea90/novig (modules engine/data/app; paths below are under data/src/main/kotlin/com/tjshea/vigilant/ or app's). Health checks come first, worst first, each with its evidence [in brackets] and the code that owns it (→); the blocks after are the numbers behind them. No keys are ever included.")
+        if (x.skipped.isNotEmpty()) { o.appendLine("LEFT OUT OF THIS FILE (too slow to read or failed; the file was still made):"); x.skipped.forEach { o.appendLine("  - $it") } }
         val set = s.settings
 
         o.appendLine()

@@ -1759,19 +1759,67 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val burstProofReason: String?,
         /** The leagues the recorder has proved on their own windows ([VigilantApp.burstProof]). */
         val burstProvedLeagues: Set<String>,
+        /** The reports built from the recorders' journals (read on their own, so one slow journal cannot hold the file back), and what was left out and why. */
+        val pinnReport: String? = null,
+        val labReport: List<String>? = null,
+        val burstReport: String? = null,
+        val skipped: List<String> = emptyList(),
     )
 
-    private suspend fun gatherDiag(): DiagInputs = withContext(Dispatchers.IO) {
-        DiagInputs(
-            problems = runCatching { c.problems.recent() }.getOrDefault(emptyList()),
-            cycles = runCatching { c.cycleLog.summary() }.getOrDefault(com.tjshea.vigilant.data.diag.CycleBook()),
-            logcat = com.tjshea.vigilant.data.diag.LogcatTail.read(android.os.Process.myPid()),
-            storage = runCatching { DiagnosticsShare.storage(getApplication()) }.getOrDefault(emptyList()),
-            previous = runCatching { c.diagHistory.all().lastOrNull() }.getOrNull(),
-            makerBids = runCatching { c.makerStore.all() }.getOrDefault(emptyList()),
-            study = runCatching { c.study.overview() }.getOrNull(),
-            burstProofReason = runCatching { c.burstProof().reason }.getOrDefault("the proof could not be read"),
-            burstProvedLeagues = runCatching { c.burstProof().leagues }.getOrDefault(emptySet()),
+    /**
+     * Everything the Diagnostics file reads from disk, each item on its own coroutine with a deadline (Tj, 2026-10-10: "it says making the file but nothing happens"): the scan study's journal, the
+     * recorders' day files and the burst data grow all day, and one slow read used to hold the whole file back with no word. An item that is over time is left out of the file and named in it.
+     */
+    private suspend fun gatherDiag(): DiagInputs {
+        val skipped = java.util.Collections.synchronizedList(ArrayList<String>())
+        val start = System.currentTimeMillis()
+        fun <T> bg(block: () -> T) = viewModelScope.async(Dispatchers.IO) { runCatching(block) }
+        suspend fun <T> take(what: String, d: kotlinx.coroutines.Deferred<Result<T>>): T? {
+            val left = (DIAG_ITEM_MS - (System.currentTimeMillis() - start)).coerceAtLeast(1_000L)
+            val r = kotlinx.coroutines.withTimeoutOrNull(left) { d.await() }
+            return when {
+                r == null -> { skipped += "$what: left out, it took over ${DIAG_ITEM_MS / 1000} s to read"; null }
+                r.isFailure -> { skipped += "$what: left out (${r.exceptionOrNull()?.javaClass?.simpleName}: ${r.exceptionOrNull()?.message ?: ""})"; null }
+                else -> r.getOrNull()
+            }
+        }
+        val problems = bg { c.problems.recent() }
+        val cycles = bg { c.cycleLog.summary() }
+        val logcat = bg { com.tjshea.vigilant.data.diag.LogcatTail.read(android.os.Process.myPid()) }
+        val storage = bg { DiagnosticsShare.storage(getApplication()) }
+        val previous = bg { c.diagHistory.all().lastOrNull() }
+        val makerBids = bg { c.makerStore.all() }
+        val study = bg { c.study.overview() }
+        val burstProof = bg { c.burstProof() }
+        val settings = _state.value.settings
+        val pinn = bg { PinnText.diagnostics(settings, c.pinnRunner.status.value, c.pinnTrader.status.value, c.pinnJournal.readRecent(DIAG_DAYS), c.pinnFollowJournal.readRecent(DIAG_DAYS), c.pinnRunner.running, c.pinnReopenJournal.readRecent(DIAG_DAYS)) }
+        val lab = bg {
+            val st = c.lab.status.value
+            val recs = c.lab.recordsRecent(DIAG_DAYS)
+            if (!settings.altLab && !settings.researchMode && recs.isEmpty()) null
+            else LabText.diagnostics(st, recs, c.lab.gradesRecent(DIAG_DAYS), System.currentTimeMillis()) + com.tjshea.vigilant.data.novig.lab.BidLabReport.lines(c.bidLabBidJournal.readRecent(DIAG_DAYS), c.bidLabEventJournal.readRecent(DIAG_DAYS))
+        }
+        val burstProofNow = take("burst recorder's proof", burstProof)
+        val burst = bg {
+            BurstText.diagnostics(
+                c.burst.status.value, c.burstJournal.readAll(), c.burst.latency.note(), settings, c.burst.running,
+                trades = c.burstTradeJournal.readAll(), trader = c.burstTrader.status.value, proofReason = burstProofNow?.reason ?: "the proof could not be read", provedLeagues = burstProofNow?.leagues ?: emptySet(),
+            )
+        }
+        return DiagInputs(
+            problems = take("recent problems", problems).orEmpty(),
+            cycles = take("scan cycle log", cycles) ?: com.tjshea.vigilant.data.diag.CycleBook(),
+            logcat = take("logcat", logcat).orEmpty(),
+            storage = take("storage sizes", storage).orEmpty(),
+            previous = take("the previous report", previous),
+            makerBids = take("bids on file", makerBids).orEmpty(),
+            study = take("scan study counts", study),
+            burstProofReason = burstProofNow?.reason ?: "the proof could not be read",
+            burstProvedLeagues = burstProofNow?.leagues ?: emptySet(),
+            pinnReport = take("Pinnodds live journals", pinn),
+            labReport = take("paper lab journals", lab),
+            burstReport = take("burst recorder journals", burst),
+            skipped = skipped.toList(),
         )
     }
 
@@ -2200,25 +2248,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     c.opClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
                 }
             }.getOrNull(),
-            labReport = runCatching {
-                val st = c.lab.status.value
-                val recs = c.lab.recordsRecent(DIAG_DAYS)
-                if (!_state.value.settings.altLab && !_state.value.settings.researchMode && recs.isEmpty()) null else LabText.diagnostics(st, recs, c.lab.gradesRecent(DIAG_DAYS), System.currentTimeMillis()) + com.tjshea.vigilant.data.novig.lab.BidLabReport.lines(c.bidLabBidJournal.readRecent(DIAG_DAYS), c.bidLabEventJournal.readRecent(DIAG_DAYS))
-            }.getOrNull(),
+            labReport = g.labReport,
             sharpFeeds = runCatching { com.tjshea.vigilant.data.reference.SharpBooks.feedsAmong(c.referenceSources(_state.value.settings, background = true)) }.getOrDefault(emptyList()),
             lowUsagePlan = _state.value.settings.takeIf { it.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }?.let { runCatching { c.lowUsagePlan(it) }.getOrNull() },
-            pinnReport = runCatching {
-                PinnText.diagnostics(_state.value.settings, c.pinnRunner.status.value, c.pinnTrader.status.value, c.pinnJournal.readRecent(DIAG_DAYS), c.pinnFollowJournal.readRecent(DIAG_DAYS), c.pinnRunner.running, c.pinnReopenJournal.readRecent(DIAG_DAYS))
-            }.getOrNull(),
+            pinnReport = g.pinnReport,
             liveBidReport = runCatching {
                 LiveBidText.diagnostics(_state.value.settings, c.liveBidDesk.status.value, c.pinnRunner.status.value, c.liveBidDesk.bidsNow(), c.pinnRunner.running)
             }.getOrNull(),
-            burstReport = runCatching {
-                BurstText.diagnostics(
-                    c.burst.status.value, c.burstJournal.readAll(), c.burst.latency.note(), _state.value.settings, c.burst.running,
-                    trades = c.burstTradeJournal.readAll(), trader = c.burstTrader.status.value, proofReason = g.burstProofReason, provedLeagues = g.burstProvedLeagues,
-                )
-            }.getOrNull(),
+            burstReport = g.burstReport,
+            skipped = g.skipped,
             sharpCalls = c.sharp.calls,
             sharpFailures = c.sharp.failures,
             sharpAnswers = c.sharp.answeredBy,
@@ -2493,4 +2531,5 @@ internal suspend fun refreshWhileOnScreen(
 /** The Diagnostics file reads this many days of each recorder; the share gives up after this long; old-data clearing keeps this many days. */
 private const val DIAG_DAYS = 3
 private const val DIAG_TIMEOUT_MS = 90_000L
+private const val DIAG_ITEM_MS = 20_000L
 private const val KEEP_DAYS = 3
