@@ -350,12 +350,96 @@ def persistence(path):
             print(f'    sat at least {lim:>2} s: {sum(1 for x in gs if x >= lim) + len(held)} of {len(res)}')
 
 
+def survive(args):
+    """Follow every resting order of a random sample of the sweep's books and measure how long each lived (the public book lists each order by id)."""
+    import random
+    recs = [r for r in load(args.inp) if r['type'] in ('TOTAL', 'SPREAD', 'MONEY') and any(o['b'] for o in r['o'])]
+    random.seed(7)
+    sample = random.sample(recs, min(args.n, len(recs)))
+    ids = [r['marketId'] for r in sample]
+    print(f'following {len(ids)} books for {args.minutes} min')
+    seen = {}      # (market, order) -> [first_t, last_t, price, qty, outcome]
+    passes = []
+    end = time.time() + 60 * args.minutes
+    with open(args.out, 'w') as f:
+        while time.time() < end:
+            t = time.time()
+            for mid in ids:
+                b = read_book(mid)
+                time.sleep(1.0 / args.rate)
+                if not b:
+                    continue
+                tt = time.time()
+                f.write(json.dumps({'t': tt, 'marketId': mid, 'orders': {k: [{'id': o['orderId'], 'p': float(o['price']), 'q': int(o['qty'])} for o in v] for k, v in b['orders'].items()}}) + '\n')
+            passes.append(t)
+    print(f'{len(passes)} passes -> {args.out}')
+
+
+def survival_report(args):
+    rows = load(args.inp)
+    by = defaultdict(list)
+    for r in rows:
+        by[r['marketId']].append(r)
+    life = []     # (lifetime_s, censored, price, qty, is_top, spread-ish)
+    changes = 0
+    reads = 0
+    for mid, rs in by.items():
+        rs.sort(key=lambda r: r['t'])
+        first = {}
+        last = {}
+        top_first = {}
+        prev_best = None
+        for r in rs:
+            reads += 1
+            cur = {}
+            best_by_out = {}
+            for k, v in r['orders'].items():
+                for o in v:
+                    cur[o['id']] = (o['p'], o['q'])
+                best_by_out[k] = max((o['p'] for o in v), default=None)
+            bb = tuple(sorted(best_by_out.items()))
+            if prev_best is not None and bb != prev_best:
+                changes += 1
+            prev_best = bb
+            for oid, (pp, qq) in cur.items():
+                if oid not in first:
+                    first[oid] = (r['t'], pp, qq, pp == max((o['p'] for o in [x for v in r['orders'].values() for x in v if x['id'] == oid] ), default=0) and pp == best_by_out.get(next((k for k, v in r['orders'].items() if any(x['id'] == oid for x in v)), None)))
+                last[oid] = r['t']
+        t_start = rs[0]['t']; t_end = rs[-1]['t']
+        for oid, (t0, pp, qq, top) in first.items():
+            if t0 > t_start + 1e-6:
+                continue        # only orders already resting when we started: their ages are unknown but their remaining life is measurable
+            gone = last[oid] < t_end - 1e-6
+            life.append((last[oid] - t0, not gone, pp, qq, top))
+    n = len(life)
+    print(f'orders resting at the start: {n}; book reads {reads}; reads where the best bid on either side changed vs the previous read: {changes} ({100 * changes / max(reads, 1):.0f}%)')
+    def row(label, xs):
+        if not xs:
+            return
+        out = [f'{label:<18} n={len(xs):<4}']
+        for lim in (5, 10, 30, 60, 120):
+            alive = sum(1 for x in xs if x[0] >= lim or x[1])
+            out.append(f'>= {lim:>3}s {100 * alive / len(xs):>3.0f}%')
+        print('  '.join(out))
+    row('all', life)
+    row('top of book', [x for x in life if x[4]])
+    row('behind the top', [x for x in life if not x[4]])
+    row('size >= 50k', [x for x in life if x[3] >= 50000])
+    row('size < 50k', [x for x in life if x[3] < 50000])
+    row('price 0.05-0.95', [x for x in life if 0.05 <= x[2] <= 0.95])
+    row('price <0.05/>0.95', [x for x in life if not 0.05 <= x[2] <= 0.95])
+    span = max(r['t'] for r in rows) - min(r['t'] for r in rows)
+    print(f'watch span {span:.0f} s; "alive" counts an order still there at the last read (censored)')
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     sp = ap.add_subparsers(dest='cmd', required=True)
     a = sp.add_parser('sweep'); a.add_argument('--leagues', default='NCAAF,WNBA'); a.add_argument('--out', required=True); a.add_argument('--rate', type=float, default=4.0)
     w = sp.add_parser('watch'); w.add_argument('--in', dest='inp', required=True); w.add_argument('--minutes', type=float, default=3); w.add_argument('--out', required=True)
     w.add_argument('--top', type=int, default=30); w.add_argument('--rate', type=float, default=4.0); w.add_argument('--every', type=float, default=2.0)
+    v = sp.add_parser('survive'); v.add_argument('--in', dest='inp', required=True); v.add_argument('--n', type=int, default=24); v.add_argument('--minutes', type=float, default=3); v.add_argument('--out', required=True); v.add_argument('--rate', type=float, default=5.0)
+    z = sp.add_parser('survival'); z.add_argument('--in', dest='inp', required=True)
     r = sp.add_parser('report'); r.add_argument('--sweep', required=True); r.add_argument('--watch')
     args = ap.parse_args()
-    {'sweep': sweep, 'watch': watch, 'report': report}[args.cmd](args)
+    {'sweep': sweep, 'watch': watch, 'report': report, 'survive': survive, 'survival': survival_report}[args.cmd](args)
