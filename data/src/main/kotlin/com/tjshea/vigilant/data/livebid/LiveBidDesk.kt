@@ -128,7 +128,7 @@ class LiveBidDesk(
     /** Dollars of other resting bids on the account (the pregame desk's), counted against the wallet. */
     private val otherRestingDollars: () -> Double = { 0.0 },
     /** Dollars of API bets filled today across every desk, and the day's limit across every desk. */
-    private val spentToday: () -> Double = { 0.0 },
+    private val spentToday: suspend () -> Double = { 0.0 },
     private val dayLimit: () -> Double = { Double.MAX_VALUE },
     /** Dollars lost today on settled live bids (positive = a loss). */
     private val lossToday: suspend () -> Double = { 0.0 },
@@ -412,6 +412,9 @@ class LiveBidDesk(
         // A real bid needs a way to be sent (a key); without one nothing goes up (the gate says why).
         if (cfg.real && orders == null) return
         val fresh = synchronized(mu) { wants.values.filter { now - it.atMs <= WANT_TTL_MS }.sortedByDescending { it.verdict.ev } }
+        if (fresh.isEmpty()) return
+        // Read once per pass, outside the lock: dollars of API bets already filled today by every desk.
+        val spent = if (cfg.real) runCatching { spentToday() }.getOrDefault(Double.MAX_VALUE / 4) else 0.0
         var posts = 0
         for (w in fresh) {
             if (posts >= MAX_POSTS_PER_STEP) break
@@ -424,7 +427,7 @@ class LiveBidDesk(
                     val contracts = LiveBidStake.contracts(dollars, w.verdict.price)
                     if (contracts < MIN_CONTRACTS) { count("stake too small for a bid"); continue }
                     val cost = contracts * w.verdict.price * EvMath.CONTRACT_PAYOUT_DOLLARS
-                    val blocked = synchronized(mu) { budget(w, cost, cfg, now, decision.replacing) }
+                    val blocked = synchronized(mu) { budget(w, cost, cfg, now, decision.replacing, spent) }
                     if (blocked != null) { count(blocked); continue }
                     if (post(w, contracts, cfg, now, decision.replacing)) posts++
                 }
@@ -459,7 +462,7 @@ class LiveBidDesk(
     }
 
     /** Why a bid costing [cost] must not go up, or null. Inside [mu]. Every bid not yet over counts as if it fills. */
-    private fun budget(w: LiveBidWant, cost: Double, cfg: LiveBidConfig, now: Long, replacing: LiveBid?): String? {
+    private fun budget(w: LiveBidWant, cost: Double, cfg: LiveBidConfig, now: Long, replacing: LiveBid?, spent: Double): String? {
         val lim = cfg.limits
         val others = bids.values.filter { it.active && it.clientId != replacing?.clientId && it.clientId !in replaced }
         if (others.size >= lim.maxBids) return "at the most bids up (${lim.maxBids})"
@@ -471,7 +474,7 @@ class LiveBidDesk(
         val dayDollars = others.sumOf { it.restingDollars } + bids.values.filter { it.postedAtMs >= day }.sumOf { it.paid }
         if (dayDollars + cost > lim.maxPerDay + 1e-9) return "at the most for a day (${money(lim.maxPerDay)})"
         if (cfg.real) {
-            if (spentToday() + others.sumOf { it.restingDollars } + cost > dayLimit() + 1e-9) return "at the day's limit for API bets"
+            if (spent + others.sumOf { it.restingDollars } + cost > dayLimit() + 1e-9) return "at the day's limit for API bets"
             val w0 = wallet() ?: return "wallet not read yet"
             val up = others.filter { it.real }.sumOf { it.restingDollars } + otherRestingDollars()
             if (w0 - lim.walletReserve - up < cost) return "the wallet cannot cover it beside the bids up"
