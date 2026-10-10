@@ -5955,3 +5955,13 @@ Is there any way to keep vigilant running even when backgrounded
 ```
 Build it
 ```
+
+## 2026-10-10T02:10:13Z
+```
+For all 5 repos you are connected to, permanently save the following setup rules. Each Claude session should see this rule immediately on startup without me telling Claude anything. Each Claude session, no matter which Claude account, should see the following rules and set them up at startup: 
+
+Review all available plugins, skills, and connectors at your disposal. Use any plugins, skills, and connectors freely if they can improve app building, app UI and theming, efficiency and accuracy of code, efficiency of Claude usage, or anything else to improve Claude code for building android apps. Ignore skills, plugins, and connectors if they contradict one another; choose the best one. Most of my apps are for Android 16. 
+I frequently use a lot of usage and it runs out and interrupts Claude output. All projects should have ladder systems that auto save all data frequently to GitHub, and a new Claude code session can cold resume the project with no data or progress being lost. Make a checkpoint system and ensure all Claude progress on my projects are saved frequently in case of interruptions. Assume Claude can be interrupted at any time, and plan for a resumption protocol. There should be a smooth handoff to the next Claude session so it can immediately see what to resume, how to resume, what work needs to be done, what work was already finished, etc.
+
+I prefer longer sessions and more usage if it makes a better product and fixes bugs, but efficiency and saving Claude usage where possible.
+```
