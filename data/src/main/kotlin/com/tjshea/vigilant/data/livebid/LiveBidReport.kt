@@ -77,5 +77,63 @@ object LiveBidReport {
         return out
     }
 
+    /** Where a bid sat in Novig's book when it went up: at the front of its side, level with the best bid, or behind it. */
+    enum class Place(val label: String) { LED("led the book"), JOINED("level with the best bid"), BEHIND("behind the best bid") }
+
+    fun place(b: LiveBid): Place {
+        val best = b.bestBid ?: return Place.LED
+        return when {
+            b.price > best + 0.0005 -> Place.LED
+            b.price >= best - 0.0005 -> Place.JOINED
+            else -> Place.BEHIND
+        }
+    }
+
+    /** Seconds a bid was actually on the book (from first seen resting, else from posting) to its end; null while it is still up. */
+    private fun lifeSec(b: LiveBid): Double? = b.endedAtMs?.let { (it - (b.openAtMs ?: b.postedAtMs)) / 1000.0 }
+
+    /**
+     * Why the bids get so few fills (Tj, 2026-10-10: "figure out why I don't get a lot of action on live bets and bids"), from what the bids themselves recorded: where each sat in the book when
+     * it went up, how long it lived, how it ended, and what the desk said no to. Each line is a fact about the data; the last line is the reading, or says there is too little to read yet. [skips]
+     * are the desk's counts of looks that ended in no bid. Pure.
+     */
+    fun whyFew(bids: List<LiveBid>, skips: Map<String, Int>): List<String> {
+        val out = ArrayList<String>()
+        val done = bids.filter { it.status.ended }
+        if (bids.isEmpty()) {
+            out += "No bid has gone up yet" + (skips.entries.sortedByDescending { it.value }.take(4).takeIf { it.isNotEmpty() }?.let { ": the looks ended in " + it.joinToString(" · ") { e -> "${e.key} ×${e.value}" } } ?: " (no line has been judged).")
+            return out
+        }
+        val byPlace = bids.groupBy { place(it) }
+        out += "Where bids sat when posted: " + Place.entries.filter { it in byPlace }.joinToString(" · ") { p ->
+            val l = byPlace.getValue(p)
+            "${p.label} ${l.size} (${l.count { it.filled > 0 }} filled, ${share(l.count { it.filled > 0 }.toDouble() / l.size)})"
+        }
+        val behind = byPlace[Place.BEHIND].orEmpty()
+        if (behind.isNotEmpty()) {
+            val gaps = behind.mapNotNull { b -> b.bestBid?.let { ((it - b.price) * 100).toLong() } }.sorted()
+            if (gaps.isNotEmpty()) out += "Behind bids sat a median ${gaps[gaps.size / 2]}¢ under the best bid (the edge rule keeps the price down; a smaller margin lets it climb)"
+        }
+        val unfilled = done.filter { it.filled == 0L }
+        val lives = unfilled.mapNotNull { lifeSec(it) }.sorted()
+        if (lives.isNotEmpty()) out += "Unfilled bids lived a median ${"%.0f".format(Locale.US, lives[lives.size / 2])} s on the book (n=${lives.size}); ${unfilled.count { it.status == LiveBidStatus.CANCELED }} were pulled, ${unfilled.count { it.status == LiveBidStatus.EXPIRED }} ran out their time, ${unfilled.count { it.status == LiveBidStatus.REFUSED }} were refused"
+        val pulled = unfilled.filter { it.status == LiveBidStatus.CANCELED }.groupBy { it.why ?: "no reason recorded" }.entries.sortedByDescending { it.value.size }.take(4)
+        if (pulled.isNotEmpty()) out += "Pulled for: " + pulled.joinToString(" · ") { "${it.key} ×${it.value.size}" }
+        val fills = bids.count { it.filled > 0 }
+        val rate = fills.toDouble() / bids.size
+        val led = byPlace[Place.LED].orEmpty()
+        val ledRate = if (led.isEmpty()) null else led.count { it.filled > 0 }.toDouble() / led.size
+        val behindShare = behind.size.toDouble() / bids.size
+        val medLife = lives.getOrNull(lives.size / 2)
+        out += when {
+            bids.size < 10 -> "Reading: only ${bids.size} bids so far, too few to say why. Leave it running through a full slate."
+            rate >= 0.15 -> "Reading: ${share(rate)} of bids fill, which is healthy; more fills come from more bids up (Fill the wallet) rather than from changing the rules."
+            behindShare >= 0.5 && (ledRate ?: 0.0) > rate -> "Reading: most bids sit behind the best bid (${share(behindShare)}), and the ones that lead fill more (${share(ledRate)}): a bid priced for ${"the margin"} can't get ahead of the book. A smaller margin or 'More fills' moves them up."
+            medLife != null && medLife < 12.0 -> "Reading: bids are coming down after about ${"%.0f".format(Locale.US, medLife)} s, before a trade can find them (a live order takes ~5 s just to land). The pulls above are the cause."
+            else -> "Reading: bids rest their full time and just are not traded against: the market has nobody selling into them at that price. More games and more markets up at once is the lever."
+        }
+        return out
+    }
+
     private fun money(v: Double) = String.format(Locale.US, "$%,.2f", v)
 }
