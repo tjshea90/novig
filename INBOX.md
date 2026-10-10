@@ -5970,3 +5970,8 @@ I prefer longer sessions and more usage if it makes a better product and fixes b
 ```
 Use the best android UI plugins to come up with different designs and ui for this app, send me screenshots of different candidates but don't change anything yet
 ```
+
+## 2026-10-10T03:11:23Z
+```
+I see wildly mispriced odds on live betting on novig everyday. Investigate how to incorporate a novig live betting feature that finds positive EV in sitting live bets available and also a system to auto bid live make bets that rapidly post and cancel and maintain positive EV 
+```
