@@ -55,7 +55,7 @@ class LiveBidJudgeTest {
 
     @Test
     fun `each staleness and trust check names itself and stops the bid`() {
-        assertEquals("Novig's feed is down", skip(view(problem = "Novig live feed problem")), "Novig live feed problem")
+        assertEquals("Novig's feed is down", "Novig live feed problem", skip(view(problem = "Novig live feed problem")))
         assertEquals(LiveBidSkip.CLOSED, skip(view(lineOpen = false)))
         assertEquals(LiveBidSkip.NOT_LIVE, skip(view(pinnLive = false)))
         assertEquals(LiveBidSkip.NOVIG_PAUSED, skip(view(novigLive = false)))
@@ -73,10 +73,10 @@ class LiveBidJudgeTest {
 
     @Test
     fun `a fair price that Novig's own middle disagrees with is a mismatch, not an edge`() {
-        // Pinnacle says 50%, Novig's middle is (0.30 + 0.40) / 2 = 0.35: 15 points apart against a limit of 10.
-        assertEquals(LiveBidSkip.MISMATCH, skip(view(bestBid = 0.30, offer = 0.40)))
+        // Pinnacle says 50%, Novig's middle is (0.20 + 0.55) / 2 = 0.375: 12.5 points apart against a limit of 10.
+        assertEquals(LiveBidSkip.MISMATCH, skip(view(bestBid = 0.20, offer = 0.55)))
         assertNotNull("ten points apart or less passes", LiveBidJudge.want(view(bestBid = 0.43, offer = 0.53), q) as? LiveBidVerdict.Post)
-        assertTrue("0 turns the check off", LiveBidJudge.want(view(bestBid = 0.30, offer = 0.40), q.copy(maxBookGap = 0.0)) is LiveBidVerdict.Post)
+        assertTrue("0 turns the check off", LiveBidJudge.want(view(bestBid = 0.20, offer = 0.55), q.copy(maxBookGap = 0.0)) is LiveBidVerdict.Post)
     }
 
     @Test
@@ -127,7 +127,7 @@ class LiveBidJudgeTest {
         assertEquals(LiveBidSkip.DANGER, pull(view(dangerAgeMs = 1_000L)))
         assertEquals("a feed problem pulls at once", "Pinnodds feed quiet", pull(view(problem = "Pinnodds feed quiet")))
         assertEquals(LiveBidSkip.NOVIG_PAUSED, pull(view(novigLive = false)))
-        assertEquals(LiveBidSkip.MISMATCH, pull(view(bestBid = 0.30, offer = 0.40)))
+        assertEquals(LiveBidSkip.MISMATCH, pull(view(bestBid = 0.20, offer = 0.55)))
         assertEquals("Novig's middle fell 5 points from 0.485 to 0.435", LiveBidSkip.NOVIG_MOVED, pull(view(bestBid = 0.40, offer = 0.47)))
     }
 
