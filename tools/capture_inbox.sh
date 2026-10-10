@@ -73,6 +73,10 @@ esac
   echo '```'
 } >> INBOX.md
 
+# Files Tj sent with this message (screenshots, diagnostics, research files) are saved into research/uploads/ now, so the autosave below pushes them with the message
+# (tools/archive-uploads.sh; Tj, 2026-10-09: "save as much data and research as possible into the GitHub repo"). Never blocks the prompt.
+bash tools/archive-uploads.sh >/dev/null 2>&1 || true
+
 # Reuse the already-tested commit/secretscan/push path rather than a second
 # copy of it — this file's only job is getting the message onto disk.
 if [ "$TEXT_MODE" -eq 1 ]; then

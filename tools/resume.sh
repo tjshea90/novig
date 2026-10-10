@@ -155,6 +155,9 @@ BRIEF="$(
       echo "        working unprotected."
     fi
 
+    # Uploads from earlier in this container (or this session) that are not in the repo yet are saved now; autosave pushes them.
+    bash tools/archive-uploads.sh 2>/dev/null | head -3
+
     # RESEARCH LAB STEWARD (Tj, 2026-10-09, permanent): one session manages the GitHub lab; the rest read research/lab/NOTES.md. One line, so the briefing stays under its cap.
     if [ -f research/lab/STEWARD.json ]; then
       python3 - <<'PYLAB' 2>/dev/null || echo "  LAB   see research/lab/STEWARD.md"
