@@ -203,8 +203,8 @@ object SettingsSummary {
                 Format.kellyLabel(s.kellyMultiplier),
             ).joinToString(" · ")
             SettingsPage.PINNODDS -> when {
-                state.pinnoddsKeys.isEmpty() -> "No Pinnodds key saved"
-                !s.pinnLive -> "Off"
+                state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.website -> "No Pinnodds key saved"
+                !s.pinnLive -> "Off" + if (s.pinnWebsite.website) " (Pinnacle website feed)" else ""
                 s.pinnLiveHalted != null -> "Stopped"
                 s.pinnLiveBet -> "On: real bets, ${com.tjshea.vigilant.app.PinnText.money(s.pinnLiveStake)} a bet"
                 else -> "On: paper only (nothing is sent)"
@@ -1864,6 +1864,47 @@ private fun KeyListEditor(provider: ApiProvider, keys: List<String>, actions: Ke
     }
 }
 
+/** Where Pinnacle's prices come from: the Pinnodds socket, or Pinnacle's own website polled for free; the compare run that times one against the other; the pace. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PinnFeedChooser(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val w = state.settings.pinnWebsite
+    val set = { f: (com.tjshea.vigilant.data.scanner.PinnWebsiteSettings) -> com.tjshea.vigilant.data.scanner.PinnWebsiteSettings -> onUpdate { it.copy(pinnWebsite = f(it.pinnWebsite)) } }
+    Text("Where Pinnacle's prices come from", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        com.tjshea.vigilant.data.scanner.PinnFeedChoice.entries.forEach { c ->
+            FilterChip(selected = w.feed == c, onClick = { set { it.copy(feed = c) } }, label = { Text(c.label) }, modifier = Modifier.testTag("pinnFeed-${c.name}"))
+        }
+    }
+    Text(w.feed.blurb, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    SwitchRow("Compare the website feed with the socket", "Runs the free website feed beside the Pinnodds socket and times every price version against it (it drives nothing). Needs the socket on.", w.compare && !w.website, tag = "pinnCompare") { v -> set { it.copy(compare = v) } }
+    Text("Website feed pace: a pause between polls of each live game", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(1_000, 1_500, 2_000, 3_000, 5_000).forEachIndexed { i, ms ->
+            FilterChip(selected = w.pollMs == ms, onClick = { set { it.copy(pollMs = ms) } }, label = { Text("${ms / 1000.0} s".replace(".0 s", " s")) }, modifier = Modifier.testTag("pinnWebsitePoll-$i"))
+        }
+    }
+    Text("Most live games followed", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(8, 16, 24, 40, 60).forEachIndexed { i, n ->
+            FilterChip(selected = w.maxGames == n, onClick = { set { it.copy(maxGames = n) } }, label = { Text("$n") }, modifier = Modifier.testTag("pinnWebsiteGames-$i"))
+        }
+    }
+    var key by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(w.key) }
+    OutlinedTextField(
+        value = key, onValueChange = { key = it.trim(); set { c -> c.copy(key = key) } }, singleLine = true, label = { Text("Website key (leave empty)") },
+        supportingText = { Text("The public key Pinnacle's own site sends every visitor. Only change it if the feed says Pinnacle refused it.") }, modifier = Modifier.fillMaxWidth().testTag("pinnWebsiteKey"),
+    )
+    state.pinnWebsiteStats?.let { st ->
+        Text(
+            "Website feed: ${st.games} live games followed · ${st.polls} requests (${st.failures} failed, ${st.rateLimited} rate-limited) · a full cycle takes ${st.lastCycleMs} ms (average ${st.avgLatencyMs} ms) · ${st.changes} price changes seen" +
+                (st.lastError?.let { " · last problem: $it" } ?: ""),
+            style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("pinnWebsiteStats"),
+        )
+    }
+    if (state.pinnRaceLines.isNotEmpty() && w.compare) Text(state.pinnRaceLines.joinToString("\n"), style = MaterialTheme.typography.labelSmall, modifier = Modifier.testTag("pinnRace"))
+}
+
 /** Settings › Pinnodds live: the key and its test, the two switches (feed = paper, real bets), the limits, and the engine's status. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -1872,6 +1913,7 @@ private fun PinnLiveSection(state: UiState, keys: KeyActions, reportActions: Rep
     val shown by androidx.compose.runtime.rememberUpdatedState(reportActions.onPinnShown)
     androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(1_500) } }
     Intro(com.tjshea.vigilant.app.PinnText.HINT)
+    PinnFeedChooser(state, onUpdate)
     KeyListEditor(ApiProvider.PINNODDS, state.pinnoddsKeys, keys, com.tjshea.vigilant.app.PinnText.KEY_LABEL)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
         Button(onClick = reportActions.onTestPinnKey, enabled = state.pinnoddsKeys.isNotEmpty() && !state.pinnKeyBusy, modifier = Modifier.testTag("pinnTestKey")) {
