@@ -67,6 +67,8 @@ object LiveBidReport {
         }
         out += "By league: " + bids.groupBy { it.league }.entries.sortedByDescending { it.value.size }.take(6).joinToString(" · ") { "${it.key} ${it.value.size}" }
         out += "By line: " + bids.groupBy { it.marketLabel }.entries.sortedByDescending { it.value.size }.joinToString(" · ") { "${it.key} ${it.value.size} (${it.value.count { b -> b.filled > 0 }} filled)" }
+        out += "Why so few fills:"
+        whyFew(bids, status.skips).forEach { out += "  $it" }
         out += "Last bids:"
         bids.takeLast(10).reversed().forEach { b ->
             out += String.format(
@@ -128,7 +130,7 @@ object LiveBidReport {
         out += when {
             bids.size < 10 -> "Reading: only ${bids.size} bids so far, too few to say why. Leave it running through a full slate."
             rate >= 0.15 -> "Reading: ${share(rate)} of bids fill, which is healthy; more fills come from more bids up (Fill the wallet) rather than from changing the rules."
-            behindShare >= 0.5 && (ledRate ?: 0.0) > rate -> "Reading: most bids sit behind the best bid (${share(behindShare)}), and the ones that lead fill more (${share(ledRate)}): a bid priced for ${"the margin"} can't get ahead of the book. A smaller margin or 'More fills' moves them up."
+            behindShare >= 0.5 && (ledRate ?: 0.0) > rate -> "Reading: most bids sit behind the best bid (${share(behindShare)}), and the ones that lead fill more (${share(ledRate)}): a bid priced for the margin can't get ahead of the book. A smaller margin or 'More fills' moves them up."
             medLife != null && medLife < 12.0 -> "Reading: bids are coming down after about ${"%.0f".format(Locale.US, medLife)} s, before a trade can find them (a live order takes ~5 s just to land). The pulls above are the cause."
             else -> "Reading: bids rest their full time and just are not traded against: the market has nobody selling into them at that price. More games and more markets up at once is the lever."
         }
