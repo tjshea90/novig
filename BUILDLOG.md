@@ -181,3 +181,4 @@ day that changes.
 | v0.88.0 | code 173 | 2026-10-10T17:13Z | v0.88.0: Pinnacle website feed (free) as a choice beside the Pinnodds socket, with a compare race that times it against the socket
 | v0.88.1 | code 174 | 2026-10-10T17:46Z | v0.88.1: Pinnacle website feed treats a 403 among answers as throttling (slows, no false key alarm), polls the score less often, race shows how many versions each feed reported
 | v0.88.2 | code 175 | 2026-10-10T17:54Z | v0.88.2: Pinnacle website compare run shows what its own book received (matchups, frames, price changes) and how many versions each feed reported, so a silent race can be diagnosed
+| v0.88.3 | code 176 | 2026-10-10T18:14Z | v0.88.3: Pinnacle compare run says whether the socket and the website follow the same matchups (and each side's latest version of shared ones); website feed spreads its games across sports instead of all college football
