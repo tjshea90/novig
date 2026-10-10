@@ -164,7 +164,7 @@ object SettingsIndex {
         Entry("Which bids go up", null, "All bids, Quick & likely to win (no strange props or small markets), or Low API usage", "bids maker focus quick likely low api usage kinds", novig, bids = true),
         Entry("Most one bid may cost", null, "The most any one bid may stake", "bids maker max stake", novig, bids = true),
         Entry("Size of each bid", null, "Kelly, \$1 or your amount per bid", "bids maker stake kelly amount", novig, bids = true),
-        Entry("Low API usage", null, "Which bids go up: props only, games within your trap guard hours (6 h by default), 2-3 sharp prop books, a slow scan pace, 2.5% (or 1.5%, or your own) or more under the fair, nothing longer than +130 unless you pick another longest odds", "bids maker which bids go up low api usage credits sharp prop books kalshi prophetx fanduel caesars draftkings pace minutes interval margin 1.5 ev", novig, bids = true),
+        Entry("Low API usage", null, "Which bids go up: props only, games within the bids' trap guard hours (6 h by default), 2-3 sharp prop books, a slow scan pace, 2.5% (or 1.5%, or your own) or more under the fair, nothing longer than +130 unless you pick another longest odds", "bids maker which bids go up low api usage credits sharp prop books kalshi prophetx fanduel caesars draftkings pace minutes interval margin 1.5 ev", novig, bids = true),
         Entry("Kinds of bet", null, "Which kinds of market get bids: props, team totals, game lines…", "bids maker kinds markets", { AppBook.isNovig && it.makerFocus != com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }, bids = true),
         Entry("Both sides of a market", null, "Bid both sides, or only the better side", "bids maker both sides", novig, bids = true),
         Entry("Price under the sharp book's fair", null, "Take each bid's margin from the lower of the blend and the sharpest book's fair", "bids maker anchor sharp", { AppBook.isNovig && it.makerFocus != com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }, bids = true),
@@ -182,7 +182,7 @@ object SettingsIndex {
         Entry("Most dollars up at once", null, "How much money all bids together may hold", "bids maker wallet dollars", novig, bids = true),
         Entry("Each bid expires after", null, "How long a bid rests before Novig takes it down", "bids maker ttl expiry", novig, bids = true),
         Entry("No bids this close to the start", null, "Bids come down this long before a game", "bids maker stop start", novig, bids = true),
-        Entry("Trap guard: only games starting within", null, "No bids on games too far off (shared with auto-bet and alerts)", "bids maker trap early hours type custom 12 hours", novig, bids = true),
+        Entry("Trap guard: only games starting within", null, "No bids on games too far off (its own hours, apart from the auto-bet's)", "bids maker trap early hours type custom 12 hours", novig, bids = true),
     )
 
     /** The entries matching every word of [query] (in the title, the line or the extra words), for these settings. */
