@@ -5990,3 +5990,8 @@ I want to run this very soon with real money, but it will be ⅛ Kelly or someth
 ```
 It isn't posting any live bids at all
 ```
+
+## 2026-10-10T05:18:49Z
+```
+How can I get all these missed bets to actually fill
+```
