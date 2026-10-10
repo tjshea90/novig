@@ -1383,11 +1383,40 @@ class AppContainer(private val app: Application) {
      * The live engine: one Pinnodds socket (the account allows one) and one Novig book feed on the connected key, judging Pinnacle's price against Novig's lagging quote. Nothing is sent unless
      * Settings › Pinnodds live › "Place real bets" is on; the trader is the only thing that can place an order, and it takes the app's one-order lock.
      */
+    // ---- the Pinnacle website feed (Tj, 2026-10-10; RESEARCH.md §127): the free replacement for the Pinnodds socket, and a compare mode that times it against the socket ---------------
+
+    private fun websiteConfig(): com.tjshea.vigilant.data.scanner.PinnWebsiteSettings = settingsStore.flow.value?.pinnWebsite ?: com.tjshea.vigilant.data.scanner.PinnWebsiteSettings()
+
+    private val websiteFetcher = com.tjshea.vigilant.data.pinnodds.OkHttpWebsiteFetcher(http, { websiteConfig().key.trim().ifEmpty { com.tjshea.vigilant.data.pinnodds.PinnWebsiteFeed.PUBLIC_SITE_KEY } })
+
+    /** The website feed the engine is reading from, when it is the engine's source (null while the socket is). */
+    @Volatile private var activeWebsiteFeed: com.tjshea.vigilant.data.pinnodds.PinnWebsiteFeed? = null
+
+    /** The compare mode: the website feed on a book of its own, timed against the socket's versions; it drives nothing. */
+    val pinnRace = com.tjshea.vigilant.data.pinnodds.VersionRace()
+    @Volatile private var pinnShadowOn = false
+    private val pinnShadowBook by lazy {
+        com.tjshea.vigilant.data.pinnodds.PinnBook().also { b -> b.versionListener = { id, key, v, at -> pinnRace.note(com.tjshea.vigilant.data.pinnodds.VersionRace.Source.WEBSITE, id, key, v, at) } }
+    }
+    private val pinnShadow by lazy { com.tjshea.vigilant.data.pinnodds.PinnWebsiteFeed(websiteFetcher, appScope, { _, _ -> }, ::websiteConfig, shadow = pinnShadowBook) }
+
+    /** The website feed's counters: the engine's own while it is the source, else the compare run's; null when neither runs. */
+    fun websiteStats(): com.tjshea.vigilant.data.pinnodds.WebsiteStats? = (activeWebsiteFeed ?: pinnShadow.takeIf { it.running })?.stats?.value
+
     val pinnRunner: com.tjshea.vigilant.data.pinnodds.PinnLiveRunner by lazy {
         com.tjshea.vigilant.data.pinnodds.PinnLiveRunner(
             scope = appScope, source = novig,
             newFeed = { listener -> readConnection?.let { NovigStream(http, readKeyClient(it), appScope, idleCloseMs = BURST_IDLE_CLOSE_MS, bookListener = listener) } },
-            openFeed = { onFrame -> com.tjshea.vigilant.data.pinnodds.PinnSocket(http, { keyStore.current(ApiProvider.PINNODDS).firstOrNull() }, appScope, onFrame) },
+            openFeed = { onFrame ->
+                // The feed is read at each start of the engine; changing it in Settings restarts the engine (pinnTick).
+                if (settingsStore.flow.value?.pinnWebsite?.website == true) {
+                    com.tjshea.vigilant.data.pinnodds.PinnWebsiteFeed(websiteFetcher, appScope, onFrame, ::websiteConfig).also { activeWebsiteFeed = it }
+                } else {
+                    activeWebsiteFeed = null
+                    com.tjshea.vigilant.data.pinnodds.PinnSocket(http, { keyStore.current(ApiProvider.PINNODDS).firstOrNull() }, appScope, onFrame)
+                }
+            },
+            onVersion = { id, key, version, at -> if (pinnShadowOn) pinnRace.note(com.tjshea.vigilant.data.pinnodds.VersionRace.Source.SOCKET, id, key, version, at) },
             trader = pinnTrader, config = ::pinnConfig, followJournal = pinnFollowJournal, reopenJournal = pinnReopenJournal,
             bids = liveBidDesk, bidConfig = ::liveBidConfig,
         )
@@ -1514,6 +1543,14 @@ class AppContainer(private val app: Application) {
     }
 
     @Volatile private var pinnSawHalt = false
+    @Volatile private var pinnRunWebsite: Boolean? = null
+
+    /** Starts or stops the compare run (the website feed beside the socket, driving nothing). */
+    private fun shadowTick(on: Boolean) {
+        if (on == pinnShadowOn) return
+        pinnShadowOn = on
+        if (on) { pinnRace.reset(); pinnShadow.start() } else { pinnShadow.stop() }
+    }
     @Volatile private var liveBidSawHalt = false
 
     /**
@@ -1532,12 +1569,18 @@ class AppContainer(private val app: Application) {
         if (s.pinnLiveHalted != null) pinnSawHalt = true else if (pinnSawHalt) { pinnSawHalt = false; pinnTrader.resumed() }
         if (s.liveBidHalted != null) liveBidSawHalt = true else if (liveBidSawHalt) { liveBidSawHalt = false; liveBidDesk.resumed() }
         if (s.pinnLiveBet || (s.liveBid && s.liveBidReal)) runCatching { wallet.fresh() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
-        if (keyStore.current(ApiProvider.PINNODDS).isEmpty()) {
+        val website = s.pinnWebsite.website
+        // The engine reads its feed when it starts: a changed choice restarts it.
+        if (pinnRunner.running && pinnRunWebsite != null && pinnRunWebsite != website) pinnRunner.stop("switching the Pinnacle feed")
+        if (!website && keyStore.current(ApiProvider.PINNODDS).isEmpty()) {
             if (pinnRunner.running) pinnRunner.stop("No Pinnodds key saved (Settings › Pinnodds live).")
+            shadowTick(false)
             LiveFeedService.stop(app)
             return
         }
+        pinnRunWebsite = website
         pinnRunner.start()
+        shadowTick(!website && s.pinnWebsite.compare)
         // The foreground service holds the process and the CPU awake with the screen off (allowed from the screen, a boot or an update; refused quietly otherwise).
         LiveFeedService.start(app)
     }

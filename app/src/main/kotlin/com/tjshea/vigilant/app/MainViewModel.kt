@@ -206,6 +206,9 @@ data class UiState(
     /** Pinnodds live (RESEARCH.md §116): the engine's status, the trader's, and the Test key answer (null = not tested; [pinnKeyOk] says whether it passed), refreshed while Settings is open. */
     val pinnLive: com.tjshea.vigilant.data.pinnodds.LiveRunnerStatus = com.tjshea.vigilant.data.pinnodds.LiveRunnerStatus(),
     val pinnTrade: com.tjshea.vigilant.data.pinnodds.LiveTradeStatus = com.tjshea.vigilant.data.pinnodds.LiveTradeStatus(),
+    /** The Pinnacle website feed's counters (null = not running) and the compare run's lines (RESEARCH.md §127). */
+    val pinnWebsiteStats: com.tjshea.vigilant.data.pinnodds.WebsiteStats? = null,
+    val pinnRaceLines: List<String> = emptyList(),
     val pinnKeyNote: String? = null,
     val pinnKeyOk: Boolean? = null,
     val pinnKeyBusy: Boolean = false,
@@ -1909,12 +1912,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** The live engine's status for Settings › Pinnodds live (the page asks every second or two while it is open). */
     fun refreshPinnLive() {
-        _state.update { it.copy(pinnLive = c.pinnRunner.status.value, pinnTrade = c.pinnTrader.status.value) }
+        _state.update { it.copy(pinnLive = c.pinnRunner.status.value, pinnTrade = c.pinnTrader.status.value, pinnWebsiteStats = c.websiteStats(), pinnRaceLines = c.pinnRace.lines()) }
     }
 
     /** The live bid desk's status for Settings › Live bids (the page asks every second or two while it is open). */
     fun refreshLiveBid() {
-        _state.update { it.copy(liveBidStatus = c.liveBidDesk.status.value, liveBids = c.liveBidDesk.bidsNow(), pinnLive = c.pinnRunner.status.value, tailTrade = c.tailTaker.status.value, labStatus = c.lab.status.value, pinnTrade = c.pinnTrader.status.value) }
+        _state.update { it.copy(liveBidStatus = c.liveBidDesk.status.value, liveBids = c.liveBidDesk.bidsNow(), pinnLive = c.pinnRunner.status.value, tailTrade = c.tailTaker.status.value, labStatus = c.lab.status.value, pinnTrade = c.pinnTrader.status.value, pinnWebsiteStats = c.websiteStats()) }
     }
 
     /**

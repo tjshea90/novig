@@ -36,11 +36,11 @@ object PinnText {
     /** The line under the switches: where the engine is and what it has done. */
     fun statusLine(r: LiveRunnerStatus, t: LiveTradeStatus, s: ScanSettings, keyCount: Int): String {
         if (!s.pinnLive) return "Off."
-        if (keyCount == 0) return "On, but no Pinnodds key is saved: add it above."
+        if (keyCount == 0 && !s.pinnWebsite.website) return "On, but no Pinnodds key is saved: add it above, or switch to the free Pinnacle website feed."
         if (!r.running) return r.problem?.let { "Not running: $it" } ?: "Starting…"
         val age = r.frameAgeMs?.let { if (it < 2_000) "just now" else "${it / 1000} s ago" } ?: "no frame yet"
         val mode = if (s.pinnLiveBet && s.pinnLiveHalted == null) "REAL BETS" else if (s.pinnLiveHalted != null) "HALTED" else "paper"
-        return "Pinnodds feed ${r.socket}, last frame $age · ${r.pinnLive} live matchups, ${r.matched} matched to Novig, ${r.watched} Novig markets held · ${r.candidates} candidates · " +
+        return "${if (s.pinnWebsite.website) "Pinnacle website feed" else "Pinnodds feed"} ${r.socket}, last frame $age · ${r.pinnLive} live matchups, ${r.matched} matched to Novig, ${r.watched} Novig markets held · ${r.candidates} candidates · " +
             "$mode: ${t.bets} bets, ${t.paper} paper, ${t.missed} missed" + (t.last?.let { " · last: $it" } ?: "") + (r.problem?.let { " · $it" } ?: "")
     }
 
