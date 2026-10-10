@@ -24,18 +24,18 @@ object LiveAutopilot {
             liveBid = true, liveBidReal = real, liveBidHalted = null,
             liveBidLimits = s.liveBidLimits.copy(fillWallet = true),
             pinnLive = true, pinnLiveBet = real, pinnLiveHalted = null,
-            tailLive = true, tailLiveBet = real, tailLiveHalted = null,
+            tailLive = s.tailLive.copy(on = true, bet = real, halted = null),
             pinnLiveTrigger = LiveTrigger.EITHER, pinnLiveMinEv = TAKER_MIN_EV, pinnLiveMinMove = TAKER_MIN_MOVE,
         )
 
     /** Whether both engines are on with the autopilot's rules (the page says "In force"). */
     fun inForce(s: ScanSettings): Boolean =
-        s.liveBid && s.pinnLive && s.tailLive && s.liveBidLimits.fillWallet && LiveBidPresets.matches(s, LiveBidPresets.FILL) &&
+        s.liveBid && s.pinnLive && s.tailLive.on && s.liveBidLimits.fillWallet && LiveBidPresets.matches(s, LiveBidPresets.FILL) &&
             s.pinnLiveTrigger == LiveTrigger.EITHER && s.pinnLiveMinEv <= TAKER_MIN_EV + 1e-9
 
     /** Whether any of the two engines is placing real orders. */
-    fun real(s: ScanSettings): Boolean = (s.liveBid && s.liveBidReal) || (s.pinnLive && s.pinnLiveBet) || (s.tailLive && s.tailLiveBet)
+    fun real(s: ScanSettings): Boolean = (s.liveBid && s.liveBidReal) || (s.pinnLive && s.pinnLiveBet) || (s.tailLive.on && s.tailLive.bet)
 
     /** Both engines off (real ones included); their rules and limits stay as they are. */
-    fun off(s: ScanSettings): ScanSettings = s.copy(liveBid = false, liveBidReal = false, pinnLive = false, pinnLiveBet = false, tailLive = false, tailLiveBet = false)
+    fun off(s: ScanSettings): ScanSettings = s.copy(liveBid = false, liveBidReal = false, pinnLive = false, pinnLiveBet = false, tailLive = s.tailLive.copy(on = false, bet = false))
 }

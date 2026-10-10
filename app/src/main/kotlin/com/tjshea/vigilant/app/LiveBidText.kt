@@ -162,7 +162,7 @@ object LiveBidText {
         val l = s.liveBidLimits
         return "Both live engines will place real orders on Novig by themselves. The taker buys at most ${money(s.pinnLiveStake)} a bet, ${money(s.pinnLiveMaxGame)} a game and ${money(s.pinnLiveMaxDay)} a day; it stops if live bets lose ${money(s.pinnLiveHaltLoss)}. " +
             "The bid desk fills the wallet with bids (${l.stakeMode.label} of your ${money(s.bankroll)} bankroll, ${money(l.minStake)}-${money(l.maxStake)} a bid, keeping ${money(l.walletReserve)} in the wallet) and stops if live bids lose ${money(l.haltLoss)}. " +
-            "The tail bettor buys at most ${money(s.tailLiveStake)} a bet, ${money(s.tailLiveMaxGame)} a game and ${money(s.tailLiveMaxDay)} a day and stops if tail bets lose ${money(s.tailLiveHaltLoss)}. " +
+            "The tail bettor buys at most ${money(s.tailLive.stake)} a bet, ${money(s.tailLive.maxGame)} a game and ${money(s.tailLive.maxDay)} a day and stops if tail bets lose ${money(s.tailLive.haltLoss)}. " +
             "Pinnacle's price is an estimate of the true chance, so any single bet can lose; each is positive expected value, not a sure thing, and a 3% edge is thin. The taker and the bids depend on the live Pinnodds feed, which ends with your trial tonight (23:34Z); the tail bettor does not. " +
             "Orders take about 5 s to land in play, which is why takers miss; the page shows what filled and why not. Start small."
     }

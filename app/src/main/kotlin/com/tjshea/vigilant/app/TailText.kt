@@ -16,13 +16,13 @@ object TailText {
     private fun pct(p: Double) = com.tjshea.vigilant.data.livebid.LiveBidQuality.pct(p)
 
     fun confirm(s: ScanSettings): String =
-        "The app will buy live tail strikes by itself: at most ${money(s.tailLiveStake)} a bet, ${money(s.tailLiveMaxGame)} a game and ${money(s.tailLiveMaxDay)} a day, only when the model's fair is 92% or more and the edge after Novig's fee is ${pct(s.tailLiveMinEdge)} or more. " +
-            "It stops for the day if tail bets lose ${money(s.tailLiveHaltLoss)}. The model is a rough one (a score or clock from ESPN can be a little behind the game), so a decided-looking bet can still lose, and the paper record behind it covers only a handful of games, so there is no real track record yet. Start small."
+        "The app will buy live tail strikes by itself: at most ${money(s.tailLive.stake)} a bet, ${money(s.tailLive.maxGame)} a game and ${money(s.tailLive.maxDay)} a day, only when the model's fair is 92% or more and the edge after Novig's fee is ${pct(s.tailLive.minEdge)} or more. " +
+            "It stops for the day if tail bets lose ${money(s.tailLive.haltLoss)}. The model is a rough one (a score or clock from ESPN can be a little behind the game), so a decided-looking bet can still lose, and the paper record behind it covers only a handful of games, so there is no real track record yet. Start small."
 
     fun statusLine(s: ScanSettings, t: LiveTradeStatus, lab: LabStatus): String {
-        if (!s.tailLive) return "Off."
-        if (s.tailLiveHalted != null) return "Stopped: ${s.tailLiveHalted}"
-        val mode = if (s.tailLiveBet) "REAL" else "paper"
+        if (!s.tailLive.on) return "Off."
+        if (s.tailLive.halted != null) return "Stopped: ${s.tailLive.halted}"
+        val mode = if (s.tailLive.bet) "REAL" else "paper"
         val feed = if (!lab.running) "game reader starting" else "${lab.games} live games read, ${lab.withState} with a score and clock"
         return "$mode: ${t.bets} bought, ${t.missed} missed, ${t.paper} paper, spent ${money(t.spent)} · $feed" + (t.last?.let { " · last: $it" } ?: "") +
             (lab.problem?.let { " · problem: $it" } ?: "")
@@ -32,8 +32,8 @@ object TailText {
         val o = StringBuilder()
         o.appendLine("LIVE TAIL BETS (RESEARCH.md §125)")
         o.appendLine(
-            "Switch: ${if (s.tailLive) "ON" else "off"} · ${if (s.tailLiveBet) "REAL money" else "paper"}" + (s.tailLiveHalted?.let { " · HALTED: $it" } ?: "") +
-                " · stake ${money(s.tailLiveStake)}, game ${money(s.tailLiveMaxGame)}, day ${money(s.tailLiveMaxDay)}, halt at ${money(s.tailLiveHaltLoss)} lost · min edge ${pct(s.tailLiveMinEdge)}",
+            "Switch: ${if (s.tailLive.on) "ON" else "off"} · ${if (s.tailLive.bet) "REAL money" else "paper"}" + (s.tailLive.halted?.let { " · HALTED: $it" } ?: "") +
+                " · stake ${money(s.tailLive.stake)}, game ${money(s.tailLive.maxGame)}, day ${money(s.tailLive.maxDay)}, halt at ${money(s.tailLive.haltLoss)} lost · min edge ${pct(s.tailLive.minEdge)}",
         )
         o.appendLine("Lab: running ${lab.running} · games ${lab.games} · with state ${lab.withState} · cycles ${lab.cycles} · tail strikes seen ${lab.tail}" + (lab.problem?.let { " · problem: $it" } ?: ""))
         if (t.skipped.isNotEmpty()) o.appendLine("Held back: " + t.skipped.entries.sortedByDescending { it.value }.take(8).joinToString(" · ") { "${it.key} ${it.value}" })
