@@ -35,11 +35,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -146,7 +146,7 @@ fun ProfitChartCard(bets: List<TrackedBet>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ProfitChartBody(bets: List<TrackedBet>, now: Long, range: ProfitSeries.Range, onRange: (ProfitSeries.Range) -> Unit, tall: Boolean, onFull: (() -> Unit)?) {
+private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets: List<TrackedBet>, now: Long, range: ProfitSeries.Range, onRange: (ProfitSeries.Range) -> Unit, tall: Boolean, onFull: (() -> Unit)?) {
     val points = remember(bets) { ProfitSeries.points(bets) }
     val firstMs = points.firstOrNull()?.tMs ?: now
     val minT = firstMs.coerceAtMost(now - ProfitSeries.DAY_MS)
@@ -190,7 +190,7 @@ private fun ProfitChartBody(bets: List<TrackedBet>, now: Long, range: ProfitSeri
     }
     ProfitCanvas(
         points, view, minT, maxT, selected,
-        modifier = Modifier.fillMaxWidth().then(if (tall) Modifier.weight1() else Modifier.height(220.dp)),
+        modifier = Modifier.fillMaxWidth().then(if (tall) Modifier.weight(1f) else Modifier.height(220.dp)),
         onTransform = { focus, dx, zoom ->
             touched = true
             selected = null
@@ -201,9 +201,6 @@ private fun ProfitChartBody(bets: List<TrackedBet>, now: Long, range: ProfitSeri
         onReset = { touched = false; startMs = preset.start; endMs = preset.end; selected = null },
     )
 }
-
-/** Fills the rest of the column in the full-screen view (a Column's weight, which a plain Modifier chain cannot say). */
-private fun Modifier.weight1(): Modifier = this.then(Modifier.height(420.dp))
 
 @Composable
 private fun ProfitCanvas(
@@ -224,7 +221,7 @@ private fun ProfitCanvas(
             .pointerInput(view, minT, maxT) {
                 // Pinch (two fingers) and a sideways drag (one finger) belong to the chart; an up-and-down drag is left to the list, so the Stats tab still scrolls over the graph.
                 awaitEachGesture {
-                    val down0 = awaitFirstDown(requireUnconsumed = false)
+                    awaitFirstDown(requireUnconsumed = false)
                     var panning = false
                     var totalX = 0f
                     var totalY = 0f
@@ -249,7 +246,6 @@ private fun ProfitCanvas(
                             if (panning && d.x != 0f) { onTransform((ch.position.x / size.width).toDouble(), d.x / size.width, 1f); ch.consume() }
                         }
                     } while (event.changes.any { it.pressed })
-                    down0.consume().let { }
                 }
             }
             .pointerInput(points, view) {
@@ -276,10 +272,9 @@ private fun ProfitCanvas(
             val i1 = ProfitSeries.firstAtOrAfter(points, view.end + 1)
             val leftV = ProfitSeries.valueAt(points, view.start)
             val rightV = ProfitSeries.valueAt(points, view.end)
-            var lo = minOf(leftV, rightV, 0.0.takeIf { false } ?: Double.MAX_VALUE)
-            var hi = maxOf(leftV, rightV, -Double.MAX_VALUE)
+            var lo = minOf(leftV, rightV)
+            var hi = maxOf(leftV, rightV)
             for (k in i0 until i1) { lo = minOf(lo, points[k].cum); hi = maxOf(hi, points[k].cum) }
-            if (lo == Double.MAX_VALUE) { lo = leftV; hi = leftV }
             if (hi - lo < 1e-9) { lo -= 1.0; hi += 1.0 }
             val pad = (hi - lo) * 0.08
             lo -= pad; hi += pad
@@ -317,5 +312,3 @@ private fun ProfitCanvas(
         }
     }
 }
-
-private fun Color.toArgb(): Int = androidx.compose.ui.graphics.toArgb(this)
