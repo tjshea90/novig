@@ -69,6 +69,10 @@ data class LiveRunnerStatus(
     val lastCandidate: String? = null,
     /** Live bids: Novig lines judged for a bid (both sides count), and why not (words, counts). */
     val bidTargets: Int = 0,
+    /** Live bids: how many line judgments have been made, why the judge is not running (null = it is), and the last error it hit (it carries on after one). */
+    val bidJudged: Long = 0,
+    val bidGate: String? = null,
+    val bidError: String? = null,
 )
 
 /**
@@ -164,7 +168,7 @@ class PinnLiveRunner(
     private fun reset() {
         book = PinnBook(config().method)
         catalogEvents = emptyList(); catalogMarkets = emptyList(); targetsByEvent.clear(); targetsByMarket.clear(); armedUntil.clear(); follows.clear(); probes.clear()
-        evaluations = 0; candidates = 0; skips.clear(); lastOffer.clear(); lastBidBookMs.clear(); lastBidJudgeMs = 0L; bidTargetsNow = 0; lastCandidate = null; watched = 0; matchedGames = 0; lastRematchMs = 0; lastEventCount = -1; catalogDirty = false
+        evaluations = 0; candidates = 0; skips.clear(); lastOffer.clear(); lastBidBookMs.clear(); lastBidJudgeMs = 0L; bidTargetsNow = 0; bidJudged = 0L; bidGate = null; bidError = null; lastCandidate = null; watched = 0; matchedGames = 0; lastRematchMs = 0; lastEventCount = -1; catalogDirty = false
     }
 
     private suspend fun runLoop() {
@@ -394,6 +398,9 @@ class PinnLiveRunner(
     private val lastBidBookMs = HashMap<String, Long>()
     private var lastBidJudgeMs = 0L
     private var bidTargetsNow = 0
+    @Volatile private var bidGate: String? = null
+    @Volatile private var bidError: String? = null
+    private var bidJudged = 0L
 
     /**
      * Judges the matched lines for live bids and tells the desk what is justified: for each side of each matched line, [LiveBidJudge.keep] vouches for (or pulls) a bid already up and
@@ -403,16 +410,25 @@ class PinnLiveRunner(
     private fun judgeBids(now: Long, novig: PushedBooks, only: Set<Long>? = null, market: String? = null) {
         val desk = bids ?: return
         val bc = bidConfig()
-        if (!bc.on) return
-        val pinn = feedSource ?: return
+        if (!bc.on) { bidGate = "the live bid switch is off, or STOP ALL or the pause is on"; return }
+        val pinn = feedSource ?: run { bidGate = "the Pinnodds feed is not open"; return }
+        bidGate = null
         val problem = feedProblem(now, novig, pinn)
         var n = 0
+        // One bad line must never stop the engine (the lag taker shares this loop): the error is kept and shown, and the next line is judged.
         for ((eventId, ts) in targetsByEvent) {
             if (only != null && eventId !in only) continue
             for (t in ts) {
                 if (market != null && t.market.marketId != market) continue
                 n++
-                judgeBidTarget(desk, t, now, novig, bc, problem)
+                try {
+                    judgeBidTarget(desk, t, now, novig, bc, problem)
+                    bidJudged++
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    bidError = "${t.market.description}: ${e.javaClass.simpleName} ${e.message ?: ""}".trim()
+                }
             }
         }
         if (only == null) bidTargetsNow = n
@@ -565,7 +581,7 @@ class PinnLiveRunner(
         _status.value = _status.value.copy(
             running = job?.isActive == true, socket = socket, pinnEvents = book.events.size, pinnLive = book.events.values.count { it.live }, novigGames = catalogEvents.size, matched = matchedGames,
             targets = targetsByMarket.size, watched = watched, frames = book.frames, frameAgeMs = pinn.lastFrameAtMs.takeIf { it > 0 }?.let { now - it }, evaluations = evaluations,
-            candidates = candidates, skips = skips.toMap(), lastCandidate = lastCandidate, bidTargets = bidTargetsNow,
+            candidates = candidates, skips = skips.toMap(), lastCandidate = lastCandidate, bidTargets = bidTargetsNow, bidJudged = bidJudged, bidGate = bidGate, bidError = bidError,
             problem = (pinn.state.value as? PinnSocketState.Down)?.message ?: novig.problemSince(_status.value.sinceMs ?: 0L),
         )
     }
