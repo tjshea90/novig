@@ -6078,3 +6078,10 @@ See if there is a way to fix this memory issue. Can it be more efficient? Can th
 
 Then run another full tests protocol on the app. I want everything to run smoothly and the code to be well written and low lag in the app.
 ```
+
+## 2026-10-10T14:55:26Z
+```
+After you are done, separate the auto bid and auto bet trap guards. I want the auto bet trap guard at a certain amount of hours and the auto bid trap guard at a different number. Right now they only can be set as one number together. 
+
+Then for the stats/profit graph, let me filter the graph. For example let me select a graph for today only, yesterday, last 2 days, last 3 days, this week, all time, etc. Similar to how stock market graphs work. Let me make it full screen, pinch zoom in and zoom out to see different time periods, and scroll left to right on the graph.
+```
