@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -144,7 +145,6 @@ class LiveBidDesk(
     private val bids = LinkedHashMap<String, LiveBid>()
     private val wants = HashMap<String, LiveBidWant>()
     private val claimedAt = HashMap<String, Long>()
-    private val pullRequests = HashMap<String, String>()
     private val coolUntil = HashMap<String, Long>()
     private val marketBlockedUntil = HashMap<String, Long>()
     private val replaced = HashSet<String>()
@@ -345,7 +345,7 @@ class LiveBidDesk(
     }
 
     private suspend fun run() {
-        while (scope.isActive) {
+        while (currentCoroutineContext().isActive) {
             try {
                 step()
             } catch (e: CancellationException) {
@@ -376,7 +376,6 @@ class LiveBidDesk(
                     b.real != modeReal -> "the mode changed"
                     b.real && cfg.blockedWhy != null -> cfg.blockedWhy
                     now < standDownUntil && b.real -> "stood down: $standDownWhy"
-                    pullRequests.containsKey(b.outcomeId) -> pullRequests.remove(b.outcomeId)
                     now - (claimedAt[b.outcomeId] ?: b.postedAtMs) > CLAIM_TTL_MS -> LiveBidSkip.CLAIM_GONE
                     else -> null
                 }
@@ -404,7 +403,8 @@ class LiveBidDesk(
     // ---- posting --------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     private suspend fun postWanted(now: Long, cfg: LiveBidConfig) {
-        val q = cfg.quality
+        // A real bid needs a way to be sent (a key); without one nothing goes up (the gate says why).
+        if (cfg.real && orders == null) return
         val fresh = synchronized(mu) { wants.values.filter { now - it.atMs <= WANT_TTL_MS }.sortedByDescending { it.verdict.ev } }
         var posts = 0
         for (w in fresh) {
@@ -424,8 +424,6 @@ class LiveBidDesk(
                 }
             }
         }
-        // The rules' ttl is the bid's whole life, never under a few seconds.
-        if (q.ttlSec < MIN_TTL_SEC) count("ttl under $MIN_TTL_SEC s is raised to it")
     }
 
     private sealed interface Decision {
@@ -494,23 +492,33 @@ class LiveBidDesk(
             claimedAt[w.outcomeId] = now
             dirty = true
             last = "${if (real) "BID" else "PAPER"} · ${w.selection} @ ${"%.3f".format(Locale.US, v.price)} · fair ${"%.3f".format(Locale.US, v.fair)} · ${"%.1f".format(Locale.US, v.ev * 100)}% EV"
-            postedCount++
         }
         event("POST", bid)
         if (real && orders != null) scope.launch { place(bid, ttlMs) }
         return true
     }
 
-    private var postedCount = 0
-
     /** Sends the order. Takes the shared order lock for the call only; a live order may take seconds to be accepted, so this is its own coroutine. */
     private suspend fun place(bid: LiveBid, ttlMs: Long) {
         val o = orders ?: return
+        // On disk before it is sent: an answer that never comes back is still a bid this desk knows to look for, and a restart takes it down.
+        persist(clock(), force = true)
         val t0 = clock()
         val id: String = try {
-            withContext(NonCancellable) { lock.withLock { o.place(bid.outcomeId, bid.price, bid.contracts, ttlMs, bid.clientId) } }
+            withContext(NonCancellable) {
+                lock.withLock {
+                    // The price was worked out when the bid was decided on. Waiting for another desk's order this long (the lock is held while it is answered) makes it old: not sent.
+                    if (clock() - bid.postedAtMs > LOCK_WAIT_MAX_MS) throw WaitedTooLong()
+                    o.place(bid.outcomeId, bid.price, bid.contracts, ttlMs, bid.clientId)
+                }
+            }
         } catch (e: CancellationException) {
             throw e
+        } catch (e: WaitedTooLong) {
+            val now = clock()
+            synchronized(mu) { bids[bid.clientId]?.let { bids[bid.clientId] = it.copy(status = LiveBidStatus.CANCELED, endedAtMs = now, why = "not sent: another order held the lock too long") }; dirty = true }
+            event("END", bid, text = "not sent: the order lock was busy")
+            return
         } catch (e: NovigApiException) {
             refused(bid, e)
             return
@@ -532,6 +540,8 @@ class LiveBidDesk(
         checkTiming()
         signals.trySend(Unit)
     }
+
+    private class WaitedTooLong : RuntimeException()
 
     private fun refused(bid: LiveBid, e: NovigApiException) {
         val now = clock()
@@ -669,6 +679,7 @@ class LiveBidDesk(
         val now = clock()
         val reads = ArrayList<Pair<LiveBid, NovigOrder?>>()
         val lookups = ArrayList<LiveBid>()
+        val unseen = ArrayList<LiveBid>()
         synchronized(mu) {
             for (b0 in live) {
                 val b = bids[b0.clientId] ?: continue
@@ -690,12 +701,37 @@ class LiveBidDesk(
                     if (b.lostAtMs != null && now - b.lostAtMs >= LOST_LOOKUP_MS) lookups += b
                     continue
                 }
-                // Not on the book. A bid just accepted may not be listed yet (the list can lag a 201); anything else is over: its fills say how.
-                if (b.status == LiveBidStatus.SENT && b.openAtMs == null && now - (b.ackedAtMs ?: b.postedAtMs) < ACK_LAG_MS) continue
+                // Not on the book. One never seen there may be queued (a live order waits out Novig's in-play delay as PENDING, and the list can lag a 201): its own record says.
+                if (b.openAtMs == null) { unseen += b; continue }
                 reads += b to null
             }
         }
         for (b in lookups) lookup(b, o)
+        for (b in unseen) {
+            val id = b.orderId ?: continue
+            val rec = try {
+                o.order(id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            val age = now - (b.ackedAtMs ?: b.postedAtMs)
+            when {
+                // Queued (PENDING) or not yet listed (404 just after the 201): waited for, up to a long delay.
+                rec == null && age < QUEUE_WAIT_MS -> {}
+                rec != null && !rec.terminal && rec.status != "OPEN" -> {}
+                rec != null && !rec.terminal -> {
+                    // OPEN but the list did not have it yet: seen now.
+                    synchronized(mu) {
+                        bids[b.clientId]?.let {
+                            if (it.openAtMs == null) { bids[b.clientId] = it.copy(openAtMs = now, status = if (it.status == LiveBidStatus.SENT) LiveBidStatus.RESTING else it.status); sample(placeOpenMs, now - it.postedAtMs); dirty = true }
+                        }
+                    }
+                }
+                else -> reads += b to rec
+            }
+        }
         for ((b, ord) in reads) {
             val id = b.orderId ?: continue
             val fills = try {
@@ -706,8 +742,7 @@ class LiveBidDesk(
                 synchronized(mu) { problem = "Novig's fills: ${(e as? NovigApiException)?.brief ?: e.message ?: e.javaClass.simpleName} (read again in a moment)" }
                 continue
             }
-            val record = if (ord == null && fills.isEmpty() && b.openAtMs == null) runCatching { o.order(id) }.getOrNull() else null
-            finish(b.clientId, ord ?: record, ended = ord == null, fills = fills)
+            finish(b.clientId, ord, ended = ord == null || ord.terminal, fills = fills)
         }
         checkTiming()
     }
@@ -783,7 +818,8 @@ class LiveBidDesk(
         if (nb.status.ended) event("END", nb, text = nb.why ?: nb.status.label)
         if (newFill) {
             event("FILL", nb, value = nb.filled.toDouble(), text = "${nb.filled} of ${nb.contracts} for ${money(nb.paid)}${if (nb.strict) " (through the price)" else ""}")
-            val betId = runCatching { logFills(nb.target(version), nb.orderId ?: return, all) }.getOrNull()
+            val orderId = nb.orderId ?: return
+            val betId = runCatching { logFills(nb.target(version), orderId, all) }.getOrNull()
             if (betId != null) synchronized(mu) { bids[clientId]?.let { bids[clientId] = it.copy(betId = betId) }; dirty = true }
         }
         if (pullRest) cancelOne(clientId, "filled in part: the rest is pulled")
@@ -828,7 +864,6 @@ class LiveBidDesk(
                 if (over != null) {
                     val nb = b.copy(status = over, endedAtMs = now)
                     bids[b.clientId] = nb
-                    if (over == LiveBidStatus.CANCELED && b.cancelSentAtMs != null) sample(pullMs, PAPER_LATENCY_MS)
                     ended += nb
                     dirty = true
                 }
@@ -852,15 +887,16 @@ class LiveBidDesk(
                         val picked = f < b.price
                         bids[b.clientId] = b.copy(fairAt30 = f, pickedOff = picked)
                         logged += bids[b.clientId]!!
-                        judged.addLast(picked)
-                        val q = config().quality
-                        while (judged.size > maxOf(q.pickOffWindow, 1)) judged.removeFirst()
-                        if (q.pickOffLimit > 0 && judged.size >= q.pickOffWindow.coerceAtLeast(1) && judged.count { it } >= q.pickOffLimit && halted == null) {
-                            haltWhy = "${judged.count { it }} of the last ${judged.size} live bid fills were picked off (Pinnacle's fair 30 s later was under the price paid)"
+                        // Only real money stops the feature; a paper fill is judged and counted the same but never halts it.
+                        if (b.real) {
+                            judged.addLast(picked)
+                            val q = config().quality
+                            while (judged.size > maxOf(q.pickOffWindow, 1)) judged.removeFirst()
+                            if (q.pickOffLimit > 0 && judged.size >= q.pickOffWindow.coerceAtLeast(1) && judged.count { it } >= q.pickOffLimit && halted == null) {
+                                haltWhy = "${judged.count { it }} of the last ${judged.size} live bid fills were picked off (Pinnacle's fair 30 s later was under the price paid)"
+                            }
                         }
                         dirty = true
-                    } else if (now - t >= 30_000L + FAIR_FRESH_MS * 3) {
-                        bids[b.clientId] = b.copy(fairAt30 = Double.NaN.takeIf { false })   // no reading: left unjudged for good
                     }
                 }
                 val cur = bids[b.clientId] ?: continue
@@ -922,9 +958,9 @@ class LiveBidDesk(
         }
     }
 
-    private suspend fun persist(now: Long) {
+    private suspend fun persist(now: Long, force: Boolean = false) {
         val list = synchronized(mu) {
-            if (!dirty && now - lastPersistMs < PERSIST_EVERY_MS) return
+            if (!force && (!dirty || now - lastPersistMs < PERSIST_EVERY_MS)) return
             dirty = false
             lastPersistMs = now
             val keep = bids.values.filter { it.active || (it.endedAtMs ?: it.postedAtMs) >= now - LiveBidStore.KEEP_MS }
@@ -979,13 +1015,16 @@ class LiveBidDesk(
         const val REFUSED_COOLOFF_MS = 5 * 60_000L
         const val BACKOFF_MS = 10_000L
         const val CANCEL_RETRY_MS = 2_500L
-        const val ACK_LAG_MS = 2_000L
         const val LOST_LOOKUP_MS = 2_000L
         const val LOST_GIVE_UP_MS = 90_000L
         const val EXPIRY_SLACK_MS = 2_000L
         const val FAIR_FRESH_MS = 10_000L
         const val MAX_LOST = 3
-        const val PERSIST_EVERY_MS = 5_000L
+        const val PERSIST_EVERY_MS = 1_000L
+        const val LOCK_WAIT_MAX_MS = 2_000L
+
+        /** A queued order (PENDING, or not yet listed) is waited for this long before it is called lost. */
+        const val QUEUE_WAIT_MS = 30_000L
         const val LOSS_EVERY_MS = 60_000L
         const val TIMING_KEEP = 10
         const val TIMING_MIN = 5
