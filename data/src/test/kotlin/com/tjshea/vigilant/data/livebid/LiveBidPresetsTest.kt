@@ -161,24 +161,26 @@ class LiveBidPresetsTest {
 
     @Test
     fun `the autopilot sets both engines, keeps his money, and says when it is in force`() {
-        val mine = ScanSettings(liveBidLimits = LiveBidLimits(maxStake = 7.0, haltLoss = 9.0), pinnLiveStake = 3.0, pinnLiveHaltLoss = 8.0, liveBidHalted = "x", pinnLiveHalted = "y")
+        val mine = ScanSettings(liveBidLimits = LiveBidLimits(maxStake = 7.0, haltLoss = 9.0), pinnLiveStake = 3.0, pinnLiveHaltLoss = 8.0, liveBidHalted = "x", pinnLiveHalted = "y", tailLiveHalted = "z")
         val paper = LiveAutopilot.apply(mine, real = false)
         assertTrue(LiveAutopilot.inForce(paper))
         assertFalse(LiveAutopilot.real(paper))
-        assertTrue(paper.liveBid && paper.pinnLive && !paper.liveBidReal && !paper.pinnLiveBet)
+        assertTrue(paper.liveBid && paper.pinnLive && paper.tailLive && !paper.liveBidReal && !paper.pinnLiveBet && !paper.tailLiveBet)
         assertEquals(com.tjshea.vigilant.data.pinnodds.LiveTrigger.EITHER, paper.pinnLiveTrigger)
         assertEquals("halts cleared", null, paper.liveBidHalted)
         assertEquals(null, paper.pinnLiveHalted)
+        assertEquals(null, paper.tailLiveHalted)
         assertEquals("his money stays", 7.0, paper.liveBidLimits.maxStake, 0.0)
         assertEquals(9.0, paper.liveBidLimits.haltLoss, 0.0)
         assertEquals(3.0, paper.pinnLiveStake, 0.0)
         assertEquals(8.0, paper.pinnLiveHaltLoss, 0.0)
         assertTrue(paper.liveBidLimits.fillWallet)
         val real = LiveAutopilot.apply(mine, real = true)
-        assertTrue(LiveAutopilot.real(real) && real.liveBidReal && real.pinnLiveBet)
+        assertTrue(LiveAutopilot.real(real) && real.liveBidReal && real.pinnLiveBet && real.tailLiveBet)
+        assertTrue("the tail alone being real counts as real", LiveAutopilot.real(ScanSettings(tailLive = true, tailLiveBet = true)))
         assertFalse("changing one rule takes it out of force", LiveAutopilot.inForce(real.copy(liveBidQuality = real.liveBidQuality.copy(margin = 0.05))))
         val off = LiveAutopilot.off(real)
-        assertFalse(LiveAutopilot.real(off) || off.liveBid || off.pinnLive)
+        assertFalse(LiveAutopilot.real(off) || off.liveBid || off.pinnLive || off.tailLive)
         assertEquals("the rules stay for next time", real.liveBidQuality, off.liveBidQuality)
     }
 }
