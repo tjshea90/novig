@@ -151,9 +151,10 @@ class TailTakerTest {
         val rec = r.taker.attempt(offer())!!
         assertEquals("UNCONFIRMED", rec.outcome)
         assertEquals(1, r.halts.size)
-        now += 61_000L
-        assertNull(r.taker.attempt(offer()))
+        now += 1_000L
+        assertNull("inside the halt's grace nothing more is sent", r.taker.attempt(offer(cand(outcome = "over"))))
         assertEquals(1, r.taker.status.value.skipped["halted"])
+        assertEquals(1, r.orders.placed.size)
     }
 
     @Test
