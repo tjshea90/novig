@@ -1128,7 +1128,7 @@ class AppContainer(private val app: Application) {
             journal = labJournal, gradeJournal = labGradeJournal, bidLab = bidLab, grader = labGrader,
             // The tail taker's door: the lab hands over what its conservative rules find and places nothing itself. With only the tail switch on, the lab does only the tail's work.
             onTail = { tailTaker.offer(it) },
-            tailOnly = { settingsStore.flow.value?.let { s -> s.tailLive && !(s.altLab || s.researchMode) } == true },
+            tailOnly = { settingsStore.flow.value?.let { s -> s.tailLive.on && !(s.altLab || s.researchMode) } == true },
         )
     }
 
@@ -1140,9 +1140,9 @@ class AppContainer(private val app: Application) {
     private fun tailTradeRules(): com.tjshea.vigilant.data.pinnodds.LiveTradeRules {
         val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(false, false, 0.0, 0.0, 0.0, 0.0)
         return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(
-            enabled = AppBook.isNovig && s.tailLive && !s.killed, bet = s.tailLiveBet,
-            stake = if (s.apiMaxStake > 0.0) minOf(s.tailLiveStake, s.apiMaxStake) else s.tailLiveStake,
-            maxPerGame = s.tailLiveMaxGame, maxPerDay = s.tailLiveMaxDay, haltLoss = s.tailLiveHaltLoss, halted = s.tailLiveHalted,
+            enabled = AppBook.isNovig && s.tailLive.on && !s.killed, bet = s.tailLive.bet,
+            stake = if (s.apiMaxStake > 0.0) minOf(s.tailLive.stake, s.apiMaxStake) else s.tailLive.stake,
+            maxPerGame = s.tailLive.maxGame, maxPerDay = s.tailLive.maxDay, haltLoss = s.tailLive.haltLoss, halted = s.tailLive.halted,
         )
     }
 
@@ -1169,7 +1169,7 @@ class AppContainer(private val app: Application) {
 
     val tailTaker: com.tjshea.vigilant.data.novig.lab.TailTaker by lazy {
         com.tjshea.vigilant.data.novig.lab.TailTaker(
-            orders = pinnOrders, scope = appScope, rules = ::tailTradeRules, minEdge = { settingsStore.flow.value?.tailLiveMinEdge ?: com.tjshea.vigilant.data.novig.lab.TailTradeLimits.DEFAULT_MIN_EDGE },
+            orders = pinnOrders, scope = appScope, rules = ::tailTradeRules, minEdge = { settingsStore.flow.value?.tailLive?.minEdge ?: com.tjshea.vigilant.data.novig.lab.TailTradeLimits.DEFAULT_MIN_EDGE },
             gate = ::tailGate,
             ownBids = {
                 makerStore.flow.value.orEmpty().filter { it.resting }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) } +
@@ -1180,7 +1180,7 @@ class AppContainer(private val app: Application) {
                 eventLog.warn("TAILLIVE", "tail taker halted: $why")
                 appScope.launch {
                     withContext(kotlinx.coroutines.NonCancellable) {
-                        runCatching { settingsStore.update { if (it.tailLiveHalted == null) it.copy(tailLiveHalted = why) else it } }
+                        runCatching { settingsStore.update { if (it.tailLive.halted == null) it.copy(tailLive = it.tailLive.copy(halted = why)) else it } }
                         runCatching { AutoBetNotes.stopped(app, "Live tail betting stopped", why) }
                     }
                 }
@@ -1242,10 +1242,10 @@ class AppContainer(private val app: Application) {
     /** Starts or stops the paper lab to match [s]: on, not STOP ALL, the Novig app. Safe to call on every settings change. */
     fun labTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        val on = (s.altLab || s.researchMode || s.tailLive) && !s.killed
-        if (s.tailLiveHalted != null) tailSawHalt = true else if (tailSawHalt) { tailSawHalt = false; tailTaker.resumed() }
+        val on = (s.altLab || s.researchMode || s.tailLive.on) && !s.killed
+        if (s.tailLive.halted != null) tailSawHalt = true else if (tailSawHalt) { tailSawHalt = false; tailTaker.resumed() }
         // A real tail bet needs the wallet read once before its first order (the gate says "wallet not read yet" otherwise).
-        if (s.tailLive && s.tailLiveBet && !s.killed) { if (!tailWalletRead) { tailWalletRead = true; appScope.launch { runCatching { wallet.fresh() } } } } else tailWalletRead = false
+        if (s.tailLive.on && s.tailLive.bet && !s.killed) { if (!tailWalletRead) { tailWalletRead = true; appScope.launch { runCatching { wallet.fresh() } } } } else tailWalletRead = false
         if (on) lab.start(LAB_LEAGUES) else if (lab.running) lab.stop()
         // A foreground service holds the process while research is on (Tj, 2026-10-10), so Android does not end it a few minutes after he leaves.
         if (on) ResearchService.start(app) else ResearchService.stop(app)

@@ -165,31 +165,31 @@ class LiveBidUiTest {
     fun `tail bets are paper first, real money asks first, and the autopilot turns them on with the rest`() {
         val ui = show(state())
         tap("tailLiveRealSwitch")
-        assertFalse("real needs the tail switch on first", ui().settings.tailLiveBet)
+        assertFalse("real needs the tail switch on first", ui().settings.tailLive.bet)
         tap("tailLiveSwitch")
-        assertTrue(ui().settings.tailLive)
-        assertFalse(ui().settings.tailLiveBet)
+        assertTrue(ui().settings.tailLive.on)
+        assertFalse(ui().settings.tailLive.bet)
         compose.onNodeWithTag("tailLiveNote").performScrollTo().assertTextContains("paper", substring = true)
         tap("tailLiveRealSwitch")
         compose.onNodeWithTag("tailLiveRealCancel").performClick()
-        assertFalse(ui().settings.tailLiveBet)
+        assertFalse(ui().settings.tailLive.bet)
         tap("tailLiveRealSwitch")
         compose.onNodeWithTag("tailLiveRealConfirm").performClick()
-        assertTrue(ui().settings.tailLiveBet)
+        assertTrue(ui().settings.tailLive.bet)
         compose.onNodeWithTag("tailLiveNote").performScrollTo().assertTextContains("REAL", substring = true)
         tap("tailLiveRealSwitch")
-        assertFalse(ui().settings.tailLiveBet)
+        assertFalse(ui().settings.tailLive.bet)
         tap("liveAutopilotPaper")
-        assertTrue(ui().settings.tailLive)
-        assertTrue(LiveBidText.autopilotConfirm(ScanSettings(tailLiveStake = 1.0, tailLiveMaxDay = 10.0)).contains("tail bettor buys at most \$1 a bet"))
+        assertTrue(ui().settings.tailLive.on)
+        assertTrue(LiveBidText.autopilotConfirm(ScanSettings(tailLive = com.tjshea.vigilant.data.scanner.TailLiveSettings(stake = 1.0, maxDay = 10.0))).contains("tail bettor buys at most \$1 a bet"))
     }
 
     @Test
     fun `a tail halt shows its reason and Resume lifts it`() {
-        val ui = show(state(ScanSettings(tailLive = true, tailLiveHalted = "an order's answer was lost")))
+        val ui = show(state(ScanSettings(tailLive = com.tjshea.vigilant.data.scanner.TailLiveSettings(on = true, halted = "an order's answer was lost"))))
         compose.onNodeWithTag("tailLiveHalted").performScrollTo().assertIsDisplayed()
         tap("tailLiveResume")
-        assertNull(ui().settings.tailLiveHalted)
+        assertNull(ui().settings.tailLive.halted)
     }
 
     @Test
