@@ -125,6 +125,24 @@ sealed interface LiveVerdict {
 
 object LiveEdge {
     /**
+     * The highest grid price an IOC order for this side may pay and still clear [minEv] (Tj, 2026-10-10, 21 of 23 real live orders missed): the order lands about 5.3 s after the decision, so
+     * a limit set at the displayed ask misses by one grid step when Novig re-quotes upward in that time, though the bet is still at the edge Tj asked for. [from] is the worst displayed level
+     * the edge covered; the limit climbs from it a grid step at a time while the EV at the NEXT price (fee in) is still at least [minEv]. Never under [from]; the fill is at the best price
+     * available, up to this one.
+     */
+    internal fun reachPrice(fair: Double, from: Double, fee: MarketFee, novigLive: Boolean, minEv: Double): Double {
+        var p = from
+        repeat(120) {
+            val step = if (p < 0.050 - 1e-9 || p >= 0.950 - 1e-9) 0.001 else 0.005
+            val next = Math.round((p + step) * 1000) / 1000.0
+            if (next >= 0.999) return p
+            if (EvMath.quote(fair, next, fee, novigLive).evPercent < minEv) return p
+            p = next
+        }
+        return p
+    }
+
+    /**
      * A prematch bet ("steam"): Pinnacle's prematch fair for the side rose by [LiveRules.preMinMove] within [LiveRules.preMoveWindowMs], the game is between [LiveRules.preMinLeadMs] and
      * [LiveRules.preMaxLeadMs] from its start, and Novig's ask is still at a price Pinnacle itself had BEFORE the move (an order left up: the only evidence that separates a stale quote
      * from a wide book). Novig charges no taker fee before the game starts, so [fee] is not applied. Every other guard is the live one.
@@ -153,7 +171,7 @@ object LiveEdge {
         if (depth.contracts < rules.minContracts) return LiveVerdict.Skip(LiveSkip.THIN)
         return LiveVerdict.Bet(
             side = side, fair = fair, ask = best.price, fee = quote.fee, ev = quote.evPercent, move = move, stableMs = stable, overround = line.overround,
-            contracts = depth.contracts, limitPrice = reachPrice(fair, depth.worstPrice ?: best.price, fee, event.live && novigLive, rules.minEv),
+            contracts = depth.contracts, limitPrice = reachPrice(fair, depth.worstPrice ?: best.price, fee, false, rules.minEv),
         )
     }
 
@@ -199,7 +217,7 @@ object LiveEdge {
         if (depth.contracts < rules.minContracts) return LiveVerdict.Skip(LiveSkip.THIN)
         return LiveVerdict.Bet(
             side = side, fair = fair, ask = best.price, fee = quote.fee, ev = quote.evPercent, move = move, stableMs = stable, overround = line.overround,
-            contracts = depth.contracts, limitPrice = reachPrice(fair, depth.worstPrice ?: best.price, fee, event.live && novigLive, rules.minEv),
+            contracts = depth.contracts, limitPrice = reachPrice(fair, depth.worstPrice ?: best.price, fee, novigLive, rules.minEv),
         )
     }
 }
