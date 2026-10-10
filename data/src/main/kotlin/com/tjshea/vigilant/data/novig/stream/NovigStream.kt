@@ -229,14 +229,6 @@ class NovigStream(
         return out
     }
 
-    override fun bookGap(marketId: String) = this@NovigStream.bookGap(marketId)
-        override fun problemSince(sinceMs: Long) = this@NovigStream.problemSince(sinceMs)
-        override fun close() {
-            books.removeListener(listener)
-            this@NovigStream.watchLive(emptyList())
-        }
-    }
-
     override fun bookGap(marketId: String): String? = synchronized(this) {
         when {
             _state.value !is StreamState.Live -> "Novig live feed is not connected"
