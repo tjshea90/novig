@@ -1,0 +1,138 @@
+VIGILANT RESEARCH FILE · version github-actions · GitHub Actions (ubuntu), no phone · made 2026-10-10T10:41:13.633Z
+
+== READ ME FIRST (for Claude) ==
+This is Tj's research file from the Vigilant app (RESEARCH.md §120-§122). The app is in research and development: your job is to find ANY way to profit on Novig (taking, making/bidding, live, pregame, creative), look for
+patterns, stale odds and algorithms, and tell Tj in plain words what is and is not worth building. He wants simple answers, with sample sizes, and wants you to take control of the research.
+What is here: STATUS (what each recorder did), the PAPER LAB (would-be bets: ladder covers, late-game tail strikes, alternate lines against Pinnacle's, graded from settled markets) and the PAPER BIDS (many make-bid
+recipes run side by side on every line the bid desk looked at, against Novig's real trade tape: margin under the fair, how long a bid rests, a cancel-when-the-fair-moves guard; live recipes use Pinnacle's price from the Pinnodds feed).
+How to read the paper bids: a FILL means a trade printed at or under the bid's price after it went up (queue position unknown; 'strictly through' certainly filled). EV at post = fair/price - 1 (the fair is Vigilant's own at the
+time, not the truth). CLV = the last fair seen before the start / price - 1. ROI is from the settled market. Compare recipes, not single bids: the question is which recipe has the best EV x fill rate AND a CLV that keeps the edge.
+Do: (1) rank the recipes by fills per bid-hour x CLV and say which (margin, rest time, guard) to make the app's default; (2) check the slices (kind, side, hours to start, league, books behind the fair) for a pattern worth a rule;
+(3) check the live recipes: did the guard keep the edge? (4) check the paper lab's graded would-be bets: does any kind have a real edge after fees?; (5) say what to log next.
+Rules that stand: never loosen a limit or turn on real money without Tj's word; the repo is public (no keys); say 'the data suggests' on small samples; MIN 30 fills before calling a recipe better.
+The raw sections below are JSON lines: LAB RECORDS, LAB GRADES, BID LAB BIDS, BID LAB EVENTS (FILL/CANCEL/CLOSE/GRADE by bid id). The tables are from everything; a file from the GitHub lab
+keeps only the newest raw lines (the full journals, the EDGE LOG of every Novig price against the outside fair, the SGO TAPE of every book's refreshes and the SGO closing lines are beside it on the lab-data branch).
+Fair odds now come from SportsGameOdds Pro (82 books, each price with its own update time) where Tj has it on, otherwise from Vigilant's other feeds; the live recipes use SportsGameOdds' alternate lines, not Pinnodds (dormant).
+
+== STATUS ==
+GitHub lab · SportsGameOdds ON (1 key) · Novig public API only, no orders
+GitHub Actions run: 330 min from 2026-10-10T05:11:11.787Z; scanner passes: 75
+paper lab: 816 cycles, 0 live games followed, 29 tail / 20 alt / 0 cover would-be bets (last pass), problem: none
+paper bids: 95773 posted so far, 1518 resting, 978 filled and waiting, 978 fills
+edge log: 18217 rows this run
+SGO tape: 1724783 price changes written
+  draftkings: 1064391 reads, 2151 price changes, price 410s old when read (median; 90% within 2309375s, max 2629311s), refreshes every 331s on average
+  unknown: 567044 reads, 23597 price changes, price 382s old when read (median; 90% within 628s, max 2309253s), refreshes every 290s on average
+  betrivers: 533012 reads, 1544 price changes, price 347s old when read (median; 90% within 398s, max 2731090s), refreshes every 347s on average
+  betparx: 531560 reads, 1563 price changes, price 388s old when read (median; 90% within 442s, max 2731090s), refreshes every 339s on average
+  novig: 521292 reads, 2802 price changes, price 330s old when read (median; 90% within 332s, max 1631s), refreshes every 409s on average
+  sugarhouse: 518727 reads, 1172 price changes, price 578s old when read (median; 90% within 611s, max 2731090s), refreshes every 383s on average
+  fanduel: 514722 reads, 1313 price changes, price 323s old when read (median; 90% within 356s, max 6117s), refreshes every 342s on average
+  fliff: 514089 reads, 1566 price changes, price 305s old when read (median; 90% within 385s, max 6266s), refreshes every 364s on average
+  bet365: 493061 reads, 1939 price changes, price 784s old when read (median; 90% within 1557s, max 2731238s), refreshes every 417s on average
+  caesars: 465022 reads, 1488 price changes, price 463s old when read (median; 90% within 2629011s, max 2629082s), refreshes every 347s on average
+  espnbet: 411762 reads, 1143 price changes, price 365s old when read (median; 90% within 454s, max 6117s), refreshes every 325s on average
+  kalshi: 403280 reads, 2887 price changes, price 182s old when read (median; 90% within 385s, max 405083s), refreshes every 380s on average
+  ballybet: 392106 reads, 1252 price changes, price 347s old when read (median; 90% within 399s, max 1230s), refreshes every 338s on average
+  betus: 373324 reads, 798 price changes, price 383s old when read (median; 90% within 2309078s, max 2629087s), refreshes every 338s on average
+  hardrockbet: 373126 reads, 1162 price changes, price 321s old when read (median; 90% within 413s, max 2731090s), refreshes every 354s on average
+  thescorebet: 366998 reads, 992 price changes, price 578s old when read (median; 90% within 611s, max 6117s), refreshes every 388s on average
+  sportsbet: 364560 reads, 870 price changes, price 362s old when read (median; 90% within 399s, max 1230s), refreshes every 336s on average
+  fanatics: 358546 reads, 1116 price changes, price 327s old when read (median; 90% within 410s, max 1349s), refreshes every 350s on average
+  gtbets: 339688 reads, 754 price changes, price 362s old when read (median; 90% within 433s, max 1239s), refreshes every 334s on average
+  betmgm: 324638 reads, 998 price changes, price 354s old when read (median; 90% within 426s, max 2731090s), refreshes every 350s on average
+  bovada: 318512 reads, 912 price changes, price 404s old when read (median; 90% within 464s, max 1253s), refreshes every 336s on average
+  mybookie: 304116 reads, 916 price changes, price 374s old when read (median; 90% within 434s, max 1265s), refreshes every 336s on average
+  pinnacle: 297614 reads, 809 price changes, price 337s old when read (median; 90% within 417s, max 1221s), refreshes every 308s on average
+  coolbet: 293314 reads, 1266 price changes, price 372s old when read (median; 90% within 412s, max 1222s), refreshes every 344s on average
+  betonline: 290222 reads, 640 price changes, price 374s old when read (median; 90% within 420s, max 1222s), refreshes every 333s on average
+2026-10-10T08:16:09.696438381Z scan 40: 600 priced outcomes, 78 paper-bid lines, 281 edge rows (285s)
+2026-10-10T08:20:14.812189184Z scan 41: 600 priced outcomes, 24 paper-bid lines, 430 edge rows (240s)
+2026-10-10T08:23:42.819061924Z scan 42: 600 priced outcomes, 158 paper-bid lines, 121 edge rows (203s)
+2026-10-10T08:27:20.813295826Z scan 43: 600 priced outcomes, 397 paper-bid lines, 76 edge rows (212s)
+2026-10-10T08:31:12.464342275Z scan 44: 600 priced outcomes, 38 paper-bid lines, 418 edge rows (226s)
+2026-10-10T08:34:42.964402797Z scan 45: 600 priced outcomes, 407 paper-bid lines, 125 edge rows (205s)
+2026-10-10T08:38:05.967097926Z scan 46: 600 priced outcomes, 26 paper-bid lines, 100 edge rows (198s)
+2026-10-10T08:38:38.706914102Z SGO tape: 0 price changes (total 1078504)
+2026-10-10T08:43:15.331600340Z scan 47: 600 priced outcomes, 36 paper-bid lines, 422 edge rows (304s)
+2026-10-10T08:47:53.982243214Z scan 48: 600 priced outcomes, 245 paper-bid lines, 134 edge rows (273s)
+2026-10-10T08:51:58.711249297Z scan 49: 600 priced outcomes, 22 paper-bid lines, 120 edge rows (239s)
+2026-10-10T08:57:03.243867751Z scan 50: 600 priced outcomes, 22 paper-bid lines, 398 edge rows (299s)
+2026-10-10T09:01:44.580467817Z scan 51: 600 priced outcomes, 38 paper-bid lines, 132 edge rows (276s)
+2026-10-10T09:05:38.531025787Z scan 52: 600 priced outcomes, 443 paper-bid lines, 95 edge rows (228s)
+2026-10-10T09:09:16.525495124Z scan 53: 600 priced outcomes, 22 paper-bid lines, 387 edge rows (212s)
+2026-10-10T09:12:42.529233673Z scan 54: 600 priced outcomes, 126 paper-bid lines, 125 edge rows (201s)
+2026-10-10T09:13:29.967263471Z SGO tape: 28598 price changes (total 1259527)
+2026-10-10T09:16:27.659733875Z scan 55: 600 priced outcomes, 96 paper-bid lines, 296 edge rows (220s)
+2026-10-10T09:19:54.659705728Z scan 56: 600 priced outcomes, 53 paper-bid lines, 418 edge rows (202s)
+2026-10-10T09:23:29.161211991Z scan 57: 600 priced outcomes, 360 paper-bid lines, 141 edge rows (209s)
+2026-10-10T09:27:30.101401601Z scan 58: 600 priced outcomes, 21 paper-bid lines, 127 edge rows (235s)
+2026-10-10T09:30:54.600287839Z scan 59: 600 priced outcomes, 408 paper-bid lines, 363 edge rows (199s)
+2026-10-10T09:34:21.102062484Z scan 60: 600 priced outcomes, 22 paper-bid lines, 171 edge rows (201s)
+2026-10-10T09:38:14.059049548Z scan 61: 600 priced outcomes, 132 paper-bid lines, 170 edge rows (227s)
+2026-10-10T09:41:46.092183438Z scan 62: 600 priced outcomes, 365 paper-bid lines, 350 edge rows (207s)
+2026-10-10T09:46:48.350278814Z scan 63: 600 priced outcomes, 20 paper-bid lines, 109 edge rows (297s)
+2026-10-10T09:48:23.862520879Z SGO tape: 0 price changes (total 1447975)
+2026-10-10T09:51:33.025199099Z scan 64: 600 priced outcomes, 64 paper-bid lines, 166 edge rows (279s)
+2026-10-10T09:55:38.220901355Z scan 65: 600 priced outcomes, 22 paper-bid lines, 395 edge rows (240s)
+2026-10-10T09:59:11.727072390Z scan 66: 600 priced outcomes, 40 paper-bid lines, 246 edge rows (208s)
+2026-10-10T10:02:49.726012844Z scan 67: 600 priced outcomes, 370 paper-bid lines, 135 edge rows (212s)
+2026-10-10T10:06:37.386862789Z scan 68: 600 priced outcomes, 20 paper-bid lines, 245 edge rows (222s)
+2026-10-10T10:10:03.892550320Z scan 69: 600 priced outcomes, 416 paper-bid lines, 249 edge rows (201s)
+2026-10-10T10:13:34.886852026Z scan 70: 600 priced outcomes, 22 paper-bid lines, 142 edge rows (205s)
+2026-10-10T10:18:52.960296144Z scan 71: 600 priced outcomes, 43 paper-bid lines, 278 edge rows (313s)
+2026-10-10T10:23:08.099782396Z SGO tape: 0 price changes (total 1615333)
+2026-10-10T10:23:58.302787552Z scan 72: 600 priced outcomes, 99 paper-bid lines, 317 edge rows (300s)
+2026-10-10T10:27:51.225795144Z scan 73: 600 priced outcomes, 46 paper-bid lines, 230 edge rows (227s)
+2026-10-10T10:31:32.727289114Z scan 74: 600 priced outcomes, 49 paper-bid lines, 366 edge rows (216s)
+2026-10-10T10:36:41.418052464Z scan 75: 600 priced outcomes, 41 paper-bid lines, 233 edge rows (303s)
+
+== PAPER LAB (would-be bets) ==
+TAIL: 108 would-be bets on 7 games, listed edge median +4.7%, 0-0 graded, no result yet
+ALT: 342 would-be bets on 13 games, listed edge median +15.1%, 0-0 graded, no result yet
+COVER: 31 would-be bets on 8 games, listed edge median +5.5%, 0-0 graded, no result yet
+
+== PAPER BIDS ==
+PAPER BIDS by recipe (m = margin under the fair, t = how long it rests, guard = pulled when the fair moves against it; a fill = a trade went through its price after it went up, queue ignored):
+  live-m1-t2m: 3801 posted, 71 filled (1.9%, 66 strictly through, 0.57/bid-hour) · EV at post +1.9% · CLV +2.1% on 71 · 0-0 graded, ROI n/a
+  live-m1-t2m-guard: 3830 posted, 71 filled (1.9%, 66 strictly through, 0.56/bid-hour) · EV at post +1.9% · CLV +2.1% on 71 · 0-0 graded, ROI n/a
+  live-m2-t2m: 3882 posted, 72 filled (1.9%, 67 strictly through, 0.56/bid-hour) · EV at post +2.9% · CLV +3.3% on 72 · 0-0 graded, ROI n/a
+  live-m2-t2m-guard: 3908 posted, 72 filled (1.8%, 67 strictly through, 0.56/bid-hour) · EV at post +2.9% · CLV +3.3% on 72 · 0-0 graded, ROI n/a
+  live-m3-t2m: 3962 posted, 69 filled (1.7%, 62 strictly through, 0.53/bid-hour) · EV at post +3.9% · CLV +4.4% on 69 · 0-0 graded, ROI n/a
+  live-m3-t2m-guard: 3988 posted, 69 filled (1.7%, 62 strictly through, 0.52/bid-hour) · EV at post +3.9% · CLV +4.4% on 69 · 0-0 graded, ROI n/a
+  live-m4-t2m: 4050 posted, 68 filled (1.7%, 55 strictly through, 0.51/bid-hour) · EV at post +4.9% · CLV +5.4% on 68 · 0-0 graded, ROI n/a
+  live-m4-t2m-guard: 4076 posted, 68 filled (1.7%, 55 strictly through, 0.51/bid-hour) · EV at post +4.9% · CLV +5.4% on 68 · 0-0 graded, ROI n/a
+  pre-m2-t30m: 6543 posted, 108 filled (1.7%, 20 strictly through, 0.03/bid-hour) · EV at post +2.6% · CLV +0.8% on 52 · 0-0 graded, ROI n/a
+  pre-m2-t30m-guard: 6609 posted, 106 filled (1.6%, 20 strictly through, 0.03/bid-hour) · EV at post +2.6% · CLV +1.1% on 51 · 0-0 graded, ROI n/a
+  pre-m3-t120m-guard: 2930 posted, 67 filled (2.3%, 23 strictly through, 0.01/bid-hour) · EV at post +3.6% · CLV +1.8% on 18 · 0-0 graded, ROI n/a
+  pre-m3-t30m: 7355 posted, 31 filled (0.4%, 12 strictly through, 0.01/bid-hour) · EV at post +3.6% · CLV +2.5% on 8 · 0-0 graded, ROI n/a
+  pre-m3-t30m-guard: 7374 posted, 31 filled (0.4%, 12 strictly through, 0.01/bid-hour) · EV at post +3.6% · CLV +2.5% on 8 · 0-0 graded, ROI n/a
+  pre-m4-t120m-guard: 3016 posted, 35 filled (1.2%, 16 strictly through, 0.01/bid-hour) · EV at post +4.6% · CLV +4.9% on 9 · 0-0 graded, ROI n/a
+  pre-m4-t30m: 7538 posted, 14 filled (0.2%, 8 strictly through, 0.00/bid-hour) · EV at post +4.6% · CLV +6.2% on 2 · 0-0 graded, ROI n/a
+  pre-m4-t30m-guard: 7545 posted, 14 filled (0.2%, 8 strictly through, 0.00/bid-hour) · EV at post +4.6% · CLV +6.2% on 2 · 0-0 graded, ROI n/a
+  pre-m6-t30m: 7681 posted, 6 filled (0.1%, 3 strictly through, 0.00/bid-hour) · EV at post +6.6% · CLV +11.0% on 1 · 0-0 graded, ROI n/a
+  pre-m6-t30m-guard: 7685 posted, 6 filled (0.1%, 3 strictly through, 0.00/bid-hour) · EV at post +6.6% · CLV +11.0% on 1 · 0-0 graded, ROI n/a
+  slices of pre-m2-t30m (the recipe with the most fills):
+    kind MONEYLINE: 2380 posted, 37 filled (1.6%, 7 strictly through, 0.03/bid-hour) · EV at post +2.7% · CLV +0.2% on 15 · 0-0 graded, ROI n/a
+    kind SPREAD: 2004 posted, 36 filled (1.8%, 8 strictly through, 0.04/bid-hour) · EV at post +2.6% · CLV +1.0% on 17 · 0-0 graded, ROI n/a
+    kind TOTAL: 2159 posted, 35 filled (1.6%, 5 strictly through, 0.03/bid-hour) · EV at post +2.6% · CLV +1.1% on 20 · 0-0 graded, ROI n/a
+    side Over: 1114 posted, 15 filled (1.3%, 1 strictly through, 0.03/bid-hour) · EV at post +2.6% · CLV +2.8% on 10 · 0-0 graded, ROI n/a
+    side Under: 1045 posted, 20 filled (1.9%, 4 strictly through, 0.04/bid-hour) · EV at post +2.5% · CLV -0.6% on 10 · 0-0 graded, ROI n/a
+    side other: 4384 posted, 73 filled (1.7%, 15 strictly through, 0.03/bid-hour) · EV at post +2.7% · CLV +0.6% on 32 · 0-0 graded, ROI n/a
+    hours to start 1-3h: 175 posted, 2 filled (1.1%, 0 strictly through, 0.02/bid-hour) · EV at post +2.6% · CLV +2.4% on 2 · 0-0 graded, ROI n/a
+    hours to start 12-24h: 2294 posted, 29 filled (1.3%, 12 strictly through, 0.03/bid-hour) · EV at post +2.6% · CLV +2.5% on 8 · 0-0 graded, ROI n/a
+    hours to start 24h+: 1418 posted, 14 filled (1.0%, 1 strictly through, 0.02/bid-hour) · EV at post +2.7% · CLV n/a on 0 · 0-0 graded, ROI n/a
+    hours to start 3-6h: 343 posted, 8 filled (2.3%, 2 strictly through, 0.05/bid-hour) · EV at post +2.6% · CLV +2.1% on 7 · 0-0 graded, ROI n/a
+    hours to start 6-12h: 2255 posted, 55 filled (2.4%, 5 strictly through, 0.05/bid-hour) · EV at post +2.6% · CLV +0.0% on 35 · 0-0 graded, ROI n/a
+    hours to start <1h: 58 posted, 0 filled (0.0%, 0 strictly through, 0.00/bid-hour) · EV at post +2.6% · CLV n/a on 0 · 0-0 graded, ROI n/a
+    league MLB: 23 posted, 1 filled (4.3%, 0 strictly through, 0.09/bid-hour) · EV at post +2.6% · CLV n/a on 0 · 0-0 graded, ROI n/a
+    league NBA: 324 posted, 11 filled (3.4%, 4 strictly through, 0.07/bid-hour) · EV at post +2.5% · CLV +2.6% on 5 · 0-0 graded, ROI n/a
+    league NCAAF: 4777 posted, 67 filled (1.4%, 13 strictly through, 0.03/bid-hour) · EV at post +2.6% · CLV +0.5% on 30 · 0-0 graded, ROI n/a
+    league NFL: 489 posted, 3 filled (0.6%, 0 strictly through, 0.01/bid-hour) · EV at post +2.7% · CLV n/a on 0 · 0-0 graded, ROI n/a
+    league NHL: 815 posted, 22 filled (2.7%, 2 strictly through, 0.06/bid-hour) · EV at post +2.6% · CLV -0.0% on 13 · 0-0 graded, ROI n/a
+    league WNBA: 115 posted, 4 filled (3.5%, 1 strictly through, 0.07/bid-hour) · EV at post +2.5% · CLV +3.4% on 4 · 0-0 graded, ROI n/a
+    books behind the fair 2: 3725 posted, 76 filled (2.0%, 13 strictly through, 0.04/bid-hour) · EV at post +2.6% · CLV +0.6% on 46 · 0-0 graded, ROI n/a
+    books behind the fair 3: 352 posted, 2 filled (0.6%, 1 strictly through, 0.01/bid-hour) · EV at post +2.5% · CLV n/a on 0 · 0-0 graded, ROI n/a
+    books behind the fair 4: 258 posted, 0 filled (0.0%, 0 strictly through, 0.00/bid-hour) · EV at post +2.5% · CLV n/a on 0 · 0-0 graded, ROI n/a
+    books behind the fair 5+: 2208 posted, 30 filled (1.4%, 6 strictly through, 0.03/bid-hour) · EV at post +2.6% · CLV +2.0% on 6 · 0-0 graded, ROI n/a
+
