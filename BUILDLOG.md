@@ -180,3 +180,4 @@ day that changes.
 | v0.87.1 | code 172 | 2026-10-10T16:39Z | v0.87.1: live tail bettor (decided games, no Pinnacle price needed) joins the autopilot; Live tail bets page; tail source in the Tracker
 | v0.88.0 | code 173 | 2026-10-10T17:13Z | v0.88.0: Pinnacle website feed (free) as a choice beside the Pinnodds socket, with a compare race that times it against the socket
 | v0.88.1 | code 174 | 2026-10-10T17:46Z | v0.88.1: Pinnacle website feed treats a 403 among answers as throttling (slows, no false key alarm), polls the score less often, race shows how many versions each feed reported
+| v0.88.2 | code 175 | 2026-10-10T17:54Z | v0.88.2: Pinnacle website compare run shows what its own book received (matchups, frames, price changes) and how many versions each feed reported, so a silent race can be diagnosed
