@@ -595,6 +595,8 @@ class LiveBidDesk(
                 }
             }
             pullCounts[why] = (pullCounts[why] ?: 0) + 1
+            // A bid just pulled is not put straight back (the reason that pulled it is still in the air).
+            coolUntil[b.outcomeId] = maxOf(coolUntil[b.outcomeId] ?: 0L, now + PULL_COOLOFF_MS)
             dirty = true
         }
         val nb = send ?: return
@@ -1013,6 +1015,7 @@ class LiveBidDesk(
         /** What a real order takes to reach the book, and a cancel to land, in play (RESEARCH.md §120.1: 5.3 s): the delay paper bids are given. */
         const val PAPER_LATENCY_MS = 5_300L
         const val REFUSED_COOLOFF_MS = 5 * 60_000L
+        const val PULL_COOLOFF_MS = 10_000L
         const val BACKOFF_MS = 10_000L
         const val CANCEL_RETRY_MS = 2_500L
         const val LOST_LOOKUP_MS = 2_000L

@@ -389,6 +389,100 @@ class PinnLiveRunner(
 
     @Volatile private var pending: Channel<Msg>? = null
 
+    // ---- live bids (Tj, 2026-10-10; RESEARCH.md §123-§124) ----------------------------------------------------------------------------------------------------------------------
+
+    private val lastBidBookMs = HashMap<String, Long>()
+    private var lastBidJudgeMs = 0L
+    private var bidTargetsNow = 0
+
+    /**
+     * Judges the matched lines for live bids and tells the desk what is justified: for each side of each matched line, [LiveBidJudge.keep] vouches for (or pulls) a bid already up and
+     * [LiveBidJudge.want] offers a new one. [only] limits it to those Pinnacle events (a frame just changed them), [market] to one Novig market (its book just changed). The desk pulls a
+     * bid nobody vouches for within a few seconds, so a judgment that never comes (a stalled consumer, a dropped feed) takes the bids down by itself.
+     */
+    private fun judgeBids(now: Long, novig: PushedBooks, only: Set<Long>? = null, market: String? = null) {
+        val desk = bids ?: return
+        val bc = bidConfig()
+        if (!bc.on) return
+        val pinn = feedSource ?: return
+        val problem = feedProblem(now, novig, pinn)
+        var n = 0
+        for ((eventId, ts) in targetsByEvent) {
+            if (only != null && eventId !in only) continue
+            for (t in ts) {
+                if (market != null && t.market.marketId != market) continue
+                n++
+                judgeBidTarget(desk, t, now, novig, bc, problem)
+            }
+        }
+        if (only == null) bidTargetsNow = n
+    }
+
+    private fun judgeBidTarget(desk: LiveBidDesk, t: LiveTarget, now: Long, novig: PushedBooks, bc: LiveBidConfig, problem: String?) {
+        val q = bc.quality
+        val outcomes = t.outcomeBySide
+        fun off(reason: String) {
+            for (o in outcomes.values) { desk.pull(o, reason); desk.noWant(o, reason) }
+        }
+        val pe = book.events[t.pinnEventId] ?: return off(LiveBidSkip.NOT_LIVE)
+        val kindOff = when (t.type) {
+            PinnLineType.MONEYLINE -> !q.moneyline
+            PinnLineType.SPREAD -> !q.spread
+            PinnLineType.TOTAL -> !q.total
+        }
+        if (kindOff) return off(LiveBidSkip.KIND_OFF)
+        if (pe.sportId == PinnBook.TENNIS_SPORT_ID && !q.tennis) return off(LiveBidSkip.TENNIS_OFF)
+        if (q.onlyLeagues.isNotEmpty() && t.event.league !in q.onlyLeagues) return off(LiveBidSkip.LEAGUE_OFF)
+        val line = t.line(pe) ?: return off(LiveBidSkip.NO_LINE)
+        val mb = novig.live(listOf(t.market.marketId))[t.market.marketId] ?: return off(LiveBidSkip.NO_BOOK)
+        val own = desk.ownLevels()
+        val scoreAge = if (pe.scoreAtMs > 0L) now - pe.scoreAtMs else null
+        val dangerAge = if (pe.volatileUntilMs > 0L) now - (pe.volatileUntilMs - PinnBook.VOLATILE_MS) else null
+        for ((side, outcomeId) in outcomes) {
+            val f = LiveBidFair.of(line, side, q.devig)
+            if (f != null) desk.noteFair(outcomeId, f.fair, now)
+            val b = LiveBidBookView.of(mb, t.market, outcomeId, own)
+            val view = LiveBidView(
+                nowMs = now, problem = problem, pinnLive = pe.live, novigLive = t.event.status == NovigEvent.STATUS_LIVE, lineOpen = line.open, fair = f?.fair,
+                overround = f?.overround ?: line.overround, limit = line.maxRisk, quietMs = now - pe.lastFrameAtMs, sinceChangeMs = now - line.changedAtMs, scoreAgeMs = scoreAge,
+                dangerAgeMs = dangerAge, bestBid = b.bestBid, offer = b.offer, fee = t.market.fee,
+            )
+            val held = desk.held(outcomeId)
+            if (held != null) {
+                when (val k = LiveBidJudge.keep(view, q, held)) {
+                    LiveBidKeep.Keep -> desk.keepAlive(outcomeId, now)
+                    is LiveBidKeep.Pull -> desk.pull(outcomeId, k.reason)
+                }
+            }
+            when (val v = LiveBidJudge.want(view, q)) {
+                is LiveBidVerdict.Skip -> desk.noWant(outcomeId, v.reason)
+                is LiveBidVerdict.Post -> {
+                    val (label, selection) = describe(t, side, outcomeId)
+                    desk.want(
+                        LiveBidWant(
+                            atMs = now, outcomeId = outcomeId, marketId = t.market.marketId, eventId = t.event.eventId, pinnEventId = t.pinnEventId, league = t.event.league,
+                            eventName = t.event.description, startsTs = t.event.startsTs, marketLabel = label, selection = selection, verdict = v, fee = t.market.fee,
+                            score = pe.score?.let { "${it.first}-${it.second}" }, clock = pe.clock,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    /** The market's name and the selection as the Tracker shows them ("Moneyline" / "Alabama", "Spread" / "Alabama -3.5", "Total" / "Over 45.5"). */
+    private fun describe(t: LiveTarget, side: PinnSide, outcomeId: String): kotlin.Pair<String, String> {
+        val outcomeName = t.market.outcomes.firstOrNull { it.outcomeId == outcomeId }?.name ?: ""
+        val matchup = t.event.matchup
+        val novigHome = (side == PinnSide.HOME) != t.swapped
+        val team = if (novigHome) matchup?.home else matchup?.away
+        return when (t.type) {
+            PinnLineType.MONEYLINE -> "Moneyline" to (team ?: outcomeName)
+            PinnLineType.SPREAD -> "Spread" to "${team ?: outcomeName.substringBeforeLast(' ')} ${signed(if (novigHome) t.strike!! else -t.strike!!)}"
+            PinnLineType.TOTAL -> "Total" to outcomeName
+        }
+    }
+
     private fun count(reason: String) {
         skips[reason] = (skips[reason] ?: 0) + 1
     }
@@ -471,7 +565,7 @@ class PinnLiveRunner(
         _status.value = _status.value.copy(
             running = job?.isActive == true, socket = socket, pinnEvents = book.events.size, pinnLive = book.events.values.count { it.live }, novigGames = catalogEvents.size, matched = matchedGames,
             targets = targetsByMarket.size, watched = watched, frames = book.frames, frameAgeMs = pinn.lastFrameAtMs.takeIf { it > 0 }?.let { now - it }, evaluations = evaluations,
-            candidates = candidates, skips = skips.toMap(), lastCandidate = lastCandidate,
+            candidates = candidates, skips = skips.toMap(), lastCandidate = lastCandidate, bidTargets = bidTargetsNow,
             problem = (pinn.state.value as? PinnSocketState.Down)?.message ?: novig.problemSince(_status.value.sinceMs ?: 0L),
         )
     }
@@ -491,6 +585,10 @@ class PinnLiveRunner(
          * matched yet, but its spreads and totals are; the rest have a plain two-way moneyline. The study recorder used the same names against Novig's catalog without a refusal.
          */
         val EXTRA_LEAGUES = setOf("NCAAWB", "CFL", "MLS", "EPL", "Bundesliga", "Serie A", "La Liga", "Ligue 1", "Champions League", "Europa League", "KBO", "NPB")
+
+        /** Live bids are judged at least this often, and on a Novig book change no more than every [BID_BOOK_GAP_MS] per market. */
+        const val BID_EVERY_MS = 500L
+        const val BID_BOOK_GAP_MS = 200L
 
         const val DISCOVER_MS = 30_000L
         const val TICK_MS = 100L
