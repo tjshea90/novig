@@ -64,4 +64,15 @@ object PinnText {
         com.tjshea.vigilant.data.pinnodds.ReopenStudy.lines(reopen).forEach { o.appendLine("  $it") }
         return o.toString()
     }
+
+    /** The Pinnacle website feed block of the Diagnostics file (RESEARCH.md §127): which feed drives the engine, the website feed's counters, and the compare run's gaps. */
+    fun websiteDiagnostics(s: ScanSettings, stats: com.tjshea.vigilant.data.pinnodds.WebsiteStats?, race: List<String>): String = buildString {
+        val w = s.pinnWebsite
+        appendLine("PINNACLE WEBSITE FEED (RESEARCH.md §127)")
+        appendLine("Engine's source: ${w.feed.label} · compare run ${if (w.compare && !w.website) "ON" else "off"} · poll ${w.pollMs} ms · up to ${w.maxGames} live games · key ${if (w.key.isBlank()) "built-in public key" else "your own"}")
+        if (stats == null) appendLine("Not running.") else {
+            appendLine("Games ${stats.games} · requests ${stats.polls} (${stats.failures} failed, ${stats.rateLimited} rate-limited) · frames ${stats.frames} · price changes ${stats.changes} · cycle ${stats.lastCycleMs} ms (average ${stats.avgLatencyMs} ms)" + (stats.lastError?.let { " · last problem: $it" } ?: ""))
+        }
+        if (w.compare && !w.website) race.forEach { appendLine(it) }
+    }.trimEnd()
 }

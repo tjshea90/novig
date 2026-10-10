@@ -2283,7 +2283,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             pinnReport = g.pinnReport,
             liveBidReport = runCatching {
                 LiveBidText.diagnostics(_state.value.settings, c.liveBidDesk.status.value, c.pinnRunner.status.value, c.liveBidDesk.bidsNow(), c.pinnRunner.running) +
-                    "\n" + TailText.diagnostics(_state.value.settings, c.tailTaker.status.value, c.lab.status.value, c.tailTaker.records())
+                    "\n" + TailText.diagnostics(_state.value.settings, c.tailTaker.status.value, c.lab.status.value, c.tailTaker.records()) +
+                    "\n" + PinnText.websiteDiagnostics(_state.value.settings, c.websiteStats(), c.pinnRace.lines())
             }.getOrNull(),
             burstReport = g.burstReport,
             skipped = g.skipped,
