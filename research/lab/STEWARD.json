@@ -4,9 +4,10 @@
   "claimedAt": "2026-10-09T23:55:00Z",
   "lastCheckinAt": "2026-10-10T13:32:46Z",
   "leaseHours": 36,
-  "routine": "daily 08:47 America/New_York, one fresh session per fire (create_trigger, create_new_session_on_fire)",
+  "routine": "deleted 2026-10-10",
   "stopAfter": "2026-10-19",
   "stopRule": "On or after stopAfter, once the archive release for the last run is complete and READY FOR ANALYSIS is in NOTES.md: remove the schedule trigger from .github/workflows/lab-record.yml, cancel any running lab run, tell Tj. Tj can move stopAfter or say 'keep running'.",
   "routineId": "trig_01Ks2vjbokaZdSuTrpoz4m9i",
-  "note": "2026-10-10: the routine fires but its fresh session gets NO repo or GitHub tools (cannot push); check-ins are done by an interactive session that has them."
+  "note": "2026-10-10: the routine fires but its fresh session gets NO repo or GitHub tools (cannot push); check-ins are done by an interactive session that has them.",
+  "stopped": "2026-10-10: Tj said stop the lab and remove the routine. Schedule removed from lab-record.yml, routine trig_01Ks2vjbokaZdSuTrpoz4m9i deleted. Run 9 (started 12:24Z) left to finish so its journals reach the archive Release."
 }

@@ -17,9 +17,7 @@ on:
       leagues:
         description: "Novig league names, comma separated (default NFL,NCAAF,NBA,WNBA,NCAAB,NHL,MLB)"
         default: ""
-  schedule:
-    # Every 6 hours: back to back (a run is 5.5 h), so the lab is on around the clock.
-    - cron: "11 0,6,12,18 * * *"
+  # The 6-hourly schedule was removed on 2026-10-10 at Tj's word ("stop the lab and remove the routine"): the data is archived in the lab-archive-* Releases and studied; run it by hand (workflow_dispatch) if more is wanted.
 
 permissions:
   contents: write
