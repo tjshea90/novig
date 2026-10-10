@@ -83,6 +83,26 @@ object LiveBidText {
             (d.standDown?.let { " · stood down: $it" } ?: "") + (d.problem?.let { " · $it" } ?: "")
     }
 
+    /**
+     * Why nothing is up, in words (Tj, 2026-10-10: "It isn't posting any live bids at all"): the first thing in the chain that is not there (key, feed, a matched game), else what the judge said
+     * no to most. Null when a bid is up or nothing needs saying. [r] is the runner's status, [hasKey] whether a Pinnodds key is saved.
+     */
+    fun whyNone(s: ScanSettings, d: LiveBidDeskStatus, r: LiveRunnerStatus, hasKey: Boolean): String? {
+        if (!s.liveBid || s.liveBidHalted != null || d.active > 0) return null
+        if (s.paused) return "Nothing runs while STOP ALL or the pause is on."
+        if (!hasKey) return "No Pinnodds key is saved, so there is no Pinnacle price to bid from (Settings › Pinnodds live)."
+        if (!r.running) return "The live feed is not running" + (r.problem?.let { ": $it" } ?: " yet (it starts a moment after the switch goes on).")
+        if (r.socket != "live") return "The Pinnodds feed is ${r.socket}" + (r.problem?.let { " ($it)" } ?: "") + "."
+        if (r.pinnLive == 0) return "Connected, but Pinnacle has no live game on right now."
+        if (r.matched == 0) return "Connected: ${r.pinnLive} live Pinnacle games, none of them is also a live game on Novig right now."
+        val q = s.liveBidQuality
+        val top = d.skips.entries.sortedByDescending { it.value }.take(3)
+        val head = "${r.matched} live games matched to Novig, ${r.bidTargets} lines judged. "
+        if (top.isEmpty()) return head + "No look has been judged yet."
+        val tennisHint = if (!q.tennis && top.any { it.key == com.tjshea.vigilant.data.livebid.LiveBidSkip.TENNIS_OFF }) " Tennis is off (Tennis switch below); most live games at some hours are tennis." else ""
+        return head + "None passed. Most common reasons: " + top.joinToString(" · ") { "${it.key} ×${it.value}" } + "." + tennisHint
+    }
+
     fun diagnostics(s: ScanSettings, d: LiveBidDeskStatus, r: LiveRunnerStatus, bids: List<LiveBid>, running: Boolean): String {
         val o = StringBuilder()
         o.appendLine("LIVE BIDS (RESEARCH.md §123-§124)")

@@ -312,3 +312,26 @@ class LiveBidUiTest {
 private object SettingsSummaryProbe {
     fun of(s: ScanSettings): String = com.tjshea.vigilant.app.ui.SettingsSummary.of(SettingsPage.LIVEBIDS, SampleScan.state().copy(settings = s))
 }
+
+class LiveBidWhyTest {
+    private val on = ScanSettings(liveBid = true)
+    private fun run(r: com.tjshea.vigilant.data.pinnodds.LiveRunnerStatus, d: LiveBidDeskStatus = LiveBidDeskStatus(), key: Boolean = true, s: ScanSettings = on) = LiveBidText.whyNone(s, d, r, key)
+    private val live = com.tjshea.vigilant.data.pinnodds.LiveRunnerStatus(running = true, socket = "live", pinnLive = 424, matched = 15, bidTargets = 40)
+
+    @Test fun `each missing link in the chain is named in turn`() {
+        assertNull(run(live, s = ScanSettings()))
+        assertTrue(run(live, key = false)!!.contains("No Pinnodds key"))
+        assertTrue(run(live.copy(running = false))!!.contains("not running"))
+        assertTrue(run(live.copy(socket = "connecting"))!!.contains("connecting"))
+        assertTrue(run(live.copy(pinnLive = 0))!!.contains("no live game"))
+        assertTrue(run(live.copy(matched = 0))!!.contains("none of them"))
+        assertNull("a bid is up: nothing to explain", run(live, LiveBidDeskStatus(active = 1)))
+    }
+
+    @Test fun `with games matched it says what the judge said no to, and points at tennis when that is why`() {
+        val d = LiveBidDeskStatus(skips = mapOf("tennis is off" to 900, "Pinnacle limit too low" to 40))
+        val t = run(live, d)!!
+        assertTrue(t, t.contains("15 live games matched") && t.contains("tennis is off ×900"))
+        assertTrue(t, t.contains("Tennis switch"))
+    }
+}
