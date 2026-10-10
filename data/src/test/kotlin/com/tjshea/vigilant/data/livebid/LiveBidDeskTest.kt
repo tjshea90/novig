@@ -731,6 +731,21 @@ class LiveBidDeskTest {
     }
 
     @Test
+    fun `a refresh time longer than the bid's life cannot make every bid renew at once (it is held to half the life)`() = runTest {
+        val r = rig(quality = LiveBidQuality(ttlSec = 12, refreshBeforeSec = 30, overlapRepost = true), limits = LiveBidLimits(maxStake = 2.0, walletReserve = 0.0, maxBidsPerGame = 5, maxBids = 5))
+        r.wallet = 1000.0
+        r.up()
+        r.hold(3_000, "oa")
+        r.desk.want(want(r.now))
+        r.hold(1_500, "oa")
+        assertEquals("not renewed in the first half of its life", 1, r.fake.placed.size)
+        r.hold(2_500, "oa")
+        r.desk.want(want(r.now))
+        r.hold(1_500, "oa")
+        assertEquals("renewed once, in the second half", 2, r.fake.placed.size)
+    }
+
+    @Test
     fun `without overlap the replacement waits for the old bid to end`() = runTest {
         val r = rig(quality = LiveBidQuality(ttlSec = 30, refreshBeforeSec = 8, overlapRepost = false, coolOffSec = 0), limits = LiveBidLimits(maxStake = 2.0, walletReserve = 0.0))
         r.wallet = 1000.0
