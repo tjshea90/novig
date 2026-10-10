@@ -197,7 +197,24 @@ object LiveBidPresets {
         paperOnly = true,
     )
 
-    val BUILT_IN: List<SavedLiveBidPreset> = listOf(CAREFUL, BALANCED, PAPER_WIDE)
+    /**
+     * More fills (Tj, 2026-10-10: "very few of my live bids are actually filled ... I want them to fill"). Every rule that kept a bid from resting is loosened by one step, and the edge is cut to 3%
+     * (the grid's fills a bid-hour fell from about 2 at 3% to about 0 at 8%), which Novig's maker credit adds to in play (about 0.4-1.5% by league, counted here). The bid may lead the book and
+     * both sides of a market may be up, so a bid sits at the front where the money is, and the settle and hold times are halved so a fresh Pinnacle price is bid on sooner. What does NOT loosen:
+     * the price must still be Pinnacle's main line with a limit of $250 or more and a margin under 9%, a bid is pulled the instant the score, a danger frame, Pinnacle's silence, the edge
+     * (under 0.5%) or Novig's middle says so, and the pick-off stop stays at 4 of 6. A 3% edge is thin: the stake stays tiny until the Diagnostics show fills that held.
+     */
+    val FILL = SavedLiveBidPreset(
+        "More fills",
+        LiveBidQuality(
+            margin = 0.03, minPrice = 0.06, maxPrice = 0.94, minFair = 0.08, maxFair = 0.92, neverLead = false, bothSides = true,
+            maxQuietSec = 20, settleSec = 2, maxOverround = 0.09, minPinnLimit = 250.0, maxBookGap = 0.12,
+            ttlSec = 20, refreshBeforeSec = 6, pullBelowEv = 0.005, scoreHoldSec = 15, dangerHoldSec = 6, novigMovePull = 0.05, coolOffSec = 15,
+            pickOffWindow = 6, pickOffLimit = 4, maxCancelSec = 12, maxPlaceSec = 15, countCredit = true,
+        ),
+    )
+
+    val BUILT_IN: List<SavedLiveBidPreset> = listOf(CAREFUL, BALANCED, FILL, PAPER_WIDE)
 
     /** Every preset Tj can pick: the built-in ones, then his own. */
     fun all(s: ScanSettings): List<SavedLiveBidPreset> = BUILT_IN + s.liveBidPresets
