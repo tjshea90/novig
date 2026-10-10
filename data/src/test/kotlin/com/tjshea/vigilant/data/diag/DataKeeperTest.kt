@@ -3,10 +3,10 @@ package com.tjshea.vigilant.data.diag
 import java.io.File
 import java.time.LocalDate
 import java.time.ZoneId
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 /** Tj, 2026-10-10: the diagnostics must never grow until the app cannot load it; day files older than 2 days (the study: 7) and anything over a folder's cap go by themselves. */
 class DataKeeperTest {
