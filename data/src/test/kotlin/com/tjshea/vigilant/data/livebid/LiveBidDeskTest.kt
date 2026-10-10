@@ -735,10 +735,10 @@ class LiveBidDeskTest {
         val r = rig(quality = LiveBidQuality(ttlSec = 12, refreshBeforeSec = 30, overlapRepost = true), limits = LiveBidLimits(maxStake = 2.0, walletReserve = 0.0, maxBidsPerGame = 5, maxBids = 5))
         r.wallet = 1000.0
         r.up()
-        r.hold(3_000, "oa")
+        r.hold(1_000, "oa")
         r.desk.want(want(r.now))
-        r.hold(1_500, "oa")
-        assertEquals("not renewed in the first half of its life", 1, r.fake.placed.size)
+        r.hold(1_000, "oa")
+        assertEquals("not renewed in the first half of its life (about 4 s in)", 1, r.fake.placed.size)
         r.hold(2_500, "oa")
         r.desk.want(want(r.now))
         r.hold(1_500, "oa")
