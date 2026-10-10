@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.LiveBidText
 import com.tjshea.vigilant.app.UiState
+import com.tjshea.vigilant.data.livebid.LiveAutopilot
 import com.tjshea.vigilant.data.livebid.LiveBidLimits
 import com.tjshea.vigilant.data.livebid.LiveBidPresets
 import com.tjshea.vigilant.data.livebid.LiveBidQuality
@@ -59,6 +60,32 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     val setQ = { f: (LiveBidQuality) -> LiveBidQuality -> onUpdate { it.copy(liveBidQuality = f(it.liveBidQuality)) } }
     val setL = { f: (LiveBidLimits) -> LiveBidLimits -> onUpdate { it.copy(liveBidLimits = f(it.liveBidLimits)) } }
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
+
+    // ---- the autopilot: both engines, one tap ----------------------------------------------------------------------------------------------------------------------------------
+    var confirmingPilot by remember { mutableStateOf(false) }
+    SectionTitle(LiveBidText.AUTOPILOT_TITLE)
+    LbHint(LiveBidText.AUTOPILOT_HINT)
+    val pilot = LiveAutopilot.inForce(s)
+    Text(
+        (if (pilot) "In force" + (if (LiveAutopilot.real(s)) ": REAL orders." else ": paper (nothing is sent).") else "Not in force: the two engines are set separately below and in Pinnodds live.") ,
+        style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 4.dp).testTag("liveAutopilotState"),
+    )
+    Text(LiveBidText.autopilotStatus(s, state.pinnTrade, state.liveBidStatus, state.pinnLive), style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("liveAutopilotStatus"))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedButton(onClick = { onUpdate { LiveAutopilot.apply(it, real = false) } }, modifier = Modifier.testTag("liveAutopilotPaper")) { Text("Autopilot: paper") }
+        Button(onClick = { confirmingPilot = true }, modifier = Modifier.testTag("liveAutopilotReal")) { Text("Autopilot: real money") }
+        if (LiveAutopilot.real(s) || s.liveBid || s.pinnLive) TextButton(onClick = { onUpdate { LiveAutopilot.off(it) } }, modifier = Modifier.testTag("liveAutopilotOff")) { Text("Off") }
+    }
+    Text(LiveBidText.whyFew(state.liveBids, state.liveBidStatus), style = MaterialTheme.typography.labelSmall, color = subtle, modifier = Modifier.padding(top = 6.dp).testTag("liveBidWhyFew"))
+    if (confirmingPilot) {
+        AlertDialog(
+            onDismissRequest = { confirmingPilot = false },
+            title = { Text(LiveBidText.AUTOPILOT_CONFIRM_TITLE) },
+            text = { Text(LiveBidText.autopilotConfirm(s)) },
+            confirmButton = { TextButton(onClick = { confirmingPilot = false; onUpdate { LiveAutopilot.apply(it, real = true) } }, modifier = Modifier.testTag("liveAutopilotConfirm")) { Text("Turn on") } },
+            dismissButton = { TextButton(onClick = { confirmingPilot = false }, modifier = Modifier.testTag("liveAutopilotCancel")) { Text("Cancel") } },
+        )
+    }
 
     Text(LiveBidText.HINT, style = MaterialTheme.typography.bodyMedium, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
     Text(LiveBidText.EVIDENCE, style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp).testTag("liveBidEvidence"))
@@ -128,6 +155,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     LbDollars("Most at risk in one game", listOf(3.0, 5.0, 10.0, 15.0, 25.0, 50.0), lim.maxPerGame, "liveBidMaxGame", 1.0, 10_000.0) { v -> setL { it.copy(maxPerGame = v) } }
     LbDollars("Most filled in a day (fills plus the bids up)", listOf(10.0, 20.0, 40.0, 75.0, 150.0, 300.0), lim.maxPerDay, "liveBidMaxDay", 1.0, 100_000.0) { v -> setL { it.copy(maxPerDay = v) } }
     LbDollars("Stop for the day when settled live bids lose", listOf(5.0, 10.0, 15.0, 25.0, 50.0, 100.0), lim.haltLoss, "liveBidHaltLoss", 1.0, 100_000.0) { v -> setL { it.copy(haltLoss = v) } }
+    LbSwitch("Fill the wallet", "As many bids up as the wallet carries (up to ${LiveBidLimits.WALLET_MAX_BIDS}, ${LiveBidLimits.WALLET_MAX_PER_GAME_BIDS} a game): the counts and the game and day dollars above stop being the ceiling and your wallet, less what you keep, is. Every bid still has to pass the rules and the stake rule, and the loss stop still applies.", lim.fillWallet, "liveBidFillWallet") { v -> setL { it.copy(fillWallet = v) } }
     LbDollars("Keep in the wallet (bids never touch it)", listOf(0.0, 2.0, 5.0, 10.0, 25.0, 50.0), lim.walletReserve, "liveBidReserve", 1.0, 100_000.0, zeroLabel = "None") { v -> setL { it.copy(walletReserve = v) } }
 
     // ---- the price ------------------------------------------------------------------------------------------------------------------------------------------------------------------

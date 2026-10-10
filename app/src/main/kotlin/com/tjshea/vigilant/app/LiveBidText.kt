@@ -173,4 +173,8 @@ object LiveBidText {
         appendLine("Bids: " + statusLine(d, s))
         append("Feed: ${r.socket}, ${r.pinnLive} live Pinnacle games, ${r.matched} matched to Novig, ${r.bidTargets} lines watched for bids")
     }
+
+    /** Why the bids get so few fills, from the bids' own record (real bids if there are any, else the paper ones), for the page. */
+    fun whyFew(bids: List<LiveBid>, d: LiveBidDeskStatus): String =
+        LiveBidReport.whyFew(bids.filter { it.real }.ifEmpty { bids }, d.skips).joinToString("\n")
 }
