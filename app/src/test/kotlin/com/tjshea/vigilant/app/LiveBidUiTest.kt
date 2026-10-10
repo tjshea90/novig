@@ -12,12 +12,14 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.github.takahirom.roborazzi.captureRoboImage
 import com.tjshea.vigilant.app.ui.SettingsPage
 import com.tjshea.vigilant.app.ui.SettingsScreen
 import com.tjshea.vigilant.app.ui.VigilantTheme
@@ -288,6 +290,13 @@ class LiveBidUiTest {
         assertEquals(0.015, ui().settings.liveBidQuality.pullBelowEv, 1e-9)
         tap("liveBidQuiet-0")   // Off
         assertEquals(0, ui().settings.liveBidQuality.maxQuietSec)
+    }
+
+    @Test
+    fun `screenshots of the page - paper, and real money on with a live desk`() {
+        show(state(ScanSettings(bankroll = 500.0, liveBid = true)))
+        compose.onNodeWithTag("liveBidNote").performScrollTo().assertIsDisplayed()
+        compose.onRoot().captureRoboImage("screenshots/5a_live_bids_paper.png")
     }
 
     @Test
