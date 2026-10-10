@@ -1739,7 +1739,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val inputs = gatherDiag()
             // The meter as it stands this moment (a balance just read may not have reached the state yet).
-            val text = withContext(Dispatchers.Default) { DiagnosticsFile.build(_state.value.copy(usage = c.usage.flow.value), diagnosticsExtras(inputs), System.currentTimeMillis()) }
+            // The window shows a cut-down copy (a megabyte in one scrolling Text was the lag): the file and Share with Claude have the whole, budgeted one.
+            val text = withContext(Dispatchers.Default) { DiagnosticsFile.preview(DiagnosticsFile.build(_state.value.copy(usage = c.usage.flow.value), diagnosticsExtras(inputs), System.currentTimeMillis())) }
             _state.update { it.copy(report = ReportUi("Diagnostics", text)) }
         }
     }
@@ -2543,7 +2544,6 @@ internal suspend fun refreshWhileOnScreen(
 }
 
 /** The Diagnostics file reads this many days of each recorder; the share gives up after this long; old-data clearing keeps this many days. */
-private const val DIAG_DAYS = 3
+private const val DIAG_DAYS = com.tjshea.vigilant.data.diag.DataKeeper.JOURNAL_DAYS
 private const val DIAG_TIMEOUT_MS = 90_000L
 private const val DIAG_ITEM_MS = 20_000L
-private const val KEEP_DAYS = 3

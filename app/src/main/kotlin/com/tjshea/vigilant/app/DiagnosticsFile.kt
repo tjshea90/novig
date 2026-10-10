@@ -226,7 +226,7 @@ object DiagnosticsFile {
         val recent = s.bets.filter { it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING || it.createdAtMs >= since }.sortedByDescending { it.createdAtMs }
         val shown = recent.take(MAX_BET_LINES)
         o.appendLine()
-        o.appendLine("== RECENT BETS (JSON lines, newest first: the open bets and those placed in the last $BET_DAYS days: the bet, atBet = its record as placed, its close and its result; ${shown.size} of ${s.bets.size} bets) ==")
+        o.appendLine("== EVERY BET (JSON lines, newest first: only the open bets and those placed in the last $BET_DAYS days, see the note after it; the bet, atBet = its record as placed, its close and its result; ${shown.size} of ${s.bets.size} bets) ==")
         o.appendLine("<<<JSONL")
         shown.forEach { o.appendLine(mask(com.tjshea.vigilant.data.tracker.BetLedger.line(it, now))) }
         if (recent.size > shown.size) o.appendLine("[… ${recent.size - shown.size} more recent bets not listed]")
