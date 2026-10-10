@@ -178,3 +178,4 @@ day that changes.
 | v0.86.1 | code 170 | 2026-10-10T15:29Z | v0.86.1: trap guard hours split (auto-bet vs bids), profit graph with ranges, pinch zoom, scroll and full screen, heap census and per-game JSON parsing for SGO and PropLine (memory), Sofascore backs off
 | v0.87.0 | code 171 | 2026-10-10T16:18Z | v0.87.0: live autopilot (taker + bids together), More fills preset, fill-the-wallet limits, score-or-stale trigger, why-so-few-fills report
 | v0.87.1 | code 172 | 2026-10-10T16:39Z | v0.87.1: live tail bettor (decided games, no Pinnacle price needed) joins the autopilot; Live tail bets page; tail source in the Tracker
+| v0.88.0 | code 173 | 2026-10-10T17:13Z | v0.88.0: Pinnacle website feed (free) as a choice beside the Pinnodds socket, with a compare race that times it against the socket
