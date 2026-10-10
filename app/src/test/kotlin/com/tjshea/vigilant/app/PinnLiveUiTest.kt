@@ -75,6 +75,22 @@ class PinnLiveUiTest {
         SampleScan.state().copy(settings = settings, pinnoddsKeys = keys, pinnLive = LiveRunnerStatus(running = true, socket = "live"))
 
     @Test
+    fun `the Pinnacle website feed is a choice beside the socket, needs no key, and shows its counters and the race`() {
+        val ui = show(state(keys = emptyList()).copy(pinnWebsiteStats = com.tjshea.vigilant.data.pinnodds.WebsiteStats(games = 7, polls = 120, failures = 1, changes = 33, lastCycleMs = 410, avgLatencyMs = 380), pinnRaceLines = listOf("Feed race (website minus socket, 12 price versions both saw): median 1800 ms")))
+        compose.onNodeWithTag("pinnFeed-SOCKET").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("pinnFeed-WEBSITE").performScrollTo().performClick()
+        assertTrue(ui().settings.pinnWebsite.website)
+        compose.onNodeWithTag("pinnWebsiteStats").performScrollTo().assertTextContains("7 live games followed", substring = true)
+        compose.onNodeWithTag("pinnLiveNote").performScrollTo().assertTextContains("website", substring = true, ignoreCase = true)
+        compose.onNodeWithTag("pinnFeed-SOCKET").performClick()
+        compose.onNodeWithTag("pinnCompare").performScrollTo().performClick()
+        assertTrue(ui().settings.pinnWebsite.compare)
+        compose.onNodeWithTag("pinnRace").performScrollTo().assertTextContains("median 1800 ms", substring = true)
+        compose.onNodeWithTag("pinnWebsitePoll-0").performScrollTo().performClick()
+        assertEquals(1_000, ui().settings.pinnWebsite.pollMs)
+    }
+
+    @Test
     fun `the Test key button needs a saved key, then asks for the test`() {
         val probe = Probe()
         show(state(keys = emptyList()), probe)
