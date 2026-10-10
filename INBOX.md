@@ -6037,3 +6037,27 @@ How can I replicate this in the app with real money
 ```
 Figure out why the diagnosis share with Claude stopped working. See if anything may have affected it in the last few versions. Or maybe it holds too much data to make a file
 ```
+
+## 2026-10-10T14:06:08Z
+```
+This app needs a clean up. I've added so many features and changes that it is getting cluttered. The app is now laggy and the diagnostics share with Claude fails, it may be causing the whole app to lag. 
+
+For the diagnostic feature, make a button for me to reset it. This will clear everything in the diagnostics log and start fresh. Recode the diagnostics feature to make it smarter. It should never get too big that it can't load or it crashes. Consider the best way to make this feature, maybe it should automatically clear logs over 2 days old. Look back at the last several versions of this app and see if anything else could have messed up this feature. Consider the best way for diagnostics to be used and remake the feature as needed, so that the diagnostics can actually help Claude improve the code, accuracy, and speed of the app and help fix bugs.
+
+Do a thorough full tests protocol over the entire app. Especially look for bloated code and features that are causing the app to lag. Find ways to improve the code and ui and optimize the features, speed, accuracy, and efficiency of the app.
+
+Many times it says it can't find a bet, open in novig instead. But it can find the exact bet inside novig app with no problem. If it can't find the bet for auto bet, how can it find the bet so easily using the open novig link? See if this can be fixed to find bets for auto bet more accurately. 
+
+Review the screenshot and notice the styling cuts off the words. Fix it. Review the other screenshot where it shows the "locked in" card and its stats. Remove the locked in card. I don't look at it.
+
+Then look at the next two screenshots. Are the edges real section shows I lost money, but the graph shows I made money. Why are these numbers different? If it needs to be fixed, fix it. 
+
+Add a button for me to clear the scan study data. 
+
+
+Clean up the settings. Organize them as much as possible. Get rid of unused settings. Look for and fix contradictory settings. 
+
+Get rid of the "games" tab in the app. I don't use it.
+
+Look at the research currently running on GitHub. See if it needs to be maintained. Should it be stopped and studied?
+```
