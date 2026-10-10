@@ -91,8 +91,10 @@ object DiagnosticsFile {
         )
     }
 
-    /** Everything, in order. */
-    fun build(s: UiState, x: Diagnostics.Extras, now: Long, zone: TimeZone = TimeZone.getDefault()): String {
+    /** Everything, in order, kept under [MAX_CHARS] ([fit]: a file too big to load or share was the bug this guards against, Tj 2026-10-10). */
+    fun build(s: UiState, x: Diagnostics.Extras, now: Long, zone: TimeZone = TimeZone.getDefault()): String = fit(buildFull(s, x, now, zone), MAX_CHARS)
+
+    private fun buildFull(s: UiState, x: Diagnostics.Extras, now: Long, zone: TimeZone): String {
         val findings = Advisor.findings(s, x, now)
         val snap = Advisor.snap(s, x, now, findings)
         val o = StringBuilder()
@@ -141,6 +143,75 @@ object DiagnosticsFile {
         return o.toString()
     }
 
+    // ---- the size budget --------------------------------------------------------------------------------------------------
+
+    /** The sections [fit] never cuts: the reader's instructions, the ranked findings, the trend, the health checks, the machine-readable block. */
+    private val PROTECTED = listOf("READ ME FIRST", "WHAT TO DO", "SINCE THE PREVIOUS REPORT", "Health checks", "MACHINE-READABLE", "END OF FILE", "CODE MAP")
+
+    /** Sections whose NEWEST lines are at the end: when cut, the head goes, not the tail. */
+    private val NEWEST_LAST = listOf("EVENT TIMELINE", "APP LOG")
+
+    private class Section(val head: String, val lines: MutableList<String>) {
+        fun chars() = head.length + 1 + lines.sumOf { it.length + 1 }
+    }
+
+    /**
+     * Keeps [text] under [max] characters by cutting the biggest unprotected section in half again and again, with a line saying how much was left out (the newest bets and
+     * the newest events are the ones kept). A file that is too big to load, share or read was why Share with Claude "did nothing" (Tj, 2026-10-10). Protected sections are never cut.
+     */
+    fun fit(text: String, max: Int): String {
+        if (text.length <= max) return text
+        val all = text.lines()
+        val pre = ArrayList<String>()
+        val sections = ArrayList<Section>()
+        for (line in all) {
+            if (line.startsWith("== ")) sections += Section(line, ArrayList()) else if (sections.isEmpty()) pre += line else sections.last().lines += line
+        }
+        val total = { pre.sumOf { it.length + 1 } + sections.sumOf { it.chars() } }
+        val cuttable = sections.filter { s -> PROTECTED.none { s.head.startsWith("== $it") } }
+        var guard = 0
+        while (total() > max && guard++ < 200) {
+            val s = cuttable.filter { it.lines.size > MIN_KEPT_LINES }.maxByOrNull { it.chars() } ?: break
+            val open = s.lines.indexOfFirst { it.startsWith("<<<") }
+            val close = s.lines.indexOfLast { it == ">>>" }
+            val from = if (open >= 0) open + 1 else 0
+            val to = if (open >= 0 && close > open) close else s.lines.size
+            val body = s.lines.subList(from, to)
+            // Never cut a section below [MIN_KEPT_LINES] body lines.
+            val drop = (body.size / 2).coerceAtLeast(1).coerceAtMost(body.size - MIN_KEPT_LINES).coerceAtLeast(0)
+            if (drop == 0) { s.lines.clear(); s.lines.addAll(0, listOf("[left out to keep the file under ${max / 1000} KB]")); continue }
+            val keepTail = NEWEST_LAST.any { s.head.startsWith("== $it") }
+            val kept = if (keepTail) body.drop(drop) else body.take(body.size - drop)
+            val prior = body.firstOrNull { it.startsWith("[… ") }?.let { Regex("\\[… (\\d+) ").find(it)?.groupValues?.get(1)?.toIntOrNull() } ?: 0
+            val note = "[… ${drop + prior} more lines of this section left out to keep the file under ${max / 1000} KB; ${if (keepTail) "the newest are kept" else "the first (newest/most important) are kept"}]"
+            val cleaned = kept.filterNot { it.startsWith("[… ") }
+            val rebuilt = ArrayList<String>()
+            rebuilt += s.lines.subList(0, from)
+            if (keepTail) rebuilt += note
+            rebuilt += cleaned
+            if (!keepTail) rebuilt += note
+            rebuilt += s.lines.subList(to, s.lines.size)
+            s.lines.clear(); s.lines.addAll(rebuilt)
+        }
+        val out = StringBuilder()
+        pre.forEach { out.appendLine(it) }
+        sections.forEach { s -> out.appendLine(s.head); s.lines.forEach { out.appendLine(it) } }
+        val result = out.toString().trimEnd('\n') + "\n"
+        // Last resort, never reached by the file as built: whatever is still over is cut at the end, with its end marker kept.
+        return if (result.length <= max + max / 10) result else result.take(max) + "\n[… cut at ${max / 1000} KB]\n== END OF FILE ==\n"
+    }
+
+    /**
+     * What the in-app "Show report" window displays (Tj, 2026-10-10: a whole file in one scrolling Text was a megabyte of layout): the file without its READ ME, cut to [PREVIEW_CHARS]. Share
+     * with Claude and the saved file always have the whole (budgeted) file.
+     */
+    fun preview(file: String): String {
+        val start = file.indexOf("== WHAT TO DO")
+        val body = if (start >= 0) file.substring(start) else file
+        val kept = fit(body, PREVIEW_CHARS)
+        return kept + (if (kept.length < body.length) "" else "")
+    }
+
     // ---- the flight recorder's sections -----------------------------------------------------------------------------------
 
     /**
@@ -149,11 +220,18 @@ object DiagnosticsFile {
      * (`clv`, `closeFair`, `closeVia`) and its result (`status`, `profit`). As long as the Tracker is: the file has no size limit (Tj, 2026-10-02).
      */
     private fun everyBet(s: UiState, now: Long, o: StringBuilder) {
+        // Not "every" any more (Tj, 2026-10-10: the file was 1.3 MB, 900 lines of it bets, and would not load): the open bets and the last few days', newest first. Every older bet is in
+        // the Tracker/accuracy sections above as numbers and, bet by bet, in the scan study file.
+        val since = now - BET_DAYS * 24 * 3_600_000L
+        val recent = s.bets.filter { it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING || it.createdAtMs >= since }.sortedByDescending { it.createdAtMs }
+        val shown = recent.take(MAX_BET_LINES)
         o.appendLine()
-        o.appendLine("== EVERY BET (JSON lines, newest first: the bet, atBet = its record as placed, its close and its result; ${s.bets.size} bets) ==")
+        o.appendLine("== RECENT BETS (JSON lines, newest first: the open bets and those placed in the last $BET_DAYS days: the bet, atBet = its record as placed, its close and its result; ${shown.size} of ${s.bets.size} bets) ==")
         o.appendLine("<<<JSONL")
-        s.bets.sortedByDescending { it.createdAtMs }.forEach { o.appendLine(mask(com.tjshea.vigilant.data.tracker.BetLedger.line(it, now))) }
+        shown.forEach { o.appendLine(mask(com.tjshea.vigilant.data.tracker.BetLedger.line(it, now))) }
+        if (recent.size > shown.size) o.appendLine("[… ${recent.size - shown.size} more recent bets not listed]")
         o.appendLine(">>>")
+        if (s.bets.size > recent.size) o.appendLine("(${s.bets.size - recent.size} older bets are not listed: the Tracker and accuracy sections above sum them, the scan study file has each in detail.)")
     }
 
     private fun connections(x: Diagnostics.Extras, now: Long, zone: TimeZone, o: StringBuilder) {
@@ -342,6 +420,14 @@ object DiagnosticsFile {
     private fun hourLabel(hour: String, zone: TimeZone): String =
         SimpleDateFormat("MM-dd HH'h'", Locale.US).apply { timeZone = zone }.format(Date((hour.toLongOrNull() ?: 0L) * 3_600_000L))
 
+    /** The most a diagnostics file may hold, in characters (about 350 KB): it must load on the phone, share through any app and read in one go. */
+    const val MAX_CHARS = 350_000
+    const val PREVIEW_CHARS = 60_000
+    const val MIN_KEPT_LINES = 8
+
+    /** Bets listed in EVERY BET: the open ones and those from the last [BET_DAYS] days, newest first, at most [MAX_BET_LINES]. */
+    const val BET_DAYS = 3
+    const val MAX_BET_LINES = 150
     const val MAX_FINDINGS = 25
     const val MAX_PATHS = 5
     const val MAX_IMPORTANT = 250
