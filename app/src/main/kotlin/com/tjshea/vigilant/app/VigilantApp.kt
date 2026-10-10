@@ -1399,7 +1399,7 @@ class AppContainer(private val app: Application) {
         val blocked = if (s.liveBidReal && trading == null) "no betting key connected" else null
         val preset = com.tjshea.vigilant.data.livebid.LiveBidPresets.active(s)?.name ?: s.liveBidPresetName?.let { "$it (changed)" }
         return com.tjshea.vigilant.data.livebid.LiveBidConfig(
-            on = on, real = s.liveBidReal, quality = s.liveBidQuality, limits = s.liveBidLimits, bankroll = s.bankroll, apiMaxStake = s.apiMaxStake, preset = preset,
+            on = on, real = s.liveBidReal, quality = s.liveBidQuality, limits = s.liveBidLimits.effective(wallet.flow.value?.dollars), bankroll = s.bankroll, apiMaxStake = s.apiMaxStake, preset = preset,
             halted = s.liveBidHalted, blockedWhy = blocked,
         )
     }
