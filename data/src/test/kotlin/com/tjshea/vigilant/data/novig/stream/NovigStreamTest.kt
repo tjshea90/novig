@@ -221,6 +221,23 @@ class NovigStreamTest {
     }
 
     @Test
+    fun `one market Novig refuses does not shut the connection out: the batch is halved down to it and the rest go live`() = runBlocking {
+        server.enqueue(
+            MockResponse().withWebSocketUpgrade(
+                novigSide { nonce, markets, _ ->
+                    if ("m7" in markets) """{"nonce":$nonce,"code":"MARKET_NOT_FOUND","message":"unresolvable"}""" else null
+                },
+            ),
+        )
+        val stream = stream()
+        stream.watch(plan.take(40))
+        until { stream.live(plan).size >= 39 }
+        assertNull(stream.live(plan)["m7"])
+        assertEquals("Novig refused the live book (MARKET_NOT_FOUND)", stream.bookGap("m7"))
+        stream.close()
+    }
+
+    @Test
     fun `a refused upgrade says why, and scans read by REST until the retry time`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(451).setBody("""{"code":"ANONYMIZED_NETWORK"}"""))
         val stream = stream()
