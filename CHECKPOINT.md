@@ -1,21 +1,25 @@
-# CHECKPOINT 2845 — read me first, then TASKS.md
+# CHECKPOINT 2846 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T07:30:14Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-bab5067e-obkelv` · **builds on:** `094bc2f2` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T07:31:22Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-bab5067e-obkelv` · **builds on:** `d12bc1de` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.85.6: live bids say why a line has no Pinnacle price (alternate strike, no main line, three-way) (versionCode 166, v0.85.6)
+Analysed Tj's scan study v0.85.3: research/scan_study_2026-10-10/ANALYSIS.md; TASKS TD; NOTES line
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.85.6), then run: bash tools/record-release.sh v0.85.6 166 "v0.85.6: live bids say why a line has no Pinnacle price (alternate strike, no main line, three-way)"
+Tell Tj the findings + ask which section-6 decisions to apply (TD2). v0.85.6 release check pending (send_later).
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M research/lab/NOTES.md
+    ?? research/scan_study_2026-10-10/
 
 ## Last ten checkpoints
 ```
+  d12bc1de ckpt 2845: pre-release: v0.85.6: live bids say why a line has no Pinnacle price (altern
   0f4e884b ckpt 2844: pre-ship: v0.85.6: live bids say why a line has no Pinnacle price (alternate
   f6cb07f8 ckpt 2843: v0.85.5 released and recorded
   1b1245d5 ckpt 2842: pre-release: v0.85.5: diagnostics file reads the last 3 days of each recorde
@@ -25,8 +29,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   3bc8ffa2 ckpt 2838: v0.85.3 released and recorded
   f132d60f ckpt 2837: pre-release: v0.85.3: live bid desk loop heartbeat and a Details block on th
   6245fed7 ckpt 2836: pre-ship: v0.85.3: live bid desk loop heartbeat and a Details block on the L
-  6a173fb1 ckpt 2835: v0.85.2 released and recorded
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)

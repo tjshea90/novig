@@ -4436,3 +4436,7 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 ## TC: Tj's v0.85.5 screenshot 3:21 am (2026-10-10 07:21Z): desk mode real, loop steps 907 (the desk runs now). 12 live games matched, 119 lines, 51,957 judgments, none passed: "no Pinnacle line prices this market x46686, tennis is off x40836, no current Novig book x16392".
 - [x] TC1 Reading: the engine works; at 3 am the matched games are mostly tennis (off by default for live bids) and the rest are strikes that are not Pinnacle's main line (the watch band holds alternates; only the main strike is priced) or lines whose Novig book has not arrived. v0.85.6 splits "no Pinnacle line" into specific reasons (alternate strike / no open main line / three-way) so the page shows it.
 - [ ] TC2 Real test of the whole chain needs a priceable non-tennis line: Saturday daytime college football / MLB; or Tj turns Live bids > Tennis on in PAPER to watch the machinery. Read the first posted/pulled/filled bids and the timing line (accepted / on the book / pulled).
+
+## TD: Tj sent the scan study v0.85.3 (2026-10-10 ~07:25Z, no message with it)
+- [x] TD1 Analysed (research/scan_study_2026-10-10/ANALYSIS.md; archived upload research/uploads/2026-10-10/5d6ed178-*). Findings and the decisions that are Tj's are in its section 6.
+- [ ] TD2 ASK Tj which of ANALYSIS.md section 6 to apply: (1) bids only within ~12 h of the start, (2) auto-bet only within 6 h, (3) edge-floor test at 2%, (4) skip bets listed 1 h+, (5) no sharp-book requirement for props. Nothing is changed until he says.

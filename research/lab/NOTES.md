@@ -18,3 +18,5 @@
 - Cause: Novig drops a settled market, so the status BidLab/LabRecorder waited for never came (0 GRADE events). Now graded from final scores (`LabGrader`: SGO, OddsPapi, ESPN, MLB via `BetGrader`); live YES/NO ladder sides, pregame bids, TAIL/ALT records (covers are not graded).
 - Props: stat type kept in the FILL event text from v0.84.2; older prop fills stay ungraded. Period markets are not graded (name does not say which period).
 - Old fills in the journals are graded on the next pass once the phone/lab runs v0.84.2 (the GitHub lab restores them from its journals).
+
+- 2026-10-10 (scan study v0.85.3, analysed): `research/scan_study_2026-10-10/ANALYSIS.md`. Against sharp closes the lists find real edge (CLV +1.18%, EV>=2% & start<=6h: +5.2% on 62 bets/46 games, both halves); against Novig's own closes (NFL/MLB props) CLV is -1.2%. Bids: CLV +2.1% (126), 1% picked off, but 12-24 h bids burn 62% of bid-hours for 15% of fills (CLV -0.7%). Decisions for Tj listed in section 6; none applied.
