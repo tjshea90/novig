@@ -4447,3 +4447,7 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 ## TF: Tj attached the research file v0.85.5 (zipped, 2026-10-10 ~07:48Z, no message)
 - [x] TF1 Analysed: research/research_file_2026-10-10/ANALYSIS.md (upload archived in research/uploads/2026-10-10/).
 - [ ] TF2 Offer Tj (with TD2): pregame bids margin ~3%, rest ~2 h, only 1-6 h before the start. Nothing applied until he says.
+
+## TG: "the late-game tail bets went 18-0 over 6 games. How can I replicate this in the app with real money" (Tj, 2026-10-10 ~08:00Z)
+- [x] TG1 Looked at the 18: they are 3 games' worth, 12 of 18 are the SAME Lakers moneyline bet re-logged every ~30 s, the rest the Lakers' spreads and 3 Unders in one MLB game; all 18 were the EXPLORE rule set (TailRules.EXPLORE: "Not for money"), the conservative set has 4 would-be bets and no result; the fair is the app's own model of the game (books 0), not an outside price. 143 NCAAF tail bets (Iowa @ Washington, Iowa State @ BYU) are still ungraded.
+- [ ] TG2 Tj decides: wait for those 143 to grade (read them first, one session), or build a tiny real taker for the CONSERVATIVE tail rules (switch off by default, $1, one bet per market, a per-game and per-day cap, IOC with the reach limit) to collect REAL fills.
