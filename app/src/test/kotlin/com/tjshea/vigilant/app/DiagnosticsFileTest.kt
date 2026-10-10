@@ -334,4 +334,54 @@ class DiagnosticsFileTest {
         assertTrue(healthy, healthy.contains("This is the first report saved on this phone: nothing earlier to compare with."))
         assertTrue(healthy, healthy.contains("No events yet.") && healthy.contains("No calls recorded yet."))
     }
+
+    // ---- the size budget (Tj, 2026-10-10: the file grew until it would not load or share) ----------------------------------------------------
+
+    @Test
+    fun `thousands of bets and a huge timeline still make a file under the cap, with every protected section whole`() {
+        val base = state()
+        val many = (0 until 4_000).map { i -> base.bets.first().copy(id = "b$i", createdAtMs = now - i * 60_000L) }
+        val text = DiagnosticsFile.build(base.copy(bets = many), extras(), now, zone)
+        assertTrue("${text.length} chars", text.length <= DiagnosticsFile.MAX_CHARS + DiagnosticsFile.MAX_CHARS / 10)
+        for (kept in listOf("== READ ME FIRST", "== WHAT TO DO", "== SINCE THE PREVIOUS REPORT", "== Health checks", "== MACHINE-READABLE", "<<<JSON", "== END OF FILE ==")) assertTrue(kept, text.contains(kept))
+        // Only the open bets and the last days' are listed, newest first, and the file says that older ones are not.
+        val listed = text.substringAfter("== EVERY BET (JSON lines").substringBefore(">>>").lines().count { it.startsWith("{") }
+        assertTrue("$listed bet lines", listed in 1..DiagnosticsFile.MAX_BET_LINES)
+        assertTrue(text.contains("older bets are not listed"))
+    }
+
+    @Test
+    fun `fit cuts the biggest unprotected section first, keeps the newest events and says what it left out`() {
+        val big = buildString {
+            appendLine("VIGILANT DIAGNOSTICS FILE")
+            appendLine("== READ ME FIRST (for Claude) ==")
+            repeat(40) { appendLine("read me line $it ".padEnd(100, '.')) }
+            appendLine("== EVENT TIMELINE (oldest first) ==")
+            repeat(2_000) { appendLine("event $it ".padEnd(100, '.')) }
+            appendLine("== STORAGE (the app's files) ==")
+            repeat(20) { appendLine("file $it") }
+            appendLine("== END OF FILE ==")
+        }
+        val out = DiagnosticsFile.fit(big, 60_000)
+        assertTrue("${out.length} chars", out.length <= 60_000)
+        assertEquals(40, out.lines().count { it.startsWith("read me line") })
+        assertEquals(20, out.lines().count { it.startsWith("file ") })
+        assertTrue(out.contains("event 1999 "))
+        assertFalse(out.contains("event 0 "))
+        assertTrue(out.contains("more lines of this section left out"))
+        assertTrue(out.trimEnd().endsWith("== END OF FILE =="))
+        // Under the budget it is left exactly as it was.
+        assertEquals(big, DiagnosticsFile.fit(big, big.length))
+    }
+
+    @Test
+    fun `the report window shows a cut-down copy without the read-me, never a megabyte`() {
+        val base = state()
+        val many = (0 until 4_000).map { i -> base.bets.first().copy(id = "b$i", createdAtMs = now - i * 60_000L) }
+        val text = DiagnosticsFile.build(base.copy(bets = many), extras(), now, zone)
+        val shown = DiagnosticsFile.preview(text)
+        assertTrue("${shown.length} chars", shown.length <= DiagnosticsFile.PREVIEW_CHARS + DiagnosticsFile.PREVIEW_CHARS / 10)
+        assertFalse(shown.contains("== READ ME FIRST"))
+        assertTrue(shown.startsWith("== WHAT TO DO"))
+    }
 }
