@@ -333,9 +333,12 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
             item(key = "head") { MakerHead(ui, actions) }
             item(key = "rules") {
                 SectionTitle("Rules")
-                TextButton(onClick = { rulesOpen = !rulesOpen }, modifier = Modifier.testTag("makerRulesToggle")) {
-                    Text(if (rulesOpen) "Hide the rules" else MakerRulesText.summary(ui.settings))
-                }
+                // Plain left-aligned text, not a TextButton: a button centres and crops a long wrapped summary (Tj's screenshot: first and last words cut off).
+                Text(
+                    if (rulesOpen) "Hide the rules" else MakerRulesText.summary(ui.settings),
+                    Modifier.fillMaxWidth().clickable { rulesOpen = !rulesOpen }.padding(vertical = 10.dp).testTag("makerRulesToggle"),
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
+                )
                 if (rulesOpen) MakerRules(ui.settings, actions.onUpdate)
             }
             item(key = "restingTitle") { SectionTitle("Resting now (${resting.size})") }
