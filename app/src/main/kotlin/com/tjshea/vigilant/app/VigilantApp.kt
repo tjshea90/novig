@@ -1125,6 +1125,8 @@ class AppContainer(private val app: Application) {
         if (!AppBook.isNovig) return
         val on = (s.altLab || s.researchMode) && !s.killed
         if (on) lab.start(LAB_LEAGUES) else if (lab.running) lab.stop()
+        // A foreground service holds the process while research is on (Tj, 2026-10-10), so Android does not end it a few minutes after he leaves.
+        if (on) ResearchService.start(app) else ResearchService.stop(app)
         // The paper bid lab's tape reader: every 45 s while research is on (its lines come from the Bids passes and the paper lab).
         if (on && bidLabJob?.isActive != true) {
             bidLabJob = appScope.launch {

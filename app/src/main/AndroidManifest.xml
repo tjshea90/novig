@@ -88,6 +88,16 @@
                 android:value="Keeps the Pinnodds live odds connection running in the background so live bets can react to price moves" />
         </service>
 
+        <!-- Research (Tj, 2026-10-10): holds the process awake while research mode is on, so the paper lab and paper bids keep recording in the background. -->
+        <service
+            android:name=".ResearchService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the paper-only research recorders running in the background to log odds and simulated bids" />
+        </service>
+
         <!-- The +EV alert's "✓ Placed" and the confirmation's "Undo": run in the background, no screen. -->
         <receiver
             android:name=".AlertActionReceiver"
