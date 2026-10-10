@@ -686,9 +686,11 @@ class LiveBidDesk(
 
     private suspend fun settleOnce() {
         val o = orders ?: return
+        val now = clock()
         val live = synchronized(mu) { bids.values.filter { it.real && it.active } }
-        if (live.isEmpty()) return
-        val open = try {
+        // Nothing resting: only a late-fill look may be due.
+        if (live.isEmpty() && synchronized(mu) { bids.values.none { auditDue(it, now) } }) return
+        val open = if (live.isEmpty()) emptyList() else try {
             o.open()
         } catch (e: CancellationException) {
             throw e
@@ -698,7 +700,6 @@ class LiveBidDesk(
         }
         val byId = open.associateBy { it.orderId }
         val byClient = open.mapNotNull { x -> x.clientId?.let { it to x } }.toMap()
-        val now = clock()
         val reads = ArrayList<Pair<LiveBid, NovigOrder?>>()
         val lookups = ArrayList<LiveBid>()
         val unseen = ArrayList<LiveBid>()
