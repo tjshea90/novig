@@ -155,7 +155,7 @@ object LiveBidText {
     // ---- the live autopilot ----------------------------------------------------------------------------------------------------------------------------------------------------
 
     const val AUTOPILOT_TITLE = "Live autopilot"
-    const val AUTOPILOT_HINT = "One tap runs all three live engines together, across every live game they can match: the taker buys Novig prices that lag Pinnacle's fair by 4% or more after Novig's fee (after a score, or an order left up at Pinnacle's earlier price), the bid desk keeps as many bids up at 3% under Pinnacle's fair as the wallet carries, and the tail bettor buys far strikes a nearly decided game still has on offer (it needs no Pinnacle price). Your stakes, game and day caps and loss halts stay as you set them."
+    const val AUTOPILOT_HINT = "One tap runs all three live engines together, across every live game they can match: the taker buys Novig prices that lag Pinnacle's fair by 4% or more after Novig's fee (after a score, or an order left up at Pinnacle's earlier price), the bid desk keeps as many bids up at 2% under Pinnacle's fair as the wallet carries, and the tail bettor buys far strikes a nearly decided game still has on offer (it needs no Pinnacle price). Your stakes, game and day caps and loss halts stay as you set them."
     const val AUTOPILOT_CONFIRM_TITLE = "Run the live autopilot with real money?"
 
     fun autopilotConfirm(s: ScanSettings): String {

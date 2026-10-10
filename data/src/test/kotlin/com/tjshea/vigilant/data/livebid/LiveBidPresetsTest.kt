@@ -129,7 +129,7 @@ class LiveBidPresetsTest {
     fun `More fills is thinner on the margin and looser on position than Balanced, but every guard that pulls a bid stays`() {
         val f = LiveBidPresets.FILL.quality
         val b = LiveBidPresets.BALANCED.quality
-        assertTrue(f.margin < b.margin && f.margin >= 0.03)
+        assertTrue(f.margin < b.margin && f.margin >= 0.02)
         assertTrue(f.bothSides && !f.neverLead && f.countCredit)
         assertTrue(f.settleSec <= b.settleSec && f.scoreHoldSec <= b.scoreHoldSec)
         assertTrue("pulls on a score, a danger frame, silence, a fading edge, Novig's move", f.pullOnScore && f.dangerHoldSec > 0 && f.maxQuietSec > 0 && f.pullBelowEv > 0.0 && f.novigMovePull > 0.0)
