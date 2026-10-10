@@ -1,22 +1,22 @@
-# CHECKPOINT 2822 — read me first, then TASKS.md
+# CHECKPOINT 2823 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T03:35:37Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-bab5067e-obkelv` · **builds on:** `88470f35` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T04:04:56Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-bab5067e-obkelv` · **builds on:** `8fc6b016` (this checkpoint is the commit after it)
 
 ## Just done
-SW1: logged Tj's live-bid build request (TASKS.md SW)
+SW2-SW3 in progress: data/livebid/ (LiveBidRules+presets Careful/Balanced/Paper wide, LiveBidJudge pure, LiveBidDesk engine over an order port, LiveBid models), PinnLiveRunner judges live bids (takerOn flag), ScanSettings liveBid fields, Tracker source LIVEBID; tools/research/live_bid_grid.py (preset grid). data compiles; no tests yet
 
 ## Do this next
-SW1: read MakerDesk/PinnLiveRunner/presets/settings code, then SW2 pure core
+Next: unit tests (judge, presets, desk with fake orders, runner), then app wiring (VigilantApp desk+orders adapter+pinnTick), Settings page, Diagnostics, kill switch, docs, version, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  8b61f214 ckpt 2822: SW1: logged Tj's live-bid build request (TASKS.md SW)
   32ada719 ckpt 2821: SV done: investigation of live betting on Novig. RESEARCH.md §123 + NOVIG_A
   91487752 ckpt 2820: SV1: logged Tj's live-betting investigation request (TASKS.md SV); read RESE
   6b159526 ckpt 2819: SU1-SU3 done: 5 UI design candidates (Desk, Expressive, Signal, Daylight, Ne
@@ -26,8 +26,7 @@ SW1: read MakerDesk/PinnLiveRunner/presets/settings code, then SW2 pure core
   51d99f74 ckpt 2815: pre-release: v0.84.4: Research running foreground service keeps the paper la
   a4effd21 ckpt 2814: pre-ship: v0.84.4: Research running foreground service keeps the paper lab a
   6e74c425 ckpt 2813: pre-ship: v0.84.4: Research running foreground service keeps the paper lab a
-  f6d25eb0 ckpt 2812: pre-release: v0.84.3: research switches stay on when Android ends the app; s
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(14 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
