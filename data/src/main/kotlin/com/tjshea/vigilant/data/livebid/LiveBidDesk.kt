@@ -405,14 +405,25 @@ class LiveBidDesk(
             pokeSettle = false
             settling = scope.launch { settleOnce() }
         }
-        retryCancels(now)
-        paperTick(now)
-        followUps(now)
-        checkLoss(now)
+        // Each part on its own: one that throws is shown (Diagnostics, the page's problem line) and never keeps the others, or the status, from running.
+        guarded("retrying pulls") { retryCancels(now) }
+        guarded("paper fills") { paperTick(now) }
+        guarded("follow-ups") { followUps(now) }
+        guarded("loss check") { checkLoss(now) }
         // 3. New bids.
-        if (up && (!modeReal || cfg.blockedWhy == null)) postWanted(now, cfg)
-        persist(now)
+        if (up && (!modeReal || cfg.blockedWhy == null)) guarded("posting") { postWanted(now, cfg) }
+        guarded("saving") { persist(now) }
         publish(now, cfg)
+    }
+
+    private suspend fun guarded(what: String, block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            synchronized(mu) { problem = "live bid desk, $what: ${e.javaClass.simpleName} ${e.message ?: ""}".trim() }
+        }
     }
 
     // ---- posting --------------------------------------------------------------------------------------------------------------------------------------------------------------
