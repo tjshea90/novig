@@ -16,6 +16,8 @@ class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
     private val lags = ArrayDeque<Long>()
     private var socketOnly = 0
     private var websiteOnly = 0
+    private val ids = mapOf(Source.SOCKET to HashSet<Long>(), Source.WEBSITE to HashSet<Long>())
+    private val latest = HashMap<String, Triple<String, Long, Long>>()
     private var notes = 0L
     private var socketNotes = 0L
     private var websiteNotes = 0L
@@ -24,6 +26,8 @@ class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
     @Synchronized
     fun note(source: Source, matchupId: Long, key: String, version: Long, atMs: Long) {
         if (source == Source.SOCKET) socketNotes++ else websiteNotes++
+        ids.getValue(source).let { if (it.size < MAX_IDS) it.add(matchupId) }
+        latest["${source.tag}$matchupId"] = Triple(key, version, atMs)
         val k = "$matchupId|$key|$version"
         val first = seen[k]
         if (first == null) {
@@ -50,7 +54,7 @@ class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
 
     @Synchronized
     fun reset() {
-        seen.clear(); lags.clear(); socketOnly = 0; websiteOnly = 0; notes = 0; socketNotes = 0; websiteNotes = 0; since = clock()
+        seen.clear(); lags.clear(); ids.values.forEach { it.clear() }; latest.clear(); socketOnly = 0; websiteOnly = 0; notes = 0; socketNotes = 0; websiteNotes = 0; since = clock()
     }
 
     @Synchronized
@@ -63,11 +67,23 @@ class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
         )
     }
 
+    /** Matchups each feed reported and the ones both did, with the latest version each saw of a few of the shared ones: tells "different games" from "same games, different versions". */
+    @Synchronized
+    private fun overlapLines(): List<String> {
+        val both = ids.getValue(Source.SOCKET).intersect(ids.getValue(Source.WEBSITE))
+        val out = arrayListOf("Matchups reported: socket ${ids.getValue(Source.SOCKET).size}, website ${ids.getValue(Source.WEBSITE).size}, both ${both.size}" + if (both.isEmpty() && ids.getValue(Source.WEBSITE).isNotEmpty()) " (none shared: the socket is not carrying the games the website follows)" else "")
+        for (id in both.take(3)) {
+            val s = latest["S$id"]; val w = latest["W$id"]
+            if (s != null && w != null) out += "  matchup $id: socket's latest ${s.first} v${s.second}, website's latest ${w.first} v${w.second}, ${(w.third - s.third) / 1000.0} s apart"
+        }
+        return out
+    }
+
     /** The race in words for Settings and Diagnostics. */
     fun lines(): List<String> {
         val r = report()
-        if (r.paired == 0) return listOf("Feed race: no price version has been seen by both feeds yet. Versions reported: socket ${r.socketNotes}, website ${r.websiteNotes} (a socket count of 0 means the Pinnodds socket is not delivering prices: check its status line above; the website's first poll reports every market once, so it starts high).")
-        return listOf(
+        if (r.paired == 0) return overlapLines() + listOf("Feed race: no price version has been seen by both feeds yet. Versions reported: socket ${r.socketNotes}, website ${r.websiteNotes} (a socket count of 0 means the Pinnodds socket is not delivering prices: check its status line above; the website's first poll reports every market once, so it starts high).")
+        return overlapLines() + listOf(
             "Feed race (website minus socket, ${r.paired} price versions both saw): median ${r.medianLagMs} ms, 90th percentile ${r.p90LagMs} ms · website later on ${r.websiteLater}, first on ${r.websiteFirst}",
             "  the socket also saw ${r.socketOnly} versions the website skipped (it polls: it sees only the latest) and the website ${r.websiteOnly} the socket never reported",
         )
@@ -75,6 +91,7 @@ class VersionRace(private val clock: () -> Long = System::currentTimeMillis) {
 
     companion object {
         const val MAX_SAMPLES = 2_000
+        const val MAX_IDS = 5_000
         const val EXPIRE_MS = 90_000L
     }
 }

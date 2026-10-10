@@ -183,7 +183,7 @@ class PinnWebsiteFeed(
 
     /** Reads each sport's matchup list and follows the live regular matchups (at most [max]); games no longer live are dropped with a `del`. */
     internal suspend fun discover(max: Int) {
-        val live = LinkedHashMap<Long, Sport>()
+        val bySport = LinkedHashMap<Sport, ArrayList<Long>>()
         for (sport in Sport.entries) {
             val r = fetcher.get("/sports/${sport.arcadia}/matchups?withSpecials=false")
             note(r)
@@ -195,8 +195,15 @@ class PinnWebsiteFeed(
                 val o = runCatching { json.parseToJsonElement(text).jsonObject }.getOrNull() ?: continue
                 if (str(o, "type") != "matchup" || str(o, "units") != "Regular" || (o["isLive"] as? JsonPrimitive)?.booleanOrNull != true) continue
                 val id = (o["id"] as? JsonPrimitive)?.longOrNull ?: continue
-                if (live.size < max) live[id] = sport
+                bySport.getOrPut(sport) { ArrayList() } += id
             }
+        }
+        // Round-robin across the sports, so a cap of 16 games is not all college football (the socket compare and the bids want every sport that is live).
+        val live = LinkedHashMap<Long, Sport>()
+        var round = 0
+        while (live.size < max && bySport.values.any { it.size > round }) {
+            for ((sport, ids) in bySport) if (live.size < max && ids.size > round) live[ids[round]] = sport
+            round++
         }
         val gone = games.keys.filter { it !in live }
         for (id in gone) { send(delFrame(games.getValue(id)), clock()); games.remove(id) }

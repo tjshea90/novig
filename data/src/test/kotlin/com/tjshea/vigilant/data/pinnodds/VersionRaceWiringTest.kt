@@ -21,4 +21,20 @@ class VersionRaceWiringTest {
         assertEquals(r.paired.toLong(), r.socketNotes)
         assertEquals(2_000L, r.medianLagMs)
     }
+
+    @Test
+    fun `matchups are reported per feed, and shared ones show each side's latest version`() {
+        val race = VersionRace { 10_000_000L }
+        race.note(VersionRace.Source.SOCKET, 1, "s;0;m", 10, 1_000)
+        race.note(VersionRace.Source.SOCKET, 2, "s;0;m", 20, 1_000)
+        race.note(VersionRace.Source.WEBSITE, 2, "s;0;m", 21, 4_000)
+        race.note(VersionRace.Source.WEBSITE, 3, "s;0;m", 30, 4_000)
+        val lines = race.lines()
+        assertTrue(lines.first(), lines.first().startsWith("Matchups reported: socket 2, website 2, both 1"))
+        assertTrue(lines.any { it.contains("matchup 2") && it.contains("v20") && it.contains("v21") })
+        val none = VersionRace { 10_000_000L }
+        none.note(VersionRace.Source.SOCKET, 1, "k", 1, 1)
+        none.note(VersionRace.Source.WEBSITE, 9, "k", 1, 1)
+        assertTrue(none.lines().first().contains("none shared"))
+    }
 }
