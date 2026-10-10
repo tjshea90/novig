@@ -1,22 +1,22 @@
-# CHECKPOINT 2871 — read me first, then TASKS.md
+# CHECKPOINT 2872 — read me first, then TASKS.md
 
-**Written:** 2026-10-10T15:56:34Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `84b67ef9` (this checkpoint is the commit after it)
+**Written:** 2026-10-10T16:01:43Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-3fba2f23-lerg26` · **builds on:** `958f2b71` (this checkpoint is the commit after it)
 
 ## Just done
-TL written
+TL1 evidence read; plan A1-A5/B
 
 ## Do this next
-TL1 evidence: read live-bid code + analyses
+implement Phase A: FILL preset, fill-wallet limits, fill diagnostics, rest-on-miss
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  958f2b71 ckpt 2871: TL written
   83880fa4 ckpt 2870: v0.86.1 released and recorded; every item of the queue done
   114e3e64 ckpt 2869: pre-release: v0.86.1: trap guard hours split (auto-bet vs bids), profit grap
   c35f9aee ckpt 2868: pre-ship: v0.86.1: trap guard hours split (auto-bet vs bids), profit graph w
@@ -26,8 +26,4 @@ TL1 evidence: read live-bid code + analyses
   b5bbb409 ckpt 2864: research-record.yml schedule removed at Tj's word
   f9f95ea4 ckpt 2863: Lab stopped at Tj's word: cron removed from lab-record.yml, steward claim re
   820f62d8 ckpt 2862: pre-release: v0.86.0: cleanup. Diagnostics reset button, automatic 2-day ret
-  ff036059 ckpt 2861: TI3: auto-bet/Bet sheet find the bet through CNO's own link outcome (NovigBe
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
