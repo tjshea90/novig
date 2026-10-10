@@ -50,7 +50,7 @@ object LiveBidReport {
         status.problem?.let { out += "Problem: $it" }
         if (status.pulls.isNotEmpty()) out += "Why bids came down: " + status.pulls.entries.sortedByDescending { it.value }.take(8).joinToString(" · ") { "${it.key} ${it.value}" }
         if (status.skips.isNotEmpty()) out += "Why no bid (counts of looks): " + status.skips.entries.sortedByDescending { it.value }.take(10).joinToString(" · ") { "${it.key} ${it.value}" }
-        if (bids.isEmpty()) return out + "No live bids yet."
+        if (bids.isEmpty()) return out + "No live bids yet." + whyFew(bids, status.skips).map { "  $it" }
         for ((title, list) in listOf("Real bids" to bids.filter { it.real }, "Paper bids" to bids.filter { !it.real })) {
             if (list.isEmpty()) continue
             val s = stats(list)
