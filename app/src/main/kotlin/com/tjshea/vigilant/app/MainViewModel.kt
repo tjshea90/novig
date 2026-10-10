@@ -1786,30 +1786,66 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun shareDiagnostics() {
         viewModelScope.launch {
             _toasts.tryEmit("Making the diagnostics file…")
-            val intent = try {
-                withContext(Dispatchers.IO) {
-                    val inputs = gatherDiag()
-                    val now = System.currentTimeMillis()
-                    val extras = diagnosticsExtras(inputs)
-                    val st = _state.value.copy(usage = c.usage.flow.value)
-                    val text = DiagnosticsFile.build(st, extras, now)
-                    val file = DiagnosticsShare.write(getApplication(), text, DiagnosticsFile.fileName(extras.versionName, now))
-                    // A copy in Downloads/Vigilant too (Tj, 2026-10-02 17:01Z), whatever happens to the share.
-                    runCatching { DiagnosticsShare.saveToDownloads(getApplication<Application>().contentResolver, file) }
-                        .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}"); c.eventLog.info("DIAG", "diagnostics file saved to ${DiagnosticsShare.DOWNLOADS_DIR}") }
-                        .onFailure { e -> _toasts.tryEmit("Couldn't save it to Downloads (${e.message ?: e.javaClass.simpleName})"); c.eventLog.warn("DIAG", "couldn't save the diagnostics file to Downloads: ${e.message}") }
-                    c.diagHistory.add(Advisor.snap(st, extras, now, Advisor.findings(st, extras, now)))
-                    c.eventLog.info("DIAG", "diagnostics file made (${file.length() / 1024} KB)")
-                    c.eventLog.flush(force = true)
-                    DiagnosticsShare.intent(getApplication(), file, extras.versionName)
-                }
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                c.eventLog.error("DIAG", "couldn't make the diagnostics file", e)
-                null
+            // Where the work is, so a hang or a failure can say where (Tj, 2026-10-10: "it says making the file but nothing happens").
+            var stage = "starting"
+            val started = System.currentTimeMillis()
+            val job = async(Dispatchers.IO) {
+                stage = "reading the app's state"
+                val inputs = gatherDiag()
+                val now = System.currentTimeMillis()
+                stage = "reading the recorders' journals (last $DIAG_DAYS days)"
+                val extras = diagnosticsExtras(inputs)
+                val st = _state.value.copy(usage = c.usage.flow.value)
+                stage = "writing the report"
+                val text = DiagnosticsFile.build(st, extras, now)
+                stage = "saving the file"
+                val file = DiagnosticsShare.write(getApplication(), text, DiagnosticsFile.fileName(extras.versionName, now))
+                // A copy in Downloads/Vigilant too (Tj, 2026-10-02 17:01Z), whatever happens to the share.
+                runCatching { DiagnosticsShare.saveToDownloads(getApplication<Application>().contentResolver, file) }
+                    .onSuccess { _toasts.tryEmit("Saved to ${DiagnosticsShare.DOWNLOADS_DIR}/${file.name}"); c.eventLog.info("DIAG", "diagnostics file saved to ${DiagnosticsShare.DOWNLOADS_DIR}") }
+                    .onFailure { e -> _toasts.tryEmit("Couldn't save it to Downloads (${e.message ?: e.javaClass.simpleName})"); c.eventLog.warn("DIAG", "couldn't save the diagnostics file to Downloads: ${e.message}") }
+                stage = "comparing with the last report"
+                c.diagHistory.add(Advisor.snap(st, extras, now, Advisor.findings(st, extras, now)))
+                c.eventLog.info("DIAG", "diagnostics file made (${file.length() / 1024} KB in ${System.currentTimeMillis() - started} ms)")
+                c.eventLog.flush(force = true)
+                stage = "opening the share sheet"
+                DiagnosticsShare.intent(getApplication(), file, extras.versionName)
             }
-            if (intent == null) _toasts.tryEmit("Couldn't make the diagnostics file") else shares.send(intent)
+            val intent = try {
+                kotlinx.coroutines.withTimeoutOrNull(DIAG_TIMEOUT_MS) { job.await() }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                job.cancel()
+                throw e
+            } catch (e: Throwable) {   // an OutOfMemoryError too: the file is built from days of recorder data
+                c.eventLog.error("DIAG", "couldn't make the diagnostics file at: $stage", e as? Exception ?: RuntimeException(e.toString()))
+                _toasts.tryEmit("Couldn't make the diagnostics file (${e.javaClass.simpleName}: ${e.message ?: ""}) while ${stage}")
+                return@launch
+            }
+            if (intent == null) {
+                job.cancel()
+                c.eventLog.error("DIAG", "the diagnostics file took over ${DIAG_TIMEOUT_MS / 1000} s, stuck at: $stage", RuntimeException("timeout"))
+                _toasts.tryEmit("The diagnostics file took over ${DIAG_TIMEOUT_MS / 1000} s, stuck while $stage. Tap 'Clear old recorder data' in Diagnostics & about, then try again.")
+            } else shares.send(intent)
+        }
+    }
+
+    /**
+     * Settings › Diagnostics & about › Clear old recorder data (Tj, 2026-10-10: "cleared of old data that Claude already analyzed"): the recorders' day files (paper lab, bid lab, Pinnodds live,
+     * live bids) older than the newest [KEEP_DAYS] days are deleted. The Diagnostics file only ever reads the last [DIAG_DAYS]; the research file reads them all, so share that first if it matters.
+     */
+    fun pruneOldRecorderData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val r = runCatching {
+                val results = listOf(
+                    c.labJournal.prune(KEEP_DAYS), c.labGradeJournal.prune(KEEP_DAYS), c.bidLabBidJournal.prune(KEEP_DAYS), c.bidLabEventJournal.prune(KEEP_DAYS),
+                    c.pinnJournal.prune(KEEP_DAYS), c.pinnFollowJournal.prune(KEEP_DAYS), c.pinnReopenJournal.prune(KEEP_DAYS), c.liveBidJournal.prune(KEEP_DAYS),
+                )
+                results.sumOf { it.first } to results.sumOf { it.second }
+            }
+            r.onSuccess { (files, bytes) ->
+                c.eventLog.info("DIAG", "cleared old recorder data: $files files, ${bytes / 1024} KB")
+                _toasts.tryEmit(if (files == 0) "Nothing older than $KEEP_DAYS days to clear" else "Cleared $files old recorder files (${bytes / 1_048_576} MB)")
+            }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; _toasts.tryEmit("Couldn't clear the old data (${e.message ?: e.javaClass.simpleName})") }
         }
     }
 
@@ -2150,13 +2186,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }.getOrNull(),
             labReport = runCatching {
                 val st = c.lab.status.value
-                val recs = c.lab.records()
-                if (!_state.value.settings.altLab && !_state.value.settings.researchMode && recs.isEmpty()) null else LabText.diagnostics(st, recs, c.lab.grades(), System.currentTimeMillis()) + com.tjshea.vigilant.data.novig.lab.BidLabReport.lines(c.bidLabBidJournal.readAll(), c.bidLabEventJournal.readAll())
+                val recs = c.lab.recordsRecent(DIAG_DAYS)
+                if (!_state.value.settings.altLab && !_state.value.settings.researchMode && recs.isEmpty()) null else LabText.diagnostics(st, recs, c.lab.gradesRecent(DIAG_DAYS), System.currentTimeMillis()) + com.tjshea.vigilant.data.novig.lab.BidLabReport.lines(c.bidLabBidJournal.readRecent(DIAG_DAYS), c.bidLabEventJournal.readRecent(DIAG_DAYS))
             }.getOrNull(),
             sharpFeeds = runCatching { com.tjshea.vigilant.data.reference.SharpBooks.feedsAmong(c.referenceSources(_state.value.settings, background = true)) }.getOrDefault(emptyList()),
             lowUsagePlan = _state.value.settings.takeIf { it.makerFocus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }?.let { runCatching { c.lowUsagePlan(it) }.getOrNull() },
             pinnReport = runCatching {
-                PinnText.diagnostics(_state.value.settings, c.pinnRunner.status.value, c.pinnTrader.status.value, c.pinnJournal.readAll(), c.pinnFollowJournal.readAll(), c.pinnRunner.running, c.pinnReopenJournal.readAll())
+                PinnText.diagnostics(_state.value.settings, c.pinnRunner.status.value, c.pinnTrader.status.value, c.pinnJournal.readRecent(DIAG_DAYS), c.pinnFollowJournal.readRecent(DIAG_DAYS), c.pinnRunner.running, c.pinnReopenJournal.readRecent(DIAG_DAYS))
             }.getOrNull(),
             liveBidReport = runCatching {
                 LiveBidText.diagnostics(_state.value.settings, c.liveBidDesk.status.value, c.pinnRunner.status.value, c.liveBidDesk.bidsNow(), c.pinnRunner.running)
@@ -2437,3 +2473,8 @@ internal suspend fun refreshWhileOnScreen(
         }
     }
 }
+
+/** The Diagnostics file reads this many days of each recorder; the share gives up after this long; old-data clearing keeps this many days. */
+private const val DIAG_DAYS = 3
+private const val DIAG_TIMEOUT_MS = 90_000L
+private const val KEEP_DAYS = 3
