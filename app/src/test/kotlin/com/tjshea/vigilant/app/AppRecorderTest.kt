@@ -61,7 +61,7 @@ class AppRecorderTest {
     @Test
     fun `a process start brings back what earlier runs kept, notes the start after it, and writes both files on its timer`() = runBlocking {
         // An earlier run left an event, a counter and a host's stats.
-        eventStore.update { EventBook(listOf(Event(1_000L, "OLD", Level.WARN, "from the last run")), mapOf("x.count" to 5L), System.currentTimeMillis() - 3_600_000L) }
+        eventStore.update { EventBook(listOf(Event(System.currentTimeMillis() - 3_600_000L, "OLD", Level.WARN, "from the last run")), mapOf("x.count" to 5L), System.currentTimeMillis() - 3_600_000L) }
         netStore.update { NetBook(mapOf("old.example.com" to HostStat(calls = 7)), System.currentTimeMillis()) }
         val events = EventLog(eventStore)
         val net = NetStats(netStore)

@@ -250,7 +250,11 @@ class BetTrackerTest {
             b("negative", -0.07, BetStatus.WON), b("open", 0.40, BetStatus.PENDING, BetTracker.SOURCE_VIGILANT),
         )
         val s = BetTracker.stats(normal + outliers)
-        assertEquals(BetTracker.stats(normal).copy(outliers = 4, profitAll = s.profitAll, stakedAll = s.stakedAll), s)
+        assertEquals(BetTracker.stats(normal).copy(outliers = 4, profitAll = s.profitAll, stakedAll = s.stakedAll, profitOutliers = s.profitOutliers, profitOther = s.profitOther), s)
+        // Why "Are the edges real?" and Profit differ (Tj, 2026-10-10): Profit = the judged bets + the outliers + locks + bets with no EV, to the cent.
+        assertEquals(s.profitAll, s.profitWithEv + s.profitOutliers + s.profitLocks + s.profitOther, 1e-9)
+        assertEquals(1.0, s.profitOutliers, 1e-12)   // +1 -1 +1 over the three settled outliers
+        assertEquals(1.0, s.profitOther, 1e-12)      // bet "4": won, no EV on record
         // The bankroll's real result counts the outliers too: +1 -1 +1 on top of the normal bets' +1, on the 3 normal and 3 settled outlier stakes.
         assertEquals(2.0, s.profitAll, 1e-12)
         assertEquals(6.0, s.stakedAll, 1e-12)

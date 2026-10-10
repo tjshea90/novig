@@ -52,7 +52,7 @@ class BurstUiTest {
             VigilantTheme(darkTheme = true) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     SettingsScreen(
-                        ui, { f -> ui = ui.copy(settings = f(ui.settings)) }, page = SettingsPage.HELP,
+                        ui, { f -> ui = ui.copy(settings = f(ui.settings)) }, page = SettingsPage.RESEARCH,
                         reportActions = ReportActions(onShareBurst = { shared++ }, onBurstShown = { shown++ }),
                     )
                 }

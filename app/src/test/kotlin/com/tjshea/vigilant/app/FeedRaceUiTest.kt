@@ -50,7 +50,7 @@ class FeedRaceUiTest {
             VigilantTheme(darkTheme = true) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     SettingsScreen(
-                        ui, { f -> ui = ui.copy(settings = f(ui.settings)) }, page = SettingsPage.HELP,
+                        ui, { f -> ui = ui.copy(settings = f(ui.settings)) }, page = SettingsPage.RESEARCH,
                         reportActions = ReportActions(onShareFeedRace = { shared++ }, onFeedRaceShown = { shown++ }),
                     )
                 }
@@ -75,7 +75,7 @@ class FeedRaceUiTest {
         compose.setContent {
             VigilantTheme(darkTheme = true) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    SettingsScreen(ui, {}, page = SettingsPage.HELP, reportActions = ReportActions())
+                    SettingsScreen(ui, {}, page = SettingsPage.RESEARCH, reportActions = ReportActions())
                 }
             }
         }

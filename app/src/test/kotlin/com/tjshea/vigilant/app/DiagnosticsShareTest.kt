@@ -203,13 +203,14 @@ class DiagnosticsShareTest {
     }
 
     @Test
-    fun `the Show report page is the same file, so what Tj reads is what Claude gets`() {
+    fun `the Show report page is the file's findings and sections without its read-me, cut to a size the window can lay out`() {
         val vm = MainViewModel(app)
         waitFor("settings loaded") { vm.state.value.loaded }
         vm.showDiagnostics()
         waitFor("the report") { vm.state.value.report?.title == "Diagnostics" }
         val text = vm.state.value.report!!.text
-        assertTrue(text.startsWith("VIGILANT DIAGNOSTICS FILE · version "))
+        assertTrue(text.startsWith("== WHAT TO DO (ranked findings) =="))
+        assertTrue(text.length <= DiagnosticsFile.PREVIEW_CHARS + DiagnosticsFile.PREVIEW_CHARS / 10)
         assertTrue(text.contains("== WHAT TO DO (ranked findings) ==") && text.contains("== CONNECTIONS") && text.contains("== MACHINE-READABLE"))
         // Showing it doesn't spend the "previous report": only a shared one does.
         assertEquals(0, runBlocking { app.container.diagHistory.all().size })
