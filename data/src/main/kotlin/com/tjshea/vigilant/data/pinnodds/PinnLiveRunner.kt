@@ -442,6 +442,17 @@ class PinnLiveRunner(
         if (only == null) bidTargetsNow = n
     }
 
+    /** Why no Pinnacle line prices [t]: the words differ so the counts say whether it is a strike Pinnacle only offers as an alternate (never priced), no open main line, or a three-way line. */
+    private fun noLineReason(t: LiveTarget, pe: PinnEvent): String {
+        val mains = pe.lines.values.filter { it.period == 0 && !it.alternate && it.type == t.type }
+        return when {
+            mains.isEmpty() || mains.none { it.open } -> LiveBidSkip.NO_MAIN_LINE
+            mains.any { l -> l.fair.keys.any { it == PinnSide.DRAW } } && t.type == PinnLineType.MONEYLINE -> LiveBidSkip.THREE_WAY
+            t.type != PinnLineType.MONEYLINE -> LiveBidSkip.NOT_MAIN_STRIKE
+            else -> LiveBidSkip.NO_LINE
+        }
+    }
+
     private fun judgeBidTarget(desk: LiveBidDesk, t: LiveTarget, now: Long, novig: PushedBooks, bc: LiveBidConfig, problem: String?) {
         val q = bc.quality
         val outcomes = t.outcomeBySide
@@ -457,7 +468,7 @@ class PinnLiveRunner(
         if (kindOff) return off(LiveBidSkip.KIND_OFF)
         if (pe.sportId == PinnBook.TENNIS_SPORT_ID && !q.tennis) return off(LiveBidSkip.TENNIS_OFF)
         if (q.onlyLeagues.isNotEmpty() && t.event.league !in q.onlyLeagues) return off(LiveBidSkip.LEAGUE_OFF)
-        val line = t.line(pe) ?: return off(LiveBidSkip.NO_LINE)
+        val line = t.line(pe) ?: return off(noLineReason(t, pe))
         val mb = novig.live(listOf(t.market.marketId))[t.market.marketId] ?: return off(LiveBidSkip.NO_BOOK)
         val own = desk.ownLevels()
         val scoreAge = if (pe.scoreAtMs > 0L) now - pe.scoreAtMs else null
