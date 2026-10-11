@@ -6388,3 +6388,8 @@ Then in the auto bet settings, make a setting for the minimum rated bet to auto 
 ```
 When the vigilant wallet gets below 20 cents, automatically stop all scanning, betting, and bidding in the app. Put the app to sleep. There is no reason to continue usage with little money left
 ```
+
+## 2026-10-11T15:12:15Z
+```
+Can the app as it is now see all of my bets and send them to Claude with all the information about when placed and at what odds and clv etc to analyze them?
+```
