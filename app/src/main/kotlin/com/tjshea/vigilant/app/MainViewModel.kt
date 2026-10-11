@@ -1211,6 +1211,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _toasts.tryEmit(KILLED_TOAST)
             return
         }
+        if (paused) {
+            // Stopped before anything is saved (Tj, 2026-10-11: "I want it to pause immediately all scanning"): the screen, the scan running now and the background cycle do not wait for the disk.
+            _state.update { if (it.settings.pausedByHand) it else it.copy(settings = it.settings.copy(pausedByHand = true)) }
+            c.runner.stop()
+            c.autoScan.interrupt()
+            ScanService.cancelDone(getApplication())
+        }
         viewModelScope.launch {
             applySettings { it.copy(pausedByHand = paused) }
             _toasts.tryEmit(if (paused) "Scanning paused: nothing is read until you resume" else RESUMED_TOAST)
@@ -1325,7 +1332,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             ScanService.cancelDone(getApplication())
         }
         // Paused: a scan running now stops (CNO's reads stop by the watch's hold, auto-scan by its service).
-        if (!before.paused && next.paused) c.runner.stop()
+        if (!before.paused && next.paused) { c.runner.stop(); c.autoScan.interrupt() }
         // Resumed: background auto-scan starts again at once, from the widget too (Android lets an app showing an
         // overlay start it); from the app, MainActivity starts it as well, which is harmless.
         if (before.activeAutoScan == com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && next.activeAutoScan != com.tjshea.vigilant.data.scanner.AutoScanMode.OFF && !AutoScanService.running) {

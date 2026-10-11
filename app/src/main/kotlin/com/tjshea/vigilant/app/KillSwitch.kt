@@ -81,6 +81,7 @@ object KillSwitch {
         runCatching { c.eventLog.info("KILL", "kill switch ON ($by)") }
         // 2. What runs now.
         runCatching { c.runner.stop() }
+        runCatching { c.autoScan.interrupt() }
         runCatching { ScanService.cancelDone(app) }
         runCatching { AutoScanService.stop(app) }
         runCatching { c.novig.stream?.close() }

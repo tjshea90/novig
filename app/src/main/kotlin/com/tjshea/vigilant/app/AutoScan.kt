@@ -229,6 +229,32 @@ class AutoScanner(
     suspend fun cycle(forceVigilant: Boolean = false): Boolean {
         if (!mutex.tryLock()) return false
         try {
+            // The cycle runs in a scope of its own so Pause can end it at once ([interrupt]) without ending whoever called it.
+            return try {
+                kotlinx.coroutines.coroutineScope {
+                    cycleJob = coroutineContext[kotlinx.coroutines.Job]
+                    cycleBody(forceVigilant)
+                }
+            } catch (e: CancellationException) {
+                // Interrupted by Pause or STOP: the cycle ends here, the caller carries on. Cancelled from outside: the cancellation goes on.
+                if (currentCoroutineContext().isActive) true else throw e
+            } finally {
+                cycleJob = null
+            }
+        } finally {
+            mutex.unlock()
+        }
+    }
+
+    @Volatile private var cycleJob: kotlinx.coroutines.Job? = null
+
+    /** Pause and STOP (Tj, 2026-10-11: "I want it to pause immediately all scanning"): the background cycle running now ends at its next step, whatever it was reading. */
+    fun interrupt() {
+        cycleJob?.cancel(CancellationException("scanning paused"))
+    }
+
+    private suspend fun cycleBody(forceVigilant: Boolean): Boolean {
+        run {
             val settings = c.currentSettings()
             if (settings.activeAutoScan == AutoScanMode.OFF) return false
             // Check odds now has CNO's pace, the APIs and the phone to itself (Tj, 2026-10-01): no CNO read, no auto-bet and no scan from this cycle, and
@@ -275,7 +301,7 @@ class AutoScanner(
                     }.onFailure { if (it is CancellationException) throw it; errors += "Tracker: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 // Bids priced from CrazyNinjaOdds (Tj, 2026-10-07; RESEARCH.md §114): the wide list and the games' pages that are due, read here whatever alerts and auto-bet are set to.
-                if (settings.bidsFromCno && settings.autoScansCno && !settings.paused && AppBook.isNovig) {
+                if (settings.bidsFromCno && settings.autoScansCno && !c.currentSettings().paused && AppBook.isNovig) {
                     _status.update { it.copy(step = "Reading CNO for bids") }
                     runCatching { timed("cnobids") { c.cnoBids.step(settings, c.makerDesk()?.bids().orEmpty()) } }.onFailure { if (it is CancellationException) throw it; errors += "CNO bids: ${it.message ?: it.javaClass.simpleName}" }
                 }
@@ -295,7 +321,7 @@ class AutoScanner(
                 // scanned has its pass from the scan's end ([AppContainer]).
                 // Bids priced from CrazyNinjaOdds are not Vigilant's scan's: every cycle has its pass, scanned or not, and the 15-second gap that keeps a scan's own passes apart doesn't apply.
                 val fromCno = settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO
-                if (!settings.paused && AppBook.isNovig && (settings.maker || settings.makerRecommend) && (!scanned || fromCno)) {
+                if (!c.currentSettings().paused && AppBook.isNovig && (settings.maker || settings.makerRecommend) && (!scanned || fromCno)) {
                     _status.update { it.copy(step = "Make orders") }
                     runCatching { timed("maker") { c.maker.run("background cycle", minGapMs = if (fromCno) 0L else MakerRunner.BACKGROUND_GAP_MS) } }.onFailure { if (it is CancellationException) throw it; errors += "Make orders: ${it.message ?: it.javaClass.simpleName}" }
                 }
@@ -321,8 +347,6 @@ class AutoScanner(
                 }
             }
             return true
-        } finally {
-            mutex.unlock()
         }
     }
 

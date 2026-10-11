@@ -1487,7 +1487,7 @@ class AppContainer(private val app: Application) {
             // The lag taker judges only while its own switch is on; with only the live bids on the feed runs for them alone.
             takerOn = s.pinnLive,
             // Settings › Include live games: the Feed's live lane (Tj, 2026-10-11). Off, the engine does exactly what it did.
-            scanOn = AppBook.isNovig && s.includeLive && !s.killed, scanSettings = s,
+            scanOn = AppBook.isNovig && s.includeLive && !s.paused, scanSettings = s,
         )
     }
 
@@ -1680,7 +1680,7 @@ class AppContainer(private val app: Application) {
     suspend fun pinnTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
         // The Feed's live lane (Settings › Include live games) keeps the same two sockets open: it is the reason the engine runs when neither the taker nor the bids are on.
-        val wanted = s.pinnLive || s.liveBid || s.includeLive
+        val wanted = s.pinnLive || s.liveBid || (s.includeLive && !s.paused)
         if (com.tjshea.vigilant.data.scanner.Dormant.PINNODDS || !wanted || s.killed) {   // dormant (Tj, 2026-10-09): never opened
             if (pinnRunner.running) pinnRunner.stop(if (s.killed) "stopped by STOP ALL" else null)
             liveScan.clear(if (s.killed) "STOP ALL is on" else null)
