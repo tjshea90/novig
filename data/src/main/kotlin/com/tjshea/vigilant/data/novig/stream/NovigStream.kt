@@ -101,6 +101,8 @@ class NovigStream(
     maxMarkets: Int = MAX_MARKETS,
     private val idleCloseMs: Long = IDLE_CLOSE_MS,
     private val retryAfterFailureMs: Long = RETRY_AFTER_FAILURE_MS,
+    /** After a plain drop (ping timeout, network blip) while the live lane has markets pinned: it reconnects this soon, not after [retryAfterFailureMs] (Tj, 2026-10-11: "a disconnect on live betting"). */
+    private val liveRetryMs: Long = LIVE_RETRY_MS,
     /** After a 451 about the network's address: the key's REST route is back after this, and a live feed that waited longer left two scans 16-29 s long (v0.70.1 diagnostics). */
     private val networkRetryMs: Long = NovigPublicClient.NETWORK_RETRY_MS,
     /** Told of every book change as it arrives: the burst recorder's own connection (RESEARCH.md §95). A scan's stream has none. */
@@ -303,7 +305,7 @@ class NovigStream(
     /** Subscribes what's wanted and not held, drops what isn't wanted, and re-snapshots gaps. */
     private suspend fun sync() {
         while (scope.isActive) {
-            val (drop, add) = synchronized(this) {
+            val (drop, add0) = synchronized(this) {
                 if (socket == null) return
                 val now = clock()
                 refusedUntil.values.removeAll { it <= now }
@@ -326,10 +328,15 @@ class NovigStream(
                 books.forget(drop)
                 spend(dropCost)
             }
-            if (add.isEmpty()) break
+            if (add0.isEmpty()) break
+            // The live lane's new markets go in a request of their own, ahead of a scan's bulk one: that one waits for a full bucket (up to two minutes), and a live game
+            // cannot (the banner read "Novig live book not subscribed yet" through it).
+            val pinnedNow = synchronized(this) { livePinned.toHashSet() }
+            val liveAdd = add0.filter { it in pinnedNow }
+            val add = liveAdd.ifEmpty { add0 }
             // Charged weight × subjects, never over the bucket; a request at the cap needs it full.
             val cost = minOf(add.size * BOOK_WEIGHT.toDouble(), capacity)
-            val need = if (synchronized(this) { firstSent }) cost else capacity
+            val need = if (liveAdd.isNotEmpty() || synchronized(this) { firstSent }) cost else capacity
             if (!haveTokens(need)) {
                 // Wait for enough, then look again: more markets may be wanted by then, and go in the same request.
                 waitFor(need)
@@ -463,6 +470,7 @@ class NovigStream(
                 reason == "SLOW_CONSUMER" -> "Novig closed the live feed (the phone fell behind)."
                 else -> "Novig closed the live feed ($code${if (reason.isNotBlank()) " $reason" else ""})."
             },
+            quick = !reason.startsWith("GEOLOCATION"),
         )
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
@@ -480,6 +488,7 @@ class NovigStream(
                 },
                 // The key's REST route comes back after a network refusal in 2 minutes; the feed waits the same, not the 5 of a feed that broke some other way.
                 retryMs = if (refusal?.networkRefusal == true) networkRetryMs else retryAfterFailureMs,
+                quick = status == null || status >= 500,
             )
         }
     }
@@ -498,7 +507,7 @@ class NovigStream(
         _state.value = StreamState.Failed(message, clock())
     }
 
-    private fun dropped(webSocket: WebSocket, message: String, retryMs: Long = retryAfterFailureMs) {
+    private fun dropped(webSocket: WebSocket, message: String, retryMs: Long = retryAfterFailureMs, quick: Boolean = false) {
         val jobs = synchronized(this) {
             // Not the connection in use (closed on purpose, or replaced): nothing was dropped.
             if (socket !== webSocket) return
@@ -509,7 +518,9 @@ class NovigStream(
         }
         books.clear()
         jobs.forEach { it?.cancel() }
-        fail(message, retryMs)
+        // A plain drop with the live lane waiting on this feed is tried again in seconds; a refused key or location is not.
+        val live = quick && retryMs == retryAfterFailureMs && synchronized(this) { livePinned.isNotEmpty() }
+        fail(message, if (live) liveRetryMs else retryMs)
     }
 
     companion object {
@@ -532,6 +543,9 @@ class NovigStream(
 
         /** After a failure, scans read by REST this long before the feed is tried again. */
         const val RETRY_AFTER_FAILURE_MS = 5 * 60_000L
+
+        /** After a plain drop with live markets pinned. */
+        const val LIVE_RETRY_MS = 3_000L
     }
 }
 
