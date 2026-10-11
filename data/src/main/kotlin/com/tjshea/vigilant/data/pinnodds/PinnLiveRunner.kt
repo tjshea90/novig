@@ -387,7 +387,7 @@ class PinnLiveRunner(
         scanByMarket.keys.retainAll(targetsByMarket.keys)
         board.publish(
             scanByMarket.values.flatMap { rows -> rows.map { it.opportunity } },
-            LiveScanStatus(on = true, games = matchedGames, watched = watched, shown = scanByMarket.values.sumOf { it.size }, dropped = scanDropped, oldestMs = oldest),
+            LiveScanStatus(on = true, games = matchedGames, watched = watched, shown = scanByMarket.values.sumOf { it.size }, dropped = scanDropped, oldestMs = oldest?.let { it / 1000L * 1000L }),
         )
     }
 

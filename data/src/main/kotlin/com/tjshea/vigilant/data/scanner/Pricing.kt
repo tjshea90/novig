@@ -155,7 +155,8 @@ data class ScanResult(
                 ev >= settings.minEvPercent && ev <= settings.maxEvPercent && ev > 0.0 &&
                 hasLiquidity(o) &&
                 settings.withinOdds(o.quote!!.cost) &&
-                (settings.includeLive || !o.isLive) &&
+                // A live game's price is never taken from a scan (its other books are minutes old): "Include live games" lists live bets from the real-time lane only (LiveScanFeed, Tj 2026-10-11).
+                !o.isLive &&
                 MarketFamily.entries.any { it in settings.families && o.market.marketType in it.novigTypes }
         }
         .let { list ->

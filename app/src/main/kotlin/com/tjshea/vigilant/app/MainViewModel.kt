@@ -124,6 +124,9 @@ data class UiState(
     val settings: ScanSettings = ScanSettings(),
     val result: ScanResult? = null,
     val feed: List<Opportunity> = emptyList(),
+    /** The real-time live lane's rows (each at most 5 s old when published) and what the lane is doing; [feed] carries them when "Include live games" is on. */
+    val liveRows: List<Opportunity> = emptyList(),
+    val liveStatus: com.tjshea.vigilant.data.pinnodds.LiveScanStatus = com.tjshea.vigilant.data.pinnodds.LiveScanStatus(),
     val status: ScanStatus = ScanStatus(),
     val oddsApiKeys: List<String> = emptyList(),
     val pinnapiKeys: List<String> = emptyList(),
@@ -251,7 +254,19 @@ data class UiState(
         feed.filter { !it.fairIsOld(now) && settings.startsInWindow(it.event.startsTs, now) }
 
     /** [r]'s +EV feed under these settings, without the bets Tj already has (Tj, 2026-09-27). */
-    fun feedOf(r: ScanResult?): List<Opportunity> = r?.let { placedIndex.visible(it.feed(settings)) } ?: emptyList()
+    fun feedOf(r: ScanResult?, now: Long = System.currentTimeMillis()): List<Opportunity> {
+        val scanned = r?.feed(settings).orEmpty()
+        // Live games (Tj, 2026-10-11): only the real-time lane lists them, and only while its prices are within 5 s. Switch off: nothing here changes.
+        val live = com.tjshea.vigilant.data.pinnodds.LiveScanFeed.shown(liveRows, settings, now)
+        if (scanned.isEmpty() && live.isEmpty()) return emptyList()
+        val all = if (live.isEmpty()) scanned else (scanned + live).let { list ->
+            when (settings.feedSort) {
+                com.tjshea.vigilant.data.scanner.FeedSort.EV -> list.sortedByDescending { it.evPercent }
+                com.tjshea.vigilant.data.scanner.FeedSort.START -> list.sortedWith(compareBy<Opportunity> { it.event.startsTs }.thenByDescending { it.evPercent })
+            }
+        }
+        return placedIndex.visible(all)
+    }
 
     /** This state with [placedIndex] rebuilt from [placed] and [bets], and the feed re-filtered. */
     fun indexed(now: Long = System.currentTimeMillis()): UiState =
@@ -442,6 +457,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Betting through Novig's API: setup, money, the Bet sheet ([ApiBettingController]). */
     val api = ApiBettingController(c, _state, viewModelScope, _toasts)
+
+    init {
+        // The real-time live lane (Tj, 2026-10-11): its rows and status reach the screen as the engine publishes them, the feed rebuilt off the main thread, at most a few times a second.
+        viewModelScope.launch { c.liveScan.status.collect { st -> _state.update { it.copy(liveStatus = st) } } }
+        viewModelScope.launch {
+            c.liveScan.rows.collect { rows ->
+                _state.publishLive(rows)
+                kotlinx.coroutines.delay(LIVE_FEED_GAP_MS)
+            }
+        }
+    }
 
     init {
         // What the auto-bet did (a few times a minute at most: once per background cycle) for the Auto-bet tab.

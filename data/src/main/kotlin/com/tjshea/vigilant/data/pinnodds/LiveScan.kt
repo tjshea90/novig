@@ -198,3 +198,20 @@ object LiveScanRows {
         }
     }
 }
+
+/** The live lane's rows as the Feed lists them: the same bars every other bet has to clear (EV range, odds limits, kinds, leagues, 10 cents of room), in the Feed's order. */
+object LiveScanFeed {
+    fun shown(rows: List<Opportunity>, settings: ScanSettings, nowMs: Long): List<Opportunity> {
+        if (!settings.includeLive || rows.isEmpty()) return emptyList()
+        return rows.filter { o ->
+            val ev = o.evPercent ?: return@filter false
+            val q = o.quote ?: return@filter false
+            o.league.novigName in settings.leagues && ev >= settings.minEvPercent && ev <= settings.maxEvPercent && ev > 0.0 &&
+                (o.depth?.let { it.dollarCost >= com.tjshea.vigilant.data.scanner.ScanResult.MIN_LIQUIDITY_DOLLARS - 1e-9 } ?: true) &&
+                settings.withinOdds(q.cost) &&
+                com.tjshea.vigilant.data.scanner.MarketFamily.entries.any { it in settings.families && o.market.marketType in it.novigTypes } &&
+                // The board drops a row at 5 s; this is the same rule at the moment the list is read, so a row cannot outlive its time between two board passes.
+                o.bookFetchedAtMs != null && o.fairAsOfMs != null && nowMs - minOf(o.bookFetchedAtMs!!, o.fairAsOfMs!!) <= LiveScan.MAX_AGE_MS + LiveScan.STAMP_SLACK_MS
+        }
+    }
+}

@@ -42,6 +42,20 @@ internal suspend fun MutableStateFlow<UiState>.publishResult(
     }
 }
 
+/** The live lane's [rows] in the state, with the feed built again around them (off the main thread). */
+internal suspend fun MutableStateFlow<UiState>.publishLive(rows: List<com.tjshea.vigilant.data.scanner.Opportunity>, build: CoroutineDispatcher = Dispatchers.Default) {
+    while (true) {
+        val before = value
+        val feed = withContext(build) { before.copy(liveRows = rows).feedOf(before.result) }
+        var shown = false
+        update { s ->
+            shown = s.result === before.result && s.settings == before.settings && s.placedIndex === before.placedIndex
+            if (shown) s.copy(liveRows = rows, feed = feed) else s
+        }
+        if (shown) return
+    }
+}
+
 /** The feed of the state's own result, built again (the settings changed). The result it was built for must still be the one shown. */
 internal suspend fun MutableStateFlow<UiState>.refeed(build: CoroutineDispatcher = Dispatchers.Default) {
     while (true) {
