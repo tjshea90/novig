@@ -6268,3 +6268,8 @@ There is no tennis anywhere
 ```
 You made this for oddspapiv5 but I have v4
 ```
+
+## 2026-10-11T04:03:04Z
+```
+Make the same switch for sgo. And any other API with a ton of sports books 
+```
