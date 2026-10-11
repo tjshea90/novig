@@ -6563,3 +6563,8 @@ Make a live games only mode for the vigilant scanner. In this mode, only apis wh
 ```
 If I lose Internet connection, do my bids automatically expire after a set account of time
 ```
+
+## 2026-10-11T22:19:27Z
+```
+The live betting system connects for about a few seconds, matches games, then says novig live book not subscribed yet. Diagnose. Also check the novig api docs about live betting and bidding and the proper commands and methods to connect to the live book
+```
