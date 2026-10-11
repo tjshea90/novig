@@ -49,6 +49,8 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35], qualifiers = "w393dp-h851dp-xxhdpi")
 class SettingsPagesTest {
+    @org.junit.Before fun openAdvanced() { com.tjshea.vigilant.app.ui.LiveBidAdvancedOpenByDefault = true }
+
 
     @get:Rule val compose = createComposeRule()
 
