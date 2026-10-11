@@ -6575,3 +6575,8 @@ In the auto bids tab, there is a running list of all filled bids, which is getti
 
 Make the auto bid and auto bet sliders automatically change any settings in the app needed to obtain the goal at each level of the slider. 
 ```
+
+## 2026-10-11T23:18:12Z
+```
+It says 2 EV betsb but it's not showing them
+```
