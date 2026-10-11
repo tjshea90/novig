@@ -213,18 +213,21 @@ class Scanner(
                 boardAt.set(elapsed() - t0)
                 progress.fairDone()
             }
-            // First choices start at once; a fallback (RESEARCH.md §23) waits for the source it backs up.
+            // First choices start at once; a fallback (RESEARCH.md §23) waits for the source it backs up, and a feed lower on its chain ([ApiChain], Tj 2026-10-11: one API for overlapping data,
+            // the others asleep) waits for every better feed that is on: `ordered` runs best first, so each one's dependencies are already started.
             val jobs = HashMap<String, kotlinx.coroutines.Deferred<SourceReport>>()
-            for (source in ordered.sortedBy { if (it.fallbackFor == null) 0 else 1 }) {
-                val first = source.fallbackFor?.let { jobs[it] }
+            val onIds = ordered.map { it.id }
+            for (source in ordered) {
+                val waitFor = (ApiChain.better(source.id, onIds) + listOfNotNull(source.fallbackFor)).distinct().filter { it in jobs }
+                val first = waitFor.takeIf { it.isNotEmpty() }
                 jobs[source.id] = async {
-                    first?.await()
+                    waitFor.forEach { jobs.getValue(it).await() }
                     // A source that picks its games from Novig's board waits for the board, and so
                     // does a fallback (it's told which of Novig's games the first source covered).
                     val context = if (source.needsCatalog || first != null) {
                         catalogJob.await()
                         val board = catalog?.let { ScanContext(it.events, it.markets, now) } ?: ScanContext(now = now)
-                        if (first != null) covering(source.fallbackFor!!, leagues, board) else board
+                        if (first != null) covering(waitFor, leagues, board) else board
                     } else {
                         null
                     }
@@ -843,21 +846,25 @@ class Scanner(
      * What source [firstId] gave this scan, as a fallback's [ScanContext]: the leagues it answered
      * (fresh or re-used) and, per Novig game it matched, which lines and prop stats it priced.
      */
-    private fun covering(firstId: String, leagues: List<League>, board: ScanContext): ScanContext {
+    private fun covering(firstIds: List<String>, leagues: List<League>, board: ScanContext): ScanContext {
         val covered = HashMap<String, MutableSet<String>>()
         val answeredLeagues = HashSet<String>()
+        val books = HashMap<String, MutableSet<String>>()
         for (league in leagues) {
-            val key = "$firstId|${league.novigName}"
-            if (synchronized(answered) { key !in answered }) continue
-            answeredLeagues += league.novigName
-            val snap = synchronized(references) { references[key]?.snapshot } ?: continue
-            val games = board.novigEvents.filter { it.league == league.novigName }
-            for (m in Planner.matchEvents(games, listOf(snap))) {
-                val ref = m.refEvent ?: continue
-                covered.getOrPut(m.event.eventId) { HashSet() } += ref.markets.map { it.coverage }
+            for (firstId in firstIds) {
+                val key = "$firstId|${league.novigName}"
+                if (synchronized(answered) { key !in answered }) continue
+                answeredLeagues += league.novigName
+                val snap = synchronized(references) { references[key]?.snapshot } ?: continue
+                val games = board.novigEvents.filter { it.league == league.novigName }
+                for (m in Planner.matchEvents(games, listOf(snap))) {
+                    val ref = m.refEvent ?: continue
+                    covered.getOrPut(m.event.eventId) { HashSet() } += ref.markets.map { it.coverage }
+                    books.getOrPut(league.novigName) { HashSet() } += ref.markets.map { it.bookKey }
+                }
             }
         }
-        return board.copy(covered = covered, firstAnswered = answeredLeagues)
+        return board.copy(covered = covered, firstAnswered = answeredLeagues, coveredBooks = books)
     }
 
     private suspend fun fetchSource(
@@ -900,7 +907,7 @@ class Scanner(
                 // A fallback whose first choice already gave this league stands by: nothing spent.
                 // Its own last answer is dropped (it was too old to re-use, or asked differently), so
                 // quotes older than the first choice's never price beside them.
-                if (fallback && context != null && !source.needed(league, settings, context)) {
+                if (fallback && context != null && !ApiChain.asked(source, league, settings, context)) {
                     synchronized(references) { references.remove(key) }
                     standingBy++
                     onCall(league)

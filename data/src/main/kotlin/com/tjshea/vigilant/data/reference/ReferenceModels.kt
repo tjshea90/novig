@@ -200,6 +200,8 @@ data class ScanContext(
     val covered: Map<String, Set<String>> = emptyMap(),
     /** For a fallback source: the Novig leagues its first source answered this scan. */
     val firstAnswered: Set<String> = emptySet(),
+    /** For a fallback source: per Novig league, the book keys the better feeds sent (an extra book is one not among them). */
+    val coveredBooks: Map<String, Set<String>> = emptyMap(),
 )
 
 /**
