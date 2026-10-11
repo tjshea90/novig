@@ -414,7 +414,7 @@ class AppContainer(private val app: Application) {
     val sgoGames = com.tjshea.vigilant.data.reference.SgoGamesSource(sgoClient)
     val sgoProps = com.tjshea.vigilant.data.reference.SgoPropsSource(sgoClient, injuries = injuries)
 
-    /** SportsGameOdds Pro is on, a key is saved and it is answering: the scan, bids and open-bet pricing read it, and the feeds it replaces rest. */
+    /** SportsGameOdds Pro is on, a key is saved and it is answering: the scan, bids and open-bet pricing read it, beside every other API that is on. */
     fun sgoActive(s: ScanSettings): Boolean = AppBook.isNovig && s.sgoPro && keyStore.current(ApiProvider.SPORTSGAMEODDS).isNotEmpty() && !sgoClient.down()
 
     /** Closing lines (CLV, including bets already in the Tracker) and final scores from SportsGameOdds: asked only while it is switched on (see [syncSgo]). */
@@ -430,7 +430,7 @@ class AppContainer(private val app: Application) {
     val opGames = com.tjshea.vigilant.data.reference.OpGamesSource(opFeed)
     val opProps = com.tjshea.vigilant.data.reference.OpPropsSource(opFeed)
 
-    /** OddsPapi is on, a key is saved and it is answering: the scan, bids and open-bet pricing read it, and the feeds it replaces rest. */
+    /** OddsPapi is on, a key is saved and it is answering: the scan, bids and open-bet pricing read it, beside every other API that is on. */
     fun opActive(s: ScanSettings): Boolean = AppBook.isNovig && s.oddsPapi && keyStore.current(ApiProvider.ODDSPAPI).isNotEmpty() && !opClient.down()
 
     /** Closing lines (CLV for any bet, graded or not) and final scores from OddsPapi: asked only while it is switched on (see [syncOp]). */

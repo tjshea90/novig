@@ -99,10 +99,3 @@ object OpBooks {
     }
 }
 
-/**
- * A feed that rests for every league OddsPapi carries (Tj, 2026-10-09: "turn redundant APIs off to save usage"). It is asked only for the leagues OddsPapi has no feed for (tennis, MMA, soccer…), so
- * nothing it sells is bought twice. Free feeds and Pinnodds are never wrapped.
- */
-class OutsideOp(private val inner: ReferenceSource) : ReferenceSource by inner {
-    override fun supports(league: League): Boolean = inner.supports(league) && !OpBooks.supports(league)
-}

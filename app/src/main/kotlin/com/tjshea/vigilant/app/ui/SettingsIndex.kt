@@ -33,10 +33,10 @@ object SettingsIndex {
 
     val entries: List<Entry> = listOf(
         // SportsGameOdds Pro (Tj, 2026-10-09)
-        Entry("Use SportsGameOdds Pro", SettingsPage.SGO, "One paid feed for odds, props, closing lines and results; the feeds it replaces rest", "sportsgameodds sgo pro odds api feed key paid replace", novig),
+        Entry("Use SportsGameOdds Pro", SettingsPage.SGO, "One paid feed for odds, props, closing lines and results, read alongside every other API you have on", "sportsgameodds sgo pro odds api feed key paid replace", novig),
         Entry("Add a SportsGameOdds key", SettingsPage.SGO, "Add, order and test your SportsGameOdds keys", "sportsgameodds sgo key api rotate test", novig),
         // OddsPapi (Tj, 2026-10-09)
-        Entry("Use OddsPapi", SettingsPage.ODDSPAPI, "A second paid feed for odds, props, closing lines and results; the feeds it replaces rest", "oddspapi odds papi 55-tech api feed key paid replace clv closing", novig),
+        Entry("Use OddsPapi", SettingsPage.ODDSPAPI, "A second paid feed for odds, props, closing lines and results, read alongside every other API you have on", "oddspapi odds papi 55-tech api feed key paid replace clv closing", novig),
         Entry("Add an OddsPapi key", SettingsPage.ODDSPAPI, "Add, order and test your OddsPapi keys", "oddspapi odds papi key api rotate test trial", novig),
         // Every API in one place (Tj, 2026-10-11)
         Entry("Turn APIs on and off", SettingsPage.APIS, "One switch per API: an API that is off is never called anywhere", "api apis switch toggle on off enable disable pinnwire pinnapi propline parlay odds sgo oddspapi unabated kalshi polymarket pinnodds", novig),

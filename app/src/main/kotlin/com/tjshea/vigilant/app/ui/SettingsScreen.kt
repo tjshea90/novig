@@ -140,10 +140,10 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     APIS("APIs: on/off, test, usage", "Turn any API on or off, test each one's keys, test the combination, see what is left on every key", SettingsGroup.FIND),
 
     /** SportsGameOdds Pro: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). */
-    SGO("SportsGameOdds Pro", "One paid feed for odds, props, closing lines and results; the feeds it replaces rest", SettingsGroup.FIND),
+    SGO("SportsGameOdds Pro", "One paid feed for odds, props, closing lines and results, read alongside every other API you have on", SettingsGroup.FIND),
 
     /** OddsPapi v5: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). */
-    ODDSPAPI("OddsPapi", "v5 (a trial or contract key): a second paid feed for odds, props, closing lines (CLV for any bet) and results; the feeds it replaces rest", SettingsGroup.FIND),
+    ODDSPAPI("OddsPapi", "v5 (a trial or contract key): a second paid feed for odds, props, closing lines (CLV for any bet) and results, read alongside every other API you have on", SettingsGroup.FIND),
 
     /** Unabated's FREE API: soft-book lines and props at no credit cost, the last source in line (Tj, 2026-10-11). */
     UNABATED("Unabated (free)", "Free lines and props from DraftKings, FanDuel, MGM, Caesars and more; fills in what the other feeds miss", SettingsGroup.FIND),
@@ -230,12 +230,12 @@ object SettingsSummary {
             }
             SettingsPage.SGO -> when {
                 state.sgoKeys.isEmpty() -> "No key saved"
-                s.sgoPro -> "On: ${state.sgoKeys.size} key${if (state.sgoKeys.size == 1) "" else "s"}, the paid feeds it replaces rest"
+                s.sgoPro -> "On: ${state.sgoKeys.size} key${if (state.sgoKeys.size == 1) "" else "s"}, read alongside every other API that is on"
                 else -> "Off (key saved)"
             }
             SettingsPage.ODDSPAPI -> when {
                 state.opKeys.isEmpty() -> "No key saved"
-                s.oddsPapi -> "On: ${state.opKeys.size} key${if (state.opKeys.size == 1) "" else "s"}, the paid feeds it replaces rest"
+                s.oddsPapi -> "On: ${state.opKeys.size} key${if (state.opKeys.size == 1) "" else "s"}, read alongside every other API that is on"
                 else -> "Off (key saved)"
             }
             SettingsPage.APIS -> {
@@ -1286,7 +1286,7 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
 
 /**
  * Settings › SportsGameOdds Pro (Tj, 2026-10-09; SPORTSGAMEODDS_API.md): the key list (rotated like every provider's), a Test key that says what the key really carries and saves a sample for
- * Claude, and the one switch. On, the scan, bids, open-bet pricing and closing lines read SGO and the paid feeds that sell the same thing rest (tennis keeps them).
+ * Claude, and the one switch. On, the scan, bids, open-bet pricing and closing lines read SGO too, beside every other API that is on (none rests for it).
  */
 @Composable
 private fun ColumnScope.SgoPage(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
@@ -1321,7 +1321,7 @@ private fun ColumnScope.SgoPage(state: UiState, keys: KeyActions, reportActions:
 
 /**
  * Settings › OddsPapi (Tj, 2026-10-09; ODDSPAPI_API.md): the key list (rotated like every provider's), a Test key that says what the key really carries and saves a sample for Claude, and the one
- * switch. On, the scan, bids, open-bet pricing, closing lines (CLV for any bet) and grading read OddsPapi and the paid feeds that sell the same thing rest (tennis keeps them). Off: the app as it was.
+ * switch. On, the scan, bids, open-bet pricing, closing lines (CLV for any bet) and grading read OddsPapi too, beside every other API that is on (none rests for it). Off: it is never called.
  */
 @Composable
 private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {

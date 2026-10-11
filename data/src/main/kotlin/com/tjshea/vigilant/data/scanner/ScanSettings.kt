@@ -1046,8 +1046,6 @@ data class ScanSettings(
             if (unabated) { add("unabated"); add("unabated-props") }
             // OddsPapi Free (v4) reads whole games for the fair average only when Tj gives it a daily request figure; with 0 it is closing lines only.
             if (oddsPapiFree && gates.op4Fair > 0) { add("oddspapi_free"); add("oddspapi_free-props") }
-            // Tennis picked: every feed that carries it prices it, whatever its own switch says (TennisOnly in the source list).
-            if (selectedLeagues.any { it.tennis }) addAll(com.tjshea.vigilant.data.reference.TennisOnly.FEEDS)
         }
 
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }
