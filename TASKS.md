@@ -4587,5 +4587,6 @@ One "Live sniper" switch (TC3): tail taker (real small stakes, IOC) + cover take
 ## TG: tennis uses every API that offers it (Tj, 2026-10-11)
 Tj verbatim: "For tennis, make the app use every api that offers tennis if I have tennis selected. I'm trying to diagnose why tennis is not scanning"
 Evidence: v0.89.9 Diagnostics: ATP 0/16, WTA 0/4 matched to fair odds.
-- [ ] TG1 List which sources support ATP/WTA (supports(), OutsideSgo/OutsideOp tennis rule, Unabated, OddsPapi v5/v4, SGO, PropLine, Odds API, ParlayAPI, Pinnacle, Kalshi, Polymarket) and why none matched.
-- [ ] TG2 With tennis selected every source that carries tennis is read (no rest/gate), and Diagnostics says per source what tennis got.
+- [x] TG1 List which sources support ATP/WTA (supports(), OutsideSgo/OutsideOp tennis rule, Unabated, OddsPapi v5/v4, SGO, PropLine, Odds API, ParlayAPI, Pinnacle, Kalshi, Polymarket) and why none matched.
+- [x] TG2 With tennis picked, Pinnacle (keys), Kalshi and ParlayAPI are asked for ATP/WTA even with their own switches off (TennisOnly, enabledSources; TennisOnlyTest, v0.89.11).
+- [ ] TG3 Tennis from the APIs that offer it but are not wired for it: OddsPapi v4/v5 (sport tennis, a tournament per event week), SGO (check its ATP/WTA leagueIDs), The Odds API (per-tournament keys via /sports), Unabated (no tennis league seen). Needs a real tennis sample from each key (Test-key samples) before building; PropLine has none.
