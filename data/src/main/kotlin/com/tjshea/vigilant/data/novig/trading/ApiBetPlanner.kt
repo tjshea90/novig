@@ -38,6 +38,11 @@ data class BetTarget(
     val atBet: com.tjshea.vigilant.data.tracker.AtBet? = null,
     /** A lock's: the bet whose other side it buys ([com.tjshea.vigilant.data.tracker.TrackedBet.lockFor]). */
     val lockFor: String? = null,
+    /**
+     * Novig has this game in play (the card says LIVE). A game whose start has passed counts as live whatever this says ([ApiBetPlanner.plan]); this catches a game Novig put in play
+     * before its listed start. A live bet pays Novig's taker fee and can only be placed by hand (Tj, 2026-10-11: "I want to bid and bet on live games").
+     */
+    val live: Boolean = false,
 )
 
 /**
@@ -57,7 +62,7 @@ data class BetLimits(
      * A bet Tj places by hand from a Bet sheet (Tj, 2026-10-02: "Remove the restriction of minimum bet EV on bet slips in the app, I should be able to
      * bet on whatever I want manually. Only keep the hard restrictions on the auto bet function"): no minimum edge, the stake filled at the best
      * prices Novig offers whatever their EV, and old or unknown fair odds said beside the EV instead of refusing. The per-bet and per-day dollar
-     * limits, pregame only and the price he confirmed still apply. Auto-bet never sets it.
+     * limits and the price he confirmed still apply. A bet by hand may also go on a live game (Tj, 2026-10-11); the auto-bet never can. Auto-bet never sets it.
      */
     val manual: Boolean = false,
     /**
@@ -87,6 +92,10 @@ data class BetPlan(
     val bestPrice: Double,
     /** Set when the book can't fill the whole stake at a positive edge. */
     val note: String?,
+    /** The game is in play: the cost above includes Novig's taker fee ([feeDollars]) and the order takes about 5 seconds to land (NOVIG_API.md §22). */
+    val live: Boolean = false,
+    /** The taker fee inside [expectedCost] (0 pregame). */
+    val feeDollars: Double = 0.0,
 ) {
     val profitIfWon: Double get() = payout - expectedCost
     val american: Int get() = Odds.probabilityToAmerican(averagePrice.coerceIn(0.001, 0.999))
@@ -101,8 +110,9 @@ sealed interface PlanResult {
 
 /**
  * The checks and the arithmetic before any order (pure; the placer reads the book and the day's total and hands them in). Every rule here
- * is a refusal, never a silent change: pregame only; the edge must still be positive at Novig's price now; the fair odds young enough to
- * bet on ([Freshness]); a book read within [MAX_BOOK_AGE_MS]; the per-bet and per-day caps.
+ * is a refusal, never a silent change: pregame only for the auto-bet (a bet by hand may go on a live game, with Novig's taker fee in its price); the
+ * edge must still be positive at Novig's price now; the fair odds young enough to bet on ([Freshness]); a book read within [MAX_BOOK_AGE_MS]; the
+ * per-bet and per-day caps.
  */
 object ApiBetPlanner {
 
@@ -131,13 +141,16 @@ object ApiBetPlanner {
             if (!limits.manual) return PlanResult.Refused(it.words(), gameLimit = true)
             it.words() + " You can still place it."
         }
-        // Pregame only: the taker fee that applies once a game is live isn't priced into a one-tap bet.
-        if (target.startsTs <= now) return no("This game has started: bets through the API are pregame only.")
+        // The auto-bet is pregame only. By hand a live game may be bet (Tj, 2026-10-11: "I want to bid and bet on live games"; Novig's API takes in-play orders, NOVIG_API.md §18): its taker fee is
+        // priced into every number below, and the sheet says what in play means (a stale fair, ~5 seconds for the order to land).
+        val live = target.live || target.startsTs <= now
+        if (live && !limits.manual) return no("This game is live: the auto-bet is pregame only (a live game can only be bet by hand, with the Bet button).")
         if (target.market.status != "OPEN") return no("Novig has closed this market.")
         val fee = target.market.fee ?: return no("Novig's fee for this market couldn't be read, so its cost can't be worked out.")
         // Money is at stake: an unknown age isn't taken as fresh (the app's lists do, to show a bet; a bet placed needs the age). By hand, Tj
         // decides: the age is said beside the EV.
         val fairNote = when {
+            live -> liveNote(target, now)
             limits.manual && target.fairAsOfMs == null -> "How old the fair odds behind this EV are isn't known."
             limits.manual && !Freshness.fresh(target.fairAsOfMs, now, target.startsTs) ->
                 "The fair odds behind this EV are ${(now - target.fairAsOfMs!!) / 60_000L} minutes old: the EV may have moved since."
@@ -160,7 +173,7 @@ object ApiBetPlanner {
         if (AutoBet.tooShort(limits.minOdds, Odds.probabilityToAmerican(best.price.coerceIn(0.001, 0.999)))) {
             return no("Novig's best price is now ${american(best.price)}, shorter than your ${Odds.formatAmerican(limits.minOdds)} limit.")
         }
-        val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = false)
+        val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = live)
         if (!limits.manual && bestQuote.evPercent < limits.minEv - 1e-9) {
             // Still +EV, only under Tj's own minimum: say that, and where it's set (Tj, 2026-10-02: "Why is this saying the edge is gone? It's
             // the same odds, and they are positive ev": +2.4% under his +3% read as "The edge is gone").
@@ -180,22 +193,24 @@ object ApiBetPlanner {
         var dollarsLeft = stake
         var contracts = 0L
         var cost = 0.0
+        var feeTotal = 0.0
         var limit = best.price
         for (level in levels) {
-            val q = EvMath.quote(target.fair, level.price, fee, eventLive = false)
+            val q = EvMath.quote(target.fair, level.price, fee, eventLive = live)
             if (!limits.manual && q.evPercent < limits.minEv - 1e-9) break
             val perContract = q.cost * EvMath.CONTRACT_PAYOUT_DOLLARS
             val take = minOf(level.contracts, Math.floor(dollarsLeft / perContract + 1e-9).toLong())
             if (take <= 0L) break
             contracts += take
             cost += take * perContract
+            feeTotal += take * q.fee * EvMath.CONTRACT_PAYOUT_DOLLARS
             dollarsLeft -= take * perContract
             limit = level.price
             if (dollarsLeft < perContract) break
         }
         if (contracts <= 0L) return no("${money(stake)} is less than one contract at Novig's price (${american(best.price)}): bet more.")
         val average = averagePrice(levels, contracts)
-        val avgQuote = EvMath.quote(target.fair, average, fee, eventLive = false)
+        val avgQuote = EvMath.quote(target.fair, average, fee, eventLive = live)
         val shortNote = if (stake - cost > stake * 0.05 + 0.01) {
             "Only ${money(cost)} of the ${money(stake)} is offered " + when {
                 limits.manual -> "on Novig's book"
@@ -216,8 +231,22 @@ object ApiBetPlanner {
                 evPercent = avgQuote.evPercent,
                 bestPrice = best.price,
                 note = note,
+                live = live,
+                feeDollars = feeTotal,
             ),
         )
+    }
+
+    /** What a live bet's sheet says beside the numbers: how old the fair is (in play a line moves in seconds) and what in play costs and risks. */
+    internal fun liveNote(target: BetTarget, now: Long): String {
+        val age = target.fairAsOfMs?.let { (now - it).coerceAtLeast(0L) / 1000L }
+        val fairAge = when {
+            age == null -> "How old the fair odds behind this EV are isn't known"
+            age < 120 -> "The fair odds behind this EV are $age seconds old"
+            else -> "The fair odds behind this EV are ${age / 60} minutes old"
+        }
+        return "LIVE: $fairAge, and in play a line can move a lot in seconds (a score, an injury), so the edge may already be gone. " +
+            "Novig takes about 5 seconds to answer an order in play: if the price moves against you first, nothing is bought."
     }
 
     /** The average price paid when [contracts] are taken cheapest first from [levels]. */
