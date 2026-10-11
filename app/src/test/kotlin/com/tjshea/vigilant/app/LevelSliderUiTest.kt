@@ -24,6 +24,8 @@ import org.junit.runner.RunWith
 
 /** The Auto-bet tab's slider and Advanced button (Tj, 2026-10-11): a stop chip sets every bet rule, and the advanced rules are hidden until the button is pressed. */
 @RunWith(AndroidJUnit4::class)
+@org.robolectric.annotation.GraphicsMode(org.robolectric.annotation.GraphicsMode.Mode.NATIVE)
+@org.robolectric.annotation.Config(sdk = [35], qualifiers = "w393dp-h4200dp-xxhdpi")
 class LevelSliderUiTest {
     @get:Rule val compose = createComposeRule()
     private var ui by mutableStateOf(SampleScan.state().copy(betting = BettingUi(enabled = true, balance = 25.0), settings = ScanSettings()))
