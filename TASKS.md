@@ -4602,4 +4602,4 @@ Tj verbatim, 7 asks: "For the vigilant scanner: 1) similar to the cno scanner, m
 - [x] TH5 Drop books with outlier/inverted odds from fair odds.
 - [x] TH6 Auto-remove rows under 10 cents liquidity or no longer +EV.
 - [x] TH7 Tap a bet: every book with its odds for BOTH sides.
-- [ ] TH8 Ship + release (in progress; tests: BookCompanyTest, AgreementTest, AutoBetVigilantTest, BookSidesTest all green, full suite 3096 passed)
+- [x] TH8 Shipped and released v0.89.15 (code 200); full suite 3096 passed.
