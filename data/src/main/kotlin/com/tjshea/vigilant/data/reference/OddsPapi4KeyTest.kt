@@ -38,9 +38,7 @@ object OddsPapi4KeyTest {
         return Result(acc.active, lines.joinToString("\n"), sample.toString())
     }
 
-    private var lastRaw: String = ""
 
-    private fun redactedAccount(client: OddsPapi4Client): String = lastRaw.ifEmpty { "(see the summary)" }
 
     private suspend fun isV5Key(client: OddsPapi4Client, http: OkHttpClient, v5Base: String): Boolean = client.keyList().any { key ->
         runCatching {
