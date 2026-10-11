@@ -159,6 +159,20 @@ object DiagnosticsShare {
         share(context, file, "Vigilant OddsPapi sample (v$versionName)", "This is the OddsPapi key test's sample from Vigilant: a summary, then OddsPapi's raw answers (books, a league's main lines, one game in depth, the closing-line endpoint). Please check Vigilant's OddsPapi parser and market table against it (ODDSPAPI_API.md §8).", "Share OddsPapi sample")
 
     const val OP_PREFIX = "vigilant-oddspapi-sample-"
+    const val UN_PREFIX = "vigilant-unabated-sample-"
+    const val OP4_PREFIX = "vigilant-oddspapi-free-sample-"
+
+    /** A key test's sample for [prefix] (Unabated, OddsPapi Free): kept like the others, the newest [KEEP]. */
+    fun writeSample(context: Context, prefix: String, name: String, text: String): File {
+        val dir = dir(context).apply { mkdirs() }
+        val file = File(dir, name)
+        file.writeText(text)
+        dir.listFiles { f -> f.isFile && f.name.startsWith(prefix) }?.sortedByDescending { it.lastModified() }?.drop(KEEP)?.forEach { runCatching { it.delete() } }
+        return file
+    }
+
+    fun sampleIntent(context: Context, file: File, versionName: String, label: String): Intent =
+        share(context, file, "Vigilant $label sample (v$versionName)", "This is the $label key test's sample from Vigilant: a summary, then the service's raw answers. Please check Vigilant's parser against it (see the matching *_API.md in the repo).", "Share $label sample")
 
     fun researchIntent(context: Context, file: File, versionName: String): Intent =
         share(context, file, "Vigilant research file (v$versionName)", com.tjshea.vigilant.data.novig.lab.LabExport.PROMPT, "Share research file")

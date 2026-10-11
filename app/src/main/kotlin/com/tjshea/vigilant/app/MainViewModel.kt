@@ -133,6 +133,8 @@ data class UiState(
     val pinnoddsKeys: List<String> = emptyList(),
     val sgoKeys: List<String> = emptyList(),
     val opKeys: List<String> = emptyList(),
+    val unKeys: List<String> = emptyList(),
+    val op4Keys: List<String> = emptyList(),
     /** Every provider's usage ledger, updated after each call (the meters). */
     val usage: UsageBook = UsageBook(),
     val bets: List<TrackedBet> = emptyList(),
@@ -225,6 +227,13 @@ data class UiState(
     val opKeyNote: String? = null,
     val opKeyOk: Boolean? = null,
     val opKeyBusy: Boolean = false,
+    /** Unabated (Free) and OddsPapi Free (v4): the Test key's answer (null = not tested), whether it passed, and that a test is running. */
+    val unKeyNote: String? = null,
+    val unKeyOk: Boolean? = null,
+    val unKeyBusy: Boolean = false,
+    val op4KeyNote: String? = null,
+    val op4KeyOk: Boolean? = null,
+    val op4KeyBusy: Boolean = false,
 ) {
     /**
      * The +EV feed as of [now]: without EVs whose other books' prices are over a few minutes old
@@ -262,6 +271,8 @@ data class UiState(
         ApiProvider.PINNODDS -> pinnoddsKeys
         ApiProvider.SPORTSGAMEODDS -> sgoKeys
         ApiProvider.ODDSPAPI -> opKeys
+        ApiProvider.UNABATED -> unKeys
+        ApiProvider.ODDSPAPI_FREE -> op4Keys
     }
 
     /** This state with [provider]'s keys replaced. */
@@ -274,6 +285,8 @@ data class UiState(
         ApiProvider.PINNODDS -> copy(pinnoddsKeys = keys)
         ApiProvider.SPORTSGAMEODDS -> copy(sgoKeys = keys)
         ApiProvider.ODDSPAPI -> copy(opKeys = keys)
+        ApiProvider.UNABATED -> copy(unKeys = keys)
+        ApiProvider.ODDSPAPI_FREE -> copy(op4Keys = keys)
     }
 
     /** Novig's live price for [row], when that setting is on and it was read in the last minute (never in Vigilant MGM). */
@@ -1993,6 +2006,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Settings › Unabated › Test key: the key's leagues and books, one straight board and one props board read as Vigilant would, said in words; the raw answers are kept as a sample in Downloads/Vigilant
+     * (and shared when [share]) so the parser can be checked against what the key really returns (UNABATED_API.md §4). Two odds requests, about ten seconds (the Free interval).
+     */
+    fun testUnabatedKey(share: Boolean = false) {
+        _state.update { it.copy(unKeyBusy = true, unKeyNote = null, unKeyOk = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching { com.tjshea.vigilant.data.reference.UnabatedKeyTest.run(c.unabatedClient, c.unabatedFeed) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }.getOrNull()
+            if (r != null && r.sample.isNotEmpty()) sendSample(share, DiagnosticsShare.UN_PREFIX, "Unabated", r.summary, r.sample)
+            _state.update { it.copy(unKeyBusy = false, unKeyNote = r?.summary ?: "The test could not run.", unKeyOk = r?.ok == true) }
+        }
+    }
+
+    /** Settings › OddsPapi Free (v4) › Test key: the plan's real allowance and books (an unmetered call, no request spent); a v5 key pasted here is recognised and the message says where it belongs. */
+    fun testOddsPapiFreeKey(share: Boolean = false) {
+        _state.update { it.copy(op4KeyBusy = true, op4KeyNote = null, op4KeyOk = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching { com.tjshea.vigilant.data.reference.OddsPapi4KeyTest.run(c.op4Client, c.http) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }.getOrNull()
+            if (r != null && r.sample.isNotEmpty()) sendSample(share, DiagnosticsShare.OP4_PREFIX, "OddsPapi Free", r.summary, r.sample)
+            _state.update { it.copy(op4KeyBusy = false, op4KeyNote = r?.summary ?: "The test could not run.", op4KeyOk = r?.ok == true) }
+        }
+    }
+
+    private suspend fun sendSample(share: Boolean, prefix: String, label: String, summary: String, sample: String) {
+        val app = getApplication<Application>()
+        val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
+        val intent = withContext(Dispatchers.IO) {
+            runCatching {
+                val file = DiagnosticsShare.writeSample(app, prefix, prefix + java.time.Instant.now().toString().replace(':', '-') + ".txt", summary + "\n\n----- raw answers -----\n" + sample.take(900_000))
+                runCatching { DiagnosticsShare.saveToDownloads(app.contentResolver, file) }
+                DiagnosticsShare.sampleIntent(app, file, info?.versionName ?: "?", label)
+            }.getOrNull()
+        }
+        if (share && intent != null) shares.send(intent)
+    }
+
     /** Reads the live feed test's line for Settings › Diagnostics & about (the page asks every few seconds while it is open). */
     fun refreshFeedRace() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -2275,6 +2328,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     add("health: ${c.opClient.health()}")
                     c.opClient.lastRemaining?.let { add("rate limit left (last answer): $it") }
                     c.opClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
+                }
+            }.getOrNull(),
+            unabatedReport = runCatching {
+                val keys = keysFor(ApiProvider.UNABATED).size
+                if (keys == 0 && !_state.value.settings.unabated) null else buildList<String> {
+                    val st = _state.value.settings
+                    add("switch ${if (st.unabated) "ON" else "off"} · $keys key${if (keys == 1) "" else "s"} · active now: ${c.unabatedActive(st)}")
+                    add("health: ${c.unabatedClient.health()}")
+                    c.unabatedClient.lastError?.let { add("last error: $it") }
+                    c.unabatedFeed.lastBackgroundError?.let { add("last background refresh error: $it") }
+                    c.unabatedClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
+                }
+            }.getOrNull(),
+            op4Report = runCatching {
+                val keys = keysFor(ApiProvider.ODDSPAPI_FREE).size
+                if (keys == 0 && !_state.value.settings.oddsPapiFree) null else buildList<String> {
+                    val st = _state.value.settings
+                    add("switch ${if (st.oddsPapiFree) "ON" else "off"} · $keys key${if (keys == 1) "" else "s"} · closing lines only")
+                    add("health: ${c.op4Client.health()}")
+                    add("billable requests made today: ${c.op4Client.spentToday()} · may buy now: ${c.op4Budget.mayBuy()} · all requests (incl. free): ${c.op4Client.requests}")
                 }
             }.getOrNull(),
             labReport = g.labReport,
