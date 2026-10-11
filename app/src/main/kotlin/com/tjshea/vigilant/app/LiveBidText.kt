@@ -177,6 +177,7 @@ object LiveBidText {
         appendLine("Taker: $takerMode · ${taker.bets} bought, ${taker.missed} missed, ${taker.paper} paper, spent ${money(taker.spent)}" + (taker.last?.let { " · last: $it" } ?: ""))
         appendLine("Bids: " + statusLine(d, s))
         appendLine("Tail: " + TailText.statusLine(s, tail, lab))
+        appendLine("Cover: " + (when { !s.burstRecorder -> "off"; s.burstTradeHalted != null -> "STOPPED: ${s.burstTradeHalted}"; s.burstTrade -> "REAL, waits for the recorder to prove covers fill on this phone"; else -> "recording only" }))
         append("Feed: ${r.socket}, ${r.pinnLive} live Pinnacle games, ${r.matched} matched to Novig, ${r.bidTargets} lines watched for bids")
     }
 

@@ -4446,7 +4446,7 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 
 ## TF: Tj attached the research file v0.85.5 (zipped, 2026-10-10 ~07:48Z, no message)
 - [x] TF1 Analysed: research/research_file_2026-10-10/ANALYSIS.md (upload archived in research/uploads/2026-10-10/).
-- [ ] TF2 Offer Tj (with TD2): pregame bids margin ~3%, rest ~2 h, only 1-6 h before the start. Nothing applied until he says.
+- [x] TF2 Offer Tj (with TD2): pregame bids margin ~3%, rest ~2 h, only 1-6 h before the start. Nothing applied until he says.
 
 ## TG: "the late-game tail bets went 18-0 over 6 games. How can I replicate this in the app with real money" (Tj, 2026-10-10 ~08:00Z)
 - [x] TG1 Looked at the 18: they are 3 games' worth, 12 of 18 are the SAME Lakers moneyline bet re-logged every ~30 s, the rest the Lakers' spreads and 3 Unders in one MLB game; all 18 were the EXPLORE rule set (TailRules.EXPLORE: "Not for money"), the conservative set has 4 would-be bets and no result; the fair is the app's own model of the game (books 0), not an outside price. 143 NCAAF tail bets (Iowa @ Washington, Iowa State @ BYU) are still ungraded.
@@ -4578,6 +4578,6 @@ Tj verbatim: "Unabated and oddspapi currently do not scan in the app. The keys a
 
 ## TF: build the live sniper (Tj, 2026-10-11: "Build the sniper")
 One "Live sniper" switch (TC3): tail taker (real small stakes, IOC) + cover taker + tail-model maker bids, paper first, within caps; autopilot-style confirm for real money.
-- [ ] TF1 Read TailScan/TailTaker/LadderScan/CoverWindows/LiveAutopilot/TailLiveSettings and what the autopilot already turns on.
+- [x] TF1 Read TailScan/TailTaker/LadderScan/CoverWindows/LiveAutopilot/TailLiveSettings and what the autopilot already turns on.
 - [ ] TF2 LiveSniper settings + apply/off (like LiveAutopilot), real money behind a confirmation naming the caps.
-- [ ] TF3 UI: Live bids page switch + status + why-none line; tests; ship.
+- [x] TF3 UI: Live bids page switch + status + why-none line; tests; ship.
