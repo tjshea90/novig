@@ -4521,3 +4521,10 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 - [ ] TP2c After v0.88.7 Tj sends the Live bids page top: the "no book" reason words name the cause if it is not the refusal bug.
 - [ ] TP3 Tj resumes scanning, sends the Live bids page top (status, why-line, Details) and Diagnostics; read LIVE BIDS "Why so few fills" and the taker's "Held back" counts.
 
+
+## TQ: Tj, 2026-10-10 ~22:40Z: "I want the auto bid feature and auto bet features both to include all tennis. If it's has to use vigilant scanner that is fine. Let me toggle tennis on and off"
+Finding (answered first): tennis was off for live bids by default; Autopilot reads CNO rows only and CNO has no tennis (RESEARCH §85); pregame bids need ATP/WTA in Settings › Leagues (fresh default is NFL only).
+- [ ] TQ1 `ScanSettings.autoBetTennis` (default on) + schema 15 migration adding ATP/WTA to leagues once; one Settings switch "Tennis" (leagues + auto-bet) on/off.
+- [ ] TQ2 `AutoBettor.runTennis`: Vigilant-scan tennis Opportunities (pregame, fresh, Pinnacle fair) judged by the same rules (min edge, favourite bar, odds limits, kinds, stake, wallet, per-game/day limits) and placed through the same placer; hooked in AutoScan after the Vigilant scan ends, independent of CNO.
+- [ ] TQ3 Auto bids (maker): confirm tennis lines are bid when the switch is on (they use settings.leagues); test.
+- [ ] TQ4 Tests, ship (ship.sh), release, tell Tj; live bids' own Tennis switch stays separate (0 of 33 filled).
