@@ -1396,7 +1396,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (src.needsCatalog) { lines += "---  ${src.displayName}: needs Novig's board for ${league.novigName}; a scan tests it"; continue }
                 val t0 = System.currentTimeMillis()
                 val snap = withContext(Dispatchers.IO) {
-                    runCatching { kotlinx.coroutines.withTimeout(90_000L) { src.odds(league, s.copy(selectedLeagues = listOf(league))) } }.onFailure { if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }
+                    runCatching { kotlinx.coroutines.withTimeout(90_000L) { src.odds(league, s.copy(leagues = setOf(league.novigName))) } }.onFailure { if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }
                 }
                 val secs = (System.currentTimeMillis() - t0) / 1000.0
                 lines += snap.fold(

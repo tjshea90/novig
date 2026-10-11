@@ -133,6 +133,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** How fair odds are worked out, and where they come from (with keys). */
     FAIR("Fair odds & sources", "How the true odds are worked out, and from which feeds", SettingsGroup.FIND),
 
+    /** Every API in one place: its switch, a Test button, its keys' usage (Tj, 2026-10-11). */
+    APIS("APIs: on/off, test, usage", "Turn any API on or off, test each one's keys, test the combination, see what is left on every key", SettingsGroup.FIND),
+
     /** SportsGameOdds Pro: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). */
     SGO("SportsGameOdds Pro", "One paid feed for odds, props, closing lines and results; the feeds it replaces rest", SettingsGroup.FIND),
 
@@ -163,6 +166,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
         CNO -> s.cnoOn
         FEED, FAIR, USAGE -> s.vigilantOn
         ALERTS, RESEARCH, SGO, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
+        APIS -> true
         PINNODDS, LIVEBIDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
     }
@@ -230,6 +234,10 @@ object SettingsSummary {
                 state.opKeys.isEmpty() -> "No key saved"
                 s.oddsPapi -> "On: ${state.opKeys.size} key${if (state.opKeys.size == 1) "" else "s"}, the paid feeds it replaces rest"
                 else -> "Off (key saved)"
+            }
+            SettingsPage.APIS -> {
+                val on = ApiEntry.active(s).size
+                "$on of ${ApiEntry.entries.size} on"
             }
             SettingsPage.UNABATED -> when {
                 state.unKeys.isEmpty() -> "No key saved"
@@ -362,6 +370,7 @@ fun SettingsScreen(
                 SettingsPage.RESEARCH -> ResearchPage(state, reportActions, onUpdate)
                 SettingsPage.SGO -> SgoPage(state, keys, reportActions, onUpdate)
                 SettingsPage.ODDSPAPI -> OddsPapiPage(state, keys, reportActions, onUpdate)
+                SettingsPage.APIS -> ApisPage(state, reportActions, onUpdate)
                 SettingsPage.UNABATED -> UnabatedPage(state, keys, reportActions, onUpdate)
                 SettingsPage.ODDSPAPI_FREE -> OddsPapiFreePage(state, keys, reportActions, onUpdate)
                 SettingsPage.USAGE -> UsageTab(state, keys)
@@ -1364,6 +1373,73 @@ private fun ColumnScope.OddsPapiFreePage(state: UiState, keys: KeyActions, repor
     }
     SwitchRow(com.tjshea.vigilant.app.Op4Text.SWITCH_TITLE, com.tjshea.vigilant.app.Op4Text.switchSub(state.op4Keys.isNotEmpty()), s.oddsPapiFree, tag = "oddsPapiFreeSwitch") { v -> onUpdate { it.copy(oddsPapiFree = v) } }
     if (s.oddsPapiFree) Hint(com.tjshea.vigilant.app.Op4Text.NOTES)
+}
+
+/**
+ * Settings › APIs (Tj, 2026-10-11): every outside API in one list. The switch decides whether the app may call it at all (off = never called anywhere: scans, bids, closes, scores, tests); the small Test
+ * button asks the API whether each of its keys is active and accepted (and reads the usage it offers into the meter); "Test active APIs" tests the combination the switches make. Under each API: what is left
+ * on every key, from the API's own prompt where it has one.
+ */
+@Composable
+private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val now = rememberNow(30_000)
+    val views = meterViews(state, now).associateBy { it.policy.id }
+    Intro("Switch an API off and the app stops using it everywhere and adapts to the ones that are on; the first key that is spent or refused is skipped for the next one, automatically. Test checks each key; Test active APIs checks the combination the switches make and reads one league through every source in play.")
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
+        Button(onClick = reportActions.onTestActiveApis, enabled = !state.apiTestBusy, modifier = Modifier.testTag("testActiveApis")) { Text(if (state.apiTestBusy) "Testing…" else "Test active APIs") }
+        OutlinedButton(onClick = reportActions.onRefreshUsage, enabled = !state.usageBusy, modifier = Modifier.testTag("refreshUsage")) { Text(if (state.usageBusy) "Reading…" else "Refresh usage") }
+    }
+    state.apiTestLines?.let { lines ->
+        Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp).testTag("apiTestReport")) {
+            Column(Modifier.padding(10.dp)) {
+                lines.forEach { l ->
+                    Text(
+                        l, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace,
+                        color = when { l.startsWith("FAIL") -> MaterialTheme.colorScheme.error; l.startsWith("EMPTY") -> Edge.colors.warning; else -> MaterialTheme.colorScheme.onSurface },
+                    )
+                }
+            }
+        }
+    }
+    ApiEntry.entries.forEach { e ->
+        val keys = e.provider?.let { state.keysOf(it) }.orEmpty()
+        val on = e.isOn(state.settings)
+        val busy = e.name in state.apiBusy
+        Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+            Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Text(e.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            e.blurb + if (e.keyless) "" else if (keys.isEmpty()) " · no key saved" else " · ${keys.size} key${if (keys.size == 1) "" else "s"}",
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { reportActions.onTestApi(e) }, enabled = !busy && (e.keyless || keys.isNotEmpty()),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        modifier = Modifier.height(32.dp).testTag("apiTest-${e.name}"),
+                    ) { Text(if (busy) "…" else "Test", style = MaterialTheme.typography.labelMedium) }
+                    androidx.compose.material3.Switch(checked = on, onCheckedChange = { v -> onUpdate { it2 -> e.setOn(it2, v) } }, modifier = Modifier.testTag("apiSwitch-${e.name}"))
+                }
+                if (!on) Text("Off: never called.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                state.apiChecks[e.name]?.forEach { c ->
+                    Text(
+                        (if (c.ok) "✓ " else "✗ ") + (if (c.masked.isBlank() || c.masked == "no key") "" else c.masked + " · ") + c.message,
+                        style = MaterialTheme.typography.labelSmall, color = if (c.ok) Edge.colors.positive else MaterialTheme.colorScheme.error,
+                    )
+                }
+                views[e.policy?.id]?.keys?.forEach { k ->
+                    Text(keyLine(e.policy!!, k, now), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (e.provider != null && e.provider != ApiProvider.PINNODDS) Text(
+                    if (e.usagePrompt) "Usage: read from the API's own prompt." else "Usage: this API offers no prompt for it, so the count is the app's own.",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+    Hint("Keys are added and ordered on each API's own page (and can be added from Fair odds & sources); a key refused or spent is skipped for the next one and tried again after its reset.")
 }
 
 /** Research: the master switch, the one file to send, the paper lab (Tj, 2026-10-09: "I don't see the paper lab setting"), and the other recorders (burst, live feed test). */

@@ -177,7 +177,7 @@ private fun KeyRow(policy: QuotaPolicy, k: KeyView, now: Long) {
             )
         }
         val detail = listOfNotNull(
-            k.left?.let { "$it left" + if (!k.serverReported && (policy.id == QuotaPolicy.PINNAPI.id || policy.id == QuotaPolicy.PINNWIRE.id)) " (counted here)" else "" },
+            k.left?.let { "$it left" + if (k.serverReported) " (the API's own figure)" else " (counted here)" },
             k.lastCallMs?.let { "last call ${Format.age(it, now)}" },
             k.note?.takeIf { k.state == KeyState.REFUSED || k.state == KeyState.SPENT || k.state == KeyState.COOLING },
         ).joinToString(" · ")
@@ -227,4 +227,27 @@ private fun meterColorKey(left: Int, allowance: Int?): Int {
         f < 0.5f -> 1
         else -> 0
     }
+}
+
+/** One key of a meter as a line of words (Settings › APIs shows these under each API): "Key 1 abcd…wxyz · 412 left of 500 (the API's own figure) · in use · resets in 19 days". */
+fun keyLine(policy: QuotaPolicy, k: KeyView, now: Long): String = buildString {
+    append("Key ${k.index + 1} ${k.masked}")
+    append(" · ")
+    append(
+        when {
+            k.left != null && k.allowance != null -> "${k.left} left of ${k.allowance}" + if (k.serverReported) " (the API's own figure)" else " (counted here)"
+            k.left != null -> "${k.left} left" + if (k.serverReported) " (the API's own figure)" else " (counted here)"
+            else -> "${k.used} used (no allowance known)"
+        },
+    )
+    append(
+        " · " + when (k.state) {
+            KeyState.ACTIVE -> "in use"
+            KeyState.STANDBY -> "next in line"
+            KeyState.SPENT -> "spent" + (k.until?.let { ", " + UsageMeter.untilText(it, now) } ?: "")
+            KeyState.COOLING -> "waiting" + (k.until?.let { ", " + UsageMeter.whenText(it, now) } ?: "")
+            KeyState.REFUSED -> "refused by the API"
+        },
+    )
+    k.note?.takeIf { k.state != KeyState.ACTIVE && k.state != KeyState.STANDBY }?.let { append(" · $it") }
 }

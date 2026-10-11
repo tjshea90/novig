@@ -38,6 +38,11 @@ object SettingsIndex {
         // OddsPapi (Tj, 2026-10-09)
         Entry("Use OddsPapi", SettingsPage.ODDSPAPI, "A second paid feed for odds, props, closing lines and results; the feeds it replaces rest", "oddspapi odds papi 55-tech api feed key paid replace clv closing", novig),
         Entry("Add an OddsPapi key", SettingsPage.ODDSPAPI, "Add, order and test your OddsPapi keys", "oddspapi odds papi key api rotate test trial", novig),
+        // Every API in one place (Tj, 2026-10-11)
+        Entry("Turn APIs on and off", SettingsPage.APIS, "One switch per API: an API that is off is never called anywhere", "api apis switch toggle on off enable disable pinnwire pinnapi propline parlay odds sgo oddspapi unabated kalshi polymarket pinnodds", novig),
+        Entry("Test an API's key", SettingsPage.APIS, "A Test button beside each API: is the key active and accepted", "test key active accepted check api", novig),
+        Entry("Test the APIs that are on", SettingsPage.APIS, "Tests the combination the switches make and reads one league through each source", "test combination active apis all", novig),
+        Entry("How much is left on each key", SettingsPage.APIS, "Every key's usage, from the API's own prompt where it has one", "usage left remaining credits requests key api", novig),
         // Unabated Free and OddsPapi Free v4 (Tj, 2026-10-11)
         Entry("Use Unabated (free)", SettingsPage.UNABATED, "Free lines and props from DraftKings, FanDuel, MGM, Caesars and more; fills in what the other feeds miss", "unabated free api feed key draftkings fanduel mgm caesars fallback", novig),
         Entry("Add an Unabated key", SettingsPage.UNABATED, "Add, order and test your Unabated key", "unabated key api test free", novig),
