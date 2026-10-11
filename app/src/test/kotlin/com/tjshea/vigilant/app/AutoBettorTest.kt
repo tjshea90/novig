@@ -824,19 +824,17 @@ class AutoBettorTest {
     private fun spent(novig: FakeNovig) = novig.last!!.let { (_, price, qty) -> qty * price * 0.01 }
 
     @Test
-    fun `with one cent left in the wallet it bets, may empty the wallet completely, and then stops`() = runBlocking {
-        // "bet stakes all the way down to 1 cent, even if there is only 1 cent left in the wallet. It is allowed to completely deplete the wallet."
+    fun `with 20 cents left in the wallet it still bets, and under 20 cents nothing is bet and the app sleeps`() = runBlocking {
+        // Was "bet down to 1 cent" (Tj, 2026-10-01); Tj, 2026-10-11: below 20 cents "there is no reason to continue usage with little money left".
         val s = settings { it.copy(autoBetStake = AutoBetStake.QUARTER_KELLY, bankroll = 1000.0, autoBetMaxStake = 10.0) }
         val novig = FakeNovig()
-        val r = bettor(novig, wallet = 0.01).run(s, state(s))
+        val r = bettor(novig, wallet = 0.20).run(s, state(s))
         assertEquals(r.skipped.toString(), 1, r.placed.size)
-        assertEquals(1, novig.orders.get())
-        assertTrue("at most the cent that was there: ${spent(novig)}", spent(novig) in 0.001..0.0100001)
-        assertFalse("not an empty-wallet stop for a wallet that holds a cent", r.walletEmpty)
-        // What is left (under a cent) is an empty wallet: no more bets, said so.
+        assertTrue("at most the 20 cents that were there: ${spent(novig)}", spent(novig) in 0.001..0.2000001)
+        assertFalse("20 cents is not an empty-wallet stop", r.walletEmpty)
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
         val novig2 = FakeNovig()
-        val r2 = bettor(novig2, wallet = 0.01 - spent(novig)).run(s, state(s))
+        val r2 = bettor(novig2, wallet = 0.19).run(s, state(s))
         assertTrue(r2.walletEmpty)
         assertEquals(0, novig2.orders.get())
     }
