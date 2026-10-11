@@ -4658,3 +4658,9 @@ Tj verbatim: "The app is showing live game bets. See the screenshot. But it says
 - [ ] TO3 Auto-bet on live games: opt-in switch with its own guards (fair age ceiling, own minimum EV); off by default. WAITING FOR TJ'S WORD (RESEARCH.md §132.3: the scan's fair is minutes old in play).
 - [ ] TO4 Bids on live games from the Vigilant scan: opt-in, short ttl, fair age cap; off by default (or the Pinnacle-fed live bid desk, NOVIG_API.md §23). WAITING FOR TJ'S WORD.
 - [ ] TO5 Tests, docs (NOVIG_API.md/RESEARCH.md/CLAUDE.md), ship v0.89.20 (TO2 only).
+
+## TP: a minimum star rating overrides the other auto-bet filters (Tj, 2026-10-11 ~17:55Z)
+Tj verbatim: "When I select auto bet with a minimum star rating, make the app ignore all the other auto bet filters that interfere. If I have a star rating minimum turned on, I want the app to auto bet all of the scanned bets with at least that rating, regardless of any other settings. But if I turn off the minimum star rating filter, I want it to return back to enforcing all of the other auto bet settings."
+- [ ] TP1 Audit every auto-bet check in the CNO lane, the Vigilant lane and the tennis lane (`AutoBettor`, `AutoBet.judge*`, `SharpGate`, trap guard, `ApiBetPlanner`): which are SELECTION filters (edge, odds range, kinds, leagues, books-agree counts, sharp veto, liquidity, start window, ...) and which are MONEY-SAFETY limits (daily/per-bet/per-game dollars, wallet, pregame, fresh fair, still +EV at the real price, price tolerance, one bet per market, halt on a lost order).
+- [ ] TP2 With "Smallest star rating" on (>0): the selection filters are skipped and every scanned bet rated at least that is bet; the money-safety limits stay (said plainly to Tj). Off (Any): everything is enforced as before.
+- [ ] TP3 Settings/Auto-bet text says so; tests for both modes in all three lanes; ship.
