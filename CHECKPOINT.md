@@ -1,21 +1,24 @@
-# CHECKPOINT 2973 — read me first, then TASKS.md
+# CHECKPOINT 2974 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T16:43:42Z · **tests:** all 4 fast checks green
-**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `e0de31a1a` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T16:50:08Z · **tests:** all 4 fast checks green
+**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `5b3465df5` (this checkpoint is the commit after it)
 
 ## Just done
-TL2: removed OutsideSgo/OutsideOp/TennisOnly, every API on is asked, off never; Pinnodds decoupled from SGO/OP; otherBooks asks all; lab asks SGO+OP; ApiTogglesTest
+TL/TM/TN done, tests green (data, app); docs updated
 
 ## Do this next
-TL: finish call-site audit (parlayCloses.enabled paths, JS/Kt docs), update docs, run data+app tests, bump 204, ship v0.89.19
+ship v0.89.19 (versionCode 204): bash ship.sh, trigger release.yml, record-release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  2b986156d ckpt 2973: TL2: removed OutsideSgo/OutsideOp/TennisOnly, every API on is asked, off ne
   f2ecdb21d ckpt 2972: TN code + tests green in data (real start sync, sharp-history close preferr
   bae53b9ee ckpt 2971: TM done in data: worst-case devig default + migration (schema 17) + CloseDe
   2fae65f9c ckpt 2970: wrote TM tasks (conservative devig); TL audit found: OutsideSgo/OutsideOp r
@@ -25,8 +28,7 @@ TL: finish call-site audit (parlayCloses.enabled paths, JS/Kt docs), update docs
   8264b0eb4 ckpt 2966: pre-ship: v0.89.18: Share all bets with Claude (README + parts, every bet a
   085decdb5 ckpt 2965: Saved the closing-odds audit (research/closing_audit_2026-10-11.md, 25 unve
   52dd230bf ckpt 2964: TK tests (BetHistoryTest, BetHistoryUiTest, BetArchiveAppTest) pass; RESEAR
-  654499774 ckpt 2963: TK: core built — BetRating.estimate/AtBet stars, BetDims+BetFilterSpec+sm
 ```
 
-(12 automatic checkpoint(s) since the last deliberate one — the
+(11 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
