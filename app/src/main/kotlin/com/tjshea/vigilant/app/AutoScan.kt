@@ -433,6 +433,18 @@ class AutoScanner(
         val bets = runCatching { c.tracker.all() }.onFailure { if (it is CancellationException) throw it }.getOrDefault(emptyList())
         val started = startVigilant(settings, bets)
         if (!started && !c.runner.state.value.scanning) return
+        // Tennis auto-bet (Tj, 2026-10-10): CNO has no tennis, so the scan that just ended is where it comes from; independent of CNO and of the alerts below.
+        if (settings.autoBet && settings.autoBetTennis && settings.tennisOn && AppBook.isNovig) {
+            tennisBets?.takeIf { it.isActive }?.cancel()
+            tennisBets = c.appScope.launch {
+                val run = c.runner.state.first { !it.scanning && it.finished > before }
+                val s = c.currentSettings()
+                val result = run.result ?: return@launch
+                if (!s.autoBet || !s.autoBetTennis || s.paused) return@launch
+                runCatching { c.autoBet.runTennis(s, snapshot(s).copy(result = result), result) }
+                    .onFailure { if (it is CancellationException) throw it; runCatching { c.problems.add("Background auto-scan", "Tennis auto-bet: ${it.message ?: it.javaClass.simpleName}") } }
+            }
+        }
         if (settings.alertMinEv <= 0.0) return
         vigilantAlerts?.takeIf { it.isActive }?.let { return }
         vigilantAlerts = c.appScope.launch {
@@ -448,6 +460,9 @@ class AutoScanner(
 
     /** The watch that sends a background Vigilant scan's alerts when it ends (one at a time). */
     @Volatile private var vigilantAlerts: kotlinx.coroutines.Job? = null
+
+    /** The watch that auto-bets tennis from a background Vigilant scan when it ends (one at a time). */
+    @Volatile private var tennisBets: kotlinx.coroutines.Job? = null
 
     /**
      * Posts the alerts not sent before, best EV first, at most [MAX_ALERTS] a cycle: CNO bets get their

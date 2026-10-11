@@ -321,6 +321,7 @@ class AutoBettor(
                 else -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection))?.let(::skip) ?: passing.add(o)
             }
         }
+        if (tennis.isEmpty()) return Report()
         if (passing.isEmpty()) return finish(now, Report(looked = tennis.size, skipped = skipped))
 
         val balance0 = try {
