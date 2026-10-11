@@ -6431,3 +6431,8 @@ These workflows burn Claude usage and almost always get interrupted by usage the
 ```
 I previously made it so when sgo was enabled, all other apis were not used. Confirm that all apis can be used at any time for any data and long as I have them toggled on, and if any are toggled off, they are not used or called at all. If this isn't the case, make the app do this
 ```
+
+## 2026-10-11T16:17:20Z
+```
+I want the app to use conservative devig methods to be safest 
+```
