@@ -1159,10 +1159,10 @@ private fun ColumnScope.BettingTab(
             SwitchRow(
                 "Take down bids left up", "A resting order with no expiry (Novig's own app, or any tool that set none) is cancelled once it has been up this long. Vigilant's own bids always carry a time limit and are not touched.",
                 s.guards.bidGuard, tag = "bidGuardSwitch",
-            ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidGuard = v)) } }
+            ) { v -> onUpdate { it.copy(guards = it.guards.copy(bidGuard = v)) } }
             if (s.guards.bidGuard) {
                 Text("Cancel after", style = MaterialTheme.typography.bodyMedium)
-                ChoiceChips(listOf(10.0, 15.0, 30.0, 60.0, 120.0), s.guards.bidGuardMinutes.toDouble(), { "${it.toInt()} min" }) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidGuardMinutes = v.toInt())) } }
+                ChoiceChips(listOf(10.0, 15.0, 30.0, 60.0, 120.0), s.guards.bidGuardMinutes.toDouble(), { "${it.toInt()} min" }) { v -> onUpdate { it.copy(guards = it.guards.copy(bidGuardMinutes = v.toInt())) } }
             }
         }
         if (s.cnoOn && onOpenAutoBet != null) {
