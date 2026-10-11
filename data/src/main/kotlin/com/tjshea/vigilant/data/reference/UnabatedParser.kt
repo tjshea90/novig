@@ -116,8 +116,13 @@ object UnabatedParser {
      * `disabled`, or has no price is left out; its alternates are separate [UnLine]s.
      */
     fun board(raw: String, includeLive: Boolean): UnBoard {
-        envelope(raw)   // throws on success:false
-        val top = JsonSplit.members(raw) ?: return UnBoard(emptyList(), null)
+        // The envelope is checked WITHOUT parsing the board as a tree (a props board is megabytes).
+        val top = JsonSplit.members(raw) ?: throw UnabatedFailure("Unabated sent a reply Vigilant couldn't read")
+        if (top.firstOrNull { it.first == "success" }?.second?.trim() == "false") {
+            val msgs = top.firstOrNull { it.first == "messages" }?.second?.let { m -> runCatching { json.parseToJsonElement(m) as? JsonArray }.getOrNull() }.orEmpty()
+                .mapNotNull { it.prim()?.contentOrNull }.filter { it.isNotBlank() }
+            throw UnabatedFailure("Unabated: ${msgs.joinToString("; ").ifEmpty { "the request could not complete" }}")
+        }
         val dataText = top.firstOrNull { it.first == "data" }?.second ?: return UnBoard(emptyList(), null)
         val data = JsonSplit.members(dataText) ?: return UnBoard(emptyList(), null)
         val last = data.firstOrNull { it.first == "lastUpdated" }?.second?.trim()?.toDoubleOrNull()?.toLong()?.let { if (it in 1..9_999_999_999L) it * 1000L else it }
