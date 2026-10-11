@@ -446,6 +446,14 @@ private fun ColumnScope.ScanningPage(s: ScanSettings, onUpdate: SettingsUpdate) 
         s.pausedByHand,
         tag = "pauseSwitch",
     ) { v -> onUpdate { it.copy(pausedByHand = v) } }
+    // Tj, 2026-10-10: "I want the auto bid feature and auto bet features both to include all tennis ... Let me toggle tennis on and off".
+    SwitchRow(
+        "Tennis (ATP and WTA)",
+        "Scans tennis, bids on it (Make orders) and, with Auto-bet on, takes it. CrazyNinjaOdds has no tennis, so tennis comes from Vigilant's own scan: the Scanner must be " +
+            "Both or Vigilant only. Live bids have their own Tennis switch.",
+        s.tennisOn && s.autoBetTennis,
+        tag = "tennisSwitch",
+    ) { v -> onUpdate { it.withTennis(v) } }
     // The kill switch (Tj, 2026-10-05) is the red bar above the tab bar on every screen, not a setting here: a switch in a page would be one more screen away.
     Hint(
         "The red STOP ALL bar above the tab bar (on every screen, the widget and the auto-scan notification) stops everything at once: scans, CrazyNinjaOdds, " +
