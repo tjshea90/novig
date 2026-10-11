@@ -195,8 +195,8 @@ class AutoBettor(
                 else -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(injuries(), row, now, state.teams[row.key])?.let(::skip)
                     ?: AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet))?.let(::skip)
                     ?: AutoBet.starsReason(rules, item.check.rating?.stars)?.let(::skip)
-                    ?: (if (item.check.sharpAgainst) "a sharp book prices both sides and says it isn't +EV at Novig's price" else null)?.let(::skip)
                     ?: (if (byStars) null else sharpReason(item, settings, state, now))?.let(::skip)
+                    ?: (if (item.check.sharpAgainst) "a sharp book prices both sides and says it isn't +EV at Novig's price" else null)?.let(::skip)
                     ?: passing.add(item)
             }
         }
