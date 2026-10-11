@@ -244,14 +244,16 @@ class UnabatedTest {
         assertNotNull(runCatching { client().leagues() }.exceptionOrNull())
     }
 
-    @Test fun httpSuccessWithSuccessFalseIsAFailureWhoseMessagesAreShownAndTwoFailuresMarkItDown() = runTest {
-        handler = { ok("""{"data":null,"success":false,"messages":["Delayed snapshot not ready"]}""") }
+    @Test fun httpSuccessWithSuccessFalseIsAFailureWhoseMessagesAreShownButItNeverMarksTheWholeApiDownWhileServerErrorsDo() = runTest {
         val c = client()
         handler = { route(it) }; c.leagues()   // one good answer first, so "down" is measured from it
         handler = { ok("""{"data":null,"success":false,"messages":["Delayed snapshot not ready"]}""") }
         val e = runCatching { c.oddsRaw("nba", "straight") }.exceptionOrNull()
         assertTrue(e.toString(), e is UnabatedFailure && e.message!!.contains("Delayed snapshot not ready"))
-        runCatching { c.oddsRaw("nba", "straight") }
+        runCatching { c.oddsRaw("nba", "straight") }; runCatching { c.oddsRaw("nba", "straight") }
+        assertFalse("Unabated answered: not an outage (Tj's diagnostics: a props board it could not build took the whole API down)", c.down(clockMs + UnabatedClient.DOWN_AFTER_MS + 1))
+        handler = { MockResponse().setResponseCode(500) }
+        runCatching { c.get("/league") }; runCatching { c.get("/league") }
         assertTrue(c.down(clockMs + UnabatedClient.DOWN_AFTER_MS + 1)); assertFalse(c.down(clockMs))
     }
 

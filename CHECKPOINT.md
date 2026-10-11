@@ -1,7 +1,7 @@
-# CHECKPOINT 2926 — read me first, then TASKS.md
+# CHECKPOINT 2927 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T04:11:39Z · **tests:** all 4 fast checks green
-**Branch:** `claude/unabated-oddsapi-integration-1u6kdc` · **builds on:** `fd4f51d9` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T04:14:15Z · **tests:** all 4 fast checks green
+**Branch:** `claude/unabated-oddsapi-integration-1u6kdc` · **builds on:** `40eda833` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: v0.89.4: tennis bids (plain rules for ATP/WTA, lean scan keeps game lines), every-book switches for SGO/PropLine/OddsPapi, OddsPapi Free v4 as a fair-odds feed, Unabated fixes from the real diagnostics
@@ -13,11 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M RESEARCH.md
-     M app/build.gradle.kts
+     M data/src/test/kotlin/com/tjshea/vigilant/data/reference/UnabatedTest.kt
 
 ## Last ten checkpoints
 ```
+  40eda833 ckpt 2926: pre-ship: v0.89.4: tennis bids (plain rules for ATP/WTA, lean scan keeps gam
   3f9274b1 ckpt 2925: pre-release: v0.89.3: OddsPapi (v5) switch to price the fair average with ev
   f118e846 ckpt 2924: pre-ship: v0.89.3: OddsPapi (v5) switch to price the fair average with every
   ba65a365 ckpt 2923: pre-release: v0.89.2: Unabated fixed from the real sample (bet-type filtered
@@ -27,8 +27,4 @@ ship.sh gates and releases this
   3d1e0a9c ckpt 2919: pre-release: v0.89.0: Unabated (free) and OddsPapi Free (v4) added; Settings
   466b2af7 ckpt 2918: pre-ship: v0.89.0: Unabated (free) and OddsPapi Free (v4) added; Settings > 
   1f3fc96d ckpt 2917: UA2-UA4 built: per-API switches (usePinnwire/usePinnapi/usePinnodds + gating
-  9636ce1d ckpt 2916: UA1 done: Unabated per-key 5s gate + key rotation (refused/429 -> next key),
 ```
-
-(19 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
