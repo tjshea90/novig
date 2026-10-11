@@ -390,6 +390,16 @@ data class ScanSettings(
     /** OddsPapi: read every game in depth for its alternate lines (one request a game); off, the main lines of a whole tournament come in one request. */
     val opAltLines: Boolean = true,
     /**
+     * Unabated Free API (Tj, 2026-10-11; UNABATED_API.md): DraftKings, FanDuel, MGM, Caesars, theScore and Fanatics' lines and props, 15 s delayed, one request per 5 s, no credits. On (and a key saved and
+     * answering) it joins the scan LAST in the source order, so it prices only the lines no better feed sent (a fallback by line), and nothing else rests for it. Off by default; off, the app is what it was.
+     */
+    val unabated: Boolean = false,
+    /**
+     * OddsPapi Free (v4, Tj's free key; ODDSPAPI_API.md addendum 2026-10-11): the Pinnacle closing line for CLV from its free historical odds, last in the close-source order. A different product from [oddsPapi]
+     * (v5, B2B trial). Off by default.
+     */
+    val oddsPapiFree: Boolean = false,
+    /**
      * Research mode (Tj, 2026-10-09: "just make it simple for me to run"): ONE switch that turns on every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bid lab
      * and (with a Pinnodds key saved) Pinnodds live in PAPER mode. It never turns on a real-money feature. Off by default; STOP ALL stops it.
      */
@@ -996,6 +1006,8 @@ data class ScanSettings(
             if (sgoPro) { add("sgo"); add("sgo-props") }
             // OddsPapi prices through its own two sources (ODDSPAPI_API.md §6); off, this set is exactly what it was.
             if (oddsPapi) { add("oddspapi"); add("oddspapi-props") }
+            // Unabated Free: its own two sources, last in the order (UNABATED_API.md §3); off, this set is exactly what it was.
+            if (unabated) { add("unabated"); add("unabated-props") }
         }
 
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }

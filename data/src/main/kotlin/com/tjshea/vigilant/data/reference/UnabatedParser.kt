@@ -36,7 +36,7 @@ data class UnGroup(
 data class UnBoard(val groups: List<UnGroup>, val lastUpdatedMs: Long?)
 
 data class UnBetType(val id: Int, val name: String, val description: String, val hasPoints: Boolean?)
-data class UnSource(val id: Long, val name: String, val active: Boolean, val statusId: Int?)
+data class UnSource(val id: Long, val name: String, val active: Boolean, val statusId: Int?, val propsStatusId: Int? = null)
 data class UnLeague(val id: Long, val name: String, val fullName: String)
 data class UnPeriod(val id: Int, val name: String, val abbreviation: String)
 
@@ -88,7 +88,7 @@ object UnabatedParser {
     fun periods(raw: String): List<UnPeriod> = rows(raw).mapNotNull { r -> r.int("id")?.let { UnPeriod(it, r.str("name").orEmpty(), r.str("abbreviation").orEmpty()) } }
 
     fun sources(raw: String): List<UnSource> = rows(raw).mapNotNull { r ->
-        r.lng("id")?.let { UnSource(it, r.str("name").orEmpty(), r.bool("isActive") ?: true, r.int("statusId")) }
+        r.lng("id")?.let { UnSource(it, r.str("name").orEmpty(), r.bool("isActive") ?: true, r.int("statusId"), r.int("propsStatusId")) }
     }
 
     /** `/market/{league}/{type}/teams`: team id -> name (a dictionary keyed by id). */
