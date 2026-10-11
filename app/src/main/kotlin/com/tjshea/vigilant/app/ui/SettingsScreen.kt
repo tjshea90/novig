@@ -885,6 +885,16 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
         "A book or exchange whose two sides add up to too much (a book above 12%, an exchange such as ProphetX or Kalshi above 10%) is thin or careless: it is left out of every fair line and shown as \"wide\" in the books table.",
         s.ignoreWideQuotes, tag = "wideQuotesSwitch",
     ) { v -> onUpdate { it.copy(ignoreWideQuotes = v) } }
+    SwitchRow(
+        "One book per company",
+        "Books of one parent company (Hard Rock's sites, FanDuel and FanDuel YourWay, Caesars' two names, SGO's many clones) quote one line, so only one of them is listed and counted in a fair price.",
+        s.oneVotePerCompany, tag = "oneVotePerCompanySwitch",
+    ) { v -> onUpdate { it.copy(oneVotePerCompany = v) } }
+    SwitchRow(
+        "Ignore books with wrong-looking odds",
+        "A book whose odds are an extreme outlier next to the rest of the market, or put the favourite on the other side, is left out of the fair line (the bet's sheet lists it in amber).",
+        s.ignoreBadOdds, tag = "ignoreBadOddsSwitch",
+    ) { v -> onUpdate { it.copy(ignoreBadOdds = v) } }
 
     SectionTitle("Devig method (advanced)")
     Hint("How the sportsbooks' profit is taken out of a pair of odds. The methods differ most on long shots; Power is a good default.")

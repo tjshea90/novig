@@ -264,7 +264,7 @@ fun OpportunityDetail(
                 }
             }
             Text(
-                "★ sharp book · one book a company · greyed rows weren't used for this line's fair price · red rows looked wrong next to the rest of the market",
+                "★ sharp book · one book a company · greyed rows weren't used for this line's fair price · amber rows looked wrong next to the rest of the market",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),

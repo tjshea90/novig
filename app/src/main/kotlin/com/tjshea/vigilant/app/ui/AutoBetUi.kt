@@ -328,6 +328,22 @@ fun AutoBetSection(
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetAllAgreeNote"),
     )
 
+    // Vigilant's own scan feeds the auto-bet too (Tj, 2026-10-11).
+    Row(
+        Modifier.fillMaxWidth().toggleable(
+            value = s.autoBetVigilant, role = Role.Switch,
+            onValueChange = { on -> onUpdate { it.copy(autoBetVigilant = on) } },
+        ).padding(top = 4.dp, bottom = 2.dp).testTag("autoBetVigilant"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("Also bet Vigilant's own scanned bets", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
+        Switch(checked = s.autoBetVigilant, onCheckedChange = null)
+    }
+    Text(
+        "Bets from Vigilant's scan are placed only when they pass every rule here: the edge, odds, kinds, stake, the books-agree counts below and the sharp rule. Pregame only, one bet per market.",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
+    )
+
     Text("Books that must price both sides", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_TWO_SIDED_CHOICES, s.autoBetTwoSided, { "$it" }, modifier = Modifier.testTag("autoBetTwoSidedChips")) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }
     TypedIntField(NumberSpecs.count("books", 1, 12), s.autoBetTwoSided, "autoBetTwoSidedField", none = { false }) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }
