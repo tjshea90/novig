@@ -6368,3 +6368,18 @@ For the vigilant scanner:
 ```
 Review every book listed on sgo and parlayapi. Search online to see which books are from the same parent company and use this information for the exclusion rule in the app, if any changes are needed
 ```
+
+## 2026-10-11T14:02:35Z
+```
+For both cno and vigilant scanner, make a new feature that rates each bet from 1 star to 5 stars. Show the stars next to each bet. 1 star is the worst bet available (this doesn't mean it is a negative bet, just not as confident due to things such as lower positive EV values, sparse books calculating the fair odds, etc.) and 5 stars is an excellent bet (for example, all books agree that it is positive EV, at least one sharp book agrees it is positive EV, several books price the bet on both sides of the bet, and it has high positive EV value). Use half stars for the most accurate ratings. For example, a bet may be rated 2½ stars.
+
+Make the rating system yourself. It must be logical and sound and accurately rate each bet according to objective standards. Here is a non-exhaustive list of possible criteria to consider in the star rating system: 
+
+1) number of books which price the fair odds
+2) positive EV value
+3) whether sharp books agree that the bet is positive EV 
+4) the percentage of books which agree the bet is positive ev
+And any other criteria that can accurately rate bets. 
+
+Then in the auto bet settings, make a setting for the minimum rated bet to auto bet (for example, only bet 3½ Star bets or better).
+```
