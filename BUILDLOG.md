@@ -190,3 +190,4 @@ day that changes.
 | v0.88.9 | code 182 | 2026-10-10T21:06Z | v0.88.9: live bids and Autopilot use a 2% margin under Pinnacle's fair (was 3%): more fills
 | v0.88.10 | code 183 | 2026-10-10T21:14Z | v0.88.10: Pinnodds live page shows why the taker has bought nothing (looks and top reasons)
 | v0.88.11 | code 184 | 2026-10-11T00:36Z | v0.88.11: tennis in the auto-bet (from Vigilant's scan) and the bids, with one Tennis switch
+| v0.89.0 | code 185 | 2026-10-11T02:56Z | v0.89.0: Unabated (free) and OddsPapi Free (v4) added; Settings > APIs page with a switch, Test button and usage per API; keys rotate per key
