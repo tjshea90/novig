@@ -6498,3 +6498,8 @@ I have the live betting scanner turned on, but the bets are not dropping off the
 ```
 I have live games toggled on for the scanner. These bets are not dropping off, and it is not continuously scanning. Unless it is doing it in the background. If live games are toggled on  I want continuous, low latency, real time refreshing of odds and EV. As soon as positive EV is no longer on a bet, it should drop out of the list immediately. There should be a guard that if I bet any live game, it only places the bet if it can be filled at the odds listed in the scan
 ```
+
+## 2026-10-11T19:42:53Z
+```
+I have auto bet turned on. Why isn't it betting the 4 Star Bet in the screenshot? Also, for bet ratings, make a requirement that a bet be at least  2% positive ev to be rated 3½ stars or better
+```
