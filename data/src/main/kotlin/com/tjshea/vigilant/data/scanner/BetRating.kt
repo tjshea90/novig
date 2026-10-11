@@ -25,7 +25,8 @@ object BetRating {
     /** What a rating is worked out from. [spread]: the standard deviation of the pricing companies' fair chances for this side, null when unknown. */
     data class Inputs(
         val books: Int,
-        val agreeing: Int,
+        /** How many of the [books] say +EV alone; null = not known (an older record): the agreement share then scores as a middling 0.6. */
+        val agreeing: Int?,
         val ev: Double,
         val sharpAgrees: Boolean,
         val sharpAgainst: Boolean,
@@ -45,7 +46,7 @@ object BetRating {
     fun rate(i: Inputs): Rating {
         val books = i.books.coerceAtLeast(0)
         val coverage = when (books) { 0 -> 0.0; 1 -> 0.1; 2 -> 0.45; 3 -> 0.7; 4 -> 0.88; else -> 1.0 }
-        val agree = if (books == 0) 0.0 else (i.agreeing.coerceIn(0, books).toDouble() / books)
+        val agree = if (books == 0) 0.0 else i.agreeing?.let { it.coerceIn(0, books).toDouble() / books } ?: 0.6
         val edge = edgeScore(i.ev)
         val sharp = when {
             i.sharpAgainst -> 0.0
@@ -98,4 +99,34 @@ object BetRating {
     }
 
     fun text(stars: Double): String = String.format(Locale.US, "%.1f", stars)
+
+    /**
+     * Whether a sharp book agreed with the bet as [a] records it: true, false, or null (none priced it / not known). The live check's own answer when it was kept
+     * ([AtBet.sharpAgrees]); else the sharp veto's verdict (PASSED / VETOED) or, for a bid, whether the sharpest book's own fair was above its price.
+     */
+    fun sharpOf(a: com.tjshea.vigilant.data.tracker.AtBet): Boolean? = a.sharpAgrees ?: when (a.sharpVerdict) {
+        "PASSED" -> true
+        "VETOED" -> false
+        "ANCHORED" -> a.sharpEv?.let { it > 0.0 }
+        else -> null
+    }
+
+    /**
+     * The rating worked out from what a record holds ([a]: an older bet, a bid, an alert's ✓), null with no EV to judge. Companies pricing both sides are [AtBet.twoSided], else the
+     * books the fair line used (one a company); how many of them agree is [AtBet.agreeing], else unknown (a middling score). The spread comes from the page's books when they were kept.
+     */
+    fun estimate(a: com.tjshea.vigilant.data.tracker.AtBet): Rating? {
+        val ev = a.ev ?: a.checkEv ?: return null
+        val books = a.twoSided ?: a.fairBooks.map { com.tjshea.vigilant.engine.BookCompany.of(it) }.distinct().size.takeIf { it > 0 } ?: 0
+        val sharp = sharpOf(a)
+        val spread = a.fairSpread ?: spreadOf(a.books.mapNotNull { it.fair })
+        return rate(Inputs(books, a.agreeing, ev, sharpAgrees = sharp == true, sharpAgainst = sharp == false, spread = spread))
+    }
+
+    /** The rating of [a] as the record keeps it, or the estimate from it; null with neither. [Second]: whether it was estimated. */
+    fun of(a: com.tjshea.vigilant.data.tracker.AtBet?): Pair<Double, Boolean>? {
+        a ?: return null
+        a.stars?.let { return it to (a.starsEstimated == true) }
+        return estimate(a)?.let { it.stars to true }
+    }
 }

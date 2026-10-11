@@ -96,6 +96,15 @@ data class AtBet(
      * them, and CNO's game page is read for the top ones a little later ([com.tjshea.vigilant.data.study.ScanStudy]). Null: made at [atMs] (a placed bet's).
      */
     val checkAtMs: Long? = null,
+    /**
+     * The bet's 1-5 star rating when it was made ([com.tjshea.vigilant.data.scanner.BetRating], Tj 2026-10-11), the standard deviation of the books' fair chances it was rated on, and
+     * whether a sharp book agreed (true), said it wasn't +EV (false) or none priced it (null). [starsEstimated]: the rating was worked out afterwards from what the record holds
+     * (a bid's, or an older bet's: [com.tjshea.vigilant.data.scanner.BetRating.estimate]), not from the live book check.
+     */
+    val stars: Double? = null,
+    val fairSpread: Double? = null,
+    val sharpAgrees: Boolean? = null,
+    val starsEstimated: Boolean? = null,
 ) {
     companion object {
         /** Not a placed bet: a bet a scan listed, logged for the scan study (Tj, 2026-10-03), to see which kinds beat the close. */
@@ -186,6 +195,8 @@ object AtBets {
             sharpVerdict = v.verdict.name, sharpBook = v.book?.let(CnoBooks::name), sharpEv = v.ev, sharpConfirm = sharpConfirm,
             stakeRule = s.autoBetStake.label.takeIf { how == AtBet.HOW_AUTO }, fullKelly = fullKelly(c?.fairProbability ?: fair, cost),
             stake = stake, bankroll = s.bankroll, wallet = wallet,
+            stars = c?.rating?.stars, fairSpread = c?.spread,
+            sharpAgrees = c?.let { if (it.sharpAgrees) true else if (it.sharpAgainst) false else null },
         )
     }
 
@@ -205,6 +216,10 @@ object AtBets {
             fairMethod = f?.let { "${it.sourceUsed}/${it.method}" }, fairBooks = f?.booksUsed.orEmpty(), fairSharp = f?.sharpBooksUsed.orEmpty(),
             fairAgeSec = secs(oldest ?: newest ?: o.fairUpdatedMs, now),
             fullKelly = q?.kellyFraction, stake = stake, bankroll = s.bankroll, wallet = wallet,
+            // The books behind the fair line and how many of them agree (one a company), the sharp books' verdict and the 1-5 star rating, as the bet was rated when it was made.
+            twoSided = o.agreement.twoSided.takeIf { it > 0 }, agreeing = o.agreement.agreeing.takeIf { o.agreement.twoSided > 0 },
+            stars = o.rating?.stars, fairSpread = o.agreement.spread,
+            sharpAgrees = if (o.agreement.sharpAgrees) true else if (o.agreement.sharpAgainst) false else null,
         )
     }
 
@@ -226,7 +241,7 @@ object AtBets {
         // A CNO-priced bid's fair age is its data's (the older of the list's and the page's, when posted); a Vigilant bid keeps its Novig book's age as before.
         twoSided = b.books.takeIf { it > 0 }, fairAgeSec = if (b.listAgeSec != null || b.pageAgeSec != null) b.fairAgeSec?.toLong() else secs(b.bookAtMs, b.postedAtMs),
         fullKelly = fullKelly(b.fair, b.price), stake = b.paid.takeIf { it > 0.0 } ?: b.cost,
-    )
+    ).withEstimatedStars()
 
     /** A bet marked placed from a push alert's ✓: what the alert carried. */
     fun alert(a: com.tjshea.vigilant.data.alerts.EvAlert, now: Long, version: String? = null): AtBet = AtBet(
@@ -235,5 +250,11 @@ object AtBets {
         minutesToStart = minutes(a.startsAtMs, now), live = a.live, american = a.american, ev = a.ev, fair = a.fair,
         twoSided = a.books.takeIf { it > 0 }, agreeing = a.agreeing.takeIf { a.books > 0 },
         fullKelly = fullKelly(a.fair, price(a.american)), stake = a.stake,
-    )
+    ).withEstimatedStars()
+
+    /** [this] with the star rating worked out from what it holds, for a record that has no live book check behind it (a bid's, an alert's). */
+    private fun AtBet.withEstimatedStars(): AtBet {
+        val e = com.tjshea.vigilant.data.scanner.BetRating.estimate(this) ?: return this
+        return copy(stars = e.stars, starsEstimated = true, sharpAgrees = sharpAgrees ?: com.tjshea.vigilant.data.scanner.BetRating.sharpOf(this))
+    }
 }
