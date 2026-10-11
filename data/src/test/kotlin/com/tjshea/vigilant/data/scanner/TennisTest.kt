@@ -280,7 +280,9 @@ class TennisTest {
     @Test
     fun `tennis is turned on once for a saved file, and stays off once turned off`() {
         assertEquals(setOf("NFL", "MLB", "ATP", "WTA"), ScanSettings(leagues = setOf("NFL", "MLB"), schema = 6).migrate().leagues)
-        assertEquals(setOf("NFL"), ScanSettings(leagues = setOf("NFL"), schema = 7).migrate().leagues)
+        // v0.88.11: tennis is switched on once more (Tj, 2026-10-10), then a deliberate off sticks.
+        assertEquals(setOf("NFL", "ATP", "WTA"), ScanSettings(leagues = setOf("NFL"), schema = 14).migrate().leagues)
+        assertEquals(setOf("NFL"), ScanSettings(leagues = setOf("NFL"), schema = 15).migrate().leagues)
         // Chips: after Tj's first five.
         assertEquals(listOf("ATP", "WTA"), Leagues.ALL.drop(5).take(2).map { it.novigName })
     }
