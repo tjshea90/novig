@@ -191,3 +191,4 @@ day that changes.
 | v0.88.10 | code 183 | 2026-10-10T21:14Z | v0.88.10: Pinnodds live page shows why the taker has bought nothing (looks and top reasons)
 | v0.88.11 | code 184 | 2026-10-11T00:36Z | v0.88.11: tennis in the auto-bet (from Vigilant's scan) and the bids, with one Tennis switch
 | v0.89.0 | code 185 | 2026-10-11T02:56Z | v0.89.0: Unabated (free) and OddsPapi Free (v4) added; Settings > APIs page with a switch, Test button and usage per API; keys rotate per key
+| v0.89.1 | code 186 | 2026-10-11T03:07Z | v0.89.1: usage bars back on Settings > APIs (a green-amber-red bar under every key, plus a total per API)
