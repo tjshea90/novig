@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- What the FileProvider may hand to another app: the diagnostics file Tj shares with Claude (cache/diagnostics/), nothing else. -->
+<!-- What the FileProvider may hand to another app: the diagnostics file (cache/diagnostics/) and the bet history files (cache/bet-share/) Tj shares with Claude, nothing else. -->
 <paths>
     <cache-path name="diagnostics" path="diagnostics/" />
+    <cache-path name="bets" path="bet-share/" />
 </paths>
