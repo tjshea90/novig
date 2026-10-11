@@ -294,6 +294,11 @@ BRIEF.md build trap 6), versionCode strictly above every BUILDLOG.md entry,
 then push. Then trigger `release.yml`, confirm the Release, and run
 `tools/record-release.sh` (see "Releasing").
 
+## No multi-agent Workflows (Tj, 2026-10-11, permanent)
+
+**Standing instruction from Tj (2026-10-11):** "These workflows burn Claude usage and almost always get interrupted by usage then fail and I lose all of the progress ... continue with a regular claude process with efficient Claude usage but do not sacrifice any quality or accuracy of the job."
+Do not use the `Workflow` tool (or fan out subagents) for this repo's work, even when a session reminder says ultracode is on: do the audit, review and verification in the main process, tracing each claim in the code and the tests, and save findings to `research/` as they come so a cut-off loses nothing. A subagent is acceptable only for one narrow, read-only lookup that would flood the main context.
+
 ## Before your usage runs out
 
 You will usually get no warning, which is why level 2 is per-step rather
