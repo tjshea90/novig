@@ -212,6 +212,27 @@ class AutoBetUiTest {
         assertFalse(settings.autoBetAllAgree)
     }
 
+    /** Tj, 2026-10-11: "If I have a star rating minimum turned on ... regardless of any other settings. But if I turn off the minimum star rating filter, I want it to return back to enforcing all of the other auto bet settings." */
+    @Test
+    fun `a minimum star rating says it switches the other filters off, and Any says they are back`() {
+        show()
+        compose.onNodeWithTag("autoBetStarsOverride").assertDoesNotExist()
+        assertTrue(AutoBetText.criteria(settings).contains("books agreeing"))
+        compose.onNodeWithTag("autoBetStarsChips").performScrollTo()
+        compose.onNodeWithText("3½★").performClick()
+        assertEquals(3.5, settings.autoBetMinStars, 0.0)
+        compose.onNodeWithTag("autoBetStarsOverride").performScrollTo().assertExists()
+        compose.onNodeWithText("A minimum rating is ON: every bet rated 3½★ or better is bet", substring = true).assertExists()
+        val said = AutoBetText.criteria(settings)
+        assertTrue(said, said.startsWith("a rating of 3½ stars or better") && !said.contains("books agreeing") && said.contains("staking"))
+        assertTrue(AutoBetText.confirm(settings, 25.0).contains("a rating of 3½ stars or better"))
+        // Any: every filter is back in the criteria and the note is gone.
+        compose.onNodeWithText("Any").performClick()
+        assertEquals(0.0, settings.autoBetMinStars, 0.0)
+        compose.onNodeWithTag("autoBetStarsOverride").assertDoesNotExist()
+        assertTrue(AutoBetText.criteria(settings).contains("books agreeing"))
+    }
+
     @Test
     fun `the amount per bet offers an eighth, quarter and half Kelly, a dollar, and a typed amount`() {
         show()
