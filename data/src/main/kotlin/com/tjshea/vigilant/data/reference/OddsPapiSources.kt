@@ -69,9 +69,10 @@ class OddsPapiFeed(private val client: OddsPapiClient, private val clock: () -> 
         val now = clock()
         val tournament = tournamentFor(league) ?: throw ReferenceException("OddsPapi: no ${league.novigName} tournament in this key's catalogue")
         val markets = marketsFor(league)
-        val wanted = OpBooks.wanted(settings.referenceBooks, settings.opExtraBooks)
         val cat = runCatching { bookCatalog() }.getOrDefault(emptyList())
-        val slugs = OpBooks.slugsFor(wanted, cat)
+        // Every book: no `bookmakers` filter at all (the key's whole catalogue answers) and every catalogue book is kept.
+        val wanted = if (settings.opAllBooks && cat.isNotEmpty()) OpBooks.everyBook(cat) else OpBooks.wanted(settings.referenceBooks, settings.opExtraBooks)
+        val slugs = if (settings.opAllBooks && cat.isNotEmpty()) emptyList() else OpBooks.slugsFor(wanted, cat)
         val appKeyOf = keyTable(cat)
         val bookParam = if (slugs.isEmpty()) emptyList() else listOf("bookmakers" to slugs.joinToString(","))
         val wantProps = MarketFamily.PLAYER_PROPS in settings.families

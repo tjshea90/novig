@@ -225,6 +225,20 @@ class OddsPapiTest {
         assertTrue("an unmapped prop type is left out", ms.count { it.kind == LineKind.PLAYER_PROP } == 1)
     }
 
+    @Test fun everyBookModeAsksForNoBookFilterKeepsEveryCatalogueBookAndCountsRegionalClonesOnce() = runTest {
+        assertEquals("bet365", OpBooks.appKey("bet365.de")); assertEquals("bet365", OpBooks.appKey("bet365")); assertEquals("betmgm", OpBooks.appKey("betmgm.co.uk"))
+        assertEquals("bovada", OpBooks.appKey("bovada.lv")); assertEquals("betonlineag", OpBooks.appKey("betonline.ag")); assertNull(OpBooks.appKey("novig.us", "Novig"))
+        val both = mlRows + listOf(price("obscurebook", 141, 1.88, 141, changed = now - 3_000_000L), price("obscurebook", 142, 1.97, 141, changed = now - 3_000_000L))
+        handler = { r -> if (r.requestUrl!!.encodedPath == "/en/fixtures/odds/main") ok("[" + fixture(mapOf("pinnacle" to mlRows, "obscurebook" to both.filter { it.contains("obscurebook") }), meta("pinnacle" to "", "obscurebook" to "")) + "]") else route(r) }
+        val picked = OpGamesSource(OddsPapiFeed(client()) { clockMs }, { clockMs }).odds(nfl, settings(alt = false, families = setOf(MarketFamily.MONEYLINE)))
+        assertTrue("the picker keeps only Pinnacle here", picked.events.flatMap { it.markets }.none { it.bookKey == "obscurebook" })
+        assertTrue(requests.any { it.requestUrl!!.encodedPath == "/en/fixtures/odds/main" && it.requestUrl!!.queryParameter("bookmakers") != null })
+        requests.clear(); clockMs += OddsPapiFeed.TTL_MS + 1
+        val all = OpGamesSource(OddsPapiFeed(client()) { clockMs }, { clockMs }).odds(nfl, settings(alt = false, families = setOf(MarketFamily.MONEYLINE)).copy(opAllBooks = true))
+        assertTrue("every book the key carries is kept", all.events.flatMap { it.markets }.any { it.bookKey == "obscurebook" })
+        assertTrue("and no book filter is sent", requests.filter { it.requestUrl!!.encodedPath == "/en/fixtures/odds/main" }.all { it.requestUrl!!.queryParameter("bookmakers") == null })
+    }
+
     @Test fun theGamesSourceAndThePropsSourceTakeTheirOwnShare() {
         assertTrue(convert(full(), games = true, props = false)!!.markets.none { it.kind == LineKind.PLAYER_PROP })
         assertTrue(convert(full(), games = false, props = true)!!.markets.all { it.kind == LineKind.PLAYER_PROP })

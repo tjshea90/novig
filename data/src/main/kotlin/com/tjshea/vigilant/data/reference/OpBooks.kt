@@ -40,8 +40,18 @@ object OpBooks {
         val n = norm(slug)
         val byName = name?.let { norm(it) }
         if (n in EXCLUDED || byName in EXCLUDED) return null
-        return TO_APP[n] ?: byName?.let { TO_APP[it] } ?: n.takeIf { it.isNotEmpty() }
+        TO_APP[n]?.let { return it }
+        byName?.let { TO_APP[it] }?.let { return it }
+        // A regional clone of one operator ("bet365.de", "betmgm.co.uk", "bovada.lv") is the same book for the fair line: it counts once, under the operator's own key.
+        if ('.' in slug) {
+            val base = norm(slug.substringBefore('.'))
+            if (base.isNotEmpty() && base !in EXCLUDED) return TO_APP[base] ?: base
+        }
+        return n.takeIf { it.isNotEmpty() }
     }
+
+    /** Every Vigilant book key the key's catalogue carries (excluded books and clones folded): what "every book" means for [ScanSettings.opAllBooks]. */
+    fun everyBook(catalog: List<OpBookInfo>): Set<String> = catalog.mapNotNull { appKey(it.slug, it.name) }.toSet()
 
     fun title(appKey: String): String = TITLES[appKey] ?: TheOddsApiClient.bookTitle(appKey)
 

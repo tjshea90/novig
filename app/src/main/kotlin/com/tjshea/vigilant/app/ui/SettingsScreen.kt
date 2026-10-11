@@ -1321,6 +1321,7 @@ private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportAct
     SwitchRow(com.tjshea.vigilant.app.OpText.SWITCH_TITLE, com.tjshea.vigilant.app.OpText.switchSub(state.opKeys.isNotEmpty()), s.oddsPapi, tag = "oddsPapiSwitch") { v -> onUpdate { it.copy(oddsPapi = v) } }
     if (s.oddsPapi) {
         SwitchRow("Extra books: Circa, SuperBook, bet365", "Price the fair line with them too (each must show both sides and be fresh, like every book).", s.opExtraBooks, tag = "opExtraSwitch") { v -> onUpdate { it.copy(opExtraBooks = v) } }
+        SwitchRow("Every book for the fair average", "Price the fair line with every book OddsPapi carries, not just the books picked in Settings: each is devigged on its own and averaged (Market average / Blend), regional clones of one operator count once, and wide-margin or stale books are still left out. Heavier replies.", s.opAllBooks, tag = "opAllBooksSwitch") { v -> onUpdate { it.copy(opAllBooks = v) } }
         SwitchRow("Alternate lines", "Read every game in depth for each book's alternate spreads and totals (one request a game). Off: the main lines of a whole league come in one request.", s.opAltLines, tag = "opAltSwitch") { v -> onUpdate { it.copy(opAltLines = v) } }
         Hint(com.tjshea.vigilant.app.OpText.REPLACES)
     }

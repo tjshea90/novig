@@ -390,6 +390,12 @@ data class ScanSettings(
     /** OddsPapi: read every game in depth for its alternate lines (one request a game); off, the main lines of a whole tournament come in one request. */
     val opAltLines: Boolean = true,
     /**
+     * OddsPapi v5: price the fair line with EVERY book the key carries (Tj, 2026-10-11: "use as many as possible to get fair odds averages"), not only the reference books picked in Settings and the extras. Each book is
+     * devigged on its own and averaged (Market average / Blend), so more books make the average and its median guard steadier; regional clones of one operator (bet365.de, bet365.es) count once, and
+     * books with a wide margin or stale prices are still left out ([WideQuotes], the freshness rule). Off by default.
+     */
+    val opAllBooks: Boolean = false,
+    /**
      * Unabated Free API (Tj, 2026-10-11; UNABATED_API.md): DraftKings, FanDuel, MGM, Caesars, theScore and Fanatics' lines and props, 15 s delayed, one request per 5 s, no credits. On (and a key saved and
      * answering) it joins the scan LAST in the source order, so it prices only the lines no better feed sent (a fallback by line), and nothing else rests for it. Off by default; off, the app is what it was.
      */
