@@ -62,6 +62,8 @@ class PinnapiClient(
         val baseUrl: String,
         val authHeader: String,
         val props: Boolean,
+        /** False: switched off in Settings; the host is never asked (Tj, 2026-10-11). */
+        val enabled: () -> Boolean = { true },
     )
 
     /** pinnapi alone (the app before v0.16.0, and the tests written for it). */
@@ -106,7 +108,7 @@ class PinnapiClient(
         boards[sport to props]?.takeIf { clock() - it.fetchedAtMs < (if (it.host == FIRST_NAME) minOf(share, FIRST_SHARE_MS) else share) }?.let { return it }
         var problem: String? = null
         for (host in listOfNotNull(first()) + hosts) {
-            if (host.pool.keyCount() == 0) continue
+            if (!host.enabled() || host.pool.keyCount() == 0) continue
             val events = try {
                 fetch(host, sport, props && host.props)
             } catch (e: AllKeysExhaustedException) {
@@ -172,8 +174,8 @@ class PinnapiClient(
         const val FIRST_NAME = "Pinnodds"
         const val FIRST_SHARE_MS = 15_000L
 
-        fun pinnapi(pool: KeyPool, baseUrl: String = PINNAPI_URL) = Host("pinnapi", pool, baseUrl, "x-portal-apikey", props = false)
-        fun pinnwire(pool: KeyPool, baseUrl: String = PINNWIRE_URL) = Host("PinnWire", pool, baseUrl, "x-api-key", props = true)
+        fun pinnapi(pool: KeyPool, baseUrl: String = PINNAPI_URL, enabled: () -> Boolean = { true }) = Host("pinnapi", pool, baseUrl, "x-portal-apikey", props = false, enabled = enabled)
+        fun pinnwire(pool: KeyPool, baseUrl: String = PINNWIRE_URL, enabled: () -> Boolean = { true }) = Host("PinnWire", pool, baseUrl, "x-api-key", props = true, enabled = enabled)
 
         /** Pinnodds' REST board: the same `/kit/v1/markets` answer as PinnWire's (its docs: one request a sport, specials with `include_specials=1`), from Pinnacle's own push store, written under a second behind Pinnacle. */
         fun pinnodds(pool: KeyPool, baseUrl: String = PINNODDS_URL) = Host(FIRST_NAME, pool, baseUrl, "x-api-key", props = true)

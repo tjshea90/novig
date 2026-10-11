@@ -400,6 +400,13 @@ data class ScanSettings(
      */
     val oddsPapiFree: Boolean = false,
     /**
+     * Per-API switches (Tj, 2026-10-11: "toggle on and off any apis ... not using any API at all which is toggled off"). [usePinnacle] stays the switch for the Pinnacle boards as a whole; these turn the three
+     * hosts behind it off one by one: PinnWire, pinnapi and the Pinnodds account (its REST board and its live engine). On by default, as the app always was.
+     */
+    val usePinnwire: Boolean = true,
+    val usePinnapi: Boolean = true,
+    val usePinnodds: Boolean = true,
+    /**
      * Research mode (Tj, 2026-10-09: "just make it simple for me to run"): ONE switch that turns on every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bid lab
      * and (with a Pinnodds key saved) Pinnodds live in PAPER mode. It never turns on a real-money feature. Off by default; STOP ALL stops it.
      */

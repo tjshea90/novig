@@ -1603,8 +1603,8 @@ class AppContainer(private val app: Application) {
         val website = s.pinnWebsite.website
         // The engine reads its feed when it starts: a changed choice restarts it.
         if (pinnRunner.running && pinnRunWebsite != null && pinnRunWebsite != website) pinnRunner.stop("switching the Pinnacle feed")
-        if (!website && keyStore.current(ApiProvider.PINNODDS).isEmpty()) {
-            if (pinnRunner.running) pinnRunner.stop("No Pinnodds key saved (Settings › Pinnodds live).")
+        if (!website && (!s.usePinnodds || keyStore.current(ApiProvider.PINNODDS).isEmpty())) {
+            if (pinnRunner.running) pinnRunner.stop(if (!s.usePinnodds) "Pinnodds is switched off (Settings › APIs)." else "No Pinnodds key saved (Settings › Pinnodds live).")
             shadowTick(false)
             LiveFeedService.stop(app)
             return
@@ -1694,8 +1694,8 @@ class AppContainer(private val app: Application) {
     private val pinnacle = PinnapiClient(
         http, json,
         listOf(
-            PinnapiClient.pinnwire(KeyPool(QuotaPolicy.PINNWIRE, { keyStore.current(ApiProvider.PINNWIRE) }, usage)),
-            PinnapiClient.pinnapi(KeyPool(QuotaPolicy.PINNAPI, { keyStore.current(ApiProvider.PINNAPI) }, usage)),
+            PinnapiClient.pinnwire(KeyPool(QuotaPolicy.PINNWIRE, { keyStore.current(ApiProvider.PINNWIRE) }, usage), enabled = { settingsStore.flow.value?.usePinnwire != false }),
+            PinnapiClient.pinnapi(KeyPool(QuotaPolicy.PINNAPI, { keyStore.current(ApiProvider.PINNAPI) }, usage), enabled = { settingsStore.flow.value?.usePinnapi != false }),
         ),
         // SGO Pro mode with a Pinnodds key (Tj, 2026-10-09): Pinnodds' board is asked first, so Pinnacle's price in every scan, bid and EV is the fresh one; the others carry on if it fails.
         first = { settingsStore.flow.value?.let { s -> if (pinnoddsActive(s)) pinnoddsHost else null } },
@@ -1703,7 +1703,7 @@ class AppContainer(private val app: Application) {
     private val pinnoddsHost = PinnapiClient.pinnodds(KeyPool(QuotaPolicy.PINNODDS, { keyStore.current(ApiProvider.PINNODDS) }, usage))
 
     /** SGO Pro or OddsPapi is on and a Pinnodds key is saved: Pinnodds is no longer dormant and its Pinnacle board prices the scan before any other Pinnacle feed. */
-    fun pinnoddsActive(s: ScanSettings): Boolean = AppBook.isNovig && (s.sgoPro || s.oddsPapi) && keyStore.current(ApiProvider.PINNODDS).isNotEmpty()
+    fun pinnoddsActive(s: ScanSettings): Boolean = AppBook.isNovig && s.usePinnodds && (s.sgoPro || s.oddsPapi) && keyStore.current(ApiProvider.PINNODDS).isNotEmpty()
 
     /** For Diagnostics: which feed's Pinnacle board the last scan used. */
     fun pinnacleFeedNote(now: Long = System.currentTimeMillis()): String =
@@ -1786,7 +1786,7 @@ class AppContainer(private val app: Application) {
     fun lowUsagePlan(settings: ScanSettings): LowUsageBids.Plan {
         val available = buildSet {
             if (settings.useKalshi) add(LowUsageBids.FEED_KALSHI)
-            if (settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty())) add(LowUsageBids.FEED_PINNACLE)
+            if (settings.usePinnacle && ((settings.usePinnwire && keyStore.current(ApiProvider.PINNWIRE).isNotEmpty()) || (settings.usePinnapi && keyStore.current(ApiProvider.PINNAPI).isNotEmpty()))) add(LowUsageBids.FEED_PINNACLE)
             if (settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) add(LowUsageBids.FEED_PROPLINE)
             if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) add(LowUsageBids.FEED_PARLAY)
         }
@@ -1820,7 +1820,7 @@ class AppContainer(private val app: Application) {
     }
 
     internal fun baseReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
-        val pinnacleOn = settings.usePinnacle && (keyStore.current(ApiProvider.PINNWIRE).isNotEmpty() || keyStore.current(ApiProvider.PINNAPI).isNotEmpty() || pinnoddsActive(settings))
+        val pinnacleOn = settings.usePinnacle && ((settings.usePinnwire && keyStore.current(ApiProvider.PINNWIRE).isNotEmpty()) || (settings.usePinnapi && keyStore.current(ApiProvider.PINNAPI).isNotEmpty()) || pinnoddsActive(settings))
         if (pinnacleOn) add(pinnacle)
         // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (2 credits a league saved).
         parlayOdds.alternates = !pinnacleOn
