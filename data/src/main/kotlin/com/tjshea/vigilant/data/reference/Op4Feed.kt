@@ -109,7 +109,18 @@ class Op4Feed(
     private fun fairSpentToday(): Int = store.get("fair|${clock() / OddsPapi4Client.DAY_MS}", OddsPapi4Client.DAY_MS)?.toIntOrNull() ?: 0
     private fun countFair() = store.put("fair|${clock() / OddsPapi4Client.DAY_MS}", (fairSpentToday() + 1).toString())
 
-    private suspend fun doRead(league: League, settings: ScanSettings): LeagueRead {
+    private suspend fun doRead(league: League, settings: ScanSettings): LeagueRead = try {
+        read2(league, settings)
+    } catch (e: com.tjshea.vigilant.data.keys.CreditsHeldBackException) {
+        // The allowance is down to its reserve: no quotes from this feed now, and no failed scan for it.
+        lastReads[league.novigName] = "stopped: ${e.message}"
+        LeagueRead(clock(), emptyList(), emptyList())
+    } catch (e: com.tjshea.vigilant.data.keys.AllKeysExhaustedException) {
+        lastReads[league.novigName] = "stopped: monthly requests used up"
+        LeagueRead(clock(), emptyList(), emptyList())
+    }
+
+    private suspend fun read2(league: League, settings: ScanSettings): LeagueRead {
         val now = clock()
         val sport = OpBooks.sportId(league) ?: return LeagueRead(now, emptyList(), emptyList())
         val acc = client.lastAccount ?: runCatching { client.account() }.getOrNull()
