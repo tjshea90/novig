@@ -104,7 +104,25 @@ object AutoBet {
         val kinds: Set<BetKind> = BetKind.entries.toSet(),
         /** The fewest stars ([com.tjshea.vigilant.data.scanner.BetRating]) a bet needs; 0 = any. */
         val minStars: Double = 0.0,
-    )
+    ) {
+        /**
+         * A minimum star rating is on (Tj, 2026-10-11: "If I have a star rating minimum turned on, I want the app to auto bet all of the scanned bets with at least that rating, regardless of any other
+         * settings. But if I turn off the minimum star rating filter, I want it to return back to enforcing all of the other auto bet settings"): the rating decides WHICH bets are placed, so the
+         * selection filters (edge, favourite bar, odds limits, kinds, books agreeing, the sharp rule, the trap guard, the small-prop guard) are not applied. What stays whatever the rating says is
+         * the safety under them ([starsKept]): the dollar limits, pregame, a fresh Novig price and fair, a price that still matches, a bet that is still +EV, an injured player, one bet a market.
+         */
+        val byStars: Boolean get() = minStars > 0.0
+
+        /** The least edge a bet's page is read for and an order may still go at: [minEv], or only the noise floor ([MIN_EV_FLOOR]) while the rating decides. */
+        val readEv: Double get() = if (byStars) MIN_EV_FLOOR else minEv
+    }
+
+    /** What still applies while a minimum star rating decides, for the Auto-bet tab to say (and a test to pin). */
+    const val starsKept: String = "the dollar limits (per bet, per day, per game), pregame only, a fresh Novig price and fair odds, a price that still matches, a bet that is still +EV, an injured player, and one bet a market"
+
+    /** The "too good to be true" cap's reason, or null: an edge over [MAX_SANE_EV] is usually a stale or mismatched price (the rating cannot see that), so it is never bet unattended. */
+    fun tooGoodReason(ev: Double): String? =
+        if (ev > MAX_SANE_EV) "its edge ${percent(ev)} is over ${percent(MAX_SANE_EV)}, which is usually a stale or mismatched price (place it by hand if you trust it)" else null
 
     fun rules(s: ScanSettings) = Rules(
         minBooks = s.autoBetBooks.coerceIn(2, MAX_BOOKS),
@@ -164,6 +182,12 @@ object AutoBet {
      * American odds, for the longest-odds limit.
      */
     fun judge(rules: Rules, shownEv: Double, check: CnoBooks.Check, american: Int, kind: BetKind? = null): String? {
+        // The rating decides which bets go: only the cap and "the books' own line says +EV" apply, then [starsReason] (the caller's) holds the rating to the minimum.
+        if (rules.byStars) {
+            tooGoodReason(shownEv)?.let { return it }
+            val own = check.ev
+            return if (own == null || own <= 0.0) "the books' own fair line says ${own?.let(::percent) ?: "nothing"}, not +EV" else null
+        }
         if (kind != null && kind !in rules.kinds) return "${kind.label.lowercase()} aren't among the kinds of bet you auto-bet"
         if (shownEv < rules.minEv - 1e-9) return "its edge ${percent(shownEv)} is under your ${percent(rules.minEv)} minimum"
         // The bar a bet must clear (Tj, 2026-10-07, proposals 4 and 5): the minimum, and for a favorite more (the edge a short price keeps by the close is smaller), judged on the LOWER
@@ -175,7 +199,7 @@ object AutoBet {
             return if (own != null && own < shownEv - 1e-9) "the books' own check puts its edge at ${percent(own)}, under the ${percent(bar)} it needs (the lower of CNO's and the books' edge is used)"
             else "it is a favorite and its edge ${percent(shownEv)} is under the ${percent(bar)} favorites need"
         }
-        if (shownEv > MAX_SANE_EV) return "its edge ${percent(shownEv)} is over ${percent(MAX_SANE_EV)}, which is usually a stale or mismatched price (place it by hand if you trust it)"
+        tooGoodReason(shownEv)?.let { return it }
         // (No odds in the words: the report counts bets by reason, and each price would be a reason of its own.)
         if (tooLong(rules.maxOdds, american)) return "its odds are longer than your ${Odds.formatAmerican(rules.maxOdds)} limit"
         if (tooShort(rules.minOdds, american)) return "its odds are shorter than your ${Odds.formatAmerican(rules.minOdds)} limit"
@@ -193,10 +217,11 @@ object AutoBet {
      * the Pinnacle-priced fair): the kinds, the minimum (and the favourite's extra), the too-good-to-be-true cap and the odds limits. There is no books page to check it against.
      */
     fun judgeScan(rules: Rules, ev: Double, american: Int, kind: BetKind?): String? {
+        if (rules.byStars) return tooGoodReason(ev)
         if (kind != null && kind !in rules.kinds) return "${kind.label.lowercase()} aren't among the kinds of bet you auto-bet"
         val bar = evBar(rules, american)
         if (ev < bar - 1e-9) return "its edge ${percent(ev)} is under the ${percent(bar)} it needs"
-        if (ev > MAX_SANE_EV) return "its edge ${percent(ev)} is over ${percent(MAX_SANE_EV)}, which is usually a stale or mismatched price (place it by hand if you trust it)"
+        tooGoodReason(ev)?.let { return it }
         if (tooLong(rules.maxOdds, american)) return "its odds are longer than your ${Odds.formatAmerican(rules.maxOdds)} limit"
         if (tooShort(rules.minOdds, american)) return "its odds are shorter than your ${Odds.formatAmerican(rules.minOdds)} limit"
         return null
@@ -210,6 +235,7 @@ object AutoBet {
      */
     fun judgeVigilant(rules: Rules, ev: Double, american: Int, kind: BetKind?, twoSided: Int, agreeing: Int): String? {
         judgeScan(rules, ev, american, kind)?.let { return it }
+        if (rules.byStars) return null
         if (twoSided < rules.twoSided) return "${books(twoSided)} price${if (twoSided == 1) "s" else ""} both sides (you need ${rules.twoSided})"
         if (agreeing < rules.minBooks) return "${books(agreeing)} say${if (agreeing == 1) "s" else ""} +EV on their own (you need ${rules.minBooks})"
         if (rules.allAgree && agreeing < twoSided) return "only $agreeing of $twoSided books say +EV on their own (you need every one)"
