@@ -42,7 +42,7 @@ object Op4Odds {
         val header = OpFixture(
             id, head.lng("sportId")?.toInt(), head.lng("tournamentId"), head.str("tournamentName").orEmpty(), head.str("categoryName").orEmpty(),
             UnabatedParser.iso(head.str("trueStartTime")) ?: UnabatedParser.iso(head.str("startTime")), status, status == 1, head.lng("participant1Id"),
-            head.str("participant1Name").orEmpty(), head.str("participant2Name").orEmpty(), (head["externalProviders"].obj())?.str("pinnacleId"), emptyMap(), emptyList(),
+            head.str("participant1Name").orEmpty(), head.str("participant2Name").orEmpty(), (head["externalProviders"].obj())?.str("pinnacleId"), emptyMap(), emptyMap(), emptyList(),
         )
         val books = top.firstOrNull { it.first == "bookmakerOdds" }?.second?.let { JsonSplit.members(it) }.orEmpty()
         return Game(header, books)
