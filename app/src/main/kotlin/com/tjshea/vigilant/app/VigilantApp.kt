@@ -1808,17 +1808,19 @@ class AppContainer(private val app: Application) {
      * it"): ParlayAPI and PropLine side by side, The Odds API last, each only while it's on with a key, and none while Vigilant's scanner is
      * asleep (CNO only). Display only: never a fair line.
      */
-    val otherBooks = com.tjshea.vigilant.data.reference.OtherBooks(parlayOdds, propLine, oddsApi, json, on = {
-        val s = currentSettings()
-        // Every API that is switched on (and keyed) is asked, none that is off (Tj, 2026-10-11): SportsGameOdds Pro and OddsPapi no longer stand in for the other three.
-        com.tjshea.vigilant.data.reference.OtherBooks.Sources(
-            parlay = s.vigilantOn && parlayActive(),
-            propLine = s.vigilantOn && s.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty(),
-            oddsApi = s.vigilantOn && s.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty(),
-            sgo = s.vigilantOn && sgoActive(s),
-            op = s.vigilantOn && opActive(s),
-        )
-    }, sgo = sgoClient, op = { league -> opFeed.read(league, currentSettings().let { it.copy(families = it.families + com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS) }).props })
+    val otherBooks = com.tjshea.vigilant.data.reference.OtherBooks(parlayOdds, propLine, oddsApi, json, on = { otherBookSources(currentSettings()) }, sgo = sgoClient, op = { league -> opFeed.read(league, currentSettings().let { it.copy(families = it.families + com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS) }).props })
+
+    /**
+     * Which APIs a tapped bet's other-books sheet asks: every one that is switched on and keyed, none that is off (Tj, 2026-10-11): SportsGameOdds Pro and OddsPapi no longer stand in for the other three.
+     * Nothing at all while Vigilant's scanner is asleep (CNO only).
+     */
+    internal fun otherBookSources(s: ScanSettings): com.tjshea.vigilant.data.reference.OtherBooks.Sources = com.tjshea.vigilant.data.reference.OtherBooks.Sources(
+        parlay = s.vigilantOn && s.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty(),
+        propLine = s.vigilantOn && s.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty(),
+        oddsApi = s.vigilantOn && s.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty(),
+        sgo = s.vigilantOn && sgoActive(s),
+        op = s.vigilantOn && opActive(s),
+    )
 
     /**
      * Moves keys saved by v0.6.0 and earlier (encrypted with a Keystore key, which a backup
