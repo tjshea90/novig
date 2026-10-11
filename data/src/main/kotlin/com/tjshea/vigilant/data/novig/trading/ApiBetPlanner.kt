@@ -185,6 +185,14 @@ object ApiBetPlanner {
             return no("Novig's price moved: it was listed at ${american(listed)} and the best now is ${american(best.price)}. Nothing is bet unless it can fill at the listed odds: look at the list again.")
         }
         val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = live)
+        // No money ever goes on a negative-EV bet (Tj, 2026-10-11: "If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it at all ... No money should ever
+        // go on a negative ev bet"): by hand too. This supersedes the 2026-10-02 "no minimum edge by hand" for a NEGATIVE edge only: a hand bet still needs no minimum, but not less than zero.
+        if (bestQuote.evPercent < -1e-9) {
+            return no(
+                "This bet is negative EV now: Novig's best price is ${american(best.price)} against fair odds of ${american(target.fair)}, " +
+                    "${percent(bestQuote.evPercent)} EV${if (live) " with Novig's live fee" else ""}. Nothing is bet on a negative-EV price.",
+            )
+        }
         if (!limits.manual && bestQuote.evPercent < limits.minEv - 1e-9) {
             // Still +EV, only under Tj's own minimum: say that, and where it's set (Tj, 2026-10-02: "Why is this saying the edge is gone? It's
             // the same odds, and they are positive ev": +2.4% under his +3% read as "The edge is gone").
@@ -210,6 +218,8 @@ object ApiBetPlanner {
             // Live: never reach past the listed price (the order is placed to fill at those odds or better, or not at all).
             if (listed != null && level.price > listed + 1e-9) break
             val q = EvMath.quote(target.fair, level.price, fee, eventLive = live)
+            // Never past a level that is negative EV, by hand included.
+            if (q.evPercent < -1e-9) break
             if (!limits.manual && q.evPercent < limits.minEv - 1e-9) break
             val perContract = q.cost * EvMath.CONTRACT_PAYOUT_DOLLARS
             val take = minOf(level.contracts, Math.floor(dollarsLeft / perContract + 1e-9).toLong())
