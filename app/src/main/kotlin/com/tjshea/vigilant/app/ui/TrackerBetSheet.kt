@@ -124,6 +124,7 @@ fun BetSheetContent(
     ) {
         Column {
             Text(bet.selection, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            BetStars(bet, large = true)
             Text("${bet.marketLabel} · ${bet.eventName}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 listOf(bet.league, Format.startTime(bet.startsTs), if (open) TrackerText.startsIn(bet.startsTs, now) else null).filter { !it.isNullOrBlank() }.joinToString(" · "),
@@ -141,6 +142,7 @@ fun BetSheetContent(
 
         // ---- What happened / what it's waiting for ----
         StatusCard(bet, now)
+        BetRecordCard(bet, now)
 
         // ParlayAPI's call on this open bet at the price bet, only on a tap (5 credits; PARLAY_API.md §6.4).
         if (open && !started && !novigOnly) {

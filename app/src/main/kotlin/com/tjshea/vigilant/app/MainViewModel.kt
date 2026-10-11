@@ -2182,6 +2182,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * and every bid posted ([com.tjshea.vigilant.data.tracker.BetHistoryExport]), written one line at a time so a year of hundreds of bets a day never sits in memory as text; saved to
      * Downloads/Vigilant and handed to Android's share sheet. Never throws: a failure (an OutOfMemoryError too) is a toast and the app carries on.
      */
+    /** What the day-by-day archive last said, for the Share card ("12 day files (480 KB) kept, 2 copied to Downloads/Vigilant/bets"). */
+    fun betArchiveNote(): String? = c.betArchiveNote
+
     fun shareBets(range: BetShare.Range) {
         if (_betShare.value.busy) return
         viewModelScope.launch {
