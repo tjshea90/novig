@@ -47,6 +47,8 @@ data class LiveScanStatus(
     val games: Int = 0,
     val watched: Int = 0,
     val shown: Int = 0,
+    /** Novig books held right now among the markets watched (the socket delivering). */
+    val books: Int = 0,
     /** Rows that went off the list for being older than [LiveScan.MAX_AGE_MS] (or for a feed problem), since the lane started. */
     val dropped: Long = 0,
     /** How old the oldest shown row's feeds are right now (null with no rows). */

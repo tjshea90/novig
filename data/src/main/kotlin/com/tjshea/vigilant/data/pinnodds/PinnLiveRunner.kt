@@ -183,10 +183,12 @@ class PinnLiveRunner(
     private val novigGameAt = HashMap<String, Long>()
     private val novigMarketAt = HashMap<String, Long>()
     private var novigAnyAt = 0L
+    private var watchIds: List<String> = emptyList()
+    private var lastWatchAssertMs = 0L
     private var scanDropped = 0L
 
     private fun reset() {
-        scanByMarket.clear(); novigGameAt.clear(); novigMarketAt.clear(); novigAnyAt = 0L; scanDropped = 0L
+        scanByMarket.clear(); novigGameAt.clear(); novigMarketAt.clear(); novigAnyAt = 0L; watchIds = emptyList(); lastWatchAssertMs = 0L; scanDropped = 0L
         book = PinnBook(config().method)
         book.versionListener = onVersion
         catalogEvents = emptyList(); catalogMarkets = emptyList(); targetsByEvent.clear(); targetsByMarket.clear(); armedUntil.clear(); follows.clear(); probes.clear()
@@ -360,18 +362,36 @@ class PinnLiveRunner(
             board.publish(emptyList(), LiveScanStatus(on = true, games = matchedGames, watched = watched, dropped = scanDropped, reason = problem))
             return
         }
+        fun nothing(why: String) {
+            scanDropped += scanByMarket.values.sumOf { it.size }
+            scanByMarket.clear()
+            board.publish(emptyList(), LiveScanStatus(on = true, games = matchedGames, watched = watched, dropped = scanDropped, reason = why))
+        }
+        // What is missing, said exactly (Tj, 2026-10-11, a screenshot read "Novig's feed has been quiet for 1791750248 s": a zero stamp taken for a time).
+        if (targetsByMarket.isEmpty()) {
+            nothing("no live game is matched yet (Pinnacle has ${book.events.values.count { it.live && it.regular }} live matchups, Novig lists ${catalogEvents.size} live games)")
+            return
+        }
+        // The Novig subscription is asserted again every few seconds: a socket that was closed (a scan ended off screen) or refused reconnects as soon as Novig lets it, not at the next re-match.
+        if (now - lastWatchAssertMs >= WATCH_ASSERT_MS) { lastWatchAssertMs = now; novig.watchLive(watchIds) }
+        val books = novig.live(targetsByMarket.keys)
+        if (books.isEmpty()) {
+            nothing("Novig's live books have not arrived (${novig.bookGap(targetsByMarket.keys.first()) ?: "waiting for its socket"})")
+            return
+        }
+        // Books held now are Novig's word that its socket is delivering (a pushed book is current while the stream is live).
+        if (novigAnyAt <= 0L) novigAnyAt = now
         // Both feeds are PUSH: an unchanged price is not re-sent, so "this price is current" is what a healthy socket says, not how long ago the price last moved. Each socket must have delivered
         // something (any game, any market) within MAX_AGE_MS: a stalled or silent socket empties the list at once. Each row's own ages (line last changed, game feed last spoke) are on the row.
         val pinnAt = pinn.lastFrameAtMs
         val feedAge = maxOf(now - pinnAt, now - novigAnyAt)
-        if (pinnAt <= 0L || novigAnyAt <= 0L || feedAge > LiveScan.MAX_AGE_MS) {
-            scanDropped += scanByMarket.values.sumOf { it.size }
-            scanByMarket.clear()
-            val why = if (pinnAt <= 0L || now - pinnAt > LiveScan.MAX_AGE_MS) "Pinnacle's feed has been quiet for ${if (pinnAt <= 0L) "a while" else "${(now - pinnAt) / 1000} s"}" else "Novig's feed has been quiet for ${(now - novigAnyAt) / 1000} s"
-            board.publish(emptyList(), LiveScanStatus(on = true, games = matchedGames, watched = watched, dropped = scanDropped, reason = why))
+        if (pinnAt <= 0L || feedAge > LiveScan.MAX_AGE_MS) {
+            nothing(
+                if (pinnAt <= 0L) "Pinnacle's feed has sent nothing yet" else if (now - pinnAt > LiveScan.MAX_AGE_MS) "Pinnacle's feed has been quiet for ${(now - pinnAt) / 1000} s"
+                else "Novig's feed has been quiet for ${(now - novigAnyAt) / 1000} s",
+            )
             return
         }
-        val books = novig.live(targetsByMarket.keys)
         for (t in targetsByMarket.values) {
             val id = t.market.marketId
             val had = scanByMarket[id]
@@ -395,7 +415,7 @@ class PinnLiveRunner(
         scanByMarket.keys.retainAll(targetsByMarket.keys)
         board.publish(
             scanByMarket.values.flatMap { rows -> rows.map { it.opportunity } },
-            LiveScanStatus(on = true, games = matchedGames, watched = watched, shown = scanByMarket.values.sumOf { rows -> rows.count { (it.opportunity.evPercent ?: -1.0) > 0.0 } }, dropped = scanDropped, oldestMs = feedAge / 1000L * 1000L),
+            LiveScanStatus(on = true, games = matchedGames, watched = watched, shown = scanByMarket.values.sumOf { rows -> rows.count { (it.opportunity.evPercent ?: -1.0) > 0.0 } }, books = books.size, dropped = scanDropped, oldestMs = feedAge / 1000L * 1000L),
         )
     }
 
@@ -446,6 +466,8 @@ class PinnLiveRunner(
         byEvent.values.flatten().forEach { targetsByMarket[it.market.marketId] = it }
         val ids = ordered.sortedBy { it.first }.map { it.second }
         watched = ids.size
+        watchIds = ids
+        lastWatchAssertMs = now
         novig.watchLive(ids)
     }
 
@@ -717,6 +739,9 @@ class PinnLiveRunner(
 
         /** The catalog is re-read this often while the Feed's live lane is on, so a game that just went live is matched within seconds. */
         const val SCAN_DISCOVER_MS = 10_000L
+
+        /** The Novig subscription is asserted again this often while the Feed's live lane is on. */
+        const val WATCH_ASSERT_MS = 5_000L
         const val TICK_MS = 100L
         const val STATUS_EVERY_MS = 1_000L
         const val STANDING_EVERY_MS = 1_000L

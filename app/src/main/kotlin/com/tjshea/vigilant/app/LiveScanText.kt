@@ -14,8 +14,8 @@ object LiveScanText {
         !s.on && s.reason != null -> "Live: ${s.reason}"
         !s.on -> "Live: starting"
         s.reason != null -> "Live: nothing shown, ${s.reason}"
-        else -> "Live: ${s.games} game${if (s.games == 1) "" else "s"} linked · ${s.watched} markets watched · ${s.shown} bet${if (s.shown == 1) "" else "s"} within ${LiveScan.MAX_AGE_MS / 1000} s" +
-            (s.oldestMs?.let { " (oldest ${"%.1f".format(java.util.Locale.US, it / 1000.0)} s)" } ?: "") +
+        else -> "Live: ${s.games} game${if (s.games == 1) "" else "s"} linked · ${s.watched} markets watched · ${s.books} Novig books held · ${s.shown} +EV bet${if (s.shown == 1) "" else "s"} now" +
+            (s.oldestMs?.let { " (feeds ${"%.0f".format(java.util.Locale.US, it / 1000.0)} s since last word)" } ?: "") +
             (if (s.dropped > 0) " · ${s.dropped} dropped as stale" else "")
     }
 }
