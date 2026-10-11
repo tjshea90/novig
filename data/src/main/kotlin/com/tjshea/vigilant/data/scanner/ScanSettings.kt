@@ -1240,4 +1240,8 @@ data class ApiGates(
     val opAllBooks: Boolean = false,
     /** OddsPapi Free (v4): billable requests a day the fair-odds feed may spend reading whole games (every book in one request); 0 = closing lines only ([com.tjshea.vigilant.data.reference.Op4Feed]). */
     val op4Fair: Int = 0,
+    /** SportsGameOdds: price the fair line with every book it carries (82), not only the picked ones; falls back to the picked books for a league whose unfiltered query times out. */
+    val sgoAllBooks: Boolean = false,
+    /** PropLine: every sportsbook it lists (about 30, one request either way), not only the picked ones. */
+    val propLineAllBooks: Boolean = false,
 )

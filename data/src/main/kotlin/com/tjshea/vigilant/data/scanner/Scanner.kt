@@ -982,8 +982,8 @@ class Scanner(
         "parlay_props" -> "${MarketFamily.PLAYER_PROPS in settings.families}|${if (settings.lowUsageScan) LowUsageBids.parlayBooks(settings).sorted() else ""}"
         "parlay_1h" -> (MarketFamily.FIRST_HALF in settings.families).toString()
         "oddsapi_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropSet}|${settings.bookPropCreditsPerScan}|${settings.bookPropWindowHours}"
-        "propline" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}"
-        "propline_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropWindowHours}|${settings.propLineGamesPerScan}"
+        "propline" -> "${settings.referenceBooks.sorted()}|${settings.families.sorted()}|${settings.gates.propLineAllBooks}"
+        "propline_props" -> "${settings.referenceBooks.sorted()}|${settings.bookPropWindowHours}|${settings.propLineGamesPerScan}|${settings.gates.propLineAllBooks}"
         else -> "${settings.families.sorted()}|${settings.exchangeMaxSpread}|${settings.daysAhead}"
     }
 
@@ -1027,7 +1027,7 @@ class Scanner(
                 events = snap.events.map { e -> e.copy(markets = e.markets.filter { Freshness.fresh(it.lastUpdateMs, fairAsOf + headroomMs, e.commenceMs.takeIf { e.etDate == null }) }) }
                     .filter { it.markets.isNotEmpty() },
             )
-            if (fresh.provider !in PICKED_BOOK_FEEDS) fresh
+            if (fresh.provider !in PICKED_BOOK_FEEDS || (fresh.provider.startsWith("propline") && settings.gates.propLineAllBooks)) fresh
             else fresh.copy(events = fresh.events.map { e -> e.copy(markets = e.markets.filter { it.bookKey in books }) })
         }
         return Planner.plan(cat.events, cat.markets, filtered, settings, now, pinned).also { plans[youngFairOnly] = inputs to it }

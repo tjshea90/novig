@@ -72,7 +72,7 @@ class PropLineClient(
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val markets = marketsFor(settings.families)
-        val books = books(settings.referenceBooks)
+        val books = books(settings)
         if (markets.isEmpty() || books.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
         // Novig rides along in the same request (no extra cost): its prices order the scan's own
         // Novig reads, and are kept apart from the books that make the fair line.
@@ -208,6 +208,10 @@ class PropLineClient(
         fun carries(book: String): Boolean = (TO_PROPLINE[book] ?: book).let { it in KNOWN && it !in EXCLUDED }
 
         /** PropLine books for the reference books picked in Settings (The Odds API's names). */
+        /** Every sportsbook PropLine lists that can price a fair line ([ApiGates.propLineAllBooks]), else the picked ones. */
+        fun books(settings: ScanSettings): List<String> =
+            if (settings.gates.propLineAllBooks) KNOWN.filter { it !in EXCLUDED }.sorted() else books(settings.referenceBooks)
+
         fun books(referenceBooks: List<String>): List<String> =
             referenceBooks.map { TO_PROPLINE[it] ?: it }.filter { it !in EXCLUDED && it in KNOWN }.distinct()
 
@@ -303,7 +307,7 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
     override suspend fun odds(league: League, settings: ScanSettings, context: ScanContext): RefSnapshot = mutex.withLock {
         val now = context.now
         val sport = league.oddsApiSportKey
-        val books = PropLineClient.books(settings.referenceBooks)
+        val books = PropLineClient.books(settings)
         val ask = books.sorted().toString()
         // The scanner calls once per league with the same clock reading: the first call of a scan
         // spends the budget across every league at once, soonest games first.

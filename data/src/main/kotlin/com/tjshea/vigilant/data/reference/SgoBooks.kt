@@ -50,6 +50,9 @@ object SgoBooks {
         "virginbet", "williamhill", "windcreek", "wynnbet",
     )
 
+    /** Every book SGO lists that can price a fair line (everything but [EXCLUDED]): what [com.tjshea.vigilant.data.scanner.ApiGates.sgoAllBooks] means. */
+    fun everyBook(): Set<String> = KNOWN.filter { it !in EXCLUDED }.toSet()
+
     /** The `bookmakerID` filter for a request: [wanted] books SGO lists, sorted; empty = no filter (ask for every book). */
     fun filter(wanted: Set<String>): String = wanted.filter { it in KNOWN }.sorted().joinToString(",")
 
