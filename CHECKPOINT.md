@@ -1,22 +1,22 @@
-# CHECKPOINT 2971 — read me first, then TASKS.md
+# CHECKPOINT 2972 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T16:26:47Z · **tests:** all 4 fast checks green
-**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `9dd247c90` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T16:36:19Z · **tests:** all 4 fast checks green
+**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `a7b59d791` (this checkpoint is the commit after it)
 
 ## Just done
-TM done in data: worst-case devig default + migration (schema 17) + CloseDevig worst case; tests updated
+TN code + tests green in data (real start sync, sharp-history close preferred, upgrade pass, independent CLV)
 
 ## Do this next
-TN (real start, independent close, honest CLV) then TL (APIs), then app tests, ship 0.89.19
+TL: remove OutsideSgo/OutsideOp resting + TennisOnly + exclusive otherBooks + pinnoddsActive coupling in VigilantApp; audit every call site vs toggles; tests; then app tests, bump 204, ship v0.89.19
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M data/src/test/kotlin/com/tjshea/vigilant/data/scanner/SettingsMergeTest.kt
 
 ## Last ten checkpoints
 ```
+  bae53b9ee ckpt 2971: TM done in data: worst-case devig default + migration (schema 17) + CloseDe
   2fae65f9c ckpt 2970: wrote TM tasks (conservative devig); TL audit found: OutsideSgo/OutsideOp r
   03149e103 ckpt 2969: wrote TL tasks (all APIs on are used, off are never called)
   5b5f266b3 ckpt 2968: v0.89.18 shipped (share all bets, archive, stats filters, closing-odds fixe
@@ -26,8 +26,7 @@ TN (real start, independent close, honest CLV) then TL (APIs), then app tests, s
   52dd230bf ckpt 2964: TK tests (BetHistoryTest, BetHistoryUiTest, BetArchiveAppTest) pass; RESEAR
   654499774 ckpt 2963: TK: core built — BetRating.estimate/AtBet stars, BetDims+BetFilterSpec+sm
   a5b76868d ckpt 2962: wrote TK tasks (share all bets + stats filters + daily autosave)
-  55fc3a342 ckpt 2961: v0.89.17 shipped (stars + wallet sleep); release.yml triggered
 ```
 
-(7 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
