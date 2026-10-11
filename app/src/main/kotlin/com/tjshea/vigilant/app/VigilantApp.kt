@@ -489,7 +489,11 @@ class AppContainer(private val app: Application) {
 
     /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when ParlayAPI is on and Tj has a key; nothing otherwise. */
     val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, parlayPool, json, historyDays = { parlayAccount.historyDays() })
-    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(sgoCloses, opCloses, op4Closes, parlayCloses, espnCloses, novigCloses))
+    private val closeSources = listOf<com.tjshea.vigilant.data.tracker.CloseSource>(sgoCloses, opCloses, op4Closes, parlayCloses, espnCloses, novigCloses)
+    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, closeSources)
+
+    /** The Tracker's close sources in the order they are asked (a test pins it): SGO, OddsPapi v5, OddsPapi Free, ParlayAPI, ESPN, Novig. */
+    fun closeBackfillSourceIds(): List<String> = closeSources.map { it.id }
 
     /**
      * The scan study (Tj, 2026-10-03: "on every cno scan, the vigilant app saves logs on all kinds of information … when those bets are final, it logs whether
