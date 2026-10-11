@@ -488,6 +488,59 @@ class AutoBettorTest {
         assertTrue(texts.toString(), texts.any { it.contains("3 of 3 books agree") } && texts.any { it.contains("2 of 3 books agree") })
     }
 
+    /**
+     * Tj, 2026-10-11: "If I have a star rating minimum turned on, I want the app to auto bet all of the scanned bets with at least that rating, regardless of any other settings. But if I turn off
+     * the minimum star rating filter, I want it to return back to enforcing all of the other auto bet settings."
+     */
+    @Test
+    fun `with a minimum star rating on the bet goes whatever the selection filters say, and with none they all apply again`() = runBlocking {
+        val stars = AlertPicks.cnoChecked(state(), 0.01, now).single().check.rating!!.stars
+        // Filters that each refuse Jefferson's +117 prop: a 20% minimum edge, 6 books agreeing and pricing both sides, odds no longer than +100, moneylines only, and the sharp rule on.
+        val blocked = settings { it.copy(autoBetMinEv = 0.20, autoBetBooks = 6, autoBetTwoSided = 6, autoBetMaxOdds = 100, autoBetKinds = setOf(com.tjshea.vigilant.data.scanner.BetKind.MONEYLINE), sharpAutoBet = com.tjshea.vigilant.data.scanner.SharpMode.CONFIRM) }
+        val off = FakeNovig()
+        val r0 = bettor(off).run(blocked, state(blocked))
+        assertEquals(0, r0.placed.size)
+        assertEquals(0, off.orders.get())
+        assertTrue(r0.skipped.keys.toString(), r0.skipped.keys.size >= 1 && r0.skipped.keys.none { it.contains("star") })
+        // A minimum at the bet's own rating: every one of those filters is ignored and the bet is placed.
+        val rated = blocked.copy(vigGuards = blocked.vigGuards.copy(autoBetMinStars = stars))
+        val on = FakeNovig()
+        val r1 = bettor(on).run(rated, state(rated))
+        assertEquals(r1.skipped.toString(), 1, r1.placed.size)
+        assertEquals(1, on.orders.get())
+        // A minimum above its rating: not placed, and the reason is the rating.
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val above = blocked.copy(vigGuards = blocked.vigGuards.copy(autoBetMinStars = minOf(5.0, stars + 0.5)))
+        val none = FakeNovig()
+        val r2 = bettor(none).run(above, state(above))
+        assertEquals(0, none.orders.get())
+        assertTrue(r2.skipped.keys.toString(), r2.skipped.keys.any { it.contains("-star minimum") })
+        // Turned off again (Any): the filters apply as before.
+        val back = rated.copy(vigGuards = rated.vigGuards.copy(autoBetMinStars = 0.0))
+        val again = FakeNovig()
+        assertEquals(0, bettor(again).run(back, state(back)).placed.size)
+        assertEquals(0, again.orders.get())
+    }
+
+    @Test
+    fun `a minimum star rating never lifts the dollar limits, the cap on an edge too good to be true or the injury rule`() = runBlocking {
+        val stars = AlertPicks.cnoChecked(state(), 0.01, now).single().check.rating!!.stars
+        val base = settings().let { it.copy(vigGuards = it.vigGuards.copy(autoBetMinStars = stars)) }
+        // The day's dollar limit holds: $1 against a 50-cent day.
+        val day = FakeNovig()
+        val r = bettor(day).run(base.copy(apiMaxPerDay = 0.5), state(base.copy(apiMaxPerDay = 0.5)))
+        assertEquals(0, r.placed.size)
+        assertEquals(0, day.orders.get())
+        // The same bet at a $1 day limit goes.
+        val ok = FakeNovig()
+        assertEquals(1, bettor(ok).run(base.copy(apiMaxPerDay = 5.0), state(base.copy(apiMaxPerDay = 5.0))).placed.size)
+        // An injured player is still not bet.
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val out = FakeNovig()
+        assertEquals(0, bettor(out, injuries = injuryBook("Out")).run(base, state(base)).placed.size)
+        assertEquals(0, out.orders.get())
+    }
+
     @Test
     fun `only pregame bets at Novig, on a Novig price read in the last minute`() = runBlocking {
         val novig = FakeNovig()
