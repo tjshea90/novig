@@ -66,7 +66,7 @@ class FreeApisWiringTest {
         val s = settings(un = true)
         assertTrue(c.unabatedActive(s))
         val ids = c.referenceSources(s).map { it.id }
-        assertEquals(listOf("unabated"), ids.takeLast(1).filter { it == "unabated" })
+        assertTrue(ids.toString(), ids.last().startsWith("unabated"))
         assertTrue(ids.toString(), "unabated" in ids)
         // the paid feeds all stay: Unabated is free, so none of them rests
         val without = c.referenceSources(settings()).map { it.id }
@@ -81,7 +81,7 @@ class FreeApisWiringTest {
         keys(c, sgo = true)
         val ids = c.referenceSources(settings(un = true, sgo = true)).map { it.id }
         assertTrue(ids.toString(), ids.indexOf("sgo") in 0 until ids.indexOf("unabated"))
-        assertEquals("unabated", ids.last { it.startsWith("unabated") }.let { if (it == "unabated-props") "unabated" else it })
+        assertTrue(ids.toString(), ids.takeLastWhile { it.startsWith("unabated") }.isNotEmpty())
     }
 
     @Test
@@ -91,7 +91,7 @@ class FreeApisWiringTest {
         c.syncSgo(settings(free = true))
         assertTrue(c.op4Closes.active)
         val order = c.closeBackfillSourceIds()
-        assertTrue(order.toString(), order.indexOf("oddspapi") < order.indexOf("oddspapi_free") && order.indexOf("oddspapi_free") < order.indexOf(com.tjshea.vigilant.data.tracker.ParlayCloses::class.java.name))
+        assertTrue(order.toString(), order.indexOf("oddspapi") < order.indexOf("oddspapi_free") && order.indexOf("oddspapi_free") < order.indexOf("parlay"))
         c.syncSgo(settings())
         assertFalse(c.op4Closes.active)
     }

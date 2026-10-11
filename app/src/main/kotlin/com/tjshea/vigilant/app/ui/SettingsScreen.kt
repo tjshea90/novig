@@ -1387,7 +1387,7 @@ private fun ColumnScope.OddsPapiFreePage(state: UiState, keys: KeyActions, repor
 private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val now = rememberNow(30_000)
     val views = meterViews(state, now).associateBy { it.policy.id }
-    Intro("Switch an API off and the app stops using it everywhere and adapts to the ones that are on; the first key that is spent or refused is skipped for the next one, automatically. Test checks each key; Test active APIs checks the combination the switches make and reads one league through every source in play.")
+    Intro("Turn APIs on and off here. Switch an API off and the app stops using it everywhere and adapts to the ones that are on; the first key that is spent or refused is skipped for the next one, automatically. Test checks each key; Test active APIs checks the combination the switches make and reads one league through every source in play.")
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
         Button(onClick = reportActions.onTestActiveApis, enabled = !state.apiTestBusy, modifier = Modifier.testTag("testActiveApis")) { Text(if (state.apiTestBusy) "Testing…" else "Test active APIs") }
         OutlinedButton(onClick = reportActions.onRefreshUsage, enabled = !state.usageBusy, modifier = Modifier.testTag("refreshUsage")) { Text(if (state.usageBusy) "Reading…" else "Refresh usage") }
@@ -1404,6 +1404,7 @@ private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, o
             }
         }
     }
+    SectionTitle("How much is left on each key")
     com.tjshea.vigilant.app.ApiEntry.entries.forEach { e ->
         val keys = e.provider?.let { state.keysOf(it) }.orEmpty()
         val on = e.isOn(state.settings)
