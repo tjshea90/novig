@@ -2808,4 +2808,5 @@ internal suspend fun refreshWhileOnScreen(
 /** The Diagnostics file reads this many days of each recorder; the share gives up after this long; old-data clearing keeps this many days. */
 private const val DIAG_DAYS = com.tjshea.vigilant.data.diag.DataKeeper.JOURNAL_DAYS
 private const val DIAG_TIMEOUT_MS = 90_000L
+private const val BET_SHARE_TIMEOUT_MS = 5 * 60_000L
 private const val DIAG_ITEM_MS = 20_000L
