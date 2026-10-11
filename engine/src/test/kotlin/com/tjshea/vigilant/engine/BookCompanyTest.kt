@@ -124,7 +124,7 @@ class BookCompanyTest {
         assertNotEquals(BookCompany.of("ballybet"), BookCompany.of("fanduel"))
         // Six identical Kambi quotes count once in the fair line.
         val six = desk.take(6).map { book(it, 100, -134) } + book("draftkings", 105, -135) + book("fanduel", 105, -135)
-        val line = FairValue.compute(six, FairSettings(minBooks = 1))!!
+        val line = FairValue.compute(six, settings)!!
         assertEquals(3, line.perBook.size)
     }
 }
