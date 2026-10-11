@@ -392,6 +392,13 @@ class SettingsPagesTest {
     }
 
     @Test
+    fun `the APIs page draws the usage bar under every key that has an allowance`() {
+        val state = SampleScan.state().copy(proplineKeys = listOf("plkeyplkeyplkey1"))
+        screen(state) { SettingsScreen(it, {}, page = SettingsPage.APIS, onPage = {}) }
+        compose.onNodeWithTag("apiBar-PROPLINE-0").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun `every API entry reads and writes exactly its own setting`() {
         val base = SampleScan.state().settings
         for (e in com.tjshea.vigilant.app.ApiEntry.entries) {

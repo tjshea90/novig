@@ -1435,8 +1435,12 @@ private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, o
                         style = MaterialTheme.typography.labelSmall, color = if (c.ok) Edge.colors.positive else MaterialTheme.colorScheme.error,
                     )
                 }
-                views[e.policy?.id]?.keys?.forEach { k ->
-                    Text(keyLine(e.policy!!, k, now), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                views[e.policy?.id]?.let { v ->
+                    if (v.keys.size > 1) UsageBar(v.keys.sumOf { it.used }, v.totalLeft, v.totalAllowance)
+                    v.keys.forEach { k ->
+                        Text(keyLine(e.policy!!, k, now), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        UsageBar(k.used, k.left, k.allowance, Modifier.testTag("apiBar-${e.name}-${k.index}"))
+                    }
                 }
                 if (e.provider != null && e.provider != ApiProvider.PINNODDS) Text(
                     if (e.usagePrompt) "Usage: read from the API's own prompt." else "Usage: this API offers no prompt for it, so the count is the app's own.",

@@ -251,3 +251,13 @@ fun keyLine(policy: QuotaPolicy, k: KeyView, now: Long): String = buildString {
     )
     k.note?.takeIf { k.state != KeyState.ACTIVE && k.state != KeyState.STANDBY }?.let { append(" · $it") }
 }
+
+/**
+ * The green-to-red usage bar (full = used up; green with plenty left, amber under half, red under a fifth): one for an API's total and one under each key, on Settings › APIs as on Settings › API usage.
+ * Nothing is drawn when the allowance is unknown.
+ */
+@Composable
+fun UsageBar(used: Int, left: Int?, allowance: Int?, modifier: Modifier = Modifier) {
+    if (allowance == null || allowance <= 0) return
+    LinearProgressIndicator(progress = { (used.toFloat() / allowance).coerceIn(0f, 1f) }, color = meterColor(left, allowance), modifier = modifier.fillMaxWidth().padding(vertical = 2.dp))
+}
