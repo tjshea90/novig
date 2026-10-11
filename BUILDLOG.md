@@ -207,3 +207,4 @@ day that changes.
 | v0.89.15 | code 200 | 2026-10-11T13:44Z | v0.89.15: Vigilant scanner: N-of-M books agree, sharp-book star, one book per company, wrong-looking odds left out, liquidity/EV auto-removal, both sides in the book table, auto-bet also bets Vigilant's scans
 | v0.89.16 | code 201 | 2026-10-11T13:58Z | v0.89.16: parent-company table researched from SGO and ParlayAPI book lists (Kambi desk, Mr Green, Eurobet, Betway; unsupported merges removed)
 | v0.89.17 | code 202 | 2026-10-11T14:18Z | v0.89.17: 1-5 star bet ratings on both scanners with an auto-bet minimum rating; wallet under 20 cents puts the whole app to sleep
+| v0.89.18 | code 203 | 2026-10-11T16:08Z | v0.89.18: Share all bets with Claude (README + parts, every bet and bid), day-by-day archive in Downloads/Vigilant/bets, Stats smart filter and split by type/sport/stars/sharp/books/liquidity, bet record on each bet, closing-odds accuracy fixes
