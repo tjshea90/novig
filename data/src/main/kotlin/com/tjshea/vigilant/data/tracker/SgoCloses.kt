@@ -111,7 +111,7 @@ class SgoCloses(
             }
             val p = implied(a.closeOdds) ?: return CloseLookup.None("No $book close price")
             val q = implied(b.closeOdds) ?: return CloseLookup.None("No $book close price")
-            return CloseLookup.Found(Devig.multiplicative(listOf(p, q))[0], "SportsGameOdds · ${book.replaceFirstChar { it.uppercase() }} close")
+            return CloseLookup.Found(CloseDevig.fair(p, q), "SportsGameOdds · ${book.replaceFirstChar { it.uppercase() }} close")
         }
         return when (pick) {
             is BetGrader.Pick.Moneyline -> {

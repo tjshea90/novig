@@ -235,7 +235,7 @@ class ParlayCloses(
         private fun side(r: JsonObject, price: String, prob: String): Double? =
             implied(r.num(price)) ?: r.num(prob)?.let { if (it > 1.0) it / 100 else it }?.takeIf { it > 0.0 && it < 1.0 }
 
-        private fun fair(mine: Double, other: Double) = Devig.multiplicative(listOf(mine, other))[0]
+        private fun fair(mine: Double, other: Double) = CloseDevig.fair(mine, other)
 
         /** Rows of ParlayAPI's closing-lines file: the whole answer may be the list, or `{rows: [...]}`. */
         private fun rowsOf(root: JsonElement): List<JsonObject> = ((root.obj()?.get("rows") ?: root) as? JsonArray).orEmpty().mapNotNull { it.obj() }

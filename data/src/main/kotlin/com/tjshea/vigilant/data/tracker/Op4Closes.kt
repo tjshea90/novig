@@ -91,7 +91,7 @@ class Op4Closes(
         }
         val p = closePrice(game, start, mine) ?: return CloseLookup.None("OddsPapi Free has no Pinnacle close here")
         val q = closePrice(game, start, other) ?: return CloseLookup.None("OddsPapi Free has no Pinnacle close here")
-        return CloseLookup.Found(Devig.multiplicative(listOf(1.0 / p, 1.0 / q))[0], "OddsPapi Free · Pinnacle close")
+        return CloseLookup.Found(CloseDevig.fair(1.0 / p, 1.0 / q), "OddsPapi Free · Pinnacle close")
     }
 
     /** The last active Pinnacle price of [outcomeId] at or before [start], from the FREE historical odds (cached for the run: a finished game's history does not change). */

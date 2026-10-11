@@ -164,7 +164,7 @@ class EspnCloses(
         private fun line(s: String?): Double? = s?.trim()?.removePrefix("+")?.removePrefix("o")?.removePrefix("u")?.replace('−', '-')?.toDoubleOrNull()
 
         /** Two sides' vigged probabilities to the fair one of the first. */
-        private fun fairOf(mine: Double, other: Double): Double = Devig.multiplicative(listOf(mine, other))[0]
+        private fun fairOf(mine: Double, other: Double): Double = CloseDevig.fair(mine, other)
 
         /** [pick]'s close in ESPN's odds [root] for [game]: the first provider (priority order) that closed that exact line. */
         fun parseClose(root: JsonElement, pick: BetGrader.Pick, game: GameScore): CloseLookup {
@@ -278,6 +278,8 @@ class NovigTradeCloses(
                             val mine = trades.filter { it.outcomeId == outcome }
                             val qty = mine.sumOf { it.qty }
                             if (mine.isEmpty() || qty <= 0.0) CloseLookup.None("No trades on Novig in the ${windowMs / 60_000} minutes before the start")
+                            // One or two trades are not a market (closing audit 2026-10-11): a single fill, possibly Tj's own bid, would be the "close". RESEARCH.md §113 says trust three or more.
+                            else if (mine.size < MIN_TRADES) CloseLookup.None("Only ${mine.size} trade${if (mine.size == 1) "" else "s"} on Novig in the ${windowMs / 60_000} minutes before the start (needs $MIN_TRADES)")
                             else CloseLookup.Found((mine.sumOf { it.cost } / qty).coerceIn(0.001, 0.999), "Novig's last trades (${mine.size})")
                         }
                     }
@@ -382,8 +384,11 @@ class NovigTradeCloses(
     companion object {
         const val ID = "novig"
 
-        /** The close is what traded in the last half hour before the start. */
-        const val WINDOW_MS = 30 * 60_000L
+        /** The close is what traded in the last quarter hour before the start (the app's own true-close window, [ClosingLine.TRUE_CLOSE_MS]). */
+        const val WINDOW_MS = ClosingLine.TRUE_CLOSE_MS
+
+        /** The fewest trades a Novig close rests on. */
+        const val MIN_TRADES = 3
 
         private const val PROBE_BYTES = 2_048L
         private const val CHUNK_BYTES = 262_144L

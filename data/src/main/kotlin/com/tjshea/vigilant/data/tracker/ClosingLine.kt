@@ -69,8 +69,17 @@ object ClosingLine {
     /** The fair line read in the last [TRUE_CLOSE_MS] before the start, if one was. */
     fun captured(b: TrackedBet): Double? {
         val seen = b.closingSeenAtMs ?: return null
-        return b.closingFair?.takeIf { seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS }
+        return b.closingFair?.takeIf { seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS && afterBet(b, seen) }
     }
+
+    /**
+     * A read taken seconds after the bet was placed is the bet's own line, not the close (closing audit 2026-10-11: an auto-bet placed in its last minutes was "read" in the same cycle from the
+     * same books and devig as its fair, so its CLV was its EV by construction). A close must be read at least [AFTER_BET_MS] after the bet.
+     */
+    fun afterBet(b: TrackedBet, seenAtMs: Long): Boolean = seenAtMs >= b.createdAtMs + AFTER_BET_MS
+
+    /** How long after the bet a read must be to count as a close. */
+    const val AFTER_BET_MS = 60_000L
 
     /** A close's source in a word or two, for the card and Diagnostics. */
     fun sourceLabel(source: String): String = when {
@@ -94,7 +103,7 @@ object ClosingLine {
     fun needsClose(b: TrackedBet, now: Long): Boolean {
         if (b.status != BetStatus.PENDING || b.createdAtMs >= b.startsTs || now >= b.startsTs || b.isLock) return false
         val seen = b.closingSeenAtMs
-        val inWindow = b.closingFair != null && seen != null && seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS && seen >= b.startsTs - DUE_MS
+        val inWindow = b.closingFair != null && seen != null && seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS && seen >= b.startsTs - DUE_MS && afterBet(b, seen)
         return !inWindow
     }
 
@@ -105,7 +114,7 @@ object ClosingLine {
     fun needsFinalRead(b: TrackedBet, now: Long): Boolean {
         if (b.status != BetStatus.PENDING || b.createdAtMs >= b.startsTs || now >= b.startsTs || b.isLock) return false
         val seen = b.closingSeenAtMs ?: return false
-        return b.closingFair != null && seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS && b.startsTs - seen > FINAL_FRESH_MS
+        return b.closingFair != null && seen < b.startsTs && b.startsTs - seen <= TRUE_CLOSE_MS && b.startsTs - seen > FINAL_FRESH_MS && afterBet(b, seen)
     }
 
     /** The bets a capture at [now] reads: starting within [DUE_MS] (or [FINAL_DUE_MS] for a final read), not tried in the last [RETRY_MS], not in their last minute. */

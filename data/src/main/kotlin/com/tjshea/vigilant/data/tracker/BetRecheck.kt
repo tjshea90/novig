@@ -443,6 +443,8 @@ class BetRecheck(
         val check = CnoBooks.check(view, row, preferListOdds = true)
         val fair = check.fairProbability ?: return null
         val now = clock()
+        // Dated by the page's DATA time (its fetch time less CNO's own "Last Updated" age; closing audit 2026-10-11), not just when it was fetched: a stale page read at T-2 min is not a T-2 min close.
+        val seenAt = minOf(now, view.dataAtMs)
         val lines = view.prices.map { BookLine(it.name, it.odds, it.otherOdds) }
         val ownCode = CnoBooks.codeFor(bet.book) ?: CnoBooks.NOVIG
         val ownNow = view.prices.firstOrNull { it.code == ownCode }?.odds
@@ -457,9 +459,9 @@ class BetRecheck(
                     nowVia = via, nowNote = null, nowNoteAtMs = null,
                     // CNO's read on its own, for the check that also reads Vigilant's ([BetTracker.mergeReads]).
                     cnoFair = fair, cnoAtMs = now,
-                    // Dated by when the page was read, so a cached page can't pass for a close, nor replace a fresher one.
-                    closingFair = if (closing && ClosingLine.supersedes(b, minOf(now, view.fetchedAtMs))) fair else b.closingFair,
-                    closingSeenAtMs = if (closing && ClosingLine.supersedes(b, minOf(now, view.fetchedAtMs))) minOf(now, view.fetchedAtMs) else b.closingSeenAtMs,
+                    // Dated by when the page's data was current, so a cached or stale page can't pass for a close, nor replace a fresher one.
+                    closingFair = if (closing && ClosingLine.supersedes(b, seenAt)) fair else b.closingFair,
+                    closingSeenAtMs = if (closing && ClosingLine.supersedes(b, seenAt)) seenAt else b.closingSeenAtMs,
                     books = lines, booksAtMs = view.fetchedAtMs, otherSide = view.otherBet, nowAmerican = ownNow ?: b.nowAmerican,
                 )
             }

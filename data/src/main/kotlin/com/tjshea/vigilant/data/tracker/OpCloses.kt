@@ -109,7 +109,7 @@ class OpCloses(
         val prices = closePrices(game, slug, listOf(mine, other), player) ?: return CloseLookup.None("OddsPapi has no $book close here")
         val p = prices[mine]?.takeIf { it > 1.0 }?.let { 1.0 / it } ?: return CloseLookup.None("No $book close price")
         val q = prices[other]?.takeIf { it > 1.0 }?.let { 1.0 / it } ?: return CloseLookup.None("No $book close price")
-        return CloseLookup.Found(Devig.multiplicative(listOf(p, q))[0], "OddsPapi · $label close")
+        return CloseLookup.Found(CloseDevig.fair(p, q), "OddsPapi · $label close")
     }
 
     private suspend fun clvOf(game: OpFixture, slug: String, onlyOutcomes: List<Long>?, player: Long): List<OpClv> {
