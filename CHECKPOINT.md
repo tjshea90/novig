@@ -1,22 +1,22 @@
-# CHECKPOINT 2949 — read me first, then TASKS.md
+# CHECKPOINT 2950 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T13:20:09Z · **tests:** all 4 fast checks green
-**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `3b79d3a57` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T13:28:47Z · **tests:** all 4 fast checks green
+**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `a0bcb16bf` (this checkpoint is the commit after it)
 
 ## Just done
-wrote TH tasks (7 Vigilant scanner asks)
+TH1-7 code written: BookCompany+BadOdds in FairValue, Agreement sharp star, feed liquidity filter, auto-recheck, judgeVigilant+runTennis generalized, UI (card/sheet/settings). Tests written; full suite running
 
 ## Do this next
-TH0: read CNO agreement/star/both-sides code and Vigilant Scanner/Pricing/AutoBettor
+read full test result (tools/test.sh output), fix failures, tick TH boxes in TASKS.md, bump version via ship.sh, trigger release.yml (also v0.89.14 release outstanding?)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  1374a9883 ckpt 2949: wrote TH tasks (7 Vigilant scanner asks)
   1191ee05c ckpt 2948: pre-release: v0.89.14: SportsGameOdds prices tennis (ATP and WTA match winn
   ea2eb9bc4 ckpt 2947: TG3a: SGO tennis (ATP/WTA) read from the real sample: match winner = sets M
   7fca39921 ckpt 2946: pre-release: v0.89.13: SGO sample puts the tennis answers first so the file
@@ -26,8 +26,7 @@ TH0: read CNO agreement/star/both-sides code and Vigilant Scanner/Pricing/AutoBe
   029b4106b ckpt 2942: pre-release: v0.89.11: with tennis picked, every feed that carries it (Pinn
   6ecb95b8c ckpt 2941: TG: tennis picked -> Pinnacle/Kalshi/ParlayAPI asked for ATP/WTA even when 
   ad3b27e52 ckpt 2940: pre-release: v0.89.10: OddsPapi Free lists a league's games in one request 
-  6eed1860c ckpt 2939: TE4: OddsPapi Free lists a league's games with one request (was one per 12 
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(10 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
