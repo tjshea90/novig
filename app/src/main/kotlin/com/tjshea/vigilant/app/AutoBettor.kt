@@ -180,6 +180,7 @@ class AutoBettor(
                 (cooldown[row.key] ?: 0L) > now -> skip("tried a moment ago")
                 else -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(injuries(), row, now, state.teams[row.key])?.let(::skip)
                     ?: AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet))?.let(::skip)
+                    ?: AutoBet.starsReason(rules, item.check.rating?.stars)?.let(::skip)
                     ?: sharpReason(item, settings, state, now)?.let(::skip)
                     ?: passing.add(item)
             }
@@ -322,7 +323,7 @@ class AutoBettor(
             when {
                 o.isLive || o.event.startsTs - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 (cooldown[o.key] ?: 0L) > now -> skip("tried a moment ago")
-                o.league.tennis -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection))?.let(::skip) ?: passing.add(o)
+                o.league.tennis -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection))?.let(::skip) ?: AutoBet.starsReason(rules, o.rating?.stars)?.let(::skip) ?: passing.add(o)
                 else -> vigilantReason(o, rules, settings, state, now)?.let(::skip) ?: passing.add(o)
             }
         }
@@ -397,6 +398,7 @@ class AutoBettor(
         if (TrapGuard.tooEarly(o.event.startsTs, now, settings.trapEarlyHours, state.firstListed[o.key], settings.trapFirstListed) != null) return TrapGuard.earlyReason(settings.trapEarlyHours)
         val a = o.agreement
         AutoBet.judgeVigilant(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), a.twoSided, a.agreeing)?.let { return it }
+        AutoBet.starsReason(rules, o.rating?.stars)?.let { return it }
         return when (settings.sharpAutoBet) {
             SharpMode.OFF -> null
             SharpMode.VETO -> if (a.sharpAgainst) "a sharp book prices both sides and says it isn't +EV at Novig's price" else null

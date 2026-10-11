@@ -96,6 +96,8 @@ object AutoBet {
         val favouriteExtraEv: Double = 0.0,
         /** The kinds of bet it places (a preset's, RESEARCH.md §66); every kind = no limit. */
         val kinds: Set<BetKind> = BetKind.entries.toSet(),
+        /** The fewest stars ([com.tjshea.vigilant.data.scanner.BetRating]) a bet needs; 0 = any. */
+        val minStars: Double = 0.0,
     )
 
     fun rules(s: ScanSettings) = Rules(
@@ -110,7 +112,16 @@ object AutoBet {
         minOdds = normalizeMinOdds(s.autoBetMinOdds),
         favouriteExtraEv = s.autoBetFavouriteExtraEv.coerceIn(0.0, 0.2),
         kinds = s.autoBetKinds,
+        minStars = s.autoBetMinStars.coerceIn(0.0, 5.0),
     )
+
+    /** Why a bet rated [stars] is under the minimum rating, or null (also null when no minimum is set). A bet with no rating yet has no stars to show and waits. */
+    fun starsReason(rules: Rules, stars: Double?): String? {
+        if (rules.minStars <= 0.0) return null
+        val min = com.tjshea.vigilant.data.scanner.BetRating.label(rules.minStars)
+        if (stars == null) return "it has no star rating yet (you need $min stars)"
+        return if (stars < rules.minStars - 1e-9) "its rating is under your $min-star minimum" else null
+    }
 
     /** Whether [american] odds are a favorite's: shorter than even money (−101 or shorter). Even money (+100, −100) and every underdog is not. */
     fun isFavourite(american: Int): Boolean = american < -100

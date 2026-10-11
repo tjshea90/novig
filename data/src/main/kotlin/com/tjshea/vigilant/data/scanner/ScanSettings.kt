@@ -979,6 +979,9 @@ data class ScanSettings(
      */
     val autoBetVigilant: Boolean get() = vigGuards.autoBetVigilant
 
+    /** The fewest stars ([BetRating]) a bet needs for the auto-bet; 0 = any. */
+    val autoBetMinStars: Double get() = vigGuards.autoBetMinStars
+
     fun fairSettings(): FairSettings = FairSettings(
         source = fairSource,
         method = devigMethod,
@@ -1045,6 +1048,9 @@ data class ScanSettings(
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }
 
     companion object {
+        /** The auto-bet's minimum-rating choices: 0 = any, then 2 to 5 stars in halves. */
+        val AUTO_BET_STARS_CHOICES: List<Double> = listOf(0.0, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0)
+
         /** At most [Freshness.MAX_REUSE_MS]: older sportsbook odds are never compared (RESEARCH.md §24). */
         val ODDS_API_REUSE_CHOICES = listOf(0, 1, 2)
         /**
@@ -1290,4 +1296,6 @@ data class ScanGuards(
     val oneVotePerCompany: Boolean = true,
     val ignoreBadOdds: Boolean = true,
     val autoBetVigilant: Boolean = true,
+    /** The auto-bet places only bets rated at least this many stars ([BetRating]; Tj, 2026-10-11); 0 = any. */
+    val autoBetMinStars: Double = 0.0,
 )
