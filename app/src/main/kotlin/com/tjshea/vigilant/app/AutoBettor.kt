@@ -300,7 +300,7 @@ class AutoBettor(
     suspend fun runTennis(settings: ScanSettings, state: UiState, result: ScanResult): Report {
         val now = clock()
         val rules = AutoBet.rules(settings)
-        if (!settings.autoBet || !settings.autoBetTennis) return Report()
+        if (!settings.autoBet || !(settings.autoBetTennis || settings.autoBetVigilant)) return Report()
         if (settings.killed || c.settingsStore.flow.value?.killed == true) return finish(now, Report(), blocker = "Stopped by the STOP button: tap RESUME on the red bar to run again")
         settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (the Auto-bet tab › Resume auto-bet)") }
         failure?.takeIf { now < failedUntilMs }?.let { return finish(now, Report(stopped = it), blocker = it) }
@@ -311,14 +311,19 @@ class AutoBettor(
 
         val skipped = LinkedHashMap<String, Int>()
         fun skip(reason: String) { skipped.merge(reason, 1, Int::plus) }
-        val tennis = result.opportunities.filter { it.league.tennis && it.league.novigName in settings.leagues && it.quote != null && it.fairProbability != null }
+        // Tennis (no CNO page) and, with [ScanSettings.autoBetVigilant], every other league's bets from this scan.
+        val tennis = result.opportunities.filter {
+            (if (it.league.tennis) settings.autoBetTennis else settings.autoBetVigilant) &&
+                it.league.novigName in settings.leagues && it.quote != null && it.fairProbability != null
+        }
         val passing = ArrayList<Opportunity>()
         for (o in tennis.sortedByDescending { it.evPercent ?: 0.0 }) {
             val q = o.quote ?: continue
             when {
                 o.isLive || o.event.startsTs - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 (cooldown[o.key] ?: 0L) > now -> skip("tried a moment ago")
-                else -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection))?.let(::skip) ?: passing.add(o)
+                o.league.tennis -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection))?.let(::skip) ?: passing.add(o)
+                else -> vigilantReason(o, rules, settings, state, now)?.let(::skip) ?: passing.add(o)
             }
         }
         if (tennis.isEmpty()) return Report()
@@ -378,6 +383,29 @@ class AutoBettor(
         val report = Report(looked = tennis.size, passed = passing.size, placed = placed, skipped = skipped, stopped = stopped, walletEmpty = walletEmpty, halted = halted)
         if (stopped != null && !walletEmpty) postStop(now, stopped, halted)
         return finish(now, report, balance = balance)
+    }
+
+    /**
+     * Why Vigilant's own bet [o] (not tennis) is not placed, or null: the freshness the alerts ask of a bet, the injury report, the trap guard, the Tracker's duplicates, then
+     * [AutoBet.judgeVigilant] on the books behind its fair line and the sharp rule ([ScanSettings.sharpAutoBet]) on the sharp books among them.
+     */
+    private fun vigilantReason(o: Opportunity, rules: AutoBet.Rules, settings: ScanSettings, state: UiState, now: Long): String? {
+        val q = o.quote ?: return "no Novig price"
+        if (o.fairIsOld(now)) return "the other books' prices behind it are too old"
+        if (o.priceIsOld(now) || now - (o.bookFetchedAtMs ?: 0L) > AlertPicks.FRESH_PRICE_MS) return "no Novig price read in the last minute"
+        com.tjshea.vigilant.data.reference.PlayerOut.forTag(state.injuries[o.key])?.let { return it }
+        if (TrapGuard.tooEarly(o.event.startsTs, now, settings.trapEarlyHours, state.firstListed[o.key], settings.trapFirstListed) != null) return TrapGuard.earlyReason(settings.trapEarlyHours)
+        val a = o.agreement
+        AutoBet.judgeVigilant(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), a.twoSided, a.agreeing)?.let { return it }
+        return when (settings.sharpAutoBet) {
+            SharpMode.OFF -> null
+            SharpMode.VETO -> if (a.sharpAgainst) "a sharp book prices both sides and says it isn't +EV at Novig's price" else null
+            SharpMode.CONFIRM -> when {
+                a.sharpAgainst -> "a sharp book prices both sides and says it isn't +EV at Novig's price"
+                !a.sharpAgrees -> "no sharp book confirms it is +EV"
+                else -> null
+            }
+        }
     }
 
     /** What one order came to, for the pass that sent it. */

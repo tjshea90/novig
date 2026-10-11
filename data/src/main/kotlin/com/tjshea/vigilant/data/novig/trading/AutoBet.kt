@@ -185,6 +185,20 @@ object AutoBet {
         return null
     }
 
+    /**
+     * Why a bet from Vigilant's own scan (not tennis) doesn't pass, or null when it does (Tj, 2026-10-11: "make the auto bet feature also bet on vigilant scanned bets, but only if they meet
+     * the criteria I set for auto bet"). [judgeScan]'s bars on the scan's edge, then the books-agree rules the CNO path applies to its books page, applied here to the books behind the
+     * scan's fair line (one a company, odds that look wrong left out): [Rules.twoSided] books price both sides, [Rules.minBooks] of them say +EV on their own, and with [Rules.allAgree] every one.
+     * [agreeing] and [twoSided] are [com.tjshea.vigilant.data.scanner.Agreement.Count]'s.
+     */
+    fun judgeVigilant(rules: Rules, ev: Double, american: Int, kind: BetKind?, twoSided: Int, agreeing: Int): String? {
+        judgeScan(rules, ev, american, kind)?.let { return it }
+        if (twoSided < rules.twoSided) return "${books(twoSided)} price${if (twoSided == 1) "s" else ""} both sides (you need ${rules.twoSided})"
+        if (agreeing < rules.minBooks) return "${books(agreeing)} say${if (agreeing == 1) "s" else ""} +EV on their own (you need ${rules.minBooks})"
+        if (rules.allAgree && agreeing < twoSided) return "only $agreeing of $twoSided books say +EV on their own (you need every one)"
+        return null
+    }
+
     /** The stake for a scan's bet at [quote] (see [stake]): the rule's amount, or Kelly on the quote's own fair and price, held to the per-bet maximum and the wallet. */
     fun scanStake(rules: Rules, quote: EvQuote, bankroll: Double, balance: Double): Stake {
         if (balance < MIN_STAKE - 1e-9) return Stake.WalletEmpty

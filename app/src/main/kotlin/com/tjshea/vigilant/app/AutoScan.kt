@@ -434,15 +434,15 @@ class AutoScanner(
         val started = startVigilant(settings, bets)
         if (!started && !c.runner.state.value.scanning) return
         // Tennis auto-bet (Tj, 2026-10-10): CNO has no tennis, so the scan that just ended is where it comes from; independent of CNO and of the alerts below.
-        if (settings.autoBet && settings.autoBetTennis && settings.tennisOn && AppBook.isNovig) {
+        if (settings.autoBet && ((settings.autoBetTennis && settings.tennisOn) || settings.autoBetVigilant) && AppBook.isNovig) {
             tennisBets?.takeIf { it.isActive }?.cancel()
             tennisBets = c.appScope.launch {
                 val run = c.runner.state.first { !it.scanning && it.finished > before }
                 val s = c.currentSettings()
                 val result = run.result ?: return@launch
-                if (!s.autoBet || !s.autoBetTennis || s.paused) return@launch
+                if (!s.autoBet || !(s.autoBetTennis || s.autoBetVigilant) || s.paused) return@launch
                 runCatching { c.autoBet.runTennis(s, snapshot(s).copy(result = result), result) }
-                    .onFailure { if (it is CancellationException) throw it; runCatching { c.problems.add("Background auto-scan", "Tennis auto-bet: ${it.message ?: it.javaClass.simpleName}") } }
+                    .onFailure { if (it is CancellationException) throw it; runCatching { c.problems.add("Background auto-scan", "Vigilant auto-bet: ${it.message ?: it.javaClass.simpleName}") } }
             }
         }
         if (settings.alertMinEv <= 0.0) return
