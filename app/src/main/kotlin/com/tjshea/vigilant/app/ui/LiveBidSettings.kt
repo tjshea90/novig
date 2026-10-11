@@ -105,7 +105,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     LbHint(LiveBidText.AUTOPILOT_HINT)
     val pilot = LiveSniper.inForce(s)
     Text(
-        (if (pilot) "In force" + (if (LiveSniper.real(s)) ": REAL orders." else ": paper (nothing is sent).") else "Not in force: the two engines are set separately below and in Pinnodds live.") ,
+        (if (pilot) "In force" + (if (LiveSniper.real(s)) ": REAL orders." else ": paper (nothing is sent).") else "Not in force: the engines are set separately below and in Pinnodds live.") ,
         style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 4.dp).testTag("liveAutopilotState"),
     )
     Text(LiveBidText.autopilotStatus(s, state.pinnTrade, state.liveBidStatus, state.pinnLive, state.tailTrade, state.labStatus), style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("liveAutopilotStatus"))
