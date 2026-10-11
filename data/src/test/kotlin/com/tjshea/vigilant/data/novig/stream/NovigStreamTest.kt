@@ -245,7 +245,7 @@ class NovigStreamTest {
         val view = SharedStreamView({ stream }, BookListener { id, _, _ -> heard += id })
         view.watchLive(listOf("live1", "live2"))
         stream.watch(listOf("a1", "a2"))
-        until { stream.live(listOf("live1", "live2", "a1", "a2")).size == 4 }
+        try { until { stream.live(listOf("live1", "live2", "a1", "a2")).size == 4 } } catch (e: Exception) { println("DBG " + received.map { it.toString().take(150) } + " state=" + stream.state.value + " gap=" + stream.bookGap("a1")); throw e }
         // A later scan wants other markets: the live ones are not dropped.
         stream.watch(listOf("b1"))
         until { stream.live(listOf("b1")).size == 1 }
