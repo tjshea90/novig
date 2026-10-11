@@ -6363,3 +6363,8 @@ For the vigilant scanner:
 6) automatically remove from the list any bet with less than 10 cents liquidity or any bet no longer offered at positive EV
 7) similar to cno scanner, when I press on a bet, show each book carrying the bet and its odds for both sides of the bet. Currently it only shows odds for one side of the bet 
 ```
+
+## 2026-10-11T13:50:11Z
+```
+Review every book listed on sgo and parlayapi. Search online to see which books are from the same parent company and use this information for the exclusion rule in the app, if any changes are needed
+```
