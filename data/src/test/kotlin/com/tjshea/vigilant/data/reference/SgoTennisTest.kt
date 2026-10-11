@@ -34,10 +34,9 @@ class SgoTennisTest {
         assertTrue("a games spread is never a sets one", spread.filter { it.period == 0 }.all { kotlin.math.abs(it.line!!) >= 0.5 })
     }
 
-    @Test fun `each player's games won are team totals, and no prop or 1st set moneyline is priced`() {
-        val team = ref.markets.filter { it.kind == LineKind.TEAM_TOTAL }
-        assertTrue(team.any { it.subject == RefBookMarket.HOME && it.line == 12.5 })
-        assertTrue(team.any { it.subject == RefBookMarket.AWAY && it.line == 11.5 })
+    @Test fun `a suspended market is never priced, and no prop or 1st set moneyline is`() {
+        // every games-won line in this live match was `available:false` (Pinnacle had pulled it): none becomes a team total
+        assertTrue(ref.markets.none { it.kind == LineKind.TEAM_TOTAL })
         assertTrue(ref.markets.none { it.kind == LineKind.PLAYER_PROP })
         assertTrue(ref.markets.filter { it.kind == LineKind.MONEYLINE }.all { it.period == 0 })
     }
