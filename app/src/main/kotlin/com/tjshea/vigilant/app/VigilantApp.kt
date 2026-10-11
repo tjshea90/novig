@@ -1486,6 +1486,8 @@ class AppContainer(private val app: Application) {
             method = s.pinnLiveDevig, leagues = Leagues.ALL.map { it.novigName }.toSet() + com.tjshea.vigilant.data.pinnodds.PinnLiveRunner.EXTRA_LEAGUES,
             // The lag taker judges only while its own switch is on; with only the live bids on the feed runs for them alone.
             takerOn = s.pinnLive,
+            // Settings › Include live games: the Feed's live lane (Tj, 2026-10-11). Off, the engine does exactly what it did.
+            scanOn = AppBook.isNovig && s.includeLive && !s.killed, scanSettings = s,
         )
     }
 
@@ -1513,6 +1515,9 @@ class AppContainer(private val app: Application) {
     /** The website feed's counters: the engine's own while it is the source, else the compare run's; null when neither runs. */
     fun websiteStats(): com.tjshea.vigilant.data.pinnodds.WebsiteStats? = (activeWebsiteFeed ?: pinnShadow.takeIf { it.running })?.stats?.value
 
+    /** The Feed's live rows and what the live lane is doing (Settings › Include live games). */
+    val liveScan = com.tjshea.vigilant.data.pinnodds.LiveScanBoard()
+
     val pinnRunner: com.tjshea.vigilant.data.pinnodds.PinnLiveRunner by lazy {
         com.tjshea.vigilant.data.pinnodds.PinnLiveRunner(
             scope = appScope, source = novig,
@@ -1527,7 +1532,7 @@ class AppContainer(private val app: Application) {
                 }
             },
             onVersion = { id, key, version, at -> if (pinnShadowOn) pinnRace.note(com.tjshea.vigilant.data.pinnodds.VersionRace.Source.SOCKET, id, key, version, at) },
-            trader = pinnTrader, config = ::pinnConfig, followJournal = pinnFollowJournal, reopenJournal = pinnReopenJournal,
+            trader = pinnTrader, config = ::pinnConfig, followJournal = pinnFollowJournal, reopenJournal = pinnReopenJournal, scanBoard = liveScan,
             bids = liveBidDesk, bidConfig = ::liveBidConfig,
         )
     }
@@ -1674,9 +1679,11 @@ class AppContainer(private val app: Application) {
      */
     suspend fun pinnTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        val wanted = s.pinnLive || s.liveBid
+        // The Feed's live lane (Settings › Include live games) keeps the same two sockets open: it is the reason the engine runs when neither the taker nor the bids are on.
+        val wanted = s.pinnLive || s.liveBid || s.includeLive
         if (com.tjshea.vigilant.data.scanner.Dormant.PINNODDS || !wanted || s.killed) {   // dormant (Tj, 2026-10-09): never opened
             if (pinnRunner.running) pinnRunner.stop(if (s.killed) "stopped by STOP ALL" else null)
+            liveScan.clear(if (s.killed) "STOP ALL is on" else null)
             LiveFeedService.stop(app)
             return
         }
@@ -1690,6 +1697,7 @@ class AppContainer(private val app: Application) {
         if (!website && (!s.gates.usePinnodds || keyStore.current(ApiProvider.PINNODDS).isEmpty())) {
             if (pinnRunner.running) pinnRunner.stop(if (!s.gates.usePinnodds) "Pinnodds is switched off (Settings › APIs)." else "No Pinnodds key saved (Settings › Pinnodds live).")
             shadowTick(false)
+            liveScan.clear(if (!s.gates.usePinnodds) "Pinnodds is switched off (Settings › APIs): live games need its live prices." else "Live games need Pinnacle's live prices: save a Pinnodds key, or use the Pinnacle website feed (Settings › Pinnodds live).")
             LiveFeedService.stop(app)
             return
         }
