@@ -196,3 +196,4 @@ day that changes.
 | v0.89.3 | code 188 | 2026-10-11T03:59Z | v0.89.3: OddsPapi (v5) switch to price the fair average with every book it carries
 | v0.89.4 | code 189 | 2026-10-11T04:21Z | v0.89.4: tennis bids, every-book switches (SGO/PropLine/OddsPapi), OddsPapi Free v4 fair-odds feed, Unabated fixes
 | v0.89.5 | code 190 | 2026-10-11T04:33Z | v0.89.5: bid guard (cancels resting orders with no expiry after 30 min, whoever posted them)
+| v0.89.6 | code 191 | 2026-10-11T04:46Z | v0.89.6: live bids Safety/Volume slider (one control sets margin, pull line, trust rules and stops; kept-edge self-check), plain-words page, advanced rules folded away
