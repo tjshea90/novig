@@ -157,20 +157,28 @@ object UnabatedParser {
         )
     }
 
+    /** When a line last changed: `modifiedOn` unless it is the 0001 placeholder, else `sequenceNumber` when it reads as epoch milliseconds. */
+    internal fun stampOf(l: JsonObject): Long? {
+        val m = iso(l.str("modifiedOn"))?.takeIf { it > 946_684_800_000L }
+        return m ?: l.lng("sequenceNumber")?.takeIf { it in 1_500_000_000_000L..4_000_000_000_000L }
+    }
+
     private fun side(o: JsonObject): UnSide? {
         val lines = ArrayList<UnLine>()
         (o["marketSourceLines"].obj() ?: return null).values.forEach { v ->
             val l = v.obj() ?: return@forEach
             val source = l.lng("marketSourceId") ?: return@forEach
-            val modified = iso(l.str("modifiedOn"))
+            // Real answers (Tj's key, 2026-10-11): an alternate's `modifiedOn` is often "0001-01-01T00:00:00Z" (unknown) and `sequenceNumber` is the epoch-millisecond the line last changed.
+            val modified = stampOf(l)
             val ok = (l.int("statusId") ?: 1) == 1 && l.bool("disabled") != true
             val price = l.int("price")
             if (ok && price != null && price != 0) lines += UnLine(source, l.dbl("points"), price, modified, alternate = false, expiresMs = iso(l.str("freshnessExpiresAt")))
             (l["alternateLines"] as? JsonArray).orEmpty().forEach { a ->
                 val x = a.obj() ?: return@forEach
                 val p = x.int("price") ?: return@forEach
-                if ((x.int("statusId") ?: 1) != 1 || p == 0) return@forEach
-                lines += UnLine(x.lng("marketSourceId") ?: source, x.dbl("points"), p, iso(x.str("modifiedOn")) ?: modified, alternate = true, expiresMs = iso(x.str("freshnessExpiresAt")))
+                // A junk alternate (-10000 at a number far off the board) prices nothing.
+                if ((x.int("statusId") ?: 1) != 1 || p == 0 || kotlin.math.abs(p) > 3000) return@forEach
+                lines += UnLine(x.lng("marketSourceId") ?: source, x.dbl("points"), p, stampOf(x) ?: modified, alternate = true, expiresMs = iso(x.str("freshnessExpiresAt")))
             }
         }
         return UnSide(o.int("sideIndex") ?: return null, o.str("sideName").orEmpty(), o.lng("teamId"), o.lng("personId"), lines)

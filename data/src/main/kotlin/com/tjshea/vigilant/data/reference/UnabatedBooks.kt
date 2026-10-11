@@ -24,6 +24,9 @@ object UnabatedBooks {
         }
     }
 
+    /** Unabated's own league names where they differ from Vigilant's (real `/league`, 2026-10-11: "CFB" and "CBB"). */
+    private val ROUTE_ALIAS = mapOf("NCAAF" to "CFB", "NCAAB" to "CBB")
+
     fun title(appKey: String): String = OpBooks.title(appKey)
 
     /** The Unabated source ids (by [sources]) that are books Vigilant prices with: [wanted] keys only. */
@@ -32,7 +35,7 @@ object UnabatedBooks {
 
     /** Unabated's league route name for a Vigilant league, from `GET /league` (lower-case route names such as `nfl`); null when the key's list does not carry it. */
     fun routeFor(league: League, leagues: List<UnLeague>): String? =
-        leagues.firstOrNull { OpBooks.norm(it.name) == OpBooks.norm(league.novigName) }?.name
+        leagues.firstOrNull { OpBooks.norm(it.name) == OpBooks.norm(ROUTE_ALIAS[league.novigName] ?: league.novigName) }?.name
             ?: leagues.firstOrNull { OpBooks.norm(it.fullName) == OpBooks.norm(league.novigName) }?.name
 }
 

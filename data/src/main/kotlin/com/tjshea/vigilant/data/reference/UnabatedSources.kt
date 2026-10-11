@@ -58,7 +58,9 @@ class UnabatedFeed(
      */
     suspend fun read(league: League, type: String, settings: ScanSettings): Read? {
         val route = route(league) ?: return null
-        val sources = sources(route, type)
+        val deadKey = "$route|$type"
+        dead[deadKey]?.takeIf { it > clock() }?.let { return Read(emptyList(), clock(), "Unabated has no $route $type board right now") }
+        val sources = try { sources(route, type) } catch (e: UnabatedFailure) { dead[deadKey] = clock() + DEAD_MS; return Read(emptyList(), clock(), "Unabated has no $route $type board (${e.message?.take(80)})") }
         val books = UnabatedBooks.sourceMap(sources, settings.referenceBooks.toSet())
         if (books.isEmpty()) return Read(emptyList(), clock(), "no wanted book on Unabated's ${route} $type sources")
         val key = "$route|$type|${books.values.sorted().joinToString(",")}|${settings.families.map { it.name }.sorted().joinToString(",")}|${settings.includeLive}"
@@ -76,25 +78,41 @@ class UnabatedFeed(
         return refresh(key, ttl, load)
     }
 
+    private val dead = ConcurrentHashMap<String, Long>()
+
     private suspend fun refresh(key: String, ttl: Long, load: suspend () -> Read): Read =
         locks.getOrPut("read|$key") { Mutex() }.withLock {
             reads[key]?.takeIf { clock() - it.readAtMs < ttl }?.let { return@withLock it }
-            load().also { reads[key] = it }
+            // Unabated saying it cannot build this board ("Unexpected error while retrieving odds for the provided filter") is an empty board for a while, not a failed scan.
+            val r = try { load() } catch (e: UnabatedFailure) { dead[key.substringBefore("|", "") + "|" + key.split("|").getOrElse(1) { "" }] = clock() + DEAD_MS; Read(emptyList(), clock(), "Unabated: ${e.message?.take(100)}") }
+            r.also { reads[key] = it }
         }
 
     private suspend fun load(league: League, route: String, type: String, books: Map<Long, String>, sources: List<UnSource>, settings: ScanSettings): Read {
         val betTypes = betTypes()
         val periods = periods(route)
-        val teams = teams(route, type)
+        // Team names are a nicety (the board's own event name carries them): a failing teams list never fails the read.
+        val teams = try { teams(route, "straight") } catch (e: UnabatedFailure) { emptyMap() }
         val people = if (type == "props") people(route) else emptyMap()
-        val raw = client.oddsRaw(route, type)
-        val readAt = clock()
-        val board = UnabatedParser.board(raw, settings.includeLive)
-        val ctx = UnabatedContext(
-            league, books, sources.filter { if (type == "props") it.propsStatusId == 1 else it.statusId == 1 }.map { it.id }.toSet(), betTypes, periods, teams, people,
-            settings.families, settings.includeLive, readAt, board.lastUpdatedMs,
-        )
-        val events = UnabatedConvert.events(board, ctx)
+        // Only the bet types Vigilant prices are asked for: an unfiltered NFL straight board is 14.7 MB and an unfiltered props board is refused.
+        val ids = if (type == "props") UnabatedConvert.propBetTypeIds(betTypes.values, league) else UnabatedConvert.gameBetTypeIds(betTypes.values)
+        if (type == "props" && ids.isEmpty()) return Read(emptyList(), clock(), "no prop bet type with a Vigilant stat on this key")
+        val chunks = if (ids.isEmpty()) listOf(emptyList()) else ids.chunked(PROP_CHUNK).take(MAX_CHUNKS)
+        var readAt = clock()
+        var updated: Long? = null
+        val parts = chunks.map { chunk ->
+            val raw = client.oddsRaw(route, type, chunk)
+            readAt = clock()
+            val board = UnabatedParser.board(raw, settings.includeLive)
+            updated = board.lastUpdatedMs ?: updated
+            val ctx = UnabatedContext(
+                league, books, sources.filter { if (type == "props") it.propsStatusId == 1 else it.statusId == 1 }.map { it.id }.toSet(), betTypes, periods, teams, people,
+                settings.families, settings.includeLive, readAt, board.lastUpdatedMs,
+            )
+            UnabatedConvert.events(board, ctx)
+        }
+        val events = UnabatedConvert.merge(parts)
+        val board = UnBoard(emptyList(), updated)
         val summary = describe(events, readAt) + (board.lastUpdatedMs?.let { ", board updated ${(readAt - it) / 1000L}s before the read" } ?: "")
         client.lastReads["${league.novigName} $type"] = summary
         return Read(events, readAt, summary)
@@ -107,6 +125,9 @@ class UnabatedFeed(
         const val GAMES_TTL_MS = 120_000L
         const val PROPS_TTL_MS = 180_000L
         const val MIN_TTL_MS = 20_000L
+        const val DEAD_MS = 10 * 60_000L
+        const val PROP_CHUNK = 15
+        const val MAX_CHUNKS = 6
     }
 }
 

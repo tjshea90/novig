@@ -57,6 +57,29 @@ object UnabatedConvert {
 
     private fun norm(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
 
+    private val CORE_GAME_NAMES = setOf(
+        "moneyline", "spread", "pointspread", "runline", "puckline", "total", "totalpoints", "totalruns", "totalgoals", "overunder", "teamtotal", "teamtotalpoints", "teamtotalruns", "teamtotalgoals",
+    )
+
+    /**
+     * The bet types to ask a straight board for. An unfiltered NFL straight board is 14.7 MB (1,631 bet types exist; real answer, 2026-10-11), so only the game lines Vigilant prices are requested; empty when no
+     * bet type's name is one of them (the caller then asks for everything rather than nothing).
+     */
+    fun gameBetTypeIds(types: Collection<UnBetType>): List<Int> = types.filter { norm(it.name) in CORE_GAME_NAMES }.map { it.id }.sorted()
+
+    /** The player-prop bet types of [league] Vigilant has a stat for ("Passing Yards", "Player Field Goals Made"). */
+    fun propBetTypeIds(types: Collection<UnBetType>, league: League): List<Int> = types.filter { t ->
+        val k = norm(t.name)
+        OpProps.stat(league.novigName, k.removePrefix("player")) != null || OpProps.stat(league.novigName, k) != null
+    }.map { it.id }.sorted()
+
+    /** Events read in several requests, joined by event id (their markets pooled). */
+    fun merge(parts: List<List<RefEvent>>): List<RefEvent> {
+        val by = LinkedHashMap<String, RefEvent>()
+        for (e in parts.flatten()) by[e.id] = by[e.id]?.let { it.copy(markets = it.markets + e.markets) } ?: e
+        return by.values.toList()
+    }
+
     /** Vigilant's period for an Unabated period type, or null for one Novig has no market for. */
     fun periodOf(g: UnGroup, ctx: UnabatedContext): Int? {
         val name = norm(g.periodTypeId?.let { ctx.periods[it]?.name } ?: g.periodKey)
