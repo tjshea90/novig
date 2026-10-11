@@ -285,6 +285,43 @@ class UnabatedTest {
         assertEquals(listOf("bad", "good"), requests.map { it.getHeader("X-Api-Key") })
     }
 
+    @Test fun aRealAlternateWithThe0001PlaceholderIsDatedByItsSequenceNumberAndAJunkAlternateIsDropped() {
+        val j = """{"data":{"odds":{"nfl":{"leagueId":1,"periodTypes":{"game":{"periodTypeId":1,"pregame":{
+          ${group(72, side(0, null, line(91, "230.5", -110, extra = ""","alternateLines":[{"marketSourceId":91,"alternateNumber":0,"points":10.0,"price":-10000,"statusId":1,"sequenceNumber":1791574208710,"modifiedOn":"0001-01-01T00:00:00Z"},{"marketSourceId":91,"alternateNumber":0,"points":231.5,"price":-120,"statusId":1,"sequenceNumber":1791574208710,"modifiedOn":"0001-01-01T00:00:00Z"}]"""), name = "Over") + "," + side(1, null, line(91, "230.5", -110), name = "Under"))}
+        }}}}},"lastUpdated":1791741900000},"success":true,"messages":[]}"""
+        val lines = UnabatedParser.board(j, false).groups.single().sides.first { it.sideIndex == 0 }.lines
+        assertEquals("the junk -10000 alternate is dropped", 2, lines.size)
+        assertEquals("1791574208710 is epoch ms: the real time of the change", 1791574208710L, lines.single { it.alternate }.modifiedMs)
+    }
+
+    @Test fun vigilantsCollegeLeaguesAreUnabatedsCfbAndCbbAndOnlyTheGameAndPropTypesWeCanPriceAreAsked() {
+        val leagues = listOf(UnLeague(1, "NFL", ""), UnLeague(2, "CFB", ""), UnLeague(4, "CBB", ""))
+        assertEquals("CFB", UnabatedBooks.routeFor(Leagues.byNovigName("NCAAF")!!, leagues))
+        assertEquals("CBB", UnabatedBooks.routeFor(Leagues.byNovigName("NCAAB")!!, leagues))
+        val types = listOf(UnBetType(1, "Moneyline", "", false), UnBetType(2, "Spread", "", true), UnBetType(3, "Total", "", true), UnBetType(845, "Team Total Odd/Even", "", false),
+            UnBetType(14, "Passing Yards", "", true), UnBetType(37, "Most Rushing Yards", "", true), UnBetType(10, "Make Playoffs", "", false), UnBetType(59, "Player Field Goals Made", "", true))
+        assertEquals(listOf(1, 2, 3), UnabatedConvert.gameBetTypeIds(types))
+        assertEquals(listOf(14, 59), UnabatedConvert.propBetTypeIds(types, Leagues.byNovigName("NFL")!!))
+    }
+
+    @Test fun aBoardUnabatedCannotBuildIsAnEmptyBoardForAWhileNotAFailedScan() = runTest {
+        handler = { r -> if (r.requestUrl!!.encodedPath.endsWith("/sources")) ok("""{"data":null,"success":false,"messages":["Unexpected error while retrieving market sources for the provided filter."]}""") else route(r) }
+        val feed = UnabatedFeed(client(), CoroutineScope(Dispatchers.IO)) { clockMs }
+        val r = feed.read(nba, "straight", settings)!!
+        assertTrue(r.events.isEmpty())
+        val n = requests.size
+        feed.read(nba, "straight", settings)
+        assertEquals("and it is not asked again for ten minutes", n, requests.size)
+    }
+
+    @Test fun theBoardIsAskedWithTheBetTypeFilter() = runTest {
+        handler = { route(it) }
+        val feed = UnabatedFeed(client(), CoroutineScope(Dispatchers.IO)) { clockMs }
+        feed.read(nba, "straight", settings)
+        val odds = requests.single { it.requestUrl!!.encodedPath.endsWith("/odds") }.requestUrl!!
+        assertEquals(listOf("1", "72", "73"), odds.queryParameterValues("betTypeId").sortedBy { it!!.toInt() })
+    }
+
     @Test fun theFeedReadsABoardOnceServesItFromCacheAndRefreshesInTheBackgroundOnceStale() = runTest {
         handler = { route(it) }
         val feed = UnabatedFeed(client(), CoroutineScope(Dispatchers.IO)) { clockMs }

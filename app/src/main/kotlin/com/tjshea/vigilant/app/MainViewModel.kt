@@ -1370,45 +1370,67 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun testActiveApis() {
         if (_state.value.apiTestBusy) return
-        _state.update { it.copy(apiTestBusy = true, apiTestLines = listOf("Testing the APIs that are on…")) }
+        val lines = ArrayList<String>()
+        fun show(busy: Boolean = true) = _state.update { it.copy(apiTestBusy = busy, apiTestLines = lines.toList()) }
+        lines += "Testing the APIs that are on…"
+        show()
         viewModelScope.launch {
-            val lines = ArrayList<String>()
-            val s = _state.value.settings
-            val on = ApiEntry.active(s)
-            val results = HashMap<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>>()
-            if (on.isEmpty()) lines += "No API is switched on."
-            for (e in on) {
-                val checks = withContext(Dispatchers.IO) {
-                    runCatching {
-                        if (e.keyless) listOf(c.apiProbe.reach(kalshi = e == ApiEntry.KALSHI)) else c.apiProbe.check(e.provider!!, keysFor(e.provider))
-                    }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
-                } ?: continue
-                results[e.name] = checks
-                lines += (if (checks.all { it.ok }) "OK   " else "FAIL ") + e.title + ": " + checks.joinToString(" | ") { (if (it.masked.isBlank()) "" else it.masked + " ") + it.message }
-                _state.update { it.copy(apiChecks = it.apiChecks + results) }
-            }
-            lines += ""
-            lines += "One league through each source that is in play (${s.selectedLeagues.joinToString(", ") { it.novigName }.ifEmpty { "no leagues selected" }}):"
-            val sources = runCatching { c.referenceSources(s) }.getOrDefault(emptyList())
-            for (src in sources) {
-                val league = s.selectedLeagues.firstOrNull { src.supports(it) }
-                if (league == null) { lines += "---  ${src.displayName}: none of the selected leagues"; continue }
-                if (src.needsCatalog) { lines += "---  ${src.displayName}: needs Novig's board for ${league.novigName}; a scan tests it"; continue }
-                val t0 = System.currentTimeMillis()
-                val snap = withContext(Dispatchers.IO) {
-                    runCatching { kotlinx.coroutines.withTimeout(90_000L) { src.odds(league, s.copy(leagues = setOf(league.novigName))) } }.onFailure { if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }
+            try {
+                val s = _state.value.settings
+                val on = ApiEntry.active(s)
+                if (on.isEmpty()) lines += "No API is switched on."
+                show()
+                for (e in on) {
+                    lines += "…    ${e.title}: checking its key${if (keysFor(e.provider ?: ApiProvider.PARLAY).size > 1 && !e.keyless) "s" else ""}"
+                    show()
+                    val checks = withContext(Dispatchers.IO) {
+                        runCatching {
+                            kotlinx.coroutines.withTimeout(40_000L) {
+                                if (e.keyless) listOf(c.apiProbe.reach(kalshi = e == ApiEntry.KALSHI)) else c.apiProbe.check(e.provider!!, keysFor(e.provider))
+                            }
+                        }.onFailure { if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }.getOrNull()
+                    }
+                    lines.removeAt(lines.size - 1)
+                    if (checks == null) { lines += "FAIL ${e.title}: no answer in 40 s"; show(); continue }
+                    lines += (if (checks.all { it.ok }) "OK   " else "FAIL ") + e.title + ": " + checks.joinToString(" | ") { (if (it.masked.isBlank() || it.masked == "no key") "" else it.masked + " ") + it.message }
+                    _state.update { it.copy(apiChecks = it.apiChecks + (e.name to checks)) }
+                    show()
                 }
-                val secs = (System.currentTimeMillis() - t0) / 1000.0
-                lines += snap.fold(
-                    { r ->
-                        val markets = r.events.flatMap { it.markets }
-                        "${if (r.events.isNotEmpty() || r.skipped) "OK   " else "EMPTY"} ${src.displayName} · ${league.novigName}: ${r.events.size} games, ${markets.size} quotes, ${markets.map { it.bookKey }.toSet().size} books · ${"%.1f".format(secs)} s"
-                    },
-                    { e -> "FAIL ${src.displayName} · ${league.novigName}: ${com.tjshea.vigilant.data.reference.readableError(e)} · ${"%.1f".format(secs)} s" },
-                )
+                lines += ""
+                lines += "One league through each source that is in play (${s.selectedLeagues.joinToString(", ") { it.novigName }.ifEmpty { "no leagues selected" }}):"
+                show()
+                val sources = runCatching { c.referenceSources(s) }.getOrDefault(emptyList())
+                for (src in sources) {
+                    val league = s.selectedLeagues.firstOrNull { src.supports(it) }
+                    if (league == null) { lines += "---  ${src.displayName}: none of the selected leagues"; show(); continue }
+                    if (src.needsCatalog) { lines += "---  ${src.displayName}: needs Novig's board for ${league.novigName}; a scan tests it"; show(); continue }
+                    lines += "…    ${src.displayName} · ${league.novigName}: reading"
+                    show()
+                    val t0 = System.currentTimeMillis()
+                    val snap = withContext(Dispatchers.IO) {
+                        runCatching { kotlinx.coroutines.withTimeout(60_000L) { src.odds(league, s.copy(leagues = setOf(league.novigName))) } }.onFailure { if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }
+                    }
+                    val secs = (System.currentTimeMillis() - t0) / 1000.0
+                    lines.removeAt(lines.size - 1)
+                    lines += snap.fold(
+                        { r ->
+                            val markets = r.events.flatMap { it.markets }
+                            "${if (r.events.isNotEmpty() || r.skipped) "OK   " else "EMPTY"} ${src.displayName} · ${league.novigName}: ${r.events.size} games, ${markets.size} quotes, ${markets.map { it.bookKey }.toSet().size} books · ${"%.1f".format(secs)} s"
+                        },
+                        { e -> "FAIL ${src.displayName} · ${league.novigName}: ${if (e is kotlinx.coroutines.TimeoutCancellationException) "no answer in 60 s" else com.tjshea.vigilant.data.reference.readableError(e)} · ${"%.1f".format(secs)} s" },
+                    )
+                    show()
+                }
+                lines += "Done."
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                lines += "Stopped."
+                throw e
+            } catch (e: Exception) {
+                lines += "FAIL the test stopped: ${com.tjshea.vigilant.data.reference.readableError(e)}"
+            } finally {
+                _state.update { it.copy(apiTestBusy = false, apiTestLines = lines.toList()) }
+                refreshBalances(force = true)
             }
-            _state.update { it.copy(apiTestBusy = false, apiTestLines = lines) }
-            refreshBalances(force = true)
         }
     }
 
