@@ -6393,3 +6393,31 @@ When the vigilant wallet gets below 20 cents, automatically stop all scanning, b
 ```
 Can the app as it is now see all of my bets and send them to Claude with all the information about when placed and at what odds and clv etc to analyze them?
 ```
+
+## 2026-10-11T15:26:12Z
+```
+Build the share all bets button. Make sure it is very comprehensive. Careful about files that become too large and crash the app. I want to be able to send every single bet and bid I ever made with at least the following information: 
+
+1) odds when placed
+2) bet or bid 
+3) auto or manual
+4) EV when placed
+5) time before the game starts when placed
+6) amount of books behind the fair odds when placed
+7) whether sharp book agreed when placed
+8) closing odds of the bet (make sure it is accurate)
+9) clv
+10) whether the bet won lost or pushed
+11) liquidity information if available 
+12) type of bet (prop, money line, spread, etc.)
+13) sport of bet 
+14) rating of bet according to the app rating system (how many stars)
+
+Plus any other information that can be gathered and logged about each bet and bid. Make sure the app itself accurately shows this information inside of the stats feature, with filters so I can see stats depending on the type of bet and rating of the bet. Make a drop down box with a smart filter setting. 
+
+Make a share bets with Claude feature where I can share the bet logs to Claude in a format that Claude can understand and analyze. The goal is to analyze what bets and bids beat the close, are profitable, and recommendations on app improvements or filters for bids and bets. 
+
+It is important to consider file size, I do hundreds of bets a day sometimes. Maybe make the app auto save each day's bets into the vigilant folder in my local android downloads folder. Or upload to GitHub in the background if that is possible. 
+
+Use your discretion to figure out the best way to implement this feature for maximum smart analysis of my bets and bids and for the best recommendations.
+```
