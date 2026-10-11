@@ -4706,6 +4706,6 @@ Tj verbatim: "I have live games toggled on for the scanner. These bets are not d
 
 ## TW: why isn't auto-bet betting this 4-star bet; 3½★+ needs >= 2% EV (Tj, 2026-10-11 ~19:50Z)
 Tj verbatim (3 screenshots: Auto-bet tab with minimum 4★ on, "Vigilant wallet $29.15 · 23 bids up ($29.37) · over the wallet", CNO card Justin Herbert Under 199.5 4.0★ +2.95% CNO EV, Novig +108, "$15.98 in game", sheet says +1.45% EV at the devigged fair): "I have auto bet turned on. Why isn't it betting the 4 Star Bet in the screenshot? Also, for bet ratings, make a requirement that a bet be at least 2% positive ev to be rated 3½ stars or better"
-- [ ] TW1 Find the reason (wallet is fully held by 23 resting bids? game cap? EV at real price?) from the code paths and the status the Auto-bet tab keeps.
-- [ ] TW2 BetRating: a bet under +2% EV is capped below 3½★ (tests, UI text, docs).
+- [x] TW1 DONE (reasons listed in RESEARCH §133.2; the screenshots cannot say which: AutoBettor.Report.why + a line on the CNO card now does). Find the reason (wallet is fully held by 23 resting bids? game cap? EV at real price?) from the code paths and the status the Auto-bet tab keeps.
+- [x] TW2 DONE (BetRatingTest). BetRating: a bet under +2% EV is capped below 3½★ (tests, UI text, docs).
 - [ ] TW3 Ship.
