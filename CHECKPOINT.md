@@ -1,13 +1,13 @@
-# CHECKPOINT 3005 — read me first, then TASKS.md
+# CHECKPOINT 3006 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T20:29:47Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-4a7a6b39-3ig8vu` · **builds on:** `6b0607a14` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T20:36:21Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-4a7a6b39-3ig8vu` · **builds on:** `16debebe6` (this checkpoint is the commit after it)
 
 ## Just done
-TAA1 live-lane fixes in progress; wrote TAB (API priority chain: best API only, others sleep)
+TAB code (ApiChain) written, data tests green; TAC written (same-company books)
 
 ## Do this next
-finish TAA (tests, UI recovery note), then TAB1 audit sources
+TAC1 research books, TAC2 BookCompany; finish TAA/TAB tests; ship v0.89.26
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ finish TAA (tests, UI recovery note), then TAB1 audit sources
 
 ## Last ten checkpoints
 ```
+  4e46c73c7 ckpt 3005: TAA1 live-lane fixes in progress; wrote TAB (API priority chain: best API o
   8f1364ad1 ckpt 3004: TAA written (live lane banner bug, Novig books never arrive, auto-bet stopp
   d76ec702f ckpt 3003: v0.89.25 released and recorded (TS-TZZ done)
   8a76be00e ckpt 3002: pre-release: v0.89.25: no negative-EV order anywhere, a sharp book that dis
@@ -26,7 +27,6 @@ finish TAA (tests, UI recovery note), then TAB1 audit sources
   bae6652c0 ckpt 2998: pre-release: v0.89.24: Pause stops everything at once, live lane keeps rows
   e5fc694e6 ckpt 2997: pre-ship: v0.89.24: Pause stops everything at once, live lane keeps rows wh
   74b7d3bde ckpt 2996: v0.89.23 shipped+release triggered; TT written (pause must stop all scannin
-  6a8c02eed ckpt 2995: pre-release: v0.89.23: Check odds now also reads Novig's own price for ever
 ```
 
 (2 automatic checkpoint(s) since the last deliberate one — the

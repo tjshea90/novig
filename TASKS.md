@@ -4744,3 +4744,8 @@ Tj verbatim: "For clarification, if I have multiple apis toggled on, I still wan
 - [ ] TAB1 Audit: how Scanner/sources call every on API today (parallel, per league, games and props), `fallbackFor`, `SOURCE_ORDER`, which books/markets each source carries.
 - [ ] TAB2 Priority chain: per league and kind (games, props, alternates), ask the best source first; ask a lower one only for books/markets the better ones did not give, or when the better one failed, answered nothing or is out of credits; record why a source slept (diagnostics).
 - [ ] TAB3 Tests (ApiTogglesTest-style: overlap -> lower sleeps; failure/out of usage -> next best; extras still asked), CLAUDE.md rule updated, ship.
+
+## TAC: identical odds from "6 of 6 books": same company? (Tj, 2026-10-11 ~20:45Z)
+Tj verbatim (2 screenshots: Casper Ruud +0.5 games spread, "6 of 6 books agree", Bally Bet, betparx, casumo, grosvenor, tabtouch, unibet all +100 / -134, unibet -133, "One book a company"): "This bet says 6 out of 6 books agree, but the odds are suspicious because they are exactly the same. They may be the same company. Research each one. If they are the same company, permanently set them as the same company in the app."
+- [ ] TAC1 Research each book's operator and trading/odds provider (web), save to research/.
+- [ ] TAC2 If they share a company or one odds feed, add the grouping to `BookCompany` (permanent), tests, docs, ship.
