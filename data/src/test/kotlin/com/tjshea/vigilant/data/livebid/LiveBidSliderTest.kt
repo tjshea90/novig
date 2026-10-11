@@ -1,12 +1,14 @@
 package com.tjshea.vigilant.data.livebid
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+
 
 class LiveBidSliderTest {
+    private fun assertTrue(c: Boolean, m: String = "") = org.junit.Assert.assertTrue(m, c)
+
     private val all = (LiveBidSlider.MIN..LiveBidSlider.MAX).map { LiveBidSlider.apply(LiveBidQuality(), it) }
 
     @Test
