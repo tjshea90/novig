@@ -4627,3 +4627,7 @@ Tj verbatim: "Build the share all bets button. Make sure it is very comprehensiv
 - [ ] TK4 Stats in the app: all fields inside the Stats screen with a smart-filter dropdown (kind, sport, stars, bet/bid, auto/manual, sharp, time to start, result).
 - [ ] TK5 Closing odds accuracy audit (close source, true-close rule) and shown/exported with source.
 - [ ] TK6 Tests, adversarial review, ship, release.
+- [x] TK0-TK3 built and tested (BetHistory/BetHistoryExport/BetArchive/BetDims, app sync loop + share, tests: BetHistoryTest, BetHistoryUiTest, BetArchiveAppTest).
+- [ ] TK5 Closing-odds accuracy: research/closing_audit_2026-10-11.md holds 25 UNVERIFIED audit findings (workflows were stopped for usage; no multi-agent workflows from now on, Tj 2026-10-11). Triage in the main process: verify each in code, fix the ones that make a closing number wrong, export what cannot be fixed (closeBasis/independence, close read time, source).
+- [ ] TK6 Full suite, ship (versionCode 203 / 0.89.18), release.
+

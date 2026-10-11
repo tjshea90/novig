@@ -1,21 +1,23 @@
-# CHECKPOINT 2964 — read me first, then TASKS.md
+# CHECKPOINT 2965 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T15:44:15Z · **tests:** all 4 fast checks green
-**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `a4f3920d6` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T15:45:13Z · **tests:** all 4 fast checks green
+**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `5aabf8730` (this checkpoint is the commit after it)
 
 ## Just done
-TK tests (BetHistoryTest, BetHistoryUiTest, BetArchiveAppTest) pass; RESEARCH §132; review workflow wf_268ebe7b-004 + closing audit wf_cd962ddf-3e2 running
+Saved the closing-odds audit (research/closing_audit_2026-10-11.md, 25 unverified findings) and stopped both workflows (Tj: workflows burn usage and fail on interruption)
 
 ## Do this next
-read both workflow results (journal.jsonl in subagents/workflows/), fix confirmed findings, add closeBasis field, run full suite, ship (versionCode 203/0.89.18), release
+TK5: triage the audit in the main process, ordered by severity wrong-number first (BetHistory closeLeadSec, history-close devig method, novig VWAP close, stale CNO read dating); then add closeBasis/independence to BetHistory.Row; full suite; ship 0.89.18
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  52dd230bf ckpt 2964: TK tests (BetHistoryTest, BetHistoryUiTest, BetArchiveAppTest) pass; RESEAR
   654499774 ckpt 2963: TK: core built — BetRating.estimate/AtBet stars, BetDims+BetFilterSpec+sm
   a5b76868d ckpt 2962: wrote TK tasks (share all bets + stats filters + daily autosave)
   55fc3a342 ckpt 2961: v0.89.17 shipped (stars + wallet sleep); release.yml triggered
@@ -25,8 +27,7 @@ read both workflow results (journal.jsonl in subagents/workflows/), fix confirme
   dedfb335f ckpt 2957: v0.89.16 shipped (BookCompany researched, RESEARCH §130); release.yml trig
   00be0f13a ckpt 2956: pre-release: v0.89.16: parent-company table researched from SGO and ParlayA
   3d5152d4e ckpt 2955: pre-ship: v0.89.16: parent-company table researched from SGO and ParlayAPI 
-  bf0a24e57 ckpt 2954: v0.89.15 released and recorded; TH1-TH8 done
 ```
 
-(8 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
