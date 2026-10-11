@@ -35,7 +35,7 @@ for f in "${SRC[@]}"; do
     echo "  ARCHIVE  skipped $base: it looks like it holds a live credential (not copied; remove it and run again)"; continue
   fi
   mkdir -p "$dir"
-  if [ "$plain" -eq 1 ]; then gzip -9 -c "$f" > "$out.tmp" 2>/dev/null; else cp "$f" "$out.tmp" 2>/dev/null; fi
+  if [ "$plain" -eq 1 ]; then sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<email>/g' "$f" 2>/dev/null | gzip -9 -c > "$out.tmp" 2>/dev/null; else cp "$f" "$out.tmp" 2>/dev/null; fi
   sz="$(stat -c %s "$out.tmp" 2>/dev/null || echo 0)"
   if [ "$sz" -gt $((60*1024*1024)) ]; then rm -f "$out.tmp"; echo "  ARCHIVE  skipped $base: $((sz/1048576)) MB is too big for git (use a Release)"; continue; fi
   mv "$out.tmp" "$out" && n=$((n+1))
