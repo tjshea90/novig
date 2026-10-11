@@ -6513,3 +6513,8 @@ Also if I have live bets toggled to show up in the scanner, make a filter in the
 ```
 Figure out why this error happens, how to fix it, and make it automatically recheck every few seconds and if it is fixed then automatically resume auto bet. If it cannot be fixed, make a notification that auto bet stopped and explain the problem
 ```
+
+## 2026-10-11T19:54:25Z
+```
+If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it at all, whether auto bet or bid or manual bet or bid. No money should ever go on a negative ev bet.
+```
