@@ -4675,7 +4675,7 @@ Tj verbatim: "Right now I can see live games in the vigilant scanner, but it wou
 
 ## TR: Check odds now covers EVERY open bet; "Hide live games" filter (Tj, 2026-10-11 ~18:4xZ)
 Tj verbatim: "If I have 190 open bets, why does it only show 53 bets current ev? I don't think it ever rescans vigilant for current EV on all my bets. Make this feature check the current odds and EV for each and every one of my open bets and bids when I press check odds now, regardless of scanner. I should get an updated current EV and odds for every single one of my open bets based on devigged current odds across sports books. And add a filter to hide live games that I can toggle on and off. This will hide live bets from the list and from the stats numbers until I untoggle it" (screenshot: "190 open · 137 started · current EV on 53 of 53 upcoming", "73 live games left out", "11 over ±5% left out").
-- [ ] TR1 Audit: why only upcoming bets get a current EV (OpenBetPricer, TrackerText.checkCounts, started/live exclusions, ±5% outliers) and what "all 190" needs.
-- [ ] TR2 Check odds now prices every open bet (bets and bids), started ones too (live: Pinnacle/other books' current devig; no scanner needed), with current odds + EV on each card.
-- [ ] TR3 Tracker toggle "Hide live games": hides live bets from the list AND the stats until untoggled.
-- [ ] TR4 Tests, ship.
+- [x] TR1 DONE (RESEARCH §133: the 53 were only upcoming games; 73 in play were priced but left out of the counter; the rest are over). Audit: why only upcoming bets get a current EV (OpenBetPricer, TrackerText.checkCounts, started/live exclusions, ±5% outliers) and what "all 190" needs.
+- [x] TR2 DONE (counter includes in-play, summary splits upcoming/in play/finished, reasons on started bets; check already covered every open bet within 4 h). Check odds now prices every open bet (bets and bids), started ones too (live: Pinnacle/other books' current devig; no scanner needed), with current odds + EV on each card.
+- [x] TR3 DONE (Hide live games chip, LiveBets, CheckOddsStatsTest). Tracker toggle "Hide live games": hides live bets from the list AND the stats until untoggled.
+- [x] TR4 DONE with v0.89.22 (shipping).
