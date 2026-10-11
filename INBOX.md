@@ -6350,3 +6350,16 @@ Release it when the tests pass
 ```
 @"/root/.claude/uploads/a54d376e-b7de-5f72-a95d-a9c55905d63e/9e4bc2ca-vigilant-sgo-sample-2026-10-11T06-49-49.453777Z.txt" 
 ```
+
+## 2026-10-11T13:19:46Z
+```
+For the vigilant scanner: 
+
+1) similar to the cno scanner, make it show how many books agree on the positive EV (for example 4 out of 5 books agree) 
+2) add a star next to any bet which a sharp book for that market also agrees the bet is EV
+3) for any api, including sgo with its many books, consolidate same company books and do not count them for their odds more than once. Sgo carries many books, but a lot of them are the same parent company with identical odds. Only list one of these books in the results and only calculate one of the books for fair odds if there are more than one book under the same company. 
+4) make the auto bet feature also bet on vigilant scanned bets, but only if they meet the criteria I set for auto bet
+5) exclude from any fair odds evaluation any book that shows odds that look incorrect, such as extreme outliers or inverted odds (favorite on the opposite side of the rest of the market)
+6) automatically remove from the list any bet with less than 10 cents liquidity or any bet no longer offered at positive EV
+7) similar to cno scanner, when I press on a bet, show each book carrying the bet and its odds for both sides of the bet. Currently it only shows odds for one side of the bet 
+```
