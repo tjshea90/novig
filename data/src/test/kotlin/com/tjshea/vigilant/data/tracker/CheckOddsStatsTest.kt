@@ -99,7 +99,7 @@ class CheckOddsStatsTest {
     }
 
     @Test
-    fun `live bets are the open ones in the window after the start; older ones are finished`() {
+    fun `live bets are the open ones in the window after the start, older ones are finished`() {
         val inPlay = bet("p", 0.01, startsTs = now - 60 * 60_000L)
         val over = bet("o", 0.01, startsTs = now - 6 * 3_600_000L)
         val upcoming = bet("u", 0.01, startsTs = now + 3_600_000L)
