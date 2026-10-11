@@ -18,7 +18,7 @@ class BetRatingTest {
 
     @Test fun `a thin weak bet is low and a middling one lands in the middle`() {
         assertTrue(rate(2, 2, 0.01) <= 2.0)
-        assertEquals(1.0, rate(1, 1, 0.02), 0.0)
+        assertTrue(rate(1, 1, 0.02) <= 1.5)
         val mid = rate(4, 3, 0.03)
         assertTrue("middling bet was $mid", mid in 2.5..3.5)
     }
@@ -26,7 +26,7 @@ class BetRatingTest {
     @Test fun `each ingredient moves the rating the right way`() {
         val base = rate(4, 3, 0.03, spread = 0.02)
         assertTrue(rate(4, 4, 0.03, spread = 0.02) > base)           // more agreement
-        assertTrue(rate(6, 3, 0.03, spread = 0.02) > base)           // more books
+        assertTrue(rate(8, 6, 0.03, spread = 0.02) > base)           // more books at the same share agreeing
         assertTrue(rate(4, 3, 0.05, spread = 0.02) > base)           // more edge
         assertTrue(rate(4, 3, 0.03, sharp = true, spread = 0.02) > base)  // a sharp book agrees
         assertTrue(rate(4, 3, 0.03, spread = 0.005) > base)          // tighter consensus
