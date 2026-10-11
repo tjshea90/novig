@@ -34,6 +34,7 @@ import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.app.WalletAmount
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.novig.trading.AutoBet
+import com.tjshea.vigilant.data.scanner.BetRating
 import com.tjshea.vigilant.data.novig.trading.PropGuard
 import com.tjshea.vigilant.data.scanner.AutoBetStake
 import com.tjshea.vigilant.data.scanner.AutoScanMode
@@ -348,7 +349,7 @@ fun AutoBetSection(
 
     // The least a bet's star rating may be (Tj, 2026-10-11).
     Text("Smallest star rating", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    Chips(ScanSettings.AUTO_BET_STARS_CHOICES, s.autoBetMinStars, { if (it <= 0.0) "Any" else com.tjshea.vigilant.data.scanner.BetRating.label(it) + "★" }, modifier = Modifier.testTag("autoBetStarsChips")) { v ->
+    Chips(ScanSettings.AUTO_BET_STARS_CHOICES, s.autoBetMinStars, { if (it <= 0.0) "Any" else BetRating.label(it) + "★" }, modifier = Modifier.testTag("autoBetStarsChips")) { v ->
         onUpdate { it.copy(vigGuards = it.vigGuards.copy(autoBetMinStars = v)) }
     }
     Text(
