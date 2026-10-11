@@ -528,6 +528,35 @@ class AutoBettorTest {
     }
 
     @Test
+    fun `Vigilant's own scanned bets follow the same rule - the rating alone decides while a minimum is on, the filters apply when it is off`() = runBlocking {
+        val scan = SampleScan.settings.copy(leagues = setOf("NFL", "MLB"))
+        val result = SampleScan.result(scan)
+        val o = result.opportunities.filter { it.quote != null && it.fairProbability != null && it.ladder.isNotEmpty() && it.rating != null && !it.isLive && (it.evPercent ?: 0.0) in 0.01..0.14 }
+            .maxByOrNull { it.rating!!.stars } ?: error("the sample scan has no priced bet to rate")
+        val stars = o.rating!!.stars
+        val other = o.market.otherOutcome(o.outcome.outcomeId)!!.outcomeId
+        val ladder = NovigBook(o.market.marketId, 1, mapOf(other to o.ladder.sortedBy { it.price }.map { BidLevel(Math.round((1.0 - it.price) * 1000).toInt(), it.contracts) }), now)
+        // Filters that refuse it: an edge bar far above it, a books-agree count nobody meets, and a kinds choice that excludes its kind.
+        val blocked = settings { it.copy(leagues = scan.leagues, autoBetMinEv = 0.40, autoBetBooks = 12, autoBetTwoSided = 12, autoBetKinds = emptySet(), vigGuards = it.vigGuards.copy(autoBetVigilant = true)) }
+        val st = SampleScan.state(scan)
+        val none = FakeNovig()
+        assertEquals(0, bettor(none, placer = placer(none, book = ladder)).runTennis(blocked, st, result).placed.size)
+        assertEquals(0, none.orders.get())
+        val rated = blocked.copy(vigGuards = blocked.vigGuards.copy(autoBetMinStars = stars))
+        val on = FakeNovig()
+        val report = bettor(on, placer = placer(on, book = ladder)).runTennis(rated, st, result)
+        assertTrue(report.skipped.toString(), report.placed.isNotEmpty() && on.orders.get() >= 1)
+        // Above every bet's rating nothing is placed, and Any puts the filters back.
+        runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
+        val above = FakeNovig()
+        val tooHigh = blocked.copy(vigGuards = blocked.vigGuards.copy(autoBetMinStars = 5.0)).takeIf { stars < 5.0 }
+        if (tooHigh != null) assertEquals(0, bettor(above, placer = placer(above, book = ladder)).runTennis(tooHigh, st, result).placed.size)
+        val back = FakeNovig()
+        assertEquals(0, bettor(back, placer = placer(back, book = ladder)).runTennis(rated.copy(vigGuards = rated.vigGuards.copy(autoBetMinStars = 0.0)), st, result).placed.size)
+        assertEquals(0, back.orders.get())
+    }
+
+    @Test
     fun `a minimum star rating never lifts the dollar limits, the cap on an edge too good to be true or the injury rule`() = runBlocking {
         val stars = AlertPicks.cnoChecked(state(), 0.01, now).single().check.rating!!.stars
         val base = settings().let { it.copy(vigGuards = it.vigGuards.copy(autoBetMinStars = stars)) }
