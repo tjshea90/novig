@@ -311,6 +311,24 @@ class LiveBidUiTest {
     }
 
     @Test
+    fun `a slider stop sets every linked rule, hand edits say Custom, and lines keep the position`() {
+        val ui = show(state())
+        tap("liveBidStop-25")
+        assertEquals(25, ui().settings.liveBidQuality.level)
+        assertEquals(com.tjshea.vigilant.data.livebid.LiveBidSlider.margin(25), ui().settings.liveBidQuality.margin, 1e-9)
+        compose.onNodeWithTag("liveBidSliderLabel").performScrollTo().assertTextContains("Careful", substring = true)
+        tap("liveBidTennis")
+        assertEquals(25, ui().settings.liveBidQuality.level)
+        assertEquals(true, ui().settings.liveBidQuality.tennis)
+        tap("liveBidMargin-0")
+        assertEquals(-1, ui().settings.liveBidQuality.level)
+        compose.onNodeWithTag("liveBidSliderDescribe").performScrollTo().assertTextContains("Custom", substring = true)
+        tap("liveBidStop-90")
+        assertEquals(90, ui().settings.liveBidQuality.level)
+        assertEquals(true, ui().settings.liveBidQuality.tennis)
+    }
+
+    @Test
     fun `leagues are picked one by one, and All clears them`() {
         val ui = show(state())
         tap("liveBidLeague-NCAAF")
