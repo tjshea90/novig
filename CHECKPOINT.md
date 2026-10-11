@@ -1,22 +1,23 @@
-# CHECKPOINT 2954 — read me first, then TASKS.md
+# CHECKPOINT 2955 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T13:44:21Z · **tests:** all 4 fast checks green
-**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `cb8ec152c` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T13:51:53Z · **tests:** all 4 fast checks green
+**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `5c23988c9` (this checkpoint is the commit after it)
 
 ## Just done
-v0.89.15 released and recorded; TH1-TH8 done
+pre-ship: v0.89.16: parent-company table researched from SGO and ParlayAPI book lists (Kambi desk, Mr Green, Eurobet, Betway; unsupported merges removed)
 
 ## Do this next
-Next open job: TE5/TG3 (rest) in TASKS.md; ask Tj for feedback on company table + auto-bet-Vigilant default
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  bf0a24e57 ckpt 2954: v0.89.15 released and recorded; TH1-TH8 done
   f3cb85db8 ckpt 2953: TH done & shipped v0.89.15 (code 200); release.yml triggered on main
   3444ca043 ckpt 2952: pre-release: v0.89.15: Vigilant scanner: N-of-M books agree, sharp-book sta
   b5d7378fc ckpt 2951: pre-ship: v0.89.15: Vigilant scanner: N-of-M books agree, sharp-book star, 
@@ -26,5 +27,7 @@ Next open job: TE5/TG3 (rest) in TASKS.md; ask Tj for feedback on company table 
   ea2eb9bc4 ckpt 2947: TG3a: SGO tennis (ATP/WTA) read from the real sample: match winner = sets M
   7fca39921 ckpt 2946: pre-release: v0.89.13: SGO sample puts the tennis answers first so the file
   36bb4d575 ckpt 2945: SGO sample: tennis block first, NFL cut to 300 KB (the 600 KB file cap cut 
-  662a4b23f ckpt 2944: pre-release: v0.89.12: SGO Test sample also reads SGO's tennis leagues and 
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
