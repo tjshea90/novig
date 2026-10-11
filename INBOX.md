@@ -6553,3 +6553,8 @@ There seems to be a disconnect on live betting
 ```
 @"/root/.claude/uploads/d56f3bfc-bfcd-56ef-8c46-4f8597546285/7f19cdc4-vigilant-diagnostics-v0.89.26-2026-10-11-1714.txt" 
 ```
+
+## 2026-10-11T21:26:54Z
+```
+Make a live games only mode for the vigilant scanner. In this mode, only apis which can provide rapid odds are used, probably just pinnodds and novig. Only live bets are shown in the vigilant list. All other apis are turned off. Keep the same rules and logic for live betting already established from the last few versions of this app. When I toggle live betting mode on, these settings apply as well as the live betting logic such as a continuous feed and stale bets being removed from the list immediately. when I toggle live betting mode off, the apis that were on before turn back on automatically, live betting is turned off, live bets are not scanned or shown in the vigilant list at all (no api usage is wasted on live games or odds), and the regular betting logic is returned. Live betting mode should turn off anything not needed, for example, cno scanner
+```
