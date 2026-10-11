@@ -4637,3 +4637,9 @@ Tj verbatim: "I previously made it so when sgo was enabled, all other apis were 
 - [ ] TL1 Audit: every place one API rests/replaces another (OutsideSgo/OutsideOp, allReferenceSources, closes/grader chains, Pricing) and every call site of every API vs its toggle (Settings › APIs, ApiEntry).
 - [ ] TL2 Make it so: a toggled-on API is always asked (for every league/data kind it can serve); a toggled-off API is never called by anything (scan, closes, grading, bids, lab, closes backfill, key tests excepted only when Tj taps Test).
 - [ ] TL3 Tests proving both rules for each API; ship; release.
+
+## TM: conservative devig everywhere (Tj, 2026-10-11)
+Tj verbatim (sent while TL was in progress): "I want the app to use conservative devig methods to be safest"
+- [ ] TM1 Audit every devig in the app (fair line, closes, agreement, maker anchors, live/lab, Kalshi/Polymarket, Pinnodds) and which method each uses.
+- [ ] TM2 Default and migrate the fair-line method to the conservative WORST_CASE (lowest fair chance of multiplicative, additive, power and Shin, per side); closes found afterwards use the same method so CLV compares like with like; Settings says so.
+- [ ] TM3 Tests, ship with TL.
