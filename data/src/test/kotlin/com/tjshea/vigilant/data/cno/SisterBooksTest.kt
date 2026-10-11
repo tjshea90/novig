@@ -19,6 +19,9 @@ class SisterBooksTest {
     @Test
     fun `a state's site is its company's, and FanDuel YourWay is FanDuel`() {
         assertEquals("HR", CnoBooks.company("HR-FL"))
+        // Tj, 2026-10-11: Bally Bet and BetRivers both run on Kambi's desk: one opinion.
+        assertEquals(CnoBooks.company("BR"), CnoBooks.company("BB"))
+        assertEquals(CnoBooks.company("BR"), CnoBooks.companyOfName("Bally Bet"))
         assertEquals("HR", CnoBooks.company("HR-IN"))
         assertEquals("ST", CnoBooks.company("ST-NJ"))
         assertEquals("MGM", CnoBooks.company("MGM-ON"))
