@@ -74,7 +74,9 @@ class PauseScanningAppTest {
     @Test
     fun `pausing stops a running scan and background auto-scan, and resuming starts auto-scan again`() {
         val vm = File("src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt").readText()
-        assertTrue(vm.contains("if (!before.paused && next.paused) c.runner.stop()"))
+        assertTrue(vm.contains("if (!before.paused && next.paused) { c.runner.stop(); c.autoScan.interrupt() }"))
+        // Pause acts at once (Tj, 2026-10-11): the scan and the background cycle are ended before the setting is saved.
+        assertTrue(vm.contains("c.runner.stop()\n            c.autoScan.interrupt()"))
         // CNO's reads are held by the pause (and, since v0.40.1, also by a Check odds now: [cnoReadsHeld]).
         assertTrue(vm.contains("state.map(::cnoReadsHeld).distinctUntilChanged().collect { cnoWatch.hold(it) }"))
         assertTrue(vm.contains("internal fun cnoReadsHeld(s: UiState): Boolean = !s.loaded || s.settings.paused || s.checkingOdds"))
