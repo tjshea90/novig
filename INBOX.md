@@ -6436,3 +6436,14 @@ I previously made it so when sgo was enabled, all other apis were not used. Conf
 ```
 I want the app to use conservative devig methods to be safest 
 ```
+
+## 2026-10-11T16:21:09Z
+```
+Out of these: 
+
+"Start times are frozen when a bet is logged, so late or early starts get the wrong close.
+A close read up to 15 minutes before the start stops the independent Pinnacle close from being fetched.
+CNO-based CLV is partly circular. Use closeIndependent: true to check any CLV claim."
+
+Fix whatever should be fixed to make it most logical
+```
