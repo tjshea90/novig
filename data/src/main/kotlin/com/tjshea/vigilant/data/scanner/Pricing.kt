@@ -83,6 +83,15 @@ data class Opportunity(
 
     /** How many of the books pricing both sides back this bet, and whether a sharp one does ([Agreement]); worked out once per outcome. */
     val agreement: Agreement.Count by lazy(LazyThreadSafetyMode.PUBLICATION) { Agreement.of(this) }
+
+    /** The 1-5 star rating of this bet ([BetRating]); null while it has no price or fair line. */
+    val rating: BetRating.Rating? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val q = quote
+        if (q == null || fair == null) null else {
+            val a = agreement
+            BetRating.rate(BetRating.Inputs(a.twoSided, a.agreeing, q.evPercent, a.sharpAgrees, a.sharpAgainst, a.spread))
+        }
+    }
     val eventName: String get() = event.description
     val isLive: Boolean get() = event.isLive
 }

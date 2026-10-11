@@ -35,6 +35,9 @@ object CnoBooks {
 
     const val NOVIG = "NV"
 
+    /** The sharp books on CNO's page for the star rating: Pinnacle, Circa, ProphetX, Kalshi (the veto's sharpest, [SharpVeto.ranking]). */
+    val SHARP_CODES = setOf("PN", "CS", "PX", "KI")
+
     /** Fewest two-sided books (Novig aside) for Vigilant to call an edge confirmed. */
     const val MIN_TWO_SIDED = 3
 
@@ -185,7 +188,19 @@ object CnoBooks {
         val novigOdds: Int,
         val ev: Double?,
         val verdict: Verdict,
-    )
+        /** Standard deviation of the companies' fair chances ([BetRating]); null under two. */
+        val spread: Double? = null,
+        /** A sharp book ([SHARP_CODES]) prices both sides and makes the price +EV alone / says it is not. */
+        val sharpAgrees: Boolean = false,
+        val sharpAgainst: Boolean = false,
+    ) {
+        /** The 1-5 star rating of this bet from what the books say ([BetRating]); null with no usable fair line. */
+        val rating: com.tjshea.vigilant.data.scanner.BetRating.Rating? get() = ev?.let {
+            com.tjshea.vigilant.data.scanner.BetRating.rate(
+                com.tjshea.vigilant.data.scanner.BetRating.Inputs(twoSided, agreeing, it, sharpAgrees, sharpAgainst, spread),
+            )
+        }
+    }
 
     /**
      * CONFIRMED: [MIN_TWO_SIDED]+ two-sided books, their consensus says +EV, and [MIN_AGREEING]+
@@ -222,7 +237,12 @@ object CnoBooks {
             agreeing >= MIN_AGREEING -> Verdict.CONFIRMED
             else -> Verdict.SPLIT
         }
-        return Check(fairs.size, oneSided, fair, agreeing, novig, ev, verdict)
+        val sharp = pairs.filter { company(it.code) in SHARP_CODES }.mapNotNull { p -> fairFor(p.odds!!, p.otherOdds!!, p.code) }.map { evAt(it, novig, fee) }
+        return Check(
+            fairs.size, oneSided, fair, agreeing, novig, ev, verdict,
+            spread = com.tjshea.vigilant.data.scanner.BetRating.spreadOf(fairs),
+            sharpAgrees = sharp.any { it > 0.0 }, sharpAgainst = sharp.any { it <= 0.0 },
+        )
     }
 
     /**

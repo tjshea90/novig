@@ -47,7 +47,7 @@ class AgreementTest {
         // Baltimore at 0.45 (+122); every book has it near 50/50.
         val o = priced(1.95 to 1.95, 1.93 to 1.97, 1.97 to 1.93, 1.95 to 1.95)
         assertTrue(o.evPercent!! > 0.03)
-        assertEquals(Agreement.Count(4, 4, sharpAgrees = true), Agreement.of(o))
+        assertEquals(Agreement.Count(4, 4, sharpAgrees = true), Agreement.of(o).copy(spread = null))
         assertEquals("4 of 4 books agree", Agreement.of(o).text)
         assertTrue(Agreement.of(o).agrees)
     }

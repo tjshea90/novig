@@ -1,0 +1,101 @@
+package com.tjshea.vigilant.data.scanner
+
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.sqrt
+
+/**
+ * The 1-5 star rating of a +EV bet (Tj, 2026-10-11): how much to TRUST the edge, not whether it is an edge. A 1-star bet can still be +EV; it is one whose edge rests on thin or
+ * contradictory evidence. One rating for both scanners, from the same five facts about a bet, all worked out the same way (RESEARCH.md §131):
+ *
+ *  1. **Coverage** (20 points): how many companies price BOTH sides of the line (sister sites count once). A fair line from one book is that book's opinion; five is a market.
+ *  2. **Agreement** (20): the share of those companies that, each on its own devigged worst case, make the price +EV.
+ *  3. **Edge** (25): the EV at the price you would pay (taker fee included). 0% scores nothing, 6%+ is full marks; above 12% the score falls again, because an edge that large on a
+ *     priced market is usually a stale or mismatched quote, not a gift.
+ *  4. **Sharp book** (25): a sharp book for the market prices both sides and says +EV (full), none prices it (a third of the points: unproven, not disproven), or one says it is NOT +EV (none).
+ *  5. **Consensus** (10): how tightly the books' own fair chances sit together (standard deviation: 1 point or less is full, 5 or more nothing; unknown is half).
+ *
+ * The points total 0-100 and become stars on a curve, `1 + 4 * (points/100)^1.5`, so the top half stars take real evidence while a middling bet lands in the middle. Then ceilings that
+ * evidence alone cannot be argued past: under two pricing companies at most 1½ stars, two at most 3, three at most 4; a sharp book against it at most 2½; and no edge at all is 1.
+ * Rounded to the nearest half star.
+ */
+object BetRating {
+
+    /** What a rating is worked out from. [spread]: the standard deviation of the pricing companies' fair chances for this side, null when unknown. */
+    data class Inputs(
+        val books: Int,
+        val agreeing: Int,
+        val ev: Double,
+        val sharpAgrees: Boolean,
+        val sharpAgainst: Boolean,
+        val spread: Double? = null,
+    )
+
+    /** A rating: [stars] in half steps from 1.0 to 5.0, and the [points] it came from. */
+    data class Rating(val stars: Double, val points: Double) {
+        /** "3½" or "4"; the glyphs are [glyphs]. */
+        val label: String get() = BetRating.label(stars)
+        val glyphs: String get() = BetRating.glyphs(stars)
+    }
+
+    const val MIN = 1.0
+    const val MAX = 5.0
+
+    fun rate(i: Inputs): Rating {
+        val books = i.books.coerceAtLeast(0)
+        val coverage = when (books) { 0 -> 0.0; 1 -> 0.1; 2 -> 0.45; 3 -> 0.7; 4 -> 0.88; else -> 1.0 }
+        val agree = if (books == 0) 0.0 else (i.agreeing.coerceIn(0, books).toDouble() / books)
+        val edge = edgeScore(i.ev)
+        val sharp = when {
+            i.sharpAgainst -> 0.0
+            i.sharpAgrees -> 1.0
+            else -> 0.3
+        }
+        val tight = i.spread?.let { ((0.05 - it) / 0.04).coerceIn(0.0, 1.0) } ?: 0.5
+        val points = 20 * coverage + 20 * agree + 25 * edge + 25 * sharp + 10 * tight
+        var stars = 1.0 + 4.0 * (points / 100.0).coerceIn(0.0, 1.0).pow(1.5)
+        stars = minOf(stars, ceiling(books, i.sharpAgainst))
+        if (i.ev <= 0.0) stars = MIN
+        return Rating(roundHalf(stars), points)
+    }
+
+    /** The edge's share of its points: a straight climb to full at 6%, level to 12%, then back down to half at 25% and under (a too-good price is suspect). */
+    internal fun edgeScore(ev: Double): Double = when {
+        ev <= 0.0 -> 0.0
+        ev < 0.06 -> ev / 0.06
+        ev <= 0.12 -> 1.0
+        ev < 0.25 -> 1.0 - 0.5 * (ev - 0.12) / 0.13
+        else -> 0.5
+    }
+
+    private fun ceiling(books: Int, sharpAgainst: Boolean): Double {
+        val byBooks = when {
+            books < 2 -> 1.5
+            books == 2 -> 3.0
+            books == 3 -> 4.0
+            else -> MAX
+        }
+        return if (sharpAgainst) minOf(byBooks, 2.5) else byBooks
+    }
+
+    fun roundHalf(stars: Double): Double = (Math.round(stars.coerceIn(MIN, MAX) * 2.0) / 2.0)
+
+    /** "3½", "4", "2". */
+    fun label(stars: Double): String {
+        val whole = stars.toInt()
+        return if (abs(stars - whole) > 0.25) "$whole½" else "$whole"
+    }
+
+    /** "★★★½": a star for each whole one and a ½ for the half. */
+    fun glyphs(stars: Double): String = "★".repeat(stars.toInt()) + if (abs(stars - stars.toInt()) > 0.25) "½" else ""
+
+    /** The standard deviation of [values] (null under two of them). */
+    fun spreadOf(values: List<Double>): Double? {
+        if (values.size < 2) return null
+        val mean = values.average()
+        return sqrt(values.sumOf { (it - mean) * (it - mean) } / values.size)
+    }
+
+    fun text(stars: Double): String = String.format(Locale.US, "%.1f", stars)
+}
