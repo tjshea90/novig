@@ -4611,3 +4611,9 @@ Tj verbatim: "For both cno and vigilant scanner, make a new feature that rates e
 - [ ] TI3 UI: stars on Vigilant card/sheet and CNO card/sheet (sharp marker becomes a "sharp agrees" chip so the stars mean the rating only).
 - [ ] TI4 Auto-bet minimum stars setting (Auto-bet tab chips), enforced in CNO, Vigilant and tennis lanes.
 - [ ] TI5 Tests, ship, release.
+
+## TJ: wallet under 20 cents puts the whole app to sleep (Tj, 2026-10-11)
+Tj verbatim: "When the vigilant wallet gets below 20 cents, automatically stop all scanning, betting, and bidding in the app. Put the app to sleep. There is no reason to continue usage with little money left"
+- [ ] TJ1 One threshold (AutoBet.SLEEP_BELOW = $0.20) for the existing wallet-empty sleep (was under 1 cent, only inside an auto-bet pass).
+- [ ] TJ2 A watcher on every fresh wallet reading (VigilantApp) pauses everything (scans, background scan, CNO, bids, live bids) once per emptying; re-arms above $0.20; stale stored readings never pause.
+- [ ] TJ3 Tests, ship, release.
