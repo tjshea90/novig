@@ -7,6 +7,10 @@ import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.tracker.CloseLookup
+import com.tjshea.vigilant.data.scanner.ApiGates
+import com.tjshea.vigilant.data.scanner.Leagues
+import com.tjshea.vigilant.data.scanner.MarketFamily
+import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.Op4Closes
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import kotlinx.coroutines.test.runTest
@@ -208,5 +212,77 @@ class OddsPapi4Test {
         assertEquals(0, requests.size)
         assertNull(null)
         assertNotNull(Op4Closes.ID)
+    }
+
+    // ---- the fair-odds feed (whole games, every book, one request each) ---------------------------------------------------------------------
+
+    private fun oddsGame(vararg books: Pair<String, Double>, changed: String = "2026-10-11T14:00:00.000Z") =
+        """{"fixtureId":"$fx","participant1Id":1,"participant2Id":2,"sportId":14,"tournamentId":31,"statusId":0,"startTime":"2026-10-11T17:00:00.000Z","participant1Name":"Las Vegas Raiders","participant2Name":"Kansas City Chiefs",
+        "bookmakerOdds":{${books.joinToString(",") { (b, p1) -> """"$b":{"bookmakerIsActive":true,"suspended":false,"markets":{"141":{"marketActive":true,"outcomes":{
+          "141":{"players":{"0":{"active":true,"changedAt":"$changed","price":$p1,"mainLine":true}}},"142":{"players":{"0":{"active":true,"changedAt":"$changed","price":${2.0 + 1.8 - p1},"mainLine":true}}}}}}}""" }}}}"""
+
+    private fun feedSetup(perDay: Int, every: Boolean, books: String = """"pinnacle":{"has_live_odds":false,"has_player_props":true},"obscurebook":{"has_live_odds":false,"has_player_props":true}"""): Pair<Op4Feed, ScanSettings> {
+        clockMs = startMs - 2 * 3_600_000L
+        accountCount = 100
+        handler = { r ->
+            when (r.requestUrl!!.encodedPath) {
+                "/v4/account" -> ok(account(accountCount, books = books))
+                "/v4/odds" -> { accountCount++; ok(oddsGame("pinnacle" to 2.0, "obscurebook" to 1.9)) }
+                else -> route(r)
+            }
+        }
+        val c = client()
+        val store = Op4Store(null) { clockMs }
+        val budget = Op4Budget(c) { clockMs }
+        val feed = Op4Feed(c, Op4Catalog(c, budget, store) { clockMs }, budget, store) { clockMs }
+        return feed to ScanSettings(referenceBooks = listOf("pinnacle"), oddsPapiFree = true, families = setOf(MarketFamily.MONEYLINE), gates = ApiGates(op4Fair = perDay, opAllBooks = every), leagues = setOf("NFL"))
+    }
+
+    @Test fun theFairFeedReadsAWholeGameInOneRequestAndKeepsEveryBookWhenAskedTo() = runTest {
+        val (feed, s) = feedSetup(perDay = 5, every = true)
+        val nfl = Leagues.byNovigName("NFL")!!
+        val r = Op4GamesSource(feed) { clockMs }.odds(nfl, s)
+        val ev = r.events.single()
+        assertEquals("participant 1 is the home side the planner will orient", "Las Vegas Raiders", ev.home)
+        assertEquals(setOf("pinnacle", "obscurebook"), ev.markets.map { it.bookKey }.toSet())
+        val odds = requests.single { it.requestUrl!!.encodedPath == "/v4/odds" }.requestUrl!!
+        assertEquals(fx, odds.queryParameter("fixtureId")); assertEquals("3", odds.queryParameter("verbosity"))
+        assertEquals("every book: no bookmakers filter", null, odds.queryParameter("bookmakers"))
+        assertTrue("a main line of a connected book is as fresh as the read", ev.markets.all { it.lastUpdateMs == clockMs })
+    }
+
+    @Test fun withoutEveryBookOnlyThePickedBooksAreAskedForAndKept() = runTest {
+        val (feed, s) = feedSetup(perDay = 5, every = false)
+        val r = Op4GamesSource(feed) { clockMs }.odds(Leagues.byNovigName("NFL")!!, s)
+        assertEquals(setOf("pinnacle"), r.events.single().markets.map { it.bookKey }.toSet())
+        assertEquals("pinnacle", requests.single { it.requestUrl!!.encodedPath == "/v4/odds" }.requestUrl!!.queryParameter("bookmakers"))
+    }
+
+    @Test fun theDailyFigureIsTheCapAndZeroNeverBuysAGameRead() = runTest {
+        val (off, s0) = feedSetup(perDay = 0, every = true)
+        assertTrue(Op4GamesSource(off) { clockMs }.odds(Leagues.byNovigName("NFL")!!, s0).events.isEmpty())
+        assertTrue("0 a day: no /v4/odds request", requests.none { it.requestUrl!!.encodedPath == "/v4/odds" })
+        val (feed, s) = feedSetup(perDay = 1, every = true)
+        val src = Op4GamesSource(feed) { clockMs }
+        src.odds(Leagues.byNovigName("NFL")!!, s)
+        clockMs += Op4Feed.READ_MS + 1
+        src.odds(Leagues.byNovigName("NFL")!!, s)
+        assertEquals("one a day: the same game is not bought twice", 1, requests.count { it.requestUrl!!.encodedPath == "/v4/odds" })
+    }
+
+    @Test fun theFeedNeverSpendsTheLastRequestsOfThePeriod() = runTest {
+        val (feed, s) = feedSetup(perDay = 50, every = true)
+        accountCount = 235   // 15 left: under the reserve 10 + the 25 kept for closing lines
+        client().account()
+        val r = Op4GamesSource(feed) { clockMs }.odds(Leagues.byNovigName("NFL")!!, s)
+        assertTrue(r.events.isEmpty())
+        assertTrue(requests.none { it.requestUrl!!.encodedPath == "/v4/odds" })
+    }
+
+    @Test fun aTournamentThatTheGameListHasButNoPricesYetGivesNoQuotesNotAnError() = runTest {
+        val (feed, s) = feedSetup(perDay = 5, every = true)
+        handler = { r -> if (r.requestUrl!!.encodedPath == "/v4/odds") { accountCount++; ok(oddsGame()) } else if (r.requestUrl!!.encodedPath == "/v4/account") ok(account(accountCount)) else route(r) }
+        val r = Op4GamesSource(feed) { clockMs }.odds(Leagues.byNovigName("NFL")!!, s)
+        assertTrue(r.events.isEmpty())
     }
 }
