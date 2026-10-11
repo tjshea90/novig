@@ -2171,6 +2171,64 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * Settings › Research › Share research file with Claude. Only what was recorded SINCE THE LAST SHARE goes in (Tj, 2026-10-10: the whole file was over the 30 MB a chat accepts, and Claude had
      * already read the older days); [shareResearchAll] sends everything the journals hold. The very first share is the last 3 days.
      */
+    /** Where "Share bets with Claude" is: making the files, and what the day-by-day archive last said. */
+    data class BetShareState(val busy: Boolean = false, val message: String? = null)
+
+    private val _betShare = MutableStateFlow(BetShareState())
+    val betShare: StateFlow<BetShareState> = _betShare.asStateFlow()
+
+    /**
+     * Tracker › Stats › Share bets with Claude (Tj, 2026-10-11): every bet and bid in [range] as a README with the definitions, summary tables and automatic findings, the bets in parts of about 4 MB
+     * and every bid posted ([com.tjshea.vigilant.data.tracker.BetHistoryExport]), written one line at a time so a year of hundreds of bets a day never sits in memory as text; saved to
+     * Downloads/Vigilant and handed to Android's share sheet. Never throws: a failure (an OutOfMemoryError too) is a toast and the app carries on.
+     */
+    fun shareBets(range: BetShare.Range) {
+        if (_betShare.value.busy) return
+        viewModelScope.launch {
+            _betShare.value = BetShareState(busy = true, message = "Making the files…")
+            val started = System.currentTimeMillis()
+            var stage = "starting"
+            val job = async(Dispatchers.IO) {
+                val app = getApplication<Application>()
+                stage = "saving today's bets to the archive"
+                c.syncBetArchive(full = false)
+                val now = System.currentTimeMillis()
+                val dir = BetShare.dir(app).apply { deleteRecursively(); mkdirs() }
+                stage = "reading the Tracker"
+                val bets = c.tracker.all()
+                val bids = c.makerStore.all()
+                val from = range.fromMs(now)
+                val info = runCatching { app.packageManager.getPackageInfo(app.packageName, 0) }.getOrNull()
+                val stem = "vigilant-bets-" + java.time.Instant.ofEpochMilli(now).atZone(com.tjshea.vigilant.data.tracker.BetHistory.ET).toLocalDate() + "-" + range.name.lowercase().replace('_', '-')
+                stage = "writing the files"
+                val r = com.tjshea.vigilant.data.tracker.BetHistoryExport.write(dir, stem, bets, bids, c.betArchive.bidLines(bids, from), now, from, range.label.lowercase())
+                stage = "copying to Downloads"
+                runCatching { r.files.forEach { BetShare.DownloadsMirror.put(app.contentResolver, it, DiagnosticsShare.DOWNLOADS_DIR, "text/plain") } }
+                    .onFailure { e -> _toasts.tryEmit("Couldn't copy the files to Downloads (${e.message ?: e.javaClass.simpleName})") }
+                c.eventLog.info("BETSHARE", "shared ${r.bets} bets and ${r.bids} bids (${range.label}) as ${r.files.size} files, ${r.bytes / 1024} KB, in ${System.currentTimeMillis() - started} ms")
+                stage = "opening the share sheet"
+                r to BetShare.intent(app, r.files, info?.versionName ?: "?")
+            }
+            try {
+                val (r, intent) = kotlinx.coroutines.withTimeoutOrNull(BET_SHARE_TIMEOUT_MS) { job.await() } ?: run {
+                    job.cancel()
+                    _toasts.tryEmit("Making the bet files took too long (while $stage): try a shorter range")
+                    return@launch
+                }
+                _toasts.tryEmit("${r.bets} bets and ${r.bids} bids: ${r.files.size} files (${r.bytes / 1024} KB), also saved to ${DiagnosticsShare.DOWNLOADS_DIR}")
+                shares.send(intent)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                job.cancel()
+                throw e
+            } catch (e: Throwable) {   // an OutOfMemoryError too
+                c.eventLog.error("BETSHARE", "couldn't make the bet files at: $stage", e as? Exception ?: RuntimeException(e.toString()))
+                _toasts.tryEmit("Couldn't make the bet files (${e.javaClass.simpleName}: ${e.message ?: ""}) while $stage")
+            } finally {
+                _betShare.value = BetShareState()
+            }
+        }
+    }
+
     fun shareResearch() = makeResearch(all = false)
     fun shareResearchAll() = makeResearch(all = true)
 

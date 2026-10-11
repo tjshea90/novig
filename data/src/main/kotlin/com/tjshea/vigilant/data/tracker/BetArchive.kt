@@ -120,18 +120,21 @@ class BetArchive(val dir: File) {
      * Every bid ever posted as JSON lines: the day files, then the bids [current] on the desk that are not in a day file yet (still active, or ended since the last sync). A bid
      * is listed once (its day file's line wins over a live one only when the live one has not ended). Streams; never holds the history.
      */
-    fun bidLines(current: List<MakerBid>): Sequence<String> = sequence {
+    fun bidLines(current: List<MakerBid>, fromMs: Long? = null): Sequence<String> = sequence {
         val seen = HashSet<String>()
-        val files = dir.listFiles { f -> f.isFile && f.name.startsWith("bids-") && f.name.endsWith(".jsonl") }?.sortedBy { it.name }.orEmpty()
+        val fromDay = fromMs?.let { BetHistory.day(it) }
+        val files = dir.listFiles { f -> f.isFile && f.name.startsWith("bids-") && f.name.endsWith(".jsonl") && (fromDay == null || f.name.removePrefix("bids-").removeSuffix(".jsonl") >= fromDay) }?.sortedBy { it.name }.orEmpty()
         val live = current.associateBy { it.clientId.take(12) }
         for (f in files) {
             for (l in f.useLines { it.toList() }) {
-                val id = runCatching { BetHistory.json.decodeFromString<BetHistory.BidRow>(l).clientId }.getOrNull() ?: continue
+                val row = runCatching { BetHistory.json.decodeFromString<BetHistory.BidRow>(l) }.getOrNull() ?: continue
+                if (fromMs != null && row.postedMs < fromMs) continue
+                val id = row.clientId
                 // A bid that was active when archived and ended since is better told by the live record; ended ones are final.
                 if (seen.add(id)) yield(live[id]?.takeIf { it.status.ended }?.let { m -> BetHistory.line(BetHistory.bidRow(m, com.tjshea.vigilant.data.scanner.SharpVeto.sportOf(m.league).name.lowercase())) } ?: l)
             }
         }
-        for (m in current.sortedBy { it.postedAtMs }) if (seen.add(m.clientId.take(12))) yield(BetHistory.line(BetHistory.bidRow(m, com.tjshea.vigilant.data.scanner.SharpVeto.sportOf(m.league).name.lowercase())))
+        for (m in current.sortedBy { it.postedAtMs }) if ((fromMs == null || m.postedAtMs >= fromMs) && seen.add(m.clientId.take(12))) yield(BetHistory.line(BetHistory.bidRow(m, com.tjshea.vigilant.data.scanner.SharpVeto.sportOf(m.league).name.lowercase())))
     }
 
     /** Files in the archive (days), for the settings line. */
