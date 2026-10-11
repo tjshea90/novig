@@ -44,6 +44,9 @@ interface CloseSource {
     /** Megabytes a look can cost ([NovigTradeCloses]): skipped only when a caller says so ([CloseBackfill.run]'s `heavyOk`). */
     val heavy: Boolean get() = false
 
+    /** A sharp book's price at the start (SGO, OddsPapi, ParlayAPI's Pinnacle): the sources a bet that already has a read before the start is also asked ([ClosingLine.upgradeable]). */
+    val sharp: Boolean get() = false
+
     /** False: not asked at all this look (no key for it), and not counted when deciding every source has said "never". */
     val active: Boolean get() = true
 
@@ -435,6 +438,8 @@ class CloseBackfill(
         val asked = sources.filter { it.active }
         val askedIds = asked.map { it.id }
         val wanted = tracker.all().filter { due(it, now, force) || reopened(it, now, askedIds) }.sortedByDescending { it.startsTs }
+        // A bet that already has a read before the start (weak: CNO's consensus, or taken early) is only asked the sharp sources; ESPN's and Novig's closes would not beat what it has.
+        val upgrade = wanted.filter { ClosingLine.captured(it) != null }.mapTo(HashSet()) { it.id }
         val todo = if (force) wanted.take(MAX_FORCED) else wanted.take(MAX_PER_RUN)
         if (todo.isEmpty()) return@withLock Report(0, 0, emptyMap(), forced = force)
         val found = HashMap<String, CloseLookup.Found>()
@@ -442,15 +447,17 @@ class CloseBackfill(
         var left = todo
         for (source in asked) {
             if (left.isEmpty()) break
+            val ask = if (source.sharp) left else left.filter { it.id !in upgrade }
+            if (ask.isEmpty()) continue
             if (source.heavy && !heavyOk) {
-                left.forEach { notes.getOrPut(it.id) { ArrayList() } += CloseLookup.Later("Novig's trade history wasn't read this time") }
+                ask.forEach { notes.getOrPut(it.id) { ArrayList() } += CloseLookup.Later("Novig's trade history wasn't read this time") }
                 continue
             }
-            val answers = runCatching { source.closes(left) }.getOrElse { e ->
+            val answers = runCatching { source.closes(ask) }.getOrElse { e ->
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                left.associate { it.id to CloseLookup.Later(e.message ?: "failed") }
+                ask.associate { it.id to CloseLookup.Later(e.message ?: "failed") }
             }
-            val byId = left.associateBy { it.id }
+            val byId = ask.associateBy { it.id }
             for ((id, answer) in answers) {
                 // A close that can't be this bet's (another game's or side's: [ClosePlausibility]) is "never" from that source, and the next is asked.
                 val a = if (answer is CloseLookup.Found) byId[id]?.let { ClosePlausibility.reason(it, answer) }?.let { CloseLookup.None(it) } ?: answer else answer
@@ -468,7 +475,7 @@ class CloseBackfill(
                         closeNote = tried.joinToString("; ") { (it as? CloseLookup.None)?.reason ?: (it as CloseLookup.Later).reason }.ifBlank { null },
                         closeLookedAtMs = now,
                         // Every source said it never will: stop looking (until a source it didn't ask is added: [reopened]).
-                        closeFinal = tried.isNotEmpty() && tried.size >= asked.size && tried.all { it is CloseLookup.None },
+                        closeFinal = tried.isNotEmpty() && tried.size >= (if (b.id in upgrade) asked.count { it.sharp } else asked.size) && tried.all { it is CloseLookup.None },
                         closeAskedOf = askedIds,
                     )
                 }
@@ -510,12 +517,12 @@ class CloseBackfill(
          */
         fun reopened(b: TrackedBet, now: Long, activeIds: Collection<String>): Boolean =
             b.closeFinal && b.closeFair == null && b.status != BetStatus.VOID && !b.isLock && b.createdAtMs < b.startsTs &&
-                now - b.startsTs <= GIVE_UP_MS && ClosingLine.closeOf(b, now) == null &&
+                now - b.startsTs <= GIVE_UP_MS && (ClosingLine.closeOf(b, now) == null || ClosingLine.upgradeable(b, now)) &&
                 activeIds.any { it !in (b.closeAskedOf ?: ASKED_BEFORE) }
 
         fun due(b: TrackedBet, now: Long, force: Boolean = false): Boolean =
             b.status != BetStatus.VOID && !b.isLock && !b.closeFinal && b.createdAtMs < b.startsTs && now >= b.startsTs + AFTER_START_MS &&
-                now - b.startsTs <= GIVE_UP_MS && ClosingLine.closeOf(b, now) == null &&
+                now - b.startsTs <= GIVE_UP_MS && (ClosingLine.closeOf(b, now) == null || ClosingLine.upgradeable(b, now)) &&
                 (b.closeLookedAtMs == null || now - b.closeLookedAtMs >= (if (force) FORCE_GAP_MS else RETRY_MS))
     }
 }

@@ -55,6 +55,7 @@ class ParlayCloses(
     private val kept = java.util.concurrent.ConcurrentHashMap<String, Kept>()
 
     override val id: String get() = ID
+    override val sharp: Boolean get() = true
 
     /** Settings' ParlayAPI switch: off, nothing is spent on closes either. */
     @Volatile

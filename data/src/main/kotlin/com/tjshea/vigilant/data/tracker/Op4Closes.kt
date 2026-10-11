@@ -29,6 +29,7 @@ class Op4Closes(
     private val clock: () -> Long = System::currentTimeMillis,
 ) : CloseSource {
     override val id: String get() = ID
+    override val sharp: Boolean get() = true
 
     /** Settings' OddsPapi Free switch: off, nothing is asked. */
     @Volatile var enabled: Boolean = false

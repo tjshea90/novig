@@ -248,7 +248,7 @@ object BetHistory {
             stake = b.stake, contracts = b.contracts, paid = paid, fee = b.fee,
             closeFair = close?.first?.takeIf { !voided }, closeOdds = fairOddsOf(close?.first?.takeIf { !voided }), closeSource = close?.second?.takeIf { !voided },
             closeReadMs = readMs?.takeIf { !voided }, closeLeadSec = readMs?.takeIf { !voided }?.let { r -> (b.startsTs - r) / 1000L },
-            closeBasis = basis?.takeIf { !voided }, closeIndependent = basis?.takeIf { !voided }?.let { it.startsWith("history:") && it != "history:novig-trades" },
+            closeBasis = basis?.takeIf { !voided }, closeIndependent = close?.takeIf { !voided }?.let { ClosingLine.independent(it.second) },
             closeReadAfterBetSec = readMs?.takeIf { !voided }?.let { r -> (r - b.createdAtMs) / 1000L },
             novigCloseOdds = novigAge?.let { fairOddsOf(b.novigClose) }.takeIf { !voided }, novigCloseAgeSec = novigAge.takeIf { !voided },
             clv = clv.takeIf { !voided }, beatClose = clv?.takeIf { !voided }?.let { it > 0.0 },
@@ -279,14 +279,7 @@ object BetHistory {
 
     /** Where [b]'s close [source] ([ClosingLine.closeOf]) comes from, for [Row.closeBasis]. */
     fun closeBasis(b: TrackedBet, source: String): String {
-        if (source == ClosingLine.SOURCE_CAPTURED) {
-            return when (b.nowVia) {
-                BetTracker.VIA_BOTH -> "read:both"
-                BetTracker.VIA_VIGILANT -> "read:vigilant"
-                BetTracker.VIA_CNO, BetTracker.VIA_PARLAY -> "read:cno"
-                else -> if (b.source == BetTracker.SOURCE_CNO) "read:cno" else "read:vigilant"
-            }
-        }
+        if (source == ClosingLine.SOURCE_CAPTURED) return ClosingLine.readBasis(b)
         val s = source.lowercase()
         return when {
             s.contains("pinnacle") || s.startsWith("parlayapi") || s.startsWith("sportsgameodds") || s.startsWith("oddspapi") -> "history:pinnacle"

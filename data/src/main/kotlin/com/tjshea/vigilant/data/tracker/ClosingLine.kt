@@ -61,10 +61,45 @@ object ClosingLine {
     fun closeOf(b: TrackedBet, now: Long): Pair<Double, String>? {
         // A lock isn't a pick: its close says nothing about the edges, so it has none (as BetTracker.stats leaves it out of CLV).
         if (now < b.startsTs || b.createdAtMs >= b.startsTs || b.isLock) return null
-        captured(b)?.let { return it to SOURCE_CAPTURED }
-        if (b.closeFair != null) return b.closeFair to (b.closeVia ?: "history")
-        return null
+        val read = captured(b)
+        val history = b.closeFair?.let { it to (b.closeVia ?: "history") }
+        // The sharp book's price AT the start (Pinnacle through ParlayAPI, SGO or OddsPapi) is the better close: it is the market's last word, not a read up to 15 minutes before it, and it comes from outside the consensus
+        // that found the bet (Tj, 2026-10-11: "fix whatever should be fixed to make it most logical"). Then a read before the start; then ESPN's or Novig's.
+        if (history != null && sharpHistory(history.second)) return history
+        read?.let { return it to SOURCE_CAPTURED }
+        return history
     }
+
+    /** A close found afterwards from a SHARP book's price at the start (SGO, OddsPapi, ParlayAPI's Pinnacle), as against ESPN's single soft book or Novig's own trades. */
+    fun sharpHistory(source: String): Boolean = source != SOURCE_CAPTURED && !source.startsWith("ESPN") && !source.startsWith("Novig")
+
+    /** A close from outside the consensus that priced the bet: a sharp book's or ESPN's price at the start. Novig's trades include the bettor's own fills; a read before the start is the same kind of consensus that found the bet. */
+    fun independent(source: String): Boolean = source != SOURCE_CAPTURED && !source.startsWith("Novig")
+
+    /**
+     * What a read before the start is made of: `read:cno` (CrazyNinjaOdds' consensus, the same that found most CNO bets), `read:vigilant` (Vigilant's own fair line) or `read:both`. Judged from the bet's latest read
+     * (a close is almost always that one).
+     */
+    fun readBasis(b: TrackedBet): String = when (b.nowVia) {
+        BetTracker.VIA_BOTH -> "read:both"
+        BetTracker.VIA_VIGILANT -> "read:vigilant"
+        BetTracker.VIA_CNO, BetTracker.VIA_PARLAY -> "read:cno"
+        else -> if (b.source == BetTracker.SOURCE_CNO) "read:cno" else "read:vigilant"
+    }
+
+    /**
+     * A read before the start that a sharp book's price at the start should still replace: it is CNO's consensus (alone or averaged in: circular with the CNO fair that found the bet) or it was taken more than
+     * [FINAL_FRESH_MS] before the start. The back-fill asks the sharp close sources for such a bet ([upgradeable]), keeps both, and [closeOf] prefers the sharp one.
+     */
+    fun weakRead(b: TrackedBet): Boolean {
+        val seen = b.closingSeenAtMs ?: return false
+        if (captured(b) == null) return false
+        return readBasis(b).let { it == "read:cno" || it == "read:both" } || b.startsTs - seen > FINAL_FRESH_MS
+    }
+
+    /** A started bet with a [weakRead] and no sharp close found yet: worth asking the sharp close sources for. */
+    fun upgradeable(b: TrackedBet, now: Long): Boolean =
+        now >= b.startsTs && b.closeFair == null && b.status != BetStatus.VOID && !b.isLock && b.createdAtMs < b.startsTs && weakRead(b)
 
     /** The fair line read in the last [TRUE_CLOSE_MS] before the start, if one was. */
     fun captured(b: TrackedBet): Double? {
