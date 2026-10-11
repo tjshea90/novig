@@ -6528,3 +6528,8 @@ If any sharp book disagrees that a bet is positive EV, it should be vetoed and n
 ```
 Auto bet stopped and didn't fix itself. And look at the screenshot, this is clearly an error. It also isn't holding live streaming odds for pinnodds and novig. No bets are showing up
 ```
+
+## 2026-10-11T20:29:23Z
+```
+For clarification, if I have multiple apis toggled on, I still want it to be efficient and if data overlaps, only pull from the best API and let the others sleep. Only use additional apis for extra information that they carry that others don't or if the best api doesn't respond or runs out of usage, it automatically goes to the next best API for the odds
+```
