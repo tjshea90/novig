@@ -58,8 +58,11 @@ object CnoBooks {
      */
     fun company(code: String): String = SAME_DESK[code] ?: code.substringBefore('-')
 
-    /** Book columns of one company that don't share a "XX-" prefix. */
-    private val SAME_DESK = mapOf("FDYW" to "FD")
+    /**
+     * Book columns of one company that don't share a "XX-" prefix, or of one TRADING DESK: Bally Bet runs on Kambi, as BetRivers does, and quoted the same line as it on 47% of 109 lines in Tj's scan study
+     * where unrelated books matched 2-4% (RESEARCH.md §134; Tj, 2026-10-11: books on one odds provider are one opinion).
+     */
+    private val SAME_DESK = mapOf("FDYW" to "FD", "BB" to "BR")
 
     /** A book's company from the name the Tracker keeps ("Hard Rock (FL)"), via its CNO column; an unknown name is its own company. */
     fun companyOfName(name: String): String = codeFor(name)?.let(::company) ?: name.lowercase()

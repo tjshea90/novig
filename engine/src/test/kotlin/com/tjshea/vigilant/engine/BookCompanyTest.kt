@@ -117,7 +117,7 @@ class BookCompanyTest {
     /** Tj, 2026-10-11: "6 of 6 books agree" on Casper Ruud +0.5, all at +100 / -134: six owners, one Kambi trading desk. */
     @Test
     fun `books on Kambi's one trading desk are one company whoever owns them`() {
-        val desk = listOf("Bally Bet", "betparx", "casumo", "grosvenor", "tabtouch", "unibet", "betrivers", "sugarhouse", "Unibet (US)")
+        val desk = listOf("Bally Bet", "betparx", "casumo", "grosvenor", "tabtouch", "unibet", "betrivers", "sugarhouse", "Unibet (US)", "coolbet", "superbet", "livescorebet", "virginbet", "leovegas", "unibet_nl", "betrivers_ca")
         assertEquals(1, desk.map { BookCompany.of(it) }.distinct().size)
         // Other operators stay apart.
         assertNotEquals(BookCompany.of("unibet"), BookCompany.of("draftkings"))

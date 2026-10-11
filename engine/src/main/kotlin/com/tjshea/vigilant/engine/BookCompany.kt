@@ -26,7 +26,9 @@ object BookCompany {
         // LeoVegas' BetUK / Expekt, Svenska Spel, ATG, BetPlay.
         group(
             "kambi", "betrivers", "sugarhouse", "playsugarhouse", "rivers", "rushbet", "betparx", "parx", "ballybet", "bally", "unibet", "unibetus", "unibeteu", "unibetuk", "unibetau", "unibetnl", "maria", "mariacasino", "32red",
-            "casumo", "grosvenor", "grosvenorsport", "grosvenorcasinos", "enracha", "yosports", "tabtouch", "rwwa", "livescorebet", "livescore", "virginbet", "betuk", "expekt", "svenskaspel", "atg", "betplay",
+            "casumo", "grosvenor", "grosvenorsport", "grosvenorcasinos", "enracha", "yosports", "tabtouch", "rwwa", "livescorebet", "livescore", "virginbet", "betuk", "expekt", "leovegas", "svenskaspel", "atg", "betplay",
+            // Odds Feed+ clients take Kambi's traded odds as their own line (Kambi, 2025): Coolbet, Superbet (and Kindred/FDJ's Unibet, above).
+            "coolbet", "superbet",
         )
         group("penn", "espnbet", "espn", "barstool", "barstoolsportsbook", "thescore", "thescorebet", "scorebet")
         group("fanatics", "fanatics", "fanaticssportsbook", "pointsbet", "pointsbetus")
