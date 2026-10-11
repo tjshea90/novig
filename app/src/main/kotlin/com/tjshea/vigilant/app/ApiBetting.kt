@@ -176,6 +176,7 @@ object ApiBetTargets {
             marketLabel = o.marketLabel, selection = o.selection, fair = fair, fairAsOfMs = o.fairAsOfMs, source = BetTracker.SOURCE_VIGILANT, placedKey = o.key,
             basis = com.tjshea.vigilant.data.tracker.FairBasis.of(o),
             live = o.isLive,
+            liveLane = o.refEvent?.id?.startsWith("pinnacle-live-") == true,
         )
     }
 
@@ -625,12 +626,26 @@ class ApiBettingController(
         betJob = scope.launch { replan() }
     }
 
+    /**
+     * A live-lane bet (Tj, 2026-10-11) is priced from the lane's fair AS IT IS NOW, not the one on the card when it was tapped: a line that moved in the seconds the sheet was open changes the EV the plan
+     * is judged by. Null once the row has left the list (its prices are over 5 s old): nothing is bet on them. Any other bet is returned as it is.
+     */
+    private fun withLiveFair(target: BetTarget): BetTarget? {
+        if (!target.liveLane) return target
+        val row = state.value.liveRows.firstOrNull { it.key == target.placedKey } ?: return null
+        val fair = row.fairProbability ?: return null
+        return target.copy(fair = fair, fairAsOfMs = row.fairAsOfMs)
+    }
+
     private suspend fun replan() {
         val sheet = state.value.betSheet ?: return
         val target = sheet.target ?: return
         val placer = placer() ?: return
         val result = try {
-            placer.plan(target, sheet.stake, sheet.allowRepeat)
+            val priced = withLiveFair(target) ?: throw LiveRowGone()
+            placer.plan(priced, sheet.stake, sheet.allowRepeat)
+        } catch (e: LiveRowGone) {
+            PlanResult.Refused(LIVE_GONE)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -653,6 +668,11 @@ class ApiBettingController(
         val plan = sheet.plan ?: return
         if (sheet.placing || sheet.result != null) return
         val placer = placer() ?: return
+        val priced = withLiveFair(target)
+        if (priced == null) {
+            state.update { it.copy(betSheet = it.betSheet?.copy(plan = null, refusal = LIVE_GONE)) }
+            return
+        }
         state.update { it.copy(betSheet = sheet.copy(placing = true)) }
         betJob?.cancel()
         betJob = scope.launch {
@@ -661,7 +681,7 @@ class ApiBettingController(
             val result = try {
                 // The record's time and stake are the order's: the sheet may have been open a while.
                 val now = clock()
-                val placing = target.copy(atBet = target.atBet?.copy(atMs = now, minutesToStart = (target.startsTs - now) / 60_000L, stake = sheet.stake))
+                val placing = priced.copy(atBet = target.atBet?.copy(atMs = now, minutesToStart = (target.startsTs - now) / 60_000L, stake = sheet.stake))
                 withContext(Dispatchers.IO + NonCancellable) { placer.place(placing, sheet.stake, plan.limitPrice, sheet.allowRepeat) }
             } catch (e: CancellationException) {
                 throw e

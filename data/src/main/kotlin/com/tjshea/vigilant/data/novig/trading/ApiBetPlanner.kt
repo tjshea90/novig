@@ -43,6 +43,8 @@ data class BetTarget(
      * before its listed start. A live bet pays Novig's taker fee and can only be placed by hand (Tj, 2026-10-11: "I want to bid and bet on live games").
      */
     val live: Boolean = false,
+    /** Taken from the Feed's real-time live lane (Pinnacle's live fair, at most 5 s old when listed): the sheet re-reads that fair from the lane before pricing and before the order, and refuses once the row is off the list. */
+    val liveLane: Boolean = false,
 )
 
 /**
