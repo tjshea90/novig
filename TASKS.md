@@ -4536,3 +4536,5 @@ Tj: "Add two more apis to the app. Unabated api and oddspapi api. Both apis are 
 - [ ] UN2 Re-check OddsPapi code/doc vs the docs; fix mismatches; free-tier budget guard
 - [ ] UN3 Unabated client + parser + source + Settings + fallback order; tests
 - [ ] UN4 ship, release
+Tj mid-turn 2026-10-11: "Keep v5 but add v4 in separate settings. For example, two different spots for the different keys and the app knows how to use each to its full advantage, or one place to type the key and the app detects v4 or v5"
+  -> done as: v5 page unchanged, a NEW "OddsPapi Free (v4)" page+key list+switch; Test key on either page detects the other version's key and says where to paste it.
