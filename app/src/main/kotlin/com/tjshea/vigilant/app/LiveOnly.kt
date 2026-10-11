@@ -25,6 +25,7 @@ object LiveOnly {
             scanner = s.scanner.name, autoScan = s.autoScan.name,
             maker = s.maker, autoBet = s.autoBet, burstRecorder = s.burstRecorder, feedRace = s.feedRace,
             altLab = s.altLab, researchMode = s.researchMode, burstTrade = s.burstTrade,
+            usePinnacle = s.usePinnacle, pinnwire = s.gates.usePinnwire, pinnapi = s.gates.usePinnapi,
         )
         var n = OFF.fold(s) { acc, e -> e.setOn(acc, false) }
         // The Pinnacle umbrella switch was left on by PINNWIRE/PINNAPI/PINNODDS setOn; the boards themselves are off.
@@ -46,7 +47,7 @@ object LiveOnly {
             altLab = m.altLab, researchMode = m.researchMode, burstTrade = m.burstTrade,
             includeLive = false,
         )
-        return n.copy(gates = n.gates.copy(liveOnly = LiveOnlyMode()))
+        return n.copy(usePinnacle = m.usePinnacle, gates = n.gates.copy(usePinnwire = m.pinnwire, usePinnapi = m.pinnapi, liveOnly = LiveOnlyMode()))
     }
 
     fun set(s: ScanSettings, on: Boolean): ScanSettings = if (on) enter(s) else leave(s)

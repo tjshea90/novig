@@ -1306,6 +1306,10 @@ data class LiveOnlyMode(
     val altLab: Boolean = false,
     val researchMode: Boolean = false,
     val burstTrade: Boolean = false,
+    /** The Pinnacle boards' own switches, exactly as they were (an entry's `isOn` needs two of them). */
+    val usePinnacle: Boolean = true,
+    val pinnwire: Boolean = true,
+    val pinnapi: Boolean = true,
 )
 
 /**
