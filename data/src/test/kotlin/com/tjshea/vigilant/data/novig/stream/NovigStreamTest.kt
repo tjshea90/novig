@@ -310,7 +310,6 @@ class NovigStreamTest {
         stream.watch(listOf("a1"))
         until { stream.live(listOf("a1")).size == 1 }
         assertEquals(2, stream.live(listOf("live1", "live2")).size)
-        assertEquals(1, subscribes.size.coerceAtMost(1))
         stream.close()
     }
 

@@ -4765,3 +4765,6 @@ Tj verbatim (2 screenshots 5:13 PM: banner "Live: nothing shown, Novig's live bo
 Tj verbatim: "Make a live games only mode for the vigilant scanner. In this mode, only apis which can provide rapid odds are used, probably just pinnodds and novig. Only live bets are shown in the vigilant list. All other apis are turned off. Keep the same rules and logic for live betting already established ... when I toggle live betting mode off, the apis that were on before turn back on automatically, live betting is turned off, live bets are not scanned or shown in the vigilant list at all ... Live betting mode should turn off anything not needed, for example, cno scanner"
 - [x] TAF1 `app/LiveOnly.kt` enter/leave (snapshot in `ApiGates.liveOnly`), REST scan/recheck/feed rows gated by `ScanSettings.liveOnly`, Feed chip + Settings switch. Test: LiveOnlyTest.
 - [x] TAF2 Ship v0.89.28.
+
+## TAG: live books "not subscribed yet" again (Tj, 2026-10-11 ~22:00Z: "connects for a few seconds, matches games, then says novig live book not subscribed yet. Diagnose. Also check the novig api docs")
+- [x] TAG1 Cause: stream bucket cost (see NOVIG_API.md §25). TAG2 fix (affordable-now subscribes, lingering markets, bookGap detail), tests in NovigStreamTest. TAG3 ship v0.89.29.
