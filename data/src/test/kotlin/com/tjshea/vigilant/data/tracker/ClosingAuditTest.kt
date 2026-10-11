@@ -228,7 +228,7 @@ class IndependentCloseTest {
         assertNull("a lock", BetTracker.startChange(b.copy(lockFor = "x"), opp("OPEN_INGAME", start), start - 10 * min))
     }
 
-    @Test fun `a delayed game keeps its close open: the read taken for the old start is no longer a close`() {
+    @Test fun `a delayed game keeps its close open so the read taken for the old start is no longer a close`() {
         val b = bet().copy(status = BetStatus.PENDING)                      // read 2 minutes before the listed start
         val delayed = BetTracker.startChange(b, opp("OPEN_PREGAME", start + 35 * min), start - min)!!
         assertNull("33 minutes before the new start is outside the 15-minute window", ClosingLine.captured(delayed))
