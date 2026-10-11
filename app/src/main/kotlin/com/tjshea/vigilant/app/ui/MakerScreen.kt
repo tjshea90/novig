@@ -268,7 +268,6 @@ object MakerText {
 
     /** The fills' numbers: "8 fills · +4.2% EV at the fair · CLV +1.9% on 5 with a close". */
     fun fillSummary(ui: MakerUi): String? {
-        val filled = ui.filled
         if (filled.isEmpty()) return null
         val ev = filled.map { it.evAtFair }.average()
         val bets = filled.mapNotNull { b -> ui.bets.firstOrNull { it.id == b.betId || (b.orderId != null && it.orderId == b.orderId) } }
@@ -333,10 +332,17 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
         ) {
             item(key = "head") { MakerHead(ui, actions) }
             item(key = "rules") {
-                SectionTitle("Rules")
-                // Plain left-aligned text, not a TextButton: a button centres and crops a long wrapped summary (Tj's screenshot: first and last words cut off).
+                SectionTitle("Bid level")
+                val bidLevel = ui.settings.vigGuards.bidLevel
+                val bidCustom = bidLevel !in 1..100 || !com.tjshea.vigilant.data.scanner.BidSlider.matches(ui.settings, bidLevel)
+                LevelSliderCard(
+                    tag = "bidLevel", title = "Auto-bid level",
+                    hint = "1 is the strictest: fewest fills, the best price and edge, safest. 100 is the most fills at a thin but still positive edge. The slider sets every bid rule for you; bids go up on games 12 hours away and more.",
+                    level = bidLevel, custom = bidCustom, name = com.tjshea.vigilant.data.scanner.BidSlider::name, stops = com.tjshea.vigilant.data.scanner.BidSlider.STOPS,
+                    describe = com.tjshea.vigilant.data.scanner.BidSlider.describe(if (bidLevel in 1..100) bidLevel else 55, bidCustom),
+                ) { v -> actions.onUpdate { com.tjshea.vigilant.data.scanner.BidSlider.apply(it, v) } }
                 Text(
-                    if (rulesOpen) "Hide the rules" else MakerRulesText.summary(ui.settings),
+                    if (rulesOpen) "Hide advanced settings" else "Advanced settings: " + MakerRulesText.summary(ui.settings),
                     Modifier.fillMaxWidth().clickable { rulesOpen = !rulesOpen }.padding(vertical = 10.dp).testTag("makerRulesToggle"),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
                 )
@@ -381,14 +387,6 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                         TextButton(onClick = { actions.onUndoDeny(d.outcomeId) }, modifier = Modifier.testTag("undoDeny-${d.outcomeId}")) { Text("Undo") }
                     }
                 }
-            }
-            item(key = "filledTitle") {
-                SectionTitle("Filled (${filled.size})")
-                MakerText.fillSummary(ui)?.let { Text(it, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag("makerFillSummary")) }
-                if (filled.isEmpty()) Muted("None yet. A filled bid is a bet in the Tracker, with its CLV once the game starts.")
-            }
-            items(filled, key = { "f-" + it.clientId }) { b ->
-                FilledRow(b, ui.bets.firstOrNull { it.id == b.betId || (b.orderId != null && it.orderId == b.orderId) }, ui.now)
             }
             item(key = "end") { Spacer(Modifier.height(32.dp)) }
         }

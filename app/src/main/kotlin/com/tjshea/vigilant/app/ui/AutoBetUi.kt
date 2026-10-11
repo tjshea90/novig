@@ -284,6 +284,19 @@ fun AutoBetSection(
         }
     }
 
+    // The one slider (Tj, 2026-10-11): every selection rule moves together, 1 safest to 100 most volume. Everything else is under Advanced settings.
+    val betLevel = s.vigGuards.betLevel
+    val betCustom = betLevel !in 1..100 || !com.tjshea.vigilant.data.scanner.BetSlider.matches(s, betLevel)
+    LevelSliderCard(
+        tag = "betLevel", title = "Auto-bet level",
+        hint = "1 is the strictest: fewest bets, biggest edge, safest. 100 is the most bets at a thin but still positive edge. The slider sets every bet rule for you.",
+        level = betLevel, custom = betCustom, name = com.tjshea.vigilant.data.scanner.BetSlider::name, stops = com.tjshea.vigilant.data.scanner.BetSlider.STOPS,
+        describe = com.tjshea.vigilant.data.scanner.BetSlider.describe(if (betLevel in 1..100) betLevel else 55, betCustom),
+    ) { v -> onUpdate { com.tjshea.vigilant.data.scanner.BetSlider.apply(it, v) } }
+    Text("Amount per bet: ${s.autoBetStake.label} (Advanced settings › How much). Your dollar limits are never changed by the slider.", style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 4.dp))
+    var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    TextButton(onClick = { advanced = !advanced }, modifier = Modifier.testTag("autoBetAdvanced")) { Text(if (advanced) "Hide advanced settings" else "Advanced settings") }
+    if (advanced) {
     presets()
 
     // ---- What it bets --------------------------------------------------------------------------------
@@ -600,7 +613,7 @@ fun AutoBetSection(
             modifier = Modifier.testTag("autoBetTestNoteResult"),
         )
     }
-
+    }
 }
 
 /** The small-prop guard's words, free of Compose so they're testable. */
