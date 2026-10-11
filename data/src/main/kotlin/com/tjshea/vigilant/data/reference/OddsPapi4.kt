@@ -330,6 +330,10 @@ class Op4Catalog(
 
     /** The league's games between [fromMs] and [toMs]: 12-hour chunks, one request each, cached 12 hours. */
     suspend fun fixturesBetween(tournament: Long, fromMs: Long, toMs: Long): List<Op4Fixture> {
+        // The documented one-request form (ODDSPAPI_API.md: `/fixtures` with `tournamentId` alone lists every fixture of the league): one request for the whole window instead of one per 12 hours
+        // (Tj's Diagnostics 2026-10-11: 123 of 250 monthly requests gone in a day, 75 of 91 /v4/fixtures calls refused). Any trouble other than "no fixtures" falls back to the windows.
+        val whole = try { wholeLeague(tournament) } catch (e: com.tjshea.vigilant.data.keys.AllKeysExhaustedException) { throw e } catch (e: com.tjshea.vigilant.data.keys.CreditsHeldBackException) { throw e } catch (e: ReferenceException) { null }
+        if (whole != null) return whole.filter { f -> (f.trueStartMs ?: f.startMs)?.let { it in fromMs..toMs } == true }
         val out = ArrayList<Op4Fixture>()
         var w = fromMs / WINDOW_MS
         while (w * WINDOW_MS <= toMs) {
@@ -337,6 +341,20 @@ class Op4Catalog(
             w += 2
         }
         return out.distinctBy { it.id }
+    }
+
+    /** Every fixture of [tournament] in one request, cached [WHOLE_MS]; an empty league (404 FIXTURE_NOT_FOUND) is an empty list kept like any answer. */
+    private suspend fun wholeLeague(tournament: Long): List<Op4Fixture> {
+        val key = "fxall|$tournament"
+        val raw = store.get(key, WHOLE_MS) ?: run {
+            if (!may()) throw held()
+            try {
+                client.billable("/v4/fixtures", listOf("tournamentId" to tournament.toString()), reserve = Op4Budget.RESERVE)
+            } catch (e: ReferenceException) {
+                if (e.message?.contains("FIXTURE_NOT_FOUND") == true) "[]" else throw e
+            }.also { store.put(key, it) }
+        }
+        return Op4Parser.fixtures(raw)
     }
 
     private suspend fun chunk(tournament: Long, w: Long): List<Op4Fixture> {
@@ -377,6 +395,8 @@ class Op4Catalog(
         const val GAP_MS = 3 * 3_600_000L
         const val WINDOW_MS = 6 * 3_600_000L
         const val FIXTURES_MS = 12 * 3_600_000L
+        /** A league's whole fixture list is read again after this (a game's status changes, new games are listed). */
+        const val WHOLE_MS = 3 * 3_600_000L
         const val MONTH_MS = 30 * 86_400_000L
 
         /** Basketball 11, baseball 13, American football 14, ice hockey 15 (docs: get-account's sport ids). */
