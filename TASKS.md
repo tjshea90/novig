@@ -4771,8 +4771,8 @@ Tj verbatim: "Make a live games only mode for the vigilant scanner. In this mode
 
 ## TAH: auto bids/auto bet simplified + 1-100 sliders (Tj, 2026-10-11 ~22:45Z)
 Tj verbatim: "In the auto bids tab, there is a running list of all filled bids, which is getting very long. Remove this list. It doesn't need a list of filled bids at all, only keep open bids. Also make a slider system similar to the auto bet system which moves all settings in tandem to achieve certain auto bid levels from 1 to 100. 1 is the strictest settings with lowest volume but safest, highest EV bids and highest expected profit, and 100 is the riskiest but most volume on bid fills, while still maintaining positive EV. Model the system similar to the auto bet system slider. For both the auto bet and auto bid tabs, simplify them and hide all the advanced settings unless I press advanced settings. Just show the most important settings and the slider. Make sure the slider is logical and the steps from 1-100 make sense. Bids may be made for games 12 hours and more away from game time. Make the auto bid and auto bet sliders automatically change any settings in the app needed to obtain the goal at each level of the slider."
-- [ ] TAH1 Remove the filled-bids list from the Bids tab (open bids only).
-- [ ] TAH2 Bid slider 1-100 (`MakerSlider`, data): sets every bid rule (margin, books agreeing, odds, horizon >= 12 h, trap guard, sharp veto...) + other app settings needed; tests for monotonic steps.
-- [ ] TAH3 Auto-bet slider 1-100 (`AutoBetSlider`): same for the auto-bet rules.
-- [ ] TAH4 Both tabs: simple view (key settings + slider), everything else behind an "Advanced settings" button.
-- [ ] TAH5 Tests, ship.
+- [x] TAH1 Remove the filled-bids list from the Bids tab (open bids only).
+- [x] TAH2 Bid slider 1-100 (`MakerSlider`, data): sets every bid rule (margin, books agreeing, odds, horizon >= 12 h, trap guard, sharp veto...) + other app settings needed; tests for monotonic steps.
+- [x] TAH3 Auto-bet slider 1-100 (`AutoBetSlider`): same for the auto-bet rules.
+- [x] TAH4 Both tabs: simple view (key settings + slider), everything else behind an "Advanced settings" button.
+- [x] TAH5 Tests, ship.

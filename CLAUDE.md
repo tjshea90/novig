@@ -106,6 +106,10 @@ Tj asked why a live card's Bet said "pregame only" ("Is this an API limitation o
 
 **Standing instruction from Tj (2026-10-11):** a mode where only Pinnodds and Novig run and only live bets are listed; turning it off puts every API back and turns live games off. `app/LiveOnly.kt` `enter`/`leave` keep the snapshot in `ApiGates.liveOnly` (every other API, CNO, background scan, bids, auto-bet and recorders go off; Include live games on). `ScanSettings.liveOnly` keeps the REST scan, rechecks and scanned rows out. A new switch that must sleep in this mode goes into `LiveOnly` and `LiveOnlyTest`.
 
+## Auto-bet and Bids: one 1-100 slider each, advanced rules hidden (Tj, 2026-10-11, permanent)
+
+**Standing instruction from Tj (2026-10-11):** both tabs show the slider and the key settings only; everything else sits behind "Advanced settings". 1 = strictest/safest/highest edge/lowest volume, 100 = most volume, still +EV; the slider changes every setting the goal needs, bids reach games 12 h and more away; the Bids tab lists no filled bids. `data/scanner/LevelSliders.kt` (`BidSlider`, `BetSlider`; position in `vigGuards.betLevel/bidLevel`; it never touches your money limits or on/off switches, clears the star minimum, and widens the scan window to the horizon) + `app/ui/LevelSliderCard.kt`; `LevelSlidersTest` proves every rule only loosens as the level rises and stays +EV. A new auto-bet or bid selection rule goes into the matching `apply` and that test.
+
 ## A minimum star rating decides which bets the auto-bet places (Tj, 2026-10-11, permanent)
 
 **Standing instruction from Tj (2026-10-11, verbatim):** "When I select auto bet with a minimum star rating, make the app ignore all the other auto bet filters that interfere. If I have a star rating minimum turned on, I want the app to auto bet all of the scanned bets with at least that rating, regardless of any other settings. But if I turn off the minimum star rating filter, I want it to return back to enforcing all of the other auto bet settings."
