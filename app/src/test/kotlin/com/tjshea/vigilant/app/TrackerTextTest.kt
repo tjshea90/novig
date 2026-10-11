@@ -69,10 +69,10 @@ class TrackerTextTest {
         val open = listOf(
             bet("a", cost = 0.5, startsTs = now + hour), bet("b", cost = 0.5, startsTs = now - hour), bet("c", cost = 0.5, startsTs = now - 5 * hour, note = "x", manual = true),
         )
-        assertEquals("3 open · $30.00 at risk · +$30.00 if all win · 2 started · 1 need a tap · current EV on 0 of 1 upcoming", TrackerText.openSummary(open, now))
-        // Once its odds are read, the upcoming bet counts as current (a started game never counts: it waits for a result, not odds).
+        assertEquals("3 open · $30.00 at risk · +$30.00 if all win · 2 started · 1 need a tap · current EV on 0 of 1 upcoming · 0 of 1 in play · 1 finished (no odds left to read, waiting on the final score)", TrackerText.openSummary(open, now))
+        // Once its odds are read, the upcoming bet counts as current, and so does a game under way (Tj, 2026-10-11: every open bet gets its odds); a finished one waits for a result.
         val read = listOf(open[0].copy(nowAtMs = now - 60_000L, nowFair = 0.5, nowEv = 0.1), open[1].copy(nowAtMs = now - 60_000L, nowFair = 0.5, nowEv = 0.1))
-        assertEquals("2 open · $20.00 at risk · +$20.00 if all win · 1 started · current EV on 1 of 1 upcoming", TrackerText.openSummary(read, now))
+        assertEquals("2 open · $20.00 at risk · +$20.00 if all win · 1 started · current EV on 1 of 1 upcoming · 1 of 1 in play", TrackerText.openSummary(read, now))
         // A read older than the fair odds' own age limit is no longer current: 5 minutes for a game within 3 hours, 10 for a far-off one.
         val old = listOf(open[0].copy(nowAtMs = now - 6 * 60_000L, nowFair = 0.5, nowEv = 0.1))
         assertEquals("1 open · $10.00 at risk · +$10.00 if all win · current EV on 0 of 1 upcoming", TrackerText.openSummary(old, now))
@@ -94,7 +94,10 @@ class TrackerTextTest {
         assertNull(TrackerText.oddsNote(tried.copy(nowFair = 0.5, nowEv = 0.1, nowAtMs = now), now))
         // Read already, started, or settled: nothing to explain.
         assertNull(TrackerText.oddsNote(cno.copy(nowFair = 0.5, nowEv = 0.1, nowAtMs = now), now))
-        assertNull(TrackerText.oddsNote(cno.copy(startsTs = now - hour), now))
+        // A game under way is priced too, so it says why when it isn't; a finished one says it is over.
+        assertEquals("Odds not read yet: tap Check odds now", TrackerText.oddsNote(cno.copy(startsTs = now - hour), now))
+        assertEquals("Game over: no odds left to read, waiting on the final score", TrackerText.oddsNote(cno.copy(startsTs = now - 6 * hour), now))
+        assertNull(TrackerText.oddsNote(cno.copy(startsTs = now - hour, nowFair = 0.5, nowEv = 0.1, nowAtMs = now), now))
         assertNull(TrackerText.oddsNote(cno.copy(status = BetStatus.WON), now))
     }
 
