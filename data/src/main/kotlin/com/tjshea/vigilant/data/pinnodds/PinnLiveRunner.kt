@@ -181,10 +181,11 @@ class PinnLiveRunner(
     // The Feed's live lane (consumer-only state): the rows built per Novig market, when each Novig game last spoke on the book socket, and how many rows aged out.
     private val scanByMarket = HashMap<String, List<LiveScanRow>>()
     private val novigGameAt = HashMap<String, Long>()
+    private val novigMarketAt = HashMap<String, Long>()
     private var scanDropped = 0L
 
     private fun reset() {
-        scanByMarket.clear(); novigGameAt.clear(); scanDropped = 0L
+        scanByMarket.clear(); novigGameAt.clear(); novigMarketAt.clear(); scanDropped = 0L
         book = PinnBook(config().method)
         book.versionListener = onVersion
         catalogEvents = emptyList(); catalogMarkets = emptyList(); targetsByEvent.clear(); targetsByMarket.clear(); armedUntil.clear(); follows.clear(); probes.clear()
@@ -300,6 +301,7 @@ class PinnLiveRunner(
         val t = targetsByMarket[marketId] ?: return
         // The game's Novig books are streaming: this is the live lane's word that Novig's side of the game is current.
         novigGameAt[t.event.eventId] = now
+        novigMarketAt[marketId] = now
         if (bids != null) {
             // Trades on this market are what a paper bid is filled by; a real bid's own fill is looked for at once.
             bids.onBook(marketId, now, changes)
@@ -380,7 +382,7 @@ class PinnLiveRunner(
             val unchanged = first != null && first.lineVersion == line.version && first.bookSeq == mb.seq &&
                 pinnAt - first.pinnAsOfMs < LiveScan.STAMP_SLACK_MS && novigAt - first.novigAsOfMs < LiveScan.STAMP_SLACK_MS
             if (unchanged) continue
-            val rows = LiveScanRows.build(t, pe, line, mb, pinnAt, novigAt, cfg.method, cfg.rules, cfg.scanSettings)
+            val rows = LiveScanRows.build(t, pe, line, mb, pinnAt, novigAt, novigMarketAt[id], cfg.method, cfg.rules, cfg.scanSettings)
             if (rows.isEmpty()) scanByMarket.remove(id) else scanByMarket[id] = rows
         }
         // A market no longer matched leaves with its game.

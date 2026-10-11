@@ -52,6 +52,8 @@ data class Opportunity(
      * [Freshness.MAX_QUOTE_AGE_MS] this EV is no longer current and isn't shown.
      */
     val fairAsOfMs: Long? = null,
+    /** Only on a real-time live row ([com.tjshea.vigilant.data.pinnodds.LiveScanRows]): when each of the two feeds last said anything about this line. */
+    val liveAges: LiveAges? = null,
 ) {
     /** Column of this outcome in [FairLine.perBook] odds. */
     val referenceIndex: Int?
@@ -113,6 +115,9 @@ data class ScanStats(
     /** Games Novig lists past "Days ahead" (not scanned): [Plan.laterGames]. */
     val laterGames: Int = 0,
 )
+
+/** What a live row's prices are as of, from the two sockets themselves: Pinnacle's line last CHANGED, Pinnacle's game feed last spoke, Novig's market last changed, Novig's game feed last spoke (phone clock, ms). */
+data class LiveAges(val pinnLineChangedMs: Long, val pinnFeedMs: Long, val novigMarketMs: Long?, val novigFeedMs: Long)
 
 data class ScanResult(
     val games: List<PricedGame>,

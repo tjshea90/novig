@@ -251,11 +251,18 @@ data class UiState(
      * that offers Vigilant's bets shows this, not [feed].
      */
     fun feedAt(now: Long): List<Opportunity> =
-        feed.filter { !it.fairIsOld(now) && settings.startsInWindow(it.event.startsTs, now) }
+        feed.filter { !it.fairIsOld(now) && settings.startsInWindow(it.event.startsTs, now) && !staleLive(it, now) }
+
+    /**
+     * With "Include live games" on, a game that has started is listed only by the real-time lane: a scanned row whose game has begun (Novig's catalog can still call it pregame for minutes) is
+     * a pregame price on a live game, so it leaves the list at the start (Tj, 2026-10-11: live bets were not dropping off).
+     */
+    private fun staleLive(o: Opportunity, now: Long): Boolean =
+        settings.includeLive && o.liveAges == null && o.event.startsTs <= now
 
     /** [r]'s +EV feed under these settings, without the bets Tj already has (Tj, 2026-09-27). */
     fun feedOf(r: ScanResult?, now: Long = System.currentTimeMillis()): List<Opportunity> {
-        val scanned = r?.feed(settings).orEmpty()
+        val scanned = r?.feed(settings).orEmpty().let { list -> if (settings.includeLive) list.filterNot { staleLive(it, now) } else list }
         // Live games (Tj, 2026-10-11): only the real-time lane lists them, and only while its prices are within 5 s. Switch off: nothing here changes.
         val live = com.tjshea.vigilant.data.pinnodds.LiveScanFeed.shown(liveRows, settings, now)
         if (scanned.isEmpty() && live.isEmpty()) return emptyList()

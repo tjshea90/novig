@@ -130,6 +130,8 @@ object LiveScanRows {
         book: NovigBook,
         pinnAsOfMs: Long,
         novigAsOfMs: Long,
+        /** When this market's own Novig book last changed (null: not since it was first read). */
+        novigMarketAtMs: Long? = null,
         method: DevigMethod,
         rules: LiveRules,
         settings: ScanSettings,
@@ -191,7 +193,7 @@ object LiveScanRows {
                     league = league, event = t.event, market = t.market, outcome = outcome, marketLabel = label, kind = kind, selection = selection,
                     fair = fairLine, fairProbability = p, quote = quote, ladder = ladder, depth = depth, suggestedStake = stake, novigWidth = width,
                     bestBid = book.bestBid(outcomeId)?.price, bidLevels = book.bidsByOutcome[outcomeId].orEmpty(), bookFetchedAtMs = novigAsOfMs,
-                    fairUpdatedMs = pinnAsOfMs, refEvent = ref, lineKey = key, target = OutcomeTarget.Is(s), fairAsOfMs = pinnAsOfMs,
+                    fairUpdatedMs = line.changedAtMs, liveAges = com.tjshea.vigilant.data.scanner.LiveAges(line.changedAtMs, pinnAsOfMs, novigMarketAtMs, novigAsOfMs), refEvent = ref, lineKey = key, target = OutcomeTarget.Is(s), fairAsOfMs = pinnAsOfMs,
                 ),
                 lineVersion = line.version, bookSeq = book.seq, pinnAsOfMs = pinnAsOfMs, novigAsOfMs = novigAsOfMs,
             )

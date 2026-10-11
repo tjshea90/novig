@@ -528,6 +528,7 @@ fun OpportunityCard(
             }
             val depth = o.depth
             AgreementLine(o.agreement)
+            OddsAgeLine(o)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     buildString {
@@ -551,6 +552,14 @@ fun OpportunityCard(
             }
         }
     }
+}
+
+/** How old the odds behind this bet are, as far as the app knows (Tj, 2026-10-11): a live row's four feed ages tick every second, a scanned row's every 15 s. */
+@Composable
+private fun OddsAgeLine(o: Opportunity) {
+    val now = rememberNow(if (o.liveAges != null) 1_000 else 15_000)
+    val text = com.tjshea.vigilant.data.scanner.OddsAge.text(o, now) ?: return
+    Text(text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("oddsAge"))
 }
 
 /** How often the open +EV list re-reads Novig's prices for its bets. */
