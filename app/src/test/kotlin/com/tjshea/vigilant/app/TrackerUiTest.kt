@@ -19,7 +19,7 @@ import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.printToLog
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.BetActions
@@ -229,8 +229,8 @@ class TrackerUiTest {
         compose.onNodeWithText("Pays if all win").assertDoesNotExist()
         compose.onNodeWithText("Where it's working").assertExists()
         // The split can be switched between scanner, league, market, edge and price.
-        compose.onNodeWithText("Market").performScrollTo().performClick()
-        compose.onRoot().printToLog("DBG")
+        // (A semantic click: the pinned header can cover a node that was just scrolled to the top edge, and a touch would land on it.)
+        compose.onNodeWithText("Market").performScrollTo().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         compose.onNodeWithText("Moneyline").assertExists()
         compose.onNodeWithText("Player props").assertExists()
     }
