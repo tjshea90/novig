@@ -1844,9 +1844,9 @@ class AppContainer(private val app: Application) {
      * every call, so adding or removing a key takes effect on the next scan.
      */
     fun referenceSources(settings: ScanSettings, background: Boolean = false, scan: Boolean = false): List<ReferenceSource> = when {
-        // Low-usage bids narrow Vigilant's own scan only ([scan]): what prices Tj's open bets, the sharp-book confirmations and the rest read the usual feeds.
-        // SportsGameOdds Pro has no per-call budget to save (unlimited events), so low-usage bids narrow nothing while it answers.
-        scan && settings.lowUsageNow && !sgoActive(settings) && !opActive(settings) -> lowUsageSources(settings, background)
+        // Low-usage bids narrow Vigilant's own scan only ([scan]): what prices Tj's open bets, the sharp-book confirmations and the rest read the usual feeds. They narrow the feeds that spend credits a call;
+        // the flat-rate ones that are on (SportsGameOdds Pro, OddsPapi, OddsPapi Free, Unabated) have nothing to save and still price, since an API toggled on is used for any data (Tj, 2026-10-11).
+        scan && settings.lowUsageNow -> flatRateSources(settings) + lowUsageSources(settings, background)
         else -> allReferenceSources(settings, background, scan)
     }
 
@@ -1877,32 +1877,30 @@ class AppContainer(private val app: Application) {
         return LowUsageBids.feedsFor(LowUsageBids.books(settings), available)
     }
 
+    /**
+     * The flat-rate feeds that are on, in the order they price: SportsGameOdds Pro, OddsPapi, OddsPapi Free (v4), then Unabated Free last ([unabatedLast]). They are asked for every league and every kind of data they carry whatever
+     * else is on: nothing rests for them and they rest for nothing (Tj, 2026-10-11: "all apis can be used at any time for any data as long as I have them toggled on, and if any are toggled off, they are not used or called at all").
+     */
+    private fun flatRateSources(settings: ScanSettings): List<ReferenceSource> =
+        (if (sgoActive(settings)) listOf<ReferenceSource>(sgoGames) + propsOf(settings, sgoProps) else emptyList()) +
+            (if (opActive(settings)) listOf<ReferenceSource>(opGames) + propsOf(settings, opProps) else emptyList()) +
+            // OddsPapi Free (v4) reads whole games (every book) within Tj's daily figure.
+            (if (op4FairActive(settings)) listOf<ReferenceSource>(op4Games) + propsOf(settings, op4Props) else emptyList()) +
+            // Unabated Free (Tj, 2026-10-11): last in line. Pricing keeps the earlier source's quote for a book both send, so it prices only the gaps and covers a feed that is spent or down.
+            (if (unabatedActive(settings)) listOf<ReferenceSource>(unabatedGames) + propsOf(settings, unabatedProps) else emptyList())
+
+    private fun propsOf(settings: ScanSettings, props: ReferenceSource): List<ReferenceSource> =
+        if (com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families) listOf(props) else emptyList()
+
+    /**
+     * Every feed that is switched on, each asked for everything it carries (Tj, 2026-10-11): SportsGameOdds Pro and OddsPapi first (the earlier in SOURCE_ORDER wins a book both send), the credit-metered feeds after them,
+     * Unabated last. A feed that is off is not in the list at all, so it is never called; a feed that is on never rests because another one is.
+     */
     private fun allReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> {
-        val all = baseReferenceSources(settings, background, scan)
-        // Unabated Free (Tj, 2026-10-11): last in line. It costs no credits, so no other feed rests for it; Pricing keeps the earlier source's quote for a book both send, so it prices only the gaps and covers a feed that is spent or down.
-        val unabatedLast = if (unabatedActive(settings)) listOf<ReferenceSource>(unabatedGames) + (if (com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families) listOf(unabatedProps) else emptyList()) else emptyList()
-        // SportsGameOdds Pro (Tj, 2026-10-09): one feed prices what the paid ones sell; they rest for every league it carries (tennis keeps them), and come back if SGO stops answering.
-        val sgoOn = sgoActive(settings)
-        val opOn = opActive(settings)
-        // OddsPapi Free (v4) reads whole games (every book) within Tj's daily figure: before ParlayAPI in the order, resting nothing (its allowance is small).
-        val op4Sources = if (op4FairActive(settings)) listOf<ReferenceSource>(op4Games) + (if (com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families) listOf(op4Props) else emptyList()) else emptyList()
-        if (!sgoOn && !opOn) return op4Sources + all + unabatedLast
-        val replaced = setOfNotNull(
-            pinnacle.id.takeUnless { pinnoddsActive(settings) },   // Pinnodds' Pinnacle board prices every league, SGO's included
-            propLine.id, propLineProps.id, oddsApi.id, bookProps.id, parlayOdds.id, parlayOddsBackground.id, parlayProps.id, parlayPropsBackground.id, parlayHalves.id, parlayHalvesBackground.id,
-        )
-        // Each feed that answers rests the paid ones for the leagues it carries (tennis keeps them); both on: both rest them, and the earlier in SOURCE_ORDER (SGO) wins a book both send.
-        val props = com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families
-        val rest = all.map { src ->
-            var r = src
-            if (src.id in replaced) {
-                if (sgoOn) r = com.tjshea.vigilant.data.reference.OutsideSgo(r)
-                if (opOn) r = com.tjshea.vigilant.data.reference.OutsideOp(r)
-            }
-            r
-        }
-        return (if (sgoOn) listOf<ReferenceSource>(sgoGames) + (if (props) listOf(sgoProps) else emptyList()) else emptyList()) +
-            (if (opOn) listOf<ReferenceSource>(opGames) + (if (props) listOf(opProps) else emptyList()) else emptyList()) + op4Sources + rest + unabatedLast
+        val flat = flatRateSources(settings)
+        val front = flat.filter { it.id != unabatedGames.id && it.id != unabatedProps.id }
+        val last = flat.filter { it.id == unabatedGames.id || it.id == unabatedProps.id }
+        return front + baseReferenceSources(settings, background, scan) + last
     }
 
     internal fun baseReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
@@ -1931,14 +1929,6 @@ class AppContainer(private val app: Application) {
             if (settings.useBookProps) add((if (background) parlayPropsBackground else parlayProps).let { if (scan) LowUsageSource(it, windowGuard = true) else it })
             // More books' 1st-half lines (2 credits a league, only where Novig lists a 1st-half spread or total; PARLAY_API.md §6.7).
             add(if (background) parlayHalvesBackground else parlayHalves)
-        }
-        // Tennis picked (Tj, 2026-10-11): every feed that carries tennis is asked for it, even with its own switch off. A feed already in the list is left as it is; its API's own on/off (key, gate) still counts.
-        if (settings.selectedLeagues.any { it.tennis }) {
-            val have = map { it.id }.toSet()
-            fun tennis(src: ReferenceSource) { if (src.id !in have) add(com.tjshea.vigilant.data.reference.TennisOnly(src)) }
-            if ((settings.gates.usePinnwire && keyStore.current(ApiProvider.PINNWIRE).isNotEmpty()) || (settings.gates.usePinnapi && keyStore.current(ApiProvider.PINNAPI).isNotEmpty()) || pinnoddsActive(settings)) tennis(pinnacle)
-            tennis(kalshi)
-            if (keyStore.current(ApiProvider.PARLAY).isNotEmpty()) tennis(if (background) parlayOddsBackground else parlayOdds)
         }
     }
 }
