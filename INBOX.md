@@ -6278,3 +6278,8 @@ Make the same switch for sgo. And any other API with a ton of sports books
 ```
 @"/root/.claude/uploads/a54d376e-b7de-5f72-a95d-a9c55905d63e/07ae838f-vigilant-diagnostics-v0.89.2-2026-10-11-0003.txt" 
 ```
+
+## 2026-10-11T04:05:53Z
+```
+It looks like it is finding tennis matches, just not any positive EV bets, but for the bids it should still put up bids that are positive EV for tennis. Right now it won't put up a single bid even though I think it is finding tennis odds
+```
