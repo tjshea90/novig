@@ -6538,3 +6538,8 @@ For clarification, if I have multiple apis toggled on, I still want it to be eff
 ```
 This bet says 6 out of 6 books agree, but the odds are suspicious because they are exactly the same. They may be the same company. Research each one. If they are the same company, permanently set them as the same company in the app.
 ```
+
+## 2026-10-11T20:41:25Z
+```
+Many of the sports books in the app are independent companies, but they use the same odds providers. This is still double counting. Research what sports books are offered in the apis I use and see if there are books using the same odds providers. If they are, consider them the same company in the app and don't allow their odds to be double counted
+```
