@@ -590,11 +590,11 @@ class AutoBettorTest {
         val r = b.run(s, state(s))
         assertTrue(r.walletEmpty)
         assertEquals(0, novig2.orders.get())
-        assertTrue(r.stopped!!, r.stopped!!.contains("under a cent"))
+        assertTrue(r.stopped!!, r.stopped!!.contains("under $0.20"))
         // Told once, however many cycles find it empty.
         b.run(s, state(s))
         b.run(s, state(s))
-        assertEquals(1, notifications().count { it.extras.getString("android.title") == "Wallet empty: Vigilant is asleep" })
+        assertEquals(1, notifications().count { it.extras.getString("android.title") == "Wallet low: Vigilant is asleep" })
     }
 
     @Test
@@ -607,8 +607,8 @@ class AutoBettorTest {
         assertTrue(b.run(s, state(s)).walletEmpty)
         assertTrue("scanning paused", app.container.settingsStore.flow.value!!.paused)
         assertEquals(com.tjshea.vigilant.data.scanner.AutoScanMode.OFF, app.container.settingsStore.flow.value!!.activeAutoScan)
-        val note = notifications().single { it.extras.getString("android.title") == "Wallet empty: Vigilant is asleep" }
-        assertTrue(note.extras.getCharSequence("android.text")!!.contains("scanning is paused"))
+        val note = notifications().single { it.extras.getString("android.title") == "Wallet low: Vigilant is asleep" }
+        assertTrue(note.extras.getCharSequence("android.text")!!.contains("scanning, betting and bidding are paused"))
         // Tj resumes with the wallet still empty: he's left alone.
         app.container.settingsStore.update { it.copy(pausedByHand = false) }
         b.run(s, state(s))
@@ -620,6 +620,31 @@ class AutoBettorTest {
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
         wallet = 0.0
         b.run(s, state(s))
+        assertTrue(app.container.settingsStore.flow.value!!.paused)
+    }
+
+    @Test
+    fun `under 20 cents puts everything to sleep, from any wallet reading, once per emptying, and stale readings are ignored`() = runBlocking {
+        // Tj, 2026-10-11: "When the vigilant wallet gets below 20 cents, automatically stop all scanning, betting, and bidding in the app. Put the app to sleep."
+        app.container.settingsStore.update { settings() }
+        val b = AutoBettor(app, app.container, clock = { now }, placer = { placer(FakeNovig()) }, wallet = { 5.0 }, resolve = { targetOf(it) })
+        // A reading from before the last five minutes is the figure saved at the last run, not the wallet now.
+        b.onWalletReading(0.05, now - AutoBettor.FRESH_READING_MS - 1)
+        assertFalse(app.container.settingsStore.flow.value!!.paused)
+        // 20 cents is enough; 19 is not.
+        b.onWalletReading(0.20, now)
+        assertFalse(app.container.settingsStore.flow.value!!.paused)
+        b.onWalletReading(0.19, now)
+        assertTrue(app.container.settingsStore.flow.value!!.paused)
+        assertEquals(1, notifications().count { it.extras.getString("android.title") == "Wallet low: Vigilant is asleep" })
+        // Tj resumes with it still low: left alone, and not told again.
+        app.container.settingsStore.update { it.copy(pausedByHand = false) }
+        b.onWalletReading(0.10, now)
+        assertFalse(app.container.settingsStore.flow.value!!.paused)
+        assertEquals(1, notifications().count { it.extras.getString("android.title") == "Wallet low: Vigilant is asleep" })
+        // Refilled, then low again: asleep again.
+        b.onWalletReading(12.0, now)
+        b.onWalletReading(0.01, now)
         assertTrue(app.container.settingsStore.flow.value!!.paused)
     }
 

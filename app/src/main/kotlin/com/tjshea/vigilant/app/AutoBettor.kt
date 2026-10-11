@@ -206,7 +206,7 @@ class AutoBettor(
         if (balance >= AutoBet.SLEEP_BELOW) walletEmptyNoted = false
         else {
             if (!walletEmptyNoted) walletRanOut(balance)
-            return finish(now, Report(looked = all.size, passed = passing.size, skipped = skipped, walletEmpty = true), balance = balance)
+            return finish(now, Report(looked = all.size, passed = passing.size, skipped = skipped, walletEmpty = true, stopped = "the wallet has ${money(balance)}, under ${money(AutoBet.SLEEP_BELOW)}"), balance = balance)
         }
 
         // One bet per Novig market (either side) while any is open: the other side of a line is never bet after the first.
@@ -344,7 +344,7 @@ class AutoBettor(
         var balance = balance0
         if (balance < AutoBet.SLEEP_BELOW) {
             if (!walletEmptyNoted) walletRanOut(balance)
-            return finish(now, Report(looked = tennis.size, passed = passing.size, skipped = skipped, walletEmpty = true), balance = balance)
+            return finish(now, Report(looked = tennis.size, passed = passing.size, skipped = skipped, walletEmpty = true, stopped = "the wallet has ${money(balance)}, under ${money(AutoBet.SLEEP_BELOW)}"), balance = balance)
         }
         val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
         val limits = BetLimits(
