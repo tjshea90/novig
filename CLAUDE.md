@@ -87,6 +87,10 @@ What it means, every session, before the work:
 - **Low-usage bids** still narrow the credit-metered feeds (ParlayAPI, PropLine, The Odds API, Pinnacle) to the picked books' props, but SGO, OddsPapi, OddsPapi Free and Unabated, which are flat-rate, stay in whenever they are on. One deliberate exception stays: the other-books sheet asks The Odds API only when no other source found a book (1 credit a tap).
 - **Proved by `ApiTogglesTest`** (every API on = in the list; each switched off alone = gone and nothing else changes; a key without a switch, or a switch without a key, asks nothing; tennis picked switches nothing on). Adding an API means adding it to that test's `idsOf`.
 
+## Live games: by hand yes, automatically not yet (Tj, 2026-10-11)
+
+Tj asked why a live card's Bet said "pregame only" ("Is this an API limitation or a vigilant app limitation? I want to bid and bet on live games"): it was Vigilant's rule, not Novig's (NOVIG_API.md §24, RESEARCH.md §132.3). Since v0.89.20 a bet **by hand** on a live game is placed with the taker fee priced in and a LIVE note; the **auto-bet and the Vigilant bid desk stay pregame only** (TASKS.md TO3, TO4 wait for Tj's word: the scan's fair is minutes old in play). Don't lift either without asking him; if he says yes, the guards are in RESEARCH.md §132.3.
+
 ## Mobile data and storage are not a constraint
 
 Tj, 2026-09-30: "My mobile data is fast and unlimited and my phone storage is large. Choose accuracy and speed over mobile data or phone

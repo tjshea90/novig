@@ -4508,7 +4508,7 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 - [ ] TN7 Pinnacle closing line for CLV from the website: poll each open bet's game in its last minutes, keep the last price before `cutoffAt`.
 - [ ] TN8 Pinnacle specials (`withSpecials=true`, player props) as a sharp props fair beside PropLine; measure coverage and freshness first.
 - [x] TN9 (done in chat: compare run showed the cache; website feed blocked for real orders in v0.88.5) Read Tj's Diagnostics PINNACLE WEBSITE FEED block (compare run, before 23:34Z) and decide: website feed as the live source, or not.
-- [ ] TO1 Live Pinnacle after the Pinnodds trial (23:34Z): the free website API is cached, so the options are Pinnodds paid (>= $198/mo), OddsCorp trial (Telegram @oddscorp, ask NCAAF/NFL coverage and currency), or the tail bettor alone (no Pinnacle). Tj decides; nothing to build until he does.
+- [x] TO1 Live Pinnacle after the Pinnodds trial (23:34Z): the free website API is cached, so the options are Pinnodds paid (>= $198/mo), OddsCorp trial (Telegram @oddscorp, ask NCAAF/NFL coverage and currency), or the tail bettor alone (no Pinnacle). Tj decides; nothing to build until he does. DONE: answered (Vigilant rule); NOVIG_API.md §24, RESEARCH.md §132.3.
 
 ## TP: Tj, 2026-10-10 ~19:00Z: "I have 3 more days of pinnodds. The live betting feature is still not working. No bids or bets are going through"
 - [x] TP1 Cause found from his screenshots: the bar reads "Scanning paused" (a hand pause or the wallet-ran-out auto-pause; it blocks every live order: `liveBidConfig.on` needs `!paused`, `pinnGate` says "scanning is paused") and the wallet was $52.40 with 42 pregame bids holding $52.28 (nothing left for live bids: `LiveBidDesk.budget` counts `otherRestingDollars`).
@@ -4654,7 +4654,7 @@ Tj verbatim (sent while TL/TM were in progress): "Out of these: 'Start times are
 ## TO: bet and bid on live games from the Feed (Tj, 2026-10-11 ~17:24Z)
 Tj verbatim: "The app is showing live game bets. See the screenshot. But it says the API only allows pregame. Is this an API limitation or a vigilant app limitation? I want to bid and bet on live games" (the screenshot did not reach the session; the message in the app is `ApiBetPlanner`'s "This game has started: bets through the API are pregame only.")
 - [ ] TO1 ANSWER: it is Vigilant's own rule (`ApiBetPlanner` line `target.startsTs <= now`, `AutoBettor` "not pregame", `MakerQuote` `!o.isLive`), not Novig's: NOVIG_API.md §18/§22/§23 (OPEN_INGAME tradable, taker fee 0.03·P·(1−P) in play, ~5.3 s in-play order time, GOLIVE voids resting orders).
-- [ ] TO2 Manual live bet from a LIVE card: the planner prices the live taker fee, says plainly how old the fair is and that in play an order takes ~5 s; Tj decides.
-- [ ] TO3 Auto-bet on live games: opt-in switch with its own guards (fair age, minimum EV); off by default.
-- [ ] TO4 Bids on live games from the Vigilant scan: opt-in, short ttl, fair age cap; off by default.
-- [ ] TO5 Tests, docs (NOVIG_API.md/RESEARCH.md/CLAUDE.md), ship.
+- [x] TO2 Manual live bet from a LIVE card: the planner prices the live taker fee, says plainly how old the fair is and that in play an order takes ~5 s; Tj decides. DONE: ApiBetPlanner live (fee, LIVE note, BetPlan.live/feeDollars), NovigApiException.betRefused, sheet text and "Place LIVE bet"; ApiBettingTest, ApiBettingControllerTest, ApiBettingUiTest.
+- [ ] TO3 Auto-bet on live games: opt-in switch with its own guards (fair age ceiling, own minimum EV); off by default. WAITING FOR TJ'S WORD (RESEARCH.md §132.3: the scan's fair is minutes old in play).
+- [ ] TO4 Bids on live games from the Vigilant scan: opt-in, short ttl, fair age cap; off by default (or the Pinnacle-fed live bid desk, NOVIG_API.md §23). WAITING FOR TJ'S WORD.
+- [ ] TO5 Tests, docs (NOVIG_API.md/RESEARCH.md/CLAUDE.md), ship v0.89.20 (TO2 only).

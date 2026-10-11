@@ -1,21 +1,26 @@
-# CHECKPOINT 2978 — read me first, then TASKS.md
+# CHECKPOINT 2979 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T17:31:59Z · **tests:** all 4 fast checks green
-**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `c08dc144f` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T17:34:30Z · **tests:** all 4 fast checks green
+**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `2cbc735ba` (this checkpoint is the commit after it)
 
 ## Just done
-TO2: manual live bets (planner prices live fee, live note, betRefused codes, UI text) + data tests green
+TO2 done with tests; docs (NOVIG_API §24, RESEARCH 132.3, CLAUDE.md); TO3/TO4 waiting for Tj
 
 ## Do this next
-TO2 app tests (ApiBetTargets live, UI Place LIVE bet), docs, ship; TO3/TO4 need Tj's go-ahead (auto live + live bids)
+bump 205 / 0.89.20, ship, release, tell Tj the answer + that auto/bids on live wait for his word
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M CLAUDE.md
+     M NOVIG_API.md
+     M RESEARCH.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  bc1e90049 ckpt 2978: TO2: manual live bets (planner prices live fee, live note, betRefused codes
   d4d5a3f69 ckpt 2977: TO: wrote Tj's live-betting request into TASKS.md; answer = Vigilant rule n
   4c1454c14 ckpt 2976: v0.89.19 released (TL, TM, TN done and shipped)
   62fef5926 ckpt 2975: pre-release: v0.89.19: every API toggled on is used for any data and one to
@@ -25,8 +30,7 @@ TO2 app tests (ApiBetTargets live, UI Place LIVE bet), docs, ship; TO3/TO4 need 
   bae53b9ee ckpt 2971: TM done in data: worst-case devig default + migration (schema 17) + CloseDe
   2fae65f9c ckpt 2970: wrote TM tasks (conservative devig); TL audit found: OutsideSgo/OutsideOp r
   03149e103 ckpt 2969: wrote TL tasks (all APIs on are used, off are never called)
-  5b5f266b3 ckpt 2968: v0.89.18 shipped (share all bets, archive, stats filters, closing-odds fixe
 ```
 
-(6 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
