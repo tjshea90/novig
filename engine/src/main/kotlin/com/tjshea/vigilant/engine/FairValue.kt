@@ -18,7 +18,8 @@ enum class FairSource(val displayName: String, val shortName: String) {
 
 data class FairSettings(
     val source: FairSource = FairSource.BLEND,
-    val method: DevigMethod = DevigMethod.POWER,
+    /** The conservative worst case by default (Tj, 2026-10-11: "use conservative devig methods to be safest"): the lowest fair chance of the four methods, so an edge that shows survives them all. */
+    val method: DevigMethod = DevigMethod.WORST_CASE,
     /** Odds API bookmaker keys treated as sharp. */
     val sharpBooks: Set<String> = DEFAULT_SHARP_BOOKS,
     /** BLEND only: weight on the sharp component, in [0, 1]. */

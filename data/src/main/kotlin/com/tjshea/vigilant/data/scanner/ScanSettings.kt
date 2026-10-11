@@ -111,7 +111,8 @@ data class ScanSettings(
     val leagues: Set<String> = setOf("NFL"),
     val families: Set<MarketFamily> = MarketFamily.entries.toSet(),
     val fairSource: FairSource = FairSource.BLEND,
-    val devigMethod: DevigMethod = DevigMethod.POWER,
+    /** Worst case by default and by migration (Tj, 2026-10-11: "I want the app to use conservative devig methods to be safest"): each side's lowest fair chance of multiplicative, additive, power and Shin. */
+    val devigMethod: DevigMethod = DevigMethod.WORST_CASE,
     val sharpBooks: Set<String> = FairSettings.DEFAULT_SHARP_BOOKS,
     val sharpWeight: Double = 0.7,
     val fallbackToAverage: Boolean = true,
@@ -868,6 +869,10 @@ data class ScanSettings(
         // It now prices scans from 10 requests a day unless a figure is chosen; a file that still says 0 (the old default) moves once, and Off stays a choice.
         if (s.schema < 16) {
             s = s.copy(gates = s.gates.copy(op4Fair = if (s.gates.op4Fair == 0) 10 else s.gates.op4Fair), schema = 16)
+        }
+        // v0.89.19 (Tj, 2026-10-11: "I want the app to use conservative devig methods to be safest"): the fair line moves once to the worst case of the four devig methods; a later choice in Settings stays.
+        if (s.schema < 17) {
+            s = s.copy(devigMethod = DevigMethod.WORST_CASE, schema = 17)
         }
         return s
     }

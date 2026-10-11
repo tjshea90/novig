@@ -26,13 +26,14 @@ class ClosingAuditTest {
 
     // ---- the devig method of a close found afterwards ---------------------------------------------------------
 
-    @Test fun `a close found afterwards is devigged by the power method like the fair at bet, not multiplicatively`() {
+    @Test fun `a close found afterwards is devigged by the conservative worst case like the fair at bet, not multiplicatively`() {
         val mine = 1.0 / 3.6      // +260
         val other = 3.2 / 4.2     // -320
         val mult = Devig.multiplicative(listOf(mine, other))[0]
-        val power = CloseDevig.fair(mine, other)
-        assertEquals(Devig.power(listOf(mine, other))[0], power, 1e-12)
-        assertTrue("longshot: multiplicative $mult vs power $power", mult - power > 0.01)
+        val worst = CloseDevig.fair(mine, other)
+        assertEquals(Devig.worstCase(listOf(mine, other))[0], worst, 1e-12)
+        assertTrue("longshot: multiplicative $mult vs worst case $worst", mult - worst > 0.01)
+        assertTrue(worst <= Devig.power(listOf(mine, other))[0] + 1e-12)
         // A pair with no margin is normalised; a symmetric pair is 50/50.
         assertEquals(0.5, CloseDevig.fair(0.5, 0.5), 1e-12)
         assertEquals(0.4, CloseDevig.fair(0.36, 0.54), 1e-12)
