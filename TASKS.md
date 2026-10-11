@@ -4734,24 +4734,24 @@ Tj verbatim: "If any sharp book disagrees that a bet is positive EV, it should b
 
 ## TAA: live lane showed "Novig's feed has been quiet for 1791750248 s" and no bets; auto-bet stopped and did not fix itself (Tj, 2026-10-11 ~20:30Z)
 Tj verbatim (screenshot 4:24 PM: "Live: nothing shown, Novig's feed has been quiet for 1791750248 s", "Live games only" chip, "Scanned 55s ago", "Odds too old to compare"): "Auto bet stopped and didn't fix itself. And look at the screenshot, this is clearly an error. It also isn't holding live streaming odds for pinnodds and novig. No bets are showing up"
-- [ ] TAA1 The 1791750248 s is `now - 0`: Novig never delivered a book push in this run, and my "quiet" rule printed the epoch. Fix the rule (never "quiet for N s" from a zero stamp), make the banner say exactly what is missing (no game matched / Novig books not arrived + the stream's own reason / Pinnacle silent), re-assert the Novig subscription every 5 s so a closed or failed socket reconnects, and stop closing the shared Novig stream at the end of a background scan while the live engine runs (VigilantApp: `if (!onScreen) novig.stream?.close()`).
-- [ ] TAA2 Auto-bet: show what the recovery is doing on the Auto-bet tab; shorten its wait; find what else can stop auto-bet and clear itself.
-- [ ] TAA3 Tests, ship v0.89.26.
+- [x] TAA1 DONE (LiveScan banner reasons, 5 s re-subscribe, stream not closed while the engine runs). The 1791750248 s is `now - 0`: Novig never delivered a book push in this run, and my "quiet" rule printed the epoch. Fix the rule (never "quiet for N s" from a zero stamp), make the banner say exactly what is missing (no game matched / Novig books not arrived + the stream's own reason / Pinnacle silent), re-assert the Novig subscription every 5 s so a closed or failed socket reconnects, and stop closing the shared Novig stream at the end of a background scan while the live engine runs (VigilantApp: `if (!onScreen) novig.stream?.close()`).
+- [x] TAA2 DONE (recovery note on the Auto-bet tab, 30 s settle). Auto-bet: show what the recovery is doing on the Auto-bet tab; shorten its wait; find what else can stop auto-bet and clear itself.
+- [x] TAA3 shipping with v0.89.26.
 
 ## TAB: efficient APIs: best API for overlapping data, others sleep; extras and failover only (Tj, 2026-10-11 ~20:40Z)
 Tj verbatim: "For clarification, if I have multiple apis toggled on, I still want it to be efficient and if data overlaps, only pull from the best API and let the others sleep. Only use additional apis for extra information that they carry that others don't or if the best api doesn't respond or runs out of usage, it automatically goes to the next best API for the odds"
 (This refines the 2026-10-11 rule "an API that is toggled on is used for any data" in CLAUDE.md: on = ELIGIBLE, asked only for what the better APIs did not give.)
-- [ ] TAB1 Audit: how Scanner/sources call every on API today (parallel, per league, games and props), `fallbackFor`, `SOURCE_ORDER`, which books/markets each source carries.
-- [ ] TAB2 Priority chain: per league and kind (games, props, alternates), ask the best source first; ask a lower one only for books/markets the better ones did not give, or when the better one failed, answered nothing or is out of credits; record why a source slept (diagnostics).
-- [ ] TAB3 Tests (ApiTogglesTest-style: overlap -> lower sleeps; failure/out of usage -> next best; extras still asked), CLAUDE.md rule updated, ship.
+- [x] TAB1 DONE. Audit: how Scanner/sources call every on API today (parallel, per league, games and props), `fallbackFor`, `SOURCE_ORDER`, which books/markets each source carries.
+- [x] TAB2 DONE (ApiChain). Priority chain: per league and kind (games, props, alternates), ask the best source first; ask a lower one only for books/markets the better ones did not give, or when the better one failed, answered nothing or is out of credits; record why a source slept (diagnostics).
+- [x] TAB3 DONE (ApiChainTest, ScannerTest). Tests (ApiTogglesTest-style: overlap -> lower sleeps; failure/out of usage -> next best; extras still asked), CLAUDE.md rule updated, ship.
 
 ## TAC: identical odds from "6 of 6 books": same company? (Tj, 2026-10-11 ~20:45Z)
 Tj verbatim (2 screenshots: Casper Ruud +0.5 games spread, "6 of 6 books agree", Bally Bet, betparx, casumo, grosvenor, tabtouch, unibet all +100 / -134, unibet -133, "One book a company"): "This bet says 6 out of 6 books agree, but the odds are suspicious because they are exactly the same. They may be the same company. Research each one. If they are the same company, permanently set them as the same company in the app."
-- [ ] TAC1 Research each book's operator and trading/odds provider (web), save to research/.
-- [ ] TAC2 If they share a company or one odds feed, add the grouping to `BookCompany` (permanent), tests, docs, ship.
+- [x] TAC1 DONE (research/book_company_kambi_2026-10-11.md). Research each book's operator and trading/odds provider (web), save to research/.
+- [x] TAC2 DONE (BookCompany kambi). If they share a company or one odds feed, add the grouping to `BookCompany` (permanent), tests, docs, ship.
 
 ## TAD: independent books on the same odds provider are double counted (Tj, 2026-10-11 ~20:55Z)
 Tj verbatim (with a Gemini screenshot saying Bally Bet, betPARX, Grosvenor, Casumo and Unibet use Kambi): "Many of the sports books in the app are independent companies, but they use the same odds providers. This is still double counting. Research what sports books are offered in the apis I use and see if there are books using the same odds providers. If they are, consider them the same company in the app and don't allow their odds to be double counted"
-- [ ] TAD1 Research: every book each API offers (SGO, ParlayAPI, OddsPapi v5/v4, Unabated, The Odds API, PropLine, CNO columns) and its B2B odds provider (Kambi, Sportradar/Betradar, Genius, OpenBet, Altenar, ...); plus measure identical-price clusters in the saved real data.
-- [ ] TAD2 Group books by odds provider as one company in `BookCompany` (and CNO's `SAME_DESK`), tests, docs (research file + RESEARCH §134).
-- [ ] TAD3 Ship v0.89.26 (with TAA/TAB/TAC).
+- [x] TAD1 DONE (part 2 of the research file). Research: every book each API offers (SGO, ParlayAPI, OddsPapi v5/v4, Unabated, The Odds API, PropLine, CNO columns) and its B2B odds provider (Kambi, Sportradar/Betradar, Genius, OpenBet, Altenar, ...); plus measure identical-price clusters in the saved real data.
+- [x] TAD2 DONE (kambi group + CNO BB->BR). Group books by odds provider as one company in `BookCompany` (and CNO's `SAME_DESK`), tests, docs (research file + RESEARCH §134).
+- [x] TAD3 shipping v0.89.26 (with TAA/TAB/TAC).
