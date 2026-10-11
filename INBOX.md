@@ -6478,3 +6478,8 @@ Make this feature check the current odds and EV for each and every one of my ope
 
 And add a filter to hide live games that I can toggle on and off. This will hide live bets from the list and from the stats numbers until I untoggle it
 ```
+
+## 2026-10-11T19:18:36Z
+```
+Look at the screenshots for an example. I just pressed check odds now and it finished, yet this bet hasn't been checked in over 30 minutes for current EV. Why?
+```
