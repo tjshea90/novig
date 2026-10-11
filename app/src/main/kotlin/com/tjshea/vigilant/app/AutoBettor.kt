@@ -280,6 +280,9 @@ class AutoBettor(
             val priced = item.live?.outcomeId
             if (priced != null && priced != target.outcomeId) { cooldown[row.key] = now + NOT_FOUND_COOLDOWN_MS; skip("Novig's price and its bet slip name different outcomes"); continue }
             if (target.market.marketId in openMarkets) { skip("a bet in this Novig market is already open"); continue }
+            // Negative EV on ANY scanner stops it (Tj, 2026-10-11): Vigilant's own latest scan prices this exact Novig outcome too.
+            state.result?.opportunities?.firstOrNull { it.market.marketId == target.market.marketId && it.outcome.outcomeId == target.outcomeId && !it.fairIsOld(now) && !it.isLive }
+                ?.let { o -> if ((o.evPercent ?: 0.0) < 0.0) { skip("Vigilant's own scan prices it negative EV (${com.tjshea.vigilant.app.ui.Format.evPercentShort(o.evPercent ?: 0.0)})"); continue } }
             val game = GameRef(target.market.eventId, target.eventName, target.startsTs, target.league)
             val guardKey = PropGuard.key(row.league, row.market, row.bet)
             val guardGame = PropGuard.gameKey(target.market.eventId, target.eventName, target.startsTs)

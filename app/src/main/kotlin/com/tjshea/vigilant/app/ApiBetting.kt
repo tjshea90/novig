@@ -634,10 +634,19 @@ class ApiBettingController(
      * is judged by. Null once the row has left the list (its prices are over 5 s old): nothing is bet on them. Any other bet is returned as it is.
      */
     private fun withLiveFair(target: BetTarget): BetTarget? {
-        if (!target.liveLane) return target
-        val row = state.value.liveRows.firstOrNull { it.key == target.placedKey } ?: return null
-        val fair = row.fairProbability ?: return null
-        return target.copy(fair = fair, fairAsOfMs = row.fairAsOfMs)
+        val st = state.value
+        var t = target
+        if (target.liveLane) {
+            val row = st.liveRows.firstOrNull { it.key == target.placedKey } ?: return null
+            val fair = row.fairProbability ?: return null
+            t = t.copy(fair = fair, fairAsOfMs = row.fairAsOfMs)
+        }
+        // The LOWEST fair any scanner has for this exact bet right now (Tj, 2026-10-11: "If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it"): Vigilant's
+        // own latest scan of the same Novig outcome can price a CNO or ParlayAPI bet lower than the list it came from, and then that is the fair its EV is judged by.
+        val now = clock()
+        val others = st.result?.opportunities?.firstOrNull { it.market.marketId == t.market.marketId && it.outcome.outcomeId == t.outcomeId && !it.fairIsOld(now) && !it.isLive }?.fairProbability
+        if (others != null && others < t.fair) t = t.copy(fair = others)
+        return t
     }
 
     private suspend fun replan() {
