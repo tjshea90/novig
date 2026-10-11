@@ -203,3 +203,4 @@ day that changes.
 | v0.89.11 | code 196 | 2026-10-11T06:18Z | v0.89.11: with tennis picked, every feed that carries it (Pinnacle, Kalshi, ParlayAPI) prices it even when its own switch is off
 | v0.89.12 | code 197 | 2026-10-11T06:27Z | v0.89.12: SGO Test sample also reads SGO's tennis leagues and two matches
 | v0.89.13 | code 198 | 2026-10-11T06:49Z | v0.89.13: SGO sample puts the tennis answers first so the file's size cap no longer cuts them
+| v0.89.14 | code 199 | 2026-10-11T07:28Z | v0.89.14: SportsGameOdds prices tennis (ATP and WTA match winner, games and sets spreads and totals, games won)
