@@ -280,6 +280,14 @@ class OddsPapi4Test {
         assertTrue(requests.none { it.requestUrl!!.encodedPath == "/v4/odds" })
     }
 
+    @Test fun aLeaguesGamesAreListedWithOneRequestNotOnePerWindow() = runTest {
+        val (feed, s) = feedSetup(perDay = 5, every = true)
+        Op4GamesSource(feed) { clockMs }.odds(Leagues.byNovigName("NFL")!!, s)
+        val fx = requests.filter { it.requestUrl!!.encodedPath == "/v4/fixtures" }
+        assertEquals(1, fx.size)
+        assertEquals(null, fx.single().requestUrl!!.queryParameter("from"))
+    }
+
     @Test fun aListedGameWithNoOddsYet404IsNoPriceNotAFailedScan() = runTest {
         val (feed, s) = feedSetup(perDay = 5, every = true)
         handler = { r -> when (r.requestUrl!!.encodedPath) {
