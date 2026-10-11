@@ -38,12 +38,15 @@ object AlertPicks {
      * CNO's bets at or over [minEv] at the price shown (Novig's price now when it was read), best first:
      * the ones whose books and live price a cycle reads before judging them.
      */
-    fun cnoCandidates(state: UiState, minEv: Double, now: Long): List<CnoPick> {
+    fun cnoCandidates(state: UiState, minEv: Double, now: Long, trapGuard: Boolean = true): List<CnoPick> {
         if (minEv <= 0.0) return emptyList()
         val hours = state.settings.trapEarlyHours
         // The trap guard's first rule ([TrapGuard.early]): a game too far off is neither alerted on nor bet, so its books aren't read for either; nor (the third rule,
-        // [TrapGuard.listedEarly]) a bet that was already listed that far off.
-        return state.cnoCandidates(now).filter { state.livePick(it, now).ev >= minEv && TrapGuard.tooEarly(it.row.startsAtMs, now, hours, state.firstListed[it.row.key], state.settings.trapFirstListed) == null }
+        // [TrapGuard.listedEarly]) a bet that was already listed that far off. [trapGuard] false: the auto-bet while a minimum star rating decides (it ignores the guard).
+        return state.cnoCandidates(now).filter {
+            state.livePick(it, now).ev >= minEv &&
+                (!trapGuard || TrapGuard.tooEarly(it.row.startsAtMs, now, hours, state.firstListed[it.row.key], state.settings.trapFirstListed) == null)
+        }
     }
 
     /** CNO's bets at or over [minEv] that the trap guard leaves alone for starting too far off (the auto-bet's report counts them). */
@@ -69,9 +72,9 @@ object AlertPicks {
     data class CnoChecked(val pick: CnoPick, val shown: CnoPick, val check: CnoBooks.Check, val live: com.tjshea.vigilant.data.cno.LivePrice?, val link: String?)
 
     /** [cnoCandidates] that have a books read (fresh enough to compare: [UiState.booksAt]), each with its [CnoChecked.check], best first as listed. */
-    fun cnoChecked(state: UiState, minEv: Double, now: Long): List<CnoChecked> {
+    fun cnoChecked(state: UiState, minEv: Double, now: Long, trapGuard: Boolean = true): List<CnoChecked> {
         val snap = state.cno.snapshot ?: return emptyList()
-        return cnoCandidates(state, minEv, now).mapNotNull { pick ->
+        return cnoCandidates(state, minEv, now, trapGuard).mapNotNull { pick ->
             val view = state.booksAt(pick.row.key, now)?.view ?: return@mapNotNull null
             // Judged at the newest Novig price, as the green check is ([UiState.cnoAgrees]).
             val livePrice = state.livePrice(pick.row, now)
@@ -362,7 +365,7 @@ class AutoScanner(
      * beyond CNO's list.
      */
     private fun readThreshold(s: ScanSettings): Double? =
-        listOfNotNull(s.alertMinEv.takeIf { it > 0.0 }, AutoBet.rules(s).minEv.takeIf { s.autoBetsNow }).minOrNull()
+        listOfNotNull(s.alertMinEv.takeIf { it > 0.0 }, AutoBet.rules(s).readEv.takeIf { s.autoBetsNow }).minOrNull()
 
     /**
      * CNO's list, then for its best bets Novig's price now and every book's odds on CNO's game page (the green check's reads), all of it for
@@ -375,7 +378,9 @@ class AutoScanner(
         c.cno.refresh(url, s.cnoFilters)
         val minEv = readThreshold(s) ?: return
         var state = snapshot(s)
-        val wanted = AlertPicks.cnoCandidates(state, minEv, clock()).take(if (s.autoBetsNow) AUTO_BET_CHECK_TOP else CNO_CHECK_TOP)
+        // While a minimum star rating decides (Tj, 2026-10-11) every bet's page is a candidate for a rating, the trap guard's early rule aside, and a few more are read each cycle.
+        val byStars = s.autoBetsNow && AutoBet.rules(s).byStars
+        val wanted = AlertPicks.cnoCandidates(state, minEv, clock(), trapGuard = !byStars).take(if (byStars) AUTO_BET_STARS_CHECK_TOP else if (s.autoBetsNow) AUTO_BET_CHECK_TOP else CNO_CHECK_TOP)
         if (wanted.isEmpty()) return
         // Novig's price now: a bet CNO listed a while ago may be gone. Novig's own order books.
         if (AppBook.isNovig && s.cnoLivePrices) runCatching { c.live.readNow(wanted.map { it.row }) }
@@ -510,6 +515,9 @@ class AutoScanner(
 
         /** The same with auto-bet on: a few more, since each one may be bet (the books are kept 4 minutes, so a repeat costs nothing). */
         const val AUTO_BET_CHECK_TOP = 10
+
+        /** The same while a minimum star rating decides which bets go (the books are kept 4 minutes, so the ones already read cost nothing again). */
+        const val AUTO_BET_STARS_CHECK_TOP = 20
 
         /** Most alerts one cycle posts (the best EVs); the rest show in the app. */
         const val MAX_ALERTS = 5

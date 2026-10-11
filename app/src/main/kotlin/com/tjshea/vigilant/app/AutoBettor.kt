@@ -165,10 +165,14 @@ class AutoBettor(
 
         // Pregame bets at Novig whose books were read, best edge first. Each is judged on Novig's price read in the last minute: a bet with no
         // such price isn't placed (its edge is whatever it was a while ago).
-        val all = AlertPicks.cnoChecked(state, rules.minEv, now)
+        // While a minimum star rating is on (Tj, 2026-10-11) the rating decides: the edge, odds, kinds, books, sharp, trap-guard and small-prop filters are not applied ([AutoBet.Rules.byStars]).
+        val byStars = rules.byStars
+        val all = AlertPicks.cnoChecked(state, rules.readEv, now, trapGuard = !byStars)
         // The trap guard's first rule: games too far off were left out of the candidates (their books weren't even read); counted here.
-        AlertPicks.tooEarly(state, rules.minEv, now).takeIf { it > 0 }?.let { n -> skipped[TrapGuard.earlyReason(settings.trapEarlyHours)] = n }
-        AlertPicks.listedEarly(state, rules.minEv, now).takeIf { it > 0 }?.let { n -> skipped[TrapGuard.listedEarlyReason(settings.trapEarlyHours)] = n }
+        if (!byStars) {
+            AlertPicks.tooEarly(state, rules.minEv, now).takeIf { it > 0 }?.let { n -> skipped[TrapGuard.earlyReason(settings.trapEarlyHours)] = n }
+            AlertPicks.listedEarly(state, rules.minEv, now).takeIf { it > 0 }?.let { n -> skipped[TrapGuard.listedEarlyReason(settings.trapEarlyHours)] = n }
+        }
         val passing = ArrayList<AlertPicks.CnoChecked>()
         for (item in all.distinctBy { it.pick.row.key }.sortedByDescending { it.shown.ev }) {
             val row = item.pick.row
@@ -181,7 +185,7 @@ class AutoBettor(
                 else -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(injuries(), row, now, state.teams[row.key])?.let(::skip)
                     ?: AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet))?.let(::skip)
                     ?: AutoBet.starsReason(rules, item.check.rating?.stars)?.let(::skip)
-                    ?: sharpReason(item, settings, state, now)?.let(::skip)
+                    ?: (if (byStars) null else sharpReason(item, settings, state, now))?.let(::skip)
                     ?: passing.add(item)
             }
         }
@@ -211,10 +215,7 @@ class AutoBettor(
 
         // One bet per Novig market (either side) while any is open: the other side of a line is never bet after the first.
         val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
-        val limits = BetLimits(
-            maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds, minOdds = rules.minOdds, maxPerGame = settings.apiMaxPerGame,
-            minEvWhere = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
-        )
+        val limits = limitsOf(rules, settings)
         // One game is one event (Tj, 2026-10-04: "auto bet placed bets on a team at +5, then the same team at +6, then the same team at +10"): what is at risk
         // on each game across all its markets, open bets and resting bids, as the cycle began. The placer checks it again on its own read of the Tracker
         // (so a bet placed earlier this cycle, or by hand meanwhile, counts there); this pass is what keeps a full game from costing a book read per bet.
@@ -225,13 +226,15 @@ class AutoBettor(
         var halted = false
         // The small-prop guard (Tj, 2026-10-07; RESEARCH.md §109): how much of the last 24 hours' auto-bets each kind of player prop already holds, as this pass began; the bets this pass
         // places are added as they go, so a pass cannot fill a day's share in one go.
-        val guardRules = PropGuard.rules(settings)
+        val guardRules = if (byStars) PropGuard.Rules(share = 0.0, minSample = 0, perGame = 0) else PropGuard.rules(settings)
         val guardHistory = ArrayList(if (guardRules.on) PropGuard.history(c.tracker.all(), now) else emptyList())
 
         // When the wallet or the cycle's cap can't take every bet, the money goes first to the edges most likely to hold (RESEARCH.md §72): the sharpest
         // book's own edge where its veto priced the bet, else 70% of the shown edge ([AutoBet.credibleEv]). Ties keep the shown edge's order.
         val vetoOn = settings.sharpAutoBet == SharpMode.VETO
-        val ordered = passing.sortedByDescending { AutoBet.credibleEv(it.shown.ev, vetoSaid[it.pick.row.key]?.takeIf { v -> vetoOn && v.verdict == SharpVeto.Verdict.PASSED }?.ev) }
+        val credible = { it: AlertPicks.CnoChecked -> AutoBet.credibleEv(it.shown.ev, vetoSaid[it.pick.row.key]?.takeIf { v -> vetoOn && v.verdict == SharpVeto.Verdict.PASSED }?.ev) }
+        // Rated by stars: the best-rated first (then the likeliest edge), since the rating is what chose them.
+        val ordered = if (byStars) passing.sortedWith(compareByDescending<AlertPicks.CnoChecked> { it.check.rating?.stars ?: 0.0 }.thenByDescending(credible)) else passing.sortedByDescending(credible)
         for (item in ordered) {
             currentCoroutineContext().ensureActive()
             // STOP pressed since this cycle began: no further order, whatever the settings this pass started with said (Tj, 2026-10-05). (A Pause is held at each
@@ -272,7 +275,7 @@ class AutoBettor(
                 if (check.blocked) { noteGameLimit(check); skip(AutoBet.GAME_LIMIT_SKIP); continue }
             }
             // The trap guard's second rule (RESEARCH.md §71): on a game line, Novig's own trades say whether the price just moved to make it look cheap.
-            val moveReason = novigMove(item, target, settings)
+            val moveReason = if (byStars) null else novigMove(item, target, settings)
             if (moveReason != null) { cooldown[row.key] = clock() + AutoBet.COOLDOWN_MS; skip(moveReason); continue }
 
             // The order is sent and followed to its end ([sendOrder]), then what came of it is applied to this pass.
@@ -322,7 +325,9 @@ class AutoBettor(
                 it.league.novigName in settings.leagues && it.quote != null && it.fairProbability != null
         }
         val passing = ArrayList<Opportunity>()
-        for (o in tennis.sortedByDescending { it.evPercent ?: 0.0 }) {
+        // A minimum star rating decides which bets go (Tj, 2026-10-11): the best-rated first, then the biggest edge.
+        val first = if (rules.byStars) tennis.sortedWith(compareByDescending<Opportunity> { it.rating?.stars ?: 0.0 }.thenByDescending { it.evPercent ?: 0.0 }) else tennis.sortedByDescending { it.evPercent ?: 0.0 }
+        for (o in first) {
             val q = o.quote ?: continue
             when {
                 o.isLive || o.event.startsTs - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
@@ -347,10 +352,7 @@ class AutoBettor(
             return finish(now, Report(looked = tennis.size, passed = passing.size, skipped = skipped, walletEmpty = true, stopped = "the wallet has ${money(balance)}, under ${money(AutoBet.SLEEP_BELOW)}"), balance = balance)
         }
         val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
-        val limits = BetLimits(
-            maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds, minOdds = rules.minOdds, maxPerGame = settings.apiMaxPerGame,
-            minEvWhere = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
-        )
+        val limits = limitsOf(rules, settings)
         val exposure = if (settings.apiMaxPerGame > 0.0) GameExposure.items(c.tracker.all()) + GameExposure.bidItems(c.makerStore.all()) else emptyList()
         val placed = ArrayList<TrackedBet>()
         var stopped: String? = null
@@ -403,10 +405,12 @@ class AutoBettor(
         if (o.fairIsOld(now)) return "the other books' prices behind it are too old"
         if (o.priceIsOld(now) || now - (o.bookFetchedAtMs ?: 0L) > AlertPicks.FRESH_PRICE_MS) return "no Novig price read in the last minute"
         com.tjshea.vigilant.data.reference.PlayerOut.forTag(state.injuries[o.key])?.let { return it }
-        if (TrapGuard.tooEarly(o.event.startsTs, now, settings.trapEarlyHours, state.firstListed[o.key], settings.trapFirstListed) != null) return TrapGuard.earlyReason(settings.trapEarlyHours)
+        if (!rules.byStars && TrapGuard.tooEarly(o.event.startsTs, now, settings.trapEarlyHours, state.firstListed[o.key], settings.trapFirstListed) != null) return TrapGuard.earlyReason(settings.trapEarlyHours)
         val a = o.agreement
         AutoBet.judgeVigilant(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), a.twoSided, a.agreeing)?.let { return it }
         AutoBet.starsReason(rules, o.rating?.stars)?.let { return it }
+        // The rating already weighs the sharp book (a sharp book against a bet caps it at 2½ stars): while it decides, the sharp rule is not asked again.
+        if (rules.byStars) return null
         return when (settings.sharpAutoBet) {
             SharpMode.OFF -> null
             SharpMode.VETO -> if (a.sharpAgainst) "a sharp book prices both sides and says it isn't +EV at Novig's price" else null
@@ -417,6 +421,16 @@ class AutoBettor(
             }
         }
     }
+
+    /**
+     * The limits the placer holds an auto-bet to: Tj's dollar limits always; the edge floor and the odds limits only while no minimum star rating decides ([AutoBet.Rules.byStars]: the floor is then the
+     * noise floor, so a bet still has to be +EV at the real price, and the odds limits are off).
+     */
+    private fun limitsOf(rules: AutoBet.Rules, settings: ScanSettings) = BetLimits(
+        maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.readEv,
+        maxOdds = if (rules.byStars) 0 else rules.maxOdds, minOdds = if (rules.byStars) 0 else rules.minOdds, maxPerGame = settings.apiMaxPerGame,
+        minEvWhere = if (rules.byStars) "the noise floor ${AutoBet.MIN_EV_FLOOR * 100}% that applies while a minimum star rating is on" else "Auto-bet tab › Smallest edge (EV) at Novig's price now",
+    )
 
     /** What one order came to, for the pass that sent it. */
     private sealed interface Sent {
