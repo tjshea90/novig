@@ -185,6 +185,24 @@ class HistoricalClosesTest {
     }
 
     @Test
+    fun `fewer than three trades are no close`() = runBlocking {
+        // Closing audit 2026-10-11: one fill (perhaps the bettor's own bid) must not be "the close".
+        val real = res("novig-trades-mnf.csv")
+        val header = real.substringBefore('\n') + "\n"
+        val two = header +
+            "2026-09-29T00:10:00.000Z,$phi,01a0cb0e-6302-7090-85cd-f0f78362d781,Football,NFL,MONEYLINE,STRAIGHT,1,6.0,10,TAKER\n" +
+            "2026-09-29T00:12:00.000Z,$phi,01a0cb0e-6302-7090-85cd-f0f78362d781,Football,NFL,MONEYLINE,STRAIGHT,1,6.2,10,TAKER\n"
+        val server = novigServer(two.toByteArray())
+        try {
+            val out = novig(server).closes(listOf(bet("phi", "Moneyline", "Philadelphia Eagles", "Philadelphia Eagles @ Chicago Bears", bearsStart, outcomeId = phi)))
+            val none = out["phi"] as CloseLookup.None
+            assertTrue(none.reason, none.reason.contains("Only 2 trades") && none.reason.contains("needs 3"))
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
     fun `only the window is downloaded from a day's big file`() = runBlocking {
         // 20,000 earlier trades ahead of the real slice: the quarter hour before the start is found by halving byte ranges.
         val real = res("novig-trades-mnf.csv")

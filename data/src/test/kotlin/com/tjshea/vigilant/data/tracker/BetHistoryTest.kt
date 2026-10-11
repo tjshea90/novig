@@ -218,6 +218,23 @@ class BetHistoryTest {
         assertEquals(recent.betParts.map { it.name }.toSet(), dir.listFiles { f -> f.name.contains("-bets-p") }!!.map { it.name }.toSet())
     }
 
+    @Test fun `thousands of bids are summarised from the file without being held, and the findings name real groups`() {
+        val rows = (0 until 6_000).map { i ->
+            val m = maker(id = "c%05d".format(i), status = if (i % 3 == 0) MakerStatus.FILLED else MakerStatus.CANCELED, filled = if (i % 3 == 0) 400 else 0)
+                .copy(postedAtMs = start - (i % 500 + 40L) * 60_000L, fairAtFill = if (i % 3 == 0) 0.49 + (i % 4) * 0.01 else null, firstFillAtMs = if (i % 3 == 0) start - (i % 500 + 39L) * 60_000L else null)
+            BetHistory.line(BetHistory.bidRow(m, "football"))
+        }
+        val r = BetHistoryExport.write(tmp.newFolder("bids"), "b", many(1_500), emptyList(), rows.asSequence(), now)
+        val readme = r.readme.readText()
+        assertEquals(6_000, r.bids)
+        assertTrue(readme.contains("6000 bids posted"))
+        assertTrue(readme, readme.contains("All bids · 6000 posted · 2000 filled (33%)"))
+        assertTrue(readme.contains("status filled: 2000"))
+        assertTrue(readme.contains("### By kind") && readme.contains("### By time before the start when posted"))
+        // The findings section lists cells with their closed counts.
+        assertTrue(readme.substringAfter("## Automatic findings").substringBefore("## Bids posted").contains("closed (t="))
+    }
+
     @Test fun `an empty history still writes a readable README`() {
         val r = BetHistoryExport.write(tmp.newFolder("z"), "e", emptyList(), emptyList(), emptySequence(), now)
         assertEquals(0, r.bets)
