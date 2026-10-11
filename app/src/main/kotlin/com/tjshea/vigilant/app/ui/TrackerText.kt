@@ -150,8 +150,7 @@ object TrackerText {
         if (checking) "Open bets re-priced so far in this check" + (progress?.takeIf { it.second > 0 }?.let { " (${it.first}/${it.second} read)" } ?: "")
         else "Open bets re-priced in the check ${Format.age(startedAtMs, now)}",
         "${s.outliers} over ±${Format.percent(CheckOddsStats.OUTLIER_EV, 0)} left out of the average".takeIf { s.outliers > 0 },
-        // In-play odds swing with every play: those bets' own cards show them, the counter doesn't (Tj, 2026-09-30).
-        "${s.live} live game${if (s.live == 1) "" else "s"} left out".takeIf { s.live > 0 },
+        "${s.live} in play included (\"Hide live games\" takes them out)".takeIf { s.live > 0 },
     ).joinToString(" · ")
 
     /** How to colour a bet's status line: [WAITING] is normal, [ATTENTION] needs a tap from Tj. */
@@ -203,14 +202,18 @@ object TrackerText {
         val started = open.count { now >= it.startsTs }
         val needTap = open.count { now >= it.startsTs && (it.gradeManual || it.autoGradeOff) }
         val upcoming = open.filter { now < it.startsTs }
+        // Started games split in two: under way (Novig and the books still take bets, so their odds can be read) and over (nothing left to read, only the final score).
+        val inPlay = open.filter { now >= it.startsTs && com.tjshea.vigilant.data.tracker.LiveBets.isLive(it, now) }
+        val over = open.count { now >= it.startsTs } - inPlay.size
         return listOfNotNull(
             "${open.size} open",
             "${Format.money(open.sumOf { it.stake })} at risk",
             "+${Format.money(open.sumOf { it.profitIfWon })} if all win",
             "$started started".takeIf { started > 0 },
             "$needTap need a tap".takeIf { needTap > 0 },
-            // Only games still to come have odds to check: a started game is waiting on its result instead.
             "current EV on ${upcoming.count { currentEv(it, now) }} of ${upcoming.size} upcoming".takeIf { upcoming.isNotEmpty() },
+            "${inPlay.count { currentEv(it, now) }} of ${inPlay.size} in play".takeIf { inPlay.isNotEmpty() },
+            "$over finished (no odds left to read, waiting on the final score)".takeIf { over > 0 },
         ).joinToString(" · ")
     }
 
@@ -256,11 +259,12 @@ object TrackerText {
     }
 
     /**
-     * Why an upcoming open bet shows no current EV (null when its game has started, it's settled, or its EV is current): the reason the
+     * Why an open bet shows no current EV (null when it's settled or its EV is current; a game that is over says so): the reason the
      * last pricing attempt found no fair price ([TrackedBet.nowNote], while it's newer than the last number), or that nothing has priced it yet.
      */
     fun oddsNote(b: TrackedBet, now: Long): String? {
-        if (b.status != BetStatus.PENDING || now >= b.startsTs) return null
+        if (b.status != BetStatus.PENDING) return null
+        if (now >= b.startsTs && !com.tjshea.vigilant.data.tracker.LiveBets.isLive(b, now)) return "Game over: no odds left to read, waiting on the final score"
         val note = b.nowNote
         if (note != null && (b.nowNoteAtMs ?: 0L) >= (b.nowAtMs ?: 0L)) return "Not priced: $note" + (b.nowNoteAtMs?.let { " (tried ${Format.age(it, now)})" } ?: "")
         if (b.nowEv != null) return null

@@ -181,8 +181,12 @@ fun TrackerScreen(
     // held equally, paid whatever happens) leaves every list and stat below; the lock card still says what the locks made.
     val hideLocked = state.settings.trackerHideLocked
     val lockedIds = remember(priced) { LockedBets.ids(priced) }
-    val bets = remember(priced, hideLocked, lockedIds) { if (hideLocked && lockedIds.isNotEmpty()) priced.filterNot { it.id in lockedIds } else priced }
+    val unlocked = remember(priced, hideLocked, lockedIds) { if (hideLocked && lockedIds.isNotEmpty()) priced.filterNot { it.id in lockedIds } else priced }
     val minute = now / 60_000L
+    // "Hide live games" (Tj, 2026-10-11): bets whose game is under way leave every list and stat below until it is switched off.
+    val hideLive = state.settings.trackerHideLive
+    val liveIds = remember(unlocked, minute) { LiveBets.ids(unlocked, now) }
+    val bets = remember(unlocked, hideLive, liveIds) { if (hideLive && liveIds.isNotEmpty()) unlocked.filterNot { it.id in liveIds } else unlocked }
     // Bets, bids or both: everything below (the lists, the counts, every stat, the closing-line card, the profit line) reads these.
     val madeBets = remember(bets, made) { TrackerSort.inMade(bets, made) }
     val kindBets = remember(madeBets, smart, minute) { smart.apply(madeBets, now) }
@@ -274,6 +278,24 @@ fun TrackerScreen(
                             TrackerText.hiddenLocked(lockedIds.size, hideLocked),
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f).testTag("hideLockedNote"),
+                        )
+                    }
+                }
+            }
+            // The "Hide live games" chip (Tj, 2026-10-11), whenever a bet is in play.
+            if (liveIds.isNotEmpty() || hideLive) {
+                item(key = "hideLive") {
+                    Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = hideLive,
+                            onClick = { onHideLive(!hideLive) },
+                            label = { Text("Hide live games", maxLines = 1) },
+                            modifier = Modifier.testTag("hideLiveChip"),
+                        )
+                        Text(
+                            if (hideLive) "${liveIds.size} live bet${if (liveIds.size == 1) "" else "s"} hidden from the lists and stats." else "${liveIds.size} live bet${if (liveIds.size == 1) "" else "s"} shown (their game is under way).",
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f).testTag("hideLiveNote"),
                         )
                     }
                 }

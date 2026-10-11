@@ -33,7 +33,7 @@ data class CheckOddsStats(
     val averaged: Int,
     /** Re-read EVs over +[OUTLIER_EV] or under −[OUTLIER_EV]: counted as + or −, left out of [averageEv]. */
     val outliers: Int,
-    /** Open bets re-read in this check whose game has started: left out of everything above. */
+    /** Of the bets counted above, how many are in play (their game has started). */
     val live: Int = 0,
 ) {
     /** Open bets re-read in this check. */
@@ -54,9 +54,10 @@ data class CheckOddsStats(
         fun of(bets: List<TrackedBet>, sinceMs: Long, now: Long): CheckOddsStats {
             // A lock's EV now says nothing about the picks' edges (the other side of a bet already held), so it isn't counted ([TrackedBet.isLock]).
             val reRead = bets.filter { b -> b.status == BetStatus.PENDING && !b.isLock && (b.nowAtMs ?: Long.MIN_VALUE) >= sinceMs && b.nowEv?.isNaN() == false }
-            val (started, pregame) = reRead.partition { now >= it.startsTs }
-            val evs = pregame.map { it.nowEv!! }
-            if (evs.isEmpty()) return EMPTY.copy(live = started.size)
+            // In-play bets count like any other (Tj, 2026-10-11: "I should get an updated current EV and odds for every single one of my open bets"); "Hide live games" takes them out of the list handed in.
+            val inPlay = reRead.count { now >= it.startsTs }
+            val evs = reRead.map { it.nowEv!! }
+            if (evs.isEmpty()) return EMPTY
             val positive = evs.count { it > EPS }
             val negative = evs.count { it < -EPS }
             val kept = evs.filter { abs(it) <= OUTLIER_EV + EPS }
@@ -67,7 +68,7 @@ data class CheckOddsStats(
                 averageEv = if (kept.isEmpty()) null else kept.average(),
                 averaged = kept.size,
                 outliers = evs.size - kept.size,
-                live = started.size,
+                live = inPlay,
             )
         }
     }
