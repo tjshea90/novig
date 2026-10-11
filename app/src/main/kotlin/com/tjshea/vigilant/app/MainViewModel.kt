@@ -1588,6 +1588,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Reads Novig's price for every open bet whose Novig price is older than [since] (a bet the check's pricing pass did not reach), and records it or the reason it could not be read. */
+    private suspend fun readNovigSince(since: Long) {
+        val now = System.currentTimeMillis()
+        val due = com.tjshea.vigilant.data.tracker.NovigNow.priceable(c.tracker.all(), now).filter { (it.novigAtMs ?: Long.MIN_VALUE) < since }
+        if (due.isEmpty()) return
+        val r = com.tjshea.vigilant.data.tracker.NovigNow.read(
+            due, now, force = true,
+            books = { ids -> runCatching { c.novig.books(ids).books }.getOrDefault(emptyMap()) },
+            market = { id -> c.locks.market(id) },
+        )
+        c.tracker.recordNovig(r.prices, System.currentTimeMillis(), r.why)
+        c.eventLog.count("check.novigRead")
+    }
+
     /**
      * Novig's market and side for open bets logged without them ([com.tjshea.vigilant.data.tracker.NovigIds]: a CNO or ParlayAPI ✓ whose one lookup when
      * logged failed), from Novig's own catalog and nothing else; [force] looks again at every one, else only those not looked at lately. Written on the bets.
@@ -2724,6 +2738,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             c.tracker.mergeReads(everyBet, since = began, cnoSince = began - com.tjshea.vigilant.data.tracker.BetRecheck.FRESH_MS, reasons = priced?.reasons.orEmpty())
                         }
                         r = r.withEveryRead(merged, ownBets)
+                        // Novig's own price for EVERY open bet is read in this same check (Tj, 2026-10-11: a bet's Novig number was 33 minutes old after Check odds now): the pricing pass above
+                        // only leaves Novig's price on a bet it found a book read for, so any bet it missed is read here, one Novig book per market, and a bet that can't be read says why.
+                        withContext(NonCancellable + Dispatchers.IO) { runCatching { readNovigSince(began) } }
                     }
                     r
                 }
