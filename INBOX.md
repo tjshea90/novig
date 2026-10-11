@@ -6300,3 +6300,8 @@ Also as I'm typing this I don't know what I did but there aren't any more bids g
 ```
 Unabated and oddspapi currently do not scan in the app. The keys are good and the test runs fine for both keys but when I scan using only these two apis toggled on, the scan takes less than one second and finds nothing. The polymarket api scans but keeps returning no bets, which I think is wrong because other apis show several positive EV bets
 ```
+
+## 2026-10-11T04:54:40Z
+```
+Describe the optional live sniper
+```
