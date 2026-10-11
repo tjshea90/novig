@@ -205,3 +205,4 @@ day that changes.
 | v0.89.13 | code 198 | 2026-10-11T06:49Z | v0.89.13: SGO sample puts the tennis answers first so the file's size cap no longer cuts them
 | v0.89.14 | code 199 | 2026-10-11T07:28Z | v0.89.14: SportsGameOdds prices tennis (ATP and WTA match winner, games and sets spreads and totals, games won)
 | v0.89.15 | code 200 | 2026-10-11T13:44Z | v0.89.15: Vigilant scanner: N-of-M books agree, sharp-book star, one book per company, wrong-looking odds left out, liquidity/EV auto-removal, both sides in the book table, auto-bet also bets Vigilant's scans
+| v0.89.16 | code 201 | 2026-10-11T13:58Z | v0.89.16: parent-company table researched from SGO and ParlayAPI book lists (Kambi desk, Mr Green, Eurobet, Betway; unsupported merges removed)
