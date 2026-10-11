@@ -90,7 +90,7 @@ class OddsPapiClosesTest {
         val r = closes().closes(listOf(bet("Kansas City Chiefs", "Money")))["b1"]
         assertTrue(r.toString(), r is CloseLookup.Found)
         // Chiefs are participant 2 (outcome 142): 1/1.8 = .5556 against 1/2.0 = .5 -> fair .5263
-        assertEquals(0.5263, (r as CloseLookup.Found).fair, 0.001)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(1 / 1.8, 1 / 2.0), (r as CloseLookup.Found).fair, 1e-6)
         assertTrue(r.via, r.via.contains("OddsPapi") && r.via.contains("Pinnacle"))
         val list = requests.single { it.requestUrl!!.encodedPath == "/en/fixtures" }.requestUrl!!
         assertEquals("31", list.queryParameter("tournamentId"))
@@ -106,7 +106,7 @@ class OddsPapiClosesTest {
         // Chiefs -3.5 = Raiders +3.5 = market 211/212; the bet is the second outcome
         val ok = c.closes(listOf(bet("Kansas City Chiefs -3.5", "Spread")))["b1"]
         assertTrue(ok.toString(), ok is CloseLookup.Found)
-        assertEquals((1 / 1.87) / (1 / 1.87 + 1 / 1.95), (ok as CloseLookup.Found).fair, 1e-6)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(1 / 1.87, 1 / 1.95), (ok as CloseLookup.Found).fair, 1e-6)
         val other = c.closes(listOf(bet("Kansas City Chiefs -3", "Spread", "b2")))["b2"]
         assertTrue(other.toString(), other is CloseLookup.None && other.reason.contains("no market"))
     }
@@ -115,7 +115,7 @@ class OddsPapiClosesTest {
         handler = { r -> base(r) { q -> if (q.requestUrl!!.encodedPath == "/en/fixtures") ok("[${game(2)}]") else ok(clv("pinnacle" to listOf(clvRow("pinnacle", 311, 1.8, startMs - 1000L), clvRow("pinnacle", 312, 2.05, startMs - 1000L)))) } }
         val r = closes().closes(listOf(bet("Under 47.5", "Total")))["b1"]
         assertTrue(r.toString(), r is CloseLookup.Found)
-        assertEquals((1 / 2.05) / (1 / 2.05 + 1 / 1.8), (r as CloseLookup.Found).fair, 1e-6)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(1 / 2.05, 1 / 1.8), (r as CloseLookup.Found).fair, 1e-6)
     }
 
     @Test fun aCloseStampedAfterKickoffIsALivePriceSoTheTimelineGivesTheLastPriceBeforeIt() = runTest {
@@ -130,7 +130,7 @@ class OddsPapiClosesTest {
         } }
         val r = closes().closes(listOf(bet("Kansas City Chiefs", "Money")))["b1"]
         assertTrue(r.toString(), r is CloseLookup.Found)
-        assertEquals(0.5263, (r as CloseLookup.Found).fair, 0.001)       // 1.8 / 2.0, not the live 4.0 / 1.2
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(1 / 1.8, 1 / 2.0), (r as CloseLookup.Found).fair, 1e-6)       // 1.8 / 2.0, not the live 4.0 / 1.2
         val h = requests.single { it.requestUrl!!.encodedPath == "/en/fixtures/odds/historical" }.requestUrl!!
         assertEquals("pinnacle", h.queryParameter("bookmaker")); assertEquals(fx, h.queryParameter("fixtureId"))
     }

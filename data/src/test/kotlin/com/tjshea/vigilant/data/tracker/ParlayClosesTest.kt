@@ -98,7 +98,7 @@ class ParlayClosesTest {
         val root = json.parseToJsonElement(propFile)
         val allen = ParlayCloses.parseProp(root, pick("Player Passing Yards", "Josh Allen Over 245.5") as BetGrader.Pick.Prop, NFL, start)
             as CloseLookup.Found
-        assertEquals(0.52 / 1.02, allen.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(0.52, 0.50), allen.fair, 1e-9)
         val shakir = ParlayCloses.parseProp(root, pick("Player Receptions", "Khalil Shakir Over 4.5") as BetGrader.Pick.Prop, NFL, start)
         assertTrue(shakir is CloseLookup.None)
     }
@@ -151,7 +151,7 @@ class ParlayClosesTest {
         assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(126), p(-145)), rl.fair, 1e-9)
         assertTrue(ParlayCloses.parseFileGameLine(root, mlbBet("s2", "Spread", "Atlanta Braves -2.5"), pick("Spread", "Atlanta Braves -2.5")) is CloseLookup.None)
         val under = ParlayCloses.parseFileGameLine(root, mlbBet("t", "Total", "Under 6.5"), pick("Total", "Under 6.5")) as CloseLookup.Found
-        assertEquals(p(108) / (p(-121) + p(108)), under.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(108), p(-121)), under.fair, 1e-9)
         // The 7.5 was last priced 15 hours before first pitch: not a close.
         val early = ParlayCloses.parseFileGameLine(root, mlbBet("t2", "Total", "Over 7.5"), pick("Total", "Over 7.5")) as CloseLookup.None
         assertTrue(early.reason, early.reason.contains("15h before the start"))
@@ -163,7 +163,7 @@ class ParlayClosesTest {
         val olson = ParlayCloses.parseProp(root, pick("Total Bases", "Matt Olson Over 1.5") as BetGrader.Pick.Prop, "baseball_mlb", mlbStart) as CloseLookup.Found
         assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-105), p(-115)), olson.fair, 1e-9)
         val sale = ParlayCloses.parseProp(root, pick("Pitcher Strikeouts", "Chris Sale Under 6.5") as BetGrader.Pick.Prop, "baseball_mlb", mlbStart) as CloseLookup.Found
-        assertEquals(p(110) / (p(-130) + p(110)), sale.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(110), p(-130)), sale.fair, 1e-9)
         val hr = ParlayCloses.parseProp(root, pick("Home Runs", "Kyle Schwarber Over 0.5") as BetGrader.Pick.Prop, "baseball_mlb", mlbStart)
         assertTrue(hr.toString(), hr is CloseLookup.None && hr.reason.contains("h before the start"))
     }

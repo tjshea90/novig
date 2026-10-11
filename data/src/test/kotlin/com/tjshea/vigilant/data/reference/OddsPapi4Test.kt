@@ -157,7 +157,7 @@ class OddsPapi4Test {
         val r = closes().closes(listOf(bet("Kansas City Chiefs", "Money")))["b1"]
         assertTrue(r.toString(), r is CloseLookup.Found)
         // Chiefs are participant 2 (outcome 142 = 1.8); the Raiders' last price before the start is 2.0, not the 1.2 after it: 1/1.8 against 1/2.0 -> .5263
-        assertEquals(0.5263, (r as CloseLookup.Found).fair, 0.001)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(1 / 1.8, 1 / 2.0), (r as CloseLookup.Found).fair, 1e-6)
         assertTrue(r.via, r.via.contains("OddsPapi Free") && r.via.contains("Pinnacle"))
         val hist = requests.filter { it.requestUrl!!.encodedPath == "/v4/historical-odds" }
         assertEquals(2, hist.size)

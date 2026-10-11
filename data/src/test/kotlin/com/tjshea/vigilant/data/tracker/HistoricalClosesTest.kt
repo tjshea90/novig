@@ -144,7 +144,7 @@ class HistoricalClosesTest {
     private fun novig(server: MockWebServer) = NovigTradeCloses(http, json, server.url("/").toString().trimEnd('/'))
 
     @Test
-    fun `Novig's last half hour of trades before the start is the close, for the outcome on the bet or in its link`() = runBlocking {
+    fun `Novig's last quarter hour of trades before the start is the close, for the outcome on the bet or in its link`() = runBlocking {
         val server = novigServer(res("novig-trades-mnf.csv").toByteArray())
         try {
             val out = novig(server).closes(
@@ -154,11 +154,11 @@ class HistoricalClosesTest {
                     bet("none", "Moneyline", "X", "A @ B", bearsStart),
                 ),
             )
-            // Volume-weighted over the slice's trades from 23:45 to 00:15 (recomputed from the fixture when it was cut).
+            // Volume-weighted over the fixture's 33 trades on each outcome from 00:00 to 00:15 (recomputed from the CSV; the wider 23:45 window gave 0.63136).
             val p = out["phi"] as CloseLookup.Found
-            assertEquals(0.6313616457352901, p.fair, 1e-9)
+            assertEquals(0.6313071898807553, p.fair, 1e-9)
             assertTrue(p.via.startsWith("Novig's last trades"))
-            assertEquals(0.3674162851268143, (out["chi"] as CloseLookup.Found).fair, 1e-9)
+            assertEquals(0.36735051584000933, (out["chi"] as CloseLookup.Found).fair, 1e-9)
             assertEquals("No Novig outcome on record for this bet", (out["none"] as CloseLookup.None).reason)
         } finally {
             server.shutdown()
@@ -178,7 +178,7 @@ class HistoricalClosesTest {
             )
             assertEquals("Novig publishes this day's trades the next morning", (out["today"] as CloseLookup.Later).reason)
             assertTrue(out["old"] is CloseLookup.None)
-            assertEquals("No trades on Novig in the 30 minutes before the start", (out["quiet"] as CloseLookup.None).reason)
+            assertEquals("No trades on Novig in the 15 minutes before the start", (out["quiet"] as CloseLookup.None).reason)
         } finally {
             server.shutdown()
         }
@@ -186,7 +186,7 @@ class HistoricalClosesTest {
 
     @Test
     fun `only the window is downloaded from a day's big file`() = runBlocking {
-        // 20,000 earlier trades ahead of the real slice: the half hour before the start is found by halving byte ranges.
+        // 20,000 earlier trades ahead of the real slice: the quarter hour before the start is found by halving byte ranges.
         val real = res("novig-trades-mnf.csv")
         val header = real.substringBefore('\n') + "\n"
         val early = StringBuilder()
@@ -199,7 +199,7 @@ class HistoricalClosesTest {
         try {
             val closes = novig(server)
             val out = closes.closes(listOf(bet("phi", "Moneyline", "Philadelphia Eagles", "Philadelphia Eagles @ Chicago Bears", bearsStart, outcomeId = phi)))
-            assertEquals(0.6313616457352901, (out["phi"] as CloseLookup.Found).fair, 1e-9)
+            assertEquals(0.6313071898807553, (out["phi"] as CloseLookup.Found).fair, 1e-9)
             assertTrue("read ${closes.bytesRead} of ${file.size} bytes", closes.bytesRead < file.size / 3)
         } finally {
             server.shutdown()

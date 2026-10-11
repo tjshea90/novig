@@ -166,8 +166,8 @@ class SgoClientTest {
         val c = SgoCloses(client(), { true }, { clockMs }).also { it.enabled = true }
         val r = c.closes(listOf(bet("Kansas City Chiefs", "Money")))["b1"]
         assertTrue(r.toString(), r is CloseLookup.Found)
-        // -160 / +140 -> 0.6154 and 0.4167 -> fair 0.5961
-        assertEquals(0.5961, (r as CloseLookup.Found).fair, 0.001)
+        // -160 / +140 -> 0.6154 and 0.4167 -> fair by the power method (multiplicative would be 0.5961)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(160 / 260.0, 100 / 240.0), (r as CloseLookup.Found).fair, 1e-6)
         assertTrue(r.via.contains("Pinnacle"))
         val url = requests.single().requestUrl!!
         assertEquals("true", url.queryParameter("includeOpenCloseOdds"))
