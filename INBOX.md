@@ -6221,3 +6221,15 @@ Let me know if you need anything such as the keys, I don't mind sending them to 
 ```
 Keep v5 but add v4 in separate settings. For example, two different spots for the different keys and the app knows how to use each to its full advantage, or one place to type the key and the app detects v4 or v5
 ```
+
+## 2026-10-11T02:36:18Z
+```
+Don't worry about limits because I will get more keys. Remember to make the rotating keys function where the app automatically goes to the next key if usage runs out.
+Only focus on function. See exactly what these apis offer. Use the apis to their fullest extent and speed and abilities.
+
+In the settings, make it so I can toggle on and off any apis, and vigilant will adapt to what apis are active at any time and make full use of active apis while not using any API at all which is toggled off. I should be able to test each api one at a time or in combinations based on the toggles .
+
+Also add a small test button next to each api in the settings that tests whether the key is active and accepted. 
+
+Make sure the API keys usage section shows accurate readings for how much usage is left on each key for every api, and if the apis offer a prompt to see how much usage is left, use that for the readings 
+```
