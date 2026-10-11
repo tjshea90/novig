@@ -402,18 +402,23 @@ class AutoBettorTest {
         assertEquals(0, novig.orders.get())
         assertEquals(r.skipped.toString(), 1, r.skipped["Kalshi, the sharpest book for player props, says it isn't +EV at Novig's price"])
         assertEquals(mapOf("veto.VETOED" to 1), b.status.value.sharp)
-        // Pinnacle saying no doesn't veto a prop (it isn't a prop sharp); Kalshi agreeing lets it through, and the bet records it all.
+        // Pinnacle is a sharp book too: since 2026-10-11 ("If any sharp book disagrees that a bet is positive EV, it should be vetoed and not bet") its no vetoes the prop as well, whatever the sharp rule says.
         val pinnacleNo = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.map { if (it.code == "PN") com.tjshea.vigilant.data.cno.CnoBookPrice("PN", 105, null, -135, null) else it }) }
+        val novigPn = FakeNovig()
+        val rPn = bettor(novigPn).run(veto, withBooks(pinnacleNo, veto))
+        assertEquals(0, rPn.placed.size)
+        assertEquals(0, novigPn.orders.get())
+        assertTrue(rPn.skipped.keys.toString(), rPn.skipped.keys.any { it.contains("sharp book") })
+        // With Pinnacle not pricing the prop at all and Kalshi agreeing, it goes through, and the bet records it all.
+        val noPinnacle = SampleCno.jeffersonBooks().let { v -> v.copy(prices = v.prices.filter { it.code != "PN" }) }
         val novig2 = FakeNovig()
-        val placed = bettor(novig2).run(veto, withBooks(pinnacleNo, veto)).placed.single()
+        val placed = bettor(novig2).run(veto, withBooks(noPinnacle, veto)).placed.single()
         val rec = placed.atBet!!
         assertEquals(com.tjshea.vigilant.data.tracker.AtBet.HOW_AUTO, rec.how)
         assertEquals("PASSED", rec.sharpVerdict)
         assertEquals("Kalshi", rec.sharpBook)
         assertEquals("PROP", rec.kind)
-        assertEquals(listOf("Pinnacle"), rec.dissent)
-        assertEquals(3, rec.twoSided)
-        assertEquals(2, rec.agreeing)
+        assertEquals((jefferson.startsAtMs!! - now) / 60_000L, rec.minutesToStart)
         assertEquals(117, rec.american)
         assertEquals((jefferson.startsAtMs!! - now) / 60_000L, rec.minutesToStart)
         assertTrue(rec.books.any { it.book == "Kalshi" && it.fair != null && it.ev!! > 0.0 })
