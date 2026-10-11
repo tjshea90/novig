@@ -78,6 +78,7 @@ import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetFilterSpec
 import com.tjshea.vigilant.data.tracker.BetStatus
+import com.tjshea.vigilant.data.tracker.LiveBets
 import com.tjshea.vigilant.data.tracker.CheckOddsStats
 import androidx.compose.material3.Switch
 import com.tjshea.vigilant.data.tracker.ClvStats
@@ -144,6 +145,7 @@ fun TrackerScreen(
     onCheckNovig: () -> Unit = {},
     /** "Hide locked bets" switched (Tj, 2026-10-02 20:06Z): markets locked in leave the lists and stats ([LockedBets]). */
     onHideLocked: (Boolean) -> Unit = {},
+    onHideLive: (Boolean) -> Unit = {},
     /** Share every bet and bid (or a recent stretch) with Claude (Tj, 2026-10-11), whether the files are being made, and where the day-by-day copies are. */
     onShareBets: (com.tjshea.vigilant.app.BetShare.Range) -> Unit = {},
     shareBusy: Boolean = false,
