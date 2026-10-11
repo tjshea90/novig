@@ -448,8 +448,10 @@ class AutoBettorTest {
     @Test
     fun `when not every bet can be placed, the one with the bigger credible edge goes first`() {
         val src = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoBettor.kt").readText()
-        val sort = src.indexOf("val ordered = passing.sortedByDescending { AutoBet.credibleEv(")
-        assertTrue("the passing bets are ordered by the credible edge", sort > 0)
+        val credible = src.indexOf("val credible = { it: AlertPicks.CnoChecked -> AutoBet.credibleEv(")
+        assertTrue("the credible edge is worked out for every passing bet", credible > 0)
+        val sort = src.indexOf("else passing.sortedByDescending(credible)")
+        assertTrue("the passing bets are ordered by the credible edge (by rating first while a minimum rating decides)", sort > credible)
         assertTrue("and the placement loop walks that order", src.indexOf("for (item in ordered)") > sort)
         assertFalse("not the shown edge's order", src.contains("for (item in passing)"))
     }
@@ -501,7 +503,10 @@ class AutoBettorTest {
         val r0 = bettor(off).run(blocked, state(blocked))
         assertEquals(0, r0.placed.size)
         assertEquals(0, off.orders.get())
-        assertTrue(r0.skipped.keys.toString(), r0.skipped.keys.size >= 1 && r0.skipped.keys.none { it.contains("star") })
+        // With the edge floor low enough to look at it, the other filters name themselves (and none is the rating).
+        val looked = bettor(FakeNovig()).run(blocked.copy(autoBetMinEv = 0.01), state(blocked.copy(autoBetMinEv = 0.01)))
+        assertEquals(0, looked.placed.size)
+        assertTrue(looked.skipped.keys.toString(), looked.skipped.keys.size >= 1 && looked.skipped.keys.none { it.contains("star") })
         // A minimum at the bet's own rating: every one of those filters is ignored and the bet is placed.
         val rated = blocked.copy(vigGuards = blocked.vigGuards.copy(autoBetMinStars = stars))
         val on = FakeNovig()
@@ -1137,7 +1142,7 @@ class AutoBettorTest {
         assertTrue("$read $bet $alert", read in 0 until bet && bet < alert)
         // Auto-bet only inside the CNO scanner's branch, so Vigilant only never reaches it.
         assertTrue(cycle.indexOf("if (settings.autoScansCno) {") < read)
-        assertTrue(cycle.contains("listOfNotNull(s.alertMinEv.takeIf { it > 0.0 }, AutoBet.rules(s).minEv.takeIf { s.autoBetsNow }).minOrNull()"))
+        assertTrue(cycle.contains("listOfNotNull(s.alertMinEv.takeIf { it > 0.0 }, AutoBet.rules(s).readEv.takeIf { s.autoBetsNow }).minOrNull()"))
         assertTrue(java.io.File("src/main/kotlin/com/tjshea/vigilant/app/ApiBetting.kt").readText().contains("lock = c.orderLock"))
         assertTrue(java.io.File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText().contains("lock = orderLock"))
     }
