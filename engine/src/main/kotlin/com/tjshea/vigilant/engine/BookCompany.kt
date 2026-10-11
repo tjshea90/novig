@@ -62,4 +62,18 @@ object BookCompany {
 
     /** Whether [a] and [b] are books of one company. */
     fun same(a: String, b: String): Boolean = of(a) == of(b)
+
+    /**
+     * One devigged book a company: of a company's books the sharp one first (a sharp flag is the user's own choice), then the one read most recently, then the one with the least
+     * hold (its odds are the closest to the true line), then by key so the choice never flips between scans. Books of different companies are all kept, in their order.
+     */
+    fun onePerCompany(books: List<BookFair>): List<BookFair> {
+        if (books.size < 2) return books
+        val pick = compareByDescending<BookFair> { it.isSharp }
+            .thenByDescending { it.book.lastUpdateMs ?: Long.MIN_VALUE }
+            .thenBy { it.hold }
+            .thenBy { it.book.bookKey }
+        val chosen = books.groupBy { of(it.book.bookKey) }.mapValues { (_, group) -> group.minWithOrNull(pick)!! }
+        return books.filter { chosen[of(it.book.bookKey)] === it }
+    }
 }
