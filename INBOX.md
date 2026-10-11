@@ -6452,3 +6452,8 @@ Fix whatever should be fixed to make it most logical
 ```
 The app is showing live game bets. See the screenshot. But it says the API only allows pregame. Is this an API limitation or a vigilant app limitation? I want to bid and bet on live games
 ```
+
+## 2026-10-11T17:37:23Z
+```
+When I select auto bet with a minimum star rating, make the app ignore all the other auto bet filters that interfere. If I have a star rating minimum turned on, I want the app to auto bet all of the scanned bets with at least that rating, regardless of any other settings. But if I turn off the minimum star rating filter, I want it to return back to enforcing all of the other auto bet settings.
+```
