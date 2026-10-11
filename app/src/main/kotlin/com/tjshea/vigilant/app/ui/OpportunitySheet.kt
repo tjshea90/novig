@@ -107,7 +107,7 @@ fun OpportunityDetail(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(o.selection, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(sharpStarred(o.selection, o.agreement.sharpAgrees), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(
                     "${o.marketLabel} · ${o.league.displayName} · ${Format.startTime(o.event.startsTs)}",
                     style = MaterialTheme.typography.bodySmall,
@@ -119,6 +119,7 @@ fun OpportunityDetail(
             q?.takeIf { !o.fairIsOld(now) }?.let { EvBadge(it.evPercent, large = true) }
         }
         injury?.let { InjuryLine(it, Modifier.padding(top = 8.dp)) }
+        AgreementLine(o.agreement, Modifier.padding(top = 8.dp))
         TrapGuardText.sheetNote(o.event.startsTs, now, settings.trapEarlyHours)?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(top = 8.dp).testTag("trapEarlySheet"))
         }
@@ -217,9 +218,10 @@ fun OpportunityDetail(
             val idx = o.referenceIndex
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                 Text("Book", Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Odds", Modifier.width(64.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("No-vig", Modifier.width(64.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Hold", Modifier.width(52.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("This side", Modifier.width(60.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Other side", Modifier.width(60.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("No-vig", Modifier.width(52.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Hold", Modifier.width(46.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             HorizontalDivider()
             fair.perBook.sortedByDescending { it.isSharp }.forEach { b ->
@@ -234,18 +236,35 @@ fun OpportunityDetail(
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    // Both sides of the bet, as CNO's book table shows them (Tj, 2026-10-11): this bet's odds, then the other side's.
                     Text(
-                        idx?.let { Odds.formatAmerican(Odds.decimalToAmerican(b.book.decimalOdds[it])) } ?: "—",
-                        Modifier.width(64.dp),
+                        BookSides.thisSide(b.book.decimalOdds, idx) ?: "—",
+                        Modifier.width(60.dp),
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.SemiBold,
+                        color = color,
+                    )
+                    Text(
+                        BookSides.otherSides(b.book.decimalOdds, idx) ?: "—",
+                        Modifier.width(60.dp),
                         fontFamily = FontFamily.Monospace,
                         color = color,
                     )
-                    Text(idx?.let { Format.percent(b.fairProbabilities[it]) } ?: "—", Modifier.width(64.dp), color = color, style = MaterialTheme.typography.bodySmall)
-                    Text(Format.percent(b.hold), Modifier.width(52.dp), color = color, style = MaterialTheme.typography.bodySmall)
+                    Text(idx?.let { Format.percent(b.fairProbabilities[it]) } ?: "—", Modifier.width(52.dp), color = color, style = MaterialTheme.typography.bodySmall)
+                    Text(Format.percent(b.hold), Modifier.width(46.dp), color = color, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            // Books whose odds looked wrong next to the rest of the market: shown, but not counted (Tj, 2026-10-11).
+            fair.excluded.forEach { b ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(b.bookTitle, Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
+                    Text(BookSides.thisSide(b.decimalOdds, idx) ?: "—", Modifier.width(60.dp), fontFamily = FontFamily.Monospace, color = Edge.colors.warning)
+                    Text(BookSides.otherSides(b.decimalOdds, idx) ?: "—", Modifier.width(60.dp), fontFamily = FontFamily.Monospace, color = Edge.colors.warning)
+                    Text("odds look wrong, not counted", Modifier.width(98.dp), color = Edge.colors.warning, style = MaterialTheme.typography.labelSmall)
                 }
             }
             Text(
-                "★ sharp book · greyed rows weren't used for this line's fair price",
+                "★ sharp book · one book a company · greyed rows weren't used for this line's fair price · red rows looked wrong next to the rest of the market",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
