@@ -57,6 +57,9 @@ object BetHistory {
         val selection: String,
         val starts: String,
         val startsMs: Long,
+        /** The start the bet was logged with, when the game's real start turned out different (a delay, or a game seen in play before its listed start), and what happened. */
+        val startsLoggedMs: Long? = null,
+        val startsNote: String? = null,
         /** Minutes before the game starts when placed (negative: after it started). */
         val leadMin: Long? = null,
         val live: Boolean = false,
@@ -238,7 +241,7 @@ object BetHistory {
             league = b.league, kind = BetDims.kindLabel(b),
             betType = TrackerBreakdown.marketOf(b),
             market = b.marketLabel, event = b.eventName, selection = b.selection,
-            starts = iso(b.startsTs), startsMs = b.startsTs, leadMin = lead, live = a?.live == true || (lead != null && lead < 0),
+            starts = iso(b.startsTs), startsMs = b.startsTs, startsLoggedMs = b.startsLoggedTs, startsNote = b.startsNote, leadMin = lead, live = a?.live == true || (lead != null && lead < 0),
             odds = americanPlaced, cost = b.cost, otherOdds = a?.otherAmerican,
             ev = b.evPercentAtBet, fair = b.fairAtBet, fairOdds = fairOddsOf(b.fairAtBet),
             books = books, booksAgree = a?.agreeing,
