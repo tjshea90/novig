@@ -245,7 +245,7 @@ class NovigStreamTest {
         val view = SharedStreamView({ stream }, BookListener { id, _, _ -> heard += id })
         view.watchLive(listOf("live1", "live2"))
         stream.watch(listOf("a1", "a2"))
-        try { until { stream.live(listOf("live1", "live2", "a1", "a2")).size == 4 } } catch (e: Exception) { println("DBG " + received.map { it.toString().take(150) } + " state=" + stream.state.value + " gap=" + stream.bookGap("a1")); throw e }
+        until { stream.live(listOf("live1", "live2", "a1", "a2")).size == 4 }
         // A later scan wants other markets: the live ones are not dropped.
         stream.watch(listOf("b1"))
         until { stream.live(listOf("b1")).size == 1 }
@@ -253,7 +253,8 @@ class NovigStreamTest {
         assertTrue("the view's listener heard the books", heard.any { it == "live1" })
         assertEquals(1, server.requestCount)
         view.close()
-        until { stream.live(listOf("live1")).isEmpty() }
+        // Released, not dropped at once: a restart of the lane within LINGER_MS finds its books still held (the next watch of other markets drops them after).
+        assertEquals(2, stream.live(listOf("live1", "live2")).size)
         stream.close()
     }
 
