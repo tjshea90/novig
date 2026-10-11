@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -80,6 +81,8 @@ class BetHistoryUiTest {
     fun `the smart filter narrows every number to the chosen group and clears`() {
         screen { TrackerScreen(withRecords(), { _, _ -> }, {}, initialView = TrackerView.BETS) }
         compose.onNodeWithTag("smartFilter").performClick()
+        // The choices are worked out off the main thread: wait for them.
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("Bids only", substring = true).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Bids only", substring = true).performClick()
         compose.onNodeWithText("2 shown", substring = true).assertExists()
         compose.onNodeWithText("Clear").performClick()
