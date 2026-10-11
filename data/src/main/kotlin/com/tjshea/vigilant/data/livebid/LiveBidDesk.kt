@@ -993,12 +993,20 @@ class LiveBidDesk(
     // ---- self-checks -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
     /** Fills are judged against the fair 30 s and 120 s after (what the bid really kept); a run of picked-off fills halts the feature. */
+    private val keptEvs = ArrayDeque<Double>()
+
     private fun followUps(now: Long) {
         var haltWhy: String? = null
         val logged = ArrayList<LiveBid>()
         synchronized(mu) {
-            for (b in bids.values.toList()) {
+            for (b0 in bids.values.toList()) {
+                var b = b0
                 val t = b.firstFillAtMs ?: continue
+                // The edge the fill really had: Pinnacle's fair as it stood when the fill was first seen, against the price paid.
+                if (b.evAtFill == null && now - t <= 20_000L) {
+                    val f0 = latestFair[b.outcomeId]?.takeIf { now - it.second <= FAIR_FRESH_MS }?.first
+                    if (f0 != null) { b = b.copy(evAtFill = f0 / b.price - 1.0); bids[b.clientId] = b; dirty = true }
+                }
                 if (b.fairAt30 == null && now - t >= 30_000L) {
                     val f = latestFair[b.outcomeId]?.takeIf { now - it.second <= FAIR_FRESH_MS }?.first
                     if (f != null) {
@@ -1009,6 +1017,9 @@ class LiveBidDesk(
                         if (b.real) {
                             judged.addLast(picked)
                             val q = config().quality
+                            keptEvs.addLast(f / b.price - 1.0)
+                            while (keptEvs.size > maxOf(q.keptWindow, 1)) keptEvs.removeFirst()
+                            if (haltWhy == null && halted == null) haltWhy = LiveBidSlider.keptHalt(keptEvs.toList(), q)
                             while (judged.size > maxOf(q.pickOffWindow, 1)) judged.removeFirst()
                             if (q.pickOffLimit > 0 && judged.size >= q.pickOffWindow.coerceAtLeast(1) && judged.count { it } >= q.pickOffLimit && halted == null) {
                                 haltWhy = "${judged.count { it }} of the last ${judged.size} live bid fills were picked off (Pinnacle's fair 30 s later was under the price paid)"

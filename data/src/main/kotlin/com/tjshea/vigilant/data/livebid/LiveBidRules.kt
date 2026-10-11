@@ -84,6 +84,16 @@ data class LiveBidQuality(
     val maxPlaceSec: Int = 15,
     /** Count Novig's maker credit (50% of the taker's fee, paid in cash within 7 days, in play only) in the EV. Off: the gate and the numbers shown ignore it; it is a bonus. */
     val countCredit: Boolean = false,
+    // ---- the edge a fill actually keeps (Tj, 2026-10-11: "truly positive EV at the time the bid was filled") ------------------------------------------------------------------------
+    /**
+     * Stop everything when the last [keptWindow] real fills kept an average edge under this 30 s after the fill (Pinnacle's fair then against the price paid): the bids are being filled when they are wrong.
+     * The edge at POSTING is the margin; this is the check that it SURVIVES the fill. 0 = a fill has to be worth something on average; never below 0 in the slider.
+     */
+    val minKeptEv: Double = 0.0,
+    val keptWindow: Int = 8,
+    // ---- the Safety / Volume slider ------------------------------------------------------------------------------------------------------------------------------------------------
+    /** The slider position that set the numbers above ([LiveBidSlider], 0 = safest, 100 = most volume); -1 = they were set by hand (Custom). */
+    val level: Int = -1,
 ) {
     /** These rules in one line, for Settings and the bid's record. */
     fun summary(): String = buildList {

@@ -92,6 +92,8 @@ data class LiveBid(
     val fairAt30: Double? = null,
     val fairAt120: Double? = null,
     val pickedOff: Boolean? = null,
+    /** The edge at the moment the first fill was seen: Pinnacle's fair then against the price paid (no credit). The edge the fill really had. */
+    val evAtFill: Double? = null,
     /** A pull arrived while the order was still being sent: it is cancelled the moment Novig answers. */
     val cancelWanted: Boolean = false,
     /** Nothing more is expected but the order may still be on Novig's book (a lost answer): looked for by its client id. */
