@@ -343,11 +343,16 @@ class Op4Catalog(
         val key = "fx|$tournament|$w"
         val raw = store.get(key, FIXTURES_MS) ?: run {
             if (!may()) throw held()
-            client.billable(
-                "/v4/fixtures",
-                listOf("tournamentId" to tournament.toString(), "from" to Instant.ofEpochMilli(w * WINDOW_MS).toString(), "to" to Instant.ofEpochMilli((w + 2) * WINDOW_MS).toString()),
-                reserve = Op4Budget.RESERVE,
-            ).also { store.put(key, it) }
+            // No game in the window comes back as 404 FIXTURE_NOT_FOUND (Tj's Diagnostics, 2026-10-11): an empty window, kept like any other answer, never a failed scan.
+            try {
+                client.billable(
+                    "/v4/fixtures",
+                    listOf("tournamentId" to tournament.toString(), "from" to Instant.ofEpochMilli(w * WINDOW_MS).toString(), "to" to Instant.ofEpochMilli((w + 2) * WINDOW_MS).toString()),
+                    reserve = Op4Budget.RESERVE,
+                )
+            } catch (e: ReferenceException) {
+                if (e.message?.contains("FIXTURE_NOT_FOUND") == true) "[]" else throw e
+            }.also { store.put(key, it) }
         }
         return Op4Parser.fixtures(raw)
     }
