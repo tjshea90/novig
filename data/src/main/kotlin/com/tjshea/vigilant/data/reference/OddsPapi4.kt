@@ -188,7 +188,8 @@ class OddsPapi4Client(
             when {
                 code == 401 -> KeyAttemptResult.Invalid("HTTP 401, key refused")
                 code == 403 -> throw ReferenceException("OddsPapi Free HTTP 403: your plan does not include this")
-                code == 429 && code4.contains("LIMIT", true) -> KeyAttemptResult.Depleted("monthly request limit used up", null)
+                // Only the documented quota code means the month is spent; any other 429 is the per-endpoint cooldown (1 s) and the key is merely asked to wait.
+                code == 429 && code4.equals("REQUEST_LIMIT_EXCEEDED", true) -> KeyAttemptResult.Depleted("monthly request limit used up", null)
                 code == 429 -> KeyAttemptResult.RateLimited(1_500L, "slow down (HTTP 429)")
                 code in 500..599 -> throw ReferenceException("OddsPapi Free HTTP $code")
                 code !in 200..299 -> { countSpend(); throw ReferenceException("OddsPapi Free HTTP $code: ${code4.ifEmpty { "refused the request" }}") }

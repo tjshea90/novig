@@ -85,6 +85,11 @@ class UnabatedClient(
         attempt(path, params).also { failures = 0; lastOkMs = clock(); lastError = null }
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
+    } catch (e: UnabatedFailure) {
+        // Unabated ANSWERED, saying it cannot build this board ("Unexpected error while retrieving odds for the provided filter"): that is not an outage, so it never marks the whole API down.
+        lastError = (e.message ?: "failure").take(200)
+        lastOkMs = clock()
+        throw e
     } catch (e: Exception) {
         failures++
         lastError = (e.message ?: e.javaClass.simpleName).take(200)

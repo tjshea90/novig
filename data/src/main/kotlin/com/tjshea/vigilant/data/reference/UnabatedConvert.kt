@@ -178,17 +178,18 @@ object UnabatedConvert {
     private fun minOfNotNull(x: UnLine, y: UnLine): List<UnLine> = listOf(x, y)
 
     /**
-     * When the quote was last true. A price's `modifiedOn` is when it MOVED, so a steady line is hours old and still current; the docs give `freshnessExpiresAt` for that: a line not yet expired at the read is
-     * current as of the read (minus the 15-second delay). Without it, an unchanged MAIN line of a source Unabated lists as high-frequency is current as of the read when the board itself is recent; anything else
-     * keeps its own `modifiedOn` and ages out under Vigilant's freshness rules. UNVERIFIED against a live sample (UNABATED_API.md §4).
+     * When the quote was last true. A price's `modifiedOn` is when it MOVED, so a steady line is hours old and still current (real board, 2026-10-11: NFL main lines 58 minutes to 4 days since their last change). The
+     * board is a snapshot of what is on offer, so a MAIN line that is on it (available, not disabled, from a source that is not offline) is current as of the read minus the 15-second delay, provided the board itself is alive
+     * (a line changed in the last 5 minutes). `freshnessExpiresAt`, when sent, can only shorten that. Alternates keep their own change time (an alternate a book stopped offering can linger).
      */
     private fun stamp(lines: List<UnLine>, ctx: UnabatedContext, sourceId: Long): Long? {
         val asOfRead = ctx.readAtMs - DELAY_MS
+        val alive = (ctx.boardUpdatedMs ?: ctx.readAtMs) >= ctx.readAtMs - 5 * 60_000L
         val per = lines.map { l ->
             val expiry = l.expiresMs
             when {
-                expiry != null && expiry > ctx.readAtMs -> asOfRead
-                expiry == null && !l.alternate && sourceId in ctx.highFrequency && (ctx.boardUpdatedMs ?: ctx.readAtMs) >= ctx.readAtMs - 5 * 60_000L -> asOfRead
+                expiry != null && expiry <= ctx.readAtMs -> l.modifiedMs ?: ctx.boardUpdatedMs?.takeIf { it > 0 } ?: asOfRead
+                !l.alternate && alive -> asOfRead
                 else -> l.modifiedMs ?: ctx.boardUpdatedMs?.takeIf { it > 0 } ?: asOfRead
             }
         }
