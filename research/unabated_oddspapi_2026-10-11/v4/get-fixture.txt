@@ -1,0 +1,92 @@
+Version: v4
+GET fixture
+Retrieves a single fixture based on its fixture ID. The response includes detailed information about the fixture, including participant names, IDs, and external provider mappings. This endpoint does not return bookmaker odds for the given fixture.
+Endpoint
+GET /v4/fixture
+Request Parameters
+fixtureId* (string) — Unique ID of the fixture (e.g., id1000001761301153).
+language (string) — (Optional) Language code for translated labels (e.g., en, de, es). Default is en.
+Example Request
+GET /v4/fixture?fixtureId=id1000001761301153&language=en
+Sample Response
+{
+  "fixtureId": "id1000001761301153",
+  "participant1Id": 35,
+  "participant2Id": 34,
+  "sportId": 10,
+  "tournamentId": 17,
+  "seasonId": 130281,
+  "statusId": 0,
+  "hasOdds": true,
+  "startTime": "2026-04-13T19:00:00.000Z",
+  "trueStartTime": null,
+  "trueEndTime": null,
+  "updatedAt": "2026-04-06T23:17:08.202Z",
+  "externalProviders": {
+    "betradarId": 61301153,
+    "mollybetId": "2026-04-13,35,34",
+    "opticoddsId": "20260413A1B2C3D4",
+    "lsportsId": null,
+    "txoddsId": null,
+    "sofascoreId": 15676100,
+    "betgeniusId": 13670012,
+    "flashscoreId": "xK4pLm2n",
+    "pinnacleId": 1626291706,
+    "oddinId": null
+  },
+  "statusName": "Pre-Game",
+  "participant1Name": "Liverpool FC",
+  "participant1ShortName": "Liverpool",
+  "participant1Abbr": "LIV",
+  "participant2Name": "Manchester United",
+  "participant2ShortName": "Man Utd",
+  "participant2Abbr": "MNU",
+  "sportName": "Soccer",
+  "tournamentSlug": "premier-league",
+  "categorySlug": "england",
+  "categoryName": "England",
+  "tournamentName": "Premier League"
+}
+Response Fields Breakdown
+Top-Level Fields
+fixtureId (string) — Internal unique ID for the fixture.
+participant1Id (number) — ID of first participant.
+participant2Id (number) — ID of second participant.
+sportId (number) — ID representing the sport (e.g., 10 = Soccer, 12 = Tennis).
+tournamentId (number) — ID of the tournament.
+seasonId (number|null) — ID of the season, if applicable.
+statusId (number) — Fixture status code (e.g., 0 = Pre-Game, 1 = Scheduled, 2 = In-Play, 3 = Ended).
+hasOdds (boolean) — Whether odds data is available for this fixture.
+startTime (string) — ISO 8601 timestamp for scheduled start (UTC).
+trueStartTime (string|null) — Actual start time if different from scheduled (e.g., delayed kick-off).
+trueEndTime (string|null) — Actual end time of the fixture, if available.
+updatedAt (string) — ISO 8601 timestamp for last update (UTC).
+statusName (string) — Human-readable fixture status (e.g., "Pre-Game", "In-Play", "Ended").
+participant1Name (string) — Full name of first participant. Translated if language parameter is set.
+participant1ShortName (string) — Short display name of first participant. Translated if language parameter is set.
+participant1Abbr (string) — 3-letter abbreviation of first participant. Translated if language parameter is set.
+participant2Name (string) — Full name of second participant. Translated if language parameter is set.
+participant2ShortName (string) — Short display name of second participant. Translated if language parameter is set.
+participant2Abbr (string) — 3-letter abbreviation of second participant. Translated if language parameter is set.
+sportName (string) — Name of the sport.
+tournamentSlug (string) — URL-friendly tournament identifier.
+categorySlug (string) — Slug of the competition category (e.g., "england").
+categoryName (string) — Display name of the category (e.g., "England").
+tournamentName (string) — Full tournament name (translated if language parameter is set).
+externalProviders (object) — IDs from third-party providers.:betradarId (number|null) — ID from Betradar feed.
+mollybetId (string|null) — Mollybet composite identifier.
+opticoddsId (string|null) — OpticOdds identifier.
+lsportsId (number|null) — LSports identifier.
+txoddsId (number|null) — TXOdds identifier.
+sofascoreId (number|null) — Sofascore fixture ID.
+betgeniusId (number|null) — Betgenius fixture ID.
+flashscoreId (string|null) — Flashscore fixture ID.
+pinnacleId (number|null) — Pinnacle's internal fixture ID.
+oddinId (number|null) — Oddin fixture ID.
+Notes
+Endpoint cooldown (rate limit): 500ms
+All timestamps are in UTC (ISO 8601).
+This endpoint does not include bookmaker odds. Use the /v4/odds endpoint to retrieve odds for a fixture.
+Previous page
+GET fixtures
+Next pageGET markets

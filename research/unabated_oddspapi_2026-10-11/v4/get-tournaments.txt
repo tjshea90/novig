@@ -1,0 +1,60 @@
+Version: v4
+GET tournaments
+Retrieves a list of leagues based on the specified sport and language.
+Endpoint
+GET /v4/tournaments
+Request Parameters
+sportId (number)* — The ID of the sport for which leagues are being requested. For example: 10.
+language (a2) — (Optional) The language in which the league information should be returned. By default, the value is en for English.
+Example Request
+GET /v4/tournaments?sportId=10&language=en
+Example Response
+[
+  {
+    "tournamentId": 1,
+    "tournamentSlug": "uefa-euro",
+    "tournamentName": "UEFA Euro",
+    "categorySlug": "international",
+    "categoryName": "International",
+    "futureFixtures": 0,
+    "upcomingFixtures": 0,
+    "liveFixtures": 0
+  },
+  {
+    "tournamentId": 7,
+    "tournamentSlug": "uefa-champions-league",
+    "tournamentName": "UEFA Champions League",
+    "categorySlug": "international-clubs",
+    "categoryName": "International Clubs",
+    "futureFixtures": 108,
+    "upcomingFixtures": 0,
+    "liveFixtures": 0
+  },
+  {
+    "tournamentId": 8,
+    "tournamentSlug": "laliga",
+    "tournamentName": "LaLiga",
+    "categorySlug": "spain",
+    "categoryName": "Spain",
+    "futureFixtures": 300,
+    "upcomingFixtures": 0,
+    "liveFixtures": 0
+  }
+]
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a JSON array containing league information. Each object in the array contains the following fields:
+tournamentId (number) — A unique identifier for the league.
+tournamentSlug (string) — A URL-friendly version of the league name.
+tournamentName (string) — The name of the league.
+categorySlug (string) — A URL-friendly version of the category name.
+categoryName (string) — The name of the category to which the league belongs.
+futureFixtures (number) — Amount of events starting more than 24 hours from now.
+upcomingFixtures (number) — Amount of events starting less than 24 hours from now.
+liveFixtures (number) — Amount of events currently in-play.
+Notes
+Endpoint cooldown (rate limit): 1000ms
+Ensure that the sportId is valid to receive relevant league data.
+The response will be an array, which may be empty if no leagues are found for the given parameters.
+Previous page
+GET bookmakers
+Next pageGET fixtures

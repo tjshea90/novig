@@ -1,0 +1,68 @@
+Version: v4
+GET account
+Retrieves account information for the authenticated user.
+Endpoint
+GET /v4/account
+Example Response
+{
+  "api_key": "Fdgvr5S28-bSRY5d-JV8yBYc-UJGWwwQPqG",
+  "created_at": "2025-07-14T13:29:48.525Z",
+  "language_code": "en",
+  "language_name": "English",
+  "current_subscription_id": "v6ZgCuxA-gMTn5Bd-nKPPvkycUK-xgmNehB",
+  "subscriptions": [
+    {
+      "subscription_id": "v6ZgCuxA-gMTn5Bd-nKPPvkycUK-xgmNehB",
+      "currency": "USD",
+      "price": null,
+      "valid_from": "2025-07-16T13:25:00.647Z",
+      "valid_until": null,
+      "auto_renew": false,
+      "is_active": true,
+      "created_at": "2025-07-16T13:25:00.647Z",
+      "bookmakers": {
+        "pinnacle": {
+          "has_live_odds": false,
+          "has_player_props": false
+        }
+      },
+      "sport_ids": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "websocket_access": 0,
+      "request_limit": 500,
+      "rate_limit": null,
+      "request_count": 100,
+      "last_request": "2025-07-16T13:25:00.647Z"
+    }
+  ]
+}
+Response Fields Breakdown
+api_key (string) — Your API key used for authentication.
+language_code (string) — The identifier for the user's preferred language.
+language_name (string) — The name of the user's preferred language.
+subscriptions (array) — A list of subscriptions associated with the account. Each object includes:subscription_id (string) — The unique identifier for the subscription.
+currency (string) — The currency used for the subscription.
+price (number|null) — The price of the subscription.
+valid_from (ISO string) — The start date and time of the subscription in ISO format.
+valid_until (ISO string|null) — The end date and time of the subscription in ISO format or null if it is ongoing.
+auto_renew (boolean) — Indicates if the subscription will automatically renew.
+is_active (boolean) — Indicates if the subscription is currently active.
+bookmakers (object) — key = slughas_live_odds (boolean) — Indicates if the subscription includes live odds for this specific bookmaker.
+has_player_props (boolean) — Indicates if the subscription includes player props for this specific bookmaker.
+sport_ids (array) — A list of sport IDs associated with the subscription.
+websocket_access (number) — Indicates the level of access to websocket features
+request_limit (number) — The maximum number of requests allowed for the account.
+request_count (number) — The total number of requests made by the user.
+last_request (ISO string|null) — The timestamp of the last request made by the user.
+Notes
+Endpoint cooldown (rate limit): 1000ms
+1 request = 1 API request
+Previous page
+Requests & Quota
+Next pagePOST account

@@ -1,0 +1,109 @@
+Version: v4
+GET fixtures
+Retrieves a list of events based on the specified parameters such as league ID, sport ID, participant ID, date range, and language.
+Endpoint
+GET /v4/fixtures
+Request
+Parameters
+tournamentId (number) — The unique identifier for the league. This ID must correspond to an existing league.
+sportId (number) — The unique identifier for the sport. This ID must correspond to an existing sport.
+participantId (number) — The unique identifier for the participant. This ID must correspond to an existing participant.
+from (string) — The start date and time for the events in ISO 8601 format (e.g., YYYY-MM-DDTHH:MM:SSZ)
+to (string) — The end date and time for the events in ISO 8601 format (e.g., YYYY-MM-DDTHH:MM:SSZ)
+language (a2) — (Optional) The language in which the league information should be returned. By default, the value is en for English
+statusId (number: 0,1,2,3) — The statusId that the returned events must have (0: Not yet started, 1: Live, 2: Finished, 3: Cancelled).
+hasOdds (boolean) — Whether the event has odds available.
+bookmakers (string) — (Optional) Comma-separated list of bookmaker slugs. Used to evaluate the hasOdds filter.
+Conditions
+tournamentId: Can be the only parameter provided.
+participantId: Can be the only parameter provided.
+sportId: Must be accompanied by any of:tournamentId
+participantId
+Both to and from, where both times are under 10 days apart.
+to and from:If tournamentId or participantId are provided, to and from aren't mandatory and providing only one is accepted.
+If only to and from are provided, they must be under 48 hours apart.
+Example Request
+GET /v4/fixtures?sportId=10&from=2026-04-12&to=2026-04-17&statusId=0&hasOdds=true&bookmakers=pinnacle
+Example Response
+[
+  {
+    "fixtureId": "id1000001761301153",
+    "participant1Id": 35,
+    "participant2Id": 34,
+    "sportId": 10,
+    "tournamentId": 17,
+    "seasonId": 130281,
+    "statusId": 0,
+    "hasOdds": true,
+    "startTime": "2026-04-13T19:00:00.000Z",
+    "trueStartTime": null,
+    "trueEndTime": null,
+    "updatedAt": "2026-04-06T23:17:08.202Z",
+    "externalProviders": {
+      "betradarId": 61301153,
+      "mollybetId": "2026-04-13,35,34",
+      "opticoddsId": "20260413A1B2C3D4",
+      "lsportsId": null,
+      "txoddsId": null,
+      "sofascoreId": 15676100,
+      "betgeniusId": 13670012,
+      "flashscoreId": "xK4pLm2n",
+      "pinnacleId": 1626291706,
+      "oddinId": null
+    },
+    "statusName": "Pre-Game",
+    "participant1Name": "Liverpool FC",
+    "participant1ShortName": "Liverpool",
+    "participant1Abbr": "LIV",
+    "participant2Name": "Manchester United",
+    "participant2ShortName": "Man Utd",
+    "participant2Abbr": "MNU",
+    "sportName": "Soccer",
+    "tournamentSlug": "premier-league",
+    "categorySlug": "england",
+    "categoryName": "England",
+    "tournamentName": "Premier League"
+  }
+]
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a JSON array containing event objects with the following fields:
+fixtureId (string) — The unique identifier for the event.
+participant1Id (number) — The ID of the first participant.
+participant2Id (number) — The ID of the second participant.
+sportId (number) — The ID of the sport associated with the event.
+tournamentId (number) — The ID of the league associated with the event.
+seasonId (number|null) — (Optional) The ID of the season.
+statusId (number) — The current status of the event.
+hasOdds (boolean) — Whether the event has odds available.
+startTime (string) — The start time of the event.
+trueStartTime (string|null) — The actual start time of the event, if available.
+trueEndTime (string|null) — The actual end time of the event, if available.
+updatedAt (string) — The timestamp of the last update to the event.
+statusName (string) — Human-readable fixture status (e.g., "Pre-Game", "In-Play", "Ended").
+participant1Name (string) — The name of the first participant (in your requested language).
+participant1ShortName (string) — Short display name of first participant. Translated if language parameter is set.
+participant1Abbr (string) — 3-letter abbreviation of first participant. Translated if language parameter is set.
+participant2Name (string) — The name of the second participant (in your requested language).
+participant2ShortName (string) — Short display name of second participant. Translated if language parameter is set.
+participant2Abbr (string) — 3-letter abbreviation of second participant. Translated if language parameter is set.
+sportName (string) — The name of the sport associated with the event.
+tournamentSlug (string) — URL-friendly tournament identifier.
+categorySlug (string) — Slug of the competition category (e.g., "england").
+categoryName (string) — The name of the category to which the league belongs.
+tournamentName (string) — The name of the league.
+externalProviders (object) — IDs from third-party providers:betradarId (number|null) — (Optional) The ID assigned by Betradar.
+mollybetId (string|null) — (Optional) The unique ID assigned by Mollybet.
+opticoddsId (string|null) — (Optional) The unique ID assigned by Opticodds.
+lsportsId (number|null) — (Optional) The unique ID assigned by LSports.
+txoddsId (number|null) — (Optional) The unique ID assigned by TXOdds.
+sofascoreId (number|null) — (Optional) The ID assigned by Sofascore.
+betgeniusId (number|null) — (Optional) The ID assigned by Betgenius.
+flashscoreId (string|null) — (Optional) The ID assigned by Flashscore.
+pinnacleId (number|null) — (Optional) The ID assigned by Pinnacle.
+oddinId (number|null) — (Optional) The ID assigned by Oddin.
+Notes
+Endpoint cooldown (rate limit): 2000ms
+All timestamps are in UTC (ISO 8601).
+Previous page
+GET tournaments
+Next pageGET fixture

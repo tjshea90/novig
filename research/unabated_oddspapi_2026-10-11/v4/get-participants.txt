@@ -1,0 +1,22 @@
+Version: v4
+GET participants
+Retrieve a list of participants associated with a specific sport identified by the sportId.
+Endpoint
+GET /v4/participants
+Request Parameters
+sportId* (number) — A numeric identifier for the sport.
+language (a2) — (Optional) The language that the names will be returned in, if available. If not available, en is used.
+Example Request
+GET /v4/participants?sportId=11&language=en
+Example Response
+{
+  "3409": "Chicago Bulls",
+  "3410": "Milwaukee Bucks"
+}
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a JSON object where every key is the participantId and each value is the participant name.
+Notes
+Endpoint cooldown (rate limit): 1000ms
+Previous page
+GET markets
+Next pageGET odds

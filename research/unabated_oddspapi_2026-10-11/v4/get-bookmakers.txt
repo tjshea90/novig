@@ -1,0 +1,33 @@
+Version: v4
+GET bookmakers
+Retrieves a list of bookmakers available in the system.
+Endpoint
+GET /v4/bookmakers
+Sample Response
+[
+  {
+    "bookmakerName": "188BET",
+    "slug": "188bet",
+    "liveOdds": false,
+    "cloneOf": null
+  },
+  {
+    "bookmakerName": "18Bet",
+    "slug": "18bet",
+    "liveOdds": null,
+    "cloneOf": null
+  }
+]
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a JSON array containing details about each bookmaker. Each object in the array contains the following fields:
+bookmakerName (string) — The name of the bookmaker.
+slug (string) — A URL-friendly version of the bookmaker's name. This is the value you should use when sending a bookmaker parameter to any other endpoints.
+liveOdds (boolean|null) — Current live odds offered by the bookmaker.
+cloneOf (string|null) — Name of the bookmaker this bookmaker is a clone of.
+Notes
+Endpoint cooldown (rate limit): 1000ms
+The response will contain an array of bookmakers, and if no bookmakers are available, the array will be empty.
+Ensure that you handle the case where liveOdds may be null, indicating that live odds are not currently available for that bookmaker.
+Previous page
+GET sports
+Next pageGET tournaments

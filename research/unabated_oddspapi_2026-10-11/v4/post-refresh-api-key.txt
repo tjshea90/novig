@@ -1,0 +1,17 @@
+Version: v4
+POST refresh-api-key
+Allows the client to refresh their API key.
+Endpoint
+POST /v4/account/refresh-api-key
+Example Response
+{
+  "api_key": "67hbdfu-oijd83Hdf-92kfd72bhfd-gbdvgl18bhsd"
+}
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a JSON object containing the following fields:
+api_key (string) — The newly generated API key.
+Notes
+Endpoint cooldown (rate limit): 1000ms
+Previous page
+POST account
+Next pageGET languages

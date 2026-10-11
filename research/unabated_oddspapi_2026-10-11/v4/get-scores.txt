@@ -1,0 +1,46 @@
+Version: v4
+GET scores
+Retrieves the score breakdown by period for a specified event.
+Endpoint
+GET /v4/scores
+Request Parameters
+fixtureId* (string) — The unique identifier of the event to retrieve scores for.
+Example Request
+GET /v4/scores?fixtureId=id65236323277832
+Example Response
+{
+  "fixtureId": "id65236323277832",
+  "scores": {
+    "0": {
+      "participant1Score": 0,
+      "participant2Score": 2,
+      "updatedAt": "2025-07-07T19:23:40.558913+00:00"
+    },
+    "1": {
+      "participant1Score": 3,
+      "participant2Score": 6,
+      "updatedAt": "2025-07-07T18:32:58.060019+00:00"
+    },
+    "2": {
+      "participant1Score": 5,
+      "participant2Score": 7,
+      "updatedAt": "2025-07-07T19:23:40.558913+00:00"
+    },
+    "3": {
+      "participant1Score": 2,
+      "participant2Score": 2,
+      "updatedAt": "2025-07-07T19:53:03.905144+00:00"
+    }
+  }
+}
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a JSON object containing scores grouped by period.
+fixtureId (string) — The unique identifier of the event to retrieve scores for.
+scores (object) — Scores returned for each period:participant1Score (number) — Score of the first participant for the given period.
+participant2Score (number) — Score of the second participant for the given period.
+updatedAt (string) — The timestamp when the score was last updated for the period.
+Notes
+Endpoint cooldown (rate limit): 1000ms
+Previous page
+GET settlements
+Next pageWebsocket API

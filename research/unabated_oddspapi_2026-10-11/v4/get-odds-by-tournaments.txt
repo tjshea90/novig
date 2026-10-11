@@ -1,0 +1,120 @@
+Version: v4
+GET odds-by-tournaments
+Retrieves odds for all events in a specified league.
+Endpoint
+GET /v4/odds-by-tournaments
+Request Parameters
+tournamentIds* (string) — A comma-separated list of league IDs.
+bookmakers* (string) — Comma-separated list of bookmakers (required, max 3). If using betfair-ex, max 1.
+language (string) — (Optional) Language code for translated labels (e.g., en, de, es). Default is en.
+verbosity (number) — (Optional) The verbosity level to control the detail of the response.
+Example Request
+GET /v4/odds-by-tournaments?tournamentIds=17&bookmakers=pinnacle&language=en&verbosity=3
+Example Response
+{
+  "fixtureId": "id1000001761301153",
+  "participant1Id": 35,
+  "participant2Id": 34,
+  "sportId": 10,
+  "tournamentId": 17,
+  "seasonId": 130281,
+  "statusId": 0,
+  "hasOdds": true,
+  "startTime": "2026-04-13T19:00:00.000Z",
+  "trueStartTime": null,
+  "trueEndTime": null,
+  "updatedAt": "2026-04-06T23:17:08.202Z",
+  "bookmakerOdds": {
+    "pinnacle": {
+      "bookmakerIsActive": true,
+      "bookmakerFixtureId": "1626291706",
+      "fixturePath": "https://www.pinnacle.com/en/e/e/e/1626291706/#all",
+      "suspended": false,
+      "markets": {
+        "1012": {
+          "bookmakerMarketId": "line/29/1980/1626291706/56152425451/0/totals",
+          "marketActive": true,
+          "outcomes": {
+            "1012": {
+              "players": {
+                "0": {
+                  "active": true,
+                  "betslip": null,
+                  "bookmakerOutcomeId": "3.5/over",
+                  "bookmakerChangedAt": "2026-04-13T09:24:46.990Z",
+                  "changedAt": "2026-04-13T09:24:47.424Z",
+                  "limit": 20000,
+                  "playerName": null,
+                  "price": 2.71,
+                  "priceAmerican": "171",
+                  "priceFractional": "171/100",
+                  "mainLine": false,
+                  "exchangeMeta": null
+                }
+              }
+            },
+            "1013": {
+              "players": {
+                "0": {
+                  "active": true,
+                  "betslip": null,
+                  "bookmakerOutcomeId": "3.5/under",
+                  "bookmakerChangedAt": "2026-04-13T09:11:04.603Z",
+                  "changedAt": "2026-04-13T09:11:05.099Z",
+                  "limit": 40241,
+                  "playerName": null,
+                  "price": 1.497,
+                  "priceAmerican": "-201",
+                  "priceFractional": "49/99",
+                  "mainLine": false,
+                  "exchangeMeta": null
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a JSON object containing events with their associated odds.
+Top-Level Fields
+fixtureId (string) — The unique identifier of the event to retrieve scores for.
+participant1Id (number) — ID of first participant.
+participant2Id (number) — ID of second participant.
+sportId (number) — The unique identifier for the sport. This ID must correspond to an existing sport.
+tournamentId (number) — The unique identifier for the league. This ID must correspond to an existing league.
+seasonId (number|null) — ID of the season, if applicable.
+statusId (number) — Fixture status code (e.g., 0 = Pre-Game, 1 = Scheduled, 2 = In-Play, 3 = Ended).
+hasOdds (boolean) — Whether odds data is available for this fixture.
+startTime (string) — ISO 8601 start time.
+trueStartTime (string|null) — Actual start time if different from scheduled (e.g., delayed kick-off).
+trueEndTime (string|null) — Actual end time of the fixture, if available.
+updatedAt (string) — ISO 8601 timestamp for last update (UTC).
+bookmakerOdds (object) — Odds grouped by bookmaker slug:bookmakerIsActive (boolean) — Whether this bookmaker is currently active for this fixture (mostly indicates whether we collect the data from this bookmaker).
+bookmakerFixtureId (string) — Unique event ID used by the bookmaker.
+fixturePath (string) — Link to the bookmaker's betting page for the event.
+suspended (boolean) — Whether all markets for this bookmaker are currently suspended.
+markets (object) — Object containing market IDs as keys and their corresponding market data:bookmakerMarketId (string) — Internal market ID or path used by the bookmaker.
+marketActive (boolean) — Whether this specific market is currently active.
+outcomes (object) — Map of outcome IDs to outcome data:players (object) — Map of player IDs to player-level pricing:active (boolean) — Whether the odds are currently active.
+betslip (string|null) — Betslip deep-link or identifier, if available.
+bookmakerOutcomeId (string) — Bookmaker's outcome label.
+bookmakerChangedAt (string|null) — ISO 8601 timestamp of the bookmaker's last reported change, if provided.
+changedAt (string) — Timestamp of the last change to the odds.
+limit (number|null) — The maximum stake allowed for the odds.
+playerName (string|null) — Player name for player-prop markets; null for standard markets.
+price (number) — Odds in decimal format.
+priceAmerican (string) — Odds in American format (e.g., "-201", "171").
+priceFractional (string) — Odds in fractional format (e.g., "49/99").
+mainLine (boolean) — Whether this is the primary/main line for the market.
+exchangeMeta (any|null) — Additional metadata for exchange-based bookmakers (e.g., liquidity, lay price).
+Notes
+Endpoint cooldown (rate limit): 1000ms
+If no bookmakers parameter is specified, odds from all available bookmakers are included.
+All timestamps are in UTC (ISO 8601).
+All three price formats (price, priceAmerican, priceFractional) are always returned regardless of the oddsFormat query parameter.
+Previous page
+GET odds
+Next pageGET historical odds

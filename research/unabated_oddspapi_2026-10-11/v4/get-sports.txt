@@ -1,0 +1,34 @@
+Version: v4
+GET sports
+Allows users to retrieve a list of sports available in the system.
+Endpoint
+GET /v4/sports
+Request Parameters
+language (string) — (Optional) The language that the sportName will be returned in.
+Example Request
+GET /v4/sports?language=en
+Example Response
+[
+  {
+    "sportId": 10,
+    "slug": "soccer",
+    "sportName": "Soccer"
+  },
+  {
+    "sportId": 11,
+    "slug": "basketball",
+    "sportName": "Basketball"
+  }
+]
+The response will have a status code 200 indicating that the request was successful. If there are no sports available, the array may be empty.
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a JSON array containing the list of sports.
+Each object in the array contains the following fields:
+sportId (number) — A unique identifier for the sport. This is the value you should use when sending the sport parameter to any other endpoints.
+slug (string) — A URL-friendly version of the sport's name.
+sportName (string) — The sport name.
+Notes
+Endpoint cooldown (rate limit): 1000ms
+Previous page
+GET languages
+Next pageGET bookmakers

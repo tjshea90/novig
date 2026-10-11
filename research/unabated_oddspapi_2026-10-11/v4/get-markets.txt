@@ -1,0 +1,93 @@
+Version: v4
+GET markets
+Retrieves a list of markets available in the system.
+Endpoint
+GET /v4/markets
+Request Parameters
+language (a2) — (Optional) The language in which the league information should be returned. By default, the value is en for English.
+Example Request
+GET /v4/markets?language=en
+Example Response
+[
+  {
+    "marketId": 101,
+    "marketLength": 3,
+    "marketName": "Full Time Result",
+    "playerProp": false,
+    "sportId": 10,
+    "handicap": 0,
+    "period": "fulltime",
+    "marketType": "1x2",
+    "outcomes": [
+      {
+        "outcomeId": 101,
+        "outcomeName": "1"
+      },
+      {
+        "outcomeId": 102,
+        "outcomeName": "X"
+      },
+      {
+        "outcomeId": 103,
+        "outcomeName": "2"
+      }
+    ]
+  },
+  {
+    "marketId": 104,
+    "marketLength": 2,
+    "marketName": "Both Teams To Score",
+    "playerProp": false,
+    "sportId": 10,
+    "handicap": 0,
+    "period": "fulltime",
+    "marketType": "totals",
+    "outcomes": [
+      {
+        "outcomeId": 104,
+        "outcomeName": "Yes"
+      },
+      {
+        "outcomeId": 105,
+        "outcomeName": "No"
+      }
+    ]
+  },
+  {
+    "marketId": 106,
+    "marketLength": 2,
+    "marketName": "Over Under Full Time",
+    "playerProp": false,
+    "sportId": 10,
+    "handicap": 0.5,
+    "period": "fulltime",
+    "marketType": "totals",
+    "outcomes": [
+      {
+        "outcomeId": 106,
+        "outcomeName": "Over"
+      },
+      {
+        "outcomeId": 107,
+        "outcomeName": "Under"
+      }
+    ]
+  }
+]
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a JSON array containing market objects. Each market object includes the following fields:
+marketId (number) — The unique identifier for the market.
+marketLength (number) — The number of outcomes in the market.
+marketName (string) — The name of the market.
+playerProp (boolean) — Indicates if the market is a player prop.
+sportId (number) — The identifier for the associated sport.
+handicap (number) — The handicap value for the market.
+period (string) — The period of play that the market relates to.
+marketType (string) — The type of the market.
+outcomes (array) — An array of outcome objects associated with the market, where each outcome includes:outcomeId (number) — The unique identifier for the outcome.
+outcomeName (string) — The name of the outcome.
+Notes
+Endpoint cooldown (rate limit): 1000ms
+Previous page
+GET fixture
+Next pageGET participants

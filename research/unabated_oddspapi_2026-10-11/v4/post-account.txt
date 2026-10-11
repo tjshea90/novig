@@ -1,0 +1,20 @@
+Version: v4
+POST account
+Allows the client to update an account.
+Endpoint
+POST /v4/account
+Request Parameters
+language (string) — Specifies the language for the account interface.See the a2 values in the response from /languages
+Example Request
+POST /v4/account?language=en
+Example Response
+{
+  "message": "Language successfully updated to: en"
+}
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns the same JSON object as GET account.
+Notes
+Endpoint cooldown (rate limit): 1000ms
+Previous page
+GET account
+Next pagePOST refresh api key

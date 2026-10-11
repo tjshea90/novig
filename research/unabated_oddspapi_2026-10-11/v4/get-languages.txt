@@ -1,0 +1,16 @@
+Version: v4
+GET languages
+Retrieves a list of supported languages available in the system.
+Endpoint
+GET /v4/languages
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a JSON object containing the following fields:
+a2 (string) — A 2-letter language code. This is the value you should use when sending a language parameter to any other endpoint.
+name (string) — The name of the language.
+Notes
+Endpoint cooldown (rate limit): 1000ms
+This endpoint does not require any request parameters.
+The returned data can be used to understand the available languages for localisation or user interface settings.
+Previous page
+POST refresh api key
+Next pageGET sports

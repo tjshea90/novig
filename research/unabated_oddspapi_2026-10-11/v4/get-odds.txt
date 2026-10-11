@@ -1,0 +1,149 @@
+Version: v4
+GET odds
+Retrieves detailed odds and metadata for a specified sports event from various bookmakers.
+Endpoint
+GET /v4/odds
+Request Parameters
+fixtureId* (string) — Unique ID of the event
+bookmakers (string) — (Optional) Comma-separated list of bookmakers
+oddsFormat (string) — (Optional) Desired odds format. Options: fractional, decimal, american
+language (string) — (Optional) Language code for translated labels
+verbosity (number) — (Optional) Level of response detail. Higher value returns more verbose output.
+Example Request
+GET /v4/odds?fixtureId=id1000003969653792&bookmakers=pinnacle&language=en&verbosity=3
+Sample Response
+{
+  "fixtureId": "id1000003969653792",
+  "participant1Id": 1302,
+  "participant2Id": 4872,
+  "sportId": 10,
+  "tournamentId": 39,
+  "seasonId": 130951,
+  "statusId": 0,
+  "hasOdds": true,
+  "startTime": "2026-04-13T17:00:00.000Z",
+  "trueStartTime": null,
+  "trueEndTime": null,
+  "updatedAt": "2026-04-08T18:00:30.461Z",
+  "externalProviders": {
+    "betradarId": 69653792,
+    "mollybetId": "2026-04-13,625,676",
+    "opticoddsId": "20260413B49C7BD7",
+    "lsportsId": null,
+    "txoddsId": null,
+    "sofascoreId": 15676262,
+    "betgeniusId": 13679074,
+    "flashscoreId": "nDaPAq53",
+    "pinnacleId": 1627730447,
+    "oddinId": null
+  },
+  "statusName": "Pre-Game",
+  "participant1Name": "FC Fredericia",
+  "participant1ShortName": "Fredericia",
+  "participant1Abbr": "FRE",
+  "participant2Name": "Vejle BK",
+  "participant2ShortName": "Vejle",
+  "participant2Abbr": "VEJ",
+  "sportName": "Soccer",
+  "tournamentSlug": "superliga",
+  "categorySlug": "denmark",
+  "categoryName": "Denmark",
+  "tournamentName": "Superliga",
+  "bookmakerOdds": {
+    "pinnacle": {
+      "bookmakerIsActive": true,
+      "bookmakerFixtureId": "1627730447",
+      "fixturePath": "https://www.pinnacle.com/en/e/e/e/1627730447/#all",
+      "suspended": false,
+      "markets": {
+        "10286": {
+          "bookmakerMarketId": "1627730447/6020879114/1628099951",
+          "marketActive": true,
+          "outcomes": {
+            "10287": {
+              "players": {
+                "0": {
+                  "active": true,
+                  "betslip": null,
+                  "bookmakerOutcomeId": "1628099962",
+                  "bookmakerChangedAt": null,
+                  "changedAt": "2026-04-13T09:00:11.194Z",
+                  "limit": 125,
+                  "playerName": null,
+                  "price": 4.01,
+                  "priceAmerican": "301",
+                  "priceFractional": "301/100",
+                  "mainLine": false,
+                  "exchangeMeta": null
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+Response Fields Breakdown
+Top-Level Fields
+fixtureId string — Internal unique ID for the event.
+participant1Id number — The ID of the first participant.
+participant2Id number — The ID of the second participant.
+sportId number — Sport ID
+tournamentId number — League ID
+seasonId number|null — (Optional) The ID of the season.
+statusId number — The current status of the event.
+hasOdds boolean — Whether the event has odds available.
+startTime string — ISO 8601 start time.
+trueStartTime string|null — The actual start time of the event, if available.
+trueEndTime string|null — The actual end time of the event, if available.
+updatedAt string — ISO 8601 last update time.
+statusName string — Human-readable fixture status (e.g., "Pre-Game", "In-Play", "Ended").
+participant1Name string — The name of the first participant (in your requested language).
+participant1ShortName string — Short display name of first participant. Translated if language parameter is set.
+participant1Abbr string — 3-letter abbreviation of first participant. Translated if language parameter is set.
+participant2Name string — The name of the second participant (in your requested language).
+participant2ShortName string — Short display name of second participant. Translated if language parameter is set.
+participant2Abbr string — 3-letter abbreviation of second participant. Translated if language parameter is set.
+sportName string — Name of the sport.
+tournamentSlug string — URL-friendly tournament identifier.
+categorySlug string — Slug of the competition category (e.g., "england").
+categoryName string — Display name of the category (e.g., "England").
+tournamentName string — Full tournament name (translated if language parameter is set).
+externalProviders (object) — IDs from third-party providers:betradarId (number|null) — (Optional) The ID assigned by Betradar.
+mollybetId (string|null) — (Optional) The unique ID assigned by Mollybet.
+opticoddsId (string|null) — (Optional) The unique ID assigned by Opticodds.
+lsportsId (number|null) — (Optional) The unique ID assigned by LSports.
+txoddsId (number|null) — (Optional) The unique ID assigned by TXOdds.
+sofascoreId (number|null) — (Optional) The ID assigned by Sofascore.
+betgeniusId (number|null) — (Optional) The ID assigned by Betgenius.
+flashscoreId (string|null) — (Optional) The ID assigned by Flashscore.
+pinnacleId (number|null) — (Optional) The ID assigned by Pinnacle.
+oddinId (number|null) — (Optional) The ID assigned by Oddin.
+bookmakerOdds Object
+bookmakerIsActive boolean — Whether this bookmaker is currently active for this fixture (mostly indicates whether we collect the data from this bookmaker).
+bookmakerFixtureId string — The bookmaker's own fixture identifier.
+fixturePath string — Direct URL to the fixture on the bookmaker's website.
+suspended boolean — Whether all markets for this bookmaker are currently suspended.
+markets object — Object containing market IDs as keys and their corresponding market data:bookmakerMarketId string — The bookmaker's internal market identifier.
+marketActive boolean — Whether this specific market is currently active.
+outcomes object — Map of outcome IDs to outcome data:players object — Map of player IDs to player-level pricing:active boolean — Whether this selection is currently being offered.
+betslip string|null — Betslip deep-link or identifier, if available.
+bookmakerOutcomeId string — Outcome identifier from the bookmaker (e.g., "3.5/under", "home").
+bookmakerChangedAt string|null — ISO 8601 timestamp of the bookmaker's last reported change, if provided.
+changedAt string — ISO 8601 timestamp of the last recorded change in our system.
+limit number|null — Maximum bet amount allowed for this selection.
+playerName string|null — Player name for player-prop markets; null for standard markets.
+price number — Odds in decimal format.
+priceAmerican string — Odds in American format (e.g., "-201", "171").
+priceFractional string — Odds in fractional format (e.g., "49/99").
+mainLine boolean — Whether this is the primary/main line for the market.
+exchangeMeta any|null — Additional metadata for exchange-based bookmakers (e.g., liquidity, lay price).
+Notes
+Endpoint cooldown (rate limit): 500ms
+If no bookmakers parameter is specified, odds from all available bookmakers are included.
+All timestamps are in UTC (ISO 8601).
+All three price formats (price, priceAmerican, priceFractional) are always returned regardless of the oddsFormat query parameter.
+Previous page
+GET participants
+Next pageGET odds by tournaments

@@ -1,0 +1,113 @@
+Version: v4
+GET historical-odds
+Endpoint
+GET /v4/historical-odds
+Request Parameters
+fixtureId* (string) — Event ID to retrieve historical odds for.
+bookmakers* (string) — Comma-separated list of bookmaker slugs (max 3) to filter results. Example: pinnacle,bet365
+id (number) — (Optional) The unique ID of a specific historical odds entry to filter by.
+playerId (number) — (Optional) The playerId associated with the odds to narrow down results.
+outcomeId (number) — (Optional) The outcomeId to filter odds for a specific outcome.
+active (boolean) — (Optional) Filter based on whether the odds entry is currently active.
+Request Headers
+If-None-Match (string) — (Optional) Echo back the ETag from a previous response to make a conditional request. If the response would be identical, the server returns 304 Not Modified with an empty body instead of resending the payload. Only effective for events that are finished or cancelled (see "Conditional requests" below).
+Example Request
+GET /v4/historical-odds?fixtureId=id1000000758265379
+Example Response
+{
+  "fixtureId": "id1000000758265379",
+  "bookmakers": {
+    "pinnacle": {
+      "markets": {
+        "101": {
+          "outcomes": {
+            "101": {
+              "players": {
+                "0": [
+                  {
+                    "createdAt": "2025-04-16T21:12:10.506331+00:00",
+                    "price": 9.11,
+                    "limit": 1191.25,
+                    "active": false,
+                    "exchangeMeta": null
+                  },
+                  {
+                    "createdAt": "2025-04-16T20:50:58.321847+00:00",
+                    "price": 9.11,
+                    "limit": 1191.25,
+                    "active": true,
+                    "exchangeMeta": null
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "10168": {
+          "outcomes": {
+            "10168": {
+              "players": {
+                "0": [
+                  {
+                    "createdAt": "2025-04-16T20:16:45.057806+00:00",
+                    "price": 1.729,
+                    "limit": 13072.7023319616,
+                    "active": false,
+                    "exchangeMeta": null
+                  },
+                  {
+                    "createdAt": "2025-04-16T20:16:18.597131+00:00",
+                    "price": 1.729,
+                    "limit": 13072.7023319616,
+                    "active": true,
+                    "exchangeMeta": null
+                  },
+                  {
+                    "createdAt": "2025-04-16T20:15:51.441377+00:00",
+                    "price": 1.699,
+                    "limit": 13633.7625178827,
+                    "active": true,
+                    "exchangeMeta": null
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+Response (200 OK)
+On a successful request, the server responds with a status code 200 and returns a map of eventId to nested bookmaker odds history..
+bookmakers (object) — Odds grouped by bookmaker slugmarkets (object) — Each event contains market objects with outcomes.
+outcomes (object) — Outcome IDs with player data.
+players (object) — Players with odds data containing:id (number) — The unique identifier for the historical odds entry.
+createdAt (string) — The timestamp when the historical odds entry was created.
+price (number) — The price (odds) offered.
+limit (number) — The maximum stake allowed for the odds.
+active (boolean) — Whether the odds are currently active.
+exchangeMeta (object|null) — Exchange metadata if applicable, including back and lay prices.
+Response Headers (finished/cancelled events only)
+ETag — A short opaque string identifying the current response body. Example: "a1b2c3d4e5f6a7b8".
+Cache-Control — private, max-age=259200 (3 days).
+Response (304 Not Modified)
+Returned when the request includes an If-None-Match header whose value matches the current ETag for this event and filter combination. The response has an empty body; the client should reuse its previously cached payload.
+Conditional requests
+For events that are finished or cancelled the response is deterministic, so every 200 response includes an ETag header. Clients that poll the same event repeatedly can cache the body locally, then send If-None-Match: <etag> on subsequent requests to skip re-transferring and re-parsing an unchanged payload:
+GET /v4/historical-odds?fixtureId=id1000000758265379&bookmakers=pinnacle
+→ 200 OK
+  ETag: "a1b2c3d4e5f6a7b8"
+  Cache-Control: private, max-age=259200
+  { "fixtureId": "...", "bookmakers": { ... } }
+GET /v4/historical-odds?fixtureId=id1000000758265379&bookmakers=pinnacle
+If-None-Match: "a1b2c3d4e5f6a7b8"
+→ 304 Not Modified
+  ETag: "a1b2c3d4e5f6a7b8"
+The ETag is tied to the exact response, so it changes when query parameters (bookmakers, filters) change. Live and upcoming events do not emit an ETag because their odds history is still growing; conditional requests on those events are served as a normal 200 with the full body.
+Notes
+Endpoint cooldown (rate limit): 5000ms (a 304 response still counts against this limit).
+All historical odds data since January 2026 is available.
+Previous page
+GET odds by tournaments
+Next pageGET settlements

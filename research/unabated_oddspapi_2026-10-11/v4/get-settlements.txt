@@ -1,0 +1,87 @@
+Version: v4
+GET settlements
+Returns settlement results for all available markets in a specific event.
+Endpoint
+GET /v4/settlements
+Request Parameters
+fixtureId* (string) — The unique ID of the event for which to return settlement data.
+playerId (number) — (Optional) The unique ID of the player to filter results by.
+outcomeId (number) — (Optional) The unique ID of the outcome to filter results by.
+Example Request
+GET /v4/settlements?fixtureId=id1000000761280685
+Example Response
+{
+  "fixtureId": "id1000000761280685",
+  "markets": {
+    "101": {
+      "outcomes": {
+        "101": {
+          "players": {
+            "0": {
+              "result": "WIN"
+            }
+          }
+        },
+        "102": {
+          "players": {
+            "0": {
+              "result": "LOSE"
+            }
+          }
+        },
+        "103": {
+          "players": {
+            "0": {
+              "result": "LOSE"
+            }
+          }
+        }
+      }
+    },
+    "106": {
+      "outcomes": {
+        "106": {
+          "players": {
+            "0": {
+              "result": "WIN"
+            }
+          }
+        },
+        "107": {
+          "players": {
+            "0": {
+              "result": "LOSE"
+            }
+          }
+        }
+      }
+    },
+    "1056": {
+      "outcomes": {
+        "1056": {
+          "players": {
+            "0": {
+              "result": "PUSH"
+            }
+          }
+        },
+        "1057": {
+          "players": {
+            "0": {
+              "result": "PUSH"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+Response (200 OK)
+On a successful request, the server responds with a status code 200 — Returns the settlement result of each outcome per player for the given event.
+fixtureId (string) — The unique identifier of the event to retrieve scores for.
+markets (object) — A map of marketId to outcome and player result information.outcomes (object) — Map of outcome IDs to outcome data.players (object) — Each outcome maps to one or more players offering odds.result (string) — The final result of the player's outcome. Possible values are: WIN, LOSE, HALFWIN, HALFLOSS, PUSH, CANCELLED, UNDECIDED
+Notes
+Endpoint cooldown (rate limit): 2000ms
+Previous page
+GET historical odds
+Next pageGET scores

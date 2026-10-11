@@ -1,0 +1,54 @@
+Version: v4
+Understanding API Requests & Quota
+Your subscription plan includes a monthly request allowance. This page explains exactly what counts as a request, which endpoints are free, and what happens when you reach your limit.
+What is 1 Request?
+1 Request = 1 call to a billable API endpoint, regardless of the response.
+Every successful call to a billable endpoint counts as exactly one request against your quota. The response size, number of items returned, query parameters, or HTTP status all have no effect on the count — a call that returns 1,000 events and a call that returns 0 events both consume exactly 1 request.
+Requests are counted per subscription, so all calls made with your API key accumulate against the same allowance.
+Which endpoints count?
+Billable endpoints (count toward your quota)
+Every call to these endpoints uses 1 request:
+/v4/players
+/v4/settlements
+/v4/fixtures
+/v4/fixture
+/v4/odds-by-tournaments
+/v4/languages
+/v4/sports
+/v4/bookmakers
+/v4/markets
+/v4/tournaments
+/v4/participants
+/v4/scores
+/v4/odds
+Free endpoints (do NOT count toward your quota)
+/v4/historical-odds — always free. Calls never increment your request count.
+Unmetered endpoints (do NOT count, and are never blocked)
+/v4/account — always accessible, even after your quota is exhausted. This ensures you can always check your subscription status and remaining quota.
+When is a request counted?
+A request is counted after the endpoint has finished processing, whether the response was successful or returned an error. This includes:
+200 OK — successful responses
+4xx — client errors (e.g. invalid parameters, resource not found)
+5xx — server errors
+Note
+Requests that are rejected before reaching the endpoint — for example, because your API key is invalid or your quota is already exhausted — are not counted.
+Reaching your limit
+When your accumulated request count reaches your plan's request_limit, every subsequent call to a billable or free endpoint (except /v4/account) will immediately return:
+HTTP/1.1 429 Too Many Requests
+{
+  "message": "Request limit exceeded",
+  "details": "You have exceeded your request limit of X requests.",
+  "code": "REQUEST_LIMIT_EXCEEDED"
+}
+You can continue to call /v4/account at any time to inspect your subscription, current usage, and when your quota resets.
+Checking your usage
+Call GET /v4/account at any time. The response includes, for your active subscription:
+request_limit — your plan's allowance
+request_count — how many billable requests you have consumed in the current period
+Tips to minimize request consumption
+Cache responses client-side when the underlying data changes infrequently (e.g. /v4/sports, /v4/bookmakers, /v4/markets, /v4/languages).
+Batch where possible — use /v4/fixtures with filters instead of many single-event calls when you need several events at once.
+Poll responsibly — each poll of a billable endpoint is 1 request, so align your polling interval with how often the data actually changes.
+Previous page
+Overview
+Next pageGET account

@@ -1,0 +1,164 @@
+Version: v4
+Websocket API
+This WebSocket provides real-time updates for changes to individual events.
+Notes
+The WebSocket is only availabe by contacting us or via the b2b plan.
+Connection Details
+Endpoint: wss://api.oddspapi.io/v4/ws?apiKey=YOUR_API_KEY
+Direction: One-way (server → client)
+Authentication: API Key — YOUR_API_KEY
+Data Structure
+All messages include fixtureId. Only changed values are transmitted, except for complete players objects.
+{
+  "fixtureId": "string",
+  "betradarId": "number?",
+  "startTime": "number?",
+  "participant1Id": "number?",
+  "participant2Id": "number?",
+  "sportId": "number?",
+  "updatedAt": "string?",
+  "tournamentId": "number?",
+  "seasonId": "number|null",
+  "sofascoreId": "number|null",
+  "betgeniusId": "number|null",
+  "flashscoreId": "string|null",
+  "statusId": "number|null",
+  "bookmakerOdds": {
+    "bookmaker": {
+      "bookmakerFixtureId": "string|null",
+      "fixturePath": "string|null",
+      "markets": {
+        "marketId": {
+          "bookmakerMarketId": "string|null",
+          "outcomes": {
+            "outcomeId": {
+              "players": {
+                "playerId": {
+                  "limit": "number|null",
+                  "price": "number",
+                  "active": "boolean",
+                  "oddsId": "string|null",
+                  "betslip": "any|null",
+                  "playerId": "number",
+                  "changedAt": "string",
+                  "playerName": "string|null",
+                  "exchangeMeta": "any|null"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+Key Features
+Partial Updates: Only changed values are sent
+Complete Player Objects: Entire player object is retransmitted if any value changes
+Single Bookmaker Updates: Each message only contains updates for one bookmaker
+Timestamping: updatedAt changes with any top-level field update
+Examples
+Example 1: Event Metadata Update
+{
+  "fixtureId": "id2704726161008023",
+  "statusId": 1,
+  "updatedAt": "2025-06-11T16:55:28.415401+00:00"
+}
+Example 2: Player Odds Update
+{
+  "fixtureId": "id1100097561092987",
+  "bookmakerOdds": {
+    "starcasino.be": {
+      "markets": {
+        "111": {
+          "outcomes": {
+            "111": {
+              "players": {
+                "0": {
+                  "active": true,
+                  "betslip": null,
+                  "bookmakerOutcomeId": "2535416646",
+                  "changedAt": "2025-06-11T16:55:30.284055+00:00",
+                  "limit": null,
+                  "playerName": null,
+                  "price": 1.345,
+                  "exchangeMeta": {},
+                  "playerId": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+Example 3: Bookmaker Info Update
+{
+  "fixtureId": "id1100023561139799",
+  "bookmakerOdds": {
+    "22bet": {
+      "bookmakerFixtureId": "265591179",
+      "fixturePath": "https://22bets.com/line/basketball/5226-e/265591179-kk-partizan-buducnost-podgorica"
+    }
+  }
+}
+Example 4: Multiple Market Update
+{
+  "fixtureId": "id1001509158796975",
+  "bookmakerOdds": {
+    "stake": {
+      "markets": {
+        "101": {
+          "outcomes": {
+            "101": {
+              "players": {
+                "0": {
+                  "active": true,
+                  "betslip": null,
+                  "bookmakerOutcomeId": "2535416646",
+                  "changedAt": "2025-06-11T16:55:30.284055+00:00",
+                  "limit": null,
+                  "playerName": null,
+                  "price": 1.345,
+                  "exchangeMeta": {},
+                  "playerId": 0
+                }
+              }
+            },
+            "102": {
+              "players": {
+                "0": {
+                  "active": true,
+                  "betslip": null,
+                  "bookmakerOutcomeId": "2535416646",
+                  "changedAt": "2025-06-11T16:55:30.284055+00:00",
+                  "limit": null,
+                  "playerName": null,
+                  "price": 1.345,
+                  "exchangeMeta": {},
+                  "playerId": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+Example 5: Score Update
+{
+  "fixtureId": "id1000085362245214",
+  "scores": {
+    "periods": {
+      "2": {
+        "participant1Score": 0,
+        "participant2Score": 0,
+        "updatedAt": "2025-07-23T16:56:37.122614+00:00"
+      }
+    }
+  }
+}
+Previous page
+GET scores
