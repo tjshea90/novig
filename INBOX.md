@@ -6568,3 +6568,10 @@ If I lose Internet connection, do my bids automatically expire after a set accou
 ```
 The live betting system connects for about a few seconds, matches games, then says novig live book not subscribed yet. Diagnose. Also check the novig api docs about live betting and bidding and the proper commands and methods to connect to the live book
 ```
+
+## 2026-10-11T22:31:37Z
+```
+In the auto bids tab, there is a running list of all filled bids, which is getting very long. Remove this list. It doesn't need a list of filled bids at all, only keep open bids. Also make a slider system similar to the auto bet system which moves all settings in tandem to achieve certain auto bid levels from 1 to 100. 1 is the strictest settings with lowest volume but safest, highest EV bids and highest expected profit, and 100 is the riskiest but most volume on bid fills, while still maintaining positive EV. Model the system similar to the auto bet system slider. For both the auto bet and auto bid tabs, simplify them and hide all the advanced settings unless I press advanced settings. Just show the most important settings and the slider. Make sure the slider is logical and the steps from 1-100 make sense. Bids may be made for games 12 hours and more away from game time.
+
+Make the auto bid and auto bet sliders automatically change any settings in the app needed to obtain the goal at each level of the slider. 
+```
