@@ -198,12 +198,88 @@ class ApiBettingTest {
     }
 
     @Test
-    fun `by hand, Tj's own dollar limits, pregame only and what Novig can sell still apply`() {
+    fun `by hand, Tj's own dollar limits and what Novig can sell still apply, live games included`() {
         assertTrue(refused(ApiBetPlanner.plan(target(), book(), 25.0, now, manual, 0.0)).contains("over your $20.00 limit per bet"))
         assertTrue(refused(ApiBetPlanner.plan(target(), book(), 5.0, now, manual, 48.0)).contains("daily limit"))
-        assertTrue(refused(ApiBetPlanner.plan(target(starts = now - 1), book(), 5.0, now, manual, 0.0)).contains("pregame only"))
+        assertTrue(refused(ApiBetPlanner.plan(target(starts = now - 1), book(), 25.0, now, manual, 0.0)).contains("over your $20.00 limit per bet"))
+        assertTrue(refused(ApiBetPlanner.plan(target(starts = now - 1), book(), 5.0, now, manual, 48.0)).contains("daily limit"))
+        assertTrue(refused(ApiBetPlanner.plan(target(starts = now - 1), book(bidsB = emptyList()), 5.0, now, manual, 0.0)).contains("Nobody is offering"))
         assertTrue(refused(ApiBetPlanner.plan(target(), book(bidsB = emptyList()), 5.0, now, manual, 0.0)).contains("Nobody is offering"))
         assertTrue(refused(ApiBetPlanner.plan(target(), null, 5.0, now, manual, 0.0)).contains("couldn't be read"))
+    }
+
+    // ---- live games (Tj, 2026-10-11: "I want to bid and bet on live games"; the API takes in-play orders, the app used to refuse them) ----------------
+
+    /** A game that began a minute ago, its fair 4 minutes old (the +EV tab's "odds 4 min old"). */
+    private fun liveTarget(fairAsOf: Long? = now - 4 * 60_000L) = target(fairAsOf = fairAsOf, starts = now - 60_000L)
+
+    @Test
+    fun `by hand a live game is bet with Novig's taker fee in the price, the EV and the plan's cost, and the sheet says what live means`() {
+        val pre = ready(ApiBetPlanner.plan(target(), book(), 10.0, now, manual, 0.0))
+        val live = ready(ApiBetPlanner.plan(liveTarget(), book(), 10.0, now, manual, 0.0))
+        assertTrue(live.live)
+        assertFalse(pre.live)
+        assertEquals(0.0, pre.feeDollars, 0.0)
+        // The same 400 contracts: 100 at 0.46 and 300 at 0.465, each with 0.03 x P x (1 - P) a $1 payout in fee.
+        assertEquals(400L, live.contracts)
+        val fee = 100 * 0.03 * 0.46 * 0.54 * 0.01 + 300 * 0.03 * 0.465 * 0.535 * 0.01
+        assertEquals(fee, live.feeDollars, 1e-9)
+        assertEquals(pre.expectedCost + fee, live.expectedCost, 1e-9)
+        // The EV is judged against the price plus the fee at the average price.
+        val avg = live.averagePrice
+        assertEquals(0.50 / (avg + 0.03 * avg * (1.0 - avg)) - 1.0, live.evPercent, 1e-9)
+        assertTrue("the fee costs edge", live.evPercent < pre.evPercent)
+        // The limit price is Novig's price, not the fee-inclusive cost: the order buys at a price, the fee is charged on the fill.
+        assertEquals(pre.limitPrice, live.limitPrice, 1e-9)
+        assertTrue(live.note!!.startsWith("LIVE: The fair odds behind this EV are 240 seconds old"))
+        assertTrue(live.note!!.contains("about 5 seconds"))
+    }
+
+    @Test
+    fun `the sheet's note on a live bet says how old the fair is, whatever its age, and a game Novig put in play early is live too`() {
+        fun note(fairAsOf: Long?) = ready(ApiBetPlanner.plan(liveTarget(fairAsOf), book(), 0.46, now, manual, 0.0)).note!!
+        assertTrue(note(now - 30_000L).contains("30 seconds old"))
+        assertTrue(note(now - 10 * 60_000L).contains("10 minutes old"))
+        assertTrue(note(null).contains("isn't known"))
+        // Novig's status says in play before the listed start: live, with a future start time.
+        val early = ready(ApiBetPlanner.plan(target().copy(live = true), book(), 0.46, now, manual, 0.0))
+        assertTrue(early.live && early.feeDollars > 0.0)
+        // A pregame bet keeps no fee and no live note.
+        val pre = ready(ApiBetPlanner.plan(target(), book(), 0.46, now, manual, 0.0))
+        assertTrue(!pre.live && pre.feeDollars == 0.0 && pre.note == null)
+    }
+
+    @Test
+    fun `the auto-bet never bets a live game`() {
+        for (t in listOf(liveTarget(fairAsOf = now - 5_000L), target().copy(live = true))) {
+            val r = refused(ApiBetPlanner.plan(t, book(), 5.0, now, autoLimits, 0.0))
+            assertTrue(r, r.contains("pregame only") && r.contains("by hand"))
+        }
+    }
+
+    @Test
+    fun `a live bet placed by hand goes out as an IOC and is tracked with the fee Novig charged`() = runBlocking {
+        val fee = "0.02984"
+        novig(Scenario(fills = """{"items":[{"fillId":"f1","orderId":"o1","clientId":"c","marketId":"mkt","outcomeId":"A","qty":400,"cost":"1.85000","fee":"$fee","taker":true,"ts":1800000000123}]}"""))
+        val t = tracker()
+        val r = placer(t, l = manual).place(liveTarget(), 10.0, confirmedLimit = 0.465) as PlaceResult.Placed
+        val body = orderBody()
+        assertEquals("IOC", body["tif"]!!.jsonPrimitive.content)
+        assertEquals("0.465", body["price"]!!.jsonPrimitive.content)
+        assertEquals("400", body["qty"]!!.jsonPrimitive.content)
+        assertEquals(1.85, r.bet.paid!!, 1e-9)
+        assertEquals(0.02984, r.bet.fee!!, 1e-9)
+        assertEquals(1.85 + 0.02984, r.bet.stake, 1e-9)
+        assertEquals(0.50 / ((1.85 + 0.02984) / 4.0) - 1.0, r.bet.evPercentAtBet!!, 1e-9)
+    }
+
+    @Test
+    fun `a live game's refusals from Novig are about this bet, not the account`() = runBlocking {
+        for ((code, status) in listOf("NOT_LIVE_TRADABLE" to 400, "MARKET_CLOSED" to 409, "PRICE_BAND_VIOLATION" to 400, "EVENT_NOT_TRADABLE" to 400)) {
+            novig(Scenario(postResponse = MockResponse().setResponseCode(status).setBody("""{"code":"$code","message":"no"}""")))
+            val r = placer(tracker(), l = manual).place(liveTarget(), 5.0, confirmedLimit = 0.465)
+            assertTrue("$code: $r", r is PlaceResult.Refused && r.reason.contains(code))
+        }
     }
 
     @Test
