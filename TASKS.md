@@ -4703,3 +4703,9 @@ Tj verbatim: "I have live games toggled on for the scanner. These bets are not d
 - [x] TV1 The bets in the screenshot were PREGAME rows (Sun 4:05 PM) from the ordinary scan ("Scanned 2m ago"), not live-lane rows. The lane re-prices every 100 ms and `LiveScanFeed` drops a row the moment its EV is under the minimum or <= 0 (list updated at most every 150 ms).
 - [x] TV2 Guard: `BetTarget.listedPrice`; a live plan is refused when Novig's best price is above the listed one and never reaches past it; the order is IOC at that price or better. Test: ApiBettingTest.
 - [ ] TV3 ship v0.89.24 (pause fix + live fixes).
+
+## TW: why isn't auto-bet betting this 4-star bet; 3½★+ needs >= 2% EV (Tj, 2026-10-11 ~19:50Z)
+Tj verbatim (3 screenshots: Auto-bet tab with minimum 4★ on, "Vigilant wallet $29.15 · 23 bids up ($29.37) · over the wallet", CNO card Justin Herbert Under 199.5 4.0★ +2.95% CNO EV, Novig +108, "$15.98 in game", sheet says +1.45% EV at the devigged fair): "I have auto bet turned on. Why isn't it betting the 4 Star Bet in the screenshot? Also, for bet ratings, make a requirement that a bet be at least 2% positive ev to be rated 3½ stars or better"
+- [ ] TW1 Find the reason (wallet is fully held by 23 resting bids? game cap? EV at real price?) from the code paths and the status the Auto-bet tab keeps.
+- [ ] TW2 BetRating: a bet under +2% EV is capped below 3½★ (tests, UI text, docs).
+- [ ] TW3 Ship.
