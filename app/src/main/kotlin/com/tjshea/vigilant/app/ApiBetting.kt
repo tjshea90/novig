@@ -218,6 +218,8 @@ object ApiBetTargets {
  * key, entered once and then saved sealed on this phone: [ManagementKeyStore]), fund and withdraw any amount Tj types, the Bet sheet and its
  * way to the wallet ("Add money"), and syncing the Tracker with what Novig holds.
  */
+private class LiveRowGone : RuntimeException()
+
 class ApiBettingController(
     private val c: AppContainer,
     private val state: MutableStateFlow<UiState>,
@@ -757,5 +759,6 @@ class ApiBettingController(
     companion object {
         /** A typed amount is priced once typing has paused this long. */
         const val TYPING_PAUSE_MS = 400L
+        const val LIVE_GONE = "This live price has left the list: Pinnacle's and Novig's prices behind it are more than 5 seconds old, so nothing is bet on them. Tap the bet again when it is back on the list."
     }
 }
