@@ -4631,3 +4631,9 @@ Tj verbatim: "Build the share all bets button. Make sure it is very comprehensiv
 - [x] TK5 Closing-odds accuracy (fixed: power devig for history closes, CNO page dated by data time, 60 s after-bet rule, Novig trades 3+ in 15 min; export closeBasis/closeIndependent; RESEARCH §132.1): research/closing_audit_2026-10-11.md holds 25 UNVERIFIED audit findings (workflows were stopped for usage; no multi-agent workflows from now on, Tj 2026-10-11). Triage in the main process: verify each in code, fix the ones that make a closing number wrong, export what cannot be fixed (closeBasis/independence, close read time, source).
 - [ ] TK6 Full suite, ship (versionCode 203 / 0.89.18), release (in progress).
 
+
+## TL: every API toggled ON is used for any data; every API toggled OFF is never called (Tj, 2026-10-11)
+Tj verbatim: "I previously made it so when sgo was enabled, all other apis were not used. Confirm that all apis can be used at any time for any data and long as I have them toggled on, and if any are toggled off, they are not used or called at all. If this isn't the case, make the app do this"
+- [ ] TL1 Audit: every place one API rests/replaces another (OutsideSgo/OutsideOp, allReferenceSources, closes/grader chains, Pricing) and every call site of every API vs its toggle (Settings › APIs, ApiEntry).
+- [ ] TL2 Make it so: a toggled-on API is always asked (for every league/data kind it can serve); a toggled-off API is never called by anything (scan, closes, grading, bids, lab, closes backfill, key tests excepted only when Tj taps Test).
+- [ ] TL3 Tests proving both rules for each API; ship; release.
