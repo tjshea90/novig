@@ -4755,3 +4755,8 @@ Tj verbatim (with a Gemini screenshot saying Bally Bet, betPARX, Grosvenor, Casu
 - [x] TAD1 DONE (part 2 of the research file). Research: every book each API offers (SGO, ParlayAPI, OddsPapi v5/v4, Unabated, The Odds API, PropLine, CNO columns) and its B2B odds provider (Kambi, Sportradar/Betradar, Genius, OpenBet, Altenar, ...); plus measure identical-price clusters in the saved real data.
 - [x] TAD2 DONE (kambi group + CNO BB->BR). Group books by odds provider as one company in `BookCompany` (and CNO's `SAME_DESK`), tests, docs (research file + RESEARCH §134).
 - [x] TAD3 shipping v0.89.26 (with TAA/TAB/TAC).
+
+## TAE: live betting disconnect: "Novig's live books have not arrived (Novig live book not subscribed yet)" (Tj, 2026-10-11 ~21:15Z)
+Tj verbatim (2 screenshots 5:13 PM: banner "Live: nothing shown, Novig's live books have not arrived (Novig live book not subscribed yet)"; Settings shows the key connected, "live feed held 361 of 408 asked"): "There seems to be a disconnect on live betting"
+- [ ] TAE1 Why the stream says "not subscribed yet" for the live engine's markets while the scan's own subscription works (NovigStream.watchLive / sync / subscribed / livePinned / caps).
+- [ ] TAE2 Fix, test (fake stream), ship v0.89.27.
