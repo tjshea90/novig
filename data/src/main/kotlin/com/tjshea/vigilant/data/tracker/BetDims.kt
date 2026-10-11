@@ -25,7 +25,7 @@ enum class BetDim(val label: String) {
     SCANNER("Scanner"),
     RESULT("Result"),
     CLOSE("Against the close"),
-    CLOSE_SOURCE("Close from"),
+    CLOSE_SOURCE("Close basis"),
     ;
 }
 
@@ -102,7 +102,7 @@ object BetDims {
             else -> "Void / other"
         }
         BetDim.CLOSE -> ClosingLine.clv(b, now)?.let { if (it > 0) "Beat the close" else "Missed the close" } ?: "No true close yet"
-        BetDim.CLOSE_SOURCE -> ClosingLine.closeOf(b, now)?.second?.let(ClosingLine::sourceLabel) ?: "No true close yet"
+        BetDim.CLOSE_SOURCE -> if (b.status == BetStatus.VOID) "No true close yet" else ClosingLine.closeOf(b, now)?.second?.let { BetHistory.closeBasis(b, it) } ?: "No true close yet"
     }
 
     /** The natural order of a dimension's groups; groups it doesn't list sort after, by name. */
@@ -156,7 +156,10 @@ data class SmartChoice(val title: String, val note: String, val spec: BetFilterS
 object BetSmartFilters {
 
     /** A group needs this many bets with a true close before it is called best or worst. */
-    const val MIN_CLOSED = 15
+    const val MIN_CLOSED = 30
+
+    /** A group's CLV must be this many standard errors from zero to be called best or worst. */
+    const val MIN_T = 2.0
 
     fun fixed(): List<Pair<String, BetFilterSpec>> = listOf(
         "Everything" to BetFilterSpec.ALL,
@@ -204,8 +207,9 @@ object BetSmartFilters {
     /** The groups that beat the close the most and the ones that gave it away the most, strongest evidence first (by t-statistic, then size). */
     fun findings(bets: List<TrackedBet>, now: Long, take: Int = 3): Pair<List<Group>, List<Group>> {
         val g = groups(bets, now).filter { it.tStat != null }
-        val best = g.filter { it.meanClv > 0 }.sortedByDescending { it.tStat!! }.take(take)
-        val worst = g.filter { it.meanClv < 0 }.sortedBy { it.tStat!! }.take(take)
+        // About 60 groups are screened at once, so some reach |t| of 2 by luck alone: a group is shown only at |t| >= 2 and the dropdown says it is a lead, not proof.
+        val best = g.filter { it.meanClv > 0 && it.tStat!! >= MIN_T }.sortedByDescending { it.tStat!! }.take(take)
+        val worst = g.filter { it.meanClv < 0 && it.tStat!! <= -MIN_T }.sortedBy { it.tStat!! }.take(take)
         return best to worst
     }
 
@@ -214,7 +218,7 @@ object BetSmartFilters {
         val fixed = fixed().map { (title, spec) -> SmartChoice(title, "", spec, spec.apply(bets, now).size) }.filter { it.n > 0 || it.spec.isEmpty }
         val (best, worst) = findings(bets, now)
         fun pct(v: Double) = String.format(Locale.US, "%+.1f%%", v * 100)
-        fun found(prefix: String, g: Group) = SmartChoice("$prefix: ${g.value}", "${g.dim.label} · CLV ${pct(g.meanClv)} on ${g.closed} closed", BetFilterSpec.of(g.dim, g.value), g.n)
+        fun found(prefix: String, g: Group) = SmartChoice("$prefix: ${g.value}", "${g.dim.label} · CLV ${pct(g.meanClv)} on ${g.closed} closed, t=${String.format(Locale.US, "%.1f", g.tStat ?: 0.0)} (a lead, not proof)", BetFilterSpec.of(g.dim, g.value), g.n)
         return fixed + best.map { found("Best", it) } + worst.map { found("Worst", it) }
     }
 }
