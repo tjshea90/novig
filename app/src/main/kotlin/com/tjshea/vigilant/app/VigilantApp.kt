@@ -427,12 +427,33 @@ class AppContainer(private val app: Application) {
     val opCloses = com.tjshea.vigilant.data.tracker.OpCloses(opClient, opFeed, { keyStore.current(ApiProvider.ODDSPAPI).isNotEmpty() })
     val opScores = com.tjshea.vigilant.data.tracker.OpScores(opClient, opFeed, { keyStore.current(ApiProvider.ODDSPAPI).isNotEmpty() })
 
+    /**
+     * Unabated Free (Tj, 2026-10-11; UNABATED_API.md): DraftKings, FanDuel, MGM, Caesars, theScore and Fanatics' lines and props at no credit cost. Its client keeps every odds call 5.2 s apart; its feed serves cached boards
+     * and refreshes them in the background, so a scan never waits behind it. It is the LAST source ([com.tjshea.vigilant.data.scanner.Scanner.SOURCE_ORDER]), so it prices only what no better feed sent. Used only while [unabatedActive].
+     */
+    val unabatedClient = com.tjshea.vigilant.data.reference.UnabatedClient(http, KeyPool(QuotaPolicy.UNABATED, { keyStore.current(ApiProvider.UNABATED) }, usage))
+    val unabatedFeed = com.tjshea.vigilant.data.reference.UnabatedFeed(unabatedClient, appScope)
+    val unabatedGames = com.tjshea.vigilant.data.reference.UnabatedGamesSource(unabatedFeed)
+    val unabatedProps = com.tjshea.vigilant.data.reference.UnabatedPropsSource(unabatedFeed)
+
+    /** Unabated is on, a key is saved and it is answering. */
+    fun unabatedActive(s: ScanSettings): Boolean = AppBook.isNovig && s.unabated && keyStore.current(ApiProvider.UNABATED).isNotEmpty() && !unabatedClient.down()
+
+    /**
+     * OddsPapi Free (v4; ODDSPAPI_API.md addendum 2026-10-11): Tj's free key, a different product from the v5 [opClient]. Its small monthly allowance is spent only on finding a bet's game and the market list
+     * ([op4Budget] keeps a reserve and an even daily share); the closing price itself is read from the FREE historical odds. Used only for closes, last among the paid close sources.
+     */
+    val op4Client = com.tjshea.vigilant.data.reference.OddsPapi4Client(http, KeyPool(QuotaPolicy.ODDSPAPI_FREE, { keyStore.current(ApiProvider.ODDSPAPI_FREE) }, usage), { keyStore.current(ApiProvider.ODDSPAPI_FREE) })
+    val op4Budget = com.tjshea.vigilant.data.reference.Op4Budget(op4Client)
+    val op4Closes = com.tjshea.vigilant.data.tracker.Op4Closes(op4Client, op4Budget, com.tjshea.vigilant.data.reference.Op4Store(File(app.filesDir, "oddspapi_free_cache.json")))
+
     /** Follows Settings: the closes and scores read OddsPapi only while its switch is on. Safe to call on every settings change; off, nothing is asked. */
     fun syncOp(s: ScanSettings) {
         com.tjshea.vigilant.engine.WideQuotes.enabled = s.ignoreWideQuotes
         val on = AppBook.isNovig && s.oddsPapi
         opCloses.enabled = on
         opScores.enabled = on
+        op4Closes.enabled = AppBook.isNovig && s.oddsPapiFree
     }
 
     /** Follows Settings: the closes and scores read SportsGameOdds only while Pro is on. Safe to call on every settings change. */
@@ -468,7 +489,7 @@ class AppContainer(private val app: Application) {
 
     /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when ParlayAPI is on and Tj has a key; nothing otherwise. */
     val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, parlayPool, json, historyDays = { parlayAccount.historyDays() })
-    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(sgoCloses, opCloses, parlayCloses, espnCloses, novigCloses))
+    val closeBackfill = com.tjshea.vigilant.data.tracker.CloseBackfill(tracker, listOf(sgoCloses, opCloses, op4Closes, parlayCloses, espnCloses, novigCloses))
 
     /**
      * The scan study (Tj, 2026-10-03: "on every cno scan, the vigilant app saves logs on all kinds of information … when those bets are final, it logs whether
@@ -1770,10 +1791,12 @@ class AppContainer(private val app: Application) {
 
     private fun allReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> {
         val all = baseReferenceSources(settings, background, scan)
+        // Unabated Free (Tj, 2026-10-11): last in line. It costs no credits, so no other feed rests for it; Pricing keeps the earlier source's quote for a book both send, so it prices only the gaps and covers a feed that is spent or down.
+        val unabatedLast = if (unabatedActive(settings)) listOf<ReferenceSource>(unabatedGames) + (if (com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families) listOf(unabatedProps) else emptyList()) else emptyList()
         // SportsGameOdds Pro (Tj, 2026-10-09): one feed prices what the paid ones sell; they rest for every league it carries (tennis keeps them), and come back if SGO stops answering.
         val sgoOn = sgoActive(settings)
         val opOn = opActive(settings)
-        if (!sgoOn && !opOn) return all
+        if (!sgoOn && !opOn) return all + unabatedLast
         val replaced = setOfNotNull(
             pinnacle.id.takeUnless { pinnoddsActive(settings) },   // Pinnodds' Pinnacle board prices every league, SGO's included
             propLine.id, propLineProps.id, oddsApi.id, bookProps.id, parlayOdds.id, parlayOddsBackground.id, parlayProps.id, parlayPropsBackground.id, parlayHalves.id, parlayHalvesBackground.id,
@@ -1789,7 +1812,7 @@ class AppContainer(private val app: Application) {
             r
         }
         return (if (sgoOn) listOf<ReferenceSource>(sgoGames) + (if (props) listOf(sgoProps) else emptyList()) else emptyList()) +
-            (if (opOn) listOf<ReferenceSource>(opGames) + (if (props) listOf(opProps) else emptyList()) else emptyList()) + rest
+            (if (opOn) listOf<ReferenceSource>(opGames) + (if (props) listOf(opProps) else emptyList()) else emptyList()) + rest + unabatedLast
     }
 
     internal fun baseReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {
