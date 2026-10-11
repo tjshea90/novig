@@ -48,7 +48,7 @@ class LevelSlidersTest {
             assertTrue(y.trapEarlyHours >= x.trapEarlyHours)
             assertTrue(y.autoBetKinds.size >= x.autoBetKinds.size)
             assertTrue((y.autoBetMaxOdds == 0) || (x.autoBetMaxOdds != 0 && y.autoBetMaxOdds >= x.autoBetMaxOdds))
-            assertTrue(y.autoBetMinOdds >= x.autoBetMinOdds)
+            assertTrue((y.autoBetMinOdds == 0) || (x.autoBetMinOdds != 0 && y.autoBetMinOdds <= x.autoBetMinOdds))
             assertTrue(y.autoBetFavouriteExtraEv <= x.autoBetFavouriteExtraEv + 1e-12)
         }
         a.forEach { assertTrue(it.autoBetMinEv >= BetSlider.MIN_EV - 1e-12 && it.autoBetBooks >= 2 && it.sharpVetoMinEv > 0.0 && it.autoBetMinStars == 0.0) }

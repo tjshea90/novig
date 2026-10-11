@@ -18,7 +18,8 @@ internal object Levels {
     /** Straight between anchors (level to value). */
     fun curve(level: Int, anchors: List<Pair<Int, Double>>): Double {
         val l = level.coerceIn(MIN, MAX)
-        val i = anchors.indexOfLast { it.first <= l }.coerceAtMost(anchors.size - 2)
+        if (l <= anchors.first().first) return anchors.first().second
+        val i = anchors.indexOfLast { it.first <= l }.coerceIn(0, anchors.size - 2)
         val (x0, y0) = anchors[i]
         val (x1, y1) = anchors[i + 1]
         return y0 + (y1 - y0) * (l - x0) / (x1 - x0).toDouble()
