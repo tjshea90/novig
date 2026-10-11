@@ -344,6 +344,17 @@ fun AutoBetSection(
         style = MaterialTheme.typography.bodySmall, color = subtle,
     )
 
+    // The least a bet's star rating may be (Tj, 2026-10-11).
+    Text("Smallest star rating", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.AUTO_BET_STARS_CHOICES, s.autoBetMinStars, { if (it <= 0.0) "Any" else com.tjshea.vigilant.data.scanner.BetRating.label(it) + "★" }, modifier = Modifier.testTag("autoBetStarsChips")) { v ->
+        onUpdate { it.copy(vigGuards = it.vigGuards.copy(autoBetMinStars = v)) }
+    }
+    Text(
+        "Every bet is rated 1 to 5 stars on how much to trust its edge: how many companies price both sides, how many agree it is +EV, the size of the edge, whether a sharp book agrees and how tightly the books' fair odds sit together. " +
+            "Pick 3½★ and only bets rated 3½ or better are placed (CrazyNinjaOdds', Vigilant's and tennis bets alike).",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
+    )
+
     Text("Books that must price both sides", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_TWO_SIDED_CHOICES, s.autoBetTwoSided, { "$it" }, modifier = Modifier.testTag("autoBetTwoSidedChips")) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }
     TypedIntField(NumberSpecs.count("books", 1, 12), s.autoBetTwoSided, "autoBetTwoSidedField", none = { false }) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }

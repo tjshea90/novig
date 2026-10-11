@@ -466,6 +466,8 @@ fun OpportunityCard(
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EvBadge(q.evPercent)
+                Spacer(Modifier.width(8.dp))
+                StarRating(o.rating)
                 Spacer(Modifier.width(10.dp))
                 Text(
                     "${o.league.emoji} ${o.league.displayName} · ${if (o.isLive) "LIVE" else Format.startTime(o.event.startsTs)}",
@@ -489,7 +491,6 @@ fun OpportunityCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (o.agreement.sharpAgrees) Text("★ ", color = SharpStarColor, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text(
                             o.selection, Modifier.weight(1f, fill = false),
                             style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -547,8 +548,24 @@ fun OpportunityCard(
 /** How often the open +EV list re-reads Novig's prices for its bets. */
 internal const val AUTO_RECHECK_MS = 60_000L
 
-/** Gold, the ★ of a bet a sharp book also says is +EV. */
+/** Gold, the stars of a bet's rating. */
 internal val SharpStarColor = androidx.compose.ui.graphics.Color(0xFFF5B301)
+
+/**
+ * The bet's 1-5 star rating, "★★★½ 3.5" (Tj, 2026-10-11): how much to trust the edge ([com.tjshea.vigilant.data.scanner.BetRating]). Gold; the number after it is the exact half-star value.
+ * Nothing while the bet has no rating.
+ */
+@Composable
+fun StarRating(rating: com.tjshea.vigilant.data.scanner.BetRating.Rating?, modifier: Modifier = Modifier, large: Boolean = false) {
+    if (rating == null) return
+    androidx.compose.foundation.layout.Row(modifier.testTag("starRating"), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            rating.glyphs, color = SharpStarColor, fontWeight = FontWeight.Bold,
+            style = if (large) MaterialTheme.typography.titleMedium else MaterialTheme.typography.labelLarge,
+        )
+        Text(" " + com.tjshea.vigilant.data.scanner.BetRating.text(rating.stars), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
 
 /**
  * "✓ 4 of 5 books agree" (green when enough books agree for an alert: [Agreement.Count.agrees]) or "2 of 5 books agree" (amber), like CNO's card (Tj, 2026-10-11: "make it show how many books
@@ -559,7 +576,7 @@ fun AgreementLine(a: com.tjshea.vigilant.data.scanner.Agreement.Count, modifier:
     if (a.twoSided <= 0) return
     val color = if (a.agrees) Edge.colors.positive else Edge.colors.warning
     Text(
-        (if (a.agrees) "✓ " else "") + a.text + (if (a.sharpAgrees) " · sharp book agrees ★" else if (a.sharpAgainst) " · a sharp book disagrees" else ""),
+        (if (a.agrees) "✓ " else "") + a.text + (if (a.sharpAgrees) " · a sharp book agrees" else if (a.sharpAgainst) " · a sharp book disagrees" else ""),
         modifier = modifier.testTag("agreementLine"),
         style = MaterialTheme.typography.labelMedium,
         color = color,

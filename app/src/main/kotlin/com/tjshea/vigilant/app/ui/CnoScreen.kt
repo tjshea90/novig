@@ -621,6 +621,8 @@ private fun CnoCard(
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EvBadge(pick.ev, low = pick.ev < settings.cnoFilters.minEv - 1e-9)
+                Spacer(Modifier.width(8.dp))
+                StarRating(check?.rating)
                 Spacer(Modifier.width(10.dp))
                 Text(
                     "${sportEmoji(row.sport)} ${row.league.ifEmpty { row.sport }} · " +
@@ -778,6 +780,7 @@ fun CnoDetail(
         }
         Column {
             Text(pickText(row.bet, team, agrees = false), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            StarRating(check?.rating, large = true)
             Text("${row.market} · ${row.event}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             row.startsAtMs?.let { Text("${row.league.ifEmpty { row.sport }} · ${Format.startTime(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             GameBetsChip(row.event, row.startsAtMs, row.league, Modifier.padding(top = 4.dp))

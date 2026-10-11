@@ -107,10 +107,8 @@ fun OpportunityDetail(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Row {
-                    if (o.agreement.sharpAgrees) Text("★ ", color = SharpStarColor, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text(o.selection, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                }
+                Text(o.selection, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                StarRating(o.rating, large = true)
                 Text(
                     "${o.marketLabel} · ${o.league.displayName} · ${Format.startTime(o.event.startsTs)}",
                     style = MaterialTheme.typography.bodySmall,
@@ -267,7 +265,7 @@ fun OpportunityDetail(
                 }
             }
             Text(
-                "★ sharp book · one book a company · greyed rows weren't used for this line's fair price · amber rows looked wrong next to the rest of the market",
+                "★ sharp book (in the table) · one book a company · greyed rows weren't used for this line's fair price · amber rows looked wrong next to the rest of the market",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
