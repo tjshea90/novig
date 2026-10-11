@@ -164,6 +164,7 @@ class ScreenshotTest {
         shoot("5m_auto_bet_tab") { com.tjshea.vigilant.app.ui.AutoBetScreen(s, {}) }
         compose.onNodeWithTag("autoBetSwitch").assertIsOn()
         compose.onNodeWithText("Running with the background CNO scan", substring = true).assertExists()
+        compose.onNodeWithTag("autoBetAdvanced").performClick()
         for (section in listOf("PRESETS", "WHAT IT BETS", "SHARP-BOOK VETO", "TRAP GUARD", "HOW MUCH", "HOW OFTEN", "NOTIFICATIONS")) compose.onNodeWithText(section).assertExists()
     }
 

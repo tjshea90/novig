@@ -341,8 +341,9 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                     level = bidLevel, custom = bidCustom, name = com.tjshea.vigilant.data.scanner.BidSlider::name, stops = com.tjshea.vigilant.data.scanner.BidSlider.STOPS,
                     describe = com.tjshea.vigilant.data.scanner.BidSlider.describe(if (bidLevel in 1..100) bidLevel else 55, bidCustom),
                 ) { v -> actions.onUpdate { com.tjshea.vigilant.data.scanner.BidSlider.apply(it, v) } }
+                SectionTitle("Advanced settings")
                 Text(
-                    if (rulesOpen) "Hide advanced settings" else "Advanced settings: " + MakerRulesText.summary(ui.settings),
+                    if (rulesOpen) "Hide the rules" else MakerRulesText.summary(ui.settings),
                     Modifier.fillMaxWidth().clickable { rulesOpen = !rulesOpen }.padding(vertical = 10.dp).testTag("makerRulesToggle"),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
                 )
