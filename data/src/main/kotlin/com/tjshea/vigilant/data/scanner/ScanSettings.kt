@@ -862,6 +862,11 @@ data class ScanSettings(
         if (s.schema < 15) {
             s = s.copy(leagues = s.leagues + TENNIS, autoBetTennis = true, schema = 15)
         }
+        // v0.89.7 (Tj, 2026-10-11: "oddspapi currently does not scan"): switching OddsPapi Free on meant closing lines only until a daily figure was picked, which read as a switch that did nothing.
+        // It now prices scans from 10 requests a day unless a figure is chosen; a file that still says 0 (the old default) moves once, and Off stays a choice.
+        if (s.schema < 16) {
+            s = s.copy(gates = s.gates.copy(op4Fair = if (s.gates.op4Fair == 0) 10 else s.gates.op4Fair), schema = 16)
+        }
         return s
     }
 
@@ -1241,7 +1246,7 @@ data class ApiGates(
     val usePinnodds: Boolean = true,
     val opAllBooks: Boolean = false,
     /** OddsPapi Free (v4): billable requests a day the fair-odds feed may spend reading whole games (every book in one request); 0 = closing lines only ([com.tjshea.vigilant.data.reference.Op4Feed]). */
-    val op4Fair: Int = 0,
+    val op4Fair: Int = 10,
     /** SportsGameOdds: price the fair line with every book it carries (82), not only the picked ones; falls back to the picked books for a league whose unfiltered query times out. */
     val sgoAllBooks: Boolean = false,
     /** PropLine: every sportsbook it lists (about 30, one request either way), not only the picked ones. */
