@@ -163,6 +163,11 @@ data class ScanSettings(
      * API from the Vigilant wallet, pregame only ([com.tjshea.vigilant.data.novig.trading.AutoBet], `app/AutoBettor`).
      */
     val autoBet: Boolean = false,
+    /**
+     * Tennis in the auto-bet (Tj, 2026-10-10: "I want the auto bid feature and auto bet features both to include all tennis ... Let me toggle tennis on and off"). CNO carries no tennis
+     * (RESEARCH.md §85), so the auto-bet takes tennis from Vigilant's own scan ([com.tjshea.vigilant.app.AutoBettor.runTennis]); needs ATP/WTA among [leagues]. [withTennis] flips both.
+     */
+    val autoBetTennis: Boolean = true,
     /** The fewest books that must each say +EV on their own ([com.tjshea.vigilant.data.cno.CnoBooks.Check.agreeing]): 2, 3, 4 or 5. */
     val autoBetBooks: Int = 3,
     /** The smallest edge at Novig's price now: [AUTO_BET_MIN_EV_CHOICES], or what Tj typed (0.0325 = +3.25%). */
@@ -839,8 +844,18 @@ data class ScanSettings(
         if (s.schema < 14) {
             s = s.copy(trapBidHours = s.trapEarlyHours, schema = 14)
         }
+        // v0.89.0 (Tj, 2026-10-10): tennis in the auto-bet and the bids, on once beside whatever leagues are picked; the Tennis switch turns it off.
+        if (s.schema < 15) {
+            s = s.copy(leagues = s.leagues + TENNIS, autoBetTennis = true, schema = 15)
+        }
         return s
     }
+
+    /** Whether ATP and WTA are both scanned (the Tennis switch's state). */
+    val tennisOn: Boolean get() = leagues.containsAll(TENNIS)
+
+    /** The Tennis switch: ATP and WTA in or out of the scanned [leagues] (so the pregame bids follow) and the tennis auto-bet on or off. */
+    fun withTennis(on: Boolean): ScanSettings = copy(leagues = if (on) leagues + TENNIS else leagues - TENNIS, autoBetTennis = on)
 
     /** The dollars a bet's Novig slip opens with, for a bet whose Kelly stake is [kelly]; null = none. */
     fun slipStakeFor(kelly: Double?): Double? = NovigLinks.stake(slipStake, slipCustomStake, kelly)
