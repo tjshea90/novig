@@ -140,7 +140,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
         }
     }
 
-    SectionTitle("Your money (the slider never changes it)")
+    SectionTitle("Live bid limits (your money: the slider never changes it)")
     LbHint("A bid's size is a fraction of full Kelly on your bankroll (Settings › Betting & Novig account: ${LiveBidText.money(s.bankroll)}) for that bid's own price and edge, raised to the smallest stake and held to the biggest and to Settings' per-bet maximum. Makers pay no fee.")
     LbTitle("Live bid stake rule")
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
