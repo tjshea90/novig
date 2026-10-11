@@ -6508,3 +6508,8 @@ I have auto bet turned on. Why isn't it betting the 4 Star Bet in the screenshot
 ```
 Also if I have live bets toggled to show up in the scanner, make a filter in the scanner for live games only. Make another filter in the scanner to sort by bet rating (stars)
 ```
+
+## 2026-10-11T19:48:57Z
+```
+Figure out why this error happens, how to fix it, and make it automatically recheck every few seconds and if it is fixed then automatically resume auto bet. If it cannot be fixed, make a notification that auto bet stopped and explain the problem
+```
