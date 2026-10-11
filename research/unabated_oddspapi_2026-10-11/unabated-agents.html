@@ -1,0 +1,328 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>:root, .dark-mode, .light-mode {
+  color-scheme: dark;
+  --scalar-background-1: #0e1825;
+  --scalar-background-2: #132234;
+  --scalar-background-3: #1b2d40;
+  --scalar-background-accent: #18372f;
+  --scalar-color-1: #d9e4f0;
+  --scalar-color-2: #a7b8ca;
+  --scalar-color-3: #93a8bd;
+  --scalar-color-accent: #74dfb9;
+  --scalar-border-color: #29394b;
+  --scalar-radius: 4px;
+  --scalar-font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --scalar-font-code: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --scalar-color-green: #82e1b6;
+  --scalar-color-blue: #a4c6ed;
+  --scalar-color-yellow: #eabd76;
+  --scalar-color-red: #f3a5b0;
+}
+body { background: #0e1825; color: #d9e4f0; }
+a { text-underline-offset: 3px; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid #74dfb9; outline-offset: 4px; }
+pre { max-width: 100%; overflow-x: auto; }
+/* Scalar can render introduction downloads despite the reference configuration.
+   Hide the control in wide and narrow layouts; the agent guide links the contract. */
+.download-container { display: none !important; }
+.ua-quickstart { max-width: 820px; margin: 0 auto; padding: 8px 0 24px; }
+.ua-quickstart h1 { font-size: clamp(30px, 3vw, 42px); font-weight: 600; letter-spacing: -1.2px; line-height: 1.18; margin: 0 0 18px; }
+.ua-quickstart h2 { font-size: 19px; font-weight: 600; letter-spacing: -.3px; margin: 0 0 10px; line-height: 1.35; }
+.ua-quickstart h3 { font-size: 16px; font-weight: 600; margin: 0 0 7px; }
+.ua-quickstart p { color: #a7b8ca; font-size: 15px; line-height: 1.75; margin: 0 0 15px; }
+.ua-quickstart .ua-intro { max-width: 640px; font-size: 17px; }
+.ua-eyebrow { display: flex; gap: 9px; color: #a7b8ca; font-size: 12px; margin-bottom: 20px; }
+.ua-agent { padding: 20px; background: #14362d; border: 1px solid #285343; border-radius: 9px; display: flex; gap: 14px; margin: 28px 0; }
+.ua-agent .ua-icon { color: #77e4b7; font-size: 22px; }
+.ua-agent p { color: #d9e4f0; font-size: 14px; margin-bottom: 10px; }
+.ua-inline-links { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.ua-quickstart a, .ua-textlink { color: #74dfb9; text-decoration: none; font-size: inherit; }
+.ua-quickstart a:hover, .ua-textlink:hover { text-decoration: underline; }
+button.ua-textlink { background: transparent; border: 0; padding: 0; cursor: pointer; font: inherit; }
+.ua-inline-links a, .ua-inline-links button { font-size: 13px; font-weight: 500; }
+.ua-tierbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 28px; }
+.ua-tierbar > span { color: #a7b8ca; font-size: 13px; margin-right: 5px; }
+.ua-tierbar button { padding: 8px 12px; border-radius: 5px; background: transparent; color: #d9e4f0; border: 1px solid #29394b; font: 13px var(--scalar-font); cursor: pointer; }
+.ua-tierbar button[aria-pressed="true"] { background: #dce8f3; color: #182d3e; border-color: transparent; }
+.ua-step { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 16px; margin-top: 32px; }
+.ua-step[hidden] { display: none; }
+.ua-step-number { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 50%; background: #132234; border: 1px solid #29394b; font-size: 12px; }
+.ua-code { background: #102032; color: #e0e9f3; border: 1px solid #2c3c4e; border-radius: 8px; overflow: hidden; margin: 16px 0; min-width: 0; }
+.ua-code-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; border-bottom: 1px solid #2a3b4e; padding: 9px 12px; font-size: 12px; color: #a7b8ca; }
+.ua-tabs { display: flex; gap: 3px; flex-wrap: wrap; }
+.ua-tabs button { border: 0; border-radius: 4px; padding: 7px 9px; font: 12px var(--scalar-font); background: transparent; color: #a7b8ca; cursor: pointer; }
+.ua-tabs button[aria-pressed="true"] { background: #293d52; color: white; }
+.ua-copy { background: transparent; border: 0; color: #c3d1e0; padding: 7px 4px; font: 12px var(--scalar-font); cursor: pointer; }
+.ua-quickstart pre { margin: 0; padding: 18px; font: 12px/1.8 var(--scalar-font-code); white-space: pre; background: #102032; color: #e0e9f3; }
+.ua-quickstart pre code { font: inherit; padding: 0; border: 0; color: inherit; background: transparent; }
+.ua-quickstart :not(pre) > code { background: #1b2d40; color: #d9e4f0; border-radius: 3px; padding: 2px 5px; font-size: 13px; }
+.ua-note { padding: 16px; display: flex; align-items: flex-start; gap: 12px; background: #132234; border: 1px solid #29394b; border-radius: 7px; margin: 20px 0; }
+.ua-note .ua-icon { font-size: 20px; line-height: 1.35; flex-shrink: 0; }
+.ua-note p { margin: 0; font-size: 14px; }
+.ua-warn { background: #302719; border-color: #5d4930; }
+.ua-warn .ua-icon { color: #eabd76; }
+.ua-warn strong { color: #edce9e; }
+.ua-quickstart .ua-small { font-size: 13px; margin-top: 12px; }
+.ua-response { border: 1px solid #29394b; border-radius: 8px; margin-top: 20px; overflow: hidden; }
+.ua-response summary { padding: 15px; font-size: 14px; color: #d9e4f0; cursor: pointer; }
+.ua-response p { padding: 16px; font-size: 13px; margin: 0; }
+.ua-next { border-top: 1px solid #29394b; margin-top: 36px; padding-top: 22px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; color: #a7b8ca; font-size: 14px; }
+.ua-copy-status { color: #74dfb9; min-height: 22px; font-size: 13px; }
+.ua-footer { display: flex; flex-wrap: wrap; gap: 22px; padding: 28px; border-top: 1px solid #29394b; font: 12px var(--scalar-font); color: #a7b8ca; }
+.ua-footer a { color: #a7b8ca; text-decoration: none; }
+.ua-footer-muted { margin-left: 8px; }
+@media (max-width: 650px) { .ua-quickstart { padding: 0 0 20px; } .ua-step { gap: 10px; grid-template-columns: 25px minmax(0, 1fr); } .ua-step-number { width: 24px; height: 24px; } .ua-code-top { gap: 3px; padding: 8px; } .ua-tabs button { padding: 6px; } .ua-agent { padding: 16px; } .ua-quickstart pre { font-size: 11px; padding: 14px; } }
+</style>
+<title>Agents welcome</title>
+<link rel="stylesheet" crossorigin href="/_scalar/index-CgFc92Au.css">
+<link rel="stylesheet" href="/docs.css">
+<link rel="preload" href="https://fonts.scalar.com/inter-latin.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+<link rel="modulepreload" crossorigin href="/_scalar/preload-helper-zJ_50EbN.js">
+<link rel="modulepreload" crossorigin href="/_scalar/constants-KokQwIFu.js">
+<link rel="modulepreload" crossorigin href="/_scalar/chunk-BVpWp9h4.js">
+<link rel="modulepreload" crossorigin href="/_scalar/dist-DtrkcxPN.js">
+<link rel="modulepreload" crossorigin href="/_scalar/vue.runtime.esm-bundler-CyXAcUA8.js">
+<link rel="modulepreload" crossorigin href="/_scalar/useScalarIcon-B4daKjVD.js">
+<link rel="modulepreload" crossorigin href="/_scalar/floating-ui.vue-kTmhaRrJ.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarFloating.vue-CKTDs7GR.js">
+<link rel="modulepreload" crossorigin href="/_scalar/core-DZYf2T4a.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarDropdown.vue-Btd2qJoN.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarIconButton.vue-Czc102ZO.js">
+<link rel="modulepreload" crossorigin href="/_scalar/useLoadingState-ZMsvlYR6.js">
+<link rel="modulepreload" crossorigin href="/_scalar/dist-Bd_p-uiC.js">
+<link rel="modulepreload" crossorigin href="/_scalar/useClipboard-Gsa1GzDS.js">
+<link rel="modulepreload" crossorigin href="/_scalar/http-info-BMJ15NKt.js">
+<link rel="modulepreload" crossorigin href="/_scalar/is-object-C09o0hfE.js">
+<link rel="modulepreload" crossorigin href="/_scalar/type-guards-BCT_2hKj.js">
+<link rel="modulepreload" crossorigin href="/_scalar/interface-content-folder.svg-JmCeSA-m.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarIconCaretRight-DHcOSSd4.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarIconWebhooksLogo-BJjBxJEc.js">
+<link rel="modulepreload" crossorigin href="/_scalar/is-http-method-Bq1hWWun.js">
+<link rel="modulepreload" crossorigin href="/_scalar/HttpMethod.vue-DpK0Aetr.js">
+<link rel="modulepreload" crossorigin href="/_scalar/is-mac-os-B5_qdaWE.js">
+<link rel="modulepreload" crossorigin href="/_scalar/deep-clone-BmBYqqAZ.js">
+<link rel="modulepreload" crossorigin href="/_scalar/create-sidebar-state-CNcLDvsw.js">
+<link rel="modulepreload" crossorigin href="/_scalar/validate-C45-2741.js">
+<link rel="modulepreload" crossorigin href="/_scalar/schema-BKwhe3ik.js">
+<link rel="modulepreload" crossorigin href="/_scalar/index.browser-BEODCD8T.js">
+<link rel="modulepreload" crossorigin href="/_scalar/dist-DW4uLSp-.js">
+<link rel="modulepreload" crossorigin href="/_scalar/state-CtmHsdg1.js">
+<link rel="modulepreload" crossorigin href="/_scalar/result-f7UJSZrp.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarIconArrowUpRight-CZDpN-g-.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarIconCaretDown-DEhSoEU6.js">
+<link rel="modulepreload" crossorigin href="/_scalar/heading-map-D8UPLeNB.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarIconCaretUp-szQANR_W.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarIconMagnifyingGlass-Bk6npREp.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarIconSparkle-C5_GXIam.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarIconWarning-BSx_IfDc.js">
+<link rel="modulepreload" crossorigin href="/_scalar/ScalarIconX-CDLVcrzr.js">
+<link rel="modulepreload" crossorigin href="/_scalar/resolveAndFetchIcon-CC8uCuw7.js">
+<link rel="modulepreload" crossorigin href="/_scalar/_plugin-vue_export-helper-BDNMzG2s.js">
+<link rel="modulepreload" crossorigin href="/_scalar/useAgentConfig-DkoNg5fN.js">
+<link rel="modulepreload" crossorigin href="/_scalar/snippet-BkUNhhtL.js">
+<link rel="modulepreload" crossorigin href="/_scalar/vue.Cr7xSEtD-x9Z36vFt.js">
+<link rel="preload" href="/docs.css" as="style">
+<script type="module" crossorigin src="/_scalar/index-BSRoRssL.js"></script>
+<meta name="description" content="Market data for developers, content partners, and the agents helping them.">
+<meta property="og:site_name" content="Unabated API">
+<meta property="og:image" content="https://docs.unabated.com/og/a782ea5492cd0e8105c9b5f1151dd6e2e7243956.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:title" content="Build with an agent">
+<meta property="og:type" content="article">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.unabated.com/og/a782ea5492cd0e8105c9b5f1151dd6e2e7243956.png">
+<meta name="twitter:title" content="Build with an agent"></head>
+  <body class="scalar-app">
+    <script>
+       try {
+          const systemMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+
+          const configMode = 'dark';
+          const savedMode = localStorage.getItem('colorMode');
+
+          // savedMode (user's explicit choice) takes priority over the config default,
+          // matching the priority order in useColorMode: localStorage > config > system
+          const effectiveConfig = configMode === 'system' ? systemMode : (configMode || systemMode);
+          const mode = savedMode || effectiveConfig;
+
+          document.body.classList.add(mode + '-mode');
+       } catch {}
+    </script>
+    <div id="app"><!--[--><div class="section-flare" data-v-3b125427><div class="section-flare-item" data-v-3b125427></div><div class="section-flare-item" data-v-3b125427></div><div class="section-flare-item" data-v-3b125427></div><div class="section-flare-item" data-v-3b125427></div><div class="section-flare-item" data-v-3b125427></div><div class="section-flare-item" data-v-3b125427></div><div class="section-flare-item" data-v-3b125427></div><div class="section-flare-item" data-v-3b125427></div></div><main class="content content-header content-sidebar content-toc" data-v-3b125427><div class="page-content" data-v-3b125427><div class="page-layout" hasmath="false" data-v-d049deae><!----><div class="page-body" data-v-d049deae><div class="page page--toc page--docs-page t-editor" data-v-d049deae><div class="content" data-v-d049deae><div class="page-header" data-v-eacc4809 data-v-d049deae><div class="page-breadcrumb" data-v-eacc4809><!----></div><div class="page-actions" data-v-eacc4809><!--[--><!--]--><div class="page-copy" data-v-8d5900ea data-v-eacc4809><button type="button" class="scalar-button flex cursor-pointer items-center justify-center rounded font-medium -outline-offset-1 px-3.5 py-2 text-sm/4 scalar-button-outlined active:bg-btn-1 shadow-border bg-b-1 text-c-1 hover:bg-b-2 page-copy__button" style="" data-v-8d5900ea><div class="shrink-0 size-3.5 -ml-0.25 mr-1"><!--[--><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" width="1em" height="1em" aria-hidden="true" role="presentation" data-v-8d5900ea><!--[--><!--]--><g><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"></path></g></svg><!--]--></div><!--[--> Copy Page <!--]--><!----></button><!--[--><div class="contents"><!--[--><!--[--><button aria-disabled="false" type="button" class="scalar-icon-button grid aspect-square cursor-pointer rounded size-6 p-1 scalar-button-outlined active:bg-btn-1 shadow-border bg-b-1 text-c-1 hover:bg-b-2 page-copy__icon-button" style="" data-v-8d5900ea><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" width="1em" height="1em" aria-hidden="true" role="presentation" class="size-full" style=""><!--[--><!--]--><g><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path></g></svg><span class="sr-only">Test</span></button><!--]--><!--]--></div><!----><!--]--></div></div></div><div data-v-d049deae><div class="page-node t-prose">
+<h1 id="agents-welcome" class="scroll-pad interaction-observer-heading t-editor__heading" data-level="1" data-scalar-type="heading">
+  Agents welcome
+  <button class="notify-container" aria-label="Copy link to heading"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon notify">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon">
+      <path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"></path>
+    </svg></button>
+</h1>
+<p class="t-editor__paragraph">These docs are built for humans and agents working together. Start with the successful request flow, discover current identifiers from the API, and read each endpoint's available API tiers before making calls.</p>
+<h2 id="read-the-documentation" class="scroll-pad interaction-observer-heading t-editor__heading" data-level="2" data-scalar-type="heading">
+  Read the documentation
+  <button class="notify-container" aria-label="Copy link to heading"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon notify">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon">
+      <path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"></path>
+    </svg></button>
+</h2>
+<ul class="t-editor__list t-editor__paragraph">
+  <li><a href="/start/quickstart" class="t-editor__anchor">Quickstart</a>: key setup, a first odds request, and the next action.</li>
+  <li><a href="/reference" class="t-editor__anchor">API Reference</a>: methods, parameters, request bodies, and response schemas.</li>
+  <li><a href="/llms.txt" class="t-editor__anchor">llms.txt</a>: a compact index of the documentation.</li>
+  <li><a href="/llms-full.txt" class="t-editor__anchor">llms-full.txt</a>: documentation content for tools that prefer one text resource.</li>
+</ul>
+<h2 id="openapi-specification" class="scroll-pad interaction-observer-heading t-editor__heading" data-level="2" data-scalar-type="heading">
+  OpenAPI specification
+  <button class="notify-container" aria-label="Copy link to heading"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon notify">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon">
+      <path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"></path>
+    </svg></button>
+</h2>
+<p class="t-editor__paragraph">The <a href="https://data.unabated.com/swagger/v1/swagger.json" class="t-editor__anchor">OpenAPI specification</a> is machine-readable JSON describing routes, parameters, authentication, and response schemas. Tools can use it to inspect the contract or generate clients. You do not need to download it to follow the readable guides.</p>
+<h2 id="integration-rules-for-an-agent" class="scroll-pad interaction-observer-heading t-editor__heading" data-level="2" data-scalar-type="heading">
+  Integration rules for an agent
+  <button class="notify-container" aria-label="Copy link to heading"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon notify">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon">
+      <path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"></path>
+    </svg></button>
+</h2>
+<ol class="t-editor__list t-editor__paragraph">
+  <li>Use <code inline="true" class="t-editor__inline-code">https://data.unabated.com</code> and confirm the API tier. Keep credentials in an environment variable or secrets store; never request a key in an ordinary chat message.</li>
+  <li>Discover league names, bet type IDs, period types, and market source IDs from the <a href="/guides/discovery" class="t-editor__anchor">discovery endpoints</a>. Do not copy a stale identifier list into application code.</li>
+  <li>Check HTTP status and, when present, <code inline="true" class="t-editor__inline-code">success</code> and <code inline="true" class="t-editor__inline-code">messages</code>. Do not treat an empty response as an authentication success test or a guarantee of sportsbook coverage.</li>
+  <li>Serialize Free odds requests through one scheduler per API key. The five-second interval is shared across odds endpoints; honor <code inline="true" class="t-editor__inline-code">Retry-After</code> after a <code inline="true" class="t-editor__inline-code">429</code>.</li>
+  <li>Read structured odds fields rather than parsing composite dictionary keys. Preserve IDs, prices, points, timestamps, and selection context.</li>
+  <li>For a Free partner, add the partner code to returned generic Gambly links and test from the partner's own platform. Do not guess a sportsbook destination or fabricate a selection URL.</li>
+  <li>Use SSE with Concierge API or Enterprise API. Concierge API does not include <code inline="true" class="t-editor__inline-code">GET /deeplink</code>, <code inline="true" class="t-editor__inline-code">POST /api/v1/bet/generate</code>, or <code inline="true" class="t-editor__inline-code">GET /api/v1/bet/status/{guid}</code>; those operations are available to Free API and Enterprise API. Check each endpoint's available API tiers before requesting data.</li>
+  <li>Use bounded retries and request timeouts. Report an unavailable API tier or unsupported data request rather than attempting to work around it.</li>
+</ol>
+<h2 id="example-prompts" class="scroll-pad interaction-observer-heading t-editor__heading" data-level="2" data-scalar-type="heading">
+  Example prompts
+  <button class="notify-container" aria-label="Copy link to heading"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon notify">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon">
+      <path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"></path>
+    </svg></button>
+</h2>
+<h3 id="build-a-free-odds-integration" class="scroll-pad interaction-observer-heading t-editor__heading" data-level="3" data-scalar-type="heading">
+  Build a Free odds integration
+  <button class="notify-container" aria-label="Copy link to heading"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon notify">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon">
+      <path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"></path>
+    </svg></button>
+</h3>
+<div id="X3oyaVaqx4DfQOtqwZks5" class="t-editor__code-container" data-lang="text" style="position: relative;">
+  <pre style="
+        --line-digits: 2;
+        --line-number-start: -1;
+      " class="t-editor__code custom-code custom-scroll" data-focus="" data-highlight="" data-added="" data-removed="" data-line-number-start="0"><code class="hljs language-text" language="text"><span class="t-code__line" data-line-number="0">Build a server-side Unabated Free API integration using these docs.</span>
+<span class="t-code__line" data-line-number="1">Read UNABATED_API_KEY and UNABATED_PARTNER_CODE from the environment.</span>
+<span class="t-code__line" data-line-number="2">Set UNABATED_API_BASE_URL to https://data.unabated.com.</span>
+<span class="t-code__line" data-line-number="3">Discover current leagues and market sources. Request one straight-odds</span>
+<span class="t-code__line" data-line-number="4">board, check HTTP status plus the success/messages envelope, and show</span>
+<span class="t-code__line" data-line-number="5">available selections using structured fields. Coordinate every odds</span>
+<span class="t-code__line" data-line-number="6">request through one five-second scheduler per key and honor Retry-After.</span>
+<span class="t-code__line" data-line-number="7">Add our partner code to generic Gambly deep links without duplicating it.</span>
+<span class="t-code__line" data-line-number="8">Keep all credentials out of the client, logs, and generated source files.</span>
+</code></pre><button class="language-button t-editor__language-picker" data-scalar-type="code-block-copy" type="button">text
+<svg class="lang-copy" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+      <path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"></path>
+    </svg>
+<svg class="lang-success" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg></button>
+</div>
+<h3 id="build-a-live-odds-store" class="scroll-pad interaction-observer-heading t-editor__heading" data-level="3" data-scalar-type="heading">
+  Build a live odds store
+  <button class="notify-container" aria-label="Copy link to heading"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon notify">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon">
+      <path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"></path>
+    </svg></button>
+</h3>
+<div id="R9APHcftWj0YdtiU2ErJH" class="t-editor__code-container" data-lang="text" style="position: relative;">
+  <pre style="
+        --line-digits: 2;
+        --line-number-start: -1;
+      " class="t-editor__code custom-code custom-scroll" data-focus="" data-highlight="" data-added="" data-removed="" data-line-number-start="0"><code class="hljs language-text" language="text"><span class="t-code__line" data-line-number="0">Using the Unabated streaming guides and API Reference, build a server-side</span>
+<span class="t-code__line" data-line-number="1">client for a Concierge API or Enterprise API key. Use https://data.unabated.com</span>
+<span class="t-code__line" data-line-number="2">and discover filter IDs,</span>
+<span class="t-code__line" data-line-number="3">create a subscription, connect to its signed URL, and maintain current</span>
+<span class="t-code__line" data-line-number="4">state according to the documented snapshot, ordering, and recovery rules.</span>
+<span class="t-code__line" data-line-number="5">Use event families available for our API tier. Redact signed URLs and keys</span>
+<span class="t-code__line" data-line-number="6">from logs. Preserve a returned deep link only while its selection points</span>
+<span class="t-code__line" data-line-number="7">remain unchanged; odds collection must also work without a link. For</span>
+<span class="t-code__line" data-line-number="8">Concierge, do not call /deeplink or bet-slip generation/status endpoints.</span>
+<span class="t-code__line" data-line-number="9">Close streams on shutdown. Confirm our API tier and data coverage before running.</span>
+</code></pre><button class="language-button t-editor__language-picker" data-scalar-type="code-block-copy" type="button">text
+<svg class="lang-copy" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+      <path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"></path>
+    </svg>
+<svg class="lang-success" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg></button>
+</div>
+<h3 id="generate-a-bet-slip-with-free-api-or-enterprise-api" class="scroll-pad interaction-observer-heading t-editor__heading" data-level="3" data-scalar-type="heading">
+  Generate a bet slip with Free API or Enterprise API
+  <button class="notify-container" aria-label="Copy link to heading"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon notify">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon">
+      <path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"></path>
+    </svg></button>
+</h3>
+<div id="muSWCbWr7WGglauxSMJmv" class="t-editor__code-container" data-lang="text" style="position: relative;">
+  <pre style="
+        --line-digits: 2;
+        --line-number-start: -1;
+      " class="t-editor__code custom-code custom-scroll" data-focus="" data-highlight="" data-added="" data-removed="" data-line-number-start="0"><code class="hljs language-text" language="text"><span class="t-code__line" data-line-number="0">Use a Free API or Enterprise API key; Concierge API does not include this workflow.</span>
+<span class="t-code__line" data-line-number="1">Use https://data.unabated.com. Use POST /api/v1/bet/generate with content.text, then poll the returned</span>
+<span class="t-code__line" data-line-number="2">requestId using GET /api/v1/bet/status/{guid}. Check both HTTP failures</span>
+<span class="t-code__line" data-line-number="3">and the body's processing status. Stop on Complete or Error, enforce</span>
+<span class="t-code__line" data-line-number="4">a maximum wait, and show matched-leg counts alongside returned links.</span>
+<span class="t-code__line" data-line-number="5">Never infer that all requested legs matched or that displayed prices</span>
+<span class="t-code__line" data-line-number="6">will remain unchanged when the user reaches the sportsbook.</span>
+</code></pre><button class="language-button t-editor__language-picker" data-scalar-type="code-block-copy" type="button">text
+<svg class="lang-copy" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+      <path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"></path>
+    </svg>
+<svg class="lang-success" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg></button>
+</div>
+<h2 id="useful-completion-checks" class="scroll-pad interaction-observer-heading t-editor__heading" data-level="2" data-scalar-type="heading">
+  Useful completion checks
+  <button class="notify-container" aria-label="Copy link to heading"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon notify">
+      <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"></path>
+    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true" class="icon">
+      <path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"></path>
+    </svg></button>
+</h2>
+<p class="t-editor__paragraph">A working integration should demonstrate a successful response, a handled invalid-key or denied-feature response, controlled polling, and safe credential handling. For a Free API or Enterprise API link workflow, also demonstrate a real returned deep link. For a Free partner, verify click attribution on the key management page after opening the published link. For streaming, demonstrate cleanup and recovery using the documented state rules; a Concierge odds integration does not require a deep link or generated bet slip.</p>
+</div></div><!----><div class="page-nav" data-v-d049deae><div class="page-nav__container"><a href="/start/authentication" class="page-nav__item page-nav__item-left"><div class="page-nav__item-label"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" width="1em" height="1em" aria-hidden="true" role="presentation"><!--[--><!--]--><g><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path></g></svg><span>Previous</span></div><b>Authentication</b></a><!----></div></div></div></div><aside aria-label="Table of Contents" class="toc custom-scroll sidebar-header t-doc__toc" data-v-d049deae><!--[--><div class="header"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" width="1em" height="1em" aria-hidden="true" role="presentation"><!--[--><!--]--><g><path d="M32,64a8,8,0,0,1,8-8H216a8,8,0,0,1,0,16H40A8,8,0,0,1,32,64Zm8,48H168a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16Zm176,24H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Zm-48,40H40a8,8,0,0,0,0,16H168a8,8,0,0,0,0-16Z"></path></g></svg><div>On This Page</div></div><div class="container"><div class="outline-marker" style="transform:translateY(0px);"></div><ul><!--[--><li id="H07pNuDhQ5KW0zgsaNs2m" class="level-1 toc-indent-1"><a class="anchor" href="#agents-welcome">Agents welcome <!----></a></li><li id="2y2lfXrZFClRcjvz3l6lp" class="level-2 toc-indent-2"><a class="anchor" href="#read-the-documentation">Read the documentation <!----></a></li><li id="6G1r2M2HEkfxjpTVvoUFy" class="level-2 toc-indent-2"><a class="anchor" href="#openapi-specification">OpenAPI specification <!----></a></li><li id="VntrstKpBFuZtdvEb7rt8" class="level-2 toc-indent-2"><a class="anchor" href="#integration-rules-for-an-agent">Integration rules for an agent <!----></a></li><li id="MZTMKro93KINzHJVQv4Or" class="level-2 toc-indent-2"><a class="anchor" href="#example-prompts">Example prompts <!----></a></li><li id="uNRJ1kdzCig7UNPsazTyu" class="level-3 toc-indent-3"><a class="anchor" href="#build-a-free-odds-integration">Build a Free odds integration <!----></a></li><li id="PrjQygAsqFCyTQdVHE16L" class="level-3 toc-indent-3"><a class="anchor" href="#build-a-live-odds-store">Build a live odds store <!----></a></li><li id="SZuJDMKfGXoAcxBJsSvXW" class="level-3 toc-indent-3"><a class="anchor" href="#generate-a-bet-slip-with-free-api-or-enterprise-api">Generate a bet slip with Free API or Enterprise API <!----></a></li><li id="ssLmh8nP6rjqWzH1BAo2g" class="level-2 toc-indent-2"><a class="anchor" href="#useful-completion-checks">Useful completion checks <!----></a></li><!--]--></ul></div><!--]--></aside></div></div></div><div class="footer" data-v-3b125427><div class="page-node t-prose">
+<footer class="ua-footer"><span>UNABATED <span class="ua-footer-muted">Developers</span></span><a href="/start/agents" class="t-editor__anchor">Built for humans and agents</a><a href="/llms.txt" class="t-editor__anchor">Markdown index</a><a href="/start/agents#openapi-specification" class="t-editor__anchor">OpenAPI for tools</a></footer>
+</div></div></main><!----><aside class="flex flex-col border-r bg-sidebar-b-1 border-sidebar-border sidebar w-(--scalar-sidebar-width) sidebar-header t-doc__sidebar" style="" data-v-fd75b4c5 data-v-3b125427><!--[--><!----><!----><div class="search-row" data-v-fd75b4c5><button type="button" class="flex items-center rounded border text-base h-8 gap-1 pl-2 pr-1 bg-sidebar-b-search border-sidebar-border-search text-sidebar-c-search search search-grow" style="" data-v-fd75b4c5><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" width="1em" height="1em" aria-hidden="true" role="presentation" class="size-4"><!--[--><!--]--><g><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path></g></svg><span class="flex-1 text-start leading-none"><!--[-->Search...<!--]--></span><!----></button><button class="ask-ai-sidebar-button ask-ai-sidebar-button--hidden" type="button" data-v-fd75b4c5><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" width="1em" height="1em" aria-hidden="true" role="presentation" class="ask-ai-sidebar-icon" data-v-fd75b4c5><!--[--><!--]--><g><path d="M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z"></path></g></svg><span data-v-fd75b4c5>Ask AI</span></button></div><div class="custom-scroll items" data-v-fd75b4c5><!----><ul class="group/items relative flex flex-col p-(--scalar-sidebar-padding) gap-px transition-transform duration-300 translate-x-0" style="" data-v-fd75b4c5><!--[--><!--[--><!--[--><li class="group/item flex flex-col text-base sidebar-item" style="" data-sidebar-id="0s7mb6wg766ipktcjaglmyf9eyr5jybj3f1lt29q"><!--[--><!--]--><!--[--><button type="button" class="group/button peer/button flex items-stretch rounded p-2 font-sidebar text-base/4 text-sidebar-c-2 no-underline wrap-break-word hover:bg-sidebar-b-hover hover:text-sidebar-c-hover" style=""><!--[--><div class="scalar-sidebar-indent flex justify-center -my-2" style="" data-v-3e080c68><!--[--><!--]--></div><!--]--><div class="h-lh *:size-4 mr-1 flex items-center"><!--[--><!--[--><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" data-scalar-icon-src="/4200a80d3df3-rocket.svg" class=""><path d="M152,224a8,8,0,0,1-8,8H112a8,8,0,0,1,0-16h32A8,8,0,0,1,152,224ZM128,112a12,12,0,1,0-12-12A12,12,0,0,0,128,112Zm95.62,43.83-12.36,55.63a16,16,0,0,1-25.51,9.11L158.51,200h-61L70.25,220.57a16,16,0,0,1-25.51-9.11L32.38,155.83a16.09,16.09,0,0,1,3.32-13.71l28.56-34.26a123.07,123.07,0,0,1,8.57-36.67c12.9-32.34,36-52.63,45.37-59.85a16,16,0,0,1,19.6,0c9.34,7.22,32.47,27.51,45.37,59.85a123.07,123.07,0,0,1,8.57,36.67l28.56,34.26A16.09,16.09,0,0,1,223.62,155.83ZM99.43,184h57.14c21.12-37.54,25.07-73.48,11.74-106.88C156.55,47.64,134.49,29,128,24c-6.51,5-28.57,23.64-40.33,53.12C74.36,110.52,78.31,146.46,99.43,184Zm-15,5.85Q68.28,160.5,64.83,132.16L48,152.36,60.36,208l.18-.13ZM208,152.36l-16.83-20.2q-3.42,28.28-19.56,57.69l23.85,18,.18.13Z"/></svg><!--]--><!--]--></div><div class="group/button-label flex-1 min-w-0"><!--[--><!--[--> Quickstart<!--]--><!--]--></div><!--[--><!--]--></button><!--]--><!--[--><!--]--></li><!--]--><!--[--><li class="group/item flex flex-col text-base sidebar-item" style="" data-sidebar-id="ojo8fcm4a1h29n4m2ehy02zgdx7uddq28cl4tesq"><!--[--><!--]--><!--[--><button type="button" class="group/button peer/button flex items-stretch rounded p-2 font-sidebar text-base/4 text-sidebar-c-2 no-underline wrap-break-word hover:bg-sidebar-b-hover hover:text-sidebar-c-hover" style=""><!--[--><div class="scalar-sidebar-indent flex justify-center -my-2" style="" data-v-3e080c68><!--[--><!--]--></div><!--]--><div class="h-lh *:size-4 mr-1 flex items-center"><!--[--><!--[--><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" data-scalar-icon-src="/a064aed719cd-stack.svg" class=""><path d="M230.91,172A8,8,0,0,1,228,182.91l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,36,169.09l92,53.65,92-53.65A8,8,0,0,1,230.91,172ZM220,121.09l-92,53.65L36,121.09A8,8,0,0,0,28,134.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,121.09ZM24,80a8,8,0,0,1,4-6.91l96-56a8,8,0,0,1,8.06,0l96,56a8,8,0,0,1,0,13.82l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,24,80Zm23.88,0L128,126.74,208.12,80,128,33.26Z"/></svg><!--]--><!--]--></div><div class="group/button-label flex-1 min-w-0"><!--[--><!--[--> Access tiers<!--]--><!--]--></div><!--[--><!--]--></button><!--]--><!--[--><!--]--></li><!--]--><!--[--><li class="group/item flex flex-col text-base sidebar-item" style="" data-sidebar-id="fwyddpfwybsh9vu39kekr78frxgsvg5ssf8ba7py"><!--[--><!--]--><!--[--><button type="button" class="group/button peer/button flex items-stretch rounded p-2 font-sidebar text-base/4 text-sidebar-c-2 no-underline wrap-break-word hover:bg-sidebar-b-hover hover:text-sidebar-c-hover" style=""><!--[--><div class="scalar-sidebar-indent flex justify-center -my-2" style="" data-v-3e080c68><!--[--><!--]--></div><!--]--><div class="h-lh *:size-4 mr-1 flex items-center"><!--[--><!--[--><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" data-scalar-icon-src="/46f851106c29-key.svg" class=""><path d="M216.57,39.43A80,80,0,0,0,83.91,120.78L28.69,176A15.86,15.86,0,0,0,24,187.31V216a16,16,0,0,0,16,16H72a8,8,0,0,0,8-8V208H96a8,8,0,0,0,8-8V184h16a8,8,0,0,0,5.66-2.34l9.56-9.57A79.73,79.73,0,0,0,160,176h.1A80,80,0,0,0,216.57,39.43ZM224,98.1c-1.09,34.09-29.75,61.86-63.89,61.9H160a63.7,63.7,0,0,1-23.65-4.51,8,8,0,0,0-8.84,1.68L116.69,168H96a8,8,0,0,0-8,8v16H72a8,8,0,0,0-8,8v16H40V187.31l58.83-58.82a8,8,0,0,0,1.68-8.84A63.72,63.72,0,0,1,96,95.92c0-34.14,27.81-62.8,61.9-63.89A64,64,0,0,1,224,98.1ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z"/></svg><!--]--><!--]--></div><div class="group/button-label flex-1 min-w-0"><!--[--><!--[--> Authentication<!--]--><!--]--></div><!--[--><!--]--></button><!--]--><!--[--><!--]--></li><!--]--><!--[--><li class="group/item flex flex-col text-base sidebar-item sidebar-item-selected" style="" data-sidebar-id="7kbsc7lwt2h4wb9c6vq23hcob45ckvi0dkbwzjaf"><!--[--><!--]--><!--[--><button aria-current="page" type="button" class="group/button peer/button flex items-stretch rounded p-2 text-base/4 no-underline wrap-break-word cursor-auto bg-sidebar-b-active text-sidebar-c-active font-sidebar-active" style=""><!--[--><div class="scalar-sidebar-indent flex justify-center scalar-sidebar-indent-selected -my-2" style="" data-v-3e080c68><!--[--><!--]--></div><!--]--><div class="h-lh *:size-4 mr-1 flex items-center"><!--[--><!--[--><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" data-scalar-icon-src="/a230a8229c2f-robot.svg" class=""><path d="M200,48H136V16a8,8,0,0,0-16,0V48H56A32,32,0,0,0,24,80V192a32,32,0,0,0,32,32H200a32,32,0,0,0,32-32V80A32,32,0,0,0,200,48Zm16,144a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V80A16,16,0,0,1,56,64H200a16,16,0,0,1,16,16Zm-52-56H92a28,28,0,0,0,0,56h72a28,28,0,0,0,0-56Zm-24,16v24H116V152ZM80,164a12,12,0,0,1,12-12h8v24H92A12,12,0,0,1,80,164Zm84,12h-8V152h8a12,12,0,0,1,0,24ZM72,108a12,12,0,1,1,12,12A12,12,0,0,1,72,108Zm88,0a12,12,0,1,1,12,12A12,12,0,0,1,160,108Z"/></svg><!--]--><!--]--></div><div class="group/button-label flex-1 min-w-0"><!--[--><!--[--> Build with an agent<!--]--><!--]--></div><!--[--><!--]--></button><!--]--><!--[--><!--]--></li><!--]--><!--]--><!--]--></ul></div><div class="flex flex-col gap-3 p-3 border-t" style="" data-v-fd75b4c5><!--[--><!--]--><div class="flex items-center px-2"><div class="text-sidebar-c-2 flex min-w-0 flex-1 items-center text-sm/5"><!--[--><!----><!--]--></div><!--[--><!----><!--]--></div></div><!--]--></aside><!----><header class="header t-header" data-scalar-scroll-header data-v-2a33dc46 data-v-3b125427><div class="t-header__scroll" data-v-2a33dc46><div class="t-header__row" data-v-2a33dc46><div class="t-header__start" data-v-2a33dc46><button aria-disabled="false" type="button" class="scalar-icon-button grid aspect-square cursor-pointer scalar-button-ghost bg-transparent text-c-2 active:text-c-1 hover:text-c-1 size-8 p-2 m-1 -outline-offset-2 rounded-lg menu-button" style="" data-v-2a33dc46><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="scalar-icon size-full" style="" aria-hidden="true" role="presentation" data-v-b651bb23><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M22 6.8H2m20 10.4H2"></path></svg><span class="sr-only">Sidebar Menu</span></button><a href="/" data-v-5153a9f2 data-v-2a33dc46><img alt="logo" class="logo" src="/unabated-logo.svg" data-v-3ce7967b data-v-5153a9f2></a><!----><nav aria-label="Header navigation, start" class="t-header__nav" data-v-2a33dc46><!--[--><!--[--><a class="t-header__item" href="/start/quickstart"><!----><span class="t-header__item-label"><span class=""><!--[--><!--[-->Start<!--]--><!--]--></span><span class="t-header__item--active invisible"><!--[--><!--[-->Start<!--]--><!--]--></span></span><!--[--><!--]--></a><!--]--><!--[--><a class="t-header__item" href="/guides/odds"><!----><span class="t-header__item-label"><span class=""><!--[--><!--[-->Guides<!--]--><!--]--></span><span class="t-header__item--active invisible"><!--[--><!--[-->Guides<!--]--><!--]--></span></span><!--[--><!--]--></a><!--]--><!--[--><a class="t-header__item" href="/reference"><!----><span class="t-header__item-label"><span class=""><!--[--><!--[-->API reference<!--]--><!--]--></span><span class="t-header__item--active invisible"><!--[--><!--[-->API reference<!--]--><!--]--></span></span><!--[--><!--]--></a><!--]--><!--[--><a class="t-header__item" href="/changelog"><!----><span class="t-header__item-label"><span class=""><!--[--><!--[-->Changelog<!--]--><!--]--></span><span class="t-header__item--active invisible"><!--[--><!--[-->Changelog<!--]--><!--]--></span></span><!--[--><!--]--></a><!--]--><!--]--></nav></div><!----><div class="t-header__end" data-v-2a33dc46><nav aria-label="Header navigation, end" class="t-header__nav" data-v-2a33dc46><!--[--><!--[--><a class="t-header__item" href="https://tools.unabated.com/api-keys"><!----><span class="t-header__item-label"><span class=""><!--[--><!--[-->Get your API key ↗<!--]--><!--]--></span><span class="t-header__item--active invisible"><!--[--><!--[-->Get your API key ↗<!--]--><!--]--></span></span><!--[--><!--]--></a><!--]--><!--]--></nav><!----><!----><!----></div></div></div></header><!----><div data-v-3b125427></div><!----><!----><!----><!--]--></div>
+  <script src="/docs.js"></script></body>
+</html>
+  
