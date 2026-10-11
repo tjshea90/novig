@@ -19,6 +19,7 @@ import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.BetActions
@@ -229,6 +230,7 @@ class TrackerUiTest {
         compose.onNodeWithText("Where it's working").assertExists()
         // The split can be switched between scanner, league, market, edge and price.
         compose.onNodeWithText("Market").performScrollTo().performClick()
+        compose.onRoot().printToLog("DBG")
         compose.onNodeWithText("Moneyline").assertExists()
         compose.onNodeWithText("Player props").assertExists()
     }
