@@ -6447,3 +6447,8 @@ CNO-based CLV is partly circular. Use closeIndependent: true to check any CLV cl
 
 Fix whatever should be fixed to make it most logical
 ```
+
+## 2026-10-11T17:23:58Z
+```
+The app is showing live game bets. See the screenshot. But it says the API only allows pregame. Is this an API limitation or a vigilant app limitation? I want to bid and bet on live games
+```
