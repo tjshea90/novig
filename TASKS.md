@@ -4643,3 +4643,10 @@ Tj verbatim (sent while TL was in progress): "I want the app to use conservative
 - [ ] TM1 Audit every devig in the app (fair line, closes, agreement, maker anchors, live/lab, Kalshi/Polymarket, Pinnodds) and which method each uses.
 - [ ] TM2 Default and migrate the fair-line method to the conservative WORST_CASE (lowest fair chance of multiplicative, additive, power and Shin, per side); closes found afterwards use the same method so CLV compares like with like; Settings says so.
 - [ ] TM3 Tests, ship with TL.
+
+## TN: make the closing line logical: real start times, independent Pinnacle close, honest CLV on CNO bets (Tj, 2026-10-11)
+Tj verbatim (sent while TL/TM were in progress): "Out of these: 'Start times are frozen when a bet is logged, so late or early starts get the wrong close. A close read up to 15 minutes before the start stops the independent Pinnacle close from being fetched. CNO-based CLV is partly circular. Use closeIndependent: true to check any CLV claim.' Fix whatever should be fixed to make it most logical"
+- [ ] TN1 Real start time: keep the game's current start (Novig event / CNO row / score feed) fresh on each read; a game that has started early is not "pregame" any more; late starts keep their close open until the real start.
+- [ ] TN2 Independent close: ask the Pinnacle/ESPN history source for every started bet whose captured close is CNO-only or older than ~3 min, keep BOTH closes, choose by independence then recency.
+- [ ] TN3 CLV honesty: Stats and files show CLV on independent closes next to the all-closes figure; the README leads with independent CLV; the smart "Best/Worst" uses independent closes when enough.
+- [ ] TN4 Tests, ship (with TL, TM).

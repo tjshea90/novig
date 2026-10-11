@@ -54,7 +54,7 @@ class HistoricalClosesTest {
         assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(h, a), buf.fair, 1e-9)
         assertEquals("ESPN · DraftKings close", buf.via)
         val lac = EspnCloses.parseClose(root, pick("Moneyline", "Los Angeles Chargers"), bills) as CloseLookup.Found
-        assertEquals(1.0, buf.fair + lac.fair, 1e-9)
+        assertTrue("conservative: the two sides sum to just under 1", buf.fair + lac.fair in 0.97..1.0000001)
     }
 
     @Test
@@ -66,7 +66,7 @@ class HistoricalClosesTest {
         val spread = EspnCloses.parseClose(root, pick("Spread", "Buffalo Bills -7"), bills) as CloseLookup.Found
         assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p, q), spread.fair, 1e-9)
         val dog = EspnCloses.parseClose(root, pick("Point Spread", "Los Angeles Chargers +7"), bills) as CloseLookup.Found
-        assertEquals(1.0, spread.fair + dog.fair, 1e-9)
+        assertTrue("conservative: the two sides sum to just under 1", spread.fair + dog.fair in 0.97..1.0000001)
         val moved = EspnCloses.parseClose(root, pick("Spread", "Buffalo Bills -6.5"), bills) as CloseLookup.None
         assertEquals("DraftKings closed at -7, not your -6.5", moved.reason)
         // Total 50.5 at −110 both ways: a coin flip.
