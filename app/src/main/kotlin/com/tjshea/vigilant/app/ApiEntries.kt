@@ -11,7 +11,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
 enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: QuotaPolicy?, val blurb: String, val usagePrompt: Boolean) {
     SGO("SportsGameOdds Pro", ApiProvider.SPORTSGAMEODDS, QuotaPolicy.SGO, "Odds, alternates, props, closes and scores from 80+ books", true),
     ODDSPAPI("OddsPapi (v5)", ApiProvider.ODDSPAPI, QuotaPolicy.ODDSPAPI, "Pinnacle, Circa and US books with change times, props, CLV and scores (trial or contract key)", false),
-    ODDSPAPI_FREE("OddsPapi Free (v4)", ApiProvider.ODDSPAPI_FREE, QuotaPolicy.ODDSPAPI_FREE, "Pinnacle closing lines for CLV from free historical odds (free-plan key)", true),
+    ODDSPAPI_FREE("OddsPapi Free (v4)", ApiProvider.ODDSPAPI_FREE, QuotaPolicy.ODDSPAPI_FREE, "Pinnacle and ~300 books: closing lines for CLV and fair odds for scans (10 requests a day by default; set it on its page)", true),
     UNABATED("Unabated (free)", ApiProvider.UNABATED, QuotaPolicy.UNABATED, "DraftKings, FanDuel, MGM, Caesars, theScore, Fanatics lines and props; last in line", false),
     PARLAY("ParlayAPI", ApiProvider.PARLAY, QuotaPolicy.PARLAY, "Pinnacle and 30 books, props, injuries, closing lines", true),
     PROPLINE("PropLine", ApiProvider.PROPLINE, QuotaPolicy.PROPLINE, "30 books' lines and props", true),
