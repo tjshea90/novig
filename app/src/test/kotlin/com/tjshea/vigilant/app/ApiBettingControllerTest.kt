@@ -148,7 +148,8 @@ class ApiBettingControllerTest {
         val (o, book) = sample()
         val live = o.copy(event = o.event.copy(status = com.tjshea.vigilant.data.novig.NovigEvent.STATUS_LIVE))
         assertTrue(live.isLive && ApiBetTargets.of(live)!!.live)
-        val api = controller(startState(), book, FakeNovig(AtomicInteger()) { _, _ -> null })
+        val state = startState()
+        val api = controller(state, book, FakeNovig(AtomicInteger()) { _, _ -> null })
         api.bet(live)
         waitFor("a plan or a refusal") { state.value.betSheet?.let { it.plan != null || it.refusal != null } == true }
         val sheet = state.value.betSheet!!
