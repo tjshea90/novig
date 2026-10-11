@@ -4737,3 +4737,10 @@ Tj verbatim (screenshot 4:24 PM: "Live: nothing shown, Novig's feed has been qui
 - [ ] TAA1 The 1791750248 s is `now - 0`: Novig never delivered a book push in this run, and my "quiet" rule printed the epoch. Fix the rule (never "quiet for N s" from a zero stamp), make the banner say exactly what is missing (no game matched / Novig books not arrived + the stream's own reason / Pinnacle silent), re-assert the Novig subscription every 5 s so a closed or failed socket reconnects, and stop closing the shared Novig stream at the end of a background scan while the live engine runs (VigilantApp: `if (!onScreen) novig.stream?.close()`).
 - [ ] TAA2 Auto-bet: show what the recovery is doing on the Auto-bet tab; shorten its wait; find what else can stop auto-bet and clear itself.
 - [ ] TAA3 Tests, ship v0.89.26.
+
+## TAB: efficient APIs: best API for overlapping data, others sleep; extras and failover only (Tj, 2026-10-11 ~20:40Z)
+Tj verbatim: "For clarification, if I have multiple apis toggled on, I still want it to be efficient and if data overlaps, only pull from the best API and let the others sleep. Only use additional apis for extra information that they carry that others don't or if the best api doesn't respond or runs out of usage, it automatically goes to the next best API for the odds"
+(This refines the 2026-10-11 rule "an API that is toggled on is used for any data" in CLAUDE.md: on = ELIGIBLE, asked only for what the better APIs did not give.)
+- [ ] TAB1 Audit: how Scanner/sources call every on API today (parallel, per league, games and props), `fallbackFor`, `SOURCE_ORDER`, which books/markets each source carries.
+- [ ] TAB2 Priority chain: per league and kind (games, props, alternates), ask the best source first; ask a lower one only for books/markets the better ones did not give, or when the better one failed, answered nothing or is out of credits; record why a source slept (diagnostics).
+- [ ] TAB3 Tests (ApiTogglesTest-style: overlap -> lower sleeps; failure/out of usage -> next best; extras still asked), CLAUDE.md rule updated, ship.
