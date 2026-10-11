@@ -46,7 +46,9 @@ object SgoKeyTest {
         lines += "Books: " + perBook.keys.sorted().joinToString(", ")
         p.notice?.let { lines += "Plan notice: $it" }
         lines += variants(client, leagueUsed)
-        return Result(true, lines.joinToString("\n"), raw)
+        val tennis = tennisProbe(client)
+        lines += tennis.first
+        return Result(true, lines.joinToString("\n"), if (tennis.second.isEmpty()) raw else raw + "\n\n----- tennis probe (Tj 2026-10-11: which tennis leagues and markets this key carries) -----\n" + tennis.second)
     }
 
     /**
@@ -78,5 +80,21 @@ object SgoKeyTest {
             out += "  $name: ${ms} ms, ${b.length / 1024} KB, ${odds.size} markets, $books books" + if (name == "oddID only") " · oddID filter ${if (odds.size <= ids.split(',').size * page.events.size) "honored" else "NOT honored (switch to oddIDs)"}" else ""
         }
         return out
+    }
+
+    /** Tennis (Tj, 2026-10-11): the leagues SGO lists for it and two matches with odds, so the converter can be written from the real answer. The raw text goes in the sample, capped at 200 KB. */
+    private suspend fun tennisProbe(client: SportsGameOddsClient): Pair<String, String> {
+        val leagues = runCatching { client.raw("/leagues", listOf("sportID" to "TENNIS")) }
+        val events = runCatching { client.raw("/events", listOf("sportID" to "TENNIS", "oddsAvailable" to "true", "limit" to "2")) }
+        val parts = ArrayList<String>()
+        val summary = StringBuilder("Tennis probe: ")
+        leagues.getOrNull()?.let { parts += "/leagues?sportID=TENNIS\n$it"; summary.append("leagues ${Regex("\"leagueID\":\"([A-Z0-9_]+)\"").findAll(it).map { m -> m.groupValues[1] }.distinct().joinToString(",").ifEmpty { "none listed" }}; ") }
+            ?: summary.append("leagues unreadable (${leagues.exceptionOrNull()?.let { readableError(it) }}); ")
+        events.getOrNull()?.let {
+            val p = SgoParser.page(it)
+            parts += "/events?sportID=TENNIS&oddsAvailable=true&limit=2\n${it.take(200_000)}"
+            summary.append("${p.events.size} matches with odds, ${p.events.sumOf { e -> e.odds.size }} markets.")
+        } ?: summary.append("events unreadable (${events.exceptionOrNull()?.let { readableError(it) }}).")
+        return summary.toString() to parts.joinToString("\n\n")
     }
 }
