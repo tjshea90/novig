@@ -704,6 +704,10 @@ class AppContainer(private val app: Application) {
         appScope.launch(Dispatchers.IO) {
             if (killMarker.on) runCatching { settingsStore.update { KillSwitch.reconcile(it, killMarker) } }
         }
+        // A wallet under 20 cents puts the whole app to sleep (Tj, 2026-10-11), whoever read the balance: every reading the wallet records is looked at.
+        appScope.launch(Dispatchers.IO) {
+            wallet.flow.collect { r -> if (r != null) runCatching { autoBet.onWalletReading(r.dollars, r.atMs) } }
+        }
         // Housekeeping (Tj, 2026-10-10: the app lagged and the diagnostics grew too big to load): the recorders' day files older than 2 days (the scan study: 7), anything over a folder's cap
         // and the leftovers of a crashed save are deleted at start and every few hours. Pure file work, off the main thread, a minute after start so the first screen is not competing.
         appScope.launch(Dispatchers.IO) {
