@@ -4679,3 +4679,8 @@ Tj verbatim: "If I have 190 open bets, why does it only show 53 bets current ev?
 - [x] TR2 DONE (counter includes in-play, summary splits upcoming/in play/finished, reasons on started bets; check already covered every open bet within 4 h). Check odds now prices every open bet (bets and bids), started ones too (live: Pinnacle/other books' current devig; no scanner needed), with current odds + EV on each card.
 - [x] TR3 DONE (Hide live games chip, LiveBets, CheckOddsStatsTest). Tracker toggle "Hide live games": hides live bets from the list AND the stats until untoggled.
 - [x] TR4 DONE with v0.89.22 (shipping).
+
+## TS: a bet's Novig price was 33 min old right after Check odds now (Tj, 2026-10-11 ~19:17Z)
+Tj verbatim (with 2 screenshots, Novig only ON, "Reading Novig…" showing, Courtland Sutton Under 36.5 "Novig then +117 · as of 33m ago · tap Check odds now"): "I just pressed check odds now and it finished, yet this bet hasn't been checked in over 30 minutes for current EV. Why?"
+- [x] TS1 Cause: the Novig-only view shows only the Novig price (`novigFair/novigAtMs`), which Check odds now wrote only for bets its pricing pass found a book read for (`applyFair`); a bet the pass missed kept an old Novig price, silently (alongside mode writes no reason). DONE: Check odds now now also reads Novig's own book for every open bet whose Novig price is older than the check's start (`MainViewModel.readNovigSince`), recording the price or why not.
+- [x] TS2 Ship v0.89.23.
