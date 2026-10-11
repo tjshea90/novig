@@ -87,28 +87,7 @@ class OpCloses(
     }
 
     /** The catalogue market [pick] is on (a spread's number is participant 1's). */
-    private fun classOf(pick: BetGrader.Pick, game: OpFixture, markets: com.tjshea.vigilant.data.reference.OpMarkets): OpClass? {
-        fun period(p: BetGrader.Period): Int? = when (p) {
-            BetGrader.Period.GAME -> 0
-            BetGrader.Period.FIRST_HALF -> 1
-            BetGrader.Period.FIRST_INNING -> RefBookMarket.PERIOD_FIRST_INNING
-            else -> null
-        }
-        return when (pick) {
-            is BetGrader.Pick.Moneyline -> markets.find(LineKind.MONEYLINE, 0, null)
-            is BetGrader.Pick.Spread -> {
-                val side = TeamMatcher.whichOf(pick.team, game.p1, game.p2).takeIf { it != 0 } ?: return null
-                markets.find(LineKind.SPREAD, period(pick.period) ?: return null, if (side == 1) pick.line else -pick.line)
-            }
-            is BetGrader.Pick.Total -> markets.find(LineKind.TOTAL, period(pick.period) ?: return null, pick.line)
-            is BetGrader.Pick.TeamTotal -> {
-                val side = TeamMatcher.whichOf(pick.team, game.p1, game.p2).takeIf { it != 0 } ?: return null
-                markets.find(LineKind.TEAM_TOTAL, 0, pick.line, team = side)
-            }
-            is BetGrader.Pick.Prop -> markets.find(LineKind.PLAYER_PROP, 0, pick.line, stat = pick.stat)
-            is BetGrader.Pick.FirstSet -> null
-        }
-    }
+    private fun classOf(pick: BetGrader.Pick, game: OpFixture, markets: com.tjshea.vigilant.data.reference.OpMarkets): OpClass? = opClassOf(pick, game.p1, game.p2, markets)
 
     private suspend fun closeAt(game: OpFixture, cls: OpClass, pick: BetGrader.Pick, slug: String, book: String): CloseLookup {
         val label = book.replaceFirstChar { it.uppercase() }
@@ -184,5 +163,29 @@ class OpCloses(
 
         fun leagueOf(b: TrackedBet): League? =
             Leagues.ALL.firstOrNull { it.novigName.equals(b.league, true) || it.displayName.equals(b.league, true) }?.takeIf { OpBooks.supports(it) }
+    }
+}
+
+/** The catalogue market a bet [pick] is on, for a game whose participants are [p1] and [p2] (shared by OddsPapi v5's and v4's close sources). */
+internal fun opClassOf(pick: BetGrader.Pick, p1: String, p2: String, markets: com.tjshea.vigilant.data.reference.OpMarkets): OpClass? {
+    fun period(p: BetGrader.Period): Int? = when (p) {
+        BetGrader.Period.GAME -> 0
+        BetGrader.Period.FIRST_HALF -> 1
+        BetGrader.Period.FIRST_INNING -> RefBookMarket.PERIOD_FIRST_INNING
+        else -> null
+    }
+    return when (pick) {
+        is BetGrader.Pick.Moneyline -> markets.find(LineKind.MONEYLINE, 0, null)
+        is BetGrader.Pick.Spread -> {
+            val side = TeamMatcher.whichOf(pick.team, p1, p2).takeIf { it != 0 } ?: return null
+            markets.find(LineKind.SPREAD, period(pick.period) ?: return null, if (side == 1) pick.line else -pick.line)
+        }
+        is BetGrader.Pick.Total -> markets.find(LineKind.TOTAL, period(pick.period) ?: return null, pick.line)
+        is BetGrader.Pick.TeamTotal -> {
+            val side = TeamMatcher.whichOf(pick.team, p1, p2).takeIf { it != 0 } ?: return null
+            markets.find(LineKind.TEAM_TOTAL, 0, pick.line, team = side)
+        }
+        is BetGrader.Pick.Prop -> markets.find(LineKind.PLAYER_PROP, 0, pick.line, stat = pick.stat)
+        is BetGrader.Pick.FirstSet -> null
     }
 }
