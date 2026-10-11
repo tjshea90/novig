@@ -19,17 +19,31 @@ import okhttp3.Request
  */
 class UnabatedClient(
     private val http: OkHttpClient,
-    private val pool: KeyPool,
+    private val keys: () -> List<String>,
+    meter: com.tjshea.vigilant.data.keys.UsageMeter,
     private val baseUrl: String = "https://data.unabated.com",
     private val clock: () -> Long = System::currentTimeMillis,
     private val oddsGapMs: Long = 5_200,
     private val otherGapMs: Long = 400,
     private val sleep: suspend (Long) -> Unit = { delay(it) },
 ) {
-    private val oddsGate = Mutex()
-    private val otherGate = Mutex()
-    private var nextOddsAt = 0L
+    private val gate = Mutex()
+    private val nextOddsAt = java.util.concurrent.ConcurrentHashMap<String, Long>()
     private var nextOtherAt = 0L
+
+    /**
+     * Every key has its OWN five-second odds interval (the Free limit is per key), so more keys are more speed: the pool is offered the keys soonest-ready first (Tj's order breaks ties), a key that is
+     * refused (401), rate limited (429 with another key to try) or spent is skipped to the next, and a call waits only for the key it was given.
+     */
+    private val pool = KeyPool(com.tjshea.vigilant.data.keys.QuotaPolicy.UNABATED, { keys().sortedBy { nextOddsAt[it] ?: 0L } }, meter)
+
+    /** Reserves the key's next odds slot and returns how long to wait for it. */
+    private suspend fun reserve(key: String): Long = gate.withLock {
+        val now = clock()
+        val at = maxOf(now, nextOddsAt[key] ?: 0L)
+        nextOddsAt[key] = at + oddsGapMs
+        at - now
+    }
 
     @Volatile private var failures = 0
     @Volatile private var lastOkMs = 0L
@@ -80,15 +94,16 @@ class UnabatedClient(
         var last: ReferenceException? = null
         repeat(MAX_ATTEMPTS) { n ->
             val odds = isOdds(path)
-            (if (odds) oddsGate else otherGate).withLock {
-                val wait = (if (odds) nextOddsAt else nextOtherAt) - clock()
+            if (!odds) gate.withLock {
+                val wait = nextOtherAt - clock()
                 if (wait > 0) sleep(wait)
-                // Reserved before sending, so a slow answer never lets the next call go early.
-                if (odds) nextOddsAt = clock() + oddsGapMs else nextOtherAt = clock() + otherGapMs
+                nextOtherAt = clock() + otherGapMs
             }
             var retryMs: Long? = null
             try {
                 return pool.execute(cost = 1) { key ->
+                    // Reserved before sending, so a slow answer never lets the next call on this key go early.
+                    if (odds) reserve(key).let { if (it > 0) sleep(it) }
                     val url = "$baseUrl$path".toHttpUrl().newBuilder().apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }.build()
                     http.newCall(Request.Builder().url(url).header("X-Api-Key", key).header("Accept", "application/json").get().build()).await().use { response ->
                         val body = response.body?.string().orEmpty()
@@ -96,6 +111,12 @@ class UnabatedClient(
                         when {
                             response.code == 401 -> KeyAttemptResult.Invalid("HTTP 401, key refused (Free API access can be revoked)")
                             response.code == 403 -> throw ReferenceException("Unabated HTTP 403: ${messageOf(body) ?: "the Free API does not include this"}")
+                            // Too early on THIS key: with another key to try, rest this one and move on; with only one, wait its Retry-After and ask again.
+                            response.code == 429 && keys().size > 1 -> {
+                                val wait = (retryAfter ?: oddsGapMs).coerceIn(1_000L, 30_000L)
+                                nextOddsAt[key] = maxOf(nextOddsAt[key] ?: 0L, clock() + wait)
+                                KeyAttemptResult.RateLimited(wait, "one odds request per 5 s (HTTP 429)")
+                            }
                             response.code == 429 || response.code == 503 -> { retryMs = (retryAfter ?: if (response.code == 503) 5_000L else 5_200L).coerceIn(1_000L, 30_000L); throw ReferenceException("Unabated HTTP ${response.code}: slow down / snapshot unavailable") }
                             response.code in 500..599 -> throw ReferenceException("Unabated HTTP ${response.code}")
                             !response.isSuccessful -> throw ReferenceException("Unabated HTTP ${response.code}: ${messageOf(body) ?: "refused the request"}")
@@ -108,12 +129,15 @@ class UnabatedClient(
                 }
             } catch (e: UnabatedFailure) {
                 throw e
+            } catch (e: com.tjshea.vigilant.data.keys.AllKeysExhaustedException) {
+                last = ReferenceException("Unabated: ${e.message ?: "every key is rate limited, spent or refused"}")
+                if (n == MAX_ATTEMPTS - 1) throw last!!
+                sleep(oddsGapMs)
             } catch (e: ReferenceException) {
                 last = e
                 if (e.message?.contains("HTTP 403") == true || n == MAX_ATTEMPTS - 1) throw e
                 // 429 / 503 wait their Retry-After; any other failure waits a short pause once.
-                val pause = retryMs ?: 2_000L
-                if (isOdds(path)) oddsGate.withLock { nextOddsAt = maxOf(nextOddsAt, clock() + pause) } else sleep(pause)
+                sleep(retryMs ?: 2_000L)
             }
         }
         throw last ?: ReferenceException("Unabated: no attempt made")

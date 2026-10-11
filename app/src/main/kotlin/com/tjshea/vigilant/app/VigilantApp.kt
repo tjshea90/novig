@@ -431,7 +431,7 @@ class AppContainer(private val app: Application) {
      * Unabated Free (Tj, 2026-10-11; UNABATED_API.md): DraftKings, FanDuel, MGM, Caesars, theScore and Fanatics' lines and props at no credit cost. Its client keeps every odds call 5.2 s apart; its feed serves cached boards
      * and refreshes them in the background, so a scan never waits behind it. It is the LAST source ([com.tjshea.vigilant.data.scanner.Scanner.SOURCE_ORDER]), so it prices only what no better feed sent. Used only while [unabatedActive].
      */
-    val unabatedClient = com.tjshea.vigilant.data.reference.UnabatedClient(http, KeyPool(QuotaPolicy.UNABATED, { keyStore.current(ApiProvider.UNABATED) }, usage))
+    val unabatedClient = com.tjshea.vigilant.data.reference.UnabatedClient(http, { keyStore.current(ApiProvider.UNABATED) }, usage)
     val unabatedFeed = com.tjshea.vigilant.data.reference.UnabatedFeed(unabatedClient, appScope)
     val unabatedGames = com.tjshea.vigilant.data.reference.UnabatedGamesSource(unabatedFeed)
     val unabatedProps = com.tjshea.vigilant.data.reference.UnabatedPropsSource(unabatedFeed)

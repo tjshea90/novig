@@ -194,7 +194,7 @@ class UnabatedTest {
 
     private fun ok(body: String) = MockResponse().setResponseCode(200).setBody(body)
     private val meter = UsageMeter(JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), { clockMs })
-    private fun client() = UnabatedClient(OkHttpClient(), KeyPool(QuotaPolicy.UNABATED, { listOf("k1") }, meter), server.url("/").toString().trimEnd('/'), { clockMs }, sleep = { sleeps += it })
+    private fun client(keys: List<String> = listOf("k1")) = UnabatedClient(OkHttpClient(), { keys }, meter, server.url("/").toString().trimEnd('/'), { clockMs }, sleep = { sleeps += it })
 
     private fun route(r: RecordedRequest): MockResponse = when (r.requestUrl!!.encodedPath) {
         "/league" -> ok("""{"data":[{"id":3,"name":"nba","fullName":"NBA"}],"success":true,"messages":[]}""")
@@ -253,6 +253,36 @@ class UnabatedTest {
         assertTrue(e.toString(), e is UnabatedFailure && e.message!!.contains("Delayed snapshot not ready"))
         runCatching { c.oddsRaw("nba", "straight") }
         assertTrue(c.down(clockMs + UnabatedClient.DOWN_AFTER_MS + 1)); assertFalse(c.down(clockMs))
+    }
+
+    @Test fun withTwoKeysARateLimitedKeyRestsAndTheNextKeyAnswersAtOnceAndEachKeyKeepsItsOwnInterval() = runTest {
+        handler = { r -> if (r.getHeader("X-Api-Key") == "k1") MockResponse().setResponseCode(429).setHeader("Retry-After", "6") else ok(boardJson) }
+        val c = client(listOf("k1", "k2"))
+        assertTrue(c.oddsRaw("nba", "straight").contains("lastUpdated"))
+        assertEquals(listOf("k1", "k2"), requests.map { it.getHeader("X-Api-Key") })
+        assertTrue("no waiting for k2: it had its own interval", sleeps.none { it >= 1_000L })
+        requests.clear()
+        handler = { ok(boardJson) }
+        c.oddsRaw("nba", "straight"); c.oddsRaw("nba", "straight")
+        assertEquals("k1 is resting, so both go to k2, 5.2 s apart", listOf("k2", "k2"), requests.map { it.getHeader("X-Api-Key") })
+        assertTrue(sleeps.any { it in 5_000L..5_300L })
+    }
+
+    @Test fun withTwoKeysTheCallsAlternateSoTwoRequestsGoOutWithoutWaiting() = runTest {
+        handler = { ok(boardJson) }
+        val c = client(listOf("k1", "k2"))
+        c.oddsRaw("nba", "straight"); c.oddsRaw("nba", "straight")
+        assertEquals(listOf("k1", "k2"), requests.map { it.getHeader("X-Api-Key") })
+        assertTrue("two keys: no 5.2 s wait", sleeps.none { it >= 1_000L })
+        c.oddsRaw("nba", "straight")
+        assertEquals("the third waits for the first key's interval", "k1", requests.last().getHeader("X-Api-Key"))
+        assertTrue(sleeps.any { it in 4_000L..5_300L })
+    }
+
+    @Test fun aRefusedKeyIsSkippedForTheNextOne() = runTest {
+        handler = { r -> if (r.getHeader("X-Api-Key") == "bad") MockResponse().setResponseCode(401) else ok(boardJson) }
+        assertTrue(client(listOf("bad", "good")).oddsRaw("nba", "straight").contains("lastUpdated"))
+        assertEquals(listOf("bad", "good"), requests.map { it.getHeader("X-Api-Key") })
     }
 
     @Test fun theFeedReadsABoardOnceServesItFromCacheAndRefreshesInTheBackgroundOnceStale() = runTest {
