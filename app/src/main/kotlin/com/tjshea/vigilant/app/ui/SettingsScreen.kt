@@ -934,6 +934,7 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
     ) { v -> onUpdate { it.copy(usePropLine = v) } }
     if (s.usePropLine) {
         KeyListEditor(ApiProvider.PROPLINE, state.proplineKeys, keys, "Add a PropLine key")
+        SwitchRow("PropLine: every book for the fair average", "Price the fair line with every sportsbook PropLine lists (about 30; one request either way), not only the books picked below. Each is devigged on its own and averaged.", s.gates.propLineAllBooks, tag = "propLineAllBooksSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(propLineAllBooks = v)) } }
     }
     // ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43): Pinnacle and 9 more books, a league's props and alternate lines in one call each, and
     // Pinnacle's closing lines for CLV. A paid key is paced to a day's share of the plan; free keys serve scans after it, down to their last 100.
@@ -1395,6 +1396,7 @@ private fun ColumnScope.OddsPapiFreePage(state: UiState, keys: KeyActions, repor
  */
 @Composable
 private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
     val now = rememberNow(30_000)
     val views = meterViews(state, now).associateBy { it.policy.id }
     Intro("Turn APIs on and off here. Switch an API off and the app stops using it everywhere and adapts to the ones that are on; the first key that is spent or refused is skipped for the next one, automatically. Test checks each key; Test active APIs checks the combination the switches make and reads one league through every source in play.")
@@ -1402,6 +1404,12 @@ private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, o
         Button(onClick = reportActions.onTestActiveApis, enabled = !state.apiTestBusy, modifier = Modifier.testTag("testActiveApis")) { Text(if (state.apiTestBusy) "Testing…" else "Test active APIs") }
         OutlinedButton(onClick = reportActions.onRefreshUsage, enabled = !state.usageBusy, modifier = Modifier.testTag("refreshUsage")) { Text(if (state.usageBusy) "Reading…" else "Refresh usage") }
     }
+    val everyOn = s.gates.opAllBooks && s.gates.sgoAllBooks && s.gates.propLineAllBooks
+    SwitchRow(
+        "Every book from every API that has many",
+        "Price the fair average with every book OddsPapi (v5 and Free), SportsGameOdds and PropLine carry, not only the picked ones (The Odds API and ParlayAPI stay on their picked books: more books there cost more credits). Each book is devigged on its own and averaged; clones count once; wide-margin and stale books are still left out.",
+        everyOn, tag = "everyBookSwitch",
+    ) { v -> onUpdate { it.copy(gates = it.gates.copy(opAllBooks = v, sgoAllBooks = v, propLineAllBooks = v)) } }
     state.apiTestLines?.let { lines ->
         Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp).testTag("apiTestReport")) {
             Column(Modifier.padding(10.dp)) {
