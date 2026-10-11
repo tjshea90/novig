@@ -1808,17 +1808,13 @@ class AppContainer(private val app: Application) {
      */
     val otherBooks = com.tjshea.vigilant.data.reference.OtherBooks(parlayOdds, propLine, oddsApi, json, on = {
         val s = currentSettings()
-        // SportsGameOdds Pro carries every book these three do, in one read: while it answers it is the only one asked (and falls back to them if it is down).
-        val sgo = s.vigilantOn && sgoActive(s)
-        // OddsPapi likewise (its props are the scan's own read): the paid three rest while it answers.
-        val op = s.vigilantOn && opActive(s) && !sgo
-        val rest = !sgo && !op
+        // Every API that is switched on (and keyed) is asked, none that is off (Tj, 2026-10-11): SportsGameOdds Pro and OddsPapi no longer stand in for the other three.
         com.tjshea.vigilant.data.reference.OtherBooks.Sources(
-            parlay = rest && s.vigilantOn && parlayActive(),
-            propLine = rest && s.vigilantOn && s.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty(),
-            oddsApi = rest && s.vigilantOn && s.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty(),
-            sgo = sgo,
-            op = op,
+            parlay = s.vigilantOn && parlayActive(),
+            propLine = s.vigilantOn && s.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty(),
+            oddsApi = s.vigilantOn && s.useOddsApi && keyStore.current(ApiProvider.THE_ODDS_API).isNotEmpty(),
+            sgo = s.vigilantOn && sgoActive(s),
+            op = s.vigilantOn && opActive(s),
         )
     }, sgo = sgoClient, op = { league -> opFeed.read(league, currentSettings().let { it.copy(families = it.families + com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS) }).props })
 
