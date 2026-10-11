@@ -201,3 +201,4 @@ day that changes.
 | v0.89.9 | code 194 | 2026-10-11T05:45Z | v0.89.9: live sniper, one switch for taker, tail bettor, cover taker and bids at the slider position
 | v0.89.10 | code 195 | 2026-10-11T06:09Z | v0.89.10: OddsPapi Free lists a league's games in one request instead of one per 12 hours
 | v0.89.11 | code 196 | 2026-10-11T06:18Z | v0.89.11: with tennis picked, every feed that carries it (Pinnacle, Kalshi, ParlayAPI) prices it even when its own switch is off
+| v0.89.12 | code 197 | 2026-10-11T06:27Z | v0.89.12: SGO Test sample also reads SGO's tennis leagues and two matches
