@@ -69,6 +69,7 @@ class AutoBetUiTest {
         betting: BettingUi = BettingUi(enabled = true, balance = 25.0),
         blocked: String? = null,
         onTest: () -> Boolean = { true },
+        advanced: Boolean = true,
     ) {
         ui = SampleScan.state().copy(betting = betting, settings = configure(ScanSettings(autoScan = AutoScanMode.CNO)))
         compose.setContent {
@@ -80,6 +81,8 @@ class AutoBetUiTest {
                 }
             }
         }
+        // Everything under Advanced settings is hidden until it is opened (Tj, 2026-10-11): the tests that read those rules open it.
+        if (advanced) compose.onNodeWithTag("autoBetAdvanced").performScrollTo().performClick()
     }
 
     // ---- turning it on ------------------------------------------------------------------------------------------
