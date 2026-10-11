@@ -45,6 +45,34 @@ object JsonSplit {
         }
     }
 
+    /**
+     * The members of the JSON object that is [raw] as (key, value text) pairs, values uncut and unparsed: how a nested dictionary (Unabated's league -> period -> game groups) is walked one level at a
+     * time so only one small group is ever a tree. Null when [raw] is not a well-formed object.
+     */
+    fun members(raw: String): List<Pair<String, String>>? {
+        val n = raw.length
+        var i = skipWs(raw, 0)
+        if (i >= n || raw[i] != '{') return null
+        i++
+        val out = ArrayList<Pair<String, String>>()
+        while (true) {
+            i = skipWs(raw, i)
+            if (i >= n) return null
+            if (raw[i] == '}') return out
+            if (raw[i] == ',') { i++; continue }
+            if (raw[i] != '"') return null
+            val keyEnd = stringEnd(raw, i) ?: return null
+            val name = raw.substring(i + 1, keyEnd)
+            i = skipWs(raw, keyEnd + 1)
+            if (i >= n || raw[i] != ':') return null
+            i = skipWs(raw, i + 1)
+            if (i >= n) return null
+            val end = valueEnd(raw, i) ?: return null
+            out += name to raw.substring(i, end)
+            i = end
+        }
+    }
+
     private fun splitArray(raw: String, open: Int, rest: (Int, Int) -> String): Elements? {
         val n = raw.length
         val starts = ArrayList<Int>()
