@@ -6283,3 +6283,8 @@ Make the same switch for sgo. And any other API with a ton of sports books
 ```
 It looks like it is finding tennis matches, just not any positive EV bets, but for the bids it should still put up bids that are positive EV for tennis. Right now it won't put up a single bid even though I think it is finding tennis odds
 ```
+
+## 2026-10-11T04:07:18Z
+```
+I accidentally left a bad bid up indefinitely, and someone filled the bid and I lost almost immediately. That made me wonder if it is plausible for vigilant to scan the entire novig live betting field in real time and look for obviously stale or poorly priced bids from other users that I can take by having vigilant auto bet it  For example, vigilant can look for anomalies like an under the total at 60 being offered at 50%, when the game is almost finished and the total is only 25. This is clearly not 50% true odds. The feature could either use positive EV calculations, its own math engine to determine odds in real time based on live game circumstances, or stale odds after scoring events or other circumstances, or deviations in odds compared to other live markets on the same bet. I also want it to put up positive EV bids on the maker side simultaneously. I think we already tried to build this, but it never filled a single bid or bet
+```
