@@ -416,6 +416,17 @@ class ApiBettingUiTest {
         assertEquals(1, confirmed)
     }
 
+    @Test
+    fun `a live bet's sheet says live, shows the fee in what you pay and the button says LIVE`() {
+        sheetScreen { ApiBetSheetContent(sheet(plan = plan.copy(live = true, feeDollars = 0.03, note = "LIVE: The fair odds behind this EV are 4 minutes old")), {}, {}, {}, {}, {}) }
+        compose.onNodeWithText("LIVE: The fair odds behind this EV are 4 minutes old").assertExists()
+        compose.onNodeWithTag("betFeeNote").assertExists()
+        compose.onNodeWithText("Place LIVE bet · $1.85").assertExists()
+        // A pregame sheet is what it was.
+        sheetScreen { ApiBetSheetContent(sheet(), {}, {}, {}, {}, {}) }
+        compose.onNodeWithText("Place bet · $1.85").assertExists()
+    }
+
     /** Tj, 2026-09-30: "I can type in a custom account for any bet manually". */
     @Test
     fun `any amount can be typed for the bet, up to the per-bet limit`() {

@@ -142,6 +142,27 @@ class ApiBettingControllerTest {
         api.dismiss()
     }
 
+    /** Tj, 2026-10-11: "The app is showing live game bets ... it says the API only allows pregame ... I want to bid and bet on live games". */
+    @Test
+    fun `a live card's Bet opens a sheet that plans the bet with Novig's taker fee and says it is live`() {
+        val (o, book) = sample()
+        val live = o.copy(event = o.event.copy(status = com.tjshea.vigilant.data.novig.NovigEvent.STATUS_LIVE))
+        assertTrue(live.isLive && ApiBetTargets.of(live)!!.live)
+        val api = controller(startState(), book, FakeNovig(AtomicInteger()) { _, _ -> null })
+        api.bet(live)
+        waitFor("a plan or a refusal") { state.value.betSheet?.let { it.plan != null || it.refusal != null } == true }
+        val sheet = state.value.betSheet!!
+        assertNull(sheet.refusal, sheet.refusal)
+        assertTrue(sheet.plan!!.live && sheet.plan!!.feeDollars > 0.0)
+        assertTrue(sheet.plan!!.note!!.contains("LIVE"))
+        api.dismiss()
+        // The same card pregame: no fee, no live note.
+        api.bet(o)
+        waitFor("the pregame plan") { state.value.betSheet?.plan != null }
+        assertTrue(!state.value.betSheet!!.plan!!.live && state.value.betSheet!!.plan!!.feeDollars == 0.0)
+        api.dismiss()
+    }
+
     /** A state whose Novig connection has a subaccount, so the sheet reads the wallet as it opens; [balance] is the one on hand (maybe old). */
     private fun walletState(balance: Double?) = MutableStateFlow(
         SampleScan.state().let { st ->
