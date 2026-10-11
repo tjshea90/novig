@@ -941,20 +941,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * the last scan's fair odds: a few seconds, no fair-odds calls or credits. For checking an
      * edge is still there right before betting it.
      */
-    fun recheck(marketIds: Collection<String>) {
+    fun recheck(marketIds: Collection<String>, quiet: Boolean = false) {
         val current = _state.value
         if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking || marketIds.isEmpty()) return
+        // A quiet recheck is the list keeping itself honest (Tj, 2026-10-11: a bet no longer +EV leaves the list by itself): no toast, no pause or odds-check message, and no scan.
         if (current.settings.paused) {
-            _toasts.tryEmit(PAUSED_TOAST)
+            if (!quiet) _toasts.tryEmit(PAUSED_TOAST)
             return
         }
         if (current.checkingOdds) {
-            _toasts.tryEmit(CHECKING_TOAST)
+            if (!quiet) _toasts.tryEmit(CHECKING_TOAST)
             return
         }
         // A recheck re-reads Novig only. When the other books' prices it compares against are about to
         // be too old to use (RESEARCH.md §24), it would show nothing: scan everything instead.
         if (WidgetRescan.fairTooOldToRecheck(current, marketIds, System.currentTimeMillis())) {
+            if (quiet) return
             _toasts.tryEmit("The other books' odds are too old to recheck against: scanning again")
             scan()
             return
@@ -967,7 +969,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (r != null) _state.publishResult(r) { s -> s.copy(status = s.status.copy(rechecking = false)) }
             else _state.update { s -> s.copy(status = s.status.copy(rechecking = false)) }
             runCatching { c.usage.flush() }
-            _toasts.tryEmit(
+            if (!quiet) _toasts.tryEmit(
                 when {
                     report == null -> "Recheck failed: ${outcome.exceptionOrNull()?.message ?: "unknown error"}"
                     report.error != null && report.read == 0 -> "Recheck: ${report.error}"

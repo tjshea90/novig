@@ -75,6 +75,8 @@ fun FeedScreen(
     onStartsWithin: (Int) -> Unit = {},
     /** Re-read these markets' Novig prices only (seconds, no fair-odds calls). */
     onRecheck: (Collection<String>) -> Unit = {},
+    /** The same, quietly and by itself every minute the list is open: a bet that is no longer +EV, or has no liquidity left, leaves the list (Tj, 2026-10-11). */
+    onAutoRecheck: (Collection<String>) -> Unit = {},
     /** Shrink to the mini window over other apps. Null hides the button (no picture-in-picture). */
     onMiniWindow: (() -> Unit)? = null,
     /** Pause every scan (true) or resume (false). */
@@ -93,6 +95,18 @@ fun FeedScreen(
     var parlaySelected by remember { mutableStateOf<String?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
     val now = rememberNow(15_000)
+    // The list keeps itself honest: every AUTO_RECHECK_MS Novig's prices for the listed bets are read again (a few order books, no fair-odds calls), so a bet that is no longer +EV or has no liquidity left leaves it.
+    val latest = androidx.compose.runtime.rememberUpdatedState(state)
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(AUTO_RECHECK_MS)
+            val st = latest.value
+            if (!st.status.scanning && !st.status.rechecking && !st.settings.paused) {
+                val ids = feedMarketIds(st, System.currentTimeMillis())
+                if (ids.isNotEmpty()) onAutoRecheck(ids)
+            }
+        }
+    }
     // ParlayAPI's picks shown, and CNO's and Vigilant's EV for each (TASKS.md P2): worked out once per change, not per card or per tick.
     val parlayPicks = remember(state.parlayPicks, state.placedIndex, state.placedKeys, state.settings, now) { state.parlayShown(now) }
     val parlayReads = remember(parlayPicks, state.cno.snapshot, state.result, state.parlayPicks.vigilant, state.parlayPicks.vigilantReading, state.settings, now / 60_000L) {
@@ -529,6 +543,9 @@ fun OpportunityCard(
         }
     }
 }
+
+/** How often the open +EV list re-reads Novig's prices for its bets. */
+internal const val AUTO_RECHECK_MS = 60_000L
 
 /** Gold, the ★ of a bet a sharp book also says is +EV. */
 internal val SharpStarColor = androidx.compose.ui.graphics.Color(0xFFF5B301)
