@@ -1332,7 +1332,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { if (next.leagues.isEmpty()) it.copy(settings = next, result = null, feed = emptyList()) else it.copy(settings = next) }
         // CNO only now: Vigilant is asleep. A scan running now (Tj's own or a background cycle's) stops so it spends no more API credits, and a
         // "scan done" note would name bets no screen shows any more.
-        if (before.vigilantOn && !next.vigilantOn) {
+        if ((before.vigilantOn && !next.vigilantOn) || (!before.liveOnly && next.liveOnly)) {
             c.runner.stop()
             ScanService.cancelDone(getApplication())
         }

@@ -82,6 +82,8 @@ fun FeedScreen(
     onMiniWindow: (() -> Unit)? = null,
     /** Pause every scan (true) or resume (false). */
     onPause: (Boolean) -> Unit = {},
+    /** Live games only mode on/off (Tj, 2026-10-11): [com.tjshea.vigilant.app.LiveOnly]. */
+    onLiveMode: (Boolean) -> Unit = {},
     /** ✕: the bet leaves this list (and the widget) for good, through refreshes and rescans, as on the CNO tab. */
     onHide: (Opportunity) -> Unit = {},
     /** Undo, or "Put back" in the removed list: the bet (by key) shows again. */
@@ -193,6 +195,19 @@ fun FeedScreen(
                 // Only EVs whose other books' prices are still current (RESEARCH.md §24).
                 val shown = state.feedAt(now).let { all -> if (state.settings.includeLive && liveOnly) all.filter { it.isLive || it.liveAges != null } else all }
                 if (state.settings.killed) item(key = "paused") { KilledBanner(Modifier.padding(horizontal = 12.dp)) } else if (state.settings.paused) item(key = "paused") { PausedBanner({ onPause(false) }, Modifier.padding(horizontal = 12.dp)) }
+                if (AppBook.isNovig) item(key = "liveMode") {
+                    Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FilterChip(
+                            selected = state.settings.liveOnly, onClick = { onLiveMode(!state.settings.liveOnly) },
+                            label = { Text(if (state.settings.liveOnly) "Live games only mode: ON" else "Live games only mode", maxLines = 1) },
+                            modifier = Modifier.testTag("liveModeChip"),
+                        )
+                        if (state.settings.liveOnly) Text(
+                            "Only Pinnodds and Novig run, and only live bets are listed (kept 5 s fresh). Every other API, CNO, bids and the auto-bet are off; switching this off puts them back.",
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin) { onRecheck(feedMarketIds(state, now)) } }
                 // The real-time live lane (Settings › Include live games): what it is linked to and how fresh its bets are, or why it shows none (Tj, 2026-10-11).
                 if (AppBook.isNovig && state.settings.includeLive && state.settings.leagues.isNotEmpty()) {

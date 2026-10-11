@@ -1126,7 +1126,13 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
         if (AppBook.isNovig) "Off by default: reference odds lag in-game, and Novig charges its taker fee once a game is live. " + LiveScanText.SWITCH_SUB
         else "Off by default: in-game odds move faster than the feeds re-read them, so live edges are rarely real.",
         s.includeLive,
+        enabled = !s.liveOnly,
     ) { v -> onUpdate { it.copy(includeLive = v) } }
+    if (AppBook.isNovig) SwitchRow(
+        "Live games only mode",
+        "Only Pinnodds and Novig run and only live bets are listed. Every other API, CNO, bids and the auto-bet switch off; switching this off turns them back on and Include live games off.",
+        s.liveOnly, tag = "liveModeSwitch",
+    ) { v -> onUpdate { com.tjshea.vigilant.app.LiveOnly.set(it, v) } }
 }
 
 /** Betting & Novig account: the key and wallet, then how much each bet is (bankroll, Kelly, the starting amounts), and the limits. */
