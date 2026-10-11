@@ -177,6 +177,7 @@ object ApiBetTargets {
             basis = com.tjshea.vigilant.data.tracker.FairBasis.of(o),
             live = o.isLive,
             liveLane = o.refEvent?.id?.startsWith("pinnacle-live-") == true,
+            listedPrice = o.quote?.price,
         )
     }
 

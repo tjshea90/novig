@@ -45,6 +45,11 @@ data class BetTarget(
     val live: Boolean = false,
     /** Taken from the Feed's real-time live lane (Pinnacle's live fair, at most 5 s old when listed): the sheet re-reads that fair from the lane before pricing and before the order, and refuses once the row is off the list. */
     val liveLane: Boolean = false,
+    /**
+     * The Novig price the card listed when it was tapped (Tj, 2026-10-11: "if I bet any live game, it only places the bet if it can be filled at the odds listed in the scan"). On a live game
+     * the plan refuses when Novig's best price is now above it and never reaches past it: the order is a fill-or-kill at the listed price or better.
+     */
+    val listedPrice: Double? = null,
 )
 
 /**
@@ -175,6 +180,10 @@ object ApiBetPlanner {
         if (AutoBet.tooShort(limits.minOdds, Odds.probabilityToAmerican(best.price.coerceIn(0.001, 0.999)))) {
             return no("Novig's best price is now ${american(best.price)}, shorter than your ${Odds.formatAmerican(limits.minOdds)} limit.")
         }
+        val listed = target.listedPrice.takeIf { live }
+        if (listed != null && best.price > listed + 1e-9) {
+            return no("Novig's price moved: it was listed at ${american(listed)} and the best now is ${american(best.price)}. Nothing is bet unless it can fill at the listed odds: look at the list again.")
+        }
         val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = live)
         if (!limits.manual && bestQuote.evPercent < limits.minEv - 1e-9) {
             // Still +EV, only under Tj's own minimum: say that, and where it's set (Tj, 2026-10-02: "Why is this saying the edge is gone? It's
@@ -198,6 +207,8 @@ object ApiBetPlanner {
         var feeTotal = 0.0
         var limit = best.price
         for (level in levels) {
+            // Live: never reach past the listed price (the order is placed to fill at those odds or better, or not at all).
+            if (listed != null && level.price > listed + 1e-9) break
             val q = EvMath.quote(target.fair, level.price, fee, eventLive = live)
             if (!limits.manual && q.evPercent < limits.minEv - 1e-9) break
             val perContract = q.cost * EvMath.CONTRACT_PAYOUT_DOLLARS
