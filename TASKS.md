@@ -4583,3 +4583,9 @@ One "Live sniper" switch (TC3): tail taker (real small stakes, IOC) + cover take
 - [x] TF3 UI: Live bids page switch + status + why-none line; tests; ship.
 - [x] TE4 OddsPapi Free: a league's games are listed with ONE `/v4/fixtures?tournamentId` request (cached 3 h; empty = 404 FIXTURE_NOT_FOUND kept as []) instead of one per 12 h (123 of 250 monthly requests gone in a day, 75/91 fixture calls refused in Tj's v0.89.9 Diagnostics); OddsPapi4Test (v0.89.10).
 - [ ] TE5 Tj's v0.89.9 Diagnostics had Unabated + OddsPapi Free switched OFF: ask for one scan with only those two ON after v0.89.10. Live bids so far 14 bets 5-9 (EV +2.5%, a small sample); two fills on one outcome at the same instant (overlap repost, on from slider 30) double the stake: consider overlap off or a one-bid-per-outcome fill guard.
+
+## TG: tennis uses every API that offers it (Tj, 2026-10-11)
+Tj verbatim: "For tennis, make the app use every api that offers tennis if I have tennis selected. I'm trying to diagnose why tennis is not scanning"
+Evidence: v0.89.9 Diagnostics: ATP 0/16, WTA 0/4 matched to fair odds.
+- [ ] TG1 List which sources support ATP/WTA (supports(), OutsideSgo/OutsideOp tennis rule, Unabated, OddsPapi v5/v4, SGO, PropLine, Odds API, ParlayAPI, Pinnacle, Kalshi, Polymarket) and why none matched.
+- [ ] TG2 With tennis selected every source that carries tennis is read (no rest/gate), and Diagnostics says per source what tennis got.
