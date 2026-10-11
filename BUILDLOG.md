@@ -213,3 +213,4 @@ day that changes.
 | v0.89.21 | code 206 | 2026-10-11T17:55Z | v0.89.21: a minimum star rating in Auto-bet now decides which bets are placed (edge, odds, kinds, books-agree, sharp, trap-guard and small-prop filters are ignored while it is on; Any enforces them again); dollar limits, pregame, fresh prices, +EV floor, injuries and the 15% cap still apply
 | v0.89.22 | code 207 | 2026-10-11T19:06Z | v0.89.22: real-time live lane (Pinnodds+Novig, 5 s rule), Check odds counts in-play bets, Hide live games
 | v0.89.23 | code 208 | 2026-10-11T19:38Z | v0.89.23: Check odds now also reads Novig's own price for every open bet it missed
+| v0.89.24 | code 209 | 2026-10-11T20:09Z | v0.89.24: Pause stops everything at once, live lane keeps rows while both sockets are healthy and shows exact ages, live bets only fill at the listed odds
