@@ -1,23 +1,22 @@
-# CHECKPOINT 2974 — read me first, then TASKS.md
+# CHECKPOINT 2975 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T16:50:08Z · **tests:** all 4 fast checks green
-**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `5b3465df5` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T16:52:46Z · **tests:** all 4 fast checks green
+**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `5a6ba8775` (this checkpoint is the commit after it)
 
 ## Just done
-TL/TM/TN done, tests green (data, app); docs updated
+pre-release: v0.89.19: every API toggled on is used for any data and one toggled off is never called (SGO/OddsPapi no longer rest the others, tennis no longer overrides a switch, Pinnodds stands alone); conservative worst-case devig everywhere; closing line made logical (real start times, sharp Pinnacle close preferred, independent CLV shown first) (versionCode 204, v0.89.19)
 
 ## Do this next
-ship v0.89.19 (versionCode 204): bash ship.sh, trigger release.yml, record-release
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.89.19), then run: bash tools/record-release.sh v0.89.19 204 "v0.89.19: every API toggled on is used for any data and one toggled off is never called (SGO/OddsPapi no longer rest the others, tennis no longer overrides a switch, Pinnodds stands alone); conservative worst-case devig everywhere; closing line made logical (real start times, sharp Pinnacle close preferred, independent CLV shown first)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  5a6ba8775 ckpt 2974: TL/TM/TN done, tests green (data, app); docs updated
   2b986156d ckpt 2973: TL2: removed OutsideSgo/OutsideOp/TennisOnly, every API on is asked, off ne
   f2ecdb21d ckpt 2972: TN code + tests green in data (real start sync, sharp-history close preferr
   bae53b9ee ckpt 2971: TM done in data: worst-case devig default + migration (schema 17) + CloseDe
@@ -27,8 +26,4 @@ ship v0.89.19 (versionCode 204): bash ship.sh, trigger release.yml, record-relea
   0778c1fda ckpt 2967: pre-release: v0.89.18: Share all bets with Claude (README + parts, every be
   8264b0eb4 ckpt 2966: pre-ship: v0.89.18: Share all bets with Claude (README + parts, every bet a
   085decdb5 ckpt 2965: Saved the closing-odds audit (research/closing_audit_2026-10-11.md, 25 unve
-  52dd230bf ckpt 2964: TK tests (BetHistoryTest, BetHistoryUiTest, BetArchiveAppTest) pass; RESEAR
 ```
-
-(11 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
