@@ -538,6 +538,11 @@ class MakerDesk(
 
     private suspend fun placeOne(post: MakerDecision.Post, rules: MakerRules, auto: Boolean): Placed {
         val line = post.line
+        // No money ever goes on a negative-EV bid (Tj, 2026-10-11: "whether auto bet or bid or manual bet or bid"): a bid above the fair it is anchored to, or whose EV there is negative, is not sent.
+        val anchor = post.anchorFair ?: line.fair
+        if (post.evAtFair < 0.0 || (anchor != null && post.price > anchor + 1e-9)) {
+            return Placed.Refused("${line.selection}: not posted, its bid is above the fair price (negative EV)", stopsCycle = false)
+        }
         val (bid, ttl) = bidFor(post, rules, auto, clock()) ?: return Placed.Refused(tooOld(post), stopsCycle = false)
         // Recorded before it's sent: an answer that never comes back is still a bid Vigilant knows to look for.
         store.update { it + bid }

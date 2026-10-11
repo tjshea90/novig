@@ -542,6 +542,8 @@ class LiveBidDesk(
         val q = cfg.quality
         val v = w.verdict
         val lifeMs = ttlMs(q)
+        // No money ever goes on a negative-EV bid (Tj, 2026-10-11): a bid at or above the fair it was priced from is not posted, whatever judged it.
+        if (v.ev < 0.0 || v.price > v.fair + 1e-9) return false
         val real = cfg.real
         val bid = LiveBid(
             clientId = NovigTradingClient.newClientId(), mode = if (real) LiveBid.MODE_REAL else LiveBid.MODE_PAPER, marketId = w.marketId, eventId = w.eventId, outcomeId = w.outcomeId,
