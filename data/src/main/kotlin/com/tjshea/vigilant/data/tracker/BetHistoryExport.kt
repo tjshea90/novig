@@ -112,10 +112,12 @@ object BetHistoryExport {
             val st = BetTracker.stats(group, now)
             val clvs = group.filter { !it.isOutlier && !it.isLock && it.status != BetStatus.VOID }.mapNotNull { ClosingLine.clv(it, now) }
             val t = tStat(clvs)
+            val ind = group.filter { !it.isOutlier && !it.isLock && it.status != BetStatus.VOID && ClosingLine.closeOf(it, now)?.second?.let(ClosingLine::independent) == true }.mapNotNull { ClosingLine.clv(it, now) }
             return "- $label · ${st.bets} bets (${st.pending} open)" +
                 (if (st.settled > 0) " · ${st.won}-${st.lost}${if (st.pushed > 0) "-${st.pushed}" else ""} (win ${pct0(st.winRate)})" else "") +
                 " · ROI ${pct(st.roi)} · profit ${money(st.profit)} · EV when placed ${pct(st.averageEv)}" +
                 (if (clvs.isNotEmpty()) " · CLV ${pct(st.averageClv)} on ${clvs.size} closed (beat close ${pct0(st.beatClosePercent)}${t?.let { String.format(Locale.US, ", t=%.1f", it) } ?: ""})" else " · CLV n/a (no true close yet)") +
+                (if (ind.isNotEmpty()) " · INDEPENDENT-close CLV ${pct(ind.average())} on ${ind.size} (beat ${pct0(ind.count { it > 0 }.toDouble() / ind.size)})" else if (clvs.isNotEmpty()) " · no independent close" else "") +
                 (if (st.settledWithEv > 0) " · expected ${money(st.expectedProfit)} vs actual ${money(st.profitWithEv)}" else "")
         }
 
@@ -173,6 +175,7 @@ object BetHistoryExport {
 
         private fun headline(ln: (String) -> Unit, bets: List<TrackedBet>, now: Long) {
             ln("## Headline")
+            ln("**Read the INDEPENDENT-close CLV first**: a close read from the market before the start is, for a CrazyNinjaOdds bet, the same consensus that found it (partly circular); the independent figure (a sharp book's or ESPN's price at the start) cannot be.")
             ln(groupLine("All", bets, now))
             ln(groupLine("Bets (taker orders)", bets.filter { !it.isBid }, now))
             ln(groupLine("Bid fills", bets.filter { it.isBid }, now))

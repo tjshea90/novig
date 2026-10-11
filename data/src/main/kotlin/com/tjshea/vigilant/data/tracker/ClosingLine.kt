@@ -220,7 +220,16 @@ data class ClvStats(
     val averageEvAtBet: Double? = null,
     /** How many of [closed]'s closes came from where ([ClosingLine.sourceLabel]): read before the start, ESPN, Novig's trades. */
     val bySource: Map<String, Int> = emptyMap(),
+    /**
+     * Of [closed], the bets whose close is INDEPENDENT of the consensus that found them (a sharp book's or ESPN's price at the start: [ClosingLine.independent]), how many beat it and the average CLV on them (Tj,
+     * 2026-10-11: CLV against a read of the same CNO consensus is partly circular, so the figure that cannot be is shown beside it).
+     */
+    val independentClosed: Int = 0,
+    val independentBeat: Int = 0,
+    val independentAverageClv: Double? = null,
 ) {
+    val independentBeatShare: Double? get() = if (independentClosed > 0) independentBeat.toDouble() / independentClosed else null
+
     val beatShare: Double? get() = if (closed > 0) beat.toDouble() / closed else null
 
     companion object {
@@ -234,6 +243,7 @@ data class ClvStats(
             val outliers = clvs.count { abs(it) > ClosingLine.OUTLIER_CLV + EPS }
             val keptBets = if (dropOutliers) closedBets.filter { abs(it.second) <= ClosingLine.OUTLIER_CLV + EPS } else closedBets
             val kept = keptBets.map { it.second }
+            val independent = keptBets.filter { ClosingLine.closeOf(it.first, now)?.second?.let(ClosingLine::independent) == true }.map { it.second }
             return ClvStats(
                 closed = kept.size,
                 beat = kept.count { it > EPS },
@@ -244,6 +254,9 @@ data class ClvStats(
                 missed = inPeriod.count { now >= it.startsTs && ClosingLine.closeFair(it, now) == null },
                 averageEvAtBet = keptBets.mapNotNull { it.first.evPercentAtBet }.takeIf { it.isNotEmpty() }?.average(),
                 bySource = keptBets.mapNotNull { ClosingLine.closeOf(it.first, now)?.second?.let(ClosingLine::sourceLabel) }.groupingBy { it }.eachCount(),
+                independentClosed = independent.size,
+                independentBeat = independent.count { it > EPS },
+                independentAverageClv = independent.takeIf { it.isNotEmpty() }?.average(),
             )
         }
 

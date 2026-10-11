@@ -941,6 +941,13 @@ fun ClosingLineCard(
             LabeledValue("Avg vs close", s.averageClv?.let { Format.evPercent(it) } ?: "—", valueColor = s.averageClv?.let { moneyColor(it) } ?: Color.Unspecified)
             LabeledValue("Avg EV at bet", s.averageEvAtBet?.let { Format.evPercent(it) } ?: "—")
         }
+        // CLV against a read of the same consensus that found the bet is partly circular: the figure on closes from outside it (a sharp book's or ESPN's price at the start) is shown beside it.
+        Row(Modifier.fillMaxWidth().testTag("clvIndependent"), horizontalArrangement = Arrangement.SpaceBetween) {
+            LabeledValue("Independent closes", if (s.independentClosed > 0) "${s.independentClosed} of ${s.closed}" else "none yet")
+            LabeledValue("Beat it", s.independentBeatShare?.let { "${Format.percent(it, 0)} (${s.independentBeat}/${s.independentClosed})" } ?: "—")
+            LabeledValue("Avg vs it", s.independentAverageClv?.let { Format.evPercent(it) } ?: "—", valueColor = s.independentAverageClv?.let { moneyColor(it) } ?: Color.Unspecified)
+        }
+        Caption("Independent = a sharp book's (Pinnacle's) or ESPN's closing price at the start, found afterwards. The rest are reads of the market before the start; for a CNO bet that is the same consensus that found it, so its CLV is partly circular: trust the independent figure first. The app asks the sharp sources for these even when a read exists.")
         Caption(TrackerText.clvCounts(s))
         Caption(
             "The close is the devigged fair line read in the last ${ClosingLine.TRUE_CLOSE_MS / 60_000} minutes before the start: Vigilant reads it about " +
