@@ -279,7 +279,11 @@ class HistoricalClosesTest {
     fun `a close read just before the start wins, and nothing is looked for before the start or after 60 days`() {
         val captured = bet("c", "Moneyline", "Buffalo Bills").copy(closingFair = 0.6, closingSeenAtMs = billsStart - 5 * 60_000L, closeFair = 0.7, closeVia = "ESPN · DraftKings close")
         assertEquals(0.6 to ClosingLine.SOURCE_CAPTURED, ClosingLine.closeOf(captured, billsStart + 1))
-        assertFalse(CloseBackfill.due(captured.copy(closeFair = null), billsStart + 3_600_000L))
+        // A read a minute before the start is final; one five minutes before it is still worth a sharp book's price at the start (ClosingLine.weakRead), and so is a CNO read.
+        val fresh = captured.copy(closeFair = null, closingSeenAtMs = billsStart - 60_000L)
+        assertFalse(CloseBackfill.due(fresh, billsStart + 3_600_000L))
+        assertTrue(CloseBackfill.due(captured.copy(closeFair = null), billsStart + 3_600_000L))
+        assertTrue(CloseBackfill.due(fresh.copy(source = BetTracker.SOURCE_CNO), billsStart + 3_600_000L))
         val plain = bet("p", "Moneyline", "Buffalo Bills")
         assertFalse(CloseBackfill.due(plain, billsStart + 60_000L)) // ESPN posts its close at the start: a few minutes after
         assertTrue(CloseBackfill.due(plain, billsStart + CloseBackfill.AFTER_START_MS))
