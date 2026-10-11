@@ -6518,3 +6518,8 @@ Figure out why this error happens, how to fix it, and make it automatically rech
 ```
 If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it at all, whether auto bet or bid or manual bet or bid. No money should ever go on a negative ev bet.
 ```
+
+## 2026-10-11T19:59:31Z
+```
+If any sharp book disagrees that a bet is positive EV, it should be vetoed and not bet, and should not be a highly rated bet 
+```
