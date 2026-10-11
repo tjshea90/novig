@@ -63,45 +63,46 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     val shown by rememberUpdatedState(reportActions.onLiveBidShown)
     LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(1_500) } }
     var advanced by rememberSaveable { mutableStateOf(LiveBidAdvancedOpenByDefault) }
+    // Editing a rule by hand leaves the slider on "Custom"; line kinds, tennis and leagues are not the slider's, so they keep its position.
     val setQ = { f: (LiveBidQuality) -> LiveBidQuality -> onUpdate { it.copy(liveBidQuality = f(it.liveBidQuality).copy(level = -1)) } }
-    // The line kinds, tennis and leagues are not part of the slider: changing them keeps its position.
     val setKeep = { f: (LiveBidQuality) -> LiveBidQuality -> onUpdate { it.copy(liveBidQuality = f(it.liveBidQuality)) } }
     val setL = { f: (LiveBidLimits) -> LiveBidLimits -> onUpdate { it.copy(liveBidLimits = f(it.liveBidLimits)) } }
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
-    SectionTitle("What to bid on")
-    SectionTitle("Which lines")
-    LbHint("Moneylines, and spreads and totals at Pinnacle's own main line (the lines Pinnacle's price can stand behind).")
-    LbSwitch("Moneylines", "", q.moneyline, "liveBidMoneyline") { v -> setKeep { it.copy(moneyline = v) } }
-    LbSwitch("Spreads", "", q.spread, "liveBidSpread") { v -> setKeep { it.copy(spread = v) } }
-    LbSwitch("Totals", "", q.total, "liveBidTotal") { v -> setKeep { it.copy(total = v) } }
-    LbSwitch("Tennis", "Moves on every point and its feed has no clock. Off by default.", q.tennis, "liveBidTennis") { v -> setKeep { it.copy(tennis = v) } }
-    LbTitle("Leagues")
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(selected = q.onlyLeagues.isEmpty(), onClick = { setKeep { it.copy(onlyLeagues = emptySet()) } }, label = { Text("All") }, modifier = Modifier.testTag("liveBidLeague-ALL"))
-        Leagues.ALL.map { it.novigName }.distinct().forEach { lg ->
-            FilterChip(
-                selected = lg in q.onlyLeagues,
-                onClick = { setKeep { it.copy(onlyLeagues = if (lg in it.onlyLeagues) it.onlyLeagues - lg else it.onlyLeagues + lg) } },
-                label = { Text(lg) }, modifier = Modifier.testTag("liveBidLeague-$lg"),
-            )
+
+    Text(LiveBidText.HINT, style = MaterialTheme.typography.bodyMedium, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
+    Text(LiveBidText.EVIDENCE, style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp).testTag("liveBidEvidence"))
+    LbSwitch(LiveBidText.FEED_TITLE, LiveBidText.feedSub(s.liveBidReal), s.liveBid, "liveBidSwitch") { v -> onUpdate { it.copy(liveBid = v, liveBidReal = it.liveBidReal && v) } }
+    s.liveBidHalted?.let { why ->
+        Column(Modifier.padding(vertical = 4.dp).testTag("liveBidHalted")) {
+            Text("Stopped: $why", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            Button(onClick = { onUpdate { it.copy(liveBidHalted = null) } }, modifier = Modifier.testTag("liveBidResume")) { Text(LiveBidText.RESUME) }
         }
     }
-
-    SectionTitle("Your money (the slider never changes it)")
-    LbHint("A bid's size is a fraction of full Kelly on your bankroll (Settings › Betting & Novig account: ${LiveBidText.money(s.bankroll)}) for that bid's own price and edge, raised to the smallest stake and held to the biggest and to Settings' per-bet maximum. Makers pay no fee.")
-    LbTitle("Live bid stake rule")
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        AutoBetStake.entries.forEach { m ->
-            FilterChip(selected = m == lim.stakeMode, onClick = { setL { it.copy(stakeMode = m) } }, label = { Text(m.label) }, modifier = Modifier.testTag("liveBidStake-${m.name}"))
+    var confirming by remember { mutableStateOf(false) }
+    val paperOnly = LiveBidPresets.active(s)?.paperOnly == true
+    Row(
+        Modifier.fillMaxWidth().toggleable(
+            value = s.liveBidReal, role = Role.Switch,
+            onValueChange = { v -> if (!v) onUpdate { it.copy(liveBidReal = false) } else if (s.liveBid && !paperOnly) confirming = true },
+        ).padding(vertical = 6.dp).testTag("liveBidRealSwitch"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(LiveBidText.REAL_TITLE, style = MaterialTheme.typography.bodyMedium)
+            Text(LiveBidText.REAL_SUB, style = MaterialTheme.typography.bodySmall, color = subtle)
         }
+        Switch(checked = s.liveBidReal, onCheckedChange = null, enabled = (s.liveBid && !paperOnly) || s.liveBidReal)
     }
-    LiveBidText.typicalStake(s)?.let { Text("A typical bid (fair 50%, ${LiveBidText.pct(q.margin)} margin) stakes ${LiveBidText.money(it)}.", style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("liveBidTypical")) }
-    if (lim.stakeMode == AutoBetStake.CUSTOM) TypedDollarField(NumberSpecs.dollars("a bid's amount", 0.5, 1_000.0), lim.customStake, "liveBidCustomStake") { v -> setL { it.copy(customStake = v) } }
-    LbDollars("Smallest stake", listOf(0.5, 1.0, 2.0, 3.0, 5.0), lim.minStake, "liveBidMinStake", 0.5, 1_000.0) { v -> setL { it.copy(minStake = v, maxStake = maxOf(it.maxStake, v)) } }
-
+    if (paperOnly) Text("The preset in force is for watching only: real bids stay off until you apply another.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidPaperOnlyNote"))
+    Text(LiveBidText.statusLine(state.liveBidStatus, s), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("liveBidNote"))
+    LiveBidText.whyNone(s, state.liveBidStatus, state.pinnLive, state.pinnoddsKeys.isNotEmpty() || s.pinnWebsite.website)?.let { why ->
+        Text(why, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(top = 2.dp).testTag("liveBidWhy"))
+    }
+    Text(LiveBidText.detail(s, state.liveBidStatus, state.pinnLive), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp).testTag("liveBidDetail"))
+    if (state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.website) Text("No Pinnodds key is saved: add it in Settings › Pinnodds live, or switch that page to the free Pinnacle website feed. Live bids use the same feed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidNoKey"))
     // ---- the slider ---------------------------------------------------------------------------------------------------------------------------------------------------------------
     SectionTitle("Safety ↔ Volume")
-    LbHint("One slider sets every rule below together. Left: only the best prices and the cleanest moments, so fewer fills but each one keeps a big edge. Right: bids on almost everything at thin edges, so many fills.")
+    LbHint("One slider sets every rule together. Left: only the best prices and cleanest moments, so fewer fills but each keeps a big edge. Right: bids on almost everything at thin edges, so many fills.")
     val shownLevel = if (q.level in LiveBidSlider.MIN..LiveBidSlider.MAX) q.level else LiveBidSlider.nearest(q)
     var drag by remember(shownLevel) { mutableStateOf(shownLevel.toFloat()) }
     Text(LiveBidSlider.name(drag.toInt()) + " · " + drag.toInt() + " of 100", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.testTag("liveBidSliderLabel"))
@@ -118,11 +119,9 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     Column(Modifier.padding(top = 6.dp).testTag("liveBidSliderDescribe"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         LiveBidSlider.describe(q).forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = subtle) }
     }
-    LbHint("A bid is only ever posted at an edge above the line it is pulled at, and the app checks each fill: if the last fills did not keep their edge 30 s later, it stops by itself.")
-    
+    LbHint("A bid is only posted at an edge above the line it is pulled at, and every fill is checked 30 s later: if the last fills did not keep their edge, the feature stops by itself.")
 
-    // ---- what to bid on ----------------------------------------------------------------------------------------------------------------------------------------------------
-    SectionTitle("What to bid on")
+    // ---- which lines --------------------------------------------------------------------------------------------------------------------------------------------------------------
     SectionTitle("Which lines")
     LbHint("Moneylines, and spreads and totals at Pinnacle's own main line (the lines Pinnacle's price can stand behind).")
     LbSwitch("Moneylines", "", q.moneyline, "liveBidMoneyline") { v -> setKeep { it.copy(moneyline = v) } }
@@ -141,7 +140,6 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
         }
     }
 
-    SectionTitle("Live bid limits (your money: a preset never changes it)")
     SectionTitle("Your money (the slider never changes it)")
     LbHint("A bid's size is a fraction of full Kelly on your bankroll (Settings › Betting & Novig account: ${LiveBidText.money(s.bankroll)}) for that bid's own price and edge, raised to the smallest stake and held to the biggest and to Settings' per-bet maximum. Makers pay no fee.")
     LbTitle("Live bid stake rule")
@@ -162,7 +160,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
 
     OutlinedButton(onClick = { advanced = !advanced }, modifier = Modifier.fillMaxWidth().padding(top = 12.dp).testTag("liveBidAdvancedToggle")) { Text(if (advanced) "Hide advanced settings" else "Advanced settings (every individual rule)") }
     if (advanced) {
-    LbHint("Editing any rule here makes the slider say Custom. Moving the slider sets them all again.")
+        LbHint("Editing a rule here makes the slider say Custom. Moving the slider sets them all again.")
     // ---- the autopilot: both engines, one tap ----------------------------------------------------------------------------------------------------------------------------------
     var confirmingPilot by remember { mutableStateOf(false) }
     SectionTitle(LiveBidText.AUTOPILOT_TITLE)
