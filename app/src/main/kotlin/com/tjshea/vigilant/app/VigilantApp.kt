@@ -711,7 +711,7 @@ class AppContainer(private val app: Application) {
                 if (synced.changed.isNotEmpty() || copied > 0 || failed != null) eventLog.info("BETARCHIVE", note)
                 betArchiveNote = note
                 note
-            }.onFailure { e -> if (e is CancellationException) throw e; eventLog.warn("BETARCHIVE", "couldn't save the day files: ${e.message ?: e.javaClass.simpleName}") }.getOrNull()
+            }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; eventLog.warn("BETARCHIVE", "couldn't save the day files: ${e.message ?: e.javaClass.simpleName}") }.getOrNull()
         }
     }
     val makerDenials = com.tjshea.vigilant.data.novig.trading.maker.MakerDenials(File(app.filesDir, "maker_denied.json"))
