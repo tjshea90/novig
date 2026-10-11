@@ -268,6 +268,7 @@ object MakerText {
 
     /** The fills' numbers: "8 fills · +4.2% EV at the fair · CLV +1.9% on 5 with a close". */
     fun fillSummary(ui: MakerUi): String? {
+        val filled = ui.filled
         if (filled.isEmpty()) return null
         val ev = filled.map { it.evAtFair }.average()
         val bets = filled.mapNotNull { b -> ui.bets.firstOrNull { it.id == b.betId || (b.orderId != null && it.orderId == b.orderId) } }
