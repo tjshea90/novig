@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.LiveBidText
 import com.tjshea.vigilant.app.TailText
 import com.tjshea.vigilant.app.UiState
-import com.tjshea.vigilant.data.livebid.LiveAutopilot
+import com.tjshea.vigilant.data.livebid.LiveSniper
 import com.tjshea.vigilant.data.livebid.LiveBidLimits
 import com.tjshea.vigilant.data.livebid.LiveBidPresets
 import com.tjshea.vigilant.data.livebid.LiveBidQuality
@@ -100,6 +100,31 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     }
     Text(LiveBidText.detail(s, state.liveBidStatus, state.pinnLive), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp).testTag("liveBidDetail"))
     if (state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.website) Text("No Pinnodds key is saved: add it in Settings › Pinnodds live, or switch that page to the free Pinnacle website feed. Live bids use the same feed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidNoKey"))
+    var confirmingPilot by remember { mutableStateOf(false) }
+    SectionTitle(LiveBidText.AUTOPILOT_TITLE)
+    LbHint(LiveBidText.AUTOPILOT_HINT)
+    val pilot = LiveSniper.inForce(s)
+    Text(
+        (if (pilot) "In force" + (if (LiveSniper.real(s)) ": REAL orders." else ": paper (nothing is sent).") else "Not in force: the two engines are set separately below and in Pinnodds live.") ,
+        style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 4.dp).testTag("liveAutopilotState"),
+    )
+    Text(LiveBidText.autopilotStatus(s, state.pinnTrade, state.liveBidStatus, state.pinnLive, state.tailTrade, state.labStatus), style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("liveAutopilotStatus"))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedButton(onClick = { onUpdate { LiveSniper.apply(it, real = false) } }, modifier = Modifier.testTag("liveAutopilotPaper")) { Text("Sniper: paper") }
+        Button(onClick = { confirmingPilot = true }, modifier = Modifier.testTag("liveAutopilotReal")) { Text("Sniper: real money") }
+        if (LiveSniper.real(s) || s.liveBid || s.pinnLive) TextButton(onClick = { onUpdate { LiveSniper.off(it) } }, modifier = Modifier.testTag("liveAutopilotOff")) { Text("Off") }
+    }
+    Text(LiveBidText.whyFew(state.liveBids, state.liveBidStatus), style = MaterialTheme.typography.labelSmall, color = subtle, modifier = Modifier.padding(top = 6.dp).testTag("liveBidWhyFew"))
+    if (confirmingPilot) {
+        AlertDialog(
+            onDismissRequest = { confirmingPilot = false },
+            title = { Text(LiveBidText.AUTOPILOT_CONFIRM_TITLE) },
+            text = { Text(LiveBidText.autopilotConfirm(s)) },
+            confirmButton = { TextButton(onClick = { confirmingPilot = false; onUpdate { LiveSniper.apply(it, real = true) } }, modifier = Modifier.testTag("liveAutopilotConfirm")) { Text("Turn on") } },
+            dismissButton = { TextButton(onClick = { confirmingPilot = false }, modifier = Modifier.testTag("liveAutopilotCancel")) { Text("Cancel") } },
+        )
+    }
+
     // ---- the slider ---------------------------------------------------------------------------------------------------------------------------------------------------------------
     SectionTitle("Safety ↔ Volume")
     LbHint("One slider sets every rule together. Left: only the best prices and cleanest moments, so fewer fills but each keeps a big edge. Right: bids on almost everything at thin edges, so many fills.")
@@ -162,30 +187,6 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     if (advanced) {
         LbHint("Editing a rule here makes the slider say Custom. Moving the slider sets them all again.")
     // ---- the autopilot: both engines, one tap ----------------------------------------------------------------------------------------------------------------------------------
-    var confirmingPilot by remember { mutableStateOf(false) }
-    SectionTitle(LiveBidText.AUTOPILOT_TITLE)
-    LbHint(LiveBidText.AUTOPILOT_HINT)
-    val pilot = LiveAutopilot.inForce(s)
-    Text(
-        (if (pilot) "In force" + (if (LiveAutopilot.real(s)) ": REAL orders." else ": paper (nothing is sent).") else "Not in force: the two engines are set separately below and in Pinnodds live.") ,
-        style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 4.dp).testTag("liveAutopilotState"),
-    )
-    Text(LiveBidText.autopilotStatus(s, state.pinnTrade, state.liveBidStatus, state.pinnLive, state.tailTrade, state.labStatus), style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("liveAutopilotStatus"))
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        OutlinedButton(onClick = { onUpdate { LiveAutopilot.apply(it, real = false) } }, modifier = Modifier.testTag("liveAutopilotPaper")) { Text("Autopilot: paper") }
-        Button(onClick = { confirmingPilot = true }, modifier = Modifier.testTag("liveAutopilotReal")) { Text("Autopilot: real money") }
-        if (LiveAutopilot.real(s) || s.liveBid || s.pinnLive) TextButton(onClick = { onUpdate { LiveAutopilot.off(it) } }, modifier = Modifier.testTag("liveAutopilotOff")) { Text("Off") }
-    }
-    Text(LiveBidText.whyFew(state.liveBids, state.liveBidStatus), style = MaterialTheme.typography.labelSmall, color = subtle, modifier = Modifier.padding(top = 6.dp).testTag("liveBidWhyFew"))
-    if (confirmingPilot) {
-        AlertDialog(
-            onDismissRequest = { confirmingPilot = false },
-            title = { Text(LiveBidText.AUTOPILOT_CONFIRM_TITLE) },
-            text = { Text(LiveBidText.autopilotConfirm(s)) },
-            confirmButton = { TextButton(onClick = { confirmingPilot = false; onUpdate { LiveAutopilot.apply(it, real = true) } }, modifier = Modifier.testTag("liveAutopilotConfirm")) { Text("Turn on") } },
-            dismissButton = { TextButton(onClick = { confirmingPilot = false }, modifier = Modifier.testTag("liveAutopilotCancel")) { Text("Cancel") } },
-        )
-    }
 
     // ---- live tail bets ----------------------------------------------------------------------------------------------------------------------------------------------------------
     var confirmingTail by remember { mutableStateOf(false) }
