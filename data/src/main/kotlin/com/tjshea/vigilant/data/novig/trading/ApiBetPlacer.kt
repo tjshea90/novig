@@ -138,8 +138,9 @@ class ApiBetPlacer(
             if (e.status == 400 && e.code == TOO_SMALL_CODE) {
                 return PlaceResult.Refused("Novig refused the order as too small ($TOO_SMALL_CODE). Try a bigger amount.", tooSmall = true)
             }
-            // A lock on this one market, game, league or player (423 MARKET_LOCKED …) is about this bet too: the account can still bet the rest.
-            if (e.betLocked) return PlaceResult.Refused(e.advice)
+            // A lock on this one market, game, league or player (423 MARKET_LOCKED …) is about this bet too: the account can still bet the rest. So is a market that
+            // is closed for a moment or not tradable in play (a live bet), and a price off Novig's band.
+            if (e.betLocked || e.betRefused) return PlaceResult.Refused(e.advice)
             return PlaceResult.Failed(e.advice)
         } catch (e: Exception) {
             // No usable answer (a timeout, a dropped connection, a reply that couldn't be read): the order may have gone through, so look

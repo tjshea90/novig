@@ -65,6 +65,12 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
             status == 403 && serverMessage?.contains("KYC") == true -> "Novig needs your identity check (KYC) finished first."
             status == 403 -> "Novig's edge refused the request (usually too many requests). Wait a minute."
             status == 409 -> "Novig already has that key or limit (one management key, one trading key per subaccount)."
+            // In play (NOVIG_API.md §18, docs.novig.com/api/errors): about this one bet, never the account.
+            code == "NOT_LIVE_TRADABLE" -> "Novig doesn't take orders in play on this market (Novig code $code). Nothing was bought."
+            code == "EVENT_NOT_TRADABLE" -> "Novig isn't taking orders on this game right now (Novig code $code): it may be between plays or paused. Nothing was bought; look again in a moment."
+            code == "MARKET_CLOSED" || code == "MARKET_INACTIVE" -> "Novig has this market closed right now (Novig code $code): in play it closes for a few seconds after a score. Nothing was bought; look again in a moment."
+            code == "PRICE_BAND_VIOLATION" -> "Novig refused the price: it is outside the band Novig allows for an order right now (Novig code $code). Nothing was bought; look again."
+            code == "ORDER_TOO_LARGE" -> "Novig refused the order as too large (Novig code $code). Try a smaller amount."
             status == 422 -> "Novig refused the order: the Vigilant subaccount doesn't have enough money for it, or a position limit stopped it" + (serverMessage?.let { " ($it)." } ?: ".")
             status == 404 -> serverMessage ?: "Novig doesn't know that market or order (it may have closed)."
             status == 429 -> "Novig asked us to slow down. Try again in a few seconds."
@@ -75,6 +81,9 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
     /** A 423 that locks this one bet's market, game, league or player, not the account ([BET_LOCK_CODES]). */
     val betLocked: Boolean get() = status == 423 && code in BET_LOCK_CODES
 
+    /** An order refused for something about this one bet (a market closed for a moment, not tradable in play, a price off the band), not the account: no money moved and the next bet can go. */
+    val betRefused: Boolean get() = code in BET_REFUSAL_CODES
+
     companion object {
         /** The 451 codes about the request's network rather than the key holder's device. */
         val NETWORK_CODES = setOf("ANONYMIZED_NETWORK", "RESTRICTED_NETWORK_REGION")
@@ -82,6 +91,9 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
         /** The 423 codes that lock one bet's market, game (event), league or competitor (docs.novig.com/api/errors). */
         val BET_LOCK_WHAT = mapOf("MARKET_LOCKED" to "market", "EVENT_LOCKED" to "game", "LEAGUE_LOCKED" to "league", "COMPETITOR_LOCKED" to "player or team")
         val BET_LOCK_CODES = BET_LOCK_WHAT.keys
+
+        /** The 400/409 codes about one bet in play: [betRefused]. */
+        val BET_REFUSAL_CODES = setOf("NOT_LIVE_TRADABLE", "EVENT_NOT_TRADABLE", "MARKET_CLOSED", "MARKET_INACTIVE", "PRICE_BAND_VIOLATION", "ORDER_TOO_LARGE")
     }
 }
 

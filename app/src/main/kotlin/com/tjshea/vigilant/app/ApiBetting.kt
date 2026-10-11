@@ -175,6 +175,7 @@ object ApiBetTargets {
             market = o.market, outcomeId = o.outcome.outcomeId, league = o.league.displayName, eventName = o.event.description, startsTs = o.event.startsTs,
             marketLabel = o.marketLabel, selection = o.selection, fair = fair, fairAsOfMs = o.fairAsOfMs, source = BetTracker.SOURCE_VIGILANT, placedKey = o.key,
             basis = com.tjshea.vigilant.data.tracker.FairBasis.of(o),
+            live = o.isLive,
         )
     }
 
