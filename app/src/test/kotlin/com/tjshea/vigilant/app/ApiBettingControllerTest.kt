@@ -186,11 +186,11 @@ class ApiBettingControllerTest {
         waitFor("a plan") { state.value.betSheet?.plan != null }
         assertTrue(state.value.betSheet!!.plan!!.live)
         val evBefore = state.value.betSheet!!.plan!!.evPercent
-        // The lane's fair fell while the sheet was open: the plan follows it (a bet by hand is still Tj's call, but its EV is the current one).
+        // The lane's fair fell while the sheet was open: the plan follows it, and a price that is negative EV now is refused (Tj, 2026-10-11).
         state.update { it.copy(liveRows = listOf(row.copy(fairProbability = 0.01))) }
         api.refreshPlan()
-        waitFor("a plan at the lower fair") { state.value.betSheet?.plan != null }
-        assertTrue(state.value.betSheet!!.plan!!.evPercent < evBefore)
+        waitFor("a refusal at the lower fair") { state.value.betSheet?.let { it.plan == null && it.refusal != null } == true }
+        assertTrue(state.value.betSheet!!.refusal!!.contains("negative EV"))
         api.dismiss()
     }
 

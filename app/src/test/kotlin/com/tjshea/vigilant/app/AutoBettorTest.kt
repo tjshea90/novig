@@ -469,9 +469,12 @@ class AutoBettorTest {
         val check = AlertPicks.cnoChecked(withBooks(split, loose), 0.03, now).single().check
         assertEquals("the fixture: 2 of 3 agree and the consensus is still +EV", 3 to 2, check.twoSided to check.agreeing)
         assertTrue(check.ev!! > 0.0)
-        // Off: 2 of 3 passes a minimum of 2.
+        // Off: 2 of 3 passes a minimum of 2, but the one saying no is a sharp book, which vetoes it whatever the sharp rule says (Tj, 2026-10-11: "If any sharp book disagrees that a bet is
+        // positive EV, it should be vetoed and not bet").
         val novig = FakeNovig()
-        assertEquals(1, bettor(novig).run(loose, withBooks(split, loose)).placed.size)
+        val off = bettor(novig).run(loose, withBooks(split, loose))
+        assertEquals(0, off.placed.size)
+        assertTrue(off.skipped.keys.toString(), off.skipped.keys.any { it.contains("a sharp book prices both sides and says it isn't +EV") })
         // On: the same bet is skipped, with the count in the reason, and nothing reaches Novig.
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
         val strict = loose.copy(autoBetAllAgree = true)
