@@ -362,7 +362,7 @@ fun AutoBetSection(
         Text(
             "A minimum rating is ON: every bet rated ${BetRating.label(s.autoBetMinStars)}★ or better is bet, and the filters below (smallest edge, favorites' extra edge, longest and shortest odds, kinds of bet, books that must agree, " +
                 "the sharp rule, the trap guard and the small-prop guard) are NOT applied. What always applies: ${AutoBet.starsKept}. Pick Any to enforce all of the filters again.",
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStarsOverride"),
+            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStarsOverride"),
         )
     }
 
