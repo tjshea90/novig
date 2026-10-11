@@ -1872,5 +1872,13 @@ class AppContainer(private val app: Application) {
             // More books' 1st-half lines (2 credits a league, only where Novig lists a 1st-half spread or total; PARLAY_API.md §6.7).
             add(if (background) parlayHalvesBackground else parlayHalves)
         }
+        // Tennis picked (Tj, 2026-10-11): every feed that carries tennis is asked for it, even with its own switch off. A feed already in the list is left as it is; its API's own on/off (key, gate) still counts.
+        if (settings.selectedLeagues.any { it.tennis }) {
+            val have = map { it.id }.toSet()
+            fun tennis(src: ReferenceSource) { if (src.id !in have) add(com.tjshea.vigilant.data.reference.TennisOnly(src)) }
+            if ((settings.gates.usePinnwire && keyStore.current(ApiProvider.PINNWIRE).isNotEmpty()) || (settings.gates.usePinnapi && keyStore.current(ApiProvider.PINNAPI).isNotEmpty()) || pinnoddsActive(settings)) tennis(pinnacle)
+            tennis(kalshi)
+            if (keyStore.current(ApiProvider.PARLAY).isNotEmpty()) tennis(if (background) parlayOddsBackground else parlayOdds)
+        }
     }
 }
