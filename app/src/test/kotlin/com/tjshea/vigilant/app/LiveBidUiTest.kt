@@ -48,7 +48,7 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35], qualifiers = "w393dp-h4000dp-xxhdpi")
 class LiveBidUiTest {
-    @org.junit.Before fun wake() { com.tjshea.vigilant.data.scanner.Dormant.PINNODDS = false }
+    @org.junit.Before fun wake() { com.tjshea.vigilant.app.ui.LiveBidAdvancedOpenByDefault = true; com.tjshea.vigilant.data.scanner.Dormant.PINNODDS = false }
 
     @get:Rule val compose = createComposeRule()
 

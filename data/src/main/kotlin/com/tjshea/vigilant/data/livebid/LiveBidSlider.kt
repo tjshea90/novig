@@ -106,7 +106,7 @@ object LiveBidSlider {
         val custom = q.level !in MIN..MAX
         val kept = (q.margin - 0.012).coerceAtLeast(0.0)
         return listOf(
-            (if (custom) "Custom (edited in Advanced), nearest to ${name(level)}" else "${name(level)} · $level of 100"),
+            (if (custom) "Custom rules (a saved preset or edits in Advanced), nearest to ${name(level)}" else "${name(level)} · $level of 100"),
             "Each bid sits ${LiveBidQuality.pct(q.margin)} under Pinnacle's fair price: that is its edge when it goes up.",
             "Expect ${fillWord(q.margin)}; a fill kept about +${LiveBidQuality.pct(kept)} on the stored tapes at this margin (a guide, not a promise).",
             "A bid comes down when its edge falls under ${LiveBidQuality.pct(q.pullBelowEv)}; the feature stops if the last ${q.keptWindow} fills kept less than ${LiveBidQuality.pct(q.minKeptEv)} on average after 30 s.",

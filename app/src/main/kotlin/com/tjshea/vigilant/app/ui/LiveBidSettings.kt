@@ -39,6 +39,7 @@ import com.tjshea.vigilant.data.livebid.LiveAutopilot
 import com.tjshea.vigilant.data.livebid.LiveBidLimits
 import com.tjshea.vigilant.data.livebid.LiveBidPresets
 import com.tjshea.vigilant.data.livebid.LiveBidQuality
+import com.tjshea.vigilant.data.livebid.LiveBidSlider
 import com.tjshea.vigilant.data.livebid.SavedLiveBidPreset
 import com.tjshea.vigilant.data.scanner.AutoBetStake
 import com.tjshea.vigilant.data.scanner.Leagues
@@ -50,6 +51,9 @@ import com.tjshea.vigilant.engine.DevigMethod
  * that are safe positive EV live bid presets"): the two switches (paper, then real money behind a confirmation), the presets, and every number the bids use as chips with a box to type your own.
  * Order: what Tj is most likely to touch first. The money is his own and a preset never changes it.
  */
+/** Tests open the Advanced group at once; the app starts it closed. */
+internal var LiveBidAdvancedOpenByDefault = false
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
@@ -64,7 +68,37 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     val setKeep = { f: (LiveBidQuality) -> LiveBidQuality -> onUpdate { it.copy(liveBidQuality = f(it.liveBidQuality)) } }
     val setL = { f: (LiveBidLimits) -> LiveBidLimits -> onUpdate { it.copy(liveBidLimits = f(it.liveBidLimits)) } }
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
-    val subtle = MaterialTheme.typography.let { MaterialTheme.colorScheme.onSurfaceVariant }
+    SectionTitle("What to bid on")
+    SectionTitle("Which lines")
+    LbHint("Moneylines, and spreads and totals at Pinnacle's own main line (the lines Pinnacle's price can stand behind).")
+    LbSwitch("Moneylines", "", q.moneyline, "liveBidMoneyline") { v -> setKeep { it.copy(moneyline = v) } }
+    LbSwitch("Spreads", "", q.spread, "liveBidSpread") { v -> setKeep { it.copy(spread = v) } }
+    LbSwitch("Totals", "", q.total, "liveBidTotal") { v -> setKeep { it.copy(total = v) } }
+    LbSwitch("Tennis", "Moves on every point and its feed has no clock. Off by default.", q.tennis, "liveBidTennis") { v -> setKeep { it.copy(tennis = v) } }
+    LbTitle("Leagues")
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(selected = q.onlyLeagues.isEmpty(), onClick = { setKeep { it.copy(onlyLeagues = emptySet()) } }, label = { Text("All") }, modifier = Modifier.testTag("liveBidLeague-ALL"))
+        Leagues.ALL.map { it.novigName }.distinct().forEach { lg ->
+            FilterChip(
+                selected = lg in q.onlyLeagues,
+                onClick = { setKeep { it.copy(onlyLeagues = if (lg in it.onlyLeagues) it.onlyLeagues - lg else it.onlyLeagues + lg) } },
+                label = { Text(lg) }, modifier = Modifier.testTag("liveBidLeague-$lg"),
+            )
+        }
+    }
+
+    SectionTitle("Your money (the slider never changes it)")
+    LbHint("A bid's size is a fraction of full Kelly on your bankroll (Settings › Betting & Novig account: ${LiveBidText.money(s.bankroll)}) for that bid's own price and edge, raised to the smallest stake and held to the biggest and to Settings' per-bet maximum. Makers pay no fee.")
+    LbTitle("Live bid stake rule")
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        AutoBetStake.entries.forEach { m ->
+            FilterChip(selected = m == lim.stakeMode, onClick = { setL { it.copy(stakeMode = m) } }, label = { Text(m.label) }, modifier = Modifier.testTag("liveBidStake-${m.name}"))
+        }
+    }
+    LiveBidText.typicalStake(s)?.let { Text("A typical bid (fair 50%, ${LiveBidText.pct(q.margin)} margin) stakes ${LiveBidText.money(it)}.", style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("liveBidTypical")) }
+    if (lim.stakeMode == AutoBetStake.CUSTOM) TypedDollarField(NumberSpecs.dollars("a bid's amount", 0.5, 1_000.0), lim.customStake, "liveBidCustomStake") { v -> setL { it.copy(customStake = v) } }
+    LbDollars("Smallest stake", listOf(0.5, 1.0, 2.0, 3.0, 5.0), lim.minStake, "liveBidMinStake", 0.5, 1_000.0) { v -> setL { it.copy(minStake = v, maxStake = maxOf(it.maxStake, v)) } }
+
     // ---- the slider ---------------------------------------------------------------------------------------------------------------------------------------------------------------
     SectionTitle("Safety ↔ Volume")
     LbHint("One slider sets every rule below together. Left: only the best prices and the cleanest moments, so fewer fills but each one keeps a big edge. Right: bids on almost everything at thin edges, so many fills.")
