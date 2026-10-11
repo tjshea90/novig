@@ -164,6 +164,35 @@ class ApiBettingControllerTest {
         api.dismiss()
     }
 
+    /** Tj, 2026-10-11: the engine rarely fills, so live rows are bet by hand: the sheet prices them from the lane's fair AS IT IS NOW and refuses once the row has left the 5-second list. */
+    @Test
+    fun `a live-lane row is priced from the lane's current fair and refused once it has left the list`() {
+        val (o, book) = sample()
+        val row = o.copy(
+            event = o.event.copy(status = com.tjshea.vigilant.data.novig.NovigEvent.STATUS_LIVE),
+            refEvent = o.refEvent?.copy(id = "pinnacle-live-7"), fairAsOfMs = now,
+        )
+        assertTrue(ApiBetTargets.of(row)!!.liveLane)
+        assertTrue("an ordinary card is not a live-lane bet", !ApiBetTargets.of(o)!!.liveLane)
+        val state = startState()
+        val api = controller(state, book, FakeNovig(AtomicInteger()) { _, _ -> null })
+        // Not on the list (its prices aged out): nothing is planned.
+        api.bet(row)
+        waitFor("a refusal") { state.value.betSheet?.refusal != null }
+        assertTrue(state.value.betSheet!!.refusal!!.contains("left the list"))
+        // On the list: planned with the live fee.
+        state.update { it.copy(liveRows = listOf(row)) }
+        api.refreshPlan()
+        waitFor("a plan") { state.value.betSheet?.plan != null }
+        assertTrue(state.value.betSheet!!.plan!!.live)
+        // The lane's fair fell while the sheet was open: the plan follows it and the edge is gone.
+        state.update { it.copy(liveRows = listOf(row.copy(fairProbability = 0.01))) }
+        api.refreshPlan()
+        waitFor("a refusal for the lower fair") { state.value.betSheet?.let { it.plan == null && it.refusal != null } == true }
+        assertTrue(!state.value.betSheet!!.refusal!!.contains("left the list"))
+        api.dismiss()
+    }
+
     /** A state whose Novig connection has a subaccount, so the sheet reads the wallet as it opens; [balance] is the one on hand (maybe old). */
     private fun walletState(balance: Double?) = MutableStateFlow(
         SampleScan.state().let { st ->
