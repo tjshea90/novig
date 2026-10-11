@@ -422,9 +422,13 @@ class ApiBettingUiTest {
         compose.onNodeWithText("LIVE: The fair odds behind this EV are 4 minutes old").assertExists()
         compose.onNodeWithTag("betFeeNote").assertExists()
         compose.onNodeWithText("Place LIVE bet · $1.85").assertExists()
-        // A pregame sheet is what it was.
+    }
+
+    @Test
+    fun `a pregame bet's sheet has no live words`() {
         sheetScreen { ApiBetSheetContent(sheet(), {}, {}, {}, {}, {}) }
         compose.onNodeWithText("Place bet · $1.85").assertExists()
+        compose.onNodeWithText("Place LIVE bet · $1.85").assertDoesNotExist()
     }
 
     /** Tj, 2026-09-30: "I can type in a custom account for any bet manually". */
