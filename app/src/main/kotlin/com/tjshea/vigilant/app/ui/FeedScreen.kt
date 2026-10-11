@@ -476,7 +476,7 @@ fun OpportunityCard(
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            o.selection, Modifier.weight(1f, fill = false),
+                            sharpStarred(o.selection, o.agreement.sharpAgrees), Modifier.weight(1f, fill = false),
                             style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         )
                         injury?.let { Spacer(Modifier.width(6.dp)); InjuryTag(it) }
@@ -503,6 +503,7 @@ fun OpportunityCard(
                 o.suggestedStake?.let { LabeledValue(Format.kellyLabel(settings.kellyMultiplier), Format.money(it), valueColor = Edge.colors.positive) }
             }
             val depth = o.depth
+            AgreementLine(o.agreement)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     buildString {
@@ -526,6 +527,35 @@ fun OpportunityCard(
             }
         }
     }
+}
+
+/** Gold, the ★ of a bet a sharp book also says is +EV. */
+internal val SharpStarColor = androidx.compose.ui.graphics.Color(0xFFF5B301)
+
+/** "★ Dalton Schultz Over 5.5": the pick with a gold star in front when a sharp book for the market also says the bet is +EV (Tj, 2026-10-11). */
+fun sharpStarred(selection: String, sharpAgrees: Boolean): androidx.compose.ui.text.AnnotatedString =
+    androidx.compose.ui.text.buildAnnotatedString {
+        if (sharpAgrees) {
+            withStyle(androidx.compose.ui.text.SpanStyle(color = SharpStarColor)) { append("★ ") }
+        }
+        append(selection)
+    }
+
+/**
+ * "✓ 4 of 5 books agree" (green when enough books agree for an alert: [Agreement.Count.agrees]) or "2 of 5 books agree" (amber), like CNO's card (Tj, 2026-10-11: "make it show how many books
+ * agree on the positive EV"); a sharp book's agreement is said too. Nothing when no book prices both sides.
+ */
+@Composable
+fun AgreementLine(a: com.tjshea.vigilant.data.scanner.Agreement.Count, modifier: Modifier = Modifier) {
+    if (a.twoSided <= 0) return
+    val color = if (a.agrees) Edge.colors.positive else Edge.colors.warning
+    Text(
+        (if (a.agrees) "✓ " else "") + a.text + (if (a.sharpAgrees) " · sharp book agrees ★" else if (a.sharpAgainst) " · a sharp book disagrees" else ""),
+        modifier = modifier.testTag("agreementLine"),
+        style = MaterialTheme.typography.labelMedium,
+        color = color,
+        fontWeight = FontWeight.SemiBold,
+    )
 }
 
 /** A card says how old its odds are past this: the other books' prices are on their way to [Freshness.maxAgeMs]. */
