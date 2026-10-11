@@ -218,6 +218,6 @@ class ScanStudyAppTest {
         assertTrue(source("SettleWorker.kt").contains("runCatching { app.container.settleStudy() }"))
         assertTrue(source("MainViewModel.kt").contains("kotlinx.coroutines.withTimeoutOrNull(STUDY_SETTLE_WAIT_MS) { c.settleStudy() }"))
         // The FileProvider still serves only the diagnostics folder: the study's file lives in it.
-        assertEquals(listOf("<cache-path name=\"diagnostics\" path=\"diagnostics/\" />"), Regex("<[a-z-]+-path [^>]*>").findAll(File("src/main/res/xml/file_paths.xml").readText()).map { it.value }.toList())
+        assertEquals(listOf("<cache-path name=\"diagnostics\" path=\"diagnostics/\" />", "<cache-path name=\"bets\" path=\"bet-share/\" />"), Regex("<[a-z-]+-path [^>]*>").findAll(File("src/main/res/xml/file_paths.xml").readText()).map { it.value }.toList())
     }
 }

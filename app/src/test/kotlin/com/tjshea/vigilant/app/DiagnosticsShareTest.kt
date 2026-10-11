@@ -122,7 +122,7 @@ class DiagnosticsShareTest {
         assertTrue(provider, provider.contains("android:authorities=\"\${applicationId}.files\""))
         assertTrue(provider, provider.contains("android:exported=\"false\"") && provider.contains("android:grantUriPermissions=\"true\""))
         val paths = File("src/main/res/xml/file_paths.xml").readText()
-        assertEquals(listOf("<cache-path name=\"diagnostics\" path=\"diagnostics/\" />"), Regex("<[a-z-]+-path [^>]*>").findAll(paths).map { it.value }.toList())
+        assertEquals(listOf("<cache-path name=\"diagnostics\" path=\"diagnostics/\" />", "<cache-path name=\"bets\" path=\"bet-share/\" />"), Regex("<[a-z-]+-path [^>]*>").findAll(paths).map { it.value }.toList())
         // A file outside that folder isn't served.
         val other = File(app.cacheDir, "secret.txt").apply { writeText("not for sharing") }
         val uri = runCatching { androidx.core.content.FileProvider.getUriForFile(app, DiagnosticsShare.authority(app), other) }
