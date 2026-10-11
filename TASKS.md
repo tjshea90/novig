@@ -4709,3 +4709,13 @@ Tj verbatim (3 screenshots: Auto-bet tab with minimum 4★ on, "Vigilant wallet 
 - [x] TW1 DONE (reasons listed in RESEARCH §133.2; the screenshots cannot say which: AutoBettor.Report.why + a line on the CNO card now does). Find the reason (wallet is fully held by 23 resting bids? game cap? EV at real price?) from the code paths and the status the Auto-bet tab keeps.
 - [x] TW2 DONE (BetRatingTest). BetRating: a bet under +2% EV is capped below 3½★ (tests, UI text, docs).
 - [ ] TW3 Ship.
+
+## TX: Feed filters when live games are on (Tj, 2026-10-11 ~19:58Z)
+Tj verbatim: "Also if I have live bets toggled to show up in the scanner, make a filter in the scanner for live games only. Make another filter in the scanner to sort by bet rating (stars)"
+- [ ] TX1 "Live only" filter chip on the +EV Feed (shown only when Include live games is on); TX2 sort by stars (FeedSort gets STARS); tests; ship.
+
+## TY: auto-bet "stopped while an order was being placed": why, fix, auto-recheck and auto-resume, notify if not fixable (Tj, 2026-10-11 ~19:58Z)
+Tj verbatim (screenshot: red "Auto-bet is stopped: Vigilant stopped while an order for Austin Hooper Over 7.5 ($1.47) was being placed, so nothing says whether Novig filled it. Check Novig and the Tracker's Sync with Novig's fills before resuming."): "Figure out why this error happens, how to fix it, and make it automatically recheck every few seconds and if it is fixed then automatically resume auto bet. If it cannot be fixed, make a notification that auto bet stopped and explain the problem"
+- [ ] TY1 Find where the halt is raised (an order marker left by an interrupted run) and why it happens.
+- [ ] TY2 Resolve it automatically: look the order up on Novig (by client id / open orders / fills), record the fill in the Tracker if it filled, then resume; recheck every few seconds; notify (with the reason) when it cannot.
+- [ ] TY3 Tests, ship.
