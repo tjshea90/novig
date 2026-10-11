@@ -57,12 +57,12 @@ object BetShare {
          * is left (a new file is deleted, a rewrite is whole or untouched because the bytes are written after the stream opens).
          */
         fun put(resolver: ContentResolver, file: File, relativeDir: String = BETS_DIR, mime: String = "application/x-ndjson"): Uri {
-            existing(resolver, file.name, relativeDir)?.let { uri ->
+            // Files of that name already there: this install's (rewritable), and ones an earlier install made (not ours to open; Android numbered a later copy "name (1)"). The first that opens is rewritten.
+            for (uri in existing(resolver, file.name, relativeDir)) {
                 val ok = runCatching {
                     (resolver.openOutputStream(uri, "wt") ?: error("Android didn't open ${file.name}")).use { out -> file.inputStream().use { it.copyTo(out) } }
                 }.isSuccess
                 if (ok) return uri
-                // Made by an earlier install (not ours to rewrite): fall through to a fresh file; Android numbers the name.
             }
             val values = ContentValues().apply {
                 put(MediaStore.Downloads.DISPLAY_NAME, file.name)
@@ -81,13 +81,19 @@ object BetShare {
             return uri
         }
 
-        private fun existing(resolver: ContentResolver, name: String, relativeDir: String): Uri? {
+        /** Every file in [relativeDir] called [name], or "name (1)", "name (2)"… (Android's numbering), newest first. */
+        private fun existing(resolver: ContentResolver, name: String, relativeDir: String): List<Uri> {
             val rel = relativeDir.trimEnd('/') + "/"
+            val base = name.substringBeforeLast('.')
+            val ext = name.substringAfterLast('.', "")
+            val numbered = if (ext.isEmpty()) "$base (%)" else "$base (%).$ext"
+            val out = ArrayList<Uri>()
             resolver.query(
                 MediaStore.Downloads.EXTERNAL_CONTENT_URI, arrayOf(MediaStore.Downloads._ID),
-                "${MediaStore.Downloads.DISPLAY_NAME} = ? AND ${MediaStore.Downloads.RELATIVE_PATH} = ?", arrayOf(name, rel), null,
-            )?.use { c -> if (c.moveToFirst()) return android.content.ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, c.getLong(0)) }
-            return null
+                "${MediaStore.Downloads.RELATIVE_PATH} = ? AND (${MediaStore.Downloads.DISPLAY_NAME} = ? OR ${MediaStore.Downloads.DISPLAY_NAME} LIKE ?)", arrayOf(rel, name, numbered),
+                "${MediaStore.Downloads.DATE_ADDED} DESC",
+            )?.use { c -> while (c.moveToNext()) out += android.content.ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, c.getLong(0)) }
+            return out
         }
     }
 }

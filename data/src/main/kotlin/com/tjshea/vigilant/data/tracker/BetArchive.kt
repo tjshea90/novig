@@ -72,13 +72,15 @@ class BetArchive(val dir: File) {
         makerBids.forEach { m -> m.betId?.let { byBetId[it] = m } }
         val today = BetHistory.day(now)
         val recentFrom = java.time.LocalDate.parse(today).minusDays(RECENT_DAYS.toLong()).toString()
+        // A "full" sweep looks at the last month: a close or a result found later than that is rare, and rewriting a year of days (hundreds of bets each) every day would be work for nothing.
+        val fullFrom = java.time.LocalDate.parse(today).minusDays(FULL_DAYS.toLong()).toString()
 
         val byDay = bets.groupBy { BetHistory.day(it.createdAtMs) }
         var betFiles = 0
         for ((day, list) in byDay.toSortedMap()) {
             val f = betFile(day)
             val open = list.any { it.status == BetStatus.PENDING || it.startsTs > now - 3 * 3_600_000L }
-            if (!(full || !f.exists() || day >= recentFrom || open)) continue
+            if (!((full && day >= fullFrom) || !f.exists() || day >= recentFrom || open)) continue
             val sha = replaceIfChanged(f, written[f.name], list.sortedBy { it.createdAtMs }.asSequence().map { BetHistory.line(BetHistory.row(it, byBetId[it.id], now, detail = true)) })
             if (sha != null) { written[f.name] = sha; changed += f; betFiles++ }
         }
@@ -146,5 +148,8 @@ class BetArchive(val dir: File) {
     companion object {
         /** Days back that are always re-checked: results and closes arrive up to a few days after the bet. */
         const val RECENT_DAYS = 4
+
+        /** Days back a daily full sweep re-checks. */
+        const val FULL_DAYS = 30
     }
 }

@@ -90,7 +90,10 @@ fun SmartFilterBar(
     var menu by remember { mutableStateOf(false) }
     var custom by remember { mutableStateOf(false) }
     val minute = now / 60_000L
-    val choices = remember(bets, minute) { BetSmartFilters.choices(bets, now) }
+    // Worked out off the main thread: every bet is looked at on a dozen dimensions, which with a year of bets would stall a frame.
+    val choices by androidx.compose.runtime.produceState(initialValue = BetSmartFilters.fixed().map { (t, sp) -> com.tjshea.vigilant.data.tracker.SmartChoice(t, "", sp, 0) }.take(1), bets, minute) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { BetSmartFilters.choices(bets, now) }
+    }
     Row(modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         androidx.compose.foundation.layout.Box {
             OutlinedButton(onClick = { menu = true }, modifier = Modifier.testTag("smartFilter")) {
@@ -120,8 +123,10 @@ fun SmartFilterBar(
     if (custom) {
         val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         // The groups each dimension has in these bets, in their natural order.
-        val present = remember(bets, minute) {
-            BetDim.entries.associateWith { d -> bets.map { BetDims.valueOf(it, d, now) }.distinct().sortedWith(compareBy({ BetDims.sortKey(d, it) }, { it })) }
+        val present by androidx.compose.runtime.produceState(initialValue = emptyMap<BetDim, List<String>>(), bets, minute) {
+            value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                BetDim.entries.associateWith { d -> bets.map { BetDims.valueOf(it, d, now) }.distinct().sortedWith(compareBy({ BetDims.sortKey(d, it) }, { it })) }
+            }
         }
         ModalBottomSheet(onDismissRequest = { custom = false }, sheetState = sheet) {
             Column(Modifier.padding(horizontal = 16.dp).verticalScroll(rememberScrollState()).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -150,11 +155,13 @@ fun SmartFilterBar(
 /** The same numbers split by any of [BetDim]'s dimensions: type of bet, sport, stars, sharp book, books behind the fair, liquidity, auto or manual, time before the game, result, and the close. */
 @Composable
 fun DimBreakdownCard(bets: List<TrackedBet>, dim: BetDim, onDim: (BetDim) -> Unit, now: Long) {
-    val rows = remember(bets, dim, now / 60_000L) {
-        bets.groupBy { BetDims.valueOf(it, dim, now) }
-            .map { (label, g) -> label to BetTracker.stats(g, now) }
-            .filter { it.second.bets > 0 }
-            .sortedWith(compareBy({ BetDims.sortKey(dim, it.first) }, { -it.second.settled }, { -it.second.bets }, { it.first }))
+    val rows by androidx.compose.runtime.produceState(initialValue = emptyList<Pair<String, com.tjshea.vigilant.data.tracker.TrackerStats>>(), bets, dim, now / 60_000L) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            bets.groupBy { BetDims.valueOf(it, dim, now) }
+                .map { (label, g) -> label to BetTracker.stats(g, now) }
+                .filter { it.second.bets > 0 }
+                .sortedWith(compareBy({ BetDims.sortKey(dim, it.first) }, { -it.second.settled }, { -it.second.bets }, { it.first }))
+        }
     }
     androidx.compose.material3.Card(
         modifier = Modifier.fillMaxWidth().testTag("dimBreakdown"),
@@ -189,7 +196,7 @@ fun DimBreakdownCard(bets: List<TrackedBet>, dim: BetDim, onDim: (BetDim) -> Uni
 @Composable
 fun ShareBetsCard(totalBets: Int, betsIn: (BetShare.Range) -> Int, busy: Boolean, archiveNote: String?, onShare: (BetShare.Range) -> Unit) {
     var range by remember { mutableStateOf(BetShare.Range.ALL) }
-    val n = betsIn(range)
+    val n = remember(range, totalBets) { betsIn(range) }
     val (bytes, parts) = BetHistoryExport.estimate(n)
     androidx.compose.material3.Card(
         modifier = Modifier.fillMaxWidth().testTag("shareBetsCard"),
