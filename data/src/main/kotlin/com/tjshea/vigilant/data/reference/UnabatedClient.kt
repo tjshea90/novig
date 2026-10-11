@@ -59,6 +59,9 @@ class UnabatedClient(
     /** What each board last read, by league and kind (Diagnostics): games, markets, books, how old the prices were. */
     val lastReads = java.util.concurrent.ConcurrentHashMap<String, String>()
 
+    /** How many keys are saved: each has its own interval, so more keys read boards more often ([UnabatedFeed]). */
+    fun keyCount(): Int = keys().size
+
     fun health(now: Long = clock()): String =
         if (lastOkMs == 0L) "no answer yet" else if (down(now)) "DOWN (the other feeds carry on)" else "answering (last good answer ${(now - lastOkMs) / 1000L}s ago, $requests requests)"
 

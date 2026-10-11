@@ -62,7 +62,8 @@ class UnabatedFeed(
         val books = UnabatedBooks.sourceMap(sources, settings.referenceBooks.toSet())
         if (books.isEmpty()) return Read(emptyList(), clock(), "no wanted book on Unabated's ${route} $type sources")
         val key = "$route|$type|${books.values.sorted().joinToString(",")}|${settings.families.map { it.name }.sorted().joinToString(",")}|${settings.includeLive}"
-        val ttl = if (type == "props") PROPS_TTL_MS else GAMES_TTL_MS
+        // Every key has its own 5-second interval, so N keys can read boards N times as often: the re-read time shrinks with them, down to the 15-second delay of the data itself.
+        val ttl = ((if (type == "props") PROPS_TTL_MS else GAMES_TTL_MS) / client.keyCount().coerceAtLeast(1)).coerceAtLeast(MIN_TTL_MS)
         val have = reads[key]
         val load: suspend () -> Read = { load(league, route, type, books, sources, settings) }
         if (have != null && clock() - have.readAtMs < ttl) return have
@@ -105,6 +106,7 @@ class UnabatedFeed(
         /** A games board is re-read at most this often (the Free data is already 15 s behind and unchanged lines stay current). */
         const val GAMES_TTL_MS = 120_000L
         const val PROPS_TTL_MS = 180_000L
+        const val MIN_TTL_MS = 20_000L
     }
 }
 

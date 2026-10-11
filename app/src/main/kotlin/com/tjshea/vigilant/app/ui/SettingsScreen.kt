@@ -1245,6 +1245,8 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
     androidx.compose.runtime.LaunchedEffect(Unit) { onShown() }
     Intro("The odds feeds Vigilant's own scan reads (Pinnacle, ParlayAPI, PropLine, The Odds API) each allow so many requests a day or month. This shows what's left on each key.")
     SectionTitle("API usage")
+    OutlinedButton(onClick = keys.onUsageShown, enabled = !state.usageBusy, modifier = Modifier.testTag("usageRefresh")) { Text(if (state.usageBusy) "Reading…" else "Refresh from the APIs") }
+    Hint("Where an API has a prompt for it (The Odds API, PropLine, SportsGameOdds, ParlayAPI, OddsPapi Free) the figures come from the API itself and say so; PinnWire, pinnapi, Pinnodds, OddsPapi v5 and Unabated offer none, so those show the app's own count.")
     UsageSection(state)
 
     // ---- Keys backup ------------------------------------------------------------------
