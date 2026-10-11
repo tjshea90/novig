@@ -1,6 +1,6 @@
 package com.tjshea.vigilant.app
 
-import com.tjshea.vigilant.data.novig.trading.NovigApiException
+import com.tjshea.vigilant.data.novig.signing.NovigApiException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,8 +25,9 @@ import kotlinx.coroutines.withContext
 class AutoBetRecovery(
     private val c: AppContainer,
     private val scope: CoroutineScope,
+    private val app: android.app.Application,
     private val clock: () -> Long = System::currentTimeMillis,
-    private val notify: (title: String, text: String) -> Unit = { title, text -> AutoBetNotes.stopped(c.app, title, text) },
+    private val notify: (title: String, text: String) -> Unit = { title, text -> AutoBetNotes.stopped(app, title, text) },
 ) {
     @Volatile private var seenHalt: String? = null
     @Volatile private var seenAtMs = 0L

@@ -651,7 +651,7 @@ class AppContainer(private val app: Application) {
     val autoScan: AutoScanner by lazy { AutoScanner(app, this) }
 
     /** Clears an auto-bet halt left by a lost order once Novig's fills are checked (Tj, 2026-10-11). */
-    val autoBetRecovery: AutoBetRecovery by lazy { AutoBetRecovery(this, appScope) }
+    val autoBetRecovery: AutoBetRecovery by lazy { AutoBetRecovery(this, appScope, app) }
 
     /** When each background cycle started against its schedule, and whether the screen was off (files/cycles.json, Tj 2026-10-02): the evidence in Diagnostics that scanning goes on while the phone idles. */
     val cycleLog = com.tjshea.vigilant.data.diag.CycleLog(
