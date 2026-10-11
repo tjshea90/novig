@@ -77,26 +77,32 @@ class CheckOddsStatsTest {
     }
 
     @Test
-    fun `a bet whose game has started is left out of every number, and counted apart`() {
-        // Tj, 2026-09-30: "does not count any bets in which the game or bet is currently live. The odds move rapidly when a game is live".
+    fun `a bet whose game is under way is counted like any other, and counted apart as in play`() {
+        // Tj, 2026-10-11: "I should get an updated current EV and odds for every single one of my open bets"; "Hide live games" takes them out of the list instead.
         val underWay = bet("live", 0.30, startsTs = start - 60 * 60_000L)
         val startsNow = bet("atStart", -0.20, startsTs = now)
         val s = CheckOddsStats.of(listOf(bet("a", 0.02), bet("b", -0.01), underWay, startsNow), start, now)
-        assertEquals(1, s.positive)
-        assertEquals(1, s.negative)
-        assertEquals(2, s.priced)
+        assertEquals(2, s.positive)
+        assertEquals(2, s.negative)
+        assertEquals(4, s.priced)
         assertEquals(0.5, s.positiveShare!!, 1e-9)
         assertEquals(0.005, s.averageEv!!, 1e-12)
-        assertEquals(0, s.outliers)
+        assertEquals("the two over 5% are left out of the average only", 2, s.outliers)
         assertEquals(2, s.live)
-        // Only live bets re-read: nothing to count, and it still says how many were left out.
         val onlyLive = CheckOddsStats.of(listOf(underWay), start, now)
-        assertEquals(0, onlyLive.priced)
-        assertNull(onlyLive.averageEv)
+        assertEquals(1, onlyLive.priced)
         assertEquals(1, onlyLive.live)
-        // A game that starts after the check drops out of the counter from then on.
+        // The same bets after the game has started: still counted.
         val later = CheckOddsStats.of(listOf(bet("a", 0.02), bet("b", -0.01)), start, start + 3_600_000L)
-        assertEquals(0, later.priced)
+        assertEquals(2, later.priced)
         assertEquals(2, later.live)
+    }
+
+    @Test
+    fun `live bets are the open ones in the window after the start; older ones are finished`() {
+        val inPlay = bet("p", 0.01, startsTs = now - 60 * 60_000L)
+        val over = bet("o", 0.01, startsTs = now - 6 * 3_600_000L)
+        val upcoming = bet("u", 0.01, startsTs = now + 3_600_000L)
+        assertEquals(setOf("p"), LiveBets.ids(listOf(inPlay, over, upcoming), now))
     }
 }
