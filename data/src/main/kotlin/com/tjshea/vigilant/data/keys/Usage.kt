@@ -112,6 +112,14 @@ data class QuotaPolicy(
             "oddspapi", "OddsPapi", "requests", keyed = true, period = QuotaPeriod.DAY_UTC,
             rule = "v5 (v5.oddspapi.io), by trial or contract: odds endpoints 10 requests a second, every other endpoint 100 a minute, per key (Vigilant spaces its calls under both). The trial's own request quota is not published: a key that answers 429 rests until its Retry-After. Several keys are tried in order. The self-serve v4 keys (api.oddspapi.io) are a different product and are not used.",
         )
+        val UNABATED = QuotaPolicy(
+            "unabated", "Unabated", "requests", keyed = true, period = QuotaPeriod.DAY_UTC,
+            rule = "Free API: ONE odds request every 5 seconds per key, shared by every odds endpoint (Vigilant spaces them 5.2 s apart through one gate), data delayed at least 15 seconds. No monthly quota is published; a 429 or 503 carries Retry-After. Discovery calls (leagues, bet types, books, teams) do not use the odds interval.",
+        )
+        val ODDSPAPI_FREE = QuotaPolicy(
+            "oddspapi_free", "OddsPapi Free (v4)", "requests", keyed = true, period = QuotaPeriod.MONTH_UTC, defaultLimit = 250,
+            rule = "v4 (api.oddspapi.io), free plan: a small MONTHLY request allowance (250 by the docs; GET /v4/account, which never counts, says the real figure), 1 request per billable call whatever it returns. /v4/historical-odds is free and unmetered. Cooldown 1 s per endpoint (5 s for historical odds). The last requests of the month are kept for the closing-line mapping.",
+        )
         /** Pinnodds' REST board (not in [ALL]: no meter of its own; the feed's own 429s and `Retry-After` say when to wait). Full demo / Pro: 10 requests a second; the free trial tier 100 a day. */
         val PINNODDS = QuotaPolicy(
             "pinnodds_rest", "Pinnacle (Pinnodds)", "requests", keyed = true, period = QuotaPeriod.DAY_UTC,
@@ -121,7 +129,7 @@ data class QuotaPolicy(
         val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No key needed. Allows 300 requests per 10 seconds.")
         val KALSHI = QuotaPolicy("kalshi", "Kalshi", "requests", keyed = false, rule = "No key needed. Allows 20 requests a second.")
 
-        val ALL = listOf(SGO, ODDSPAPI, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI)
+        val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI)
     }
 }
 

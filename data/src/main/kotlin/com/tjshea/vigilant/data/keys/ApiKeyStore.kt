@@ -48,6 +48,15 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
      * and settlement. Trial or contract by email to contact@55-tech.com; 10 odds requests a second, 100 other requests a minute.
      */
     ODDSPAPI("oddspapi", "OddsPapi"),
+
+    /**
+     * oddspapi.io **v4** (ODDSPAPI_API.md addendum 2026-10-11): the self-serve FREE plan Tj holds (api.oddspapi.io, key as ?apiKey=, a small monthly request allowance, free unmetered historical odds). A different
+     * product from [ODDSPAPI] (v5, B2B trial): its own key, client and switch.
+     */
+    ODDSPAPI_FREE("oddspapi_free", "OddsPapi Free (v4)"),
+
+    /** unabated.com Data API, Free tier (UNABATED_API.md): DraftKings, FanDuel, MGM, Caesars, theScore, Fanatics, Novig, Kalshi, Polymarket and the DFS apps, 15 s delayed, one odds request per 5 s. */
+    UNABATED("unabated", "Unabated"),
 }
 
 /** Tj's own API keys per provider, in the order [KeyPool] tries them. */

@@ -1,0 +1,127 @@
+package com.tjshea.vigilant.data.reference
+
+import com.tjshea.vigilant.data.await
+import com.tjshea.vigilant.data.keys.KeyAttemptResult
+import com.tjshea.vigilant.data.keys.KeyPool
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Request
+
+/**
+ * Unabated Data API, Free tier (UNABATED_API.md): `https://data.unabated.com`, key in `X-Api-Key`. The Free tier allows ONE odds request every five seconds per key, shared by every odds endpoint
+ * (docs: guides/errors-and-limits "one scheduler per key"), so every `/market/{league}/{type}/odds` call goes through ONE gate [oddsGapMs] apart (5.2 s: a little over the limit, because the server counts
+ * from its own clock). Discovery calls (`/league`, `/bettype`, `/period-type`, `/market/.../sources|teams|people`) do not use the odds interval and are only spaced [otherGapMs] apart. Per the docs: a `429`
+ * (too early) or `503` (the delayed snapshot is briefly unavailable) is retried after its `Retry-After`, at most [MAX_ATTEMPTS] times, never with a different key or a live dataset; `401` refuses the key;
+ * `403` (a Free key on an endpoint it does not include) is this call's failure only; HTTP 200 with `success:false` is a failure ([UnabatedParser.envelope]).
+ */
+class UnabatedClient(
+    private val http: OkHttpClient,
+    private val pool: KeyPool,
+    private val baseUrl: String = "https://data.unabated.com",
+    private val clock: () -> Long = System::currentTimeMillis,
+    private val oddsGapMs: Long = 5_200,
+    private val otherGapMs: Long = 400,
+    private val sleep: suspend (Long) -> Unit = { delay(it) },
+) {
+    private val oddsGate = Mutex()
+    private val otherGate = Mutex()
+    private var nextOddsAt = 0L
+    private var nextOtherAt = 0L
+
+    @Volatile private var failures = 0
+    @Volatile private var lastOkMs = 0L
+
+    /** Requests made (Diagnostics). */
+    @Volatile var requests = 0
+        private set
+
+    /** The last failure, as one line, for Diagnostics. */
+    @Volatile var lastError: String? = null
+        private set
+
+    /** What each board last read, by league and kind (Diagnostics): games, markets, books, how old the prices were. */
+    val lastReads = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    fun health(now: Long = clock()): String =
+        if (lastOkMs == 0L) "no answer yet" else if (down(now)) "DOWN (the other feeds carry on)" else "answering (last good answer ${(now - lastOkMs) / 1000L}s ago, $requests requests)"
+
+    /** Two failures in a row and nothing good for [DOWN_AFTER_MS]: the source gives nothing until one call works again. */
+    fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS
+
+    suspend fun leagues() = UnabatedParser.leagues(get("/league"))
+    suspend fun betTypes() = UnabatedParser.betTypes(get("/bettype"))
+    suspend fun periods(league: String) = UnabatedParser.periods(get("/period-type/$league"))
+    suspend fun sources(league: String, type: String) = UnabatedParser.sources(get("/market/$league/$type/sources"))
+    suspend fun teams(league: String, type: String) = UnabatedParser.teams(get("/market/$league/$type/teams"))
+    suspend fun people(league: String, type: String) = UnabatedParser.people(get("/market/$league/$type/people"))
+
+    /** The raw odds board of [type] (`straight`, `props`, `futures`) for [league]; [betTypeIds] narrows it (repeated `betTypeId` parameters, docs: guides/odds). */
+    suspend fun oddsRaw(league: String, type: String, betTypeIds: List<Int> = emptyList()): String =
+        get("/market/$league/$type/odds", betTypeIds.map { "betTypeId" to it.toString() })
+
+    /** The reply body of `GET [path]`; throws [ReferenceException] on a refusal, a failure or an unreadable reply. */
+    suspend fun get(path: String, params: List<Pair<String, String>> = emptyList()): String = try {
+        requests++
+        attempt(path, params).also { failures = 0; lastOkMs = clock(); lastError = null }
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        failures++
+        lastError = (e.message ?: e.javaClass.simpleName).take(200)
+        throw e
+    }
+
+    private fun isOdds(path: String) = path.endsWith("/odds")
+
+    private suspend fun attempt(path: String, params: List<Pair<String, String>>): String {
+        var last: ReferenceException? = null
+        repeat(MAX_ATTEMPTS) { n ->
+            val odds = isOdds(path)
+            (if (odds) oddsGate else otherGate).withLock {
+                val wait = (if (odds) nextOddsAt else nextOtherAt) - clock()
+                if (wait > 0) sleep(wait)
+                // Reserved before sending, so a slow answer never lets the next call go early.
+                if (odds) nextOddsAt = clock() + oddsGapMs else nextOtherAt = clock() + otherGapMs
+            }
+            var retryMs: Long? = null
+            try {
+                return pool.execute(cost = 1) { key ->
+                    val url = "$baseUrl$path".toHttpUrl().newBuilder().apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }.build()
+                    http.newCall(Request.Builder().url(url).header("X-Api-Key", key).header("Accept", "application/json").get().build()).await().use { response ->
+                        val body = response.body?.string().orEmpty()
+                        val retryAfter = response.header("Retry-After")?.trim()?.toDoubleOrNull()?.let { (it * 1000.0).toLong() }
+                        when {
+                            response.code == 401 -> KeyAttemptResult.Invalid("HTTP 401, key refused (Free API access can be revoked)")
+                            response.code == 403 -> throw ReferenceException("Unabated HTTP 403: ${messageOf(body) ?: "the Free API does not include this"}")
+                            response.code == 429 || response.code == 503 -> { retryMs = (retryAfter ?: if (response.code == 503) 5_000L else 5_200L).coerceIn(1_000L, 30_000L); throw ReferenceException("Unabated HTTP ${response.code}: slow down / snapshot unavailable") }
+                            response.code in 500..599 -> throw ReferenceException("Unabated HTTP ${response.code}")
+                            !response.isSuccessful -> throw ReferenceException("Unabated HTTP ${response.code}: ${messageOf(body) ?: "refused the request"}")
+                            body.isBlank() -> throw ReferenceException("Unabated sent an empty reply")
+                            else -> KeyAttemptResult.Success(body)
+                        }
+                    }
+                }
+            } catch (e: UnabatedFailure) {
+                throw e
+            } catch (e: ReferenceException) {
+                last = e
+                if (e.message?.contains("HTTP 403") == true || n == MAX_ATTEMPTS - 1) throw e
+                // 429 / 503 wait their Retry-After; any other failure waits a short pause once.
+                val pause = retryMs ?: 2_000L
+                if (isOdds(path)) oddsGate.withLock { nextOddsAt = maxOf(nextOddsAt, clock() + pause) } else sleep(pause)
+            }
+        }
+        throw last ?: ReferenceException("Unabated: no attempt made")
+    }
+
+    private fun messageOf(body: String): String? =
+        Regex("\"message\"\\s*:\\s*\"([^\"]{1,200})\"").find(body)?.groupValues?.get(1)
+
+    companion object {
+        const val DOWN_AFTER_MS = 120_000L
+        const val MAX_ATTEMPTS = 3
+    }
+}
