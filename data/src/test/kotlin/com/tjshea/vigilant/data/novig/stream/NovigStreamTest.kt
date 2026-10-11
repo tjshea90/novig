@@ -286,6 +286,34 @@ class NovigStreamTest {
     }
 
     @Test
+    fun `live markets are subscribed as far as the bucket pays, not held back until the whole request is affordable`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        // 0.5 token a second: all 60 would take minutes, the 30 the bucket holds after the upgrade are affordable now.
+        val stream = stream(refillPerSec = 0.5)
+        val ids = (1..60).map { "lv$it" }
+        stream.watchLive(ids)
+        until { stream.live(ids).size >= 30 }
+        assertEquals(30, stream.live(ids).size)
+        assertTrue(stream.bookGap("lv60")!!.startsWith("Novig live book not subscribed yet: 30 of 60"))
+        stream.close()
+    }
+
+    @Test
+    fun `a stopped live lane's markets stay subscribed for a while, so a restart pays nothing again`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        val stream = stream()
+        val view = SharedStreamView({ stream }, BookListener { _, _, _ -> })
+        view.watchLive(listOf("live1", "live2"))
+        until { stream.live(listOf("live1", "live2")).size == 2 }
+        view.close()
+        stream.watch(listOf("a1"))
+        until { stream.live(listOf("a1")).size == 1 }
+        assertEquals(2, stream.live(listOf("live1", "live2")).size)
+        assertEquals(1, subscribes.size.coerceAtMost(1))
+        stream.close()
+    }
+
+    @Test
     fun `a refused upgrade says why, and scans read by REST until the retry time`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(451).setBody("""{"code":"ANONYMIZED_NETWORK"}"""))
         val stream = stream()
