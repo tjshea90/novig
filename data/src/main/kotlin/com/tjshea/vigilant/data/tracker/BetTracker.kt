@@ -766,6 +766,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         val now = clock()
         val ids = betIds.toHashSet()
         val byKey = result?.opportunities?.filter { it.fairProbability != null }?.associateBy { it.market.marketId to it.outcome.outcomeId }.orEmpty()
+        // The game's real start, as this pass's markets say it (a pass that only prices open bets reads it as freshly as a scan does).
+        result?.opportunities?.associateBy { it.market.marketId to it.outcome.outcomeId }?.let { syncStarts(it, now) }
         var priced = 0
         var unpriced = 0
         store.update { list ->
