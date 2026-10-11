@@ -1,13 +1,13 @@
-# CHECKPOINT 2991 — read me first, then TASKS.md
+# CHECKPOINT 2992 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T18:58:35Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-4a7a6b39-3ig8vu` · **builds on:** `2789b3561` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T18:58:56Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-4a7a6b39-3ig8vu` · **builds on:** `327196d38` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.89.22: real-time live lane (Pinnodds+Novig, 5 s rule), Check odds counts in-play bets, Hide live games (versionCode 207, v0.89.22)
+v0.89.22 shipped to main, release.yml triggered (TQ live lane, TR check odds/hide live)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.89.22), then run: bash tools/record-release.sh v0.89.22 207 "v0.89.22: real-time live lane (Pinnodds+Novig, 5 s rule), Check odds counts in-play bets, Hide live games"
+confirm release v0.89.22 via get_release_by_tag, then bash tools/record-release.sh v0.89.22 207 "...", send Tj the Release link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  327196d38 ckpt 2991: pre-release: v0.89.22: real-time live lane (Pinnodds+Novig, 5 s rule), Chec
   2789b3561 ckpt 2990: pre-ship: v0.89.22: real-time live lane (Pinnodds+Novig, 5 s rule), Check o
   e8dc299d2 ckpt 2989: pre-ship: v0.89.22: real-time live lane (Pinnodds+Novig, 5 s rule), Check o
   0b4f6e441 ckpt 2988: TQ done in code+tests (live lane, manual live bets re-read fair); wrote TR 
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   e7cbe3118 ckpt 2984: pre-ship: v0.89.21: a minimum star rating in Auto-bet now decides which bet
   b91c3a22d ckpt 2983: TP done: star rating overrides the selection filters (3 lanes), UI note, te
   f69319c26 ckpt 2982: TP: wrote the star-rating-overrides-filters request into TASKS.md; v0.89.20
-  96de1ae98 ckpt 2981: pre-release: v0.89.20: bets by hand on live games (the Bet sheet no longer 
 ```
