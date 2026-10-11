@@ -228,6 +228,15 @@ class ApiBettingTest {
         assertTrue(partial.evPercent >= 0.0)
     }
 
+    /** Tj, 2026-10-11: "If any sharp book disagrees that a bet is positive EV, it should be vetoed and not bet". */
+    @Test
+    fun `a bet a sharp book says is not +EV is refused, by hand and by the auto-bet`() {
+        val against = target().copy(sharpAgainst = true)
+        assertTrue(refused(ApiBetPlanner.plan(against, book(), 5.0, now, manual, 0.0)).contains("sharp book"))
+        assertTrue(refused(ApiBetPlanner.plan(against, book(), 5.0, now, limits, 0.0)).contains("sharp book"))
+        ready(ApiBetPlanner.plan(target(), book(), 5.0, now, manual, 0.0))
+    }
+
     /** Tj, 2026-10-11: "if I bet any live game, it only places the bet if it can be filled at the odds listed in the scan". */
     @Test
     fun `a live bet is refused when Novig's price is above the listed one, and never reaches past it`() {
@@ -313,7 +322,7 @@ class ApiBettingTest {
 
     @Test
     fun `a pause holds the auto-bet, never a bet placed by hand`() = runBlocking {
-        val hand = placer(tracker(), paused = true, l = manual).plan(target(fair = 0.45), 5.0)
+        val hand = placer(tracker(), paused = true, l = manual).plan(target(), 5.0)
         assertTrue(hand is PlanResult.Ready)
         val auto = placer(tracker(), paused = true, l = manual).plan(target(), 5.0, limitsOverride = autoLimits)
         assertTrue(refused(auto).contains("Scanning is paused"))
