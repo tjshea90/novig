@@ -4528,3 +4528,11 @@ Finding (answered first): tennis was off for live bids by default; Autopilot rea
 - [x] TQ2 `AutoBettor.runTennis`: Vigilant-scan tennis Opportunities (pregame, fresh, Pinnacle fair) judged by the same rules (min edge, favourite bar, odds limits, kinds, stake, wallet, per-game/day limits) and placed through the same placer; hooked in AutoScan after the Vigilant scan ends, independent of CNO.
 - [x] TQ3 Auto bids (maker): confirm tennis lines are bid when the switch is on (they use settings.leagues); test.
 - [x] TQ4 Tests, ship (ship.sh), release, tell Tj; live bids' own Tennis switch stays separate (0 of 33 filled).
+
+## UN: Unabated + OddsPapi free tiers (Tj, 2026-10-11)
+Tj: "Add two more apis to the app. Unabated api and oddspapi api. Both apis are the free tiers. Research the full docs ... 1) what does each API offer? 2) best way to implement each into vigilant? 3) how can vigilant make full use of each? Wire in each api into the app and settings ... match the docs exactly ... If odds overlap from different apis, use the best API first and when usage runs out or the API doesn't respond, automatically fall back to the other apis that serve the same data. Let me know if you need keys."
+(OddsPapi v5 already exists in code since v0.8x: ODDSPAPI_API.md; this job re-checks it against the live docs and adds Unabated.)
+- [ ] UN1 Research: raw docs saved to research/unabated_oddspapi_2026-10-11/; write RESEARCH.md section + UNABATED_API.md
+- [ ] UN2 Re-check OddsPapi code/doc vs the docs; fix mismatches; free-tier budget guard
+- [ ] UN3 Unabated client + parser + source + Settings + fallback order; tests
+- [ ] UN4 ship, release
