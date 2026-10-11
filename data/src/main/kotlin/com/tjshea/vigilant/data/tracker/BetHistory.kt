@@ -252,7 +252,7 @@ object BetHistory {
             },
             detail = if (!detail || a == null) null else Detail(
                 bookPrices = a.books.map { bk ->
-                    bk.book + ": " + (bk.odds?.let { Odds.formatAmerican(it) } ?: "—") + "/" + (bk.other?.let { Odds.formatAmerican(it) } ?: "—") + (bk.fair?.let { String.format("%s (%.1f%%)", "", it * 100).trim() } ?: "")
+                    bk.book + ": " + (bk.odds?.let { Odds.formatAmerican(it) } ?: "—") + "/" + (bk.other?.let { Odds.formatAmerican(it) } ?: "—") + (bk.fair?.let { String.format(java.util.Locale.US, " (fair %.1f%%)", it * 100) } ?: "")
                 },
                 dissent = a.dissent, fairBooks = a.fairBooks, fairSharp = a.fairSharp, rules = a.rules, sharpConfirm = a.sharpConfirm,
             ),
