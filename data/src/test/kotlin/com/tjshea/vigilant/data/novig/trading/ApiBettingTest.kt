@@ -213,6 +213,20 @@ class ApiBettingTest {
     /** A game that began a minute ago, its fair 4 minutes old (the +EV tab's "odds 4 min old"). */
     private fun liveTarget(fairAsOf: Long? = now - 4 * 60_000L) = target(fairAsOf = fairAsOf, starts = now - 60_000L)
 
+    /** Tj, 2026-10-11: "if I bet any live game, it only places the bet if it can be filled at the odds listed in the scan". */
+    @Test
+    fun `a live bet is refused when Novig's price is above the listed one, and never reaches past it`() {
+        // The book sells A at 0.46 (100 contracts) then 0.465.
+        val listedAtBest = liveTarget().copy(listedPrice = 0.46)
+        val plan = ready(ApiBetPlanner.plan(listedAtBest, book(), 10.0, now, manual, 0.0))
+        assertEquals("only the 0.46 level is within the listed price", 0.46, plan.limitPrice, 1e-9)
+        assertEquals(100L, plan.contracts)
+        val moved = liveTarget().copy(listedPrice = 0.45)
+        assertTrue(refused(ApiBetPlanner.plan(moved, book(), 10.0, now, manual, 0.0)).contains("price moved"))
+        // The same listed price on a pregame bet is no guard (Tj asked it of live games).
+        assertTrue(ApiBetPlanner.plan(target().copy(listedPrice = 0.45), book(), 5.0, now, manual, 0.0) is PlanResult.Ready)
+    }
+
     @Test
     fun `by hand a live game is bet with Novig's taker fee in the price, the EV and the plan's cost, and the sheet says what live means`() {
         val pre = ready(ApiBetPlanner.plan(target(), book(), 10.0, now, manual, 0.0))
