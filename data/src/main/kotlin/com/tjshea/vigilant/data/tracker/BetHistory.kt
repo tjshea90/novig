@@ -91,8 +91,18 @@ object BetHistory {
         val closeSource: String? = null,
         val closeReadMs: Long? = null,
         val closeLeadSec: Long? = null,
-        /** Novig's own last price before the start (American), when read. */
+        /**
+         * What the close is made of: `read:cno` (CrazyNinjaOdds' consensus read before the start), `read:vigilant` (Vigilant's own fair line), `read:both` (their average), `history:pinnacle`
+         * (Pinnacle's price at the start from ParlayAPI, SGO or OddsPapi), `history:espn`, `history:novig-trades` (the last trades on Novig, own fills included) or `history:other`.
+         */
+        val closeBasis: String? = null,
+        /** true: a price from a source other than the one that found the bet (Pinnacle or ESPN history); false: a read of the same consensus that priced the bet, or Novig's own trades. */
+        val closeIndependent: Boolean? = null,
+        /** Seconds between placing the bet and the read that became its close (a read must be 60+ s after the bet to count). */
+        val closeReadAfterBetSec: Long? = null,
+        /** Novig's own last price before the start (American), when it was read in the last 15 minutes before it; its age in seconds. */
         val novigCloseOdds: Int? = null,
+        val novigCloseAgeSec: Long? = null,
         /** Closing-line value: closeFair / cost - 1. Present only for a true close ([ClosingLine]); beatClose is its sign. */
         val clv: Double? = null,
         val beatClose: Boolean? = null,
@@ -211,7 +221,13 @@ object BetHistory {
         val americanPlaced = b.american ?: a?.american
         val paid = b.paid
         val profit = b.profit
-        val closeReadMs = if (close?.second == ClosingLine.SOURCE_CAPTURED) b.closingSeenAtMs else b.closeLookedAtMs
+        // A voided bet never happened: no close, no CLV (as every in-app stat).
+        val voided = b.status == BetStatus.VOID
+        val captured = close?.second == ClosingLine.SOURCE_CAPTURED
+        // A captured close knows when it was read; a history close is the price AT the start, so it has no read time (the back-fill's lookup time is days later and says nothing about the price).
+        val readMs = if (captured) b.closingSeenAtMs else null
+        val basis = close?.let { (_, src) -> closeBasis(b, src) }
+        val novigAge = b.novigCloseAtMs?.takeIf { b.novigClose != null && b.startsTs - it in 0..ClosingLine.TRUE_CLOSE_MS && now >= b.startsTs }?.let { (b.startsTs - it) / 1000L }
         return Row(
             id = b.id.take(8), placed = iso(b.createdAtMs), placedMs = b.createdAtMs, day = day(b.createdAtMs),
             made = BetOrBid.of(b).word,
@@ -230,10 +246,12 @@ object BetHistory {
             stars = stars?.first, starsBasis = stars?.let { if (it.second) "estimated" else "recorded" },
             liquidity = a?.available, novigAgeSec = a?.novigAgeSec,
             stake = b.stake, contracts = b.contracts, paid = paid, fee = b.fee,
-            closeFair = close?.first, closeOdds = fairOddsOf(close?.first), closeSource = close?.second,
-            closeReadMs = close?.let { closeReadMs }, closeLeadSec = close?.let { closeReadMs?.let { r -> ((b.startsTs - r) / 1000L) } },
-            novigCloseOdds = b.novigClose?.takeIf { now >= b.startsTs }?.let { fairOddsOf(it) },
-            clv = clv, beatClose = clv?.let { it > 0.0 },
+            closeFair = close?.first?.takeIf { !voided }, closeOdds = fairOddsOf(close?.first?.takeIf { !voided }), closeSource = close?.second?.takeIf { !voided },
+            closeReadMs = readMs?.takeIf { !voided }, closeLeadSec = readMs?.takeIf { !voided }?.let { r -> (b.startsTs - r) / 1000L },
+            closeBasis = basis?.takeIf { !voided }, closeIndependent = basis?.takeIf { !voided }?.let { it.startsWith("history:") && it != "history:novig-trades" },
+            closeReadAfterBetSec = readMs?.takeIf { !voided }?.let { r -> (r - b.createdAtMs) / 1000L },
+            novigCloseOdds = novigAge?.let { fairOddsOf(b.novigClose) }.takeIf { !voided }, novigCloseAgeSec = novigAge.takeIf { !voided },
+            clv = clv.takeIf { !voided }, beatClose = clv?.takeIf { !voided }?.let { it > 0.0 },
             result = if (b.status == BetStatus.PENDING) "open" else b.status.name.lowercase(),
             profit = profit, roi = profit?.takeIf { b.stake > 0 }?.let { it / b.stake },
             settledMs = b.settledAtMs, settledBy = b.settledBy,
@@ -257,6 +275,25 @@ object BetHistory {
                 dissent = a.dissent, fairBooks = a.fairBooks, fairSharp = a.fairSharp, rules = a.rules, sharpConfirm = a.sharpConfirm,
             ),
         )
+    }
+
+    /** Where [b]'s close [source] ([ClosingLine.closeOf]) comes from, for [Row.closeBasis]. */
+    fun closeBasis(b: TrackedBet, source: String): String {
+        if (source == ClosingLine.SOURCE_CAPTURED) {
+            return when (b.nowVia) {
+                BetTracker.VIA_BOTH -> "read:both"
+                BetTracker.VIA_VIGILANT -> "read:vigilant"
+                BetTracker.VIA_CNO, BetTracker.VIA_PARLAY -> "read:cno"
+                else -> if (b.source == BetTracker.SOURCE_CNO) "read:cno" else "read:vigilant"
+            }
+        }
+        val s = source.lowercase()
+        return when {
+            s.contains("pinnacle") || s.startsWith("parlayapi") || s.startsWith("sportsgameodds") || s.startsWith("oddspapi") -> "history:pinnacle"
+            s.startsWith("espn") -> "history:espn"
+            s.startsWith("novig") -> "history:novig-trades"
+            else -> "history:other"
+        }
     }
 
     fun bidRow(m: MakerBid, sport: String? = null): BidRow = BidRow(
