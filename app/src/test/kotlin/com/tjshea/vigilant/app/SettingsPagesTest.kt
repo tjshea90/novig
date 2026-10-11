@@ -356,7 +356,7 @@ class SettingsPagesTest {
         val tested = ArrayList<com.tjshea.vigilant.app.ApiEntry>()
         var all = 0
         val state = SampleScan.state().copy(
-            sgoKeys = listOf("sgo-key-aaaa-1111"), unKeys = listOf("un-key-aaaa-1111"),
+            sgoKeys = listOf("sgo-key-aaaa-1111"), unKeys = listOf("un-key-aaaa-1111"), proplineKeys = emptyList(),
             apiChecks = mapOf("SGO" to listOf(com.tjshea.vigilant.data.keys.ApiProbe.Check("sgo-…1111", true, "Active and accepted"))),
             apiTestLines = listOf("OK   SportsGameOdds Pro: fine", "FAIL Unabated: refused"),
         )
