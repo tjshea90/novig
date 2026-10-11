@@ -226,6 +226,13 @@ fun AutoBetSection(
     // Halted: a lost order. Never silently resumed.
     s.autoBetHalted?.let { why ->
         Text("Auto-bet is stopped: $why", style = MaterialTheme.typography.bodyMedium, color = Edge.colors.negative, modifier = Modifier.padding(vertical = 4.dp).testTag("autoBetHalted"))
+        // A lost-order stop is checked against Novig by itself every few seconds and clears when Novig's fills are read: what it is doing, so the wait is never silent.
+        if (com.tjshea.vigilant.app.AutoBettor.isLostOrderHalt(why)) {
+            Text(
+                "Checking Novig by itself every few seconds; auto-bet starts again when it is read: " + (state.autoBetRecovery ?: "starting"),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("autoBetRecoveryNote"),
+            )
+        }
         Text(
             "Check Novig for that bet (and the Tracker's Sync with Novig's fills), then resume. Nothing is placed until you do.",
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,

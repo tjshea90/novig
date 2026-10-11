@@ -33,9 +33,14 @@ class AutoBetRecovery(
     @Volatile private var seenAtMs = 0L
     @Volatile private var notified = false
 
-    /** What the last attempt found (for Diagnostics and tests). */
-    @Volatile var lastNote: String? = null
-        private set
+    private val _note = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+
+    /** What the last attempt found (the Auto-bet tab shows it under the halt, so the wait is never silent; also for tests). */
+    val note: kotlinx.coroutines.flow.StateFlow<String?> = _note
+
+    var lastNote: String?
+        get() = _note.value
+        private set(v) { _note.value = v }
 
     fun start() {
         scope.launch {
@@ -101,7 +106,7 @@ class AutoBetRecovery(
         const val CHECK_MS = 5_000L
 
         /** An auto-bet order is over within seconds; the check waits this long after the halt first shows. */
-        const val SETTLE_MS = 45_000L
+        const val SETTLE_MS = 30_000L
 
         /** After this long without a successful check the notification goes out (once). */
         const val GIVE_UP_MS = 3 * 60_000L

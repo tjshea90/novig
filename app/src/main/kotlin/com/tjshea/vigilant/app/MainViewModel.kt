@@ -127,6 +127,8 @@ data class UiState(
     /** The real-time live lane's rows (each at most 5 s old when published) and what the lane is doing; [feed] carries them when "Include live games" is on. */
     val liveRows: List<Opportunity> = emptyList(),
     val liveStatus: com.tjshea.vigilant.data.pinnodds.LiveScanStatus = com.tjshea.vigilant.data.pinnodds.LiveScanStatus(),
+    /** What the auto-bet's lost-order recovery last did or is waiting for ([AutoBetRecovery.note]), shown under the halt on the Auto-bet tab. */
+    val autoBetRecovery: String? = null,
     val status: ScanStatus = ScanStatus(),
     val oddsApiKeys: List<String> = emptyList(),
     val pinnapiKeys: List<String> = emptyList(),
@@ -466,6 +468,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         // The real-time live lane (Tj, 2026-10-11): its rows and status reach the screen as the engine publishes them, the feed rebuilt off the main thread, at most a few times a second.
         viewModelScope.launch { c.liveScan.status.collect { st -> _state.update { it.copy(liveStatus = st) } } }
+        viewModelScope.launch { c.autoBetRecovery.note.collect { n -> _state.update { it.copy(autoBetRecovery = n) } } }
         viewModelScope.launch {
             c.liveScan.rows.collect { rows ->
                 _state.publishLive(rows)
