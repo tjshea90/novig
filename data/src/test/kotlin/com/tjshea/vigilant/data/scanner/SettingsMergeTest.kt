@@ -21,4 +21,16 @@ class SettingsMergeTest {
         assertEquals(17, once.schema)
         assertEquals(10.0, once.copy(apiBetStake = 99.0).migrate().slipCustomStake, 0.0)
     }
+
+    @Test fun `the fair line uses the conservative worst case by default, saved settings move to it once, and a later choice stays`() {
+        assertEquals(com.tjshea.vigilant.engine.DevigMethod.WORST_CASE, ScanSettings().devigMethod)
+        assertEquals(com.tjshea.vigilant.engine.DevigMethod.WORST_CASE, ScanSettings().fairSettings().method)
+        assertEquals(com.tjshea.vigilant.engine.DevigMethod.WORST_CASE, com.tjshea.vigilant.engine.FairSettings().method)
+        val old = ScanSettings(devigMethod = com.tjshea.vigilant.engine.DevigMethod.POWER, schema = 16).migrate()
+        assertEquals(com.tjshea.vigilant.engine.DevigMethod.WORST_CASE, old.devigMethod)
+        assertEquals(17, old.schema)
+        // Tj picks Power afterwards: the file is current, so it is left alone.
+        val picked = old.copy(devigMethod = com.tjshea.vigilant.engine.DevigMethod.POWER).migrate()
+        assertEquals(com.tjshea.vigilant.engine.DevigMethod.POWER, picked.devigMethod)
+    }
 }
