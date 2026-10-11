@@ -99,6 +99,8 @@ object AutoBetText {
     /** The criteria in one sentence, as the confirm and the status say them. */
     fun criteria(s: ScanSettings): String {
         val r = AutoBet.rules(s)
+        // A minimum star rating decides which bets go (Tj, 2026-10-11): the other criteria are not applied, so they are not listed.
+        if (r.byStars) return "a rating of ${BetRating.label(r.minStars)} stars or better (whatever the edge, odds, kinds, books-agree counts, sharp rule and trap guard say), staking ${stakeText(s)} (never over ${Format.money(r.maxStake)})"
         val agreeing = if (r.allAgree) "every book that prices both sides agreeing it's +EV on their own (and at least ${r.minBooks} of them)"
         else "at least ${r.minBooks} book${if (r.minBooks == 1) "" else "s"} agreeing it's +EV on their own"
         return "$agreeing, ${r.twoSided} pricing both sides, an edge of " +
@@ -340,7 +342,7 @@ fun AutoBetSection(
         Switch(checked = s.autoBetVigilant, onCheckedChange = null)
     }
     Text(
-        "Bets from Vigilant's scan are placed only when they pass every rule here: the edge, odds, kinds, stake, the books-agree counts below and the sharp rule. Pregame only, one bet per market.",
+        "Bets from Vigilant's scan are placed only when they pass every rule here: the edge, odds, kinds, stake, the books-agree counts below and the sharp rule (all of them except while a minimum star rating is picked below: then the rating alone decides). Pregame only, one bet per market.",
         style = MaterialTheme.typography.bodySmall, color = subtle,
     )
 
@@ -354,6 +356,14 @@ fun AutoBetSection(
             "Pick 3½★ and only bets rated 3½ or better are placed (CrazyNinjaOdds', Vigilant's and tennis bets alike).",
         style = MaterialTheme.typography.bodySmall, color = subtle,
     )
+    // While a minimum is picked the rating alone chooses the bets (Tj, 2026-10-11): say so beside the filters it switches off.
+    if (s.autoBetMinStars > 0.0) {
+        Text(
+            "A minimum rating is ON: every bet rated ${BetRating.label(s.autoBetMinStars)}★ or better is bet, and the filters below (smallest edge, favorites' extra edge, longest and shortest odds, kinds of bet, books that must agree, " +
+                "the sharp rule, the trap guard and the small-prop guard) are NOT applied. What always applies: ${AutoBet.starsKept}. Pick Any to enforce all of the filters again.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStarsOverride"),
+        )
+    }
 
     Text("Books that must price both sides", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_TWO_SIDED_CHOICES, s.autoBetTwoSided, { "$it" }, modifier = Modifier.testTag("autoBetTwoSidedChips")) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }
