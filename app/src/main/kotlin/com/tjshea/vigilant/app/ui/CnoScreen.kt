@@ -336,6 +336,7 @@ fun CnoScreen(
                             listedOdds = pick.row.odds.takeIf { it != shown.row.odds },
                             priceAtMs = state.priceReadAtMs(pick.row, now) ?: snap.fetchedAtMs,
                             live = state.livePrice(pick.row, now) != null,
+                            autoBetWhy = if (state.settings.autoBet) state.autoBetStatus.last.why[pick.row.key] else null,
                             team = state.teams[pick.row.key],
                             injury = state.injuries[com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(pick.row)],
                             move = state.lineMoves[com.tjshea.vigilant.data.reference.InjuryTags.cnoKey(pick.row)],
@@ -602,6 +603,8 @@ private fun CnoCard(
     priceAtMs: Long = snap.fetchedAtMs,
     /** The price shown is Novig's, read just now. */
     live: Boolean = false,
+    /** Why the auto-bet has not placed this bet, from its last pass (Tj, 2026-10-11); null = nothing to say. */
+    autoBetWhy: String? = null,
     onPlaced: () -> Unit = {},
     onHide: () -> Unit = {},
     /** Its one-tap "Open in Novig": the bet slip, the way the widget opens it. */
@@ -679,6 +682,7 @@ private fun CnoCard(
                 row.books?.let { LabeledValue("Books", it.toString()) }
                 cnoStake(pick, settings)?.let { LabeledValue(Format.kellyLabel(settings.kellyMultiplier), Format.money(it), valueColor = Edge.colors.positive) }
             }
+            autoBetWhy?.let { Text("Auto-bet: not placed, $it", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, modifier = Modifier.testTag("autoBetWhy")) }
             // One tap to the bet slip, as the widget and the +EV cards do (Tj, 2026-09-28); tapping the card still opens its books.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
