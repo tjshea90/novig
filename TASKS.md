@@ -4749,3 +4749,9 @@ Tj verbatim: "For clarification, if I have multiple apis toggled on, I still wan
 Tj verbatim (2 screenshots: Casper Ruud +0.5 games spread, "6 of 6 books agree", Bally Bet, betparx, casumo, grosvenor, tabtouch, unibet all +100 / -134, unibet -133, "One book a company"): "This bet says 6 out of 6 books agree, but the odds are suspicious because they are exactly the same. They may be the same company. Research each one. If they are the same company, permanently set them as the same company in the app."
 - [ ] TAC1 Research each book's operator and trading/odds provider (web), save to research/.
 - [ ] TAC2 If they share a company or one odds feed, add the grouping to `BookCompany` (permanent), tests, docs, ship.
+
+## TAD: independent books on the same odds provider are double counted (Tj, 2026-10-11 ~20:55Z)
+Tj verbatim (with a Gemini screenshot saying Bally Bet, betPARX, Grosvenor, Casumo and Unibet use Kambi): "Many of the sports books in the app are independent companies, but they use the same odds providers. This is still double counting. Research what sports books are offered in the apis I use and see if there are books using the same odds providers. If they are, consider them the same company in the app and don't allow their odds to be double counted"
+- [ ] TAD1 Research: every book each API offers (SGO, ParlayAPI, OddsPapi v5/v4, Unabated, The Odds API, PropLine, CNO columns) and its B2B odds provider (Kambi, Sportradar/Betradar, Genius, OpenBet, Altenar, ...); plus measure identical-price clusters in the saved real data.
+- [ ] TAD2 Group books by odds provider as one company in `BookCompany` (and CNO's `SAME_DESK`), tests, docs (research file + RESEARCH §134).
+- [ ] TAD3 Ship v0.89.26 (with TAA/TAB/TAC).
