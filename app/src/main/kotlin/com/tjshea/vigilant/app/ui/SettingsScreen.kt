@@ -1143,6 +1143,18 @@ private fun ColumnScope.BettingTab(
         if (state.novig.connection != null) {
             NovigBettingSection(state.betting, s, bettingActions, onUpdate, savedKey = state.novig.managementKey)
         }
+        // The bid guard (Tj, 2026-10-11): a resting order with no expiry is taken down after a while, whoever posted it.
+        if (state.novig.connection != null) {
+            SectionTitle("Bid guard")
+            SwitchRow(
+                "Take down bids left up", "A resting order with no expiry (Novig's own app, or any tool that set none) is cancelled once it has been up this long. Vigilant's own bids always carry a time limit and are not touched.",
+                s.guards.bidGuard, tag = "bidGuardSwitch",
+            ) { v -> onUpdate { it.copy(guards = it.guards.copy(bidGuard = v)) } }
+            if (s.guards.bidGuard) {
+                Text("Cancel after", style = MaterialTheme.typography.bodyMedium)
+                ChoiceChips(listOf(10.0, 15.0, 30.0, 60.0, 120.0), s.guards.bidGuardMinutes.toDouble(), { "${it.toInt()} min" }) { v -> onUpdate { it.copy(guards = it.guards.copy(bidGuardMinutes = v.toInt())) } }
+            }
+        }
         if (s.cnoOn && onOpenAutoBet != null) {
             OutlinedButton(onClick = onOpenAutoBet, modifier = Modifier.padding(top = 8.dp).testTag("bettingOpenAutoBet")) { Text("Auto-bet has its own tab: open it") }
         }

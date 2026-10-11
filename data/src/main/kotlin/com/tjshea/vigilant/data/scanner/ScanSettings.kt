@@ -401,6 +401,8 @@ data class ScanSettings(
     val oddsPapiFree: Boolean = false,
     /** The newer per-API switches and OddsPapi's every-book mode, in one group (a settings class this wide runs out of JVM argument slots: [ApiGates]). */
     val gates: ApiGates = ApiGates(),
+    /** Safety nets that take orders down by themselves ([Guards]). */
+    val guards: Guards = Guards(),
     /**
      * Research mode (Tj, 2026-10-09: "just make it simple for me to run"): ONE switch that turns on every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bid lab
      * and (with a Pinnodds key saved) Pinnodds live in PAPER mode. It never turns on a real-money feature. Off by default; STOP ALL stops it.
@@ -1244,4 +1246,14 @@ data class ApiGates(
     val sgoAllBooks: Boolean = false,
     /** PropLine: every sportsbook it lists (about 30, one request either way), not only the picked ones. */
     val propLineAllBooks: Boolean = false,
+)
+
+/**
+ * The bid guard (Tj, 2026-10-11: "I accidentally left a bad bid up indefinitely, and someone filled the bid and I lost almost immediately"): while [bidGuard] is on, any resting order with no expiry that has been up longer than
+ * [bidGuardMinutes] is cancelled, whoever posted it ([com.tjshea.vigilant.data.novig.trading.BidGuard]). On by default.
+ */
+@kotlinx.serialization.Serializable
+data class Guards(
+    val bidGuard: Boolean = true,
+    val bidGuardMinutes: Int = 30,
 )
