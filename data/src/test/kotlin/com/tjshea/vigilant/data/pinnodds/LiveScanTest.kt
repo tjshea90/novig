@@ -130,6 +130,13 @@ class LiveScanTest {
         val s = ScanSettings(leagues = setOf("NBA"), includeLive = true)
         assertTrue(LiveScanFeed.shown(rows, s, base + currentTime).isNotEmpty())
         assertTrue("switch off: nothing", LiveScanFeed.shown(rows, s.copy(includeLive = false), base + currentTime).isEmpty())
+        // A +EV row the filters hide says why (Tj, 2026-10-11: the banner counted 2 +EV bets and the list showed none).
+        assertTrue(LiveScanFeed.hiddenReasons(rows, s, base + currentTime).isEmpty())
+        val other = LiveScanFeed.hiddenReasons(rows, s.copy(leagues = setOf("NFL")), base + currentTime)
+        assertEquals(listOf("NBA is not one of your picked leagues"), other.map { it.first })
+        assertTrue(other.single().second >= 1)
+        val strict = LiveScanFeed.hiddenReasons(rows, s.copy(minEvPercent = 0.9, maxEvPercent = 1.0), base + currentTime)
+        assertTrue(strict.single().first.startsWith("under your"))
         h.runner.stop()
     }
 
