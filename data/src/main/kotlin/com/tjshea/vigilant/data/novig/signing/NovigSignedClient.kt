@@ -64,13 +64,13 @@ class NovigApiException(val status: Int, val code: String?, val serverMessage: S
             status == 403 && serverMessage?.contains("VPN") == true -> "Keys can't be created over a VPN or proxy. Turn it off and try again."
             status == 403 && serverMessage?.contains("KYC") == true -> "Novig needs your identity check (KYC) finished first."
             status == 403 -> "Novig's edge refused the request (usually too many requests). Wait a minute."
-            status == 409 -> "Novig already has that key or limit (one management key, one trading key per subaccount)."
             // In play (NOVIG_API.md §18, docs.novig.com/api/errors): about this one bet, never the account.
             code == "NOT_LIVE_TRADABLE" -> "Novig doesn't take orders in play on this market (Novig code $code). Nothing was bought."
             code == "EVENT_NOT_TRADABLE" -> "Novig isn't taking orders on this game right now (Novig code $code): it may be between plays or paused. Nothing was bought; look again in a moment."
             code == "MARKET_CLOSED" || code == "MARKET_INACTIVE" -> "Novig has this market closed right now (Novig code $code): in play it closes for a few seconds after a score. Nothing was bought; look again in a moment."
             code == "PRICE_BAND_VIOLATION" -> "Novig refused the price: it is outside the band Novig allows for an order right now (Novig code $code). Nothing was bought; look again."
             code == "ORDER_TOO_LARGE" -> "Novig refused the order as too large (Novig code $code). Try a smaller amount."
+            status == 409 -> "Novig already has that key or limit (one management key, one trading key per subaccount)."
             status == 422 -> "Novig refused the order: the Vigilant subaccount doesn't have enough money for it, or a position limit stopped it" + (serverMessage?.let { " ($it)." } ?: ".")
             status == 404 -> serverMessage ?: "Novig doesn't know that market or order (it may have closed)."
             status == 429 -> "Novig asked us to slow down. Try again in a few seconds."
