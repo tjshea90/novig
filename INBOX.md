@@ -6543,3 +6543,8 @@ This bet says 6 out of 6 books agree, but the odds are suspicious because they a
 ```
 Many of the sports books in the app are independent companies, but they use the same odds providers. This is still double counting. Research what sports books are offered in the apis I use and see if there are books using the same odds providers. If they are, consider them the same company in the app and don't allow their odds to be double counted
 ```
+
+## 2026-10-11T21:13:38Z
+```
+There seems to be a disconnect on live betting
+```
