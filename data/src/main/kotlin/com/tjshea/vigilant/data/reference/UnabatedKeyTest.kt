@@ -45,7 +45,10 @@ object UnabatedKeyTest {
         }
         for (type in listOf("straight", "props")) {
             try {
-                val body = client.oddsRaw(route, type)
+                val all = runCatching { client.betTypes() }.getOrNull().orEmpty()
+                val ids = (if (type == "props") UnabatedConvert.propBetTypeIds(all, league) else UnabatedConvert.gameBetTypeIds(all)).take(UnabatedFeed.PROP_CHUNK)
+                lines += "$route $type: asking for ${ids.size} bet types (an unfiltered board is megabytes): " + ids.joinToString(", ") { id -> "$id=${all.firstOrNull { it.id == id }?.name}" }
+                val body = client.oddsRaw(route, type, ids)
                 raw("GET /market/$route/$type/odds (${body.length} characters)", body, 60_000)
                 val board = UnabatedParser.board(body, includeLive = false)
                 val read = feed.read(league, type, ScanSettings(families = MarketFamily.entries.toSet()))
