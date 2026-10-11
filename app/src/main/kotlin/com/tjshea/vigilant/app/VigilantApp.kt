@@ -1939,3 +1939,9 @@ class AppContainer(private val app: Application) {
         }
     }
 }
+
+/** How often the day files are brought up to date. */
+private const val BET_ARCHIVE_EVERY_MS = 30 * 60_000L
+
+/** The most files one pass copies to Downloads (the first pass after an update may have many days to catch up on). */
+private const val BET_MIRROR_PER_PASS = 80

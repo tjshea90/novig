@@ -1298,4 +1298,6 @@ data class ScanGuards(
     val autoBetVigilant: Boolean = true,
     /** The auto-bet places only bets rated at least this many stars ([BetRating]; Tj, 2026-10-11); 0 = any. */
     val autoBetMinStars: Double = 0.0,
+    /** Copy each day's bets and bids to Downloads/Vigilant/bets (the app keeps its own copy either way; Tj, 2026-10-11). */
+    val betArchive: Boolean = true,
 )
