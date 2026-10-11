@@ -4689,3 +4689,10 @@ Tj verbatim (with 2 screenshots, Novig only ON, "Reading Novig…" showing, Cour
 Tj verbatim: "When I press the pause button at the top to pause scanning, the scanning is still running and finishes the scan. I don't want this. I want it to pause immediately all scanning"
 - [ ] TT1 Audit: what Pause (`settings.paused`) does today and which scanners keep running (Scanner run, auto-scan cycle, CNO reads, live lane, bids, background scan, in-flight requests).
 - [ ] TT2 Pause cancels every in-flight scan/read at once and nothing starts until Resume; tests; ship.
+- [x] TT DONE in code: Pause now stops the scan, the background cycle (AutoScanner.interrupt) and the live lane at once, before the settings are saved; the cycle's mid-way pause checks read the live setting. Tests: PauseScanningAppTest (to extend).
+
+## TU: live bets not dropping after 20+ s; show how old the odds are (Tj, 2026-10-11 ~19:40Z)
+Tj verbatim: "I have the live betting scanner turned on, but the bets are not dropping off the scanner even after 20+ seconds. Why not? Add a function that says how old the odds are for any scanning in the app if it can be figured out accurately"
+- [ ] TU1 Cause: (a) a game that has started but Novig's catalog still calls pregame is not `isLive`, so its REST-scanned row stayed on the Feed as a pregame bet; (b) lane rows live while both game feeds keep speaking (by design, but not what Tj reads as "odds fresh").
+- [ ] TU2 With live games on, REST rows of started games leave the Feed; lane rows carry exact ages (Pinnacle line changed, feed spoke; Novig market changed, feed spoke) and every Feed card says how old its odds are (`OddsAge`).
+- [ ] TU3 Tests, ship.
