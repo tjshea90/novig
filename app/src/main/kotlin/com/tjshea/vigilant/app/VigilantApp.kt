@@ -449,7 +449,7 @@ class AppContainer(private val app: Application) {
     val op4Closes = com.tjshea.vigilant.data.tracker.Op4Closes(op4Client, op4Budget, op4Store)
 
     /** OddsPapi Free's fair-odds feed (Tj, 2026-10-11): whole games, every book, one request each, within the daily figure Tj sets ([ScanSettings.gates]); used only while [op4FairActive]. */
-    val op4Feed = com.tjshea.vigilant.data.reference.Op4Feed(op4Client, com.tjshea.vigilant.data.reference.Op4Catalog(op4Client, op4Budget, op4Store), op4Budget, op4Store)
+    val op4Feed = com.tjshea.vigilant.data.reference.Op4Feed(op4Client, com.tjshea.vigilant.data.reference.Op4Catalog(op4Client, op4Budget, op4Store, lenient = true), op4Budget, op4Store)
     val op4Games = com.tjshea.vigilant.data.reference.Op4GamesSource(op4Feed)
     val op4Props = com.tjshea.vigilant.data.reference.Op4PropsSource(op4Feed)
 

@@ -234,7 +234,7 @@ class OddsPapi4Test {
         val c = client()
         val store = Op4Store(null) { clockMs }
         val budget = Op4Budget(c) { clockMs }
-        val feed = Op4Feed(c, Op4Catalog(c, budget, store) { clockMs }, budget, store) { clockMs }
+        val feed = Op4Feed(c, Op4Catalog(c, budget, store, { clockMs }, lenient = true), budget, store) { clockMs }
         return feed to ScanSettings(referenceBooks = listOf("pinnacle"), oddsPapiFree = true, families = setOf(MarketFamily.MONEYLINE), gates = ApiGates(op4Fair = perDay, opAllBooks = every), leagues = setOf("NFL"))
     }
 

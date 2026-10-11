@@ -248,6 +248,13 @@ class Op4Budget(private val client: OddsPapi4Client, private val clock: () -> Lo
         return client.spentToday(now) < dailyShare
     }
 
+    /** A cached lookup (tournament id, game list, market catalogue) is allowed while more than [RESERVE] requests are left. */
+    fun mayBuyLookup(): Boolean {
+        val acc = client.lastAccount ?: return true
+        val left = acc.left ?: return true
+        return acc.active && left > RESERVE
+    }
+
     /**
      * Whether the fair-odds feed may buy one `/v4/odds` read now ([perDay]: the daily figure Tj chose, 0 = never; [spentToday]: its reads so far today). It never spends the last [RESERVE] + [CLOSE_KEEP] requests of the
      * period: those stay for the closing lines, which matter more.
@@ -301,14 +308,18 @@ class Op4Catalog(
     private val budget: Op4Budget,
     private val store: Op4Store,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** The fair-odds feed has its own daily figure, so its lookups (a handful of cached requests) are held only by the reserve, not by the closing lines' daily share. */
+    private val lenient: Boolean = false,
 ) {
+    private fun may(): Boolean = if (lenient) budget.mayBuyLookup() else budget.mayBuy()
+
     private val marketsHeld = java.util.concurrent.ConcurrentHashMap<String, OpMarkets>()
 
     private fun held() = com.tjshea.vigilant.data.keys.CreditsHeldBackException("OddsPapi Free's daily share is spent")
 
     suspend fun tournamentId(league: com.tjshea.vigilant.data.scanner.League, sport: Int): Long? {
         val raw = store.get("tournaments|$sport", MONTH_MS) ?: run {
-            if (!budget.mayBuy()) throw held()
+            if (!may()) throw held()
             client.billable("/v4/tournaments", listOf("sportId" to sport.toString()), reserve = Op4Budget.RESERVE).also { store.put("tournaments|$sport", it) }
         }
         return OpBooks.tournamentFor(league, OpParser.tournaments(raw))?.id
@@ -331,7 +342,7 @@ class Op4Catalog(
     private suspend fun chunk(tournament: Long, w: Long): List<Op4Fixture> {
         val key = "fx|$tournament|$w"
         val raw = store.get(key, FIXTURES_MS) ?: run {
-            if (!budget.mayBuy()) throw held()
+            if (!may()) throw held()
             client.billable(
                 "/v4/fixtures",
                 listOf("tournamentId" to tournament.toString(), "from" to Instant.ofEpochMilli(w * WINDOW_MS).toString(), "to" to Instant.ofEpochMilli((w + 2) * WINDOW_MS).toString()),
@@ -344,7 +355,7 @@ class Op4Catalog(
     suspend fun markets(league: com.tjshea.vigilant.data.scanner.League, sport: Int): OpMarkets {
         marketsHeld[league.novigName]?.let { return it }
         val raw = store.get("markets", MONTH_MS) ?: run {
-            if (!budget.mayBuy()) throw held()
+            if (!may()) throw held()
             // The whole catalogue (every sport) is megabytes: cut it element by element and keep only the sports Vigilant bets.
             val all = client.billable("/v4/markets", emptyList(), reserve = Op4Budget.RESERVE)
             val parts = com.tjshea.vigilant.data.JsonSplit.elements(all)
