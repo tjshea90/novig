@@ -6325,3 +6325,8 @@ Build the sniper
 ```
 @"/root/.claude/uploads/a54d376e-b7de-5f72-a95d-a9c55905d63e/369cfa5c-vigilant-diagnostics-v0.89.9-2026-10-11-0151.txt" 
 ```
+
+## 2026-10-11T06:05:15Z
+```
+For tennis, make the app use every api that offers tennis if I have tennis selected. I'm trying to diagnose why tennis is not scanning
+```
