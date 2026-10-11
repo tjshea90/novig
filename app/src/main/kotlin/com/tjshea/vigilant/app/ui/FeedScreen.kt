@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.AppBook
+import com.tjshea.vigilant.app.LiveScanText
 import com.tjshea.vigilant.app.R
 import com.tjshea.vigilant.app.ScanStatus
 import com.tjshea.vigilant.app.UiState
