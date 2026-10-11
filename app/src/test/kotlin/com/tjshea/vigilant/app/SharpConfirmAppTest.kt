@@ -366,8 +366,10 @@ class SharpConfirmAppTest {
         assertFalse(src.substringAfter("private suspend fun vigilantScan").substringBefore("private suspend fun send").contains("SharpGate"))
         // And the auto-bet's check comes after every other criterion, before the stake.
         val bettor = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoBettor.kt").readText()
-        assertTrue(bettor.indexOf("AutoBet.judge(rules, item.shown.ev") < bettor.indexOf("?: sharpReason(item, settings, state, now)"))
-        assertTrue(bettor.indexOf("?: sharpReason(item, settings, state, now)") < bettor.indexOf("AutoBet.stake(rules, item.shown.row"))
+        // (While a minimum star rating decides the sharp rule is not asked: `if (byStars) null else sharpReason(...)`.)
+        val sharp = "?: (if (byStars) null else sharpReason(item, settings, state, now))"
+        assertTrue(bettor.indexOf("AutoBet.judge(rules, item.shown.ev") < bettor.indexOf(sharp))
+        assertTrue(bettor.indexOf(sharp) < bettor.indexOf("AutoBet.stake(rules, item.shown.row"))
     }
 
     // ---- the flight recorder sees every run (Tj, 2026-10-02) ---------------------------------------------------------------
