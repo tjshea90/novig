@@ -175,7 +175,7 @@ class ScanStudyAppTest {
         // with bids on and "Bids priced from" set to CrazyNinjaOdds (below), so with that off nothing in the app reads or asks for the wide read.
         assertEquals(sortedSetOf("CnoBidLane.kt", "CnoClient.kt", "CnoFeed.kt"), data)
         val cycle = File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
-        assertTrue(cycle.contains("if (settings.bidsFromCno && settings.autoScansCno && !settings.paused && AppBook.isNovig) {"))
+        assertTrue(cycle.contains("if (settings.bidsFromCno && settings.autoScansCno && !c.currentSettings().paused && AppBook.isNovig) {"))
         val callers = File("src/main/kotlin/com/tjshea/vigilant/app").walkTopDown().filter { it.isFile && it.extension == "kt" && "cnoBids.step(" in it.readText() }.map { it.name }.toList()
         assertEquals(listOf("AutoScan.kt"), callers)
     }
