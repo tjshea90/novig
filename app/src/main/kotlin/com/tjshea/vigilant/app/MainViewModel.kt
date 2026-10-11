@@ -234,6 +234,12 @@ data class UiState(
     val op4KeyNote: String? = null,
     val op4KeyOk: Boolean? = null,
     val op4KeyBusy: Boolean = false,
+    /** Settings › APIs: each API's last key check (by [ApiEntry] name), the ones being checked, and the combined test's report. */
+    val apiChecks: Map<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>> = emptyMap(),
+    val apiBusy: Set<String> = emptySet(),
+    val apiTestLines: List<String>? = null,
+    val apiTestBusy: Boolean = false,
+    val usageBusy: Boolean = false,
 ) {
     /**
      * The +EV feed as of [now]: without EVs whose other books' prices are over a few minutes old
@@ -1339,6 +1345,86 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching { c.parlayAccount.refresh(force) }
             if (history) runCatching { c.parlayAccount.refreshHistory(force) }
+        }
+    }
+
+    /** Settings › APIs › Test beside one API: every key of that API, one at a time, active and accepted or not (the usage prompt it offers is read into the meter too). */
+    fun testApi(entry: ApiEntry) {
+        if (entry.name in _state.value.apiBusy) return
+        _state.update { it.copy(apiBusy = it.apiBusy + entry.name) }
+        viewModelScope.launch {
+            val checks = withContext(Dispatchers.IO) {
+                runCatching {
+                    if (entry.keyless) listOf(c.apiProbe.reach(kalshi = entry == ApiEntry.KALSHI))
+                    else c.apiProbe.check(entry.provider!!, keysFor(entry.provider))
+                }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
+            }
+            _state.update { it.copy(apiBusy = it.apiBusy - entry.name, apiChecks = if (checks != null) it.apiChecks + (entry.name to checks) else it.apiChecks) }
+            if (entry == ApiEntry.PARLAY) refreshBalances(force = true)
+        }
+    }
+
+    /**
+     * Settings › APIs › Test active APIs: the combination the switches make. Every API that is ON has its keys checked, then the scan's own sources (exactly the ones the switches leave in play) each read
+     * one league and say how many games, quotes and books came back and how long it took. An API that is OFF is not touched.
+     */
+    fun testActiveApis() {
+        if (_state.value.apiTestBusy) return
+        _state.update { it.copy(apiTestBusy = true, apiTestLines = listOf("Testing the APIs that are on…")) }
+        viewModelScope.launch {
+            val lines = ArrayList<String>()
+            val s = _state.value.settings
+            val on = ApiEntry.active(s)
+            val results = HashMap<String, List<com.tjshea.vigilant.data.keys.ApiProbe.Check>>()
+            if (on.isEmpty()) lines += "No API is switched on."
+            for (e in on) {
+                val checks = withContext(Dispatchers.IO) {
+                    runCatching {
+                        if (e.keyless) listOf(c.apiProbe.reach(kalshi = e == ApiEntry.KALSHI)) else c.apiProbe.check(e.provider!!, keysFor(e.provider))
+                    }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
+                } ?: continue
+                results[e.name] = checks
+                lines += (if (checks.all { it.ok }) "OK   " else "FAIL ") + e.title + ": " + checks.joinToString(" | ") { (if (it.masked.isBlank()) "" else it.masked + " ") + it.message }
+                _state.update { it.copy(apiChecks = it.apiChecks + results) }
+            }
+            lines += ""
+            lines += "One league through each source that is in play (${s.selectedLeagues.joinToString(", ") { it.novigName }.ifEmpty { "no leagues selected" }}):"
+            val sources = runCatching { c.referenceSources(s) }.getOrDefault(emptyList())
+            for (src in sources) {
+                val league = s.selectedLeagues.firstOrNull { src.supports(it) }
+                if (league == null) { lines += "---  ${src.displayName}: none of the selected leagues"; continue }
+                if (src.needsCatalog) { lines += "---  ${src.displayName}: needs Novig's board for ${league.novigName}; a scan tests it"; continue }
+                val t0 = System.currentTimeMillis()
+                val snap = withContext(Dispatchers.IO) {
+                    runCatching { kotlinx.coroutines.withTimeout(90_000L) { src.odds(league, s.copy(selectedLeagues = listOf(league))) } }.onFailure { if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }
+                }
+                val secs = (System.currentTimeMillis() - t0) / 1000.0
+                lines += snap.fold(
+                    { r ->
+                        val markets = r.events.flatMap { it.markets }
+                        "${if (r.events.isNotEmpty() || r.skipped) "OK   " else "EMPTY"} ${src.displayName} · ${league.novigName}: ${r.events.size} games, ${markets.size} quotes, ${markets.map { it.bookKey }.toSet().size} books · ${"%.1f".format(secs)} s"
+                    },
+                    { e -> "FAIL ${src.displayName} · ${league.novigName}: ${com.tjshea.vigilant.data.reference.readableError(e)} · ${"%.1f".format(secs)} s" },
+                )
+            }
+            _state.update { it.copy(apiTestBusy = false, apiTestLines = lines) }
+            refreshBalances(force = true)
+        }
+    }
+
+    /**
+     * Asks every API that offers a usage prompt how much each key has left, and writes the answer into the meter (Settings › API usage opened, or its Refresh button). The Odds API, PropLine, SportsGameOdds,
+     * ParlayAPI and OddsPapi Free have one; PinnWire/pinnapi, Pinnodds, OddsPapi v5 and Unabated publish none, so their meters show the app's own count.
+     */
+    fun refreshUsage() {
+        if (_state.value.usageBusy) return
+        _state.update { it.copy(usageBusy = true) }
+        viewModelScope.launch(Dispatchers.IO) {
+            for (e in ApiEntry.entries.filter { it.usagePrompt && it.provider != null && keysFor(it.provider).isNotEmpty() }) {
+                runCatching { c.apiProbe.check(e.provider!!, keysFor(e.provider)) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }
+            runCatching { c.parlayAccount.refreshHistory(true) }
+            _state.update { it.copy(usageBusy = false) }
         }
     }
 

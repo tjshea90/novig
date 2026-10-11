@@ -482,6 +482,9 @@ class AppContainer(private val app: Application) {
     val espnCloses = com.tjshea.vigilant.data.tracker.EspnCloses(http, json)
     val novigCloses = com.tjshea.vigilant.data.tracker.NovigTradeCloses(http, json)
     /** Tj's ParlayAPI keys, one pool (and one meter) for its scans and its closing lines. */
+    /** Checks each API's keys and reads the usage prompts the APIs offer into the meter (Settings › APIs, Settings › API usage). */
+    val apiProbe by lazy { com.tjshea.vigilant.data.keys.ApiProbe(http, usage, parlayAccount) }
+
     private val parlayPool = KeyPool(QuotaPolicy.PARLAY, { keyStore.current(ApiProvider.PARLAY) }, usage)
 
     /** Each ParlayAPI key's own account (credits left, plan, reset), read for free so the meter is exact (Tj, 2026-09-30). */

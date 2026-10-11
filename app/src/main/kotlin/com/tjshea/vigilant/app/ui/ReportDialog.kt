@@ -52,6 +52,10 @@ data class ReportActions(
     /** OddsPapi: test the key (and, with true, share the sample it saved). */
     val onTestOpKey: (Boolean) -> Unit = {},
     /** Unabated (Free) and OddsPapi Free (v4): test the key (and, with true, share the sample it saved). */
+    /** Settings › APIs: test one API's keys, test every API that is on (plus a one-league read through each source in play), refresh the usage meters from the APIs' own prompts. */
+    val onTestApi: (com.tjshea.vigilant.app.ApiEntry) -> Unit = {},
+    val onTestActiveApis: () -> Unit = {},
+    val onRefreshUsage: () -> Unit = {},
     val onTestUnabatedKey: (Boolean) -> Unit = {},
     val onTestOddsPapiFreeKey: (Boolean) -> Unit = {},
     /** The live feed test (Tj, 2026-10-07): make its file and share it, and read the line that says what it is doing. */

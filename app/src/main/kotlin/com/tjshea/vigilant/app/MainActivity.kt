@@ -845,7 +845,7 @@ private fun VigilantRoot(
                         moveUp = vm::moveKeyUp,
                         exportTo = vm::exportKeys,
                         importFrom = vm::importKeys,
-                        onUsageShown = { vm.refreshBalances(history = true) },
+                        onUsageShown = { vm.refreshBalances(history = true); vm.refreshUsage() },
                     ),
                     reportActions = com.tjshea.vigilant.app.ui.ReportActions(
                         onDiagnostics = vm::showDiagnostics,
@@ -864,6 +864,9 @@ private fun VigilantRoot(
                         onTestPinnKey = vm::testPinnoddsKey,
                         onTestSgoKey = { share -> vm.testSgoKey(share) },
                         onTestOpKey = { share -> vm.testOpKey(share) },
+                        onTestApi = vm::testApi,
+                        onTestActiveApis = vm::testActiveApis,
+                        onRefreshUsage = vm::refreshUsage,
                         onTestUnabatedKey = { share -> vm.testUnabatedKey(share) },
                         onTestOddsPapiFreeKey = { share -> vm.testOddsPapiFreeKey(share) },
                         onShareFeedRace = vm::shareFeedRace,
