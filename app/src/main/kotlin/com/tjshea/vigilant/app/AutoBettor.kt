@@ -102,6 +102,8 @@ class AutoBettor(
         val stopped: String? = null,
         val walletEmpty: Boolean = false,
         val halted: Boolean = false,
+        /** Why each CNO bet that was looked at was not placed, by CNO row key (Tj, 2026-10-11: "Why isn't it betting the 4 Star Bet in the screenshot?"): shown on the bet's card. */
+        val why: Map<String, String> = emptyMap(),
     ) {
         val staked: Double get() = placed.sumOf { it.stake }
     }
@@ -161,7 +163,10 @@ class AutoBettor(
         cooldown.entries.removeAll { it.value <= now }
 
         val skipped = LinkedHashMap<String, Int>()
-        fun skip(reason: String) { skipped.merge(reason, 1, Int::plus) }
+        // The bet being judged (CNO row key): what stops it is kept against it, for its card.
+        val why = HashMap<String, String>()
+        var judging: String? = null
+        fun skip(reason: String) { skipped.merge(reason, 1, Int::plus); judging?.let { why[it] = reason } }
 
         // Pregame bets at Novig whose books were read, best edge first. Each is judged on Novig's price read in the last minute: a bet with no
         // such price isn't placed (its edge is whatever it was a while ago).
@@ -176,6 +181,7 @@ class AutoBettor(
         val passing = ArrayList<AlertPicks.CnoChecked>()
         for (item in all.distinctBy { it.pick.row.key }.sortedByDescending { it.shown.ev }) {
             val row = item.pick.row
+            judging = row.key
             val startsAt = row.startsAtMs
             when {
                 !ApiBetTargets.atNovig(row) -> skip("not priced at Novig")
@@ -189,6 +195,7 @@ class AutoBettor(
                     ?: passing.add(item)
             }
         }
+        judging = null
         if (passing.isEmpty()) {
             // Nothing to bet this cycle, but the wallet this cycle read may already be empty (Tj, 2026-10-02 ~22:10Z): asleep until he adds money.
             c.wallet.last?.takeIf { now - it.atMs < WalletBalance.FRESH_MS }?.let { w ->
@@ -242,6 +249,7 @@ class AutoBettor(
             if (c.settingsStore.flow.value?.killed == true) { stopped = "the STOP button was pressed while this pass ran"; break }
             if (placed.size >= AutoBet.MAX_PER_CYCLE) { stopped = "placed ${AutoBet.MAX_PER_CYCLE} this cycle (the best edges first); the rest wait for the next"; break }
             val row = item.pick.row
+            judging = row.key
             // A Kelly stake is never sized on more edge than the sharpest book backs (its own fair, where its veto priced the bet: RESEARCH.md §72).
             val sharpFair = vetoSaid[row.key]?.takeIf { v -> vetoOn && v.verdict == SharpVeto.Verdict.PASSED }?.fair
             val stake = when (val s = AutoBet.stake(rules, item.shown.row, settings.bankroll, balance, sharpFair, item.check.fairProbability)) {
