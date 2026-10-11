@@ -7,7 +7,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TennisOnlyTest {
-    private val kalshi = KalshiClient(okhttp3.OkHttpClient())
+    private val kalshi = KalshiClient(okhttp3.OkHttpClient(), kotlinx.serialization.json.Json { ignoreUnknownKeys = true })
 
     @Test fun `a feed asked for tennis alone supports the tours and nothing else`() {
         val only = TennisOnly(kalshi)
