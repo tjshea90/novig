@@ -383,6 +383,41 @@ class ScannerTest {
         assertEquals(listOf("backup"), log) // never asked whether it's needed
     }
 
+    // ---- Tj, 2026-10-11: one API for overlapping data, the others asleep (ApiChain) ---------------------------------------------
+
+    /** An aggregator on the lines chain, faked on the same board: [id] decides its place; it logs its calls. */
+    private class FakeAggregator(override val id: String, val log: MutableList<String>, var fail: Boolean = false) : ReferenceSource {
+        override val displayName = id
+        override val metered = true
+        override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
+            kotlinx.coroutines.delay(20)
+            log += id
+            if (fail) throw AllKeysExhaustedException("All 1 $id key(s) are rate-limited or invalid")
+            return RefSnapshot(league.oddsApiSportKey, Fixtures.oddsApiSeenNow(), 0)
+        }
+    }
+
+    @Test
+    fun `with two aggregators on and the same books, only the best is asked and the other sleeps`() = runTest {
+        val log = java.util.Collections.synchronizedList(ArrayList<String>())
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(FakeAggregator("oddspapi", log), FakeAggregator("sgo", log)))
+        assertEquals(listOf("sgo"), log)
+        assertEquals(1, r.sources.single { it.id == "oddspapi" }.standingBy)
+        assertEquals(0, r.sources.single { it.id == "oddspapi" }.fetched)
+        assertTrue(r.result!!.opportunities.isNotEmpty())
+    }
+
+    @Test
+    fun `when the best aggregator does not answer or is out of credits the next best is asked for the odds`() = runTest {
+        val log = java.util.Collections.synchronizedList(ArrayList<String>())
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(FakeAggregator("oddspapi", log), FakeAggregator("sgo", log, fail = true), FakeAggregator("unabated", log)))
+        // SGO fails; OddsPapi takes over; Unabated (below both) finds the league answered and sleeps.
+        assertEquals(listOf("sgo", "oddspapi"), log)
+        assertEquals(1, r.sources.single { it.id == "oddspapi" }.fetched)
+        assertEquals(1, r.sources.single { it.id == "unabated" }.standingBy)
+        assertTrue(r.result!!.opportunities.isNotEmpty())
+    }
+
     /** Full test, 2026-09-27: a backup that stands by must not keep pricing from its last, older answer. */
     @Test
     fun `a fallback standing by drops its own older answer`() = runTest {
