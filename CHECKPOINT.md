@@ -1,22 +1,27 @@
-# CHECKPOINT 2917 — read me first, then TASKS.md
+# CHECKPOINT 2918 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T02:47:19Z · **tests:** all 4 fast checks green
-**Branch:** `claude/unabated-oddsapi-integration-1u6kdc` · **builds on:** `b9e2b689` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T02:50:26Z · **tests:** all 4 fast checks green
+**Branch:** `claude/unabated-oddsapi-integration-1u6kdc` · **builds on:** `50af72fc` (this checkpoint is the commit after it)
 
 ## Just done
-UA2-UA4 built: per-API switches (usePinnwire/usePinnapi/usePinnodds + gating), Settings APIs page (switch+Test+usage per API, Test active APIs with one-league source reads, Refresh usage), ApiProbe usage prompts into the meter; tests ApiProbeTest(12), APIs page tests
+pre-ship: v0.89.0: Unabated (free) and OddsPapi Free (v4) added; Settings > APIs page with a switch, Test button and usage per API; keys rotate per key
 
 ## Do this next
-Run the full floor, update docs (CLAUDE.md/UNABATED/ODDSPAPI notes, RESEARCH §129 addendum), BUILDLOG via ship, release, report to Tj
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/src/test/kotlin/com/tjshea/vigilant/app/SettingsPagesTest.kt
+    M  CLAUDE.md
+    M  RESEARCH.md
+    M  TASKS.md
+    M  UNABATED_API.md
+    M  app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  1f3fc96d ckpt 2917: UA2-UA4 built: per-API switches (usePinnwire/usePinnapi/usePinnodds + gating
   9636ce1d ckpt 2916: UA1 done: Unabated per-key 5s gate + key rotation (refused/429 -> next key),
   57e2e312 ckpt 2915: UN3 wired: VigilantApp (Unabated last-in-line sources, OddsPapi Free closes 
   cf5a29a1 ckpt 2914: UN3: Unabated + OddsPapi v4 (Op4 client/budget/store/Op4Closes) done in data
@@ -26,8 +31,7 @@ Run the full floor, update docs (CLAUDE.md/UNABATED/ODDSPAPI notes, RESEARCH §1
   5d8c65b9 ckpt 2910: pre-release: v0.88.11: tennis in the auto-bet (from Vigilant's scan) and the
   93119d04 ckpt 2909: pre-ship: v0.88.11: tennis in the auto-bet (from Vigilant's scan) and the bi
   506a68de ckpt 2908: TQ1/TQ2 written: autoBetTennis setting+migration, AutoBet.judgeScan/scanStak
-  ad32dd40 ckpt 2907: TQ: wrote tennis auto-bet/auto-bid task into TASKS.md
 ```
 
-(9 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

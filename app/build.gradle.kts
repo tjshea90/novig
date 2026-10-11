@@ -19,8 +19,8 @@ android {
         // no real cost to a bit of headroom for testing on whatever other device is on hand.
         minSdk = 30
         targetSdk = 36
-        versionCode = 184
-        versionName = "0.88.11"
+        versionCode = 185
+        versionName = "0.89.0"
         // The book this app prices: Novig. The `mgm` module builds Vigilant MGM from these same
         // sources with "betmgm" (AppBook.kt, BRIEF.md). Never change this one.
         buildConfigField("String", "BOOK", "\"novig\"")
