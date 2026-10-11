@@ -197,6 +197,7 @@ class PinnLiveRunner(
         val novig = newFeed { marketId, atMs, changes -> queue.trySend(Msg.Book(marketId, atMs, changes)) }
         if (novig == null) {
             _status.value = _status.value.copy(running = false, socket = "off", problem = "No Novig key is connected: the live feed needs a key's live books (Settings › Betting & Novig account).")
+            scanBoard?.clear("no Novig key is connected (Settings › Betting & Novig account)")
             return
         }
         val pinn = openFeed { text, at -> queue.trySend(Msg.Frame(text, at)) }
