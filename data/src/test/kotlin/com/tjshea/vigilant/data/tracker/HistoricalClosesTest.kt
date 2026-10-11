@@ -51,7 +51,7 @@ class HistoricalClosesTest {
         val h = 345.0 / 445.0
         val a = 100.0 / 375.0
         val buf = EspnCloses.parseClose(root, pick("Moneyline", "Buffalo Bills"), bills) as CloseLookup.Found
-        assertEquals(h / (h + a), buf.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(h, a), buf.fair, 1e-9)
         assertEquals("ESPN · DraftKings close", buf.via)
         val lac = EspnCloses.parseClose(root, pick("Moneyline", "Los Angeles Chargers"), bills) as CloseLookup.Found
         assertEquals(1.0, buf.fair + lac.fair, 1e-9)
@@ -64,7 +64,7 @@ class HistoricalClosesTest {
         val p = 115.0 / 215.0
         val q = 105.0 / 205.0
         val spread = EspnCloses.parseClose(root, pick("Spread", "Buffalo Bills -7"), bills) as CloseLookup.Found
-        assertEquals(p / (p + q), spread.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p, q), spread.fair, 1e-9)
         val dog = EspnCloses.parseClose(root, pick("Point Spread", "Los Angeles Chargers +7"), bills) as CloseLookup.Found
         assertEquals(1.0, spread.fair + dog.fair, 1e-9)
         val moved = EspnCloses.parseClose(root, pick("Spread", "Buffalo Bills -6.5"), bills) as CloseLookup.None

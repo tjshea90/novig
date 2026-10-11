@@ -83,7 +83,7 @@ class ParlayClosesTest {
         val root = json.parseToJsonElement(propFile)
         val over = ParlayCloses.parseProp(root, pick("Player Receptions", "Dalton Kincaid Over 3.5") as BetGrader.Pick.Prop, NFL, start)
             as CloseLookup.Found
-        assertEquals(p(-125) / (p(-125) + p(105)), over.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-125), p(105)), over.fair, 1e-9)
         assertEquals("ParlayAPI · Pinnacle close", over.via)
         val under = ParlayCloses.parseProp(root, pick("Player Receptions", "Dalton Kincaid Under 3.5") as BetGrader.Pick.Prop, NFL, start)
             as CloseLookup.Found
@@ -107,11 +107,11 @@ class ParlayClosesTest {
     fun `a game line's Pinnacle close in The Odds API's event shape, should closing-lines ever answer so`() {
         val root = json.parseToJsonElement(gameFile)
         val ml = ParlayCloses.parseGameLine(root, bet("ml", "Moneyline", "Buffalo Bills"), pick("Moneyline", "Buffalo Bills")) as CloseLookup.Found
-        assertEquals(p(-320) / (p(-320) + p(280)), ml.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-320), p(280)), ml.fair, 1e-9)
         val dog = ParlayCloses.parseGameLine(root, bet("d", "Moneyline", "Los Angeles Chargers"), pick("Moneyline", "Los Angeles Chargers")) as CloseLookup.Found
         assertEquals(1.0, ml.fair + dog.fair, 1e-9)
         val spread = ParlayCloses.parseGameLine(root, bet("s", "Spread", "Buffalo Bills -7"), pick("Spread", "Buffalo Bills -7")) as CloseLookup.Found
-        assertEquals(p(-108) / (p(-108) + p(-102)), spread.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-108), p(-102)), spread.fair, 1e-9)
         assertTrue(ParlayCloses.parseGameLine(root, bet("s2", "Spread", "Buffalo Bills -6.5"), pick("Spread", "Buffalo Bills -6.5")) is CloseLookup.None)
         assertEquals(0.5, (ParlayCloses.parseGameLine(root, bet("t", "Total", "Under 50.5"), pick("Total", "Under 50.5")) as CloseLookup.Found).fair, 1e-9)
         // Another game at another time is never matched to this one.
@@ -144,11 +144,11 @@ class ParlayClosesTest {
     fun `the closes file's game lines, one team a row, at the closing number, and a price from hours before isn't a close`() {
         val root = json.parseToJsonElement(mlbFile)
         val ml = ParlayCloses.parseFileGameLine(root, mlbBet("ml", "Moneyline", "Atlanta Braves"), pick("Moneyline", "Atlanta Braves")) as CloseLookup.Found
-        assertEquals(p(-174) / (p(-174) + p(160)), ml.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-174), p(160)), ml.fair, 1e-9)
         val dog = ParlayCloses.parseFileGameLine(root, mlbBet("d", "Moneyline", "Philadelphia Phillies"), pick("Moneyline", "Philadelphia Phillies")) as CloseLookup.Found
         assertEquals(1.0, ml.fair + dog.fair, 1e-9)
         val rl = ParlayCloses.parseFileGameLine(root, mlbBet("s", "Spread", "Atlanta Braves -1.5"), pick("Spread", "Atlanta Braves -1.5")) as CloseLookup.Found
-        assertEquals(p(126) / (p(126) + p(-145)), rl.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(126), p(-145)), rl.fair, 1e-9)
         assertTrue(ParlayCloses.parseFileGameLine(root, mlbBet("s2", "Spread", "Atlanta Braves -2.5"), pick("Spread", "Atlanta Braves -2.5")) is CloseLookup.None)
         val under = ParlayCloses.parseFileGameLine(root, mlbBet("t", "Total", "Under 6.5"), pick("Total", "Under 6.5")) as CloseLookup.Found
         assertEquals(p(108) / (p(-121) + p(108)), under.fair, 1e-9)
@@ -161,7 +161,7 @@ class ParlayClosesTest {
     fun `props in the closes file under each book's own market name, and one priced the night before isn't a close`() {
         val root = json.parseToJsonElement(mlbFile)
         val olson = ParlayCloses.parseProp(root, pick("Total Bases", "Matt Olson Over 1.5") as BetGrader.Pick.Prop, "baseball_mlb", mlbStart) as CloseLookup.Found
-        assertEquals(p(-105) / (p(-105) + p(-115)), olson.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-105), p(-115)), olson.fair, 1e-9)
         val sale = ParlayCloses.parseProp(root, pick("Pitcher Strikeouts", "Chris Sale Under 6.5") as BetGrader.Pick.Prop, "baseball_mlb", mlbStart) as CloseLookup.Found
         assertEquals(p(110) / (p(-130) + p(110)), sale.fair, 1e-9)
         val hr = ParlayCloses.parseProp(root, pick("Home Runs", "Kyle Schwarber Over 0.5") as BetGrader.Pick.Prop, "baseball_mlb", mlbStart)
@@ -181,7 +181,7 @@ class ParlayClosesTest {
     fun `closing-lines' flat rows give the moneyline at the start, never a three-way one`() {
         val root = json.parseToJsonElement(flatLines)
         val home = ParlayCloses.parseGameLine(root, mlbBet("ml", "Moneyline", "Atlanta Braves"), pick("Moneyline", "Atlanta Braves")) as CloseLookup.Found
-        assertEquals(p(-170) / (p(-170) + p(155)), home.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-170), p(155)), home.fair, 1e-9)
         val away = ParlayCloses.parseGameLine(root, mlbBet("a", "Moneyline", "Philadelphia Phillies"), pick("Moneyline", "Philadelphia Phillies")) as CloseLookup.Found
         assertEquals(1.0, home.fair + away.fair, 1e-9)
         assertTrue(ParlayCloses.parseGameLine(root, mlbBet("s", "Spread", "Atlanta Braves -1.5"), pick("Spread", "Atlanta Braves -1.5")) is CloseLookup.None)
@@ -214,7 +214,7 @@ class ParlayClosesTest {
         val other = flat("Oregon State Beavers", "Idaho State Bengals", 272, -340, start = "2026-10-03T23:45:00Z")
         val both = json.parseToJsonElement("[$other,$truth]")
         val found = ParlayCloses.parseGameLine(both, wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
-        assertEquals(p(-115) / (p(-115) + p(-105)), found.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-115), p(-105)), found.fair, 1e-9)
         val away = ParlayCloses.parseGameLine(both, wsu("a", "Fresno State"), pick("Moneyline", "Fresno State")) as CloseLookup.Found
         assertEquals(1.0, found.fair + away.fair, 1e-9)
         // The real game missing from the file: no close at all beats the other game's.
@@ -228,11 +228,11 @@ class ParlayClosesTest {
         val first = flat("Washington State Cougars", "Fresno State Bulldogs", -115, -105, start = "2026-10-03T20:30:00Z")
         val second = flat("Washington State Cougars", "Fresno State Bulldogs", 150, -170, start = "2026-10-03T23:30:00Z")
         val dh = ParlayCloses.parseGameLine(json.parseToJsonElement("[$first,$second]"), wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
-        assertEquals(p(150) / (p(150) + p(-170)), dh.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(150), p(-170)), dh.fair, 1e-9)
         // And the first game's own bet, whichever row came first or was updated last: its own start's game, not the later one.
         val early = wsu("early").copy(startsTs = Instant.parse("2026-10-03T20:30:00Z").toEpochMilli())
         val dhEarly = ParlayCloses.parseGameLine(json.parseToJsonElement("[$second,$first]"), early, pick("Moneyline", "Washington State")) as CloseLookup.Found
-        assertEquals(p(-115) / (p(-115) + p(-105)), dhEarly.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-115), p(-105)), dhEarly.fair, 1e-9)
         // Two DIFFERENT pairings each as good a fit as the other (each shares one team exactly and a State word with the other): refused, not the later one.
         val a = flat("Oregon State Beavers", "Fresno State Bulldogs", 200, -240, start = "2026-10-03T23:40:00Z")
         val b = flat("Washington State Cougars", "Boise State Broncos", -115, -105)
@@ -255,7 +255,7 @@ class ParlayClosesTest {
         )
         val root = json.parseToJsonElement("""{"rows":[${(other + truth).joinToString(",")}]}""")
         val mine = ParlayCloses.parseFileGameLine(root, wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
-        assertEquals(p(-115) / (p(-115) + p(-105)), mine.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-115), p(-105)), mine.fair, 1e-9)
         val theirs = ParlayCloses.parseFileGameLine(root, wsu("a", "Fresno State"), pick("Moneyline", "Fresno State")) as CloseLookup.Found
         assertEquals(1.0, mine.fair + theirs.fair, 1e-9)
         assertTrue(ParlayCloses.parseFileGameLine(json.parseToJsonElement("""{"rows":[${other.joinToString(",")}]}"""), wsu("ml"), pick("Moneyline", "Washington State")) is CloseLookup.None)
@@ -263,7 +263,7 @@ class ParlayClosesTest {
         val draw = fileRow("Washington State Cougars", "Fresno State Bulldogs", "Draw", 900, snap = "2026-10-03T23:29:30Z")
         val withDraw = json.parseToJsonElement("""{"rows":[${(truth + draw).joinToString(",")}]}""")
         val steady = ParlayCloses.parseFileGameLine(withDraw, wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
-        assertEquals(p(-115) / (p(-115) + p(-105)), steady.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-115), p(-105)), steady.fair, 1e-9)
     }
 
     @Test
@@ -272,7 +272,7 @@ class ParlayClosesTest {
             "bookmakers":[{"key":"pinnacle","markets":[{"key":"h2h","outcomes":[{"name":"Fresno State Bulldogs","price":-105},{"name":"Washington State Cougars","price":-115}]}]}]}]"""
         val root = json.parseToJsonElement(game)
         val mine = ParlayCloses.parseGameLine(root, wsu("ml"), pick("Moneyline", "Washington State")) as CloseLookup.Found
-        assertEquals(p(-115) / (p(-115) + p(-105)), mine.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-115), p(-105)), mine.fair, 1e-9)
         val dog = ParlayCloses.parseGameLine(root, wsu("a", "Fresno State"), pick("Moneyline", "Fresno State")) as CloseLookup.Found
         assertEquals(1.0, mine.fair + dog.fair, 1e-9)
     }
@@ -483,18 +483,18 @@ class ParlayClosesTest {
     fun `a tennis games spread closes at Pinnacle's games line, never its sets line at the same number`() {
         // Games -1.5: the "(Games)" rows, Fokina -117 / Berrettini +1.5 -101. The sets -1.5 (+152 / -179, ~38%) is the trap.
         val games = tennisClose("Games Spread", "Alejandro Davidovich Fokina -1.5") as CloseLookup.Found
-        assertEquals(p(-117) / (p(-117) + p(-101)), games.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-117), p(-101)), games.fair, 1e-9)
         val sets = tennisClose("Set Spread", "Alejandro Davidovich Fokina -1.5") as CloseLookup.Found
-        assertEquals(p(152) / (p(152) + p(-179)), sets.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(152), p(-179)), sets.fair, 1e-9)
         // Totals: 22.5 games from the Games match, 2.5 sets from the match's own rows; a games total at 2.5 isn't one.
         val total = tennisClose("Total Games", "Over 22.5") as CloseLookup.Found
-        assertEquals(p(-113) / (p(-113) + p(-103)), total.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-113), p(-103)), total.fair, 1e-9)
         val totalSets = tennisClose("Total Sets", "Under 2.5") as CloseLookup.Found
-        assertEquals(p(-187) / (p(-187) + p(159)), totalSets.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-187), p(159)), totalSets.fair, 1e-9)
         assertTrue(tennisClose("Total Games", "Over 2.5") is CloseLookup.None)
         // The winner, from the match's own rows.
         val ml = tennisClose("Moneyline", "Matteo Berrettini") as CloseLookup.Found
-        assertEquals(p(124) / (p(124) + p(-143)), ml.fair, 1e-9)
+        assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(124), p(-143)), ml.fair, 1e-9)
     }
 
     @Test
@@ -510,7 +510,7 @@ class ParlayClosesTest {
         try {
             val closes = ParlayCloses(OkHttpClient(), pool("pk-1"), json, server.url("/v1").toString().trimEnd('/'), clock = { tennisStart + 6 * 3_600_000L })
             val found = closes.closes(listOf(tennisBet("ss", "Set Spread", "Matteo Berrettini +1.5"))).getValue("ss") as CloseLookup.Found
-            assertEquals(p(-179) / (p(-179) + p(152)), found.fair, 1e-9)
+            assertEquals(com.tjshea.vigilant.data.tracker.CloseDevig.fair(p(-179), p(152)), found.fair, 1e-9)
         } finally {
             server.shutdown()
         }
