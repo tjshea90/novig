@@ -6464,3 +6464,8 @@ Right now I can see live games in the vigilant scanner, but it would be stupid t
 
 This should only apply if I have live games toggled on in the settings to show up in vigilant scanner. If it is toggled off, the app should behave normally
 ```
+
+## 2026-10-11T18:35:44Z
+```
+The pinnodds + novig engine isn't working right. I can rarely get a single fill. That's why I want to use the scanner and manually bet them in real time
+```
