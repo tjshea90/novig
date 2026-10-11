@@ -1332,4 +1332,7 @@ data class ScanGuards(
     val autoBetMinStars: Double = 0.0,
     /** Copy each day's bets and bids to Downloads/Vigilant/bets (the app keeps its own copy either way; Tj, 2026-10-11). */
     val betArchive: Boolean = true,
+    /** The 1-100 safety/volume sliders' positions ([BetSlider], [BidSlider]); 0 = never set. The rules they set are ordinary settings: edit one and the slider reads Custom. */
+    val betLevel: Int = 0,
+    val bidLevel: Int = 0,
 )
