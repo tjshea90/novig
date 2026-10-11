@@ -783,7 +783,6 @@ private fun VigilantRoot(
                     onCheckOdds = vm::checkOdds, onShown = { vm.settleBets(); vm.scanLocks(); if (state.settings.trackerNovigOnly) vm.refreshNovigOnly() },
                     onNovigOnly = { on -> vm.updateSettings { it.copy(trackerNovigOnly = on) }; if (on) vm.refreshNovigOnly() },
                     onHideLocked = { on -> vm.updateSettings { it.copy(trackerHideLocked = on) } },
-                    onHideLive = { on -> vm.updateSettings { it.copy(trackerHideLive = on) } },
                     onCheckNovig = { vm.refreshNovigOnly(force = true) },
                     actions = com.tjshea.vigilant.app.ui.BetActions(
                         onReplace = onReplaceBet,

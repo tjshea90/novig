@@ -145,7 +145,6 @@ fun TrackerScreen(
     onCheckNovig: () -> Unit = {},
     /** "Hide locked bets" switched (Tj, 2026-10-02 20:06Z): markets locked in leave the lists and stats ([LockedBets]). */
     onHideLocked: (Boolean) -> Unit = {},
-    onHideLive: (Boolean) -> Unit = {},
     /** Share every bet and bid (or a recent stretch) with Claude (Tj, 2026-10-11), whether the files are being made, and where the day-by-day copies are. */
     onShareBets: (com.tjshea.vigilant.app.BetShare.Range) -> Unit = {},
     shareBusy: Boolean = false,
@@ -186,7 +185,7 @@ fun TrackerScreen(
     val unlocked = remember(priced, hideLocked, lockedIds) { if (hideLocked && lockedIds.isNotEmpty()) priced.filterNot { it.id in lockedIds } else priced }
     val minute = now / 60_000L
     // "Hide live games" (Tj, 2026-10-11): bets whose game is under way leave every list and stat below until it is switched off.
-    val hideLive = state.settings.trackerHideLive
+    var hideLive by rememberSaveable { mutableStateOf(false) }
     val liveIds = remember(unlocked, minute) { LiveBets.ids(unlocked, now) }
     val bets = remember(unlocked, hideLive, liveIds) { if (hideLive && liveIds.isNotEmpty()) unlocked.filterNot { it.id in liveIds } else unlocked }
     // Bets, bids or both: everything below (the lists, the counts, every stat, the closing-line card, the profit line) reads these.
@@ -290,7 +289,7 @@ fun TrackerScreen(
                     Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = hideLive,
-                            onClick = { onHideLive(!hideLive) },
+                            onClick = { hideLive = !hideLive },
                             label = { Text("Hide live games", maxLines = 1) },
                             modifier = Modifier.testTag("hideLiveChip"),
                         )
