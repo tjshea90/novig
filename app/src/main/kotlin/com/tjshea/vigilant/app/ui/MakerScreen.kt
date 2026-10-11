@@ -322,7 +322,6 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
     ) { padding ->
         val resting = ui.resting
         val ready = ui.ready
-        val filled = ui.filled
         LazyColumn(
             Modifier
                 .padding(padding)
@@ -990,13 +989,5 @@ private fun ReadyRow(d: MakerDecision.Post, now: Long, setUp: Boolean, auto: Boo
                 Text(if (auto) "Post now" else "Approve")
             }
         }
-    }
-}
-
-@Composable
-private fun FilledRow(b: MakerBid, bet: TrackedBet?, now: Long) {
-    RowCard {
-        BetTitle(b.selection, "${b.marketLabel} · ${b.eventName}")
-        Text(MakerText.fillLine(b, bet, now), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
     }
 }
