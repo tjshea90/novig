@@ -6190,3 +6190,8 @@ There is no held back list
 ```
 I notice that I never see tennis bets or bids in the app. Are they set up correctly?
 ```
+
+## 2026-10-11T00:05:12Z
+```
+I want the auto bid feature and auto bet features both to include all tennis. If it's has to use vigilant scanner that is fine. Let me toggle tennis on and off
+```
