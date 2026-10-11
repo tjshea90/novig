@@ -45,6 +45,13 @@ data class FairSettings(
     val minSharp: Int = 1,
     /** Leave out a book whose two sides add up to too much ([WideQuotes]): off here so every engine caller that never asked is as it was; `ScanSettings` turns it on by default. */
     val wideGuard: Boolean = false,
+    /**
+     * One book a company ([BookCompany]): a parent company's sites quote one line, so they are one vote in the fair price, not several (Tj, 2026-10-11). Off here so every engine caller that
+     * never asked is as it was; `ScanSettings` turns it on by default.
+     */
+    val oneBookPerCompany: Boolean = false,
+    /** Leave out a book whose odds look wrong next to the rest of the market ([BadOdds]: an extreme outlier, or the favourite on the other side). Off here; `ScanSettings` turns it on. */
+    val dropBadOdds: Boolean = false,
 ) {
     init {
         require(sharpWeight in 0.0..1.0) { "sharpWeight must be in [0,1], got $sharpWeight" }
@@ -93,6 +100,8 @@ data class FairLine(
     val perBook: List<BookFair>,
     val sharpBooksUsed: List<String>,
     val averageBooksUsed: List<String>,
+    /** Books that quoted this line but were left out because their odds look wrong next to the rest ([BadOdds]); never part of [perBook]. */
+    val excluded: List<BookPrices> = emptyList(),
 ) {
     val booksUsed: List<String> by lazy { (sharpBooksUsed + averageBooksUsed).distinct() }
 
@@ -122,10 +131,15 @@ object FairValue {
         val outcomeCount = books.first().decimalOdds.size
         if (outcomeCount < 2) return null
 
-        val perBook = books
+        val devigged = books
             .filter { it.decimalOdds.size == outcomeCount && it.decimalOdds.all { o -> o > 1.0 && o.isFinite() } }
             .mapNotNull { devigBook(it, settings) }
+        // One book a company, then the books that look wrong are left out of what is left.
+        val onePerCompany = if (settings.oneBookPerCompany) BookCompany.onePerCompany(devigged) else devigged
+        val screened = if (settings.dropBadOdds) BadOdds.screen(onePerCompany) else BadOdds.Screened(onePerCompany, emptyList())
+        val perBook = screened.kept
         if (perBook.isEmpty()) return null
+        val excluded = screened.dropped.map { it.book }
 
         val sharp = perBook.filter { it.isSharp }
         val average = perBook
@@ -142,24 +156,24 @@ object FairValue {
 
         return when (settings.source) {
             FairSource.SHARP -> when {
-                sharpOk -> line(avg(sharp), settings, FairSource.SHARP, perBook, sharp, emptyList())
+                sharpOk -> line(avg(sharp), settings, FairSource.SHARP, perBook, sharp, emptyList(), excluded)
                 settings.fallbackToAverage && averageOk ->
-                    line(avg(average), settings, FairSource.MARKET_AVERAGE, perBook, emptyList(), average)
+                    line(avg(average), settings, FairSource.MARKET_AVERAGE, perBook, emptyList(), average, excluded)
                 else -> null
             }
 
             FairSource.MARKET_AVERAGE ->
-                if (averageOk) line(avg(average), settings, FairSource.MARKET_AVERAGE, perBook, emptyList(), average) else null
+                if (averageOk) line(avg(average), settings, FairSource.MARKET_AVERAGE, perBook, emptyList(), average, excluded) else null
 
             FairSource.BLEND -> when {
                 sharpOk && averageOk -> {
                     val s = avg(sharp)
                     val a = avg(average)
                     val w = settings.sharpWeight
-                    line(s.indices.map { w * s[it] + (1 - w) * a[it] }, settings, FairSource.BLEND, perBook, sharp, average)
+                    line(s.indices.map { w * s[it] + (1 - w) * a[it] }, settings, FairSource.BLEND, perBook, sharp, average, excluded)
                 }
-                sharpOk -> line(avg(sharp), settings, FairSource.SHARP, perBook, sharp, emptyList())
-                averageOk -> line(avg(average), settings, FairSource.MARKET_AVERAGE, perBook, emptyList(), average)
+                sharpOk -> line(avg(sharp), settings, FairSource.SHARP, perBook, sharp, emptyList(), excluded)
+                averageOk -> line(avg(average), settings, FairSource.MARKET_AVERAGE, perBook, emptyList(), average, excluded)
                 else -> null
             }
         }
@@ -193,6 +207,7 @@ object FairValue {
         perBook: List<BookFair>,
         sharp: List<BookFair>,
         average: List<BookFair>,
+        excluded: List<BookPrices>,
     ) = FairLine(
         probabilities = probs,
         requestedSource = settings.source,
@@ -201,5 +216,6 @@ object FairValue {
         perBook = perBook,
         sharpBooksUsed = sharp.map { it.book.bookTitle },
         averageBooksUsed = average.map { it.book.bookTitle },
+        excluded = excluded,
     )
 }
