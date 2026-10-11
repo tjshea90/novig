@@ -76,6 +76,7 @@ import androidx.compose.ui.unit.dp
 import com.tjshea.vigilant.app.AppBook
 import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.tracker.BetSettler
+import com.tjshea.vigilant.data.tracker.BetFilterSpec
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.CheckOddsStats
 import androidx.compose.material3.Switch
@@ -143,6 +144,10 @@ fun TrackerScreen(
     onCheckNovig: () -> Unit = {},
     /** "Hide locked bets" switched (Tj, 2026-10-02 20:06Z): markets locked in leave the lists and stats ([LockedBets]). */
     onHideLocked: (Boolean) -> Unit = {},
+    /** Share every bet and bid (or a recent stretch) with Claude (Tj, 2026-10-11), whether the files are being made, and where the day-by-day copies are. */
+    onShareBets: (com.tjshea.vigilant.app.BetShare.Range) -> Unit = {},
+    shareBusy: Boolean = false,
+    archiveNote: String? = null,
 ) {
     val now = rememberNow(60_000)
     var view by rememberSaveable { mutableStateOf(initialView) }
@@ -155,6 +160,9 @@ fun TrackerScreen(
     // Bets, bids or both (Tj, 2026-10-07): one choice for the lists and the stats, kept like the others.
     var made by rememberSaveable { mutableStateOf(MadeFilter.ALL) }
     var breakdownBy by rememberSaveable { mutableStateOf(TrackerBreakdown.By.LEAGUE) }
+    // The smart filter (Tj, 2026-10-11): by type of bet, sport, stars, sharp book, books behind the fair, liquidity, auto or manual, result…; one choice for the lists and the stats.
+    var smart by rememberSaveable(stateSaver = BetFilterSaver) { mutableStateOf(BetFilterSpec.ALL) }
+    var dimBy by rememberSaveable { mutableStateOf(com.tjshea.vigilant.data.tracker.BetDim.KIND) }
     // The closing-line card's own period and outlier switch (Tj, 2026-09-29).
     var clvPeriod by rememberSaveable { mutableStateOf(ClvPeriod.ALL) }
     var clvHideOutliers by rememberSaveable { mutableStateOf(false) }
@@ -176,7 +184,8 @@ fun TrackerScreen(
     val bets = remember(priced, hideLocked, lockedIds) { if (hideLocked && lockedIds.isNotEmpty()) priced.filterNot { it.id in lockedIds } else priced }
     val minute = now / 60_000L
     // Bets, bids or both: everything below (the lists, the counts, every stat, the closing-line card, the profit line) reads these.
-    val kindBets = remember(bets, made) { TrackerSort.inMade(bets, made) }
+    val madeBets = remember(bets, made) { TrackerSort.inMade(bets, made) }
+    val kindBets = remember(madeBets, smart, minute) { smart.apply(madeBets, now) }
     val madeCounts = remember(bets) { MadeFilter.entries.associateWith { f -> TrackerSort.inMade(bets, f).size } }
     val scoped = remember(kindBets, scanner) { TrackerSort.inScanner(kindBets, scanner) }
     val counts = remember(scoped) { BetFilter.entries.associateWith { f -> filtered(scoped, f).size } }
@@ -196,7 +205,7 @@ fun TrackerScreen(
     // composition, and one restored after a rotation, keep their place.
     val listState = rememberLazyListState()
     var shownKey by remember { mutableStateOf<List<Any>?>(null) }
-    val listKey = listOf(view, period, filter, sort, sortReversed, scanner, made)
+    val listKey = listOf(view, period, filter, sort, sortReversed, scanner, made, smart)
     LaunchedEffect(listKey) {
         if (shownKey != null && shownKey != listKey) listState.scrollToItem(0)
         shownKey = listKey
@@ -343,6 +352,9 @@ fun TrackerScreen(
                     }
                 }
             }
+            if (bets.isNotEmpty()) {
+                item(key = "smartFilter") { SmartFilterBar(madeBets, smart, kindBets.size, now, { smart = it }) }
+            }
             if (made != MadeFilter.ALL) {
                 item(key = "madeCaption") {
                     Text(
@@ -365,6 +377,9 @@ fun TrackerScreen(
             }
             when (view) {
                 TrackerView.STATS -> {
+                    if (bets.isNotEmpty()) {
+                        item(key = "shareBets") { ShareBetsCard(bets.size, { r -> r.fromMs(now)?.let { from -> bets.count { it.createdAtMs >= from } } ?: bets.size }, shareBusy, archiveNote, onShareBets) }
+                    }
                     if (periodBets.isEmpty()) {
                         item(key = "empty") { EmptyState(TrackerText.emptyStats(made, period == TrackerPeriod.ALL, bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT) }
                     } else {
@@ -373,6 +388,7 @@ fun TrackerScreen(
                                 ClosingLineCard(kindBets, now, clvPeriod, { clvPeriod = it }, clvHideOutliers, { clvHideOutliers = it })
                             }
                         }
+                        item(key = "dimBreakdown") { DimBreakdownCard(periodBets, dimBy, { dimBy = it }, now) }
                     }
                 }
                 TrackerView.BETS -> {
@@ -669,6 +685,7 @@ private fun BetCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(bet.selection, Modifier.weight(1f, fill = false), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (bet.isBid) { Spacer(Modifier.width(6.dp)); BidTag() }
+                        Spacer(Modifier.width(6.dp)); BetStars(bet)
                         if (open) injury?.let { Spacer(Modifier.width(6.dp)); InjuryTag(it) }
                     }
                     Text(
