@@ -258,6 +258,35 @@ class NovigStreamTest {
     }
 
     @Test
+    fun `a live game's market is subscribed at once, not behind a scan's bulk request waiting for a full bucket`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        // 1 token a second: the plan's request (a full 512 bucket) would wait half a minute.
+        val stream = stream(refillPerSec = 1.0)
+        stream.watch(plan)
+        stream.watchLive(listOf("live1"))
+        until { stream.live(listOf("live1")).size == 1 }
+        assertNull(stream.bookGap("live1"))
+        stream.close()
+    }
+
+    @Test
+    fun `a plain drop with live markets pinned reconnects in seconds, not after the long wait`() = runBlocking {
+        val dropper = object : WebSocketListener() {
+            override fun onMessage(webSocket: WebSocket, text: String) { webSocket.close(1011, "gone") }
+        }
+        server.enqueue(MockResponse().withWebSocketUpgrade(dropper))
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        val stream = NovigStream(
+            OkHttpClient(), signer(), scope, wsUrl = server.url("/v3/ws").toString().replace("http", "ws"),
+            refillPerSec = 4_000.0, liveRetryMs = 100,
+        )
+        stream.watchLive(listOf("live1"))
+        until { stream.watchLive(listOf("live1")); stream.live(listOf("live1")).size == 1 }
+        assertEquals(2, server.requestCount)
+        stream.close()
+    }
+
+    @Test
     fun `a refused upgrade says why, and scans read by REST until the retry time`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(451).setBody("""{"code":"ANONYMIZED_NETWORK"}"""))
         val stream = stream()
