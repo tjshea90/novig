@@ -4532,9 +4532,10 @@ Finding (answered first): tennis was off for live bids by default; Autopilot rea
 ## UN: Unabated + OddsPapi free tiers (Tj, 2026-10-11)
 Tj: "Add two more apis to the app. Unabated api and oddspapi api. Both apis are the free tiers. Research the full docs ... 1) what does each API offer? 2) best way to implement each into vigilant? 3) how can vigilant make full use of each? Wire in each api into the app and settings ... match the docs exactly ... If odds overlap from different apis, use the best API first and when usage runs out or the API doesn't respond, automatically fall back to the other apis that serve the same data. Let me know if you need keys."
 (OddsPapi v5 already exists in code since v0.8x: ODDSPAPI_API.md; this job re-checks it against the live docs and adds Unabated.)
-- [ ] UN1 Research: raw docs saved to research/unabated_oddspapi_2026-10-11/; write RESEARCH.md section + UNABATED_API.md
-- [ ] UN2 Re-check OddsPapi code/doc vs the docs; fix mismatches; free-tier budget guard
-- [ ] UN3 Unabated client + parser + source + Settings + fallback order; tests
+- [x] UN1 Research: raw docs saved to research/unabated_oddspapi_2026-10-11/; RESEARCH.md §129 + UNABATED_API.md + ODDSPAPI_API.md addendum (written; the verdict is in §129)
+- [x] UN2 OddsPapi: Tj's free key is v4 (v5 kept untouched): OddsPapi4Client/Op4Budget/Op4Store/Op4Closes, tests OddsPapi4Test
+- [x] UN3 Unabated client/parser/convert/sources (last in SOURCE_ORDER), Settings pages for both, wiring; tests UnabatedTest (17), OddsPapi4Test (10), FreeApisWiringTest
 - [ ] UN4 ship, release
 Tj mid-turn 2026-10-11: "Keep v5 but add v4 in separate settings. For example, two different spots for the different keys and the app knows how to use each to its full advantage, or one place to type the key and the app detects v4 or v5"
   -> done as: v5 page unchanged, a NEW "OddsPapi Free (v4)" page+key list+switch; Test key on either page detects the other version's key and says where to paste it.
+- [ ] UN5 Tj sends the two samples (Settings › Unabated › Test and share sample; Settings › OddsPapi Free (v4) › Test and share sample); check UnabatedParser/UnabatedConvert and Op4Parser/v4 market periods against them, add SgoRealDataTest-style tests from the real answers, fix UNABATED_API.md §4 / ODDSPAPI_API.md addendum.
