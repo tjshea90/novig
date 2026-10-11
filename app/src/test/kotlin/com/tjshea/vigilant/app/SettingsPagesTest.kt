@@ -11,6 +11,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.StateRestorationTester
@@ -347,6 +348,60 @@ class SettingsPagesTest {
         assertTrue(settings.oddsPapi)
         compose.onNodeWithTag("opExtraSwitch").performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag("opAltSwitch").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun `the APIs page has a switch and a small Test button for every API, and Test active APIs`() {
+        var settings by mutableStateOf(SampleScan.state().settings)
+        val tested = ArrayList<com.tjshea.vigilant.app.ApiEntry>()
+        var all = 0
+        val state = SampleScan.state().copy(
+            sgoKeys = listOf("sgo-key-aaaa-1111"), unKeys = listOf("un-key-aaaa-1111"),
+            apiChecks = mapOf("SGO" to listOf(com.tjshea.vigilant.data.keys.ApiProbe.Check("sgo-…1111", true, "Active and accepted"))),
+            apiTestLines = listOf("OK   SportsGameOdds Pro: fine", "FAIL Unabated: refused"),
+        )
+        screen(state) {
+            SettingsScreen(
+                it.copy(settings = settings), { f -> settings = f(settings) },
+                reportActions = com.tjshea.vigilant.app.ui.ReportActions(onTestApi = { e -> tested += e }, onTestActiveApis = { all++ }),
+                page = SettingsPage.APIS, onPage = {},
+            )
+        }
+        for (e in com.tjshea.vigilant.app.ApiEntry.entries) {
+            compose.onNodeWithTag("apiSwitch-${e.name}").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("apiTest-${e.name}").performScrollTo().assertIsDisplayed()
+        }
+        compose.onNodeWithTag("apiTest-SGO").performScrollTo().performClick()
+        compose.onNodeWithTag("apiTest-KALSHI").performScrollTo().performClick()
+        assertEquals(listOf(com.tjshea.vigilant.app.ApiEntry.SGO, com.tjshea.vigilant.app.ApiEntry.KALSHI), tested)
+        compose.onNodeWithTag("apiTest-PROPLINE").performScrollTo().assertIsNotEnabled()   // no key saved: nothing to test
+        compose.onNodeWithTag("testActiveApis").performScrollTo().performClick()
+        assertEquals(1, all)
+        compose.onNodeWithTag("apiTestReport").performScrollTo().assertIsDisplayed()
+        assertTrue(!settings.unabated)
+        compose.onNodeWithTag("apiSwitch-UNABATED").performScrollTo().performClick()
+        compose.waitForIdle()
+        assertTrue(settings.unabated)
+        // every switch writes its own setting and nothing else
+        compose.onNodeWithTag("apiSwitch-PINNWIRE").performScrollTo().performClick()
+        compose.waitForIdle()
+        assertTrue(!settings.usePinnwire && settings.usePinnapi && settings.usePinnacle)
+        compose.onNodeWithTag("apiSwitch-PINNODDS").performScrollTo().performClick()
+        compose.waitForIdle()
+        assertTrue(!settings.usePinnodds)
+    }
+
+    @Test
+    fun `every API entry reads and writes exactly its own setting`() {
+        val base = SampleScan.state().settings
+        for (e in com.tjshea.vigilant.app.ApiEntry.entries) {
+            val on = e.setOn(base, true)
+            val off = e.setOn(base, false)
+            assertTrue("${e.name} on", e.isOn(on)); assertTrue("${e.name} off", !e.isOn(off))
+            for (other in com.tjshea.vigilant.app.ApiEntry.entries.filter { it != e }) {
+                assertEquals("${e.name} must not change ${other.name}", other.isOn(base), other.isOn(off))
+            }
+        }
     }
 
     @Test
