@@ -322,7 +322,7 @@ class LiveBidUiTest {
         assertEquals(true, ui().settings.liveBidQuality.tennis)
         tap("liveBidMargin-0")
         assertEquals(-1, ui().settings.liveBidQuality.level)
-        compose.onNodeWithTag("liveBidSliderDescribe").performScrollTo().assertTextContains("Custom", substring = true)
+        compose.onNodeWithText("Custom rules", substring = true).performScrollTo().assertIsDisplayed()
         tap("liveBidStop-90")
         assertEquals(90, ui().settings.liveBidQuality.level)
         assertEquals(true, ui().settings.liveBidQuality.tennis)
