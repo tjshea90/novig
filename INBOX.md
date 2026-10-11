@@ -6469,3 +6469,12 @@ This should only apply if I have live games toggled on in the settings to show u
 ```
 The pinnodds + novig engine isn't working right. I can rarely get a single fill. That's why I want to use the scanner and manually bet them in real time
 ```
+
+## 2026-10-11T18:43:03Z
+```
+If I have 190 open bets, why does it only show 53 bets current ev? I don't think it ever rescans vigilant for current EV on all my bets. 
+
+Make this feature check the current odds and EV for each and every one of my open bets and bids when I press check odds now, regardless of scanner. I should get an updated current EV and odds for every single one of my open bets based on devigged current odds across sports books. 
+
+And add a filter to hide live games that I can toggle on and off. This will hide live bets from the list and from the stats numbers until I untoggle it
+```
