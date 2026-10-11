@@ -47,9 +47,9 @@ class OtherBooks(
     private val json: Json,
     private val on: suspend () -> Sources,
     private val clock: () -> Long = System::currentTimeMillis,
-    /** SportsGameOdds Pro (Tj, 2026-10-09): while it is on it is the one source asked, with every book it carries (the paid ones rest: [Sources.sgo]). */
+    /** SportsGameOdds Pro (Tj, 2026-10-09): asked with every book it carries while it is on ([Sources.sgo]), beside the others (Tj, 2026-10-11: no API rests because another is on). */
     private val sgo: SportsGameOddsClient? = null,
-    /** OddsPapi (Tj, 2026-10-09): a league's player-prop events as OddsPapi has them now (the scan's own read, shared); while it is on it is the one source asked ([Sources.op]). */
+    /** OddsPapi (Tj, 2026-10-09): a league's player-prop events as OddsPapi has them now (the scan's own read, shared); asked beside the others while it is on ([Sources.op]). */
     private val op: (suspend (League) -> List<RefEvent>)? = null,
 ) {
     /** Which sources may be asked now (on in Settings, with a key). */
