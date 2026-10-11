@@ -48,7 +48,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         ODDS_API -> s.copy(useOddsApi = on)
         PINNWIRE -> s.copy(gates = s.gates.copy(usePinnwire = on), usePinnacle = s.usePinnacle || on)
         PINNAPI -> s.copy(gates = s.gates.copy(usePinnapi = on), usePinnacle = s.usePinnacle || on)
-        PINNODDS -> s.copy(gates = s.gates.copy(usePinnodds = on))
+        PINNODDS -> s.copy(gates = s.gates.copy(usePinnodds = on), usePinnacle = s.usePinnacle || on)   // its REST board is one of the Pinnacle boards: on here means it is asked there too
         KALSHI -> s.copy(useKalshi = on)
         POLYMARKET -> s.copy(usePolymarket = on)
     }

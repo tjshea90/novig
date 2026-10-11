@@ -1866,7 +1866,7 @@ class AppContainer(private val app: Application) {
     fun lowUsagePlan(settings: ScanSettings): LowUsageBids.Plan {
         val available = buildSet {
             if (settings.useKalshi) add(LowUsageBids.FEED_KALSHI)
-            if (settings.usePinnacle && ((settings.gates.usePinnwire && keyStore.current(ApiProvider.PINNWIRE).isNotEmpty()) || (settings.gates.usePinnapi && keyStore.current(ApiProvider.PINNAPI).isNotEmpty()))) add(LowUsageBids.FEED_PINNACLE)
+            if (settings.usePinnacle && ((settings.gates.usePinnwire && keyStore.current(ApiProvider.PINNWIRE).isNotEmpty()) || (settings.gates.usePinnapi && keyStore.current(ApiProvider.PINNAPI).isNotEmpty()) || pinnoddsActive(settings))) add(LowUsageBids.FEED_PINNACLE)
             if (settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) add(LowUsageBids.FEED_PROPLINE)
             if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) add(LowUsageBids.FEED_PARLAY)
         }

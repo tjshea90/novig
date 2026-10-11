@@ -1333,7 +1333,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (trimmed.isEmpty() || trimmed in keysFor(provider)) return
         setKeys(provider, keysFor(provider) + trimmed)
         // A new ParlayAPI key: its plan and credits from the key itself, at once (free).
-        if (provider == ApiProvider.PARLAY) refreshBalances(force = true)
+        if (provider == ApiProvider.PARLAY) refreshBalances(force = true)   // (a no-op while ParlayAPI is switched off)
         // A new Pinnodds key: the live engine starts at once if it is on.
         if (provider == ApiProvider.PINNODDS) viewModelScope.launch { runCatching { c.pinnTick(_state.value.settings) } }
     }
@@ -1343,7 +1343,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * (Settings › API usage & keys on screen) its day-by-day usage log too, for the chart under its meter (free, at most once a minute).
      */
     fun refreshBalances(force: Boolean = false, history: Boolean = false) {
-        if (keysFor(ApiProvider.PARLAY).isEmpty()) return
+        // An API that is switched off is never called, not even for its balance (Tj, 2026-10-11).
+        if (keysFor(ApiProvider.PARLAY).isEmpty() || !_state.value.settings.useParlay) return
         viewModelScope.launch(Dispatchers.IO) {
             runCatching { c.parlayAccount.refresh(force) }
             if (history) runCatching { c.parlayAccount.refreshHistory(force) }
@@ -1444,10 +1445,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (_state.value.usageBusy) return
         _state.update { it.copy(usageBusy = true) }
         viewModelScope.launch(Dispatchers.IO) {
-            for (e in ApiEntry.entries.filter { it.usagePrompt && it.provider != null && keysFor(it.provider).isNotEmpty() }) {
+            val on = ApiEntry.active(_state.value.settings)
+            for (e in ApiEntry.entries.filter { it in on && it.usagePrompt && it.provider != null && keysFor(it.provider).isNotEmpty() }) {
                 runCatching { c.apiProbe.check(e.provider!!, keysFor(e.provider)) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
             }
-            runCatching { c.parlayAccount.refreshHistory(true) }
+            if (ApiEntry.PARLAY in on && keysFor(ApiProvider.PARLAY).isNotEmpty()) runCatching { c.parlayAccount.refreshHistory(true) }
             _state.update { it.copy(usageBusy = false) }
         }
     }
@@ -1860,8 +1862,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun showDiagnostics() {
         buildDiagnostics()
-        // ParlayAPI's own figures (free) and the report again with them, while it's still open.
-        if (keysFor(ApiProvider.PARLAY).isEmpty()) return
+        // ParlayAPI's own figures (free) and the report again with them, while it's still open; not while ParlayAPI is switched off.
+        if (keysFor(ApiProvider.PARLAY).isEmpty() || !_state.value.settings.useParlay) return
         viewModelScope.launch {
             val answered = withContext(Dispatchers.IO) { runCatching { c.parlayAccount.refresh(force = true) }.getOrDefault(0) }
             if (answered > 0 && _state.value.report?.title == "Diagnostics") buildDiagnostics()
