@@ -215,3 +215,4 @@ day that changes.
 | v0.89.23 | code 208 | 2026-10-11T19:38Z | v0.89.23: Check odds now also reads Novig's own price for every open bet it missed
 | v0.89.24 | code 209 | 2026-10-11T20:09Z | v0.89.24: Pause stops everything at once, live lane keeps rows while both sockets are healthy and shows exact ages, live bets only fill at the listed odds
 | v0.89.25 | code 210 | 2026-10-11T20:18Z | v0.89.25: no negative-EV order anywhere, a sharp book that disagrees vetoes, auto-bet clears a lost-order halt by itself, live-only filter and Stars sort, why-not on CNO cards, 3.5 stars need +2% EV
+| v0.89.26 | code 211 | 2026-10-11T21:05Z | v0.89.26: live lane says what is missing and keeps Novig's stream open, one API for overlapping data with failover, Kambi-desk books count once, auto-bet recovery status
