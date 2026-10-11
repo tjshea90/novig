@@ -190,6 +190,13 @@ fun FeedScreen(
                 val shown = state.feedAt(now)
                 if (state.settings.killed) item(key = "paused") { KilledBanner(Modifier.padding(horizontal = 12.dp)) } else if (state.settings.paused) item(key = "paused") { PausedBanner({ onPause(false) }, Modifier.padding(horizontal = 12.dp)) }
                 item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin) { onRecheck(feedMarketIds(state, now)) } }
+                // The real-time live lane (Settings › Include live games): what it is linked to and how fresh its bets are, or why it shows none (Tj, 2026-10-11).
+                if (AppBook.isNovig && state.settings.includeLive && state.settings.leagues.isNotEmpty()) {
+                    item(key = "live") {
+                        val st = state.liveStatus
+                        Banner(LiveScanText.line(st), Modifier.padding(horizontal = 12.dp), color = if (st.on && st.reason == null) Edge.colors.positive else Edge.colors.warning)
+                    }
+                }
                 if (removed.isNotEmpty() && state.settings.leagues.isNotEmpty()) {
                     item(key = "removed") {
                         Column(Modifier.padding(horizontal = 12.dp)) {

@@ -1122,7 +1122,7 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     )
     SwitchRow(
         "Include live games",
-        if (AppBook.isNovig) "Off by default: reference odds lag in-game, and Novig charges its taker fee once a game is live."
+        if (AppBook.isNovig) "Off by default: reference odds lag in-game, and Novig charges its taker fee once a game is live. " + LiveScanText.SWITCH_SUB
         else "Off by default: in-game odds move faster than the feeds re-read them, so live edges are rarely real.",
         s.includeLive,
     ) { v -> onUpdate { it.copy(includeLive = v) } }
