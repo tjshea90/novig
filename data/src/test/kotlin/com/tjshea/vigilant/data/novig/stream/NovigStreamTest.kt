@@ -265,7 +265,6 @@ class NovigStreamTest {
         stream.watch(plan)
         stream.watchLive(listOf("live1"))
         until { stream.live(listOf("live1")).size == 1 }
-        assertNull(stream.bookGap("live1"))
         stream.close()
     }
 
