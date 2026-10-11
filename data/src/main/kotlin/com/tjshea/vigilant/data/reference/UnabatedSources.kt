@@ -45,7 +45,20 @@ class UnabatedFeed(
     suspend fun leagues(): List<UnLeague> = cached("leagues", DAY_MS) { client.leagues() }
     suspend fun betTypes(): Map<Int, UnBetType> = cached("bettypes", DAY_MS) { client.betTypes().associateBy { it.id } }
     private suspend fun periods(route: String): Map<Int, UnPeriod> = cached("periods|$route", DAY_MS) { client.periods(route).associateBy { it.id } }
-    private suspend fun sources(route: String, type: String): List<UnSource> = cached("sources|$route|$type", 6 * 3_600_000L) { client.sources(route, type) }
+    /**
+     * A league's book ids. Unabated's own server often fails this call for one league ("Unexpected error while retrieving market sources", 9-15 s, Tj's Diagnostics 2026-10-11: NFL, CFB and NBA never
+     * got a board for it); the ids are the same books everywhere, so a failure falls back to the other board of the league, then to any list already read, before the league is given up.
+     */
+    private suspend fun sources(route: String, type: String): List<UnSource> = try {
+        cached("sources|$route|$type", 6 * 3_600_000L) { client.sources(route, type) }
+    } catch (e: UnabatedFailure) {
+        val other = if (type == "props") "straight" else "props"
+        @Suppress("UNCHECKED_CAST")
+        (meta["sources|$route|$other"]?.value as? List<UnSource>)
+            ?: (meta.entries.firstOrNull { it.key.startsWith("sources|") }?.value?.value as? List<UnSource>)
+            ?: runCatching { cached("sources|$route|$other", 6 * 3_600_000L) { client.sources(route, other) } }.getOrNull()
+            ?: throw e
+    }
     private suspend fun teams(route: String, type: String): Map<Long, String> = cached("teams|$route|$type", DAY_MS) { client.teams(route, type) }
     private suspend fun people(route: String): Map<Long, String> = cached("people|$route", 30 * 60_000L) { client.people(route, "props") }
 
