@@ -166,11 +166,12 @@ class ApiBettingTest {
     private val manual = BetLimits.manual(maxStake = 20.0, maxPerDay = 50.0)
 
     @Test
-    fun `by hand, any edge is planned, negative included, and the EV is said`() {
-        // Fair 0.45 against the 0.46 price: -2.2% EV. The auto-bet's rules refuse it; by hand it is Tj's call.
+    fun `by hand, any edge from zero up is planned and the EV is said, a negative one never is`() {
+        // Fair 0.45 against the 0.46 price: -2.2% EV. The auto-bet's rules refuse it as gone; by hand it is refused too (Tj, 2026-10-11: no money ever on a negative EV bet).
         assertTrue(refused(ApiBetPlanner.plan(target(fair = 0.45), book(), 5.0, now, limits, 0.0)).startsWith("The edge is gone"))
-        val p = ready(ApiBetPlanner.plan(target(fair = 0.45), book(), 5.0, now, manual, 0.0))
-        assertTrue(p.evPercent < 0)
+        assertTrue(refused(ApiBetPlanner.plan(target(fair = 0.45), book(), 5.0, now, manual, 0.0)).contains("negative EV"))
+        val p = ready(ApiBetPlanner.plan(target(fair = 0.4685), book(), 5.0, now, manual, 0.0))
+        assertTrue(p.evPercent > 0)
         assertEquals(0.46, p.bestPrice, 1e-9)
         // And whatever the minimum would have been: a +1.8% bet with a 3% floor set (the old Settings value) is planned.
         ready(ApiBetPlanner.plan(target(fair = 0.4685), book(), 5.0, now, manual.copy(minEv = 0.03), 0.0))

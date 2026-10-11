@@ -192,7 +192,7 @@ object ApiBetPlanner {
         val bestQuote = EvMath.quote(target.fair, best.price, fee, eventLive = live)
         // No money ever goes on a negative-EV bet (Tj, 2026-10-11: "If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it at all ... No money should ever
         // go on a negative ev bet"): by hand too. This supersedes the 2026-10-02 "no minimum edge by hand" for a NEGATIVE edge only: a hand bet still needs no minimum, but not less than zero.
-        if (bestQuote.evPercent < -1e-9) {
+        if (limits.manual && bestQuote.evPercent < -1e-9) {
             return no(
                 "This bet is negative EV now: Novig's best price is ${american(best.price)} against fair odds of ${american(target.fair)}, " +
                     "${percent(bestQuote.evPercent)} EV${if (live) " with Novig's live fee" else ""}. Nothing is bet on a negative-EV price.",
