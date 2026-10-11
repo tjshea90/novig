@@ -4724,6 +4724,10 @@ Tj verbatim (screenshot: red "Auto-bet is stopped: Vigilant stopped while an ord
 
 ## TZ: no money ever on a negative-EV bet or bid (Tj, 2026-10-11 ~20:10Z)
 Tj verbatim: "If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it at all, whether auto bet or bid or manual bet or bid. No money should ever go on a negative ev bet."
-- [ ] TZ1 Audit every path that sends an order: auto-bet (3 lanes), manual Bet sheet (Vigilant/CNO/ParlayAPI/live lane), lock, bids (Maker auto/recommend/manual approve, live bids, CNO bids), tennis, Pinnodds live taker.
-- [ ] TZ2 One rule at the choke points: an order whose EV at the price it would fill (fee in) against the fair behind it is negative is refused, whoever asked; manual bets lose their "no minimum edge" (Tj's 2026-10-02 rule is superseded for negative EV only).
-- [ ] TZ3 Tests, ship v0.89.25.
+- [x] TZ1 DONE (choke points: ApiBetPlanner.plan for every taker order incl. manual/live/lock-free paths, MakerDesk.placeOne and LiveBidDesk.post for bids, AutoBettor cross-check vs Vigilant's scan; locks (placeLock) and the Pinnodds lag taker are judged +EV at >= 3% by their own rules). Audit every path that sends an order: auto-bet (3 lanes), manual Bet sheet (Vigilant/CNO/ParlayAPI/live lane), lock, bids (Maker auto/recommend/manual approve, live bids, CNO bids), tennis, Pinnodds live taker.
+- [x] TZ2 DONE. One rule at the choke points: an order whose EV at the price it would fill (fee in) against the fair behind it is negative is refused, whoever asked; manual bets lose their "no minimum edge" (Tj's 2026-10-02 rule is superseded for negative EV only).
+- [x] TZ3 Tests (ApiBettingTest, ApiBettingControllerTest, AutoBettorTest), ship v0.89.25.
+
+## TZZ: any sharp book that disagrees vetoes the bet and caps its rating (Tj, 2026-10-11 ~20:20Z)
+Tj verbatim: "If any sharp book disagrees that a bet is positive EV, it should be vetoed and not bet, and should not be a highly rated bet"
+- [x] DONE: `a.sharpAgainst` (any sharp book prices both sides and says not +EV) vetoes in every auto-bet lane whatever the sharp rule or a minimum star rating says (AutoBettor), refuses the manual Bet sheet (`BetTarget.sharpAgainst`), stops a bid priced above a sharp book's fair (MakerDesk); the rating already caps it at 2½★ (`BetRating.ceiling`). Tests: AutoBettorTest, ApiBettingTest.
