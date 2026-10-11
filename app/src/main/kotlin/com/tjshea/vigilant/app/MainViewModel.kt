@@ -2456,6 +2456,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     add("switch ${if (st.oddsPapiFree) "ON" else "off"} · $keys key${if (keys == 1) "" else "s"} · closing lines only")
                     add("health: ${c.op4Client.health()}")
                     add("billable requests made today: ${c.op4Client.spentToday()} · may buy now: ${c.op4Budget.mayBuy()} · all requests (incl. free): ${c.op4Client.requests}")
+                    add("fair odds feed: ${if (st.gates.op4Fair > 0) "${st.gates.op4Fair} requests a day" else "off (closing lines only)"} · every book ${if (st.gates.opAllBooks) "on" else "off"} · active now: ${c.op4FairActive(st)}")
+                    c.op4Feed.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
                 }
             }.getOrNull(),
             labReport = g.labReport,

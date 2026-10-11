@@ -445,7 +445,16 @@ class AppContainer(private val app: Application) {
      */
     val op4Client = com.tjshea.vigilant.data.reference.OddsPapi4Client(http, KeyPool(QuotaPolicy.ODDSPAPI_FREE, { keyStore.current(ApiProvider.ODDSPAPI_FREE) }, usage), { keyStore.current(ApiProvider.ODDSPAPI_FREE) })
     val op4Budget = com.tjshea.vigilant.data.reference.Op4Budget(op4Client)
-    val op4Closes = com.tjshea.vigilant.data.tracker.Op4Closes(op4Client, op4Budget, com.tjshea.vigilant.data.reference.Op4Store(File(app.filesDir, "oddspapi_free_cache.json")))
+    val op4Store = com.tjshea.vigilant.data.reference.Op4Store(File(app.filesDir, "oddspapi_free_cache.json"))
+    val op4Closes = com.tjshea.vigilant.data.tracker.Op4Closes(op4Client, op4Budget, op4Store)
+
+    /** OddsPapi Free's fair-odds feed (Tj, 2026-10-11): whole games, every book, one request each, within the daily figure Tj sets ([ScanSettings.gates]); used only while [op4FairActive]. */
+    val op4Feed = com.tjshea.vigilant.data.reference.Op4Feed(op4Client, com.tjshea.vigilant.data.reference.Op4Catalog(op4Client, op4Budget, op4Store), op4Budget, op4Store)
+    val op4Games = com.tjshea.vigilant.data.reference.Op4GamesSource(op4Feed)
+    val op4Props = com.tjshea.vigilant.data.reference.Op4PropsSource(op4Feed)
+
+    /** OddsPapi Free is on, a key is saved and Tj gave the fair-odds feed a daily request figure. */
+    fun op4FairActive(s: ScanSettings): Boolean = AppBook.isNovig && s.oddsPapiFree && s.gates.op4Fair > 0 && keyStore.current(ApiProvider.ODDSPAPI_FREE).isNotEmpty()
 
     /** Follows Settings: the closes and scores read OddsPapi only while its switch is on. Safe to call on every settings change; off, nothing is asked. */
     fun syncOp(s: ScanSettings) {
@@ -1803,7 +1812,9 @@ class AppContainer(private val app: Application) {
         // SportsGameOdds Pro (Tj, 2026-10-09): one feed prices what the paid ones sell; they rest for every league it carries (tennis keeps them), and come back if SGO stops answering.
         val sgoOn = sgoActive(settings)
         val opOn = opActive(settings)
-        if (!sgoOn && !opOn) return all + unabatedLast
+        // OddsPapi Free (v4) reads whole games (every book) within Tj's daily figure: before ParlayAPI in the order, resting nothing (its allowance is small).
+        val op4Sources = if (op4FairActive(settings)) listOf<ReferenceSource>(op4Games) + (if (com.tjshea.vigilant.data.scanner.MarketFamily.PLAYER_PROPS in settings.families) listOf(op4Props) else emptyList()) else emptyList()
+        if (!sgoOn && !opOn) return op4Sources + all + unabatedLast
         val replaced = setOfNotNull(
             pinnacle.id.takeUnless { pinnoddsActive(settings) },   // Pinnodds' Pinnacle board prices every league, SGO's included
             propLine.id, propLineProps.id, oddsApi.id, bookProps.id, parlayOdds.id, parlayOddsBackground.id, parlayProps.id, parlayPropsBackground.id, parlayHalves.id, parlayHalvesBackground.id,
@@ -1819,7 +1830,7 @@ class AppContainer(private val app: Application) {
             r
         }
         return (if (sgoOn) listOf<ReferenceSource>(sgoGames) + (if (props) listOf(sgoProps) else emptyList()) else emptyList()) +
-            (if (opOn) listOf<ReferenceSource>(opGames) + (if (props) listOf(opProps) else emptyList()) else emptyList()) + rest + unabatedLast
+            (if (opOn) listOf<ReferenceSource>(opGames) + (if (props) listOf(opProps) else emptyList()) else emptyList()) + op4Sources + rest + unabatedLast
     }
 
     internal fun baseReferenceSources(settings: ScanSettings, background: Boolean, scan: Boolean = false): List<ReferenceSource> = buildList {

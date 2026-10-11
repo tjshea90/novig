@@ -1287,6 +1287,7 @@ private fun ColumnScope.SgoPage(state: UiState, keys: KeyActions, reportActions:
     SwitchRow(com.tjshea.vigilant.app.SgoText.SWITCH_TITLE, com.tjshea.vigilant.app.SgoText.switchSub(state.sgoKeys.isNotEmpty()), s.sgoPro, tag = "sgoProSwitch") { v -> onUpdate { it.copy(sgoPro = v) } }
     if (s.sgoPro) {
         SwitchRow("Extra books: Circa, SuperBook, bet365", "Price the fair line with them too (each must show both sides and be fresh, like every book).", s.sgoExtraBooks, tag = "sgoExtraSwitch") { v -> onUpdate { it.copy(sgoExtraBooks = v) } }
+        SwitchRow("Every book for the fair average", "Price the fair line with every book SportsGameOdds carries (80+), not only the books picked in Settings and the extras: each is devigged on its own and averaged (Market average / Blend). A league whose unfiltered query times out falls back to the picked books.", s.gates.sgoAllBooks, tag = "sgoAllBooksSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(sgoAllBooks = v)) } }
         SwitchRow("Alternate lines", "Every book's alternate spreads and totals with the game lines (heavier replies; Pro handles them).", s.sgoAltLines, tag = "sgoAltSwitch") { v -> onUpdate { it.copy(sgoAltLines = v) } }
         Text("Drop odds older than", style = MaterialTheme.typography.bodyMedium)
         ChoiceChips(ScanSettings.SGO_MAX_AGE_CHOICES.map { it.toDouble() }, s.sgoMaxAgeMinutes.toDouble(), { "${it.toInt()} min" }) { v -> onUpdate { it.copy(sgoMaxAgeMinutes = v.toInt()) } }
@@ -1378,7 +1379,13 @@ private fun ColumnScope.OddsPapiFreePage(state: UiState, keys: KeyActions, repor
         )
     }
     SwitchRow(com.tjshea.vigilant.app.Op4Text.SWITCH_TITLE, com.tjshea.vigilant.app.Op4Text.switchSub(state.op4Keys.isNotEmpty()), s.oddsPapiFree, tag = "oddsPapiFreeSwitch") { v -> onUpdate { it.copy(oddsPapiFree = v) } }
-    if (s.oddsPapiFree) Hint(com.tjshea.vigilant.app.Op4Text.NOTES)
+    if (s.oddsPapiFree) {
+        Hint(com.tjshea.vigilant.app.Op4Text.NOTES)
+        Text("Fair odds from whole games: requests a day", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+        ChoiceChips(listOf(0.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0), s.gates.op4Fair.toDouble(), { if (it == 0.0) "Off" else "${it.toInt()}" }) { v -> onUpdate { it.copy(gates = it.gates.copy(op4Fair = v.toInt())) } }
+        Hint(com.tjshea.vigilant.app.Op4Text.FAIR_HINT)
+        SwitchRow("Every book for the fair average", "Ask for every book the plan carries (about 300) in each game's one request, not only the books picked in Settings. Each is devigged on its own and averaged; regional clones count once.", s.gates.opAllBooks, tag = "op4AllBooksSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(opAllBooks = v)) } }
+    }
 }
 
 /**
