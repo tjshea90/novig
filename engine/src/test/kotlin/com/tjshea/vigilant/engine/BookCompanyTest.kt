@@ -26,6 +26,24 @@ class BookCompanyTest {
         assertEquals(BookCompany.of("williamhill_us"), BookCompany.of("caesars"))
         assertEquals(BookCompany.of("betonlineag"), BookCompany.of("lowvig"))
         assertEquals(BookCompany.of("Hard Rock Bet"), BookCompany.of("hardrockbet"))
+        // Researched 2026-10-11 (RESEARCH.md §130): Flutter, Evoke, Entain, Penn, Fanatics+PointsBet US, Kambi's BetRivers/betPARX, Super Group.
+        assertEquals(BookCompany.of("fanduel"), BookCompany.of("sportsbet_au"))
+        assertEquals(BookCompany.of("williamhill"), BookCompany.of("mrgreen"))
+        assertEquals(BookCompany.of("ladbrokes"), BookCompany.of("eurobet"))
+        assertEquals(BookCompany.of("espnbet"), BookCompany.of("thescorebet"))
+        assertEquals(BookCompany.of("fanatics"), BookCompany.of("pointsbetus"))
+        assertEquals(BookCompany.of("betrivers"), BookCompany.of("betparx"))
+        assertEquals(BookCompany.of("betrivers"), BookCompany.of("betrivers_ca"))
+        assertEquals(BookCompany.of("unibet"), BookCompany.of("unibet_nl"))
+        assertEquals(BookCompany.of("betway"), BookCompany.of("betway_mz"))
+    }
+
+    @Test
+    fun `unconfirmed or separate owners are not merged`() {
+        assertNotEquals(BookCompany.of("pointsbetau"), BookCompany.of("fanatics"))
+        assertNotEquals(BookCompany.of("wynnbet"), BookCompany.of("windcreek"))
+        assertNotEquals(BookCompany.of("bookmakereu"), BookCompany.of("bovada"))
+        assertNotEquals(BookCompany.of("betmgm"), BookCompany.of("ladbrokes"))
     }
 
     @Test
