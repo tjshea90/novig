@@ -6493,3 +6493,8 @@ When I press the pause button at the top to pause scanning, the scanning is stil
 ```
 I have the live betting scanner turned on, but the bets are not dropping off the scanner even after 20+ seconds. Why not? Add a function that says how old the odds are for any scanning in the app if it can be figured out accurately
 ```
+
+## 2026-10-11T19:31:28Z
+```
+I have live games toggled on for the scanner. These bets are not dropping off, and it is not continuously scanning. Unless it is doing it in the background. If live games are toggled on  I want continuous, low latency, real time refreshing of odds and EV. As soon as positive EV is no longer on a bet, it should drop out of the list immediately. There should be a guard that if I bet any live game, it only places the bet if it can be filled at the odds listed in the scan
+```
