@@ -280,6 +280,22 @@ class OddsPapi4Test {
         assertTrue(requests.none { it.requestUrl!!.encodedPath == "/v4/odds" })
     }
 
+    @Test fun aListedGameWithNoOddsYet404IsNoPriceNotAFailedScan() = runTest {
+        val (feed, s) = feedSetup(perDay = 5, every = true)
+        handler = { r -> when (r.requestUrl!!.encodedPath) {
+            "/v4/odds" -> { accountCount++; MockResponse().setResponseCode(404).setBody("{\"error\":{\"code\":\"FIXTURE_NOT_FOUND\",\"message\":\"nope\"}}") }
+            "/v4/fixtures" -> { accountCount++; ok(fixtures(0)) }
+            "/v4/account" -> ok(account(accountCount))
+            else -> route(r)
+        } }
+        val r = Op4GamesSource(feed) { clockMs }.odds(Leagues.byNovigName("NFL")!!, s)
+        assertTrue(r.events.isEmpty())
+        assertTrue(feed.lastReads.getValue("NFL").contains("no odds yet"))
+        val before = requests.count { it.requestUrl!!.encodedPath == "/v4/odds" }
+        Op4GamesSource(feed) { clockMs }.odds(Leagues.byNovigName("NFL")!!, s)
+        assertEquals("not asked again within the read interval", before, requests.count { it.requestUrl!!.encodedPath == "/v4/odds" })
+    }
+
     @Test fun aTournamentThatTheGameListHasButNoPricesYetGivesNoQuotesNotAnError() = runTest {
         val (feed, s) = feedSetup(perDay = 5, every = true)
         handler = { r -> if (r.requestUrl!!.encodedPath == "/v4/fixtures") { accountCount++; ok(fixtures(0)) } else if (r.requestUrl!!.encodedPath == "/v4/odds") { accountCount++; ok(oddsGame()) } else if (r.requestUrl!!.encodedPath == "/v4/account") ok(account(accountCount)) else route(r) }
