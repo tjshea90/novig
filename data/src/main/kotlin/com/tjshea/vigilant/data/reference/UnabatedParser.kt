@@ -12,7 +12,7 @@ import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.longOrNull
 
 /** One sportsbook's price for one side of an Unabated group (UNABATED_API.md §2). Alternates are separate [UnLine]s with the same [sourceId]. */
-data class UnLine(val sourceId: Long, val points: Double?, val price: Int, val modifiedMs: Long?, val alternate: Boolean)
+data class UnLine(val sourceId: Long, val points: Double?, val price: Int, val modifiedMs: Long?, val alternate: Boolean, val expiresMs: Long? = null)
 
 data class UnSide(val sideIndex: Int, val sideName: String, val teamId: Long?, val personId: Long?, val lines: List<UnLine>)
 
@@ -165,12 +165,12 @@ object UnabatedParser {
             val modified = iso(l.str("modifiedOn"))
             val ok = (l.int("statusId") ?: 1) == 1 && l.bool("disabled") != true
             val price = l.int("price")
-            if (ok && price != null && price != 0) lines += UnLine(source, l.dbl("points"), price, modified, alternate = false)
+            if (ok && price != null && price != 0) lines += UnLine(source, l.dbl("points"), price, modified, alternate = false, expiresMs = iso(l.str("freshnessExpiresAt")))
             (l["alternateLines"] as? JsonArray).orEmpty().forEach { a ->
                 val x = a.obj() ?: return@forEach
                 val p = x.int("price") ?: return@forEach
                 if ((x.int("statusId") ?: 1) != 1 || p == 0) return@forEach
-                lines += UnLine(x.lng("marketSourceId") ?: source, x.dbl("points"), p, iso(x.str("modifiedOn")) ?: modified, alternate = true)
+                lines += UnLine(x.lng("marketSourceId") ?: source, x.dbl("points"), p, iso(x.str("modifiedOn")) ?: modified, alternate = true, expiresMs = iso(x.str("freshnessExpiresAt")))
             }
         }
         return UnSide(o.int("sideIndex") ?: return null, o.str("sideName").orEmpty(), o.lng("teamId"), o.lng("personId"), lines)

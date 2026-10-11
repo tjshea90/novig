@@ -100,6 +100,8 @@ class UnabatedClient(
                             response.code in 500..599 -> throw ReferenceException("Unabated HTTP ${response.code}")
                             !response.isSuccessful -> throw ReferenceException("Unabated HTTP ${response.code}: ${messageOf(body) ?: "refused the request"}")
                             body.isBlank() -> throw ReferenceException("Unabated sent an empty reply")
+                            // HTTP 200 with success:false is a failure whose messages say why (checked in the envelope's tail/head, not by parsing the body).
+                            Regex("\"success\"\\s*:\\s*false").containsMatchIn(body.takeLast(600) + body.take(300)) -> { UnabatedParser.board(body, false); throw UnabatedFailure("Unabated: the request could not complete") }
                             else -> KeyAttemptResult.Success(body)
                         }
                     }
