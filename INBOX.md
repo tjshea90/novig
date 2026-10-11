@@ -6288,3 +6288,10 @@ It looks like it is finding tennis matches, just not any positive EV bets, but f
 ```
 I accidentally left a bad bid up indefinitely, and someone filled the bid and I lost almost immediately. That made me wonder if it is plausible for vigilant to scan the entire novig live betting field in real time and look for obviously stale or poorly priced bids from other users that I can take by having vigilant auto bet it  For example, vigilant can look for anomalies like an under the total at 60 being offered at 50%, when the game is almost finished and the total is only 25. This is clearly not 50% true odds. The feature could either use positive EV calculations, its own math engine to determine odds in real time based on live game circumstances, or stale odds after scoring events or other circumstances, or deviations in odds compared to other live markets on the same bet. I also want it to put up positive EV bids on the maker side simultaneously. I think we already tried to build this, but it never filled a single bid or bet
 ```
+
+## 2026-10-11T04:29:03Z
+```
+I'm using the live betting system already in place and I'm starting to get fills. But there are way too many options for the live betting system and I don't understand most of them. Clean up the settings, remove any settings that aren't needed, make the settings easier to understand, and make presets that are easy to understand. I want bids to be filled but also safe, truly positive EV at the time the bid was filled. Make sure the app does this. Maybe make a slide option, on one side is the very safest and best bets and bids with highest EV but least likely to fill, on the other side is pure volume more risky but very high fill rate, and I can slide the slider and vigilant will adjust the settings accordingly in the background. For this to work, make sure the settings are logical and mathematically sound. The wider the range of settings for the slider the better, so I can fine tune it. 
+
+Also as I'm typing this I don't know what I did but there aren't any more bids going up. Check the screenshot.
+```
