@@ -130,11 +130,9 @@ class SgoClientTest {
         assertTrue(SgoPropsSource(client(), { clockMs }).supports(nfl))
     }
 
-    @Test fun outsideSgoLeavesTennisToTheOtherFeedsAndSgoLeaguesToSgo() {
-        val inner = SgoGamesSource(client(), { clockMs })
-        val wrapped = OutsideSgo(inner)
-        assertFalse(wrapped.supports(nfl))
+    @Test fun sgoCarriesNflButNotTennis() {
         val atp = Leagues.byNovigName("ATP")!!
+        assertTrue(SgoBooks.supports(nfl))
         assertFalse(SgoBooks.supports(atp))
     }
 

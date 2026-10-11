@@ -179,15 +179,6 @@ class OddsPapiTest {
         assertEquals(11, OpBooks.sportId(Leagues.byNovigName("NBA")!!)); assertEquals(15, OpBooks.sportId(Leagues.byNovigName("NHL")!!)); assertNull(OpBooks.sportId(Leagues.byNovigName("ATP")!!))
     }
 
-    @Test fun outsideOpRestsAFeedForEveryLeagueOpCarriesAndNoOther() {
-        val inner = object : ReferenceSource {
-            override val id = "x"; override val displayName = "x"
-            override suspend fun odds(league: com.tjshea.vigilant.data.scanner.League, settings: ScanSettings) = RefSnapshot("k", emptyList(), 0L)
-        }
-        val o = OutsideOp(inner)
-        assertFalse(o.supports(nfl)); assertTrue(o.supports(Leagues.byNovigName("ATP")!!)); assertEquals("x", o.id)
-    }
-
     // ---- conversion -------------------------------------------------------------------------------------------------------------------------
 
     private fun full(): OpFixture {

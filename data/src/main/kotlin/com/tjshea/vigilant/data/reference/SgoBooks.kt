@@ -67,7 +67,7 @@ object SgoBooks {
 
     /**
      * SGO's tennis leagues (Tj's Pro key, 2026-10-11: `/leagues?sportID=TENNIS` lists ATP and WTA, `teamType` SINGLE_PLAYER). Kept apart from [leagueId] on purpose: the closes and the grader still read tennis
-     * from the other feeds, and a paid feed rests for a league [supports] says SGO carries (tennis keeps them), so only the game-line read ([SgoGamesSource]) asks for these.
+     * from the other feeds, and no other API rests for it (Tj, 2026-10-11), so only the game-line read ([SgoGamesSource]) asks for these.
      */
     fun tennisLeagueId(league: League): String? = if (league.tennis) league.novigName.takeIf { it == "ATP" || it == "WTA" } else null
 }
