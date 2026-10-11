@@ -1304,25 +1304,27 @@ class AppContainer(private val app: Application) {
 
     /**
      * The paper lab's outside alternate lines for a Novig game (Tj, 2026-10-09: "incorporate sportsgamesodds pro into the research labs"): SportsGameOdds' main and alternate spreads and totals of the game,
-     * every book, live games included, matched to the Novig game by teams and start. Nothing while SGO Pro is off or has no key (Pinnodds is dormant): the lab then has no outside quotes and records only
+     * every book, live games included, matched to the Novig game by teams and start. Quotes come from every one of SGO Pro and OddsPapi that is on with a key (none is asked while it is off): with neither the lab has no outside quotes and records only
      * the ladder covers and tail strikes.
      */
     private suspend fun labAltQuotes(ev: com.tjshea.vigilant.data.novig.NovigEvent): List<com.tjshea.vigilant.data.novig.lab.AltQuote> {
         val s = currentSettings()
         // Pinnodds' live Pinnacle lines first when its socket is running (Tj, 2026-10-09: the app still uses Pinnodds; "stop" meant Claude's own connections), then SGO's.
         val pinn = if (!com.tjshea.vigilant.data.scanner.Dormant.PINNODDS && pinnRunner.running) runCatching { pinnRunner.altQuotes(ev.eventId) }.getOrDefault(emptyList()) else emptyList()
-        val useSgo = sgoActive(s)
-        val useOp = !useSgo && opActive(s)
-        if (!useSgo && !useOp) return pinn
         val league = com.tjshea.vigilant.data.scanner.Leagues.byNovigName(ev.league) ?: return pinn
-        if (!(if (useSgo) com.tjshea.vigilant.data.reference.SgoBooks.supports(league) else com.tjshea.vigilant.data.reference.OpBooks.supports(league))) return pinn
         val now = System.currentTimeMillis()
-        val snap = labBoards[league.novigName]?.takeIf { now - it.first < LAB_BOARD_MS }?.second
-            ?: (if (useSgo) sgoGames.odds(league, s.copy(includeLive = true)) else opGames.odds(league, s.copy(includeLive = true, opAltLines = true))).also { labBoards[league.novigName] = now to it }
-        val match = com.tjshea.vigilant.data.scanner.Planner.matchEvents(listOf(ev), listOf(snap)).firstOrNull()?.refEvent ?: return pinn
         val novigHome = com.tjshea.vigilant.data.novig.NovigText.parseMatchup(ev.description)?.home.orEmpty()
-        val swapped = com.tjshea.vigilant.data.match.TeamMatcher.whichOf(novigHome, match.home, match.away) == 2
-        return pinn + com.tjshea.vigilant.data.novig.lab.SgoAltQuotes.quotes(match, swapped)
+        // Every outside feed that is switched on contributes its quotes (Tj, 2026-10-11: no API rests because another is on): SGO's board, then OddsPapi's.
+        suspend fun quotesOf(key: String, supported: Boolean, read: suspend () -> com.tjshea.vigilant.data.reference.RefSnapshot): List<com.tjshea.vigilant.data.novig.lab.AltQuote> {
+            if (!supported) return emptyList()
+            val snap = labBoards["$key|${league.novigName}"]?.takeIf { now - it.first < LAB_BOARD_MS }?.second ?: read().also { labBoards["$key|${league.novigName}"] = now to it }
+            val match = com.tjshea.vigilant.data.scanner.Planner.matchEvents(listOf(ev), listOf(snap)).firstOrNull()?.refEvent ?: return emptyList()
+            val swapped = com.tjshea.vigilant.data.match.TeamMatcher.whichOf(novigHome, match.home, match.away) == 2
+            return com.tjshea.vigilant.data.novig.lab.SgoAltQuotes.quotes(match, swapped)
+        }
+        val sgo = if (sgoActive(s)) quotesOf("sgo", com.tjshea.vigilant.data.reference.SgoBooks.supports(league)) { sgoGames.odds(league, s.copy(includeLive = true)) } else emptyList()
+        val op = if (opActive(s)) quotesOf("op", com.tjshea.vigilant.data.reference.OpBooks.supports(league)) { opGames.odds(league, s.copy(includeLive = true, opAltLines = true)) } else emptyList()
+        return pinn + sgo + op
     }
 
     /** The paper bid lab's files (RESEARCH.md §122): the paper bids when they went up and what happened to them. */
