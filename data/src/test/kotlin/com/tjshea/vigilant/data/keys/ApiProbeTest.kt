@@ -40,13 +40,13 @@ class ApiProbeTest {
 
     private val meter = UsageMeter(JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), { clockMs })
     private fun base(p: String) = server.url("/$p").toString().trimEnd('/')
-    private val probe = ApiProbe(
+    private val probe by lazy { ApiProbe(
         OkHttpClient(), meter, null, { clockMs },
         ApiProbe.Hosts(
             oddsApi = base("odds"), propLine = base("pl"), sgo = base("sgo"), op5 = base("op5"), op4 = base("op4"), unabated = base("un"), pinnodds = base("pinnodds"),
             pinnwire = base("wire"), pinnapi = base("pinnapi"), kalshi = base("kalshi"), polymarket = base("poly"),
         ),
-    )
+    ) }
     private fun ok(body: String = "{}") = MockResponse().setResponseCode(200).setBody(body)
     private suspend fun usage(policy: QuotaPolicy, key: String): KeyUsage { meter.load(); return meter.flow.value.providers[policy.id]!!.keys[key]!! }
 
