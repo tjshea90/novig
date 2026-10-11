@@ -20,8 +20,14 @@ object BookCompany {
         group("caesars", "williamhillus", "caesars", "caesarssportsbook", "czr", "williamhillnevada")
         group("evoke", "williamhill", "888sport", "888", "mrgreen", "williamhilluk")
         group("entain", "ladbrokes", "coral", "neds", "sportingbet", "bwin", "gamebookers", "gala", "eurobet")
-        // Rush Street's BetRivers and SugarHouse, plus betPARX / Parx: all run on Kambi's one trading desk, so they quote one line (RESEARCH.md §46); RushBet is Rush Street's Latin American brand.
-        group("rushstreet", "betrivers", "sugarhouse", "playsugarhouse", "rivers", "betparx", "parx", "rushbet")
+        // Kambi's one trading desk (Tj, 2026-10-11, six "agreeing" books with identical odds: Bally Bet, betPARX, Casumo, Grosvenor, TABtouch, Unibet): these are DIFFERENT owners (Bally's, Greenwood/Parx, Casumo, Rank, RWWA, Kindred) who all
+        // run Kambi's sportsbook, whose traders compile one line for them all, so they quote one line and are one opinion, not many (RESEARCH.md §46, §134). Sources: Kambi's and the operators' own announcements.
+        // Rush Street's BetRivers/SugarHouse/RushBet, Greenwood's betPARX/Parx, Bally's Bally Bet, Kindred's Unibet/Maria/32Red, Casumo, Rank's Grosvenor/Enracha/YoSports, RWWA's TABtouch, LiveScore Bet / Virgin Bet,
+        // LeoVegas' BetUK / Expekt, Svenska Spel, ATG, BetPlay.
+        group(
+            "kambi", "betrivers", "sugarhouse", "playsugarhouse", "rivers", "rushbet", "betparx", "parx", "ballybet", "bally", "unibet", "unibetus", "unibeteu", "unibetuk", "unibetau", "unibetnl", "maria", "mariacasino", "32red",
+            "casumo", "grosvenor", "grosvenorsport", "grosvenorcasinos", "enracha", "yosports", "tabtouch", "rwwa", "livescorebet", "livescore", "virginbet", "betuk", "expekt", "svenskaspel", "atg", "betplay",
+        )
         group("penn", "espnbet", "espn", "barstool", "barstoolsportsbook", "thescore", "thescorebet", "scorebet")
         group("fanatics", "fanatics", "fanaticssportsbook", "pointsbet", "pointsbetus")
         group("hardrock", "hardrock", "hardrockbet", "hr")
@@ -29,10 +35,8 @@ object BookCompany {
         group("bodog", "bovada", "bodog")
         group("digitalgaming", "betonlineag", "betonline", "lowvig", "sportsbettingag", "sportsbetting")
         group("betsson", "betsson", "betsafe", "nordicbet")
-        group("kindred", "unibet", "unibetus", "unibeteu", "unibetuk", "unibetau", "unibetnl", "maria", "mariacasino", "32red")
         group("windcreek", "windcreek", "windcreekbet")
         group("supergroup", "betway")
-        group("bally", "ballybet", "bally")
         group("sporttrade", "sporttrade", "st")
         group("pinnacle", "pinnacle", "pinnaclesports", "pn")
         group("circa", "circa", "circasports", "cs")
