@@ -777,7 +777,7 @@ private fun VigilantRoot(
                 Tab.TRACKER -> TrackerScreen(
                     state,
                     onShareBets = vm::shareBets,
-                    shareBusy = vm.betShare.collectAsState().value.busy,
+                    shareBusy = vm.betShare.collectAsStateWithLifecycle().value.busy,
                     archiveNote = vm.betArchiveNote(),
                     onSettle = vm::settleBet, onDelete = vm::deleteBet, onStake = vm::setStake,
                     onCheckOdds = vm::checkOdds, onShown = { vm.settleBets(); vm.scanLocks(); if (state.settings.trackerNovigOnly) vm.refreshNovigOnly() },
