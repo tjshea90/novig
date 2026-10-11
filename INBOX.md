@@ -6421,3 +6421,8 @@ It is important to consider file size, I do hundreds of bets a day sometimes. Ma
 
 Use your discretion to figure out the best way to implement this feature for maximum smart analysis of my bets and bids and for the best recommendations.
 ```
+
+## 2026-10-11T15:44:38Z
+```
+These workflows burn Claude usage and almost always get interrupted by usage then fail and I lose all of the progress. Save the audit at the next logical opportunity and continue with a regular claude process with efficient Claude usage but do not sacrifice any quality or accuracy of the job
+```
