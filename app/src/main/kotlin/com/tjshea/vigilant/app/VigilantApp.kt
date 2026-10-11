@@ -481,6 +481,7 @@ class AppContainer(private val app: Application) {
         val on = AppBook.isNovig && s.sgoPro
         sgoCloses.enabled = on
         sgoScores.enabled = on
+        parlayCloses.enabled = s.useParlay   // ParlayAPI's closes follow its switch on every settings change, not only when a back-fill starts
         NotifyGate.quiet = s.quietNotifications
         com.tjshea.vigilant.data.scanner.Freshness.sgoMaxAgeMs = s.sgoMaxAgeMinutes.coerceIn(10, 30) * 60_000L
         com.tjshea.vigilant.data.scanner.Freshness.sgoMode = on
