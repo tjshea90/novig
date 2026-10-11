@@ -90,14 +90,14 @@ object UnabatedConvert {
             val a = s0.lines.filter { it.sourceId == sourceId }
             val b = s1.lines.filter { it.sourceId == sourceId }
             if (a.isEmpty() || b.isEmpty()) continue
-            fun stamp(x: UnLine, y: UnLine) = stamp(minOfNotNull(x, y), ctx, sourceId)
+            fun st(x: UnLine, y: UnLine) = stamp(minOfNotNull(x, y), ctx, sourceId)
             when {
                 // Team total: over (0) and under (1) of ONE team.
                 sameTeam && anyPoints -> {
                     if (MarketFamily.TEAM_TOTAL !in ctx.families || period != 0) continue
                     val subject = if (s0.teamId == g.homeTeamId) RefBookMarket.HOME else if (s0.teamId == g.awayTeamId) RefBookMarket.AWAY else continue
                     for (x in a) for (y in b.filter { it.points == x.points && x.points != null }) {
-                        out += RefBookMarket(book, UnabatedBooks.title(book), LineKind.TEAM_TOTAL, listOf(RefQuote(Side.OVER, americanToDecimal(x.price), x.points), RefQuote(Side.UNDER, americanToDecimal(y.price), x.points)), stamp(x, y), period, subject)
+                        out += RefBookMarket(book, UnabatedBooks.title(book), LineKind.TEAM_TOTAL, listOf(RefQuote(Side.OVER, americanToDecimal(x.price), x.points), RefQuote(Side.UNDER, americanToDecimal(y.price), x.points)), st(x, y), period, subject)
                     }
                 }
                 // Total: no team id, a number on both sides.
@@ -105,7 +105,7 @@ object UnabatedConvert {
                     val fam = if (period == 0) MarketFamily.TOTAL else MarketFamily.FIRST_HALF
                     if (fam !in ctx.families) continue
                     for (x in a) for (y in b.filter { it.points == x.points && x.points != null }) {
-                        out += RefBookMarket(book, UnabatedBooks.title(book), LineKind.TOTAL, listOf(RefQuote(Side.OVER, americanToDecimal(x.price), x.points), RefQuote(Side.UNDER, americanToDecimal(y.price), x.points)), stamp(x, y), period)
+                        out += RefBookMarket(book, UnabatedBooks.title(book), LineKind.TOTAL, listOf(RefQuote(Side.OVER, americanToDecimal(x.price), x.points), RefQuote(Side.UNDER, americanToDecimal(y.price), x.points)), st(x, y), period)
                     }
                 }
                 // Spread: team ids and a handicap on each side; side 0 is the away team, side 1 the home team.
@@ -114,7 +114,7 @@ object UnabatedConvert {
                     val fam = if (period == 0) MarketFamily.SPREAD else MarketFamily.FIRST_HALF
                     if (fam !in ctx.families) continue
                     for (y in b) for (x in a.filter { it.points != null && y.points != null && Math.abs(it.points!! + y.points!!) < 1e-9 }) {
-                        out += RefBookMarket(book, UnabatedBooks.title(book), LineKind.SPREAD, listOf(RefQuote(Side.HOME, americanToDecimal(y.price), y.points), RefQuote(Side.AWAY, americanToDecimal(x.price), x.points)), stamp(x, y), period)
+                        out += RefBookMarket(book, UnabatedBooks.title(book), LineKind.SPREAD, listOf(RefQuote(Side.HOME, americanToDecimal(y.price), y.points), RefQuote(Side.AWAY, americanToDecimal(x.price), x.points)), st(x, y), period)
                     }
                 }
                 // Moneyline: team ids, no points. First-half moneylines are not priced (3-way at the books, 2-way at Novig: ScanSettings.MarketFamily.FIRST_HALF).
@@ -122,7 +122,7 @@ object UnabatedConvert {
                     if (MarketFamily.MONEYLINE !in ctx.families || period != 0) continue
                     val x = a.firstOrNull { !it.alternate } ?: continue
                     val y = b.firstOrNull { !it.alternate } ?: continue
-                    out += RefBookMarket(book, UnabatedBooks.title(book), LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, americanToDecimal(x.price), null), RefQuote(Side.HOME, americanToDecimal(y.price), null)), stamp(x, y), period)
+                    out += RefBookMarket(book, UnabatedBooks.title(book), LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, americanToDecimal(x.price), null), RefQuote(Side.HOME, americanToDecimal(y.price), null)), st(x, y), period)
                 }
             }
         }

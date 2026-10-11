@@ -24,6 +24,8 @@ object UnabatedBooks {
         }
     }
 
+    fun title(appKey: String): String = OpBooks.title(appKey)
+
     /** The Unabated source ids (by [sources]) that are books Vigilant prices with: [wanted] keys only. */
     fun sourceMap(sources: List<UnSource>, wanted: Set<String>): Map<Long, String> =
         sources.filter { it.active && it.statusId != 3 }.mapNotNull { s -> appKey(s.name)?.takeIf { it in wanted }?.let { s.id to it } }.toMap()
