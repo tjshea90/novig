@@ -4719,3 +4719,11 @@ Tj verbatim (screenshot: red "Auto-bet is stopped: Vigilant stopped while an ord
 - [ ] TY1 Find where the halt is raised (an order marker left by an interrupted run) and why it happens.
 - [ ] TY2 Resolve it automatically: look the order up on Novig (by client id / open orders / fills), record the fill in the Tracker if it filled, then resume; recheck every few seconds; notify (with the reason) when it cannot.
 - [ ] TY3 Tests, ship.
+- [x] TX DONE in code: "Live games only" chip under the live banner (Include live games on), Feed sort "Stars" (`FeedSort.STARS`, `FeedOrder.sort`); test OddsAgeTest.
+- [x] TY DONE in code: `AutoBetRecovery` (every 5 s: a lost-order halt waits 45 s, reads Novig's fills into the Tracker, clears itself; after 3 min unreadable it notifies once with the reason and keeps trying), `AutoBetRecoveryAppTest`. Cause: the halt is saved BEFORE an order is sent and cleared on the answer; the process died in between (app update/reinstall, Android killing it, crash).
+
+## TZ: no money ever on a negative-EV bet or bid (Tj, 2026-10-11 ~20:10Z)
+Tj verbatim: "If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it at all, whether auto bet or bid or manual bet or bid. No money should ever go on a negative ev bet."
+- [ ] TZ1 Audit every path that sends an order: auto-bet (3 lanes), manual Bet sheet (Vigilant/CNO/ParlayAPI/live lane), lock, bids (Maker auto/recommend/manual approve, live bids, CNO bids), tennis, Pinnodds live taker.
+- [ ] TZ2 One rule at the choke points: an order whose EV at the price it would fill (fee in) against the fair behind it is negative is refused, whoever asked; manual bets lose their "no minimum edge" (Tj's 2026-10-02 rule is superseded for negative EV only).
+- [ ] TZ3 Tests, ship v0.89.25.
