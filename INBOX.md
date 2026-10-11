@@ -6488,3 +6488,8 @@ Look at the screenshots for an example. I just pressed check odds now and it fin
 ```
 When I press the pause button at the top to pause scanning, the scanning is still running and finishes the scan. I don't want this. I want it to pause immediately all scanning
 ```
+
+## 2026-10-11T19:27:32Z
+```
+I have the live betting scanner turned on, but the bets are not dropping off the scanner even after 20+ seconds. Why not? Add a function that says how old the odds are for any scanning in the app if it can be figured out accurately
+```
