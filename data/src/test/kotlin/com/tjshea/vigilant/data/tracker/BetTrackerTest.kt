@@ -133,7 +133,7 @@ class BetTrackerTest {
     fun `a pricing pass also follows a delayed game's new start`() = runTest {
         val t = BetTracker(File(tmp.root, "bets.json"), clock = { now })
         val a = t.track(dal(scan()), stake = 10.0)!!
-        val delayed = scan().let { r -> r.copy(opportunities = r.opportunities.map { it.copy(market = it.market.copy(startsTs = Fixtures.START_MS + 40 * 60_000L)) }) }
+        val delayed = scan().let { r -> r.copy(opportunities = r.opportunities.map { it.copy(event = it.event.copy(startsTs = Fixtures.START_MS + 40 * 60_000L)) }) }
         t.applyPricing(delayed, listOf(a.id))
         val after = t.all().single()
         assertEquals(Fixtures.START_MS + 40 * 60_000L, after.startsTs)
