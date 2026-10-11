@@ -32,7 +32,14 @@ object LongRunBids {
 
     /** The families the background scan keeps: Tj's families that Quick & likely's kinds (the ones Tj left on) can go on. */
     fun keep(s: ScanSettings): Set<MarketFamily> =
-        s.makerKinds.intersect(QuickLikely.KINDS).mapNotNull { family(it) }.toSet().intersect(s.families)
+        (s.makerKinds.intersect(QuickLikely.KINDS).mapNotNull { family(it) }.toSet() + tennisFamilies(s)).intersect(s.families)
+
+    /**
+     * Tennis has no player props: its bids go on moneylines, spreads and totals (and each player's games won), so while the Tennis switch is on the lean scan keeps those boards too (Tj, 2026-10-11:
+     * "for the bids it should still put up bids that are positive EV for tennis"). The price: the game-line boards of the other leagues are read as well.
+     */
+    fun tennisFamilies(s: ScanSettings): Set<MarketFamily> =
+        if (s.tennisOn) setOf(MarketFamily.MONEYLINE, MarketFamily.SPREAD, MarketFamily.TOTAL, MarketFamily.TEAM_TOTAL) else emptySet()
 
     /**
      * Whether the background scan is lean now: the saver is active, bids are Quick & likely to win (the only focus whose kinds are known to be props and team totals),

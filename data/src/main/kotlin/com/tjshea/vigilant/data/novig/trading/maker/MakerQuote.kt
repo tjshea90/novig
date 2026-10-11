@@ -127,8 +127,19 @@ data class MakerRules(
     val obscureStake: Double = 0.5,
     /** Which "Which bids go up" choice these rules are ([com.tjshea.vigilant.data.scanner.BidFocus] name): written on every bid, so Diagnostics can split the bids by it. */
     val focus: String = com.tjshea.vigilant.data.scanner.BidFocus.ALL.name,
+    /**
+     * Tennis (Tj, 2026-10-11: "for the bids it should still put up bids that are positive EV for tennis"): the rules a tennis line (ATP, WTA) is judged by when the Tennis switch is on. Tennis has one sharp
+     * price (Pinnacle's; Kalshi, Polymarket and ParlayAPI match almost none of it) and no player props, so Quick & likely's kinds (props and team totals), its small-market filters and the two-book rule
+     * would leave it without a single bid: tennis keeps Tj's own margin, price window, odds limits, stake and sharp rules and is judged by them alone. Null = tennis is judged like everything else.
+     */
+    val tennis: MakerRules? = null,
 ) {
+    /** The rules [line] is judged by: the tennis rules for an ATP or WTA line, else these. */
+    fun forLine(line: MakerLine): MakerRules = if (tennis != null && line.league in TENNIS_LEAGUES) tennis else this
+
     companion object {
+        val TENNIS_LEAGUES = setOf("ATP", "WTA")
+
         /**
          * [refreshBeforeMs]'s default: a bid is re-posted from a fresher fair once it is this close to its end, so a scan that STARTS this long before the oldest bid's
          * fair goes old keeps it up ([com.tjshea.vigilant.data.scanner.LowUsageBids.autoGapSeconds] is the freshness limit minus this).
@@ -147,7 +158,18 @@ data class MakerRules(
         /** The price at which a bid pays [odds], either sign (−200 pays $0.50 on $1.00 staked: $1 / $1.50 = 0.6667). The ceiling a shortest-odds limit puts on a bid's price. */
         fun priceAtShortest(odds: Int): Double = if (odds == 0) 1.0 else 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(odds)
 
-        fun of(s: ScanSettings): MakerRules = base(s).let { r ->
+        /** The plain bid rules for tennis: Tj's own, game lines always on, one sharp book (Pinnacle) pricing both ways is enough, no popularity filters, whatever the focus. */
+        private fun tennisRules(s: ScanSettings): MakerRules = base(s).copy(
+            kinds = s.makerKinds + GAME_LINES + BetKind.TEAM_TOTAL, minBooks = 1, requireSharp = true, quick = false, skipObscure = false, popularOnly = false, minLineBooks = 0,
+            obscureFill = false, lowUsageBooks = emptySet(), focus = s.makerFocus.name,
+        )
+
+        fun of(s: ScanSettings): MakerRules = withTennis(s, ofFocus(s))
+
+        private fun withTennis(s: ScanSettings, r: MakerRules): MakerRules =
+            if (s.tennisOn && (s.maker || s.makerRecommend) && s.makerSource != com.tjshea.vigilant.data.scanner.BidSource.CNO) r.copy(tennis = tennisRules(s)) else r
+
+        private fun ofFocus(s: ScanSettings): MakerRules = base(s).let { r ->
             when {
                 // Bids priced from CrazyNinjaOdds ([CnoMakerLines]): Quick & likely narrows them too, Low API usage (Vigilant's scan on a few books) means nothing without that scan.
                 s.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO ->
@@ -451,7 +473,8 @@ object MakerQuote {
      * the same side is never bought twice, like the auto-bet). The bid is fair / (1 + margin) floored to Novig's grid; it must stay under Novig's offer
      * (a post-only bid at or over it would be refused: that side is a bet to take now, the +EV feed's).
      */
-    fun decide(line: MakerLine, rules: MakerRules, now: Long, held: Set<String> = emptySet()): MakerDecision {
+    fun decide(line: MakerLine, allRules: MakerRules, now: Long, held: Set<String> = emptySet()): MakerDecision {
+        val rules = allRules.forLine(line)
         var obscure = false
         val (blendPrice, until) = when (val pre = precheck(line, rules, now, held)) {
             is Pre.No -> return pre.skip
@@ -526,7 +549,8 @@ object MakerQuote {
      * [MakerLines.from] works out the books' fairs (a devig per book) only for lines that pass, on every pass with that pass's clock (a line too far
      * off now is judged again once its game is inside the trap guard's window).
      */
-    fun precheck(line: MakerLine, rules: MakerRules, now: Long, held: Set<String> = emptySet()): Pre {
+    fun precheck(line: MakerLine, allRules: MakerRules, now: Long, held: Set<String> = emptySet()): Pre {
+        val rules = allRules.forLine(line)
         fun skip(why: String) = Pre.No(MakerDecision.Skip(line, why))
         if (line.live || now >= line.startsTs) return skip("The game has started (Novig cancels resting bids at the start)")
         if (now >= line.startsTs - rules.stopMs) return skip("Starts within ${rules.stopMs / 60_000} min: no bids this close")
