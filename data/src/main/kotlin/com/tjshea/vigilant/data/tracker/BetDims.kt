@@ -56,6 +56,14 @@ object BetDims {
         else -> UNKNOWN
     }
 
+    /** The type of bet ("Player props", "Moneylines", "Spreads", "Game totals"…): the record's own, else worked out from the market and pick, so a bet with no record still has one. */
+    fun kindLabel(b: TrackedBet): String =
+        b.atBet?.kind?.takeIf { it.isNotEmpty() }?.let { k -> runCatching { BetKind.valueOf(k).label }.getOrDefault(k) } ?: BetKind.of(b.marketLabel, b.selection).label
+
+    /** The sport ("Football", "Basketball", "Tennis"…): the record's own, else from the league. */
+    fun sportLabel(b: TrackedBet): String =
+        (b.atBet?.sport?.takeIf { it.isNotEmpty() } ?: com.tjshea.vigilant.data.scanner.SharpVeto.sportOf(b.league).name).lowercase().replaceFirstChar { it.uppercase() }.replace('_', ' ')
+
     /** Minutes between placing and the start (the record's own, else the two times). */
     fun leadMinutes(b: TrackedBet): Long? = b.atBet?.minutesToStart ?: b.startsTs.takeIf { it > 0 }?.let { (it - b.createdAtMs) / 60_000L }
 
@@ -79,8 +87,8 @@ object BetDims {
             b.atBet?.how == AtBet.HOW_STUDY -> "Auto"
             else -> "Manual"
         }
-        BetDim.KIND -> BetLedger.keyOf(b, BetLedger.Split.KIND)
-        BetDim.SPORT -> BetLedger.keyOf(b, BetLedger.Split.SPORT)
+        BetDim.KIND -> kindLabel(b)
+        BetDim.SPORT -> sportLabel(b)
         BetDim.STARS -> stars(b)?.first?.let(::starBand) ?: UNRATED
         BetDim.SHARP -> sharpLabel(b)
         BetDim.BOOKS -> books(b)?.let { n -> if (n >= 10) "10 or more books" else if (n >= 6) "6-9 books" else if (n >= 4) "4-5 books" else if (n == 1) "1 book" else "$n books" } ?: UNKNOWN

@@ -102,6 +102,14 @@ class BetHistoryTest {
         assertEquals(0.49 / 0.48 - 1, r.bid!!.fillEv!!, 1e-9)
     }
 
+    @Test fun `a bet with no record still has a type of bet and a sport`() {
+        val r = BetHistory.row(bet(at = null), null, now)
+        assertEquals("Player props", r.kind)
+        assertEquals("football", r.sport)
+        assertEquals("Football", BetDims.valueOf(bet(at = null), BetDim.SPORT, now))
+        assertEquals("Moneylines", BetDims.valueOf(bet(at = null).copy(marketLabel = "Moneyline", selection = "Baltimore Ravens"), BetDim.KIND, now))
+    }
+
     @Test fun `an unknown fact is left out of the line, never written as zero`() {
         val r = BetHistory.row(bet(at = null, closeFair = null), null, now)
         val line = BetHistory.line(r)
