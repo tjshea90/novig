@@ -1,13 +1,13 @@
-# CHECKPOINT 2935 — read me first, then TASKS.md
+# CHECKPOINT 2936 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T05:04:43Z · **tests:** all 4 fast checks green
-**Branch:** `claude/unabated-oddsapi-integration-1u6kdc` · **builds on:** `7843a521` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T05:15:08Z · **tests:** all 4 fast checks green
+**Branch:** `claude/unabated-oddsapi-integration-1u6kdc` · **builds on:** `ed318aa5` (this checkpoint is the commit after it)
 
 ## Just done
-TE/TD: OddsPapi Free 404 FIXTURE_NOT_FOUND = empty window/no odds (not a failed scan); Unabated sources fall back when one league's /sources fails; whyFew points to Tennis switch; schema tests -> 16; v0.89.8
+pre-release: v0.89.8: OddsPapi Free no longer errors on empty fixture windows, Unabated reads leagues whose sources call fails, OddsPapi Free prices scans by default, live-bid why-line names the Tennis switch (versionCode 193, v0.89.8)
 
 ## Do this next
-ship v0.89.8, release, record; tell Tj: max-volume no bids = every live game tennis + Tennis switch off; Unabated NFL/NBA/CFB never read because /sources failed (fixed)
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.89.8), then run: bash tools/record-release.sh v0.89.8 193 "v0.89.8: OddsPapi Free no longer errors on empty fixture windows, Unabated reads leagues whose sources call fails, OddsPapi Free prices scans by default, live-bid why-line names the Tennis switch"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ ship v0.89.8, release, record; tell Tj: max-volume no bids = every live game ten
 
 ## Last ten checkpoints
 ```
+  08a2cec0 ckpt 2935: TE/TD: OddsPapi Free 404 FIXTURE_NOT_FOUND = empty window/no odds (not a fai
   3a19cb83 ckpt 2934: TE: OddsPapi Free fair-odds feed now on by default (10/day, schema 16 migrat
   7244f0ee ckpt 2933: pre-release: v0.89.6: live bids Safety/Volume slider (one control sets margi
   3c07f0a9 ckpt 2932: TD: Safety/Volume slider (LiveBidSlider + LiveBidSliderTest, desk evAtFill +
@@ -25,8 +26,7 @@ ship v0.89.8, release, record; tell Tj: max-volume no bids = every live game ten
   fb078545 ckpt 2928: pre-release: v0.89.4: tennis bids (plain rules for ATP/WTA, lean scan keeps 
   edb95cd5 ckpt 2927: pre-ship: v0.89.4: tennis bids (plain rules for ATP/WTA, lean scan keeps gam
   40eda833 ckpt 2926: pre-ship: v0.89.4: tennis bids (plain rules for ATP/WTA, lean scan keeps gam
-  3f9274b1 ckpt 2925: pre-release: v0.89.3: OddsPapi (v5) switch to price the fair average with ev
 ```
 
-(11 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
