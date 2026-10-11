@@ -1,6 +1,5 @@
 package com.tjshea.vigilant.data.tracker
 
-import com.tjshea.vigilant.data.JsonSplit
 import com.tjshea.vigilant.data.match.TeamMatcher
 import com.tjshea.vigilant.data.novig.NovigText
 import com.tjshea.vigilant.data.reference.Op4Budget
@@ -56,8 +55,6 @@ class Op4Closes(
         return out
     }
 
-    private class Held(val markets: OpMarkets)
-
     private suspend fun lookup(league: League, b: TrackedBet): CloseLookup {
         val pick = BetGrader.pickOf(b) ?: return CloseLookup.None("Couldn't read this bet's market")
         val m = NovigText.parseMatchup(b.eventName) ?: return CloseLookup.None("Couldn't read the teams")
@@ -107,62 +104,20 @@ class Op4Closes(
     }
 
     private val ticksCache = java.util.concurrent.ConcurrentHashMap<String, List<com.tjshea.vigilant.data.reference.Op4Tick>>()
-    private val marketsHeld = java.util.concurrent.ConcurrentHashMap<String, Held>()
+    private val catalog = com.tjshea.vigilant.data.reference.Op4Catalog(client, budget, store, clock)
 
-    private suspend fun tournamentId(league: League, sport: Int): Long? {
-        val raw = store.get("tournaments|$sport", MONTH_MS) ?: run {
-            if (!budget.mayBuy()) throw com.tjshea.vigilant.data.keys.CreditsHeldBackException("OddsPapi Free's daily share is spent")
-            client.billable("/v4/tournaments", listOf("sportId" to sport.toString()), reserve = Op4Budget.RESERVE).also { store.put("tournaments|$sport", it) }
-        }
-        return OpBooks.tournamentFor(league, OpParser.tournaments(raw))?.id
-    }
-
-    private suspend fun fixtures(tournament: Long, startMs: Long): List<Op4Fixture> {
-        val from = startMs - GAP_MS
-        val to = startMs + GAP_MS
-        // 6-hour windows share one request: the day's bets in one league are usually one or two windows.
-        val key = "fx|$tournament|${from / WINDOW_MS}"
-        val raw = store.get(key, FIXTURES_MS) ?: run {
-            if (!budget.mayBuy()) throw com.tjshea.vigilant.data.keys.CreditsHeldBackException("OddsPapi Free's daily share is spent")
-            client.billable(
-                "/v4/fixtures",
-                listOf("tournamentId" to tournament.toString(), "from" to Instant.ofEpochMilli((from / WINDOW_MS) * WINDOW_MS).toString(), "to" to Instant.ofEpochMilli((from / WINDOW_MS + 2) * WINDOW_MS).toString()),
-                reserve = Op4Budget.RESERVE,
-            ).also { store.put(key, it) }
-        }
-        return Op4Parser.fixtures(raw)
-    }
-
-    private suspend fun markets(league: League, sport: Int): OpMarkets {
-        marketsHeld[league.novigName]?.let { return it.markets }
-        val raw = store.get("markets", MONTH_MS) ?: run {
-            if (!budget.mayBuy()) throw com.tjshea.vigilant.data.keys.CreditsHeldBackException("OddsPapi Free's daily share is spent")
-            // The whole catalogue (every sport) is megabytes: cut it element by element and keep only the sports Vigilant bets.
-            val all = client.billable("/v4/markets", emptyList(), reserve = Op4Budget.RESERVE)
-            val parts = JsonSplit.elements(all)
-            val kept = if (parts == null) all else (0 until parts.size).map { parts.element(it) }.filter { e -> SPORT_FIELD.find(e)?.groupValues?.get(1)?.toIntOrNull() in SPORTS }.joinToString(",", "[", "]")
-            kept.also { store.put("markets", it) }
-        }
-        val rows = Regex("\"sportId\"\\s*:\\s*$sport\\b")
-        val parts = JsonSplit.elements(raw)
-        val mine = if (parts == null) raw else (0 until parts.size).map { parts.element(it) }.filter { rows.containsMatchIn(it) }.joinToString(",", "[", "]")
-        return OpMarkets(OpParser.markets(mine), league.novigName).also { marketsHeld[league.novigName] = Held(it) }
-    }
+    private suspend fun tournamentId(league: League, sport: Int): Long? = catalog.tournamentId(league, sport)
+    private suspend fun fixtures(tournament: Long, startMs: Long): List<Op4Fixture> = catalog.fixturesAround(tournament, startMs)
+    private suspend fun markets(league: League, sport: Int): OpMarkets = catalog.markets(league, sport)
 
     companion object {
         const val ID = "oddspapi_free"
         const val BOOK = "pinnacle"
         const val GAP_MS = 3 * 3_600_000L
-        const val WINDOW_MS = 6 * 3_600_000L
-        const val FIXTURES_MS = 12 * 3_600_000L
-        const val MONTH_MS = 30 * 86_400_000L
 
         /** The free plan's history starts January 2026 (docs: get-historical-odds). */
         val HISTORY_FROM_MS: Long = Instant.parse("2026-01-01T00:00:00Z").toEpochMilli()
 
-        /** Basketball 11, baseball 13, American football 14, ice hockey 15 (docs: get-account's sport ids). */
-        val SPORTS = setOf(11, 13, 14, 15)
-        private val SPORT_FIELD = Regex("\"sportId\"\\s*:\\s*(\\d+)")
 
         fun leagueOf(b: TrackedBet): League? =
             Leagues.ALL.firstOrNull { it.novigName.equals(b.league, true) || it.displayName.equals(b.league, true) }?.takeIf { OpBooks.supports(it) }

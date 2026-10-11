@@ -276,3 +276,77 @@ class Op4Store(private val file: File?, private val clock: () -> Long = System::
         }
     }
 }
+
+/**
+ * The lookups every OddsPapi v4 use needs and that cost BILLABLE requests, each cached on disk ([Op4Store]) and gated by [Op4Budget]: a league's tournament id and the market catalogue (30 days), and a league's game list
+ * (12 hours per window). Shared by the closing-line source ([com.tjshea.vigilant.data.tracker.Op4Closes]) and the fair-odds source ([Op4Feed]).
+ */
+class Op4Catalog(
+    private val client: OddsPapi4Client,
+    private val budget: Op4Budget,
+    private val store: Op4Store,
+    private val clock: () -> Long = System::currentTimeMillis,
+) {
+    private val marketsHeld = java.util.concurrent.ConcurrentHashMap<String, OpMarkets>()
+
+    private fun held() = com.tjshea.vigilant.data.keys.CreditsHeldBackException("OddsPapi Free's daily share is spent")
+
+    suspend fun tournamentId(league: com.tjshea.vigilant.data.scanner.League, sport: Int): Long? {
+        val raw = store.get("tournaments|$sport", MONTH_MS) ?: run {
+            if (!budget.mayBuy()) throw held()
+            client.billable("/v4/tournaments", listOf("sportId" to sport.toString()), reserve = Op4Budget.RESERVE).also { store.put("tournaments|$sport", it) }
+        }
+        return OpBooks.tournamentFor(league, OpParser.tournaments(raw))?.id
+    }
+
+    /** The league's games within 3 hours of [startMs] (one request per 6-hour window). */
+    suspend fun fixturesAround(tournament: Long, startMs: Long): List<Op4Fixture> = fixturesBetween(tournament, startMs - GAP_MS, startMs + GAP_MS)
+
+    /** The league's games between [fromMs] and [toMs], read in 6-hour-aligned windows, each cached 12 hours. */
+    suspend fun fixturesBetween(tournament: Long, fromMs: Long, toMs: Long): List<Op4Fixture> {
+        val out = ArrayList<Op4Fixture>()
+        var w = fromMs / WINDOW_MS
+        val last = toMs / WINDOW_MS
+        while (w <= last) {
+            val key = "fx|$tournament|$w"
+            val raw = store.get(key, FIXTURES_MS) ?: run {
+                if (!budget.mayBuy()) throw held()
+                client.billable(
+                    "/v4/fixtures",
+                    listOf("tournamentId" to tournament.toString(), "from" to Instant.ofEpochMilli(w * WINDOW_MS).toString(), "to" to Instant.ofEpochMilli((w + 1) * WINDOW_MS).toString()),
+                    reserve = Op4Budget.RESERVE,
+                ).also { store.put(key, it) }
+            }
+            out += Op4Parser.fixtures(raw)
+            w++
+        }
+        return out.distinctBy { it.id }
+    }
+
+    suspend fun markets(league: com.tjshea.vigilant.data.scanner.League, sport: Int): OpMarkets {
+        marketsHeld[league.novigName]?.let { return it }
+        val raw = store.get("markets", MONTH_MS) ?: run {
+            if (!budget.mayBuy()) throw held()
+            // The whole catalogue (every sport) is megabytes: cut it element by element and keep only the sports Vigilant bets.
+            val all = client.billable("/v4/markets", emptyList(), reserve = Op4Budget.RESERVE)
+            val parts = com.tjshea.vigilant.data.JsonSplit.elements(all)
+            val kept = if (parts == null) all else (0 until parts.size).map { parts.element(it) }.filter { e -> SPORT_FIELD.find(e)?.groupValues?.get(1)?.toIntOrNull() in SPORTS }.joinToString(",", "[", "]")
+            kept.also { store.put("markets", it) }
+        }
+        val rows = Regex("\"sportId\"\\s*:\\s*$sport\\b")
+        val parts = com.tjshea.vigilant.data.JsonSplit.elements(raw)
+        val mine = if (parts == null) raw else (0 until parts.size).map { parts.element(it) }.filter { rows.containsMatchIn(it) }.joinToString(",", "[", "]")
+        return OpMarkets(OpParser.markets(mine), league.novigName).also { marketsHeld[league.novigName] = it }
+    }
+
+    companion object {
+        const val GAP_MS = 3 * 3_600_000L
+        const val WINDOW_MS = 6 * 3_600_000L
+        const val FIXTURES_MS = 12 * 3_600_000L
+        const val MONTH_MS = 30 * 86_400_000L
+
+        /** Basketball 11, baseball 13, American football 14, ice hockey 15 (docs: get-account's sport ids). */
+        val SPORTS = setOf(11, 13, 14, 15)
+        private val SPORT_FIELD = Regex("\"sportId\"\\s*:\\s*(\\d+)")
+    }
+}
