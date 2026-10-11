@@ -385,10 +385,10 @@ class SettingsPagesTest {
         // every switch writes its own setting and nothing else
         compose.onNodeWithTag("apiSwitch-PINNWIRE").performScrollTo().performClick()
         compose.waitForIdle()
-        assertTrue(!settings.usePinnwire && settings.usePinnapi && settings.usePinnacle)
+        assertTrue(!settings.gates.usePinnwire && settings.gates.usePinnapi && settings.usePinnacle)
         compose.onNodeWithTag("apiSwitch-PINNODDS").performScrollTo().performClick()
         compose.waitForIdle()
-        assertTrue(!settings.usePinnodds)
+        assertTrue(!settings.gates.usePinnodds)
     }
 
     @Test

@@ -234,7 +234,7 @@ class OddsPapiTest {
         assertTrue("the picker keeps only Pinnacle here", picked.events.flatMap { it.markets }.none { it.bookKey == "obscurebook" })
         assertTrue(requests.any { it.requestUrl!!.encodedPath == "/en/fixtures/odds/main" && it.requestUrl!!.queryParameter("bookmakers") != null })
         requests.clear(); clockMs += OddsPapiFeed.TTL_MS + 1
-        val all = OpGamesSource(OddsPapiFeed(client()) { clockMs }, { clockMs }).odds(nfl, settings(alt = false, families = setOf(MarketFamily.MONEYLINE)).copy(opAllBooks = true))
+        val all = OpGamesSource(OddsPapiFeed(client()) { clockMs }, { clockMs }).odds(nfl, settings(alt = false, families = setOf(MarketFamily.MONEYLINE)).let { it.copy(gates = it.gates.copy(opAllBooks = true)) })
         assertTrue("every book the key carries is kept", all.events.flatMap { it.markets }.any { it.bookKey == "obscurebook" })
         assertTrue("and no book filter is sent", requests.filter { it.requestUrl!!.encodedPath == "/en/fixtures/odds/main" }.all { it.requestUrl!!.queryParameter("bookmakers") == null })
     }

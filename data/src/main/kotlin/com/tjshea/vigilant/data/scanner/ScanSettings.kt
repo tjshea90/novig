@@ -390,12 +390,6 @@ data class ScanSettings(
     /** OddsPapi: read every game in depth for its alternate lines (one request a game); off, the main lines of a whole tournament come in one request. */
     val opAltLines: Boolean = true,
     /**
-     * OddsPapi v5: price the fair line with EVERY book the key carries (Tj, 2026-10-11: "use as many as possible to get fair odds averages"), not only the reference books picked in Settings and the extras. Each book is
-     * devigged on its own and averaged (Market average / Blend), so more books make the average and its median guard steadier; regional clones of one operator (bet365.de, bet365.es) count once, and
-     * books with a wide margin or stale prices are still left out ([WideQuotes], the freshness rule). Off by default.
-     */
-    val opAllBooks: Boolean = false,
-    /**
      * Unabated Free API (Tj, 2026-10-11; UNABATED_API.md): DraftKings, FanDuel, MGM, Caesars, theScore and Fanatics' lines and props, 15 s delayed, one request per 5 s, no credits. On (and a key saved and
      * answering) it joins the scan LAST in the source order, so it prices only the lines no better feed sent (a fallback by line), and nothing else rests for it. Off by default; off, the app is what it was.
      */
@@ -405,13 +399,8 @@ data class ScanSettings(
      * (v5, B2B trial). Off by default.
      */
     val oddsPapiFree: Boolean = false,
-    /**
-     * Per-API switches (Tj, 2026-10-11: "toggle on and off any apis ... not using any API at all which is toggled off"). [usePinnacle] stays the switch for the Pinnacle boards as a whole; these turn the three
-     * hosts behind it off one by one: PinnWire, pinnapi and the Pinnodds account (its REST board and its live engine). On by default, as the app always was.
-     */
-    val usePinnwire: Boolean = true,
-    val usePinnapi: Boolean = true,
-    val usePinnodds: Boolean = true,
+    /** The newer per-API switches and OddsPapi's every-book mode, in one group (a settings class this wide runs out of JVM argument slots: [ApiGates]). */
+    val gates: ApiGates = ApiGates(),
     /**
      * Research mode (Tj, 2026-10-09: "just make it simple for me to run"): ONE switch that turns on every recorder that places nothing: the live feed test, the burst recorder, the paper lab, the paper bid lab
      * and (with a Pinnodds key saved) Pinnodds live in PAPER mode. It never turns on a real-money feature. Off by default; STOP ALL stops it.
@@ -1234,3 +1223,17 @@ data class ScanSettings(
         val ALERT_MIN_EV_CHOICES = listOf(0.0, 0.02, 0.03, 0.04)
     }
 }
+
+/**
+ * Per-API switches (Tj, 2026-10-11: "toggle on and off any apis ... not using any API at all which is toggled off") and OddsPapi's every-book mode. [usePinnacle] stays the switch for the Pinnacle boards as a whole;
+ * these turn the three hosts behind it off one by one: PinnWire, pinnapi and the Pinnodds account (its REST board and its live engine). [opAllBooks] (Tj, 2026-10-11: "use as many as possible to get fair odds averages"):
+ * OddsPapi v5 prices the fair line with EVERY book the key carries, not only the reference books picked in Settings and the extras; each is devigged on its own and averaged, regional clones of one operator count
+ * once, and wide-margin or stale books are still left out. On by default except [opAllBooks], as the app always was.
+ */
+@kotlinx.serialization.Serializable
+data class ApiGates(
+    val usePinnwire: Boolean = true,
+    val usePinnapi: Boolean = true,
+    val usePinnodds: Boolean = true,
+    val opAllBooks: Boolean = false,
+)

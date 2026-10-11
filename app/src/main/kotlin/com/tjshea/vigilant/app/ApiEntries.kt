@@ -31,9 +31,9 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         PARLAY -> s.useParlay
         PROPLINE -> s.usePropLine
         ODDS_API -> s.useOddsApi
-        PINNWIRE -> s.usePinnacle && s.usePinnwire
-        PINNAPI -> s.usePinnacle && s.usePinnapi
-        PINNODDS -> s.usePinnodds
+        PINNWIRE -> s.usePinnacle && s.gates.usePinnwire
+        PINNAPI -> s.usePinnacle && s.gates.usePinnapi
+        PINNODDS -> s.gates.usePinnodds
         KALSHI -> s.useKalshi
         POLYMARKET -> s.usePolymarket
     }
@@ -46,9 +46,9 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         PARLAY -> s.copy(useParlay = on)
         PROPLINE -> s.copy(usePropLine = on)
         ODDS_API -> s.copy(useOddsApi = on)
-        PINNWIRE -> s.copy(usePinnwire = on, usePinnacle = s.usePinnacle || on)
-        PINNAPI -> s.copy(usePinnapi = on, usePinnacle = s.usePinnacle || on)
-        PINNODDS -> s.copy(usePinnodds = on)
+        PINNWIRE -> s.copy(gates = s.gates.copy(usePinnwire = on), usePinnacle = s.usePinnacle || on)
+        PINNAPI -> s.copy(gates = s.gates.copy(usePinnapi = on), usePinnacle = s.usePinnacle || on)
+        PINNODDS -> s.copy(gates = s.gates.copy(usePinnodds = on))
         KALSHI -> s.copy(useKalshi = on)
         POLYMARKET -> s.copy(usePolymarket = on)
     }

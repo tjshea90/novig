@@ -71,8 +71,8 @@ class OddsPapiFeed(private val client: OddsPapiClient, private val clock: () -> 
         val markets = marketsFor(league)
         val cat = runCatching { bookCatalog() }.getOrDefault(emptyList())
         // Every book: no `bookmakers` filter at all (the key's whole catalogue answers) and every catalogue book is kept.
-        val wanted = if (settings.opAllBooks && cat.isNotEmpty()) OpBooks.everyBook(cat) else OpBooks.wanted(settings.referenceBooks, settings.opExtraBooks)
-        val slugs = if (settings.opAllBooks && cat.isNotEmpty()) emptyList() else OpBooks.slugsFor(wanted, cat)
+        val wanted = if (settings.gates.opAllBooks && cat.isNotEmpty()) OpBooks.everyBook(cat) else OpBooks.wanted(settings.referenceBooks, settings.opExtraBooks)
+        val slugs = if (settings.gates.opAllBooks && cat.isNotEmpty()) emptyList() else OpBooks.slugsFor(wanted, cat)
         val appKeyOf = keyTable(cat)
         val bookParam = if (slugs.isEmpty()) emptyList() else listOf("bookmakers" to slugs.joinToString(","))
         val wantProps = MarketFamily.PLAYER_PROPS in settings.families
