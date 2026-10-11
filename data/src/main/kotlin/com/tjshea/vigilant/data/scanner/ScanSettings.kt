@@ -892,6 +892,9 @@ data class ScanSettings(
     /** Vigilant's own scan, and the APIs behind it, can run (both scanners, or Vigilant only). */
     val vigilantOn: Boolean get() = scanner != ScannerMode.CNO
 
+    /** Live games only mode is on: no scan reads the REST board and the list holds the real-time lane's bets alone. */
+    val liveOnly: Boolean get() = gates.liveOnly.on
+
     /** The scanner choice as it runs. */
     val scannerNow: ScannerMode get() = scanner
 
@@ -1281,6 +1284,28 @@ data class ApiGates(
     val sgoAllBooks: Boolean = false,
     /** PropLine: every sportsbook it lists (about 30, one request either way), not only the picked ones. */
     val propLineAllBooks: Boolean = false,
+    /** Live games only mode (Tj, 2026-10-11): see [LiveOnlyMode]. */
+    val liveOnly: LiveOnlyMode = LiveOnlyMode(),
+)
+
+/**
+ * "Live games only" mode (Tj, 2026-10-11): only the real-time lane runs (Pinnodds + Novig sockets), only live bets are listed, and everything the lane does not need is switched OFF. [on] is the mode;
+ * the rest is what was on before, so that switching it off puts it all back ([com.tjshea.vigilant.app.LiveOnly] does both). The saved fields are only meaningful while [on].
+ */
+@kotlinx.serialization.Serializable
+data class LiveOnlyMode(
+    val on: Boolean = false,
+    /** [com.tjshea.vigilant.app.ApiEntry] names that were on. */
+    val apis: Set<String> = emptySet(),
+    val scanner: String = "",
+    val autoScan: String = "",
+    val maker: Boolean = false,
+    val autoBet: Boolean = false,
+    val burstRecorder: Boolean = false,
+    val feedRace: Boolean = false,
+    val altLab: Boolean = false,
+    val researchMode: Boolean = false,
+    val burstTrade: Boolean = false,
 )
 
 /**
