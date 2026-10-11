@@ -186,6 +186,12 @@ data class TrackedBet(
      * it off, because the lens made nothing an outlier). Never saved; null on every bet in the store.
      */
     val outlierListed: Boolean? = null,
+    /**
+     * The start time the bet was logged with, kept when the game's real start turned out different (Tj, 2026-10-11: "Start times are frozen when a bet is logged, so late or early starts get the wrong close"):
+     * [startsTs] then holds the start Novig now gives (a delayed game) or the moment it was seen in play (a game that began early, tennis above all), and [startsNote] says which. Null: never changed.
+     */
+    val startsLoggedTs: Long? = null,
+    val startsNote: String? = null,
 ) {
     /** Bought to lock in another bet's profit ([lockFor]). */
     val isLock: Boolean get() = lockFor != null
@@ -707,6 +713,8 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
     suspend fun observe(result: ScanResult): Boolean {
         val now = clock()
         val byKey = result.opportunities.associateBy { it.market.marketId to it.outcome.outcomeId }
+        // The game's real start first: a bet's close, its "pregame" reads and its result all hang on it.
+        val moved = syncStarts(byKey, now)
         fun fresh(b: TrackedBet): Opportunity? {
             if (b.status != BetStatus.PENDING || now >= b.startsTs) return null
             val o = byKey[b.marketId to b.outcomeId] ?: return null
@@ -716,7 +724,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             val aged = b.nowAtMs == null || now - b.nowAtMs >= OBSERVE_REFRESH_MS
             return o.takeIf { changed || aged }
         }
-        if (store.read().none { fresh(it) != null }) return false
+        if (store.read().none { fresh(it) != null }) return moved
         // The scan's fair line is also the bet's EV now (the Tracker's "now +3% EV"), and its books are the bet's books.
         store.update { list ->
             list.map { b ->
@@ -724,6 +732,15 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
                 applyFair(b, o, now, VIA_VIGILANT)
             }
         }
+        return true
+    }
+
+    /**
+     * Brings each open bet's start to the game's real one as the scan sees it ([startChange]). Only a changed bet is written.
+     */
+    private suspend fun syncStarts(byKey: Map<Pair<String, String>, Opportunity>, now: Long): Boolean {
+        if (store.read().none { startChange(it, byKey[it.marketId to it.outcomeId], now) != null }) return false
+        store.update { list -> list.map { b -> startChange(b, byKey[b.marketId to b.outcomeId], now) ?: b } }
         return true
     }
 
@@ -971,6 +988,32 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
         const val SOURCE_TAIL = "tail"
 
         /** [TrackedBet.nowVia]: whose fair line the current EV rests on. */
+        /** A start Novig now gives is adopted when it differs from the bet's by at least this much (a few minutes is noise between feeds)… */
+        const val START_SHIFT_MS = 3 * 60_000L
+
+        /** …and by at most this much (a day and a half: past that it is another game or a bad row). */
+        const val MAX_START_SHIFT_MS = 36 * 3_600_000L
+
+        /**
+         * [b] with its start made the game's real one, or null when nothing changes. [o]: the scan's line for the bet (null: not seen). A game Novig has IN PLAY while the bet's start is still ahead began
+         * early: its start is now the moment the scan saw it (so a read after that is not "pregame", and the last true read before it is the close); a game Novig still has pre-game at another
+         * start (a delay, a rescheduling) takes Novig's start, which reopens the close for the new time. The logged start is kept in [TrackedBet.startsLoggedTs].
+         */
+        fun startChange(b: TrackedBet, o: Opportunity?, now: Long): TrackedBet? {
+            o ?: return null
+            if (b.status != BetStatus.PENDING || b.isLock) return null
+            val e = o.event
+            val logged = b.startsLoggedTs ?: b.startsTs
+            if (e.isLive) {
+                if (now >= b.startsTs) return null
+                val at = minOf(now, o.bookFetchedAtMs ?: now).coerceAtLeast(b.createdAtMs)
+                return b.copy(startsTs = at, startsLoggedTs = logged, startsNote = "started early: Novig had it in play ${(b.startsTs - at) / 60_000L} min before its listed start")
+            }
+            val shift = e.startsTs - b.startsTs
+            if (e.startsTs <= 0L || kotlin.math.abs(shift) < START_SHIFT_MS || kotlin.math.abs(shift) > MAX_START_SHIFT_MS) return null
+            return b.copy(startsTs = e.startsTs, startsLoggedTs = logged, startsNote = "start moved ${if (shift > 0) "+" else "-"}${kotlin.math.abs(shift) / 60_000L} min by Novig")
+        }
+
         const val VIA_CNO = "cno"
         const val VIA_VIGILANT = "vigilant"
         /** [TrackedBet.nowVia]: every book's price from ParlayAPI, judged with CNO's check ([ParlayBooks]), when CNO didn't have the bet. */
