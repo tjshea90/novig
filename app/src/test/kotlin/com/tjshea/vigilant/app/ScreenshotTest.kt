@@ -316,7 +316,7 @@ class ScreenshotTest {
         compose.onAllNodes(androidx.compose.ui.test.hasScrollToKeyAction()).onFirst().performScrollToKey(dallas.key)
         compose.onNodeWithText("Dallas Cowboys").performClick()
         // The sheet scrolls: since v0.52.0 a +EV line also shows the bid 4% under the fair (the Bids tab's margin), so these sit lower.
-        compose.onNodeWithText("FAIR ODDS: BLEND · POWER").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("FAIR ODDS: BLEND · WORST CASE").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Track").performScrollTo().assertIsDisplayed()
     }
 
