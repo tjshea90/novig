@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.app.ui.LocalClock
 import com.tjshea.vigilant.app.ui.TrackerScreen
@@ -63,12 +64,14 @@ class BetHistoryUiTest {
         compose.onNodeWithTag("smartFilter").assertExists()
         compose.onNodeWithTag("shareBetsCard").performScrollTo().assertExists()
         compose.onNodeWithText("3 day files kept", substring = true).assertExists()
-        compose.onNodeWithTag("dimBreakdown").performScrollTo().assertExists()
-        compose.onNodeWithText("Type of bet").performScrollTo().assertExists()
+        compose.onNode(androidx.compose.ui.test.hasScrollAction()).performScrollToNode(androidx.compose.ui.test.hasTestTag("dimBreakdown"))
+        compose.onNodeWithTag("dimBreakdown").assertExists()
+        compose.onNodeWithText("Type of bet").assertExists()
         // Splitting by the star rating shows a row for the bets' rating.
-        compose.onNodeWithText("Star rating").performScrollTo().performClick()
+        compose.onNodeWithText("Star rating").performClick()
         assertTrue(compose.onAllNodesWithTag("dimBreakdown").fetchSemanticsNodes().isNotEmpty())
-        compose.onNodeWithTag("shareBetsButton").performScrollTo().performClick()
+        compose.onNode(androidx.compose.ui.test.hasScrollAction()).performScrollToNode(androidx.compose.ui.test.hasTestTag("shareBetsCard"))
+        compose.onNodeWithTag("shareBetsButton").performClick()
         assertEquals(com.tjshea.vigilant.app.BetShare.Range.ALL, shared)
     }
 
