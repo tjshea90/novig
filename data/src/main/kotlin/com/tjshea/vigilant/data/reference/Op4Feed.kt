@@ -138,6 +138,7 @@ class Op4Feed(
         val wantProps = MarketFamily.PLAYER_PROPS in settings.families
         val perDay = settings.gates.op4Fair
         var bought = 0
+        var missing = 0
         var stopped: String? = null
         val sportKey = league.oddsApiSportKey
         for (f in list) {
@@ -152,6 +153,12 @@ class Op4Feed(
                 client.billable("/v4/odds", params, reserve = Op4Budget.RESERVE)
             } catch (e: com.tjshea.vigilant.data.keys.AllKeysExhaustedException) { stopped = "monthly requests used up"; break }
             catch (e: com.tjshea.vigilant.data.keys.CreditsHeldBackException) { stopped = "reserve kept"; break }
+            catch (e: ReferenceException) {
+                // A listed game OddsPapi holds no odds for yet (404 FIXTURE_NOT_FOUND, Tj's screen 2026-10-11) is no price, never a failed scan: it is left alone for a while and the next game is read.
+                countFair(); bought++
+                if (e.message?.contains("FIXTURE_NOT_FOUND") == true) { games[f.id] = GameRead(clock(), null, null); missing++; continue }
+                stopped = e.message?.take(80); break
+            }
             countFair(); bought++
             val readAt = clock()
             val g = Op4Odds.parse(raw) ?: continue
@@ -171,7 +178,7 @@ class Op4Feed(
         val fresh = list.mapNotNull { games[it.id]?.takeIf { r -> now - r.atMs < KEEP_MS || r.atMs >= now - KEEP_MS } }
         val g = fresh.mapNotNull { it.game }
         val p = fresh.mapNotNull { it.props }
-        lastReads[league.novigName] = "${list.size} games listed, $bought read now, ${g.size} with prices (${g.sumOf { it.markets.size }} quotes, ${g.flatMap { it.markets }.map { it.bookKey }.toSet().size} books)" +
+        lastReads[league.novigName] = "${list.size} games listed, $bought read now, ${g.size} with prices${if (missing > 0) ", $missing listed with no odds yet" else ""} (${g.sumOf { it.markets.size }} quotes, ${g.flatMap { it.markets }.map { it.bookKey }.toSet().size} books)" +
             (stopped?.let { " · stopped: $it" } ?: "") + " · fair requests today ${fairSpentToday()}/${if (perDay >= Int.MAX_VALUE) "all" else perDay}"
         return LeagueRead(now, g, p)
     }
