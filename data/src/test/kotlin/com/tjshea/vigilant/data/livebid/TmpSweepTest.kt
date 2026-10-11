@@ -1,4 +1,5 @@
 package com.tjshea.vigilant.data.livebid
+import com.tjshea.vigilant.engine.MarketFee
 import org.junit.Test
 class TmpSweepTest {
     @Test fun sweep() {
