@@ -130,22 +130,22 @@ object BetHistoryExport {
         fun write(w: BufferedWriter, bets: List<TrackedBet>, bids: List<BetHistory.BidRow>, now: Long, range: String, betFiles: List<String>, bidFile: String?) {
             fun ln(s: String = "") { w.write(s); w.write("\n") }
             ln("# Vigilant bet history ($range)")
-            ln()
+            ln("")
             ln("Generated ${BetHistory.iso(now)} by Vigilant (format ${BetHistory.FORMAT}). **${bets.size} bets and bid fills** (${bets.count { it.isBid }} are bid fills), **${bids.size} bids posted**" +
                 (bets.minByOrNull { it.createdAtMs }?.let { ", from ${BetHistory.day(it.createdAtMs)} to ${BetHistory.day(bets.maxOf { b -> b.createdAtMs })}" } ?: "") + ".")
-            ln()
+            ln("")
             ln("## Your task")
             ln("Tj bets on Novig (a US exchange) with a +EV scanner, **Vigilant**. The goal is PROFIT through positive EV that the CLOSING LINE confirms. From the files below find (1) which kinds of bets and bids beat the close and are")
             ln("profitable and which do not, (2) whether the app's own star rating, sharp-book check and agreement counts predict beating the close, (3) specific filters, thresholds and rule changes for the auto-bet")
             ln("and the auto-bid desk (name the setting or the code: Presets.kt, SharpVeto.kt, AutoBet.kt, MakerRules.kt, BetRating.kt), (4) data-quality problems in the logging itself. Judge groups by CLV first (it needs far fewer")
             ln("bets than profit to say anything): a group wants roughly 100+ bets with a true close before CLV means much and 1,000+ before ROI does. State the sample size and t-statistic behind every claim, say when the sample is too small, and")
             ln("do not recommend a change on a handful of bets. Bets and bids are different instruments (a bid can be picked off; a bet cannot): read them apart.")
-            ln()
+            ln("")
             ln("## Files")
             betFiles.forEach { ln("- `$it`: bets and bid fills, one JSON object per line, oldest first") }
             bidFile?.let { ln("- `$it`: every bid posted (filled or not), one JSON object per line") }
             ln("- this README: dictionary, definitions, summary tables and automatic findings")
-            ln()
+            ln("")
             dictionary(::ln)
             headline(::ln, bets, bids, now)
             splits(::ln, bets, now)
@@ -166,7 +166,7 @@ object BetHistoryExport {
             ln("- **how**: auto (auto-bet or auto-bid) / manual / lock. **made**: bet (taker) / bid (maker fill). **leadMin**: minutes before the start when placed. **liquidity**: dollars Novig had at the price. **result**: won / lost / push / void / fmv / open; **profit** in dollars, **roi** = profit/stake.")
             ln("- `outlier: true` = an EV beyond +-" + String.format(Locale.US, "%.0f%%", BetTracker.OUTLIER_EV * 100) + " that the app leaves out of its averages (so do the tables here); `lockFor` = a bet that locks in another's profit (not a pick).")
             ln("- A field absent from a line is unknown for that bet (never 0 or empty). Times are America/New_York.")
-            ln()
+            ln("")
         }
 
         private fun headline(ln: (String) -> Unit, bets: List<TrackedBet>, bids: List<BetHistory.BidRow>, now: Long) {
@@ -174,7 +174,7 @@ object BetHistoryExport {
             ln(groupLine("All", bets, now))
             ln(groupLine("Bets (taker orders)", bets.filter { !it.isBid }, now))
             ln(groupLine("Bid fills", bets.filter { it.isBid }, now))
-            ln()
+            ln("")
         }
 
         private val SPLIT_DIMS = listOf(
@@ -189,12 +189,12 @@ object BetHistoryExport {
                 val groups = bets.groupBy { BetDims.valueOf(it, dim, now) }
                 val ordered = groups.entries.sortedWith(compareBy({ BetDims.sortKey(dim, it.key) }, { -it.value.size }))
                 ordered.forEach { (label, g) -> ln(groupLine(label, g, now)) }
-                ln()
+                ln("")
             }
             // Bets and bids by week, to see a trend.
             ln("### By week placed")
             bets.groupBy { weekOf(it.createdAtMs) }.toSortedMap().forEach { (wk, g) -> ln(groupLine(wk, g, now)) }
-            ln()
+            ln("")
         }
 
         private fun weekOf(ms: Long): String {
@@ -208,7 +208,7 @@ object BetHistoryExport {
             val usable = bets.filter { !it.isOutlier && !it.isLock && it.status != BetStatus.VOID && ClosingLine.clv(it, now) != null }
             if (usable.size < 30) {
                 ln("Only ${usable.size} bets have a true close, too few for findings. Read the splits above with that in mind.")
-                ln()
+                ln("")
                 return
             }
             val dims = listOf(BetDim.MADE, BetDim.HOW, BetDim.KIND, BetDim.SPORT, BetDim.STARS, BetDim.SHARP, BetDim.BOOKS, BetDim.EV, BetDim.LEAD, BetDim.LIQUIDITY, BetDim.ODDS, BetDim.SCANNER)
@@ -238,12 +238,12 @@ object BetHistoryExport {
             show("Beating the close", scored.filter { it.second > 0 }.sortedByDescending { it.third }.take(15))
             show("Giving the close away", scored.filter { it.second < 0 }.sortedBy { it.third }.take(15))
             ln("(t = mean CLV over its standard error: |t| of 2+ is hard to get by luck for one group, but this scans hundreds of groups, so expect a few at |t| of 2-3 by chance alone: trust the ones that are large AND make sense.)")
-            ln()
+            ln("")
         }
 
         private fun bidSection(ln: (String) -> Unit, bids: List<BetHistory.BidRow>) {
             ln("## Bids posted (all, filled or not)")
-            if (bids.isEmpty()) { ln("No bid history in this export (the file kept by the app holds the last days of bids; older days are in the daily copies in Downloads/Vigilant/bets)."); ln(); return }
+            if (bids.isEmpty()) { ln("No bid history in this export (the file kept by the app holds the last days of bids; older days are in the daily copies in Downloads/Vigilant/bets)."); ln(""); return }
             fun line(label: String, g: List<BetHistory.BidRow>): String {
                 val filled = g.count { it.filled > 0 }
                 val full = g.count { it.fillPct >= 0.999 }
@@ -262,7 +262,7 @@ object BetHistoryExport {
             bids.groupBy { BetLedger.leadBand(it.postedLeadMin ?: 0) }.entries.sortedBy { BetLedger.LEAD_ORDER.indexOf(it.key) }.forEach { (k, g) -> ln(line(k, g)) }
             ln("### By scanner / auto")
             bids.groupBy { "${it.scanner}${if (it.auto) " (auto)" else " (by hand)"}" }.entries.sortedByDescending { it.value.size }.forEach { (k, g) -> ln(line(k, g)) }
-            ln()
+            ln("")
         }
 
         private fun quality(ln: (String) -> Unit, bets: List<TrackedBet>, now: Long) {
@@ -278,7 +278,7 @@ object BetHistoryExport {
             row("open", bets.count { it.status == BetStatus.PENDING })
             val bySource = bets.mapNotNull { ClosingLine.closeOf(it, now)?.second }.groupingBy { ClosingLine.sourceLabel(it) }.eachCount()
             ln("- true closes by source: " + bySource.entries.sortedByDescending { it.value }.joinToString(", ") { "${it.key} ${it.value}" }.ifEmpty { "none" })
-            ln()
+            ln("")
         }
     }
 
