@@ -897,7 +897,7 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
     ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(ignoreBadOdds = v)) } }
 
     SectionTitle("Devig method (advanced)")
-    Hint("How the sportsbooks' profit is taken out of a pair of odds. The methods differ most on long shots; Power is a good default.")
+    Hint("How the sportsbooks' profit is taken out of a pair of odds. The methods differ most on long shots. Worst case (the default) takes the lowest fair chance of the other four for each side, so an edge that shows survives them all: the safest. Closing lines found after a game use the same method, so CLV compares like with like.")
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         DevigMethod.entries.forEach { m ->
             FilterChip(selected = s.devigMethod == m, onClick = { onUpdate { it.copy(devigMethod = m) } }, label = { Text(m.displayName) })
