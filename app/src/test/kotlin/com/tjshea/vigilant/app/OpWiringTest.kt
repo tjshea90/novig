@@ -4,8 +4,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.tjshea.vigilant.data.keys.ApiProvider
 import com.tjshea.vigilant.data.keys.QuotaPolicy
-import com.tjshea.vigilant.data.reference.OutsideOp
-import com.tjshea.vigilant.data.reference.OutsideSgo
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.runBlocking
@@ -18,9 +16,9 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 /**
- * Tj, 2026-10-09: "make a toggle ... with it on use it to full power everywhere and turn redundant APIs off to save usage (keep free ones and ones that add data/speed/accuracy like Pinnodds) ... toggle off =
- * app exactly as before". With OddsPapi on and a key saved it prices every league it carries and the paid feeds rest for them; tennis keeps them; the free exchanges and Pinnodds stay; off, the source
- * list is the one the app built before OddsPapi existed and nothing is ever sent to it.
+ * Tj, 2026-10-11: "Confirm that all apis can be used at any time for any data as long as I have them toggled on, and if any are toggled off, they are not used or called at all" (this replaced 2026-10-09's
+ * "turn redundant APIs off to save usage"). With OddsPapi on and a key saved it prices every league it carries and every other API that is on is asked beside it; off, the source list is the one the app
+ * built before OddsPapi existed and nothing is ever sent to it.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [35])
@@ -61,7 +59,7 @@ class OpWiringTest {
     }
 
     @Test
-    fun `on with a key it leads and the paid feeds rest for the leagues it carries`() = runBlocking {
+    fun `on with a key it leads and no other API that is on rests for it`() = runBlocking {
         val c = app.container
         keys(c)
         val s = settings(true)
@@ -71,34 +69,37 @@ class OpWiringTest {
         assertEquals("oddspapi", sources.first().id)
         val forNfl = sources.filter { it.supports(nfl) }.map { it.id }
         assertTrue("oddspapi" in forNfl && "oddspapi-props" in forNfl)
-        assertTrue(forNfl.toString(), forNfl.none { it == "propline" || it == "oddsapi" || it.startsWith("parlay") || it == "pinnacle" })
-        assertTrue(forNfl.toString(), forNfl.any { it == "kalshi" } && forNfl.any { it == "polymarket" })
-        // tennis is not an OddsPapi league here: the other feeds keep it
+        assertTrue(forNfl.toString(), listOf("propline", "oddsapi", "parlay", "pinnacle", "kalshi", "polymarket").all { it in forNfl })
+        // tennis is not an OddsPapi league here: the other feeds that carry it are asked
         val forAtp = sources.filter { it.supports(atp) }.map { it.id }
         assertFalse("oddspapi" in forAtp)
-        assertTrue(forAtp.toString(), forAtp.any { it == "pinnacle" || it.startsWith("parlay") })
+        assertTrue(forAtp.toString(), forAtp.any { it == "pinnacle" } && forAtp.any { it.startsWith("parlay") })
     }
 
     @Test
-    fun `Pinnodds stays when its key is saved, the other Pinnacle feeds rest`() = runBlocking {
+    fun `Pinnodds is used whenever it is on with a key, whatever else is on`() = runBlocking {
         val c = app.container
         keys(c, pinnodds = true)
         val s = settings(true)
         assertTrue(c.pinnoddsActive(s))
-        assertTrue("Pinnacle's fresh push feed adds speed: it keeps pricing the NFL", c.referenceSources(s).filter { it.supports(nfl) }.any { it.id == "pinnacle" })
+        assertTrue("Pinnacle's fresh push feed keeps pricing the NFL", c.referenceSources(s).filter { it.supports(nfl) }.any { it.id == "pinnacle" })
+        // neither SportsGameOdds nor OddsPapi has to be on for it
+        assertTrue(c.pinnoddsActive(settings(false)))
+        // switched off in Settings › APIs it is not used, key or no key
+        assertFalse(c.pinnoddsActive(s.copy(gates = s.gates.copy(usePinnodds = false))))
         keys(c, pinnodds = false)
         assertFalse(c.pinnoddsActive(s))
     }
 
     @Test
-    fun `with SportsGameOdds Pro also on both lead and both rest the paid feeds`() = runBlocking {
+    fun `with SportsGameOdds Pro also on both lead and the paid feeds are still asked`() = runBlocking {
         val c = app.container
         keys(c, sgoKey = true)
         val s = settings(true, sgo = true)
         val ids = c.referenceSources(s).map { it.id }
         assertEquals(listOf("sgo", "sgo-props", "oddspapi", "oddspapi-props"), ids.take(4))
         val forNfl = c.referenceSources(s).filter { it.supports(nfl) }.map { it.id }
-        assertTrue(forNfl.toString(), forNfl.none { it == "propline" || it == "oddsapi" || it.startsWith("parlay") })
+        assertTrue(forNfl.toString(), listOf("propline", "oddsapi", "parlay").all { it in forNfl })
         // SGO earlier in the scan's source order wins a book both send
         assertTrue(com.tjshea.vigilant.data.scanner.Scanner.SOURCE_ORDER.indexOf("sgo") < com.tjshea.vigilant.data.scanner.Scanner.SOURCE_ORDER.indexOf("oddspapi"))
     }
@@ -125,7 +126,6 @@ class OpWiringTest {
             val off = c.referenceSources(settings(false), background, scan)
             val before = c.baseReferenceSources(settings(false), background, scan)
             assertEquals(before.map { it.javaClass.name + ":" + it.id }, off.map { it.javaClass.name + ":" + it.id })
-            assertTrue(off.none { it is OutsideOp || it is OutsideSgo })
         }
     }
 

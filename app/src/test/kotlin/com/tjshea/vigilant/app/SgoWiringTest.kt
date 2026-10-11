@@ -14,8 +14,9 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 /**
- * Tj, 2026-10-09: "redundant apis that do the same thing as sportsgamesodds pro should be turned off to save their usage ... Only use other apis at the same time ... if they are free or significantly
- * add". With the switch on and a key saved, SportsGameOdds prices every league it carries and the paid feeds rest for them; tennis, which it does not carry, keeps them; the free exchanges stay.
+ * Tj, 2026-10-11: "Confirm that all apis can be used at any time for any data as long as I have them toggled on, and if any are toggled off, they are not used or called at all" (this replaced 2026-10-09's
+ * "redundant apis ... should be turned off to save their usage"). With the switch on and a key saved, SportsGameOdds leads and EVERY other API that is on is still asked for every league it carries; off, it is
+ * never in the list and nothing is sent to it.
  */
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [35])
@@ -53,7 +54,7 @@ class SgoWiringTest {
     }
 
     @Test
-    fun `on with a key it leads and the paid feeds rest for the leagues it carries`() = runBlocking {
+    fun `on with a key it leads and no other API that is on rests for it`() = runBlocking {
         val c = app.container
         keys(c)
         val s = settings(true)
@@ -62,18 +63,16 @@ class SgoWiringTest {
         assertEquals("sgo", sources.first().id)
         val forNfl = sources.filter { it.supports(nfl) }.map { it.id }
         assertTrue("sgo" in forNfl && "sgo-props" in forNfl)
-        // the paid feeds that sell the same thing are not asked for the NFL
-        assertTrue(forNfl.toString(), forNfl.none { it == "propline" || it == "oddsapi" || it.startsWith("parlay") || it == "pinnacle" })
-        // free exchanges stay
-        assertTrue(forNfl.toString(), forNfl.any { it == "kalshi" } && forNfl.any { it == "polymarket" })
-        // tennis: SGO's game lines now carry it (v0.89.14) and the other feeds keep it too
+        // the paid feeds that sell the same thing are asked for the NFL too, and so are the free exchanges
+        assertTrue(forNfl.toString(), listOf("propline", "oddsapi", "parlay", "pinnacle", "kalshi", "polymarket").all { it in forNfl })
+        // tennis: SGO's game lines carry it (v0.89.14) and the other feeds that carry it are asked as well
         val forAtp = sources.filter { it.supports(atp) }.map { it.id }
         assertTrue("sgo" in forAtp && "sgo-props" !in forAtp)
-        assertTrue(forAtp.toString(), forAtp.any { it == "pinnacle" || it.startsWith("parlay") })
+        assertTrue(forAtp.toString(), forAtp.any { it == "pinnacle" } && forAtp.any { it.startsWith("parlay") })
     }
 
     @Test
-    fun `when SportsGameOdds stops answering the feeds it replaced come back`() = runBlocking {
+    fun `when SportsGameOdds stops answering it leaves the list and the other feeds are unchanged`() = runBlocking {
         val c = app.container
         keys(c)
         val s = settings(true)
@@ -103,7 +102,6 @@ class SgoWiringTest {
             val off = c.referenceSources(settings(false), background, scan)
             val before = c.baseReferenceSources(settings(false), background, scan)
             assertEquals("same sources, same order, same kinds (no wrapper)", before.map { it.javaClass.name + ":" + it.id }, off.map { it.javaClass.name + ":" + it.id })
-            assertTrue(off.none { it is com.tjshea.vigilant.data.reference.OutsideSgo })
         }
     }
 
