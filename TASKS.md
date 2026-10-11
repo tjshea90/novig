@@ -4731,3 +4731,9 @@ Tj verbatim: "If a bet ever becomes negative EV anywhere in the app on any scann
 ## TZZ: any sharp book that disagrees vetoes the bet and caps its rating (Tj, 2026-10-11 ~20:20Z)
 Tj verbatim: "If any sharp book disagrees that a bet is positive EV, it should be vetoed and not bet, and should not be a highly rated bet"
 - [x] DONE: `a.sharpAgainst` (any sharp book prices both sides and says not +EV) vetoes in every auto-bet lane whatever the sharp rule or a minimum star rating says (AutoBettor), refuses the manual Bet sheet (`BetTarget.sharpAgainst`), stops a bid priced above a sharp book's fair (MakerDesk); the rating already caps it at 2½★ (`BetRating.ceiling`). Tests: AutoBettorTest, ApiBettingTest.
+
+## TAA: live lane showed "Novig's feed has been quiet for 1791750248 s" and no bets; auto-bet stopped and did not fix itself (Tj, 2026-10-11 ~20:30Z)
+Tj verbatim (screenshot 4:24 PM: "Live: nothing shown, Novig's feed has been quiet for 1791750248 s", "Live games only" chip, "Scanned 55s ago", "Odds too old to compare"): "Auto bet stopped and didn't fix itself. And look at the screenshot, this is clearly an error. It also isn't holding live streaming odds for pinnodds and novig. No bets are showing up"
+- [ ] TAA1 The 1791750248 s is `now - 0`: Novig never delivered a book push in this run, and my "quiet" rule printed the epoch. Fix the rule (never "quiet for N s" from a zero stamp), make the banner say exactly what is missing (no game matched / Novig books not arrived + the stream's own reason / Pinnacle silent), re-assert the Novig subscription every 5 s so a closed or failed socket reconnects, and stop closing the shared Novig stream at the end of a background scan while the live engine runs (VigilantApp: `if (!onScreen) novig.stream?.close()`).
+- [ ] TAA2 Auto-bet: show what the recovery is doing on the Auto-bet tab; shorten its wait; find what else can stop auto-bet and clear itself.
+- [ ] TAA3 Tests, ship v0.89.26.
