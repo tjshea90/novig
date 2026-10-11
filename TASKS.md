@@ -4557,3 +4557,7 @@ Finding (his Diagnostics v0.89.2): scan sees tennis (155 Novig games, ATP 71/74 
 - [ ] TC1 Read what exists (TailTrade/LiveBid/Pinnodds live/lab) and why it never filled (Diagnostics: 21 orders sent, 0 filled, all "the offer was gone", median order 5.5 s); answer plausibility honestly.
 - [ ] TC2 Defensive twin: a watchdog for resting bids (any left up, even outside the app) that cancels one whose fair has moved against it.
 - [ ] TC3 Live anomaly engine design + paper mode first; maker side simultaneous.
+- [x] TB1 MakerRules.tennis + lean scan keeps game-line families while tennis is on (TennisBidTest, v0.89.4).
+- [x] TC1 Answered: the live sniper exists (TailScan/TailTaker = the "under 60 at 50% with 25 points" case; LadderScan/CoverWindows = cross-strike locks; LiveBid desk = maker side) but is OFF/paper, and the Pinnacle-fair parts died with the Pinnodds trial; every real taker order missed because Novig answers a live order in ~5.3 s.
+- [x] TC2 BidGuard (v0.89.5): resting orders with no expiry older than 30 min (Tj's setting) are cancelled, whoever posted them (BidGuardTest). Settings › Betting › Bid guard, on by default.
+- [ ] TC3 Next, Tj's call: one "Live sniper" switch that turns the tail taker (real, small stakes), the cover taker and tail-model maker bids on together; first send a Diagnostics after a live evening with Research mode + Live tail bets (paper) on, so the tail strikes seen can be read.
