@@ -107,7 +107,10 @@ fun OpportunityDetail(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(sharpStarred(o.selection, o.agreement.sharpAgrees), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Row {
+                    if (o.agreement.sharpAgrees) Text("★ ", color = SharpStarColor, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(o.selection, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
                 Text(
                     "${o.marketLabel} · ${o.league.displayName} · ${Format.startTime(o.event.startsTs)}",
                     style = MaterialTheme.typography.bodySmall,
