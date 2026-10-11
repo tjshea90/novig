@@ -1,0 +1,333 @@
+OddsPapi | Documentation overviewHome
+Docs
+Historical Data
+Coverage
+Account
+Join Discord
+US
+US
+Menu
+Home
+Docs
+Historical Data
+Coverage
+Account
+Join Discord
+OddsPapi Documentation v4
+OverviewREST API Endpoints
+Requests & Quota
+GET account
+POST account
+POST refresh api key
+GET languages
+GET sports
+GET bookmakers
+GET tournaments
+GET fixtures
+GET fixture
+GET markets
+GET participants
+GET odds
+GET odds by tournaments
+GET historical odds
+GET settlements
+GET scores
+Websocket API
+OddsPapi Documentation v4
+OverviewRequests & QuotaREST API EndpointsGET account
+POST account
+POST refresh api key
+GET languages
+GET sports
+GET bookmakers
+GET tournaments
+GET fixtures
+GET fixture
+GET markets
+GET participants
+GET odds
+GET odds by tournaments
+GET historical odds
+GET settlements
+GET scores
+Websocket APIB2B docs (v5) ↗Version: v4
+OddsPapi Sports Betting Odds API Documentation
+This documentation provides everything you need to start using the OddsPapi Sports Odds API — a real-time sports data service offering live betting odds, pre-match odds, player props, totals, spreads, and historical odds data from over 300 global bookmakers across 60+ sports. In just a few minutes, you’ll learn how to authenticate with your API key, request leagues and events, fetch bookmaker odds, and stream real-time line movements through our low-latency WebSocket feed.
+Step 1 – Get your API key
+Get your API key in your account settings
+Step 2 – Get leagues for a sport
+Get the list of tournaments for your favorite sports
+Details here
+GET/v4/tournaments?sportId=10&apiKey={{YOUR_API_KEY}}
+or
+curl "https://api.oddspapi.io/v4/tournaments?sportId=10&apiKey={{YOUR_API_KEY}}"
+[
+  {
+    "tournamentId": 17,
+    "tournamentSlug": "premier-league",
+    "tournamentName": "Premier League",
+    "categorySlug": "england",
+    "categoryName": "England",
+    "futureFixtures": 231,
+    "upcomingFixtures": 0,
+    "liveFixtures": 0
+  },
+  {
+    "tournamentId": 8,
+    "tournamentSlug": "laliga",
+    "tournamentName": "LaLiga",
+    "categorySlug": "spain",
+    "categoryName": "Spain",
+    "futureFixtures": 229,
+    "upcomingFixtures": 0,
+    "liveFixtures": 0
+  },
+  "{ /* more tournaments... */ }"
+]
+Step 3 – Get upcoming events and odds by leagues
+Get the tournaments ids from step 2 and separate them with commas to get a list of upcoming fixtures and odds from a bookmaker
+Use the oddsFormat parameter to show odds in either decimal or American format
+Details here
+GET/v4/odds-by-tournaments?bookmaker=pinnacle&tournamentIds=17,8&apiKey={{YOUR_API_KEY}}
+or
+curl "https://api.oddspapi.io/v4/odds-by-tournaments?bookmaker=pinnacle&tournamentIds=17,8&apiKey={{YOUR_API_KEY}}"
+[
+  {
+    "fixtureId": "id1000001764618978",
+    "participant1Id": 3,
+    "participant2Id": 35,
+    "sportId": 10,
+    "tournamentId": 17,
+    "seasonId": 130281,
+    "statusId": 0,
+    "hasOdds": true,
+    "startTime": "2025-12-08T20:00:00.000Z",
+    "trueStartTime": null,
+    "trueEndTime": null,
+    "updatedAt": "2025-12-02T08:01:48.812Z",
+    "bookmakerOdds": {
+      "pinnacle": {
+        "bookmakerIsActive": true,
+        "bookmakerFixtureId": "1620599468",
+        "fixturePath": "https://www.pinnacle.com/en/e/e/e/1620599468/#all",
+        "markets": {
+          "101": {
+            "outcomes": {
+              "101": {
+                "players": {
+                  "0": {
+                    "active": true,
+                    "betslip": null,
+                    "bookmakerOutcomeId": "home",
+                    "changedAt": "2025-12-07T22:50:48.515996+00:00",
+                    "limit": 5000,
+                    "playerName": null,
+                    "price": 5.01,
+                    "exchangeMeta": {}
+                  }
+                }
+              },
+              "102": {
+                "players": {
+                  "0": {
+                    "active": true,
+                    "betslip": null,
+                    "bookmakerOutcomeId": "draw",
+                    "changedAt": "2025-12-07T22:50:48.516257+00:00",
+                    "limit": 5000,
+                    "playerName": null,
+                    "price": 4.32,
+                    "exchangeMeta": {}
+                  }
+                }
+              },
+              "103": {
+                "players": {
+                  "0": {
+                    "active": true,
+                    "betslip": null,
+                    "bookmakerOutcomeId": "away",
+                    "changedAt": "2025-12-07T22:50:48.516384+00:00",
+                    "limit": 7704,
+                    "playerName": null,
+                    "price": 1.649,
+                    "exchangeMeta": {}
+                  }
+                }
+              }
+            },
+            "bookmakerMarketId": "line/29/1980/1620128138/3377661430/0/moneyline"
+          },
+          "104": {
+            "outcomes": {
+              "104": {
+                "players": {
+                  "0": {
+                    "active": true,
+                    "betslip": null,
+                    "bookmakerOutcomeId": "1620599418",
+                    "changedAt": "2025-12-07T21:33:08.962871+00:00",
+                    "limit": 705,
+                    "playerName": null,
+                    "price": 1.709,
+                    "exchangeMeta": {}
+                  }
+                }
+              },
+              "105": {
+                "players": {
+                  "0": {
+                    "active": true,
+                    "betslip": null,
+                    "bookmakerOutcomeId": "1620599419",
+                    "changedAt": "2025-12-07T21:33:08.963137+00:00",
+                    "limit": 500,
+                    "playerName": null,
+                    "price": 2.2,
+                    "exchangeMeta": {}
+                  }
+                }
+              }
+            },
+            "bookmakerMarketId": "1620128138/5608638792/1620599417"
+          }
+        }
+      }
+    }
+  },
+  {
+    "fixtureId": "id1000000861624232",
+    "participant1Id": 2820,
+    "participant2Id": 2849,
+    "sportId": 10,
+    "tournamentId": 8,
+    "seasonId": 130805,
+    "statusId": 0,
+    "hasOdds": true,
+    "startTime": "2025-12-08T20:00:00.000Z",
+    "trueStartTime": null,
+    "trueEndTime": null,
+    "updatedAt": "2025-11-30T14:00:59.994Z",
+    "bookmakerOdds": {
+      "pinnacle": {
+        "bookmakerIsActive": true,
+        "bookmakerFixtureId": "1620613130",
+        "fixturePath": "https://www.pinnacle.com/en/e/e/e/1620613130/#all",
+        "markets": {
+          "101": {
+            "outcomes": {
+              "101": {
+                "players": {
+                  "0": {
+                    "active": true,
+                    "betslip": null,
+                    "bookmakerOutcomeId": "home",
+                    "changedAt": "2025-12-07T20:45:17.225169+00:00",
+                    "limit": 9986,
+                    "playerName": null,
+                    "price": 1.751,
+                    "exchangeMeta": {}
+                  }
+                }
+              },
+              "102": {
+                "players": {
+                  "0": {
+                    "active": true,
+                    "betslip": null,
+                    "bookmakerOutcomeId": "draw",
+                    "changedAt": "2025-12-07T20:45:17.225297+00:00",
+                    "limit": 7500,
+                    "playerName": null,
+                    "price": 3.89,
+                    "exchangeMeta": {}
+                  }
+                }
+              },
+              "103": {
+                "players": {
+                  "0": {
+                    "active": true,
+                    "betslip": null,
+                    "bookmakerOutcomeId": "away",
+                    "changedAt": "2025-12-07T20:45:17.225365+00:00",
+                    "limit": 7500,
+                    "playerName": null,
+                    "price": 4.81,
+                    "exchangeMeta": {}
+                  }
+                }
+              }
+            },
+            "bookmakerMarketId": "line/29/2196/1620122243/3377596534/0/moneyline"
+          },
+          "104": {
+            "outcomes": {
+              "104": {
+                "players": {
+                  "0": {
+                    "active": true,
+                    "betslip": null,
+                    "bookmakerOutcomeId": "1620613118",
+                    "changedAt": "2025-12-07T20:45:15.476236+00:00",
+                    "limit": 848,
+                    "playerName": null,
+                    "price": 1.884,
+                    "exchangeMeta": {}
+                  }
+                }
+              },
+              "105": {
+                "players": {
+                  "0": {
+                    "active": true,
+                    "betslip": null,
+                    "bookmakerOutcomeId": "1620613119",
+                    "changedAt": "2025-12-07T20:45:15.476405+00:00",
+                    "limit": 773,
+                    "playerName": null,
+                    "price": 1.97,
+                    "exchangeMeta": {}
+                  }
+                }
+              }
+            },
+            "bookmakerMarketId": "1620122243/5608474224/1620613117"
+          }
+        }
+      }
+    }
+  },
+  "{ /* more fixtures... */ }"
+]
+Host
+All requests use the host https://api.oddspapi.io
+Authorization
+All endpoints require an API key to be passed as a request parameter:
+ParameterKeyValue
+AuthorizationapiKey{{YOUR_API_KEY}}
+Contact Us
+If you have any questions, need assistance, or would like to report an issue, feel free to reach out to us at [email protected].
+Next pageRequests & Quota
+Seen an error? Report itReportFollow Us
+View Live Football Scores
+Want to become an affiliate?Join us and earn commissions
+Coverage
+Map
+Latency
+Sportsbooks
+Sports
+Docs
+API
+WebSocket
+Historical Data
+API Status
+Company
+About
+Career
+Contact
+Blog
+Join our discord
+Legal
+Terms
+Privacy
