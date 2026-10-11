@@ -329,6 +329,11 @@ class AppContainer(private val app: Application) {
      * feeds leave them alone while it's set.
      */
     @Volatile var trading: NovigTradingClient? = null
+        private set
+
+    /** The Vigilant subaccount's key id (its wallet's address) while [trading] is set; null otherwise. */
+    @Volatile var subaccountKeyId: String? = null
+        private set
 
     /** The bid guard: takes down any resting order with no expiry that has been up too long (Tj, 2026-10-11). Runs for the life of the app; nothing happens without a trading key or with the switch off. */
     val bidGuard: com.tjshea.vigilant.data.novig.trading.BidGuard.Runner by lazy {
@@ -339,11 +344,6 @@ class AppContainer(private val app: Application) {
             { done -> done.forEach { (o, why) -> eventLog.record("BIDGUARD", com.tjshea.vigilant.data.diag.Level.WARN, "took down a resting order at ${(o.price * 100).toInt()}¢ x${o.remaining} on ${o.marketId.take(8)}: $why") } },
         )
     }
-        private set
-
-    /** The Vigilant subaccount's key id (its wallet's address) while [trading] is set; null otherwise. */
-    @Volatile var subaccountKeyId: String? = null
-        private set
 
     /** The Vigilant wallet's balance, shown on every notification ([withWallet]; Tj, 2026-10-02 21:51Z). */
     val wallet = WalletBalance(
