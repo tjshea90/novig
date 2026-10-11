@@ -257,7 +257,7 @@ fun NovigBettingSection(
     Text(
         "Vigilant can place a bet on Novig for you from a separate \"Vigilant\" wallet on your Novig account, and grade it from Novig's own books. " +
             "It is not the cash wallet your Novig app bets use: you add money to it here, and only bets placed from Vigilant use it. " +
-            "Every bet shows exactly what it will buy and asks you to confirm; nothing is sent before that, and it never bets a game that has started. " +
+            "Every bet shows exactly what it will buy and asks you to confirm; nothing is sent before that. The auto-bet only bets pregame; by hand you can also bet a game that is live (Novig charges its taker fee in play, and says so before you confirm). " +
             "Novig only lets an order through from a network it doesn't list as a VPN or proxy, and when you've opened the Novig app in the last 3 days. " +
             "Setting up and moving money need your management key (Novig › Profile › Settings › Betting & Novig account › Novig API key); you enter it once and it's saved on this phone.",
         style = MaterialTheme.typography.bodySmall,
@@ -522,8 +522,10 @@ fun ApiBetSheetContent(
             }
             Text(
                 "It's placed as one order that buys at ${Format.american(plan.limitPrice)} or better and never rests: if Novig's price moves against you first, " +
-                    "or nobody's selling, nothing is bought. Pregame bets pay no Novig fee.",
+                    "or nobody's selling, nothing is bought. " +
+                    if (plan.live) "In play Novig charges its taker fee: ${Format.money(plan.feeDollars)} of what you pay is fee." else "Pregame bets pay no Novig fee.",
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag("betFeeNote"),
             )
             Button(
                 onClick = onConfirm,
@@ -534,7 +536,7 @@ fun ApiBetSheetContent(
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                     Text("  Placing…")
                 } else {
-                    Text("Place bet · ${Format.money(plan.expectedCost)}", fontWeight = FontWeight.Bold)
+                    Text((if (plan.live) "Place LIVE bet · " else "Place bet · ") + Format.money(plan.expectedCost), fontWeight = FontWeight.Bold)
                 }
             }
         }
