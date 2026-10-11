@@ -198,3 +198,4 @@ day that changes.
 | v0.89.5 | code 190 | 2026-10-11T04:33Z | v0.89.5: bid guard (cancels resting orders with no expiry after 30 min, whoever posted them)
 | v0.89.6 | code 191 | 2026-10-11T04:46Z | v0.89.6: live bids Safety/Volume slider (one control sets margin, pull line, trust rules and stops; kept-edge self-check), plain-words page, advanced rules folded away
 | v0.89.8 | code 193 | 2026-10-11T05:25Z | v0.89.8: OddsPapi Free no longer errors on empty fixture windows, Unabated reads leagues whose sources call fails, OddsPapi Free prices scans by default, live-bid why-line names the Tennis switch
+| v0.89.9 | code 194 | 2026-10-11T05:45Z | v0.89.9: live sniper, one switch for taker, tail bettor, cover taker and bids at the slider position
