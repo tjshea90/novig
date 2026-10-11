@@ -48,7 +48,7 @@ object SgoKeyTest {
         lines += variants(client, leagueUsed)
         val tennis = tennisProbe(client)
         lines += tennis.first
-        return Result(true, lines.joinToString("\n"), if (tennis.second.isEmpty()) raw else raw + "\n\n----- tennis probe (Tj 2026-10-11: which tennis leagues and markets this key carries) -----\n" + tennis.second)
+        return Result(true, lines.joinToString("\n"), if (tennis.second.isEmpty()) raw else "----- tennis probe (Tj 2026-10-11: which tennis leagues and markets this key carries) -----\n" + tennis.second + "\n\n----- NFL answer (cut to fit the file) -----\n" + raw.take(300_000))
     }
 
     /**
