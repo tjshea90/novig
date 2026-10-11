@@ -247,9 +247,23 @@ class Op4Budget(private val client: OddsPapi4Client, private val clock: () -> Lo
         return client.spentToday(now) < dailyShare
     }
 
+    /**
+     * Whether the fair-odds feed may buy one `/v4/odds` read now ([perDay]: the daily figure Tj chose, 0 = never; [spentToday]: its reads so far today). It never spends the last [RESERVE] + [CLOSE_KEEP] requests of the
+     * period: those stay for the closing lines, which matter more.
+     */
+    fun mayBuyFair(perDay: Int, spentToday: Int): Boolean {
+        if (perDay <= 0 || spentToday >= perDay) return false
+        val acc = client.lastAccount ?: return true
+        val left = acc.left ?: return true
+        return acc.active && left > RESERVE + CLOSE_KEEP
+    }
+
     companion object {
         /** Requests of the allowance never spent by the app: left for Tj's own use of the key. */
         const val RESERVE = 10
+
+        /** Requests the fair-odds feed leaves for closing lines. */
+        const val CLOSE_KEEP = 25
     }
 }
 

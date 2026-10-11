@@ -1010,6 +1010,8 @@ data class ScanSettings(
             if (oddsPapi) { add("oddspapi"); add("oddspapi-props") }
             // Unabated Free: its own two sources, last in the order (UNABATED_API.md §3); off, this set is exactly what it was.
             if (unabated) { add("unabated"); add("unabated-props") }
+            // OddsPapi Free (v4) reads whole games for the fair average only when Tj gives it a daily request figure; with 0 it is closing lines only.
+            if (oddsPapiFree && gates.op4Fair > 0) { add("oddspapi_free"); add("oddspapi_free-props") }
         }
 
     val novigMarketTypes: List<String> get() = families.flatMap { it.novigTypes }
@@ -1236,4 +1238,6 @@ data class ApiGates(
     val usePinnapi: Boolean = true,
     val usePinnodds: Boolean = true,
     val opAllBooks: Boolean = false,
+    /** OddsPapi Free (v4): billable requests a day the fair-odds feed may spend reading whole games (every book in one request); 0 = closing lines only ([com.tjshea.vigilant.data.reference.Op4Feed]). */
+    val op4Fair: Int = 0,
 )
