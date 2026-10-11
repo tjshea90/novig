@@ -889,12 +889,12 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
         "One book per company",
         "Books of one parent company (Hard Rock's sites, FanDuel and FanDuel YourWay, Caesars' two names, SGO's many clones) quote one line, so only one of them is listed and counted in a fair price.",
         s.oneVotePerCompany, tag = "oneVotePerCompanySwitch",
-    ) { v -> onUpdate { it.copy(guards = it.guards.copy(oneVotePerCompany = v)) } }
+    ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(oneVotePerCompany = v)) } }
     SwitchRow(
         "Ignore books with wrong-looking odds",
         "A book whose odds are an extreme outlier next to the rest of the market, or put the favourite on the other side, is left out of the fair line (the bet's sheet lists it in amber).",
         s.ignoreBadOdds, tag = "ignoreBadOddsSwitch",
-    ) { v -> onUpdate { it.copy(guards = it.guards.copy(ignoreBadOdds = v)) } }
+    ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(ignoreBadOdds = v)) } }
 
     SectionTitle("Devig method (advanced)")
     Hint("How the sportsbooks' profit is taken out of a pair of odds. The methods differ most on long shots; Power is a good default.")
@@ -1159,10 +1159,10 @@ private fun ColumnScope.BettingTab(
             SwitchRow(
                 "Take down bids left up", "A resting order with no expiry (Novig's own app, or any tool that set none) is cancelled once it has been up this long. Vigilant's own bids always carry a time limit and are not touched.",
                 s.guards.bidGuard, tag = "bidGuardSwitch",
-            ) { v -> onUpdate { it.copy(guards = it.guards.copy(bidGuard = v)) } }
+            ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidGuard = v)) } }
             if (s.guards.bidGuard) {
                 Text("Cancel after", style = MaterialTheme.typography.bodyMedium)
-                ChoiceChips(listOf(10.0, 15.0, 30.0, 60.0, 120.0), s.guards.bidGuardMinutes.toDouble(), { "${it.toInt()} min" }) { v -> onUpdate { it.copy(guards = it.guards.copy(bidGuardMinutes = v.toInt())) } }
+                ChoiceChips(listOf(10.0, 15.0, 30.0, 60.0, 120.0), s.guards.bidGuardMinutes.toDouble(), { "${it.toInt()} min" }) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidGuardMinutes = v.toInt())) } }
             }
         }
         if (s.cnoOn && onOpenAutoBet != null) {

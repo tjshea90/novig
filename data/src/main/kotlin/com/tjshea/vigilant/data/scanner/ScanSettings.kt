@@ -386,7 +386,7 @@ data class ScanSettings(
      */
     val ignoreWideQuotes: Boolean = true,
     /** Tj's 2026-10-11 scanner guards and the auto-bet's Vigilant lane, in one field (ScanSettings is near the JVM's 255-argument limit: [ScanSettingsSizeTest]). */
-    val guards: ScanGuards = ScanGuards(),
+    val vigGuards: ScanGuards = ScanGuards(),
     /** OddsPapi: also price the fair line with the books Vigilant's list lacks (Circa, SuperBook, bet365: [com.tjshea.vigilant.data.reference.OpBooks.EXTRA]). */
     val opExtraBooks: Boolean = true,
     /** OddsPapi: read every game in depth for its alternate lines (one request a game); off, the main lines of a whole tournament come in one request. */
@@ -968,16 +968,16 @@ data class ScanSettings(
      * One book a parent company in every fair line and every list (Tj, 2026-10-11: "consolidate same company books and do not count them for their odds more than once"): Hard Rock's
      * sites, FanDuel and its YourWay, Caesars' two names are one vote ([com.tjshea.vigilant.engine.BookCompany]). On by default.
      */
-    val oneVotePerCompany: Boolean get() = guards.oneVotePerCompany
+    val oneVotePerCompany: Boolean get() = vigGuards.oneVotePerCompany
 
     /** Leave a book out of every fair line when its odds look wrong next to the market: an extreme outlier, or the favourite on the other side ([com.tjshea.vigilant.engine.BadOdds]). On by default. */
-    val ignoreBadOdds: Boolean get() = guards.ignoreBadOdds
+    val ignoreBadOdds: Boolean get() = vigGuards.ignoreBadOdds
 
     /**
      * The auto-bet also takes bets from Vigilant's own scan (Tj, 2026-10-11: "make the auto bet feature also bet on vigilant scanned bets, but only if they meet the criteria I set for auto bet"):
      * the same edge, odds, kind, stake and limit rules, plus the books-agree rules ([com.tjshea.vigilant.data.novig.trading.AutoBet.judgeVigilant]). Needs [autoBet]. On by default.
      */
-    val autoBetVigilant: Boolean get() = guards.autoBetVigilant
+    val autoBetVigilant: Boolean get() = vigGuards.autoBetVigilant
 
     fun fairSettings(): FairSettings = FairSettings(
         source = fairSource,

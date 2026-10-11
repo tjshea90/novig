@@ -332,7 +332,7 @@ fun AutoBetSection(
     Row(
         Modifier.fillMaxWidth().toggleable(
             value = s.autoBetVigilant, role = Role.Switch,
-            onValueChange = { on -> onUpdate { it.copy(guards = it.guards.copy(autoBetVigilant = on)) } },
+            onValueChange = { on -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(autoBetVigilant = on)) } },
         ).padding(top = 4.dp, bottom = 2.dp).testTag("autoBetVigilant"),
         verticalAlignment = Alignment.CenterVertically,
     ) {

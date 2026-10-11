@@ -65,7 +65,7 @@ class AgreementTest {
     @Test
     fun `a single sharp book pricing the fair line doesn't make agreement on its own`() {
         // SHARP: only b0 prices it. The other books still count for the agreement check, and here they don't agree.
-        val o = priced(1.95 to 1.95, 2.60 to 1.55, 2.70 to 1.50, 2.80 to 1.45, source = FairSource.SHARP, extra = { copy(guards = guards.copy(ignoreBadOdds = false)) })
+        val o = priced(1.95 to 1.95, 2.60 to 1.55, 2.70 to 1.50, 2.80 to 1.45, source = FairSource.SHARP, extra = { copy(vigGuards = vigGuards.copy(ignoreBadOdds = false)) })
         assertTrue(o.evPercent!! > 0.0)
         assertFalse(Agreement.of(o).agrees)
         // No fair line or no price: nothing agrees.
