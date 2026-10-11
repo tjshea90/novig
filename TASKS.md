@@ -4650,3 +4650,11 @@ Tj verbatim (sent while TL/TM were in progress): "Out of these: 'Start times are
 - [x] TN2 Independent close: ask the Pinnacle/ESPN history source for every started bet whose captured close is CNO-only or older than ~3 min, keep BOTH closes, choose by independence then recency. DONE: ClosingLine.weakRead/upgradeable, CloseBackfill upgrade pass, sharp history preferred in closeOf; IndependentCloseTest.
 - [x] TN3 CLV honesty: Stats and files show CLV on independent closes next to the all-closes figure; the README leads with independent CLV; the smart "Best/Worst" uses independent closes when enough. DONE: ClvStats independent figures, ClosingLineCard row, README leads with independent CLV; ClosingAuditTest.
 - [x] TN4 Tests, ship (with TL, TM). DONE: full suite green; shipped in v0.89.19.
+
+## TO: bet and bid on live games from the Feed (Tj, 2026-10-11 ~17:24Z)
+Tj verbatim: "The app is showing live game bets. See the screenshot. But it says the API only allows pregame. Is this an API limitation or a vigilant app limitation? I want to bid and bet on live games" (the screenshot did not reach the session; the message in the app is `ApiBetPlanner`'s "This game has started: bets through the API are pregame only.")
+- [ ] TO1 ANSWER: it is Vigilant's own rule (`ApiBetPlanner` line `target.startsTs <= now`, `AutoBettor` "not pregame", `MakerQuote` `!o.isLive`), not Novig's: NOVIG_API.md §18/§22/§23 (OPEN_INGAME tradable, taker fee 0.03·P·(1−P) in play, ~5.3 s in-play order time, GOLIVE voids resting orders).
+- [ ] TO2 Manual live bet from a LIVE card: the planner prices the live taker fee, says plainly how old the fair is and that in play an order takes ~5 s; Tj decides.
+- [ ] TO3 Auto-bet on live games: opt-in switch with its own guards (fair age, minimum EV); off by default.
+- [ ] TO4 Bids on live games from the Vigilant scan: opt-in, short ttl, fair age cap; off by default.
+- [ ] TO5 Tests, docs (NOVIG_API.md/RESEARCH.md/CLAUDE.md), ship.
