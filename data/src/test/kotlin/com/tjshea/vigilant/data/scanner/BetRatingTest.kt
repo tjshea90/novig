@@ -81,4 +81,15 @@ class BetRatingTest {
         assertNull(AutoBet.starsReason(AutoBet.rules(ScanSettings()), 1.0))
         assertNull(AutoBet.starsReason(AutoBet.rules(ScanSettings()), null))
     }
+
+    @Test
+    fun `under 2 percent EV a bet is at most 3 stars, however well the books agree`() {
+        val strong = BetRating.Inputs(books = 5, agreeing = 5, ev = 0.019, sharpAgrees = true, sharpAgainst = false, spread = 0.005)
+        assertEquals(3.0, BetRating.rate(strong).stars, 1e-9)
+        assertTrue("the same bet at +2% keeps its rating", BetRating.rate(strong.copy(ev = 0.02)).stars >= 3.5)
+        assertEquals("no edge is still 1", 1.0, BetRating.rate(strong.copy(ev = 0.0)).stars, 1e-9)
+        // A bet already under 3 stars is untouched.
+        val weak = BetRating.Inputs(books = 2, agreeing = 1, ev = 0.01, sharpAgrees = false, sharpAgainst = false)
+        assertTrue(BetRating.rate(weak).stars <= 3.0)
+    }
 }
