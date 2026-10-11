@@ -1,22 +1,24 @@
-# CHECKPOINT 2911 — read me first, then TASKS.md
+# CHECKPOINT 2912 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T00:36:57Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-eba05906-u8ocwe` · **builds on:** `d777af52` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T01:56:20Z · **tests:** all 4 fast checks green
+**Branch:** `claude/unabated-oddsapi-integration-1u6kdc` · **builds on:** `c571b66b` (this checkpoint is the commit after it)
 
 ## Just done
-v0.88.11 released+recorded (tennis: Tennis switch, auto-bet from Vigilant scan, bids follow leagues)
+UN1 done: raw Unabated/OddsPapi(v4) docs saved to research/unabated_oddspapi_2026-10-11/, UNABATED_API.md + ODDSPAPI_API.md v4 addendum written (free tiers; design decided)
 
 ## Do this next
-Tj installs v0.88.11, checks Settings › Scanning › Tennis is on and Scanner is Both/Vigilant; then reads Auto-bet status for tennis looks/skips
+UN2/UN3: write data/.../reference/Unabated*.kt (client, parser, books, sources) then Op4* (client, budget, Op4Closes); then ScanSettings+wiring+Settings UI+tests
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+    M  ODDSPAPI_API.md
+    A  UNABATED_API.md
 
 ## Last ten checkpoints
 ```
+  639e07b2 ckpt 2911: v0.88.11 released+recorded (tennis: Tennis switch, auto-bet from Vigilant sc
   5d8c65b9 ckpt 2910: pre-release: v0.88.11: tennis in the auto-bet (from Vigilant's scan) and the
   93119d04 ckpt 2909: pre-ship: v0.88.11: tennis in the auto-bet (from Vigilant's scan) and the bi
   506a68de ckpt 2908: TQ1/TQ2 written: autoBetTennis setting+migration, AutoBet.judgeScan/scanStak
@@ -26,5 +28,7 @@ Tj installs v0.88.11, checks Settings › Scanning › Tennis is on and Scanner 
   dca9aadb ckpt 2904: pre-ship: v0.88.10: Pinnodds live page shows why the taker has bought nothin
   19e7e08e ckpt 2903: pre-release: v0.88.9: live bids and Autopilot use a 2% margin under Pinnacle
   2816b7e4 ckpt 2902: pre-ship: v0.88.9: live bids and Autopilot use a 2% margin under Pinnacle's 
-  d47da744 ckpt 2901: Tj's 4:45 screenshots: live bids post for real on v0.88.8, 0 fills so far (T
 ```
+
+(5 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
