@@ -137,7 +137,13 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     SGO("SportsGameOdds Pro", "One paid feed for odds, props, closing lines and results; the feeds it replaces rest", SettingsGroup.FIND),
 
     /** OddsPapi v5: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). */
-    ODDSPAPI("OddsPapi", "A second paid feed for odds, props, closing lines (CLV for any bet) and results; the feeds it replaces rest", SettingsGroup.FIND),
+    ODDSPAPI("OddsPapi", "v5 (a trial or contract key): a second paid feed for odds, props, closing lines (CLV for any bet) and results; the feeds it replaces rest", SettingsGroup.FIND),
+
+    /** Unabated's FREE API: soft-book lines and props at no credit cost, the last source in line (Tj, 2026-10-11). */
+    UNABATED("Unabated (free)", "Free lines and props from DraftKings, FanDuel, MGM, Caesars and more; fills in what the other feeds miss", SettingsGroup.FIND),
+
+    /** OddsPapi's FREE v4 plan: Pinnacle closing lines for CLV from free historical odds (Tj, 2026-10-11). */
+    ODDSPAPI_FREE("OddsPapi Free (v4)", "Your free OddsPapi key: Pinnacle closing lines for CLV, spending almost none of its monthly requests", SettingsGroup.FIND),
 
     /** The floating widget and the picture-in-picture window. */
     WIDGET("Widget & mini window", "The small window that floats over other apps", SettingsGroup.SCREEN),
@@ -156,7 +162,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR, USAGE -> s.vigilantOn
-        ALERTS, RESEARCH, SGO, ODDSPAPI -> AppBook.isNovig
+        ALERTS, RESEARCH, SGO, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
         PINNODDS, LIVEBIDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
     }
@@ -223,6 +229,16 @@ object SettingsSummary {
             SettingsPage.ODDSPAPI -> when {
                 state.opKeys.isEmpty() -> "No key saved"
                 s.oddsPapi -> "On: ${state.opKeys.size} key${if (state.opKeys.size == 1) "" else "s"}, the paid feeds it replaces rest"
+                else -> "Off (key saved)"
+            }
+            SettingsPage.UNABATED -> when {
+                state.unKeys.isEmpty() -> "No key saved"
+                s.unabated -> "On: free lines and props, last in line"
+                else -> "Off (key saved)"
+            }
+            SettingsPage.ODDSPAPI_FREE -> when {
+                state.op4Keys.isEmpty() -> "No key saved"
+                s.oddsPapiFree -> "On: Pinnacle closing lines for CLV"
                 else -> "Off (key saved)"
             }
             SettingsPage.RESEARCH -> if (s.researchMode) "On: every recorder (nothing is bet)" else if (s.altLab) "Paper lab on" else "Off"
@@ -346,6 +362,8 @@ fun SettingsScreen(
                 SettingsPage.RESEARCH -> ResearchPage(state, reportActions, onUpdate)
                 SettingsPage.SGO -> SgoPage(state, keys, reportActions, onUpdate)
                 SettingsPage.ODDSPAPI -> OddsPapiPage(state, keys, reportActions, onUpdate)
+                SettingsPage.UNABATED -> UnabatedPage(state, keys, reportActions, onUpdate)
+                SettingsPage.ODDSPAPI_FREE -> OddsPapiFreePage(state, keys, reportActions, onUpdate)
                 SettingsPage.USAGE -> UsageTab(state, keys)
                 SettingsPage.HELP -> ToolsTab(state, reportActions, onUpdate)
             }
@@ -1292,6 +1310,60 @@ private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportAct
         SwitchRow("Alternate lines", "Read every game in depth for each book's alternate spreads and totals (one request a game). Off: the main lines of a whole league come in one request.", s.opAltLines, tag = "opAltSwitch") { v -> onUpdate { it.copy(opAltLines = v) } }
         Hint(com.tjshea.vigilant.app.OpText.REPLACES)
     }
+}
+
+/**
+ * Settings › Unabated (free) (Tj, 2026-10-11; UNABATED_API.md): the key list, a Test key that says what the Free key carries and saves a sample for Claude, and the one switch. On, Unabated joins the scan LAST in
+ * line and prices only the lines no better feed sent. Off: the app as it was.
+ */
+@Composable
+private fun ColumnScope.UnabatedPage(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    Intro(com.tjshea.vigilant.app.UnabatedText.INTRO)
+    KeyListEditor(ApiProvider.UNABATED, state.unKeys, keys, "Add an Unabated key")
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        Button(onClick = { reportActions.onTestUnabatedKey(false) }, enabled = state.unKeys.isNotEmpty() && !state.unKeyBusy, modifier = Modifier.testTag("unTestKey")) {
+            Text(if (state.unKeyBusy) "Testing…" else "Test key")
+        }
+        androidx.compose.material3.OutlinedButton(onClick = { reportActions.onTestUnabatedKey(true) }, enabled = state.unKeys.isNotEmpty() && !state.unKeyBusy, modifier = Modifier.testTag("unShareSample")) {
+            Text("Test and share sample")
+        }
+    }
+    state.unKeyNote?.let {
+        Text(
+            it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("unKeyNote"),
+            color = if (state.unKeyOk == true) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+        )
+    }
+    SwitchRow(com.tjshea.vigilant.app.UnabatedText.SWITCH_TITLE, com.tjshea.vigilant.app.UnabatedText.switchSub(state.unKeys.isNotEmpty()), s.unabated, tag = "unabatedSwitch") { v -> onUpdate { it.copy(unabated = v) } }
+    if (s.unabated) Hint(com.tjshea.vigilant.app.UnabatedText.NOTES)
+}
+
+/**
+ * Settings › OddsPapi Free (v4) (Tj, 2026-10-11; ODDSPAPI_API.md addendum): the free key's own page, apart from the v5 one. Test key reads the plan's real allowance for free and says which page a key belongs
+ * on. On, Pinnacle's closing line for your bets is read from OddsPapi's free historical odds (a few cached requests find the game), after v5 and SportsGameOdds and before ParlayAPI's credits.
+ */
+@Composable
+private fun ColumnScope.OddsPapiFreePage(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    Intro(com.tjshea.vigilant.app.Op4Text.INTRO)
+    KeyListEditor(ApiProvider.ODDSPAPI_FREE, state.op4Keys, keys, "Add an OddsPapi Free (v4) key")
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        Button(onClick = { reportActions.onTestOddsPapiFreeKey(false) }, enabled = state.op4Keys.isNotEmpty() && !state.op4KeyBusy, modifier = Modifier.testTag("op4TestKey")) {
+            Text(if (state.op4KeyBusy) "Testing…" else "Test key")
+        }
+        androidx.compose.material3.OutlinedButton(onClick = { reportActions.onTestOddsPapiFreeKey(true) }, enabled = state.op4Keys.isNotEmpty() && !state.op4KeyBusy, modifier = Modifier.testTag("op4ShareSample")) {
+            Text("Test and share sample")
+        }
+    }
+    state.op4KeyNote?.let {
+        Text(
+            it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("op4KeyNote"),
+            color = if (state.op4KeyOk == true) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+        )
+    }
+    SwitchRow(com.tjshea.vigilant.app.Op4Text.SWITCH_TITLE, com.tjshea.vigilant.app.Op4Text.switchSub(state.op4Keys.isNotEmpty()), s.oddsPapiFree, tag = "oddsPapiFreeSwitch") { v -> onUpdate { it.copy(oddsPapiFree = v) } }
+    if (s.oddsPapiFree) Hint(com.tjshea.vigilant.app.Op4Text.NOTES)
 }
 
 /** Research: the master switch, the one file to send, the paper lab (Tj, 2026-10-09: "I don't see the paper lab setting"), and the other recorders (burst, live feed test). */

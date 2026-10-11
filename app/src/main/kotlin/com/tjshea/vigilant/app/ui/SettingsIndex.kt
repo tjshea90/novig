@@ -38,6 +38,11 @@ object SettingsIndex {
         // OddsPapi (Tj, 2026-10-09)
         Entry("Use OddsPapi", SettingsPage.ODDSPAPI, "A second paid feed for odds, props, closing lines and results; the feeds it replaces rest", "oddspapi odds papi 55-tech api feed key paid replace clv closing", novig),
         Entry("Add an OddsPapi key", SettingsPage.ODDSPAPI, "Add, order and test your OddsPapi keys", "oddspapi odds papi key api rotate test trial", novig),
+        // Unabated Free and OddsPapi Free v4 (Tj, 2026-10-11)
+        Entry("Use Unabated (free)", SettingsPage.UNABATED, "Free lines and props from DraftKings, FanDuel, MGM, Caesars and more; fills in what the other feeds miss", "unabated free api feed key draftkings fanduel mgm caesars fallback", novig),
+        Entry("Add an Unabated key", SettingsPage.UNABATED, "Add, order and test your Unabated key", "unabated key api test free", novig),
+        Entry("Use OddsPapi Free (v4)", SettingsPage.ODDSPAPI_FREE, "Your free OddsPapi key: Pinnacle closing lines for CLV from free historical odds", "oddspapi free v4 key api clv closing pinnacle historical", novig),
+        Entry("Add an OddsPapi Free (v4) key", SettingsPage.ODDSPAPI_FREE, "Add and test the free-plan OddsPapi key (a v5 key goes under OddsPapi)", "oddspapi free v4 key api test", novig),
         // Research (Tj, 2026-10-09)
         Entry("Research mode (turn everything on)", SettingsPage.RESEARCH, "One switch for every recorder that places nothing: feed test, burst recorder, paper lab, paper bids", "research record log paper lab test study", novig),
         Entry("Share research file with Claude", SettingsPage.RESEARCH, "One file with what every recorder found, to send to Claude", "research share file send claude export", novig),

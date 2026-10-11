@@ -51,6 +51,9 @@ data class ReportActions(
     val onTestSgoKey: (Boolean) -> Unit = {},
     /** OddsPapi: test the key (and, with true, share the sample it saved). */
     val onTestOpKey: (Boolean) -> Unit = {},
+    /** Unabated (Free) and OddsPapi Free (v4): test the key (and, with true, share the sample it saved). */
+    val onTestUnabatedKey: (Boolean) -> Unit = {},
+    val onTestOddsPapiFreeKey: (Boolean) -> Unit = {},
     /** The live feed test (Tj, 2026-10-07): make its file and share it, and read the line that says what it is doing. */
     val onShareFeedRace: () -> Unit = {},
     val onShareResearch: () -> Unit = {},
