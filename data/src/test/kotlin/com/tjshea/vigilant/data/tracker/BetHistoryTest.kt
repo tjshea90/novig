@@ -245,8 +245,8 @@ class BetHistoryTest {
         // Nothing changed: nothing rewritten, nothing to copy.
         assertTrue(a.sync(bets, emptyList(), now, full = true).changed.isEmpty())
         // One bet settles: its day is rewritten and offered again, the others are not.
-        val one = bets.first().copy(status = BetStatus.LOST)
-        val second = a.sync(listOf(one) + bets.drop(1), emptyList(), now, full = true)
+        val one = bets[1].copy(status = BetStatus.LOST)
+        val second = a.sync(listOf(bets[0], one) + bets.drop(2), emptyList(), now, full = true)
         assertEquals(1, second.changed.size)
         assertEquals(1, a.pendingMirror().size)
         // Every line in a day file is a full row with its detail.

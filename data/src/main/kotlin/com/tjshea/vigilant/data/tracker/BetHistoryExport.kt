@@ -14,7 +14,7 @@ import kotlin.math.sqrt
  * What it writes, for the bets and bids since [fromMs] (all of them when null):
  *  - `…-README.md`: what the files are, a dictionary of every field, how CLV, EV and the star rating are defined, the headline numbers, the same table split every way ([BetDim]), the best and worst
  *    groups by closing-line value (single groups and pairs, with a t-statistic), the bids' fill story, data-quality counts and the questions to answer. Claude can answer most of the task from this alone.
- *  - `…-bets-p1.jsonl`, `-p2` …: one [BetHistory.Row] per line, oldest first, a new part every [partBytes] (about 4 MB, 6,000 bets), so no file is too big for a chat or for the phone.
+ *  - `…-bets-p1.jsonl`, `-p2` …: one [BetHistory.Row] per line, oldest first, a new part every [partBytes] (about 4 MB, 4,000 bets), so no file is too big for a chat or for the phone.
  *  - `…-bids-posted.jsonl`: one [BetHistory.BidRow] per bid posted, filled or not.
  *
  * Memory: a bet is turned into its line, written and forgotten; nothing is built whole (the Tracker's own list is already in memory; the summary reads it with a handful of small maps). Pure
@@ -288,7 +288,7 @@ object BetHistoryExport {
         return bytes to ((bytes + partBytes - 1) / partBytes).toInt().coerceAtLeast(1)
     }
 
-    const val BYTES_PER_BET = 800L
+    const val BYTES_PER_BET = 1_000L
 
     @Suppress("unused")
     private fun absForImport() = abs(0)

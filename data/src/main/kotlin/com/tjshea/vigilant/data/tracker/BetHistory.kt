@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter
  * bet or bid, auto or manual, EV when placed, time before the game starts, books behind the fair odds, whether a sharp book agreed, closing odds, CLV, won lost or pushed, liquidity, type of bet,
  * sport, rating ... plus any other information"). RESEARCH.md §132.
  *
- * [Row] holds the facts every analysis wants and stays small (about 0.7 KB a line), so a year of hundreds of bets a day is tens of megabytes in a few parts; [Detail] (the daily copies only)
+ * [Row] holds the facts every analysis wants and stays small (about 1 KB a line), so a year of hundreds of bets a day is tens of megabytes in a few parts; [Detail] (the daily copies only)
  * adds each book's own price and the rules in force. Every number is the Tracker's own ([ClosingLine], [BetTracker], [BetDims]): a file can never disagree with the Stats screen. A field that
  * isn't known for a bet is left out of its line (never 0 or "").
  *
