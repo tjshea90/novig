@@ -6457,3 +6457,10 @@ The app is showing live game bets. See the screenshot. But it says the API only 
 ```
 When I select auto bet with a minimum star rating, make the app ignore all the other auto bet filters that interfere. If I have a star rating minimum turned on, I want the app to auto bet all of the scanned bets with at least that rating, regardless of any other settings. But if I turn off the minimum star rating filter, I want it to return back to enforcing all of the other auto bet settings.
 ```
+
+## 2026-10-11T18:25:25Z
+```
+Right now I can see live games in the vigilant scanner, but it would be stupid to bet on any unless the odds are very fresh. If I toggle on live games to show up in the scanner, automatically make the app match the games that are live at that instant and keep them linked with novig and pinnodds web sockets both active. Scan continuously for immediate odds from both novig and pinnodds. Do the EV calculation in real time. Only keep bets in the scanner list if the odds are within the last 5 seconds fresh. The fair value must be determined from fresh odds from pinnodds in real time. After 5 seconds, automatically drop bets from the list. Make sure the scan is real time and non stop. 
+
+This should only apply if I have live games toggled on in the settings to show up in vigilant scanner. If it is toggled off, the app should behave normally
+```
