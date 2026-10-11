@@ -12,9 +12,10 @@ object SgoConvert {
     const val PREFIX = "sgo:"
 
     /** Vigilant's period number for an SGO periodID, or null for one Novig has no market for. [totalOnly] ones are over/under lines only. */
-    private fun period(periodId: String, baseball: Boolean): Pair<Int, Boolean>? = when (periodId) {
+    private fun period(periodId: String, baseball: Boolean, tennis: Boolean = false): Pair<Int, Boolean>? = when (periodId) {
         "game" -> 0 to false
         "1h" -> 1 to false
+        "1s" -> if (tennis) 1 to false else null
         "1ix5" -> if (baseball) 1 to false else null
         "1i" -> if (baseball) RefBookMarket.PERIOD_FIRST_INNING to true else null
         else -> null
@@ -34,11 +35,25 @@ object SgoConvert {
             }
             if (!first) continue
             val opp = (a.opposingOddId?.let { id -> e.odds.firstOrNull { it.oddId == id } }) ?: byKey[key(a.statId, if (a.betType == "ou" || a.betType == "yn") a.entityId else "away", a.periodId, a.betType, opposite(a.betType, a.sideId))] ?: continue
-            val (p, totalOnly) = period(a.periodId, sport == Sport.BASEBALL) ?: continue
+            val (p0, totalOnly) = period(a.periodId, sport == Sport.BASEBALL, sport == Sport.TENNIS) ?: continue
+            var p = p0
             val kind: LineKind
             var subject: String? = null
             var stat: String? = null
             when {
+                // Tennis (the real answer, Tj's key 2026-10-11): `points` is SETS and `games` is GAMES; no prop (aces, break points, fantasy score) is priced, and a 1st set's moneyline has no Novig market.
+                sport == Sport.TENNIS -> when {
+                    a.statId == "points" && a.betType == "ml" && a.entityId == "home" && p == 0 -> kind = LineKind.MONEYLINE
+                    a.statId == "games" && a.betType == "sp" && a.entityId == "home" -> kind = LineKind.SPREAD
+                    a.statId == "games" && a.betType == "ou" && a.entityId == "all" -> kind = LineKind.TOTAL
+                    a.statId == "games" && a.betType == "ou" && (a.entityId == "home" || a.entityId == "away") && p == 0 -> {
+                        kind = LineKind.TEAM_TOTAL
+                        subject = if (a.entityId == "home") RefBookMarket.HOME else RefBookMarket.AWAY
+                    }
+                    a.statId == "points" && a.betType == "sp" && a.entityId == "home" && p == 0 -> { kind = LineKind.SPREAD; p = RefBookMarket.PERIOD_SETS }
+                    a.statId == "points" && a.betType == "ou" && a.entityId == "all" && p == 0 -> { kind = LineKind.TOTAL; p = RefBookMarket.PERIOD_SETS }
+                    else -> continue
+                }
                 a.statId == "points" && a.betType == "ml" && a.entityId == "home" -> { if (totalOnly || p != 0) continue; kind = LineKind.MONEYLINE }
                 a.statId == "points" && a.betType == "sp" && a.entityId == "home" -> { if (totalOnly) continue; kind = LineKind.SPREAD }
                 a.statId == "points" && a.betType == "ou" && a.entityId == "all" -> kind = LineKind.TOTAL
@@ -109,7 +124,7 @@ object SgoConvert {
 
     /** Vigilant sports as SGO groups them (for the prop-stat names). */
     enum class Sport {
-        FOOTBALL, BASEBALL, BASKETBALL, HOCKEY, OTHER;
+        FOOTBALL, BASEBALL, BASKETBALL, HOCKEY, TENNIS, OTHER;
 
         companion object {
             fun of(leagueId: String): Sport = when (leagueId) {
@@ -117,6 +132,7 @@ object SgoConvert {
                 "MLB" -> BASEBALL
                 "NBA", "NCAAB", "WNBA" -> BASKETBALL
                 "NHL" -> HOCKEY
+                "ATP", "WTA" -> TENNIS
                 else -> OTHER
             }
         }
@@ -153,7 +169,7 @@ object SgoProps {
         SgoConvert.Sport.BASEBALL -> BASEBALL[statId]
         SgoConvert.Sport.BASKETBALL -> BASKETBALL[statId]
         SgoConvert.Sport.HOCKEY -> HOCKEY[statId]
-        SgoConvert.Sport.OTHER -> null
+        SgoConvert.Sport.TENNIS, SgoConvert.Sport.OTHER -> null
     }
 
     /** SGO statIDs of a sport's priced props, for the `oddID` filter ("passing_yards-PLAYER_ID-game-ou-over"). */
@@ -162,7 +178,7 @@ object SgoProps {
         SgoConvert.Sport.BASEBALL -> BASEBALL.keys
         SgoConvert.Sport.BASKETBALL -> BASKETBALL.keys
         SgoConvert.Sport.HOCKEY -> HOCKEY.keys
-        SgoConvert.Sport.OTHER -> emptySet()
+        SgoConvert.Sport.TENNIS, SgoConvert.Sport.OTHER -> emptySet()
     }
 
     /** Yes/No stats SGO sells as `yn` or as an over/under of 0.5 (anytime touchdown, double-double). */

@@ -15,13 +15,13 @@ class SgoGamesSource(private val client: SportsGameOddsClient, private val clock
     override val displayName = "SportsGameOdds"
     override val metered = true
 
-    override fun supports(league: League) = SgoBooks.supports(league)
+    override fun supports(league: League) = SgoBooks.supports(league) || SgoBooks.tennisLeagueId(league) != null
 
     /** SGO refreshes about every 30 s; scans closer together than this share one read. */
     override fun reuseMs(settings: ScanSettings): Long = REUSE_MS
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
-        val leagueId = SgoBooks.leagueId(league) ?: return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
+        val leagueId = SgoBooks.leagueId(league) ?: SgoBooks.tennisLeagueId(league) ?: return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
         val ids = oddIds(settings.families, SgoConvert.Sport.of(leagueId))
         if (ids.isEmpty()) return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
         val wanted = if (settings.gates.sgoAllBooks) SgoBooks.everyBook() else SgoBooks.wanted(settings.referenceBooks, settings.sgoExtraBooks)
@@ -37,13 +37,31 @@ class SgoGamesSource(private val client: SportsGameOddsClient, private val clock
 
     companion object {
         const val ID = "sgo"
+
+        /**
+         * A tennis match's markets (the real answer, 2026-10-11): `points` is SETS and `games` is GAMES, so the match winner is `points-*-game-ml`, the games spread and total are `games-*-game-sp` and
+         * `games-all-game-ou`, the sets spread and total are `points-*-game-sp` and `points-all-game-ou`, and each player's games won is `games-home|away-game-ou`. The 1st set's games lines are period `1s`.
+         */
+        fun tennisOddIds(families: Set<MarketFamily>): List<String> = buildList {
+            if (MarketFamily.MONEYLINE in families) { add("points-home-game-ml-home"); add("points-away-game-ml-away") }
+            if (MarketFamily.SPREAD in families) {
+                add("games-home-game-sp-home"); add("games-away-game-sp-away"); add("points-home-game-sp-home"); add("points-away-game-sp-away")
+            }
+            if (MarketFamily.TOTAL in families) {
+                add("games-all-game-ou-over"); add("games-all-game-ou-under"); add("points-all-game-ou-over"); add("points-all-game-ou-under")
+            }
+            if (MarketFamily.TEAM_TOTAL in families) { for (t in listOf("home", "away")) { add("games-$t-game-ou-over"); add("games-$t-game-ou-under") } }
+            if (MarketFamily.FIRST_HALF in families) {
+                add("games-home-1s-sp-home"); add("games-away-1s-sp-away"); add("games-all-1s-ou-over"); add("games-all-1s-ou-under")
+            }
+        }
         const val REUSE_MS = 25_000L
 
         /** Events a page asks for with alternate lines (SGO caps a page at 25-100 by query): a page is parsed whole, so it stays a few MB. */
         const val GAMES_PAGE = 25
 
         /** The oddIDs a scan asks for: only the markets [families] price, so the reply stays small and fast (SGO's own speed advice). */
-        fun oddIds(families: Set<MarketFamily>, sport: SgoConvert.Sport): List<String> = buildList {
+        fun oddIds(families: Set<MarketFamily>, sport: SgoConvert.Sport): List<String> = if (sport == SgoConvert.Sport.TENNIS) tennisOddIds(families) else buildList {
             fun both(period: String, ml: Boolean, sp: Boolean, total: Boolean, team: Boolean) {
                 if (ml) { add("points-home-$period-ml-home"); add("points-away-$period-ml-away") }
                 if (sp) { add("points-home-$period-sp-home"); add("points-away-$period-sp-away") }
