@@ -4575,3 +4575,9 @@ Tj verbatim: "Unabated and oddspapi currently do not scan in the app. The keys a
 - [ ] TE1 Find why a scan with only Unabated + OddsPapi Free on finishes in <1 s with nothing (source gating? cache? no sharp book? Pricing needs?).
 - [ ] TE2 Find why Polymarket alone returns no bets while other APIs show +EV.
 - [ ] TE3 Fix, test, ship.
+
+## TF: build the live sniper (Tj, 2026-10-11: "Build the sniper")
+One "Live sniper" switch (TC3): tail taker (real small stakes, IOC) + cover taker + tail-model maker bids, paper first, within caps; autopilot-style confirm for real money.
+- [ ] TF1 Read TailScan/TailTaker/LadderScan/CoverWindows/LiveAutopilot/TailLiveSettings and what the autopilot already turns on.
+- [ ] TF2 LiveSniper settings + apply/off (like LiveAutopilot), real money behind a confirmation naming the caps.
+- [ ] TF3 UI: Live bids page switch + status + why-none line; tests; ship.
