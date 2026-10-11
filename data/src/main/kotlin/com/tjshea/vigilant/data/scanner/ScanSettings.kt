@@ -385,6 +385,18 @@ data class ScanSettings(
      * -140 / -113 on a total (11.4%) was counted as a view of the price. On by default.
      */
     val ignoreWideQuotes: Boolean = true,
+    /**
+     * One book a parent company in every fair line and every list (Tj, 2026-10-11: "consolidate same company books and do not count them for their odds more than once"): Hard Rock's
+     * sites, FanDuel and its YourWay, Caesars' two names are one vote ([com.tjshea.vigilant.engine.BookCompany]). On by default.
+     */
+    val oneVotePerCompany: Boolean = true,
+    /** Leave a book out of every fair line when its odds look wrong next to the market: an extreme outlier, or the favourite on the other side ([com.tjshea.vigilant.engine.BadOdds]). On by default. */
+    val ignoreBadOdds: Boolean = true,
+    /**
+     * The auto-bet also takes bets from Vigilant's own scan (Tj, 2026-10-11: "make the auto bet feature also bet on vigilant scanned bets, but only if they meet the criteria I set for auto bet"):
+     * the same edge, odds, kind, stake and limit rules, plus the books-agree rules ([com.tjshea.vigilant.data.novig.trading.AutoBet.judgeVigilant]). Needs [autoBet]. On by default.
+     */
+    val autoBetVigilant: Boolean = true,
     /** OddsPapi: also price the fair line with the books Vigilant's list lacks (Circa, SuperBook, bet365: [com.tjshea.vigilant.data.reference.OpBooks.EXTRA]). */
     val opExtraBooks: Boolean = true,
     /** OddsPapi: read every game in depth for its alternate lines (one request a game); off, the main lines of a whole tournament come in one request. */
@@ -972,6 +984,8 @@ data class ScanSettings(
         outlierGuard = outlierGuard,
         minSharp = minSharpBooks.coerceAtLeast(1),
         wideGuard = ignoreWideQuotes,
+        oneBookPerCompany = oneVotePerCompany,
+        dropBadOdds = ignoreBadOdds,
     )
 
     /** Whether a price (cost per $1 payout) is within [maxOdds]. */

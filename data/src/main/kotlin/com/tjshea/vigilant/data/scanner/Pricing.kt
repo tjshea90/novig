@@ -80,6 +80,9 @@ data class Opportunity(
     /** Novig's price for this line was read more than [Pricing.OLD_PRICE_MS] before [now]. */
     fun priceIsOld(now: Long): Boolean = bookFetchedAtMs == null || now - bookFetchedAtMs > Pricing.OLD_PRICE_MS
     val evPercent: Double? get() = quote?.evPercent
+
+    /** How many of the books pricing both sides back this bet, and whether a sharp one does ([Agreement]); worked out once per outcome. */
+    val agreement: Agreement.Count by lazy(LazyThreadSafetyMode.PUBLICATION) { Agreement.of(this) }
     val eventName: String get() = event.description
     val isLive: Boolean get() = event.isLive
 }
@@ -123,9 +126,15 @@ data class ScanResult(
     val partial: Boolean get() = freshSinceMs != null
 
     companion object {
+        /** The least a bet may have fillable at +EV to stay on the list. */
+        const val MIN_LIQUIDITY_DOLLARS = 0.10
+
         /** A league's game lines ([props] false) or its player props, as held back in [waitingFor]. */
         fun waitKey(league: String, props: Boolean): String = "$league|${if (props) "props" else "lines"}"
     }
+
+    /** Less than this many dollars fillable at +EV and the bet is not worth listing (Tj, 2026-10-11: "automatically remove from the list any bet with less than 10 cents liquidity"). */
+    private fun hasLiquidity(o: Opportunity): Boolean = o.depth?.let { it.dollarCost >= MIN_LIQUIDITY_DOLLARS - 1e-9 } ?: true
 
     /** The +EV feed: at or above the user's threshold, below the too-good-to-be-true cap, in the chosen order. */
     fun feed(settings: ScanSettings): List<Opportunity> = opportunities
@@ -134,7 +143,8 @@ data class ScanResult(
             (freshSinceMs == null || (o.bookFetchedAtMs ?: 0L) >= freshSinceMs) &&
                 (waitingFor.isEmpty() || waitKey(o.league.novigName, o.kind == LineKind.PLAYER_PROP) !in waitingFor) &&
                 o.league.novigName in settings.leagues &&
-                ev >= settings.minEvPercent && ev <= settings.maxEvPercent &&
+                ev >= settings.minEvPercent && ev <= settings.maxEvPercent && ev > 0.0 &&
+                hasLiquidity(o) &&
                 settings.withinOdds(o.quote!!.cost) &&
                 (settings.includeLive || !o.isLive) &&
                 MarketFamily.entries.any { it in settings.families && o.market.marketType in it.novigTypes }
