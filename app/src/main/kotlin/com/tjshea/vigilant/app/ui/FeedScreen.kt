@@ -333,6 +333,11 @@ private fun FeedSummary(
                     "Bets appear here as ${AppBook.name}'s prices come in, likeliest edges first. " +
                     "You can switch apps: the scan keeps going and tells you when it's done.",
             )
+            // Live games only mode: no scan ever runs, so "Tap Scan" is never the answer; the live lane's banner above says what it is watching.
+            state.settings.liveOnly -> if (shown.isEmpty()) EmptyState(
+                "No live +EV bet right now",
+                "Live games are watched in real time. A bet appears here the moment Novig's price beats Pinnacle's fair price, and leaves the moment it stops being +EV or its prices are 5 seconds old.",
+            )
             // Vigilant MGM reads BetMGM's own odds through these feeds: with neither, there's nothing to price.
             result == null && !AppBook.isNovig && state.proplineKeys.isEmpty() && state.oddsApiKeys.isEmpty() -> EmptyState(
                 "Add a PropLine key",
