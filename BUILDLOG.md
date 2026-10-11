@@ -194,3 +194,4 @@ day that changes.
 | v0.89.1 | code 186 | 2026-10-11T03:07Z | v0.89.1: usage bars back on Settings > APIs (a green-amber-red bar under every key, plus a total per API)
 | v0.89.2 | code 187 | 2026-10-11T03:16Z | v0.89.2: Unabated fixed from the real sample; Test active APIs shows progress and times out
 | v0.89.3 | code 188 | 2026-10-11T03:59Z | v0.89.3: OddsPapi (v5) switch to price the fair average with every book it carries
+| v0.89.4 | code 189 | 2026-10-11T04:21Z | v0.89.4: tennis bids, every-book switches (SGO/PropLine/OddsPapi), OddsPapi Free v4 fair-odds feed, Unabated fixes
