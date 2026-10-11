@@ -125,6 +125,10 @@ class OddsPapi4Client(
         private set
     @Volatile var lastError: String? = null
         private set
+
+    /** The last `/v4/account` answer with the key (and the `api_key` field) replaced, for a saved sample. */
+    @Volatile var lastAccountRaw: String = ""
+        private set
     @Volatile var requests = 0
         private set
     @Volatile private var spentDay = 0L
@@ -168,6 +172,7 @@ class OddsPapi4Client(
                 val (code, body, _) = fetch(k, "/v4/account", emptyList())
                 if (code == 401 || code == 403) { failure = ReferenceException("OddsPapi Free: key refused (HTTP $code)"); continue }
                 if (code !in 200..299) { failure = ReferenceException("OddsPapi Free HTTP $code"); continue }
+                lastAccountRaw = body.replace(k, "<key>").replace(Regex("\"api_key\"\\s*:\\s*\"[^\"]*\""), "\"api_key\":\"<key>\"")
                 return Op4Parser.account(body).also { lastAccount = it; lastError = null }
             } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { failure = e }
         }

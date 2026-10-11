@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.reference
 
+import com.tjshea.vigilant.data.await
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
@@ -22,7 +23,7 @@ object OddsPapi4KeyTest {
             else "\nA v4 key comes from your account page at oddspapi.io (the free plan)."
             return Result(false, "OddsPapi Free: $m$hint", sample.toString())
         }
-        sample.append("=== GET /v4/account (key replaced) ===\n").append(redactedAccount(client)).append("\n")
+        sample.append("=== GET /v4/account (key replaced) ===\n").append(client.lastAccountRaw.ifEmpty { "(see the summary)" }).append("\n")
         val lines = ArrayList<String>()
         lines += acc.summary()
         val left = acc.left
@@ -46,6 +47,4 @@ object OddsPapi4KeyTest {
             http.newCall(Request.Builder().url("$v5Base/bookmakers").header("X-API-Key", key).get().build()).await().use { it.code in 200..299 }
         }.getOrDefault(false)
     }
-
-    private suspend fun okhttp3.Call.await(): okhttp3.Response = com.tjshea.vigilant.data.run { this@await.await() }
 }
