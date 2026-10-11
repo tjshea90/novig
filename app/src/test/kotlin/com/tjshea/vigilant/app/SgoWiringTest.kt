@@ -66,9 +66,9 @@ class SgoWiringTest {
         assertTrue(forNfl.toString(), forNfl.none { it == "propline" || it == "oddsapi" || it.startsWith("parlay") || it == "pinnacle" })
         // free exchanges stay
         assertTrue(forNfl.toString(), forNfl.any { it == "kalshi" } && forNfl.any { it == "polymarket" })
-        // tennis is not an SGO league: the other feeds keep it
+        // tennis: SGO's game lines now carry it (v0.89.14) and the other feeds keep it too
         val forAtp = sources.filter { it.supports(atp) }.map { it.id }
-        assertFalse("sgo" in forAtp)
+        assertTrue("sgo" in forAtp && "sgo-props" !in forAtp)
         assertTrue(forAtp.toString(), forAtp.any { it == "pinnacle" || it.startsWith("parlay") })
     }
 
