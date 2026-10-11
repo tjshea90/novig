@@ -30,15 +30,15 @@ class AgreementTest {
     private val market = NovigMarket("m1", "e1", "MONEY", "OPEN", "ML", Fixtures.START_MS, MarketFee.GAME, listOf(NovigOutcome("bal", "BAL", "TBD"), NovigOutcome("dal", "DAL", "TBD")))
 
     /** Each book's (Baltimore, Dallas) decimal odds. */
-    private fun priced(vararg books: Pair<Double, Double>, dalBid: Int = 550, source: FairSource = FairSource.MARKET_AVERAGE): Opportunity {
+    private fun priced(vararg books: Pair<Double, Double>, dalBid: Int = 550, source: FairSource = FairSource.MARKET_AVERAGE, contracts: Long = 1_000, keys: List<String>? = null, extra: ScanSettings.() -> ScanSettings = { this }): Opportunity {
         val ref = RefEvent(
             "r1", "americanfootball_nfl", Fixtures.START_MS, home = "Dallas Cowboys", away = "Baltimore Ravens",
-            markets = books.mapIndexed { i, (bal, dal) -> RefBookMarket("b$i", "Book $i", LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, bal, null), RefQuote(Side.HOME, dal, null)), now) },
+            markets = books.mapIndexed { i, (bal, dal) -> RefBookMarket(keys?.get(i) ?: "b$i", "Book $i", LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, bal, null), RefQuote(Side.HOME, dal, null)), now) },
         )
-        val settings = ScanSettings(fairSource = source, sharpBooks = setOf("b0"), minBooks = 1, minEvPercent = 0.0)
+        val settings = ScanSettings(fairSource = source, sharpBooks = setOf(keys?.get(0) ?: "b0"), minBooks = 1, minEvPercent = 0.0).extra()
         val plan = Planner.plan(listOf(event), listOf(market), listOf(RefSnapshot("americanfootball_nfl", listOf(ref), now)), settings, now)
         // Baltimore takes at 1 − Dallas's best bid.
-        val book = NovigBook("m1", 1, mapOf("dal" to listOf(BidLevel(dalBid, 1_000)), "bal" to listOf(BidLevel(300, 1_000))), now)
+        val book = NovigBook("m1", 1, mapOf("dal" to listOf(BidLevel(dalBid, contracts)), "bal" to listOf(BidLevel(300, 1_000))), now)
         return Pricing.price(plan, mapOf("m1" to book), settings, now).opportunities.first { it.outcome.outcomeId == "bal" }
     }
 
@@ -71,5 +71,34 @@ class AgreementTest {
         // No fair line or no price: nothing agrees.
         assertEquals(Agreement.Count(0, 0), Agreement.of(o.copy(fair = null)))
         assertEquals(Agreement.Count(0, 0), Agreement.of(o.copy(quote = null)))
+    }
+
+    @Test
+    fun `sister sites are one book in the count and the list`() {
+        // Three Hard Rock sites and one other book: two companies, not four books.
+        val o = priced(1.95 to 1.95, 1.95 to 1.95, 1.95 to 1.95, 1.97 to 1.93, keys = listOf("hardrockbet", "hardrock", "HR-FL", "betrivers"))
+        assertEquals(2, Agreement.of(o).twoSided)
+        assertEquals(2, o.fair!!.perBook.size)
+    }
+
+    @Test
+    fun `a sharp book that agrees puts a star on the bet and one that disagrees does not`() {
+        val agree = priced(1.95 to 1.95, 1.93 to 1.97, 1.97 to 1.93, 1.95 to 1.95)
+        assertTrue(agree.agreement.sharpAgrees)
+        // The sharp book (b0) has Baltimore well under Novig's 45%; the soft books are higher.
+        val against = priced(2.60 to 1.55, 1.93 to 1.97, 1.97 to 1.93, 1.95 to 1.95)
+        assertFalse(against.agreement.sharpAgrees)
+        assertTrue(against.agreement.sharpAgainst)
+    }
+
+    @Test
+    fun `a bet with under ten cents of liquidity is not listed`() {
+        val settings = ScanSettings(minEvPercent = 0.0, minBooks = 1, leagues = setOf("NFL"))
+        val thin = priced(1.95 to 1.95, 1.93 to 1.97, 1.97 to 1.93, contracts = 5)
+        assertTrue(thin.depth!!.dollarCost < 0.10)
+        fun feed(o: Opportunity) = ScanResult(emptyList(), listOf(o), ScanStats(1, 1, 1, 1, 1), now).feed(settings)
+        assertTrue(feed(thin).isEmpty())
+        val deep = priced(1.95 to 1.95, 1.93 to 1.97, 1.97 to 1.93, contracts = 1_000)
+        assertEquals(1, feed(deep).size)
     }
 }
