@@ -159,7 +159,7 @@ class ApiTogglesTest {
         val c = app.container
         allKeys(c)
         val low = everything().copy(
-            maker = true, makerFocus = com.tjshea.vigilant.data.novig.trading.maker.BidFocus.LOW_USAGE, makerSource = com.tjshea.vigilant.data.novig.trading.maker.BidSource.VIGILANT,
+            maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE, makerSource = com.tjshea.vigilant.data.scanner.BidSource.VIGILANT,
             lowUsageBooks = setOf("kalshi", "pinnacle"),
         )
         assertTrue(low.lowUsageNow)
