@@ -135,6 +135,9 @@ class OddsPapi4Client(
 
     fun hasKey() = keys().isNotEmpty()
 
+    /** The saved keys, for the key test's v4/v5 check (never logged). */
+    fun keyList(): List<String> = keys()
+
     fun health(): String = lastAccount?.let { "answering · ${it.summary()}" } ?: (lastError ?: "no answer yet")
 
     private fun cooldown(path: String) = when {

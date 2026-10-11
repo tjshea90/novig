@@ -24,7 +24,7 @@ object OpKeyTest {
             catalog = OpParser.bookmakers(body)
         } catch (e: Exception) {
             val m = readableError(e)
-            val hint = if (m.contains("401")) "\nVigilant speaks OddsPapi v5 (v5.oddspapi.io), which comes from a trial or contract arranged with contact@55-tech.com. A key from the self-serve plan builder (api.oddspapi.io/v4) is a different product and is refused here." else ""
+            val hint = if (m.contains("401")) "\nVigilant speaks OddsPapi v5 (v5.oddspapi.io), which comes from a trial or contract arranged with contact@55-tech.com. A key from the self-serve plan builder (api.oddspapi.io/v4, the FREE plan) is a different product: paste it under Settings › OddsPapi Free (v4) instead. It is refused here." else ""
             return Result(false, "Could not read the key's books: $m$hint", sample.toString())
         }
         val ours = OpBooks.wanted(ScanSettings().referenceBooks, true)
