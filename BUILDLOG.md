@@ -218,3 +218,4 @@ day that changes.
 | v0.89.26 | code 211 | 2026-10-11T21:05Z | v0.89.26: live lane says what is missing and keeps Novig's stream open, one API for overlapping data with failover, Kambi-desk books count once, auto-bet recovery status
 | v0.89.27 | code 212 | 2026-10-11T21:35Z | v0.89.27: live Novig books subscribe at once and the feed reconnects in seconds after a drop
 | v0.89.28 | code 213 | 2026-10-11T21:47Z | v0.89.28: Live games only mode (Pinnodds + Novig only, every other API and CNO off, restored when switched off)
+| v0.89.29 | code 214 | 2026-10-11T22:49Z | v0.89.29: live Novig books subscribe as far as the stream allowance pays and stay held when the lane restarts
