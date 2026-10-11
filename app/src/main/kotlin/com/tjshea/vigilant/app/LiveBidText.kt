@@ -180,6 +180,10 @@ object LiveBidText {
     }
 
     /** Why the bids get so few fills, from the bids' own record (real bids if there are any, else the paper ones), for the page. */
-    fun whyFew(bids: List<LiveBid>, d: LiveBidDeskStatus): String =
-        LiveBidReport.whyFew(bids.filter { it.real }.ifEmpty { bids }, d.skips).joinToString("\n")
+    fun whyFew(bids: List<LiveBid>, d: LiveBidDeskStatus): String {
+        val text = LiveBidReport.whyFew(bids.filter { it.real }.ifEmpty { bids }, d.skips).joinToString("\n")
+        // Tj, 2026-10-11: every live game was tennis and the Tennis switch (What to bid on) was off, so the slider at 100 changed nothing: say where the switch is.
+        val tennisCount = d.skips[com.tjshea.vigilant.data.livebid.LiveBidSkip.TENNIS_OFF] ?: 0
+        return if (tennisCount > 0 && text.contains(com.tjshea.vigilant.data.livebid.LiveBidSkip.TENNIS_OFF)) "$text\nTo bid on tennis, switch on Tennis under \"What to bid on\" below the slider." else text
+    }
 }
