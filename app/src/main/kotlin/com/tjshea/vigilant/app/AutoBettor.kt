@@ -196,12 +196,14 @@ class AutoBettor(
             }
         }
         judging = null
+        // Bets that passed every rule but were not reached or not paid for this pass say why too ([Report.why]).
+        val passWhy = { msg: String -> HashMap(why).also { m -> passing.forEach { m.putIfAbsent(it.pick.row.key, msg) } } }
         if (passing.isEmpty()) {
             // Nothing to bet this cycle, but the wallet this cycle read may already be empty (Tj, 2026-10-02 ~22:10Z): asleep until he adds money.
             c.wallet.last?.takeIf { now - it.atMs < WalletBalance.FRESH_MS }?.let { w ->
                 if (w.dollars < AutoBet.SLEEP_BELOW) { if (!walletEmptyNoted) walletRanOut(w.dollars) } else walletEmptyNoted = false
             }
-            return finish(now, Report(looked = all.size, skipped = skipped))
+            return finish(now, Report(looked = all.size, skipped = skipped, why = why))
         }
 
         val balance0 = try {
@@ -209,15 +211,15 @@ class AutoBettor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: NovigApiException) {
-            return stopFor(now, Report(looked = all.size, passed = passing.size, skipped = skipped), "Couldn't read the wallet: ${e.advice}")
+            return stopFor(now, Report(looked = all.size, passed = passing.size, skipped = skipped, why = passWhy("the wallet couldn't be read")), "Couldn't read the wallet: ${e.advice}")
         } catch (e: Exception) {
-            return stopFor(now, Report(looked = all.size, passed = passing.size, skipped = skipped), "Couldn't read the wallet: ${e.message ?: e.javaClass.simpleName}")
-        } ?: return finish(now, Report(looked = all.size, passed = passing.size, skipped = skipped), blocker = "Betting through Novig's API isn't set up (Settings › Betting & Novig account › Enable betting)")
+            return stopFor(now, Report(looked = all.size, passed = passing.size, skipped = skipped, why = passWhy("the wallet couldn't be read")), "Couldn't read the wallet: ${e.message ?: e.javaClass.simpleName}")
+        } ?: return finish(now, Report(looked = all.size, passed = passing.size, skipped = skipped, why = passWhy("betting through Novig's API isn't set up")), blocker = "Betting through Novig's API isn't set up (Settings › Betting & Novig account › Enable betting)")
         var balance = balance0
         if (balance >= AutoBet.SLEEP_BELOW) walletEmptyNoted = false
         else {
             if (!walletEmptyNoted) walletRanOut(balance)
-            return finish(now, Report(looked = all.size, passed = passing.size, skipped = skipped, walletEmpty = true, stopped = "the wallet has ${money(balance)}, under ${money(AutoBet.SLEEP_BELOW)}"), balance = balance)
+            return finish(now, Report(looked = all.size, passed = passing.size, skipped = skipped, walletEmpty = true, stopped = "the wallet has ${money(balance)}, under ${money(AutoBet.SLEEP_BELOW)}", why = passWhy("the wallet has ${money(balance)}, under ${money(AutoBet.SLEEP_BELOW)}")), balance = balance)
         }
 
         // One bet per Novig market (either side) while any is open: the other side of a line is never bet after the first.
@@ -302,7 +304,10 @@ class AutoBettor(
             }
         }
         if (walletEmpty && !walletEmptyNoted) walletRanOut(balance)
-        val report = Report(looked = all.size, passed = passing.size, placed = placed, skipped = skipped, stopped = stopped, walletEmpty = walletEmpty, halted = halted)
+        judging = null
+        val placedKeys = placed.mapTo(HashSet()) { it.placedKey }
+        val finalWhy = passWhy(stopped?.let { "the pass stopped: $it" } ?: "its turn did not come this pass").also { m -> ordered.forEach { if (it.pick.row.key in placedKeys) m.remove(it.pick.row.key) } }
+        val report = Report(looked = all.size, passed = passing.size, placed = placed, skipped = skipped, stopped = stopped, walletEmpty = walletEmpty, halted = halted, why = finalWhy)
         if (stopped != null && !walletEmpty) postStop(now, stopped, halted)
         return finish(now, report, balance = balance)
     }
