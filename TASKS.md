@@ -4606,14 +4606,14 @@ Tj verbatim, 7 asks: "For the vigilant scanner: 1) similar to the cno scanner, m
 
 ## TI: 1-5 star bet ratings for CNO and Vigilant + auto-bet minimum rating (Tj, 2026-10-11)
 Tj verbatim: "For both cno and vigilant scanner, make a new feature that rates each bet from 1 star to 5 stars. Show the stars next to each bet. 1 star is the worst bet available (this doesn't mean it is a negative bet, just not as confident due to things such as lower positive EV values, sparse books calculating the fair odds, etc.) and 5 stars is an excellent bet (for example, all books agree that it is positive EV, at least one sharp book agrees it is positive EV, several books price the bet on both sides of the bet, and it has high positive EV value). Use half stars for the most accurate ratings. For example, a bet may be rated 2½ stars. Make the rating system yourself. It must be logical and sound and accurately rate each bet according to objective standards. [criteria: number of books pricing fair odds; EV; sharp agreement; % books agreeing; any other] Then in the auto bet settings, make a setting for the minimum rated bet to auto bet (for example, only bet 3½ Star bets or better)."
-- [ ] TI1 BetRating (pure, data/scanner): inputs books, agreeing, EV, sharp for/against, spread of per-book fairs; score -> 1..5 in half stars; caps; documented in RESEARCH.md.
-- [ ] TI2 Feed inputs: Vigilant Opportunity.rating (Agreement gets spread); CNO CnoBooks.Check gets spread + sharp.
-- [ ] TI3 UI: stars on Vigilant card/sheet and CNO card/sheet (sharp marker becomes a "sharp agrees" chip so the stars mean the rating only).
-- [ ] TI4 Auto-bet minimum stars setting (Auto-bet tab chips), enforced in CNO, Vigilant and tennis lanes.
-- [ ] TI5 Tests, ship, release.
+- [x] TI1 BetRating (pure, data/scanner): inputs books, agreeing, EV, sharp for/against, spread of per-book fairs; score -> 1..5 in half stars; caps; documented in RESEARCH.md.
+- [x] TI2 Feed inputs: Vigilant Opportunity.rating (Agreement gets spread); CNO CnoBooks.Check gets spread + sharp.
+- [x] TI3 UI: stars on Vigilant card/sheet and CNO card/sheet (sharp marker becomes a "sharp agrees" chip so the stars mean the rating only).
+- [x] TI4 Auto-bet minimum stars setting (Auto-bet tab chips), enforced in CNO, Vigilant and tennis lanes.
+- [x] TI5 Tests, ship, release.
 
 ## TJ: wallet under 20 cents puts the whole app to sleep (Tj, 2026-10-11)
 Tj verbatim: "When the vigilant wallet gets below 20 cents, automatically stop all scanning, betting, and bidding in the app. Put the app to sleep. There is no reason to continue usage with little money left"
-- [ ] TJ1 One threshold (AutoBet.SLEEP_BELOW = $0.20) for the existing wallet-empty sleep (was under 1 cent, only inside an auto-bet pass).
-- [ ] TJ2 A watcher on every fresh wallet reading (VigilantApp) pauses everything (scans, background scan, CNO, bids, live bids) once per emptying; re-arms above $0.20; stale stored readings never pause.
-- [ ] TJ3 Tests, ship, release.
+- [x] TJ1 One threshold (AutoBet.SLEEP_BELOW = $0.20) for the existing wallet-empty sleep (was under 1 cent, only inside an auto-bet pass).
+- [x] TJ2 A watcher on every fresh wallet reading (VigilantApp) pauses everything (scans, background scan, CNO, bids, live bids) once per emptying; re-arms above $0.20; stale stored readings never pause.
+- [x] TJ3 Tests, ship, release.
