@@ -291,7 +291,7 @@ object BetHistoryExport {
         return bytes to ((bytes + partBytes - 1) / partBytes).toInt().coerceAtLeast(1)
     }
 
-    const val BYTES_PER_BET = 1_000L
+    const val BYTES_PER_BET = 1_200L
 
     @Suppress("unused")
     private fun absForImport() = abs(0)

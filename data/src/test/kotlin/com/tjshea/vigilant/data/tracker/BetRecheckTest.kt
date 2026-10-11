@@ -449,6 +449,24 @@ class BetRecheckTest {
     }
 
     @Test
+    fun `a page CNO says is minutes old is dated by its data, so a stale page read at T-2 min is not a T-2 min close`() = runTest {
+        // Closing audit 2026-10-11: a page fetched 2 minutes before the start whose "Last Updated" said 9 minutes ago was accepted as a fresh close.
+        val t = tracker(bet("a"))
+        now = start - 2 * 60_000L
+        val stale = view(-125, 105).copy(fetchedAtMs = now, cnoAgeSeconds = 9 * 60)
+        BetRecheck(t, books = { stale }, clock = { now }).captureClosing(listOf("a"))
+        val a = t.all().single()
+        assertEquals(start - 11 * 60_000L, a.closingSeenAtMs)
+        // 11 minutes before the start is still inside the 15-minute window, but it is dated 11 minutes, not 2.
+        assertEquals(11 * 60_000L, start - a.closingSeenAtMs!!)
+        // A page whose data is 20 minutes old is no close at all.
+        val t2 = tracker(bet("b"))
+        BetRecheck(t2, books = { view(-125, 105).copy(fetchedAtMs = now, cnoAgeSeconds = 20 * 60) }, clock = { now }).captureClosing(listOf("b"))
+        assertNull(ClosingLine.clv(t2.all().single(), start + 1))
+        assertEquals(true, ClosingLine.needsClose(t2.all().single(), now))
+    }
+
+    @Test
     fun `bets with no CNO page get every book's read too (ParlayAPI's), games under way included, four hours in not`() = runTest {
         val t = tracker(
             bet("vig", gameUrl = null), bet("vigLive", gameUrl = null, startsTs = now - 30 * 60_000L),
