@@ -1,22 +1,25 @@
-# CHECKPOINT 2982 — read me first, then TASKS.md
+# CHECKPOINT 2983 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T17:37:44Z · **tests:** all 4 fast checks green
-**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `4bd387025` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T17:46:00Z · **tests:** all 4 fast checks green
+**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `a5c393214` (this checkpoint is the commit after it)
 
 ## Just done
-TP: wrote the star-rating-overrides-filters request into TASKS.md; v0.89.20 gated+pushed, release.yml not yet triggered
+TP done: star rating overrides the selection filters (3 lanes), UI note, tests green (data+app lanes); docs
 
 ## Do this next
-trigger release.yml for v0.89.20, record-release 205; then TP1 audit of AutoBettor/AutoBet filters
+bump 206 / 0.89.21, ship, release, tell Tj what is kept and what is ignored; TO3/TO4 still waiting for Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M CLAUDE.md
+     M RESEARCH.md
      M TASKS.md
 
 ## Last ten checkpoints
 ```
+  f69319c26 ckpt 2982: TP: wrote the star-rating-overrides-filters request into TASKS.md; v0.89.20
   96de1ae98 ckpt 2981: pre-release: v0.89.20: bets by hand on live games (the Bet sheet no longer 
   30bddb6b4 ckpt 2980: pre-ship: v0.89.20: bets by hand on live games (the Bet sheet no longer ref
   bb685c195 ckpt 2979: TO2 done with tests; docs (NOVIG_API §24, RESEARCH 132.3, CLAUDE.md); TO3/
@@ -26,8 +29,7 @@ trigger release.yml for v0.89.20, record-release 205; then TP1 audit of AutoBett
   62fef5926 ckpt 2975: pre-release: v0.89.19: every API toggled on is used for any data and one to
   5a6ba8775 ckpt 2974: TL/TM/TN done, tests green (data, app); docs updated
   2b986156d ckpt 2973: TL2: removed OutsideSgo/OutsideOp/TennisOnly, every API on is asked, off ne
-  f2ecdb21d ckpt 2972: TN code + tests green in data (real start sync, sharp-history close preferr
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(10 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

@@ -91,6 +91,11 @@ What it means, every session, before the work:
 
 Tj asked why a live card's Bet said "pregame only" ("Is this an API limitation or a vigilant app limitation? I want to bid and bet on live games"): it was Vigilant's rule, not Novig's (NOVIG_API.md §24, RESEARCH.md §132.3). Since v0.89.20 a bet **by hand** on a live game is placed with the taker fee priced in and a LIVE note; the **auto-bet and the Vigilant bid desk stay pregame only** (TASKS.md TO3, TO4 wait for Tj's word: the scan's fair is minutes old in play). Don't lift either without asking him; if he says yes, the guards are in RESEARCH.md §132.3.
 
+## A minimum star rating decides which bets the auto-bet places (Tj, 2026-10-11, permanent)
+
+**Standing instruction from Tj (2026-10-11, verbatim):** "When I select auto bet with a minimum star rating, make the app ignore all the other auto bet filters that interfere. If I have a star rating minimum turned on, I want the app to auto bet all of the scanned bets with at least that rating, regardless of any other settings. But if I turn off the minimum star rating filter, I want it to return back to enforcing all of the other auto bet settings."
+`AutoBet.Rules.byStars` (minimum > 0) switches off every SELECTION filter in all three lanes (edge, odds limits, kinds, books-agree counts, sharp rule, trap guard, small-prop guard); the safety stays (`AutoBet.starsKept`: the dollar limits, pregame, fresh price and fair, +EV at the real price, injuries, one bet a market, the 15% cap). RESEARCH.md §132.4. A new auto-bet filter must be skipped when `rules.byStars` and added to `AutoBetStarsTest`.
+
 ## Mobile data and storage are not a constraint
 
 Tj, 2026-09-30: "My mobile data is fast and unlimited and my phone storage is large. Choose accuracy and speed over mobile data or phone
