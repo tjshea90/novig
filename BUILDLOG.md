@@ -217,3 +217,4 @@ day that changes.
 | v0.89.25 | code 210 | 2026-10-11T20:18Z | v0.89.25: no negative-EV order anywhere, a sharp book that disagrees vetoes, auto-bet clears a lost-order halt by itself, live-only filter and Stars sort, why-not on CNO cards, 3.5 stars need +2% EV
 | v0.89.26 | code 211 | 2026-10-11T21:05Z | v0.89.26: live lane says what is missing and keeps Novig's stream open, one API for overlapping data with failover, Kambi-desk books count once, auto-bet recovery status
 | v0.89.27 | code 212 | 2026-10-11T21:35Z | v0.89.27: live Novig books subscribe at once and the feed reconnects in seconds after a drop
+| v0.89.28 | code 213 | 2026-10-11T21:47Z | v0.89.28: Live games only mode (Pinnodds + Novig only, every other API and CNO off, restored when switched off)
