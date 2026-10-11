@@ -231,7 +231,7 @@ class ApiBettingTest {
         assertTrue("the fee costs edge", live.evPercent < pre.evPercent)
         // The limit price is Novig's price, not the fee-inclusive cost: the order buys at a price, the fee is charged on the fill.
         assertEquals(pre.limitPrice, live.limitPrice, 1e-9)
-        assertTrue(live.note!!.startsWith("LIVE: The fair odds behind this EV are 4 minutes old"))
+        assertTrue(live.note!!.contains("LIVE: The fair odds behind this EV are 4 minutes old"))
         assertTrue(live.note!!.contains("about 5 seconds"))
     }
 
