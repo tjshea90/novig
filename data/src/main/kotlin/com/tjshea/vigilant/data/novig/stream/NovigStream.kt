@@ -143,7 +143,14 @@ class NovigStream(
     /** The live engines' markets ([watchLive]): always ahead of [wanted] in what is subscribed. */
     private var livePinned: List<String> = emptyList()
 
-    private fun allWanted(): List<String> = if (livePinned.isEmpty()) wanted else (livePinned + wanted).distinct()
+    /** The live markets of a lane that just stopped ([watchLive] with none): kept subscribed [LINGER_MS] so a restart of the lane does not pay 16 tokens a market again (the bucket refills 4 a second). */
+    private var lingering: List<String> = emptyList()
+    private var lingerUntilMs = 0L
+
+    private fun allWanted(): List<String> {
+        val keep = if (lingering.isNotEmpty() && clock() < lingerUntilMs) lingering else emptyList()
+        return if (livePinned.isEmpty() && keep.isEmpty()) wanted else (livePinned + wanted + keep).distinct()
+    }
 
     /**
      * Markets Novig refused for a reason other than a limit, and until when they are not asked for again; [chunk] is how many one subscribe may carry after such a refusal (halved each
@@ -200,7 +207,9 @@ class NovigStream(
         val start: Boolean
         synchronized(this) {
             lastUsedMs = clock()
-            livePinned = marketIds.distinct()
+            val next = marketIds.distinct()
+            if (next.isEmpty() && livePinned.isNotEmpty()) { lingering = livePinned; lingerUntilMs = clock() + LINGER_MS }
+            livePinned = next
             start = socket == null && failedAtMs.let { it == null || clock() - it >= retryDelayMs }
         }
         if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
@@ -235,7 +244,11 @@ class NovigStream(
         when {
             _state.value !is StreamState.Live -> "Novig live feed is not connected"
             marketId in refusedUntil -> "Novig refused the live book (${lastRefusal ?: "unknown"})"
-            marketId !in subscribed -> "Novig live book not subscribed yet"
+            marketId !in subscribed -> {
+                refill()
+                val held = livePinned.count { it in subscribed }
+                "Novig live book not subscribed yet: $held of ${livePinned.size} live markets are, ${(tokens / BOOK_WEIGHT).toInt().coerceAtLeast(0)} more affordable now (stream allowance ${tokens.toInt().coerceAtLeast(0)} of ${capacity.toInt()}, refills ${refillPerSec.toInt()} a second)"
+            }
             else -> "Novig live book subscribed, no snapshot yet"
         }
     }
@@ -333,10 +346,28 @@ class NovigStream(
             // cannot (the banner read "Novig live book not subscribed yet" through it).
             val pinnedNow = synchronized(this) { livePinned.toHashSet() }
             val liveAdd = add0.filter { it in pinnedNow }
-            val add = liveAdd.ifEmpty { add0 }
-            // Charged weight × subjects, never over the bucket; a request at the cap needs it full.
-            val cost = minOf(add.size * BOOK_WEIGHT.toDouble(), capacity)
-            val need = if (liveAdd.isNotEmpty() || synchronized(this) { firstSent }) cost else capacity
+            val add: List<String>
+            val cost: Double
+            val need: Double
+            if (liveAdd.isNotEmpty()) {
+                // As many of them as the bucket pays for RIGHT NOW (moneylines first: [allWanted] is in priority order), the rest as tokens return, one market per 4 s at worst. Waiting for the whole
+                // request's price left a live game with no book for minutes after a scan (or an earlier subscribe) had emptied the bucket (Tj, 2026-10-11: "connects for a few seconds, matches games,
+                // then says Novig live book not subscribed yet").
+                refill()
+                val afford = synchronized(this) { (tokens / BOOK_WEIGHT).toInt() }
+                if (afford < 1) {
+                    waitFor(BOOK_WEIGHT.toDouble())
+                    continue
+                }
+                add = liveAdd.take(afford)
+                cost = add.size * BOOK_WEIGHT.toDouble()
+                need = cost
+            } else {
+                add = add0
+                // Charged weight × subjects, never over the bucket; a request at the cap needs it full.
+                cost = minOf(add.size * BOOK_WEIGHT.toDouble(), capacity)
+                need = if (synchronized(this) { firstSent }) cost else capacity
+            }
             if (!haveTokens(need)) {
                 // Wait for enough, then look again: more markets may be wanted by then, and go in the same request.
                 waitFor(need)
@@ -543,6 +574,9 @@ class NovigStream(
 
         /** After a failure, scans read by REST this long before the feed is tried again. */
         const val RETRY_AFTER_FAILURE_MS = 5 * 60_000L
+
+        /** How long a stopped live lane's markets stay subscribed. */
+        const val LINGER_MS = 3 * 60_000L
 
         /** After a plain drop with live markets pinned. */
         const val LIVE_RETRY_MS = 3_000L
