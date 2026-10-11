@@ -6233,3 +6233,8 @@ Also add a small test button next to each api in the settings that tests whether
 
 Make sure the API keys usage section shows accurate readings for how much usage is left on each key for every api, and if the apis offer a prompt to see how much usage is left, use that for the readings 
 ```
+
+## 2026-10-11T02:58:54Z
+```
+You got rid of the meter green bars that light up to show API usage. Put them back in
+```
