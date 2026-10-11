@@ -76,7 +76,7 @@ Settings › **OddsPapi** (key list rotated like every provider's, Test key, the
 2. **Closes / CLV** (`OpCloses`): any bet, graded or not, however old: `/fixtures` (window around the bet) to find the game, `/fixtures/odds/clv` for Pinnacle then Circa; devigged across the bet's two sides, at the exact number the bet was on.
 3. **Grading** (`OpScores`): final scores (`scores.result`, per-period) from `/fixtures`, chained in front of the free feeds like SGO's.
 4. **Live**: `includeLive` reads `/fixtures/live` and live games' odds; the paper lab gets OddsPapi's alternate lines (`SgoAltQuotes`).
-5. **Redundancy**: while it answers, the feeds that sell the same thing rest for the leagues it carries (`OutsideOp`: PinnWire/pinnapi unless Pinnodds is on, PropLine, The Odds API, ParlayAPI); free feeds (Kalshi, Polymarket, CrazyNinjaOdds, ESPN) and Pinnodds stay.
+5. **Redundancy (changed 2026-10-11)**: no feed rests for OddsPapi any more (`OutsideOp` is deleted). Every API Tj has switched on is asked for everything it carries; one switched off is never called (CLAUDE.md, "An API that is toggled on is used for any data").
    If OddsPapi stops answering (two failures, two minutes) they come back by themselves. Switch OFF = the app as it was (`OpWiringTest`).
 6. Not used on the phone: the WebSocket. A REST read at scan time is as fresh as a pushed price (Pinnacle p50 0.38 s), and a phone-side book of every alternate line and prop would cost memory the app has had trouble with
    (heap 487 of 512 MB, v0.83.4 file). Live betting stays on Pinnodds' socket. Revisit after the trial if the numbers say OddsPapi's socket is faster than Pinnodds' for live lines (docs/guides/evaluation has the protocol).
