@@ -1559,6 +1559,16 @@ private fun ColumnScope.ResearchPage(state: UiState, reportActions: ReportAction
 @Composable
 private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     Intro("When something looks wrong, Share with Claude makes one file (kept under a size cap) with what the app recorded, for Claude to diagnose and fix.")
+    // ---- Every bet and bid, kept day by day (Tj, 2026-10-11) -----------------------------
+    SectionTitle("Bet history")
+    Hint(
+        "The app keeps a file for every day of bets and every day of bids (all the facts: odds, EV, books, sharp book, stars, liquidity, close, CLV, result). With this on it also copies each day to " +
+            "Downloads/Vigilant/bets, so nothing is lost if the app is cleared. Share them with Claude from Tracker › Stats › Share bets with Claude.",
+    )
+    SwitchRow(
+        "Save each day's bets to Downloads", "Downloads/Vigilant/bets: one file for the bets and one for the bids of each day, updated as results and closing lines arrive.",
+        state.settings.vigGuards.betArchive, tag = "betArchiveSwitch",
+    ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(betArchive = v)) } }
     // ---- Diagnostics ---------------------------------------------------------------------
     SectionTitle("Diagnostics")
     Hint(
