@@ -572,6 +572,7 @@ class AutoBetUiTest {
             VigilantTheme(darkTheme = true) { com.tjshea.vigilant.app.ui.AutoBetScreen(ui, { t -> ui = ui.copy(settings = t(ui.settings)) }) }
         }
         compose.waitForIdle()
+        compose.onNodeWithTag("autoBetAdvanced").performScrollTo().performClick()
         for (e in com.tjshea.vigilant.app.ui.SettingsIndex.entries.filter { it.page == null && !it.bids && it.shown(settings) }) {
             assertTrue(
                 "\"${e.title}\" should be on the Auto-bet tab",
