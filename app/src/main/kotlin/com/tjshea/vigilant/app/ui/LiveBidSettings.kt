@@ -58,10 +58,77 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     val lim = s.liveBidLimits
     val shown by rememberUpdatedState(reportActions.onLiveBidShown)
     LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(1_500) } }
-    val setQ = { f: (LiveBidQuality) -> LiveBidQuality -> onUpdate { it.copy(liveBidQuality = f(it.liveBidQuality)) } }
+    var advanced by rememberSaveable { mutableStateOf(LiveBidAdvancedOpenByDefault) }
+    val setQ = { f: (LiveBidQuality) -> LiveBidQuality -> onUpdate { it.copy(liveBidQuality = f(it.liveBidQuality).copy(level = -1)) } }
+    // The line kinds, tennis and leagues are not part of the slider: changing them keeps its position.
+    val setKeep = { f: (LiveBidQuality) -> LiveBidQuality -> onUpdate { it.copy(liveBidQuality = f(it.liveBidQuality)) } }
     val setL = { f: (LiveBidLimits) -> LiveBidLimits -> onUpdate { it.copy(liveBidLimits = f(it.liveBidLimits)) } }
     val subtle = MaterialTheme.colorScheme.onSurfaceVariant
+    val subtle = MaterialTheme.typography.let { MaterialTheme.colorScheme.onSurfaceVariant }
+    // ---- the slider ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+    SectionTitle("Safety ↔ Volume")
+    LbHint("One slider sets every rule below together. Left: only the best prices and the cleanest moments, so fewer fills but each one keeps a big edge. Right: bids on almost everything at thin edges, so many fills.")
+    val shownLevel = if (q.level in LiveBidSlider.MIN..LiveBidSlider.MAX) q.level else LiveBidSlider.nearest(q)
+    var drag by remember(shownLevel) { mutableStateOf(shownLevel.toFloat()) }
+    Text(LiveBidSlider.name(drag.toInt()) + " · " + drag.toInt() + " of 100", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.testTag("liveBidSliderLabel"))
+    androidx.compose.material3.Slider(
+        value = drag, onValueChange = { drag = it }, valueRange = LiveBidSlider.MIN.toFloat()..LiveBidSlider.MAX.toFloat(),
+        onValueChangeFinished = { val v = drag.toInt(); onUpdate { it.copy(liveBidQuality = LiveBidSlider.apply(it.liveBidQuality, v)) } },
+        modifier = Modifier.fillMaxWidth().testTag("liveBidSlider"),
+    )
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        LiveBidSlider.STOPS.forEach { (pos, label) ->
+            FilterChip(selected = q.level == pos, onClick = { onUpdate { it.copy(liveBidQuality = LiveBidSlider.apply(it.liveBidQuality, pos)) } }, label = { Text(label) }, modifier = Modifier.testTag("liveBidStop-$pos"))
+        }
+    }
+    Column(Modifier.padding(top = 6.dp).testTag("liveBidSliderDescribe"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        LiveBidSlider.describe(q).forEach { Text(it, style = MaterialTheme.typography.bodySmall, color = subtle) }
+    }
+    LbHint("A bid is only ever posted at an edge above the line it is pulled at, and the app checks each fill: if the last fills did not keep their edge 30 s later, it stops by itself.")
+    
 
+    // ---- what to bid on ----------------------------------------------------------------------------------------------------------------------------------------------------
+    SectionTitle("What to bid on")
+    SectionTitle("Which lines")
+    LbHint("Moneylines, and spreads and totals at Pinnacle's own main line (the lines Pinnacle's price can stand behind).")
+    LbSwitch("Moneylines", "", q.moneyline, "liveBidMoneyline") { v -> setKeep { it.copy(moneyline = v) } }
+    LbSwitch("Spreads", "", q.spread, "liveBidSpread") { v -> setKeep { it.copy(spread = v) } }
+    LbSwitch("Totals", "", q.total, "liveBidTotal") { v -> setKeep { it.copy(total = v) } }
+    LbSwitch("Tennis", "Moves on every point and its feed has no clock. Off by default.", q.tennis, "liveBidTennis") { v -> setKeep { it.copy(tennis = v) } }
+    LbTitle("Leagues")
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(selected = q.onlyLeagues.isEmpty(), onClick = { setKeep { it.copy(onlyLeagues = emptySet()) } }, label = { Text("All") }, modifier = Modifier.testTag("liveBidLeague-ALL"))
+        Leagues.ALL.map { it.novigName }.distinct().forEach { lg ->
+            FilterChip(
+                selected = lg in q.onlyLeagues,
+                onClick = { setKeep { it.copy(onlyLeagues = if (lg in it.onlyLeagues) it.onlyLeagues - lg else it.onlyLeagues + lg) } },
+                label = { Text(lg) }, modifier = Modifier.testTag("liveBidLeague-$lg"),
+            )
+        }
+    }
+
+    SectionTitle("Live bid limits (your money: a preset never changes it)")
+    SectionTitle("Your money (the slider never changes it)")
+    LbHint("A bid's size is a fraction of full Kelly on your bankroll (Settings › Betting & Novig account: ${LiveBidText.money(s.bankroll)}) for that bid's own price and edge, raised to the smallest stake and held to the biggest and to Settings' per-bet maximum. Makers pay no fee.")
+    LbTitle("Live bid stake rule")
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        AutoBetStake.entries.forEach { m ->
+            FilterChip(selected = m == lim.stakeMode, onClick = { setL { it.copy(stakeMode = m) } }, label = { Text(m.label) }, modifier = Modifier.testTag("liveBidStake-${m.name}"))
+        }
+    }
+    LiveBidText.typicalStake(s)?.let { Text("A typical bid (fair 50%, ${LiveBidText.pct(q.margin)} margin) stakes ${LiveBidText.money(it)}.", style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("liveBidTypical")) }
+    if (lim.stakeMode == AutoBetStake.CUSTOM) TypedDollarField(NumberSpecs.dollars("a bid's amount", 0.5, 1_000.0), lim.customStake, "liveBidCustomStake") { v -> setL { it.copy(customStake = v) } }
+    LbDollars("Smallest stake", listOf(0.5, 1.0, 2.0, 3.0, 5.0), lim.minStake, "liveBidMinStake", 0.5, 1_000.0) { v -> setL { it.copy(minStake = v, maxStake = maxOf(it.maxStake, v)) } }
+    LbDollars("Biggest stake", listOf(1.0, 2.0, 3.0, 5.0, 10.0, 25.0), lim.maxStake, "liveBidMaxStake", 0.5, 1_000.0) { v -> setL { it.copy(maxStake = v, minStake = minOf(it.minStake, v)) } }
+    LbCount("Most bids up at once", listOf(1, 2, 3, 5, 8, 12, 20), lim.maxBids, "liveBidMaxBids", 1, 100) { v -> setL { it.copy(maxBids = v, maxBidsPerGame = minOf(it.maxBidsPerGame, v)) } }
+    LbCount("Most bids up in one game", listOf(1, 2, 3, 4, 6), lim.maxBidsPerGame, "liveBidMaxGameBids", 1, 100) { v -> setL { it.copy(maxBidsPerGame = v, maxBids = maxOf(it.maxBids, v)) } }
+    LbDollars("Most at risk in one game", listOf(3.0, 5.0, 10.0, 15.0, 25.0, 50.0), lim.maxPerGame, "liveBidMaxGame", 1.0, 10_000.0) { v -> setL { it.copy(maxPerGame = v) } }
+    LbDollars("Most filled in a day (fills plus the bids up)", listOf(10.0, 20.0, 40.0, 75.0, 150.0, 300.0), lim.maxPerDay, "liveBidMaxDay", 1.0, 100_000.0) { v -> setL { it.copy(maxPerDay = v) } }
+    LbDollars("Stop for the day when settled live bids lose", listOf(5.0, 10.0, 15.0, 25.0, 50.0, 100.0), lim.haltLoss, "liveBidHaltLoss", 1.0, 100_000.0) { v -> setL { it.copy(haltLoss = v) } }
+
+    OutlinedButton(onClick = { advanced = !advanced }, modifier = Modifier.fillMaxWidth().padding(top = 12.dp).testTag("liveBidAdvancedToggle")) { Text(if (advanced) "Hide advanced settings" else "Advanced settings (every individual rule)") }
+    if (advanced) {
+    LbHint("Editing any rule here makes the slider say Custom. Moving the slider sets them all again.")
     // ---- the autopilot: both engines, one tap ----------------------------------------------------------------------------------------------------------------------------------
     var confirmingPilot by remember { mutableStateOf(false) }
     SectionTitle(LiveBidText.AUTOPILOT_TITLE)
@@ -87,38 +154,6 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
             dismissButton = { TextButton(onClick = { confirmingPilot = false }, modifier = Modifier.testTag("liveAutopilotCancel")) { Text("Cancel") } },
         )
     }
-
-    Text(LiveBidText.HINT, style = MaterialTheme.typography.bodyMedium, color = subtle, modifier = Modifier.padding(vertical = 4.dp))
-    Text(LiveBidText.EVIDENCE, style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(vertical = 4.dp).testTag("liveBidEvidence"))
-    LbSwitch(LiveBidText.FEED_TITLE, LiveBidText.feedSub(s.liveBidReal), s.liveBid, "liveBidSwitch") { v -> onUpdate { it.copy(liveBid = v, liveBidReal = it.liveBidReal && v) } }
-    s.liveBidHalted?.let { why ->
-        Column(Modifier.padding(vertical = 4.dp).testTag("liveBidHalted")) {
-            Text("Stopped: $why", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-            Button(onClick = { onUpdate { it.copy(liveBidHalted = null) } }, modifier = Modifier.testTag("liveBidResume")) { Text(LiveBidText.RESUME) }
-        }
-    }
-    var confirming by remember { mutableStateOf(false) }
-    val paperOnly = LiveBidPresets.active(s)?.paperOnly == true
-    Row(
-        Modifier.fillMaxWidth().toggleable(
-            value = s.liveBidReal, role = Role.Switch,
-            onValueChange = { v -> if (!v) onUpdate { it.copy(liveBidReal = false) } else if (s.liveBid && !paperOnly) confirming = true },
-        ).padding(vertical = 6.dp).testTag("liveBidRealSwitch"),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f).padding(end = 12.dp)) {
-            Text(LiveBidText.REAL_TITLE, style = MaterialTheme.typography.bodyMedium)
-            Text(LiveBidText.REAL_SUB, style = MaterialTheme.typography.bodySmall, color = subtle)
-        }
-        Switch(checked = s.liveBidReal, onCheckedChange = null, enabled = (s.liveBid && !paperOnly) || s.liveBidReal)
-    }
-    if (paperOnly) Text("The preset in force is for watching only: real bids stay off until you apply another.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidPaperOnlyNote"))
-    Text(LiveBidText.statusLine(state.liveBidStatus, s), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("liveBidNote"))
-    LiveBidText.whyNone(s, state.liveBidStatus, state.pinnLive, state.pinnoddsKeys.isNotEmpty() || s.pinnWebsite.website)?.let { why ->
-        Text(why, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(top = 2.dp).testTag("liveBidWhy"))
-    }
-    Text(LiveBidText.detail(s, state.liveBidStatus, state.pinnLive), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp).testTag("liveBidDetail"))
-    if (state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.website) Text("No Pinnodds key is saved: add it in Settings › Pinnodds live, or switch that page to the free Pinnacle website feed. Live bids use the same feed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidNoKey"))
 
     // ---- live tail bets ----------------------------------------------------------------------------------------------------------------------------------------------------------
     var confirmingTail by remember { mutableStateOf(false) }
@@ -178,24 +213,6 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     )
     Button(onClick = { onUpdate { LiveBidPresets.save(it, name) ?: it }; name = "" }, enabled = trimmed.isNotEmpty() && !taken, modifier = Modifier.testTag("liveBidPresetSave")) { Text("Save these rules as a preset") }
 
-    // ---- the money ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-    SectionTitle("Live bid limits (your money: a preset never changes it)")
-    LbHint("A bid's size is a fraction of full Kelly on your bankroll (Settings › Betting & Novig account: ${LiveBidText.money(s.bankroll)}) for that bid's own price and edge, raised to the smallest stake and held to the biggest and to Settings' per-bet maximum. Makers pay no fee.")
-    LbTitle("Live bid stake rule")
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        AutoBetStake.entries.forEach { m ->
-            FilterChip(selected = m == lim.stakeMode, onClick = { setL { it.copy(stakeMode = m) } }, label = { Text(m.label) }, modifier = Modifier.testTag("liveBidStake-${m.name}"))
-        }
-    }
-    LiveBidText.typicalStake(s)?.let { Text("A typical bid (fair 50%, ${LiveBidText.pct(q.margin)} margin) stakes ${LiveBidText.money(it)}.", style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("liveBidTypical")) }
-    if (lim.stakeMode == AutoBetStake.CUSTOM) TypedDollarField(NumberSpecs.dollars("a bid's amount", 0.5, 1_000.0), lim.customStake, "liveBidCustomStake") { v -> setL { it.copy(customStake = v) } }
-    LbDollars("Smallest stake", listOf(0.5, 1.0, 2.0, 3.0, 5.0), lim.minStake, "liveBidMinStake", 0.5, 1_000.0) { v -> setL { it.copy(minStake = v, maxStake = maxOf(it.maxStake, v)) } }
-    LbDollars("Biggest stake", listOf(1.0, 2.0, 3.0, 5.0, 10.0, 25.0), lim.maxStake, "liveBidMaxStake", 0.5, 1_000.0) { v -> setL { it.copy(maxStake = v, minStake = minOf(it.minStake, v)) } }
-    LbCount("Most bids up at once", listOf(1, 2, 3, 5, 8, 12, 20), lim.maxBids, "liveBidMaxBids", 1, 100) { v -> setL { it.copy(maxBids = v, maxBidsPerGame = minOf(it.maxBidsPerGame, v)) } }
-    LbCount("Most bids up in one game", listOf(1, 2, 3, 4, 6), lim.maxBidsPerGame, "liveBidMaxGameBids", 1, 100) { v -> setL { it.copy(maxBidsPerGame = v, maxBids = maxOf(it.maxBids, v)) } }
-    LbDollars("Most at risk in one game", listOf(3.0, 5.0, 10.0, 15.0, 25.0, 50.0), lim.maxPerGame, "liveBidMaxGame", 1.0, 10_000.0) { v -> setL { it.copy(maxPerGame = v) } }
-    LbDollars("Most filled in a day (fills plus the bids up)", listOf(10.0, 20.0, 40.0, 75.0, 150.0, 300.0), lim.maxPerDay, "liveBidMaxDay", 1.0, 100_000.0) { v -> setL { it.copy(maxPerDay = v) } }
-    LbDollars("Stop for the day when settled live bids lose", listOf(5.0, 10.0, 15.0, 25.0, 50.0, 100.0), lim.haltLoss, "liveBidHaltLoss", 1.0, 100_000.0) { v -> setL { it.copy(haltLoss = v) } }
     LbSwitch("Fill the wallet", "As many bids up as the wallet carries (up to ${LiveBidLimits.WALLET_MAX_BIDS}, ${LiveBidLimits.WALLET_MAX_PER_GAME_BIDS} a game): the counts and the game and day dollars above stop being the ceiling and your wallet, less what you keep, is. Every bid still has to pass the rules and the stake rule, and the loss stop still applies.", lim.fillWallet, "liveBidFillWallet") { v -> setL { it.copy(fillWallet = v) } }
     LbPercent("Share of the wallet the pregame bids leave for live (the Bids tab's make orders stop at the rest)", listOf(0.0, 0.25, 0.5, 0.75), lim.pregameLeavesShare, "liveBidPregameLeaves", 0.0, 95.0, unit = "%", zeroLabel = "None") { v -> setL { it.copy(pregameLeavesShare = v) } }
     LbDollars("Keep in the wallet (bids never touch it)", listOf(0.0, 2.0, 5.0, 10.0, 25.0, 50.0), lim.walletReserve, "liveBidReserve", 1.0, 100_000.0, zeroLabel = "None") { v -> setL { it.copy(walletReserve = v) } }
@@ -217,25 +234,6 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     LbTyped("Highest Pinnacle fair to bid on", q.maxFair, "liveBidMaxFair", 10.0, 99.0) { v -> setQ { it.copy(maxFair = v, minFair = minOf(it.minFair, v - 0.01)) } }
     LbSwitch("Never lead the book", "Skip a bid that would be the best bid on its side. On the tapes bids that led were picked off most.", q.neverLead, "liveBidNeverLead") { v -> setQ { it.copy(neverLead = v) } }
     LbSwitch("Bid both sides of a market", "Off: one side at a time (the other is left alone while one is up).", q.bothSides, "liveBidBothSides") { v -> setQ { it.copy(bothSides = v) } }
-
-    // ---- which lines --------------------------------------------------------------------------------------------------------------------------------------------------------------
-    SectionTitle("Which lines")
-    LbHint("Moneylines, and spreads and totals at Pinnacle's own main line (the lines Pinnacle's price can stand behind).")
-    LbSwitch("Moneylines", "", q.moneyline, "liveBidMoneyline") { v -> setQ { it.copy(moneyline = v) } }
-    LbSwitch("Spreads", "", q.spread, "liveBidSpread") { v -> setQ { it.copy(spread = v) } }
-    LbSwitch("Totals", "", q.total, "liveBidTotal") { v -> setQ { it.copy(total = v) } }
-    LbSwitch("Tennis", "Moves on every point and its feed has no clock. Off by default.", q.tennis, "liveBidTennis") { v -> setQ { it.copy(tennis = v) } }
-    LbTitle("Leagues")
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(selected = q.onlyLeagues.isEmpty(), onClick = { setQ { it.copy(onlyLeagues = emptySet()) } }, label = { Text("All") }, modifier = Modifier.testTag("liveBidLeague-ALL"))
-        Leagues.ALL.map { it.novigName }.distinct().forEach { lg ->
-            FilterChip(
-                selected = lg in q.onlyLeagues,
-                onClick = { setQ { it.copy(onlyLeagues = if (lg in it.onlyLeagues) it.onlyLeagues - lg else it.onlyLeagues + lg) } },
-                label = { Text(lg) }, modifier = Modifier.testTag("liveBidLeague-$lg"),
-            )
-        }
-    }
 
     // ---- fresh --------------------------------------------------------------------------------------------------------------------------------------------------------------------
     SectionTitle("Live bid freshness: how fresh Pinnacle's price must be")
@@ -282,6 +280,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     LbSeconds("Stop when pulling a bid takes longer than (90th percentile of the last ten)", listOf(0, 6, 8, 10, 12, 15, 20), q.maxCancelSec, "liveBidMaxCancel", 120) { v -> setQ { it.copy(maxCancelSec = v) } }
     LbSeconds("Stop when a bid takes longer than this to reach Novig's book", listOf(0, 8, 10, 12, 15, 20, 30), q.maxPlaceSec, "liveBidMaxPlace", 120) { v -> setQ { it.copy(maxPlaceSec = v) } }
     LbSwitch("Count Novig's maker credit as edge", "Half the taker's fee, paid in cash within 7 days, in play only. Off: the checks ignore it and it is a bonus.", q.countCredit, "liveBidCredit") { v -> setQ { it.copy(countCredit = v) } }
+    }
 
     if (confirming) {
         AlertDialog(
