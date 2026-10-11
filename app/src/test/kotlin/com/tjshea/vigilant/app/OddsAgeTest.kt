@@ -46,4 +46,17 @@ class OddsAgeTest {
         val before = base.copy(settings = base.settings.copy(includeLive = true), feed = listOf(started))
         assertEquals("before the start it is a pregame bet like any other", 1, before.feedAt(o.event.startsTs - 3_600_000L).size)
     }
+
+    @Test
+    fun `the Feed can be ordered by stars, best rated first, the bigger edge first among equals`() {
+        val rated = SampleScan.state().feed.filter { it.rating != null }
+        org.junit.Assert.assertTrue("the sample has rated bets", rated.size >= 3)
+        val sorted = com.tjshea.vigilant.data.scanner.FeedOrder.sort(rated, com.tjshea.vigilant.data.scanner.FeedSort.STARS)
+        val stars = sorted.map { it.rating!!.stars }
+        assertEquals(stars.sortedDescending(), stars)
+        sorted.zipWithNext().filter { (a, b) -> a.rating!!.stars == b.rating!!.stars }.forEach { (a, b) -> org.junit.Assert.assertTrue(a.evPercent!! >= b.evPercent!!) }
+        // The other orders are as they were.
+        val byEv = com.tjshea.vigilant.data.scanner.FeedOrder.sort(rated, com.tjshea.vigilant.data.scanner.FeedSort.EV)
+        assertEquals(byEv.map { it.evPercent }, byEv.map { it.evPercent }.sortedByDescending { it })
+    }
 }
