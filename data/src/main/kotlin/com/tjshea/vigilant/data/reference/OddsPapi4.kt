@@ -299,28 +299,31 @@ class Op4Catalog(
         return OpBooks.tournamentFor(league, OpParser.tournaments(raw))?.id
     }
 
-    /** The league's games within 3 hours of [startMs] (one request per 6-hour window). */
-    suspend fun fixturesAround(tournament: Long, startMs: Long): List<Op4Fixture> = fixturesBetween(tournament, startMs - GAP_MS, startMs + GAP_MS)
+    /** The league's games within 3 hours of [startMs]: one request for the 12 hours from the 6-hour mark before it, cached 12 hours. */
+    suspend fun fixturesAround(tournament: Long, startMs: Long): List<Op4Fixture> = chunk(tournament, (startMs - GAP_MS) / WINDOW_MS)
 
-    /** The league's games between [fromMs] and [toMs], read in 6-hour-aligned windows, each cached 12 hours. */
+    /** The league's games between [fromMs] and [toMs]: 12-hour chunks, one request each, cached 12 hours. */
     suspend fun fixturesBetween(tournament: Long, fromMs: Long, toMs: Long): List<Op4Fixture> {
         val out = ArrayList<Op4Fixture>()
         var w = fromMs / WINDOW_MS
-        val last = toMs / WINDOW_MS
-        while (w <= last) {
-            val key = "fx|$tournament|$w"
-            val raw = store.get(key, FIXTURES_MS) ?: run {
-                if (!budget.mayBuy()) throw held()
-                client.billable(
-                    "/v4/fixtures",
-                    listOf("tournamentId" to tournament.toString(), "from" to Instant.ofEpochMilli(w * WINDOW_MS).toString(), "to" to Instant.ofEpochMilli((w + 1) * WINDOW_MS).toString()),
-                    reserve = Op4Budget.RESERVE,
-                ).also { store.put(key, it) }
-            }
-            out += Op4Parser.fixtures(raw)
-            w++
+        while (w * WINDOW_MS <= toMs) {
+            out += chunk(tournament, w)
+            w += 2
         }
         return out.distinctBy { it.id }
+    }
+
+    private suspend fun chunk(tournament: Long, w: Long): List<Op4Fixture> {
+        val key = "fx|$tournament|$w"
+        val raw = store.get(key, FIXTURES_MS) ?: run {
+            if (!budget.mayBuy()) throw held()
+            client.billable(
+                "/v4/fixtures",
+                listOf("tournamentId" to tournament.toString(), "from" to Instant.ofEpochMilli(w * WINDOW_MS).toString(), "to" to Instant.ofEpochMilli((w + 2) * WINDOW_MS).toString()),
+                reserve = Op4Budget.RESERVE,
+            ).also { store.put(key, it) }
+        }
+        return Op4Parser.fixtures(raw)
     }
 
     suspend fun markets(league: com.tjshea.vigilant.data.scanner.League, sport: Int): OpMarkets {
