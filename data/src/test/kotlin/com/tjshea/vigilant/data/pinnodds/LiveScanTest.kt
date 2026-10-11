@@ -166,7 +166,7 @@ class LiveScanTest {
         h.novigPush(base + currentTime)
         advanceTimeBy(300); runCurrent()
         assertTrue(h.board.rows.value.isNotEmpty())
-        repeat(5) { advanceTimeBy(1_000); runCurrent(); h.frame(base + currentTime, live(markets = arrayOf(money(3 + it, -150, 125)))) }
+        repeat(5) { advanceTimeBy(1_000); runCurrent(); h.frame(base + currentTime, live(markets = arrayOf(money(3L + it, -150, 125)))) }
         advanceTimeBy(300); runCurrent()
         assertTrue(h.board.rows.value.isEmpty())
         h.novigPush(base + currentTime)
