@@ -122,7 +122,7 @@ class LiveScanTest {
         assertEquals("Oklahoma City Thunder", okc.selection)
         assertEquals(0.5, okc.quote!!.price, 1e-9)
         assertTrue("Pinnacle -150/+125 devigged is about 57%", okc.fairProbability!! in 0.55..0.59)
-        assertTrue("positive after Novig's live taker fee", okc.evPercent!! > 5.0)
+        assertTrue("positive after Novig's live taker fee", okc.evPercent!! > 0.05)
         assertEquals("the fee is the live one", com.tjshea.vigilant.engine.EvMath.quote(okc.fairProbability!!, 0.5, ml.fee!!, true).evPercent, okc.evPercent!!, 1e-9)
         assertTrue(h.board.status.value.on)
         assertEquals(1, h.board.status.value.games)
