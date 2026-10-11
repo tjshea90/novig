@@ -4594,12 +4594,12 @@ Evidence: v0.89.9 Diagnostics: ATP 0/16, WTA 0/4 matched to fair odds.
 
 ## TH: Vigilant scanner enhancements (Tj, 2026-10-11)
 Tj verbatim, 7 asks: "For the vigilant scanner: 1) similar to the cno scanner, make it show how many books agree on the positive EV (for example 4 out of 5 books agree) 2) add a star next to any bet which a sharp book for that market also agrees the bet is EV 3) for any api, including sgo with its many books, consolidate same company books and do not count them for their odds more than once. Sgo carries many books, but a lot of them are the same parent company with identical odds. Only list one of these books in the results and only calculate one of the books for fair odds if there are more than one book under the same company. 4) make the auto bet feature also bet on vigilant scanned bets, but only if they meet the criteria I set for auto bet 5) exclude from any fair odds evaluation any book that shows odds that look incorrect, such as extreme outliers or inverted odds (favorite on the opposite side of the rest of the market) 6) automatically remove from the list any bet with less than 10 cents liquidity or any bet no longer offered at positive EV 7) similar to cno scanner, when I press on a bet, show each book carrying the bet and its odds for both sides of the bet. Currently it only shows odds for one side of the bet"
-- [ ] TH0 Read how CNO shows agreement/sharp star/both-side book table and how Vigilant's Scanner/Pricing/AutoBettor are built.
-- [ ] TH1 "N of M books agree" on each Vigilant row.
-- [ ] TH2 Star on rows where a sharp book for that market also shows +EV.
-- [ ] TH3 One book per parent company everywhere (list + fair odds), all APIs incl. SGO.
-- [ ] TH4 Auto bet also bets Vigilant-scanned bets that meet the auto-bet criteria.
-- [ ] TH5 Drop books with outlier/inverted odds from fair odds.
-- [ ] TH6 Auto-remove rows under 10 cents liquidity or no longer +EV.
-- [ ] TH7 Tap a bet: every book with its odds for BOTH sides.
-- [ ] TH8 Tests, ship, release (Tj asked for releases only when tests pass; confirm CHECKPOINT's v0.89.14 release is outstanding too).
+- [x] TH0 Read how CNO shows agreement/sharp star/both-side book table and how Vigilant's Scanner/Pricing/AutoBettor are built.
+- [x] TH1 "N of M books agree" on each Vigilant row.
+- [x] TH2 Star on rows where a sharp book for that market also shows +EV.
+- [x] TH3 One book per parent company everywhere (list + fair odds), all APIs incl. SGO.
+- [x] TH4 Auto bet also bets Vigilant-scanned bets that meet the auto-bet criteria.
+- [x] TH5 Drop books with outlier/inverted odds from fair odds.
+- [x] TH6 Auto-remove rows under 10 cents liquidity or no longer +EV.
+- [x] TH7 Tap a bet: every book with its odds for BOTH sides.
+- [ ] TH8 Ship + release (in progress; tests: BookCompanyTest, AgreementTest, AutoBetVigilantTest, BookSidesTest all green, full suite 3096 passed)
