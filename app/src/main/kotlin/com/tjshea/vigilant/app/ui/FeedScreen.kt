@@ -215,6 +215,12 @@ fun FeedScreen(
                         val st = state.liveStatus
                         Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Banner(LiveScanText.line(st), color = if (st.on && st.reason == null) Edge.colors.positive else Edge.colors.warning)
+                            // The lane counts every +EV row; the list holds the ones that pass your filters. Say what is hidden and why, never a count with nothing under it (Tj, 2026-10-11).
+                            val hidden = remember(state.liveRows, state.settings, now / 1000L) { com.tjshea.vigilant.data.pinnodds.LiveScanFeed.hiddenReasons(state.liveRows, state.settings, now) }
+                            if (hidden.isNotEmpty()) Text(
+                                "Hidden by your filters: " + hidden.joinToString("; ") { (why, n) -> "$n ($why)" } + ".",
+                                style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, modifier = Modifier.testTag("liveHidden"),
+                            )
                             FilterChip(selected = liveOnly, onClick = { liveOnly = !liveOnly }, label = { Text("Live games only", maxLines = 1) }, modifier = Modifier.testTag("liveOnlyChip"))
                         }
                     }
