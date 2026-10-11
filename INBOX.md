@@ -6523,3 +6523,8 @@ If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me
 ```
 If any sharp book disagrees that a bet is positive EV, it should be vetoed and not bet, and should not be a highly rated bet 
 ```
+
+## 2026-10-11T20:25:58Z
+```
+Auto bet stopped and didn't fix itself. And look at the screenshot, this is clearly an error. It also isn't holding live streaming odds for pinnodds and novig. No bets are showing up
+```
