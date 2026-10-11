@@ -4569,3 +4569,9 @@ Screenshot (12:27, v0.89.x): Live bids on, REAL on: 0 up, today 496 posted, 14 f
 - [ ] TD2 Read every live-bid setting and decide: keep (in a plain-words Advanced group), derive from the slider, or remove.
 - [x] TD3 Safety/volume slider (wide range, e.g. 0-100) that maps to every math-linked setting consistently; guarantee: a bid is only posted/kept while its EV AT ITS PRICE vs the fair (after fees) is above the slider's floor, and a fill is checked against the fair at fill time.
 - [x] TD4 Presets named in plain words; tests; ship.
+
+## TE: Unabated / OddsPapi Free scan nothing; Polymarket finds no bets (Tj, 2026-10-11)
+Tj verbatim: "Unabated and oddspapi currently do not scan in the app. The keys are good and the test runs fine for both keys but when I scan using only these two apis toggled on, the scan takes less than one second and finds nothing. The polymarket api scans but keeps returning no bets, which I think is wrong because other apis show several positive EV bets"
+- [ ] TE1 Find why a scan with only Unabated + OddsPapi Free on finishes in <1 s with nothing (source gating? cache? no sharp book? Pricing needs?).
+- [ ] TE2 Find why Polymarket alone returns no bets while other APIs show +EV.
+- [ ] TE3 Fix, test, ship.
