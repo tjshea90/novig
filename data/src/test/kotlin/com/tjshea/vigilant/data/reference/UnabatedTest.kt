@@ -213,7 +213,7 @@ class UnabatedTest {
         assertTrue(requests.all { it.getHeader("X-Api-Key") == "k1" && !it.requestUrl.toString().contains("k1") })
         assertEquals("the second odds call waits out the 5.2 s gate", listOf(5_200L), sleeps.toList())
         c.leagues(); c.betTypes()
-        assertEquals("discovery calls do not use the odds interval", 1, sleeps.size + 0)
+        assertEquals("discovery calls do not use the odds interval", 1, sleeps.count { it == 5_200L })
     }
 
     @Test fun aRateLimitIsWaitedOutByItsRetryAfterAndTheSameKeyIsUsed() = runTest {
@@ -247,6 +247,8 @@ class UnabatedTest {
     @Test fun httpSuccessWithSuccessFalseIsAFailureWhoseMessagesAreShownAndTwoFailuresMarkItDown() = runTest {
         handler = { ok("""{"data":null,"success":false,"messages":["Delayed snapshot not ready"]}""") }
         val c = client()
+        handler = { route(it) }; c.leagues()   // one good answer first, so "down" is measured from it
+        handler = { ok("""{"data":null,"success":false,"messages":["Delayed snapshot not ready"]}""") }
         val e = runCatching { c.oddsRaw("nba", "straight") }.exceptionOrNull()
         assertTrue(e.toString(), e is UnabatedFailure && e.message!!.contains("Delayed snapshot not ready"))
         runCatching { c.oddsRaw("nba", "straight") }
