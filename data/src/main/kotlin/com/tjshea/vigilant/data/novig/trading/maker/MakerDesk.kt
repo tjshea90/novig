@@ -543,6 +543,10 @@ class MakerDesk(
         if (post.evAtFair < 0.0 || (anchor != null && post.price > anchor + 1e-9)) {
             return Placed.Refused("${line.selection}: not posted, its bid is above the fair price (negative EV)", stopsCycle = false)
         }
+        // A sharp book that prices the line below this bid disagrees that it is +EV: vetoed (Tj, 2026-10-11).
+        line.sharpFairs.minOrNull()?.let { sharp ->
+            if (post.price > sharp + 1e-9) return Placed.Refused("${line.selection}: not posted, a sharp book's fair is below this bid", stopsCycle = false)
+        }
         val (bid, ttl) = bidFor(post, rules, auto, clock()) ?: return Placed.Refused(tooOld(post), stopsCycle = false)
         // Recorded before it's sent: an answer that never comes back is still a bid Vigilant knows to look for.
         store.update { it + bid }

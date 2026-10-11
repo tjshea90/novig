@@ -50,6 +50,8 @@ data class BetTarget(
      * the plan refuses when Novig's best price is now above it and never reaches past it: the order is a fill-or-kill at the listed price or better.
      */
     val listedPrice: Double? = null,
+    /** A sharp book prices both sides of this bet and says it is NOT +EV at Novig's price (Tj, 2026-10-11): nothing is bet on it, by hand or by the auto-bet. */
+    val sharpAgainst: Boolean = false,
 )
 
 /**
@@ -179,6 +181,9 @@ object ApiBetPlanner {
         }
         if (AutoBet.tooShort(limits.minOdds, Odds.probabilityToAmerican(best.price.coerceIn(0.001, 0.999)))) {
             return no("Novig's best price is now ${american(best.price)}, shorter than your ${Odds.formatAmerican(limits.minOdds)} limit.")
+        }
+        if (target.sharpAgainst) {
+            return no("A sharp book prices both sides of this bet and says it is not +EV at Novig's price, so nothing is bet on it.")
         }
         val listed = target.listedPrice.takeIf { live }
         if (listed != null && best.price > listed + 1e-9) {

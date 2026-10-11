@@ -178,6 +178,7 @@ object ApiBetTargets {
             live = o.isLive,
             liveLane = o.refEvent?.id?.startsWith("pinnacle-live-") == true,
             listedPrice = o.quote?.price,
+            sharpAgainst = o.agreement.sharpAgainst,
         )
     }
 
@@ -542,7 +543,11 @@ class ApiBettingController(
     }
 
     /** A CNO card's bet: its Novig outcome is found first (the same match the Open button uses), then the sheet opens. */
-    override fun bet(row: CnoRow) = betRow(row, "CrazyNinjaOdds") { found, market -> ApiBetTargets.of(row, found, market, c.cno.state.value.snapshot?.dataAtMs) }
+    override fun bet(row: CnoRow) = betRow(row, "CrazyNinjaOdds") { found, market -> ApiBetTargets.of(row, found, market, c.cno.state.value.snapshot?.dataAtMs)?.let { it.copy(sharpAgainst = cnoSharpAgainst(row)) } }
+
+    /** A sharp book among the books read for [row] says it is not +EV at Novig's price ([CnoBooks.Check.sharpAgainst]); false when the books were not read. */
+    private fun cnoSharpAgainst(row: CnoRow): Boolean =
+        state.value.books[row.key]?.view?.let { v -> CnoBooks.check(v, row, live = (row.startsAtMs ?: Long.MAX_VALUE) <= clock())?.sharpAgainst } == true
 
     /** A CNO-shaped row's Kelly stake (CNO's or ParlayAPI's fair odds against Novig's price, capped at what's available). */
     private fun kellyOf(row: CnoRow): Double? =

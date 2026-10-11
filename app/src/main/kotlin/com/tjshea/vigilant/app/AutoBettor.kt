@@ -195,6 +195,7 @@ class AutoBettor(
                 else -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(injuries(), row, now, state.teams[row.key])?.let(::skip)
                     ?: AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet))?.let(::skip)
                     ?: AutoBet.starsReason(rules, item.check.rating?.stars)?.let(::skip)
+                    ?: (if (item.check.sharpAgainst) "a sharp book prices both sides and says it isn't +EV at Novig's price" else null)?.let(::skip)
                     ?: (if (byStars) null else sharpReason(item, settings, state, now))?.let(::skip)
                     ?: passing.add(item)
             }
@@ -429,6 +430,8 @@ class AutoBettor(
         val a = o.agreement
         AutoBet.judgeVigilant(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), a.twoSided, a.agreeing)?.let { return it }
         AutoBet.starsReason(rules, o.rating?.stars)?.let { return it }
+        // A sharp book that disagrees vetoes the bet, whatever the sharp rule or a minimum star rating says (Tj, 2026-10-11: "If any sharp book disagrees that a bet is positive EV, it should be vetoed and not bet").
+        if (a.sharpAgainst) return "a sharp book prices both sides and says it isn't +EV at Novig's price"
         // The rating already weighs the sharp book (a sharp book against a bet caps it at 2½ stars): while it decides, the sharp rule is not asked again.
         if (rules.byStars) return null
         return when (settings.sharpAutoBet) {
