@@ -171,6 +171,35 @@ object AutoBet {
         return null
     }
 
+    /**
+     * Why a bet from Vigilant's own scan (tennis, which CNO doesn't carry) doesn't pass, or null when it does. The same bars as [judge] on the scan's edge ([ev], Novig's price against
+     * the Pinnacle-priced fair): the kinds, the minimum (and the favourite's extra), the too-good-to-be-true cap and the odds limits. There is no books page to check it against.
+     */
+    fun judgeScan(rules: Rules, ev: Double, american: Int, kind: BetKind?): String? {
+        if (kind != null && kind !in rules.kinds) return "${kind.label.lowercase()} aren't among the kinds of bet you auto-bet"
+        val bar = evBar(rules, american)
+        if (ev < bar - 1e-9) return "its edge ${percent(ev)} is under the ${percent(bar)} it needs"
+        if (ev > MAX_SANE_EV) return "its edge ${percent(ev)} is over ${percent(MAX_SANE_EV)}, which is usually a stale or mismatched price (place it by hand if you trust it)"
+        if (tooLong(rules.maxOdds, american)) return "its odds are longer than your ${Odds.formatAmerican(rules.maxOdds)} limit"
+        if (tooShort(rules.minOdds, american)) return "its odds are shorter than your ${Odds.formatAmerican(rules.minOdds)} limit"
+        return null
+    }
+
+    /** The stake for a scan's bet at [quote] (see [stake]): the rule's amount, or Kelly on the quote's own fair and price, held to the per-bet maximum and the wallet. */
+    fun scanStake(rules: Rules, quote: EvQuote, bankroll: Double, balance: Double): Stake {
+        if (balance < MIN_STAKE - 1e-9) return Stake.WalletEmpty
+        val wanted = when (rules.stake) {
+            AutoBetStake.ONE_DOLLAR -> 1.0
+            AutoBetStake.CUSTOM -> rules.customStake
+            else -> {
+                val kelly = rules.stake.kelly ?: return Stake.Skip("no Kelly fraction")
+                if (!(bankroll > 0.0)) return Stake.Skip("it has no Kelly stake (no bankroll set)")
+                EvMath.suggestedStake(quote, bankroll, kelly, null).takeIf { it > 0.0 } ?: return Stake.Skip("it has no Kelly stake (no edge at this price)")
+            }
+        }
+        return cap(rules, wanted, balance)
+    }
+
     /** How much to stake on one bet. */
     sealed interface Stake {
         data class Amount(val dollars: Double) : Stake

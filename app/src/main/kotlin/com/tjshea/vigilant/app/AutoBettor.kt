@@ -291,6 +291,94 @@ class AutoBettor(
         return finish(now, report, balance = balance)
     }
 
+    /**
+     * Tennis (Tj, 2026-10-10: "I want the auto bid feature and auto bet features both to include all tennis. If it's has to use vigilant scanner that is fine"). CrazyNinjaOdds
+     * carries no tennis (RESEARCH.md §85), so [run] can never see it; this takes it from Vigilant's own finished scan [result] (Pinnacle's price as the fair), judges it by the same
+     * rules ([AutoBet.judgeScan]: edge, favourite bar, odds limits, kinds, stake, wallet) and places it through the same placer, whose own book read, price match and limits
+     * ([ApiBetPlacer.placeAuto]) are the last word. Pregame only. Switched by [ScanSettings.autoBetTennis] with ATP/WTA among the leagues.
+     */
+    suspend fun runTennis(settings: ScanSettings, state: UiState, result: ScanResult): Report {
+        val now = clock()
+        val rules = AutoBet.rules(settings)
+        if (!settings.autoBet || !settings.autoBetTennis) return Report()
+        if (settings.killed || c.settingsStore.flow.value?.killed == true) return finish(now, Report(), blocker = "Stopped by the STOP button: tap RESUME on the red bar to run again")
+        settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (the Auto-bet tab › Resume auto-bet)") }
+        failure?.takeIf { now < failedUntilMs }?.let { return finish(now, Report(stopped = it), blocker = it) }
+        val placer = placer()
+        if (!AppBook.isNovig || placer == null) return finish(now, Report(), blocker = "Betting through Novig's API isn't set up (Settings › Betting & Novig account › Enable betting)")
+        if (result.partial) return Report()
+        cooldown.entries.removeAll { it.value <= now }
+
+        val skipped = LinkedHashMap<String, Int>()
+        fun skip(reason: String) { skipped.merge(reason, 1, Int::plus) }
+        val tennis = result.opportunities.filter { it.league.tennis && it.league.novigName in settings.leagues && it.quote != null && it.fairProbability != null }
+        val passing = ArrayList<Opportunity>()
+        for (o in tennis.sortedByDescending { it.evPercent ?: 0.0 }) {
+            val q = o.quote ?: continue
+            when {
+                o.isLive || o.event.startsTs - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
+                (cooldown[o.key] ?: 0L) > now -> skip("tried a moment ago")
+                else -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection))?.let(::skip) ?: passing.add(o)
+            }
+        }
+        if (passing.isEmpty()) return finish(now, Report(looked = tennis.size, skipped = skipped))
+
+        val balance0 = try {
+            wallet()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return stopFor(now, Report(looked = tennis.size, passed = passing.size, skipped = skipped), "Couldn't read the wallet: ${(e as? NovigApiException)?.advice ?: e.message ?: e.javaClass.simpleName}")
+        } ?: return finish(now, Report(looked = tennis.size, passed = passing.size, skipped = skipped), blocker = "Betting through Novig's API isn't set up (Settings › Betting & Novig account › Enable betting)")
+        var balance = balance0
+        val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
+        val limits = BetLimits(
+            maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds, minOdds = rules.minOdds, maxPerGame = settings.apiMaxPerGame,
+            minEvWhere = "Auto-bet tab › Smallest edge (EV) at Novig's price now",
+        )
+        val exposure = if (settings.apiMaxPerGame > 0.0) GameExposure.items(c.tracker.all()) + GameExposure.bidItems(c.makerStore.all()) else emptyList()
+        val placed = ArrayList<TrackedBet>()
+        var stopped: String? = null
+        var walletEmpty = false
+        var halted = false
+        for (o in passing) {
+            currentCoroutineContext().ensureActive()
+            if (c.settingsStore.flow.value?.killed == true) { stopped = "the STOP button was pressed while this pass ran"; break }
+            if (placed.size >= AutoBet.MAX_PER_CYCLE) { stopped = "placed ${AutoBet.MAX_PER_CYCLE} this cycle (the best edges first); the rest wait for the next"; break }
+            val q = o.quote ?: continue
+            val stake = when (val s = AutoBet.scanStake(rules, q, settings.bankroll, balance)) {
+                is AutoBet.Stake.WalletEmpty -> { walletEmpty = true; stopped = "the wallet has ${money(balance)}, under a cent"; break }
+                is AutoBet.Stake.Skip -> { skip(s.reason); continue }
+                is AutoBet.Stake.Amount -> s.dollars
+            }
+            if (stake <= tooSmallBelow + 1e-9) { skip("Novig refused an order of ${money(tooSmallBelow)} as too small, and this one is no bigger"); continue }
+            val target = ApiBetTargets.of(o)
+            if (target == null) { skip("its fair price is missing"); continue }
+            if (target.market.marketId in openMarkets) { skip("a bet in this Novig market is already open"); continue }
+            if (settings.apiMaxPerGame > 0.0) {
+                val check = GameExposure.check(GameRef(target.market.eventId, target.eventName, target.startsTs, target.league), exposure, target.market.marketId, target.outcomeId, stake, settings.apiMaxPerGame)
+                if (check.blocked) { noteGameLimit(check); skip(AutoBet.GAME_LIMIT_SKIP); continue }
+            }
+            val atBet = runCatching { BetRecord.opportunity(state.copy(settings = settings), o, AtBet.HOW_AUTO, now, stake = stake) }.getOrNull()
+            when (val sent = sendOrder(placer, target, stake, limits, q.cost, atBet, o.key, now)) {
+                is Sent.Placed -> {
+                    val bet = sent.bet
+                    placed += bet
+                    openMarkets += target.market.marketId
+                    balance -= bet.stake
+                    withContext(NonCancellable) { markPlaced(c, target, sent.result, clock()) }
+                    notes.placed(app, target, bet, null, walletLeft = balance)
+                }
+                is Sent.Skipped -> skip(sent.reason)
+                is Sent.Stop -> { stopped = sent.why; halted = sent.halted; break }
+            }
+        }
+        if (walletEmpty && !walletEmptyNoted) walletRanOut(balance)
+        val report = Report(looked = tennis.size, passed = passing.size, placed = placed, skipped = skipped, stopped = stopped, walletEmpty = walletEmpty, halted = halted)
+        if (stopped != null && !walletEmpty) postStop(now, stopped, halted)
+        return finish(now, report, balance = balance)
+    }
+
     /** What one order came to, for the pass that sent it. */
     private sealed interface Sent {
         data class Placed(val bet: TrackedBet, val result: PlaceResult.Placed) : Sent
@@ -705,10 +793,11 @@ object AutoBetNotes {
     }
 
     /** "+120 · 4 of 5 books agree · Moneyline · A @ B · wallet $2.10 left". */
-    fun text(bet: TrackedBet, target: BetTarget, check: CnoBooks.Check, walletLeft: Double? = null): String {
+    fun text(bet: TrackedBet, target: BetTarget, check: CnoBooks.Check?, walletLeft: Double? = null): String {
         val odds = bet.american?.let { if (it > 0) "+$it" else "$it" } ?: "?"
         val left = walletLeft?.let { " · wallet ${String.format(Locale.US, "$%.2f", it.coerceAtLeast(0.0))} left" }.orEmpty()
-        return "$odds · ${check.agreeing} of ${check.twoSided} books agree · ${target.marketLabel} · ${target.eventName}$left"
+        val books = check?.let { "${it.agreeing} of ${it.twoSided} books agree · " }.orEmpty()
+        return "$odds · $books${target.marketLabel} · ${target.eventName}$left"
     }
 
     /** Why a bet's notification wouldn't show on this phone (Android's permission or settings), or null when it will. */
@@ -720,7 +809,7 @@ object AutoBetNotes {
         return null
     }
 
-    fun placed(app: Application, target: BetTarget, bet: TrackedBet, check: CnoBooks.Check, walletLeft: Double? = null, sharp: String? = null) {
+    fun placed(app: Application, target: BetTarget, bet: TrackedBet, check: CnoBooks.Check?, walletLeft: Double? = null, sharp: String? = null) {
         if (!ScanService.canNotify(app)) return
         ensureChannel(app)
         // The sharp book that confirmed it (Tj, 2026-10-02), when the check is on: "Pinnacle +2.1% (devigged, 45 sec old, via PinnWire)".
