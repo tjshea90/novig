@@ -264,7 +264,7 @@ data class UiState(
 
     /** [r]'s +EV feed under these settings, without the bets Tj already has (Tj, 2026-09-27). */
     fun feedOf(r: ScanResult?, now: Long = System.currentTimeMillis()): List<Opportunity> {
-        val scanned = r?.feed(settings).orEmpty().let { list -> if (settings.includeLive) list.filterNot { staleLive(it, now) } else list }
+        val scanned = r?.feed(settings).orEmpty().let { list -> if (settings.liveOnly) emptyList() else if (settings.includeLive) list.filterNot { staleLive(it, now) } else list }
         // Live games (Tj, 2026-10-11): only the real-time lane lists them, and only while its prices are within 5 s. Switch off: nothing here changes.
         val live = com.tjshea.vigilant.data.pinnodds.LiveScanFeed.shown(liveRows, settings, now)
         if (scanned.isEmpty() && live.isEmpty()) return emptyList()
@@ -955,7 +955,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         // CNO only: Vigilant's scanner and every API behind it stay asleep.
-        if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking) return
+        if (!current.loaded || !current.settings.vigilantOn || current.settings.liveOnly || c.runner.running || current.status.rechecking) return
         if (current.settings.paused) {
             _toasts.tryEmit(PAUSED_TOAST)
             return
@@ -977,7 +977,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun recheck(marketIds: Collection<String>, quiet: Boolean = false) {
         val current = _state.value
-        if (!current.loaded || !current.settings.vigilantOn || c.runner.running || current.status.rechecking || marketIds.isEmpty()) return
+        if (!current.loaded || !current.settings.vigilantOn || current.settings.liveOnly || c.runner.running || current.status.rechecking || marketIds.isEmpty()) return
         // A quiet recheck is the list keeping itself honest (Tj, 2026-10-11: a bet no longer +EV leaves the list by itself): no toast, no pause or odds-check message, and no scan.
         if (current.settings.paused) {
             if (!quiet) _toasts.tryEmit(PAUSED_TOAST)

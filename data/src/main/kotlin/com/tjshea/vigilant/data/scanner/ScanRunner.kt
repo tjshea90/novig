@@ -51,6 +51,8 @@ class ScanRunner(private val scanner: OddsScanner, private val scope: CoroutineS
         if (job?.isActive == true) return false
         // CNO only: Vigilant's scan and every API behind it are asleep, whoever asks (a tap, the widget, a background cycle: Tj, 2026-09-29).
         if (!settings.vigilantOn) return false
+        // Live games only: the real-time lane is the whole scanner, and no REST read is spent (Tj, 2026-10-11).
+        if (settings.liveOnly) return false
         // Shown again if this scan ends without a result of its own (Novig's board failed). Held SOFTLY: it is a whole scan's priced lines
         // and the reference boards behind them, kept alive beside the new scan's own, and the heap is a fixed 256-512 MB (Tj's Diagnostics,
         // 2026-10-01: an OutOfMemoryError mid-scan). Under pressure Android lets it go, and a failed scan then shows no old result.
