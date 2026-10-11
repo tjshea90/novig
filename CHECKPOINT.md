@@ -1,24 +1,22 @@
-# CHECKPOINT 2983 — read me first, then TASKS.md
+# CHECKPOINT 2984 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T17:46:00Z · **tests:** all 4 fast checks green
-**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `a5c393214` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T17:46:11Z · **tests:** all 4 fast checks green
+**Branch:** `claude/vigilant-scanner-enhancements-q97yhz` · **builds on:** `631ffb753` (this checkpoint is the commit after it)
 
 ## Just done
-TP done: star rating overrides the selection filters (3 lanes), UI note, tests green (data+app lanes); docs
+pre-ship: v0.89.21: a minimum star rating in Auto-bet now decides which bets are placed (edge, odds, kinds, books-agree, sharp, trap-guard and small-prop filters are ignored while it is on; Any enforces them again); dollar limits, pregame, fresh prices, +EV floor, injuries and the 15% cap still apply
 
 ## Do this next
-bump 206 / 0.89.21, ship, release, tell Tj what is kept and what is ignored; TO3/TO4 still waiting for Tj
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M CLAUDE.md
-     M RESEARCH.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  b91c3a22d ckpt 2983: TP done: star rating overrides the selection filters (3 lanes), UI note, te
   f69319c26 ckpt 2982: TP: wrote the star-rating-overrides-filters request into TASKS.md; v0.89.20
   96de1ae98 ckpt 2981: pre-release: v0.89.20: bets by hand on live games (the Bet sheet no longer 
   30bddb6b4 ckpt 2980: pre-ship: v0.89.20: bets by hand on live games (the Bet sheet no longer ref
@@ -28,8 +26,7 @@ bump 206 / 0.89.21, ship, release, tell Tj what is kept and what is ignored; TO3
   4c1454c14 ckpt 2976: v0.89.19 released (TL, TM, TN done and shipped)
   62fef5926 ckpt 2975: pre-release: v0.89.19: every API toggled on is used for any data and one to
   5a6ba8775 ckpt 2974: TL/TM/TN done, tests green (data, app); docs updated
-  2b986156d ckpt 2973: TL2: removed OutsideSgo/OutsideOp/TennisOnly, every API on is asked, off ne
 ```
 
-(10 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
