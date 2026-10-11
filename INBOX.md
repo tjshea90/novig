@@ -6383,3 +6383,8 @@ And any other criteria that can accurately rate bets.
 
 Then in the auto bet settings, make a setting for the minimum rated bet to auto bet (for example, only bet 3½ Star bets or better).
 ```
+
+## 2026-10-11T14:06:37Z
+```
+When the vigilant wallet gets below 20 cents, automatically stop all scanning, betting, and bidding in the app. Put the app to sleep. There is no reason to continue usage with little money left
+```
