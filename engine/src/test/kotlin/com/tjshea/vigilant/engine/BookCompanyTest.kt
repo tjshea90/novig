@@ -113,4 +113,18 @@ class BookCompanyTest {
         assertEquals(4, line.perBook.size)
         assertFalse(line.excluded.isNotEmpty())
     }
+
+    /** Tj, 2026-10-11: "6 of 6 books agree" on Casper Ruud +0.5, all at +100 / -134: six owners, one Kambi trading desk. */
+    @Test
+    fun `books on Kambi's one trading desk are one company whoever owns them`() {
+        val desk = listOf("Bally Bet", "betparx", "casumo", "grosvenor", "tabtouch", "unibet", "betrivers", "sugarhouse", "Unibet (US)")
+        assertEquals(1, desk.map { BookCompany.of(it) }.distinct().size)
+        // Other operators stay apart.
+        assertNotEquals(BookCompany.of("unibet"), BookCompany.of("draftkings"))
+        assertNotEquals(BookCompany.of("ballybet"), BookCompany.of("fanduel"))
+        // Six identical Kambi quotes count once in the fair line.
+        val six = desk.take(6).map { book(it, 100, -134) } + book("draftkings", 105, -135) + book("fanduel", 105, -135)
+        val line = FairValue.compute(six, FairSettings(minBooks = 1))!!
+        assertEquals(3, line.perBook.size)
+    }
 }
