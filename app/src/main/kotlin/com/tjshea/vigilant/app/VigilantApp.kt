@@ -650,6 +650,9 @@ class AppContainer(private val app: Application) {
     /** The background auto-scan and its +EV alerts (Tj, 2026-09-28), run by [AutoScanService]. */
     val autoScan: AutoScanner by lazy { AutoScanner(app, this) }
 
+    /** Clears an auto-bet halt left by a lost order once Novig's fills are checked (Tj, 2026-10-11). */
+    val autoBetRecovery: AutoBetRecovery by lazy { AutoBetRecovery(this, appScope) }
+
     /** When each background cycle started against its schedule, and whether the screen was off (files/cycles.json, Tj 2026-10-02): the evidence in Diagnostics that scanning goes on while the phone idles. */
     val cycleLog = com.tjshea.vigilant.data.diag.CycleLog(
         JsonFileStore(File(app.filesDir, "cycles.json"), com.tjshea.vigilant.data.diag.CycleBook.serializer(), { com.tjshea.vigilant.data.diag.CycleBook() }, json),
@@ -856,6 +859,8 @@ class AppContainer(private val app: Application) {
                 runCatching { pinnTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
             }
         }
+        // A halt after a lost order is checked against Novig every few seconds and cleared by itself once Novig's fills are read (Tj, 2026-10-11); a notification if it cannot.
+        autoBetRecovery.start()
         // The live bid desk runs for the life of the app (cheap when nothing is up): bids left from a run that ended come down at once, and a fill that lands after the switch is turned off is still recorded.
         appScope.launch { runCatching { liveBidDesk.start() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
         // The bid guard watches every resting order for as long as the app runs.

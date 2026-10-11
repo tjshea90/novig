@@ -135,6 +135,10 @@ class AutoBettor(
      */
     private var tooSmallBelow = 0.0
 
+    /** An order of ours is being sent and followed right now ([AutoBetRecovery] leaves its halt alone until it is over). */
+    @Volatile var sending = false
+        private set
+
     /** The wallet-empty note went out and the wallet hasn't refilled since. */
     private var walletEmptyNoted = false
 
@@ -475,12 +479,15 @@ class AutoBettor(
     ): Sent {
         val marker = inFlightNote(target, stake)
         withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = marker) } } }
+        sending = true
         val result = try {
             withContext(Dispatchers.IO + NonCancellable) { placer.placeAuto(target.copy(auto = true, atBet = atBet), stake, limits, expectedPrice) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             PlaceResult.Unconfirmed("Something went wrong while placing it (${e.message ?: e.javaClass.simpleName}).")
+        } finally {
+            sending = false
         }
         // A definitive answer (placed, nothing filled, refused, Novig said no) clears the marker; a lost answer replaces it below.
         if (result !is PlaceResult.Unconfirmed) {
@@ -515,7 +522,8 @@ class AutoBettor(
             }
             is PlaceResult.Unconfirmed -> {
                 // Nothing says whether it filled: never again until Tj has looked (Novig, then the Auto-bet tab › Resume).
-                withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = result.message) } } }
+                // The words start so that [AutoBetRecovery] knows this halt is one it can check on its own.
+                withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = "$LOST_ORDER_PREFIX: ${result.message}") } } }
                 Sent.Stop("an order's answer was lost, so auto-bet is stopped: ${result.message}", halted = true)
             }
         }
@@ -768,6 +776,12 @@ class AutoBettor(
 
         /** A game starting sooner than this isn't bet: Novig may be moving it to live, and the price is about to jump. */
         const val MIN_LEAD_MS = 60_000L
+
+        /** How a halt after an order whose answer never came back begins ([isLostOrderHalt]). */
+        const val LOST_ORDER_PREFIX = "An order's answer was lost"
+
+        /** Whether [halt] is the kind [AutoBetRecovery] checks and clears by itself: an order in flight when the app stopped, or one whose answer was lost. */
+        fun isLostOrderHalt(halt: String): Boolean = halt.startsWith("Vigilant stopped while an order") || halt.startsWith(LOST_ORDER_PREFIX)
 
         /** What the saved halt says while an order may be on its way ([run]): a restart that finds it knows what to check. */
         fun inFlightNote(target: BetTarget, stake: Double): String =
