@@ -115,6 +115,8 @@ fun FeedScreen(
     // Vigilant's own bets Tj removed with ✕ (CNO's are listed on its tab), to put back.
     val removed = state.placed.filter { it.hidden && !it.key.startsWith("cno:") }
     var showRemoved by remember { mutableStateOf(false) }
+    // "Live only" (Tj, 2026-10-11): with Include live games on, the list can be cut to games under way.
+    var liveOnly by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     fun undoable(text: String, key: String) {
@@ -188,14 +190,17 @@ fun FeedScreen(
                     }
                 }
                 // Only EVs whose other books' prices are still current (RESEARCH.md §24).
-                val shown = state.feedAt(now)
+                val shown = state.feedAt(now).let { all -> if (state.settings.includeLive && liveOnly) all.filter { it.isLive || it.liveAges != null } else all }
                 if (state.settings.killed) item(key = "paused") { KilledBanner(Modifier.padding(horizontal = 12.dp)) } else if (state.settings.paused) item(key = "paused") { PausedBanner({ onPause(false) }, Modifier.padding(horizontal = 12.dp)) }
                 item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin) { onRecheck(feedMarketIds(state, now)) } }
                 // The real-time live lane (Settings › Include live games): what it is linked to and how fresh its bets are, or why it shows none (Tj, 2026-10-11).
                 if (AppBook.isNovig && state.settings.includeLive && state.settings.leagues.isNotEmpty()) {
                     item(key = "live") {
                         val st = state.liveStatus
-                        Banner(LiveScanText.line(st), Modifier.padding(horizontal = 12.dp), color = if (st.on && st.reason == null) Edge.colors.positive else Edge.colors.warning)
+                        Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Banner(LiveScanText.line(st), color = if (st.on && st.reason == null) Edge.colors.positive else Edge.colors.warning)
+                            FilterChip(selected = liveOnly, onClick = { liveOnly = !liveOnly }, label = { Text("Live games only", maxLines = 1) }, modifier = Modifier.testTag("liveOnlyChip"))
+                        }
                     }
                 }
                 if (removed.isNotEmpty() && state.settings.leagues.isNotEmpty()) {

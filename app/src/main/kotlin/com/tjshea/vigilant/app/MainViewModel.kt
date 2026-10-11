@@ -266,12 +266,7 @@ data class UiState(
         // Live games (Tj, 2026-10-11): only the real-time lane lists them, and only while its prices are within 5 s. Switch off: nothing here changes.
         val live = com.tjshea.vigilant.data.pinnodds.LiveScanFeed.shown(liveRows, settings, now)
         if (scanned.isEmpty() && live.isEmpty()) return emptyList()
-        val all = if (live.isEmpty()) scanned else (scanned + live).let { list ->
-            when (settings.feedSort) {
-                com.tjshea.vigilant.data.scanner.FeedSort.EV -> list.sortedByDescending { it.evPercent }
-                com.tjshea.vigilant.data.scanner.FeedSort.START -> list.sortedWith(compareBy<Opportunity> { it.event.startsTs }.thenByDescending { it.evPercent })
-            }
-        }
+        val all = if (live.isEmpty()) scanned else com.tjshea.vigilant.data.scanner.FeedOrder.sort(scanned + live, settings.feedSort)
         return placedIndex.visible(all)
     }
 

@@ -119,6 +119,15 @@ data class ScanStats(
 /** What a live row's prices are as of, from the two sockets themselves: Pinnacle's line last CHANGED, Pinnacle's game feed last spoke, Novig's market last changed, Novig's game feed last spoke (phone clock, ms). */
 data class LiveAges(val pinnLineChangedMs: Long, val pinnFeedMs: Long, val novigMarketMs: Long?, val novigFeedMs: Long)
 
+/** The Feed's orders (Tj, 2026-10-11 added Stars: the 1-5 star rating, best first, the bigger edge first among equals). */
+object FeedOrder {
+    fun sort(list: List<Opportunity>, sort: FeedSort): List<Opportunity> = when (sort) {
+        FeedSort.EV -> list.sortedByDescending { it.evPercent }
+        FeedSort.START -> list.sortedWith(compareBy<Opportunity> { it.event.startsTs }.thenByDescending { it.evPercent })
+        FeedSort.STARS -> list.sortedWith(compareByDescending<Opportunity> { it.rating?.stars ?: 0.0 }.thenByDescending { it.evPercent })
+    }
+}
+
 data class ScanResult(
     val games: List<PricedGame>,
     val opportunities: List<Opportunity>,
@@ -165,10 +174,7 @@ data class ScanResult(
                 MarketFamily.entries.any { it in settings.families && o.market.marketType in it.novigTypes }
         }
         .let { list ->
-            when (settings.feedSort) {
-                FeedSort.EV -> list.sortedByDescending { it.evPercent }
-                FeedSort.START -> list.sortedWith(compareBy<Opportunity> { it.event.startsTs }.thenByDescending { it.evPercent })
-            }
+            FeedOrder.sort(list, settings.feedSort)
         }
 }
 

@@ -80,7 +80,7 @@ enum class BidFocus(val displayName: String) {
 enum class BidSource(val displayName: String) { VIGILANT("Vigilant's scan"), CNO("CrazyNinjaOdds") }
 
 /** How the +EV feed is ordered (OddsJam offers the same two). */
-enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest") }
+enum class FeedSort(val displayName: String) { EV("Best EV"), START("Soonest"), STARS("Stars") }
 
 /** Which Novig market families to price. */
 enum class MarketFamily(val displayName: String, val novigTypes: List<String>) {
