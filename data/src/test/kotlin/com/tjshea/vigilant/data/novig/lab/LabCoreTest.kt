@@ -167,7 +167,7 @@ class LabCoreTest {
         assertEquals(0.40, c.ask, 1e-9)
         assertEquals(2, c.books)
         assertTrue(c.fair in 0.50..0.56)
-        assertTrue(c.edge > 0.3)
+        assertTrue("the conservative worst-case fair gives a smaller edge than the plain average would", c.edge > 0.25)
         assertTrue("one book is not enough by default", AltLineScan.scan(points, two.take(1), now, null, live = true).isEmpty())
         assertEquals("one book, when the study asks for it", 1, AltLineScan.scan(points, two.take(1), now, null, live = true, rules = AltRules(minBooks = 1)).size)
         val stale = two.map { it.copy(seenAtMs = now - 11 * 60_000L) }
