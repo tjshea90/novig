@@ -6533,3 +6533,8 @@ Auto bet stopped and didn't fix itself. And look at the screenshot, this is clea
 ```
 For clarification, if I have multiple apis toggled on, I still want it to be efficient and if data overlaps, only pull from the best API and let the others sleep. Only use additional apis for extra information that they carry that others don't or if the best api doesn't respond or runs out of usage, it automatically goes to the next best API for the odds
 ```
+
+## 2026-10-11T20:35:54Z
+```
+This bet says 6 out of 6 books agree, but the odds are suspicious because they are exactly the same. They may be the same company. Research each one. If they are the same company, permanently set them as the same company in the app.
+```
