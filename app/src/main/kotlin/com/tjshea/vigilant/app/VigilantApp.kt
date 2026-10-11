@@ -671,6 +671,49 @@ class AppContainer(private val app: Application) {
 
     /** Every bid make orders posted (files/maker.json; RESEARCH.md §70), the sides Tj denied, and the sides already recommended. */
     val makerStore = com.tjshea.vigilant.data.novig.trading.maker.MakerStore(File(app.filesDir, "maker.json"))
+
+    /**
+     * Every bet and bid, day by day, for good (Tj, 2026-10-11: "auto save each day's bets into the vigilant folder in my local android downloads folder"): the app's own `bet-archive/` folder,
+     * copied to Downloads/Vigilant/bets while [com.tjshea.vigilant.data.scanner.ScanGuards.betArchive] is on. RESEARCH.md §132.
+     */
+    val betArchive = com.tjshea.vigilant.data.tracker.BetArchive(File(app.filesDir, "bet-archive"))
+    private val betArchiveMutex = kotlinx.coroutines.sync.Mutex()
+
+    /** What the last [syncBetArchive] said, for Settings: "3 files saved to Downloads/Vigilant/bets". */
+    @Volatile var betArchiveNote: String? = null
+
+    /**
+     * Brings the day files up to date and copies the changed ones to Downloads. Never throws; one at a time. [full] rewrites any day whose content changed (once a day does it); otherwise only the
+     * last few days and days with open bets are looked at.
+     */
+    suspend fun syncBetArchive(full: Boolean = false): String? = betArchiveMutex.withLock {
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val now = System.currentTimeMillis()
+                val synced = betArchive.sync(tracker.all(), makerStore.all(), now, full)
+                var copied = 0
+                var failed: String? = null
+                if (currentSettings().vigGuards.betArchive) {
+                    val resolver = app.contentResolver
+                    for (f in betArchive.pendingMirror().take(BET_MIRROR_PER_PASS)) {
+                        try {
+                            BetShare.DownloadsMirror.put(resolver, f)
+                            betArchive.markMirrored(f)
+                            copied++
+                        } catch (e: Exception) {
+                            failed = e.message ?: e.javaClass.simpleName
+                            break
+                        }
+                    }
+                }
+                val (files, bytes) = betArchive.counts()
+                val note = "$files day files (${bytes / 1024} KB) kept" + (if (copied > 0) ", $copied copied to ${BetShare.BETS_DIR}" else "") + (failed?.let { ", copy to Downloads failed: $it" } ?: "")
+                if (synced.changed.isNotEmpty() || copied > 0 || failed != null) eventLog.info("BETARCHIVE", note)
+                betArchiveNote = note
+                note
+            }.onFailure { e -> if (e is CancellationException) throw e; eventLog.warn("BETARCHIVE", "couldn't save the day files: ${e.message ?: e.javaClass.simpleName}") }.getOrNull()
+        }
+    }
     val makerDenials = com.tjshea.vigilant.data.novig.trading.maker.MakerDenials(File(app.filesDir, "maker_denied.json"))
     val makerRecommended = MakerRecommended(File(app.filesDir, "maker_recommended.json"))
 
@@ -703,6 +746,16 @@ class AppContainer(private val app: Application) {
         // for long, and every part that stops for it (the bids, the services) sees it through the same flow. Never turns it off: only Resume does.
         appScope.launch(Dispatchers.IO) {
             if (killMarker.on) runCatching { settingsStore.update { KillSwitch.reconcile(it, killMarker) } }
+        }
+        // The day-by-day bet and bid files (Tj, 2026-10-11): two minutes after start, then every half hour, and everything rechecked once a day.
+        appScope.launch(Dispatchers.IO) {
+            delay(120_000)
+            var lastFull = 0L
+            while (true) {
+                val full = System.currentTimeMillis() - lastFull > 20 * 3_600_000L
+                if (syncBetArchive(full) != null && full) lastFull = System.currentTimeMillis()
+                delay(BET_ARCHIVE_EVERY_MS)
+            }
         }
         // A wallet under 20 cents puts the whole app to sleep (Tj, 2026-10-11), whoever read the balance: every reading the wallet records is looked at.
         appScope.launch(Dispatchers.IO) {
