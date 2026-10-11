@@ -6195,3 +6195,24 @@ I notice that I never see tennis bets or bids in the app. Are they set up correc
 ```
 I want the auto bid feature and auto bet features both to include all tennis. If it's has to use vigilant scanner that is fine. Let me toggle tennis on and off
 ```
+
+## 2026-10-11T01:51:22Z
+```
+Add two more apis to the app. Unabated api and oddspapi api. Both apis are the free tiers. 
+
+Start with research: 
+https://oddspapi.io/us/docs
+https://docs.unabated.com/start/agents
+https://docs.unabated.com/llms-full.txt
+https://data.unabated.com/swagger/v1/swagger.json
+
+Research the full docs on unabated and oddspapi apis. I have both free tiers.
+
+1) what does each API offer? 
+2) what is the best way to implement each api into vigilant? 
+3) how can vigilant make full use of each API?
+
+Wire in each api into the app and settings. Find out how vigilant can best use each API to its full potential, but make sure to use the correct commands and proper usage and endpoints. Make sure to match the docs exactly. The goal is to use each API to improve vigilant speed and accuracy. If odds or data overlap from different apis, use the best API first and when usage runs out or if the API doesn't respond, automatically fall back to the other apis that serve the same data. Find out the best and most efficient ways to integrate these apis into the app. 
+
+Let me know if you need anything such as the keys, I don't mind sending them to you
+```
