@@ -40,7 +40,16 @@ import java.util.PriorityQueue
 import kotlin.math.abs
 
 /** What the runner is told each time it looks: Tj's rules and the leagues he wants (Novig's names). [takerOn]: the lag taker judges and trades; off, the feed runs only for the live bids. */
-data class LiveConfig(val rules: LiveRules, val method: DevigMethod, val leagues: Set<String>, val takerOn: Boolean = true)
+data class LiveConfig(
+    val rules: LiveRules,
+    val method: DevigMethod,
+    val leagues: Set<String>,
+    val takerOn: Boolean = true,
+    /** The Feed's live lane ([LiveScan]): Settings › Include live games. On, every matched live market is priced in real time and listed while its feeds are fresh. */
+    val scanOn: Boolean = false,
+    /** What the live lane's rows are staked from (bankroll, Kelly). */
+    val scanSettings: com.tjshea.vigilant.data.scanner.ScanSettings = com.tjshea.vigilant.data.scanner.ScanSettings(),
+)
 
 /** The Pinnodds source of frames: the socket in the app, a fake in tests. */
 interface PinnFeedSource {
@@ -103,6 +112,8 @@ class PinnLiveRunner(
     private val tickMs: Long = TICK_MS,
     /** Told of every market version the runner's book takes in (the feed race's view of THIS feed). */
     private val onVersion: ((Long, String, Long, Long) -> Unit)? = null,
+    /** Where the Feed's live rows are left ([LiveScanBoard]); null = the lane does not exist (tests of the lag taker). */
+    private val scanBoard: LiveScanBoard? = null,
 ) {
     private val _status = MutableStateFlow(LiveRunnerStatus())
     val status: StateFlow<LiveRunnerStatus> = _status.asStateFlow()
@@ -167,7 +178,13 @@ class PinnLiveRunner(
     private var catalogDirty = false
     private var lastStandingMs = 0L
 
+    // The Feed's live lane (consumer-only state): the rows built per Novig market, when each Novig game last spoke on the book socket, and how many rows aged out.
+    private val scanByMarket = HashMap<String, List<LiveScanRow>>()
+    private val novigGameAt = HashMap<String, Long>()
+    private var scanDropped = 0L
+
     private fun reset() {
+        scanByMarket.clear(); novigGameAt.clear(); scanDropped = 0L
         book = PinnBook(config().method)
         book.versionListener = onVersion
         catalogEvents = emptyList(); catalogMarkets = emptyList(); targetsByEvent.clear(); targetsByMarket.clear(); armedUntil.clear(); follows.clear(); probes.clear()
@@ -195,6 +212,8 @@ class PinnLiveRunner(
             helpers.forEach { it.cancel() }
             // The feed that justified the live bids is gone: they come down (Novig removes any that this misses at their ttl).
             withContext(NonCancellable) { runCatching { bids?.stopAll("the live feed stopped") } }
+            // A live lane nobody is feeding must not leave its last rows on the list: they would only get older.
+            scanBoard?.clear("the live feed stopped")
             feedSource = null
             pending = null
             runCatching { pinn.stop() }
@@ -220,7 +239,8 @@ class PinnLiveRunner(
             } catch (e: Exception) {
                 _status.value = _status.value.copy(problem = "Novig's catalog: ${e.message ?: e.javaClass.simpleName}")
             }
-            delay(discoverEveryMs)
+            // With the Feed's live lane on a game that has just kicked off must be found within seconds, not at the next half-minute catalog.
+            delay(if (config().scanOn) minOf(discoverEveryMs, SCAN_DISCOVER_MS) else discoverEveryMs)
         }
     }
 
@@ -277,6 +297,8 @@ class PinnLiveRunner(
 
     private fun onNovigBook(marketId: String, now: Long, novig: PushedBooks, changes: List<BookChange>) {
         val t = targetsByMarket[marketId] ?: return
+        // The game's Novig books are streaming: this is the live lane's word that Novig's side of the game is current.
+        novigGameAt[t.event.eventId] = now
         if (bids != null) {
             // Trades on this market are what a paper bid is filled by; a real bid's own fill is looked for at once.
             bids.onBook(marketId, now, changes)
@@ -292,6 +314,7 @@ class PinnLiveRunner(
     }
 
     private fun onTick(now: Long, novig: PushedBooks, pinn: PinnFeedSource) {
+        if (scanBoard != null) scanPass(now, novig, pinn)
         // Live bids: every matched line is judged twice a second, so a bid is vouched for (or pulled) at least that often.
         if (bids != null && now - lastBidJudgeMs >= BID_EVERY_MS) { lastBidJudgeMs = now; judgeBids(now, novig) }
         // Armed games: judged on every tick (the settle time passes between a Pinnacle change and its first judgment).
@@ -312,6 +335,59 @@ class PinnLiveRunner(
         if (catalogDirty || events != lastEventCount && now - lastRematchMs > REMATCH_MS) rematch(novig, now)
         if (now % 30_000L < tickMs) book.prune(now)
         if (now - lastAltMs >= ALT_EVERY_MS) { lastAltMs = now; altMap = matchedPairs.mapNotNull { p -> (book.events[p.linesEventId ?: p.pinnEventId])?.let { p.event.eventId to com.tjshea.vigilant.data.novig.lab.PinnAltQuotes.quotes(it, p.swapped) } }.toMap() }
+    }
+
+    /**
+     * The Feed's live lane, on every tick (100 ms): each matched live market is priced from Pinnacle's fair and Novig's take ladder as they are RIGHT NOW, and kept only while the older of the two
+     * feeds' last word about the game is within [LiveScan.MAX_AGE_MS]. A feed problem (socket down, quiet, Novig refusing) empties the list: nothing is shown on a price nobody is confirming.
+     */
+    private fun scanPass(now: Long, novig: PushedBooks, pinn: PinnFeedSource) {
+        val board = scanBoard ?: return
+        val cfg = config()
+        if (!cfg.scanOn) {
+            if (scanByMarket.isNotEmpty() || board.status.value.on) { scanByMarket.clear(); board.clear() }
+            return
+        }
+        val problem = feedProblem(now, novig, pinn)
+        if (problem != null) {
+            scanDropped += scanByMarket.values.sumOf { it.size }
+            scanByMarket.clear()
+            board.publish(emptyList(), LiveScanStatus(on = true, games = matchedGames, watched = watched, dropped = scanDropped, reason = problem))
+            return
+        }
+        val books = novig.live(targetsByMarket.keys)
+        var oldest: Long? = null
+        for (t in targetsByMarket.values) {
+            val id = t.market.marketId
+            val had = scanByMarket[id]
+            val pe = book.events[t.pinnEventId]
+            val line = pe?.let { t.line(it) }
+            val mb = books[id]
+            val novigAt = novigGameAt[t.event.eventId]
+            if (pe == null || line == null || mb == null || novigAt == null || LiveScanRows.refusal(t, pe, line, now, cfg.rules) != null) {
+                if (had != null) scanByMarket.remove(id)
+                continue
+            }
+            val pinnAt = pe.lastFrameAtMs
+            val age = LiveScanRows.age(pinnAt, novigAt, now)
+            if (age > LiveScan.MAX_AGE_MS) {
+                if (had != null) { scanDropped += had.size; scanByMarket.remove(id) }
+                continue
+            }
+            oldest = maxOf(oldest ?: 0L, age)
+            val first = had?.firstOrNull()
+            val unchanged = first != null && first.lineVersion == line.version && first.bookSeq == mb.seq &&
+                pinnAt - first.pinnAsOfMs < LiveScan.STAMP_SLACK_MS && novigAt - first.novigAsOfMs < LiveScan.STAMP_SLACK_MS
+            if (unchanged) continue
+            val rows = LiveScanRows.build(t, pe, line, mb, pinnAt, novigAt, cfg.method, cfg.rules, cfg.scanSettings)
+            if (rows.isEmpty()) scanByMarket.remove(id) else scanByMarket[id] = rows
+        }
+        // A market no longer matched leaves with its game.
+        scanByMarket.keys.retainAll(targetsByMarket.keys)
+        board.publish(
+            scanByMarket.values.flatMap { rows -> rows.map { it.opportunity } },
+            LiveScanStatus(on = true, games = matchedGames, watched = watched, shown = scanByMarket.values.sumOf { it.size }, dropped = scanDropped, oldestMs = oldest),
+        )
     }
 
     /** Pinnacle's live main and alternate spreads and totals for the Novig game [novigEventId] as the lab recorder reads them (a snapshot taken every few seconds on the consumer; empty when the game is not matched). */
@@ -629,6 +705,9 @@ class PinnLiveRunner(
         const val BID_BOOK_GAP_MS = 200L
 
         const val DISCOVER_MS = 30_000L
+
+        /** The catalog is re-read this often while the Feed's live lane is on, so a game that just went live is matched within seconds. */
+        const val SCAN_DISCOVER_MS = 10_000L
         const val TICK_MS = 100L
         const val STATUS_EVERY_MS = 1_000L
         const val STANDING_EVERY_MS = 1_000L
