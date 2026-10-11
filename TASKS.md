@@ -4760,3 +4760,8 @@ Tj verbatim (with a Gemini screenshot saying Bally Bet, betPARX, Grosvenor, Casu
 Tj verbatim (2 screenshots 5:13 PM: banner "Live: nothing shown, Novig's live books have not arrived (Novig live book not subscribed yet)"; Settings shows the key connected, "live feed held 361 of 408 asked"): "There seems to be a disconnect on live betting"
 - [x] TAE1 Cause: a scan's bulk subscribe waits for a full bucket (up to 2 min) and the live markets queued behind it; and a ping-timeout drop left the feed off for 5 min. Fixed in NovigStream (live markets get their own immediate request; plain drops with live pinned retry in 3 s). Tests: NovigStreamTest.
 - [x] TAE2 Fix, test, ship v0.89.27.
+
+## TAF: Live games only mode (Tj, 2026-10-11 ~21:40Z)
+Tj verbatim: "Make a live games only mode for the vigilant scanner. In this mode, only apis which can provide rapid odds are used, probably just pinnodds and novig. Only live bets are shown in the vigilant list. All other apis are turned off. Keep the same rules and logic for live betting already established ... when I toggle live betting mode off, the apis that were on before turn back on automatically, live betting is turned off, live bets are not scanned or shown in the vigilant list at all ... Live betting mode should turn off anything not needed, for example, cno scanner"
+- [x] TAF1 `app/LiveOnly.kt` enter/leave (snapshot in `ApiGates.liveOnly`), REST scan/recheck/feed rows gated by `ScanSettings.liveOnly`, Feed chip + Settings switch. Test: LiveOnlyTest.
+- [x] TAF2 Ship v0.89.28.
