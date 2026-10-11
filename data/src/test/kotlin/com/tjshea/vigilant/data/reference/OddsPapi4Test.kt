@@ -120,6 +120,20 @@ class OddsPapi4Test {
         assertTrue(c.free("/v4/historical-odds", listOf("fixtureId" to fx)).contains("pinnacle"))
     }
 
+    @Test fun aSpentKeyMovesTheCallToTheNextKeyAndTheSpentOneStaysResting() = runTest {
+        handler = { r ->
+            if (r.requestUrl!!.encodedPath == "/v4/account") ok(account(10))
+            else if (r.requestUrl!!.queryParameter("apiKey") == "k1") MockResponse().setResponseCode(429).setBody("""{"message":"Request limit exceeded","code":"REQUEST_LIMIT_EXCEEDED"}""")
+            else ok(tournaments)
+        }
+        val c = client(listOf("k1", "k2"))
+        assertTrue(c.billable("/v4/tournaments", listOf("sportId" to "14")).contains("NFL"))
+        assertEquals(listOf("k1", "k2"), requests.filter { it.requestUrl!!.encodedPath == "/v4/tournaments" }.map { it.requestUrl!!.queryParameter("apiKey") })
+        requests.clear()
+        c.billable("/v4/tournaments", listOf("sportId" to "14"))
+        assertEquals("the spent key is not asked again", listOf("k2"), requests.filter { it.requestUrl!!.encodedPath == "/v4/tournaments" }.map { it.requestUrl!!.queryParameter("apiKey") })
+    }
+
     @Test fun theBudgetStopsAtTheReserveAndSpendsAnEvenShareOfWhatIsLeft() = runTest {
         val c = client()
         val b = Op4Budget(c) { clockMs }
