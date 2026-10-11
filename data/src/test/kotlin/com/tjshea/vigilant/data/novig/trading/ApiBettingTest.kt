@@ -213,6 +213,20 @@ class ApiBettingTest {
     /** A game that began a minute ago, its fair 4 minutes old (the +EV tab's "odds 4 min old"). */
     private fun liveTarget(fairAsOf: Long? = now - 4 * 60_000L) = target(fairAsOf = fairAsOf, starts = now - 60_000L)
 
+    /** Tj, 2026-10-11: "If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it at all ... No money should ever go on a negative ev bet." */
+    @Test
+    fun `no bet is placed at a negative EV, by hand included, and the plan never reaches a negative level`() {
+        // The book sells A at 0.46 then 0.465: a fair of 0.45 makes both negative; a fair of 0.462 makes only the first positive.
+        val negative = refused(ApiBetPlanner.plan(target(fair = 0.45), book(), 5.0, now, manual, 0.0))
+        assertTrue(negative.contains("negative EV"))
+        val live = refused(ApiBetPlanner.plan(liveTarget().copy(fair = 0.45), book(), 5.0, now, manual, 0.0))
+        assertTrue(live.contains("negative EV"))
+        val partial = ready(ApiBetPlanner.plan(target(fair = 0.462), book(), 10.0, now, manual, 0.0))
+        assertEquals("only the 0.46 level is positive", 0.46, partial.limitPrice, 1e-9)
+        assertEquals(100L, partial.contracts)
+        assertTrue(partial.evPercent >= 0.0)
+    }
+
     /** Tj, 2026-10-11: "if I bet any live game, it only places the bet if it can be filled at the odds listed in the scan". */
     @Test
     fun `a live bet is refused when Novig's price is above the listed one, and never reaches past it`() {
