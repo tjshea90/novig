@@ -193,3 +193,4 @@ day that changes.
 | v0.89.0 | code 185 | 2026-10-11T02:56Z | v0.89.0: Unabated (free) and OddsPapi Free (v4) added; Settings > APIs page with a switch, Test button and usage per API; keys rotate per key
 | v0.89.1 | code 186 | 2026-10-11T03:07Z | v0.89.1: usage bars back on Settings > APIs (a green-amber-red bar under every key, plus a total per API)
 | v0.89.2 | code 187 | 2026-10-11T03:16Z | v0.89.2: Unabated fixed from the real sample; Test active APIs shows progress and times out
+| v0.89.3 | code 188 | 2026-10-11T03:59Z | v0.89.3: OddsPapi (v5) switch to price the fair average with every book it carries
