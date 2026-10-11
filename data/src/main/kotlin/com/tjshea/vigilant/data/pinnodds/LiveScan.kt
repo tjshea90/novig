@@ -135,6 +135,9 @@ object LiveScanRows {
         method: DevigMethod,
         rules: LiveRules,
         settings: ScanSettings,
+        /** When Pinnacle's feed last spoke about this game, and Novig's about its books (for the row's own age line; default: the feed stamps). */
+        pinnFeedMs: Long = pinnAsOfMs,
+        novigFeedMs: Long = novigAsOfMs,
         league: League? = Leagues.ALL.firstOrNull { it.novigName == t.event.league },
     ): List<LiveScanRow> {
         league ?: return emptyList()
@@ -193,7 +196,7 @@ object LiveScanRows {
                     league = league, event = t.event, market = t.market, outcome = outcome, marketLabel = label, kind = kind, selection = selection,
                     fair = fairLine, fairProbability = p, quote = quote, ladder = ladder, depth = depth, suggestedStake = stake, novigWidth = width,
                     bestBid = book.bestBid(outcomeId)?.price, bidLevels = book.bidsByOutcome[outcomeId].orEmpty(), bookFetchedAtMs = novigAsOfMs,
-                    fairUpdatedMs = line.changedAtMs, liveAges = com.tjshea.vigilant.data.scanner.LiveAges(line.changedAtMs, pinnAsOfMs, novigMarketAtMs, novigAsOfMs), refEvent = ref, lineKey = key, target = OutcomeTarget.Is(s), fairAsOfMs = pinnAsOfMs,
+                    fairUpdatedMs = line.changedAtMs, liveAges = com.tjshea.vigilant.data.scanner.LiveAges(line.changedAtMs, pinnFeedMs, novigMarketAtMs, novigFeedMs), refEvent = ref, lineKey = key, target = OutcomeTarget.Is(s), fairAsOfMs = pinnAsOfMs,
                 ),
                 lineVersion = line.version, bookSeq = book.seq, pinnAsOfMs = pinnAsOfMs, novigAsOfMs = novigAsOfMs,
             )

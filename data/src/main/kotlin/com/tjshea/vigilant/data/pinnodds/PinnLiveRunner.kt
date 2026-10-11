@@ -182,10 +182,11 @@ class PinnLiveRunner(
     private val scanByMarket = HashMap<String, List<LiveScanRow>>()
     private val novigGameAt = HashMap<String, Long>()
     private val novigMarketAt = HashMap<String, Long>()
+    private var novigAnyAt = 0L
     private var scanDropped = 0L
 
     private fun reset() {
-        scanByMarket.clear(); novigGameAt.clear(); novigMarketAt.clear(); scanDropped = 0L
+        scanByMarket.clear(); novigGameAt.clear(); novigMarketAt.clear(); novigAnyAt = 0L; scanDropped = 0L
         book = PinnBook(config().method)
         book.versionListener = onVersion
         catalogEvents = emptyList(); catalogMarkets = emptyList(); targetsByEvent.clear(); targetsByMarket.clear(); armedUntil.clear(); follows.clear(); probes.clear()
@@ -302,6 +303,7 @@ class PinnLiveRunner(
         // The game's Novig books are streaming: this is the live lane's word that Novig's side of the game is current.
         novigGameAt[t.event.eventId] = now
         novigMarketAt[marketId] = now
+        novigAnyAt = now
         if (bids != null) {
             // Trades on this market are what a paper bid is filled by; a real bid's own fill is looked for at once.
             bids.onBook(marketId, now, changes)
@@ -358,38 +360,42 @@ class PinnLiveRunner(
             board.publish(emptyList(), LiveScanStatus(on = true, games = matchedGames, watched = watched, dropped = scanDropped, reason = problem))
             return
         }
+        // Both feeds are PUSH: an unchanged price is not re-sent, so "this price is current" is what a healthy socket says, not how long ago the price last moved. Each socket must have delivered
+        // something (any game, any market) within MAX_AGE_MS: a stalled or silent socket empties the list at once. Each row's own ages (line last changed, game feed last spoke) are on the row.
+        val pinnAt = pinn.lastFrameAtMs
+        val feedAge = maxOf(now - pinnAt, now - novigAnyAt)
+        if (pinnAt <= 0L || novigAnyAt <= 0L || feedAge > LiveScan.MAX_AGE_MS) {
+            scanDropped += scanByMarket.values.sumOf { it.size }
+            scanByMarket.clear()
+            val why = if (pinnAt <= 0L || now - pinnAt > LiveScan.MAX_AGE_MS) "Pinnacle's feed has been quiet for ${if (pinnAt <= 0L) "a while" else "${(now - pinnAt) / 1000} s"}" else "Novig's feed has been quiet for ${(now - novigAnyAt) / 1000} s"
+            board.publish(emptyList(), LiveScanStatus(on = true, games = matchedGames, watched = watched, dropped = scanDropped, reason = why))
+            return
+        }
         val books = novig.live(targetsByMarket.keys)
-        var oldest: Long? = null
         for (t in targetsByMarket.values) {
             val id = t.market.marketId
             val had = scanByMarket[id]
             val pe = book.events[t.pinnEventId]
             val line = pe?.let { t.line(it) }
             val mb = books[id]
-            val novigAt = novigGameAt[t.event.eventId]
-            if (pe == null || line == null || mb == null || novigAt == null || LiveScanRows.refusal(t, pe, line, now, cfg.rules) != null) {
+            val novigGameAtMs = novigGameAt[t.event.eventId]
+            if (pe == null || line == null || mb == null || novigGameAtMs == null || LiveScanRows.refusal(t, pe, line, now, cfg.rules) != null) {
                 if (had != null) scanByMarket.remove(id)
                 continue
             }
-            val pinnAt = pe.lastFrameAtMs
-            val age = LiveScanRows.age(pinnAt, novigAt, now)
-            if (age > LiveScan.MAX_AGE_MS) {
-                if (had != null) { scanDropped += had.size; scanByMarket.remove(id) }
-                continue
-            }
-            oldest = maxOf(oldest ?: 0L, age)
             val first = had?.firstOrNull()
             val unchanged = first != null && first.lineVersion == line.version && first.bookSeq == mb.seq &&
-                pinnAt - first.pinnAsOfMs < LiveScan.STAMP_SLACK_MS && novigAt - first.novigAsOfMs < LiveScan.STAMP_SLACK_MS
+                pinnAt - first.pinnAsOfMs < LiveScan.STAMP_SLACK_MS && novigAnyAt - first.novigAsOfMs < LiveScan.STAMP_SLACK_MS &&
+                pe.lastFrameAtMs - (first.opportunity.liveAges?.pinnFeedMs ?: 0L) < LiveScan.STAMP_SLACK_MS
             if (unchanged) continue
-            val rows = LiveScanRows.build(t, pe, line, mb, pinnAt, novigAt, novigMarketAt[id], cfg.method, cfg.rules, cfg.scanSettings)
+            val rows = LiveScanRows.build(t, pe, line, mb, pinnAt, novigAnyAt, novigMarketAt[id], cfg.method, cfg.rules, cfg.scanSettings, pinnFeedMs = pe.lastFrameAtMs, novigFeedMs = novigGameAtMs)
             if (rows.isEmpty()) scanByMarket.remove(id) else scanByMarket[id] = rows
         }
         // A market no longer matched leaves with its game.
         scanByMarket.keys.retainAll(targetsByMarket.keys)
         board.publish(
             scanByMarket.values.flatMap { rows -> rows.map { it.opportunity } },
-            LiveScanStatus(on = true, games = matchedGames, watched = watched, shown = scanByMarket.values.sumOf { it.size }, dropped = scanDropped, oldestMs = oldest?.let { it / 1000L * 1000L }),
+            LiveScanStatus(on = true, games = matchedGames, watched = watched, shown = scanByMarket.values.sumOf { rows -> rows.count { (it.opportunity.evPercent ?: -1.0) > 0.0 } }, dropped = scanDropped, oldestMs = feedAge / 1000L * 1000L),
         )
     }
 
