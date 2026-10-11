@@ -433,6 +433,9 @@ data class UiState(
  * outlives this screen (Tj switches apps mid-scan); this only mirrors it: progress and partial
  * results while it runs, the report when it ends.
  */
+/** The live lane's rows reach the feed no more often than this (the board changes up to ten times a second; a screen needs a few). */
+private const val LIVE_FEED_GAP_MS = 150L
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val c = (application as VigilantApp).container
