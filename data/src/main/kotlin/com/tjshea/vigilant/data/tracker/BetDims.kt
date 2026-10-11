@@ -38,7 +38,7 @@ object BetDims {
 
     /** Companies behind the fair line when [b] was placed: the book check's two-sided count, else the books the fair line used (one a company). */
     fun books(b: TrackedBet): Int? {
-        val a = b.atBet ?: return b.nowBooks?.takeIf { false }
+        val a = b.atBet ?: return null
         return a.twoSided?.takeIf { it > 0 } ?: a.fairBooks.map { com.tjshea.vigilant.engine.BookCompany.of(it) }.distinct().size.takeIf { it > 0 }
     }
 
