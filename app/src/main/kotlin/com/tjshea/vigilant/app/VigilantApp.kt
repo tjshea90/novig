@@ -1723,7 +1723,7 @@ class AppContainer(private val app: Application) {
     val parlayMovers = com.tjshea.vigilant.data.reference.ParlayMovers(http, json)
 
     /** ESPN's injury list through ParlayAPI (1 credit a league, 10 min apart) for listed or open prop bets no props answer covered. */
-    val parlayInjuries = com.tjshea.vigilant.data.reference.ParlayInjuries(parlayOdds, injuries, json, active = { parlayActive() && !sgoActive(currentSettings()) })
+    val parlayInjuries = com.tjshea.vigilant.data.reference.ParlayInjuries(parlayOdds, injuries, json, active = { parlayActive() })
 
     /**
      * What bids priced from CrazyNinjaOdds read and judge (Tj, 2026-10-07; [com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane], RESEARCH.md §114): the background cycle calls its `step`,
@@ -1783,8 +1783,11 @@ class AppContainer(private val app: Application) {
     )
     private val pinnoddsHost = PinnapiClient.pinnodds(KeyPool(QuotaPolicy.PINNODDS, { keyStore.current(ApiProvider.PINNODDS) }, usage))
 
-    /** SGO Pro or OddsPapi is on and a Pinnodds key is saved: Pinnodds is no longer dormant and its Pinnacle board prices the scan before any other Pinnacle feed. */
-    fun pinnoddsActive(s: ScanSettings): Boolean = AppBook.isNovig && s.gates.usePinnodds && (s.sgoPro || s.oddsPapi) && keyStore.current(ApiProvider.PINNODDS).isNotEmpty()
+    /**
+     * Pinnodds is switched on (Settings › APIs) and a key is saved: its REST Pinnacle board prices the scan before any other Pinnacle feed. Nothing else decides it (Tj, 2026-10-11: an API that is toggled on is used for any
+     * data, one that is toggled off is never called): SGO Pro and OddsPapi being on or off no longer matters to it.
+     */
+    fun pinnoddsActive(s: ScanSettings): Boolean = AppBook.isNovig && s.gates.usePinnodds && keyStore.current(ApiProvider.PINNODDS).isNotEmpty()
 
     /** For Diagnostics: which feed's Pinnacle board the last scan used. */
     fun pinnacleFeedNote(now: Long = System.currentTimeMillis()): String =
