@@ -6253,3 +6253,8 @@ When I pressed test APIs it is just stuck at "testing"
 ```
 Tell me how to get tennis in the bids and bets 
 ```
+
+## 2026-10-11T03:44:54Z
+```
+Oddspapi has a lot of sports books. Can I make vigilant use as many as possible to get fair odds averages
+```
