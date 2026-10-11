@@ -23,14 +23,20 @@ class BetRatingTest {
         assertTrue("middling bet was $mid", mid in 2.5..3.5)
     }
 
+    /** The unrounded points, so a small improvement shows even when the half-star rounding hides it. */
+    private fun pts(books: Int, agreeing: Int, ev: Double, sharp: Boolean = false, against: Boolean = false, spread: Double? = null) =
+        BetRating.rate(BetRating.Inputs(books, agreeing, ev, sharp, against, spread)).points
+
     @Test fun `each ingredient moves the rating the right way`() {
-        val base = rate(4, 3, 0.03, spread = 0.02)
-        assertTrue(rate(4, 4, 0.03, spread = 0.02) > base)           // more agreement
-        assertTrue(rate(8, 6, 0.03, spread = 0.02) > base)           // more books at the same share agreeing
-        assertTrue(rate(4, 3, 0.05, spread = 0.02) > base)           // more edge
-        assertTrue(rate(4, 3, 0.03, sharp = true, spread = 0.02) > base)  // a sharp book agrees
-        assertTrue(rate(4, 3, 0.03, spread = 0.005) > base)          // tighter consensus
-        assertTrue(rate(4, 3, 0.03, against = true, spread = 0.02) < base) // a sharp book against
+        val base = pts(4, 3, 0.03, spread = 0.02)
+        assertTrue(pts(4, 4, 0.03, spread = 0.02) > base)           // more agreement
+        assertTrue(pts(8, 6, 0.03, spread = 0.02) > base)           // more books at the same share agreeing
+        assertTrue(pts(4, 3, 0.05, spread = 0.02) > base)           // more edge
+        assertTrue(pts(4, 3, 0.03, sharp = true, spread = 0.02) > base)  // a sharp book agrees
+        assertTrue(pts(4, 3, 0.03, spread = 0.005) > base)          // tighter consensus
+        assertTrue(pts(4, 3, 0.03, against = true, spread = 0.02) < base) // a sharp book against
+        assertTrue(rate(4, 3, 0.03, sharp = true, spread = 0.02) > rate(4, 3, 0.03, spread = 0.02))
+        assertTrue(rate(4, 3, 0.03, against = true, spread = 0.02) < rate(4, 3, 0.03, spread = 0.02))
     }
 
     @Test fun `ceilings hold however good the rest looks`() {
