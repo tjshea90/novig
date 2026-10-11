@@ -1,22 +1,22 @@
-# CHECKPOINT 2930 — read me first, then TASKS.md
+# CHECKPOINT 2931 — read me first, then TASKS.md
 
-**Written:** 2026-10-11T04:26:46Z · **tests:** all 4 fast checks green
-**Branch:** `claude/unabated-oddsapi-integration-1u6kdc` · **builds on:** `7a0104c1` (this checkpoint is the commit after it)
+**Written:** 2026-10-11T04:29:00Z · **tests:** all 4 fast checks green
+**Branch:** `claude/unabated-oddsapi-integration-1u6kdc` · **builds on:** `8796d96e` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v0.89.5: bid guard (cancels resting orders with no expiry after 30 min, whoever posted them)
+pre-release: v0.89.5: bid guard (cancels resting orders with no expiry after 30 min, whoever posted them) (versionCode 190, v0.89.5)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.89.5), then run: bash tools/record-release.sh v0.89.5 190 "v0.89.5: bid guard (cancels resting orders with no expiry after 30 min, whoever posted them)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt
 
 ## Last ten checkpoints
 ```
+  8796d96e ckpt 2930: pre-ship: v0.89.5: bid guard (cancels resting orders with no expiry after 30
   7a0104c1 ckpt 2929: pre-ship: v0.89.5: bid guard (cancels resting orders with no expiry after 30
   fb078545 ckpt 2928: pre-release: v0.89.4: tennis bids (plain rules for ATP/WTA, lean scan keeps 
   edb95cd5 ckpt 2927: pre-ship: v0.89.4: tennis bids (plain rules for ATP/WTA, lean scan keeps gam
@@ -26,5 +26,4 @@ ship.sh gates and releases this
   ba65a365 ckpt 2923: pre-release: v0.89.2: Unabated fixed from the real sample (bet-type filtered
   69bf0afd ckpt 2922: pre-ship: v0.89.2: Unabated fixed from the real sample (bet-type filtered bo
   8edfb143 ckpt 2921: pre-release: v0.89.1: usage bars back on Settings > APIs (a green-amber-red 
-  e319ba3a ckpt 2920: pre-ship: v0.89.1: usage bars back on Settings > APIs (a green-amber-red bar
 ```
