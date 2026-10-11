@@ -30,6 +30,12 @@ object AutoBet {
      */
     const val MIN_STAKE = 0.01
 
+    /**
+     * Below this many dollars in the Vigilant wallet the whole app goes to sleep (Tj, 2026-10-11: "When the vigilant wallet gets below 20 cents, automatically stop all scanning, betting, and bidding
+     * ... There is no reason to continue usage with little money left"): [com.tjshea.vigilant.app.AutoBettor.walletRanOut]. It is re-armed once the wallet is back at or above it.
+     */
+    const val SLEEP_BELOW = 0.20
+
     /** The edge floor: a typed minimum under this is read as this (a 0.1% "edge" is noise, and 0 would bet everything). */
     const val MIN_EV_FLOOR = 0.005
 

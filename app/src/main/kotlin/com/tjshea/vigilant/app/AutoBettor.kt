@@ -188,7 +188,7 @@ class AutoBettor(
         if (passing.isEmpty()) {
             // Nothing to bet this cycle, but the wallet this cycle read may already be empty (Tj, 2026-10-02 ~22:10Z): asleep until he adds money.
             c.wallet.last?.takeIf { now - it.atMs < WalletBalance.FRESH_MS }?.let { w ->
-                if (w.dollars < AutoBet.MIN_STAKE) { if (!walletEmptyNoted) walletRanOut(w.dollars) } else walletEmptyNoted = false
+                if (w.dollars < AutoBet.SLEEP_BELOW) { if (!walletEmptyNoted) walletRanOut(w.dollars) } else walletEmptyNoted = false
             }
             return finish(now, Report(looked = all.size, skipped = skipped))
         }
@@ -203,7 +203,11 @@ class AutoBettor(
             return stopFor(now, Report(looked = all.size, passed = passing.size, skipped = skipped), "Couldn't read the wallet: ${e.message ?: e.javaClass.simpleName}")
         } ?: return finish(now, Report(looked = all.size, passed = passing.size, skipped = skipped), blocker = "Betting through Novig's API isn't set up (Settings › Betting & Novig account › Enable betting)")
         var balance = balance0
-        if (balance >= AutoBet.MIN_STAKE) walletEmptyNoted = false
+        if (balance >= AutoBet.SLEEP_BELOW) walletEmptyNoted = false
+        else {
+            if (!walletEmptyNoted) walletRanOut(balance)
+            return finish(now, Report(looked = all.size, passed = passing.size, skipped = skipped, walletEmpty = true), balance = balance)
+        }
 
         // One bet per Novig market (either side) while any is open: the other side of a line is never bet after the first.
         val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
@@ -338,6 +342,10 @@ class AutoBettor(
             return stopFor(now, Report(looked = tennis.size, passed = passing.size, skipped = skipped), "Couldn't read the wallet: ${(e as? NovigApiException)?.advice ?: e.message ?: e.javaClass.simpleName}")
         } ?: return finish(now, Report(looked = tennis.size, passed = passing.size, skipped = skipped), blocker = "Betting through Novig's API isn't set up (Settings › Betting & Novig account › Enable betting)")
         var balance = balance0
+        if (balance < AutoBet.SLEEP_BELOW) {
+            if (!walletEmptyNoted) walletRanOut(balance)
+            return finish(now, Report(looked = tennis.size, passed = passing.size, skipped = skipped, walletEmpty = true), balance = balance)
+        }
         val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
         val limits = BetLimits(
             maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.minEv, maxOdds = rules.maxOdds, minOdds = rules.minOdds, maxPerGame = settings.apiMaxPerGame,
@@ -497,12 +505,23 @@ class AutoBettor(
         withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(pausedByHand = true) } } }
         if (c.runner.running) runCatching { c.runner.stop() }
         runCatching { ScanService.cancelDone(app) }
-        runCatching { c.eventLog.info("AUTOBET", "wallet empty (${money(balance)}): scanning paused") }
+        runCatching { c.eventLog.info("AUTOBET", "wallet low (${money(balance)}, under ${money(AutoBet.SLEEP_BELOW)}): everything paused") }
         notes.stopped(
-            app, "Wallet empty: Vigilant is asleep",
-            "The Vigilant wallet has ${money(balance)}, so auto-bet can't place anything: scanning is paused (nothing is read, nothing is bet). " +
+            app, "Wallet low: Vigilant is asleep",
+            "The Vigilant wallet has ${money(balance)}, under ${money(AutoBet.SLEEP_BELOW)}, so scanning, betting and bidding are paused (nothing is read, nothing is bet, no bid goes up). " +
                 "Add money in Settings › Betting & Novig account, then tap Resume.",
         )
+    }
+
+    /**
+     * Every fresh wallet reading, wherever it came from (the strip, a cycle, a bet's answer): under [AutoBet.SLEEP_BELOW] the app goes to sleep once ([walletRanOut]), and a reading at or above
+     * it re-arms that. A reading older than [FRESH_READING_MS] is ignored, so the figure saved at the last run can't put the app to sleep after Tj has added money.
+     */
+    suspend fun onWalletReading(dollars: Double, atMs: Long) {
+        if (clock() - atMs > FRESH_READING_MS || !dollars.isFinite()) return
+        if (dollars >= AutoBet.SLEEP_BELOW) { walletEmptyNoted = false; return }
+        if (walletEmptyNoted) return
+        walletRanOut(dollars)
     }
 
     /** What the sharp book said about each bet that passed (CNO row key → the numbers), for the bet's pop-up and Diagnostics. */
@@ -662,6 +681,9 @@ class AutoBettor(
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
     companion object {
+        /** A wallet reading older than this is not acted on by [onWalletReading]. */
+        const val FRESH_READING_MS = 5 * 60_000L
+
 
         /** Auto-bet bets the sharp veto stopped only for its bar (the sharpest book gave a positive edge under [ScanSettings.sharpVetoMinEv]). */
         const val SHARP_BAR_COUNTER = "sharpbar.autobet.under"
