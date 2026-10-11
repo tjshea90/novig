@@ -60,6 +60,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -236,8 +239,8 @@ object SettingsSummary {
                 else -> "Off (key saved)"
             }
             SettingsPage.APIS -> {
-                val on = ApiEntry.active(s).size
-                "$on of ${ApiEntry.entries.size} on"
+                val on = com.tjshea.vigilant.app.ApiEntry.active(s).size
+                "$on of ${com.tjshea.vigilant.app.ApiEntry.entries.size} on"
             }
             SettingsPage.UNABATED -> when {
                 state.unKeys.isEmpty() -> "No key saved"
@@ -1401,7 +1404,7 @@ private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, o
             }
         }
     }
-    ApiEntry.entries.forEach { e ->
+    com.tjshea.vigilant.app.ApiEntry.entries.forEach { e ->
         val keys = e.provider?.let { state.keysOf(it) }.orEmpty()
         val on = e.isOn(state.settings)
         val busy = e.name in state.apiBusy
