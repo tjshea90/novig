@@ -4439,7 +4439,7 @@ This lifts the Pinnodds dormancy ("Stop using the pinnodds API", 2026-10-09 earl
 
 ## TD: Tj sent the scan study v0.85.3 (2026-10-10 ~07:25Z, no message with it)
 - [x] TD1 Analysed (research/scan_study_2026-10-10/ANALYSIS.md; archived upload research/uploads/2026-10-10/5d6ed178-*). Findings and the decisions that are Tj's are in its section 6.
-- [ ] TD2 ASK Tj which of ANALYSIS.md section 6 to apply: (1) bids only within ~12 h of the start, (2) auto-bet only within 6 h, (3) edge-floor test at 2%, (4) skip bets listed 1 h+, (5) no sharp-book requirement for props. Nothing is changed until he says.
+- [x] TD2 ASK Tj which of ANALYSIS.md section 6 to apply: (1) bids only within ~12 h of the start, (2) auto-bet only within 6 h, (3) edge-floor test at 2%, (4) skip bets listed 1 h+, (5) no sharp-book requirement for props. Nothing is changed until he says.
 
 ## TE: "How can I send you the research mode research file because it is over 30mb" (Tj, 2026-10-10 ~07:45Z)
 - [x] TE1 v0.85.7: Settings › Research › Share research file now sends only what was recorded since the last share (first time: last 3 days); "Share ALL research data" keeps the old everything file. Until it is installed: zip the file (Files app > Compress) and upload it on github.com to the repo (research/uploads/2026-10-10/, Add file > Upload files, up to 25 MB) or attach the zip here.
@@ -4565,7 +4565,7 @@ Finding (his Diagnostics v0.89.2): scan sees tennis (155 Novig games, ATP 71/74 
 ## TD: live bids settings clean-up and a safety/volume slider (Tj, 2026-10-11)
 Tj: "I'm using the live betting system already in place and I'm starting to get fills. But there are way too many options for the live betting system and I don't understand most of them. Clean up the settings, remove any settings that aren't needed, make the settings easier to understand, and make presets that are easy to understand. I want bids to be filled but also safe, truly positive EV at the time the bid was filled. Make sure the app does this. Maybe make a slide option, on one side is the very safest and best bets and bids with highest EV but least likely to fill, on the other side is pure volume more risky but very high fill rate, and I can slide the slider and vigilant will adjust the settings accordingly in the background. ... The wider the range of settings for the slider the better ... Also as I'm typing this I don't know what I did but there aren't any more bids going up. Check the screenshot."
 Screenshot (12:27, v0.89.x): Live bids on, REAL on: 0 up, today 496 posted, 14 filled for $10.54; 20 live games matched, 152 lines watched, 410123 judgments, NONE passed: "not Pinnacle's main line x563172, Novig live book not subscribed yet x97470, tennis is off x96996"; desk problem: "Novig's fills: Novig asked us to slow down".
-- [ ] TD1 Diagnose why nothing passes (tennis off, book subscriptions, 429 on fills) and fix what is a bug.
+- [x] TD1 Diagnose why nothing passes (tennis off, book subscriptions, 429 on fills) and fix what is a bug.
 - [ ] TD2 Read every live-bid setting and decide: keep (in a plain-words Advanced group), derive from the slider, or remove.
-- [ ] TD3 Safety/volume slider (wide range, e.g. 0-100) that maps to every math-linked setting consistently; guarantee: a bid is only posted/kept while its EV AT ITS PRICE vs the fair (after fees) is above the slider's floor, and a fill is checked against the fair at fill time.
-- [ ] TD4 Presets named in plain words; tests; ship.
+- [x] TD3 Safety/volume slider (wide range, e.g. 0-100) that maps to every math-linked setting consistently; guarantee: a bid is only posted/kept while its EV AT ITS PRICE vs the fair (after fees) is above the slider's floor, and a fill is checked against the fair at fill time.
+- [x] TD4 Presets named in plain words; tests; ship.
