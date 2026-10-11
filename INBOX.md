@@ -6216,3 +6216,8 @@ Wire in each api into the app and settings. Find out how vigilant can best use e
 
 Let me know if you need anything such as the keys, I don't mind sending them to you
 ```
+
+## 2026-10-11T01:56:24Z
+```
+Keep v5 but add v4 in separate settings. For example, two different spots for the different keys and the app knows how to use each to its full advantage, or one place to type the key and the app detects v4 or v5
+```
