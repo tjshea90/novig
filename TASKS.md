@@ -4776,3 +4776,6 @@ Tj verbatim: "In the auto bids tab, there is a running list of all filled bids, 
 - [x] TAH3 Auto-bet slider 1-100 (`AutoBetSlider`): same for the auto-bet rules.
 - [x] TAH4 Both tabs: simple view (key settings + slider), everything else behind an "Advanced settings" button.
 - [x] TAH5 Tests, ship.
+
+## TAI: live lane banner said "2 +EV bets now" but the list showed none (Tj, 2026-10-11 ~23:20Z, screenshot, Live games only mode on)
+- [x] TAI1 Cause: the banner counts every +EV row, the list applies the Feed's bars (picked leagues, minimum EV, odds limits, kinds, depth) and, in Live games only mode, the empty state said "Tap Scan". Fix: `LiveScanFeed.hiddenBecause/hiddenReasons`, a "Hidden by your filters: ..." line under the banner, a live-mode empty state. Test: LiveScanTest.
