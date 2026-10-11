@@ -6503,3 +6503,8 @@ I have live games toggled on for the scanner. These bets are not dropping off, a
 ```
 I have auto bet turned on. Why isn't it betting the 4 Star Bet in the screenshot? Also, for bet ratings, make a requirement that a bet be at least  2% positive ev to be rated 3½ stars or better
 ```
+
+## 2026-10-11T19:48:53Z
+```
+Also if I have live bets toggled to show up in the scanner, make a filter in the scanner for live games only. Make another filter in the scanner to sort by bet rating (stars)
+```
