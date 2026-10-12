@@ -151,6 +151,9 @@ class NovigStream(
     private val canaryMarkets: Int = CANARY_MARKETS,
     /** How often the check against the book is repeated on a connection that stays up (a drift in the best bids would otherwise go unseen for as long as it lives). */
     private val canaryEveryMs: Long = CANARY_EVERY_MS,
+    /** How long a book check may go unanswered before it counts as inconclusive, and how soon it is asked again. */
+    private val canaryWaitMs: Long = CANARY_WAIT_MS,
+    private val canaryInconclusiveRetryMs: Long = CANARY_INCONCLUSIVE_RETRY_MS,
 ) : PushedBooks {
     @Volatile
     private var capacity = capacity
@@ -809,14 +812,14 @@ class NovigStream(
     private fun watchdog() {
         val now = clock()
         val reason = synchronized(this) {
-            if (canaryNonce != 0L && now - canarySentAtMs > CANARY_WAIT_MS) {
+            if (canaryNonce != 0L && now - canarySentAtMs > canaryWaitMs) {
                 canaryNonce = 0L
-                canary = Canary(now, 0, 0, canaryIds.size, "no reply to the book check in ${CANARY_WAIT_MS / 1000} s (inconclusive)" + (refusalCounts["RATE_LIMIT_EXCEEDED"]?.let { ", Novig throttled the stream $it times" } ?: ""))
+                canary = Canary(now, 0, 0, canaryIds.size, "no reply to the book check in ${canaryWaitMs / 1000.0} s (inconclusive)" + (refusalCounts["RATE_LIMIT_EXCEEDED"]?.let { ", Novig throttled the stream $it times" } ?: ""))
                 // Not a verdict: the check is asked again (a first real key left it unanswered while the stream allowance was spent on 156 markets; it stayed unchecked for the whole connection).
                 canaryInconclusive++
                 canaryDone = false
                 canaryTried.clear()
-                canaryNotBeforeMs = now + if (canaryInconclusive >= CANARY_INCONCLUSIVE_MAX) canaryEveryMs else CANARY_INCONCLUSIVE_RETRY_MS
+                canaryNotBeforeMs = now + if (canaryInconclusive >= CANARY_INCONCLUSIVE_MAX) canaryEveryMs else canaryInconclusiveRetryMs
             }
             if (bboActive() && bboFirstSentAtMs != 0L && bboSnapshots == 0 && now - bboFirstSentAtMs > bboDataWaitMs && subscribedOn.values.count { it == BookChannel.BBO } >= 3) {
                 "Novig sent no best-bid snapshot in ${bboDataWaitMs / 1000} s"

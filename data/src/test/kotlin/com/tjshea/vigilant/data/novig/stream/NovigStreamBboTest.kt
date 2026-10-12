@@ -62,6 +62,8 @@ class NovigStreamBboTest {
         lifecycle: Boolean = true,
         emptyBbo: Boolean = false,
         oddDelta: Boolean = false,
+        silentSnapshots: java.util.concurrent.atomic.AtomicBoolean = java.util.concurrent.atomic.AtomicBoolean(false),
+        throttleSnapshots: Boolean = false,
     ) = object : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {}
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) { webSocket.close(1000, null) }
@@ -71,6 +73,11 @@ class NovigStreamBboTest {
             val nonce = msg["nonce"]!!.jsonPrimitive.content.toLong()
             val verb = if (msg["subscribe"] != null) "subscribe" else if (msg["snapshot"] != null) "snapshot" else return
             val channels = channelsOf(msg, verb)
+            if (verb == "snapshot" && throttleSnapshots) {
+                webSocket.send("""{"code":"RATE_LIMIT_EXCEEDED","message":"stream throttle"}""")
+                return
+            }
+            if (verb == "snapshot" && silentSnapshots.get()) return
             if (refuseBbo != null && channels.values.any { it == "bbo" }) {
                 webSocket.send("""{"nonce":$nonce,"code":"INVALID_CHANNEL","message":"$refuseBbo"}""")
                 return
@@ -108,11 +115,13 @@ class NovigStreamBboTest {
         keepOpen: Boolean = false,
         liveRetryMs: Long = 100,
         canaryEveryMs: Long = 600_000,
+        canaryWaitMs: Long = 10_000,
+        canaryInconclusiveRetryMs: Long = 60_000,
         clock: () -> Long = System::currentTimeMillis,
     ) = NovigStream(
         OkHttpClient(), signer(), scope, wsUrl = server.url("/v3/ws").toString().replace("http", "ws"),
         refillPerSec = refillPerSec, idleCloseMs = 60_000, bbo = bbo, bboDataWaitMs = bboDataWaitMs, canaryMarkets = canaryMarkets,
-        deepHoldMs = deepHoldMs, liveRetryMs = liveRetryMs, canaryEveryMs = canaryEveryMs, clock = clock,
+        deepHoldMs = deepHoldMs, liveRetryMs = liveRetryMs, canaryEveryMs = canaryEveryMs, canaryWaitMs = canaryWaitMs, canaryInconclusiveRetryMs = canaryInconclusiveRetryMs, clock = clock,
     ).also { if (keepOpen) it.configureFeed(bbo, true) }
 
     private val plan = (1..12).map { "m$it" }
@@ -403,6 +412,48 @@ class NovigStreamBboTest {
         s.watch((1..12).map { "p$it" })
         until(timeoutMs = 30_000) { snapshots.size >= 2 }
         assertTrue(s.feedReport().first().startsWith("feed: best-bid feed"))
+        s.close()
+    }
+
+    @Test
+    fun `a book check nobody answers is inconclusive and is asked again, not given up for the whole connection`() = runBlocking {
+        val silent = java.util.concurrent.atomic.AtomicBoolean(true)
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(silentSnapshots = silent)))
+        val s = stream(canaryWaitMs = 300, canaryInconclusiveRetryMs = 300)
+        s.watch(plan)
+        until { s.canary?.detail?.contains("inconclusive") == true }
+        // Novig starts answering: the next attempt (other markets, a moment later) is a real verdict
+        silent.set(false)
+        until { s.canary?.detail?.contains("of 4") == true }
+        assertEquals(4, s.canary!!.matched)
+        assertEquals("bbo stayed on the whole time", BookChannel.BBO, s.books.channelOf("m1"))
+        assertTrue("two book checks went out", snapshots.size >= 2)
+        s.close()
+    }
+
+    @Test
+    fun `a throttled book check is counted and the report says Novig refused it`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(throttleSnapshots = true)))
+        val s = stream(canaryWaitMs = 300, canaryInconclusiveRetryMs = 10_000)
+        s.watch(plan)
+        until { s.canary?.detail?.contains("inconclusive") == true }
+        assertTrue(s.canary!!.detail, s.canary!!.detail.contains("throttled the stream 1 times"))
+        val line = s.feedReport().first { it.startsWith("refused by Novig:") }
+        assertTrue(line, line.contains("RATE_LIMIT_EXCEEDED ×1"))
+        s.close()
+    }
+
+    @Test
+    fun `the report says whether the stream allowance is the key's own or a documented default`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        val s = stream()
+        s.watch(plan)
+        until { s.liveTop(plan).size == plan.size }
+        assertTrue(s.feedReport().first { it.startsWith("held:") }.contains("documented default"))
+        s.tune(512, 4.0, 2048)
+        val held = s.feedReport().first { it.startsWith("held:") }
+        assertTrue(held, held.contains("this key's own /v3/limits"))
+        assertNotNull(s.allowance())
         s.close()
     }
 }
