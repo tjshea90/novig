@@ -74,6 +74,9 @@ interface PushedBooks {
     /** The feed's state in words, line by line, for Diagnostics. */
     fun feedReport(): List<String> = emptyList()
 
+    /** The stream allowance this connection believes is left (tokens), or null when it holds no connection. The Test key waits on it so its own connection is not starved by the app's. */
+    fun allowance(): Double? = null
+
     /** Why [marketId] has no pushed book right now, in fixed words (null = no reason known, or it has one). The live bids count these, so a page full of "no book" says which. */
     fun bookGap(marketId: String): String? = null
 
@@ -299,6 +302,7 @@ class NovigStream(
 
     @Volatile var canary: Canary? = null
         private set
+    private var canaryInconclusive = 0
     private var canaryNonce = 0L
     private var canarySentAtMs = 0L
     private var canaryIds: List<String> = emptyList()
@@ -443,6 +447,8 @@ class NovigStream(
         return out
     }
 
+    override fun allowance(): Double? = synchronized(this) { refill(); tokens.coerceAtLeast(0.0) }
+
     override fun bookGap(marketId: String): String? = synchronized(this) {
         when {
             _state.value !is StreamState.Live -> "Novig live feed is not connected"
@@ -489,6 +495,8 @@ class NovigStream(
         bboDeltaOdd = 0
         canaryNonce = 0L
         canaryDone = false
+        canaryInconclusive = 0
+        refusalCounts.clear()
         privateSent = false
         orderEvents.reset()
         canaryStrikes = 0
@@ -778,7 +786,7 @@ class NovigStream(
         canary = Canary(clock(), checked, matched, skipped, detail)
         if (checked >= 3 && matched * 3 >= checked * 2) {
             // Verified: again on other markets after [canaryEveryMs].
-            synchronized(this) { canaryStrikes = 0; canaryDone = false; canaryNotBeforeMs = clock() + canaryEveryMs; canaryTried.clear() }
+            synchronized(this) { canaryStrikes = 0; canaryInconclusive = 0; canaryDone = false; canaryNotBeforeMs = clock() + canaryEveryMs; canaryTried.clear() }
         }
         if (checked >= 3 && matched * 3 < checked * 2) {
             // A reply can overtake a market push still queued behind it (the docs send replies first), so one disagreement is asked again on other markets a few seconds on; two give `bbo` up.
@@ -797,7 +805,12 @@ class NovigStream(
         val reason = synchronized(this) {
             if (canaryNonce != 0L && now - canarySentAtMs > CANARY_WAIT_MS) {
                 canaryNonce = 0L
-                canary = Canary(now, 0, 0, canaryIds.size, "no reply to the book check in ${CANARY_WAIT_MS / 1000} s (inconclusive)")
+                canary = Canary(now, 0, 0, canaryIds.size, "no reply to the book check in ${CANARY_WAIT_MS / 1000} s (inconclusive)" + (refusalCounts["RATE_LIMIT_EXCEEDED"]?.let { ", Novig throttled the stream $it times" } ?: ""))
+                // Not a verdict: the check is asked again (a first real key left it unanswered while the stream allowance was spent on 156 markets; it stayed unchecked for the whole connection).
+                canaryInconclusive++
+                canaryDone = false
+                canaryTried.clear()
+                canaryNotBeforeMs = now + if (canaryInconclusive >= CANARY_INCONCLUSIVE_MAX) canaryEveryMs else CANARY_INCONCLUSIVE_RETRY_MS
             }
             if (bboActive() && bboFirstSentAtMs != 0L && bboSnapshots == 0 && now - bboFirstSentAtMs > bboDataWaitMs && subscribedOn.values.count { it == BookChannel.BBO } >= 3) {
                 "Novig sent no best-bid snapshot in ${bboDataWaitMs / 1000} s"
@@ -855,10 +868,18 @@ class NovigStream(
             ((msg["error"] as? JsonObject)?.get("message") as? JsonPrimitive)?.content,
         ).joinToString(" ")
 
+    /** What Novig refused on this connection by error code, and when it last did (Diagnostics): "the canary got no reply" and "held 621 of 759" are throttling or something else, and this says which. */
+    private val refusalCounts = LinkedHashMap<String, Int>()
+    private var lastRefusalCode: String? = null
+    private var lastRefusalAtMs = 0L
+
     private fun refused(msg: JsonObject, code: String) {
         val n = (msg["nonce"] as? JsonPrimitive)?.longOrNull
         var bboLost = false
         synchronized(this) {
+            refusalCounts[code] = (refusalCounts[code] ?: 0) + 1
+            lastRefusalCode = code
+            lastRefusalAtMs = clock()
             // A throttled frame is answered with no nonce: every unanswered subscribe may be the one.
             val lost = if (n != null) unanswered.remove(n).orEmpty() else unanswered.values.flatten().also { unanswered.clear() }
             bboLost = lost.any { subscribedOn[it] == BookChannel.BBO }
@@ -1068,6 +1089,7 @@ class NovigStream(
     override fun feedReport(): List<String> {
         val now = clock()
         return synchronized(this) {
+            refill()
             val onBbo = subscribedOn.values.count { it == BookChannel.BBO }
             val onBook = subscribedOn.values.count { it == BookChannel.BOOK }
             val mode = when {
@@ -1079,6 +1101,7 @@ class NovigStream(
                 add("feed: $mode")
                 add("held: ${subscribed.size} markets of room ${if (bboActive()) limit else minOf(limit, MAX_MARKETS)} ($onBbo on bbo, $onBook on book, ${deepUntil.count { it.value > now }} deepened) · stream allowance ${capacity.toInt()} refilling ${refillPerSec.toInt()} a second (${if (tuned) "this key's own /v3/limits" else "documented default: /v3/limits not read yet"}), ${tokens.toInt().coerceAtLeast(0)} spare · ${if (keepOpen) "kept open between scans" else "closed ${idleMs / 1000} s after the last scan"}")
                 add("connection: ${when (val st = _state.value) { is StreamState.Live -> "live since ${(now - st.sinceMs) / 1000} s"; is StreamState.Connecting -> "connecting"; is StreamState.Failed -> "failed: ${st.message}"; StreamState.Off -> "off" }} · connects $connects, drops $drops, upgrade 429s $upgrade429s" + (lastDrop?.let { " · last drop: $it" } ?: ""))
+                add("refused by Novig: " + (if (refusalCounts.isEmpty()) "nothing on this connection" else refusalCounts.entries.joinToString(", ") { "${it.key} ×${it.value}" } + " (last ${lastRefusalCode} ${(now - lastRefusalAtMs) / 1000} s ago)"))
                 add("bbo: ${bboSnapshots} snapshots this connection, ${bboUnreadable} unreadable, ${deepened} markets deepened in all")
                 add("canary: " + (canary?.let { "${(now - it.atMs) / 1000} s ago: ${it.detail}" } ?: "not run yet"))
                 add("orders: " + (if (!ordersOn) (privateError?.let { "refused by Novig ($it): results are read by request" } ?: "pushed order results are switched off: results are read by request") else if (orderEvents.live) "pushed (${orderEvents.events} events heard, ${orderEvents.gaps} gaps)" else "subscribing / not live: results are read by request"))
@@ -1132,6 +1155,10 @@ class NovigStream(
         const val CANARY_MARKETS = 6
         const val CANARY_WAIT_MS = 10_000L
         const val CANARY_RETRY_MS = 3_000L
+
+        /** An unanswered book check is asked again this soon, up to [CANARY_INCONCLUSIVE_MAX] times in a row, then at the usual cadence. */
+        const val CANARY_INCONCLUSIVE_RETRY_MS = 60_000L
+        const val CANARY_INCONCLUSIVE_MAX = 5
         const val CANARY_EVERY_MS = 10 * 60_000L
         const val EMPTY_CHECK_MIN = 25
     }
@@ -1172,6 +1199,7 @@ class SharedStreamView(private val provider: () -> NovigStream?, private val lis
     override fun deepen(marketIds: Collection<String>) { stream()?.deepen(marketIds) }
     override fun room(): Int = stream()?.room() ?: NovigStream.MAX_MARKETS
     override fun feedReport(): List<String> = stream()?.feedReport().orEmpty()
+    override fun allowance(): Double? = stream()?.allowance()
     override fun bookGap(marketId: String): String? = stream()?.bookGap(marketId) ?: "Novig live feed is not connected (no key)"
     override fun problemSince(sinceMs: Long): String? = stream()?.problemSince(sinceMs)
 
