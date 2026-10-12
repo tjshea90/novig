@@ -303,8 +303,8 @@ class NovigStream(
             if (orders != ordersOn) {
                 ordersOn = orders
                 privateError = null
-                if (!orders) { orderEvents.reset() }
-                privateSent = false
+                // Turned on: subscribe (afresh). Turned off: what was subscribed stays marked, so the next pass unsubscribes it.
+                if (orders) privateSent = false else orderEvents.reset()
                 resync = true
             }
             if (bbo != bboOn) {
