@@ -1185,9 +1185,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 waited += 2_000
                             }
                         }
-                        NovigLiveCheck(c.http, c.json, c.readKeyClient(conn), feed = { s -> NovigStream(c.http, s, viewModelScope) }).run { step ->
+                        val checked = NovigLiveCheck(c.http, c.json, c.readKeyClient(conn), feed = { s -> NovigStream(c.http, s, viewModelScope) }).run { step ->
                             _state.update { it.copy(novig = it.novig.copy(busy = true, message = report.message + "\n\n" + step)) }
                         }
+                        if (waited > 0) listOf("The app's own live feed was let go for this check, and it waited ${waited / 1000} s for the key's stream allowance to refill (it is shared by every connection on the key).") + checked else checked
                     }
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
@@ -2919,3 +2920,7 @@ private const val DIAG_DAYS = com.tjshea.vigilant.data.diag.DataKeeper.JOURNAL_D
 private const val DIAG_TIMEOUT_MS = 90_000L
 private const val BET_SHARE_TIMEOUT_MS = 5 * 60_000L
 private const val DIAG_ITEM_MS = 20_000L
+
+/** What the Test key's own live-feed steps spend of the key's stream allowance (two connections: 32 each, 80 + 160 + 160), and the longest it waits for it. */
+private const val TEST_KEY_ALLOWANCE = 470.0
+private const val TEST_KEY_WAIT_MS = 100_000L
