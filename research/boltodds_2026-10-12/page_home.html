@@ -1,0 +1,553 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoltOdds - Real-time Sports Betting Data Made Simple</title>
+    <meta name="description" content="BoltOdds delivers lightning-fast sports betting odds and data at a fraction of the price. Perfect for betting APIs, sports data models, and more" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="./images/api_favicon.png" />
+
+    <!-- Apple Touch Icon for iOS devices -->
+    <link rel="apple-touch-icon" sizes="180x180" href="./images/api_favicon.png" />
+      <!-- Open Graph meta tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="BoltOdds - Real-time Sports Betting Data Made Simple" />
+    <meta property="og:description" content="Get fast, real-time sports betting data and odds delivered instantly." />
+    <!-- <meta property="og:image" content="https://boltodds.com/images/api_favicon.png" /> -->
+    <meta property="og:url" content="https://boltodds.com" />
+
+    <script type="application/ld+json">
+        {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+            "@type": "Organization",
+            "@id": "https://boltodds.com/#organization",
+            "name": "BoltOdds",
+            "url": "https://boltodds.com",
+            "logo": "https://boltodds.com/images/api_favicon.png"
+            },
+            {
+                "@type": "SoftwareApplication",
+                "@id": "https://boltodds.com/#product",
+                "name": "BoltOdds Sports Betting Odds API",
+                "applicationCategory": "Sports Data API",
+                "operatingSystem": "All",
+                "description": "Real-time sports betting odds API for line shopping, arbitrage, and sports models. Lightning-fast, reliable, and low-cost.",
+                "url": "https://boltodds.com",
+                "creator": {
+                    "@id": "https://boltodds.com/#organization"
+                },
+                "offers": {
+                    "@type": "Offer",
+                    "url": "https://boltodds.com/pricing",
+                    "price": "99.00",
+                    "priceCurrency": "USD",
+                    "priceValidUntil": "2025-12-31"
+                }
+            },
+            {
+            "@type": "FAQPage",
+            "@id": "https://boltodds.com/#faq",
+            "mainEntity": [
+                {
+                "@type": "Question",
+                "name": "What is BoltOdds?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "BoltOdds is a real-time sports betting odds API that provides lightning-fast data for line shopping, arbitrage, and betting models."
+                }
+                },
+                {
+                "@type": "Question",
+                "name": "Who can use the BoltOdds API?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "BoltOdds is designed for developers, bettors, analysts, and businesses who need live sports betting data for apps, models, or platforms."
+                }
+                },
+                {
+                "@type": "Question",
+                "name": "How fast is the API?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Our API delivers real-time odds with ultra-low latency, ensuring you never miss an opportunity."
+                }
+                }
+            ]
+            }
+        ]
+        }
+        </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <a href='/' style='display:flex;align-items:center;gap:inherit;text-decoration:none;color:inherit;'>
+                    <img src="./images/api_favicon.png" alt="API Logo" class="logo" />
+                    <h3>BoltOdds</h3>
+                </a>
+            </div>
+
+
+            <div class="hamburger" id="hamburger">
+                ☰
+            </div>
+            <!-- <div class="nav-container"> -->
+
+            <nav class="nav-menu">
+                <a href='/'>Home</a>
+                <a href='/pricing'>Pricing</a>
+                <a href='/docs'>Documentation</a>
+                <!-- <a href="liveviewer.html">Live Center</a> -->
+                <a href='/contact'>Contact</a>
+                <a href="https://discord.gg/JTgtfJCv7f" target="_blank">
+                    Discord
+                </a>
+
+                <div class="account-buttons">
+                    <a class='btn-primary' href='/signup' id='signup'>Sign Up</a>
+                    <a class='btn-primary' href='/signin' id='login'>Login</a>
+                    
+                </div>
+                <a href='/account' id='account'>Account</a>
+            </nav>
+
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">
+                Real-time Sports Betting Data Made Simple
+            </div>
+            <h1 class="hero-title">Real-time Sports Betting Data Provider, Lightning Fast Speed</h1>
+            <p class="hero-subtitle">
+                BoltOdds gives you access to millions of sports betting odds and live sports data with near zero latency.
+            </p>
+            <div class="hero-buttons">
+                <!-- <button class="btn-primary btn-large">Start Building</button> -->
+                <a class='btn-primary btn-large' href='/signup' id='try-now'>Try Now</a>
+                <a class='btn-secondary btn-large' href='/docs'>View Documentation</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Code Preview -->
+    <section class="code-preview">
+        <div class="container">
+            <div class="code-window">
+                <div class="code-header">
+                    <div class="window-controls">
+                        <div class="control red"></div>
+                        <div class="control yellow"></div>
+                        <div class="control green"></div>
+                    </div>
+                    <span class="filename">websocket-example.py</span>
+                </div>
+                <div class="code-content">
+                    <pre><code>
+import asyncio
+import websockets
+import json
+
+async def run_client():
+    uri = "wss://spro.agency/api?key=YOUR_TOKEN"
+    while True:
+        try:
+            async with websockets.connect(uri) as websocket:
+
+                ack_message = await websocket.recv()
+
+                # Send subscription message
+                subscribe_message = {
+                    "action": "subscribe",
+                    "filters": {
+                        "sports": ["NBA", "MLB", "Wimbledon (M)"],
+                        "sportsbooks": ["draftkings", "betmgm"],
+                        "games":["San Francisco Giants vs Philadelphia Phillies, 2025-07-07, 09", "Corinthians vs Bragantino, 2025-07-13, 06"],
+                        "markets":["Moneyline", "Spread"]
+                    }
+                }
+
+                await websocket.send(json.dumps(subscribe_message))
+                
+
+                # Listen for incoming messages
+                while True:
+
+                    message = await websocket.recv()
+                    
+                    data = json.loads(message)
+
+                    #work with data
+                    print("Received message:", data)
+
+        except websockets.ConnectionClosed:
+            print("Connection closed — reconnecting")
+            await asyncio.sleep(5)
+            continue
+
+
+if __name__ == "__main__":
+    asyncio.run(run_client())
+</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Why Choose BoltOdds?</h2>
+                <p>Built for users who need reliable, secure, and real-time sports betting data</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Lightning Fast</h3>
+                    <p>Near-zero latency. No polling. Our odds sometimes update even before the sportsbooks frontend.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Best Value</h3>
+                    <p>Gone are the days of paying thousands and thousands of dollars for sports betting data. Get the data you care about at the best possible price.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">👨‍💻</div>
+                    <h3>Super Quick Onboarding</h3>
+                    <p>Access to real-time sports betting data should not be difficult. With BoltOdds, you sign up, get your API key and get to work. The whole process can take less than 5 minutes.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section id="supported-data" class="supported-data">
+        <div class="container">
+            <div class="section-header">
+                <h2>Supported Data</h2>
+                <p>We’re constantly expanding our coverage to include more sports, leagues, and sportsbooks — with new additions being made weekly</p>
+            </div>
+            
+            <div class="league-groups">
+
+                <div class="sport-group">
+                    <h3>🏒 Hockey</h3>
+                    <ul>
+                    <li>NHL</li>
+                    <li>NCAA Hockey</li>
+                    <li>Swedish SHL</li>
+                    <li>AHL</li>
+                    <li>Finnish SM Liga</li>
+                    <li>Czech Extra Liga</li>
+                    <li>Swiss NLA</li>
+                    <li>German DEL</li>
+                    <li>Slovakia Extra Liga</li>
+                    </ul>
+
+                </div>
+
+                <div class="sport-group">
+                    <h3>🏎️ Motorsports</h3>
+                    <ul>
+                    <li>Formula 1</li>
+                    <li>NASCAR</li>
+                    <li>IndyCar</li>
+                    </ul>
+                </div>
+                
+
+
+                <div class="sport-group">
+                    <h3>⚾ Baseball</h3>
+                    <ul>
+                    <li>MLB</li>
+                    <li>NCAA Baseball</li>
+                    <li>KBO</li>
+                    <li>NPB</li>
+                    </ul>
+                </div>
+
+                <div class="sport-group">
+                    <h3>🎾 Tennis</h3>
+                    <ul>
+                    <li>Grand Slams</li>
+                    <li>ATP & WTA Tours</li>
+                    <li>Challenger Tournaments</li>
+                    <li>ITF Events</li>
+                    <li>UTR Events</li>
+                    </ul>
+                </div>
+
+                <div class="sport-group">
+                    <h3>🏈 Football</h3>
+                    <ul>
+                    <li>NFL</li>
+                    <li>NCAA Football</li>
+                    <li>CFL</li>
+                    <li>NFL Pre Season</li>
+                    </ul>
+                </div>
+
+                <div class="sport-group">
+                    <h3>🥊 Combat</h3>
+                    <ul>
+                    <li>UFC</li>
+                    <li>Boxing</li>
+                    </ul>
+                </div>
+
+                <div class="sport-group">
+                    <h3>🎮 eSports</h3>
+                    <ul>
+                    <li>League of Legends</li>
+                    <li>Call of Duty</li>
+                    <li>CS2</li>
+                    <li>Valorant</li>
+                    <li>Dota</li>
+                    <li>CSGO</li>
+                    <li>Overwatch</li>
+                    <li>Rainbow Six</li>
+                    <li>Rocket League</li>
+                    </ul>
+                </div>
+
+                <div class="sport-group">
+                    <h3>⛳ Golf</h3>
+                    <ul>
+                    <li>Majors</li>
+                    <li>PGA Tour</li>
+                    <li>LIV Golf</li>
+                    <li>DP World Tour</li>
+                    <li>LPGA Tour</li>
+                    <li>NCAA Golf</li>
+                    <li>Team Events</li>
+                    </ul>
+                </div>
+
+                <div class="sport-group">
+                    <h3>🏀 Basketball</h3>
+                    <ul>
+                    <li>NBA</li>
+                    <li>NCAAB</li>
+                    <li>NCAAB (W)</li>
+                    <li>WNBA</li>
+                    <li>NBA Summer</li>
+                    <li>NBA Preseason</li>
+                    <li>Euroleague</li>
+                    <li>Spanish ACB</li>
+                    <li>Turkish BSL</li>
+                    <li>Australian NBL</li>
+                    <li>French LNB Pro A</li>
+                    <li>Bundesliga BB</li>
+                    <li>Greece Basket League</li>
+                    </ul>
+                </div>
+
+
+                <div class="sport-group">
+                    <h3>⚽ Soccer</h3>
+                    <ul class="soccer-leagues">
+                    <li>MLS</li>
+                    <li>Bundesliga</li>
+                    <li>La Liga</li>
+                    <li>Ligue 1</li>
+                    <li>Serie A</li>
+                    <li>EPL</li>
+                    <li>Primeira Liga</li>
+                    <li>CSL</li>
+                    <li>Brazil Serie A</li>
+                    <li>FIFA CWC</li>
+                    <li>CONCACAF GC</li>
+                    <li>Colombian Primera A</li>
+                    <li>LP Argentina</li>
+                    <li>Liga MX</li>
+                    <li>Champions League</li>
+                    <li>EFL Championship</li>
+                    <li>FA Cup</li>
+                    <li>Europa League</li>
+                    <li>Europa Conference</li>
+                    <li>World Cup Quals.</li>
+                    <li>World Cup 2026</li>
+                    <li>Norway Eliteserien</li>
+                    <li>K League 1</li>
+                    <li>J League 1</li>
+                    <li>Sweden Allsvenskan</li>
+                    <li>Finland Veikkausliiga</li>
+                    <li>Iceland Urvalsdeild</li>
+                    <li>Ireland Premier Division</li>
+                    <li>Ecuador Liga Pro</li>
+                    <li>Brazil Serie B</li>
+                    </ul>
+                </div>
+
+                <div class="sport-group">
+                    <h3>🏓 Table Tennis</h3>
+                    <ul>
+                    <li>International Tournaments</li>
+                    <li>Elite & Challenger Events</li>
+                    <li>World & European Events</li>
+                    <li>National Leagues</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="books-carousel">
+                <div class="books-track">
+                    <img src="./images/draftkings.png" alt="DraftKings Logo" />
+                    <img src="./images/neobet.png" alt="NeoBet Logo" />
+                    <img src="./images/fanduel.png" alt="FanDuel Logo" />
+                    <img src="./images/betmgm.png" alt="BetMGM Logo" />
+                    <!-- <img src="./images/bookmaker.png" alt="BookMaker Logo" /> -->
+                    <img src="./images/thescore.png" alt="theScore Logo" />
+                    <img src="./images/bet99.png" alt="Bet99 Logo" />
+                    <img src="./images/betrivers.png" alt="BetRivers Logo" />
+                    <img src="./images/sportsinteraction.png" alt="SportsInteraction Logo" />
+                    <img src="./images/partysports.png" alt="PartySports Logo" />
+                    <img src="./images/bwin.png" alt="BWin Logo" />
+                    <img src="./images/playfallsview.png" alt="PlayFallsView Logo" />
+                    <img src="./images/leovegas.png" alt="LeoVegas Logo" />
+                    <img src="./images/betonline.png" alt="BetOnline Logo" />
+                    <img src="./images/northstar.png" alt="NorthStar Logo" />
+                    <img src="./images/888.png" alt="888 Logo" />
+                    <img src="./images/espnbet.png" alt="ESPNBet Logo" />
+                    <img src="./images/tonybet.png" alt="Tonybet Logo" />
+                    <img src="./images/ozoon.png" alt="Ozoon Logo" />
+                    <img src="./images/bovada.png" alt="Bovada Logo" />
+                    <img src="./images/pokerstars.png" alt="Pokerstars Logo" />
+                    <img src="./images/ballybet.png" alt="BallyBet Logo" />
+                    <img src="./images/playnow.png" alt="PlayNow Logo" />
+                    <!-- <img src="./images/betfair.png" alt="Betfair Logo" />
+                    <img src="./images/paddypower.png" alt="PaddyPower Logo" /> -->
+                    <img src="./images/miseojeu.png" alt="Miseojeu Logo" />
+                    <!-- <img src="./images/casumo.png" alt="Casumo Logo" /> -->
+                    <img src="./images/hardrock.png" alt="HardRock Logo" />
+                    <!-- <img src="./images/betvictor.png" alt="BetVictor Logo" />
+                    <img src="./images/betanouk.png" alt="Betano UK Logo" />
+                    <img src="./images/talksportbet.png" alt="talkSPORT BET Logo" />
+                    <img src="./images/parimatch.png" alt="Parimatch Logo" /> -->
+                    <img src="./images/dk predictions.png" alt="DK Predictions Logo" />
+                    <img src="./images/polymarket.png" alt="Polymarket Logo" />
+                    <img src="./images/prophetx.png" alt="ProphetX Logo" />
+                    <img src="./images/caesars.png" alt="Caesars Logo" />
+                    <!-- <img src="./images/sporttrade.png" alt="Sporttrade Logo" /> -->
+                    <img src="./images/thunderpick.png" alt="Thunderpick Logo" />
+                    <img src="./images/novig.png" alt="NoVig Logo" />
+                    <img src="./images/kalshi.png" alt="Kalshi Logo" />
+                    <img src="./images/fd predicts.png" alt="FD Predicts Logo" />
+                    <img src="./images/bet105.png" alt="Bet105 Logo" />
+                    <img src="./images/stake.png" alt="Stake Logo" />
+                    
+
+                    <!-- Repeat all images again for seamless loop -->
+                    <img src="./images/draftkings.png" alt="DraftKings Logo" />
+                    <img src="./images/neobet.png" alt="NeoBet Logo" />
+                    <img src="./images/fanduel.png" alt="FanDuel Logo" />
+                    <img src="./images/betmgm.png" alt="BetMGM Logo" />
+                    <!-- <img src="./images/bookmaker.png" alt="BookMaker Logo" /> -->
+                    <img src="./images/thescore.png" alt="theScore Logo" />
+                    <img src="./images/bet99.png" alt="Bet99 Logo" />
+                    <img src="./images/betrivers.png" alt="BetRivers Logo" />
+                    <img src="./images/sportsinteraction.png" alt="SportsInteraction Logo" />
+                    <img src="./images/partysports.png" alt="PartySports Logo" />
+                    <img src="./images/bwin.png" alt="BWin Logo" />
+                    <img src="./images/playfallsview.png" alt="PlayFallsView Logo" />
+                    <img src="./images/leovegas.png" alt="LeoVegas Logo" />
+                    <img src="./images/betonline.png" alt="BetOnline Logo" />
+                    <img src="./images/northstar.png" alt="NorthStar Logo" />
+                    <img src="./images/888.png" alt="888 Logo" />
+                    <img src="./images/espnbet.png" alt="ESPNBet Logo" />
+                    <img src="./images/tonybet.png" alt="Tonybet Logo" />
+                    <img src="./images/ozoon.png" alt="Ozoon Logo" />
+                    <img src="./images/bovada.png" alt="Bovada Logo" />
+                    <img src="./images/pokerstars.png" alt="Pokerstars Logo" />
+                    <img src="./images/ballybet.png" alt="BallyBet Logo" />
+                    <img src="./images/playnow.png" alt="PlayNow Logo" />
+                    <!-- <img src="./images/betfair.png" alt="Betfair Logo" />
+                    <img src="./images/paddypower.png" alt="PaddyPower Logo" /> -->
+                    <img src="./images/miseojeu.png" alt="Miseojeu Logo" />
+                    <!-- <img src="./images/casumo.png" alt="Casumo Logo" /> -->
+                    <img src="./images/hardrock.png" alt="HardRock Logo" />
+                    <!-- <img src="./images/betvictor.png" alt="BetVictor Logo" />
+                    <img src="./images/betanouk.png" alt="Betano UK Logo" />
+                    <img src="./images/talksportbet.png" alt="talkSPORT BET Logo" />
+                    <img src="./images/parimatch.png" alt="Parimatch Logo" /> -->
+                    <img src="./images/dk predictions.png" alt="DK Predictions Logo" />
+                    <img src="./images/polymarket.png" alt="Polymarket Logo" />
+                    <img src="./images/prophetx.png" alt="ProphetX Logo" />
+                    <img src="./images/caesars.png" alt="Caesars Logo" />
+                    <!-- <img src="./images/sporttrade.png" alt="Sporttrade Logo" /> -->
+                    <img src="./images/thunderpick.png" alt="Thunderpick Logo" />
+                    <img src="./images/novig.png" alt="NoVig Logo" />
+                    <img src="./images/kalshi.png" alt="Kalshi Logo" />
+                    <img src="./images/fd predicts.png" alt="FD Predicts Logo" />
+                    <img src="./images/bet105.png" alt="Bet105 Logo" />
+                    <img src="./images/stake.png" alt="Stake Logo" />
+                </div>
+                </div>
+
+        </div>
+    </section>
+
+    <!-- Getting Started Section -->
+    <section id="getting-started" class="getting-started">
+        <div class="container">
+            <div class="section-header">
+                <h2>Get Started in Minutes</h2>
+                <p>Three simple steps to integrate WebSocket functionality into your application</p>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Sign Up & Get API Key</h3>
+                    <p>Create your account and receive your unique API key instantly. No credit card required for testing.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Connect Your App</h3>
+                    <p>Use our simple WebSocket client to establish a connection.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Start Sending and Receiving Messages</h3>
+                    <p>Send and receive real-time messages.</p>
+                </div>
+            </div>
+
+            <!-- <div class="cta-center">
+                <button class="btn-primary btn-large">Start Your Free Trial</button>
+            </div> -->
+        </div>
+    </section>
+
+ 
+    <footer class="footer">
+        
+        <div class="footer-bottom">
+            <p>&copy; <span id="year"></span> Spro Technologies Inc. All rights reserved.</p>
+        </div>
+       
+    </footer> 
+
+    <script>
+        document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+
+    <script src="script.js"></script>
+</body>
+</html>

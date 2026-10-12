@@ -1,0 +1,192 @@
+
+    BoltOdds - Real-time Sports Betting Data Made Simple
+     -->
+                    BoltOdds
+                ☰
+             -->
+                Home
+                Pricing
+                Documentation
+                Live Center -->
+                Contact
+                    Discord
+                    Sign Up
+                    Login
+                Account
+                Real-time Sports Betting Data Made Simple
+            Real-time Sports Betting Data Provider, Lightning Fast Speed
+                BoltOdds gives you access to millions of sports betting odds and live sports data with near zero latency.
+                Start Building -->
+                Try Now
+                View Documentation
+                    websocket-example.py
+import asyncio
+import websockets
+import json
+async def run_client():
+    uri = "wss://spro.agency/api?key=YOUR_TOKEN"
+    while True:
+        try:
+            async with websockets.connect(uri) as websocket:
+                ack_message = await websocket.recv()
+                # Send subscription message
+                subscribe_message = {
+                    "action": "subscribe",
+                    "filters": {
+                        "sports": ["NBA", "MLB", "Wimbledon (M)"],
+                        "sportsbooks": ["draftkings", "betmgm"],
+                        "games":["San Francisco Giants vs Philadelphia Phillies, 2025-07-07, 09", "Corinthians vs Bragantino, 2025-07-13, 06"],
+                        "markets":["Moneyline", "Spread"]
+                    }
+                }
+                await websocket.send(json.dumps(subscribe_message))
+                # Listen for incoming messages
+                while True:
+                    message = await websocket.recv()
+                    data = json.loads(message)
+                    #work with data
+                    print("Received message:", data)
+        except websockets.ConnectionClosed:
+            print("Connection closed — reconnecting")
+            await asyncio.sleep(5)
+            continue
+if __name__ == "__main__":
+    asyncio.run(run_client())
+                Why Choose BoltOdds?
+                Built for users who need reliable, secure, and real-time sports betting data
+                    ⚡
+                    Lightning Fast
+                    Near-zero latency. No polling. Our odds sometimes update even before the sportsbooks frontend.
+                    📈
+                    Best Value
+                    Gone are the days of paying thousands and thousands of dollars for sports betting data. Get the data you care about at the best possible price.
+                    👨‍💻
+                    Super Quick Onboarding
+                    Access to real-time sports betting data should not be difficult. With BoltOdds, you sign up, get your API key and get to work. The whole process can take less than 5 minutes.
+                Supported Data
+                We’re constantly expanding our coverage to include more sports, leagues, and sportsbooks — with new additions being made weekly
+                    🏒 Hockey
+                    NHL
+                    NCAA Hockey
+                    Swedish SHL
+                    AHL
+                    Finnish SM Liga
+                    Czech Extra Liga
+                    Swiss NLA
+                    German DEL
+                    Slovakia Extra Liga
+                    🏎️ Motorsports
+                    Formula 1
+                    NASCAR
+                    IndyCar
+                    ⚾ Baseball
+                    MLB
+                    NCAA Baseball
+                    KBO
+                    NPB
+                    🎾 Tennis
+                    Grand Slams
+                    ATP & WTA Tours
+                    Challenger Tournaments
+                    ITF Events
+                    UTR Events
+                    🏈 Football
+                    NFL
+                    NCAA Football
+                    CFL
+                    NFL Pre Season
+                    🥊 Combat
+                    UFC
+                    Boxing
+                    🎮 eSports
+                    League of Legends
+                    Call of Duty
+                    CS2
+                    Valorant
+                    Dota
+                    CSGO
+                    Overwatch
+                    Rainbow Six
+                    Rocket League
+                    ⛳ Golf
+                    Majors
+                    PGA Tour
+                    LIV Golf
+                    DP World Tour
+                    LPGA Tour
+                    NCAA Golf
+                    Team Events
+                    🏀 Basketball
+                    NBA
+                    NCAAB
+                    NCAAB (W)
+                    WNBA
+                    NBA Summer
+                    NBA Preseason
+                    Euroleague
+                    Spanish ACB
+                    Turkish BSL
+                    Australian NBL
+                    French LNB Pro A
+                    Bundesliga BB
+                    Greece Basket League
+                    ⚽ Soccer
+                    MLS
+                    Bundesliga
+                    La Liga
+                    Ligue 1
+                    Serie A
+                    EPL
+                    Primeira Liga
+                    CSL
+                    Brazil Serie A
+                    FIFA CWC
+                    CONCACAF GC
+                    Colombian Primera A
+                    LP Argentina
+                    Liga MX
+                    Champions League
+                    EFL Championship
+                    FA Cup
+                    Europa League
+                    Europa Conference
+                    World Cup Quals.
+                    World Cup 2026
+                    Norway Eliteserien
+                    K League 1
+                    J League 1
+                    Sweden Allsvenskan
+                    Finland Veikkausliiga
+                    Iceland Urvalsdeild
+                    Ireland Premier Division
+                    Ecuador Liga Pro
+                    Brazil Serie B
+                    🏓 Table Tennis
+                    International Tournaments
+                    Elite & Challenger Events
+                    World & European Events
+                    National Leagues
+                     -->
+                     -->
+                     -->
+                     -->
+                     -->
+                     -->
+                     -->
+                     -->
+                     -->
+                     -->
+                Get Started in Minutes
+                Three simple steps to integrate WebSocket functionality into your application
+                    1
+                    Sign Up & Get API Key
+                    Create your account and receive your unique API key instantly. No credit card required for testing.
+                    2
+                    Connect Your App
+                    Use our simple WebSocket client to establish a connection.
+                    3
+                    Start Sending and Receiving Messages
+                    Send and receive real-time messages.
+                Start Your Free Trial
+ -->
+            ©  Spro Technologies Inc. All rights reserved.

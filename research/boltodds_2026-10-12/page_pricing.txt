@@ -1,0 +1,135 @@
+
+    Pricing - BoltOdds | Real-time Sports Betting Data
+                    BoltOdds
+                ☰
+             -->
+                Home
+                Pricing
+                Documentation
+                Contact
+                    Discord
+                Account
+                    Sign Up
+                    Login
+                Simple, Transparent Pricing
+ -->
+            Choose Your Plan
+                Get real-time sports betting data for a fraction of the price.
+                Monthly
+                    Annual
+                    Save 20%
+            Start 7-day Free Trial
+ No Credit Card Required
+                    Most Popular
+ -->
+                        Starter
+                        For hobbyists and side projects
+                            $
+                            99
+                            /month
+                        Billed annually at $948
+                        Billed monthly
+                            ✓ Real-time sports betting data via WebSocket
+                            ✓ All sportsbooks
+                            ✓ Choose 1 sports league per connection
+                            ✓ Choose 1 market per connection
+                            ✓ Advanced WebSocket filters
+                            ✓ 1 concurrent connection limit
+                    Join Now
+                    Change Plan
+                    Manage Plan
+                    Most Popular
+ -->
+                        Growth
+                        For bettors and builders who need more depth or small startups
+                            $
+                            219
+                            /month
+                        Billed annually at $2148
+                        Billed monthly
+                            ✓ Real-time sports betting data via WebSocket
+                            ✓ All sportsbooks
+                            ✓ Choose up to 3 sports leagues per connection
+                            ✓ All markets
+                            ✓ Advanced WebSocket filters
+                            ✓ 1 concurrent connection limit
+                    Start 14-day Free Trial -->
+                    Join Now
+                    Change Plan
+                    Manage Plan
+                    Best Value
+                        Pro
+                        For serious bettors, developers, and growing startups
+                            $
+                            349
+                            /month
+                        Billed annually at $3348
+                        Billed monthly
+                            ✓ Real-time sports betting data via WebSocket
+                            ✓ All sportsbooks
+                            ✓ All leagues
+                            ✓ All markets
+                            ✓ Advanced WebSocket filters
+                            ✓ 3 concurrent connections limit
+                            ✓ Pre-built parlays endpoint
+                            ✓ Priority support
+                    Start 14-day Free Trial -->
+                    Join Now
+                    Change Plan
+                    Manage Plan
+                        Custom
+                        For a custom sports betting feed
+                            Please Contact
+                            $
+                            499
+                            /month -->
+                        Billed annually at $4,788
+ -->
+                        Billed monthly
+ -->
+                             Everything on the Pro plan, plus...
+                            ✓ Custom sports & markets
+                            ✓ Custom sportsbooks
+                            ✓ Custom API endpoints
+                            ✓ Custom WebSocket filters
+                            ✓ Custom integrations
+                            ✓ Custom number of concurrent connections
+                            ✓ SGP Pricing Engine
+                            ✓ Historical odds
+                    Let's Discuss
+                        Live Play-by-Play and Scores API
+                        Top of the line play-by-play and live scores data
+                            Please Contact
+                            ✓ Play-by-play events
+                            ✓ Live score updates
+                            ✓ Live box scores
+                            ✓ Live & historical fixtures, results & market settlement data
+                            ✓ 30+ leagues covered
+                    Let's Discuss
+                Frequently Asked Questions
+                Everything you need to know about our pricing and plans
+                        What happens when I exceed my API limit?
+                        +
+                        If you exceed your monthly API limit, your requests will be temporarily throttled. You can upgrade your plan at any time to increase your limits immediately.
+ -->
+                        Can I cancel my plan at any time?
+                        +
+                        Yes! You can cancel your plan at anytime.
+                        Do you offer custom plans?
+                        +
+                        Absolutely! For users with unique requirements, we offer custom plans with tailored pricing based on your needs. Reach out and let us know what you're looking for!
+                        What payment methods do you accept?
+                        +
+                        We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and wire transfers for enterprise customers.
+ -->
+                        Is there a setup fee?
+                        +
+                        No setup fees, ever. You only pay for your chosen plan. Get started immediately with your API key upon signup.
+                        Do you offer a free trial?
+                        +
+                        Yes! We offer a 7-day free trial with access to almost all features. If you're not satisfied within those 7 days, you can cancel at anytime for any reason and will NOT be charged.
+                Ready to Get Started?
+                Join the many developers who trust BoltOdds for their sports betting data needs.
+                    Start Free Trial
+                    Join Discord
+            ©  Spro Technologies Inc. All rights reserved.
