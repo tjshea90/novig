@@ -158,8 +158,13 @@ class NovigStream(
     @Volatile
     private var maxMarkets = maxMarkets
 
+    /** True once `GET /v3/limits` has told this connection the key's own allowance (Diagnostics says which numbers it prints: this key's or the documented defaults). */
+    @Volatile
+    private var tuned = false
+
     override fun tune(capacity: Int, refillPerSec: Double, maxWatchedMarkets: Int) {
         synchronized(this) {
+            tuned = true
             this.capacity = capacity.toDouble()
             this.refillPerSec = refillPerSec
             // A margin under the cap, as with the documented 2,048.
@@ -1072,7 +1077,7 @@ class NovigStream(
             }
             buildList {
                 add("feed: $mode")
-                add("held: ${subscribed.size} markets of room ${if (bboActive()) limit else minOf(limit, MAX_MARKETS)} ($onBbo on bbo, $onBook on book, ${deepUntil.count { it.value > now }} deepened) · stream allowance ${capacity.toInt()} refilling ${refillPerSec.toInt()} a second · ${if (keepOpen) "kept open between scans" else "closed ${idleMs / 1000} s after the last scan"}")
+                add("held: ${subscribed.size} markets of room ${if (bboActive()) limit else minOf(limit, MAX_MARKETS)} ($onBbo on bbo, $onBook on book, ${deepUntil.count { it.value > now }} deepened) · stream allowance ${capacity.toInt()} refilling ${refillPerSec.toInt()} a second (${if (tuned) "this key's own /v3/limits" else "documented default: /v3/limits not read yet"}), ${tokens.toInt().coerceAtLeast(0)} spare · ${if (keepOpen) "kept open between scans" else "closed ${idleMs / 1000} s after the last scan"}")
                 add("connection: ${when (val st = _state.value) { is StreamState.Live -> "live since ${(now - st.sinceMs) / 1000} s"; is StreamState.Connecting -> "connecting"; is StreamState.Failed -> "failed: ${st.message}"; StreamState.Off -> "off" }} · connects $connects, drops $drops, upgrade 429s $upgrade429s" + (lastDrop?.let { " · last drop: $it" } ?: ""))
                 add("bbo: ${bboSnapshots} snapshots this connection, ${bboUnreadable} unreadable, ${deepened} markets deepened in all")
                 add("canary: " + (canary?.let { "${(now - it.atMs) / 1000} s ago: ${it.detail}" } ?: "not run yet"))
