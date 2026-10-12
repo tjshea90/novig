@@ -389,16 +389,33 @@ class DiagnosticsTest {
                 "novig" to ProviderUsage(callsToday = 8255, throttledToday = 9, lastThrottleMs = now - 7 * 3_600_000L),
             ),
         )
-        val checks = HealthChecks.of(base.copy(usage = usage), extras, now)
+        val checks = HealthChecks.of(base.copy(usage = usage, oddsApiKeys = listOf("key-16a7", "key-71c4")), extras, now)
         val key = checks.first { it.area == "API The Odds API" }
         assertEquals(HealthChecks.Level.OK, key.level)
         assertEquals("key …16a7 is spent until its reset in 2h 25m; the other key carries on", key.finding)
         assertEquals(HealthChecks.Level.OK, checks.first { it.area == "API Novig" }.level)
         // The last key spent is a warning; so is a refusal in the last hour.
         val alone = UsageBook(mapOf("oddsapi" to ProviderUsage(keys = mapOf("key-16a7" to KeyUsage(periodStart = month, used = 500, remaining = 0, depletedUntil = now + 3_600_000L))), "novig" to ProviderUsage(callsToday = 8255, throttledToday = 9, lastThrottleMs = now - 60_000L)))
-        val two = HealthChecks.of(base.copy(usage = alone), extras, now)
+        val two = HealthChecks.of(base.copy(usage = alone, oddsApiKeys = listOf("key-16a7")), extras, now)
         assertEquals(HealthChecks.Level.WARN, two.first { it.area == "API The Odds API" }.level)
         assertEquals(HealthChecks.Level.WARN, two.first { it.area == "API Novig" }.level)
+    }
+
+    @Test
+    fun `a refused key that is no longer saved, or belongs to a switched-off API, is not a finding (v0_89_34 file: a FAIL for a removed OddsPapi key)`() {
+        val base = SampleScan.state()
+        val usage = UsageBook(
+            mapOf(
+                "oddspapi" to ProviderUsage(keys = mapOf("key-ff45" to KeyUsage(refused = true, lastNote = "HTTP 401 invalid_api_key"))),
+                "oddsapi" to ProviderUsage(keys = mapOf("key-old" to KeyUsage(refused = true, lastNote = "HTTP 401"))),
+            ),
+        )
+        // OddsPapi (v5) has no key saved any more; The Odds API is switched off: the leftovers in the meter say nothing.
+        val gone = HealthChecks.of(base.copy(usage = usage, opKeys = emptyList(), oddsApiKeys = listOf("key-old"), settings = base.settings.copy(oddsPapi = true, useOddsApi = false)), extras, now)
+        assertTrue(gone.toString(), gone.none { it.area == "API OddsPapi" || it.area == "API The Odds API" })
+        // The same refusal on a key that is saved and an API that is on is still a FAIL.
+        val live = HealthChecks.of(base.copy(usage = usage, opKeys = listOf("key-ff45"), settings = base.settings.copy(oddsPapi = true)), extras, now)
+        assertEquals(HealthChecks.Level.FAIL, live.first { it.area == "API OddsPapi" }.level)
     }
 
     /** A bet placed [hoursBefore] h before a start 2 h ago, at 50¢, whose close was [closeRatio] times its price: CLV = closeRatio − 1; EV when bet +3%. */

@@ -268,7 +268,7 @@ object HealthChecks {
                 )
             }
         }
-        x.parlayAccounts.forEach { (key, a) ->
+        x.parlayAccounts.filter { (key, _) -> s.settings.useParlay && key in s.parlayKeys }.forEach { (key, a) ->
             if (a.valid == false) add(Check(Level.FAIL, "API ParlayAPI", "key …${key.takeLast(4)} is not valid" + (a.reason?.let { ": $it" } ?: ""), look = "parlay-api.com account; Settings › Fair odds & sources"))
         }
         val views = com.tjshea.vigilant.app.ui.meterViews(s, now).filter { it.policy.keyed }
