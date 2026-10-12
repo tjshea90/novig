@@ -190,7 +190,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** Pages for a scanner that's asleep are hidden (CNO only hides Vigilant's scan and its feeds; Vigilant only hides CNO's list). */
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
-        FEED, FAIR, USAGE -> s.vigilantOn
+        FEED, FAIR -> s.vigilantOn
         ALERTS, RESEARCH, SGO, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
         APIS -> true
         PINNODDS, LIVEBIDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"

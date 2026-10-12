@@ -57,8 +57,22 @@ class SettingsPagesTest {
     private fun screen(state: UiState = SampleScan.state(), content: @androidx.compose.runtime.Composable (UiState) -> Unit = { SettingsScreen(it, {}) }) =
         compose.setContent { VigilantTheme(darkTheme = true) { Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content(state) } } }
 
+    /** Back to the Settings home list, from wherever it is (a page of APIs & keys is two arrows deep). */
+    private fun home() {
+        while (compose.onAllNodesWithTag("settingsBack").fetchSemanticsNodes().isNotEmpty()) back()
+    }
+
+    /** Opens [page] from the home list: a home page by its row, one of the APIs' own pages (v0.89.35) through APIs & keys: its "Keys & options" button, or the usage link. */
     private fun open(page: SettingsPage) {
-        compose.onNodeWithTag("settingsRow-${page.name}").performScrollTo().performClick()
+        home()
+        val parent = page.parent
+        if (parent != null) {
+            open(parent)
+            val tag = com.tjshea.vigilant.app.ApiEntry.entries.firstOrNull { it.page == page }?.let { "apiOpen-${it.name}" } ?: "settingsLink-${page.name}"
+            compose.onNodeWithTag(tag).performScrollTo().performClick()
+        } else {
+            compose.onNodeWithTag("settingsRow-${page.name}").performScrollTo().performClick()
+        }
         compose.waitForIdle()
     }
 
@@ -107,16 +121,18 @@ class SettingsPagesTest {
         compose.onNodeWithTag("settingsPage-HOME").assertExists()
         compose.onNodeWithTag("settingsSearch").assertIsDisplayed()
         val s = SampleScan.state()
-        for (p in SettingsPage.shown(s.settings)) {
+        for (p in SettingsPage.home(s.settings)) {
             compose.onNodeWithTag("settingsRow-${p.name}").performScrollTo().assertTextContains(p.title, substring = true)
             // two pages can say the same thing ("No key saved": SportsGameOdds, OddsPapi)
             assertTrue(compose.onAllNodesWithText(SettingsSummary.of(p, s), substring = true).fetchSemanticsNodes().isNotEmpty())
         }
         // The order: as the enum lists them.
         val shown = texts().filter { t -> SettingsPage.entries.any { it.title == t } }   // the hidden pages are not on the list
-        assertEquals(SettingsPage.shown(s.settings).map { it.title }, shown)
+        assertEquals(SettingsPage.home(s.settings).map { it.title }, shown)
+        // The APIs' own pages are not on the list: one row, APIs & keys, opens them (v0.89.35).
+        for (child in SettingsPage.entries.filter { it.parent != null }) compose.onAllNodesWithTag("settingsRow-${child.name}").assertCountEquals(0)
         open(SettingsPage.FAIR)
-        compose.onNodeWithText("Fair odds & sources").assertIsDisplayed() // the top bar
+        compose.onNodeWithText("Fair odds", ignoreCase = false).assertIsDisplayed() // the top bar
         compose.onNodeWithText("Fair odds method", ignoreCase = true).assertIsDisplayed()
         back()
         compose.onNodeWithTag("settingsPage-HOME").assertExists()
