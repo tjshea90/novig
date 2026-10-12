@@ -459,7 +459,7 @@ class NovigStreamBboTest {
     }
 
     @Test
-    fun `the feed writes its own history for the event log: connect, a refusal, the fallback`() = runBlocking {
+    fun `the feed writes its own history for the event log, a connect, a refusal and the fallback`() = runBlocking {
         server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(refuseBbo = "channel bbo is not allowed")))
         server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
         val events = CopyOnWriteArrayList<Pair<Boolean, String>>()
