@@ -235,12 +235,17 @@ object HealthChecks {
         for ((id, p) in s.usage.providers) {
             val name = com.tjshea.vigilant.data.keys.QuotaPolicy.ALL.firstOrNull { it.id == id }?.displayName ?: id
             val policy = com.tjshea.vigilant.data.keys.QuotaPolicy.ALL.firstOrNull { it.id == id }
+            // An API that is switched off is never called (Tj, 2026-10-11) and a key that is no longer saved cannot be replaced: neither is a finding. The v0.89.34 file showed a FAIL
+            // for an OddsPapi (v5) key that Tj had already removed (its refusal was a leftover in the usage meter).
+            val entry = ApiEntry.entries.firstOrNull { it.policy?.id == id }
+            if (entry != null && !entry.isOn(s.settings)) continue
+            val saved = entry?.provider?.let { s.keysOf(it) }
             fun spent(u: com.tjshea.vigilant.data.keys.KeyUsage) = u.depletedUntil?.let { it > now } == true
-            p.keys.forEach { (key, u) ->
+            p.keys.filter { (key, _) -> saved == null || key in saved }.forEach { (key, u) ->
                 if (u.refused) add(Check(Level.FAIL, "API $name", "key …${key.takeLast(4)} was refused", u.lastNote?.take(120), "Settings › Fair odds & sources: replace it"))
                 else u.depletedUntil?.takeIf { it > now }?.let { until ->
                     // Another key with credits left carries on: a spent key is only worth a warning when it was the last one.
-                    val others = p.keys.filter { (k, o) -> k != key && !o.refused && !spent(o) && (policy?.let { pol -> o.left(pol) } ?: 1) > 0 }
+                    val others = p.keys.filter { (k, o) -> k != key && (saved == null || k in saved) && !o.refused && !spent(o) && (policy?.let { pol -> o.left(pol) } ?: 1) > 0 }
                     add(
                         Check(
                             if (others.isEmpty()) Level.WARN else Level.OK, "API $name",
