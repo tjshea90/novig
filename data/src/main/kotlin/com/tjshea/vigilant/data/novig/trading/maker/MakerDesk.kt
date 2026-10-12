@@ -23,6 +23,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import java.io.File
 
 /** Where one of Vigilant's bids is. */
@@ -159,7 +160,9 @@ data class MakerBid(
 
 /** Every bid posted, newest last; ended ones are kept [KEEP_MS] for the Make tab's numbers. */
 class MakerStore(file: File) {
-    private val store = JsonFileStore(file, ListSerializer(MakerBid.serializer()), { emptyList() })
+    // Fields still at their default are not written (v0.89.35): a bid is a log record whose defaults never change, and the file is rewritten whole and synced to the disk on every post and cancel (Tj's
+    // v0.89.34 file: 23 MB, 19,497 bids). Old files, written with every field, read the same.
+    private val store = JsonFileStore(file, ListSerializer(MakerBid.serializer()), { emptyList() }, Json { ignoreUnknownKeys = true; encodeDefaults = false })
     val flow get() = store.flow
     suspend fun all(): List<MakerBid> = store.read()
     suspend fun update(transform: (List<MakerBid>) -> List<MakerBid>) = store.update(transform)
