@@ -345,7 +345,7 @@ class BoltOddsLiveTest {
         until { s.live && received.any { it["action"]?.jsonPrimitive?.content == "subscribe" } }
         val before = received.count { it["action"]?.jsonPrimitive?.content == "subscribe" }
         serverSockets.last().send("""{"action": "error", "message": "Re-subscription rate limit hit. Please wait 5 minutes before re-subscribing."}""")
-        kotlinx.coroutines.delay(1_500)
+        kotlinx.coroutines.delay(7_000)
         assertEquals(before, received.count { it["action"]?.jsonPrimitive?.content == "subscribe" })
         s.close()
     }
