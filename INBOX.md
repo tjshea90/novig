@@ -6665,3 +6665,12 @@ If you need me to do anything to install the new novig features, such as the bbo
 ```
 @"/root/.claude/uploads/d95b6645-d5e0-5a0b-9345-cf5a8be1907e/851eb445-vigilant-boltodds-sample-2026-10-12T07-16-17.389743Z.txt" 
 ```
+
+## 2026-10-12T08:12:52Z
+```
+I want orders placed over the socket. Build that.
+
+If socket compression helps speed or accuracy or efficiency of the app or scanning, build that in too.
+
+Explain what you mean by "acting on market status". If it helps speed or accuracy or efficiency of the app or scanning, build that in too.
+```
