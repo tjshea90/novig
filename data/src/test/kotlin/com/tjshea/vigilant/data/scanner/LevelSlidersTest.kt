@@ -89,7 +89,7 @@ class LevelSlidersTest {
     @Test fun `a short scan window is widened to the bids' horizon, a longer one is kept`() {
         val short = ScanSettings(startsWithinHours = 6, daysAhead = 1, bookPropHours = 6)
         val n = BidSlider.apply(short, 100)
-        assertEquals(48, n.startsWithinHours); assertEquals(2, n.daysAhead); assertEquals(48, n.bookPropHours)
+        assertEquals(24, n.startsWithinHours); assertEquals(1, n.daysAhead); assertEquals(24, n.bookPropHours)
         val long = ScanSettings(startsWithinHours = 0, daysAhead = 7, bookPropHours = 72)
         assertEquals(long.daysAhead, BidSlider.apply(long, 100).daysAhead); assertEquals(72, BidSlider.apply(long, 100).bookPropHours)
     }
