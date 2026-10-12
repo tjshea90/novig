@@ -155,6 +155,16 @@ object AutoScanClock {
     /** Alarm jitter: a Vigilant scan counts as due this much before its gap has fully passed. */
     private const val JITTER_MS = 5_000L
 
+    const val MAKER_MIN_BUDGET_MS = 20_000L
+    const val MAKER_MAX_BUDGET_MS = 90_000L
+
+    /**
+     * The longest a background cycle waits on the bid desk's pass (Tj's v0.89.34 file: the bids step took 61 s at the 95th percentile and 122 s at worst, behind a lock, a rate limit or a wave of
+     * re-posts, while the cycle is 15 s: 4,747 cycles in 36 hours instead of 8,640, and the CNO read and the auto-bet waited for each). The cycle's own interval, kept between
+     * [MAKER_MIN_BUDGET_MS] and [MAKER_MAX_BUDGET_MS]; the pass is idempotent (it reconciles with Novig's open orders), so what it did not finish the next cycle's pass does.
+     */
+    fun makerBudgetMs(seconds: Int): Long = (seconds.coerceAtLeast(1) * 1_000L).coerceIn(MAKER_MIN_BUDGET_MS, MAKER_MAX_BUDGET_MS)
+
     /**
      * Whether a cycle at [seconds] runs Vigilant's own scan (Tj, 2026-10-01: CNO may be read every 15 s, but a Vigilant scan spends API credits
      * and takes ~100 s): every cycle when they're [gapSeconds] ([ScanSettings.vigilantGapSeconds]: the usual [ScanSettings.AUTO_SCAN_VIGILANT_MIN_GAP_SECONDS], or the
@@ -325,7 +335,16 @@ class AutoScanner(
                 val fromCno = settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO
                 if (!c.currentSettings().paused && AppBook.isNovig && (settings.maker || settings.makerRecommend) && (!scanned || fromCno)) {
                     _status.update { it.copy(step = "Make orders") }
-                    runCatching { timed("maker") { c.maker.run("background cycle", minGapMs = if (fromCno) 0L else MakerRunner.BACKGROUND_GAP_MS) } }.onFailure { if (it is CancellationException) throw it; errors += "Make orders: ${it.message ?: it.javaClass.simpleName}" }
+                    runCatching {
+                        timed("maker") {
+                            val budget = AutoScanClock.makerBudgetMs(settings.autoScanSeconds)
+                            val finished = kotlinx.coroutines.withTimeoutOrNull(budget) { c.maker.run("background cycle", minGapMs = if (fromCno) 0L else MakerRunner.BACKGROUND_GAP_MS); Unit }
+                            if (finished == null) {
+                                c.eventLog.count("cycle.maker.timeout")
+                                c.eventLog.warn("CYCLE", "the bid desk's pass was still running after ${budget / 1_000} s: the cycle went on without it (the next pass finishes the work)", budget)
+                            }
+                        }
+                    }.onFailure { if (it is CancellationException) throw it; errors += "Make orders: ${it.message ?: it.javaClass.simpleName}" }
                 }
                 val sent = send(alerts)
                 _status.update { it.copy(lastFound = alerts.distinctBy { a -> a.dedupeKey }.size, lastAlerts = sent) }

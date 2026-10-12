@@ -51,6 +51,20 @@ class AutoScanTest {
      * auto-bet idle for those minutes. Now the cycle starts the scan and ends; the scan's alerts go out when it ends.
      */
     @Test
+    fun `a background cycle waits on the bid desk's pass for its own interval and no longer than 90 seconds (the v0_89_34 file had passes of 122 s in a 15 s cycle)`() {
+        assertEquals(20_000L, AutoScanClock.makerBudgetMs(5))
+        assertEquals(20_000L, AutoScanClock.makerBudgetMs(15))
+        assertEquals(30_000L, AutoScanClock.makerBudgetMs(30))
+        assertEquals(60_000L, AutoScanClock.makerBudgetMs(60))
+        assertEquals(90_000L, AutoScanClock.makerBudgetMs(300))
+        assertEquals(20_000L, AutoScanClock.makerBudgetMs(0))
+        // The wiring: the cycle's bid step runs inside withTimeoutOrNull(makerBudgetMs) and counts a timeout.
+        val src = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/AutoScan.kt").readText()
+        assertTrue(src.contains("withTimeoutOrNull(budget) { c.maker.run(\"background cycle\""))
+        assertTrue(src.contains("cycle.maker.timeout"))
+    }
+
+    @Test
     fun `a background cycle starts Vigilant's scan and ends without waiting for it`() {
         val app = context as VigilantApp
         kotlinx.coroutines.runBlocking {
