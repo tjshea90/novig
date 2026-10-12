@@ -6646,3 +6646,10 @@ Also look at novig docs to see if anything has changed or updated that needs to 
 ```
 @"/root/.claude/uploads/d95b6645-d5e0-5a0b-9345-cf5a8be1907e/dd9b16a0-vigilant-boltodds-sample-2026-10-12T06-38-48.175876Z.txt" 
 ```
+
+## 2026-10-12T06:45:08Z
+```
+Novig's lighter best-bid-only channel, and letting the scan ask for more than 2,000 markets
+
+Explain this
+```
