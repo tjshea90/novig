@@ -38,6 +38,9 @@ interface OrderSocket {
     /** An order can go out over the socket right now (connected, switched on, and not put on REST after a failure). */
     val ready: Boolean
 
+    /** An order is likely soon: connect now if not connected. */
+    fun warm() {}
+
     /** Places one order and returns its id. A [NovigApiException] is Novig's refusal; a [SocketFallback] means NOTHING was placed (send it by REST); any other [IOException] is a lost answer. */
     suspend fun place(order: NovigTradingClient.NewOrder): String
 }
@@ -126,7 +129,7 @@ class NovigOrderSocket(
     override val ready: Boolean get() = enabled && state == State.READY && clock() >= untrustedUntilMs
 
     /** Opens the connection if it is not open (an order is likely soon: the Bet sheet opened, the auto-bet is planning). Cheap to call often. */
-    fun warm() {
+    override fun warm() {
         if (!enabled) return
         synchronized(lock) { lastUsedMs = clock() }
         val go = synchronized(lock) { socket == null && clock() >= retryAtMs && clock() >= untrustedUntilMs }

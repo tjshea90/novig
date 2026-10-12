@@ -65,6 +65,11 @@ open class NovigTradingClient(
      * off for the test doubles, which only know the single-order calls.
      */
     open val batchOrders: Boolean = false,
+    /**
+     * Where a taker order (IOC, FOK) may go besides REST: Novig's websocket ([NovigOrderSocket], NOVIG_API.md §27). Asked at every order, so a socket that is not there, or not ready, or that was put on
+     * REST after a failure, costs nothing but the REST request it replaces. Maker orders (post-only bids) and batches always go by REST.
+     */
+    private val orderSocket: () -> OrderSocket? = { null },
 ) {
 
     /** One order for [placeOrders]; the fields of [placeOrder]. */
@@ -99,6 +104,18 @@ open class NovigTradingClient(
         require(isUuid(clientId)) { "clientId must be a UUID (Novig parses it as one): $clientId" }
         require(ttlMs == null || (tif == "PO" || tif == "GTT") && ttlMs > 0) { "ttl is only for PO and GTT orders, and positive: $tif $ttlMs" }
         require(tif != "GTT" || ttlMs != null) { "a GTT order needs a ttl" }
+        if (tif == "IOC" || tif == "FOK") {
+            val socket = orderSocket()
+            if (socket != null && socket.ready) {
+                try {
+                    return socket.place(NewOrder(outcomeId, price, qty, tif, clientId, ttlMs))
+                } catch (e: SocketFallback) {
+                    // Nothing was placed (not sendable, or Novig could not read the frame): the same order goes by REST, once.
+                }
+            } else {
+                socket?.warm()
+            }
+        }
         val body = json.encodeToString(
             JsonObject.serializer(),
             JsonObject(
