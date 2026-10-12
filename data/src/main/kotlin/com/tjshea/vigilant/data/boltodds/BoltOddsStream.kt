@@ -83,6 +83,7 @@ class BoltOddsStream(
         private set
     @Volatile var lastError: String? = null
         private set
+    @Volatile private var lastRefusal: String? = null
     @Volatile var snapshotError: String? = null
         private set
     @Volatile var snapshots = 0
@@ -156,7 +157,7 @@ class BoltOddsStream(
             if (clock() - lastUsedMs > idleCloseMs) break
             val key = client.nextKey()
             if (key == null) {
-                down("no usable key (every saved key is refused or resting)")
+                down("no usable key (every saved key is refused or resting)" + (lastRefusal?.let { ": $it" } ?: ""))
                 delay(30_000)
                 continue
             }
@@ -187,7 +188,8 @@ class BoltOddsStream(
             lastClose = "code ${c.code}${if (c.reason.isNotBlank()) " ${client.redact(c.reason)}" else ""} after ${lived / 1000}s"
             if (c.code == 1008 || c.reason.contains("invalid token", ignoreCase = true)) {
                 client.refuseKey(key, "BoltOdds closed the socket: ${c.reason.ifBlank { "policy violation" }}")
-                down("BoltOdds refused the key (${c.reason.ifBlank { "Invalid token" }})")
+                lastRefusal = "BoltOdds refused the key (${c.reason.ifBlank { "Invalid token" }})"
+                down(lastRefusal!!)
             } else {
                 down(lastClose ?: "connection lost")
             }

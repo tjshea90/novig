@@ -290,12 +290,16 @@ class BoltOddsLiveTest {
         snapshotBody = "[" + game("draftkings") + "," + game("fanduel", ml1 = "-155", ml2 = "+135") + "]"
         val settings = ScanSettings(leagues = setOf("NBA", "MLB"), referenceBooks = listOf("draftkings", "fanduel"))
         val events = feed.events(Leagues.byNovigName("NBA")!!, settings, props = false)
-        val sub = received.first { it["action"]?.jsonPrimitive?.content == "subscribe" }["filters"]!!.jsonObject
+        val subs = received.filter { it["action"]?.jsonPrimitive?.content == "subscribe" }.map { it["filters"]!!.jsonObject }
+        val sub = subs.first { f -> f["markets"]!!.jsonArray.any { it.jsonPrimitive.content == "Moneyline" } }
         assertEquals(listOf("MLB", "NBA"), sub["sports"]!!.jsonArray.map { it.jsonPrimitive.content })
         // novig and neobet are not the fair line's books (novig is excluded, neobet is not among the picked)
         assertEquals(listOf("draftkings", "fanduel"), sub["sportsbooks"]!!.jsonArray.map { it.jsonPrimitive.content })
         // only market names the table can use as game lines; the prop names go to the props socket
         assertEquals(listOf("Moneyline", "Spread", "Total"), sub["markets"]!!.jsonArray.map { it.jsonPrimitive.content })
+        // the props socket asks for the prop names the table can use (Rebounds, Player Points), never the lines or a prop with no Novig market
+        val propsSub = subs.first { f -> f["markets"]!!.jsonArray.any { it.jsonPrimitive.content == "Rebounds" } }
+        assertEquals(listOf("Player Points", "Rebounds"), propsSub["markets"]!!.jsonArray.map { it.jsonPrimitive.content })
         assertEquals(1, events.size)
         assertEquals(setOf("draftkings", "fanduel"), events.single().markets.map { it.bookKey }.toSet())
         // the same call again reads the board and spends no request
