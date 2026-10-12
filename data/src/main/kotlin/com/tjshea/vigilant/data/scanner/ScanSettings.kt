@@ -1323,6 +1323,11 @@ data class ApiGates(
      * itself off for good (until switched off and on) if frames will not inflate.
      */
     val novigCompress: Boolean = true,
+    /**
+     * Profit-proven only (Tj, 2026-10-12): the auto-bet and the bid desk skip the types of bet and bid that have lost money in Tj's own bet history ([ProfitProfile]), the bids go up best type first, and a
+     * bet by hand is warned. Default OFF: off changes nothing at all.
+     */
+    val profitProven: Boolean = false,
 )
 
 /**

@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.novig.trading.maker
 
+import com.tjshea.vigilant.data.scanner.ProfitProfile
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.scanner.Freshness
@@ -22,6 +23,8 @@ import kotlin.math.floor
  * [minPrice]..[maxPrice], at least [minBooks] books each pricing the bid +EV on their own, and (with [sharpVeto]) no sharp book saying it isn't.
  */
 data class MakerRules(
+    /** Settings › Profit-proven only: the profile of Tj's bet history (null = off, nothing changes). A bid on a type of bid that lost money is skipped, and the best types go up first. */
+    val profit: ProfitProfile? = null,
     val margin: Double,
     /** The amount [AutoBetStake.CUSTOM] bids. */
     val customStake: Double,
@@ -195,6 +198,7 @@ data class MakerRules(
         }
 
         private fun baseRules(s: ScanSettings, maxOdds: Int, minOdds: Int) = MakerRules(
+            profit = if (s.gates.profitProven) ProfitProfile.shipped else null,
             margin = s.makerMargin.coerceIn(0.005, 0.5),
             customStake = s.makerStake.coerceAtLeast(0.01),
             maxBids = s.makerMaxBids.coerceAtLeast(0),
@@ -496,6 +500,7 @@ object MakerQuote {
         val fair = MakerRules.anchorOf(blend, line.sharpFairs, rules.anchorSharp)
         val price = if (fair < blend - 1e-12) PriceGrid.floor(fair / (1.0 + margin)) ?: return skip("The sharp book's price is too small to bid under") else blendPrice
         outsideWindow(price, rules)?.let { return skip(it) }
+        rules.profit?.judge(ProfitProfile.Instrument.BID, line.league, line.kind.label, line.selection, blend / price - 1.0, (line.startsTs - now) / 60_000L)?.blocked?.let { return skip("Not bid: $it") }
         if (line.kind in MakerRules.GAME_LINES && line.sharpFairs.isEmpty()) return skip("Game lines need a sharp book (Pinnacle, Circa …) in the fair")
         if (rules.requireSharp && line.sharpFairs.isEmpty()) return skip("No sharp book (Pinnacle, Circa, an exchange) prices this both ways, and a sharp book must agree (your setting)")
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
@@ -904,7 +909,14 @@ object MakerPlan {
      * that kind a day; a kind never measured by how many books price the line), then the cheapest and the most EV as before. Never changes which bids qualify, only which
      * go up when the bids, the dollars or the wallet run out.
      */
-    fun priority(rules: MakerRules, now: Long = System.currentTimeMillis()): Comparator<MakerDecision.Post> = compareBy<MakerDecision.Post> { it.obscure }.then(popularPriority(rules, now))
+    fun priority(rules: MakerRules, now: Long = System.currentTimeMillis()): Comparator<MakerDecision.Post> {
+        val base = compareBy<MakerDecision.Post> { it.obscure }
+        // Profit-proven only: the types of bid with the best history go up first (a neutral or unknown type scores 0, so nothing is held back for want of data).
+        val byProfit = rules.profit?.let { pf ->
+            compareByDescending<MakerDecision.Post> { pf.judge(ProfitProfile.Instrument.BID, it.line.league, it.line.kind.label, it.line.selection, it.evAtFair, (it.line.startsTs - now) / 60_000L).score }
+        }
+        return (byProfit?.let { base.then(it) } ?: base).then(popularPriority(rules, now))
+    }
 
     /**
      * A game this far from its start (hours) is "far" for the order: its bid goes up after every nearer one when the wallet, the dollar limit or the most bids can't take them

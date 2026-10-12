@@ -74,6 +74,8 @@ class ApiBetPlacer(
     private val warm: () -> Unit = {},
     /** Where the time of a bet check went, for the event log (Tj, 2026-10-12: "after I press the bet button, it lags for a long time"). */
     private val timing: (String) -> Unit = {},
+    /** The profile of Tj's bet history when Settings › Profit-proven only is on, else null ([com.tjshea.vigilant.data.scanner.ProfitProfile]). */
+    private val profit: () -> com.tjshea.vigilant.data.scanner.ProfitProfile? = { null },
 ) {
 
     /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. [limitsOverride]: the auto-bet's own limits. */
@@ -112,7 +114,7 @@ class ApiBetPlacer(
             val ref = GameRef(target.market.eventId, target.eventName, target.startsTs, target.league)
             GameExposure.check(ref, GameExposure.items(all) + restingBids() + pending.map { it.item }, target.market.marketId, target.outcomeId, stake, cap)
         }
-        val plan = ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all) + pending.sumOf { it.dollars }, game)
+        val plan = ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all) + pending.sumOf { it.dollars }, game, profit())
         timing("bet check: ${clock() - t0} ms in all (before the book ${t1 - t0} ms, book read ${t2 - t1} ms${if (book == null) ", FAILED" else ""}, rest ${clock() - t2} ms)")
         return plan
     }

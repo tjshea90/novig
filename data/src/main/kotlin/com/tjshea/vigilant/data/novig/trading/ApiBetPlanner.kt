@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.novig.trading
 
+import com.tjshea.vigilant.data.scanner.BetKind
 import com.tjshea.vigilant.data.novig.NovigBook
 import com.tjshea.vigilant.data.novig.NovigMarket
 import com.tjshea.vigilant.data.scanner.Freshness
@@ -137,6 +138,8 @@ object ApiBetPlanner {
         spentToday: Double,
         /** What this bet does to its game's exposure ([com.tjshea.vigilant.data.tracker.GameExposure.check]); null = not asked (no limit set). */
         game: GameExposure.Check? = null,
+        /** Settings › Profit-proven only: what Tj's own bet history says about this TYPE of bet. The auto-bet is refused a type that has lost money; a bet by hand only gets a note. Null = off. */
+        profit: com.tjshea.vigilant.data.scanner.ProfitProfile? = null,
     ): PlanResult {
         fun no(reason: String) = PlanResult.Refused(reason)
         if (!(stake > 0.0)) return no("Pick an amount to bet.")
@@ -249,6 +252,11 @@ object ApiBetPlanner {
         if (contracts <= 0L) return no("${money(stake)} is less than one contract at Novig's price (${american(best.price)}): bet more.")
         val average = averagePrice(levels, contracts)
         val avgQuote = EvMath.quote(target.fair, average, fee, eventLive = live)
+        var profitNote: String? = null
+        profit?.let { pf ->
+            val j = pf.judge(com.tjshea.vigilant.data.scanner.ProfitProfile.Instrument.BET, target.league, BetKind.of(target.marketLabel, target.selection).label, target.selection, bestQuote.evPercent, (target.startsTs - now) / 60_000L)
+            j.blocked?.let { why -> if (!limits.manual) return no("Not bet: $why.") else profitNote = "Heads up: $why." }
+        }
         val shortNote = if (stake - cost > stake * 0.05 + 0.01) {
             "Only ${money(cost)} of the ${money(stake)} is offered " + when {
                 limits.manual -> "on Novig's book"
@@ -258,7 +266,7 @@ object ApiBetPlanner {
         } else {
             null
         }
-        val note = listOfNotNull(shortNote, fairNote, gameNote).joinToString(" ").ifEmpty { null }
+        val note = listOfNotNull(shortNote, fairNote, gameNote, profitNote).joinToString(" ").ifEmpty { null }
         return PlanResult.Ready(
             BetPlan(
                 limitPrice = limit,
