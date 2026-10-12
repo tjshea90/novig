@@ -113,7 +113,7 @@ class LabRecorder(
         val ids = live.map { it.eventId }.toSet()
         val markets = source.markets(leagues, Ladders.TYPES, listOf(NovigEvent.STATUS_LIVE, NovigEvent.STATUS_DELAYED))
             .filter { it.eventId in ids && it.isOpen }
-        val books = source.books(markets.map { it.marketId }).books
+        val books = kotlinx.coroutines.withContext(com.tjshea.vigilant.data.novig.NovigReadTag("lab")) { source.books(markets.map { it.marketId }) }.books
         val reports = ArrayList<LadderReport>()
         var tail = 0
         var alt = 0

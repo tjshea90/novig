@@ -508,9 +508,11 @@ class Scanner(
                 val base = progress.booksDone
                 progress.emit()
                 try {
-                    val batch = novig.books(ids) { d, _ ->
-                        progress.booksDone = base + d
-                        progress.emit()
+                    val batch = withContext(com.tjshea.vigilant.data.novig.NovigReadTag("scan")) {
+                        novig.books(ids) { d, _ ->
+                            progress.booksDone = base + d
+                            progress.emit()
+                        }
                     }
                     fresh.putAll(batch.books)
                     fetched += batch.fetched
@@ -583,7 +585,7 @@ class Scanner(
             if (ids.isEmpty()) return
             progress.rereading(0, ids.size)
             try {
-                val batch = novig.books(ids) { d, t -> progress.rereading(d, t) }
+                val batch = withContext(com.tjshea.vigilant.data.novig.NovigReadTag("scan-reread")) { novig.books(ids) { d, t -> progress.rereading(d, t) } }
                 // Only books actually read again replace the first read (a failed one keeps it).
                 for ((id, book) in batch.books) if (book.fetchedAtMs >= cutoff) fresh[id] = book
                 reread += batch.fetched + batch.notModified
@@ -751,7 +753,7 @@ class Scanner(
         var failed = 0
         if (ids.isNotEmpty()) {
             try {
-                val batch = novig.books(ids) { d, t -> onProgress(d, t) }
+                val batch = withContext(com.tjshea.vigilant.data.novig.NovigReadTag("open-bets")) { novig.books(ids) { d, t -> onProgress(d, t) } }
                 books = HashMap(books).apply { putAll(batch.books) }
                 read = batch.fetched + batch.notModified
                 failed = batch.failed

@@ -366,7 +366,7 @@ class AppContainer(private val app: Application) {
 
     /** The market's book read from Novig just now (never one shown from the last scan). */
     suspend fun freshBook(marketId: String): NovigBook? =
-        withContext(Dispatchers.IO) { novig.books(listOf(marketId)).takeIf { it.failed == 0 && it.fromCache == 0 }?.books?.get(marketId) }
+        withContext(Dispatchers.IO + com.tjshea.vigilant.data.novig.NovigReadTag("fresh-book")) { novig.books(listOf(marketId)).takeIf { it.failed == 0 && it.fromCache == 0 }?.books?.get(marketId) }
 
     /** The placer the background auto-bet uses, for the trading client in use (null = betting isn't set up); limits from the saved settings. */
     @Synchronized

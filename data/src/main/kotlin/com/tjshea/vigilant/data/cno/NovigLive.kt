@@ -163,7 +163,7 @@ class NovigLive(
     private suspend fun read(marketIds: List<String>) {
         if (marketIds.isEmpty()) return
         reads += marketIds.size
-        val batch = runCatching { novig.books(marketIds) }.getOrNull() ?: return
+        val batch = runCatching { withContext(com.tjshea.vigilant.data.novig.NovigReadTag("cno-live")) { novig.books(marketIds) } }.getOrNull() ?: return
         books.putAll(batch.books)
     }
 

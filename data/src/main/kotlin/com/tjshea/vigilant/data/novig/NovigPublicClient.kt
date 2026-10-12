@@ -428,6 +428,7 @@ class NovigPublicClient(
         val pushed = pushed(all)
         for ((id, book) in pushed) bookCache[id] = CachedBook(null, book)
         val ids = all.filter { it !in pushed }
+        NovigReads.add(coroutineContext[NovigReadTag]?.tag ?: "other", ids.size)
         val signer = keyed?.takeIf { clock() >= keyedDownUntil }
         if (signer != null && ids.isNotEmpty()) ensureLimits(signer)
         val publicStart = publicGate.currentRate

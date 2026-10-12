@@ -45,7 +45,7 @@ class LockScanner(
     /** The books of these markets from Novig, by market id (the websocket's, or a read). */
     private val readBooks: suspend (List<String>) -> Map<String, com.tjshea.vigilant.data.novig.NovigBook>,
 ) {
-    constructor(c: AppContainer) : this(readMarket = { c.novig.market(it) }, readBooks = { c.novig.books(it).books })
+    constructor(c: AppContainer) : this(readMarket = { c.novig.market(it) }, readBooks = { kotlinx.coroutines.withContext(com.tjshea.vigilant.data.novig.NovigReadTag("locks")) { c.novig.books(it).books } })
 
 
     private val markets = ConcurrentHashMap<String, Pair<NovigMarket, Long>>()
