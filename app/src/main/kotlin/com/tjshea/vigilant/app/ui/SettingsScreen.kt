@@ -242,8 +242,8 @@ object SettingsSummary {
                 Format.kellyLabel(s.kellyMultiplier),
             ).joinToString(" · ")
             SettingsPage.PINNODDS -> when {
-                state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.website -> "No Pinnodds key saved"
-                !s.pinnLive -> "Off" + if (s.pinnWebsite.website) " (Pinnacle website feed)" else ""
+                state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.noPinnKey -> "No Pinnodds key saved"
+                !s.pinnLive -> "Off" + if (s.pinnWebsite.website) " (Pinnacle website feed)" else if (s.pinnWebsite.bolt) " (BoltOdds soft-book average)" else ""
                 s.pinnLiveHalted != null -> "Stopped"
                 s.pinnLiveBet -> "On: real bets, ${com.tjshea.vigilant.app.PinnText.money(s.pinnLiveStake)} a bet"
                 else -> "On: paper only (nothing is sent)"
@@ -2293,6 +2293,28 @@ private fun PinnFeedChooser(state: UiState, onUpdate: ((ScanSettings) -> ScanSet
         }
     }
     Text(w.feed.blurb, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    if (w.bolt) {
+        val g = state.settings.gates
+        val setG = { f: (com.tjshea.vigilant.data.scanner.ApiGates) -> com.tjshea.vigilant.data.scanner.ApiGates -> onUpdate { it.copy(gates = f(it.gates)) } }
+        Text("Companies that must agree on a line", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(3, 4, 5, 6).forEach { n -> FilterChip(selected = g.boltLiveMinCompanies == n, onClick = { setG { it.copy(boltLiveMinCompanies = n) } }, label = { Text("$n") }, modifier = Modifier.testTag("boltLiveMin-$n")) }
+        }
+        Text("Each must have pushed within", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(5, 10, 20).forEach { n -> FilterChip(selected = g.boltLiveMaxAgeSeconds == n, onClick = { setG { it.copy(boltLiveMaxAgeSeconds = n) } }, label = { Text("$n s") }, modifier = Modifier.testTag("boltLiveAge-$n")) }
+        }
+        Text("They may disagree by at most", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(3, 5, 8).forEach { n -> FilterChip(selected = g.boltLiveMaxSpreadPoints == n, onClick = { setG { it.copy(boltLiveMaxSpreadPoints = n) } }, label = { Text("$n points") }, modifier = Modifier.testTag("boltLiveSpread-$n")) }
+        }
+        SwitchRow(
+            "Allow REAL orders on the soft-book average",
+            "Off (the default) = it decides, journals and follows up but sends nothing, and real live bets and bids stay paper whatever their own switches say. The soft books' average trails the truth by seconds " +
+                "and carries no scores, so watch the paper results before turning this on. The edge floor is 4% after Novig's live fee.",
+            g.boltLiveReal, tag = "boltLiveReal",
+        ) { v -> setG { it.copy(boltLiveReal = v) } }
+    }
     SwitchRow("Compare the website feed with the socket", "Runs the free website feed beside the Pinnodds socket and times every price version against it (it drives nothing). Needs the socket on.", w.compare && !w.website, tag = "pinnCompare") { v -> set { it.copy(compare = v) } }
     Text("Website feed pace: a pause between polls of each live game", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

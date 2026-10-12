@@ -95,11 +95,11 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     }
     if (paperOnly) Text("The preset in force is for watching only: real bids stay off until you apply another.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidPaperOnlyNote"))
     Text(LiveBidText.statusLine(state.liveBidStatus, s), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("liveBidNote"))
-    LiveBidText.whyNone(s, state.liveBidStatus, state.pinnLive, state.pinnoddsKeys.isNotEmpty() || s.pinnWebsite.website)?.let { why ->
+    LiveBidText.whyNone(s, state.liveBidStatus, state.pinnLive, state.pinnoddsKeys.isNotEmpty() || s.pinnWebsite.noPinnKey)?.let { why ->
         Text(why, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary, modifier = Modifier.padding(top = 2.dp).testTag("liveBidWhy"))
     }
     Text(LiveBidText.detail(s, state.liveBidStatus, state.pinnLive), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp).testTag("liveBidDetail"))
-    if (state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.website) Text("No Pinnodds key is saved: add it in Settings › Pinnodds live, or switch that page to the free Pinnacle website feed. Live bids use the same feed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidNoKey"))
+    if (state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.noPinnKey) Text("No Pinnodds key is saved: add it in Settings › Pinnodds live, or switch that page to the free Pinnacle website feed. Live bids use the same feed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("liveBidNoKey"))
     var confirmingPilot by remember { mutableStateOf(false) }
     SectionTitle(LiveBidText.AUTOPILOT_TITLE)
     LbHint(LiveBidText.AUTOPILOT_HINT)
