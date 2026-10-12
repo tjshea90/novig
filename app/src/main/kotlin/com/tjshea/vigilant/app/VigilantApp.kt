@@ -364,6 +364,9 @@ class AppContainer(private val app: Application) {
 
     private var autoPlacerCache: Pair<Any, ApiBetPlacer>? = null
 
+    /** The Novig markets Vigilant has a bid resting on: held as a complete book, so the bid desk counts the others' bids behind its own ([com.tjshea.vigilant.data.scanner.Scanner.deepEdges]). */
+    fun bidMarkets(): Collection<String> = runCatching { makerStore.all().filter { it.active }.map { it.marketId }.distinct() }.getOrDefault(emptyList())
+
     /** The market's book read from Novig just now (never one shown from the last scan). */
     suspend fun freshBook(marketId: String): NovigBook? =
         withContext(Dispatchers.IO + com.tjshea.vigilant.data.novig.NovigReadTag("fresh-book")) { novig.books(listOf(marketId)).takeIf { it.failed == 0 && it.fromCache == 0 }?.books?.get(marketId) }
@@ -1406,7 +1409,8 @@ class AppContainer(private val app: Application) {
         com.tjshea.vigilant.data.novig.burst.BurstRecorder(
             scope = appScope,
             source = novig,
-            newFeed = { listener -> readConnection?.let { NovigStream(http, readKeyClient(it), appScope, idleCloseMs = BURST_IDLE_CLOSE_MS, bookListener = listener) } },
+            // The app's one connection: a second one on the same key spent the same `stream` bucket and starved the scan's (Tj's v0.89.34 file: upgrades answered 429, scans "held 0 of N").
+            newFeed = { listener -> readConnection?.let { com.tjshea.vigilant.data.novig.stream.SharedStreamView({ novig.stream as? NovigStream }, listener) } },
             echo = { (novig.keyed ?: error("no Novig key")).echo() },
             trades = { id -> novig.trades(id) },
             journal = burstJournal,

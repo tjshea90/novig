@@ -182,6 +182,7 @@ class NovigStream(
     /** The live engines' markets ([watchLive]): always ahead of [wanted] in what is subscribed. */
     private var livePinned: List<String> = emptyList()
     private var pinnedSet: Set<String> = emptySet()
+    private val pinOwners = LinkedHashMap<Any, List<String>>()
 
     /** The live markets of a lane that just stopped ([watchLive] with none): kept subscribed [LINGER_MS] so a restart of the lane does not pay 16 tokens a market again (the bucket refills 4 a second). */
     private var lingering: List<String> = emptyList()
@@ -336,14 +337,26 @@ class NovigStream(
         if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
     }
 
-    override fun watchLive(marketIds: Collection<String>) {
+    override fun watchLive(marketIds: Collection<String>) = pin(DEFAULT_OWNER, marketIds)
+
+    /**
+     * The live markets of one [owner] (the live lane, the burst recorder): each owner's list replaces only its own, and the stream holds the union, all on `book`. Before there were two owners one
+     * list was enough; now two lanes share the one connection (a second connection of the key spent the same `stream` bucket and starved the first: Tj's v0.89.34 file).
+     */
+    fun pin(owner: Any, marketIds: Collection<String>) {
         val start: Boolean
         synchronized(this) {
             lastUsedMs = clock()
             val next = marketIds.distinct()
-            if (next.isEmpty() && livePinned.isNotEmpty()) { lingering = livePinned; lingerUntilMs = clock() + LINGER_MS }
-            livePinned = next
-            pinnedSet = next.toHashSet()
+            val before = pinOwners[owner].orEmpty()
+            if (next.isEmpty()) {
+                if (before.isNotEmpty()) { lingering = before; lingerUntilMs = clock() + LINGER_MS }
+                pinOwners.remove(owner)
+            } else {
+                pinOwners[owner] = next
+            }
+            livePinned = pinOwners.values.flatten().distinct()
+            pinnedSet = livePinned.toHashSet()
             start = socket == null && failedAtMs.let { it == null || clock() - it >= retryDelayMs }
         }
         if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
@@ -983,6 +996,7 @@ class NovigStream(
     }
 
     companion object {
+        private val DEFAULT_OWNER = Any()
         const val STREAM_CAPACITY = 512
         const val REFILL_PER_SEC = 4.0
         const val UPGRADE_COST = 32
@@ -1047,7 +1061,7 @@ class SharedStreamView(private val provider: () -> NovigStream?, private val lis
             bound?.books?.removeListener(listener)
             now?.books?.addListener(listener)
             bound = now
-            if (now != null && pinned.isNotEmpty()) now.watchLive(pinned)
+            if (now != null && pinned.isNotEmpty()) now.pin(this, pinned)
         }
         return now
     }
@@ -1056,7 +1070,7 @@ class SharedStreamView(private val provider: () -> NovigStream?, private val lis
 
     override fun watchLive(marketIds: Collection<String>) {
         pinned = marketIds.distinct()
-        stream()?.watchLive(pinned)
+        stream()?.pin(this, pinned)
     }
 
     override fun open() { stream()?.open() }
@@ -1071,7 +1085,7 @@ class SharedStreamView(private val provider: () -> NovigStream?, private val lis
     @Synchronized
     override fun close() {
         bound?.books?.removeListener(listener)
-        bound?.watchLive(emptyList())
+        bound?.pin(this, emptyList())
         bound = null
         pinned = emptyList()
     }
