@@ -4786,3 +4786,4 @@ Tj verbatim: "For the auto bid and auto bet, consider whether it is wise to bet 
 - [ ] TAJ2 Bet lag: what runs during a bet tap; brief pause of scanning while the order is placed, resume after.
 - [ ] TAJ3 Auto-bet halts (check Novig): find why they came back (v0.89.2x recovery), make EVERY halt self-resolve and auto-resume quickly; tests.
 - [ ] TAJ4 Ship.
+- Progress TAJ (2026-10-12): TAJ1 done (bets cap +150, bids +200, never unlimited; LevelSlidersTest). TAJ2 done: `BetPriority` (data/novig): scan requests wait at every RateGate while a bet sheet is planning or an order is placed, then go on where they were (BetPriorityTest). TAJ3 done: AutoBetRecovery checks Novig after 8 s every 3 s and, if it cannot settle within 60 s, resumes anyway, holds that bet back 2 h and notifies (AutoBetRecoveryAppTest).

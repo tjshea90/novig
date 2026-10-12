@@ -68,7 +68,11 @@ class ApiBetPlacer(
 ) {
 
     /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. [limitsOverride]: the auto-bet's own limits. */
-    suspend fun plan(target: BetTarget, stake: Double, allowRepeat: Boolean = false, limitsOverride: BetLimits? = null): PlanResult {
+    suspend fun plan(target: BetTarget, stake: Double, allowRepeat: Boolean = false, limitsOverride: BetLimits? = null): PlanResult =
+        // The sheet Tj opened: scans give way while it reads the book ([com.tjshea.vigilant.data.novig.BetPriority]). An auto-bet's own planning (many candidates a cycle) does not.
+        if (limitsOverride == null) com.tjshea.vigilant.data.novig.BetPriority.hold { planImpl(target, stake, allowRepeat, limitsOverride) } else planImpl(target, stake, allowRepeat, limitsOverride)
+
+    private suspend fun planImpl(target: BetTarget, stake: Double, allowRepeat: Boolean, limitsOverride: BetLimits?): PlanResult {
         val limits = limitsOverride ?: limits()
         // Pause holds what runs by itself (auto-bet); a bet Tj places by hand is his call (Tj, 2026-10-02: "I should be able to bet on whatever I want manually").
         if (!limits.manual && paused()) return PlanResult.Refused("Scanning is paused (Settings): resume it before betting.")
