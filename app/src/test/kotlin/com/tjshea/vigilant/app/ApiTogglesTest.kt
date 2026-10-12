@@ -28,7 +28,7 @@ class ApiTogglesTest {
     /** Every API on. */
     private fun everything() = ScanSettings(
         leagues = setOf("NFL", "ATP"), usePinnacle = true, usePolymarket = true, useKalshi = true, usePropLine = true, useParlay = true, useOddsApi = true,
-        sgoPro = true, oddsPapi = true, oddsPapiFree = true, unabated = true,
+        sgoPro = true, oddsPapi = true, oddsPapiFree = true, unabated = true, gates = com.tjshea.vigilant.data.scanner.ApiGates(useBoltOdds = true),
     )
 
     private suspend fun allKeys(c: AppContainer) {
@@ -42,6 +42,7 @@ class ApiTogglesTest {
         c.keyStore.setKeys(ApiProvider.ODDSPAPI, listOf("op"))
         c.keyStore.setKeys(ApiProvider.ODDSPAPI_FREE, listOf("op4"))
         c.keyStore.setKeys(ApiProvider.UNABATED, listOf("un"))
+        c.keyStore.setKeys(ApiProvider.BOLTODDS, listOf("bolt"))
     }
 
     /** The source ids each API contributes (Pinnacle's three hosts share one source). */
@@ -50,6 +51,7 @@ class ApiTogglesTest {
         ApiEntry.ODDSPAPI to setOf("oddspapi", "oddspapi-props"),
         ApiEntry.ODDSPAPI_FREE to setOf("oddspapi_free", "oddspapi_free-props"),
         ApiEntry.UNABATED to setOf("unabated", "unabated-props"),
+        ApiEntry.BOLTODDS to setOf("bolt", "bolt-props"),
         ApiEntry.PARLAY to setOf("parlay", "parlay_1h", "parlay_props"),
         ApiEntry.PROPLINE to setOf("propline", "propline_props"),
         ApiEntry.ODDS_API to setOf("oddsapi", "oddsapi_props"),
@@ -70,7 +72,7 @@ class ApiTogglesTest {
         for ((entry, own) in idsOf) assertTrue("$entry (background): $own missing from $background", own.all { it in background })
         // for a league, every source that carries it is asked: nothing is left out for the leagues SGO or OddsPapi carry
         val forNfl = c.referenceSources(s).filter { it.supports(nfl) }.map { it.id }.toSet()
-        for (id in listOf("sgo", "oddspapi", "parlay", "propline", "oddsapi", "kalshi", "polymarket", "pinnacle")) assertTrue("$id for the NFL in $forNfl", id in forNfl)
+        for (id in listOf("sgo", "oddspapi", "bolt", "parlay", "propline", "oddsapi", "kalshi", "polymarket", "pinnacle")) assertTrue("$id for the NFL in $forNfl", id in forNfl)
         val forAtp = c.referenceSources(s).filter { it.supports(atp) }.map { it.id }.toSet()
         for (id in listOf("sgo", "pinnacle", "kalshi", "parlay")) assertTrue("$id for tennis in $forAtp", id in forAtp)
     }
@@ -122,11 +124,11 @@ class ApiTogglesTest {
         val off = ApiEntry.entries.fold(all) { acc, e -> e.setOn(acc, false) }.copy(usePinnacle = false)
         val ids = c.referenceSources(off).map { it.id }
         assertEquals("only what has no key and is off: nothing", emptyList<String>(), ids)
-        assertFalse(c.sgoActive(off) || c.opActive(off) || c.unabatedActive(off) || c.op4FairActive(off) || c.pinnoddsActive(off))
+        assertFalse(c.sgoActive(off) || c.opActive(off) || c.unabatedActive(off) || c.op4FairActive(off) || c.pinnoddsActive(off) || c.boltActive(off))
         // switches on, keys gone: still nothing that needs a key
         for (p in ApiProvider.entries) c.keyStore.setKeys(p, emptyList())
         val keyless = c.referenceSources(all).map { it.id }.toSet()
-        for (e in listOf(ApiEntry.SGO, ApiEntry.ODDSPAPI, ApiEntry.ODDSPAPI_FREE, ApiEntry.UNABATED, ApiEntry.PARLAY, ApiEntry.PROPLINE, ApiEntry.ODDS_API)) assertTrue("$e without a key", idsOf.getValue(e).none { it in keyless })
+        for (e in listOf(ApiEntry.SGO, ApiEntry.ODDSPAPI, ApiEntry.ODDSPAPI_FREE, ApiEntry.UNABATED, ApiEntry.BOLTODDS, ApiEntry.PARLAY, ApiEntry.PROPLINE, ApiEntry.ODDS_API)) assertTrue("$e without a key", idsOf.getValue(e).none { it in keyless })
         assertFalse("pinnacle without any key", "pinnacle" in keyless)
         assertTrue("the keyless exchanges stay", "kalshi" in keyless && "polymarket" in keyless)
     }

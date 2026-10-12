@@ -43,7 +43,7 @@ class ApiProbeTest {
     private val probe by lazy { ApiProbe(
         OkHttpClient(), meter, null, { clockMs },
         ApiProbe.Hosts(
-            oddsApi = base("odds"), propLine = base("pl"), sgo = base("sgo"), op5 = base("op5"), op4 = base("op4"), unabated = base("un"), pinnodds = base("pinnodds"),
+            oddsApi = base("odds"), propLine = base("pl"), sgo = base("sgo"), op5 = base("op5"), op4 = base("op4"), unabated = base("un"), bolt = base("bolt"), pinnodds = base("pinnodds"),
             pinnwire = base("wire"), pinnapi = base("pinnapi"), kalshi = base("kalshi"), polymarket = base("poly"),
         ),
     ) }
@@ -155,5 +155,27 @@ class ApiProbeTest {
         val e = runCatching { allOff.odds(Leagues.byNovigName("NFL")!!, ScanSettings()) }.exceptionOrNull()
         assertTrue(e.toString(), e != null)
         assertEquals("nothing is sent when every host is off", 0, requests.size)
+    }
+
+    @Test fun boltOddsKeyIsCheckedWithGetInfoAndARefusalIsToldApartFromAnOutage() = runTest {
+        handler = { r -> if (r.requestUrl!!.queryParameter("key") == "boltboltbolt1") ok("""{"sports":["NBA","MLB"],"sportsbooks":["draftkings","fanduel","novig"]}""") else MockResponse().setResponseCode(403).setBody("""{"detail":"Invalid API token"}""") }
+        val good = probe.check(ApiProvider.BOLTODDS, listOf("boltboltbolt1")).single()
+        assertTrue(good.message, good.ok); assertTrue(good.message, good.message.contains("2 sports, 3 sportsbooks"))
+        assertEquals("/bolt/get_info", requests.last().requestUrl!!.encodedPath)
+        val bad = probe.check(ApiProvider.BOLTODDS, listOf("wrongwrongwrong")).single()
+        assertFalse(bad.message, bad.ok); assertTrue(bad.message, bad.message.contains("Invalid API token"))
+        assertTrue("a refused key rests", usage(QuotaPolicy.BOLTODDS, "wrongwrongwrong").refused)
+        // a key that was refused and is now accepted is lifted
+        handler = { ok("""{"sports":[],"sportsbooks":[]}""") }
+        assertTrue(probe.check(ApiProvider.BOLTODDS, listOf("wrongwrongwrong")).single().ok)
+        assertFalse(usage(QuotaPolicy.BOLTODDS, "wrongwrongwrong").refused)
+    }
+
+    @Test fun boltOddsOtherAnswersAreNamedNotMistakenForAnOutage() = runTest {
+        handler = { MockResponse().setResponseCode(429) }
+        assertTrue(probe.check(ApiProvider.BOLTODDS, listOf("boltboltbolt1")).single().message.contains("12 a minute"))
+        handler = { MockResponse().setResponseCode(403).setBody("""{"detail":"Plan does not include this"}""") }
+        val r = probe.check(ApiProvider.BOLTODDS, listOf("boltboltbolt1")).single()
+        assertFalse(r.ok); assertTrue(r.message, r.message.contains("Plan does not include this"))
     }
 }
