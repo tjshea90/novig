@@ -6600,3 +6600,18 @@ For the auto bet slider, under it put the ratings filter (1 to 5 stars) that alr
 ```
 Make the live betting mode have no maximum EV filter. It can show bets at any EV 
 ```
+
+## 2026-10-12T01:45:07Z
+```
+The problem I'm having right now with the live betting is nba odds shift so fast that I can't place bets at the listed odds.
+
+1) the odds probably have to match timing on novig and pinnacle almost at the same time because the odds move so fast. If they are seconds apart, the EV calculation may be based on stale odds.
+2) the odds move so fast that I can't get fills.
+
+
+If there is a way to do rapid auto bets faster than I can press bet, make it. But give me settings for it such as minimum live EV, maximum bet stake, etc. 
+
+See if it is plausible to positive EV bet rapid sports such as basketball. Figure out the logistics. Maybe auto bet or even auto bid in an odds range instead of a specific odds, as long as the range is still positive EV. For example, if the auto bet can get filled at odds that are still positive EV, bet it. 
+
+If it is not plausible, find other opportunities for live betting 
+```
