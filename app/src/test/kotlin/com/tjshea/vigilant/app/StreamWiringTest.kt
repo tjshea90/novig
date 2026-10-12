@@ -52,3 +52,26 @@ class StreamWiringTest {
         assertFalse("STOP ALL / pause stops it", c.streamEngine.status.value.running)
     }
 }
+
+/** The soft-book live feed's settings (Tj, 2026-10-12): paper only until real orders are allowed, no Pinnodds key needed, BoltOdds kept awake by Live games only mode. */
+class BoltLiveSettingsTest {
+    @Test
+    fun `the soft-book average needs no Pinnodds key and starts paper only`() {
+        val s = ScanSettings(pinnWebsite = com.tjshea.vigilant.data.scanner.PinnWebsiteSettings(feed = com.tjshea.vigilant.data.scanner.PinnFeedChoice.BOLT))
+        assertTrue(s.pinnWebsite.bolt)
+        assertTrue(s.pinnWebsite.noPinnKey)
+        assertFalse(s.pinnWebsite.website)
+        assertFalse("real orders are off until Tj allows them", s.gates.boltLiveReal)
+        assertEquals(4, s.gates.boltLiveMinCompanies)
+        assertFalse(ScanSettings().pinnWebsite.noPinnKey)
+    }
+
+    @Test
+    fun `Live games only mode keeps BoltOdds on when it is the live fair`() {
+        val bolt = ScanSettings(
+            gates = ApiGates(useBoltOdds = true), pinnWebsite = com.tjshea.vigilant.data.scanner.PinnWebsiteSettings(feed = com.tjshea.vigilant.data.scanner.PinnFeedChoice.BOLT),
+        )
+        assertTrue(LiveOnly.enter(bolt).gates.useBoltOdds)
+        assertFalse(LiveOnly.enter(bolt.copy(pinnWebsite = com.tjshea.vigilant.data.scanner.PinnWebsiteSettings())).gates.useBoltOdds)
+    }
+}

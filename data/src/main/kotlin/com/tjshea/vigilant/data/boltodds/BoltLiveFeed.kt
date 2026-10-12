@@ -24,7 +24,7 @@ import kotlin.math.abs
 
 /**
  * The live engine's third source of fair prices (Tj, 2026-10-12): the soft-book consensus of BoltOdds' live games ([BoltLiveConsensus]), spoken in the same frames the Pinnodds socket sends, so the whole live lane
- * (the matcher, the 5-second rule, the taker fee, the live trader and live bids, every guard) runs on it unchanged. It is PUSH: a board change for a game ([BoltBoard.onGameChanged]) wakes the worker, which waits
+ * (the matcher, the 5-second rule, the taker fee, the live trader and live bids, every guard) runs on it unchanged. It is PUSH: a board change for a game ([BoltBoard.addGameListener]) wakes the worker, which waits
  * [DEBOUNCE_MS] (a burst of books repricing together is one update) and re-reads just that game; nothing polls for a price and nothing scans. A once-a-second look only keeps lines honest: a line whose companies
  * stopped pushing, or disagree, is CLOSED in the next frame, and a line that still holds is re-stated so the engine's "heard from this game" time is the time the quorum was last seen.
  *
