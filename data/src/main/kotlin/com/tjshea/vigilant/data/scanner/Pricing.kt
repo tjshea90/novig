@@ -276,7 +276,7 @@ object Pricing {
             val ref = refById[key.refEventId] ?: return@getOrPut null
             // Low-usage bids: a book's quote past the freshness limit is left out BEFORE the devig, so a stale third book can't spoil a line two fresh sharp books price,
             // and a book with no stamp is not known to be current (RESEARCH.md §92). Everywhere else the oldest quote only dates the whole line ([Opportunity.fairIsOld]).
-            val prices = bookPrices(ref, key).let { all ->
+            val prices = bookPrices(ref, key, settings.gates.freshestWins).let { all ->
                 if (settings.lowUsageScan) all.filter { b -> b.lastUpdateMs != null && Freshness.fresh(b.lastUpdateMs, now, ref.commenceMs) } else all
             }
             FairValue.compute(prices, fairSettings)
@@ -361,15 +361,29 @@ object Pricing {
         )
     }
 
-    /** Every book's odds for one line, in [LineKey.sides] order; books missing a side are dropped. */
-    fun bookPrices(ref: RefEvent, key: LineKey): List<BookPrices> =
-        ref.markets
+    /** A feed's quote replaces an earlier feed's for the same book only when its time is newer by more than this (the feeds' clocks differ by seconds; below it the feed order stands). */
+    const val FRESHER_BY_MS = 20_000L
+
+    /**
+     * Every book's odds for one line, in [LineKey.sides] order; books missing a side are dropped. Where more than one feed sent the book, the first (the feeds' order) stands unless [freshest] and a
+     * later feed's quote is newer by more than [FRESHER_BY_MS]; a quote with no time never replaces one.
+     */
+    fun bookPrices(ref: RefEvent, key: LineKey, freshest: Boolean = true): List<BookPrices> {
+        val all = ref.markets
             .filter { key.matches(it) }
             .mapNotNull { m ->
                 val odds = key.sides.map { side -> m.quotes.firstOrNull { it.side == side }?.decimalOdds ?: return@mapNotNull null }
                 BookPrices(m.bookKey, m.bookTitle, odds, m.lastUpdateMs)
             }
-            .distinctBy { it.bookKey }
+        if (!freshest) return all.distinctBy { it.bookKey }
+        val chosen = LinkedHashMap<String, BookPrices>()
+        for (b in all) {
+            val have = chosen[b.bookKey]
+            val newer = have != null && b.lastUpdateMs != null && have.lastUpdateMs != null && b.lastUpdateMs - have.lastUpdateMs > FRESHER_BY_MS
+            if (have == null || newer) chosen[b.bookKey] = b
+        }
+        return chosen.values.toList()
+    }
 
     fun probabilityFor(target: OutcomeTarget, key: LineKey, fair: FairLine): Double? = when (target) {
         is OutcomeTarget.Is -> key.sides.indexOf(target.side).takeIf { it >= 0 }?.let { fair.probabilities[it] }

@@ -1334,6 +1334,11 @@ data class ApiGates(
      * A limit of 0 is no limit on that; a bet by hand is warned, never blocked.
      */
     val repeatGuard: Boolean = true,
+    /**
+     * Freshest quote wins (Tj, 2026-10-12): when two feeds that are on both send the same book's price for one line, the one whose book-stamped time is newer by more than
+     * [com.tjshea.vigilant.data.scanner.Pricing.FRESHER_BY_MS] is used; otherwise (or with no time) the feed order decides, as before. Off = the feed order alone.
+     */
+    val freshestWins: Boolean = true,
     val repeatMaxBets: Int = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_BETS,
     val repeatMaxDollars: Double = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_DOLLARS,
     val repeatHedge: Boolean = true,
