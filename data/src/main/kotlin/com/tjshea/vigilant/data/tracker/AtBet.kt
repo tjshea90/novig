@@ -167,17 +167,17 @@ object AtBets {
         // What the bet costs, as its EV is judged: Novig's taker fee on top once the game is live (a sportsbook's price is all-in).
         val cost = price(american).let { p ->
             val novig = row.book.isBlank() || CnoBooks.codeFor(row.book) == CnoBooks.NOVIG
-            if (live && novig && p < 1.0) p + com.tjshea.vigilant.engine.Fees.takerFee(p, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true) else p
+            if (live && novig && p < 1.0) p + com.tjshea.vigilant.engine.Fees.takerFee(p, com.tjshea.vigilant.engine.MarketFee.gameFor(row.league), eventLive = true) else p
         }
         val v = veto ?: SharpVeto.judge(view, row.league, row.market, row.bet, american, live, s.sharpVetoMinEv)
         val usable = view?.prices.orEmpty().filter { CnoBooks.usableForFair(it.code) }
         val books = view?.prices.orEmpty().map { p ->
             val fair = if (p.twoSided) CnoBooks.fairFor(p.odds!!, p.otherOdds!!, p.code) else null
-            AtBetBook(CnoBooks.name(p.code), p.odds, p.otherOdds, fair, fair?.let { CnoBooks.evAt(it, american, live) })
+            AtBetBook(CnoBooks.name(p.code), p.odds, p.otherOdds, fair, fair?.let { CnoBooks.evAt(it, american, live, row.league) })
         }
         val dissent = usable.filter { it.twoSided }.mapNotNull { p ->
             val fair = CnoBooks.fairFor(p.odds!!, p.otherOdds!!, p.code) ?: return@mapNotNull null
-            p.name.takeIf { CnoBooks.evAt(fair, american, live) <= 0.0 }
+            p.name.takeIf { CnoBooks.evAt(fair, american, live, row.league) <= 0.0 }
         }
         val fair = CnoChecks.fairProbability(row)
         val (preset, rules) = preset(s)

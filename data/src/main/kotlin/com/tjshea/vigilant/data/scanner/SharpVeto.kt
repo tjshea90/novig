@@ -144,13 +144,13 @@ object SharpVeto {
      * [view]: the bet's book page; [novigOdds]: Novig's price now (American); [live]: Novig's taker fee applies; [minEv]: the bar the sharpest book's own
      * edge must reach ([ScanSettings.sharpVetoMinEv]; 0 = any +EV); [judged]: the book being bet.
      */
-    fun judge(view: CnoBooksView?, kind: BetKind, sport: Sport, novigOdds: Int, live: Boolean, minEv: Double, judged: String = CnoBooks.NOVIG): Result {
+    fun judge(view: CnoBooksView?, kind: BetKind, sport: Sport, novigOdds: Int, live: Boolean, minEv: Double, judged: String = CnoBooks.NOVIG, league: String? = null): Result {
         val bar = minEv.coerceAtLeast(0.0)
         val prices = view?.prices.orEmpty().filter { it.twoSided && it.code != judged }
         for (code in ranking(kind, sport)) {
             val p = prices.firstOrNull { CnoBooks.company(it.code) == code } ?: continue
             val fair = CnoBooks.fairFor(p.odds!!, p.otherOdds!!, p.code) ?: continue
-            val ev = CnoBooks.evAt(fair, novigOdds, live)
+            val ev = CnoBooks.evAt(fair, novigOdds, live, league)
             return Result(if (passes(ev, bar)) Verdict.PASSED else Verdict.VETOED, kind, code, fair, ev, bar)
         }
         return Result(Verdict.NO_SHARP, kind, minEv = bar)
@@ -158,7 +158,7 @@ object SharpVeto {
 
     /** [judge] for a bet as CNO names it ([league], [market], [bet]). */
     fun judge(view: CnoBooksView?, league: String, market: String, bet: String, novigOdds: Int, live: Boolean, minEv: Double, judged: String = CnoBooks.NOVIG): Result =
-        judge(view, BetKind.of(market, bet), sportOf(league), novigOdds, live, minEv, judged)
+        judge(view, BetKind.of(market, bet), sportOf(league), novigOdds, live, minEv, judged, league)
 
     /** A sharp book's own edge [ev] clears the bar [minEv]: above zero always, and at least the bar. */
     fun passes(ev: Double, minEv: Double): Boolean = ev > 0.0 && ev >= minEv - 1e-12

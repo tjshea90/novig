@@ -360,7 +360,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
     suspend fun logAlert(a: com.tjshea.vigilant.data.alerts.EvAlert, stake: Double = DEFAULT_STAKE, atBet: AtBet? = AtBets.alert(a, clock())): TrackedBet {
         val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(a.american)
         val fee = if (a.live && price > 0.0 && price < 1.0) {
-            com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true)
+            com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.gameFor(a.league, clock()), eventLive = true)
         } else {
             0.0
         }
@@ -435,7 +435,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             if (b.orderId != null) return@edit b
             val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(american)
             val live = b.cost > b.price + 1e-9
-            val fee = if (live && price < 1.0) com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true) else 0.0
+            val fee = if (live && price < 1.0) com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.gameFor(b.league, b.createdAtMs), eventLive = true) else 0.0
             val cost = price + fee
             b.copy(
                 price = price, cost = cost, american = american,
@@ -918,7 +918,7 @@ class BetTracker(file: File, private val clock: () -> Long = System::currentTime
             val decimal = com.tjshea.vigilant.engine.Odds.americanToDecimal(row.odds)
             val price = 1.0 / decimal
             val fee = if (live && price > 0.0 && price < 1.0) {
-                com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.GAME, eventLive = true)
+                com.tjshea.vigilant.engine.Fees.takerFee(price, com.tjshea.vigilant.engine.MarketFee.gameFor(row.league, now), eventLive = true)
             } else {
                 0.0
             }

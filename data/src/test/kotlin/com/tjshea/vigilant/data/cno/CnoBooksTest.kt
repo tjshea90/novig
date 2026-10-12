@@ -102,6 +102,21 @@ class CnoBooksTest {
     }
 
     @Test
+    fun `live MLB NHL and NCAAF bets pay the 0 06 taker fee since 2026-10-08 and every other league 0 03`() {
+        val flat = CnoBooks.evAt(0.5, 110, live = true)
+        val nba = CnoBooks.evAt(0.5, 110, live = true, league = "NBA")
+        assertEquals(flat, nba, 1e-12)
+        val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(110)
+        for (league in listOf("MLB", "NHL", "NCAAF")) {
+            val ev = CnoBooks.evAt(0.5, 110, live = true, league = league)
+            assertEquals(0.5 / (price + 0.06 * price * (1 - price)) - 1.0, ev, 1e-12)
+            assertTrue(ev < flat)
+        }
+        // Pregame is free in every league.
+        assertEquals(CnoBooks.evAt(0.5, 110, live = false), CnoBooks.evAt(0.5, 110, live = false, league = "MLB"), 0.0)
+    }
+
+    @Test
     fun `a row from another book is judged at that book's price, with Novig counted as one more book`() {
         // A Shared View link can list other books too. ProphetX's Under at -107 is the price judged;
         // Novig (+120 / -127) now counts toward the fair value instead.

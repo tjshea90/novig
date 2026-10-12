@@ -10,8 +10,8 @@ from this file alone.
 open to select members" banner, but every doc page and the OpenAPI spec could
 be fetched **anonymously** on 2026-09-25. To re-read a page, start from
 `https://docs.novig.com/llms.txt` (index of every page, each as `.md`) and
-the spec at `https://docs.novig.com/api-reference/spec-files/openapi-v3-target.json`
-(OpenAPI 3.1, ~500KB). Signing test vectors:
+the spec at `https://docs.novig.com/api-reference/spec-files/openapi-v3.json`
+(OpenAPI 3.1, ~740KB; it was `openapi-v3-target.json` until 2026-10-12, now a 404). Signing test vectors:
 `https://docs.novig.com/api-reference/spec-files/signing-vectors.json`.
 This repo is **public**, so the docs are summarized here, not copied in. Refetch
 them when you need exact field names.
@@ -47,7 +47,7 @@ passing Novig's location checks (no VPN or proxy).
 | Env        | REST + websocket host        | Money | Keys created at |
 | ---------- | ---------------------------- | ----- | --------------- |
 | Production | `https://api.novig.com` (ws: `wss://api.novig.com/v3/ws`) | Real | novig.com → Profile → Settings → Novig API |
-| QA         | `https://api.qa.novig.com` (ws: `wss://api.qa.novig.com/v3/ws`) | Test | `https://novig-mobile-app--qa.expo.app` → Profile → Settings → Novig API |
+| ~~QA~~ → **Paper** (2026-10-12) | `https://api.paper.novig.com` (ws: `wss://api.paper.novig.com/v3/ws`) | Play money ($10,000 a new account) | `https://paper.novig.com` → Profile → Settings → Novig API; **no location check**, same API (docs.novig.com/api/environments). The QA host and its fixed test values are gone from the docs. |
 
 - Keys are per-environment. A QA key on prod gets `api key not found`.
 - QA signup uses Google, then fixed test values for the identity check. The docs
@@ -742,3 +742,12 @@ What is new here is the account/execution half of the API, which Vigilant has ne
 
 ## 25. Live books and the `stream` bucket (2026-10-11; Tj: "connects for a few seconds, matches games, then says novig live book not subscribed yet")
 Docs re-read against the code (§6, §18, §21): the protocol Vigilant speaks is the documented one (`subscribe {markets: {<id>: "book"}}` after the 32-token upgrade, snapshot then deltas, `snapshot` on a gap, pong every 15 s). The cause was cost, not protocol: `book` is 16 tokens a market against a 512 bucket refilling 4 a second, so 39 live markets (624, capped at 512) need a FULL bucket and a scan's bulk subscribe or an earlier subscribe leaves it empty for ~2 minutes. v0.89.29: live markets are subscribed as far as the bucket pays right now (moneylines first), the rest as tokens return (one market per 4 s at worst); a stopped lane's markets stay subscribed 3 minutes (`NovigStream.LINGER_MS`) so a restart pays nothing; `bookGap` now says how many are held and the allowance. Not verified against a live key: whether `bbo` (8 a market, frame shape undocumented) would be enough for the lane and halve the cost.
+
+## 24. Docs re-read, 2026-10-12 (Tj: "look at novig docs to see if anything has changed or updated that needs to be updated in the app"; full notes: `research/novig_docs_recheck_2026-10-12.md`, raw pages in `research/novig_docs_2026-10-12/`)
+`llms.txt` lists 135 `.md` pages (138 on 2026-10-08); the API Changelog is still empty. What changed and what the app did:
+- **Live taker fee 0.06 on NCAAF, MLB and NHL from Thursday 2026-10-08** (fees page and Maker Credit Program: the maker credit stays 50% of the taker fee, charged WHEN_LIVE; every other game market 0.03; pregame free). The scan, the live lane and the bid desk read each market's own `fee` and were right; the fallbacks that only know a league (CNO picks, the Tracker's hand-placed bets, the sharp checks, `AtBet`, `ParlayCompare`, `cnoStake`) priced a live bet at 0.03. **v0.90.0: `MarketFee.gameFor(league, atMs)`** (0.06 for those three leagues at or after 2026-10-08 04:00Z = Eastern midnight, else 0.03) at every one of them.
+- **`stream` throttle refill is now 32 a second** (capacity 512 unchanged; §11 said 4) and the **watch cap 8,192** (§6 said 2,048). The app takes both from `GET /v3/limits` before it opens the socket (`ensureLimits` → `NovigStream.tune`), so a key that has them uses them; the constants (`REFILL_PER_SEC` 4, `MAX_WATCHED` 2,048 as the margin base) are only the defaults when `/v3/limits` cannot be read (451/423/outage), and were left alone. Open follow-up: the Scanner still asks the stream for at most `NovigStream.MAX_MARKETS` (2,000) books, so a key with the larger cap is under-used (TASKS.md TBO6).
+- **`bbo` is specified** in the OpenAPI schemas (`BboSnapshot`, `Batch_BboDelta`, `BboLevel`): each outcome's best resting BID `{price, qty}` (absent when none), 8 tokens a market against `book`'s 16, `lifecycle` included. A taker price is `1 − best bid of the other outcome`, so `bbo` carries what a price check needs. Not adopted yet (TBO6): the stores keep ladders and a live-feed change cannot be tested here.
+- Paper replaces QA (§1). The spec file is `openapi-v3.json` (the `-target` name is a 404). History routes `/v3/history/events|markets|positions` and `settledAfter` exist (settled records, no age limit).
+- Unchanged and re-checked against the spec: every `/v3/...` path the app calls, every catalog/order/fill/position/limits field it reads, verbs, channel costs, nonce rules, heartbeat, FMV settlement, event/order lifecycles, the other throttle buckets, error codes, signing, fee formula, edge limits (2,000 requests a minute per IP, 8 KiB body).
+

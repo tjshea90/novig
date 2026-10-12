@@ -139,7 +139,7 @@ object CnoChecks {
         // Only Novig charges the taker once a game is live; a sportsbook's price is all-in (Vigilant MGM's BetMGM rows).
         if (!live || !chargesNovigFee(row)) return row.ev
         val fair = fairProbability(row) ?: return row.ev
-        return CnoBooks.evAt(fair, row.odds, live = true)
+        return CnoBooks.evAt(fair, row.odds, live = true, league = row.league)
     }
 
     /** A row at Novig (or of unknown book, as before): its live fills pay Novig's taker fee. */

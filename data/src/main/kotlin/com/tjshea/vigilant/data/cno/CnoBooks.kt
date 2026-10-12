@@ -214,14 +214,14 @@ object CnoBooks {
 
     /** Checks [row] (its book's price, and Novig's taker fee if the game is [live]) against [view]. */
     fun check(view: CnoBooksView, row: CnoRow, live: Boolean = false, preferListOdds: Boolean = false): Check =
-        check(view, row.odds, live, codeFor(row.book) ?: NOVIG, preferListOdds)
+        check(view, row.odds, live, codeFor(row.book) ?: NOVIG, preferListOdds, row.league)
 
     /**
      * [listOdds] is the price in CNO's +EV list at book [judged]; [live] adds Novig's taker fee
      * (pregame is free; other books' fees aren't modeled). The game page's price for the judged
      * book wins over the list's, unless [preferListOdds] (the list is the newer read).
      */
-    fun check(view: CnoBooksView, listOdds: Int, live: Boolean = false, judged: String = NOVIG, preferListOdds: Boolean = false): Check {
+    fun check(view: CnoBooksView, listOdds: Int, live: Boolean = false, judged: String = NOVIG, preferListOdds: Boolean = false, league: String? = null): Check {
         val usable = view.prices.filter { usableForFair(it.code, judged) }
         val pairs = usable.filter { it.twoSided }
         // One vote a company: Hard Rock's four state sites, Sporttrade's five or BetMGM's two are one desk's line, averaged into one (Tj, 2026-10-02).
@@ -231,8 +231,8 @@ object CnoBooks {
         val fair = consensus(fairs)
         val novig = (if (preferListOdds) null else view.prices.firstOrNull { it.code == judged }?.odds) ?: listOdds
         val fee = live && judged == NOVIG
-        val ev = fair?.let { evAt(it, novig, fee) }
-        val agreeing = fairs.count { evAt(it, novig, fee) > 0 }
+        val ev = fair?.let { evAt(it, novig, fee, league) }
+        val agreeing = fairs.count { evAt(it, novig, fee, league) > 0 }
         val verdict = when {
             fairs.isEmpty() -> Verdict.NO_DATA
             fairs.size < MIN_TWO_SIDED -> Verdict.THIN
@@ -240,7 +240,7 @@ object CnoBooks {
             agreeing >= MIN_AGREEING -> Verdict.CONFIRMED
             else -> Verdict.SPLIT
         }
-        val sharp = pairs.filter { company(it.code) in SHARP_CODES }.mapNotNull { p -> fairFor(p.odds!!, p.otherOdds!!, p.code) }.map { evAt(it, novig, fee) }
+        val sharp = pairs.filter { company(it.code) in SHARP_CODES }.mapNotNull { p -> fairFor(p.odds!!, p.otherOdds!!, p.code) }.map { evAt(it, novig, fee, league) }
         return Check(
             fairs.size, oneSided, fair, agreeing, novig, ev, verdict,
             spread = com.tjshea.vigilant.data.scanner.BetRating.spreadOf(fairs),
@@ -268,10 +268,13 @@ object CnoBooks {
         return if (sum <= 1.0) raw[0] / sum else Devig.worstCase(raw)[0]
     }
 
-    /** EV of a Novig price against a fair probability, net of the taker fee when [live]. */
-    fun evAt(fairProbability: Double, odds: Int, live: Boolean): Double {
+    /**
+     * EV of a Novig price against a fair probability, net of the taker fee when [live]. [league] (Novig's name) picks the in-play schedule: NCAAF, MLB and NHL
+     * pay 0.06 since 2026-10-08, everything else 0.03 ([MarketFee.gameFor]); unknown = 0.03.
+     */
+    fun evAt(fairProbability: Double, odds: Int, live: Boolean, league: String? = null): Double {
         val price = 1.0 / Odds.americanToDecimal(odds)
-        val fee = if (live) Fees.takerFee(price, MarketFee.GAME, eventLive = true) else 0.0
+        val fee = if (live) Fees.takerFee(price, MarketFee.gameFor(league), eventLive = true) else 0.0
         return fairProbability / (price + fee) - 1.0
     }
 

@@ -22,6 +22,23 @@ data class MarketFee(
          */
         val GAME = MarketFee(coefficient = 0.03, makerCredit = 0.5, charged = FeeCharge.WHEN_LIVE)
 
+        /** The in-play schedule NCAAF, MLB and NHL game markets moved to on Thursday 2026-10-08 (docs.novig.com/api/concepts/fees, NOVIG_API.md §24). */
+        val GAME_LIVE_RAISED = MarketFee(coefficient = 0.06, makerCredit = 0.5, charged = FeeCharge.WHEN_LIVE)
+
+        /** The leagues on [GAME_LIVE_RAISED]. */
+        val RAISED_LEAGUES = setOf("NCAAF", "MLB", "NHL")
+
+        /** Eastern midnight, Thursday 2026-10-08 (04:00Z): from here a live fill in [RAISED_LEAGUES] pays the raised coefficient. */
+        const val RAISED_FROM_MS = 1_791_432_000_000L
+
+        /**
+         * The game schedule for a bet whose Novig market was not read ([league] is Novig's league name, [atMs] when the bet was or would be
+         * placed). Everything priced from a Novig market reads that market's own `fee` instead ("Read `fee` from the market. Never work it out
+         * from this table"); this is for CNO's picks, the Tracker's hand-placed bets and the sharp checks, which have the league and not the market.
+         */
+        fun gameFor(league: String?, atMs: Long = System.currentTimeMillis()): MarketFee =
+            if (atMs >= RAISED_FROM_MS && league != null && league.uppercase() in RAISED_LEAGUES) GAME_LIVE_RAISED else GAME
+
         /** Novig's documented NFL/MLB/NCAAF futures schedule: charged pregame too. */
         val FUTURES = MarketFee(coefficient = 0.06, makerCredit = 0.7, charged = FeeCharge.ALWAYS)
     }

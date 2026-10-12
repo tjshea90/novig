@@ -55,7 +55,7 @@ object ParlayCompare {
 
     /** EV of [pick] at Novig's price now against [fair]. */
     fun evAt(fair: Double, pick: ParlayPick, now: Long): Double =
-        CnoBooks.evAt(fair, pick.row.odds, live = pick.row.startsAtMs?.let { it <= now } == true)
+        CnoBooks.evAt(fair, pick.row.odds, live = pick.row.startsAtMs?.let { it <= now } == true, league = pick.row.league)
 
     /** Two listings start close enough to be one game (PlacedIndex's rule: half a day's slack, two hours in baseball); unknown = yes. */
     private fun sameStart(a: Long?, b: Long?, league: String): Boolean {
