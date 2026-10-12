@@ -57,6 +57,13 @@ class AutoBetStarsTest {
         both({ it.copy(autoBetBooks = 6) }, two = 6, agree = 5)
         both({ it.copy(autoBetAllAgree = true) }, two = 6, agree = 5)
         both({ it.copy(autoBetFavouriteExtraEv = 0.10) }, odds = -150)
+        // The Over-prop bar is a selection filter too: it binds with no minimum and is ignored while a rating decides.
+        val overs = loose.copy(vigGuards = loose.vigGuards.copy(autoBetOverPropExtraEv = 0.05))
+        val o0 = AutoBet.rules(overs)
+        val o1 = AutoBet.rules(overs.copy(vigGuards = overs.vigGuards.copy(autoBetMinStars = 2.0)))
+        assertNotNull(AutoBet.judgeVigilant(o0, 0.04, 110, BetKind.PROP, 5, 5, overProp = true))
+        assertNull(AutoBet.judgeVigilant(o1, 0.04, 110, BetKind.PROP, 5, 5, overProp = true))
+        assertNull(AutoBet.judge(o1, 0.04, check(), 110, BetKind.PROP, overProp = true))
     }
 
     @Test

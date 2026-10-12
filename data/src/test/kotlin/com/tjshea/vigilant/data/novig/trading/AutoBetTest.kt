@@ -126,6 +126,33 @@ class AutoBetTest {
         assertTrue(judge(r, 0.04, check(ev = null))!!.contains("not +EV"))
     }
 
+    /** Tj's 2026-10-11 export: 456 settled player-prop Overs won 39.7% against a 49.2% fair chance (z = -3.4 by game); Unders 47.1% against 50.1%. */
+    @Test
+    fun `a player-prop Over needs the extra edge, an Under or anything else does not, and the words say why`() {
+        val base = ScanSettings(autoBetMinEv = 0.03, autoBetFavouriteExtraEv = 0.0, autoBetBooks = 3, autoBetTwoSided = 2)
+        assertEquals("on by default: three points", 0.03, base.autoBetOverPropExtraEv, 0.0)
+        val r = AutoBet.rules(base)
+        assertEquals(0.03, r.overPropExtraEv, 0.0)
+        assertEquals(0.03, AutoBet.evBar(r, 110), 1e-12)
+        assertEquals(0.06, AutoBet.evBar(r, 110, overProp = true), 1e-12)
+        // CNO's lane: +4.5% passes as an Under, fails as an Over; +6% passes both.
+        assertNull(AutoBet.judge(r, 0.045, check(), 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, overProp = false))
+        assertTrue(AutoBet.judge(r, 0.045, check(), 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, overProp = true)!!.contains("player-prop Over"))
+        assertNull(AutoBet.judge(r, 0.06, check(), 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, overProp = true))
+        // Vigilant's lane and tennis' judge the same bar.
+        assertNull(AutoBet.judgeVigilant(r, 0.045, 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, 4, 3, overProp = false))
+        assertNotNull(AutoBet.judgeVigilant(r, 0.045, 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, 4, 3, overProp = true))
+        // Off (0): the same bar for every side.
+        val off = AutoBet.rules(base.copy(vigGuards = base.vigGuards.copy(autoBetOverPropExtraEv = 0.0)))
+        assertNull(AutoBet.judge(off, 0.045, check(), 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, overProp = true))
+        // Which bets are Overs: a player prop's Over only.
+        assertTrue(AutoBet.isOverProp("Player Receiving Yards", "Puka Nacua Over 92.5"))
+        assertFalse(AutoBet.isOverProp("Player Receiving Yards", "Puka Nacua Under 92.5"))
+        assertFalse("a game total's Over is not a player prop", AutoBet.isOverProp("Total", "Over 47.5"))
+        assertFalse("a team total's Over is not a player prop", AutoBet.isOverProp("Team Total", "Detroit Lions Over 24.5"))
+        assertFalse(AutoBet.isOverProp("Moneyline", "Detroit Lions"))
+    }
+
     /** Tj, 2026-10-01: "require that every sports book scanned agrees the bet is positive EV (for example, 5 of 5 books agree positive EV)". */
     @Test
     fun `with every book must agree on, a bet passes only when all the books that price both sides say +EV, and not otherwise`() {
