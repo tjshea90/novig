@@ -10,7 +10,11 @@ import java.util.concurrent.ConcurrentHashMap
  * Only outcomes [BoltMarkets] can classify are kept (the rest are counted in [unmapped], by sport and name, for Diagnostics and Test key), so the board stays as small as what the scan can use.
  * Thread-safe: two sockets feed it, a scan reads it.
  */
-class BoltBoard(private val clock: () -> Long = System::currentTimeMillis) {
+class BoltBoard(
+    private val clock: () -> Long = System::currentTimeMillis,
+    /** Which kinds of line this board keeps: the lines socket keeps every kind but player props, the props socket only those (their games share names, so each has a board of its own). */
+    private val keeps: (com.tjshea.vigilant.data.reference.LineKind) -> Boolean = { true },
+) {
     private val lock = Any()
     private val games = HashMap<BoltGameKey, BoltBookGame>()
 
@@ -64,7 +68,8 @@ class BoltBoard(private val clock: () -> Long = System::currentTimeMillis) {
         heard[heardKey(book, sport)] = maxOf(heard[heardKey(book, sport)] ?: 0L, at)
         val kept = ArrayList<BoltOutcome>(d.outcomes.size)
         for (o in d.outcomes) {
-            if (league != null && BoltMarkets.classify(league, o) != null) kept += o else noteUnmapped(sport, o.name)
+            val ref = league?.let { BoltMarkets.classify(it, o) }
+            if (ref != null) { if (keeps(ref.kind)) kept += o } else noteUnmapped(sport, o.name)
         }
         val key = BoltGameKey(book, game)
         synchronized(lock) {
