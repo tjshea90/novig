@@ -135,6 +135,7 @@ object SettingsIndex {
         Entry("Best-bid feed (bbo)", SettingsPage.BETTING, "Novig's live feed on its best-bid channel for screening, the full book where depth matters; off = the full book everywhere, as before", "novig bbo best bid live feed websocket stream book fallback toggle", novig),
         Entry("Keep the Novig live feed open", SettingsPage.BETTING, "Keeps the connection open between scans and reconnects it by itself", "novig live feed websocket stream connection keep open reconnect", novig),
         Entry("Instant order results", SettingsPage.BETTING, "Novig pushes an order's end over the live feed, so a bet's result is not asked for every half second; off = read by request", "novig order results push private stream orders fill reject websocket instant", novig),
+        Entry("Orders over the socket", SettingsPage.BETTING, "Sends an immediate-or-cancel bet over a live connection to Novig instead of a web request; never replays a bet; off = web request, as before", "novig orders place socket websocket trading key ioc instant fast", novig),
         Entry("Bankroll", SettingsPage.BETTING, "The money you set aside for betting", "bankroll money"),
         Entry("Kelly fraction for suggested stakes", SettingsPage.BETTING, "How big suggested stakes are for a given edge", "kelly stake size"),
         Entry("Most for one bet you place", SettingsPage.BETTING, "The most one bet may stake (your own bets and auto-bets)", "limit max stake per bet", novig),
