@@ -1,0 +1,342 @@
+rows 1422  non-outlier 1331  bets 1031  bid fills 300
+ALL (non-outlier)                          n=1162 stake= 1606.6 ROI=  -3.6% (EV  3.3%) profit= -58.33 exp= 55.40 z= -2.2 | CLV  1.34% n=1135 t=  6.6 beat= 69% | indep  2.21% n=434
+BETS (taker)                               n=911  stake= 1219.9 ROI=  -5.7% (EV  3.2%) profit= -69.83 exp= 41.33 z= -2.5 | CLV  1.14% n=886  t=  4.6 beat= 67% | indep  2.11% n=336
+BID FILLS                                  n=251  stake=  386.7 ROI=   3.0% (EV  3.5%) profit=  11.50 exp= 14.07 z= -0.1 | CLV  2.05% n=249  t=  6.6 beat= 73% | indep  2.55% n=98
+
+================ BETS ================
+
+### kind
+Player props                               n=658  stake=  928.1 ROI= -11.5% (EV  3.4%) profit=-106.38 exp= 32.67 z= -3.4 | CLV  1.45% n=643  t=  5.7 beat= 72% | indep  2.18% n=268
+Game totals                                n=103  stake=  114.3 ROI=  10.6% (EV  2.9%) profit=  12.12 exp=  3.46 z=  0.7 | CLV  0.24% n=94   t=  0.3 beat= 51% | indep  2.48% n=26
+Spreads                                    n=96   stake=  115.9 ROI=  17.1% (EV  2.6%) profit=  19.81 exp=  3.36 z=  1.2 | CLV -0.74% n=92   t= -0.7 beat= 54% | indep  2.36% n=23
+Team totals                                n=28   stake=   35.9 ROI= -11.0% (EV  3.1%) profit=  -3.96 exp=  1.20 z= -0.7 | CLV  2.88% n=26   t=  2.8 beat= 73% | indep  0.78% n=8
+1st half / inning / set lines              n=13   stake=   12.7 ROI=  22.8% (EV  2.8%) profit=   2.90 exp=  0.36 z=  0.7 | CLV  1.72% n=15   t=  1.2 beat= 60% | indep  4.10% n=4
+Moneylines                                 n=12   stake=   12.0 ROI=  41.0% (EV  2.2%) profit=   4.91 exp=  0.26 z=  1.4 | CLV -1.97% n=8    t= -0.7 beat= 38% | indep -2.10% n=7
+Other                                      n=1    stake=    1.0 ROI=  75.2% (EV  2.3%) profit=   0.75 exp=  0.02 z=  0.8 | CLV  4.60% n=8    t=  0.8 beat= 75% | indep   nan% n=0
+
+### sport
+football                                   n=480  stake=  641.9 ROI= -10.4% (EV  3.2%) profit= -66.47 exp= 21.87 z= -2.7 | CLV  1.03% n=474  t=  2.8 beat= 68% | indep  1.89% n=200
+college football                           n=140  stake=  161.8 ROI=  21.2% (EV  2.9%) profit=  34.28 exp=  4.91 z=  1.9 | CLV -0.07% n=129  t= -0.1 beat= 60% | indep  2.85% n=26
+hockey                                     n=130  stake=  215.5 ROI=  -8.1% (EV  3.4%) profit= -17.45 exp=  7.69 z= -1.2 | CLV  2.63% n=128  t=  6.1 beat= 80% | indep  2.60% n=74
+basketball                                 n=87   stake=  106.6 ROI= -13.3% (EV  3.2%) profit= -14.18 exp=  3.69 z= -1.4 | CLV  2.07% n=81   t=  3.5 beat= 68% | indep  2.07% n=23
+baseball                                   n=67   stake=   86.2 ROI= -10.2% (EV  3.3%) profit=  -8.80 exp=  2.91 z= -1.0 | CLV  0.46% n=64   t=  0.7 beat= 61% | indep  1.39% n=13
+other                                      n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV -2.36% n=5    t= -3.8 beat=  0% | indep   nan% n=0
+tennis                                     n=5    stake=    6.0 ROI=  11.9% (EV  3.1%) profit=   0.71 exp=  0.22 z=  0.2 | CLV  0.47% n=3    t=  0.3 beat= 33% | indep   nan% n=0
+
+### league
+NFL                                        n=480  stake=  641.9 ROI= -10.4% (EV  3.2%) profit= -66.47 exp= 21.87 z= -2.7 | CLV  1.03% n=474  t=  2.8 beat= 68% | indep  1.89% n=200
+NCAAF                                      n=140  stake=  161.8 ROI=  21.2% (EV  2.9%) profit=  34.28 exp=  4.91 z=  1.9 | CLV -0.07% n=129  t= -0.1 beat= 60% | indep  2.85% n=26
+NHL                                        n=130  stake=  215.5 ROI=  -8.1% (EV  3.4%) profit= -17.45 exp=  7.69 z= -1.2 | CLV  2.63% n=128  t=  6.1 beat= 80% | indep  2.60% n=74
+MLB                                        n=67   stake=   86.2 ROI= -10.2% (EV  3.3%) profit=  -8.80 exp=  2.91 z= -1.0 | CLV  0.46% n=64   t=  0.7 beat= 61% | indep  1.39% n=13
+WNBA                                       n=76   stake=   88.2 ROI=  -6.6% (EV  3.2%) profit=  -5.80 exp=  2.95 z= -0.8 | CLV  2.06% n=73   t=  3.4 beat= 67% | indep  2.01% n=21
+                                           n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV -2.36% n=5    t= -3.8 beat=  0% | indep   nan% n=0
+NBA                                        n=11   stake=   18.4 ROI= -45.7% (EV  3.6%) profit=  -8.38 exp=  0.73 z= -1.5 | CLV  2.14% n=8    t=  0.8 beat= 75% | indep  2.65% n=2
+
+### side (Over/Under) of props
+Over                                       n=377  stake=  532.2 ROI= -16.6% (EV  3.4%) profit= -88.60 exp= 19.11 z= -3.5 | CLV  1.85% n=368  t=  5.2 beat= 76% | indep  2.21% n=167
+Under                                      n=281  stake=  395.9 ROI=  -4.5% (EV  3.3%) profit= -17.77 exp= 13.56 z= -1.2 | CLV  0.91% n=275  t=  2.5 beat= 67% | indep  2.13% n=101
+(not prop)                                 n=253  stake=  291.8 ROI=  12.5% (EV  2.8%) profit=  36.55 exp=  8.66 z=  1.4 | CLV  0.32% n=243  t=  0.5 beat= 56% | indep  1.86% n=68
+
+### side x sport (props)
+None                                       n=253  stake=  291.8 ROI=  12.5% (EV  2.8%) profit=  36.55 exp=  8.66 z=  1.4 | CLV  0.32% n=243  t=  0.5 beat= 56% | indep  1.86% n=68
+('football', 'Over')                       n=224  stake=  306.7 ROI= -15.8% (EV  3.4%) profit= -48.49 exp= 11.04 z= -2.6 | CLV  1.46% n=218  t=  2.8 beat= 75% | indep  1.91% n=94
+('football', 'Under')                      n=188  stake=  262.7 ROI=  -7.6% (EV  3.3%) profit= -19.97 exp=  8.96 z= -1.4 | CLV  0.66% n=186  t=  1.4 beat= 67% | indep  2.34% n=73
+('hockey', 'Over')                         n=101  stake=  164.3 ROI= -15.1% (EV  3.5%) profit= -24.85 exp=  5.89 z= -1.7 | CLV  2.43% n=98   t=  4.8 beat= 79% | indep  2.57% n=61
+('baseball', 'Under')                      n=33   stake=   44.7 ROI=  -2.4% (EV  3.4%) profit=  -1.06 exp=  1.55 z= -0.3 | CLV  0.82% n=31   t=  0.9 beat= 61% | indep  1.37% n=6
+('basketball', 'Under')                    n=35   stake=   43.6 ROI=   6.6% (EV  3.4%) profit=   2.87 exp=  1.53 z=  0.2 | CLV  1.11% n=33   t=  1.4 beat= 67% | indep -0.06% n=9
+('other', 'Under')                         n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+('baseball', 'Over')                       n=26   stake=   32.8 ROI= -24.0% (EV  3.4%) profit=  -7.89 exp=  1.14 z= -1.2 | CLV  0.39% n=26   t=  0.3 beat= 69% | indep  1.02% n=6
+('basketball', 'Over')                     n=26   stake=   28.4 ROI= -26.0% (EV  3.4%) profit=  -7.38 exp=  1.03 z= -1.3 | CLV  4.30% n=26   t=  4.5 beat= 77% | indep  4.37% n=6
+('hockey', 'Under')                        n=25   stake=   45.0 ROI=   0.9% (EV  3.2%) profit=   0.39 exp=  1.52 z= -0.1 | CLV  2.66% n=25   t=  3.3 beat= 80% | indep  2.76% n=13
+('other', 'Over')                          n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+
+### EV when placed
+0.02-0.03                                  n=294  stake=  356.1 ROI=  -0.7% (EV  2.5%) profit=  -2.63 exp=  9.04 z= -0.5 | CLV  0.38% n=286  t=  0.9 beat= 67% | indep  1.15% n=121
+0.03-0.04                                  n=273  stake=  382.4 ROI=  -4.0% (EV  3.5%) profit= -15.36 exp= 13.47 z= -1.1 | CLV  1.62% n=262  t=  4.0 beat= 71% | indep  2.24% n=107
+0.04-0.05                                  n=143  stake=  223.8 ROI=  -6.2% (EV  4.4%) profit= -13.92 exp=  9.80 z= -1.1 | CLV  2.20% n=135  t=  3.3 beat= 74% | indep  4.19% n=50
+0.01-0.02                                  n=119  stake=  118.5 ROI=  -0.1% (EV  1.6%) profit=  -0.16 exp=  1.91 z= -0.2 | CLV  0.31% n=117  t=  0.4 beat= 56% | indep  2.55% n=43
+0.05-0.06                                  n=75   stake=  130.0 ROI= -28.1% (EV  5.4%) profit= -36.56 exp=  7.09 z= -2.4 | CLV  1.74% n=66   t=  2.2 beat= 68% | indep  0.92% n=13
+n/a                                        n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV  2.82% n=13   t=  0.8 beat= 54% | indep   nan% n=0
+
+### stars
+n/a                                        n=384  stake=  414.6 ROI=  -7.1% (EV  2.9%) profit= -29.53 exp= 12.36 z= -1.8 | CLV  0.11% n=363  t=  0.2 beat= 56% | indep  1.58% n=119
+4.0                                        n=207  stake=  308.7 ROI=   4.4% (EV  3.0%) profit=  13.69 exp=  9.90 z=  0.2 | CLV  1.84% n=213  t=  4.5 beat= 77% | indep  1.81% n=92
+4.5                                        n=136  stake=  228.4 ROI= -14.7% (EV  3.8%) profit= -33.56 exp=  8.82 z= -2.0 | CLV  2.51% n=144  t=  5.1 beat= 82% | indep  3.69% n=71
+3.0                                        n=81   stake=  124.1 ROI=  -2.3% (EV  3.8%) profit=  -2.79 exp=  5.06 z= -0.5 | CLV  1.11% n=76   t=  1.5 beat= 66% | indep  2.34% n=20
+3.5                                        n=51   stake=   71.7 ROI=   1.5% (EV  3.8%) profit=   1.08 exp=  2.80 z= -0.1 | CLV  1.09% n=47   t=  1.1 beat= 66% | indep -0.41% n=12
+2.5                                        n=35   stake=   50.8 ROI= -24.0% (EV  3.2%) profit= -12.19 exp=  1.65 z= -1.5 | CLV  1.48% n=34   t=  2.2 beat= 74% | indep  1.88% n=18
+1.5                                        n=11   stake=   15.2 ROI=  -1.0% (EV  3.3%) profit=  -0.15 exp=  0.47 z= -0.2 | CLV -3.27% n=2    t= -1.5 beat=  0% | indep   nan% n=0
+5.0                                        n=6    stake=    6.4 ROI=-100.0% (EV  4.1%) profit=  -6.38 exp=  0.28 z= -2.0 | CLV  5.23% n=7    t=  6.4 beat=100% | indep  4.43% n=4
+
+### lead (h)
+48+                                        n=202  stake=  225.7 ROI=  -1.3% (EV  2.9%) profit=  -3.02 exp=  6.75 z= -0.6 | CLV -0.08% n=191  t= -0.1 beat= 54% | indep  1.39% n=88
+2-6                                        n=166  stake=  235.0 ROI=  -4.1% (EV  3.3%) profit=  -9.74 exp=  8.31 z= -0.9 | CLV  2.48% n=170  t=  8.1 beat= 78% | indep  2.86% n=62
+13-24                                      n=110  stake=  144.1 ROI=   4.6% (EV  3.1%) profit=   6.59 exp=  4.58 z=  0.1 | CLV -0.09% n=108  t= -0.1 beat= 56% | indep  0.75% n=41
+6-13                                       n=134  stake=  198.2 ROI= -12.2% (EV  3.3%) profit= -24.13 exp=  6.78 z= -1.7 | CLV  0.53% n=129  t=  1.0 beat= 58% | indep  1.84% n=44
+24-48                                      n=109  stake=  154.3 ROI= -17.2% (EV  3.5%) profit= -26.57 exp=  5.77 z= -1.9 | CLV -0.77% n=103  t= -0.9 beat= 55% | indep  1.55% n=32
+0-0.5                                      n=92   stake=  125.7 ROI=   2.8% (EV  3.1%) profit=   3.54 exp=  4.12 z= -0.0 | CLV  3.70% n=96   t= 12.9 beat= 92% | indep  3.93% n=37
+0.5-2                                      n=89   stake=  128.3 ROI= -13.1% (EV  3.6%) profit= -16.75 exp=  4.76 z= -1.4 | CLV  2.99% n=89   t=  9.5 beat= 92% | indep  3.24% n=32
+<0                                         n=9    stake=    8.6 ROI=   3.1% (EV  3.2%) profit=   0.26 exp=  0.28 z= -0.0 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+
+### odds band
+100-130                                    n=681  stake=  896.8 ROI=  -8.1% (EV  3.3%) profit= -72.65 exp= 31.04 z= -2.7 | CLV  1.20% n=666  t=  4.1 beat= 68% | indep  2.30% n=242
+130-160                                    n=79   stake=   99.7 ROI=   1.8% (EV  3.3%) profit=   1.82 exp=  3.61 z= -0.1 | CLV  2.47% n=78   t=  2.8 beat= 69% | indep  3.11% n=35
+-150--110                                  n=65   stake=  100.0 ROI=   3.9% (EV  2.9%) profit=   3.91 exp=  2.97 z=  0.1 | CLV  0.78% n=65   t=  1.2 beat= 65% | indep  1.75% n=29
+-110-100                                   n=61   stake=   89.7 ROI=  -3.0% (EV  3.0%) profit=  -2.69 exp=  2.87 z= -0.5 | CLV -0.39% n=60   t= -0.5 beat= 67% | indep -0.67% n=27
+-200--150                                  n=10   stake=   14.2 ROI=  36.2% (EV  3.1%) profit=   5.15 exp=  0.38 z=  1.2 | CLV  1.87% n=7    t=  1.6 beat= 71% | indep  2.40% n=2
+n/a                                        n=8    stake=    8.6 ROI= -50.2% (EV  1.9%) profit=  -4.29 exp=  0.17 z= -1.5 | CLV -2.03% n=7    t= -1.0 beat= 29% | indep  7.54% n=1
+
+### books behind fair
+n/a                                        n=388  stake=  418.5 ROI=  -7.0% (EV  2.9%) profit= -29.29 exp= 12.49 z= -1.8 | CLV  0.11% n=363  t=  0.2 beat= 56% | indep  1.58% n=119
+4                                          n=101  stake=  163.5 ROI=  -7.8% (EV  3.7%) profit= -12.82 exp=  6.28 z= -1.1 | CLV  1.92% n=98   t=  2.9 beat= 70% | indep  0.97% n=22
+5                                          n=96   stake=  139.5 ROI=  -3.7% (EV  3.3%) profit=  -5.14 exp=  4.71 z= -0.6 | CLV  1.67% n=100  t=  2.7 beat= 78% | indep  3.09% n=38
+3                                          n=86   stake=  148.7 ROI= -12.6% (EV  3.9%) profit= -18.77 exp=  6.03 z= -1.4 | CLV  3.17% n=81   t=  5.1 beat= 80% | indep  3.39% n=21
+6                                          n=67   stake=  103.3 ROI=  -8.6% (EV  3.2%) profit=  -8.92 exp=  3.42 z= -0.9 | CLV  1.89% n=69   t=  3.5 beat= 80% | indep  2.58% n=47
+7                                          n=54   stake=   78.8 ROI= -12.0% (EV  3.5%) profit=  -9.46 exp=  2.83 z= -1.0 | CLV  1.51% n=57   t=  1.4 beat= 75% | indep  3.04% n=33
+10                                         n=27   stake=   36.8 ROI=   6.5% (EV  3.1%) profit=   2.39 exp=  1.21 z=  0.1 | CLV  1.17% n=29   t=  1.0 beat= 72% | indep  1.86% n=18
+8                                          n=24   stake=   33.9 ROI= -19.2% (EV  3.3%) profit=  -6.49 exp=  1.13 z= -1.0 | CLV  0.63% n=25   t=  0.5 beat= 72% | indep  0.42% n=15
+9                                          n=16   stake=   23.4 ROI=  13.2% (EV  3.6%) profit=   3.10 exp=  0.84 z=  0.3 | CLV  1.18% n=17   t=  1.2 beat= 65% | indep  0.02% n=6
+12                                         n=14   stake=   17.2 ROI=  28.2% (EV  2.6%) profit=   4.84 exp=  0.50 z=  0.8 | CLV  0.36% n=14   t=  0.3 beat= 64% | indep  2.51% n=3
+11                                         n=10   stake=   13.2 ROI=  14.0% (EV  2.9%) profit=   1.84 exp=  0.38 z=  0.3 | CLV  0.61% n=10   t=  0.5 beat= 70% | indep  0.98% n=4
+1                                          n=7    stake=   11.2 ROI=  -3.5% (EV  3.2%) profit=  -0.40 exp=  0.33 z= -0.2 | CLV -3.27% n=2    t= -1.5 beat=  0% | indep   nan% n=0
+13                                         n=7    stake=   10.7 ROI=  -5.3% (EV  2.6%) profit=  -0.57 exp=  0.32 z= -0.2 | CLV  2.91% n=8    t=  6.3 beat=100% | indep  3.37% n=5
+2                                          n=8    stake=   14.9 ROI=  43.8% (EV  4.6%) profit=   6.51 exp=  0.67 z=  1.0 | CLV  2.93% n=7    t=  2.0 beat= 71% | indep -0.81% n=1
+
+### sharp
+n/a                                        n=470  stake=  553.6 ROI=  -6.9% (EV  3.1%) profit= -38.27 exp= 18.20 z= -2.0 | CLV  0.31% n=435  t=  0.8 beat= 58% | indep  1.69% n=142
+agree                                      n=361  stake=  556.2 ROI=  -3.6% (EV  3.3%) profit= -20.22 exp= 19.26 z= -1.2 | CLV  2.14% n=375  t=  7.0 beat= 79% | indep  2.64% n=173
+none                                       n=64   stake=   85.6 ROI=   5.5% (EV  3.4%) profit=   4.73 exp=  3.08 z=  0.1 | CLV  1.00% n=60   t=  1.0 beat= 70% | indep  0.22% n=13
+against                                    n=16   stake=   24.5 ROI= -65.5% (EV  3.1%) profit= -16.07 exp=  0.79 z= -2.6 | CLV  0.62% n=16   t=  0.6 beat= 62% | indep  1.14% n=8
+
+### how
+manual                                     n=580  stake=  719.9 ROI=  -7.8% (EV  3.1%) profit= -56.33 exp= 23.37 z= -2.4 | CLV  0.53% n=558  t=  1.5 beat= 61% | indep  2.03% n=198
+auto                                       n=331  stake=  500.1 ROI=  -2.7% (EV  3.5%) profit= -13.50 exp= 17.96 z= -1.0 | CLV  2.16% n=328  t=  7.8 beat= 78% | indep  2.23% n=138
+
+### origin
+n/a                                        n=384  stake=  414.6 ROI=  -7.1% (EV  2.9%) profit= -29.53 exp= 12.36 z= -1.8 | CLV  0.00% n=350  t=  0.0 beat= 56% | indep  1.58% n=119
+auto                                       n=300  stake=  450.8 ROI=  -0.6% (EV  3.4%) profit=  -2.76 exp= 15.97 z= -0.7 | CLV  2.25% n=299  t=  8.0 beat= 79% | indep  2.21% n=128
+sheet                                      n=219  stake=  346.6 ROI= -11.6% (EV  3.5%) profit= -40.20 exp= 12.77 z= -2.0 | CLV  1.38% n=216  t=  2.9 beat= 71% | indep  2.96% n=85
+imported                                   n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV  2.82% n=13   t=  0.8 beat= 54% | indep   nan% n=0
+marked                                     n=8    stake=    7.9 ROI=  33.8% (EV  3.0%) profit=   2.66 exp=  0.24 z=  0.8 | CLV -0.60% n=8    t= -0.2 beat= 50% | indep -3.06% n=4
+
+### scanner
+CNO                                        n=737  stake=  991.5 ROI=  -5.5% (EV  3.1%) profit= -54.05 exp= 32.74 z= -2.1 | CLV  1.16% n=720  t=  4.1 beat= 68% | indep  2.01% n=296
+Vigilant                                   n=165  stake=  219.5 ROI=  -8.6% (EV  3.6%) profit= -18.85 exp=  8.23 z= -1.4 | CLV  1.10% n=165  t=  2.3 beat= 65% | indep  2.89% n=40
+
+### fairMethod
+n/a                                        n=805  stake= 1058.4 ROI=  -5.9% (EV  3.1%) profit= -62.37 exp= 34.79 z= -2.3 | CLV  1.06% n=788  t=  3.9 beat= 67% | indep  2.04% n=305
+BLEND/WORST_CASE                           n=69   stake=  107.7 ROI=  -5.9% (EV  3.8%) profit=  -6.33 exp=  4.26 z= -0.7 | CLV  1.91% n=72   t=  4.1 beat= 78% | indep  2.95% n=29
+MARKET_AVERAGE/WORST_CASE                  n=26   stake=   38.7 ROI=  -2.5% (EV  4.4%) profit=  -0.98 exp=  1.81 z= -0.3 | CLV  1.76% n=24   t=  1.6 beat= 67% | indep  1.14% n=2
+SHARP/WORST_CASE                           n=4    stake=    8.2 ROI=  -8.7% (EV  3.0%) profit=  -0.71 exp=  0.23 z= -0.3 | CLV -3.27% n=2    t= -1.5 beat=  0% | indep   nan% n=0
+
+### close basis
+history:pinnacle                           n=308  stake=  434.3 ROI=  -7.8% (EV  3.1%) profit= -33.87 exp= 14.22 z= -1.8 | CLV  2.05% n=320  t=  5.8 beat= 75% | indep  2.05% n=320
+read:cno                                   n=227  stake=  325.0 ROI=  -3.0% (EV  3.3%) profit=  -9.74 exp= 11.47 z= -0.9 | CLV  1.20% n=229  t=  2.1 beat= 72% | indep   nan% n=0
+history:novig-trades                       n=201  stake=  229.8 ROI=  -8.3% (EV  3.0%) profit= -19.04 exp=  7.23 z= -1.4 | CLV -0.75% n=208  t= -1.4 beat= 47% | indep   nan% n=0
+n/a                                        n=62   stake=   79.2 ROI= -21.0% (EV  3.7%) profit= -16.64 exp=  3.08 z= -1.7 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+read:vigilant                              n=75   stake=  104.2 ROI=   8.7% (EV  3.5%) profit=   9.12 exp=  3.85 z=  0.4 | CLV  1.20% n=85   t=  2.2 beat= 67% | indep   nan% n=0
+read:both                                  n=22   stake=   29.3 ROI= -16.3% (EV  3.4%) profit=  -4.77 exp=  1.03 z= -0.8 | CLV  2.74% n=28   t=  3.2 beat= 86% | indep   nan% n=0
+history:espn                               n=16   stake=   18.1 ROI=  28.3% (EV  2.4%) profit=   5.12 exp=  0.45 z=  1.0 | CLV  3.37% n=16   t=  3.9 beat= 81% | indep  3.37% n=16
+
+### fair age (s)
+n/a                                        n=812  stake= 1065.3 ROI=  -5.8% (EV  3.1%) profit= -61.81 exp= 35.03 z= -2.3 | CLV  1.06% n=788  t=  3.9 beat= 67% | indep  2.04% n=305
+300-600                                    n=62   stake=   93.2 ROI= -11.8% (EV  4.0%) profit= -11.00 exp=  3.86 z= -1.1 | CLV  2.11% n=64   t=  4.0 beat= 77% | indep  3.54% n=20
+120-300                                    n=19   stake=   35.7 ROI=   0.6% (EV  3.9%) profit=   0.23 exp=  1.37 z= -0.1 | CLV  0.65% n=20   t=  0.6 beat= 60% | indep -1.14% n=4
+600+                                       n=13   stake=   18.5 ROI=  17.4% (EV  3.9%) profit=   3.21 exp=  0.75 z=  0.4 | CLV  1.77% n=13   t=  1.7 beat= 77% | indep  3.18% n=6
+
+### page age (s)
+n/a                                        n=490  stake=  576.2 ROI=  -6.4% (EV  3.1%) profit= -36.99 exp= 18.90 z= -1.9 | CLV  0.46% n=461  t=  1.2 beat= 60% | indep  1.84% n=150
+0-30                                       n=224  stake=  359.8 ROI=  -4.2% (EV  3.4%) profit= -15.18 exp= 12.54 z= -1.1 | CLV  2.66% n=228  t=  9.4 beat= 79% | indep  2.53% n=103
+30-120                                     n=149  stake=  217.7 ROI=   3.6% (EV  3.4%) profit=   7.77 exp=  7.73 z=  0.0 | CLV  1.26% n=149  t=  2.2 beat= 73% | indep  1.95% n=63
+120-600                                    n=48   stake=   66.2 ROI= -38.4% (EV  3.2%) profit= -25.43 exp=  2.16 z= -2.6 | CLV  0.00% n=48   t=  0.0 beat= 67% | indep  2.51% n=20
+
+### week
+2026-10-11                                 n=123  stake=  155.8 ROI= -20.2% (EV  3.3%) profit= -31.49 exp=  5.60 z= -2.4 | CLV  2.89% n=135  t=  9.7 beat= 85% | indep  3.01% n=46
+2026-09-28                                 n=95   stake=   95.0 ROI=   0.6% (EV  2.2%) profit=   0.60 exp=  2.10 z= -0.1 | CLV -0.93% n=90   t= -1.0 beat= 48% | indep  0.58% n=21
+2026-09-30                                 n=88   stake=   85.4 ROI= -10.1% (EV  3.1%) profit=  -8.66 exp=  2.65 z= -1.1 | CLV -1.97% n=75   t= -1.9 beat= 44% | indep -1.20% n=29
+2026-10-09                                 n=79   stake=  116.5 ROI=  -1.5% (EV  4.1%) profit=  -1.70 exp=  4.85 z= -0.4 | CLV  0.90% n=78   t=  1.5 beat= 58% | indep  0.74% n=31
+2026-10-02                                 n=67   stake=   95.0 ROI= -11.6% (EV  3.1%) profit= -11.01 exp=  3.12 z= -1.1 | CLV  0.85% n=66   t=  1.0 beat= 65% | indep  1.56% n=26
+2026-09-26                                 n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV -2.36% n=5    t= -3.8 beat=  0% | indep   nan% n=0
+2026-10-04                                 n=62   stake=  105.4 ROI=  -3.1% (EV  3.5%) profit=  -3.31 exp=  3.79 z= -0.5 | CLV  2.68% n=62   t=  3.7 beat= 82% | indep  2.80% n=27
+2026-10-03                                 n=59   stake=   99.0 ROI=   1.0% (EV  3.4%) profit=   1.02 exp=  3.43 z= -0.2 | CLV -0.12% n=55   t= -0.1 beat= 69% | indep  1.71% n=26
+2026-09-27                                 n=58   stake=   58.0 ROI=  18.6% (EV  2.9%) profit=  10.80 exp=  1.66 z=  1.1 | CLV  1.94% n=52   t=  2.3 beat= 69% | indep  3.46% n=19
+2026-10-01                                 n=54   stake=   80.2 ROI= -24.3% (EV  3.7%) profit= -19.53 exp=  3.21 z= -1.9 | CLV  0.87% n=48   t=  0.7 beat= 62% | indep  2.65% n=23
+2026-10-10                                 n=53   stake=   72.5 ROI= -14.4% (EV  3.3%) profit= -10.43 exp=  2.56 z= -1.2 | CLV  2.04% n=51   t=  2.6 beat= 78% | indep  3.30% n=19
+2026-09-29                                 n=44   stake=   41.9 ROI=  17.9% (EV  2.8%) profit=   7.48 exp=  1.15 z=  0.9 | CLV  2.72% n=43   t=  1.5 beat= 70% | indep  4.89% n=14
+2026-10-06                                 n=45   stake=   74.5 ROI=   4.7% (EV  3.2%) profit=   3.53 exp=  2.52 z=  0.1 | CLV  2.17% n=44   t=  3.4 beat= 82% | indep  1.65% n=19
+2026-10-05                                 n=36   stake=   62.1 ROI= -10.0% (EV  3.0%) profit=  -6.23 exp=  1.88 z= -0.8 | CLV  0.94% n=35   t=  0.7 beat= 74% | indep  3.43% n=14
+2026-10-07                                 n=29   stake=   50.0 ROI=  -7.6% (EV  3.6%) profit=  -3.81 exp=  1.86 z= -0.5 | CLV  2.31% n=29   t=  2.7 beat= 76% | indep  2.33% n=16
+2026-10-08                                 n=11   stake=   20.0 ROI=  36.0% (EV  3.8%) profit=   7.20 exp=  0.80 z=  0.9 | CLV  2.58% n=11   t=  1.6 beat= 73% | indep  5.70% n=5
+2026-09-25                                 n=8    stake=    8.6 ROI= -50.2% (EV  1.9%) profit=  -4.29 exp=  0.17 z= -1.5 | CLV -2.03% n=7    t= -1.0 beat= 29% | indep  7.54% n=1
+
+### app version
+n/a                                        n=391  stake=  421.5 ROI=  -6.9% (EV  2.9%) profit= -28.97 exp= 12.60 z= -1.8 | CLV  0.11% n=363  t=  0.2 beat= 56% | indep  1.58% n=119
+0.59.1                                     n=33   stake=   51.1 ROI= -18.6% (EV  3.4%) profit=  -9.49 exp=  1.79 z= -1.1 | CLV  4.37% n=33   t=  5.4 beat= 88% | indep  4.98% n=12
+0.83.7                                     n=25   stake=   35.8 ROI=   8.6% (EV  3.9%) profit=   3.08 exp=  1.43 z=  0.2 | CLV  2.31% n=26   t=  2.9 beat= 65% | indep  1.30% n=16
+0.83.5                                     n=27   stake=   39.8 ROI= -19.9% (EV  4.0%) profit=  -7.91 exp=  1.64 z= -1.1 | CLV  0.69% n=23   t=  0.7 beat= 61% | indep  2.31% n=8
+0.89.22                                    n=18   stake=   18.5 ROI=  -3.2% (EV  2.8%) profit=  -0.59 exp=  0.54 z= -0.2 | CLV  3.46% n=21   t=  6.1 beat= 95% | indep  3.77% n=6
+0.47.0                                     n=23   stake=   38.6 ROI=  16.5% (EV  3.2%) profit=   6.36 exp=  1.31 z=  0.6 | CLV  1.97% n=23   t=  1.2 beat= 74% | indep  3.07% n=11
+0.89.14                                    n=20   stake=   25.8 ROI= -30.6% (EV  3.5%) profit=  -7.89 exp=  0.95 z= -1.4 | CLV  3.17% n=21   t=  3.5 beat= 76% | indep  4.67% n=7
+0.70.1                                     n=17   stake=   27.3 ROI= -25.4% (EV  3.2%) profit=  -6.93 exp=  0.95 z= -1.1 | CLV  0.64% n=16   t=  0.5 beat= 62% | indep  0.88% n=8
+0.73.0                                     n=17   stake=   24.8 ROI= -26.6% (EV  3.6%) profit=  -6.59 exp=  0.90 z= -1.1 | CLV  3.01% n=16   t=  4.8 beat= 81% | indep  2.66% n=8
+0.59.0                                     n=16   stake=   29.2 ROI=  12.4% (EV  3.6%) profit=   3.61 exp=  1.04 z=  0.3 | CLV -0.30% n=16   t= -0.2 beat= 62% | indep -0.17% n=9
+0.89.18                                    n=15   stake=   17.9 ROI=   5.8% (EV  3.4%) profit=   1.03 exp=  0.62 z=  0.1 | CLV  4.25% n=16   t=  8.4 beat=100% | indep  3.71% n=5
+0.70.3                                     n=15   stake=   27.7 ROI=  28.3% (EV  3.4%) profit=   7.85 exp=  0.97 z=  0.9 | CLV  4.15% n=15   t=  6.6 beat=100% | indep  2.50% n=5
+0.61.0                                     n=14   stake=   25.5 ROI= -37.2% (EV  3.0%) profit=  -9.49 exp=  0.71 z= -1.5 | CLV -3.92% n=13   t= -1.4 beat= 54% | indep  2.31% n=4
+0.66.0                                     n=13   stake=   21.2 ROI=  49.6% (EV  3.2%) profit=  10.50 exp=  0.68 z=  1.5 | CLV  3.47% n=13   t=  2.9 beat= 77% | indep  3.43% n=5
+0.70.2                                     n=13   stake=   19.6 ROI=  13.4% (EV  2.8%) profit=   2.62 exp=  0.60 z=  0.4 | CLV  1.77% n=13   t=  2.0 beat= 85% | indep  1.97% n=6
+0.89.31                                    n=2    stake=    2.6 ROI= -47.9% (EV  3.0%) profit=  -1.27 exp=  0.10 z= -0.6 | CLV  2.82% n=5    t=  3.7 beat=100% | indep  2.97% n=2
+0.60.0                                     n=12   stake=   22.3 ROI=  24.0% (EV  3.4%) profit=   5.37 exp=  0.81 z=  0.6 | CLV  2.11% n=12   t=  1.5 beat= 92% | indep  3.14% n=5
+0.89.17                                    n=12   stake=   17.9 ROI= -34.5% (EV  3.8%) profit=  -6.16 exp=  0.72 z= -1.2 | CLV  3.88% n=11   t=  5.6 beat=100% | indep  2.51% n=4
+0.52.0                                     n=11   stake=   20.4 ROI= -22.9% (EV  3.4%) profit=  -4.67 exp=  0.74 z= -0.8 | CLV -6.08% n=11   t= -1.2 beat= 36% | indep  0.09% n=5
+0.58.2                                     n=11   stake=   15.9 ROI=  62.8% (EV  3.0%) profit=  10.01 exp=  0.48 z=  1.9 | CLV  1.25% n=10   t=  2.1 beat= 80% | indep  1.96% n=5
+0.86.1                                     n=11   stake=   16.7 ROI= -17.9% (EV  3.2%) profit=  -2.99 exp=  0.60 z= -0.7 | CLV  3.27% n=11   t=  3.4 beat= 73% | indep  4.20% n=3
+0.88.10                                    n=11   stake=   16.1 ROI=  -8.8% (EV  3.8%) profit=  -1.41 exp=  0.65 z= -0.4 | CLV  0.88% n=10   t=  0.3 beat= 80% | indep  5.03% n=4
+0.89.15                                    n=11   stake=   17.6 ROI=  61.2% (EV  4.1%) profit=  10.76 exp=  0.75 z=  1.7 | CLV  1.32% n=10   t=  1.1 beat= 70% | indep  3.18% n=5
+0.56.1                                     n=10   stake=   20.9 ROI=  -7.0% (EV  3.6%) profit=  -1.45 exp=  0.77 z= -0.3 | CLV  6.08% n=9    t=  4.6 beat= 89% | indep  5.88% n=2
+0.78.0                                     n=10   stake=   19.1 ROI=  42.6% (EV  4.0%) profit=   8.13 exp=  0.79 z=  1.1 | CLV  3.75% n=10   t=  3.3 beat= 80% | indep  5.70% n=5
+0.83.3                                     n=10   stake=   16.5 ROI= -33.8% (EV  4.3%) profit=  -5.58 exp=  0.74 z= -1.1 | CLV -3.39% n=10   t= -1.4 beat= 40% | indep -2.53% n=4
+0.89.13                                    n=10   stake=   13.6 ROI= -77.4% (EV  3.7%) profit= -10.52 exp=  0.53 z= -2.3 | CLV  3.17% n=10   t=  7.3 beat=100% | indep  3.90% n=4
+0.89.25                                    n=7    stake=    6.8 ROI=  -8.8% (EV  2.3%) profit=  -0.60 exp=  0.18 z= -0.3 | CLV  2.23% n=9    t=  1.8 beat= 78% | indep  5.45% n=2
+0.58.3                                     n=8    stake=   11.9 ROI=  12.6% (EV  3.2%) profit=   1.50 exp=  0.36 z=  0.2 | CLV  1.17% n=8    t=  0.5 beat= 88% | indep -0.24% n=5
+0.81.3                                     n=8    stake=   12.4 ROI=  24.4% (EV  3.6%) profit=   3.03 exp=  0.45 z=  0.6 | CLV  0.83% n=8    t=  0.5 beat= 38% | indep -0.81% n=1
+0.89.2                                     n=6    stake=    9.6 ROI=-100.0% (EV  3.9%) profit=  -9.59 exp=  0.37 z= -2.3 | CLV  1.53% n=7    t=  0.6 beat= 57% | indep -0.32% n=4
+
+================ BIDS ================
+
+### kind
+Player props                               n=165  stake=  268.3 ROI=  -6.4% (EV  3.5%) profit= -17.09 exp=  9.65 z= -1.2 | CLV  1.93% n=168  t=  5.0 beat= 73% | indep  2.11% n=75
+Team totals                                n=65   stake=   99.2 ROI=  33.9% (EV  3.8%) profit=  33.63 exp=  3.80 z=  2.2 | CLV  2.38% n=65   t=  4.4 beat= 74% | indep  3.64% n=21
+Moneylines                                 n=9    stake=    7.9 ROI= -56.4% (EV  2.6%) profit=  -4.47 exp=  0.23 z= -2.1 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+Other                                      n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV -1.04% n=8    t= -0.6 beat= 50% | indep   nan% n=0
+Spreads                                    n=5    stake=    2.6 ROI= -60.0% (EV  2.2%) profit=  -1.53 exp=  0.06 z= -1.4 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+
+### sport
+football                                   n=83   stake=  123.1 ROI= -20.1% (EV  3.3%) profit= -24.79 exp=  4.22 z= -1.9 | CLV  2.26% n=93   t=  4.6 beat= 75% | indep  2.79% n=33
+hockey                                     n=61   stake=  108.7 ROI=  24.4% (EV  3.7%) profit=  26.54 exp=  4.14 z=  1.5 | CLV  2.14% n=57   t=  3.3 beat= 74% | indep  2.43% n=31
+baseball                                   n=37   stake=   66.9 ROI=   7.9% (EV  3.7%) profit=   5.26 exp=  2.48 z=  0.2 | CLV  2.20% n=41   t=  3.3 beat= 71% | indep  2.92% n=15
+basketball                                 n=41   stake=   53.6 ROI=  -3.7% (EV  3.2%) profit=  -1.99 exp=  1.78 z= -0.4 | CLV  0.45% n=30   t=  0.4 beat= 67% | indep  1.05% n=11
+college football                           n=25   stake=   29.9 ROI=  36.6% (EV  4.3%) profit=  10.96 exp=  1.31 z=  1.5 | CLV  2.78% n=27   t=  2.7 beat= 74% | indep  3.44% n=8
+tennis                                     n=4    stake=    4.5 ROI=-100.0% (EV  2.7%) profit=  -4.49 exp=  0.14 z= -2.8 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+
+### league
+NFL                                        n=83   stake=  123.1 ROI= -20.1% (EV  3.3%) profit= -24.79 exp=  4.22 z= -1.9 | CLV  2.26% n=93   t=  4.6 beat= 75% | indep  2.79% n=33
+NHL                                        n=61   stake=  108.7 ROI=  24.4% (EV  3.7%) profit=  26.54 exp=  4.14 z=  1.5 | CLV  2.14% n=57   t=  3.3 beat= 74% | indep  2.43% n=31
+MLB                                        n=37   stake=   66.9 ROI=   7.9% (EV  3.7%) profit=   5.26 exp=  2.48 z=  0.2 | CLV  2.20% n=41   t=  3.3 beat= 71% | indep  2.92% n=15
+WNBA                                       n=32   stake=   48.5 ROI=  -5.2% (EV  3.4%) profit=  -2.53 exp=  1.67 z= -0.5 | CLV  0.45% n=30   t=  0.4 beat= 67% | indep  1.05% n=11
+NCAAF                                      n=25   stake=   29.9 ROI=  36.6% (EV  4.3%) profit=  10.96 exp=  1.31 z=  1.5 | CLV  2.78% n=27   t=  2.7 beat= 74% | indep  3.44% n=8
+NBA                                        n=9    stake=    5.1 ROI=  10.6% (EV  2.2%) profit=   0.54 exp=  0.11 z=  0.3 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+WTA                                        n=4    stake=    4.5 ROI=-100.0% (EV  2.7%) profit=  -4.49 exp=  0.14 z= -2.8 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+
+### side (Over/Under) of props
+(not prop)                                 n=86   stake=  118.4 ROI=  24.1% (EV  3.6%) profit=  28.59 exp=  4.42 z=  1.7 | CLV  2.28% n=81   t=  4.4 beat= 72% | indep  4.00% n=23
+Under                                      n=86   stake=  146.1 ROI=  -3.3% (EV  3.5%) profit=  -4.84 exp=  5.25 z= -0.6 | CLV  2.24% n=94   t=  4.1 beat= 74% | indep  3.11% n=37
+Over                                       n=79   stake=  122.2 ROI= -10.0% (EV  3.5%) profit= -12.26 exp=  4.39 z= -1.1 | CLV  1.54% n=74   t=  2.9 beat= 72% | indep  1.13% n=38
+
+### side x sport (props)
+None                                       n=86   stake=  118.4 ROI=  24.1% (EV  3.6%) profit=  28.59 exp=  4.42 z=  1.7 | CLV  2.28% n=81   t=  4.4 beat= 72% | indep  4.00% n=23
+('football', 'Under')                      n=36   stake=   59.4 ROI= -35.8% (EV  3.4%) profit= -21.26 exp=  2.11 z= -2.1 | CLV  2.65% n=44   t=  3.2 beat= 80% | indep  3.37% n=15
+('football', 'Over')                       n=29   stake=   39.5 ROI= -12.6% (EV  3.2%) profit=  -4.99 exp=  1.33 z= -0.8 | CLV  2.04% n=27   t=  3.4 beat= 74% | indep  1.84% n=13
+('hockey', 'Over')                         n=26   stake=   44.6 ROI=   5.6% (EV  3.7%) profit=   2.51 exp=  1.68 z=  0.1 | CLV  1.36% n=24   t=  1.1 beat= 75% | indep  0.94% n=15
+('baseball', 'Under')                      n=20   stake=   38.5 ROI=  38.5% (EV  3.7%) profit=  14.84 exp=  1.43 z=  1.5 | CLV  2.99% n=21   t=  2.8 beat= 76% | indep  4.45% n=8
+('basketball', 'Under')                    n=19   stake=   30.1 ROI=  -0.6% (EV  3.4%) profit=  -0.19 exp=  1.02 z= -0.2 | CLV  0.26% n=18   t=  0.2 beat= 67% | indep  1.52% n=6
+('baseball', 'Over')                       n=11   stake=   19.7 ROI= -37.8% (EV  3.8%) profit=  -7.44 exp=  0.74 z= -1.3 | CLV  1.62% n=11   t=  1.5 beat= 64% | indep  0.51% n=5
+('basketball', 'Over')                     n=13   stake=   18.4 ROI= -12.7% (EV  3.5%) profit=  -2.34 exp=  0.65 z= -0.5 | CLV  0.73% n=12   t=  0.5 beat= 67% | indep  0.48% n=5
+('hockey', 'Under')                        n=11   stake=   18.0 ROI=   9.9% (EV  3.9%) profit=   1.78 exp=  0.69 z=  0.2 | CLV  2.39% n=11   t=  2.6 beat= 64% | indep  2.48% n=8
+
+### EV when placed
+0.03-0.04                                  n=139  stake=  230.9 ROI=   8.0% (EV  3.5%) profit=  18.44 exp=  8.12 z=  0.5 | CLV  2.00% n=138  t=  5.3 beat= 75% | indep  2.34% n=55
+0.04-0.05                                  n=63   stake=  105.9 ROI=  -7.3% (EV  4.3%) profit=  -7.77 exp=  4.55 z= -0.8 | CLV  2.20% n=59   t=  2.6 beat= 68% | indep  2.79% n=23
+0.02-0.03                                  n=45   stake=   44.9 ROI=   0.1% (EV  2.5%) profit=   0.05 exp=  1.16 z= -0.2 | CLV  2.24% n=38   t=  4.2 beat= 76% | indep  2.86% n=20
+n/a                                        n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV  0.55% n=11   t=  0.4 beat= 64% | indep   nan% n=0
+
+### stars
+3.5                                        n=158  stake=  245.6 ROI=  -1.0% (EV  3.4%) profit=  -2.44 exp=  8.50 z= -0.5 | CLV  1.80% n=160  t=  5.0 beat= 74% | indep  2.15% n=69
+4.0                                        n=53   stake=   88.0 ROI=  19.4% (EV  4.2%) profit=  17.09 exp=  3.66 z=  1.0 | CLV  2.70% n=53   t=  3.2 beat= 70% | indep  2.84% n=23
+n/a                                        n=11   stake=   22.3 ROI=  37.6% (EV  4.4%) profit=   8.37 exp=  0.97 z=  1.0 | CLV  2.35% n=22   t=  2.0 beat= 73% | indep  6.87% n=4
+1.5                                        n=15   stake=   11.0 ROI= -48.8% (EV  2.5%) profit=  -5.39 exp=  0.30 z= -2.2 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+3.0                                        n=11   stake=   16.4 ROI= -62.6% (EV  3.2%) profit= -10.26 exp=  0.53 z= -2.0 | CLV  1.51% n=12   t=  2.0 beat= 67% | indep  4.51% n=2
+
+### lead (h)
+2-6                                        n=72   stake=  101.9 ROI=   0.4% (EV  3.5%) profit=   0.42 exp=  3.63 z= -0.2 | CLV  2.07% n=79   t=  4.2 beat= 73% | indep  2.56% n=31
+6-13                                       n=82   stake=  144.7 ROI=  10.9% (EV  3.7%) profit=  15.83 exp=  5.44 z=  0.6 | CLV  2.09% n=77   t=  3.3 beat= 68% | indep  1.70% n=29
+0.5-2                                      n=37   stake=   59.7 ROI=   2.3% (EV  3.6%) profit=   1.38 exp=  2.14 z= -0.1 | CLV  3.18% n=38   t=  7.1 beat= 84% | indep  3.82% n=16
+13-24                                      n=29   stake=   51.4 ROI=   6.0% (EV  3.8%) profit=   3.11 exp=  1.96 z=  0.1 | CLV -0.06% n=29   t= -0.0 beat= 62% | indep  1.54% n=14
+0-0.5                                      n=14   stake=   14.9 ROI=  -5.3% (EV  3.1%) profit=  -0.78 exp=  0.47 z= -0.3 | CLV  2.89% n=21   t=  4.7 beat= 86% | indep  4.89% n=8
+<0                                         n=15   stake=   11.0 ROI= -48.8% (EV  2.5%) profit=  -5.39 exp=  0.30 z= -2.2 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+24-48                                      n=2    stake=    3.1 ROI=-100.0% (EV  3.9%) profit=  -3.07 exp=  0.12 z= -1.4 | CLV  1.10% n=5    t=  0.3 beat= 60% | indep   nan% n=0
+
+### odds band
+100-130                                    n=166  stake=  242.6 ROI=  -1.1% (EV  3.5%) profit=  -2.55 exp=  8.84 z= -0.5 | CLV  2.00% n=166  t=  4.9 beat= 73% | indep  2.38% n=68
+-150--110                                  n=34   stake=   70.3 ROI=  26.3% (EV  3.4%) profit=  18.51 exp=  2.44 z=  1.4 | CLV  2.82% n=34   t=  4.9 beat= 79% | indep  3.70% n=14
+130-160                                    n=25   stake=   33.4 ROI=  -2.0% (EV  3.7%) profit=  -0.66 exp=  1.28 z= -0.2 | CLV  0.48% n=25   t=  0.5 beat= 56% | indep  0.45% n=5
+-110-100                                   n=20   stake=   32.8 ROI=  11.6% (EV  3.7%) profit=   3.79 exp=  1.23 z=  0.3 | CLV  3.33% n=21   t=  4.0 beat= 81% | indep  3.10% n=11
+
+### books behind fair
+5                                          n=39   stake=   64.5 ROI=  24.6% (EV  3.7%) profit=  15.89 exp=  2.38 z=  1.2 | CLV  1.93% n=37   t=  3.5 beat= 76% | indep  2.60% n=7
+4                                          n=32   stake=   55.3 ROI=  -0.4% (EV  3.5%) profit=  -0.24 exp=  1.96 z= -0.2 | CLV  1.12% n=32   t=  1.1 beat= 75% | indep  1.50% n=9
+6                                          n=34   stake=   55.6 ROI=  11.5% (EV  3.6%) profit=   6.40 exp=  2.03 z=  0.4 | CLV  2.42% n=31   t=  2.1 beat= 58% | indep  2.28% n=11
+n/a                                        n=11   stake=   22.3 ROI=  37.6% (EV  4.4%) profit=   8.37 exp=  0.97 z=  1.0 | CLV  2.35% n=22   t=  2.0 beat= 73% | indep  6.87% n=4
+3                                          n=26   stake=   47.6 ROI= -28.0% (EV  3.7%) profit= -13.33 exp=  1.79 z= -1.5 | CLV  1.15% n=27   t=  1.0 beat= 67% | indep -1.50% n=6
+7                                          n=23   stake=   35.2 ROI=  19.9% (EV  3.7%) profit=   7.01 exp=  1.30 z=  0.7 | CLV  3.03% n=25   t=  6.6 beat= 84% | indep  3.69% n=11
+1                                          n=15   stake=   11.0 ROI= -48.8% (EV  2.5%) profit=  -5.39 exp=  0.30 z= -2.2 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+9                                          n=19   stake=   26.1 ROI=  42.2% (EV  3.5%) profit=  11.00 exp=  0.95 z=  1.5 | CLV  1.14% n=20   t=  0.9 beat= 70% | indep  1.43% n=14
+8                                          n=15   stake=   19.7 ROI= -21.2% (EV  3.6%) profit=  -4.18 exp=  0.72 z= -0.9 | CLV  1.76% n=16   t=  2.0 beat= 56% | indep  1.98% n=7
+10                                         n=10   stake=   14.2 ROI= -20.2% (EV  3.5%) profit=  -2.86 exp=  0.52 z= -0.7 | CLV  3.39% n=11   t=  2.4 beat= 82% | indep  2.67% n=8
+11                                         n=8    stake=   10.0 ROI= -43.9% (EV  3.2%) profit=  -4.38 exp=  0.32 z= -1.2 | CLV  4.62% n=8    t=  3.0 beat=100% | indep  4.62% n=8
+2                                          n=9    stake=   14.1 ROI= -58.4% (EV  3.4%) profit=  -8.24 exp=  0.48 z= -1.7 | CLV  1.70% n=8    t=  1.6 beat= 75% | indep  4.51% n=2
+
+### sharp
+agree                                      n=221  stake=  348.7 ROI=   0.8% (EV  3.6%) profit=   2.92 exp= 12.65 z= -0.4 | CLV  2.00% n=224  t=  6.1 beat= 72% | indep  2.37% n=94
+n/a                                        n=26   stake=   33.3 ROI=   8.9% (EV  3.3%) profit=   2.98 exp=  1.28 z=  0.2 | CLV  2.35% n=22   t=  2.0 beat= 73% | indep  6.87% n=4
+
+### how
+auto                                       n=251  stake=  386.7 ROI=   3.0% (EV  3.5%) profit=  11.50 exp= 14.07 z= -0.1 | CLV  2.11% n=238  t=  6.7 beat= 73% | indep  2.55% n=98
+manual                                     n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV  0.55% n=11   t=  0.4 beat= 64% | indep   nan% n=0
+
+### origin
+bid                                        n=240  stake=  364.4 ROI=   0.9% (EV  3.5%) profit=   3.13 exp= 13.10 z= -0.4 | CLV  2.02% n=227  t=  6.3 beat= 73% | indep  2.37% n=94
+imported                                   n=0    stake=    0.0 ROI=   nan% (EV  nan%) profit=   0.00 exp=  0.00 z=  nan | CLV  0.55% n=11   t=  0.4 beat= 64% | indep   nan% n=0
+n/a                                        n=11   stake=   22.3 ROI=  37.6% (EV  4.4%) profit=   8.37 exp=  0.97 z=  1.0 | CLV  4.15% n=11   t=  2.4 beat= 82% | indep  6.87% n=4
+
+### scanner
+Vigilant                                   n=227  stake=  356.2 ROI=   2.6% (EV  3.6%) profit=   9.15 exp= 13.04 z= -0.2 | CLV  2.08% n=240  t=  6.6 beat= 72% | indep  2.57% n=94
+Live bids                                  n=15   stake=   11.0 ROI= -48.8% (EV  2.5%) profit=  -5.39 exp=  0.30 z= -2.2 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+CNO                                        n=9    stake=   19.4 ROI=  39.8% (EV  3.7%) profit=   7.73 exp=  0.72 z=  1.0 | CLV  1.04% n=9    t=  0.6 beat= 78% | indep  2.05% n=4
+
+### fairMethod
+BLEND                                      n=209  stake=  323.6 ROI=   0.3% (EV  3.6%) profit=   0.91 exp= 11.75 z= -0.4 | CLV  2.04% n=212  t=  6.1 beat= 72% | indep  2.38% n=90
+n/a                                        n=11   stake=   22.3 ROI=  37.6% (EV  4.4%) profit=   8.37 exp=  0.97 z=  1.0 | CLV  2.35% n=22   t=  2.0 beat= 73% | indep  6.87% n=4
+Pinnacle live, devigged                    n=15   stake=   11.0 ROI= -48.8% (EV  2.5%) profit=  -5.39 exp=  0.30 z= -2.2 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+SHARP                                      n=3    stake=    5.7 ROI=-100.0% (EV  3.1%) profit=  -5.73 exp=  0.18 z= -1.8 | CLV  1.56% n=3    t=  1.7 beat= 67% | indep   nan% n=0
+CNO                                        n=9    stake=   19.4 ROI=  39.8% (EV  3.7%) profit=   7.73 exp=  0.72 z=  1.0 | CLV  1.04% n=9    t=  0.6 beat= 78% | indep  2.05% n=4
+
+### close basis
+history:pinnacle                           n=91   stake=  141.1 ROI=   9.5% (EV  3.6%) profit=  13.43 exp=  5.23 z=  0.5 | CLV  2.55% n=98   t=  6.0 beat= 85% | indep  2.55% n=98
+read:vigilant                              n=68   stake=   89.8 ROI=  -8.6% (EV  3.6%) profit=  -7.71 exp=  3.27 z= -0.9 | CLV  1.96% n=75   t=  4.3 beat= 68% | indep   nan% n=0
+history:novig-trades                       n=63   stake=  121.2 ROI=  13.9% (EV  3.6%) profit=  16.82 exp=  4.40 z=  0.8 | CLV  1.49% n=68   t=  1.9 beat= 60% | indep   nan% n=0
+n/a                                        n=25   stake=   26.5 ROI= -48.1% (EV  2.9%) profit= -12.76 exp=  0.86 z= -2.3 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0
+
+### fair age (s)
+30-120                                     n=92   stake=  142.1 ROI=  12.1% (EV  3.5%) profit=  17.23 exp=  5.13 z=  0.7 | CLV  2.28% n=97   t=  4.6 beat= 78% | indep  2.25% n=48
+0-30                                       n=66   stake=  110.9 ROI=  -8.2% (EV  3.6%) profit=  -9.13 exp=  4.03 z= -0.9 | CLV  2.32% n=67   t=  4.5 beat= 72% | indep  2.72% n=19
+120-300                                    n=58   stake=   84.0 ROI=  -1.2% (EV  3.5%) profit=  -0.98 exp=  3.01 z= -0.3 | CLV  1.07% n=56   t=  1.5 beat= 64% | indep  2.16% n=25
+n/a                                        n=26   stake=   33.3 ROI=   8.9% (EV  3.3%) profit=   2.98 exp=  1.28 z=  0.2 | CLV  2.35% n=22   t=  2.0 beat= 73% | indep  6.87% n=4
+300-600                                    n=8    stake=   14.7 ROI=  20.4% (EV  3.7%) profit=   3.01 exp=  0.55 z=  0.5 | CLV  2.57% n=6    t=  1.3 beat= 67% | indep  3.61% n=1
+
+### page age (s)
+n/a                                        n=242  stake=  367.3 ROI=   1.0% (EV  3.5%) profit=   3.76 exp= 13.35 z= -0.4 | CLV  2.08% n=240  t=  6.6 beat= 72% | indep  2.57% n=94
+0-30                                       n=8    stake=   17.3 ROI=  57.0% (EV  3.7%) profit=   9.85 exp=  0.64 z=  1.5 | CLV  1.01% n=8    t=  0.5 beat= 75% | indep  2.05% n=4
+
+### week
+2026-10-11                                 n=61   stake=   61.5 ROI=  -7.9% (EV  2.8%) profit=  -4.87 exp=  1.81 z= -0.8 | CLV  2.61% n=55   t=  6.2 beat= 82% | indep  2.78% n=30
+2026-10-09                                 n=52   stake=   81.2 ROI= -21.7% (EV  3.7%) profit= -17.65 exp=  3.07 z= -1.8 | CLV  0.96% n=53   t=  1.2 beat= 66% | indep  2.05% n=27
+2026-10-08                                 n=54   stake=  110.0 ROI=   3.3% (EV  3.7%) profit=   3.64 exp=  4.10 z= -0.0 | CLV  1.62% n=52   t=  1.8 beat= 67% | indep  1.91% n=6
+2026-10-10                                 n=43   stake=   51.7 ROI=   7.1% (EV  3.9%) profit=   3.65 exp=  2.04 z=  0.2 | CLV  2.29% n=48   t=  4.1 beat= 75% | indep  2.01% n=21
+2026-10-05                                 n=16   stake=   29.6 ROI= -11.0% (EV  4.1%) profit=  -3.25 exp=  1.21 z= -0.5 | CLV  2.73% n=16   t=  2.3 beat= 75% | indep  6.87% n=4
+2026-10-07                                 n=14   stake=   25.9 ROI=  77.9% (EV  3.1%) profit=  20.15 exp=  0.82 z=  2.7 | CLV  3.04% n=14   t=  2.0 beat= 64% | indep  3.21% n=2
+2026-10-06                                 n=10   stake=   24.2 ROI=  27.6% (EV  3.6%) profit=   6.67 exp=  0.89 z=  0.8 | CLV  2.50% n=10   t=  2.3 beat= 80% | indep  3.00% n=8
+
+### app version
+n/a                                        n=236  stake=  375.6 ROI=   4.5% (EV  3.6%) profit=  16.88 exp= 13.77 z=  0.1 | CLV  2.05% n=249  t=  6.6 beat= 73% | indep  2.55% n=98
+0.89.2                                     n=14   stake=   10.5 ROI= -46.4% (EV  2.5%) profit=  -4.89 exp=  0.29 z= -2.0 | CLV   nan% n=0    t=  nan beat=nan% | indep   nan% n=0

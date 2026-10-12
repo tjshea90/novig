@@ -1,0 +1,96 @@
+=== results vs fair, cluster-robust (by game / by day) ===
+ALL                                      n=1162 games=278  ROI=  -3.6% exp= 3.4% resid=-113.73 z_game= -2.2 z_day= -1.7 | win 46.0% vs fair 49.6% (-3.7pp)
+made=bet                                 n=911  games=255  ROI=  -5.7% exp= 3.4% resid=-111.16 z_game= -2.5 z_day= -2.1 | win 45.3% vs fair 49.6% (-4.3pp)
+made=bid                                 n=251  games=79   ROI=   3.0% exp= 3.6% resid=  -2.57 z_game= -0.1 z_day= -0.1 | win 48.2% vs fair 49.6% (-1.4pp)
+bets: props                              n=658  games=138  ROI= -11.5% exp= 3.5% resid=-139.05 z_game= -3.4 z_day= -2.2 | win 42.6% vs fair 49.7% (-7.1pp)
+bets: props Over                         n=377  games=124  ROI= -16.6% exp= 3.6% resid=-107.71 z_game= -3.4 z_day= -2.5 | win 39.3% vs fair 49.4% (-10.1pp)
+bets: props Under                        n=281  games=86   ROI=  -4.5% exp= 3.4% resid= -31.34 z_game= -1.2 z_day= -1.2 | win 47.0% vs fair 50.1% (-3.1pp)
+bets: non-props                          n=253  games=161  ROI=  12.5% exp= 3.0% resid=  27.89 z_game=  1.2 z_day=  1.5 | win 52.6% vs fair 49.5% (+3.1pp)
+bids: props Over                         n=79   games=38   ROI= -10.0% exp= 3.6% resid= -16.65 z_game= -1.1 z_day= -1.0 | win 41.8% vs fair 48.7% (-6.9pp)
+bids: props Under                        n=86   games=27   ROI=  -3.3% exp= 3.6% resid= -10.09 z_game= -0.5 z_day= -0.4 | win 47.7% vs fair 50.2% (-2.5pp)
+ALL: props Over                          n=456  games=132  ROI= -15.4% exp= 3.6% resid=-124.36 z_game= -3.4 z_day= -2.5 | win 39.7% vs fair 49.2% (-9.5pp)
+ALL: props Under                         n=367  games=92   ROI=  -4.2% exp= 3.5% resid= -41.43 z_game= -1.3 z_day= -1.3 | win 47.1% vs fair 50.1% (-3.0pp)
+props Over NFL                           n=253  games=39   ROI= -15.4% exp= 3.6% resid= -65.84 z_game= -2.4 z_day= -1.9 | win 39.5% vs fair 49.3% (-9.7pp)
+props Under NFL                          n=224  games=37   ROI= -12.8% exp= 3.4% resid= -52.30 z_game= -2.1 z_day= -2.0 | win 43.3% vs fair 49.7% (-6.4pp)
+props Over NHL                           n=127  games=59   ROI= -10.7% exp= 3.6% resid= -29.91 z_game= -1.5 z_day= -1.6 | win 44.1% vs fair 49.5% (-5.4pp)
+props Under NHL                          n=36   games=22   ROI=   3.4% exp= 3.5% resid=  -0.04 z_game= -0.0 z_day= -0.0 | win 52.8% vs fair 50.8% (+2.0pp)
+props Over MLB                           n=37   games=21   ROI= -29.2% exp= 3.6% resid= -17.21 z_game= -1.9 z_day= -1.9 | win 35.1% vs fair 49.2% (-14.1pp)
+props Under MLB                          n=53   games=20   ROI=  16.6% exp= 3.6% resid=  10.80 z_game=  0.9 z_day=  0.7 | win 58.5% vs fair 52.1% (+6.4pp)
+props Over WNBA                          n=39   games=13   ROI= -20.8% exp= 3.6% resid= -11.41 z_game= -1.0 z_day= -1.3 | win 30.8% vs fair 48.4% (-17.6pp)
+props Under WNBA                         n=54   games=13   ROI=   3.6% exp= 3.5% resid=   0.12 z_game=  0.0 z_day=  0.0 | win 48.1% vs fair 49.4% (-1.3pp)
+
+=== by market (props), ALL made ===
+('NHL', 'Player Shots On Goal', 'Over')  n=85   games=52   ROI=  -6.3% exp= 3.6% resid= -14.41 z_game= -0.8 z_day= -0.8 | win 45.9% vs fair 49.4% (-3.5pp)
+('NFL', 'Player Receiving Yards', 'Under') n=54   games=26   ROI= -15.2% exp= 3.5% resid= -14.25 z_game= -1.1 z_day= -1.8 | win 40.7% vs fair 49.7% (-8.9pp)
+('NFL', 'Player Receiving Yards', 'Over') n=54   games=28   ROI= -15.7% exp= 3.5% resid= -13.77 z_game= -1.3 z_day= -1.6 | win 38.9% vs fair 49.1% (-10.2pp)
+('NFL', 'Player Receptions', 'Over')     n=37   games=23   ROI= -24.1% exp= 3.3% resid= -11.48 z_game= -1.5 z_day= -1.3 | win 32.4% vs fair 49.3% (-16.8pp)
+('NFL', 'Player Rushing Yards', 'Over')  n=32   games=23   ROI= -28.0% exp= 3.4% resid= -12.61 z_game= -1.4 z_day= -1.3 | win 37.5% vs fair 48.5% (-11.0pp)
+('NFL', 'Player Receptions', 'Under')    n=27   games=17   ROI= -21.6% exp= 2.9% resid=  -8.26 z_game= -1.2 z_day= -0.9 | win 37.0% vs fair 48.9% (-11.9pp)
+('NFL', 'Player Rushing Yards', 'Under') n=23   games=15   ROI=  25.2% exp= 3.7% resid=   7.34 z_game=  1.0 z_day=  0.8 | win 56.5% vs fair 48.8% (+7.7pp)
+('NFL', 'Receiving Yards', 'Under')      n=20   games=8    ROI= -38.5% exp= 3.6% resid= -14.16 z_game= -1.8 z_day= -1.6 | win 35.0% vs fair 51.6% (-16.6pp)
+('NFL', 'Rushing Yards', 'Over')         n=19   games=11   ROI= -35.2% exp= 3.6% resid= -11.23 z_game= -1.1 z_day= -1.3 | win 31.6% vs fair 49.5% (-17.9pp)
+('NFL', 'Receiving Yards', 'Over')       n=18   games=8    ROI=  -1.1% exp= 3.5% resid=  -1.15 z_game= -0.2 z_day= -0.2 | win 44.4% vs fair 49.5% (-5.1pp)
+('WNBA', 'Points', 'Under')              n=17   games=7    ROI=   9.2% exp= 3.8% resid=   1.43 z_game=  0.2 z_day=  0.2 | win 52.9% vs fair 49.4% (+3.6pp)
+('NHL', 'Shots On Goal', 'Over')         n=17   games=9    ROI=   0.5% exp= 3.9% resid=  -0.98 z_game= -0.1 z_day= -0.1 | win 52.9% vs fair 50.6% (+2.4pp)
+('NFL', 'Player Rushing Attempts', 'Over') n=16   games=15   ROI=  10.3% exp= 3.5% resid=   1.58 z_game=  0.3 z_day=  0.2 | win 56.2% vs fair 50.5% (+5.8pp)
+('NHL', 'Player Shots On Goal', 'Under') n=16   games=13   ROI=   0.9% exp= 3.2% resid=  -0.70 z_game= -0.1 z_day= -0.2 | win 50.0% vs fair 52.0% (-2.0pp)
+('NFL', 'Rushing Yards', 'Under')        n=13   games=8    ROI=  18.1% exp= 3.8% resid=   2.82 z_game=  0.5 z_day=  0.8 | win 61.5% vs fair 49.9% (+11.6pp)
+('NFL', 'Player Passing Completions', 'Under') n=11   games=10   ROI= -38.1% exp= 3.1% resid=  -6.13 z_game= -1.4 z_day= -1.7 | win 36.4% vs fair 49.4% (-13.0pp)
+('WNBA', 'Points', 'Over')               n=11   games=5    ROI= -32.5% exp= 3.9% resid=  -4.75 z_game= -0.7 z_day= -1.2 | win 27.3% vs fair 48.3% (-21.0pp)
+('NHL', 'Player Points', 'Over')         n=11   games=10   ROI=  11.3% exp= 3.0% resid=   1.34 z_game=  0.3 z_day=  0.4 | win 54.5% vs fair 50.2% (+4.4pp)
+('NFL', 'Rushing Attempts', 'Over')      n=11   games=5    ROI= -53.7% exp= 3.7% resid=  -7.76 z_game= -1.7 z_day= -1.6 | win 27.3% vs fair 48.2% (-20.9pp)
+('NFL', 'Player Passing Attempts', 'Over') n=10   games=8    ROI= -22.0% exp= 3.1% resid=  -3.30 z_game= -0.6 z_day= -0.8 | win 40.0% vs fair 48.6% (-8.6pp)
+('WNBA', 'Player Points', 'Under')       n=9    games=7    ROI= -60.6% exp= 3.2% resid=  -6.51 z_game= -1.6 z_day= -1.7 | win 22.2% vs fair 49.0% (-26.8pp)
+('NFL', 'Receptions', 'Over')            n=8    games=6    ROI=  37.6% exp= 3.2% resid=   4.03 z_game=  0.8 z_day=  0.8 | win 62.5% vs fair 48.9% (+13.6pp)
+('NFL', 'Player Passing Interceptions', 'Under') n=8    games=7    ROI=  20.4% exp= 3.0% resid=   1.85 z_game=  0.6 z_day=  0.8 | win 50.0% vs fair 51.2% (-1.2pp)
+('MLB', 'Player Hits + Runs + RBIs', 'Under') n=8    games=7    ROI=  28.0% exp= 3.3% resid=   2.45 z_game=  0.7 z_day=  0.6 | win 62.5% vs fair 49.1% (+13.4pp)
+
+=== calibration by fair-probability band (all settled) ===
+fair 0-0.3                               n=1    games=0    ROI=-100.0% exp= 5.7% resid=  -0.75 z_game=  nan z_day=  nan | win  0.0% vs fair 17.4% (-17.4pp)
+fair 0.3-0.4                             n=3    games=2    ROI=-100.0% exp= 3.8% resid=  -4.04 z_game= -1.3 z_day= -1.3 | win  0.0% vs fair 37.7% (-37.7pp)
+fair 0.4-0.45                            n=89   games=67   ROI=   0.1% exp= 3.3% resid=  -3.48 z_game= -0.2 z_day= -0.2 | win 41.6% vs fair 43.4% (-1.8pp)
+fair 0.45-0.5                            n=726  games=229  ROI=  -8.2% exp= 3.5% resid=-111.96 z_game= -2.6 z_day= -2.3 | win 43.4% vs fair 48.2% (-4.8pp)
+fair 0.5-0.55                            n=246  games=115  ROI=   0.9% exp= 3.5% resid=  -9.61 z_game= -0.4 z_day= -0.4 | win 49.6% vs fair 51.8% (-2.2pp)
+fair 0.55-0.6                            n=66   games=53   ROI=   8.7% exp= 3.2% resid=   6.55 z_game=  0.5 z_day=  0.5 | win 57.6% vs fair 57.1% (+0.4pp)
+fair 0.6-1                               n=31   games=23   ROI=  22.3% exp= 3.0% resid=   9.55 z_game=  1.3 z_day=  1.4 | win 71.0% vs fair 69.3% (+1.7pp)
+
+=== EV band x made (cluster-robust) ===
+bets EV 0-0.02                           n=126  games=65   ROI=  -1.1% exp= 1.5% resid=  -3.31 z_game= -0.2 z_day= -0.5 | win 46.8% vs fair 49.4% (-2.6pp)
+bids EV 0-0.02                           n=1    games=0    ROI=-100.0% exp= 2.0% resid=  -0.51 z_game=  nan z_day=  nan | win  0.0% vs fair 47.4% (-47.4pp)
+bets EV 0.02-0.03                        n=294  games=133  ROI=  -0.7% exp= 2.5% resid= -11.67 z_game= -0.6 z_day= -0.5 | win 48.6% vs fair 49.9% (-1.2pp)
+bids EV 0.02-0.03                        n=45   games=20   ROI=   0.1% exp= 2.6% resid=  -1.11 z_game= -0.1 z_day= -0.1 | win 44.4% vs fair 50.3% (-5.9pp)
+bets EV 0.03-0.04                        n=273  games=143  ROI=  -4.0% exp= 3.5% resid= -28.83 z_game= -1.2 z_day= -1.1 | win 45.1% vs fair 49.4% (-4.3pp)
+bids EV 0.03-0.04                        n=139  games=52   ROI=   8.0% exp= 3.5% resid=  10.33 z_game=  0.5 z_day=  0.5 | win 50.4% vs fair 49.8% (+0.6pp)
+bets EV 0.04-0.05                        n=143  games=81   ROI=  -6.2% exp= 4.4% resid= -23.71 z_game= -1.1 z_day= -0.9 | win 42.7% vs fair 50.1% (-7.4pp)
+bids EV 0.04-0.05                        n=63   games=34   ROI=  -7.3% exp= 4.3% resid= -12.33 z_game= -0.8 z_day= -0.7 | win 47.6% vs fair 49.2% (-1.6pp)
+bets EV 0.05-0.06                        n=75   games=52   ROI= -28.1% exp= 5.5% resid= -43.65 z_game= -2.4 z_day= -1.8 | win 36.0% vs fair 49.1% (-13.1pp)
+bids EV 0.05-0.06                        n=3    games=3    ROI=  28.6% exp= 5.1% resid=   1.04 z_game=  0.3 z_day=  0.3 | win 33.3% vs fair 37.7% (-4.3pp)
+
+=== lead time x CLV (bets + bids), all with a true close ===
+-- made=bet
+lead 0-1 h                         n=146  CLV  3.38% t= 13.9 t_game= 12.7 beat= 92% | indep  3.61% n=51
+lead 1-2 h                         n=39   CLV  3.27% t=  7.2 t_game=  6.9 beat= 92% | indep  3.59% n=18
+lead 2-4 h                         n=121  CLV  2.52% t=  6.9 t_game=  6.1 beat= 79% | indep  2.52% n=41
+lead 4-6 h                         n=49   CLV  2.38% t=  4.2 t_game=  4.5 beat= 78% | indep  3.52% n=21
+lead 6-9 h                         n=73   CLV  0.56% t=  0.9 t_game=  0.8 beat= 56% | indep  2.64% n=19
+lead 9-13 h                        n=56   CLV  0.49% t=  0.5 t_game=  0.5 beat= 61% | indep  1.24% n=25
+lead 13-24 h                       n=108  CLV -0.09% t= -0.1 t_game= -0.1 beat= 56% | indep  0.75% n=41
+lead 24-1000000000.0 h             n=294  CLV -0.32% t= -0.5 t_game= -0.6 beat= 54% | indep  1.43% n=120
+-- made=bid
+lead 0-1 h                         n=37   CLV  2.83% t=  7.0 t_game=  6.3 beat= 84% | indep  4.28% n=17
+lead 1-2 h                         n=22   CLV  3.50% t=  5.1 t_game=  5.1 beat= 86% | indep  3.92% n=7
+lead 2-4 h                         n=39   CLV  2.74% t=  3.8 t_game=  3.4 beat= 85% | indep  3.37% n=19
+lead 4-6 h                         n=40   CLV  1.41% t=  2.2 t_game=  2.4 beat= 62% | indep  1.26% n=12
+lead 6-9 h                         n=43   CLV  2.16% t=  2.7 t_game=  3.0 beat= 72% | indep  2.21% n=18
+lead 9-13 h                        n=34   CLV  2.00% t=  1.9 t_game=  3.5 beat= 62% | indep  0.85% n=11
+lead 13-24 h                       n=29   CLV -0.06% t= -0.0 t_game= -0.0 beat= 62% | indep  1.54% n=14
+lead 24-1000000000.0 h             n=5    CLV  1.10% t=  0.3 t_game=  0.3 beat= 60% | indep   nan% n=0
+-- made=None
+lead 0-1 h                         n=183  CLV  3.27% t= 15.5 t_game= 13.8 beat= 90% | indep  3.78% n=68
+lead 1-2 h                         n=61   CLV  3.35% t=  8.9 t_game=  8.7 beat= 90% | indep  3.68% n=25
+lead 2-4 h                         n=160  CLV  2.57% t=  7.9 t_game=  6.6 beat= 80% | indep  2.79% n=60
+lead 4-6 h                         n=89   CLV  1.94% t=  4.5 t_game=  4.9 beat= 71% | indep  2.70% n=33
+lead 6-9 h                         n=116  CLV  1.16% t=  2.3 t_game=  2.1 beat= 62% | indep  2.43% n=37
+lead 9-13 h                        n=90   CLV  1.06% t=  1.5 t_game=  1.6 beat= 61% | indep  1.12% n=36
+lead 13-24 h                       n=137  CLV -0.08% t= -0.1 t_game= -0.1 beat= 57% | indep  0.95% n=55
+lead 24-1000000000.0 h             n=299  CLV -0.30% t= -0.5 t_game= -0.6 beat= 55% | indep  1.43% n=120

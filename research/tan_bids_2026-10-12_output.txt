@@ -1,0 +1,105 @@
+bids 22234 status Counter({'canceled': 21205, 'expired': 794, 'filled': 218, 'refused': 16, 'lost': 1})
+
+### league
+NFL                                posted=10808  filled=89   ( 0.8%) bid-hours=  863.6 fills/100bh=  10.3 paid=$ 130.00 EVpost= 3.4%
+NCAAF                              posted=4190   filled=24   ( 0.6%) bid-hours=  713.8 fills/100bh=   3.4 paid=$  27.34 EVpost= 4.1%
+NHL                                posted=3165   filled=59   ( 1.9%) bid-hours=  232.4 fills/100bh=  25.4 paid=$ 107.25 EVpost= 3.9%
+MLB                                posted=2074   filled=40   ( 1.9%) bid-hours=  246.3 fills/100bh=  16.2 paid=$  69.21 EVpost= 3.6%
+WNBA                               posted=1303   filled=32   ( 2.5%) bid-hours=   96.8 fills/100bh=  33.0 paid=$  48.50 EVpost= 3.7%
+WTA                                posted=377    filled=0    ( 0.0%) bid-hours=   38.5 fills/100bh=   0.0 paid=$   0.00 EVpost= 2.8%
+ATP                                posted=311    filled=1    ( 0.3%) bid-hours=   35.2 fills/100bh=   2.8 paid=$   0.93 EVpost= 2.9%
+
+### kind
+Player props                       posted=11924  filled=174  ( 1.5%) bid-hours= 1015.2 fills/100bh=  17.1 paid=$ 277.49 EVpost= 3.6%
+Team totals                        posted=8589   filled=65   ( 0.8%) bid-hours= 1071.8 fills/100bh=   6.1 paid=$  99.22 EVpost= 3.8%
+1st half / inning / set lines      posted=961    filled=4    ( 0.4%) bid-hours=   81.3 fills/100bh=   4.9 paid=$   4.87 EVpost= 3.1%
+Game totals                        posted=416    filled=1    ( 0.2%) bid-hours=   29.8 fills/100bh=   3.4 paid=$   0.71 EVpost= 3.3%
+Spreads                            posted=278    filled=0    ( 0.0%) bid-hours=   23.5 fills/100bh=   0.0 paid=$   0.00 EVpost= 3.0%
+Moneylines                         posted=66     filled=1    ( 1.5%) bid-hours=    5.4 fills/100bh=  18.4 paid=$   0.93 EVpost= 2.6%
+
+### side
+Over                               posted=10865  filled=104  ( 1.0%) bid-hours= 1090.2 fills/100bh=   9.5 paid=$ 154.47 EVpost= 3.6%
+Under                              posted=10504  filled=138  ( 1.3%) bid-hours= 1058.9 fills/100bh=  13.0 paid=$ 225.42 EVpost= 3.6%
+other                              posted=865    filled=3    ( 0.3%) bid-hours=   77.9 fills/100bh=   3.9 paid=$   3.34 EVpost= 3.0%
+
+### margin
+0.0325                             posted=5562   filled=74   ( 1.3%) bid-hours=  431.2 fills/100bh=  17.2 paid=$ 131.51 EVpost= 3.8%
+0.0275                             posted=5531   filled=20   ( 0.4%) bid-hours=  423.3 fills/100bh=   4.7 paid=$  23.65 EVpost= 3.2%
+0.035                              posted=3860   filled=29   ( 0.8%) bid-hours=  730.3 fills/100bh=   4.0 paid=$  48.10 EVpost= 4.1%
+0.03                               posted=3586   filled=54   ( 1.5%) bid-hours=  338.4 fills/100bh=  16.0 paid=$  86.90 EVpost= 3.5%
+0.04                               posted=1803   filled=21   ( 1.2%) bid-hours=  140.9 fills/100bh=  14.9 paid=$  32.37 EVpost= 4.5%
+0.02                               posted=1605   filled=26   ( 1.6%) bid-hours=  143.6 fills/100bh=  18.1 paid=$  27.48 EVpost= 2.5%
+0.025                              posted=287    filled=21   ( 7.3%) bid-hours=   19.2 fills/100bh= 109.3 paid=$  33.22 EVpost= 3.0%
+
+### lead at post (h)
+36                                 posted=2698   filled=2    ( 0.1%) bid-hours=  197.9 fills/100bh=   1.0 paid=$   3.07 EVpost= 3.8%
+3                                  posted=1718   filled=24   ( 1.4%) bid-hours=  132.2 fills/100bh=  18.2 paid=$  29.40 EVpost= 3.5%
+6                                  posted=1475   filled=10   ( 0.7%) bid-hours=  102.8 fills/100bh=   9.7 paid=$  12.50 EVpost= 3.6%
+4                                  posted=1441   filled=23   ( 1.6%) bid-hours=  121.3 fills/100bh=  19.0 paid=$  33.89 EVpost= 3.6%
+8                                  posted=1414   filled=25   ( 1.8%) bid-hours=  285.4 fills/100bh=   8.8 paid=$  44.22 EVpost= 3.5%
+5                                  posted=1319   filled=16   ( 1.2%) bid-hours=  104.6 fills/100bh=  15.3 paid=$  24.22 EVpost= 3.6%
+0                                  posted=1316   filled=30   ( 2.3%) bid-hours=  101.5 fills/100bh=  29.6 paid=$  43.92 EVpost= 3.5%
+7                                  posted=1216   filled=10   ( 0.8%) bid-hours=  102.7 fills/100bh=   9.7 paid=$  19.37 EVpost= 3.4%
+2                                  posted=1204   filled=18   ( 1.5%) bid-hours=  111.3 fills/100bh=  16.2 paid=$  23.61 EVpost= 3.6%
+9                                  posted=1146   filled=13   ( 1.1%) bid-hours=  111.2 fills/100bh=  11.7 paid=$  22.89 EVpost= 3.5%
+1                                  posted=895    filled=20   ( 2.2%) bid-hours=   87.7 fills/100bh=  22.8 paid=$  28.06 EVpost= 3.7%
+16                                 posted=890    filled=4    ( 0.4%) bid-hours=  156.8 fills/100bh=   2.6 paid=$   6.76 EVpost= 3.6%
+10                                 posted=740    filled=15   ( 2.0%) bid-hours=   47.0 fills/100bh=  31.9 paid=$  30.37 EVpost= 3.4%
+13                                 posted=719    filled=2    ( 0.3%) bid-hours=   56.1 fills/100bh=   3.6 paid=$   2.63 EVpost= 3.5%
+11                                 posted=676    filled=6    ( 0.9%) bid-hours=  148.0 fills/100bh=   4.1 paid=$  10.29 EVpost= 3.3%
+19                                 posted=551    filled=5    ( 0.9%) bid-hours=   40.8 fills/100bh=  12.2 paid=$   8.98 EVpost= 4.0%
+14                                 posted=517    filled=2    ( 0.4%) bid-hours=   40.3 fills/100bh=   5.0 paid=$   2.10 EVpost= 3.8%
+15                                 posted=483    filled=4    ( 0.8%) bid-hours=  121.7 fills/100bh=   3.3 paid=$   6.79 EVpost= 3.6%
+18                                 posted=455    filled=5    ( 1.1%) bid-hours=   53.2 fills/100bh=   9.4 paid=$   9.43 EVpost= 4.0%
+20                                 posted=346    filled=1    ( 0.3%) bid-hours=   27.9 fills/100bh=   3.6 paid=$   1.98 EVpost= 4.0%
+12                                 posted=332    filled=4    ( 1.2%) bid-hours=   31.3 fills/100bh=  12.8 paid=$   5.99 EVpost= 3.6%
+17                                 posted=312    filled=5    ( 1.6%) bid-hours=   20.3 fills/100bh=  24.6 paid=$  10.37 EVpost= 3.9%
+21                                 posted=136    filled=1    ( 0.7%) bid-hours=   11.1 fills/100bh=   9.0 paid=$   2.35 EVpost= 4.0%
+22                                 posted=59     filled=0    ( 0.0%) bid-hours=    4.0 fills/100bh=   0.0 paid=$   0.00 EVpost= 4.1%
+23                                 posted=46     filled=0    ( 0.0%) bid-hours=    2.4 fills/100bh=   0.0 paid=$   0.00 EVpost= 4.1%
+26                                 posted=39     filled=0    ( 0.0%) bid-hours=    1.9 fills/100bh=   0.0 paid=$   0.00 EVpost= 4.1%
+25                                 posted=37     filled=0    ( 0.0%) bid-hours=    2.2 fills/100bh=   0.0 paid=$   0.00 EVpost= 3.9%
+
+### books
+10                                 posted=4321   filled=33   ( 0.8%) bid-hours=  365.3 fills/100bh=   9.0 paid=$  40.39 EVpost= 3.4%
+6                                  posted=2953   filled=34   ( 1.2%) bid-hours=  281.3 fills/100bh=  12.1 paid=$  55.57 EVpost= 3.7%
+5                                  posted=2819   filled=42   ( 1.5%) bid-hours=  272.1 fills/100bh=  15.4 paid=$  72.20 EVpost= 3.7%
+7                                  posted=2769   filled=27   ( 1.0%) bid-hours=  362.7 fills/100bh=   7.4 paid=$  39.84 EVpost= 3.7%
+8                                  posted=2362   filled=17   ( 0.7%) bid-hours=  249.8 fills/100bh=   6.8 paid=$  22.08 EVpost= 3.7%
+3                                  posted=2025   filled=27   ( 1.3%) bid-hours=  183.8 fills/100bh=  14.7 paid=$  48.44 EVpost= 3.8%
+9                                  posted=1923   filled=19   ( 1.0%) bid-hours=  203.1 fills/100bh=   9.4 paid=$  26.06 EVpost= 3.6%
+4                                  posted=1672   filled=34   ( 2.0%) bid-hours=  176.1 fills/100bh=  19.3 paid=$  58.89 EVpost= 3.8%
+2                                  posted=842    filled=11   ( 1.3%) bid-hours=   72.6 fills/100bh=  15.2 paid=$  18.83 EVpost= 3.5%
+1                                  posted=548    filled=1    ( 0.2%) bid-hours=   60.3 fills/100bh=   1.7 paid=$   0.93 EVpost= 2.9%
+
+### price band
+0.5                                posted=15605  filled=166  ( 1.1%) bid-hours= 1613.6 fills/100bh=  10.3 paid=$ 263.86 EVpost= 3.6%
+0.4                                posted=6241   filled=64   ( 1.0%) bid-hours=  575.7 fills/100bh=  11.1 paid=$  86.64 EVpost= 3.6%
+0.6                                posted=387    filled=14   ( 3.6%) bid-hours=   37.6 fills/100bh=  37.2 paid=$  32.01 EVpost= 3.5%
+
+### EV at post
+4                                  posted=11283  filled=114  ( 1.0%) bid-hours= 1301.7 fills/100bh=   8.8 paid=$ 202.52 EVpost= 3.9%
+3                                  posted=8812   filled=100  ( 1.1%) bid-hours=  721.0 fills/100bh=  13.9 paid=$ 141.43 EVpost= 3.2%
+5                                  posted=1246   filled=15   ( 1.2%) bid-hours=  125.9 fills/100bh=  11.9 paid=$  24.31 EVpost= 4.7%
+2                                  posted=892    filled=15   ( 1.7%) bid-hours=   78.2 fills/100bh=  19.2 paid=$  14.26 EVpost= 2.2%
+
+### position at post
+led or level (best bid <= ours)    posted=15004  filled=224  ( 1.5%) bid-hours= 1517.2 fills/100bh=  14.8 paid=$ 347.85 EVpost= 3.6%
+behind by 1c                       posted=2351   filled=9    ( 0.4%) bid-hours=  221.9 fills/100bh=   4.1 paid=$  16.98 EVpost= 3.5%
+behind by 2c                       posted=1827   filled=2    ( 0.1%) bid-hours=  210.8 fills/100bh=   0.9 paid=$   3.04 EVpost= 3.5%
+n/a                                posted=1648   filled=8    ( 0.5%) bid-hours=  144.8 fills/100bh=   5.5 paid=$  12.01 EVpost= 3.6%
+behind by 3c                       posted=744    filled=2    ( 0.3%) bid-hours=   76.2 fills/100bh=   2.6 paid=$   3.34 EVpost= 3.6%
+behind by 4c                       posted=371    filled=0    ( 0.0%) bid-hours=   28.2 fills/100bh=   0.0 paid=$   0.00 EVpost= 3.9%
+behind by 5c                       posted=289    filled=0    ( 0.0%) bid-hours=   27.8 fills/100bh=   0.0 paid=$   0.00 EVpost= 3.9%
+
+### scanner
+('vigilant', True)                 posted=22018  filled=236  ( 1.1%) bid-hours= 2221.2 fills/100bh=  10.6 paid=$ 363.82 EVpost= 3.6%
+('cno', True)                      posted=216    filled=9    ( 4.2%) bid-hours=    5.7 fills/100bh= 158.7 paid=$  19.41 EVpost= 3.5%
+
+### day
+2026-10-10                         posted=8712   filled=43   ( 0.5%) bid-hours= 1201.4 fills/100bh=   3.6 paid=$  51.71 EVpost= 3.9%
+2026-10-11                         posted=7130   filled=56   ( 0.8%) bid-hours=  560.3 fills/100bh=  10.0 paid=$  60.61 EVpost= 3.1%
+2026-10-09                         posted=6298   filled=52   ( 0.8%) bid-hours=  461.2 fills/100bh=  11.3 paid=$  81.21 EVpost= 3.8%
+
+distinct markets 1889 posts per market: mean 11.8, p50 5, p90 29, max 139
+markets with a fill 244 posts spent on markets that never filled: 19474 of 22234
