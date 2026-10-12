@@ -4927,3 +4927,6 @@ Design: reuse the whole Pinnodds live lane (matcher, 5 s freshness, fee, trader,
 - [x] TBL7a (backoff built, test: refusal that says wait minutes) BoltOdds lines socket got "Re-subscription rate limit hit. Please wait 5 minutes": resubscribe only when the filters really changed, back off 5 min after that error. Then read the v0.95.3 live-feed note (per-game fresh companies) from Tj's next file during a real live slate and decide quorum/age or is_live semantics.
 
 - [ ] TPL1 (Tj, 2026-10-12) "Investigate if [PropLine Streaming Lite] is good": DONE as research, see research/propline_streaming_lite_2026-10-12.md. If Tj says buy/build: PropLineStream socket + suspend signal + Kalshi/Polymarket votes + 250k QuotaPolicy.
+
+- [x] TBL8 BoltOdds refresh 7-14 s: conversion cache keyed on aliveAt invalidated by every push; cache now holds raw-time conversion, lift applied as a copy (BoltLiveConsensusTest "a book speaking again lifts..."). Ship v0.95.4.
+- [ ] TPL2 (Tj, 2026-10-12) "How can I use the propline pushed live events to my advantage with vigilant": answer in chat; build only if Tj says buy/build (TPL1).
