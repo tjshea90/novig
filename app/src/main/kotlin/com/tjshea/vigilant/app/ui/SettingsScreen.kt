@@ -1188,6 +1188,24 @@ private fun ColumnScope.BettingTab(
                 (com.tjshea.vigilant.data.scanner.ProfitProfile.shipped?.summary() ?: "no profile is built in") + ". Off = no change at all.",
             s.gates.profitProven, tag = "profitProvenSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(profitProven = v)) } }
+        SectionTitle("Repeat and hedge guard")
+        SwitchRow(
+            "Repeat and hedge guard",
+            "Stops the auto-bet, the bids and the live engine from betting or bidding the same side (player, team or prop) over and over because its price keeps changing: after the number of bets below, or the dollars below, " +
+                "that side is left alone. The other side of the same market is allowed only when both sides together are a sure profit after fees, so it never locks in a loss. A bet by hand is only warned.",
+            s.gates.repeatGuard, tag = "repeatGuardSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatGuard = v)) } }
+        if (s.gates.repeatGuard) {
+            Text("Most bets or bids on one side", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            ChoiceChips(listOf(1, 2, 3, 5, 0), s.gates.repeatMaxBets, { if (it == 0) "No limit" else it.toString() }) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatMaxBets = v)) } }
+            Text("Most dollars on one side", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            ChoiceChips(listOf(25.0, 50.0, 100.0, 250.0, 0.0), s.gates.repeatMaxDollars, { if (it == 0.0) "No limit" else "$" + it.toInt() }) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatMaxDollars = v)) } }
+            SwitchRow(
+                "Allow the other side when it is a sure profit",
+                "Lets the auto-bet and bids take the other side of a market you already hold, but only if every way it can end pays a profit after every dollar spent. Off = never both sides.",
+                s.gates.repeatHedge, tag = "repeatHedgeSwitch",
+            ) { v -> onUpdate { it.copy(gates = it.gates.copy(repeatHedge = v)) } }
+        }
         if (s.cnoOn && onOpenAutoBet != null) {
             OutlinedButton(onClick = onOpenAutoBet, modifier = Modifier.padding(top = 8.dp).testTag("bettingOpenAutoBet")) { Text("Auto-bet has its own tab: open it") }
         }
