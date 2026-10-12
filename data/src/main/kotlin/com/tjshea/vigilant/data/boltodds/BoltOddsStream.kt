@@ -360,7 +360,9 @@ class BoltOddsStream(
                     // Re-subscription too soon: ask again once the gap has passed.
                     if (m.text.contains("rate limit", ignoreCase = true)) {
                         subscribed = null
-                        lastSubscribeAt = now
+                        // The server now says how long ("Please wait 5 minutes"): honour it, and do not hammer it every few seconds meanwhile.
+                        val minutes = Regex("(\\d+)\\s*minute", RegexOption.IGNORE_CASE).find(m.text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+                        lastSubscribeAt = now + minutes * 60_000L
                         scope.launch { syncSubscription() }
                     }
                 }
