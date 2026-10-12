@@ -18,6 +18,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okio.ByteString
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -52,6 +53,8 @@ class BoltOddsStream(
     /** A book that has said nothing about a sport for this long is not vouched for: its quotes age by their own times. */
     private val quietBookMs: Long = 30 * 60_000L,
     private val checkEveryMs: Long = 2_000L,
+    /** How long an opened connection waits for `socket_connected` before it subscribes anyway. */
+    private val greetingWaitMs: Long = 4_000L,
 ) {
     enum class State { OFF, CONNECTING, LIVE, DOWN }
 
@@ -99,6 +102,24 @@ class BoltOddsStream(
     @Volatile var frames = 0L
         private set
 
+    /**
+     * What the first sample showed (BOLTODDS_API.md §6, 2026-10-12: a connection that opened and then said nothing for 30 s): how many frames were text and how many binary, how many arrived on THIS connection, when it
+     * opened and what the server answered the upgrade with, and the first few raw frames (kind, size, a preview). For Test key and Diagnostics.
+     */
+    @Volatile var textFrames = 0L
+        private set
+    @Volatile var binaryFrames = 0L
+        private set
+    @Volatile var framesThisConn = 0L
+        private set
+    @Volatile var openedAtMs = 0L
+        private set
+    @Volatile var openInfo: String? = null
+        private set
+    @Volatile var greetingFallbacks = 0
+        private set
+    val rawFrames = java.util.concurrent.CopyOnWriteArrayList<String>()
+
     /** Frames that were a JSON array of messages, and the biggest frame (characters): what the docs leave open (BOLTODDS_API.md §8). */
     @Volatile var arrayFrames = 0L
         private set
@@ -139,7 +160,8 @@ class BoltOddsStream(
      * Null otherwise: a quote then counts only as old as the message that set it.
      */
     fun aliveAt(book: String, sport: String): Long? {
-        if (state != State.LIVE || readyAtMs == 0L) return null
+        // A connection that has not sent one frame since it opened (not even a ping) is not vouched for, whatever state it claims.
+        if (state != State.LIVE || readyAtMs == 0L || framesThisConn == 0L) return null
         val now = clock()
         val heard = board.heardAt(book, sport) ?: return null
         return if (now - heard <= quietBookMs) now else null
@@ -174,6 +196,9 @@ class BoltOddsStream(
             val startedAt = clock()
             state = State.CONNECTING
             connects++
+            openedAtMs = 0L
+            openInfo = null
+            framesThisConn = 0L
             val ws = http.newWebSocket(Request.Builder().url("$wsUrl?key=$key").build(), Listener(closed))
             socket = ws
             var idle = false
@@ -181,8 +206,16 @@ class BoltOddsStream(
                 withTimeoutOrNull(checkEveryMs) { closed.await() }
                 if (closed.isCompleted) break
                 if (clock() - lastUsedMs > idleCloseMs) { idle = true; ws.close(1000, "idle"); withTimeoutOrNull(3_000) { closed.await() }; break }
-                // Opened but never greeted with `socket_connected`: not a connection to wait on.
-                if (state == State.CONNECTING && clock() - startedAt > CONNECT_TIMEOUT_MS) { ws.cancel(); closed.complete(Closed(-1, "no socket_connected within ${CONNECT_TIMEOUT_MS / 1000}s")); break }
+                // Opened but not greeted with `socket_connected` within [greetingWaitMs]: the docs' troubleshooting says to send the subscription soon after connecting, and the first sample (2026-10-12) saw a connection
+                // that opened and said nothing for 30 s. Go on as if greeted: subscribe now (a greeting that comes later changes nothing), and read the snapshot.
+                if (state == State.CONNECTING && openedAtMs > 0L && clock() - openedAtMs > greetingWaitMs) {
+                    greetingFallbacks++
+                    state = State.LIVE
+                    lastError = "no socket_connected within ${greetingWaitMs / 1000}s of opening: subscribed anyway"
+                    scope.launch { syncSubscription() }
+                }
+                // Never opened at all: not a connection to wait on.
+                if (state == State.CONNECTING && openedAtMs == 0L && clock() - startedAt > CONNECT_TIMEOUT_MS) { ws.cancel(); closed.complete(Closed(-1, "the upgrade did not finish within ${CONNECT_TIMEOUT_MS / 1000}s")); break }
                 maybeResnapshot()
             }
             val c = if (closed.isCompleted) closed.await() else Closed(1000, "idle")
@@ -284,10 +317,19 @@ class BoltOddsStream(
         }
     }.toString()
 
-    private fun onFrame(text: String) {
+    private fun onFrame(text: String, binary: Boolean = false, raw: String? = null) {
         val now = clock()
         lastFrameMs = now
         frames++
+        framesThisConn++
+        if (binary) binaryFrames++ else textFrames++
+        if (rawFrames.size < MAX_RAW_FRAMES) rawFrames += "${if (binary) "binary ${raw ?: ""}" else "text"} · ${text.length} chars · ${client.redact(text.take(160)).replace('\n', ' ')}"
+        // A frame of any kind proves the connection is talking: a missing greeting does not keep it from being live.
+        if (state == State.CONNECTING) {
+            state = State.LIVE
+            liveSinceMs = now
+            scope.launch { syncSubscription() }
+        }
         if (text.trimStart().startsWith("[")) arrayFrames++
         if (text.length > biggestFrame) biggestFrame = text.length
         for (m in BoltParser.frame(text, now)) {
@@ -321,8 +363,18 @@ class BoltOddsStream(
     }
 
     private inner class Listener(private val closed: CompletableDeferred<Closed>) : WebSocketListener() {
+        override fun onOpen(webSocket: WebSocket, response: Response) {
+            openedAtMs = clock()
+            openInfo = "HTTP ${response.code} · extensions ${response.header("Sec-WebSocket-Extensions") ?: "none"} · server ${response.header("Server") ?: "?"}"
+        }
+
         override fun onMessage(webSocket: WebSocket, text: String) {
             if (webSocket === socket) onFrame(text)
+        }
+
+        /** The docs' own client reads `recv()` whatever the frame type: a binary frame carrying JSON (possibly gzip or zlib) is read like a text one. */
+        override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+            if (webSocket === socket) onFrame(BoltFrames.decode(bytes), binary = true, raw = "${bytes.size} bytes, starts ${bytes.substring(0, minOf(8, bytes.size)).hex()}")
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
@@ -344,6 +396,7 @@ class BoltOddsStream(
         const val DEFAULT_WS_URL = "wss://spro.agency/api"
         const val MAX_SNAPSHOT_MARKETS = 60
         const val CONNECT_TIMEOUT_MS = 30_000L
+        const val MAX_RAW_FRAMES = 6
         const val MAX_PINGS = 20
 
         /** The OkHttp client for a socket: it pings every 20 s and drops a connection that does not answer. */
