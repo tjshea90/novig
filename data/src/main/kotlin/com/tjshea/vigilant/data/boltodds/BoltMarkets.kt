@@ -68,10 +68,29 @@ object BoltMarkets {
         }
     }
 
-    /** Novig's stat for a prop name: "Home Runs", "Player Points", "Rebounds" (the OddsPapi table, [OpProps], is the one list of them). */
+    /**
+     * The names BoltOdds' books really use (the 2026-10-12 sample's `get_markets`, BOLTODDS_API.md §8) for a stat the OddsPapi table words differently: only names that mean exactly one Novig stat. The ambiguous
+     * ones are left out on purpose ("Strikeouts" is a pitcher's or a batter's, "Bases", "Runs" and "Touchdowns" are not "Total Bases", "Earned Runs" or "Anytime Touchdown"). Every stat here is also in
+     * [OpProps.ALL_TYPES], so the scan already loads Novig's market for it.
+     */
+    private val BOLT_FOOTBALL = mapOf(
+        "passcompletions" to "PASSING_COMPLETIONS", "passingrushingyards" to "PASSING_AND_RUSHING_YARDS", "rushingreceivingyards" to "RUSHING_AND_RECEIVING_YARDS",
+        "receptionyards" to "RECEIVING_YARDS", "interceptionsthrown" to "INTERCEPTIONS_THROWN", "longestpasscompletion" to "LONGEST_COMPLETION", "longestrushingattempt" to "LONGEST_RUSH",
+    )
+    private val BOLT_BASEBALL = mapOf("strikeoutsthrown" to "PITCHER_STRIKEOUTS", "batterstrikeouts" to "BATTING_STRIKEOUTS", "earnedrunsallowed" to "EARNED_RUNS")
+    private val BOLT_BASKETBALL = mapOf("pointsassistsrebounds" to "POINTS_REBOUNDS_ASSISTS")
+
+    private fun boltStat(league: String, key: String): String? = when (league) {
+        "NFL", "NCAAF" -> BOLT_FOOTBALL[key]
+        "MLB" -> BOLT_BASEBALL[key]
+        "NBA", "NCAAB", "WNBA" -> BOLT_BASKETBALL[key]
+        else -> null
+    }
+
+    /** Novig's stat for a prop name: "Home Runs", "Player Points", "Rebounds" (the OddsPapi table, [OpProps], is the one list of them, with [boltStat] for BoltOdds' own wording). */
     fun stat(league: String, normalized: String): String? =
         OpProps.stat(league, normalized) ?: OpProps.stat(league, normalized.removePrefix("player")) ?: OpProps.stat(league, normalized.removePrefix("playertotal"))
-            ?: OpProps.stat(league, normalized + "s") ?: OpProps.stat(league, normalized.removeSuffix("s"))
+            ?: OpProps.stat(league, normalized + "s") ?: OpProps.stat(league, normalized.removeSuffix("s")) ?: boltStat(league, normalized) ?: boltStat(league, normalized.removePrefix("player"))
 
     /** Whether [name] is a market name this table can use at all, whatever the shape of the outcome (for choosing the market filter from `get_markets`). */
     fun usableName(league: String, name: String, props: Boolean): Boolean {

@@ -35,8 +35,11 @@ object BoltBooks {
         "Boxing" to listOf("boxing"),
     )
 
-    /** Parts of a season whose games Novig lists in the league's own market: a "NBA Preseason" game is a NBA game. (Summer League, other competitions: not.) */
-    private val SUFFIXES = listOf("", "preseason")
+    /**
+     * Parts of a season whose games Novig lists in the league's own market: BoltOdds names the preseason "NBA Pre" / "NFL Pre" (its `get_info`, 2026-10-12) and a "NBA Preseason" game is a NBA game too.
+     * (Summer League, other competitions: not.)
+     */
+    private val SUFFIXES = listOf("", "pre", "preseason")
 
     private fun norm(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
 
