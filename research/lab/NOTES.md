@@ -37,3 +37,4 @@
 - 2026-10-12 TPF: profit by type from the 1,331-bet history (research/profit_types_2026-10-12.md): NFL player props (esp. Overs, t=-2.6) and 4-6% EV bets lose; team-total bids win (+34%, t=2.3); profile + 'Profit-proven only' switch built (v0.93.0)
 - 2026-10-12 v0.93.3: Entain family (bwin, Party Sports, Sports Interaction, Ladbrokes, Coral, Neds, ...) and BetMGM are one company in every book count (research/book_company_2026-10-12.md).
 - 2026-10-12 Tj's v0.94.1 diagnostics: BoltOdds has no sharp book (live fair stays Pinnodds), key is on Trial plan; streaming engine updates were starved by full scans (fixed v0.94.2). research/streaming_v0.94.1_first_evidence_2026-10-12.md
+- 2026-10-12 v0.95.0: BoltOdds live (is_live parsed), soft-book average live fair (BoltLiveConsensus/BoltLiveFeed, PinnFeedChoice.BOLT, paper-only until boltLiveReal); streaming engine now push (addGameListener). BOLTODDS_API.md §10.
