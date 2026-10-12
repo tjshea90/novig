@@ -6856,3 +6856,8 @@ Parlayapi odds can be 5-10 minutes old. Pinnodds socket will run out soon. I'm n
 
 What do you recommend for what this app does 
 ```
+
+## 2026-10-12T21:58:06Z
+```
+I can add more pinnwire and pinnapi for free. I can also get a lot of free propline keys. Is propline pro better than 25 free keys? What about sharpapi?
+```
