@@ -6689,3 +6689,8 @@ It is done tell me what to do
 ```
 @"/root/.claude/uploads/d95b6645-d5e0-5a0b-9345-cf5a8be1907e/16f48f89-vigilant-diagnostics-v0.92.0-2026-10-12-0512.txt" 
 ```
+
+## 2026-10-12T09:20:06Z
+```
+When I do bets, after I press the bet button, it lags for a long time, if the bet over the socket only took 60ms, can the app make the bet slip faster
+```
