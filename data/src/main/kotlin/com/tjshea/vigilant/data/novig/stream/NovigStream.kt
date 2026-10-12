@@ -449,7 +449,7 @@ class NovigStream(
         idleJob?.cancel()
         idleJob = scope.launch {
             while (isActive) {
-                delay(minOf(idleMs, IDLE_CHECK_MS))
+                delay(minOf(idleMs, IDLE_CHECK_MS, maxOf(bboDataWaitMs / 2, 250L)))
                 val idle = synchronized(this@NovigStream) { clock() - lastUsedMs >= idleMs }
                 if (idle) {
                     close()
@@ -827,6 +827,8 @@ class NovigStream(
                 (b["lifecycle"] as? JsonObject)?.let { books.applyLifecycleSnapshot(marketId, it) }
             }
             if (bboUnreadable >= 3 && bboSnapshots == 0) fallBackFromBbo("Novig's best-bid snapshots could not be read")
+            // Enough best-bid snapshots are in for the once-a-connection check against the book: a sync pass ends with it.
+            if (!canaryDone && bboSnapshots >= minOf(canaryMarkets, 3)) scheduleSync()
             var gap = false
             (msg["delta"] as? JsonObject)?.forEach { (marketId, body) ->
                 // Pushes for a market just dropped are ignored (its unsubscribe may still be on the way).
