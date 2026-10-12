@@ -4911,7 +4911,7 @@ The 4: (1) standing match index BoltOdds game/prop <-> Novig event/market/outcom
 - [x] TLN4 Tests, ship, release.
 - TLN1-3 done in code (v0.94.1): Scanner.streamUpdate (+ScannerTest), ScanRunner.stream, AutoScanner.streamHandOff, StreamEngine rewrite (Novig line update + BoltOdds refresh), BoltBoard.lagReport in Diagnostics. TLN4 = ship/release. WAITING ON TJ for item 4 (BoltOdds as a live fair): Diagnostics file after ~10 min of a live slate with BoltOdds on: the "push lag" block (books, sharp-book line, lag) and the Streaming engine line.
 - [x] TLN5 Tj's v0.94.1 file read (research/streaming_v0.94.1_first_evidence_2026-10-12.md): BoltOdds no sharp book -> live stays Pinnodds (item 4 settled); engine starvation fixed in v0.94.2 (non-blocking streamUpdate, Novig first, async bids, 300 s full-scan gap while streaming); stale league names no longer sent to Novig (TNV13 done).
-- [ ] TLN6 Read the next file: "Streaming engine" line (priced N ms / auto-bet N ms, skipped for a running scan) and whether Novig-line updates now dominate; bid desk pass >20 s (cycle.step.maker p95 20,004): find why.
+- [x] TLN6 (read) Read the next file: "Streaming engine" line (priced N ms / auto-bet N ms, skipped for a running scan) and whether Novig-line updates now dominate; bid desk pass >20 s (cycle.step.maker p95 20,004): find why.
 
 ## TBL: live engine from the soft-book average on BoltOdds (Tj, 2026-10-12 ~19:50Z)
 Tj (verbatim): "Can you build a live betting engine based on an average of the soft sports books offered by the boltodds socket at low latency? Does it offer live? Make sure the app is taking full advantage of all sockets. They shouldn't need to wait for anything or scan at internals. They should run in real time"
@@ -4922,4 +4922,6 @@ Design: reuse the whole Pinnodds live lane (matcher, 5 s freshness, fee, trader,
 - [x] TBL3 BoltLiveFeed (PinnFeedSource): board change -> frames for the changed games at once (100 ms debounce), 1 s tick closes stale lines; feed choice BOLT in Settings; runner forced to MOVE/STANDING trigger (no scores), min EV floor 4%; real-money switches unchanged (paper default).
 - [x] TBL4 Sockets audit: what else waits or polls (stream engine 250 ms counter poll -> push callback; Novig live lane already push).
 - [x] TBL5 Tests, ship, release; tell Tj what it can't do (no scores: livescores/playbyplay sockets next) and what to send.
-- [ ] TBL6 Read the next file: "BoltOdds live feed" line + "games flagged in play" + Streaming engine timing breakdown (boards/matching/pricing); confirm tennis matches; decide on a /livescores socket for scores.
+- [x] TBL6 (read v0.95.2 file; see research/boltodds_live_v0.95.2_evidence_2026-10-12.md) Read the next file: "BoltOdds live feed" line + "games flagged in play" + Streaming engine timing breakdown (boards/matching/pricing); confirm tennis matches; decide on a /livescores socket for scores.
+
+- [ ] TBL7 BoltOdds lines socket got "Re-subscription rate limit hit. Please wait 5 minutes": resubscribe only when the filters really changed, back off 5 min after that error. Then read the v0.95.3 live-feed note (per-game fresh companies) from Tj's next file during a real live slate and decide quorum/age or is_live semantics.
