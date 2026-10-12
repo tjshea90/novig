@@ -153,15 +153,15 @@ class OddsPapi4Test {
     @Test fun theFairFeedsDailyFigureCannotOutrunThePlanEvenWhenTjPicksMoreThanADayCanHold() = runTest {
         val c = client()
         val b = Op4Budget(c) { clockMs }
-        handler = { ok(account(100)) }; c.account()
+        handler = { ok(account(150)) }; c.account()
         // "250 a day" on a plan of 250 a MONTH (Tj's file 2026-10-11 23:18: 220 gone in a day): 100 left, 35 kept, so at most 65 in the very last day and far fewer before it.
         assertTrue(b.mayBuyFair(250, 0))
         assertFalse("65 is the whole of what is spendable, only ever on the last day", b.mayBuyFair(250, 65))
         assertFalse("his own figure still caps it", b.mayBuyFair(5, 5))
-        handler = { ok(account(36)) }; c.account()
+        handler = { ok(account(214)) }; c.account()
         assertTrue("one request above the reserves buys one", b.mayBuyFair(250, 0))
         assertFalse(b.mayBuyFair(250, 1))
-        handler = { ok(account(35)) }; c.account()
+        handler = { ok(account(215)) }; c.account()
         assertFalse("the last 35 are for closing lines", b.mayBuyFair(250, 0))
     }
 
