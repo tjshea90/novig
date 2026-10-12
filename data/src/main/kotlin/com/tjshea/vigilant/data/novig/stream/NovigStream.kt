@@ -238,6 +238,9 @@ class NovigStream(
     private var idleJob: Job? = null
     private var reconnectJob: Job? = null
     private var tokens = 0.0
+
+    /** True once a connection has been opened: [tokens] is then a running model of the key's `stream` bucket, not a guess. */
+    private var modelKnown = false
     private var tokensAt = 0L
     private var lastUsedMs = 0L
     private var failedAtMs: Long? = null
@@ -478,8 +481,11 @@ class NovigStream(
             fail("This phone can't sign with the saved Novig key. Reconnect it in Settings.")
             return
         }
-        // The upgrade costs 32; the bucket is assumed full before it (a fresh or long-idle key).
-        tokens = capacity - UPGRADE_COST
+        // The upgrade costs 32. The bucket is the KEY's, not the connection's: a reconnect after a drop (or the Test key's own connection) finds what the last one spent still unrefilled, so the model
+        // carries on from where it was (4 a second); a first connection in this process assumes a full bucket (a fresh or long-idle key).
+        val before = if (modelKnown) minOf(capacity, tokens + (clock() - tokensAt).coerceAtLeast(0) / 1000.0 * refillPerSec) else capacity
+        tokens = before - UPGRADE_COST
+        modelKnown = true
         tokensAt = clock()
         subscribeRequests = 0
         chunk = Int.MAX_VALUE
