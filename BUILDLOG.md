@@ -228,3 +228,4 @@ day that changes.
 | v0.90.0 | code 221 | 2026-10-12T06:35Z | v0.90.0: BoltOdds Pro (websocket lines + props, Test key sample), live taker fee 0.06 for NCAAF/MLB/NHL, Novig docs re-check, NovigStream wake-up race fix
 | v0.90.1 | code 222 | 2026-10-12T07:14Z | v0.90.1: BoltOdds odds socket reads binary frames and subscribes without a greeting, Test key v2 (multi-book snapshot, scores sockets), real market names, preseason sports
 | v0.91.0 | code 223 | 2026-10-12T08:20Z | v0.91.0: Novig best-bid feed (bbo) with a switch back and automatic fallbacks, one persistent shared Novig connection (429 waits Retry-After, reconnects itself, the burst recorder shares it), the key's full watch room, instant order results from the private stream, Test key checks bbo against the book
+| v0.92.0 | code 224 | 2026-10-12T09:09Z | v0.92.0: orders over Novig's websocket, compressed live feed, market status acted on, feed diagnostics, canary retries, Test key frees the app's feed first
