@@ -116,7 +116,8 @@ class Scanner(
     /** The live feed is handed its markets once the plan is in, or this long into a scan ([BookPump.feedStream]). */
     private val streamHoldMs: Long = STREAM_HOLD_MS,
     /** How many markets the live feed holds at once: more unread than this and there's no reason to wait. */
-    private val streamRoom: Int = com.tjshea.vigilant.data.novig.stream.NovigStream.MAX_MARKETS,
+    /** How many markets a scan may hand the live feed; null = what the feed says it can hold ([NovigSource.watchRoom]: the key's own cap). */
+    private val streamRoom: Int? = null,
 ) : OddsScanner {
     private data class Catalog(
         val leagues: Set<String>,
@@ -259,6 +260,7 @@ class Scanner(
             pump.fairOddsDone()
             pumpJob.await()
             // A long scan's first edges were read minutes before its last books: read them again.
+            if (!betsOnly) pump.deepenEdges()
             if (!betsOnly) pump.rereadEarlyEdges()
             if (pump.readFrom != null) pump.readTo = elapsed() - t0
             reports
@@ -329,7 +331,7 @@ class Scanner(
                 liveFeedAsked = pump.streamAsked,
                 // The feed's whole worth is what it holds: asked for 2,000 at 4 s and holding 315 at the end is the number that says it was slow (Tj's
                 // v0.58.2 file: 315 pushed of 2,000 asked in a 299 s scan, REST-bound at 14.5 a second).
-                liveFeedHeld = pump.streamAt?.let { novig.pushed(pump.streamIds).size },
+                liveFeedHeld = pump.streamAt?.let { novig.pushedTop(pump.streamIds).size },
                 pace = pump.pace,
             ),
         )
@@ -484,7 +486,7 @@ class Scanner(
                     continue
                 }
                 // Books the websocket already holds cost no request: all of them at once.
-                val pushed = novig.pushed(pending.map { it.market.marketId })
+                val pushed = novig.pushedTop(pending.map { it.market.marketId })
                 if (pushed.isNotEmpty()) {
                     val ids = fetchOrder(pending.filter { it.market.marketId in pushed }, settings, preview)
                         .take(cap - requested.size).map { it.market.marketId }
@@ -551,15 +553,60 @@ class Scanner(
             if (streamAt != null) return
             novig.openFeed()
             val waited = elapsed() - startedAt
-            if (!lastPass && pending.size < streamRoom && waited < streamHoldMs && waiting().isNotEmpty()) return
-            val held = novig.pushed(plan.marketIds).keys
+            val room = streamRoom ?: novig.watchRoom()
+            if (!lastPass && pending.size < room && waited < streamHoldMs && waiting().isNotEmpty()) return
+            val held = novig.pushedTop(plan.marketIds).keys
             val unread = fetchOrder(pending, settings, preview).take((cap - requested.size).coerceAtLeast(0)).map { it.market.marketId }.filter { it !in held }
             val ids = plan.markets.map { it.market.marketId }.filter { it in held } + unread
             streamAt = waited
-            streamAsked = minOf(ids.size, streamRoom)
+            streamAsked = minOf(ids.size, room)
             streamIds = ids.take(streamAsked).toHashSet()
             if (ids.isNotEmpty()) novig.watch(ids)
         }
+
+        /**
+         * Markets the live feed held as their best bid only price a bet exactly (a taker's price is the other side's best bid) but know nothing of its size: the stake it would take, the
+         * ladder behind it, the others' bids the bid desk joins (NOVIG_API.md §25). So every market whose best price is +EV is moved to the full book, and read again as a complete book the
+         * moment it arrives (up to [DEEPEN_WAIT_MS]); the few the feed did not deliver in time are read by REST as before. The result is the one an all-`book` feed would have given.
+         */
+        suspend fun deepenEdges() {
+            val cat = catalog ?: return
+            if (fresh.values.none { it.partial }) return
+            val shown = planFor(cat, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS)
+            val merged = HashMap(books).apply { putAll(fresh) }
+            val ids = Pricing.price(shown, merged, settings, now, fairMemo).opportunities
+                .filter { o -> fresh[o.market.marketId]?.partial == true && (o.quote?.evPercent ?: Double.NEGATIVE_INFINITY) > 0.0 }
+                .map { it.market.marketId }
+                .distinct()
+            if (ids.isEmpty()) return
+            novig.deepen(ids)
+            var complete = novig.pushed(ids)
+            var waited = 0L
+            while (complete.size < ids.size && waited < DEEPEN_WAIT_MS) {
+                delay(DEEPEN_POLL_MS)
+                waited += DEEPEN_POLL_MS
+                complete = novig.pushed(ids)
+            }
+            for ((id, book) in complete) fresh[id] = book
+            val missing = ids.filter { it !in complete }
+            if (missing.isNotEmpty()) {
+                try {
+                    val batch = withContext(com.tjshea.vigilant.data.novig.NovigReadTag("scan-deepen")) { novig.books(missing) }
+                    for ((id, book) in batch.books) if (!book.partial) fresh[id] = book
+                    refused += batch.refused
+                    batch.retryAfterSeconds?.let { retryAfter = it }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // The best-price books stand: right price, the size of the top level.
+                }
+            }
+            deepened += ids.size
+            publish(cat)
+        }
+
+        /** Markets moved to the full book by [deepenEdges]. */
+        var deepened = 0
 
         /**
          * Novig reads again (at most [MAX_REREAD]) the feed's bets whose price was read over

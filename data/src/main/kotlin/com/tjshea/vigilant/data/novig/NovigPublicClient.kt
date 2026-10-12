@@ -54,8 +54,20 @@ interface NovigSource {
     /** Opens the live feed (if this source has one) without changing what it watches: its throttle refills while a scan's plan fills in. */
     fun openFeed() {}
 
-    /** Books among [marketIds] this source holds current right now, with no request. None by default. */
+    /** Books among [marketIds] this source holds current right now, with no request. None by default. COMPLETE books only (a full ladder); see [pushedTop]. */
     fun pushed(marketIds: Collection<String>): Map<String, NovigBook> = emptyMap()
+
+    /**
+     * Like [pushed], but also the markets the feed holds as their best bid only ([NovigBook.partial]): exact for the price to buy and for what is bid, never for depth. For screening a scan's
+     * prices; a bet that is worth making asks for the complete book ([deepen]). Same as [pushed] for a source with no best-bid channel.
+     */
+    fun pushedTop(marketIds: Collection<String>): Map<String, NovigBook> = pushed(marketIds)
+
+    /** Moves these markets to the live feed's full book (a no-op for a source with no best-bid channel). */
+    fun deepen(marketIds: Collection<String>) {}
+
+    /** How many markets the live feed can hold at once: what a scan may hand it. */
+    fun watchRoom(): Int = com.tjshea.vigilant.data.novig.stream.NovigStream.MAX_MARKETS
 
     /** Why pushed books stopped, if they did at or after [sinceMs] (the scan says so once). */
     fun pushProblem(sinceMs: Long): String? = null
@@ -233,6 +245,15 @@ class NovigPublicClient(
 
     override fun pushed(marketIds: Collection<String>): Map<String, NovigBook> =
         if (marketIds.isEmpty()) emptyMap() else liveStream()?.live(marketIds).orEmpty()
+
+    override fun pushedTop(marketIds: Collection<String>): Map<String, NovigBook> =
+        if (marketIds.isEmpty()) emptyMap() else liveStream()?.liveTop(marketIds).orEmpty()
+
+    override fun deepen(marketIds: Collection<String>) {
+        if (marketIds.isNotEmpty()) liveStream()?.deepen(marketIds)
+    }
+
+    override fun watchRoom(): Int = liveStream()?.room() ?: com.tjshea.vigilant.data.novig.stream.NovigStream.MAX_MARKETS
 
     override fun pushProblem(sinceMs: Long): String? = stream?.problemSince(sinceMs)
 
@@ -425,8 +446,10 @@ class NovigPublicClient(
     override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?): BookBatch = coroutineScope {
         val all = marketIds.distinct()
         // Books the websocket keeps current need no request; the rest are read one by one.
-        val pushed = pushed(all)
-        for ((id, book) in pushed) bookCache[id] = CachedBook(null, book)
+        // A read that only needs each side's best price (the Tracker's open bets) takes a market the feed holds as its best bid; every other read wants a complete ladder.
+        val pushed = if (coroutineContext[NovigScreening] != null) pushedTop(all) else pushed(all)
+        // Never a best-bid-only book into the cache: a failed read later falls back to it, and that is not a ladder.
+        for ((id, book) in pushed) if (!book.partial) bookCache[id] = CachedBook(null, book)
         val ids = all.filter { it !in pushed }
         NovigReads.add(coroutineContext[NovigReadTag]?.tag ?: "other", ids.size)
         val signer = keyed?.takeIf { clock() >= keyedDownUntil }
