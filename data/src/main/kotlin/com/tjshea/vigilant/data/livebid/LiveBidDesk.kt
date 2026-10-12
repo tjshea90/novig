@@ -150,6 +150,9 @@ class LiveBidDesk(
     private val clock: () -> Long = System::currentTimeMillis,
     private val version: String? = null,
     private val tickMs: Long = TICK_MS,
+    /** The repeat and hedge guard's rules (null = off) and what Tj's open bets hold, read once per pass ([com.tjshea.vigilant.data.tracker.RepeatGuard]). Paper bids are judged against the desk's own paper fills. */
+    private val repeat: () -> com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? = { null },
+    private val heldBets: suspend () -> List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = { emptyList() },
 ) {
     private val mu = Any()
     private val bids = LinkedHashMap<String, LiveBid>()
@@ -448,6 +451,7 @@ class LiveBidDesk(
         if (fresh.isEmpty()) return
         // Read once per pass, outside the lock: dollars of API bets already filled today by every desk.
         val spent = if (cfg.real) runCatching { spentToday() }.getOrDefault(Double.MAX_VALUE / 4) else 0.0
+        val held = if (repeat() != null && cfg.real) runCatching { heldBets() }.getOrDefault(emptyList()) else emptyList()
         var posts = 0
         for (w in fresh) {
             if (posts >= MAX_POSTS_PER_STEP) break
@@ -462,6 +466,8 @@ class LiveBidDesk(
                     val cost = contracts * w.verdict.price * EvMath.CONTRACT_PAYOUT_DOLLARS
                     val blocked = synchronized(mu) { budget(w, cost, cfg, now, decision.replacing, spent) }
                     if (blocked != null) { count(blocked); continue }
+                    val repeatWhy = synchronized(mu) { repeatWhy(w, cost, contracts, cfg, now, decision.replacing, held) }
+                    if (repeatWhy != null) { count(REPEAT_SKIP); continue }
                     // A runaway guard: more real bids in a minute than the limits and the bids' lives can explain means something is wrong (a loop, an order Novig keeps ending): stop and say so.
                     if (cfg.real) {
                         val overRate = synchronized(mu) {
@@ -514,6 +520,20 @@ class LiveBidDesk(
         }
         if (!cfg.quality.bothSides && bids.values.any { it.active && it.marketId == w.marketId && it.outcomeId != w.outcomeId }) return Decision.Skip("the other side of this market has a bid up", count = false)
         return Decision.Go(replacing)
+    }
+
+    /**
+     * The repeat and hedge guard ([com.tjshea.vigilant.data.tracker.RepeatGuard], Tj, 2026-10-12): why a bid of [contracts] must not go up, or null. Inside [mu]. A real bid is judged against the Tracker's open
+     * bets ([held], live-bid fills included); a paper bid against the desk's own paper fills. A bid up now counts as if it filled for the other-side test but not as a bet; the bid [replacing] is the same bid renewed.
+     */
+    private fun repeatWhy(w: LiveBidWant, cost: Double, contracts: Long, cfg: LiveBidConfig, now: Long, replacing: LiveBid?, held: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>): String? {
+        val rules = repeat() ?: return null
+        val pos = ArrayList(held)
+        val day = ApiBetPlacer.localMidnight(now)
+        if (!cfg.real) bids.values.filter { it.postedAtMs >= day && it.filled > 0 }.mapTo(pos) { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.paid, it.filled * EvMath.CONTRACT_PAYOUT_DOLLARS) }
+        bids.values.filter { it.active && it.clientId != replacing?.clientId && it.clientId !in replaced && it.restingDollars > 0.0 }
+            .mapTo(pos) { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.restingDollars, (it.contracts - it.filled).coerceAtLeast(0) * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0) }
+        return com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, pos, w.marketId, w.outcomeId, cost, contracts * EvMath.CONTRACT_PAYOUT_DOLLARS)
     }
 
     /** Why a bid costing [cost] must not go up, or null. Inside [mu]. Every bid not yet over counts as if it fills. */
