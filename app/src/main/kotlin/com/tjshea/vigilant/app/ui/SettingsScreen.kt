@@ -1162,6 +1162,12 @@ private fun ColumnScope.BettingTab(
             "Holds the connection between scans and reconnects it by itself after a drop, so a scan finds its prices already pushed. Off = the connection closes two minutes after a scan.",
             s.gates.novigKeepOpen, tag = "novigKeepOpenSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(novigKeepOpen = v)) } }
+        SwitchRow(
+            "Instant order results",
+            "Novig pushes an order's end (filled, cancelled, rejected) over the live feed the moment its matching engine has it, so a bet's result is not asked for every half second. The fills are still read " +
+                "from Novig for the record. Off = the result is read by request, as before.",
+            s.gates.novigOrderPush, tag = "novigOrderPushSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(novigOrderPush = v)) } }
         if (s.cnoOn && onOpenAutoBet != null) {
             OutlinedButton(onClick = onOpenAutoBet, modifier = Modifier.padding(top = 8.dp).testTag("bettingOpenAutoBet")) { Text("Auto-bet has its own tab: open it") }
         }

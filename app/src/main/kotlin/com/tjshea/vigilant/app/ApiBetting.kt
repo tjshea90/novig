@@ -252,6 +252,7 @@ class ApiBettingController(
             ?: ApiBetPlacer(
                 t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock, lock = c.orderLock,
                 restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(c.makerStore.all()) },
+                events = { (c.novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream)?.orderEvents },
             ).also { placerCache = t to it }
     }
 
