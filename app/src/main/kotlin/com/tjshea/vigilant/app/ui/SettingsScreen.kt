@@ -1208,6 +1208,11 @@ private fun ColumnScope.BettingTab(
         }
         SectionTitle("Repeat and hedge guard")
         SwitchRow(
+            "Freshest quote wins",
+            "When two of your APIs send the same book's price for the same line, use the one stamped more than 20 seconds newer (otherwise the usual feed order). Off = feed order only. Diagnostics › Source race shows how old each API's quotes were.",
+            s.gates.freshestWins, tag = "freshestWinsSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(freshestWins = v)) } }
+        SwitchRow(
             "Repeat and hedge guard",
             "Stops the auto-bet, the bids and the live engine from betting or bidding the same side (player, team or prop) over and over because its price keeps changing: after the number of bets below, or the dollars below, " +
                 "that side is left alone. The other side of the same market is allowed only when both sides together are a sure profit after fees, so it never locks in a loss. A bet by hand is only warned.",

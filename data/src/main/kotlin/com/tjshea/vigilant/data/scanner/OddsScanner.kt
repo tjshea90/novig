@@ -35,6 +35,9 @@ interface OddsScanner {
     /** Where the last streaming update's time went (reading the boards, matching, pricing, deepening), for Diagnostics; null when none ran. */
     fun streamTimings(): String? = null
 
+    /** Diagnostics "Source race": for each feed the scanner holds, how old its book quotes were when last read (median / 90th percentile), and its freshest and stalest books. */
+    fun sourceRace(now: Long): List<String> = emptyList()
+
     suspend fun streamUpdate(settings: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? = null
 
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */

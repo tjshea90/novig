@@ -834,6 +834,27 @@ class Scanner(
     @Volatile private var streamTimings: String? = null
     override fun streamTimings(): String? = streamTimings
 
+    override fun sourceRace(now: Long): List<String> {
+        val held = synchronized(references) { references.values.map { it.snapshot } }
+        return held.groupBy { it.provider.ifEmpty { "reference" } }.entries.sortedBy { SOURCE_ORDER.indexOf(it.key).let { i -> if (i < 0) Int.MAX_VALUE else i } }.map { (id, snaps) ->
+            // Age of each quote when the board was read: the read time minus the book's own stamp (a quote with no stamp is left out, and counted).
+            val ages = ArrayList<Pair<String, Long>>()
+            var unstamped = 0
+            for (snap in snaps) for (e in snap.events) for (m in e.markets) {
+                val t = m.lastUpdateMs
+                if (t == null) unstamped++ else ages += m.bookKey to (snap.fetchedAtMs - t).coerceAtLeast(0L)
+            }
+            if (ages.isEmpty()) return@map "$id: no stamped quotes ($unstamped unstamped)"
+            fun pct(l: List<Long>, p: Double) = l.sorted()[((l.size - 1) * p).toInt()]
+            val all = ages.map { it.second }
+            val perBook = ages.groupBy { it.first }.filterValues { it.size >= 5 }.mapValues { (_, l) -> pct(l.map { it.second }, 0.5) }.entries.sortedBy { it.value }
+            fun sec(ms: Long) = if (ms < 10_000) "%.1f s".format(ms / 1000.0) else "${ms / 1000} s"
+            "$id: ${ages.size} quotes (${snaps.size} boards, read ${(now - snaps.maxOf { it.fetchedAtMs }) / 1000} s ago) · age median ${sec(pct(all, 0.5))}, p90 ${sec(pct(all, 0.9))}" +
+                (if (unstamped > 0) ", $unstamped unstamped" else "") +
+                (if (perBook.isNotEmpty()) " · freshest books " + perBook.take(4).joinToString { "${it.key} ${sec(it.value)}" } + " · stalest " + perBook.takeLast(2).joinToString { "${it.key} ${sec(it.value)}" } else "")
+        }
+    }
+
     override suspend fun streamUpdate(requested: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? {
         // Never waits for a scan: a full scan holds the scanner for minutes (Tj's v0.94.1 file: updates of 115-153 s waiting on it). Null = busy or nothing to price from.
         if (!mutex.tryLock()) return null
