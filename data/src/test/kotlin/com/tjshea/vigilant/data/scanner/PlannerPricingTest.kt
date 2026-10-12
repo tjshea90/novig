@@ -360,4 +360,21 @@ class PlannerPricingTest {
         val later = r.feed(s.copy(feedSort = FeedSort.START))
         assertEquals(later.sortedWith(compareBy<Opportunity> { it.event.startsTs }.thenByDescending { it.evPercent }), later)
     }
+
+    @Test
+    fun `a market Novig's feed says is closed or live is left out of the pregame list however the catalog reads`() {
+        val plan = Planner.plan(listOf(event), markets, refs, sharpOnly, now)
+        val whole = Pricing.price(plan, books, sharpOnly, now)
+        assertTrue(whole.opportunities.any { it.market.marketId == Fixtures.ML_MARKET })
+        fun withLife(marketId: String, status: String, live: Boolean?) = books.mapValues { (id, b) ->
+            if (id == marketId) b.copy(lifecycle = com.tjshea.vigilant.data.novig.stream.MarketLifecycle(status, null, live, now)) else b
+        }
+        val closed = Pricing.price(plan, withLife(Fixtures.ML_MARKET, "CLOSED", false), sharpOnly, now)
+        assertTrue("a closed market has nothing to bet", closed.opportunities.none { it.market.marketId == Fixtures.ML_MARKET })
+        assertTrue("the others are untouched", closed.opportunities.any { it.market.marketId == Fixtures.SPREAD_MARKET })
+        val live = Pricing.price(plan, withLife(Fixtures.ML_MARKET, "OPEN", true), sharpOnly, now)
+        assertTrue("a market in play is not a pregame bet", live.opportunities.none { it.market.marketId == Fixtures.ML_MARKET })
+        val open = Pricing.price(plan, withLife(Fixtures.ML_MARKET, "OPEN", false), sharpOnly, now)
+        assertEquals("open and not live prices as it always did", whole.opportunities.size, open.opportunities.size)
+    }
 }
