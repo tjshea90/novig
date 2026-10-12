@@ -81,6 +81,13 @@ class ApiBetPlacer(
         // The sheet Tj opened: scans give way while it reads the book ([com.tjshea.vigilant.data.novig.BetPriority]). An auto-bet's own planning (many candidates a cycle) does not.
         if (limitsOverride == null) com.tjshea.vigilant.data.novig.BetPriority.hold { planImpl(target, stake, allowRepeat, limitsOverride) } else planImpl(target, stake, allowRepeat, limitsOverride)
 
+    /**
+     * A bet by hand whose order is in at Novig and not yet recorded ([placeByHand]): Novig takes about 5 s to end it, and the next bet may start meanwhile (Tj, 2026-10-12: "Do option 1"). Its
+     * dollars count against the day's limit and its game's limit, and it blocks a repeat of the same side, exactly as if it were already in the Tracker; it leaves when the record is made.
+     */
+    private data class Pending(val outcomeId: String, val item: com.tjshea.vigilant.data.tracker.GameExposure.Item, val dollars: Double)
+    private val pending = java.util.concurrent.CopyOnWriteArrayList<Pending>()
+
     private suspend fun planImpl(target: BetTarget, stake: Double, allowRepeat: Boolean, limitsOverride: BetLimits?): PlanResult {
         val t0 = clock()
         warm()
@@ -88,7 +95,7 @@ class ApiBetPlacer(
         // Pause holds what runs by itself (auto-bet); a bet Tj places by hand is his call (Tj, 2026-10-02: "I should be able to bet on whatever I want manually").
         if (!limits.manual && paused()) return PlanResult.Refused("Scanning is paused (Settings): resume it before betting.")
         val all = tracker.all()
-        if (!allowRepeat && all.any { it.status == BetStatus.PENDING && it.orderId != null && it.outcomeId == target.outcomeId }) {
+        if (!allowRepeat && (pending.any { it.outcomeId == target.outcomeId } || all.any { it.status == BetStatus.PENDING && it.orderId != null && it.outcomeId == target.outcomeId })) {
             return PlanResult.Refused("You've already bet this through the API and it's still open (Tracker). Bet it again from the Tracker's bet if you mean to.")
         }
         val t1 = clock()
@@ -103,9 +110,9 @@ class ApiBetPlacer(
         // One game is one event (Tj, 2026-10-04): what is at risk on it across every market, open bets and resting bids, before this one.
         val game = limits.maxPerGame.takeIf { it > 0.0 }?.let { cap ->
             val ref = GameRef(target.market.eventId, target.eventName, target.startsTs, target.league)
-            GameExposure.check(ref, GameExposure.items(all) + restingBids(), target.market.marketId, target.outcomeId, stake, cap)
+            GameExposure.check(ref, GameExposure.items(all) + restingBids() + pending.map { it.item }, target.market.marketId, target.outcomeId, stake, cap)
         }
-        val plan = ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all), game)
+        val plan = ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all) + pending.sumOf { it.dollars }, game)
         timing("bet check: ${clock() - t0} ms in all (before the book ${t1 - t0} ms, book read ${t2 - t1} ms${if (book == null) ", FAILED" else ""}, rest ${clock() - t2} ms)")
         return plan
     }
@@ -126,6 +133,13 @@ class ApiBetPlacer(
     suspend fun placeAuto(target: BetTarget, stake: Double, limits: BetLimits, expectedPrice: Double): PlaceResult =
         com.tjshea.vigilant.data.novig.BetPriority.hold { placeLocked(target, stake, confirmedLimit = 1.0, allowRepeat = false, limitsOverride = limits, expectedPrice = expectedPrice) }
 
+    /**
+     * A bet by hand (the Bet sheet): the same as [place], but the order lock is let go and [onSent] is called the moment Novig has taken the order, and the end of the order (about 5 s at Novig) is
+     * waited for and recorded after that, so Tj can close the sheet or start the next bet. The order's dollars are held against the limits ([pending]) until the record is made. Returns the end.
+     */
+    suspend fun placeByHand(target: BetTarget, stake: Double, confirmedLimit: Double, allowRepeat: Boolean, onSent: () -> Unit): PlaceResult =
+        com.tjshea.vigilant.data.novig.BetPriority.hold { placeLocked(target, stake, confirmedLimit, allowRepeat, limitsOverride = null, expectedPrice = null, onSent = onSent) }
+
     private suspend fun placeLocked(
         target: BetTarget,
         stake: Double,
@@ -133,7 +147,12 @@ class ApiBetPlacer(
         allowRepeat: Boolean,
         limitsOverride: BetLimits?,
         expectedPrice: Double?,
-    ): PlaceResult = lock.withLock {
+        onSent: (() -> Unit)? = null,
+    ): PlaceResult {
+        lock.lock()
+        var held = true
+        fun release() { if (held) { held = false; lock.unlock() } }
+        try {
         val tp0 = clock()
         val plan = when (val p = plan(target, stake, allowRepeat, limitsOverride)) {
             is PlanResult.Refused -> return PlaceResult.Refused(p.reason, gameLimit = p.gameLimit)
@@ -173,8 +192,24 @@ class ApiBetPlacer(
         }
         // Once the order is in, what came of it is always read and recorded, even if the screen that asked has gone: money spent never goes untracked.
         val tp2 = clock()
-        withContext(NonCancellable) { finish(target, orderId) }.also {
-            timing("bet placed: ${clock() - tp0} ms from the tap's confirm to the record (re-check ${tp1 - tp0} ms, order sent and answered ${tp2 - tp1} ms, waiting for the end and reading the fills ${clock() - tp2} ms)")
+        // By hand: the order is in, so the next bet may start while this one ends. Its dollars stay counted until its record is made.
+        val reservation = onSent?.let {
+            Pending(target.outcomeId, com.tjshea.vigilant.data.tracker.GameExposure.Item(GameRef(target.market.eventId, target.eventName, target.startsTs, target.league), target.market.marketId, target.outcomeId, plan.expectedCost), plan.expectedCost)
+                .also { r -> pending += r }
+        }
+        if (reservation != null) {
+            release()
+            try { onSent() } catch (_: Exception) { }
+        }
+        try {
+            return withContext(NonCancellable) { finish(target, orderId) }.also {
+                timing("bet placed: ${clock() - tp0} ms from the tap's confirm to the record (re-check ${tp1 - tp0} ms, order sent and answered ${tp2 - tp1} ms, waiting for the end and reading the fills ${clock() - tp2} ms)")
+            }
+        } finally {
+            reservation?.let { pending -= it }
+        }
+        } finally {
+            release()
         }
     }
 
