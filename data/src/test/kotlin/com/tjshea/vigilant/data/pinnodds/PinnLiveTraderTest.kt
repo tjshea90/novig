@@ -69,6 +69,7 @@ class PinnLiveTraderTest {
     private fun rig(
         rules: LiveTradeRules = LiveTradeRules(enabled = true, bet = true, stake = 2.0, maxPerGame = 6.0, maxPerDay = 25.0, haltLoss = 10.0),
         gate: String? = null, ownBids: List<LiveOwnBid> = emptyList(), loss: Double = 0.0, scope: kotlinx.coroutines.CoroutineScope, lock: Mutex? = null, logOk: Boolean = true,
+        repeat: com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? = null, held: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = emptyList(),
     ): Rig {
         val orders = FakeOrders()
         val journal = DayJournal(tmp.newFolder("j" + System.nanoTime()), "pinn-live", LiveRecord.serializer()) { it.atMs }
@@ -78,7 +79,7 @@ class PinnLiveTraderTest {
         val trader = PinnLiveTrader(
             orders = orders, scope = scope, rules = { rules }, gate = { gate }, ownBids = { ownBids }, journal = journal, onHalt = { halts += it },
             logFills = { _, id, _ -> logged += id; logOk }, lossToday = { loss }, clock = { now }, dayStart = { base - 3_600_000L }, pause = { now += it },
-            newClientId = { "00000000-0000-4000-8000-%012d".format(++n) }, lock = lock,
+            newClientId = { "00000000-0000-4000-8000-%012d".format(++n) }, lock = lock, repeat = { repeat }, held = { held },
         )
         return Rig(trader, orders, journal, halts, logged)
     }
@@ -110,6 +111,27 @@ class PinnLiveTraderTest {
         assertTrue(r.trader.status.value.spent > 0.0)
         assertEquals("the move to decision time is journaled", 1_000L, rec.decisionMs)
         assertEquals(rec, r.journal.readAll().single())
+    }
+
+    @Test
+    fun `the repeat guard stops a third bet on the same side at a new price and a hedge that would lock a loss, and lets a sure-profit hedge through`() = runTest {
+        val guard = com.tjshea.vigilant.data.tracker.RepeatGuard.Rules(maxBets = 2, maxDollars = 0.0, hedge = true)
+        fun pos(outcome: String, dollars: Double, payout: Double) = com.tjshea.vigilant.data.tracker.RepeatGuard.Pos("mkt", outcome, dollars, payout)
+        // Two bets on OKC already: no third, whatever the new price.
+        val same = rig(scope = backgroundScope, repeat = guard, held = listOf(pos("ml-a", 2.0, 4.0), pos("ml-a", 2.0, 4.0)))
+        assertEquals(null, same.trader.attempt(candidate()))
+        assertTrue(same.orders.placed.isEmpty())
+        assertEquals(1, same.trader.status.value.skipped["repeat guard"])
+        // OKC held for $2 / $4 payout: MIL at about 0.48 for $2 more pays ~$4.2 against $4 spent: a sure profit only if both pay more than spent; here OKC pays 4.0 < 4.0+ -> refused.
+        val loss = rig(scope = backgroundScope, repeat = guard, held = listOf(pos("ml-b", 2.0, 4.0)))
+        assertEquals(null, loss.trader.attempt(candidate()))
+        assertTrue(loss.orders.placed.isEmpty())
+        // MIL held with a $20 payout for $2: OKC for ~$2 pays ~$3.8 and MIL pays 20 -> OKC wins gives 3.8 + 0 - 4 < 0: still a loss, refused.
+        val still = rig(scope = backgroundScope, repeat = guard, held = listOf(pos("ml-b", 2.0, 20.0)))
+        assertEquals(null, still.trader.attempt(candidate()))
+        // With the guard off the same candidate is bet.
+        val off = rig(scope = backgroundScope, repeat = null, held = listOf(pos("ml-a", 2.0, 4.0), pos("ml-a", 2.0, 4.0)))
+        assertEquals("FILLED", off.trader.attempt(candidate())!!.outcome)
     }
 
     @Test
