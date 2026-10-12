@@ -89,6 +89,10 @@ class BoltOddsLiveTest {
                     "/api/get_info" -> MockResponse().setBody(infoBody)
                     "/api/get_markets" -> MockResponse().setBody(marketsBody)
                     "/api/snapshot" -> MockResponse().setResponseCode(snapshotCode).setBody(snapshotBody)
+                    "/api/get_games" -> MockResponse().setBody("""{"Boston Celtics vs New York Knicks, 2026-10-20, 07":{"when":"2026-10-20, 07:30 PM","game":"Boston Celtics vs New York Knicks, 2026-10-20, 07","orig_teams":"Boston Celtics vs New York Knicks","universal_id":"abc123","sport":"NBA"}}""")
+                    "/api/get_parlays" -> MockResponse().setBody("""[{"odds":"+1746","total_bets":3238,"type":"SGP_PLUS","legs":{}}]""")
+                    "/api/playbyplay/user" -> MockResponse().setResponseCode(403).setBody("""{"detail":"Not available on your plan"}""")
+                    "/api/livescores/user" -> MockResponse().setBody("""{"games":[]}""")
                     else -> MockResponse().setResponseCode(404)
                 }
             }
@@ -336,6 +340,31 @@ class BoltOddsLiveTest {
         assertEquals("POINTS", p.events.single().markets.single().stat)
         assertTrue("the lines socket has no props", BoltGamesSource(feed).odds(nba, settings).events.isEmpty())
         feed.close()
+    }
+
+    @Test fun `Test key reads the lists, the markets and a small snapshot, listens on a socket of its own and shares no key`() = runBlocking {
+        snapshotBody = "[" + game("draftkings") + "]"
+        val feed = BoltOddsFeed(client(listOf("good")), OkHttpClient(), scope, wsUrl = wsUrl())
+        val r = BoltKeyTest.run(feed, ScanSettings(leagues = setOf("NBA"), referenceBooks = listOf("draftkings", "fanduel")), listenMs = 600)
+        assertTrue(r.summary, r.ok)
+        assertTrue(r.summary, r.summary.contains("3 sports, 4 sportsbooks, 2 of them"))
+        assertTrue(r.summary, r.summary.contains("Sharp books: none"))
+        assertTrue(r.summary, r.summary.contains("1 games listed"))
+        assertTrue(r.summary, r.summary.contains("Snapshot of NBA at draftkings"))
+        for (piece in listOf("===== get_info =====", "novig [never the fair line]", "neobet", "===== get_markets", "Player Points [prop POINTS]", "Moneyline [line]", "Fight To Not Go Distance [—]", "===== snapshot (NBA · draftkings", "===== get_parlays", "GET /playbyplay/user", "Not available on your plan", "===== websocket probe", "socket_connected")) {
+            assertTrue("missing '$piece' in:\n${r.sample}", r.sample.contains(piece))
+        }
+        assertFalse("the key is not in the sample", r.sample.contains("good") && r.sample.contains("key=good"))
+        assertTrue("the probe used a socket of its own and closed it", feed.probeStream().state == BoltOddsStream.State.OFF)
+        feed.close()
+    }
+
+    @Test fun `a bad key fails the test in one line`() = runBlocking {
+        val feed = BoltOddsFeed(client(listOf("nope")), OkHttpClient(), scope, wsUrl = wsUrl())
+        val r = BoltKeyTest.run(feed, ScanSettings(leagues = setOf("NBA")), listenMs = 100)
+        assertFalse(r.ok)
+        assertTrue(r.summary, r.summary.startsWith("BoltOdds:"))
+        assertFalse(r.summary.contains("nope"))
     }
 
     @Test fun `seen at the start the two sockets are the lines and the props and the third connection stays free`() {
