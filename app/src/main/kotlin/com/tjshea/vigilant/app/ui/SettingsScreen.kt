@@ -1206,12 +1206,13 @@ private fun ColumnScope.BettingTab(
                 s.gates.streamLive, tag = "streamLiveSwitch",
             ) { v -> onUpdate { it.copy(includeLive = if (v) true else it.includeLive, pinnLive = if (v) true else it.pinnLive, liveBid = if (v) true else it.liveBid, gates = it.gates.copy(streamLive = v)) } }
         }
-        SectionTitle("Repeat and hedge guard")
+        SectionTitle("Freshest quote")
         SwitchRow(
             "Freshest quote wins",
             "When two of your APIs send the same book's price for the same line, use the one stamped more than 20 seconds newer (otherwise the usual feed order). Off = feed order only. Diagnostics › Source race shows how old each API's quotes were.",
             s.gates.freshestWins, tag = "freshestWinsSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(freshestWins = v)) } }
+        SectionTitle("Repeat and hedge guard")
         SwitchRow(
             "Repeat and hedge guard",
             "Stops the auto-bet, the bids and the live engine from betting or bidding the same side (player, team or prop) over and over because its price keeps changing: after the number of bets below, or the dollars below, " +
