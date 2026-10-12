@@ -1,0 +1,79 @@
+# BoltOdds Pro — permanent research memory (Tj, 2026-10-12)
+
+Tj's request (2026-10-12, verbatim): "I got a new api. It is boltodds pro. Set it up for the vigilant app. Integrate it just like all the other apis ... set up vigilant to take full advantage of everything boltodds pro tier offers, including the web socket. Thoroughly study the docs to make sure the app is taking full advantage of the pro api and using all the correct commands and usage."
+
+Source: https://boltodds.com/docs (one static page, saved raw as `research/boltodds_2026-10-12/docs_index.html`, text in `docs_index.txt`), https://boltodds.com/pricing (`page_pricing.txt`), the home page (`page_home.txt`). Operator: Spro Technologies Inc., support@boltodds.com. **Nothing in sections 1-5 has been run against Tj's key**: they are the docs plus the probes in §6. Section 8 lists what the first Test-key sample must settle (TBO5).
+
+## 1. The Pro plan (pricing page, 2026-10-12)
+
+$349 a month ($3,348 a year), "for serious bettors, developers, and growing startups":
+- real-time odds over a WebSocket; **all sportsbooks, all leagues, all markets**; advanced WebSocket filters (sports, sportsbooks, games, markets);
+- **3 concurrent WebSocket connections**;
+- the **pre-built parlays endpoint** (`GET /api/get_parlays`);
+- priority support.
+
+NOT in Pro (Custom $499, or the separate "Live Play-by-Play and Scores API", both by contact): SGP Pricing Engine (`POST /api/fanduel/get_parlay_prices`), historical odds, custom sportsbooks/endpoints, **play-by-play** (`wss://spro.agency/api/playbyplay`), **live scores** (`wss://spro.agency/api/livescores`), **box scores / match stats / match info** (POST endpoints). The docs say those scores features are "available to Trial and Custom users". Vigilant therefore builds on the odds WebSocket, the snapshot and the info endpoints; the Test key also asks the two cheap `.../user` endpoints so the sample says whether this key carries the scores feeds (§7).
+
+Cheaper tiers, for the record: Starter $99 (1 league, 1 market per connection, 1 connection), Growth $219 (3 leagues, all markets, 1 connection). Supported data (home page): NHL/AHL/SHL/…, F1/NASCAR/IndyCar, MLB/KBO/NPB/NCAA baseball, tennis (Slams, ATP, WTA, Challenger, ITF), NFL/NCAAF/CFL, UFC/boxing, esports, golf, NBA/NCAAB/WNBA/Euroleague/…, soccer (MLS, EPL, La Liga, …), table tennis.
+
+## 2. Connection and authentication
+
+- WebSocket: `wss://spro.agency/api?key=YOUR_TOKEN`. The key goes in the query string (REST too: `?key=`), not a header. "Once ack_message is received, you have been validated": the first frame is `{'action': 'socket_connected'}`.
+- Send a subscription "soon after connecting" (troubleshooting): `{"action":"subscribe","filters":{"sports":[...],"sportsbooks":[...],"games":[...],"markets":[...]}}`. A filter left out = all of that kind. Sports, sportsbooks, games, markets MUST be spelled exactly as `get_info` / `get_games` / `get_markets` return them; anything else is ignored.
+- Re-sending a subscribe changes the filters on the same connection; it is rate limited: `{"action":"error","message":"Re-subscription rate limit hit. Please wait 5 seconds before re-subscribing."}`. Acknowledged by `{"action":"subscription_updated","message":"You have successfully updated your subscription filters."}`.
+- Frames: the docs print single objects but the example loops `for data in msg`, so a frame may be a JSON ARRAY of messages. Vigilant accepts both. Max message size 64 KB (FAQ). "Message format can be changed or modified in the future."
+- Reconnect: the examples wait 5 s and reconnect forever. Close codes listed: 1000, 1001, 1002, 1003, 1011.
+
+## 3. Messages (`action`)
+
+| action | meaning |
+|---|---|
+| `socket_connected` | key accepted |
+| `game_update` | ALL odds of one game at one book replaced (`data.outcomes` is the full set) |
+| `game_added` | named only in the example code (new game at a book); treated like `game_update` |
+| `line_update` | some outcomes of a game at a book changed; `odds` `None`/`''` = suspended/deleted/unavailable (drop that outcome) |
+| `game_removed` | game left the book (finished, suspended, …) |
+| `sport_clear` | every game of `data.sport` at `data.sportsbook` cleared ("connection drops on our backend") |
+| `book_clear` | every game of `data.sportsbook` cleared |
+| `ping` | keep-alive |
+| `subscription_updated` / `error` | see §2 |
+
+Shape of `data` (game_update / line_update / game_removed / snapshot `initial_state`): `timestamp` (UTC ISO, outside `data`), `sport` (e.g. "MLB", "NBA", "Wimbledon (M)"), `sportsbook` (lower-case slug: "draftkings", "betmgm", "ballybet", "hardrock", "neobet"), `game` (id string `"<Team A> vs <Team B>, YYYY-MM-DD, HH"`; HH is the 12-hour hour of the start), `home_team`, `away_team`, `info` `{id, game, when: "YYYY-MM-DD, hh:mm AM/PM", link}`, `outcomes`.
+`outcomes` is a map keyed by a readable label ("New York Mets Moneyline", player props "Auston Matthews Over 0.5 Goals" in `get_parlays`) of `{odds: "-3333" (American, as a string), link (deep link), outcome_name ("Moneyline", "Goals", "Home Runs"…), outcome_line ("0.5" or null), outcome_over_under ("Over"/"Under"/null), outcome_target (team or player name)}`.
+
+**Time zone of `when`**: the docs' tennis example (`match_info`) has the match scheduled 20:00 UTC (started 20:09 UTC) on 2026-02-26 and BoltOdds' id for it is `..., 2026-02-26, 03` = 3 PM, i.e. US Eastern (EST, UTC-5). So `when` is read as America/New_York (inferred, not stated; the same assumption as Kalshi's Eastern dates). Start times are only to the minute.
+
+## 4. REST endpoints (Pro)
+
+All `GET`, key as `?key=`:
+- `/api/get_info` → `{"sports":[...], "sportsbooks":[...]}` (the exact filter spellings).
+- `/api/get_games` → map of game id → `{when, game, orig_teams, universal_id, sport}`.
+- `/api/get_markets[&sports=A,B&sportsbooks=x,y]` → `{sportsbook: {sport: [market names…]}}`.
+- `/api/snapshot[&sports=&sportsbooks=&games=&markets=]` (filters as repeated or comma parameters in the docs' `requests.get(params=...)`; lists) → JSON array of `{timestamp, action:"initial_state", data:{…as §3…}}`. "Intended to retrieve the initial state when establishing a connection or reconnecting ... not intended to be polled continuously."
+- `/api/get_parlays?sportsbooks=<one slug>` → array of `{odds, total_bets, type ("SGP_PLUS"…), legs:{label:{game, sport, universal_id, outcome_name, outcome_line, outcome_over_under, outcome_target}}}`: popular parlays at a book with how many bets were placed. Not used by Vigilant (Novig has no parlay market; the counts are public-money signals, not prices): read only by the Test key for the sample.
+
+## 5. Limits ("subject to change")
+
+- WebSocket connections: 12 a minute per IP. GET endpoints: 12 a minute per IP (3 in quick succession). `/api/snapshot`: 6 a minute per IP **plus a per-key token quota per 24 hours** ("larger requests use more tokens", the amount is not published). Pro: 3 concurrent WebSocket connections. Exceeding limits "temporarily throttles".
+- The docs' advice: do not poll GET endpoints for odds (that is what the WebSocket is for); avoid frequent calls to rarely-changing endpoints (info, games).
+
+## 6. Probes run from the Claude container (2026-10-12, no real key)
+
+- `GET https://spro.agency/api/get_info` (no key) → HTTP 403 `{"detail":"Missing API token"}`; `?key=INVALID` → HTTP 403 `{"detail":"Invalid API token"}` (same for `/api/snapshot`).
+- WebSocket `wss://spro.agency/api?key=INVALID` → upgrade accepted (101), then the server closes with **code 1008, reason "Invalid token"** after ~2 s; with no key at all → the upgrade is refused (non-101).
+- So a bad key is told apart from an outage by the 403 `detail` text / the 1008 close. The host is reachable from this container's proxy. No real key has been used by a session (Tj offered it; the app's own Test button is the route: three connections are allowed, but a session's connection would still sit in the app's allowance, and the 12-a-minute connection limit is shared by IP).
+
+## 7. How Vigilant uses it (built v0.90.0; see RESEARCH.md for the verdict)
+
+(filled in as built — see the section "Vigilant's wiring" below once written)
+
+## 8. Not known until a real key answers (TBO5)
+
+1. The sportsbook slugs in `get_info` — above all whether **Pinnacle, Circa, bet365** are there (they decide whether BoltOdds can be a sharp fair line or only a soft-book one) and the exact spelling of the books Vigilant prices with.
+2. The exact `outcome_name` / `outcome_over_under` / `outcome_target` for game totals and spreads (docs show only moneyline and player props: "Goals", "Home Runs"), and how alternates and periods (1st half, F5) are named in `get_markets`.
+3. Whether a WebSocket subscription is answered with the current state or only with changes (the docs send you to `/snapshot` first), the `ping` interval, whether frames are arrays.
+4. The snapshot's token cost, its answer size for a whole sport, and any quota header.
+5. Whether this key carries play-by-play / live scores / `get_parlays`.
+6. Whether `timestamp` is the book's change time or BoltOdds' processing time, and how late a quote that has not changed is re-sent.
+
+Settings › BoltOdds › "Test and share sample" saves the answers of all of the above to Downloads/Vigilant (`vigilant-boltodds-sample-*.txt`); when Tj sends it, check `BoltParser`/`BoltConvert`/`BoltBooks`/`BoltMarkets` against it and correct this file.
