@@ -1,22 +1,22 @@
-# CHECKPOINT 3041 — read me first, then TASKS.md
+# CHECKPOINT 3042 — read me first, then TASKS.md
 
-**Written:** 2026-10-12T04:20:13Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `e6cc1bed7` (this checkpoint is the commit after it)
+**Written:** 2026-10-12T04:23:30Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `d0a61fe4e` (this checkpoint is the commit after it)
 
 ## Just done
-version 0.89.35; TASKS TAN2-TAN6 ticked with evidence; skill doc lists the new settings structure
+TAN: NET event line carries the start of a 400's body; follow-ups (e)(f) written; full floor green before this edit (3262 tests)
 
 ## Do this next
-full regression (bash tools/test.sh), then ship.sh, release.yml, record-release, link to Tj
+wait for CI on this commit (ci.yml), then bash ship.sh, trigger release.yml, record-release, send Tj the link
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  8a91641a5 ckpt 3041: version 0.89.35; TASKS TAN2-TAN6 ticked with evidence; skill doc lists the 
   b1b4d24d0 ckpt 3040: RESEARCH §135 written (the TAN analysis + what was acted on and what was n
   f8f04ecbd ckpt 3039: TAN6: Kelly stake scaled by lead time (EvMath.leadScale: 1.0 up to 9h, 0.6 
   93fe0376d ckpt 3038: TAN4: Settings home 20 -> 14 rows: APIs & keys hub with child pages (SGO, O
@@ -26,8 +26,7 @@ full regression (bash tools/test.sh), then ship.sh, release.yml, record-release,
   8e11a6ba3 ckpt 3034: TAN2: bid-desk step in the background cycle time-boxed to the cycle interva
   37d7ae536 ckpt 3033: TAN2: health check ignores removed keys/switched-off APIs; OddsPapi Free fa
   ef2c82a17 ckpt 3032: TAN1 baseline: full floor green (3245 tests, 405 s); TAN3 analysis saved
-  853ff8fed ckpt 3031: TAN3: bet/bid analysis scripts + findings memo (lead-time slope strong; Ove
 ```
 
-(8 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
