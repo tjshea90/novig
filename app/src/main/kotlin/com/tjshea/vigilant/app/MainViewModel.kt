@@ -1588,7 +1588,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val now = System.currentTimeMillis()
                     val r = com.tjshea.vigilant.data.tracker.NovigNow.read(
                         c.tracker.all(), now, force,
-                        books = { ids -> runCatching { kotlinx.coroutines.withContext(com.tjshea.vigilant.data.novig.NovigReadTag("bets-pricing")) { c.novig.books(ids).books } }.getOrDefault(emptyMap()) },
+                        books = { ids -> runCatching { kotlinx.coroutines.withContext(com.tjshea.vigilant.data.novig.NovigReadTag("bets-pricing") + com.tjshea.vigilant.data.novig.NovigScreening()) { c.novig.books(ids).books } }.getOrDefault(emptyMap()) },
                         market = { id -> c.locks.market(id) },
                     )
                     c.tracker.recordNovig(r.prices, System.currentTimeMillis(), r.why)
@@ -1614,7 +1614,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (due.isEmpty()) return
         val r = com.tjshea.vigilant.data.tracker.NovigNow.read(
             due, now, force = true,
-            books = { ids -> runCatching { kotlinx.coroutines.withContext(com.tjshea.vigilant.data.novig.NovigReadTag("bets-pricing")) { c.novig.books(ids).books } }.getOrDefault(emptyMap()) },
+            books = { ids -> runCatching { kotlinx.coroutines.withContext(com.tjshea.vigilant.data.novig.NovigReadTag("bets-pricing") + com.tjshea.vigilant.data.novig.NovigScreening()) { c.novig.books(ids).books } }.getOrDefault(emptyMap()) },
             market = { id -> c.locks.market(id) },
         )
         c.tracker.recordNovig(r.prices, System.currentTimeMillis(), r.why)
