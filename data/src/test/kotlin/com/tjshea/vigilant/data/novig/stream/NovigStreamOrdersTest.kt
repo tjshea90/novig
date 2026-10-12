@@ -5,6 +5,7 @@ import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -79,7 +80,7 @@ class NovigStreamOrdersTest {
         assertEquals(1, privateSubscribes().size)
         assertEquals(listOf("orders"), privateSubscribes().single()["subscribe"]!!.jsonObject["private"]!!.jsonArray.map { it.jsonPrimitive.content })
         // a fill is pushed while the placer waits
-        val end = kotlinx.coroutines.async { s.orderEvents.awaitEnd("o1", 5_000) }
+        val end = async { s.orderEvents.awaitEnd("o1", 5_000) }
         delay(50)
         socket!!.send("""{"ts":2,"delta":{},"orders":{"seq":11,"deltas":[{"kind":"fill","orderId":"o1","outcomeId":"A","price":"0.46","qty":5,"remaining":0}]}}""")
         assertEquals(OrderEvents.End.FILLED, end.await()!!.end)
