@@ -1550,11 +1550,9 @@ class AppContainer(val app: Application) {
     }
 
     /** The BoltOdds live feed the engine is reading from, when it is the source (null otherwise). */
-    private companion object {
-        /** The least edge the soft-book average may be bet on, whatever the Pinnodds setting says (a consensus trails the truth; a thin edge on it is noise). */
-        const val BOLT_LIVE_MIN_EV = 0.04
-        const val BOLT_LIVE_SETTLE_MS = 1_500L
-    }
+    /** The least edge the soft-book average may be bet on, whatever the Pinnodds setting says (a consensus trails the truth; a thin edge on it is noise), and how long a price must have sat still. */
+    private val BOLT_LIVE_MIN_EV = 0.04
+    private val BOLT_LIVE_SETTLE_MS = 1_500L
 
     @Volatile var boltLiveFeed: com.tjshea.vigilant.data.boltodds.BoltLiveFeed? = null
         private set
