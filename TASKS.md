@@ -4807,7 +4807,7 @@ Data archived by the hook in `research/uploads/2026-10-12/` (bets p1, bids-poste
 - [~] TAN1 Full floor (BASELINE GREEN 3245 tests, research/tan_fulltest_2026-10-12.md; the screenshot run + final regression happen last): `bash tools/test.sh` (+ `-Pscreenshots`, look at PNGs); record green/red honestly in research/tan_fulltest_2026-10-12.md.
 - [ ] TAN2 Diagnostics v0.89.34 deep read: errors, slow paths, memory, API budgets, halts, wasted requests; list of fixes in research/tan_diagnostics_2026-10-12.md; fix the strong ones.
 - [ ] TAN3 Bet history analysis (1422 bets, 25k bids): CLV/ROI by dimension with t-stats, independent closes only for claims; research/tan_bets_2026-10-12.md; change defaults/filters ONLY on strong signals (>=100 bets with true close for CLV, state n and t).
-- [ ] TAN4 Settings audit: inventory every setting (page, default, who reads it), find contradictions, dead/unneeded settings, overlaps; research/tan_settings_audit_2026-10-12.md; then simplify/reorganize/remove (SettingsIndex + SettingsPagesTest stay in sync).
+- [~] TAN4 (audit written: research/tan_settings_audit_2026-10-12.md; doing S1 nav+API children, S2 fair-odds split, S3 window, S4 Kalshi switch) Settings audit: inventory every setting (page, default, who reads it), find contradictions, dead/unneeded settings, overlaps; research/tan_settings_audit_2026-10-12.md; then simplify/reorganize/remove (SettingsIndex + SettingsPagesTest stay in sync).
 - [ ] TAN5 UI polish pass (Compose skills; screenshots).
 - [ ] TAN6 Math/logic audit: engine (Devig, FairValue, Fees, EvMath, Kelly), AutoBet.stake/judge, BetRating, SharpVeto, MakerRules; adversarial read + tests.
 - [ ] TAN7 Full regression, ckpt, ship (`ship.sh`), release.yml, Release link to Tj.
