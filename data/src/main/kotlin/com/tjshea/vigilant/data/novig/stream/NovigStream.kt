@@ -380,8 +380,9 @@ class NovigStream(
                 if (whole) inf.reset()
                 synchronized(this) { plainBytes += out.size() }
                 return out.toString(Charsets.UTF_8.name())
-            } catch (e: java.util.zip.DataFormatException) {
-                inf.reset()
+            } catch (e: Exception) {
+                // DataFormatException (not DEFLATE) or any other trouble with the frame: unreadable, and the stream's state is dropped.
+                runCatching { inf.reset() }
                 return null
             }
         }
@@ -554,7 +555,6 @@ class NovigStream(
         }
         val compress = compressOn && compressGivenUp == null
         compressRequested = compress
-        inflater?.end()
         inflater = null
         inflateFailuresRun = 0
         // The upgrade costs 32. The bucket is the KEY's, not the connection's: a reconnect after a drop (or the Test key's own connection) finds what the last one spent still unrefilled, so the model
@@ -1321,7 +1321,6 @@ class SharedStreamView(private val provider: () -> NovigStream?, private val lis
     override fun room(): Int = stream()?.room() ?: NovigStream.MAX_MARKETS
     override fun feedReport(): List<String> = stream()?.feedReport().orEmpty()
     override fun allowance(): Double? = stream()?.allowance()
-    override fun configureCompression(on: Boolean) { stream()?.configureCompression(on) }
     override fun bookGap(marketId: String): String? = stream()?.bookGap(marketId) ?: "Novig live feed is not connected (no key)"
     override fun problemSince(sinceMs: Long): String? = stream()?.problemSince(sinceMs)
 
