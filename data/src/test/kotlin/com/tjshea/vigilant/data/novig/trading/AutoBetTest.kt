@@ -138,7 +138,7 @@ class AutoBetTest {
         // CNO's lane: +4.5% passes as an Under, fails as an Over; +6% passes both.
         assertNull(AutoBet.judge(r, 0.045, check(), 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, overProp = false))
         assertTrue(AutoBet.judge(r, 0.045, check(), 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, overProp = true)!!.contains("player-prop Over"))
-        assertNull(AutoBet.judge(r, 0.06, check(), 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, overProp = true))
+        assertNull(AutoBet.judge(r, 0.06, check(ev = 0.07), 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, overProp = true))
         // Vigilant's lane and tennis' judge the same bar.
         assertNull(AutoBet.judgeVigilant(r, 0.045, 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, 4, 3, overProp = false))
         assertNotNull(AutoBet.judgeVigilant(r, 0.045, 110, com.tjshea.vigilant.data.scanner.BetKind.PROP, 4, 3, overProp = true))
