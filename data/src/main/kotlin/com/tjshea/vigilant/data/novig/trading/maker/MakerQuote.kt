@@ -23,8 +23,6 @@ import kotlin.math.floor
  * [minPrice]..[maxPrice], at least [minBooks] books each pricing the bid +EV on their own, and (with [sharpVeto]) no sharp book saying it isn't.
  */
 data class MakerRules(
-    /** Settings › Profit-proven only: the profile of Tj's bet history (null = off, nothing changes). A bid on a type of bid that lost money is skipped, and the best types go up first. */
-    val profit: ProfitProfile? = null,
     val margin: Double,
     /** The amount [AutoBetStake.CUSTOM] bids. */
     val customStake: Double,
@@ -141,6 +139,8 @@ data class MakerRules(
      * (1.5¢) behind the best bid and 4 of them filled (0.1%), against 1.5% of the 15,000 that led or sat level: they only added posts, cancels and Novig calls. 0 or less = no limit.
      */
     val maxBehind: Double = MAX_BEHIND,
+    /** Settings › Profit-proven only: the profile of Tj's bet history (null = off, nothing changes). A bid on a type of bid that lost money is skipped, and the best types go up first. */
+    val profit: ProfitProfile? = null,
 ) {
     /** The rules [line] is judged by: the tennis rules for an ATP or WTA line, else these. */
     fun forLine(line: MakerLine): MakerRules = if (tennis != null && line.league in TENNIS_LEAGUES) tennis else this
