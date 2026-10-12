@@ -134,6 +134,7 @@ class ApiBetPlacer(
         limitsOverride: BetLimits?,
         expectedPrice: Double?,
     ): PlaceResult = lock.withLock {
+        val tp0 = clock()
         val plan = when (val p = plan(target, stake, allowRepeat, limitsOverride)) {
             is PlanResult.Refused -> return PlaceResult.Refused(p.reason, gameLimit = p.gameLimit)
             is PlanResult.Ready -> p.plan
@@ -148,6 +149,7 @@ class ApiBetPlacer(
         }
         // Novig parses the clientId as a UUID and refuses anything else (a "vigilant-" prefix did, on the first real order).
         val clientId = NovigTradingClient.newClientId()
+        val tp1 = clock()
         val orderId: String = try {
             trading.placeOrder(target.outcomeId, minOf(plan.limitPrice, confirmedLimit), plan.contracts, "IOC", clientId)
         } catch (e: CancellationException) {
@@ -170,7 +172,10 @@ class ApiBetPlacer(
             )
         }
         // Once the order is in, what came of it is always read and recorded, even if the screen that asked has gone: money spent never goes untracked.
-        withContext(NonCancellable) { finish(target, orderId) }
+        val tp2 = clock()
+        withContext(NonCancellable) { finish(target, orderId) }.also {
+            timing("bet placed: ${clock() - tp0} ms from the tap's confirm to the record (re-check ${tp1 - tp0} ms, order sent and answered ${tp2 - tp1} ms, waiting for the end and reading the fills ${clock() - tp2} ms)")
+        }
     }
 
     /**
