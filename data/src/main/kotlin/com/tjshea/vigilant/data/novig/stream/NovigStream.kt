@@ -310,8 +310,24 @@ class NovigStream(
 
     private fun scheduleSync() {
         synchronized(this) {
-            if (syncJob?.isActive == true) return
-            syncJob = scope.launch { sync() }
+            if (syncJob?.isActive == true) {
+                syncAgain = true
+                return
+            }
+            syncAgain = false
+            syncJob = scope.launch {
+                val me = coroutineContext[Job]
+                // A request that lands while a pass is running makes it look again before it ends, and the pass lets go of [syncJob] under the same lock that decides
+                // that: a refusal arriving in a pass's last moments (its job still "active") was dropped, and the refused batch was never asked for again (CI, 2026-10-12).
+                do {
+                    sync()
+                } while (synchronized(this@NovigStream) {
+                        val again = syncAgain && syncJob === me && scope.isActive
+                        syncAgain = false
+                        if (!again && syncJob === me) syncJob = null
+                        again
+                    })
+            }
         }
     }
 
