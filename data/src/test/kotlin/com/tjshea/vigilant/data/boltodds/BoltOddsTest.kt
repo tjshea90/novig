@@ -38,7 +38,7 @@ class BoltOddsTest {
     // ---- parser -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     @Test fun `the board counts its changes, so the streaming engine can tell a push arrived`() {
-        val board = BoltBoard { now }
+        val board = BoltBoard({ now })
         assertEquals(0L, board.changeSeq)
         board.apply(BoltParser.frame(docsGameUpdate, now).single())
         assertEquals(1L, board.changeSeq)
