@@ -48,7 +48,7 @@ class StreamWiringTest {
         assertTrue(c.streamEngine.status.value.running)
         c.streamEngine.tick(settings(bolt = true, stream = false))
         assertFalse(c.streamEngine.status.value.running)
-        c.streamEngine.tick(settings(bolt = true, stream = true).copy(paused = true))
+        c.streamEngine.tick(settings(bolt = true, stream = true).copy(pausedByHand = true))
         assertFalse("STOP ALL / pause stops it", c.streamEngine.status.value.running)
     }
 }
