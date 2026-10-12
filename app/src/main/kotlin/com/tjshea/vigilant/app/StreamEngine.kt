@@ -66,7 +66,7 @@ class StreamEngine(
             _status.update { st -> st.copy(signals = st.signals + 1, novigSignals = st.novigSignals + 1) }
             signal.trySend("Novig")
         }
-        view = com.tjshea.vigilant.data.novig.stream.SharedStreamView({ c.novig.stream }, listener).also { it.open() }
+        view = com.tjshea.vigilant.data.novig.stream.SharedStreamView({ c.novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream }, listener).also { it.open() }
         // BoltOdds' board counts its changes; reading the counters is free, so they are looked at a few times a second.
         watcher = scope.launch {
             var seen = boltSeq()
