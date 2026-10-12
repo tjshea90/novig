@@ -238,3 +238,4 @@ day that changes.
 | v0.94.1 | code 234 | 2026-10-12T18:36Z | v0.94.1: per-line streaming engine; BoltOdds push-lag report
 | v0.94.2 | code 235 | 2026-10-12T19:57Z | v0.94.2: streaming updates never wait for a scan or bid desk; stale league names not sent
 | v0.95.0 | code 236 | 2026-10-12T20:09Z | v0.95.0: BoltOdds soft-book live engine (paper only), push streaming
+| v0.95.1 | code 237 | 2026-10-12T20:29Z | v0.95.1: live tennis on BoltOdds feed, feed explains no-game, conversion cache
