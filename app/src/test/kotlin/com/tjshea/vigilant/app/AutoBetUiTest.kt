@@ -561,7 +561,7 @@ class AutoBetUiTest {
         assertEquals(0.03, settings.autoBetOverPropExtraEv, 1e-9)
         compose.onNodeWithText("+5 pts").performScrollTo().performClick()
         assertEquals(0.05, settings.autoBetOverPropExtraEv, 1e-9)
-        compose.onNodeWithText("Off").performScrollTo().performClick()
+        compose.onNodeWithText("No extra").performScrollTo().performClick()
         assertEquals(0.0, settings.autoBetOverPropExtraEv, 1e-9)
         compose.onNodeWithTag("autoBetOverPropNote").assertTextContains("Off", substring = true)
     }

@@ -80,8 +80,8 @@ object AutoBetText {
             "In the first three days of data the edge a bet kept to the close fell as the price got shorter."
     }
 
-    /** "Off", "+3 pts": the choices for the extra edge a player-prop Over needs. */
-    fun overPropLabel(extra: Double): String = if (extra <= 1e-9) "Off" else "+" + trim(extra * 100) + " pts"
+    /** "No extra", "+3 pts": the choices for the extra edge a player-prop Over needs. */
+    fun overPropLabel(extra: Double): String = if (extra <= 1e-9) "No extra" else "+" + trim(extra * 100) + " pts"
 
     /** What the Over-prop bar does at [s]'s settings. */
     fun overPropNote(s: ScanSettings): String {
