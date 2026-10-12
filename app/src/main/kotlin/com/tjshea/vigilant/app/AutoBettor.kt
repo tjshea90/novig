@@ -951,6 +951,24 @@ object AutoBetNotes {
         runCatching { NotificationManagerCompat.from(app).notify(bet.id, ID_PLACED, n) }
     }
 
+    /** The end of a bet placed by hand from the Bet sheet, which closes as soon as Novig has the order: a placed bet or the error, as a pop-up on the bet channel. */
+    fun handResult(app: Application, title: String, text: String) {
+        if (!ScanService.canNotify(app)) return
+        ensureChannel(app)
+        val n = NotificationCompat.Builder(app, CHANNEL_BET)
+            .setSmallIcon(R.drawable.ic_scan)
+            .withWallet(app)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setAutoCancel(true)
+            .setContentIntent(EvAlerts.openVigilant(app, ID_PLACED))
+            .build()
+        runCatching { NotificationManagerCompat.from(app).notify("hand-${System.nanoTime()}", ID_PLACED, n) }
+    }
+
     /** A lock auto-lock placed (RESEARCH.md §67): the profit whichever side wins, the side bought, the game. */
     fun locked(app: Application, bet: TrackedBet, view: LockView, guaranteed: Double) {
         if (!ScanService.canNotify(app)) return

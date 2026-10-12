@@ -714,7 +714,8 @@ class ApiBettingController(
                 withContext(Dispatchers.IO + NonCancellable) {
                     placer.placeByHand(placing, sheet.stake, plan.limitPrice, sheet.allowRepeat) {
                         // Novig has the order: the sheet says so and may be closed; the end is still being waited for below.
-                        state.update { st -> st.copy(betSheet = st.betSheet?.takeIf { it.target === target }?.copy(sent = true) ?: st.betSheet) }
+                        // Tj, 2026-10-12: "Close the bet slip immediately automatically after I place the bet. Then send a notification of successful bet or any error."
+                        state.update { st -> st.copy(betSheet = if (st.betSheet?.target === target) null else st.betSheet) }
                     }
                 }
             } catch (e: CancellationException) {
@@ -724,6 +725,13 @@ class ApiBettingController(
             }
             // The sheet on screen may be another bet by now (the next one was started while this ended): only its own sheet gets the result.
             state.update { st -> st.copy(betSheet = st.betSheet?.let { if (it.target === target) it.copy(placing = false, sent = false, result = result) else it }) }
+            // The sheet is gone by now: the answer comes as a notification (success or error), and a toast for whoever is looking.
+            withContext(NonCancellable) {
+                runCatching {
+                    if (result is PlaceResult.Placed) AutoBetNotes.handResult(c.app, "Bet placed ${money(result.bet.stake)} · ${target.selection}", "${result.bet.american?.let { com.tjshea.vigilant.engine.Odds.formatAmerican(it) } ?: ""} · ${target.marketLabel} · ${target.eventName}".trim(' ', '·'))
+                    else AutoBetNotes.handResult(c.app, "Bet NOT placed · ${target.selection}", resultNote(result, target))
+                }
+            }
             if (result !is PlaceResult.Placed) toasts.tryEmit(resultNote(result, target))
             if (result is PlaceResult.Placed) {
                 withContext(NonCancellable) {
