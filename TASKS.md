@@ -4930,3 +4930,10 @@ Design: reuse the whole Pinnodds live lane (matcher, 5 s freshness, fee, trader,
 
 - [x] TBL8 BoltOdds refresh 7-14 s: conversion cache keyed on aliveAt invalidated by every push; cache now holds raw-time conversion, lift applied as a copy (BoltLiveConsensusTest "a book speaking again lifts..."). Ship v0.95.4.
 - [ ] TPL2 (Tj, 2026-10-12) "How can I use the propline pushed live events to my advantage with vigilant": answer in chat; build only if Tj says buy/build (TPL1).
+
+## TFR: freshest source wins, test the APIs, simplify the shopping list (Tj, 2026-10-12 ~22:00Z)
+Tj: "Set up a vigilant to use the best, freshest available source from the toggled on keys for whatever data it needs from different sources. Propline claims to get odds fresh within seconds, and I can get many free propline keys. If possible, run tests to see which apis are the best for speed and accuracy and tell me what to get keys for. If you can test this, let me know if you need keys or what to do. I have so many options for apis and subscriptions. Simplify and clarify for me the best things to do between which apis, which free keys, which paid services or apis 50 dollars or less per month, etc"
+- [ ] TFR1 Measure what can be measured keyless from this container (PropLine /v1/freshness, ParlayAPI source-quality, others) and write research/api_freshness_2026-10-12.md.
+- [ ] TFR2 Read ApiChain/Scanner.SOURCE_ORDER; add freshness-aware ordering: per-source/per-book measured quote age (median over the last scan) decides which source wins a book/line, ties by the old order, switch off = old order (test).
+- [ ] TFR3 In-app "Source race" Diagnostics section: per source, per book: quotes, median/p90 age, so Tj's next file measures every API on his keys.
+- [ ] TFR4 One-page shopping list for Tj (research/api_shopping_list_2026-10-12.md): keys to get free, paid <= $50, skip.
