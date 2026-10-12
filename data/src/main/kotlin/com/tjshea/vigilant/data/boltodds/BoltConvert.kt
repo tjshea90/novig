@@ -83,10 +83,12 @@ object BoltConvert {
      */
     private fun marketsOf(g: BoltBookGame, book: String, ctx: BoltContext): List<RefBookMarket> {
         val seenAt = ctx.aliveAt(g.sportsbook, g.sport)
-        // One slot: what the entry was last converted for (the league, the families, and the time its book was last heard, which the quote times are lifted to). A quiet book's entries keep their slot between refreshes.
-        val key = "${ctx.league.novigName}|${ctx.families.hashCode()}|$seenAt"
-        g.marketsCache?.let { (k, v) -> if (k == key) return v }
-        return convert(g, book, ctx, seenAt).also { g.marketsCache = key to it }
+        // The slot keeps the conversion with the quotes' OWN times (no lift): the lift depends on when the book last spoke about the sport, which changes with every push of that book and used to
+        // throw every one of its entries away (v0.95.3 file: 7-15 s per refresh). The lift is applied after, as a cheap copy, only where it changes a time.
+        val key = "${ctx.league.novigName}|${ctx.families.hashCode()}"
+        val base = g.marketsCache?.let { (k, v) -> if (k == key) v else null } ?: convert(g, book, ctx, null).also { g.marketsCache = key to it }
+        if (seenAt == null) return base
+        return base.map { m -> val t = m.lastUpdateMs; if (t != null && t < seenAt) m.copy(lastUpdateMs = seenAt) else m }
     }
 
     private fun convert(g: BoltBookGame, book: String, ctx: BoltContext, seenAt: Long?): List<RefBookMarket> {
