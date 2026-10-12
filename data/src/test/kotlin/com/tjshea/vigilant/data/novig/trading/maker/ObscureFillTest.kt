@@ -341,4 +341,16 @@ class ObscureFillTest {
         val order = listOf(post("o", true, price = 0.20), post("p", false, price = 0.55), post("p2", false, price = 0.40)).sortedWith(MakerPlan.RECOMMEND_ORDER).map { it.line.outcomeId }
         assertEquals(listOf("p2-over", "p-over", "o-over"), order)
     }
+
+    /** Tj, 2026-10-12: every resting bid is re-checked against each scan and comes down the moment it is not +EV. */
+    @Test
+    fun `a resting bid priced at or over the fair this pass found is taken down even if the pass would keep it`() {
+        val r = rules(g = { it.copy(maxBids = 5, maxDollars = 100.0) })
+        // the line's fair is 0.50; a bid resting at 0.51 has no edge, and the pass's own new price (0.52) would not move it
+        val plan = MakerPlan.plan(listOf(post("p", false, price = 0.52)), listOf(resting("p", false, price = 0.51)), r, now)
+        assertEquals(listOf("p-over"), plan.cancels.map { it.first.outcomeId })
+        assertTrue(plan.cancels.single().second, plan.cancels.single().second.startsWith("No longer +EV"))
+        // a bid still under the fair stays
+        assertTrue(MakerPlan.plan(listOf(post("p", false, price = 0.48)), listOf(resting("p", false, price = 0.48)), r, now).cancels.isEmpty())
+    }
 }

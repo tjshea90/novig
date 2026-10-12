@@ -1005,6 +1005,9 @@ class ApiBettingTest {
         assertTrue(auto, auto.startsWith("Not bet: your bet history says NFL Moneylines other bets lose money"))
         val hand = ready(ApiBetPlanner.plan(t, book(), 5.0, now, manual, 0.0, profit = loserProfile))
         assertTrue(hand.note.orEmpty(), hand.note.orEmpty().contains("Heads up: your bet history says"))
+        // a minimum star rating decides the auto-bet: the profile no longer refuses it (its stars were lowered instead), the note is only said beside the plan
+        val byStars = ready(ApiBetPlanner.plan(t, book(), 5.0, now, limits.copy(starsDecide = true), 0.0, profit = loserProfile))
+        assertTrue(byStars.note.orEmpty(), byStars.note.orEmpty().contains("Heads up: your bet history says"))
         // off: the same bet plans exactly as before
         val off = ready(ApiBetPlanner.plan(t, book(), 5.0, now, limits, 0.0))
         assertNull(off.note?.takeIf { it.contains("bet history") })

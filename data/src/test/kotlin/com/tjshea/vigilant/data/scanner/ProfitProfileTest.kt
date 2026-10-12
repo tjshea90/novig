@@ -103,4 +103,16 @@ class ProfitProfileTest {
         assertFalse(ScanSettings().gates.profitProven)
         assertNotNull(MakerRules.of(on).profit)
     }
+
+    @Test
+    fun `a losing type is blocked and also carries a star penalty that grows with how clearly it lost`() {
+        val p = profile(40, ("league|kind|side" to "NFL|Player props|over") to loser)
+        val j = p.judge(Instrument.BET, "NFL", "Player props", "A Over 1.5", 0.03, 600)
+        assertEquals(0.5 + 0.5 * (2.61 - 1.5), j.starPenalty, 1e-9)
+        val worse = profile(40, ("league|kind|side" to "NFL|Player props|over") to Group(900, -0.2, -9.0, 0.3))
+        assertEquals("never more than two stars", 2.0, worse.judge(Instrument.BET, "NFL", "Player props", "A Over 1.5", 0.03, 600).starPenalty, 1e-9)
+        // a type that is not proven a loser keeps its stars
+        assertEquals(0.0, p.judge(Instrument.BET, "NFL", "Player props", "A Under 1.5", 0.03, 600).starPenalty, 0.0)
+        assertEquals(0.0, profile(40).judge(Instrument.BET, "NHL", "Spreads", "A -1.5", 0.03, 600).starPenalty, 0.0)
+    }
 }
