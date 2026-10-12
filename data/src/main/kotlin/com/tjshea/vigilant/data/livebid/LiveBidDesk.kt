@@ -1154,6 +1154,9 @@ class LiveBidDesk(
         const val TICK_MS = 250L
         const val POLL_MS = 1_000L
 
+        /** The skip the repeat and hedge guard counts: this side is bet to the limit, or the other side of its market is held without a sure profit. */
+        const val REPEAT_SKIP = "repeat guard: this side is already bet to your limit, or the other side is held and both would not be a sure profit"
+
         /** A resting bid nobody vouched for this long comes down; the runner judges every half second and on every Pinnacle frame. */
         const val CLAIM_TTL_MS = 3_500L
 

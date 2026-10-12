@@ -247,6 +247,9 @@ class PinnLiveTrader(
     private val pause: suspend (Long) -> Unit = { delay(it) },
     private val newClientId: () -> String = { NovigTradingClient.newClientId() },
     private val lock: Mutex? = null,
+    /** The repeat and hedge guard's rules (null = off) and what Tj holds (the Tracker's open bets and Vigilant's resting bids): [com.tjshea.vigilant.data.tracker.RepeatGuard]. PAPER mode is judged against its own journal. */
+    private val repeat: () -> com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? = { null },
+    private val held: suspend () -> List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = { emptyList() },
 ) {
     private val _status = MutableStateFlow(LiveTradeStatus())
     val status: StateFlow<LiveTradeStatus> = _status.asStateFlow()
@@ -296,6 +299,7 @@ class PinnLiveTrader(
                 return skip("halted")
             }
             val qty = size(c, r, start) ?: return skip("limit reached")
+            repeatWhy(c, r, qty, start)?.let { return skip("repeat guard") }
             return withContext(NonCancellable) { if (r.bet) trade(c, qty, start) else paper(c, qty) }
         } finally {
             lock?.unlock()
@@ -311,6 +315,20 @@ class PinnLiveTrader(
 
     private fun clashesWithOwnBid(c: LiveCandidate): Boolean =
         ownBids().any { it.marketId == c.target.market.marketId && it.outcomeId != c.outcomeId && it.price >= 1.0 - c.verdict.limitPrice - 1e-9 }
+
+    /**
+     * The repeat and hedge guard (Tj, 2026-10-12: "it bets or bids the same side ... over and over many times repeatedly, because the odds change yet it is still positive EV"): a side already bet to the limit, or the
+     * other side of a market without a sure profit, is not bet again. Real bets are judged against what the Tracker holds; paper decisions against today's paper journal.
+     */
+    private suspend fun repeatWhy(c: LiveCandidate, r: LiveTradeRules, qty: Long, now: Long): String? {
+        val rules = repeat() ?: return null
+        val payout = EvMath.CONTRACT_PAYOUT_DOLLARS
+        val worst = c.verdict.limitPrice
+        val perContract = (worst + Fees.takerFee(worst.coerceIn(0.001, 0.999), c.fee, true)) * payout
+        val positions = if (r.bet) runCatching { held() }.getOrDefault(emptyList()) else history.filter { it.atMs >= dayStart(now) && it.mode == "PAPER" }
+            .map { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.contracts * (it.limitPrice + it.fee) * payout, it.contracts * payout) }
+        return com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, positions, c.target.market.marketId, c.outcomeId, qty * perContract, qty * payout, c.target.market.outcomes.map { it.outcomeId })
+    }
 
     /** Contracts: the stake at the WORST price the order may fill at (fee in), what is on offer at a positive edge, and what the game's and the day's caps leave. */
     private fun size(c: LiveCandidate, r: LiveTradeRules, now: Long): Long? {
