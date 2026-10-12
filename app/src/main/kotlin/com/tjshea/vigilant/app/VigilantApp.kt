@@ -365,7 +365,7 @@ class AppContainer(private val app: Application) {
     private var autoPlacerCache: Pair<Any, ApiBetPlacer>? = null
 
     /** The Novig markets Vigilant has a bid resting on: held as a complete book, so the bid desk counts the others' bids behind its own ([com.tjshea.vigilant.data.scanner.Scanner.deepEdges]). */
-    fun bidMarkets(): Collection<String> = runCatching { makerStore.all().filter { it.active }.map { it.marketId }.distinct() }.getOrDefault(emptyList())
+    suspend fun bidMarkets(): Collection<String> = runCatching { makerStore.all().filter { it.active }.map { it.marketId }.distinct() }.getOrDefault(emptyList())
 
     /** The market's book read from Novig just now (never one shown from the last scan). */
     suspend fun freshBook(marketId: String): NovigBook? =

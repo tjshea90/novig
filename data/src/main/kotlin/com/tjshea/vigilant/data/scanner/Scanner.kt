@@ -120,7 +120,7 @@ class Scanner(
     /** How many markets a scan may hand the live feed; null = what the feed says it can hold ([NovigSource.watchRoom]: the key's own cap). */
     private val streamRoom: Int? = null,
     /** Markets that must be read as a complete book whatever their price (the ones Vigilant has a bid resting on: the bid desk counts the others' bids behind its own). */
-    private val deepExtra: () -> Collection<String> = { emptySet() },
+    private val deepExtra: suspend () -> Collection<String> = { emptySet() },
 ) : OddsScanner {
     private data class Catalog(
         val leagues: Set<String>,
@@ -580,7 +580,7 @@ class Scanner(
             val ids = Pricing.price(shown, merged, settings, now, fairMemo).opportunities
                 .filter { o -> fresh[o.market.marketId]?.partial == true && (o.quote?.evPercent ?: Double.NEGATIVE_INFINITY) > 0.0 }
                 .map { it.market.marketId }
-                .plus(deepExtra().filter { fresh[it]?.partial == true })
+                .plus(runCatching { deepExtra() }.getOrDefault(emptyList()).filter { fresh[it]?.partial == true })
                 .distinct()
             if (ids.isEmpty()) return
             novig.deepen(ids)
