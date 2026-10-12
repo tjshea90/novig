@@ -138,13 +138,14 @@ class AutoBettor(
     /** An order of ours is being sent and followed right now ([AutoBetRecovery] leaves its halt alone until it is over). */
     @Volatile var sending = false
 
+        private set
+
     /** Bets (by selection text) held back after an order whose answer was never confirmed ([AutoBetRecovery.forceResume]): never placed twice. */
     private val quarantined = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     fun quarantine(selection: String, untilMs: Long) { quarantined[selection.lowercase()] = untilMs }
 
     private fun isQuarantined(text: String, now: Long): Boolean = quarantined.entries.any { (sel, until) -> until > now && text.lowercase().contains(sel) }
-        private set
 
     /** The wallet-empty note went out and the wallet hasn't refilled since. */
     private var walletEmptyNoted = false
