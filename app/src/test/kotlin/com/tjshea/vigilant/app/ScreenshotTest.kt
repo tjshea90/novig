@@ -155,6 +155,7 @@ class ScreenshotTest {
     @Test fun settingsTabApis() = settingsTab(SettingsPage.APIS)
     @Test fun settingsTabPinnacle() = settingsTab(SettingsPage.PINNACLE)
     @Test fun settingsTabParlay() = settingsTab(SettingsPage.PARLAY)
+    @Test fun settingsTabBoltOdds() = settingsTab(SettingsPage.BOLTODDS)
 
     /** The Auto-bet tab (v0.46.0: its own tab, out of Settings › Betting), set up and on, with the presets under its switch. */
     @Config(qualifiers = "w393dp-h7000dp-xxhdpi")
