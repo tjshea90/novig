@@ -831,6 +831,9 @@ class Scanner(
 
     override fun streamReady(): Boolean = catalog != null
 
+    @Volatile private var streamTimings: String? = null
+    override fun streamTimings(): String? = streamTimings
+
     override suspend fun streamUpdate(requested: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? {
         // Never waits for a scan: a full scan holds the scanner for minutes (Tj's v0.94.1 file: updates of 115-153 s waiting on it). Null = busy or nothing to price from.
         if (!mutex.tryLock()) return null
@@ -846,6 +849,7 @@ class Scanner(
         val cat = catalog ?: return null
         if (settings.leagues.isEmpty()) return null
         val now = clock()
+        val t0 = elapsed()
         // The streaming sources' boards are held in memory by their sockets: read again every time, no re-use window (a stale snapshot would price a moved line).
         for (source in sources) for (league in settings.selectedLeagues) {
             if (!source.supports(league)) continue
@@ -859,11 +863,14 @@ class Scanner(
                 // The last snapshot stays until the freshness rule drops it.
             }
         }
+        val t1 = elapsed()
         val plan = planFor(cat, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS)
+        val t2 = elapsed()
         // Books the live feed holds right now (best bid is enough to screen); nothing is requested from Novig for a market the feed does not hold.
         val top = novig.pushedTop(marketIds?.toList() ?: plan.marketIds)
         if (top.isNotEmpty()) books = HashMap(books).apply { putAll(top) }
         var result = Pricing.price(plan, books, settings, now, fairMemo)
+        val t3 = elapsed()
         // A market held as its best bid prices a bet exactly but knows nothing of its size: the +EV ones move to the full book and are read again as complete books.
         val deepIds = result.opportunities
             .filter { o -> top[o.market.marketId]?.partial == true && (o.quote?.evPercent ?: Double.NEGATIVE_INFINITY) > 0.0 }
@@ -882,6 +889,8 @@ class Scanner(
                 result = Pricing.price(plan, books, settings, clock(), fairMemo)
             }
         }
+        val t4 = elapsed()
+        streamTimings = "boards read ${t1 - t0} ms (${sources.size} sources), matching ${t2 - t1} ms, pricing ${t3 - t2} ms, deepening ${t4 - t3} ms (${deepIds.size} markets), ${plan.markets.size} markets"
         result
     }
 

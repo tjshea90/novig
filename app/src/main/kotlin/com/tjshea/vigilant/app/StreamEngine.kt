@@ -196,7 +196,7 @@ class StreamEngine(
             )
         }
         c.perf.add(if (refresh) "stream.refresh.ms" else "stream.fast.ms", took.toDouble())
-        if (_status.value.passes % LOG_EVERY == 1L || took > SLOW_MS) c.eventLog.info("STREAM", "streaming update #${_status.value.passes} (${if (refresh) "BoltOdds refresh, all lines" else "${ids.size} Novig line${if (ids.size == 1) "" else "s"}"}) took $took ms (priced ${priced - t0} ms, auto-bet ${clock() - priced} ms), $handed lines judged")
+        if (_status.value.passes % LOG_EVERY == 1L || took > SLOW_MS) c.eventLog.info("STREAM", "streaming update #${_status.value.passes} (${if (refresh) "BoltOdds refresh, all lines" else "${ids.size} Novig line${if (ids.size == 1) "" else "s"}"}) took $took ms (priced ${priced - t0} ms, auto-bet ${clock() - priced} ms), $handed lines judged" + (c.scanner.streamTimings()?.let { " · $it" } ?: ""))
     }
 
     @Volatile private var lastRefreshTookMs = 0L

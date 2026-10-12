@@ -1789,6 +1789,7 @@ class AppContainer(val app: Application) {
     suspend fun pinnTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
         // The Feed's live lane (Settings › Include live games) keeps the same two sockets open: it is the reason the engine runs when neither the taker nor the bids are on.
+        if (!s.pinnWebsite.bolt) boltFeed.liveTennis = false
         val wanted = s.pinnLive || s.liveBid || (s.includeLive && !s.paused)
         if (com.tjshea.vigilant.data.scanner.Dormant.PINNODDS || !wanted || s.killed) {   // dormant (Tj, 2026-10-09): never opened
             if (pinnRunner.running) pinnRunner.stop(if (s.killed) "stopped by STOP ALL" else null)

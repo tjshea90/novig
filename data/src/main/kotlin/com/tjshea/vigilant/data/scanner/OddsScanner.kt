@@ -32,6 +32,9 @@ interface OddsScanner {
     /** Whether a catalog is held (a scan has run): [streamUpdate] has something to price from. */
     fun streamReady(): Boolean = false
 
+    /** Where the last streaming update's time went (reading the boards, matching, pricing, deepening), for Diagnostics; null when none ran. */
+    fun streamTimings(): String? = null
+
     suspend fun streamUpdate(settings: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? = null
 
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
