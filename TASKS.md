@@ -4836,3 +4836,18 @@ Rules that apply: an API switched on is eligible for everything it carries, swit
 - [ ] TBP7 If livescores / play-by-play subscribe works on this key: feed the live lane (TBO8) with score events.
 - [ ] TBP8 Tennis: BoltOdds sport "Tennis" with per-tournament names ("WTA Wuhan - Tennis"), 848 games: map ATP/WTA once the odds socket works.
 
+
+## TNV: Novig full use, bbo, as fast as Novig allows (Tj, 2026-10-12 06:56Z; plan + evidence: research/novig_full_use_plan_2026-10-12.md)
+Tj verbatim: "Build the novig bbo feature with a backup to default toggle in case it doesn't work right. Make sure vigilant app is making full use of the novig API. The app should go as fast as novig allows. Optimize the vigilant app to take full advantage of everything the API offers. If it can make scanning or live betting or any other part or function of vigilant better, do it. If you need me to do anything to install the new novig features, such as the bbo, let me know"
+Evidence (Tj's v0.89.34 diagnostics): 651,623 REST book reads a day, scans "live feed held 0 of N", a 429 on the websocket upgrade parks the feed for 5 minutes, the stream closes 2 minutes after a scan while auto-scans are 2m10s apart, the burst recorder has its own second connection on the same key's `stream` bucket. When the feed works a 408-price scan takes 2.9 s (v0.89.26 file) instead of 150-200 s.
+Rules: no Workflow/subagents (CLAUDE.md); every new behaviour has a toggle back to the old one and an automatic fallback with a Diagnostics line; money paths never rely on a push alone; mocks speak BOTH the prose and the OpenAPI shapes; ckpt after every step.
+- [ ] TNV1 `StreamBooks` reads both shapes (`order`|`orderId`, `outcome`|`outcomeId`), the `update` delta kind (`remaining`), lifecycle snapshot/deltas (strings or `{kind,status}`), keeps each market's status; tests for the prose and the OpenAPI shapes.
+- [ ] TNV2 `bbo` channel: `StreamBooks` bbo snapshot/delta -> partial `NovigBook`; `NovigStream` per-market channel (BBO|BOOK, weights 8/16), `deepen()`; switch `ApiGates.novigBbo` (default ON, off = every market on `book` as before); automatic fallback (refused subscribe, no data, canary mismatch via `snapshot` verb on `book`) sticky for the session; Diagnostics line.
+- [ ] TNV3 Depth stays correct: partial books only satisfy screening reads; planner, maker, live lane, lock always full; the scan deepens +EV markets so its Opportunities (stake, depth, ladder, bidLevels) equal the all-`book` ones; tests.
+- [ ] TNV4 Limits and persistence: upgrade 429 waits `Retry-After` (not 5 min); the watch cap and `Scanner.streamRoom` come from `/v3/limits`; idle close long while scan/auto-scan/bids/live are on; prompt reconnect after a plain drop.
+- [ ] TNV5 One connection per key: the burst recorder uses the shared stream (`SharedStreamView`).
+- [ ] TNV6 Private stream: `orders` + `positions` on the same socket; `OrderFeed`; `ApiBetPlacer.finish` push-first with the REST path unchanged as fallback; recovery, bid desk and Tracker sync learn fills at once.
+- [ ] TNV7 Lifecycle status used by the planner, scan and bid desk (CLOSED = no bet; GOLIVE voids resting orders).
+- [ ] TNV8 UI + Diagnostics: Settings > Betting & Novig account "Live feed" (bbo switch, keep-open), stream stats in Diagnostics (connects, 429s, held/asked, channels, fallbacks, canary result), Test key compares bbo with book on real markets.
+- [ ] TNV9 Later, each behind a switch: WS `place`/`cancel`, WS compression, REST `depth`, `trades` channel for the live lane; TBO6 follow-ups merge into TNV2/TNV4.
+- [ ] TNV10 Ship (full floor), release, tell Tj what to tap (Settings > Betting & Novig account > Test key) and what to send back.

@@ -1,21 +1,24 @@
-# CHECKPOINT 3060 — read me first, then TASKS.md
+# CHECKPOINT 3061 — read me first, then TASKS.md
 
-**Written:** 2026-10-12T06:55:59Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `2b3323c8e` (this checkpoint is the commit after it)
+**Written:** 2026-10-12T07:14:58Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `f81ac1f38` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.90.1: BoltOdds odds socket reads binary frames and subscribes without a greeting, Test key v2 (multi-book snapshot, scores sockets), real market names, preseason sports (versionCode 222, v0.90.1)
+v0.90.1 released + recorded; Tj asked for Novig bbo + full API use: wrote research/novig_full_use_plan_2026-10-12.md and TASKS TNV1-TNV10
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.90.1), then run: bash tools/record-release.sh v0.90.1 222 "v0.90.1: BoltOdds odds socket reads binary frames and subscribes without a greeting, Test key v2 (multi-book snapshot, scores sockets), real market names, preseason sports"
+TNV1: StreamBooks both shapes + update + lifecycle + tests; then TNV2 bbo channel
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+    ?? research/novig_full_use_plan_2026-10-12.md
 
 ## Last ten checkpoints
 ```
+  d3b5a9c1f ckpt 3060: pre-release: v0.90.1: BoltOdds odds socket reads binary frames and subscrib
   2b3323c8e ckpt 3059: pre-ship: v0.90.1: BoltOdds odds socket reads binary frames and subscribes 
   d0a167b80 ckpt 3058: TBP4 done: BoltKeyTest v2 (closes the app's sockets, snapshot of the sport 
   3fa23b9e5 ckpt 3057: TBP1-TBP3 done: BoltOddsStream reads binary frames (BoltFrames utf8/gzip/zl
@@ -25,5 +28,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   d01978332 ckpt 3053: pre-ship: v0.90.0: BoltOdds Pro (websocket lines + props, Test key sample),
   298a71e29 ckpt 3052: TBO: docs written (BOLTODDS_API.md §7, RESEARCH.md §136, CLAUDE.md BoltOd
   e568abb49 ckpt 3051: TBO3 (app wiring): ApiEntry.BOLTODDS, VigilantApp client/feed/sources/boltA
-  855ff31d5 ckpt 3050: TBO3 (data side, part 1): data/.../boltodds/ Models, Parser, Markets, Books
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
