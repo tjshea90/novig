@@ -33,7 +33,13 @@ class BoltBoard(
     private fun count(action: String) { counts.merge(action, 1, Int::plus) }
 
     /** Applies one socket message. Returns true when the board changed. */
-    fun apply(m: BoltMessage): Boolean {
+    fun apply(m: BoltMessage): Boolean = applyMessage(m).also { if (it) changeSeq++ }
+
+    /** Counts every change to the board (the streaming engine looks at it to know a push arrived; a read of the number costs nothing). */
+    @Volatile var changeSeq: Long = 0L
+        private set
+
+    private fun applyMessage(m: BoltMessage): Boolean {
         lastMessageMs = clock()
         return when (m) {
             is BoltMessage.GameUpdate -> { count(if (m.initial) "initial_state" else "game_update"); put(m.data, m.atMs, replace = true, initial = m.initial) }

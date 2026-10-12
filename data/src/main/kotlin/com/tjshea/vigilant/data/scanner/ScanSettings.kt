@@ -1337,6 +1337,14 @@ data class ApiGates(
     val repeatMaxBets: Int = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_BETS,
     val repeatMaxDollars: Double = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_DOLLARS,
     val repeatHedge: Boolean = true,
+    /**
+     * The streaming engine (Tj, 2026-10-12): a push on the Novig or BoltOdds socket starts a scan pass at once (free sources only: the BoltOdds board in memory and Novig's pushed books, no API credits), and the
+     * auto-bet and the bid desk judge its result, instead of waiting for the next interval. Default OFF: off changes nothing. [streamGapSeconds] is the least time between two passes.
+     */
+    val streamScan: Boolean = false,
+    val streamGapSeconds: Int = 3,
+    /** Live games in the streaming engine: the real-time Pinnodds + Novig lane (live fee, 5 s freshness, the order's own delay in its worst price) with live bids. Real orders still need their own switches in Pinnodds live. */
+    val streamLive: Boolean = false,
 ) {
     /** The guard's rules for the placers, or null with the guard switched off. */
     fun repeatRules(): com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? =
