@@ -69,7 +69,6 @@ class BoltOddsStream(
     @Volatile private var snapshotJob: Job? = null
     @Volatile private var needSnapshot = false
     @Volatile private var lastSnapshotAt = 0L
-    @Volatile private var snapshotFilters: BoltFilters? = null
 
     /** When the current connection's snapshot was read (or failed); 0 until then, and again 0 after a drop. */
     @Volatile var readyAtMs = 0L
@@ -172,6 +171,8 @@ class BoltOddsStream(
                 withTimeoutOrNull(checkEveryMs) { closed.await() }
                 if (closed.isCompleted) break
                 if (clock() - lastUsedMs > idleCloseMs) { idle = true; ws.close(1000, "idle"); withTimeoutOrNull(3_000) { closed.await() }; break }
+                // Opened but never greeted with `socket_connected`: not a connection to wait on.
+                if (state == State.CONNECTING && clock() - startedAt > CONNECT_TIMEOUT_MS) { ws.cancel(); closed.complete(Closed(-1, "no socket_connected within ${CONNECT_TIMEOUT_MS / 1000}s")); break }
                 maybeResnapshot()
             }
             val c = if (closed.isCompleted) closed.await() else Closed(1000, "idle")
@@ -194,10 +195,8 @@ class BoltOddsStream(
             delay(backoff)
             backoff = minOf(backoff * 2, backoffMaxMs)
         }
-        if (state != State.OFF && !idleStillWanted()) state = State.OFF
+        if (clock() - lastUsedMs > idleCloseMs) state = State.OFF
     }
-
-    private fun idleStillWanted() = clock() - lastUsedMs <= idleCloseMs
 
     private fun down(why: String) {
         lastError = why
@@ -223,8 +222,7 @@ class BoltOddsStream(
         lastSubscribeAt = clock()
         subscribed = f
         // New sports or books are not in the board yet: the snapshot has to be read again for them (a narrower subscription needs none).
-        val grew = old == null || !old.sports.containsAll(f.sports) || !old.sportsbooks.containsAll(f.sportsbooks) && old.sportsbooks.isNotEmpty() || (old.markets.isNotEmpty() && !old.markets.containsAll(f.markets))
-        if (grew) startSnapshot(f)
+        if (f.addsTo(old)) startSnapshot(f)
     }
 
     private fun maybeResnapshot() {
@@ -233,7 +231,7 @@ class BoltOddsStream(
     }
 
     private fun startSnapshot(f: BoltFilters) {
-        if (snapshotJob?.isActive == true) { needSnapshot = true; snapshotFilters = f; return }
+        if (snapshotJob?.isActive == true) { needSnapshot = true; return }
         needSnapshot = false
         // A long market list would make the URL too long: the board drops what it cannot use anyway.
         val asked = f.copy(markets = if (f.markets.size > MAX_SNAPSHOT_MARKETS) emptyList() else f.markets)
@@ -259,7 +257,6 @@ class BoltOddsStream(
                 // Ready either way: a failed snapshot leaves the socket to fill the board, and a scan must not wait on it for ever.
                 if (state == State.LIVE) readyAtMs = clock()
             }
-            if (needSnapshot && state == State.LIVE) needSnapshot = true
         }
     }
 
@@ -333,8 +330,16 @@ class BoltOddsStream(
     companion object {
         const val DEFAULT_WS_URL = "wss://spro.agency/api"
         const val MAX_SNAPSHOT_MARKETS = 60
+        const val CONNECT_TIMEOUT_MS = 30_000L
 
         /** The OkHttp client for a socket: it pings every 20 s and drops a connection that does not answer. */
         fun socketClient(base: OkHttpClient): OkHttpClient = base.newBuilder().pingInterval(20, TimeUnit.SECONDS).readTimeout(0, TimeUnit.MILLISECONDS).build()
     }
+}
+
+/** Whether these filters take in something [old] did not (a sport, a book, a market, a game): what a snapshot read for [old] lacks. An empty list means "all of that kind". */
+internal fun BoltFilters.addsTo(old: BoltFilters?): Boolean {
+    if (old == null) return true
+    fun grows(o: List<String>, n: List<String>) = if (o.isEmpty()) false else n.isEmpty() || !o.containsAll(n)
+    return grows(old.sports, sports) || grows(old.sportsbooks, sportsbooks) || grows(old.markets, markets) || grows(old.games, games)
 }

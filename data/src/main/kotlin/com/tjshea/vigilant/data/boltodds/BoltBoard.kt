@@ -65,7 +65,9 @@ class BoltBoard(
         val game = d.game ?: return false
         val sport = d.sport ?: return false
         val league = BoltBooks.leagueOfSport(sport)
-        heard[heardKey(book, sport)] = maxOf(heard[heardKey(book, sport)] ?: 0L, at)
+        // A snapshot item's own time may be the time the game last CHANGED; what it proves is that the book was read just now.
+        val heardTs = if (initial) maxOf(at, clock()) else at
+        heard[heardKey(book, sport)] = maxOf(heard[heardKey(book, sport)] ?: 0L, heardTs)
         val kept = ArrayList<BoltOutcome>(d.outcomes.size)
         for (o in d.outcomes) {
             val ref = league?.let { BoltMarkets.classify(it, o) }
