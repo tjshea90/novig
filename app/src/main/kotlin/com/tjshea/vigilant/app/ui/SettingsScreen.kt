@@ -1358,10 +1358,8 @@ private fun ColumnScope.BoltOddsPage(state: UiState, keys: KeyActions, reportAct
         )
     }
     SwitchRow(com.tjshea.vigilant.app.BoltOddsText.SWITCH_TITLE, com.tjshea.vigilant.app.BoltOddsText.switchSub(state.boltKeys.isNotEmpty()), s.gates.useBoltOdds, tag = "boltSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(useBoltOdds = v)) } }
-    if (s.gates.useBoltOdds) {
-        SwitchRow(com.tjshea.vigilant.app.BoltOddsText.ALL_BOOKS_TITLE, com.tjshea.vigilant.app.BoltOddsText.ALL_BOOKS_SUB, s.gates.boltAllBooks, tag = "boltAllBooks") { v -> onUpdate { it.copy(gates = it.gates.copy(boltAllBooks = v)) } }
-        Hint(com.tjshea.vigilant.app.BoltOddsText.NOTES)
-    }
+    SwitchRow(com.tjshea.vigilant.app.BoltOddsText.ALL_BOOKS_TITLE, com.tjshea.vigilant.app.BoltOddsText.ALL_BOOKS_SUB, s.gates.boltAllBooks, tag = "boltAllBooks") { v -> onUpdate { it.copy(gates = it.gates.copy(boltAllBooks = v)) } }
+    if (s.gates.useBoltOdds) Hint(com.tjshea.vigilant.app.BoltOddsText.NOTES)
 }
 
 /**
