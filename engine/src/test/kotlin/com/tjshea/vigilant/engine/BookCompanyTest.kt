@@ -43,7 +43,7 @@ class BookCompanyTest {
         assertNotEquals(BookCompany.of("pointsbetau"), BookCompany.of("fanatics"))
         assertNotEquals(BookCompany.of("wynnbet"), BookCompany.of("windcreek"))
         assertNotEquals(BookCompany.of("bookmakereu"), BookCompany.of("bovada"))
-        assertNotEquals(BookCompany.of("betmgm"), BookCompany.of("ladbrokes"))
+        assertNotEquals(BookCompany.of("betmgm"), BookCompany.of("caesars"))
     }
 
     @Test
@@ -126,5 +126,14 @@ class BookCompanyTest {
         val six = desk.take(6).map { book(it, 100, -134) } + book("draftkings", 105, -135) + book("fanduel", 105, -135)
         val line = FairValue.compute(six, settings)!!
         assertEquals(3, line.perBook.size)
+    }
+
+    /** Tj, 2026-10-12: Dalton Kincaid Over 56.5, bwin / partysports / BetMGM / sportsinteraction all -120 / -111 with the same hold, counted as "4 of 4 books agree". One Entain desk, one vote. */
+    @Test
+    fun `Entain's brands and its BetMGM joint venture are one company, so the four identical rows are one book`() {
+        val all = listOf("bwin", "partysports", "BetMGM", "sportsinteraction", "BetMGM (ON)", "betmgm_on", "Sports Interaction", "Party Sports", "si").map(BookCompany::of).toSet()
+        assertEquals(1, all.size)
+        assertEquals(BookCompany.of("ladbrokes"), BookCompany.of("bwin"))
+        assertNotEquals(BookCompany.of("bwin"), BookCompany.of("fanduel"))
     }
 }
