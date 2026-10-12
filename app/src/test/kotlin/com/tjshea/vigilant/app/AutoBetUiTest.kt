@@ -555,6 +555,18 @@ class AutoBetUiTest {
     }
 
     @Test
+    fun `a player-prop Over needs three points more by default, a chip changes it, and the note says what it does (the 2026-10-11 export)`() {
+        show()
+        compose.onNodeWithTag("autoBetOverPropNote").performScrollTo().assertTextContains("player-prop Over needs", substring = true)
+        assertEquals(0.03, settings.autoBetOverPropExtraEv, 1e-9)
+        compose.onNodeWithText("+5 pts").performScrollTo().performClick()
+        assertEquals(0.05, settings.autoBetOverPropExtraEv, 1e-9)
+        compose.onNodeWithText("Off").performScrollTo().performClick()
+        assertEquals(0.0, settings.autoBetOverPropExtraEv, 1e-9)
+        compose.onNodeWithTag("autoBetOverPropNote").assertTextContains("Off", substring = true)
+    }
+
+    @Test
     fun `the first-listed rule has its own switch in the trap guard, on by default, with a note that follows it (Tj, 2026-10-07)`() {
         show()
         compose.onNodeWithTag("autoBet-trapFirstListedNote").performScrollTo().assertTextContains("first seen more than 6 h before", substring = true)
