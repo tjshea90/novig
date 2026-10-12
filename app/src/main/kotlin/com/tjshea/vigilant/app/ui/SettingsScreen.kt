@@ -1383,12 +1383,12 @@ private fun ColumnScope.OddsPapiFreePage(state: UiState, keys: KeyActions, repor
 }
 
 /**
- * Settings › APIs (Tj, 2026-10-11): every outside API in one list. The switch decides whether the app may call it at all (off = never called anywhere: scans, bids, closes, scores, tests); the small Test
+ * Settings › APIs & keys (Tj, 2026-10-11): every outside API in one list. The switch decides whether the app may call it at all (off = never called anywhere: scans, bids, closes, scores, tests); the small Test
  * button asks the API whether each of its keys is active and accepted (and reads the usage it offers into the meter); "Test active APIs" tests the combination the switches make. Under each API: what is left
- * on every key, from the API's own prompt where it has one.
+ * on every key, from the API's own prompt where it has one, and a button to its own page for its keys and options (v0.89.35: the one home for them).
  */
 @Composable
-private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit, onOpenPage: (SettingsPage) -> Unit = {}) {
     val s = state.settings
     val now = rememberNow(30_000)
     val views = meterViews(state, now).associateBy { it.policy.id }
@@ -1438,6 +1438,12 @@ private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, o
                     androidx.compose.material3.Switch(checked = on, onCheckedChange = { v -> onUpdate { it2 -> e.setOn(it2, v) } }, modifier = Modifier.testTag("apiSwitch-${e.name}"))
                 }
                 if (!on) Text("Off: never called.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                e.page?.let { page ->
+                    TextButton(
+                        onClick = { onOpenPage(page) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                        modifier = Modifier.height(28.dp).testTag("apiOpen-${e.name}"),
+                    ) { Text(if (e.keyless) "Options ›" else if (keys.isEmpty()) "Add a key ›" else "Keys & options ›", style = MaterialTheme.typography.labelMedium) }
+                }
                 state.apiChecks[e.name]?.forEach { c ->
                     Text(
                         (if (c.ok) "✓ " else "✗ ") + (if (c.masked.isBlank() || c.masked == "no key") "" else c.masked + " · ") + c.message,
@@ -1458,8 +1464,13 @@ private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, o
             }
         }
     }
-    Hint("Keys are added and ordered on each API's own page (and can be added from Fair odds & sources); a key refused or spent is skipped for the next one and tried again after its reset.")
+    Hint("Keys are added and ordered on each API's own page (the button under it); a key refused or spent is skipped for the next one and tried again after its reset.")
+    SettingsRowLink("Usage details & keys backup", "The day-by-day chart, every meter, and an export of your keys.", SettingsPage.USAGE, onOpenPage)
 }
+
+/** A row that opens another settings page, at the bottom of a page. */
+@Composable
+private fun SettingsRowLink(title: String, summary: String, page: SettingsPage, onOpenPage: (SettingsPage) -> Unit) = SettingsRow(title, summary, "settingsLink-${page.name}") { onOpenPage(page) }
 
 /**
  * Settings › APIs & keys › Pinnacle (PinnWire, pinnapi) (v0.89.35: moved here from Fair odds & sources). One switch for both services, and their keys in the order they are tried.
@@ -1497,7 +1508,7 @@ private fun ColumnScope.PropLinePage(state: UiState, keys: KeyActions, onUpdate:
     SwitchRow(
         "PropLine",
         if (state.proplineKeys.isEmpty()) "Your sportsbooks below (Pinnacle, DraftKings, FanDuel, BetMGM…) in one feed. Free key at prop-line.com: 1,000 requests a day."
-        else "1 request per league per scan for game lines, 1 per game for player props (${gamesLabel(s.propLineGamesPerScan)} a scan, below). 1,000 a day per key.",
+        else "1 request per league per scan for game lines, 1 per game for player props (${gamesLabel(s.propLineGamesPerScan)} a scan, set under Fair odds). 1,000 a day per key.",
         s.usePropLine,
     ) { v -> onUpdate { it.copy(usePropLine = v) } }
     if (s.usePropLine) {

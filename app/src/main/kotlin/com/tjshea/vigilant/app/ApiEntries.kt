@@ -55,6 +55,21 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
 
     val keyless: Boolean get() = provider == null
 
+    /** The API's own Settings page (its keys and options), or null when it has none: the exchanges have nothing to set. */
+    val page: com.tjshea.vigilant.app.ui.SettingsPage?
+        get() = when (this) {
+            SGO -> com.tjshea.vigilant.app.ui.SettingsPage.SGO
+            ODDSPAPI -> com.tjshea.vigilant.app.ui.SettingsPage.ODDSPAPI
+            ODDSPAPI_FREE -> com.tjshea.vigilant.app.ui.SettingsPage.ODDSPAPI_FREE
+            UNABATED -> com.tjshea.vigilant.app.ui.SettingsPage.UNABATED
+            PARLAY -> com.tjshea.vigilant.app.ui.SettingsPage.PARLAY
+            PROPLINE -> com.tjshea.vigilant.app.ui.SettingsPage.PROPLINE
+            ODDS_API -> com.tjshea.vigilant.app.ui.SettingsPage.ODDS_API
+            PINNWIRE, PINNAPI -> com.tjshea.vigilant.app.ui.SettingsPage.PINNACLE
+            PINNODDS -> com.tjshea.vigilant.app.ui.SettingsPage.PINNODDS
+            KALSHI, POLYMARKET -> null
+        }
+
     companion object {
         /** The entries that are on. */
         fun active(s: ScanSettings): List<ApiEntry> = entries.filter { it.isOn(s) }
