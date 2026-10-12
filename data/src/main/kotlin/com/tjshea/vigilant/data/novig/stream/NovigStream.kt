@@ -352,8 +352,8 @@ class NovigStream(
             if (on == compressOn) return
             compressOn = on
             if (on) compressGivenUp = null
-            // The header rides the upgrade: a connection in use is replaced so the new setting takes hold (its subscriptions are asked for again on the new one).
-            socket != null
+            // The header rides the upgrade, so it takes hold at the next connection: replacing a live one costs the scan its books (v0.92.0 did, and scans took 98-135 s).
+            false
         }
         if (reconnect) { close(); connect() }
     }
@@ -567,11 +567,9 @@ class NovigStream(
         compressRequested = compress
         inflater = null
         inflateFailuresRun = 0
-        // The upgrade costs 32. The bucket is the KEY's, not the connection's: a reconnect after a drop (or the Test key's own connection) finds what the last one spent still unrefilled, so the model
-        // carries on from where it was (4 a second); a first connection in this process assumes a full bucket (a fresh or long-idle key).
-        val before = if (modelKnown) minOf(capacity, tokens + (clock() - tokensAt).coerceAtLeast(0) / 1000.0 * refillPerSec) else capacity
-        tokens = before - UPGRADE_COST
-        modelKnown = true
+        // The upgrade costs 32; the bucket is assumed full before it. (v0.92.0 carried the last connection's spending forward instead: after a reconnect the bulk subscribe then waited for a "full" bucket
+        // for up to 128 s at 4 a second and two scans in four read everything by REST, 98-135 s. v0.91.0's optimistic start gave 24-34 s; a refusal from Novig resets the model to empty anyway.)
+        tokens = capacity - UPGRADE_COST
         tokensAt = clock()
         subscribeRequests = 0
         chunk = Int.MAX_VALUE
