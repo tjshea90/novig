@@ -6738,3 +6738,12 @@ For the star rating system, allow auto bets on the types of bets that are preven
 ```
 In this screenshot, notice the odds are suspiciously identical across the sports books. Do a thorough search online for sports books and look for books with the same company, same parent company, or books that use odds from another provider. The app should not double count any odds from books that have the same company or the same odds source. This guard should be applied throughout the app
 ```
+
+## 2026-10-12T17:16:15Z
+```
+Since boltodds pro has a web socket, and novig has a web socket, can vigilant be made to do real time streaming of odds on both for positive EV scanning instead of scanning at intervals? For example, can I have auto bet and auto bid turned on, with odds movement tracked in real time using the web socket, and as soon as bets come up on novig matching the criteria, it auto bets it rapidly? Basically the scans on both novig and boltodds would both be streaming continuously. It can use the speed to pick off stale odds rapidly or make smarter auto bids which take advantage of bettors who haven't seen the odds movement fast enough. 
+
+If this is plausible and can be built, build it now. Make a toggle on and off for this setting. It should also be able to handle live bets and bids using this engine if it is refreshed fast enough. Make a toggle for it to handle live bets and bids as well. Keep in mind the 5 second or so delay in bets on novig and the live bet fee. The live bets and bids must have a positive EV "range" where they are still posted and bet as long as the bet is still positive EV at the time it can be filled but immediately removed or cancelled if it is no longer positive EV.
+
+Another safeguard needs to be made and applied automatically. When I live auto bet, a lot of the time it bets or bids the same side, player, team, or prop over and over many times repeatedly, because the odds change yet it is still positive EV. Identical bets with different odds need a guard that doesn't bet or bid on them if they have already been bet a certain number of times or a certain money amount. Bets and bids may be placed on both sides of a two sided bet (for example betting on both players in a match at different times), but only if it guarantees positive profit. It should never lock in a loss
+```
