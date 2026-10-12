@@ -2,11 +2,11 @@ package com.tjshea.vigilant.data.tracker
 
 import com.tjshea.vigilant.data.tracker.RepeatGuard.Pos
 import com.tjshea.vigilant.data.tracker.RepeatGuard.Rules
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class RepeatGuardTest {
     private val rules = Rules(maxBets = 2, maxDollars = 100.0)
@@ -24,7 +24,7 @@ class RepeatGuardTest {
 
     @Test fun `the same side at a new price is held back after the limit`() {
         val held = listOf(pos("over", 20.0, 40.0), pos("over", 20.0, 38.0))
-        val why = assertNotNull(RepeatGuard.check(rules, held, "m1", "over", 20.0, 36.0))
+        val why = RepeatGuard.check(rules, held, "m1", "over", 20.0, 36.0)!!
         assertTrue("same side" in why)
     }
 
