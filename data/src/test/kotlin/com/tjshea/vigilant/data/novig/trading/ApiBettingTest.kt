@@ -12,6 +12,8 @@ import com.tjshea.vigilant.data.tracker.GameExposure
 import com.tjshea.vigilant.data.tracker.GameRef
 import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.async
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -966,5 +968,25 @@ class ApiBettingTest {
         assertTrue("the live fee lowers the EV: ${live.evPercent} vs ${pre.evPercent}", live.evPercent < pre.evPercent)
         // UNLIVE puts it back to pregame
         ready(ApiBetPlanner.plan(target(), book().copy(lifecycle = com.tjshea.vigilant.data.novig.stream.MarketLifecycle("OPEN", "UNLIVE", false, now)), 5.0, now, limits, 0.0))
+    }
+
+    /** Tj, 2026-10-12: Novig takes about 5 s to end an order; "Do option 1": the sheet is freed once the order is in, and the dollars stay counted until the record is made. */
+    @Test
+    fun `a bet by hand frees the sheet once Novig has the order, and its dollars count against the limits until it is recorded`() = runBlocking {
+        laggingNovig(Scenario(), pendingFor = 2)
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val sent = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val p = ApiBetPlacer(
+            tradingClient(), tracker(), books = { book() }, limits = { limits }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { gate.await() },
+        )
+        val placing = kotlinx.coroutines.async(Dispatchers.IO) { p.placeByHand(target(), 10.0, 0.465, false) { sent.complete(Unit) } }
+        withTimeout(10_000) { sent.await() }
+        assertFalse("the order is still being finished", placing.isCompleted)
+        // while it ends: the same side is not bet again, and the day's limit already counts it ($10 + $41 > $50)
+        assertTrue(refused(p.plan(target(), 5.0)).contains("already bet this"))
+        assertTrue(refused(p.plan(target(), 41.0, allowRepeat = true)).contains("daily limit"))
+        gate.complete(Unit)
+        val r = withTimeout(10_000) { placing.await() }
+        assertTrue(r.toString(), r is PlaceResult.Placed)
     }
 }
