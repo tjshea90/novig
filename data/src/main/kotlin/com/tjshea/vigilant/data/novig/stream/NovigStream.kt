@@ -26,6 +26,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okio.ByteString
+import java.util.zip.Inflater
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
@@ -70,6 +72,9 @@ interface PushedBooks {
 
     /** Sets the feed's options from Settings: the best-bid channel on or off, keeping the connection open between scans, and the private `orders` stream (an order's end, pushed). A no-op for a feed with none. */
     fun configureFeed(bbo: Boolean, keepOpen: Boolean, orders: Boolean = false) {}
+
+    /** Asks Novig to send this connection's messages as raw-DEFLATE binary frames (`X-Novig-WS-Compress: deflate`, NOVIG_API.md §27). Takes effect at the next connection; given up on its own if frames will not inflate. */
+    fun configureCompression(on: Boolean) {}
 
     /** The feed's state in words, line by line, for Diagnostics. */
     fun feedReport(): List<String> = emptyList()
@@ -319,6 +324,69 @@ class NovigStream(
     private val canaryTried = HashSet<String>()
 
     /** Applies the Settings options: the best-bid channel on or off (turning it off and on again clears a fallback, so it is tried afresh), and keeping the connection open between scans. */
+    /** Compression asked for ([configureCompression]), why it was given up on (sticky until the switch is turned off and on), and what it has done (Diagnostics). */
+    @Volatile
+    private var compressOn = false
+    private var compressGivenUp: String? = null
+    private var compressRequested = false
+    private var inflater: Inflater? = null
+    private var inflateFailuresRun = 0
+    private var inflateFailuresTotal = 0
+    private var lastInflateError: String? = null
+    private var wireBytes = 0L
+    private var plainBytes = 0L
+    private var binaryFrames = 0L
+    private var textFrames = 0L
+    private var textFramesWhileCompressed = 0L
+
+    override fun configureCompression(on: Boolean) {
+        val reconnect = synchronized(this) {
+            if (on == compressOn) return
+            compressOn = on
+            if (on) compressGivenUp = null
+            // The header rides the upgrade: a connection in use is replaced so the new setting takes hold (its subscriptions are asked for again on the new one).
+            socket != null
+        }
+        if (reconnect) { close(); connect() }
+    }
+
+    private fun giveUpCompression(why: String) {
+        val first = synchronized(this) { if (compressGivenUp != null) false else { compressGivenUp = why; true } }
+        if (!first) return
+        // This connection's frames cannot be read: it is let go and the feed comes back plainly, at once.
+        close()
+        connect()
+    }
+
+    /** One binary frame's text: raw DEFLATE (a frame that is a stream of its own, or one piece of a stream carried on), or, if it is not DEFLATE at all, plain JSON sent as bytes. Null = unreadable. */
+    private fun inflate(frame: ByteArray): String? {
+        val inf = synchronized(this) { inflater ?: Inflater(true).also { inflater = it } }
+        synchronized(inf) {
+            try {
+                // The zlib the platform wraps wants a dummy byte after a raw stream.
+                inf.setInput(frame + ByteArray(1))
+                val out = java.io.ByteArrayOutputStream(frame.size * 6)
+                val buf = ByteArray(32 * 1024)
+                while (true) {
+                    val n = inf.inflate(buf)
+                    if (n > 0) {
+                        out.write(buf, 0, n)
+                        if (out.size() > MAX_INFLATED_BYTES) { inf.reset(); return null }
+                        continue
+                    }
+                    if (inf.finished() || inf.needsInput() || inf.needsDictionary()) break
+                }
+                val whole = inf.finished()
+                if (whole) inf.reset()
+                synchronized(this) { plainBytes += out.size() }
+                return out.toString(Charsets.UTF_8.name())
+            } catch (e: java.util.zip.DataFormatException) {
+                inf.reset()
+                return null
+            }
+        }
+    }
+
     override fun configureFeed(bbo: Boolean, keepOpen: Boolean, orders: Boolean) {
         var resync = false
         synchronized(this) {
@@ -484,6 +552,11 @@ class NovigStream(
             fail("This phone can't sign with the saved Novig key. Reconnect it in Settings.")
             return
         }
+        val compress = compressOn && compressGivenUp == null
+        compressRequested = compress
+        inflater?.end()
+        inflater = null
+        inflateFailuresRun = 0
         // The upgrade costs 32. The bucket is the KEY's, not the connection's: a reconnect after a drop (or the Test key's own connection) finds what the last one spent still unrefilled, so the model
         // carries on from where it was (4 a second); a first connection in this process assumes a full bucket (a fresh or long-idle key).
         val before = if (modelKnown) minOf(capacity, tokens + (clock() - tokensAt).coerceAtLeast(0) / 1000.0 * refillPerSec) else capacity
@@ -512,7 +585,7 @@ class NovigStream(
         canaryNotBeforeMs = 0L
         canaryTried.clear()
         connects++
-        socket = http.newWebSocket(request, Listener())
+        socket = http.newWebSocket(if (compress) request.newBuilder().header(COMPRESS_HEADER, "deflate").build() else request, Listener())
         idleJob?.cancel()
         idleJob = scope.launch {
             while (isActive) {
@@ -925,8 +998,35 @@ class NovigStream(
             scheduleSync()
         }
 
+        override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+            if (!current(webSocket)) return
+            val raw = bytes.toByteArray()
+            synchronized(this@NovigStream) { binaryFrames++; wireBytes += raw.size }
+            val text = inflate(raw) ?: raw.takeIf { it.isNotEmpty() && it[0] == '{'.code.toByte() }?.toString(Charsets.UTF_8)
+            if (text == null) {
+                val run = synchronized(this@NovigStream) {
+                    inflateFailuresRun++
+                    inflateFailuresTotal++
+                    lastInflateError = "a ${raw.size}-byte binary frame was neither DEFLATE nor JSON"
+                    inflateFailuresRun
+                }
+                if (run >= INFLATE_FAILURES_TO_GIVE_UP) giveUpCompression("$run frames in a row would not inflate")
+                return
+            }
+            synchronized(this@NovigStream) { inflateFailuresRun = 0 }
+            handle(webSocket, text)
+        }
+
         override fun onMessage(webSocket: WebSocket, text: String) {
             if (!current(webSocket)) return
+            synchronized(this@NovigStream) {
+                textFrames++
+                if (compressRequested) textFramesWhileCompressed++
+            }
+            handle(webSocket, text)
+        }
+
+        private fun handle(webSocket: WebSocket, text: String) {
             val msg = runCatching { json.parseToJsonElement(text).jsonObject }.getOrNull() ?: return
             errorCode(msg)?.let { code ->
                 val n = (msg["nonce"] as? JsonPrimitive)?.longOrNull
@@ -1111,6 +1211,13 @@ class NovigStream(
                 add("held: ${subscribed.size} markets of room ${if (bboActive()) limit else minOf(limit, MAX_MARKETS)} ($onBbo on bbo, $onBook on book, ${deepUntil.count { it.value > now }} deepened) · stream allowance ${capacity.toInt()} refilling ${refillPerSec.toInt()} a second (${if (tuned) "this key's own /v3/limits" else "documented default: /v3/limits not read yet"}), ${tokens.toInt().coerceAtLeast(0)} spare · ${if (keepOpen) "kept open between scans" else "closed ${idleMs / 1000} s after the last scan"}")
                 add("connection: ${when (val st = _state.value) { is StreamState.Live -> "live since ${(now - st.sinceMs) / 1000} s"; is StreamState.Connecting -> "connecting"; is StreamState.Failed -> "failed: ${st.message}"; StreamState.Off -> "off" }} · connects $connects, drops $drops, upgrade 429s $upgrade429s" + (lastDrop?.let { " · last drop: $it" } ?: ""))
                 add("refused by Novig: " + (if (refusalCounts.isEmpty()) "nothing on this connection" else refusalCounts.entries.joinToString(", ") { "${it.key} ×${it.value}" } + " (last ${lastRefusalCode} ${(now - lastRefusalAtMs) / 1000} s ago)"))
+                add("compression: " + when {
+                    !compressOn -> "switched off"
+                    compressGivenUp != null -> "given up: $compressGivenUp (${lastInflateError ?: "no detail"}); the feed is plain"
+                    !compressRequested -> "on, asked for at the next connection"
+                    binaryFrames == 0L && textFrames > 0L -> "asked for, but Novig answered in plain text ($textFrames frames): nothing is saved"
+                    else -> "on: $binaryFrames frames, ${wireBytes / 1024} KB on the wire became ${plainBytes / 1024} KB" + (if (wireBytes > 0) " (${String.format(java.util.Locale.US, "%.1f", plainBytes.toDouble() / wireBytes)}× smaller)" else "") + (if (inflateFailuresTotal > 0) ", $inflateFailuresTotal unreadable" else "")
+                })
                 add("bbo: ${bboSnapshots} snapshots this connection, ${bboUnreadable} unreadable, ${deepened} markets deepened in all")
                 add("canary: " + (canary?.let { "${(now - it.atMs) / 1000} s ago: ${it.detail}" } ?: "not run yet"))
                 add("orders: " + (if (!ordersOn) (privateError?.let { "refused by Novig ($it): results are read by request" } ?: "pushed order results are switched off: results are read by request") else if (orderEvents.live) "pushed (${orderEvents.events} events heard, ${orderEvents.gaps} gaps)" else "subscribing / not live: results are read by request"))
@@ -1121,6 +1228,11 @@ class NovigStream(
     companion object {
         private val DEFAULT_OWNER = Any()
         const val STREAM_CAPACITY = 512
+
+        /** The header that asks Novig for raw-DEFLATE binary frames (docs.novig.com/api/streaming/connection). */
+        const val COMPRESS_HEADER = "X-Novig-WS-Compress"
+        const val INFLATE_FAILURES_TO_GIVE_UP = 3
+        const val MAX_INFLATED_BYTES = 64 * 1024 * 1024
         const val REFILL_PER_SEC = 4.0
         const val UPGRADE_COST = 32
         const val BOOK_WEIGHT = 16
@@ -1209,6 +1321,7 @@ class SharedStreamView(private val provider: () -> NovigStream?, private val lis
     override fun room(): Int = stream()?.room() ?: NovigStream.MAX_MARKETS
     override fun feedReport(): List<String> = stream()?.feedReport().orEmpty()
     override fun allowance(): Double? = stream()?.allowance()
+    override fun configureCompression(on: Boolean) { stream()?.configureCompression(on) }
     override fun bookGap(marketId: String): String? = stream()?.bookGap(marketId) ?: "Novig live feed is not connected (no key)"
     override fun problemSince(sinceMs: Long): String? = stream()?.problemSince(sinceMs)
 
