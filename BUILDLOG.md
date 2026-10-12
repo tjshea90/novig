@@ -241,3 +241,4 @@ day that changes.
 | v0.95.1 | code 237 | 2026-10-12T20:29Z | v0.95.1: live tennis on BoltOdds feed, feed explains no-game, conversion cache
 | v0.95.2 | code 238 | 2026-10-12T20:48Z | v0.95.2: BoltOdds live feed note in Diagnostics, tennis subscription fix, faster refresh
 | v0.95.3 | code 239 | 2026-10-12T21:11Z | v0.95.3: BoltOdds live note lists per-game fresh companies; re-subscribe honours the server's wait-minutes refusal
+| v0.95.4 | code 240 | 2026-10-12T22:11Z | v0.95.4: BoltOdds board conversion no longer redone for every book push (refresh passes took 8-15 s)
