@@ -577,10 +577,17 @@ class Scanner(
             if (fresh.values.none { it.partial }) return
             val shown = planFor(cat, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS)
             val merged = HashMap(books).apply { putAll(fresh) }
+            val extra = try {
+                deepExtra()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                emptyList()
+            }
             val ids = Pricing.price(shown, merged, settings, now, fairMemo).opportunities
                 .filter { o -> fresh[o.market.marketId]?.partial == true && (o.quote?.evPercent ?: Double.NEGATIVE_INFINITY) > 0.0 }
                 .map { it.market.marketId }
-                .plus(runCatching { deepExtra() }.getOrDefault(emptyList()).filter { fresh[it]?.partial == true })
+                .plus(extra.filter { fresh[it]?.partial == true })
                 .distinct()
             if (ids.isEmpty()) return
             novig.deepen(ids)
