@@ -2,7 +2,6 @@ package com.tjshea.vigilant.data.boltodds
 
 import com.tjshea.vigilant.data.reference.RefEvent
 import com.tjshea.vigilant.data.scanner.League
-import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.reference.LineKind
@@ -25,7 +24,6 @@ class BoltOddsFeed(
     private val scope: CoroutineScope,
     private val clock: () -> Long = System::currentTimeMillis,
     wsUrl: String = BoltOddsStream.DEFAULT_WS_URL,
-    tuning: (String) -> BoltStreamTuning = { BoltStreamTuning() },
 ) {
     private val socketHttp = BoltOddsStream.socketClient(http)
 
@@ -151,6 +149,3 @@ class BoltOddsFeed(
         const val READY_WAIT_MS = 25_000L
     }
 }
-
-/** Timing knobs of a socket, for tests. */
-class BoltStreamTuning
