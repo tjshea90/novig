@@ -76,15 +76,15 @@ class BboScanTest {
     }
 
     private inner class Fair : ReferenceSource {
-        override val id = "poly"
-        override val displayName = "poly"
+        override val id = "polymarket"
+        override val displayName = "polymarket"
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot =
             RefSnapshot(
                 league.oddsApiSportKey,
                 (0 until 6).map { i ->
                     RefEvent(
-                        "poly$i", league.oddsApiSportKey, events[i].startsTs, home = "Home $i", away = "Away $i",
-                        markets = listOf(RefBookMarket("poly", "poly", LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, 2.0, null), RefQuote(Side.HOME, 2.0, null)), now)),
+                        "polymarket$i", league.oddsApiSportKey, events[i].startsTs, home = "Home $i", away = "Away $i",
+                        markets = listOf(RefBookMarket("polymarket", "polymarket", LineKind.MONEYLINE, listOf(RefQuote(Side.AWAY, 2.0, null), RefQuote(Side.HOME, 2.0, null)), now)),
                     )
                 },
                 now,
