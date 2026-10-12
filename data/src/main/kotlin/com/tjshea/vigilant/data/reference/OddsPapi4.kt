@@ -247,7 +247,7 @@ class Op4Budget(private val client: OddsPapi4Client, private val clock: () -> Lo
     }
 
     /** Days until the plan's period ends, counting today (at least 1): the month's end unless the account says when it is valid until. */
-    private fun daysLeft(acc: OddsPapi4Client.Account, now: Long): Int {
+    private fun daysLeft(acc: Op4Account, now: Long): Int {
         val end = acc.validUntilMs?.takeIf { it > now } ?: java.time.ZonedDateTime.ofInstant(Instant.ofEpochMilli(now), ZoneOffset.UTC).let { it.withDayOfMonth(1).plusMonths(1).truncatedTo(java.time.temporal.ChronoUnit.DAYS).toInstant().toEpochMilli() }
         return (((end - now) / OddsPapi4Client.DAY_MS) + 1).toInt().coerceAtLeast(1)
     }

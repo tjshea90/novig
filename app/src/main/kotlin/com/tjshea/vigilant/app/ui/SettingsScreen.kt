@@ -1411,8 +1411,9 @@ private fun ColumnScope.OddsPapiFreePage(state: UiState, keys: KeyActions, repor
     SwitchRow(com.tjshea.vigilant.app.Op4Text.SWITCH_TITLE, com.tjshea.vigilant.app.Op4Text.switchSub(state.op4Keys.isNotEmpty()), s.oddsPapiFree, tag = "oddsPapiFreeSwitch") { v -> onUpdate { it.copy(oddsPapiFree = v) } }
     if (s.oddsPapiFree) {
         Hint(com.tjshea.vigilant.app.Op4Text.NOTES)
-        Text("Fair odds from whole games: requests a day", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
-        ChoiceChips(listOf(0.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0), s.gates.op4Fair.toDouble(), { if (it == 0.0) "Off" else "${it.toInt()}" }) { v -> onUpdate { it.copy(gates = it.gates.copy(op4Fair = v.toInt())) } }
+        Text("Fair odds from whole games: requests a day (at most)", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+        // The plan is 250 requests a MONTH: chips above one day's even share (about 8) only ever promised what the app could not keep (the v0.89.34 file: "250 a day" spent 220 in one day).
+        ChoiceChips(listOf(0.0, 2.0, 5.0, 10.0), s.gates.op4Fair.toDouble().coerceAtMost(10.0), { if (it == 0.0) "Off" else "${it.toInt()}" }) { v -> onUpdate { it.copy(gates = it.gates.copy(op4Fair = v.toInt())) } }
         Hint(com.tjshea.vigilant.app.Op4Text.FAIR_HINT)
         SwitchRow("Every book for the fair average", "Ask for every book the plan carries (about 300) in each game's one request, not only the books picked in Settings. Each is devigged on its own and averaged; regional clones count once.", s.gates.opAllBooks, tag = "op4AllBooksSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(opAllBooks = v)) } }
     }
