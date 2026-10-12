@@ -6721,3 +6721,8 @@ Make this a toggle somewhere in the settings. Toggle on = only place the types o
 ```
 The bet slip is still lagging. And the auto bet feature gave another error and stopped and did not fix itself and auto resume. These auto bet errors were not happening a few versions back.
 ```
+
+## 2026-10-12T15:53:03Z
+```
+I now see the close button in the bet slip. Close the bet slip immediately automatically after I place the bet. Then send a notification of successful bet or any error
+```
