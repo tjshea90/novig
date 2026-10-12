@@ -1172,6 +1172,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (report.message != null && report.error == null && !c.runner.running && !_state.value.status.scanning) {
                 val lines = try {
                     withContext(Dispatchers.IO) {
+                        // The key's `stream` allowance (512, refilling 4 a second on Tj's key) is shared by every connection on it, and the app's own kept-open feed has been spending it: this check's
+                        // connection would starve beside it (v0.91.0's first Test key: "complete books asked for: 0 of 10 in 5.0 s"). The app's feed is let go (the next scan opens it again) and the
+                        // check waits, up to 100 s, until the allowance is back to what its own steps spend (about 470 tokens).
+                        val shared = c.novig.stream as? com.tjshea.vigilant.data.novig.stream.PushedBooks
+                        var waited = 0L
+                        if (shared?.allowance() != null) {
+                            shared.close()
+                            while ((shared.allowance() ?: 0.0) < TEST_KEY_ALLOWANCE && waited < TEST_KEY_WAIT_MS) {
+                                _state.update { it.copy(novig = it.novig.copy(busy = true, message = report.message + "\n\nWaiting for the key's live-feed allowance to refill (${(shared.allowance() ?: 0.0).toInt()} of ${TEST_KEY_ALLOWANCE.toInt()})…")) }
+                                kotlinx.coroutines.delay(2_000)
+                                waited += 2_000
+                            }
+                        }
                         NovigLiveCheck(c.http, c.json, c.readKeyClient(conn), feed = { s -> NovigStream(c.http, s, viewModelScope) }).run { step ->
                             _state.update { it.copy(novig = it.novig.copy(busy = true, message = report.message + "\n\n" + step)) }
                         }
