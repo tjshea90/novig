@@ -114,17 +114,13 @@ enum class SettingsGroup(val title: String, val about: String) {
  * back arrow (Android's own Settings works this way). Auto-bet has its own bottom tab ([AutoBetScreen]); the home list links to it.
  */
 enum class SettingsPage(val title: String, val about: String, val group: SettingsGroup) {
+    // The order is the order on the home list: its groups, and inside each the pages as listed here. The APIs' own pages follow APIS (they open from it).
+
     /** Push alerts for new +EV bets, and the sharp books' say over them. */
     ALERTS("Alerts", "A notification when a new bet is good enough", SettingsGroup.BET),
 
     /** The Novig key, the wallet, bet amounts, limits, bankroll. */
     BETTING("Betting & Novig account", "Your Novig key, wallet, bet amounts and limits", SettingsGroup.BET),
-
-    /** Pinnacle's live price on the Pinnodds WebSocket against Novig's lagging quote: the key, the switches and the limits (Tj, 2026-10-08). */
-    PINNODDS("Pinnodds live", "Pinnacle's live price against Novig: key, paper or real bets, limits", SettingsGroup.LIVE),
-
-    /** Post-only bids on Novig's live lines, priced under Pinnacle's live fair: paper, then real money, with presets and every number as a chip or a box (Tj, 2026-10-10). */
-    LIVEBIDS("Live bids", "Bids on live games, kept fresh and pulled fast: presets, stake and every safeguard", SettingsGroup.LIVE),
 
     /** Pause, which scanner, which games, the background scan. */
     SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background", SettingsGroup.FIND),
@@ -135,44 +131,50 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** What Vigilant's own +EV feed shows and how much a scan reads. */
     FEED("+EV feed & scan size", "Vigilant's own scan: what it shows and how much it reads", SettingsGroup.FIND),
 
-    /** How fair odds are worked out, and where they come from (with keys). */
+    /** How fair odds are worked out: the method, the sharp books, the guards, the sportsbooks and their props. The feeds and keys are under [APIS]. */
     FAIR("Fair odds", "How the true odds are worked out: the method, the sharp books, the sportsbooks and their props", SettingsGroup.FIND),
 
     /** Every API in one place: its switch, a Test button, its keys and what is left on them, and a button to its own page for the keys and options (Tj, 2026-10-11; one home for them since v0.89.35). */
     APIS("APIs & keys", "Turn any API on or off, add its keys, test them and see what is left on each; the odds feeds, their options and a backup of your keys", SettingsGroup.FIND),
 
-    /** SportsGameOdds Pro: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). */
+    /** SportsGameOdds Pro: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). A page of [APIS]. */
     SGO("SportsGameOdds Pro", "One paid feed for odds, props, closing lines and results, read alongside every other API you have on", SettingsGroup.FIND),
 
-    /** OddsPapi v5: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). */
+    /** OddsPapi v5: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). A page of [APIS]. */
     ODDSPAPI("OddsPapi", "v5 (a trial or contract key): a second paid feed for odds, props, closing lines (CLV for any bet) and results, read alongside every other API you have on", SettingsGroup.FIND),
 
-    /** Unabated's FREE API: soft-book lines and props at no credit cost, the last source in line (Tj, 2026-10-11). */
+    /** Unabated's FREE API: soft-book lines and props at no credit cost, the last source in line (Tj, 2026-10-11). A page of [APIS]. */
     UNABATED("Unabated (free)", "Free lines and props from DraftKings, FanDuel, MGM, Caesars and more; fills in what the other feeds miss", SettingsGroup.FIND),
 
-    /** OddsPapi's FREE v4 plan: Pinnacle closing lines for CLV from free historical odds (Tj, 2026-10-11). */
+    /** OddsPapi's FREE v4 plan: Pinnacle closing lines for CLV from free historical odds (Tj, 2026-10-11). A page of [APIS]. */
     ODDSPAPI_FREE("OddsPapi Free (v4)", "Your free OddsPapi key: Pinnacle closing lines for CLV, spending almost none of its monthly requests", SettingsGroup.FIND),
+
+    /** Pinnacle through PinnWire and pinnapi: the switch for both and their keys (moved out of Fair odds in v0.89.35). A page of [APIS]. */
+    PINNACLE("Pinnacle (PinnWire, pinnapi)", "Pinnacle's board and player props: the keys and their order", SettingsGroup.FIND),
+
+    /** PropLine: its keys and options. A page of [APIS]. */
+    PROPLINE("PropLine", "30 books' lines and props: keys and options", SettingsGroup.FIND),
+
+    /** ParlayAPI: its keys. A page of [APIS]. */
+    PARLAY("ParlayAPI", "Pinnacle and 30 books, props, injuries and closing lines: keys", SettingsGroup.FIND),
+
+    /** The Odds API: its keys and options. A page of [APIS]. */
+    ODDS_API("The Odds API", "Sportsbook lines and props: keys and options", SettingsGroup.FIND),
+
+    /** Each feed's usage charts and the keys backup. A page of [APIS]. */
+    USAGE("Usage details & keys backup", "Credits left on each feed, the day-by-day chart, and a backup of your keys", SettingsGroup.FIND),
+
+    /** Pinnacle's live price on the Pinnodds WebSocket against Novig's lagging quote: the key, the switches and the limits (Tj, 2026-10-08). */
+    PINNODDS("Pinnodds live", "Pinnacle's live price against Novig: key, paper or real bets, limits", SettingsGroup.LIVE),
+
+    /** Post-only bids on Novig's live lines, priced under Pinnacle's live fair: paper, then real money, with presets and every number as a chip or a box (Tj, 2026-10-10). */
+    LIVEBIDS("Live bids", "Bids on live games, kept fresh and pulled fast: presets, stake and every safeguard", SettingsGroup.LIVE),
+
+    /** Research mode: one switch for every recorder that places nothing, the paper lab, and the one file to send Claude (Tj, 2026-10-09). */
+    RESEARCH("Research mode", "One switch for every recorder that places nothing, and the file to send Claude", SettingsGroup.LIVE),
 
     /** The floating widget and the picture-in-picture window. */
     WIDGET("Widget & mini window", "The small window that floats over other apps", SettingsGroup.SCREEN),
-
-    /** Research mode: one switch for every recorder that places nothing, the paper lab, and the one file to send Claude (Tj, 2026-10-09). */
-    RESEARCH("Research mode", "One switch for every recorder that places nothing, and the file to send Claude", SettingsGroup.DATA),
-
-    /** Pinnacle through PinnWire and pinnapi: the switch for both and their keys (moved out of Fair odds in v0.89.35; a page of APIs). */
-    PINNACLE("Pinnacle (PinnWire, pinnapi)", "Pinnacle's board and player props: the keys and their order", SettingsGroup.FIND),
-
-    /** PropLine: its keys and options (a page of APIs). */
-    PROPLINE("PropLine", "30 books' lines and props: keys and options", SettingsGroup.FIND),
-
-    /** ParlayAPI: its keys (a page of APIs). */
-    PARLAY("ParlayAPI", "Pinnacle and 30 books, props, injuries and closing lines: keys", SettingsGroup.FIND),
-
-    /** The Odds API: its keys and options (a page of APIs). */
-    ODDS_API("The Odds API", "Sportsbook lines and props: keys and options", SettingsGroup.FIND),
-
-    /** Each feed's usage charts and the keys backup (a page of APIs). */
-    USAGE("Usage details & keys backup", "Credits left on each feed, the day-by-day chart, and a backup of your keys", SettingsGroup.DATA),
 
     /** Diagnostics, the grading check, About. */
     HELP("Diagnostics & about", "Send Claude a report, check grading, version", SettingsGroup.DATA),
