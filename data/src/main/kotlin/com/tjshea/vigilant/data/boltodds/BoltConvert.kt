@@ -56,10 +56,13 @@ object BoltConvert {
                 val ms = marketsOf(b, key, ctx)
                 markets += if (flip) ms.map { it.flipped() } else ms
             }
-            if (markets.isNotEmpty()) out += RefEvent("bolt-${ctx.league.novigName}-${gameId.hashCode().toUInt().toString(16)}", ctx.league.oddsApiSportKey, start, canon.home, canon.away, markets)
+            if (markets.isNotEmpty()) out += RefEvent(eventId(ctx.league.novigName, gameId), ctx.league.oddsApiSportKey, start, canon.home, canon.away, markets)
         }
         return out
     }
+
+    /** The reference event id of BoltOdds game [gameId] in [league] (the same wherever it is built). */
+    fun eventId(league: String, gameId: String): String = "bolt-$league-${gameId.hashCode().toUInt().toString(16)}"
 
     private fun norm(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
 

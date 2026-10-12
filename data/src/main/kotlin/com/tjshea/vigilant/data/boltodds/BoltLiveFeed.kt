@@ -120,11 +120,18 @@ class BoltLiveFeed(
     @Synchronized
     private fun update(ids: Set<String>?) {
         val now = clock()
-        val entries = board.liveEntries(ids?.let { it })
+        var only = ids
+        var entries = board.liveEntries(only)
+        // A game that has left the board (removed, cleared, no longer live) cannot say which league it was: look at everything.
+        if (only != null && only.any { id -> entries.none { it.game == id } }) { only = null; entries = board.liveEntries(null) }
         val built = BoltLiveConsensus.build(entries, now, rules())
         val byGame = built.associateBy { it.id }
-        // Games to look at: the ones just built, and every game already said (a game that lost its quorum must close its lines).
-        val look = LinkedHashSet<String>().apply { addAll(byGame.keys); if (ids == null) addAll(games.keys) else addAll(games.keys.filter { key -> idOf(key) in ids }) }
+        // Games to look at: the ones just built, and (a game that lost its quorum must close its lines) the ones just read, or every game already said.
+        val look = LinkedHashSet<String>().apply {
+            addAll(byGame.keys)
+            if (only == null) addAll(games.keys)
+            else entries.forEach { e -> BoltBooks.leagueOfSport(e.sport)?.let { add(BoltConvert.eventId(it, e.game)) } }
+        }
         for (key in look) {
             val g = byGame[key]
             val st = games[key]
