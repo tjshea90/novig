@@ -853,10 +853,10 @@ private fun ColumnScope.WidgetPage(s: ScanSettings, onUpdate: SettingsUpdate) {
     }
 }
 
-/** Fair odds: how fair odds are worked out, where they come from (and their keys), the sportsbooks. */
+/** Fair odds: how fair odds are worked out, the sharp books, the guards, the sportsbooks and their props. The feeds, switches and keys are under APIs & keys. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: SettingsUpdate) {
+private fun ColumnScope.FairOddsTab(state: UiState, onUpdate: SettingsUpdate, onOpenPage: (SettingsPage) -> Unit) {
     val s = state.settings
     Intro(
         "Fair (true) odds are what a bet's odds would be with the sportsbooks' profit taken out. Vigilant compares Novig's price with them: a price better than " +
@@ -942,65 +942,10 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
     }
     Hint(s.devigMethod.blurb)
 
-    // ---- Sources ------------------------------------------------------------------------
+    // ---- Sources (the switches, keys and credit options moved to APIs & keys in v0.89.35: one home for them) -----------------
     SectionTitle("Where fair odds come from")
-    Hint("Each is called only when you scan. Polymarket and Kalshi need no key; the others take a free key.")
-    val pinnKeys = state.pinnwireKeys.size + state.pinnapiKeys.size
-    SwitchRow(
-        "Pinnacle",
-        if (pinnKeys == 0) "The sharpest book. Needs a free key: pinnwire.com (100 requests a day, player props included) or pinnapi.com (game lines only)."
-        else "About 1–2 of a key's 100 daily requests per scan. PinnWire keys go first (with Pinnacle's player props), then pinnapi's.",
-        s.usePinnacle,
-    ) { v -> onUpdate { it.copy(usePinnacle = v) } }
-    if (s.usePinnacle) {
-        Text("PinnWire keys (game lines and player props)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-        KeyListEditor(ApiProvider.PINNWIRE, state.pinnwireKeys, keys, "Add a PinnWire key")
-        Text("pinnapi keys (game lines, used when PinnWire's run out)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
-        KeyListEditor(ApiProvider.PINNAPI, state.pinnapiKeys, keys, "Add a pinnapi key")
-        if (state.pinnapiKeys.size > 1 || state.pinnwireKeys.size > 1) {
-            Hint(
-                "Heads up: these feeds' terms forbid circumventing their rate limits, so using extra keys of one feed to get " +
-                    "past 100 a day could get the keys suspended. Each key is still kept inside its own limit.",
-            )
-        }
-    }
-    SwitchRow("Polymarket", "Free. NFL, college football, NBA, WNBA, MLB, NHL, UFC.", s.usePolymarket) { v -> onUpdate { it.copy(usePolymarket = v) } }
-    SwitchRow("Kalshi", "Free. NFL, college football, MLB, NBA, NHL, UFC, tennis (match winners).", s.useKalshi) { v -> onUpdate { it.copy(useKalshi = v) } }
-    if (s.useKalshi) {
-        SwitchRow(
-            "Test Kalshi at 3 requests a second",
-            "A scan of its series takes about 23 s instead of 32 s if it holds. About 300 requests; at the first refusal it goes back to 2 a second for the rest of the session. Settings › Diagnostics says how it went.",
-            s.kalshiFastPace,
-        ) { v -> onUpdate { it.copy(kalshiFastPace = v) } }
-    }
-    SwitchRow(
-        "PropLine",
-        if (state.proplineKeys.isEmpty()) "Your sportsbooks below (Pinnacle, DraftKings, FanDuel, BetMGM…) in one feed. Free key at prop-line.com: 1,000 requests a day."
-        else "1 request per league per scan for game lines, 1 per game for player props (${gamesLabel(s.propLineGamesPerScan)} a scan, below). 1,000 a day per key.",
-        s.usePropLine,
-    ) { v -> onUpdate { it.copy(usePropLine = v) } }
-    if (s.usePropLine) {
-        KeyListEditor(ApiProvider.PROPLINE, state.proplineKeys, keys, "Add a PropLine key")
-        SwitchRow("PropLine: every book for the fair average", "Price the fair line with every sportsbook PropLine lists (about 30; one request either way), not only the books picked below. Each is devigged on its own and averaged.", s.gates.propLineAllBooks, tag = "propLineAllBooksSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(propLineAllBooks = v)) } }
-    }
-    // ParlayAPI (Tj, 2026-09-30, RESEARCH.md §43): Pinnacle and 9 more books, a league's props and alternate lines in one call each, and
-    // Pinnacle's closing lines for CLV. A paid key is paced to a day's share of the plan; free keys serve scans after it, down to their last 100.
-    SwitchRow(
-        "ParlayAPI",
-        if (state.parlayKeys.isEmpty()) "Optional, best on its \$5 plan: Pinnacle, ProphetX, BetOnline, bet365, Bovada and the US books, a " +
-            "whole league's player props and alternate lines in one call each, and Pinnacle's closing lines for your CLV. Free key at " +
-            "parlay-api.com (1,000 credits a month each: add as many as you like, they are used one after another); \$5 a month (20,000) is paced to a day's share."
-        else "Pinnacle and 9 more books (3 credits a league; 5 with Pinnacle's alternate lines, bought only when PinnWire and pinnapi are " +
-            "off; tennis 3 a tour, with Pinnacle's set lines for set spreads and total sets), every book's player props (3 a league) and 1st-half lines (2 a league, only where Novig lists them) " +
-            "each scan, paced to a day's share of your plan (background auto-scans use half of it at most), plus Pinnacle's closing " +
-            "lines for your CLV (the last 300 credits are kept for them). Free with it: injury tags on prop bets (1 credit a league when a " +
-            "player isn't in its props), Pinnacle's line moves, the credits-a-day chart. Only on a tap: its own picks at Novig (+EV tab, " +
-            "10 a league) and a bet's second opinion (5). Keys are used in the order listed: each next key once the one before is spent or at its day's share (free keys down to their last 100, kept for closing lines), and again from key 1 whenever credits reset. Off, spent or gone: the other feeds carry on.",
-        s.useParlay,
-    ) { v -> onUpdate { it.copy(useParlay = v) } }
-    if (s.useParlay) {
-        KeyListEditor(ApiProvider.PARLAY, state.parlayKeys, keys, "Add a ParlayAPI key")
-    }
+    Hint("The feeds, their switches, keys and credits are all under APIs & keys: each API has its own page there. These choices below decide what is done with the prices they send.")
+    OutlinedButton(onClick = { onOpenPage(SettingsPage.APIS) }, modifier = Modifier.testTag("fairOpenApis")) { Text("Open APIs & keys") }
     if (!AppBook.isNovig) {
         Hint(
             "${AppBook.name}'s own odds come in these same requests (no request just for ${AppBook.name}): PropLine first, " +
@@ -1010,24 +955,6 @@ private fun ColumnScope.FairOddsTab(state: UiState, keys: KeyActions, onUpdate: 
     }
     // PropLine goes first for the same sportsbooks; The Odds API backs it up (RESEARCH.md §23).
     val propLineFirst = s.usePropLine && state.proplineKeys.isNotEmpty()
-    SwitchRow(
-        "The Odds API",
-        when {
-            state.oddsApiKeys.isEmpty() -> "Optional: US sportsbooks plus Pinnacle. Free key at the-odds-api.com (500 credits a month)."
-            propLineFirst -> "Backup to PropLine (the same sportsbooks): asked only for leagues, games and props PropLine couldn't give, " +
-                "so its credits last. Keys are used in order; the next takes over when one runs out."
-            else -> "US sportsbooks plus Pinnacle. Keys are used in order; the next takes over when one runs out."
-        },
-        s.useOddsApi,
-    ) { v -> onUpdate { it.copy(useOddsApi = v) } }
-    if (s.useOddsApi) {
-        KeyListEditor(ApiProvider.THE_ODDS_API, state.oddsApiKeys, keys, "Add an Odds API key")
-        Text("Re-use The Odds API between scans for", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp))
-        ChoiceChips(ScanSettings.ODDS_API_REUSE_CHOICES, (s.oddsApiReuseMs / 60_000L).toInt(), { if (it == 0) "Every scan" else "${it}m" }) { v ->
-            onUpdate { it.copy(oddsApiReuseMinutes = v) }
-        }
-        Hint(creditEstimate(s, backup = propLineFirst))
-    }
     if (s.useOddsApi || s.usePropLine || s.useParlay) {
         SwitchRow(
             "Sportsbook player props",
