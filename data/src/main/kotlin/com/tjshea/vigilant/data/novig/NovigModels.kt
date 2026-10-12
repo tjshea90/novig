@@ -86,6 +86,11 @@ data class NovigBook(
      * from [bidsByOutcome].
      */
     val posted: Map<String, List<TakeLevel>>? = null,
+    /**
+     * True for a book kept from Novig's `bbo` channel (NOVIG_API.md §25): each outcome has at most ONE level, its best bid and the size resting at it. That is exact for the price to buy
+     * (the best level) and for what is bid, but it is not a ladder: nothing here may size a bet across levels, count the others' bids behind our own, or read depth from it.
+     */
+    val partial: Boolean = false,
 ) {
     /**
      * What you could buy [outcomeId] for right now, best (cheapest) first: every resting bid on
