@@ -178,6 +178,7 @@ class NovigStream(
     /** Test seam: called as a pass finds nothing left to subscribe, just before it ends. */
     @Volatile
     internal var onSyncTail: (() -> Unit)? = null
+
     private var idleJob: Job? = null
     private var tokens = 0.0
     private var tokensAt = 0L
