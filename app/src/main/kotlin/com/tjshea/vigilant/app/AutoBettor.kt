@@ -206,7 +206,7 @@ class AutoBettor(
                 isQuarantined(row.bet, now) -> skip("an earlier order for it was never confirmed")
                 else -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(injuries(), row, now, state.teams[row.key])?.let(::skip)
                     ?: AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet), AutoBet.isOverProp(row.market, row.bet))?.let(::skip)
-                    ?: AutoBet.starsReason(rules, item.check.rating?.stars)?.let(::skip)
+                    ?: AutoBet.starsReason(rules, starsFor(settings, item.check.rating?.stars, row.league, BetKind.of(row.market, row.bet).label, row.bet, item.shown.ev, startsAt, now))?.let(::skip)
                     ?: (if (byStars) null else sharpReason(item, settings, state, now))?.let(::skip)
                     ?: (if (item.check.sharpAgainst) "a sharp book prices both sides and says it isn't +EV at Novig's price" else null)?.let(::skip)
                     ?: passing.add(item)
@@ -260,7 +260,7 @@ class AutoBettor(
         val vetoOn = settings.sharpAutoBet == SharpMode.VETO
         val credible = { it: AlertPicks.CnoChecked -> AutoBet.credibleEv(it.shown.ev, vetoSaid[it.pick.row.key]?.takeIf { v -> vetoOn && v.verdict == SharpVeto.Verdict.PASSED }?.ev) }
         // Rated by stars: the best-rated first (then the likeliest edge), since the rating is what chose them.
-        val ordered = if (byStars) passing.sortedWith(compareByDescending<AlertPicks.CnoChecked> { it.check.rating?.stars ?: 0.0 }.thenByDescending(credible)) else passing.sortedByDescending(credible)
+        val ordered = if (byStars) passing.sortedWith(compareByDescending<AlertPicks.CnoChecked> { starsFor(settings, it.check.rating?.stars, it.pick.row.league, BetKind.of(it.pick.row.market, it.pick.row.bet).label, it.pick.row.bet, it.shown.ev, it.pick.row.startsAtMs, now) ?: 0.0 }.thenByDescending(credible)) else passing.sortedByDescending(credible)
         for (item in ordered) {
             currentCoroutineContext().ensureActive()
             // STOP pressed since this cycle began: no further order, whatever the settings this pass started with said (Tj, 2026-10-05). (A Pause is held at each
@@ -362,7 +362,7 @@ class AutoBettor(
         val profile = if (settings.gates.profitProven) com.tjshea.vigilant.data.scanner.ProfitProfile.shipped else null
         // Profit-proven only: the types of bet with the best history first (a neutral type scores 0), then the usual order.
         val profitScore = { o: Opportunity -> profile?.judge(com.tjshea.vigilant.data.scanner.ProfitProfile.Instrument.BET, o.league.novigName, com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection).label, o.selection, o.evPercent, (o.event.startsTs - now) / 60_000L)?.score ?: 0.0 }
-        val first = (if (rules.byStars) tennis.sortedWith(compareByDescending<Opportunity> { it.rating?.stars ?: 0.0 }.thenByDescending { it.evPercent ?: 0.0 }) else tennis.sortedByDescending { it.evPercent ?: 0.0 })
+        val first = (if (rules.byStars) tennis.sortedWith(compareByDescending<Opportunity> { starsFor(settings, it.rating?.stars, it.league.novigName, BetKind.of(it.marketLabel, it.selection).label, it.selection, it.evPercent, it.event.startsTs, now) ?: 0.0 }.thenByDescending { it.evPercent ?: 0.0 }) else tennis.sortedByDescending { it.evPercent ?: 0.0 })
             .let { list -> if (profile != null) list.sortedByDescending(profitScore) else list }
         for (o in first) {
             val q = o.quote ?: continue
@@ -370,7 +370,7 @@ class AutoBettor(
                 o.isLive || o.event.startsTs - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 (cooldown[o.key] ?: 0L) > now -> skip("tried a moment ago")
                 isQuarantined(o.selection, now) -> skip("an earlier order for it was never confirmed")
-                o.league.tennis -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), AutoBet.isOverProp(o.marketLabel, o.selection))?.let(::skip) ?: AutoBet.starsReason(rules, o.rating?.stars)?.let(::skip) ?: passing.add(o)
+                o.league.tennis -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), AutoBet.isOverProp(o.marketLabel, o.selection))?.let(::skip) ?: AutoBet.starsReason(rules, starsFor(settings, o.rating?.stars, o.league.novigName, BetKind.of(o.marketLabel, o.selection).label, o.selection, o.evPercent, o.event.startsTs, now))?.let(::skip) ?: passing.add(o)
                 else -> vigilantReason(o, rules, settings, state, now)?.let(::skip) ?: passing.add(o)
             }
         }
@@ -446,7 +446,7 @@ class AutoBettor(
         if (!rules.byStars && TrapGuard.tooEarly(o.event.startsTs, now, settings.trapEarlyHours, state.firstListed[o.key], settings.trapFirstListed) != null) return TrapGuard.earlyReason(settings.trapEarlyHours)
         val a = o.agreement
         AutoBet.judgeVigilant(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), a.twoSided, a.agreeing, AutoBet.isOverProp(o.marketLabel, o.selection))?.let { return it }
-        AutoBet.starsReason(rules, o.rating?.stars)?.let { return it }
+        AutoBet.starsReason(rules, starsFor(settings, o.rating?.stars, o.league.novigName, BetKind.of(o.marketLabel, o.selection).label, o.selection, o.evPercent, o.event.startsTs, now))?.let { return it }
         // A sharp book that disagrees vetoes the bet, whatever the sharp rule or a minimum star rating says (Tj, 2026-10-11: "If any sharp book disagrees that a bet is positive EV, it should be vetoed and not bet").
         if (a.sharpAgainst) return "a sharp book prices both sides and says it isn't +EV at Novig's price"
         // The rating already weighs the sharp book (a sharp book against a bet caps it at 2½ stars): while it decides, the sharp rule is not asked again.
@@ -466,9 +466,20 @@ class AutoBettor(
      * The limits the placer holds an auto-bet to: Tj's dollar limits always; the edge floor and the odds limits only while no minimum star rating decides ([AutoBet.Rules.byStars]: the floor is then the
      * noise floor, so a bet still has to be +EV at the real price, and the odds limits are off).
      */
+    /**
+     * The stars the minimum is held against. With Settings › Profit-proven only ON, a type of bet Tj's history says loses money has its stars lowered by [ProfitProfile.Judgement.starPenalty]
+     * (a type that is not proven either way, and every type with the switch off, is unchanged). Only a minimum star rating reads this: it overrides the profile's block (Tj, 2026-10-12).
+     */
+    private fun starsFor(settings: ScanSettings, stars: Double?, league: String, kind: String, selection: String, ev: Double?, startsAtMs: Long?, now: Long): Double? {
+        if (stars == null || !settings.gates.profitProven) return stars
+        val pf = com.tjshea.vigilant.data.scanner.ProfitProfile.shipped ?: return stars
+        val lead = startsAtMs?.let { (it - now) / 60_000L }
+        return (stars - pf.judge(com.tjshea.vigilant.data.scanner.ProfitProfile.Instrument.BET, league, kind, selection, ev, lead).starPenalty).coerceAtLeast(0.0)
+    }
+
     private fun limitsOf(rules: AutoBet.Rules, settings: ScanSettings) = BetLimits(
         maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.readEv,
-        maxOdds = if (rules.byStars) 0 else rules.maxOdds, minOdds = if (rules.byStars) 0 else rules.minOdds, maxPerGame = settings.apiMaxPerGame,
+        maxOdds = if (rules.byStars) 0 else rules.maxOdds, minOdds = if (rules.byStars) 0 else rules.minOdds, maxPerGame = settings.apiMaxPerGame, starsDecide = rules.byStars,
         minEvWhere = if (rules.byStars) "the noise floor ${AutoBet.MIN_EV_FLOOR * 100}% that applies while a minimum star rating is on" else "Auto-bet tab › Smallest edge (EV) at Novig's price now",
     )
 

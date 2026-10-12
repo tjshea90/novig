@@ -35,7 +35,7 @@ class ProfitProfile(
     enum class Instrument(val key: String) { BET("bet"), BID("bid") }
 
     /** [blocked] is the reason in words (null = not blocked); [score] ranks (higher first; 0 = neutral); [favoured] names the winning groups behind a positive score. */
-    data class Judgement(val blocked: String?, val score: Double, val favoured: String?) {
+    data class Judgement(val blocked: String?, val score: Double, val favoured: String?, val starPenalty: Double = 0.0) {
         companion object { val NEUTRAL = Judgement(null, 0.0, null) }
     }
 
@@ -65,7 +65,10 @@ class ProfitProfile(
         val score = hits.sumOf { (it.specific + 1) * it.g.roi * it.g.n / (it.g.n + SHRINK) } / hits.sumOf { it.specific + 1 }
         val blocked = blocker?.let { "your bet history says ${it.label} ${if (instrument == Instrument.BID) "bids" else "bets"} lose money (${it.g.n} settled, ROI ${pct(it.g.roi)}, win ${Math.round(it.g.win * 100)}%, t ${"%.1f".format(Locale.US, it.g.t)}) (Settings › Profit-proven only)" }
         val favoured = winners.takeIf { it.isNotEmpty() }?.joinToString("; ") { "${it.label} ${pct(it.g.roi)} over ${it.g.n}" }
-        return Judgement(blocked, score, favoured)
+        // While a minimum star rating decides the auto-bet it overrides the block (Tj, 2026-10-12), but a type that lost money has its stars lowered by how clearly it lost: half a star at the cut-off
+        // (t = -tCut), another half star for each further point of t, at most two stars (the rating's own steps are halves).
+        val penalty = blocker?.let { (STAR_BASE + STAR_PER_T * (kotlin.math.abs(it.g.t) - tCut)).coerceIn(STAR_BASE, STAR_MAX) } ?: 0.0
+        return Judgement(blocked, score, favoured, penalty)
     }
 
     private fun dimWords(dim: String) = when (dim) { "ev" -> "an edge of"; "lead" -> "placed"; else -> "" }
@@ -87,6 +90,9 @@ class ProfitProfile(
     companion object {
         /** A group's ROI counts as n / (n + SHRINK) of itself in the score: 100 settled bets count half. */
         const val SHRINK = 100.0
+        const val STAR_BASE = 0.5
+        const val STAR_PER_T = 0.5
+        const val STAR_MAX = 2.0
 
         private val OVER = Regex("\\bover\\b", RegexOption.IGNORE_CASE)
         private val UNDER = Regex("\\bunder\\b", RegexOption.IGNORE_CASE)

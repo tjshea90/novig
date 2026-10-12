@@ -747,6 +747,9 @@ object MakerPlan {
             }
             val why = when {
                 w == null -> skips[r.outcomeId] ?: "No longer a bid to post"
+                // Belt and braces (Tj, 2026-10-12: every resting bid is re-checked against each scan and comes down the moment it is not +EV): a bid priced at or over the fair this pass worked out
+                // (the anchor when a sharp book lowered it) has no edge left, whatever else says it can stay.
+                r.price >= (w.anchorFair ?: w.line.fair ?: 1.0) - 1e-9 -> "No longer +EV: its price is at or over the fair"
                 w.price < r.price - 1e-9 -> if (repost) "The fair price fell: re-posted lower" else "The fair price fell under the bid: taken down"
                 repost && w.price >= r.price + rules.requoteSteps * MakerQuote.step(r.price) - 1e-9 -> "The fair price rose: re-posted higher"
                 // Only when the new bid would rest at least [MakerRules.minLifeMs] longer (a fresher fair): re-posted from the same fair it would end at

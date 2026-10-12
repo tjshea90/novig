@@ -80,6 +80,8 @@ data class BetLimits(
      * 0 = no limit (Tj, 2026-10-04). The auto-bet is refused past it; a bet by hand is only warned.
      */
     val maxPerGame: Double = 0.0,
+    /** A minimum star rating decides which bets the auto-bet places: the profit profile no longer refuses a bet here (it lowered its stars instead), it is only said beside the plan. */
+    val starsDecide: Boolean = false,
 ) {
     companion object {
         /** A hand-placed bet's limits: only Tj's own dollar limits. */
@@ -255,7 +257,7 @@ object ApiBetPlanner {
         var profitNote: String? = null
         profit?.let { pf ->
             val j = pf.judge(com.tjshea.vigilant.data.scanner.ProfitProfile.Instrument.BET, target.league, BetKind.of(target.marketLabel, target.selection).label, target.selection, bestQuote.evPercent, (target.startsTs - now) / 60_000L)
-            j.blocked?.let { why -> if (!limits.manual) return no("Not bet: $why.") else profitNote = "Heads up: $why." }
+            j.blocked?.let { why -> if (!limits.manual && !limits.starsDecide) return no("Not bet: $why.") else profitNote = "Heads up: $why." }
         }
         val shortNote = if (stake - cost > stake * 0.05 + 0.01) {
             "Only ${money(cost)} of the ${money(stake)} is offered " + when {
