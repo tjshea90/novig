@@ -48,7 +48,10 @@ internal object Levels {
     val STOPS: List<Pair<Int, String>> = listOf(5 to "Safest", 20 to "Careful", 40 to "Steady", 55 to "Balanced", 75 to "More volume", 90 to "High volume", 100 to "Maximum")
 }
 
-/** Auto bids. See [Levels]. Bids may be made for games 12 hours away and more: the horizon runs from 12 h (safest) to 48 h (maximum volume). */
+/**
+ * Auto bids. See [Levels]. Bids may be made for games 12 hours away and more: the horizon runs from 12 h (safest) to 24 h (maximum volume). It was 48 h until v0.89.35: Tj's 2026-10-11 export had 2,698 bids posted
+ * 24+ h before the start and 2 of them filled (0.07%), 4,835 posted 12-24 h out and 39 filled, 6,958 posted 6-12 h out and 81 filled, and bids filled 12-24 h out closed at -0.2% (33 closes) against +2.1% inside 12 h.
+ */
 object BidSlider {
     const val MIN = Levels.MIN
     const val MAX = Levels.MAX
@@ -57,7 +60,8 @@ object BidSlider {
     fun name(level: Int) = Levels.name(level)
 
     fun margin(level: Int): Double = Levels.curve(level, listOf(1 to 0.08, 25 to 0.055, 50 to 0.04, 75 to 0.027, 100 to MIN_MARGIN))
-    fun horizonHours(level: Int): Int = Levels.curve(level, listOf(1 to 12.0, 50 to 24.0, 100 to 48.0)).roundToInt()
+    fun horizonHours(level: Int): Int = Levels.curve(level, listOf(1 to 12.0, 50 to 18.0, 100 to HORIZON_MAX_HOURS.toDouble())).roundToInt()
+    const val HORIZON_MAX_HOURS = 24
 
     fun minBooks(level: Int): Int = when { level <= 15 -> 5; level <= 35 -> 4; level <= 60 -> 3; else -> 2 }
     /** Never unlimited and never past [LONGEST_ODDS] (RESEARCH.md §8.1, §16.2, §69: buys under 20¢ lose to the favorite-longshot bias and a longshot's fair is the least reliable; the bids' own +140 was Tj's rule, 2026-10-05). */
