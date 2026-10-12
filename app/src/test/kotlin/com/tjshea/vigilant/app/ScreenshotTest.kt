@@ -844,7 +844,7 @@ class ScreenshotTest {
     }
 
     /** Tj, 2026-09-28: background auto-scan (CNO, or CNO + Vigilant, every 5-40 min) and alerts at 2/3/4%+; 2026-10-01: also every 3 min, 1 min, 30 s, 15 s. */
-    @Config(qualifiers = "w393dp-h1500dp-xxhdpi")
+    @Config(qualifiers = "w393dp-h2000dp-xxhdpi")
     @Test fun settingsOfferBackgroundAutoScanAndAlerts() {
         val base = SampleScan.state()
         val s = base.copy(settings = base.settings.copy(autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanSeconds = 600))
