@@ -3,7 +3,7 @@
 at its size cap) and prints, for every pair of books with >= MIN lines in common, the share of lines with the same odds and the same point. Unrelated books match 2-4%; one trading desk 45-100%.
 Usage: tools/book_pairs.py sample.txt [...]"""
 import json, sys, itertools, collections, re
-MIN = 20
+MIN = int(__import__("os").environ.get("MIN", 20))
 
 def events(text):
     i = text.find('{"nextCursor"')
