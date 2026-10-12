@@ -531,7 +531,7 @@ object MakerQuote {
         // A small-market bid stakes [MakerRules.obscureStake] of what a POPULAR bid on the line would (sized at the popular bid's own price: Kelly sized at the wider margin's lower
         // price would see a bigger edge and stake more, 0.74x of a popular bid at the default margin and 1.18x at the widest chip, not half).
         val popularPrice = if (obscure) maxOf(price, PriceGrid.floor(fair / (1.0 + rules.margin)) ?: price) else price
-        val fullStake = stake(fair, popularPrice, rules) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
+        val fullStake = stake(fair, popularPrice, rules, (line.startsTs - now) / 3_600_000.0) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
         val stake = if (obscure) fullStake * rules.obscureStake else fullStake
         val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
         if (contracts < 1) return skip("The stake is too small for one contract")
@@ -618,14 +618,14 @@ object MakerQuote {
      * What one bid stakes (dollars it costs if it fills), held to [MakerRules.maxStake]: a fraction of full Kelly on the bankroll for this bid's own
      * price and fair (`(fair − price) / (1 − price)`: makers pay no fee), a dollar, or the set amount. Null when Kelly has nothing to stake.
      */
-    fun stake(fair: Double, price: Double, rules: MakerRules): Double? {
+    fun stake(fair: Double, price: Double, rules: MakerRules, hoursToStart: Double? = null): Double? {
         val wanted = when (rules.stakeMode) {
             com.tjshea.vigilant.data.scanner.AutoBetStake.ONE_DOLLAR -> 1.0
             com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM -> rules.customStake
             else -> {
                 val f = rules.stakeMode.kelly ?: return null
                 if (!(rules.bankroll > 0.0) || fair <= price || price >= 1.0) return null
-                f * (fair - price) / (1.0 - price) * rules.bankroll
+                f * (fair - price) / (1.0 - price) * rules.bankroll * EvMath.leadScale(hoursToStart)
             }
         }
         return minOf(wanted, rules.maxStake).takeIf { it > 0.0 }

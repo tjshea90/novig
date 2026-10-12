@@ -145,6 +145,9 @@ class AutoBettor(
 
     fun quarantine(selection: String, untilMs: Long) { quarantined[selection.lowercase()] = untilMs }
 
+    /** Hours from now to a start ([EvMath.leadScale] sizes a Kelly stake by it); null when the start is not known. */
+    private fun hoursToStart(startsAtMs: Long?): Double? = startsAtMs?.takeIf { it > 0L }?.let { (it - clock()) / 3_600_000.0 }
+
     private fun isQuarantined(text: String, now: Long): Boolean = quarantined.entries.any { (sel, until) -> until > now && text.lowercase().contains(sel) }
 
     /** The wallet-empty note went out and the wallet hasn't refilled since. */

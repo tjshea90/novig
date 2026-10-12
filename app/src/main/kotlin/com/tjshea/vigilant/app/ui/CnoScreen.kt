@@ -560,7 +560,7 @@ fun cnoStake(pick: CnoPick, s: ScanSettings): Double? {
     val price = 1.0 / Odds.americanToDecimal(row.odds)
     // Pregame Novig game markets charge the taker nothing (NOVIG_API.md §8); live ones do. A sportsbook never does.
     val fee = if (AppBook.exchange) Fees.takerFee(price, MarketFee.GAME, eventLive = pick.live) else 0.0
-    val stake = EvMath.suggestedStake(EvQuote(fair, price, fee), s.bankroll, s.kellyMultiplier, row.available)
+    val stake = EvMath.suggestedStake(EvQuote(fair, price, fee), s.bankroll, s.kellyMultiplier, row.available, row.startsAtMs?.takeIf { it > 0L }?.let { (it - System.currentTimeMillis()) / 3_600_000.0 })
     return stake.takeIf { it > 0 }
 }
 

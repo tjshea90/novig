@@ -30,6 +30,6 @@ object BetReplace {
         val fair = b.nowFair ?: b.fairAtBet ?: return null
         val price = b.nowAmerican?.let { 1.0 / Odds.americanToDecimal(it) } ?: b.price
         val fee = (b.cost - b.price).coerceAtLeast(0.0)
-        return EvMath.suggestedStake(EvQuote(fair, price, fee), settings.bankroll, settings.kellyMultiplier, null).takeIf { it > 0 }
+        return EvMath.suggestedStake(EvQuote(fair, price, fee), settings.bankroll, settings.kellyMultiplier, null, b.startsTs.takeIf { it > 0L }?.let { (it - System.currentTimeMillis()) / 3_600_000.0 }).takeIf { it > 0 }
     }
 }

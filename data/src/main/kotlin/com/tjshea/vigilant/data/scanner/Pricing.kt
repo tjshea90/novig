@@ -305,7 +305,7 @@ object Pricing {
                 val quote = if (p != null && ladder.isNotEmpty()) EvMath.quote(p, ladder.first().price, fee, live) else null
                 val depth = if (p != null && ladder.isNotEmpty()) EvMath.positiveDepth(ladder, p, fee, live) else null
                 val stake = if (quote != null && quote.evPercent > 0) {
-                    EvMath.suggestedStake(quote, settings.bankroll, settings.kellyMultiplier, depth?.dollarCost)
+                    EvMath.suggestedStake(quote, settings.bankroll, settings.kellyMultiplier, depth?.dollarCost, (pm.event.startsTs - now) / 3_600_000.0)
                 } else {
                     null
                 }
