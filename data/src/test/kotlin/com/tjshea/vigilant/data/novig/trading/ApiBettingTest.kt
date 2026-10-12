@@ -977,15 +977,15 @@ class ApiBettingTest {
         val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
         val sent = kotlinx.coroutines.CompletableDeferred<Unit>()
         val p = ApiBetPlacer(
-            tradingClient(), tracker(), books = { book() }, limits = { limits }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { gate.await() },
+            tradingClient(), tracker(), books = { book() }, limits = { limits.copy(maxStake = 100.0) }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { gate.await() },
         )
         val placing = async(Dispatchers.IO) { p.placeByHand(target(), 10.0, 0.465, false) { sent.complete(Unit) } }
         withTimeout(10_000) { sent.await() }
         try {
             assertFalse("the order is still being finished", placing.isCompleted)
-            // while it ends: the same side is not bet again, and the day's limit already counts it ($10 + $41 > $50)
+            // while it ends: the same side is not bet again, and the day's limit already counts it (what is held + $49.50 > $50)
             assertTrue(refused(p.plan(target(), 5.0)).contains("already bet this"))
-            assertTrue(refused(p.plan(target(), 41.0, allowRepeat = true)).contains("daily limit"))
+            assertTrue(refused(p.plan(target(), 49.5, allowRepeat = true)).contains("daily limit"))
         } finally {
             gate.complete(Unit)
         }
