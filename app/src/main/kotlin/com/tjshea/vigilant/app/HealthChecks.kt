@@ -437,7 +437,9 @@ object HealthChecks {
         val needsAlarm = ClosingLine.nextAt(bets, now)
         if (needsAlarm != null && x.closingAlarmAtMs == null) add(Check(Level.WARN, "Closing lines", "a close is due but no capture alarm is set in this process", look = "app/ClosingAlarm.kt"))
         // Data the stats can't use.
-        val dupes = open.groupBy { Triple(it.marketId, it.outcomeId, it.startsTs) }.filter { (k, v) -> k.first.isNotBlank() && k.second.isNotBlank() && v.size > 1 }
+        // Two orders Novig filled separately (different order ids) are two bets, not one logged twice: Tj's file 2026-10-11 flagged two live bids on the same Dodgers moneyline, two minutes apart.
+        val dupes = open.groupBy { Triple(it.marketId, it.outcomeId, it.startsTs) }
+            .filter { (k, v) -> k.first.isNotBlank() && k.second.isNotBlank() && v.size > 1 && !(v.all { it.orderId != null } && v.map { it.orderId }.distinct().size == v.size) }
         if (dupes.isNotEmpty()) add(Check(Level.WARN, "Tracker data", "${dupes.size} open bet${plural(dupes.size)} tracked more than once", dupes.values.first().first().let { "${it.marketLabel} ${it.selection}" }, "BetTracker.track/logCno/logApi keys; delete the copy in the Tracker"))
         val noEv = bets.count { it.evPercentAtBet == null && it.status != BetStatus.VOID }
         if (noEv > 0) add(Check(Level.OK, "Tracker data", "$noEv bet${plural(noEv)} ${if (noEv == 1) "has" else "have"} no EV on record (imported or synced): left out of expected vs actual"))
