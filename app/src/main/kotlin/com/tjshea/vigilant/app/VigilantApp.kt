@@ -1524,6 +1524,11 @@ class AppContainer(val app: Application) {
             },
             logFills = { target, orderId, fills -> tracker.logApi(target, orderId, fills) != null },
             lossToday = ::pinnLossToday, lock = orderLock,
+            repeat = { settingsStore.flow.value?.gates?.repeatRules() },
+            held = {
+                com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(tracker.all()) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(makerStore.all()) +
+                    liveBidDesk.bidsNow().filter { it.active && it.restingDollars > 0.0 }.map { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.restingDollars, (it.contracts - it.filled).coerceAtLeast(0) * com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0) }
+            },
         )
     }
 
@@ -1707,6 +1712,8 @@ class AppContainer(val app: Application) {
                 }
             },
             lock = orderLock, version = BuildConfig.VERSION_NAME,
+            repeat = { settingsStore.flow.value?.gates?.repeatRules() },
+            heldBets = { com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(tracker.all()) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(makerStore.all()) },
         )
     }
 
