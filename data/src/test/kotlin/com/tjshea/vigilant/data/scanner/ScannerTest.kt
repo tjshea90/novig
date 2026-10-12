@@ -327,7 +327,7 @@ class ScannerTest {
         assertNotNull(same.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }.fairProbability)
         // The feed pushes a cheaper DAL: the update takes it, stamped now, and still asks Novig for nothing.
         now += 1_000
-        novig.held = NovigBook(Fixtures.ML_MARKET, 2, mapOf(Fixtures.ML_DAL to listOf(BidLevel(300, 1000)), Fixtures.ML_BAL to listOf(BidLevel(615, 1000))), now)
+        novig.held = NovigBook(Fixtures.ML_MARKET, 2, mapOf(Fixtures.ML_DAL to listOf(BidLevel(380, 1000)), Fixtures.ML_BAL to listOf(BidLevel(560, 1000))), now)
         val moved = scanner.streamUpdate(settings, emptyList(), listOf(Fixtures.ML_MARKET))!!
         assertEquals(books, novig.bookCalls)
         assertEquals(calls + 1, exchange.calls)
