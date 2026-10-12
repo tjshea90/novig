@@ -258,7 +258,7 @@ class NovigStreamBboTest {
         // the markets are still held as bbo: the book reply was a comparison, not state
         assertEquals(BookChannel.BBO, s.books.channelOf("m1"))
         assertTrue(s.feedReport().first().startsWith("feed: best-bid feed"))
-        assertTrue(s.feedReport().last().contains("4 of 4"))
+        assertTrue(s.feedReport().first { it.startsWith("canary:") }.contains("4 of 4"))
         s.close()
     }
 
