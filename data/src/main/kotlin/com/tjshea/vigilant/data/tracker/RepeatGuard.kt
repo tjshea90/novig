@@ -53,6 +53,11 @@ object RepeatGuard {
         .filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() && (it.contracts ?: 0L) > 0L }
         .map { Pos(it.marketId, it.outcomeId, it.stake, (it.contracts ?: 0L) * com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS) }
 
+    /** What Vigilant's bids not yet ended would hold if they filled (the unfilled part; a filled part is already a bet in the Tracker). They hold the other side of a market but are not a count of bets. */
+    fun fromBids(bids: List<com.tjshea.vigilant.data.novig.trading.maker.MakerBid>): List<Pos> = bids
+        .filter { it.active && it.restingDollars > 0.0 && it.outcomeId.isNotBlank() }
+        .map { Pos(it.marketId, it.outcomeId, it.restingDollars, (it.contracts - it.filled).coerceAtLeast(0) * com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0) }
+
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
     private const val EPS = 1e-9

@@ -256,6 +256,8 @@ class ApiBettingController(
                 restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(c.makerStore.all()) },
                 events = c::orderEvents, warm = { c.orderSocket?.warm() }, timing = { c.eventLog.info("BET", it) },
                 profit = { if (settings().gates.profitProven) com.tjshea.vigilant.data.scanner.ProfitProfile.shipped else null },
+                repeatRules = { settings().gates.repeatRules() },
+                restingPositions = { com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(c.makerStore.all()) },
             ).also { placerCache = t to it }
     }
 

@@ -392,6 +392,8 @@ class AppContainer(val app: Application) {
             restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(makerStore.all()) },
             events = ::orderEvents, warm = { orderSocket?.warm() },
             profit = { if (settingsStore.flow.value?.gates?.profitProven == true) com.tjshea.vigilant.data.scanner.ProfitProfile.shipped else null },
+                repeatRules = { (settingsStore.flow.value ?: ScanSettings()).gates.repeatRules() },
+                restingPositions = { com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(makerStore.all()) },
         )
             .also { autoPlacerCache = t to it }
     }
