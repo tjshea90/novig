@@ -31,3 +31,4 @@
 
 - 2026-10-10 (Tj's 15 odds-source links, TM): read all; see `research/odds_sources_2026-10-10.md` and RESEARCH.md §126. Headline: Pinnacle's guest website API (free, whole-sport live markets incl. alternates, same shapes as the Pinnodds frames) is the candidate replacement for the Pinnodds socket after 23:34Z tonight; freshness unmeasured. Soft-book per-event JSON endpoints (Bovada works from the container). OddsCorp / OddsShopper trials worth a request.
 - 2026-10-11 (TAC): the six identical "agreeing" books (Bally Bet, betPARX, Casumo, Grosvenor, TABtouch, Unibet) all run Kambi's sportsbook: one desk, now one company in BookCompany (research/book_company_kambi_2026-10-11.md).
+- 2026-10-12: rapid NBA live betting is not +EV with Novig's ~5.3 s in-play order delay (RESEARCH §120.2 item 4, §125); alternatives = tail bettor + guarded live bids: research/live_rapid_nba_plausibility_2026-10-12.md

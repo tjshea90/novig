@@ -4794,3 +4794,9 @@ Tj: "put the ratings filter (1 to 5 stars) under the slider ... When I choose th
 
 ## TAL: no maximum EV on live bets (Tj, 2026-10-12: "Make the live betting mode have no maximum EV filter. It can show bets at any EV")
 - [x] TAL1 `LiveScanFeed.hiddenBecause` no longer applies `maxEvPercent`; the minimum EV and the other bars stay. Test: LiveScanTest.
+
+## TAM: rapid live NBA betting plausibility (Tj, 2026-10-12)
+Tj: NBA odds move too fast; asked for a rapid auto-bet with settings, a price range, a plausibility check and alternatives. Verdict in `research/live_rapid_nba_plausibility_2026-10-12.md`: the engine, its settings and the price range already exist (Pinnodds live, `LiveEdge.reachPrice`); NBA taking is not +EV with the ~5.3 s in-play order delay (RESEARCH §120.2, §125); the tail bettor and guarded live bids are the plausible live paths.
+- [x] TAM1 Research memo + answer.
+- [ ] TAM2 Journal the order's end reason and Novig's ask at that moment for IOC misses (proves "quote vanished" vs a delay rule).
+- [ ] TAM3 Hockey lag measurement (20 s) before any hockey taker.
