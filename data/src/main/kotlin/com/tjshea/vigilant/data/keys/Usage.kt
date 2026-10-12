@@ -116,6 +116,10 @@ data class QuotaPolicy(
             "unabated", "Unabated", "requests", keyed = true, period = QuotaPeriod.DAY_UTC,
             rule = "Free API: ONE odds request every 5 seconds per key, shared by every odds endpoint (Vigilant spaces them 5.2 s apart through one gate), data delayed at least 15 seconds. No monthly quota is published; a 429 or 503 carries Retry-After. Discovery calls (leagues, bet types, books, teams) do not use the odds interval.",
         )
+        val BOLTODDS = QuotaPolicy(
+            "boltodds", "BoltOdds", "requests", keyed = true, period = QuotaPeriod.DAY_UTC,
+            rule = "Pro: the odds arrive over a WebSocket (3 connections at once, 12 new connections a minute per IP); the GET endpoints (get_info, get_games, get_markets, get_parlays) 12 a minute per IP, 3 in quick succession; the snapshot (the initial state, asked once per connection) 6 a minute per IP and a per-key daily token quota BoltOdds does not publish. Vigilant keeps under all of them. A refused key rests; several keys are tried in order.",
+        )
         val ODDSPAPI_FREE = QuotaPolicy(
             "oddspapi_free", "OddsPapi Free (v4)", "requests", keyed = true, period = QuotaPeriod.MONTH_UTC, defaultLimit = 250,
             rule = "v4 (api.oddspapi.io), free plan: a small MONTHLY request allowance (250 by the docs; GET /v4/account, which never counts, says the real figure), 1 request per billable call whatever it returns. /v4/historical-odds is free and unmetered. Cooldown 1 s per endpoint (5 s for historical odds). The last requests of the month are kept for the closing-line mapping.",
@@ -129,7 +133,7 @@ data class QuotaPolicy(
         val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No key needed. Allows 300 requests per 10 seconds.")
         val KALSHI = QuotaPolicy("kalshi", "Kalshi", "requests", keyed = false, rule = "No key needed. Allows 20 requests a second.")
 
-        val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI)
+        val ALL = listOf(SGO, BOLTODDS, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI)
     }
 }
 

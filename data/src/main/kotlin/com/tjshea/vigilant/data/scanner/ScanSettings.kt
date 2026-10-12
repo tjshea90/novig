@@ -1046,6 +1046,8 @@ data class ScanSettings(
             if (sgoPro) { add("sgo"); add("sgo-props") }
             // OddsPapi prices through its own two sources (ODDSPAPI_API.md §6); off, this set is exactly what it was.
             if (oddsPapi) { add("oddspapi"); add("oddspapi-props") }
+            // BoltOdds Pro: its own two sources (BOLTODDS_API.md §7); off, this set is exactly what it was.
+            if (gates.useBoltOdds) { add("bolt"); add("bolt-props") }
             // Unabated Free: its own two sources, last in the order (UNABATED_API.md §3); off, this set is exactly what it was.
             if (unabated) { add("unabated"); add("unabated-props") }
             // OddsPapi Free (v4) reads whole games for the fair average only when Tj gives it a daily request figure; with 0 it is closing lines only.
@@ -1290,6 +1292,13 @@ data class ApiGates(
     val propLineAllBooks: Boolean = false,
     /** Live games only mode (Tj, 2026-10-11): see [LiveOnlyMode]. */
     val liveOnly: LiveOnlyMode = LiveOnlyMode(),
+    /**
+     * BoltOdds Pro (Tj, 2026-10-12; BOLTODDS_API.md): the odds websocket as a fair-line source. On (and a key saved and answering) the scan reads the lines and props the socket has already delivered,
+     * free of any per-call cost, beside every other API that is on. Off by default; off, the app is what it was and nothing is sent to BoltOdds.
+     */
+    val useBoltOdds: Boolean = false,
+    /** BoltOdds: price the fair line with every sportsbook it lists (not only the picked ones). */
+    val boltAllBooks: Boolean = false,
 )
 
 /**

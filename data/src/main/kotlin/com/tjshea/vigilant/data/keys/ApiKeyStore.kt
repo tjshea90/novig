@@ -57,6 +57,12 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
 
     /** unabated.com Data API, Free tier (UNABATED_API.md): DraftKings, FanDuel, MGM, Caesars, theScore, Fanatics, Novig, Kalshi, Polymarket and the DFS apps, 15 s delayed, one odds request per 5 s. */
     UNABATED("unabated", "Unabated"),
+
+    /**
+     * boltodds.com Pro (BOLTODDS_API.md, Tj 2026-10-12): real-time odds from every sportsbook over a WebSocket (3 connections), with the snapshot, `get_info`/`get_games`/`get_markets` and `get_parlays`.
+     * The key goes in the query string (`?key=`), REST and WebSocket alike.
+     */
+    BOLTODDS("boltodds", "BoltOdds"),
 }
 
 /** Tj's own API keys per provider, in the order [KeyPool] tries them. */
