@@ -6772,3 +6772,8 @@ Yes make all 4. Just tell me what you need for number 4 when ready
 ```
 Can you build a live betting engine based on an average of the soft sports books offered by the boltodds socket at low latency? Does it offer live? Make sure the app is taking full advantage of all sockets. They shouldn't need to wait for anything or scan at internals. They should run in real time
 ```
+
+## 2026-10-12T20:08:44Z
+```
+How do i turn on boltodds live 
+```
