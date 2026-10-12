@@ -992,4 +992,21 @@ class ApiBettingTest {
         val r = withTimeout(10_000) { placing.await() }
         assertTrue(r.toString(), r is PlaceResult.Placed)
     }
+
+    /** Tj, 2026-10-12: Profit-proven only. The auto-bet is refused a type of bet that has lost money in his history; by hand he is warned; off changes nothing. */
+    @Test
+    fun `profit-proven only refuses the auto-bet a losing type, warns by hand, and off changes nothing`() {
+        val loserProfile = com.tjshea.vigilant.data.scanner.ProfitProfile(
+            mapOf("bet" to mapOf("league|kind|side" to mapOf("NFL|Spreads|other" to com.tjshea.vigilant.data.scanner.ProfitProfile.Group(224, -0.158, -2.61, 0.39)))), 40, 1.5, 1000, "2026-10-11",
+        )
+        val t = target()
+        assertEquals("the fixture is an NFL spread", "NFL", t.league)
+        val auto = refused(ApiBetPlanner.plan(t, book(), 5.0, now, limits, 0.0, profit = loserProfile))
+        assertTrue(auto, auto.startsWith("Not bet: your bet history says NFL Spreads other bets lose money"))
+        val hand = ready(ApiBetPlanner.plan(t, book(), 5.0, now, manual, 0.0, profit = loserProfile))
+        assertTrue(hand.note.orEmpty(), hand.note.orEmpty().contains("Heads up: your bet history says"))
+        // off: the same bet plans exactly as before
+        val off = ready(ApiBetPlanner.plan(t, book(), 5.0, now, limits, 0.0))
+        assertNull(off.note?.takeIf { it.contains("bet history") })
+    }
 }
