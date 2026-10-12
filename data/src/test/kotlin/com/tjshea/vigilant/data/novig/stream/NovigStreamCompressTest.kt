@@ -22,7 +22,6 @@ import okio.ByteString.Companion.toByteString
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -124,7 +123,6 @@ class NovigStreamCompressTest {
     @Test
     fun `frames that will not inflate give compression up and the feed comes back plain`() = runBlocking {
         // the first connection answers garbage to a request that carried the header; the second (asked without it) answers plainly
-        val upgrades = java.util.concurrent.atomic.AtomicInteger(0)
         val garbage = java.util.concurrent.atomic.AtomicBoolean(true)
         server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(Mode.GARBAGE_WHEN_ASKED) { garbage.getAndSet(true) }))
         garbage.set(true)
@@ -139,7 +137,6 @@ class NovigStreamCompressTest {
         assertNull("the reconnect asks for plain frames", second.getHeader(NovigStream.COMPRESS_HEADER))
         val line = s.feedReport().first { it.startsWith("compression:") }
         assertTrue(line, line.startsWith("compression: given up"))
-        assertNotNull(upgrades)
         s.close()
     }
 
