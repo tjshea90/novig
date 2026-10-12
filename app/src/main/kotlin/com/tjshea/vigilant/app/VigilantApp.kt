@@ -1125,7 +1125,7 @@ class AppContainer(private val app: Application) {
         val signer = connection?.let(::readKeyClient)
         novig.stream?.close()
         novig.keyed = signer
-        novig.stream = signer?.let { NovigStream(http, it, appScope) }
+        novig.stream = signer?.let { sg -> NovigStream(http, sg, appScope, onEvent = { warn, text -> if (warn) eventLog.warn("NOVIG", text) else eventLog.info("NOVIG", text) }) }
         settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush); novig.stream?.configureCompression(s.gates.novigCompress) }
         val alias = connection?.tradingAlias
         val key = connection?.tradingKeyId

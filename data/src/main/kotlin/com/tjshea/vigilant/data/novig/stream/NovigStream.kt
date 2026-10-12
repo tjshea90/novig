@@ -159,7 +159,14 @@ class NovigStream(
     /** How long a book check may go unanswered before it counts as inconclusive, and how soon it is asked again. */
     private val canaryWaitMs: Long = CANARY_WAIT_MS,
     private val canaryInconclusiveRetryMs: Long = CANARY_INCONCLUSIVE_RETRY_MS,
+    /** The feed's own history for the app's event log (Diagnostics' timeline): connects, drops, fallbacks, the book check, what Novig refused. `warn` says a line worth a second look. */
+    private val onEvent: ((warn: Boolean, text: String) -> Unit)? = null,
 ) : PushedBooks {
+
+    private fun note(warn: Boolean, text: String) {
+        try { onEvent?.invoke(warn, text) } catch (_: Exception) { }
+    }
+
     @Volatile
     private var capacity = capacity
 
@@ -174,6 +181,7 @@ class NovigStream(
     private var tuned = false
 
     override fun tune(capacity: Int, refillPerSec: Double, maxWatchedMarkets: Int) {
+        note(false, "stream allowance from this key's /v3/limits: $capacity, refilling ${refillPerSec.toInt()} a second, up to $maxWatchedMarkets markets watched")
         synchronized(this) {
             tuned = true
             this.capacity = capacity.toDouble()
@@ -353,6 +361,7 @@ class NovigStream(
     private fun giveUpCompression(why: String) {
         val first = synchronized(this) { if (compressGivenUp != null) false else { compressGivenUp = why; true } }
         if (!first) return
+        note(true, "compressed feed given up ($why): reconnecting plain")
         // This connection's frames cannot be read: it is let go and the feed comes back plainly, at once.
         close()
         connect()
@@ -427,6 +436,7 @@ class NovigStream(
             bboFallback = reason
             bboFallbackAtMs = clock()
         }
+        note(true, "best-bid feed (bbo) given up, back on the full book: $reason")
         scheduleSync()
     }
 
@@ -866,6 +876,7 @@ class NovigStream(
         }
         val detail = "$matched of $checked markets' best bids matched the book" + (if (skipped > 0) " ($skipped skipped: moved or unreadable)" else "") + (if (bad.isNotEmpty()) "; " + bad.joinToString("; ") else "")
         canary = Canary(clock(), checked, matched, skipped, detail)
+        note(checked >= 3 && matched * 3 < checked * 2, "book check: $detail")
         if (checked >= 3 && matched * 3 >= checked * 2) {
             // Verified: again on other markets after [canaryEveryMs].
             synchronized(this) { canaryStrikes = 0; canaryInconclusive = 0; canaryDone = false; canaryNotBeforeMs = clock() + canaryEveryMs; canaryTried.clear() }
@@ -960,6 +971,7 @@ class NovigStream(
         var bboLost = false
         synchronized(this) {
             refusalCounts[code] = (refusalCounts[code] ?: 0) + 1
+            if (refusalCounts[code] == 1) note(true, "Novig refused a live-feed request: ${errorText(msg).take(160)}")
             lastRefusalCode = code
             lastRefusalAtMs = clock()
             // A throttled frame is answered with no nonce: every unanswered subscribe may be the one.
@@ -994,6 +1006,7 @@ class NovigStream(
         override fun onOpen(webSocket: WebSocket, response: Response) {
             if (!current(webSocket)) return
             openedAtMs = clock()
+            note(false, "live feed connected (connect #$connects${if (compressRequested) ", compressed" else ""})")
             _state.value = StreamState.Live(clock(), 0)
             scheduleSync()
         }
@@ -1166,6 +1179,7 @@ class NovigStream(
         jobs.forEach { it?.cancel() }
         drops++
         lastDrop = message
+        note(true, "live feed dropped: $message")
         val lived = if (openedAtMs > 0L) clock() - openedAtMs else 0L
         openedAtMs = 0L
         if (lived >= STABLE_MS) quickFails = 0 else if (quick || exact) quickFails++
