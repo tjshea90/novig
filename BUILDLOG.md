@@ -231,3 +231,4 @@ day that changes.
 | v0.92.0 | code 224 | 2026-10-12T09:09Z | v0.92.0: orders over Novig's websocket, compressed live feed, market status acted on, feed diagnostics, canary retries, Test key frees the app's feed first
 | v0.92.1 | code 225 | 2026-10-12T09:36Z | v0.92.1: fixes slow scans after a reconnect; bet-check timing in the event log; order socket and compression confirmed on a live key
 | v0.92.2 | code 226 | 2026-10-12T10:00Z | v0.92.2: whole-bet timing in the event log
+| v0.93.0 | code 228 | 2026-10-12T15:35Z | v0.93.0: Profit-proven only switch; bet sheet frees once Novig has the order; whole-bet timing
