@@ -192,9 +192,57 @@ class BoltOddsTest {
         assertFalse(BoltMarkets.usableName("NBA", "Fight To Not Go Distance", props = true))
     }
 
+    @Test fun `the market names the real key carries (the 2026-10-12 sample) are read as the stat they mean, and the ambiguous ones are not`() {
+        fun prop(league: String, name: String) = BoltMarkets.usableName(league, name, props = true)
+        fun stat(league: String, name: String) = BoltMarkets.stat(league, name.lowercase().filter { it.isLetterOrDigit() })
+        // football
+        for ((name, want) in listOf(
+            "Passing Yards" to "PASSING_YARDS", "Passing Touchdowns" to "PASSING_TOUCHDOWNS", "Rushing Yards" to "RUSHING_YARDS", "Receiving Yards" to "RECEIVING_YARDS", "Receptions" to "RECEPTIONS",
+            "Longest Reception" to "LONGEST_RECEPTION", "Passing Attempts" to "PASSING_ATTEMPTS", "Rushing Attempts" to "RUSHING_ATTEMPTS", "Pass Completions" to "PASSING_COMPLETIONS",
+            "Passing + Rushing Yards" to "PASSING_AND_RUSHING_YARDS", "Rushing + Receiving Yards" to "RUSHING_AND_RECEIVING_YARDS", "Reception Yards" to "RECEIVING_YARDS",
+            "Interceptions Thrown" to "INTERCEPTIONS_THROWN", "Longest Pass Completion" to "LONGEST_COMPLETION", "Longest Rushing Attempt" to "LONGEST_RUSH",
+        )) { assertEquals(name, want, stat("NFL", name)); assertTrue(name, prop("NFL", name)); assertEquals(name, want, stat("NCAAF", name)) }
+        // baseball
+        for ((name, want) in listOf(
+            "Home Runs" to "HOME_RUNS", "Hits" to "HITS", "RBIs" to "RBIS", "Hits + Runs + RBIs" to "HITS_RUNS_RBIS", "Stolen Bases" to "STOLEN_BASES", "Hits Allowed" to "HITS_ALLOWED",
+            "Strikeouts Thrown" to "PITCHER_STRIKEOUTS", "Batter Strikeouts" to "BATTING_STRIKEOUTS", "Earned Runs Allowed" to "EARNED_RUNS",
+        )) { assertEquals(name, want, stat("MLB", name)); assertTrue(name, prop("MLB", name)) }
+        // basketball and hockey
+        for ((name, want) in listOf("Points" to "POINTS", "Rebounds" to "REBOUNDS", "Assists" to "ASSISTS", "Threes" to "THREE_POINTERS_MADE", "Double-Doubles" to "DOUBLE_DOUBLE", "Points + Assists + Rebounds" to "POINTS_REBOUNDS_ASSISTS")) {
+            assertEquals(name, want, stat("NBA", name)); assertTrue(name, prop("NBA", name)); assertEquals(name, want, stat("WNBA", name))
+        }
+        for ((name, want) in listOf("Goals" to "PLAYER_GOALS", "Assists" to "ASSISTS", "Points" to "POINTS", "Shots On Goal" to "SHOTS_ON_GOAL")) { assertEquals(name, want, stat("NHL", name)); assertTrue(name, prop("NHL", name)) }
+        // not guessed at: "Strikeouts" is a pitcher's or a batter's, "Bases"/"Runs"/"Touchdowns" are not Total Bases / Earned Runs / Anytime Touchdown, and a stat of another sport is not read
+        for (name in listOf("Bases", "Runs", "Singles", "Doubles", "Triples")) assertFalse(name, prop("MLB", name))
+        assertFalse(prop("NFL", "Touchdowns"))
+        assertFalse("football's wording in baseball", prop("MLB", "Pass Completions"))
+        assertFalse("baseball's wording in football", prop("NFL", "Batter Strikeouts"))
+        // the line names of the sample
+        for (name in listOf("Moneyline", "Spread", "Total", "Total Points", "Team Total", "1st Half Moneyline", "1st Half Spread", "1st Half Total", "1st Half Team Total")) assertTrue(name, BoltMarkets.usableName("NFL", name, props = false))
+        for (name in listOf("1st 5 Innings Moneyline", "1st 5 Innings Spread", "1st 5 Innings Total", "1st 5 Innings Team Total", "1st Inning Total")) assertTrue(name, BoltMarkets.usableName("MLB", name, props = false))
+    }
+
+    @Test fun `a binary frame is read as text, plain or gzip or zlib, and what will not inflate is read as it is`() {
+        val json = """{"action":"ping"}"""
+        fun gz(t: String) = java.io.ByteArrayOutputStream().also { o -> java.util.zip.GZIPOutputStream(o).use { it.write(t.toByteArray()) } }.toByteArray()
+        fun zl(t: String) = java.io.ByteArrayOutputStream().also { o -> java.util.zip.DeflaterOutputStream(o).use { it.write(t.toByteArray()) } }.toByteArray()
+        assertEquals(json, BoltFrames.decode(okio.ByteString.of(*json.toByteArray())))
+        assertEquals(json, BoltFrames.decode(okio.ByteString.of(*gz(json))))
+        assertEquals(json, BoltFrames.decode(okio.ByteString.of(*zl(json))))
+        val big = "[" + (1..2_000).joinToString(",") { """{"action":"line_update","n":$it}""" } + "]"
+        assertEquals(big, BoltFrames.decode(okio.ByteString.of(*gz(big))))
+        // a frame that starts like gzip but is not: kept as text, never an exception
+        val broken = byteArrayOf(0x1f, 0x8b.toByte(), 1, 2, 3)
+        assertEquals(5, BoltFrames.decode(okio.ByteString.of(*broken)).length.coerceAtLeast(5).coerceAtMost(5))
+        assertEquals("", BoltFrames.decode(okio.ByteString.EMPTY))
+    }
+
     @Test fun `sports and books are matched by their letters`() {
         assertEquals("NBA", BoltBooks.leagueOfSport("NBA"))
         assertEquals("NBA", BoltBooks.leagueOfSport("NBA Preseason"))
+        assertEquals("the sample's own preseason names", "NBA", BoltBooks.leagueOfSport("NBA Pre"))
+        assertEquals("NFL", BoltBooks.leagueOfSport("NFL Pre"))
+        assertEquals(listOf("NFL", "NFL Pre"), BoltBooks.sportsFor(Leagues.byNovigName("NFL")!!, listOf("NFL Pre", "NFL", "NBA Pre", "Tennis")))
         assertNull(BoltBooks.leagueOfSport("NBA Summer"))
         assertEquals("NCAAF", BoltBooks.leagueOfSport("NCAAF"))
         assertNull(BoltBooks.leagueOfSport("Wimbledon (M)"))
