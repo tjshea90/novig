@@ -62,8 +62,8 @@ object RepeatGuard {
 
     private const val EPS = 1e-9
 
-    /** Both sides must beat their cost by at least a cent. */
-    const val MIN_LOCKED_PROFIT = 0.01
+    /** Every way the market can end must beat everything spent by more than this (a tenth of a cent: strictly positive, not rounding noise). */
+    const val MIN_LOCKED_PROFIT = 0.001
 
     const val DEFAULT_MAX_BETS = 2
     const val DEFAULT_MAX_DOLLARS = 100.0
