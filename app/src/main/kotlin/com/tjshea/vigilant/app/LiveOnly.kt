@@ -17,17 +17,20 @@ object LiveOnly {
     /** The APIs the real-time lane does not need: all but Pinnodds (its own socket is the fair value). */
     private val OFF = ApiEntry.entries.filter { it != ApiEntry.PINNODDS }
 
+    /** What sleeps now: all but Pinnodds, and BoltOdds too unless it is the live fair (Settings › Pinnodds live › BoltOdds soft-book average). */
+    private fun off(s: ScanSettings) = OFF.filter { !(it == ApiEntry.BOLTODDS && s.pinnWebsite.bolt) }
+
     fun enter(s: ScanSettings): ScanSettings {
         if (s.gates.liveOnly.on) return s
         val saved = LiveOnlyMode(
             on = true,
-            apis = OFF.filter { it.isOn(s) }.map { it.name }.toSet(),
+            apis = off(s).filter { it.isOn(s) }.map { it.name }.toSet(),
             scanner = s.scanner.name, autoScan = s.autoScan.name,
             maker = s.maker, autoBet = s.autoBet, burstRecorder = s.burstRecorder, feedRace = s.feedRace,
             altLab = s.altLab, researchMode = s.researchMode, burstTrade = s.burstTrade,
             usePinnacle = s.usePinnacle, pinnwire = s.gates.usePinnwire, pinnapi = s.gates.usePinnapi,
         )
-        var n = OFF.fold(s) { acc, e -> e.setOn(acc, false) }
+        var n = off(s).fold(s) { acc, e -> e.setOn(acc, false) }
         // The Pinnacle umbrella switch was left on by PINNWIRE/PINNAPI/PINNODDS setOn; the boards themselves are off.
         n = n.copy(
             scanner = ScannerMode.VIGILANT, autoScan = AutoScanMode.OFF, maker = false, autoBet = false, burstRecorder = false,
