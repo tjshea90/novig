@@ -1,0 +1,343 @@
+package com.tjshea.vigilant.data.boltodds
+
+import com.tjshea.vigilant.data.keys.UsageBook
+import com.tjshea.vigilant.data.keys.UsageMeter
+import com.tjshea.vigilant.data.scanner.Leagues
+import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.store.JsonFileStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.OkHttpClient
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import okhttp3.mockwebserver.Dispatcher
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import java.time.Instant
+import java.util.concurrent.CopyOnWriteArrayList
+
+/**
+ * BoltOdds' REST client, websocket lane and feed against a mock server speaking what BOLTODDS_API.md documents and what the real server was seen to do on 2026-10-12 (HTTP 403 `{"detail":"Invalid API token"}`
+ * for a bad key; the socket accepted, then closed with code 1008 "Invalid token"). No live key has been used.
+ */
+class BoltOddsLiveTest {
+    private lateinit var server: MockWebServer
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val rest = CopyOnWriteArrayList<RecordedRequest>()
+    private val upgrades = CopyOnWriteArrayList<RecordedRequest>()
+    private val serverSockets = CopyOnWriteArrayList<WebSocket>()
+    private val received = CopyOnWriteArrayList<JsonObject>()
+    private val sleeps = CopyOnWriteArrayList<Long>()
+
+    @Volatile private var snapshotBody = "[]"
+    @Volatile private var snapshotCode = 200
+    @Volatile private var infoBody = """{"sports":["NBA","MLB","Wimbledon (M)"],"sportsbooks":["draftkings","fanduel","novig","neobet"]}"""
+    @Volatile private var marketsBody = """{"draftkings":{"NBA":["Moneyline","Spread","Total","Player Points","Fight To Not Go Distance"],"MLB":["Moneyline"]},"fanduel":{"NBA":["Moneyline","Rebounds"]}}"""
+    @Volatile private var validKeys = setOf("good")
+    @Volatile private var greet = true
+
+    private val serverListener = object : WebSocketListener() {
+        override fun onOpen(webSocket: WebSocket, response: Response) {
+            serverSockets += webSocket
+            if (greet) webSocket.send("""{"action": "socket_connected"}""")
+        }
+
+        override fun onMessage(webSocket: WebSocket, text: String) {
+            val o = Json.parseToJsonElement(text).jsonObject
+            received += o
+            if (o["action"]?.jsonPrimitive?.content == "subscribe") webSocket.send("""{"action": "subscription_updated", "message": "You have successfully updated your subscription filters."}""")
+        }
+
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) { webSocket.close(code, null) }
+    }
+
+    @Before fun setUp() {
+        server = MockWebServer()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                val key = request.requestUrl?.queryParameter("key")
+                if (request.getHeader("Upgrade")?.equals("websocket", ignoreCase = true) == true) {
+                    upgrades += request
+                    return if (key in validKeys) MockResponse().withWebSocketUpgrade(serverListener)
+                    else MockResponse().withWebSocketUpgrade(object : WebSocketListener() {
+                        override fun onOpen(webSocket: WebSocket, response: Response) { webSocket.close(1008, "Invalid token") }
+                    })
+                }
+                rest += request
+                if (key !in validKeys) return MockResponse().setResponseCode(403).setBody(if (key == null) """{"detail":"Missing API token"}""" else """{"detail":"Invalid API token"}""")
+                return when (request.requestUrl!!.encodedPath) {
+                    "/api/get_info" -> MockResponse().setBody(infoBody)
+                    "/api/get_markets" -> MockResponse().setBody(marketsBody)
+                    "/api/snapshot" -> MockResponse().setResponseCode(snapshotCode).setBody(snapshotBody)
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+        }
+        server.start()
+    }
+
+    @After fun tearDown() { scope.cancel(); server.shutdown() }
+
+    private val meter = UsageMeter(JsonFileStore(java.io.File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }))
+    private fun base() = server.url("/api").toString().trimEnd('/')
+    private fun wsUrl() = base().replaceFirst("http", "ws")
+    private fun client(keys: List<String> = listOf("good")) = BoltOddsClient(OkHttpClient(), { keys }, meter, base(), sleep = { sleeps += it })
+
+    private fun stream(client: BoltOddsClient, name: String = "lines", keeps: (com.tjshea.vigilant.data.reference.LineKind) -> Boolean = { true }) =
+        BoltOddsStream(
+            name, BoltOddsStream.socketClient(OkHttpClient()), client, BoltBoard(keeps = keeps), scope, wsUrl(),
+            backoffMinMs = 150, backoffMaxMs = 400, resubscribeGapMs = 250, resnapshotGapMs = 300, idleCloseMs = 60_000, checkEveryMs = 50,
+        )
+
+    private suspend fun until(timeoutMs: Long = 8_000, check: () -> Boolean) = withTimeout(timeoutMs) { while (!check()) delay(20) }
+
+    private fun game(book: String, ml1: String = "-150", ml2: String = "+130", at: String = "2026-10-20T14:00:00+00:00", sport: String = "NBA", action: String = "initial_state") =
+        """{"timestamp":"$at","action":"$action","data":{"sport":"$sport","sportsbook":"$book","game":"Boston Celtics vs New York Knicks, 2026-10-20, 07","home_team":"Boston Celtics","away_team":"New York Knicks","info":{"id":1,"game":"Boston Celtics vs New York Knicks, 2026-10-20, 07","when":"2026-10-20, 07:30 PM","link":"x"},"outcomes":{"Boston Celtics Moneyline":{"odds":"$ml1","outcome_name":"Moneyline","outcome_line":null,"outcome_over_under":null,"outcome_target":"Boston Celtics"},"New York Knicks Moneyline":{"odds":"$ml2","outcome_name":"Moneyline","outcome_line":null,"outcome_over_under":null,"outcome_target":"New York Knicks"}}}}"""
+
+    private val filters = BoltFilters(sports = listOf("NBA"), sportsbooks = listOf("draftkings", "fanduel"), markets = listOf("Moneyline"))
+
+    // ---- REST client ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    @Test fun `get_info and get_markets read the key's lists, and the key travels as the query parameter`() = runBlocking {
+        val c = client()
+        val info = c.info()
+        assertEquals(listOf("NBA", "MLB", "Wimbledon (M)"), info.sports)
+        assertEquals(listOf("draftkings", "fanduel", "novig", "neobet"), info.sportsbooks)
+        val m = c.markets(listOf("NBA", "MLB"), listOf("draftkings", "fanduel"))
+        assertEquals(listOf("Moneyline", "Spread", "Total", "Player Points", "Fight To Not Go Distance"), m.getValue("draftkings").getValue("NBA"))
+        val req = rest.last { it.requestUrl!!.encodedPath == "/api/get_markets" }
+        assertEquals("NBA,MLB", req.requestUrl!!.queryParameter("sports"))
+        assertEquals("draftkings,fanduel", req.requestUrl!!.queryParameter("sportsbooks"))
+        assertEquals("good", req.requestUrl!!.queryParameter("key"))
+        assertEquals(2, c.requests)
+    }
+
+    @Test fun `a refused key is skipped for the next, and with none left the message carries no key`() = runBlocking {
+        val c = client(listOf("badbadbad", "good"))
+        assertEquals(3, c.info().sports.size)
+        assertEquals(listOf("badbadbad", "good"), rest.map { it.requestUrl!!.queryParameter("key") })
+        // the refused key now rests: the next call goes straight to the good one
+        rest.clear()
+        c.info()
+        assertEquals(listOf("good"), rest.map { it.requestUrl!!.queryParameter("key") })
+        val only = client(listOf("justwrongkey"))
+        try { only.info(); throw AssertionError("expected a refusal") } catch (e: BoltOddsException) {
+            assertFalse("no key in ${e.message}", e.message!!.contains("justwrongkey"))
+            assertTrue(e.message!!, e.message!!.contains("BoltOdds"))
+        }
+    }
+
+    @Test fun `GETs keep under 12 a minute with 3 at once, the snapshot under 6 a minute`() = runBlocking {
+        val c = client()
+        repeat(3) { c.info() }
+        assertTrue("the first three go at once: $sleeps", sleeps.none { it > 0 })
+        c.info()
+        assertTrue("the fourth waits for a token: $sleeps", sleeps.any { it in 3_000..5_300 })
+        sleeps.clear()
+        c.snapshotStream(filters) { }
+        c.snapshotStream(filters) { }
+        assertTrue("a second snapshot waits its own gap: $sleeps", sleeps.any { it >= 8_000 })
+    }
+
+    @Test fun `the snapshot is streamed with repeated filter parameters`() = runBlocking {
+        snapshotBody = "[" + game("draftkings") + "," + game("fanduel") + "]"
+        val got = ArrayList<String>()
+        val n = client().snapshotStream(BoltFilters(sports = listOf("NBA", "MLB"), sportsbooks = listOf("draftkings"), markets = listOf("To Win By KO, TKO, DQ"))) { got += it }
+        assertEquals(2, n)
+        assertEquals(2, got.size)
+        val url = rest.last { it.requestUrl!!.encodedPath == "/api/snapshot" }.requestUrl!!
+        assertEquals(listOf("NBA", "MLB"), url.queryParameterValues("sports"))
+        assertEquals(listOf("To Win By KO, TKO, DQ"), url.queryParameterValues("markets"))
+    }
+
+    @Test fun `a snapshot answered with an error object fails with its text, an invalid key is refused`() = runBlocking {
+        snapshotBody = """{"detail":"Daily token quota exceeded"}"""
+        try { client().snapshotStream(filters) { }; throw AssertionError("expected a failure") } catch (e: BoltOddsException) {
+            assertTrue(e.message!!, e.message!!.contains("Daily token quota exceeded"))
+        }
+        snapshotCode = 429
+        try { client().snapshotStream(filters) { }; throw AssertionError("expected a failure") } catch (e: BoltOddsException) {
+            assertTrue(e.message!!, e.message!!.contains("429"))
+        }
+    }
+
+    @Test fun `redact cuts every saved key out of a text`() {
+        val c = client(listOf("abcdef123456", "short"))
+        assertEquals("GET /x?key=…3456&a=1", c.redact("GET /x?key=abcdef123456&a=1"))
+        assertEquals("short", c.redact("short"))
+    }
+
+    // ---- the websocket lane ----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    @Test fun `it connects with the key, subscribes with the filters, reads the snapshot and keeps the board current`() = runBlocking {
+        snapshotBody = "[" + game("draftkings") + "," + game("fanduel", ml1 = "-155", ml2 = "+135") + "]"
+        val s = stream(client())
+        s.want(filters)
+        assertTrue(s.awaitReady(8_000))
+        assertEquals("good", upgrades.single().requestUrl!!.queryParameter("key"))
+        val sub = received.first { it["action"]?.jsonPrimitive?.content == "subscribe" }["filters"]!!.jsonObject
+        assertEquals(listOf("NBA"), sub["sports"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf("draftkings", "fanduel"), sub["sportsbooks"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf("Moneyline"), sub["markets"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertNull(sub["games"])
+        val snap = rest.first { it.requestUrl!!.encodedPath == "/api/snapshot" }.requestUrl!!
+        assertEquals(listOf("draftkings", "fanduel"), snap.queryParameterValues("sportsbooks"))
+        assertEquals(2, s.board.gamesOf(listOf("NBA")).size)
+        // a live line moves, a book removes a line
+        serverSockets.last().send(game("draftkings", ml1 = "-170", ml2 = "+148", at = "2026-10-20T14:30:00+00:00", action = "game_update"))
+        until { s.board.gamesOf(listOf("NBA")).any { g -> g.sportsbook == "draftkings" && g.outcomes.values.any { it.odds == -170 } } }
+        assertTrue(s.live)
+        assertNotNull("a book that spoke is vouched for", s.aliveAt("draftkings", "NBA"))
+        assertNull("a book that never spoke is not", s.aliveAt("caesars", "NBA"))
+        assertTrue(s.examples.containsKey("game_update") && s.examples.containsKey("socket_connected") && s.examples.containsKey("subscription_updated"))
+        s.close()
+        assertEquals(BoltOddsStream.State.OFF, s.state)
+        assertTrue(s.board.gamesOf(listOf("NBA")).isEmpty())
+    }
+
+    @Test fun `a refused key closes with 1008, is set aside, and the lane does not hammer the server`() = runBlocking {
+        validKeys = setOf("other")
+        val c = client(listOf("badone"))
+        val s = stream(c)
+        s.want(filters)
+        until { s.state == BoltOddsStream.State.DOWN && s.drops >= 1 }
+        delay(900)
+        assertEquals("one connection, then no key to try", 1, upgrades.size)
+        assertTrue(s.lastError!!, s.lastError!!.contains("refused the key"))
+        assertNull(c.nextKey())
+        s.close()
+    }
+
+    @Test fun `a dropped connection empties the board and comes back, reading the snapshot again`() = runBlocking {
+        snapshotBody = "[" + game("draftkings") + "]"
+        val s = stream(client())
+        s.want(filters)
+        assertTrue(s.awaitReady(8_000))
+        assertEquals(1, s.board.gamesOf(listOf("NBA")).size)
+        serverSockets.last().close(1001, "going away")
+        until { s.drops >= 1 }
+        assertNull("not vouched for while it is down", s.aliveAt("draftkings", "NBA"))
+        until { upgrades.size >= 2 && s.live && s.readyAtMs > 0 }
+        assertEquals(2, rest.count { it.requestUrl!!.encodedPath == "/api/snapshot" })
+        assertEquals(1, s.board.gamesOf(listOf("NBA")).size)
+        s.close()
+    }
+
+    @Test fun `a changed want re-subscribes on the same connection no sooner than the gap, and only a growing one re-reads the snapshot`() = runBlocking {
+        snapshotBody = "[" + game("draftkings") + "]"
+        val s = stream(client())
+        s.want(filters)
+        assertTrue(s.awaitReady(8_000))
+        val subs = { received.count { it["action"]?.jsonPrimitive?.content == "subscribe" } }
+        assertEquals(1, subs())
+        // fewer books: re-subscribed, no new snapshot
+        s.want(filters.copy(sportsbooks = listOf("draftkings")))
+        until { subs() == 2 }
+        assertEquals(1, rest.count { it.requestUrl!!.encodedPath == "/api/snapshot" })
+        // more sports: re-subscribed and the snapshot is read again
+        s.want(filters.copy(sportsbooks = listOf("draftkings"), sports = listOf("NBA", "MLB")))
+        until { subs() == 3 && rest.count { it.requestUrl!!.encodedPath == "/api/snapshot" } == 2 }
+        assertEquals("still one connection", 1, upgrades.size)
+        s.close()
+    }
+
+    @Test fun `a re-subscription refusal is asked again after the gap`() = runBlocking {
+        val s = stream(client())
+        s.want(filters)
+        until { s.live && received.any { it["action"]?.jsonPrimitive?.content == "subscribe" } }
+        val before = received.count { it["action"]?.jsonPrimitive?.content == "subscribe" }
+        serverSockets.last().send("""{"action": "error", "message": "Re-subscription rate limit hit. Please wait 5 seconds before re-subscribing."}""")
+        until { received.count { it["action"]?.jsonPrimitive?.content == "subscribe" } > before }
+        s.close()
+    }
+
+    @Test fun `a book_clear empties that book and the snapshot is read again after the gap`() = runBlocking {
+        snapshotBody = "[" + game("draftkings") + "," + game("fanduel") + "]"
+        val s = stream(client())
+        s.want(filters)
+        assertTrue(s.awaitReady(8_000))
+        serverSockets.last().send("""{"timestamp":"2026-10-20T14:40:00+00:00","action":"book_clear","data":{"sport":{},"sportsbook":"fanduel","game":{},"home_team":{},"away_team":{},"info":{},"outcomes":{}}}""")
+        until { rest.count { it.requestUrl!!.encodedPath == "/api/snapshot" } == 2 }
+        until { s.board.gamesOf(listOf("NBA")).size == 2 }
+        s.close()
+    }
+
+    // ---- the feed ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    @Test fun `the feed subscribes the sports, books and market names it can use and serves the scan from the board`() = runBlocking {
+        val c = client()
+        val feed = BoltOddsFeed(c, OkHttpClient(), scope, wsUrl = wsUrl())
+        snapshotBody = "[" + game("draftkings") + "," + game("fanduel", ml1 = "-155", ml2 = "+135") + "]"
+        val settings = ScanSettings(leagues = setOf("NBA", "MLB"), referenceBooks = listOf("draftkings", "fanduel"))
+        val events = feed.events(Leagues.byNovigName("NBA")!!, settings, props = false)
+        val sub = received.first { it["action"]?.jsonPrimitive?.content == "subscribe" }["filters"]!!.jsonObject
+        assertEquals(listOf("MLB", "NBA"), sub["sports"]!!.jsonArray.map { it.jsonPrimitive.content })
+        // novig and neobet are not the fair line's books (novig is excluded, neobet is not among the picked)
+        assertEquals(listOf("draftkings", "fanduel"), sub["sportsbooks"]!!.jsonArray.map { it.jsonPrimitive.content })
+        // only market names the table can use as game lines; the prop names go to the props socket
+        assertEquals(listOf("Moneyline", "Spread", "Total"), sub["markets"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(1, events.size)
+        assertEquals(setOf("draftkings", "fanduel"), events.single().markets.map { it.bookKey }.toSet())
+        // the same call again reads the board and spends no request
+        val requestsBefore = c.requests
+        feed.events(Leagues.byNovigName("NBA")!!, settings, props = false)
+        assertEquals(requestsBefore, c.requests)
+        // MLB has no game on the board
+        assertTrue(feed.events(Leagues.byNovigName("MLB")!!, settings, props = false).isEmpty())
+        feed.close()
+    }
+
+    @Test fun `a socket that cannot connect fails the read with the reason, and a league BoltOdds lacks is not asked`() = runBlocking {
+        validKeys = setOf("nope")
+        val feed = BoltOddsFeed(client(listOf("good")), OkHttpClient(), scope, wsUrl = wsUrl())
+        val settings = ScanSettings(leagues = setOf("NBA"), referenceBooks = listOf("draftkings"))
+        try { feed.events(Leagues.byNovigName("NBA")!!, settings, props = false); throw AssertionError("expected a failure") } catch (e: com.tjshea.vigilant.data.reference.ReferenceException) {
+            assertTrue(e.message!!, e.message!!.contains("BoltOdds"))
+        }
+        assertTrue(BoltGamesSource(feed).supports(Leagues.byNovigName("NBA")!!))
+        assertFalse(BoltGamesSource(feed).supports(Leagues.byNovigName("ATP")!!))
+        feed.close()
+    }
+
+    @Test fun `the games source and the props source answer for their own socket`() = runBlocking {
+        val feed = BoltOddsFeed(client(), OkHttpClient(), scope, wsUrl = wsUrl())
+        val props = """{"timestamp":"2026-10-20T14:00:00+00:00","action":"initial_state","data":{"sport":"NBA","sportsbook":"draftkings","game":"Boston Celtics vs New York Knicks, 2026-10-20, 07","home_team":"Boston Celtics","away_team":"New York Knicks","info":{"id":1,"game":"g","when":"2026-10-20, 07:30 PM","link":"x"},"outcomes":{
+            "o":{"odds":"-115","outcome_name":"Player Points","outcome_line":"27.5","outcome_over_under":"Over","outcome_target":"Jayson Tatum"},
+            "u":{"odds":"-105","outcome_name":"Player Points","outcome_line":"27.5","outcome_over_under":"Under","outcome_target":"Jayson Tatum"}}}}"""
+        snapshotBody = "[$props]"
+        val settings = ScanSettings(leagues = setOf("NBA"), referenceBooks = listOf("draftkings"))
+        val nba = Leagues.byNovigName("NBA")!!
+        val p = BoltPropsSource(feed).odds(nba, settings)
+        assertEquals("bolt-props", p.provider)
+        assertEquals("POINTS", p.events.single().markets.single().stat)
+        assertTrue("the lines socket has no props", BoltGamesSource(feed).odds(nba, settings).events.isEmpty())
+        feed.close()
+    }
+
+    @Test fun `seen at the start the two sockets are the lines and the props and the third connection stays free`() {
+        val feed = BoltOddsFeed(client(), OkHttpClient(), scope, wsUrl = wsUrl())
+        assertEquals(listOf("lines", "props"), listOf(feed.lines.name, feed.props.name))
+        assertFalse(feed.connected)
+        assertEquals(Instant.parse("2026-10-20T23:30:00Z").toEpochMilli(), BoltParser.whenMs("2026-10-20, 07:30 PM"))
+    }
+}
