@@ -25,6 +25,12 @@ interface OddsScanner {
         onProgress: (Int, Int) -> Unit = { _, _ -> },
     ): RecheckReport
 
+    /**
+     * The streaming engine's update (Tj, 2026-10-12): reads [sources] again (in-memory boards: no request), takes the Novig books the live feed holds for [marketIds] (null: every market the plan prices),
+     * deepens the ones whose best price is +EV, and prices. No catalog read, no REST read. Null before the first scan (the catalog is the standing match of Novig's games to the feeds').
+     */
+    suspend fun streamUpdate(settings: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? = null
+
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
     suspend fun reprice(settings: ScanSettings): ScanResult?
 

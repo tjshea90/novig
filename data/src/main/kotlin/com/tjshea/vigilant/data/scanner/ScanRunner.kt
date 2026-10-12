@@ -95,6 +95,17 @@ class ScanRunner(private val scanner: OddsScanner, private val scope: CoroutineS
     val running: Boolean get() = job?.isActive == true
 
     /**
+     * The streaming engine's update ([OddsScanner.streamUpdate]): prices from the sockets' held boards and publishes the result as the latest (so the feed, the auto-bet and the bid desk all see it), unless a
+     * full scan is running (its own result lands when it ends). Null when there is nothing to price from yet.
+     */
+    suspend fun stream(settings: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? {
+        if (job?.isActive == true) return null
+        val result = scanner.streamUpdate(settings, sources, marketIds) ?: return null
+        _state.update { if (it.scanning) it else it.copy(result = result) }
+        return result
+    }
+
+    /**
      * Stops the scan running now, if any (scanning paused; Tj, 2026-09-28). It ends like a failed one: the last
      * finished result stays up, not a half-read one, and [start]'s afterScan still runs.
      */

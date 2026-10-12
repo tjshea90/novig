@@ -829,6 +829,50 @@ class Scanner(
         RecheckReport(Pricing.price(plan, books, settings, now, fairMemo), read, failed, error)
     }
 
+    override suspend fun streamUpdate(requested: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? = mutex.withLock {
+        val settings = requested.effective(forBets = betsOnly)
+        val cat = catalog ?: return@withLock null
+        if (settings.leagues.isEmpty()) return@withLock null
+        val now = clock()
+        // The streaming sources' boards are held in memory by their sockets: read again every time, no re-use window (a stale snapshot would price a moved line).
+        for (source in sources) for (league in settings.selectedLeagues) {
+            if (!source.supports(league)) continue
+            val key = "${source.id}|${league.novigName}"
+            try {
+                val snap = source.odds(league, settings).copy(fetchedAtMs = now, provider = source.id).seenBy(now)
+                synchronized(references) { references[key] = Cached(snap, requestKey(source, settings)) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The last snapshot stays until the freshness rule drops it.
+            }
+        }
+        val plan = planFor(cat, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS)
+        // Books the live feed holds right now (best bid is enough to screen); nothing is requested from Novig for a market the feed does not hold.
+        val top = novig.pushedTop(marketIds?.toList() ?: plan.marketIds)
+        if (top.isNotEmpty()) books = HashMap(books).apply { putAll(top) }
+        var result = Pricing.price(plan, books, settings, now, fairMemo)
+        // A market held as its best bid prices a bet exactly but knows nothing of its size: the +EV ones move to the full book and are read again as complete books.
+        val deepIds = result.opportunities
+            .filter { o -> top[o.market.marketId]?.partial == true && (o.quote?.evPercent ?: Double.NEGATIVE_INFINITY) > 0.0 }
+            .map { it.market.marketId }.distinct()
+        if (deepIds.isNotEmpty()) {
+            novig.deepen(deepIds)
+            var complete = novig.pushed(deepIds)
+            var waited = 0L
+            while (complete.size < deepIds.size && waited < DEEPEN_WAIT_MS) {
+                delay(DEEPEN_POLL_MS)
+                waited += DEEPEN_POLL_MS
+                complete = novig.pushed(deepIds)
+            }
+            if (complete.isNotEmpty()) {
+                books = HashMap(books).apply { putAll(complete) }
+                result = Pricing.price(plan, books, settings, clock(), fairMemo)
+            }
+        }
+        result
+    }
+
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
     override suspend fun reprice(requested: ScanSettings): ScanResult? = mutex.withLock {
         val settings = requested.effective(forBets = betsOnly)
