@@ -6861,3 +6861,10 @@ What do you recommend for what this app does
 ```
 I can add more pinnwire and pinnapi for free. I can also get a lot of free propline keys. Is propline pro better than 25 free keys? What about sharpapi?
 ```
+
+## 2026-10-12T22:04:20Z
+```
+Set up a vigilant to use the best, freshest available source from the toggled on keys for whatever data it needs from different sources. Propline claims to get odds fresh within seconds, and I can get many free propline keys. If possible, run tests to see which apis are the best for speed and accuracy and tell me what to get keys for. If you can test this, let me know if you need keys or what to do
+
+I have so many options for apis and subscriptions. Simplify and clarify for me the best things to do between which apis, which free keys, which paid services or apis 50 dollars or less per month, etc
+```
