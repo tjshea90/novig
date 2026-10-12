@@ -444,6 +444,78 @@ class ApiBettingTest {
         assertTrue(bet.viaApi)
     }
 
+    // ---- the private stream's push (NOVIG_API.md §25) ---------------------------------------------------------------------------------------------------
+
+    /** The order reads by request answer PENDING until [pendingFor] of them have gone by (the matching engine's queue), then [Scenario.orderStatus]. */
+    private fun laggingNovig(s: Scenario, pendingFor: Int) {
+        val reads = java.util.concurrent.atomic.AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                requests += request
+                val path = request.path!!
+                return when {
+                    request.method == "POST" && path == "/v3/orders" -> MockResponse().setResponseCode(201).setBody("""{"orderId":"o1","clientId":"c"}""")
+                    path == "/v3/orders/o1" -> {
+                        val status = if (reads.incrementAndGet() <= pendingFor) "PENDING" else s.orderStatus
+                        MockResponse().setBody("""{"orderId":"o1","clientId":"c","marketId":"mkt","outcomeId":"A","price":"0.465","qty":${s.qty},"remaining":0,"tif":"IOC","status":"$status","createdTs":1800000000000}""")
+                    }
+                    path.startsWith("/v3/portfolio/fills") -> MockResponse().setBody(s.fills)
+                    else -> MockResponse().setResponseCode(404)
+                }
+            }
+        }
+    }
+
+    private fun pushedFill(): com.tjshea.vigilant.data.novig.stream.OrderEvents = com.tjshea.vigilant.data.novig.stream.OrderEvents { now }.also { e ->
+        e.apply(json.parseToJsonElement("""{"seq":5,"open":[]}""").jsonObject)
+        e.apply(json.parseToJsonElement("""{"seq":6,"deltas":[{"kind":"fill","orderId":"o1","outcomeId":"A","price":"0.4625","qty":400,"remaining":0}]}""").jsonObject)
+    }
+
+    @Test
+    fun `an order the stream has already said ended is read once it is, with no 400 ms waits between reads`() = runBlocking {
+        laggingNovig(Scenario(), pendingFor = 2)
+        val pauses = ArrayList<Long>()
+        val p = ApiBetPlacer(
+            tradingClient(), tracker(), books = { book() }, limits = { limits }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { pauses += it; now += it },
+            events = { pushedFill() },
+        )
+        val r = p.place(target(), 10.0, confirmedLimit = 0.465)
+        assertTrue(r.toString(), r is PlaceResult.Placed)
+        assertEquals("the reads that found it still PENDING waited only the short agreement, never the full poll", listOf(ApiBetPlacer.PUSH_AGREE_MS, ApiBetPlacer.PUSH_AGREE_MS), pauses)
+        assertEquals(400L, (r as PlaceResult.Placed).bet.contracts)
+    }
+
+    @Test
+    fun `without a live stream the order is read every 400 ms as it always was`() = runBlocking {
+        laggingNovig(Scenario(), pendingFor = 2)
+        val pauses = ArrayList<Long>()
+        val dead = com.tjshea.vigilant.data.novig.stream.OrderEvents { now } // never given a snapshot: not live
+        val p = ApiBetPlacer(
+            tradingClient(), tracker(), books = { book() }, limits = { limits }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { pauses += it; now += it },
+            events = { dead },
+        )
+        assertTrue(p.place(target(), 10.0, confirmedLimit = 0.465) is PlaceResult.Placed)
+        assertEquals(listOf(ApiBetPlacer.POLL_MS, ApiBetPlacer.POLL_MS), pauses)
+    }
+
+    @Test
+    fun `a pushed reject is never taken as the answer: the fills are read, and an order that filled nothing places no bet`() = runBlocking {
+        laggingNovig(Scenario(orderStatus = "REJECTED", fills = """{"items":[]}"""), pendingFor = 0)
+        val e = com.tjshea.vigilant.data.novig.stream.OrderEvents { now }.also {
+            it.apply(json.parseToJsonElement("""{"seq":5,"open":[]}""").jsonObject)
+            it.apply(json.parseToJsonElement("""{"seq":6,"deltas":[{"kind":"reject","orderId":"o1"}]}""").jsonObject)
+        }
+        val t = tracker()
+        val p = ApiBetPlacer(
+            tradingClient(), t, books = { book() }, limits = { limits }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { now += it },
+            events = { e },
+        )
+        val r = p.place(target(), 10.0, confirmedLimit = 0.465)
+        assertTrue(r.toString(), r is PlaceResult.NotFilled)
+        assertTrue(t.all().isEmpty())
+        assertTrue("the fills were asked for", requests.any { it.path!!.startsWith("/v3/portfolio/fills") })
+    }
+
     @Test
     fun `an order id that isn't a UUID is refused before anything is sent, and the ones the app makes are UUIDs`() = runBlocking {
         novig(Scenario())
