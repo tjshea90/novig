@@ -252,12 +252,19 @@ class ApiBettingController(
         val t = c.trading ?: return null
         placerCache?.takeIf { it.first === t }?.second
             ?: ApiBetPlacer(
-                t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock, lock = c.orderLock,
+                t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock, lock = handLock,
                 restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(c.makerStore.all()) },
                 events = c::orderEvents, warm = { c.orderSocket?.warm() }, timing = { c.eventLog.info("BET", it) },
                 profit = { if (settings().gates.profitProven) com.tjshea.vigilant.data.scanner.ProfitProfile.shipped else null },
             ).also { placerCache = t to it }
     }
+
+    /**
+     * The order lock for a bet by hand. NOT the app's shared one ([AppContainer.orderLock]): the bid desk holds that for a whole cycle (reads, cancels, up to 50 posts) and the auto-bet for the 5 s Novig takes to
+     * end an order, and a bet placed from the sheet sat behind them ("Placing…" for a long time, Tj 2026-10-12). Hand bets still go one at a time among themselves; the day's limit is checked against the
+     * Tracker and the bets in flight, so the one race left (a bid filling in the same instant) can overshoot it by one small stake.
+     */
+    private val handLock = kotlinx.coroutines.sync.Mutex()
 
     /** The market's book read from Novig just now (never one shown from the last scan). */
     private suspend fun freshBook(marketId: String): NovigBook? = c.freshBook(marketId)

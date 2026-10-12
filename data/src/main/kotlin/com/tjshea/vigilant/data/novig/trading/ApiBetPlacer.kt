@@ -151,11 +151,13 @@ class ApiBetPlacer(
         expectedPrice: Double?,
         onSent: (() -> Unit)? = null,
     ): PlaceResult {
+        val tw = clock()
         lock.lock()
         var held = true
         fun release() { if (held) { held = false; lock.unlock() } }
         try {
         val tp0 = clock()
+        val lockWaitMs = tp0 - tw
         val plan = when (val p = plan(target, stake, allowRepeat, limitsOverride)) {
             is PlanResult.Refused -> return PlaceResult.Refused(p.reason, gameLimit = p.gameLimit)
             is PlanResult.Ready -> p.plan
@@ -205,7 +207,7 @@ class ApiBetPlacer(
         }
         try {
             return withContext(NonCancellable) { finish(target, orderId) }.also {
-                timing("bet placed: ${clock() - tp0} ms from the tap's confirm to the record (re-check ${tp1 - tp0} ms, order sent and answered ${tp2 - tp1} ms, waiting for the end and reading the fills ${clock() - tp2} ms)")
+                timing("bet placed: ${clock() - tw} ms from the tap's confirm to the record (waited ${lockWaitMs} ms for the order lock, re-check ${tp1 - tp0} ms, order sent and answered ${tp2 - tp1} ms, waiting for the end and reading the fills ${clock() - tp2} ms)")
             }
         } finally {
             reservation?.let { pending -= it }
