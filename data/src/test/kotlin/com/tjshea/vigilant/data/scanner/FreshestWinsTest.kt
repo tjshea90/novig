@@ -14,7 +14,7 @@ class FreshestWinsTest {
 
     private fun ref(vararg m: RefBookMarket) = RefEvent("e", "basketball_nba", 10_000_000L, "H", "A", m.toList())
 
-    private val key = LineKey(LineKind.MONEYLINE, null, 0, null, "e", listOf(Side.HOME, Side.AWAY))
+    private val key = LineKey("e", LineKind.MONEYLINE, null)
 
     @Test fun `a clearly newer quote of the same book replaces the first feed's`() {
         val r = ref(ml("draftkings", 1.90, 2.00, 1_000_000L), ml("draftkings", 1.80, 2.10, 1_000_000L + 60_000L))
