@@ -236,3 +236,4 @@ day that changes.
 | v0.93.4 | code 232 | 2026-10-12T17:37Z | v0.93.4: repeat and hedge guard; Entain family + BetMGM one book; resting bids at/over fair cancelled; star minimum overrides Profit-proven with lowered stars
 | v0.94.0 | code 233 | 2026-10-12T17:50Z | v0.94.0: streaming engine (Novig/BoltOdds pushes start a free scan pass; live toggle; repeat guard already in 0.93.4)
 | v0.94.1 | code 234 | 2026-10-12T18:36Z | v0.94.1: per-line streaming engine; BoltOdds push-lag report
+| v0.94.2 | code 235 | 2026-10-12T19:57Z | v0.94.2: streaming updates never wait for a scan or bid desk; stale league names not sent
