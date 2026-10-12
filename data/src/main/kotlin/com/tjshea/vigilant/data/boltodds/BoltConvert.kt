@@ -71,10 +71,9 @@ object BoltConvert {
         val league = ctx.league.novigName
         val seenAt = ctx.aliveAt(g.sportsbook, g.sport)
         val title = BoltBooks.title(book)
-        fun stamp(vararg o: BoltOutcome): Long = o.minOf { x -> if (seenAt != null) maxOf(x.atMs, seenAt) else x.atMs }
+        val stamp: (List<BoltOutcome>) -> Long = { l -> l.minOf { x -> if (seenAt != null) maxOf(x.atMs, seenAt) else x.atMs } }
 
         // Group the book's outcomes: (kind, period, stat, subject) -> the outcomes of that market.
-        class Key(val ref: BoltMarketRef, val subject: String?)
         val groups = LinkedHashMap<Pair<BoltMarketRef, String?>, MutableList<BoltOutcome>>()
         for (o in g.outcomes.values) {
             val ref = BoltMarkets.classify(league, o) ?: continue
@@ -94,18 +93,18 @@ object BoltConvert {
                 LineKind.MONEYLINE -> {
                     val h = list.firstOrNull { sameTeam(it.target, g.home) } ?: continue
                     val a = list.firstOrNull { sameTeam(it.target, g.away) } ?: continue
-                    out += RefBookMarket(book, title, LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, americanToDecimal(h.odds), null), RefQuote(Side.AWAY, americanToDecimal(a.odds), null)), stamp(h, a), ref.period)
+                    out += RefBookMarket(book, title, LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, americanToDecimal(h.odds), null), RefQuote(Side.AWAY, americanToDecimal(a.odds), null)), stamp(listOf(h, a)), ref.period)
                 }
                 LineKind.SPREAD -> {
                     val homes = list.filter { sameTeam(it.target, g.home) && it.line != null }
                     val aways = list.filter { sameTeam(it.target, g.away) && it.line != null }
                     for (h in homes) for (a in aways.filter { Math.abs(it.line!! + h.line!!) < 1e-9 }) {
-                        out += RefBookMarket(book, title, LineKind.SPREAD, listOf(RefQuote(Side.HOME, americanToDecimal(h.odds), h.line), RefQuote(Side.AWAY, americanToDecimal(a.odds), a.line)), stamp(h, a), ref.period)
+                        out += RefBookMarket(book, title, LineKind.SPREAD, listOf(RefQuote(Side.HOME, americanToDecimal(h.odds), h.line), RefQuote(Side.AWAY, americanToDecimal(a.odds), a.line)), stamp(listOf(h, a)), ref.period)
                     }
                 }
-                LineKind.TOTAL -> overUnder(list, book, title, LineKind.TOTAL, ref.period, null, null, ::stamp, out)
-                LineKind.TEAM_TOTAL -> overUnder(list, book, title, LineKind.TEAM_TOTAL, 0, subject, null, ::stamp, out)
-                LineKind.PLAYER_PROP -> overUnder(list.filter { it.target?.trim() == subject }, book, title, LineKind.PLAYER_PROP, 0, subject, ref.stat, ::stamp, out)
+                LineKind.TOTAL -> overUnder(list, book, title, LineKind.TOTAL, ref.period, null, null, stamp, out)
+                LineKind.TEAM_TOTAL -> overUnder(list, book, title, LineKind.TEAM_TOTAL, 0, subject, null, stamp, out)
+                LineKind.PLAYER_PROP -> overUnder(list.filter { it.target?.trim() == subject }, book, title, LineKind.PLAYER_PROP, 0, subject, ref.stat, stamp, out)
             }
         }
         return out
@@ -113,12 +112,12 @@ object BoltConvert {
 
     private fun overUnder(
         list: List<BoltOutcome>, book: String, title: String, kind: LineKind, period: Int, subject: String?, stat: String?,
-        stamp: (Array<out BoltOutcome>) -> Long, out: MutableList<RefBookMarket>,
+        stamp: (List<BoltOutcome>) -> Long, out: MutableList<RefBookMarket>,
     ) {
         val overs = list.filter { it.isOver && it.line != null }
         val unders = list.filter { it.isUnder && it.line != null }
         for (o in overs) for (u in unders.filter { Math.abs(it.line!! - o.line!!) < 1e-9 }) {
-            out += RefBookMarket(book, title, kind, listOf(RefQuote(Side.OVER, americanToDecimal(o.odds), o.line), RefQuote(Side.UNDER, americanToDecimal(u.odds), o.line)), stamp(arrayOf(o, u)), period, subject, stat)
+            out += RefBookMarket(book, title, kind, listOf(RefQuote(Side.OVER, americanToDecimal(o.odds), o.line), RefQuote(Side.UNDER, americanToDecimal(u.odds), o.line)), stamp(listOf(o, u)), period, subject, stat)
         }
     }
 
