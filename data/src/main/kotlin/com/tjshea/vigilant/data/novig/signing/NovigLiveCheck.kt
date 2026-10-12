@@ -83,7 +83,7 @@ class NovigLiveCheck(
     }
 
     /**
-     * The best-bid channel on a feed of its own (NOVIG_API.md §25), the only real test of it there is: the markets arrive as best bids, the feed compares a few of them with their `book`
+     * The best-bid channel on a feed of its own (NOVIG_API.md §26), the only real test of it there is: the markets arrive as best bids, the feed compares a few of them with their `book`
      * (its own check, run once a connection), and a complete book is asked for to see the ladder come. Says plainly whether `bbo` is in use or the feed gave it up, and why.
      */
     private suspend fun bboFeed(ids: List<String>): String {

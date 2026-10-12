@@ -24,7 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * A scan on the live feed's best-bid channel (NOVIG_API.md §25): every market is screened on its best bid alone, the markets whose best price is +EV are moved to the full book and priced again
+ * A scan on the live feed's best-bid channel (NOVIG_API.md §26): every market is screened on its best bid alone, the markets whose best price is +EV are moved to the full book and priced again
  * on the complete ladder, so the result is the one an all-`book` feed gives (the stake, the depth, the ladder), and the markets that are not worth a bet are never asked for a ladder.
  */
 class BboScanTest {

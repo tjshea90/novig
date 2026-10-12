@@ -12,7 +12,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The private `orders` stream's events (docs.novig.com/api/streaming/private; NOVIG_API.md §25), as JSON in and what the placer asks out. */
+/** The private `orders` stream's events (docs.novig.com/api/streaming/private; NOVIG_API.md §26), as JSON in and what the placer asks out. */
 class OrderEventsTest {
 
     private fun obj(s: String) = Json.parseToJsonElement(s).jsonObject

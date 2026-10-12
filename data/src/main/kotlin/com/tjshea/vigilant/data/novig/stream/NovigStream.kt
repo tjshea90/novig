@@ -106,7 +106,7 @@ interface PushedBooks {
  * subscribed: an event counts as all its markets (500+ for an NFL game), which would crowd out the
  * cap with lines no fair source quotes.
  *
- * **Two channels** (NOVIG_API.md §25, Tj 2026-10-12: "Build the novig bbo feature with a backup to default toggle"): `book` is every resting order (16 tokens a market, a message for every order that
+ * **Two channels** (NOVIG_API.md §26, Tj 2026-10-12: "Build the novig bbo feature with a backup to default toggle"): `book` is every resting order (16 tokens a market, a message for every order that
  * joins or leaves anywhere in the ladder); `bbo` is each outcome's best bid and its size (8 tokens, a message only when the top moves). A taker's price is `1 − best bid of the other outcome`, so `bbo`
  * is all a SCREENING read needs, at half the tokens and a fraction of the messages, parsing and memory. With [configureFeed] `bbo` on, every market is held on `bbo` except those that need the ladder: the
  * live lane's pinned markets, and any market someone asks a complete book of ([live], [deepen]: the scan deepens each +EV market, the bet planner and the bid desk read full books). A market's

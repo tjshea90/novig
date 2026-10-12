@@ -66,7 +66,7 @@ class ApiBetPlacer(
     /** What Vigilant's resting bids would cost if they filled, by game ([GameExposure.bidItems]): the per-game limit counts them beside the open bets. */
     private val restingBids: suspend () -> List<GameExposure.Item> = { emptyList() },
     /**
-     * The subaccount's own orders as Novig's private stream pushes them, while that stream is live (NOVIG_API.md §25): the end of an order is known the moment the matching engine has it, so
+     * The subaccount's own orders as Novig's private stream pushes them, while that stream is live (NOVIG_API.md §26): the end of an order is known the moment the matching engine has it, so
      * [finish] waits on that instead of asking every [POLL_MS]. The REST reads stay the record (the fills carry the fee) and the way back when nothing is pushed.
      */
     private val events: () -> com.tjshea.vigilant.data.novig.stream.OrderEvents? = { null },

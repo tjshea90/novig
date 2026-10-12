@@ -87,7 +87,7 @@ data class NovigBook(
      */
     val posted: Map<String, List<TakeLevel>>? = null,
     /**
-     * True for a book kept from Novig's `bbo` channel (NOVIG_API.md §25): each outcome has at most ONE level, its best bid and the size resting at it. That is exact for the price to buy
+     * True for a book kept from Novig's `bbo` channel (NOVIG_API.md §26): each outcome has at most ONE level, its best bid and the size resting at it. That is exact for the price to buy
      * (the best level) and for what is bid, but it is not a ladder: nothing here may size a bet across levels, count the others' bids behind our own, or read depth from it.
      */
     val partial: Boolean = false,

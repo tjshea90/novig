@@ -9,7 +9,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 
 /**
- * The subaccount's own orders as Novig's private stream tells them (NOVIG_API.md §25; docs.novig.com/api/streaming/private): `open` (the order rests), `fill` (a trade: the traded price, the size, how much
+ * The subaccount's own orders as Novig's private stream tells them (NOVIG_API.md §26; docs.novig.com/api/streaming/private): `open` (the order rests), `fill` (a trade: the traded price, the size, how much
  * is left), `cancel` (with a reason when the engine names one: GO_LIVE, MARKET_CLOSED, SETTLED, NEUTRALIZED) and `reject` ("We accepted the order, then refused it. No HTTP status reports this refusal. An
  * unfilled IOC, FOK or PO order also arrives as reject"). The order's own events come in this order: its fills, then open, cancel or reject.
  *

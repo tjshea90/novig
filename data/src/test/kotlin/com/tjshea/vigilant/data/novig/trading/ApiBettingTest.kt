@@ -444,7 +444,7 @@ class ApiBettingTest {
         assertTrue(bet.viaApi)
     }
 
-    // ---- the private stream's push (NOVIG_API.md §25) ---------------------------------------------------------------------------------------------------
+    // ---- the private stream's push (NOVIG_API.md §26) ---------------------------------------------------------------------------------------------------
 
     /** The order reads by request answer PENDING until [pendingFor] of them have gone by (the matching engine's queue), then [Scenario.orderStatus]. */
     private fun laggingNovig(s: Scenario, pendingFor: Int) {

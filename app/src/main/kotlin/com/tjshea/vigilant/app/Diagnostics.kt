@@ -69,7 +69,7 @@ object Diagnostics {
         val unabatedReport: List<String>? = null,
         /** BoltOdds Pro (BOLTODDS_API.md): the switch, the keys, each socket's state and counters, the boards, the names not priced. Null when no key is saved and the switch is off. */
         val boltReport: List<String>? = null,
-        /** Novig's live feed (NOVIG_API.md §25): the channel each market is on, the room, the connection's drops and 429s, the bbo fallback, the check against the book. Null with no key connected. */
+        /** Novig's live feed (NOVIG_API.md §26): the channel each market is on, the room, the connection's drops and 429s, the bbo fallback, the check against the book. Null with no key connected. */
         val novigFeedReport: List<String>? = null,
         val op4Report: List<String>? = null,
         /** The live burst recorder (no orders; RESEARCH.md §95): its status line and its report from the journal; null when it was never on and has recorded nothing. */

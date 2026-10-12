@@ -569,7 +569,7 @@ class Scanner(
 
         /**
          * Markets the live feed held as their best bid only price a bet exactly (a taker's price is the other side's best bid) but know nothing of its size: the stake it would take, the
-         * ladder behind it, the others' bids the bid desk joins (NOVIG_API.md §25). So every market whose best price is +EV is moved to the full book, and read again as a complete book the
+         * ladder behind it, the others' bids the bid desk joins (NOVIG_API.md §26). So every market whose best price is +EV is moved to the full book, and read again as a complete book the
          * moment it arrives (up to [DEEPEN_WAIT_MS]); the few the feed did not deliver in time are read by REST as before. The result is the one an all-`book` feed would have given.
          */
         suspend fun deepenEdges() {

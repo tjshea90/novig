@@ -34,7 +34,7 @@ fun interface BookListener {
 }
 
 /**
- * The channel a market is subscribed on (NOVIG_API.md §25): [BOOK] is every resting order (the full ladder of each outcome, 16 tokens a market); [BBO] is only each outcome's best resting bid and its
+ * The channel a market is subscribed on (NOVIG_API.md §26): [BOOK] is every resting order (the full ladder of each outcome, 16 tokens a market); [BBO] is only each outcome's best resting bid and its
  * size (8 tokens), which is all a taker's price needs. A [BBO] market's book is [NovigBook.partial].
  */
 enum class BookChannel(val wire: String, val weight: Int) {
@@ -57,7 +57,7 @@ data class MarketLifecycle(val status: String?, val transition: String?, val liv
  * stale until a fresh snapshot arrives. Pure logic, no socket, so every rule is unit-testable.
  *
  * Novig's prose docs and its OpenAPI document word the same messages differently (an order is `order` or `orderId`, an outcome `outcome` or `outcomeId`; the OpenAPI adds an `update` delta
- * that lowers a resting order's size; a lifecycle delta is a plain transition or a `{kind, status}` object), and no real answer settles which a live server sends (NOVIG_API.md §25), so every
+ * that lowers a resting order's size; a lifecycle delta is a plain transition or a `{kind, status}` object), and no real answer settles which a live server sends (NOVIG_API.md §26), so every
  * reader here takes both.
  */
 class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {

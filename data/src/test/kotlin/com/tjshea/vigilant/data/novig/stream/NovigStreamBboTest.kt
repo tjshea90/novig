@@ -31,7 +31,7 @@ import org.junit.Test
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * The best-bid channel (NOVIG_API.md §25) against a mock Novig that answers each market on the channel it was subscribed on, with the OpenAPI's `bbo` shapes: a snapshot
+ * The best-bid channel (NOVIG_API.md §26) against a mock Novig that answers each market on the channel it was subscribed on, with the OpenAPI's `bbo` shapes: a snapshot
  * `{bbo: {seq, bbo: {outcome: {price, qty}}}}` and a delta `{bbo: {seq, deltas: [{outcomeId, bbo}]}}`.
  */
 class NovigStreamBboTest {

@@ -16,7 +16,7 @@ class NovigReadTag(val tag: String) : AbstractCoroutineContextElement(Key) {
 
 /**
  * A read that only needs each outcome's best price (the Tracker pricing open bets, CNO's live check): [NovigPublicClient.books] may serve it from a market the live feed holds as its best bid
- * only ([NovigBook.partial], NOVIG_API.md §25). Any read without it wants complete books: a market held as its best bid is read the long way and moved to the full book channel for the next read.
+ * only ([NovigBook.partial], NOVIG_API.md §26). Any read without it wants complete books: a market held as its best bid is read the long way and moved to the full book channel for the next read.
  */
 class NovigScreening : AbstractCoroutineContextElement(Key) {
     companion object Key : CoroutineContext.Key<NovigScreening>

@@ -1148,7 +1148,7 @@ private fun ColumnScope.BettingTab(
                 ChoiceChips(listOf(10.0, 15.0, 30.0, 60.0, 120.0), s.guards.bidGuardMinutes.toDouble(), { "${it.toInt()} min" }) { v -> onUpdate { it.copy(guards = it.guards.copy(bidGuardMinutes = v.toInt())) } }
             }
         }
-        // Novig's live feed (Tj, 2026-10-12: "Build the novig bbo feature with a backup to default toggle in case it doesn't work right"; NOVIG_API.md §25).
+        // Novig's live feed (Tj, 2026-10-12: "Build the novig bbo feature with a backup to default toggle in case it doesn't work right"; NOVIG_API.md §26).
         SectionTitle("Novig live feed")
         SwitchRow(
             "Best-bid feed (bbo)",
