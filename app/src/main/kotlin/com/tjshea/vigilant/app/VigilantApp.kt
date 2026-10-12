@@ -446,6 +446,18 @@ class AppContainer(private val app: Application) {
     val unabatedGames = com.tjshea.vigilant.data.reference.UnabatedGamesSource(unabatedFeed)
     val unabatedProps = com.tjshea.vigilant.data.reference.UnabatedPropsSource(unabatedFeed)
 
+    /**
+     * BoltOdds Pro (Tj, 2026-10-12; BOLTODDS_API.md): the odds websocket as a fair-line source. The client rotates Tj's keys; the feed owns the two sockets (lines, props) and their boards and opens them only while a scan
+     * needs them. Used only while [boltActive]; switched off (or no key) the sockets are closed ([syncSgo]) and nothing is sent to BoltOdds.
+     */
+    val boltClient = com.tjshea.vigilant.data.boltodds.BoltOddsClient(http, { keyStore.current(ApiProvider.BOLTODDS) }, usage)
+    val boltFeed = com.tjshea.vigilant.data.boltodds.BoltOddsFeed(boltClient, http, appScope)
+    val boltGames = com.tjshea.vigilant.data.boltodds.BoltGamesSource(boltFeed)
+    val boltProps = com.tjshea.vigilant.data.boltodds.BoltPropsSource(boltFeed)
+
+    /** BoltOdds is on and a key is saved (the sockets answer for themselves: a read throws the reason when they cannot connect). */
+    fun boltActive(s: ScanSettings): Boolean = AppBook.isNovig && s.gates.useBoltOdds && keyStore.current(ApiProvider.BOLTODDS).isNotEmpty()
+
     /** Unabated is on, a key is saved and it is answering. */
     fun unabatedActive(s: ScanSettings): Boolean = AppBook.isNovig && s.unabated && keyStore.current(ApiProvider.UNABATED).isNotEmpty() && !unabatedClient.down()
 
@@ -478,6 +490,8 @@ class AppContainer(private val app: Application) {
     /** Follows Settings: the closes and scores read SportsGameOdds only while Pro is on. Safe to call on every settings change. */
     fun syncSgo(s: ScanSettings) {
         syncOp(s)
+        // Switched off (or its key gone, or Live games only mode asleep): the sockets are closed at once, not left to idle out.
+        if (!boltActive(s)) boltFeed.close()
         val on = AppBook.isNovig && s.sgoPro
         sgoCloses.enabled = on
         sgoScores.enabled = on
@@ -1899,6 +1913,8 @@ class AppContainer(private val app: Application) {
     private fun flatRateSources(settings: ScanSettings): List<ReferenceSource> =
         (if (sgoActive(settings)) listOf<ReferenceSource>(sgoGames) + propsOf(settings, sgoProps) else emptyList()) +
             (if (opActive(settings)) listOf<ReferenceSource>(opGames) + propsOf(settings, opProps) else emptyList()) +
+            // BoltOdds Pro (Tj, 2026-10-12): read from the sockets' boards, which costs nothing, so it is asked for every league it carries beside every other API that is on.
+            (if (boltActive(settings)) listOf<ReferenceSource>(boltGames) + propsOf(settings, boltProps) else emptyList()) +
             // OddsPapi Free (v4) reads whole games (every book) within Tj's daily figure.
             (if (op4FairActive(settings)) listOf<ReferenceSource>(op4Games) + propsOf(settings, op4Props) else emptyList()) +
             // Unabated Free (Tj, 2026-10-11): last in line. Pricing keeps the earlier source's quote for a book both send, so it prices only the gaps and covers a feed that is spent or down.

@@ -10,6 +10,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
  */
 enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: QuotaPolicy?, val blurb: String, val usagePrompt: Boolean) {
     SGO("SportsGameOdds Pro", ApiProvider.SPORTSGAMEODDS, QuotaPolicy.SGO, "Odds, alternates, props, closes and scores from 80+ books", true),
+    BOLTODDS("BoltOdds Pro", ApiProvider.BOLTODDS, QuotaPolicy.BOLTODDS, "Real-time odds from many sportsbooks over a WebSocket: lines, props and a snapshot (3 connections)", false),
     ODDSPAPI("OddsPapi (v5)", ApiProvider.ODDSPAPI, QuotaPolicy.ODDSPAPI, "Pinnacle, Circa and US books with change times, props, CLV and scores (trial or contract key)", false),
     ODDSPAPI_FREE("OddsPapi Free (v4)", ApiProvider.ODDSPAPI_FREE, QuotaPolicy.ODDSPAPI_FREE, "Pinnacle and ~300 books: closing lines for CLV and fair odds for scans (10 requests a day by default; set it on its page)", true),
     UNABATED("Unabated (free)", ApiProvider.UNABATED, QuotaPolicy.UNABATED, "DraftKings, FanDuel, MGM, Caesars, theScore, Fanatics lines and props; last in line", false),
@@ -25,6 +26,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
     /** Whether the app is allowed to call it at all. */
     fun isOn(s: ScanSettings): Boolean = when (this) {
         SGO -> s.sgoPro
+        BOLTODDS -> s.gates.useBoltOdds
         ODDSPAPI -> s.oddsPapi
         ODDSPAPI_FREE -> s.oddsPapiFree
         UNABATED -> s.unabated
@@ -40,6 +42,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
 
     fun setOn(s: ScanSettings, on: Boolean): ScanSettings = when (this) {
         SGO -> s.copy(sgoPro = on)
+        BOLTODDS -> s.copy(gates = s.gates.copy(useBoltOdds = on))
         ODDSPAPI -> s.copy(oddsPapi = on)
         ODDSPAPI_FREE -> s.copy(oddsPapiFree = on)
         UNABATED -> s.copy(unabated = on)
@@ -59,6 +62,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
     val page: com.tjshea.vigilant.app.ui.SettingsPage?
         get() = when (this) {
             SGO -> com.tjshea.vigilant.app.ui.SettingsPage.SGO
+            BOLTODDS -> com.tjshea.vigilant.app.ui.SettingsPage.BOLTODDS
             ODDSPAPI -> com.tjshea.vigilant.app.ui.SettingsPage.ODDSPAPI
             ODDSPAPI_FREE -> com.tjshea.vigilant.app.ui.SettingsPage.ODDSPAPI_FREE
             UNABATED -> com.tjshea.vigilant.app.ui.SettingsPage.UNABATED
