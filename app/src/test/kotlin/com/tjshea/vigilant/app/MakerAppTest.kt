@@ -100,7 +100,7 @@ class MakerAppTest {
 
     /** The runner and its desk on the sample scan's clock (the container's own desk keeps the phone's: it only cancels here). */
     private fun runner(novig: FakeNovig) = MakerRunner(
-        app, app.container, clock = { now }, scan = { ScanRun(result = SampleScan.result(), finished = 1) },
+        app, app.container, clock = { now }, scan = { ScanRun(result = SampleScan.resultNoOtherBids(), finished = 1) },
         desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
     )
 
@@ -110,7 +110,7 @@ class MakerAppTest {
         app.container.installTradingForTest(novig, "sub-1")
         var t = now
         val runner = MakerRunner(
-            app, app.container, clock = { t }, scan = { ScanRun(result = SampleScan.result(), finished = 1) },
+            app, app.container, clock = { t }, scan = { ScanRun(result = SampleScan.resultNoOtherBids(), finished = 1) },
             desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { t }) },
         )
         assertTrue(runner.run("during a scan") != null)
@@ -129,7 +129,7 @@ class MakerAppTest {
         app.container.installTradingForTest(novig, "sub-1")
         val asked = java.util.concurrent.CopyOnWriteArrayList<String>()
         fun runner(fail: Boolean) = MakerRunner(
-            app, app.container, clock = { now }, scan = { ScanRun(result = SampleScan.result(), finished = 1) },
+            app, app.container, clock = { now }, scan = { ScanRun(result = SampleScan.resultNoOtherBids(), finished = 1) },
             desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
             recentTrades = { id -> asked += id; if (fail) throw java.io.IOException("429") else emptyList() },
         )
@@ -184,7 +184,7 @@ class MakerAppTest {
         runner(novig).run("test")!!
         val up = novig.orders.values.filter { it.status == "OPEN" }.map { it.outcomeId }.toSet()
         // A prop among the bids up (the sample scan's props are in the sports the injury reports cover).
-        val props = SampleScan.result().opportunities.filter { it.outcome.outcomeId in up && com.tjshea.vigilant.data.reference.InjuryTags.wantOf(it) != null }
+        val props = SampleScan.resultNoOtherBids().opportunities.filter { it.outcome.outcomeId in up && com.tjshea.vigilant.data.reference.InjuryTags.wantOf(it) != null }
         assertTrue("a prop among the bids: ${novig.placed}", props.isNotEmpty())
         val victim = props.first()
         val want = com.tjshea.vigilant.data.reference.InjuryTags.wantOf(victim)!!
@@ -205,7 +205,7 @@ class MakerAppTest {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
         runner(novig).run("test")!!
-        val victim = SampleScan.result().opportunities.first { o -> novig.placed.any { it.startsWith(o.outcome.outcomeId + " ") } && com.tjshea.vigilant.data.reference.InjuryTags.wantOf(o) != null }
+        val victim = SampleScan.resultNoOtherBids().opportunities.first { o -> novig.placed.any { it.startsWith(o.outcome.outcomeId + " ") } && com.tjshea.vigilant.data.reference.InjuryTags.wantOf(o) != null }
         val want = com.tjshea.vigilant.data.reference.InjuryTags.wantOf(victim)!!
         // Start again with nothing up, then the report says he is out: Approve (post) refuses with the reason and nothing is sent.
         app.container.makerStore.update { emptyList() }
@@ -223,7 +223,7 @@ class MakerAppTest {
         app.container.installTradingForTest(novig, "sub-1")
         val running = MakerRunner(
             app, app.container, clock = { now },
-            scan = { ScanRun(scanning = true, result = SampleScan.result().copy(freshSinceMs = now - 60_000), finished = 1) },
+            scan = { ScanRun(scanning = true, result = SampleScan.resultNoOtherBids().copy(freshSinceMs = now - 60_000), finished = 1) },
             desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
         )
         val r = running.run("during a scan")!!
