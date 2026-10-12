@@ -268,7 +268,7 @@ class AutoBettor(
             judging = row.key
             // A Kelly stake is never sized on more edge than the sharpest book backs (its own fair, where its veto priced the bet: RESEARCH.md §72).
             val sharpFair = vetoSaid[row.key]?.takeIf { v -> vetoOn && v.verdict == SharpVeto.Verdict.PASSED }?.fair
-            val stake = when (val s = AutoBet.stake(rules, item.shown.row, settings.bankroll, balance, sharpFair, item.check.fairProbability)) {
+            val stake = when (val s = AutoBet.stake(rules, item.shown.row, settings.bankroll, balance, sharpFair, item.check.fairProbability, hoursToStart(row.startsAtMs))) {
                 is AutoBet.Stake.WalletEmpty -> { walletEmpty = true; stopped = "the wallet has ${money(balance)}, under a cent"; break }
                 is AutoBet.Stake.Skip -> { skip(s.reason); continue }
                 is AutoBet.Stake.Amount -> s.dollars
@@ -394,7 +394,7 @@ class AutoBettor(
             if (c.settingsStore.flow.value?.killed == true) { stopped = "the STOP button was pressed while this pass ran"; break }
             if (placed.size >= AutoBet.MAX_PER_CYCLE) { stopped = "placed ${AutoBet.MAX_PER_CYCLE} this cycle (the best edges first); the rest wait for the next"; break }
             val q = o.quote ?: continue
-            val stake = when (val s = AutoBet.scanStake(rules, q, settings.bankroll, balance)) {
+            val stake = when (val s = AutoBet.scanStake(rules, q, settings.bankroll, balance, hoursToStart(o.event.startsTs))) {
                 is AutoBet.Stake.WalletEmpty -> { walletEmpty = true; stopped = "the wallet has ${money(balance)}, under a cent"; break }
                 is AutoBet.Stake.Skip -> { skip(s.reason); continue }
                 is AutoBet.Stake.Amount -> s.dollars

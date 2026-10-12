@@ -107,12 +107,33 @@ object EvMath {
         return PositiveDepth(contracts, cost, ev, worst)
     }
 
+    /** Games up to this many hours away keep the whole Kelly stake ([leadScale]). */
+    const val LEAD_FULL_HOURS = 9.0
+
+    /** Past [LEAD_FULL_HOURS] and up to this many hours, [LEAD_SCALE_MID] of it; beyond, [LEAD_SCALE_FAR]. */
+    const val LEAD_FAR_HOURS = 13.0
+    const val LEAD_SCALE_MID = 0.6
+    const val LEAD_SCALE_FAR = 0.4
+
     /**
-     * Suggested stake in dollars: bankroll x kellyMultiplier x full Kelly, capped at what the
+     * How much of a Kelly stake a bet [hoursToStart] hours before the game keeps. A stake sized on the shown edge assumes the edge is real; the close keeps less of it the earlier a bet is
+     * placed. Tj's 2026-10-11 export (1,135 bets and bid fills with a true close, research/tan_bets_2026-10-12.md): the edge still there at the close was 3.3% of 3.1% shown within 1 h, 2.6% of
+     * 3.3% at 2-4 h, 1.9% at 4-6 h, 1.2% at 6-9 h, 1.1% at 9-13 h and about 0 beyond (t = 8 and above for the slope, bets and bids alike). So within [LEAD_FULL_HOURS] the stake is whole, up to
+     * [LEAD_FAR_HOURS] it is [LEAD_SCALE_MID] of it, and beyond [LEAD_SCALE_FAR]: a quarter Kelly of an edge that is mostly noise is not a quarter Kelly. Null (not known) and a game already
+     * under way keep the whole stake.
+     */
+    fun leadScale(hoursToStart: Double?): Double = when {
+        hoursToStart == null || hoursToStart.isNaN() || hoursToStart <= LEAD_FULL_HOURS -> 1.0
+        hoursToStart <= LEAD_FAR_HOURS -> LEAD_SCALE_MID
+        else -> LEAD_SCALE_FAR
+    }
+
+    /**
+     * Suggested stake in dollars: bankroll x kellyMultiplier x full Kelly x [leadScale] of [hoursToStart], capped at what the
      * book can actually fill at a positive edge ([maxFillable]).
      */
-    fun suggestedStake(quote: EvQuote, bankroll: Double, kellyMultiplier: Double, maxFillable: Double?): Double {
-        val kelly = bankroll * kellyMultiplier * quote.kellyFraction
+    fun suggestedStake(quote: EvQuote, bankroll: Double, kellyMultiplier: Double, maxFillable: Double?, hoursToStart: Double? = null): Double {
+        val kelly = bankroll * kellyMultiplier * quote.kellyFraction * leadScale(hoursToStart)
         return if (maxFillable == null) kelly else minOf(kelly, maxFillable)
     }
 }

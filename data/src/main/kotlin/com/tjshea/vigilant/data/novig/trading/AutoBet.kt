@@ -258,7 +258,7 @@ object AutoBet {
     }
 
     /** The stake for a scan's bet at [quote] (see [stake]): the rule's amount, or Kelly on the quote's own fair and price, held to the per-bet maximum and the wallet. */
-    fun scanStake(rules: Rules, quote: EvQuote, bankroll: Double, balance: Double): Stake {
+    fun scanStake(rules: Rules, quote: EvQuote, bankroll: Double, balance: Double, hoursToStart: Double? = null): Stake {
         if (balance < MIN_STAKE - 1e-9) return Stake.WalletEmpty
         val wanted = when (rules.stake) {
             AutoBetStake.ONE_DOLLAR -> 1.0
@@ -266,7 +266,7 @@ object AutoBet {
             else -> {
                 val kelly = rules.stake.kelly ?: return Stake.Skip("no Kelly fraction")
                 if (!(bankroll > 0.0)) return Stake.Skip("it has no Kelly stake (no bankroll set)")
-                EvMath.suggestedStake(quote, bankroll, kelly, null).takeIf { it > 0.0 } ?: return Stake.Skip("it has no Kelly stake (no edge at this price)")
+                EvMath.suggestedStake(quote, bankroll, kelly, null, hoursToStart).takeIf { it > 0.0 } ?: return Stake.Skip("it has no Kelly stake (no edge at this price)")
             }
         }
         return cap(rules, wanted, balance)
@@ -290,12 +290,12 @@ object AutoBet {
      * odds of every bet. [sharpFair]: the sharpest book's own fair for this side when its veto priced the bet; the Kelly fair is never above it
      * (RESEARCH.md §72: what a bet keeps is about the sharp book's edge, and Kelly on an edge overestimated by more than 2× loses money: Benter).
      */
-    fun stake(rules: Rules, row: CnoRow, bankroll: Double, balance: Double, sharpFair: Double? = null, checkFair: Double? = null): Stake {
+    fun stake(rules: Rules, row: CnoRow, bankroll: Double, balance: Double, sharpFair: Double? = null, checkFair: Double? = null, hoursToStart: Double? = null): Stake {
         if (balance < MIN_STAKE - 1e-9) return Stake.WalletEmpty
         val wanted = when (rules.stake) {
             AutoBetStake.ONE_DOLLAR -> 1.0
             AutoBetStake.CUSTOM -> rules.customStake
-            else -> kellyStake(row, bankroll, rules.stake.kelly ?: return Stake.Skip("no Kelly fraction"), sharpFair, checkFair) ?: return Stake.Skip("it has no Kelly stake (no edge at this price, or its fair odds are missing, or no bankroll is set)")
+            else -> kellyStake(row, bankroll, rules.stake.kelly ?: return Stake.Skip("no Kelly fraction"), sharpFair, checkFair, hoursToStart) ?: return Stake.Skip("it has no Kelly stake (no edge at this price, or its fair odds are missing, or no bankroll is set)")
         }
         return cap(rules, wanted, balance)
     }
@@ -320,13 +320,13 @@ object AutoBet {
      * The Kelly stake in dollars at [fraction] of full Kelly; null when there's no edge, no fair probability or no bankroll. The fair is CNO's, or
      * [sharpFair] (the sharpest book's own) when that is lower: never more than the sharp book backs.
      */
-    fun kellyStake(row: CnoRow, bankroll: Double, fraction: Double, sharpFair: Double? = null, checkFair: Double? = null): Double? {
+    fun kellyStake(row: CnoRow, bankroll: Double, fraction: Double, sharpFair: Double? = null, checkFair: Double? = null, hoursToStart: Double? = null): Double? {
         if (!(bankroll > 0.0)) return null
         val cno = CnoChecks.fairProbability(row) ?: return null
         // The lowest of the three fairs: CNO's, the sharpest book's and the app's own book check's (Tj, 2026-10-07: size on the lower edge too, not only gate on it).
         val fair = listOfNotNull(cno, sharpFair?.takeIf { it > 0.0 }, checkFair?.takeIf { it > 0.0 }).min()
         val price = 1.0 / Odds.americanToDecimal(row.odds)
-        val stake = EvMath.suggestedStake(EvQuote(fair, price, 0.0), bankroll, fraction, row.available)
+        val stake = EvMath.suggestedStake(EvQuote(fair, price, 0.0), bankroll, fraction, row.available, hoursToStart)
         return stake.takeIf { it > 0.0 }
     }
 
