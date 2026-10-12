@@ -202,7 +202,7 @@ class AutoBettor(
                 (cooldown[row.key] ?: 0L) > now -> skip("tried a moment ago")
                 isQuarantined(row.bet, now) -> skip("an earlier order for it was never confirmed")
                 else -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(injuries(), row, now, state.teams[row.key])?.let(::skip)
-                    ?: AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet))?.let(::skip)
+                    ?: AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet), AutoBet.isOverProp(row.market, row.bet))?.let(::skip)
                     ?: AutoBet.starsReason(rules, item.check.rating?.stars)?.let(::skip)
                     ?: (if (byStars) null else sharpReason(item, settings, state, now))?.let(::skip)
                     ?: (if (item.check.sharpAgainst) "a sharp book prices both sides and says it isn't +EV at Novig's price" else null)?.let(::skip)
@@ -363,7 +363,7 @@ class AutoBettor(
                 o.isLive || o.event.startsTs - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 (cooldown[o.key] ?: 0L) > now -> skip("tried a moment ago")
                 isQuarantined(o.selection, now) -> skip("an earlier order for it was never confirmed")
-                o.league.tennis -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection))?.let(::skip) ?: AutoBet.starsReason(rules, o.rating?.stars)?.let(::skip) ?: passing.add(o)
+                o.league.tennis -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), AutoBet.isOverProp(o.marketLabel, o.selection))?.let(::skip) ?: AutoBet.starsReason(rules, o.rating?.stars)?.let(::skip) ?: passing.add(o)
                 else -> vigilantReason(o, rules, settings, state, now)?.let(::skip) ?: passing.add(o)
             }
         }
@@ -438,7 +438,7 @@ class AutoBettor(
         com.tjshea.vigilant.data.reference.PlayerOut.forTag(state.injuries[o.key])?.let { return it }
         if (!rules.byStars && TrapGuard.tooEarly(o.event.startsTs, now, settings.trapEarlyHours, state.firstListed[o.key], settings.trapFirstListed) != null) return TrapGuard.earlyReason(settings.trapEarlyHours)
         val a = o.agreement
-        AutoBet.judgeVigilant(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), a.twoSided, a.agreeing)?.let { return it }
+        AutoBet.judgeVigilant(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), a.twoSided, a.agreeing, AutoBet.isOverProp(o.marketLabel, o.selection))?.let { return it }
         AutoBet.starsReason(rules, o.rating?.stars)?.let { return it }
         // A sharp book that disagrees vetoes the bet, whatever the sharp rule or a minimum star rating says (Tj, 2026-10-11: "If any sharp book disagrees that a bet is positive EV, it should be vetoed and not bet").
         if (a.sharpAgainst) return "a sharp book prices both sides and says it isn't +EV at Novig's price"

@@ -989,6 +989,7 @@ data class ScanSettings(
 
     /** The fewest stars ([BetRating]) a bet needs for the auto-bet; 0 = any. */
     val autoBetMinStars: Double get() = vigGuards.autoBetMinStars
+    val autoBetOverPropExtraEv: Double get() = vigGuards.autoBetOverPropExtraEv
 
     fun fairSettings(): FairSettings = FairSettings(
         source = fairSource,
@@ -1330,6 +1331,12 @@ data class ScanGuards(
     val autoBetVigilant: Boolean = true,
     /** The auto-bet places only bets rated at least this many stars ([BetRating]; Tj, 2026-10-11); 0 = any. */
     val autoBetMinStars: Double = 0.0,
+    /**
+     * Player-prop OVERS need this much more edge than the auto-bet's minimum (Tj's 2026-10-11 export: 456 settled Over props won 39.7% against a 49.2% fair chance, z = -3.4 by game, in all four sports
+     * with a prop, while Unders won 47.1% against 50.1%, z = -1.3: books shade the public's side, so a devigged Over fair runs high; 0.03 = 3 points, RESEARCH.md §135). 0 = the same bar as every bet.
+     * Not applied while a minimum star rating decides.
+     */
+    val autoBetOverPropExtraEv: Double = 0.03,
     /** Copy each day's bets and bids to Downloads/Vigilant/bets (the app keeps its own copy either way; Tj, 2026-10-11). */
     val betArchive: Boolean = true,
     /** The 1-100 safety/volume sliders' positions ([BetSlider], [BidSlider]); 0 = never set. The rules they set are ordinary settings: edit one and the slider reads Custom. */

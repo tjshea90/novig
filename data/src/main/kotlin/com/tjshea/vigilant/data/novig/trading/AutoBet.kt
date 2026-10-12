@@ -104,6 +104,8 @@ object AutoBet {
         val kinds: Set<BetKind> = BetKind.entries.toSet(),
         /** The fewest stars ([com.tjshea.vigilant.data.scanner.BetRating]) a bet needs; 0 = any. */
         val minStars: Double = 0.0,
+        /** A player-prop Over needs this much more edge than [minEv] ([ScanSettings.autoBetOverPropExtraEv]); 0 = none. */
+        val overPropExtraEv: Double = 0.0,
     ) {
         /**
          * A minimum star rating is on (Tj, 2026-10-11: "If I have a star rating minimum turned on, I want the app to auto bet all of the scanned bets with at least that rating, regardless of any other
@@ -137,7 +139,12 @@ object AutoBet {
         favouriteExtraEv = s.autoBetFavouriteExtraEv.coerceIn(0.0, 0.2),
         kinds = s.autoBetKinds,
         minStars = s.autoBetMinStars.coerceIn(0.0, 5.0),
+        overPropExtraEv = s.autoBetOverPropExtraEv.coerceIn(0.0, 0.1),
     )
+
+    /** Whether [bet] ("Josh Allen Over 36.5") in [market] is the Over side of a player prop: the side that wins less often than its fair chance says ([ScanSettings.autoBetOverPropExtraEv]). */
+    fun isOverProp(market: String, bet: String): Boolean =
+        (com.tjshea.vigilant.data.tracker.BetGrader.pickOf(market, bet) as? com.tjshea.vigilant.data.tracker.BetGrader.Pick.Prop)?.over == true
 
     /** Why a bet rated [stars] is under the minimum rating, or null (also null when no minimum is set). A bet with no rating yet has no stars to show and waits. */
     fun starsReason(rules: Rules, stars: Double?): String? {
@@ -150,8 +157,9 @@ object AutoBet {
     /** Whether [american] odds are a favorite's: shorter than even money (−101 or shorter). Even money (+100, −100) and every underdog is not. */
     fun isFavourite(american: Int): Boolean = american < -100
 
-    /** The smallest edge a bet at [american] odds needs: [Rules.minEv], plus [Rules.favouriteExtraEv] for a favorite. */
-    fun evBar(rules: Rules, american: Int): Double = rules.minEv + if (isFavourite(american)) rules.favouriteExtraEv else 0.0
+    /** The smallest edge a bet at [american] odds needs: [Rules.minEv], plus [Rules.favouriteExtraEv] for a favorite and [Rules.overPropExtraEv] for a player-prop Over ([overProp]). */
+    fun evBar(rules: Rules, american: Int, overProp: Boolean = false): Double =
+        rules.minEv + (if (isFavourite(american)) rules.favouriteExtraEv else 0.0) + (if (overProp) rules.overPropExtraEv else 0.0)
 
     /** The longest a favorite-side shortest-odds limit can be: −100 is even money. A positive limit (+100 or more) means underdogs only. */
     const val MAX_MIN_ODDS = -100
@@ -181,7 +189,7 @@ object AutoBet {
      * now). [check]: what the books on the bet's game page say ([CnoBooks.check], judged at that same price). [american]: that price as
      * American odds, for the longest-odds limit.
      */
-    fun judge(rules: Rules, shownEv: Double, check: CnoBooks.Check, american: Int, kind: BetKind? = null): String? {
+    fun judge(rules: Rules, shownEv: Double, check: CnoBooks.Check, american: Int, kind: BetKind? = null, overProp: Boolean = false): String? {
         // The rating decides which bets go: only the cap and "the books' own line says +EV" apply, then [starsReason] (the caller's) holds the rating to the minimum.
         if (rules.byStars) {
             tooGoodReason(shownEv)?.let { return it }
@@ -194,9 +202,10 @@ object AutoBet {
         // of CNO's edge and the app's own book check's (9 of 99 bets in the first three days had a check edge under 2.5% at a CNO edge over it). Said apart from the plain minimum so
         // the report counts each on its own.
         val own = check.ev?.takeIf { it > 0.0 }   // a books' edge at or under zero is the "not +EV" check's below, with its own words
-        val bar = evBar(rules, american)
+        val bar = evBar(rules, american, overProp)
         if (minOf(shownEv, own ?: shownEv) < bar - 1e-9) {
             return if (own != null && own < shownEv - 1e-9) "the books' own check puts its edge at ${percent(own)}, under the ${percent(bar)} it needs (the lower of CNO's and the books' edge is used)"
+            else if (overProp && shownEv >= evBar(rules, american) - 1e-9) "it is a player-prop Over and its edge ${percent(shownEv)} is under the ${percent(bar)} Overs need"
             else "it is a favorite and its edge ${percent(shownEv)} is under the ${percent(bar)} favorites need"
         }
         tooGoodReason(shownEv)?.let { return it }
@@ -216,10 +225,10 @@ object AutoBet {
      * Why a bet from Vigilant's own scan (tennis, which CNO doesn't carry) doesn't pass, or null when it does. The same bars as [judge] on the scan's edge ([ev], Novig's price against
      * the Pinnacle-priced fair): the kinds, the minimum (and the favourite's extra), the too-good-to-be-true cap and the odds limits. There is no books page to check it against.
      */
-    fun judgeScan(rules: Rules, ev: Double, american: Int, kind: BetKind?): String? {
+    fun judgeScan(rules: Rules, ev: Double, american: Int, kind: BetKind?, overProp: Boolean = false): String? {
         if (rules.byStars) return tooGoodReason(ev)
         if (kind != null && kind !in rules.kinds) return "${kind.label.lowercase()} aren't among the kinds of bet you auto-bet"
-        val bar = evBar(rules, american)
+        val bar = evBar(rules, american, overProp)
         if (ev < bar - 1e-9) return "its edge ${percent(ev)} is under the ${percent(bar)} it needs"
         tooGoodReason(ev)?.let { return it }
         if (tooLong(rules.maxOdds, american)) return "its odds are longer than your ${Odds.formatAmerican(rules.maxOdds)} limit"
@@ -233,8 +242,8 @@ object AutoBet {
      * scan's fair line (one a company, odds that look wrong left out): [Rules.twoSided] books price both sides, [Rules.minBooks] of them say +EV on their own, and with [Rules.allAgree] every one.
      * [agreeing] and [twoSided] are [com.tjshea.vigilant.data.scanner.Agreement.Count]'s.
      */
-    fun judgeVigilant(rules: Rules, ev: Double, american: Int, kind: BetKind?, twoSided: Int, agreeing: Int): String? {
-        judgeScan(rules, ev, american, kind)?.let { return it }
+    fun judgeVigilant(rules: Rules, ev: Double, american: Int, kind: BetKind?, twoSided: Int, agreeing: Int, overProp: Boolean = false): String? {
+        judgeScan(rules, ev, american, kind, overProp)?.let { return it }
         if (rules.byStars) return null
         if (twoSided < rules.twoSided) return "${books(twoSided)} price${if (twoSided == 1) "s" else ""} both sides (you need ${rules.twoSided})"
         if (agreeing < rules.minBooks) return "${books(agreeing)} say${if (agreeing == 1) "s" else ""} +EV on their own (you need ${rules.minBooks})"
