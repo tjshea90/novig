@@ -39,6 +39,7 @@ class ApiProbe(
         val op5: String = "https://v5.oddspapi.io/en",
         val op4: String = "https://api.oddspapi.io",
         val unabated: String = "https://data.unabated.com",
+        val bolt: String = "https://spro.agency/api",
         val pinnodds: String = "https://pinnodds.com",
         val pinnwire: String = "https://pinnwire.com/kit/v1",
         val pinnapi: String = "https://pinnapi.com/kit/v1",
@@ -170,6 +171,22 @@ class ApiProbe(
                 r.code == 401 -> { meter.recordBalance(QuotaPolicy.UNABATED, key, null, inactive = true); false to refused(401, "(Free access can be revoked)") }
                 r.code == 403 -> false to refused(403)
                 r.isSuccessful -> true to "Active and accepted · Unabated Free has no allowance, only one odds request per 5 s per key."
+                else -> false to "Answered HTTP ${r.code}."
+            }
+        }
+        ApiProvider.BOLTODDS -> {
+            // get_info names the sports and sportsbooks the key may subscribe to; it carries no usage figure (BOLTODDS_API.md §4): an invalid key answers 403 {"detail":"Invalid API token"}.
+            val r = get("${hosts.bolt}/get_info?key=$key", listOf("Accept" to "application/json"))
+            when {
+                r.code == 401 || (r.code == 403 && r.body.contains("token", ignoreCase = true)) -> { meter.recordBalance(QuotaPolicy.BOLTODDS, key, null, inactive = true); false to refused(r.code, "(BoltOdds said: ${Regex("\"detail\"\\s*:\\s*\"([^\"]{1,80})\"").find(r.body)?.groupValues?.get(1) ?: "invalid token"})") }
+                r.code == 403 -> false to "Refused (HTTP 403): ${Regex("\"detail\"\\s*:\\s*\"([^\"]{1,80})\"").find(r.body)?.groupValues?.get(1) ?: "your plan does not include this"}."
+                r.code == 429 -> true to "Accepted, rate limited for the moment (HTTP 429: GET endpoints allow 12 a minute per IP)."
+                r.isSuccessful -> {
+                    meter.recordAccepted(QuotaPolicy.BOLTODDS, key)
+                    val sports = Regex("\"sports\"\\s*:\\s*\\[([^\\]]*)\\]").find(r.body)?.groupValues?.get(1)?.split(',')?.count { it.isNotBlank() }
+                    val books = Regex("\"sportsbooks\"\\s*:\\s*\\[([^\\]]*)\\]").find(r.body)?.groupValues?.get(1)?.split(',')?.count { it.isNotBlank() }
+                    true to "Active and accepted · ${sports ?: "?"} sports, ${books ?: "?"} sportsbooks. BoltOdds publishes no usage figure: the odds come over its websocket (Pro: 3 connections at once)."
+                }
                 else -> false to "Answered HTTP ${r.code}."
             }
         }

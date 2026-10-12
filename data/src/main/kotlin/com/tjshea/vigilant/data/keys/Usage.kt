@@ -320,6 +320,9 @@ class UsageMeter(
         u.copy(depletedUntil = u.nextReset(policy), refused = true, lastNote = note, lastCallMs = now)
     }
 
+    /** A Test key found [key] accepted: a rest that a refusal set is lifted (nothing else changes). */
+    suspend fun recordAccepted(policy: QuotaPolicy, key: String) = edit(policy, key) { u, _ -> if (u.refused) u.copy(refused = false, depletedUntil = null, lastNote = null) else u }
+
     /** Requests (and throttles) to any provider, for the "today" counters. In memory until [flush]. */
     suspend fun countKeyless(policy: QuotaPolicy, calls: Int = 1, throttled: Int = 0) = mutex.withLock {
         ensureLoaded()
