@@ -90,6 +90,18 @@ class NovigPublicClientTest {
     }
 
     @Test
+    fun `every book request is counted under the tag of the code that asked for it, and untagged ones under other`() = runBlocking {
+        NovigReads.reset()
+        server.enqueue(MockResponse().setBody(Fixtures.mlBook).setHeader("ETag", "\"x-1\""))
+        server.enqueue(MockResponse().setBody(Fixtures.mlBook).setHeader("ETag", "\"x-2\""))
+        val c = client()
+        kotlinx.coroutines.withContext(NovigReadTag("scan")) { c.books(listOf(Fixtures.ML_MARKET)) }
+        c.books(listOf(Fixtures.ML_MARKET))
+        assertEquals(listOf("other" to 1L, "scan" to 1L).sortedBy { it.first }, NovigReads.snapshot().sortedBy { it.first })
+        NovigReads.reset()
+    }
+
+    @Test
     fun `an unchanged book is revalidated with its ETag and served from cache on 304`() = runBlocking {
         val hits = AtomicInteger()
         server.dispatcher = object : Dispatcher() {
