@@ -222,3 +222,4 @@ day that changes.
 | v0.89.30 | code 215 | 2026-10-11T22:59Z | v0.89.30: 1-100 sliders for Auto-bet and Bids, advanced settings hidden, no filled-bids list
 | v0.89.31 | code 216 | 2026-10-11T23:38Z | v0.89.31: live lane says which filters hide a +EV bet, live-only empty state
 | v0.89.32 | code 217 | 2026-10-12T00:49Z | v0.89.32: no longshot levels on the sliders, scans give way to a bet, auto-bet resumes by itself within a minute
+| v0.89.33 | code 218 | 2026-10-12T01:16Z | v0.89.33: star filter under the auto-bet slider, slider off while a minimum is picked
