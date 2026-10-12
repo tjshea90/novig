@@ -348,7 +348,7 @@ class ScannerTest {
     }
 
     @Test
-    fun `a streaming update never waits for a scan - it answers null at once while the scanner is held`() = runTest {
+    fun `a streaming update prices only once a scan has made the catalog`() = runTest {
         val novig = FakeNovig()
         val scanner = Scanner(novig, clock = { now })
         assertFalse(scanner.streamReady())
