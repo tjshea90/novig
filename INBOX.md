@@ -6733,3 +6733,8 @@ Make it so any and all resting bids are checked that they are still positive ev 
 
 For the star rating system, allow auto bets on the types of bets that are prevented by the new proven profit only setting, but lower their star rating in a way that is logical. Only allow these bets if the star minimum auto bet filter is enabled, allowing it to override the proven profit filter, but ensure that bets which have been negative historically are lowered on the star rating system
 ```
+
+## 2026-10-12T17:03:59Z
+```
+In this screenshot, notice the odds are suspiciously identical across the sports books. Do a thorough search online for sports books and look for books with the same company, same parent company, or books that use odds from another provider. The app should not double count any odds from books that have the same company or the same odds source. This guard should be applied throughout the app
+```
