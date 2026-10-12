@@ -35,6 +35,9 @@ class LevelSlidersTest {
             assertTrue(n.scanWindowHours >= n.trapBidHours && n.bookPropWindowHours >= n.trapBidHours)
         }
         assertEquals(12, BidSlider.apply(s, 1).trapBidHours)
+        // Never past 24 h: bids posted 24+ h out filled 2 times in 2,698 in Tj's 2026-10-11 export.
+        assertEquals(24, BidSlider.apply(s, 100).trapBidHours)
+        assertTrue(levels.all { BidSlider.apply(s, it).trapBidHours in 12..24 })
         assertEquals(0.08, BidSlider.apply(s, 1).makerMargin, 1e-9)
     }
 
