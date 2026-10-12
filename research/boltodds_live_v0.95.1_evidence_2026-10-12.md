@@ -1,0 +1,7 @@
+# v0.95.1 file (Tj, 2026-10-12 ~20:35Z): BoltOdds live feed still 0 games
+File: research/uploads/2026-10-12/147d424b-vigilant-diagnostics-v0.95.1-2026-10-12-1634.txt.gz
+- Feed ON and running, state Live, 0 live games / 0 frames sent. BoltOdds' board flags 8 NBA games in play (`games flagged in play: NBA 8`) and none else; Novig lists 7 live games; matched 0.
+- Why 0 could not be read: the feed's own note (flagged N, quorum K, best game has B fresh companies) was shown only on the Feed banner. v0.95.2 prints it in Diagnostics ("BoltOdds live feed note"). Candidates: the 8 flagged games are quiet (books silent for >5 s: Tj had set 3 companies / 5 s), or `is_live` flags games that are not truly in play (8 NBA games at 4:34 PM ET on a preseason Monday is odd).
+- Tennis never subscribed: BoltOdds' `get_info` lists the sport as "Tennis" (games carry "WTA ... - Tennis"), my filter looked for tournament names. Fixed v0.95.2 (subscribe every sport whose name contains "tennis" while the live feed is the source).
+- Streaming engine timing now visible: Novig-line updates 7-71 ms; BoltOdds refresh 4.4-5.3 s = boards read 1.5-2.1 s + matching 0.4 s + pricing 0.45 s + auto-bet 2.1-2.5 s (2,576 lines judged each time; one outlier 10.5 s with boards read 7.3 s).
+- Fixes v0.95.2: the hand-off judges only +EV rows (a non-+EV row can never be bet); the entry conversion cache keys on the book's last-heard time too (steady lines no longer re-copied each refresh).

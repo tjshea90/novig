@@ -39,3 +39,4 @@
 - 2026-10-12 Tj's v0.94.1 diagnostics: BoltOdds has no sharp book (live fair stays Pinnodds), key is on Trial plan; streaming engine updates were starved by full scans (fixed v0.94.2). research/streaming_v0.94.1_first_evidence_2026-10-12.md
 - 2026-10-12 v0.95.0: BoltOdds live (is_live parsed), soft-book average live fair (BoltLiveConsensus/BoltLiveFeed, PinnFeedChoice.BOLT, paper-only until boltLiveReal); streaming engine now push (addGameListener). BOLTODDS_API.md §10.
 - 2026-10-12 v0.95.1: live tennis on the BoltOdds live feed, feed explains why it has no game, BoltOdds conversion cached per entry (refresh was 7-18 s), stream update timing breakdown. research/boltodds_live_v0.95.0_first_evidence_2026-10-12.md
+- 2026-10-12 v0.95.2: BoltOdds live feed note in Diagnostics, tennis subscription fixed (info sport 'Tennis'), refresh hand-off only +EV rows, conversion cache keyed on last-heard. research/boltodds_live_v0.95.1_evidence_2026-10-12.md
