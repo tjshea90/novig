@@ -284,6 +284,9 @@ class NovigStream(
     private var canaryIds: List<String> = emptyList()
     private var canarySeqs: Map<String, Long> = emptyMap()
     private var canaryDone = false
+    private var canaryStrikes = 0
+    private var canaryNotBeforeMs = 0L
+    private val canaryTried = HashSet<String>()
 
     /** Applies the Settings options: the best-bid channel on or off (turning it off and on again clears a fallback, so it is tried afresh), and keeping the connection open between scans. */
     override fun configureFeed(bbo: Boolean, keepOpen: Boolean) {
@@ -444,6 +447,9 @@ class NovigStream(
         bboFirstSentAtMs = 0L
         canaryNonce = 0L
         canaryDone = false
+        canaryStrikes = 0
+        canaryNotBeforeMs = 0L
+        canaryTried.clear()
         connects++
         socket = http.newWebSocket(request, Listener())
         idleJob?.cancel()
@@ -623,12 +629,12 @@ class NovigStream(
         val ids: List<String>
         val seqs: Map<String, Long>
         synchronized(this) {
-            if (canaryDone || canaryNonce != 0L || socket == null || !bboActive() || bboSnapshots < minOf(canaryMarkets, 3)) return
+            if (canaryDone || canaryNonce != 0L || socket == null || !bboActive() || bboSnapshots < minOf(canaryMarkets, 3) || clock() < canaryNotBeforeMs) return
             val picked = ArrayList<String>()
             val sq = HashMap<String, Long>()
             for (id in allWanted()) {
                 if (picked.size >= canaryMarkets) break
-                if (subscribedOn[id] != BookChannel.BBO || books.channelOf(id) != BookChannel.BBO) continue
+                if (subscribedOn[id] != BookChannel.BBO || books.channelOf(id) != BookChannel.BBO || id in canaryTried) continue
                 val b = books.book(id) ?: continue
                 if (b.bidsByOutcome.isEmpty()) continue
                 picked += id
@@ -638,6 +644,7 @@ class NovigStream(
             ids = picked
             seqs = sq
             canaryDone = true
+            canaryTried += picked
         }
         val cost = minOf(ids.size * BookChannel.BOOK.weight.toDouble(), capacity)
         waitFor(cost)
@@ -697,7 +704,15 @@ class NovigStream(
         }
         val detail = "$matched of $checked markets' best bids matched the book" + (if (skipped > 0) " ($skipped skipped: moved or unreadable)" else "") + (if (bad.isNotEmpty()) "; " + bad.joinToString("; ") else "")
         canary = Canary(clock(), checked, matched, skipped, detail)
-        if (checked >= 3 && matched * 3 < checked * 2) fallBackFromBbo("the best-bid feed disagreed with the book ($detail)")
+        if (checked >= 3 && matched * 3 < checked * 2) {
+            // A reply can overtake a market push still queued behind it (the docs send replies first), so one disagreement is asked again on other markets a few seconds on; two give `bbo` up.
+            val strikes = synchronized(this) { ++canaryStrikes }
+            if (strikes >= 2) {
+                fallBackFromBbo("the best-bid feed disagreed with the book ($detail)")
+            } else {
+                synchronized(this) { canaryDone = false; canaryNotBeforeMs = clock() + CANARY_RETRY_MS }
+            }
+        }
     }
 
     /** Run from the idle loop: gives up on `bbo` when markets were subscribed on it and not one snapshot came, and drops a canary that was never answered. */
@@ -715,6 +730,7 @@ class NovigStream(
             }
         }
         if (reason != null) fallBackFromBbo(reason)
+        else if (synchronized(this) { bboActive() && !canaryDone && canaryStrikes > 0 && now >= canaryNotBeforeMs }) scheduleSync()
     }
 
     private fun refill() = synchronized(this) {
@@ -1010,6 +1026,7 @@ class NovigStream(
         const val BBO_DATA_WAIT_MS = 12_000L
         const val CANARY_MARKETS = 6
         const val CANARY_WAIT_MS = 10_000L
+        const val CANARY_RETRY_MS = 3_000L
     }
 }
 

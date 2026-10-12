@@ -268,9 +268,12 @@ class NovigStreamBboTest {
         server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(bboQty = 77)))
         val s = stream()
         s.watch(plan)
-        until { s.feedReport().first().contains("given up") }
+        until(timeoutMs = 30_000) { s.feedReport().first().contains("given up") }
         assertTrue(s.feedReport().first().contains("disagreed with the book"))
         assertEquals(0, s.canary!!.matched)
+        // asked twice, the second time of other markets
+        assertEquals(2, snapshots.size)
+        assertTrue(channelsOf(snapshots[0], "snapshot").keys.intersect(channelsOf(snapshots[1], "snapshot").keys).isEmpty())
         until { s.live(plan).size == plan.size }
         assertFalse(s.live(plan).values.any { it.partial })
         s.close()
