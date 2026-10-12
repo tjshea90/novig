@@ -167,10 +167,13 @@ class BoltBoard(
 
     /** How many games and outcomes are held, and which books, for Diagnostics. */
     fun summary(): Summary = synchronized(lock) {
-        Summary(games.size, games.values.sumOf { it.outcomes.size }, games.values.groupingBy { it.sportsbook }.eachCount(), games.values.groupingBy { it.sport }.eachCount())
+        Summary(
+            games.size, games.values.sumOf { it.outcomes.size }, games.values.groupingBy { it.sportsbook }.eachCount(), games.values.groupingBy { it.sport }.eachCount(),
+            games.values.filter { it.live }.groupBy { it.sport }.mapValues { (_, l) -> l.map { it.game }.distinct().size },
+        )
     }
 
-    data class Summary(val games: Int, val outcomes: Int, val byBook: Map<String, Int>, val bySport: Map<String, Int>)
+    data class Summary(val games: Int, val outcomes: Int, val byBook: Map<String, Int>, val bySport: Map<String, Int>, val liveBySport: Map<String, Int> = emptyMap())
 
     fun clear() {
         synchronized(lock) { games.clear() }

@@ -44,6 +44,10 @@ class BoltLiveFeed(
     private val _state = MutableStateFlow<PinnSocketState>(PinnSocketState.Off)
     override val state: StateFlow<PinnSocketState> = _state.asStateFlow()
 
+    /** Why the live lane has no game from this feed, in words (updated each look): what BoltOdds flags in play, and how many of those have a quorum. */
+    @Volatile override var note: String? = null
+        private set
+
     @Volatile override var lastFrameAtMs: Long = 0L
         private set
 
@@ -126,6 +130,7 @@ class BoltLiveFeed(
         // A game that has left the board (removed, cleared, no longer live) cannot say which league it was: look at everything.
         if (only != null && only.any { id -> entries.none { it.game == id } }) { only = null; entries = board.liveEntries(null) }
         val built = BoltLiveConsensus.build(entries, now, rules())
+        if (only == null) note = explain(entries, built, now)
         val byGame = built.associateBy { it.id }
         // Games to look at: the ones just built, and (a game that lost its quorum must close its lines) the ones just read, or every game already said.
         val look = LinkedHashSet<String>().apply {
@@ -166,6 +171,15 @@ class BoltLiveFeed(
         }
         liveGames = games.count { it.value.lines.isNotEmpty() }
         linesLive = games.values.sumOf { it.lines.size }
+    }
+
+    private fun explain(entries: List<BoltBookGame>, built: List<BoltLiveConsensus.Game>, now: Long): String {
+        val games = entries.map { it.game }.distinct()
+        if (games.isEmpty()) return "BoltOdds flags no game as in play right now (it carries only the leagues picked in Settings and tennis; ${board.summary().games} games are on its boards)"
+        val r = rules()
+        val fresh = entries.filter { now - it.updatedAtMs <= r.maxAgeMs }.groupBy { it.game }.mapValues { (_, l) -> l.map { com.tjshea.vigilant.engine.BookCompany.of(it.sportsbook) }.distinct().size }
+        val best = fresh.values.maxOrNull() ?: 0
+        return "BoltOdds flags ${games.size} games in play; ${built.size} have a quorum of ${r.minCompanies} companies pushed within ${r.maxAgeMs / 1000} s and agreeing" + if (built.isEmpty()) " (the best game has $best fresh companies)" else ""
     }
 
     private fun send(frame: JsonObject) {

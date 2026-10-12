@@ -57,6 +57,9 @@ interface PinnFeedSource {
     fun stop()
     val state: StateFlow<PinnSocketState>
     val lastFrameAtMs: Long
+
+    /** A source that is not Pinnacle says here why it has no game to offer (the Feed shows it); null for the Pinnodds socket. */
+    val note: String? get() = null
 }
 
 data class LiveRunnerStatus(
@@ -369,7 +372,7 @@ class PinnLiveRunner(
         }
         // What is missing, said exactly (Tj, 2026-10-11, a screenshot read "Novig's feed has been quiet for 1791750248 s": a zero stamp taken for a time).
         if (targetsByMarket.isEmpty()) {
-            nothing("no live game is matched yet (Pinnacle has ${book.events.values.count { it.live && it.regular }} live matchups, Novig lists ${catalogEvents.size} live games)")
+            nothing("no live game is matched yet (${pinn.note ?: "Pinnacle has ${book.events.values.count { it.live && it.regular }} live matchups"}, Novig lists ${catalogEvents.size} live games${if (pinn.note != null) ", ${book.events.values.count { it.live && it.regular }} from BoltOdds" else ""})")
             return
         }
         // The Novig subscription is asserted again every few seconds: a socket that was closed (a scan ended off screen) or refused reconnects as soon as Novig lets it, not at the next re-match.

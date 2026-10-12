@@ -1626,12 +1626,12 @@ class AppContainer(val app: Application) {
                         board = boltFeed.lines.board, socketLive = { boltFeed.lines.live },
                         ensureOpen = { boltFeed.arrange(currentSettings()); boltFeed.lines.use() },
                         sink = onFrame, scope = appScope, rules = ::boltLiveRules,
-                    ).also { boltLiveFeed = it }
+                    ).also { boltLiveFeed = it; boltFeed.liveTennis = true }
                 } else if (settingsStore.flow.value?.pinnWebsite?.website == true) {
-                    boltLiveFeed = null
+                    boltLiveFeed = null; boltFeed.liveTennis = false
                     com.tjshea.vigilant.data.pinnodds.PinnWebsiteFeed(websiteFetcher, appScope, onFrame, ::websiteConfig).also { activeWebsiteFeed = it }
                 } else {
-                    boltLiveFeed = null
+                    boltLiveFeed = null; boltFeed.liveTennis = false
                     activeWebsiteFeed = null
                     com.tjshea.vigilant.data.pinnodds.PinnSocket(http, { keyStore.current(ApiProvider.PINNODDS).firstOrNull() }, appScope, onFrame)
                 }

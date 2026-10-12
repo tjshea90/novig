@@ -36,6 +36,9 @@ class BoltOddsFeed(
     private var marketsKept: Kept<Map<String, Map<String, List<String>>>>? = null
     private var marketsFor: Pair<List<String>, List<String>>? = null
 
+    /** The live engine is reading BoltOdds: tennis tournaments are subscribed too (their match winners are its fair), whatever the scan's leagues are. */
+    @Volatile var liveTennis: Boolean = false
+
     @Volatile var lastPlan: String? = null
         private set
 
@@ -88,7 +91,8 @@ class BoltOddsFeed(
         if (leagues.isEmpty()) return emptyList()
         val info = info()
         val sportsByLeague = leagues.associateWith { BoltBooks.sportsFor(it, info?.sports) }
-        val sports = sportsByLeague.values.flatten().distinct().sorted()
+        val tennis = if (liveTennis) info?.sports.orEmpty().filter { BoltBooks.tennisLeagueOf(it) != null } else emptyList()
+        val sports = (sportsByLeague.values.flatten() + tennis).distinct().sorted()
         val wanted = BoltBooks.wanted(settings)
         val books = info?.let { BoltBooks.slugsFor(wanted, it.sportsbooks) }.orEmpty()
         val markets = markets(sports, books)
@@ -159,6 +163,7 @@ class BoltOddsFeed(
             s.lastError?.let { add("  last error: $it") }
             s.connectionNotes()?.let { add("  $it") }
             add("  board: ${b.games} games, ${b.outcomes} outcomes · books " + b.byBook.entries.sortedByDescending { it.value }.take(14).joinToString { "${it.key} ${it.value}" } + " · sports " + b.bySport.entries.joinToString { "${it.key} ${it.value}" })
+            add("  games flagged in play (info.is_live): " + (b.liveBySport.entries.joinToString { "${it.key} ${it.value}" }.ifEmpty { "none" }))
             add("  push lag (for the live-fair decision): " + b.let { s.board.lagReport().firstOrNull() })
             s.board.lagReport().drop(1).take(20).forEach { line -> add(line) }
             add("  messages: " + s.board.counts.entries.sortedByDescending { it.value }.joinToString { "${it.key} ${it.value}" }.ifEmpty { "none" })
