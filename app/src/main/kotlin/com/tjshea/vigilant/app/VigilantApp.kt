@@ -384,6 +384,7 @@ class AppContainer(private val app: Application) {
         return ApiBetPlacer(
             t, tracker, books = ::freshBook, limits = limits, paused = { settingsStore.flow.value?.paused == true }, lock = orderLock,
             restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(makerStore.all()) },
+            events = { (novig.stream as? NovigStream)?.orderEvents },
         )
             .also { autoPlacerCache = t to it }
     }
@@ -494,7 +495,7 @@ class AppContainer(private val app: Application) {
     fun syncSgo(s: ScanSettings) {
         syncOp(s)
         // Novig's live feed: the best-bid channel and keeping the connection open follow their switches (a new connection gets them in [useConnection]).
-        novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen)
+        novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush)
         // Switched off (or its key gone, or Live games only mode asleep): the sockets are closed at once, not left to idle out.
         if (!boltActive(s)) boltFeed.close()
         val on = AppBook.isNovig && s.sgoPro
@@ -1124,7 +1125,7 @@ class AppContainer(private val app: Application) {
         novig.stream?.close()
         novig.keyed = signer
         novig.stream = signer?.let { NovigStream(http, it, appScope) }
-        settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen) }
+        settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush) }
         val alias = connection?.tradingAlias
         val key = connection?.tradingKeyId
         val client = if (alias != null && key != null && alias in KeystoreVault.aliases(NovigBettingSetup.TRADING_PREFIX)) {

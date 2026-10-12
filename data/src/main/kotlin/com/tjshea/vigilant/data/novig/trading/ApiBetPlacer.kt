@@ -65,6 +65,11 @@ class ApiBetPlacer(
     private val lock: Mutex = Mutex(),
     /** What Vigilant's resting bids would cost if they filled, by game ([GameExposure.bidItems]): the per-game limit counts them beside the open bets. */
     private val restingBids: suspend () -> List<GameExposure.Item> = { emptyList() },
+    /**
+     * The subaccount's own orders as Novig's private stream pushes them, while that stream is live (NOVIG_API.md §25): the end of an order is known the moment the matching engine has it, so
+     * [finish] waits on that instead of asking every [POLL_MS]. The REST reads stay the record (the fills carry the fee) and the way back when nothing is pushed.
+     */
+    private val events: () -> com.tjshea.vigilant.data.novig.stream.OrderEvents? = { null },
 ) {
 
     /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. [limitsOverride]: the auto-bet's own limits. */
@@ -231,16 +236,29 @@ class ApiBetPlacer(
     private suspend fun finish(target: BetTarget, orderId: String): PlaceResult {
         var order: NovigOrder? = null
         val started = clock()
-        while (clock() - started < ORDER_WAIT_MS) {
-            order = try {
-                trading.order(orderId)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                null
+        // The private stream says when the order ended: a short look for that first (an IOC is over in milliseconds), so the first read of it by request already finds it ended.
+        val feed = events()?.takeIf { it.live }
+        feed?.awaitEnd(orderId, FIRST_PUSH_WAIT_MS)
+        try {
+            while (clock() - started < ORDER_WAIT_MS) {
+                order = try {
+                    trading.order(orderId)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    null
+                }
+                if (order?.terminal == true) break
+                // Between two reads: the end, as soon as it is pushed, instead of the full wait. If it was pushed and the read still says it runs, the read is behind the stream: a moment, not a busy loop.
+                val live = events()?.takeIf { it.live }
+                if (live == null) {
+                    pause(POLL_MS)
+                } else if (live.awaitEnd(orderId, POLL_MS) != null) {
+                    pause(PUSH_AGREE_MS)
+                }
             }
-            if (order?.terminal == true) break
-            pause(POLL_MS)
+        } finally {
+            feed?.forget(orderId)
         }
         var fills = readFills(orderId)
         if (fills.isEmpty() && order?.status == "FILLED") {
@@ -308,6 +326,10 @@ class ApiBetPlacer(
         /** A lock this close to the start is worked out as if in-game (the fee is charged by the time it fills: NOVIG_API.md §8). */
         const val LIVE_MARGIN_MS = 2 * 60_000L
         const val POLL_MS = 400L
+
+        /** How long the first read of a just-placed order waits for the stream to say it ended, and how long a read that is behind a pushed end waits before asking again. */
+        const val FIRST_PUSH_WAIT_MS = 150L
+        const val PUSH_AGREE_MS = 100L
 
         fun localMidnight(now: Long): Long {
             val zone = java.time.ZoneId.systemDefault()
