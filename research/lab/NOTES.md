@@ -45,3 +45,4 @@
 - 2026-10-12 v0.95.3 diagnostics read (research/boltodds_live_v0.95.3_evidence_2026-10-12.md): BoltOdds live feed builds 1 live game with quorum; engine not run (feed off); NBA flags likely stale.
 - 2026-10-12 PropLine vs ParlayAPI pregame comparison (research/propline_vs_parlayapi_pregame_2026-10-12.md): PropLine far cheaper per scan, ParlayAPI one-call props + measured ages; keep both.
 - 2026-10-12 second v0.95.3 file: BoltOdds off; refresh 'boards read' 7-14 s traced to conversion cache keyed on aliveAt; fixed (v0.95.4). PropLine only 72 calls on 3 free keys, no info on quality.
+- 2026-10-12 subscription advice (research/subscription_advice_2026-10-12.md).
