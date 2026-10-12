@@ -6653,3 +6653,10 @@ Novig's lighter best-bid-only channel, and letting the scan ask for more than 2,
 
 Explain this
 ```
+
+## 2026-10-12T06:56:29Z
+```
+Build the novig bbo feature with a backup to default toggle in case it doesn't work right. Make sure vigilant app is making full use of the novig API. The app should go as fast as novig allows. Optimize the vigilant app to take full advantage of everything the API offers. If it can make scanning or live betting or any other part or function of vigilant better, do it.
+
+If you need me to do anything to install the new novig features, such as the bbo, let me know
+```
