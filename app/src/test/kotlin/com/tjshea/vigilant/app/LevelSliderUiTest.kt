@@ -7,7 +7,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -42,5 +45,22 @@ class LevelSliderUiTest {
         assertTrue(BetSlider.matches(ui.settings, 5))
         compose.onNodeWithTag("autoBetAdvanced").performScrollTo().performClick()
         compose.onNodeWithTag("autoBetMinEvField").performScrollTo()
+    }
+
+    @Test fun `the star filter sits under the slider, switches the slider off while picked, and Any brings it back`() {
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Column(Modifier.verticalScroll(rememberScrollState())) { AutoBetSection(ui) { t -> ui = ui.copy(settings = t(ui.settings)) } }
+            }
+        }
+        compose.onNodeWithTag("betLevel").performScrollTo().assertIsEnabled()
+        compose.onNodeWithTag("autoBetStarsChips").performScrollTo().assertExists()
+        compose.onNodeWithText("4★").performScrollTo().performClick()
+        assertEquals(4.0, ui.settings.autoBetMinStars, 0.0)
+        compose.onNodeWithTag("betLevel").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithTag("autoBetStarsOverride").performScrollTo().assertExists()
+        compose.onNodeWithText("Any").performScrollTo().performClick()
+        assertEquals(0.0, ui.settings.autoBetMinStars, 0.0)
+        compose.onNodeWithTag("betLevel").performScrollTo().assertIsEnabled()
     }
 }
