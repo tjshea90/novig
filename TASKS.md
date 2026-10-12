@@ -4791,3 +4791,6 @@ Tj verbatim: "For the auto bid and auto bet, consider whether it is wise to bet 
 ## TAK: star filter under the auto-bet slider (Tj, 2026-10-12)
 Tj: "put the ratings filter (1 to 5 stars) under the slider ... When I choose the minimum bet from 1 to 5 stars, it ignores the slider completely ... Make sure I can also turn it off and return to the slider"
 - [x] TAK1 Stars chips + override note moved under the slider (always visible), slider greyed while a minimum is picked, Any returns to it; the slider no longer touches the minimum. Tests: LevelSliderUiTest, LevelSlidersTest.
+
+## TAL: no maximum EV on live bets (Tj, 2026-10-12: "Make the live betting mode have no maximum EV filter. It can show bets at any EV")
+- [x] TAL1 `LiveScanFeed.hiddenBecause` no longer applies `maxEvPercent`; the minimum EV and the other bars stay. Test: LiveScanTest.
