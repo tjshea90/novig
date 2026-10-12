@@ -6747,3 +6747,8 @@ If this is plausible and can be built, build it now. Make a toggle on and off fo
 
 Another safeguard needs to be made and applied automatically. When I live auto bet, a lot of the time it bets or bids the same side, player, team, or prop over and over many times repeatedly, because the odds change yet it is still positive EV. Identical bets with different odds need a guard that doesn't bet or bid on them if they have already been bet a certain number of times or a certain money amount. Bets and bids may be placed on both sides of a two sided bet (for example betting on both players in a match at different times), but only if it guarantees positive profit. It should never lock in a loss
 ```
+
+## 2026-10-12T17:31:48Z
+```
+Start building the streaming engine if you haven't already
+```
