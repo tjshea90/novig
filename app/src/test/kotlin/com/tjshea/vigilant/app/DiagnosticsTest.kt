@@ -402,7 +402,7 @@ class DiagnosticsTest {
     }
 
     @Test
-    fun `a refused key that is no longer saved, or belongs to a switched-off API, is not a finding (v0_89_34 file: a FAIL for a removed OddsPapi key)`() {
+    fun `a refused key that is no longer saved, or belongs to a switched-off API, is not a finding (the v0_89_34 file had a FAIL for a removed OddsPapi key)`() {
         val base = SampleScan.state()
         val usage = UsageBook(
             mapOf(
