@@ -185,7 +185,12 @@ class StreamEngine(
         if (_status.value.passes % LOG_EVERY == 1L) c.eventLog.info("STREAM", "streaming update #${_status.value.passes} (${if (refresh) "BoltOdds refresh, all lines" else "${ids.size} Novig line${if (ids.size == 1) "" else "s"}"}) took $took ms, $handed lines judged")
     }
 
-    private fun drain(): Set<String> = HashSet<String>().also { out -> dirty.removeAll(dirty.toList().also { out += it }.toSet()) }
+    private fun drain(): Set<String> {
+        val out = HashSet<String>()
+        val it = dirty.iterator()
+        while (it.hasNext()) { out += it.next(); it.remove() }
+        return out
+    }
 
     companion object {
         const val WATCH_MS = 250L
