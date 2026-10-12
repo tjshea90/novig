@@ -189,14 +189,15 @@ class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {
 
     /**
      * Applies one market's `bbo` object from a snapshot message: `{seq, bbo: {<outcome>: {price, qty}}}`, an outcome with no resting bid absent (OpenAPI `BboSnapshot`). The market is then held as
-     * [BookChannel.BBO]: its book has only the best level of each outcome.
+     * [BookChannel.BBO]: its book has only the best level of each outcome. False when the object could not be read (no `seq`).
      */
     @Synchronized
-    fun applyBboSnapshot(marketId: String, bbo: JsonObject) {
-        val seq = bbo["seq"]?.jsonPrimitive?.longOrNull ?: return
+    fun applyBboSnapshot(marketId: String, bbo: JsonObject): Boolean {
+        val seq = bbo["seq"]?.jsonPrimitive?.longOrNull ?: return false
         val top = LinkedHashMap<String, Level>()
         (bbo["bbo"] as? JsonObject)?.forEach { (outcome, level) -> level(level)?.let { top[outcome] = it } }
         markets[marketId] = Market(seq, BookChannel.BBO, LinkedHashMap(), top, stale = false, updatedAtMs = clock())
+        return true
     }
 
     /**
