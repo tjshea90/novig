@@ -242,10 +242,14 @@ class Op4Budget(private val client: OddsPapi4Client, private val clock: () -> Lo
         val left = acc.left ?: return true
         if (!acc.active || left <= RESERVE) return false
         val now = clock()
-        val end = acc.validUntilMs?.takeIf { it > now } ?: java.time.ZonedDateTime.ofInstant(Instant.ofEpochMilli(now), ZoneOffset.UTC).let { it.withDayOfMonth(1).plusMonths(1).truncatedTo(java.time.temporal.ChronoUnit.DAYS).toInstant().toEpochMilli() }
-        val daysLeft = (((end - now) / OddsPapi4Client.DAY_MS) + 1).toInt().coerceAtLeast(1)
-        val dailyShare = ((left - RESERVE) / daysLeft).coerceAtLeast(1)
+        val dailyShare = ((left - RESERVE) / daysLeft(acc, now)).coerceAtLeast(1)
         return client.spentToday(now) < dailyShare
+    }
+
+    /** Days until the plan's period ends, counting today (at least 1): the month's end unless the account says when it is valid until. */
+    private fun daysLeft(acc: OddsPapi4Client.Account, now: Long): Int {
+        val end = acc.validUntilMs?.takeIf { it > now } ?: java.time.ZonedDateTime.ofInstant(Instant.ofEpochMilli(now), ZoneOffset.UTC).let { it.withDayOfMonth(1).plusMonths(1).truncatedTo(java.time.temporal.ChronoUnit.DAYS).toInstant().toEpochMilli() }
+        return (((end - now) / OddsPapi4Client.DAY_MS) + 1).toInt().coerceAtLeast(1)
     }
 
     /** A cached lookup (tournament id, game list, market catalogue) is allowed while more than [RESERVE] requests are left. */
@@ -263,7 +267,11 @@ class Op4Budget(private val client: OddsPapi4Client, private val clock: () -> Lo
         if (perDay <= 0 || spentToday >= perDay) return false
         val acc = client.lastAccount ?: return true
         val left = acc.left ?: return true
-        return acc.active && left > RESERVE + CLOSE_KEEP
+        if (!acc.active || left <= RESERVE + CLOSE_KEEP) return false
+        // The figure Tj chose cannot outrun the plan: at most an even share of what is left above the two reserves for each day to the period's end (Tj's file 2026-10-11 23:18: "250 requests a day" on a plan of
+        // 250 a MONTH spent 220 in a day and left nothing for closing lines).
+        val share = ((left - RESERVE - CLOSE_KEEP) / daysLeft(acc, clock())).coerceAtLeast(1)
+        return spentToday < share
     }
 
     companion object {
