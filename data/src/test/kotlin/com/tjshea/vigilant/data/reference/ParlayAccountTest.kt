@@ -160,7 +160,7 @@ class ParlayAccountTest {
     }
 
     @Test
-    fun `a scan reads a key's account at most every ten minutes (v0_89_34 file: 7902 usage reads in a day and a half)`() = runBlocking<Unit> {
+    fun `a scan reads a key's account at most every ten minutes (the v0_89_34 file had 7902 usage reads in a day and a half)`() = runBlocking<Unit> {
         val a = account()
         server.enqueue(MockResponse().setBody("""{"valid":true,"tier":"starter","credits_remaining":19000}"""))
         a.refresh(minAgeMs = ParlayAccount.SCAN_REFRESH_MS)
