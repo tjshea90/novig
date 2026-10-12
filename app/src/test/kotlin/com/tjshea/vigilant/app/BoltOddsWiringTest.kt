@@ -127,7 +127,7 @@ class StreamPacerTest {
     @Test
     fun `a pass waits out the rest of the gap, never less than a second`() {
         assertEquals(0L, StreamPacer.waitMs(10_000, 0, 3_000))
-        assertEquals(2_000L, StreamPacer.waitMs(11_000, 10_000, 3_000).let { it + 1_000 })
+        assertEquals(2_000L, StreamPacer.waitMs(11_000, 10_000, 3_000))
         assertEquals(1_000L, StreamPacer.waitMs(10_000, 10_000, 0))
         assertEquals(0L, StreamPacer.waitMs(12_000, 10_000, 2_000))
     }

@@ -43,7 +43,7 @@ class BoltOddsTest {
         board.apply(BoltParser.frame(docsGameUpdate, now).single())
         assertEquals(1L, board.changeSeq)
         // A ping changes nothing: no signal.
-        board.apply(BoltMessage.Ping(now))
+        board.apply(BoltMessage.Ping)
         assertEquals(1L, board.changeSeq)
     }
 
