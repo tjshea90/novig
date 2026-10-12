@@ -1191,13 +1191,13 @@ private fun ColumnScope.BettingTab(
         SectionTitle("Streaming engine")
         SwitchRow(
             "Stream odds instead of scanning at intervals",
-            "A price pushed on the Novig or BoltOdds socket starts a scan pass at once, and the auto-bet and bids judge it with all the same rules, instead of waiting for the next interval. A pass reads only the BoltOdds " +
-                "board already held in memory and Novig's pushed books, so it spends no API credits; your normal interval scans go on beside it and read everything. Needs BoltOdds on with a key, a background scan mode on, " +
+            "When Novig pushes a new price for a line, just that line is re-priced against the fair odds already held (milliseconds) and the auto-bet judges it at once; when BoltOdds' board changes, its games are matched to Novig's again and every held " +
+                "price is re-priced. Bids follow. Nothing is requested from any API (the sockets' boards are in memory), so it spends no credits; your normal interval scans go on beside it and read everything. Needs BoltOdds on with a key, a background scan mode on, " +
                 "and the Novig key. Off = nothing changes.",
             s.gates.streamScan, tag = "streamScanSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(streamScan = v)) } }
         if (s.gates.streamScan) {
-            Text("Least seconds between passes", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            Text("Least seconds between BoltOdds refreshes", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
             ChoiceChips(listOf(1, 2, 3, 5, 10), s.gates.streamGapSeconds, { "$it s" }) { v -> onUpdate { it.copy(gates = it.gates.copy(streamGapSeconds = v)) } }
             SwitchRow(
                 "Live games too",
