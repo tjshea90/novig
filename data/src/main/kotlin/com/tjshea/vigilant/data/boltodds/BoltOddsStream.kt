@@ -7,6 +7,8 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -68,6 +70,7 @@ class BoltOddsStream(
     @Volatile private var lastUsedMs = 0L
     @Volatile private var lastSubscribeAt = 0L
     @Volatile private var resubscribePending = false
+    private val subLock = Mutex()
     @Volatile private var loop: Job? = null
     @Volatile private var snapshotJob: Job? = null
     @Volatile private var needSnapshot = false
@@ -258,15 +261,18 @@ class BoltOddsStream(
             resubscribePending = true
             try { delay(wait) } finally { resubscribePending = false }
         }
-        val ws = socket ?: return
-        val f = desired ?: return
-        if (state != State.LIVE || subscribed == f) return
-        val old = subscribed
-        if (!ws.send(subscribeFrame(f))) return
-        lastSubscribeAt = clock()
-        subscribed = f
-        // New sports or books are not in the board yet: the snapshot has to be read again for them (a narrower subscription needs none).
-        if (f.addsTo(old)) startSnapshot(f)
+        // One at a time: a frame that wakes the socket (any frame, and the greeting itself) starts a sync of its own, and two of them must not both send the same subscription.
+        subLock.withLock {
+            val ws = socket ?: return
+            val f = desired ?: return
+            if (state != State.LIVE || subscribed == f) return
+            val old = subscribed
+            if (!ws.send(subscribeFrame(f))) return
+            lastSubscribeAt = clock()
+            subscribed = f
+            // New sports or books are not in the board yet: the snapshot has to be read again for them (a narrower subscription needs none).
+            if (f.addsTo(old)) startSnapshot(f)
+        }
     }
 
     private fun maybeResnapshot() {
