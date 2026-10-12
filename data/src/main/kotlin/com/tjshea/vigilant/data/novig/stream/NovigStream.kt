@@ -93,23 +93,33 @@ interface PushedBooks {
 }
 
 /**
- * Novig's signed websocket (`GET /v3/ws`, NOVIG_API.md §6) carrying the `book` channel for exactly
+ * Novig's signed websocket (`GET /v3/ws`, NOVIG_API.md §6) carrying the `book` or `bbo` channel for exactly
  * the markets a scan prices (Tj, 2026-09-28: "Make sure the app is taking full advantage of the novig
  * API key").
  *
  * Why it's fast: a request is charged `weight × subjects` but **never more than the 512-token `stream`
  * bucket**, and one over that passes whenever the bucket is full (docs.novig.com/api/streaming/connection).
- * So once the bucket is full again after the upgrade (32 tokens, ~8 s at 4/s), ONE `subscribe` covers
- * every planned market, up to the 2,048 a connection may watch, and their snapshots arrive together;
+ * So once the bucket is full again after the upgrade (32 tokens, ~1 s at 32/s, ~8 s at 4/s), ONE `subscribe` covers
+ * every planned market, up to the connection's watch cap, and their snapshots arrive together;
  * after that each change is pushed. A 1,200-price scan takes that instead of ~90 s of REST reads.
  * Additions that fit the tokens left go at once; bigger ones wait for a full bucket. Events aren't
  * subscribed: an event counts as all its markets (500+ for an NFL game), which would crowd out the
- * 2,048 cap with lines no fair source quotes.
+ * cap with lines no fair source quotes.
  *
- * It lives only while scans use it: closed [idleCloseMs] after the last [watch] or [live], and on any
- * failure (then not retried for [retryAfterFailureMs], or for [networkRetryMs] when Novig judged the network's address, the same 2 minutes the key's REST route waits; the REST route reads
- * meanwhile). OkHttp
- * answers Novig's 15 s pings and pings back, so a dead connection fails instead of serving old books.
+ * **Two channels** (NOVIG_API.md §25, Tj 2026-10-12: "Build the novig bbo feature with a backup to default toggle"): `book` is every resting order (16 tokens a market, a message for every order that
+ * joins or leaves anywhere in the ladder); `bbo` is each outcome's best bid and its size (8 tokens, a message only when the top moves). A taker's price is `1 − best bid of the other outcome`, so `bbo`
+ * is all a SCREENING read needs, at half the tokens and a fraction of the messages, parsing and memory. With [configureFeed] `bbo` on, every market is held on `bbo` except those that need the ladder: the
+ * live lane's pinned markets, and any market someone asks a complete book of ([live], [deepen]: the scan deepens each +EV market, the bet planner and the bid desk read full books). A market's
+ * channel is part of what is wanted, and a subscribe sets it. Off, or after a fallback, every market is on `book` exactly as before.
+ *
+ * **Fallback** (sticky until the switch is turned off and on): Novig refusing a `bbo` subscribe by naming the channel, no `bbo` snapshot arriving for markets subscribed on it, snapshots that cannot be
+ * read, or the **canary**: once per connection a few `bbo` markets are also asked for with the `snapshot` verb on `book` (which leaves the subscription alone) and their best bids compared. Any of
+ * them puts every market back on `book` and says so in Diagnostics ([feedReport]).
+ *
+ * It lives while scans use it: closed [idleCloseMs] after the last [watch] or [live] (a long time with [configureFeed] keepOpen: a scan every two minutes used to open a new connection each time,
+ * wait for a full bucket and close it again), and on any failure (then not retried for [retryAfterFailureMs], or for [networkRetryMs] when Novig judged the network's address, the same 2 minutes the
+ * key's REST route waits; a 429 on the upgrade, an empty `stream` bucket, waits the `Retry-After` it names; the REST route reads meanwhile). With keepOpen a plain drop is retried by the stream itself
+ * after a few seconds, backing off. OkHttp answers Novig's 15 s pings and pings back, so a dead connection fails instead of serving old books.
  */
 class NovigStream(
     http: OkHttpClient,
@@ -128,6 +138,14 @@ class NovigStream(
     private val networkRetryMs: Long = NovigPublicClient.NETWORK_RETRY_MS,
     /** Told of every book change as it arrives: the burst recorder's own connection (RESEARCH.md §95). A scan's stream has none. */
     bookListener: BookListener? = null,
+    /** The best-bid channel for markets that need no ladder. Off here (every market on `book`, as it always was); the app turns it on from Settings ([configureFeed]). */
+    bbo: Boolean = false,
+    /** How long a market asked a complete book of stays on `book` ([deepen]). */
+    private val deepHoldMs: Long = DEEP_HOLD_MS,
+    /** How long subscribed `bbo` markets may go with not one `bbo` snapshot before the channel is given up on. */
+    private val bboDataWaitMs: Long = BBO_DATA_WAIT_MS,
+    /** How many `bbo` markets the canary asks the `book` of. */
+    private val canaryMarkets: Int = CANARY_MARKETS,
 ) : PushedBooks {
     @Volatile
     private var capacity = capacity
@@ -163,6 +181,7 @@ class NovigStream(
 
     /** The live engines' markets ([watchLive]): always ahead of [wanted] in what is subscribed. */
     private var livePinned: List<String> = emptyList()
+    private var pinnedSet: Set<String> = emptySet()
 
     /** The live markets of a lane that just stopped ([watchLive] with none): kept subscribed [LINGER_MS] so a restart of the lane does not pay 16 tokens a market again (the bucket refills 4 a second). */
     private var lingering: List<String> = emptyList()
@@ -185,6 +204,9 @@ class NovigStream(
     /** Asked for on this connection (acknowledged or not). */
     private val subscribed = HashSet<String>()
 
+    /** The channel each of [subscribed] was last asked for on. */
+    private val subscribedOn = HashMap<String, BookChannel>()
+
     /** Subscribes not yet answered, by nonce: a refusal takes them back out of [subscribed]. */
     private val unanswered = HashMap<Long, List<String>>()
 
@@ -201,6 +223,7 @@ class NovigStream(
     internal var onSyncTail: (() -> Unit)? = null
 
     private var idleJob: Job? = null
+    private var reconnectJob: Job? = null
     private var tokens = 0.0
     private var tokensAt = 0L
     private var lastUsedMs = 0L
@@ -222,6 +245,84 @@ class NovigStream(
     var subscribeRequests = 0
         private set
 
+    // ---- the options (Settings) -------------------------------------------------------------------------------------------------------------------------------------------
+
+    @Volatile private var bboOn = bbo
+    @Volatile private var keepOpen = false
+    @Volatile private var idleMs = idleCloseMs
+
+    /** Why `bbo` was given up on, or null (sticky until [configureFeed] turns the channel off and on again). */
+    @Volatile private var bboFallback: String? = null
+    private var bboFallbackAtMs = 0L
+
+    private fun bboActive() = bboOn && bboFallback == null
+
+    /** Market → the time until which it must be held on `book` ([deepen]). */
+    private val deepUntil = HashMap<String, Long>()
+
+    // ---- diagnostics ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    @Volatile private var connects = 0
+    @Volatile private var drops = 0
+    @Volatile private var upgrade429s = 0
+    @Volatile private var lastDrop: String? = null
+    @Volatile private var openedAtMs = 0L
+    @Volatile private var bboSnapshots = 0
+    @Volatile private var bboUnreadable = 0
+    @Volatile private var bboRefusals = 0
+    @Volatile private var bboFirstSentAtMs = 0L
+    @Volatile private var deepened = 0
+    private var quickFails = 0
+
+    /** What the canary last found (see [feedReport]): null until one has finished on any connection. */
+    class Canary(val atMs: Long, val checked: Int, val matched: Int, val skipped: Int, val detail: String)
+
+    @Volatile var canary: Canary? = null
+        private set
+    private var canaryNonce = 0L
+    private var canarySentAtMs = 0L
+    private var canaryIds: List<String> = emptyList()
+    private var canarySeqs: Map<String, Long> = emptyMap()
+    private var canaryDone = false
+
+    /** Applies the Settings options: the best-bid channel on or off (turning it off and on again clears a fallback, so it is tried afresh), and keeping the connection open between scans. */
+    override fun configureFeed(bbo: Boolean, keepOpen: Boolean) {
+        var resync = false
+        synchronized(this) {
+            if (bbo != bboOn) {
+                bboOn = bbo
+                bboFallback = null
+                resync = true
+            }
+            this.keepOpen = keepOpen
+            idleMs = if (keepOpen) maxOf(idleCloseMs, KEEP_OPEN_MS) else idleCloseMs
+            if (!keepOpen) reconnectJob?.cancel()
+        }
+        if (resync && _state.value is StreamState.Live) scheduleSync()
+    }
+
+    override fun room(): Int = synchronized(this) { if (bboActive()) limit else minOf(limit, MAX_MARKETS) }
+
+    /** The channel [id] should be held on right now. Under the lock. */
+    private fun channelFor(id: String, now: Long): BookChannel {
+        if (!bboActive()) return BookChannel.BOOK
+        if (id in pinnedSet) return BookChannel.BOOK
+        if (lingering.isNotEmpty() && now < lingerUntilMs && id in lingering) return BookChannel.BOOK
+        val until = deepUntil[id]
+        return if (until != null && until > now) BookChannel.BOOK else BookChannel.BBO
+    }
+
+    private fun fallBackFromBbo(reason: String) {
+        synchronized(this) {
+            if (bboFallback != null || !bboOn) return
+            bboFallback = reason
+            bboFallbackAtMs = clock()
+        }
+        scheduleSync()
+    }
+
+    // ---- what is wanted ---------------------------------------------------------------------------------------------------------------------------------------------------
+
     override fun watch(marketIds: Collection<String>) {
         val start: Boolean
         synchronized(this) {
@@ -239,6 +340,7 @@ class NovigStream(
             val next = marketIds.distinct()
             if (next.isEmpty() && livePinned.isNotEmpty()) { lingering = livePinned; lingerUntilMs = clock() + LINGER_MS }
             livePinned = next
+            pinnedSet = next.toHashSet()
             start = socket == null && failedAtMs.let { it == null || clock() - it >= retryDelayMs }
         }
         if (start) connect() else if (_state.value is StreamState.Live) scheduleSync()
@@ -256,16 +358,46 @@ class NovigStream(
         if (start) connect()
     }
 
-    override fun live(marketIds: Collection<String>): Map<String, NovigBook> {
+    override fun deepen(marketIds: Collection<String>) {
+        var changed = false
+        synchronized(this) {
+            lastUsedMs = clock()
+            if (!bboActive()) return
+            val now = clock()
+            val until = now + deepHoldMs
+            for (id in marketIds) {
+                if (subscribedOn[id] == BookChannel.BBO || deepUntil[id].let { it == null || it <= now }) changed = true
+                deepUntil[id] = until
+            }
+            deepened += marketIds.size
+            // Bounded: expired entries go once the table outgrows the watch cap.
+            if (deepUntil.size > limit * 2) deepUntil.values.removeAll { it <= now }
+        }
+        if (changed && _state.value is StreamState.Live) scheduleSync()
+    }
+
+    override fun live(marketIds: Collection<String>): Map<String, NovigBook> = read(marketIds, needDepth = true)
+
+    override fun liveTop(marketIds: Collection<String>): Map<String, NovigBook> = read(marketIds, needDepth = false)
+
+    private fun read(marketIds: Collection<String>, needDepth: Boolean): Map<String, NovigBook> {
         synchronized(this) { lastUsedMs = clock() }
         if (_state.value !is StreamState.Live) return emptyMap()
         val now = clock()
         val out = HashMap<String, NovigBook>()
+        var deep: ArrayList<String>? = null
         for (id in marketIds) {
             if (!synchronized(this) { id in subscribed }) continue
             // Current as of now: every change since its snapshot has been applied.
-            books.book(id)?.let { out[id] = it.copy(fetchedAtMs = now) }
+            val b = books.book(id) ?: continue
+            if (b.partial && needDepth) {
+                // A complete book was asked of a market held as its best bid: it goes to `book` for the next read, and this one is read the long way.
+                (deep ?: ArrayList<String>().also { deep = it }) += id
+                continue
+            }
+            out[id] = b.copy(fetchedAtMs = now)
         }
+        deep?.let { deepen(it) }
         return out
     }
 
@@ -276,8 +408,9 @@ class NovigStream(
             marketId !in subscribed -> {
                 refill()
                 val held = livePinned.count { it in subscribed }
-                "Novig live book not subscribed yet: $held of ${livePinned.size} live markets are, ${(tokens / BOOK_WEIGHT).toInt().coerceAtLeast(0)} more affordable now (stream allowance ${tokens.toInt().coerceAtLeast(0)} of ${capacity.toInt()}, refills ${refillPerSec.toInt()} a second)"
+                "Novig live book not subscribed yet: $held of ${livePinned.size} live markets are, ${(tokens / BookChannel.BOOK.weight).toInt().coerceAtLeast(0)} more affordable now (stream allowance ${tokens.toInt().coerceAtLeast(0)} of ${capacity.toInt()}, refills ${refillPerSec.toInt()} a second)"
             }
+            books.channelOf(marketId) == BookChannel.BBO -> "Novig live book is held as its best bid only: the full book is being subscribed"
             else -> "Novig live book subscribed, no snapshot yet"
         }
     }
@@ -305,16 +438,24 @@ class NovigStream(
         refusedUntil.clear()
         firstSent = false
         limit = maxMarkets
+        bboSnapshots = 0
+        bboUnreadable = 0
+        bboRefusals = 0
+        bboFirstSentAtMs = 0L
+        canaryNonce = 0L
+        canaryDone = false
+        connects++
         socket = http.newWebSocket(request, Listener())
         idleJob?.cancel()
         idleJob = scope.launch {
             while (isActive) {
-                delay(minOf(idleCloseMs, IDLE_CHECK_MS))
-                val idle = synchronized(this@NovigStream) { clock() - lastUsedMs >= idleCloseMs }
+                delay(minOf(idleMs, IDLE_CHECK_MS))
+                val idle = synchronized(this@NovigStream) { clock() - lastUsedMs >= idleMs }
                 if (idle) {
                     close()
                     break
                 }
+                watchdog()
             }
         }
     }
@@ -324,8 +465,11 @@ class NovigStream(
             val t = Triple(syncJob, idleJob, socket)
             syncJob = null
             idleJob = null
+            reconnectJob?.cancel()
+            reconnectJob = null
             socket = null
             subscribed.clear()
+            subscribedOn.clear()
             unanswered.clear()
             t
         }
@@ -360,7 +504,7 @@ class NovigStream(
         }
     }
 
-    /** Subscribes what's wanted and not held, drops what isn't wanted, and re-snapshots gaps. */
+    /** Subscribes what's wanted and not held, moves what is on the wrong channel, drops what isn't wanted, and re-snapshots gaps. */
     private suspend fun sync() {
         while (scope.isActive) {
             val (drop, add0) = synchronized(this) {
@@ -371,7 +515,20 @@ class NovigStream(
                 val wantSet = want.toHashSet()
                 val drop = subscribed.filter { it !in wantSet }
                 val room = limit - (subscribed.size - drop.size)
-                drop to want.filter { it !in subscribed }.take(minOf(room.coerceAtLeast(0), chunk))
+                // Not held yet, or held on a channel it should no longer be on (a subscribe sets the channel); in priority order. Only new markets count against the room.
+                val need = ArrayList<String>()
+                var added = 0
+                for (id in want) {
+                    if (need.size >= chunk) break
+                    if (id !in subscribed) {
+                        if (added >= room.coerceAtLeast(0)) continue
+                        added++
+                        need += id
+                    } else if (subscribedOn[id] != channelFor(id, now)) {
+                        need += id
+                    }
+                }
+                drop to need
             }
             if (drop.isNotEmpty()) {
                 // 1 token a subject, never more than the bucket (like any request): uncapped, a big drop waited minutes and left the
@@ -382,7 +539,7 @@ class NovigStream(
                     put("nonce", nonce.incrementAndGet())
                     putJsonArray("unsubscribe") { drop.forEach { add(JsonPrimitive("market:$it")) } }
                 })
-                synchronized(this) { subscribed.removeAll(drop.toSet()) }
+                synchronized(this) { subscribed.removeAll(drop.toSet()); drop.forEach { subscribedOn.remove(it); deepUntil.remove(it) } }
                 books.forget(drop)
                 spend(dropCost)
             }
@@ -392,28 +549,32 @@ class NovigStream(
             }
             // The live lane's new markets go in a request of their own, ahead of a scan's bulk one: that one waits for a full bucket (up to two minutes), and a live game
             // cannot (the banner read "Novig live book not subscribed yet" through it).
-            val pinnedNow = synchronized(this) { livePinned.toHashSet() }
+            val pinnedNow = synchronized(this) { pinnedSet }
             val liveAdd = add0.filter { it in pinnedNow }
             val add: List<String>
             val cost: Double
             val need: Double
+            val now = clock()
+            val channels: Map<String, BookChannel>
             if (liveAdd.isNotEmpty()) {
                 // As many of them as the bucket pays for RIGHT NOW (moneylines first: [allWanted] is in priority order), the rest as tokens return, one market per 4 s at worst. Waiting for the whole
                 // request's price left a live game with no book for minutes after a scan (or an earlier subscribe) had emptied the bucket (Tj, 2026-10-11: "connects for a few seconds, matches games,
                 // then says Novig live book not subscribed yet").
                 refill()
-                val afford = synchronized(this) { (tokens / BOOK_WEIGHT).toInt() }
+                val afford = synchronized(this) { (tokens / BookChannel.BOOK.weight).toInt() }
                 if (afford < 1) {
-                    waitFor(BOOK_WEIGHT.toDouble())
+                    waitFor(BookChannel.BOOK.weight.toDouble())
                     continue
                 }
                 add = liveAdd.take(afford)
-                cost = add.size * BOOK_WEIGHT.toDouble()
+                channels = add.associateWith { BookChannel.BOOK }
+                cost = add.size * BookChannel.BOOK.weight.toDouble()
                 need = cost
             } else {
                 add = add0
+                channels = synchronized(this) { add.associateWith { channelFor(it, now) } }
                 // Charged weight × subjects, never over the bucket; a request at the cap needs it full.
-                cost = minOf(add.size * BOOK_WEIGHT.toDouble(), capacity)
+                cost = minOf(channels.values.sumOf { it.weight }.toDouble(), capacity)
                 need = if (synchronized(this) { firstSent }) cost else capacity
             }
             if (!haveTokens(need)) {
@@ -425,28 +586,135 @@ class NovigStream(
             synchronized(this) {
                 if (socket == null) return
                 subscribed.addAll(add)
+                channels.forEach { (id, ch) -> subscribedOn[id] = ch }
                 unanswered[n] = add
                 firstSent = true
+                if (bboFirstSentAtMs == 0L && channels.values.any { it == BookChannel.BBO }) bboFirstSentAtMs = clock()
             }
             send(buildJsonObject {
                 put("nonce", n)
-                putJsonObject("subscribe") { putJsonObject("markets") { add.forEach { put(it, "book") } } }
+                putJsonObject("subscribe") { putJsonObject("markets") { channels.forEach { (id, ch) -> put(id, ch.wire) } } }
             })
             subscribeRequests++
             spend(cost)
             _state.value = (state.value as? StreamState.Live)?.copy(markets = synchronized(this) { subscribed.size }) ?: state.value
         }
-        // Books whose seq skipped are re-read with `snapshot` (it keeps the subscriptions).
+        // Books whose seq skipped are re-read with `snapshot` (it keeps the subscriptions), each on the channel it is held on.
         val gaps = books.needsSnapshot.filter { synchronized(this) { it in subscribed } }
         if (gaps.isNotEmpty()) {
-            val cost = minOf(gaps.size * BOOK_WEIGHT.toDouble(), capacity)
+            val cost = minOf(gaps.sumOf { (synchronized(this) { subscribedOn[it] } ?: BookChannel.BOOK).weight }.toDouble(), capacity)
             waitFor(cost)
             send(buildJsonObject {
                 put("nonce", nonce.incrementAndGet())
-                putJsonObject("snapshot") { putJsonObject("markets") { gaps.forEach { put(it, "book") } } }
+                putJsonObject("snapshot") { putJsonObject("markets") { gaps.forEach { put(it, (synchronized(this@NovigStream) { subscribedOn[it] } ?: BookChannel.BOOK).wire) } } }
             })
             spend(cost)
         }
+        maybeCanary()
+    }
+
+    // ---- the canary and the watchdog --------------------------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Once per connection, when `bbo` snapshots are in: a few `bbo` markets are asked for with the `snapshot` verb on `book` (which leaves the subscription alone) and the best bids compared. The
+     * reply is routed by its nonce ([finishCanary]) and never applied to the books.
+     */
+    private suspend fun maybeCanary() {
+        val ids: List<String>
+        val seqs: Map<String, Long>
+        synchronized(this) {
+            if (canaryDone || canaryNonce != 0L || socket == null || !bboActive() || bboSnapshots < minOf(canaryMarkets, 3)) return
+            val picked = ArrayList<String>()
+            val sq = HashMap<String, Long>()
+            for (id in allWanted()) {
+                if (picked.size >= canaryMarkets) break
+                if (subscribedOn[id] != BookChannel.BBO || books.channelOf(id) != BookChannel.BBO) continue
+                val b = books.book(id) ?: continue
+                if (b.bidsByOutcome.isEmpty()) continue
+                picked += id
+                sq[id] = b.seq
+            }
+            if (picked.size < minOf(canaryMarkets, 3)) return
+            ids = picked
+            seqs = sq
+            canaryDone = true
+        }
+        val cost = minOf(ids.size * BookChannel.BOOK.weight.toDouble(), capacity)
+        waitFor(cost)
+        val n = nonce.incrementAndGet()
+        synchronized(this) {
+            canaryNonce = n
+            canarySentAtMs = clock()
+            canaryIds = ids
+            canarySeqs = seqs
+        }
+        send(buildJsonObject {
+            put("nonce", n)
+            putJsonObject("snapshot") { putJsonObject("markets") { ids.forEach { put(it, BookChannel.BOOK.wire) } } }
+        })
+        spend(cost)
+    }
+
+    /** The canary's reply: the best resting bid of each outcome from the `book` snapshot against the `bbo` state held for the same market. */
+    private fun finishCanary(snapshot: JsonObject) {
+        val ids: List<String>
+        val seqs: Map<String, Long>
+        synchronized(this) {
+            ids = canaryIds
+            seqs = canarySeqs
+            canaryNonce = 0L
+        }
+        var checked = 0
+        var matched = 0
+        var skipped = 0
+        val bad = ArrayList<String>()
+        for (id in ids) {
+            val full = ((snapshot[id] as? JsonObject)?.get("book") as? JsonObject)?.get("orders") as? JsonObject
+            val held = books.book(id)
+            if (full == null || held == null || !held.partial) { skipped++; continue }
+            // The state moved between the two replies: the comparison would be of two different moments.
+            if (held.seq != seqs[id]) { skipped++; continue }
+            checked++
+            var same = true
+            val outcomes = (full.keys + held.bidsByOutcome.keys)
+            for (o in outcomes) {
+                val levels = (full[o] as? kotlinx.serialization.json.JsonArray).orEmpty().mapNotNull { el ->
+                    val ob = el as? JsonObject ?: return@mapNotNull null
+                    val price = ob["price"]?.jsonPrimitive?.content?.let(com.tjshea.vigilant.data.novig.NovigText::priceMilli) ?: return@mapNotNull null
+                    val qty = ob["qty"]?.jsonPrimitive?.longOrNull ?: return@mapNotNull null
+                    price to qty
+                }
+                val best = levels.maxOfOrNull { it.first }
+                val bestQty = if (best == null) 0L else levels.filter { it.first == best }.sumOf { it.second }
+                val top = held.bidsByOutcome[o]?.firstOrNull()
+                if (best == null && top == null) continue
+                if (best == null || top == null || top.priceMilli != best || top.contracts != bestQty) {
+                    same = false
+                    if (bad.size < 3) bad += "$id/${o.take(8)}: bbo ${top?.let { "${it.priceMilli}×${it.contracts}" } ?: "none"} vs book ${best?.let { "$it×$bestQty" } ?: "none"}"
+                }
+            }
+            if (same) matched++
+        }
+        val detail = "$matched of $checked markets' best bids matched the book" + (if (skipped > 0) " ($skipped skipped: moved or unreadable)" else "") + (if (bad.isNotEmpty()) "; " + bad.joinToString("; ") else "")
+        canary = Canary(clock(), checked, matched, skipped, detail)
+        if (checked >= 3 && matched * 3 < checked * 2) fallBackFromBbo("the best-bid feed disagreed with the book ($detail)")
+    }
+
+    /** Run from the idle loop: gives up on `bbo` when markets were subscribed on it and not one snapshot came, and drops a canary that was never answered. */
+    private fun watchdog() {
+        val now = clock()
+        val reason = synchronized(this) {
+            if (canaryNonce != 0L && now - canarySentAtMs > CANARY_WAIT_MS) {
+                canaryNonce = 0L
+                canary = Canary(now, 0, 0, canaryIds.size, "no reply to the book check in ${CANARY_WAIT_MS / 1000} s (inconclusive)")
+            }
+            if (bboActive() && bboFirstSentAtMs != 0L && bboSnapshots == 0 && now - bboFirstSentAtMs > bboDataWaitMs && subscribedOn.values.count { it == BookChannel.BBO } >= 3) {
+                "Novig sent no best-bid snapshot in ${bboDataWaitMs / 1000} s"
+            } else {
+                null
+            }
+        }
+        if (reason != null) fallBackFromBbo(reason)
     }
 
     private fun refill() = synchronized(this) {
@@ -489,12 +757,21 @@ class NovigStream(
     private fun errorCode(msg: JsonObject): String? =
         (msg["code"] as? JsonPrimitive)?.content ?: ((msg["error"] as? JsonObject)?.get("code") as? JsonPrimitive)?.content
 
+    private fun errorText(msg: JsonObject): String =
+        listOfNotNull(
+            errorCode(msg), (msg["message"] as? JsonPrimitive)?.content,
+            ((msg["error"] as? JsonObject)?.get("message") as? JsonPrimitive)?.content,
+        ).joinToString(" ")
+
     private fun refused(msg: JsonObject, code: String) {
         val n = (msg["nonce"] as? JsonPrimitive)?.longOrNull
+        var bboLost = false
         synchronized(this) {
             // A throttled frame is answered with no nonce: every unanswered subscribe may be the one.
             val lost = if (n != null) unanswered.remove(n).orEmpty() else unanswered.values.flatten().also { unanswered.clear() }
+            bboLost = lost.any { subscribedOn[it] == BookChannel.BBO }
             subscribed.removeAll(lost.toSet())
+            lost.forEach { subscribedOn.remove(it) }
             when (code) {
                 // Our token model ran ahead of Novig's: start it from empty.
                 "RATE_LIMIT_EXCEEDED" -> { tokens = 0.0; tokensAt = clock() }
@@ -507,12 +784,21 @@ class NovigStream(
                 }
             }
         }
+        // A refusal that names the best-bid channel, or three refused requests of it with not one snapshot, is Novig saying `bbo` is not for this key: back to `book`.
+        if (bboLost && code != "RATE_LIMIT_EXCEEDED" && code != "SUBSCRIPTION_LIMIT_EXCEEDED") {
+            val text = errorText(msg)
+            val names = text.contains("bbo", ignoreCase = true) || text.contains("channel", ignoreCase = true)
+            val strikes = synchronized(this) { ++bboRefusals }
+            if (names) fallBackFromBbo("Novig refused the best-bid channel ($text)")
+            else if (strikes >= 3 && bboSnapshots == 0) fallBackFromBbo("Novig refused every best-bid subscribe ($text)")
+        }
         scheduleSync()
     }
 
     private inner class Listener : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {
             if (!current(webSocket)) return
+            openedAtMs = clock()
             _state.value = StreamState.Live(clock(), 0)
             scheduleSync()
         }
@@ -524,16 +810,31 @@ class NovigStream(
                 refused(msg, code)
                 return
             }
-            (msg["nonce"] as? JsonPrimitive)?.longOrNull?.let { n -> synchronized(this@NovigStream) { unanswered.remove(n) } }
+            val replyTo = (msg["nonce"] as? JsonPrimitive)?.longOrNull
+            replyTo?.let { n -> synchronized(this@NovigStream) { unanswered.remove(n) } }
+            // The canary's answer is a comparison, not state: it must never reach the books (a `book` snapshot would turn a `bbo` market into a `book` one).
+            if (replyTo != null && replyTo == synchronized(this@NovigStream) { canaryNonce }) {
+                (msg["snapshot"] as? JsonObject)?.let { finishCanary(it) }
+                return
+            }
             (msg["snapshot"] as? JsonObject)?.forEach { (marketId, body) ->
                 if (!held(marketId)) return@forEach
-                (body as? JsonObject)?.get("book")?.let { it as? JsonObject }?.let { books.applySnapshot(marketId, it) }
+                val b = body as? JsonObject ?: return@forEach
+                (b["book"] as? JsonObject)?.let { books.applySnapshot(marketId, it) }
+                (b["bbo"] as? JsonObject)?.let {
+                    if (books.applyBboSnapshot(marketId, it)) bboSnapshots++ else bboUnreadable++
+                }
+                (b["lifecycle"] as? JsonObject)?.let { books.applyLifecycleSnapshot(marketId, it) }
             }
+            if (bboUnreadable >= 3 && bboSnapshots == 0) fallBackFromBbo("Novig's best-bid snapshots could not be read")
             var gap = false
             (msg["delta"] as? JsonObject)?.forEach { (marketId, body) ->
                 // Pushes for a market just dropped are ignored (its unsubscribe may still be on the way).
                 if (!held(marketId)) return@forEach
-                (body as? JsonObject)?.get("book")?.let { it as? JsonObject }?.let { if (!books.applyDelta(marketId, it)) gap = true }
+                val b = body as? JsonObject ?: return@forEach
+                (b["book"] as? JsonObject)?.let { if (!books.applyDelta(marketId, it)) gap = true }
+                (b["bbo"] as? JsonObject)?.let { if (!books.applyBboDelta(marketId, it)) gap = true }
+                (b["lifecycle"] as? JsonObject)?.let { if (!books.applyLifecycleDelta(marketId, it)) gap = true }
             }
             if (gap) scheduleSync()
         }
@@ -556,18 +857,27 @@ class NovigStream(
             val status = response?.code
             // Novig's code says whether it judged the network's address or the phone's location check (the body can be read once).
             val refusal = if (status != null && (status == 451 || status == 423)) NovigApiException(status, refusalCode(response), null) else null
+            // 429 on the upgrade: the `stream` bucket is empty (another connection of the key, or the last bulk subscribe, spent it). The docs: wait the seconds in Retry-After, then retry.
+            val throttledFor = if (status == 429) (response.header("Retry-After")?.trim()?.toLongOrNull() ?: DEFAULT_RETRY_AFTER_S) else null
+            if (throttledFor != null) upgrade429s++
             dropped(
                 webSocket,
                 when {
                     status == 401 -> "Novig refused the key for its live feed (401)."
                     status == 403 -> "This key can't open Novig's live feed (403)."
+                    throttledFor != null -> "Novig's live feed throttle was empty (429): trying again in ${throttledFor.coerceIn(1, 30)} s."
                     refusal != null && status == 451 -> refusal.brief
                     refusal != null -> refusal.advice
                     else -> "Novig's live feed dropped (${t.message ?: t.javaClass.simpleName})."
                 },
                 // The key's REST route comes back after a network refusal in 2 minutes; the feed waits the same, not the 5 of a feed that broke some other way.
-                retryMs = if (refusal?.networkRefusal == true) networkRetryMs else retryAfterFailureMs,
+                retryMs = when {
+                    throttledFor != null -> (throttledFor.coerceIn(1, 30) * 1000 + 500)
+                    refusal?.networkRefusal == true -> networkRetryMs
+                    else -> retryAfterFailureMs
+                },
                 quick = status == null || status >= 500,
+                exact = throttledFor != null,
             )
         }
     }
@@ -586,20 +896,72 @@ class NovigStream(
         _state.value = StreamState.Failed(message, clock())
     }
 
-    private fun dropped(webSocket: WebSocket, message: String, retryMs: Long = retryAfterFailureMs, quick: Boolean = false) {
+    /**
+     * [exact]: [retryMs] is the wait Novig itself named (a 429's Retry-After), kept as it is. With the connection kept open ([configureFeed]) a plain drop or a throttled upgrade is retried
+     * by the stream itself, not at the next scan: after [liveRetryMs], doubling to a minute while connections keep failing quickly.
+     */
+    private fun dropped(webSocket: WebSocket, message: String, retryMs: Long = retryAfterFailureMs, quick: Boolean = false, exact: Boolean = false) {
         val jobs = synchronized(this) {
             // Not the connection in use (closed on purpose, or replaced): nothing was dropped.
             if (socket !== webSocket) return
             socket = null
             subscribed.clear()
+            subscribedOn.clear()
             unanswered.clear()
+            canaryNonce = 0L
             listOf(syncJob, idleJob).also { syncJob = null; idleJob = null }
         }
         books.clear()
         jobs.forEach { it?.cancel() }
+        drops++
+        lastDrop = message
+        val lived = if (openedAtMs > 0L) clock() - openedAtMs else 0L
+        openedAtMs = 0L
+        if (lived >= STABLE_MS) quickFails = 0 else if (quick || exact) quickFails++
         // A plain drop with the live lane waiting on this feed is tried again in seconds; a refused key or location is not.
         val live = quick && retryMs == retryAfterFailureMs && synchronized(this) { livePinned.isNotEmpty() }
-        fail(message, if (live) liveRetryMs else retryMs)
+        val keepTrying = (quick || exact) && synchronized(this) { keepOpen && clock() - lastUsedMs < idleMs }
+        val wait = when {
+            exact -> retryMs
+            keepTrying -> minOf(liveRetryMs shl minOf(quickFails - 1, 5).coerceAtLeast(0), MAX_RECONNECT_MS)
+            live -> liveRetryMs
+            else -> retryMs
+        }
+        fail(message, wait)
+        if (keepTrying) scheduleReconnect(wait)
+    }
+
+    private fun scheduleReconnect(delayMs: Long) {
+        synchronized(this) {
+            reconnectJob?.cancel()
+            reconnectJob = scope.launch {
+                delay(delayMs)
+                val go = synchronized(this@NovigStream) { socket == null && keepOpen && clock() - lastUsedMs < idleMs }
+                if (go) connect()
+            }
+        }
+    }
+
+    // ---- diagnostics ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    override fun feedReport(): List<String> {
+        val now = clock()
+        return synchronized(this) {
+            val onBbo = subscribedOn.values.count { it == BookChannel.BBO }
+            val onBook = subscribedOn.values.count { it == BookChannel.BOOK }
+            val mode = when {
+                !bboOn -> "full book on every market (the best-bid feed is switched off)"
+                bboFallback != null -> "full book on every market: the best-bid feed was given up on ${(now - bboFallbackAtMs) / 1000} s ago, ${bboFallback}"
+                else -> "best-bid feed (bbo) for screening, full book where depth is needed"
+            }
+            buildList {
+                add("feed: $mode")
+                add("held: ${subscribed.size} markets of room ${if (bboActive()) limit else minOf(limit, MAX_MARKETS)} ($onBbo on bbo, $onBook on book, ${deepUntil.count { it.value > now }} deepened) · stream allowance ${capacity.toInt()} refilling ${refillPerSec.toInt()} a second · ${if (keepOpen) "kept open between scans" else "closed ${idleMs / 1000} s after the last scan"}")
+                add("connection: ${when (val st = _state.value) { is StreamState.Live -> "live since ${(now - st.sinceMs) / 1000} s"; is StreamState.Connecting -> "connecting"; is StreamState.Failed -> "failed: ${st.message}"; StreamState.Off -> "off" }} · connects $connects, drops $drops, upgrade 429s $upgrade429s" + (lastDrop?.let { " · last drop: $it" } ?: ""))
+                add("bbo: ${bboSnapshots} snapshots this connection, ${bboUnreadable} unreadable, ${deepened} markets deepened in all")
+                add("canary: " + (canary?.let { "${(now - it.atMs) / 1000} s ago: ${it.detail}" } ?: "not run yet"))
+            }
+        }
     }
 
     companion object {
@@ -608,7 +970,7 @@ class NovigStream(
         const val UPGRADE_COST = 32
         const val BOOK_WEIGHT = 16
 
-        /** Documented: 2,048 markets watched per connection. */
+        /** Documented: 2,048 markets watched per connection (8,192 on the keys that report it: `GET /v3/limits`). */
         const val MAX_WATCHED = 2_048
 
         /** A margin under [MAX_WATCHED]. */
@@ -618,6 +980,9 @@ class NovigStream(
 
         /** Closed this long after a scan last used it: rechecks right after a scan are instant. */
         const val IDLE_CLOSE_MS = 2 * 60_000L
+
+        /** With the connection kept open: closed this long after the last use (the scan, auto-scan and the lanes all touch it). */
+        const val KEEP_OPEN_MS = 20 * 60_000L
         private const val IDLE_CHECK_MS = 15_000L
 
         /** After a failure, scans read by REST this long before the feed is tried again. */
@@ -628,6 +993,21 @@ class NovigStream(
 
         /** After a plain drop with live markets pinned. */
         const val LIVE_RETRY_MS = 3_000L
+
+        /** A 429 without a Retry-After. */
+        const val DEFAULT_RETRY_AFTER_S = 5L
+
+        /** A connection that lived this long starts the reconnect back-off over. */
+        const val STABLE_MS = 30_000L
+        const val MAX_RECONNECT_MS = 60_000L
+
+        /** A market asked a complete book of stays on `book` this long. */
+        const val DEEP_HOLD_MS = 10 * 60_000L
+
+        /** Markets subscribed on `bbo` with not one snapshot after this long: Novig does not serve it to this key. */
+        const val BBO_DATA_WAIT_MS = 12_000L
+        const val CANARY_MARKETS = 6
+        const val CANARY_WAIT_MS = 10_000L
     }
 }
 
@@ -662,6 +1042,10 @@ class SharedStreamView(private val provider: () -> NovigStream?, private val lis
 
     override fun open() { stream()?.open() }
     override fun live(marketIds: Collection<String>): Map<String, NovigBook> = stream()?.live(marketIds).orEmpty()
+    override fun liveTop(marketIds: Collection<String>): Map<String, NovigBook> = stream()?.liveTop(marketIds).orEmpty()
+    override fun deepen(marketIds: Collection<String>) { stream()?.deepen(marketIds) }
+    override fun room(): Int = stream()?.room() ?: NovigStream.MAX_MARKETS
+    override fun feedReport(): List<String> = stream()?.feedReport().orEmpty()
     override fun bookGap(marketId: String): String? = stream()?.bookGap(marketId) ?: "Novig live feed is not connected (no key)"
     override fun problemSince(sinceMs: Long): String? = stream()?.problemSince(sinceMs)
 
