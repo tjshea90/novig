@@ -1312,6 +1312,11 @@ data class ApiGates(
      * result is read by request as before; the REST fills stay the record either way.
      */
     val novigOrderPush: Boolean = true,
+    /**
+     * Taker orders (the Bet sheet, the auto-bet, a lock) placed over Novig's websocket instead of `POST /v3/orders` (Tj, 2026-10-12: "I want orders placed over the socket"; NOVIG_API.md §27): a
+     * connection of its own, signed by the trading key, nothing to sign per order. Off = every order by REST. It also goes back to REST by itself, for a while, after any answer it cannot read.
+     */
+    val novigSocketOrders: Boolean = true,
 )
 
 /**

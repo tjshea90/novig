@@ -384,7 +384,7 @@ class AppContainer(private val app: Application) {
         return ApiBetPlacer(
             t, tracker, books = ::freshBook, limits = limits, paused = { settingsStore.flow.value?.paused == true }, lock = orderLock,
             restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(makerStore.all()) },
-            events = { (novig.stream as? NovigStream)?.orderEvents },
+            events = ::orderEvents, warm = { orderSocket?.warm() },
         )
             .also { autoPlacerCache = t to it }
     }
@@ -496,6 +496,7 @@ class AppContainer(private val app: Application) {
         syncOp(s)
         // Novig's live feed: the best-bid channel and keeping the connection open follow their switches (a new connection gets them in [useConnection]).
         novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush)
+        orderSocket?.let { sock -> sock.enabled = s.gates.novigSocketOrders; if (s.gates.novigSocketOrders) sock.warm() }
         // Switched off (or its key gone, or Live games only mode asleep): the sockets are closed at once, not left to idle out.
         if (!boltActive(s)) boltFeed.close()
         val on = AppBook.isNovig && s.sgoPro
@@ -1128,16 +1129,26 @@ class AppContainer(private val app: Application) {
         settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush) }
         val alias = connection?.tradingAlias
         val key = connection?.tradingKeyId
-        val client = if (alias != null && key != null && alias in KeystoreVault.aliases(NovigBettingSetup.TRADING_PREFIX)) {
-            NovigTradingClient(NovigSignedClient(http, json, KeystoreSigningKey(alias, key)), json, batchOrders = true)
-        } else {
-            null
-        }
+        val tradingSigner = if (alias != null && key != null && alias in KeystoreVault.aliases(NovigBettingSetup.TRADING_PREFIX)) NovigSignedClient(http, json, KeystoreSigningKey(alias, key)) else null
+        // Orders over the websocket (NOVIG_API.md §27): a connection of its own on the TRADING key (the read key's connection cannot place), opened as soon as betting is set up and kept while orders are likely.
+        orderSocket?.close()
+        orderSocket = tradingSigner?.let { sg -> com.tjshea.vigilant.data.novig.trading.NovigOrderSocket(http, sg, appScope) }
+        settingsStore.flow.value?.let { s -> orderSocket?.enabled = s.gates.novigSocketOrders }
+        orderSocket?.warm()
+        val client = tradingSigner?.let { sg -> NovigTradingClient(sg, json, batchOrders = true, orderSocket = { orderSocket }) }
         trading = client
         subaccountKeyId = connection?.subaccountKeyId?.takeIf { client != null }
         apiSettler = client?.let { ApiSettler(tracker, it, connection?.subaccountKeyId.orEmpty(), scoreGrade = { bet -> settler.scoreGradeOf(bet) }) }
         apiSync = client?.let { ApiBetSync(tracker, it, novig) }
     }
+
+    /** The order socket (NOVIG_API.md §27); null with no trading key. Rebuilt by [useConnection]. */
+    @Volatile var orderSocket: com.tjshea.vigilant.data.novig.trading.NovigOrderSocket? = null
+        private set
+
+    /** The subaccount's pushed order events: the order socket's while it is live, else the market stream's private channel; null with neither. */
+    fun orderEvents(): com.tjshea.vigilant.data.novig.stream.OrderEvents? =
+        orderSocket?.events?.takeIf { it.live } ?: (novig.stream as? NovigStream)?.orderEvents
 
     fun readKeyClient(connection: NovigConnection, client: OkHttpClient = http) =
         NovigSignedClient(client, json, KeystoreSigningKey(connection.readAlias, connection.readKeyId))

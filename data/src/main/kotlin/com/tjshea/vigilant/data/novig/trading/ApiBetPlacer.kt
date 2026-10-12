@@ -70,6 +70,8 @@ class ApiBetPlacer(
      * [finish] waits on that instead of asking every [POLL_MS]. The REST reads stay the record (the fills carry the fee) and the way back when nothing is pushed.
      */
     private val events: () -> com.tjshea.vigilant.data.novig.stream.OrderEvents? = { null },
+    /** Told whenever a bet is planned: an order is likely soon, so the order socket opens if it is not open ([OrderSocket.warm]). */
+    private val warm: () -> Unit = {},
 ) {
 
     /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. [limitsOverride]: the auto-bet's own limits. */
@@ -78,6 +80,7 @@ class ApiBetPlacer(
         if (limitsOverride == null) com.tjshea.vigilant.data.novig.BetPriority.hold { planImpl(target, stake, allowRepeat, limitsOverride) } else planImpl(target, stake, allowRepeat, limitsOverride)
 
     private suspend fun planImpl(target: BetTarget, stake: Double, allowRepeat: Boolean, limitsOverride: BetLimits?): PlanResult {
+        warm()
         val limits = limitsOverride ?: limits()
         // Pause holds what runs by itself (auto-bet); a bet Tj places by hand is his call (Tj, 2026-10-02: "I should be able to bet on whatever I want manually").
         if (!limits.manual && paused()) return PlanResult.Refused("Scanning is paused (Settings): resume it before betting.")
