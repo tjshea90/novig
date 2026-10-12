@@ -6580,3 +6580,8 @@ Make the auto bid and auto bet sliders automatically change any settings in the 
 ```
 It says 2 EV betsb but it's not showing them
 ```
+
+## 2026-10-12T00:28:37Z
+```
+For the auto bid and auto bet, consider whether it is wise to bet longshots of +300, right now it is betting up to +300 odds on the slider settings. Is this still profitable because I may end up losing many bets at these odds. If it needs to be adjusted, do so. When I'm going to place a bet, sometimes it lags and it may be because it is scanning simultaneously. If you think this is why, see if the scanning can briefly be paused as soon as I press bet, then resumed where it left off when the bet is confirmed. Also the auto bet feature keeps pausing telling me to check novig. It doesn't automatically fix and resume. Have this feature automatically resume auto bet without me pressing the button. Make the app try to fix whatever the issue is but always auto resume quickly. This is strange because it wasn't giving me these errors before
+```
