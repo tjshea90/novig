@@ -4908,5 +4908,5 @@ The 4: (1) standing match index BoltOdds game/prop <-> Novig event/market/outcom
 - [x] TLN1 Audit Scanner/Pricing for a single-game re-price entry (reprice/recheck) and the auto-bet/bid hand-off for a row.
 - [x] TLN2 LineIndex + per-game incremental pass (StreamEngine): dirty set of Novig events/Bolt games, re-price just those, merge into the result, hand rows to auto-bet / bid desk.
 - [x] TLN3 Live (item 4): live games keep Pinnodds as fair; BoltOdds live fair gated off until Tj's data (BoltOdds sharp-book/latency report in Diagnostics). Tell Tj exactly what to send.
-- [ ] TLN4 Tests, ship, release.
+- [x] TLN4 Tests, ship, release.
 - TLN1-3 done in code (v0.94.1): Scanner.streamUpdate (+ScannerTest), ScanRunner.stream, AutoScanner.streamHandOff, StreamEngine rewrite (Novig line update + BoltOdds refresh), BoltBoard.lagReport in Diagnostics. TLN4 = ship/release. WAITING ON TJ for item 4 (BoltOdds as a live fair): Diagnostics file after ~10 min of a live slate with BoltOdds on: the "push lag" block (books, sharp-book line, lag) and the Streaming engine line.
