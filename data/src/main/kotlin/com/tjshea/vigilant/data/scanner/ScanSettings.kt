@@ -1345,6 +1345,14 @@ data class ApiGates(
     val streamGapSeconds: Int = 3,
     /** Live games in the streaming engine: the real-time Pinnodds + Novig lane (live fee, 5 s freshness, the order's own delay in its worst price) with live bids. Real orders still need their own switches in Pinnodds live. */
     val streamLive: Boolean = false,
+    /**
+     * The live engine on BoltOdds' soft-book average (Tj, 2026-10-12; [PinnFeedChoice.BOLT]): the fewest companies that must agree, how recently each must have pushed (seconds), the widest they may disagree
+     * (percentage points of probability), and whether REAL orders are allowed on it at all (off = paper only, whatever the live switches say).
+     */
+    val boltLiveMinCompanies: Int = 4,
+    val boltLiveMaxAgeSeconds: Int = 10,
+    val boltLiveMaxSpreadPoints: Int = 5,
+    val boltLiveReal: Boolean = false,
 ) {
     /** The guard's rules for the placers, or null with the guard switched off. */
     fun repeatRules(): com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? =

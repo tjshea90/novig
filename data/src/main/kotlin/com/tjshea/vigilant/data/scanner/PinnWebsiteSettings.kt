@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class PinnFeedChoice(val label: String, val blurb: String) {
     SOCKET("Pinnodds socket", "Pinnacle's prices pushed by the Pinnodds WebSocket (your Pinnodds key; the trial ends 2026-10-10 23:34Z, then at least \$198 a month)."),
+    BOLT("BoltOdds soft-book average", "NOT Pinnacle. The average of the soft books BoltOdds pushes for a live game (devigged, one vote per company, the highest and lowest dropped, only books that pushed in the last few seconds and agree). It trails the truth by seconds and has no scores, so it is judged by 'any move' / 'any edge' and starts PAPER ONLY: real orders need their own switch below."),
     WEBSITE("Pinnacle website (free)", "Pinnacle's own website API, polled from your phone: no key, no account, no cost. MEASURED 2026-10-10: Pinnacle serves it through a cache (Cloudflare, up to 15 minutes), and the answers were 90-400 seconds old, with no way around it. It is NOT fresh enough for live betting, so real live orders are blocked while it is selected; paper only."),
 }
 
@@ -24,4 +25,10 @@ data class PinnWebsiteSettings(
     val key: String = "",
 ) {
     val website: Boolean get() = feed == PinnFeedChoice.WEBSITE
+
+    /** The live fair is BoltOdds' soft-book average ([com.tjshea.vigilant.data.boltodds.BoltLiveConsensus]). */
+    val bolt: Boolean get() = feed == PinnFeedChoice.BOLT
+
+    /** The feed needs no Pinnodds key (the website feed, or BoltOdds, which has its own). */
+    val noPinnKey: Boolean get() = website || bolt
 }

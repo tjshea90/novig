@@ -1507,6 +1507,7 @@ class AppContainer(val app: Application) {
             s.killed -> "STOP ALL is on"
             s.pausedByHand -> "scanning is paused"
             s.pinnWebsite.website -> "the free Pinnacle website feed is minutes old (cached): real live bets need the Pinnodds socket"
+            s.pinnWebsite.bolt && !s.gates.boltLiveReal -> "the soft-book average is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             trading == null -> "no betting key connected"
             wallet == null -> "wallet not read yet"
             wallet < stake * 1.2 -> "wallet too low"
@@ -1548,10 +1549,37 @@ class AppContainer(val app: Application) {
         )
     }
 
+    /** The BoltOdds live feed the engine is reading from, when it is the source (null otherwise). */
+    private companion object {
+        /** The least edge the soft-book average may be bet on, whatever the Pinnodds setting says (a consensus trails the truth; a thin edge on it is noise). */
+        const val BOLT_LIVE_MIN_EV = 0.04
+        const val BOLT_LIVE_SETTLE_MS = 1_500L
+    }
+
+    @Volatile var boltLiveFeed: com.tjshea.vigilant.data.boltodds.BoltLiveFeed? = null
+        private set
+
+    private fun boltLiveRules(): com.tjshea.vigilant.data.boltodds.BoltLiveConsensus.Rules {
+        val g = (settingsStore.flow.value ?: ScanSettings()).gates
+        return com.tjshea.vigilant.data.boltodds.BoltLiveConsensus.Rules(
+            minCompanies = g.boltLiveMinCompanies.coerceIn(2, 10), maxAgeMs = g.boltLiveMaxAgeSeconds.coerceIn(2, 60) * 1000L, maxSpread = g.boltLiveMaxSpreadPoints.coerceIn(1, 15) / 100.0,
+            method = (settingsStore.flow.value ?: ScanSettings()).pinnLiveDevig,
+        )
+    }
+
     private fun pinnConfig(): com.tjshea.vigilant.data.pinnodds.LiveConfig {
         val s = settingsStore.flow.value ?: ScanSettings()
+        val rules = if (s.pinnWebsite.bolt) {
+            // A soft-book consensus: no scores to wait for (the lag test must be a move or a standing edge), a floor under the edge it must show, a settle time so a price still repricing is not bet, and no Pinnacle-specific
+            // margin or limit rule (those describe Pinnacle's own market, which this is not).
+            com.tjshea.vigilant.data.pinnodds.LiveRules(
+                minEv = maxOf(s.pinnLiveMinEv, BOLT_LIVE_MIN_EV), minMove = s.pinnLiveMinMove, pregame = false,
+                trigger = if (s.pinnLiveTrigger == com.tjshea.vigilant.data.pinnodds.LiveTrigger.SCORE) com.tjshea.vigilant.data.pinnodds.LiveTrigger.MOVE else s.pinnLiveTrigger,
+                holdoffMs = s.pinnLiveHoldoffSeconds * 1000L, settleMs = BOLT_LIVE_SETTLE_MS, maxOverround = 1.0, minPinnLimit = 0.0,
+            )
+        } else com.tjshea.vigilant.data.pinnodds.LiveRules(minEv = s.pinnLiveMinEv, minMove = s.pinnLiveMinMove, pregame = s.pinnLivePregame, trigger = s.pinnLiveTrigger, holdoffMs = s.pinnLiveHoldoffSeconds * 1000L)
         return com.tjshea.vigilant.data.pinnodds.LiveConfig(
-            rules = com.tjshea.vigilant.data.pinnodds.LiveRules(minEv = s.pinnLiveMinEv, minMove = s.pinnLiveMinMove, pregame = s.pinnLivePregame, trigger = s.pinnLiveTrigger, holdoffMs = s.pinnLiveHoldoffSeconds * 1000L),
+            rules = rules,
             method = s.pinnLiveDevig, leagues = Leagues.ALL.map { it.novigName }.toSet() + com.tjshea.vigilant.data.pinnodds.PinnLiveRunner.EXTRA_LEAGUES,
             // The lag taker judges only while its own switch is on; with only the live bids on the feed runs for them alone.
             takerOn = s.pinnLive,
@@ -1593,9 +1621,19 @@ class AppContainer(val app: Application) {
             newFeed = { listener -> readConnection?.let { com.tjshea.vigilant.data.novig.stream.SharedStreamView({ novig.stream as? NovigStream }, listener) } },
             openFeed = { onFrame ->
                 // The feed is read at each start of the engine; changing it in Settings restarts the engine (pinnTick).
-                if (settingsStore.flow.value?.pinnWebsite?.website == true) {
+                if (settingsStore.flow.value?.pinnWebsite?.bolt == true) {
+                    // BoltOdds' soft-book average (Tj, 2026-10-12): pushed by the odds socket, spoken as Pinnodds frames.
+                    activeWebsiteFeed = null
+                    com.tjshea.vigilant.data.boltodds.BoltLiveFeed(
+                        board = boltFeed.lines.board, socketLive = { boltFeed.lines.live },
+                        ensureOpen = { boltFeed.arrange(currentSettings()); boltFeed.lines.use() },
+                        sink = onFrame, scope = appScope, rules = ::boltLiveRules,
+                    ).also { boltLiveFeed = it }
+                } else if (settingsStore.flow.value?.pinnWebsite?.website == true) {
+                    boltLiveFeed = null
                     com.tjshea.vigilant.data.pinnodds.PinnWebsiteFeed(websiteFetcher, appScope, onFrame, ::websiteConfig).also { activeWebsiteFeed = it }
                 } else {
+                    boltLiveFeed = null
                     activeWebsiteFeed = null
                     com.tjshea.vigilant.data.pinnodds.PinnSocket(http, { keyStore.current(ApiProvider.PINNODDS).firstOrNull() }, appScope, onFrame)
                 }
@@ -1680,6 +1718,7 @@ class AppContainer(val app: Application) {
             s.liveBidReal && trading == null -> "no betting key connected"
             // Pinnacle's website feed is served from a cache and was measured 90-400 s old (RESEARCH.md §127): never a basis for a real order.
             s.liveBidReal && s.pinnWebsite.website -> "the free Pinnacle website feed is minutes old (cached): real live bids need the Pinnodds socket"
+            s.liveBidReal && s.pinnWebsite.bolt && !s.gates.boltLiveReal -> "the soft-book average is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             else -> null
         }
         val preset = com.tjshea.vigilant.data.livebid.LiveBidPresets.active(s)?.name ?: s.liveBidPresetName?.let { "$it (changed)" }
@@ -1735,6 +1774,7 @@ class AppContainer(val app: Application) {
 
     @Volatile private var pinnSawHalt = false
     @Volatile private var pinnRunWebsite: Boolean? = null
+    @Volatile private var pinnRunFeed: com.tjshea.vigilant.data.scanner.PinnFeedChoice? = null
 
     /** Starts or stops the compare run (the website feed beside the socket, driving nothing). */
     private fun shadowTick(on: Boolean) {
@@ -1762,9 +1802,15 @@ class AppContainer(val app: Application) {
         if (s.pinnLiveHalted != null) pinnSawHalt = true else if (pinnSawHalt) { pinnSawHalt = false; pinnTrader.resumed() }
         if (s.liveBidHalted != null) liveBidSawHalt = true else if (liveBidSawHalt) { liveBidSawHalt = false; liveBidDesk.resumed() }
         if (s.pinnLiveBet || (s.liveBid && s.liveBidReal)) runCatching { wallet.fresh() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
-        val website = s.pinnWebsite.website
+        val website = s.pinnWebsite.noPinnKey
         // The engine reads its feed when it starts: a changed choice restarts it.
-        if (pinnRunner.running && pinnRunWebsite != null && pinnRunWebsite != website) pinnRunner.stop("switching the Pinnacle feed")
+        if (pinnRunner.running && pinnRunWebsite != null && pinnRunFeed != s.pinnWebsite.feed) pinnRunner.stop("switching the live price feed")
+        if (s.pinnWebsite.bolt && !boltActive(s)) {
+            if (pinnRunner.running) pinnRunner.stop("BoltOdds is not on (Settings › APIs & keys).")
+            liveScan.clear("Live games from the soft-book average need BoltOdds switched on with a key (Settings › APIs & keys).")
+            LiveFeedService.stop(app)
+            return
+        }
         if (!website && (!s.gates.usePinnodds || keyStore.current(ApiProvider.PINNODDS).isEmpty())) {
             if (pinnRunner.running) pinnRunner.stop(if (!s.gates.usePinnodds) "Pinnodds is switched off (Settings › APIs)." else "No Pinnodds key saved (Settings › Pinnodds live).")
             shadowTick(false)
@@ -1773,6 +1819,7 @@ class AppContainer(val app: Application) {
             return
         }
         pinnRunWebsite = website
+        pinnRunFeed = s.pinnWebsite.feed
         pinnRunner.start()
         shadowTick(!website && s.pinnWebsite.compare)
         // The foreground service holds the process and the CPU awake with the screen off (allowed from the screen, a boot or an update; refused quietly otherwise).
