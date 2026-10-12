@@ -121,6 +121,17 @@ class BoltLiveConsensusTest {
         assertTrue(BoltConvert.events(listOf(moved), ctx).single().markets != a)
     }
 
+    @Test fun `a book speaking again lifts the quote times without converting the entry again`() {
+        val e = book("draftkings", -150)
+        fun ctx(seen: Long?) = BoltContext(com.tjshea.vigilant.data.scanner.Leagues.byNovigName("NBA")!!, null, com.tjshea.vigilant.data.scanner.MarketFamily.entries.toSet(), true, now, { _, _ -> seen }, true)
+        val first = BoltConvert.events(listOf(e), ctx(null)).single().markets
+        val slot = e.marketsCache
+        val lifted = BoltConvert.events(listOf(e), ctx(now)).single().markets
+        assertTrue("the entry was not converted again", slot === e.marketsCache)
+        assertTrue(lifted.all { it.lastUpdateMs == now })
+        assertEquals(first.map { it.quotes }, lifted.map { it.quotes })
+    }
+
     @Test fun `tennis tournaments belong to their tour`() {
         assertEquals("WTA", BoltBooks.tennisLeagueOf("WTA Wuhan - Tennis"))
         assertEquals("ATP", BoltBooks.tennisLeagueOf("ATP Challenger Brisbane - Tennis"))
