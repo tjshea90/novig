@@ -299,19 +299,20 @@ class ApiBettingControllerTest {
         waitFor("a plan") { state.value.betSheet?.plan != null }
         api.confirm()
         api.confirm() // a second tap while it's placing does nothing
-        waitFor("placed") { state.value.betSheet?.result is PlaceResult.Placed }
+        // The sheet closes the moment Novig has the order (Tj, 2026-10-12); the bet is recorded when Novig ends it.
+        waitFor("recorded") { kotlinx.coroutines.runBlocking { app.container.tracker.all() }.any { it.orderId == "order-1" } }
         assertEquals(1, orders.get())
-        val bet = (state.value.betSheet!!.result as PlaceResult.Placed).bet
-        assertEquals("order-1", bet.orderId)
+        assertNull("the sheet closed by itself", state.value.betSheet)
         val tracked = kotlinx.coroutines.runBlocking { app.container.tracker.all() }.single { it.orderId == "order-1" }
+        val bet = tracked
         assertEquals(o.outcome.outcomeId, tracked.outcomeId)
         assertEquals(bet.contracts, fake.last!!.third)
         // The card's own key is on the bet (the ✓ mark that hides it from the +EV list uses the same key; PlacedBets prunes by the real clock,
         // so a sample game from another day can't be read back here).
         assertEquals(o.key, tracked.placedKey)
-        // Nothing more can be done to a finished sheet.
+        // Nothing can be done to a sheet that is gone.
         api.setStake(9.0)
-        assertTrue(state.value.betSheet!!.result is PlaceResult.Placed)
+        assertNull(state.value.betSheet)
     }
 
     @Test
