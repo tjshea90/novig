@@ -140,6 +140,27 @@ class BoltOddsFeed(
     /** A socket of its own (Pro allows 3 at once; the lines and props sockets are 2) for Test key's listening probe: its own board, nothing shared. */
     fun probeStream(): BoltOddsStream = BoltOddsStream("probe", socketHttp, client, BoltBoard(clock), scope, socketWsUrl, clock)
 
+    /** Diagnostics (BOLTODDS_API.md §7): each socket's state and counters, the boards, what could not be mapped, the first message of every kind. */
+    fun report(now: Long = clock()): List<String> = buildList {
+        add("REST: ${client.health(now)}" + (client.lastError?.let { " · last error: $it" } ?: ""))
+        lastPlan?.let { add("subscribed: $it") }
+        metaError?.let { add("get_info / get_markets: $it") }
+        for (s in listOf(lines, props)) {
+            val b = s.board.summary()
+            add(
+                "${s.name} socket: ${s.state.name.lowercase()} · connects ${s.connects}, drops ${s.drops}" + (s.lastClose?.let { " (last: $it)" } ?: "") +
+                    " · frames ${s.frames} (${s.arrayFrames} arrays, biggest ${s.biggestFrame} chars)" +
+                    (s.readyAtMs.takeIf { it > 0 }?.let { " · ready ${(now - it) / 1000}s ago" } ?: " · not ready"),
+            )
+            add("  snapshot: ${s.snapshots} read, last ${s.snapshotGames} games in ${s.snapshotMs} ms" + (s.snapshotError?.let { " · error: $it" } ?: ""))
+            s.lastError?.let { add("  last error: $it") }
+            add("  board: ${b.games} games, ${b.outcomes} outcomes · books " + b.byBook.entries.sortedByDescending { it.value }.take(14).joinToString { "${it.key} ${it.value}" } + " · sports " + b.bySport.entries.joinToString { "${it.key} ${it.value}" })
+            add("  messages: " + s.board.counts.entries.sortedByDescending { it.value }.joinToString { "${it.key} ${it.value}" }.ifEmpty { "none" })
+            if (s.board.unmapped.isNotEmpty()) add("  names not priced (sport | name ×count): " + s.board.unmapped.entries.sortedByDescending { it.value }.take(25).joinToString("; ") { "${it.key} ×${it.value}" })
+            s.examples.entries.sortedBy { it.key }.take(12).forEach { add("  first ${it.key}: ${client.redact(it.value)}") }
+        }
+    }
+
     /** Both sockets down and idle (the switch went off, or the app is closing). */
     fun close() {
         lines.close()

@@ -160,6 +160,7 @@ object DiagnosticsShare {
 
     const val OP_PREFIX = "vigilant-oddspapi-sample-"
     const val UN_PREFIX = "vigilant-unabated-sample-"
+    const val BOLT_PREFIX = "vigilant-boltodds-sample-"
     const val OP4_PREFIX = "vigilant-oddspapi-free-sample-"
 
     /** A key test's sample for [prefix] (Unabated, OddsPapi Free): kept like the others, the newest [KEEP]. */

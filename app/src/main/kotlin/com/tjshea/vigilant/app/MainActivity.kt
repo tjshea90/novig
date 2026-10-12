@@ -874,6 +874,7 @@ private fun VigilantRoot(
                         onTestActiveApis = vm::testActiveApis,
                         onRefreshUsage = vm::refreshUsage,
                         onTestUnabatedKey = { share -> vm.testUnabatedKey(share) },
+                        onTestBoltKey = { share -> vm.testBoltKey(share) },
                         onTestOddsPapiFreeKey = { share -> vm.testOddsPapiFreeKey(share) },
                         onShareFeedRace = vm::shareFeedRace,
                         onShareResearch = vm::shareResearch,

@@ -139,6 +139,7 @@ data class UiState(
     val sgoKeys: List<String> = emptyList(),
     val opKeys: List<String> = emptyList(),
     val unKeys: List<String> = emptyList(),
+    val boltKeys: List<String> = emptyList(),
     val op4Keys: List<String> = emptyList(),
     /** Every provider's usage ledger, updated after each call (the meters). */
     val usage: UsageBook = UsageBook(),
@@ -236,6 +237,10 @@ data class UiState(
     val unKeyNote: String? = null,
     val unKeyOk: Boolean? = null,
     val unKeyBusy: Boolean = false,
+    /** BoltOdds Pro: the Test key's answer, whether it passed, and that a test is running (it listens on a socket for about 15 s). */
+    val boltKeyNote: String? = null,
+    val boltKeyOk: Boolean? = null,
+    val boltKeyBusy: Boolean = false,
     val op4KeyNote: String? = null,
     val op4KeyOk: Boolean? = null,
     val op4KeyBusy: Boolean = false,
@@ -297,6 +302,7 @@ data class UiState(
         ApiProvider.SPORTSGAMEODDS -> sgoKeys
         ApiProvider.ODDSPAPI -> opKeys
         ApiProvider.UNABATED -> unKeys
+        ApiProvider.BOLTODDS -> boltKeys
         ApiProvider.ODDSPAPI_FREE -> op4Keys
     }
 
@@ -311,6 +317,7 @@ data class UiState(
         ApiProvider.SPORTSGAMEODDS -> copy(sgoKeys = keys)
         ApiProvider.ODDSPAPI -> copy(opKeys = keys)
         ApiProvider.UNABATED -> copy(unKeys = keys)
+        ApiProvider.BOLTODDS -> copy(boltKeys = keys)
         ApiProvider.ODDSPAPI_FREE -> copy(op4Keys = keys)
     }
 
@@ -2188,6 +2195,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Settings › BoltOdds Pro › Test key (BOLTODDS_API.md §8): the sports and sportsbooks the key carries, which of them Vigilant prices with, the market names and what became of each, one small snapshot, the optional
+     * endpoints, and a 15-second listen on a socket of its own; said in words, with the raw answers saved to Downloads/Vigilant (and shared when [share]) so the parser can be checked against the real thing.
+     */
+    fun testBoltKey(share: Boolean = false) {
+        _state.update { it.copy(boltKeyBusy = true, boltKeyNote = null, boltKeyOk = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching { com.tjshea.vigilant.data.boltodds.BoltKeyTest.run(c.boltFeed, _state.value.settings) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }.getOrNull()
+            if (r != null && r.sample.isNotEmpty()) sendSample(share, DiagnosticsShare.BOLT_PREFIX, "BoltOdds", r.summary, r.sample)
+            if (r?.ok == true) runCatching { c.apiProbe.check(ApiProvider.BOLTODDS, emptyList()) }
+            _state.update { it.copy(boltKeyBusy = false, boltKeyNote = r?.summary ?: "The test could not run.", boltKeyOk = r?.ok == true) }
+        }
+    }
+
     /** Settings › OddsPapi Free (v4) › Test key: the plan's real allowance and books (an unmetered call, no request spent); a v5 key pasted here is recognised and the message says where it belongs. */
     fun testOddsPapiFreeKey(share: Boolean = false) {
         _state.update { it.copy(op4KeyBusy = true, op4KeyNote = null, op4KeyOk = null) }
@@ -2556,6 +2579,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     add("health: ${c.opClient.health()}")
                     c.opClient.lastRemaining?.let { add("rate limit left (last answer): $it") }
                     c.opClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
+                }
+            }.getOrNull(),
+            boltReport = runCatching {
+                val keys = keysFor(ApiProvider.BOLTODDS).size
+                if (keys == 0 && !_state.value.settings.gates.useBoltOdds) null else buildList<String> {
+                    val st = _state.value.settings
+                    add("switch ${if (st.gates.useBoltOdds) "ON" else "off"} · $keys key${if (keys == 1) "" else "s"} · every book ${if (st.gates.boltAllBooks) "on" else "off"} · active now: ${c.boltActive(st)}")
+                    addAll(c.boltFeed.report())
                 }
             }.getOrNull(),
             unabatedReport = runCatching {
