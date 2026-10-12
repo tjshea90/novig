@@ -1095,7 +1095,7 @@ class AppContainer(val app: Application) {
             // A scan that ended with Vigilant off screen (background auto-scan, or Tj left) closes Novig's
             // live feed at once: nothing will recheck in the next two minutes, and pushes cost battery.
             // Not while the live engine runs: it holds the same stream open for the Feed's live lane and the live bids (Tj, 2026-10-11: no live books arrived).
-            if (!onScreen && !pinnRunner.running) novig.stream?.close()
+            if (!onScreen && !pinnRunner.running && !streamEngine.status.value.running) novig.stream?.close()
             // Disk trouble (full storage) must never break a scan.
             report?.result?.let { runCatching { tracker.observe(it) } }
             // Keyed calls saved as they happened; this saves the keyless request counters.

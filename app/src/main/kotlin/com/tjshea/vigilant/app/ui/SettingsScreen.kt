@@ -1188,6 +1188,24 @@ private fun ColumnScope.BettingTab(
                 (com.tjshea.vigilant.data.scanner.ProfitProfile.shipped?.summary() ?: "no profile is built in") + ". Off = no change at all.",
             s.gates.profitProven, tag = "profitProvenSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(profitProven = v)) } }
+        SectionTitle("Streaming engine")
+        SwitchRow(
+            "Stream odds instead of scanning at intervals",
+            "A price pushed on the Novig or BoltOdds socket starts a scan pass at once, and the auto-bet and bids judge it with all the same rules, instead of waiting for the next interval. A pass reads only the BoltOdds " +
+                "board already held in memory and Novig's pushed books, so it spends no API credits; your normal interval scans go on beside it and read everything. Needs BoltOdds on with a key, a background scan mode on, " +
+                "and the Novig key. Off = nothing changes.",
+            s.gates.streamScan, tag = "streamScanSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(streamScan = v)) } }
+        if (s.gates.streamScan) {
+            Text("Least seconds between passes", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+            ChoiceChips(listOf(1, 2, 3, 5, 10), s.gates.streamGapSeconds, { "$it s" }) { v -> onUpdate { it.copy(gates = it.gates.copy(streamGapSeconds = v)) } }
+            SwitchRow(
+                "Live games too",
+                "Turns on Include live games, the real-time Pinnodds + Novig lane (the live fee, prices kept only while 5 seconds fresh, a bet's worst price keeps it +EV after Novig's ~5 s order delay) and live bids " +
+                    "(a bid comes down the moment it stops being +EV). BoltOdds has no Pinnacle, so a live fair still comes from Pinnodds. Real orders still need their own switches in Pinnodds live (paper until you turn them on).",
+                s.gates.streamLive, tag = "streamLiveSwitch",
+            ) { v -> onUpdate { it.copy(includeLive = if (v) true else it.includeLive, pinnLive = if (v) true else it.pinnLive, liveBid = if (v) true else it.liveBid, gates = it.gates.copy(streamLive = v)) } }
+        }
         SectionTitle("Repeat and hedge guard")
         SwitchRow(
             "Repeat and hedge guard",
