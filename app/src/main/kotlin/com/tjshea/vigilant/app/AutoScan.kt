@@ -393,8 +393,13 @@ class AutoScanner(
                 .onFailure { if (it is CancellationException) throw it; runCatching { c.problems.add("Streaming engine", "auto-bet: ${it.message ?: it.javaClass.simpleName}") } }
         } else judged = 0
         if (!settings.paused && AppBook.isNovig && (settings.maker || settings.makerRecommend)) {
-            runCatching { c.maker.run("streaming update", minGapMs = STREAM_BID_GAP_MS) }
-                .onFailure { if (it is CancellationException) throw it; runCatching { c.problems.add("Streaming engine", "bids: ${it.message ?: it.javaClass.simpleName}") } }
+            // The bid desk's pass takes seconds (a pass of 60 new bids and 73 cancels ran 20 s+ in Tj's v0.94.1 file): it runs on its own, one at a time, and the engine never waits for it.
+            if (streamBids?.isActive != true) {
+                streamBids = c.appScope.launch {
+                    runCatching { c.maker.run("streaming update", minGapMs = STREAM_BID_GAP_MS) }
+                        .onFailure { if (it is CancellationException) throw it; runCatching { c.problems.add("Streaming engine", "bids: ${it.message ?: it.javaClass.simpleName}") } }
+                }
+            }
         }
         return judged
     }
@@ -528,6 +533,9 @@ class AutoScanner(
 
     /** The watch that sends a background Vigilant scan's alerts when it ends (one at a time). */
     @Volatile private var vigilantAlerts: kotlinx.coroutines.Job? = null
+
+    /** The bid desk pass the streaming engine started (one at a time). */
+    @Volatile private var streamBids: kotlinx.coroutines.Job? = null
 
     /** The watch that auto-bets tennis from a background Vigilant scan when it ends (one at a time). */
     @Volatile private var tennisBets: kotlinx.coroutines.Job? = null

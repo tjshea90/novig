@@ -51,6 +51,11 @@ class StreamEngine(
         /** Lines handed to the auto-bet in all, and the slowest update. */
         val handedOff: Long = 0,
         val slowestMs: Long = 0,
+        /** Where the last update's time went: re-reading and pricing, the auto-bet's judging, and (started on its own, never waited for) the bid desk's pass. */
+        val lastPriceMs: Long = 0,
+        val lastBetMs: Long = 0,
+        /** Updates skipped because a full scan held the scanner (an update never waits for one). */
+        val scannerBusy: Long = 0,
     )
 
     private val _status = MutableStateFlow(Status())
@@ -143,32 +148,53 @@ class StreamEngine(
             return
         }
         val t0 = clock()
-        val boltWait = StreamPacer.waitMs(t0, lastBoltRefreshMs, s.gates.streamGapSeconds * 1000L)
-        val refresh = boltDirty.get() && boltWait == 0L
-        val ids: Set<String> = if (refresh) emptySet() else drain()
-        if (!refresh && ids.isEmpty()) {
-            // Only BoltOdds changed and its gap has not passed: come back when it has.
-            if (boltDirty.get()) { delay(boltWait.coerceAtLeast(50L)); signal.trySend("BoltOdds") }
-            return
+        // 1. The Novig lines that moved come first: a few milliseconds each, and a stale price is picked off here. They are never held behind a BoltOdds refresh.
+        val ids = if (dirty.isEmpty()) emptySet() else drain()
+        if (ids.isNotEmpty()) {
+            val fastWait = StreamPacer.waitFastMs(t0, lastFastMs)
+            if (fastWait > 0) { dirty += ids; delay(fastWait) }
+            else {
+                lastFastMs = clock()
+                update(s, ids, refresh = false)
+            }
         }
-        // At most one fast update per FAST_GAP_MS: a market that moved meanwhile stays dirty for the next.
-        val fastWait = StreamPacer.waitFastMs(t0, lastFastMs)
-        if (!refresh && fastWait > 0) { dirty += ids; delay(fastWait); signal.trySend(trigger); return }
-        val result = if (refresh) {
-            boltDirty.set(false)
-            lastBoltRefreshMs = t0
-            drain()
-            c.runner.stream(s, c.streamSources(s), null)
-        } else {
-            lastFastMs = t0
-            c.runner.stream(s, emptyList(), ids)
+        // 2. BoltOdds' board changed: read it again, match, re-price everything held. The gap is the setting, and never less than three times what the last refresh took (a refresh that runs long must not run back to back).
+        if (boltDirty.get()) {
+            val gap = maxOf(s.gates.streamGapSeconds * 1000L, lastRefreshTookMs * 3)
+            val wait = StreamPacer.waitMs(clock(), lastBoltRefreshMs, gap)
+            if (wait == 0L) {
+                boltDirty.set(false)
+                lastBoltRefreshMs = clock()
+                drain()
+                update(s, emptySet(), refresh = true)
+                lastRefreshTookMs = clock() - lastBoltRefreshMs
+            } else {
+                delay(wait.coerceIn(50L, 1_000L))
+                signal.trySend("BoltOdds")
+            }
+        } else if (dirty.isNotEmpty()) {
+            delay(StreamPacer.FAST_GAP_MS)
+            signal.trySend("Novig")
         }
+    }
+
+    /** One update: price (nothing is requested from any API), judge with the auto-bet, then start the bid desk's pass on its own (never waited for). */
+    private suspend fun update(s: ScanSettings, ids: Set<String>, refresh: Boolean) {
+        val t0 = clock()
+        val result = if (refresh) c.runner.stream(s, c.streamSources(s), null) else c.runner.stream(s, emptyList(), ids)
+        val priced = clock()
         if (result == null) {
-            // No catalog yet (no scan has run since the app started): one full cycle makes it; the next update is a stream one.
-            if (!c.runner.running) {
-                c.streamPass = true
-                try { c.autoScan.cycle(forceVigilant = true) } finally { c.streamPass = false }
-                _status.update { it.copy(bootstrapCycles = it.bootstrapCycles + 1, why = null) }
+            if (!c.scanner.streamReady()) {
+                // No catalog yet (no scan has run since the app started): one full cycle makes it; the next update is a stream one.
+                if (!c.runner.running && !c.autoScan.running) {
+                    c.streamPass = true
+                    try { c.autoScan.cycle(forceVigilant = true) } finally { c.streamPass = false }
+                    _status.update { it.copy(bootstrapCycles = it.bootstrapCycles + 1, why = null) }
+                }
+            } else {
+                // A full scan holds the scanner: this update is skipped, and the next push asks again.
+                _status.update { it.copy(scannerBusy = it.scannerBusy + 1) }
+                if (refresh) boltDirty.set(true) else dirty += ids
             }
             return
         }
@@ -178,12 +204,14 @@ class StreamEngine(
             it.copy(
                 passes = it.passes + 1, lastPassMs = took, lastPassAtMs = clock(), lastTrigger = if (refresh) "BoltOdds" else "Novig", why = null,
                 fastPasses = it.fastPasses + if (refresh) 0 else 1, refreshPasses = it.refreshPasses + if (refresh) 1 else 0,
-                handedOff = it.handedOff + handed, slowestMs = maxOf(it.slowestMs, took),
+                handedOff = it.handedOff + handed, slowestMs = maxOf(it.slowestMs, took), lastPriceMs = priced - t0, lastBetMs = clock() - priced,
             )
         }
         c.perf.add(if (refresh) "stream.refresh.ms" else "stream.fast.ms", took.toDouble())
-        if (_status.value.passes % LOG_EVERY == 1L) c.eventLog.info("STREAM", "streaming update #${_status.value.passes} (${if (refresh) "BoltOdds refresh, all lines" else "${ids.size} Novig line${if (ids.size == 1) "" else "s"}"}) took $took ms, $handed lines judged")
+        if (_status.value.passes % LOG_EVERY == 1L || took > SLOW_MS) c.eventLog.info("STREAM", "streaming update #${_status.value.passes} (${if (refresh) "BoltOdds refresh, all lines" else "${ids.size} Novig line${if (ids.size == 1) "" else "s"}"}) took $took ms (priced ${priced - t0} ms, auto-bet ${clock() - priced} ms), $handed lines judged")
     }
+
+    @Volatile private var lastRefreshTookMs = 0L
 
     private fun drain(): Set<String> {
         val out = HashSet<String>()
@@ -198,6 +226,7 @@ class StreamEngine(
         const val RETRY_MS = 5_000L
         const val BUSY_RETRY_MS = 500L
         const val LOG_EVERY = 20L
+        const val SLOW_MS = 3_000L
     }
 }
 
