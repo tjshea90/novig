@@ -69,12 +69,15 @@ class ParlayAccount(
     var last: Map<String, Check> = emptyMap()
         private set
 
-    /** Reads every key's account ([force]: even one read in the last [REFRESH_MS]). Returns how many answered; never throws. */
-    suspend fun refresh(force: Boolean = false): Int {
+    /**
+     * Reads every key's account ([force]: even one read in the last [minAgeMs]). Returns how many answered; never throws. A scan asks with [SCAN_REFRESH_MS]: Tj's v0.89.34 file showed 7,902 `/v1/usage`
+     * calls in a day and a half (77% of everything sent to ParlayAPI), ten keys read at every scan for figures the local meter already tracks between reads.
+     */
+    suspend fun refresh(force: Boolean = false, minAgeMs: Long = REFRESH_MS): Int {
         var answered = 0
         for (key in keys()) {
             val now = clock()
-            if (!force && (checkedAt[key]?.let { now - it < REFRESH_MS } == true)) continue
+            if (!force && (checkedAt[key]?.let { now - it < minAgeMs } == true)) continue
             checkedAt[key] = now
             val check = try {
                 read(key)
@@ -222,6 +225,9 @@ class ParlayAccount(
 
         /** A key's account is read again after this at the soonest, unless asked (free, and ParlayAPI has no per-second cap on paid plans). */
         const val REFRESH_MS = 60_000L
+
+        /** How old a key's last read may be before a scan reads it again. */
+        const val SCAN_REFRESH_MS = 10 * 60_000L
 
         private val REMAINING = listOf("credits_remaining", "remaining_credits", "credits_left", "credit_headroom", "headroom", "remaining")
         // credits_total first: the plan's month plus any credits granted on top (/v1/usage's plan.credits_per_month is the plan alone).
