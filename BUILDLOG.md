@@ -225,3 +225,4 @@ day that changes.
 | v0.89.33 | code 218 | 2026-10-12T01:16Z | v0.89.33: star filter under the auto-bet slider, slider off while a minimum is picked
 | v0.89.34 | code 219 | 2026-10-12T01:47Z | v0.89.34: live bets have no maximum EV
 | v0.89.35 | code 220 | 2026-10-12T04:44Z | v0.89.35: Over-prop edge bar, lead-time Kelly scale, bid desk skips unfillable bids (24 h horizon), APIs & keys settings hub, diagnostics fixes (stale key FAIL, OddsPapi Free budget, ParlayAPI usage reads, time-boxed bid step), Novig reads counted by caller
+| v0.90.0 | code 221 | 2026-10-12T06:35Z | v0.90.0: BoltOdds Pro (websocket lines + props, Test key sample), live taker fee 0.06 for NCAAF/MLB/NHL, Novig docs re-check, NovigStream wake-up race fix
