@@ -800,7 +800,7 @@ class AutoBettor(
 
         /** The bet a halt is about, from its words (null when it names none). */
         fun haltSelection(halt: String): String? =
-            Regex("^Vigilant stopped while an order for (.+?) \\(\\$""").find(halt)?.groupValues?.get(1)
+            Regex("""^Vigilant stopped while an order for (.+?) \(\$""").find(halt)?.groupValues?.get(1)
                 ?: Regex("""^$LOST_ORDER_PREFIX for (.+?): """).find(halt)?.groupValues?.get(1)
 
         /** What the saved halt says while an order may be on its way ([run]): a restart that finds it knows what to check. */

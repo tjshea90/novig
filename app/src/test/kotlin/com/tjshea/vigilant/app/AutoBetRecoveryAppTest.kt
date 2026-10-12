@@ -78,32 +78,34 @@ class AutoBetRecoveryAppTest {
     }
 
     @Test
-    fun `a halt that is not about a lost order is left for Tj`() = runBlocking {
+    fun `a halt that is not about a lost order still resumes by itself, a minute later`() = runBlocking {
         val r = recovery()
         halt("Novig refused: location check failed")
-        now += 10 * AutoBetRecovery.SETTLE_MS
+        now += AutoBetRecovery.SETTLE_MS + 1
         assertFalse(r.step())
-        assertEquals("Novig refused: location check failed", halted())
+        assertNotNull(halted())
+        now += AutoBetRecovery.FORCE_MS
+        assertTrue(r.step())
+        assertNull(halted())
     }
 
     @Test
-    fun `when Novig cannot be read it keeps trying, says so once after three minutes, and clears the moment Novig answers`() = runBlocking {
+    fun `when Novig cannot be read it keeps trying, then resumes anyway after a minute, holds that bet back and says so once`() = runBlocking {
         val r = recovery()
-        halt("${AutoBettor.LOST_ORDER_PREFIX}: Something went wrong while placing it (timeout).")
+        halt("${AutoBettor.LOST_ORDER_PREFIX} for Austin Hooper Over 7.5: Something went wrong while placing it (timeout).")
         novig.down = "Novig is down for maintenance"
         now += AutoBetRecovery.SETTLE_MS + 1
         assertFalse(r.step())
         assertTrue(sent.isEmpty())
-        now += AutoBetRecovery.GIVE_UP_MS
-        assertFalse(r.step())
-        assertFalse(r.step())
-        assertEquals("one notification, not one per try", 1, sent.size)
-        assertEquals("Auto-bet is stopped", sent.single().first)
-        assertTrue(sent.single().second.contains("Novig is down for maintenance"))
         assertNotNull(halted())
-        novig.down = null
+        now += AutoBetRecovery.FORCE_MS
         assertTrue(r.step())
-        assertNull(halted())
+        assertNull("auto-bet is going again", halted())
+        assertEquals("one notification, not one per try", 1, sent.size)
+        assertEquals("Auto-bet resumed", sent.single().first)
+        assertTrue(sent.single().second.contains("Austin Hooper Over 7.5"))
+        assertEquals("Austin Hooper Over 7.5", AutoBettor.haltSelection("${AutoBettor.LOST_ORDER_PREFIX} for Austin Hooper Over 7.5: x"))
+        assertEquals("Austin Hooper Over 7.5", AutoBettor.haltSelection("Vigilant stopped while an order for Austin Hooper Over 7.5 (\$1.47) was being placed, so nothing"))
     }
 
     @Test
