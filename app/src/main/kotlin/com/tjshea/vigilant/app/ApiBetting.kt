@@ -61,6 +61,8 @@ data class BetSheetUi(
     /** Why the bet can't be placed now, in words (a refused plan). */
     val refusal: String? = null,
     val placing: Boolean = false,
+    /** Novig has the order and is finishing it (about 5 s): the sheet can be closed or the next bet started, and the result lands in the Tracker and a notification (Tj, 2026-10-12). */
+    val sent: Boolean = false,
     /** How placing came out (the sheet shows it and offers Done). */
     val result: PlaceResult? = null,
     val allowRepeat: Boolean = false,
@@ -693,20 +695,28 @@ class ApiBettingController(
         }
         state.update { it.copy(betSheet = sheet.copy(placing = true)) }
         betJob?.cancel()
-        betJob = scope.launch {
+        // Not betJob: opening the next bet cancels that, and this one must be followed to its end whatever the sheet does.
+        scope.launch {
             // Once the order may be on its way it is always followed to its end (and recorded) even if the sheet is closed: a cancelled call
             // would drop the answer to an order Novig has already taken.
             val result = try {
                 // The record's time and stake are the order's: the sheet may have been open a while.
                 val now = clock()
                 val placing = priced.copy(atBet = target.atBet?.copy(atMs = now, minutesToStart = (target.startsTs - now) / 60_000L, stake = sheet.stake))
-                withContext(Dispatchers.IO + NonCancellable) { placer.place(placing, sheet.stake, plan.limitPrice, sheet.allowRepeat) }
+                withContext(Dispatchers.IO + NonCancellable) {
+                    placer.placeByHand(placing, sheet.stake, plan.limitPrice, sheet.allowRepeat) {
+                        // Novig has the order: the sheet says so and may be closed; the end is still being waited for below.
+                        state.update { st -> st.copy(betSheet = st.betSheet?.takeIf { it.target === target }?.copy(sent = true) ?: st.betSheet) }
+                    }
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 PlaceResult.Unconfirmed("Something went wrong while placing it (${e.message ?: e.javaClass.simpleName}). Nothing is assumed: tap Sync with Novig in the Tracker in a minute.")
             }
-            state.update { it.copy(betSheet = it.betSheet?.copy(placing = false, result = result)) }
+            // The sheet on screen may be another bet by now (the next one was started while this ended): only its own sheet gets the result.
+            state.update { st -> st.copy(betSheet = st.betSheet?.let { if (it.target === target) it.copy(placing = false, sent = false, result = result) else it }) }
+            if (result !is PlaceResult.Placed) toasts.tryEmit(resultNote(result, target))
             if (result is PlaceResult.Placed) {
                 withContext(NonCancellable) {
                     hideFromLists(target, result)
@@ -715,6 +725,14 @@ class ApiBettingController(
                 toasts.tryEmit("Bet placed: ${money(result.bet.stake)} on ${target.selection}")
             }
         }
+    }
+
+    /** A bet that did not end as Placed, in a line for the notification (the sheet may be closed by then). */
+    private fun resultNote(r: PlaceResult, target: BetTarget): String = when (r) {
+        is PlaceResult.NotFilled -> "Not filled on ${target.selection}: nobody was selling at that price (no money moved)"
+        is PlaceResult.Refused -> "Not placed on ${target.selection}: ${r.reason}"
+        is PlaceResult.Unconfirmed -> "Check ${target.selection}: ${r.reason}"
+        else -> "Bet on ${target.selection} didn't go through"
     }
 
     /** The bet leaves the +EV and CNO lists the way a ✓ makes it ([PlacedBets]): it's placed (shared with the auto-bet: [markPlaced]). */

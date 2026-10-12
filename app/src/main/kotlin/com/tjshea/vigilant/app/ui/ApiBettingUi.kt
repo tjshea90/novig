@@ -442,7 +442,7 @@ fun ApiBetSheet(
     keySaved: Boolean = false,
 ) {
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = { if (!sheet.placing) onDismiss() }, sheetState = state) {
+    ModalBottomSheet(onDismissRequest = { if (!sheet.placing || sheet.sent) onDismiss() }, sheetState = state) {
         ApiBetSheetContent(sheet, onStake, onConfirm, onRefresh, onRepeat, onDismiss, onAddMoney, onTypeStake, onFundWallet, keySaved)
     }
 }
@@ -534,7 +534,7 @@ fun ApiBetSheetContent(
             ) {
                 if (sheet.placing) {
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    Text("  Placing…")
+                    Text(if (sheet.sent) "  Sent to Novig, finishing…" else "  Placing…")
                 } else {
                     Text((if (plan.live) "Place LIVE bet · " else "Place bet · ") + Format.money(plan.expectedCost), fontWeight = FontWeight.Bold)
                 }
@@ -558,7 +558,7 @@ fun ApiBetSheetContent(
         // in the bet slip"): open already, with what the bet is short by, when the wallet can't cover it.
         val shortBy = sheet.plan?.let { p -> sheet.balance?.takeIf { it + 1e-9 < p.expectedCost }?.let { p.expectedCost - it } }
         AddMoneyBlock(sheet, keySaved, suggest = shortBy, autoOpen = shortBy != null, onFund = onFundWallet, onSettings = onAddMoney)
-        if (!sheet.placing) TextButton(onClick = onDismiss) { Text("Cancel") }
+        if (!sheet.placing || sheet.sent) TextButton(onClick = onDismiss, modifier = Modifier.testTag("closeSentBet")) { Text(if (sheet.sent) "Close (the result comes as a notification)" else "Cancel") }
         Spacer(Modifier.height(4.dp))
     }
 }
