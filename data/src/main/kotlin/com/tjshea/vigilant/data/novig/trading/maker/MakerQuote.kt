@@ -133,12 +133,20 @@ data class MakerRules(
      * would leave it without a single bid: tennis keeps Tj's own margin, price window, odds limits, stake and sharp rules and is judged by them alone. Null = tennis is judged like everything else.
      */
     val tennis: MakerRules? = null,
+    /**
+     * A bid sitting more than this far under the best bid on its side is not posted ([MAX_BEHIND]). Novig fills the best bid first; Tj's export of 2026-10-11 (22,234 bids posted) had 3,370 bids 3+ ticks
+     * (1.5¢) behind the best bid and 4 of them filled (0.1%), against 1.5% of the 15,000 that led or sat level: they only added posts, cancels and Novig calls. 0 or less = no limit.
+     */
+    val maxBehind: Double = MAX_BEHIND,
 ) {
     /** The rules [line] is judged by: the tennis rules for an ATP or WTA line, else these. */
     fun forLine(line: MakerLine): MakerRules = if (tennis != null && line.league in TENNIS_LEAGUES) tennis else this
 
     companion object {
         val TENNIS_LEAGUES = setOf("ATP", "WTA")
+
+        /** [maxBehind]'s default: two ticks (1¢) of Novig's half-cent grid. */
+        const val MAX_BEHIND = 0.01
 
         /**
          * [refreshBeforeMs]'s default: a bid is re-posted from a fresher fair once it is this close to its end, so a scan that STARTS this long before the oldest bid's
@@ -512,6 +520,12 @@ object MakerQuote {
             val spread = all.max() - all.min()
             if (spread > rules.obscureAgreePoints + 1e-9) {
                 return skip("The sharp books and the blend are ${points(spread)} apart on this small-market line (they must be within ${points(rules.obscureAgreePoints)})")
+            }
+        }
+        // Too far behind the best bid to fill (see [MakerRules.maxBehind]): the bid would rest for its whole life and never reach a taker.
+        line.bestBid?.let { best ->
+            if (rules.maxBehind > 0.0 && best - price > rules.maxBehind + 1e-9) {
+                return skip("Priced ${points(best - price)} under the best bid, too far behind it to fill (more than ${points(rules.maxBehind)}): a smaller margin would climb")
             }
         }
         // A small-market bid stakes [MakerRules.obscureStake] of what a POPULAR bid on the line would (sized at the popular bid's own price: Kelly sized at the wider margin's lower
