@@ -639,7 +639,9 @@ class AutoBettorTest {
         val novig = FakeNovig()
         bettor(novig, placer = placer(novig, limits = BetLimits(100.0, 500.0, 0.01))).run(s, state(s))
         val cost = novig.last!!.let { (_, price, qty) -> qty * price * 0.01 }
-        assertTrue("about \$3.2 of contracts (the books' own fair), never CNO's \$6.25: $cost", cost in 3.0..3.25)
+        // The sample game is a day away, past 13 h: a Kelly stake keeps 40% of its size there (EvMath.leadScale, the 2026-10-11 export), so every figure here is 0.4 of its old value.
+        val far = com.tjshea.vigilant.engine.EvMath.LEAD_SCALE_FAR
+        assertTrue("about \$3.2 x 0.4 of contracts (the books' own fair), never CNO's \$6.25 x 0.4: $cost", cost in 3.0 * far..3.25 * far)
         // The veto on (the default): Kalshi, the sharpest prop book on the page, backs less (its own fair ~0.474, +2.9% at +117), so the stake is sized
         // on Kalshi's fair, about half (RESEARCH.md §72: never more edge than the sharp book backs).
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
@@ -647,13 +649,13 @@ class AutoBettorTest {
         val novigV = FakeNovig()
         bettor(novigV, placer = placer(novigV, limits = BetLimits(100.0, 500.0, 0.01))).run(withVeto, state(withVeto))
         val vetoCost = novigV.last!!.let { (_, price, qty) -> qty * price * 0.01 }
-        assertTrue("sized on Kalshi's own fair: $vetoCost", vetoCost in 2.9..3.15)
-        // 1/2 Kelly would be $25: Tj's maximum of $10 holds it.
-        val capped = settings { it.copy(autoBetStake = AutoBetStake.HALF_KELLY, bankroll = 1000.0, autoBetMaxStake = 10.0) }
+        assertTrue("sized on Kalshi's own fair: $vetoCost", vetoCost in 2.9 * far..3.15 * far)
+        // 1/2 Kelly would be about \$5 here (\$12.7 x 0.4): Tj's maximum of \$4 holds it.
+        val capped = settings { it.copy(autoBetStake = AutoBetStake.HALF_KELLY, bankroll = 1000.0, autoBetMaxStake = 4.0) }
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
         val novig2 = FakeNovig()
         bettor(novig2).run(capped, state(capped))
-        assertTrue(novig2.last!!.let { (_, price, qty) -> qty * price * 0.01 } in 9.5..10.0)
+        assertTrue(novig2.last!!.let { (_, price, qty) -> qty * price * 0.01 } in 3.5..4.0)
     }
 
     @Test
@@ -850,7 +852,7 @@ class AutoBettorTest {
         val r = bettor(novig).run(s, state(s))
         assertEquals(r.skipped.toString(), 1, r.placed.size)
         val bet = r.placed.single()
-        assertTrue("about 12 cents, not a dollar: ${bet.stake}", bet.stake in 0.09..0.15)
+        assertTrue("about 12 cents x 0.4 (the sample game is a day away: EvMath.leadScale), not a dollar: ${bet.stake}", bet.stake in 0.09 * 0.4..0.15 * 0.4)
         // One cent: one cent's worth of contracts (two at 46 cents).
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
         val penny = settings { it.copy(autoBetStake = AutoBetStake.CUSTOM, autoBetCustomStake = 0.01) }
@@ -944,8 +946,8 @@ class AutoBettorTest {
         // The same with a wallet of $3.10.
         runBlocking { app.container.tracker.all().forEach { app.container.tracker.delete(it.id) } }
         val novig2 = FakeNovig()
-        assertEquals(1, bettor(novig2, wallet = 3.10).run(s, state(s)).placed.size)
-        assertTrue("the remainder of the wallet, ${spent(novig2)}", spent(novig2) in 3.0..3.10)
+        assertEquals(1, bettor(novig2, wallet = 2.0).run(s, state(s)).placed.size)   // (the stake is about \$2.5 here: the sample game is a day away, 0.4 of a Kelly stake)
+        assertTrue("the remainder of the wallet, ${spent(novig2)}", spent(novig2) in 1.9..2.0)
     }
 
     @Test
