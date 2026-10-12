@@ -170,6 +170,10 @@ class SettingsFixesTest {
         assertNotNull(Shadowed.daysAhead(base.copy(startsWithinHours = 6, daysAhead = 7)))
         assertNull(Shadowed.daysAhead(base.copy(startsWithinHours = 0, daysAhead = 7)))
         assertNull(Shadowed.daysAhead(base.copy(startsWithinHours = 240, daysAhead = 7)))
+        // The reverse: a start window longer than Days ahead is cut at Days ahead, and Scanning (where the window is picked) says so.
+        assertNotNull(Shadowed.startsWithinCut(base.copy(startsWithinHours = 240, daysAhead = 7)))
+        assertNull(Shadowed.startsWithinCut(base.copy(startsWithinHours = 48, daysAhead = 7)))
+        assertNull(Shadowed.startsWithinCut(base.copy(startsWithinHours = 0, daysAhead = 2)))
     }
 
     // ---- (d) auto-bet: why it isn't running, with the tap that fixes it -----------------------------------------------------

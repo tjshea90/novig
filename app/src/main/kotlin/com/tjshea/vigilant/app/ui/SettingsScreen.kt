@@ -549,6 +549,7 @@ private fun ColumnScope.ScanningPage(s: ScanSettings, onUpdate: SettingsUpdate) 
             "Every list (+EV, CNO, Games and the widgets) shows only games starting within this window, and Vigilant's scan reads only these games. " +
                 "Games already under way still show when live games are on.",
         )
+        Shadowed.startsWithinCut(s)?.let { Warn(it, "startsWithinCut") }
     }
     // Live games (moved from the Feed's "Scan size (advanced)" in v0.89.35: which games are scanned is a Scanning choice).
     SwitchRow(
@@ -1856,6 +1857,12 @@ object Shadowed {
         if (!s.cnoOn || shown.isEmpty() || s.autoBetKinds.isEmpty()) return null
         return if (shown.none { it in s.autoBetKinds }) "None of these kinds is one the auto-bet places (Auto-bet tab › Kinds of bet to place), so it will place nothing from this list." else null
     }
+
+    /** "Games starting within" longer than Days ahead: the scan stops at Days ahead (the list's own window is still the longer one). Said where the window is picked. */
+    fun startsWithinCut(s: ScanSettings): String? =
+        if (AppBook.isNovig && s.startsWithinHours > s.daysAhead.coerceAtLeast(1) * 24)
+            "Scans read only ${s.daysAhead} day${if (s.daysAhead == 1) "" else "s"} ahead (Days ahead, under +EV feed & scan size), so games starting later than that are not scanned."
+        else null
 
     /** Days ahead past the start window: the window decides. */
     fun daysAhead(s: ScanSettings): String? =
