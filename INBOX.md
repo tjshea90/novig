@@ -6726,3 +6726,10 @@ The bet slip is still lagging. And the auto bet feature gave another error and s
 ```
 I now see the close button in the bet slip. Close the bet slip immediately automatically after I place the bet. Then send a notification of successful bet or any error
 ```
+
+## 2026-10-12T16:47:37Z
+```
+Make it so any and all resting bids are checked that they are still positive ev on every scan. This shouldn't cost more usage because it uses the scan already happening. If any resting bids no longer meet the bid criteria, whether it is no longer positive EV, a sharp book now vetoes it, etc, Immediately cancel that bid.
+
+For the star rating system, allow auto bets on the types of bets that are prevented by the new proven profit only setting, but lower their star rating in a way that is logical. Only allow these bets if the star minimum auto bet filter is enabled, allowing it to override the proven profit filter, but ensure that bets which have been negative historically are lowered on the star rating system
+```
