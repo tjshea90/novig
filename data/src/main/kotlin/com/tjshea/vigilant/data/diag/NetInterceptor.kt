@@ -72,9 +72,11 @@ class NetInterceptor(
         val ttfb = clock() - t0
         val status = response.code
         val limit = if (status == 429 || status == 403) response.header("Retry-After")?.let { "Retry-After: ${it.take(20)}" } else null
+        // What the host said it did not like (Tj's v0.89.34 file: 76 `/v3/public/catalog/events` calls refused with 400 and no hint why): the start of a 400's body, read without consuming it.
+        val note = if (status == 400 && events != null) runCatching { ProblemLog.clean(response.peekBody(NOTE_BYTES).string()).take(160) }.getOrNull()?.takeIf { it.isNotBlank() } else null
         val body = response.body
         if (status == 101 || body == null) {
-            finish(host, shape, status, ttfb, ttfb, 0, net, limit)
+            finish(host, shape, status, ttfb, ttfb, 0, net, limit, note)
             return response
         }
         val done = AtomicBoolean(false)
@@ -97,7 +99,7 @@ class NetInterceptor(
             }
 
             private fun end() {
-                if (done.compareAndSet(false, true)) finish(host, shape, status, ttfb, clock() - t0, bytes, net, limit)
+                if (done.compareAndSet(false, true)) finish(host, shape, status, ttfb, clock() - t0, bytes, net, limit, note)
             }
         }
         val buffered = counting.buffer()
@@ -109,13 +111,13 @@ class NetInterceptor(
         return response.newBuilder().body(wrapped).build()
     }
 
-    private fun finish(host: String, shape: String, status: Int, ttfb: Long, total: Long, bytes: Long, net: String?, limit: String?) {
+    private fun finish(host: String, shape: String, status: Int, ttfb: Long, total: Long, bytes: Long, net: String?, limit: String?, note: String? = null) {
         stats.record(host, shape, status, null, ttfb, total, bytes, net, limit = limit)
         val ev = events ?: return
         when {
             status == 429 -> ev.record("NET", Level.WARN, "$host$shape rate-limited (429${limit?.let { ", $it" } ?: ""})")
             status >= 500 -> ev.record("NET", Level.ERROR, "$host$shape server error $status after ${ttfb} ms")
-            status >= 400 -> ev.record("NET", Level.WARN, "$host$shape refused with $status after ${ttfb} ms")
+            status >= 400 -> ev.record("NET", Level.WARN, "$host$shape refused with $status after ${ttfb} ms" + (note?.let { ": $it" } ?: ""))
             total >= SLOW_MS -> ev.record("NET", Level.WARN, "$host$shape slow: ${total} ms for ${bytes / 1024} KB", ms = total)
         }
     }
@@ -123,6 +125,9 @@ class NetInterceptor(
     companion object {
         /** A call whose whole body took this long is an event of its own. */
         const val SLOW_MS = 8_000L
+
+        /** How much of a 400's body is read for the event line. */
+        const val NOTE_BYTES = 400L
 
         fun kindOf(e: IOException): String = when {
             e is UnknownHostException -> "dns"
