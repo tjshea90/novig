@@ -96,9 +96,11 @@ class NovigLiveCheckTest {
     fun `a live feed that never delivers says so, and what Novig said about it`() = runBlocking {
         novig()
         val silent = check(FakeFeed(afterMs = Long.MAX_VALUE), waitMs = 600).run()
-        assertTrue(silent.last(), silent.last().startsWith("Live feed: no book arrived in ") && silent.last().contains("one price at a time"))
+        val live = silent.first { it.startsWith("Live feed:") }
+        assertTrue(live, live.startsWith("Live feed: no book arrived in ") && live.contains("one price at a time"))
+        assertTrue(silent.last(), silent.last().startsWith("Best-bid feed (bbo): no market arrived in "))
         val refused = check(FakeFeed(afterMs = 0, problem = "Novig closed the live feed (1008 GEOLOCATION_EXPIRED)."), waitMs = 2_000).run()
-        assertTrue(refused.last(), refused.last().contains("Novig's side of it: Novig closed the live feed (1008 GEOLOCATION_EXPIRED)."))
+        assertTrue(refused.first { it.startsWith("Live feed:") }, refused.first { it.startsWith("Live feed:") }.contains("Novig's side of it: Novig closed the live feed (1008 GEOLOCATION_EXPIRED)."))
     }
 
     @Test
@@ -136,8 +138,10 @@ class NovigLiveCheckTest {
     @Test
     fun `the best-bid check says it is in use, what the feed's own comparison with the book found, and that the complete books followed`() = runBlocking {
         novig()
-        val feed = BboFeed(listOf("feed: best-bid feed (bbo) for screening, full book where depth is needed", "canary: 2 s ago: 3 of 3 markets' best bids matched the book"))
-        val lines = NovigLiveCheck(OkHttpClient(), json, signer(), feed = { feed }, publicBaseUrl = base(), waitMs = 3_000, samples = 2, watchCount = 3).run()
+        val feeds = ArrayList<BboFeed>()
+        val report = listOf("feed: best-bid feed (bbo) for screening, full book where depth is needed", "canary: 2 s ago: 3 of 3 markets' best bids matched the book")
+        val lines = NovigLiveCheck(OkHttpClient(), json, signer(), feed = { BboFeed(report).also { feeds += it } }, publicBaseUrl = base(), waitMs = 3_000, samples = 2, watchCount = 3).run()
+        val feed = feeds.last()
         val bbo = lines.last()
         assertTrue(bbo, bbo.startsWith("Best-bid feed (bbo): 3 of 3 markets after "))
         assertTrue(bbo, bbo.contains("in use (3 of 3 markets held as best bids)"))
@@ -150,8 +154,8 @@ class NovigLiveCheckTest {
     @Test
     fun `the best-bid check names a feed that gave bbo up, and why`() = runBlocking {
         novig()
-        val feed = BboFeed(listOf("feed: full book on every market: the best-bid feed was given up 4 s ago, the best-bid feed disagreed with the book (1 of 3 markets' best bids matched)", "canary: 3 s ago: 1 of 3 markets' best bids matched the book"), partial = false)
-        val bbo = NovigLiveCheck(OkHttpClient(), json, signer(), feed = { feed }, publicBaseUrl = base(), waitMs = 3_000, samples = 2, watchCount = 3).run().last()
+        val report = listOf("feed: full book on every market: the best-bid feed was given up 4 s ago, the best-bid feed disagreed with the book (1 of 3 markets' best bids matched)", "canary: 3 s ago: 1 of 3 markets' best bids matched the book")
+        val bbo = NovigLiveCheck(OkHttpClient(), json, signer(), feed = { BboFeed(report, partial = false) }, publicBaseUrl = base(), waitMs = 3_000, samples = 2, watchCount = 3).run().last()
         assertTrue(bbo, bbo.contains("GIVEN UP, back on the full book: the best-bid feed disagreed with the book"))
     }
 }
