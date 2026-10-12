@@ -177,7 +177,6 @@ class BoltLiveFeed(
         val games = entries.map { it.game }.distinct()
         val r = rules()
         if (games.isEmpty()) return "BoltOdds flags no game as in play right now (it carries only the leagues picked in Settings and tennis; ${board.summary().games} games are on its boards)"
-        val r = rules()
         fun companies(l: List<BoltBookGame>, within: Long) = l.filter { now - it.updatedAtMs <= within }.map { com.tjshea.vigilant.engine.BookCompany.of(it.sportsbook) }.distinct().size
         val perGame = entries.groupBy { it.game }.entries.sortedByDescending { companies(it.value, r.maxAgeMs * 6) }
         val best = perGame.firstOrNull()?.let { companies(it.value, r.maxAgeMs) } ?: 0
