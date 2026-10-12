@@ -1,0 +1,1164 @@
+
+    Documentation - BoltOdds
+                    BoltOdds
+                ☰
+             -->
+                Home
+                Pricing
+                Documentation
+                Contact
+                    Discord
+                    Sign Up
+                    Login
+                Account
+                Getting Started
+                    Introduction
+ -->
+                    Quick Start
+                    Authentication
+                API Reference
+                Odds API
+                    Connection
+                    Messages
+                    Odds Endpoints
+                    Rate Limits
+                Scores API
+                    Play by Play
+                    Live Scores
+                    Scores Endpoints
+                Parlay
+                    Parlay Pricing Engine
+                    Parlay Deeplinks
+                Examples
+                    Basic Usage
+                    Advanced Features
+                    React Integration
+ -->
+                Resources
+                    Troubleshooting
+                    FAQ
+ -->
+                    Support
+            Welcome to the complete guide for integrating and using BoltOdds. This documentation will help you get up and running quickly so you can access real-time sports betting odds.
+                Introduction
+                BoltOdds provides a persistent, full-duplex communication channel between your client and our servers.
+                Key Features
+                    Sub-millisecond latency for lightning-fast communication
+                    Automatic reconnection and connection management
+                    Built-in authentication and authorization
+                    Scalable infrastructure supporting millions of concurrent connections
+                    Comprehensive error handling and status reporting
+ -->
+                Quick Start
+                Get connected to the Odds API in just a few steps:
+                Step 1: Obtain Your API Key
+                First, sign up for an account and retrieve your API key. This should be sent to the email you signed up with. You'll need this for authentication. If you don't see it in your inbox, please check your spam/junk folder.
+                Step 2: Establish Connection
+async def run_client():
+    uri = "wss://spro.agency/api?key=YOUR_TOKEN"
+    while True:
+        try:
+            async with websockets.connect(uri, max_size=None) as websocket:
+                ack_message = await websocket.recv()
+                print(ack_message)
+                Step 3: Send Subscription Data
+                To see all the sports and sportsbooks you could subscribe to, see the GET request below. NOTE: sports and sportsbooks MUST be subscribed to in the exact format seen in the response from the GET request below. Any deviation will be ignored. If either of these subscription filters are left out, your subscription will default to all available options, in this case all sports and sportsbooks.
+                    GET https://spro.agency/api/get_info?key=YOUR_TOKEN
+                To see all the games you could subscribe to, see the GET request below. NOTE: games MUST be subscribed to in the exact format seen in the response from the GET request below. Any deviation will be ignored. If this subscription filter is left out, your subscription will default to all available options, in this case all games.
+                    GET https://spro.agency/api/get_games?key=YOUR_TOKEN
+                To see all the markets you could subscribe to, see the GET request below. NOTE: markets MUST be subscribed to in the exact format seen in the response from the GET request below. Any deviation will be ignored. If this subscription filter is left out, your subscription will default to all available options, in this case all markets.
+                    GET https://spro.agency/api/get_markets?key=YOUR_TOKEN&sports=YOUR_SPORTS&sportsbooks=YOUR_BOOKS
+                You have the option to add query parameters to this request, specifically "sportsbooks" and "sports". This allows you to specify a certain book, sport, or a combo of each where you want to see the markets available. If your request does not specify these parameters, it will return all markets for all sportsbooks and all sports. YOUR_SPORTS can be a comma-separated string if you want to get the markets for multiple sports in one request. The same goes for YOUR_BOOKS. For example:
+                    GET https://spro.agency/api/get_markets?key=YOUR_TOKEN&sports=MLB,NHL,US Open (M)&sportsbooks=draftkings,betmgm
+                To see an initial state of all odds data, see the GET request below. This endpoint is intended to retrieve the initial state when establishing a connection or reconnecting, after which the wss should be used to receive real-time updates and deltas. If no subscription filter is provided, the response will default to all available options. This endpoint is not intended to be polled continuously.
+                    GET https://spro.agency/api/snapshot?key=YOUR_TOKEN
+                You have the option to add query parameters to this request. This allows you to specify a certain book, sport, game, market or a combo of each where you want to see the lines available. If your request does not specify these parameters, it will return all lines for all sportsbooks, sports, games and markets. For example:
+URL = 'https://spro.agency/api/snapshot?key=YOUR_TOKEN'
+subscribe_message = {
+    "sports": ["NBA", "MLB", "Wimbledon (M)", 'WNBA'],
+    "sportsbooks": ["draftkings", "betmgm"],
+    "games":["Las Vegas Aces vs Los Angeles Sparks, 2026-09-22, 1602a0f7ae48"],
+    "markets":["Moneyline", "Spread"]
+}
+data = requests.get(URL, params=subscribe_message)
+                If you don't want to filter for a certain category, just don't include its key in your subscription filters. For example, if you don't want to specify a game(s) to sub to, don't include the 'games' key in the subscription filters.
+subscribe_message = {
+    "action": "subscribe",
+    "filters": {
+        "sports": ["NBA", "MLB", "Wimbledon (M)"],
+        "sportsbooks": ["draftkings", "betmgm"],
+        "games":["San Francisco Giants vs Philadelphia Phillies, 2025-07-07, 09", "Corinthians vs Bragantino, 2025-07-13, 06"],
+        "markets":["Moneyline", "Spread"]
+    }
+}
+await websocket.send(json.dumps(subscribe_message))
+# You are now connected and subscribed to your specified stream of data
+while True:
+    message = await websocket.recv()
+                Authentication
+                All WebSocket connections must be authenticated using your API key.
+                    Security Note
+                    Always use WSS (WebSocket Secure) in production environments. Never expose your API key in client-side code for public applications.
+ -->
+                Authentication Flow
+                    Establish WebSocket connection using a valid API key.
+                    Once ack_message is received, you have been validated
+                Connection Management
+                Automatic Reconnection
+async def run_client():
+    uri = "wss://spro.agency/api?key=YOUR_TOKEN"
+    while True:
+        try:
+            async with websockets.connect(uri, max_size=None) as websocket:
+                ack_message = await websocket.recv()
+                print(ack_message)
+                subscribe_message = {
+                    "action": "subscribe",
+                    "filters": {
+                        "sports": ["NBA", "MLB", "Wimbledon (M)"],
+                        "sportsbooks": ["draftkings", "betmgm"],
+                        "games":["San Francisco Giants vs Philadelphia Phillies, 2025-07-07, 09", "Corinthians vs Bragantino, 2025-07-13, 06"],
+                        "markets":["Moneyline", "Spread"]
+                    }
+                }
+                await websocket.send(json.dumps(subscribe_message))
+                # You are now connected and subscribed to your specified stream of data
+                while True:
+                    message = await websocket.recv()
+        except websockets.ConnectionClosed as e:
+            print("Connection closed — reason:", e)
+            print('Reconnecting...')
+            await asyncio.sleep(5)
+            continue
+        #can add other exception handling as needed
+                Message Format
+                All messages sent through the WebSocket are JSON formatted and follow a consistent structure.
+                Message Types
+                The foundation of all messages over the wss is an action which will tell you what the message entails. These are the actions BoltOdds sends which you could expect to receive. Please note that message format can be changed or modified in the future.
+                    socket_connected - Initial authentication successfull
+{'action': 'socket_connected'}
+                    game_update - All odds for a specific game have been updated
+{
+    "timestamp": "2025-07-23T19:46:10.023175+00:00", #UTC
+    "action": "game_update",
+    "data": {
+        "sport": "MLB",
+        "sportsbook": "ballybet",
+        "game": "New York Mets vs Los Angeles Angels, 2025-07-23, 01",
+        "home_team": "New York Mets",
+        "away_team": "Los Angeles Angels",
+        "info": {
+            "id": 1022036664,
+            "game": "New York Mets vs Los Angeles Angels, 2025-07-23, 01",
+            "when": "2025-07-23, 01:09 PM",
+            "link": "https://play.ballybet.ca/sports#event/1022036664"
+        },
+        "outcomes": {
+            "New York Mets Moneyline": {
+                "odds": "-3333",
+                "link": "https://play.ballybet.ca/sports#event/1022036664?coupon=pickType|3815533797|wagerAmounts|replace", #deep link
+                "outcome_name": "Moneyline",
+                "outcome_line": null,
+                "outcome_over_under": null,
+                "outcome_target": "New York Mets"
+            },
+            "Los Angeles Angels Moneyline": {
+                "odds": "+900",
+                "link": "https://play.ballybet.ca/sports#event/1022036664?coupon=pickType|3815533801|wagerAmounts|replace", #deep link
+                "outcome_name": "Moneyline",
+                "outcome_line": null,
+                "outcome_over_under": null,
+                "outcome_target": "Los Angeles Angels"
+            },
+            ... #all other lines offered
+        }
+    }
+}
+                    game_removed - Entire game removed (finished, suspended, etc)
+{
+    "timestamp": "2025-07-23T19:55:09.062375+00:00", #UTC
+    "action": "game_removed",
+    "data": {
+        "sport": "MLB",
+        "sportsbook": "ballybet",
+        "game": "New York Mets vs Los Angeles Angels, 2025-07-23, 01",
+        "home_team": "New York Mets",
+        "away_team": "Los Angeles Angels",
+        "info": {
+            "id": 1022036664,
+            "game": "New York Mets vs Los Angeles Angels, 2025-07-23, 01",
+            "when": "2025-07-23, 01:09 PM",
+            "link": "https://play.ballybet.ca/sports#event/1022036664"
+        },
+        "outcomes": {}
+    }
+}
+                    game_added - New game added to sportsbook
+ -->
+                    line_update - A line update. If odds provided are None or '', it means there are no odds available for this line i.e its currently suspended, deleted etc
+{
+    "timestamp": "2025-07-23T19:46:10.023175+00:00", #UTC
+    "action": "line_update",
+    "data": {
+        "sport": "MLB",
+        "sportsbook": "ballybet",
+        "game": "New York Mets vs Los Angeles Angels, 2025-07-23, 01",
+        "home_team": "New York Mets",
+        "away_team": "Los Angeles Angels",
+        "info": {
+            "id": 1022036664,
+            "game": "New York Mets vs Los Angeles Angels, 2025-07-23, 01",
+            "when": "2025-07-23, 01:09 PM",
+            "link": "https://play.ballybet.ca/sports#event/1022036664"
+        },
+        "outcomes": {
+            "New York Mets Moneyline": {
+                "odds": "-1250", #if line is suspended, closed, unavailable, this will be None or ''
+                "link": "https://play.ballybet.ca/sports#event/1022036664?coupon=pickType|3815533797|wagerAmounts|replace", #deep link
+                "outcome_name": "Moneyline",
+                "outcome_line": null,
+                "outcome_over_under": null,
+                "outcome_target": "New York Mets"
+            }
+        }
+    }
+}
+sport_clear - All games for specified sport from specified book have been cleared. This may happen in the case of connection drops on our backend
+{
+    "timestamp": "2025-07-23T19:58:43.086382+00:00", #UTC
+    "action": "sport_clear",
+    "data": {
+        "sport": 'NBA',
+        "sportsbook": "ballybet",
+        "game": {},
+        "home_team": {},
+        "away_team": {},
+        "info": {},
+        "outcomes": {}
+    }
+}
+                    book_clear - All games for specified book have been cleared. This may happen in the case of connection drops on our backend
+{
+    "timestamp": "2025-07-23T19:58:43.086382+00:00", #UTC
+    "action": "book_clear",
+    "data": {
+        "sport": {},
+        "sportsbook": "ballybet",
+        "game": {},
+        "home_team": {},
+        "away_team": {},
+        "info": {},
+        "outcomes": {}
+    }
+}
+                    ping - Keep-alive message
+{"action": "ping"}
+                error - Something went wrong. Message will be accompanied with a description of the issue.
+{"action": "error", "message": "Re-subscription rate limit hit. Please wait 5 seconds before re-subscribing."}
+                subscription_updated - Ack message that your subscription filters were successfully changed.
+{"action": "subscription_updated", "message": "You have successfully updated your subscription filters."}
+                Resubscribing
+                If you want to update your subscription filters without terminating your connection, simply send a subscription message in the same format you used when you initially subscribed. Your subscription filters will be updated, and you will start receiving data according to your new filters.
+                Odds Endpoints
+                These endpoints provide access to supporting information, as well as additional odds-related data beyond your subscription filters. Use them to retrieve specialized information such as parlays, boosts, or sportsbook-specific offerings. Note: Access to these endpoints may be limited based on your plan
+                GET /api/snapshot
+                This endpoint returns an initial state of all lines and odds data according to your subscription parameters.
+                    GET https://spro.agency/api/snapshot?key=YOUR_TOKEN
+[
+    {
+        "timestamp": "2025-07-23T19:45:03.048958+00:00", #UTC
+        "action": "initial_state",
+        "data": {
+            "sport": "MLB",
+            "sportsbook": "ballybet",
+            "game": "New York Mets vs Los Angeles Angels, 2025-07-23, 01",
+            "home_team": "New York Mets",
+            "away_team": "Los Angeles Angels",
+            "info": {
+                "id": 1022036664,
+                "game": "New York Mets vs Los Angeles Angels, 2025-07-23, 01",
+                "when": "2025-07-23, 01:09 PM",
+                "link": "https://play.ballybet.ca/sports#event/1022036664"
+            },
+            "outcomes": {
+                "New York Mets Moneyline": {
+                    "odds": "-10000",
+                    "link": "https://play.ballybet.ca/sports#event/1022036664?coupon=pickType|3815533797|wagerAmounts|replace", #deep link
+                    "outcome_name": "Moneyline",
+                    "outcome_line": null,
+                    "outcome_over_under": null,
+                    "outcome_target": "New York Mets"
+                },
+                "Los Angeles Angels Moneyline": {
+                    "odds": "+3300",
+                    "link": "https://play.ballybet.ca/sports#event/1022036664?coupon=pickType|3815533801|wagerAmounts|replace", #deep link
+                    "outcome_name": "Moneyline",
+                    "outcome_line": null,
+                    "outcome_over_under": null,
+                    "outcome_target": "Los Angeles Angels"
+                },
+                ... #all other lines offered
+            }
+        }
+    }
+    ...
+]
+                GET /api/get_info
+                This endpoint returns information regarding supported leagues and sportsbooks.
+                    GET https://spro.agency/api/get_info?key=YOUR_TOKEN
+{
+  "sports": [
+    "UFC",
+    "Boxing",
+    "NBA",
+    ...
+  ],
+  "sportsbooks": [
+    "draftkings",
+    "neobet",
+    ...
+  ]
+}
+                GET /api/get_games
+                This endpoint returns information regarding all supported events/fixtures.
+                    GET https://spro.agency/api/get_games?key=YOUR_TOKEN
+{
+  "Damian Pinas vs Wes Schultz, 2026-02-28, 05": {
+    "when": "2026-02-28, 05:15 PM",
+    "game": "Damian Pinas vs Wes Schultz, 2026-02-28, 05",
+    "orig_teams": "Damian Pinas vs Wes Schultz",
+    "universal_id": "af418396d57c",
+    "sport": "UFC"
+  },
+  "Erik Silva vs Francis Marshall, 2026-02-28, 05": {
+    "when": "2026-02-28, 05:45 PM",
+    "game": "Erik Silva vs Francis Marshall, 2026-02-28, 05",
+    "orig_teams": "Erik Silva vs Francis Marshall",
+    "universal_id": "144fb6386df6",
+    "sport": "UFC"
+  },
+  ...
+}
+                GET /api/get_markets
+                This endpoint returns information regarding all supported markets by sportsbook and league.
+                    GET https://spro.agency/api/get_markets?key=YOUR_TOKEN
+{
+  "draftkings": {
+    "UFC": [
+      "Fight To Not Start R3",
+      "Fight To Not Go Distance",
+      "To Win By KO, TKO, DQ",
+      ... #more markets
+        ],
+    ..., #more leagues
+  }
+  ..., #more sportsbooks
+}
+                GET /api/get_parlays
+                This endpoint returns parlay betting data for a specific sportsbook.
+                    GET https://spro.agency/api/get_parlays?key=YOUR_TOKEN&sportsbooks=sportsbook
+                You can use the /get_info endpoint (described above) to retrieve a list of supported sportsbooks and view the correct formatting for the sportsbooks parameter.
+                This endpoint will return a json object with parlay data for the specified sportsbook if its a sportsbook we are collecting parlay data for.
+[
+    {
+        "odds":"+1746",
+        "total_bets":3238,
+        "type":"SGP_PLUS",
+        "legs":{
+            "Auston Matthews Over 0.5 Goals":{
+                "game":"Toronto Maple Leafs vs New York Rangers, 2025-10-16, 07",
+                "sport":"NHL",
+                "universal_id":"ac792a4acb18",
+                "outcome_name":"Goals",
+                "outcome_line":"0.5",
+                "outcome_over_under":"Over",
+                "outcome_target":"Auston Matthews"
+            },
+            "Toronto Maple Leafs Moneyline":{
+                "game":"Toronto Maple Leafs vs New York Rangers, 2025-10-16, 07",
+                "sport":"NHL",
+                "universal_id":"ac792a4acb18",
+                "outcome_name":"Moneyline",
+                "outcome_line":null,
+                "outcome_over_under":null,
+                "outcome_target":"Toronto Maple Leafs"
+            },
+                "Toronto Blue Jays Moneyline":{
+                "game":"Seattle Mariners vs Toronto Blue Jays, 2025-10-16, 08",
+                "sport":"MLB",
+                "universal_id":"762ce180a3ef",
+                "outcome_name":"Moneyline",
+                "outcome_line":null,
+                "outcome_over_under":null,
+                "outcome_target":"Toronto Blue Jays"
+            },
+                "Vladimir Guerrero Jr. Over 0.5 Home Runs":{
+                "game":"Seattle Mariners vs Toronto Blue Jays, 2025-10-16, 08",
+                "sport":"MLB",
+                "universal_id":"762ce180a3ef",
+                "outcome_name":"Home Runs",
+                "outcome_line":"0.5",
+                "outcome_over_under":"Over",
+                "outcome_target":"Vladimir Guerrero Jr."
+            }
+        }
+    }
+    ...
+]
+                Rate Limits
+                Rate limits are subject to change. If rate limits are exceed, your request will be rejected.
+                WebSocket Connections
+                WebSocket connections are limited to 12 per minute per IP address.
+                GET Endpoints
+                Requests are limited to 12 per minute per IP address. You can make up to 3 requests in quick succession before the rate limit is enforced.
+                GET /api/snapshot
+                Requests are limited to 6 per minute per IP address. Each API key is also limited to a certain number of tokens per 24-hour period. Larger requests use more tokens. Smaller requests use fewer. Number of tokens per API key is subject to change.
+                Strategies to Avoid Rate Limits
+                    Avoid a high frequency of requests to endpoints where data isn't updated frequently (sports, games, etc)
+                    don't rely on GET endpoints for updating odds data. That's what our WebSockets for!
+                 -->
+                Play-by-Play
+                    The Play-by-Play feed provides real-time updates for live games, including scoring events, stats, turnovers, fouls, and other key moments. 
+                    This allows you to track games as they happen and build live dashboards, alerts, or analytics tools.
+                How To Use
+                In order to connect and start receiving live in-game updates from BoltOdds Play-by-Play, you need to establish a connection to this endpoint:
+                    wss://spro.agency/api/playbyplay?key=YOUR_TOKEN
+                    This feature is available to Trial and Custom users. 
+                    Once you receive a socket_connected message, you can send a subscription message containing the games you want to receive updates for.
+subscribe_message = 
+{
+    "action": "subscribe",
+    "filters": 
+    {
+        "games":["Houston Texans vs Jacksonville Jaguars, 2025-11-09, 01", 
+                "New York Jets vs Cleveland Browns, 2025-11-09, 01"
+        ],
+    }
+}
+                To view all available games and confirm the correct naming format, make a GET request to the following endpoint:
+                    GET https://spro.agency/api/get_games?key=YOUR_TOKEN
+                Only live games will return play-by-play updates.
+                Message Format
+                Messages vary based on several factors such as the sport, type of play, and game context. Play-by-play updates are available over a few different streams, defined by the stream key. Message format, content, latency etc. will vary slightly based on the stream.
+                Stream 1
+                    When you first connect, you will receive a few initial messages:
+                    1) current_state – Provides the current state of the game you're subscribed to, including clock time, field position (if applicable), score, and more.
+{
+    'stream':1,
+    'action': 'current_state', 
+    'event': 'Buffalo Bills vs Cincinnati Bengals, 2025-12-07', 
+    'universal_id': '26dbab0e7ade', 
+    'league':'NFL',
+    'game_info': 
+    {
+        'period': 3, 
+        'clock': 631, 
+        'game_start': '2025-12-07T18:00:00Z', 
+        'score': 
+        {
+            'home_team': 'Buffalo Bills', 
+            'home_score': 11, 
+            'away_team': 'Cincinnati Bengals', 
+            'away_score': 21
+        }
+    }, 
+    'field_state': 
+    {
+        'possession': 'home', 
+        'down': 3, 
+        'yardline': 35, 
+        'field_side': 'away', 
+        'timeouts': 
+        {
+            'home': 3, 
+            'away': 3
+        }
+    }
+}
+                2) stats – Provides an updated snapshot of multiple key stats as the game progresses.
+{
+    'stream': 1, 
+    'action': 'stats', 
+    'event': 'Buffalo Bills vs Cincinnati Bengals, 2025-12-07', 
+    'universal_id': '26dbab0e7ade', 
+    'league':'NFL',
+    'state': '', 
+    'play_info': 
+    {
+        'id': None, 
+        'away_team_stats_cons_nonscoring_drv': 0, 
+        'away_team_stats_cons_scoring_drv': 0, 
+        'away_team_stats_first_downs': 10, 
+        'away_team_stats_for_loss': 0, 
+        'away_team_stats_fourth_down_conv': 0, 
+        'away_team_stats_lng_td': 17, 
+        'away_team_stats_pen': 10, 
+        'away_team_stats_pen_yds': 70, 
+        'away_team_stats_punt': 2, 
+        'away_team_stats_td_yds': 25, 
+        'away_team_stats_third_down_conv': 1, 
+        'away_team_stats_two_pt_conv_att': 0, 
+        'away_team_stats_two_pt_conv_made': 0, 
+        'home_team_stats_cons_nonscoring_drv': 0, 
+        'home_team_stats_cons_scoring_drv': 0, 
+        'home_team_stats_first_downs': 13, 
+        'home_team_stats_for_loss': 3, 
+        ...
+    }, 
+    'play_start': '', 
+    'play_end': '', 
+    'action_id': 'AZsQdbI-AAC3joRjm07yXQ=='
+}
+                3) last_play – Provides the most recent play that occurred in the game.
+{
+    'stream':1,
+    'action': 'pass_that_gains_yards', 
+    'event': 'Buffalo Bills vs Cincinnati Bengals, 2025-12-07', 
+    'universal_id': '26dbab0e7ade', 
+    'league':'NFL',
+    'state': 'last_play', 
+    'play_info': 
+    {
+        'receiver': 
+        {
+            'full_name': 'James Cook'
+        }, 
+        'goal_to_go': False, 
+        'passer': 
+        {
+            'full_name': 'Josh Allen'
+        }, 
+        'drive_number': 5, 
+        'net_yards': 5, 
+        'play_number': 7, 
+        'tackler_1': 
+        {
+            'full_name': None
+        }
+    }, 
+    'play_start': 
+    {
+        'down': 2, 
+        'side': 'away', 
+        'possession': 'home', 
+        'yardline': 40, 
+        'distance': 7
+    }, 
+    'play_end': 
+    {
+        'down': 3, 
+        'side': 'away', 
+        'possession': 'home', 
+        'yardline': 35, 
+        'distance': 2
+    }, 
+    'action_id': 'AZr6VN81AABCouuXe-zjzQ=='
+}
+            Ongoing messages will be new_play and stats. new_play actions contain updates such as play details, player information, or field location. stats actions contain updated game statistics as the match progresses.
+{
+    'stream':1,
+    'action': 'rush_that_gains_yards', 
+    'event': 'New York Jets vs Miami Dolphins, 2025-12-07', 
+    'universal_id': 'e6251db7dbec', 
+    'league':'NFL',
+    'state': 'new_play', 
+    'play_info': 
+    {
+        'goal_to_go': False, 
+        'drive_number': 9, 
+        'net_yards': 1, 
+        'play_number': 1
+    }, 
+    'play_start': 
+    {
+        'down': 1, 
+        'side': 'away', 
+        'possession': 'away', 
+        'yardline': 7, 
+        'distance': 10
+    }, 
+    'play_end': 
+    {
+        'down': 2, 
+        'side': 'away', 
+        'possession': 'away', 
+        'yardline': 8, 
+        'distance': 9
+    }, 
+    'action_id': 'AZr6ZcXuAAAcrGO3LfBQGg=='
+}
+            Stream 2
+                When you first connect, you'll receive two messages. The first containing the most recent 10 plays in the game and the second a current snapshot of the game's stats. As the game develops, ongoing messages will follow the same format.
+            1) new_play
+{
+    'stream': 2, 
+    'action': 'new_play', 
+    'event': 'Houston Rockets vs Los Angeles Clippers, 2025-12-11, 08', 
+    'universal_id': '08a0bc661896', 
+    'league':'NBA',
+    'state': 'new_play', 
+    'play_info': 
+    [
+        {
+            'clock': '00:00', 
+            'description': 'End of 3rd Quarter.', 
+            'isEndOfPeriod': True, 
+        },
+        ...
+    ], 
+    'play_start': '', 
+    'play_end': '', 
+    'score': 
+    {
+        'home': 80, 
+        'away': 82
+    }
+}
+            2) stats
+{
+    'stream': 2, 
+    'action': 'stats', 
+    'event': 'Houston Rockets vs Los Angeles Clippers, 2025-12-11, 08', 
+    'universal_id': '08a0bc661896', 
+    'league':'NBA',
+    'state': '', 
+    'play_info': 
+    {
+        'game': 
+        {
+            'threePointsAtt': 54, 
+            'rebounds': 55, 
+            'offensiveRebounds': 20, 
+            'defensiveRebounds': 35, 
+            'twoPointsAtt': 66, 
+            'personalFouls': 25, 
+            'freeThrowsAtt': 28, 
+            'freeThrowsMade': 23, 
+            'points': 162, 
+            ...
+        }, 
+        'team': 
+        {
+            'away': 
+            {
+                'threePointsAtt': 29, 
+                'rebounds': 19, 
+                'offensiveRebounds': 5, 
+                'personalFouls': 12
+                ...
+            }, 
+            'home': 
+            {
+                'rebounds': 36, 
+                'defensiveRebounds': 21, 
+                'twoPointsAtt': 39, 
+                'offensiveRebounds': 15, 
+                ...
+            }
+        }
+    }, 
+    'play_start': '', 
+    'play_end': '', 
+    'action_id': ''
+}
+            Stream 3
+                            When you first connect, you'll receive two messages. The first containing the most recent 5 plays in the game and the second a current snapshot of the game's stats. As the game develops, ongoing messages will follow the same format.
+                        1) new_play
+            {
+                'stream': 3, 
+                'action': 'new_play', 
+                'event': 'Sheffield vs Hull City, 2025-12-26, 10', 
+                'universal_id': 'd8b78ad82391', 
+                'league':'EFL Championship',
+                'state': 'new_play', 
+                'play_info': 
+                [
+                    {
+                        'id': '480', 
+                        'type': 'GoalKick', 
+                        'subType': '', 
+                        'actionDetails': {}, 
+                        'gameTime': '01:06:23', 
+                        'team': 'Hull City'
+                    }, 
+                    {
+                        'id': '479', 
+                        'type': 'DangerStateChanged', 
+                        'subType': 'Safe', 
+                        'actionDetails': {'state': 'Safe'}, 
+                        'gameTime': '01:06:22', 
+                        'team': 'Hull City'
+                    }, 
+                        ...
+                ], 
+                'play_start': '', 
+                'play_end': '', 
+                'score': 
+                {
+                    'home': 2, 
+                    'away': 2
+                }
+            }
+                        2) stats
+            {
+                'stream': 3, 
+                'action': 'stats', 
+                'event': 'Sheffield vs Hull City, 2025-12-26, 10', 
+                'universal_id': 'd8b78ad82391',
+                'league':'EFL Championship',
+                'state': '', 
+                'play_info': 
+                {
+                    'game': 
+                    [
+                        {
+                            'name': 'POSSESSIONS', 'home': '48', 'away': '52'
+                        }, 
+                        {
+                            'name': 'ATTACKS', 'home': '67', 'away': '53'
+                        }, 
+                        {
+                            'name': 'DANGEROUS_ATTACK', 'home': '41', 'away': '43'
+                        }, 
+                        {
+                            'name': 'SHOTS', 'home': '0/3', 'homePercentage': 0, 'away': '4/7', 'awayPercentage': 57
+                        },
+                        ...
+                    ]
+                }, 
+                'play_start': '', 
+                'play_end': '', 
+                'action_id': ''
+            }
+            Stream 4
+                This stream feeds you the most current play in the game as it happens. There is currently no archive of past plays on this stream, nor a continuous stream of box score updates.
+            1) new_play
+{
+    'stream': 4, 
+    'action': 'new_play', 
+    'event': 'Portland Trail Blazers vs Dallas Mavericks, 2025-12-29, 10', 
+    'universal_id': 'af76659e4344', 
+    'home': 'Portland Trail Blazers', 
+    'away': 'Dallas Mavericks', 
+    'league': 'NBA', 
+    'state': 'new_play', 
+    'play_info': 
+    [
+    {
+        'type': 'attempt_missed', 
+        'team': 'home', 
+        'points': 3, 
+        'seconds': 200, 
+        'name': 'Attempt missed', 
+        'X': 73, 
+        'Y': 83, 
+        'time': 4
+    }
+    ], 
+    'score': {'home': 8, 'away': 9}
+}
+Resubscribing
+            If you want to update your subscription filters without terminating your connection, simply send a subscription message in the same format you used when you initially subscribed. Your subscription filters will be updated, and you will start receiving data according to your new filters.
+            User Info
+            If you want to verify which games you're currently subscribed to on the playbyplay feed, make a GET request to the following endpoint:
+                    GET https://spro.agency/api/playbyplay/user?key=YOUR_TOKEN
+            Useful for verifying a subscription went through, or checking how many of your allotted games you're using.
+                Live Scores
+                The Live Scores feed provides real-time score updates for live games. Depending on your use case, this feed could be used in place of the play-by-play feed or in parallel.
+                How To Use
+                In order to connect and start receiving live in-game updates from BoltOdds Live Scores, you need to establish a connection to this endpoint:
+                    wss://spro.agency/api/livescores?key=YOUR_TOKEN
+                    This feature is available to Trial and Custom users. 
+                    Once you receive a socket_connected message, you can send a subscription message containing the games you want to receive updates for.
+subscribe_message = 
+{
+    "action": "subscribe",
+    "filters": 
+    {
+        "games":["Houston Texans vs Jacksonville Jaguars, 2025-11-09, 01", 
+                "Georgia Yellow Jackets vs Georgia Panthers, 2026-02-24, 04"
+        ],
+    }
+}
+                To view all available games and confirm the correct naming format, make a GET request to the following endpoint:
+                    GET https://spro.agency/api/get_games?key=YOUR_TOKEN
+                Only live games will return live score updates.
+                Message Format
+                Message format will vary slightly from league to league.
+{
+    'action': 'match_update', 
+    'game': 'Georgia Yellow Jackets vs Georgia Panthers, 2026-02-24, 04', 
+    'universal_id': '469e868dfa5b', 
+    'home': 'Georgia Yellow Jackets', 
+    'away': 'Georgia Panthers', 
+    'designation': {'A': 'home', 'B': 'away'}, 
+    'state': {
+        'preMatch': False, 
+        'matchCompleted': False, 
+        'out': 0, 
+        'inning': 5, 
+        'runs': {'A': 2, 'B': 0}, 
+        'strike': 1, 
+        'ball': 0, 
+        'base1': False, 
+        'base2': True, 
+        'base3': True, 
+        'topOfInning': True, 
+        'extraInningsRuns': {'A': 0, 'B': 0}, 
+        'inningScores': {'1': {'A': 2, 'B': 0}, '2': {'A': 0, 'B': 0}, '3': {'A': 0, 'B': 0}, '4': {'A': 0, 'B': 0}, '5': {'A': 0, 'B': 0}}, 
+        'matchPeriod': ['BaseballMatchPeriod', 'AT_TOP_5TH_INNING'], 
+        'matchNumberOfInnings': 0, 
+        'clockStatus': 'SET_PERIOD_END', 
+        'totalRunsForTeamA': 2, 
+        'totalRunsForTeamB': 0, 
+        'clockRunning': False
+    }
+}
+            Resubscribing
+            If you want to update your subscription filters without terminating your connection, simply send a subscription message in the same format you used when you initially subscribed. Your subscription filters will be updated, and you will start receiving data according to your new filters.
+            User Info
+            If you want to verify which games you're currently subscribed to on the livescores feed, make a GET request to the following endpoint:
+                    GET https://spro.agency/api/livescores/user?key=YOUR_TOKEN
+            Useful for verifying a subscription went through, or checking how many of your allotted games you're using.
+                Scores Endpoints
+                Scores API endpoints can be used to retrieve additional fixture related information, including things like box scores, live and historical results, market, and settlement data.
+                Box Scores
+                The Box Scores endpoint provides live game statistics, including full team and player box scores. In order to retrieve box score data, make a POST request to the following endpoint:
+                    POST https://spro.agency/api/boxscores?key=YOUR_TOKEN
+                    Your request must include one or more games in the body and be passed in the following format:
+{
+    'games': [
+    'San Jose State Spartans vs Long Beach State 49ers, 2025-12-09, 10',
+    ...
+    ]
+}
+                To view all available games and confirm the correct naming format, make a GET request to the following endpoint:
+                    GET https://spro.agency/api/get_games?key=YOUR_TOKEN
+                Only live or completed games will return box score data. This feature is available to Trial and Custom users. If no box scores are available for a certain game, nothing will be returned.
+                Example
+import requests
+import json
+games = 
+{
+    'games':
+    [
+        'Tampa Bay Buccaneers vs Atlanta Falcons, 2025-12-11, 08'
+    ]
+}
+x = requests.post('https://spro.agency/api/boxscores?key=YOUR_TOKEN', json=games)
+                Response
+{
+    'Tampa Bay Buccaneers vs Atlanta Falcons, 2025-12-11, 08': 
+    {
+        'game': 
+        {
+            'scorePerPeriod': 
+            {
+                'Q1': {'home': 7, 'away': 0}, 
+                'Q2': {'home': 6, 'away': 14}, 
+                'Q3': {'home': 0, 'away': 0}
+            }, 
+            'location': '', 
+            'clock': 'Halftime', 
+            'timeoutsTotal': 3, 
+            'timeoutsRemaining': {'home': 3, 'away': 3}, 
+            'isRedZone': False, 
+            'possession': 'away', 
+            'home': 13, 
+            'away': 14
+        }, 
+        'players': 
+        [
+            {
+                'player': 
+                {
+                    'player_name': 'Kirk Cousins', 
+                    'player_number': '18', 
+                    'player_position': 'Quarterback'
+                }, 
+                'stats': 
+                {
+                    'passingComb': '12/16', 
+                    'passYards': '156', 
+                    'passYardsLong': '36', 
+                    'passTds': '2', 
+                    'passInts': '0', 
+                    'passSacks': '0'
+                }
+            }, 
+            ...
+        ]
+    }
+}
+                Match Stats
+                The Match Stats endpoint provides detailed game stats. In order to retrieve match stats data, make a POST request to the following endpoint:
+                    POST https://spro.agency/api/match_stats?key=YOUR_TOKEN
+                    Your request must include one or more games in the body and be passed in the following format:
+{
+    'games': [
+    'Jessica Bouzas Maneiro vs Magdalena Frech, 2026-02-26, 03',
+    ...
+    ]
+}
+                To view all available games and confirm the correct naming format, make a GET request to the following endpoint:
+                    GET https://spro.agency/api/get_games?key=YOUR_TOKEN
+                This feature is available to Trial and Custom users. If match info is not available for a certain game, nothing will be returned.
+                Example
+import requests
+import json
+games = 
+{
+    'games':
+    [
+        'Jessica Bouzas Maneiro vs Magdalena Frech, 2026-02-26, 03'
+    ]
+}
+x = requests.post('https://spro.agency/api/match_stats?key=YOUR_TOKEN', json=games)
+                Response
+{
+    'Jessica Bouzas Maneiro vs Magdalena Frech, 2026-02-26, 03': {
+        'doc': 
+        [{
+            'event': 'match_detailsextended', 
+            '_dob': 1772139461, 
+            '_maxage': 10, 
+            'data': {
+                '_doc': 'details', 
+                '_matchid': 69079420, 
+                'teams': {'home': 'Bouzas Maneiro, Jessica', 'away': 'Frech, Magdalena'}, 
+                'index': [132, 139, 136, 134, 'gameswon', 143, 141, 1410, 145, 1188, 137, 138, 1189, 1745], 
+                'values': {'132': {'name': 'Double Faults', 'value': {'home': 1, 'away': 1}}, '134': {'name': 'Max Points in a Row', 'value': {'home': 3, 'away': 7}}, '136': {'name': 'Points won', 'value': {'home': 25, 'away': 39}}, '137': {'name': '1st Serve Pts. Won', 'value': {'home': '8/9/17', 'away': '12/8/20'}},...}
+            }
+        }], 
+        'types': {'130': 'Aces', '132': 'Double Faults', '139': 'Break Points Won', '136': 'Points won', '134': 'Max Points in a Row', 'gameswon': 'Games won',...}
+    }
+}
+                Match Info
+                The Match Info endpoint provides general game information, including event participants, score, match/clock status ad other game related information. In order to retrieve match info data, make a POST request to the following endpoint:
+                    POST https://spro.agency/api/match_info?key=YOUR_TOKEN
+                    Your request must include one or more games in the body and be passed in the following format:
+{
+    'games': [
+    'Jessica Bouzas Maneiro vs Magdalena Frech, 2026-02-26, 03',
+    ...
+    ]
+}
+                To view all available games and confirm the correct naming format, make a GET request to the following endpoint:
+                    GET https://spro.agency/api/get_games?key=YOUR_TOKEN
+                This feature is available to Trial and Custom users. If match info is not available for a certain game, nothing will be returned.
+                Example
+import requests
+import json
+games = 
+{
+    'games':
+    [
+        'Jessica Bouzas Maneiro vs Magdalena Frech, 2026-02-26, 03'
+    ]
+}
+x = requests.post('https://spro.agency/api/match_info?key=YOUR_TOKEN', json=games)
+                Response
+{
+    'Jessica Bouzas Maneiro vs Magdalena Frech, 2026-02-26, 03': 
+    {
+        'doc': 
+        [
+        {
+            'event': 'match_timelinedelta', 
+            '_synced': True, '_dob': 1772139333, 
+            '_maxage': 3, 
+            'data': 
+            {
+                'match': 
+                {
+                    '_doc': 'match', 
+                    '_doctype': 'tennis', 
+                    '_id': 69079420, 
+                    ...
+                    '_dt': 
+                    {
+                        '_doc': 'time', 
+                        'time': '20:00', 
+                        'date': '26/02/26', 
+                        ...
+                    }, 
+                    'round': 26, 
+                    'roundname': 
+                    {
+                        '_doc': 'cupround', 
+                        '_id': 26, 
+                        ...
+                    }, 
+                    'cuproundmatchnumber': 1, 
+                    'cuproundnumberofmatches': 1, 
+                    'week': 9, 
+                    'coverage': {
+                        'lineup': 0, 
+                        'formations': 0, 
+                        ...
+                    }, 
+                    ...,
+                    'result': {'home': 0, 'away': 1, 'winner': 'away'}, 
+                    'periods': {'p1': {'home': 0, 'away': 6}, 'p2': {'home': 2, 'away': 1}}, 
+                    'updated_uts': 1772139299, 
+                    'ended_uts': False, 
+                    'p': '2', 
+                    'ptime': 1772138257, 
+                    'timeinfo': {'injurytime': None, 'ended': None, 'started': '1772136548', 'played': '2748', 'remaining': '0', 'running': True}, 
+                    'teams': {'home': {'_doc': 'team', '_id': 10478796, '_sid': 5, 'uid': 405057, 'virtual': False, 'name': 'Bouzas Maneiro, Jessica', 'mediumname': 'Bouzas Maneiro, Jessica', 'abbr': 'BOU', 'nickname': None, 'iscountry': False, 'haslogo': False, 'surname': 'Bouzas Maneiro', 'cc': {'_doc': 'countrycode', '_id': 199, 'a2': 'es', 'name': 'Spain', 'a3': 'ESP', 'ioc': 'ESP', 'continentid': 1, 'continent': 'Europe', 'population': 46000000}, 'seed': {'seeding': 7, 'type_short': 'S'}}, 'away': {'_doc': 'team', '_id': 6212076, '_sid': 5, 'uid': 71250, 'virtual': False, 'name': 'Frech, Magdalena', 'mediumname': 'Frech, Magdalena', 'abbr': 'FRE', 'nickname': None, 'iscountry': False, 'haslogo': False, 'surname': 'Frech', 'cc': {'_doc': 'countrycode', '_id': 171, 'a2': 'pl', 'name': 'Poland', 'a3': 'POL', 'ioc': 'POL', 'continentid': 1, 'continent': 'Europe', 'population': 38137473}, 'seed': {'seeding': None, 'type_short': None}}}, 
+                    'status': {'_doc': 'status', '_id': 9, 'name': '2nd set', 'shortName': 'S2'}, 
+                    'removed': False, 
+                    ...,
+                    'gamescore': {'home': 0, 'away': 0, 'service': '1'}
+                }, 
+                'events': []
+            }
+        }
+        ]
+    }
+}
+                Parlay Pricing Engine
+                    The BoltOdds Parlay Pricing Engine returns real-time same-game parlay odds sourced directly from supported sportsbooks. You submit a set of selections, and the engine returns the corresponding correlated parlay price, reflecting how those outcomes are priced together by the specified sportsbook(s).
+                    Example: You want to price a 3-leg NBA SGP:
+                    Los Angeles Lakers Moneyline
+                    Luka Doncic Over 10.5 Rebounds
+                    LeBron James Over 25.5 Points
+                    The BoltOdds Parlay Pricing Engine returns the combined parlay odds directly from the sportsbook, reflecting how these selections are priced together, including built-in correlations that a simple multiply-the-odds approach cannot capture.
+                How To Use
+                    You submit the legs you want pricing for in your SGP to a book-specific endpoint
+                    The engine returns the the combined parlay odds with correlation adjustments
+                    POST https://spro.agency/api/fanduel/get_parlay_prices?key=YOUR_TOKEN
+                Example Response
+{'odds': 280, 'max_payout': 5000000, 'max_stake': 2000, 'min_stake': 0.09, 'cashout': True, 'deep_link': ...}
+            Parlay Deeplinks
+                BoltOdds Parlay Deeplinks allow you to generate direct betslip links for same-game parlays across supported sportsbooks. 
+                Simply submit a set of selections along with the sportsbooks you want, and BoltOdds will return a deeplink for each book,
+                taking you directly to a pre-filled betslip with your SGP already added.
+            How To Use
+                Submit the game, sport, sportsbooks, and desired legs
+                BoltOdds maps those selections to each sportsbook
+                Returns a deeplink for each book with the parlay preloaded
+                POST https://spro.agency/api/sgp/links?key=YOUR_TOKEN
+            Example Request
+import requests
+url = "https://spro.agency/api/sgp/links?key=YOUR_TOKEN"
+data = {
+    "game": "Golden State Warriors vs Minnesota Timberwolves, 2026-03-13, 10",
+    "sport": "NBA",
+    "sportsbooks": ["draftkings", "hardrock"],
+    "legs": [
+        "Minnesota Timberwolves Moneyline",
+        "Minnesota Timberwolves U 218.5"
+    ]
+}
+response = requests.post(url, json=data)
+print(response.json())
+                Event Handling
+                The WebSocket API supports various event types for different scenarios.
+                    ws.onopen = function(event) {
+    // Connection established
+};
+ws.onmessage = function(event) {
+    // Message received
+};
+ws.onerror = function(error) {
+    // Error occurred
+};
+ws.onclose = function(event) {
+    // Connection closed
+};
+ -->
+                Error Handling
+                Proper error handling is crucial for maintaining stable WebSocket connections.
+                    Important
+                    Always implement comprehensive error handling to ensure your application can gracefully handle connection issues.
+                Common Error Codes
+                    1000 - Normal closure
+                    1001 - Going away
+                    1002 - Protocol error
+                    1003 - Unsupported data
+                    1011 - Server error
+ -->
+                Basic Example
+                Here's a complete basic example of connecting to and using BoltOdds Odds API:
+import asyncio
+import websockets
+import json
+async def run_client():
+    #get initial state
+    snapshot_url = "https://spro.agency/api/snapshot?key=YOUR_TOKEN"
+    filters = {
+        "sports": ["NBA", "MLB", "Wimbledon (M)"],
+        "sportsbooks": ["draftkings", "betmgm"],
+        "games":["San Francisco Giants vs Philadelphia Phillies, 2025-07-07, 09", "Corinthians vs Bragantino, 2025-07-13, 06"],
+        "markets":["Moneyline", "Spread"]
+    }
+    initial_state = requests.get(snapshot_url, params=filters).json()
+    #connect to wss to receive ongoing updates in near real-time            
+    uri = "wss://spro.agency/api?key=YOUR_TOKEN"
+    while True:
+        try:
+            async with websockets.connect(uri, max_size=None) as websocket:
+                ack_message = await websocket.recv()
+                print(ack_message)
+                # Send the subscription message
+                subscribe_message = {
+                    "action": "subscribe",
+                    "filters": filters
+                }
+                await websocket.send(json.dumps(subscribe_message))
+                # Listen for incoming messages
+                while True:
+                    message = await websocket.recv()
+                    msg = json.loads(message)
+                    for data in msg:
+                        if data['action'] == 'ping':
+                            continue
+                        #entire game odds update
+                        elif data['action'] == 'game_update':
+                            ...
+                        #games done
+                        elif data['action'] == 'game_removed':
+                            ...
+                        #game added
+                        elif data['action'] == 'game_added':
+                            ...
+                        #singular line odd update
+                        #if odds r None or '', no odds available for line i.e its deleted, suspended etc
+                        elif data['action'] == 'line_update':
+                            ...
+                        #all games from a specific sport and book have been cleared
+                        elif data['action'] == 'sport_clear':
+                            ...
+                        #all games for this book have been cleared
+                        elif data['action'] == 'book_clear':
+                            ...
+        except websockets.ConnectionClosed as e:
+            print("Connection closed — reason:", e)
+            print('Reconnecting...')
+            await asyncio.sleep(5)
+            continue
+if __name__ == "__main__":
+    asyncio.run(run_client())
+                Troubleshooting
+                Common issues and their solutions:
+                Connection Fails
+                    Verify your API key is correct
+                    Check that you're using the correct WebSocket URL
+                    Ensure your firewall allows WebSocket connections
+                    Ensure you're sending subscription message soon after connecting
+                Authentication Errors
+                    Double-check your API key format
+                Frequently Asked Questions
+                What's the maximum message size?
+                The maximum message size is 64KB per individual message.
+                How many concurrent connections can I have?
+                This depends on your subscription plan. Check your dashboard for current limits.
+                Is there rate limiting?
+                Yes, rate limits apply based on your plan. Exceeded limits will result in temporary connection throttling.
+ -->
+                Support
+                Need help? We're here for you:
+                    Email: support@boltodds.com
+                    Documentation: Available 24/7 online
+            ©  Spro Technologies Inc. All rights reserved.
