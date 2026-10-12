@@ -1128,7 +1128,7 @@ class NovigStream(
         const val CANARY_WAIT_MS = 10_000L
         const val CANARY_RETRY_MS = 3_000L
         const val CANARY_EVERY_MS = 10 * 60_000L
-        const val EMPTY_CHECK_MIN = 10
+        const val EMPTY_CHECK_MIN = 25
     }
 }
 

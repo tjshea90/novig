@@ -378,10 +378,11 @@ class NovigStreamBboTest {
     fun `bbo snapshots that all have no bid in them are a shape read wrong, not a quiet slate`() = runBlocking {
         server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(emptyBbo = true)))
         val s = stream()
-        s.watch((1..12).map { "e$it" })
+        val ids = (1..30).map { "e$it" }
+        s.watch(ids)
         until { s.feedReport().first().contains("given up") }
         assertTrue(s.feedReport().first().contains("no bid in them"))
-        until { s.live((1..12).map { "e$it" }).size == 12 }
+        until { s.live(ids).size == ids.size }
         s.close()
     }
 
