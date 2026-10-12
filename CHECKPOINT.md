@@ -1,26 +1,23 @@
-# CHECKPOINT 3052 — read me first, then TASKS.md
+# CHECKPOINT 3053 — read me first, then TASKS.md
 
-**Written:** 2026-10-12T06:09:27Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `cc33c175e` (this checkpoint is the commit after it)
+**Written:** 2026-10-12T06:12:25Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `298a71e29` (this checkpoint is the commit after it)
 
 ## Just done
-TBO: docs written (BOLTODDS_API.md §7, RESEARCH.md §136, CLAUDE.md BoltOdds section, TASKS TBO3 ticked, TBO7/TBO8 follow-ups), health: BoltOdds refusals come through the generic API check
+pre-ship: v0.90.0: BoltOdds Pro (websocket lines + props, Test key sample), live taker fee 0.06 for NCAAF/MLB/NHL, Novig docs re-check, NovigStream wake-up race fix
 
 ## Do this next
-Run the full floor (bash tools/test.sh), fix anything red, then bash ship.sh for v0.90.0 (versionCode 221), CI, release.yml, record-release, send Tj the link and the Test-and-share-sample instruction.
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
-     M .claude/skills/test-protocols/SKILL.md
-     M BOLTODDS_API.md
      M CHECKPOINT.md
-     M CLAUDE.md
-     M RESEARCH.md
-     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  298a71e29 ckpt 3052: TBO: docs written (BOLTODDS_API.md §7, RESEARCH.md §136, CLAUDE.md BoltOd
   e568abb49 ckpt 3051: TBO3 (app wiring): ApiEntry.BOLTODDS, VigilantApp client/feed/sources/boltA
   855ff31d5 ckpt 3050: TBO3 (data side, part 1): data/.../boltodds/ Models, Parser, Markets, Books
   9bd2933e8 ckpt 3049: TBO2 done: Novig docs re-read (135 pages + OpenAPI), findings in research/n
@@ -30,8 +27,4 @@ Run the full floor (bash tools/test.sh), fix anything red, then bash ship.sh for
   5e530badd ckpt 3043: pre-release: v0.89.35: Over-prop edge bar, lead-time Kelly scale, bid desk 
   e299c8137 ckpt 3042: TAN: NET event line carries the start of a 400's body; follow-ups (e)(f) wr
   8a91641a5 ckpt 3041: version 0.89.35; TASKS TAN2-TAN6 ticked with evidence; skill doc lists the 
-  b1b4d24d0 ckpt 3040: RESEARCH §135 written (the TAN analysis + what was acted on and what was n
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
