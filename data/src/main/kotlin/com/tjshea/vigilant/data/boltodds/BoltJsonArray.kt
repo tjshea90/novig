@@ -28,11 +28,14 @@ object BoltJsonArray {
                 if (!started) {
                     if (c == '[') { started = true; continue }
                     if (!c.isWhitespace()) {
-                        // Not an array: keep the start (and the rest, up to a limit) to say what it was.
+                        // Not an array: keep its start (up to 400 characters) to say what it was.
                         head.append(c)
                         while (i < n && head.length < 400) head.append(buf[i++])
-                        var m = reader.read(buf)
-                        while (m >= 0 && head.length < 400) { head.append(String(buf, 0, minOf(m, 400 - head.length))); m = if (head.length < 400) reader.read(buf) else -1 }
+                        while (head.length < 400) {
+                            val m = reader.read(buf)
+                            if (m < 0) break
+                            head.append(buf, 0, minOf(m, 400 - head.length))
+                        }
                         return Result(0, head.toString().trim())
                     }
                     continue
