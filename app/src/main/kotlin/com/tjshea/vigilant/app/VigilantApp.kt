@@ -362,6 +362,12 @@ class AppContainer(val app: Application) {
      */
     val orderLock = Mutex()
 
+    /**
+     * One TAKER order at a time across the whole app (Tj, 2026-10-01): the Bet sheet's placer and the auto-bet's share it, so the same bet can never be placed by both at once. It is NOT the bid desk's
+     * [orderLock]: the desk holds that for a whole cycle (reads, cancels, up to 50 posts), and a bet by hand sat behind it ("Placing…" for a long time, Tj 2026-10-12).
+     */
+    val betLock = Mutex()
+
     private var autoPlacerCache: Pair<Any, ApiBetPlacer>? = null
 
     /** The Novig markets Vigilant has a bid resting on: held as a complete book, so the bid desk counts the others' bids behind its own ([com.tjshea.vigilant.data.scanner.Scanner.deepEdges]). */
@@ -382,7 +388,7 @@ class AppContainer(val app: Application) {
             BetLimits(s.apiMaxStake, s.apiMaxPerDay, maxPerGame = s.apiMaxPerGame)
         }
         return ApiBetPlacer(
-            t, tracker, books = ::freshBook, limits = limits, paused = { settingsStore.flow.value?.paused == true }, lock = orderLock,
+            t, tracker, books = ::freshBook, limits = limits, paused = { settingsStore.flow.value?.paused == true }, lock = betLock,
             restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(makerStore.all()) },
             events = ::orderEvents, warm = { orderSocket?.warm() },
             profit = { if (settingsStore.flow.value?.gates?.profitProven == true) com.tjshea.vigilant.data.scanner.ProfitProfile.shipped else null },

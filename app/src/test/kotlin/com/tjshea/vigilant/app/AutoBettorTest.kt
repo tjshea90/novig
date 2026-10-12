@@ -1182,8 +1182,8 @@ class AutoBettorTest {
         // Auto-bet only inside the CNO scanner's branch, so Vigilant only never reaches it.
         assertTrue(cycle.indexOf("if (settings.autoScansCno) {") < read)
         assertTrue(cycle.contains("listOfNotNull(s.alertMinEv.takeIf { it > 0.0 }, AutoBet.rules(s).readEv.takeIf { s.autoBetsNow }).minOrNull()"))
-        assertTrue(java.io.File("src/main/kotlin/com/tjshea/vigilant/app/ApiBetting.kt").readText().contains("lock = c.orderLock"))
-        assertTrue(java.io.File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText().contains("lock = orderLock"))
+        assertTrue(java.io.File("src/main/kotlin/com/tjshea/vigilant/app/ApiBetting.kt").readText().contains("lock = c.betLock"))
+        assertTrue(java.io.File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText().contains("lock = betLock"))
     }
 
     // ---- the trap guard (Tj, 2026-10-03: "find these trap bets and avoid them"; RESEARCH.md §71) ----------------------------------------------
