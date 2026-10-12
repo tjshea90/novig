@@ -310,6 +310,7 @@ class MakerDesk(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
             repost = autoPost, partial = partial, heldItems = GameExposure.items(bets), onTheWay = comingDown(bids),
+            held = if (rules.repeat != null) com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(bets) else emptyList(),
         )
         val noReplace = HashSet<String>()
         val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }

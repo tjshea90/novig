@@ -141,6 +141,8 @@ data class MakerRules(
     val maxBehind: Double = MAX_BEHIND,
     /** Settings › Profit-proven only: the profile of Tj's bet history (null = off, nothing changes). A bid on a type of bid that lost money is skipped, and the best types go up first. */
     val profit: ProfitProfile? = null,
+    /** The repeat and hedge guard ([com.tjshea.vigilant.data.tracker.RepeatGuard]); null = off. A bid on a side already bet or bid to the limit, or on the other side of a market without a sure profit, is held back. */
+    val repeat: com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? = null,
 ) {
     /** The rules [line] is judged by: the tennis rules for an ATP or WTA line, else these. */
     fun forLine(line: MakerLine): MakerRules = if (tennis != null && line.league in TENNIS_LEAGUES) tennis else this
@@ -199,6 +201,7 @@ data class MakerRules(
 
         private fun baseRules(s: ScanSettings, maxOdds: Int, minOdds: Int) = MakerRules(
             profit = if (s.gates.profitProven) ProfitProfile.shipped else null,
+            repeat = s.gates.repeatRules(),
             margin = s.makerMargin.coerceIn(0.005, 0.5),
             customStake = s.makerStake.coerceAtLeast(0.01),
             maxBids = s.makerMaxBids.coerceAtLeast(0),
@@ -734,6 +737,8 @@ object MakerPlan {
         heldItems: List<GameExposure.Item> = emptyList(),
         /** Bids whose cancel is in flight ([MakerDesk]): they can still be on Novig's book, so the wash guard counts them with [resting]. */
         onTheWay: List<RestingBid> = emptyList(),
+        /** What Tj's open bets hold, for the repeat and hedge guard ([com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets]); the bids that stay up are added here. */
+        held: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = emptyList(),
     ): MakerActions {
         if (stopAll != null) return MakerActions(resting.map { it to stopAll }, emptyList(), emptyList())
         val byOutcome = wanted.associateBy { it.line.outcomeId }
@@ -813,8 +818,10 @@ object MakerPlan {
         val waiting = HashMap<String, Int>()
         fun wait(why: String) = waiting.merge(why, 1, Int::plus)
         // What a pass has left to spend on bids: the bids up, the dollars they hold, the wallet, and what each game already has at risk.
-        class Room(var bids: Int, var dollars: Double, var spend: Double, var games: List<GameExposure.Item>)
-        val state = Room(bids, dollars, spend, onGames)
+        class Room(var bids: Int, var dollars: Double, var spend: Double, var games: List<GameExposure.Item>, var pos: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>)
+        // The repeat guard's picture: Tj's open bets, and every bid that stays up as if it filled (it adds to the other-side test but not to the count of bets).
+        val keptPos = if (rules.repeat != null) held + kept.map { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.restingDollars, it.remaining * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0) } else emptyList()
+        val state = Room(bids, dollars, spend, onGames, keptPos)
         /** Why [w] can't go up in [r] (the most bids, the pass's own limit when [passCapped], the most dollars, the per-game limit, the wallet), or null. */
         fun capacity(w: MakerDecision.Post, r: Room, passCapped: Boolean): String? = when {
             r.bids >= rules.maxBids -> MAX_BIDS_REACHED.format(rules.maxBids)
@@ -822,11 +829,13 @@ object MakerPlan {
             r.dollars + w.cost > rules.maxDollars + 1e-9 -> MAX_DOLLARS_REACHED.format(money(rules.maxDollars))
             rules.maxPerGame > 0.0 && GameExposure.check(w.gameItem.game, r.games, w.gameItem.marketId, w.gameItem.outcomeId, w.cost, rules.maxPerGame).blocked ->
                 GAME_REACHED.format(money(rules.maxPerGame))
+            rules.repeat != null && com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules.repeat, r.pos, w.line.marketId, w.line.outcomeId, w.cost, w.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, w.line.market.outcomes.map { it.outcomeId }) != null -> REPEAT_GUARD
             w.cost > r.spend + (freed[w.line.outcomeId] ?: 0.0) + 1e-9 -> BUDGET_REACHED
             else -> null
         }
         fun take(w: MakerDecision.Post, r: Room) {
             if (rules.maxPerGame > 0.0) r.games = r.games + w.gameItem
+            if (rules.repeat != null) r.pos = r.pos + com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(w.line.marketId, w.line.outcomeId, w.cost, w.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0)
             r.bids++
             r.dollars += w.cost
             r.spend -= (w.cost - (freed[w.line.outcomeId] ?: 0.0)).coerceAtLeast(0.0)
@@ -854,7 +863,7 @@ object MakerPlan {
         fun without(down: Collection<RestingBid>): List<MakerDecision.Post> {
             val games = state.games.toMutableList()
             for (d in down) d.gameItem?.let { games.remove(it) }
-            val r = Room(state.bids - down.size, state.dollars - down.sumOf { it.restingDollars }, state.spend + down.sumOf { it.restingDollars }, games)
+            val r = Room(state.bids - down.size, state.dollars - down.sumOf { it.restingDollars }, state.spend + down.sumOf { it.restingDollars }, games, state.pos.filter { p -> p.count > 0 || down.none { d -> d.outcomeId == p.outcomeId } })
             return roomShort.filter { w -> (capacity(w, r, passCapped = false) == null).also { ok -> if (ok) take(w, r) } }
         }
         var popularWaits = false
@@ -948,6 +957,7 @@ object MakerPlan {
     const val MAX_BIDS_REACHED = "the most bids up at once (%d) is reached"
     const val MAX_DOLLARS_REACHED = "the most dollars up at once (%s) is reached"
     const val BUDGET_REACHED = "the wallet (or today's limit for API bets) can't cover it beside the bids already up"
+    const val REPEAT_GUARD = "the repeat guard holds it back: this side is already bet or bid to your limit, or the other side of its market is held and both sides would not be a sure profit"
     const val GAME_REACHED = "the most at risk on one game (%s) is reached"
     const val WASH = "it would trade with your own bid on the other side of that market (a wash: the two prices add up to \$1 or more); it goes up once that bid is gone"
     const val PASS_FULL = "a pass sends at most %d new bids; the rest go up on the next pass"
