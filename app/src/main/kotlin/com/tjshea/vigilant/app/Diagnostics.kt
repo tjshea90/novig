@@ -354,6 +354,8 @@ object Diagnostics {
         o.appendLine("== API usage (each provider's own allowance) ==")
         if (s.usage.providers.isEmpty()) o.appendLine("Nothing counted yet.")
         x.kalshiPace?.let { o.appendLine(it) }
+        // Who asked Novig for books (v0.89.35): the 651k reads of the v0.89.34 file had no caller in them.
+        com.tjshea.vigilant.data.novig.NovigReads.line()?.let { o.appendLine(it) }
         for ((id, p) in s.usage.providers.toSortedMap()) {
             o.appendLine("$id: ${p.callsToday} calls today, ${p.throttledToday} refused/throttled" + (p.lastThrottleMs?.let { ", last throttle ${ago(it)}" } ?: ""))
             for ((key, u) in p.keys) {
