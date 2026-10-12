@@ -146,6 +146,8 @@ class NovigStream(
     private val bboDataWaitMs: Long = BBO_DATA_WAIT_MS,
     /** How many `bbo` markets the canary asks the `book` of. */
     private val canaryMarkets: Int = CANARY_MARKETS,
+    /** How often the check against the book is repeated on a connection that stays up (a drift in the best bids would otherwise go unseen for as long as it lives). */
+    private val canaryEveryMs: Long = CANARY_EVERY_MS,
 ) : PushedBooks {
     @Volatile
     private var capacity = capacity
@@ -281,6 +283,9 @@ class NovigStream(
     @Volatile private var bboUnreadable = 0
     @Volatile private var bboRefusals = 0
     @Volatile private var bboFirstSentAtMs = 0L
+    @Volatile private var bboNonEmpty = 0
+    @Volatile private var bboDeltaOk = 0
+    @Volatile private var bboDeltaOdd = 0
     @Volatile private var deepened = 0
     private var quickFails = 0
 
@@ -474,6 +479,9 @@ class NovigStream(
         bboUnreadable = 0
         bboRefusals = 0
         bboFirstSentAtMs = 0L
+        bboNonEmpty = 0
+        bboDeltaOk = 0
+        bboDeltaOdd = 0
         canaryNonce = 0L
         canaryDone = false
         privateSent = false
@@ -763,6 +771,10 @@ class NovigStream(
         }
         val detail = "$matched of $checked markets' best bids matched the book" + (if (skipped > 0) " ($skipped skipped: moved or unreadable)" else "") + (if (bad.isNotEmpty()) "; " + bad.joinToString("; ") else "")
         canary = Canary(clock(), checked, matched, skipped, detail)
+        if (checked >= 3 && matched * 3 >= checked * 2) {
+            // Verified: again on other markets after [canaryEveryMs].
+            synchronized(this) { canaryStrikes = 0; canaryDone = false; canaryNotBeforeMs = clock() + canaryEveryMs; canaryTried.clear() }
+        }
         if (checked >= 3 && matched * 3 < checked * 2) {
             // A reply can overtake a market push still queued behind it (the docs send replies first), so one disagreement is asked again on other markets a few seconds on; two give `bbo` up.
             val strikes = synchronized(this) { ++canaryStrikes }
@@ -789,7 +801,7 @@ class NovigStream(
             }
         }
         if (reason != null) fallBackFromBbo(reason)
-        else if (synchronized(this) { bboActive() && !canaryDone && canaryStrikes > 0 && now >= canaryNotBeforeMs }) scheduleSync()
+        else if (synchronized(this) { bboActive() && !canaryDone && canaryNonce == 0L && canaryNotBeforeMs > 0L && now >= canaryNotBeforeMs }) scheduleSync()
     }
 
     private fun refill() = synchronized(this) {
@@ -904,11 +916,18 @@ class NovigStream(
                 val b = body as? JsonObject ?: return@forEach
                 (b["book"] as? JsonObject)?.let { books.applySnapshot(marketId, it) }
                 (b["bbo"] as? JsonObject)?.let {
-                    if (books.applyBboSnapshot(marketId, it)) bboSnapshots++ else bboUnreadable++
+                    if (books.applyBboSnapshot(marketId, it)) {
+                        bboSnapshots++
+                        if (books.book(marketId)?.bidsByOutcome?.isNotEmpty() == true) bboNonEmpty++
+                    } else {
+                        bboUnreadable++
+                    }
                 }
                 (b["lifecycle"] as? JsonObject)?.let { books.applyLifecycleSnapshot(marketId, it) }
             }
             if (bboUnreadable >= 3 && bboSnapshots == 0) fallBackFromBbo("Novig's best-bid snapshots could not be read")
+            // Every snapshot empty is not a quiet slate, it is a shape read wrong: a pregame board always has bids somewhere.
+            if (bboSnapshots >= EMPTY_CHECK_MIN && bboNonEmpty == 0) fallBackFromBbo("all $bboSnapshots best-bid snapshots had no bid in them")
             // Enough best-bid snapshots are in for the once-a-connection check against the book: a sync pass ends with it.
             if (!canaryDone && bboSnapshots >= minOf(canaryMarkets, 3)) scheduleSync()
             var gap = false
@@ -922,7 +941,13 @@ class NovigStream(
                 if (!held(marketId)) return@forEach
                 val b = body as? JsonObject ?: return@forEach
                 (b["book"] as? JsonObject)?.let { if (!books.applyDelta(marketId, it)) gap = true }
-                (b["bbo"] as? JsonObject)?.let { if (!books.applyBboDelta(marketId, it)) gap = true }
+                (b["bbo"] as? JsonObject)?.let {
+                    // A delta that names no outcome anywhere is a shape read wrong: the best bids would go stale without a word.
+                    val readable = (it["deltas"] as? kotlinx.serialization.json.JsonArray)?.any { d -> d is JsonObject && (d["outcomeId"] != null || d["outcome"] != null) } == true
+                    if (readable) bboDeltaOk++ else bboDeltaOdd++
+                    if (bboDeltaOdd >= 5 && bboDeltaOk == 0) fallBackFromBbo("Novig's best-bid updates could not be read")
+                    if (!books.applyBboDelta(marketId, it)) gap = true
+                }
                 (b["lifecycle"] as? JsonObject)?.let { if (!books.applyLifecycleDelta(marketId, it)) gap = true }
             }
             if (gap) scheduleSync()
@@ -1102,6 +1127,8 @@ class NovigStream(
         const val CANARY_MARKETS = 6
         const val CANARY_WAIT_MS = 10_000L
         const val CANARY_RETRY_MS = 3_000L
+        const val CANARY_EVERY_MS = 10 * 60_000L
+        const val EMPTY_CHECK_MIN = 10
     }
 }
 

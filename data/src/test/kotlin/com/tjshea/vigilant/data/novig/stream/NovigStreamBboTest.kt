@@ -60,6 +60,8 @@ class NovigStreamBboTest {
         refuseBbo: String? = null,
         lateBboDelta: Boolean = false,
         lifecycle: Boolean = true,
+        emptyBbo: Boolean = false,
+        oddDelta: Boolean = false,
     ) = object : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {}
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) { webSocket.close(1000, null) }
@@ -75,9 +77,14 @@ class NovigStreamBboTest {
             }
             val life = if (lifecycle) ""","lifecycle":{"seq":3,"status":"OPEN"}""" else ""
             val body = channels.filter { (_, ch) -> !(silentBbo && ch == "bbo") }.map { (m, ch) ->
-                """"$m":{"eventId":"e1",${if (ch == "bbo") bboOf(m, qtyA = bboQty) else bookOf(m)}$life}"""
+                """"$m":{"eventId":"e1",${if (ch == "bbo") (if (emptyBbo) """"bbo":{"seq":5,"bbo":{}}""" else bboOf(m, qtyA = bboQty)) else bookOf(m)}$life}"""
             }
             webSocket.send("""{"ts":1,"nonce":$nonce,"subscribed":{},"snapshot":{${body.joinToString(",")}}}""")
+            if (oddDelta && verb == "subscribe") {
+                channels.entries.filter { it.value == "bbo" }.forEach { (m, _) ->
+                    webSocket.send("""{"ts":2,"delta":{"$m":{"eventId":"e1","bbo":{"seq":6,"changes":[{"o":"A-$m","p":"0.7"}]}}}}""")
+                }
+            }
             if (lateBboDelta && verb == "subscribe") {
                 val first = channels.entries.first { it.value == "bbo" }.key
                 webSocket.send("""{"ts":2,"delta":{"$first":{"eventId":"e1","bbo":{"seq":6,"deltas":[{"outcomeId":"A-$first","bbo":{"price":"0.610","qty":7}}]}}}}""")
@@ -100,11 +107,12 @@ class NovigStreamBboTest {
         deepHoldMs: Long = 60_000,
         keepOpen: Boolean = false,
         liveRetryMs: Long = 100,
+        canaryEveryMs: Long = 600_000,
         clock: () -> Long = System::currentTimeMillis,
     ) = NovigStream(
         OkHttpClient(), signer(), scope, wsUrl = server.url("/v3/ws").toString().replace("http", "ws"),
         refillPerSec = refillPerSec, idleCloseMs = 60_000, bbo = bbo, bboDataWaitMs = bboDataWaitMs, canaryMarkets = canaryMarkets,
-        deepHoldMs = deepHoldMs, liveRetryMs = liveRetryMs, clock = clock,
+        deepHoldMs = deepHoldMs, liveRetryMs = liveRetryMs, canaryEveryMs = canaryEveryMs, clock = clock,
     ).also { if (keepOpen) it.configureFeed(bbo, true) }
 
     private val plan = (1..12).map { "m$it" }
@@ -364,5 +372,36 @@ class NovigStreamBboTest {
         val book = stream(bbo = false)
         book.tune(capacity = 512, refillPerSec = 32.0, maxWatchedMarkets = 8_192)
         assertEquals(NovigStream.MAX_MARKETS, book.room())
+    }
+
+    @Test
+    fun `bbo snapshots that all have no bid in them are a shape read wrong, not a quiet slate`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(emptyBbo = true)))
+        val s = stream()
+        s.watch((1..12).map { "e$it" })
+        until { s.feedReport().first().contains("given up") }
+        assertTrue(s.feedReport().first().contains("no bid in them"))
+        until { s.live((1..12).map { "e$it" }).size == 12 }
+        s.close()
+    }
+
+    @Test
+    fun `bbo updates that name no outcome are a shape read wrong and put everything back on book`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(oddDelta = true)))
+        val s = stream()
+        s.watch((1..12).map { "d$it" })
+        until { s.feedReport().first().contains("given up") }
+        assertTrue(s.feedReport().first().contains("updates could not be read"))
+        s.close()
+    }
+
+    @Test
+    fun `a connection that stays up is checked against the book again, on other markets`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        val s = stream(canaryEveryMs = 300, canaryMarkets = 3)
+        s.watch((1..12).map { "p$it" })
+        until(timeoutMs = 30_000) { snapshots.size >= 2 }
+        assertTrue(s.feedReport().first().startsWith("feed: best-bid feed"))
+        s.close()
     }
 }
