@@ -91,7 +91,7 @@ class BoltOddsFeed(
         if (leagues.isEmpty()) return emptyList()
         val info = info()
         val sportsByLeague = leagues.associateWith { BoltBooks.sportsFor(it, info?.sports) }
-        val tennis = if (liveTennis) info?.sports.orEmpty().filter { BoltBooks.tennisLeagueOf(it) != null } else emptyList()
+        val tennis = if (liveTennis) info?.sports.orEmpty().filter { "tennis" in it.lowercase() } else emptyList()
         val sports = (sportsByLeague.values.flatten() + tennis).distinct().sorted()
         val wanted = BoltBooks.wanted(settings)
         val books = info?.let { BoltBooks.slugsFor(wanted, it.sportsbooks) }.orEmpty()

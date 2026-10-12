@@ -82,17 +82,18 @@ object BoltConvert {
      * book pushes, so the conversion is kept on the entry itself and redone only for an entry that changed. What depends on the clock ([BoltContext.aliveAt]) is applied on top, after.
      */
     private fun marketsOf(g: BoltBookGame, book: String, ctx: BoltContext): List<RefBookMarket> {
-        val key = "${ctx.league.novigName}|${ctx.families.map { it.name }.sorted().joinToString(",")}"
-        val base = g.marketsCache.getOrPut(key) { convert(g, book, ctx) }
-        val seenAt = ctx.aliveAt(g.sportsbook, g.sport) ?: return base
-        return base.map { m -> m.lastUpdateMs?.let { if (it >= seenAt) m else m.copy(lastUpdateMs = seenAt) } ?: m }
+        val seenAt = ctx.aliveAt(g.sportsbook, g.sport)
+        // One slot: what the entry was last converted for (the league, the families, and the time its book was last heard, which the quote times are lifted to). A quiet book's entries keep their slot between refreshes.
+        val key = "${ctx.league.novigName}|${ctx.families.hashCode()}|$seenAt"
+        g.marketsCache?.let { (k, v) -> if (k == key) return v }
+        return convert(g, book, ctx, seenAt).also { g.marketsCache = key to it }
     }
 
-    private fun convert(g: BoltBookGame, book: String, ctx: BoltContext): List<RefBookMarket> {
+    private fun convert(g: BoltBookGame, book: String, ctx: BoltContext, seenAt: Long?): List<RefBookMarket> {
         val league = ctx.league.novigName
         val tennis = league == "ATP" || league == "WTA"
         val title = BoltBooks.title(book)
-        val stamp: (List<BoltOutcome>) -> Long = { l -> l.minOf { x -> x.atMs } }
+        val stamp: (List<BoltOutcome>) -> Long = { l -> l.minOf { x -> if (seenAt != null) maxOf(x.atMs, seenAt) else x.atMs } }
 
         // Group the book's outcomes: (kind, period, stat, subject) -> the outcomes of that market.
         val groups = LinkedHashMap<Pair<BoltMarketRef, String?>, MutableList<BoltOutcome>>()

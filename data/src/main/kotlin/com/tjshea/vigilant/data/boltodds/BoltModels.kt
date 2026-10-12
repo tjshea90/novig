@@ -43,7 +43,7 @@ data class BoltBookGame(
     val key: BoltGameKey get() = BoltGameKey(sportsbook, game)
 
     /** The converted markets of this entry by what they were converted for ([BoltConvert]); not part of the entry's identity. */
-    internal val marketsCache = java.util.concurrent.ConcurrentHashMap<String, List<com.tjshea.vigilant.data.reference.RefBookMarket>>()
+    @Volatile internal var marketsCache: Pair<String, List<com.tjshea.vigilant.data.reference.RefBookMarket>>? = null
 }
 
 /** The `data` object of a message, parsed. [outcomes] holds only the outcomes that carry a price; [removed] the labels sent with no price (suspended / deleted). */

@@ -386,7 +386,8 @@ class AutoScanner(
      * bid desk takes its pass from the published result. Everything the interval path checks (limits, guards, fresh price, the placer's own book read) applies unchanged.
      */
     suspend fun streamHandOff(settings: ScanSettings, result: ScanResult, only: Set<String>?): Int {
-        val rows = if (only == null) result else result.copy(opportunities = result.opportunities.filter { it.market.marketId in only })
+        // Only a bet that is +EV at its price can be bet: judging the thousands of the others cost 2 s a refresh (Tj's v0.95.1 file: 2,576 lines).
+        val rows = result.copy(opportunities = result.opportunities.filter { (only == null || it.market.marketId in only) && (it.evPercent ?: -1.0) > 0.0 })
         var judged = rows.opportunities.size
         if (settings.autoBet && ((settings.autoBetTennis && settings.tennisOn) || settings.autoBetVigilant) && AppBook.isNovig && !settings.paused) {
             runCatching { c.autoBet.runTennis(settings, snapshot(settings).copy(result = result), rows) }
