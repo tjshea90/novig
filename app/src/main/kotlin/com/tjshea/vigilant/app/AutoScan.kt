@@ -495,7 +495,15 @@ class AutoScanner(
      * wasn't read and auto-bet placed nothing. Tj's own scan may be running already: then its end is this one's.
      */
     /** The gap between two Vigilant scans now: the usual one, or the low-usage bids' (Auto: the freshness limit less the bids' re-post window, for the games the last scan saw). */
-    private fun vigilantGap(settings: ScanSettings): Int = when {
+    private fun vigilantGap(settings: ScanSettings): Int = streamGap(baseGap(settings))
+
+    /**
+     * With the streaming engine running (and a catalog held) the full scan only brings in new games and markets: the engine re-prices from the sockets, and a full scan holds the scanner for a minute or more
+     * (Tj's v0.94.1 file: 43-119 s scans every 15 s left the engine skipping nearly every update). So it runs no more often than [STREAM_FULL_SCAN_SECONDS].
+     */
+    private fun streamGap(gap: Int): Int = if (c.streamEngine.status.value.running && c.scanner.streamReady()) maxOf(gap, STREAM_FULL_SCAN_SECONDS) else gap
+
+    private fun baseGap(settings: ScanSettings): Int = when {
         settings.lowUsageNow -> com.tjshea.vigilant.data.scanner.LowUsageBids.gapSeconds(settings, gameStarts(), clock())
         // The long-run saver (RESEARCH.md §119): 8 minutes, not 4, while no game is inside the 3-hour reach; the usual gap otherwise.
         else -> com.tjshea.vigilant.data.scanner.LongRunBids.gapSeconds(settings, gameStarts(), clock())
@@ -575,6 +583,9 @@ class AutoScanner(
     }
 
     companion object {
+        /** The least time between two full scans while the streaming engine runs. */
+        const val STREAM_FULL_SCAN_SECONDS = 300
+
         /** The least time between two bid-desk passes started by the streaming engine. */
         const val STREAM_BID_GAP_MS = 2_000L
 

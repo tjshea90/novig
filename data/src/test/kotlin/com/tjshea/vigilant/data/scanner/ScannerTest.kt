@@ -25,6 +25,7 @@ import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -39,9 +40,10 @@ class ScannerTest {
         var catalogCalls = 0
         var bookCalls = 0
         var lastBookIds: Collection<String> = emptyList()
+        var lastLeagues: Collection<String> = emptyList()
         override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?) = listOf(
             NovigEvent(Fixtures.EVENT_ID, "FOOTBALL", league, "OPEN_PREGAME", "Baltimore Ravens @ Dallas Cowboys", Fixtures.START_MS),
-        ).also { catalogCalls++ }
+        ).also { catalogCalls++; lastLeagues = leagues }
         var lastTypes: Collection<String> = emptyList()
         override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?) = listOf(
             NovigMarket(Fixtures.ML_MARKET, Fixtures.EVENT_ID, "MONEY", "OPEN", "DAL", Fixtures.START_MS, MarketFee.GAME,
@@ -334,6 +336,25 @@ class ScannerTest {
         val dal = moved.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
         assertEquals(now, dal.bookFetchedAtMs)
         assertNotEquals(same.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }.quote, dal.quote)
+    }
+
+    @Test
+    fun `a league name an older version saved is never sent to Novig`() = runTest {
+        val novig = FakeNovig()
+        val scanner = Scanner(novig, clock = { now })
+        scanner.scan(settings.copy(leagues = settings.leagues + setOf("LALIGA", "PREMIER LEAGUE")), emptyList())
+        assertEquals(1, novig.catalogCalls)
+        assertTrue(novig.lastLeagues.toString(), "LALIGA" !in novig.lastLeagues && "PREMIER LEAGUE" !in novig.lastLeagues && novig.lastLeagues.isNotEmpty())
+    }
+
+    @Test
+    fun `a streaming update never waits for a scan - it answers null at once while the scanner is held`() = runTest {
+        val novig = FakeNovig()
+        val scanner = Scanner(novig, clock = { now })
+        assertFalse(scanner.streamReady())
+        scanner.scan(settings, emptyList())
+        assertTrue(scanner.streamReady())
+        assertNotNull(scanner.streamUpdate(settings, emptyList(), null))
     }
 
     @Test

@@ -135,13 +135,6 @@ class StreamEngine(
     private suspend fun pass(trigger: String) {
         val s = c.currentSettings()
         if (!s.gates.streamScan || s.paused || s.killed) return
-        // A cycle already running (the interval's) or a scan Tj started is not interrupted: the pushes are kept for when it ends.
-        if (c.autoScan.running || c.runner.state.value.scanning) {
-            _status.update { it.copy(busySkips = it.busySkips + 1) }
-            delay(BUSY_RETRY_MS)
-            signal.trySend(trigger)
-            return
-        }
         if (!c.boltActive(s)) {
             _status.update { it.copy(why = "BoltOdds is not on (Settings › APIs & keys): there is nothing free to stream") }
             delay(RETRY_MS)
