@@ -265,8 +265,9 @@ class MakerTest {
 
     // ---- resting bids against the bids wanted ---------------------------------------------------------------------------
 
+    // The line's fair sits above the bid's price by the margin (a bid at or over its fair has no edge and comes down: MakerPlan.plan).
     private fun post(outcome: String, price: Double, contracts: Long = 1_000) =
-        MakerDecision.Post(line(outcome), price, contracts, 0.04)
+        MakerDecision.Post(line(outcome, fair = maxOf(0.52, price + 0.04)), price, contracts, 0.04)
 
     private fun resting(outcome: String, price: Double, expires: Long? = now + 20 * 60_000, filled: Long = 0) =
         RestingBid("o-$outcome", outcome.substringBefore('-'), outcome, price, 1_000 - filled, filled, expires)
