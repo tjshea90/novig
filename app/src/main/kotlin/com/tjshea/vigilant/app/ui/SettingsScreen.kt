@@ -225,10 +225,7 @@ object SettingsSummary {
             }
             SettingsPage.WIDGET -> (if (s.floatingWidget) "Floating widget" else "Picture-in-picture") + if (s.miniWindow) " · opens when you leave Vigilant" else ""
             SettingsPage.FEED -> "${pctShort(s.minEvPercent)}+ · ${maxOddsLabel(s.maxOdds).let { if (it == "Any") "any odds" else "up to $it" }} · ${s.families.size} market types · ${s.daysAhead} days ahead"
-            SettingsPage.FAIR -> {
-                val on = listOf(s.usePinnacle, s.usePolymarket, s.useKalshi, s.usePropLine, s.useParlay, s.useOddsApi).count { it }
-                "${s.fairSource.shortName} · $on of 6 feeds on"
-            }
+            SettingsPage.FAIR -> "${s.fairSource.shortName} · ${s.devigMethod.displayName.lowercase(Locale.US)} devig · at least ${s.minBooks} books"
             SettingsPage.BETTING -> listOfNotNull(
                 when {
                     !AppBook.isNovig -> null
@@ -264,8 +261,13 @@ object SettingsSummary {
             }
             SettingsPage.APIS -> {
                 val on = com.tjshea.vigilant.app.ApiEntry.active(s).size
-                "$on of ${com.tjshea.vigilant.app.ApiEntry.entries.size} on"
+                val keys = com.tjshea.vigilant.data.keys.ApiProvider.entries.sumOf { state.keysOf(it).size }
+                "$on of ${com.tjshea.vigilant.app.ApiEntry.entries.size} on · $keys key${if (keys == 1) "" else "s"} saved"
             }
+            SettingsPage.PINNACLE -> keyedSummary(s.usePinnacle && (s.gates.usePinnwire || s.gates.usePinnapi), state.pinnwireKeys.size + state.pinnapiKeys.size)
+            SettingsPage.PROPLINE -> keyedSummary(s.usePropLine, state.proplineKeys.size)
+            SettingsPage.PARLAY -> keyedSummary(s.useParlay, state.parlayKeys.size)
+            SettingsPage.ODDS_API -> keyedSummary(s.useOddsApi, state.oddsApiKeys.size)
             SettingsPage.UNABATED -> when {
                 state.unKeys.isEmpty() -> "No key saved"
                 s.unabated -> "On: free lines and props, last in line"
@@ -283,6 +285,13 @@ object SettingsSummary {
             }
             SettingsPage.HELP -> "Share with Claude · Vigilant ${BuildConfig.VERSION_NAME}"
         }
+    }
+
+    /** "On: 3 keys" / "Off (2 keys saved)" / "No key saved": the line for an API's own page. */
+    private fun keyedSummary(on: Boolean, keys: Int): String = when {
+        keys == 0 -> "No key saved"
+        on -> "On: $keys key${if (keys == 1) "" else "s"}"
+        else -> "Off ($keys key${if (keys == 1) "" else "s"} saved)"
     }
 
     /** "1%", "2.5%": a percent with a decimal only when it has one. */
@@ -356,15 +365,15 @@ fun SettingsScreen(
     val current = wanted?.takeIf { it.shownIn(s) }
     val topUp = state.betting.topUp != null
     LaunchedEffect(topUp) { if (topUp && current != SettingsPage.BETTING) go(SettingsPage.BETTING) }
-    androidx.activity.compose.BackHandler(enabled = current != null) { go(null) }
+    androidx.activity.compose.BackHandler(enabled = current != null) { go(current?.parent) }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(current?.title ?: "Settings", fontWeight = FontWeight.Bold, maxLines = 1) },
                 navigationIcon = {
                     if (current != null) {
-                        IconButton(onClick = { go(null) }, modifier = Modifier.testTag("settingsBack")) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Settings")
+                        IconButton(onClick = { go(current.parent) }, modifier = Modifier.testTag("settingsBack")) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = if (current.parent != null) "Back to ${current.parent!!.title}" else "Back to Settings")
                         }
                     }
                 },
@@ -390,14 +399,18 @@ fun SettingsScreen(
                 SettingsPage.CNO -> CnoPage(s, onUpdate)
                 SettingsPage.WIDGET -> WidgetPage(s, onUpdate)
                 SettingsPage.FEED -> FeedTab(s, onUpdate)
-                SettingsPage.FAIR -> FairOddsTab(state, keys, onUpdate)
+                SettingsPage.FAIR -> FairOddsTab(state, onUpdate, onOpenPage = go)
                 SettingsPage.BETTING -> BettingTab(state, onUpdate, onNovigConnect, onNovigTest, onNovigDisconnect, bettingActions, onOpenAutoBet)
                 SettingsPage.PINNODDS -> PinnLiveSection(state, keys, reportActions, onUpdate)
                 SettingsPage.LIVEBIDS -> LiveBidPage(state, reportActions, onUpdate)
                 SettingsPage.RESEARCH -> ResearchPage(state, reportActions, onUpdate)
                 SettingsPage.SGO -> SgoPage(state, keys, reportActions, onUpdate)
                 SettingsPage.ODDSPAPI -> OddsPapiPage(state, keys, reportActions, onUpdate)
-                SettingsPage.APIS -> ApisPage(state, reportActions, onUpdate)
+                SettingsPage.APIS -> ApisPage(state, reportActions, onUpdate, onOpenPage = go)
+                SettingsPage.PINNACLE -> PinnaclePage(state, keys, onUpdate)
+                SettingsPage.PROPLINE -> PropLinePage(state, keys, onUpdate)
+                SettingsPage.PARLAY -> ParlayPage(state, keys, onUpdate)
+                SettingsPage.ODDS_API -> OddsApiPage(state, keys, onUpdate)
                 SettingsPage.UNABATED -> UnabatedPage(state, keys, reportActions, onUpdate)
                 SettingsPage.ODDSPAPI_FREE -> OddsPapiFreePage(state, keys, reportActions, onUpdate)
                 SettingsPage.USAGE -> UsageTab(state, keys)
@@ -437,7 +450,7 @@ private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> U
         }
         return
     }
-    val shown = SettingsPage.shown(s)
+    val shown = SettingsPage.home(s)
     SettingsGroup.entries.forEach { g ->
         val rows = shown.filter { it.group == g }
         val autoBet = g == SettingsGroup.BET && AppBook.isNovig && s.cnoOn && onOpenAutoBet != null
