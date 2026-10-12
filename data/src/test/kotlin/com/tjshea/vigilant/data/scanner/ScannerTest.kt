@@ -312,7 +312,7 @@ class ScannerTest {
     @Test
     fun `a streaming update re-reads the in-memory boards and the held Novig books, prices from them, and reads nothing else`() = runTest {
         val novig = FakeNovig()
-        val exchange = FakeExchange("kalshi", 0.60, 0.40)
+        val exchange = FakeOddsApi()
         val scanner = Scanner(novig, clock = { now })
         assertNull(scanner.streamUpdate(settings, listOf(exchange), null)) // no catalog yet: a full scan makes it
         scanner.scan(settings, listOf(exchange))
