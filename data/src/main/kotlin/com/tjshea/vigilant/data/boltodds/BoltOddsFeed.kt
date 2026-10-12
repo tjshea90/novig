@@ -159,6 +159,8 @@ class BoltOddsFeed(
             s.lastError?.let { add("  last error: $it") }
             s.connectionNotes()?.let { add("  $it") }
             add("  board: ${b.games} games, ${b.outcomes} outcomes · books " + b.byBook.entries.sortedByDescending { it.value }.take(14).joinToString { "${it.key} ${it.value}" } + " · sports " + b.bySport.entries.joinToString { "${it.key} ${it.value}" })
+            add("  push lag (for the live-fair decision): " + b.let { s.board.lagReport().firstOrNull() })
+            s.board.lagReport().drop(1).take(20).forEach { line -> add(line) }
             add("  messages: " + s.board.counts.entries.sortedByDescending { it.value }.joinToString { "${it.key} ${it.value}" }.ifEmpty { "none" })
             if (s.board.unmapped.isNotEmpty()) add("  names not priced (sport | name ×count): " + s.board.unmapped.entries.sortedByDescending { it.value }.take(25).joinToString("; ") { "${it.key} ×${it.value}" })
             s.examples.entries.sortedBy { it.key }.take(12).forEach { add("  first ${it.key}: ${client.redact(it.value)}") }

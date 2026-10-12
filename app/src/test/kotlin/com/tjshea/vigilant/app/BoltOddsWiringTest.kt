@@ -130,5 +130,8 @@ class StreamPacerTest {
         assertEquals(2_000L, StreamPacer.waitMs(11_000, 10_000, 3_000))
         assertEquals(1_000L, StreamPacer.waitMs(10_000, 10_000, 0))
         assertEquals(0L, StreamPacer.waitMs(12_000, 10_000, 2_000))
+        // A Novig-push update waits out 300 ms after the last.
+        assertEquals(200L, StreamPacer.waitFastMs(10_100, 10_000))
+        assertEquals(0L, StreamPacer.waitFastMs(10_400, 10_000))
     }
 }

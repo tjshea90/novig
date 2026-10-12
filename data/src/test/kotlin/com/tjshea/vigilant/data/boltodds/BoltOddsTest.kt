@@ -47,6 +47,19 @@ class BoltOddsTest {
         assertEquals(1L, board.changeSeq)
     }
 
+    @Test fun `the board reports each book's push lag and whether a sharp book is among them`() {
+        val board = BoltBoard({ now })
+        assertEquals(listOf("no live push has arrived yet"), board.lagReport())
+        board.apply(BoltParser.frame(docsGameUpdate, now).single())
+        val report = board.lagReport()
+        assertEquals("sharp books among them: none", report[0])
+        assertTrue(report[1], report[1].contains("ballybet") && report[1].contains("1 pushes"))
+        // A snapshot item (initial) is not a live push.
+        val snap = BoltBoard({ now })
+        snap.applyInitial(listOf(BoltParser.frame(docsGameUpdate, now).single() as BoltMessage.GameUpdate))
+        assertEquals(listOf("no live push has arrived yet"), snap.lagReport())
+    }
+
     @Test fun `the docs game_update example is read`() {
         val m = BoltParser.frame(docsGameUpdate, now).single() as BoltMessage.GameUpdate
         assertEquals(Instant.parse("2025-07-23T19:46:10.023175Z").toEpochMilli(), m.atMs)

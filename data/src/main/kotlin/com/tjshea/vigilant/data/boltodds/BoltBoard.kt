@@ -74,6 +74,8 @@ class BoltBoard(
         // A snapshot item's own time may be the time the game last CHANGED; what it proves is that the book was read just now.
         val heardTs = if (initial) maxOf(at, clock()) else at
         heard[heardKey(book, sport)] = maxOf(heard[heardKey(book, sport)] ?: 0L, heardTs)
+        // How fast the book's pushes arrive (the lag between the message's own time and ours), for the live-fair decision: only live messages count, never a snapshot's.
+        if (!initial) lagOf.getOrPut(book) { BookLag() }.add((clock() - at).coerceAtLeast(0L), clock())
         val kept = ArrayList<BoltOutcome>(d.outcomes.size)
         for (o in d.outcomes) {
             val ref = league?.let { BoltMarkets.classify(it, o) }
@@ -98,6 +100,33 @@ class BoltBoard(
             )
             return true
         }
+    }
+
+    /** Per book: how many live pushes, and the lag from the message's time to ours. */
+    private class BookLag {
+        private val ring = LongArray(64)
+        private var n = 0L
+        private var lastAt = 0L
+        @Synchronized fun add(lagMs: Long, nowMs: Long) { ring[(n % ring.size).toInt()] = lagMs; n++; lastAt = nowMs }
+        @Synchronized fun line(nowMs: Long): String {
+            val k = minOf(n, ring.size.toLong()).toInt()
+            val sorted = ring.take(k).sorted()
+            return "$n pushes, lag median ${sorted.getOrNull(k / 2) ?: 0} ms, max ${sorted.lastOrNull() ?: 0} ms (last ${(nowMs - lastAt) / 1000}s ago)"
+        }
+    }
+
+    private val lagOf = ConcurrentHashMap<String, BookLag>()
+
+    /**
+     * For the live-fair decision (Tj, 2026-10-12): every book that pushed, how often and how late its pushes arrive, and whether a sharp book is among them. A live fair needs a sharp book whose pushes are seconds
+     * old at most; BoltOdds had none in sample #1 (BOLTODDS_API.md §9), so this is what Tj's file must show before BoltOdds prices a live bet.
+     */
+    fun lagReport(): List<String> {
+        val now = clock()
+        val books = lagOf.entries.sortedBy { it.key }
+        if (books.isEmpty()) return listOf("no live push has arrived yet")
+        val sharpHere = books.map { it.key }.filter { b -> SHARP.any { it in b.lowercase() } }
+        return listOf("sharp books among them: " + (sharpHere.joinToString().ifEmpty { "none" })) + books.map { "  ${it.key}: ${it.value.line(now)}" }
     }
 
     private fun noteUnmapped(sport: String, name: String) {
@@ -126,6 +155,8 @@ class BoltBoard(
     }
 
     companion object {
+        /** Names that mark a sharp price: Pinnacle and Circa for game lines, Kalshi, ProphetX and Polymarket as exchanges. */
+        private val SHARP = listOf("pinnacle", "circa", "bookmaker", "betcris", "prophetx", "kalshi", "polymarket")
         const val MAX_UNMAPPED = 300
     }
 }
