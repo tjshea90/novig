@@ -1,12 +1,18 @@
 package com.tjshea.vigilant.data.boltodds
 
+import com.tjshea.vigilant.data.await
 import com.tjshea.vigilant.data.awaitText
 import com.tjshea.vigilant.data.keys.KeyAttemptResult
 import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.reference.ReferenceException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
@@ -121,6 +127,63 @@ class BoltOddsClient(
         return get("/snapshot", params, snapshot = true)
     }
 
+    /**
+     * The snapshot for [filters], read as a STREAM: [onElement] gets each game's JSON text as it arrives and the body is never held whole (a whole sport's lines and props is tens of megabytes). Same gates and
+     * key rotation as [get]; returns how many games came. An error object in place of the array ("Invalid API token") refuses the key or fails the call, as with any GET.
+     */
+    suspend fun snapshotStream(filters: BoltFilters, onElement: (String) -> Unit): Int {
+        requests++
+        val params = buildList {
+            filters.sports.forEach { add("sports" to it) }
+            filters.sportsbooks.forEach { add("sportsbooks" to it) }
+            filters.games.forEach { add("games" to it) }
+            filters.markets.forEach { add("markets" to it) }
+        }
+        try {
+            val n = pool.execute(cost = 1) { key ->
+                acquire(snapshot = true)
+                val response = http.newCall(Request.Builder().url(url("/snapshot", key, params)).header("Accept", "application/json").get().build()).await()
+                response.use { r ->
+                    when {
+                        r.code == 401 || r.code == 403 -> {
+                            val detail = detailOf(r.body?.string().orEmpty())
+                            if (r.code == 401 || detail?.contains("token", ignoreCase = true) == true) KeyAttemptResult.Invalid("HTTP ${r.code}: ${detail ?: "key refused"}")
+                            else throw BoltOddsException("BoltOdds HTTP 403: ${detail ?: "your plan does not include the snapshot"}")
+                        }
+                        r.code == 429 -> {
+                            val wait = (r.header("Retry-After")?.trim()?.toDoubleOrNull()?.let { (it * 1000).toLong() } ?: 15_000L).coerceIn(1_000L, 120_000L)
+                            if (keys().size > 1) KeyAttemptResult.RateLimited(wait, "BoltOdds snapshot limit (HTTP 429)") else throw BoltOddsException("BoltOdds snapshot HTTP 429 (6 a minute, plus a daily token quota)")
+                        }
+                        !r.isSuccessful -> throw BoltOddsException("BoltOdds snapshot HTTP ${r.code}")
+                        else -> {
+                            val job = currentCoroutineContext()[Job]
+                            val res = withContext(Dispatchers.IO) {
+                                BoltJsonArray.forEachElement(r.body!!.charStream()) { text ->
+                                    if (job != null && !job.isActive) throw CancellationException("snapshot cancelled")
+                                    onElement(text)
+                                }
+                            }
+                            res.notAnArray?.let { throw BoltOddsException("BoltOdds snapshot: ${redact(it).take(160)}") }
+                            KeyAttemptResult.Success(res.elements)
+                        }
+                    }
+                }
+            }
+            failures = 0; lastOkMs = clock(); lastError = null
+            return n
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: com.tjshea.vigilant.data.keys.AllKeysExhaustedException) {
+            failures++
+            lastError = redact(e.message ?: "every key is refused or resting").take(200)
+            throw BoltOddsException("BoltOdds: $lastError")
+        } catch (e: Exception) {
+            failures++
+            lastError = redact(e.message ?: e.javaClass.simpleName).take(200)
+            throw e
+        }
+    }
+
     /** `get_parlays` for one sportsbook slug (raw text; Pro). Not used by the scan: Test key reads it for the sample. */
     suspend fun parlaysRaw(book: String): String = get("/get_parlays", listOf("sportsbooks" to book))
 
@@ -156,7 +219,7 @@ class BoltOddsClient(
     private suspend fun get(path: String, params: List<Pair<String, String>> = emptyList(), snapshot: Boolean = false): String = try {
         requests++
         attempt(path, params, snapshot).also { failures = 0; lastOkMs = clock(); lastError = null }
-    } catch (e: kotlinx.coroutines.CancellationException) {
+    } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
         failures++
