@@ -1177,6 +1177,10 @@ class Scanner(
          */
         const val STREAM_HOLD_MS = 30_000L
 
+        /** How long a scan waits for the live feed to deliver the complete books of the markets it found +EV on their best bid; a poll every [DEEPEN_POLL_MS]. */
+        const val DEEPEN_WAIT_MS = 2_000L
+        const val DEEPEN_POLL_MS = 50L
+
         /**
          * Merge order: when two feeds carry the same book, the earlier one's quote is priced. ParlayAPI ahead of PropLine (Tj, 2026-09-30,
          * "prioritize its use if it can do anything better"): its books are polled every few seconds and each quote carries its measured
