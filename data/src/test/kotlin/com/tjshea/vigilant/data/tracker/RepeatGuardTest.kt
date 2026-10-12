@@ -3,12 +3,18 @@ package com.tjshea.vigilant.data.tracker
 import com.tjshea.vigilant.data.tracker.RepeatGuard.Pos
 import com.tjshea.vigilant.data.tracker.RepeatGuard.Rules
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RepeatGuardTest {
     private val rules = Rules(maxBets = 2, maxDollars = 100.0)
+
+    private fun tracked(id: String, contracts: Long?) = TrackedBet(
+        id = id, createdAtMs = 0L, league = "NFL", eventName = "A @ B", startsTs = 1L, marketLabel = "Total", selection = "Over", marketId = "m1", outcomeId = "over",
+        price = 0.5, cost = 0.5, fairAtBet = 0.52, evPercentAtBet = 0.04, stake = 20.0, orderId = "ord-$id", contracts = contracts, paid = 20.0, fee = 0.0, eventId = "e1",
+    )
 
     private fun pos(outcome: String, dollars: Double, contracts: Double, market: String = "m1") = Pos(market, outcome, dollars, contracts)
 
@@ -63,8 +69,10 @@ class RepeatGuardTest {
     }
 
     @Test fun `only open API bets with contracts are held`() {
-        val bet = TrackedBetFixtures.open("o1", "m1", stake = 20.0, contracts = 40L)
-        val mark = TrackedBetFixtures.open("o2", "m1", stake = 20.0, contracts = null)
-        assertTrue(RepeatGuard.fromBets(listOf(bet, mark)).size == 1)
+        val bet = tracked("o1", 4_000L)
+        val mark = tracked("o2", null)
+        val held = RepeatGuard.fromBets(listOf(bet, mark, tracked("o3", 4_000L).copy(status = BetStatus.WON)))
+        assertTrue(held.size == 1)
+        assertEquals(40.0, held.single().payout, 1e-9)
     }
 }

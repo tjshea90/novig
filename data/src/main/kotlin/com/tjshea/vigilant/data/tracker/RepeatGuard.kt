@@ -18,13 +18,13 @@ object RepeatGuard {
     data class Rules(val maxBets: Int = DEFAULT_MAX_BETS, val maxDollars: Double = DEFAULT_MAX_DOLLARS, val hedge: Boolean = true)
 
     /** One position on one outcome: what it cost (fees included) and what it pays if that outcome wins (a contract pays $1). A resting bid counts as if it filled. */
-    data class Pos(val marketId: String, val outcomeId: String, val dollars: Double, val contracts: Double, val count: Int = 1)
+    data class Pos(val marketId: String, val outcomeId: String, val dollars: Double, val payout: Double, val count: Int = 1)
 
     /**
-     * Why a new bet or bid of [dollars] buying [contracts] on [outcomeId] of [marketId] must not go, in words; null when it may. [outcomes]: every outcome id of the market when known (so a three-way
+     * Why a new bet or bid of [dollars] paying [payout] if it wins on [outcomeId] of [marketId] must not go, in words; null when it may. [outcomes]: every outcome id of the market when known (so a three-way
      * market with a side nobody holds is seen); [held]: everything held, in any market.
      */
-    fun check(rules: Rules, held: List<Pos>, marketId: String, outcomeId: String, dollars: Double, contracts: Double, outcomes: Collection<String>? = null): String? {
+    fun check(rules: Rules, held: List<Pos>, marketId: String, outcomeId: String, dollars: Double, payout: Double, outcomes: Collection<String>? = null): String? {
         if (outcomeId.isBlank()) return null
         val same = held.filter { it.outcomeId == outcomeId }
         val n = same.sumOf { it.count }
@@ -38,10 +38,10 @@ object RepeatGuard {
         val others = held.filter { it.marketId == marketId && it.outcomeId != outcomeId && marketId.isNotBlank() }
         if (others.isEmpty()) return null
         if (!rules.hedge) return "The other side of this market is already held, and betting both sides is switched off."
-        val inMarket = held.filter { it.marketId == marketId } + Pos(marketId, outcomeId, dollars, contracts)
+        val inMarket = held.filter { it.marketId == marketId } + Pos(marketId, outcomeId, dollars, payout)
         val spent = inMarket.sumOf { it.dollars }
         val sides = (outcomes.orEmpty() + inMarket.map { it.outcomeId }).toSet()
-        val worst = sides.minOf { side -> inMarket.filter { it.outcomeId == side }.sumOf { it.contracts } - spent }
+        val worst = sides.minOf { side -> inMarket.filter { it.outcomeId == side }.sumOf { it.payout } - spent }
         if (worst <= MIN_LOCKED_PROFIT) {
             return "Both sides of this market would not be a sure profit (the worst way it ends is ${if (worst < 0) "-" else ""}${money(kotlin.math.abs(worst))} after ${money(spent)} spent): a bet or bid on the other side is held back."
         }
@@ -51,7 +51,7 @@ object RepeatGuard {
     /** The open API bets of the Tracker as positions, locks included (a lock is a position on the other side like any other); a ✓ mark has no contracts and holds nothing here. */
     fun fromBets(bets: List<TrackedBet>): List<Pos> = bets
         .filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() && (it.contracts ?: 0L) > 0L }
-        .map { Pos(it.marketId, it.outcomeId, it.stake, (it.contracts ?: 0L).toDouble()) }
+        .map { Pos(it.marketId, it.outcomeId, it.stake, (it.contracts ?: 0L) * com.tjshea.vigilant.engine.EvMath.CONTRACT_PAYOUT_DOLLARS) }
 
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
 
