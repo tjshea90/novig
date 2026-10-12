@@ -357,7 +357,10 @@ class NovigStream(
                 books.forget(drop)
                 spend(dropCost)
             }
-            if (add0.isEmpty()) break
+            if (add0.isEmpty()) {
+                onSyncTail?.invoke()
+                break
+            }
             // The live lane's new markets go in a request of their own, ahead of a scan's bulk one: that one waits for a full bucket (up to two minutes), and a live game
             // cannot (the banner read "Novig live book not subscribed yet" through it).
             val pinnedNow = synchronized(this) { livePinned.toHashSet() }
