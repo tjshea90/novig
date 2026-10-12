@@ -135,6 +135,8 @@ class LiveScanTest {
         val other = LiveScanFeed.hiddenReasons(rows, s.copy(leagues = setOf("NFL")), base + currentTime)
         assertEquals(listOf("NBA is not one of your picked leagues"), other.map { it.first })
         assertTrue(other.single().second >= 1)
+        // Any EV: the Feed's maximum EV does not apply to live bets.
+        assertTrue(LiveScanFeed.shown(rows, s.copy(maxEvPercent = 0.0001), base + currentTime).isNotEmpty())
         val strict = LiveScanFeed.hiddenReasons(rows, s.copy(minEvPercent = 0.9, maxEvPercent = 1.0), base + currentTime)
         assertTrue(strict.single().first.startsWith("under your"))
         h.runner.stop()

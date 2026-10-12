@@ -216,7 +216,7 @@ object LiveScanFeed {
             o.league.novigName !in settings.leagues -> "${o.league.novigName} is not one of your picked leagues"
             ev <= 0.0 -> "not +EV"
             ev < settings.minEvPercent -> "under your ${String.format(java.util.Locale.US, "%.1f", settings.minEvPercent * 100)}% minimum EV"
-            ev > settings.maxEvPercent -> "over your ${String.format(java.util.Locale.US, "%.0f", settings.maxEvPercent * 100)}% maximum EV (too good to be true)"
+            // No maximum EV for live bets (Tj, 2026-10-12: "It can show bets at any EV"): the 5 s freshness rule and Pinnacle's own fair are what keep a live price honest, so a big edge is shown, not hidden as too good to be true.
             o.depth?.let { it.dollarCost < com.tjshea.vigilant.data.scanner.ScanResult.MIN_LIQUIDITY_DOLLARS - 1e-9 } == true -> "too little money on the book"
             !settings.withinOdds(q.cost) -> "outside your odds limits"
             com.tjshea.vigilant.data.scanner.MarketFamily.entries.none { it in settings.families && o.market.marketType in it.novigTypes } -> "that kind of market is switched off"
