@@ -4779,3 +4779,10 @@ Tj verbatim: "In the auto bids tab, there is a running list of all filled bids, 
 
 ## TAI: live lane banner said "2 +EV bets now" but the list showed none (Tj, 2026-10-11 ~23:20Z, screenshot, Live games only mode on)
 - [x] TAI1 Cause: the banner counts every +EV row, the list applies the Feed's bars (picked leagues, minimum EV, odds limits, kinds, depth) and, in Live games only mode, the empty state said "Tap Scan". Fix: `LiveScanFeed.hiddenBecause/hiddenReasons`, a "Hidden by your filters: ..." line under the banner, a live-mode empty state. Test: LiveScanTest.
+
+## TAJ: longshot cap on sliders, scan paused while betting, auto-bet auto-resume (Tj, 2026-10-12)
+Tj verbatim: "For the auto bid and auto bet, consider whether it is wise to bet longshots of +300 ... If it needs to be adjusted, do so. When I'm going to place a bet, sometimes it lags and it may be because it is scanning simultaneously. If you think this is why, see if the scanning can briefly be paused as soon as I press bet, then resumed where it left off when the bet is confirmed. Also the auto bet feature keeps pausing telling me to check novig. It doesn't automatically fix and resume. Have this feature automatically resume auto bet without me pressing the button. Make the app try to fix whatever the issue is but always auto resume quickly. This is strange because it wasn't giving me these errors before"
+- [ ] TAJ1 Longshot evidence (RESEARCH/study) and cap both sliders' longest odds accordingly; tests.
+- [ ] TAJ2 Bet lag: what runs during a bet tap; brief pause of scanning while the order is placed, resume after.
+- [ ] TAJ3 Auto-bet halts (check Novig): find why they came back (v0.89.2x recovery), make EVERY halt self-resolve and auto-resume quickly; tests.
+- [ ] TAJ4 Ship.
