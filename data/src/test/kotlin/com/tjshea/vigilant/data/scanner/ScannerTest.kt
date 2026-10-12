@@ -25,6 +25,7 @@ import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -54,6 +55,9 @@ class ScannerTest {
             return BookBatch(mapOf(Fixtures.ML_MARKET to b), 0, 1, 0)
         }
         override suspend fun market(marketId: String): NovigMarket? = null
+        /** What the live feed holds right now, when a test sets it (the streaming engine reads it; nothing else does). */
+        var held: NovigBook? = null
+        override fun pushedTop(marketIds: Collection<String>): Map<String, NovigBook> = held?.takeIf { it.marketId in marketIds }?.let { mapOf(it.marketId to it) } ?: emptyMap()
     }
 
     /** The Odds API, faked: metered, re-used for the settings' window. */
@@ -303,6 +307,33 @@ class ScannerTest {
         assertEquals(now, dal.bookFetchedAtMs)
         assertNotNull(dal.fairProbability)
         assertEquals(1, r.read)
+    }
+
+    @Test
+    fun `a streaming update re-reads the in-memory boards and the held Novig books, prices from them, and reads nothing else`() = runTest {
+        val novig = FakeNovig()
+        val exchange = FakeExchange("kalshi", 0.60, 0.40)
+        val scanner = Scanner(novig, clock = { now })
+        assertNull(scanner.streamUpdate(settings, listOf(exchange), null)) // no catalog yet: a full scan makes it
+        scanner.scan(settings, listOf(exchange))
+        val calls = exchange.calls
+        val books = novig.bookCalls
+        now += 2_000
+        // Nothing held by the feed: priced from the books the scan read, no request.
+        val same = scanner.streamUpdate(settings, listOf(exchange), null)!!
+        assertEquals(calls + 1, exchange.calls)
+        assertEquals(books, novig.bookCalls)
+        assertEquals(1, novig.catalogCalls)
+        assertNotNull(same.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }.fairProbability)
+        // The feed pushes a cheaper DAL: the update takes it, stamped now, and still asks Novig for nothing.
+        now += 1_000
+        novig.held = NovigBook(Fixtures.ML_MARKET, 2, mapOf(Fixtures.ML_DAL to listOf(BidLevel(300, 1000)), Fixtures.ML_BAL to listOf(BidLevel(615, 1000))), now)
+        val moved = scanner.streamUpdate(settings, emptyList(), listOf(Fixtures.ML_MARKET))!!
+        assertEquals(books, novig.bookCalls)
+        assertEquals(calls + 1, exchange.calls)
+        val dal = moved.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        assertEquals(now, dal.bookFetchedAtMs)
+        assertNotEquals(same.opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }.quote, dal.quote)
     }
 
     @Test
