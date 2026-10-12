@@ -979,7 +979,7 @@ class ApiBettingTest {
         val p = ApiBetPlacer(
             tradingClient(), tracker(), books = { book() }, limits = { limits }, clock = { now }, dayStart = { now - 3_600_000L }, pause = { gate.await() },
         )
-        val placing = kotlinx.coroutines.async(Dispatchers.IO) { p.placeByHand(target(), 10.0, 0.465, false) { sent.complete(Unit) } }
+        val placing = async(Dispatchers.IO) { p.placeByHand(target(), 10.0, 0.465, false) { sent.complete(Unit) } }
         withTimeout(10_000) { sent.await() }
         assertFalse("the order is still being finished", placing.isCompleted)
         // while it ends: the same side is not bet again, and the day's limit already counts it ($10 + $41 > $50)
