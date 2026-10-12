@@ -17,6 +17,8 @@ class BoltContext(
     val families: Set<MarketFamily>,
     val includeLive: Boolean,
     val nowMs: Long,
+    /** Only games BoltOdds says are in play (the live engine's); false = the usual pregame reading, which leaves a game flagged live out whatever [includeLive] says. */
+    val liveOnly: Boolean = false,
     /** When [book] was last heard on [sport] AND the connection that heard it is healthy; null when that cannot be vouched for (the quote then ages by its own time). */
     val aliveAt: (book: String, sport: String) -> Long?,
 )
@@ -36,11 +38,14 @@ object BoltConvert {
         for (g in games) {
             if (BoltBooks.leagueOfSport(g.sport) != ctx.league.novigName) continue
             val start = g.startMs ?: continue
-            if (!ctx.includeLive && start <= ctx.nowMs) continue
+            if (!ctx.liveOnly && !ctx.includeLive && start <= ctx.nowMs) continue
             byGame.getOrPut(g.game) { ArrayList() } += g
         }
         val out = ArrayList<RefEvent>()
         for ((gameId, books) in byGame) {
+            // TBP9: a game BoltOdds flags as in play is the live engine's, never the pregame fair's; and the live engine reads only those.
+            val inPlay = books.any { it.live }
+            if (ctx.liveOnly != inPlay) continue
             val canon = books.maxByOrNull { it.outcomes.size } ?: continue
             val start = books.firstNotNullOfOrNull { it.startMs } ?: continue
             val markets = ArrayList<RefBookMarket>()

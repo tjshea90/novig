@@ -97,6 +97,7 @@ class BoltBoard(
                 sport = sport, sportsbook = book, game = game,
                 home = d.home ?: old?.home ?: return false, away = d.away ?: old?.away ?: return false,
                 startMs = d.startMs ?: old?.startMs, outcomes = outcomes, updatedAtMs = maxOf(at, old?.updatedAtMs ?: 0L),
+                live = d.live ?: old?.live ?: false,
             )
             return true
         }

@@ -88,7 +88,14 @@ object BoltParser {
             sport = text(d["sport"]), sportsbook = text(d["sportsbook"]), game = text(d["game"]) ?: text(info?.get("game")),
             home = text(d["home_team"]), away = text(d["away_team"]), startMs = whenMs(text(info?.get("when"))),
             infoId = text(info?.get("id")), outcomes = outcomes, removed = removed,
+            live = bool(info?.get("is_live")),
         )
+    }
+
+    /** A JSON boolean, also as "true"/"false" text or 1/0; null when absent. */
+    private fun bool(el: JsonElement?): Boolean? {
+        val s = text(el)?.lowercase() ?: return null
+        return when (s) { "true", "1", "yes" -> true; "false", "0", "no" -> false; else -> null }
     }
 
     /** A JSON value as text: a string, or a number as printed; an object, an array and null are none ("{}" is how the clear messages say "nothing"). */

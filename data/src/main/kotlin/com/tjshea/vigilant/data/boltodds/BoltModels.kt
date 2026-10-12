@@ -37,6 +37,8 @@ data class BoltBookGame(
     val outcomes: Map<String, BoltOutcome>,
     /** The newest message time folded into this entry: a snapshot never overwrites a newer live update. */
     val updatedAtMs: Long,
+    /** `info.is_live` as the book last said it (BOLTODDS_API.md §9, sample #2): the game is in play. */
+    val live: Boolean = false,
 ) {
     val key: BoltGameKey get() = BoltGameKey(sportsbook, game)
 }
@@ -52,6 +54,8 @@ data class BoltData(
     val infoId: String?,
     val outcomes: List<BoltOutcome>,
     val removed: List<String>,
+    /** `info.is_live`: the game is in play at this book (null when the message did not say). */
+    val live: Boolean? = null,
 )
 
 /** One message of the odds socket or one element of the snapshot (BOLTODDS_API.md §3). */
