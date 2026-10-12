@@ -76,6 +76,10 @@ class ApiBetPlacer(
     private val timing: (String) -> Unit = {},
     /** The profile of Tj's bet history when Settings › Profit-proven only is on, else null ([com.tjshea.vigilant.data.scanner.ProfitProfile]). */
     private val profit: () -> com.tjshea.vigilant.data.scanner.ProfitProfile? = { null },
+    /** The repeat and hedge guard's rules ([com.tjshea.vigilant.data.tracker.RepeatGuard], Settings › Betting & Novig account), or null with it off. */
+    private val repeatRules: () -> com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? = { null },
+    /** What Vigilant's resting bids would hold if they filled, for the guard (they count toward the other-side test, not toward the count of bets). */
+    private val restingPositions: suspend () -> List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = { emptyList() },
 ) {
 
     /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. [limitsOverride]: the auto-bet's own limits. */
@@ -87,7 +91,7 @@ class ApiBetPlacer(
      * A bet by hand whose order is in at Novig and not yet recorded ([placeByHand]): Novig takes about 5 s to end it, and the next bet may start meanwhile (Tj, 2026-10-12: "Do option 1"). Its
      * dollars count against the day's limit and its game's limit, and it blocks a repeat of the same side, exactly as if it were already in the Tracker; it leaves when the record is made.
      */
-    private data class Pending(val outcomeId: String, val item: com.tjshea.vigilant.data.tracker.GameExposure.Item, val dollars: Double)
+    private data class Pending(val outcomeId: String, val item: com.tjshea.vigilant.data.tracker.GameExposure.Item, val dollars: Double, val pos: com.tjshea.vigilant.data.tracker.RepeatGuard.Pos)
     private val pending = java.util.concurrent.CopyOnWriteArrayList<Pending>()
 
     private suspend fun planImpl(target: BetTarget, stake: Double, allowRepeat: Boolean, limitsOverride: BetLimits?): PlanResult {
@@ -114,9 +118,23 @@ class ApiBetPlacer(
             val ref = GameRef(target.market.eventId, target.eventName, target.startsTs, target.league)
             GameExposure.check(ref, GameExposure.items(all) + restingBids() + pending.map { it.item }, target.market.marketId, target.outcomeId, stake, cap)
         }
-        val plan = ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all) + pending.sumOf { it.dollars }, game, profit())
+        val plan = guardRepeat(ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all) + pending.sumOf { it.dollars }, game, profit()), target, limits, all)
         timing("bet check: ${clock() - t0} ms in all (before the book ${t1 - t0} ms, book read ${t2 - t1} ms${if (book == null) ", FAILED" else ""}, rest ${clock() - t2} ms)")
         return plan
+    }
+
+    /**
+     * The repeat and hedge guard ([com.tjshea.vigilant.data.tracker.RepeatGuard]): the same side again at a new price, or the other side of a market without a sure profit. The auto-bet is refused;
+     * a bet by hand only gets the note (Tj decides what he bets by hand).
+     */
+    private suspend fun guardRepeat(result: PlanResult, target: BetTarget, limits: BetLimits, all: List<com.tjshea.vigilant.data.tracker.TrackedBet>): PlanResult {
+        val rules = repeatRules() ?: return result
+        val ready = result as? PlanResult.Ready ?: return result
+        val p = ready.plan
+        val held = com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(all) + restingPositions() + pending.map { it.pos }
+        val why = com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, held, target.market.marketId, target.outcomeId, p.expectedCost, p.payout, target.market.outcomes.map { it.outcomeId }) ?: return result
+        return if (limits.manual) PlanResult.Ready(p.copy(note = listOfNotNull(p.note, "Heads up: $why You can still place it.").joinToString(" ")))
+        else PlanResult.Refused("Not bet: $why")
     }
 
     /**
@@ -198,7 +216,7 @@ class ApiBetPlacer(
         val tp2 = clock()
         // By hand: the order is in, so the next bet may start while this one ends. Its dollars stay counted until its record is made.
         val reservation = onSent?.let {
-            Pending(target.outcomeId, com.tjshea.vigilant.data.tracker.GameExposure.Item(GameRef(target.market.eventId, target.eventName, target.startsTs, target.league), target.market.marketId, target.outcomeId, plan.expectedCost), plan.expectedCost)
+            Pending(target.outcomeId, com.tjshea.vigilant.data.tracker.GameExposure.Item(GameRef(target.market.eventId, target.eventName, target.startsTs, target.league), target.market.marketId, target.outcomeId, plan.expectedCost), plan.expectedCost, com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(target.market.marketId, target.outcomeId, plan.expectedCost, plan.payout))
                 .also { r -> pending += r }
         }
         if (reservation != null) {
