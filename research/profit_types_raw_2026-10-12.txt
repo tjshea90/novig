@@ -1,0 +1,156 @@
+
+######## BETS: 1031 records
+
+-- league (n>=15)
+  NCAAF                                  n= 141 win= 53% ROI= +20.2% profit=  +32.88 t=+1.46 CLV=-0.1%/129
+                                         n=  64 win= 53% ROI=  +9.9% profit=   +6.32 t=+0.75 CLV=-2.4%/5
+  WNBA                                   n=  76 win= 41% ROI=  -6.6% profit=   -5.80 t=-1.25 CLV=+2.1%/73
+  NHL                                    n= 131 win= 47% ROI=  -7.2% profit=  -15.60 t=-0.23 CLV=+2.6%/128
+  MLB                                    n=  67 win= 46% ROI= -10.2% profit=   -8.80 t=-0.59 CLV=+0.3%/62
+  NFL                                    n= 486 win= 43% ROI= -10.6% profit=  -69.04 t=-2.30 CLV=+1.0%/454
+
+-- kind (n>=15)
+  Spreads                                n=  99 win= 54% ROI= +17.6% profit=  +20.93 t=+1.28 CLV=-0.8%/91
+  Game totals                            n= 111 win= 52% ROI= +12.0% profit=  +14.69 t=+0.79 CLV=+0.2%/93
+  Player props                           n= 711 win= 43% ROI= -10.6% profit= -103.75 t=-2.69 CLV=+1.4%/622
+  Team totals                            n=  28 win= 43% ROI= -11.0% profit=   -3.96 t=-0.43 CLV=+2.9%/26
+
+-- side (n>=15)
+  other                                  n= 119 win= 57% ROI= +18.7% profit=  +25.96 t=+1.66 CLV=-0.8%/103
+  under                                  n= 382 win= 46% ROI=  -5.2% profit=  -26.16 t=-1.06 CLV=+0.9%/329
+  over                                   n= 482 win= 43% ROI= -10.1% profit=  -65.43 t=-1.92 CLV=+1.7%/430
+
+-- lead (n>=15)
+  <1h                                    n= 153 win= 52% ROI=  +6.5% profit=  +13.23 t=+0.76 CLV=+3.4%/142
+  >13h                                   n= 484 win= 46% ROI=  -3.0% profit=  -17.88 t=-0.59 CLV=-0.3%/394
+  3-6h                                   n= 103 win= 46% ROI=  -4.7% profit=   -7.29 t=-0.42 CLV=+2.6%/100
+  6-13h                                  n= 135 win= 41% ROI= -11.5% profit=  -22.90 t=-1.69 CLV=+0.5%/127
+  1-3h                                   n= 108 win= 41% ROI= -20.8% profit=  -30.79 t=-1.76 CLV=+2.7%/99
+
+-- ev (n>=15)
+  ?                                      n=  72 win= 53% ROI=  +5.5% profit=   +4.20 t=+0.71 CLV=+2.8%/13
+  <2%                                    n= 126 win= 47% ROI=  -1.1% profit=   -1.36 t=-0.38 CLV=+0.2%/121
+  2-4%                                   n= 567 win= 47% ROI=  -2.4% profit=  -17.99 t=-0.68 CLV=+1.0%/533
+  4-6%                                   n= 218 win= 40% ROI= -14.3% profit=  -50.48 t=-2.08 CLV=+2.0%/195
+
+-- price (n>=15)
+  55-70c                                 n=  51 win= 59% ROI=  +7.6% profit=   +5.54 t=+0.01 CLV=+1.3%/38
+  30-45c                                 n= 147 win= 42% ROI=  -1.0% profit=   -1.83 t=-0.20 CLV=+2.0%/132
+  45-55c                                 n= 778 win= 45% ROI=  -6.7% profit=  -69.61 t=-1.52 CLV=+0.9%/690
+
+-- league+kind (n>=15)
+  NCAAF Spreads                          n=  64 win= 58% ROI= +33.0% profit=  +25.86 t=+1.75 CLV=-0.8%/59
+  NCAAF Game totals                      n=  59 win= 54% ROI= +20.4% profit=  +13.12 t=+1.11 CLV=-0.9%/53
+   Player props                          n=  53 win= 51% ROI=  +5.0% profit=   +2.63 t=+0.34 CLV=n/a
+  NFL Game totals                        n=  31 win= 48% ROI=  +1.7% profit=   +0.56 t=-0.46 CLV=+1.3%/26
+  NFL Spreads                            n=  20 win= 45% ROI=  +0.8% profit=   +0.16 t=-0.11 CLV=-1.0%/20
+  WNBA Player props                      n=  61 win= 39% ROI=  -6.3% profit=   -4.51 t=-1.29 CLV=+2.5%/59
+  MLB Player props                       n=  59 win= 46% ROI= -11.5% profit=   -8.95 t=-0.68 CLV=+0.5%/55
+  NHL Player props                       n= 126 win= 44% ROI= -11.7% profit=  -24.45 t=-0.70 CLV=+2.5%/123
+  NFL Player props                       n= 412 win= 42% ROI= -12.0% profit=  -68.46 t=-2.53 CLV=+1.1%/385
+
+-- kind+side (n>=15)
+  Game totals over                       n=  55 win= 62% ROI= +34.0% profit=  +21.24 t=+2.27 CLV=-0.1%/50
+  Spreads other                          n=  99 win= 54% ROI= +17.6% profit=  +20.93 t=+1.28 CLV=-0.8%/91
+  Player props under                     n= 312 win= 47% ROI=  -4.4% profit=  -18.65 t=-0.62 CLV=+0.9%/269
+  Game totals under                      n=  52 win= 38% ROI= -12.2% profit=   -6.80 t=-1.21 CLV=+0.5%/43
+  Team totals under                      n=  15 win= 40% ROI= -12.2% profit=   -2.51 t=-0.47 CLV=+2.3%/14
+  Player props over                      n= 399 win= 40% ROI= -15.4% profit=  -85.10 t=-3.05 CLV=+1.8%/353
+
+-- league+side (n>=15)
+  NCAAF other                            n=  66 win= 58% ROI= +32.4% profit=  +25.97 t=+1.74 CLV=-0.5%/61
+   over                                  n=  28 win= 61% ROI= +28.8% profit=   +8.07 t=+1.44 CLV=-3.2%/3
+  NHL under                              n=  28 win= 57% ROI= +14.1% profit=   +7.30 t=+0.90 CLV=+3.2%/28
+  NCAAF under                            n=  33 win= 48% ROI= +12.1% profit=   +4.45 t=+0.21 CLV=+0.4%/28
+  NFL other                              n=  30 win= 57% ROI=  +7.0% profit=   +2.12 t=+0.27 CLV=-1.6%/26
+  NCAAF over                             n=  42 win= 50% ROI=  +5.3% profit=   +2.46 t=+0.32 CLV=+0.3%/40
+  WNBA under                             n=  38 win= 47% ROI=  +4.2% profit=   +1.97 t=+0.02 CLV=+0.8%/36
+  MLB under                              n=  39 win= 51% ROI=  -2.1% profit=   -1.09 t=-0.04 CLV=+0.9%/36
+   under                                 n=  33 win= 45% ROI=  -8.7% profit=   -2.87 t=-0.49 CLV=n/a
+  NFL under                              n= 207 win= 43% ROI= -11.4% profit=  -32.27 t=-1.53 CLV=+0.7%/198
+  NFL over                               n= 249 win= 42% ROI= -11.6% profit=  -38.89 t=-1.89 CLV=+1.5%/230
+  NHL over                               n= 103 win= 44% ROI= -13.8% profit=  -22.90 t=-0.72 CLV=+2.5%/100
+  WNBA over                              n=  29 win= 28% ROI= -25.3% profit=   -8.07 t=-2.46 CLV=+4.0%/29
+  MLB over                               n=  27 win= 37% ROI= -26.3% profit=   -8.89 t=-1.07 CLV=-0.4%/25
+
+-- league+kind+side (n>=15)
+  NCAAF Spreads other                    n=  64 win= 58% ROI= +33.0% profit=  +25.86 t=+1.75 CLV=-0.8%/59
+  NCAAF Game totals under                n=  30 win= 53% ROI= +23.3% profit=   +7.80 t=+0.72 CLV=+0.1%/25
+  NCAAF Game totals over                 n=  29 win= 55% ROI= +17.3% profit=   +5.32 t=+0.84 CLV=-1.7%/28
+   Player props over                     n=  22 win= 55% ROI= +15.9% profit=   +3.50 t=+0.69 CLV=n/a
+  WNBA Player props under                n=  35 win= 49% ROI=  +6.6% profit=   +2.87 t=+0.16 CLV=+1.1%/33
+  NHL Player props under                 n=  25 win= 52% ROI=  +0.9% profit=   +0.39 t=+0.34 CLV=+2.7%/25
+  NFL Spreads other                      n=  20 win= 45% ROI=  +0.8% profit=   +0.16 t=-0.11 CLV=-1.0%/20
+  MLB Player props under                 n=  33 win= 52% ROI=  -2.4% profit=   -1.06 t=-0.08 CLV=+0.8%/31
+   Player props under                    n=  31 win= 48% ROI=  -2.8% profit=   -0.87 t=-0.15 CLV=n/a
+  NFL Player props under                 n= 188 win= 45% ROI=  -7.6% profit=  -19.97 t=-0.90 CLV=+0.7%/180
+  NHL Player props over                  n= 101 win= 43% ROI= -15.1% profit=  -24.85 t=-0.95 CLV=+2.4%/98
+  NFL Player props over                  n= 224 win= 39% ROI= -15.8% profit=  -48.49 t=-2.61 CLV=+1.4%/205
+  MLB Player props over                  n=  26 win= 38% ROI= -24.0% profit=   -7.89 t=-0.90 CLV=+0.1%/24
+  WNBA Player props over                 n=  26 win= 27% ROI= -26.0% profit=   -7.38 t=-2.41 CLV=+4.3%/26
+
+######## BIDS: 300 records
+
+-- league (n>=15)
+  NCAAF                                  n=  28 win= 57% ROI= +32.2% profit=  +10.34 t=+1.00 CLV=+2.8%/27
+  NHL                                    n=  61 win= 57% ROI= +24.4% profit=  +26.54 t=+1.44 CLV=+2.1%/57
+  MLB                                    n=  38 win= 53% ROI=  +9.3% profit=   +6.30 t=+0.18 CLV=+2.4%/38
+  WNBA                                   n=  32 win= 44% ROI=  -5.2% profit=   -2.53 t=-0.39 CLV=+0.4%/30
+  NFL                                    n=  88 win= 41% ROI= -16.5% profit=  -21.64 t=-1.12 CLV=+2.1%/82
+
+-- kind (n>=15)
+  Team totals                            n=  65 win= 62% ROI= +33.9% profit=  +33.63 t=+2.32 CLV=+2.4%/65
+  Player props                           n= 166 win= 45% ROI=  -5.7% profit=  -15.48 t=-0.83 CLV=+1.9%/156
+
+-- side (n>=15)
+  under                                  n= 143 win= 53% ROI=  +8.6% profit=  +20.11 t=+1.04 CLV=+2.3%/135
+  over                                   n= 106 win= 44% ROI=  -1.3% profit=   -2.09 t=-0.51 CLV=+1.4%/97
+  other                                  n=  17 win= 29% ROI= -34.0% profit=   -5.26 t=-2.04 CLV=+10.5%/3
+
+-- lead (n>=15)
+  6-13h                                  n=  83 win= 53% ROI=  +9.8% profit=  +14.34 t=+0.91 CLV=+2.1%/77
+  3-6h                                   n=  57 win= 49% ROI=  +7.3% profit=   +6.04 t=+0.30 CLV=+1.8%/56
+  >13h                                   n=  39 win= 49% ROI=  +1.4% profit=   +0.95 t=+0.11 CLV=+0.1%/34
+  <1h                                    n=  49 win= 45% ROI=  -6.9% profit=   -4.01 t=-0.90 CLV=+2.9%/33
+  1-3h                                   n=  38 win= 39% ROI=  -8.7% profit=   -4.56 t=-0.92 CLV=+3.2%/35
+
+-- ev (n>=15)
+  2-4%                                   n= 184 win= 49% ROI=  +6.7% profit=  +18.49 t=+0.14 CLV=+2.0%/164
+  ?                                      n=  15 win= 47% ROI=  +6.1% profit=   +1.26 t=-0.11 CLV=+0.6%/9
+  4-6%                                   n=  66 win= 47% ROI=  -5.9% profit=   -6.50 t=-0.10 CLV=+2.3%/62
+
+-- price (n>=15)
+  45-55c                                 n= 188 win= 50% ROI=  +5.5% profit=  +16.30 t=+0.34 CLV=+2.2%/167
+  55-70c                                 n=  15 win= 60% ROI=  +3.3% profit=   +0.94 t=+0.21 CLV=+4.5%/10
+  30-45c                                 n=  61 win= 41% ROI=  -3.5% profit=   -2.78 t=-0.43 CLV=+1.1%/57
+
+-- league+kind (n>=15)
+  NHL Team totals                        n=  22 win= 73% ROI= +53.1% profit=  +23.69 t=+2.48 CLV=+2.9%/22
+  NCAAF Team totals                      n=  24 win= 58% ROI= +28.6% profit=   +7.81 t=+1.02 CLV=+2.3%/24
+  MLB Player props                       n=  31 win= 55% ROI= +12.7% profit=   +7.39 t=+0.32 CLV=+2.7%/31
+  NHL Player props                       n=  37 win= 51% ROI=  +6.8% profit=   +4.29 t=+0.41 CLV=+1.7%/35
+  WNBA Player props                      n=  32 win= 44% ROI=  -5.2% profit=   -2.53 t=-0.39 CLV=+0.4%/30
+  NFL Player props                       n=  66 win= 38% ROI= -24.5% profit=  -24.63 t=-1.56 CLV=+2.3%/60
+
+-- kind+side (n>=15)
+  Team totals over                       n=  19 win= 63% ROI= +52.4% profit=  +14.08 t=+1.49 CLV=+2.2%/19
+  Team totals under                      n=  46 win= 61% ROI= +27.0% profit=  +19.55 t=+1.77 CLV=+2.5%/46
+  Player props under                     n=  87 win= 48% ROI=  -2.2% profit=   -3.22 t=-0.21 CLV=+2.1%/83
+  Player props over                      n=  79 win= 42% ROI= -10.0% profit=  -12.26 t=-0.97 CLV=+1.6%/73
+
+-- league+side (n>=15)
+  NCAAF under                            n=  20 win= 65% ROI= +42.4% profit=   +9.62 t=+1.53 CLV=+2.9%/19
+  MLB under                              n=  25 win= 68% ROI= +32.7% profit=  +15.28 t=+1.72 CLV=+3.1%/25
+  NHL under                              n=  25 win= 60% ROI= +27.3% profit=  +12.89 t=+1.07 CLV=+3.0%/25
+  NHL over                               n=  34 win= 59% ROI= +25.2% profit=  +15.09 t=+1.33 CLV=+1.5%/32
+  WNBA under                             n=  19 win= 47% ROI=  -0.6% profit=   -0.19 t=-0.06 CLV=+0.3%/18
+  NFL over                               n=  36 win= 44% ROI=  -5.0% profit=   -2.44 t=-0.23 CLV=+1.7%/33
+  NFL under                              n=  50 win= 40% ROI= -20.9% profit=  -16.80 t=-1.02 CLV=+2.0%/47
+
+-- league+kind+side (n>=15)
+  NCAAF Team totals under                n=  17 win= 71% ROI= +49.9% profit=  +10.24 t=+1.95 CLV=+2.6%/17
+  MLB Player props under                 n=  20 win= 70% ROI= +38.5% profit=  +14.84 t=+1.65 CLV=+3.3%/20
+  NHL Player props over                  n=  26 win= 50% ROI=  +5.6% profit=   +2.51 t=+0.26 CLV=+1.4%/24
+  WNBA Player props under                n=  19 win= 47% ROI=  -0.6% profit=   -0.19 t=-0.06 CLV=+0.3%/18
+  NFL Player props over                  n=  29 win= 41% ROI= -12.6% profit=   -4.99 t=-0.60 CLV=+2.1%/26
+  NFL Player props under                 n=  37 win= 35% ROI= -32.2% profit=  -19.65 t=-1.56 CLV=+2.4%/34
