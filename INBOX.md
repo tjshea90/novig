@@ -6752,3 +6752,8 @@ Another safeguard needs to be made and applied automatically. When I live auto b
 ```
 Start building the streaming engine if you haven't already
 ```
+
+## 2026-10-12T18:14:17Z
+```
+Is there a way to have both web sockets "match" game and prop odds so they can compare odds changes in real time rather than refreshing every few seconds? Does it already do this? The live betting would work better if it kept a match on games, compared odds with low latency, and rapid bet on stake novig odds 
+```
