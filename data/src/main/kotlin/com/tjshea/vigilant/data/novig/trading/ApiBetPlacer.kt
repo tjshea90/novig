@@ -96,7 +96,7 @@ class ApiBetPlacer(
      * has moved above [confirmedLimit] is refused ("the price moved: look again").
      */
     suspend fun place(target: BetTarget, stake: Double, confirmedLimit: Double, allowRepeat: Boolean = false): PlaceResult =
-        placeLocked(target, stake, confirmedLimit, allowRepeat, limitsOverride = null, expectedPrice = null)
+        com.tjshea.vigilant.data.novig.BetPriority.hold { placeLocked(target, stake, confirmedLimit, allowRepeat, limitsOverride = null, expectedPrice = null) }
 
     /**
      * An auto-bet (Tj, 2026-10-01): nobody confirms, so the ceiling is the plan's own (the deepest level still at [limits]' minimum edge, on a
@@ -105,7 +105,7 @@ class ApiBetPlacer(
      * outcome found may not be the bet that was shown, or the market just moved). Never a repeat of an open bet.
      */
     suspend fun placeAuto(target: BetTarget, stake: Double, limits: BetLimits, expectedPrice: Double): PlaceResult =
-        placeLocked(target, stake, confirmedLimit = 1.0, allowRepeat = false, limitsOverride = limits, expectedPrice = expectedPrice)
+        com.tjshea.vigilant.data.novig.BetPriority.hold { placeLocked(target, stake, confirmedLimit = 1.0, allowRepeat = false, limitsOverride = limits, expectedPrice = expectedPrice) }
 
     private suspend fun placeLocked(
         target: BetTarget,

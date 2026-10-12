@@ -69,6 +69,7 @@ class RateGate(
 
     /** Waits until one request may go out. */
     suspend fun acquire() {
+        BetPriority.yieldToBet()
         while (true) {
             val wait = mutex.withLock {
                 val now = clock()
