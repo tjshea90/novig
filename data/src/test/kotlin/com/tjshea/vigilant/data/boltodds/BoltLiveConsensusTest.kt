@@ -17,10 +17,11 @@ class BoltLiveConsensusTest {
 
     /** A book's live game: home ML, spread -3.5 and total 220.5 priced by [ml] (home American odds, away the mirror image at ~4.5% hold). */
     private fun book(slug: String, ml: Int, live: Boolean = true, updated: Long = now - 1_000L, spreadHome: Double = -3.5, total: Double = 220.5): BoltBookGame {
-        val away = -ml + if (ml < 0) 9 else -9   // roughly the other side with a hold
+        val imp = if (ml < 0) -ml / (-ml + 100.0) else 100.0 / (ml + 100.0)
+        val away = BoltLiveConsensus.american(1.0 - imp + 0.045).toInt()   // the other side with a 4.5% hold
         val outcomes = mapOf(
             out("$slug ml home", ml, "Moneyline", "Boston Celtics"),
-            out("$slug ml away", if (ml < 0) 100 + (-ml - 100) * 0 + 120 else -140, "Moneyline", "Miami Heat"),
+            out("$slug ml away", away, "Moneyline", "Miami Heat"),
             out("$slug sp home", -110, "Spread", "Boston Celtics", spreadHome),
             out("$slug sp away", -110, "Spread", "Miami Heat", -spreadHome),
             out("$slug o", -110, "Total", null, total, "Over"),
