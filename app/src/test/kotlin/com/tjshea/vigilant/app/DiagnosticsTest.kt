@@ -428,6 +428,16 @@ class DiagnosticsTest {
     }
 
     @Test
+    fun `one bet logged twice is flagged but two orders Novig filled separately are two bets`() {
+        val base = SampleScan.state()
+        fun open(id: String, order: String?) = leadBet(id, 2, 1.0).copy(startsTs = now + 3_600_000L, status = BetStatus.PENDING, marketId = "m", outcomeId = "o", orderId = order)
+        val twice = HealthChecks.of(base.copy(bets = listOf(open("a", null), open("b", null))), extras, now)
+        assertTrue(twice.any { it.area == "Tracker data" && it.finding.contains("tracked more than once") })
+        val two = HealthChecks.of(base.copy(bets = listOf(open("a", "order-1"), open("b", "order-2"))), extras, now)
+        assertTrue(two.none { it.area == "Tracker data" && it.finding.contains("tracked more than once") })
+    }
+
+    @Test
     fun `edge accuracy is judged on the bets placed inside the trap guard's window, and the earlier ones are called out on their own (RESEARCH 82)`() {
         val base = SampleScan.state()
         // 20 bets placed 1 h before the start that closed 3% better than their price, 20 placed 30 h before that closed 4% worse: pooled −0.5%, a FAIL before.
