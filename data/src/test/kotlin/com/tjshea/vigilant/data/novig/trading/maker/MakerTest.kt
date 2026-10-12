@@ -74,6 +74,23 @@ class MakerTest {
     }
 
     @Test
+    fun `the bid file leaves out fields at their default, reads the same, and still reads a file written with every field (the v0_89_34 file was 23 MB)`() = runBlocking<Unit> {
+        val bid = MakerBid(
+            clientId = "c1", orderId = "o1", marketId = "m1", eventId = "e1", outcomeId = "x1", league = "NFL", eventName = "A @ B", startsTs = now + 3_600_000L, marketLabel = "Player Receiving Yards",
+            selection = "Pat Over 50.5", price = 0.5, contracts = 500, fair = 0.52, evAtFair = 0.04, margin = 0.04, postedAtMs = now,
+        )
+        val compactFile = File.createTempFile("maker-compact", ".json").also { it.delete() }
+        val store = MakerStore(compactFile)
+        store.update { (1..50).map { bid.copy(clientId = "c$it") } }
+        val everyField = File.createTempFile("maker-full", ".json").also { it.delete() }
+        everyField.writeText(kotlinx.serialization.json.Json { encodeDefaults = true }.encodeToString(kotlinx.serialization.builtins.ListSerializer(MakerBid.serializer()), (1..50).map { bid.copy(clientId = "c$it") }))
+        assertTrue("${compactFile.length()} against ${everyField.length()}", compactFile.length() < everyField.length() * 0.75)
+        // Read back from disk: the same 50 bids; and the full file reads the same way.
+        assertEquals(store.all(), MakerStore(compactFile).all())
+        assertEquals(store.all(), MakerStore(everyField).all())
+    }
+
+    @Test
     fun `a bid more than a cent under the best bid is not posted (the 2026-10-11 export had 4 fills in 3370 bids 3 or more ticks behind)`() {
         // fair 0.52 at the 4% margin is a bid at 0.500.
         val level = MakerQuote.decide(line(fair = 0.52).copy(bestBid = 0.500), rules, now)
