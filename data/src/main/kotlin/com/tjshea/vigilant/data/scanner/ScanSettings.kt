@@ -1328,7 +1328,20 @@ data class ApiGates(
      * bet by hand is warned. Default OFF: off changes nothing at all.
      */
     val profitProven: Boolean = false,
-)
+    /**
+     * The repeat and hedge guard ([com.tjshea.vigilant.data.tracker.RepeatGuard], Tj, 2026-10-12): the auto-bet, the bid desk and the live engine place at most [repeatMaxBets] bets or bids and [repeatMaxDollars]
+     * dollars on one side of one line (a new price on it is the same selection), and bet the other side of a market only while both sides together are a sure profit ([repeatHedge]). Default ON (a safety).
+     * A limit of 0 is no limit on that; a bet by hand is warned, never blocked.
+     */
+    val repeatGuard: Boolean = true,
+    val repeatMaxBets: Int = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_BETS,
+    val repeatMaxDollars: Double = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_DOLLARS,
+    val repeatHedge: Boolean = true,
+) {
+    /** The guard's rules for the placers, or null with the guard switched off. */
+    fun repeatRules(): com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? =
+        if (repeatGuard) com.tjshea.vigilant.data.tracker.RepeatGuard.Rules(repeatMaxBets.coerceAtLeast(0), repeatMaxDollars.coerceAtLeast(0.0), repeatHedge) else null
+}
 
 /**
  * "Live games only" mode (Tj, 2026-10-11): only the real-time lane runs (Pinnodds + Novig sockets), only live bets are listed, and everything the lane does not need is switched OFF. [on] is the mode;
