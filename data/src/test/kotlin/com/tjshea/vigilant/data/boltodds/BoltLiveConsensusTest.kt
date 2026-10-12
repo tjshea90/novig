@@ -93,4 +93,38 @@ class BoltLiveConsensusTest {
         assertEquals(-150.0, BoltLiveConsensus.american(0.6), 0.01)
         assertEquals(150.0, BoltLiveConsensus.american(0.4), 0.01)
     }
+
+    private fun tennis(slug: String, home: Int, away: Int) = BoltBookGame(
+        "WTA Wuhan - Tennis", slug, "Alice Rame vs Leyre Romero Gormaz, 2026-10-12, 04", "Alice Rame", "Leyre Romero Gormaz", start,
+        mapOf(
+            out("$slug h", home, "Moneyline", "Alice Rame"), out("$slug a", away, "Moneyline", "Leyre Romero Gormaz"),
+            out("$slug sp h", -110, "Spread", "Alice Rame", -3.5), out("$slug sp a", -110, "Spread", "Leyre Romero Gormaz", 3.5),
+        ),
+        now - 1_000L, true,
+    )
+
+    @Test fun `a live tennis match is read for its match winner only`() {
+        val g = BoltLiveConsensus.build(slugs.map { tennis(it, -150, 125) }, now).single()
+        assertEquals("WTA", g.league)
+        assertTrue(g.tennis)
+        assertEquals(2, g.sportId)
+        assertEquals("a games spread is never used (sets and games lines are not told apart)", listOf(PinnLineType.MONEYLINE), g.lines.map { it.type })
+    }
+
+    @Test fun `a game is converted once for an entry and again only when the entry changes`() {
+        val e = book("draftkings", -150)
+        val ctx = BoltContext(com.tjshea.vigilant.data.scanner.Leagues.byNovigName("NBA")!!, null, com.tjshea.vigilant.data.scanner.MarketFamily.entries.toSet(), true, now, { _, _ -> null }, true)
+        val a = BoltConvert.events(listOf(e), ctx).single().markets
+        val b = BoltConvert.events(listOf(e), ctx).single().markets
+        assertEquals(a, b)
+        val moved = book("draftkings", -170)
+        assertTrue(BoltConvert.events(listOf(moved), ctx).single().markets != a)
+    }
+
+    @Test fun `tennis tournaments belong to their tour`() {
+        assertEquals("WTA", BoltBooks.tennisLeagueOf("WTA Wuhan - Tennis"))
+        assertEquals("ATP", BoltBooks.tennisLeagueOf("ATP Challenger Brisbane - Tennis"))
+        assertNull(BoltBooks.tennisLeagueOf("Tennis"))
+        assertNull(BoltBooks.tennisLeagueOf("NBA"))
+    }
 }

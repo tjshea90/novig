@@ -127,4 +127,16 @@ class BoltLiveFeedTest {
         assertFalse(r.frames.any { "\"markets\"" in it && "\"open\"" in it })
         assertNotNull(r.feed)
     }
+
+    @Test
+    fun `with no quorum the feed says why, in words, for the Feed's status line`() = runTest {
+        val r = rig()
+        r.feed.start()
+        advanceTimeBy(1_100)
+        assertTrue(r.feed.note!!, r.feed.note!!.contains("flags no game as in play"))
+        slugs.take(2).forEach { r.board.apply(update(it, -150, 130, base + currentTime)) }
+        advanceTimeBy(1_100)
+        assertTrue(r.feed.note!!, r.feed.note!!.contains("flags 1 games in play") && r.feed.note!!.contains("best game has 2 fresh companies"))
+        assertEquals(1, r.board.summary().liveBySport["NBA"])
+    }
 }
