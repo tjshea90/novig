@@ -981,11 +981,14 @@ class ApiBettingTest {
         )
         val placing = async(Dispatchers.IO) { p.placeByHand(target(), 10.0, 0.465, false) { sent.complete(Unit) } }
         withTimeout(10_000) { sent.await() }
-        assertFalse("the order is still being finished", placing.isCompleted)
-        // while it ends: the same side is not bet again, and the day's limit already counts it ($10 + $41 > $50)
-        assertTrue(refused(p.plan(target(), 5.0)).contains("already bet this"))
-        assertTrue(refused(p.plan(target(), 41.0, allowRepeat = true)).contains("daily limit"))
-        gate.complete(Unit)
+        try {
+            assertFalse("the order is still being finished", placing.isCompleted)
+            // while it ends: the same side is not bet again, and the day's limit already counts it ($10 + $41 > $50)
+            assertTrue(refused(p.plan(target(), 5.0)).contains("already bet this"))
+            assertTrue(refused(p.plan(target(), 41.0, allowRepeat = true)).contains("daily limit"))
+        } finally {
+            gate.complete(Unit)
+        }
         val r = withTimeout(10_000) { placing.await() }
         assertTrue(r.toString(), r is PlaceResult.Placed)
     }
