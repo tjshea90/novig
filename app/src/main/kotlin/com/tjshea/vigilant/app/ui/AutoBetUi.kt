@@ -80,6 +80,14 @@ object AutoBetText {
             "In the first three days of data the edge a bet kept to the close fell as the price got shorter."
     }
 
+    /** What the Over-prop bar does at [s]'s settings. */
+    fun overPropNote(s: ScanSettings): String {
+        val extra = s.autoBetOverPropExtraEv
+        if (extra <= 1e-9) return "Off: an Over needs the same edge as any other bet."
+        return "A player-prop Over needs ${evLabel(s.autoBetMinEv + extra)} or more, ${trim(extra * 100)} ${if (abs(extra * 100 - 1.0) < 1e-9) "point" else "points"} more than the ${evLabel(s.autoBetMinEv)} minimum. " +
+            "In 456 settled Over props the books' fair chance ran about 10 points above how often they won (Unders: 3); the books shade the public's side. Not applied while a star minimum decides."
+    }
+
     /** What each stake choice means, for the confirm and the hint. */
     fun stakeText(s: ScanSettings): String = when (s.autoBetStake) {
         AutoBetStake.EIGHTH_KELLY, AutoBetStake.QUARTER_KELLY, AutoBetStake.HALF_KELLY -> "its ${s.autoBetStake.label} stake of your ${Format.money(s.bankroll)} bankroll"
@@ -424,6 +432,9 @@ fun AutoBetSection(
     Chips(ScanSettings.AUTO_BET_FAVOURITE_EV_CHOICES, s.autoBetFavouriteExtraEv, AutoBetText::favouriteEvLabel, equal = { a, b -> abs(a - b) < 1e-9 }) { v -> onUpdate { it.copy(autoBetFavouriteExtraEv = v) } }
     TypedNumberField(NumberSpecs.percent("extra edge for favorites", 0.0, 20.0), AutoBetText.trim(s.autoBetFavouriteExtraEv * 100), "autoBetFavouriteEvField") { v -> onUpdate { it.copy(autoBetFavouriteExtraEv = v / 100.0) } }
     Text(AutoBetText.favouriteNote(s), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("autoBetFavouriteNote"))
+    Text("Extra edge a player-prop Over needs", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.AUTO_BET_OVER_PROP_EV_CHOICES, s.autoBetOverPropExtraEv, AutoBetText::favouriteEvLabel, equal = { a, b -> abs(a - b) < 1e-9 }) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(autoBetOverPropExtraEv = v)) } }
+    Text(AutoBetText.overPropNote(s), style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.testTag("autoBetOverPropNote"))
     Text("Shortest odds to bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_MIN_ODDS_CHOICES, s.autoBetMinOdds, AutoBetText::minOddsLabel) { v -> onUpdate { it.copy(autoBetMinOdds = v) } }
     TypedNumberField(NumberSpecs.SHORTEST_ODDS, oddsShown(s.autoBetMinOdds), "autoBetMinOddsField") { v -> onUpdate { it.copy(autoBetMinOdds = v.toInt()) } }

@@ -1146,6 +1146,9 @@ data class ScanSettings(
         /** [autoBetFavouriteExtraEv]'s choices (probability points above the minimum edge; 0 = none). */
         val AUTO_BET_FAVOURITE_EV_CHOICES = listOf(0.0, 0.005, 0.01, 0.015, 0.02)
 
+        /** The extra edge a player-prop Over can be asked for ([autoBetOverPropExtraEv]). */
+        val AUTO_BET_OVER_PROP_EV_CHOICES = listOf(0.0, 0.01, 0.02, 0.03, 0.05)
+
         /** The leagues the burst recorder can watch (Novig's league names): the ones with a game clock whose lines Novig lists as a moneyline, spreads and totals. */
         val BURST_LEAGUES = listOf("NFL", "NCAAF", "NBA", "WNBA", "NHL", "MLB")
 

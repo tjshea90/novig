@@ -143,8 +143,14 @@ object AutoBet {
     )
 
     /** Whether [bet] ("Josh Allen Over 36.5") in [market] is the Over side of a player prop: the side that wins less often than its fair chance says ([ScanSettings.autoBetOverPropExtraEv]). */
-    fun isOverProp(market: String, bet: String): Boolean =
-        (com.tjshea.vigilant.data.tracker.BetGrader.pickOf(market, bet) as? com.tjshea.vigilant.data.tracker.BetGrader.Pick.Prop)?.over == true
+    fun isOverProp(market: String, bet: String): Boolean {
+        val pick = com.tjshea.vigilant.data.tracker.BetGrader.pickOf(market, bet)
+        if (pick is com.tjshea.vigilant.data.tracker.BetGrader.Pick.Prop) return pick.over
+        // A stat the grader cannot read from a score (sacks, pitcher outs) is still a prop told by its words.
+        return pick == null && BetKind.of(market, bet) == BetKind.PROP && OVER_WORD.containsMatchIn(bet)
+    }
+
+    private val OVER_WORD = Regex("\\bover\\b", RegexOption.IGNORE_CASE)
 
     /** Why a bet rated [stars] is under the minimum rating, or null (also null when no minimum is set). A bet with no rating yet has no stars to show and waits. */
     fun starsReason(rules: Rules, stars: Double?): String? {
