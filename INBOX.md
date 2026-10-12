@@ -6792,3 +6792,29 @@ How do i turn on boltodds live
 ```
 @"/root/.claude/uploads/d95b6645-d5e0-5a0b-9345-cf5a8be1907e/d15d640a-vigilant-diagnostics-v0.95.2-2026-10-12-1658.txt" 
 ```
+
+## 2026-10-12T21:28:43Z
+```
+This seems really good, propline streaming lite. The odds are fresh and it has web socket on my budget: 
+
+Streaming Lite
+$39
+/mo
+Push alerts at half the price
+
+✓
+250,000 requests / day
+✓
+Everything in Pro
+✓
+Push alerts by webhook or websocket: line moves, steam, resolution, market pulls
+✓
+HMAC-signed deliveries with retry, batching (up to 500 events per POST) + a replay cursor for gap-free catch-up
+✓
+Up to 5 active webhooks · 2 websocket connections
+✓
+Bulk CSV export (180-day depth)
+
+
+Investigate if it is good
+```
