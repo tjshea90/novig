@@ -115,4 +115,24 @@ class EvMathTest {
         assertEquals(0.0, EvMath.suggestedStake(EvQuote(0.50, 0.50, 0.0), 1_000.0, 0.25, null), 0.0)
         assertEquals(0.0, EvMath.suggestedStake(EvQuote(0.45, 0.50, 0.0), 1_000.0, 0.25, null), 0.0)
     }
+
+    @Test
+    fun `a Kelly stake keeps its whole size for a game up to 9 hours away, 60 percent to 13 hours and 40 percent beyond (the 2026-10-11 export's edge kept at the close)`() {
+        val even = EvQuote(fairProbability = 0.52, price = 0.50, fee = 0.0)   // full Kelly 4%: $25 at a quarter Kelly on $1,000
+        assertEquals(1.0, EvMath.leadScale(null), 0.0)
+        assertEquals(1.0, EvMath.leadScale(-0.5), 0.0)
+        assertEquals(1.0, EvMath.leadScale(0.0), 0.0)
+        assertEquals(1.0, EvMath.leadScale(9.0), 0.0)
+        assertEquals(0.6, EvMath.leadScale(9.01), 0.0)
+        assertEquals(0.6, EvMath.leadScale(13.0), 0.0)
+        assertEquals(0.4, EvMath.leadScale(13.01), 0.0)
+        assertEquals(0.4, EvMath.leadScale(72.0), 0.0)
+        assertEquals(1.0, EvMath.leadScale(Double.NaN), 0.0)
+        assertEquals(25.00, EvMath.suggestedStake(even, 1_000.0, 0.25, null, hoursToStart = 3.0), 1e-9)
+        assertEquals(15.00, EvMath.suggestedStake(even, 1_000.0, 0.25, null, hoursToStart = 11.0), 1e-9)
+        assertEquals(10.00, EvMath.suggestedStake(even, 1_000.0, 0.25, null, hoursToStart = 30.0), 1e-9)
+        assertEquals("no start given: the whole stake", 25.00, EvMath.suggestedStake(even, 1_000.0, 0.25, null), 1e-9)
+        // The liquidity cap still binds after the scale.
+        assertEquals(4.0, EvMath.suggestedStake(even, 1_000.0, 0.25, 4.0, hoursToStart = 3.0), 0.0)
+    }
 }
