@@ -829,10 +829,22 @@ class Scanner(
         RecheckReport(Pricing.price(plan, books, settings, now, fairMemo), read, failed, error)
     }
 
-    override suspend fun streamUpdate(requested: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? = mutex.withLock {
+    override fun streamReady(): Boolean = catalog != null
+
+    override suspend fun streamUpdate(requested: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? {
+        // Never waits for a scan: a full scan holds the scanner for minutes (Tj's v0.94.1 file: updates of 115-153 s waiting on it). Null = busy or nothing to price from.
+        if (!mutex.tryLock()) return null
+        try {
+            return streamUpdateLocked(requested, sources, marketIds)
+        } finally {
+            mutex.unlock()
+        }
+    }
+
+    private suspend fun streamUpdateLocked(requested: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? = run {
         val settings = requested.effective(forBets = betsOnly)
-        val cat = catalog ?: return@withLock null
-        if (settings.leagues.isEmpty()) return@withLock null
+        val cat = catalog ?: return null
+        if (settings.leagues.isEmpty()) return null
         val now = clock()
         // The streaming sources' boards are held in memory by their sockets: read again every time, no re-use window (a stale snapshot would price a moved line).
         for (source in sources) for (league in settings.selectedLeagues) {
@@ -916,7 +928,8 @@ class Scanner(
                 add(NovigEvent.STATUS_DELAYED)
                 if (settings.includeLive) add(NovigEvent.STATUS_LIVE)
             }
-            val leagues = settings.leagues.toList()
+            // Only leagues this version knows: a name saved by an older version (LALIGA, PREMIER LEAGUE) is not in Novig's vocabulary and made the whole catalog request fail with 400 INVALID_QUERY (Tj's v0.94.1 file: 39 times).
+            val leagues = settings.selectedLeagues.map { it.novigName }
             // One extra day of slack past the horizon; Planner applies the exact cut.
             val before = now + (catalogHours(settings) + 24) * 3_600_000L
             // Every event, not just the window: one small request, and the scan can then say how many games
