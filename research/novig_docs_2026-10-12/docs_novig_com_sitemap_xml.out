@@ -1,0 +1,678 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+    
+  <url>
+    <loc>https://docs.novig.com/affiliates/deeplinking</loc>
+    <lastmod>2026-03-19T15:01:21.278Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/affiliates/futures</loc>
+    <lastmod>2026-10-08T19:05:10.486Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/affiliates/odds-screens</loc>
+    <lastmod>2026-10-08T19:05:10.488Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/affiliates/overview</loc>
+    <lastmod>2026-10-08T19:05:10.489Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/affiliates/parlay-pricing</loc>
+    <lastmod>2026-10-08T05:17:07.818Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/fund-a-subaccount</loc>
+    <lastmod>2026-10-09T20:09:17.258Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/get-a-balance</loc>
+    <lastmod>2026-10-09T20:09:17.224Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/get-a-transfer</loc>
+    <lastmod>2026-10-09T20:09:17.272Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/get-an-account-transfer</loc>
+    <lastmod>2026-10-09T20:09:17.320Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/get-the-account-balance</loc>
+    <lastmod>2026-10-09T20:09:17.148Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/issue-a-subaccount-key</loc>
+    <lastmod>2026-10-09T20:09:17.234Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/label-a-subaccount</loc>
+    <lastmod>2026-10-09T20:09:17.213Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/list-account-transactions</loc>
+    <lastmod>2026-10-09T20:09:17.282Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/list-account-transfers</loc>
+    <lastmod>2026-10-09T20:09:17.295Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/list-subaccounts</loc>
+    <lastmod>2026-10-09T20:09:17.191Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/list-transactions</loc>
+    <lastmod>2026-10-09T20:09:17.245Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/accounts/open-a-subaccount</loc>
+    <lastmod>2026-10-09T20:09:17.202Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/authentication/create-a-key</loc>
+    <lastmod>2026-10-09T20:09:17.508Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/authentication/echo</loc>
+    <lastmod>2026-10-09T20:09:17.406Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/authentication/get-a-key</loc>
+    <lastmod>2026-10-09T20:09:17.520Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/authentication/list-keys</loc>
+    <lastmod>2026-10-09T20:09:17.497Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/authentication/revoke-a-key</loc>
+    <lastmod>2026-10-09T20:09:17.532Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/catalog/get-a-market</loc>
+    <lastmod>2026-10-09T20:09:17.367Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/catalog/get-an-event</loc>
+    <lastmod>2026-10-09T20:09:17.343Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/catalog/get-the-order-book</loc>
+    <lastmod>2026-10-09T20:09:17.380Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/catalog/list-event-statuses</loc>
+    <lastmod>2026-10-09T20:09:17.739Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/catalog/list-events</loc>
+    <lastmod>2026-10-09T20:09:17.332Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/catalog/list-leagues</loc>
+    <lastmod>2026-10-09T20:09:17.750Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/catalog/list-market-types</loc>
+    <lastmod>2026-10-09T20:09:17.761Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/catalog/list-markets</loc>
+    <lastmod>2026-10-09T20:09:17.356Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/catalog/list-sports</loc>
+    <lastmod>2026-10-09T20:09:17.774Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/catalog/list-trades</loc>
+    <lastmod>2026-10-09T20:09:17.394Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/changelog</loc>
+    <lastmod>2026-09-24T08:33:15.951Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/batch-cancel-orders</loc>
+    <lastmod>2026-10-09T20:09:17.611Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/batch-place-orders</loc>
+    <lastmod>2026-10-09T20:09:17.600Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/cancel-all-orders</loc>
+    <lastmod>2026-10-09T20:09:17.588Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/cancel-an-order</loc>
+    <lastmod>2026-10-09T20:09:17.635Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/get-an-order</loc>
+    <lastmod>2026-10-09T20:09:17.624Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/get-your-positions</loc>
+    <lastmod>2026-10-09T20:09:17.180Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/get-your-resting-orders</loc>
+    <lastmod>2026-10-09T20:09:17.166Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/list-fills</loc>
+    <lastmod>2026-10-09T20:09:17.647Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/list-orders</loc>
+    <lastmod>2026-10-09T20:09:17.556Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/list-positions</loc>
+    <lastmod>2026-10-09T20:09:17.658Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/execution/place-an-order</loc>
+    <lastmod>2026-10-09T20:09:17.573Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/history/get-a-market-from-history</loc>
+    <lastmod>2026-10-09T20:09:17.454Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/history/get-a-position-from-history</loc>
+    <lastmod>2026-10-09T20:09:17.482Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/history/get-an-event-from-history</loc>
+    <lastmod>2026-10-09T20:09:17.431Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/history/list-event-history</loc>
+    <lastmod>2026-10-09T20:09:17.418Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/history/list-market-history</loc>
+    <lastmod>2026-10-09T20:09:17.442Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/history/list-position-history</loc>
+    <lastmod>2026-10-09T20:09:17.466Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/rfq/eligibility</loc>
+    <lastmod>2026-09-24T13:49:36.798Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/rfq/executions</loc>
+    <lastmod>2026-10-01T14:27:00.083Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/rfq/overview</loc>
+    <lastmod>2026-09-24T13:49:36.804Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/rfq/registration</loc>
+    <lastmod>2026-10-09T20:09:23.973Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/rfq/settlement</loc>
+    <lastmod>2026-09-24T13:49:36.805Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/rfq/signing</loc>
+    <lastmod>2026-09-24T13:49:36.799Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/rfq/webhooks</loc>
+    <lastmod>2026-10-06T19:48:37.871Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/rfq/websocket</loc>
+    <lastmod>2026-09-30T20:59:04.575Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/streaming/open-the-websocket</loc>
+    <lastmod>2026-10-09T20:09:17.784Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api-reference/throttle/get-your-throttle-schedule</loc>
+    <lastmod>2026-10-09T20:09:17.544Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/api-keys</loc>
+    <lastmod>2026-10-08T23:39:48.231Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/concepts/account-model</loc>
+    <lastmod>2026-09-24T20:34:56.620Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/concepts/event-lifecycle</loc>
+    <lastmod>2026-10-08T05:17:07.771Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/concepts/fees</loc>
+    <lastmod>2026-10-08T05:17:07.768Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/concepts/money</loc>
+    <lastmod>2026-09-24T13:49:36.792Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/concepts/order-lifecycle</loc>
+    <lastmod>2026-09-24T13:49:36.795Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/concepts/universe-model</loc>
+    <lastmod>2026-09-24T13:49:36.798Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/environments</loc>
+    <lastmod>2026-10-06T19:48:37.872Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/errors</loc>
+    <lastmod>2026-10-08T23:39:48.233Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/quickstart</loc>
+    <lastmod>2026-10-06T19:48:37.877Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/signing</loc>
+    <lastmod>2026-09-24T13:49:36.794Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/streaming/book</loc>
+    <lastmod>2026-09-24T13:49:36.803Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/streaming/connection</loc>
+    <lastmod>2026-10-09T20:09:23.338Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/streaming/lifecycle</loc>
+    <lastmod>2026-09-24T13:49:32.755Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/streaming/private</loc>
+    <lastmod>2026-09-24T13:49:32.754Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/streaming/tape</loc>
+    <lastmod>2026-09-24T13:49:32.750Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/subaccounts/funding</loc>
+    <lastmod>2026-09-29T13:43:24.831Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/subaccounts/manage</loc>
+    <lastmod>2026-09-29T13:43:24.824Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/api/throttling</loc>
+    <lastmod>2026-10-09T20:09:23.335Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/WSS/authentication</loc>
+    <lastmod>2026-09-24T20:34:56.128Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/WSS/code-examples</loc>
+    <lastmod>2026-10-09T20:09:23.341Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/WSS/heartbeat</loc>
+    <lastmod>2026-09-24T20:34:56.159Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/WSS/lifecycle-channel</loc>
+    <lastmod>2026-09-24T20:34:56.153Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/WSS/orderbook-channel</loc>
+    <lastmod>2026-09-24T20:34:56.127Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/WSS/overview</loc>
+    <lastmod>2026-09-24T20:34:56.157Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/WSS/private-channel</loc>
+    <lastmod>2026-09-24T20:34:56.127Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/account/get-dashboard-url</loc>
+    <lastmod>2026-10-08T19:05:05.047Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/account/get-open-costs</loc>
+    <lastmod>2026-10-08T19:05:05.038Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/account/get-user-transactions</loc>
+    <lastmod>2026-10-08T19:05:05.086Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/account/get-wallet-balance</loc>
+    <lastmod>2026-10-08T19:05:05.020Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/authentication</loc>
+    <lastmod>2026-09-24T20:34:56.156Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/data-model</loc>
+    <lastmod>2026-09-24T20:34:56.153Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/events/get-event</loc>
+    <lastmod>2026-10-08T19:05:04.992Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/events/get-event-statuses</loc>
+    <lastmod>2026-10-08T19:05:04.970Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/events/get-event-types</loc>
+    <lastmod>2026-10-08T19:05:04.960Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/events/get-events</loc>
+    <lastmod>2026-10-08T19:05:04.981Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/events/get-leagues</loc>
+    <lastmod>2026-10-08T19:05:04.950Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/markets/get-lock-status</loc>
+    <lastmod>2026-10-08T19:05:05.063Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/markets/get-market</loc>
+    <lastmod>2026-10-08T19:05:04.921Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/markets/get-markets-by-event</loc>
+    <lastmod>2026-10-08T19:05:05.011Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/markets/get-markets-by-events-batch</loc>
+    <lastmod>2026-10-08T19:05:05.002Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/markets/get-open-markets</loc>
+    <lastmod>2026-10-08T19:05:04.931Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/markets/get-order-book</loc>
+    <lastmod>2026-10-08T19:05:04.940Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/markets/get-ticks</loc>
+    <lastmod>2026-10-08T19:05:05.166Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/markets/request-new-market-strike</loc>
+    <lastmod>2026-10-08T19:05:05.155Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/orders/cancel-all-orders</loc>
+    <lastmod>2026-10-08T19:05:04.881Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/orders/cancel-order</loc>
+    <lastmod>2026-10-08T19:05:04.871Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/orders/cancel-order-batch</loc>
+    <lastmod>2026-10-08T19:05:04.849Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/orders/get-all-my-orders</loc>
+    <lastmod>2026-10-08T19:05:04.891Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/orders/get-order</loc>
+    <lastmod>2026-10-08T19:05:04.859Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/orders/place-order</loc>
+    <lastmod>2026-10-08T19:05:04.828Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/orders/place-order-batch</loc>
+    <lastmod>2026-10-08T19:05:04.839Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/outcome-ids</loc>
+    <lastmod>2026-09-24T20:34:56.123Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/positions/get-all-my-fills</loc>
+    <lastmod>2026-10-08T19:05:04.901Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/positions/get-all-my-positions</loc>
+    <lastmod>2026-10-08T19:05:04.911Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/rest-api</loc>
+    <lastmod>2026-10-08T05:17:07.251Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/rfq/eligibility</loc>
+    <lastmod>2026-09-24T20:34:56.125Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/rfq/executions</loc>
+    <lastmod>2026-09-25T19:19:13.018Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/rfq/overview</loc>
+    <lastmod>2026-09-24T20:34:56.119Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/rfq/registration</loc>
+    <lastmod>2026-10-09T20:09:23.324Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/rfq/settlement</loc>
+    <lastmod>2026-09-24T20:34:56.151Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/rfq/signing</loc>
+    <lastmod>2026-09-24T20:34:56.128Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/rfq/webhooks</loc>
+    <lastmod>2026-09-24T20:34:56.155Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/rfq/websocket</loc>
+    <lastmod>2026-09-24T20:34:56.123Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/ticks</loc>
+    <lastmod>2026-10-09T20:09:23.326Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/api-reference/trade-data</loc>
+    <lastmod>2026-10-09T20:09:23.343Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/fees</loc>
+    <lastmod>2026-09-24T20:34:56.120Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated</loc>
+    <lastmod>2026-10-08T19:05:10.079Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/deprecated/maker-credit-program</loc>
+    <lastmod>2026-09-24T20:34:56.125Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/fees</loc>
+    <lastmod>2026-10-08T05:17:07.249Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com</loc>
+    <lastmod>2026-10-08T05:17:07.250Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/maker-credit-program</loc>
+    <lastmod>2026-10-08T19:05:10.085Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/public-data/markets</loc>
+    <lastmod>2026-09-24T13:49:32.725Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/public-data/overview</loc>
+    <lastmod>2026-09-24T13:49:32.745Z</lastmod>
+  </url>
+
+  <url>
+    <loc>https://docs.novig.com/public-data/trades</loc>
+    <lastmod>2026-09-24T13:49:32.726Z</lastmod>
+  </url>
+</urlset>
