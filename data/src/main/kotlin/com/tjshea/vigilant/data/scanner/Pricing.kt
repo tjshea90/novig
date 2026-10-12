@@ -379,7 +379,9 @@ object Pricing {
         val chosen = LinkedHashMap<String, BookPrices>()
         for (b in all) {
             val have = chosen[b.bookKey]
-            val newer = have != null && b.lastUpdateMs != null && have.lastUpdateMs != null && b.lastUpdateMs - have.lastUpdateMs > FRESHER_BY_MS
+            val mine = b.lastUpdateMs
+            val theirs = have?.lastUpdateMs
+            val newer = mine != null && theirs != null && mine - theirs > FRESHER_BY_MS
             if (have == null || newer) chosen[b.bookKey] = b
         }
         return chosen.values.toList()

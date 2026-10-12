@@ -18,18 +18,18 @@ class FreshestWinsTest {
 
     @Test fun `a clearly newer quote of the same book replaces the first feed's`() {
         val r = ref(ml("draftkings", 1.90, 2.00, 1_000_000L), ml("draftkings", 1.80, 2.10, 1_000_000L + 60_000L))
-        assertEquals(1.80, Pricing.bookPrices(r, key, freshest = true).single().odds[0], 1e-9)
+        assertEquals(1.80, Pricing.bookPrices(r, key, freshest = true).single().decimalOdds[0], 1e-9)
     }
 
     @Test fun `within the margin or without a time the feed order stands`() {
         val within = ref(ml("draftkings", 1.90, 2.00, 1_000_000L), ml("draftkings", 1.80, 2.10, 1_000_000L + 10_000L))
-        assertEquals(1.90, Pricing.bookPrices(within, key).single().odds[0], 1e-9)
+        assertEquals(1.90, Pricing.bookPrices(within, key).single().decimalOdds[0], 1e-9)
         val undated = ref(ml("draftkings", 1.90, 2.00, 1_000_000L), ml("draftkings", 1.80, 2.10, null))
-        assertEquals(1.90, Pricing.bookPrices(undated, key).single().odds[0], 1e-9)
+        assertEquals(1.90, Pricing.bookPrices(undated, key).single().decimalOdds[0], 1e-9)
     }
 
     @Test fun `switched off the first feed always wins`() {
         val r = ref(ml("draftkings", 1.90, 2.00, 1_000_000L), ml("draftkings", 1.80, 2.10, 1_000_000L + 60_000L))
-        assertEquals(1.90, Pricing.bookPrices(r, key, freshest = false).single().odds[0], 1e-9)
+        assertEquals(1.90, Pricing.bookPrices(r, key, freshest = false).single().decimalOdds[0], 1e-9)
     }
 }
