@@ -99,6 +99,7 @@ class BboScanTest {
         val r = scanner(novig).scan(settings, listOf(Fair()), onProgress = {}, onPartial = {})
         assertEquals("the +EV markets and no others", setOf("m0", "m1"), novig.deepened.toSet())
         val result = r.result!!
+        println("DEBUG opps=" + result.opportunities.map { it.market.marketId + ":" + it.quote?.evPercent + ":" + it.ladder.size + ":" + it.fairProbability } + " viaPush=" + r.booksViaPush + " fetched=" + r.booksFetched + " errors=" + r.errors)
         for (id in listOf("m0", "m1")) {
             val os = result.opportunities.filter { it.market.marketId == id }
             assertTrue(id, os.isNotEmpty())
