@@ -493,6 +493,11 @@ Tj's two free keys (2026-10-11). **`UNABATED_API.md`**: Unabated's FREE Data API
 - **Every new Novig behaviour has a switch back to the old one and an automatic fallback with a Diagnostics line** (`ApiGates.novigBbo`, `novigKeepOpen`, `novigOrderPush`). The REST fills stay the record of a bet (fees); a push only says when to look.
 - **Nothing here has met a live key from this container.** Tj's Settings › Betting & Novig account › Test key (best-bid step) and the Diagnostics "Novig live feed" lines are the evidence; read them first when he sends a file, and fix `NOVIG_API.md` §26.
 
+## Orders over the socket, compression, market status (Tj, 2026-10-12, permanent)
+
+**Standing instruction from Tj (2026-10-12, verbatim):** "I want orders placed over the socket. Build that. If socket compression helps speed or accuracy or efficiency of the app or scanning, build that in too. Explain what you mean by 'acting on market status'. If it helps speed or accuracy or efficiency of the app or scanning, build that in too."
+`NOVIG_API.md` §27 has the design and the evidence. Rules: (1) **an order is never sent twice**: `NovigOrderSocket` hands an order to REST only when nothing can have been placed, and an unanswered one is looked up by `clientId`, never replayed; (2) the order socket is a connection of its own signed by the TRADING key (its own `stream` bucket), never the market feed's; (3) compression is the market socket's only and gives itself up on unreadable frames; (4) the stream's lifecycle (`NovigBook.lifecycle`) outranks the catalog's status: CLOSED is no bet, GOLIVE is live (fee on, auto-bet refuses); (5) **this key's `stream` allowance is 512 at 4 a second** (`/v3/limits`): a new stream behaviour that spends tokens is judged against that, and one that cannot afford it goes to REST. Switches: `novigSocketOrders`, `novigCompress`; every one has a Diagnostics line.
+
 ## Diagnostics, retention and the file's size cap (Tj, 2026-10-10, permanent)
 
 **Standing instruction from Tj (2026-10-10):** the diagnostics "should never get too big that it can't load or it crashes … maybe it should automatically clear logs over 2 days old", with a button to reset it, and the app was laggy.
