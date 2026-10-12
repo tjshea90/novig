@@ -6595,3 +6595,8 @@ Does Kelly betting bet less on longer odds? If not, make the app cap at +175 max
 ```
 For the auto bet slider, under it put the ratings filter (1 to 5 stars) that already exists in the settings. When I choose the minimum bet from 1 to 5 stars, it ignores the slider completely and bets all bets that have at least a minimum of that many stars, with the strict exceptions already built into this setting. Make sure I can also turn it off and return to the slider
 ```
+
+## 2026-10-12T01:32:25Z
+```
+Make the live betting mode have no maximum EV filter. It can show bets at any EV 
+```
