@@ -152,8 +152,18 @@ object ApiBetPlanner {
         }
         // The auto-bet is pregame only. By hand a live game may be bet (Tj, 2026-10-11: "I want to bid and bet on live games"; Novig's API takes in-play orders, NOVIG_API.md §18): its taker fee is
         // priced into every number below, and the sheet says what in play means (a stale fair, ~5 seconds for the order to land).
-        val live = target.live || target.startsTs <= now
-        if (live && !limits.manual) return no("This game is live: the auto-bet is pregame only (a live game can only be bet by hand, with the Bet button).")
+        // Novig's live feed knows a market's state as it changes (the catalog's is minutes old): CLOSED is no bet at all, and GOLIVE (Novig can put a game in play before its listed start) makes it a live
+        // bet with the taker fee on, whatever the clock says (NOVIG_API.md §27).
+        val life = book?.lifecycle
+        val wentLive = life?.live == true
+        val live = target.live || target.startsTs <= now || wentLive
+        if (life != null && life.closed) return no("Novig has closed this market (its live feed says ${life.status?.lowercase() ?: "closed"}).")
+        if (live && !limits.manual) {
+            return no(
+                if (wentLive && !target.live && target.startsTs > now) "Novig has put this game in play (its live feed says so): the auto-bet is pregame only (a live game can only be bet by hand, with the Bet button)."
+                else "This game is live: the auto-bet is pregame only (a live game can only be bet by hand, with the Bet button).",
+            )
+        }
         if (target.market.status != "OPEN") return no("Novig has closed this market.")
         val fee = target.market.fee ?: return no("Novig's fee for this market couldn't be read, so its cost can't be worked out.")
         // Money is at stake: an unknown age isn't taken as fresh (the app's lists do, to show a bet; a bet placed needs the age). By hand, Tj

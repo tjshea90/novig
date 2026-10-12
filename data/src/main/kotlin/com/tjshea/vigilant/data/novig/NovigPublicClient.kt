@@ -449,7 +449,7 @@ class NovigPublicClient(
         // A read that only needs each side's best price (the Tracker's open bets) takes a market the feed holds as its best bid; every other read wants a complete ladder.
         val pushed = if (coroutineContext[NovigScreening] != null) pushedTop(all) else pushed(all)
         // Never a best-bid-only book into the cache: a failed read later falls back to it, and that is not a ladder.
-        for ((id, book) in pushed) if (!book.partial) bookCache[id] = CachedBook(null, book)
+        for ((id, book) in pushed) if (!book.partial) bookCache[id] = CachedBook(null, book.copy(lifecycle = null))
         val ids = all.filter { it !in pushed }
         NovigReads.add(coroutineContext[NovigReadTag]?.tag ?: "other", ids.size)
         val signer = keyed?.takeIf { clock() >= keyedDownUntil }

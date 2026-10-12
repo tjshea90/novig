@@ -297,12 +297,12 @@ class StreamBooks(private val clock: () -> Long = System::currentTimeMillis) {
         val m = markets[marketId] ?: return null
         if (m.stale) return null
         if (m.channel == BookChannel.BBO) {
-            return NovigBook(marketId, m.seq, m.top.mapValues { (_, l) -> listOf(BidLevel(l.priceMilli, l.qty)) }, m.updatedAtMs, partial = true)
+            return NovigBook(marketId, m.seq, m.top.mapValues { (_, l) -> listOf(BidLevel(l.priceMilli, l.qty)) }, m.updatedAtMs, partial = true, lifecycle = lifecycle(marketId))
         }
         val byOutcome = m.orders.values.groupBy { it.outcome }.mapValues { (_, orders) ->
             orders.groupBy { it.priceMilli }.map { (p, os) -> BidLevel(p, os.sumOf { it.qty }) }.sortedByDescending { it.priceMilli }
         }
-        return NovigBook(marketId, m.seq, byOutcome, m.updatedAtMs)
+        return NovigBook(marketId, m.seq, byOutcome, m.updatedAtMs, lifecycle = lifecycle(marketId))
     }
 
     @Synchronized

@@ -287,6 +287,9 @@ object Pricing {
         for ((index, pm) in plan.markets.withIndex()) {
             val fee = pm.market.fee ?: continue
             val book = books[pm.market.marketId]
+            // What Novig's live feed says about the market NOW is ahead of the catalog (minutes old): a market it has closed has nothing to bet, and one it has put in play is not a pregame bet (its
+            // taker fee is on, its resting orders are void, and the REST scan never lists live games: the live lane has them when Include live games is on). NOVIG_API.md §27.
+            book?.lifecycle?.let { if (it.closed || it.live == true) continue }
             val reused = kept?.get(index, book, settings.bankroll, settings.kellyMultiplier)
             if (reused != null) {
                 all += reused

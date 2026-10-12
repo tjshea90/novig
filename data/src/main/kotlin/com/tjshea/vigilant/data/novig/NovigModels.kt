@@ -91,6 +91,11 @@ data class NovigBook(
      * (the best level) and for what is bid, but it is not a ladder: nothing here may size a bet across levels, count the others' bids behind our own, or read depth from it.
      */
     val partial: Boolean = false,
+    /**
+     * What Novig's live feed last said about the market's state (NOVIG_API.md §27): OPEN, CLOSED or SETTLED, and whether it has gone live (`GOLIVE` voids resting orders and turns taker fees on). Null for a
+     * book read by REST (nothing is known beyond the catalog's own minutes-old status) and for a market the feed has said nothing about.
+     */
+    val lifecycle: com.tjshea.vigilant.data.novig.stream.MarketLifecycle? = null,
 ) {
     /**
      * What you could buy [outcomeId] for right now, best (cheapest) first: every resting bid on
