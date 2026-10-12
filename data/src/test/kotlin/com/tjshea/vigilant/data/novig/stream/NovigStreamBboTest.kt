@@ -351,4 +351,18 @@ class NovigStreamBboTest {
         assertTrue(listOf("la1", "la2", "lb1", "lb2").all { all[it] == "book" })
         s.close()
     }
+
+    @Test
+    fun `a key that reports a bigger watch cap is given the room, a smaller one is held to it`() = runBlocking {
+        val s = stream()
+        assertEquals(NovigStream.MAX_MARKETS, s.room())
+        s.tune(capacity = 512, refillPerSec = 32.0, maxWatchedMarkets = 8_192)
+        assertEquals(8_192 - (NovigStream.MAX_WATCHED - NovigStream.MAX_MARKETS), s.room())
+        s.tune(capacity = 512, refillPerSec = 32.0, maxWatchedMarkets = 1_000)
+        assertEquals(1_000 - (NovigStream.MAX_WATCHED - NovigStream.MAX_MARKETS), s.room().coerceAtLeast(1))
+        // without the best-bid channel a full book on 8,000 markets is more than a phone's heap should hold: the room stays at the old 2,000
+        val book = stream(bbo = false)
+        book.tune(capacity = 512, refillPerSec = 32.0, maxWatchedMarkets = 8_192)
+        assertEquals(NovigStream.MAX_MARKETS, book.room())
+    }
 }

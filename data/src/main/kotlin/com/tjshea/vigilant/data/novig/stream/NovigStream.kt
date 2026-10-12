@@ -161,8 +161,10 @@ class NovigStream(
             this.capacity = capacity.toDouble()
             this.refillPerSec = refillPerSec
             // A margin under the cap, as with the documented 2,048.
+            val before = this.maxMarkets
             this.maxMarkets = (maxWatchedMarkets - (MAX_WATCHED - MAX_MARKETS)).coerceAtLeast(1)
-            limit = minOf(limit, this.maxMarkets)
+            // A key that holds more than the default (8,192 on the keys that report it) is given the room at once, on this connection; one that holds less is held to it.
+            limit = if (this.maxMarkets > before) this.maxMarkets else minOf(limit, this.maxMarkets)
             tokens = minOf(tokens, this.capacity)
         }
     }
