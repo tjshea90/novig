@@ -46,10 +46,6 @@ class AutoScanTest {
 
     // ---- settings ----------------------------------------------------------------------------------
 
-    /**
-     * Tj's v0.52.0 file: "a background cycle took 456 s (its interval is 30 sec)": the cycle waited Vigilant's whole scan out, and CNO went unread and
-     * auto-bet idle for those minutes. Now the cycle starts the scan and ends; the scan's alerts go out when it ends.
-     */
     @Test
     fun `a background cycle waits on the bid desk's pass for its own interval and no longer than 90 seconds (the v0_89_34 file had passes of 122 s in a 15 s cycle)`() {
         assertEquals(20_000L, AutoScanClock.makerBudgetMs(5))
@@ -64,6 +60,10 @@ class AutoScanTest {
         assertTrue(src.contains("cycle.maker.timeout"))
     }
 
+    /**
+     * Tj's v0.52.0 file: "a background cycle took 456 s (its interval is 30 sec)": the cycle waited Vigilant's whole scan out, and CNO went unread and
+     * auto-bet idle for those minutes. Now the cycle starts the scan and ends; the scan's alerts go out when it ends.
+     */
     @Test
     fun `a background cycle starts Vigilant's scan and ends without waiting for it`() {
         val app = context as VigilantApp
