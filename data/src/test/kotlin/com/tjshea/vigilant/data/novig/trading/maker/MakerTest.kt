@@ -64,7 +64,7 @@ class MakerTest {
     // ---- the bid for one line -------------------------------------------------------------------------------------------
 
     @Test
-    fun `a bid more than a cent under the best bid is not posted (the 2026-10-11 export: 4 fills in 3370 bids 3 or more ticks behind)`() {
+    fun `a bid more than a cent under the best bid is not posted (the 2026-10-11 export had 4 fills in 3370 bids 3 or more ticks behind)`() {
         // fair 0.52 at the 4% margin is a bid at 0.500.
         val level = MakerQuote.decide(line(fair = 0.52).copy(bestBid = 0.500), rules, now)
         val twoTicks = MakerQuote.decide(line(fair = 0.52).copy(bestBid = 0.510), rules, now)
