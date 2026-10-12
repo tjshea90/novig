@@ -206,6 +206,10 @@ object HealthChecks {
     private fun MutableList<Check>.keyRoute(s: UiState, x: Diagnostics.Extras, now: Long) {
         if (s.novig.connection == null) return
         x.keyDownNow?.let { add(Check(Level.WARN, "Novig key route", "standing down now: reads are on the public routes (a third of the pace)", it.take(160), "data/novig/NovigPublicClient.kt (standDown, keyRetryAfter)")) }
+        // The live feed (NOVIG_API.md §25): a fallback from the best-bid channel is the feed doing its job, but Tj should know it happened (and why) to send the line to Claude.
+        x.novigFeedReport?.firstOrNull { it.startsWith("feed: full book on every market: the best-bid feed was given up") }?.let {
+            add(Check(Level.WARN, "Novig live feed", "gave up on the best-bid feed (bbo) and is back on the full book", it.removePrefix("feed: ").take(240), "data/novig/stream/NovigStream.kt (fallBackFromBbo); Settings › Betting & Novig account › Best-bid feed turns it off and on"))
+        }
         val recent = x.keyStanddowns.filter { now - it.atMs <= 6 * HOUR }
         if (recent.isNotEmpty() && x.keyDownNow == null) {
             val byWhy = recent.groupingBy { it.why }.eachCount().entries.sortedByDescending { it.value }.joinToString(", ") { "${it.key} ×${it.value}" }
