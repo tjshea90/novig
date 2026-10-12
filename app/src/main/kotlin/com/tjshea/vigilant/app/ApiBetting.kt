@@ -255,6 +255,7 @@ class ApiBettingController(
                 t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock, lock = c.orderLock,
                 restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(c.makerStore.all()) },
                 events = c::orderEvents, warm = { c.orderSocket?.warm() }, timing = { c.eventLog.info("BET", it) },
+                profit = { if (settings().gates.profitProven) com.tjshea.vigilant.data.scanner.ProfitProfile.shipped else null },
             ).also { placerCache = t to it }
     }
 

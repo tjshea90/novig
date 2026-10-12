@@ -385,6 +385,7 @@ class AppContainer(private val app: Application) {
             t, tracker, books = ::freshBook, limits = limits, paused = { settingsStore.flow.value?.paused == true }, lock = orderLock,
             restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(makerStore.all()) },
             events = ::orderEvents, warm = { orderSocket?.warm() },
+            profit = { if (settingsStore.flow.value?.gates?.profitProven == true) com.tjshea.vigilant.data.scanner.ProfitProfile.shipped else null },
         )
             .also { autoPlacerCache = t to it }
     }

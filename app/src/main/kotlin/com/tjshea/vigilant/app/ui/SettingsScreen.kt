@@ -1180,6 +1180,14 @@ private fun ColumnScope.BettingTab(
                 "prices and results arrive the same. It turns itself off if the feed can't be read compressed (Diagnostics says why). Off = plain text, as before. Takes effect when the feed next connects.",
             s.gates.novigCompress, tag = "novigCompressSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(novigCompress = v)) } }
+        SectionTitle("Profit-proven only")
+        SwitchRow(
+            "Profit-proven only",
+            "Skips the types of bet and bid that have lost money in YOUR bet history (for example an NFL player-prop Over), puts the best-performing types of bid up first, and warns on a bet by hand. A type with " +
+                "a small sample is left alone. It learns from the bet-history files you share with Claude and updates when Claude regenerates it from a bigger history: " +
+                (com.tjshea.vigilant.data.scanner.ProfitProfile.shipped?.summary() ?: "no profile is built in") + ". Off = no change at all.",
+            s.gates.profitProven, tag = "profitProvenSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(profitProven = v)) } }
         if (s.cnoOn && onOpenAutoBet != null) {
             OutlinedButton(onClick = onOpenAutoBet, modifier = Modifier.padding(top = 8.dp).testTag("bettingOpenAutoBet")) { Text("Auto-bet has its own tab: open it") }
         }
