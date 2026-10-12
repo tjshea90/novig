@@ -1307,6 +1307,11 @@ data class ApiGates(
     val novigBbo: Boolean = true,
     /** Keep the Novig live feed's connection open between scans and reconnect it by itself after a drop (off: it closes two minutes after a scan, as before). */
     val novigKeepOpen: Boolean = true,
+    /**
+     * Novig's private `orders` stream (NOVIG_API.md §25): an order's end (filled, cancelled, rejected) arrives the moment the matching engine has it, so a bet's result is not asked for every 0.4 s. Off = the
+     * result is read by request as before; the REST fills stay the record either way.
+     */
+    val novigOrderPush: Boolean = true,
 )
 
 /**

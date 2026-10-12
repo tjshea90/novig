@@ -68,8 +68,8 @@ interface PushedBooks {
     /** How many markets this feed can be asked to hold at once (the key's watch cap less a margin; lower when the feed is all `book`). */
     fun room(): Int = NovigStream.MAX_MARKETS
 
-    /** Sets the feed's options from Settings: the best-bid channel on or off, and keeping the connection open between scans. A no-op for a feed with neither. */
-    fun configureFeed(bbo: Boolean, keepOpen: Boolean) {}
+    /** Sets the feed's options from Settings: the best-bid channel on or off, keeping the connection open between scans, and the private `orders` stream (an order's end, pushed). A no-op for a feed with none. */
+    fun configureFeed(bbo: Boolean, keepOpen: Boolean, orders: Boolean = false) {}
 
     /** The feed's state in words, line by line, for Diagnostics. */
     fun feedReport(): List<String> = emptyList()
@@ -249,6 +249,13 @@ class NovigStream(
     // ---- the options (Settings) -------------------------------------------------------------------------------------------------------------------------------------------
 
     @Volatile private var bboOn = bbo
+
+    /** The subaccount's own orders, pushed: `private: [orders]` subscribed on this connection ([configureFeed]). */
+    val orderEvents = OrderEvents(clock)
+    @Volatile private var ordersOn = false
+    private var privateSent = false
+    private var privateNonce = 0L
+    @Volatile private var privateError: String? = null
     @Volatile private var keepOpen = false
     @Volatile private var idleMs = idleCloseMs
 
@@ -290,9 +297,16 @@ class NovigStream(
     private val canaryTried = HashSet<String>()
 
     /** Applies the Settings options: the best-bid channel on or off (turning it off and on again clears a fallback, so it is tried afresh), and keeping the connection open between scans. */
-    override fun configureFeed(bbo: Boolean, keepOpen: Boolean) {
+    override fun configureFeed(bbo: Boolean, keepOpen: Boolean, orders: Boolean) {
         var resync = false
         synchronized(this) {
+            if (orders != ordersOn) {
+                ordersOn = orders
+                privateError = null
+                if (!orders) { orderEvents.reset() }
+                privateSent = false
+                resync = true
+            }
             if (bbo != bboOn) {
                 bboOn = bbo
                 bboFallback = null
@@ -460,6 +474,8 @@ class NovigStream(
         bboFirstSentAtMs = 0L
         canaryNonce = 0L
         canaryDone = false
+        privateSent = false
+        orderEvents.reset()
         canaryStrikes = 0
         canaryNotBeforeMs = 0L
         canaryTried.clear()
@@ -495,6 +511,7 @@ class NovigStream(
         sync?.cancel()
         ws?.close(1000, "idle")
         books.clear()
+        orderEvents.reset()
         _state.value = StreamState.Off
         // Last: the idle watchdog may be the caller.
         idle?.cancel()
@@ -525,6 +542,7 @@ class NovigStream(
 
     /** Subscribes what's wanted and not held, moves what is on the wrong channel, drops what isn't wanted, and re-snapshots gaps. */
     private suspend fun sync() {
+        privateStep()
         while (scope.isActive) {
             val (drop, add0) = synchronized(this) {
                 if (socket == null) return
@@ -630,6 +648,32 @@ class NovigStream(
             spend(cost)
         }
         maybeCanary()
+    }
+
+    /** The private `orders` channel (1 token): subscribed once a connection, asked again after a gap, dropped when the switch goes off. */
+    private suspend fun privateStep() {
+        val (want, sent) = synchronized(this) { if (socket == null) return; ordersOn to privateSent }
+        if (want && !sent) {
+            waitFor(1.0)
+            val n = nonce.incrementAndGet()
+            synchronized(this) {
+                if (socket == null) return
+                privateSent = true
+                privateNonce = n
+            }
+            send(buildJsonObject {
+                put("nonce", n)
+                putJsonObject("subscribe") { putJsonArray("private") { add(JsonPrimitive("orders")) } }
+            })
+            spend(1.0)
+        } else if (!want && sent) {
+            synchronized(this) { privateSent = false }
+            send(buildJsonObject {
+                put("nonce", nonce.incrementAndGet())
+                putJsonArray("unsubscribe") { add(JsonPrimitive("PRIVATE")) }
+            })
+            spend(1.0)
+        }
     }
 
     // ---- the canary and the watchdog --------------------------------------------------------------------------------------------------------------------------------------
@@ -836,6 +880,13 @@ class NovigStream(
             if (!current(webSocket)) return
             val msg = runCatching { json.parseToJsonElement(text).jsonObject }.getOrNull() ?: return
             errorCode(msg)?.let { code ->
+                val n = (msg["nonce"] as? JsonPrimitive)?.longOrNull
+                if (n != null && n == synchronized(this@NovigStream) { privateNonce }) {
+                    // The private stream refused: orders are then read the way they always were (REST), and the stream says why.
+                    privateError = errorText(msg)
+                    synchronized(this@NovigStream) { ordersOn = false }
+                    return
+                }
                 refused(msg, code)
                 return
             }
@@ -859,6 +910,11 @@ class NovigStream(
             // Enough best-bid snapshots are in for the once-a-connection check against the book: a sync pass ends with it.
             if (!canaryDone && bboSnapshots >= minOf(canaryMarkets, 3)) scheduleSync()
             var gap = false
+            // The subaccount's own orders: a snapshot answers the subscribe, deltas follow; a heartbeat ahead of the last seq says a message was lost, and the subscribe is sent again.
+            (msg["orders"] as? JsonObject)?.let { if (!orderEvents.apply(it)) { synchronized(this@NovigStream) { privateSent = false }; gap = true } }
+            ((msg["heartbeat"] as? JsonObject)?.get("orders") as? JsonPrimitive)?.longOrNull?.let { hb ->
+                if (!orderEvents.heartbeat(hb)) { synchronized(this@NovigStream) { privateSent = false }; gap = true }
+            }
             (msg["delta"] as? JsonObject)?.forEach { (marketId, body) ->
                 // Pushes for a market just dropped are ignored (its unsubscribe may still be on the way).
                 if (!held(marketId)) return@forEach
@@ -940,9 +996,11 @@ class NovigStream(
             subscribedOn.clear()
             unanswered.clear()
             canaryNonce = 0L
+            privateSent = false
             listOf(syncJob, idleJob).also { syncJob = null; idleJob = null }
         }
         books.clear()
+        orderEvents.reset()
         jobs.forEach { it?.cancel() }
         drops++
         lastDrop = message
@@ -991,6 +1049,7 @@ class NovigStream(
                 add("connection: ${when (val st = _state.value) { is StreamState.Live -> "live since ${(now - st.sinceMs) / 1000} s"; is StreamState.Connecting -> "connecting"; is StreamState.Failed -> "failed: ${st.message}"; StreamState.Off -> "off" }} · connects $connects, drops $drops, upgrade 429s $upgrade429s" + (lastDrop?.let { " · last drop: $it" } ?: ""))
                 add("bbo: ${bboSnapshots} snapshots this connection, ${bboUnreadable} unreadable, ${deepened} markets deepened in all")
                 add("canary: " + (canary?.let { "${(now - it.atMs) / 1000} s ago: ${it.detail}" } ?: "not run yet"))
+                add("orders: " + (if (!ordersOn) (privateError?.let { "refused by Novig ($it): results are read by request" } ?: "pushed order results are switched off: results are read by request") else if (orderEvents.live) "pushed (${orderEvents.events} events heard, ${orderEvents.gaps} gaps)" else "subscribing / not live: results are read by request"))
             }
         }
     }
