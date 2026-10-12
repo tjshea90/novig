@@ -50,7 +50,10 @@ object BoltLiveConsensus {
     }
 
     /** One live game: its teams, start, the league's Pinnodds sport id and its consensus lines. */
-    data class Game(val id: String, val league: String, val sportId: Int, val home: String, val away: String, val startMs: Long, val lines: List<Line>)
+    data class Game(val id: String, val league: String, val sportId: Int, val home: String, val away: String, val startMs: Long, val lines: List<Line>) {
+        /** Tennis is spoken as Pinnacle's "Sets" matchup (the match winner); its games lines are not used. */
+        val tennis: Boolean get() = league == "ATP" || league == "WTA"
+    }
 
     /**
      * Every live game on [games] (BoltOdds' board entries, one per book and game) as consensus lines. [games] are filtered to those flagged live and pushed within the age window before they are read.
@@ -58,7 +61,7 @@ object BoltLiveConsensus {
     fun build(games: List<BoltBookGame>, nowMs: Long, rules: Rules = Rules()): List<Game> {
         val fresh = games.filter { it.live && nowMs - it.updatedAtMs <= rules.maxAgeMs }
         val out = ArrayList<Game>()
-        for (league in fresh.mapNotNull { BoltBooks.leagueOfSport(it.sport) }.distinct()) {
+        for (league in fresh.mapNotNull { BoltBooks.leagueOfSport(it.sport) ?: BoltBooks.tennisLeagueOf(it.sport) }.distinct()) {
             val lg = Leagues.byNovigName(league) ?: continue
             val ctx = BoltContext(
                 league = lg, wanted = null, families = com.tjshea.vigilant.data.scanner.MarketFamily.entries.toSet(), includeLive = true, nowMs = nowMs,

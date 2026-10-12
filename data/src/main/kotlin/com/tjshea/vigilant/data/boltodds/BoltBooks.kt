@@ -51,6 +51,20 @@ object BoltBooks {
         return ALIASES.entries.firstOrNull { (_, names) -> names.any { a -> SUFFIXES.any { n == a + it } } }?.key
     }
 
+    /**
+     * Tennis (the live engine only): BoltOdds names a tennis game's sport per tournament ("WTA Wuhan - Tennis", BOLTODDS_API.md §9). The tour is the name's first word; anything else is not matched.
+     * Returns Novig's league ("ATP" / "WTA") or null.
+     */
+    fun tennisLeagueOf(sport: String): String? {
+        val low = sport.lowercase()
+        if ("tennis" !in low) return null
+        return when {
+            low.startsWith("wta") -> "WTA"
+            low.startsWith("atp") -> "ATP"
+            else -> null
+        }
+    }
+
     /** The BoltOdds sport names of [league] among [available] (`get_info`'s sports); with the list unknown, the league's own name. */
     fun sportsFor(league: League, available: Collection<String>?): List<String> {
         if (!supports(league)) return emptyList()

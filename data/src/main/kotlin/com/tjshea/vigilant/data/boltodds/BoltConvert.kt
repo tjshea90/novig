@@ -36,7 +36,9 @@ object BoltConvert {
     fun events(games: List<BoltBookGame>, ctx: BoltContext): List<RefEvent> {
         val byGame = LinkedHashMap<String, MutableList<BoltBookGame>>()
         for (g in games) {
-            if (BoltBooks.leagueOfSport(g.sport) != ctx.league.novigName) continue
+            // Tennis is read only for the live engine (a tournament is its own BoltOdds sport, and only the match winner is used: Bolt's games and sets lines are not told apart).
+            val league = BoltBooks.leagueOfSport(g.sport) ?: (if (ctx.liveOnly) BoltBooks.tennisLeagueOf(g.sport) else null)
+            if (league != ctx.league.novigName) continue
             val start = g.startMs ?: continue
             if (!ctx.liveOnly && !ctx.includeLive && start <= ctx.nowMs) continue
             byGame.getOrPut(g.game) { ArrayList() } += g
@@ -75,16 +77,28 @@ object BoltConvert {
         return x == y || (x.length >= 4 && y.length >= 4 && (x.contains(y) || y.contains(x)))
     }
 
+    /**
+     * A book's markets of one game. Converting an entry is the costly part of reading the board (a phone took 7-17 s for a whole refresh, Tj's v0.95.0 file), and an entry is replaced as a whole when its
+     * book pushes, so the conversion is kept on the entry itself and redone only for an entry that changed. What depends on the clock ([BoltContext.aliveAt]) is applied on top, after.
+     */
     private fun marketsOf(g: BoltBookGame, book: String, ctx: BoltContext): List<RefBookMarket> {
+        val key = "${ctx.league.novigName}|${ctx.families.map { it.name }.sorted().joinToString(",")}"
+        val base = g.marketsCache.getOrPut(key) { convert(g, book, ctx) }
+        val seenAt = ctx.aliveAt(g.sportsbook, g.sport) ?: return base
+        return base.map { m -> m.lastUpdateMs?.let { if (it >= seenAt) m else m.copy(lastUpdateMs = seenAt) } ?: m }
+    }
+
+    private fun convert(g: BoltBookGame, book: String, ctx: BoltContext): List<RefBookMarket> {
         val league = ctx.league.novigName
-        val seenAt = ctx.aliveAt(g.sportsbook, g.sport)
+        val tennis = league == "ATP" || league == "WTA"
         val title = BoltBooks.title(book)
-        val stamp: (List<BoltOutcome>) -> Long = { l -> l.minOf { x -> if (seenAt != null) maxOf(x.atMs, seenAt) else x.atMs } }
+        val stamp: (List<BoltOutcome>) -> Long = { l -> l.minOf { x -> x.atMs } }
 
         // Group the book's outcomes: (kind, period, stat, subject) -> the outcomes of that market.
         val groups = LinkedHashMap<Pair<BoltMarketRef, String?>, MutableList<BoltOutcome>>()
         for (o in g.outcomes.values) {
             val ref = BoltMarkets.classify(league, o) ?: continue
+            if (tennis && ref.kind != LineKind.MONEYLINE) continue
             val subject = when (ref.kind) {
                 LineKind.PLAYER_PROP -> o.target?.trim()?.takeIf { it.isNotEmpty() } ?: continue
                 LineKind.TEAM_TOTAL -> (if (sameTeam(o.target, g.home)) RefBookMarket.HOME else if (sameTeam(o.target, g.away)) RefBookMarket.AWAY else null) ?: continue

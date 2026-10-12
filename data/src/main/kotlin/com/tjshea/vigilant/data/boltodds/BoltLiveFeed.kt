@@ -131,7 +131,7 @@ class BoltLiveFeed(
         val look = LinkedHashSet<String>().apply {
             addAll(byGame.keys)
             if (only == null) addAll(games.keys)
-            else entries.forEach { e -> BoltBooks.leagueOfSport(e.sport)?.let { add(BoltConvert.eventId(it, e.game)) } }
+            else entries.forEach { e -> (BoltBooks.leagueOfSport(e.sport) ?: BoltBooks.tennisLeagueOf(e.sport))?.let { add(BoltConvert.eventId(it, e.game)) } }
         }
         for (key in look) {
             val g = byGame[key]
@@ -187,7 +187,7 @@ class BoltLiveFeed(
             put("rec", buildJsonObject {
                 put("id", eventId)
                 put("isLive", true)
-                put("units", "Regular")
+                put("units", if (g?.tennis == true) "Sets" else "Regular")
                 if (g != null) {
                     put("startTime", java.time.Instant.ofEpochMilli(g.startMs).toString())
                     put("league", buildJsonObject { put("name", g.league) })
