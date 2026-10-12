@@ -64,6 +64,16 @@ class MakerTest {
     // ---- the bid for one line -------------------------------------------------------------------------------------------
 
     @Test
+    fun `a Kelly bid keeps its whole stake inside 9 hours of the start and stakes less the earlier it goes up (the edge kept at the close falls with the hours)`() {
+        val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.QUARTER_KELLY, bankroll = 1_000.0, maxStake = 1_000.0)
+        val whole = MakerQuote.stake(0.52, 0.50, kelly, hoursToStart = 3.0)!!
+        assertEquals(whole, MakerQuote.stake(0.52, 0.50, kelly)!!, 1e-12)
+        assertEquals(whole * 0.6, MakerQuote.stake(0.52, 0.50, kelly, hoursToStart = 11.0)!!, 1e-9)
+        assertEquals(whole * 0.4, MakerQuote.stake(0.52, 0.50, kelly, hoursToStart = 20.0)!!, 1e-9)
+        assertEquals("a fixed amount is never scaled", 5.0, MakerQuote.stake(0.52, 0.50, rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 5.0), hoursToStart = 20.0)!!, 0.0)
+    }
+
+    @Test
     fun `a bid more than a cent under the best bid is not posted (the 2026-10-11 export had 4 fills in 3370 bids 3 or more ticks behind)`() {
         // fair 0.52 at the 4% margin is a bid at 0.500.
         val level = MakerQuote.decide(line(fair = 0.52).copy(bestBid = 0.500), rules, now)

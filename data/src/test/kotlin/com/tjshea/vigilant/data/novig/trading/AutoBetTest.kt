@@ -126,6 +126,24 @@ class AutoBetTest {
         assertTrue(judge(r, 0.04, check(ev = null))!!.contains("not +EV"))
     }
 
+    /** Tj's 2026-10-11 export: the edge a bet kept at the close fell with the hours before the start (3.3% of 3.1% shown inside an hour, 1.1% at 9-13 h, about 0 beyond). */
+    @Test
+    fun `a Kelly stake keeps its whole size inside 9 hours of the start, 60 percent up to 13 and 40 percent beyond, and a fixed amount never changes`() {
+        val kelly = rules(stake = AutoBetStake.QUARTER_KELLY, max = 1_000.0)
+        val r = row(100, 0.55)   // +100: price 0.50, full Kelly 10%, a quarter of $1,000 = $25.00
+        assertEquals(25.00, amount(AutoBet.stake(kelly, r, 1_000.0, 1_000.0, hoursToStart = 4.0)), 0.011)
+        assertEquals(25.00, amount(AutoBet.stake(kelly, r, 1_000.0, 1_000.0)), 0.011)
+        assertEquals(25.00, amount(AutoBet.stake(kelly, r, 1_000.0, 1_000.0, hoursToStart = 9.0)), 0.011)
+        assertEquals(15.00, amount(AutoBet.stake(kelly, r, 1_000.0, 1_000.0, hoursToStart = 11.0)), 0.011)
+        assertEquals(10.00, amount(AutoBet.stake(kelly, r, 1_000.0, 1_000.0, hoursToStart = 20.0)), 0.011)
+        val fixed = rules(stake = AutoBetStake.CUSTOM, custom = 5.0, max = 1_000.0)
+        assertEquals(5.00, amount(AutoBet.stake(fixed, r, 1_000.0, 1_000.0, hoursToStart = 30.0)), 0.0)
+        // Vigilant's own lane (the scan's quote) is scaled the same way.
+        val quote = com.tjshea.vigilant.engine.EvQuote(0.55, 0.50, 0.0)
+        assertEquals(25.00, amount(AutoBet.scanStake(kelly, quote, 1_000.0, 1_000.0, hoursToStart = 2.0)), 0.011)
+        assertEquals(10.00, amount(AutoBet.scanStake(kelly, quote, 1_000.0, 1_000.0, hoursToStart = 30.0)), 0.011)
+    }
+
     /** Tj's 2026-10-11 export: 456 settled player-prop Overs won 39.7% against a 49.2% fair chance (z = -3.4 by game); Unders 47.1% against 50.1%. */
     @Test
     fun `a player-prop Over needs the extra edge, an Under or anything else does not, and the words say why`() {
