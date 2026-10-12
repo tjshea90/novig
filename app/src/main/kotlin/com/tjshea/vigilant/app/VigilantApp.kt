@@ -880,6 +880,10 @@ class AppContainer(val app: Application) {
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s -> runCatching { burstTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
         }
+        // The streaming engine follows its switch and STOP ALL (Tj, 2026-10-12).
+        appScope.launch {
+            settingsStore.flow.filterNotNull().collect { s -> runCatching { streamEngine.tick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
+        }
         // Pinnodds live follows its switch, the Pinnodds key, the Novig key and STOP ALL (paper unless "Place real bets" is on; RESEARCH.md §116).
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s ->
@@ -1085,7 +1089,9 @@ class AppContainer(val app: Application) {
         val before = usage.flow.value
         // ParlayAPI's own figure for what's left, read for free (at most every few minutes): the pace decides from the key's word.
         if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) appScope.launch { runCatching { parlayAccount.refresh(minAgeMs = com.tjshea.vigilant.data.reference.ParlayAccount.SCAN_REFRESH_MS) } }
-        return runner.start(settings, referenceSources(settings, background, scan = true), pinned) { report ->
+        // A streaming pass (StreamEngine) reads only what costs nothing per read; every other scan reads every source that is on.
+        val sources = if (streamPass) streamSources(settings) else referenceSources(settings, background, scan = true)
+        return runner.start(settings, sources, pinned) { report ->
             // A scan that ended with Vigilant off screen (background auto-scan, or Tj left) closes Novig's
             // live feed at once: nothing will recheck in the next two minutes, and pushes cost battery.
             // Not while the live engine runs: it holds the same stream open for the Feed's live lane and the live bids (Tj, 2026-10-11: no live books arrived).
@@ -1098,6 +1104,16 @@ class AppContainer(val app: Application) {
             if (report != null) lastScanCost = RoundCost(now, System.currentTimeMillis() - now, UsageDelta.between(before, usage.flow.value))
         }
     }
+
+    /** True while the streaming engine's pass is the cycle that runs (set around [AutoScanner.cycle], which one cycle at a time keeps unambiguous). */
+    @Volatile var streamPass = false
+
+    /** The sources a streaming pass asks (Tj, 2026-10-12): the BoltOdds board held in memory by its sockets, which costs nothing per read. Nothing else, so a pass spends no API credits however often it runs. */
+    internal fun streamSources(settings: ScanSettings): List<ReferenceSource> =
+        if (boltActive(settings)) listOf<ReferenceSource>(boltGames) + propsOf(settings, boltProps) else emptyList()
+
+    /** The streaming engine: Novig and BoltOdds pushes start a scan pass at once ([StreamEngine]). Follows [com.tjshea.vigilant.data.scanner.ApiGates.streamScan]. */
+    val streamEngine: StreamEngine by lazy { StreamEngine(this, appScope) }
 
     /** What the last Vigilant scan and the last Check odds now cost each API since the app opened ([RoundCost]), for Diagnostics. */
     @Volatile var lastScanCost: RoundCost? = null
