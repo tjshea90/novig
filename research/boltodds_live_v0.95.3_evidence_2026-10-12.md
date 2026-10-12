@@ -1,0 +1,7 @@
+# BoltOdds live feed, v0.95.3 diagnostics (Tj, 2026-10-12 17:29 ET)
+File: research/uploads/2026-10-12/30cd87f8-vigilant-diagnostics-v0.95.3-2026-10-12-1729.txt.gz
+- Live feed now builds a game: "flags 10 games in play; 1 have a quorum of 3 companies within 5 s"; 1 live game, 1 line standing, 140 frames sent, 12 lines closed for losing their quorum. So the pipeline (board -> consensus -> Pinnodds-format frames) works end to end; v0.95.2's 0 was a quiet slate.
+- 8 NBA + 1 NFL + 1 MLB flagged. NBA 8 flagged at 4:56 PM ET stayed flagged at 5:29 PM: the same suspicious flag (preseason, not started). Only the live game(s) have fresh quotes, which is what the quorum shows.
+- The live engine itself did not run on it: "Engine's source: BoltOdds soft-book average ... Not running"; PINNODDS LIVE feed "off", 0 evaluations/candidates; so no paper decisions from the soft average yet. Needs Settings > Pinnodds live: feed on (paper) + source BoltOdds.
+- Incidental: real Pinnodds live history 77 orders, 6 filled, median send-to-fill 5.8 s (Novig's delay); live bids 43 filled of 1261, ML 7-17 (-49%), totals 8-3, small samples. 444 live bids pulled for "Pinnacle silent too long", 267 "another order held the lock too long" (lock contention on the bid desk). Novig key was blocked once at 15:14 as ANONYMIZED_NETWORK (VPN/proxy on the phone).
+- Streaming engine: 242 updates, catalog cycles 123 (bootstrap cycles repeating?), skipped for a running scan 212, slowest 17 s; pricing 9 ms.

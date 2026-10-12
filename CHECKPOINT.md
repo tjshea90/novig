@@ -1,24 +1,24 @@
-# CHECKPOINT 3120 — read me first, then TASKS.md
+# CHECKPOINT 3121 — read me first, then TASKS.md
 
-**Written:** 2026-10-12T21:29:36Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `13a5b571a` (this checkpoint is the commit after it)
+**Written:** 2026-10-12T21:30:36Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `87ce1c918` (this checkpoint is the commit after it)
 
 ## Just done
-PropLine Streaming Lite investigated (vendor docs), note written
+Read v0.95.3 diagnostics; evidence note
 
 ## Do this next
-Wait for Tj's decision on PropLine; meanwhile TBL7 follow-up needs his v0.95.3 diagnostics during a live slate
+Ask Tj to switch Pinnodds live feed on (paper, source BoltOdds) during a live slate; investigate 'catalog cycles 123' under streaming and bid-desk lock contention (267 not sent)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
      M research/lab/NOTES.md
-    ?? research/propline_streaming_lite_2026-10-12.md
+    ?? research/boltodds_live_v0.95.3_evidence_2026-10-12.md
 
 ## Last ten checkpoints
 ```
+  1d5039705 ckpt 3120: PropLine Streaming Lite investigated (vendor docs), note written
   eb2e43f16 ckpt 3119: pre-release: v0.95.3: BoltOdds live note lists per-game fresh companies; re
   6dad339a3 ckpt 3118: pre-ship: v0.95.3: BoltOdds live note lists per-game fresh companies; re-su
   007ef81b9 ckpt 3117: TBL7a: BoltOdds re-subscribe honours 'wait N minutes' (test), live note has
@@ -28,7 +28,6 @@ Wait for Tj's decision on PropLine; meanwhile TBL7 follow-up needs his v0.95.3 d
   d75f4c4f1 ckpt 3113: pre-release: v0.95.1: BoltOdds live feed reads live tennis (match winner), 
   b35e1fd55 ckpt 3112: pre-ship: v0.95.1: BoltOdds live feed reads live tennis (match winner), exp
   a8570156a ckpt 3111: pre-release: v0.95.0: live engine on BoltOdds' soft-book average (BoltOdds 
-  ac3fabfd4 ckpt 3110: Recorded TBL1-5 (BoltOdds soft-book live engine). v0.94.2 release pending (
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
