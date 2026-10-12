@@ -117,11 +117,12 @@ class NovigStreamBboTest {
         canaryEveryMs: Long = 600_000,
         canaryWaitMs: Long = 10_000,
         canaryInconclusiveRetryMs: Long = 60_000,
+        onEvent: ((Boolean, String) -> Unit)? = null,
         clock: () -> Long = System::currentTimeMillis,
     ) = NovigStream(
         OkHttpClient(), signer(), scope, wsUrl = server.url("/v3/ws").toString().replace("http", "ws"),
         refillPerSec = refillPerSec, idleCloseMs = 60_000, bbo = bbo, bboDataWaitMs = bboDataWaitMs, canaryMarkets = canaryMarkets,
-        deepHoldMs = deepHoldMs, liveRetryMs = liveRetryMs, canaryEveryMs = canaryEveryMs, canaryWaitMs = canaryWaitMs, canaryInconclusiveRetryMs = canaryInconclusiveRetryMs, clock = clock,
+        deepHoldMs = deepHoldMs, liveRetryMs = liveRetryMs, canaryEveryMs = canaryEveryMs, canaryWaitMs = canaryWaitMs, canaryInconclusiveRetryMs = canaryInconclusiveRetryMs, onEvent = onEvent, clock = clock,
     ).also { if (keepOpen) it.configureFeed(bbo, true) }
 
     private val plan = (1..12).map { "m$it" }
@@ -454,6 +455,20 @@ class NovigStreamBboTest {
         val held = s.feedReport().first { it.startsWith("held:") }
         assertTrue(held, held.contains("this key's own /v3/limits"))
         assertNotNull(s.allowance())
+        s.close()
+    }
+
+    @Test
+    fun `the feed writes its own history for the event log: connect, a refusal, the fallback`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide(refuseBbo = "channel bbo is not allowed")))
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        val events = CopyOnWriteArrayList<Pair<Boolean, String>>()
+        val s = stream(onEvent = { warn, text -> events += warn to text })
+        s.watch(plan)
+        until { events.any { it.second.startsWith("best-bid feed (bbo) given up") } }
+        assertTrue(events.toString(), events.any { !it.first && it.second.startsWith("live feed connected") })
+        assertTrue(events.toString(), events.any { it.first && it.second.startsWith("Novig refused a live-feed request") })
+        assertTrue(events.toString(), events.any { it.first && it.second.contains("given up") })
         s.close()
     }
 }
