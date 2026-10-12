@@ -724,6 +724,6 @@ class AutoScanTest {
         val app = File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText()
         assertTrue(app.contains("if (!onScreen && !pinnRunner.running) novig.stream?.close()"))
         // Built only with the key, replaced (the old one closed) when the key changes.
-        assertTrue(app.contains("novig.stream?.close()\n        novig.keyed = signer\n        novig.stream = signer?.let { NovigStream(http, it, appScope) }"))
+        assertTrue(app.contains("novig.stream?.close()\n        novig.keyed = signer\n        novig.stream = signer?.let { sg -> NovigStream(http, sg, appScope, onEvent"))
     }
 }

@@ -123,6 +123,6 @@ class BurstUiTest {
         assertTrue(block, block.contains("SharedStreamView") && block.contains("novig.stream") && block.contains(".echo()"))
         assertFalse(block, block.contains("trading"))
         val connection = app.substringAfter("fun useConnection(connection: NovigConnection?)").substringBefore("val alias = connection?.tradingAlias")
-        assertTrue(connection, connection.contains("val signer = connection?.let(::readKeyClient)") && connection.contains("NovigStream(http, it, appScope)"))
+        assertTrue(connection, connection.contains("val signer = connection?.let(::readKeyClient)") && connection.contains("NovigStream(http, sg, appScope"))
     }
 }
