@@ -6716,3 +6716,8 @@ You said something about betting overs losing money. Find the most profitable ty
 
 Make this a toggle somewhere in the settings. Toggle on = only place the types of bets and bids that have proven profitable so far. Toggle off = no change at all, leave the app how it already is.
 ```
+
+## 2026-10-12T15:51:04Z
+```
+The bet slip is still lagging. And the auto bet feature gave another error and stopped and did not fix itself and auto resume. These auto bet errors were not happening a few versions back.
+```
