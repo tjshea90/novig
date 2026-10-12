@@ -95,7 +95,7 @@ class KillSwitchAppTest {
     }
 
     private fun runner(novig: FakeNovig) = MakerRunner(
-        app, app.container, clock = { now }, scan = { ScanRun(result = SampleScan.result(), finished = 1) },
+        app, app.container, clock = { now }, scan = { ScanRun(result = SampleScan.resultNoOtherBids(), finished = 1) },
         desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
     )
 
