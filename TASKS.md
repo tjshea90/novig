@@ -4888,6 +4888,6 @@ Tj (verbatim): "Make it so any and all resting bids are checked that they are st
 
 ## TBC: more books that are one company / one odds source (Tj, 2026-10-12 ~17:00Z)
 Tj (verbatim, with a screenshot: Kincaid Over 56.5, bwin / partysports / BetMGM / sportsinteraction all -120 / -111): "In this screenshot, notice the odds are suspiciously identical across the sports books. Do a thorough search online for sports books and look for books with the same company, same parent company, or books that use odds from another provider. The app should not double count any odds from books that have the same company or the same odds source. This guard should be applied throughout the app"
-- [ ] TBC1 Research (web + the repo's own scan-study data): every book name the app sees, its company, parent and odds provider; measure identical-line rates between pairs in research/uploads scan studies. Write research/book_company_2026-10-12.md.
-- [ ] TBC2 engine/BookCompany.kt + CnoBooks.SAME_DESK: add the groups (Entain family first); one test per group; check every place that counts books (fair line, books agree, star rating, sharp, other-books sheet, bids, lab) goes through BookCompany.
-- [ ] TBC3 Ship.
+- [x] TBC1 Research (web + the repo's own scan-study data): every book name the app sees, its company, parent and odds provider; measure identical-line rates between pairs in research/uploads scan studies. Write research/book_company_2026-10-12.md.
+- [x] TBC2 engine/BookCompany.kt + CnoBooks.SAME_DESK: add the groups (Entain family first); one test per group; check every place that counts books (fair line, books agree, star rating, sharp, other-books sheet, bids, lab) goes through BookCompany.
+- [x] TBC3 Ship v0.93.3 (v0.93.2 was never released; its changes ride in this one).
