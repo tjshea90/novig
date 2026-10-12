@@ -83,11 +83,10 @@ class BoltLiveConsensusTest {
     }
 
     @Test fun `five or more votes drop the highest and lowest`() {
-        val g = slugs.mapIndexed { i, s -> book(s, when (i) { 0 -> -170; 4 -> -135; else -> -150 }) }
+        val g = slugs.mapIndexed { i, s -> book(s, when (i) { 0 -> -165; 4 -> -148; else -> -150 }) }
         val trimmed = BoltLiveConsensus.build(g, now).single().lines.first { it.type == PinnLineType.MONEYLINE }.fair.getValue(PinnSide.HOME)
-        val plain = BoltLiveConsensus.build(g.take(4), now, BoltLiveConsensus.Rules(minCompanies = 4)).single().lines.first { it.type == PinnLineType.MONEYLINE }.fair.getValue(PinnSide.HOME)
-        assertTrue(trimmed > 0.5 && plain > 0.5)
-        assertEquals(3, BoltLiveConsensus.build(g, now).single().lines.first { it.type == PinnLineType.MONEYLINE }.books.size - 2)
+        val steady = BoltLiveConsensus.build(games(), now).single().lines.first { it.type == PinnLineType.MONEYLINE }.fair.getValue(PinnSide.HOME)
+        assertEquals("the middle three are the five -150 books' fair", steady, trimmed, 1e-9)
     }
 
     @Test fun `the american price of a probability round-trips`() {
