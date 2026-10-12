@@ -2596,6 +2596,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     c.opClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
                 }
             }.getOrNull(),
+            profitReport = runCatching { val on = state.value.settings.gates.profitProven; (if (on) "ON, " else "OFF (nothing changes); the profile ") + (com.tjshea.vigilant.data.scanner.ProfitProfile.shipped?.summary() ?: "is not built in") }.getOrNull(),
             novigFeedReport = runCatching { (c.novig.stream as? com.tjshea.vigilant.data.novig.stream.PushedBooks)?.feedReport().orEmpty() + c.orderSocket?.report().orEmpty() }.getOrNull(),
             boltReport = runCatching {
                 val keys = keysFor(ApiProvider.BOLTODDS).size
