@@ -4921,4 +4921,5 @@ Design: reuse the whole Pinnodds live lane (matcher, 5 s freshness, fee, trader,
 - [x] TBL2 BoltLiveConsensus (pure, tested): per live game and main line (moneyline, spread, total) devig each book, one vote per company (BookCompany), trimmed mean, needs >= N companies pushed within M seconds, dispersion cap; else the line is closed.
 - [x] TBL3 BoltLiveFeed (PinnFeedSource): board change -> frames for the changed games at once (100 ms debounce), 1 s tick closes stale lines; feed choice BOLT in Settings; runner forced to MOVE/STANDING trigger (no scores), min EV floor 4%; real-money switches unchanged (paper default).
 - [x] TBL4 Sockets audit: what else waits or polls (stream engine 250 ms counter poll -> push callback; Novig live lane already push).
-- [ ] TBL5 Tests, ship, release; tell Tj what it can't do (no scores: livescores/playbyplay sockets next) and what to send.
+- [x] TBL5 Tests, ship, release; tell Tj what it can't do (no scores: livescores/playbyplay sockets next) and what to send.
+- [ ] TBL6 Read the next file: "BoltOdds live feed" line + "games flagged in play" + Streaming engine timing breakdown (boards/matching/pricing); confirm tennis matches; decide on a /livescores socket for scores.

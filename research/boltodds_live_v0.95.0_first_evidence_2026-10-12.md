@@ -1,0 +1,8 @@
+# BoltOdds live feed, first evidence (Tj's v0.95.0 file, 2026-10-12 ~20:15Z)
+File: research/uploads/2026-10-12/fe2662f3-vigilant-diagnostics-v0.95.0-2026-10-12-1615.txt.gz and 5 screenshots (4:13-4:14 PM).
+- The feed was selected (BoltOdds soft-book average, 3 companies, 5 s) and the runner was "running true, socket live" but "Pinnacle live 0, matched 0, watched 0": no live game came out of the feed while Novig listed 6 live games. At the file's time the engine was "stopped by STOP ALL", so the counters (0 frames) are of a stopped feed.
+- Probable cause (unproven): the 6 Novig live games were tennis (ATP/WTA are picked leagues; Tj's earlier live bets were tennis). The BoltOdds integration carried NO tennis (leagues NFL, NCAAF, MLB, NBA, WNBA, NHL, UFC, Boxing only; BoltOdds names a tennis game's sport per tournament, "WTA Wuhan - Tennis"), so the feed could never match them. v0.95.1 adds live tennis (match winner only; subscribes the tennis tournaments while the live feed is the source).
+- The runner's message could not say why: v0.95.1 adds the feed's own words ("BoltOdds flags N games in play; K have a quorum of M companies pushed within S s ... the best game has B fresh companies"), and Diagnostics now lists games flagged in play by sport.
+- BoltOdds refresh updates took 6.6-17.7 s (median 10.8 s) in the streaming engine: the cost is converting the whole board every time. v0.95.1 keeps each entry's conversion on the entry (redone only when that book pushes) and logs where an update's time goes (boards / matching / pricing / deepening).
+- Novig-line updates: median 15 ms, p95 1.0 s: the per-line path works.
+- Real Pinnodds live history in the file: 77 real orders, 6 filled, 71 missed ("the offer was gone"), send-to-fill median 5.8 s.
