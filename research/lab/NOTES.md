@@ -47,3 +47,4 @@
 - 2026-10-12 second v0.95.3 file: BoltOdds off; refresh 'boards read' 7-14 s traced to conversion cache keyed on aliveAt; fixed (v0.95.4). PropLine only 72 calls on 3 free keys, no info on quality.
 - 2026-10-12 subscription advice (research/subscription_advice_2026-10-12.md).
 - 2026-10-12 follow-up advice: free keys beat PropLine Pro for scanning; SharpAPI not worth it (research/subscription_advice_2026-10-12.md).
+- 2026-10-12 TFR: keyless freshness measurements (research/api_freshness_2026-10-12.md), shopping list (research/api_shopping_list_2026-10-12.md); built 'Freshest quote wins' + Diagnostics Source race.
