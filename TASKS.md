@@ -4800,3 +4800,14 @@ Tj: NBA odds move too fast; asked for a rapid auto-bet with settings, a price ra
 - [x] TAM1 Research memo + answer.
 - [ ] TAM2 Journal the order's end reason and Novig's ask at that moment for IOC misses (proves "quote vanished" vs a delay rule).
 - [ ] TAM3 Hockey lag measurement (20 s) before any hockey taker.
+
+## TAN: full tests, settings cleanup, UI, math audit, bet-history + diagnostics analysis (Tj, 2026-10-12)
+Tj verbatim: "Run full tests on the app. Clean up and simplify and organize settings so they are intuitive. Remove settings that are unnecessary. Fix contradictory settings. Improve the ui. Make sure all the math and logic is sound. Do deep analysis on the attached bets and diagnostics. Use the diagnostics to improve the app, code, efficiency, and functions. Use the bet history to find patterns and improve recommended filters and defaults in the app for maximum profit. Keep in mind the sample size is not huge so only act on strong signals. Optimize the app to take advantage of strong patterns and profit methods. As you do this, do frequent checkpoints and ladder and save all progress and data in case you get cut off by usage limit."
+Data archived by the hook in `research/uploads/2026-10-12/` (bets p1, bids-posted p1, README, diagnostics v0.89.34 23:18). Findings go to `research/tan_*_2026-10-12.md` AS THEY COME. Resume from the first `[ ]` below.
+- [ ] TAN1 Full floor: `bash tools/test.sh` (+ `-Pscreenshots`, look at PNGs); record green/red honestly in research/tan_fulltest_2026-10-12.md.
+- [ ] TAN2 Diagnostics v0.89.34 deep read: errors, slow paths, memory, API budgets, halts, wasted requests; list of fixes in research/tan_diagnostics_2026-10-12.md; fix the strong ones.
+- [ ] TAN3 Bet history analysis (1422 bets, 25k bids): CLV/ROI by dimension with t-stats, independent closes only for claims; research/tan_bets_2026-10-12.md; change defaults/filters ONLY on strong signals (>=100 bets with true close for CLV, state n and t).
+- [ ] TAN4 Settings audit: inventory every setting (page, default, who reads it), find contradictions, dead/unneeded settings, overlaps; research/tan_settings_audit_2026-10-12.md; then simplify/reorganize/remove (SettingsIndex + SettingsPagesTest stay in sync).
+- [ ] TAN5 UI polish pass (Compose skills; screenshots).
+- [ ] TAN6 Math/logic audit: engine (Devig, FairValue, Fees, EvMath, Kelly), AutoBet.stake/judge, BetRating, SharpVeto, MakerRules; adversarial read + tests.
+- [ ] TAN7 Full regression, ckpt, ship (`ship.sh`), release.yml, Release link to Tj.
