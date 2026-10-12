@@ -252,7 +252,7 @@ class ApiBettingController(
             ?: ApiBetPlacer(
                 t, c.tracker, books = readBook ?: ::freshBook, limits = ::limits, paused = { settings().paused }, clock = clock, lock = c.orderLock,
                 restingBids = { com.tjshea.vigilant.data.tracker.GameExposure.bidItems(c.makerStore.all()) },
-                events = c::orderEvents, warm = { c.orderSocket?.warm() },
+                events = c::orderEvents, warm = { c.orderSocket?.warm() }, timing = { c.eventLog.info("BET", it) },
             ).also { placerCache = t to it }
     }
 

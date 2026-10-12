@@ -72,6 +72,8 @@ class ApiBetPlacer(
     private val events: () -> com.tjshea.vigilant.data.novig.stream.OrderEvents? = { null },
     /** Told whenever a bet is planned: an order is likely soon, so the order socket opens if it is not open ([OrderSocket.warm]). */
     private val warm: () -> Unit = {},
+    /** Where the time of a bet check went, for the event log (Tj, 2026-10-12: "after I press the bet button, it lags for a long time"). */
+    private val timing: (String) -> Unit = {},
 ) {
 
     /** What [stake] would do now: the confirm sheet's numbers. Reads the book; sends nothing. [limitsOverride]: the auto-bet's own limits. */
@@ -80,6 +82,7 @@ class ApiBetPlacer(
         if (limitsOverride == null) com.tjshea.vigilant.data.novig.BetPriority.hold { planImpl(target, stake, allowRepeat, limitsOverride) } else planImpl(target, stake, allowRepeat, limitsOverride)
 
     private suspend fun planImpl(target: BetTarget, stake: Double, allowRepeat: Boolean, limitsOverride: BetLimits?): PlanResult {
+        val t0 = clock()
         warm()
         val limits = limitsOverride ?: limits()
         // Pause holds what runs by itself (auto-bet); a bet Tj places by hand is his call (Tj, 2026-10-02: "I should be able to bet on whatever I want manually").
@@ -88,6 +91,7 @@ class ApiBetPlacer(
         if (!allowRepeat && all.any { it.status == BetStatus.PENDING && it.orderId != null && it.outcomeId == target.outcomeId }) {
             return PlanResult.Refused("You've already bet this through the API and it's still open (Tracker). Bet it again from the Tracker's bet if you mean to.")
         }
+        val t1 = clock()
         val book = try {
             books(target.market.marketId)
         } catch (e: CancellationException) {
@@ -95,12 +99,15 @@ class ApiBetPlacer(
         } catch (e: Exception) {
             null
         }
+        val t2 = clock()
         // One game is one event (Tj, 2026-10-04): what is at risk on it across every market, open bets and resting bids, before this one.
         val game = limits.maxPerGame.takeIf { it > 0.0 }?.let { cap ->
             val ref = GameRef(target.market.eventId, target.eventName, target.startsTs, target.league)
             GameExposure.check(ref, GameExposure.items(all) + restingBids(), target.market.marketId, target.outcomeId, stake, cap)
         }
-        return ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all), game)
+        val plan = ApiBetPlanner.plan(target, book, stake, clock(), limits, spentToday(all), game)
+        timing("bet check: ${clock() - t0} ms in all (before the book ${t1 - t0} ms, book read ${t2 - t1} ms${if (book == null) ", FAILED" else ""}, rest ${clock() - t2} ms)")
+        return plan
     }
 
     /**
