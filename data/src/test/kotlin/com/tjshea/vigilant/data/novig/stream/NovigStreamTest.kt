@@ -238,6 +238,26 @@ class NovigStreamTest {
     }
 
     @Test
+    fun `a refusal that lands as a sync pass is ending still gets the batch asked for again`() = runBlocking {
+        // CI 2026-10-12: the refusal reached scheduleSync while the pass that sent the batch was still "active" (in its last moments), so no pass ran for it and the
+        // markets stayed unsubscribed for good. The seam holds the first pass open at that moment, long enough for the mock's reply to arrive.
+        server.enqueue(
+            MockResponse().withWebSocketUpgrade(
+                novigSide { nonce, markets, _ ->
+                    if ("m7" in markets) """{"nonce":$nonce,"code":"MARKET_NOT_FOUND","message":"unresolvable"}""" else null
+                },
+            ),
+        )
+        val stream = stream()
+        val passes = java.util.concurrent.atomic.AtomicInteger()
+        stream.onSyncTail = { if (passes.getAndIncrement() == 0) Thread.sleep(500) }
+        stream.watch(plan.take(40))
+        until { stream.live(plan).size >= 39 && stream.bookGap("m7")?.startsWith("Novig refused") == true }
+        assertNull(stream.live(plan)["m7"])
+        stream.close()
+    }
+
+    @Test
     fun `the live engine's markets stay subscribed when a scan replaces its own list, on the one connection`() = runBlocking {
         server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
         val stream = stream()
