@@ -23,7 +23,7 @@ object SettingsIndex {
         val bids: Boolean = false,
     ) {
         /** Where it lives, as a search hit says it. */
-        val where: String get() = if (bids) "Bids tab" else page?.title ?: "Auto-bet tab"
+        val where: String get() = if (bids) "Bids tab" else page?.let { p -> p.parent?.let { "${it.title} › ${p.title}" } ?: p.title } ?: "Auto-bet tab"
     }
 
     private val novig: (ScanSettings) -> Boolean = { AppBook.isNovig }
@@ -119,7 +119,12 @@ object SettingsIndex {
         Entry("Fall back to market average", SettingsPage.FAIR, "When no sharp book quotes a line, use every book instead of skipping it", "sharp fallback average", { it.fairSource == com.tjshea.vigilant.engine.FairSource.SHARP }),
         Entry("Sportsbook player props", SettingsPage.FAIR, "Your books' player props as fair odds (DraftKings, FanDuel, BetMGM…)", "props book props prop types credits games hours reuse", { it.useOddsApi || it.usePropLine || it.useParlay }),
         Entry("Sportsbooks for fair odds", SettingsPage.FAIR, "Which sportsbooks' odds count toward the fair odds", "reference books picker draftkings fanduel betmgm caesars", { it.useOddsApi || it.usePropLine || it.useParlay }),
-        Entry("Where fair odds come from", SettingsPage.FAIR, "Turn feeds on or off and add their keys", "pinnacle pinnwire pinnapi polymarket kalshi propline parlayapi odds api keys sources feeds"),
+        Entry("Where fair odds come from", SettingsPage.FAIR, "The feeds, their switches, keys and credits are under APIs & keys (a button opens it)", "pinnacle pinnwire pinnapi polymarket kalshi propline parlayapi odds api keys sources feeds"),
+        // The APIs' own pages (v0.89.35: the one home for each API's keys and options)
+        Entry("PinnWire keys", SettingsPage.PINNACLE, "Pinnacle's board and player props: add and order the PinnWire and pinnapi keys", "pinnacle pinnwire pinnapi key keys sharp board", novig),
+        Entry("PropLine", SettingsPage.PROPLINE, "30 books' lines and props: the switch, its keys and the every-book option", "propline prop line key keys books all", novig),
+        Entry("ParlayAPI", SettingsPage.PARLAY, "Pinnacle and 30 books, props, injuries and closing lines: the switch and its keys", "parlayapi parlay key keys credits plan starter free", novig),
+        Entry("The Odds API", SettingsPage.ODDS_API, "Sportsbook lines and props: the switch, its keys and how long its lines are re-used", "odds api the-odds-api key keys credits reuse", novig),
         // Betting & Novig account
         Entry("Novig API key", SettingsPage.BETTING, "Connect Novig to bet from Vigilant", "key connect account api", novig),
         Entry("Bankroll", SettingsPage.BETTING, "The money you set aside for betting", "bankroll money"),
