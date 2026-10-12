@@ -331,4 +331,24 @@ class NovigStreamBboTest {
         assertNull(s.live(listOf("not-wanted"))["not-wanted"])
         s.close()
     }
+
+    @Test
+    fun `two lanes' live markets are held together on the one connection, each lane replacing only its own`() = runBlocking {
+        server.enqueue(MockResponse().withWebSocketUpgrade(novigSide()))
+        val s = stream()
+        val a = SharedStreamView({ s }, BookListener { _, _, _ -> })
+        val b = SharedStreamView({ s }, BookListener { _, _, _ -> })
+        a.watchLive(listOf("la1", "la2"))
+        b.watchLive(listOf("lb1"))
+        until { s.live(listOf("la1", "la2", "lb1")).size == 3 }
+        // lane b changes its list: lane a's markets stay pinned (and on book), not dropped by a list that replaced them
+        b.watchLive(listOf("lb1", "lb2"))
+        s.watch(plan)
+        until { s.live(listOf("lb2")).size == 1 }
+        assertEquals(setOf("la1", "la2"), s.live(listOf("la1", "la2")).keys)
+        assertEquals("one connection for both lanes", 1, server.requestCount)
+        val all = subscribes.flatMap { channelsOf(it).entries }.associate { it.key to it.value }
+        assertTrue(listOf("la1", "la2", "lb1", "lb2").all { all[it] == "book" })
+        s.close()
+    }
 }

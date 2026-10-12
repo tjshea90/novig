@@ -142,4 +142,11 @@ class BboScanTest {
         assertTrue(r.result!!.opportunities.filter { it.market.marketId in setOf("m0", "m1") }.all { it.ladder.size == 2 })
         assertFalse(novig.restCalls.flatten().any { it in setOf("m2", "m3", "m4", "m5") })
     }
+
+    @Test
+    fun `a market the bid desk has a bid on is moved to the full book whatever its price`() = runTest {
+        val novig = Bbo()
+        Scanner(novig, clock = { now }, elapsed = { 0L }, deepExtra = { listOf("m4") }).scan(settings, listOf(Fair()), onProgress = {}, onPartial = {})
+        assertEquals(setOf("m0", "m1", "m4"), novig.deepened.toSet())
+    }
 }
