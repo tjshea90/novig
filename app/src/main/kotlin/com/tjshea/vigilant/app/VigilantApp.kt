@@ -123,7 +123,7 @@ class VigilantApp : Application() {
  * any network on its own: only a scan the user asks for does, and CrazyNinjaOdds' list (with its
  * books and player teams) while the CNO scanner is on screen ([cno], [teams]).
  */
-class AppContainer(private val app: Application) {
+class AppContainer(val app: Application) {
     private companion object {
         /** Why scanning stopped, for the bids' cancel reason ([KillSwitch.CANCEL_WHY] for the kill switch). */
         const val NEITHER = 0
