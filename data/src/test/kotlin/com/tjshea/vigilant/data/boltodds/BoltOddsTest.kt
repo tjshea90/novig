@@ -37,6 +37,16 @@ class BoltOddsTest {
 
     // ---- parser -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    @Test fun `the board counts its changes, so the streaming engine can tell a push arrived`() {
+        val board = BoltBoard { now }
+        assertEquals(0L, board.changeSeq)
+        board.apply(BoltParser.frame(docsGameUpdate, now).single())
+        assertEquals(1L, board.changeSeq)
+        // A ping changes nothing: no signal.
+        board.apply(BoltMessage.Ping(now))
+        assertEquals(1L, board.changeSeq)
+    }
+
     @Test fun `the docs game_update example is read`() {
         val m = BoltParser.frame(docsGameUpdate, now).single() as BoltMessage.GameUpdate
         assertEquals(Instant.parse("2025-07-23T19:46:10.023175Z").toEpochMilli(), m.atMs)
