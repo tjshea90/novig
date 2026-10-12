@@ -73,6 +73,8 @@ object Diagnostics {
         val novigFeedReport: List<String>? = null,
         /** Settings › Profit-proven only: on or off, and what the profile blocks and favours. */
         val profitReport: String? = null,
+        /** The repeat guard's and the streaming engine's state, one block of lines (null: nothing to say). */
+        val streamReport: String? = null,
         val op4Report: List<String>? = null,
         /** The live burst recorder (no orders; RESEARCH.md §95): its status line and its report from the journal; null when it was never on and has recorded nothing. */
         val burstReport: String? = null,
@@ -327,6 +329,7 @@ object Diagnostics {
         }
         x.novigFeedReport?.takeIf { it.isNotEmpty() }?.let { lines -> lines.forEach { o.appendLine("Novig $it") } }
         x.profitReport?.let { o.appendLine("Profit-proven only: $it") }
+        x.streamReport?.let { o.appendLine(it) }
 
         o.appendLine()
         o.appendLine("== Last Vigilant scan ==")

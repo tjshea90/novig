@@ -2596,6 +2596,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     c.opClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
                 }
             }.getOrNull(),
+            streamReport = runCatching {
+                val g = state.value.settings.gates
+                val st = c.streamEngine.status.value
+                buildString {
+                    appendLine("Repeat and hedge guard: " + (if (g.repeatGuard) "ON, ${if (g.repeatMaxBets == 0) "no limit" else g.repeatMaxBets.toString()} bets/bids and ${if (g.repeatMaxDollars == 0.0) "no limit" else "$" + g.repeatMaxDollars.toInt()} a side, other side ${if (g.repeatHedge) "only when a sure profit" else "never"}" else "OFF"))
+                    append("Streaming engine: " + (if (!g.streamScan) "OFF (nothing changes)" else "ON${if (g.streamLive) " + live games" else ""}, gap ${g.streamGapSeconds} s, running ${st.running}, passes ${st.passes}, signals ${st.signals} (Novig ${st.novigSignals}, BoltOdds ${st.boltSignals}), busy skips ${st.busySkips}" +
+                        (st.lastPassMs?.let { ", last pass $it ms (${st.lastTrigger})" } ?: "") + (st.why?.let { ", note: $it" } ?: "")))
+                }
+            }.getOrNull(),
             profitReport = runCatching { val on = state.value.settings.gates.profitProven; (if (on) "ON, " else "OFF (nothing changes); the profile ") + (com.tjshea.vigilant.data.scanner.ProfitProfile.shipped?.summary() ?: "is not built in") }.getOrNull(),
             novigFeedReport = runCatching { (c.novig.stream as? com.tjshea.vigilant.data.novig.stream.PushedBooks)?.feedReport().orEmpty() + c.orderSocket?.report().orEmpty() }.getOrNull(),
             boltReport = runCatching {
