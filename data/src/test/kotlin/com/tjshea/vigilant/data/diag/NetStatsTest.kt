@@ -196,6 +196,19 @@ class NetInterceptorTest {
     }
 
     @Test
+    fun `a 400 says what the host did not like, and the body still arrives whole (the v0_89_34 file had 76 refusals and no reason)`() {
+        server.enqueue(MockResponse().setResponseCode(400).setBody("""{"error":"invalid status filter","detail":"status must be one of OPEN_PREGAME"}"""))
+        val body = get("/v3/public/catalog/events").use { it.body!!.string() }
+        assertTrue(body, body.contains("status must be one of"))
+        val e = events.events().map { it.msg }
+        assertTrue(e.toString(), e.any { it.contains("/v3/public/catalog/events refused with 400") && it.contains("invalid status filter") })
+        // A 404 stays as it was: no body in the line.
+        server.enqueue(MockResponse().setResponseCode(404).setBody("not here at all"))
+        get("/other").use { it.body!!.string() }
+        assertTrue(events.events().map { it.msg }.any { it.endsWith("/other refused with 404 after ") || (it.contains("/other refused with 404") && !it.contains("not here")) })
+    }
+
+    @Test
     fun `a call that fails before an answer is recorded with how it failed, and a call cancelled on purpose is not an event`() {
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
         try { get("/slow") } catch (e: java.io.IOException) { }
