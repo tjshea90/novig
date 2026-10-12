@@ -382,6 +382,24 @@ class AutoScanner(
     }
 
     /**
+     * The streaming engine's hand-off (Tj, 2026-10-12): the auto-bet judges [result]'s bets (only those on [only] markets when given: the lines whose Novig price just moved) by the same rules as after a scan, and the
+     * bid desk takes its pass from the published result. Everything the interval path checks (limits, guards, fresh price, the placer's own book read) applies unchanged.
+     */
+    suspend fun streamHandOff(settings: ScanSettings, result: ScanResult, only: Set<String>?): Int {
+        val rows = if (only == null) result else result.copy(opportunities = result.opportunities.filter { it.market.marketId in only })
+        var judged = rows.opportunities.size
+        if (settings.autoBet && ((settings.autoBetTennis && settings.tennisOn) || settings.autoBetVigilant) && AppBook.isNovig && !settings.paused) {
+            runCatching { c.autoBet.runTennis(settings, snapshot(settings).copy(result = result), rows) }
+                .onFailure { if (it is CancellationException) throw it; runCatching { c.problems.add("Streaming engine", "auto-bet: ${it.message ?: it.javaClass.simpleName}") } }
+        } else judged = 0
+        if (!settings.paused && AppBook.isNovig && (settings.maker || settings.makerRecommend)) {
+            runCatching { c.maker.run("streaming update", minGapMs = STREAM_BID_GAP_MS) }
+                .onFailure { if (it is CancellationException) throw it; runCatching { c.problems.add("Streaming engine", "bids: ${it.message ?: it.javaClass.simpleName}") } }
+        }
+        return judged
+    }
+
+    /**
      * The alerts a Vigilant scan that just ended while Vigilant was off screen should send (Tj's own
      * Scan, left running in the background): the same rules as a background cycle.
      */
@@ -549,6 +567,9 @@ class AutoScanner(
     }
 
     companion object {
+        /** The least time between two bid-desk passes started by the streaming engine. */
+        const val STREAM_BID_GAP_MS = 2_000L
+
         /** The most a cycle's end waits for the scan study's catch-up (a wide read, a few pages' checks, one write). */
         const val STUDY_SYNC_MS = 25_000L
 
