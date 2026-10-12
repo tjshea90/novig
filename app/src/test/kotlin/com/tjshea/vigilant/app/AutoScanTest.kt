@@ -720,9 +720,9 @@ class AutoScanTest {
     fun `Novig's live feed is closed off screen, not left pushing for two minutes`() {
         val activity = File("src/main/kotlin/com/tjshea/vigilant/app/MainActivity.kt").readText()
         // Not while the live engine runs (Tj, 2026-10-11: the Feed's live lane and the live bids hold the same stream).
-        assertTrue(activity.contains("if (!container.runner.running && !container.pinnRunner.running) container.novig.stream?.close()"))
+        assertTrue(activity.contains("if (!container.runner.running && !container.pinnRunner.running && !container.streamEngine.status.value.running) container.novig.stream?.close()"))
         val app = File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText()
-        assertTrue(app.contains("if (!onScreen && !pinnRunner.running) novig.stream?.close()"))
+        assertTrue(app.contains("if (!onScreen && !pinnRunner.running && !streamEngine.status.value.running) novig.stream?.close()"))
         // Built only with the key, replaced (the old one closed) when the key changes.
         assertTrue(app.contains("novig.stream?.close()\n        novig.keyed = signer\n        novig.stream = signer?.let { sg -> NovigStream(http, sg, appScope, onEvent"))
     }

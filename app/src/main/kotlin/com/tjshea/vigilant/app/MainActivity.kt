@@ -547,7 +547,7 @@ class MainActivity : ComponentActivity() {
         container.onScreen = false
         // Novig's live feed only while a scan or Tj is using it: off screen with no scan, it's closed now
         // rather than pushing prices to a phone in a pocket for two more minutes.
-        if (!container.runner.running && !container.pinnRunner.running) container.novig.stream?.close()
+        if (!container.runner.running && !container.pinnRunner.running && !container.streamEngine.status.value.running) container.novig.stream?.close()
         super.onStop()
     }
 
