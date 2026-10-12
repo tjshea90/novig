@@ -233,3 +233,4 @@ day that changes.
 | v0.92.2 | code 226 | 2026-10-12T10:00Z | v0.92.2: whole-bet timing in the event log
 | v0.93.0 | code 228 | 2026-10-12T15:35Z | v0.93.0: Profit-proven only switch; bet sheet frees once Novig has the order; whole-bet timing
 | v0.93.1 | code 229 | 2026-10-12T16:18Z | v0.93.1: bet sheet auto-closes, result notification, hand bets no longer wait behind the bid desk
+| v0.93.4 | code 232 | 2026-10-12T17:37Z | v0.93.4: repeat and hedge guard; Entain family + BetMGM one book; resting bids at/over fair cancelled; star minimum overrides Profit-proven with lowered stars
