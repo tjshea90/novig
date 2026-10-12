@@ -361,7 +361,7 @@ class AutoBettor(
         // A minimum star rating decides which bets go (Tj, 2026-10-11): the best-rated first, then the biggest edge.
         val profile = if (settings.gates.profitProven) com.tjshea.vigilant.data.scanner.ProfitProfile.shipped else null
         // Profit-proven only: the types of bet with the best history first (a neutral type scores 0), then the usual order.
-        val profitScore = { o: Opportunity -> profile?.judge(com.tjshea.vigilant.data.scanner.ProfitProfile.Instrument.BET, o.league.novigName, o.kind.label, o.selection, o.evPercent, (o.event.startsTs - now) / 60_000L)?.score ?: 0.0 }
+        val profitScore = { o: Opportunity -> profile?.judge(com.tjshea.vigilant.data.scanner.ProfitProfile.Instrument.BET, o.league.novigName, com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection).label, o.selection, o.evPercent, (o.event.startsTs - now) / 60_000L)?.score ?: 0.0 }
         val first = (if (rules.byStars) tennis.sortedWith(compareByDescending<Opportunity> { it.rating?.stars ?: 0.0 }.thenByDescending { it.evPercent ?: 0.0 }) else tennis.sortedByDescending { it.evPercent ?: 0.0 })
             .let { list -> if (profile != null) list.sortedByDescending(profitScore) else list }
         for (o in first) {
