@@ -25,6 +25,8 @@ import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString.Companion.toByteString
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -55,17 +57,30 @@ class BoltOddsLiveTest {
     @Volatile private var marketsBody = """{"draftkings":{"NBA":["Moneyline","Spread","Total","Player Points","Fight To Not Go Distance"],"MLB":["Moneyline"]},"fanduel":{"NBA":["Moneyline","Rebounds"]}}"""
     @Volatile private var validKeys = setOf("good")
     @Volatile private var greet = true
+    @Volatile private var answerSubscribe = true
+
+    /** How the mock server packs its frames: text, a binary frame of UTF-8, gzip or zlib. */
+    @Volatile private var packing = "text"
+
+    private fun WebSocket.frame(text: String) {
+        when (packing) {
+            "utf8" -> send(text.encodeUtf8())
+            "gzip" -> send(java.io.ByteArrayOutputStream().also { o -> java.util.zip.GZIPOutputStream(o).use { it.write(text.toByteArray()) } }.toByteArray().toByteString())
+            "zlib" -> send(java.io.ByteArrayOutputStream().also { o -> java.util.zip.DeflaterOutputStream(o).use { it.write(text.toByteArray()) } }.toByteArray().toByteString())
+            else -> send(text)
+        }
+    }
 
     private val serverListener = object : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {
             serverSockets += webSocket
-            if (greet) webSocket.send("""{"action": "socket_connected"}""")
+            if (greet) webSocket.frame("""{"action": "socket_connected"}""")
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
             val o = Json.parseToJsonElement(text).jsonObject
             received += o
-            if (o["action"]?.jsonPrimitive?.content == "subscribe") webSocket.send("""{"action": "subscription_updated", "message": "You have successfully updated your subscription filters."}""")
+            if (answerSubscribe && o["action"]?.jsonPrimitive?.content == "subscribe") webSocket.frame("""{"action": "subscription_updated", "message": "You have successfully updated your subscription filters."}""")
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) { webSocket.close(code, null) }
@@ -107,10 +122,10 @@ class BoltOddsLiveTest {
     private fun wsUrl() = base().replaceFirst("http", "ws")
     private fun client(keys: List<String> = listOf("good")) = BoltOddsClient(OkHttpClient(), { keys }, meter, base(), sleep = { sleeps += it })
 
-    private fun stream(client: BoltOddsClient, name: String = "lines", keeps: (com.tjshea.vigilant.data.reference.LineKind) -> Boolean = { true }) =
+    private fun stream(client: BoltOddsClient, name: String = "lines", keeps: (com.tjshea.vigilant.data.reference.LineKind) -> Boolean = { true }, greetingWaitMs: Long = 4_000L) =
         BoltOddsStream(
             name, BoltOddsStream.socketClient(OkHttpClient()), client, BoltBoard(keeps = keeps), scope, wsUrl(),
-            backoffMinMs = 150, backoffMaxMs = 400, resubscribeGapMs = 250, resnapshotGapMs = 300, idleCloseMs = 60_000, checkEveryMs = 50,
+            backoffMinMs = 150, backoffMaxMs = 400, resubscribeGapMs = 250, resnapshotGapMs = 300, idleCloseMs = 60_000, checkEveryMs = 50, greetingWaitMs = greetingWaitMs,
         )
 
     private suspend fun until(timeoutMs: Long = 8_000, check: () -> Boolean) = withTimeout(timeoutMs) { while (!check()) delay(20) }
@@ -208,7 +223,7 @@ class BoltOddsLiveTest {
         assertEquals(listOf("draftkings", "fanduel"), snap.queryParameterValues("sportsbooks"))
         assertEquals(2, s.board.gamesOf(listOf("NBA")).size)
         // a live line moves, a book removes a line
-        serverSockets.last().send(game("draftkings", ml1 = "-170", ml2 = "+148", at = "2026-10-20T14:30:00+00:00", action = "game_update"))
+        serverSockets.last().frame(game("draftkings", ml1 = "-170", ml2 = "+148", at = "2026-10-20T14:30:00+00:00", action = "game_update"))
         until { s.board.gamesOf(listOf("NBA")).any { g -> g.sportsbook == "draftkings" && g.outcomes.values.any { it.odds == -170 } } }
         assertTrue(s.live)
         assertNotNull("a book that spoke is vouched for", s.aliveAt("draftkings", "NBA"))
@@ -245,6 +260,55 @@ class BoltOddsLiveTest {
         assertEquals(2, rest.count { it.requestUrl!!.encodedPath == "/api/snapshot" })
         assertEquals(1, s.board.gamesOf(listOf("NBA")).size)
         s.close()
+    }
+
+    @Test fun `a server that never greets is subscribed anyway after the greeting wait, and says so`() = runBlocking {
+        greet = false
+        snapshotBody = "[" + game("draftkings") + "]"
+        val s = stream(client(), greetingWaitMs = 300)
+        s.want(filters)
+        assertTrue("subscribed without a greeting", s.awaitReady(8_000))
+        assertTrue(received.any { it["action"]?.jsonPrimitive?.content == "subscribe" })
+        assertEquals(1, s.greetingFallbacks)
+        assertEquals(1, s.board.gamesOf(listOf("NBA")).size)
+        assertTrue(s.openInfo!!, s.openInfo!!.startsWith("HTTP 101"))
+        // the server answered the subscription, so the connection has spoken and is vouched for
+        until { s.framesThisConn > 0 }
+        assertNotNull(s.aliveAt("draftkings", "NBA"))
+        s.close()
+    }
+
+    @Test fun `a connection that has not sent one frame is not vouched for, whatever its state`() = runBlocking {
+        greet = false
+        answerSubscribe = false
+        snapshotBody = "[" + game("draftkings") + "]"
+        val s = stream(client(), greetingWaitMs = 300)
+        s.want(filters)
+        assertTrue(s.awaitReady(8_000))
+        assertEquals(0L, s.framesThisConn)
+        assertNull("silent socket", s.aliveAt("draftkings", "NBA"))
+        serverSockets.last().frame("""{"action": "ping"}""")
+        until { s.framesThisConn > 0 }
+        assertNotNull("it spoke", s.aliveAt("draftkings", "NBA"))
+        s.close()
+    }
+
+    @Test fun `binary frames, plain UTF-8, gzip or zlib, are read like text ones`() = runBlocking {
+        for (kind in listOf("utf8", "gzip", "zlib")) {
+            packing = kind
+            received.clear()
+            snapshotBody = "[" + game("draftkings") + "]"
+            val s = stream(client())
+            s.want(filters)
+            assertTrue("$kind: ready", s.awaitReady(8_000))
+            serverSockets.last().frame(game("draftkings", ml1 = "-170", ml2 = "+148", at = "2026-10-20T14:30:00+00:00", action = "game_update"))
+            until { s.board.gamesOf(listOf("NBA")).any { g -> g.outcomes.values.any { it.odds == -170 } } }
+            assertTrue("$kind: counted as binary (${s.binaryFrames} binary, ${s.textFrames} text)", s.binaryFrames >= 2 && s.textFrames == 0L)
+            assertTrue("$kind: raw frames kept for Diagnostics", s.rawFrames.isNotEmpty() && s.rawFrames.first().startsWith("binary"))
+            assertTrue("$kind: subscribed after the binary greeting", received.any { it["action"]?.jsonPrimitive?.content == "subscribe" })
+            assertEquals("$kind: no fallback needed", 0, s.greetingFallbacks)
+            s.close()
+        }
     }
 
     @Test fun `a changed want re-subscribes on the same connection no sooner than the gap, and only a growing one re-reads the snapshot`() = runBlocking {
