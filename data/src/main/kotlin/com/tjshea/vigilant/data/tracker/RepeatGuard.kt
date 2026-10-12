@@ -48,14 +48,9 @@ object RepeatGuard {
         return null
     }
 
-    /** The open bets of the Tracker as positions (only API bets with contracts; a ✓ mark has none and holds nothing here). */
+    /** The open API bets of the Tracker as positions, locks included (a lock is a position on the other side like any other); a ✓ mark has no contracts and holds nothing here. */
     fun fromBets(bets: List<TrackedBet>): List<Pos> = bets
-        .filter { it.status == BetStatus.PENDING && !it.isLock && it.outcomeId.isNotBlank() }
-        .map { Pos(it.marketId, it.outcomeId, it.stake, (it.contracts ?: 0L).toDouble()) }
-
-    /** A lock is a bet on the other side bought on purpose to even a market out; it is judged by its own rules, but it counts as held. */
-    fun fromBetsWithLocks(bets: List<TrackedBet>): List<Pos> = bets
-        .filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() }
+        .filter { it.status == BetStatus.PENDING && it.outcomeId.isNotBlank() && (it.contracts ?: 0L) > 0L }
         .map { Pos(it.marketId, it.outcomeId, it.stake, (it.contracts ?: 0L).toDouble()) }
 
     private fun money(v: Double) = String.format(Locale.US, "$%.2f", v)
