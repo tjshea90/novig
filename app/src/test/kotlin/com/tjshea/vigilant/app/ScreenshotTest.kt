@@ -151,6 +151,10 @@ class ScreenshotTest {
     @Test fun settingsTabTools() = settingsTab(SettingsPage.HELP)
     @Test fun settingsTabAlerts() = settingsTab(SettingsPage.ALERTS)
     @Test fun settingsTabWidget() = settingsTab(SettingsPage.WIDGET)
+    // The APIs hub and two of the pages that open from it (v0.89.35).
+    @Test fun settingsTabApis() = settingsTab(SettingsPage.APIS)
+    @Test fun settingsTabPinnacle() = settingsTab(SettingsPage.PINNACLE)
+    @Test fun settingsTabParlay() = settingsTab(SettingsPage.PARLAY)
 
     /** The Auto-bet tab (v0.46.0: its own tab, out of Settings › Betting), set up and on, with the presets under its switch. */
     @Config(qualifiers = "w393dp-h7000dp-xxhdpi")
