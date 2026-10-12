@@ -223,7 +223,7 @@ class BoltOddsTest {
     private fun moneyline(odds1: String, odds2: String) = oc("Moneyline", "Boston Celtics", odds1) + "," + oc("Moneyline", "New York Knicks", odds2)
 
     @Test fun `game_update replaces, line_update edits, and a price of none removes an outcome`() {
-        val b = BoltBoard { now }
+        val b = BoltBoard(clock = { now })
         apply(b, update("game_update", "draftkings", game, moneyline("-150", "+130") + "," + oc("Spread", "Boston Celtics", "-110", "-3.5") + "," + oc("Spread", "New York Knicks", "-110", "3.5")))
         assertEquals(4, b.gamesOf(listOf("NBA")).single().outcomes.size)
         // one price moves
@@ -242,7 +242,7 @@ class BoltOddsTest {
     }
 
     @Test fun `sport_clear and book_clear drop what BoltOdds' backend lost`() {
-        val b = BoltBoard { now }
+        val b = BoltBoard(clock = { now })
         apply(b, update("game_update", "draftkings", game, moneyline("-150", "+130")))
         apply(b, update("game_update", "fanduel", game, moneyline("-155", "+135")))
         apply(b, update("game_update", "fanduel", "A vs B, 2026-10-20, 07", oc("Moneyline", "A", "-110") + "," + oc("Moneyline", "B", "-110"), home = "A", away = "B", sport = "NHL"))
@@ -253,7 +253,7 @@ class BoltOddsTest {
     }
 
     @Test fun `a snapshot never overwrites a newer live update, and fills what the live updates have not`() {
-        val b = BoltBoard { now }
+        val b = BoltBoard(clock = { now })
         apply(b, update("game_update", "draftkings", game, moneyline("-160", "+140"), at = "2026-10-20T14:10:00+00:00"))
         // the snapshot (older timestamps) arrives afterwards
         val snap = update("initial_state", "draftkings", game, moneyline("-150", "+130"), at = "2026-10-20T14:00:00+00:00")
@@ -265,7 +265,7 @@ class BoltOddsTest {
     }
 
     @Test fun `outcomes the table cannot classify are counted, not kept`() {
-        val b = BoltBoard { now }
+        val b = BoltBoard(clock = { now })
         apply(b, update("game_update", "draftkings", game, moneyline("-150", "+130") + "," + oc("Race To 10 Points", "Boston Celtics", "+200") + "," + oc("Race To 10 Points", "New York Knicks", "+250")))
         assertEquals(2, b.gamesOf(listOf("NBA")).single().outcomes.size)
         assertEquals(2, b.unmapped["NBA | Race To 10 Points"])
@@ -299,7 +299,7 @@ class BoltOddsTest {
     }
 
     @Test fun `a book's outcomes become oriented reference markets`() {
-        val b = BoltBoard { now }
+        val b = BoltBoard(clock = { now })
         fullBook(b)
         val ev = BoltConvert.events(b.gamesOf(listOf("NBA")), ctx()).single()
         assertEquals("Boston Celtics", ev.home)
@@ -323,7 +323,7 @@ class BoltOddsTest {
     }
 
     @Test fun `a pair that does not close is dropped, never repaired`() {
-        val b = BoltBoard { now }
+        val b = BoltBoard(clock = { now })
         apply(
             b,
             update(
@@ -342,7 +342,7 @@ class BoltOddsTest {
     }
 
     @Test fun `a book that names home and away the other way round is put the right way round`() {
-        val b = BoltBoard { now }
+        val b = BoltBoard(clock = { now })
         fullBook(b)
         apply(b, update("game_update", "fanduel", game, moneyline("+125", "-145"), home = "New York Knicks", away = "Boston Celtics"))
         // In FanDuel's own message the Knicks are home and Boston is away; its outcomes name the TEAM, so Boston's price is +125 whichever side the book calls home.
@@ -353,7 +353,7 @@ class BoltOddsTest {
     }
 
     @Test fun `books, families and live games are filtered`() {
-        val b = BoltBoard { now }
+        val b = BoltBoard(clock = { now })
         fullBook(b)
         apply(b, update("game_update", "bet365", game, moneyline("-148", "+128")))
         val all = b.gamesOf(listOf("NBA"))
@@ -386,7 +386,7 @@ class BoltOddsTest {
     }
 
     @Test fun `a quote is as fresh as its book's last word while the socket is alive, else as old as its own message`() {
-        val b = BoltBoard { now }
+        val b = BoltBoard(clock = { now })
         fullBook(b) // every outcome set at 14:00Z
         val own = Instant.parse("2026-10-20T14:00:00Z").toEpochMilli()
         val dead = BoltConvert.events(b.gamesOf(listOf("NBA")), ctx()).single().markets.first { it.kind == LineKind.MONEYLINE }
