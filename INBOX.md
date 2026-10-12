@@ -6838,3 +6838,8 @@ For pregame EV scanning, compare propline to parlayapi
 ```
 How can I use the propline pushed live events to my advantage with vigilant
 ```
+
+## 2026-10-12T21:43:43Z
+```
+I sent you the diagnostics to look at propline
+```
