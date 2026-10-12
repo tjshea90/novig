@@ -95,7 +95,7 @@ class NovigLiveCheck(
             return "Best-bid feed (bbo): couldn't start (${e.message ?: e.javaClass.simpleName})."
         }
         val t0 = clock()
-        try {
+        return try {
             pushed.configureFeed(bbo = true, keepOpen = false)
             pushed.watch(ids)
             var top = 0
