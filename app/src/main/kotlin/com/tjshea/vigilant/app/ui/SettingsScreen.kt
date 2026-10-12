@@ -140,6 +140,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** SportsGameOdds Pro: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). A page of [APIS]. */
     SGO("SportsGameOdds Pro", "One paid feed for odds, props, closing lines and results, read alongside every other API you have on", SettingsGroup.FIND),
 
+    /** BoltOdds Pro: the odds WebSocket (lines and props) as a fair-line source, free to read once connected (Tj, 2026-10-12). A page of [APIS]. */
+    BOLTODDS("BoltOdds Pro", "Real-time odds pushed over a WebSocket from many sportsbooks: lines and player props, read alongside every other API you have on", SettingsGroup.FIND),
+
     /** OddsPapi v5: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). A page of [APIS]. */
     ODDSPAPI("OddsPapi", "v5 (a trial or contract key): a second paid feed for odds, props, closing lines (CLV for any bet) and results, read alongside every other API you have on", SettingsGroup.FIND),
 
@@ -183,7 +186,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The page this one belongs to, or null for a page on the Settings home list: the APIs' own pages and their usage details open from APIs & keys and go back to it. */
     val parent: SettingsPage?
         get() = when (this) {
-            SGO, ODDSPAPI, UNABATED, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
+            SGO, BOLTODDS, ODDSPAPI, UNABATED, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
             else -> null
         }
 
@@ -191,7 +194,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR -> s.vigilantOn
-        ALERTS, RESEARCH, SGO, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
+        ALERTS, RESEARCH, SGO, BOLTODDS, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
         APIS -> true
         PINNODDS, LIVEBIDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
@@ -270,6 +273,11 @@ object SettingsSummary {
             SettingsPage.PROPLINE -> keyedSummary(s.usePropLine, state.proplineKeys.size)
             SettingsPage.PARLAY -> keyedSummary(s.useParlay, state.parlayKeys.size)
             SettingsPage.ODDS_API -> keyedSummary(s.useOddsApi, state.oddsApiKeys.size)
+            SettingsPage.BOLTODDS -> when {
+                state.boltKeys.isEmpty() -> "No key saved"
+                s.gates.useBoltOdds -> "On: real-time lines and props over a WebSocket"
+                else -> "Off (key saved)"
+            }
             SettingsPage.UNABATED -> when {
                 state.unKeys.isEmpty() -> "No key saved"
                 s.unabated -> "On: free lines and props, last in line"
@@ -414,6 +422,7 @@ fun SettingsScreen(
                 SettingsPage.PARLAY -> ParlayPage(state, keys, onUpdate)
                 SettingsPage.ODDS_API -> OddsApiPage(state, keys, onUpdate)
                 SettingsPage.UNABATED -> UnabatedPage(state, keys, reportActions, onUpdate)
+                SettingsPage.BOLTODDS -> BoltOddsPage(state, keys, reportActions, onUpdate)
                 SettingsPage.ODDSPAPI_FREE -> OddsPapiFreePage(state, keys, reportActions, onUpdate)
                 SettingsPage.USAGE -> UsageTab(state, keys)
                 SettingsPage.HELP -> ToolsTab(state, reportActions, onUpdate)
@@ -1322,6 +1331,36 @@ private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportAct
         SwitchRow("Every book for the fair average", "Price the fair line with every book OddsPapi carries, not just the books picked in Settings: each is devigged on its own and averaged (Market average / Blend), regional clones of one operator count once, and wide-margin or stale books are still left out. Heavier replies.", s.gates.opAllBooks, tag = "opAllBooksSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(opAllBooks = v)) } }
         SwitchRow("Alternate lines", "Read every game in depth for each book's alternate spreads and totals (one request a game). Off: the main lines of a whole league come in one request.", s.opAltLines, tag = "opAltSwitch") { v -> onUpdate { it.copy(opAltLines = v) } }
         Hint(com.tjshea.vigilant.app.OpText.REPLACES)
+    }
+}
+
+/**
+ * Settings › BoltOdds Pro (Tj, 2026-10-12; BOLTODDS_API.md): the key list, a Test key that says what the key carries (and listens on a socket for 15 s) and saves a sample for Claude, the one switch, and the
+ * option to price with every book BoltOdds lists. On, two WebSockets (the lines, the props) open while scans use them and the fair line reads what they have delivered. Off: nothing is sent and nothing is open.
+ */
+@Composable
+private fun ColumnScope.BoltOddsPage(state: UiState, keys: KeyActions, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    Intro(com.tjshea.vigilant.app.BoltOddsText.INTRO)
+    KeyListEditor(ApiProvider.BOLTODDS, state.boltKeys, keys, "Add a BoltOdds key")
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        Button(onClick = { reportActions.onTestBoltKey(false) }, enabled = state.boltKeys.isNotEmpty() && !state.boltKeyBusy, modifier = Modifier.testTag("boltTestKey")) {
+            Text(if (state.boltKeyBusy) "Testing (about 40 s)…" else "Test key")
+        }
+        androidx.compose.material3.OutlinedButton(onClick = { reportActions.onTestBoltKey(true) }, enabled = state.boltKeys.isNotEmpty() && !state.boltKeyBusy, modifier = Modifier.testTag("boltShareSample")) {
+            Text("Test and share sample")
+        }
+    }
+    state.boltKeyNote?.let {
+        Text(
+            it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("boltKeyNote"),
+            color = if (state.boltKeyOk == true) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+        )
+    }
+    SwitchRow(com.tjshea.vigilant.app.BoltOddsText.SWITCH_TITLE, com.tjshea.vigilant.app.BoltOddsText.switchSub(state.boltKeys.isNotEmpty()), s.gates.useBoltOdds, tag = "boltSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(useBoltOdds = v)) } }
+    if (s.gates.useBoltOdds) {
+        SwitchRow(com.tjshea.vigilant.app.BoltOddsText.ALL_BOOKS_TITLE, com.tjshea.vigilant.app.BoltOddsText.ALL_BOOKS_SUB, s.gates.boltAllBooks, tag = "boltAllBooks") { v -> onUpdate { it.copy(gates = it.gates.copy(boltAllBooks = v)) } }
+        Hint(com.tjshea.vigilant.app.BoltOddsText.NOTES)
     }
 }
 

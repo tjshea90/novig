@@ -2203,10 +2203,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { it.copy(boltKeyBusy = true, boltKeyNote = null, boltKeyOk = null) }
         viewModelScope.launch {
             val r = withContext(Dispatchers.IO) {
+                // A direct check of every saved key first: an accepted key lifts the rest a refusal put it on, so the test reads with it.
+                runCatching { c.apiProbe.check(ApiProvider.BOLTODDS, c.keyStore.current(ApiProvider.BOLTODDS)) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
                 runCatching { com.tjshea.vigilant.data.boltodds.BoltKeyTest.run(c.boltFeed, _state.value.settings) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
             }.getOrNull()
             if (r != null && r.sample.isNotEmpty()) sendSample(share, DiagnosticsShare.BOLT_PREFIX, "BoltOdds", r.summary, r.sample)
-            if (r?.ok == true) runCatching { c.apiProbe.check(ApiProvider.BOLTODDS, emptyList()) }
             _state.update { it.copy(boltKeyBusy = false, boltKeyNote = r?.summary ?: "The test could not run.", boltKeyOk = r?.ok == true) }
         }
     }
