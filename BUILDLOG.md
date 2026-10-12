@@ -230,3 +230,4 @@ day that changes.
 | v0.91.0 | code 223 | 2026-10-12T08:20Z | v0.91.0: Novig best-bid feed (bbo) with a switch back and automatic fallbacks, one persistent shared Novig connection (429 waits Retry-After, reconnects itself, the burst recorder shares it), the key's full watch room, instant order results from the private stream, Test key checks bbo against the book
 | v0.92.0 | code 224 | 2026-10-12T09:09Z | v0.92.0: orders over Novig's websocket, compressed live feed, market status acted on, feed diagnostics, canary retries, Test key frees the app's feed first
 | v0.92.1 | code 225 | 2026-10-12T09:36Z | v0.92.1: fixes slow scans after a reconnect; bet-check timing in the event log; order socket and compression confirmed on a live key
+| v0.92.2 | code 226 | 2026-10-12T10:00Z | v0.92.2: whole-bet timing in the event log
