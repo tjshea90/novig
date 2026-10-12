@@ -160,6 +160,23 @@ class ParlayAccountTest {
     }
 
     @Test
+    fun `a scan reads a key's account at most every ten minutes (v0_89_34 file: 7902 usage reads in a day and a half)`() = runBlocking<Unit> {
+        val a = account()
+        server.enqueue(MockResponse().setBody("""{"valid":true,"tier":"starter","credits_remaining":19000}"""))
+        a.refresh(minAgeMs = ParlayAccount.SCAN_REFRESH_MS)
+        now += ParlayAccount.REFRESH_MS * 2
+        a.refresh(minAgeMs = ParlayAccount.SCAN_REFRESH_MS)
+        assertEquals("two minutes later a scan does not ask again", 1, server.requestCount)
+        server.enqueue(MockResponse().setBody("""{"valid":true,"tier":"starter","credits_remaining":18900}"""))
+        now += ParlayAccount.SCAN_REFRESH_MS
+        a.refresh(minAgeMs = ParlayAccount.SCAN_REFRESH_MS)
+        assertEquals(2, server.requestCount)
+        server.enqueue(MockResponse().setBody("""{"valid":true,"tier":"starter","credits_remaining":18800}"""))
+        a.refresh(force = true)
+        assertEquals("opening the usage page (or Test) still reads at once", 3, server.requestCount)
+    }
+
+    @Test
     fun `a check that can't be read changes nothing`() = runBlocking<Unit> {
         server.enqueue(MockResponse().setResponseCode(500))
         server.enqueue(MockResponse().setResponseCode(500))
