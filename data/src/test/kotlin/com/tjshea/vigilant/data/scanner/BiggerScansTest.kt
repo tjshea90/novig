@@ -245,6 +245,8 @@ class BiggerScansTest {
     private inner class Pushing(private val novig: Novig, private val restChunks: Int) : NovigSource by novig {
         val watched = ArrayList<List<String>>()
         override fun watch(marketIds: Collection<String>) { watched += marketIds.toList() }
+        // A scan screens on pushedTop; a feed with no best-bid channel answers it like pushed.
+        override fun pushedTop(marketIds: Collection<String>): Map<String, NovigBook> = pushed(marketIds)
         override fun pushed(marketIds: Collection<String>): Map<String, NovigBook> {
             if (novig.calls.size < restChunks) return emptyMap()
             val held = watched.lastOrNull().orEmpty().toSet()
