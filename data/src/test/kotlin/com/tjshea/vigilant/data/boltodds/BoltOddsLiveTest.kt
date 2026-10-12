@@ -409,13 +409,23 @@ class BoltOddsLiveTest {
     @Test fun `Test key reads the lists, the markets and a small snapshot, listens on a socket of its own and shares no key`() = runBlocking {
         snapshotBody = "[" + game("draftkings") + "]"
         val feed = BoltOddsFeed(client(listOf("good")), OkHttpClient(), scope, wsUrl = wsUrl())
-        val r = BoltKeyTest.run(feed, ScanSettings(leagues = setOf("NBA"), referenceBooks = listOf("draftkings", "fanduel")), listenMs = 600)
+        // the app's own sockets were open before the test: it closes them, so the probes have Pro's connections to themselves
+        feed.lines.want(filters)
+        until { feed.lines.live }
+        val r = BoltKeyTest.run(feed, ScanSettings(leagues = setOf("NBA"), referenceBooks = listOf("draftkings", "fanduel")), listenMs = 600, scoresListenMs = 500)
+        assertEquals("the lines socket was closed for the test", BoltOddsStream.State.OFF, feed.lines.state)
         assertTrue(r.summary, r.ok)
         assertTrue(r.summary, r.summary.contains("3 sports, 4 sportsbooks, 2 of them"))
         assertTrue(r.summary, r.summary.contains("Sharp books: none"))
         assertTrue(r.summary, r.summary.contains("1 games listed"))
-        assertTrue(r.summary, r.summary.contains("Snapshot of NBA at draftkings"))
-        for (piece in listOf("===== get_info =====", "novig [never the fair line]", "neobet", "===== get_markets", "Player Points [prop POINTS]", "Moneyline [line]", "Fight To Not Go Distance [—]", "===== snapshot (NBA · draftkings", "===== get_parlays", "GET /playbyplay/user", "Not available on your plan", "===== websocket probe", "socket_connected")) {
+        assertTrue(r.summary, r.summary.contains("Snapshot of NBA at 1 books"))
+        assertTrue(r.summary, r.summary.contains("Odds socket: live"))
+        assertTrue(r.summary, r.summary.contains("Scores socket /livescores"))
+        for (piece in listOf(
+            "===== get_info =====", "novig [never the fair line]", "neobet", "===== get_markets", "Player Points [prop POINTS]", "Moneyline [line]", "Fight To Not Go Distance [—]",
+            "===== snapshot (NBA · 3 books: draftkings, fanduel, novig", "games per book: draftkings 1", "--- draftkings", "===== get_parlays", "GET /playbyplay/user", "Not available on your plan",
+            "===== websocket probe", "socket_connected", "connection: HTTP 101", "===== websocket /livescores", "opened: HTTP 101", "sending {\"action\":\"subscribe\"", "===== websocket /playbyplay",
+        )) {
             assertTrue("missing '$piece' in:\n${r.sample}", r.sample.contains(piece))
         }
         assertFalse("the key is not in the sample", r.sample.contains("good") && r.sample.contains("key=good"))
