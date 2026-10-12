@@ -1092,7 +1092,7 @@ private fun ColumnScope.FeedTab(s: ScanSettings, onUpdate: SettingsUpdate) {
     } else {
         Hint("Every ${AppBook.name} line another book also prices is checked: its lines come in the fair-odds requests, so there's no per-line cost to limit.")
     }
-    Text("Days ahead: ${s.daysAhead}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+    Text("Days ahead: ${s.daysAhead} (the furthest a scan reads)", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.DAYS_AHEAD_CHOICES, s.daysAhead, { "${it}d" }) { v -> onUpdate { it.copy(daysAhead = v) } }
     TypedIntField(NumberSpecs.time("days", 1, 30), s.daysAhead, "daysAheadField", none = { false }) { v -> onUpdate { it.copy(daysAhead = v) } }
     Hint(
