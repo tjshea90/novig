@@ -6823,3 +6823,8 @@ Investigate if it is good
 ```
 @"/root/.claude/uploads/d95b6645-d5e0-5a0b-9345-cf5a8be1907e/30cd87f8-vigilant-diagnostics-v0.95.3-2026-10-12-1729.txt" 
 ```
+
+## 2026-10-12T21:33:14Z
+```
+For pregame EV scanning, compare propline to parlayapi
+```
