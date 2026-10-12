@@ -50,8 +50,29 @@ interface PushedBooks {
     /** Connects (if it isn't already) without changing what is watched. */
     fun open() {}
 
-    /** The books held current right now among [marketIds]: only those already pushed. */
+    /**
+     * The books held current right now among [marketIds]: only those already pushed, and only COMPLETE ones (a full ladder). A market the feed holds only as its best bid
+     * ([NovigBook.partial]) is not returned, and is moved to the full `book` channel for the next read ([deepen]).
+     */
     fun live(marketIds: Collection<String>): Map<String, NovigBook>
+
+    /**
+     * Like [live], but a market held only as its best bid is returned too ([NovigBook.partial]): enough to screen prices, never to size a bet across levels. Same as [live] for a feed with
+     * no best-bid channel.
+     */
+    fun liveTop(marketIds: Collection<String>): Map<String, NovigBook> = live(marketIds)
+
+    /** Moves these markets to the full `book` channel (and keeps them there a while): the scan found a price worth a bet on them, which needs the ladder. Nothing for a feed with no best-bid channel. */
+    fun deepen(marketIds: Collection<String>) {}
+
+    /** How many markets this feed can be asked to hold at once (the key's watch cap less a margin; lower when the feed is all `book`). */
+    fun room(): Int = NovigStream.MAX_MARKETS
+
+    /** Sets the feed's options from Settings: the best-bid channel on or off, and keeping the connection open between scans. A no-op for a feed with neither. */
+    fun configureFeed(bbo: Boolean, keepOpen: Boolean) {}
+
+    /** The feed's state in words, line by line, for Diagnostics. */
+    fun feedReport(): List<String> = emptyList()
 
     /** Why [marketId] has no pushed book right now, in fixed words (null = no reason known, or it has one). The live bids count these, so a page full of "no book" says which. */
     fun bookGap(marketId: String): String? = null
