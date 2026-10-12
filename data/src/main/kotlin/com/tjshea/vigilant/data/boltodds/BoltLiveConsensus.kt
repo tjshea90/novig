@@ -96,7 +96,7 @@ object BoltLiveConsensus {
     /** A book's devigged fairs for its two sides in quote order, or null when its prices cannot be read. */
     private fun fairs(m: com.tjshea.vigilant.data.reference.RefBookMarket, rules: Rules): List<Double>? {
         if (m.quotes.size != 2) return null
-        val raw = m.quotes.map { 1.0 / it.decimal }
+        val raw = m.quotes.map { 1.0 / it.decimalOdds }
         if (raw.any { !(it > 0.0 && it < 1.0) }) return null
         return runCatching { Devig.devig(raw, rules.method) }.getOrNull()
     }
