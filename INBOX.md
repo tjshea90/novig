@@ -6843,3 +6843,16 @@ How can I use the propline pushed live events to my advantage with vigilant
 ```
 I sent you the diagnostics to look at propline
 ```
+
+## 2026-10-12T21:53:08Z
+```
+Parlayapi odds can be 5-10 minutes old. Pinnodds socket will run out soon. I'm not sure how good sgo is. I'm considering :
+
+1) keeping parlayapi plan
+2) keeping boltodds
+3) getting prop line streaming lite 
+4) buying a better the odds api subscription
+5) looking for other apps
+
+What do you recommend for what this app does 
+```
