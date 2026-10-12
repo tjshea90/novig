@@ -48,6 +48,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.EvMath
 import com.tjshea.vigilant.engine.Odds
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -288,9 +289,11 @@ fun OpportunityDetail(
                 }
             }
             o.suggestedStake?.let {
+                val scale = com.tjshea.vigilant.engine.EvMath.leadScale((o.event.startsTs - System.currentTimeMillis()) / 3_600_000.0)
                 Text(
                     "Suggested: ${Format.money(it)} (${Format.kellyLabel(settings.kellyMultiplier)} of a ${Format.money(settings.bankroll)} bankroll" +
-                        (if (AppBook.exchange) ", capped at +EV liquidity)." else ")."),
+                        (if (AppBook.exchange) ", capped at +EV liquidity" else "") +
+                        (if (scale < 1.0) ", ${(scale * 100).roundToInt()}% of it because the game is more than ${com.tjshea.vigilant.engine.EvMath.LEAD_FULL_HOURS.roundToInt()} h away and early edges mostly fade by the close" else "") + ").",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp),
