@@ -18,7 +18,7 @@ import java.util.Locale
  *
  * The rule (the cut-offs are in the file): a group counts only with n >= minN (a marginal dimension: ev, lead, side, kind alone, league alone, 2 x minN); it is a LOSER when its ROI is negative and
  * t <= -tCut, a WINNER when ROI is positive and t >= tCut, otherwise neutral. A candidate is BLOCKED by a loser unless a MORE SPECIFIC group of the same candidate is a winner (specific outranks
- * general); it is never blocked for lack of data. The score that ranks the rest is the average ROI of the groups that count, shrunk by n/(n+SHRINK), so a thin group moves it little.
+ * general); it is never blocked for lack of data. The score that ranks the rest is the ROI of the groups that count, shrunk by n/(n+SHRINK) (a thin group moves it little) and weighted by how specific the group is.
  *
  * ROI is noisy (the t-statistic is the guard), and CLV, not ROI, is what the app optimises: a type that lost with a positive CLV is probably variance. The profile is a filter on what HAS lost, said so
  * in the words of the refusal.
@@ -55,13 +55,14 @@ class ProfitProfile(
             // A marginal dimension needs twice the sample: it is checked against every candidate, so it is where chance finds a "loser".
             val need = if (specific >= 2) minN else 2 * minN
             if (g.n < need) continue
-            hits += Hit("${dimWords(dim)} ${key.replace('|', ' ').trim()}", g, specific, if (g.roi < 0 && g.t <= -tCut) -1 else if (g.roi > 0 && g.t >= tCut) 1 else 0)
+            hits += Hit(listOf(dimWords(dim), key.replace('|', ' ').trim()).filter { it.isNotBlank() }.joinToString(" "), g, specific, if (g.roi < 0 && g.t <= -tCut) -1 else if (g.roi > 0 && g.t >= tCut) 1 else 0)
         }
         if (hits.isEmpty()) return Judgement.NEUTRAL
         val losers = hits.filter { it.kind < 0 }
         val winners = hits.filter { it.kind > 0 }
         val blocker = losers.filter { l -> winners.none { it.specific > l.specific } }.maxByOrNull { it.specific * 1000 + it.g.n }
-        val score = hits.sumOf { it.g.roi * it.g.n / (it.g.n + SHRINK) } / hits.size
+        // The more specific the group the more it says about THIS candidate: weights 4, 3, 2, 1 for league|kind|side down to the bucket dimensions.
+        val score = hits.sumOf { (it.specific + 1) * it.g.roi * it.g.n / (it.g.n + SHRINK) } / hits.sumOf { it.specific + 1 }
         val blocked = blocker?.let { "your bet history says ${it.label} ${if (instrument == Instrument.BID) "bids" else "bets"} lose money (${it.g.n} settled, ROI ${pct(it.g.roi)}, win ${Math.round(it.g.win * 100)}%, t ${"%.1f".format(Locale.US, it.g.t)}) (Settings › Profit-proven only)" }
         val favoured = winners.takeIf { it.isNotEmpty() }?.joinToString("; ") { "${it.label} ${pct(it.g.roi)} over ${it.g.n}" }
         return Judgement(blocked, score, favoured)
