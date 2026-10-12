@@ -1,23 +1,22 @@
-# CHECKPOINT 3101 — read me first, then TASKS.md
+# CHECKPOINT 3102 — read me first, then TASKS.md
 
-**Written:** 2026-10-12T17:27:09Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `9c78c9d5f` (this checkpoint is the commit after it)
+**Written:** 2026-10-12T17:29:57Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `21712abeb` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v0.93.4: repeat and hedge guard (a side is bet or bid at most twice / $100 by default, the other side of a market only when both sides are a sure profit; auto-bet, bids, live bids and the live engine), Entain family + BetMGM counted as one book, resting bids priced at or over fair come down in the same pass, star minimum overrides Profit-proven with lowered stars for losing types
+pre-release: v0.93.4: repeat and hedge guard (a side is bet or bid at most twice / $100 by default, the other side of a market only when both sides are a sure profit; auto-bet, bids, live bids and the live engine), Entain family + BetMGM counted as one book, resting bids priced at or over fair come down in the same pass, star minimum overrides Profit-proven with lowered stars for losing types (versionCode 232, v0.93.4)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.93.4), then run: bash tools/record-release.sh v0.93.4 232 "v0.93.4: repeat and hedge guard (a side is bet or bid at most twice / $100 by default, the other side of a market only when both sides are a sure profit; auto-bet, bids, live bids and the live engine), Entain family + BetMGM counted as one book, resting bids priced at or over fair come down in the same pass, star minimum overrides Profit-proven with lowered stars for losing types"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  21712abeb ckpt 3101: pre-ship: v0.93.4: repeat and hedge guard (a side is bet or bid at most twi
   9c78c9d5f ckpt 3100: TST2 done: RepeatGuard (pure, RepeatGuardTest) wired into ApiBetPlacer (aut
   2771ed5aa ckpt 3099: Recorded Tj's streaming-engine request as TST1-5; v0.93.3 CI/release still 
   2eb959c28 ckpt 3098: pre-release: v0.93.3: Entain's bwin, Party Sports, Sports Interaction, Ladb
@@ -27,5 +26,4 @@ ship.sh gates and releases this
   9621ebb1e ckpt 3094: pre-release: v0.93.1: the bet sheet closes by itself when Novig has the ord
   75311ee0d ckpt 3093: pre-ship: v0.93.1: the bet sheet closes by itself when Novig has the order 
   75fc650d5 ckpt 3092: pre-ship: v0.93.1: the bet sheet closes by itself when Novig has the order 
-  17452a28c ckpt 3091: pre-release: v0.93.0: Profit-proven only switch (Settings > Betting & Novig
 ```
