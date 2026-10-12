@@ -6709,3 +6709,10 @@ When I do bets, after I press the bet button, it lags for a long time, if the be
 ```
 Do option 1
 ```
+
+## 2026-10-12T14:56:31Z
+```
+You said something about betting overs losing money. Find the most profitable types of bets and bids and make the app have a toggle in the settings that prevents bets and bids and auto bets and bids on the types of bets and bids losing money according to my bet history, and favors the types of bets and bids and auto bets and bids which have had the most profit and win rate so far in my bet history. For example, if unders in NBA are the most profitable (hypothetical scenario), put up those types of bids first on the auto bid feature, followed by the second most profitable type of bid, etc. Treat any type of bet or bid with relatively small sample size as neutral. This feature can adjust all necessary settings to achieve profitable betting and bids, such as trap guard timing, minimum EV, sport, market type, etc. This feature should be able to adapt over time based on more analysis from my bet history as it gets larger. As I give Claude more bet history files, it can adapt this feature based on the additional data. The goal is to optimize it for the most profitable types of bets and bids.
+
+Make this a toggle somewhere in the settings. Toggle on = only place the types of bets and bids that have proven profitable so far. Toggle off = no change at all, leave the app how it already is.
+```
