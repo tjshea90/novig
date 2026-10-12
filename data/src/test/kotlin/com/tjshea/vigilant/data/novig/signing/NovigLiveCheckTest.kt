@@ -123,7 +123,7 @@ class NovigLiveCheckTest {
         var closed = false
         var configured: Pair<Boolean, Boolean>? = null
         override fun watch(marketIds: Collection<String>) { wanted = marketIds.toList() }
-        override fun configureFeed(bbo: Boolean, keepOpen: Boolean) { configured = bbo to keepOpen }
+        override fun configureFeed(bbo: Boolean, keepOpen: Boolean, orders: Boolean) { configured = bbo to keepOpen }
         override fun liveTop(marketIds: Collection<String>): Map<String, NovigBook> =
             marketIds.associateWith { NovigBook(it, 1, mapOf("a" to listOf(BidLevel(500, 100))), 0, partial = partial && !asked) }
         override fun live(marketIds: Collection<String>): Map<String, NovigBook> {
