@@ -56,16 +56,17 @@ class AutoBetRecovery(
         val now = clock()
         val s = c.currentSettings()
         val halt = s.autoBetHalted
-        if (halt == null || !AutoBettor.isLostOrderHalt(halt) || s.killed) { seenHalt = null; notified = false; return false }
+        if (halt == null || s.killed) { seenHalt = null; notified = false; return false }
         if (halt != seenHalt) { seenHalt = halt; seenAtMs = now; notified = false }
         // An order of ours is on its way right now: its own answer clears the halt.
         if (c.autoBet.sending) return false
         if (now - seenAtMs < SETTLE_MS) { lastNote = "waiting for the order to end before checking Novig"; return false }
+        // Any other halt is not one this can check: it still never stops auto-bet for good (Tj, 2026-10-12: "always auto resume quickly").
+        if (!AutoBettor.isLostOrderHalt(halt)) return forceResume(now, halt, "it is not about an order that can be checked")
         val sync = c.apiSync
         if (sync == null) {
             lastNote = "betting through Novig's API isn't set up"
-            giveUpNote(now, "Betting through Novig's API isn't connected on this phone, so the lost order can't be checked.")
-            return false
+            return forceResume(now, halt, "betting through Novig's API isn't connected on this phone, so the order couldn't be checked")
         }
         val report = try {
             withContext(Dispatchers.IO) { sync.run(sinceMs = null) }
@@ -74,8 +75,7 @@ class AutoBetRecovery(
         } catch (e: Exception) {
             val why = (e as? NovigApiException)?.advice ?: e.message ?: e.javaClass.simpleName
             lastNote = "couldn't read Novig's fills: $why"
-            giveUpNote(now, "Novig's fills can't be read ($why), so Vigilant can't tell whether the order for the halted bet went through.")
-            return false
+            return forceResume(now, halt, "Novig's fills couldn't be read ($why)")
         }
         if (report.added > 0) withContext(Dispatchers.IO) { runCatching { c.tracker.tagBids(c.makerStore.all().mapNotNullTo(HashSet()) { it.orderId }) } }
         // Cleared only if the halt is still the one we looked at (Tj may have resumed, or another order halted it, meanwhile).
@@ -90,25 +90,45 @@ class AutoBetRecovery(
         return true
     }
 
-    private fun giveUpNote(now: Long, problem: String) {
-        if (notified || now - seenAtMs < GIVE_UP_MS) return
-        notified = true
-        runCatching {
-            notify(
-                "Auto-bet is stopped",
-                "$problem Auto-bet places nothing until it can check, and Vigilant keeps trying every ${CHECK_MS / 1000} seconds: it starts again by itself the moment Novig answers. " +
-                    "If it does not, look at Novig for that bet, then Settings › Auto-bet › Resume auto-bet.",
-            )
+    /**
+     * Novig could not settle it within [FORCE_MS]: auto-bet starts again anyway, with the bet it was placing held back for [QUARANTINE_MS] ([AutoBettor.quarantine]) so it cannot be placed twice,
+     * and a notification says what to look at. A bet is only ever at risk of one stake more (the daily limit is read from the Tracker, which a late Sync fills in); stopping for good was the worse trade.
+     * True when it resumed.
+     */
+    private suspend fun forceResume(now: Long, halt: String, problem: String): Boolean {
+        if (now - seenAtMs < FORCE_MS) return false
+        val cleared = withContext(kotlinx.coroutines.NonCancellable) {
+            runCatching { c.settingsStore.update { if (it.autoBetHalted == halt) it.copy(autoBetHalted = null) else it } }.getOrNull()?.autoBetHalted == null
         }
+        if (!cleared) return false
+        val sel = AutoBettor.haltSelection(halt)
+        if (sel != null) c.autoBet.quarantine(sel, now + QUARANTINE_MS)
+        lastNote = "resumed at $now without confirming the order ($problem)"
+        runCatching { c.eventLog.info("AUTOBET", "auto-bet resumed by itself without confirming a lost order: $problem" + (sel?.let { "; '$it' is held back for ${QUARANTINE_MS / 60_000L} min" } ?: "")) }
+        if (!notified) {
+            notified = true
+            runCatching {
+                notify(
+                    "Auto-bet resumed",
+                    "Auto-bet started again by itself. " + (sel?.let { "One order for $it could not be confirmed ($problem): that bet is held back for ${QUARANTINE_MS / 3_600_000L} hours, look at Novig for it. " } ?: "") +
+                        "The Tracker's Sync with Novig's fills will add it if it filled.",
+                )
+            }
+        }
+        seenHalt = null
+        return true
     }
 
     companion object {
-        const val CHECK_MS = 5_000L
+        const val CHECK_MS = 3_000L
 
         /** An auto-bet order is over within seconds; the check waits this long after the halt first shows. */
-        const val SETTLE_MS = 30_000L
+        const val SETTLE_MS = 8_000L
 
-        /** After this long without a successful check the notification goes out (once). */
-        const val GIVE_UP_MS = 3 * 60_000L
+        /** After this long without a successful check auto-bet resumes anyway ([forceResume]). */
+        const val FORCE_MS = 60_000L
+
+        /** How long the bet of an unconfirmed order stays held back. */
+        const val QUARANTINE_MS = 2 * 3_600_000L
     }
 }

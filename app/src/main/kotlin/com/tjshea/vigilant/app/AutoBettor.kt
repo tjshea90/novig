@@ -137,6 +137,13 @@ class AutoBettor(
 
     /** An order of ours is being sent and followed right now ([AutoBetRecovery] leaves its halt alone until it is over). */
     @Volatile var sending = false
+
+    /** Bets (by selection text) held back after an order whose answer was never confirmed ([AutoBetRecovery.forceResume]): never placed twice. */
+    private val quarantined = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    fun quarantine(selection: String, untilMs: Long) { quarantined[selection.lowercase()] = untilMs }
+
+    private fun isQuarantined(text: String, now: Long): Boolean = quarantined.entries.any { (sel, until) -> until > now && text.lowercase().contains(sel) }
         private set
 
     /** The wallet-empty note went out and the wallet hasn't refilled since. */
@@ -192,6 +199,7 @@ class AutoBettor(
                 item.pick.live || startsAt == null || startsAt - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 item.live == null -> skip("no Novig price read in the last minute")
                 (cooldown[row.key] ?: 0L) > now -> skip("tried a moment ago")
+                isQuarantined(row.bet, now) -> skip("an earlier order for it was never confirmed")
                 else -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(injuries(), row, now, state.teams[row.key])?.let(::skip)
                     ?: AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet))?.let(::skip)
                     ?: AutoBet.starsReason(rules, item.check.rating?.stars)?.let(::skip)
@@ -353,6 +361,7 @@ class AutoBettor(
             when {
                 o.isLive || o.event.startsTs - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 (cooldown[o.key] ?: 0L) > now -> skip("tried a moment ago")
+                isQuarantined(o.selection, now) -> skip("an earlier order for it was never confirmed")
                 o.league.tennis -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection))?.let(::skip) ?: AutoBet.starsReason(rules, o.rating?.stars)?.let(::skip) ?: passing.add(o)
                 else -> vigilantReason(o, rules, settings, state, now)?.let(::skip) ?: passing.add(o)
             }
@@ -529,7 +538,7 @@ class AutoBettor(
             is PlaceResult.Unconfirmed -> {
                 // Nothing says whether it filled: never again until Tj has looked (Novig, then the Auto-bet tab › Resume).
                 // The words start so that [AutoBetRecovery] knows this halt is one it can check on its own.
-                withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = "$LOST_ORDER_PREFIX: ${result.message}") } } }
+                withContext(NonCancellable) { runCatching { c.settingsStore.update { it.copy(autoBetHalted = "$LOST_ORDER_PREFIX for ${target.selection}: ${result.message}") } } }
                 Sent.Stop("an order's answer was lost, so auto-bet is stopped: ${result.message}", halted = true)
             }
         }
@@ -788,6 +797,11 @@ class AutoBettor(
 
         /** Whether [halt] is the kind [AutoBetRecovery] checks and clears by itself: an order in flight when the app stopped, or one whose answer was lost. */
         fun isLostOrderHalt(halt: String): Boolean = halt.startsWith("Vigilant stopped while an order") || halt.startsWith(LOST_ORDER_PREFIX)
+
+        /** The bet a halt is about, from its words (null when it names none). */
+        fun haltSelection(halt: String): String? =
+            Regex("^Vigilant stopped while an order for (.+?) \\(\\$""").find(halt)?.groupValues?.get(1)
+                ?: Regex("""^$LOST_ORDER_PREFIX for (.+?): """).find(halt)?.groupValues?.get(1)
 
         /** What the saved halt says while an order may be on its way ([run]): a restart that finds it knows what to check. */
         fun inFlightNote(target: BetTarget, stake: Double): String =
