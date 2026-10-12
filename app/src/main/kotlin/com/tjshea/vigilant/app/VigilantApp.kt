@@ -495,7 +495,7 @@ class AppContainer(private val app: Application) {
     fun syncSgo(s: ScanSettings) {
         syncOp(s)
         // Novig's live feed: the best-bid channel and keeping the connection open follow their switches (a new connection gets them in [useConnection]).
-        novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush)
+        novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush); novig.stream?.configureCompression(s.gates.novigCompress)
         orderSocket?.let { sock -> sock.enabled = s.gates.novigSocketOrders; if (s.gates.novigSocketOrders) sock.warm() }
         // Switched off (or its key gone, or Live games only mode asleep): the sockets are closed at once, not left to idle out.
         if (!boltActive(s)) boltFeed.close()
@@ -1126,7 +1126,7 @@ class AppContainer(private val app: Application) {
         novig.stream?.close()
         novig.keyed = signer
         novig.stream = signer?.let { NovigStream(http, it, appScope) }
-        settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush) }
+        settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush); novig.stream?.configureCompression(s.gates.novigCompress) }
         val alias = connection?.tradingAlias
         val key = connection?.tradingKeyId
         val tradingSigner = if (alias != null && key != null && alias in KeystoreVault.aliases(NovigBettingSetup.TRADING_PREFIX)) NovigSignedClient(http, json, KeystoreSigningKey(alias, key)) else null

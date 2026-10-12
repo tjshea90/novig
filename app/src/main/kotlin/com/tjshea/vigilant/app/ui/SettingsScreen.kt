@@ -1174,6 +1174,12 @@ private fun ColumnScope.BettingTab(
                 "A bet is never sent twice: if Novig does not answer, the bet is looked up by its id rather than replayed, and the socket rests for ten minutes (Diagnostics says why). Off = every bet goes by web request, as before.",
             s.gates.novigSocketOrders, tag = "novigSocketOrdersSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(novigSocketOrders = v)) } }
+        SwitchRow(
+            "Compress the live feed",
+            "Asks Novig to send the live feed compressed. Your phone downloads about 640 KB a second from Novig, so a first snapshot of a thousand markets takes a second or more plain and a fraction of that compressed; " +
+                "prices and results arrive the same. It turns itself off if the feed can't be read compressed (Diagnostics says why). Off = plain text, as before. Takes effect when the feed next connects.",
+            s.gates.novigCompress, tag = "novigCompressSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(novigCompress = v)) } }
         if (s.cnoOn && onOpenAutoBet != null) {
             OutlinedButton(onClick = onOpenAutoBet, modifier = Modifier.padding(top = 8.dp).testTag("bettingOpenAutoBet")) { Text("Auto-bet has its own tab: open it") }
         }

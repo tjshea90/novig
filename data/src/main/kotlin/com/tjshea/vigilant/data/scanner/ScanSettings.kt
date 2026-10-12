@@ -1317,6 +1317,12 @@ data class ApiGates(
      * connection of its own, signed by the trading key, nothing to sign per order. Off = every order by REST. It also goes back to REST by itself, for a while, after any answer it cannot read.
      */
     val novigSocketOrders: Boolean = true,
+    /**
+     * Novig's live feed as raw-DEFLATE binary frames (`X-Novig-WS-Compress: deflate`, Tj, 2026-10-12: "If socket compression helps speed ... build that in"; NOVIG_API.md §27). A phone downloads about
+     * 640 KB a second from Novig (v0.91.0's diagnostics), so a first snapshot of a thousand markets is a second or more; compressed it is a fraction. Off = plain text frames, as before. It turns
+     * itself off for good (until switched off and on) if frames will not inflate.
+     */
+    val novigCompress: Boolean = true,
 )
 
 /**
