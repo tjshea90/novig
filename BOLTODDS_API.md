@@ -85,3 +85,9 @@ Code: `data/.../boltodds/` (tests: `BoltOddsTest`, `BoltOddsLiveTest`, app `Bolt
 6. Whether `timestamp` is the book's change time or BoltOdds' processing time, and how late a quote that has not changed is re-sent.
 
 Settings › BoltOdds › "Test and share sample" saves the answers of all of the above to Downloads/Vigilant (`vigilant-boltodds-sample-*.txt`); when Tj sends it, check `BoltParser`/`BoltConvert`/`BoltBooks`/`BoltMarkets` against it and correct this file.
+
+## 9. Sample #1 (Tj's v0.90.0 Test key, 2026-10-12) and v0.90.1
+
+Full table: `research/boltodds_sample_2026-10-12.md`. Facts the real key gave: 34 sportsbooks (no Pinnacle / Circa / bet365 / Bookmaker / SuperBook; exchanges prophetx, kalshi, polymarket, novig, "dk predictions", "fd predicts"); 78 sports, the preseason is "NBA Pre" / "NFL Pre"; a game's name ends in a 12-character id, `when` is Eastern time; `get_parlays` for draftkings: HTTP 403 "Not offering parlays for this sportsbook just yet"; `/playbyplay/user` and `/livescores/user` answer 200 `{"connections":0,"total_games":0,"games":[]}`; the snapshot of NBA (offseason names) was `[]`. **The odds WebSocket sent no frame in 15 s** and was not refused.
+
+v0.90.1 answers that without guessing which way the server is odd: binary frames are read (UTF-8, gzip, zlib), a connection that opened and said nothing for 4 s is subscribed anyway, any frame makes it live, and the Test (and Diagnostics) record the upgrade answer, frame kinds, the first raw frames and every close code. Test key v2 closes the app's own sockets, snapshots the sport with the most market names across up to 10 books (the Vigilant books plus the exchanges), keeps two raw games per book, and opens `/livescores` and `/playbyplay` with a two-game subscription to say whether those sockets are part of this key. When sample #2 arrives, read its "websocket probe", "websocket /livescores" and "snapshot" sections first.
