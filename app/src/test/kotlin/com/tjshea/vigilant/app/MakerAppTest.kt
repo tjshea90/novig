@@ -151,7 +151,7 @@ class MakerAppTest {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
         val r = runner(novig).run("test")!!
-        assertTrue("placed ${r.placed}", r.placed >= 2)
+        assertTrue("placed ${r.placed} " + r.decisions.filterIsInstance<com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Skip>().groupingBy { it.why.take(90) }.eachCount() + " posts=" + r.decisions.filterIsInstance<com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Post>().map { "${it.price}x${it.contracts}" }, r.placed >= 2)
         // Post-only, living only as long as their fair stays fresh: the sample's prices are 3 min old on games 50 h off (fresh 10 min) = 7 min.
         assertTrue(novig.placed.joinToString(), novig.placed.all { it.endsWith(" PO 420000") })
         // A taker fills the first bid.
