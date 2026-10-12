@@ -246,7 +246,7 @@ class AppContainer(private val app: Application) {
      * Novig's own books (Vigilant), or a sportsbook's posted odds out of the fair-odds feeds'
      * requests (Vigilant MGM: BetMGM, no request of its own; [SportsbookScanner]).
      */
-    val scanner: OddsScanner = if (AppBook.isNovig) Scanner(novig) else SportsbookScanner(AppBook.current)
+    val scanner: OddsScanner = if (AppBook.isNovig) Scanner(novig, deepExtra = ::bidMarkets) else SportsbookScanner(AppBook.current)
 
     /**
      * Lives as long as the process, not a screen: a scan Tj starts keeps going when he switches
@@ -490,6 +490,8 @@ class AppContainer(private val app: Application) {
     /** Follows Settings: the closes and scores read SportsGameOdds only while Pro is on. Safe to call on every settings change. */
     fun syncSgo(s: ScanSettings) {
         syncOp(s)
+        // Novig's live feed: the best-bid channel and keeping the connection open follow their switches (a new connection gets them in [useConnection]).
+        novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen)
         // Switched off (or its key gone, or Live games only mode asleep): the sockets are closed at once, not left to idle out.
         if (!boltActive(s)) boltFeed.close()
         val on = AppBook.isNovig && s.sgoPro
@@ -1119,6 +1121,7 @@ class AppContainer(private val app: Application) {
         novig.stream?.close()
         novig.keyed = signer
         novig.stream = signer?.let { NovigStream(http, it, appScope) }
+        settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen) }
         val alias = connection?.tradingAlias
         val key = connection?.tradingKeyId
         val client = if (alias != null && key != null && alias in KeystoreVault.aliases(NovigBettingSetup.TRADING_PREFIX)) {

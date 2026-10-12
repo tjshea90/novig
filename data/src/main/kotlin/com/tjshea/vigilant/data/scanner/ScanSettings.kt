@@ -1299,6 +1299,14 @@ data class ApiGates(
     val useBoltOdds: Boolean = false,
     /** BoltOdds: price the fair line with every sportsbook it lists (not only the picked ones). */
     val boltAllBooks: Boolean = false,
+    /**
+     * Novig's live feed on its best-bid channel (`bbo`; Tj, 2026-10-12, NOVIG_API.md §25): every market a scan screens is held as its best bid and size (half the tokens, a fraction of the messages), and the
+     * markets worth a bet, the live lane's and those with a bid of ours resting are held as the full book. Off = every market on the full `book` channel, exactly as before. The feed also puts itself back on
+     * `book` when Novig refuses `bbo`, never sends it, or the check against the book disagrees (Diagnostics says so); turning this off and on again tries `bbo` afresh.
+     */
+    val novigBbo: Boolean = true,
+    /** Keep the Novig live feed's connection open between scans and reconnect it by itself after a drop (off: it closes two minutes after a scan, as before). */
+    val novigKeepOpen: Boolean = true,
 )
 
 /**
