@@ -56,7 +56,7 @@ class BoltOddsTest {
         assertTrue(report[1], report[1].contains("ballybet") && report[1].contains("1 pushes"))
         // A snapshot item (initial) is not a live push.
         val snap = BoltBoard({ now })
-        snap.applyInitial(listOf(BoltParser.frame(docsGameUpdate, now).single() as BoltMessage.GameUpdate))
+        snap.applyInitial(listOf((BoltParser.frame(docsGameUpdate, now).single() as BoltMessage.GameUpdate).copy(initial = true)))
         assertEquals(listOf("no live push has arrived yet"), snap.lagReport())
     }
 
