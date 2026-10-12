@@ -116,10 +116,13 @@ class BurstUiTest {
         for (word in listOf("NovigTradingClient", "placeOrder", "cancelOrder", "orders/batch", "MakerDesk", "AutoBet", "/v3/orders")) {
             assertFalse("the burst recorder must not mention $word", code.contains(word))
         }
-        // And the container hands it the READ key's stream and a free echo, no trading client.
+        // And the container hands it the app's ONE stream (since v0.91.0 the burst recorder no longer opens a second connection on the key's `stream` bucket) and a free echo, no trading client.
+        // That stream is built from the READ key.
         val app = java.io.File("src/main/kotlin/com/tjshea/vigilant/app/VigilantApp.kt").readText()
         val block = app.substringAfter("val burst: com.tjshea.vigilant.data.novig.burst.BurstRecorder by lazy").substringBefore("/** Starts or stops the burst recorder")
-        assertTrue(block, block.contains("readKeyClient") && block.contains(".echo()"))
+        assertTrue(block, block.contains("SharedStreamView") && block.contains("novig.stream") && block.contains(".echo()"))
         assertFalse(block, block.contains("trading"))
+        val connection = app.substringAfter("fun useConnection(connection: NovigConnection?)").substringBefore("val alias = connection?.tradingAlias")
+        assertTrue(connection, connection.contains("val signer = connection?.let(::readKeyClient)") && connection.contains("NovigStream(http, it, appScope)"))
     }
 }
