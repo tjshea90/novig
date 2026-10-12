@@ -731,7 +731,8 @@ class ApiBettingController(
     private fun resultNote(r: PlaceResult, target: BetTarget): String = when (r) {
         is PlaceResult.NotFilled -> "Not filled on ${target.selection}: nobody was selling at that price (no money moved)"
         is PlaceResult.Refused -> "Not placed on ${target.selection}: ${r.reason}"
-        is PlaceResult.Unconfirmed -> "Check ${target.selection}: ${r.reason}"
+        is PlaceResult.Unconfirmed -> "Check ${target.selection}: ${r.message}"
+        is PlaceResult.Failed -> "Bet on ${target.selection} failed: ${r.message}"
         else -> "Bet on ${target.selection} didn't go through"
     }
 
