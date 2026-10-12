@@ -135,6 +135,13 @@ class BoltOddsStream(
     /** The first example of every `action` the socket sent (200 characters), for Test key and Diagnostics. */
     val examples = ConcurrentHashMap<String, String>()
 
+    /** One line for Diagnostics and Test key: how the upgrade was answered and what kinds of frames came (null before the first connection). */
+    fun connectionNotes(): String? {
+        if (connects == 0) return null
+        return "connection: ${openInfo ?: "not opened"} · frames text $textFrames, binary $binaryFrames, ${framesThisConn} on this connection" +
+            (if (greetingFallbacks > 0) " · subscribed without a greeting $greetingFallbacks time(s)" else "")
+    }
+
     /** Registers the filters this socket should hold and wakes it. Safe to call on every scan. */
     fun want(filters: BoltFilters) {
         lastUsedMs = clock()

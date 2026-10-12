@@ -140,6 +140,9 @@ class BoltOddsFeed(
     /** A socket of its own (Pro allows 3 at once; the lines and props sockets are 2) for Test key's listening probe: its own board, nothing shared. */
     fun probeStream(): BoltOddsStream = BoltOddsStream("probe", socketHttp, client, BoltBoard(clock), scope, socketWsUrl, clock)
 
+    /** Test key's look at a socket the app does not use (`/livescores`, `/playbyplay`): what the upgrade answered, the frames, the closes. */
+    suspend fun probeRaw(path: String, subscribe: String?, listenMs: Long): String = BoltRawProbe.run(socketHttp, client, socketWsUrl, path, subscribe, listenMs, clock = clock)
+
     /** Diagnostics (BOLTODDS_API.md §7): each socket's state and counters, the boards, what could not be mapped, the first message of every kind. */
     fun report(now: Long = clock()): List<String> = buildList {
         add("REST: ${client.health(now)}" + (client.lastError?.let { " · last error: $it" } ?: ""))
@@ -154,10 +157,12 @@ class BoltOddsFeed(
             )
             add("  snapshot: ${s.snapshots} read, last ${s.snapshotGames} games in ${s.snapshotMs} ms" + (s.snapshotError?.let { " · error: $it" } ?: ""))
             s.lastError?.let { add("  last error: $it") }
+            s.connectionNotes()?.let { add("  $it") }
             add("  board: ${b.games} games, ${b.outcomes} outcomes · books " + b.byBook.entries.sortedByDescending { it.value }.take(14).joinToString { "${it.key} ${it.value}" } + " · sports " + b.bySport.entries.joinToString { "${it.key} ${it.value}" })
             add("  messages: " + s.board.counts.entries.sortedByDescending { it.value }.joinToString { "${it.key} ${it.value}" }.ifEmpty { "none" })
             if (s.board.unmapped.isNotEmpty()) add("  names not priced (sport | name ×count): " + s.board.unmapped.entries.sortedByDescending { it.value }.take(25).joinToString("; ") { "${it.key} ×${it.value}" })
             s.examples.entries.sortedBy { it.key }.take(12).forEach { add("  first ${it.key}: ${client.redact(it.value)}") }
+            s.rawFrames.forEach { add("  raw frame: ${client.redact(it)}") }
         }
     }
 
