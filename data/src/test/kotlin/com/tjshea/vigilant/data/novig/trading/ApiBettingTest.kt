@@ -499,7 +499,7 @@ class ApiBettingTest {
     }
 
     @Test
-    fun `a pushed reject is never taken as the answer: the fills are read, and an order that filled nothing places no bet`() = runBlocking {
+    fun `a pushed reject is never taken as the answer, the fills are read, and an order that filled nothing places no bet`() = runBlocking {
         laggingNovig(Scenario(orderStatus = "REJECTED", fills = """{"items":[]}"""), pendingFor = 0)
         val e = com.tjshea.vigilant.data.novig.stream.OrderEvents { now }.also {
             it.apply(json.parseToJsonElement("""{"seq":5,"open":[]}""").jsonObject)
