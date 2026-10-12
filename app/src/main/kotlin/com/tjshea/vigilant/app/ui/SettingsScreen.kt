@@ -1168,6 +1168,12 @@ private fun ColumnScope.BettingTab(
                 "from Novig for the record. Off = the result is read by request, as before.",
             s.gates.novigOrderPush, tag = "novigOrderPushSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(novigOrderPush = v)) } }
+        SwitchRow(
+            "Orders over the socket",
+            "Sends an immediate-or-cancel bet to Novig over a live connection of its own (signed with the trading key) instead of a web request: no new handshake per bet, and the answer comes back on the same line. " +
+                "A bet is never sent twice: if Novig does not answer, the bet is looked up by its id rather than replayed, and the socket rests for ten minutes (Diagnostics says why). Off = every bet goes by web request, as before.",
+            s.gates.novigSocketOrders, tag = "novigSocketOrdersSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(novigSocketOrders = v)) } }
         if (s.cnoOn && onOpenAutoBet != null) {
             OutlinedButton(onClick = onOpenAutoBet, modifier = Modifier.padding(top = 8.dp).testTag("bettingOpenAutoBet")) { Text("Auto-bet has its own tab: open it") }
         }
