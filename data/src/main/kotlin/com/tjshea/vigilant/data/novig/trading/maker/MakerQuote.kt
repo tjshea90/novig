@@ -427,7 +427,8 @@ object MakerLines {
         val used = fair.booksUsed.toHashSet()
         return fair.perBook.asSequence()
             .filter { it.book.bookTitle in used && (!sharpOnly || it.isSharp) }
-            .distinctBy { it.book.bookKey }
+            // One book a company: the bid desk's "books agree" count and its sharp books are votes, and one trading desk is one vote (Tj, 2026-10-12).
+            .distinctBy { com.tjshea.vigilant.engine.BookCompany.of(it.book.bookKey) }
             .mapNotNull { b ->
                 val odds = b.book.decimalOdds
                 if (odds.size < 2 || !odds.all { it > 1.0 && it.isFinite() }) return@mapNotNull null

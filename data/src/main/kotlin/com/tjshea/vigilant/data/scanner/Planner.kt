@@ -267,7 +267,7 @@ object Planner {
         if (quotes.isEmpty()) return null
         val first = quotes.first().quotes
         val imbalance = if (first.size == 2) abs(1 / first[0].decimalOdds - 1 / first[1].decimalOdds) else 0.0
-        return LineStats(quotes.distinctBy { it.bookKey }.size, imbalance)
+        return LineStats(quotes.distinctBy { com.tjshea.vigilant.engine.BookCompany.of(it.bookKey) }.size, imbalance)
     }
 
     fun matchEvents(events: List<NovigEvent>, references: Map<String, RefSnapshot>): List<EventMatch> =

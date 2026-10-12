@@ -69,7 +69,7 @@ object AltLineScan {
                 q.kind == line.kind && Math.abs(q.threshold - line.threshold) < 1e-9 &&
                     (line.kind == LadderKind.TOTAL || (q.refSide.isNotEmpty() && q.refSide == sideOf(line.ref))) &&
                     q.yesDecimal > 1.0 && q.noDecimal > 1.0 && Freshness.fresh(q.seenAtMs, now, startsAtMs)
-            }.distinctBy { it.bookKey }
+            }.distinctBy { com.tjshea.vigilant.engine.BookCompany.of(it.bookKey) }
             if (matching.size < rules.minBooks) continue
             val fair = FairValue.compute(
                 matching.map { BookPrices(it.bookKey, it.bookTitle, listOf(it.yesDecimal, it.noDecimal), it.seenAtMs) },

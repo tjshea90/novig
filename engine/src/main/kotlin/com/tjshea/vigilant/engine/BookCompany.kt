@@ -11,15 +11,17 @@ package com.tjshea.vigilant.engine
  */
 object BookCompany {
 
-    /** Normalised book key -> company. Only books of one operator that quote from one desk are here; a joint venture (BetMGM) is its own company. */
+    /** Normalised book key -> company. Only books of one operator that quote from one desk are here; a joint venture that quotes its partner's line (BetMGM and Entain) is one desk. */
     private val PARENT: Map<String, String> = buildMap {
         fun group(company: String, vararg keys: String) = keys.forEach { put(it, company) }
         group("flutter", "fanduel", "fanduelyourway", "fdyw", "fd", "paddypower", "betfairsportsbook", "sportsbet", "skybet", "foxbet", "tombola", "sisal")
         group("draftkings", "draftkings", "dk", "dkpick6")
-        group("mgm", "betmgm", "mgm", "betmgmuk")
         group("caesars", "williamhillus", "caesars", "caesarssportsbook", "czr", "williamhillnevada")
         group("evoke", "williamhill", "888sport", "888", "mrgreen", "williamhilluk")
-        group("entain", "ladbrokes", "coral", "neds", "sportingbet", "bwin", "gamebookers", "gala", "eurobet")
+        // Entain's one trading desk (Tj, 2026-10-12, a screenshot: Dalton Kincaid Over 56.5, bwin / partysports / BetMGM / sportsinteraction all -120 / -111 with the same hold, "4 of 4 books agree"):
+        // Sports Interaction (Canada; Entain bought its owner Avid Gaming in 2022), Party Sports (Entain's Party brands, launched in Ontario with bwin in April 2022) and bwin are Entain's own; BetMGM is
+        // Entain's joint venture with MGM Resorts and quoted the same line. Sources: research/book_company_2026-10-12.md.
+        group("entain", "ladbrokes", "coral", "neds", "sportingbet", "bwin", "gamebookers", "gala", "eurobet", "sportsinteraction", "si", "partysports", "party", "betcity", "crystalbet", "supersport", "betmgm", "mgm", "betmgmuk")
         // Kambi's one trading desk (Tj, 2026-10-11, six "agreeing" books with identical odds: Bally Bet, betPARX, Casumo, Grosvenor, TABtouch, Unibet): these are DIFFERENT owners (Bally's, Greenwood/Parx, Casumo, Rank, RWWA, Kindred) who all
         // run Kambi's sportsbook, whose traders compile one line for them all, so they quote one line and are one opinion, not many (RESEARCH.md §46, §134). Sources: Kambi's and the operators' own announcements.
         // Rush Street's BetRivers/SugarHouse/RushBet, Greenwood's betPARX/Parx, Bally's Bally Bet, Kindred's Unibet/Maria/32Red, Casumo, Rank's Grosvenor/Enracha/YoSports, RWWA's TABtouch, LiveScore Bet / Virgin Bet,
