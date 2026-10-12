@@ -6629,3 +6629,15 @@ As you do this, do frequent checkpoints and ladder and save all progress and dat
 ```
 Ci done
 ```
+
+## 2026-10-12T05:24:06Z
+```
+I got a new api. It is boltodds pro.
+
+Set it up for the vigilant app. Integrate it just like all the other apis.
+
+https://boltodds.com/docs
+
+Research the docs at that address and set up vigilant to take full advantage of everything boltodds pro tier offers, including the web socket. Thoroughly study the docs to make sure the app is taking full advantage of the pro api and using all the correct commands and usage. Let me know if you need the key for testing. 
+Also look at novig docs to see if anything has changed or updated that needs to be updated in the app
+```
