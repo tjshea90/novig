@@ -60,7 +60,9 @@ object BidSlider {
     fun horizonHours(level: Int): Int = Levels.curve(level, listOf(1 to 12.0, 50 to 24.0, 100 to 48.0)).roundToInt()
 
     fun minBooks(level: Int): Int = when { level <= 15 -> 5; level <= 35 -> 4; level <= 60 -> 3; else -> 2 }
-    fun maxOdds(level: Int): Int = when { level <= 20 -> 120; level <= 40 -> 150; level <= 60 -> 200; level <= 80 -> 300; else -> 0 }
+    /** Never unlimited and never past [LONGEST_ODDS] (RESEARCH.md §8.1, §16.2, §69: buys under 20¢ lose to the favorite-longshot bias and a longshot's fair is the least reliable; the bids' own +140 was Tj's rule, 2026-10-05). */
+    const val LONGEST_ODDS = 200
+    fun maxOdds(level: Int): Int = when { level <= 20 -> 120; level <= 45 -> 140; level <= 60 -> 150; level <= 80 -> 175; else -> LONGEST_ODDS }
     fun ttlMinutes(level: Int): Int = when { level <= 25 -> 10; level <= 60 -> 30; level <= 85 -> 60; else -> 120 }
     fun stopMinutes(level: Int): Int = when { level <= 25 -> 30; level <= 60 -> 15; else -> 5 }
     fun kinds(level: Int): Set<BetKind> = when {
@@ -107,7 +109,7 @@ object BidSlider {
             "Each bid sits ${pct(margin(l))} under the fair price: its edge when it goes up (never under ${pct(MIN_MARGIN)}).",
             "${minBooks(l)}+ books must each say it is +EV; a sharp book that disagrees vetoes it" + (if (l <= 40) " and one must confirm it" else "") + ".",
             "Games up to ${horizonHours(l)} h away; each bid rests ${ttlMinutes(l)} min and stops ${stopMinutes(l)} min before the start.",
-            (if (maxOdds(l) > 0) "Never longer than +${maxOdds(l)}. " else "Any odds. ") + (if (kinds(l).size == 1) "Player props only." else if (kinds(l).size == 3) "Props, periods and team totals." else "Props, periods, team totals and game lines.") +
+            "Never longer than +${maxOdds(l)} (longshots lose to the favorite-longshot bias). " + (if (kinds(l).size == 1) "Player props only." else if (kinds(l).size == 3) "Props, periods and team totals." else "Props, periods, team totals and game lines.") +
                 (if (l >= 35) " Takes the likeliest-to-fill bids first" else "") + (if (l >= 65) " and fills leftover money with small markets." else "."),
             "Expect " + (if (l <= 20) "few fills, the best price each" else if (l <= 50) "a fair number of fills" else if (l <= 80) "many fills at a thinner edge" else "the most fills, each at a thin but positive edge") + ".",
         )
@@ -128,7 +130,9 @@ object BetSlider {
     fun vetoBar(level: Int): Double = Levels.curve(level, listOf(1 to 0.03, 50 to 0.01, 100 to 0.005))
     fun books(level: Int): Int = when { level <= 15 -> 5; level <= 35 -> 4; level <= 65 -> 3; else -> 2 }
     fun twoSided(level: Int): Int = if (level <= 70) 3 else 2
-    fun maxOdds(level: Int): Int = when { level <= 10 -> 110; level <= 30 -> 130; level <= 55 -> 150; level <= 80 -> 200; level <= 95 -> 300; else -> 0 }
+    /** Never unlimited and never past +150, the research's range (RESEARCH.md §8.1, §16.2, §65-§66, §69: favorite-longshot bias, thin books on longshots; the Strict preset's +130). Longer odds were +200 to +300 to unlimited before v0.89.32. */
+    const val LONGEST_ODDS = 150
+    fun maxOdds(level: Int): Int = when { level <= 10 -> 110; level <= 25 -> 120; level <= 45 -> 130; else -> LONGEST_ODDS }
     fun minOdds(level: Int): Int = when { level <= 15 -> -150; level <= 60 -> -200; level <= 85 -> -300; else -> 0 }
     fun favouriteExtra(level: Int): Double = Levels.curve(level, listOf(1 to 0.015, 100 to 0.005))
     fun horizonHours(level: Int): Int = Levels.curve(level, listOf(1 to 6.0, 50 to 8.0, 100 to 24.0)).roundToInt()
@@ -165,7 +169,7 @@ object BetSlider {
             (if (custom) "Custom rules (edited in Advanced), last slider position $l: ${name(l)}" else "${name(l)} · $l of 100"),
             "Bets only at ${String.format(java.util.Locale.US, "%.1f", minEv(l) * 100)}%+ edge at Novig's price now (favorites ${String.format(java.util.Locale.US, "%.1f", favouriteExtra(l) * 100)} points more); ${books(l)}+ books agree, ${twoSided(l)}+ price both sides" + (if (l <= 12) ", every one agreeing" else "") + ".",
             "A sharp book that gives it under ${String.format(java.util.Locale.US, "%.1f", vetoBar(l) * 100)}% vetoes it.",
-            (if (maxOdds(l) > 0) "Odds up to +${maxOdds(l)}" else "Any longer odds") + (if (minOdds(l) < 0) ", none shorter than ${minOdds(l)}" else "") + "; games up to ${horizonHours(l)} h away.",
+            "Odds up to +${maxOdds(l)}, never a longshot" + (if (minOdds(l) < 0) ", none shorter than ${minOdds(l)}" else "") + "; games up to ${horizonHours(l)} h away.",
             (if (kinds(l).size == 3) "Props, moneylines and spreads." else if (kinds(l).size == 5) "Plus team totals and period lines." else "Every kind of bet."),
             "Expect " + (if (l <= 20) "few bets, the best edge each" else if (l <= 50) "a steady number of bets" else if (l <= 80) "many bets at a thinner edge" else "the most bets, each at a thin but positive edge") + ". The minimum star rating is switched off while a level is set.",
         )

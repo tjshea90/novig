@@ -54,6 +54,13 @@ class LevelSlidersTest {
         a.forEach { assertTrue(it.autoBetMinEv >= BetSlider.MIN_EV - 1e-12 && it.autoBetBooks >= 2 && it.sharpVetoMinEv > 0.0 && it.autoBetMinStars == 0.0) }
     }
 
+    @Test fun `no level bets or bids a longshot - bets stop at +150, bids at +200`() {
+        for (l in levels) {
+            assertTrue(BetSlider.apply(ScanSettings(), l).autoBetMaxOdds in 1..150)
+            assertTrue(BidSlider.apply(ScanSettings(), l).makerMaxOdds in 1..200)
+        }
+    }
+
     @Test fun `a level matches itself, leaves the money alone, and reads custom after an edit`() {
         val base = ScanSettings(bankroll = 321.0, makerMaxDollars = 77.0, apiMaxStake = 9.0, makerMaxStake = 4.0, leagues = setOf("NBA"))
         for (l in listOf(1, 37, 100)) {
