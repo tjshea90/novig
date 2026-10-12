@@ -118,7 +118,7 @@ class EvMathTest {
 
     @Test
     fun `a Kelly stake keeps its whole size for a game up to 9 hours away, 60 percent to 13 hours and 40 percent beyond (the 2026-10-11 export's edge kept at the close)`() {
-        val even = EvQuote(fairProbability = 0.52, price = 0.50, fee = 0.0)   // full Kelly 4%: $25 at a quarter Kelly on $1,000
+        val even = EvQuote(fairProbability = 0.55, price = 0.50, fee = 0.0)   // full Kelly 10%: $25 at a quarter Kelly on $1,000
         assertEquals(1.0, EvMath.leadScale(null), 0.0)
         assertEquals(1.0, EvMath.leadScale(-0.5), 0.0)
         assertEquals(1.0, EvMath.leadScale(0.0), 0.0)
