@@ -33,3 +33,4 @@
 - 2026-10-11 (TAC): the six identical "agreeing" books (Bally Bet, betPARX, Casumo, Grosvenor, TABtouch, Unibet) all run Kambi's sportsbook: one desk, now one company in BookCompany (research/book_company_kambi_2026-10-11.md).
 - 2026-10-12: rapid NBA live betting is not +EV with Novig's ~5.3 s in-play order delay (RESEARCH §120.2 item 4, §125); alternatives = tail bettor + guarded live bids: research/live_rapid_nba_plausibility_2026-10-12.md
 - 2026-10-12 NOVIG v0.91.0 first evidence (Tj's diagnostics): bbo works, scans 115 s -> ~25 s, pushed orders work; stream allowance still shows the documented 512 / 4 a second (source unknown) and the canary timed out inconclusive. research/novig_v0.91.0_first_evidence_2026-10-12.md
+- 2026-10-12 v0.92.0 evidence: order socket 60 ms ack, compression 3.4x; reconnect regression fixed in v0.92.1 (research/novig_v0.92.0_evidence_2026-10-12.md)
