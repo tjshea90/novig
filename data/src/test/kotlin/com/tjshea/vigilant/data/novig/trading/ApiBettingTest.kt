@@ -938,4 +938,33 @@ class ApiBettingTest {
         val r = placer(t).placeAuto(target(), 1.0, autoLimits.copy(maxPerGame = 25.0), expectedPrice = 0.46)
         assertTrue(r.toString(), r is PlaceResult.Refused && r.gameLimit)
     }
+
+    /** Tj, 2026-10-12: "Explain what you mean by acting on market status. If it helps ... build that in too." Novig's feed knows a market's state as it changes; the catalog's is minutes old. */
+    @Test
+    fun `a market Novig's feed says is closed is refused at once, however open the catalog says it is`() {
+        val closed = book().copy(lifecycle = com.tjshea.vigilant.data.novig.stream.MarketLifecycle("CLOSED", "CLOSE", false, now))
+        assertEquals("OPEN", target().market.status)
+        assertTrue(refused(ApiBetPlanner.plan(target(), closed, 5.0, now, limits, 0.0)).startsWith("Novig has closed this market (its live feed says closed)"))
+        // by hand too: nothing can be placed on a closed market
+        assertTrue(refused(ApiBetPlanner.plan(target(), closed, 5.0, now, manual, 0.0)).startsWith("Novig has closed this market"))
+        // a market it calls OPEN, or has said nothing about, plans as before
+        ready(ApiBetPlanner.plan(target(), book().copy(lifecycle = com.tjshea.vigilant.data.novig.stream.MarketLifecycle("OPEN", null, null, now)), 5.0, now, limits, 0.0))
+        ready(ApiBetPlanner.plan(target(), book(), 5.0, now, limits, 0.0))
+    }
+
+    @Test
+    fun `a pregame market Novig's feed says has gone live is no auto-bet, and a bet by hand is priced with the live fee`() {
+        val wentLive = book().copy(lifecycle = com.tjshea.vigilant.data.novig.stream.MarketLifecycle("OPEN", "GOLIVE", true, now))
+        // the clock says the game is 6 hours away
+        val auto = refused(ApiBetPlanner.plan(target(), wentLive, 5.0, now, limits, 0.0))
+        assertTrue(auto, auto.startsWith("Novig has put this game in play"))
+        // by hand: allowed, and the fee is the live one (the same bet costs more than it did pregame)
+        val pre = ready(ApiBetPlanner.plan(target(), book(), 5.0, now, manual, 0.0))
+        val live = ready(ApiBetPlanner.plan(target(), wentLive, 5.0, now, manual, 0.0))
+        assertTrue(live.live)
+        assertFalse(pre.live)
+        assertTrue("the live fee lowers the EV: ${live.evPercent} vs ${pre.evPercent}", live.evPercent < pre.evPercent)
+        // UNLIVE puts it back to pregame
+        ready(ApiBetPlanner.plan(target(), book().copy(lifecycle = com.tjshea.vigilant.data.novig.stream.MarketLifecycle("OPEN", "UNLIVE", false, now)), 5.0, now, limits, 0.0))
+    }
 }

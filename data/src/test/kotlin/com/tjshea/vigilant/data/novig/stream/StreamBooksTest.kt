@@ -206,4 +206,17 @@ class StreamBooksTest {
         b.clear()
         assertNull(b.lifecycle("n"))
     }
+
+    @Test
+    fun `a book carries what the lifecycle channel last said, bbo or book`() {
+        val b = StreamBooks { 9 }
+        b.applyBboSnapshot("m", obj("""{"seq":20,"bbo":{"A":{"price":"0.7","qty":2}}}"""))
+        assertNull(b.book("m")!!.lifecycle)
+        b.applyLifecycleSnapshot("m", obj("""{"seq":12,"status":"OPEN"}"""))
+        assertTrue(b.book("m")!!.lifecycle!!.open)
+        assertTrue(b.applyLifecycleDelta("m", obj("""{"seq":13,"deltas":["GOLIVE"]}""")))
+        assertEquals(true, b.book("m")!!.lifecycle!!.live)
+        b.applySnapshot("m", obj("""{"seq":1,"orders":{"A":[{"order":"x","price":"0.5","qty":1}]}}"""))
+        assertEquals("a full book carries it too", true, b.book("m")!!.lifecycle!!.live)
+    }
 }
