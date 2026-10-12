@@ -76,8 +76,73 @@ class NovigLiveCheck(
 
         onStep("Trying the live feed (up to ${waitMs / 1000} s)…")
         lines += liveFeed(ids)
+
+        onStep("Trying the best-bid feed (bbo)…")
+        lines += bboFeed(ids)
         return lines
     }
+
+    /**
+     * The best-bid channel on a feed of its own (NOVIG_API.md §25), the only real test of it there is: the markets arrive as best bids, the feed compares a few of them with their `book`
+     * (its own check, run once a connection), and a complete book is asked for to see the ladder come. Says plainly whether `bbo` is in use or the feed gave it up, and why.
+     */
+    private suspend fun bboFeed(ids: List<String>): String {
+        val pushed = try {
+            feed(signer)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return "Best-bid feed (bbo): couldn't start (${e.message ?: e.javaClass.simpleName})."
+        }
+        val t0 = clock()
+        try {
+            pushed.configureFeed(bbo = true, keepOpen = false)
+            pushed.watch(ids)
+            var top = 0
+            var firstAt: Long? = null
+            var problem: String? = null
+            while (clock() - t0 < waitMs) {
+                top = pushed.liveTop(ids).size
+                if (top > 0 && firstAt == null) firstAt = clock() - t0
+                if (top >= ids.size) break
+                problem = pushed.problemSince(t0)
+                if (problem != null) break
+                delay(POLL_MS)
+            }
+            if (top == 0) {
+                return "Best-bid feed (bbo): no market arrived in ${seconds(clock() - t0)}." + (problem?.let { " Novig's side of it: $it" } ?: "")
+            }
+            val partial = pushed.liveTop(ids).values.count { it.partial }
+            // The feed's own check against the book runs once the first snapshots are in; give it its time (a feed with no report has no such check).
+            var report = pushed.feedReport()
+            val checkUntil = clock() + CHECK_WAIT_MS
+            while (report.isNotEmpty() && clock() < checkUntil && !checked(report)) {
+                delay(POLL_MS)
+                report = pushed.feedReport()
+            }
+            val canary = report.firstOrNull { it.startsWith("canary:") }?.removePrefix("canary: ")
+            val mode = when {
+                report.isEmpty() -> "this connection has no best-bid channel"
+                report.first().contains("given up") -> "GIVEN UP, back on the full book: " + report.first().substringAfter("given up").substringAfter(" ago, ", report.first())
+                partial > 0 -> "in use ($partial of $top markets held as best bids)"
+                else -> "not in use (the full book)"
+            }
+            // A complete book of each market, asked for as the bet sheet and the scan do: it moves them to the full book.
+            val td = clock()
+            var complete = pushed.live(ids).size
+            while (complete < ids.size && clock() - td < DEEPEN_WAIT_MS) {
+                delay(POLL_MS)
+                complete = pushed.live(ids).size
+            }
+            "Best-bid feed (bbo): $top of ${ids.size} markets after ${seconds(firstAt ?: (clock() - t0))}, $mode" +
+                (canary?.let { "; check against the book: $it" } ?: "") + "; complete books asked for: $complete of ${ids.size} in ${seconds(clock() - td)}."
+        } finally {
+            pushed.close()
+        }
+    }
+
+    private fun checked(report: List<String>): Boolean =
+        report.first().contains("given up") || report.firstOrNull { it.startsWith("canary:") }?.let { !it.contains("not run yet") } == true
 
     private suspend fun liveFeed(ids: List<String>): String {
         val pushed = try {
@@ -149,5 +214,7 @@ class NovigLiveCheck(
         /** Few enough (10 x 16 = 160 of the 512 `stream` tokens) that a scan running on the same key isn't kept waiting long for a full bucket. */
         const val WATCH_COUNT = 10
         private const val POLL_MS = 250L
+        private const val CHECK_WAIT_MS = 14_000L
+        private const val DEEPEN_WAIT_MS = 5_000L
     }
 }

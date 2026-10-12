@@ -82,10 +82,11 @@ class NovigLiveCheckTest {
         assertTrue(lines[1], lines[1].startsWith("Signed catalog: 3 open markets in "))
         assertTrue(lines[2], lines[2].startsWith("Books: 2 through the key ") && lines[2].contains("2 public "))
         assertTrue(lines[3], lines[3].startsWith("Live feed: first books after ") && lines[3].contains("3 of 3 after "))
-        assertEquals(4, lines.size)
+        assertTrue(lines[4], lines[4].startsWith("Best-bid feed (bbo): 3 of 3 markets after ") && lines[4].contains("this connection has no best-bid channel"))
+        assertEquals(5, lines.size)
         assertEquals(listOf("m1", "m2", "m3"), feed.wanted)
         assertTrue("the feed is closed again", feed.closed)
-        assertEquals(4, steps.size)
+        assertEquals(5, steps.size)
         // The signed reads are signed; the public ones aren't asked for through the key.
         assertTrue(asked.any { it == "/v3/catalog/markets/m1/book" } && asked.any { it == "/v3/public/catalog/markets/m1/book" })
         assertTrue(asked.any { it.startsWith("/v3/catalog/markets?eventStatus=OPEN_PREGAME&limit=3&marketType=MONEY") })
@@ -111,5 +112,46 @@ class NovigLiveCheckTest {
         val empty = NovigLiveCheck(OkHttpClient(), json, signer(), feed = { FakeFeed(0) }, publicBaseUrl = base(), waitMs = 500, samples = 2, watchCount = 3).run()
         assertEquals(2, empty.size)
         assertTrue(empty.last(), empty.last().contains("no open game is listed"))
+    }
+
+    /** A feed with a best-bid channel: partial books at first, the complete ones once they are asked for; [report] is what Diagnostics would say. */
+    private class BboFeed(val report: List<String>, val partial: Boolean = true) : PushedBooks {
+        var wanted: List<String> = emptyList()
+        var asked = false
+        var closed = false
+        var configured: Pair<Boolean, Boolean>? = null
+        override fun watch(marketIds: Collection<String>) { wanted = marketIds.toList() }
+        override fun configureFeed(bbo: Boolean, keepOpen: Boolean) { configured = bbo to keepOpen }
+        override fun liveTop(marketIds: Collection<String>): Map<String, NovigBook> =
+            marketIds.associateWith { NovigBook(it, 1, mapOf("a" to listOf(BidLevel(500, 100))), 0, partial = partial && !asked) }
+        override fun live(marketIds: Collection<String>): Map<String, NovigBook> {
+            asked = true
+            return marketIds.associateWith { NovigBook(it, 1, mapOf("a" to listOf(BidLevel(500, 100), BidLevel(490, 50))), 0) }
+        }
+        override fun feedReport(): List<String> = report
+        override fun problemSince(sinceMs: Long): String? = null
+        override fun close() { closed = true }
+    }
+
+    @Test
+    fun `the best-bid check says it is in use, what the feed's own comparison with the book found, and that the complete books followed`() = runBlocking {
+        novig()
+        val feed = BboFeed(listOf("feed: best-bid feed (bbo) for screening, full book where depth is needed", "canary: 2 s ago: 3 of 3 markets' best bids matched the book"))
+        val lines = NovigLiveCheck(OkHttpClient(), json, signer(), feed = { feed }, publicBaseUrl = base(), waitMs = 3_000, samples = 2, watchCount = 3).run()
+        val bbo = lines.last()
+        assertTrue(bbo, bbo.startsWith("Best-bid feed (bbo): 3 of 3 markets after "))
+        assertTrue(bbo, bbo.contains("in use (3 of 3 markets held as best bids)"))
+        assertTrue(bbo, bbo.contains("check against the book: 2 s ago: 3 of 3 markets' best bids matched the book"))
+        assertTrue(bbo, bbo.contains("complete books asked for: 3 of 3"))
+        assertEquals(true to false, feed.configured)
+        assertTrue(feed.closed)
+    }
+
+    @Test
+    fun `the best-bid check names a feed that gave bbo up, and why`() = runBlocking {
+        novig()
+        val feed = BboFeed(listOf("feed: full book on every market: the best-bid feed was given up 4 s ago, the best-bid feed disagreed with the book (1 of 3 markets' best bids matched)", "canary: 3 s ago: 1 of 3 markets' best bids matched the book"), partial = false)
+        val bbo = NovigLiveCheck(OkHttpClient(), json, signer(), feed = { feed }, publicBaseUrl = base(), waitMs = 3_000, samples = 2, watchCount = 3).run().last()
+        assertTrue(bbo, bbo.contains("GIVEN UP, back on the full book: the best-bid feed disagreed with the book"))
     }
 }
