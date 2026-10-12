@@ -1148,6 +1148,20 @@ private fun ColumnScope.BettingTab(
                 ChoiceChips(listOf(10.0, 15.0, 30.0, 60.0, 120.0), s.guards.bidGuardMinutes.toDouble(), { "${it.toInt()} min" }) { v -> onUpdate { it.copy(guards = it.guards.copy(bidGuardMinutes = v.toInt())) } }
             }
         }
+        // Novig's live feed (Tj, 2026-10-12: "Build the novig bbo feature with a backup to default toggle in case it doesn't work right"; NOVIG_API.md §25).
+        SectionTitle("Novig live feed")
+        SwitchRow(
+            "Best-bid feed (bbo)",
+            "Screens prices on each market's best bid alone (half the stream allowance, a fraction of the updates, fast on a phone) and holds the full order book only where depth matters: bets worth making, " +
+                "live games and your resting bids. Off = the full order book for every market, as before. It puts itself back on the full book if Novig refuses it or it disagrees with the book " +
+                "(Diagnostics says which); turn it off and on to try it again.",
+            s.gates.novigBbo, tag = "novigBboSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(novigBbo = v)) } }
+        SwitchRow(
+            "Keep the Novig live feed open",
+            "Holds the connection between scans and reconnects it by itself after a drop, so a scan finds its prices already pushed. Off = the connection closes two minutes after a scan.",
+            s.gates.novigKeepOpen, tag = "novigKeepOpenSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(novigKeepOpen = v)) } }
         if (s.cnoOn && onOpenAutoBet != null) {
             OutlinedButton(onClick = onOpenAutoBet, modifier = Modifier.padding(top = 8.dp).testTag("bettingOpenAutoBet")) { Text("Auto-bet has its own tab: open it") }
         }

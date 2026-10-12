@@ -132,6 +132,8 @@ object SettingsIndex {
         Entry("The Odds API", SettingsPage.ODDS_API, "Sportsbook lines and props: the switch, its keys and how long its lines are re-used", "odds api the-odds-api key keys credits reuse", novig),
         // Betting & Novig account
         Entry("Novig API key", SettingsPage.BETTING, "Connect Novig to bet from Vigilant", "key connect account api", novig),
+        Entry("Best-bid feed (bbo)", SettingsPage.BETTING, "Novig's live feed on its best-bid channel for screening, the full book where depth matters; off = the full book everywhere, as before", "novig bbo best bid live feed websocket stream book fallback toggle", novig),
+        Entry("Keep the Novig live feed open", SettingsPage.BETTING, "Keeps the connection open between scans and reconnects it by itself", "novig live feed websocket stream connection keep open reconnect", novig),
         Entry("Bankroll", SettingsPage.BETTING, "The money you set aside for betting", "bankroll money"),
         Entry("Kelly fraction for suggested stakes", SettingsPage.BETTING, "How big suggested stakes are for a given edge", "kelly stake size"),
         Entry("Most for one bet you place", SettingsPage.BETTING, "The most one bet may stake (your own bets and auto-bets)", "limit max stake per bet", novig),
