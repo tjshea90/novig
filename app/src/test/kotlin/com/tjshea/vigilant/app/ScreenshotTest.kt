@@ -192,13 +192,19 @@ class ScreenshotTest {
     }
 
     @Test fun settingsTakePinnWireAndPropLineKeys() {
-        screen { SettingsScreen(SampleScan.state().copy(pinnwireKeys = emptyList(), proplineKeys = emptyList()), {}) }
-        openSettingsTab(SettingsPage.FAIR)
+        // The keys moved from Fair odds to the APIs' own pages (v0.89.35): Pinnacle's and PropLine's, each a page of APIs & keys; Fair odds keeps the sportsbooks.
+        val page = androidx.compose.runtime.mutableStateOf<SettingsPage?>(SettingsPage.PINNACLE)
+        screen { SettingsScreen(SampleScan.state().copy(pinnwireKeys = emptyList(), proplineKeys = emptyList()), {}, page = page.value, onPage = { page.value = it }) }
         compose.onNodeWithText("PinnWire keys (game lines and player props)").assertExists()
         compose.onNodeWithText("Add a PinnWire key").assertExists()
+        page.value = SettingsPage.PROPLINE
+        compose.waitForIdle()
         compose.onNodeWithText("Free key at prop-line.com", substring = true).assertExists()
         compose.onNodeWithText("Add a PropLine key").assertExists()
+        page.value = SettingsPage.FAIR
+        compose.waitForIdle()
         compose.onNodeWithText("SPORTSBOOKS FOR FAIR ODDS", substring = true).assertExists()
+        compose.onAllNodesWithText("Add a PinnWire key").assertCountEquals(0)
     }
 
     @Config(qualifiers = "w393dp-h1300dp-xxhdpi")
@@ -956,8 +962,8 @@ class ScreenshotTest {
         screen { SettingsScreen(SampleScan.state(), {}) }
         openSettingsTab(SettingsPage.FAIR)
         compose.onNodeWithText("Fair odds method", ignoreCase = true).assertExists()
-        openSettingsTab(SettingsPage.USAGE)
-        compose.onNodeWithText("API usage", ignoreCase = true).assertExists()
+        openSettingsTab(SettingsPage.APIS)
+        compose.onNodeWithText("How much is left on each key", ignoreCase = true).assertExists()
         openSettingsTab(SettingsPage.CNO)
         compose.onNodeWithText("What the list shows", ignoreCase = true).assertExists()
     }
@@ -1454,9 +1460,12 @@ class ScreenshotTest {
     /** RESEARCH.md §23: with a PropLine key, The Odds API says it only backs PropLine up, and what that costs. */
     @Config(qualifiers = "w393dp-h7400dp-xxhdpi")
     @Test fun settingsSayTheOddsApiBacksUpPropLine() {
-        screen { SettingsScreen(SampleScan.state(), { }, page = SettingsPage.FAIR) }
+        val page = androidx.compose.runtime.mutableStateOf<SettingsPage?>(SettingsPage.ODDS_API)
+        screen { SettingsScreen(SampleScan.state(), { }, page = page.value, onPage = { page.value = it }) }
         compose.onNodeWithText("Backup to PropLine", substring = true).assertExists()
         compose.onNodeWithText("Nothing while PropLine answers", substring = true).assertExists()
+        page.value = SettingsPage.FAIR
+        compose.waitForIdle()
         compose.onNodeWithText("Read from PropLine first", substring = true).assertExists()
     }
 
