@@ -6590,3 +6590,8 @@ For the auto bid and auto bet, consider whether it is wise to bet longshots of +
 ```
 Does Kelly betting bet less on longer odds? If not, make the app cap at +175 maximum long odds on the slider and gradually work up to that number
 ```
+
+## 2026-10-12T00:57:31Z
+```
+For the auto bet slider, under it put the ratings filter (1 to 5 stars) that already exists in the settings. When I choose the minimum bet from 1 to 5 stars, it ignores the slider completely and bets all bets that have at least a minimum of that many stars, with the strict exceptions already built into this setting. Make sure I can also turn it off and return to the slider
+```
