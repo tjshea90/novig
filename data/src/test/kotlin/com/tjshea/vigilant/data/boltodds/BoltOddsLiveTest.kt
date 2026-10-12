@@ -339,6 +339,17 @@ class BoltOddsLiveTest {
         s.close()
     }
 
+    @Test fun `a refusal that says wait minutes is not asked again within seconds`() = runBlocking {
+        val s = stream(client())
+        s.want(filters)
+        until { s.live && received.any { it["action"]?.jsonPrimitive?.content == "subscribe" } }
+        val before = received.count { it["action"]?.jsonPrimitive?.content == "subscribe" }
+        serverSockets.last().send("""{"action": "error", "message": "Re-subscription rate limit hit. Please wait 5 minutes before re-subscribing."}""")
+        kotlinx.coroutines.delay(1_500)
+        assertEquals(before, received.count { it["action"]?.jsonPrimitive?.content == "subscribe" })
+        s.close()
+    }
+
     @Test fun `a book_clear empties that book and the snapshot is read again after the gap`() = runBlocking {
         snapshotBody = "[" + game("draftkings") + "," + game("fanduel") + "]"
         val s = stream(client())
