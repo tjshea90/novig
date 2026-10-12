@@ -99,6 +99,15 @@ class BoltOddsStream(
     @Volatile var frames = 0L
         private set
 
+    /** Frames that were a JSON array of messages, and the biggest frame (characters): what the docs leave open (BOLTODDS_API.md §8). */
+    @Volatile var arrayFrames = 0L
+        private set
+    @Volatile var biggestFrame = 0
+        private set
+
+    /** When the first [MAX_PINGS] `ping` messages arrived (ms): the keep-alive interval, for Test key. */
+    val pings = java.util.concurrent.CopyOnWriteArrayList<Long>()
+
     /** The first example of every `action` the socket sent (200 characters), for Test key and Diagnostics. */
     val examples = ConcurrentHashMap<String, String>()
 
@@ -279,6 +288,8 @@ class BoltOddsStream(
         val now = clock()
         lastFrameMs = now
         frames++
+        if (text.trimStart().startsWith("[")) arrayFrames++
+        if (text.length > biggestFrame) biggestFrame = text.length
         for (m in BoltParser.frame(text, now)) {
             when (m) {
                 is BoltMessage.SocketConnected -> {
@@ -299,7 +310,7 @@ class BoltOddsStream(
                     }
                 }
                 is BoltMessage.SubscriptionUpdated -> examples.putIfAbsent("subscription_updated", text.take(200))
-                is BoltMessage.Ping -> examples.putIfAbsent("ping", text.take(200))
+                is BoltMessage.Ping -> { examples.putIfAbsent("ping", text.take(200)); if (pings.size < MAX_PINGS) pings += now; board.apply(m) }
                 is BoltMessage.SportClear, is BoltMessage.BookClear -> { needSnapshot = true; board.apply(m); examples.putIfAbsent(if (m is BoltMessage.SportClear) "sport_clear" else "book_clear", text.take(200)) }
                 is BoltMessage.Unknown -> { examples.putIfAbsent("other:" + m.action.take(40), text.take(200)); board.apply(m) }
                 is BoltMessage.GameUpdate -> { examples.putIfAbsent("game_update", text.take(200)); board.apply(m) }
@@ -333,6 +344,7 @@ class BoltOddsStream(
         const val DEFAULT_WS_URL = "wss://spro.agency/api"
         const val MAX_SNAPSHOT_MARKETS = 60
         const val CONNECT_TIMEOUT_MS = 30_000L
+        const val MAX_PINGS = 20
 
         /** The OkHttp client for a socket: it pings every 20 s and drops a connection that does not answer. */
         fun socketClient(base: OkHttpClient): OkHttpClient = base.newBuilder().pingInterval(20, TimeUnit.SECONDS).readTimeout(0, TimeUnit.MILLISECONDS).build()

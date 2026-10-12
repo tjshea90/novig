@@ -135,6 +135,11 @@ class BoltOddsFeed(
         return BoltConvert.events(stream.board.gamesOf(sports), ctx)
     }
 
+    private val socketWsUrl = wsUrl
+
+    /** A socket of its own (Pro allows 3 at once; the lines and props sockets are 2) for Test key's listening probe: its own board, nothing shared. */
+    fun probeStream(): BoltOddsStream = BoltOddsStream("probe", socketHttp, client, BoltBoard(clock), scope, socketWsUrl, clock)
+
     /** Both sockets down and idle (the switch went off, or the app is closing). */
     fun close() {
         lines.close()
