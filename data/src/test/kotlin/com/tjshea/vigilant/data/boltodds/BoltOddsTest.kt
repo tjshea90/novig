@@ -345,7 +345,7 @@ class BoltOddsTest {
         val b = BoltBoard { now }
         fullBook(b)
         apply(b, update("game_update", "fanduel", game, moneyline("+125", "-145"), home = "New York Knicks", away = "Boston Celtics"))
-        // in fanduel's view the Knicks are home: the "Knicks" outcome is +125?? no: the labels name the TEAM, so Boston's price is the one marked Boston (+125 here), whichever side the book calls home
+        // In FanDuel's own message the Knicks are home and Boston is away; its outcomes name the TEAM, so Boston's price is +125 whichever side the book calls home.
         val ev = BoltConvert.events(b.gamesOf(listOf("NBA")), ctx()).single()
         val fd = ev.markets.single { it.bookKey == "fanduel" && it.kind == LineKind.MONEYLINE }
         assertEquals("Boston Celtics stays home in the event's orientation", 2.25, fd.quotes.single { it.side == Side.HOME }.decimalOdds, 1e-9)
