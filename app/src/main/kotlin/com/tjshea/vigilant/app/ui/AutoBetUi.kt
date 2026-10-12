@@ -290,10 +290,30 @@ fun AutoBetSection(
     LevelSliderCard(
         tag = "betLevel", title = "Auto-bet level",
         hint = "1 is the strictest: fewest bets, biggest edge, safest. 100 is the most bets at a thin but still positive edge. The slider sets every bet rule for you.",
+        enabled = s.autoBetMinStars <= 0.0,
         level = betLevel, custom = betCustom, name = com.tjshea.vigilant.data.scanner.BetSlider::name, stops = com.tjshea.vigilant.data.scanner.BetSlider.STOPS,
         describe = com.tjshea.vigilant.data.scanner.BetSlider.describe(if (betLevel in 1..100) betLevel else 55, betCustom),
     ) { v -> onUpdate { com.tjshea.vigilant.data.scanner.BetSlider.apply(it, v) } }
     Text("Amount per bet: ${s.autoBetStake.label} (Advanced settings › How much). Your dollar limits are never changed by the slider.", style = MaterialTheme.typography.bodySmall, color = subtle, modifier = Modifier.padding(top = 4.dp))
+    // The least a bet's star rating may be (Tj, 2026-10-11).
+    Text("Smallest star rating", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
+    Chips(ScanSettings.AUTO_BET_STARS_CHOICES, s.autoBetMinStars, { if (it <= 0.0) "Any" else BetRating.label(it) + "★" }, modifier = Modifier.testTag("autoBetStarsChips")) { v ->
+        onUpdate { it.copy(vigGuards = it.vigGuards.copy(autoBetMinStars = v)) }
+    }
+    Text(
+        "Every bet is rated 1 to 5 stars on how much to trust its edge: how many companies price both sides, how many agree it is +EV, the size of the edge, whether a sharp book agrees and how tightly the books' fair odds sit together. " +
+            "A bet under +2% EV is rated 3★ at most. Pick 3½★ and only bets rated 3½ or better are placed (CrazyNinjaOdds', Vigilant's and tennis bets alike).",
+        style = MaterialTheme.typography.bodySmall, color = subtle,
+    )
+    // While a minimum is picked the rating alone chooses the bets (Tj, 2026-10-11): say so beside the filters it switches off.
+    if (s.autoBetMinStars > 0.0) {
+        Text(
+            "A minimum rating is ON: every bet rated ${BetRating.label(s.autoBetMinStars)}★ or better is bet, and the filters below (smallest edge, favorites' extra edge, longest and shortest odds, kinds of bet, books that must agree, " +
+                "the sharp rule, the trap guard and the small-prop guard) are NOT applied. What always applies: ${AutoBet.starsKept}. Pick Any to enforce all of the filters again (and the slider above).",
+            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStarsOverride"),
+        )
+    }
+
     var advanced by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     TextButton(onClick = { advanced = !advanced }, modifier = Modifier.testTag("autoBetAdvanced")) { Text(if (advanced) "Hide advanced settings" else "Advanced settings") }
     if (advanced) {
@@ -366,25 +386,6 @@ fun AutoBetSection(
         "Bets from Vigilant's scan are placed only when they pass every rule here: the edge, odds, kinds, stake, the books-agree counts below and the sharp rule (all of them except while a minimum star rating is picked below: then the rating alone decides). Pregame only, one bet per market.",
         style = MaterialTheme.typography.bodySmall, color = subtle,
     )
-
-    // The least a bet's star rating may be (Tj, 2026-10-11).
-    Text("Smallest star rating", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    Chips(ScanSettings.AUTO_BET_STARS_CHOICES, s.autoBetMinStars, { if (it <= 0.0) "Any" else BetRating.label(it) + "★" }, modifier = Modifier.testTag("autoBetStarsChips")) { v ->
-        onUpdate { it.copy(vigGuards = it.vigGuards.copy(autoBetMinStars = v)) }
-    }
-    Text(
-        "Every bet is rated 1 to 5 stars on how much to trust its edge: how many companies price both sides, how many agree it is +EV, the size of the edge, whether a sharp book agrees and how tightly the books' fair odds sit together. " +
-            "A bet under +2% EV is rated 3★ at most. Pick 3½★ and only bets rated 3½ or better are placed (CrazyNinjaOdds', Vigilant's and tennis bets alike).",
-        style = MaterialTheme.typography.bodySmall, color = subtle,
-    )
-    // While a minimum is picked the rating alone chooses the bets (Tj, 2026-10-11): say so beside the filters it switches off.
-    if (s.autoBetMinStars > 0.0) {
-        Text(
-            "A minimum rating is ON: every bet rated ${BetRating.label(s.autoBetMinStars)}★ or better is bet, and the filters below (smallest edge, favorites' extra edge, longest and shortest odds, kinds of bet, books that must agree, " +
-                "the sharp rule, the trap guard and the small-prop guard) are NOT applied. What always applies: ${AutoBet.starsKept}. Pick Any to enforce all of the filters again.",
-            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(top = 4.dp).testTag("autoBetStarsOverride"),
-        )
-    }
 
     Text("Books that must price both sides", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
     Chips(ScanSettings.AUTO_BET_TWO_SIDED_CHOICES, s.autoBetTwoSided, { "$it" }, modifier = Modifier.testTag("autoBetTwoSidedChips")) { v -> onUpdate { it.copy(autoBetTwoSided = v) } }

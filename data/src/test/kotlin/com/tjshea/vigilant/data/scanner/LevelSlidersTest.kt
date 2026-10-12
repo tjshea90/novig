@@ -51,13 +51,20 @@ class LevelSlidersTest {
             assertTrue((y.autoBetMinOdds == 0) || (x.autoBetMinOdds != 0 && y.autoBetMinOdds <= x.autoBetMinOdds))
             assertTrue(y.autoBetFavouriteExtraEv <= x.autoBetFavouriteExtraEv + 1e-12)
         }
-        a.forEach { assertTrue(it.autoBetMinEv >= BetSlider.MIN_EV - 1e-12 && it.autoBetBooks >= 2 && it.sharpVetoMinEv > 0.0 && it.autoBetMinStars == 0.0) }
+        a.forEach { assertTrue(it.autoBetMinEv >= BetSlider.MIN_EV - 1e-12 && it.autoBetBooks >= 2 && it.sharpVetoMinEv > 0.0) }
     }
 
     @Test fun `no level bets or bids a longshot - bets stop at +150, bids at +200`() {
         for (l in levels) {
             assertTrue(BetSlider.apply(ScanSettings(), l).autoBetMaxOdds in 1..150)
             assertTrue(BidSlider.apply(ScanSettings(), l).makerMaxOdds in 1..200)
+        }
+    }
+
+    @Test fun `the slider never changes the star minimum`() {
+        for (stars in listOf(0.0, 3.5)) {
+            val s = ScanSettings(vigGuards = ScanGuards(autoBetMinStars = stars))
+            for (l in listOf(1, 50, 100)) assertEquals(stars, BetSlider.apply(s, l).autoBetMinStars, 0.0)
         }
     }
 

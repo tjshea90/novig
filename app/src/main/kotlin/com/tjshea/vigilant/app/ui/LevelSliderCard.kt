@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun LevelSliderCard(
     tag: String, title: String, hint: String, level: Int, custom: Boolean, name: (Int) -> String, stops: List<Pair<Int, String>>,
-    describe: List<String>, onLevel: (Int) -> Unit,
+    describe: List<String>, enabled: Boolean = true, onLevel: (Int) -> Unit,
 ) {
     val shown = if (level in 1..100) level else 55
     var drag by remember(shown) { mutableStateOf(shown.toFloat()) }
@@ -41,12 +41,13 @@ fun LevelSliderCard(
         )
         Slider(
             value = drag, onValueChange = { drag = it }, valueRange = 1f..100f, steps = 98,
+            enabled = enabled,
             onValueChangeFinished = { onLevel(drag.toInt().coerceIn(1, 100)) },
             modifier = Modifier.fillMaxWidth().testTag(tag),
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             stops.forEach { (pos, label) ->
-                FilterChip(selected = level == pos && !custom, onClick = { onLevel(pos) }, label = { Text(label) }, modifier = Modifier.testTag("$tag-$pos"))
+                FilterChip(selected = level == pos && !custom, onClick = { onLevel(pos) }, enabled = enabled, label = { Text(label) }, modifier = Modifier.testTag("$tag-$pos"))
             }
         }
         Column(Modifier.padding(top = 4.dp).testTag("${tag}Describe"), verticalArrangement = Arrangement.spacedBy(2.dp)) {

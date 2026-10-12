@@ -155,8 +155,8 @@ object BetSlider {
             propGuardShare = Levels.curve(l, listOf(1 to 0.15, 100 to 0.35)),
             propGuardPerGame = Levels.curve(l, listOf(1 to 1.0, 100 to 4.0)).roundToInt(),
             trapEarlyHours = h, trapNovigMove = true,
-            // A star minimum overrides every rule above (AutoBet.Rules.byStars): the slider is the rule set, so the minimum is cleared.
-            vigGuards = s.vigGuards.copy(betLevel = l, autoBetMinStars = 0.0),
+            // A star minimum, when picked, overrides every rule above (AutoBet.Rules.byStars) and leaves the slider unused: the slider never changes it (Tj, 2026-10-12).
+            vigGuards = s.vigGuards.copy(betLevel = l),
         )
         return Levels.reach(n, h)
     }
@@ -171,7 +171,7 @@ object BetSlider {
             "A sharp book that gives it under ${String.format(java.util.Locale.US, "%.1f", vetoBar(l) * 100)}% vetoes it.",
             "Odds up to +${maxOdds(l)}, never a longshot" + (if (minOdds(l) < 0) ", none shorter than ${minOdds(l)}" else "") + "; games up to ${horizonHours(l)} h away.",
             (if (kinds(l).size == 3) "Props, moneylines and spreads." else if (kinds(l).size == 5) "Plus team totals and period lines." else "Every kind of bet."),
-            "Expect " + (if (l <= 20) "few bets, the best edge each" else if (l <= 50) "a steady number of bets" else if (l <= 80) "many bets at a thinner edge" else "the most bets, each at a thin but positive edge") + ". The minimum star rating is switched off while a level is set.",
+            "Expect " + (if (l <= 20) "few bets, the best edge each" else if (l <= 50) "a steady number of bets" else if (l <= 80) "many bets at a thinner edge" else "the most bets, each at a thin but positive edge") + ".",
         )
     }
 }
