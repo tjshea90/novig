@@ -221,3 +221,4 @@ day that changes.
 | v0.89.29 | code 214 | 2026-10-11T22:49Z | v0.89.29: live Novig books subscribe as far as the stream allowance pays and stay held when the lane restarts
 | v0.89.30 | code 215 | 2026-10-11T22:59Z | v0.89.30: 1-100 sliders for Auto-bet and Bids, advanced settings hidden, no filled-bids list
 | v0.89.31 | code 216 | 2026-10-11T23:38Z | v0.89.31: live lane says which filters hide a +EV bet, live-only empty state
+| v0.89.32 | code 217 | 2026-10-12T00:49Z | v0.89.32: no longshot levels on the sliders, scans give way to a bet, auto-bet resumes by itself within a minute
