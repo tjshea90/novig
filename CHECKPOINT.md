@@ -1,23 +1,23 @@
-# CHECKPOINT 3040 — read me first, then TASKS.md
+# CHECKPOINT 3041 — read me first, then TASKS.md
 
-**Written:** 2026-10-12T04:14:06Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `f8f04ecbd` (this checkpoint is the commit after it)
+**Written:** 2026-10-12T04:20:13Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `e6cc1bed7` (this checkpoint is the commit after it)
 
 ## Just done
-RESEARCH §135 written (the TAN analysis + what was acted on and what was noise)
+version 0.89.35; TASKS TAN2-TAN6 ticked with evidence; skill doc lists the new settings structure
 
 ## Do this next
-TAN5 UI pass with screenshots; then full regression, ship
+full regression (bash tools/test.sh), then ship.sh, release.yml, record-release, link to Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M RESEARCH.md
-     M research/tan_bets_2026-10-12.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  b1b4d24d0 ckpt 3040: RESEARCH §135 written (the TAN analysis + what was acted on and what was n
   f8f04ecbd ckpt 3039: TAN6: Kelly stake scaled by lead time (EvMath.leadScale: 1.0 up to 9h, 0.6 
   93fe0376d ckpt 3038: TAN4: Settings home 20 -> 14 rows: APIs & keys hub with child pages (SGO, O
   e132c821e ckpt 3037: TAN4 settings audit written (research/tan_settings_audit_2026-10-12.md): AP
@@ -27,5 +27,7 @@ TAN5 UI pass with screenshots; then full regression, ship
   37d7ae536 ckpt 3033: TAN2: health check ignores removed keys/switched-off APIs; OddsPapi Free fa
   ef2c82a17 ckpt 3032: TAN1 baseline: full floor green (3245 tests, 405 s); TAN3 analysis saved
   853ff8fed ckpt 3031: TAN3: bet/bid analysis scripts + findings memo (lead-time slope strong; Ove
-  7caf557ab ckpt 3030: TAN written in TASKS.md (request captured); hooks installed; uploads alread
 ```
+
+(8 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
