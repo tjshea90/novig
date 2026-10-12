@@ -2582,7 +2582,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     c.opClient.lastReads.toSortedMap().forEach { (k, v) -> add("$k: $v") }
                 }
             }.getOrNull(),
-            novigFeedReport = runCatching { (c.novig.stream as? com.tjshea.vigilant.data.novig.stream.PushedBooks)?.feedReport() }.getOrNull(),
+            novigFeedReport = runCatching { (c.novig.stream as? com.tjshea.vigilant.data.novig.stream.PushedBooks)?.feedReport().orEmpty() + c.orderSocket?.report().orEmpty() }.getOrNull(),
             boltReport = runCatching {
                 val keys = keysFor(ApiProvider.BOLTODDS).size
                 if (keys == 0 && !_state.value.settings.gates.useBoltOdds) null else buildList<String> {

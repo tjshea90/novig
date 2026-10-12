@@ -323,7 +323,7 @@ object Diagnostics {
             o.appendLine("Novig key route: " + (x.keyDownNow?.let { "STANDING DOWN now (reads go to the public routes): $it" } ?: "usable now") + " · stand-downs since the app opened: ${x.keyStanddowns.size}")
             x.keyStanddowns.takeLast(10).forEach { d -> o.appendLine("  ${at(d.atMs)} · public routes for ${d.forMs / 1_000} s · ${d.why}") }
         }
-        x.novigFeedReport?.takeIf { it.isNotEmpty() }?.let { lines -> lines.forEach { o.appendLine("Novig live feed $it") } }
+        x.novigFeedReport?.takeIf { it.isNotEmpty() }?.let { lines -> lines.forEach { o.appendLine("Novig $it") } }
 
         o.appendLine()
         o.appendLine("== Last Vigilant scan ==")

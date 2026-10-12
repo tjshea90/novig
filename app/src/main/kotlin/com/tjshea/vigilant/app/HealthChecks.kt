@@ -210,6 +210,10 @@ object HealthChecks {
         x.novigFeedReport?.firstOrNull { it.startsWith("feed: full book on every market: the best-bid feed was given up") }?.let {
             add(Check(Level.WARN, "Novig live feed", "gave up on the best-bid feed (bbo) and is back on the full book", it.removePrefix("feed: ").take(240), "data/novig/stream/NovigStream.kt (fallBackFromBbo); Settings › Betting & Novig account › Best-bid feed turns it off and on"))
         }
+        // Orders over the socket: ON HOLD means a placed order got no readable answer, and bets go by REST for ten minutes (Novig itself says nothing about it).
+        x.novigFeedReport?.firstOrNull { it.startsWith("order socket: ON HOLD") }?.let {
+            add(Check(Level.WARN, "Novig order socket", "bets are going by web request: the order socket is on hold", it.removePrefix("order socket: ").take(240), "data/novig/trading/NovigOrderSocket.kt (hold); Settings › Betting & Novig account › Orders over the socket turns it off"))
+        }
         val recent = x.keyStanddowns.filter { now - it.atMs <= 6 * HOUR }
         if (recent.isNotEmpty() && x.keyDownNow == null) {
             val byWhy = recent.groupingBy { it.why }.eachCount().entries.sortedByDescending { it.value }.joinToString(", ") { "${it.key} ×${it.value}" }
