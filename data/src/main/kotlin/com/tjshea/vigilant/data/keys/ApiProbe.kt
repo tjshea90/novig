@@ -177,15 +177,16 @@ class ApiProbe(
         ApiProvider.BOLTODDS -> {
             // get_info names the sports and sportsbooks the key may subscribe to; it carries no usage figure (BOLTODDS_API.md §4): an invalid key answers 403 {"detail":"Invalid API token"}.
             val r = get("${hosts.bolt}/get_info?key=$key", listOf("Accept" to "application/json"))
+            val detail = Regex("\"detail\"\\s*:\\s*\"([^\"]{1,80})\"").find(r.body)?.groupValues?.get(1)
             when {
-                r.code == 401 || (r.code == 403 && r.body.contains("token", ignoreCase = true)) -> { meter.recordBalance(QuotaPolicy.BOLTODDS, key, null, inactive = true); false to refused(r.code, "(BoltOdds said: ${Regex("\"detail\"\\s*:\\s*\"([^\"]{1,80})\"").find(r.body)?.groupValues?.get(1) ?: "invalid token"})") }
-                r.code == 403 -> false to "Refused (HTTP 403): ${Regex("\"detail\"\\s*:\\s*\"([^\"]{1,80})\"").find(r.body)?.groupValues?.get(1) ?: "your plan does not include this"}."
+                r.code == 401 || (r.code == 403 && r.body.contains("token", ignoreCase = true)) -> { meter.recordBalance(QuotaPolicy.BOLTODDS, key, null, inactive = true); false to refused(r.code, "(BoltOdds said: ${detail ?: "invalid token"})") }
+                r.code == 403 -> false to "Refused (HTTP 403): ${detail ?: "your plan does not include this"}."
                 r.code == 429 -> true to "Accepted, rate limited for the moment (HTTP 429: GET endpoints allow 12 a minute per IP)."
                 r.isSuccessful -> {
                     meter.recordAccepted(QuotaPolicy.BOLTODDS, key)
-                    val sports = Regex("\"sports\"\\s*:\\s*\\[([^\\]]*)\\]").find(r.body)?.groupValues?.get(1)?.split(',')?.count { it.isNotBlank() }
-                    val books = Regex("\"sportsbooks\"\\s*:\\s*\\[([^\\]]*)\\]").find(r.body)?.groupValues?.get(1)?.split(',')?.count { it.isNotBlank() }
-                    true to "Active and accepted · ${sports ?: "?"} sports, ${books ?: "?"} sportsbooks. BoltOdds publishes no usage figure: the odds come over its websocket (Pro: 3 connections at once)."
+                    val info = runCatching { kotlinx.serialization.json.Json.parseToJsonElement(r.body) as? kotlinx.serialization.json.JsonObject }.getOrNull()
+                    fun count(k: String) = (info?.get(k) as? kotlinx.serialization.json.JsonArray)?.size
+                    true to "Active and accepted · ${count("sports") ?: "?"} sports, ${count("sportsbooks") ?: "?"} sportsbooks. BoltOdds publishes no usage figure: the odds come over its websocket (Pro: 3 connections at once)."
                 }
                 else -> false to "Answered HTTP ${r.code}."
             }
