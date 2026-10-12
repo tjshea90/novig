@@ -39,7 +39,10 @@ class BoltBoard(
      * Told the BoltOdds game id of every message that changed the board (called on the socket's thread: keep it quick). The live feed ([BoltLiveFeed]) and the streaming engine react to a push instead of looking for
      * one. A clear message names no game: the readers' periodic look finds what it removed.
      */
-    @Volatile var onGameChanged: ((String) -> Unit)? = null
+    private val gameListeners = java.util.concurrent.CopyOnWriteArrayList<(String) -> Unit>()
+
+    fun addGameListener(l: (String) -> Unit) { gameListeners += l }
+    fun removeGameListener(l: (String) -> Unit) { gameListeners -= l }
 
     private fun notifyGame(m: BoltMessage) {
         val g = when (m) {
@@ -48,7 +51,7 @@ class BoltBoard(
             is BoltMessage.GameRemoved -> m.data.game
             else -> null
         } ?: return
-        onGameChanged?.invoke(g)
+        for (l in gameListeners) runCatching { l(g) }
     }
 
     /** The board entries flagged in play, of just [gameIds] (null: every live game), a copy. */

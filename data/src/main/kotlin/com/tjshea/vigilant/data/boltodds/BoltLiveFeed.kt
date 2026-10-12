@@ -49,6 +49,7 @@ class BoltLiveFeed(
 
     private val signal = Channel<Unit>(Channel.CONFLATED)
     private val dirty = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    private val listener: (String) -> Unit = { g -> dirty += g; signal.trySend(Unit) }
     private var worker: Job? = null
     private var ticker: Job? = null
 
@@ -77,7 +78,7 @@ class BoltLiveFeed(
     override fun start() {
         if (worker?.isActive == true) return
         _state.value = PinnSocketState.Connecting
-        board.onGameChanged = { g -> dirty += g; signal.trySend(Unit) }
+        board.addGameListener(listener)
         worker = scope.launch {
             runCatching { ensureOpen() }
             while (isActive) {
@@ -105,7 +106,7 @@ class BoltLiveFeed(
 
     @Synchronized
     override fun stop() {
-        board.onGameChanged = null
+        board.removeGameListener(listener)
         worker?.cancel(); worker = null
         ticker?.cancel(); ticker = null
         dirty.clear()

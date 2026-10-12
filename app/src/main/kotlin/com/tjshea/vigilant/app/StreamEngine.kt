@@ -65,6 +65,7 @@ class StreamEngine(
     private var job: Job? = null
     private var watcher: Job? = null
     private var view: com.tjshea.vigilant.data.novig.stream.SharedStreamView? = null
+    private var boltListener: ((String) -> Unit)? = null
 
     /** Novig markets whose book moved since the last update, and whether BoltOdds' board changed. */
     private val dirty = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
@@ -91,22 +92,16 @@ class StreamEngine(
             signal.trySend("Novig")
         }
         view = com.tjshea.vigilant.data.novig.stream.SharedStreamView({ c.novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream }, listener).also { it.open() }
-        // BoltOdds' board counts its changes; reading the counters is free, so they are looked at a few times a second.
-        watcher = scope.launch {
-            var seen = boltSeq()
-            while (isActive) {
-                delay(WATCH_MS)
-                val now = boltSeq()
-                if (now != seen) {
-                    seen = now
-                    boltDirty.set(true)
-                    _status.update { st -> st.copy(signals = st.signals + 1, boltSignals = st.boltSignals + 1) }
-                    signal.trySend("BoltOdds")
-                }
-                // A view bound to an old stream (the key was reconnected) is bound again by asking it for the stream.
-                view?.open()
-            }
+        // BoltOdds' boards tell the engine of every change as it arrives (a push, not a look): the lines socket's board and the props socket's.
+        boltListener = { _ ->
+            boltDirty.set(true)
+            _status.update { st -> st.copy(signals = st.signals + 1, boltSignals = st.boltSignals + 1) }
+            signal.trySend("BoltOdds")
         }
+        c.boltFeed.lines.board.addGameListener(boltListener!!)
+        c.boltFeed.props.board.addGameListener(boltListener!!)
+        // Only a key reconnected in Settings makes a new Novig stream; asking the view for it binds the listener again.
+        watcher = scope.launch { while (isActive) { delay(WATCH_MS); view?.open() } }
         job = scope.launch {
             while (isActive) {
                 val why = signal.receive()
@@ -121,13 +116,13 @@ class StreamEngine(
         }
     }
 
-    private fun boltSeq(): Long = c.boltFeed.lines.board.changeSeq + c.boltFeed.props.board.changeSeq
-
     @Synchronized
     fun stop(why: String? = null) {
         job?.cancel(); job = null
         watcher?.cancel(); watcher = null
         view?.close(); view = null
+        boltListener?.let { l -> c.boltFeed.lines.board.removeGameListener(l); c.boltFeed.props.board.removeGameListener(l) }
+        boltListener = null
         dirty.clear()
         _status.update { it.copy(running = false, why = why) }
     }
@@ -214,7 +209,7 @@ class StreamEngine(
     }
 
     companion object {
-        const val WATCH_MS = 250L
+        const val WATCH_MS = 5_000L
         const val DEBOUNCE_MS = 100L
         const val RETRY_MS = 5_000L
         const val BUSY_RETRY_MS = 500L
