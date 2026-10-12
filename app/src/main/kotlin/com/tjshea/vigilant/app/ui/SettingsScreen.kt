@@ -103,8 +103,9 @@ import kotlin.math.roundToInt
 enum class SettingsGroup(val title: String, val about: String) {
     BET("Betting & alerts", "What happens when a +EV bet is found: alerts, auto-bet, bids, your Novig account and limits"),
     FIND("Finding bets", "What Vigilant and CrazyNinjaOdds scan, how fair odds are worked out, and what the lists show"),
+    LIVE("Live games & research", "The live engines (Pinnodds against Novig, live bids) and the recorders that place nothing"),
     SCREEN("On screen", "The floating widget"),
-    DATA("Data & help", "Feed keys and credits, diagnostics, version"),
+    DATA("Data & help", "Diagnostics and the version"),
 }
 
 /**
@@ -120,10 +121,10 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     BETTING("Betting & Novig account", "Your Novig key, wallet, bet amounts and limits", SettingsGroup.BET),
 
     /** Pinnacle's live price on the Pinnodds WebSocket against Novig's lagging quote: the key, the switches and the limits (Tj, 2026-10-08). */
-    PINNODDS("Pinnodds live", "Pinnacle's live price against Novig: key, paper or real bets, limits", SettingsGroup.BET),
+    PINNODDS("Pinnodds live", "Pinnacle's live price against Novig: key, paper or real bets, limits", SettingsGroup.LIVE),
 
     /** Post-only bids on Novig's live lines, priced under Pinnacle's live fair: paper, then real money, with presets and every number as a chip or a box (Tj, 2026-10-10). */
-    LIVEBIDS("Live bids", "Bids on live games, kept fresh and pulled fast: presets, stake and every safeguard", SettingsGroup.BET),
+    LIVEBIDS("Live bids", "Bids on live games, kept fresh and pulled fast: presets, stake and every safeguard", SettingsGroup.LIVE),
 
     /** Pause, which scanner, which games, the background scan. */
     SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background", SettingsGroup.FIND),
@@ -135,10 +136,10 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     FEED("+EV feed & scan size", "Vigilant's own scan: what it shows and how much it reads", SettingsGroup.FIND),
 
     /** How fair odds are worked out, and where they come from (with keys). */
-    FAIR("Fair odds & sources", "How the true odds are worked out, and from which feeds", SettingsGroup.FIND),
+    FAIR("Fair odds", "How the true odds are worked out: the method, the sharp books, the sportsbooks and their props", SettingsGroup.FIND),
 
-    /** Every API in one place: its switch, a Test button, its keys' usage (Tj, 2026-10-11). */
-    APIS("APIs: on/off, test, usage", "Turn any API on or off, test each one's keys, test the combination, see what is left on every key", SettingsGroup.FIND),
+    /** Every API in one place: its switch, a Test button, its keys and what is left on them, and a button to its own page for the keys and options (Tj, 2026-10-11; one home for them since v0.89.35). */
+    APIS("APIs & keys", "Turn any API on or off, add its keys, test them and see what is left on each; the odds feeds, their options and a backup of your keys", SettingsGroup.FIND),
 
     /** SportsGameOdds Pro: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). */
     SGO("SportsGameOdds Pro", "One paid feed for odds, props, closing lines and results, read alongside every other API you have on", SettingsGroup.FIND),
@@ -158,12 +159,31 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** Research mode: one switch for every recorder that places nothing, the paper lab, and the one file to send Claude (Tj, 2026-10-09). */
     RESEARCH("Research mode", "One switch for every recorder that places nothing, and the file to send Claude", SettingsGroup.DATA),
 
-    /** Each feed's usage meter, and the keys backup. */
-    USAGE("API usage & keys", "Credits left on each feed, and a backup of your keys", SettingsGroup.DATA),
+    /** Pinnacle through PinnWire and pinnapi: the switch for both and their keys (moved out of Fair odds in v0.89.35; a page of APIs). */
+    PINNACLE("Pinnacle (PinnWire, pinnapi)", "Pinnacle's board and player props: the keys and their order", SettingsGroup.FIND),
+
+    /** PropLine: its keys and options (a page of APIs). */
+    PROPLINE("PropLine", "30 books' lines and props: keys and options", SettingsGroup.FIND),
+
+    /** ParlayAPI: its keys (a page of APIs). */
+    PARLAY("ParlayAPI", "Pinnacle and 30 books, props, injuries and closing lines: keys", SettingsGroup.FIND),
+
+    /** The Odds API: its keys and options (a page of APIs). */
+    ODDS_API("The Odds API", "Sportsbook lines and props: keys and options", SettingsGroup.FIND),
+
+    /** Each feed's usage charts and the keys backup (a page of APIs). */
+    USAGE("Usage details & keys backup", "Credits left on each feed, the day-by-day chart, and a backup of your keys", SettingsGroup.DATA),
 
     /** Diagnostics, the grading check, About. */
     HELP("Diagnostics & about", "Send Claude a report, check grading, version", SettingsGroup.DATA),
     ;
+
+    /** The page this one belongs to, or null for a page on the Settings home list: the APIs' own pages and their usage details open from APIs & keys and go back to it. */
+    val parent: SettingsPage?
+        get() = when (this) {
+            SGO, ODDSPAPI, UNABATED, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
+            else -> null
+        }
 
     /** Pages for a scanner that's asleep are hidden (CNO only hides Vigilant's scan and its feeds; Vigilant only hides CNO's list). */
     fun shownIn(s: ScanSettings): Boolean = when (this) {
@@ -176,8 +196,11 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     }
 
     companion object {
-        /** The pages shown for [s], in order. */
+        /** Every page that can be opened for [s], in order (the home list's and the APIs' own pages). */
         fun shown(s: ScanSettings): List<SettingsPage> = entries.filter { it.shownIn(s) }
+
+        /** The pages on the Settings home list for [s]: [shown] without the pages that open from another page ([parent]). */
+        fun home(s: ScanSettings): List<SettingsPage> = shown(s).filter { it.parent == null }
 
         fun named(name: String?): SettingsPage? = entries.firstOrNull { it.name == name }
     }
