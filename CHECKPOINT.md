@@ -1,24 +1,22 @@
-# CHECKPOINT 3023 — read me first, then TASKS.md
+# CHECKPOINT 3024 — read me first, then TASKS.md
 
-**Written:** 2026-10-12T00:36:55Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-4a7a6b39-3ig8vu` · **builds on:** `86092c64c` (this checkpoint is the commit after it)
+**Written:** 2026-10-12T00:39:48Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-4a7a6b39-3ig8vu` · **builds on:** `f1c0c556c` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v0.89.32: no longshot levels on the sliders, scans give way to a bet, auto-bet resumes by itself within a minute
+pre-release: v0.89.32: no longshot levels on the sliders, scans give way to a bet, auto-bet resumes by itself within a minute (versionCode 217, v0.89.32)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.89.32), then run: bash tools/record-release.sh v0.89.32 217 "v0.89.32: no longshot levels on the sliders, scans give way to a bet, auto-bet resumes by itself within a minute"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M CLAUDE.md
-     M TASKS.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  f1c0c556c ckpt 3023: pre-ship: v0.89.32: no longshot levels on the sliders, scans give way to a 
   3d8ffeaa1 ckpt 3022: TAJ written
   2bd755a4b ckpt 3021: pre-release: v0.89.31: live lane says which filters hide a +EV bet, live-on
   2d5b14c27 ckpt 3020: pre-ship: v0.89.31: live lane says which filters hide a +EV bet, live-only 
@@ -28,8 +26,4 @@ ship.sh gates and releases this
   e836721d6 ckpt 3016: pre-release: v0.89.29: live Novig books subscribe as far as the stream allo
   748991b74 ckpt 3015: pre-ship: v0.89.29: live Novig books subscribe as far as the stream allowan
   5e88a5510 ckpt 3014: pre-release: v0.89.28: Live games only mode (Pinnodds + Novig only, every o
-  1373644e4 ckpt 3013: pre-ship: v0.89.28: Live games only mode (Pinnodds + Novig only, every othe
 ```
-
-(6 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
