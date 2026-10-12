@@ -138,6 +138,7 @@ object SettingsIndex {
         Entry("Orders over the socket", SettingsPage.BETTING, "Sends an immediate-or-cancel bet over a live connection to Novig instead of a web request; never replays a bet; off = web request, as before", "novig orders place socket websocket trading key ioc instant fast", novig),
         Entry("Compress the live feed", SettingsPage.BETTING, "Asks Novig for the live feed compressed: a faster first snapshot; turns itself off if it can't be read; off = plain text, as before", "novig compress compression deflate websocket stream feed speed", novig),
         Entry("Profit-proven only", SettingsPage.BETTING, "Skips the types of bet and bid that lost money in your history, bids the best types first; off = no change", "profit proven history types losing winning overs unders auto-bet bids filter learn", novig),
+        Entry("Repeat and hedge guard", SettingsPage.BETTING, "Stops the same side being bet or bid again and again at new prices; the other side only when both are a sure profit", "repeat hedge guard duplicate same side over and over locked loss both sides arbitrage live auto-bet bids limit", novig),
         Entry("Bankroll", SettingsPage.BETTING, "The money you set aside for betting", "bankroll money"),
         Entry("Kelly fraction for suggested stakes", SettingsPage.BETTING, "How big suggested stakes are for a given edge", "kelly stake size"),
         Entry("Most for one bet you place", SettingsPage.BETTING, "The most one bet may stake (your own bets and auto-bets)", "limit max stake per bet", novig),
