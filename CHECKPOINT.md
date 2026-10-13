@@ -1,13 +1,13 @@
-# CHECKPOINT 3193 — read me first, then TASKS.md
+# CHECKPOINT 3194 — read me first, then TASKS.md
 
-**Written:** 2026-10-13T23:10:10Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b57fa2a2-ftkkrm` · **builds on:** `b4da96c5f` (this checkpoint is the commit after it)
+**Written:** 2026-10-13T23:20:14Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b57fa2a2-ftkkrm` · **builds on:** `e60014ed3` (this checkpoint is the commit after it)
 
 ## Just done
-v0.97.2 recorded; v0.97.3 (BoltOdds classify memo) shipped, release triggered
+v0.97.3 released and recorded
 
 ## Do this next
-when v0.97.3 release appears: record-release.sh v0.97.3 255, tick TSP3, tell Tj
+await Tj's next diagnostics: read stream.refresh.ms, heap, GC; TDG3 (Novig public-route 429s) still open
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ when v0.97.3 release appears: record-release.sh v0.97.3 255, tick TSP3, tell Tj
 
 ## Last ten checkpoints
 ```
+  e4819e974 ckpt 3193: v0.97.2 recorded; v0.97.3 (BoltOdds classify memo) shipped, release trigger
   4950d974f ckpt 3192: pre-release: v0.97.3: BoltOdds passes classify each market name once instea
   dc824e142 ckpt 3191: pre-ship: v0.97.3: BoltOdds passes classify each market name once instead o
   2d3b1c981 ckpt 3190: pre-release: v0.97.2: Kalshi socket now counts every subscribed market (ok 
@@ -26,5 +27,4 @@ when v0.97.3 release appears: record-release.sh v0.97.3 255, tick TSP3, tell Tj
   4c61d009f ckpt 3186: pre-release: v0.97.1: PropLine leads the API order (lines and props) while 
   fa5604717 ckpt 3185: pre-ship: v0.97.1: PropLine leads the API order (lines and props) while its
   1bde8d023 ckpt 3184: pre-release: v0.97.0: Kalshi API key (Ed25519/RSA, sealed in the Keystore) 
-  e0e81901f ckpt 3183: pre-ship: v0.97.0: Kalshi API key (Ed25519/RSA, sealed in the Keystore) wit
 ```
