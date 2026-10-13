@@ -6892,3 +6892,23 @@ Figure out a way for the app to use the best apis and favor fresh odds with the 
 
 Find the best logistics on what apis to use for what data in combinations. The app will need to use certain apis to fill in data that other apis don't offer. But if some data overlaps from more than one api, make sure the app always uses the apis from Best to worst order, favoring apis that provide the most accurate, freshest odds and scanning speed, and when their usage runs out, rotate keys for the same api. If all keys are used or if the API is not responding, the app should automatically fall back to the next best API for the overlapping data.
 ```
+
+## 2026-10-13T00:56:54Z
+```
+After you are done with all app improvements. Tell me what would best suit the app on a 50 dollar per month budget, maximizing free keys. I want the best apis for speed and accuracy and freshness of odds, but slower apis may be used for backups and extra features not covered by other apis.
+
+I can get free keys for: 
+Pinnapi
+Sharpapi
+The odds api
+Pinnwire
+Propline
+Moneylineapp.com
+Parlay-api
+Pinnodds
+Unabated
+Tennis api
+Boltodds pro (free trials I can refresh) 
+
+After your research, tell me which ones to buy if they offer things better than the free tier and which ones to add more free keys
+```
