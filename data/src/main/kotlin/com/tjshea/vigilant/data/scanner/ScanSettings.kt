@@ -1309,6 +1309,16 @@ data class ApiGates(
     /** Keep the Novig live feed's connection open between scans and reconnect it by itself after a drop (off: it closes two minutes after a scan, as before). */
     val novigKeepOpen: Boolean = true,
     /**
+     * The socket of each API that has one (Tj, 2026-10-13, Settings › APIs): ON = the app keeps that API's WebSocket open for real-time prices; OFF with the API itself still on = the regular
+     * requests, no socket; the API off = never called. [novigSocket] is Novig's market feed (the Vigilant read key's `book`/`bbo` stream; off = the scan reads books by request); the order socket and the
+     * orders push have their own switches below. [boltSocket]: BoltOdds' two odds sockets (off = its REST snapshot, read at most every 12 s). [pinnSocket]: the Pinnodds live socket (off = the live lane,
+     * which needs it, waits; Pinnacle's REST boards are unaffected). [kalshiSocket]: Kalshi's `ticker` socket (needs the key; off = the signed or public REST read every scan).
+     */
+    val novigSocket: Boolean = true,
+    val boltSocket: Boolean = true,
+    val pinnSocket: Boolean = true,
+    val kalshiSocket: Boolean = true,
+    /**
      * Novig's private `orders` stream (NOVIG_API.md §26): an order's end (filled, cancelled, rejected) arrives the moment the matching engine has it, so a bet's result is not asked for every 0.4 s. Off = the
      * result is read by request as before; the REST fills stay the record either way.
      */
