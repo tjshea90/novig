@@ -302,11 +302,13 @@ object Planner {
                 continue
             }
             val primary = list.first()
+            // Every quote is tagged with the feed that sent it, so a bet can say where its fair odds came from ([FairProvenance]).
+            fun tagged(f: Found) = f.ref.markets.map { if (it.source == null) it.copy(source = f.provider) else it }
             val merged = if (list.size == 1) {
-                primary.ref
+                primary.ref.copy(markets = tagged(primary))
             } else {
                 // Orient every other feed like the first one before pooling their quotes.
-                val markets = list.flatMap { f -> if (f.swapped == primary.swapped) f.ref.markets else f.ref.markets.map { it.flipped() } }
+                val markets = list.flatMap { f -> tagged(f).let { ms -> if (f.swapped == primary.swapped) ms else ms.map { it.flipped() } } }
                 primary.ref.copy(id = list.joinToString("+") { it.ref.id }, markets = markets)
             }
             out += EventMatch(league, e, merged, primary.swapped, list.map { it.provider }.distinct())

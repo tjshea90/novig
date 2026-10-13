@@ -368,21 +368,25 @@ object Pricing {
      * Every book's odds for one line, in [LineKey.sides] order; books missing a side are dropped. Where more than one feed sent the book, the first (the feeds' order) stands unless [freshest] and a
      * later feed's quote is newer by more than [FRESHER_BY_MS]; a quote with no time never replaces one.
      */
-    fun bookPrices(ref: RefEvent, key: LineKey, freshest: Boolean = true): List<BookPrices> {
+    fun bookPrices(ref: RefEvent, key: LineKey, freshest: Boolean = true): List<BookPrices> =
+        chosenMarkets(ref, key, freshest).map { (m, odds) -> BookPrices(m.bookKey, m.bookTitle, odds, m.lastUpdateMs) }
+
+    /** The quotes [bookPrices] uses for [key], each with its odds in [LineKey.sides] order: one per book, the freshest feed's where two sent it ([freshest]). */
+    fun chosenMarkets(ref: RefEvent, key: LineKey, freshest: Boolean = true): List<Pair<com.tjshea.vigilant.data.reference.RefBookMarket, List<Double>>> {
         val all = ref.markets
             .filter { key.matches(it) }
             .mapNotNull { m ->
                 val odds = key.sides.map { side -> m.quotes.firstOrNull { it.side == side }?.decimalOdds ?: return@mapNotNull null }
-                BookPrices(m.bookKey, m.bookTitle, odds, m.lastUpdateMs)
+                m to odds
             }
-        if (!freshest) return all.distinctBy { it.bookKey }
-        val chosen = LinkedHashMap<String, BookPrices>()
+        if (!freshest) return all.distinctBy { it.first.bookKey }
+        val chosen = LinkedHashMap<String, Pair<com.tjshea.vigilant.data.reference.RefBookMarket, List<Double>>>()
         for (b in all) {
-            val have = chosen[b.bookKey]
-            val mine = b.lastUpdateMs
-            val theirs = have?.lastUpdateMs
+            val have = chosen[b.first.bookKey]
+            val mine = b.first.lastUpdateMs
+            val theirs = have?.first?.lastUpdateMs
             val newer = mine != null && theirs != null && mine - theirs > FRESHER_BY_MS
-            if (have == null || newer) chosen[b.bookKey] = b
+            if (have == null || newer) chosen[b.first.bookKey] = b
         }
         return chosen.values.toList()
     }

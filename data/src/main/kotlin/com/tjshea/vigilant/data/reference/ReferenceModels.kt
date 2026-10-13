@@ -38,6 +38,8 @@ data class RefBookMarket(
     val bookEventId: String? = null,
     /** The book's page for this game, when the feed sends one (PropLine's `includeLinks`). */
     val link: String? = null,
+    /** Which feed (its [ReferenceSource.id]) sent this quote: set when feeds are merged for a game, so a bet can say where its fair odds came from. Null before the merge. */
+    val source: String? = null,
 ) {
     /**
      * The line this quote is on: null for moneylines, the HOME side's handicap for spreads
