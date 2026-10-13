@@ -7020,3 +7020,8 @@ Then:
 
 2) review the screenshot. If a bet is no longer positive EV, remove it from the list automatically and immediately without me having to press on it
 ```
+
+## 2026-10-13T18:17:38Z
+```
+If it doesn't already do this, make the auto bet feature also auto bet on bets scanned in vigilant scanner as well as cno, but only if they match the bet criteria in the auto bet settings
+```
