@@ -1001,12 +1001,12 @@ private fun MoneyInCard(all: List<TrackedBet>, given: Double) {
         CardTitle("Your money, all time")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             LabeledValue("Put in", Format.money(r.deposited))
-            LabeledValue("Profit", Format.signedMoney(r.profit), valueColor = moneyColor(r.profit), modifier = Modifier.testTag("moneyInProfit"))
+            LabeledValue("Bet in all", Format.money(r.turnover))
             LabeledValue("Profit %", r.percent?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(r.percent ?: 0.0), modifier = Modifier.testTag("moneyInPercent"))
         }
         Caption(
             "You have put in ${Format.money(r.deposited)}" + (if (r.estimated) " (worked out from your bets: the least money that could have placed them all with winnings re-bet; type your real total in Settings › Betting & Novig account to use that instead)" else " (the total you gave in Settings)") +
-                " and made ${Format.signedMoney(r.profit)}: ${r.percent?.let { Format.evPercent(it) } ?: "—"} of your money. " +
+                " and made ${r.percent?.let { Format.evPercent(it) } ?: "—"} of it (your profit, shown in the graph below, over that money). " +
                 "That money was bet ${Format.money(r.turnover)} in all, about ${r.turns?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "—"} times over, because winnings and refunds were bet again; that is why Profit % in the graph below (profit over everything staked) reads smaller.",
         )
     }
