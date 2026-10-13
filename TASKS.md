@@ -4963,3 +4963,9 @@ Tj verbatim: "There may or may not be an accounting error in the app. I only dep
 - [x] TPL1b (the Tracker Profit % was profit over every dollar staked: wrong base; deposits are not known to the app) Find every place the app shows profit / ROI / "staked" / "wagered" and what it divides by; find whether it knows deposits (wallet funding, "Add money", Novig balance history).
 - [x] TPL2b (MoneyIn replay + optional Settings figure; Your money card, Diagnostics line) Decide the true-capital model (deposits in, withdrawals out, wallet + open exposure now) and what the app can know without a deposit feed; build "Total profit / profit % on money deposited" (all time), keep ROI-on-stake as a separate labelled line.
 - [x] TPL3b Tests, ship, release.
+
+## TSM: Pinnacle steam as a trigger and a star input (Tj, 2026-10-13)
+Tj verbatim: "If Pinnacle moves toward a bet, is that a strong signal to bet it? If so, can the app continually look for bets which pinnacle is moving toward and try to find stale positive EV odds on novig for the same bet?"
+Answered in chat from RESEARCH.md §116.2 + research/copy_sharps_2026-10-13.md: the app already prices Novig against the current Pinnacle fair; what is NOT built is "moved toward it" as a trigger/filter. Not built until the test below says yes.
+- [ ] TSM1 Test on the scan-study data: does a listed bet whose Pinnacle/sharp fair moved toward it in the last 10-30 min beat the close more often than one whose fair was flat? (split by pregame/live, by sport, bet type; say n and t-stat). Write research/steam_signal_<date>.md + NOTES line.
+- [ ] TSM2 Only if TSM1 is positive: add a "sharp moved toward" flag/star input and a stream-engine trigger (re-price that market on a Pinnacle move), behind a switch, default off.
