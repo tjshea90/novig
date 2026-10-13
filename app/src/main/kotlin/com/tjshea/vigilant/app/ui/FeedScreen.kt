@@ -513,13 +513,14 @@ fun OpportunityCard(
                     "${o.league.emoji} ${o.league.displayName} · ${if (o.isLive) "LIVE" else Format.startTime(o.event.startsTs)}",
                     style = MaterialTheme.typography.labelMedium,
                     color = if (o.isLive) Edge.colors.negative else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                if (o.priceIsOld(now)) Text("old price ", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                if (o.priceIsOld(now)) Text("old price ", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, maxLines = 1, softWrap = false)
                 // How old its other books' prices are, once past a few minutes (they leave the feed at 5, or 10 for a
                 // game more than 3 hours away: Freshness.maxAgeMs).
                 o.fairAsOfMs?.let { now - it }?.takeIf { it > FAIR_AGING_MS }?.let { age ->
-                    Text("odds ${age / 60_000} min old", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                    Text("odds ${age / 60_000} min old", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, maxLines = 1, softWrap = false)
                 }
                 // Top right, where CNO's cards have theirs.
                 if (onHide != null) {
@@ -619,7 +620,11 @@ fun StarRating(rating: com.tjshea.vigilant.data.scanner.BetRating.Rating?, modif
     }
         // Profit-proven only lowered the stars the auto-bet holds against its minimum (Tj, 2026-10-13): said on the card so the two numbers never disagree.
         if (adjusted != null && kotlin.math.abs(adjusted - rating.stars) > 1e-9) {
-            Text(" → " + com.tjshea.vigilant.data.scanner.BetRating.text(adjusted) + " after your history", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, modifier = Modifier.testTag("starsAdjusted"))
+            // One short line on a card: this sits in a header row beside a weighted league/time text, which "after your history" squeezed to no width, wrapping it a letter to a line (tall empty cards, the feed lagging: Tj, 2026-10-13). The sheet has room for the whole phrase.
+            Text(
+                " → " + com.tjshea.vigilant.data.scanner.BetRating.text(adjusted) + if (large) " after your history" else "",
+                style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, maxLines = 1, softWrap = false, modifier = Modifier.testTag("starsAdjusted"),
+            )
         }
 }
 
