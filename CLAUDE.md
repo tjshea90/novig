@@ -551,3 +551,18 @@ Settings › Betting & Novig account › Profit-proven only (`ApiGates.profitPro
 
 **Standing instruction from Tj (2026-10-12, verbatim, shortened):** "build a live betting engine based on an average of the soft sports books offered by the boltodds socket at low latency ... Make sure the app is taking full advantage of all sockets. They shouldn't need to wait for anything or scan at intervals. They should run in real time."
 `data/boltodds/BoltLiveConsensus.kt` (pure: quorum of COMPANIES that pushed within seconds and agree, trimmed mean, else the line is closed) + `BoltLiveFeed.kt` (push: `BoltBoard.addGameListener`; speaks Pinnodds frames) make `PinnFeedChoice.BOLT` a third source for `PinnLiveRunner`, so the matcher, the 5 s rule, the taker fee, the live trader and live bids run on it unchanged. It has no scores and BoltOdds has no sharp book (BOLTODDS_API.md §9-§10): the trigger is never "after a score", the edge floor is 4%, and REAL orders need `ApiGates.boltLiveReal` (default off = paper) on top of the live switches. Never loosen those without Tj's paper results. The streaming engine and the live feed are push (`addGameListener`, Novig `BookListener`); a new reader of either socket must be push too.
+
+<!-- handoff:learnings:begin -->
+## Session Learnings (auto-updated by handoff)
+
+### Implicit Rules
+- Repo CLAUDE.md rules: run tools/install-hooks.sh first; ckpt.sh after each step; ship.sh then release.yml then record-release.sh; no Workflow/subagent fan-out; Vigilant Novig only, mgm frozen
+- Never commit keys; Pinnodds/BoltOdds sockets never opened by Claude sessions
+
+### Key Decisions
+- Decision: refusal hold 2,4,8..min cap 1h, reset on any accepted call — Reason: old rule rested refused key until next UTC day; transient 1008 locked BoltOdds all day
+- Decision: every API Test button lifts refusal via ApiProbe.policyOf — Reason: only BoltOdds Test did
+- Decision: down() of SGO/OddsPapi/Unabated/BoltOdds REST lasts 60s after last failure (RETRY_AFTER_MS) — Reason: down source dropped from source list never called again, stayed down until app restart
+- Decision: quota-depleted holds unchanged — Reason: legit until provider reset
+
+<!-- handoff:learnings:end -->
