@@ -54,3 +54,4 @@
 - 2026-10-13 budget plan (research/api_budget_plan_2026-10-13.md): buy ParlayAPI $5 only; farm Pinnwire/pinnapi/PropLine free keys.
 - 2026-10-13 copy-the-sharps research (research/copy_sharps_2026-10-13.md): individuals anonymized; liquidity-following -1% EV; whale takers n.s.; sharp book prices already the core.
 - 2026-10-13 true profit on money put in: MoneyIn replay (least deposit with winnings re-bet) + optional Settings figure; Tracker 'Your money, all time' card; Diagnostics line; chart's % relabelled 'Per $ staked'.
+- 2026-10-13 odds-api.net researched (research/odds_api_net_2026-10-13.md): Pinnacle polled 60-120 s, pre-match only, no free tier, sharp books only Pinnacle+Betfair confirmed; not worth $50.
