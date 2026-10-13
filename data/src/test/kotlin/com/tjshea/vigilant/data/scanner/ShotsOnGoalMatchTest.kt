@@ -56,7 +56,7 @@ class ShotsOnGoalMatchTest {
         )
         val prices = Pricing.bookPrices(ev, key)
         assertEquals(listOf("fd"), prices.map { it.bookKey })
-        assertEquals(listOf(2.0, 1.85), prices.single().odds) // Over first, Under second: never swapped
+        assertEquals(listOf(2.0, 1.85), prices.single().decimalOdds) // Over first, Under second: never swapped
     }
 
     @Test fun `books on other stats, lines and players in the same game never reach the line`() {
