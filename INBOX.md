@@ -6959,3 +6959,8 @@ Research how fresh the odds are and what books are offered including sharp books
 ```
 @"/root/.claude/uploads/d95b6645-d5e0-5a0b-9345-cf5a8be1907e/f70d8d18-vigilant-bets-2026-10-13-all-README.md" Figure out my most profitable types of bids, with a sample size big enough
 ```
+
+## 2026-10-13T06:08:22Z
+```
+Also most profitable types of bets
+```
