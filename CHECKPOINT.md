@@ -1,13 +1,13 @@
-# CHECKPOINT 3146 — read me first, then TASKS.md
+# CHECKPOINT 3147 — read me first, then TASKS.md
 
-**Written:** 2026-10-13T17:44:08Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-18ecef04-mledpg` · **builds on:** `00b985411` (this checkpoint is the commit after it)
+**Written:** 2026-10-13T17:55:04Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-18ecef04-mledpg` · **builds on:** `9300fbb42` (this checkpoint is the commit after it)
 
 ## Just done
-answered Pinnacle-steam question; TSM1/TSM2 written
+TMB tasks written
 
 ## Do this next
-await Tj; TSM1 if asked
+TMB1: read BidSlider/MakerDesk
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ await Tj; TSM1 if asked
 
 ## Last ten checkpoints
 ```
+  c5456c74a ckpt 3146: answered Pinnacle-steam question; TSM1/TSM2 written
   781eb5e0c ckpt 3145: sample-size note
   88ed6cc22 ckpt 3144: full 1648-record refresh of profitable types / team totals
   4e0dcb2af ckpt 3143: team totals detail + correction (README row pools bets and bids)
@@ -26,8 +27,7 @@ await Tj; TSM1 if asked
   645e3faef ckpt 3139: TPL: true profit on money put in (MoneyIn), card, setting, diagnostics; ful
   0d55d78a1 ckpt 3138: copy-the-sharps research written
   b4608ce18 ckpt 3137: answered: rank setting does not ask every API each scan
-  e87df1dd2 ckpt 3136: v0.95.9 released; budget plan written
 ```
 
-(3 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
