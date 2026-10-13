@@ -99,7 +99,7 @@ class BidTierTest {
         val posts = listOf(
             line("r", "NBA", BetKind.PROP, "P Over 20.5", "POINTS"), line("s", "NBA", BetKind.PROP, "P Under 20.5", "POINTS"), line("p", "NHL", BetKind.TEAM_TOTAL, "T Over 2.5"),
         ).map { decide(it) as MakerDecision.Post }
-        val ordered = posts.sortedWith(MakerQuote.priority(rules, now)).map { BidTier.of(it.line) }
+        val ordered = posts.sortedWith(MakerPlan.priority(rules, now)).map { BidTier.of(it.line) }
         assertEquals(listOf(BidTier.PROVEN, BidTier.STEADY, BidTier.RISKY), ordered)
     }
 
