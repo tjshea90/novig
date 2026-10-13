@@ -93,7 +93,7 @@ object AutoBetText {
 
     /** What each stake choice means, for the confirm and the hint. */
     fun stakeText(s: ScanSettings): String = when (s.autoBetStake) {
-        AutoBetStake.EIGHTH_KELLY, AutoBetStake.QUARTER_KELLY, AutoBetStake.HALF_KELLY -> "its ${s.autoBetStake.label} stake of your ${Format.money(s.bankroll)} bankroll"
+        AutoBetStake.SIXTEENTH_KELLY, AutoBetStake.EIGHTH_KELLY, AutoBetStake.QUARTER_KELLY, AutoBetStake.HALF_KELLY -> "its ${s.autoBetStake.label} stake of your ${Format.money(s.bankroll)} bankroll"
         AutoBetStake.ONE_DOLLAR -> "$1"
         AutoBetStake.CUSTOM -> Format.money(s.autoBetCustomStake)
     }
