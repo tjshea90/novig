@@ -7035,3 +7035,8 @@ How is this bet under my 4 star minimum
 ```
 Yes, show the adjusted stars on the card and in the message
 ```
+
+## 2026-10-13T18:43:45Z
+```
+I noticed in the scanner on vigilant I'm getting flooded with nhl player shots on goal props. There are so many of them supposedly positive EV that I'm getting suspicious. Make sure that they are actually matched correctly to the same odds from different sports books. They may be showing positive EV because they are incorrectly matched to a different type of bet odds
+```
