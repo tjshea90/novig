@@ -7087,3 +7087,8 @@ Let me know if you want me to send the kalshi api key
 ```
 @"/root/.claude/uploads/ab9f4f2b-e7a0-56c8-95be-37f5164ca186/de2fba53-vigilant-diagnostics-v0.97.0-2026-10-13-1847.txt" 
 ```
+
+## 2026-10-13T22:58:31Z
+```
+If I'm using sockets, why aren't my scans extremely fast?
+```
