@@ -507,7 +507,11 @@ class AppContainer(val app: Application) {
         novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush); novig.stream?.configureCompression(s.gates.novigCompress)
         orderSocket?.let { sock -> sock.enabled = s.gates.novigSocketOrders; if (s.gates.novigSocketOrders) sock.warm() }
         // Switched off (or its key gone, or Live games only mode asleep): the sockets are closed at once, not left to idle out.
-        if (!boltActive(s)) boltFeed.close()
+        if (!boltActive(s) || !s.gates.boltSocket) boltFeed.close()
+        if (!s.useKalshi || !s.gates.kalshiSocket) kalshiStream.close()
+        // Novig's market feed follows its socket switch (Settings › APIs): off = the scan reads books by request; back on = the feed is built again.
+        if (!s.gates.novigSocket && novig.stream != null) { novig.stream?.close(); novig.stream = null }
+        else if (s.gates.novigSocket && novig.stream == null && readConnection != null) useConnection(readConnection)
         val on = AppBook.isNovig && s.sgoPro
         sgoCloses.enabled = on
         sgoScores.enabled = on
@@ -1063,6 +1067,7 @@ class AppContainer(val app: Application) {
         loadedConnection?.let { return@withLock it.getOrNull() }
         runCatching { migrateKeys() }
         runCatching { usage.load() }
+        runCatching { kalshiKeyStore.read() }
         val connection = runCatching { novigConnection.load() }
         useConnection(connection.getOrNull())
         loadedConnection = Result.success(connection.getOrNull())
@@ -1150,7 +1155,7 @@ class AppContainer(val app: Application) {
         val signer = connection?.let(::readKeyClient)
         novig.stream?.close()
         novig.keyed = signer
-        novig.stream = signer?.let { sg -> NovigStream(http, sg, appScope, onEvent = { warn, text -> if (warn) eventLog.warn("NOVIG", text) else eventLog.info("NOVIG", text) }) }
+        novig.stream = signer?.takeIf { settingsStore.flow.value?.gates?.novigSocket != false }?.let { sg -> NovigStream(http, sg, appScope, onEvent = { warn, text -> if (warn) eventLog.warn("NOVIG", text) else eventLog.info("NOVIG", text) }) }
         settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush); novig.stream?.configureCompression(s.gates.novigCompress) }
         val alias = connection?.tradingAlias
         val key = connection?.tradingKeyId
@@ -1804,16 +1809,16 @@ class AppContainer(val app: Application) {
         val website = s.pinnWebsite.noPinnKey
         // The engine reads its feed when it starts: a changed choice restarts it.
         if (pinnRunner.running && pinnRunWebsite != null && pinnRunFeed != s.pinnWebsite.feed) pinnRunner.stop("switching the live price feed")
-        if (s.pinnWebsite.bolt && !boltActive(s)) {
-            if (pinnRunner.running) pinnRunner.stop("BoltOdds is not on (Settings › APIs & keys).")
+        if (s.pinnWebsite.bolt && (!boltActive(s) || !s.gates.boltSocket)) {
+            if (pinnRunner.running) pinnRunner.stop(if (!s.gates.boltSocket) "BoltOdds' socket is switched off (Settings › APIs)." else "BoltOdds is not on (Settings › APIs & keys).")
             liveScan.clear("Live games from the soft-book average need BoltOdds switched on with a key (Settings › APIs & keys).")
             LiveFeedService.stop(app)
             return
         }
-        if (!website && (!s.gates.usePinnodds || keyStore.current(ApiProvider.PINNODDS).isEmpty())) {
-            if (pinnRunner.running) pinnRunner.stop(if (!s.gates.usePinnodds) "Pinnodds is switched off (Settings › APIs)." else "No Pinnodds key saved (Settings › Pinnodds live).")
+        if (!website && (!s.gates.usePinnodds || !s.gates.pinnSocket || keyStore.current(ApiProvider.PINNODDS).isEmpty())) {
+            if (pinnRunner.running) pinnRunner.stop(if (!s.gates.usePinnodds) "Pinnodds is switched off (Settings › APIs)." else if (!s.gates.pinnSocket) "Pinnodds' socket is switched off (Settings › APIs)." else "No Pinnodds key saved (Settings › Pinnodds live).")
             shadowTick(false)
-            liveScan.clear(if (!s.gates.usePinnodds) "Pinnodds is switched off (Settings › APIs): live games need its live prices." else "Live games need Pinnacle's live prices: save a Pinnodds key, or use the Pinnacle website feed (Settings › Pinnodds live).")
+            liveScan.clear(if (!s.gates.usePinnodds) "Pinnodds is switched off (Settings › APIs): live games need its live prices." else if (!s.gates.pinnSocket) "Pinnodds' socket is switched off (Settings › APIs): live games need its live push (or use the Pinnacle website feed, Settings › Pinnodds live)." else "Live games need Pinnacle's live prices: save a Pinnodds key, or use the Pinnacle website feed (Settings › Pinnodds live).")
             LiveFeedService.stop(app)
             return
         }
@@ -1826,10 +1831,31 @@ class AppContainer(val app: Application) {
     }
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
-    private val kalshi = KalshiClient(http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage, fastPace = { settingsStore.flow.value?.kalshiFastPace ?: true })
+    /**
+     * Tj's Kalshi API key (Ed25519 or RSA: Key ID + private key PEM), in the app's own file and never in the repo (KALSHI_API.md). With it Kalshi's reads are signed (recommended host, the account's read
+     * budget) and its WebSocket can run.
+     */
+    val kalshiKeyStore = com.tjshea.vigilant.data.store.JsonFileStore(File(app.filesDir, "kalshi_key.json"), com.tjshea.vigilant.data.kalshi.KalshiCredentials.serializer(), { com.tjshea.vigilant.data.kalshi.KalshiCredentials() }, json)
+    private var kalshiSignerKept: Pair<com.tjshea.vigilant.data.kalshi.KalshiCredentials, com.tjshea.vigilant.data.kalshi.KalshiSigner?>? = null
+
+    /** The signer for the saved key, parsed once per key (null without a usable key). */
+    @Synchronized
+    fun kalshiSigner(): com.tjshea.vigilant.data.kalshi.KalshiSigner? {
+        val cred = kalshiKeyStore.flow.value?.takeIf { it.complete } ?: return null
+        kalshiSignerKept?.takeIf { it.first == cred }?.let { return it.second }
+        return com.tjshea.vigilant.data.kalshi.KalshiSigner.of(cred).getOrNull().also { kalshiSignerKept = cred to it }
+    }
+
+    /** Kalshi's socket (Settings › APIs › Kalshi › Socket): opened only by a scan that reads Kalshi with the key and the switch on; closed at once when either goes off. */
+    val kalshiStream = com.tjshea.vigilant.data.kalshi.KalshiStream(com.tjshea.vigilant.data.kalshi.KalshiStream.socketClient(http), { kalshiSigner() }, appScope)
+
+    private val kalshi = KalshiClient(
+        http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage, fastPace = { settingsStore.flow.value?.kalshiFastPace ?: true },
+        signer = { kalshiSigner() }, stream = kalshiStream, socketOn = { settingsStore.flow.value?.let { it.useKalshi && it.gates.kalshiSocket } ?: false },
+    )
 
     /** How the Kalshi 3-requests-a-second test has gone this session (Diagnostics). */
-    fun kalshiPaceNote(): String = kalshi.paceNote()
+    fun kalshiPaceNote(): String = kalshi.paceNote() + "\n" + kalshi.report().joinToString("\n") { "  $it" }
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keyStore.current(ApiProvider.THE_ODDS_API) }, usage), json)
 
     /** ParlayAPI's degraded-mode check (free): books it says aren't keeping up don't price from it. */
