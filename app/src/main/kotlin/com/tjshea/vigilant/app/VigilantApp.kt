@@ -1155,7 +1155,9 @@ class AppContainer(val app: Application) {
         val signer = connection?.let(::readKeyClient)
         novig.stream?.close()
         novig.keyed = signer
-        novig.stream = signer?.takeIf { settingsStore.flow.value?.gates?.novigSocket != false }?.let { sg -> NovigStream(http, sg, appScope, onEvent = { warn, text -> if (warn) eventLog.warn("NOVIG", text) else eventLog.info("NOVIG", text) }) }
+        novig.stream = signer?.let { sg -> NovigStream(http, sg, appScope, onEvent = { warn, text -> if (warn) eventLog.warn("NOVIG", text) else eventLog.info("NOVIG", text) }) }
+        // The socket switch (Settings › APIs) is off: the feed is not kept, every read is by request.
+        if (settingsStore.flow.value?.gates?.novigSocket == false) { novig.stream?.close(); novig.stream = null }
         settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush); novig.stream?.configureCompression(s.gates.novigCompress) }
         val alias = connection?.tradingAlias
         val key = connection?.tradingKeyId

@@ -44,8 +44,9 @@ object SettingsIndex {
         Entry("Refresh usage", SettingsPage.APIS, "Ask each API how much is left on every key", "refresh usage left remaining", novig),
         Entry("How much is left on each key", SettingsPage.APIS, "Every key's usage, from the API's own prompt where it has one", "usage left remaining credits requests key api", novig),
         // Kalshi key and sockets (Tj, 2026-10-13)
-        Entry("Kalshi API key and socket", SettingsPage.KALSHI, "Save your Kalshi Key ID and private key, test them, switch Kalshi and its real-time socket", "kalshi key id private pem ed25519 rsa socket websocket exchange api test", novig),
-        Entry("Sockets: on or off per API", SettingsPage.APIS, "Keep each API's WebSocket open for real-time prices, or use the regular requests", "socket sockets websocket ws stream real-time realtime novig boltodds pinnodds kalshi toggle", novig),
+        Entry("Use Kalshi", SettingsPage.KALSHI, "Switch Kalshi on or off; save your Kalshi Key ID and private key and test them", "kalshi key id private pem ed25519 rsa exchange api test", novig),
+        Entry("Kalshi socket", SettingsPage.KALSHI, "Keep Kalshi's real-time socket open (needs your key), or read it by request", "kalshi socket websocket real-time realtime ticker", novig),
+        Entry("Sockets", SettingsPage.APIS, "Keep each API's WebSocket open for real-time prices, or use the regular requests", "socket sockets websocket ws stream real-time realtime novig boltodds pinnodds kalshi toggle", novig),
         // BoltOdds Pro (Tj, 2026-10-12)
         Entry("Use BoltOdds", SettingsPage.BOLTODDS, "Real-time odds pushed over a WebSocket from many sportsbooks: lines and player props, read alongside every other API you have on", "boltodds bolt odds websocket socket realtime real time push pro api feed key sportsbooks", novig),
         Entry("Add a BoltOdds key", SettingsPage.BOLTODDS, "Add, order and test your BoltOdds key (the test listens on a socket for 15 seconds and saves a sample)", "boltodds bolt key api test sample websocket rotate", novig),
