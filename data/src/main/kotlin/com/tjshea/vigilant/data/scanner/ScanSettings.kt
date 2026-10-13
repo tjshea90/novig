@@ -1339,6 +1339,11 @@ data class ApiGates(
      * [com.tjshea.vigilant.data.scanner.Pricing.FRESHER_BY_MS] is used; otherwise (or with no time) the feed order decides, as before. Off = the feed order alone.
      */
     val freshestWins: Boolean = true,
+    /**
+     * API study mode (Tj, 2026-10-12: "run tests to see which apis are the best for speed and accuracy"): every API that is switched on is asked for every league, ignoring the standby chain
+     * ([com.tjshea.vigilant.data.scanner.ApiChain]), so Diagnostics' Source race can compare them all on the same scan. It spends the credits of every API that is on: leave it off except for a study.
+     */
+    val askAllSources: Boolean = false,
     val repeatMaxBets: Int = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_BETS,
     val repeatMaxDollars: Double = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_DOLLARS,
     val repeatHedge: Boolean = true,

@@ -49,6 +49,8 @@ object ApiChain {
      */
     fun needed(sourceId: String, league: League, settings: ScanSettings, context: ScanContext): Boolean {
         val kind = kindOf(sourceId) ?: return true
+        // Study mode: every API that is on is asked, so the Source race can compare them on one scan.
+        if (settings.gates.askAllSources) return true
         // No better feed answered this league: it failed, ran out of credits, was held back, or does not list it. The next best takes over.
         if (league.novigName !in context.firstAnswered) return true
         val horizon = context.now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L

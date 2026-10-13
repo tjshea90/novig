@@ -1212,6 +1212,11 @@ private fun ColumnScope.BettingTab(
             "When two of your APIs send the same book's price for the same line, use the one stamped more than 20 seconds newer (otherwise the usual feed order). Off = feed order only. Diagnostics › Source race shows how old each API's quotes were.",
             s.gates.freshestWins, tag = "freshestWinsSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(freshestWins = v)) } }
+        SwitchRow(
+            "API study mode",
+            "For testing which of your APIs is fastest and most accurate: the next scan asks EVERY API that is switched on, instead of letting the best one answer and the rest stand by. It spends the credits of every API that is on, so switch off the ones you are short of (The Odds API, OddsPapi Free), run one scan, send the Diagnostics file (Source race), then switch this off again.",
+            s.gates.askAllSources, tag = "askAllSourcesSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(askAllSources = v)) } }
         SectionTitle("Repeat and hedge guard")
         SwitchRow(
             "Repeat and hedge guard",
