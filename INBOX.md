@@ -7055,3 +7055,12 @@ Look at these errors , I tested boltodds and it is running again. Shouldn't vigi
 ```
 Right now the app is laggy and glitching
 ```
+
+## 2026-10-13T21:29:31Z
+```
+Is there any free rapid sources or at least a few minutes fresh sources for:
+
+Prophetx
+Kalshi
+And any other sharp prop odds
+```
