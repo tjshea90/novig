@@ -6912,3 +6912,8 @@ Boltodds pro (free trials I can refresh)
 
 After your research, tell me which ones to buy if they offer things better than the free tier and which ones to add more free keys
 ```
+
+## 2026-10-13T01:31:10Z
+```
+If I have the rank api setting on, does it use every api on every scan 
+```
