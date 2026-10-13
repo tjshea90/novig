@@ -470,7 +470,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val toasts: kotlinx.coroutines.flow.SharedFlow<String> = _toasts
 
     /** Betting through Novig's API: setup, money, the Bet sheet ([ApiBettingController]). */
-    val api = ApiBettingController(c, _state, viewModelScope, _toasts)
+    val api = ApiBettingController(c, _state, viewModelScope, _toasts, onRestored = { ids -> recheck(ids, quiet = true) })
 
     init {
         // The real-time live lane (Tj, 2026-10-11): its rows and status reach the screen as the engine publishes them, the feed rebuilt off the main thread, at most a few times a second.

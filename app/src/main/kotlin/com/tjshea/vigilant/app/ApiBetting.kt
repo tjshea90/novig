@@ -232,6 +232,8 @@ class ApiBettingController(
     /** A market's book read from Novig now; null = the app's own reader ([AppContainer.novig]). Tests hand in their own. */
     private val readBook: (suspend (String) -> NovigBook?)? = null,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** A bet that missed came back to the lists: its market is priced again now, so a bet no longer +EV does not show (Tj, 2026-10-13). */
+    private val onRestored: (Collection<String>) -> Unit = {},
 ) : com.tjshea.vigilant.app.ui.ApiBetTarget {
     private var betJob: Job? = null
 
@@ -745,7 +747,7 @@ class ApiBettingController(
                 withContext(NonCancellable) {
                     provisional?.join()
                     restoreAfterMiss(c, target, sentAt, clock)
-                    c.recheckMarkets(listOf(target.market.marketId))
+                    onRestored(listOf(target.market.marketId))
                 }
             }
         }
