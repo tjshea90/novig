@@ -28,7 +28,7 @@ object BidTier {
         val over = line.selection.contains(" over ", ignoreCase = true) || line.selection.startsWith("over ", ignoreCase = true)
         return when {
             line.kind in MakerRules.GAME_LINES -> RISKY
-            league == "NFL" && line.kind != BetKind.TEAM_TOTAL -> RISKY
+            league == "NFL" -> RISKY
             line.kind == BetKind.PROP && over && league != "NHL" -> RISKY
             league == "NHL" -> PROVEN
             line.kind == BetKind.TEAM_TOTAL && league != "NFL" -> PROVEN
