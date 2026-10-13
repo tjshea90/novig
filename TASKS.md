@@ -4949,6 +4949,6 @@ Tj: "When I do scans on the app, I have no way to know which apis are accurate, 
 - [x] TAQ3 SourceScore: each API scored from its measured quote age, agreement with Pinnacle and read time (pure, tested); ApiChain's order follows the scores (best first), static order as the prior and the fallback; switch + Diagnostics line "API ranking".
 - [x] TAQ4 Logistics table: which API for which data (Pinnacle sharp anchor; lines; props; periods; closes; live), in research/api_logistics_2026-10-13.md and in the Settings text.
 - [x] TAQ5 Keys rotate and the next-best API takes over (verify with tests that already exist; add any missing case).
-- [ ] TAQ6 Ship, release.
+- [x] TAQ6 Ship, release.
 
 - [x] TBU1 (Tj, 2026-10-13) "After you are done with all app improvements. Tell me what would best suit the app on a 50 dollar per month budget, maximizing free keys. I want the best apis for speed and accuracy and freshness of odds, but slower apis may be used for backups and extra features not covered by other apis. I can get free keys for: Pinnapi, Sharpapi, The odds api, Pinnwire, Propline, Moneylineapp.com, Parlay-api, Pinnodds, Unabated, Tennis api, Boltodds pro (free trials I can refresh). After your research, tell me which ones to buy if they offer things better than the free tier and which ones to add more free keys": research each (vendor docs) and write research/api_budget_plan_2026-10-13.md.
