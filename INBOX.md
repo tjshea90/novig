@@ -7009,3 +7009,14 @@ If Pinnacle moves toward a bet, is that a strong signal to bet it? If so, can th
 ```
 Consider whether it would be wise to  lower the stake on each bid to something low, and increase the amount of bids posted, in attempt to get the most volume at positive EV bets
 ```
+
+## 2026-10-13T17:54:48Z
+```
+Add a more-smaller-bids option to the Bids slider. Make it so it can post hundreds of bids, maybe 1/16 Kelly or something. But it shouldn't sacrifice the EV rules. Make this option automatically include all types of bids, but post the most profitable ones first (from the study) and then the riskier ones after, but with more stringent rules for risky bids, such as all books plus a sharp book must agree. Make it logical. The goal of this slider is many bids up at a time at lower stakes, best bids up first. 
+
+Then:
+
+1) as soon as I bet on something and the bet slip disappears, remove the bet from the list immediately. Add it back to the list only if the bet did not go through after about 15 seconds, and only if it is still positive EV.
+
+2) review the screenshot. If a bet is no longer positive EV, remove it from the list automatically and immediately without me having to press on it
+```
