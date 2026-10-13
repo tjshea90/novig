@@ -52,6 +52,27 @@ class ApiChainTest {
     }
 
     @Test
+    fun `a feed with no recent measurement is auditioned once, then stands by again; the order follows the measurements`() {
+        try {
+            ApiChain.reset()
+            val fresh = SourceScore.Measure("propline", 500, 40_000L, 1.0, 50, now)
+            val stale = SourceScore.Measure("sgo", 500, 380_000L, 1.0, 50, now)
+            ApiChain.measures = mapOf("propline" to fresh, "sgo" to stale)
+            assertEquals("propline", ApiChain.order()[0].first())
+            assertEquals(listOf("propline"), ApiChain.better("oddspapi", listOf("propline", "sgo", "oddspapi")).take(1))
+            // unabated has no measurement: auditioned once...
+            assertTrue(ApiChain.needed("unabated", nfl, ScanSettings(), ctx()))
+            // ...and not asked again at once.
+            assertFalse(ApiChain.needed("unabated", nfl, ScanSettings(), ctx()))
+            // With the switch off nothing is auditioned.
+            ApiChain.reset(); ApiChain.measures = mapOf("propline" to fresh)
+            assertFalse(ApiChain.needed("unabated", nfl, ScanSettings(gates = ApiGates(rankByMeasure = false)), ctx()))
+        } finally {
+            ApiChain.reset()
+        }
+    }
+
+    @Test
     fun `when no better feed answered the league (failed, out of credits, held back) the next best takes over`() {
         assertTrue(ApiChain.needed("oddspapi", nfl, ScanSettings(), ctx(answered = false)))
     }
