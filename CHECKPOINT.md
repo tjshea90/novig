@@ -1,22 +1,22 @@
-# CHECKPOINT 3129 — read me first, then TASKS.md
+# CHECKPOINT 3130 — read me first, then TASKS.md
 
-**Written:** 2026-10-13T00:14:24Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `32df81610` (this checkpoint is the commit after it)
+**Written:** 2026-10-13T00:18:04Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `6c69b7b5b` (this checkpoint is the commit after it)
 
 ## Just done
-API study: read v0.95.5 file, added API study mode (askAllSources), notes
+pre-release: v0.95.6: API study mode (one scan asks every API that is on) for the Source race (versionCode 242, v0.95.6)
 
 ## Do this next
-ship v0.95.6 (bash ship.sh), release.yml, record-release; then ask Tj to turn study mode on, run ONE scan (switch off The Odds API / OddsPapi Free), send Diagnostics
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.95.6), then run: bash tools/record-release.sh v0.95.6 242 "v0.95.6: API study mode (one scan asks every API that is on) for the Source race"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  6c69b7b5b ckpt 3129: API study: read v0.95.5 file, added API study mode (askAllSources), notes
   f95f49035 ckpt 3128: pre-release: v0.95.5: Freshest quote wins (switch) and Diagnostics Source r
   dcc9af869 ckpt 3127: pre-ship: v0.95.5: Freshest quote wins (switch) and Diagnostics Source race
   15a921b11 ckpt 3126: advice follow-up: free keys, SharpAPI
@@ -26,8 +26,4 @@ ship v0.95.6 (bash ship.sh), release.yml, record-release; then ask Tj to turn st
   1e793c057 ckpt 3122: PropLine vs ParlayAPI pregame comparison written
   4354d30e0 ckpt 3121: Read v0.95.3 diagnostics; evidence note
   1d5039705 ckpt 3120: PropLine Streaming Lite investigated (vendor docs), note written
-  eb2e43f16 ckpt 3119: pre-release: v0.95.3: BoltOdds live note lists per-game fresh companies; re
 ```
-
-(4 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
