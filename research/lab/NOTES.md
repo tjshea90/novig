@@ -48,3 +48,4 @@
 - 2026-10-12 subscription advice (research/subscription_advice_2026-10-12.md).
 - 2026-10-12 follow-up advice: free keys beat PropLine Pro for scanning; SharpAPI not worth it (research/subscription_advice_2026-10-12.md).
 - 2026-10-12 TFR: keyless freshness measurements (research/api_freshness_2026-10-12.md), shopping list (research/api_shopping_list_2026-10-12.md); built 'Freshest quote wins' + Diagnostics Source race.
+- 2026-10-12 first API study (research/api_study_v0.95.5_2026-10-12.md): SGO median quote age 229 s; ParlayAPI slowest read; PropLine unmeasured -> API study mode in v0.95.6.

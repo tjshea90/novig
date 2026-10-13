@@ -4937,3 +4937,7 @@ Tj: "Set up a vigilant to use the best, freshest available source from the toggl
 - [x] TFR2 (built as "Freshest quote wins": FreshestWinsTest; the chain order itself stays, ordering it by measured age waits for the Source race data) Read ApiChain/Scanner.SOURCE_ORDER; add freshness-aware ordering: per-source/per-book measured quote age (median over the last scan) decides which source wins a book/line, ties by the old order, switch off = old order (test).
 - [x] TFR3 (Diagnostics Source race) In-app "Source race" Diagnostics section: per source, per book: quotes, median/p90 age, so Tj's next file measures every API on his keys.
 - [x] TFR4 One-page shopping list for Tj (research/api_shopping_list_2026-10-12.md): keys to get free, paid <= $50, skip.
+
+- [x] TFR5a Read the v0.95.5 file (research/api_study_v0.95.5_2026-10-12.md): SGO ~229 s stale, ParlayAPI reads 41 s, PropLine never asked (standby chain).
+- [x] TFR5b API study mode switch (askAllSources) so one scan asks every API on; Diagnostics line; ApiChainTest.
+- [ ] TFR5c After Tj sends a study-mode file: rank PropLine/ParlayAPI/SGO/Unabated by quote age; add per-source agreement-with-Pinnacle (accuracy) to the Source race; reorder ApiChain by the result.
