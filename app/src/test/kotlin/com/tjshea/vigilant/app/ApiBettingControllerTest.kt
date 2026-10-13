@@ -332,7 +332,7 @@ class ApiBettingControllerTest {
             shadowOf(Looper.getMainLooper()).idle()
             return restored
         }
-        assertEquals(1, run("CANCELLED") { _, _ -> null })
+        assertEquals(1, run("CANCELED") { _, _ -> null })
         assertEquals(0, run("FILLED") { qty, price -> NovigFill("f1", "order-1", null, o.market.marketId, o.outcome.outcomeId, qty, qty * price * 0.01, true, 0.0, now) })
     }
 
