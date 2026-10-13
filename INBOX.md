@@ -6984,3 +6984,8 @@ Is this all of my bets and bids?
 ```
 @"/root/.claude/uploads/d95b6645-d5e0-5a0b-9345-cf5a8be1907e/0ad3aa22-bids-2026-10-13.jsonl" @"/root/.claude/uploads/d95b6645-d5e0-5a0b-9345-cf5a8be1907e/8d48b138-bets-2026-10-13.jsonl" 
 ```
+
+## 2026-10-13T06:22:02Z
+```
+If I keep gathering this data, how much until there is enough sample to act on
+```
