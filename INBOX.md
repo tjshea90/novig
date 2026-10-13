@@ -6994,3 +6994,8 @@ If I keep gathering this data, how much until there is enough sample to act on
 ```
 How do I do on nhl player props like shots on goal
 ```
+
+## 2026-10-13T06:26:38Z
+```
+Is there any research on the Internet on the types of bets and bids that are most profitable over large samples
+```
