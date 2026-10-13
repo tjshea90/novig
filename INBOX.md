@@ -6964,3 +6964,8 @@ Research how fresh the odds are and what books are offered including sharp books
 ```
 Also most profitable types of bets
 ```
+
+## 2026-10-13T06:12:23Z
+```
+Give me more details on the team totals. Over or under. Sports?
+```
