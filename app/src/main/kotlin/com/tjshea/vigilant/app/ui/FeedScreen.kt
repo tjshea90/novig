@@ -592,6 +592,9 @@ private fun OddsAgeLine(o: Opportunity) {
     val now = rememberNow(if (o.liveAges != null) 1_000 else 15_000)
     val text = com.tjshea.vigilant.data.scanner.OddsAge.text(o, now) ?: return
     Text(text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("oddsAge"))
+    // Where the fair odds came from (Tj, 2026-10-13): the books behind them, the API that sent each, and how old each price is.
+    val from = if (o.liveAges != null) null else com.tjshea.vigilant.data.scanner.FairProvenance.text(o, now)
+    if (from != null) Text(from, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("fairFrom"))
 }
 
 /** How often the open +EV list re-reads Novig's prices for its bets. */
