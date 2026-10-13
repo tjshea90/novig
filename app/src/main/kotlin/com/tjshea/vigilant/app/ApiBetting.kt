@@ -234,6 +234,8 @@ class ApiBettingController(
     private val clock: () -> Long = System::currentTimeMillis,
     /** A bet that missed came back to the lists: its market is priced again now, so a bet no longer +EV does not show (Tj, 2026-10-13). */
     private val onRestored: (Collection<String>) -> Unit = {},
+    /** [MISS_RESTORE_MS]; tests shorten it. */
+    private val missRestoreMs: Long = MISS_RESTORE_MS,
 ) : com.tjshea.vigilant.app.ui.ApiBetTarget {
     private var betJob: Job? = null
 
@@ -746,7 +748,7 @@ class ApiBettingController(
                 // Not unconfirmed: that one may have been placed, so it stays off the list until the Tracker settles it.
                 withContext(NonCancellable) {
                     provisional?.join()
-                    restoreAfterMiss(c, target, sentAt, clock)
+                    restoreAfterMiss(c, target, sentAt, clock, missRestoreMs)
                     onRestored(listOf(target.market.marketId))
                 }
             }

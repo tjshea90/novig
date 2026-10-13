@@ -74,7 +74,7 @@ class ApiBettingControllerTest {
 
     /** A Novig that fills what's asked for at the cost the plan expected; counts the orders. */
     private class FakeNovig(
-        val orders: AtomicInteger, val slowMs: Long = 0, val wallet: Double = 25.0, val walletMs: Long = 0, val fillsFor: (qty: Long, price: Double) -> NovigFill?,
+        val orders: AtomicInteger, val slowMs: Long = 0, val wallet: Double = 25.0, val walletMs: Long = 0, val status: String = "FILLED", val fillsFor: (qty: Long, price: Double) -> NovigFill?,
     ) :
         NovigTradingClient(NovigSignedClient(OkHttpClient(), Json { ignoreUnknownKeys = true }, object : NovigSigningKey {
             override val keyId = "kid"
@@ -88,7 +88,7 @@ class ApiBettingControllerTest {
             if (slowMs > 0) kotlinx.coroutines.delay(slowMs)
             return "order-1"
         }
-        override suspend fun order(orderId: String) = NovigOrder(orderId, null, "", last!!.first, last!!.second, last!!.third, 0, "IOC", "FILLED", 1)
+        override suspend fun order(orderId: String) = NovigOrder(orderId, null, "", last!!.first, last!!.second, last!!.third, 0, "IOC", status, 1)
         override suspend fun fills(orderId: String?, limit: Int) = listOfNotNull(fillsFor(last!!.third, last!!.second))
         override suspend fun balance(subaccountKeyId: String): Double {
             if (walletMs > 0) kotlinx.coroutines.delay(walletMs)
@@ -313,6 +313,42 @@ class ApiBettingControllerTest {
         // Nothing can be done to a sheet that is gone.
         api.setStake(9.0)
         assertNull(state.value.betSheet)
+    }
+
+    @Test
+    fun `a bet leaves the lists when its slip closes, and a miss brings it back only after the wait`() {
+        val (o, book) = sample()
+        val state = startState()
+        app.container.installTradingForTest(FakeNovig(AtomicInteger(), status = "CANCELLED") { _, _ -> null }, "sub")
+        val api = ApiBettingController(app.container, state, scope, toasts, readBook = { book }, clock = { now }, missRestoreMs = 400)
+        fun marked() = app.container.placed.flow.value?.bets?.any { o.key in it.keys } == true
+        api.bet(o)
+        waitFor("a plan") { state.value.betSheet?.plan != null }
+        api.confirm()
+        // The slip is gone and the bet is off the lists at once (before Novig has said how the order ended).
+        waitFor("the slip closing") { state.value.betSheet == null }
+        waitFor("the bet leaving the lists") { marked() }
+        // The order ended unfilled: after the wait the mark is taken off, so the bet may list again (the lists' own EV check decides whether it shows).
+        waitFor("the bet coming back") { !marked() }
+        assertTrue(kotlinx.coroutines.runBlocking { app.container.tracker.all() }.none { it.orderId == "order-1" })
+    }
+
+    @Test
+    fun `a bet that filled stays off the lists`() {
+        val (o, book) = sample()
+        val state = startState()
+        val fake = FakeNovig(AtomicInteger()) { qty, price ->
+            NovigFill("f1", "order-1", null, o.market.marketId, o.outcome.outcomeId, qty, qty * price * 0.01, true, 0.0, now)
+        }
+        app.container.installTradingForTest(fake, "sub")
+        val api = ApiBettingController(app.container, state, scope, toasts, readBook = { book }, clock = { now }, missRestoreMs = 200)
+        api.bet(o)
+        waitFor("a plan") { state.value.betSheet?.plan != null }
+        api.confirm()
+        waitFor("recorded") { kotlinx.coroutines.runBlocking { app.container.tracker.all() }.any { it.orderId == "order-1" } }
+        Thread.sleep(500)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(app.container.placed.flow.value?.bets?.any { o.key in it.keys && it.odds.isNotEmpty() } == true)
     }
 
     @Test

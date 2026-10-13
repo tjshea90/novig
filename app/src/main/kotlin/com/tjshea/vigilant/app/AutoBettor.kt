@@ -910,9 +910,9 @@ internal suspend fun markProvisional(c: AppContainer, target: BetTarget, now: Lo
  * After the order was sent at [sentAt] and did not go through: waits until [MISS_RESTORE_MS] after the slip closed, then takes the provisional mark off, unless the bet was marked placed
  * since (only the provisional mark, which has no odds and the time [sentAt], is ever removed). The lists drop it again at once if it is no longer +EV (CNO's live EV, the feed's re-price).
  */
-internal suspend fun restoreAfterMiss(c: AppContainer, target: BetTarget, sentAt: Long, clock: () -> Long) {
+internal suspend fun restoreAfterMiss(c: AppContainer, target: BetTarget, sentAt: Long, clock: () -> Long, restoreMs: Long = MISS_RESTORE_MS) {
     val key = target.placedKey ?: return
-    val wait = sentAt + MISS_RESTORE_MS - clock()
+    val wait = sentAt + restoreMs - clock()
     if (wait > 0) kotlinx.coroutines.delay(wait)
     val mine = c.placed.flow.value?.bets?.firstOrNull { b -> key in b.keys && b.odds.isEmpty() && b.placedAtMs == sentAt } ?: return
     runCatching { c.placed.unmark(mine.key) }
