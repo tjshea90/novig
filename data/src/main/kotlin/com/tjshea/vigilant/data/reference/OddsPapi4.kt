@@ -293,18 +293,35 @@ class Op4Store(private val file: File?, private val clock: () -> Long = System::
 
     init {
         runCatching { file?.takeIf { it.exists() }?.readText()?.let { json.decodeFromString<Map<String, Entry>>(it) } }.getOrNull()?.let { entries.putAll(it) }
+        // Tj's 2026-10-13 file: 17 MB, rewritten whole on every change and held in memory whole. Entries past what any reader would still use are dropped at once, not only when a new one is saved.
+        if (prune()) persist()
+    }
+
+    /** How long an entry is worth keeping: its reader's own limit ([OddsPapi4Client]'s window, whole-league and month caches) plus a margin. Unknown keys keep the month. */
+    private fun keepFor(key: String): Long = when {
+        key.startsWith("fxall|") -> 6 * 3_600_000L
+        key.startsWith("fx|") -> 24 * 3_600_000L
+        key.startsWith("fair|") -> 2 * OddsPapi4Client.DAY_MS
+        else -> 31 * OddsPapi4Client.DAY_MS
+    }
+
+    /** Drops the entries past their keep time; true when something went. */
+    private fun prune(): Boolean = entries.entries.removeIf { clock() - it.value.at > keepFor(it.key) }
+
+    private fun persist() {
+        runCatching { file?.let { f -> val tmp = File(f.path + ".tmp"); tmp.writeText(json.encodeToString(entries.toMap())); tmp.renameTo(f) } }
     }
 
     fun get(key: String, maxAgeMs: Long): String? = entries[key]?.takeIf { clock() - it.at < maxAgeMs }?.v
 
     fun put(key: String, value: String) {
         entries[key] = Entry(clock(), value)
-        runCatching {
-            // Old fixture lists are dropped so the file stays small.
-            entries.entries.removeIf { it.key.startsWith("fx|") && clock() - it.value.at > 3 * OddsPapi4Client.DAY_MS }
-            file?.let { f -> val tmp = File(f.path + ".tmp"); tmp.writeText(json.encodeToString(entries.toMap())); tmp.renameTo(f) }
-        }
+        prune()
+        persist()
     }
+
+    /** Entries held, for tests and Diagnostics. */
+    val size: Int get() = entries.size
 }
 
 /**
