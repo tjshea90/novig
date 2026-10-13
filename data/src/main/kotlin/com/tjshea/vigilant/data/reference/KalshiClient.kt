@@ -101,7 +101,7 @@ class KalshiClient(
     private val refusedAt = java.util.concurrent.atomic.AtomicInteger(0)
 
     /** The gate this request waits at: the faster one while the test is on and nothing has been refused at it, else the measured-safe pace. */
-    private fun activeGate(): RateGate = if (fastPace() && refusedAt.get() == 0) fastGate else slowGate
+    private fun activeGate(): RateGate = if (signed() != null) authedGate else if (fastPace() && refusedAt.get() == 0) fastGate else slowGate
 
     /**
      * The pace test in a line for Diagnostics: off, still running (requests so far), passed (requests at the faster pace with none refused) or failed (the request Kalshi
@@ -226,29 +226,34 @@ class KalshiClient(
 
     override suspend fun lines(league: League, settings: ScanSettings): RefSnapshot? {
         val now = clock()
+        refreshLimits()
         val series = selected(league, settings).filter { familyOf(it) != MarketFamily.PLAYER_PROPS }
         val events = ArrayList<EventDto>()
         var fetched = 0
+        var asOf = now
         val read = readSeries(series)
         for (s in series) {
             // A failed read is left for [odds], which asks again for whatever didn't come and reports it.
             val got = read[s]?.getOrNull() ?: continue
-            synchronized(early) { early[s] = now to got }
-            events += got
+            synchronized(early) { early[s] = got.readAtMs to got.events }
+            val (v, at) = view(got.readAtMs, got.events)
+            asOf = minOf(asOf, at)
+            events += v
             fetched++
         }
         if (fetched == 0) return null
-        return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, now), now, provider = id)
+        return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, asOf), asOf, provider = id)
     }
 
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val now = clock()
+        refreshLimits()
         val series = selected(league, settings)
         val events = ArrayList<EventDto>()
         var failure: Exception? = null
         var fetched = 0
         // Every quote is stamped with the oldest read behind it: lines read by [lines] a few seconds ago never pass
-        // for newer than they are (RESEARCH.md §24).
+        // for newer than they are (RESEARCH.md §24). With the socket, a market it vouches for is as new as the last push.
         var asOf = now
         // What [lines] just read stands in for asking again; only the rest is asked, several at a time.
         val already = series.associateWith { s -> synchronized(early) { early.remove(s) }?.takeIf { now - it.first in 0 until EARLY_MS } }
@@ -256,14 +261,20 @@ class KalshiClient(
         for (s in series) {
             val kept = already[s]
             if (kept != null) {
-                asOf = minOf(asOf, kept.first)
-                events += kept.second
+                val (v, at) = view(kept.first, kept.second)
+                asOf = minOf(asOf, at)
+                events += v
                 fetched++
                 continue
             }
             // One series failing (or throttled) mustn't cost the others: keep what came back. Null: skipped after a throttle.
             val got = read[s] ?: continue
-            got.onSuccess { events += it; fetched++ }.onFailure { if (failure == null) failure = it as? Exception ?: RuntimeException(it) }
+            got.onSuccess { r ->
+                val (v, at) = view(r.readAtMs, r.events)
+                asOf = minOf(asOf, at)
+                events += v
+                fetched++
+            }.onFailure { if (failure == null) failure = it as? Exception ?: RuntimeException(it) }
         }
         if (fetched == 0 && failure != null) throw failure
         return RefSnapshot(league.oddsApiSportKey, parse(events, league, settings.exchangeMaxSpread, asOf), asOf, provider = id)
@@ -276,15 +287,24 @@ class KalshiClient(
      * pace was raised, a read takes ~0.2 s). Once Kalshi refuses, series not yet started are skipped (null) instead of asking a
      * limiting server more; a series that failed is its failure. Keyed by series.
      */
-    private suspend fun readSeries(series: List<String>): Map<String, Result<List<EventDto>>?> = coroutineScope {
+    private class Read(val readAtMs: Long, val events: List<EventDto>)
+
+    private suspend fun readSeries(series: List<String>): Map<String, Result<Read>?> = coroutineScope {
         val throttled = AtomicBoolean(false)
-        val permits = Semaphore(PARALLEL)
+        val permits = Semaphore(if (signed() != null) AUTH_PARALLEL else PARALLEL)
         series.map { s ->
             s to async {
+                // The socket vouches for this whole series since its catalog was read: nothing to ask Kalshi.
+                fromCatalog(s, clock())?.let { c -> stream?.use(); return@async Result.success(Read(c.readAtMs, c.events)) }
                 permits.withPermit {
                     if (throttled.get()) return@withPermit null
                     try {
-                        Result.success(fetchSeries(s))
+                        // The read counts from when it began: a push that landed meanwhile may or may not be in it.
+                        val startedAt = clock()
+                        val events = fetchSeries(s)
+                        catalog[s] = Catalog(startedAt, events)
+                        if (streamOn()) stream?.want(s, events.flatMap { e -> e.markets.map { it.ticker } })
+                        Result.success(Read(startedAt, events))
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
@@ -301,6 +321,9 @@ class KalshiClient(
 
     private fun host(): String = if (onAlt && altBaseUrl != null) altBaseUrl else baseUrl
 
+    /** With a key, the recommended `external-api` host (the dedicated one for API traders); without, the host that has always answered unsigned reads. */
+    private fun hostNow(): String = if (signed() != null && altBaseUrl != null && !onAlt) altBaseUrl else host()
+
     /** The first host failed in a way that means it is gone, not busy: the other one, if there is one and it isn't already the one in use. */
     private fun switchHost(): Boolean {
         if (altBaseUrl == null || onAlt) return false
@@ -314,7 +337,7 @@ class KalshiClient(
         repeat(MAX_PAGES) {
             var page: PageDto? = null
             for (attempt in 0 until ATTEMPTS) {
-                val url = "${host()}/events".toHttpUrl().newBuilder().apply {
+                val url = "${hostNow()}/events".toHttpUrl().newBuilder().apply {
                     addQueryParameter("series_ticker", series)
                     addQueryParameter("status", "open")
                     addQueryParameter("with_nested_markets", "true")
@@ -326,7 +349,7 @@ class KalshiClient(
                 gate.acquire()
                 if (fastRequest) sent.incrementAndGet()
                 val result = try {
-                    http.newCall(Request.Builder().url(url).get().build()).await().use { response ->
+                    http.newCall(Request.Builder().url(url).get().apply { signed()?.headers("GET", url, clock())?.forEach { (h, v) -> header(h, v) } }.build()).await().use { response ->
                         val body = response.body?.string().orEmpty()
                         usage?.countKeyless(QuotaPolicy.KALSHI, calls = 1, throttled = if (response.code == 429) 1 else 0)
                         when {
@@ -336,6 +359,7 @@ class KalshiClient(
                                 if (fastRequest) refusedAt.compareAndSet(0, sent.get().coerceAtLeast(1))
                                 slowGate.pause(System.currentTimeMillis() + wait)
                                 if (fastRequest) fastGate.pause(System.currentTimeMillis() + wait)
+                                if (signed() != null) authedGate.pause(System.currentTimeMillis() + wait)
                                 gate.slowDown()
                                 null
                             }
@@ -387,6 +411,20 @@ class KalshiClient(
         /** The measured test (Tj, 2026-10-07, proposal 9): requests a second, and how many requests count as passed. */
         const val TRIAL_RATE = 3.0
         const val TRIAL_REQUESTS = 300
+
+        /**
+         * Signed reads (KALSHI_API.md): the pace before the account's limits are known, the most it ever goes (a read of the nested-markets route may cost more than the default 10 tokens, and the docs
+         * give no 429 cooldown), the burst, and how many series are read at once. [DEFAULT_COST] is the docs' "most requests cost 10 tokens".
+         */
+        const val AUTH_START_RATE = 4.0
+        const val AUTH_MAX_RATE = 8.0
+        const val AUTH_BURST = 8
+        const val AUTH_PARALLEL = 4
+        const val DEFAULT_COST = 10.0
+
+        /** How long a series read stands as the catalog the socket's prices are laid over (new markets appear in it), and how often the account's limits are read. */
+        const val CATALOG_TTL_MS = 5 * 60_000L
+        const val LIMITS_TTL_MS = 60 * 60_000L
 
         /** Series read at once, and tries per page (a 429 waits Retry-After, then tries again). */
         const val PARALLEL = 2
