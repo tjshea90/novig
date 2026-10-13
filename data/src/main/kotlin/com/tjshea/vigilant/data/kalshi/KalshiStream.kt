@@ -374,7 +374,7 @@ class KalshiStream(
             "socket: ${state.name.lowercase()} · connects $connects, drops $drops" + (lastClose?.let { " (last: $it)" } ?: "") +
                 " · frames $frames (ticker $tickerMessages, lifecycle $lifecycleMessages)" + (readyAtMs.takeIf { it > 0 }?.let { " · ready ${(now - it) / 1000}s ago" } ?: " · not ready"),
         )
-        add("  markets: wanted $wantedCount, subscribed $subscribedCount, with a push $${tops.size}, closed/paused ${closedMarkets.size} · chunk $chunk · sequence gaps $gaps")
+        add("  markets: wanted $wantedCount, subscribed $subscribedCount, with a push ${tops.size}, closed/paused ${closedMarkets.size} · chunk $chunk · sequence gaps $gaps")
         lastError?.let { add("  last error: $it") }
         if (errorCodes.isNotEmpty()) add("  error codes seen: " + errorCodes.entries.sortedBy { it.key }.joinToString { "${it.key}×${it.value}" })
         if (lastFrameMs > 0) add("  last frame ${(now - lastFrameMs) / 1000}s ago")
