@@ -27,6 +27,12 @@ object ApiChain {
     /** What each feed was last measured to deliver ([SourceScore]); empty = the shipped order. Set by the scanner after each scan while [ApiGates.rankByMeasure] is on. */
     @Volatile var measures: Map<String, SourceScore.Measure> = emptyMap()
 
+    /** When each feed was last auditioned (asked only to be measured), so one that never yields a measurable board is not auditioned on every scan. */
+    private val auditioned = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    /** A new scanner starts from the shipped order. */
+    fun reset() { measures = emptyMap(); auditioned.clear() }
+
     /** The chains, best first: the shipped order re-ranked by [measures]. */
     private val CHAINS: List<List<Pair<String, Kind>>>
         get() {
@@ -67,7 +73,10 @@ object ApiChain {
     fun needed(sourceId: String, league: League, settings: ScanSettings, context: ScanContext): Boolean {
         val kind = kindOf(sourceId) ?: return true
         // Audition: a feed with no recent measurement is asked once so it can be measured, and can earn first place (a feed that always stands by could never be ranked).
-        if (settings.gates.rankByMeasure && measures.isNotEmpty() && SourceScore.auditionDue(sourceId, context.now, measures)) return true
+        if (settings.gates.rankByMeasure && measures.isNotEmpty() && SourceScore.auditionDue(sourceId, context.now, measures) && (context.now - (auditioned[sourceId] ?: 0L)) > SourceScore.AUDITION_MS) {
+            auditioned[sourceId] = context.now
+            return true
+        }
         // Study mode: every API that is on is asked, so the Source race can compare them on one scan.
         if (settings.gates.askAllSources) return true
         // No better feed answered this league: it failed, ran out of credits, was held back, or does not list it. The next best takes over.

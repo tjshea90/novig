@@ -141,6 +141,8 @@ class Scanner(
     /** Latest snapshot per `"$sourceId|$league"`. */
     private val references = HashMap<String, Cached>()
 
+    init { ApiChain.reset() }
+
     /** The `"$sourceId|$league"` keys answered this scan (fetched, re-used or partly): what a fallback may lean on. */
     private val answered = HashSet<String>()
     private var creditsRemaining: Int? = null
