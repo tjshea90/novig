@@ -49,8 +49,32 @@ object BoltMarkets {
         }
     }
 
-    /** What [o] is in [league] (Novig's name), or null when it is not a market Vigilant prices. */
+    private class Memo(val ref: BoltMarketRef?)
+
+    /** league -> market name -> the answer for each shape of outcome (a number? an Over/Under?): see [classify]. */
+    private val classifyMemo = java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.ConcurrentHashMap<String, Array<Memo?>>>()
+    private val usableMemo = java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.ConcurrentHashMap<String, Array<Boolean?>>>()
+
+    /** The most distinct names kept per league (the books use a few hundred): a flood of odd names is classified each time, never remembered without end. */
+    private const val MAX_MEMO = 4_000
+
+    /**
+     * What [o] is in [league] (Novig's name), or null when it is not a market Vigilant prices.
+     *
+     * The answer depends only on the league, the market name and whether the outcome has a number and an Over/Under, so it is remembered by those: it was worked out with six regular
+     * expressions, set unions and string copies for EVERY outcome, on every push and again on every pass (Tj's 2026-10-13 file: BoltOdds' 215,000 outcomes made its refresh passes take 25-45 s on
+     * the phone). Same answers, the work done once per name.
+     */
     fun classify(league: String, o: BoltOutcome): BoltMarketRef? {
+        val shape = (if (o.line != null) 1 else 0) + (if (o.isOver || o.isUnder) 2 else 0)
+        val byName = classifyMemo.getOrPut(league) { java.util.concurrent.ConcurrentHashMap() }
+        val slot = byName[o.name] ?: arrayOfNulls<Memo>(4).also { if (byName.size < MAX_MEMO) byName[o.name] = it }
+        slot[shape]?.let { return it.ref }
+        return classifyUncached(league, o).also { slot[shape] = Memo(it) }
+    }
+
+    /** [classify] without the memory: the definition, and what the tests hold the remembered answers to. */
+    internal fun classifyUncached(league: String, o: BoltOutcome): BoltMarketRef? {
         val (period, rest) = period(o.name) ?: return null
         val base = norm(rest)
         if (base.isEmpty()) return null
@@ -94,6 +118,14 @@ object BoltMarkets {
 
     /** Whether [name] is a market name this table can use at all, whatever the shape of the outcome (for choosing the market filter from `get_markets`). */
     fun usableName(league: String, name: String, props: Boolean): Boolean {
+        val byName = usableMemo.getOrPut(league) { java.util.concurrent.ConcurrentHashMap() }
+        val slot = byName[name] ?: arrayOfNulls<Boolean>(2).also { if (byName.size < MAX_MEMO) byName[name] = it }
+        val i = if (props) 1 else 0
+        slot[i]?.let { return it }
+        return usableNameUncached(league, name, props).also { slot[i] = it }
+    }
+
+    internal fun usableNameUncached(league: String, name: String, props: Boolean): Boolean {
         val (period, rest) = period(name) ?: return false
         val base = norm(rest)
         val b = withoutAlternate(base).let { if (it.endsWith("s") && it.removeSuffix("s") in (MONEYLINE + SPREAD + TOTAL + TEAM_TOTAL)) it.removeSuffix("s") else it }

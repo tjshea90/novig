@@ -66,7 +66,10 @@ object BoltConvert {
     /** The reference event id of BoltOdds game [gameId] in [league] (the same wherever it is built). */
     fun eventId(league: String, gameId: String): String = "bolt-$league-${gameId.hashCode().toUInt().toString(16)}"
 
-    private fun norm(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
+    /** Team names are few and said again for every outcome of every book: their letters-and-digits form is worked out once (bounded). */
+    private val normMemo = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    private fun norm(s: String): String = normMemo[s] ?: s.lowercase().filter { it.isLetterOrDigit() }.also { if (normMemo.size < 20_000) normMemo[s] = it }
 
     /** The same team named two ways: equal letters and digits, or one inside the other ("Mets" in "New York Mets"). */
     fun sameTeam(a: String?, b: String?): Boolean {
