@@ -159,6 +159,8 @@ data class KeyUsage(
     val recent: List<Long> = emptyList(),
     /** The provider refused the key itself (wrong or deleted), not just its allowance. */
     val refused: Boolean = false,
+    /** Refusals in a row (reset by any accepted call or Test): each one rests the key longer, [UsageMeter.refusalHold]. */
+    val refusals: Int = 0,
     /** When this key first answered (kept across periods): a plan bought mid-month is paced from here ([CreditPace]), not from the 1st. */
     val firstSeenMs: Long? = null,
     /** When the provider says this key's period resets ([CreditHeaders.resetAtMs], ParlayAPI's `X-RateLimit-Reset`): its plan's own cycle. */
@@ -236,7 +238,7 @@ class UsageMeter(
     suspend fun recordCall(
         policy: QuotaPolicy, key: String, cost: Int, serverRemaining: Int? = null, serverUsed: Int? = null, resetAtMs: Long? = null,
     ) = edit(policy, key) { u, now ->
-        var x = u.copy(calls = u.calls + 1, lastCallMs = now, lastCost = cost, recent = u.recent + now, lastNote = null, firstSeenMs = u.firstSeenMs ?: now, charged = u.charged + cost)
+        var x = u.copy(calls = u.calls + 1, lastCallMs = now, lastCost = cost, recent = u.recent + now, lastNote = null, firstSeenMs = u.firstSeenMs ?: now, charged = u.charged + cost, refused = false, refusals = 0)
         if (serverUsed != null && serverRemaining != null) {
             val drop = u.used - serverUsed
             val sinceLast = u.lastCallMs?.let { now - it } ?: Long.MAX_VALUE
@@ -315,13 +317,18 @@ class UsageMeter(
         u.copy(coolUntil = now + retryAfterMs, lastNote = note, lastCallMs = now, recent = u.recent + now)
     }.also { countKeyless(policy, calls = 0, throttled = 1) }
 
-    /** The key itself was refused (wrong, deleted, deactivated). Skipped until the next period. */
+    /**
+     * The key itself was refused (wrong, deleted, deactivated, or a socket closed 1008 for a moment's reason). It rests only briefly and is tried again,
+     * the hold growing with each refusal in a row ([refusalHold]), so a refusal that was transient (Tj, 2026-10-13: BoltOdds refused once and stayed
+     * shut out all day though its key worked) heals by itself on a later scan, and a truly bad key costs one call an hour at most.
+     */
     suspend fun recordRejected(policy: QuotaPolicy, key: String, note: String) = edit(policy, key) { u, now ->
-        u.copy(depletedUntil = u.nextReset(policy), refused = true, lastNote = note, lastCallMs = now)
+        val n = u.refusals + 1
+        u.copy(depletedUntil = now + refusalHold(n), refused = true, refusals = n, lastNote = note, lastCallMs = now)
     }
 
     /** A Test key found [key] accepted: a rest that a refusal set is lifted (nothing else changes). */
-    suspend fun recordAccepted(policy: QuotaPolicy, key: String) = edit(policy, key) { u, _ -> if (u.refused) u.copy(refused = false, depletedUntil = null, lastNote = null) else u }
+    suspend fun recordAccepted(policy: QuotaPolicy, key: String) = edit(policy, key) { u, _ -> if (u.refused || u.refusals > 0) u.copy(refused = false, refusals = 0, depletedUntil = null, lastNote = null) else u }
 
     /** Requests (and throttles) to any provider, for the "today" counters. In memory until [flush]. */
     suspend fun countKeyless(policy: QuotaPolicy, calls: Int = 1, throttled: Int = 0) = mutex.withLock {
@@ -388,6 +395,9 @@ class UsageMeter(
         const val MINUTE = 60_000L
         const val HOUR = 3_600_000L
         const val REPROBE = 6 * HOUR
+
+        /** How long the [n]th refusal in a row rests a key: 2, 4, 8 ... minutes, at most an hour. */
+        fun refusalHold(n: Int): Long = minOf(2 * MINUTE shl (n - 1).coerceIn(0, 5), HOUR)
         const val RESET_GRACE = 36 * HOUR
 
         private val DAY_FMT = DateTimeFormatter.ofPattern("MMM d", Locale.US)

@@ -56,7 +56,11 @@ class ApiProbe(
         return keys.map { key ->
             val masked = UsageViews.mask(key)
             try {
-                one(provider, key.trim()).let { (ok, msg) -> Check(masked, ok, msg) }
+                one(provider, key.trim()).let { (ok, msg) ->
+                    // A key the API just accepted is no longer refused, whichever API it is: the rotation tries it again on the very next call.
+                    if (ok) policyOf(provider)?.let { meter.recordAccepted(it, key.trim()) }
+                    Check(masked, ok, msg)
+                }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -78,6 +82,20 @@ class ApiProbe(
 
     private suspend fun get(url: String, headers: List<Pair<String, String>>): com.tjshea.vigilant.data.HttpText =
         http.newCall(Request.Builder().url(url.toHttpUrl()).apply { headers.forEach { (k, v) -> header(k, v) } }.get().build()).awaitText()
+
+    private fun policyOf(p: ApiProvider): QuotaPolicy? = when (p) {
+        ApiProvider.THE_ODDS_API -> QuotaPolicy.ODDS_API
+        ApiProvider.PINNAPI -> QuotaPolicy.PINNAPI
+        ApiProvider.PINNWIRE -> QuotaPolicy.PINNWIRE
+        ApiProvider.PROPLINE -> QuotaPolicy.PROPLINE
+        ApiProvider.PARLAY -> QuotaPolicy.PARLAY
+        ApiProvider.SPORTSGAMEODDS -> QuotaPolicy.SGO
+        ApiProvider.ODDSPAPI -> QuotaPolicy.ODDSPAPI
+        ApiProvider.ODDSPAPI_FREE -> QuotaPolicy.ODDSPAPI_FREE
+        ApiProvider.UNABATED -> QuotaPolicy.UNABATED
+        ApiProvider.BOLTODDS -> QuotaPolicy.BOLTODDS
+        ApiProvider.PINNODDS -> null
+    }
 
     private fun refused(code: Int, what: String = "") = "Refused (HTTP $code): this key is not accepted${if (what.isNotEmpty()) " $what" else ""}."
 
