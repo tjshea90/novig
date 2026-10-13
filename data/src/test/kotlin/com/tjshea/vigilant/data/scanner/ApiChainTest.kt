@@ -44,6 +44,14 @@ class ApiChainTest {
     }
 
     @Test
+    fun `API study mode asks every feed that is on even when the better ones answered`() {
+        val study = ScanSettings(gates = ApiGates(askAllSources = true))
+        assertTrue(ApiChain.needed("oddspapi", nfl, study, ctx()))
+        assertTrue(ApiChain.needed("unabated", nfl, study, ctx()))
+        assertFalse("off by default", ApiChain.needed("unabated", nfl, ScanSettings(), ctx()))
+    }
+
+    @Test
     fun `when no better feed answered the league (failed, out of credits, held back) the next best takes over`() {
         assertTrue(ApiChain.needed("oddspapi", nfl, ScanSettings(), ctx(answered = false)))
     }
