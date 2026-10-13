@@ -5008,8 +5008,8 @@ Tj: "Right now the app is laggy and glitching" (2 screenshots of the +EV feed: c
 
 ## TKS: Kalshi API key + WebSocket, and a socket on/off toggle for every API with a socket (Tj, 2026-10-13)
 Tj: "I now have a kalshi api key. Find the kalshi API docs and figure out how to make it work with vigilant. Key type Ed25519, an API key id plus a private key. I want to take full advantage of this api, including any web socket. For any of my apis in the app which have web socket, in the API settings, make a toggle for socket on or off. If socket is on, vigilant should keep a connection with that socket to get real time odds and whatever the api socket offers. If the socket toggle is off but the api toggle is still on, use the regular API without socket. If the api toggle is off, do not use that API at all. Do thorough research on kalshi api docs to make sure the correct commands and settings and addresses and speed limits are observed. Make vigilant take full advantage of the kalshi API where it can, including the socket, and everything it offers, but make sure it is efficient and within the parameters of the docs"
-- [ ] TKS1 Research the Kalshi docs in full (auth incl. Ed25519, hosts, rate limits, REST market data, WebSocket channels, sports/props series) into KALSHI_API.md + research/kalshi_docs_2026-10-13.md.
-- [ ] TKS2 Kalshi key storage (key id + private key, never committed), signing, Test key, API entry with api switch.
-- [ ] TKS3 Kalshi WebSocket client (ticker/orderbook_delta), feeding the scan as a push source; REST fallback; rate limits obeyed.
-- [ ] TKS4 Socket on/off switch for every API that has a socket (Novig, BoltOdds, Pinnodds, Kalshi, others): on = keep the socket; off with API on = REST only; API off = never called.
+- [x] TKS1 Research the Kalshi docs in full (auth incl. Ed25519, hosts, rate limits, REST market data, WebSocket channels, sports/props series) into KALSHI_API.md + research/kalshi_docs_2026-10-13.md.
+- [x] TKS2 Kalshi key storage (key id + private key, never committed), signing, Test key, API entry with api switch.
+- [x] TKS3 Kalshi WebSocket client (ticker/orderbook_delta), feeding the scan as a push source; REST fallback; rate limits obeyed.
+- [x] TKS4 Socket on/off switch for every API that has a socket (Novig, BoltOdds, Pinnodds, Kalshi, others): on = keep the socket; off with API on = REST only; API off = never called.
 - [ ] TKS5 Tests, ship, tell Tj where to paste the key.
