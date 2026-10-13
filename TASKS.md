@@ -4999,4 +4999,4 @@ Tj verbatim: "Do option 1" (option 1 = "a prop whose fair comes from fewer than 
 Tj: "I tested boltodds and it is running again. Shouldn't vigilant retry and auto reconnect on the next scan? If it doesn't, make it do so for every api"
 - [x] TRC1 Cause: `UsageMeter.recordRejected` rested a refused key until the next UTC day (BoltOdds socket 1008 refusal kept it out all day though the key worked); only BoltOdds's Test lifted it; SGO/OddsPapi/Unabated `down()` stayed true forever once set (the source was no longer called, so nothing ever cleared it).
 - [x] TRC2 Fix: refusal rests 2,4,8..min, max 1 h (`refusalHold`, `KeyUsage.refusals`), cleared by any accepted call; every API's Test lifts it (`ApiProbe.policyOf`); `down()` of SGO/OddsPapi/Unabated/BoltOdds REST lasts 60 s after the last failure (`RETRY_AFTER_MS`) then asks again. Tests: `UsageMeterTest` (3), `SgoClientTest`, `UnabatedTest`, `OddsPapiTest`.
-- [ ] TRC3 Ship v0.96.3 (floor, release) and tell Tj.
+- [x] TRC3 Ship v0.96.3 (floor, release) and tell Tj.
