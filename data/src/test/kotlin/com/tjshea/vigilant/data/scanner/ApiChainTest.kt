@@ -52,7 +52,7 @@ class ApiChainTest {
     }
 
     @Test
-    fun `a feed with no recent measurement is auditioned once, then stands by again; the order follows the measurements`() {
+    fun `a feed with no recent measurement is auditioned once, then stands by again, and the order follows the measurements`() {
         try {
             ApiChain.reset()
             val fresh = SourceScore.Measure("propline", 500, 40_000L, 1.0, 50, now)
