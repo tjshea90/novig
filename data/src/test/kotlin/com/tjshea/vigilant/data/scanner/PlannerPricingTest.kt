@@ -239,6 +239,23 @@ class PlannerPricingTest {
     }
 
     @Test
+    fun `a bet says which API sent each book behind its fair odds and how old the price was`() {
+        val poly = RefEvent("pm:1", "americanfootball_nfl", Fixtures.START_MS, home = "Cowboys", away = "Ravens",
+            markets = listOf(exchangeMl("polymarket", away = 1 / 0.63, home = 1 / 0.38).copy(lastUpdateMs = now - 4_000L)))
+        val kal = RefEvent("k:1", "americanfootball_nfl", Fixtures.START_MS, home = "Cowboys", away = "Ravens",
+            markets = listOf(exchangeMl("kalshi", away = 1 / 0.64, home = 1 / 0.37).copy(lastUpdateMs = now - 90_000L)))
+        val snaps = listOf(
+            RefSnapshot("americanfootball_nfl", listOf(poly), now, provider = "propline"),
+            RefSnapshot("americanfootball_nfl", listOf(kal), now, provider = "sgo"),
+        )
+        val avg = sharpOnly.copy(fairSource = FairSource.MARKET_AVERAGE, minBooks = 2)
+        val dal = Pricing.price(Planner.plan(listOf(event), markets, snaps, avg, now), books, avg, now).opportunities.first { it.outcome.outcomeId == Fixtures.ML_DAL }
+        val text = FairProvenance.text(dal, now)!!
+        assertTrue(text, "polymarket via PropLine 4 s" in text)
+        assertTrue(text, "kalshi via SGO 90 s" in text || "kalshi via SGO 1 min" in text || "kalshi via SGO" in text)
+    }
+
+    @Test
     fun `a book two feeds both carry is priced once, from the first feed`() {
         val direct = RefEvent("pin:1", "americanfootball_nfl", Fixtures.START_MS, home = "Dallas Cowboys", away = "Baltimore Ravens",
             markets = listOf(RefBookMarket("pinnacle", "Pinnacle", LineKind.MONEYLINE, listOf(RefQuote(Side.HOME, 2.40, null), RefQuote(Side.AWAY, 1.64, null)), now)))
