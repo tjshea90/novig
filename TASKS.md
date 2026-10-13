@@ -5000,3 +5000,8 @@ Tj: "I tested boltodds and it is running again. Shouldn't vigilant retry and aut
 - [x] TRC1 Cause: `UsageMeter.recordRejected` rested a refused key until the next UTC day (BoltOdds socket 1008 refusal kept it out all day though the key worked); only BoltOdds's Test lifted it; SGO/OddsPapi/Unabated `down()` stayed true forever once set (the source was no longer called, so nothing ever cleared it).
 - [x] TRC2 Fix: refusal rests 2,4,8..min, max 1 h (`refusalHold`, `KeyUsage.refusals`), cleared by any accepted call; every API's Test lifts it (`ApiProbe.policyOf`); `down()` of SGO/OddsPapi/Unabated/BoltOdds REST lasts 60 s after the last failure (`RETRY_AFTER_MS`) then asks again. Tests: `UsageMeterTest` (3), `SgoClientTest`, `UnabatedTest`, `OddsPapiTest`.
 - [x] TRC3 Ship v0.96.3 (floor, release) and tell Tj.
+
+## TLG: the app is laggy and glitching (Tj, 2026-10-13 ~21:25Z, v0.96.3)
+Tj: "Right now the app is laggy and glitching" (2 screenshots of the +EV feed: cards drawn as tall mostly-empty panels with the content pushed to the bottom/clipped, then scrolling; 23 bets, 187 bids up, Scanning, Novig prices 3293/3626, battery 41%).
+- [ ] TLG1 Find the cause of the tall empty cards (layout/animation bug in the feed card) and of the lag (recompute/recomposition cost of the live list).
+- [ ] TLG2 Fix, test, ship v0.96.4.
