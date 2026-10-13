@@ -55,3 +55,4 @@
 - 2026-10-13 copy-the-sharps research (research/copy_sharps_2026-10-13.md): individuals anonymized; liquidity-following -1% EV; whale takers n.s.; sharp book prices already the core.
 - 2026-10-13 true profit on money put in: MoneyIn replay (least deposit with winnings re-bet) + optional Settings figure; Tracker 'Your money, all time' card; Diagnostics line; chart's % relabelled 'Per $ staked'.
 - 2026-10-13 odds-api.net researched (research/odds_api_net_2026-10-13.md): Pinnacle polled 60-120 s, pre-match only, no free tier, sharp books only Pinnacle+Betfair confirmed; not worth $50.
+- 2026-10-13 profitable-types study (research/profitable_types_2026-10-13.md): team totals the one type with profit+CLV+n>100; player props lose (-$122/989); bids not proven by ROI; time <6h beats close, 24h+ gives it away.
