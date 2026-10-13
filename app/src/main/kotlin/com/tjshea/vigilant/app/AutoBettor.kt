@@ -893,10 +893,10 @@ internal const val MISS_RESTORE_MS = 15_000L
  * The bet leaves the lists the moment its slip closes ([ApiBetting.confirm]'s order-sent step, Tj 2026-10-13): marked like a ✓ before Novig has answered. [markPlaced] replaces this
  * mark when the bet is Placed; [restoreAfterMiss] takes it off again when it was not.
  */
-internal suspend fun markProvisional(c: AppContainer, target: BetTarget, now: Long) {
+internal suspend fun markProvisional(placed: com.tjshea.vigilant.data.tracker.PlacedBets, target: BetTarget, now: Long) {
     val key = target.placedKey ?: return
     runCatching {
-        c.placed.mark(
+        placed.mark(
             com.tjshea.vigilant.data.tracker.PlacedBet(
                 key = key, title = target.selection, detail = "${target.marketLabel} · ${target.eventName}", odds = "",
                 placedAtMs = now, startsAtMs = target.startsTs, event = target.eventName, market = target.marketLabel,
@@ -910,12 +910,12 @@ internal suspend fun markProvisional(c: AppContainer, target: BetTarget, now: Lo
  * After the order was sent at [sentAt] and did not go through: waits until [MISS_RESTORE_MS] after the slip closed, then takes the provisional mark off, unless the bet was marked placed
  * since (only the provisional mark, which has no odds and the time [sentAt], is ever removed). The lists drop it again at once if it is no longer +EV (CNO's live EV, the feed's re-price).
  */
-internal suspend fun restoreAfterMiss(c: AppContainer, target: BetTarget, sentAt: Long, clock: () -> Long, restoreMs: Long = MISS_RESTORE_MS) {
+internal suspend fun restoreAfterMiss(placed: com.tjshea.vigilant.data.tracker.PlacedBets, target: BetTarget, sentAt: Long, clock: () -> Long, restoreMs: Long = MISS_RESTORE_MS) {
     val key = target.placedKey ?: return
     val wait = sentAt + restoreMs - clock()
     if (wait > 0) kotlinx.coroutines.delay(wait)
-    val mine = c.placed.flow.value?.bets?.firstOrNull { b -> key in b.keys && b.odds.isEmpty() && b.placedAtMs == sentAt } ?: return
-    runCatching { c.placed.unmark(mine.key) }
+    val mine = placed.flow.value?.bets?.firstOrNull { b -> key in b.keys && b.odds.isEmpty() && b.placedAtMs == sentAt } ?: return
+    runCatching { placed.unmark(mine.key) }
 }
 
 /**

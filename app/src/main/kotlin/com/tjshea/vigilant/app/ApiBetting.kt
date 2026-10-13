@@ -719,7 +719,7 @@ class ApiBettingController(
                         // Tj, 2026-10-12: "Close the bet slip immediately automatically after I place the bet. Then send a notification of successful bet or any error."
                         state.update { st -> st.copy(betSheet = if (st.betSheet?.target === target) null else st.betSheet) }
                         sentAt = clock()
-                        provisional = scope.launch(Dispatchers.IO + NonCancellable) { markProvisional(c, target, sentAt) }
+                        provisional = scope.launch(Dispatchers.IO + NonCancellable) { markProvisional(c.placed, target, sentAt) }
                     }
                 }
             } catch (e: CancellationException) {
@@ -748,7 +748,7 @@ class ApiBettingController(
                 // Not unconfirmed: that one may have been placed, so it stays off the list until the Tracker settles it.
                 withContext(NonCancellable) {
                     provisional?.join()
-                    restoreAfterMiss(c, target, sentAt, clock, missRestoreMs)
+                    restoreAfterMiss(c.placed, target, sentAt, clock, missRestoreMs)
                     onRestored(listOf(target.market.marketId))
                 }
             }
