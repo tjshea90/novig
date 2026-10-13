@@ -1,21 +1,25 @@
-# CHECKPOINT 3135 — read me first, then TASKS.md
+# CHECKPOINT 3136 — read me first, then TASKS.md
 
-**Written:** 2026-10-13T01:00:06Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `c60bd5277` (this checkpoint is the commit after it)
+**Written:** 2026-10-13T01:06:41Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-eb2a51d8-1tw8ot` · **builds on:** `424ca63e3` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.95.9: every bet says which API priced its fair odds and how old each price is; APIs ranked by measured freshness and accuracy (versionCode 245, v0.95.9)
+v0.95.9 released; budget plan written
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.95.9), then run: bash tools/record-release.sh v0.95.9 245 "v0.95.9: every bet says which API priced its fair odds and how old each price is; APIs ranked by measured freshness and accuracy"
+await Tj's next study file (Source race + API ranking) to confirm PropLine accuracy; MoneyLine API unmeasured; PropLine props match fix
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M research/lab/NOTES.md
+    ?? research/api_budget_plan_2026-10-13.md
 
 ## Last ten checkpoints
 ```
+  b41d5fbc8 ckpt 3135: pre-release: v0.95.9: every bet says which API priced its fair odds and how
   c60bd5277 ckpt 3134: TAQ1-5: provenance line, measured API ranking + audition, agreement vs Pinn
   277807c45 ckpt 3133: 2nd study file read; SourceAgreement (accuracy vs Pinnacle) in Source race
   aaabb9eff ckpt 3132: pre-release: v0.95.7: Settings search finds API study mode and Freshest quo
@@ -25,5 +29,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   f95f49035 ckpt 3128: pre-release: v0.95.5: Freshest quote wins (switch) and Diagnostics Source r
   dcc9af869 ckpt 3127: pre-ship: v0.95.5: Freshest quote wins (switch) and Diagnostics Source race
   15a921b11 ckpt 3126: advice follow-up: free keys, SharpAPI
-  078a73b52 ckpt 3125: v0.95.4 release triggered; subscription advice note
 ```
