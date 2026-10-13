@@ -5021,7 +5021,7 @@ Tj: "Also make propline a preferred api in the vigilant API order if it offers f
 
 ## TDG: Tj's v0.97.0 diagnostics (2026-10-13), see research/diagnostics_v0.97.0_2026-10-13.md
 - [x] TDG1 Kalshi `ok` acknowledgements counted as subscribed (v0.97.2): `KalshiTest` "markets added to a subscribed channel...".
-- [ ] TDG2 Prune maker.json: ended unfilled bids kept 6 h not 2 days (memory/lag), test.
+- [x] TDG2 Prune maker.json: ended unfilled bids kept 6 h not 2 days (memory/lag), test.
 - [ ] TDG3 Trace who reads Novig's PUBLIC `/v3/public/catalog/markets` at pace while a key is connected (1,134 of 1,356 429s).
-- [ ] TDG4 oddspapi_free_cache.json 17 MB rewritten whole: prune or journal.
+- [x] TDG4 (Op4Store prunes by key kind at open and on every save; Op4StoreTest) oddspapi_free_cache.json 17 MB rewritten whole: prune or journal.
 - [ ] TDG5 Ship v0.97.2.
