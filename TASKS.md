@@ -4976,13 +4976,13 @@ Tj verbatim: "Add a more-smaller-bids option to the Bids slider. Make it so it c
 - [x] TMB2 Implement + LevelSlidersTest (every rule still +EV, tiers ordered, risky tier stricter).
 - [x] TMB3 Bet slip closes -> row leaves the list at once; back after ~15 s only if no fill and still +EV.
 - [x] TMB4 Rows that fall to <= 0 EV (re-priced at the live Novig ask) leave the list automatically, no tap.
-- [ ] TMB5 Full floor, ship, release.
+- [x] TMB5 Full floor, ship, release.
 
 ## TST: show the adjusted stars on the card and in the auto-bet's message (Tj, 2026-10-13)
 Tj verbatim: "Yes, show the adjusted stars on the card and in the message" (after: a card showed 4.5★ while the auto-bet said "its rating is under your 4-star minimum": Profit-proven only lowers the stars of bet types that lost money in his history before the minimum is checked).
 - [x] TST1 One shared helper for the adjusted stars (data), used by the auto-bet and the UI.
 - [x] TST2 The auto-bet message names the adjusted and the shown stars; the card shows the adjusted stars beside the raw ones when they differ (CNO card, +EV card).
-- [ ] TST3 Tests, ship, release.
+- [x] TST3 Tests, ship, release.
 
 ## TSOG: NHL shots-on-goal props flooding the Vigilant scanner: are they matched to the right odds? (Tj, 2026-10-13)
 Tj verbatim: "I noticed in the scanner on vigilant I'm getting flooded with nhl player shots on goal props. There are so many of them supposedly positive EV that I'm getting suspicious. Make sure that they are actually matched correctly to the same odds from different sports books. They may be showing positive EV because they are incorrectly matched to a different type of bet odds"
