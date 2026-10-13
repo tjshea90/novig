@@ -66,3 +66,8 @@ CORRECTION to my first answer: the README's "team totals 108" pools bets and bid
 - Bids by kind (all 373): team totals 73 (+29.8%), player props 189 (-5.6%, CLV +1.8% t=4.9); by league: NHL 84 +16.1% (CLV +2.0% t=3.3), MLB 47 +11.7%, WNBA 32 -5.2% (CLV +0.4%), NFL 92 -15.1% (CLV +2.2% t=4.6). NFL prop-under bids 40: -30.1%.
 - Bets: player props 751 -9.4% (t=-2.5; overs 418 -15.2% t=-3.2; unders 333 -2.0%), spreads 112 +16.6% (CLV -1.2%), game totals 119 +11.6% (CLV +0.3%), team totals 32 -9.1%; NFL 509 -7.9%, NHL 147 -11.2% (CLV +2.4% t=5.8, props), NCAAF 144 +21.6% (CLV -0.1%).
 - The only bids-posted file in this upload is 2026-10-05 (one day, 16 rows): the all-time unfilled-bid statistics still come from the README (22,234 or 37,117 posted: the README contradicts itself).
+
+## How much data is enough (Tj, 2026-10-13)
+Per-bet return has a standard deviation of about 1.05 (a $1 bet at +110 returns +1.1 or -1); the CLV of a bet has one of about 5%. Bets needed for |t| >= 2: ROI n = (2 x 1.05 / edge)^2: edge 20% -> 110, 10% -> 440, 5% -> 1,760, 3% -> 4,900 (80% power: x about 2). CLV n = (2 x 5% / edge)^2: edge 2% -> 25, 1% -> 100.
+So: CLV answers "is this type beating the market" after ~100 closes; ROI answers "does it pay" only after thousands per type, which no single type will reach (the whole account makes ~65 bets and ~20 bid fills a day: 1,057 settled bets today, ROI SE +-3.1%).
+Rate per day over the 19 days: team-total bid fills ~3.8, NHL team totals ~1.7, all bids ~19.6, all bets ~67, player props ~40.
