@@ -363,6 +363,27 @@ class BoltOddsLiveTest {
 
     // ---- the feed ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    @Test fun `with the socket switch off the feed reads the REST snapshot, opens no socket, and reads it at most every 12 seconds`() = runBlocking {
+        val c = client()
+        val feed = BoltOddsFeed(c, OkHttpClient(), scope, wsUrl = wsUrl())
+        snapshotBody = "[" + game("draftkings") + "," + game("fanduel", ml1 = "-155", ml2 = "+135") + "]"
+        val off = ScanSettings(leagues = setOf("NBA", "MLB"), referenceBooks = listOf("draftkings", "fanduel")).let { it.copy(gates = it.gates.copy(boltSocket = false)) }
+        val events = feed.events(Leagues.byNovigName("NBA")!!, off, props = false)
+        assertEquals(setOf("draftkings", "fanduel"), events.single().markets.map { it.bookKey }.toSet())
+        assertEquals("no socket was opened", 0, upgrades.size)
+        assertFalse(feed.connected)
+        val snaps = rest.count { it.requestUrl!!.encodedPath == "/api/snapshot" }
+        assertEquals(1, snaps)
+        // The same scan again within the gap spends no request; the quotes are only as old as the read (no socket vouches for them).
+        feed.events(Leagues.byNovigName("NBA")!!, off, props = false)
+        assertEquals(1, rest.count { it.requestUrl!!.encodedPath == "/api/snapshot" })
+        // Switching the socket on again opens it.
+        val on = off.copy(gates = off.gates.copy(boltSocket = true))
+        feed.events(Leagues.byNovigName("NBA")!!, on, props = false)
+        assertTrue("the socket is opened once the switch is on", upgrades.size >= 1)
+        feed.close()
+    }
+
     @Test fun `the feed subscribes the sports, books and market names it can use and serves the scan from the board`() = runBlocking {
         val c = client()
         val feed = BoltOddsFeed(c, OkHttpClient(), scope, wsUrl = wsUrl())
