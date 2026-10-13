@@ -206,7 +206,7 @@ class AutoBettor(
                 isQuarantined(row.bet, now) -> skip("an earlier order for it was never confirmed")
                 else -> com.tjshea.vigilant.data.reference.PlayerOut.forCnoRow(injuries(), row, now, state.teams[row.key])?.let(::skip)
                     ?: AutoBet.judge(rules, item.shown.ev, item.check, item.shown.row.odds, BetKind.of(row.market, row.bet), AutoBet.isOverProp(row.market, row.bet))?.let(::skip)
-                    ?: AutoBet.starsReason(rules, starsFor(settings, item.check.rating?.stars, row.league, BetKind.of(row.market, row.bet).label, row.bet, item.shown.ev, startsAt, now))?.let(::skip)
+                    ?: AutoBet.starsReason(rules, starsFor(settings, item.check.rating?.stars, row.league, BetKind.of(row.market, row.bet).label, row.bet, item.shown.ev, startsAt, now), item.check.rating?.stars)?.let(::skip)
                     ?: (if (byStars) null else sharpReason(item, settings, state, now))?.let(::skip)
                     ?: (if (item.check.sharpAgainst) "a sharp book prices both sides and says it isn't +EV at Novig's price" else null)?.let(::skip)
                     ?: passing.add(item)
@@ -370,7 +370,7 @@ class AutoBettor(
                 o.isLive || o.event.startsTs - now < MIN_LEAD_MS -> skip("not pregame (live betting isn't available)")
                 (cooldown[o.key] ?: 0L) > now -> skip("tried a moment ago")
                 isQuarantined(o.selection, now) -> skip("an earlier order for it was never confirmed")
-                o.league.tennis -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), AutoBet.isOverProp(o.marketLabel, o.selection))?.let(::skip) ?: AutoBet.starsReason(rules, starsFor(settings, o.rating?.stars, o.league.novigName, BetKind.of(o.marketLabel, o.selection).label, o.selection, o.evPercent, o.event.startsTs, now))?.let(::skip) ?: passing.add(o)
+                o.league.tennis -> AutoBet.judgeScan(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), AutoBet.isOverProp(o.marketLabel, o.selection))?.let(::skip) ?: AutoBet.starsReason(rules, starsFor(settings, o.rating?.stars, o.league.novigName, BetKind.of(o.marketLabel, o.selection).label, o.selection, o.evPercent, o.event.startsTs, now), o.rating?.stars)?.let(::skip) ?: passing.add(o)
                 else -> vigilantReason(o, rules, settings, state, now)?.let(::skip) ?: passing.add(o)
             }
         }
@@ -470,12 +470,8 @@ class AutoBettor(
      * The stars the minimum is held against. With Settings › Profit-proven only ON, a type of bet Tj's history says loses money has its stars lowered by [ProfitProfile.Judgement.starPenalty]
      * (a type that is not proven either way, and every type with the switch off, is unchanged). Only a minimum star rating reads this: it overrides the profile's block (Tj, 2026-10-12).
      */
-    private fun starsFor(settings: ScanSettings, stars: Double?, league: String, kind: String, selection: String, ev: Double?, startsAtMs: Long?, now: Long): Double? {
-        if (stars == null || !settings.gates.profitProven) return stars
-        val pf = com.tjshea.vigilant.data.scanner.ProfitProfile.shipped ?: return stars
-        val lead = startsAtMs?.let { (it - now) / 60_000L }
-        return (stars - pf.judge(com.tjshea.vigilant.data.scanner.ProfitProfile.Instrument.BET, league, kind, selection, ev, lead).starPenalty).coerceAtLeast(0.0)
-    }
+    private fun starsFor(settings: ScanSettings, stars: Double?, league: String, kind: String, selection: String, ev: Double?, startsAtMs: Long?, now: Long): Double? =
+        com.tjshea.vigilant.data.scanner.ProfitProfile.adjustedStars(settings.gates.profitProven, stars, league, kind, selection, ev, startsAtMs, now)
 
     private fun limitsOf(rules: AutoBet.Rules, settings: ScanSettings) = BetLimits(
         maxStake = rules.maxStake, maxPerDay = settings.apiMaxPerDay, minEv = rules.readEv,

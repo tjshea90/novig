@@ -138,6 +138,17 @@ class ProfitProfile(
         }
 
         /** The profile that ships in the app (`profit_profile.json`), or null when it can't be read (the filter is then off: nothing is blocked on a profile that isn't there). */
+        /**
+         * The stars a minimum star rating is held against (Tj, 2026-10-13: "show the adjusted stars on the card and in the message"). With Settings › Profit-proven only ON, a type of bet
+         * Tj's history says loses money has its stars lowered by [Judgement.starPenalty]; every other bet, and every bet with the switch off, keeps [stars]. The auto-bet and the cards both read this.
+         */
+        fun adjustedStars(profitProven: Boolean, stars: Double?, league: String, kind: String, selection: String, ev: Double?, startsAtMs: Long?, now: Long): Double? {
+            if (stars == null || !profitProven) return stars
+            val pf = shipped ?: return stars
+            val lead = startsAtMs?.let { (it - now) / 60_000L }
+            return (stars - pf.judge(Instrument.BET, league, kind, selection, ev, lead).starPenalty).coerceAtLeast(0.0)
+        }
+
         val shipped: ProfitProfile? by lazy { ProfitProfile::class.java.getResourceAsStream("/profit_profile.json")?.bufferedReader()?.use { parse(it.readText()) } }
     }
 }

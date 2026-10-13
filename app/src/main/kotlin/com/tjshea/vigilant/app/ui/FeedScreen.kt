@@ -507,7 +507,7 @@ fun OpportunityCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EvBadge(q.evPercent)
                 Spacer(Modifier.width(8.dp))
-                StarRating(o.rating)
+                StarRating(o.rating, adjusted = adjustedStarsOf(settings, o, now))
                 Spacer(Modifier.width(10.dp))
                 Text(
                     "${o.league.emoji} ${o.league.displayName} · ${if (o.isLive) "LIVE" else Format.startTime(o.event.startsTs)}",
@@ -608,7 +608,7 @@ internal val SharpStarColor = androidx.compose.ui.graphics.Color(0xFFF5B301)
  * Nothing while the bet has no rating.
  */
 @Composable
-fun StarRating(rating: com.tjshea.vigilant.data.scanner.BetRating.Rating?, modifier: Modifier = Modifier, large: Boolean = false) {
+fun StarRating(rating: com.tjshea.vigilant.data.scanner.BetRating.Rating?, modifier: Modifier = Modifier, large: Boolean = false, adjusted: Double? = null) {
     if (rating == null) return
     androidx.compose.foundation.layout.Row(modifier.testTag("starRating"), verticalAlignment = Alignment.CenterVertically) {
         Text(
@@ -617,6 +617,10 @@ fun StarRating(rating: com.tjshea.vigilant.data.scanner.BetRating.Rating?, modif
         )
         Text(" " + com.tjshea.vigilant.data.scanner.BetRating.text(rating.stars), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+        // Profit-proven only lowered the stars the auto-bet holds against its minimum (Tj, 2026-10-13): said on the card so the two numbers never disagree.
+        if (adjusted != null && kotlin.math.abs(adjusted - rating.stars) > 1e-9) {
+            Text(" → " + com.tjshea.vigilant.data.scanner.BetRating.text(adjusted) + " after your history", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, modifier = Modifier.testTag("starsAdjusted"))
+        }
 }
 
 /**
@@ -695,3 +699,15 @@ internal fun agedOutText(state: UiState, now: Long): String? {
     return "$aged bet${if (aged == 1) "" else "s"} hidden: the other books' odds behind ${if (aged == 1) "it" else "them"} " +
         "are too old (${com.tjshea.vigilant.data.scanner.Freshness.LIMIT_TEXT}). Scan for current odds."
 }
+
+/** The stars the auto-bet holds against its minimum for [o] ([ProfitProfile.adjustedStars]), for the card to show beside the rating. */
+fun adjustedStarsOf(settings: ScanSettings, o: Opportunity, now: Long): Double? =
+    com.tjshea.vigilant.data.scanner.ProfitProfile.adjustedStars(
+        settings.gates.profitProven, o.rating?.stars, o.league.novigName, com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection).label, o.selection, o.evPercent, o.event.startsTs, now,
+    )
+
+/** The same for a CNO bet. */
+fun adjustedStarsOf(settings: ScanSettings, row: com.tjshea.vigilant.data.cno.CnoRow, stars: Double?, ev: Double?, now: Long): Double? =
+    com.tjshea.vigilant.data.scanner.ProfitProfile.adjustedStars(
+        settings.gates.profitProven, stars, row.league, com.tjshea.vigilant.data.scanner.BetKind.of(row.market, row.bet).label, row.bet, ev, row.startsAtMs, now,
+    )

@@ -109,7 +109,7 @@ fun OpportunityDetail(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(o.selection, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                StarRating(o.rating, large = true)
+                StarRating(o.rating, large = true, adjusted = adjustedStarsOf(settings, o, System.currentTimeMillis()))
                 Text(
                     "${o.marketLabel} · ${o.league.displayName} · ${Format.startTime(o.event.startsTs)}",
                     style = MaterialTheme.typography.bodySmall,

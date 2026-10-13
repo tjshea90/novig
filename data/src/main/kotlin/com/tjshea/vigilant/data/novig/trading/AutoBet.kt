@@ -152,12 +152,18 @@ object AutoBet {
 
     private val OVER_WORD = Regex("\\bover\\b", RegexOption.IGNORE_CASE)
 
-    /** Why a bet rated [stars] is under the minimum rating, or null (also null when no minimum is set). A bet with no rating yet has no stars to show and waits. */
-    fun starsReason(rules: Rules, stars: Double?): String? {
+    /**
+     * Why a bet rated [stars] is under the minimum rating, or null (also null when no minimum is set). A bet with no rating yet has no stars to show and waits. [shown] is the rating the card
+     * shows before Profit-proven only lowered it: when it differs from [stars] the reason says both (Tj, 2026-10-13).
+     */
+    fun starsReason(rules: Rules, stars: Double?, shown: Double? = null): String? {
         if (rules.minStars <= 0.0) return null
         val min = com.tjshea.vigilant.data.scanner.BetRating.label(rules.minStars)
         if (stars == null) return "it has no star rating yet (you need $min stars)"
-        return if (stars < rules.minStars - 1e-9) "its rating is under your $min-star minimum" else null
+        if (stars >= rules.minStars - 1e-9) return null
+        val had = shown?.takeIf { kotlin.math.abs(it - stars) > 1e-9 }
+        return if (had == null) "its rating is under your $min-star minimum"
+        else "its rating is ${com.tjshea.vigilant.data.scanner.BetRating.label(stars)}★ after Profit-proven only lowered the shown ${com.tjshea.vigilant.data.scanner.BetRating.label(had)}★ (your history says this type of bet loses money), under your $min-star minimum"
     }
 
     /** Whether [american] odds are a favorite's: shorter than even money (−101 or shorter). Even money (+100, −100) and every underdog is not. */
