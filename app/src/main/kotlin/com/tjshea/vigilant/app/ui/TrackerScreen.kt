@@ -407,7 +407,7 @@ fun TrackerScreen(
                         item(key = "empty") { EmptyState(TrackerText.emptyStats(made, period == TrackerPeriod.ALL, bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT) }
                     } else {
                         if (periodBets.isNotEmpty()) item(key = "stats") {
-                            StatsCards(periodBets, kindBets, breakdownBy, onBreakdown = { breakdownBy = it }) {
+                            StatsCards(periodBets, kindBets, breakdownBy, onBreakdown = { breakdownBy = it }, allBets = bets, moneyDeposited = state.settings.moneyDeposited) {
                                 ClosingLineCard(kindBets, now, clvPeriod, { clvPeriod = it }, clvHideOutliers, { clvHideOutliers = it })
                             }
                         }
@@ -586,6 +586,9 @@ private fun StatsCards(
     chartBets: List<TrackedBet>,
     by: TrackerBreakdown.By,
     onBreakdown: (TrackerBreakdown.By) -> Unit,
+    /** Every bet and bid ever made (the money is one pot, whatever the period or kind shown), and the deposit figure Tj gave (0 = work it out). */
+    allBets: List<TrackedBet> = chartBets,
+    moneyDeposited: Double = 0.0,
     /** The closing-line card's own filters, and every bet (it runs over all time, whatever the period at the top). */
     clv: @Composable () -> Unit = {},
 ) {
@@ -595,9 +598,10 @@ private fun StatsCards(
         if (stats.outliers > 0) {
             Caption(TrackerText.outlierNote(stats.outliers))
         }
+        MoneyInCard(allBets, moneyDeposited)
         // The profit graph has its own time ranges and zoom (Tj, 2026-10-10), over every bet (bets or bids, whatever the period at the top says): the numbers above it are what happened inside the view.
         ProfitChartCard(chartBets)
-        Caption("Profit counts every settled bet, outliers and locks too (it ends at the bankroll's real result); the edge numbers below leave the outliers out. Profit % is profit over money staked.")
+        Caption("Profit counts every settled bet, outliers and locks too (it ends at the bankroll's real result); the edge numbers below leave the outliers out. Profit % in the graph is profit over the money staked in that view (each dollar counted every time it is bet again); the card above it is profit over the money you actually put in.")
         clv()
         StatsCard {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -981,6 +985,29 @@ fun ClosingLineCard(
                 "too) the next morning. \"Avg vs close\" is how much better your odds were than the closing odds, " +
                 "averaged over the bets. Beating the close is the best early sign your edges are real. This card has its own period; the one at the " +
                 "top doesn't change it.",
+        )
+    }
+}
+
+/**
+ * Profit on the money actually put in, all time (Tj, 2026-10-13): winnings that are bet again are not a second deposit, so "$1,000 bet" on "$200 put in" reads as the profit over $200, not over $1,000
+ * ([MoneyIn]). The deposit is Tj's own figure from Settings when he gave one, else the least money that could have placed his bets with winnings re-bet.
+ */
+@Composable
+private fun MoneyInCard(all: List<TrackedBet>, given: Double) {
+    val r = remember(all, given) { com.tjshea.vigilant.data.tracker.MoneyIn.compute(all, given.takeIf { it > 0 }) }
+    if (r.deposited <= 0) return
+    StatsCard {
+        CardTitle("Your money, all time")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            LabeledValue("Put in", Format.money(r.deposited))
+            LabeledValue("Profit", Format.signedMoney(r.profit), valueColor = moneyColor(r.profit), modifier = Modifier.testTag("moneyInProfit"))
+            LabeledValue("Profit %", r.percent?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(r.percent ?: 0.0), modifier = Modifier.testTag("moneyInPercent"))
+        }
+        Caption(
+            "You have put in ${Format.money(r.deposited)}" + (if (r.estimated) " (worked out from your bets: the least money that could have placed them all with winnings re-bet; type your real total in Settings › Betting & Novig account to use that instead)" else " (the total you gave in Settings)") +
+                " and made ${Format.signedMoney(r.profit)}: ${r.percent?.let { Format.evPercent(it) } ?: "—"} of your money. " +
+                "That money was bet ${Format.money(r.turnover)} in all, about ${r.turns?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "—"} times over, because winnings and refunds were bet again; that is why Profit % in the graph below (profit over everything staked) reads smaller.",
         )
     }
 }

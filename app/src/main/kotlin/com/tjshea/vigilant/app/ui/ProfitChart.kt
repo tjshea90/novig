@@ -175,7 +175,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets:
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         LabeledValue("Profit in view", Format.signedMoney(change), valueColor = moneyColor(change), modifier = Modifier.weight(1.3f).testTag("profitInView"))
-        LabeledValue("Profit %", inView.roi?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(inView.roi ?: 0.0), modifier = Modifier.weight(1f))
+        LabeledValue("Per $ staked", inView.roi?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(inView.roi ?: 0.0), modifier = Modifier.weight(1f))
         LabeledValue("Staked", Format.money(inView.staked), modifier = Modifier.weight(1f))
         LabeledValue("Settled", "${inView.bets}", modifier = Modifier.weight(0.6f))
     }

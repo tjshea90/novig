@@ -131,6 +131,11 @@ data class ScanSettings(
      */
     val daysAhead: Int = 7,
     val bankroll: Double = 1000.0,
+    /**
+     * The money Tj has actually put in, all time (Tj, 2026-10-13): the base of the Tracker's "Profit % of money put in". 0 = not given: the Tracker replays his bets and uses the least deposit that
+     * would have placed them all with winnings re-bet ([com.tjshea.vigilant.data.tracker.MoneyIn]).
+     */
+    val moneyDeposited: Double = 0.0,
     val kellyMultiplier: Double = 0.25,
     /**
      * What Novig's bet slip opens with when a bet is tapped ([NovigLinks]; Tj, 2026-09-28): nothing (Novig's own

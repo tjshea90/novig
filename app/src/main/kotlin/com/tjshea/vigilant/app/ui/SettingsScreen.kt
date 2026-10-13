@@ -1260,6 +1260,19 @@ private fun ColumnScope.BettingTab(
         modifier = Modifier.fillMaxWidth(),
     )
     Hint("Your bankroll: the money you set aside for betting. Kelly stakes are a share of it.")
+    var deposited by remember(s.moneyDeposited) { mutableStateOf(if (s.moneyDeposited > 0) String.format(Locale.US, "%.0f", s.moneyDeposited) else "") }
+    OutlinedTextField(
+        value = deposited,
+        onValueChange = { t ->
+            deposited = t.filter { it.isDigit() || it == '.' }.take(9)
+            onUpdate { it.copy(moneyDeposited = deposited.toDoubleOrNull() ?: 0.0) }
+        },
+        label = { Text("Money I have put in, all time $ (optional)") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = Modifier.fillMaxWidth().testTag("moneyDepositedField"),
+    )
+    Hint("Total you have actually deposited, not counting winnings you bet again. The Tracker's Profit % of money put in divides by this. Leave it empty and the Tracker works it out from your bets: the least money that could have placed them all with winnings re-bet.")
     Text("Kelly fraction for suggested stakes", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
     ChoiceChips(ScanSettings.KELLY_CHOICES, s.kellyMultiplier, Format::kellyLabel) { v -> onUpdate { it.copy(kellyMultiplier = v) } }
     TypedNumberField(NumberSpecs.KELLY, NumberSpecs.KELLY.show(s.kellyMultiplier), "kellyField") { v -> onUpdate { it.copy(kellyMultiplier = v) } }
