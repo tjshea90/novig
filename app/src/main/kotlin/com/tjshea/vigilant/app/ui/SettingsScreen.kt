@@ -1260,12 +1260,12 @@ private fun ColumnScope.BettingTab(
         modifier = Modifier.fillMaxWidth(),
     )
     Hint("Your bankroll: the money you set aside for betting. Kelly stakes are a share of it.")
-    var deposited by remember(s.moneyDeposited) { mutableStateOf(if (s.moneyDeposited > 0) String.format(Locale.US, "%.0f", s.moneyDeposited) else "") }
+    var deposited by remember(s.gates.moneyDeposited) { mutableStateOf(if (s.gates.moneyDeposited > 0) String.format(Locale.US, "%.0f", s.gates.moneyDeposited) else "") }
     OutlinedTextField(
         value = deposited,
         onValueChange = { t ->
             deposited = t.filter { it.isDigit() || it == '.' }.take(9)
-            onUpdate { it.copy(moneyDeposited = deposited.toDoubleOrNull() ?: 0.0) }
+            onUpdate { it.copy(gates = it.gates.copy(moneyDeposited = deposited.toDoubleOrNull() ?: 0.0)) }
         },
         label = { Text("Money I have put in, all time $ (optional)") },
         singleLine = true,

@@ -131,11 +131,6 @@ data class ScanSettings(
      */
     val daysAhead: Int = 7,
     val bankroll: Double = 1000.0,
-    /**
-     * The money Tj has actually put in, all time (Tj, 2026-10-13): the base of the Tracker's "Profit % of money put in". 0 = not given: the Tracker replays his bets and uses the least deposit that
-     * would have placed them all with winnings re-bet ([com.tjshea.vigilant.data.tracker.MoneyIn]).
-     */
-    val moneyDeposited: Double = 0.0,
     val kellyMultiplier: Double = 0.25,
     /**
      * What Novig's bet slip opens with when a bet is tapped ([NovigLinks]; Tj, 2026-09-28): nothing (Novig's own
@@ -1343,6 +1338,11 @@ data class ApiGates(
      * Freshest quote wins (Tj, 2026-10-12): when two feeds that are on both send the same book's price for one line, the one whose book-stamped time is newer by more than
      * [com.tjshea.vigilant.data.scanner.Pricing.FRESHER_BY_MS] is used; otherwise (or with no time) the feed order decides, as before. Off = the feed order alone.
      */
+    /**
+     * The money Tj has actually put in, all time (Tj, 2026-10-13): the base of the Tracker's "Profit % of money put in". 0 = not given: the Tracker replays his bets and uses the least deposit that
+     * would have placed them all with winnings re-bet ([com.tjshea.vigilant.data.tracker.MoneyIn]).
+     */
+    val moneyDeposited: Double = 0.0,
     val freshestWins: Boolean = true,
     /**
      * API study mode (Tj, 2026-10-12: "run tests to see which apis are the best for speed and accuracy"): every API that is switched on is asked for every league, ignoring the standby chain

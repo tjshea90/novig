@@ -480,7 +480,7 @@ object Diagnostics {
         }
         o.appendLine("Results: ${stats.won}-${stats.lost}${if (stats.pushed > 0) "-${stats.pushed}" else ""} · profit ${String.format(Locale.US, "%+.2f", stats.profit)} on ${String.format(Locale.US, "%.2f", stats.staked)} staked" + (stats.roi?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + (stats.averageEv?.let { String.format(Locale.US, " · average EV when bet %+.1f%%", it * 100) } ?: "") + (stats.averageClv?.let { String.format(Locale.US, " · average CLV %+.1f%%", it * 100) } ?: ""))
         // Profit on the money actually put in (Tj, 2026-10-13): winnings that are bet again are not a deposit, so this is the real return on the bankroll; the lines above divide by every dollar staked.
-        MoneyIn.compute(bets, s.settings.moneyDeposited.takeIf { it > 0 }).let { m ->
+        MoneyIn.compute(bets, s.settings.gates.moneyDeposited.takeIf { it > 0 }).let { m ->
             o.appendLine(String.format(Locale.US, "Money put in %.2f (%s) · profit %+.2f = %s of the money put in · %.2f staked in all, each deposited dollar bet %s times", m.deposited, if (m.estimated) "worked out from the bets: the least money that could have placed them all with winnings re-bet" else "given in Settings", m.profit, m.percent?.let { String.format(Locale.US, "%+.1f%%", it * 100) } ?: "n/a", m.turnover, m.turns?.let { String.format(Locale.US, "%.1f", it) } ?: "n/a"))
         }
         // What the Tracker's Profit shows (every settled bet, the same with its "Novig only" filter on or off): the line above leaves the outliers out.

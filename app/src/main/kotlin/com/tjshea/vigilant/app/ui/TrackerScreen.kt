@@ -407,7 +407,7 @@ fun TrackerScreen(
                         item(key = "empty") { EmptyState(TrackerText.emptyStats(made, period == TrackerPeriod.ALL, bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT) }
                     } else {
                         if (periodBets.isNotEmpty()) item(key = "stats") {
-                            StatsCards(periodBets, kindBets, breakdownBy, onBreakdown = { breakdownBy = it }, allBets = bets, moneyDeposited = state.settings.moneyDeposited) {
+                            StatsCards(periodBets, kindBets, breakdownBy, onBreakdown = { breakdownBy = it }, allBets = bets, moneyDeposited = state.settings.gates.moneyDeposited) {
                                 ClosingLineCard(kindBets, now, clvPeriod, { clvPeriod = it }, clvHideOutliers, { clvHideOutliers = it })
                             }
                         }
