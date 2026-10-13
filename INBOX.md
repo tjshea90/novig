@@ -7045,3 +7045,8 @@ I noticed in the scanner on vigilant I'm getting flooded with nhl player shots o
 ```
 Do option 1
 ```
+
+## 2026-10-13T20:18:46Z
+```
+Look at these errors , I tested boltodds and it is running again. Shouldn't vigilant retry and auto reconnect on the next scan? If it doesn't, make it do so for every api
+```
