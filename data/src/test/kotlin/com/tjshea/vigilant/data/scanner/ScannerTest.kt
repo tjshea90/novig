@@ -369,8 +369,7 @@ class ScannerTest {
     // ---- RESEARCH.md §23: the second API for the same books is only a fallback ---------------------
 
     /** PropLine, faked: the same Ravens–Cowboys board as the Odds API fixture. [fail] = no answer. */
-    private class FakeFirst(val log: MutableList<String>, var fail: Boolean = false) : ReferenceSource {
-        override val id = "propline"
+    private class FakeFirst(val log: MutableList<String>, var fail: Boolean = false, override val id: String = "propline") : ReferenceSource {
         override val displayName = "PropLine"
         override val metered = true
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
@@ -497,7 +496,8 @@ class ScannerTest {
             override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot =
                 throw com.tjshea.vigilant.data.keys.CreditsHeldBackException("ParlayAPI has spent today's share of its credits: back tomorrow (unused days carry over).")
         }
-        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(paced, FakeFirst(log)))
+        // PropLine leads the chain now (Tj, 2026-10-13), so the feed that answers is one BELOW ParlayAPI: the paced one is asked first.
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(paced, FakeFirst(log, id = "oddsapi")))
         val report = r.sources.single { it.id == "parlay" }
         assertEquals(1, report.standingBy)
         assertNull(report.error)
@@ -516,9 +516,9 @@ class ScannerTest {
             override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot =
                 throw AllKeysExhaustedException("All 3 ParlayAPI keys are used up until Nov 1.")
         }
-        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(spent, FakeFirst(log)))
+        val r = Scanner(FakeNovig(), clock = { now }).scan(settings, listOf(spent, FakeFirst(log, id = "oddsapi")))
         assertEquals("All 3 ParlayAPI keys are used up until Nov 1.", r.sources.single { it.id == "parlay" }.error)
-        assertEquals(1, r.sources.single { it.id == "propline" }.matched)
+        assertEquals(1, r.sources.single { it.id == "oddsapi" }.matched)
         assertTrue(r.result!!.opportunities.isNotEmpty())
     }
 
