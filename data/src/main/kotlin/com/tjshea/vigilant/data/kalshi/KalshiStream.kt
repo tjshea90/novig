@@ -236,7 +236,7 @@ class KalshiStream(
                 delay(COMMAND_GAP_MS)
             }
             val inFlight = pending.values.flatten().toHashSet()
-            val todo = wanted.values.flatten().filter { it !in subscribedAt && it !in inFlight }.distinct()
+            val todo = wanted.values.flatten().filter { !subscribedAt.containsKey(it) && it !in inFlight }.distinct()
             for (part in todo.chunked(chunk)) {
                 if (state != State.LIVE) return
                 val (id, text) = command(
