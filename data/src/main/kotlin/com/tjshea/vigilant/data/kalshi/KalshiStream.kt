@@ -28,8 +28,11 @@ import okhttp3.WebSocketListener
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
-/** One market's top of book as Kalshi's `ticker` channel last said it (prices in dollars, sizes in contracts). */
-data class KalshiTop(val yesBid: Double?, val yesAsk: Double?, val bidSize: Double?, val askSize: Double?, val atMs: Long)
+/**
+ * One market's top of book as Kalshi's `ticker` channel last said it (prices in dollars, sizes in contracts). [atMs] is when THIS phone received it (the clock a REST read is ordered against); [sentMs] is
+ * Kalshi's own `sending_ts_ms`, for the push-lag line in Diagnostics.
+ */
+data class KalshiTop(val yesBid: Double?, val yesAsk: Double?, val bidSize: Double?, val askSize: Double?, val atMs: Long, val sentMs: Long? = null)
 
 /**
  * Kalshi's WebSocket (KALSHI_API.md): one signed connection to `wss://external-api-ws.kalshi.com/trade-api/ws/v2` carrying the `ticker` channel for the markets a scan reads (a push whenever a market's best
@@ -100,6 +103,10 @@ class KalshiStream(
     @Volatile var openedAtMs = 0L
         private set
     @Volatile var errors = 0
+        private set
+
+    /** How long the last push took to reach this phone (receipt minus Kalshi's own send time; includes any clock difference). */
+    @Volatile var lagMs: Long? = null
         private set
     private val errorCodes = ConcurrentHashMap<Int, Int>()
 
@@ -323,8 +330,9 @@ class KalshiStream(
         tops[ticker] = KalshiTop(
             yesBid = d("yes_bid_dollars") ?: old?.yesBid, yesAsk = d("yes_ask_dollars") ?: old?.yesAsk,
             bidSize = d("yes_bid_size_fp") ?: old?.bidSize, askSize = d("yes_ask_size_fp") ?: old?.askSize,
-            atMs = if (sentMs in 1..now + 5_000L) sentMs else now,
+            atMs = now, sentMs = sentMs.takeIf { it > 0 },
         )
+        (sentMs.takeIf { it > 0 })?.let { lagMs = (now - it).coerceAtLeast(0) }
     }
 
     private fun applyLifecycle(msg: JsonObject) {
@@ -377,7 +385,7 @@ class KalshiStream(
         add("  markets: wanted $wantedCount, subscribed $subscribedCount, with a push ${tops.size}, closed/paused ${closedMarkets.size} · chunk $chunk · sequence gaps $gaps")
         lastError?.let { add("  last error: $it") }
         if (errorCodes.isNotEmpty()) add("  error codes seen: " + errorCodes.entries.sortedBy { it.key }.joinToString { "${it.key}×${it.value}" })
-        if (lastFrameMs > 0) add("  last frame ${(now - lastFrameMs) / 1000}s ago")
+        if (lastFrameMs > 0) add("  last frame ${(now - lastFrameMs) / 1000}s ago" + (lagMs?.let { " · last push arrived $it ms after Kalshi sent it" } ?: ""))
     }
 
     companion object {

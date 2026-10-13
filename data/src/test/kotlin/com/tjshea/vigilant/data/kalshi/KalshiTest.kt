@@ -112,6 +112,8 @@ class KalshiTest {
     private val restCalls = AtomicInteger(0)
     private val restHeaders = CopyOnWriteArrayList<RecordedRequest>()
     @Volatile private var sidCounter = 0
+    @Volatile private var restBid = "0.5100"
+    @Volatile private var restAsk = "0.5200"
 
     @Before fun setUp() {
         ws = MockWebServer()
@@ -141,7 +143,7 @@ class KalshiTest {
                 return MockResponse().setBody(
                     if (request.requestUrl!!.queryParameter("series_ticker") == "KXNFLTOTAL") {
                         """{"events":[{"event_ticker":"KXNFLTOTAL-26SEP27CARCLE","series_ticker":"KXNFLTOTAL","title":"CAR Panthers vs CLE Browns: Total Points","sub_title":"CAR vs CLE (Sep 27)",
-                          "markets":[{"ticker":"KXNFLTOTAL-26SEP27CARCLE-44","title":"Full Game: over 43.5 points scored?","yes_sub_title":"Over 43.5 points scored","yes_bid_dollars":"0.5100","yes_ask_dollars":"0.5200","floor_strike":43.5,"status":"active"}]}],"cursor":""}"""
+                          "markets":[{"ticker":"KXNFLTOTAL-26SEP27CARCLE-44","title":"Full Game: over 43.5 points scored?","yes_sub_title":"Over 43.5 points scored","yes_bid_dollars":"$restBid","yes_ask_dollars":"$restAsk","floor_strike":43.5,"status":"active"}]}],"cursor":""}"""
                     } else {
                         """{"events":[]}"""
                     },
@@ -217,10 +219,11 @@ class KalshiTest {
         push(ticker("0.60", "0.61"))
         until("a push") { stream.top("KXNFLTOTAL-26SEP27CARCLE-44") != null }
 
-        // The first read came before the subscription: it is read once more, and now it is current.
+        // The first read came before the subscription: it is read once more, and now it is current. (A real exchange's REST already shows what it pushed.)
+        restBid = "0.6000"; restAsk = "0.6100"
         val second = client.odds(nfl, s)
         assertEquals(2, restCalls.get())
-        assertEquals("the push is laid over the read", 1.0 / 0.61, over(second), 1e-9)
+        assertEquals(1.0 / 0.61, over(second), 1e-9)
 
         push(ticker("0.70", "0.71"))
         until("the second push") { stream.top("KXNFLTOTAL-26SEP27CARCLE-44")!!.yesAsk == 0.71 }

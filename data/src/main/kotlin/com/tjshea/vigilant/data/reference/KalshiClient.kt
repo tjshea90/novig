@@ -155,7 +155,8 @@ class KalshiClient(
             e.copy(markets = e.markets.map { m ->
                 when {
                     st.isClosed(m.ticker) -> { allTrusted = allTrusted && st.trusted(m.ticker, readAtMs); m.copy(status = "closed") }
-                    st.trusted(m.ticker, readAtMs) -> st.top(m.ticker)?.let { t ->
+                    // A push received after the read began is newer than it; one received before is already in it (so the read stands).
+                    st.trusted(m.ticker, readAtMs) -> st.top(m.ticker)?.takeIf { it.atMs >= readAtMs }?.let { t ->
                         m.copy(
                             yes_bid_dollars = t.yesBid?.let { fmt(it) } ?: m.yes_bid_dollars, yes_ask_dollars = t.yesAsk?.let { fmt(it) } ?: m.yes_ask_dollars,
                             yes_bid_size_fp = t.bidSize?.let { fmt(it) } ?: m.yes_bid_size_fp, yes_ask_size_fp = t.askSize?.let { fmt(it) } ?: m.yes_ask_size_fp,
@@ -302,7 +303,7 @@ class KalshiClient(
                         // The read counts from when it began: a push that landed meanwhile may or may not be in it.
                         val startedAt = clock()
                         val events = fetchSeries(s)
-                        catalog[s] = Catalog(startedAt, events)
+                        if (streamOn()) catalog[s] = Catalog(startedAt, events) else catalog.remove(s)
                         if (streamOn()) stream?.want(s, events.flatMap { e -> e.markets.map { it.ticker } })
                         Result.success(Read(startedAt, events))
                     } catch (e: CancellationException) {
