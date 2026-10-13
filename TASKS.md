@@ -4980,6 +4980,6 @@ Tj verbatim: "Add a more-smaller-bids option to the Bids slider. Make it so it c
 
 ## TST: show the adjusted stars on the card and in the auto-bet's message (Tj, 2026-10-13)
 Tj verbatim: "Yes, show the adjusted stars on the card and in the message" (after: a card showed 4.5★ while the auto-bet said "its rating is under your 4-star minimum": Profit-proven only lowers the stars of bet types that lost money in his history before the minimum is checked).
-- [ ] TST1 One shared helper for the adjusted stars (data), used by the auto-bet and the UI.
-- [ ] TST2 The auto-bet message names the adjusted and the shown stars; the card shows the adjusted stars beside the raw ones when they differ (CNO card, +EV card).
+- [x] TST1 One shared helper for the adjusted stars (data), used by the auto-bet and the UI.
+- [x] TST2 The auto-bet message names the adjusted and the shown stars; the card shows the adjusted stars beside the raw ones when they differ (CNO card, +EV card).
 - [ ] TST3 Tests, ship, release.
