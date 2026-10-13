@@ -836,6 +836,11 @@ class Scanner(
 
     override fun sourceRace(now: Long): List<String> {
         val held = synchronized(references) { references.values.map { it.snapshot } }
+        val agreement = SourceAgreement.compute(
+            held.groupBy { it.provider.ifEmpty { "reference" } },
+            held.filter { it.provider == "pinnacle" }.flatMap { it.events },
+            setOf("draftkings", "fanduel"),
+        )
         return held.groupBy { it.provider.ifEmpty { "reference" } }.entries.sortedBy { SOURCE_ORDER.indexOf(it.key).let { i -> if (i < 0) Int.MAX_VALUE else i } }.map { (id, snaps) ->
             // Age of each quote when the board was read: the read time minus the book's own stamp (a quote with no stamp is left out, and counted).
             val ages = ArrayList<Pair<String, Long>>()
@@ -851,6 +856,7 @@ class Scanner(
             fun sec(ms: Long) = if (ms < 10_000) "%.1f s".format(ms / 1000.0) else "${ms / 1000} s"
             "$id: ${ages.size} quotes (${snaps.size} boards, read ${(now - snaps.maxOf { it.fetchedAtMs }) / 1000} s ago) · age median ${sec(pct(all, 0.5))}, p90 ${sec(pct(all, 0.9))}" +
                 (if (unstamped > 0) ", $unstamped unstamped" else "") +
+                (agreement[id]?.let { a -> " · vs Pinnacle (DK/FD main lines) off by %.1f pts on average, %d%% within 1 pt, n=%d".format(a.meanPoints, Math.round(a.within1Pct * 100), a.lines) } ?: "") +
                 (if (perBook.isNotEmpty()) " · freshest books " + perBook.take(4).joinToString { "${it.key} ${sec(it.value)}" } + " · stalest " + perBook.takeLast(2).joinToString { "${it.key} ${sec(it.value)}" } else "")
         }
     }
