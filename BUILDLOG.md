@@ -252,3 +252,4 @@ day that changes.
 | v0.96.3 | code 250 | 2026-10-13T20:38Z | v0.96.3: every API reconnects by itself (refusal holds short, down sources re-probe after 60 s, Test lifts refusals)
 | v0.96.4 | code 251 | 2026-10-13T21:38Z | v0.96.4: laggy/glitching feed fix (adjusted-stars note no longer squeezes the card header)
 | v0.97.0 | code 252 | 2026-10-13T22:39Z | v0.97.0: Kalshi API key + signed reads + real-time socket; socket switch per API
+| v0.97.1 | code 253 | 2026-10-13T22:48Z | v0.97.1: PropLine leads the API order, measured freshness can demote it
