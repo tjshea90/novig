@@ -7050,3 +7050,8 @@ Do option 1
 ```
 Look at these errors , I tested boltodds and it is running again. Shouldn't vigilant retry and auto reconnect on the next scan? If it doesn't, make it do so for every api
 ```
+
+## 2026-10-13T21:24:46Z
+```
+Right now the app is laggy and glitching
+```
