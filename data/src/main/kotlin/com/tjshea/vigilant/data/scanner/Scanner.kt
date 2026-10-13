@@ -1310,11 +1310,12 @@ class Scanner(
         const val DEEPEN_POLL_MS = 50L
 
         /**
-         * Merge order: when two feeds carry the same book, the earlier one's quote is priced. ParlayAPI ahead of PropLine (Tj, 2026-09-30,
+         * Merge order: when two feeds carry the same book, the earlier one's quote is priced. PropLine moved up front (Tj, 2026-10-13: "make propline a preferred api ... if it offers fresh odds"; the
+         * measured ranking in [ApiChain] still demotes it if its quotes prove staler). Before that ParlayAPI was ahead of PropLine (Tj, 2026-09-30,
          * "prioritize its use if it can do anything better"): its books are polled every few seconds and each quote carries its measured
          * age, where PropLine runs ~20 s behind; between ParlayAPI's paced refreshes its quotes age out (Freshness) and PropLine's price.
          */
-        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "sgo", "sgo-props", "oddspapi", "oddspapi-props", "oddspapi_free", "oddspapi_free-props", "bolt", "bolt-props", "parlay", "parlay_1h", "propline", "oddsapi", "parlay_props", "propline_props", "oddsapi_props", "unabated", "unabated-props")
+        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "propline", "propline_props", "sgo", "sgo-props", "oddspapi", "oddspapi-props", "oddspapi_free", "oddspapi_free-props", "bolt", "bolt-props", "parlay", "parlay_1h", "parlay_props", "oddsapi", "oddsapi_props", "unabated", "unabated-props")
 
         /** Sportsbook feeds whose books follow the reference-book picker in Settings. */
         private val PICKED_BOOK_FEEDS = setOf("oddsapi", "oddsapi_props", "propline", "propline_props")
