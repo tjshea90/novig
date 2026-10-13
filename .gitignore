@@ -34,3 +34,7 @@ __pycache__/
 
 # Robolectric screenshots (regenerate: ./gradlew :app:testDebugUnitTest -Pscreenshots)
 app/screenshots/
+
+# simple-workflow plugin artifacts (local-only; delete entries to share via git)
+.simple-workflow/
+.simple-workflow
