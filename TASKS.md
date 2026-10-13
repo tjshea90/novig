@@ -4955,5 +4955,5 @@ Tj: "When I do scans on the app, I have no way to know which apis are accurate, 
 
 ## TCP: copy the sharps? (Tj, 2026-10-13 ~01:50Z)
 Tj: "Research if it is plausible and profitable to figure out what sharps are betting and replicate their bets automatically"
-- [ ] TCP1 What the app/Novig/other APIs expose about who bets what (Novig trades & user ids, exchange order flow, PropLine steam/movement, splits), and what the repo's own studies already found about following sharp money / steam / trades.
-- [ ] TCP2 Write research/copy_sharps_2026-10-13.md with the verdict (plausible? profitable? which version, what it would need), then answer Tj.
+- [x] TCP1 What the app/Novig/other APIs expose about who bets what (Novig trades & user ids, exchange order flow, PropLine steam/movement, splits), and what the repo's own studies already found about following sharp money / steam / trades.
+- [x] TCP2 Write research/copy_sharps_2026-10-13.md with the verdict (plausible? profitable? which version, what it would need), then answer Tj.

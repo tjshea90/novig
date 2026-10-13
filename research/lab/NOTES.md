@@ -52,3 +52,4 @@
 - 2026-10-13 second study file read: PropLine median 0 s p90 70 s (real stamps), SGO 334 s, Unabated tail hours; chain is sequential so a scan waits for every better feed; SourceAgreement (vs Pinnacle) added.
 - 2026-10-13 TAQ built: FairProvenance (bet says which API/age per book), SourceScore + ApiChain measured ranking + audition, SourceAgreement vs Pinnacle; research/api_logistics_2026-10-13.md.
 - 2026-10-13 budget plan (research/api_budget_plan_2026-10-13.md): buy ParlayAPI $5 only; farm Pinnwire/pinnapi/PropLine free keys.
+- 2026-10-13 copy-the-sharps research (research/copy_sharps_2026-10-13.md): individuals anonymized; liquidity-following -1% EV; whale takers n.s.; sharp book prices already the core.
