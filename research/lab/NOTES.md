@@ -53,3 +53,4 @@
 - 2026-10-13 TAQ built: FairProvenance (bet says which API/age per book), SourceScore + ApiChain measured ranking + audition, SourceAgreement vs Pinnacle; research/api_logistics_2026-10-13.md.
 - 2026-10-13 budget plan (research/api_budget_plan_2026-10-13.md): buy ParlayAPI $5 only; farm Pinnwire/pinnapi/PropLine free keys.
 - 2026-10-13 copy-the-sharps research (research/copy_sharps_2026-10-13.md): individuals anonymized; liquidity-following -1% EV; whale takers n.s.; sharp book prices already the core.
+- 2026-10-13 true profit on money put in: MoneyIn replay (least deposit with winnings re-bet) + optional Settings figure; Tracker 'Your money, all time' card; Diagnostics line; chart's % relabelled 'Per $ staked'.
