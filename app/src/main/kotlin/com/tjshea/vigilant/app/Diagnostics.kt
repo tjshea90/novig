@@ -13,6 +13,7 @@ import com.tjshea.vigilant.data.scanner.ScanTiming
 import com.tjshea.vigilant.data.tracker.BetSettler
 import com.tjshea.vigilant.data.tracker.BetStatus
 import com.tjshea.vigilant.data.tracker.BetTracker
+import com.tjshea.vigilant.data.tracker.MoneyIn
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -478,6 +479,10 @@ object Diagnostics {
             stillLooking.groupingBy { it.closeNote ?: "not looked for yet" }.eachCount().entries.sortedByDescending { it.value }.take(5).forEach { o.appendLine("    ×${it.value}: ${it.key}") }
         }
         o.appendLine("Results: ${stats.won}-${stats.lost}${if (stats.pushed > 0) "-${stats.pushed}" else ""} · profit ${String.format(Locale.US, "%+.2f", stats.profit)} on ${String.format(Locale.US, "%.2f", stats.staked)} staked" + (stats.roi?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + (stats.averageEv?.let { String.format(Locale.US, " · average EV when bet %+.1f%%", it * 100) } ?: "") + (stats.averageClv?.let { String.format(Locale.US, " · average CLV %+.1f%%", it * 100) } ?: ""))
+        // Profit on the money actually put in (Tj, 2026-10-13): winnings that are bet again are not a deposit, so this is the real return on the bankroll; the lines above divide by every dollar staked.
+        MoneyIn.compute(bets, s.settings.moneyDeposited.takeIf { it > 0 }).let { m ->
+            o.appendLine(String.format(Locale.US, "Money put in %.2f (%s) · profit %+.2f = %s of the money put in · %.2f staked in all, each deposited dollar bet %s times", m.deposited, if (m.estimated) "worked out from the bets: the least money that could have placed them all with winnings re-bet" else "given in Settings", m.profit, m.percent?.let { String.format(Locale.US, "%+.1f%%", it * 100) } ?: "n/a", m.turnover, m.turns?.let { String.format(Locale.US, "%.1f", it) } ?: "n/a"))
+        }
         // What the Tracker's Profit shows (every settled bet, the same with its "Novig only" filter on or off): the line above leaves the outliers out.
         if (stats.outliers > 0) o.appendLine("Every settled bet, outliers too (the Tracker's Profit): profit ${String.format(Locale.US, "%+.2f", stats.profitAll)} on ${String.format(Locale.US, "%.2f", stats.stakedAll)} staked" + (stats.roiAll?.let { String.format(Locale.US, " (%+.1f%%)", it * 100) } ?: "") + " · ${stats.outliers} outlier bet${if (stats.outliers == 1) "" else "s"} (over ±${(BetTracker.OUTLIER_EV * 100).toInt()}% EV when bet)")
         stats.luck?.let { o.appendLine(String.format(Locale.US, "Expected %+.2f vs actual %+.2f over %d settled bets with an EV: %+.1f standard deviations", stats.expectedProfit, stats.profitWithEv, stats.settledWithEv, it)) }
