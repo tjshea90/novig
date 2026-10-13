@@ -7025,3 +7025,8 @@ Then:
 ```
 If it doesn't already do this, make the auto bet feature also auto bet on bets scanned in vigilant scanner as well as cno, but only if they match the bet criteria in the auto bet settings
 ```
+
+## 2026-10-13T18:31:29Z
+```
+How is this bet under my 4 star minimum
+```
