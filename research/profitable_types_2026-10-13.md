@@ -22,7 +22,7 @@ Conclusion on bids: nothing is proven profitable by ROI yet (every ROI interval 
 ## BETS (takers). 10-13 README: 1,162 bets, ROI -4.5% (profit -$64.80), CLV +1.0% on 953 (t=4.3), independent +2.0% on 377
 | Type | n | ROI | CLV (n, t) | Verdict |
 | :- | -: | :- | :- | :- |
-| Team totals | 108 | +19.4%, +$29.27 | +2.6% (101, t=5.9, ind +2.8%) | BEST for bets: wins AND beats the close |
+| Team totals (README row pools bets AND bid fills: 108 in all) | 108 | +19.4%, +$29.27 | +2.6% (101, t=5.9, ind +2.8%) | CORRECTION 10-13 evening: the money is in the BID fills; taker bets alone are 29 settled, -7.9% (see below) |
 | 1st half / inning / set | 24 | +24.9% | +2.8% (23, t=2.4) | too few |
 | Spreads | 162 | +14.8% | -1.0% (109, t=-1.1) | profit not backed by the close: luck risk |
 | Game totals | 166 | +11.7% | +0.3% (106, t=0.3) | same: results ahead of the close |
@@ -49,3 +49,10 @@ Reading: the money loss sits in PLAYER PROPS (-$122 on 989) and underdogs; the a
 4. Price: favorites and even money are break-even or better; underdogs +110..+200 lose 8.6% on 846 bets while beating the close: tighten the dog band (BetSlider LONGEST_ODDS +150 already).
 5. Too small to act on: NHL bids (+24%), NCAAF spreads (+34%), favorites bids (+21%): watch, do not change settings.
 Next data to ask: record-level files after 10-13 (the README alone cannot split bids by type) so team totals can reach n=150+.
+
+## Team totals in detail (record-level, 10-11 files: 94 settled = 65 bid fills + 29 taker bets; ROI +22.6%, t=1.8; CLV +2.5% on 91, t=5.3, independent +2.9% on 29)
+CORRECTION to my first answer: the README's "team totals 108" pools bets and bid fills, so I wrongly called it "best for bets". Split: BID fills 65 (+33.9%, t=+2.3, CLV +2.4% t=4.4); TAKER bets 29 (-7.9%, t=-0.2, CLV +2.9% on 26).
+- Side: over 33 (+31.7%, CLV +2.7% t=3.4) vs under 61 (+18.3%, CLV +2.4% t=4.0): both beat the close equally; results favor over but n=33. By instrument: bid over 19 +52% / bid under 46 +27%; bet over 14 -2.5% / bet under 15 -12.2%.
+- Sport: NHL 26 (+60.3%, t=3.4, CLV +3.6% t=4.0, independent +5.2% on 8) BEST; NCAAF 35 (+4.4%, CLV +3.0% t=3.2); NFL 23 (+1.7%, CLV +0.9% t=1.4, independent -0.3%: no edge); MLB 8 (-4%). NHL over 10: +85% (t=4.2); NHL under 16: +48%. NFL unders 16: -20%; NCAAF overs 15: -29% (CLV +3.5%).
+- Lead time: 6-24 h 39 (+40.1%, t=2.5), 2-6 h 26 (+22.4%), 30 min-2 h 12 (-16.5%). Odds: even money 30 (+34.2%), dogs +110..+200 56 (+18.3%). Auto 71 (+29.5%, t=2.0, CLV +2.6% t=5.1) vs manual 22 (-6.9%).
+- Every ROI above rests on 8-65 bets: too small to set rules; the closes (CLV) are the evidence: team totals beat the close in NHL and NCAAF, not in NFL.
