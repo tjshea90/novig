@@ -143,6 +143,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** BoltOdds Pro: the odds WebSocket (lines and props) as a fair-line source, free to read once connected (Tj, 2026-10-12). A page of [APIS]. */
     BOLTODDS("BoltOdds Pro", "Real-time odds pushed over a WebSocket from many sportsbooks: lines and player props, read alongside every other API you have on", SettingsGroup.FIND),
 
+    /** Kalshi: the exchange's prices (free to read), and with Tj's API key a real-time socket and a bigger read budget (Tj, 2026-10-13; KALSHI_API.md). A page of [APIS]. */
+    KALSHI("Kalshi", "Exchange prices, free to read; your API key adds a real-time socket and a bigger read budget", SettingsGroup.FIND),
+
     /** OddsPapi v5: the key(s), the one switch that makes it the source for everything it can do, and what it replaces (Tj, 2026-10-09). A page of [APIS]. */
     ODDSPAPI("OddsPapi", "v5 (a trial or contract key): a second paid feed for odds, props, closing lines (CLV for any bet) and results, read alongside every other API you have on", SettingsGroup.FIND),
 
@@ -186,7 +189,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The page this one belongs to, or null for a page on the Settings home list: the APIs' own pages and their usage details open from APIs & keys and go back to it. */
     val parent: SettingsPage?
         get() = when (this) {
-            SGO, BOLTODDS, ODDSPAPI, UNABATED, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
+            SGO, BOLTODDS, KALSHI, ODDSPAPI, UNABATED, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
             else -> null
         }
 
@@ -194,7 +197,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR -> s.vigilantOn
-        ALERTS, RESEARCH, SGO, BOLTODDS, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
+        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
         APIS -> true
         PINNODDS, LIVEBIDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
@@ -277,6 +280,12 @@ object SettingsSummary {
                 state.boltKeys.isEmpty() -> "No key saved"
                 s.gates.useBoltOdds -> "On: real-time lines and props over a WebSocket"
                 else -> "Off (key saved)"
+            }
+            SettingsPage.KALSHI -> when {
+                !s.useKalshi -> "Off"
+                state.kalshiHasKey && s.gates.kalshiSocket -> "On: signed reads and a real-time socket"
+                state.kalshiHasKey -> "On: signed reads, socket off"
+                else -> "On: public reads (no key saved)"
             }
             SettingsPage.UNABATED -> when {
                 state.unKeys.isEmpty() -> "No key saved"
@@ -423,6 +432,7 @@ fun SettingsScreen(
                 SettingsPage.ODDS_API -> OddsApiPage(state, keys, onUpdate)
                 SettingsPage.UNABATED -> UnabatedPage(state, keys, reportActions, onUpdate)
                 SettingsPage.BOLTODDS -> BoltOddsPage(state, keys, reportActions, onUpdate)
+                SettingsPage.KALSHI -> KalshiPage(state, reportActions, onUpdate)
                 SettingsPage.ODDSPAPI_FREE -> OddsPapiFreePage(state, keys, reportActions, onUpdate)
                 SettingsPage.USAGE -> UsageTab(state, keys)
                 SettingsPage.HELP -> ToolsTab(state, reportActions, onUpdate)
@@ -1445,6 +1455,50 @@ private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportAct
 }
 
 /**
+ * Settings › Kalshi (Tj, 2026-10-13; KALSHI_API.md): the Key ID and private key of an API key (Ed25519 or RSA), a Test key (the signed account call, and the socket's signed handshake), the API switch and the
+ * socket switch. With a key the reads are signed and paced by the account's own budget, and the socket pushes every price change so scans read Kalshi without asking it. The private key is kept in the app's
+ * own file and is never shown again, logged or shared.
+ */
+@Composable
+private fun ColumnScope.KalshiPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    Intro("Kalshi is the exchange whose prices Vigilant reads for fair odds (game lines, props, spreads and totals). Reading is free without a key. A key (kalshi.com › Profile › API keys; Ed25519 recommended) signs the reads, which then use the dedicated API host and the account's own read budget, and lets Vigilant keep Kalshi's WebSocket open, which pushes every price change in real time.")
+    var keyId by remember(state.kalshiKeyId) { mutableStateOf(state.kalshiKeyId) }
+    var pem by remember { mutableStateOf("") }
+    Text(
+        if (state.kalshiHasKey) "Saved: Key ID …${state.kalshiKeyId.takeLast(6)} (${state.kalshiAlgo ?: "?"}). The private key stays on this phone and is not shown again." else "No key saved: Kalshi is read without one.",
+        style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("kalshiKeyState"),
+    )
+    OutlinedTextField(
+        value = keyId, onValueChange = { keyId = it.trim() }, label = { Text("Key ID") }, singleLine = true,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).testTag("kalshiKeyId"),
+    )
+    OutlinedTextField(
+        value = pem, onValueChange = { pem = it }, label = { Text("Private key (paste the whole file)") }, minLines = 3, maxLines = 6,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp).testTag("kalshiPem"),
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        Button(onClick = { reportActions.onSaveKalshiKey(keyId, pem); pem = "" }, enabled = keyId.isNotBlank() && pem.isNotBlank(), modifier = Modifier.testTag("kalshiSave")) { Text("Save key") }
+        Button(onClick = reportActions.onTestKalshiKey, enabled = state.kalshiHasKey && !state.kalshiKeyBusy, modifier = Modifier.testTag("kalshiTest")) { Text(if (state.kalshiKeyBusy) "Testing…" else "Test key") }
+        androidx.compose.material3.OutlinedButton(onClick = reportActions.onRemoveKalshiKey, enabled = state.kalshiHasKey, modifier = Modifier.testTag("kalshiRemove")) { Text("Remove") }
+    }
+    state.kalshiKeyNote?.let {
+        Text(
+            it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("kalshiKeyNote"),
+            color = if (state.kalshiKeyOk == true) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+        )
+    }
+    SwitchRow("Use Kalshi", "Off: Kalshi is never called, by any scan, bid or check.", s.useKalshi, tag = "kalshiSwitch") { v -> onUpdate { it.copy(useKalshi = v) } }
+    SwitchRow(
+        "Kalshi socket", if (state.kalshiHasKey) com.tjshea.vigilant.app.ApiEntry.KALSHI.socketBlurb else "Needs a saved key. " + com.tjshea.vigilant.app.ApiEntry.KALSHI.socketBlurb,
+        s.gates.kalshiSocket, tag = "kalshiSocketSwitch", enabled = s.useKalshi,
+    ) { v -> onUpdate { it.copy(gates = it.gates.copy(kalshiSocket = v)) } }
+    Hint("Kalshi's docs: reads cost 10 tokens each against the account's bucket (a Basic account has 200 tokens a second, so 20 reads); a refused request (429) is retried with backoff. Vigilant paces itself at half the bucket at most. Diagnostics shows the tier, the socket's state, the markets it holds and any error codes.")
+}
+
+/**
  * Settings › BoltOdds Pro (Tj, 2026-10-12; BOLTODDS_API.md): the key list, a Test key that says what the key carries (and listens on a socket for 15 s) and saves a sample for Claude, the one switch, and the
  * option to price with every book BoltOdds lists. On, two WebSockets (the lines, the props) open while scans use them and the fair line reads what they have delivered. Off: nothing is sent and nothing is open.
  */
@@ -1565,6 +1619,17 @@ private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, o
                 }
             }
         }
+    }
+    SectionTitle("Sockets")
+    Intro("An API with a WebSocket has a second switch here. Socket on: the app keeps that connection open for real-time prices. Socket off with the API still on: the regular requests, no socket. The API off: never called at all.")
+    SwitchRow(
+        "Novig live feed socket", "On: the Vigilant read key's market feed (book / best-bid) stays open and scans read the books it holds. Off: every scan reads Novig's books by request (slower, no pushes). Orders and their results have their own switches under Betting & Novig.",
+        s.gates.novigSocket, tag = "novigSocketSwitch",
+    ) { v -> onUpdate { it.copy(gates = it.gates.copy(novigSocket = v)) } }
+    com.tjshea.vigilant.app.ApiEntry.entries.filter { it.hasSocket }.forEach { e ->
+        SwitchRow(
+            e.title + " socket", e.socketBlurb, e.socketOn(s), tag = "apiSocket-${e.name}", enabled = e.isOn(s),
+        ) { v -> onUpdate { it2 -> e.setSocket(it2, v) } }
     }
     SectionTitle("How much is left on each key")
     com.tjshea.vigilant.app.ApiEntry.entries.forEach { e ->

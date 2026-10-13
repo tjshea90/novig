@@ -1442,7 +1442,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val checks = withContext(Dispatchers.IO) {
                 runCatching {
-                    if (entry.keyless) listOf(c.apiProbe.reach(kalshi = entry == ApiEntry.KALSHI))
+                    if (entry.keyless) listOf(c.apiProbe.reach(kalshi = entry == ApiEntry.KALSHI)) + kalshiKeyChecks(entry)
                     else c.apiProbe.check(entry.provider!!, keysFor(entry.provider))
                 }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull()
             }
@@ -1473,7 +1473,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val checks = withContext(Dispatchers.IO) {
                         runCatching {
                             kotlinx.coroutines.withTimeout(40_000L) {
-                                if (e.keyless) listOf(c.apiProbe.reach(kalshi = e == ApiEntry.KALSHI)) else c.apiProbe.check(e.provider!!, keysFor(e.provider))
+                                if (e.keyless) listOf(c.apiProbe.reach(kalshi = e == ApiEntry.KALSHI)) + kalshiKeyChecks(e) else c.apiProbe.check(e.provider!!, keysFor(e.provider))
                             }
                         }.onFailure { if (it is kotlinx.coroutines.CancellationException && it !is kotlinx.coroutines.TimeoutCancellationException) throw it }.getOrNull()
                     }
@@ -2220,6 +2220,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * Settings › Unabated › Test key: the key's leagues and books, one straight board and one props board read as Vigilant would, said in words; the raw answers are kept as a sample in Downloads/Vigilant
      * (and shared when [share]) so the parser can be checked against what the key really returns (UNABATED_API.md §4). Two odds requests, about ten seconds (the Free interval).
      */
+    /** Kalshi's saved key checked beside its public reach (Settings › APIs › Test): one line per outcome; nothing for any other API or without a key. */
+    private suspend fun kalshiKeyChecks(entry: ApiEntry): List<com.tjshea.vigilant.data.keys.ApiProbe.Check> {
+        if (entry != ApiEntry.KALSHI) return emptyList()
+        val signer = c.kalshiSigner() ?: return emptyList()
+        val r = runCatching { com.tjshea.vigilant.data.kalshi.KalshiKeyTest.run(c.http, signer) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }.getOrNull() ?: return emptyList()
+        return r.summary.lines().filter { it.isNotBlank() }.map { l -> com.tjshea.vigilant.data.keys.ApiProbe.Check("key …${signer.keyId.takeLast(4)}", l.startsWith("✓"), l.removePrefix("✓ ").removePrefix("✗ ")) }
+    }
+
     /** Saves Tj's Kalshi Key ID and private key (KALSHI_API.md); says at once if the key cannot be read. The PEM is never logged or shown again. */
     fun saveKalshiKey(keyId: String, pem: String) {
         val cred = com.tjshea.vigilant.data.kalshi.KalshiCredentials(keyId.trim(), pem.trim())
