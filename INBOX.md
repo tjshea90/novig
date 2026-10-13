@@ -6999,3 +6999,8 @@ How do I do on nhl player props like shots on goal
 ```
 Is there any research on the Internet on the types of bets and bids that are most profitable over large samples
 ```
+
+## 2026-10-13T17:43:39Z
+```
+If Pinnacle moves toward a bet, is that a strong signal to bet it? If so, can the app continually look for bets which pinnacle is moving toward and try to find stale positive EV odds on novig for the same bet?
+```
