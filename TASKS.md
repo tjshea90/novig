@@ -5013,3 +5013,8 @@ Tj: "I now have a kalshi api key. Find the kalshi API docs and figure out how to
 - [x] TKS3 Kalshi WebSocket client (ticker/orderbook_delta), feeding the scan as a push source; REST fallback; rate limits obeyed.
 - [x] TKS4 Socket on/off switch for every API that has a socket (Novig, BoltOdds, Pinnodds, Kalshi, others): on = keep the socket; off with API on = REST only; API off = never called.
 - [ ] TKS5 Tests, ship, tell Tj where to paste the key.
+
+## TPP: PropLine a preferred API in the order, if it offers fresh odds (Tj, 2026-10-13)
+Tj: "Also make propline a preferred api in the vigilant API order if it offers fresh odds. Let me know if you want me to send the kalshi api key" (answer: no, never in chat; paste it in Settings › Kalshi).
+- [x] TPP1 PropLine first in `ApiChain` LINES/PROPS chains and in `Scanner.SOURCE_ORDER` (after exchanges); the measured ranking (`rankByMeasure`, p90 quote age) still demotes it if staler. Tests: `ApiChainTest` (new), `ScannerTest` adapted.
+- [ ] TPP2 Ship v0.97.1.
