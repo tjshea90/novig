@@ -381,14 +381,14 @@ data class UiState(
     }
 
     /**
-     * [ev] (percent, at Novig's price now against CNO's fair) re-judged by the LOWEST fair any scanner has for the same Novig outcome, as the Bet sheet does ([ApiBettingController]:
+     * [ev] (a fraction, at Novig's price now against CNO's fair) re-judged by the LOWEST fair any scanner has for the same Novig outcome, as the Bet sheet does ([ApiBettingController]:
      * Tj, 2026-10-11, "if a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it"), so the list never shows +EV for a bet the sheet then calls negative
      * (Tj, 2026-10-13, screenshot: the card said +2.04%, the sheet -0.1%). Vigilant's latest scan only counts while its fair is fresh.
      */
     private fun lowestFairEv(row: CnoRow, live: com.tjshea.vigilant.data.cno.LivePrice, ev: Double, now: Long): Double {
         val own = result?.opportunities?.firstOrNull { it.market.marketId == live.marketId && it.outcome.outcomeId == live.outcomeId && !it.isLive && !it.fairIsOld(now) }?.fairProbability ?: return ev
         val cnoFair = com.tjshea.vigilant.data.cno.CnoChecks.fairProbability(row) ?: return ev
-        return if (own < cnoFair && cnoFair > 0.0) ((1.0 + ev / 100.0) * (own / cnoFair) - 1.0) * 100.0 else ev
+        return if (own < cnoFair && cnoFair > 0.0) (1.0 + ev) * (own / cnoFair) - 1.0 else ev
     }
 
     /** When [row]'s shown price was read: Novig's live read, else CNO's list. */

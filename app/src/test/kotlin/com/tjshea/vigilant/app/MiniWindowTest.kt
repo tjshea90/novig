@@ -303,6 +303,21 @@ class MiniWindowTest {
         assertEquals(null, MiniWindow.items(same, now).first { it.title == jj.bet }.movedFrom)
     }
 
+    /** Tj, 2026-10-13 (screenshot: the card said +2.04%, the bet sheet "negative EV now"): a CNO bet at or under 0% at Novig's price now leaves the list by itself. */
+    @Test
+    fun `a CNO bet that is no longer positive EV at Novig's price now leaves the list without a tap, and returns when it is positive again`() {
+        val jj = SampleCno.rows[1]
+        val now = SampleScan.NOW
+        val s = SampleCno.state()
+        assertTrue(s.cnoShown(now).any { it.row.key == jj.key })
+        fun at(ev: Double) = s.copy(novigLive = mapOf(jj.key to com.tjshea.vigilant.data.cno.LivePrice(american = 105, available = 40.0, ev = ev, atMs = now - 1_000)))
+        assertTrue(at(-0.001).cnoShown(now).none { it.row.key == jj.key })
+        assertTrue(at(0.0).cnoShown(now).none { it.row.key == jj.key })
+        // still read live while hidden, so it comes back when it turns +EV (nothing flickers)
+        assertTrue(at(-0.001).livePriceRows(now).any { it.key == jj.key })
+        assertTrue(at(0.004).cnoShown(now).any { it.row.key == jj.key })
+    }
+
     @Test
     fun `the green check judges Novig's price now, not the older one CNO listed`() {
         val jj = SampleCno.rows[1]
