@@ -188,10 +188,10 @@ class NovigLive(
 
     companion object {
         /** The listed Novig bets whose books are read. */
-        const val LIVE_TOP = 10
+        const val LIVE_TOP = 30
 
         /** How often they're read (most answers are "not modified"). */
-        const val LIVE_EVERY_MS = 15_000L
+        const val LIVE_EVERY_MS = 8_000L
 
         /** A live price older than this isn't shown (the widget went quiet, or Novig didn't answer). */
         const val FRESH_MS = 60_000L

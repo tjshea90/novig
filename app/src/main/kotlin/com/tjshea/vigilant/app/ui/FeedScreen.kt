@@ -598,7 +598,7 @@ private fun OddsAgeLine(o: Opportunity) {
 }
 
 /** How often the open +EV list re-reads Novig's prices for its bets. */
-internal const val AUTO_RECHECK_MS = 60_000L
+internal const val AUTO_RECHECK_MS = 15_000L
 
 /** Gold, the stars of a bet's rating. */
 internal val SharpStarColor = androidx.compose.ui.graphics.Color(0xFFF5B301)
