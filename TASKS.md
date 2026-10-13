@@ -5028,6 +5028,6 @@ Tj: "Also make propline a preferred api in the vigilant API order if it offers f
 
 ## TSP: speed up the app without losing accuracy (Tj, 2026-10-13: "Do whichever ones, if any, speed up the app and make it more efficient but without sacrificing any accuracy or quality")
 Evidence: v0.97.0 diagnostics: a BoltOdds streaming pass took 45 s, 41 s of it "boards read" (the whole 2,077-game / 215k-outcome board converted again for every league each pass); heap 92%, GC 48% of a core.
-- [ ] TSP1 Convert only the BoltOdds games that changed since the last pass (per-game cache keyed by the game's content version AND everything else the conversion reads), identical output to a full conversion (test).
-- [ ] TSP2 Judge the other two options (stop starting before slow feeds / fewer Novig deepens) on accuracy: do only what loses none.
+- [x] TSP1 (cause found: `BoltMarkets.classify` ran six regexes + set unions per OUTCOME on every push and again in every pass; now remembered by (league, name, shape): 215,000 outcomes 650-970 ms -> 5-14 ms on the dev JVM, same answers: `BoltMarketsMemoTest`; team-name normalisation remembered too)
+- [x] TSP2 Not done on purpose: starting a scan before the slow feeds are in would change which books build the fair (accuracy); fewer Novig deepens trades bets found for stream room (needs live measurement).
 - [ ] TSP3 Ship v0.97.3.
