@@ -491,7 +491,7 @@ fun AutoBetSection(
     // ---- How much -----------------------------------------------------------------------------------
     SectionTitle("How much")
     Text("Amount per bet", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
-    Chips(AutoBetStake.entries.toList(), s.autoBetStake, { it.label }) { v -> onUpdate { it.copy(autoBetStake = v) } }
+    Chips(AutoBetStake.entries.filter { it != AutoBetStake.SIXTEENTH_KELLY }, s.autoBetStake, { it.label }) { v -> onUpdate { it.copy(autoBetStake = v) } }
     if (s.autoBetStake == AutoBetStake.CUSTOM) {
         var custom by remember(s.autoBetCustomStake) { mutableStateOf(WalletAmount.text(s.autoBetCustomStake)) }
         OutlinedTextField(

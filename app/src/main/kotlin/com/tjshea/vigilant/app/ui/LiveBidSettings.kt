@@ -169,7 +169,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     LbHint("A bid's size is a fraction of full Kelly on your bankroll (Settings › Betting & Novig account: ${LiveBidText.money(s.bankroll)}) for that bid's own price and edge, raised to the smallest stake and held to the biggest and to Settings' per-bet maximum. Makers pay no fee.")
     LbTitle("Live bid stake rule")
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        AutoBetStake.entries.forEach { m ->
+        AutoBetStake.entries.filter { it != AutoBetStake.SIXTEENTH_KELLY }.forEach { m ->
             FilterChip(selected = m == lim.stakeMode, onClick = { setL { it.copy(stakeMode = m) } }, label = { Text(m.label) }, modifier = Modifier.testTag("liveBidStake-${m.name}"))
         }
     }
