@@ -886,6 +886,38 @@ internal suspend fun markPlaced(c: AppContainer, target: BetTarget, placed: Plac
     }
 }
 
+/** How long a bet whose slip closed stays off the lists before it may come back, when the order did not go through (Tj, 2026-10-13: "after about 15 seconds"). */
+internal const val MISS_RESTORE_MS = 15_000L
+
+/**
+ * The bet leaves the lists the moment its slip closes ([ApiBetting.confirm]'s order-sent step, Tj 2026-10-13): marked like a ✓ before Novig has answered. [markPlaced] replaces this
+ * mark when the bet is Placed; [restoreAfterMiss] takes it off again when it was not.
+ */
+internal suspend fun markProvisional(c: AppContainer, target: BetTarget, now: Long) {
+    val key = target.placedKey ?: return
+    runCatching {
+        c.placed.mark(
+            com.tjshea.vigilant.data.tracker.PlacedBet(
+                key = key, title = target.selection, detail = "${target.marketLabel} · ${target.eventName}", odds = "",
+                placedAtMs = now, startsAtMs = target.startsTs, event = target.eventName, market = target.marketLabel,
+                outcomeId = target.outcomeId, league = target.league,
+            ),
+        )
+    }
+}
+
+/**
+ * After the order was sent at [sentAt] and did not go through: waits until [MISS_RESTORE_MS] after the slip closed, then takes the provisional mark off, unless the bet was marked placed
+ * since (only the provisional mark, which has no odds and the time [sentAt], is ever removed). The lists drop it again at once if it is no longer +EV (CNO's live EV, the feed's re-price).
+ */
+internal suspend fun restoreAfterMiss(c: AppContainer, target: BetTarget, sentAt: Long, clock: () -> Long) {
+    val key = target.placedKey ?: return
+    val wait = sentAt + MISS_RESTORE_MS - clock()
+    if (wait > 0) kotlinx.coroutines.delay(wait)
+    val mine = c.placed.flow.value?.bets?.firstOrNull { b -> key in b.keys && b.odds.isEmpty() && b.placedAtMs == sentAt } ?: return
+    runCatching { c.placed.unmark(mine.key) }
+}
+
 /**
  * The auto-bet's notifications (Tj, 2026-10-01: "Make a push notification for every automatic bet, so I can see each bet placed and the stake and
  * EV"): one of its own for each bet placed (it spent money while nobody looked), on a HIGH-importance channel so it pops up, with the stake and the

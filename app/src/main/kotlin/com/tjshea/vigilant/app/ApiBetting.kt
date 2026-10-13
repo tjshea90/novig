@@ -700,6 +700,9 @@ class ApiBettingController(
         betJob?.cancel()
         // Not betJob: opening the next bet cancels that, and this one must be followed to its end whatever the sheet does.
         scope.launch {
+            // The bet leaves the lists the moment the sheet closes (Tj, 2026-10-13); it comes back only if the order did not go through ([restoreAfterMiss]).
+            var sentAt = 0L
+            var provisional: kotlinx.coroutines.Job? = null
             // Once the order may be on its way it is always followed to its end (and recorded) even if the sheet is closed: a cancelled call
             // would drop the answer to an order Novig has already taken.
             val result = try {
@@ -711,6 +714,8 @@ class ApiBettingController(
                         // Novig has the order: the sheet says so and may be closed; the end is still being waited for below.
                         // Tj, 2026-10-12: "Close the bet slip immediately automatically after I place the bet. Then send a notification of successful bet or any error."
                         state.update { st -> st.copy(betSheet = if (st.betSheet?.target === target) null else st.betSheet) }
+                        sentAt = clock()
+                        provisional = scope.launch(Dispatchers.IO + NonCancellable) { markProvisional(c, target, sentAt) }
                     }
                 }
             } catch (e: CancellationException) {
@@ -730,10 +735,18 @@ class ApiBettingController(
             if (result !is PlaceResult.Placed) toasts.tryEmit(resultNote(result, target))
             if (result is PlaceResult.Placed) {
                 withContext(NonCancellable) {
+                    provisional?.join()
                     hideFromLists(target, result)
                     refreshBalance(quiet = true)
                 }
                 toasts.tryEmit("Bet placed: ${money(result.bet.stake)} on ${target.selection}")
+            } else if (sentAt > 0L && (result is PlaceResult.NotFilled || result is PlaceResult.Refused || result is PlaceResult.Failed)) {
+                // Not unconfirmed: that one may have been placed, so it stays off the list until the Tracker settles it.
+                withContext(NonCancellable) {
+                    provisional?.join()
+                    restoreAfterMiss(c, target, sentAt, clock)
+                    c.recheckMarkets(listOf(target.market.marketId))
+                }
             }
         }
     }
