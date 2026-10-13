@@ -248,3 +248,4 @@ day that changes.
 | v0.95.9 | code 245 | 2026-10-13T01:06Z | v0.95.9: every bet says which API priced its fair odds and how old each price is; APIs ranked by measured freshness and accuracy
 | v0.95.10 | code 246 | 2026-10-13T02:35Z | v0.95.10: profit and profit % on the money actually put in (winnings that are bet again are not a deposit)
 | v0.96.0 | code 247 | 2026-10-13T18:41Z | v0.96.0: More, smaller bids (Bids slider switch), bets leave the list when the slip closes, dead bets drop out of the CNO list
+| v0.96.2 | code 249 | 2026-10-13T19:18Z | v0.96.2: NHL shots-on-goal fair prices built from fewer than 5 books on a game over 12 h away are cut 2.5 points (switch in Settings); includes v0.96.1 adjusted stars
