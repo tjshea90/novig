@@ -2237,7 +2237,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         viewModelScope.launch {
-            c.kalshiKeyStore.update { cred }
+            val sealed = runCatching { c.sealSecret(cred.pem) }
+            if (sealed.isFailure) {
+                _state.update { it.copy(kalshiKeyNote = "This phone could not seal the key in its secure storage, so it was not saved.", kalshiKeyOk = false) }
+                return@launch
+            }
+            c.kalshiKeyStore.update { cred.copy(pem = sealed.getOrThrow()) }
             c.kalshiStream.close()
             _state.update { it.copy(kalshiKeyId = cred.keyId, kalshiHasKey = true, kalshiAlgo = parsed.getOrNull()?.algorithm, kalshiKeyNote = "Saved (${parsed.getOrNull()?.algorithm}). Tap Test key to check it with Kalshi.", kalshiKeyOk = true) }
         }

@@ -9,6 +9,7 @@
 <full-backup-content>
     <exclude domain="file" path="datastore/vigilant_api_keys.preferences_pb" />
         <exclude domain="file" path="novig_management_key.json" />
+        <exclude domain="file" path="kalshi_key.json" />
         <exclude domain="file" path="cno.json" />
         <exclude domain="file" path="teams.json" />
         <exclude domain="file" path="cno_links.json" />

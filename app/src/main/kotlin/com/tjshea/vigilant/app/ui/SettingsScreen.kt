@@ -1466,7 +1466,11 @@ private fun ColumnScope.KalshiPage(state: UiState, reportActions: ReportActions,
     var keyId by remember(state.kalshiKeyId) { mutableStateOf(state.kalshiKeyId) }
     var pem by remember { mutableStateOf("") }
     Text(
-        if (state.kalshiHasKey) "Saved: Key ID …${state.kalshiKeyId.takeLast(6)} (${state.kalshiAlgo ?: "?"}). The private key stays on this phone and is not shown again." else "No key saved: Kalshi is read without one.",
+        when {
+            state.kalshiHasKey && state.kalshiAlgo == null -> "A key is saved but this phone can no longer open it (it was sealed by another phone's secure storage). Save it again."
+            state.kalshiHasKey -> "Saved: Key ID …${state.kalshiKeyId.takeLast(6)} (${state.kalshiAlgo}). The private key is sealed in this phone's secure storage, left out of backups, and not shown again."
+            else -> "No key saved: Kalshi is read without one."
+        },
         style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("kalshiKeyState"),
     )
     OutlinedTextField(

@@ -2,11 +2,12 @@
 <!-- Android 12+: same rule for cloud backup and phone-to-phone transfer. API keys live in
      files/api_keys.json (plain JSON, Tj's call) so they restore; the Novig key connection
      (a hardware-bound key) does not, and is set up again on the new phone; nor does the saved
-     Novig management key (novig_management_key.json, sealed by this phone's Keystore). -->
+     Novig management key (novig_management_key.json, sealed by this phone's Keystore), nor the Kalshi API key (kalshi_key.json, sealed the same way: it can trade). -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="datastore/vigilant_api_keys.preferences_pb" />
         <exclude domain="file" path="novig_management_key.json" />
+        <exclude domain="file" path="kalshi_key.json" />
         <exclude domain="file" path="cno.json" />
         <exclude domain="file" path="teams.json" />
         <exclude domain="file" path="cno_links.json" />
@@ -14,6 +15,7 @@
     <device-transfer>
         <exclude domain="file" path="datastore/vigilant_api_keys.preferences_pb" />
         <exclude domain="file" path="novig_management_key.json" />
+        <exclude domain="file" path="kalshi_key.json" />
         <exclude domain="file" path="cno.json" />
         <exclude domain="file" path="teams.json" />
         <exclude domain="file" path="cno_links.json" />

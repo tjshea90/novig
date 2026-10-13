@@ -238,7 +238,12 @@ class AppContainer(val app: Application) {
     /** Robolectric has no Android Keystore: tests seal the management key with [box] (same file). */
     internal fun installSecretBoxForTest(box: com.tjshea.vigilant.data.novig.signing.SecretBox) {
         managementKeys = ManagementKeyStore(File(filesDir, MANAGEMENT_KEY_FILE), box, json)
+        secretBox = box
     }
+
+    /** Seals the Kalshi private key for disk (the Keystore, like the management key: an API key can trade, so it is never stored as plain text). */
+    @Volatile private var secretBox: com.tjshea.vigilant.data.novig.signing.SecretBox = KeystoreSecretBox
+    fun sealSecret(plain: String): String = secretBox.seal(plain)
 
     private val filesDir: File = app.filesDir
 
@@ -1845,7 +1850,9 @@ class AppContainer(val app: Application) {
     fun kalshiSigner(): com.tjshea.vigilant.data.kalshi.KalshiSigner? {
         val cred = kalshiKeyStore.flow.value?.takeIf { it.complete } ?: return null
         kalshiSignerKept?.takeIf { it.first == cred }?.let { return it.second }
-        return com.tjshea.vigilant.data.kalshi.KalshiSigner.of(cred).getOrNull().also { kalshiSignerKept = cred to it }
+        // Sealed by this phone's Keystore; null when this phone can no longer open it (a restore onto another phone).
+        val plain = runCatching { secretBox.open(cred.pem) }.getOrNull()
+        return plain?.let { com.tjshea.vigilant.data.kalshi.KalshiSigner.of(cred.copy(pem = it)).getOrNull() }.also { kalshiSignerKept = cred to it }
     }
 
     /** Kalshi's socket (Settings › APIs › Kalshi › Socket): opened only by a scan that reads Kalshi with the key and the switch on; closed at once when either goes off. */
