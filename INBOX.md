@@ -6932,3 +6932,10 @@ Research if it is plausible and profitable to figure out what sharps are betting
 ```
 Should I remove soft books and only focus on comparing novig odds to sharp books
 ```
+
+## 2026-10-13T02:13:26Z
+```
+There may or may not be an accounting error in the app. I only deposit a set amount of money, then bet on this money. If I win bets, I use the same money from the winnings to bet more. The app should not treat this as another deposit. For example, it says I placed over 1000 dollars in bets, which is true, but that is based on the same money rotating from wins and losses daily, not 1000 dollars of deposits. Make sure the stats accurately calculate total profit and profit percentage based on this. For example, even if I placed 1000 dollars of bets, but the initial first day of bets was 200 dollars placed, the stats should calculate how much total profit and percent of profit I made from the initial 200 dollar investment, not the 1000 dollars of bets. 
+
+See if the app already properly does this. If not, make it a true profit/loss of my actual total money and percent profit/loss all time of my actual total money
+```
