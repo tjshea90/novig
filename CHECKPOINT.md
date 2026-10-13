@@ -1,13 +1,13 @@
-# CHECKPOINT 3179 — read me first, then TASKS.md
+# CHECKPOINT 3180 — read me first, then TASKS.md
 
-**Written:** 2026-10-13T22:12:06Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b57fa2a2-ftkkrm` · **builds on:** `4733b698a` (this checkpoint is the commit after it)
+**Written:** 2026-10-13T22:17:04Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b57fa2a2-ftkkrm` · **builds on:** `8b37fa458` (this checkpoint is the commit after it)
 
 ## Just done
-Kalshi data layer + tests green (38)
+TKS2-4: Kalshi key store, Test key, Settings page, socket switches (Novig/Bolt/Pinnodds/Kalshi) wired; app compiles
 
 ## Do this next
-app wiring: credential store, VigilantApp, settings page, Test key, socket toggles
+run floor, add BoltOdds REST-mode + socket-switch tests, ship v0.97.0
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ app wiring: credential store, VigilantApp, settings page, Test key, socket toggl
 
 ## Last ten checkpoints
 ```
+  f6dd455ed ckpt 3179: Kalshi data layer + tests green (38)
   84c6a6b0e ckpt 3178: TKS2/3: KalshiAuth, KalshiStream, KalshiClient signed+socket overlay (data 
   c7c0ed3f6 ckpt 3177: TKS1: Kalshi docs researched into KALSHI_API.md
   8c3a1e988 ckpt 3174: TKS tasks written
@@ -25,8 +26,7 @@ app wiring: credential store, VigilantApp, settings page, Test key, socket toggl
   f2f6bf7d8 ckpt 3170: handoff saved to .handoff/
   7e9ad40f5 ckpt 3169: v0.96.3 released and recorded
   65778d897 ckpt 3168: pre-release: v0.96.3: every API reconnects by itself: a refused key rests 2
-  d6da05ba3 ckpt 3167: pre-ship: v0.96.3: every API reconnects by itself: a refused key rests 2 mi
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
