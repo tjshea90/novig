@@ -100,13 +100,37 @@ object BidSlider {
             trapBidHours = h, trapNovigMove = true,
             vigGuards = s.vigGuards.copy(bidLevel = l),
         )
-        return Levels.reach(n, h)
+        return Levels.reach(if (s.vigGuards.bidMany) many(n) else n, h)
+    }
+
+    /** Most bids up at once in "More, smaller bids" mode; the money limits (Tj's dollars, the wallet) still bind first. */
+    const val MANY_BIDS = 400
+
+    /**
+     * "More, smaller bids" (Tj, 2026-10-13: "many bids up at a time at lower stakes, best bids up first ... shouldn't sacrifice the EV rules"). Over the slider's own rules: every kind of bid is allowed
+     * (the planner's [com.tjshea.vigilant.data.novig.trading.maker.BidTier] ranks them from the study, proven types first, and asks more of the risky ones: every book plus a sharp book must agree, a
+     * wider margin, half the stake), 1/16 Kelly a bid, up to [MANY_BIDS] at once, no popularity filter (the tiers do that job). The slider's margin, books, sharp veto, longest odds, horizon and
+     * expiry still apply to every tier, so each bid is still +EV at the floor [MIN_MARGIN]. Your dollar limits and the wallet are untouched: smaller bids just let the same money cover more markets.
+     */
+    private fun many(n: ScanSettings): ScanSettings = n.copy(
+        makerStakeMode = AutoBetStake.SIXTEENTH_KELLY, makerMaxBids = MANY_BIDS,
+        makerKinds = BetKind.entries.toSet(), makerFocus = BidFocus.ALL, makerObscureFill = false, makerPopularFirst = true,
+    )
+
+    /** [s] with the mode switched [on] or off; off puts back the two settings the mode changed that the slider does not own. */
+    fun withMany(s: ScanSettings, on: Boolean, level: Int): ScanSettings {
+        val flipped = s.copy(vigGuards = s.vigGuards.copy(bidMany = on))
+        val restored = if (on) flipped else flipped.copy(
+            makerStakeMode = if (flipped.makerStakeMode == AutoBetStake.SIXTEENTH_KELLY) AutoBetStake.QUARTER_KELLY else flipped.makerStakeMode,
+            makerMaxBids = if (flipped.makerMaxBids == MANY_BIDS) 20 else flipped.makerMaxBids,
+        )
+        return apply(restored, level)
     }
 
     /** Whether [s] still has the rules [level] sets (the scan window may only be longer). */
     fun matches(s: ScanSettings, level: Int): Boolean = level in MIN..MAX && apply(s, level) == s
 
-    fun describe(level: Int, custom: Boolean): List<String> {
+    fun describe(level: Int, custom: Boolean, many: Boolean = false): List<String> {
         val l = level.coerceIn(MIN, MAX)
         return listOf(
             (if (custom) "Custom rules (edited in Advanced), last slider position $l: ${name(l)}" else "${name(l)} · $l of 100"),
@@ -116,7 +140,9 @@ object BidSlider {
             "Never longer than +${maxOdds(l)} (longshots lose to the favorite-longshot bias). " + (if (kinds(l).size == 1) "Player props only." else if (kinds(l).size == 3) "Props, periods and team totals." else "Props, periods, team totals and game lines.") +
                 (if (l >= 35) " Takes the likeliest-to-fill bids first" else "") + (if (l >= 65) " and fills leftover money with small markets." else "."),
             "Expect " + (if (l <= 20) "few fills, the best price each" else if (l <= 50) "a fair number of fills" else if (l <= 80) "many fills at a thinner edge" else "the most fills, each at a thin but positive edge") + ".",
-        )
+        ) + (if (many) listOf(
+            "More, smaller bids: up to $MANY_BIDS at once at 1/16 Kelly each, every kind of bid. Proven types (team totals outside the NFL, the NHL) go up first; steady ones next with a sharp book and one more book agreeing; risky ones last (prop overs, the NFL, game lines): every book that prices them and a sharp book must agree, a 1.5-point wider margin, half the stake.",
+        ) else emptyList())
     }
 
     private fun pct(v: Double) = String.format(java.util.Locale.US, "%.1f%%", v * 100).replace(".0%", "%")

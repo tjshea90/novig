@@ -1193,7 +1193,7 @@ data class ScanSettings(
         val MAKER_STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 25.0)
 
         /** [makerMaxBids]' choices; [NO_LIMIT] = unlimited (Tj, 2026-10-05: "an option for unlimited bids up at once"): the wallet, the dollars and the per-game limit still bind. */
-        val MAKER_MAX_BIDS_CHOICES = listOf(5, 10, 20, 40, NO_LIMIT)
+        val MAKER_MAX_BIDS_CHOICES = listOf(5, 10, 20, 40, BidSlider.MANY_BIDS, NO_LIMIT)
 
         /** [makerMaxDollars]' choices; [MAKER_NO_DOLLAR_LIMIT] = no limit of its own (the wallet and the day's limit still hold every bid). */
         val MAKER_MAX_DOLLARS_CHOICES = listOf(25.0, 50.0, 100.0, 250.0, 1_000.0, MAKER_NO_DOLLAR_LIMIT)
