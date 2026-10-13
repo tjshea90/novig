@@ -111,9 +111,13 @@ class SgoClientTest {
         assertFalse(c.down(clockMs))
         runCatching { c.events(listOf("leagueID" to "NFL")) }
         assertEquals("one retry, no loop", 2, requests.size)
-        runCatching { c.events(listOf("leagueID" to "NFL")) }
         clockMs += SportsGameOddsClient.DOWN_AFTER_MS + 1
+        runCatching { c.events(listOf("leagueID" to "NFL")) }
         assertTrue(c.down(clockMs))
+        clockMs += SportsGameOddsClient.RETRY_AFTER_MS + 1
+        assertFalse("a minute on it is asked again, so it reconnects by itself", c.down(clockMs))
+        runCatching { c.events(listOf("leagueID" to "NFL")) }
+        assertTrue("still failing: down for another minute", c.down(clockMs))
         handler = { ok(sample) }
         c.events(listOf("leagueID" to "NFL"))
         assertFalse("one good answer ends it", c.down(clockMs))
