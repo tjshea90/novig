@@ -5003,5 +5003,5 @@ Tj: "I tested boltodds and it is running again. Shouldn't vigilant retry and aut
 
 ## TLG: the app is laggy and glitching (Tj, 2026-10-13 ~21:25Z, v0.96.3)
 Tj: "Right now the app is laggy and glitching" (2 screenshots of the +EV feed: cards drawn as tall mostly-empty panels with the content pushed to the bottom/clipped, then scrolling; 23 bets, 187 bids up, Scanning, Novig prices 3293/3626, battery 41%).
-- [ ] TLG1 Find the cause of the tall empty cards (layout/animation bug in the feed card) and of the lag (recompute/recomposition cost of the live list).
+- [x] TLG1 (cause: v0.96.1 adjusted-stars label starved the weighted league/time Text in the card header row -> one letter per line, tall empty cards, lag) Find the cause of the tall empty cards (layout/animation bug in the feed card) and of the lag (recompute/recomposition cost of the live list).
 - [ ] TLG2 Fix, test, ship v0.96.4.
