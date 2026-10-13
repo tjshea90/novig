@@ -4941,3 +4941,12 @@ Tj: "Set up a vigilant to use the best, freshest available source from the toggl
 - [x] TFR5a Read the v0.95.5 file (research/api_study_v0.95.5_2026-10-12.md): SGO ~229 s stale, ParlayAPI reads 41 s, PropLine never asked (standby chain).
 - [x] TFR5b API study mode switch (askAllSources) so one scan asks every API on; Diagnostics line; ApiChainTest.
 - [ ] TFR5c After Tj sends a study-mode file: rank PropLine/ParlayAPI/SGO/Unabated by quote age; add per-source agreement-with-Pinnacle (accuracy) to the Source race; reorder ApiChain by the result.
+
+## TAQ: know how old and how accurate the odds behind every bet are; rank the APIs automatically (Tj, 2026-10-13 ~01:00Z)
+Tj: "When I do scans on the app, I have no way to know which apis are accurate, which ones have the freshest odds, and whether the bets I'm placing are based on accurate and fresh odds from other sports books. I always wonder how old the odds are. Figure out a way for the app to use the best apis and favor fresh odds with the best accuracy and preferably fast scanning speed. Find the best logistics on what apis to use for what data in combinations. The app will need to use certain apis to fill in data that other apis don't offer. But if some data overlaps from more than one api, make sure the app always uses the apis from Best to worst order, favoring apis that provide the most accurate, freshest odds and scanning speed, and when their usage runs out, rotate keys for the same api. If all keys are used or if the API is not responding, the app should automatically fall back to the next best API for the overlapping data."
+- [ ] TAQ1 Read what a bet already shows about its fair odds (age, sources) and what keys/fallback already do (KeyPool rotation, ApiChain failover): write what exists vs what is missing.
+- [ ] TAQ2 Every bet shows how old its fair odds are and which API/books priced them (feed card, bet sheet), in plain words, with an old/fresh colour.
+- [ ] TAQ3 SourceScore: each API scored from its measured quote age, agreement with Pinnacle and read time (pure, tested); ApiChain's order follows the scores (best first), static order as the prior and the fallback; switch + Diagnostics line "API ranking".
+- [ ] TAQ4 Logistics table: which API for which data (Pinnacle sharp anchor; lines; props; periods; closes; live), in research/api_logistics_2026-10-13.md and in the Settings text.
+- [ ] TAQ5 Keys rotate and the next-best API takes over (verify with tests that already exist; add any missing case).
+- [ ] TAQ6 Ship, release.
