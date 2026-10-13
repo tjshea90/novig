@@ -4994,3 +4994,9 @@ Tj verbatim: "I noticed in the scanner on vigilant I'm getting flooded with nhl 
 Tj verbatim: "Do option 1" (option 1 = "a prop whose fair comes from fewer than 5 books, on a game more than 12 hours away, takes a 2-3 point haircut off the fair" for NHL shots on goal; research/nhl_sog_matching_2026-10-13.md).
 - [x] TSOH1 Haircut in the shared fair (Pricing) so the feed, auto-bet, bids and bet sheet all see it; scoped to NHL SOG (the measured gap; other props +0.8 pts), switchable, on by default.
 - [x] TSOH2 Tests (off = unchanged, 4 books 15 h = haircut, 5 books or under 12 h = none), ship, release.
+
+## TRC: every API reconnects by itself on the next scan (Tj, 2026-10-13)
+Tj: "I tested boltodds and it is running again. Shouldn't vigilant retry and auto reconnect on the next scan? If it doesn't, make it do so for every api"
+- [x] TRC1 Cause: `UsageMeter.recordRejected` rested a refused key until the next UTC day (BoltOdds socket 1008 refusal kept it out all day though the key worked); only BoltOdds's Test lifted it; SGO/OddsPapi/Unabated `down()` stayed true forever once set (the source was no longer called, so nothing ever cleared it).
+- [x] TRC2 Fix: refusal rests 2,4,8..min, max 1 h (`refusalHold`, `KeyUsage.refusals`), cleared by any accepted call; every API's Test lifts it (`ApiProbe.policyOf`); `down()` of SGO/OddsPapi/Unabated/BoltOdds REST lasts 60 s after the last failure (`RETRY_AFTER_MS`) then asks again. Tests: `UsageMeterTest` (3), `SgoClientTest`, `UnabatedTest`, `OddsPapiTest`.
+- [ ] TRC3 Ship v0.96.3 (floor, release) and tell Tj.
