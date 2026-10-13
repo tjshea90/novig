@@ -155,6 +155,39 @@ class BoltOddsStream(
 
     val live: Boolean get() = state == State.LIVE
 
+    /** What the REST snapshot reads while the socket switch is off (Settings › APIs › BoltOdds › Socket): the filters [BoltOddsFeed.arrange] worked out, and when they were last read. */
+    @Volatile var restFilters: BoltFilters? = null
+    @Volatile private var lastRestAt = 0L
+    private val restLock = kotlinx.coroutines.sync.Mutex()
+
+    /**
+     * The regular API without the socket: one REST snapshot of [f] into the board, at most once every [minGapMs] (the snapshot is 6 a minute per IP). Nothing is held open and the board's quotes count
+     * only as old as this read ([aliveAt] is null off the socket). A failed read keeps what the board has and says why in [snapshotError].
+     */
+    suspend fun readOnce(f: BoltFilters, minGapMs: Long = REST_GAP_MS) = restLock.withLock {
+        if (clock() - lastRestAt < minGapMs && f == restFilters) return@withLock
+        val asked = f.copy(markets = if (f.markets.size > MAX_SNAPSHOT_MARKETS) emptyList() else f.markets)
+        val t0 = clock()
+        var games = 0
+        try {
+            client.snapshotStream(asked) { text ->
+                BoltParser.message(parseObject(text) ?: return@snapshotStream, clock(), initial = true)?.let { board.apply(it) }
+                games++
+            }
+            snapshots++
+            snapshotGames = games
+            snapshotError = null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            snapshotError = client.redact(e.message ?: e.javaClass.simpleName).take(200)
+        } finally {
+            snapshotMs = clock() - t0
+            lastRestAt = clock()
+            restFilters = f
+        }
+    }
+
     /** True once the current connection's snapshot is in the board; waits up to [timeoutMs] for it. */
     suspend fun awaitReady(timeoutMs: Long): Boolean {
         val until = clock() + timeoutMs
@@ -410,6 +443,9 @@ class BoltOddsStream(
     companion object {
         const val DEFAULT_WS_URL = "wss://spro.agency/api"
         const val MAX_SNAPSHOT_MARKETS = 60
+
+        /** The least time between two REST snapshots of one stream when the socket is off (the snapshot allows 6 a minute per IP; the lines and props streams are two). */
+        const val REST_GAP_MS = 12_000L
         const val CONNECT_TIMEOUT_MS = 30_000L
         const val MAX_RAW_FRAMES = 6
         const val MAX_PINGS = 20

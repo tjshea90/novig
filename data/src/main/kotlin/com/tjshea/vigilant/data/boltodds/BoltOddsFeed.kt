@@ -105,7 +105,17 @@ class BoltOddsFeed(
         }.distinct().sorted()
         val out = ArrayList<BoltOddsStream>(2)
         val lineMarkets = names(false)
-        lines.want(BoltFilters(sports = sports, sportsbooks = books, markets = lineMarkets))
+        val lineFilters = BoltFilters(sports = sports, sportsbooks = books, markets = lineMarkets)
+        // Socket switch (Settings › APIs › BoltOdds): on = the sockets below; off = no socket at all, the REST snapshot of the same filters read by [events].
+        if (!settings.gates.boltSocket) {
+            lines.close(); props.close()
+            lines.restFilters = lineFilters
+            out += lines
+            if (wantProps) { props.restFilters = BoltFilters(sports = sports, sportsbooks = books, markets = names(true)); out += props }
+            lastPlan = "REST snapshot (socket off) · sports ${sports.size} · books ${books.size.takeIf { it > 0 } ?: "all"} · line markets ${lineMarkets.size.takeIf { it > 0 } ?: "all"}"
+            return out
+        }
+        lines.want(lineFilters)
         out += lines
         if (wantProps) {
             props.want(BoltFilters(sports = sports, sportsbooks = books, markets = names(true)))
@@ -125,16 +135,22 @@ class BoltOddsFeed(
         val streams = arrange(settings)
         val stream = if (props) this.props else lines
         if (stream !in streams) return emptyList()
-        stream.use()
-        val ready = stream.awaitReady(READY_WAIT_MS)
-        if (!ready && !stream.live) {
-            throw com.tjshea.vigilant.data.reference.ReferenceException("BoltOdds: the ${stream.name} socket is not connected (${stream.lastError ?: "connecting"})")
+        val socketOn = settings.gates.boltSocket
+        if (socketOn) {
+            stream.use()
+            val ready = stream.awaitReady(READY_WAIT_MS)
+            if (!ready && !stream.live) {
+                throw com.tjshea.vigilant.data.reference.ReferenceException("BoltOdds: the ${stream.name} socket is not connected (${stream.lastError ?: "connecting"})")
+            }
+        } else {
+            stream.restFilters?.let { stream.readOnce(it) }
+            stream.snapshotError?.let { err -> if (stream.board.gamesOf(BoltBooks.sportsFor(league, info()?.sports)).isEmpty()) throw com.tjshea.vigilant.data.reference.ReferenceException("BoltOdds: the REST snapshot failed ($err)") }
         }
         val info = info()
         val sports = BoltBooks.sportsFor(league, info?.sports)
         val ctx = BoltContext(
             league = league, wanted = BoltBooks.wanted(settings), families = settings.families, includeLive = settings.includeLive, nowMs = clock(),
-            aliveAt = { book, sport -> stream.aliveAt(book, sport) },
+            aliveAt = { book, sport -> if (socketOn) stream.aliveAt(book, sport) else null },
         )
         return BoltConvert.events(stream.board.gamesOf(sports), ctx)
     }
