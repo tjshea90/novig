@@ -254,3 +254,4 @@ day that changes.
 | v0.97.0 | code 252 | 2026-10-13T22:39Z | v0.97.0: Kalshi API key + signed reads + real-time socket; socket switch per API
 | v0.97.1 | code 253 | 2026-10-13T22:48Z | v0.97.1: PropLine leads the API order, measured freshness can demote it
 | v0.97.2 | code 254 | 2026-10-13T23:10Z | v0.97.2: Kalshi ok-ack fix, maker.json and OddsPapi Free cache pruned
+| v0.97.3 | code 255 | 2026-10-13T23:20Z | v0.97.3: BoltOdds classify memo (about 70x less work per pass, same answers)
