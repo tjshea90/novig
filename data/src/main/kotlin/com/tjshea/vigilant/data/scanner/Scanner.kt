@@ -857,7 +857,7 @@ class Scanner(
             "$id: ${ages.size} quotes (${snaps.size} boards, read ${(now - snaps.maxOf { it.fetchedAtMs }) / 1000} s ago) · age median ${sec(pct(all, 0.5))}, p90 ${sec(pct(all, 0.9))}" +
                 (if (unstamped > 0) ", $unstamped unstamped" else "") +
                 (agreement[id]?.let { a -> " · vs Pinnacle (DK/FD main lines) off by %.1f pts on average, %d%% within 1 pt, n=%d".format(a.meanPoints, Math.round(a.within1Pct * 100), a.lines) } ?: "") +
-                (if (perBook.isNotEmpty()) " · freshest books " + perBook.take(4).joinToString { "${it.key} ${sec(it.value)}" } + " · stalest " + perBook.takeLast(2).joinToString { "${it.key} ${sec(it.value)}" } else "")
+                (if (perBook.isNotEmpty()) " · freshest books " + perBook.take(6).joinToString { "${it.key} ${sec(it.value)}" } + " · stalest " + perBook.takeLast(4).joinToString { "${it.key} ${sec(it.value)}" } else "")
         }
     }
 
