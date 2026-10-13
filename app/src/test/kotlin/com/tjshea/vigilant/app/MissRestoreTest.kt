@@ -47,7 +47,7 @@ class MissRestoreTest {
         assertTrue(p.flow.value!!.bets.none { "m1/o1" in it.keys })
     }
 
-    @Test fun `a bet that filled keeps its mark: the real mark replaces the provisional one and is never removed`() = runTest {
+    @Test fun `a bet that filled keeps its mark - the real mark replaces the provisional one and is never removed`() = runTest {
         val p = placed()
         markProvisional(p, target, now)
         val sent = now
