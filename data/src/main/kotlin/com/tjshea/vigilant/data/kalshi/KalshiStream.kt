@@ -134,7 +134,7 @@ class KalshiStream(
     fun trusted(ticker: String, readAtMs: Long): Boolean {
         if (state != State.LIVE || framesThisConn == 0L) return false
         val at = subscribedAt[ticker] ?: return false
-        return readAtMs >= at && readAtMs >= trustFloorMs
+        return readAtMs > at && readAtMs > trustFloorMs
     }
 
     /** The latest push for [ticker], or null if it has not spoken on this connection. */
