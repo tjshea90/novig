@@ -9,6 +9,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import com.tjshea.vigilant.data.scanner.ProfitProfile
 import org.junit.Test
 
 /**
@@ -92,5 +93,25 @@ class AutoBetStarsTest {
         // The kept safety is said in one place for the Auto-bet tab; the money limits are BetLimits', not the rules'.
         for (word in listOf("dollar limits", "pregame", "fresh", "+EV", "injured", "one bet a market")) assertTrue(word, AutoBet.starsKept.contains(word))
         assertEquals(10.0, AutoBet.rules(ScanSettings(autoBetMaxStake = 10.0, vigGuards = ScanSettings().vigGuards.copy(autoBetMinStars = 4.0))).maxStake, 0.0)
+    }
+
+    @Test
+    fun `when Profit-proven only lowered the stars the reason names both numbers (Tj, 2026-10-13)`() {
+        val min = com.tjshea.vigilant.data.scanner.BetRating.label(on.minStars)
+        val same = AutoBet.starsReason(on, 2.5, shown = 2.5)!!
+        assertEquals("its rating is under your $min-star minimum", same)
+        val lowered = AutoBet.starsReason(on, 3.5.coerceAtMost(on.minStars - 0.5), shown = 4.5)!!
+        assertTrue(lowered, lowered.contains("after Profit-proven only lowered the shown 4.5"))
+        assertNull("passing is still passing", AutoBet.starsReason(on, 5.0, shown = 5.0))
+    }
+
+    @Test
+    fun `the adjusted stars are the shown stars unless Profit-proven only is on and the type lost money`() {
+        val lost = ProfitProfile.adjustedStars(true, 4.5, "NFL", "Player props", "A Over 1.5", 0.03, 1_000_000L, 0L)
+        val shipped = ProfitProfile.shipped!!.judge(ProfitProfile.Instrument.BET, "NFL", "Player props", "A Over 1.5", 0.03, 0L)
+        assertEquals(4.5 - shipped.starPenalty, lost!!, 1e-9)
+        assertTrue("the shipped profile lowers an NFL prop over", lost < 4.5)
+        assertEquals(4.5, ProfitProfile.adjustedStars(false, 4.5, "NFL", "Player props", "A Over 1.5", 0.03, 1_000_000L, 0L)!!, 0.0)
+        assertEquals(null, ProfitProfile.adjustedStars(true, null, "NFL", "Player props", "A Over 1.5", 0.03, 1_000_000L, 0L))
     }
 }
