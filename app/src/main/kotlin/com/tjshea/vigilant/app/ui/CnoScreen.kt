@@ -632,9 +632,10 @@ private fun CnoCard(
                         if (pick.live) "LIVE" else row.startsAtMs?.let { Format.startTime(it) }.orEmpty(),
                     style = MaterialTheme.typography.labelMedium,
                     color = if (pick.live) Edge.colors.negative else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                if (old) Text("old price", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning)
+                if (old) Text("old price", style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, maxLines = 1, softWrap = false)
                 // Top right, where there's always room (in the values row they were squeezed on a phone).
                 IconButton(onClick = onPlaced, modifier = Modifier.size(36.dp)) {
                     Icon(Icons.Outlined.CheckCircle, contentDescription = "I placed ${row.bet}: hide it", tint = MaterialTheme.colorScheme.onSurfaceVariant)
