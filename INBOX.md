@@ -6927,3 +6927,8 @@ I want to use the sniper feature alone or in combination with auto bid and or au
 ```
 Research if it is plausible and profitable to figure out what sharps are betting and replicate their bets automatically
 ```
+
+## 2026-10-13T02:12:04Z
+```
+Should I remove soft books and only focus on comparing novig odds to sharp books
+```
