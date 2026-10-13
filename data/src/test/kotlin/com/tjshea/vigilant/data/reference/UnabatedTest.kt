@@ -253,8 +253,10 @@ class UnabatedTest {
         runCatching { c.oddsRaw("nba", "straight") }; runCatching { c.oddsRaw("nba", "straight") }
         assertFalse("Unabated answered: not an outage (Tj's diagnostics: a props board it could not build took the whole API down)", c.down(clockMs + UnabatedClient.DOWN_AFTER_MS + 1))
         handler = { MockResponse().setResponseCode(500) }
+        clockMs += UnabatedClient.DOWN_AFTER_MS + 1
         runCatching { c.get("/league") }; runCatching { c.get("/league") }
-        assertTrue(c.down(clockMs + UnabatedClient.DOWN_AFTER_MS + 1)); assertFalse(c.down(clockMs))
+        assertTrue(c.down(clockMs)); assertFalse(c.down(clockMs - UnabatedClient.DOWN_AFTER_MS))
+        assertFalse("a minute later it is asked again: it reconnects by itself", c.down(clockMs + UnabatedClient.RETRY_AFTER_MS + 1))
     }
 
     @Test fun withTwoKeysARateLimitedKeyRestsAndTheNextKeyAnswersAtOnceAndEachKeyKeepsItsOwnInterval() = runTest {

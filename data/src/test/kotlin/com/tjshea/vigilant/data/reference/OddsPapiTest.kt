@@ -328,8 +328,10 @@ class OddsPapiTest {
         assertEquals(6, c.bookmakers().size)
         assertEquals(2, requests.size)
         handler = { MockResponse().setResponseCode(500) }
+        clockMs += OddsPapiClient.DOWN_AFTER_MS + 1
         runCatching { c.get("/bookmakers") }; runCatching { c.get("/bookmakers") }
-        assertTrue(c.down(clockMs + OddsPapiClient.DOWN_AFTER_MS + 1)); assertFalse(c.down(clockMs))
+        assertTrue(c.down(clockMs)); assertFalse(c.down(clockMs - OddsPapiClient.DOWN_AFTER_MS))
+        assertFalse("a minute later it is asked again: it reconnects by itself", c.down(clockMs + OddsPapiClient.RETRY_AFTER_MS + 1))
         handler = { ok(catalog) }
         c.get("/bookmakers")
         assertFalse(c.down(clockMs + 10 * OddsPapiClient.DOWN_AFTER_MS))
