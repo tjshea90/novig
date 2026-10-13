@@ -50,3 +50,4 @@
 - 2026-10-12 TFR: keyless freshness measurements (research/api_freshness_2026-10-12.md), shopping list (research/api_shopping_list_2026-10-12.md); built 'Freshest quote wins' + Diagnostics Source race.
 - 2026-10-12 first API study (research/api_study_v0.95.5_2026-10-12.md): SGO median quote age 229 s; ParlayAPI slowest read; PropLine unmeasured -> API study mode in v0.95.6.
 - 2026-10-13 second study file read: PropLine median 0 s p90 70 s (real stamps), SGO 334 s, Unabated tail hours; chain is sequential so a scan waits for every better feed; SourceAgreement (vs Pinnacle) added.
+- 2026-10-13 TAQ built: FairProvenance (bet says which API/age per book), SourceScore + ApiChain measured ranking + audition, SourceAgreement vs Pinnacle; research/api_logistics_2026-10-13.md.
