@@ -4986,6 +4986,6 @@ Tj verbatim: "Yes, show the adjusted stars on the card and in the message" (afte
 
 ## TSOG: NHL shots-on-goal props flooding the Vigilant scanner: are they matched to the right odds? (Tj, 2026-10-13)
 Tj verbatim: "I noticed in the scanner on vigilant I'm getting flooded with nhl player shots on goal props. There are so many of them supposedly positive EV that I'm getting suspicious. Make sure that they are actually matched correctly to the same odds from different sports books. They may be showing positive EV because they are incorrectly matched to a different type of bet odds"
-- [ ] TSOG1 Audit every source's market/line/side/player mapping for NHL shots on goal (shots vs shots on goal vs blocked, team vs player, period, alt lines, Over/Under side), find any mismatch.
-- [ ] TSOG2 Check recorded data (scan study / bet history) for NHL SOG: EV at listing vs CLV, by source and book count.
-- [ ] TSOG3 Fix what is wrong, test with real-shape fixtures, ship.
+- [x] TSOG1 Audit every source's market/line/side/player mapping for NHL shots on goal (shots vs shots on goal vs blocked, team vs player, period, alt lines, Over/Under side), find any mismatch.
+- [x] TSOG2 Check recorded data (scan study / bet history) for NHL SOG: EV at listing vs CLV, by source and book count.
+- [x] TSOG3 Matching is correct (nothing to fix): ShotsOnGoalMatchTest pins it. The fair-too-high finding (research/nhl_sog_matching_2026-10-13.md §3, options a-c) needs Tj's word before any rule changes.

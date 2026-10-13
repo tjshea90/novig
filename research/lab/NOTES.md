@@ -57,3 +57,4 @@
 - 2026-10-13 odds-api.net researched (research/odds_api_net_2026-10-13.md): Pinnacle polled 60-120 s, pre-match only, no free tier, sharp books only Pinnacle+Betfair confirmed; not worth $50.
 - 2026-10-13 profitable-types study (research/profitable_types_2026-10-13.md): team totals the one type with profit+CLV+n>100; player props lose (-$122/989); bids not proven by ROI; time <6h beats close, 24h+ gives it away.
 - 2026-10-13 all daily bet files received (1648 unique): refresh in research/profitable_types_2026-10-13.md; team totals bids +29.8% n=73 (NHL best), bets -9%.
+- 2026-10-13: NHL shots-on-goal matching audited (`research/nhl_sog_matching_2026-10-13.md`): matching is exact (stat+line+period+player, both sides) and now tested (`ShotsOnGoalMatchTest`); Vigilant's SOG fair runs +2.1 pts above Pinnacle's close (t +3.5, n 24), concentrated at 12 h+ and 3-4 books; options (a)-(c) wait for Tj.
