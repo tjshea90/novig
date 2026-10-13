@@ -7092,3 +7092,8 @@ Let me know if you want me to send the kalshi api key
 ```
 If I'm using sockets, why aren't my scans extremely fast?
 ```
+
+## 2026-10-13T23:02:29Z
+```
+Do whichever ones, if any, speed up the app and make it more efficient but without sacrificing any accuracy or quality
+```
