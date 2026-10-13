@@ -100,6 +100,11 @@ data class MakerRules(
      */
     val postsPerPass: Int = POSTS_PER_PASS,
     /**
+     * "More, smaller bids" ([com.tjshea.vigilant.data.scanner.VigGuards.bidMany], Tj 2026-10-13): every bid is judged by its [BidTier] (proven types first, risky ones after under stricter
+     * rules: [BidTier]) and the bids go up in that order. Off = nothing changes.
+     */
+    val tiered: Boolean = false,
+    /**
      * Low API usage bids ([LowUsage], RESEARCH.md §92): the fair must be built from [lowUsageBooks] alone (their names as the fair line gives them: "Kalshi", "ProphetX"),
      * at least two of them, which is what the low-usage scan prices ([com.tjshea.vigilant.data.scanner.LowUsageBids.profile]); a line priced by an older full scan, with
      * a soft book or a sharp book that wasn't picked in it, waits for the next scan. Empty = the rule is off.
@@ -497,7 +502,7 @@ object MakerQuote {
             is Pre.Price -> { obscure = pre.obscure; pre.price to pre.until }
         }
         // A small-market bid is posted under a wider margin: never under the normal one.
-        val margin = if (obscure) maxOf(rules.margin, rules.obscureMargin) else rules.margin
+        val margin = marginOf(line, rules, obscure)
         fun skip(why: String) = MakerDecision.Skip(line, why)
         val blend = line.fair!!
         // The margin is under the lower of the blend and the sharpest book's own fair (only lines with their books' fairs worked out get here: [MakerLines.from]).
@@ -510,6 +515,7 @@ object MakerQuote {
         // Books agree: each one's own fair (worst case) must put this bid at +EV, at least [minBooks] of them (the auto-bet's "books agree").
         val agreeing = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.count { it > price + 1e-9 }
         if (agreeing < rules.minBooks) return skip("Only $agreeing book${if (agreeing == 1) "" else "s"} price this bid +EV on their own (fewest: ${rules.minBooks})")
+        tierReason(line, rules, price, agreeing)?.let { return skip(it) }
         if (rules.novigMove && line.moveUnread) return skip(MOVE_UNREAD)
         if (rules.novigMove) line.novigMove?.let { m -> com.tjshea.vigilant.data.scanner.TrapGuard.moveReason(line.kind, m)?.let { return skip(it) } }
         if (rules.sharpVeto) {
@@ -541,10 +547,30 @@ object MakerQuote {
         // price would see a bigger edge and stake more, 0.74x of a popular bid at the default margin and 1.18x at the widest chip, not half).
         val popularPrice = if (obscure) maxOf(price, PriceGrid.floor(fair / (1.0 + rules.margin)) ?: price) else price
         val fullStake = stake(fair, popularPrice, rules, (line.startsTs - now) / 3_600_000.0) ?: return skip("No stake: ${rules.stakeMode.label} has nothing to bid here (no bankroll set?)")
-        val stake = if (obscure) fullStake * rules.obscureStake else fullStake
+        val stake = (if (obscure) fullStake * rules.obscureStake else fullStake) * (if (rules.tiered) BidTier.stakeShare(BidTier.of(line)) else 1.0)
         val contracts = floor(stake / (price * EvMath.CONTRACT_PAYOUT_DOLLARS) + 1e-9).toLong()
         if (contracts < 1) return skip("The stake is too small for one contract")
         return MakerDecision.Post(line, price, contracts, fair / price - 1.0, until, anchorFair = fair, obscure = obscure)
+    }
+
+    /** The margin a bid on [line] is posted under: the rules' own, a small market's wider one, and (tiered bids) the tier's extra points. */
+    fun marginOf(line: MakerLine, rules: MakerRules, smallMarket: Boolean): Double =
+        (if (smallMarket) maxOf(rules.margin, rules.obscureMargin) else rules.margin) + (if (rules.tiered) BidTier.extraMargin(BidTier.of(line)) else 0.0)
+
+    /** Why a bid in the steady or risky tier is stricter-checked out, or null: a sharp book must price it, and a risky bid needs every book to agree (see [BidTier]). */
+    private fun tierReason(line: MakerLine, rules: MakerRules, price: Double, agreeing: Int): String? {
+        if (!rules.tiered) return null
+        val tier = BidTier.of(line)
+        if (tier == BidTier.PROVEN) return null
+        if (line.sharpFairs.isEmpty()) return "A ${BidTier.label(tier)} needs a sharp book (Pinnacle, Circa, an exchange) pricing both sides to agree"
+        if (tier == BidTier.STEADY) {
+            return if (agreeing < rules.minBooks + 1) "A ${BidTier.label(tier)} needs ${rules.minBooks + 1} books on its side (only $agreeing)" else null
+        }
+        val priced = if (line.bookFairs.isEmpty()) line.books else line.bookFairs.size
+        if (priced < BidTier.RISKY_MIN_BOOKS) return "A ${BidTier.label(tier)} needs at least ${BidTier.RISKY_MIN_BOOKS} books pricing it (only $priced)"
+        if (agreeing < priced) return "A ${BidTier.label(tier)} needs every book that prices it to agree ($agreeing of $priced do)"
+        if (line.sharpFairs.any { it / price - 1.0 < BidTier.RISKY_SHARP_MIN_EV - 1e-9 }) return "A sharp book's own price gives this ${BidTier.label(tier)} under ${percent(BidTier.RISKY_SHARP_MIN_EV)} edge"
+        return null
     }
 
     /**
@@ -602,7 +628,7 @@ object MakerQuote {
         val until = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, seen + (line.fairMaxAgeMs ?: Freshness.maxAgeMs(line.startsTs, now)))
         if (until - now < rules.minLifeMs) return skip("The fair price goes old within a minute: re-priced at the next scan")
         if (line.outcomeId in held) return skip("Already bet or bid on this side")
-        val price = PriceGrid.floor(fair / (1.0 + (if (smallMarket != null) maxOf(rules.margin, rules.obscureMargin) else rules.margin))) ?: return skip("The fair price is too small to bid under")
+        val price = PriceGrid.floor(fair / (1.0 + marginOf(line, rules, smallMarket != null))) ?: return skip("The fair price is too small to bid under")
         outsideWindow(price, rules)?.let { return skip(it) }
         val offer = line.offer
         if (offer != null && price >= offer - 1e-9) return skip("Novig already offers it at ${percent(offer)}, at or under this bid: take it instead")
@@ -779,6 +805,8 @@ object MakerPlan {
         if (kept.sumOf { it.restingDollars } > room + 1e-9) {
             val worth = compareBy<RestingBid> { it.auto }
                 .thenBy { it.obscure }
+                // Many-bids mode: the riskiest tier's bids come down first when the money falls short.
+                .thenBy { if (rules.tiered) byOutcome[it.outcomeId]?.line?.let { l -> BidTier.of(l) } ?: BidTier.PROVEN else 0 }
                 .thenByDescending { byOutcome[it.outcomeId]?.leads ?: it.leads }
                 // Far games' bids come down first when the money falls short: a bid 12 h or more out fills about a third as often per quote (RESEARCH.md §119.3).
                 .thenBy { farOf(byOutcome[it.outcomeId]?.line?.startsTs ?: it.game?.startsTs, now) }
@@ -923,7 +951,7 @@ object MakerPlan {
      * go up when the bids, the dollars or the wallet run out.
      */
     fun priority(rules: MakerRules, now: Long = System.currentTimeMillis()): Comparator<MakerDecision.Post> {
-        val base = compareBy<MakerDecision.Post> { it.obscure }
+        val base = if (rules.tiered) compareBy<MakerDecision.Post> { BidTier.of(it.line) }.thenBy { it.obscure } else compareBy<MakerDecision.Post> { it.obscure }
         // Profit-proven only: the types of bid with the best history go up first (a neutral or unknown type scores 0, so nothing is held back for want of data).
         val byProfit = rules.profit?.let { pf ->
             compareByDescending<MakerDecision.Post> { pf.judge(ProfitProfile.Instrument.BID, it.line.league, it.line.kind.label, it.line.selection, it.evAtFair, (it.line.startsTs - now) / 60_000L).score }
