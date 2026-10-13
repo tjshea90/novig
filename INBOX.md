@@ -7076,3 +7076,9 @@ I want to take full advantage of this api, including any web socket. For any of 
 
 Do thorough research on kalshi api docs to make sure the correct commands and settings and addresses and speed limits are observed. Make vigilant take full advantage of the kalshi API where it can, including the socket, and everything it offers, but make sure it is efficient and within the parameters of the docs 
 ```
+
+## 2026-10-13T22:29:18Z
+```
+Also make propline a preferred api in the vigilant API order if it offers fresh odds
+Let me know if you want me to send the kalshi api key
+```
