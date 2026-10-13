@@ -957,6 +957,11 @@ private fun ColumnScope.FairOddsTab(state: UiState, onUpdate: SettingsUpdate, on
         "A book whose odds are an extreme outlier next to the rest of the market, or put the favourite on the other side, is left out of the fair line (the bet's sheet lists it in amber).",
         s.ignoreBadOdds, tag = "ignoreBadOddsSwitch",
     ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(ignoreBadOdds = v)) } }
+    SwitchRow(
+        "Cut thin early shots-on-goal fair prices",
+        "NHL shots-on-goal fair prices built from fewer than 5 books, on a game more than 12 hours away, ran about 3 points above Pinnacle's closing price: each side's fair chance is cut 2.5 points before the edge, stake, rating, auto-bet and bids use it.",
+        s.thinEarlyHaircut, tag = "thinEarlyHaircutSwitch",
+    ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(thinEarlyHaircut = v)) } }
 
     SectionTitle("Devig method (advanced)")
     Hint("How the sportsbooks' profit is taken out of a pair of odds. The methods differ most on long shots. Worst case (the default) takes the lowest fair chance of the other four for each side, so an edge that shows survives them all: the safest. Closing lines found after a game use the same method, so CLV compares like with like.")

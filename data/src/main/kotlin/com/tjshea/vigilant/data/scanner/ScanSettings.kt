@@ -980,6 +980,7 @@ data class ScanSettings(
 
     /** Leave a book out of every fair line when its odds look wrong next to the market: an extreme outlier, or the favourite on the other side ([com.tjshea.vigilant.engine.BadOdds]). On by default. */
     val ignoreBadOdds: Boolean get() = vigGuards.ignoreBadOdds
+    val thinEarlyHaircut: Boolean get() = vigGuards.thinEarlyHaircut
 
     /**
      * The auto-bet also takes bets from Vigilant's own scan (Tj, 2026-10-11: "make the auto bet feature also bet on vigilant scanned bets, but only if they meet the criteria I set for auto bet"):
@@ -1417,6 +1418,8 @@ data class Guards(
 data class ScanGuards(
     val oneVotePerCompany: Boolean = true,
     val ignoreBadOdds: Boolean = true,
+    /** [ThinEarlyHaircut] (Tj, 2026-10-13): NHL shots-on-goal fair prices built from few books on a game far off are cut a few points. On by default. */
+    val thinEarlyHaircut: Boolean = true,
     val autoBetVigilant: Boolean = true,
     /** The auto-bet places only bets rated at least this many stars ([BetRating]; Tj, 2026-10-11); 0 = any. */
     val autoBetMinStars: Double = 0.0,

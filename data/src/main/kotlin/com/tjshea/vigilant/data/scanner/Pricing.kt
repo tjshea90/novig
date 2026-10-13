@@ -304,7 +304,10 @@ object Pricing {
             val outcomes = ArrayList<Opportunity>(pm.outcomes.size)
             for (po in pm.outcomes) {
                 val ladder = ladders[po.outcome.outcomeId].orEmpty()
-                val p = fair?.let { probabilityFor(po.target, pm.lineKey, it) }
+                val p = fair?.let { probabilityFor(po.target, pm.lineKey, it) }?.let { raw ->
+                    // Thin soft-book fairs far from the start run high (ThinEarlyHaircut): cut before anything reads the chance.
+                    if (settings.thinEarlyHaircut) (raw - ThinEarlyHaircut.points(pm.league.novigName, pm.lineKey?.stat, fair.booksUsed.size, (pm.event.startsTs - now) / 3_600_000.0)).coerceAtLeast(0.0) else raw
+                }
                 val quote = if (p != null && ladder.isNotEmpty()) EvMath.quote(p, ladder.first().price, fee, live) else null
                 val depth = if (p != null && ladder.isNotEmpty()) EvMath.positiveDepth(ladder, p, fee, live) else null
                 val stake = if (quote != null && quote.evPercent > 0) {
