@@ -59,6 +59,10 @@ data class ReportActions(
     val onTestUnabatedKey: (Boolean) -> Unit = {},
     /** BoltOdds Pro: test the key (and, with true, share the sample it saved). */
     val onTestBoltKey: (Boolean) -> Unit = {},
+    /** Kalshi (Settings › Kalshi): save the Key ID and private key, remove them, test them. */
+    val onSaveKalshiKey: (String, String) -> Unit = { _, _ -> },
+    val onRemoveKalshiKey: () -> Unit = {},
+    val onTestKalshiKey: () -> Unit = {},
     val onTestOddsPapiFreeKey: (Boolean) -> Unit = {},
     /** The live feed test (Tj, 2026-10-07): make its file and share it, and read the line that says what it is doing. */
     val onShareFeedRace: () -> Unit = {},

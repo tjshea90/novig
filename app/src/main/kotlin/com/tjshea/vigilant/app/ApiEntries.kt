@@ -20,7 +20,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
     PINNWIRE("PinnWire (Pinnacle)", ApiProvider.PINNWIRE, QuotaPolicy.PINNWIRE, "Pinnacle's board with player props", false),
     PINNAPI("pinnapi (Pinnacle)", ApiProvider.PINNAPI, QuotaPolicy.PINNAPI, "Pinnacle's board (PinnWire's backup)", false),
     PINNODDS("Pinnodds", ApiProvider.PINNODDS, null, "Pinnacle's live push feed and REST board", false),
-    KALSHI("Kalshi", null, QuotaPolicy.KALSHI, "Free exchange prices, no key", false),
+    KALSHI("Kalshi", null, QuotaPolicy.KALSHI, "Exchange prices, free to read; a key adds a real-time socket and a bigger read budget", false),
     POLYMARKET("Polymarket", null, QuotaPolicy.POLYMARKET, "Free exchange prices, no key", false);
 
     /** Whether the app is allowed to call it at all. */
@@ -58,6 +58,35 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
 
     val keyless: Boolean get() = provider == null
 
+    /**
+     * Whether the API has a WebSocket the app can keep open (Tj, 2026-10-13: "a toggle for socket on or off" for every API that has one). Socket on = the connection is kept for real-time prices; socket
+     * off with the API still on = the regular requests; the API off = never called ([isOn]). Novig's own market feed has its switch beside these rows ([novigSocket]).
+     */
+    val hasSocket: Boolean get() = this == BOLTODDS || this == PINNODDS || this == KALSHI
+
+    fun socketOn(s: ScanSettings): Boolean = when (this) {
+        BOLTODDS -> s.gates.boltSocket
+        PINNODDS -> s.gates.pinnSocket
+        KALSHI -> s.gates.kalshiSocket
+        else -> false
+    }
+
+    fun setSocket(s: ScanSettings, on: Boolean): ScanSettings = when (this) {
+        BOLTODDS -> s.copy(gates = s.gates.copy(boltSocket = on))
+        PINNODDS -> s.copy(gates = s.gates.copy(pinnSocket = on))
+        KALSHI -> s.copy(gates = s.gates.copy(kalshiSocket = on))
+        else -> s
+    }
+
+    /** One line under the socket switch: what on and off mean for this API. */
+    val socketBlurb: String
+        get() = when (this) {
+            BOLTODDS -> "On: the lines and props sockets stay open and the fair line is read from what they push. Off: BoltOdds' REST snapshot, at most every 12 seconds, no socket."
+            PINNODDS -> "On: the live push feed stays open for the live lane and live bids. Off: no socket, so the live lane waits (Pinnacle's REST boards in scans are unaffected)."
+            KALSHI -> "On (needs your Kalshi key): a socket pushes every price change, so scans read Kalshi without asking it. Off: the signed or public REST read every scan."
+            else -> ""
+        }
+
     /** The API's own Settings page (its keys and options), or null when it has none: the exchanges have nothing to set. */
     val page: com.tjshea.vigilant.app.ui.SettingsPage?
         get() = when (this) {
@@ -71,7 +100,8 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
             ODDS_API -> com.tjshea.vigilant.app.ui.SettingsPage.ODDS_API
             PINNWIRE, PINNAPI -> com.tjshea.vigilant.app.ui.SettingsPage.PINNACLE
             PINNODDS -> com.tjshea.vigilant.app.ui.SettingsPage.PINNODDS
-            KALSHI, POLYMARKET -> null
+            KALSHI -> com.tjshea.vigilant.app.ui.SettingsPage.KALSHI
+            POLYMARKET -> null
         }
 
     companion object {

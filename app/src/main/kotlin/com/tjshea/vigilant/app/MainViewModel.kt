@@ -237,6 +237,13 @@ data class UiState(
     val unKeyNote: String? = null,
     val unKeyOk: Boolean? = null,
     val unKeyBusy: Boolean = false,
+    /** Kalshi (Settings › Kalshi): the saved Key ID (the private key never leaves the app's file), its type, and the Test key's answer. */
+    val kalshiKeyId: String = "",
+    val kalshiHasKey: Boolean = false,
+    val kalshiAlgo: String? = null,
+    val kalshiKeyNote: String? = null,
+    val kalshiKeyOk: Boolean? = null,
+    val kalshiKeyBusy: Boolean = false,
     /** BoltOdds Pro: the Test key's answer, whether it passed, and that a test is running (it listens on a socket for about 15 s). */
     val boltKeyNote: String? = null,
     val boltKeyOk: Boolean? = null,
@@ -517,12 +524,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // Keys moved, meters, the Novig key: once per process (the background auto-scan may have done it).
             val connection = c.ensureLoaded()
             val keys = ApiProvider.entries.associateWith { c.keyStore.getKeys(it) }
+            val kalshiKey = runCatching { c.kalshiKeyStore.read() }.getOrNull()?.takeIf { it.complete }
             val bets = c.tracker.all()
             val lastCheck = runCatching { c.lastCheck.read().startedAtMs }.getOrNull()
             _state.update {
                 keys.entries.fold(it) { s, (p, k) -> s.withKeys(p, k) }.copy(
                     settings = settings, bets = bets, loaded = true, checkStartedAtMs = it.checkStartedAtMs ?: lastCheck,
                     novig = it.novig.copy(connection = connection),
+                    kalshiKeyId = kalshiKey?.keyId.orEmpty(), kalshiHasKey = kalshiKey != null, kalshiAlgo = c.kalshiSigner()?.algorithm,
                 )
             }
             // Betting through Novig's API: the Bet buttons show when this phone holds the subaccount's trading key.
@@ -2211,6 +2220,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * Settings › Unabated › Test key: the key's leagues and books, one straight board and one props board read as Vigilant would, said in words; the raw answers are kept as a sample in Downloads/Vigilant
      * (and shared when [share]) so the parser can be checked against what the key really returns (UNABATED_API.md §4). Two odds requests, about ten seconds (the Free interval).
      */
+    /** Saves Tj's Kalshi Key ID and private key (KALSHI_API.md); says at once if the key cannot be read. The PEM is never logged or shown again. */
+    fun saveKalshiKey(keyId: String, pem: String) {
+        val cred = com.tjshea.vigilant.data.kalshi.KalshiCredentials(keyId.trim(), pem.trim())
+        val parsed = com.tjshea.vigilant.data.kalshi.KalshiSigner.of(cred)
+        if (parsed.isFailure) {
+            _state.update { it.copy(kalshiKeyNote = "That key could not be read: ${parsed.exceptionOrNull()?.message?.take(100) ?: "unknown error"}. Paste the whole private key, including its BEGIN and END lines.", kalshiKeyOk = false) }
+            return
+        }
+        viewModelScope.launch {
+            c.kalshiKeyStore.update { cred }
+            c.kalshiStream.close()
+            _state.update { it.copy(kalshiKeyId = cred.keyId, kalshiHasKey = true, kalshiAlgo = parsed.getOrNull()?.algorithm, kalshiKeyNote = "Saved (${parsed.getOrNull()?.algorithm}). Tap Test key to check it with Kalshi.", kalshiKeyOk = true) }
+        }
+    }
+
+    fun removeKalshiKey() {
+        viewModelScope.launch {
+            c.kalshiKeyStore.update { com.tjshea.vigilant.data.kalshi.KalshiCredentials() }
+            c.kalshiStream.close()
+            _state.update { it.copy(kalshiKeyId = "", kalshiHasKey = false, kalshiAlgo = null, kalshiKeyNote = "Key removed: Kalshi is read without one.", kalshiKeyOk = true) }
+        }
+    }
+
+    /** Settings › Kalshi › Test key: the signed account call (tier and read budget) and the socket's signed handshake with one subscribe; said in words. */
+    fun testKalshiKey() {
+        val signer = c.kalshiSigner()
+        if (signer == null) {
+            _state.update { it.copy(kalshiKeyNote = "Save the Key ID and private key first.", kalshiKeyOk = false) }
+            return
+        }
+        _state.update { it.copy(kalshiKeyBusy = true, kalshiKeyNote = null, kalshiKeyOk = null) }
+        viewModelScope.launch {
+            val r = withContext(Dispatchers.IO) {
+                runCatching { com.tjshea.vigilant.data.kalshi.KalshiKeyTest.run(c.http, signer) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+            }.getOrNull()
+            // A key Kalshi accepted is a working key: nothing stays held against it.
+            _state.update { it.copy(kalshiKeyBusy = false, kalshiKeyNote = r?.summary ?: "The test could not run.", kalshiKeyOk = r?.ok == true) }
+        }
+    }
+
     fun testUnabatedKey(share: Boolean = false) {
         _state.update { it.copy(unKeyBusy = true, unKeyNote = null, unKeyOk = null) }
         viewModelScope.launch {
