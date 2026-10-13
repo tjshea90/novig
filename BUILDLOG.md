@@ -250,3 +250,4 @@ day that changes.
 | v0.96.0 | code 247 | 2026-10-13T18:41Z | v0.96.0: More, smaller bids (Bids slider switch), bets leave the list when the slip closes, dead bets drop out of the CNO list
 | v0.96.2 | code 249 | 2026-10-13T19:18Z | v0.96.2: NHL shots-on-goal fair prices built from fewer than 5 books on a game over 12 h away are cut 2.5 points (switch in Settings); includes v0.96.1 adjusted stars
 | v0.96.3 | code 250 | 2026-10-13T20:38Z | v0.96.3: every API reconnects by itself (refusal holds short, down sources re-probe after 60 s, Test lifts refusals)
+| v0.96.4 | code 251 | 2026-10-13T21:38Z | v0.96.4: laggy/glitching feed fix (adjusted-stars note no longer squeezes the card header)
