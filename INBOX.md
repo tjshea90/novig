@@ -6917,3 +6917,8 @@ After your research, tell me which ones to buy if they offer things better than 
 ```
 If I have the rank api setting on, does it use every api on every scan 
 ```
+
+## 2026-10-13T01:41:06Z
+```
+I want to use the sniper feature alone or in combination with auto bid and or auto bet. I think right now the only way to use the sniper is with other live betting features turned on. Correct me if I'm wrong, the sniper actively looks for stale live odds that are obviously wrong? 
+```
