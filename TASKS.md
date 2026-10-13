@@ -4972,8 +4972,8 @@ Answered in chat from RESEARCH.md §116.2 + research/copy_sharps_2026-10-13.md: 
 
 ## TMB: "More, smaller bids" option on the Bids slider + remove a bet from the list when its slip closes + drop bets that go -EV (Tj, 2026-10-13 ~18:50Z)
 Tj verbatim: "Add a more-smaller-bids option to the Bids slider. Make it so it can post hundreds of bids, maybe 1/16 Kelly or something. But it shouldn't sacrifice the EV rules. Make this option automatically include all types of bids, but post the most profitable ones first (from the study) and then the riskier ones after, but with more stringent rules for risky bids, such as all books plus a sharp book must agree. Make it logical. The goal of this slider is many bids up at a time at lower stakes, best bids up first. Then: 1) as soon as I bet on something and the bet slip disappears, remove the bet from the list immediately. Add it back to the list only if the bet did not go through after about 15 seconds, and only if it is still positive EV. 2) review the screenshot. If a bet is no longer positive EV, remove it from the list automatically and immediately without me having to press on it" (screenshot: Bet sheet for Noah Dobson Over 1.5 SOG says "negative EV now: best price -135 vs fair -135, -0.1% EV" while the row still shows +2.04%).
-- [ ] TMB1 Read LevelSliders.kt/BidSlider, MakerRules, MakerDesk ordering; design: a "Many small bids" mode (tiers: proven types first, risky types after with stricter rules), 1/16 Kelly, hundreds of bids, same EV floor.
-- [ ] TMB2 Implement + LevelSlidersTest (every rule still +EV, tiers ordered, risky tier stricter).
-- [ ] TMB3 Bet slip closes -> row leaves the list at once; back after ~15 s only if no fill and still +EV.
-- [ ] TMB4 Rows that fall to <= 0 EV (re-priced at the live Novig ask) leave the list automatically, no tap.
+- [x] TMB1 Read LevelSliders.kt/BidSlider, MakerRules, MakerDesk ordering; design: a "Many small bids" mode (tiers: proven types first, risky types after with stricter rules), 1/16 Kelly, hundreds of bids, same EV floor.
+- [x] TMB2 Implement + LevelSlidersTest (every rule still +EV, tiers ordered, risky tier stricter).
+- [x] TMB3 Bet slip closes -> row leaves the list at once; back after ~15 s only if no fill and still +EV.
+- [x] TMB4 Rows that fall to <= 0 EV (re-priced at the live Novig ask) leave the list automatically, no tap.
 - [ ] TMB5 Full floor, ship, release.
