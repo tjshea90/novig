@@ -99,10 +99,30 @@ class UsageMeterTest {
     }
 
     @Test
-    fun `a refused key waits for the next period and says why`() = runTest {
+    fun `a refused key rests briefly, says why, and is tried again by itself`() = runTest {
         meter.recordRejected(odds, "k1", "HTTP 401 INVALID_KEY")
         assertEquals("k2", meter.pick(odds, keys, 1))
         assertEquals("HTTP 401 INVALID_KEY", usage(odds, "k1").lastNote)
+        now += 2 * 60_000L + 1
+        assertEquals("k1", meter.pick(odds, keys, 1))
+    }
+
+    @Test
+    fun `each refusal in a row rests longer, at most an hour, and an accepted call starts over`() = runTest {
+        repeat(8) { meter.recordRejected(odds, "k1", "no"); now += UsageMeter.HOUR + 1 }
+        meter.recordRejected(odds, "k1", "no")
+        assertEquals(now + UsageMeter.HOUR, usage(odds, "k1").depletedUntil)
+        now += UsageMeter.HOUR + 1
+        meter.recordCall(odds, "k1", 1)
+        meter.recordRejected(odds, "k1", "no")
+        assertEquals(now + 2 * 60_000L, usage(odds, "k1").depletedUntil)
+    }
+
+    @Test
+    fun `a Test that finds the key accepted lifts the rest at once`() = runTest {
+        meter.recordRejected(odds, "k1", "no")
+        meter.recordAccepted(odds, "k1")
+        assertEquals("k1", meter.pick(odds, keys, 1))
     }
 
     @Test
