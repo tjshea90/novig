@@ -4992,5 +4992,5 @@ Tj verbatim: "I noticed in the scanner on vigilant I'm getting flooded with nhl 
 
 ## TSOH: option 1: thin-books early haircut on NHL shots-on-goal fair (Tj, 2026-10-13)
 Tj verbatim: "Do option 1" (option 1 = "a prop whose fair comes from fewer than 5 books, on a game more than 12 hours away, takes a 2-3 point haircut off the fair" for NHL shots on goal; research/nhl_sog_matching_2026-10-13.md).
-- [ ] TSOH1 Haircut in the shared fair (Pricing) so the feed, auto-bet, bids and bet sheet all see it; scoped to NHL SOG (the measured gap; other props +0.8 pts), switchable, on by default.
-- [ ] TSOH2 Tests (off = unchanged, 4 books 15 h = haircut, 5 books or under 12 h = none), ship, release.
+- [x] TSOH1 Haircut in the shared fair (Pricing) so the feed, auto-bet, bids and bet sheet all see it; scoped to NHL SOG (the measured gap; other props +0.8 pts), switchable, on by default.
+- [x] TSOH2 Tests (off = unchanged, 4 books 15 h = haircut, 5 books or under 12 h = none), ship, release.
