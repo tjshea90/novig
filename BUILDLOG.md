@@ -244,3 +244,4 @@ day that changes.
 | v0.95.4 | code 240 | 2026-10-12T22:11Z | v0.95.4: BoltOdds board conversion no longer redone for every book push (refresh passes took 8-15 s)
 | v0.95.5 | code 241 | 2026-10-12T22:19Z | v0.95.5: Freshest quote wins (switch) and Diagnostics Source race (per-API quote age)
 | v0.95.6 | code 242 | 2026-10-13T00:23Z | v0.95.6: API study mode (one scan asks every API that is on) for the Source race
+| v0.95.7 | code 243 | 2026-10-13T00:49Z | v0.95.7: Settings search finds API study mode and Freshest quote wins
