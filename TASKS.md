@@ -4952,3 +4952,8 @@ Tj: "When I do scans on the app, I have no way to know which apis are accurate, 
 - [x] TAQ6 Ship, release.
 
 - [x] TBU1 (Tj, 2026-10-13) "After you are done with all app improvements. Tell me what would best suit the app on a 50 dollar per month budget, maximizing free keys. I want the best apis for speed and accuracy and freshness of odds, but slower apis may be used for backups and extra features not covered by other apis. I can get free keys for: Pinnapi, Sharpapi, The odds api, Pinnwire, Propline, Moneylineapp.com, Parlay-api, Pinnodds, Unabated, Tennis api, Boltodds pro (free trials I can refresh). After your research, tell me which ones to buy if they offer things better than the free tier and which ones to add more free keys": research each (vendor docs) and write research/api_budget_plan_2026-10-13.md.
+
+## TCP: copy the sharps? (Tj, 2026-10-13 ~01:50Z)
+Tj: "Research if it is plausible and profitable to figure out what sharps are betting and replicate their bets automatically"
+- [ ] TCP1 What the app/Novig/other APIs expose about who bets what (Novig trades & user ids, exchange order flow, PropLine steam/movement, splits), and what the repo's own studies already found about following sharp money / steam / trades.
+- [ ] TCP2 Write research/copy_sharps_2026-10-13.md with the verdict (plausible? profitable? which version, what it would need), then answer Tj.
