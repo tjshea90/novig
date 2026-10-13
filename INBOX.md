@@ -7064,3 +7064,15 @@ Prophetx
 Kalshi
 And any other sharp prop odds
 ```
+
+## 2026-10-13T22:01:49Z
+```
+I now have a kalshi api key. Find the kalshi API docs and figure out how to make it work with vigilant. Key type
+Ed25519
+
+It has an API key id plus a private key. 
+
+I want to take full advantage of this api, including any web socket. For any of my apis in the app which have web socket, in the API settings, make a toggle for socket on or off. If socket is on, vigilant should keep a connection with that socket to get real time odds and whatever the api socket offers. If the socket toggle is off but the api toggle is still on, use the regular API without socket. If the api toggle is off, do not use that API at all. 
+
+Do thorough research on kalshi api docs to make sure the correct commands and settings and addresses and speed limits are observed. Make vigilant take full advantage of the kalshi API where it can, including the socket, and everything it offers, but make sure it is efficient and within the parameters of the docs 
+```
