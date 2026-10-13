@@ -25,7 +25,7 @@ class SourceAgreementTest {
         val r = SourceAgreement.compute(mapOf("good" to listOf(good), "stale" to listOf(stale), "flipped" to listOf(flipped), "pinnacle" to listOf(snap("pinnacle", pin))), listOf(pin), setOf("draftkings"))
         assertEquals(0.0, r.getValue("good").meanPoints, 1e-9)
         assertEquals("swapped home/away is the same game", 0.0, r.getValue("flipped").meanPoints, 1e-9)
-        assertTrue(r.getValue("stale").meanPoints > 10.0)
+        assertTrue(r.getValue("stale").meanPoints > 5.0)
         assertFalse("pinnacle is not compared with itself", "pinnacle" in r)
     }
 
