@@ -6989,3 +6989,8 @@ Is this all of my bets and bids?
 ```
 If I keep gathering this data, how much until there is enough sample to act on
 ```
+
+## 2026-10-13T06:23:07Z
+```
+How do I do on nhl player props like shots on goal
+```
