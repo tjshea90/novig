@@ -7004,3 +7004,8 @@ Is there any research on the Internet on the types of bets and bids that are mos
 ```
 If Pinnacle moves toward a bet, is that a strong signal to bet it? If so, can the app continually look for bets which pinnacle is moving toward and try to find stale positive EV odds on novig for the same bet?
 ```
+
+## 2026-10-13T17:44:25Z
+```
+Consider whether it would be wise to  lower the stake on each bid to something low, and increase the amount of bids posted, in attempt to get the most volume at positive EV bets
+```
