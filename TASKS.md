@@ -5024,7 +5024,7 @@ Tj: "Also make propline a preferred api in the vigilant API order if it offers f
 - [x] TDG2 Prune maker.json: ended unfilled bids kept 6 h not 2 days (memory/lag), test.
 - [ ] TDG3 Trace who reads Novig's PUBLIC `/v3/public/catalog/markets` at pace while a key is connected (1,134 of 1,356 429s).
 - [x] TDG4 (Op4Store prunes by key kind at open and on every save; Op4StoreTest) oddspapi_free_cache.json 17 MB rewritten whole: prune or journal.
-- [ ] TDG5 Ship v0.97.2.
+- [x] TDG5 Ship v0.97.2.
 
 ## TSP: speed up the app without losing accuracy (Tj, 2026-10-13: "Do whichever ones, if any, speed up the app and make it more efficient but without sacrificing any accuracy or quality")
 Evidence: v0.97.0 diagnostics: a BoltOdds streaming pass took 45 s, 41 s of it "boards read" (the whole 2,077-game / 215k-outcome board converted again for every league each pass); heap 92%, GC 48% of a core.
