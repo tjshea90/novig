@@ -56,3 +56,13 @@ CORRECTION to my first answer: the README's "team totals 108" pools bets and bid
 - Sport: NHL 26 (+60.3%, t=3.4, CLV +3.6% t=4.0, independent +5.2% on 8) BEST; NCAAF 35 (+4.4%, CLV +3.0% t=3.2); NFL 23 (+1.7%, CLV +0.9% t=1.4, independent -0.3%: no edge); MLB 8 (-4%). NHL over 10: +85% (t=4.2); NHL under 16: +48%. NFL unders 16: -20%; NCAAF overs 15: -29% (CLV +3.5%).
 - Lead time: 6-24 h 39 (+40.1%, t=2.5), 2-6 h 26 (+22.4%), 30 min-2 h 12 (-16.5%). Odds: even money 30 (+34.2%), dogs +110..+200 56 (+18.3%). Auto 71 (+29.5%, t=2.0, CLV +2.6% t=5.1) vs manual 22 (-6.9%).
 - Every ROI above rests on 8-65 bets: too small to set rules; the closes (CLV) are the evidence: team totals beat the close in NHL and NCAAF, not in NFL.
+
+## REFRESH on the complete record set (Tj sent every daily file 09-25..10-13: 1,648 unique records = 1,275 bets + 373 bid fills, matching the README)
+- All bids: 331 settled, ROI +2.9% (t=+0.4), CLV +2.1% on 273 (t=6.5, independent +2.8% on 107). All bets: 1,057 settled, ROI -4.3% (t=-1.4), CLV +1.1% on 941 (t=4.4, independent +1.9% on 371).
+- TEAM TOTALS (105 settled: 73 bid fills, 32 bets): all ROI +19.7% (t=1.4), CLV +2.6% on 99 (t=5.8, independent +2.8% on 32). Bid fills +29.8% (t=2.0), CLV +2.4% on 70 (t=4.8, ind +3.5% on 24). Taker bets -9.1% (t=-0.4), CLV +2.9% on 29 (ind only +0.8% on 8).
+  Side: over 35 +30.3% (CLV +2.6%, t=3.4) / under 70 +14.9% (CLV +2.5%, t=4.6). Bids: over 21 +48.2%, under 52 +22.9%.
+  League: NHL 33 +46.1% (t=2.2), CLV +3.5% (t=4.4, ind +4.6% on 9); NCAAF 35 +4.4% CLV +3.0%; MLB 13 +5.6% CLV +2.2%; NFL 23 +1.7% CLV +0.9% (ind -0.3%). NHL over 11 +72% (t=2.8), NHL under 22 +34%.
+  Lead: 6-24 h 48 +32.2%; 2-6 h 26 +22.4%; 30 min-2 h 14 -12.8%. Odds: even money 32 +34.4%; dogs 63 +13.4%. Auto 79 +26.1% (CLV +2.6% t=5.4) vs manual 25 -8.5%.
+- Bids by kind (all 373): team totals 73 (+29.8%), player props 189 (-5.6%, CLV +1.8% t=4.9); by league: NHL 84 +16.1% (CLV +2.0% t=3.3), MLB 47 +11.7%, WNBA 32 -5.2% (CLV +0.4%), NFL 92 -15.1% (CLV +2.2% t=4.6). NFL prop-under bids 40: -30.1%.
+- Bets: player props 751 -9.4% (t=-2.5; overs 418 -15.2% t=-3.2; unders 333 -2.0%), spreads 112 +16.6% (CLV -1.2%), game totals 119 +11.6% (CLV +0.3%), team totals 32 -9.1%; NFL 509 -7.9%, NHL 147 -11.2% (CLV +2.4% t=5.8, props), NCAAF 144 +21.6% (CLV -0.1%).
+- The only bids-posted file in this upload is 2026-10-05 (one day, 16 rows): the all-time unfilled-bid statistics still come from the README (22,234 or 37,117 posted: the README contradicts itself).
