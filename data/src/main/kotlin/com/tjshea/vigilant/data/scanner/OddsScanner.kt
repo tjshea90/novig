@@ -38,6 +38,9 @@ interface OddsScanner {
     /** Diagnostics "Source race": for each feed the scanner holds, how old its book quotes were when last read (median / 90th percentile), and its freshest and stalest books. */
     fun sourceRace(now: Long): List<String> = emptyList()
 
+    /** Diagnostics "API ranking": the best-to-worst order the scan now asks its APIs in, with what each was measured to deliver; null before the first measurement. */
+    fun sourceRanking(): String? = null
+
     suspend fun streamUpdate(settings: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? = null
 
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */

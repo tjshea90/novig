@@ -1213,6 +1213,11 @@ private fun ColumnScope.BettingTab(
             s.gates.freshestWins, tag = "freshestWinsSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(freshestWins = v)) } }
         SwitchRow(
+            "Rank APIs by measured quality",
+            "After every scan the app measures each API (how old its odds are by the books' own times, and how far its prices sit from Pinnacle's) and asks the freshest, most accurate one first; the others stand by, take over when it fails or runs out of keys, or fill games it lacks. An API that stood by is tried once every 6 hours so it can earn the top. Off = the fixed order the app shipped with. Diagnostics › API ranking shows the order.",
+            s.gates.rankByMeasure, tag = "rankByMeasureSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(rankByMeasure = v)) } }
+        SwitchRow(
             "API study mode",
             "For testing which of your APIs is fastest and most accurate: the next scan asks EVERY API that is switched on, instead of letting the best one answer and the rest stand by. It spends the credits of every API that is on, so switch off the ones you are short of (The Odds API, OddsPapi Free), run one scan, send the Diagnostics file (Source race), then switch this off again.",
             s.gates.askAllSources, tag = "askAllSourcesSwitch",

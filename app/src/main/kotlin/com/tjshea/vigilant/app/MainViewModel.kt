@@ -2602,6 +2602,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 buildString {
                     appendLine("Repeat and hedge guard: " + (if (g.repeatGuard) "ON, ${if (g.repeatMaxBets == 0) "no limit" else g.repeatMaxBets.toString()} bets/bids and ${if (g.repeatMaxDollars == 0.0) "no limit" else "$" + g.repeatMaxDollars.toInt()} a side, other side ${if (g.repeatHedge) "only when a sure profit" else "never"}" else "OFF"))
                     appendLine("Freshest quote wins: " + (if (g.freshestWins) "ON (a book sent by two feeds uses the one stamped more than 20 s newer)" else "OFF (feed order only)"))
+                    appendLine("API ranking (best first; " + (if (g.rankByMeasure) "ON: ordered by measured freshness and accuracy, the shipped order as the fallback" else "OFF: the shipped order") + "):")
+                    (c.scanner.sourceRanking() ?: "not measured yet (the first scan measures)").lines().forEach { appendLine("  $it") }
                     appendLine("API study mode: " + (if (g.askAllSources) "ON (every API that is on is asked, the standby chain is ignored: spends all their credits)" else "OFF (the best API answers, the rest stand by)"))
                     appendLine("Source race (quote age = when the board was read minus the book's own stamp; lower is fresher). 0.0 s means either the feed gives no stamp of its own (Pinnacle, Kalshi, Polymarket are read at request time) or it reports the book as just seen (BoltOdds push, ParlayAPI heartbeat); only SGO, PropLine, The Odds API and Unabated report true update times:")
                     c.scanner.sourceRace(System.currentTimeMillis()).ifEmpty { listOf("no board read yet (run a scan)") }.forEach { appendLine("  $it") }

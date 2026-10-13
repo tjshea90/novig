@@ -305,6 +305,8 @@ class Scanner(
             lastEv = r.opportunities.mapNotNull { o -> o.evPercent?.let { o.market.marketId to it } }
                 .groupBy({ it.first }, { it.second }).mapValues { (_, evs) -> evs.max() }
         }
+        // Rank the APIs by what this scan measured (the next scan asks the best first); a feed measured earlier keeps its measurement until it is measured again.
+        ApiChain.measures = if (settings.gates.rankByMeasure) ApiChain.measures + measureAll(clock()) else emptyMap()
         val reports = sourceReports.map { r -> r.copy(matched = currentPlan?.events?.count { r.id in it.providers } ?: 0) }
         ScanReport(
             result = result,
@@ -833,6 +835,26 @@ class Scanner(
 
     @Volatile private var streamTimings: String? = null
     override fun streamTimings(): String? = streamTimings
+
+    /** What each feed held delivered when last read, for [SourceScore]: quote count, 90th-percentile age by the books' own stamps, and agreement with Pinnacle. */
+    private fun measureAll(now: Long): Map<String, SourceScore.Measure> {
+        val held = synchronized(references) { references.values.map { it.snapshot } }
+        val byId = held.groupBy { it.provider.ifEmpty { "reference" } }
+        val agreement = SourceAgreement.compute(byId, held.filter { it.provider == "pinnacle" }.flatMap { it.events }, setOf("draftkings", "fanduel"))
+        return byId.mapNotNull { (id, snaps) ->
+            val ages = ArrayList<Long>()
+            for (snap in snaps) for (e in snap.events) for (m in e.markets) m.lastUpdateMs?.let { ages += (snap.fetchedAtMs - it).coerceAtLeast(0L) }
+            if (ages.isEmpty()) return@mapNotNull null
+            ages.sort()
+            id to SourceScore.Measure(id, ages.size, ages[((ages.size - 1) * 0.9).toInt()], agreement[id]?.meanPoints, agreement[id]?.lines ?: 0, snaps.maxOf { it.fetchedAtMs })
+        }.toMap()
+    }
+
+    override fun sourceRanking(): String? {
+        val m = ApiChain.measures
+        if (m.isEmpty()) return null
+        return ApiChain.order().joinToString("\n") { SourceScore.describe(it, m) }
+    }
 
     override fun sourceRace(now: Long): List<String> {
         val held = synchronized(references) { references.values.map { it.snapshot } }
