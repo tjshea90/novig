@@ -1,0 +1,38 @@
+# Kalshi API: permanent research memory (read 2026-10-13 from docs.kalshi.com; Tj's key is Ed25519)
+
+Sources (all fetched 2026-10-13): getting_started/api_keys, api_environments, rate_limits, quick_start_websockets; websockets/websocket-connection, connection-keep-alive, market-ticker, orderbook-updates, market-and-event-lifecycle; api-reference/market/get-markets, get-multiple-market-orderbooks; account/get-account-api-limits; live-data/get-game-stats; `https://docs.kalshi.com/llms.txt` indexes every page.
+
+## Hosts
+| | Recommended (dedicated to the external Trade API) | Legacy shared host (still supported, no dates given) |
+| - | - | - |
+| REST prod | `https://external-api.kalshi.com/trade-api/v2` | `https://api.elections.kalshi.com/trade-api/v2` |
+| WS prod | `wss://external-api-ws.kalshi.com/trade-api/ws/v2` | `wss://api.elections.kalshi.com/trade-api/ws/v2` |
+| REST demo | `https://external-api.demo.kalshi.co/trade-api/v2` | `https://demo-api.kalshi.co/trade-api/v2` |
+| WS demo | `wss://external-api-ws.demo.kalshi.co/trade-api/ws/v2` | `wss://demo-api.kalshi.co/trade-api/ws/v2` |
+Market data on REST needs no key (the app has used it so, anonymous, since v0.1); the WebSocket needs a signed handshake even for public channels.
+
+## Keys and signing
+- Keys are asymmetric pairs; Kalshi picks the verification algorithm from the registered public key. **Ed25519 (recommended)**: PKCS#8 PEM (header line reads BEGIN PRIVATE KEY), signs the message bytes directly (RFC 8032, 64-byte signature). RSA-2048: RSA-PSS, SHA-256, MGF1 SHA-256, salt length 32. The PEM header does not reliably tell the type (PKCS#8 RSA says the same): decide from the parsed key. Kalshi never stores the private key; the Key ID identifies the key.
+- Headers on every signed request: `KALSHI-ACCESS-KEY` (Key ID), `KALSHI-ACCESS-TIMESTAMP` (ms since epoch, decimal string), `KALSHI-ACCESS-SIGNATURE` (base64).
+- Signed message = `timestamp + METHOD + path`, no separators, path WITHOUT the query string and including the `/trade-api/v2` prefix (e.g. `1697000000000GET/trade-api/v2/account/limits`). WebSocket handshake: the same three headers on the upgrade, signing `timestamp + "GET" + "/trade-api/ws/v2"`.
+
+## Rate limits (rate_limits)
+Token buckets per second, READ budget / WRITE budget: Basic 200/100, Advanced 300/300, Premier 1,200/1,200, Prime 4,800/4,800. Most requests cost 10 tokens (so Basic reads = 20 a second); batch create orders 10 per order, batch cancel 2 per order; the authoritative non-default costs are `GET /account/endpoint_costs`. Own limits: `GET /account/limits` -> `usage_tier`, `read` and `write` `{refill_rate, bucket_capacity}`, `grants[]`. 429 body `{"error":"too many requests"}`, NO Retry-After and no X-RateLimit headers, no penalty or cooldown: "apply exponential backoff on 429". REST and FIX drain the same buckets; the docs do not say how the WebSocket is metered.
+
+## REST market data
+- `GET /markets` (limit default 100, max 1000; cursor; `series_ticker`, `event_ticker`, `tickers` comma list, `status` one of unopened|open|paused|closed|settled; `mve_filter`). Prices are FixedPointDollars STRINGS (up to 6 decimals): `yes_bid_dollars`, `yes_ask_dollars`, `no_bid_dollars`, `no_ask_dollars`, `last_price_dollars`; sizes `yes_bid_size_fp`, `yes_ask_size_fp` (2 decimals); `volume_fp`, `open_interest_fp`; `floor_strike`/`cap_strike`/`strike_type`/`custom_strike`; `status` initialized|inactive|active|closed|determined|disputed|amended|finalized.
+- `GET /events?series_ticker&status=open&with_nested_markets=true` is what the app reads (one request a series).
+- `GET /markets/orderbooks?tickers=` up to 100 tickers, `orderbook_fp.{yes_dollars,no_dollars}` arrays of `[price, size]` strings. Cost not stated.
+- Also: `/series`, `/events/{t}`, trades, candlesticks, `/live_data/...` (`GET /live_data/milestone/{id}/game_stats` returns play-by-play for pro/college football and basketball, WNBA, soccer, hockey, baseball; null without a Sportradar id; score/clock fields undocumented), exchange status/schedule.
+
+## WebSocket (the app's use is read-only market data)
+- Envelope: client `{"id":N,"cmd":"subscribe"|"unsubscribe"|"list_subscriptions"|"update_subscription","params":{...}}`; server `{"type","id","sid","seq","msg","sending_ts_ms"}`. `subscribe` params `channels:[..]`, `market_ticker`/`market_tickers` (ticker also takes `market_id(s)`; **omit the market to receive all markets**). Ack `{"id":1,"type":"subscribed","msg":{"channel":"ticker","sid":1}}`. `update_subscription` `{"sid":S,"action":"add_markets"|"delete_markets"|"get_snapshot","market_tickers":[..]}` -> `{"type":"ok","msg":{"market_tickers":[full list]}}` (flag `skip_ticker_ack` omits the list).
+- Channels: `orderbook_delta` (snapshot `orderbook_snapshot` then `orderbook_delta`; `seq` per sid "should be checked to guarantee you received all the messages"; `msg.yes_dollars_fp`/`no_dollars_fp` `[price, count]` strings; delta `price_dollars`, `delta_fp`, `side`), **`ticker`** (sent whenever any ticker field changes; `price_dollars`, `yes_bid_dollars`, `yes_ask_dollars`, `yes_bid_size_fp`, `yes_ask_size_fp`, `volume_fp`, `open_interest_fp`, `last_trade_size_fp`, `ts_ms`, `market_ticker`, `market_id`), `trade`, `fill`, `market_positions`, **`market_lifecycle_v2`** (all markets, no filter: `msg.event_type` created|activated|deactivated|close_date_updated|determined|settled|metadata_updated|price_level_structure_updated, `is_deactivated` for pause, `result`, `settlement_value`, `close_ts`), `user_orders`, `communications`, `order_group_updates`, CF Benchmarks and Pyth value feeds.
+- Heartbeat: "Kalshi sends Ping frames (0x9) every 10 seconds with body `heartbeat`"; clients "should respond with Pong"; clients may also ping. (OkHttp answers pings by itself.) No documented pong timeout or idle disconnect.
+- NOT documented (so the app must be defensive): the maximum connections, the maximum subscriptions, the per-subscription market limit (error 26) and the per-subscription command rate (error 27). Error codes: 1 general, 2 missing params, 3 missing channels, 5 unknown command, 7 sid not found, 8 unknown channel, 9 channel needs auth, 11 malformed parameter, 12 exactly one sid, 13 invalid action, 14 missing market, 18 server timeout, 25 outbound buffer exceeded (subscribe to less, read faster), 26 market limit, 27 command rate.
+
+## How Vigilant uses it (v0.97.0, TKS; `data/.../kalshi/`)
+- `KalshiAuth` (Ed25519 and RSA-PSS through BouncyCastle, as Novig's signer) signs REST and the socket handshake. The key (Key ID + PEM) is saved in the app's own file `kalshi_key.json` (never in the repo; Settings › Kalshi).
+- With a key the REST reads go to the recommended host, SIGNED, and are paced from `GET /account/limits` (not the anonymous 2 a second).
+- `KalshiStream` (switch Settings › APIs › Kalshi › Socket): one connection, `ticker` for the markets the scan reads (+ `market_lifecycle_v2` for pauses/determined). The REST read seeds each series' catalog and prices AFTER the subscription is acknowledged; the socket then keeps each price current, so a scan within the catalog TTL asks Kalshi for nothing and its quotes are as fresh as the last push. Socket off, API on: REST every scan as before. API off: never called.
+- Nothing here has met a live key from this container (no session opens Kalshi's socket with Tj's key). Test key (Settings › Kalshi) checks the signature on `/account/limits` and a handshake + `list_subscriptions` on the socket; Diagnostics › Kalshi lists the rest. Fix this file when Tj's first report arrives.
