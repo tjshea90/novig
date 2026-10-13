@@ -112,6 +112,8 @@ class KalshiTest {
     private val restCalls = AtomicInteger(0)
     private val restHeaders = CopyOnWriteArrayList<RecordedRequest>()
     @Volatile private var sidCounter = 0
+    @Volatile private var tickerSubs = 0
+    @Volatile private var okSeq = 10
     @Volatile private var restBid = "0.5100"
     @Volatile private var restAsk = "0.5200"
 
@@ -127,7 +129,9 @@ class KalshiTest {
                 if ((o["cmd"] as? JsonPrimitive)?.content == "subscribe") {
                     val id = (o["id"] as JsonPrimitive).longOrNull
                     val channel = ((o["params"] as JsonObject)["channels"] as kotlinx.serialization.json.JsonArray).first().let { (it as JsonPrimitive).content }
-                    webSocket.send("""{"id":$id,"type":"subscribed","msg":{"channel":"$channel","sid":${++sidCounter}}}""")
+                    // Like the real server (Tj's report): the first subscribe to a channel is `subscribed`, a later one to the same channel is added to it and answered `ok`.
+                    if (channel == "ticker" && tickerSubs++ > 0) webSocket.send("""{"id":$id,"sid":2,"seq":${++okSeq},"type":"ok"}""")
+                    else webSocket.send("""{"id":$id,"type":"subscribed","msg":{"channel":"$channel","sid":${++sidCounter}}}""")
                 }
             }
         }
@@ -197,6 +201,20 @@ class KalshiTest {
         until("closed") { stream.isClosed("KXNFLTOTAL-26SEP27CARCLE-44") }
         stream.close()
         assertEquals(KalshiStream.State.OFF, stream.state)
+    }
+
+    @Test
+    fun `markets added to a subscribed channel are acknowledged with ok and count as subscribed`() {
+        val (_, text) = edKey()
+        val signer = KalshiSigner.of(KalshiCredentials("kid", text)).getOrThrow()
+        val stream = KalshiStream(OkHttpClient(), { signer }, scope, wsUrl = ws.url("/trade-api/ws/v2").toString().replace("http", "ws"))
+        stream.want("A", listOf("A-1", "A-2"))
+        until("the first chunk") { stream.subscribedCount == 2 }
+        stream.want("B", listOf("B-1", "B-2", "B-3"))
+        until("the second chunk, answered ok") { stream.subscribedCount == 5 }
+        assertTrue(stream.oks >= 1)
+        assertTrue(stream.trusted("B-2", System.currentTimeMillis() + 1))
+        stream.close()
     }
 
     @Test

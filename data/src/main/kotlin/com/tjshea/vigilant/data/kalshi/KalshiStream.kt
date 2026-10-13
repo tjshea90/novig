@@ -98,6 +98,10 @@ class KalshiStream(
         private set
     @Volatile var gaps = 0
         private set
+    @Volatile var subscribedAcks = 0
+        private set
+    @Volatile var oks = 0
+        private set
     @Volatile var lastFrameMs = 0L
         private set
     @Volatile var openedAtMs = 0L
@@ -287,9 +291,21 @@ class KalshiStream(
                 val channel = (msg?.get("channel") as? JsonPrimitive)?.contentOrNull
                 if (channel != null && sid != null) sidOfChannel.putIfAbsent(channel, sid)
                 val part = id?.let { pending.remove(it) }
+                subscribedAcks++
                 if (part != null && part.firstOrNull() == LIFECYCLE) {
                     readyAtMs = now
                 } else if (part != null) {
+                    part.forEach { subscribedAt[it] = now }
+                    if (readyAtMs == 0L) readyAtMs = now
+                }
+            }
+            // A subscribe to a channel already subscribed on this connection is acknowledged as `ok` (Tj's first report, 2026-10-13: 10,049 markets wanted, 200 acknowledged as `subscribed`, 3,184 of them
+            // pushing): the markets were added to the existing subscription, and count from this acknowledgement all the same.
+            "ok" -> {
+                oks++
+                val id = (obj["id"] as? JsonPrimitive)?.longOrNull
+                val part = id?.let { pending.remove(it) }
+                if (part != null && part.firstOrNull() != LIFECYCLE) {
                     part.forEach { subscribedAt[it] = now }
                     if (readyAtMs == 0L) readyAtMs = now
                 }
@@ -382,7 +398,7 @@ class KalshiStream(
             "socket: ${state.name.lowercase()} · connects $connects, drops $drops" + (lastClose?.let { " (last: $it)" } ?: "") +
                 " · frames $frames (ticker $tickerMessages, lifecycle $lifecycleMessages)" + (readyAtMs.takeIf { it > 0 }?.let { " · ready ${(now - it) / 1000}s ago" } ?: " · not ready"),
         )
-        add("  markets: wanted $wantedCount, subscribed $subscribedCount, with a push ${tops.size}, closed/paused ${closedMarkets.size} · chunk $chunk · sequence gaps $gaps")
+        add("  markets: wanted $wantedCount, subscribed $subscribedCount, with a push ${tops.size}, closed/paused ${closedMarkets.size} · chunk $chunk · sequence gaps $gaps · acks: subscribed $subscribedAcks, ok $oks · still waiting for ${pending.values.sumOf { it.size }}")
         lastError?.let { add("  last error: $it") }
         if (errorCodes.isNotEmpty()) add("  error codes seen: " + errorCodes.entries.sortedBy { it.key }.joinToString { "${it.key}×${it.value}" })
         if (lastFrameMs > 0) add("  last frame ${(now - lastFrameMs) / 1000}s ago" + (lagMs?.let { " · last push arrived $it ms after Kalshi sent it" } ?: ""))
