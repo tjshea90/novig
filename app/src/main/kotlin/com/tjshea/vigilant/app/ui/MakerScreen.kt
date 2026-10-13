@@ -339,8 +339,13 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                     tag = "bidLevel", title = "Auto-bid level",
                     hint = "1 is the strictest: fewest fills, the best price and edge, safest. 100 is the most fills at a thin but still positive edge. The slider sets every bid rule for you; bids go up on games 12 hours away and more.",
                     level = bidLevel, custom = bidCustom, name = com.tjshea.vigilant.data.scanner.BidSlider::name, stops = com.tjshea.vigilant.data.scanner.BidSlider.STOPS,
-                    describe = com.tjshea.vigilant.data.scanner.BidSlider.describe(if (bidLevel in 1..100) bidLevel else 55, bidCustom),
+                    describe = com.tjshea.vigilant.data.scanner.BidSlider.describe(if (bidLevel in 1..100) bidLevel else 55, bidCustom, ui.settings.vigGuards.bidMany),
                 ) { v -> actions.onUpdate { com.tjshea.vigilant.data.scanner.BidSlider.apply(it, v) } }
+                SwitchRow(
+                    "More, smaller bids",
+                    "Up to ${com.tjshea.vigilant.data.scanner.BidSlider.MANY_BIDS} bids at once at 1/16 Kelly each, every kind of bid, the proven types first and the risky ones last under stricter rules (every book and a sharp book must agree). Same dollar limits.",
+                    ui.settings.vigGuards.bidMany, "bidMany",
+                ) { on -> actions.onUpdate { com.tjshea.vigilant.data.scanner.BidSlider.withMany(it, on, if (bidLevel in 1..100) bidLevel else 55) } }
                 SectionTitle("Advanced settings")
                 Text(
                     if (rulesOpen) "Hide the rules" else MakerRulesText.summary(ui.settings),
