@@ -167,6 +167,9 @@ data class MakerRules(
         /** [postsPerPass]'s default. */
         const val POSTS_PER_PASS = 60
 
+        /** [postsPerPass] with "More, smaller bids" on: hundreds of small bids go up in a few passes (Novig takes 8 orders a second; 120 is 15 s). */
+        const val MANY_POSTS_PER_PASS = 120
+
         /** The shortest a longest-odds limit can be: +100 is even money; under it would mean "favorites only", which isn't what the option is for (as [com.tjshea.vigilant.data.novig.trading.AutoBet.MIN_MAX_ODDS]). */
         const val MIN_MAX_ODDS = com.tjshea.vigilant.data.novig.trading.AutoBet.MIN_MAX_ODDS
 
@@ -231,6 +234,8 @@ data class MakerRules(
             novigMove = s.trapNovigMove,
             maxPerGame = s.apiMaxPerGame.coerceAtLeast(0.0),
             popularFirst = s.makerPopularFirst,
+            tiered = s.vigGuards.bidMany,
+            postsPerPass = if (s.vigGuards.bidMany) MANY_POSTS_PER_PASS else POSTS_PER_PASS,
             requireSharp = s.makerRequireSharp,
             anchorSharp = s.makerAnchorSharp,
         )

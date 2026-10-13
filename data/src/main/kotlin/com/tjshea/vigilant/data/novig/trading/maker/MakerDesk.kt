@@ -525,7 +525,7 @@ class MakerDesk(
             league = line.league, eventName = line.eventName, startsTs = line.startsTs, marketLabel = line.marketLabel, selection = line.selection,
             kind = line.kind, price = post.price, contracts = post.contracts, fair = post.anchorFair ?: line.fair ?: post.price, evAtFair = post.evAtFair,
             blendFair = line.fair, sharpFairAtPost = line.sharpFairs.minOrNull(),
-            margin = if (post.obscure) maxOf(rules.margin, rules.obscureMargin) else rules.margin, books = line.books, source = line.source, gameUrl = line.gameUrl, fairBasis = line.basis, postedAtMs = now,
+            margin = MakerQuote.marginOf(line, rules, post.obscure), books = line.books, source = line.source, gameUrl = line.gameUrl, fairBasis = line.basis, postedAtMs = now,
             // Never past what it was priced from ([MakerDecision.Post.restUntilMs]: the expiry, the fair's freshness, the stop window before the start).
             expiresAtMs = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, post.restUntilMs), auto = auto,
             bestBidAtPost = line.bestBid, offerAtPost = line.offer, bookAtMs = line.bookAtMs,

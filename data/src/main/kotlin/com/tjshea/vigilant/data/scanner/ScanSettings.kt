@@ -55,7 +55,7 @@ enum class AutoScanMode(val displayName: String) {
  * Kelly ones size the bet from his bankroll and the bet's own odds and edge ([com.tjshea.vigilant.data.novig.trading.AutoBet.stake]).
  */
 enum class AutoBetStake(val label: String, val kelly: Double?) {
-    EIGHTH_KELLY("⅛ Kelly", 0.125), QUARTER_KELLY("¼ Kelly", 0.25), HALF_KELLY("½ Kelly", 0.5), ONE_DOLLAR("$1", null), CUSTOM("My amount", null)
+    SIXTEENTH_KELLY("1/16 Kelly", 0.0625), EIGHTH_KELLY("⅛ Kelly", 0.125), QUARTER_KELLY("¼ Kelly", 0.25), HALF_KELLY("½ Kelly", 0.5), ONE_DOLLAR("$1", null), CUSTOM("My amount", null)
 }
 
 /**
@@ -1431,4 +1431,6 @@ data class ScanGuards(
     /** The 1-100 safety/volume sliders' positions ([BetSlider], [BidSlider]); 0 = never set. The rules they set are ordinary settings: edit one and the slider reads Custom. */
     val betLevel: Int = 0,
     val bidLevel: Int = 0,
+    /** The Bids slider's "More, smaller bids" mode ([BidSlider.many], Tj 2026-10-13): hundreds of 1/16-Kelly bids, proven types first, riskier ones under stricter rules. */
+    val bidMany: Boolean = false,
 )
