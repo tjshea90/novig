@@ -7030,3 +7030,8 @@ If it doesn't already do this, make the auto bet feature also auto bet on bets s
 ```
 How is this bet under my 4 star minimum
 ```
+
+## 2026-10-13T18:34:17Z
+```
+Yes, show the adjusted stars on the card and in the message
+```
