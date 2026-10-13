@@ -1344,6 +1344,10 @@ data class ApiGates(
      * ([com.tjshea.vigilant.data.scanner.ApiChain]), so Diagnostics' Source race can compare them all on the same scan. It spends the credits of every API that is on: leave it off except for a study.
      */
     val askAllSources: Boolean = false,
+    /**
+     * Rank the APIs by what they were measured to deliver ([SourceScore]): the freshest, most accurate answers first, the shipped order as the prior and as the fallback. Off = the shipped order only.
+     */
+    val rankByMeasure: Boolean = true,
     val repeatMaxBets: Int = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_BETS,
     val repeatMaxDollars: Double = com.tjshea.vigilant.data.tracker.RepeatGuard.DEFAULT_MAX_DOLLARS,
     val repeatHedge: Boolean = true,

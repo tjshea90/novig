@@ -22,7 +22,24 @@ object ApiChain {
     /** The feeds of one chain, best first, each with what it serves. */
     private val LINES_CHAIN = listOf("sgo" to Kind.LINES, "oddspapi" to Kind.LINES, "oddspapi_free" to Kind.LINES, "parlay" to Kind.LINES, "parlay_1h" to Kind.PERIODS, "propline" to Kind.LINES, "oddsapi" to Kind.LINES, "unabated" to Kind.LINES)
     private val PROPS_CHAIN = listOf("sgo-props", "oddspapi-props", "oddspapi_free-props", "parlay_props", "propline_props", "oddsapi_props", "unabated-props").map { it to Kind.PROPS }
-    private val CHAINS = listOf(LINES_CHAIN, PROPS_CHAIN)
+    private val STATIC_CHAINS = listOf(LINES_CHAIN, PROPS_CHAIN)
+
+    /** What each feed was last measured to deliver ([SourceScore]); empty = the shipped order. Set by the scanner after each scan while [ApiGates.rankByMeasure] is on. */
+    @Volatile var measures: Map<String, SourceScore.Measure> = emptyMap()
+
+    /** The chains, best first: the shipped order re-ranked by [measures]. */
+    private val CHAINS: List<List<Pair<String, Kind>>>
+        get() {
+            val m = measures
+            if (m.isEmpty()) return STATIC_CHAINS
+            return STATIC_CHAINS.map { chain ->
+                val kinds = chain.toMap()
+                SourceScore.rank(chain.map { it.first }, m).map { it to kinds.getValue(it) }
+            }
+        }
+
+    /** The order of the lines chain now, for Diagnostics. */
+    fun order(): List<List<String>> = CHAINS.map { c -> c.map { it.first } }
 
     /** What a feed serves, or null when it is not on a chain (always asked). */
     fun kindOf(sourceId: String): Kind? = CHAINS.firstNotNullOfOrNull { chain -> chain.firstOrNull { it.first == sourceId }?.second }
@@ -49,6 +66,8 @@ object ApiChain {
      */
     fun needed(sourceId: String, league: League, settings: ScanSettings, context: ScanContext): Boolean {
         val kind = kindOf(sourceId) ?: return true
+        // Audition: a feed with no recent measurement is asked once so it can be measured, and can earn first place (a feed that always stands by could never be ranked).
+        if (settings.gates.rankByMeasure && measures.isNotEmpty() && SourceScore.auditionDue(sourceId, context.now, measures)) return true
         // Study mode: every API that is on is asked, so the Source race can compare them on one scan.
         if (settings.gates.askAllSources) return true
         // No better feed answered this league: it failed, ran out of credits, was held back, or does not list it. The next best takes over.
