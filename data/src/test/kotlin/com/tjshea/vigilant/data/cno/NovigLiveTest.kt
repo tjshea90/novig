@@ -106,7 +106,7 @@ class NovigLiveTest {
     fun `only the top bets are read, and an empty list reads nothing`() = runTest {
         val source = Source().also { it.clock = { currentTime } }
         val live = NovigLive(source, { r -> finder(r.bet.removePrefix("P").substringBefore(' ').toInt()) }, clock = { currentTime })
-        val rows = MutableStateFlow((1..8).map { row(it) } + (10..20).map { row(it) })
+        val rows = MutableStateFlow((1..8).map { row(it) } + (10..60).map { row(it) })
         val job = launch { live.keepFresh(rows, top = NovigLive.LIVE_TOP) }
         runCurrent()
         assertEquals(NovigLive.LIVE_TOP, source.reads)
