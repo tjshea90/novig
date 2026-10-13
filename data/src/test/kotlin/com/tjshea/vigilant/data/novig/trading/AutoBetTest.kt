@@ -63,8 +63,8 @@ class AutoBetTest {
         assertEquals(listOf(2, 3, 4, 5), ScanSettings.AUTO_BET_BOOKS_CHOICES)
         assertEquals(listOf(0.02, 0.025, 0.03, 0.0325, 0.035, 0.0375, 0.04), ScanSettings.AUTO_BET_MIN_EV_CHOICES)
         assertEquals(listOf(1, 2, 3), ScanSettings.AUTO_BET_TWO_SIDED_CHOICES)
-        assertEquals(listOf("⅛ Kelly", "¼ Kelly", "½ Kelly", "$1", "My amount"), AutoBetStake.entries.map { it.label })
-        assertEquals(listOf(0.125, 0.25, 0.5, null, null), AutoBetStake.entries.map { it.kelly })
+        assertEquals(listOf("⅛ Kelly", "¼ Kelly", "½ Kelly", "$1", "My amount"), AutoBetStake.entries.filter { it != AutoBetStake.SIXTEENTH_KELLY }.map { it.label }) // 1/16 Kelly is the Bids slider's "More, smaller bids" only
+        assertEquals(listOf(0.125, 0.25, 0.5, null, null), AutoBetStake.entries.filter { it != AutoBetStake.SIXTEENTH_KELLY }.map { it.kelly })
         // A file saved before auto-bet existed reads with all of it off, and nothing else moves.
         val old = json.decodeFromString(ScanSettings.serializer(), """{"autoScan":"CNO","autoScanSeconds":30,"schema":12}""")
         assertFalse(old.autoBet)
