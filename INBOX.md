@@ -6883,3 +6883,12 @@ Where is the API study mode
 ```
 @"/root/.claude/uploads/d95b6645-d5e0-5a0b-9345-cf5a8be1907e/e65e94fb-vigilant-diagnostics-v0.95.6-2026-10-12-2040.txt" 
 ```
+
+## 2026-10-13T00:47:05Z
+```
+When I do scans on the app, I have no way to know which apis are accurate, which ones have the freshest odds, and whether the bets I'm placing are based on accurate and fresh odds from other sports books. I always wonder how old the odds are. 
+
+Figure out a way for the app to use the best apis and favor fresh odds with the best accuracy and preferably fast scanning speed. 
+
+Find the best logistics on what apis to use for what data in combinations. The app will need to use certain apis to fill in data that other apis don't offer. But if some data overlaps from more than one api, make sure the app always uses the apis from Best to worst order, favoring apis that provide the most accurate, freshest odds and scanning speed, and when their usage runs out, rotate keys for the same api. If all keys are used or if the API is not responding, the app should automatically fall back to the next best API for the overlapping data.
+```
