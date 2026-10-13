@@ -169,10 +169,11 @@ class MakerStore(file: File) {
 
     companion object {
         /**
-         * Ended bids that never filled leave after 2 days; ones that filled after a week (Tj, 2026-10-10: the file was 15 MB, rewritten whole on every change, and
-         * made the whole app lag; the fills themselves live on in the Tracker for good).
+         * Ended bids that never filled leave after 6 hours; ones that filled after a week (Tj, 2026-10-10: the file was 15 MB, rewritten whole on every change, and
+         * made the whole app lag; the fills themselves live on in the Tracker for good). It was 2 days until v0.97.2: "More, smaller bids" (v0.96.0) posts hundreds a day and
+         * Tj's 2026-10-13 file had maker.json at 22 MB with the heap at 92% twice. Nothing reads an ended unfilled bid later (the repeat guard counts only bids not yet ended).
          */
-        const val KEEP_MS = 2 * 24 * 3_600_000L
+        const val KEEP_MS = 6 * 3_600_000L
         const val KEEP_FILLED_MS = 7 * 24 * 3_600_000L
 
         /** An ended bid that is past its keep window. */
