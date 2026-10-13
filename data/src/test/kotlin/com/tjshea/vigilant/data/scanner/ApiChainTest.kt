@@ -52,6 +52,22 @@ class ApiChainTest {
     }
 
     @Test
+    fun `PropLine leads both chains until a measurement proves it staler than another feed`() {
+        try {
+            ApiChain.reset()
+            assertEquals("propline", ApiChain.order()[0].first())
+            assertEquals("propline_props", ApiChain.order()[1].first())
+            assertEquals("the feeds below it wait for it", listOf("propline"), ApiChain.better("sgo", listOf("propline", "sgo")))
+            assertTrue(Scanner.SOURCE_ORDER.indexOf("propline") < Scanner.SOURCE_ORDER.indexOf("sgo"))
+            // Measured: PropLine's quotes run 6 minutes old, SGO's 40 seconds: SGO leads (ties keep PropLine first).
+            ApiChain.measures = mapOf("propline" to SourceScore.Measure("propline", 500, 380_000L, 1.0, 50, now), "sgo" to SourceScore.Measure("sgo", 500, 40_000L, 1.0, 50, now))
+            assertEquals("sgo", ApiChain.order()[0].first())
+        } finally {
+            ApiChain.reset()
+        }
+    }
+
+    @Test
     fun `a feed with no recent measurement is auditioned once, then stands by again, and the order follows the measurements`() {
         try {
             ApiChain.reset()
