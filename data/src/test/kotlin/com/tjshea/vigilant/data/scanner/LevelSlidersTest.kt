@@ -93,4 +93,38 @@ class LevelSlidersTest {
         val long = ScanSettings(startsWithinHours = 0, daysAhead = 7, bookPropHours = 72)
         assertEquals(long.daysAhead, BidSlider.apply(long, 100).daysAhead); assertEquals(72, BidSlider.apply(long, 100).bookPropHours)
     }
+
+    @Test fun `more smaller bids keeps every EV rule of the level and only adds volume`() {
+        val base = ScanSettings(bankroll = 185.0, apiMaxStake = 7.0, makerMaxDollars = 100.0)
+        for (l in levels) {
+            val plain = BidSlider.apply(base, l)
+            val many = BidSlider.withMany(base, true, l)
+            assertTrue(BidSlider.matches(many, l))
+            // the rules that make a bid +EV are the level's own, unchanged
+            assertEquals(plain.makerMargin, many.makerMargin, 0.0)
+            assertEquals(plain.makerMinBooks, many.makerMinBooks)
+            assertEquals(plain.makerSharpVeto, many.makerSharpVeto)
+            assertEquals(plain.makerMaxOdds, many.makerMaxOdds)
+            assertEquals(plain.trapBidHours, many.trapBidHours)
+            assertTrue(many.makerMargin >= BidSlider.MIN_MARGIN - 1e-12)
+            assertTrue(many.makerSharpVeto && many.makerAnchorSharp)
+            // volume: 1/16 Kelly, hundreds of bids, every kind; money untouched
+            assertEquals(AutoBetStake.SIXTEENTH_KELLY, many.makerStakeMode)
+            assertTrue(many.makerMaxBids >= 100)
+            assertEquals(BetKind.entries.toSet(), many.makerKinds)
+            assertEquals(base.makerMaxDollars, many.makerMaxDollars, 0.0)
+            assertEquals(base.bankroll, many.bankroll, 0.0)
+            assertEquals(base.apiMaxStake, many.apiMaxStake, 0.0)
+            assertTrue(many.makerMaxOdds in 1..BidSlider.LONGEST_ODDS)
+        }
+    }
+
+    @Test fun `switching more smaller bids off puts the stake and count back`() {
+        val on = BidSlider.withMany(ScanSettings(), true, 50)
+        val off = BidSlider.withMany(on, false, 50)
+        assertFalse(off.vigGuards.bidMany)
+        assertEquals(AutoBetStake.QUARTER_KELLY, off.makerStakeMode)
+        assertEquals(20, off.makerMaxBids)
+        assertTrue(BidSlider.matches(off, 50))
+    }
 }
