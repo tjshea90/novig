@@ -1,6 +1,8 @@
 package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.await
+import com.tjshea.vigilant.data.kalshi.KalshiSigner
+import com.tjshea.vigilant.data.kalshi.KalshiStream
 import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.scanner.League
@@ -59,6 +61,17 @@ class KalshiClient(
     private val fastPace: () -> Boolean = { false },
     /** How many requests at the faster pace count as passed ([TRIAL_REQUESTS]; the tests use a few). */
     private val trialRequests: Int = TRIAL_REQUESTS,
+    /**
+     * Tj's Kalshi key (Settings › Kalshi; KALSHI_API.md): with one every read is signed, goes to the recommended `external-api` host and is paced by the account's own read budget
+     * (`GET /account/limits`) instead of the anonymous 2 a second. Null: the public, unsigned reads as before.
+     */
+    private val signer: () -> KalshiSigner? = { null },
+    /**
+     * The socket (Settings › APIs › Kalshi › Socket): while it is live and a series' catalog was read after its markets were subscribed, a scan asks Kalshi for nothing and reads the prices the
+     * socket holds. Null, or [socketOn] false: REST every scan, as before.
+     */
+    private val stream: KalshiStream? = null,
+    private val socketOn: () -> Boolean = { false },
 ) : ReferenceSource {
 
     override val id = BOOK_KEY
@@ -116,6 +129,97 @@ class KalshiClient(
 
     /** Series [lines] just read, for the [odds] call that follows: taken once, and only while young. */
     private val early = HashMap<String, Pair<Long, List<EventDto>>>()
+
+    /** A series as last read from REST, and when the read began: the catalog the socket's prices are laid over. */
+    private class Catalog(val readAtMs: Long, val events: List<EventDto>)
+    private val catalog = java.util.concurrent.ConcurrentHashMap<String, Catalog>()
+
+    /** The account's read budget (tokens a second, `GET /account/limits`), when it has been read; and the tier's name for Diagnostics. */
+    @Volatile private var readRefill: Int? = null
+    @Volatile private var tier: String? = null
+    @Volatile private var limitsReadAt = 0L
+    @Volatile private var limitsNote: String? = null
+    @Volatile private var authedGate: RateGate = RateGate(ratePerSecond = AUTH_START_RATE, burst = AUTH_BURST, sleep = sleep, minRate = MIN_RATE, maxRate = AUTH_START_RATE, rampEvery = RAMP_EVERY, rampStep = RAMP_STEP)
+    private val sleepFn = sleep
+
+    private fun signed(): KalshiSigner? = signer()
+
+    private fun streamOn(): Boolean = stream != null && signed() != null && socketOn()
+
+    /** Prices, sizes and status of [events] as the socket holds them, and when they are as of: now if every market is current on the socket, else the REST read's own time. */
+    private fun view(readAtMs: Long, events: List<EventDto>): Pair<List<EventDto>, Long> {
+        val st = stream
+        if (st == null || !streamOn()) return events to readAtMs
+        var allTrusted = true
+        val out = events.map { e ->
+            e.copy(markets = e.markets.map { m ->
+                when {
+                    st.isClosed(m.ticker) -> { allTrusted = allTrusted && st.trusted(m.ticker, readAtMs); m.copy(status = "closed") }
+                    st.trusted(m.ticker, readAtMs) -> st.top(m.ticker)?.let { t ->
+                        m.copy(
+                            yes_bid_dollars = t.yesBid?.let { fmt(it) } ?: m.yes_bid_dollars, yes_ask_dollars = t.yesAsk?.let { fmt(it) } ?: m.yes_ask_dollars,
+                            yes_bid_size_fp = t.bidSize?.let { fmt(it) } ?: m.yes_bid_size_fp, yes_ask_size_fp = t.askSize?.let { fmt(it) } ?: m.yes_ask_size_fp,
+                        )
+                    } ?: m
+                    else -> { allTrusted = false; m }
+                }
+            })
+        }
+        return out to (if (allTrusted) clock() else readAtMs)
+    }
+
+    private fun fmt(v: Double): String = String.format(java.util.Locale.US, "%.4f", v)
+
+    /** A series whose catalog is young enough, and whose every market the socket vouches for since it was read: no request needed. */
+    private fun fromCatalog(series: String, now: Long): Catalog? {
+        val st = stream ?: return null
+        if (!streamOn() || !st.live) return null
+        val c = catalog[series] ?: return null
+        if (now - c.readAtMs > CATALOG_TTL_MS) return null
+        if (c.events.any { e -> e.markets.any { m -> !st.trusted(m.ticker, c.readAtMs) } }) return null
+        return c
+    }
+
+    /** What the account's limits and the socket say, for Diagnostics. */
+    fun report(now: Long = clock()): List<String> = buildList {
+        val k = signed()
+        add(if (k == null) "key: none (public reads, ${START_RATE.toInt()} a second)" else "key: ${k.algorithm} ${k.keyId.take(8)}… · host ${altBaseUrl ?: baseUrl} · signed reads at ~${"%.1f".format(authedRate())} a second")
+        add("account: " + (tier?.let { "tier $it, read budget ${readRefill ?: "?"} tokens a second" } ?: (limitsNote ?: "not read yet")) + (limitsReadAt.takeIf { it > 0 }?.let { " (read ${(now - it) / 60_000} min ago)" } ?: ""))
+        add("catalog: ${catalog.size} series held" + (stream?.let { if (streamOn()) ", socket on" else ", socket off" } ?: ", no socket"))
+        stream?.report(now)?.forEach { add(it) }
+    }
+
+    /** Signed reads' pace: half the account's read budget at the default 10 tokens a request, between [AUTH_START_RATE] and [AUTH_MAX_RATE]. */
+    private fun authedRate(): Double = readRefill?.let { (it / DEFAULT_COST * 0.5).coerceIn(AUTH_START_RATE, AUTH_MAX_RATE) } ?: AUTH_START_RATE
+
+    /** `GET /account/limits` (signed), once an hour: the pace follows the tier. A failure keeps the start pace and says why in [report]. */
+    private suspend fun refreshLimits() {
+        val k = signed() ?: return
+        val now = clock()
+        if (now - limitsReadAt < LIMITS_TTL_MS) return
+        limitsReadAt = now
+        try {
+            val url = "${hostNow()}/account/limits".toHttpUrl()
+            val req = Request.Builder().url(url).get().apply { k.headers("GET", url, now).forEach { (h, v) -> header(h, v) } }.build()
+            http.newCall(req).await().use { r ->
+                val body = r.body?.string().orEmpty()
+                if (!r.isSuccessful) { limitsNote = "account limits: HTTP ${r.code}"; return }
+                val o = json.parseToJsonElement(body) as? kotlinx.serialization.json.JsonObject ?: return
+                tier = (o["usage_tier"] as? kotlinx.serialization.json.JsonPrimitive)?.content
+                val refill = ((o["read"] as? kotlinx.serialization.json.JsonObject)?.get("refill_rate") as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull()
+                if (refill != null && refill > 0) {
+                    readRefill = refill
+                    val rate = authedRate()
+                    authedGate = RateGate(ratePerSecond = rate, burst = AUTH_BURST, sleep = sleepFn, minRate = MIN_RATE, maxRate = rate, rampEvery = RAMP_EVERY, rampStep = RAMP_STEP)
+                }
+                limitsNote = null
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            limitsNote = "account limits: ${e.message?.take(80) ?: e.javaClass.simpleName}"
+        }
+    }
 
     private fun selected(league: League, settings: ScanSettings) =
         league.kalshiSeries.filter { s -> familyOf(s)?.let { it in settings.families } ?: false }
