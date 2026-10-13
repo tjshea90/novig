@@ -60,6 +60,7 @@ class BoltOddsClient(
     private var nextSnapshotAt = 0L
 
     @Volatile private var failures = 0
+    @Volatile private var lastFailMs = 0L
     @Volatile var lastOkMs = 0L
         private set
 
@@ -84,7 +85,7 @@ class BoltOddsClient(
         if (lastOkMs == 0L) "no answer yet" else if (down(now)) "DOWN (REST: ${lastError ?: "failing"})" else "answering (last good answer ${(now - lastOkMs) / 1000L}s ago, $requests requests)"
 
     /** Two failures in a row and nothing good for two minutes. */
-    fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS
+    fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS && now - lastFailMs < RETRY_AFTER_MS
 
     suspend fun info(): BoltInfo {
         val root = parse(get("/get_info"))
@@ -174,11 +175,11 @@ class BoltOddsClient(
         } catch (e: CancellationException) {
             throw e
         } catch (e: com.tjshea.vigilant.data.keys.AllKeysExhaustedException) {
-            failures++
+            failures++; lastFailMs = clock()
             lastError = redact(e.message ?: "every key is refused or resting").take(200)
             throw BoltOddsException("BoltOdds: $lastError")
         } catch (e: Exception) {
-            failures++
+            failures++; lastFailMs = clock()
             lastError = redact(e.message ?: e.javaClass.simpleName).take(200)
             throw e
         }
@@ -222,7 +223,7 @@ class BoltOddsClient(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        failures++
+        failures++; lastFailMs = clock()
         lastError = redact(e.message ?: e.javaClass.simpleName).take(200)
         throw e
     }
@@ -270,6 +271,9 @@ class BoltOddsClient(
 
     companion object {
         const val DOWN_AFTER_MS = 120_000L
+
+        /** A source that is down is asked again once this long has passed since its last failure (the next scan): a feed that came back reconnects by itself, and a failure here starts the rest over. */
+        const val RETRY_AFTER_MS = 60_000L
         const val MAX_ATTEMPTS = 3
     }
 }

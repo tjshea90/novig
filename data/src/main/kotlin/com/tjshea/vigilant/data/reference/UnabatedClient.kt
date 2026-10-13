@@ -46,6 +46,7 @@ class UnabatedClient(
     }
 
     @Volatile private var failures = 0
+    @Volatile private var lastFailMs = 0L
     @Volatile private var lastOkMs = 0L
 
     /** Requests made (Diagnostics). */
@@ -66,7 +67,7 @@ class UnabatedClient(
         if (lastOkMs == 0L) "no answer yet" else if (down(now)) "DOWN (the other feeds carry on)" else "answering (last good answer ${(now - lastOkMs) / 1000L}s ago, $requests requests)"
 
     /** Two failures in a row and nothing good for [DOWN_AFTER_MS]: the source gives nothing until one call works again. */
-    fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS
+    fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS && now - lastFailMs < RETRY_AFTER_MS
 
     suspend fun leagues() = UnabatedParser.leagues(get("/league"))
     suspend fun betTypes() = UnabatedParser.betTypes(get("/bettype"))
@@ -91,7 +92,7 @@ class UnabatedClient(
         lastOkMs = clock()
         throw e
     } catch (e: Exception) {
-        failures++
+        failures++; lastFailMs = clock()
         lastError = (e.message ?: e.javaClass.simpleName).take(200)
         throw e
     }
@@ -156,6 +157,9 @@ class UnabatedClient(
 
     companion object {
         const val DOWN_AFTER_MS = 120_000L
+
+        /** A source that is down is asked again once this long has passed since its last failure (the next scan): a feed that came back reconnects by itself, and a failure here starts the rest over. */
+        const val RETRY_AFTER_MS = 60_000L
         const val MAX_ATTEMPTS = 3
     }
 }

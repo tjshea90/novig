@@ -128,6 +128,7 @@ class SportsGameOddsClient(
     class SgoPages(val events: List<SgoEvent>, val notice: String?, val pages: Int)
 
     @Volatile private var failures = 0
+    @Volatile private var lastFailMs = 0L
     @Volatile private var lastOkMs = 0L
 
     /** Requests made, answers read and the last plan notice (Diagnostics). */
@@ -151,7 +152,7 @@ class SportsGameOddsClient(
      * Whether SGO has stopped answering: two failures in a row and nothing good for [DOWN_AFTER_MS]. While it is down the feeds Vigilant stood down for SGO Pro (see `AppContainer.referenceSources`)
      * are asked again for the leagues SGO carries, so an outage costs no scan; one good answer ends it.
      */
-    fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS
+    fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS && now - lastFailMs < RETRY_AFTER_MS
 
     private suspend fun get(path: String, params: List<Pair<String, String>>): String = try {
         requests++
@@ -159,7 +160,7 @@ class SportsGameOddsClient(
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
-        failures++
+        failures++; lastFailMs = clock()
         throw e
     }
 
@@ -214,6 +215,9 @@ class SportsGameOddsClient(
     companion object {
         /** SGO counts as down when it has failed twice running and answered nothing for this long. */
         const val DOWN_AFTER_MS = 120_000L
+
+        /** A source that is down is asked again once this long has passed since its last failure (the next scan): a feed that came back reconnects by itself, and a failure here starts the rest over. */
+        const val RETRY_AFTER_MS = 60_000L
 
         /** Pages read per league at most (each page is one request of the 300 a minute). */
         const val MAX_PAGES = 12

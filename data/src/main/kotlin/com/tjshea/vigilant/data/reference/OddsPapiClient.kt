@@ -32,6 +32,7 @@ class OddsPapiClient(
     private var lastOtherAt = 0L
 
     @Volatile private var failures = 0
+    @Volatile private var lastFailMs = 0L
     @Volatile private var lastOkMs = 0L
 
     /** Requests made (Diagnostics). */
@@ -52,7 +53,7 @@ class OddsPapiClient(
      * Whether OddsPapi has stopped answering: two failures in a row and nothing good for [DOWN_AFTER_MS]. While it is down the feeds Vigilant stood down for it are asked again, so an outage costs
      * no scan; one good answer ends it.
      */
-    fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS
+    fun down(now: Long = clock()): Boolean = failures >= 2 && now - lastOkMs > DOWN_AFTER_MS && now - lastFailMs < RETRY_AFTER_MS
 
     /** The answer body of `GET [path]` with [params]; throws [ReferenceException] when the service refuses, errs or is unreadable. */
     suspend fun get(path: String, params: List<Pair<String, String>> = emptyList()): String = try {
@@ -61,7 +62,7 @@ class OddsPapiClient(
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
-        failures++
+        failures++; lastFailMs = clock()
         throw e
     }
 
@@ -131,6 +132,9 @@ class OddsPapiClient(
     companion object {
         /** OddsPapi counts as down when it has failed twice running and answered nothing for this long. */
         const val DOWN_AFTER_MS = 120_000L
+
+        /** A source that is down is asked again once this long has passed since its last failure (the next scan): a feed that came back reconnects by itself, and a failure here starts the rest over. */
+        const val RETRY_AFTER_MS = 60_000L
         const val PLAYERS_PER_CALL = 100
     }
 }
