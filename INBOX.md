@@ -6922,3 +6922,8 @@ If I have the rank api setting on, does it use every api on every scan
 ```
 I want to use the sniper feature alone or in combination with auto bid and or auto bet. I think right now the only way to use the sniper is with other live betting features turned on. Correct me if I'm wrong, the sniper actively looks for stale live odds that are obviously wrong? 
 ```
+
+## 2026-10-13T02:05:51Z
+```
+Research if it is plausible and profitable to figure out what sharps are betting and replicate their bets automatically
+```
