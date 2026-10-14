@@ -270,3 +270,4 @@ day that changes.
 | v0.99.9 | code 268 | 2026-10-14T18:12Z | v0.99.9: the +EV list re-prices its bets from Novig's live prices every 15 s even while a scan runs
 | v0.99.10 | code 269 | 2026-10-14T18:22Z | v0.99.10: wallet-filling bids rest behind the best bid, week-pass skip reasons in Diagnostics
 | v0.99.11 | code 270 | 2026-10-14T18:31Z | v0.99.11: the last wallet-filling pass bids every start time and kind, popular first, riskier kinds at a higher edge; bids read ten days ahead
+| v0.99.12 | code 271 | 2026-10-14T19:12Z | v0.99.12: longer bid rests, per-game bid limit and spread over games and kinds
