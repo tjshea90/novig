@@ -287,6 +287,10 @@ class Scanner(
                     books[id]?.let { merged[id] = it; if (id !in pump.requested) pump.fromCache++ }
                 }
             }
+            // A quick scan ([FarLane]) plans only the next 48 hours: the books it did not plan are kept (up to [BOOK_KEEP_MS]) for the bids on the games past it, which are priced from the fair and need the book only for
+            // the offer and the best bid (Tj, 2026-10-14: "The scan is almost done but few bids": a quick scan dropped every far game's book, and the next full scan reads them last).
+            val keepAfter = clock() - BOOK_KEEP_MS
+            for ((id, b) in books) if (id !in merged && b.fetchedAtMs >= keepAfter) merged[id] = b
             books = merged
         }
         // Refused in this scan, or earlier (a scan starting while the key is set aside never tries it, and was only slow with no word why).
@@ -1318,6 +1322,9 @@ class Scanner(
 
     companion object {
         /** A plan this big is priced for a partial result at most every [PUBLISH_MIN_MS]. */
+        /** How long a Novig book read by an earlier scan is kept for a market the current scan did not plan (a quick scan's far games). */
+        const val BOOK_KEEP_MS = 90 * 60_000L
+
         const val BIG_PLAN_MARKETS = 400
 
         /** What a scan read without the key costs (NovigPublicClient: the public routes' 4-6 a second against the key's 14, and no live feed). */

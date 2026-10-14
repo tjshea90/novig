@@ -375,6 +375,12 @@ object MakerLines {
     const val MAX_BOOK_AGE_MS = 20 * 60_000L
 
     /**
+     * Volume mode ([BidVolume]), a game 6 hours or more out: the Novig book may be this old. The bid is priced from the fair; the book only says whether the bid would cross Novig's offer (a post-only bid that
+     * would is refused whole, nothing is lost) and what is already bid. Far games' books are read late in a full scan and not at all in a quick one (Tj, 2026-10-14: 93 bids up of thousands possible).
+     */
+    const val VOLUME_FAR_BOOK_AGE_MS = 90 * 60_000L
+
+    /**
      * [result]'s priced sides in [settings]' leagues at [now], pregame, as [MakerLine]s: on a scan still running, the leagues whose fair-odds sources
      * have all answered (as the feed holds them back), each with the newest Novig book read in the last [MAX_BOOK_AGE_MS]. Each book's own fair
      * ([bookFairs], a devig per book) is worked out only for the lines that pass [MakerQuote.precheck] (a busy slate prices 13,000 sides, and a pass
@@ -393,7 +399,7 @@ object MakerLines {
         val rules = MakerRules.of(settings)
         return result.opportunities.filter { o ->
             o.league.novigName in settings.leagues && !o.isLive && o.fairProbability != null &&
-                o.bookFetchedAtMs != null && now - o.bookFetchedAtMs <= MAX_BOOK_AGE_MS &&
+                o.bookFetchedAtMs != null && now - o.bookFetchedAtMs <= (if (rules.volume && minOf(o.event.startsTs, o.market.startsTs) - now >= 6 * 3_600_000L) VOLUME_FAR_BOOK_AGE_MS else MAX_BOOK_AGE_MS) &&
                 (result.waitingFor.isEmpty() || settings.vigGuards.bidWhileScanning || com.tjshea.vigilant.data.scanner.ScanResult.waitKey(o.league.novigName, o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP) !in result.waitingFor)
         }.map { o ->
             val line = MakerLine(

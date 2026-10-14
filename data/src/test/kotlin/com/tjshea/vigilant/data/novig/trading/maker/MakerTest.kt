@@ -1393,6 +1393,13 @@ class MakerTest {
         val lines = MakerLines.from(result, settings, now)
         assertEquals(listOf("fresh-over", "lastscan-over"), lines.map { it.outcomeId })
         assertEquals(now - 9 * 60_000, lines[1].bookAtMs)
+        // Volume mode (Tj, 2026-10-14): a game 6 h or more out is bid on with a book up to 90 min old (the bid comes from the fair), a nearer one still needs a book from the last 20 min.
+        val farEvent = event.copy(startsTs = now + 30 * 3_600_000L)
+        fun far(id: String, bookAt: Long) = opp(id, bookAt).copy(event = farEvent, market = market(id, starts = now + 30 * 3_600_000L))
+        val vol = ScanSettings(leagues = setOf("NFL"), vigGuards = ScanGuards(bidVolume = true))
+        val volResult = result.copy(opportunities = listOf(far("far45", now - 45 * 60_000), far("far100", now - 100 * 60_000), opp("near45", now - 45 * 60_000)), waitingFor = emptySet())
+        assertEquals(listOf("far45-over"), MakerLines.from(volResult, vol, now).map { it.outcomeId })
+        assertTrue("without Volume mode a 45-minute-old book is too old for any game", MakerLines.from(volResult, ScanSettings(leagues = setOf("NFL")), now).isEmpty())
         // Bids while the scan runs (Tj, 2026-10-14, the default): the waiting league's line is judged with the fair in so far; the old and never-read books are still left out.
         val progressive = MakerLines.from(result, ScanSettings(leagues = setOf("NFL", "MLB")), now)
         assertEquals(listOf("fresh-over", "lastscan-over", "waiting-over"), progressive.map { it.outcomeId })
