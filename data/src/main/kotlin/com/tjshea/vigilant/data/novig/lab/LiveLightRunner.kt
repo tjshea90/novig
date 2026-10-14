@@ -96,7 +96,7 @@ class LiveLightRunner(
             _status.value = _status.value.let { it.copy(pushes = it.pushes + 1, lastPushMs = clock()) }
             signal.trySend(Unit)
         }
-        view = newView(listener)
+        view = newView(listener)?.also { it.open() }
         jobs = listOf(
             scope.launch { guarded("catalog") { catalogLoop() } },
             scope.launch { guarded("score") { stateLoop() } },
