@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.cloud
 
+import com.tjshea.vigilant.data.scanner.ApiGates
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScanStats
@@ -28,7 +29,7 @@ class CloudScannerTest {
     @Test
     fun `before any list arrives a cloud scan says why, with no result`() = runBlocking {
         val latest = CloudLatest().also { it.why = "no GitHub token saved" }
-        val r = CloudScanner(latest).scan(ScanSettings(cloudScan = true), emptyList(), emptySet(), {}, {})
+        val r = CloudScanner(latest).scan(ScanSettings(gates = ApiGates(cloudScan = true)), emptyList(), emptySet(), {}, {})
         assertNull(r.result)
         assertTrue(r.errors.single().contains("no GitHub token saved"))
     }
@@ -37,7 +38,7 @@ class CloudScannerTest {
     fun `a list is the scan's result, and an old one is said to be old`() = runBlocking {
         val now = 1_000_000_000L
         val latest = CloudLatest().also { it.put(feed(now - 10 * 60_000L), now) }
-        val r = CloudScanner(latest, clock = { now }).scan(ScanSettings(cloudScan = true), emptyList(), emptySet(), {}, {})
+        val r = CloudScanner(latest, clock = { now }).scan(ScanSettings(gates = ApiGates(cloudScan = true)), emptyList(), emptySet(), {}, {})
         assertNotNull(r.result)
         assertEquals(now - 10 * 60_000L, r.result!!.computedAtMs)
         assertTrue(r.errors.single().contains("10 min old"))
@@ -48,8 +49,8 @@ class CloudScannerTest {
         val local = Local()
         val latest = CloudLatest().also { it.put(feed(5L), 5L) }
         val s = SwitchingScanner(local, CloudScanner(latest))
-        val on = ScanSettings(cloudScan = true)
-        val off = ScanSettings(cloudScan = false)
+        val on = ScanSettings(gates = ApiGates(cloudScan = true))
+        val off = ScanSettings(gates = ApiGates(cloudScan = false))
         assertNotNull(s.scan(on, emptyList(), emptySet(), {}, {}).result)
         assertEquals(0, local.scans)
         s.scan(off, emptyList(), emptySet(), {}, {})

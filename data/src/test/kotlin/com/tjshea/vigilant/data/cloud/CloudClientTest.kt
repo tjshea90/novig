@@ -75,7 +75,7 @@ class CloudClientTest {
 
     @Test
     fun `the settings the phone writes are read back by the engine`() {
-        val c = CloudConfig(rev = 5, on = true, settings = com.tjshea.vigilant.data.scanner.ScanSettings(leagues = setOf("NHL", "MLB"), sgoPro = true, cloudScan = true), device = "Moto")
+        val c = CloudConfig(rev = 5, on = true, settings = com.tjshea.vigilant.data.scanner.ScanSettings(leagues = setOf("NHL", "MLB"), sgoPro = true, gates = com.tjshea.vigilant.data.scanner.ApiGates(cloudScan = true)), device = "Moto")
         val back = CloudConfig.parse(CloudConfig.text(c))!!
         assertEquals(c, back)
         // a newer phone's extra field, and a settings file with only some fields, still read

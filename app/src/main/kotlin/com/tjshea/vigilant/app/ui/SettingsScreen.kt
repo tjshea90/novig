@@ -1505,7 +1505,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     SwitchRow(
         "Scan on GitHub", "On: the phone makes no scan of its own and no API call; the engine on GitHub scans under these settings and this phone shows its list. Off: the app is what it was.",
         s.cloudScan, tag = "cloudScanSwitch", enabled = u.hasToken,
-    ) { v -> onUpdate { it.copy(cloudScan = v) } }
+    ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudScan = v)) } }
     if (s.cloudScan) {
         Text(
             u.line + (u.listAgeSec?.let { " The list is ${if (it < 90) "$it s" else "${it / 60} min"} old (${u.rows} bets)." } ?: ""),
@@ -1516,7 +1516,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     SwitchRow(
         "Save bets, bids and history to GitHub", "Automatically, every 15 minutes: every bet and bid (day files) and the scan study, to the repository's phone-data branch, kept for good, for Claude to analyse. Needs the token.",
         s.cloudSave, tag = "cloudSaveSwitch", enabled = u.hasToken,
-    ) { v -> onUpdate { it.copy(cloudSave = v) } }
+    ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudSave = v)) } }
     if (u.hasToken && s.cloudSave) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
             androidx.compose.material3.OutlinedButton(onClick = reportActions.onSaveCloudNow, modifier = Modifier.testTag("cloudSaveNow")) { Text("Save now") }
