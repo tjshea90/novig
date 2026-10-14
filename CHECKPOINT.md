@@ -1,22 +1,23 @@
-# CHECKPOINT 3195 — read me first, then TASKS.md
+# CHECKPOINT 3196 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T00:39:16Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-b57fa2a2-ftkkrm` · **builds on:** `00dc8c786` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T00:49:44Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-b57fa2a2-ftkkrm` · **builds on:** `76c8c56ca` (this checkpoint is the commit after it)
 
 ## Just done
-TWF tasks written
+TWF2: public lookups slow on 429 + remembered, lab yields to scans, stream engine ignores bolt when socket off, net endpoints keep their last word
 
 ## Do this next
-read the v0.97.3 diagnostics
+wallet deployment (bids), diagnostics upgrades, then ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M data/src/main/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClient.kt
 
 ## Last ten checkpoints
 ```
+  2f4a16aaa ckpt 3195: TWF tasks written
   0b6098311 ckpt 3194: v0.97.3 released and recorded
   e4819e974 ckpt 3193: v0.97.2 recorded; v0.97.3 (BoltOdds classify memo) shipped, release trigger
   4950d974f ckpt 3192: pre-release: v0.97.3: BoltOdds passes classify each market name once instea
@@ -26,8 +27,7 @@ read the v0.97.3 diagnostics
   1d4bf6991 ckpt 3188: TDG: diagnostics analysed, Kalshi ok-ack fix
   6ea5f446f ckpt 3187: v0.97.0 recorded; v0.97.1 (PropLine first) shipped, release triggered
   4c61d009f ckpt 3186: pre-release: v0.97.1: PropLine leads the API order (lines and props) while 
-  fa5604717 ckpt 3185: pre-ship: v0.97.1: PropLine leads the API order (lines and props) while its
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
