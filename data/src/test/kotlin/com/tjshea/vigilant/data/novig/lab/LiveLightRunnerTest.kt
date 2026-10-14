@@ -218,4 +218,22 @@ class LiveLightRunnerTest {
         assertEquals("alt-o", o.candidate.outcomeId)
         assertEquals(LiveLightCurve.RULE, o.candidate.rule)
     }
+
+    @Test
+    fun `every watched game says in words what it is, the score, and its closest call and why it was not bet`() = runBlocking {
+        val view = View(mapOf("m1" to book(bostonBid = 490, miamiBid = 490)))
+        val r = runner(view, ArrayList(), scoreboard(82, 80))   // a close game: nothing decided
+        r.look()
+        val line = r.status.value.gameLines.getValue("ev")
+        assertTrue(line, line.contains("Miami Heat 80 @ Boston Celtics 82"))
+        assertTrue(line, line.contains("closest:") && line.contains("sure (needs 93.0%)"))
+        // A game the scoreboard does not have is named, not silently skipped.
+        val none = runner(view, ArrayList(), """{"events":[]}""")
+        none.readCatalog(); none.readScores()
+        assertTrue(none.status.value.gameLines.getValue("ev").contains("no score"))
+        // A decided game at a good price: the line says the model's rules are met and the taker's limits decide.
+        val good = runner(View(mapOf("m1" to book(bostonBid = 200, miamiBid = 200))), ArrayList(), scoreboard(105, 80))
+        good.look()
+        assertTrue(good.status.value.gameLines.getValue("ev").contains("meets the model's rules"))
+    }
 }
