@@ -74,7 +74,7 @@ data class LiveLightCurveRules(
     val sdMult: Double = 1.25,
     val minFair: Double = 0.60,
     /** The score model's own chance for the side under which a curve bet is refused (see [LiveLightCurve.scan]). */
-    val vetoBelow: Double = 0.30,
+    val vetoBelow: Double = 0.02,
     /** Higher than the score model's: a curve says a price is out of line with its neighbours, not that the game is decided. */
     val minEdge: Double = 0.08,
     val maxAsk: Double = 0.985,
@@ -90,7 +90,7 @@ data class LiveLightCurveRules(
 
 /**
  * Alternate spreads and totals priced off their own ladder (Tj, 2026-10-14): each ladder's liquid middles are fitted ([LadderFit]) with the line under test LEFT OUT, and a side Novig sells under what the curve
- * (cautiously) says is a bet. The score model, when it can judge the same side, vetoes a bet it rates well under a coin flip (a ladder that disagrees that much with the score is the stale one). Pure.
+ * (cautiously) says is a bet. The score model, when it can judge the same side, vetoes a bet it rates almost impossible (a ladder that disagrees that much with the score is the stale one). Pure.
  */
 object LiveLightCurve {
     const val RULE = "curve"
@@ -121,7 +121,7 @@ object LiveLightCurve {
                     if (leg.contracts < rules.minContracts || leg.price > rules.maxAsk) continue
                     val fair = fit.pYes(t, yes, rules.shiftSd, rules.sdMult)
                     val outcome = if (yes) p.line.yesOutcomeId else p.line.noOutcomeId
-                    // The score model is a veto, not a cap: its bounds are wide (it only calls a game decided), so a side it rates well under a coin flip while the ladder says it is likely means the ladder is stale or mismatched.
+                    // The score model is a veto, not a cap: its bounds are deliberately pessimistic, so only a side it rates almost impossible while the ladder says it is likely means the ladder is stale or mismatched.
                     scoreFair[outcome]?.let { if (it < rules.vetoBelow) continue }
                     if (fair < rules.minFair) continue
                     val fee = Fees.takerFee(leg.price, p.line.fee, eventLive = true)

@@ -74,7 +74,7 @@ class LiveLightCurveTest {
     @Test
     fun `the score model vetoes the curve, and a strike beyond the liquid lines is not extrapolated`() {
         val ladder = strikes.map { honest(it) } + point("alt", 210.5, overAsk = 0.60, underAsk = 0.43)
-        assertTrue(LiveLightCurve.scan(ladder, "NBA", state, scoreFair = mapOf("alt-o" to 0.10)).isEmpty())
+        assertTrue(LiveLightCurve.scan(ladder, "NBA", state, scoreFair = mapOf("alt-o" to 0.01)).isEmpty())
         assertEquals(1, LiveLightCurve.scan(ladder, "NBA", state, scoreFair = mapOf("alt-o" to 0.55)).size)
         val far = strikes.map { honest(it) } + point("far", 150.5, overAsk = 0.60, underAsk = 0.43)
         assertTrue(LiveLightCurve.scan(far, "NBA", state).isEmpty())
