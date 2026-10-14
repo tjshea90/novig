@@ -5132,3 +5132,8 @@ Tj: "Post as many bids as possible. Fill up the wallet. Hundreds of bids. All sp
 - [x] TWF1 Read the tier code (`MakerDesk.deployFor`, `BidTier`, `MakerQuote.tierReason`, `bidMany`) and plan: popular first, then wider passes (any start time, sharp not required, props and every market), each wider pass asking a higher edge.
 - [x] TWF2 (`MakerDesk.deployFor` last pass, `DEPLOY_ANY_*`, schema 20 ten-day reach, `MakerTest`) built, shipped v0.99.11.
 - [x] TWF3 v0.99.11 released and recorded. Next: read Tj's next Diagnostics WALLET DEPLOYMENT (any-pass skip reasons).
+
+## TWD: bids are taken down within a minute, pile onto the same games; diversify (Tj, 2026-10-14 ~14:45 local, v0.99.11 file 39d58cc1...)
+Tj: "It is better but not correct. It is putting up hundreds of bids but still not filling the wallet. Also every minute or less it takes hundreds of bids back down. They don't rest anywhere near long enough. And it is posting a lot of bids on the same games, even though there are many games available. I only want so many bids/money on each game. Make it diversify bids among many games and bid types"
+- [ ] TWD1 Read the file: why bids come down every minute (fair-age, requote, trim, `up to 60 min`), how much sits per game, what still limits the fill.
+- [ ] TWD2 Fix: bids rest long; per-game cap on bids and dollars for bids (diversify games and bid types), the rest of the wallet spread over other games; tests; ship.
