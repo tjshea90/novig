@@ -7102,3 +7102,14 @@ Do whichever ones, if any, speed up the app and make it more efficient but witho
 ```
 Tell me what you need from me
 ```
+
+## 2026-10-14T00:38:51Z
+```
+@"/root/.claude/uploads/ab9f4f2b-e7a0-56c8-95be-37f5164ca186/9f1170da-vigilant-diagnostics-v0.97.3-2026-10-13-2038.txt" Notice my wallet and the difference in the balance with the small amount of auto bids up. I want the auto bids to fill up my wallet at all times. As long as the bids are placed at positive EV, it is fine. If there are not great bids to put up, make it put up riskier bids but with safeguards such as higher EV. 
+
+Then  make sure the diagnostics feature is very smart. I want the diagnostic feature to show Claude in depth, comprehensive data about the app. It should be able to consistently improve the app with a lot of data logged to make the app more accurate, more efficient, better code, etc.
+
+Review the attached diagnostics, look for ways to increase accuracy and speed, look at the boltodds refresh time , heap, kalshi.
+
+Figure out the novig public route refusals. Figure out why propline returned no props.
+```
