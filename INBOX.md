@@ -7118,3 +7118,28 @@ Figure out the novig public route refusals. Figure out why propline returned no 
 ```
 I'm switching to a new code session because the context window ran out. Checkpoint and save what you need for a new session
 ```
+
+## 2026-10-14T01:20:36Z
+```
+v0.98.0 is shipped and the build is running. I'll record it and send the link in about 8 minutes. The full test run passed, but none of this has run on your phone yet.
+All your sockets were off in this file. The report showed BoltOdds, Kalshi and Novig's live feed switched off, so every number in it is from request mode. The Novig feed held none of the 649 markets the scan asked for. That is the main reason the last scan took 116 s: 769 Novig prices at 6.7 a second, when your key allows 16. Please turn them back on in Settings › APIs › Sockets. The report now has a SOCKETS section and a warning when a socket is off while its API is on.
+The wallet.
+What limited it: the bids were tiny. About 33 were up at once at $0.14 each, with only 5 games on Novig that night.
+What I built: a "Keep the wallet working" switch on the Bids tab, on by default, with a target of 90% of the wallet. While the bids up are worth less than the target:
+New stakes scale up to 4× (never past ¼ Kelly for that bid's own edge, or the per-bid maximum).
+If the usual bids still can't reach the target, riskier ones go up: games up to 36 hours out, a sharp book required, a margin 4 points wider and half the stake. They go up last and come down first.
+Not guaranteed: if nothing passes the rules, the wallet stays under target. The new WALLET DEPLOYMENT section in Diagnostics says which limit is binding.
+Novig public-route refusals. Single-market lookups (the paper lab's grading, CNO live prices, bet settling) hit Novig's public route, but a 429 never slowed that route, so the next lookups were refused too.
+A 429 now slows the pace and the lookup retries once.
+A market looked up is remembered for 30 seconds.
+The paper lab was also making 67% of all Novig book reads (19,949 of 29,593) and now waits while a scan runs or a bet is held.
+Connection stats now list each endpoint separately, so the cause shows next time.
+BoltOdds refresh time. With the socket off, every REST snapshot counted as thousands of changes and triggered another pass, so passes took 17 s typical and 133 s worst. The streaming engine now rests while BoltOdds' socket is off. The earlier speedup (v0.97.3) is for the socket-on case, and I haven't measured it on your phone yet.
+Kalshi. It worked in the earlier file: 45,000 pushes, no gaps, no drops. It was off in this one.
+PropLine props. It wasn't an outage. In the earlier file the props feed was on standby behind better feeds. In this file it returned 769 prop quotes. PropLine's line quotes are 5–19 minutes old, so ParlayAPI and SportsGameOdds rank ahead of it.
+Heap. It's at 163 of 512 MB, and maker.json is down from 22 MB to 7 MB.
+New in Diagnostics: the SOCKETS and WALLET DEPLOYMENT sections, per-phase timing percentiles for streaming passes, and a count of how often the lab waited. The full analysis is in research/diagnostics_v0.97.3_2026-10-14.md.
+After installing, turn the sockets on, run for a while, then send a fresh file.
+
+After you said this, it says prompt is too long
+```
