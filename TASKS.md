@@ -5131,4 +5131,4 @@ Tj: "I finished a full scan and it still is not posting many bids"
 Tj: "Post as many bids as possible. Fill up the wallet. Hundreds of bids. All sports are allowed. All times are allowed. All props are allowed. Fill it with popular sports and market types first. As long as risky bids have a higher ev ask, it is fine"
 - [x] TWF1 Read the tier code (`MakerDesk.deployFor`, `BidTier`, `MakerQuote.tierReason`, `bidMany`) and plan: popular first, then wider passes (any start time, sharp not required, props and every market), each wider pass asking a higher edge.
 - [x] TWF2 (`MakerDesk.deployFor` last pass, `DEPLOY_ANY_*`, schema 20 ten-day reach, `MakerTest`) built, shipped v0.99.11.
-- [ ] TWF3 release.yml triggered for v0.99.11: confirm get_release_by_tag v0.99.11, record-release.sh v0.99.11 270, send Tj the link; then read the next Diagnostics WALLET DEPLOYMENT (any-pass skip reasons).
+- [x] TWF3 v0.99.11 released and recorded. Next: read Tj's next Diagnostics WALLET DEPLOYMENT (any-pass skip reasons).
