@@ -7297,3 +7297,8 @@ I finished a full scan and it still is not posting many bids
 ```
 @"/root/.claude/uploads/a5e8042f-c90d-5023-a7e1-ea7d8da2eff3/52d5ceae-vigilant-diagnostics-v0.99.8-2026-10-14-1406.txt" 
 ```
+
+## 2026-10-14T18:13:09Z
+```
+Post as many bids as possible. Fill up the wallet. Hundreds of bids. All sports are allowed. All times are allowed. All props are allowed. Fill it with popular sports and market types first. As long as risky bids have a higher ev ask, it is fine 
+```
