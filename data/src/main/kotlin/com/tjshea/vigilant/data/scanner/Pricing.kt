@@ -148,6 +148,17 @@ data class ScanResult(
     /** True while the scan that produced this is still reading prices. */
     val partial: Boolean get() = freshSinceMs != null
 
+    /**
+     * Cheap equality: the same result, or one computed at the same moment with the same shape. The generated one walked every opportunity and every reference event on the MAIN thread each time Compose compared the app's
+     * state (Tj's 2026-10-14 file: "not responding ... Waited 10000ms for MotionEvent", main thread in `UiState.equals` > `ScanResult.equals` > `Opportunity.equals` > `RefEvent.equals`): a re-scan that priced the same
+     * thousands of lines compared them all, every time. A result is a new value whenever it is recomputed ([computedAtMs]), so this never hides a change.
+     */
+    override fun equals(other: Any?): Boolean =
+        this === other || (other is ScanResult && computedAtMs == other.computedAtMs && freshSinceMs == other.freshSinceMs && games.size == other.games.size &&
+            opportunities.size == other.opportunities.size && waitingFor == other.waitingFor)
+
+    override fun hashCode(): Int = (computedAtMs.hashCode() * 31 + opportunities.size) * 31 + games.size
+
     companion object {
         /** The least a bet may have fillable at +EV to stay on the list. */
         const val MIN_LIQUIDITY_DOLLARS = 0.10
