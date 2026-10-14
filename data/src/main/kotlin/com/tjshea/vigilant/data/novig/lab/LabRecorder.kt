@@ -31,6 +31,8 @@ data class LabStatus(
     val withState: Int = 0,
     val problem: String? = null,
     val lastCycleMs: Long? = null,
+    /** Passes the lab skipped because a scan or a bet was using Novig. */
+    val yielded: Long = 0L,
 )
 
 /**

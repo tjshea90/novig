@@ -1311,6 +1311,8 @@ class AppContainer(val app: Application) {
             // The tail taker's door: the lab hands over what its conservative rules find and places nothing itself. With only the tail switch on, the lab does only the tail's work.
             onTail = { tailTaker.offer(it) },
             tailOnly = { settingsStore.flow.value?.let { s -> s.tailLive.on && !(s.altLab || s.researchMode) } == true },
+            // The research lab waits while a scan runs or a bet is held: its Novig reads were two thirds of every read the app made (Tj's 2026-10-13 file) and the scan got 6.7 a second of the key's 16.
+            busy = { runner.running || com.tjshea.vigilant.data.novig.BetPriority.isActive },
         )
     }
 
