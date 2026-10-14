@@ -204,7 +204,7 @@ class LiveBidUiTest {
 
     @Test
     fun `a tail halt shows its reason and Resume lifts it`() {
-        val ui = show(state(ScanSettings(tailLive = com.tjshea.vigilant.data.scanner.TailLiveSettings(on = true, halted = "an order's answer was lost"))))
+        val ui = showLive(state(ScanSettings(tailLive = com.tjshea.vigilant.data.scanner.TailLiveSettings(on = true, halted = "an order's answer was lost"))))
         compose.onNodeWithTag("tailLiveHalted").performScrollTo().assertIsDisplayed()
         tap("tailLiveResume")
         assertNull(ui().settings.tailLive.halted)
