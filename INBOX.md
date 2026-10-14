@@ -7322,3 +7322,8 @@ The scan is huge and takes a long time, can't it put up bids progressively as th
 ```
 It seems to be working now. Now fine tune it. The key is volume. I want hundreds or thousands of bids up at any time, on markets and types of bids most likely to be filled put up first. It can go down to 1.5% positive EV on the safest bid types and 2.5% positive EV on riskier ones. The goal right now is pure volume and bid fills. I'm going to experiment with lower positive EV margins but large numbers of fills. Optimize the bid types for smaller positive EV margins but maximum chance of many bids being filled rapidly
 ```
+
+## 2026-10-14T20:28:46Z
+```
+The scan is almost done but few bids
+```
