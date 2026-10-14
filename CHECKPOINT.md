@@ -1,22 +1,23 @@
-# CHECKPOINT 3234 — read me first, then TASKS.md
+# CHECKPOINT 3235 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T17:25:38Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `48ad2ca9c` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T17:40:40Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `2b687acff` (this checkpoint is the commit after it)
 
 ## Just done
-v0.99.7 recorded; week-ahead scan reach for bids done + MakerTest fixed (TWR1)
+pre-ship: v0.99.8: the auto bids read a week of games, so the weekend's NFL and college slate is priced and the wallet can fill (the Starts within chip no longer shortens the scan)
 
 ## Do this next
-bash ship.sh 'v0.99.8: bids read a week of games', trigger release.yml, confirm, record-release.sh v0.99.8, send Tj the link
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  dddadc69a ckpt 3234: v0.99.7 recorded; week-ahead scan reach for bids done + MakerTest fixed (TW
   fbc986247 ckpt 3233: pre-release: v0.99.7: scan errors about Novig (the key stand-down, a failed
   91e37bbe4 ckpt 3232: pre-ship: v0.99.7: scan errors about Novig (the key stand-down, a failed re
   d8e01c380 ckpt 3231: pre-ship: v0.99.7: scan errors about Novig (the key stand-down, a failed re
