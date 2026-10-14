@@ -1391,13 +1391,13 @@ class MakerTest {
         assertEquals(60, rec.settings.autoScanSeconds)
         assertFalse(rec.settings.paused)
         assertTrue(rec.settings.autoScansVigilant)
-        assertEquals(4, rec.turnedOn.size)
+        assertEquals(5, rec.turnedOn.size)
         assertFalse(rec.startsAutoBet)
         val auto = MakerSetup.set(cnoOnly, BidMode.AUTOMATIC)
         assertTrue(auto.settings.maker)
         assertTrue(auto.settings.makerNow)
         // Already set up (Vigilant only, background every 30 s): nothing else changes, nothing to say.
-        val ready = ScanSettings(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanSeconds = 30)
+        val ready = ScanSettings(scanner = com.tjshea.vigilant.data.scanner.ScannerMode.VIGILANT, autoScan = com.tjshea.vigilant.data.scanner.AutoScanMode.BOTH, autoScanSeconds = 30, daysAhead = ScanSettings.BID_REACH_DAYS, bookPropHours = ScanSettings.BID_REACH_DAYS * 24)
         assertEquals(ready.copy(maker = true), MakerSetup.set(ready, BidMode.AUTOMATIC).settings)
         assertTrue(MakerSetup.set(ready, BidMode.AUTOMATIC).turnedOn.isEmpty())
         // Off: bids off, the scanner and the background scan left as they are.
