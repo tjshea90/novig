@@ -65,6 +65,7 @@ class CloudLink(private val c: AppContainer) {
     private var lastPushedKey: String? = null
     private var lastRev = 0L
     private var lastStartAskedAt = 0L
+    private var lastRestartAt = 0L
     private var feedFetchedFor = 0L
 
     private fun token(): String? {
@@ -264,16 +265,21 @@ class CloudLink(private val c: AppContainer) {
             sent += name
             delay(300L)
         }
+        val previous = runCatching { keysSent.readText() }.getOrNull()
         runCatching { keysSent.writeText(fp) }
         val msg = "Sent ${sent.size} key set(s) to GitHub secrets: ${sent.joinToString(", ")}. Pinnodds, BoltOdds and Kalshi keys stay on the phone."
         c.eventLog.info("CLOUD", msg)
-        // A running engine holds the old secrets: restart it so the new keys are used.
+        // A running engine holds the secrets it read when its job began: restart it only when the keys CHANGED (a second tap with the same keys must not throw away a scan that is minutes in), and at most
+        // once in 10 minutes.
         val st = latest.status
-        val running = st != null && !st.idle && System.currentTimeMillis() - st.heartbeatMs < ENGINE_DEAD_S * 1000L
-        val tail = if (running && c.settingsStore.flow.value?.cloudScan == true) {
+        val now = System.currentTimeMillis()
+        val running = st != null && !st.idle && now - st.heartbeatMs < ENGINE_DEAD_S * 1000L
+        val changed = previous != fp
+        val tail = if (running && changed && c.settingsStore.flow.value?.cloudScan == true && now - lastRestartAt > 10 * 60_000L) {
+            lastRestartAt = now
             client.cancelRun(st!!.runId); delay(4_000L); lastStartAskedAt = System.currentTimeMillis(); client.startEngine()
             " The engine was restarted to use them."
-        } else ""
+        } else if (running && changed) " The running engine reads them the next time it starts (within 6 hours, or tap Start the engine now after switching it off and on)." else ""
         _ui.update { it.copy(keysNote = msg + tail) }
         return msg + tail
     }
