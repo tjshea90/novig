@@ -5165,3 +5165,13 @@ Tj: "Most bids went up when the scan finished, but still only around half the wa
 Cause: Volume mode (v0.99.14) turned the stake scale-up off, so each bid stays at ~$0.2-0.5 (1/8 Kelly of a 1.5% edge).
 - [x] TVM5a (`MakerDesk.cycle` scales new stakes toward the wallet target in Volume mode, the deeper rung stays off, `MakerTest`) v0.99.16.
 - [x] TVM5b v0.99.16 released and recorded. Next: read Tj's next Diagnostics (resting dollars vs target, which limit binds: per-game 5, odds +120, Kelly ceiling, per-bid max).
+
+## TCL: Vigilant's scans on GitHub runners; the phone shows the list and sets the settings (Tj, 2026-10-14)
+Tj: "Put vigilant scans on GitHub runners. Outsource as much Internet bandwidth and processing power as possible to GitHub without sacrificing quality or freshness of odds. Can this run on GitHub and simply stream me the bets list? I just control the settings from the phone?"
+Design and limits: research/cloud_scan_2026-10-14.md. Needs from Tj (Claude cannot): repo secrets for each API key the cloud should use, and a fine-grained token (this repo, contents read+write) pasted into the app.
+- [ ] TCL0 Tj's word on: GitHub terms grey area (continuous Actions scan), public output of the +EV list, and which API keys go into secrets.
+- [ ] TCL1 Move the source wiring and feed filter a JVM needs into `:data` (same sources and rows as the app for the same settings; test).
+- [ ] TCL2 `:cloud` module + `.github/workflows/cloud-scan.yml`: loop, reads cloud/settings.json, publishes feed.json.gz to the `cloud-feed` branch, 15-min cron backstop + self-handoff before 6 h.
+- [ ] TCL3 Phone: Settings > Cloud scan (switch, token), feed reader with ETag polling, Feed shows cloud rows with age, settings writer; local scan sleeps while it is on.
+- [ ] TCL4 Bet sheet re-reads Novig live and fair at tap; stale/missing cloud feed falls back to the phone's own scan; Diagnostics CLOUD section.
+- [ ] TCL5 `CloudReferenceSource` so auto-bet and bids run on the cloud's merged fair with Novig live on the phone.
