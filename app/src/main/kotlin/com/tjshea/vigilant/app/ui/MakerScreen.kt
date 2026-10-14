@@ -346,6 +346,31 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                     "Up to ${com.tjshea.vigilant.data.scanner.BidSlider.MANY_BIDS} bids at once at 1/16 Kelly each, every kind of bid, the proven types first and the risky ones last under stricter rules (every book and a sharp book must agree). Same dollar limits.",
                     ui.settings.vigGuards.bidMany, "bidMany",
                 ) { on -> actions.onUpdate { com.tjshea.vigilant.data.scanner.BidSlider.withMany(it, on, if (bidLevel in 1..100) bidLevel else 55) } }
+                SwitchRow(
+                    "Keep the wallet working",
+                    "While the bids up are worth less than ${ui.settings.vigGuards.bidDeployPct}% of the wallet, every new bid stakes more (never over ${ui.settings.vigGuards.bidDeployKelly}% of full Kelly for its own edge or the most per bid), and if that is still not enough, riskier bids go up too: games up to 36 h away, a sharp book required, a margin 4 points wider (so a higher edge) and half the stake. Every bid is still positive EV; the riskier ones are the last to go up and the first to come down.",
+                    ui.settings.vigGuards.bidDeploy, "bidDeploy",
+                ) { on -> actions.onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidDeploy = on)) } }
+                if (ui.settings.vigGuards.bidDeploy) {
+                    Text("Wallet target", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
+                    androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                        listOf(50, 70, 90, 100).forEach { pct ->
+                            androidx.compose.material3.FilterChip(
+                                selected = ui.settings.vigGuards.bidDeployPct == pct, onClick = { actions.onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidDeployPct = pct)) } },
+                                label = { Text("$pct%") }, modifier = Modifier.testTag("bidDeployPct-$pct"),
+                            )
+                        }
+                    }
+                    Text("Most of full Kelly a bigger stake may reach", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
+                    androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                        listOf(13 to "⅛", 25 to "¼", 33 to "⅓", 50 to "½").forEach { (pct, label) ->
+                            androidx.compose.material3.FilterChip(
+                                selected = ui.settings.vigGuards.bidDeployKelly == pct, onClick = { actions.onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidDeployKelly = pct)) } },
+                                label = { Text(label) }, modifier = Modifier.testTag("bidDeployKelly-$pct"),
+                            )
+                        }
+                    }
+                }
                 SectionTitle("Advanced settings")
                 Text(
                     if (rulesOpen) "Hide the rules" else MakerRulesText.summary(ui.settings),
