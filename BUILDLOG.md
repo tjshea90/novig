@@ -269,3 +269,4 @@ day that changes.
 | v0.99.8 | code 267 | 2026-10-14T17:52Z | v0.99.8: the auto bids read a week of games, so the weekend's NFL and college slate is priced and the wallet can fill
 | v0.99.9 | code 268 | 2026-10-14T18:12Z | v0.99.9: the +EV list re-prices its bets from Novig's live prices every 15 s even while a scan runs
 | v0.99.10 | code 269 | 2026-10-14T18:22Z | v0.99.10: wallet-filling bids rest behind the best bid, week-pass skip reasons in Diagnostics
+| v0.99.11 | code 270 | 2026-10-14T18:31Z | v0.99.11: the last wallet-filling pass bids every start time and kind, popular first, riskier kinds at a higher edge; bids read ten days ahead
