@@ -937,6 +937,22 @@ class MakerTest {
         assertTrue("switch off: nothing extra", d3.cycle(listOf(withSharp), kelly.copy(earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
     }
 
+    @Test
+    fun `with nothing left in the usual window the wallet-filling bids reach games later in the week, at a wider margin, and not past a week`() = runBlocking {
+        val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1)
+        // 100 hours out: past the 20 h guard AND past the riskier pass's 36 h, so only the week-ahead pass can bid on it.
+        val far = line("m1-over", fair = 0.60, offer = 0.64, m = market("m1", starts = start + 100 * 3_600_000L)).copy(sharpFairs = listOf(0.60))
+        val r = desk(FakeNovig(), tracker()).cycle(listOf(far), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0)
+        val post = r.decisions.filterIsInstance<MakerDecision.Post>().single()
+        assertTrue("a wallet-filling bid", post.overflow)
+        assertTrue("a margin the usual bid's plus 4 plus 2 points: price at most ${0.60 / 1.08}", post.price <= 0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_WEEK_MARGIN) + 1e-9)
+        // Past the week: nothing, whatever the wallet.
+        val beyond = far.copy(market = market("m2", starts = start + 200 * 3_600_000L))
+        assertTrue(desk(FakeNovig(), tracker()).cycle(listOf(beyond), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
+        // Switch off: nothing extra.
+        assertTrue(desk(FakeNovig(), tracker()).cycle(listOf(far), kelly.copy(earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
+    }
+
     // ---- the desk: a cancel is only queued; fills never go unrecorded ----------------------------------------------------
 
     @Test
