@@ -5035,9 +5035,9 @@ Evidence: v0.97.0 diagnostics: a BoltOdds streaming pass took 45 s, 41 s of it "
 ## TWF: wallet always working, smarter diagnostics, v0.97.3 file review (Tj, 2026-10-14, with vigilant-diagnostics-v0.97.3-2026-10-13-2038.txt + a CNO screenshot)
 Tj: "Notice my wallet and the difference in the balance with the small amount of auto bids up. I want the auto bids to fill up my wallet at all times. As long as the bids are placed at positive EV, it is fine. If there are not great bids to put up, make it put up riskier bids but with safeguards such as higher EV. Then make sure the diagnostics feature is very smart. I want the diagnostic feature to show Claude in depth, comprehensive data about the app. It should be able to consistently improve the app with a lot of data logged to make the app more accurate, more efficient, better code, etc. Review the attached diagnostics, look for ways to increase accuracy and speed, look at the boltodds refresh time, heap, kalshi. Figure out the novig public route refusals. Figure out why propline returned no props."
 (Screenshot: wallet $73.31, 32 bids up ($4.55): only ~6% of the wallet is working.)
-- [ ] TWF1 Read the v0.97.3 file: BoltOdds refresh time, heap/GC, Kalshi socket, speed and accuracy findings -> research/diagnostics_v0.97.3_2026-10-14.md.
-- [ ] TWF2 Find the Novig PUBLIC-route refusals (429) and fix the cause.
-- [ ] TWF3 Find why PropLine returned no props and fix it.
-- [ ] TWF4 Bids fill the wallet: why only $4.55 of $73 is up, then deploy the rest at positive EV, riskier tiers only with a higher EV bar (never below the EV rules).
-- [ ] TWF5 Diagnostics: richer, structured data for continuous improvement (what each scan/pass/bid decision cost and why), within the size cap.
+- [x] TWF1 Read the v0.97.3 file: BoltOdds refresh time, heap/GC, Kalshi socket, speed and accuracy findings -> research/diagnostics_v0.97.3_2026-10-14.md.
+- [x] TWF2 Find the Novig PUBLIC-route refusals (429) and fix the cause.
+- [x] TWF3 (not a failure: standby behind better feeds; PropLine lines are 5-19 min old) Find why PropLine returned no props and fix it.
+- [x] TWF4 Bids fill the wallet: why only $4.55 of $73 is up, then deploy the rest at positive EV, riskier tiers only with a higher EV bar (never below the EV rules).
+- [x] TWF5 Diagnostics: richer, structured data for continuous improvement (what each scan/pass/bid decision cost and why), within the size cap.
 - [ ] TWF6 Tests, ship.

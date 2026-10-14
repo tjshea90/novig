@@ -58,3 +58,4 @@
 - 2026-10-13 profitable-types study (research/profitable_types_2026-10-13.md): team totals the one type with profit+CLV+n>100; player props lose (-$122/989); bids not proven by ROI; time <6h beats close, 24h+ gives it away.
 - 2026-10-13 all daily bet files received (1648 unique): refresh in research/profitable_types_2026-10-13.md; team totals bids +29.8% n=73 (NHL best), bets -9%.
 - 2026-10-13: NHL shots-on-goal matching audited (`research/nhl_sog_matching_2026-10-13.md`): matching is exact (stat+line+period+player, both sides) and now tested (`ShotsOnGoalMatchTest`); Vigilant's SOG fair runs +2.1 pts above Pinnacle's close (t +3.5, n 24), concentrated at 12 h+ and 3-4 books; options (a)-(c) wait for Tj.
+- 2026-10-14 TWF: v0.97.3 file read (research/diagnostics_v0.97.3_2026-10-14.md): sockets were off; lab = 67% of Novig reads; public 429s = lookups that did not slow the gate; bids keep the wallet working (v0.98.0).
