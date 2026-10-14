@@ -367,6 +367,12 @@ data class ScanSettings(
      * leagues it carries. Off by default.
      */
     val sgoPro: Boolean = false,
+    /**
+     * Cloud scan (Tj, 2026-10-14: "use the phone only to set the settings and retrieve the scanned results. GitHub will provide all the power"): the scan runs on GitHub's computers
+     * ([com.tjshea.vigilant.data.cloud.CloudEngine]) under these settings, and the phone's "scan" adopts the list it publishes ([com.tjshea.vigilant.data.cloud.CloudScanner]); no API is called from the phone.
+     * Off (the default): the app is what it was.
+     */
+    val cloudScan: Boolean = false,
     /** SGO Pro: also price the fair line with the books Vigilant's list lacks (Circa, SuperBook, bet365: [SgoBooks.EXTRA]). */
     val sgoExtraBooks: Boolean = true,
     /** SGO Pro: ask for every book's alternate lines with the game lines (heavier replies; dropped for a league whose query times out). */
