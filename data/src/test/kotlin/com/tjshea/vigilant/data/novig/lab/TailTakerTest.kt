@@ -16,6 +16,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -102,6 +103,18 @@ class TailTakerTest {
         val s = r.taker.status.value.skipped
         assertEquals(1, s["not the conservative rules"])
         assertEquals(1, s["edge too large to be real"])
+    }
+
+    @Test
+    fun `a curve bet is believed at a lower fair than a decided game, but only for a bigger edge, and a second live source lifts the edge cap`() = runTest {
+        val r = rig(scope = backgroundScope)
+        assertNull("a curve edge under 8% is not enough", r.taker.attempt(offer(cand(rule = "curve", fair = 0.70, ask = 0.64, edge = 0.06, outcome = "c1"))))
+        assertNull("under the curve fair floor", r.taker.attempt(offer(cand(rule = "curve", fair = 0.55, ask = 0.45, edge = 0.20, outcome = "c2"))))
+        assertNotNull(r.taker.attempt(offer(cand(rule = "curve", fair = 0.70, ask = 0.62, edge = 0.12, outcome = "c3"))))
+        // A 60% edge is a wrong game unless a second live source agreed.
+        val big = cand(fair = 0.97, ask = 0.55, edge = 0.70, outcome = "c4")
+        assertNull(r.taker.attempt(offer(big)))
+        assertNotNull(r.taker.attempt(offer(cand(fair = 0.97, ask = 0.55, edge = 0.70, outcome = "c5")).copy(confirm = 0.985)))
     }
 
     @Test
