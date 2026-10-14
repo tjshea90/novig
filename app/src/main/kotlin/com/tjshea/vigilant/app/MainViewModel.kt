@@ -225,6 +225,8 @@ data class UiState(
     /** Live bids (RESEARCH.md §123-§124): the desk's status and every bid on record, refreshed while Settings › Live bids is open. */
     val liveBidStatus: com.tjshea.vigilant.data.livebid.LiveBidDeskStatus = com.tjshea.vigilant.data.livebid.LiveBidDeskStatus(),
     val liveBids: List<com.tjshea.vigilant.data.livebid.LiveBid> = emptyList(),
+    /** Live light's own bids (its desk), newest last: shown on the Bids tab. */
+    val lightBids: List<com.tjshea.vigilant.data.livebid.LiveBid> = emptyList(),
     /** Live tail bets (RESEARCH.md §125): the taker's status and the lab's (games read, tail strikes seen), refreshed with the live bids page. */
     val tailTrade: com.tjshea.vigilant.data.pinnodds.LiveTradeStatus = com.tjshea.vigilant.data.pinnodds.LiveTradeStatus(),
     val labStatus: com.tjshea.vigilant.data.novig.lab.LabStatus = com.tjshea.vigilant.data.novig.lab.LabStatus(),
@@ -2160,7 +2162,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** The live bid desk's status for Settings › Live bids (the page asks every second or two while it is open). */
     fun refreshLiveBid() {
-        _state.update { it.copy(liveBidStatus = c.liveBidDesk.status.value, liveBids = c.liveBidDesk.bidsNow(), pinnLive = c.pinnRunner.status.value, tailTrade = c.tailTaker.status.value, labStatus = c.lab.status.value, lightStatus = c.liveLight.status.value, pinnTrade = c.pinnTrader.status.value, pinnWebsiteStats = c.websiteStats()) }
+        _state.update { it.copy(liveBidStatus = c.liveBidDesk.status.value, liveBids = c.liveBidDesk.bidsNow(), lightBids = c.lightBidDesk.bidsNow(), pinnLive = c.pinnRunner.status.value, tailTrade = c.tailTaker.status.value, labStatus = c.lab.status.value, lightStatus = c.liveLight.status.value, pinnTrade = c.pinnTrader.status.value, pinnWebsiteStats = c.websiteStats()) }
     }
 
     /**

@@ -32,6 +32,7 @@ object TailText {
         val age = { at: Long -> if (at == 0L) "never" else "${(System.currentTimeMillis() - at) / 1000} s ago" }
         o.appendLine("Games ${l.games} (${l.withScore} with a score) · markets watched ${l.markets} · pushes ${l.pushes} (last ${age(l.lastPushMs)}) · judgments ${l.scans} (last ${age(l.lastScanMs)}, ${l.lastScanTookMs} ms from the push) · offers to the taker ${l.offers}")
         if (l.skipped.isNotEmpty()) o.appendLine("Not judged: " + l.skipped.entries.sortedByDescending { it.value }.take(8).joinToString(" · ") { "${it.key} ${it.value}" })
+        l.gameLines.values.forEach { o.appendLine("  game: $it") }
         l.last?.let { o.appendLine("Last offer: $it") }
         if (s.tailLive.bids) {
             o.appendLine("Bids: wanted ${l.bidWants} · taken down by the model ${l.bidPulls}" + (desk?.let { d -> " · desk ${d.mode}: ${d.active} up (${money(d.restingDollars)}), ${d.posted} posted, ${d.fills} filled, paid ${money(d.paid)}, refused ${d.refused}" + (d.halted?.let { h -> " · HALTED: $h" } ?: "") + (d.last?.let { x -> " · last: $x" } ?: "") } ?: ""))

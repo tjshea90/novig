@@ -233,6 +233,7 @@ class LiveLightRunner(
         marketEvent = built.values.flatMap { g -> g.marketIds.map { it to g.ev.eventId } }.toMap()
         view?.watchLive(marketEvent.keys.toList())
         feeds.keys.retainAll(built.keys)
+        _status.value = _status.value.let { it.copy(gameLines = it.gameLines.filterKeys { k -> k in built.keys }) }
         _status.value = _status.value.copy(games = built.size, markets = marketEvent.size, withScore = built.keys.count { feeds.containsKey(it) }, problem = null)
     }
 
@@ -300,7 +301,7 @@ class LiveLightRunner(
         val marginOf = { ref: String -> feed.game.marginOf(ref) }
         val sides = LiveLightScan.sides(points, game.ev.league, st, marginOf, rules)
         manageBids(game, sides, feed.game, now)
-        val scoreText = "${game.ev.description} · ${feed.game.homeScore}-${feed.game.awayScore} (home-away order as ESPN lists: home ${feed.game.homeScore}) · ${"%.0f".format(java.util.Locale.US, frac * 100)}% left · ${points.size} of ${game.lines.size} lines priced"
+        val scoreText = "${feed.game.away} ${feed.game.awayScore} @ ${feed.game.home} ${feed.game.homeScore} · ${"%.0f".format(java.util.Locale.US, frac * 100)}% left · ${points.size} of ${game.lines.size} lines priced"
         setLine(eventId, "$scoreText · closest: ${if (sides.isEmpty()) "the model cannot judge this game yet" else closestCall(sides)}")
         val curve = LiveLightCurve.scan(points, game.ev.league, st, sides.associate { it.outcomeId to it.fair })
         val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + curve + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
