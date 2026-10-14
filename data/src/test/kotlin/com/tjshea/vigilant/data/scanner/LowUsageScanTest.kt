@@ -129,7 +129,7 @@ class LowUsageScanTest {
     @Test
     fun `a metered feed is not asked for a league with no game in the window in any scan, and one with a game is`() = runTest {
         val parlay = Feed("parlay_props")
-        val normal = on.copy(makerFocus = BidFocus.ALL, startsWithinHours = 24)
+        val normal = on.copy(makerFocus = BidFocus.ALL, startsWithinHours = 24, vigGuards = on.vigGuards.copy(bidDeploy = false))
         assertFalse(normal.effective().lowUsageScan)
         assertEquals(24, normal.scanWindowHours)
         val report = Scanner(Board(), clock = { now }).scan(normal, listOf(LowUsageSource(parlay, windowGuard = true)))

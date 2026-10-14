@@ -47,12 +47,12 @@ object MakerSetup {
         if (mode == BidMode.OFF) return Change(modeSet, emptyList(), startsAutoBet = false)
         val on = ArrayList<String>()
         var next = modeSet
+        if (next.makerSource == BidSource.CNO) return forCno(next, s, on)
         // The bids fill the wallet from games up to a week out: the scan has to read that far, and price their props.
         if (next.daysAhead < ScanSettings.BID_REACH_DAYS || next.bookPropHours < ScanSettings.BID_REACH_DAYS * 24) {
             next = next.copy(daysAhead = maxOf(next.daysAhead, ScanSettings.BID_REACH_DAYS), bookPropHours = maxOf(next.bookPropHours, ScanSettings.BID_REACH_DAYS * 24))
             on += "a week of games for the scan (Days ahead: ${ScanSettings.BID_REACH_DAYS})"
         }
-        if (next.makerSource == BidSource.CNO) return forCno(next, s, on)
         if (next.scanner == ScannerMode.CNO) {
             next = next.copy(scanner = ScannerMode.BOTH)
             on += "Vigilant's scanner (Scanner: Both)"
