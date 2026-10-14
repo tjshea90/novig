@@ -5041,3 +5041,9 @@ Tj: "Notice my wallet and the difference in the balance with the small amount of
 - [x] TWF4 Bids fill the wallet: why only $4.55 of $73 is up, then deploy the rest at positive EV, riskier tiers only with a higher EV bar (never below the EV rules).
 - [x] TWF5 Diagnostics: richer, structured data for continuous improvement (what each scan/pass/bid decision cost and why), within the size cap.
 - [ ] TWF6 Tests, ship.
+
+## TWG: stale negative-EV card stays in the CNO list; wallet still mostly idle (Tj, 2026-10-14, screenshots + diagnostics file to follow)
+Tj: "This bet is now negative EV, but it did not automatically be removed from the list. And the auto bids are still only filling up a small part of the available wallet balance. If there are no more good bids to make just fill it up with very high positive ev safe bets and see if anyone takes them" (Screenshots: card +1.15% at +133 / fair +130, Bet sheet says fair +134, -0.6% EV; wallet $67.30, 53 bids up = $21.27.)
+- [ ] TWG1 Find why the list kept a card the Bet sheet calls -EV (list judged by CNO's fair +130, sheet by the lowest/other scanner's +134?) and make the list drop it by the same rule.
+- [ ] TWG2 Wallet: when the usual and riskier tiers leave the wallet under target, post "filler" bids: very high edge, safe kinds, still +EV after all rules.
+- [ ] TWG3 Tests, ship.
