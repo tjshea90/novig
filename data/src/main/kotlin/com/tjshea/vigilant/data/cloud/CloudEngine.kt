@@ -9,7 +9,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -89,7 +89,7 @@ class CloudEngine(
     private suspend fun currentScopeActive(): Boolean = currentCoroutineContext().isActive
 
     /** One scan under [s], publishing partial lists as it goes; returns the final list, or null when the scan was cut short (a newer revision) or failed. */
-    private suspend fun scanOnce(cfg: CloudConfig, s: ScanSettings, startedAtMs: Long, untilMs: Long): CloudFeed? = coroutineScope {
+    private suspend fun scanOnce(cfg: CloudConfig, s: ScanSettings, startedAtMs: Long, untilMs: Long): CloudFeed? = supervisorScope {
         val t0 = clock()
         val partial = AtomicReference<ScanResult?>(null)
         val feedSources = sources(s)
@@ -116,7 +116,7 @@ class CloudEngine(
                 if (newer != null && newer.rev != cfg.rev) { restart = true; job.cancel(CancellationException("settings changed")); break }
             }
         }
-        if (restart) { log("settings changed mid-scan: starting over"); return@coroutineScope null }
+        if (restart) { log("settings changed mid-scan: starting over"); return@supervisorScope null }
         val report = try {
             job.await()
         } catch (e: CancellationException) {
@@ -125,14 +125,14 @@ class CloudEngine(
             problem = "scan failed: ${e.javaClass.simpleName}: ${e.message?.take(120)}"
             log(problem!!)
             publish(null, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = null))
-            return@coroutineScope null
+            return@supervisorScope null
         }
         val result = report.result
         if (result == null) {
             problem = report.errors.firstOrNull()?.take(160) ?: "the scan returned nothing"
             log("no result: $problem")
             publish(null, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = null))
-            return@coroutineScope null
+            return@supervisorScope null
         }
         val rows = result.feed(s)
         val feed = CloudFeed(result.computedAtMs, cfg.rev, result.stats, rows)
