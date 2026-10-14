@@ -352,6 +352,11 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                     ui.settings.vigGuards.bidWhileScanning, "bidWhileScanning",
                 ) { on -> actions.onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidWhileScanning = on)) } }
                 SwitchRow(
+                    "Quick scans between full ones",
+                    "The background scan reads the whole reach (${ui.settings.daysAhead} days) at most every 15 minutes and a quick 48-hour scan in between, so the fair odds stay fresh and a scan does not take 8 minutes. Bids on later games stay up until their own end. Your own Scan tap is always the full reach. Off: every background scan reads everything.",
+                    ui.settings.vigGuards.bidFarLane, "bidFarLane",
+                ) { on -> actions.onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidFarLane = on)) } }
+                SwitchRow(
                     "Keep the wallet working",
                     "While the bids up are worth less than ${ui.settings.vigGuards.bidDeployPct}% of the wallet, every new bid stakes more (never over ${ui.settings.vigGuards.bidDeployKelly}% of full Kelly for its own edge or the most per bid), and if that is still not enough, riskier bids go up too: games up to 36 h away, a sharp book required, a margin 4 points wider (so a higher edge) and half the stake. With nothing left even there, bids reach games later in the week (up to 7 days) at a margin 2 points wider again. Every bid is still positive EV; the riskier ones are the last to go up and the first to come down.",
                     ui.settings.vigGuards.bidDeploy, "bidDeploy",

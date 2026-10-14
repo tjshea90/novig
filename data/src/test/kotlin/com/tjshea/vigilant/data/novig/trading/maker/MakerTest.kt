@@ -1049,6 +1049,20 @@ class MakerTest {
     }
 
     @Test
+    fun `a quick scan keeps the bids on games past its reach until their own expiry, and a full scan still takes down a bid with no line`() {
+        val far = RestingBid("o-far", "m1", "m1-over", 0.5, 1_000, 0, now + 20 * 60_000, game = com.tjshea.vigilant.data.tracker.GameRef("g-far", "A @ B", now + 100 * 3_600_000L, "NFL"))
+        val near = RestingBid("o-near", "m2", "m2-over", 0.5, 1_000, 0, now + 20 * 60_000, game = com.tjshea.vigilant.data.tracker.GameRef("g-near", "C @ D", now + 5 * 3_600_000L, "NFL"))
+        val reach = now + 54 * 3_600_000L
+        val quick = MakerPlan.plan(wanted = emptyList(), resting = listOf(far, near), rules = rules, now = now, reachUntilMs = reach)
+        assertEquals("the far game was not judged: its bid stays; the near one has no line in a scan that reached it: down", listOf("o-near"), quick.cancels.map { it.first.orderId })
+        assertEquals(listOf("o-far"), quick.kept.map { it.orderId })
+        val expired = MakerPlan.plan(wanted = emptyList(), resting = listOf(far.copy(expiresAtMs = now - 1)), rules = rules, now = now, reachUntilMs = reach)
+        assertEquals("past its own expiry nothing keeps it", 1, expired.cancels.size)
+        val full = MakerPlan.plan(wanted = emptyList(), resting = listOf(far), rules = rules, now = now, reachUntilMs = null)
+        assertEquals("a full scan with no line for it takes it down", 1, full.cancels.size)
+    }
+
+    @Test
     fun `a wallet-filling bid may rest far behind the best bid - it is posted to see if anyone takes it`() = runBlocking {
         val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1)
         // Tj, 2026-10-14 (v0.99.8 file: 9,400 of 10,184 lines skipped for the start time, the week pass posted nothing): the bests bid is 0.58, a wide-margin price is near 0.55, far below it.
