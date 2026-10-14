@@ -7302,3 +7302,8 @@ I finished a full scan and it still is not posting many bids
 ```
 Post as many bids as possible. Fill up the wallet. Hundreds of bids. All sports are allowed. All times are allowed. All props are allowed. Fill it with popular sports and market types first. As long as risky bids have a higher ev ask, it is fine 
 ```
+
+## 2026-10-14T18:46:13Z
+```
+@"/root/.claude/uploads/a5e8042f-c90d-5023-a7e1-ea7d8da2eff3/39d58cc1-vigilant-diagnostics-v0.99.11-2026-10-14-1443.txt" It is better but not correct. It is putting up hundreds of bids but still not filling the wallet. Also every minute or less it takes hundreds of bids back down. They don't rest anywhere near long enough. And it is posting a lot of bids on the same games, even though there are many games available. I only want so many bids/money on each game. Make it diversify bids among many games and bid types
+```
