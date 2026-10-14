@@ -1,21 +1,23 @@
-# CHECKPOINT 3253 — read me first, then TASKS.md
+# CHECKPOINT 3254 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T19:03:18Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `df05b1517` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T19:03:32Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `a3a251768` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.99.12: bids rest longer (a transient old fair no longer takes a bid down; wallet-filling bids on far games live up to 30 min), and are spread over many games and kinds with a per-game bid limit (default 10 bids, $10) (versionCode 271, v0.99.12)
+v0.99.12 shipped (bids rest longer, transient-skip keep, per-game bid caps + interleave), release.yml triggered
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.99.12), then run: bash tools/record-release.sh v0.99.12 271 "v0.99.12: bids rest longer (a transient old fair no longer takes a bid down; wallet-filling bids on far games live up to 30 min), and are spread over many games and kinds with a per-game bid limit (default 10 bids, $10)"
+get_release_by_tag v0.99.12, record-release.sh v0.99.12 271 'v0.99.12: longer rests, per-game bid limit and spread', send Tj https://github.com/tjshea90/novig/releases/tag/v0.99.12; then read Tj's next Diagnostics (spread lines, ended reasons)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  a3a251768 ckpt 3253: pre-release: v0.99.12: bids rest longer (a transient old fair no longer tak
   df05b1517 ckpt 3252: pre-ship: v0.99.12: bids rest longer (a transient old fair no longer takes 
   fe2232570 ckpt 3251: pre-ship: v0.99.12: bids rest longer (a transient old fair no longer takes 
   bf53370a0 ckpt 3250: v0.99.11 released and recorded (TWF3 done)
@@ -25,5 +27,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   8afb8b263 ckpt 3246: pre-ship: v0.99.11: the last wallet-filling pass bids every start time and 
   2b98e8d05 ckpt 3245: v0.99.9 recorded; v0.99.10 shipped (wallet-filling bids ignore max-behind, 
   1d5882246 ckpt 3244: pre-release: v0.99.10: wallet-filling bids may rest far behind the best bid
-  17c56d7d7 ckpt 3243: pre-ship: v0.99.10: wallet-filling bids may rest far behind the best bid, a
 ```
