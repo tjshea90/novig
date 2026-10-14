@@ -7192,3 +7192,8 @@ Record 99.1
 
 This must work without pinnodds at all, because I no longer have pinnodds socket
 ```
+
+## 2026-10-14T05:28:11Z
+```
+How do I see the live bids
+```
