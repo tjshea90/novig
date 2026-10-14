@@ -21,8 +21,10 @@ object TailText {
 
     const val LIGHT_HINT = "Live light judges each live game the moment Novig's live feed or the score changes, instead of every 20 seconds, and it works from the score and clock alone, so a stale price is found even when the whole ladder is stale (a team up 25 offered near 50/50). A bet this big needs a second live source to agree (BoltOdds' soft-book consensus, when it is on); without one it only takes edges up to 30%. Needs the Novig key's live feed. Pinnodds is not used."
 
-    /** The Diagnostics lines of Live light's push lane. */
-    fun lightDiagnostics(s: ScanSettings, l: com.tjshea.vigilant.data.novig.lab.LiveLightStatus, running: Boolean, feedConnected: Boolean): String {
+    const val LIGHT_BIDS_HINT = "Also puts up post-only bids on the sides the score and clock call decided, 10% under the model's fair and under what Novig offers, each re-vouched for every second and pulled the moment the model no longer clears it or the game stops being judged (a bid nobody vouches for comes down in 3.5 seconds). Real money only while \"Buy tail bets with real money\" is on; the stake, game, day and loss limits below apply to bids and bets together. Pinnodds is not used."
+
+    /** The Diagnostics lines of Live light's push lane and its bid desk. */
+    fun lightDiagnostics(s: ScanSettings, l: com.tjshea.vigilant.data.novig.lab.LiveLightStatus, running: Boolean, feedConnected: Boolean, desk: com.tjshea.vigilant.data.livebid.LiveBidDeskStatus? = null): String {
         val o = StringBuilder()
         o.appendLine("LIVE LIGHT (push lane for obviously wrong live prices; Tj 2026-10-14)")
         o.appendLine("Switch: ${if (s.tailLive.on && s.tailLive.light) "ON" else "off"} · running $running · Novig live feed ${if (feedConnected) "connected" else "NOT connected (the 20-second pass is used)"} · bids ${if (s.tailLive.bids) "on" else "off"}")
@@ -31,6 +33,11 @@ object TailText {
         o.appendLine("Games ${l.games} (${l.withScore} with a score) · markets watched ${l.markets} · pushes ${l.pushes} (last ${age(l.lastPushMs)}) · judgments ${l.scans} (last ${age(l.lastScanMs)}, ${l.lastScanTookMs} ms from the push) · offers to the taker ${l.offers}")
         if (l.skipped.isNotEmpty()) o.appendLine("Not judged: " + l.skipped.entries.sortedByDescending { it.value }.take(8).joinToString(" · ") { "${it.key} ${it.value}" })
         l.last?.let { o.appendLine("Last offer: $it") }
+        if (s.tailLive.bids) {
+            o.appendLine("Bids: wanted ${l.bidWants} · taken down by the model ${l.bidPulls}" + (desk?.let { d -> " · desk ${d.mode}: ${d.active} up (${money(d.restingDollars)}), ${d.posted} posted, ${d.fills} filled, paid ${money(d.paid)}, refused ${d.refused}" + (d.halted?.let { h -> " · HALTED: $h" } ?: "") + (d.last?.let { x -> " · last: $x" } ?: "") } ?: ""))
+            if (desk != null && desk.skips.isNotEmpty()) o.appendLine("Bids not put up: " + desk.skips.entries.sortedByDescending { it.value }.take(6).joinToString(" · ") { "${it.key} ${it.value}" })
+            if (desk != null && desk.pulls.isNotEmpty()) o.appendLine("Bids pulled: " + desk.pulls.entries.sortedByDescending { it.value }.take(6).joinToString(" · ") { "${it.key} ${it.value}" })
+        }
         l.problem?.let { o.appendLine("Problem: $it") }
         return o.toString().trimEnd()
     }

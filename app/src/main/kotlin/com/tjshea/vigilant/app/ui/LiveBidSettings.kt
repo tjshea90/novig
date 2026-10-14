@@ -193,7 +193,8 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
     SectionTitle(TailText.TITLE)
     LbHint(TailText.HINT)
     LbSwitch("Look for tail bets", "Reads the live games' strikes and writes down what it would buy (paper). Needs no Pinnodds key.", s.tailLive.on, "tailLiveSwitch") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(on = v, bet = it.tailLive.bet && v)) } }
-    LbSwitch("Live light: real-time push lane", TailText.LIGHT_HINT, s.tailLive.light, "tailLiveLightSwitch") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(light = v)) } }
+    LbSwitch("Live light: real-time push lane", TailText.LIGHT_HINT, s.tailLive.light, "tailLiveLightSwitch") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(light = v, bids = it.tailLive.bids && v)) } }
+    if (s.tailLive.light) LbSwitch("Live light bids", TailText.LIGHT_BIDS_HINT, s.tailLive.bids, "tailLiveBidsSwitch") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(bids = v)) } }
     s.tailLive.halted?.let { why ->
         Column(Modifier.padding(vertical = 4.dp).testTag("tailLiveHalted")) {
             Text("Stopped: $why", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)

@@ -2779,7 +2779,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             liveBidReport = runCatching {
                 LiveBidText.diagnostics(_state.value.settings, c.liveBidDesk.status.value, c.pinnRunner.status.value, c.liveBidDesk.bidsNow(), c.pinnRunner.running) +
                     "\n" + TailText.diagnostics(_state.value.settings, c.tailTaker.status.value, c.lab.status.value, c.tailTaker.records()) +
-                    "\n" + TailText.lightDiagnostics(_state.value.settings, c.liveLight.status.value, c.liveLight.running, c.novig.stream != null) +
+                    "\n" + TailText.lightDiagnostics(_state.value.settings, c.liveLight.status.value, c.liveLight.running, c.novig.stream != null, c.lightBidDesk.status.value) +
                     "\n" + PinnText.websiteDiagnostics(_state.value.settings, c.websiteStats(), c.pinnRace.lines())
             }.getOrNull(),
             burstReport = g.burstReport,
