@@ -922,7 +922,7 @@ class MakerTest {
     fun `riskier bids fill what the usual ones cannot - a wider margin, a sharp book required, half the stake, last in - and none with the switch off`() = runBlocking {
         val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1)
         // A line with no sharp book in its fair: a usual bid goes up (sharp not required), the riskier pass would need one: nothing extra.
-        val noSharp = line("m1-over", fair = 0.60, m = market("m1", starts = start + 30 * 3_600_000L))
+        val noSharp = line("m1-over", fair = 0.60, offer = 0.62, m = market("m1", starts = start + 30 * 3_600_000L))
         val d = desk(FakeNovig(), tracker())
         val r = d.cycle(listOf(noSharp), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0)
         assertTrue("a game 30 h out is past the 20 h guard: no usual bid; and no riskier one without a sharp book", r.decisions.none { it is MakerDecision.Post })
