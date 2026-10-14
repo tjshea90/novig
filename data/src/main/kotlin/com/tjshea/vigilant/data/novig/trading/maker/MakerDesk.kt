@@ -261,7 +261,9 @@ class MakerDesk(
     )
 
     /** The wallet-deployment state of one pass, for Diagnostics: the target, what was up, the stake multiple used, and the riskier bids wanted. */
-    data class Deploy(val walletDollars: Double, val targetDollars: Double, val restingDollars: Double, val scale: Double, val kellyCeiling: Double, val overflowWanted: Int, val overflowDollars: Double, val wantedDollars: Double)
+    data class Deploy(val walletDollars: Double, val targetDollars: Double, val restingDollars: Double, val scale: Double, val kellyCeiling: Double, val overflowWanted: Int, val overflowDollars: Double, val wantedDollars: Double,
+        /** The most common reasons lines got no bid this pass (numbers folded together), with their counts, and how many lines were judged: what limits the deployment. */
+        val skips: List<Pair<String, Int>> = emptyList(), val judged: Int = 0)
 
     /**
      * One pass: what Novig says happened to every bid (fills to the Tracker), then the bids [lines] want under [rules] at [now], then the cancels and
@@ -315,7 +317,10 @@ class MakerDesk(
         val base = MakerQuote.decideAll(ownless, rulesNow, now, held).map(judge)
         val extra = deployFor(rulesNow, ownless, base, bids, activeOutcomes, held, now, wallet, usual, judge)
         val decisions = base + extra.first
-        lastDeploy = extra.second?.copy(scale = scale)
+        lastDeploy = extra.second?.copy(
+            scale = scale, judged = decisions.size,
+            skips = decisions.filterIsInstance<MakerDecision.Skip>().groupingBy { it.why.replace(Regex("[0-9]+(\\.[0-9]+)?"), "#") }.eachCount().entries.sortedByDescending { it.value }.take(10).map { it.key to it.value },
+        )
         val spent = spentToday(bets, now)
         val stopAll = stop ?: if (spent >= maxPerDay - 1e-9) "Today's limit for API bets (${money(maxPerDay)}) is reached" else null
         val resting = restingOf(active)
