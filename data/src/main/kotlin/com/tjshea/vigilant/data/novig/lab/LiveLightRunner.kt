@@ -31,6 +31,9 @@ data class LiveLightStatus(
     val pushes: Long = 0,
     val scans: Long = 0,
     val offers: Long = 0,
+    /** Bids the model asked the desk for, and bids it took down again. */
+    val bidWants: Long = 0,
+    val bidPulls: Long = 0,
     val lastPushMs: Long = 0,
     val lastScanMs: Long = 0,
     /** How long the latest scan took from the push to the offer (ms), and the slowest of the last ones. */
@@ -55,6 +58,9 @@ class LiveLightRunner(
     /** A second live source for the moneyline (BoltOdds' consensus): lifts the cap on how large an edge can be believed. Null = Novig and the score alone. */
     private val confirm: () -> LiveConfirm? = { null },
     private val leagues: () -> Set<String>,
+    /** The live bid desk Live light's bids go through, or null while the bids switch is off (nothing is wanted and any bid still up is pulled). */
+    private val bids: () -> LightBidDesk? = { null },
+    private val bidRules: () -> LiveLightBidRules = { LiveLightBidRules() },
     private val clock: () -> Long = System::currentTimeMillis,
     private val rules: LiveLightRules = LiveLightRules(),
     private val tailRules: TailRules = TailRules(),
@@ -95,7 +101,16 @@ class LiveLightRunner(
             scope.launch { guarded("catalog") { catalogLoop() } },
             scope.launch { guarded("score") { stateLoop() } },
             scope.launch { guarded("scan") { scanLoop() } },
+            scope.launch { guarded("beat") { heartbeat() } },
         )
+    }
+
+    /** A bid nobody vouched for within seconds is pulled by the desk: while bids are on every game is judged again each [HEARTBEAT_MS], push or no push. */
+    private suspend fun heartbeat() {
+        while (scope.isActive) {
+            delay(HEARTBEAT_MS)
+            if (bids() != null && games.isNotEmpty()) { dirty += games.keys; signal.trySend(Unit) }
+        }
     }
 
     /** Opens the view of Novig's live feed and listens to it (the loops are started by [start]; a test drives the steps by hand after this). */
@@ -239,6 +254,8 @@ class LiveLightRunner(
         }
         if (points.isEmpty()) return skip("markets closed")
         val marginOf = { ref: String -> feed.game.marginOf(ref) }
+        val sides = LiveLightScan.sides(points, game.ev.league, st, marginOf, rules)
+        manageBids(game, sides, feed.game, now)
         val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
         val s = _status.value
         _status.value = s.copy(scans = s.scans + 1, lastScanMs = now, lastScanTookMs = (clock() - triggeredAtMs).coerceAtLeast(0))
@@ -268,7 +285,40 @@ class LiveLightRunner(
         }
     }
 
+    /** The bids for one game: every side the model calls decided gets a bid under its fair (the desk's own limits decide how many go up); a bid up whose side is no longer clear comes down. */
+    private fun manageBids(game: Game, sides: List<LiveLightScan.SideFair>, e: EspnGame, now: Long) {
+        val desk = bids()
+        if (desk == null) return
+        val br = bidRules()
+        val score = "${e.homeScore}-${e.awayScore}"
+        val clock = "P${e.period} ${"%d:%02d".format(java.util.Locale.US, (e.clockSec / 60).toInt(), (e.clockSec % 60).toInt())}"
+        val seen = HashSet<String>()
+        for (sf in sides) {
+            seen += sf.outcomeId
+            desk.noteFair(sf.outcomeId, sf.fair, now)
+            val held = desk.held(sf.outcomeId)
+            if (held != null) {
+                val why = LiveLightBids.keep(sf, held, br)
+                if (why != null) { desk.pull(sf.outcomeId, why); _status.value = _status.value.let { it.copy(bidPulls = it.bidPulls + 1) } } else desk.keepAlive(sf.outcomeId, now)
+                continue
+            }
+            when (val v = LiveLightBids.judge(sf, br)) {
+                is com.tjshea.vigilant.data.livebid.LiveBidVerdict.Post -> {
+                    desk.want(LiveLightBids.want(game.ev, sf, v, score, clock, now))
+                    _status.value = _status.value.let { it.copy(bidWants = it.bidWants + 1) }
+                }
+                is com.tjshea.vigilant.data.livebid.LiveBidVerdict.Skip -> desk.noWant(sf.outcomeId, "light bid: ${v.reason}")
+            }
+        }
+        // A bid up on an outcome the model can no longer judge (the clock went unreadable, the game entered overtime) does not stay on a guess.
+        for (line in game.lines) for (id in listOf(line.yesOutcomeId, line.noOutcomeId)) {
+            if (id !in seen && desk.held(id) != null) { desk.pull(id, "the game is no longer judged"); _status.value = _status.value.let { it.copy(bidPulls = it.bidPulls + 1) } }
+        }
+    }
+
     companion object {
+        const val HEARTBEAT_MS = 1_000L
+
         /** Markets the lane may hold on the feed: a bbo market costs 8 of the key's 512 stream tokens, and the scan and the bids share them. */
         const val MAX_MARKETS = 48
         const val CATALOG_MS = 20_000L
