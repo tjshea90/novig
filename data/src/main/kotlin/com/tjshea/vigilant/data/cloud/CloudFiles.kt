@@ -33,6 +33,11 @@ data class CloudConfig(
     val device: String = "",
     /** Seconds between one scan's end and the next one's start (the scan itself takes as long as it takes). */
     val passGapSeconds: Int = 20,
+    /**
+     * Pull to refresh / the Scan button on the phone (Tj, 2026-10-14: "I want it to tell GitHub to scan every time I pull to refresh"): the phone's clock when it asked. A value newer than the one the engine last
+     * served starts a fresh scan at once ([CloudStatus.ackedRefreshAtMs] is the engine's acknowledgement); 0 = never asked.
+     */
+    val refreshAtMs: Long = 0L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
@@ -64,6 +69,27 @@ data class CloudStatus(
     val idle: Boolean = false,
     /** When this job will hand over to the next (ms): the phone shows it, nothing depends on it. */
     val handoverAtMs: Long = 0L,
+    /** A scan is running now, since [scanStartedAtMs], and what it is doing ([progressStep], [progressDone] of [progressTotal]). */
+    val scanning: Boolean = false,
+    val scanStartedAtMs: Long = 0L,
+    val progressStep: String = "",
+    val progressDone: Int = 0,
+    val progressTotal: Int = 0,
+    /** The newest [CloudConfig.refreshAtMs] the engine has seen and begun serving (its acknowledgement), and the one the running or last scan was started for. */
+    val ackedRefreshAtMs: Long = 0L,
+    val scanRefreshAtMs: Long = 0L,
+    /** The last scan that ran to its end: when it began and ended, and which refresh request it served. */
+    val lastScanStartedAtMs: Long = 0L,
+    val lastScanEndedAtMs: Long = 0L,
+    val lastScanForRefreshAtMs: Long = 0L,
+    /**
+     * How old the listed bets' prices were at [computedAtMs] (seconds, worked out from each row's own timestamps: [com.tjshea.vigilant.data.scanner.Opportunity.bookFetchedAtMs] is when its Novig book was read,
+     * [com.tjshea.vigilant.data.scanner.Opportunity.fairAsOfMs] when the oldest book price behind its fair line was last seen by its feed); -1 = no list or no stamps.
+     */
+    val novigAgeMedianS: Long = -1L,
+    val novigAgeMaxS: Long = -1L,
+    val fairAgeMedianS: Long = -1L,
+    val fairAgeMaxS: Long = -1L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
