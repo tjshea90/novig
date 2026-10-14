@@ -631,8 +631,8 @@ private fun MakerRules(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSetting
         }
         RuleChips("Most dollars up at once (the wallet must cover them)", ScanSettings.MAKER_MAX_DOLLARS_CHOICES, s.makerMaxDollars, MakerRulesText::dollarsLabel) { v -> onUpdate { it.copy(makerMaxDollars = v) } }
         TypedDollarField(NumberSpecs.dollars("most dollars up", 1.0, 1_000_000.0), if (s.makerMaxDollars >= ScanSettings.MAKER_NO_DOLLAR_LIMIT) 0.0 else s.makerMaxDollars, "makerMaxDollarsField") { v -> onUpdate { it.copy(makerMaxDollars = v) } }
-        RuleChips("Most bid dollars on one game (spreads the bids over many games)", ScanSettings.BID_PER_GAME_DOLLARS_CHOICES, s.bidPerGameDollars, { if (it <= 0.0) "No limit" else Format.money(it) }) { v -> onUpdate { it.copy(bidPerGameDollars = v) } }
-        RuleChips("Most bids on one game", ScanSettings.BID_PER_GAME_BIDS_CHOICES, s.bidPerGameBids, { if (it <= 0) "No limit" else it.toString() }) { v -> onUpdate { it.copy(bidPerGameBids = v) } }
+        RuleChips("Most bid dollars on one game (spreads the bids over many games)", ScanSettings.BID_PER_GAME_DOLLARS_CHOICES, s.vigGuards.bidPerGameDollars, { if (it <= 0.0) "No limit" else Format.money(it) }) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidPerGameDollars = v)) } }
+        RuleChips("Most bids on one game", ScanSettings.BID_PER_GAME_BIDS_CHOICES, s.vigGuards.bidPerGameBids, { if (it <= 0) "No limit" else it.toString() }) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidPerGameBids = v)) } }
         RuleChips("Which bids go up", com.tjshea.vigilant.data.scanner.BidFocus.entries.filter { !fromCno || it != com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE }, s.makerFocus, { it.displayName }) { v -> onUpdate { it.copy(makerFocus = v) } }
         Text(
             when (s.makerFocus) {

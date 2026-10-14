@@ -482,12 +482,6 @@ data class ScanSettings(
     val makerMaxBids: Int = 20,
     /** The most dollars resting at once, all bids together ([MAKER_MAX_DOLLARS_CHOICES]): Novig needs the wallet to cover each bid. */
     val makerMaxDollars: Double = 100.0,
-    /**
-     * The most Vigilant's BIDS put on one game, dollars and bids (Tj, 2026-10-14: "I only want so many bids/money on each game. Make it diversify bids among many games and bid types"). 0 = no limit.
-     * Apart from [apiMaxPerGame], which counts every bet and bid on a game together.
-     */
-    val bidPerGameDollars: Double = 10.0,
-    val bidPerGameBids: Int = 10,
     /** The kinds of bet it posts on: props, 1st-half/inning lines and team totals by default; game lines only with a fair that leads Novig (§70.2). */
     val makerKinds: Set<BetKind> = MAKER_DEFAULT_KINDS,
     /** How long each bid may rest before Novig cancels it by itself (`ttl`, [MAKER_TTL_CHOICES]): the safety net if the phone stops checking. */
@@ -1220,7 +1214,7 @@ data class ScanSettings(
         val MAKER_STAKE_CHOICES = listOf(1.0, 2.0, 5.0, 10.0, 25.0)
 
         /** [makerMaxBids]' choices; [NO_LIMIT] = unlimited (Tj, 2026-10-05: "an option for unlimited bids up at once"): the wallet, the dollars and the per-game limit still bind. */
-        /** [bidPerGameDollars]' and [bidPerGameBids]' chips (0 = no limit). */
+        /** [ScanGuards.bidPerGameDollars]' and [ScanGuards.bidPerGameBids]' chips (0 = no limit). */
         val BID_PER_GAME_DOLLARS_CHOICES = listOf(3.0, 5.0, 10.0, 20.0, 0.0)
         val BID_PER_GAME_BIDS_CHOICES = listOf(3, 5, 10, 20, 0)
 
@@ -1511,4 +1505,10 @@ data class ScanGuards(
     val bidDeploy: Boolean = true,
     val bidDeployPct: Int = 90,
     val bidDeployKelly: Int = 25,
+    /**
+     * The most Vigilant's BIDS put on one game, dollars and bids (Tj, 2026-10-14: "I only want so many bids/money on each game. Make it diversify bids among many games and bid types"). 0 = no limit.
+     * Apart from [ScanSettings.apiMaxPerGame], which counts every bet and bid on a game together.
+     */
+    val bidPerGameDollars: Double = 10.0,
+    val bidPerGameBids: Int = 10,
 )
