@@ -947,7 +947,7 @@ class MakerTest {
         assertTrue("a wallet-filling bid", post.overflow)
         assertTrue("a margin the usual bid's plus 4 plus 2 points: price at most ${0.60 / 1.08}", post.price <= 0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_WEEK_MARGIN) + 1e-9)
         // Past the week: nothing, whatever the wallet.
-        val beyond = far.copy(market = market("m2", starts = start + 200 * 3_600_000L))
+        val beyond = line("m2-over", fair = 0.60, offer = 0.64, m = market("m2", starts = start + 200 * 3_600_000L)).copy(sharpFairs = listOf(0.60))
         assertTrue(desk(FakeNovig(), tracker()).cycle(listOf(beyond), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
         // Switch off: nothing extra.
         assertTrue(desk(FakeNovig(), tracker()).cycle(listOf(far), kelly.copy(earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
