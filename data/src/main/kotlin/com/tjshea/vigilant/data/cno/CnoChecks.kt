@@ -58,7 +58,7 @@ object CnoChecks {
         EV("below your minimum EV"),
     }
 
-    fun screen(snapshot: CnoSnapshot, filters: CnoFilters, now: Long, propHaircut: Boolean = true): CnoScreened {
+    fun screen(snapshot: CnoSnapshot, filters: CnoFilters, now: Long, propHaircut: Boolean = false): CnoScreened {
         val hidden = LinkedHashMap<Reason, Int>()
         val words = Words.of(filters.scope)
         val picks = snapshot.rows.mapNotNull { row ->
