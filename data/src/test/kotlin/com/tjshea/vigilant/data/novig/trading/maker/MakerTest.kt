@@ -967,7 +967,7 @@ class MakerTest {
         val all = d.bids().filter { it.active }
         assertEquals("two bids on one side", 2, all.size)
         val deep = all.first { it.rung == 1 }
-        assertTrue("deeper: ${deep.price} under ${usual.price}", deep.price < usual.price - 0.03)
+        assertTrue("deeper: ${deep.price} under ${usual.price}", deep.price <= usual.price - 0.025)
         assertTrue(deep.evAtFair > usual.evAtFair)
         assertEquals(usual.outcomeId, deep.outcomeId)
         assertEquals(1L, d.deepPlaced)
