@@ -53,6 +53,29 @@ class NovigPublicClientTest {
     }
 
     @Test
+    fun `a market looked up again within 30 s is not asked for again, a refused lookup slows the public pace and is retried once`() = runBlocking {
+        val one = """{"marketId":"m1","eventId":"e1","type":"MONEY","status":"OPEN","description":"x","outcomes":[]}"""
+        server.enqueue(MockResponse().setResponseCode(429).setHeader("Retry-After", "1").setBody("{}"))
+        server.enqueue(MockResponse().setBody(one))
+        val paused = ArrayList<Long>()
+        val c = NovigPublicClient(OkHttpClient(), json, server.url("").toString().trimEnd('/'), clock = { now }, sleep = { paused += it })
+        assertEquals("m1", c.market("m1")?.marketId)
+        assertEquals("the refusal was retried once", 2, server.requestCount)
+        assertTrue("the Retry-After was waited out: $paused", paused.any { it >= 1_000L })
+        assertEquals("m1", c.market("m1")?.marketId)
+        assertEquals("the second ask came from memory", 2, server.requestCount)
+        now += NovigPublicClient.LOOKUP_TTL_MS + 1
+        server.enqueue(MockResponse().setBody(one))
+        c.market("m1")
+        assertEquals("an old answer is asked for again", 3, server.requestCount)
+        // A market Novig no longer lists (404) is remembered too, for a shorter while.
+        server.enqueue(MockResponse().setResponseCode(404).setBody("{}"))
+        assertNull(c.market("gone"))
+        assertNull(c.market("gone"))
+        assertEquals(4, server.requestCount)
+    }
+
+    @Test
     fun `a short 429 on the board is waited out instead of failing the scan`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(429).setHeader("Retry-After", "1").setBody("{}"))
         server.enqueue(MockResponse().setBody("""{"items":[{"eventId":"a"}]}"""))
