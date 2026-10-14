@@ -5164,4 +5164,4 @@ Tj: "It seems to be working now. Now fine tune it. The key is volume. I want hun
 Tj: "Most bids went up when the scan finished, but still only around half the wallet balance"
 Cause: Volume mode (v0.99.14) turned the stake scale-up off, so each bid stays at ~$0.2-0.5 (1/8 Kelly of a 1.5% edge).
 - [x] TVM5a (`MakerDesk.cycle` scales new stakes toward the wallet target in Volume mode, the deeper rung stays off, `MakerTest`) v0.99.16.
-- [ ] TVM5b v0.99.15 recorded; v0.99.16 shipped, release.yml triggered: confirm get_release_by_tag v0.99.16, record-release.sh v0.99.16 275, send Tj the link; then read his next file (resting dollars vs target).
+- [x] TVM5b v0.99.16 released and recorded. Next: read Tj's next Diagnostics (resting dollars vs target, which limit binds: per-game 5, odds +120, Kelly ceiling, per-bid max).
