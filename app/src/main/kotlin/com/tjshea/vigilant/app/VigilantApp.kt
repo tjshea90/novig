@@ -246,6 +246,7 @@ class AppContainer(val app: Application) {
     /** Seals the Kalshi private key for disk (the Keystore, like the management key: an API key can trade, so it is never stored as plain text). */
     @Volatile private var secretBox: com.tjshea.vigilant.data.novig.signing.SecretBox = KeystoreSecretBox
     fun sealSecret(plain: String): String = secretBox.seal(plain)
+    fun openSecret(sealed: String): String = secretBox.open(sealed)
 
     private val filesDir: File = app.filesDir
 
@@ -253,7 +254,13 @@ class AppContainer(val app: Application) {
      * Novig's own books (Vigilant), or a sportsbook's posted odds out of the fair-odds feeds'
      * requests (Vigilant MGM: BetMGM, no request of its own; [SportsbookScanner]).
      */
-    val scanner: OddsScanner = if (AppBook.isNovig) Scanner(novig, deepExtra = ::bidMarkets) else SportsbookScanner(AppBook.current)
+    val localScanner: OddsScanner = if (AppBook.isNovig) Scanner(novig, deepExtra = ::bidMarkets) else SportsbookScanner(AppBook.current)
+
+    /**
+     * Cloud scan (Tj, 2026-10-14): with Settings › Cloud scan on, a "scan" adopts the list the GitHub engine published and calls no API; off, it is [localScanner] exactly as before ([com.tjshea.vigilant.data.cloud.SwitchingScanner]).
+     */
+    val cloud: CloudLink by lazy { CloudLink(this) }
+    val scanner: OddsScanner = com.tjshea.vigilant.data.cloud.SwitchingScanner(localScanner, com.tjshea.vigilant.data.cloud.CloudScanner(cloud.latest))
 
     /**
      * Lives as long as the process, not a screen: a scan Tj starts keeps going when he switches

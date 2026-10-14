@@ -373,6 +373,8 @@ data class ScanSettings(
      * Off (the default): the app is what it was.
      */
     val cloudScan: Boolean = false,
+    /** Save every bet, bid and the scan study's days to GitHub's `phone-data` branch automatically (Tj, 2026-10-14), whenever a GitHub token is saved in Settings › Cloud scan. */
+    val cloudSave: Boolean = true,
     /** SGO Pro: also price the fair line with the books Vigilant's list lacks (Circa, SuperBook, bet365: [SgoBooks.EXTRA]). */
     val sgoExtraBooks: Boolean = true,
     /** SGO Pro: ask for every book's alternate lines with the game lines (heavier replies; dropped for a league whose query times out). */

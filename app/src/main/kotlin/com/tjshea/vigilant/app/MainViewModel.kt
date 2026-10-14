@@ -2004,7 +2004,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** The heap and what the app holds in it, for Diagnostics (counts, not bytes: a scan result, the boards kept between scans, the books pages). */
     private fun memoryNow(): Diagnostics.Memory {
         val r = _state.value.result
-        val held = (c.scanner as? com.tjshea.vigilant.data.scanner.Scanner)?.holdings()
+        val held = (c.localScanner as? com.tjshea.vigilant.data.scanner.Scanner)?.holdings()
         val lines = listOfNotNull(
             "Scan result: ${r?.opportunities?.size ?: 0} priced sides in ${r?.games?.size ?: 0} games" + if (r?.partial == true) " (partial: a scan is running)" else "",
             held?.let { "Kept between scans: ${it.snapshots} fair-odds boards (${it.events} games, ${it.bookMarkets} book lines) · ${it.books} Novig books + ${it.cachedBooks} in the books cache" },
