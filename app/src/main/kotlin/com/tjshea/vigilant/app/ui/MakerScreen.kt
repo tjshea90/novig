@@ -343,7 +343,7 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                 ) { v -> actions.onUpdate { com.tjshea.vigilant.data.scanner.BidSlider.apply(it, v) } }
                 SwitchRow(
                     "Volume mode",
-                    "Pure volume and fills: every bid goes up at the most its edge floor allows (1.5% on the safest types, 2.5% on riskier ones and lines no sharp book prices), up to ${com.tjshea.vigilant.data.novig.trading.maker.BidVolume.MAX_BIDS} bids at once, any start time, the kinds that have filled fastest first (near-start player props, WNBA, NHL, MLB, NFL), spread over many games by the per-game limits below. Off: the slider's rules and margins.",
+                    "Pure volume and fills: every bid goes up at the most its edge floor allows (1.5% on the safest types, 2.5% on riskier ones and lines no sharp book prices), up to ${com.tjshea.vigilant.data.novig.trading.maker.BidVolume.MAX_BIDS} bids at once, any start time, the kinds that have filled fastest first (near-start player props, WNBA, NHL, MLB, NFL), spread over many games by the per-game limits below, and new bids stake more while the bids up are under the wallet target (Keep the wallet working). Off: the slider's rules and margins.",
                     ui.settings.vigGuards.bidVolume, "bidVolume",
                 ) { on -> actions.onUpdate { it.copy(vigGuards = it.vigGuards.copy(bidVolume = on)) } }
                 SwitchRow(

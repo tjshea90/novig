@@ -1,22 +1,26 @@
-# CHECKPOINT 3270 — read me first, then TASKS.md
+# CHECKPOINT 3271 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T20:35:28Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `c51eb5d2c` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T20:36:54Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `dd749e1f8` (this checkpoint is the commit after it)
 
 ## Just done
-v0.99.15 shipped (far books kept + 90 min far book age in Volume mode), release.yml triggered
+pre-ship: v0.99.16: Volume mode scales the stakes of new bids up toward the wallet target (the count stays), so the wallet fills instead of sitting near half
 
 ## Do this next
-get_release_by_tag v0.99.15, record-release.sh v0.99.15 274, send Tj https://github.com/tjshea90/novig/releases/tag/v0.99.15; read next Diagnostics: bids up, games, skip reasons
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
+     M app/build.gradle.kts
+     M app/src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt
+     M app/src/main/kotlin/com/tjshea/vigilant/app/ui/MakerScreen.kt
 
 ## Last ten checkpoints
 ```
+  1fe47f144 ckpt 3270: v0.99.15 shipped (far books kept + 90 min far book age in Volume mode), rel
   c51eb5d2c ckpt 3269: pre-release: v0.99.15: Volume mode bids far games from a Novig book up to 9
   7cd1275e9 ckpt 3268: pre-ship: v0.99.15: Volume mode bids far games from a Novig book up to 90 m
   b23dc905c ckpt 3267: TVM4: logged 'few bids' report on v0.99.14 (93 bids / $18.30), no v0.99.14 
@@ -26,5 +30,7 @@ get_release_by_tag v0.99.15, record-release.sh v0.99.15 274, send Tj https://git
   51040dd2b ckpt 3263: pre-ship: v0.99.14: Volume mode for bids - EV floors 1.5% safest / 2.5% ris
   4c3849b70 ckpt 3262: pre-ship: v0.99.14: Volume mode for bids - EV floors 1.5% safest / 2.5% ris
   b06707bd8 ckpt 3261: v0.99.13 released and recorded (TWP2 done)
-  990ebf93d ckpt 3260: v0.99.13 shipped (bid while scanning + FarLane quick scans), release.yml tr
 ```
+
+(2 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
