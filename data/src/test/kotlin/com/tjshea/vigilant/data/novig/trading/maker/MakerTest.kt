@@ -1034,6 +1034,20 @@ class MakerTest {
     }
 
     @Test
+    fun `the wallet-filling bids are spread over many games, never more than the per-game limit on one`() = runBlocking {
+        val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1, maxOdds = 0, perGameBids = 2, maxBids = 100, maxDollars = 10_000.0)
+        val farStart = start + 100 * 3_600_000L
+        fun far(game: String, id: String) = line("$id-over", fair = 0.60, offer = 0.64, m = market(id, starts = farStart).copy(eventId = game)).copy(sharpFairs = listOf(0.60))
+        // Eight lines on one game and one each on three others: the wallet has room for all of them, the limit lets two through on the first.
+        val lines = (1..8).map { far("g1", "a$it") } + listOf(far("g2", "b1"), far("g3", "c1"), far("g4", "d1"))
+        val r = desk(FakeNovig(), tracker()).cycle(lines, kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 5_000.0, wallet = 1_000.0)
+        val perGame = r.decisions.filterIsInstance<MakerDecision.Post>().groupingBy { it.line.market.eventId }.eachCount()
+        assertTrue("no game over 2 bids: $perGame", perGame.values.all { it <= 2 })
+        assertTrue("the other games get theirs: $perGame", perGame.keys.containsAll(listOf("g2", "g3", "g4")))
+        assertTrue(r.deploy!!.spread.isNotEmpty())
+    }
+
+    @Test
     fun `a wallet-filling bid may rest far behind the best bid - it is posted to see if anyone takes it`() = runBlocking {
         val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1)
         // Tj, 2026-10-14 (v0.99.8 file: 9,400 of 10,184 lines skipped for the start time, the week pass posted nothing): the bests bid is 0.58, a wide-margin price is near 0.55, far below it.
