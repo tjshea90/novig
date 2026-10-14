@@ -339,7 +339,17 @@ class MakerDesk(
         val base = MakerQuote.decideAll(ownless, rulesNow, now, held).map(judge)
         val extra = if (rung > 0) (emptyList<MakerDecision>() to null) else deployFor(rulesNow, ownless, base, bids, activeOutcomes, held, now, wallet, usual, judge)
         val decisions = base + extra.first
-        if (rung == 0) lastDeploy = extra.second?.copy(
+        // Volume mode runs no wallet-filling pass, so its Diagnostics line is made here: how many bids are wanted, how much money, how they are spread over games.
+        val deployInfo = extra.second ?: if (rules.volume && wallet != null && wallet > 0.0) {
+            val posts = base.filterIsInstance<MakerDecision.Post>()
+            val fresh = posts.filter { it.line.outcomeId !in activeOutcomes }
+            val gb = HashMap<String, Int>()
+            val gd = HashMap<String, Double>()
+            for (b in allBids) if (b.active) { gb.merge(b.eventId, 1, Int::plus); gd.merge(b.eventId, b.restingDollars, Double::plus) }
+            for (c in fresh) { gb.merge(c.line.market.eventId, 1, Int::plus); gd.merge(c.line.market.eventId, c.cost, Double::plus) }
+            Deploy(wallet, 0.9 * wallet, usual, 1.0, rules.deployMaxKelly, fresh.size, fresh.sumOf { it.cost }, usual + fresh.sumOf { it.cost }, spread = spreadLines(gb, gd, allBids, lines, rules))
+        } else null
+        if (rung == 0) lastDeploy = deployInfo?.copy(
             scale = scale, judged = decisions.size,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().groupingBy { it.why.replace(Regex("[0-9]+(\\.[0-9]+)?"), "#") }.eachCount().entries.sortedByDescending { it.value }.take(10).map { it.key to it.value },
         )
@@ -506,15 +516,21 @@ class MakerDesk(
             val byTier = anyPosts.groupBy { MarketPopularity.tier(it.line.league, it.line.market.marketType, it.line.books, rules.popularBooks) }
             for (tier in byTier.keys.sorted()) pick(byTier.getValue(tier), compareBy<MakerDecision.Post> { BidTier.of(it.line) }.thenByDescending { it.evAtFair })
         }
+        val spread = spreadLines(gameBids, gameDollars, bids, lines, rules)
+        return out to Deploy(wallet, target, resting, 1.0, rules.deployMaxKelly, out.size, dollars, resting + wantedNew, weekSkips = weekSkips, weekJudged = weekJudged, anySkips = anySkips, anyJudged = anyJudged, spread = spread)
+    }
+
+
+    /** How the bids are spread over games (Diagnostics): games with a bid, the most on one, and the five games carrying the most. */
+    private fun spreadLines(gameBids: Map<String, Int>, gameDollars: Map<String, Double>, bids: List<MakerBid>, lines: List<MakerLine>, rules: MakerRules): List<String> {
         val names = HashMap<String, String>().apply {
             for (b in bids) put(b.eventId, b.eventName)
             for (l in lines) put(l.market.eventId, l.eventName)
         }
-        val spread = buildList {
+        return buildList {
             add("games with a bid: ${gameBids.size} · most bids on one game ${gameBids.values.maxOrNull() ?: 0}, most dollars ${String.format(java.util.Locale.US, "$%.2f", gameDollars.values.maxOrNull() ?: 0.0)} (limits: ${if (rules.perGameBids > 0) "${rules.perGameBids} bids" else "no bid count"}, ${if (rules.perGameBidDollars > 0.0) String.format(java.util.Locale.US, "$%.2f", rules.perGameBidDollars) else "no dollars"} a game)")
             gameDollars.entries.sortedByDescending { it.value }.take(5).forEach { (g, d) -> add("  ${names[g] ?: g}: ${gameBids[g] ?: 0} bids, ${String.format(java.util.Locale.US, "$%.2f", d)}") }
         }
-        return out to Deploy(wallet, target, resting, 1.0, rules.deployMaxKelly, out.size, dollars, resting + wantedNew, weekSkips = weekSkips, weekJudged = weekJudged, anySkips = anySkips, anyJudged = anyJudged, spread = spread)
     }
 
     /**
