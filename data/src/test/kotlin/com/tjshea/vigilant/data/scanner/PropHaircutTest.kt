@@ -46,9 +46,11 @@ class PropHaircutTest {
     }
 
     @Test
-    fun `comparing two scan results never walks their opportunities (the main-thread freeze in Tj's 2026-10-14 file)`() {
-        fun result(at: Long, n: Int) = ScanResult(emptyList(), List(n) { throw AssertionError("the opportunities must not be touched") }.takeIf { false } ?: emptyList(), ScanStats(), at)
-        assertEquals(result(5, 0), result(5, 0))
-        assertTrue(result(5, 0) != result(6, 0))
+    fun `comparing two scan results is cheap and still tells a recomputed one apart (the main-thread freeze in Tj's 2026-10-14 file)`() {
+        fun result(at: Long) = ScanResult(emptyList(), emptyList(), ScanStats(0, 0, 0, 0, 0), at)
+        assertEquals(result(5), result(5))
+        assertEquals(result(5).hashCode(), result(5).hashCode())
+        assertTrue(result(5) != result(6))
+        assertTrue(result(5) != result(5).copy(freshSinceMs = 3L))
     }
 }
