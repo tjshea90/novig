@@ -1003,8 +1003,8 @@ class MakerTest {
         val up = MakerPlan.plan(wanted = listOf(postOf(onGame("g1", "z1"))), resting = listOf(resting("x1-over", 0.5).copy(game = com.tjshea.vigilant.data.tracker.GameRef("g1", "A @ B", start, "NFL")), resting("x2-over", 0.5).copy(game = com.tjshea.vigilant.data.tracker.GameRef("g1", "A @ B", start, "NFL"))),
             rules = limited, now = now, budget = 10_000.0, skips = emptyMap(), partial = true)
         assertTrue(up.places.isEmpty())
-        // Dollars: each bid costs 100 contracts x 0.55 = $55 here; a $60 limit takes one.
-        val dollars = MakerPlan.plan(wanted = (1..3).map { postOf(onGame("g1", "d$it")) }, resting = emptyList(), rules = rules.copy(perGameBidDollars = 60.0, maxBids = 100, maxDollars = 10_000.0), now = now, budget = 10_000.0)
+        // Dollars: each bid costs 100 contracts x 0.55 x $0.01 = $0.55 here; a $1.00 limit takes one.
+        val dollars = MakerPlan.plan(wanted = (1..3).map { postOf(onGame("g1", "d$it")) }, resting = emptyList(), rules = rules.copy(perGameBidDollars = 1.0, maxBids = 100, maxDollars = 10_000.0), now = now, budget = 10_000.0)
         assertEquals(1, dollars.places.size)
     }
 
