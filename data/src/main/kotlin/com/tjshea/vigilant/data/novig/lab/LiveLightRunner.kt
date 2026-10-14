@@ -1,0 +1,266 @@
+package com.tjshea.vigilant.data.novig.lab
+
+import com.tjshea.vigilant.data.live.Fetched
+import com.tjshea.vigilant.data.match.TeamMatcher
+import com.tjshea.vigilant.data.novig.NovigEvent
+import com.tjshea.vigilant.data.novig.NovigMarket
+import com.tjshea.vigilant.data.novig.NovigSource
+import com.tjshea.vigilant.data.novig.burst.LadderLine
+import com.tjshea.vigilant.data.novig.burst.Ladders
+import com.tjshea.vigilant.data.novig.stream.BookListener
+import com.tjshea.vigilant.data.novig.stream.PushedBooks
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
+
+/** What Live light has done, for the settings page and Diagnostics. */
+data class LiveLightStatus(
+    val running: Boolean = false,
+    val games: Int = 0,
+    val markets: Int = 0,
+    val withScore: Int = 0,
+    /** Pushes from Novig's live feed that reached a watched market, and scans they (and score changes) caused. */
+    val pushes: Long = 0,
+    val scans: Long = 0,
+    val offers: Long = 0,
+    val lastPushMs: Long = 0,
+    val lastScanMs: Long = 0,
+    /** How long the latest scan took from the push to the offer (ms), and the slowest of the last ones. */
+    val lastScanTookMs: Long = 0,
+    val skipped: Map<String, Int> = emptyMap(),
+    val last: String? = null,
+    val problem: String? = null,
+)
+
+/**
+ * Live light (Tj, 2026-10-14): obviously wrong or stale live prices, found as they appear. It rides Novig's own websocket (one shared connection, [PushedBooks]) for the prices of every live game's moneyline,
+ * spread and total markets, and ESPN's scoreboard (every [stateMs]) for the score and clock. A push on a watched market, or a change of score, re-judges that one game at once ([LiveLightScan]: the score
+ * and clock alone say where the game is going; [TailScan]: Novig's own liquid lines do), and what it finds is handed to the tail taker ([onOffer]) behind ITS switches and limits. Nothing here places an
+ * order. A game whose score is older than [STATE_MAX_AGE_MS], whose Novig market is closed, or whose team can't be matched to the score is never judged.
+ */
+class LiveLightRunner(
+    private val scope: CoroutineScope,
+    private val source: NovigSource,
+    private val newView: (BookListener) -> PushedBooks?,
+    private val fetch: suspend (url: String) -> Fetched?,
+    private val onOffer: (TailOffer) -> Unit,
+    private val leagues: () -> Set<String>,
+    private val clock: () -> Long = System::currentTimeMillis,
+    private val rules: LiveLightRules = LiveLightRules(),
+    private val tailRules: TailRules = TailRules(),
+    private val catalogMs: Long = CATALOG_MS,
+    private val stateMs: Long = STATE_MS,
+    private val debounceMs: Long = DEBOUNCE_MS,
+) {
+    private class Game(val ev: NovigEvent, val markets: List<NovigMarket>, val lines: List<LadderLine>) {
+        val marketIds: List<String> = markets.map { it.marketId }
+    }
+
+    private class Feed(val game: EspnGame, val atMs: Long)
+
+    private val _status = MutableStateFlow(LiveLightStatus())
+    val status: StateFlow<LiveLightStatus> = _status.asStateFlow()
+
+    @Volatile private var games: Map<String, Game> = emptyMap()
+    @Volatile private var marketEvent: Map<String, String> = emptyMap()
+    private val feeds = ConcurrentHashMap<String, Feed>()
+    private val dirty = ConcurrentHashMap.newKeySet<String>()
+    private val signal = Channel<Unit>(Channel.CONFLATED)
+    private val offered = HashMap<String, Pair<Long, Double>>()
+    @Volatile private var view: PushedBooks? = null
+    private var jobs: List<Job> = emptyList()
+    @Volatile private var pushSinceMs = 0L
+
+    val running: Boolean get() = jobs.any { it.isActive }
+
+    /** True while the push lane is doing the work: watching live games and hearing from Novig lately. The slower lab then leaves tail offers to it. */
+    fun carrying(now: Long = clock()): Boolean = running && games.isNotEmpty() && now - _status.value.lastPushMs < CARRY_MS
+
+    @Synchronized
+    fun start() {
+        if (running) return
+        _status.value = LiveLightStatus(running = true)
+        dirty.clear()
+        val listener = BookListener { marketId, atMs, _ ->
+            val ev = marketEvent[marketId] ?: return@BookListener
+            dirty += ev
+            pushSinceMs = atMs
+            _status.value = _status.value.let { it.copy(pushes = it.pushes + 1, lastPushMs = clock()) }
+            signal.trySend(Unit)
+        }
+        view = newView(listener)
+        jobs = listOf(
+            scope.launch { guarded("catalog") { catalogLoop() } },
+            scope.launch { guarded("score") { stateLoop() } },
+            scope.launch { guarded("scan") { scanLoop() } },
+        )
+    }
+
+    @Synchronized
+    fun stop() {
+        jobs.forEach { it.cancel() }
+        jobs = emptyList()
+        view?.close()
+        view = null
+        games = emptyMap()
+        marketEvent = emptyMap()
+        feeds.clear()
+        dirty.clear()
+        _status.value = _status.value.copy(running = false, games = 0, markets = 0, withScore = 0)
+    }
+
+    private suspend fun guarded(what: String, body: suspend () -> Unit) {
+        while (scope.isActive) {
+            try {
+                body()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {   // a lane that decides bets must never take the app down, and must never stop for one bad frame
+                _status.value = _status.value.copy(problem = "$what: ${e.javaClass.simpleName} ${e.message ?: ""}".trim())
+                delay(RETRY_MS)
+            }
+        }
+    }
+
+    private fun skip(why: String) {
+        _status.value = _status.value.let { it.copy(skipped = it.skipped + (why to (it.skipped[why] ?: 0) + 1)) }
+    }
+
+    // ---- the games: Novig's live events and their markets, re-read every [catalogMs] and pinned on the feed -------------------------------------------------------------------------
+
+    private suspend fun catalogLoop() {
+        while (scope.isActive) {
+            readCatalog()
+            delay(catalogMs)
+        }
+    }
+
+    internal suspend fun readCatalog() {
+        val statuses = listOf(NovigEvent.STATUS_LIVE, NovigEvent.STATUS_DELAYED)
+        val ls = leagues()
+        val live = source.events(ls, statuses).sortedBy { it.startsTs }
+        if (live.isEmpty()) {
+            games = emptyMap(); marketEvent = emptyMap()
+            view?.watchLive(emptyList())
+            _status.value = _status.value.copy(games = 0, markets = 0, withScore = 0, problem = null)
+            return
+        }
+        val ids = live.map { it.eventId }.toSet()
+        val all = source.markets(ls, Ladders.TYPES, statuses).filter { it.eventId in ids && it.isOpen }
+        val room = minOf(MAX_MARKETS, view?.room() ?: MAX_MARKETS)
+        val built = LinkedHashMap<String, Game>()
+        var budget = room
+        // The games furthest along first: they are the ones that can be decided.
+        for (ev in live) {
+            val ms = all.filter { it.eventId == ev.eventId }
+            val lines = ms.mapNotNull { Ladders.line(it) }
+            if (lines.isEmpty()) continue
+            val keep = ms.filter { m -> lines.any { it.marketId == m.marketId } }
+            if (keep.size > budget) continue
+            budget -= keep.size
+            built[ev.eventId] = Game(ev, keep, lines)
+        }
+        games = built
+        marketEvent = built.values.flatMap { g -> g.marketIds.map { it to g.ev.eventId } }.toMap()
+        view?.watchLive(marketEvent.keys.toList())
+        feeds.keys.retainAll(built.keys)
+        _status.value = _status.value.copy(games = built.size, markets = marketEvent.size, withScore = built.keys.count { it in feeds }, problem = null)
+    }
+
+    // ---- the score: ESPN's scoreboard every few seconds; a change of score or clock is a reason to judge the game again --------------------------------------------------------------------
+
+    private suspend fun stateLoop() {
+        while (scope.isActive) {
+            readScores()
+            delay(stateMs)
+        }
+    }
+
+    internal suspend fun readScores() {
+        val now = clock()
+        val g = games
+        for (league in g.values.map { it.ev.league }.toSet()) {
+            val path = LabClock.ESPN_PATHS[league] ?: continue
+            val boards = fetch("https://site.api.espn.com/apis/site/v2/sports/$path/scoreboard")?.let { LabClock.parseEspn(it.body) } ?: continue
+            for (game in g.values.filter { it.ev.league == league }) {
+                val m = game.ev.matchup ?: continue
+                val e = boards.filter { it.live }.firstOrNull { TeamMatcher.similarity(it.home, m.home) >= 0.5 && TeamMatcher.similarity(it.away, m.away) >= 0.5 } ?: continue
+                val before = feeds[game.ev.eventId]?.game
+                feeds[game.ev.eventId] = Feed(e, now)
+                if (before == null || before.homeScore != e.homeScore || before.awayScore != e.awayScore || before.period != e.period || before.clockSec != e.clockSec) {
+                    dirty += game.ev.eventId
+                    signal.trySend(Unit)
+                }
+            }
+        }
+        _status.value = _status.value.copy(withScore = g.keys.count { it in feeds })
+    }
+
+    // ---- the judgment: one game, at once -----------------------------------------------------------------------------------------------------------------------------------------------
+
+    private suspend fun scanLoop() {
+        while (scope.isActive) {
+            signal.receive()
+            val first = clock()
+            delay(debounceMs)   // a burst of pushes is one look
+            val ids = dirty.toList().also { dirty.removeAll(it.toSet()) }
+            for (id in ids) scanGame(id, first)
+        }
+    }
+
+    internal fun scanGame(eventId: String, triggeredAtMs: Long = clock()) {
+        val game = games[eventId] ?: return
+        val now = clock()
+        val feed = feeds[eventId] ?: return skip("no score for the game")
+        if (now - feed.atMs > STATE_MAX_AGE_MS) return skip("score older than ${STATE_MAX_AGE_MS / 1000} s")
+        val sport = LabClock.sportOf(game.ev.league) ?: return
+        val frac = LabClock.fractionLeft(game.ev.league, feed.game.period, feed.game.clockSec) ?: return skip("clock not readable (overtime or unknown)")
+        val st = GameState(sport, feed.game.homeScore, feed.game.awayScore, frac)
+        val books = view?.liveTop(game.marketIds).orEmpty()
+        if (books.isEmpty()) return skip("no books from the live feed")
+        val points = game.lines.mapNotNull { line ->
+            val b = books[line.marketId] ?: return@mapNotNull null
+            if (b.lifecycle?.closed == true) null else LadderPoint(line, b)
+        }
+        if (points.isEmpty()) return skip("markets closed")
+        val marginOf = { ref: String -> feed.game.marginOf(ref) }
+        val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
+        val s = _status.value
+        _status.value = s.copy(scans = s.scans + 1, lastScanMs = now, lastScanTookMs = (clock() - triggeredAtMs).coerceAtLeast(0))
+        // The best view of an outcome both models like is the more cautious one.
+        for (c in found.groupBy { it.outcomeId }.values.map { g -> g.minBy { it.fair } }.sortedByDescending { it.edge }) {
+            val prev = offered[c.outcomeId]
+            if (prev != null && now - prev.first < REOFFER_MS && c.ask >= prev.second - 1e-9) continue
+            val offer = TailOffers.build(game.ev, game.markets, points, st, c, now) ?: continue
+            offered[c.outcomeId] = now to c.ask
+            _status.value = _status.value.let { it.copy(offers = it.offers + 1, last = "${c.rule} · ${offer.target.selection} · ${"%.1f".format(java.util.Locale.US, c.edge * 100)}% edge · ${offer.state}") }
+            runCatching { onOffer(offer) }
+        }
+    }
+
+    companion object {
+        /** Markets the lane may hold on the feed: a bbo market costs 8 of the key's 512 stream tokens, and the scan and the bids share them. */
+        const val MAX_MARKETS = 48
+        const val CATALOG_MS = 20_000L
+        const val STATE_MS = 3_000L
+        const val DEBOUNCE_MS = 120L
+        const val RETRY_MS = 2_000L
+
+        /** A score older than this is not what the game is now: nothing is judged on it. */
+        const val STATE_MAX_AGE_MS = 12_000L
+
+        /** The same outcome is handed to the taker again only after this long, or at a better price. */
+        const val REOFFER_MS = 1_500L
+
+        /** Pushes heard within this long = the lane is carrying the load. */
+        const val CARRY_MS = 60_000L
+    }
+}
