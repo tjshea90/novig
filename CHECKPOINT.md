@@ -1,7 +1,7 @@
-# CHECKPOINT 3262 — read me first, then TASKS.md
+# CHECKPOINT 3263 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T20:06:41Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `fb7fb0081` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T20:10:30Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `4c3849b70` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: v0.99.14: Volume mode for bids - EV floors 1.5% safest / 2.5% riskier, up to 3,000 bids, the kinds that fill fastest first (from 24,000 bids of history), no stake scale-up
@@ -13,11 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
+     M app/src/test/kotlin/com/tjshea/vigilant/app/SampleScan.kt
 
 ## Last ten checkpoints
 ```
+  4c3849b70 ckpt 3262: pre-ship: v0.99.14: Volume mode for bids - EV floors 1.5% safest / 2.5% ris
   b06707bd8 ckpt 3261: v0.99.13 released and recorded (TWP2 done)
   990ebf93d ckpt 3260: v0.99.13 shipped (bid while scanning + FarLane quick scans), release.yml tr
   2793ac247 ckpt 3259: pre-release: v0.99.13: bids go up as a league's odds arrive during a scan, 
@@ -27,8 +27,4 @@ ship.sh gates and releases this
   ac4ad8106 ckpt 3255: v0.99.12 released and recorded (TWD3 done)
   d75e15dee ckpt 3254: v0.99.12 shipped (bids rest longer, transient-skip keep, per-game bid caps 
   a3a251768 ckpt 3253: pre-release: v0.99.12: bids rest longer (a transient old fair no longer tak
-  df05b1517 ckpt 3252: pre-ship: v0.99.12: bids rest longer (a transient old fair no longer takes 
 ```
-
-(8 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
