@@ -429,9 +429,11 @@ class MakerDesk(
         val wantedNew = posted.filter { it.line.outcomeId !in activeOutcomes }.sumOf { it.cost }
         val relaxed = rules.copy(
             margin = rules.margin + DEPLOY_EXTRA_MARGIN, requireSharp = true, stakeScale = DEPLOY_OVERFLOW_STAKE, kellyCeiling = 0.0,
+            earlyHours = if (rules.earlyHours > 0) maxOf(rules.earlyHours, DEPLOY_HOURS) else 0,
             // A riskier bid is posted to "see if anyone takes it" (Tj, 2026-10-14): resting well behind the best bid is the point, so the "too far behind to fill" rule does not apply to it.
             maxBehind = 0.0,
-            earlyHours = if (rules.earlyHours > 0) maxOf(rules.earlyHours, DEPLOY_HOURS) else 0,
+            // ... and it rests (Tj: "They don't rest anywhere near long enough"): on a game 12 h or more out its fair may be [DEPLOY_FAR_FAIR_MS] old before it must end.
+            farFairMaxAgeMs = DEPLOY_FAR_FAIR_MS,
         )
         val candidates = MakerQuote.decideAll(lines, relaxed, now, held).map(judge).filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in postedOutcomes }
         val overflowResting = bids.filter { it.active && it.overflow }.mapTo(HashSet()) { it.outcomeId }
@@ -439,17 +441,37 @@ class MakerDesk(
         val out = ArrayList<MakerDecision>()
         var dollars = 0.0
         var weekJudged = 0
+        var weekSkips: List<Pair<String, Int>> = emptyList()
         var anyJudged = 0
         var anySkips: List<Pair<String, Int>> = emptyList()
-        var weekSkips: List<Pair<String, Int>> = emptyList()
-        // The riskier bids already up first (they stay while valid), then the best new ones by their edge, while the target has room.
-        for (c in candidates.sortedWith(compareByDescending<MakerDecision.Post> { it.line.outcomeId in overflowResting }.thenByDescending { it.evAtFair })) {
-            val keep = c.line.outcomeId in overflowResting
-            if (!keep && room <= 0.0) continue
-            out += c.copy(obscure = true, overflow = true)
-            dollars += c.cost
-            if (!keep) room -= c.cost
+        // What each game already has up (resting bids and the usual bids this pass posts): the wallet-filling bids are spread over many games, never piled on a few (Tj, 2026-10-14: "I only want so many
+        // bids/money on each game. Make it diversify bids among many games and bid types").
+        val gameBids = HashMap<String, Int>()
+        val gameDollars = HashMap<String, Double>()
+        for (b in bids) if (b.active) { gameBids.merge(b.eventId, 1, Int::plus); gameDollars.merge(b.eventId, b.restingDollars, Double::plus) }
+        for (c in posted) if (c.line.outcomeId !in activeOutcomes) { gameBids.merge(c.line.market.eventId, 1, Int::plus); gameDollars.merge(c.line.market.eventId, c.cost, Double::plus) }
+        /** Takes [cands]: the ones already up first (they stay while valid), then every game's best in turn, within each game's cap; stops at the room the target has left. */
+        fun pick(cands: List<MakerDecision.Post>, order: Comparator<MakerDecision.Post>) {
+            val sorted = cands.sortedWith(compareByDescending<MakerDecision.Post> { it.line.outcomeId in overflowResting }.then(order))
+            val (up, fresh) = sorted.partition { it.line.outcomeId in overflowResting }
+            for (c in up) {
+                out += c.copy(obscure = true, overflow = true)
+                dollars += c.cost
+            }
+            for (c in BidSpread.interleave(fresh)) {
+                if (room <= 0.0) break
+                val game = c.line.market.eventId
+                if (rules.perGameBids > 0 && (gameBids[game] ?: 0) >= rules.perGameBids) continue
+                if (rules.perGameBidDollars > 0.0 && (gameDollars[game] ?: 0.0) + c.cost > rules.perGameBidDollars + 1e-9) continue
+                out += c.copy(obscure = true, overflow = true)
+                dollars += c.cost
+                room -= c.cost
+                gameBids.merge(game, 1, Int::plus)
+                gameDollars.merge(game, c.cost, Double::plus)
+            }
         }
+        // The riskier bids already up first (they stay while valid), then the best new ones by their edge, while the target has room.
+        pick(candidates, compareByDescending { it.evAtFair })
         // Still short, with nothing left in the usual window (Tj, 2026-10-14: "If it can't find good bids, increase the time period of game start date to bid on games later in the week ... but all at a safe EV"):
         // the same lines judged for games up to a week out, with a margin [DEPLOY_WEEK_MARGIN] wider again (a bid that rests for days is priced from older books), a sharp book required and half the stake.
         // Every rule that makes a bid safe (fresh fair, books agreeing, the sharp veto, the repeat and game guards, Profit-proven) is unchanged; only the clock and the margin move.
@@ -459,19 +481,12 @@ class MakerDesk(
             val farAll = MakerQuote.decideAll(lines, week, now, held).map(judge)
             weekJudged = farAll.size
             weekSkips = farAll.filterIsInstance<MakerDecision.Skip>().groupingBy { it.why.replace(Regex("[0-9]+(\\.[0-9]+)?"), "#") }.eachCount().entries.sortedByDescending { it.value }.take(8).map { it.key to it.value }
-            val far = farAll.filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in taken }
-            for (c in far.sortedWith(compareByDescending<MakerDecision.Post> { it.line.outcomeId in overflowResting }.thenByDescending { it.evAtFair })) {
-                val keep = c.line.outcomeId in overflowResting
-                if (!keep && room <= 0.0) continue
-                out += c.copy(obscure = true, overflow = true)
-                dollars += c.cost
-                if (!keep) room -= c.cost
-            }
+            pick(farAll.filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in taken }, compareByDescending { it.evAtFair })
         }
         // Last, still short (Tj, 2026-10-14: "Post as many bids as possible. Fill up the wallet. Hundreds of bids. All sports ... all times ... all props are allowed. Fill it with popular sports and market types first.
         // As long as risky bids have a higher ev ask, it is fine"): every start time, every kind, no sharp book required and no tier rules; the price sits [DEPLOY_ANY_MARGIN] further under the fair, and a
         // risky kind (prop overs, the NFL, game lines: [BidTier]) a further [DEPLOY_ANY_RISKY_MARGIN]. At least [DEPLOY_ANY_MIN_BOOKS] books must price it. The fair's freshness, the books agreeing, a sharp book's
-        // veto where one prices the line, the repeat and game guards, Profit-proven and the half stake are unchanged. Popular kinds of market go first, the riskier after.
+        // veto where one prices the line, the repeat and game guards, Profit-proven and the half stake are unchanged. Popular kinds of market go first, the riskier after, each over many games.
         if (room > 0.0) {
             val taken = HashSet<String>(postedOutcomes).apply { out.forEach { add(it.line.outcomeId) } }
             val anyRules = relaxed.copy(
@@ -483,17 +498,9 @@ class MakerDesk(
             anyJudged = anyAll.size
             anySkips = anyAll.filterIsInstance<MakerDecision.Skip>().groupingBy { it.why.replace(Regex("[0-9]+(\\.[0-9]+)?"), "#") }.eachCount().entries.sortedByDescending { it.value }.take(8).map { it.key to it.value }
             val anyPosts = anyAll.filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in taken }
-            val order = compareByDescending<MakerDecision.Post> { it.line.outcomeId in overflowResting }
-                .thenBy { MarketPopularity.tier(it.line.league, it.line.market.marketType, it.line.books, rules.popularBooks) }
-                .thenBy { BidTier.of(it.line) }
-                .thenByDescending { it.evAtFair }
-            for (c in anyPosts.sortedWith(order)) {
-                val keep = c.line.outcomeId in overflowResting
-                if (!keep && room <= 0.0) continue
-                out += c.copy(obscure = true, overflow = true)
-                dollars += c.cost
-                if (!keep) room -= c.cost
-            }
+            // The hottest kinds of market first (over every game), then the popular, then the rest; the safer kind before the riskier within each.
+            val byTier = anyPosts.groupBy { MarketPopularity.tier(it.line.league, it.line.market.marketType, it.line.books, rules.popularBooks) }
+            for (tier in byTier.keys.sorted()) pick(byTier.getValue(tier), compareBy<MakerDecision.Post> { BidTier.of(it.line) }.thenByDescending { it.evAtFair })
         }
         return out to Deploy(wallet, target, resting, 1.0, rules.deployMaxKelly, out.size, dollars, resting + wantedNew, weekSkips = weekSkips, weekJudged = weekJudged, anySkips = anySkips, anyJudged = anyJudged)
     }
@@ -1060,6 +1067,9 @@ class MakerDesk(
         const val DEPLOY_ANY_MARGIN = 0.04
         const val DEPLOY_ANY_RISKY_MARGIN = 0.04
         const val DEPLOY_ANY_MIN_BOOKS = 3
+
+        /** How old the fair behind a wallet-filling bid on a game 12 h or more out may get before the bid ends: 30 minutes (the quotes in it were a scan's fresh ones when it was priced). */
+        const val DEPLOY_FAR_FAIR_MS = 30 * 60_000L
 
         /** A second, deeper bid on a side that already has one: this much more margin under the fair (about 6 points more edge), so its Kelly stake is bigger and it rests where it fills rarely but well. */
         const val DEEP_MARGIN = 0.06

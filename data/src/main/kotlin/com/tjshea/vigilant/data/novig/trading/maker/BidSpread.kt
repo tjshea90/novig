@@ -10,10 +10,10 @@ object BidSpread {
     /** [bids] (in priority order) ordered so that every game's first choice comes before any game's second. */
     fun interleave(bids: List<MakerDecision.Post>): List<MakerDecision.Post> {
         if (bids.size < 2) return bids
-        val position = HashMap<MakerDecision.Post, Int>(bids.size * 2)
-        for ((_, ofGame) in bids.groupBy { it.line.market.eventId }) {
+        val position = IntArray(bids.size)
+        for ((_, ofGame) in bids.indices.groupBy { bids[it].line.market.eventId }) {
             // The game's kinds in the order each first appears, then round after round: one bid of each kind per round.
-            val byKind = ofGame.groupBy { it.line.kind }.values.toList()
+            val byKind = ofGame.groupBy { bids[it].line.kind }.values.toList()
             var next = 0
             var round = 0
             while (next < ofGame.size) {
@@ -21,7 +21,7 @@ object BidSpread {
                 round++
             }
         }
-        return bids.withIndex().sortedWith(compareBy({ position[it.value] ?: 0 }, { it.index })).map { it.value }
+        return bids.indices.sortedWith(compareBy({ position[it] }, { it })).map { bids[it] }
     }
 
     /** Bids up on each game (by event id). */
