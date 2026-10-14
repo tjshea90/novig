@@ -40,7 +40,18 @@ class CloudScanner(
         val f = latest.feed
         val r = result()
         val errors = buildList {
-            if (f == null) add("Cloud scan: no list has arrived from the GitHub engine yet" + (latest.why?.let { " ($it)" } ?: ""))
+            if (f == null) {
+                val st = latest.status
+                val running = st != null && !st.idle && clock() - st.heartbeatMs < 240_000L
+                add(
+                    when {
+                        latest.why != null -> "Cloud scan: no list has arrived from the GitHub engine yet (${latest.why})"
+                        running -> "Cloud scan: the GitHub engine is running its first scan (${(clock() - st!!.startedAtMs) / 60_000L} min so far). A league is listed only when every feed has answered it, so with many leagues, props and ${"" }days ahead the first list takes several minutes; later lists update every 20 s."
+                        st != null && st.idle -> "Cloud scan: the GitHub engine is switched off (it stops when the switch is off); turn Scan on GitHub on again"
+                        else -> "Cloud scan: no list has arrived from the GitHub engine yet (waiting for it to start; Settings › Cloud scan › Start the engine now)"
+                    },
+                )
+            }
             else {
                 val age = (clock() - f.computedAtMs) / 1000L
                 if (age > STALE_SECONDS) add("Cloud scan: the list is ${age / 60} min old" + (latest.why?.let { " ($it)" } ?: " (is the engine running?)"))

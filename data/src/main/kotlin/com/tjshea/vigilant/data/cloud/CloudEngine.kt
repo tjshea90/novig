@@ -97,6 +97,7 @@ class CloudEngine(
         val job = async { scanner.scan(s, feedSources, emptySet(), onProgress = {}, onPartial = { partial.set(it) }) }
         var lastPublishedAt = 0L
         var lastConfigAt = t0
+        var lastBeatAt = t0
         var restart = false
         while (job.isActive) {
             pause(1_000L)
@@ -108,7 +109,13 @@ class CloudEngine(
                     val feed = CloudFeed(now, cfg.rev, r.stats, rows)
                     onFeed(rows, now)
                     problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = feed, scanMs = now - t0))
+                    lastBeatAt = now
                 }
+            }
+            // A long first scan has no list to publish for minutes (a league is listed only when every feed has answered it): the heartbeat still goes out, so the phone can tell a working engine from a dead one.
+            if (now - lastBeatAt >= heartbeatEveryMs) {
+                lastBeatAt = now
+                problem = publish(null, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = null, scanMs = now - t0))
             }
             if (now - lastConfigAt >= configEveryMs) {
                 lastConfigAt = now
