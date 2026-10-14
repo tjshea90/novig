@@ -225,6 +225,7 @@ object ApiBetPlanner {
                     "The edge is gone: Novig's best price is now ${american(best.price)}, and the fair odds ${american(target.fair)} make that " +
                         "${percent(bestQuote.evPercent)} EV."
                 },
+                negativeEv = bestQuote.evPercent <= 0.0,
             )
         }
 

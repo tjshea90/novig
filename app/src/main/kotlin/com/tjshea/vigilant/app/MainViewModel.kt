@@ -191,6 +191,8 @@ data class UiState(
     val cnoLinks: Map<String, String> = emptyMap(),
     /** Novig's price now for CNO's listed bets, by row key ([com.tjshea.vigilant.data.cno.NovigLive]). */
     val novigLive: Map<String, com.tjshea.vigilant.data.cno.LivePrice> = emptyMap(),
+    /** Bets (their list key) the Bet sheet just found not +EV at Novig's price, and when: they leave the lists at once, until a newer price read says otherwise (Tj, 2026-10-14). */
+    val negativeSeen: Map<String, Long> = emptyMap(),
     /**
      * Every bet Tj already has (✓ placed or ✕ removed in the widget or CNO tab, or tracked from a
      * card), from either scanner: hidden from every list ([PlacedIndex]). Rebuilt when those change.
@@ -444,7 +446,13 @@ data class UiState(
     fun cnoShown(now: Long): List<CnoPick> =
         cnoCandidates(now).let { all -> if (settings.cnoOnlyAgreed) all.filter { cnoAgrees(it, now) } else all }
             // A bet that is no longer +EV at Novig's price now leaves the list by itself, no tap needed (Tj, 2026-10-13); it is still read ([livePriceRows]), so it returns if it turns +EV again.
-            .filter { livePick(it, now).ev > 0.0 }
+            .filter { livePick(it, now).ev > 0.0 && !negativeSeenAt(it.row, now) }
+
+    /** The Bet sheet found [row] not +EV in the last minute, and no price read since says it is back. */
+    private fun negativeSeenAt(row: CnoRow, now: Long): Boolean {
+        val at = negativeSeen[com.tjshea.vigilant.app.MiniWindow.cnoKey(row)] ?: return false
+        return now - at < NEGATIVE_SEEN_MS && (livePrice(row, now)?.atMs ?: 0L) <= at
+    }
 
     /**
      * With "only bets the books agree on" on: the bets held back only because their books haven't
@@ -471,6 +479,9 @@ data class UiState(
  * outlives this screen (Tj switches apps mid-scan); this only mirrors it: progress and partial
  * results while it runs, the report when it ends.
  */
+/** How long the Bet sheet's "not +EV" keeps a bet out of the lists when no newer price read overrides it. */
+private const val NEGATIVE_SEEN_MS = 60_000L
+
 /** The live lane's rows reach the feed no more often than this (the board changes up to ten times a second; a screen needs a few). */
 private const val LIVE_FEED_GAP_MS = 150L
 

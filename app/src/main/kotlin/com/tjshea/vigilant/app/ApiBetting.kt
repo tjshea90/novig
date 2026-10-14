@@ -684,7 +684,13 @@ class ApiBettingController(
             else s.copy(betSheet = when (result) {
                 is PlanResult.Ready -> cur.copy(plan = result.plan, refusal = null)
                 is PlanResult.Refused -> cur.copy(plan = null, refusal = result.reason)
-            })
+            }).let { u ->
+                // The bet is not +EV at Novig's price: it leaves the lists now, not at the next price read.
+                if (result is PlanResult.Refused && result.negativeEv) {
+                    val t = clock()
+                    u.copy(negativeSeen = (u.negativeSeen.filterValues { t - it < 60_000L }) + (target.placedKey to t))
+                } else u
+            }
         }
     }
 
