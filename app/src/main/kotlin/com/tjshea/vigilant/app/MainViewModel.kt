@@ -1028,7 +1028,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun recheck(marketIds: Collection<String>, quiet: Boolean = false) {
         val current = _state.value
-        if (!current.loaded || !current.settings.vigilantOn || current.settings.liveOnly || c.runner.running || current.status.rechecking || marketIds.isEmpty()) return
+        if (!current.loaded || !current.settings.vigilantOn || current.settings.liveOnly || current.status.rechecking || marketIds.isEmpty()) return
+        // A scan holds the scanner for minutes: the list is still kept honest from Novig's live top of book, without the scan's lock (Tj, 2026-10-14: a -3.7% bet stayed listed during a scan).
+        if (c.runner.running || current.status.scanning) {
+            if (quiet && !current.settings.paused) requoteDuringScan(marketIds)
+            return
+        }
         // A quiet recheck is the list keeping itself honest (Tj, 2026-10-11: a bet no longer +EV leaves the list by itself): no toast, no pause or odds-check message, and no scan.
         if (current.settings.paused) {
             if (!quiet) _toasts.tryEmit(PAUSED_TOAST)
@@ -1062,6 +1067,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     else -> "Rechecked ${report.read} price${if (report.read == 1) "" else "s"}"
                 },
             )
+        }
+    }
+
+    private var requoting = false
+
+    /** Re-prices the listed rows [marketIds] from Novig's newest books while a scan runs; a row that is no longer +EV drops out of the feed. */
+    private fun requoteDuringScan(marketIds: Collection<String>) {
+        if (requoting) return
+        requoting = true
+        viewModelScope.launch {
+            try {
+                val before = _state.value.result ?: return@launch
+                val ids = marketIds.toSet()
+                val rows = before.opportunities.filter { it.market.marketId in ids }
+                val fresh = runCatching { withContext(Dispatchers.IO) { c.scanner.requoteListed(_state.value.settings, rows) } }.getOrNull().orEmpty()
+                if (fresh.isEmpty()) return@launch
+                val byKey = fresh.associateBy { it.market.marketId + "|" + it.outcome.outcomeId }
+                fun swap(o: com.tjshea.vigilant.data.scanner.Opportunity) = byKey[o.market.marketId + "|" + o.outcome.outcomeId] ?: o
+                // The scan may have published newer rows while Novig was read: patch what is held NOW.
+                val latest = _state.value.result ?: return@launch
+                val patched = latest.copy(
+                    opportunities = latest.opportunities.map(::swap),
+                    games = latest.games.map { g -> g.copy(outcomes = g.outcomes.map(::swap)) },
+                )
+                _state.publishResult(patched)
+            } finally {
+                requoting = false
+            }
         }
     }
 

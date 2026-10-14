@@ -106,7 +106,7 @@ fun FeedScreen(
         while (true) {
             kotlinx.coroutines.delay(AUTO_RECHECK_MS)
             val st = latest.value
-            if (!st.status.scanning && !st.status.rechecking && !st.settings.paused) {
+            if (!st.status.rechecking && !st.settings.paused) {
                 val ids = feedMarketIds(st, System.currentTimeMillis())
                 if (ids.isNotEmpty()) onAutoRecheck(ids)
             }
