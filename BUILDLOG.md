@@ -266,3 +266,4 @@ day that changes.
 | v0.99.5 | code 264 | 2026-10-14T13:51Z | v0.99.5: Live features master switch, Live light page, by-reference state, tennis off, FAIR CALIBRATION
 | v0.99.6 | code 265 | 2026-10-14T16:55Z | v0.99.6: Safeguards page, Live tab, wallet-filling bids reach later in the week
 | v0.99.7 | code 266 | 2026-10-14T17:21Z | v0.99.7: Novig scan errors clear themselves, deeper second bids fill the wallet
+| v0.99.8 | code 267 | 2026-10-14T17:52Z | v0.99.8: the auto bids read a week of games, so the weekend's NFL and college slate is priced and the wallet can fill
