@@ -132,7 +132,7 @@ class ApiBetPlacer(
         val ready = result as? PlanResult.Ready ?: return result
         val p = ready.plan
         val held = com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(all) + restingPositions() + pending.map { it.pos }
-        val why = com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, held, target.market.marketId, target.outcomeId, p.expectedCost, p.payout, target.market.outcomes.map { it.outcomeId }) ?: return result
+        val why = com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules, held, target.market.marketId, target.outcomeId, p.expectedCost, p.payout, target.market.outcomes.map { it.outcomeId }, com.tjshea.vigilant.data.tracker.RepeatGuard.family(target.eventName, target.startsTs, target.marketLabel, target.selection)) ?: return result
         return if (limits.manual) PlanResult.Ready(p.copy(note = listOfNotNull(p.note, "Heads up: $why You can still place it.").joinToString(" ")))
         else PlanResult.Refused("Not bet: $why")
     }
