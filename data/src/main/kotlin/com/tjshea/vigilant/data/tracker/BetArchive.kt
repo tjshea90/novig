@@ -100,21 +100,24 @@ class BetArchive(val dir: File) {
         return Synced(byDay.size, betFiles, bidFiles, changed)
     }
 
-    /** The archive's files whose current content has not been copied out yet (to Downloads), oldest first. */
+    /**
+     * The archive's files whose current content has not been copied out yet, oldest first. [channel] is where they go: "mirrored" is Downloads/Vigilant/bets, "github" is the `phone-data` branch
+     * (Tj, 2026-10-14: bets, bids and history saved permanently to GitHub automatically, for Claude to analyze); each channel remembers what it has sent on its own.
+     */
     @Synchronized
-    fun pendingMirror(): List<File> {
+    fun pendingMirror(channel: String = "mirrored"): List<File> {
         val state = load()
         val written = state["written"].orEmpty()
-        val mirrored = state["mirrored"].orEmpty()
+        val mirrored = state[channel].orEmpty()
         return written.filter { (name, sha) -> mirrored[name] != sha && File(dir, name).exists() }.keys.sorted().map { File(dir, it) }
     }
 
-    /** [file] was copied out as it is now. */
+    /** [file] was copied out as it is now (to [channel], see [pendingMirror]). */
     @Synchronized
-    fun markMirrored(file: File) {
+    fun markMirrored(file: File, channel: String = "mirrored") {
         val state = load()
         val sha = state["written"]?.get(file.name) ?: return
-        state.getOrPut("mirrored") { mutableMapOf() }[file.name] = sha
+        state.getOrPut(channel) { mutableMapOf() }[file.name] = sha
         save(state)
     }
 
