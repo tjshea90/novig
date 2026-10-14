@@ -7354,3 +7354,8 @@ https://owlsinsight.com/
 
 Is this a good api? I'm considering the $50 monthly plan. Consider if it would work well with vigilant
 ```
+
+## 2026-10-14T21:54:02Z
+```
+Can it tell me positive EV bets on novig without me scanning locally with vigilant
+```
