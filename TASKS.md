@@ -5059,5 +5059,5 @@ Tj (verbatim): "I want a "light" version of the feature which looks for obviousl
 - [x] TLL1 (design in the code comments and research/live_light_2026-10-14.md) Research what exists (paper lab TAIL score model, PinnLiveRunner/LiveScan/BoltLiveConsensus, Kalshi live markets, a score+clock source, LiveBidDesk) and write the design to research/live_light_2026-10-14.md.
 - [x] TLL2 (`LiveLightScan`, `LiveLightScanTest`) Pure engine: win/over probability from score + time left (obviously-wrong test: a wide margin of safety), cross-checked by any live feed that is on (Kalshi, BoltOdds soft-book consensus) when present; Novig-only works from score alone.
 - [x] TLL3 (`LiveLightRunner` + `LiveConfirm`, `LiveLightRunnerTest`; wired in VigilantApp.labTick, settings switch in Live bids) Runner on Novig's socket (push): a wrong live price is bet at once; own switch (Settings), pregame scanner/auto-bet/bids unaffected; never touches Pinnodds.
-- [ ] TLL4 Live auto-bids toggle: bids priced off the same live fair, far under it.
+- [x] TLL4 (`LiveLightBids`, second `LiveBidDesk` "lightBidDesk", Settings switch, `LiveLightRunnerTest` bid cases) Live auto-bids toggle: bids priced off the same live fair, far under it.
 - [ ] TLL5 Guards (live fee, 5 s freshness, repeat/line guards, per-game exposure), Diagnostics section, tests, ship.
