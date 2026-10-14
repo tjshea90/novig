@@ -5106,6 +5106,6 @@ Tj: "Yes, add the safeguards screen. Instead of all the live features in the set
 
 ## TER: stale scan errors, bids never fill the wallet (Tj, 2026-10-14, screenshot of the +EV tab)
 Tj: "Make these errors refresh and disappear automatically as soon as they no longer apply (when the novig key is accepted). Also look at the bids up, it never fills my wallet" (screenshot: two red cards "Novig key: Novig lists the internet address ... VPN or proxy (ANONYMIZED_NETWORK) ... The key is tried again every 10 minutes" and "Novig prices: Unable to resolve host api.novig.com"; wallet $152.18, 17 bids up = $19.27.)
-- [ ] TER1 Find where those cards come from and make each one clear itself the moment the thing it reports works again (a key read, a Novig read, any later scan), without a new scan.
-- [ ] TER2 Bids: find why only 17 bids / $19 are up of a $152 wallet (supply, stake size, a limit) and fix it.
-- [ ] TER3 Tests, ship.
+- [x] TER1 (`NovigHealth`, `MainViewModel.errorStillApplies`, FeedScreen `errorApplies`) Find where those cards come from and make each one clear itself the moment the thing it reports works again (a key read, a Novig read, any later scan), without a new scan.
+- [x] TER2 (deeper second bids: `MakerBid.rung`, `MakerDesk.cycle(rung)`, MakerRunner deep pass; `MakerTest`) Bids: find why only 17 bids / $19 are up of a $152 wallet (supply, stake size, a limit) and fix it.
+- [x] TER3 (shipped v0.99.7) Tests, ship.

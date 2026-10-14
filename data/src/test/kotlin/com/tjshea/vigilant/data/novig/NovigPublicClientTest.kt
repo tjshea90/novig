@@ -53,6 +53,15 @@ class NovigPublicClientTest {
     }
 
     @Test
+    fun `a successful Novig answer is remembered, so a scan's old Novig error can leave the screen (Tj, 2026-10-14)`() = runBlocking {
+        com.tjshea.vigilant.data.novig.NovigHealth.okAtMs = 0L
+        val before = System.currentTimeMillis()
+        server.enqueue(MockResponse().setBody("""{"marketId":"mh","eventId":"e1","type":"MONEY","status":"OPEN","description":"x","outcomes":[]}"""))
+        client().market("mh")
+        assertTrue(com.tjshea.vigilant.data.novig.NovigHealth.okAtMs >= before)
+    }
+
+    @Test
     fun `a market looked up again within 30 s is not asked for again, a refused lookup slows the public pace and is retried once`() = runBlocking {
         val one = """{"marketId":"m1","eventId":"e1","type":"MONEY","status":"OPEN","description":"x","outcomes":[]}"""
         server.enqueue(MockResponse().setResponseCode(429).setHeader("Retry-After", "1").setBody("{}"))
