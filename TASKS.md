@@ -5096,3 +5096,10 @@ Tj: "Have the losing bet types been consistent since the start. There is still l
 - [x] TRD4 (Compose compares UiState by reference: `collectAsStateByReference`; ScanResult cheap equals) Lag/freezing: find the next main-thread cost (state emission rate, deep equality, recomposition).
 - [x] TRD5 (`LiveMaster`, Settings › Live light & live switch, master row on the Settings home; `LiveMasterTest`) One "Live features" master switch (all live lanes, live bids, Pinnodds/BoltOdds/Kalshi live engine, live sockets) and a "Live" settings page that is not under Pinnodds.
 - [x] TRD6 (shipped v0.99.5) Ship.
+
+## TLV: Safeguards screen, a Live tab, and bids that fill the wallet (Tj, 2026-10-14)
+Tj: "Yes, add the safeguards screen. Instead of all the live features in the settings, make a live tab with all of the features and well organized and easy to understand. Also the auto bids are still only posting a small portion of my wallet. I want it to fill up the wallet. If it can't find good bids, increase the time period of game start date to bid on games later in the week, or bid on more markets and sports, but all at all a safe EV"
+- [ ] TLV1 Settings › Safeguards page: every protection with its on/off state and its switch, and one "Turn all safeguards on" button.
+- [ ] TLV2 A Live tab (bottom bar): the master switch, Live light (bets, bids, real money, limits, status), live games, the sockets, and the Pinnodds-based engines in their own section; the Live light page and master row leave Settings.
+- [ ] TLV3 Wallet fill: when the bids up are under the wallet target and no usual or riskier bid is left, widen the start window (up to the week) and the markets and sports, at the same safe EV bars.
+- [ ] TLV4 Tests, ship.
