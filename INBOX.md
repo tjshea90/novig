@@ -7197,3 +7197,13 @@ This must work without pinnodds at all, because I no longer have pinnodds socket
 ```
 How do I see the live bids
 ```
+
+## 2026-10-14T05:32:12Z
+```
+Loosen the Live light thresholds a bit
+
+
+I want better chance for filled live bets and bids
+
+Also with all this turned on the app is lagging and freezing
+```
