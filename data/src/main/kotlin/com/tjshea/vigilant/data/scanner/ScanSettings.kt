@@ -876,7 +876,8 @@ data class ScanSettings(
         }
         // v0.99.4 (Tj, 2026-10-14: "Do what you think is most profitable because I'm losing money"): Profit-proven only turns on once, from the history files' profile; a later choice in Settings stays.
         if (s.schema < 18) {
-            s = s.copy(gates = s.gates.copy(profitProven = true), vigGuards = s.vigGuards.copy(propHaircut = true), schema = 18)
+            // Tennis auto-bets: -28% on 97 bets (non-prop tennis -40% on 38, t -4.1): off until a history file says otherwise.
+            s = s.copy(gates = s.gates.copy(profitProven = true), vigGuards = s.vigGuards.copy(propHaircut = true), autoBetTennis = false, schema = 18)
         }
         return s
     }
