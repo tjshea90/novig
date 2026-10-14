@@ -1,22 +1,25 @@
-# CHECKPOINT 3255 — read me first, then TASKS.md
+# CHECKPOINT 3256 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T19:13:07Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `bd3dd08b7` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T19:19:07Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `09fcac2b5` (this checkpoint is the commit after it)
 
 ## Just done
-v0.99.12 released and recorded (TWD3 done)
+pre-ship: v0.99.13: bids go up on a league as its odds arrive while a huge scan is still running (switch: Bids > Bid while the scan runs)
 
 ## Do this next
-Wait for Tj's next Diagnostics from v0.99.12: WALLET DEPLOYMENT spread lines, bids ended reasons, bid-hours by lead time; nothing else open
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
+     M app/build.gradle.kts
+     M app/src/main/kotlin/com/tjshea/vigilant/app/MainViewModel.kt
 
 ## Last ten checkpoints
 ```
+  ac4ad8106 ckpt 3255: v0.99.12 released and recorded (TWD3 done)
   d75e15dee ckpt 3254: v0.99.12 shipped (bids rest longer, transient-skip keep, per-game bid caps 
   a3a251768 ckpt 3253: pre-release: v0.99.12: bids rest longer (a transient old fair no longer tak
   df05b1517 ckpt 3252: pre-ship: v0.99.12: bids rest longer (a transient old fair no longer takes 
@@ -26,5 +29,7 @@ Wait for Tj's next Diagnostics from v0.99.12: WALLET DEPLOYMENT spread lines, bi
   ef8e9ae74 ckpt 3248: pre-release: v0.99.11: the last wallet-filling pass bids every start time a
   1093b87e9 ckpt 3247: pre-ship: v0.99.11: the last wallet-filling pass bids every start time and 
   8afb8b263 ckpt 3246: pre-ship: v0.99.11: the last wallet-filling pass bids every start time and 
-  2b98e8d05 ckpt 3245: v0.99.9 recorded; v0.99.10 shipped (wallet-filling bids ignore max-behind, 
 ```
+
+(2 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)

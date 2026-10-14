@@ -2786,7 +2786,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val vg = st.vigGuards
                 val d = c.makerDesk()?.lastDeploy
                 buildList {
-                    add("switch ${if (vg.bidDeploy) "ON" else "off"} · target ${vg.bidDeployPct}% of the wallet · stake ceiling ${vg.bidDeployKelly}% of full Kelly · bids ${if (st.maker) "on" else "off"}")
+                    add("switch ${if (vg.bidDeploy) "ON" else "off"} · target ${vg.bidDeployPct}% of the wallet · stake ceiling ${vg.bidDeployKelly}% of full Kelly · bids ${if (st.maker) "on" else "off"} · bid while the scan runs ${if (vg.bidWhileScanning) "ON" else "off"}")
                     if (d == null) add("no pass has worked it out yet (bids off, no wallet reading, or the switch is off)") else {
                         fun m(v: Double) = String.format(java.util.Locale.US, "$%.2f", v)
                         add("last pass: wallet ${m(d.walletDollars)} · target ${m(d.targetDollars)} · resting ${m(d.restingDollars)} (${(100 * d.restingDollars / d.walletDollars.coerceAtLeast(0.01)).toInt()}% of the wallet) · stake scale x${String.format(java.util.Locale.US, "%.1f", d.scale)} (cap ${(d.kellyCeiling * 100).toInt()}% Kelly)")
