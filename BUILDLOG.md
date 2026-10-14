@@ -276,3 +276,4 @@ day that changes.
 | v0.99.15 | code 274 | 2026-10-14T20:40Z | v0.99.15: far games' books kept and bid from up to 90 min old in Volume mode
 | v0.99.16 | code 275 | 2026-10-14T20:49Z | v0.99.16: Volume mode scales new stakes toward the wallet target
 | v0.100.0 | code 276 | 2026-10-14T22:39Z | v0.100.0: Cloud scan - the scans run on GitHub (engine, cloud-scan.yml), the phone sets settings and shows the list; bets, bids and history saved to GitHub automatically
+| v0.100.1 | code 277 | 2026-10-14T22:54Z | v0.100.1: the app sends your API keys to GitHub secrets for the cloud engine (sealed on the phone, write-only; Pinnodds, BoltOdds and Kalshi never sent)
