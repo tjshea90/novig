@@ -7175,3 +7175,8 @@ Make a toggle for live auto bids as well, which does the same thing but offers b
 
 All of this should be able to work simultaneously with the regular pregame odds scanning/ auto bet and auto bid, but only if I'm already using those.
 ```
+
+## 2026-10-14T03:13:04Z
+```
+The live light should look at alternate market odds as well on novig, for example, alternate spreads and totals on games, because these are often wrong. It should have a smart math system if needed to calculate bad odds in real time then rapidly auto bet
+```
