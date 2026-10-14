@@ -41,6 +41,8 @@ data class LiveLightStatus(
     val skipped: Map<String, Int> = emptyMap(),
     val last: String? = null,
     val problem: String? = null,
+    /** One line per watched game (its name, the score and time left, the closest call and why it was not bet): what the Bids tab and Diagnostics show so a quiet lane can be read. */
+    val gameLines: Map<String, String> = emptyMap(),
 )
 
 /**
@@ -152,6 +154,28 @@ class LiveLightRunner(
         }
     }
 
+    private fun setLine(eventId: String, line: String) {
+        _status.value = _status.value.let { it.copy(gameLines = it.gameLines + (eventId to line)) }
+    }
+
+    /** The closest call among [sides] in words: the side with the best edge over what Novig asks, and the first rule it fails (or that it passed). */
+    internal fun closestCall(sides: List<LiveLightScan.SideFair>): String {
+        val priced = sides.filter { !it.ask.isNaN() && it.contracts > 0 }
+        val best = priced.maxByOrNull { it.fair / (it.ask + com.tjshea.vigilant.engine.Fees.takerFee(it.ask.coerceIn(0.001, 0.999), it.line.fee, eventLive = true)) }
+            ?: return "nothing offered to buy"
+        val fee = com.tjshea.vigilant.engine.Fees.takerFee(best.ask.coerceIn(0.001, 0.999), best.line.fee, eventLive = true)
+        val edge = best.fair / (best.ask + fee) - 1.0
+        fun pct(d: Double) = "%.1f".format(java.util.Locale.US, d * 100)
+        val why = when {
+            best.fair < rules.minFair -> "the model is only ${pct(best.fair)}% sure (needs ${pct(rules.minFair)}%)"
+            edge < rules.minEdge -> "the edge is under ${pct(rules.minEdge)}%"
+            best.contracts < rules.minContracts -> "only ${best.contracts} contracts offered"
+            best.ask > rules.maxAsk -> "the price is over ${pct(rules.maxAsk)}c"
+            else -> "meets the model's rules: it is the taker's limits that decide (stake, edge minimum, caps)"
+        }
+        return "${best.line.label} ${best.side.lowercase()}: model ${pct(best.fair)}% vs ask ${pct(best.ask)}c = edge ${if (edge >= 0) "+" else ""}${pct(edge)}% · $why"
+    }
+
     private fun skip(why: String) {
         _status.value = _status.value.let { it.copy(skipped = it.skipped + (why to (it.skipped[why] ?: 0) + 1)) }
     }
@@ -229,7 +253,11 @@ class LiveLightRunner(
             val boards = fetch("https://site.api.espn.com/apis/site/v2/sports/$path/scoreboard")?.let { LabClock.parseEspn(it.body) } ?: continue
             for (game in g.values.filter { it.ev.league == league }) {
                 val m = game.ev.matchup ?: continue
-                val e = boards.filter { it.live }.firstOrNull { TeamMatcher.similarity(it.home, m.home) >= 0.5 && TeamMatcher.similarity(it.away, m.away) >= 0.5 } ?: continue
+                val e = boards.filter { it.live }.firstOrNull { TeamMatcher.similarity(it.home, m.home) >= 0.5 && TeamMatcher.similarity(it.away, m.away) >= 0.5 }
+                    ?: run {
+                        if (!feeds.containsKey(game.ev.eventId)) setLine(game.ev.eventId, "${game.ev.description}: no score (ESPN's ${league} scoreboard has no live game with these teams)")
+                        null
+                    } ?: continue
                 val before = feeds[game.ev.eventId]?.game
                 if (before == null) recatalog = true
                 feeds[game.ev.eventId] = Feed(e, now)
@@ -272,6 +300,8 @@ class LiveLightRunner(
         val marginOf = { ref: String -> feed.game.marginOf(ref) }
         val sides = LiveLightScan.sides(points, game.ev.league, st, marginOf, rules)
         manageBids(game, sides, feed.game, now)
+        val scoreText = "${game.ev.description} · ${feed.game.homeScore}-${feed.game.awayScore} (home-away order as ESPN lists: home ${feed.game.homeScore}) · ${"%.0f".format(java.util.Locale.US, frac * 100)}% left · ${points.size} of ${game.lines.size} lines priced"
+        setLine(eventId, "$scoreText · closest: ${if (sides.isEmpty()) "the model cannot judge this game yet" else closestCall(sides)}")
         val curve = LiveLightCurve.scan(points, game.ev.league, st, sides.associate { it.outcomeId to it.fair })
         val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + curve + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
         val s = _status.value
