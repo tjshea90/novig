@@ -761,6 +761,7 @@ private fun VigilantRoot(
                     onMiniWindow = onMiniWindow,
                     onPause = vm::setPaused,
                     onLiveMode = { on -> vm.updateSettings { com.tjshea.vigilant.app.LiveOnly.set(it, on) } },
+                    errorApplies = { e -> vm.errorStillApplies(e, System.currentTimeMillis()) },
                     onHide = vm::hideOpportunity,
                     onUnhide = vm::unmarkPlaced,
                     parlay = parlayActions,

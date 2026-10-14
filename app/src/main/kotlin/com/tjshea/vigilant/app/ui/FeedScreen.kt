@@ -84,6 +84,8 @@ fun FeedScreen(
     onPause: (Boolean) -> Unit = {},
     /** Live games only mode on/off (Tj, 2026-10-11): [com.tjshea.vigilant.app.LiveOnly]. */
     onLiveMode: (Boolean) -> Unit = {},
+    /** Whether a scan's error still holds now: one that no longer does leaves the screen by itself (Tj, 2026-10-14). */
+    errorApplies: (String) -> Boolean = { true },
     /** ✕: the bet leaves this list (and the widget) for good, through refreshes and rescans, as on the CNO tab. */
     onHide: (Opportunity) -> Unit = {},
     /** Undo, or "Put back" in the removed list: the bet (by key) shows again. */
@@ -208,7 +210,7 @@ fun FeedScreen(
                         )
                     }
                 }
-                item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin) { onRecheck(feedMarketIds(state, now)) } }
+                item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin, errorApplies) { onRecheck(feedMarketIds(state, now)) } }
                 // The real-time live lane (Settings › Include live games): what it is linked to and how fresh its bets are, or why it shows none (Tj, 2026-10-11).
                 if (AppBook.isNovig && state.settings.includeLive && state.settings.leagues.isNotEmpty()) {
                     item(key = "live") {
@@ -284,9 +286,9 @@ private fun FeedSummary(
     onOpenSettings: () -> Unit,
     onSort: (FeedSort) -> Unit,
     onStartsWithin: (Int) -> Unit,
-    onRecheck: () -> Unit,
     /** Whether a scan's error still holds now ([com.tjshea.vigilant.app.MainViewModel.errorStillApplies]): one that no longer does leaves the screen by itself. */
-    errorApplies: (String) -> Boolean = { true },
+    errorApplies: (String) -> Boolean,
+    onRecheck: () -> Unit,
 ) {
     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         UsageStrip(state)
