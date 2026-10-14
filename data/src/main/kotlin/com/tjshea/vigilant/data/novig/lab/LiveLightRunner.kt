@@ -172,7 +172,7 @@ class LiveLightRunner(
         marketEvent = built.values.flatMap { g -> g.marketIds.map { it to g.ev.eventId } }.toMap()
         view?.watchLive(marketEvent.keys.toList())
         feeds.keys.retainAll(built.keys)
-        _status.value = _status.value.copy(games = built.size, markets = marketEvent.size, withScore = built.keys.count { it in feeds }, problem = null)
+        _status.value = _status.value.copy(games = built.size, markets = marketEvent.size, withScore = built.keys.count { feeds.containsKey(it) }, problem = null)
     }
 
     // ---- the score: ESPN's scoreboard every few seconds; a change of score or clock is a reason to judge the game again --------------------------------------------------------------------
@@ -201,7 +201,7 @@ class LiveLightRunner(
                 }
             }
         }
-        _status.value = _status.value.copy(withScore = g.keys.count { it in feeds })
+        _status.value = _status.value.copy(withScore = g.keys.count { feeds.containsKey(it) })
     }
 
     // ---- the judgment: one game, at once -----------------------------------------------------------------------------------------------------------------------------------------------
