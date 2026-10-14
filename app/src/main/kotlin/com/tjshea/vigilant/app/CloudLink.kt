@@ -204,16 +204,25 @@ class CloudLink(private val c: AppContainer) {
         }
     }
 
+    /** A switch-off the engine has not been told yet (kept in a file, so a restart before it was sent does not leave the engine running for a phone that is off). */
+    private val offPending = File(c.app.filesDir, "cloud_off_pending")
+    private var lastOn: Boolean? = null
+
     private suspend fun pushSettings(s: ScanSettings) {
         if (!hasToken()) return
-        val wasOn = lastPushedKey?.startsWith("on") == true
-        if (!s.cloudScan && !wasOn && lastPushedKey != null) return
+        if (lastOn == true && !s.cloudScan) runCatching { offPending.writeText("1") }
+        lastOn = s.cloudScan
+        // Off and nothing owed: the engine is left alone (no request is made for a phone that never used the cloud scan).
+        if (!s.cloudScan && !offPending.exists()) return
         val key = (if (s.cloudScan) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode()
         if (key == lastPushedKey) return
         val rev = maxOf(System.currentTimeMillis(), lastRev + 1)
         val why = client.writeConfig(CloudConfig(rev = rev, on = s.cloudScan, settings = s, device = android.os.Build.MODEL.orEmpty().take(40)))
-        if (why == null) { lastPushedKey = key; lastRev = rev; _ui.update { it.copy(note = if (s.cloudScan) "Settings sent to the engine." else "Cloud scan off: the engine will stop.") } }
-        else { c.eventLog.warn("CLOUD", "settings not sent: $why"); _ui.update { it.copy(note = "Settings not sent: $why") } }
+        if (why == null) {
+            lastPushedKey = key; lastRev = rev
+            if (!s.cloudScan) runCatching { offPending.delete() }
+            _ui.update { it.copy(note = if (s.cloudScan) "Settings sent to the engine." else "Cloud scan off: the engine will stop.") }
+        } else { c.eventLog.warn("CLOUD", "settings not sent: $why"); _ui.update { it.copy(note = "Settings not sent: $why") } }
     }
 
     /** Saves the bet and bid day files and the scan study's days to `phone-data`; each file is sent again only when it changed. */
