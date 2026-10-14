@@ -954,6 +954,21 @@ class MakerTest {
     }
 
     @Test
+    fun `the last wallet-filling pass bids any start time and kind with no sharp book, riskier kinds at a higher edge, popular markets first`() = runBlocking {
+        val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1, maxOdds = 0)
+        // 300 hours out (past the week), NO sharp book: only the last pass can bid on it.
+        val far = line("m1-over", fair = 0.60, offer = 0.64, m = market("m1", starts = start + 300 * 3_600_000L))
+        val r = desk(FakeNovig(), tracker()).cycle(listOf(far), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0)
+        val post = r.decisions.filterIsInstance<MakerDecision.Post>().single()
+        assertTrue("a wallet-filling bid", post.overflow)
+        val margin = kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_ANY_MARGIN
+        assertTrue("at least ${margin} under the fair even for a kind that is not risky: price at most ${0.60 / (1.0 + margin)}", post.price <= 0.60 / (1.0 + margin) + 1e-9)
+        assertTrue(r.deploy!!.anyJudged > 0)
+        // Switch off: nothing extra.
+        assertTrue(desk(FakeNovig(), tracker()).cycle(listOf(far), kelly.copy(earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
+    }
+
+    @Test
     fun `a wallet-filling bid may rest far behind the best bid - it is posted to see if anyone takes it`() = runBlocking {
         val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1)
         // Tj, 2026-10-14 (v0.99.8 file: 9,400 of 10,184 lines skipped for the start time, the week pass posted nothing): the bests bid is 0.58, a wide-margin price is near 0.55, far below it.
