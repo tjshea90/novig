@@ -1,21 +1,23 @@
-# CHECKPOINT 3280 — read me first, then TASKS.md
+# CHECKPOINT 3281 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T22:23:45Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-e8041e9d-7grwre` · **builds on:** `18d98158c` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T22:28:41Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-e8041e9d-7grwre` · **builds on:** `0b70bd22e` (this checkpoint is the commit after it)
 
 ## Just done
-TCL3/TCL4: phone CloudLink (poll, settings push, GitHub history saving), CloudScanner/SwitchingScanner, Settings > Cloud scan page, CLAUDE.md rule, resume.sh CLOUD line; data+app settings tests pass
+TCL: cloudScan/cloudSave moved into gates (ScanSettings slot limit), off-owed marker, version 0.100.0 code 276, TASKS ticks
 
 ## Do this next
-Read first live run's logs; set cloud-config on=false after the test; full test floor; bump version; ship.sh; release
+ship.sh v0.100.0, release.yml, record-release, tell Tj the 3 manual steps
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  47ec326c1 ckpt 3280: TCL3/TCL4: phone CloudLink (poll, settings push, GitHub history saving), Cl
   650b7053e ckpt 3279: TCL2: CloudEngine (+tests), :cloud module (CloudMain publisher), cloud-scan
   0e840422d ckpt 3278: TCL1: CloudCodec (+test pass), CloudSources, CloudFiles, CloudClient writte
   26b2e2a3d ckpt 3277: TCL tasks written after Tj agreed (cloud engine + permanent GitHub history)
@@ -25,8 +27,7 @@ Read first live run's logs; set cloud-config on=false after the test; full test 
   c212ff27b ckpt 3273: v0.99.15 recorded; v0.99.16 shipped (Volume mode stake scale-up), release.y
   9d007daa3 ckpt 3272: pre-release: v0.99.16: Volume mode scales the stakes of new bids up toward 
   e67ee3fb2 ckpt 3271: pre-ship: v0.99.16: Volume mode scales the stakes of new bids up toward the
-  1fe47f144 ckpt 3270: v0.99.15 shipped (far books kept + 90 min far book age in Volume mode), rel
 ```
 
-(9 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
