@@ -1298,6 +1298,8 @@ data class ApiGates(
     val propLineAllBooks: Boolean = false,
     /** Live games only mode (Tj, 2026-10-11): see [LiveOnlyMode]. */
     val liveOnly: LiveOnlyMode = LiveOnlyMode(),
+    /** The one main switch for every live feature and socket (Tj, 2026-10-14): see [LiveMasterMode]. */
+    val liveMaster: LiveMasterMode = LiveMasterMode(),
     /**
      * BoltOdds Pro (Tj, 2026-10-12; BOLTODDS_API.md): the odds websocket as a fair-line source. On (and a key saved and answering) the scan reads the lines and props the socket has already delivered,
      * free of any per-call cost, beside every other API that is on. Off by default; off, the app is what it was and nothing is sent to BoltOdds.
@@ -1400,6 +1402,26 @@ data class ApiGates(
  * "Live games only" mode (Tj, 2026-10-11): only the real-time lane runs (Pinnodds + Novig sockets), only live bets are listed, and everything the lane does not need is switched OFF. [on] is the mode;
  * the rest is what was on before, so that switching it off puts it all back ([com.tjshea.vigilant.app.LiveOnly] does both). The saved fields are only meaningful while [on].
  */
+/**
+ * What the Live features master switch remembers while it is OFF (Tj, 2026-10-14: "I need a way to turn off all live features and sockets on one main toggle"): every live lane, live bid and socket
+ * switch as it was, so turning the master back ON puts each back exactly. [off] true = every live feature and socket is switched off.
+ */
+@kotlinx.serialization.Serializable
+data class LiveMasterMode(
+    val off: Boolean = false,
+    val tailOn: Boolean = false,
+    val tailBids: Boolean = false,
+    val liveBid: Boolean = false,
+    val pinnLive: Boolean = false,
+    val includeLive: Boolean = false,
+    val streamLive: Boolean = false,
+    val streamScan: Boolean = false,
+    val novigSocket: Boolean = true,
+    val boltSocket: Boolean = true,
+    val pinnSocket: Boolean = true,
+    val kalshiSocket: Boolean = true,
+)
+
 @kotlinx.serialization.Serializable
 data class LiveOnlyMode(
     val on: Boolean = false,

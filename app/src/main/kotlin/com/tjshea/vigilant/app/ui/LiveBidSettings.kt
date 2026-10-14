@@ -188,47 +188,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
         LbHint("Editing a rule here makes the slider say Custom. Moving the slider sets them all again.")
     // ---- the autopilot: both engines, one tap ----------------------------------------------------------------------------------------------------------------------------------
 
-    // ---- live tail bets ----------------------------------------------------------------------------------------------------------------------------------------------------------
-    var confirmingTail by remember { mutableStateOf(false) }
-    SectionTitle(TailText.TITLE)
-    LbHint(TailText.HINT)
-    LbSwitch("Look for tail bets", "Reads the live games' strikes and writes down what it would buy (paper). Needs no Pinnodds key.", s.tailLive.on, "tailLiveSwitch") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(on = v, bet = it.tailLive.bet && v)) } }
-    LbSwitch("Live light: real-time push lane", TailText.LIGHT_HINT, s.tailLive.light, "tailLiveLightSwitch") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(light = v, bids = it.tailLive.bids && v)) } }
-    if (s.tailLive.light) LbSwitch("Live light bids", TailText.LIGHT_BIDS_HINT, s.tailLive.bids, "tailLiveBidsSwitch") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(bids = v)) } }
-    s.tailLive.halted?.let { why ->
-        Column(Modifier.padding(vertical = 4.dp).testTag("tailLiveHalted")) {
-            Text("Stopped: $why", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-            Button(onClick = { onUpdate { it.copy(tailLive = it.tailLive.copy(halted = null)) } }, modifier = Modifier.testTag("tailLiveResume")) { Text(LiveBidText.RESUME) }
-        }
-    }
-    Row(
-        Modifier.fillMaxWidth().toggleable(
-            value = s.tailLive.bet, role = Role.Switch,
-            onValueChange = { v -> if (!v) onUpdate { it.copy(tailLive = it.tailLive.copy(bet = false)) } else if (s.tailLive.on) confirmingTail = true },
-        ).padding(vertical = 6.dp).testTag("tailLiveRealSwitch"),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f).padding(end = 12.dp)) {
-            Text("Buy tail bets with real money", style = MaterialTheme.typography.bodyMedium)
-            Text("One immediate-or-cancel order per bet, sized by the stake below and held to the caps below.", style = MaterialTheme.typography.bodySmall, color = subtle)
-        }
-        Switch(checked = s.tailLive.bet, onCheckedChange = null, enabled = s.tailLive.on || s.tailLive.bet)
-    }
-    Text(TailText.statusLine(s, state.tailTrade, state.labStatus, state.lightStatus), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("tailLiveNote"))
-    LbDollars("Tail bet stake", listOf(1.0, 2.0, 3.0, 5.0), s.tailLive.stake, "tailLiveStake", 1.0, 25.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(stake = v)) } }
-    LbDollars("Most on one game", listOf(2.0, 3.0, 5.0, 10.0, 25.0), s.tailLive.maxGame, "tailLiveMaxGame", 1.0, 1_000.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(maxGame = v)) } }
-    LbDollars("Most in a day", listOf(5.0, 10.0, 20.0, 40.0, 100.0), s.tailLive.maxDay, "tailLiveMaxDay", 1.0, 10_000.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(maxDay = v)) } }
-    LbDollars("Stop for the day when settled tail bets lose", listOf(3.0, 5.0, 10.0, 25.0), s.tailLive.haltLoss, "tailLiveHaltLoss", 1.0, 10_000.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(haltLoss = v)) } }
-    LbPercent("Smallest edge after Novig's fee", listOf(0.03, 0.05, 0.07, 0.10), s.tailLive.minEdge, "tailLiveMinEdge", 1.0, 30.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(minEdge = v)) } }
-    if (confirmingTail) {
-        AlertDialog(
-            onDismissRequest = { confirmingTail = false },
-            title = { Text(TailText.CONFIRM_TITLE) },
-            text = { Text(TailText.confirm(s)) },
-            confirmButton = { TextButton(onClick = { confirmingTail = false; onUpdate { it.copy(tailLive = it.tailLive.copy(bet = true, halted = null)) } }, modifier = Modifier.testTag("tailLiveRealConfirm")) { Text("Turn on") } },
-            dismissButton = { TextButton(onClick = { confirmingTail = false }, modifier = Modifier.testTag("tailLiveRealCancel")) { Text("Cancel") } },
-        )
-    }
+    LbHint("Live light and the live tail bets are on their own page now: Settings › Live light.")
 
     // ---- presets ----------------------------------------------------------------------------------------------------------------------------------------------------------------
     SectionTitle("Live bid presets")
@@ -407,4 +367,58 @@ private fun LbPresetCard(preset: SavedLiveBidPreset, inForce: Boolean, builtIn: 
             }
         }
     }
+}
+
+
+/**
+ * Live light and the live tail bets (Tj, 2026-10-14: "the new live betting features are buried under pinnodds settings"): the switches, the real-money switch, the limits and the lane's status, on the Live light page.
+ * They need no Pinnodds key or socket: Novig's live feed and ESPN's score are enough.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun TailLiveBlock(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    val subtle = MaterialTheme.colorScheme.onSurfaceVariant
+    // ---- live tail bets ----------------------------------------------------------------------------------------------------------------------------------------------------------
+    var confirmingTail by remember { mutableStateOf(false) }
+    SectionTitle(TailText.TITLE)
+    LbHint(TailText.HINT)
+    LbSwitch("Look for tail bets", "Reads the live games' strikes and writes down what it would buy (paper). Needs no Pinnodds key.", s.tailLive.on, "tailLiveSwitch") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(on = v, bet = it.tailLive.bet && v)) } }
+    LbSwitch("Live light: real-time push lane", TailText.LIGHT_HINT, s.tailLive.light, "tailLiveLightSwitch") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(light = v, bids = it.tailLive.bids && v)) } }
+    if (s.tailLive.light) LbSwitch("Live light bids", TailText.LIGHT_BIDS_HINT, s.tailLive.bids, "tailLiveBidsSwitch") { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(bids = v)) } }
+    s.tailLive.halted?.let { why ->
+        Column(Modifier.padding(vertical = 4.dp).testTag("tailLiveHalted")) {
+            Text("Stopped: $why", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            Button(onClick = { onUpdate { it.copy(tailLive = it.tailLive.copy(halted = null)) } }, modifier = Modifier.testTag("tailLiveResume")) { Text(LiveBidText.RESUME) }
+        }
+    }
+    Row(
+        Modifier.fillMaxWidth().toggleable(
+            value = s.tailLive.bet, role = Role.Switch,
+            onValueChange = { v -> if (!v) onUpdate { it.copy(tailLive = it.tailLive.copy(bet = false)) } else if (s.tailLive.on) confirmingTail = true },
+        ).padding(vertical = 6.dp).testTag("tailLiveRealSwitch"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text("Buy tail bets with real money", style = MaterialTheme.typography.bodyMedium)
+            Text("One immediate-or-cancel order per bet, sized by the stake below and held to the caps below.", style = MaterialTheme.typography.bodySmall, color = subtle)
+        }
+        Switch(checked = s.tailLive.bet, onCheckedChange = null, enabled = s.tailLive.on || s.tailLive.bet)
+    }
+    Text(TailText.statusLine(s, state.tailTrade, state.labStatus, state.lightStatus), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("tailLiveNote"))
+    LbDollars("Tail bet stake", listOf(1.0, 2.0, 3.0, 5.0), s.tailLive.stake, "tailLiveStake", 1.0, 25.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(stake = v)) } }
+    LbDollars("Most on one game", listOf(2.0, 3.0, 5.0, 10.0, 25.0), s.tailLive.maxGame, "tailLiveMaxGame", 1.0, 1_000.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(maxGame = v)) } }
+    LbDollars("Most in a day", listOf(5.0, 10.0, 20.0, 40.0, 100.0), s.tailLive.maxDay, "tailLiveMaxDay", 1.0, 10_000.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(maxDay = v)) } }
+    LbDollars("Stop for the day when settled tail bets lose", listOf(3.0, 5.0, 10.0, 25.0), s.tailLive.haltLoss, "tailLiveHaltLoss", 1.0, 10_000.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(haltLoss = v)) } }
+    LbPercent("Smallest edge after Novig's fee", listOf(0.03, 0.05, 0.07, 0.10), s.tailLive.minEdge, "tailLiveMinEdge", 1.0, 30.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(minEdge = v)) } }
+    if (confirmingTail) {
+        AlertDialog(
+            onDismissRequest = { confirmingTail = false },
+            title = { Text(TailText.CONFIRM_TITLE) },
+            text = { Text(TailText.confirm(s)) },
+            confirmButton = { TextButton(onClick = { confirmingTail = false; onUpdate { it.copy(tailLive = it.tailLive.copy(bet = true, halted = null)) } }, modifier = Modifier.testTag("tailLiveRealConfirm")) { Text("Turn on") } },
+            dismissButton = { TextButton(onClick = { confirmingTail = false }, modifier = Modifier.testTag("tailLiveRealCancel")) { Text("Cancel") } },
+        )
+    }
+
 }

@@ -170,8 +170,11 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** Each feed's usage charts and the keys backup. A page of [APIS]. */
     USAGE("Usage details & keys backup", "Credits left on each feed, the day-by-day chart, and a backup of your keys", SettingsGroup.FIND),
 
+    /** Live light and the one switch for every live feature and socket (Tj, 2026-10-14). No Pinnodds needed. */
+    LIVELIGHT("Live light & live switch", "One switch for every live feature and socket, and Live light: bets and bids on obviously wrong live prices (no Pinnodds needed)", SettingsGroup.LIVE),
+
     /** Pinnacle's live price on the Pinnodds WebSocket against Novig's lagging quote: the key, the switches and the limits (Tj, 2026-10-08). */
-    PINNODDS("Pinnodds live", "Pinnacle's live price against Novig: key, paper or real bets, limits", SettingsGroup.LIVE),
+    PINNODDS("Pinnodds live (needs its socket)", "Pinnacle's live price against Novig: key, paper or real bets, limits; only if you have a Pinnodds socket", SettingsGroup.LIVE),
 
     /** Post-only bids on Novig's live lines, priced under Pinnacle's live fair: paper, then real money, with presets and every number as a chip or a box (Tj, 2026-10-10). */
     LIVEBIDS("Live bids", "Bids on live games, kept fresh and pulled fast: presets, stake and every safeguard", SettingsGroup.LIVE),
@@ -197,7 +200,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR -> s.vigilantOn
-        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
+        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, ODDSPAPI, UNABATED, ODDSPAPI_FREE, LIVELIGHT -> AppBook.isNovig
         APIS -> true
         PINNODDS, LIVEBIDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
@@ -244,6 +247,11 @@ object SettingsSummary {
                 "bankroll ${Format.money(s.bankroll)}",
                 Format.kellyLabel(s.kellyMultiplier),
             ).joinToString(" · ")
+            SettingsPage.LIVELIGHT -> when {
+                !com.tjshea.vigilant.app.LiveMaster.isOn(s) -> "ALL live features and sockets are OFF"
+                !s.tailLive.on -> "Live light off"
+                else -> "Live light on" + (if (s.tailLive.bids) " with bids" else "") + (if (s.tailLive.bet) ", real money" else ", paper")
+            }
             SettingsPage.PINNODDS -> when {
                 state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.noPinnKey -> "No Pinnodds key saved"
                 !s.pinnLive -> "Off" + if (s.pinnWebsite.website) " (Pinnacle website feed)" else if (s.pinnWebsite.bolt) " (BoltOdds soft-book average)" else ""
@@ -412,7 +420,7 @@ fun SettingsScreen(
                 .testTag("settingsPage-${current?.name ?: "HOME"}"),
         ) {
             when (current) {
-                null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids)
+                null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids, onUpdate = onUpdate)
                 SettingsPage.SCANNING -> ScanningPage(s, onUpdate)
                 SettingsPage.ALERTS -> AlertsPage(state, onUpdate)
                 SettingsPage.CNO -> CnoPage(s, onUpdate)
@@ -420,6 +428,7 @@ fun SettingsScreen(
                 SettingsPage.FEED -> FeedTab(s, onUpdate)
                 SettingsPage.FAIR -> FairOddsTab(state, onUpdate, onOpenPage = go)
                 SettingsPage.BETTING -> BettingTab(state, onUpdate, onNovigConnect, onNovigTest, onNovigDisconnect, bettingActions, onOpenAutoBet)
+                SettingsPage.LIVELIGHT -> LiveLightPage(state, reportActions, onUpdate)
                 SettingsPage.PINNODDS -> PinnLiveSection(state, keys, reportActions, onUpdate)
                 SettingsPage.LIVEBIDS -> LiveBidPage(state, reportActions, onUpdate)
                 SettingsPage.RESEARCH -> ResearchPage(state, reportActions, onUpdate)
@@ -443,8 +452,9 @@ fun SettingsScreen(
 
 /** The Settings home: a search box, the Auto-bet row (it opens its tab), then every page with what it's set to now. */
 @Composable
-private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> Unit, onOpenAutoBet: (() -> Unit)?, onOpenBids: (() -> Unit)?) {
+private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> Unit, onOpenAutoBet: (() -> Unit)?, onOpenBids: (() -> Unit)?, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val s = state.settings
+    if (AppBook.isNovig) LiveMasterRow(s, onUpdate)
     var query by rememberSaveable { mutableStateOf("") }
     OutlinedTextField(
         value = query,
@@ -2560,4 +2570,27 @@ private fun PinnDollarChips(title: String, choices: List<Double>, selected: Doub
         }
     }
     TypedDollarField(NumberSpecs.dollars(title.lowercase(), 1.0, 10_000.0), selected, "$tag-field", onPick)
+}
+
+
+/** The one main switch for every live feature and socket ([com.tjshea.vigilant.app.LiveMaster]); on top of the Settings home and of the Live light page. */
+@Composable
+fun LiveMasterRow(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val on = com.tjshea.vigilant.app.LiveMaster.isOn(s)
+    SwitchRow(
+        "Live features",
+        if (on) "On: live lanes, live bids and live sockets run as each is set. Turn this off to switch ALL of them (Live light, live bids, Pinnodds live, live games, the Novig, BoltOdds, Pinnodds and Kalshi sockets) off at once; turning it back on restores each as it was."
+        else "OFF: every live feature and every socket is switched off. Nothing live is read or sent. Turn it on to put each back as it was.",
+        on, tag = "liveMasterSwitch",
+    ) { v -> onUpdate { com.tjshea.vigilant.app.LiveMaster.set(it, v) } }
+}
+
+/** Settings › Live light & live switch: the master switch, then Live light (bets, bids, real money, limits, status). */
+@Composable
+fun LiveLightPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val shown by androidx.compose.runtime.rememberUpdatedState(reportActions.onLiveBidShown)
+    androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(1_500) } }
+    LiveMasterRow(state.settings, onUpdate)
+    Hint("Live light needs only Novig's live connection (your Novig key) and ESPN's scoreboard. Pinnodds is not needed.")
+    TailLiveBlock(state, onUpdate)
 }
