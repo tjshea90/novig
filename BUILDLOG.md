@@ -261,3 +261,4 @@ day that changes.
 | v0.99.0 | code 259 | 2026-10-14T03:20Z | v0.99.0: Live light push lane (score and clock model, BoltOdds second opinion, live bids)
 | v0.99.1 | code 260 | 2026-10-14T03:40Z | v0.99.1: Live light watches alternate spreads and totals and fits each ladder to a normal curve
 | v0.99.2 | code 261 | 2026-10-14T05:28Z | v0.99.2: Live light on the Bids tab and in Diagnostics (per-game closest call)
+| v0.99.3 | code 262 | 2026-10-14T06:12Z | v0.99.3: Live light loosened and lag fixed
