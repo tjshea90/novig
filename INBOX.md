@@ -7270,3 +7270,8 @@ I don't understand why it should ever be under wallet. There are plenty of games
 ```
 Confirm release v0.99.7 exists (mcp__github__get_release_by_tag tjshea90/novig v0.99.7), then run bash tools/record-release.sh v0.99.7 266 "v0.99.7: Novig scan errors clear themselves, deeper second bids fill the wallet" and send Tj the link https://github.com/tjshea90/novig/releases/tag/v0.99.7
 ```
+
+## 2026-10-14T17:20:44Z
+```
+This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
+```
