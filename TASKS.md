@@ -5084,6 +5084,6 @@ Causes found: `readCatalog` re-downloads and parses EVERY live market of 7 leagu
 
 ## TPH: player-prop haircut + Profit-proven on (Tj, 2026-10-14: "Do what you think is most profitable because I'm losing money")
 Evidence (research/bet_history_2026-10-14.md + my recomputation over 1,228 settled taker bets): player-prop OVERS taken as bets won 39.7% against a stated fair of 49.4% (n 481, z -4.2, ROI -15.7%); prop Unders -3.0 pts (n 317, z -1.1); non-prop bets and even-money bets match their stated EV; the bigger the stated EV the worse (EV >= 3.5%: -10.6 to -15 pts). The old guard `autoBetOverPropExtraEv` (3 points) is switched off whenever a minimum star rating decides (Tj's 4-star rule), so 481 prop overs got through.
-- [ ] TPH1 `PropHaircut`: the fair of a player-prop Over is cut 7 points and of an Under 3, in the Vigilant scan (`Pricing`) and in CNO's rows (`CnoChecks.screen`), so the edge, stake, STARS (and so the 4-star rule), auto-bet, bids and bet sheet all see it; switch `vigGuards.propHaircut` default on; Settings switch.
-- [ ] TPH2 One-time settings migration: Profit-proven only turns on (schema 18); he can turn it off.
-- [ ] TPH3 Tests, ship.
+- [x] TPH1 (`PropHaircut`, `PropHaircutTest`) `PropHaircut`: the fair of a player-prop Over is cut 7 points and of an Under 3, in the Vigilant scan (`Pricing`) and in CNO's rows (`CnoChecks.screen`), so the edge, stake, STARS (and so the 4-star rule), auto-bet, bids and bet sheet all see it; switch `vigGuards.propHaircut` default on; Settings switch.
+- [x] TPH2 (schema 18) One-time settings migration: Profit-proven only turns on (schema 18); he can turn it off.
+- [x] TPH3 (floor green 3552, shipped v0.99.4) Tests, ship.
