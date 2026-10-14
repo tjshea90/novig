@@ -897,6 +897,7 @@ private fun VigilantRoot(
                         onTestCloud = { vm.testCloud() },
                         onStartCloud = { vm.startCloud() },
                         onSaveCloudNow = { vm.saveCloudNow() },
+                        onSendCloudKeys = { vm.sendCloudKeys() },
                         onTestBoltKey = { share -> vm.testBoltKey(share) },
                         onTestOddsPapiFreeKey = { share -> vm.testOddsPapiFreeKey(share) },
                         onShareFeedRace = vm::shareFeedRace,

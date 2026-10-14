@@ -2337,6 +2337,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun removeCloudToken() { viewModelScope.launch(Dispatchers.IO) { c.cloud.removeToken() } }
     fun testCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.test() } }
     fun startCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.startEngine() } }
+    fun sendCloudKeys() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendKeys() } }
     fun saveCloudNow() { viewModelScope.launch(Dispatchers.IO) { c.cloud.saveHistory() } }
 
     fun removeKalshiKey() {

@@ -1488,7 +1488,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     Intro("Cloud scan runs Vigilant's scanner on GitHub's computers (free for this public repository) with every API you have a repository secret for, and sends this phone the +EV list. The phone sets the settings; GitHub does the reading and the pricing. Bets shown are re-checked against Novig's live price when you tap them. Live games, the auto-bet's and bids' own scans, Pinnodds, BoltOdds and your Kalshi key stay on the phone.")
     var token by remember { mutableStateOf("") }
     Text(
-        if (u.hasToken) "Token saved (ends …${u.tokenTail}). It is sealed in this phone's secure storage and not shown again." else "No GitHub token saved. Create a fine-grained token for the repository tjshea90/novig with Contents: read and write and Actions: read and write, and paste it here.",
+        if (u.hasToken) "Token saved (ends …${u.tokenTail}). It is sealed in this phone's secure storage and not shown again." else "No GitHub token saved. Create a fine-grained token for the repository tjshea90/novig with Contents, Actions and Secrets all set to read and write, and paste it here.",
         style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudTokenState"),
     )
     OutlinedTextField(
@@ -1502,6 +1502,11 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
         androidx.compose.material3.OutlinedButton(onClick = reportActions.onRemoveCloudToken, enabled = u.hasToken, modifier = Modifier.testTag("cloudRemove")) { Text("Remove") }
     }
     u.note?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudNote")) }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        Button(onClick = reportActions.onSendCloudKeys, enabled = u.hasToken, modifier = Modifier.testTag("cloudSendKeys")) { Text("Send my API keys to GitHub") }
+    }
+    Hint("Sends the keys saved on this phone to the repository's secrets, for the engine to use. Each is sealed on this phone before it leaves, so GitHub keeps it write-only (nothing can read it back). Pinnodds, BoltOdds and your Kalshi key are never sent. Needs the token's Secrets: read and write permission. Sent again by itself when a key changes while Scan on GitHub is on.")
+    u.keysNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudKeysNote")) }
     SwitchRow(
         "Scan on GitHub", "On: the phone makes no scan of its own and no API call; the engine on GitHub scans under these settings and this phone shows its list. Off: the app is what it was.",
         s.cloudScan, tag = "cloudScanSwitch", enabled = u.hasToken,

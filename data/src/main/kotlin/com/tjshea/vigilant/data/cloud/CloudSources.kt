@@ -163,5 +163,25 @@ object CloudKeys {
 
     val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, ODDS_API, PARLAY)
 
+    /**
+     * Which of the phone's keys go to which repository secret (the app sends them: Settings › Cloud scan › Send my API keys to GitHub; Tj, 2026-10-14). **Pinnodds and BoltOdds are never in it** (their sockets allow one
+     * connection and a second one evicts the app's), and neither is Kalshi's private key (it can trade; it is not an [com.tjshea.vigilant.data.keys.ApiProvider]). A new provider must be added here or left out on purpose
+     * (`CloudKeysTest` fails until it is one or the other).
+     */
+    val BY_PROVIDER: Map<com.tjshea.vigilant.data.keys.ApiProvider, String> = mapOf(
+        com.tjshea.vigilant.data.keys.ApiProvider.SPORTSGAMEODDS to SGO,
+        com.tjshea.vigilant.data.keys.ApiProvider.ODDSPAPI to ODDSPAPI,
+        com.tjshea.vigilant.data.keys.ApiProvider.ODDSPAPI_FREE to ODDSPAPI_FREE,
+        com.tjshea.vigilant.data.keys.ApiProvider.UNABATED to UNABATED,
+        com.tjshea.vigilant.data.keys.ApiProvider.PINNWIRE to PINNWIRE,
+        com.tjshea.vigilant.data.keys.ApiProvider.PINNAPI to PINNAPI,
+        com.tjshea.vigilant.data.keys.ApiProvider.PROPLINE to PROPLINE,
+        com.tjshea.vigilant.data.keys.ApiProvider.THE_ODDS_API to ODDS_API,
+        com.tjshea.vigilant.data.keys.ApiProvider.PARLAY to PARLAY,
+    )
+
+    /** Providers whose keys stay on the phone, on purpose. */
+    val PHONE_ONLY = setOf(com.tjshea.vigilant.data.keys.ApiProvider.PINNODDS, com.tjshea.vigilant.data.keys.ApiProvider.BOLTODDS)
+
     fun fromEnv(name: String): List<String> = System.getenv(name).orEmpty().split(',', '\n', ' ').map { it.trim() }.filter { it.isNotEmpty() }
 }

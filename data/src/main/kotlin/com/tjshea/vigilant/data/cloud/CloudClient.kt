@@ -126,6 +126,52 @@ class CloudClient(
         }.getOrElse { it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "") }
     }
 
+    /**
+     * Stores [value] as the repository secret [name], sealed to the repository's public key ([SealedBox]); GitHub keeps it write-only. Needs a token with Secrets: read and write.
+     * Null = stored; otherwise why not (never carrying the value or the token).
+     */
+    suspend fun putSecret(name: String, value: String, key: SecretsKey): String? = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext "no GitHub token saved"
+        runCatching {
+            val sealed = SealedBox.seal(value.toByteArray(Charsets.UTF_8), key.publicKey)
+            val body = buildJsonObject { put("encrypted_value", Base64.getEncoder().encodeToString(sealed)); put("key_id", key.keyId) }.toString().toRequestBody(JSON)
+            http.newCall(req("actions/secrets/$name").put(body).build()).execute().use { r ->
+                note(r)
+                when {
+                    r.isSuccessful -> null
+                    r.code == 403 || r.code == 404 -> "the token cannot write secrets (give it Secrets: read and write on the repository)"
+                    else -> why(r.code, r.body?.string())
+                }
+            }
+        }.getOrElse { it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "") }
+    }
+
+    /** The key a secret is sealed to. */
+    class SecretsKey(val keyId: String, val publicKey: ByteArray)
+
+    suspend fun secretsKey(): Poll<SecretsKey> = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
+        runCatching {
+            http.newCall(req("actions/secrets/public-key").header("Accept", "application/vnd.github+json").build()).execute().use { r ->
+                note(r)
+                val text = r.body?.string().orEmpty()
+                if (!r.isSuccessful) return@use Poll.Failed(if (r.code == 403 || r.code == 404) "the token cannot write secrets (give it Secrets: read and write on the repository)" else why(r.code, text))
+                val j = Json.parseToJsonElement(text).jsonObject
+                val id = j["key_id"]?.jsonPrimitive?.contentOrNull
+                val k = j["key"]?.jsonPrimitive?.contentOrNull?.let { Base64.getDecoder().decode(it) }
+                if (id == null || k == null || k.size != SealedBox.KEY_BYTES) Poll.Failed("GitHub's secrets key could not be read") else Poll.Fresh(SecretsKey(id, k), null)
+            }
+        }.getOrElse { Poll.Failed(it.javaClass.simpleName) }
+    }
+
+    /** Stops a running workflow run (so a new engine starts with the secrets just stored). Null = asked. */
+    suspend fun cancelRun(runId: String): String? = withContext(Dispatchers.IO) {
+        if (!hasToken() || runId.isBlank()) return@withContext "nothing to cancel"
+        runCatching {
+            http.newCall(req("actions/runs/$runId/cancel").post("".toRequestBody(JSON)).build()).execute().use { r -> note(r); if (r.isSuccessful) null else why(r.code, r.body?.string()) }
+        }.getOrElse { it.javaClass.simpleName }
+    }
+
     /** Starts the engine (`cloud-scan.yml` on the default branch). Null = asked; otherwise why not. */
     suspend fun startEngine(workflow: String = WORKFLOW): String? = withContext(Dispatchers.IO) {
         if (!hasToken()) return@withContext "no GitHub token saved"
