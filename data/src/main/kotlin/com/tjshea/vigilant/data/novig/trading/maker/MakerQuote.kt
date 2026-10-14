@@ -656,7 +656,7 @@ object MakerQuote {
         if (line.fairOld) return skip("The fair price is too old to bid on")
         val seen = line.fairAsOfMs ?: return skip("The fair price's age isn't known: no bid on it")
         // A bid never outlives what it was priced from: the fair's own freshness, the stop window before the start, and the expiry setting.
-        val fairLife = line.fairMaxAgeMs ?: Freshness.maxAgeMs(line.startsTs, now).let { own -> if (rules.farFairMaxAgeMs > own && farOf(line.startsTs, now) == 1) rules.farFairMaxAgeMs else own }
+        val fairLife = line.fairMaxAgeMs ?: Freshness.maxAgeMs(line.startsTs, now).let { own -> if (rules.farFairMaxAgeMs > own && MakerPlan.farOf(line.startsTs, now) == 1) rules.farFairMaxAgeMs else own }
         val until = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, seen + fairLife)
         if (until - now < rules.minLifeMs) return skip("The fair price goes old within a minute: re-priced at the next scan")
         if (line.outcomeId in held) return skip("Already bet or bid on this side")
