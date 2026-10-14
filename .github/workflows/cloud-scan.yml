@@ -1,0 +1,114 @@
+name: Cloud scan (Vigilant engine on GitHub)
+
+# Tj, 2026-10-14: "Put vigilant scans on GitHub runners. Outsource as much Internet bandwidth and processing power as possible to GitHub ... use the phone only to set the settings and retrieve the scanned results."
+# This job IS the scan: the `cloud` module runs Vigilant's own Scanner and every fair-odds feed that is switched on (keys from repository secrets), under the settings the phone writes to the
+# `cloud-config` branch (settings.json), and publishes the +EV list to the `cloud-feed` branch (feed.json.gz + status.json, ONE commit force-pushed each time: the branch never grows). It places NO order.
+# The phone polls cloud-feed with its token. Rules (research/cloud_scan_2026-10-14.md, CLAUDE.md "Cloud scan"):
+#   - the phone's switch is the master: settings.json "on": false => the gate step ends the run in seconds (no Java, no Gradle, no API call), and a running engine idles and ends itself;
+#   - a job is capped at 6 h, so each run hands over to the next one (a self-dispatch at the end) and a 15-minute schedule is only the backstop; one run at a time (concurrency group);
+#   - every pass's changed rows (the EDGE LOG) are gzipped to the `cloud-archive-YYYY-MM-DD` Release every 20 minutes and at the end (permanent, never delete), for Claude to analyse.
+# Repository secrets used (all optional; an API is used only if its switch is on in the phone's settings AND its secret exists): SGO_API_KEY, ODDSPAPI_API_KEY, ODDSPAPI_FREE_API_KEY, UNABATED_API_KEY,
+# PINNWIRE_API_KEY, PINNAPI_API_KEY, PROPLINE_API_KEY, ODDS_API_KEY, PARLAY_API_KEY (several keys: comma separated). NEVER put Pinnodds, BoltOdds or Kalshi private keys here (sockets/trading keys stay on the phone).
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "How long this run scans before it hands over (max 340)"
+        default: "340"
+  schedule:
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: cloud-scan
+  cancel-in-progress: false
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gate (is the phone's switch on?)
+        id: gate
+        run: |
+          RUN=false
+          if git fetch -q --depth=1 origin cloud-config 2>/dev/null; then
+            ON=$(git show FETCH_HEAD:settings.json 2>/dev/null | python3 -c "import json,sys; print(str(json.load(sys.stdin).get('on', False)).lower())" 2>/dev/null || echo false)
+            echo "phone switch: on=$ON"
+            [ "$ON" = "true" ] && RUN=true
+          else
+            echo "no cloud-config branch yet: the phone has never switched the cloud scan on"
+          fi
+          # A manual start (the phone's Start button, or Claude) always runs: the engine itself idles out if the switch is off.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then RUN=true; fi
+          echo "run=$RUN" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.gate.outputs.run == 'true'
+
+      - name: Archive loop (every 20 min, in the background)
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          cat > archive.sh <<'SH'
+          #!/usr/bin/env bash
+          # Gzips the engine's journals and uploads them to the day's cloud-archive Release. Safe to run any time; --clobber replaces the same name.
+          D="$(date -u +%Y-%m-%d)"; TAG="cloud-archive-$D"; mkdir -p arch
+          for f in out/cloud/*.jsonl; do [ -f "$f" ] && gzip -9 -c "$f" > "arch/$(basename "$f" .jsonl)-run${GITHUB_RUN_ID}.jsonl.gz"; done
+          [ -f out/cloud-engine.log ] && gzip -9 -c out/cloud-engine.log > "arch/engine-log-run${GITHUB_RUN_ID}.txt.gz"
+          ls arch/* >/dev/null 2>&1 || exit 0
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "Cloud scan archive $D" --prerelease --latest=false --target main --notes "Raw journals of the GitHub cloud scan, $D (UTC): edge rows (every listed bet when its fair or price moved) per run. Permanent: never delete (research/cloud_scan_2026-10-14.md)." >/dev/null 2>&1 || true
+          fi
+          gh release upload "$TAG" arch/* --clobber >/dev/null 2>&1 || echo "archive upload failed"
+          SH
+          chmod +x archive.sh
+          nohup bash -c 'while true; do sleep 1200; ./archive.sh; done' >/dev/null 2>&1 &
+
+      - name: Engine
+        if: steps.gate.outputs.run == 'true'
+        env:
+          SGO_API_KEY: ${{ secrets.SGO_API_KEY }}
+          ODDSPAPI_API_KEY: ${{ secrets.ODDSPAPI_API_KEY }}
+          ODDSPAPI_FREE_API_KEY: ${{ secrets.ODDSPAPI_FREE_API_KEY }}
+          UNABATED_API_KEY: ${{ secrets.UNABATED_API_KEY }}
+          PINNWIRE_API_KEY: ${{ secrets.PINNWIRE_API_KEY }}
+          PINNAPI_API_KEY: ${{ secrets.PINNAPI_API_KEY }}
+          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          PARLAY_API_KEY: ${{ secrets.PARLAY_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+          MINUTES: ${{ github.event.inputs.minutes || '340' }}
+        run: |
+          set -o pipefail
+          ./gradlew :cloud:run --no-daemon --no-configure-on-demand --console=plain --args="--minutes $MINUTES --out out --pub pub --cfg ." 2>&1 | tail -n 600
+
+      - name: Summary
+        if: always() && steps.gate.outputs.run == 'true'
+        run: |
+          { echo '### Cloud scan'; echo '```'; tail -n 40 out/cloud-engine.log 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Final archive
+        if: always() && steps.gate.outputs.run == 'true'
+        continue-on-error: true
+        run: bash archive.sh
+
+      # Hand over: the next run queues behind this one (same concurrency group) and starts the moment this ends. Not when the engine ended because the phone switched it off.
+      - name: Hand over to the next run
+        if: always() && steps.gate.outputs.run == 'true'
+        run: |
+          END=$(cat out/end 2>/dev/null || echo UNKNOWN)
+          echo "engine ended: $END"
+          if [ "$END" = "TIME_UP" ]; then gh workflow run cloud-scan.yml --ref main; fi
