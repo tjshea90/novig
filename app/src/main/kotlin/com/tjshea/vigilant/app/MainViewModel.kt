@@ -228,6 +228,8 @@ data class UiState(
     /** Live tail bets (RESEARCH.md §125): the taker's status and the lab's (games read, tail strikes seen), refreshed with the live bids page. */
     val tailTrade: com.tjshea.vigilant.data.pinnodds.LiveTradeStatus = com.tjshea.vigilant.data.pinnodds.LiveTradeStatus(),
     val labStatus: com.tjshea.vigilant.data.novig.lab.LabStatus = com.tjshea.vigilant.data.novig.lab.LabStatus(),
+    /** Live light's push lane ([com.tjshea.vigilant.data.novig.lab.LiveLightRunner]). */
+    val lightStatus: com.tjshea.vigilant.data.novig.lab.LiveLightStatus = com.tjshea.vigilant.data.novig.lab.LiveLightStatus(),
     /** SportsGameOdds Pro's Test key (Settings › SportsGameOdds Pro): the answer (null = not tested), whether it passed, and that a test is running. */
     val sgoKeyNote: String? = null,
     val sgoKeyOk: Boolean? = null,
@@ -2158,7 +2160,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** The live bid desk's status for Settings › Live bids (the page asks every second or two while it is open). */
     fun refreshLiveBid() {
-        _state.update { it.copy(liveBidStatus = c.liveBidDesk.status.value, liveBids = c.liveBidDesk.bidsNow(), pinnLive = c.pinnRunner.status.value, tailTrade = c.tailTaker.status.value, labStatus = c.lab.status.value, pinnTrade = c.pinnTrader.status.value, pinnWebsiteStats = c.websiteStats()) }
+        _state.update { it.copy(liveBidStatus = c.liveBidDesk.status.value, liveBids = c.liveBidDesk.bidsNow(), pinnLive = c.pinnRunner.status.value, tailTrade = c.tailTaker.status.value, labStatus = c.lab.status.value, lightStatus = c.liveLight.status.value, pinnTrade = c.pinnTrader.status.value, pinnWebsiteStats = c.websiteStats()) }
     }
 
     /**
@@ -2777,6 +2779,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             liveBidReport = runCatching {
                 LiveBidText.diagnostics(_state.value.settings, c.liveBidDesk.status.value, c.pinnRunner.status.value, c.liveBidDesk.bidsNow(), c.pinnRunner.running) +
                     "\n" + TailText.diagnostics(_state.value.settings, c.tailTaker.status.value, c.lab.status.value, c.tailTaker.records()) +
+                    "\n" + TailText.lightDiagnostics(_state.value.settings, c.liveLight.status.value, c.liveLight.running, c.novig.stream != null) +
                     "\n" + PinnText.websiteDiagnostics(_state.value.settings, c.websiteStats(), c.pinnRace.lines())
             }.getOrNull(),
             burstReport = g.burstReport,

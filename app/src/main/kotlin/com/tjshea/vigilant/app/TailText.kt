@@ -19,11 +19,27 @@ object TailText {
         "The app will buy live tail strikes by itself: at most ${money(s.tailLive.stake)} a bet, ${money(s.tailLive.maxGame)} a game and ${money(s.tailLive.maxDay)} a day, only when the model's fair is 92% or more and the edge after Novig's fee is ${pct(s.tailLive.minEdge)} or more. " +
             "It stops for the day if tail bets lose ${money(s.tailLive.haltLoss)}. The model is a rough one (a score or clock from ESPN can be a little behind the game), so a decided-looking bet can still lose, and the paper record behind it covers only a handful of games, so there is no real track record yet. Start small."
 
-    fun statusLine(s: ScanSettings, t: LiveTradeStatus, lab: LabStatus): String {
+    const val LIGHT_HINT = "Live light judges each live game the moment Novig's live feed or the score changes, instead of every 20 seconds, and it works from the score and clock alone, so a stale price is found even when the whole ladder is stale (a team up 25 offered near 50/50). A bet this big needs a second live source to agree (BoltOdds' soft-book consensus, when it is on); without one it only takes edges up to 30%. Needs the Novig key's live feed. Pinnodds is not used."
+
+    /** The Diagnostics lines of Live light's push lane. */
+    fun lightDiagnostics(s: ScanSettings, l: com.tjshea.vigilant.data.novig.lab.LiveLightStatus, running: Boolean, feedConnected: Boolean): String {
+        val o = StringBuilder()
+        o.appendLine("LIVE LIGHT (push lane for obviously wrong live prices; Tj 2026-10-14)")
+        o.appendLine("Switch: ${if (s.tailLive.on && s.tailLive.light) "ON" else "off"} · running $running · Novig live feed ${if (feedConnected) "connected" else "NOT connected (the 20-second pass is used)"} · bids ${if (s.tailLive.bids) "on" else "off"}")
+        if (!running) return o.toString().trimEnd()
+        val age = { at: Long -> if (at == 0L) "never" else "${(System.currentTimeMillis() - at) / 1000} s ago" }
+        o.appendLine("Games ${l.games} (${l.withScore} with a score) · markets watched ${l.markets} · pushes ${l.pushes} (last ${age(l.lastPushMs)}) · judgments ${l.scans} (last ${age(l.lastScanMs)}, ${l.lastScanTookMs} ms from the push) · offers to the taker ${l.offers}")
+        if (l.skipped.isNotEmpty()) o.appendLine("Not judged: " + l.skipped.entries.sortedByDescending { it.value }.take(8).joinToString(" · ") { "${it.key} ${it.value}" })
+        l.last?.let { o.appendLine("Last offer: $it") }
+        l.problem?.let { o.appendLine("Problem: $it") }
+        return o.toString().trimEnd()
+    }
+
+    fun statusLine(s: ScanSettings, t: LiveTradeStatus, lab: LabStatus, light: com.tjshea.vigilant.data.novig.lab.LiveLightStatus = com.tjshea.vigilant.data.novig.lab.LiveLightStatus()): String {
         if (!s.tailLive.on) return "Off."
         if (s.tailLive.halted != null) return "Stopped: ${s.tailLive.halted}"
         val mode = if (s.tailLive.bet) "REAL" else "paper"
-        val feed = if (!lab.running) "game reader starting" else "${lab.games} live games read, ${lab.withState} with a score and clock"
+        val feed = if (light.running) "push lane: ${light.games} live games, ${light.withScore} with a score, ${light.pushes} pushes, ${light.offers} offers" else if (!lab.running) "game reader starting" else "${lab.games} live games read, ${lab.withState} with a score and clock"
         return "$mode: ${t.bets} bought, ${t.missed} missed, ${t.paper} paper, spent ${money(t.spent)} · $feed" + (t.last?.let { " · last: $it" } ?: "") +
             (lab.problem?.let { " · problem: $it" } ?: "")
     }
