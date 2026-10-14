@@ -890,6 +890,53 @@ class MakerTest {
         assertEquals(1.0, MakerQuote.stake(0.52, 0.50, kelly.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.ONE_DOLLAR))!!, 1e-9)
     }
 
+    // ---- keeping the wallet working (Tj, 2026-10-14) ---------------------------------------------------------------------
+
+    @Test
+    fun `a scaled-up stake is held to the Kelly ceiling and the per-bid maximum, never lowers the usual stake, and scale 1 changes nothing`() {
+        val sixteenth = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0)
+        // fair 0.52 at 0.50: full Kelly 4%: 1/16 of it = 0.25% of $1,000 = $2.50 usual.
+        assertEquals(2.5, MakerQuote.stake(0.52, 0.50, sixteenth)!!, 1e-9)
+        assertEquals("scaled 3x, under the 1/4 ceiling ($10)", 7.5, MakerQuote.stake(0.52, 0.50, sixteenth.copy(stakeScale = 3.0, kellyCeiling = 0.25))!!, 1e-9)
+        assertEquals("scaled 14x is held to 1/4 Kelly: $10", 10.0, MakerQuote.stake(0.52, 0.50, sixteenth.copy(stakeScale = 14.0, kellyCeiling = 0.25))!!, 1e-9)
+        assertEquals("and to the per-bid maximum", 4.0, MakerQuote.stake(0.52, 0.50, sixteenth.copy(stakeScale = 14.0, kellyCeiling = 0.25, maxStake = 4.0))!!, 1e-9)
+        val half = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 0.5 }, bankroll = 1_000.0, maxStake = 100.0)
+        assertEquals("a ceiling under the usual stake never lowers it", 20.0, MakerQuote.stake(0.52, 0.50, half.copy(stakeScale = 4.0, kellyCeiling = 0.25))!!, 1e-9)
+        assertEquals("a riskier bid's half stake", 1.25, MakerQuote.stake(0.52, 0.50, sixteenth.copy(stakeScale = 0.5))!!, 1e-9)
+    }
+
+    @Test
+    fun `with the wallet far under its target a cycle stakes more per bid, and with it at the target it stakes the usual`() = runBlocking {
+        val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0)
+        fun contractsFor(r: MakerRules, wallet: Double): Long {
+            val d = desk(FakeNovig(), tracker())
+            val rep = d.cycle(listOf(line("m1-over", fair = 0.52)), r, stop = null, maxPerDay = 500.0, wallet = wallet)
+            return (rep.decisions.single() as MakerDecision.Post).contracts
+        }
+        val off = contractsFor(kelly, 100.0)
+        val on = contractsFor(kelly.copy(deployPct = 0.9), 100.0)
+        assertTrue("the wallet is empty of bids: $on contracts against the usual $off", on > off && on <= off * 4)
+    }
+
+    @Test
+    fun `riskier bids fill what the usual ones cannot - a wider margin, a sharp book required, half the stake, last in - and none with the switch off`() = runBlocking {
+        val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1)
+        // A line with no sharp book in its fair: a usual bid goes up (sharp not required), the riskier pass would need one: nothing extra.
+        val noSharp = line("m1-over", fair = 0.60, m = market("m1", starts = start + 30 * 3_600_000L))
+        val d = desk(FakeNovig(), tracker())
+        val r = d.cycle(listOf(noSharp), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0)
+        assertTrue("a game 30 h out is past the 20 h guard: no usual bid; and no riskier one without a sharp book", r.decisions.none { it is MakerDecision.Post })
+        val withSharp = noSharp.copy(sharpFairs = listOf(0.60))
+        val d2 = desk(FakeNovig(), tracker())
+        val r2 = d2.cycle(listOf(withSharp), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0)
+        val post = r2.decisions.filterIsInstance<MakerDecision.Post>().single()
+        assertTrue("a riskier, wallet-filling bid", post.overflow)
+        assertTrue("its edge is at least the usual margin plus 4 points (fair 0.60: price at most ${0.60 / 1.06})", post.price <= 0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN) + 1e-9)
+        assertNotNull(r2.deploy)
+        val d3 = desk(FakeNovig(), tracker())
+        assertTrue("switch off: nothing extra", d3.cycle(listOf(withSharp), kelly.copy(earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
+    }
+
     // ---- the desk: a cancel is only queued; fills never go unrecorded ----------------------------------------------------
 
     @Test
