@@ -7234,3 +7234,8 @@ Investigate how I'm consistently beating clv yet losing so much money. Either th
 
 Back to research and development. Optimize the app for making profit, whatever needs to be done
 ```
+
+## 2026-10-14T13:50:54Z
+```
+How do I turn on all the safeguards you made against bad bets and bids
+```
