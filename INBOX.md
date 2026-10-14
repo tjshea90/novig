@@ -7253,3 +7253,10 @@ Also the auto bids are still only posting a small portion of my wallet. I want i
 ```
 If you look at my most losing bet types , couldn't I simply bet and bid on the other side of them for a profit? For example, if overs are losing money, should I make positive EV bids and bets on unders?
 ```
+
+## 2026-10-14T16:54:38Z
+```
+Make these errors refresh and disappear automatically as soon as they no longer apply (when the novig key is accepted) 
+
+Also look at the bids up, it never fills my wallet
+```
