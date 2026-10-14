@@ -179,9 +179,9 @@ class LiveLightRunnerTest {
         runner(view, ArrayList(), scoreboard(105, 80), desk = tight).look()
         assertEquals(listOf("m1-b"), tight.pulls.map { it.first })
         assertTrue(tight.pulls.single().second.contains("no longer clears"))
-        // The game becomes unjudgeable (overtime has no readable clock): the bid comes down rather than stay on a guess.
+        // The game becomes unjudgeable (overtime has no readable clock): nothing vouches for the bid and nothing new is wanted; the desk takes an unvouched bid down within 3.5 s by itself.
         val ot = Desk(heldPrice = 0.90)
         runner(view, ArrayList(), scoreboard(105, 105, period = 5, clock = "5:00"), desk = ot).look()
-        assertTrue(ot.pulls.isEmpty() || ot.pulls.single().second.contains("no longer judged") || ot.wants.isEmpty())
+        assertTrue(ot.wants.isEmpty() && ot.kept == 0)
     }
 }
