@@ -257,3 +257,4 @@ day that changes.
 | v0.97.3 | code 255 | 2026-10-13T23:20Z | v0.97.3: BoltOdds classify memo (about 70x less work per pass, same answers)
 | v0.98.0 | code 256 | 2026-10-14T01:20Z | v0.98.0: bids keep the wallet working (stakes scale to 1/4 Kelly, riskier higher-edge bids fill the gap), the paper lab waits for scans, Novig lookups slow on a 429 and are remembered, the streaming engine rests when BoltOdds' socket is off, Diagnostics gain SOCKETS, WALLET DEPLOYMENT and phase timings
 | v0.98.1 | code 257 | 2026-10-14T01:51Z | v0.98.1: the CNO list drops a bet the Bet sheet or the lowest fair says is not +EV even with no fresh price read; Diagnostics list why bids were skipped (wallet deployment)
+| v0.98.2 | code 258 | 2026-10-14T03:12Z | v0.98.2: the auto-bet holds one line of a team's spread (or a player's side) per game, counting open bets and resting bids
