@@ -216,7 +216,7 @@ class ApiBetPlacer(
         val tp2 = clock()
         // By hand: the order is in, so the next bet may start while this one ends. Its dollars stay counted until its record is made.
         val reservation = onSent?.let {
-            Pending(target.outcomeId, com.tjshea.vigilant.data.tracker.GameExposure.Item(GameRef(target.market.eventId, target.eventName, target.startsTs, target.league), target.market.marketId, target.outcomeId, plan.expectedCost), plan.expectedCost, com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(target.market.marketId, target.outcomeId, plan.expectedCost, plan.payout))
+            Pending(target.outcomeId, com.tjshea.vigilant.data.tracker.GameExposure.Item(GameRef(target.market.eventId, target.eventName, target.startsTs, target.league), target.market.marketId, target.outcomeId, plan.expectedCost), plan.expectedCost, com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(target.market.marketId, target.outcomeId, plan.expectedCost, plan.payout, family = com.tjshea.vigilant.data.tracker.RepeatGuard.family(target.eventName, target.startsTs, target.marketLabel, target.selection)))
                 .also { r -> pending += r }
         }
         if (reservation != null) {

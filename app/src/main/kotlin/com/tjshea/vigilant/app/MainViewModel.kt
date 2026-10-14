@@ -2693,7 +2693,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val g = state.value.settings.gates
                 val st = c.streamEngine.status.value
                 buildString {
-                    appendLine("Repeat and hedge guard: " + (if (g.repeatGuard) "ON, ${if (g.repeatMaxBets == 0) "no limit" else g.repeatMaxBets.toString()} bets/bids and ${if (g.repeatMaxDollars == 0.0) "no limit" else "$" + g.repeatMaxDollars.toInt()} a side, other side ${if (g.repeatHedge) "only when a sure profit" else "never"}" else "OFF"))
+                    appendLine("Repeat and hedge guard: " + (if (g.repeatGuard) "ON, ${if (g.repeatMaxBets == 0) "no limit" else g.repeatMaxBets.toString()} bets/bids and ${if (g.repeatMaxDollars == 0.0) "no limit" else "$" + g.repeatMaxDollars.toInt()} a side, other side ${if (g.repeatHedge) "only when a sure profit" else "never"}, other lines of one team/player per game ${if (g.repeatMaxLines == 0) "no limit" else g.repeatMaxLines.toString()}" else "OFF"))
                     appendLine("Freshest quote wins: " + (if (g.freshestWins) "ON (a book sent by two feeds uses the one stamped more than 20 s newer)" else "OFF (feed order only)"))
                     appendLine("API ranking (best first; " + (if (g.rankByMeasure) "ON: ordered by measured freshness and accuracy, the shipped order as the fallback" else "OFF: the shipped order") + "):")
                     (c.scanner.sourceRanking() ?: "not measured yet (the first scan measures)").lines().forEach { appendLine("  $it") }
