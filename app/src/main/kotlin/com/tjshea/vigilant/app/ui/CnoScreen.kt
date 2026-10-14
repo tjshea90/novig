@@ -138,7 +138,7 @@ fun CnoScreen(
     // A list read for another link (Tj just changed it) isn't shown as if it were this one's.
     val snap = cno.snapshot?.takeIf { it.url == state.cnoUrl }
     // Screened once per change of what it's screened from, not on every recomposition (each state the app gets recomposes this tab).
-    val keys = arrayOf<Any?>(state.cno.snapshot, state.settings, state.placed, state.placedIndex, state.cnoLinks, state.books, state.novigLive, now)
+    val keys = arrayOf<Any?>(state.cno.snapshot, state.settings, state.placed, state.placedIndex, state.cnoLinks, state.books, state.novigLive, state.result, state.negativeSeen, now)
     val screened = remember(*keys) { state.cnoPicks(now) }
     // Bets Tj placed or removed are gone from the list (and the widget) until their game is over;
     // with "only bets the books agree on", so are the ones without the green check.

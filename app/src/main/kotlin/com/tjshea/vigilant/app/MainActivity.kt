@@ -633,7 +633,7 @@ private fun TabIconWithCount(t: Tab, state: UiState) {
         Tab.CNO -> {
             val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
             // Placed and removed bets aren't counted (nor, with "only bets the books agree on", the rest): the tab doesn't list them.
-            androidx.compose.runtime.remember(state.cno.snapshot, state.settings, state.placed, state.placedIndex, state.cnoLinks, state.books, state.novigLive, now) {
+            androidx.compose.runtime.remember(state.cno.snapshot, state.settings, state.placed, state.placedIndex, state.cnoLinks, state.books, state.novigLive, state.result, state.negativeSeen, now) {
                 state.cnoShown(now).size
             }
         }
