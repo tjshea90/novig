@@ -7143,3 +7143,12 @@ After installing, turn the sockets on, run for a while, then send a fresh file.
 
 After you said this, it says prompt is too long
 ```
+
+## 2026-10-14T01:29:07Z
+```
+I'm going to send the diagnostic file, but first: 
+
+This bet is now negative EV, but it did not automatically be removed from the list.
+
+And the auto bids are still only filling up a small part of the available wallet balance. If there are no more good bids to make just fill it up with very high positive ev safe bets and see if anyone takes them
+```
