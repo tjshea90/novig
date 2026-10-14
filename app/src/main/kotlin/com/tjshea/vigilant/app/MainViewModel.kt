@@ -248,6 +248,8 @@ data class UiState(
     val kalshiHasKey: Boolean = false,
     val kalshiAlgo: String? = null,
     val kalshiKeyNote: String? = null,
+    /** Cloud scan (Settings › Cloud scan): the GitHub link's token, the engine's state and what was saved to GitHub last. */
+    val cloudUi: CloudLink.Ui = CloudLink.Ui(),
     val kalshiKeyOk: Boolean? = null,
     val kalshiKeyBusy: Boolean = false,
     /** BoltOdds Pro: the Test key's answer, whether it passed, and that a test is running (it listens on a socket for about 15 s). */
@@ -524,6 +526,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 kotlinx.coroutines.delay(LIVE_FEED_GAP_MS)
             }
         }
+    }
+
+    init {
+        // Cloud scan: the link's state (token, engine line, list age, last save) for Settings.
+        viewModelScope.launch { c.cloud.ui.collect { u -> _state.update { it.copy(cloudUi = u) } } }
     }
 
     init {
@@ -2324,6 +2331,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(kalshiKeyId = cred.keyId, kalshiHasKey = true, kalshiAlgo = parsed.getOrNull()?.algorithm, kalshiKeyNote = "Saved (${parsed.getOrNull()?.algorithm}). Tap Test key to check it with Kalshi.", kalshiKeyOk = true) }
         }
     }
+
+    /** Settings › Cloud scan: the GitHub token (sealed in this phone's secure storage, only ever sent to api.github.com). */
+    fun saveCloudToken(token: String) { viewModelScope.launch(Dispatchers.IO) { c.cloud.saveToken(token) } }
+    fun removeCloudToken() { viewModelScope.launch(Dispatchers.IO) { c.cloud.removeToken() } }
+    fun testCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.test() } }
+    fun startCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.startEngine() } }
+    fun saveCloudNow() { viewModelScope.launch(Dispatchers.IO) { c.cloud.saveHistory() } }
 
     fun removeKalshiKey() {
         viewModelScope.launch {

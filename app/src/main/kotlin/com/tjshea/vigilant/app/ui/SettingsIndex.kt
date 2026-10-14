@@ -32,6 +32,10 @@ object SettingsIndex {
     private val exchange: (ScanSettings) -> Boolean = { AppBook.exchange }
 
     val entries: List<Entry> = listOf(
+        // Cloud scan (Tj, 2026-10-14)
+        Entry("Scan on GitHub", SettingsPage.CLOUD, "Run the scans on GitHub's computers; the phone only sets the settings and shows the list", "cloud github actions engine scan remote server offload", novig),
+        Entry("GitHub token", SettingsPage.CLOUD, "The token that lets this phone read the cloud list, send settings and save history to GitHub", "cloud github token pat", novig),
+        Entry("Save bets, bids and history to GitHub", SettingsPage.CLOUD, "Automatic permanent saving of every bet, bid and the scan study to GitHub for Claude to analyse", "cloud github save backup history phone-data", novig),
         // SportsGameOdds Pro (Tj, 2026-10-09)
         Entry("Use SportsGameOdds Pro", SettingsPage.SGO, "One paid feed for odds, props, closing lines and results, read alongside every other API you have on", "sportsgameodds sgo pro odds api feed key paid replace", novig),
         Entry("Add a SportsGameOdds key", SettingsPage.SGO, "Add, order and test your SportsGameOdds keys", "sportsgameodds sgo key api rotate test", novig),

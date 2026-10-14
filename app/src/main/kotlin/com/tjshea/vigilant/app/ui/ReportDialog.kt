@@ -63,6 +63,12 @@ data class ReportActions(
     val onSaveKalshiKey: (String, String) -> Unit = { _, _ -> },
     val onRemoveKalshiKey: () -> Unit = {},
     val onTestKalshiKey: () -> Unit = {},
+    /** Cloud scan (Settings › Cloud scan): save the GitHub token, remove it, test it, start the engine, save the bets/bids/history to GitHub now. */
+    val onSaveCloudToken: (String) -> Unit = {},
+    val onRemoveCloudToken: () -> Unit = {},
+    val onTestCloud: () -> Unit = {},
+    val onStartCloud: () -> Unit = {},
+    val onSaveCloudNow: () -> Unit = {},
     val onTestOddsPapiFreeKey: (Boolean) -> Unit = {},
     /** The live feed test (Tj, 2026-10-07): make its file and share it, and read the line that says what it is doing. */
     val onShareFeedRace: () -> Unit = {},

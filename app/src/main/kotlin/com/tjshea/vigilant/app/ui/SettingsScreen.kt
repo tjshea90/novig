@@ -125,6 +125,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** Every protection against bad bets and bids in one list, with a switch each and one button to turn them all on (Tj, 2026-10-14). */
     SAFEGUARDS("Safeguards", "Every protection against bad bets and bids, on or off, and one button for all", SettingsGroup.BET),
 
+    /** The scan on GitHub's computers, the token, and the permanent saving of bets, bids and history to GitHub (Tj, 2026-10-14). */
+    CLOUD("Cloud scan", "Run the scans on GitHub's computers: the phone only sets the settings and shows the list; bets, bids and history are saved to GitHub", SettingsGroup.FIND),
+
     /** Pause, which scanner, which games, the background scan. */
     SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background", SettingsGroup.FIND),
 
@@ -260,6 +263,11 @@ object SettingsSummary {
                 s.liveBidHalted != null -> "Stopped"
                 s.liveBidReal -> "On: real money, ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
                 else -> "On: paper only (nothing is sent), ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
+            }
+            SettingsPage.CLOUD -> when {
+                !state.cloudUi.hasToken -> "No GitHub token saved"
+                s.cloudScan -> "On: " + state.cloudUi.line
+                else -> "Off (token saved, history saved to GitHub: ${if (s.cloudSave) "on" else "off"})"
             }
             SettingsPage.SGO -> when {
                 state.sgoKeys.isEmpty() -> "No key saved"
@@ -418,6 +426,7 @@ fun SettingsScreen(
             when (current) {
                 null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids)
                 SettingsPage.SCANNING -> ScanningPage(s, onUpdate)
+                SettingsPage.CLOUD -> CloudPage(state, reportActions, onUpdate)
                 SettingsPage.ALERTS -> AlertsPage(state, onUpdate)
                 SettingsPage.CNO -> CnoPage(s, onUpdate)
                 SettingsPage.WIDGET -> WidgetPage(s, onUpdate)
@@ -1465,6 +1474,56 @@ private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportAct
         SwitchRow("Alternate lines", "Read every game in depth for each book's alternate spreads and totals (one request a game). Off: the main lines of a whole league come in one request.", s.opAltLines, tag = "opAltSwitch") { v -> onUpdate { it.copy(opAltLines = v) } }
         Hint(com.tjshea.vigilant.app.OpText.REPLACES)
     }
+}
+
+/**
+ * Settings › Cloud scan (Tj, 2026-10-14): "use the phone only to set the settings and retrieve the scanned results. GitHub will provide all the power." The scan runs in a GitHub Actions job
+ * (`cloud-scan.yml`) under THESE settings; this phone reads its list. The same GitHub token also saves every bet, bid and the scan study's days to the repository's `phone-data` branch, so Claude can
+ * analyse them. The token is sealed in this phone's secure storage and only ever sent to api.github.com.
+ */
+@Composable
+private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    val u = state.cloudUi
+    Intro("Cloud scan runs Vigilant's scanner on GitHub's computers (free for this public repository) with every API you have a repository secret for, and sends this phone the +EV list. The phone sets the settings; GitHub does the reading and the pricing. Bets shown are re-checked against Novig's live price when you tap them. Live games, the auto-bet's and bids' own scans, Pinnodds, BoltOdds and your Kalshi key stay on the phone.")
+    var token by remember { mutableStateOf("") }
+    Text(
+        if (u.hasToken) "Token saved (ends …${u.tokenTail}). It is sealed in this phone's secure storage and not shown again." else "No GitHub token saved. Create a fine-grained token for the repository tjshea90/novig with Contents: read and write and Actions: read and write, and paste it here.",
+        style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudTokenState"),
+    )
+    OutlinedTextField(
+        value = token, onValueChange = { token = it.trim() }, label = { Text("GitHub token") }, singleLine = true,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = KeyboardType.Password),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).testTag("cloudToken"),
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 4.dp)) {
+        Button(onClick = { reportActions.onSaveCloudToken(token); token = "" }, enabled = token.length >= 20, modifier = Modifier.testTag("cloudSave")) { Text("Save token") }
+        Button(onClick = reportActions.onTestCloud, enabled = u.hasToken, modifier = Modifier.testTag("cloudTest")) { Text("Test") }
+        androidx.compose.material3.OutlinedButton(onClick = reportActions.onRemoveCloudToken, enabled = u.hasToken, modifier = Modifier.testTag("cloudRemove")) { Text("Remove") }
+    }
+    u.note?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudNote")) }
+    SwitchRow(
+        "Scan on GitHub", "On: the phone makes no scan of its own and no API call; the engine on GitHub scans under these settings and this phone shows its list. Off: the app is what it was.",
+        s.cloudScan, tag = "cloudScanSwitch", enabled = u.hasToken,
+    ) { v -> onUpdate { it.copy(cloudScan = v) } }
+    if (s.cloudScan) {
+        Text(
+            u.line + (u.listAgeSec?.let { " The list is ${if (it < 90) "$it s" else "${it / 60} min"} old (${u.rows} bets)." } ?: ""),
+            style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudLine"),
+        )
+        Button(onClick = reportActions.onStartCloud, enabled = u.hasToken, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudStart")) { Text("Start the engine now") }
+    }
+    SwitchRow(
+        "Save bets, bids and history to GitHub", "Automatically, every 15 minutes: every bet and bid (day files) and the scan study, to the repository's phone-data branch, kept for good, for Claude to analyse. Needs the token.",
+        s.cloudSave, tag = "cloudSaveSwitch", enabled = u.hasToken,
+    ) { v -> onUpdate { it.copy(cloudSave = v) } }
+    if (u.hasToken && s.cloudSave) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+            androidx.compose.material3.OutlinedButton(onClick = reportActions.onSaveCloudNow, modifier = Modifier.testTag("cloudSaveNow")) { Text("Save now") }
+            Text(u.saveLine.ifBlank { "Nothing sent yet this session." }, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("cloudSaveLine"))
+        }
+    }
+    Hint("GitHub allows 5,000 API requests an hour on this token; reading the list uses about 720 an hour while the screen is on (a 304 \"nothing new\" answer is free). " + (u.rateRemaining?.let { "Left this hour: $it." } ?: ""))
 }
 
 /**
