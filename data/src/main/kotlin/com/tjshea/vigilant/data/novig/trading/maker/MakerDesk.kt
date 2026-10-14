@@ -123,6 +123,8 @@ data class MakerBid(
     val fairNewestAgeSec: Int? = null,
     /** A small-market bid ([MakerRules.obscureFill]; Tj, 2026-10-07): Diagnostics and the Bids tab split bids and fills by it. */
     val obscure: Boolean = false,
+    /** A riskier bid posted only to keep the wallet working (Tj, 2026-10-14; [MakerDesk.deployFor]): Diagnostics counts these apart. */
+    val overflow: Boolean = false,
     /**
      * A CNO-priced bid ([source] "cno", [CnoMakerLines]): how old CNO's own data was when it was posted, in seconds, for the list that found the side and for the game page whose
      * books made the fair (CNO's "Last Updated" at the read plus the time since the read). What the BIDS section splits picked-off rates by (RESEARCH.md §113). Null for every other bid.
@@ -254,7 +256,12 @@ class MakerDesk(
         val partial: Boolean = false,
         /** Of [cancelled], the bids the wallet (or the day's limit) no longer covered ([MakerPlan.TRIMMED]). */
         val trimmed: Int = 0,
+        /** What keeping the wallet working did this pass ([Deploy]); null = off or no wallet reading. */
+        val deploy: Deploy? = null,
     )
+
+    /** The wallet-deployment state of one pass, for Diagnostics: the target, what was up, the stake multiple used, and the riskier bids wanted. */
+    data class Deploy(val walletDollars: Double, val targetDollars: Double, val restingDollars: Double, val scale: Double, val kellyCeiling: Double, val overflowWanted: Int, val overflowDollars: Double, val wantedDollars: Double)
 
     /**
      * One pass: what Novig says happened to every bid (fills to the Tracker), then the bids [lines] want under [rules] at [now], then the cancels and
@@ -293,13 +300,22 @@ class MakerDesk(
         val busy = bids.filter { it.status == MakerStatus.CANCELING || (it.status == MakerStatus.SENT && it.orderId == null) }.mapTo(HashSet()) { it.outcomeId }
         val held = held(bets, activeOutcomes) + busy
         val refused = bids.filter { it.status == MakerStatus.REFUSED && now - (it.endedAtMs ?: it.postedAtMs) < REFUSED_COOLOFF_MS }.mapTo(HashSet()) { it.outcomeId }
-        val decisions = MakerQuote.decideAll(MakerLines.withoutOwn(lines, bids), rules, now, held).map { d ->
-            if (d is MakerDecision.Post && d.line.outcomeId in denied) return@map MakerDecision.Skip(d.line, DENIED)
+        val judge = { d: MakerDecision ->
+            if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, DENIED)
             // Novig refused a bid here a moment ago (post-only: its price had moved to the bid): not asked again until the cool-off passes.
-            if (d is MakerDecision.Post && d.line.outcomeId in refused && d.line.outcomeId !in activeOutcomes) {
+            else if (d is MakerDecision.Post && d.line.outcomeId in refused && d.line.outcomeId !in activeOutcomes) {
                 MakerDecision.Skip(d.line, "Novig refused a bid here in the last ${REFUSED_COOLOFF_MS / 60_000} min (its price had moved to the bid)")
             } else d
         }
+        // Keep the wallet working: stakes scale up while the bids up are worth less than the target, and riskier bids fill what the usual ones cannot.
+        val usual = bids.filter { it.active }.sumOf { it.restingDollars }
+        val scale = deployScale(rules, usual, wallet)
+        val rulesNow = if (scale > 1.0) rules.copy(stakeScale = scale, kellyCeiling = rules.deployMaxKelly) else rules
+        val ownless = MakerLines.withoutOwn(lines, bids)
+        val base = MakerQuote.decideAll(ownless, rulesNow, now, held).map(judge)
+        val extra = deployFor(rulesNow, ownless, base, bids, activeOutcomes, held, now, wallet, usual, judge)
+        val decisions = base + extra.first
+        lastDeploy = extra.second?.copy(scale = scale)
         val spent = spentToday(bets, now)
         val stopAll = stop ?: if (spent >= maxPerDay - 1e-9) "Today's limit for API bets (${money(maxPerDay)}) is reached" else null
         val resting = restingOf(active)
@@ -346,7 +362,58 @@ class MakerDesk(
             }
         }
         val after = store.all().count { it.active }
-        Report(placed, cancelled, fills, problems, after, stopAll, decisions, actions.waiting, partial, actions.trimmed)
+        Report(placed, cancelled, fills, problems, after, stopAll, decisions, actions.waiting, partial, actions.trimmed, lastDeploy)
+    }
+
+    /** What the last pass's wallet deployment worked out, for Diagnostics ([Report.deploy]). */
+    @Volatile var lastDeploy: Deploy? = null
+        private set
+
+    /**
+     * How many times its usual stake a new bid asks for this pass (1 = usual): the wallet's target ([MakerRules.deployPct] of the balance) over what the bids up are worth, at most [DEPLOY_MAX_SCALE],
+     * so a wallet far from the target is filled in a few passes and one near it is left alone. Each stake is still held to the per-bid maximum and to [MakerRules.deployMaxKelly] of full Kelly for its own
+     * edge ([MakerQuote.stake]): a bigger stake is never a bigger bet than the edge supports.
+     */
+    private fun deployScale(rules: MakerRules, resting: Double, wallet: Double?): Double {
+        if (rules.deployPct <= 0.0 || wallet == null || wallet <= 0.0) return 1.0
+        val target = rules.deployPct * wallet
+        if (resting >= target) return 1.0
+        return (target / maxOf(resting, DEPLOY_FLOOR_DOLLARS)).coerceIn(1.0, DEPLOY_MAX_SCALE)
+    }
+
+    /**
+     * The riskier bids that fill what the usual ones leave of the target (Tj, 2026-10-14: "if there are not great bids to put up, make it put up riskier bids but with safeguards such as higher EV"): the same
+     * lines judged again with a margin [DEPLOY_EXTRA_MARGIN] wider (every one of them is +EV by at least that much more), a sharp book required, games up to [DEPLOY_HOURS] h out, and half the stake. They
+     * are the last in and the first out ([MakerDecision.Post.overflow], also `obscure` for the plan). A riskier bid already resting stays wanted while it is still valid, so the set does not flap as the
+     * deficit closes; a new one is added only while there is room under the target. Returns the decisions and the note for Diagnostics.
+     */
+    private fun deployFor(
+        rules: MakerRules, lines: List<MakerLine>, base: List<MakerDecision>, bids: List<MakerBid>, activeOutcomes: Set<String>, held: Set<String>, now: Long, wallet: Double?, resting: Double,
+        judge: (MakerDecision) -> MakerDecision,
+    ): Pair<List<MakerDecision>, Deploy?> {
+        if (rules.deployPct <= 0.0 || wallet == null || wallet <= 0.0) return emptyList<MakerDecision>() to null
+        val target = rules.deployPct * wallet
+        val posted = base.filterIsInstance<MakerDecision.Post>()
+        val postedOutcomes = posted.mapTo(HashSet()) { it.line.outcomeId }
+        val wantedNew = posted.filter { it.line.outcomeId !in activeOutcomes }.sumOf { it.cost }
+        val relaxed = rules.copy(
+            margin = rules.margin + DEPLOY_EXTRA_MARGIN, requireSharp = true, stakeScale = DEPLOY_OVERFLOW_STAKE, kellyCeiling = 0.0,
+            earlyHours = if (rules.earlyHours > 0) maxOf(rules.earlyHours, DEPLOY_HOURS) else 0,
+        )
+        val candidates = MakerQuote.decideAll(lines, relaxed, now, held).map(judge).filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in postedOutcomes }
+        val overflowResting = bids.filter { it.active && it.overflow }.mapTo(HashSet()) { it.outcomeId }
+        var room = target - resting - wantedNew
+        val out = ArrayList<MakerDecision>()
+        var dollars = 0.0
+        // The riskier bids already up first (they stay while valid), then the best new ones by their edge, while the target has room.
+        for (c in candidates.sortedWith(compareByDescending<MakerDecision.Post> { it.line.outcomeId in overflowResting }.thenByDescending { it.evAtFair })) {
+            val keep = c.line.outcomeId in overflowResting
+            if (!keep && room <= 0.0) continue
+            out += c.copy(obscure = true, overflow = true)
+            dollars += c.cost
+            if (!keep) room -= c.cost
+        }
+        return out to Deploy(wallet, target, resting, 1.0, rules.deployMaxKelly, out.size, dollars, resting + wantedNew)
     }
 
     /**
@@ -530,7 +597,7 @@ class MakerDesk(
             // Never past what it was priced from ([MakerDecision.Post.restUntilMs]: the expiry, the fair's freshness, the stop window before the start).
             expiresAtMs = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, post.restUntilMs), auto = auto,
             bestBidAtPost = line.bestBid, offerAtPost = line.offer, bookAtMs = line.bookAtMs,
-            focus = rules.focus, fairBooks = line.fairBooks, obscure = post.obscure,
+            focus = rules.focus, fairBooks = line.fairBooks, obscure = post.obscure, overflow = post.overflow,
             fairAgeSec = line.fairAsOfMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() }, fairNewestAgeSec = line.fairNewestMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() },
             listAgeSec = line.listAtMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() }, pageAgeSec = line.pageAtMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() },
         )

@@ -482,6 +482,8 @@ sealed interface MakerDecision {
         val anchorFair: Double? = null,
         /** A small-market bid ([MakerRules.obscureFill]): goes up only after every popular bid, and comes down to make room for one. */
         val obscure: Boolean = false,
+        /** A riskier bid put up only to keep the wallet working ([MakerDesk.deployFor]): a wider margin, a sharp book required, half the stake; it is also [obscure] for the plan (last in, first out). */
+        val overflow: Boolean = false,
     ) : MakerDecision {
         val cost: Double get() = contracts * price * EvMath.CONTRACT_PAYOUT_DOLLARS
 
@@ -681,7 +683,7 @@ object MakerQuote {
         // Scaled up to keep the wallet working (or down for a riskier bid): never past the per-bid maximum, and a scaled-UP stake never past the Kelly ceiling for this bid's own edge.
         var sized = wanted * rules.stakeScale
         if (rules.stakeScale > 1.0 && rules.kellyCeiling > 0.0 && rules.bankroll > 0.0 && fair > price && price < 1.0) {
-            sized = minOf(sized, rules.kellyCeiling * (fair - price) / (1.0 - price) * rules.bankroll * EvMath.leadScale(hoursToStart))
+            sized = maxOf(wanted, minOf(sized, rules.kellyCeiling * (fair - price) / (1.0 - price) * rules.bankroll * EvMath.leadScale(hoursToStart)))
         }
         return minOf(sized, rules.maxStake).takeIf { it > 0.0 }
     }
