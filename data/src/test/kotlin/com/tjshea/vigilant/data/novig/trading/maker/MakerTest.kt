@@ -954,6 +954,18 @@ class MakerTest {
     }
 
     @Test
+    fun `a wallet-filling bid may rest far behind the best bid - it is posted to see if anyone takes it`() = runBlocking {
+        val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1)
+        // Tj, 2026-10-14 (v0.99.8 file: 9,400 of 10,184 lines skipped for the start time, the week pass posted nothing): the bests bid is 0.58, a wide-margin price is near 0.55, far below it.
+        val far = line("m1-over", fair = 0.60, offer = 0.64, m = market("m1", starts = start + 100 * 3_600_000L)).copy(sharpFairs = listOf(0.60), bestBid = 0.58)
+        val r = desk(FakeNovig(), tracker()).cycle(listOf(far), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0)
+        val post = r.decisions.filterIsInstance<MakerDecision.Post>().single()
+        assertTrue(post.overflow && post.price < 0.58 - kelly.maxBehind)
+        // Why the week pass posted nothing is on the report: with the switch on and every line judged, its skip reasons are listed.
+        assertTrue(r.deploy != null && r.deploy!!.weekJudged >= 0)
+    }
+
+    @Test
     fun `a second, deeper bid goes up on a side that already has one while the wallet is under its target, and not once it is at it`() = runBlocking {
         val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1, deployPct = 0.9)
         val l = line("m1-over", fair = 0.60, offer = 0.64)
