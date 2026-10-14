@@ -144,6 +144,8 @@ class AppContainer(val app: Application) {
 
         /** The leagues the paper lab reads: the ones ESPN's scoreboard can give a clock for. */
         const val LAB_BOARD_MS = 25_000L
+        /** How far under the model's fair Live light's bids sit (the edge a bid has at the moment it goes up). */
+        const val LIGHT_BID_MARGIN = 0.10
         val LAB_LEAGUES = setOf("NFL", "NCAAF", "NBA", "WNBA", "NCAAB", "NHL", "MLB")
         const val BURST_TRADE_MAX_STAKE = 10.0
 
@@ -771,7 +773,7 @@ class AppContainer(val app: Application) {
         return com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(
             t, tracker, makerStore, lock = orderLock,
             // The live bids are post-only orders this desk has no record of; they are the live bid desk's, never strays.
-            otherDesks = { liveBidDesk.bidsNow().let { l -> com.tjshea.vigilant.data.novig.trading.maker.MakerDesk.OtherOrders(l.mapNotNull { it.orderId }.toSet(), l.map { it.clientId }.toSet()) } },
+            otherDesks = { (liveBidDesk.bidsNow() + lightBidDesk.bidsNow()).let { l -> com.tjshea.vigilant.data.novig.trading.maker.MakerDesk.OtherOrders(l.mapNotNull { it.orderId }.toSet(), l.map { it.clientId }.toSet()) } },
         ).also { makerDeskCache = t to it }
     }
 
@@ -1358,7 +1360,7 @@ class AppContainer(val app: Application) {
             gate = ::tailGate,
             ownBids = {
                 makerStore.flow.value.orEmpty().filter { it.resting }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) } +
-                    liveBidDesk.bidsNow().filter { it.active }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) }
+                    (liveBidDesk.bidsNow() + lightBidDesk.bidsNow()).filter { it.active }.map { com.tjshea.vigilant.data.pinnodds.LiveOwnBid(it.marketId, it.outcomeId, it.price) }
             },
             journal = tailJournal,
             onHalt = { why ->
@@ -1384,6 +1386,8 @@ class AppContainer(val app: Application) {
             scope = appScope, source = novig,
             newView = { l -> com.tjshea.vigilant.data.novig.stream.SharedStreamView({ novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream }, l) },
             fetch = ::feedRaceFetch, onOffer = { tailTaker.offer(it) }, leagues = { LAB_LEAGUES },
+            bids = { if (lightBidsOn(settingsStore.flow.value)) lightBidDesk else null },
+            bidRules = { com.tjshea.vigilant.data.novig.lab.LiveLightBidRules(margin = LIGHT_BID_MARGIN) },
             confirm = {
                 val s = settingsStore.flow.value
                 if (s != null && boltActive(s) && s.gates.boltSocket) com.tjshea.vigilant.data.novig.lab.BoltLiveConfirm(boltFeed.lines.board) else null
@@ -1392,6 +1396,7 @@ class AppContainer(val app: Application) {
     }
 
     @Volatile private var tailSawHalt = false
+    @Volatile private var lightBidWasOn = false
     @Volatile private var tailWalletRead = false
 
     /** The lab's SportsGameOdds boards by league: one read serves every game of the league for [LAB_BOARD_MS] (SGO refreshes about every 30 s). */
@@ -1449,7 +1454,9 @@ class AppContainer(val app: Application) {
         // The push lane replaces the slow tail pass while the live feed is connected; a research switch still wants the lab.
         val on = (s.altLab || s.researchMode || (s.tailLive.on && !light)) && !s.killed
         if (light) { if (!liveLight.running) liveLight.start() } else if (liveLight.running) liveLight.stop()
-        if (s.tailLive.halted != null) tailSawHalt = true else if (tailSawHalt) { tailSawHalt = false; tailTaker.resumed() }
+        // The bid desk runs for the life of the app once Live light's bids have been on (a fill that lands after the switch is off is still recorded); switched off, what is up comes down.
+        if (lightBidsOn(s)) { lightBidWasOn = true; runCatching { lightBidDesk.start() } } else if (lightBidWasOn) { lightBidWasOn = false; appScope.launch { runCatching { lightBidDesk.stopAll("Live light bids switched off") } } }
+        if (s.tailLive.halted != null) tailSawHalt = true else if (tailSawHalt) { tailSawHalt = false; tailTaker.resumed(); lightBidDesk.resumed() }
         // A real tail bet needs the wallet read once before its first order (the gate says "wallet not read yet" otherwise).
         if (s.tailLive.on && s.tailLive.bet && !s.killed) { if (!tailWalletRead) { tailWalletRead = true; appScope.launch { runCatching { wallet.fresh() } } } } else tailWalletRead = false
         if (on) lab.start(LAB_LEAGUES) else if (lab.running) lab.stop()
@@ -1795,6 +1802,53 @@ class AppContainer(val app: Application) {
                     withContext(kotlinx.coroutines.NonCancellable) {
                         runCatching { settingsStore.update { if (it.liveBidHalted == null) it.copy(liveBidHalted = why) else it } }
                         runCatching { AutoBetNotes.stopped(app, "Live bids stopped", why) }
+                    }
+                }
+            },
+            lock = orderLock, version = BuildConfig.VERSION_NAME,
+            repeat = { settingsStore.flow.value?.gates?.repeatRules() },
+            heldBets = { com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(tracker.all()) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(makerStore.all()) },
+        )
+    }
+
+    /** Live light's bids switch ([com.tjshea.vigilant.data.scanner.TailLiveSettings.bids]): on only while Live light itself is on, the Novig app, no STOP ALL, no hand pause. */
+    private fun lightBidsOn(s: com.tjshea.vigilant.data.scanner.ScanSettings?): Boolean =
+        s != null && AppBook.isNovig && s.tailLive.on && s.tailLive.light && s.tailLive.bids && !s.killed && !s.paused
+
+    /** What Live light's bid desk is told each time it looks: the tail switches' money limits (paper until "Buy with real money" is on), the bid rules the desk needs (its price window is the model's, not Pinnacle's). */
+    private fun lightBidConfig(): com.tjshea.vigilant.data.livebid.LiveBidConfig {
+        val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.livebid.LiveBidConfig.OFF
+        val t = s.tailLive
+        val limits = com.tjshea.vigilant.data.livebid.LiveBidLimits(
+            stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = t.stake, minStake = 1.0, maxStake = t.stake, maxBids = 4, maxBidsPerGame = 2,
+            maxPerGame = t.maxGame, maxPerDay = t.maxDay, haltLoss = t.haltLoss, walletReserve = 5.0,
+        )
+        val quality = com.tjshea.vigilant.data.livebid.LiveBidQuality(margin = LIGHT_BID_MARGIN, minPrice = 0.30, maxPrice = 0.93, ttlSec = 20)
+        return com.tjshea.vigilant.data.livebid.LiveBidConfig(
+            on = lightBidsOn(s), real = t.bet, quality = quality, limits = limits, bankroll = s.bankroll, apiMaxStake = s.apiMaxStake, preset = "Live light",
+            halted = t.halted, blockedWhy = if (t.bet && trading == null) "no betting key connected" else null,
+        )
+    }
+
+    /** Live light's own bid desk: the live bid desk's machinery (post-only orders with a ttl, vouched for every second or pulled in 3.5 s, wallet, game, day and loss limits, repeat guard) with its own store and the tail switches' limits. */
+    val lightBidDesk: com.tjshea.vigilant.data.livebid.LiveBidDesk by lazy {
+        com.tjshea.vigilant.data.livebid.LiveBidDesk(
+            scope = appScope, orders = liveBidOrders, store = com.tjshea.vigilant.data.livebid.LiveBidStore(File(app.filesDir, "light-bids.json")),
+            journal = com.tjshea.vigilant.data.pinnodds.DayJournal(File(app.filesDir, "live-bids"), "lightbid", com.tjshea.vigilant.data.livebid.LiveBidEvent.serializer()) { it.atMs },
+            config = ::lightBidConfig, wallet = { wallet.flow.value?.dollars },
+            otherRestingDollars = { makerStore.flow.value.orEmpty().filter { it.resting }.sumOf { it.restingDollars } + liveBidDesk.bidsNow().filter { it.active }.sumOf { it.restingDollars } },
+            spentToday = ::liveBidSpentToday, dayLimit = { settingsStore.flow.value?.apiMaxPerDay ?: 0.0 }, lossToday = ::liveBidLossToday,
+            logFills = { target, orderId, fills ->
+                val bet = tracker.logMakerFills(target, orderId, fills)
+                if (bet != null) appScope.launch { runCatching { wallet.fresh() } }
+                bet?.id
+            },
+            onHalt = { why ->
+                eventLog.warn("LIGHTBID", "live light bids halted: $why")
+                appScope.launch {
+                    withContext(kotlinx.coroutines.NonCancellable) {
+                        runCatching { settingsStore.update { if (it.tailLive.halted == null) it.copy(tailLive = it.tailLive.copy(halted = why)) else it } }
+                        runCatching { AutoBetNotes.stopped(app, "Live light bids stopped", why) }
                     }
                 }
             },

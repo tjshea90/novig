@@ -87,6 +87,7 @@ object KillSwitch {
         runCatching { c.novig.stream?.close() }
         // The live bids first: they rest for seconds and are re-vouched for every half second, so they are the ones a stopped feed must not leave behind.
         runCatching { c.liveBidDesk.stopAll(CANCEL_WHY) }
+        runCatching { c.lightBidDesk.stopAll(CANCEL_WHY) }
         // 3. Every bid down.
         val cancelled = try {
             c.maker.cancelAll(CANCEL_WHY)?.let { n -> maxOf(n, (upBefore ?: 0) - (c.makerDesk()?.bids()?.count { it.active } ?: 0)) }
