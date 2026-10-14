@@ -1511,4 +1511,10 @@ data class ScanGuards(
      */
     val bidPerGameDollars: Double = 10.0,
     val bidPerGameBids: Int = 10,
+    /**
+     * Bid on a league's lines while the scan is still collecting its odds (Tj, 2026-10-14: "The scan is huge and takes a long time, can't it put up bids progressively as the scan is going?"): a line is judged
+     * with the fair odds in so far, under every rule a bid has (the fewest books, the sharp book, the margin), and re-priced as the rest arrive (a bid whose fair falls comes down). Off: a league waits until
+     * every source has answered it, as the feed does.
+     */
+    val bidWhileScanning: Boolean = true,
 )

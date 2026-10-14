@@ -384,7 +384,7 @@ object MakerLines {
         return result.opportunities.filter { o ->
             o.league.novigName in settings.leagues && !o.isLive && o.fairProbability != null &&
                 o.bookFetchedAtMs != null && now - o.bookFetchedAtMs <= MAX_BOOK_AGE_MS &&
-                (result.waitingFor.isEmpty() || com.tjshea.vigilant.data.scanner.ScanResult.waitKey(o.league.novigName, o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP) !in result.waitingFor)
+                (result.waitingFor.isEmpty() || settings.vigGuards.bidWhileScanning || com.tjshea.vigilant.data.scanner.ScanResult.waitKey(o.league.novigName, o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP) !in result.waitingFor)
         }.map { o ->
             val line = MakerLine(
                 market = o.market, outcomeId = o.outcome.outcomeId, startsTs = minOf(o.event.startsTs, o.market.startsTs), league = o.league.displayName,

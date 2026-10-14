@@ -11,6 +11,7 @@ import com.tjshea.vigilant.data.novig.trading.NovigFill
 import com.tjshea.vigilant.data.novig.trading.NovigOrder
 import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
 import com.tjshea.vigilant.data.scanner.BetKind
+import com.tjshea.vigilant.data.scanner.ScanGuards
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.BetTracker
 import com.tjshea.vigilant.data.tracker.GameExposure
@@ -1324,10 +1325,14 @@ class MakerTest {
             computedAtMs = now, freshSinceMs = scanStart,
             waitingFor = setOf(com.tjshea.vigilant.data.scanner.ScanResult.waitKey("MLB", props = true)),
         )
-        val settings = ScanSettings(leagues = setOf("NFL", "MLB"))
+        // Waiting leagues held back: the switch off (the feed's rule).
+        val settings = ScanSettings(leagues = setOf("NFL", "MLB"), vigGuards = ScanGuards(bidWhileScanning = false))
         val lines = MakerLines.from(result, settings, now)
         assertEquals(listOf("fresh-over", "lastscan-over"), lines.map { it.outcomeId })
         assertEquals(now - 9 * 60_000, lines[1].bookAtMs)
+        // Bids while the scan runs (Tj, 2026-10-14, the default): the waiting league's line is judged with the fair in so far; the old and never-read books are still left out.
+        val progressive = MakerLines.from(result, ScanSettings(leagues = setOf("NFL", "MLB")), now)
+        assertEquals(listOf("fresh-over", "lastscan-over", "waiting-over"), progressive.map { it.outcomeId })
     }
 
     // ---- why no bid filled (Tj, 2026-10-03, v0.53.0: "None of my auto bids were accepted") -----------------------------------------------------
