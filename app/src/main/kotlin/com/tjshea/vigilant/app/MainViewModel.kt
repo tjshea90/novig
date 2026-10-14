@@ -2160,6 +2160,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { it.copy(pinnLive = c.pinnRunner.status.value, pinnTrade = c.pinnTrader.status.value, pinnWebsiteStats = c.websiteStats(), pinnRaceLines = c.pinnRace.lines()) }
     }
 
+    /** What the Bids tab shows of Live light: the lane's status and its desk's bids, looked at every 1.5 s but only while that tab is collecting (nothing runs behind a closed tab). */
+    data class LightUi(val status: com.tjshea.vigilant.data.novig.lab.LiveLightStatus = com.tjshea.vigilant.data.novig.lab.LiveLightStatus(), val bids: List<com.tjshea.vigilant.data.livebid.LiveBid> = emptyList())
+
+    val lightUi: StateFlow<LightUi> by lazy {
+        kotlinx.coroutines.flow.flow {
+            while (true) {
+                emit(LightUi(c.liveLight.status.value, c.lightBidDesk.bidsNow()))
+                kotlinx.coroutines.delay(1_500L)
+            }
+        }.distinctUntilChanged().stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(3_000L), LightUi())
+    }
+
     /** The live bid desk's status for Settings › Live bids (the page asks every second or two while it is open). */
     fun refreshLiveBid() {
         _state.update { it.copy(liveBidStatus = c.liveBidDesk.status.value, liveBids = c.liveBidDesk.bidsNow(), lightBids = c.lightBidDesk.bidsNow(), pinnLive = c.pinnRunner.status.value, tailTrade = c.tailTaker.status.value, labStatus = c.lab.status.value, lightStatus = c.liveLight.status.value, pinnTrade = c.pinnTrader.status.value, pinnWebsiteStats = c.websiteStats()) }
