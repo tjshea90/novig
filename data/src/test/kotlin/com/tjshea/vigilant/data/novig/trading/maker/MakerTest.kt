@@ -925,7 +925,9 @@ class MakerTest {
         val noSharp = line("m1-over", fair = 0.60, offer = 0.62, m = market("m1", starts = start + 30 * 3_600_000L))
         val d = desk(FakeNovig(), tracker())
         val r = d.cycle(listOf(noSharp), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0)
-        assertTrue("a game 30 h out is past the 20 h guard: no usual bid; and no riskier one without a sharp book", r.decisions.none { it is MakerDecision.Post })
+        // A game 30 h out is past the 20 h guard: no usual bid and no riskier one (no sharp book); only the last, widest pass (Tj, 2026-10-14: all times, no sharp book needed) bids, far under the fair.
+        val widest = r.decisions.filterIsInstance<MakerDecision.Post>().singleOrNull()
+        assertTrue("only the widest pass bids: price at most ${0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_ANY_MARGIN)}", widest == null || (widest.overflow && widest.price <= 0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_ANY_MARGIN) + 1e-9))
         val withSharp = noSharp.copy(sharpFairs = listOf(0.60))
         val d2 = desk(FakeNovig(), tracker())
         val r2 = d2.cycle(listOf(withSharp), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0)
@@ -946,9 +948,10 @@ class MakerTest {
         val post = r.decisions.filterIsInstance<MakerDecision.Post>().single()
         assertTrue("a wallet-filling bid", post.overflow)
         assertTrue("a margin the usual bid's plus 4 plus 2 points: price at most ${0.60 / 1.08}", post.price <= 0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_WEEK_MARGIN) + 1e-9)
-        // Past the week: nothing, whatever the wallet.
+        // Past the week the last pass still bids (Tj, 2026-10-14: "all times are allowed"), but only at its own, wider margin.
         val beyond = line("m2-over", fair = 0.60, offer = 0.64, m = market("m2", starts = start + 200 * 3_600_000L)).copy(sharpFairs = listOf(0.60))
-        assertTrue(desk(FakeNovig(), tracker()).cycle(listOf(beyond), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
+        val beyondPost = desk(FakeNovig(), tracker()).cycle(listOf(beyond), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.filterIsInstance<MakerDecision.Post>().singleOrNull()
+        assertTrue(beyondPost == null || beyondPost.price <= 0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_ANY_MARGIN) + 1e-9)
         // Switch off: nothing extra.
         assertTrue(desk(FakeNovig(), tracker()).cycle(listOf(far), kelly.copy(earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
     }
