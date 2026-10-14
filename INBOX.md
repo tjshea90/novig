@@ -7248,3 +7248,8 @@ Instead of all the live features in the settings, make a live tab with all of th
 
 Also the auto bids are still only posting a small portion of my wallet. I want it to fill up the wallet. If it can't find good bids, increase the time period of game start date to bid on games later in the week, or bid on more markets and sports, but all at all a safe EV
 ```
+
+## 2026-10-14T14:12:44Z
+```
+If you look at my most losing bet types , couldn't I simply bet and bid on the other side of them for a profit? For example, if overs are losing money, should I make positive EV bids and bets on unders?
+```
