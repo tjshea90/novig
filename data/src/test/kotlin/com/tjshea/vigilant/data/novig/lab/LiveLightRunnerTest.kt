@@ -184,4 +184,38 @@ class LiveLightRunnerTest {
         runner(view, ArrayList(), scoreboard(105, 105, period = 5, clock = "5:00"), desk = ot).look()
         assertTrue(ot.wants.isEmpty() && ot.kept == 0)
     }
+
+    @Test
+    fun `alternate totals are watched near where the game is going, and one priced off its ladder is offered as a curve bet`() = runBlocking {
+        val mu = 220.0
+        val sigma = 12.0
+        fun pOver(t: Double) = 1.0 - TailModel.phi((t - mu) / sigma)
+        fun totalMarket(id: String, strike: Double) = NovigMarket(
+            id, "ev", "TOTAL", "OPEN", "d", 0L, MarketFee.GAME,
+            listOf(NovigOutcome("$id-u", "Under $strike", "TBD"), NovigOutcome("$id-o", "Over $strike", "TBD")), strike,
+        )
+        fun totalBook(id: String, overAsk: Double, underAsk: Double) =
+            NovigBook(id, 1L, mapOf("$id-u" to listOf(BidLevel(((1 - overAsk) * 1000).toInt(), 5_000)), "$id-o" to listOf(BidLevel(((1 - underAsk) * 1000).toInt(), 5_000))), 0L)
+        val honest = listOf(204.5, 208.5, 212.5, 216.5, 224.5, 228.5, 232.5, 236.5)
+        val far = totalMarket("farout", 330.5)   // nowhere near this game: not watched
+        val markets = honest.map { totalMarket("t${it.toInt()}", it) } + totalMarket("alt", 210.5) + far
+        val books = honest.associate { "t${it.toInt()}" to totalBook("t${it.toInt()}", pOver(it) + 0.01, 1 - pOver(it) + 0.01) } +
+            ("alt" to totalBook("alt", 0.60, 0.43)) + ("farout" to totalBook("farout", 0.5, 0.5))
+        val view = View(books)
+        val offers = ArrayList<TailOffer>()
+        val r = LiveLightRunner(
+            scope = TestScope(), source = Src(event, markets), newView = { _: BookListener -> view },
+            fetch = { Fetched(scoreboard(60, 60, period = 3, clock = "7:12"), 5L) }, onOffer = { offers += it }, leagues = { setOf("NBA") }, clock = { now },
+        ).also { it.bind() }
+        r.readCatalog()
+        assertTrue("with no score yet only the moneyline is watched (none here)", view.watched.isEmpty())
+        r.readScores()
+        r.readCatalog()
+        assertTrue("alt" in view.watched && "t204" in view.watched)
+        assertTrue("a strike 100 points from the game is not watched", "farout" !in view.watched)
+        r.scanGame("ev")
+        val o = offers.single()
+        assertEquals("alt-o", o.candidate.outcomeId)
+        assertEquals(LiveLightCurve.RULE, o.candidate.rule)
+    }
 }
