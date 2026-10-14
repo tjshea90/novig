@@ -7275,3 +7275,10 @@ Confirm release v0.99.7 exists (mcp__github__get_release_by_tag tjshea90/novig v
 ```
 This session's worker process was restarted. If your previous turn was already complete, take no action and wait for the next event. Otherwise, continue from where you left off.
 ```
+
+## 2026-10-14T17:21:25Z
+```
+Why does this keep happening?
+
+Resume
+```
