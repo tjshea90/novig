@@ -5064,6 +5064,6 @@ Tj (verbatim): "I want a "light" version of the feature which looks for obviousl
 
 ## TLA: Live light on alternate lines, with ladder math (Tj, 2026-10-14)
 Tj: "The live light should look at alternate market odds as well on novig, for example, alternate spreads and totals on games, because these are often wrong. It should have a smart math system if needed to calculate bad odds in real time then rapidly auto bet"
-- [ ] TLA1 Market selection: per live game keep the alternate strikes within 3 sd of where the score says the game is (the decided ones are the tail), moneyline always, so the stream budget goes to the lines that can be wrong; re-pick as the score moves.
-- [ ] TLA2 `LadderFit` + `LiveLightCurve`: fit each ladder's liquid mids to a normal curve (probit regression), price every other strike from the curve with the line left out of its own fit (inconsistent alternates), cautious (spread widened, centre shifted), never above the score model's fair; rule "curve" with a higher edge floor.
-- [ ] TLA3 Wire into the runner + taker (rule accepted, bigger edge floor), tests, ship.
+- [x] TLA1 (`LiveLightLines`, `LiveLightLinesTest`) Market selection: per live game keep the alternate strikes within 3 sd of where the score says the game is (the decided ones are the tail), moneyline always, so the stream budget goes to the lines that can be wrong; re-pick as the score moves.
+- [x] TLA2 (`LadderFit`, `LiveLightCurve`, `LiveLightCurveTest`) `LadderFit` + `LiveLightCurve`: fit each ladder's liquid mids to a normal curve (probit regression), price every other strike from the curve with the line left out of its own fit (inconsistent alternates), cautious (spread widened, centre shifted), never above the score model's fair; rule "curve" with a higher edge floor.
+- [x] TLA3 (runner + taker rule, tests; shipped v0.99.1) Wire into the runner + taker (rule accepted, bigger edge floor), tests, ship.

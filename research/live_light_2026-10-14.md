@@ -21,3 +21,8 @@ Ask: a "light" live lane that finds live prices that are obviously wrong in Tj's
 - Kalshi as a second opinion (its live game markets; matching + staleness unverified from this container).
 - Live auto-bids (TLL4): a second `LiveBidDesk` with its own store/limits fed by model-priced wants.
 - Nothing here has met a live key or a live game from this container: Diagnostics > LIVE LIGHT (pushes, judgments, ms from push, what was not judged and why) is the evidence.
+
+## v0.99.1: alternate lines and the ladder math (Tj, same day)
+- `LiveLightLines.window`: each alternate spread/total is its own Novig market; the 48-market stream budget now goes to the moneyline plus the strikes within 3.5 sigma of where the score says the game is going (nearest first, 14 a game), re-picked every 20 s and at once when a game's first score arrives.
+- `LadderFit` (probit regression of a ladder's liquid middles on the strike: mu, sigma, rms) + `LiveLightCurve`: every strike is priced from the curve fitted WITHOUT it (>= 4 other liquid lines, rms <= 3 points, sigma within 2x of what the sport and time left allow, strike inside the liquid range + 0.5 sigma), cautious (centre 0.25 sigma against the bet, width x1.25), fair >= 60%, edge >= 8% after the live fee; the score model only vetoes (a side it rates under 2% while the ladder says likely = a stale ladder). Rule "curve": the taker's fair floor is 60% and edge floor 8% for it.
+- Not built: monotonicity arbitrage (a lower Over priced under a higher one) as an auto-bet (two legs; `LadderScan` covers stay paper).
