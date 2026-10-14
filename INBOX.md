@@ -7282,3 +7282,8 @@ Why does this keep happening?
 
 Resume
 ```
+
+## 2026-10-14T17:57:43Z
+```
+This bet is negative ev. Why did it not automatically remove itself from the list
+```
