@@ -5148,3 +5148,9 @@ Cause: passes already run on partial scan results every 20 s, but `MakerLines.fr
 ## TWR2: v0.99.12 is worse: fewer bids, scan far too long (Tj, 2026-10-14 ~15:20 local, file 55a487c0...)
 Tj: "It's broken. It placed even fewer bids on this version. The scan takes way too long."
 - [x] TWR2a (v0.99.12 file: a 10-day scan = 7,669 Novig prices in 496 s, fair read in 47 s so 5,000+ lines "fair too old"; the 130 bids were cleared by STOP ALL at 15:19:46 before the report) `FarLane`: background scans alternate a quick 48 h scan with a full-reach one every 15 min; bids past a quick scan's reach stay until expiry (`MakerPlan.reachUntilMs`); switch `bidFarLane`. Tests `FarLaneTest`, `MakerTest`. v0.99.13 (with progressive bidding).
+
+## TVM: volume mode for bids: hundreds or thousands up, likeliest-to-fill first, 1.5% / 2.5% EV floors (Tj, 2026-10-14 ~19:45Z)
+Tj: "It seems to be working now. Now fine tune it. The key is volume. I want hundreds or thousands of bids up at any time, on markets and types of bids most likely to be filled put up first. It can go down to 1.5% positive EV on the safest bid types and 2.5% positive EV on riskier ones. The goal right now is pure volume and bid fills. I'm going to experiment with lower positive EV margins but large numbers of fills. Optimize the bid types for smaller positive EV margins but maximum chance of many bids being filled rapidly"
+- [ ] TVM1 Study: which bid kinds / leagues / lead times / prices fill fastest (per bid-hour) in the files in research/uploads; write research/bid_fill_speed_2026-10-14.md.
+- [ ] TVM2 Build: a Volume mode (switch) = EV floor 1.5% safe / 2.5% risky, no tier extras that widen beyond that, max bids in the thousands, posts per pass up, order by fill likelihood (type score from TVM1), diversification kept; tests.
+- [ ] TVM3 Ship, then read Tj's next file (bids up, fills per hour, EV at fill).
