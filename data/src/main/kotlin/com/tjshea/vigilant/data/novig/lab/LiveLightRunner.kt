@@ -90,6 +90,16 @@ class LiveLightRunner(
     fun start() {
         if (running) return
         _status.value = LiveLightStatus(running = true)
+        bind()
+        jobs = listOf(
+            scope.launch { guarded("catalog") { catalogLoop() } },
+            scope.launch { guarded("score") { stateLoop() } },
+            scope.launch { guarded("scan") { scanLoop() } },
+        )
+    }
+
+    /** Opens the view of Novig's live feed and listens to it (the loops are started by [start]; a test drives the steps by hand after this). */
+    internal fun bind() {
         dirty.clear()
         val listener = BookListener { marketId, atMs, _ ->
             val ev = marketEvent[marketId] ?: return@BookListener
@@ -99,11 +109,6 @@ class LiveLightRunner(
             signal.trySend(Unit)
         }
         view = newView(listener)?.also { it.open() }
-        jobs = listOf(
-            scope.launch { guarded("catalog") { catalogLoop() } },
-            scope.launch { guarded("score") { stateLoop() } },
-            scope.launch { guarded("scan") { scanLoop() } },
-        )
     }
 
     @Synchronized

@@ -59,7 +59,7 @@ class LiveLightRunnerTest {
         LiveLightRunner(
             scope = TestScope(), source = Src(event, listOf(market)), newView = { _: BookListener -> view },
             fetch = { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock,
-        )
+        ).also { it.bind() }
 
     private suspend fun LiveLightRunner.look() { readCatalog(); readScores(); scanGame("ev") }
 
