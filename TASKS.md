@@ -5061,3 +5061,9 @@ Tj (verbatim): "I want a "light" version of the feature which looks for obviousl
 - [x] TLL3 (`LiveLightRunner` + `LiveConfirm`, `LiveLightRunnerTest`; wired in VigilantApp.labTick, settings switch in Live bids) Runner on Novig's socket (push): a wrong live price is bet at once; own switch (Settings), pregame scanner/auto-bet/bids unaffected; never touches Pinnodds.
 - [x] TLL4 (`LiveLightBids`, second `LiveBidDesk` "lightBidDesk", Settings switch, `LiveLightRunnerTest` bid cases) Live auto-bids toggle: bids priced off the same live fair, far under it.
 - [x] TLL5 (full floor green, shipped v0.99.0) Guards (live fee, 5 s freshness, repeat/line guards, per-game exposure), Diagnostics section, tests, ship.
+
+## TLA: Live light on alternate lines, with ladder math (Tj, 2026-10-14)
+Tj: "The live light should look at alternate market odds as well on novig, for example, alternate spreads and totals on games, because these are often wrong. It should have a smart math system if needed to calculate bad odds in real time then rapidly auto bet"
+- [ ] TLA1 Market selection: per live game keep the alternate strikes within 3 sd of where the score says the game is (the decided ones are the tail), moneyline always, so the stream budget goes to the lines that can be wrong; re-pick as the score moves.
+- [ ] TLA2 `LadderFit` + `LiveLightCurve`: fit each ladder's liquid mids to a normal curve (probit regression), price every other strike from the curve with the line left out of its own fit (inconsistent alternates), cautious (spread widened, centre shifted), never above the score model's fair; rule "curve" with a higher edge floor.
+- [ ] TLA3 Wire into the runner + taker (rule accepted, bigger edge floor), tests, ship.
