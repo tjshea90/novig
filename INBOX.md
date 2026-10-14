@@ -7260,3 +7260,8 @@ Make these errors refresh and disappear automatically as soon as they no longer 
 
 Also look at the bids up, it never fills my wallet
 ```
+
+## 2026-10-14T17:14:09Z
+```
+I don't understand why it should ever be under wallet. There are plenty of games. There are games this weekend with a full NFL and college football slate with thousands of props and spreads and totals. If it runs out of preferred bids, it should automatically post bids on popular sports and props, just at a high ev that is safe
+```
