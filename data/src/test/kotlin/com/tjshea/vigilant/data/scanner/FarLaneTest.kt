@@ -31,8 +31,8 @@ class FarLaneTest {
     @Test
     fun `a quick scan reads 48 hours, a full one the whole reach`() {
         assertEquals(240, bidding.scanWindowHours)
-        assertEquals(FarLane.NEAR_HOURS, bidding.copy(nearScan = true).scanWindowHours)
-        assertEquals("never past the reach itself", 24, bidding.copy(nearScan = true, daysAhead = 1).scanWindowHours)
-        assertFalse("never saved", kotlinx.serialization.json.Json.encodeToString(ScanSettings.serializer(), bidding.copy(nearScan = true)).contains("nearScan"))
+        assertEquals(FarLane.NEAR_HOURS, bidding.copy(vigGuards = bidding.vigGuards.copy(nearScan = true)).scanWindowHours)
+        assertEquals("never past the reach itself", 24, bidding.copy(vigGuards = bidding.vigGuards.copy(nearScan = true), daysAhead = 1).scanWindowHours)
+        assertFalse("never saved", kotlinx.serialization.json.Json.encodeToString(ScanSettings.serializer(), bidding.copy(vigGuards = bidding.vigGuards.copy(nearScan = true))).contains("nearScan"))
     }
 }

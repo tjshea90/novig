@@ -999,7 +999,7 @@ class Scanner(
      * How far ahead Novig's markets are read: "Days ahead" (a day's slack is added), or in low-usage bids only the window ([ScanSettings.scanWindowHours]): the scan prices
      * nothing past it, so the prop markets of the next week are not read for it (RESEARCH.md §92).
      */
-    private fun catalogHours(settings: ScanSettings): Int = if (settings.lowUsageScan || settings.nearScan) settings.scanWindowHours else settings.daysAhead.coerceAtLeast(1) * 24
+    private fun catalogHours(settings: ScanSettings): Int = if (settings.lowUsageScan || settings.vigGuards.nearScan) settings.scanWindowHours else settings.daysAhead.coerceAtLeast(1) * 24
 
     private suspend fun refreshCatalog(settings: ScanSettings, types: Set<String>, now: Long, errors: MutableList<String>) {
         val c = catalog

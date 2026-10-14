@@ -1097,7 +1097,7 @@ class AppContainer(val app: Application) {
         val lean = if (background && com.tjshea.vigilant.data.scanner.LongRunBids.leanApplies(requested)) requested.copy(leanScan = true) else requested
         // The quick 48-hour scan between full-reach ones (Tj, 2026-10-14: "The scan takes way too long"): see [FarLane].
         val near = com.tjshea.vigilant.data.scanner.FarLane.nearOnly(lean, background, now, lastFullScanAtMs)
-        val settings = if (near) lean.copy(nearScan = true) else lean
+        val settings = if (near) lean.copy(vigGuards = lean.vigGuards.copy(nearScan = true)) else lean
         if (!near && !streamPass) lastFullScanAtMs = now
         val pinned = bets.filter { it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
         // Low API usage bids: the markets a bid of ours rests on are read first, so each is re-posted from this scan's fair before its old one ends (RESEARCH.md §93).
