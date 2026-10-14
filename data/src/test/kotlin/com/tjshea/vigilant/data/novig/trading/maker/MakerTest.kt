@@ -1062,6 +1062,55 @@ class MakerTest {
         assertEquals("a full scan with no line for it takes it down", 1, full.cancels.size)
     }
 
+    // ---- Volume mode (Tj, 2026-10-14) -------------------------------------------------------------------------------------
+
+    private val volume = MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = true)))
+
+    @Test
+    fun `Volume mode is thousands of bids at any start time, the margin is an EV floor by type and the wallet scale-up passes are off`() {
+        assertTrue(volume.volume)
+        assertEquals(BidVolume.MAX_BIDS, volume.maxBids)
+        assertEquals("any start time", 0, volume.earlyHours)
+        assertEquals(0.0, volume.deployPct, 0.0)
+        assertFalse("off: the usual rules", MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = false))).volume)
+        // The safest types (a proven NHL prop with a sharp book) bid at 1.5% under the fair; a risky one (an NFL prop) and a line with no sharp book at 2.5%.
+        val safe = line("s-over", fair = 0.60, offer = 0.70, m = market("s")).copy(league = "NHL", sharpFairs = listOf(0.60), books = 5, bookFairs = listOf(0.60, 0.60, 0.60, 0.60, 0.60))
+        val risky = line("r-over", fair = 0.60, offer = 0.70, m = market("r")).copy(league = "NFL", sharpFairs = listOf(0.60), books = 5, bookFairs = listOf(0.60, 0.60, 0.60, 0.60, 0.60))
+        val noSharp = safe.copy(sharpFairs = emptyList())
+        val rs = volume.copy(minBooks = 1, bankroll = 1_000.0, maxStake = 50.0, perGameBids = 0, perGameBidDollars = 0.0)
+        val p1 = MakerQuote.decide(safe, rs, now) as MakerDecision.Post
+        val p2 = MakerQuote.decide(risky, rs, now) as MakerDecision.Post
+        val p3 = MakerQuote.decide(noSharp, rs, now) as MakerDecision.Post
+        assertTrue("safe: price ${p1.price} within a tick of fair/1.015", p1.price <= 0.60 / 1.015 + 1e-9 && p1.price > 0.60 / 1.015 - 0.0101)
+        assertTrue("risky: price ${p2.price} within a tick of fair/1.025", p2.price <= 0.60 / 1.025 + 1e-9 && p2.price > 0.60 / 1.025 - 0.0101)
+        assertTrue("no sharp book is the risky floor", p3.price <= 0.60 / 1.025 + 1e-9)
+        assertTrue("a thinner floor than the 2.91% margin of the usual rules", p1.price > 0.60 / 1.0291)
+    }
+
+    @Test
+    fun `Volume mode puts the bids that fill fastest first - a near player prop in a busy league before a far game line`() {
+        val fast = postOf(line("a-over", m = market("a", starts = now + 2 * 3_600_000L)).copy(league = "WNBA", kind = BetKind.PROP))
+        val slow = postOf(line("b-over", m = market("b", starts = now + 60 * 3_600_000L)).copy(league = "NCAAF", kind = BetKind.SPREAD))
+        val mid = postOf(line("c-over", m = market("c", starts = now + 8 * 3_600_000L)).copy(league = "NFL", kind = BetKind.TEAM_TOTAL))
+        val order = listOf(slow, mid, fast).sortedWith(MakerPlan.priority(volume, now)).map { it.line.market.marketId }
+        assertEquals(listOf("a", "c", "b"), order)
+        assertTrue(BidVolume.score(fast.line, true, now) > BidVolume.score(fast.line, false, now))
+    }
+
+    @Test
+    fun `Volume mode runs no wallet-filling pass and does not scale the stakes, and says how the bids are spread`() = runBlocking {
+        val rs = volume.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1, maxOdds = 0, minOdds = 0, perGameBids = 0, perGameBidDollars = 0.0)
+        val near = (1..6).map { line("n$it-over", fair = 0.60, offer = 0.70, m = market("n$it", starts = start + 6 * 3_600_000L).copy(eventId = "g${it % 3}")).copy(league = "NHL", sharpFairs = listOf(0.60), books = 5, bookFairs = List(5) { 0.60 }) }
+        val r = desk(FakeNovig(), tracker()).cycle(near, rs, stop = null, maxPerDay = 5_000.0, wallet = 500.0)
+        val posts = r.decisions.filterIsInstance<MakerDecision.Post>()
+        assertEquals(6, posts.size)
+        assertTrue("no wallet-filling bid", posts.none { it.overflow })
+        val plain = rs.copy(volume = false, deployPct = 0.0)
+        val usual = desk(FakeNovig(), tracker()).cycle(near, plain, stop = null, maxPerDay = 5_000.0, wallet = 500.0).decisions.filterIsInstance<MakerDecision.Post>()
+        assertTrue("the stake is the usual one, never scaled: ${posts.first().cost} vs ${usual.first().cost}", posts.first().cost <= usual.first().cost * 1.0001 + 1.0)
+        assertTrue(r.deploy != null && r.deploy!!.spread.isNotEmpty())
+    }
+
     @Test
     fun `a wallet-filling bid may rest far behind the best bid - it is posted to see if anyone takes it`() = runBlocking {
         val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1)
