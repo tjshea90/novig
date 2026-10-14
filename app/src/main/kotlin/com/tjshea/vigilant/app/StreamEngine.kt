@@ -204,6 +204,8 @@ class StreamEngine(
             )
         }
         c.perf.add(if (refresh) "stream.refresh.ms" else "stream.fast.ms", took.toDouble())
+        // Where a pass spends its time, by phase (p50 and p95 in Diagnostics' PERFORMANCE): which one a speed-up should go after.
+        c.scanner.streamPhaseMs()?.forEach { (phase, ms) -> c.perf.add((if (refresh) "stream.refresh." else "stream.fast.") + phase + ".ms", ms.toDouble()) }
         if (_status.value.passes % LOG_EVERY == 1L || took > SLOW_MS) c.eventLog.info("STREAM", "streaming update #${_status.value.passes} (${if (refresh) "BoltOdds refresh, all lines" else "${ids.size} Novig line${if (ids.size == 1) "" else "s"}"}) took $took ms (priced ${priced - t0} ms, auto-bet ${clock() - priced} ms), $handed lines judged" + (c.scanner.streamTimings()?.let { " · $it" } ?: ""))
     }
 

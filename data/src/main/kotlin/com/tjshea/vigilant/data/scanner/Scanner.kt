@@ -837,6 +837,8 @@ class Scanner(
 
     @Volatile private var streamTimings: String? = null
     override fun streamTimings(): String? = streamTimings
+    @Volatile private var streamPhases: Map<String, Long>? = null
+    override fun streamPhaseMs(): Map<String, Long>? = streamPhases
 
     /** What each feed held delivered when last read, for [SourceScore]: quote count, 90th-percentile age by the books' own stamps, and agreement with Pinnacle. */
     private fun measureAll(now: Long): Map<String, SourceScore.Measure> {
@@ -941,6 +943,7 @@ class Scanner(
             }
         }
         val t4 = elapsed()
+        streamPhases = mapOf("boards" to t1 - t0, "match" to t2 - t1, "price" to t3 - t2, "deepen" to t4 - t3)
         streamTimings = "boards read ${t1 - t0} ms (${sources.size} sources), matching ${t2 - t1} ms, pricing ${t3 - t2} ms, deepening ${t4 - t3} ms (${deepIds.size} markets), ${plan.markets.size} markets"
         result
     }

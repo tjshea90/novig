@@ -35,6 +35,9 @@ interface OddsScanner {
     /** Where the last streaming update's time went (reading the boards, matching, pricing, deepening), for Diagnostics; null when none ran. */
     fun streamTimings(): String? = null
 
+    /** The same last streaming pass's phases in milliseconds (boards, match, price, deepen), for Diagnostics' timing percentiles; null before the first pass. */
+    fun streamPhaseMs(): Map<String, Long>? = null
+
     /** Diagnostics "Source race": for each feed the scanner holds, how old its book quotes were when last read (median / 90th percentile), and its freshest and stalest books. */
     fun sourceRace(now: Long): List<String> = emptyList()
 
