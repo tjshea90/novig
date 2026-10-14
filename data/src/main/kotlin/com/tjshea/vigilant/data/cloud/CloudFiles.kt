@@ -31,6 +31,8 @@ data class CloudConfig(
     val settings: ScanSettings = ScanSettings(),
     /** Which phone wrote it (a label for the logs). */
     val device: String = "",
+    /** Seconds between one scan's end and the next one's start (the scan itself takes as long as it takes). */
+    val passGapSeconds: Int = 20,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
