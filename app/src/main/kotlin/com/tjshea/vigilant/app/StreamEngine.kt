@@ -135,6 +135,14 @@ class StreamEngine(
             delay(RETRY_MS)
             return
         }
+        // BoltOdds with its socket switched off is read by REST snapshot, which marks every game changed each time: a pass fed by that would only be a poll that re-matches and re-prices the whole board in a loop
+        // (Tj's 2026-10-13 file: 28,435 "signals", passes of 17-133 s). The engine streams pushes; with the socket off there are none.
+        if (!s.gates.boltSocket) {
+            boltDirty.set(false)
+            _status.update { it.copy(why = "BoltOdds' socket is switched off (Settings › APIs › Sockets): nothing is pushed, so there is nothing to stream; scans read it by request") }
+            delay(RETRY_MS)
+            return
+        }
         val t0 = clock()
         // 1. The Novig lines that moved come first: a few milliseconds each, and a stale price is picked off here. They are never held behind a BoltOdds refresh.
         val ids = if (dirty.isEmpty()) emptySet() else drain()
