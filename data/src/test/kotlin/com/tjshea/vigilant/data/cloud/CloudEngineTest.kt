@@ -60,10 +60,10 @@ class CloudEngineTest {
 
     private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH), passGapSeconds = 5)
 
-    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L) = CloudEngine(
+    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartWithinMs: Long = 45_000L) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
-        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1,
+        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, restartWithinMs = restartWithinMs,
     )
 
     @Test
@@ -110,6 +110,26 @@ class CloudEngineTest {
         assertTrue("scanned again", scanner.calls.get() >= 2)
         assertEquals(0.03, scanner.settingsSeen.last().minEvPercent, 0.0)
         assertTrue(published.any { it.second.configRev == 2L && it.first?.rows?.map { r -> r.event.eventId } == listOf("e-c") })
+    }
+
+    @Test
+    fun `a settings change late in a scan waits for the next pass, a switch-off does not`() = runBlocking {
+        var cfg = on
+        val scanner = FakeScanner { _, _, n -> if (n == 1) { delay(200); report(result("a")) } else report(result("b")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = engine(scanner, { cfg }, published, restartWithinMs = 20)
+        launch(kotlinx.coroutines.Dispatchers.Default) { delay(80); cfg = on.copy(rev = 2, settings = on.settings.copy(minEvPercent = 0.03)) }
+        e.run(untilMs = System.currentTimeMillis() + 500)
+        assertTrue("the first scan finished and was published", published.any { it.first?.rows?.map { r -> r.event.eventId } == listOf("e-a") })
+        assertEquals("the second scan ran under the new settings", 0.03, scanner.settingsSeen.last().minEvPercent, 0.0)
+        // a switch-off cancels at once
+        var c2 = on
+        val s2 = FakeScanner { _, _, _ -> delay(5_000); report(result("a")) }
+        val e2 = engine(s2, { c2 }, CopyOnWriteArrayList(), idleExitMs = 30, restartWithinMs = 20)
+        launch(kotlinx.coroutines.Dispatchers.Default) { delay(60); c2 = on.copy(rev = 3, on = false) }
+        val t0 = System.currentTimeMillis()
+        e2.run(untilMs = t0 + 3_000)
+        assertTrue("stopped well before the 5 s scan would end", System.currentTimeMillis() - t0 < 2_500)
     }
 
     @Test

@@ -22,7 +22,8 @@ import java.util.concurrent.atomic.AtomicReference
  * public API, every feed, the pricing), takes the feed (`ScanResult.feed(settings)`: the same filter as the phone's) and hands it to [publish]. Four rules:
  *  1. **Progressive.** While a long scan runs, what is priced so far (a partial result: only Novig prices read since the scan began, only leagues whose feeds all answered) is published every
  *     [partialEveryMs], so the list fills as the scan goes.
- *  2. **The phone's word is final.** A new settings revision during a scan stops it and starts again under the new settings (checked every [configEveryMs]).
+ *  2. **The phone's word is final, without thrashing.** A new settings revision in a scan's first [restartWithinMs] stops it and starts again under the new settings (checked every [configEveryMs]); later it is applied at the next pass,
+ *     and a switch-off always stops at once. (The phone filters the list again with its own display settings, so a raised minimum edge shows at once.)
  *  3. **Off means off.** `on = false` publishes an idle heartbeat and calls no API; after [idleExitMs] of it the job ends (nothing spends a minute while the phone is asleep).
  *  4. **Live games are never here.** The cloud list is pregame: the 5-second live lane needs the phone's own sockets, and a hop through GitHub is slower than five seconds.
  *
@@ -44,6 +45,8 @@ class CloudEngine(
     private val configEveryMs: Long = 8_000L,
     private val idleExitMs: Long = 10 * 60_000L,
     private val heartbeatEveryMs: Long = 25_000L,
+    /** A new settings revision restarts a scan only this soon after it began; later it waits for the next pass (a scan minutes in is not thrown away for every toggle: Tj changed settings every few seconds). */
+    private val restartWithinMs: Long = 45_000L,
     private val sourceNames: (ScanSettings) -> List<String> = { s -> sources(s).map { it.id } },
 ) {
     enum class End { TIME_UP, IDLE }
@@ -98,6 +101,7 @@ class CloudEngine(
         var lastPublishedAt = 0L
         var lastConfigAt = t0
         var lastBeatAt = t0
+        var deferredLogged = false
         var restart = false
         while (job.isActive) {
             pause(1_000L)
@@ -120,7 +124,11 @@ class CloudEngine(
             if (now - lastConfigAt >= configEveryMs) {
                 lastConfigAt = now
                 val newer = runCatching { config() }.getOrNull()
-                if (newer != null && newer.rev != cfg.rev) { restart = true; job.cancel(CancellationException("settings changed")); break }
+                if (newer != null && newer.rev != cfg.rev) {
+                    if (!newer.on) { restart = true; job.cancel(CancellationException("switched off")); break }
+                    if (now - t0 <= restartWithinMs) { restart = true; job.cancel(CancellationException("settings changed")); break }
+                    if (!deferredLogged) { deferredLogged = true; log("settings changed ${(now - t0) / 1000}s into a scan: kept, applied at the next pass") }
+                }
             }
         }
         if (restart) { log("settings changed mid-scan: starting over"); return@supervisorScope null }
