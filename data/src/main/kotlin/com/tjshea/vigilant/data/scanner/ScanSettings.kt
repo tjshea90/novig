@@ -879,6 +879,10 @@ data class ScanSettings(
             // Tennis auto-bets: -28% on 97 bets (non-prop tennis -40% on 38, t -4.1): off until a history file says otherwise.
             s = s.copy(gates = s.gates.copy(profitProven = true), vigGuards = s.vigGuards.copy(propHaircut = true), autoBetTennis = false, schema = 18)
         }
+        // v0.99.8 (Tj, 2026-10-14: the weekend's slate was never scanned: Days ahead 2): bids need a week of games and their props.
+        if (s.schema < 19) {
+            s = if (s.maker || s.makerRecommend) s.copy(daysAhead = maxOf(s.daysAhead, BID_REACH_DAYS), bookPropHours = maxOf(s.bookPropHours, BID_REACH_DAYS * 24), schema = 19) else s.copy(schema = 19)
+        }
         return s
     }
 
@@ -971,6 +975,9 @@ data class ScanSettings(
     val scanWindowHours: Int
         get() {
             val days = daysAhead.coerceAtLeast(1) * 24
+            // The auto bids fill the wallet from games later in the week (Tj, 2026-10-14: "There are games this weekend with a full NFL and college football slate ..."): the Starts within chip is a VIEW of the next
+            // hours, and it must not stop the scan from reading the whole Days ahead window the bids are priced from. Only the bids' own switch widens it; a feed that shows 48 h still shows 48 h.
+            if (maker && vigGuards.bidDeploy) return days
             return if (startsWithinHours in 1 until days) startsWithinHours else days
         }
 
@@ -1118,6 +1125,9 @@ data class ScanSettings(
          * a list that can be set to 6 h shows what the guard would bet; before, the shortest choice was 12 h.
          */
         val STARTS_WITHIN_CHOICES = listOf(0, 3, 6, 12, 24, 48)
+
+        /** How many days ahead the scan must read for the auto bids to find a full slate of games and props (the week). */
+        const val BID_REACH_DAYS = 7
 
         /** [daysAhead]'s choices. */
         val DAYS_AHEAD_CHOICES = listOf(1, 2, 3, 5, 7, 10)
