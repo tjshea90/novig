@@ -70,6 +70,10 @@ data class MakerRules(
      * the scan's fresh ones, only the bid's life after the post is longer.
      */
     val farFairMaxAgeMs: Long = 0L,
+    /** Volume mode ([BidVolume]): the margin is an EV floor by type, the order is by fill speed, no wallet-filling passes or stake scale-up. */
+    val volume: Boolean = false,
+    /** Like [farFairMaxAgeMs] for a game 1 to [FAR_HOURS] hours out (0 = the ordinary limit). */
+    val midFairMaxAgeMs: Long = 0L,
     /**
      * The most Vigilant's own BIDS put on one game (Tj, 2026-10-14: "I only want so many bids/money on each game. Make it diversify bids among many games and bid types"): dollars up on it, and bids
      * up on it (0 = no limit). Counted apart from Tj's open bets, which the per-game limit above covers.
@@ -205,7 +209,13 @@ data class MakerRules(
             obscureFill = false, lowUsageBooks = emptySet(), focus = s.makerFocus.name,
         )
 
-        fun of(s: ScanSettings): MakerRules = withTennis(s, ofFocus(s))
+        fun of(s: ScanSettings): MakerRules = withTennis(s, ofFocus(s)).let { if (s.vigGuards.bidVolume && s.makerSource != com.tjshea.vigilant.data.scanner.BidSource.CNO) volumeOf(it) else it }
+
+        /** Volume mode's rules over the usual ones ([BidVolume]): thousands of bids, no start-time limit, the EV floors, the fair allowed to age a little longer while a bid rests. */
+        private fun volumeOf(r: MakerRules): MakerRules = r.copy(
+            volume = true, tiered = true, margin = BidVolume.SAFE_EV, maxBids = BidVolume.MAX_BIDS, maxDollars = Double.MAX_VALUE / 4, postsPerPass = BidVolume.POSTS_PER_PASS,
+            earlyHours = 0, deployPct = 0.0, requireSharp = false, farFairMaxAgeMs = maxOf(r.farFairMaxAgeMs, 30 * 60_000L), midFairMaxAgeMs = BidVolume.MID_FAIR_MAX_AGE_MS,
+        )
 
         private fun withTennis(s: ScanSettings, r: MakerRules): MakerRules =
             if (s.tennisOn && (s.maker || s.makerRecommend) && s.makerSource != com.tjshea.vigilant.data.scanner.BidSource.CNO) r.copy(tennis = tennisRules(s)) else r
@@ -586,11 +596,12 @@ object MakerQuote {
 
     /** The margin a bid on [line] is posted under: the rules' own, a small market's wider one, and (tiered bids) the tier's extra points. */
     fun marginOf(line: MakerLine, rules: MakerRules, smallMarket: Boolean): Double =
-        (if (smallMarket) maxOf(rules.margin, rules.obscureMargin) else rules.margin) + (if (rules.tiered) BidTier.extraMargin(BidTier.of(line)) else 0.0)
+        if (rules.volume) BidVolume.margin(line, smallMarket) else (if (smallMarket) maxOf(rules.margin, rules.obscureMargin) else rules.margin) + (if (rules.tiered) BidTier.extraMargin(BidTier.of(line)) else 0.0)
 
     /** Why a bid in the steady or risky tier is stricter-checked out, or null: a sharp book must price it, and a risky bid needs every book to agree (see [BidTier]). */
     private fun tierReason(line: MakerLine, rules: MakerRules, price: Double, agreeing: Int): String? {
         if (!rules.tiered) return null
+        if (rules.volume) return BidVolume.tierReason(line, agreeing, rules.minBooks)
         val tier = BidTier.of(line)
         if (tier == BidTier.PROVEN) return null
         if (line.sharpFairs.isEmpty()) return "A ${BidTier.label(tier)} needs a sharp book (Pinnacle, Circa, an exchange) pricing both sides to agree"
@@ -656,7 +667,13 @@ object MakerQuote {
         if (line.fairOld) return skip("The fair price is too old to bid on")
         val seen = line.fairAsOfMs ?: return skip("The fair price's age isn't known: no bid on it")
         // A bid never outlives what it was priced from: the fair's own freshness, the stop window before the start, and the expiry setting.
-        val fairLife = line.fairMaxAgeMs ?: Freshness.maxAgeMs(line.startsTs, now).let { own -> if (rules.farFairMaxAgeMs > own && MakerPlan.farOf(line.startsTs, now) == 1) rules.farFairMaxAgeMs else own }
+        val fairLife = line.fairMaxAgeMs ?: Freshness.maxAgeMs(line.startsTs, now).let { own ->
+            when {
+                rules.farFairMaxAgeMs > own && MakerPlan.farOf(line.startsTs, now) == 1 -> rules.farFairMaxAgeMs
+                rules.midFairMaxAgeMs > own && line.startsTs - now >= 3_600_000L -> rules.midFairMaxAgeMs
+                else -> own
+            }
+        }
         val until = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, seen + fairLife)
         if (until - now < rules.minLifeMs) return skip("The fair price goes old within a minute: re-priced at the next scan")
         if (line.outcomeId in held) return skip("Already bet or bid on this side")
@@ -857,7 +874,8 @@ object MakerPlan {
         var trimmed = 0
         val room = budget + resting.sumOf { it.restingDollars }
         if (kept.sumOf { it.restingDollars } > room + 1e-9) {
-            val worth = compareBy<RestingBid> { it.auto }
+            val worth = (if (rules.volume) compareByDescending<RestingBid> { r -> byOutcome[r.outcomeId]?.let { BidVolume.score(it.line, it.leads, now) } ?: 0.0 } else compareBy<RestingBid> { 0 })
+                .thenBy { !it.auto }
                 .thenBy { it.obscure }
                 // Many-bids mode: the riskiest tier's bids come down first when the money falls short.
                 .thenBy { if (rules.tiered) byOutcome[it.outcomeId]?.line?.let { l -> BidTier.of(l) } ?: BidTier.PROVEN else 0 }
@@ -1013,6 +1031,8 @@ object MakerPlan {
      * go up when the bids, the dollars or the wallet run out.
      */
     fun priority(rules: MakerRules, now: Long = System.currentTimeMillis()): Comparator<MakerDecision.Post> {
+        // Volume mode: the bids that fill fastest go up first ([BidVolume.score]); the edge breaks a tie.
+        if (rules.volume) return compareByDescending<MakerDecision.Post> { BidVolume.score(it.line, it.leads, now) }.thenByDescending { it.evAtFair }
         val base = if (rules.tiered) compareBy<MakerDecision.Post> { BidTier.of(it.line) }.thenBy { it.obscure } else compareBy<MakerDecision.Post> { it.obscure }
         // Profit-proven only: the types of bid with the best history go up first (a neutral or unknown type scores 0, so nothing is held back for want of data).
         val byProfit = rules.profit?.let { pf ->

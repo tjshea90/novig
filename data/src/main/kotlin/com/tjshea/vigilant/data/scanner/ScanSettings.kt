@@ -1524,6 +1524,11 @@ data class ScanGuards(
      */
     val bidFarLane: Boolean = true,
     /**
+     * Volume mode for the bids (Tj, 2026-10-14: "The key is volume ... hundreds or thousands of bids up ... 1.5% positive EV on the safest bid types and 2.5% on riskier ones ... most likely to be filled put up first"):
+     * every bid at the most its EV floor allows, ordered by how fast that kind of bid has filled, up to 3,000 at once, stakes not scaled up (count, not size). Replaces the margins and the wallet-filling passes while on.
+     */
+    val bidVolume: Boolean = true,
+    /**
      * Set by the background scan only ([FarLane]): this pass reads just the next [FarLane.NEAR_HOURS] hours, the quick one that runs between the full-reach scans (Tj, 2026-10-14: "The scan takes way too long":
      * ten days is ~7,700 Novig prices and 8 minutes, by when the fair odds read at its start are too old to bid on). Never saved; a scan Tj starts is always the full reach.
      */
