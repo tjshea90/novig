@@ -2766,6 +2766,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val g = state.value.settings.gates
                 val st = c.streamEngine.status.value
                 buildString {
+                    // Cloud scan (Tj, 2026-10-14): read this first when the list looks old or wrong.
+                    val cu = c.cloud.ui.value
+                    val cs = c.cloud.latest.status
+                    val cf = c.cloud.latest.feed
+                    appendLine("Cloud scan: " + (if (state.value.settings.cloudScan) "ON" else "off") + ", GitHub token ${if (cu.hasToken) "saved (…${cu.tokenTail})" else "NOT saved"}, history saving ${if (state.value.settings.cloudSave) "on" else "off"}")
+                    if (state.value.settings.cloudScan || cs != null) {
+                        appendLine("  engine: ${cu.line.ifBlank { "not heard yet" }}" + (c.cloud.latest.why?.let { " | link problem: $it" } ?: ""))
+                        appendLine("  list: " + (cf?.let { "${it.rows.size} bets, ${(System.currentTimeMillis() - it.computedAtMs) / 1000L} s old, fetched ${(System.currentTimeMillis() - c.cloud.latest.fetchedAtMs) / 1000L} s ago, priced under settings revision ${it.configRev}, ${it.unreadable} unreadable" } ?: "none yet"))
+                        cs?.let { appendLine("  engine status: run ${it.runId}, pass ${it.passes}, last scan ${it.scanMs / 1000L} s, feeds ${it.sources.joinToString(",")}, heartbeat ${(System.currentTimeMillis() - it.heartbeatMs) / 1000L} s ago, hands over in ${(it.handoverAtMs - System.currentTimeMillis()) / 60_000L} min" + (it.problem?.let { p -> ", problem: $p" } ?: "")) }
+                    }
+                    appendLine("  saving to GitHub: ${cu.saveLine.ifBlank { "nothing sent yet this session" }}; GitHub requests left this hour: ${cu.rateRemaining ?: "unknown"}")
                     appendLine("Repeat and hedge guard: " + (if (g.repeatGuard) "ON, ${if (g.repeatMaxBets == 0) "no limit" else g.repeatMaxBets.toString()} bets/bids and ${if (g.repeatMaxDollars == 0.0) "no limit" else "$" + g.repeatMaxDollars.toInt()} a side, other side ${if (g.repeatHedge) "only when a sure profit" else "never"}, other lines of one team/player per game ${if (g.repeatMaxLines == 0) "no limit" else g.repeatMaxLines.toString()}" else "OFF"))
                     appendLine("Freshest quote wins: " + (if (g.freshestWins) "ON (a book sent by two feeds uses the one stamped more than 20 s newer)" else "OFF (feed order only)"))
                     appendLine("API ranking (best first; " + (if (g.rankByMeasure) "ON: ordered by measured freshness and accuracy, the shipped order as the fallback" else "OFF: the shipped order") + "):")
