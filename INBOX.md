@@ -7317,3 +7317,8 @@ The scan is huge and takes a long time, can't it put up bids progressively as th
 ```
 @"/root/.claude/uploads/a5e8042f-c90d-5023-a7e1-ea7d8da2eff3/55a487c0-vigilant-diagnostics-v0.99.12-2026-10-14-1519.txt" It's broken. It placed even fewer bids on this version. The scan takes way too long.
 ```
+
+## 2026-10-14T19:59:20Z
+```
+It seems to be working now. Now fine tune it. The key is volume. I want hundreds or thousands of bids up at any time, on markets and types of bids most likely to be filled put up first. It can go down to 1.5% positive EV on the safest bid types and 2.5% positive EV on riskier ones. The goal right now is pure volume and bid fills. I'm going to experiment with lower positive EV margins but large numbers of fills. Optimize the bid types for smaller positive EV margins but maximum chance of many bids being filled rapidly
+```
