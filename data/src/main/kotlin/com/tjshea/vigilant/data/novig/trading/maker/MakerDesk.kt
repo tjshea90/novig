@@ -269,7 +269,9 @@ class MakerDesk(
         /** The same for the wallet-filling pass that looks a week ahead (what stopped THOSE lines), and how many it judged: Diagnostics' answer to "why did the week tier post nothing". */
         val weekSkips: List<Pair<String, Int>> = emptyList(), val weekJudged: Int = 0,
         /** The last wallet-filling pass (every start time, every kind, no sharp book required, a higher edge asked of riskier kinds): lines judged, what stopped the rest. */
-        val anySkips: List<Pair<String, Int>> = emptyList(), val anyJudged: Int = 0)
+        val anySkips: List<Pair<String, Int>> = emptyList(), val anyJudged: Int = 0,
+        /** How the bids this pass wants are spread: games with a bid, and the games carrying the most (name, bids, dollars): Diagnostics' check that no few games hold the wallet. */
+        val spread: List<String> = emptyList())
 
     /**
      * One pass: what Novig says happened to every bid (fills to the Tracker), then the bids [lines] want under [rules] at [now], then the cancels and
@@ -502,7 +504,15 @@ class MakerDesk(
             val byTier = anyPosts.groupBy { MarketPopularity.tier(it.line.league, it.line.market.marketType, it.line.books, rules.popularBooks) }
             for (tier in byTier.keys.sorted()) pick(byTier.getValue(tier), compareBy<MakerDecision.Post> { BidTier.of(it.line) }.thenByDescending { it.evAtFair })
         }
-        return out to Deploy(wallet, target, resting, 1.0, rules.deployMaxKelly, out.size, dollars, resting + wantedNew, weekSkips = weekSkips, weekJudged = weekJudged, anySkips = anySkips, anyJudged = anyJudged)
+        val names = HashMap<String, String>().apply {
+            for (b in bids) put(b.eventId, b.eventName)
+            for (l in lines) put(l.market.eventId, l.eventName)
+        }
+        val spread = buildList {
+            add("games with a bid: ${gameBids.size} · most bids on one game ${gameBids.values.maxOrNull() ?: 0}, most dollars ${String.format(java.util.Locale.US, "$%.2f", gameDollars.values.maxOrNull() ?: 0.0)} (limits: ${if (rules.perGameBids > 0) "${rules.perGameBids} bids" else "no bid count"}, ${if (rules.perGameBidDollars > 0.0) String.format(java.util.Locale.US, "$%.2f", rules.perGameBidDollars) else "no dollars"} a game)")
+            gameDollars.entries.sortedByDescending { it.value }.take(5).forEach { (g, d) -> add("  ${names[g] ?: g}: ${gameBids[g] ?: 0} bids, ${String.format(java.util.Locale.US, "$%.2f", d)}") }
+        }
+        return out to Deploy(wallet, target, resting, 1.0, rules.deployMaxKelly, out.size, dollars, resting + wantedNew, weekSkips = weekSkips, weekJudged = weekJudged, anySkips = anySkips, anyJudged = anyJudged, spread = spread)
     }
 
     /**
