@@ -418,6 +418,21 @@ class MakerDesk(
             dollars += c.cost
             if (!keep) room -= c.cost
         }
+        // Still short, with nothing left in the usual window (Tj, 2026-10-14: "If it can't find good bids, increase the time period of game start date to bid on games later in the week ... but all at a safe EV"):
+        // the same lines judged for games up to a week out, with a margin [DEPLOY_WEEK_MARGIN] wider again (a bid that rests for days is priced from older books), a sharp book required and half the stake.
+        // Every rule that makes a bid safe (fresh fair, books agreeing, the sharp veto, the repeat and game guards, Profit-proven) is unchanged; only the clock and the margin move.
+        if (room > 0.0 && rules.earlyHours > 0 && rules.earlyHours < DEPLOY_WEEK_HOURS) {
+            val taken = HashSet<String>(postedOutcomes).apply { out.forEach { add(it.line.outcomeId) } }
+            val week = relaxed.copy(margin = relaxed.margin + DEPLOY_WEEK_MARGIN, earlyHours = DEPLOY_WEEK_HOURS)
+            val far = MakerQuote.decideAll(lines, week, now, held).map(judge).filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in taken }
+            for (c in far.sortedWith(compareByDescending<MakerDecision.Post> { it.line.outcomeId in overflowResting }.thenByDescending { it.evAtFair })) {
+                val keep = c.line.outcomeId in overflowResting
+                if (!keep && room <= 0.0) continue
+                out += c.copy(obscure = true, overflow = true)
+                dollars += c.cost
+                if (!keep) room -= c.cost
+            }
+        }
         return out to Deploy(wallet, target, resting, 1.0, rules.deployMaxKelly, out.size, dollars, resting + wantedNew)
     }
 
@@ -975,6 +990,10 @@ class MakerDesk(
         const val DEPLOY_EXTRA_MARGIN = 0.04
         const val DEPLOY_OVERFLOW_STAKE = 0.5
         const val DEPLOY_HOURS = 36
+
+        /** The furthest start the wallet-filling bids reach when the usual window has nothing left, and the margin they add for it. */
+        const val DEPLOY_WEEK_HOURS = 168
+        const val DEPLOY_WEEK_MARGIN = 0.02
         /** New bids go up this many to a request (Novig's batch is all or nothing: one refused bid costs only its own ten, not a whole pass of them; Tj, 2026-10-09: "smaller batches because they are getting rejected sometimes"). */
         const val PLACE_CHUNK = 10
 
