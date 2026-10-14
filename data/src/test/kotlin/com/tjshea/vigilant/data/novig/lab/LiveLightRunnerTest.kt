@@ -71,7 +71,7 @@ class LiveLightRunnerTest {
     private fun runner(view: View, offers: MutableList<TailOffer>, board: String?, confirm: LiveConfirm? = null, clock: () -> Long = { now }, desk: Desk? = null) =
         LiveLightRunner(
             scope = TestScope(), source = Src(event, listOf(market)), newView = { _: BookListener -> view },
-            fetch = { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock, bids = { desk },
+            fetch = { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock, bids = { desk }, publishMs = 0L,
         ).also { it.bind() }
 
     private suspend fun LiveLightRunner.look() { readCatalog(); readScores(); scanGame("ev") }
@@ -205,7 +205,7 @@ class LiveLightRunnerTest {
         val offers = ArrayList<TailOffer>()
         val r = LiveLightRunner(
             scope = TestScope(), source = Src(event, markets), newView = { _: BookListener -> view },
-            fetch = { Fetched(scoreboard(60, 60, period = 3, clock = "7:12"), 5L) }, onOffer = { offers += it }, leagues = { setOf("NBA") }, clock = { now },
+            fetch = { Fetched(scoreboard(60, 60, period = 3, clock = "7:12"), 5L) }, onOffer = { offers += it }, leagues = { setOf("NBA") }, clock = { now }, publishMs = 0L,
         ).also { it.bind() }
         r.readCatalog()
         assertTrue("with no score yet only the moneyline is watched (none here)", view.watched.isEmpty())

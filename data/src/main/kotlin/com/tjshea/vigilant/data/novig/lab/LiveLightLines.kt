@@ -23,14 +23,15 @@ object LiveLightLines {
         val totalSd = if (state.sport.normal) state.sport.fullTotalSd * sqrt(left) else sqrt((prior * left * 1.2).coerceAtLeast(0.25))
         val marginSd = if (state.sport.normal) state.sport.fullMarginSd * sqrt(left) else sqrt((prior * left * 1.2).coerceAtLeast(0.25))
         val totalCentre = state.points + prior * left
+        // (line, rank: nearest first, moneyline?)
         val scored = lines.mapNotNull { l ->
             val (centre, sd) = if (l.kind == LadderKind.TOTAL) totalCentre to totalSd else (e.marginOf(l.ref)?.toDouble() ?: return@mapNotNull null) to marginSd
             val z = abs(l.threshold - centre) / sd.coerceAtLeast(0.5)
+            val ml = l.kind == LadderKind.MARGIN && l.threshold == 0.0
             // A line already watched stays a little longer than a new one is taken on (every change of the watched set costs the feed's subscription tokens).
             val held = l.marketId in keep
-            if (l.kind == LadderKind.MARGIN && l.threshold == 0.0) l to -1.0 else if (z <= REACH_SD || (held && z <= STICKY_SD)) l to (if (held) z - 0.5 else z) else null
+            if (ml) Triple(l, z, true) else if (z <= REACH_SD || (held && z <= STICKY_SD)) Triple(l, if (held) z - 0.5 else z, false) else null
         }
-        val ml = scored.filter { it.second == -1.0 }.map { it.first }
-        return ml + scored.filter { it.second >= 0 }.sortedBy { it.second }.take(MAX_PER_GAME).map { it.first }
+        return scored.filter { it.third }.map { it.first } + scored.filter { !it.third }.sortedBy { it.second }.take(MAX_PER_GAME).map { it.first }
     }
 }
