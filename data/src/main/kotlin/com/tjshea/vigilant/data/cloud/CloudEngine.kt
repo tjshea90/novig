@@ -8,9 +8,9 @@ import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.util.concurrent.atomic.AtomicReference
@@ -86,7 +86,7 @@ class CloudEngine(
         return End.TIME_UP
     }
 
-    private suspend fun currentScopeActive(): Boolean = kotlin.coroutines.coroutineContext[kotlinx.coroutines.Job]?.isActive ?: true
+    private suspend fun currentScopeActive(): Boolean = currentCoroutineContext().isActive
 
     /** One scan under [s], publishing partial lists as it goes; returns the final list, or null when the scan was cut short (a newer revision) or failed. */
     private suspend fun scanOnce(cfg: CloudConfig, s: ScanSettings, startedAtMs: Long, untilMs: Long): CloudFeed? = coroutineScope {
@@ -96,6 +96,7 @@ class CloudEngine(
         val names = sourceNames(s)
         val job = async { scanner.scan(s, feedSources, emptySet(), onProgress = {}, onPartial = { partial.set(it) }) }
         var lastPublishedAt = 0L
+        var lastConfigAt = t0
         var restart = false
         while (job.isActive) {
             pause(1_000L)
@@ -109,7 +110,8 @@ class CloudEngine(
                     problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = feed, scanMs = now - t0))
                 }
             }
-            if (now - t0 >= configEveryMs && (now - t0) % configEveryMs < 1_500L) {
+            if (now - lastConfigAt >= configEveryMs) {
+                lastConfigAt = now
                 val newer = runCatching { config() }.getOrNull()
                 if (newer != null && newer.rev != cfg.rev) { restart = true; job.cancel(CancellationException("settings changed")); break }
             }
