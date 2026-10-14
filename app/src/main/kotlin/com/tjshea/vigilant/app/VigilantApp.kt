@@ -799,6 +799,8 @@ class AppContainer(val app: Application) {
         appScope.launch(Dispatchers.IO) {
             if (killMarker.on) runCatching { settingsStore.update { KillSwitch.reconcile(it, killMarker) } }
         }
+        // Cloud scan and the permanent GitHub saving (Tj, 2026-10-14): reads the engine's list, sends the settings, saves bets/bids/study days to GitHub. Each loop sleeps without a token / with the switch off.
+        cloud.start(appScope)
         // The day-by-day bet and bid files (Tj, 2026-10-11): two minutes after start, then every half hour, and everything rechecked once a day.
         appScope.launch(Dispatchers.IO) {
             delay(120_000)
@@ -1111,9 +1113,9 @@ class AppContainer(val app: Application) {
         if (settings.lowUsageNow) pinned += com.tjshea.vigilant.data.novig.trading.maker.LowUsage.restingMarkets(makerStore.flow.value.orEmpty())
         val before = usage.flow.value
         // ParlayAPI's own figure for what's left, read for free (at most every few minutes): the pace decides from the key's word.
-        if (settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) appScope.launch { runCatching { parlayAccount.refresh(minAgeMs = com.tjshea.vigilant.data.reference.ParlayAccount.SCAN_REFRESH_MS) } }
-        // A streaming pass (StreamEngine) reads only what costs nothing per read; every other scan reads every source that is on.
-        val sources = if (streamPass) streamSources(settings) else referenceSources(settings, background, scan = true)
+        if (!settings.cloudScan && settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) appScope.launch { runCatching { parlayAccount.refresh(minAgeMs = com.tjshea.vigilant.data.reference.ParlayAccount.SCAN_REFRESH_MS) } }
+        // A streaming pass (StreamEngine) reads only what costs nothing per read; every other scan reads every source that is on. A cloud scan reads none: the GitHub engine did.
+        val sources = if (settings.cloudScan) emptyList() else if (streamPass) streamSources(settings) else referenceSources(settings, background, scan = true)
         return runner.start(settings, sources, pinned) { report ->
             // A scan that ended with Vigilant off screen (background auto-scan, or Tj left) closes Novig's
             // live feed at once: nothing will recheck in the next two minutes, and pushes cost battery.
@@ -1125,6 +1127,15 @@ class AppContainer(val app: Application) {
             runCatching { usage.flush() }
             // What this scan cost each API, for Settings › Diagnostics & about (a scan that failed outright has no report and no cost to show).
             if (report != null) lastScanCost = RoundCost(now, System.currentTimeMillis() - now, UsageDelta.between(before, usage.flow.value))
+        }
+    }
+
+    /** A new list arrived from the GitHub engine: show it as the scan that just finished (the cloud scanner returns it at once; nothing is read here). */
+    fun adoptCloud() {
+        appScope.launch {
+            val s = currentSettings()
+            if (!s.cloudScan || !s.vigilantOn || s.liveOnly) return@launch
+            runCatching { startVigilantScan(s, runCatching { tracker.all() }.getOrDefault(emptyList()), background = false) }
         }
     }
 
