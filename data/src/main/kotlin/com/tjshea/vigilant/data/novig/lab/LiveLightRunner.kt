@@ -52,6 +52,8 @@ class LiveLightRunner(
     private val newView: (BookListener) -> PushedBooks?,
     private val fetch: suspend (url: String) -> Fetched?,
     private val onOffer: (TailOffer) -> Unit,
+    /** A second live source for the moneyline (BoltOdds' consensus): lifts the cap on how large an edge can be believed. Null = Novig and the score alone. */
+    private val confirm: () -> LiveConfirm? = { null },
     private val leagues: () -> Set<String>,
     private val clock: () -> Long = System::currentTimeMillis,
     private val rules: LiveLightRules = LiveLightRules(),
@@ -239,7 +241,22 @@ class LiveLightRunner(
         for (c in found.groupBy { it.outcomeId }.values.map { g -> g.minBy { it.fair } }.sortedByDescending { it.edge }) {
             val prev = offered[c.outcomeId]
             if (prev != null && now - prev.first < REOFFER_MS && c.ask >= prev.second - 1e-9) continue
-            val offer = TailOffers.build(game.ev, game.markets, points, st, c, now) ?: continue
+            val line = game.lines.firstOrNull { it.marketId == c.marketId } ?: continue
+            var cand = c
+            var second: Double? = null
+            if (line.kind == com.tjshea.vigilant.data.novig.burst.LadderKind.MARGIN && line.threshold == 0.0) {
+                val pRef = confirm()?.moneyline(game.ev, line.ref, now)
+                val pBet = pRef?.let { if (c.side == "YES") it else 1.0 - it }
+                if (pBet != null && pBet >= CONFIRM_MIN) {
+                    // Priced by the more cautious of the two views, two points under the second one.
+                    val fair = minOf(c.fair, pBet - CONFIRM_MARGIN)
+                    val fee = com.tjshea.vigilant.engine.Fees.takerFee(c.ask.coerceIn(0.001, 0.999), line.fee, eventLive = true)
+                    cand = c.copy(fair = fair, edge = fair / (c.ask + fee) - 1.0)
+                    second = pBet
+                }
+            }
+            if (cand.edge > TailTradeLimits.MAX_EDGE && second == null) { skip("edge over ${(TailTradeLimits.MAX_EDGE * 100).toInt()}% and no second live source agrees"); continue }
+            val offer = (TailOffers.build(game.ev, game.markets, points, st, cand, now) ?: continue).copy(confirm = second)
             offered[c.outcomeId] = now to c.ask
             _status.value = _status.value.let { it.copy(offers = it.offers + 1, last = "${c.rule} · ${offer.target.selection} · ${"%.1f".format(java.util.Locale.US, c.edge * 100)}% edge · ${offer.state}") }
             runCatching { onOffer(offer) }
@@ -262,5 +279,9 @@ class LiveLightRunner(
 
         /** Pushes heard within this long = the lane is carrying the load. */
         const val CARRY_MS = 60_000L
+
+        /** A second live source counts only when it too calls the bet at least this likely, priced [CONFIRM_MARGIN] under it. */
+        const val CONFIRM_MIN = 0.85
+        const val CONFIRM_MARGIN = 0.02
     }
 }

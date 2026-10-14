@@ -36,6 +36,8 @@ data class TailOffer(
     val fee: MarketFee,
     val state: String,
     val decidedAtMs: Long,
+    /** The chance an independent live source ([LiveConfirm]) gives the bet, when it agreed with the model: only then may the edge pass [TailTradeLimits.MAX_EDGE]. */
+    val confirm: Double? = null,
 )
 
 /** The fixed guards of the tail trader (Tj's own caps are the [LiveTradeRules] it is given): these protect him from the model. */
@@ -43,8 +45,11 @@ object TailTradeLimits {
     /** The model's fair for the bet must be at least this: a decided game, not a lean. */
     const val MIN_FAIR = 0.92
 
-    /** An edge this large is the model or the game state being wrong, not a gift: refused. */
+    /** An edge this large is the model or the game state being wrong, not a gift: refused, unless a second live source agrees ([MAX_EDGE_CONFIRMED]). */
     const val MAX_EDGE = 0.30
+
+    /** With an independent live price that agrees (a game decided in front of every book), the cap is lifted: a stale price at 50/50 on a decided game is an edge of 90%. */
+    const val MAX_EDGE_CONFIRMED = 0.95
 
     /** The same outcome is not tried again within this long. */
     const val COOLDOWN_MS = 60_000L
@@ -117,7 +122,7 @@ class TailTaker(
         if (c.fair < TailTradeLimits.MIN_FAIR) return skip("fair under ${(TailTradeLimits.MIN_FAIR * 100).toInt()}%")
         val floor = maxOf(minEdge(), 0.0)
         if (c.edge < floor) return skip("edge under your minimum")
-        if (c.edge > TailTradeLimits.MAX_EDGE) return skip("edge too large to be real")
+        if (c.edge > (if (o.confirm != null) TailTradeLimits.MAX_EDGE_CONFIRMED else TailTradeLimits.MAX_EDGE)) return skip("edge too large to be real")
         if (r.bet) gate()?.let { return skip(it) }
         if (start - (lastTry[c.outcomeId] ?: 0L) < TailTradeLimits.COOLDOWN_MS) return skip("cooldown")
         if ((blacklist[c.marketId] ?: 0L) > start) return skip("market refused lately")
