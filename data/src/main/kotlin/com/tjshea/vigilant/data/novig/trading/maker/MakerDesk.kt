@@ -964,6 +964,12 @@ class MakerDesk(
     private fun money(v: Double) = String.format(java.util.Locale.US, "$%,.2f", v)
 
     companion object {
+        /** Wallet deployment ([deployScale], [deployFor]): the most a stake is scaled up, the resting dollars below which the scale stops growing, the riskier bids' extra margin, their stake share and their furthest start. */
+        const val DEPLOY_MAX_SCALE = 4.0
+        const val DEPLOY_FLOOR_DOLLARS = 1.0
+        const val DEPLOY_EXTRA_MARGIN = 0.04
+        const val DEPLOY_OVERFLOW_STAKE = 0.5
+        const val DEPLOY_HOURS = 36
         /** New bids go up this many to a request (Novig's batch is all or nothing: one refused bid costs only its own ten, not a whole pass of them; Tj, 2026-10-09: "smaller batches because they are getting rejected sometimes"). */
         const val PLACE_CHUNK = 10
 
