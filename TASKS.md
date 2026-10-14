@@ -5071,6 +5071,6 @@ Tj: "The live light should look at alternate market odds as well on novig, for e
 ## TLX: Live light "not working": no bets, bids not visible (Tj, 2026-10-14, vigilant-diagnostics-v0.99.1-2026-10-14-0017.txt + screenshot)
 Tj: "I don't think it is working, so far no bets and I can't even see where the bids are supposed to be. I don't think it posted bids. This must work without pinnodds at all, because I no longer have pinnodds socket"
 Read of the file (research/uploads/2026-10-14/495f8673...): the lane RUNS (3 games all with a score, 37 markets, 339 pushes, 106 judgments, 123 ms push-to-judgment, Novig feed connected), 0 offers; the light desk posted 18 real bids (3 refused, 0 up, 0 filled) but NOTHING in the app lists live bids (state.liveBids only fed the settings text). Nothing in the lane touches Pinnodds (`pinnOrders` is only the Novig order client's old name).
-- [ ] TLX1 Show Live light on the Bids tab: its bids up now and the last ended (price, fair, EV, why it ended), the lane's status line, and one line per watched game (score, % left, the closest call and why it is not bet).
-- [ ] TLX2 Diagnostics: the same per-game lines + a game with no ESPN match says so by name.
-- [ ] TLX3 Tests, ship.
+- [x] TLX1 (Bids tab "Live light" section: `LightSection`) Show Live light on the Bids tab: its bids up now and the last ended (price, fair, EV, why it ended), the lane's status line, and one line per watched game (score, % left, the closest call and why it is not bet).
+- [x] TLX2 (`gameLines` in Diagnostics + `LiveLightRunnerTest`) Diagnostics: the same per-game lines + a game with no ESPN match says so by name.
+- [x] TLX3 (shipped v0.99.2) Tests, ship.

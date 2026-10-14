@@ -1,21 +1,24 @@
-# CHECKPOINT 3216 — read me first, then TASKS.md
+# CHECKPOINT 3217 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T03:40:28Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-147419fb-llvuq5` · **builds on:** `f3c3d7983` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T04:21:37Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-147419fb-llvuq5` · **builds on:** `b923336a7` (this checkpoint is the commit after it)
 
 ## Just done
-v0.99.1 released and recorded
+pre-ship: v0.99.2: Live light shows on the Bids tab (status, one line per watched game with its closest call and why it was not bet, the bids up and the last ended) and in Diagnostics
 
 ## Do this next
-read Tj's LIVE LIGHT diagnostics when sent; Kalshi live second opinion; TWG2 wallet ladder
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  da7b68cbe ckpt 3216: v0.99.1 released and recorded
   1c82d54be ckpt 3215: v0.99.1 shipped (alternate-line watch + ladder curve), release.yml triggere
   f1bb4a157 ckpt 3214: pre-release: v0.99.1: Live light watches alternate spreads and totals near 
   87a46b055 ckpt 3213: pre-ship: v0.99.1: Live light watches alternate spreads and totals near whe
@@ -25,8 +28,7 @@ read Tj's LIVE LIGHT diagnostics when sent; Kalshi live second opinion; TWG2 wal
   40e3c08e2 ckpt 3209: TLL1-3: Live light push lane built (LiveLightScan, LiveLightRunner, BoltLiv
   85db7bf22 ckpt 3208: TLL2/TLL3 in progress: LiveLightScan (score model), TailOffers extracted, L
   171bb4e1a ckpt 3207: v0.98.1 recorded; v0.98.2 (line-stack guard for the auto-bet) shipped, rele
-  1f7ab6693 ckpt 3206: pre-release: v0.98.2: the auto-bet holds one line of a team's spread (or a 
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(6 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
