@@ -7312,3 +7312,8 @@ Post as many bids as possible. Fill up the wallet. Hundreds of bids. All sports 
 ```
 The scan is huge and takes a long time, can't it put up bids progressively as the scan is going? Right now it has very few bids and the scan is going
 ```
+
+## 2026-10-14T19:22:56Z
+```
+@"/root/.claude/uploads/a5e8042f-c90d-5023-a7e1-ea7d8da2eff3/55a487c0-vigilant-diagnostics-v0.99.12-2026-10-14-1519.txt" It's broken. It placed even fewer bids on this version. The scan takes way too long.
+```
