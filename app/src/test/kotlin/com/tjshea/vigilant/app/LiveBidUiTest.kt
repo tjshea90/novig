@@ -52,6 +52,19 @@ class LiveBidUiTest {
 
     @get:Rule val compose = createComposeRule()
 
+    /** The Live tab (Live light moved there from Settings): the same state, the same tags. */
+    private fun showLive(initial: UiState): () -> UiState {
+        var ui by mutableStateOf(initial)
+        compose.setContent {
+            VigilantTheme(darkTheme = true) {
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    com.tjshea.vigilant.app.ui.LiveScreen(ui, MainViewModel.LightUi(), 0L, { f -> ui = ui.copy(settings = f(ui.settings)) }, {}, {}, {})
+                }
+            }
+        }
+        return { ui }
+    }
+
     private fun show(initial: UiState, page: SettingsPage = SettingsPage.LIVEBIDS): () -> UiState {
         var ui by mutableStateOf(initial)
         compose.setContent {
@@ -163,7 +176,7 @@ class LiveBidUiTest {
 
     @Test
     fun `tail bets are paper first and real money asks first (they live on the Live light page now)`() {
-        val ui = show(state(), SettingsPage.LIVELIGHT)
+        val ui = showLive(state())
         tap("tailLiveRealSwitch")
         assertFalse("real needs the tail switch on first", ui().settings.tailLive.bet)
         tap("tailLiveSwitch")
@@ -191,7 +204,7 @@ class LiveBidUiTest {
 
     @Test
     fun `a tail halt shows its reason and Resume lifts it`() {
-        val ui = show(state(ScanSettings(tailLive = com.tjshea.vigilant.data.scanner.TailLiveSettings(on = true, halted = "an order's answer was lost"))), SettingsPage.LIVELIGHT)
+        val ui = show(state(ScanSettings(tailLive = com.tjshea.vigilant.data.scanner.TailLiveSettings(on = true, halted = "an order's answer was lost"))))
         compose.onNodeWithTag("tailLiveHalted").performScrollTo().assertIsDisplayed()
         tap("tailLiveResume")
         assertNull(ui().settings.tailLive.halted)
