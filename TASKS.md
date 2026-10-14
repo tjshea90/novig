@@ -5144,3 +5144,7 @@ Tj: "The scan is huge and takes a long time, can't it put up bids progressively 
 Cause: passes already run on partial scan results every 20 s, but `MakerLines.from` held back every league whose fair-odds sources had not ALL answered (props: every source).
 - [x] TWP1 (`ScanGuards.bidWhileScanning` default on, `MakerLines.from`, Bids tab switch, Diagnostics WALLET DEPLOYMENT line, `MakerTest`) lines are judged with the fair in so far under every bid rule; re-priced as the rest arrive. v0.99.13.
 - [ ] TWP2 release.yml for v0.99.13: confirm get_release_by_tag, record-release.sh v0.99.13 272, send the link; then read Tj's next file (event log "during a scan" posted counts).
+
+## TWR2: v0.99.12 is worse: fewer bids, scan far too long (Tj, 2026-10-14 ~15:20 local, file 55a487c0...)
+Tj: "It's broken. It placed even fewer bids on this version. The scan takes way too long."
+- [ ] TWR2a Read the file: scan duration and what made it long (10-day reach?), bid counts and skip reasons; fix before shipping v0.99.13 (v0.99.13 built, NOT released).
