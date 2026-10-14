@@ -333,7 +333,7 @@ class MakerDesk(
         }
         // Keep the wallet working: stakes scale up while the bids up are worth less than the target, and riskier bids fill what the usual ones cannot.
         val usual = allBids.filter { it.active }.sumOf { it.restingDollars }
-        val scale = if (rung > 0) 1.0 else deployScale(rules, usual, wallet)
+        val scale = if (rung > 0 || rules.volume) 1.0 else deployScale(rules, usual, wallet)
         val rulesNow = if (scale > 1.0) rules.copy(stakeScale = scale, kellyCeiling = rules.deployMaxKelly) else rules
         val ownless = MakerLines.withoutOwn(lines, allBids)
         val base = MakerQuote.decideAll(ownless, rulesNow, now, held).map(judge)

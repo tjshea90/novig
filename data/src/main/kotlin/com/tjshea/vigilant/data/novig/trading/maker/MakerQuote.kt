@@ -874,8 +874,9 @@ object MakerPlan {
         var trimmed = 0
         val room = budget + resting.sumOf { it.restingDollars }
         if (kept.sumOf { it.restingDollars } > room + 1e-9) {
-            val worth = (if (rules.volume) compareByDescending<RestingBid> { r -> byOutcome[r.outcomeId]?.let { BidVolume.score(it.line, it.leads, now) } ?: 0.0 } else compareBy<RestingBid> { 0 })
-                .thenBy { !it.auto }
+            val worth = compareBy<RestingBid> { it.auto }
+                // Volume mode: the bids that fill fastest are the last to come down when the money falls short.
+                .thenByDescending { r -> if (rules.volume) byOutcome[r.outcomeId]?.let { BidVolume.score(it.line, it.leads, now) } ?: 0.0 else 0.0 }
                 .thenBy { it.obscure }
                 // Many-bids mode: the riskiest tier's bids come down first when the money falls short.
                 .thenBy { if (rules.tiered) byOutcome[it.outcomeId]?.line?.let { l -> BidTier.of(l) } ?: BidTier.PROVEN else 0 }
