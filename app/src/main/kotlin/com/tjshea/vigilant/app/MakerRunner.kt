@@ -108,6 +108,19 @@ class MakerRunner(
     }
 
     /**
+     * The last start the scan behind [result] reached: the quick scan's 48 hours past [now] when it was one ([ScanSettings.nearScan] is not in the result, so the latest start it priced stands for it,
+     * never less than the quick scan's own reach). Null for a full scan or no result.
+     */
+    private fun reachOf(result: com.tjshea.vigilant.data.scanner.ScanResult?, now: Long): Long? {
+        result ?: return null
+        val s = c.currentSettings()
+        if (!s.maker || !s.vigGuards.bidFarLane || s.daysAhead * 24 <= com.tjshea.vigilant.data.scanner.FarLane.NEAR_HOURS) return null
+        val latest = result.opportunities.maxOfOrNull { minOf(it.event.startsTs, it.market.startsTs) } ?: return null
+        // A full-reach scan priced games out to the reach; only a scan that stopped at the quick scan's hours leaves later games unjudged.
+        return if (latest - now <= (com.tjshea.vigilant.data.scanner.FarLane.NEAR_HOURS + 6) * 3_600_000L) latest + 6 * 3_600_000L else null
+    }
+
+    /**
      * One pass. Auto-make on: the bids Vigilant's latest scan wants are posted, moved and cancelled. Auto-make off: the bids Tj approved by hand are
      * watched (fills recorded, taken down when no longer worth it, never re-posted), and new bids are recommended to approve or deny
      * ([ScanSettings.makerRecommend]). Scanning paused: every bid comes down. No scan yet: only fills and expiries are read. A scan still running is
@@ -160,6 +173,8 @@ class MakerRunner(
             val report = desk.cycle(
                 moved, rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,
+                // A quick scan (FarLane) reads only the next 48 hours: a bid on a game past that stays up for its own expiry instead of coming down as "no longer a bid to post".
+                reachUntilMs = reachOf(result, now),
             )
             notifyFills(report.fills, desk.bids())
             // Still under the wallet target after the usual and the riskier bids (Tj, 2026-10-14: "the bids up ... never fill my wallet"): a second, DEEPER bid on the sides that already have one. Each is priced

@@ -1094,7 +1094,11 @@ class AppContainer(val app: Application) {
     fun startVigilantScan(requested: ScanSettings, bets: List<com.tjshea.vigilant.data.tracker.TrackedBet>, background: Boolean = false): Boolean {
         val now = System.currentTimeMillis()
         // The long-run saver (RESEARCH.md §119): the background scan reads only the families Quick & likely bids go on; Tj's own scan never does.
-        val settings = if (background && com.tjshea.vigilant.data.scanner.LongRunBids.leanApplies(requested)) requested.copy(leanScan = true) else requested
+        val lean = if (background && com.tjshea.vigilant.data.scanner.LongRunBids.leanApplies(requested)) requested.copy(leanScan = true) else requested
+        // The quick 48-hour scan between full-reach ones (Tj, 2026-10-14: "The scan takes way too long"): see [FarLane].
+        val near = com.tjshea.vigilant.data.scanner.FarLane.nearOnly(lean, background, now, lastFullScanAtMs)
+        val settings = if (near) lean.copy(nearScan = true) else lean
+        if (!near && !streamPass) lastFullScanAtMs = now
         val pinned = bets.filter { it.status == com.tjshea.vigilant.data.tracker.BetStatus.PENDING && it.startsTs > now }.mapTo(HashSet()) { it.marketId }
         // Low API usage bids: the markets a bid of ours rests on are read first, so each is re-posted from this scan's fair before its old one ends (RESEARCH.md §93).
         if (settings.lowUsageNow) pinned += com.tjshea.vigilant.data.novig.trading.maker.LowUsage.restingMarkets(makerStore.flow.value.orEmpty())
@@ -1116,6 +1120,9 @@ class AppContainer(val app: Application) {
             if (report != null) lastScanCost = RoundCost(now, System.currentTimeMillis() - now, UsageDelta.between(before, usage.flow.value))
         }
     }
+
+    /** When the last full-reach scan started ([FarLane]); 0 = none yet in this process, so the first background scan is full. */
+    @Volatile var lastFullScanAtMs: Long = 0L
 
     /** True while the streaming engine's pass is the cycle that runs (set around [AutoScanner.cycle], which one cycle at a time keeps unambiguous). */
     @Volatile var streamPass = false

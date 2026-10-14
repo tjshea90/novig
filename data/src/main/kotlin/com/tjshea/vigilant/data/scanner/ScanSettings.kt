@@ -471,6 +471,11 @@ data class ScanSettings(
     @Transient val lowUsageScan: Boolean = false,
     /** Set only by the background scan ([LongRunBids.leanApplies]) and read by [effective]: this scan is the lean one. Never saved. */
     @Transient val leanScan: Boolean = false,
+    /**
+     * Set by the background scan only ([FarLane]): this pass reads just the next [FarLane.NEAR_HOURS] hours, the quick one that runs between the full-reach scans (Tj, 2026-10-14: "The scan takes way too long":
+     * ten days is ~7,700 Novig prices and 8 minutes, by when the fair odds read at its start are too old to bid on). Never saved; a scan Tj starts is always the full reach.
+     */
+    @Transient val nearScan: Boolean = false,
     /** Set only by [effective]: the fewest sharp books a sharp fair is built from ([com.tjshea.vigilant.engine.FairSettings.minSharp]). Never saved. */
     @Transient val minSharpBooks: Int = 1,
     /**
@@ -979,6 +984,7 @@ data class ScanSettings(
     val scanWindowHours: Int
         get() {
             val days = daysAhead.coerceAtLeast(1) * 24
+            if (nearScan) return minOf(days, FarLane.NEAR_HOURS)
             // The auto bids fill the wallet from games later in the week (Tj, 2026-10-14: "There are games this weekend with a full NFL and college football slate ..."): the Starts within chip is a VIEW of the next
             // hours, and it must not stop the scan from reading the whole Days ahead window the bids are priced from. Only the bids' own switch widens it; a feed that shows 48 h still shows 48 h.
             if (maker && vigGuards.bidDeploy && !lowUsageScan && !leanScan && makerFocus != BidFocus.LOW_USAGE) return days
@@ -1517,4 +1523,9 @@ data class ScanGuards(
      * every source has answered it, as the feed does.
      */
     val bidWhileScanning: Boolean = true,
+    /**
+     * The background scan alternates a full-reach scan (at most every 15 minutes) with a quick 48-hour one ([FarLane]), so the fair odds stay fresh for the bids and a scan stops taking 8 minutes (Tj, 2026-10-14:
+     * "The scan takes way too long"). Off: every background scan reads the whole reach, as before.
+     */
+    val bidFarLane: Boolean = true,
 )

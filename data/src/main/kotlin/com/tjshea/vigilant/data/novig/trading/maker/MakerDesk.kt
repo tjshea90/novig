@@ -298,6 +298,8 @@ class MakerDesk(
         keepPosting: () -> Boolean = { true },
         /** The rung this pass works on ([MakerBid.rung]); 1 only runs while the bids up are under the wallet target. */
         rung: Int = 0,
+        /** The last start the scan behind [lines] reached ([MakerPlan.plan]'s reachUntilMs); null = all. */
+        reachUntilMs: Long? = null,
     ): Report = lock.withLock {
         cycleRung = rung
         val problems = ArrayList<String>()
@@ -351,7 +353,7 @@ class MakerDesk(
         val actions = MakerPlan.plan(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
-            repost = autoPost, partial = partial, heldItems = GameExposure.items(bets) + GameExposure.bidItems(others), onTheWay = comingDown(allBids),
+            repost = autoPost, partial = partial, reachUntilMs = reachUntilMs, heldItems = GameExposure.items(bets) + GameExposure.bidItems(others), onTheWay = comingDown(allBids),
             held = if (rules.repeat != null) com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(bets) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(others) else emptyList(),
         )
         val noReplace = HashSet<String>()

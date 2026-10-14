@@ -796,6 +796,11 @@ object MakerPlan {
          * whose line is gone comes down.
          */
         partial: Boolean = false,
+        /**
+         * The last start the scan that judged these lines reached (a quick scan, [com.tjshea.vigilant.data.scanner.FarLane]): a resting bid on a game that starts after it was not judged at all, so it stays
+         * up until its own expiry and the next full-reach scan judges it. Null: every game is in reach.
+         */
+        reachUntilMs: Long? = null,
         /** What Tj's open bets have at risk, for the per-game limit ([MakerRules.maxPerGame]): bids add to it, never replace it ([GameExposure.items]). */
         heldItems: List<GameExposure.Item> = emptyList(),
         /** Bids whose cancel is in flight ([MakerDesk]): they can still be on Novig's book, so the wash guard counts them with [resting]. */
@@ -811,6 +816,11 @@ object MakerPlan {
         for (r in resting) {
             val w = byOutcome[r.outcomeId]
             if (w == null && partial && r.outcomeId !in skips) {
+                kept += r
+                continue
+            }
+            // A game past this scan's reach was not judged: the bid stays until its own expiry (a quick scan reads only the next 48 hours).
+            if (w == null && r.outcomeId !in skips && reachUntilMs != null && (r.game?.startsTs ?: 0L) > reachUntilMs && (r.expiresAtMs == null || r.expiresAtMs > now)) {
                 kept += r
                 continue
             }
