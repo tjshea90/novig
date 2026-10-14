@@ -18,7 +18,7 @@ class RecompositionCostTest {
         val main = source("MainActivity.kt")
         val badge = main.substringAfter("private fun TabIconWithCount").substringBefore("BadgedBox")
         assertTrue(badge, badge.contains("remember(state.feed, state.settings, now) { state.feedAt(now).size }"))
-        assertTrue(badge, Regex("remember\\(state\\.cno\\.snapshot, state\\.settings, state\\.placed, state\\.placedIndex, state\\.cnoLinks, state\\.books, state\\.novigLive, now\\)").containsMatchIn(badge))
+        assertTrue(badge, Regex("remember\\(state\\.cno\\.snapshot, state\\.settings, state\\.placed, state\\.placedIndex, state\\.cnoLinks, state\\.books, state\\.novigLive, state\\.result, state\\.negativeSeen, now\\)").containsMatchIn(badge))
     }
 
     @Test
