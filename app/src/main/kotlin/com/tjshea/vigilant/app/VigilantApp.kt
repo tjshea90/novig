@@ -1309,7 +1309,8 @@ class AppContainer(val app: Application) {
             scope = appScope, source = novig, fetch = ::feedRaceFetch, altQuotes = ::labAltQuotes,
             journal = labJournal, gradeJournal = labGradeJournal, bidLab = bidLab, grader = labGrader,
             // The tail taker's door: the lab hands over what its conservative rules find and places nothing itself. With only the tail switch on, the lab does only the tail's work.
-            onTail = { tailTaker.offer(it) },
+            // While Live light's push lane is carrying the load it hands the taker the offers; this slower pass (every 20 s, Novig's books by request) is the fallback when there is no live feed.
+            onTail = { if (!liveLight.carrying()) tailTaker.offer(it) },
             tailOnly = { settingsStore.flow.value?.let { s -> s.tailLive.on && !(s.altLab || s.researchMode) } == true },
             // The research lab waits while a scan runs or a bet is held: its Novig reads were two thirds of every read the app made (Tj's 2026-10-13 file) and the scan got 6.7 a second of the key's 16.
             busy = { runner.running || com.tjshea.vigilant.data.novig.BetPriority.isActive },
@@ -1374,6 +1375,22 @@ class AppContainer(val app: Application) {
         )
     }
 
+    /**
+     * Live light (Tj, 2026-10-14): the push lane that finds obviously wrong live prices as they appear. Novig's one live connection (a view of it, pinned on the live games' markets), ESPN's score every 3 s,
+     * and BoltOdds' soft-book consensus as a second opinion when that is on. It places nothing: what it finds goes to [tailTaker], behind the tail switches and limits.
+     */
+    val liveLight: com.tjshea.vigilant.data.novig.lab.LiveLightRunner by lazy {
+        com.tjshea.vigilant.data.novig.lab.LiveLightRunner(
+            scope = appScope, source = novig,
+            newView = { l -> com.tjshea.vigilant.data.novig.stream.SharedStreamView({ novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream }, l) },
+            fetch = ::feedRaceFetch, onOffer = { tailTaker.offer(it) }, leagues = { LAB_LEAGUES },
+            confirm = {
+                val s = settingsStore.flow.value
+                if (s != null && boltActive(s) && s.gates.boltSocket) com.tjshea.vigilant.data.novig.lab.BoltLiveConfirm(boltFeed.lines.board) else null
+            },
+        )
+    }
+
     @Volatile private var tailSawHalt = false
     @Volatile private var tailWalletRead = false
 
@@ -1428,13 +1445,16 @@ class AppContainer(val app: Application) {
     /** Starts or stops the paper lab to match [s]: on, not STOP ALL, the Novig app. Safe to call on every settings change. */
     fun labTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        val on = (s.altLab || s.researchMode || s.tailLive.on) && !s.killed
+        val light = s.tailLive.on && s.tailLive.light && !s.killed && novig.stream != null
+        // The push lane replaces the slow tail pass while the live feed is connected; a research switch still wants the lab.
+        val on = (s.altLab || s.researchMode || (s.tailLive.on && !light)) && !s.killed
+        if (light) { if (!liveLight.running) liveLight.start() } else if (liveLight.running) liveLight.stop()
         if (s.tailLive.halted != null) tailSawHalt = true else if (tailSawHalt) { tailSawHalt = false; tailTaker.resumed() }
         // A real tail bet needs the wallet read once before its first order (the gate says "wallet not read yet" otherwise).
         if (s.tailLive.on && s.tailLive.bet && !s.killed) { if (!tailWalletRead) { tailWalletRead = true; appScope.launch { runCatching { wallet.fresh() } } } } else tailWalletRead = false
         if (on) lab.start(LAB_LEAGUES) else if (lab.running) lab.stop()
         // A foreground service holds the process while research is on (Tj, 2026-10-10), so Android does not end it a few minutes after he leaves.
-        if (on) ResearchService.start(app) else ResearchService.stop(app)
+        if (on || light) ResearchService.start(app) else ResearchService.stop(app)
         // The paper bid lab's tape reader: every 45 s while research is on (its lines come from the Bids passes and the paper lab).
         if (on && bidLabJob?.isActive != true) {
             bidLabJob = appScope.launch {

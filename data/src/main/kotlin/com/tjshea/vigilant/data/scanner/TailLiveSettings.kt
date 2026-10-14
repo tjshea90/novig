@@ -18,4 +18,8 @@ data class TailLiveSettings(
     val haltLoss: Double = 5.0,
     val minEdge: Double = 0.05,
     val halted: String? = null,
+    /** Live light's push lane (Tj, 2026-10-14): judge each live game the moment Novig's feed or the score changes, and score-only (a stale price is found even when the whole ladder is stale). Off = the slower 20-second pass. */
+    val light: Boolean = true,
+    /** Live light's bids: post-only bids far under the model's fair on decided live games (a second desk of its own). */
+    val bids: Boolean = false,
 )
