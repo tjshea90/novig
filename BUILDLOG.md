@@ -259,3 +259,4 @@ day that changes.
 | v0.98.1 | code 257 | 2026-10-14T01:51Z | v0.98.1: the CNO list drops a bet the Bet sheet or the lowest fair says is not +EV even with no fresh price read; Diagnostics list why bids were skipped (wallet deployment)
 | v0.98.2 | code 258 | 2026-10-14T03:12Z | v0.98.2: the auto-bet holds one line of a team's spread (or a player's side) per game, counting open bets and resting bids
 | v0.99.0 | code 259 | 2026-10-14T03:20Z | v0.99.0: Live light push lane (score and clock model, BoltOdds second opinion, live bids)
+| v0.99.1 | code 260 | 2026-10-14T03:40Z | v0.99.1: Live light watches alternate spreads and totals and fits each ladder to a normal curve
