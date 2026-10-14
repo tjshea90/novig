@@ -74,34 +74,46 @@ object LiveLightScan {
         return if (over) pOver else 1.0 - pOver
     }
 
+    /** One side of one line with the model's conservative chance it wins and what Novig asks for it ([leg]); null when nothing can be bought there. */
+    data class SideFair(val line: com.tjshea.vigilant.data.novig.burst.LadderLine, val yes: Boolean, val fair: Double, val ask: Double, val contracts: Long, val book: com.tjshea.vigilant.data.novig.NovigBook?) {
+        val outcomeId: String get() = if (yes) line.yesOutcomeId else line.noOutcomeId
+        val side: String get() = if (line.kind == LadderKind.TOTAL) (if (yes) "OVER" else "UNDER") else (if (yes) "YES" else "NO")
+    }
+
     /**
-     * The bets in [points] the score and clock call decided while Novig still offers them cheaper than that. [marginOf] gives a margin ladder's reference team's lead now (null = the team can't be matched to
-     * the score: that ladder is skipped, never guessed).
+     * The model's fair for every side of every line in [points] that it can judge (a whole-number line, a team that can't be matched, a game with no usable clock are left out). Bets and bids are both read off this:
+     * a bet needs the side to be decided and cheaper than its fair by the edge; a bid needs it decided and sits well under it.
      */
-    fun scan(points: List<LadderPoint>, league: String, state: GameState, marginOf: (String) -> Int?, rules: LiveLightRules = LiveLightRules()): List<TailCandidate> {
+    fun sides(points: List<LadderPoint>, league: String, state: GameState, marginOf: (String) -> Int?, rules: LiveLightRules = LiveLightRules()): List<SideFair> {
         if (state.fractionLeft < rules.minFractionLeft || state.fractionLeft > rules.maxFractionLeft) return emptyList()
-        val out = ArrayList<TailCandidate>()
+        val out = ArrayList<SideFair>()
         for (p in points) {
             val line = p.line
             val margin = if (line.kind == LadderKind.MARGIN) (marginOf(line.ref) ?: continue) else 0
             // Pushes: a whole-number line (other than a moneyline) is left alone.
             if (!(line.kind == LadderKind.MARGIN && line.threshold == 0.0) && line.threshold % 1.0 == 0.0) continue
             for (yes in booleanArrayOf(true, false)) {
-                val leg = CoverMath.leg(p.book, line, yes) ?: continue
-                if (leg.contracts < rules.minContracts || leg.price > rules.maxAsk) continue
                 val pWin = (if (line.kind == LadderKind.TOTAL) pOver(state.sport, league, line.threshold, state.points, state.fractionLeft, rules, over = yes)
                 else pMargin(state.sport, league, line.threshold, margin, state.fractionLeft, rules, yes)) ?: continue
-                if (pWin < rules.minFair) continue
-                val fee = Fees.takerFee(leg.price, line.fee, eventLive = true)
-                val edge = pWin / (leg.price + fee) - 1.0
-                if (edge < rules.minEdge) continue
-                val total = line.kind == LadderKind.TOTAL
-                out += TailCandidate(
-                    rules.name, line.marketId, line.eventId, if (yes) line.yesOutcomeId else line.noOutcomeId, line.label,
-                    if (total) (if (yes) "OVER" else "UNDER") else (if (yes) "YES" else "NO"),
-                    line.threshold, leg.price, pWin, edge, leg.contracts, 0.0, state.fractionLeft,
-                )
+                val leg = CoverMath.leg(p.book, line, yes)
+                out += SideFair(line, yes, pWin, leg?.price ?: Double.NaN, leg?.contracts ?: 0L, p.book)
             }
+        }
+        return out
+    }
+
+    /**
+     * The bets in [points] the score and clock call decided while Novig still offers them cheaper than that. [marginOf] gives a margin ladder's reference team's lead now (null = the team can't be matched to
+     * the score: that ladder is skipped, never guessed).
+     */
+    fun scan(points: List<LadderPoint>, league: String, state: GameState, marginOf: (String) -> Int?, rules: LiveLightRules = LiveLightRules()): List<TailCandidate> {
+        val out = ArrayList<TailCandidate>()
+        for (sf in sides(points, league, state, marginOf, rules)) {
+            if (sf.ask.isNaN() || sf.contracts < rules.minContracts || sf.ask > rules.maxAsk || sf.fair < rules.minFair) continue
+            val fee = Fees.takerFee(sf.ask, sf.line.fee, eventLive = true)
+            val edge = sf.fair / (sf.ask + fee) - 1.0
+            if (edge < rules.minEdge) continue
+            out += TailCandidate(rules.name, sf.line.marketId, sf.line.eventId, sf.outcomeId, sf.line.label, sf.side, sf.line.threshold, sf.ask, sf.fair, edge, sf.contracts, 0.0, state.fractionLeft)
         }
         return out.sortedByDescending { it.edge }
     }
