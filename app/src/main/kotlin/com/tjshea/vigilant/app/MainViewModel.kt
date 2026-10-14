@@ -2797,6 +2797,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             add("lines judged this pass: ${d.judged} · skipped for (most common first):")
                             d.skips.forEach { (why, n) -> add("  ×$n $why") }
                         }
+                        if (d.weekJudged > 0) {
+                            add("wallet-filling pass a week ahead: ${d.weekJudged} lines judged · skipped for:")
+                            d.weekSkips.forEach { (why, n) -> add("  ×$n $why") }
+                        }
                     }
                 }
             }.getOrNull(),

@@ -265,7 +265,9 @@ class MakerDesk(
     /** The wallet-deployment state of one pass, for Diagnostics: the target, what was up, the stake multiple used, and the riskier bids wanted. */
     data class Deploy(val walletDollars: Double, val targetDollars: Double, val restingDollars: Double, val scale: Double, val kellyCeiling: Double, val overflowWanted: Int, val overflowDollars: Double, val wantedDollars: Double,
         /** The most common reasons lines got no bid this pass (numbers folded together), with their counts, and how many lines were judged: what limits the deployment. */
-        val skips: List<Pair<String, Int>> = emptyList(), val judged: Int = 0)
+        val skips: List<Pair<String, Int>> = emptyList(), val judged: Int = 0,
+        /** The same for the wallet-filling pass that looks a week ahead (what stopped THOSE lines), and how many it judged: Diagnostics' answer to "why did the week tier post nothing". */
+        val weekSkips: List<Pair<String, Int>> = emptyList(), val weekJudged: Int = 0)
 
     /**
      * One pass: what Novig says happened to every bid (fills to the Tracker), then the bids [lines] want under [rules] at [now], then the cancels and
@@ -425,6 +427,8 @@ class MakerDesk(
         val wantedNew = posted.filter { it.line.outcomeId !in activeOutcomes }.sumOf { it.cost }
         val relaxed = rules.copy(
             margin = rules.margin + DEPLOY_EXTRA_MARGIN, requireSharp = true, stakeScale = DEPLOY_OVERFLOW_STAKE, kellyCeiling = 0.0,
+            // A riskier bid is posted to "see if anyone takes it" (Tj, 2026-10-14): resting well behind the best bid is the point, so the "too far behind to fill" rule does not apply to it.
+            maxBehind = 0.0,
             earlyHours = if (rules.earlyHours > 0) maxOf(rules.earlyHours, DEPLOY_HOURS) else 0,
         )
         val candidates = MakerQuote.decideAll(lines, relaxed, now, held).map(judge).filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in postedOutcomes }
@@ -432,6 +436,8 @@ class MakerDesk(
         var room = target - resting - wantedNew
         val out = ArrayList<MakerDecision>()
         var dollars = 0.0
+        var weekJudged = 0
+        var weekSkips: List<Pair<String, Int>> = emptyList()
         // The riskier bids already up first (they stay while valid), then the best new ones by their edge, while the target has room.
         for (c in candidates.sortedWith(compareByDescending<MakerDecision.Post> { it.line.outcomeId in overflowResting }.thenByDescending { it.evAtFair })) {
             val keep = c.line.outcomeId in overflowResting
@@ -446,7 +452,10 @@ class MakerDesk(
         if (room > 0.0 && rules.earlyHours > 0 && rules.earlyHours < DEPLOY_WEEK_HOURS) {
             val taken = HashSet<String>(postedOutcomes).apply { out.forEach { add(it.line.outcomeId) } }
             val week = relaxed.copy(margin = relaxed.margin + DEPLOY_WEEK_MARGIN, earlyHours = DEPLOY_WEEK_HOURS)
-            val far = MakerQuote.decideAll(lines, week, now, held).map(judge).filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in taken }
+            val farAll = MakerQuote.decideAll(lines, week, now, held).map(judge)
+            weekJudged = farAll.size
+            weekSkips = farAll.filterIsInstance<MakerDecision.Skip>().groupingBy { it.why.replace(Regex("[0-9]+(\\.[0-9]+)?"), "#") }.eachCount().entries.sortedByDescending { it.value }.take(8).map { it.key to it.value }
+            val far = farAll.filterIsInstance<MakerDecision.Post>().filter { it.line.outcomeId !in taken }
             for (c in far.sortedWith(compareByDescending<MakerDecision.Post> { it.line.outcomeId in overflowResting }.thenByDescending { it.evAtFair })) {
                 val keep = c.line.outcomeId in overflowResting
                 if (!keep && room <= 0.0) continue
@@ -455,7 +464,7 @@ class MakerDesk(
                 if (!keep) room -= c.cost
             }
         }
-        return out to Deploy(wallet, target, resting, 1.0, rules.deployMaxKelly, out.size, dollars, resting + wantedNew)
+        return out to Deploy(wallet, target, resting, 1.0, rules.deployMaxKelly, out.size, dollars, resting + wantedNew, weekSkips = weekSkips, weekJudged = weekJudged)
     }
 
     /**
