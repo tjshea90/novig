@@ -811,6 +811,7 @@ private fun VigilantRoot(
                     val cnoLane by vm.cnoBidStatus.collectAsStateWithLifecycle()
                     val bids by vm.makerBids.collectAsStateWithLifecycle()
                     val denied by vm.makerDenied.collectAsStateWithLifecycle()
+                    val light by vm.lightUi.collectAsStateWithLifecycle()
                     val now = com.tjshea.vigilant.app.ui.rememberNow(30_000)
                     // The bids each line of the latest scan would get, worked out as the tab opens (each pass and each scan keep it current after).
                     androidx.compose.runtime.LaunchedEffect(vm) { vm.makerPreview() }
@@ -834,7 +835,7 @@ private fun VigilantRoot(
                             denied = denied.orEmpty().filter { it.startsTs > now }, backgroundFeeds = state.settings.autoScansVigilant,
                             waiting = status.lastReport?.waiting.orEmpty(), lastPass = status.lastReport?.let(com.tjshea.vigilant.app.ui.MakerText::passLine),
                             cno = if (state.settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO) cnoLane else null,
-                            lightBids = state.lightBids, light = state.lightStatus,
+                            lightBids = light.bids, light = light.status,
                         ),
                         actions,
                     )
