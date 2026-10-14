@@ -1,7 +1,7 @@
-# CHECKPOINT 3231 — read me first, then TASKS.md
+# CHECKPOINT 3232 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T17:01:50Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-147419fb-llvuq5` · **builds on:** `ab9e0749c` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T17:05:53Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-147419fb-llvuq5` · **builds on:** `d8e01c380` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: v0.99.7: scan errors about Novig (the key stand-down, a failed read) leave the screen by themselves once they stop applying, and a second, deeper bid goes up on sides that already have one while the wallet is under its target
@@ -13,12 +13,11 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
-     M data/src/test/kotlin/com/tjshea/vigilant/data/novig/NovigPublicClientTest.kt
+     M app/src/main/kotlin/com/tjshea/vigilant/app/MakerRunner.kt
 
 ## Last ten checkpoints
 ```
+  d8e01c380 ckpt 3231: pre-ship: v0.99.7: scan errors about Novig (the key stand-down, a failed re
   7d12c39cd ckpt 3230: pre-release: v0.99.6: Settings > Safeguards (every protection with a switch
   4d583c2dc ckpt 3229: pre-ship: v0.99.6: Settings > Safeguards (every protection with a switch an
   9707921f0 ckpt 3228: TLV1/TLV2: Safeguards page + Live tab built (tests green)
@@ -28,8 +27,4 @@ ship.sh gates and releases this
   e1618641f ckpt 3224: pre-release: v0.99.4: player-prop fair prices cut (Overs 7 points, Unders 3
   3826fa353 ckpt 3223: pre-ship: v0.99.4: player-prop fair prices cut (Overs 7 points, Unders 3: t
   0b3aacb2a ckpt 3222: bet history 2026-10-14 read: longshot/prop EV overstated; profit_profile.js
-  c323738a3 ckpt 3221: pre-release: v0.99.3: Live light loosened (model fair 90%, bids 7% under th
 ```
-
-(9 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)

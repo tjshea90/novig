@@ -155,8 +155,10 @@ class MakerRunner(
             val mine = desk.bids().filter { it.active || (it.filled > 0 && it.fairAtFill == null) }.mapTo(HashSet()) { it.outcomeId }
             val lines = if (cnoSource) cnoSet?.lines.orEmpty() else MakerLines.from(result, s, now, always = mine, unavailable = playerOut(now))
             if (!cnoSource && c.researchOn()) runCatching { c.bidLab.observe(lines.mapNotNull { com.tjshea.vigilant.data.novig.lab.labLineOf(it, now) }, now) }
+            // Novig's recent trades are read once per pass: the deeper pass below judges the same lines (a game line whose read failed gets no bid in either).
+            val moved = withMoves(lines, rules, now, read = stop == null)
             val report = desk.cycle(
-                withMoves(lines, rules, now, read = stop == null), rules, stop, s.apiMaxPerDay, wallet,
+                moved, rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,
             )
             notifyFills(report.fills, desk.bids())
@@ -165,7 +167,7 @@ class MakerRunner(
             if (s.maker && stop == null && !partial && !cnoSource) {
                 val deepRules = rules.copy(margin = rules.margin + MakerDesk.DEEP_MARGIN)
                 val deep = desk.cycle(
-                    withMoves(lines, deepRules, now, read = false), deepRules, stop, s.apiMaxPerDay, wallet,
+                    moved, deepRules, stop, s.apiMaxPerDay, wallet,
                     denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = false, keepPosting = ::stillPosting, rung = 1,
                 )
                 notifyFills(deep.fills, desk.bids())
