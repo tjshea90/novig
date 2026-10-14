@@ -170,28 +170,9 @@ class LabRecorder(
         if (cycle % gradeEvery == 0 && !light) grade(now)
     }
 
-    /** A tail candidate as the taker needs it: the Novig market it is on, the Tracker's record of it, the market's own fee. Null when the market or its fee can't be found. */
-    private fun tailOffer(ev: NovigEvent, markets: List<NovigMarket>, points: List<LadderPoint>, st: GameState, c: TailCandidate, now: Long): TailOffer? {
-        if (onTail == null) return null
-        val market = markets.firstOrNull { it.marketId == c.marketId } ?: return null
-        val fee = points.firstOrNull { it.line.marketId == c.marketId }?.line?.fee ?: return null
-        val total = c.side == "OVER" || c.side == "UNDER"
-        val marketLabel = if (total) "Total" else if (c.strike == 0.0) "Moneyline" else "Spread"
-        val selection = "${c.label} ${c.side.lowercase()}"
-        val american = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(c.ask.coerceIn(0.001, 0.999))
-        val target = com.tjshea.vigilant.data.novig.trading.BetTarget(
-            market = market, outcomeId = c.outcomeId, league = ev.league, eventName = ev.description, startsTs = ev.startsTs, marketLabel = marketLabel, selection = selection,
-            fair = c.fair, fairAsOfMs = now, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_TAIL,
-            basis = com.tjshea.vigilant.data.tracker.FairBasis(com.tjshea.vigilant.data.tracker.FairBasis.SOURCE_TAIL, emptyList(), 0), auto = true,
-            atBet = com.tjshea.vigilant.data.tracker.AtBet(
-                atMs = now, how = com.tjshea.vigilant.data.tracker.AtBet.HOW_AUTO, scanner = "Live tail", league = ev.league, live = true, american = american, ev = c.edge, fair = c.fair,
-                fairAmerican = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(c.fair.coerceIn(0.001, 0.999)), fairMethod = "Late-game tail model (ESPN score and clock, Novig's own centre)",
-                fairBooks = emptyList(), fairSharp = emptyList(),
-            ),
-        )
-        val note = "${st.homeScore}-${st.awayScore}, ${"%.0f".format(java.util.Locale.US, st.fractionLeft * 100)}% left, centre ${"%.1f".format(java.util.Locale.US, c.centre)}"
-        return TailOffer(c, target, fee, note, now)
-    }
+    /** A tail candidate as the taker needs it ([TailOffers.build]); null when the lab has no taker to hand it to. */
+    private fun tailOffer(ev: NovigEvent, markets: List<NovigMarket>, points: List<LadderPoint>, st: GameState, c: TailCandidate, now: Long): TailOffer? =
+        if (onTail == null) null else TailOffers.build(ev, markets, points, st, c, now)
 
     /** Both sides of a Novig strike as paper-bid lines: Pinnacle's fair, Novig's ask (what a bid must stay under) and its best bid. */
     private fun liveLines(ev: NovigEvent, sf: StrikeFair): List<LabLine> {

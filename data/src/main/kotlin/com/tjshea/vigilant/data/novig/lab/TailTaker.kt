@@ -113,7 +113,7 @@ class TailTaker(
         val start = clock()
         if (r.halted != null || start - haltedAtMs < LiveTradeLimits.HALT_GRACE_MS) return skip("halted")
         if (r.bet && start < standDownUntil) return skip("stood down")
-        if (c.rule != CONSERVATIVE) return skip("not the conservative rules")
+        if (c.rule != CONSERVATIVE && c.rule != LiveLightScan.RULE) return skip("not the conservative rules")
         if (c.fair < TailTradeLimits.MIN_FAIR) return skip("fair under ${(TailTradeLimits.MIN_FAIR * 100).toInt()}%")
         val floor = maxOf(minEdge(), 0.0)
         if (c.edge < floor) return skip("edge under your minimum")
