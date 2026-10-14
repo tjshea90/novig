@@ -256,7 +256,8 @@ class LiveLightRunner(
         val marginOf = { ref: String -> feed.game.marginOf(ref) }
         val sides = LiveLightScan.sides(points, game.ev.league, st, marginOf, rules)
         manageBids(game, sides, feed.game, now)
-        val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
+        val curve = LiveLightCurve.scan(points, game.ev.league, st, sides.associate { it.outcomeId to it.fair })
+        val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + curve + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
         val s = _status.value
         _status.value = s.copy(scans = s.scans + 1, lastScanMs = now, lastScanTookMs = (clock() - triggeredAtMs).coerceAtLeast(0))
         // The best view of an outcome both models like is the more cautious one.

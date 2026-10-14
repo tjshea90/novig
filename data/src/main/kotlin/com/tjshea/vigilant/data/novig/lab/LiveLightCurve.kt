@@ -73,6 +73,8 @@ data class LiveLightCurveRules(
     val shiftSd: Double = 0.25,
     val sdMult: Double = 1.25,
     val minFair: Double = 0.60,
+    /** The score model's own chance for the side under which a curve bet is refused (see [LiveLightCurve.scan]). */
+    val vetoBelow: Double = 0.30,
     /** Higher than the score model's: a curve says a price is out of line with its neighbours, not that the game is decided. */
     val minEdge: Double = 0.08,
     val maxAsk: Double = 0.985,
@@ -88,7 +90,7 @@ data class LiveLightCurveRules(
 
 /**
  * Alternate spreads and totals priced off their own ladder (Tj, 2026-10-14): each ladder's liquid middles are fitted ([LadderFit]) with the line under test LEFT OUT, and a side Novig sells under what the curve
- * (cautiously) says is a bet. The score model, when it can judge the same side, caps the fair: the curve is never more optimistic than the score allows. Pure.
+ * (cautiously) says is a bet. The score model, when it can judge the same side, vetoes a bet it rates well under a coin flip (a ladder that disagrees that much with the score is the stale one). Pure.
  */
 object LiveLightCurve {
     const val RULE = "curve"
@@ -101,7 +103,7 @@ object LiveLightCurve {
         else sqrt((prior * left * 1.2).coerceAtLeast(0.25))
     }
 
-    fun scan(points: List<LadderPoint>, league: String, state: GameState, caps: Map<String, Double> = emptyMap(), rules: LiveLightCurveRules = LiveLightCurveRules()): List<TailCandidate> {
+    fun scan(points: List<LadderPoint>, league: String, state: GameState, scoreFair: Map<String, Double> = emptyMap(), rules: LiveLightCurveRules = LiveLightCurveRules()): List<TailCandidate> {
         val out = ArrayList<TailCandidate>()
         for ((_, g) in points.groupBy { it.line.ladderKey }) {
             val kind = g.first().line.kind
@@ -117,9 +119,10 @@ object LiveLightCurve {
                 for (yes in booleanArrayOf(true, false)) {
                     val leg = CoverMath.leg(p.book, p.line, yes) ?: continue
                     if (leg.contracts < rules.minContracts || leg.price > rules.maxAsk) continue
-                    var fair = fit.pYes(t, yes, rules.shiftSd, rules.sdMult)
+                    val fair = fit.pYes(t, yes, rules.shiftSd, rules.sdMult)
                     val outcome = if (yes) p.line.yesOutcomeId else p.line.noOutcomeId
-                    caps[outcome]?.let { fair = minOf(fair, it) }
+                    // The score model is a veto, not a cap: its bounds are wide (it only calls a game decided), so a side it rates well under a coin flip while the ladder says it is likely means the ladder is stale or mismatched.
+                    scoreFair[outcome]?.let { if (it < rules.vetoBelow) continue }
                     if (fair < rules.minFair) continue
                     val fee = Fees.takerFee(leg.price, p.line.fee, eventLive = true)
                     val edge = fair / (leg.price + fee) - 1.0
