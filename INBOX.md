@@ -7222,3 +7222,15 @@ Do what you think is most profitable because I'm losing money
 ```
 @"/root/.claude/uploads/cf6ab219-16ec-5602-bdb7-367accddf30a/47e1db89-vigilant-diagnostics-v0.99.3-2026-10-14-0158.txt" 
 ```
+
+## 2026-10-14T06:15:22Z
+```
+Have the losing bet types been consistent since the start
+There is still lag and freezing. The settings are getting long and complicated. I no longer have pinnodds socket yet the new live betting features are buried under pinnodds settings.
+
+I need a way to turn off all live features and sockets on one main toggle. 
+
+Investigate how I'm consistently beating clv yet losing so much money. Either the clv values are wrong, or the EV analysis is wrong. 
+
+Back to research and development. Optimize the app for making profit, whatever needs to be done
+```
