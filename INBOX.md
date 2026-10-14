@@ -7265,3 +7265,8 @@ Also look at the bids up, it never fills my wallet
 ```
 I don't understand why it should ever be under wallet. There are plenty of games. There are games this weekend with a full NFL and college football slate with thousands of props and spreads and totals. If it runs out of preferred bids, it should automatically post bids on popular sports and props, just at a high ev that is safe
 ```
+
+## 2026-10-14T17:16:00Z
+```
+Confirm release v0.99.7 exists (mcp__github__get_release_by_tag tjshea90/novig v0.99.7), then run bash tools/record-release.sh v0.99.7 266 "v0.99.7: Novig scan errors clear themselves, deeper second bids fill the wallet" and send Tj the link https://github.com/tjshea90/novig/releases/tag/v0.99.7
+```
