@@ -285,10 +285,12 @@ private fun FeedSummary(
     onSort: (FeedSort) -> Unit,
     onStartsWithin: (Int) -> Unit,
     onRecheck: () -> Unit,
+    /** Whether a scan's error still holds now ([com.tjshea.vigilant.app.MainViewModel.errorStillApplies]): one that no longer does leaves the screen by itself. */
+    errorApplies: (String) -> Boolean = { true },
 ) {
     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         UsageStrip(state)
-        state.status.errors.take(3).forEach { Banner(it, color = Edge.colors.negative) }
+        state.status.errors.filter { errorApplies(it) }.take(3).forEach { Banner(it, color = Edge.colors.negative) }
         val old = if (state.status.scanning) emptyList() else shown.filter { it.priceIsOld(now) }
         if (old.isNotEmpty()) {
             // Novig prices age: an edge from 20 minutes ago may be gone. Say so before Tj bets it,

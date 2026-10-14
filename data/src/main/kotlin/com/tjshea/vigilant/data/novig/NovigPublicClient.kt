@@ -696,6 +696,7 @@ class NovigPublicClient(
     }
 
     private suspend fun count(code: Int) {
+        if (code in 200..299) NovigHealth.okAtMs = System.currentTimeMillis()
         usage?.countKeyless(QuotaPolicy.NOVIG, calls = 1, throttled = if (code == 429 || code == 403) 1 else 0)
     }
 
@@ -898,4 +899,13 @@ private data class TradeDto(val tradeId: String = "", val outcomeId: String = ""
         if (outcomeId.isBlank() || qty <= 0 || ts <= 0) return null
         return com.tjshea.vigilant.data.scanner.TrapGuard.Trade(outcomeId, p, qty, ts)
     }
+}
+
+
+/**
+ * When Novig last answered a request successfully (Tj, 2026-10-14: "Make these errors refresh and disappear automatically as soon as they no longer apply"): an error a scan reported about Novig's prices stays on
+ * screen only until a read after that scan succeeds, instead of until the next full scan ends.
+ */
+object NovigHealth {
+    @Volatile var okAtMs: Long = 0L
 }

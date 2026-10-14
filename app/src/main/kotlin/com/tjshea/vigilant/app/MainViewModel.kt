@@ -2160,6 +2160,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { it.copy(pinnLive = c.pinnRunner.status.value, pinnTrade = c.pinnTrader.status.value, pinnWebsiteStats = c.websiteStats(), pinnRaceLines = c.pinnRace.lines()) }
     }
 
+    /**
+     * Whether an error a finished scan reported ([ScanStatus.errors]) still holds at [now] (Tj, 2026-10-14: "Make these errors refresh and disappear automatically as soon as they no longer apply"): the Novig key's
+     * stand-down only while the key is still stood down, and a Novig read that failed only until a read after that scan succeeded. Anything else is the scan's word until the next scan.
+     */
+    fun errorStillApplies(error: String, now: Long): Boolean = when {
+        error.startsWith("Novig key:") -> c.novig.keyDown(now) != null
+        error.startsWith("Novig prices:") -> com.tjshea.vigilant.data.novig.NovigHealth.okAtMs <= (_state.value.status.scannedAtMs ?: 0L)
+        else -> true
+    }
+
     /** What the Bids tab shows of Live light: the lane's status and its desk's bids, looked at every 1.5 s but only while that tab is collecting (nothing runs behind a closed tab). */
     data class LightUi(val status: com.tjshea.vigilant.data.novig.lab.LiveLightStatus = com.tjshea.vigilant.data.novig.lab.LiveLightStatus(), val bids: List<com.tjshea.vigilant.data.livebid.LiveBid> = emptyList())
 
