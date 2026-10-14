@@ -7239,3 +7239,12 @@ Back to research and development. Optimize the app for making profit, whatever n
 ```
 How do I turn on all the safeguards you made against bad bets and bids
 ```
+
+## 2026-10-14T13:56:58Z
+```
+Yes, add the safeguards screen. 
+
+Instead of all the live features in the settings, make a live tab with all of the features and well organized and easy to understand. 
+
+Also the auto bids are still only posting a small portion of my wallet. I want it to fill up the wallet. If it can't find good bids, increase the time period of game start date to bid on games later in the week, or bid on more markets and sports, but all at all a safe EV
+```
