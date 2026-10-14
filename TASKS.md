@@ -5114,3 +5114,9 @@ Tj: "Make these errors refresh and disappear automatically as soon as they no lo
 Cause found: the feed's "Starts within 48h" chip also set how far the scan read (`scanWindowHours`), so the weekend slate was never priced.
 - [x] TWR1 (`ScanSettings.scanWindowHours`, `BID_REACH_DAYS`, schema 19, `MakerSetup.set`, `MakerTest`) With bids on (deploy on) the scan reads the whole Days-ahead window; picking a bid mode raises Days ahead and prop hours to a week; the chip only filters the view.
 - [x] TWR2 v0.99.8 shipped, release.yml triggered: confirm get_release_by_tag v0.99.8, then record-release.sh v0.99.8 267, send Tj the link, ask him to read Diagnostics › WALLET DEPLOYMENT.
+
+## TNR: a negative-EV bet stays in the +EV list during a scan (Tj, 2026-10-14, screenshot: Oregon State -19.5 listed at +125 / +1.68%, "Novig read 2 min ago"; Bet sheet says +113, -3.7% EV)
+Tj: "This bet is negative ev. Why did it not automatically remove itself from the list"
+Cause: FeedScreen's 15 s recheck (`AUTO_RECHECK_MS`) is skipped while `status.scanning`, `MainViewModel.recheck` returns while `c.runner.running`, and `Scanner.recheck` needs the scan's mutex; v0.99.8's week-wide scan runs for minutes, so listed rows were never re-priced.
+- [ ] TNR1 (`Pricing.requote`, `OddsScanner.requoteListed`, `MainViewModel.recheck` during a scan, `FeedScreen`) Re-price the listed rows from Novig's live top of book every 15 s even while a scan runs (no scan lock); a row no longer +EV leaves the list. Test `RequoteTest`.
+- [ ] TNR2 ship v0.99.9.
