@@ -188,7 +188,7 @@ fun LiveBidPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSe
         LbHint("Editing a rule here makes the slider say Custom. Moving the slider sets them all again.")
     // ---- the autopilot: both engines, one tap ----------------------------------------------------------------------------------------------------------------------------------
 
-    LbHint("Live light and the live tail bets are on their own page now: Settings › Live light.")
+    LbHint("Live light and the live tail bets are on their own page now: the Live tab.")
 
     // ---- presets ----------------------------------------------------------------------------------------------------------------------------------------------------------------
     SectionTitle("Live bid presets")
