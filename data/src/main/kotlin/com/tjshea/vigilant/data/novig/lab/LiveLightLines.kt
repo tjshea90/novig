@@ -14,8 +14,9 @@ import kotlin.math.sqrt
 object LiveLightLines {
     const val REACH_SD = 3.5
     const val MAX_PER_GAME = 14
+    const val STICKY_SD = 4.5
 
-    fun window(lines: List<LadderLine>, league: String, state: GameState?, e: EspnGame?): List<LadderLine> {
+    fun window(lines: List<LadderLine>, league: String, state: GameState?, e: EspnGame?, keep: Set<String> = emptySet()): List<LadderLine> {
         val prior = LiveLightScan.priorTotal(league)
         if (state == null || e == null || prior == null) return lines.filter { it.kind == LadderKind.MARGIN && it.threshold == 0.0 }
         val left = state.fractionLeft
@@ -25,9 +26,11 @@ object LiveLightLines {
         val scored = lines.mapNotNull { l ->
             val (centre, sd) = if (l.kind == LadderKind.TOTAL) totalCentre to totalSd else (e.marginOf(l.ref)?.toDouble() ?: return@mapNotNull null) to marginSd
             val z = abs(l.threshold - centre) / sd.coerceAtLeast(0.5)
-            if (l.kind == LadderKind.MARGIN && l.threshold == 0.0) l to -1.0 else if (z <= REACH_SD) l to z else null
+            // A line already watched stays a little longer than a new one is taken on (every change of the watched set costs the feed's subscription tokens).
+            val held = l.marketId in keep
+            if (l.kind == LadderKind.MARGIN && l.threshold == 0.0) l to -1.0 else if (z <= REACH_SD || (held && z <= STICKY_SD)) l to (if (held) z - 0.5 else z) else null
         }
-        val ml = scored.filter { it.second < 0 }.map { it.first }
+        val ml = scored.filter { it.second == -1.0 }.map { it.first }
         return ml + scored.filter { it.second >= 0 }.sortedBy { it.second }.take(MAX_PER_GAME).map { it.first }
     }
 }
