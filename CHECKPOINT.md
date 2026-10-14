@@ -1,23 +1,23 @@
-# CHECKPOINT 3276 — read me first, then TASKS.md
+# CHECKPOINT 3277 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T21:59:52Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-e8041e9d-7grwre` · **builds on:** `64474b334` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T22:06:21Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-e8041e9d-7grwre` · **builds on:** `52fc1485e` (this checkpoint is the commit after it)
 
 ## Just done
-wrote cloud-scan design (research/cloud_scan_2026-10-14.md) and TASKS.md TCL1-5
+TCL tasks written after Tj agreed (cloud engine + permanent GitHub history)
 
 ## Do this next
-Waiting on Tj's word (TCL0: terms risk, public list, secrets list); then TCL1 move source wiring to :data
+TCL1: data/cloud codec, sources, client; start with BetArchive second mirror channel
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
-    ?? research/cloud_scan_2026-10-14.md
 
 ## Last ten checkpoints
 ```
+  fe91cc153 ckpt 3276: wrote cloud-scan design (research/cloud_scan_2026-10-14.md) and TASKS.md TC
   46c994200 ckpt 3275: wrote handoff-novig.md (amhandoff #1)
   97bc219d3 ckpt 3274: v0.99.16 released and recorded (TVM5b done)
   c212ff27b ckpt 3273: v0.99.15 recorded; v0.99.16 shipped (Volume mode stake scale-up), release.y
@@ -27,8 +27,7 @@ Waiting on Tj's word (TCL0: terms risk, public list, secrets list); then TCL1 mo
   c51eb5d2c ckpt 3269: pre-release: v0.99.15: Volume mode bids far games from a Novig book up to 9
   7cd1275e9 ckpt 3268: pre-ship: v0.99.15: Volume mode bids far games from a Novig book up to 90 m
   b23dc905c ckpt 3267: TVM4: logged 'few bids' report on v0.99.14 (93 bids / $18.30), no v0.99.14 
-  a90410b1c ckpt 3266: v0.99.14 released and recorded (TVM3 done)
 ```
 
-(3 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
