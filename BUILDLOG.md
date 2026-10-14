@@ -267,3 +267,4 @@ day that changes.
 | v0.99.6 | code 265 | 2026-10-14T16:55Z | v0.99.6: Safeguards page, Live tab, wallet-filling bids reach later in the week
 | v0.99.7 | code 266 | 2026-10-14T17:21Z | v0.99.7: Novig scan errors clear themselves, deeper second bids fill the wallet
 | v0.99.8 | code 267 | 2026-10-14T17:52Z | v0.99.8: the auto bids read a week of games, so the weekend's NFL and college slate is priced and the wallet can fill
+| v0.99.9 | code 268 | 2026-10-14T18:12Z | v0.99.9: the +EV list re-prices its bets from Novig's live prices every 15 s even while a scan runs
