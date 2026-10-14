@@ -5099,7 +5099,7 @@ Tj: "Have the losing bet types been consistent since the start. There is still l
 
 ## TLV: Safeguards screen, a Live tab, and bids that fill the wallet (Tj, 2026-10-14)
 Tj: "Yes, add the safeguards screen. Instead of all the live features in the settings, make a live tab with all of the features and well organized and easy to understand. Also the auto bids are still only posting a small portion of my wallet. I want it to fill up the wallet. If it can't find good bids, increase the time period of game start date to bid on games later in the week, or bid on more markets and sports, but all at all a safe EV"
-- [ ] TLV1 Settings › Safeguards page: every protection with its on/off state and its switch, and one "Turn all safeguards on" button.
-- [ ] TLV2 A Live tab (bottom bar): the master switch, Live light (bets, bids, real money, limits, status), live games, the sockets, and the Pinnodds-based engines in their own section; the Live light page and master row leave Settings.
-- [ ] TLV3 Wallet fill: when the bids up are under the wallet target and no usual or riskier bid is left, widen the start window (up to the week) and the markets and sports, at the same safe EV bars.
-- [ ] TLV4 Tests, ship.
+- [x] TLV1 (`Safeguards`, Settings › Safeguards, `SafeguardsTest`) Settings › Safeguards page: every protection with its on/off state and its switch, and one "Turn all safeguards on" button.
+- [x] TLV2 (`LiveScreen`, Tab.LIVE) A Live tab (bottom bar): the master switch, Live light (bets, bids, real money, limits, status), live games, the sockets, and the Pinnodds-based engines in their own section; the Live light page and master row leave Settings.
+- [x] TLV3 (`MakerDesk.deployFor` week-ahead pass, `MakerTest`) Wallet fill: when the bids up are under the wallet target and no usual or riskier bid is left, widen the start window (up to the week) and the markets and sports, at the same safe EV bars.
+- [x] TLV4 (shipped v0.99.6) Tests, ship.
