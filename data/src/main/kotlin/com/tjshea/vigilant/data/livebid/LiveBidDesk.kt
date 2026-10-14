@@ -153,7 +153,7 @@ class LiveBidDesk(
     /** The repeat and hedge guard's rules (null = off) and what Tj's open bets hold, read once per pass ([com.tjshea.vigilant.data.tracker.RepeatGuard]). Paper bids are judged against the desk's own paper fills. */
     private val repeat: () -> com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? = { null },
     private val heldBets: suspend () -> List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos> = { emptyList() },
-) {
+) : com.tjshea.vigilant.data.novig.lab.LightBidDesk {
     private val mu = Any()
     private val bids = LinkedHashMap<String, LiveBid>()
     private val wants = HashMap<String, LiveBidWant>()
@@ -202,7 +202,7 @@ class LiveBidDesk(
     // ---- what the runner says -------------------------------------------------------------------------------------------------------------------------------------------------
 
     /** A bid is justified now: a new one goes up if none is, and a bid already up on the outcome is vouched for. Plain and quick; callable from any thread. */
-    fun want(w: LiveBidWant) {
+    override fun want(w: LiveBidWant) {
         synchronized(mu) {
             wants[w.outcomeId] = w
             claimedAt[w.outcomeId] = w.atMs
@@ -211,12 +211,12 @@ class LiveBidDesk(
     }
 
     /** The bid up on [outcomeId] is still justified as of [nowMs] (the judge's `keep` said so). */
-    fun keepAlive(outcomeId: String, nowMs: Long) {
+    override fun keepAlive(outcomeId: String, nowMs: Long) {
         synchronized(mu) { claimedAt[outcomeId] = nowMs }
     }
 
     /** No new bid on [outcomeId] (counted by [reason]); a bid already up is not touched by this. */
-    fun noWant(outcomeId: String, reason: String) {
+    override fun noWant(outcomeId: String, reason: String) {
         synchronized(mu) {
             wants.remove(outcomeId)
             skipCounts[reason] = (skipCounts[reason] ?: 0) + 1
@@ -224,7 +224,7 @@ class LiveBidDesk(
     }
 
     /** The bid up on [outcomeId] must come down now. Acted on at once, from this call. */
-    fun pull(outcomeId: String, reason: String) {
+    override fun pull(outcomeId: String, reason: String) {
         val victims = synchronized(mu) {
             wants.remove(outcomeId)
             bids.values.filter { it.active && it.outcomeId == outcomeId }.map { it.clientId }
@@ -242,7 +242,7 @@ class LiveBidDesk(
     }
 
     /** The latest Pinnacle fair for an outcome, noted by the runner at every judgment (fills are followed up against it). */
-    fun noteFair(outcomeId: String, fair: Double, atMs: Long) {
+    override fun noteFair(outcomeId: String, fair: Double, atMs: Long) {
         latestFair[outcomeId] = fair to atMs
     }
 
@@ -250,7 +250,7 @@ class LiveBidDesk(
     fun bidsNow(): List<LiveBid> = synchronized(mu) { bids.values.toList() }
 
     /** The bid up on [outcomeId], as the judge needs it, or null. */
-    fun held(outcomeId: String): LiveBidHeld? = synchronized(mu) {
+    override fun held(outcomeId: String): LiveBidHeld? = synchronized(mu) {
         bids.values.lastOrNull { it.active && it.outcomeId == outcomeId && it.status != LiveBidStatus.CANCELING }?.let { LiveBidHeld(it.price, it.postedAtMs, it.mid) }
     }
 
