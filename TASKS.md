@@ -5051,5 +5051,5 @@ Tj: "This bet is now negative EV, but it did not automatically be removed from t
 
 ## TWH: auto-bet bets the same team at many spreads (Tj, 2026-10-14)
 Tj: "Auto bet is betting a lot of the same teams many times just at different spreads. Check to see if the guard on same game bets is working" (Checked in the v0.98.0 file: Sacramento +6.5 and +3.5 $5.82, Lakers +1.5 and -1.5. Game guard = dollars only ($50), repeat guard = the exact outcome only, so another line of the same team passes both.)
-- [ ] TWH1 `RepeatGuard` line-stack limit: at most N other lines of the same team (spreads) / player+side (props) / side (totals) in one game, counting open bets and resting bids; default 1; auto-bet refused, by hand warned; bids not limited (supply); Settings chips + Diagnostics line.
-- [ ] TWH2 Tests (`RepeatGuardTest`), ship.
+- [x] TWH1 `RepeatGuard` line-stack limit: at most N other lines of the same team (spreads) / player+side (props) / side (totals) in one game, counting open bets and resting bids; default 1; auto-bet refused, by hand warned; bids not limited (supply); Settings chips + Diagnostics line.
+- [x] TWH2 (`RepeatGuardTest`: family, line limit, bets+bids count) Tests, ship v0.98.2.
