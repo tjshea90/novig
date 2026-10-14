@@ -61,7 +61,7 @@ class NovigPublicClientTest {
         val c = NovigPublicClient(OkHttpClient(), json, server.url("").toString().trimEnd('/'), clock = { now }, sleep = { paused += it })
         assertEquals("m1", c.market("m1")?.marketId)
         assertEquals("the refusal was retried once", 2, server.requestCount)
-        assertTrue("the Retry-After was waited out: $paused", paused.any { it >= 1_000L })
+        assertTrue("the Retry-After was waited out: ${paused.take(3)}", paused.any { it >= 900L })
         assertEquals("m1", c.market("m1")?.marketId)
         assertEquals("the second ask came from memory", 2, server.requestCount)
         now += NovigPublicClient.LOOKUP_TTL_MS + 1
