@@ -265,3 +265,4 @@ day that changes.
 | v0.99.4 | code 263 | 2026-10-14T06:30Z | v0.99.4: player-prop haircut, Profit-proven only on, main-thread freeze fixed
 | v0.99.5 | code 264 | 2026-10-14T13:51Z | v0.99.5: Live features master switch, Live light page, by-reference state, tennis off, FAIR CALIBRATION
 | v0.99.6 | code 265 | 2026-10-14T16:55Z | v0.99.6: Safeguards page, Live tab, wallet-filling bids reach later in the week
+| v0.99.7 | code 266 | 2026-10-14T17:21Z | v0.99.7: Novig scan errors clear themselves, deeper second bids fill the wallet
