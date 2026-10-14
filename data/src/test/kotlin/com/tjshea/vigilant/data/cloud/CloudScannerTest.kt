@@ -35,6 +35,21 @@ class CloudScannerTest {
     }
 
     @Test
+    fun `while the engine is on its first long scan the report says so, with an empty list or none`() = runBlocking {
+        val now = 1_000_000_000L
+        val st = CloudStatus(startedAtMs = now - 7 * 60_000L, heartbeatMs = now - 5_000L, passes = 0)
+        val none = CloudLatest().also { it.status = st }
+        val a = CloudScanner(none, clock = { now }).scan(ScanSettings(gates = ApiGates(cloudScan = true)), emptyList(), emptySet(), {}, {})
+        assertTrue(a.errors.single().contains("first scan (7 min so far)"))
+        val empty = CloudLatest().also { it.status = st; it.put(feed(now - 1_000L), now) }
+        val b = CloudScanner(empty, clock = { now }).scan(ScanSettings(gates = ApiGates(cloudScan = true)), emptyList(), emptySet(), {}, {})
+        assertTrue(b.errors.single().contains("first scan"))
+        // an engine that is switched off says that instead
+        val off = CloudLatest().also { it.status = st.copy(idle = true) }
+        assertTrue(CloudScanner(off, clock = { now }).scan(ScanSettings(), emptyList(), emptySet(), {}, {}).errors.single().contains("switched off"))
+    }
+
+    @Test
     fun `a list is the scan's result, and an old one is said to be old`() = runBlocking {
         val now = 1_000_000_000L
         val latest = CloudLatest().also { it.put(feed(now - 10 * 60_000L), now) }

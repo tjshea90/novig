@@ -113,6 +113,15 @@ class CloudEngineTest {
     }
 
     @Test
+    fun `a long scan with nothing to list yet still sends heartbeats`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> delay(150); report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = engine(scanner, { on }, published)
+        e.run(untilMs = System.currentTimeMillis() + 120)
+        assertTrue("heartbeats went out while the scan had nothing to publish", published.count { it.first == null && !it.second.idle } >= 2)
+    }
+
+    @Test
     fun `a failed scan is reported in the heartbeat and the engine carries on`() = runBlocking {
         val scanner = FakeScanner { _, _, n -> if (n == 1) throw IllegalStateException("boom") else report(result("a")) }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
