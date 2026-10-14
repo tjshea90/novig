@@ -50,6 +50,17 @@ class FreshOddsAppTest {
     }
 
     @Test
+    fun `a bet the Bet sheet found not +EV leaves the CNO list at once and returns on a newer price read`() {
+        // Tj, 2026-10-14: the card said +1.15%, the Bet sheet said -0.6%, and the card stayed (no price had been read for it).
+        val s = SampleCno.state().let { it.copy(settings = it.settings.copy(scanner = ScannerMode.CNO)) }
+        val row = s.cnoShown(now).first().row
+        val flagged = s.copy(negativeSeen = mapOf(MiniWindow.cnoKey(row) to now - 1_000))
+        assertTrue(flagged.cnoShown(now).none { it.row.key == row.key })
+        // A minute later the flag is spent: the list judges it again by its own prices.
+        assertTrue(flagged.cnoShown(now + 2 * minute - 1_000).any { it.row.key == row.key } || flagged.cnoTooOld(now + 2 * minute))
+    }
+
+    @Test
     fun `a book page over five minutes old is neither shown nor agreed with`() {
         val fresh = SampleCno.withBooks()
         val jj = SampleCno.rows[1]
