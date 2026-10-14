@@ -26,7 +26,7 @@ object LabText {
         if (!s.running && s.sinceMs == null) return "Off."
         val head = if (s.running) "Running" + (s.sinceMs?.let { " for ${duration(now - it)}" } ?: "") else "Stopped"
         val games = if (s.games == 0) "waiting for a live game" else "${s.games} live game${if (s.games == 1) "" else "s"} (${s.withState} with a clock)"
-        return "$head: $games · ${s.cycles} reads · would-be bets so far: ${s.tail} tail, ${s.alt} alternate-line, ${s.covers} cover" + (s.problem?.let { " · PROBLEM: $it" } ?: "")
+        return "$head: $games · ${s.cycles} reads · would-be bets so far: ${s.tail} tail, ${s.alt} alternate-line, ${s.covers} cover" + (if (s.yielded > 0) " · waited for a scan or a bet ${s.yielded} times (it never takes Novig's reads from them)" else "") + (s.problem?.let { " · PROBLEM: $it" } ?: "")
     }
 
     /** The Diagnostics block's lines. */
