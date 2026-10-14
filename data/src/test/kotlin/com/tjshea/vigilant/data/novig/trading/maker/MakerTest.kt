@@ -36,7 +36,7 @@ class MakerTest {
     private var now = 1_800_000_000_000L
     private val start = now + 6 * 3_600_000L
     /** The defaults with a fixed $5 a bid (the sizing tests below cover Kelly). */
-    private val rules = MakerRules.of(ScanSettings()).copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0, deployPct = 0.0)
+    private val rules = MakerRules.of(ScanSettings()).copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = 5.0, maxStake = 10.0, deployPct = 0.0, perGameBidDollars = 0.0, perGameBids = 0)
 
     /** A far-off game's fair is fresh for 10 minutes (Freshness), seen 30 s ago: a bid rests 9.5 min at most, not the 30-minute expiry. */
     private val life = 10 * 60_000L - 30_000L
@@ -997,7 +997,7 @@ class MakerTest {
         val limited = rules.copy(perGameBids = 2, perGameBidDollars = 0.0, maxBids = 100, maxDollars = 10_000.0)
         val wanted = (1..5).map { postOf(onGame("g1", "x$it")) } + (1..3).map { postOf(onGame("g2", "y$it")) }
         val plan = MakerPlan.plan(wanted = wanted, resting = emptyList(), rules = limited, now = now, budget = 10_000.0)
-        assertEquals("two on each game", mapOf("ev" to 0, "g1" to 2, "g2" to 2).filterValues { it > 0 }, plan.places.groupingBy { it.line.market.eventId }.eachCount())
+        assertEquals("two on each game", mapOf("g1" to 2, "g2" to 2), plan.places.groupingBy { it.line.market.eventId }.eachCount())
         assertEquals(mapOf(MakerPlan.GAME_BIDS_REACHED.format(2) to 4), plan.waiting)
         // Bids already up count: g1 has two resting, so no new bid goes up on it.
         val up = MakerPlan.plan(wanted = listOf(postOf(onGame("g1", "z1"))), resting = listOf(resting("x1-over", 0.5).copy(game = com.tjshea.vigilant.data.tracker.GameRef("g1", "A @ B", start, "NFL")), resting("x2-over", 0.5).copy(game = com.tjshea.vigilant.data.tracker.GameRef("g1", "A @ B", start, "NFL"))),
@@ -1023,12 +1023,12 @@ class MakerTest {
 
     @Test
     fun `a wallet-filling bid on a far game rests up to half an hour from a fair a few minutes old, a near one keeps the ordinary life`() {
-        val seenAgo = 9 * 60_000L
+        val seenAgo = 9 * 60_000L + 30_000L
         val far = line("m1-over", fair = 0.60, offer = 0.64, m = market("m1", starts = start + 48 * 3_600_000L)).copy(fairAsOfMs = now - seenAgo)
         val ordinary = MakerQuote.decide(far, rules.copy(earlyHours = 0), now)
         assertTrue("the ordinary rule: 1 minute of life is left of the 10", ordinary is MakerDecision.Skip)
         val filling = MakerQuote.decide(far, rules.copy(earlyHours = 0, farFairMaxAgeMs = MakerDesk.DEPLOY_FAR_FAIR_MS), now) as MakerDecision.Post
-        assertEquals(now + 21 * 60_000L, filling.restUntilMs)
+        assertEquals(now + 20 * 60_000L + 30_000L, filling.restUntilMs)
         val near = line("m2-over", fair = 0.60, offer = 0.64, m = market("m2", starts = start + 2 * 3_600_000L)).copy(fairAsOfMs = now - seenAgo)
         assertTrue("a game under 12 h away keeps the ordinary limit", MakerQuote.decide(near, rules.copy(earlyHours = 0, farFairMaxAgeMs = MakerDesk.DEPLOY_FAR_FAIR_MS), now) is MakerDecision.Skip)
     }
@@ -1194,9 +1194,9 @@ class MakerTest {
         val running = MakerPlan.plan(listOf(post("m1-over", 0.500)), two, rules, now, partial = true)
         assertTrue(running.cancels.isEmpty())
         assertEquals(setOf("m1-over", "m2-over"), running.kept.map { it.outcomeId }.toSet())
-        // It judged m2 and wants no bid there: down, with that line's reason.
-        val judged = MakerPlan.plan(listOf(post("m1-over", 0.500)), two, rules, now, skips = mapOf("m2-over" to "The fair price is too old to bid on"), partial = true)
-        assertEquals(listOf("m2-over" to "The fair price is too old to bid on"), judged.cancels.map { it.first.outcomeId to it.second })
+        // It judged m2 and wants no bid there: down, with that line's reason (a fair merely too old this pass is not a reason: the bid's own expiry ends it, see the transient-skip test).
+        val judged = MakerPlan.plan(listOf(post("m1-over", 0.500)), two, rules, now, skips = mapOf("m2-over" to "A sharp book's own price says this bid isn't +EV"), partial = true)
+        assertEquals(listOf("m2-over" to "A sharp book's own price says this bid isn't +EV"), judged.cancels.map { it.first.outcomeId to it.second })
         // The finished scan has no line for m2 at all: down.
         val done = MakerPlan.plan(listOf(post("m1-over", 0.500)), two, rules, now)
         assertEquals(listOf("m2-over" to "No longer a bid to post"), done.cancels.map { it.first.outcomeId to it.second })
