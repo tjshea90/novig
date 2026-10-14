@@ -5113,4 +5113,4 @@ Tj: "Make these errors refresh and disappear automatically as soon as they no lo
 ## TWR: bids read a week of games (Tj, 2026-10-14: "There are games this weekend with a full NFL and college football slate ... it should automatically post bids on popular sports and props")
 Cause found: the feed's "Starts within 48h" chip also set how far the scan read (`scanWindowHours`), so the weekend slate was never priced.
 - [x] TWR1 (`ScanSettings.scanWindowHours`, `BID_REACH_DAYS`, schema 19, `MakerSetup.set`, `MakerTest`) With bids on (deploy on) the scan reads the whole Days-ahead window; picking a bid mode raises Days ahead and prop hours to a week; the chip only filters the view.
-- [ ] TWR2 ship v0.99.8 (`bash ship.sh`, trigger release.yml, `tools/record-release.sh`), then ask Tj to read Diagnostics › WALLET DEPLOYMENT to see the fill.
+- [ ] TWR2 v0.99.8 shipped, release.yml triggered: confirm get_release_by_tag v0.99.8, then record-release.sh v0.99.8 267, send Tj the link, ask him to read Diagnostics › WALLET DEPLOYMENT.
