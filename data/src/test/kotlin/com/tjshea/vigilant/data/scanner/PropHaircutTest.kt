@@ -36,11 +36,12 @@ class PropHaircutTest {
     }
 
     @Test
-    fun `the schema migration turns Profit-proven only on once and a later choice stays`() {
+    fun `the schema migration turns Profit-proven only and the prop haircut on once, and a later choice stays`() {
         val migrated = ScanSettings(schema = 17).migrate()
         assertTrue(migrated.gates.profitProven)
         val chosen = ScanSettings(schema = 18, gates = ScanSettings().gates.copy(profitProven = false)).migrate()
         assertTrue(!chosen.gates.profitProven)
-        assertTrue(ScanSettings().propHaircut)
+        assertTrue(migrated.propHaircut)
+        assertTrue(!ScanSettings(schema = 18).migrate().propHaircut)   // a choice made after the migration stays
     }
 }

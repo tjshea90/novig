@@ -876,7 +876,7 @@ data class ScanSettings(
         }
         // v0.99.4 (Tj, 2026-10-14: "Do what you think is most profitable because I'm losing money"): Profit-proven only turns on once, from the history files' profile; a later choice in Settings stays.
         if (s.schema < 18) {
-            s = s.copy(gates = s.gates.copy(profitProven = true), schema = 18)
+            s = s.copy(gates = s.gates.copy(profitProven = true), vigGuards = s.vigGuards.copy(propHaircut = true), schema = 18)
         }
         return s
     }
@@ -1437,8 +1437,8 @@ data class ScanGuards(
     val ignoreBadOdds: Boolean = true,
     /** [ThinEarlyHaircut] (Tj, 2026-10-13): NHL shots-on-goal fair prices built from few books on a game far off are cut a few points. On by default. */
     val thinEarlyHaircut: Boolean = true,
-    /** [PropHaircut] (Tj, 2026-10-14): a player-prop Over's fair is cut 7 points and an Under's 3 before anything reads it (the history: Overs won 39.7% against a 49.4% fair, t -4.2). On by default. */
-    val propHaircut: Boolean = true,
+    /** [PropHaircut] (Tj, 2026-10-14): a player-prop Over's fair is cut 7 points and an Under's 3 before anything reads it (the history: Overs won 39.7% against a 49.4% fair, t -4.2). Off in a bare ScanSettings() (a test's); the schema-18 migration turns it on for every real install, so it is on by default in the app and a later choice stays. */
+    val propHaircut: Boolean = false,
     val autoBetVigilant: Boolean = true,
     /** The auto-bet places only bets rated at least this many stars ([BetRating]; Tj, 2026-10-11); 0 = any. */
     val autoBetMinStars: Double = 0.0,
