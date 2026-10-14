@@ -736,6 +736,11 @@ class NovigPublicClient(
         /** How many of a market's newest trades the trap guard reads: an hour of a busy game line (the route takes up to 500 and pages past that). */
         const val TRADES_LIMIT = 200
 
+        /** Single-market lookups remembered: how many, for how long an answer is re-used, and a market Novig did not list. */
+        const val LOOKUP_KEEP = 300
+        const val LOOKUP_TTL_MS = 30_000L
+        const val LOOKUP_GONE_TTL_MS = 120_000L
+
         /** The key route is tried again this soon after Novig refused the network's address ([keyRetryAfter]). */
         const val NETWORK_RETRY_MS = 2 * 60_000L
 

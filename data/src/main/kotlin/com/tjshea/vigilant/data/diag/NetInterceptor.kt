@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * What an endpoint looks like with nothing in it that is a person's or a key's: "api.example.com" and "/v1/sports/{id}/odds", never a query. A path segment that
- * is a number of five digits or more, a UUID, or a long run of letters and digits (an id, a token, a key put in a path) is `{id}`; at most four segments are kept.
+ * is a number of five digits or more, a UUID, or a long run of letters and digits (an id, a token, a key put in a path) is `{id}`; at most six segments are kept (the endpoint's last word is what tells `/markets/{id}` from `/markets/{id}/book` and `/trades`: Tj's 2026-10-13 file merged them and hid who was refused).
  */
 object NetShape {
     private val NUMBER = Regex("^\\d{5,}$")
@@ -35,7 +35,7 @@ object NetShape {
         else -> s
     }
 
-    const val MAX_SEGMENTS = 4
+    const val MAX_SEGMENTS = 6
 }
 
 /**

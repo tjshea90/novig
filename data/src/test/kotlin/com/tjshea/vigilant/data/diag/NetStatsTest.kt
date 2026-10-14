@@ -41,7 +41,8 @@ class NetStatsTest {
         assertEquals("/a/{id}", shape("https://x.com/a/3f2504e0-4f89-11d3-9a0c-0305e82c3301"))
         assertEquals("/a/{id}", shape("https://x.com/a/sk-ABCDEFGHIJKLMNOPQRSTUVWXYZ123456")) // FAKE
         assertEquals("/a/{id}", shape("https://x.com/a/0123456789abcdef0123"))
-        assertEquals("/a/b/c/d/…", shape("https://x.com/a/b/c/d/e/f"))
+        assertEquals("/a/b/c/d/e/f/…", shape("https://x.com/a/b/c/d/e/f/g"))
+        assertEquals("/v3/public/catalog/markets/{id}/book", shape("https://api.novig.com/v3/public/catalog/markets/0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0/book"))
         assertEquals("/", shape("https://x.com/"))
         // A short word with a digit is kept (a version, a short name).
         assertEquals("/v3/sports", shape("https://x.com/v3/sports"))
