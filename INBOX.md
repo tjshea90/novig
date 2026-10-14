@@ -7307,3 +7307,8 @@ Post as many bids as possible. Fill up the wallet. Hundreds of bids. All sports 
 ```
 @"/root/.claude/uploads/a5e8042f-c90d-5023-a7e1-ea7d8da2eff3/39d58cc1-vigilant-diagnostics-v0.99.11-2026-10-14-1443.txt" It is better but not correct. It is putting up hundreds of bids but still not filling the wallet. Also every minute or less it takes hundreds of bids back down. They don't rest anywhere near long enough. And it is posting a lot of bids on the same games, even though there are many games available. I only want so many bids/money on each game. Make it diversify bids among many games and bid types
 ```
+
+## 2026-10-14T19:16:10Z
+```
+The scan is huge and takes a long time, can't it put up bids progressively as the scan is going? Right now it has very few bids and the scan is going
+```
