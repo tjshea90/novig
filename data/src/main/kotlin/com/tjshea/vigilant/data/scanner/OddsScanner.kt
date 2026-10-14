@@ -46,6 +46,12 @@ interface OddsScanner {
 
     suspend fun streamUpdate(settings: ScanSettings, sources: List<ReferenceSource>, marketIds: Collection<String>?): ScanResult? = null
 
+    /**
+     * The listed [rows] priced again from Novig's live top of book (the push feed, else a read of just those books), WITHOUT the scan's lock: a long scan holds the scanner for minutes and the list must not
+     * wait for it to drop a bet that is no longer +EV (Tj, 2026-10-14). Returns only the rows that have a newer book; empty when there is nothing newer.
+     */
+    suspend fun requoteListed(settings: ScanSettings, rows: List<Opportunity>): List<Opportunity> = emptyList()
+
     /** Re-price what's already fetched under new settings. No network. Null before the first scan. */
     suspend fun reprice(settings: ScanSettings): ScanResult?
 

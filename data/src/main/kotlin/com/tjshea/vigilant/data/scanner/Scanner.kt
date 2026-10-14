@@ -833,6 +833,29 @@ class Scanner(
         RecheckReport(Pricing.price(plan, books, settings, now, fairMemo), read, failed, error)
     }
 
+    override suspend fun requoteListed(requested: ScanSettings, rows: List<Opportunity>): List<Opportunity> {
+        if (rows.isEmpty()) return emptyList()
+        val settings = requested.effective(forBets = betsOnly)
+        val ids = rows.map { it.market.marketId }.distinct().take(MAX_RECHECK)
+        val now = clock()
+        // The push feed's best prices first (free); a market it does not hold is read once (a few books), never the whole scan's.
+        val fresh = HashMap(novig.pushedTop(ids))
+        val missing = ids.filter { it !in fresh }
+        if (missing.isNotEmpty()) {
+            try {
+                fresh.putAll(withContext(com.tjshea.vigilant.data.novig.NovigReadTag("open-bets")) { novig.books(missing) }.books)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Whatever was held stays; the next pass tries again.
+            }
+        }
+        return rows.mapNotNull { o ->
+            val b = fresh[o.market.marketId] ?: return@mapNotNull null
+            if (o.bookFetchedAtMs != null && b.fetchedAtMs < o.bookFetchedAtMs) null else Pricing.requote(o, b, settings, now)
+        }
+    }
+
     override fun streamReady(): Boolean = catalog != null
 
     @Volatile private var streamTimings: String? = null

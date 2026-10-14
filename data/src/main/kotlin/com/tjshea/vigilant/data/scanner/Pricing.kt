@@ -377,6 +377,31 @@ object Pricing {
         )
     }
 
+    /**
+     * [o] priced again against a newer Novig [book] with the fair it already carries (Tj, 2026-10-14: a listed bet at +125 was +113 and -3.7% EV on Novig while a long scan held the list). Pure: the same
+     * arithmetic as [price] for one outcome, no scan state. A market Novig has closed or put in play has nothing to bet pregame, so its quote goes.
+     */
+    fun requote(o: Opportunity, book: NovigBook, settings: ScanSettings, now: Long): Opportunity {
+        val fee = o.market.fee ?: return o
+        val closed = book.lifecycle?.let { it.closed || it.live == true } == true
+        val ladder = if (closed) emptyList() else book.takeLadder(o.market, o.outcome.outcomeId)
+        val p = o.fairProbability
+        val live = o.event.isLive
+        val quote = if (p != null && ladder.isNotEmpty()) EvMath.quote(p, ladder.first().price, fee, live) else null
+        val depth = if (p != null && ladder.isNotEmpty()) EvMath.positiveDepth(ladder, p, fee, live) else null
+        val stake = if (quote != null && quote.evPercent > 0) {
+            EvMath.suggestedStake(quote, settings.bankroll, settings.kellyMultiplier, depth?.dollarCost, (o.event.startsTs - now) / 3_600_000.0)
+        } else {
+            null
+        }
+        return o.copy(
+            quote = quote, ladder = ladder, depth = depth, suggestedStake = stake,
+            bestBid = book.bestBid(o.outcome.outcomeId)?.price,
+            bidLevels = book.bidsByOutcome[o.outcome.outcomeId].orEmpty(),
+            bookFetchedAtMs = book.fetchedAtMs,
+        )
+    }
+
     /** A feed's quote replaces an earlier feed's for the same book only when its time is newer by more than this (the feeds' clocks differ by seconds; below it the feed order stands). */
     const val FRESHER_BY_MS = 20_000L
 
