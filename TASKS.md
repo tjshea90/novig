@@ -5180,4 +5180,4 @@ Design and limits: research/cloud_scan_2026-10-14.md. Needs from Tj (Claude cann
 ## TCL7: the app uploads the API keys to GitHub for the engine (Tj, 2026-10-14)
 Tj: "Can you make it so the app itself uploads the API keys to GitHub for the engine to use them"
 - [x] TCL7a `SealedBox` (libsodium crypto_box_seal on BouncyCastle; `SealedBoxTest` pins the key derivation and secretbox to the NaCl test vectors and opens a seal independently), `CloudClient.secretsKey/putSecret/cancelRun` (`CloudKeysTest`: value never in clear, 403 says what permission is missing), `CloudLink.sendKeys` (button + automatic when keys change with the switch on, engine restarted to read them), `CloudKeys.BY_PROVIDER/PHONE_ONLY` (Pinnodds, BoltOdds never), Settings button. Token needs Secrets: read and write too.
-- [ ] TCL7b v0.100.1 shipped and recorded; Tj's first Send: read the Cloud scan note and `cloud-feed` status `sources` to see the feeds the engine now has.
+- [x] TCL7b v0.100.1 shipped and recorded (release.yml run); open:  Tj's first Send: read the Cloud scan note and `cloud-feed` status `sources` to see the feeds the engine now has.
