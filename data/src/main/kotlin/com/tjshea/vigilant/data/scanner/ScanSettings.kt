@@ -367,14 +367,6 @@ data class ScanSettings(
      * leagues it carries. Off by default.
      */
     val sgoPro: Boolean = false,
-    /**
-     * Cloud scan (Tj, 2026-10-14: "use the phone only to set the settings and retrieve the scanned results. GitHub will provide all the power"): the scan runs on GitHub's computers
-     * ([com.tjshea.vigilant.data.cloud.CloudEngine]) under these settings, and the phone's "scan" adopts the list it publishes ([com.tjshea.vigilant.data.cloud.CloudScanner]); no API is called from the phone.
-     * Off (the default): the app is what it was.
-     */
-    val cloudScan: Boolean = false,
-    /** Save every bet, bid and the scan study's days to GitHub's `phone-data` branch automatically (Tj, 2026-10-14), whenever a GitHub token is saved in Settings › Cloud scan. */
-    val cloudSave: Boolean = true,
     /** SGO Pro: also price the fair line with the books Vigilant's list lacks (Circa, SuperBook, bet365: [SgoBooks.EXTRA]). */
     val sgoExtraBooks: Boolean = true,
     /** SGO Pro: ask for every book's alternate lines with the game lines (heavier replies; dropped for a league whose query times out). */
@@ -920,6 +912,16 @@ data class ScanSettings(
     /** Live games only mode is on: no scan reads the REST board and the list holds the real-time lane's bets alone. */
     val liveOnly: Boolean get() = gates.liveOnly.on
 
+    /**
+     * Cloud scan (Tj, 2026-10-14: "use the phone only to set the settings and retrieve the scanned results. GitHub will provide all the power"): the scan runs on GitHub's computers
+     * ([com.tjshea.vigilant.data.cloud.CloudEngine]) under these settings, and the phone's "scan" adopts the list it publishes ([com.tjshea.vigilant.data.cloud.CloudScanner]); no API is called from the phone.
+     * Off (the default): the app is what it was. Kept in [gates] (ScanSettings is near the JVM's 255-argument limit, ScanSettingsSizeTest).
+     */
+    val cloudScan: Boolean get() = gates.cloudScan
+
+    /** Save every bet, bid and the scan study's days to GitHub's `phone-data` branch automatically (Tj, 2026-10-14), whenever a GitHub token is saved in Settings › Cloud scan. */
+    val cloudSave: Boolean get() = gates.cloudSave
+
     /** The scanner choice as it runs. */
     val scannerNow: ScannerMode get() = scanner
 
@@ -1330,6 +1332,9 @@ data class ApiGates(
     val propLineAllBooks: Boolean = false,
     /** Live games only mode (Tj, 2026-10-11): see [LiveOnlyMode]. */
     val liveOnly: LiveOnlyMode = LiveOnlyMode(),
+    /** Cloud scan on / history saving to GitHub on (see [ScanSettings.cloudScan]). */
+    val cloudScan: Boolean = false,
+    val cloudSave: Boolean = true,
     /** The one main switch for every live feature and socket (Tj, 2026-10-14): see [LiveMasterMode]. */
     val liveMaster: LiveMasterMode = LiveMasterMode(),
     /**
