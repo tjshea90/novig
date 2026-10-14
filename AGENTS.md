@@ -4,13 +4,17 @@
 ## Session Learnings (auto-updated by handoff)
 
 ### Implicit Rules
-- Repo CLAUDE.md rules: run tools/install-hooks.sh first; ckpt.sh after each step; ship.sh then release.yml then record-release.sh; no Workflow/subagent fan-out; Vigilant Novig only, mgm frozen
-- Never commit keys; Pinnodds/BoltOdds sockets never opened by Claude sessions
+- Branches: cloud-config (settings.json), cloud-feed (feed.json.gz+status.json), phone-data (phone/bets, phone/study)
+- Repo secrets: SGO_API_KEY, ODDSPAPI_API_KEY, ODDSPAPI_FREE_API_KEY, UNABATED_API_KEY, PINNWIRE_API_KEY, PINNAPI_API_KEY, PROPLINE_API_KEY, ODDS_API_KEY, PARLAY_API_KEY
+- Repo CLAUDE.md: ckpt after each step, ship.sh then release.yml then record-release.sh, no subagent fan-out, never commit keys
 
 ### Key Decisions
-- Decision: refusal hold 2,4,8..min cap 1h, reset on any accepted call — Reason: old rule rested refused key until next UTC day; transient 1008 locked BoltOdds all day
-- Decision: every API Test button lifts refusal via ApiProbe.policyOf — Reason: only BoltOdds Test did
-- Decision: down() of SGO/OddsPapi/Unabated/BoltOdds REST lasts 60s after last failure (RETRY_AFTER_MS) — Reason: down source dropped from source list never called again, stayed down until app restart
-- Decision: quota-depleted holds unchanged — Reason: legit until provider reset
+- Decision: hand-written JSON codec CloudCodec, refEvent dropped — Reason: engine module lacks serialization plugin, refEvent heavy
+- Decision: phone scan = CloudScanner behind SwitchingScanner picked by settings.cloudScan — Reason: Feed, sheets, auto-bet work unchanged
+- Decision: cloudScan/cloudSave in ApiGates — Reason: ScanSettings at 255 JVM arg-slot limit (ScanSettingsSizeTest)
+- Decision: cloud-feed one force-pushed commit, publish gap 10 s, poll 5 s with ETag — Reason: GitHub rate limits, branch never grows
+- Decision: phone-data never rewritten via BetArchive channel github — Reason: permanent history for Claude
+- Decision: Pinnodds/BoltOdds/Kalshi keys stay on phone; bid desk + live lane keep own scans — Reason: one-connection sockets, trading keys, cloud list is +EV rows only
+- Decision: engine idles when cloud-config on=false, job ends after 10 min; handover at ~5h40m via self-dispatch — Reason: 6 h job cap, save minutes
 
 <!-- handoff:learnings:end -->
