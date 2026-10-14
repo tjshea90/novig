@@ -83,8 +83,8 @@ class LiveLightScanTest {
 
     @Test
     fun `hockey and baseball use the goals and runs still to come, not a points spread`() {
-        // NHL: up 4 goals with a fifth of the game left at fifty-fifty is found; up one goal is not.
-        val nhl = { a: Int, h: Int -> GameState(TailSport.HOCKEY, h, a, 0.20) }
+        // NHL: up 4 goals with five minutes left at fifty-fifty is found; up one goal is not.
+        val nhl = { a: Int, h: Int -> GameState(TailSport.HOCKEY, h, a, 0.08) }
         val lead = LiveLightScan.scan(listOf(moneyline(490, 490)), "NHL", nhl(5, 1), { 4 })
         assertEquals("m1-a", lead.single().outcomeId)
         assertTrue(LiveLightScan.scan(listOf(moneyline(490, 490)), "NHL", nhl(2, 1), { 1 }).isEmpty())

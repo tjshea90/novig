@@ -51,7 +51,8 @@ object LiveLightScan {
     private fun pMargin(sport: TailSport, league: String, threshold: Double, margin: Int, left: Double, rules: LiveLightRules, yes: Boolean): Double? {
         val prior = priorTotal(league) ?: return null
         val sd = (if (sport.normal) sport.fullMarginSd * sqrt(left) else sqrt((prior * left * rules.highShare).coerceAtLeast(0.25))) * rules.sdMult
-        val mean = margin + if (yes) -rules.shiftPoints else rules.shiftPoints
+        val shift = rules.shiftPoints * (if (sport.normal) 1.0 else 0.5)   // a goal or a run is worth far more than a point
+        val mean = margin + if (yes) -shift else shift
         // A moneyline's YES wins with a lead of 1 or more, its NO with a deficit of 1 or more: half a point either side, the tie's credit left out.
         val t = if (threshold == 0.0) (if (yes) 0.5 else -0.5) else threshold
         val above = 1.0 - TailModel.phi((t - mean) / sd.coerceAtLeast(0.5))
@@ -67,7 +68,8 @@ object LiveLightScan {
         val lowRem = remaining * rules.lowShare
         val highRem = maxOf(remaining * rules.highShare, (pace ?: 0.0) * 1.2)
         val centre = points + if (over) lowRem else highRem
-        val shift = if (over) -rules.shiftPoints else rules.shiftPoints
+        val moved = rules.shiftPoints * (if (sport.normal) 1.0 else 0.5)
+        val shift = if (over) -moved else moved
         val pOver = TailModel.pTotalOver(sport, strike, points, left, centre, rules.sdMult, shift)
         return if (over) pOver else 1.0 - pOver
     }
