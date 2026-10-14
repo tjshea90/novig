@@ -1,24 +1,22 @@
-# CHECKPOINT 3286 — read me first, then TASKS.md
+# CHECKPOINT 3287 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T22:47:49Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-e8041e9d-7grwre` · **builds on:** `bed2bce04` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T22:50:48Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-e8041e9d-7grwre` · **builds on:** `948771d04` (this checkpoint is the commit after it)
 
 ## Just done
-TCL7: app sends API keys to GitHub secrets (SealedBox, sendKeys, button), docs
+pre-release: v0.100.1: the app sends your API keys to GitHub secrets for the cloud engine (sealed on the phone, write-only; Pinnodds, BoltOdds and Kalshi never sent) (versionCode 277, v0.100.1)
 
 ## Do this next
-ship.sh v0.100.1, release.yml, record-release
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.100.1), then run: bash tools/record-release.sh v0.100.1 277 "v0.100.1: the app sends your API keys to GitHub secrets for the cloud engine (sealed on the phone, write-only; Pinnodds, BoltOdds and Kalshi never sent)"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M CLAUDE.md
-     M TASKS.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  948771d04 ckpt 3286: TCL7: app sends API keys to GitHub secrets (SealedBox, sendKeys, button), d
   05f8377e1 ckpt 3285: v0.100.0 released and recorded (TCL5 done)
   9f974b523 ckpt 3284: research doc: built + first live run; Diagnostics CLOUD section; release.ym
   aa9eb8fc2 ckpt 3283: pre-release: v0.100.0: Cloud scan - the scans run on GitHub (engine, cloud-
@@ -28,8 +26,4 @@ ship.sh v0.100.1, release.yml, record-release
   650b7053e ckpt 3279: TCL2: CloudEngine (+tests), :cloud module (CloudMain publisher), cloud-scan
   0e840422d ckpt 3278: TCL1: CloudCodec (+test pass), CloudSources, CloudFiles, CloudClient writte
   26b2e2a3d ckpt 3277: TCL tasks written after Tj agreed (cloud engine + permanent GitHub history)
-  fe91cc153 ckpt 3276: wrote cloud-scan design (research/cloud_scan_2026-10-14.md) and TASKS.md TC
 ```
-
-(4 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
