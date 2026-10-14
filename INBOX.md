@@ -7359,3 +7359,8 @@ Is this a good api? I'm considering the $50 monthly plan. Consider if it would w
 ```
 Can it tell me positive EV bets on novig without me scanning locally with vigilant
 ```
+
+## 2026-10-14T21:58:08Z
+```
+Put vigilant scans on GitHub runners. Outsource as much Internet bandwidth and processing power as possible to GitHub without sacrificing quality or freshness of odds. Can this run on GitHub and simply steam me the bets list? I just control the settings from the phone?
+```
