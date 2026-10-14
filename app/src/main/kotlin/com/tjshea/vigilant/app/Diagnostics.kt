@@ -70,6 +70,9 @@ object Diagnostics {
         val unabatedReport: List<String>? = null,
         /** BoltOdds Pro (BOLTODDS_API.md): the switch, the keys, each socket's state and counters, the boards, the names not priced. Null when no key is saved and the switch is off. */
         val boltReport: List<String>? = null,
+        /** Which sockets are on and what they are doing, and the wallet deployment's last pass (Tj, 2026-10-14: a diagnostics file that says why a scan was slow or the wallet idle without guessing). */
+        val socketReport: List<String>? = null,
+        val walletReport: List<String>? = null,
         /** Novig's live feed (NOVIG_API.md §26): the channel each market is on, the room, the connection's drops and 429s, the bbo fallback, the check against the book. Null with no key connected. */
         val novigFeedReport: List<String>? = null,
         /** Settings › Profit-proven only: on or off, and what the profile blocks and favours. */
@@ -247,6 +250,8 @@ object Diagnostics {
         x.feedRace?.let { lines -> o.appendLine(); o.appendLine("== LIVE FEED TEST (which free feed shows a score or odds move before Novig's price; no orders; RESEARCH.md §106) =="); lines.forEach { o.appendLine(it) } }
         x.sgoReport?.let { lines -> o.appendLine(); o.appendLine("== SPORTSGAMEODDS PRO (SPORTSGAMEODDS_API.md) =="); lines.forEach { o.appendLine(it) } }
         x.opReport?.let { lines -> o.appendLine(); o.appendLine("== ODDSPAPI (ODDSPAPI_API.md) =="); lines.forEach { o.appendLine(it) } }
+        x.socketReport?.let { lines -> o.appendLine(); o.appendLine("== SOCKETS (Settings › APIs › Sockets: on = kept open for real-time prices; off with the API on = read by request) =="); lines.forEach { o.appendLine(it) } }
+        x.walletReport?.let { lines -> o.appendLine(); o.appendLine("== WALLET DEPLOYMENT (Bids › Keep the wallet working) =="); lines.forEach { o.appendLine(it) } }
         x.boltReport?.let { lines -> o.appendLine(); o.appendLine("== BOLTODDS PRO (BOLTODDS_API.md) =="); lines.forEach { o.appendLine(it) } }
         x.unabatedReport?.let { lines -> o.appendLine(); o.appendLine("== UNABATED FREE (UNABATED_API.md) =="); lines.forEach { o.appendLine(it) } }
         x.op4Report?.let { lines -> o.appendLine(); o.appendLine("== ODDSPAPI FREE v4 (ODDSPAPI_API.md addendum) =="); lines.forEach { o.appendLine(it) } }

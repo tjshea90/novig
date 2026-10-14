@@ -2690,6 +2690,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }.getOrNull(),
             profitReport = runCatching { val on = state.value.settings.gates.profitProven; (if (on) "ON, " else "OFF (nothing changes); the profile ") + (com.tjshea.vigilant.data.scanner.ProfitProfile.shipped?.summary() ?: "is not built in") }.getOrNull(),
             novigFeedReport = runCatching { (c.novig.stream as? com.tjshea.vigilant.data.novig.stream.PushedBooks)?.feedReport().orEmpty() + c.orderSocket?.report().orEmpty() }.getOrNull(),
+            socketReport = runCatching {
+                val st = _state.value.settings
+                val g = st.gates
+                buildList {
+                    fun line(name: String, apiOn: Boolean, socketOn: Boolean, state: String, off: String) =
+                        add("$name: API ${if (apiOn) "ON" else "off"} · socket ${if (socketOn) "ON" else "OFF"} · $state" + if (apiOn && !socketOn) " · $off" else "")
+                    line("Novig market feed", true, g.novigSocket, (c.novig.stream?.let { "feed built" } ?: "no feed (off, or no read key)"), "every scan reads Novig's books by request (a scan of ~800 prices takes about 2 minutes at the key's 16 a second)")
+                    line("BoltOdds", c.boltActive(st), g.boltSocket, "lines ${if (c.boltFeed.lines.live) "live" else "not live"} · props ${if (c.boltFeed.props.live) "live" else "not live"}", "REST snapshot at most every 12 s; the streaming engine has nothing to stream")
+                    line("Kalshi", st.useKalshi, g.kalshiSocket, "${if (c.kalshiStream.live) "live" else "not live"} · ${c.kalshiStream.subscribedCount} of ${c.kalshiStream.wantedCount} markets subscribed", "signed or public REST read every scan")
+                    line("Pinnodds", g.usePinnodds, g.pinnSocket, if (c.pinnRunner.running) "live engine running" else "live engine not running", "the live lane waits (needs the push)")
+                    add("Streaming engine: ${if (g.streamScan) "ON" else "off"}${if (g.streamScan && !g.boltSocket) " but BoltOdds' socket is OFF: it has nothing to stream" else ""}")
+                }
+            }.getOrNull(),
+            walletReport = runCatching {
+                val st = _state.value.settings
+                val vg = st.vigGuards
+                val d = c.makerDesk()?.lastDeploy
+                buildList {
+                    add("switch ${if (vg.bidDeploy) "ON" else "off"} · target ${vg.bidDeployPct}% of the wallet · stake ceiling ${vg.bidDeployKelly}% of full Kelly · bids ${if (st.maker) "on" else "off"}")
+                    if (d == null) add("no pass has worked it out yet (bids off, no wallet reading, or the switch is off)") else {
+                        fun m(v: Double) = String.format(java.util.Locale.US, "$%.2f", v)
+                        add("last pass: wallet ${m(d.walletDollars)} · target ${m(d.targetDollars)} · resting ${m(d.restingDollars)} (${(100 * d.restingDollars / d.walletDollars.coerceAtLeast(0.01)).toInt()}% of the wallet) · stake scale x${String.format(java.util.Locale.US, "%.1f", d.scale)} (cap ${(d.kellyCeiling * 100).toInt()}% Kelly)")
+                        add("wanted after this pass: ${m(d.wantedDollars)} · riskier wallet-filling bids wanted: ${d.overflowWanted} (${m(d.overflowDollars)})")
+                        val short = d.targetDollars - d.wantedDollars - d.overflowDollars
+                        add(if (short > 1.0) "STILL SHORT of the target by ${m(short)}: there are not enough bids that pass every rule (the games on Novig, the sharp-book and EV rules): see 'bids wanted but not posted' and the skip reasons" else "target reached")
+                    }
+                }
+            }.getOrNull(),
             boltReport = runCatching {
                 val keys = keysFor(ApiProvider.BOLTODDS).size
                 if (keys == 0 && !_state.value.settings.gates.useBoltOdds) null else buildList<String> {

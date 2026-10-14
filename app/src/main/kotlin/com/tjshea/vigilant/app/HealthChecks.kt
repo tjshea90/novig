@@ -46,6 +46,8 @@ object HealthChecks {
         bids(s, x, now)
         sharp(s, x)
         memory(x)
+        sockets(s)
+        wallet(s, x)
     }.sortedBy { it.level.ordinal }
 
     /**
@@ -557,6 +559,29 @@ object HealthChecks {
                 add(Check(Level.WARN, "Results vs edges", "results are ${String.format(Locale.US, "%.1f", kotlin.math.abs(z))} standard deviations ${if (z < 0) "below" else "above"} what the edges promised", "${stats.settledWithEv} settled bets: expected ${String.format(Locale.US, "%+.2f", stats.expectedProfit)}, actual ${String.format(Locale.US, "%+.2f", stats.profitWithEv)}", if (z < 0) "fair odds too optimistic, or grading (check both)" else null))
             }
         }
+    }
+
+    /** Sockets (Tj, 2026-10-14): an API that is on with its socket OFF is read by request: slower and not real time, and its streaming has nothing to stream. One finding naming each. */
+    private fun MutableList<Check>.sockets(s: UiState) {
+        val set = s.settings
+        val off = buildList {
+            if (!set.gates.novigSocket) add("Novig's market feed (every scan reads its books by request: ~800 prices take about 2 minutes)")
+            ApiEntry.entries.filter { it.hasSocket && it.isOn(set) && !it.socketOn(set) }.forEach { add(it.title) }
+        }
+        if (off.isNotEmpty()) add(Check(Level.WARN, "Sockets", "${off.size} socket${if (off.size == 1) " is" else "s are"} switched off while the API is on", off.joinToString("; "), "Settings › APIs › Sockets"))
+    }
+
+    /** Keeping the wallet working (Tj, 2026-10-14): on, with bids on and a wallet reading, the bids up should be near the target; far under it for a whole pass says what limits it. */
+    private fun MutableList<Check>.wallet(s: UiState, x: Diagnostics.Extras) {
+        val set = s.settings
+        if (!set.vigGuards.bidDeploy || !set.maker) return
+        val b = s.betting.balance ?: return
+        if (b < 5.0) return
+        val resting = x.makerBids.filter { it.active }.sumOf { it.restingDollars }
+        val target = set.vigGuards.bidDeployPct / 100.0 * b
+        if (resting < 0.5 * target) {
+            add(Check(Level.WARN, "Wallet deployment", "only ${String.format(Locale.US, "$%.2f", resting)} of ${String.format(Locale.US, "$%.2f", b)} is working in bids (target ${String.format(Locale.US, "$%.2f", target)})", "see WALLET DEPLOYMENT: what is wanted and what limits it (few games on Novig, the EV and sharp rules)", "MakerDesk.deployScale / deployFor"))
+        } else add(Check(Level.OK, "Wallet deployment", "${String.format(Locale.US, "$%.2f", resting)} of ${String.format(Locale.US, "$%.2f", b)} is working in bids (target ${String.format(Locale.US, "$%.2f", target)})"))
     }
 
     private fun MutableList<Check>.betting(s: UiState) {
