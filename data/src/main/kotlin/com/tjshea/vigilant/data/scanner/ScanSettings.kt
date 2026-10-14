@@ -887,6 +887,10 @@ data class ScanSettings(
         if (s.schema < 20) {
             s = if (s.maker || s.makerRecommend) s.copy(daysAhead = maxOf(s.daysAhead, BID_REACH_DAYS), bookPropHours = maxOf(s.bookPropHours, BID_REACH_DAYS * 24), schema = 20) else s.copy(schema = 20)
         }
+        // v0.99.14 (Tj, 2026-10-14: "The key is volume"): Volume mode on for every install; switching it off on the Bids tab stays.
+        if (s.schema < 21) {
+            s = s.copy(vigGuards = s.vigGuards.copy(bidVolume = true), schema = 21)
+        }
         return s
     }
 
@@ -1525,9 +1529,9 @@ data class ScanGuards(
     val bidFarLane: Boolean = true,
     /**
      * Volume mode for the bids (Tj, 2026-10-14: "The key is volume ... hundreds or thousands of bids up ... 1.5% positive EV on the safest bid types and 2.5% on riskier ones ... most likely to be filled put up first"):
-     * every bid at the most its EV floor allows, ordered by how fast that kind of bid has filled, up to 3,000 at once, stakes not scaled up (count, not size). Replaces the margins and the wallet-filling passes while on.
+     * every bid at the most its EV floor allows, ordered by how fast that kind of bid has filled, up to 3,000 at once, stakes not scaled up (count, not size). Replaces the margins and the wallet-filling passes while on. Off in a bare ScanSettings() (a test's); the schema-21 migration turns it on for every real install, so a later choice stays.
      */
-    val bidVolume: Boolean = true,
+    val bidVolume: Boolean = false,
     /**
      * Set by the background scan only ([FarLane]): this pass reads just the next [FarLane.NEAR_HOURS] hours, the quick one that runs between the full-reach scans (Tj, 2026-10-14: "The scan takes way too long":
      * ten days is ~7,700 Novig prices and 8 minutes, by when the fair odds read at its start are too old to bid on). Never saved; a scan Tj starts is always the full reach.
