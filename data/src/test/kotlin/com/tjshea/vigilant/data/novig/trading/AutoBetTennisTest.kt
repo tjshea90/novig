@@ -61,7 +61,7 @@ class AutoBetTennisTest {
         val on = off.withTennis(true)
         assertTrue(on.tennisOn); assertTrue(on.autoBetTennis); assertTrue("NFL" in on.leagues)
         val migrated = ScanSettings(leagues = setOf("NFL"), autoBetTennis = false, schema = 14).migrate()
-        assertTrue(migrated.tennisOn); assertTrue(migrated.autoBetTennis)
+        assertTrue(migrated.tennisOn); assertFalse("schema 18 switched the tennis auto-bet off (-28% on 97 bets)", migrated.autoBetTennis)
         // already migrated: a deliberate off stays off
         assertFalse(ScanSettings(leagues = setOf("NFL"), autoBetTennis = false, schema = 15).migrate().tennisOn)
     }
