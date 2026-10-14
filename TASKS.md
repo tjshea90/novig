@@ -5081,3 +5081,9 @@ Causes found: `readCatalog` re-downloads and parses EVERY live market of 7 leagu
 - [x] TLY1 (markets cache `MARKETS_TTL_MS`, sticky window, `upd` throttle, `lightUi` flow; `LiveLightRunnerTest`) Lag: markets cached 90 s (re-read at once only when a NEW live game appears), sticky strike window (no re-pin churn), status published at most twice a second, game lines only when changed, a Bids-tab flow that runs only while that tab is showing.
 - [x] TLY2 (LiveLightRules, LiveLightCurveRules, LiveLightBidRules, TailTradeLimits.MIN_FAIR_LIGHT) Loosen: model fair 93->90%, sd x1.4->1.3, centre shift 2->1.5 pts, curve fair 60->55% / edge 8->6%, bids 10->7% under the fair, bid floor fair 90->85%, price window to 95c, keep EV 4->3%, 6 bids / 3 a game.
 - [x] TLY3 (shipped v0.99.3) Tests, ship.
+
+## TPH: player-prop haircut + Profit-proven on (Tj, 2026-10-14: "Do what you think is most profitable because I'm losing money")
+Evidence (research/bet_history_2026-10-14.md + my recomputation over 1,228 settled taker bets): player-prop OVERS taken as bets won 39.7% against a stated fair of 49.4% (n 481, z -4.2, ROI -15.7%); prop Unders -3.0 pts (n 317, z -1.1); non-prop bets and even-money bets match their stated EV; the bigger the stated EV the worse (EV >= 3.5%: -10.6 to -15 pts). The old guard `autoBetOverPropExtraEv` (3 points) is switched off whenever a minimum star rating decides (Tj's 4-star rule), so 481 prop overs got through.
+- [ ] TPH1 `PropHaircut`: the fair of a player-prop Over is cut 7 points and of an Under 3, in the Vigilant scan (`Pricing`) and in CNO's rows (`CnoChecks.screen`), so the edge, stake, STARS (and so the 4-star rule), auto-bet, bids and bet sheet all see it; switch `vigGuards.propHaircut` default on; Settings switch.
+- [ ] TPH2 One-time settings migration: Profit-proven only turns on (schema 18); he can turn it off.
+- [ ] TPH3 Tests, ship.

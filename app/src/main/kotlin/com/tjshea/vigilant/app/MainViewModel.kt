@@ -356,7 +356,7 @@ data class UiState(
      * nothing was read for this link yet.
      */
     fun cnoPicks(now: Long): CnoScreened? =
-        cno.snapshot?.takeIf { settings.cnoOn && it.url == cnoUrl && !cnoTooOld(now) }?.let { CnoChecks.screen(it, settings.cnoFilters, now) }
+        cno.snapshot?.takeIf { settings.cnoOn && it.url == cnoUrl && !cnoTooOld(now) }?.let { CnoChecks.screen(it, settings.cnoFilters, now, settings.propHaircut) }
 
     /**
      * CNO's own odds (its EVs come from other books' prices) are over [Freshness.MAX_QUOTE_AGE_MS]

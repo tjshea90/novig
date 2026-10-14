@@ -58,7 +58,7 @@ object CnoChecks {
         EV("below your minimum EV"),
     }
 
-    fun screen(snapshot: CnoSnapshot, filters: CnoFilters, now: Long): CnoScreened {
+    fun screen(snapshot: CnoSnapshot, filters: CnoFilters, now: Long, propHaircut: Boolean = true): CnoScreened {
         val hidden = LinkedHashMap<Reason, Int>()
         val words = Words.of(filters.scope)
         val picks = snapshot.rows.mapNotNull { row ->
@@ -68,7 +68,8 @@ object CnoChecks {
                 null
             } else {
                 val live = row.startsAtMs != null && row.startsAtMs <= now
-                CnoPick(row, netEv(row, live), live)
+                val adjusted = if (propHaircut) haircut(row) else row
+                CnoPick(adjusted, netEv(adjusted, live), live)
             }
         }
         // Net EV can drop a live row under the floor.
@@ -76,6 +77,18 @@ object CnoChecks {
         if (kept.size < picks.size) hidden[Reason.EV] = (hidden[Reason.EV] ?: 0) + picks.size - kept.size
         val sorted = kept.sortedByDescending { it.ev }
         return CnoScreened(capProps(sorted, filters.scope.propsPerGame, hidden), hidden)
+    }
+
+    /**
+     * [row] with its fair chance cut by [com.tjshea.vigilant.data.scanner.PropHaircut] (a player-prop Over 7 points, an Under 3) and its EV worked out again at the same price, so the list, the stars, the auto-bet and the
+     * bet sheet all read the corrected edge. Any other row is returned as it is.
+     */
+    fun haircut(row: CnoRow): CnoRow {
+        val points = com.tjshea.vigilant.data.scanner.PropHaircut.points(com.tjshea.vigilant.data.scanner.BetKind.of(row.market, row.bet), row.bet)
+        if (points <= 0.0) return row
+        val fair = fairProbability(row) ?: return row
+        val cut = (fair - points).coerceAtLeast(0.0)
+        return row.copy(fairProbability = cut, ev = cut * Odds.americanToDecimal(row.odds) - 1.0)
     }
 
     /** At most [cap] player props from one game, the best edge first ([sorted] is best first); the rest are counted under [Reason.PROPS]. 0 = no cap. */

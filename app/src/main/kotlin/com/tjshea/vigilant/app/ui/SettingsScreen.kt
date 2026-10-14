@@ -972,6 +972,11 @@ private fun ColumnScope.FairOddsTab(state: UiState, onUpdate: SettingsUpdate, on
         "NHL shots-on-goal fair prices built from fewer than 5 books, on a game more than 12 hours away, ran about 3 points above Pinnacle's closing price: each side's fair chance is cut 2.5 points before the edge, stake, rating, auto-bet and bids use it.",
         s.thinEarlyHaircut, tag = "thinEarlyHaircutSwitch",
     ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(thinEarlyHaircut = v)) } }
+    SwitchRow(
+        "Cut player-prop fair prices (Overs 7 points, Unders 3)",
+        "Your history (1,228 settled bets): player-prop Overs won 39.7% against a fair chance of 49.4% (t -4.2), Unders about 3 points under theirs, every other kind of bet matched. Each prop side's fair chance is cut before the edge, stake, star rating, auto-bet, bids and Bet sheet use it, so most prop Overs stop looking +EV. Turn it off to see the unadjusted edges.",
+        s.propHaircut, tag = "propHaircutSwitch",
+    ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(propHaircut = v)) } }
 
     SectionTitle("Devig method (advanced)")
     Hint("How the sportsbooks' profit is taken out of a pair of odds. The methods differ most on long shots. Worst case (the default) takes the lowest fair chance of the other four for each side, so an edge that shows survives them all: the safest. Closing lines found after a game use the same method, so CLV compares like with like.")
