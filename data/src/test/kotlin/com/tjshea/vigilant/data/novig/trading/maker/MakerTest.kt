@@ -908,7 +908,7 @@ class MakerTest {
     @Test
     fun `with the wallet far under its target a cycle stakes more per bid, and with it at the target it stakes the usual`() = runBlocking {
         val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0)
-        fun contractsFor(r: MakerRules, wallet: Double): Long {
+        suspend fun contractsFor(r: MakerRules, wallet: Double): Long {
             val d = desk(FakeNovig(), tracker())
             val rep = d.cycle(listOf(line("m1-over", fair = 0.52)), r, stop = null, maxPerDay = 500.0, wallet = wallet)
             return (rep.decisions.single() as MakerDecision.Post).contracts
@@ -932,7 +932,7 @@ class MakerTest {
         val post = r2.decisions.filterIsInstance<MakerDecision.Post>().single()
         assertTrue("a riskier, wallet-filling bid", post.overflow)
         assertTrue("its edge is at least the usual margin plus 4 points (fair 0.60: price at most ${0.60 / 1.06})", post.price <= 0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN) + 1e-9)
-        assertNotNull(r2.deploy)
+        assertTrue(r2.deploy != null)
         val d3 = desk(FakeNovig(), tracker())
         assertTrue("switch off: nothing extra", d3.cycle(listOf(withSharp), kelly.copy(earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
     }
