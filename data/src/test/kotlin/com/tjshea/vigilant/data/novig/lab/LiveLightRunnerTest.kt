@@ -28,8 +28,9 @@ class LiveLightRunnerTest {
     )
 
     private class Src(val event: NovigEvent, val markets: List<NovigMarket>) : NovigSource {
+        var marketCalls = 0
         override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?) = listOf(event)
-        override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?) = markets
+        override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?): List<NovigMarket> { marketCalls++; return markets }
         override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?) = BookBatch(emptyMap(), 0, marketIds.size, 0)
         override suspend fun market(marketId: String): NovigMarket? = markets.firstOrNull { it.marketId == marketId }
     }
@@ -235,5 +236,23 @@ class LiveLightRunnerTest {
         val good = runner(View(mapOf("m1" to book(bostonBid = 200, miamiBid = 200))), ArrayList(), scoreboard(105, 80))
         good.look()
         assertTrue(good.status.value.gameLines.getValue("ev").contains("meets the model's rules"))
+    }
+
+    @Test
+    fun `the big market list is read once in ninety seconds, not at every catalog pass, and a status flood is published sparingly`() = runBlocking {
+        var t = now
+        val src = Src(event, listOf(market))
+        val r = LiveLightRunner(
+            scope = TestScope(), source = src, newView = { _: BookListener -> View(emptyMap()) }, fetch = { null }, onOffer = {}, leagues = { setOf("NBA") }, clock = { t },
+        ).also { it.bind() }
+        r.readCatalog(); r.readCatalog(); r.readCatalog()
+        assertEquals(1, src.marketCalls)
+        t += LiveLightRunner.MARKETS_TTL_MS + 1
+        r.readCatalog()
+        assertEquals(2, src.marketCalls)
+        // Hundreds of changes inside half a second reach whoever reads the status as one.
+        val seen = HashSet<Any>()
+        repeat(500) { r.scanGame("nope"); seen += r.status.value }
+        assertTrue("published ${seen.size} different statuses", seen.size <= 3)
     }
 }
