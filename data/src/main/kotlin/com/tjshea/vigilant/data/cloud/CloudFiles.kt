@@ -72,7 +72,10 @@ data class CloudStatus(
     }
 }
 
-/** One finished scan's list as the engine publishes it (`feed.json.gz`). */
+/**
+ * One list as the engine publishes it (`feed.json.gz`). [computedAtMs] is the moment it was PUBLISHED, so every list (each partial one of a long scan, then the final one) has a time of its own
+ * and the phone, which fetches a list only when this changes, never misses one.
+ */
 class CloudFeed(val computedAtMs: Long, val configRev: Long, val stats: ScanStats, val rows: List<Opportunity>, val unreadable: Int = 0) {
     companion object {
         const val VERSION = 1

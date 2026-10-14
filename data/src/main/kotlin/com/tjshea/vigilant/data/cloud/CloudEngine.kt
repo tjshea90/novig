@@ -105,7 +105,7 @@ class CloudEngine(
                 lastPublishedAt = now
                 partial.getAndSet(null)?.let { r ->
                     val rows = r.feed(s)
-                    val feed = CloudFeed(r.computedAtMs, cfg.rev, r.stats, rows)
+                    val feed = CloudFeed(now, cfg.rev, r.stats, rows)
                     onFeed(rows, now)
                     problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = feed, scanMs = now - t0))
                 }
@@ -135,7 +135,7 @@ class CloudEngine(
             return@supervisorScope null
         }
         val rows = result.feed(s)
-        val feed = CloudFeed(result.computedAtMs, cfg.rev, result.stats, rows)
+        val feed = CloudFeed(clock(), cfg.rev, result.stats, rows)
         passes++
         lastRows = rows.size
         lastScanMs = clock() - t0
