@@ -2737,6 +2737,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     add("Streaming engine: ${if (g.streamScan) "ON" else "off"}${if (g.streamScan && !g.boltSocket) " but BoltOdds' socket is OFF: it has nothing to stream" else ""}")
                 }
             }.getOrNull(),
+            calibrationReport = runCatching { com.tjshea.vigilant.data.tracker.FairCalibration.lines(_state.value.bets) }.getOrNull(),
             walletReport = runCatching {
                 val st = _state.value.settings
                 val vg = st.vigGuards
