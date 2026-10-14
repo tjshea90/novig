@@ -5090,9 +5090,9 @@ Evidence (research/bet_history_2026-10-14.md + my recomputation over 1,228 settl
 
 ## TRD: back to R&D: profit first (Tj, 2026-10-14)
 Tj: "Have the losing bet types been consistent since the start. There is still lag and freezing. The settings are getting long and complicated. I no longer have pinnodds socket yet the new live betting features are buried under pinnodds settings. I need a way to turn off all live features and sockets on one main toggle. Investigate how I'm consistently beating clv yet losing so much money. Either the clv values are wrong, or the EV analysis is wrong. Back to research and development. Optimize the app for making profit, whatever needs to be done"
-- [ ] TRD1 Research: are the losing types consistent week by week (research/bet_history_2026-10-14.md addendum).
-- [ ] TRD2 Research: CLV vs losses: is the close or the EV wrong (calibration of closeFair and fair against results, devig bias, grading).
-- [ ] TRD3 Fix what TRD2 finds in the fair line (calibrate against results, not only against the close).
-- [ ] TRD4 Lag/freezing: find the next main-thread cost (state emission rate, deep equality, recomposition).
-- [ ] TRD5 One "Live features" master switch (all live lanes, live bids, Pinnodds/BoltOdds/Kalshi live engine, live sockets) and a "Live" settings page that is not under Pinnodds.
-- [ ] TRD6 Ship.
+- [x] TRD1 (research/bet_history_2026-10-14.md addendum §1) Research: are the losing types consistent week by week (research/bet_history_2026-10-14.md addendum).
+- [x] TRD2 (addendum §2: the de-vigged close is ~8 pts too high for prop Overs) Research: CLV vs losses: is the close or the EV wrong (calibration of closeFair and fair against results, devig bias, grading).
+- [x] TRD3 (PropHaircut v0.99.4; tennis auto-bets off; Diagnostics FAIR CALIBRATION `FairCalibration`) Fix what TRD2 finds in the fair line (calibrate against results, not only against the close).
+- [x] TRD4 (Compose compares UiState by reference: `collectAsStateByReference`; ScanResult cheap equals) Lag/freezing: find the next main-thread cost (state emission rate, deep equality, recomposition).
+- [x] TRD5 (`LiveMaster`, Settings › Live light & live switch, master row on the Settings home; `LiveMasterTest`) One "Live features" master switch (all live lanes, live bids, Pinnodds/BoltOdds/Kalshi live engine, live sockets) and a "Live" settings page that is not under Pinnodds.
+- [x] TRD6 (shipped v0.99.5) Ship.
