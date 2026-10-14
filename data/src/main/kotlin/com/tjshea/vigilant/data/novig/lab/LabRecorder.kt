@@ -61,6 +61,11 @@ class LabRecorder(
     private val onTail: ((TailOffer) -> Unit)? = null,
     /** True while ONLY the tail taker wants the lab (no research switch is on): more games, and none of the paper lab's other work (covers, outside quotes, paper bids, grading). */
     private val tailOnly: () -> Boolean = { false },
+    /**
+     * True while a scan or a bet is using Novig: the paper lab (research, no money) then waits its turn. Its reads share the key's 16 a second and the public edge limit with the scan; Tj's 2026-10-13 file:
+     * the lab made 19,949 of 29,593 book reads (67%) and the scan got 6.7 a second of the 16. The tail taker (real money) never waits: [tailOnly] lab passes always run.
+     */
+    private val busy: () -> Boolean = { false },
 ) {
     private val _status = MutableStateFlow(LabStatus())
     val status: StateFlow<LabStatus> = _status.asStateFlow()
@@ -103,6 +108,10 @@ class LabRecorder(
     suspend fun cycleOnce(leagues: Set<String>) {
         val now = clock()
         val light = tailOnly()
+        if (!light && busy()) {
+            _status.value = _status.value.copy(yielded = _status.value.yielded + 1)
+            return
+        }
         val live = source.events(leagues, listOf(NovigEvent.STATUS_LIVE, NovigEvent.STATUS_DELAYED)).sortedBy { it.startsTs }.take(if (light) MAX_GAMES_TAIL else MAX_GAMES)
         if (live.isEmpty()) {
             _status.value = _status.value.copy(games = 0, cycles = _status.value.cycles + 1, lastCycleMs = now)
