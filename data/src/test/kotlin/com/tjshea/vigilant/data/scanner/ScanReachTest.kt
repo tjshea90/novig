@@ -42,9 +42,11 @@ class ScanReachTest {
         assertEquals(7, ScanSettings().daysAhead)
         assertEquals(7, ScanSettings(daysAhead = 3, schema = 7).migrate().daysAhead)
         // Tj's own other picks stay, and so does a 3 chosen after the move.
-        for (kept in listOf(1, 2, 5, 10)) assertEquals(kept, ScanSettings(daysAhead = kept, schema = 7).migrate().daysAhead)
-        assertEquals(3, ScanSettings(daysAhead = 3, schema = 8).migrate().daysAhead)
+        for (kept in listOf(1, 2, 5, 10)) assertEquals(kept, ScanSettings(daysAhead = kept, schema = 7, maker = false, makerRecommend = false).migrate().daysAhead)
+        assertEquals(3, ScanSettings(daysAhead = 3, schema = 8, maker = false, makerRecommend = false).migrate().daysAhead)
         assertTrue(ScanSettings.DAYS_AHEAD_CHOICES.containsAll(listOf(3, 7, 10)))
+        // Bids on: a saved short reach (Tj, 2026-10-14: Days ahead 2) moves to the week once, so the weekend slate is priced.
+        assertEquals(7, ScanSettings(daysAhead = 2, schema = 18, maker = true).migrate().daysAhead)
         // A file saved before the field changed gets the new default.
         assertEquals(7, Json { ignoreUnknownKeys = true }.decodeFromString(ScanSettings.serializer(), """{"schema":8}""").daysAhead)
     }
