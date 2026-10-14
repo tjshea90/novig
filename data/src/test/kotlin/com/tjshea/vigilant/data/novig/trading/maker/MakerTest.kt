@@ -927,7 +927,7 @@ class MakerTest {
         val r = d.cycle(listOf(noSharp), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0)
         // A game 30 h out is past the 20 h guard: no usual bid and no riskier one (no sharp book); only the last, widest pass (Tj, 2026-10-14: all times, no sharp book needed) bids, far under the fair.
         val widest = r.decisions.filterIsInstance<MakerDecision.Post>().single()
-        assertTrue("only the widest pass bids: price at most ${0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_ANY_MARGIN)}", widest == null || (widest.overflow && widest.price <= 0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_ANY_MARGIN) + 1e-9))
+        assertTrue("only the widest pass bids: price at most ${0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_ANY_MARGIN)}", widest.overflow && widest.price <= 0.60 / (1.0 + kelly.margin + MakerDesk.DEPLOY_EXTRA_MARGIN + MakerDesk.DEPLOY_ANY_MARGIN) + 1e-9)
         val withSharp = noSharp.copy(sharpFairs = listOf(0.60))
         val d2 = desk(FakeNovig(), tracker())
         val r2 = d2.cycle(listOf(withSharp), kelly.copy(deployPct = 0.9, earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0)

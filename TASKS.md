@@ -5129,5 +5129,5 @@ Tj: "I finished a full scan and it still is not posting many bids"
 
 ## TWF: fill the wallet with hundreds of bids, every sport, time, market (Tj, 2026-10-14 ~18:15Z)
 Tj: "Post as many bids as possible. Fill up the wallet. Hundreds of bids. All sports are allowed. All times are allowed. All props are allowed. Fill it with popular sports and market types first. As long as risky bids have a higher ev ask, it is fine"
-- [ ] TWF1 Read the tier code (`MakerDesk.deployFor`, `BidTier`, `MakerQuote.tierReason`, `bidMany`) and plan: popular first, then wider passes (any start time, sharp not required, props and every market), each wider pass asking a higher edge.
+- [x] TWF1 Read the tier code (`MakerDesk.deployFor`, `BidTier`, `MakerQuote.tierReason`, `bidMany`) and plan: popular first, then wider passes (any start time, sharp not required, props and every market), each wider pass asking a higher edge.
 - [ ] TWF2 Build + tests (`MakerTest`), ship v0.99.11.
