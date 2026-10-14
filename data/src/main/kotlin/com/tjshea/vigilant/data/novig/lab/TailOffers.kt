@@ -19,7 +19,8 @@ object TailOffers {
         val marketLabel = if (total) "Total" else if (c.strike == 0.0) "Moneyline" else "Spread"
         val selection = "${c.label} ${c.side.lowercase()}"
         val american = Odds.probabilityToAmerican(c.ask.coerceIn(0.001, 0.999))
-        val light = c.rule == LiveLightScan.RULE
+        val light = c.rule == LiveLightScan.RULE || c.rule == LiveLightCurve.RULE
+        val curve = c.rule == LiveLightCurve.RULE
         val target = BetTarget(
             market = market, outcomeId = c.outcomeId, league = ev.league, eventName = ev.description, startsTs = ev.startsTs, marketLabel = marketLabel, selection = selection,
             fair = c.fair, fairAsOfMs = now, source = BetTracker.SOURCE_TAIL,
@@ -27,7 +28,7 @@ object TailOffers {
             atBet = AtBet(
                 atMs = now, how = AtBet.HOW_AUTO, scanner = if (light) "Live light" else "Live tail", league = ev.league, live = true, american = american, ev = c.edge, fair = c.fair,
                 fairAmerican = Odds.probabilityToAmerican(c.fair.coerceIn(0.001, 0.999)),
-                fairMethod = if (light) "Live light model (ESPN score and clock, bounded against the bet)" else "Late-game tail model (ESPN score and clock, Novig's own centre)",
+                fairMethod = if (curve) "Live light ladder curve (the ladder's liquid lines fitted to a normal, this line left out)" else if (light) "Live light model (ESPN score and clock, bounded against the bet)" else "Late-game tail model (ESPN score and clock, Novig's own centre)",
                 fairBooks = emptyList(), fairSharp = emptyList(),
             ),
         )

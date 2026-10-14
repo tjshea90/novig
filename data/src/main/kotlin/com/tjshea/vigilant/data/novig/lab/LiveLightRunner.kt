@@ -161,8 +161,20 @@ class LiveLightRunner(
     private suspend fun catalogLoop() {
         while (scope.isActive) {
             readCatalog()
-            delay(catalogMs)
+            // The strikes worth watching move with the score: read again every [catalogMs], or at once when a game's first score arrives.
+            var waited = 0L
+            while (waited < catalogMs && !recatalog) { delay(500L); waited += 500L }
+            recatalog = false
         }
+    }
+
+    @Volatile private var recatalog = false
+
+    /** The game as the model sees it, from ESPN's [e]; null when its clock can't be read. */
+    private fun stateOf(ev: NovigEvent, e: EspnGame): GameState? {
+        val sport = LabClock.sportOf(ev.league) ?: return null
+        val frac = LabClock.fractionLeft(ev.league, e.period, e.clockSec) ?: return null
+        return GameState(sport, e.homeScore, e.awayScore, frac)
     }
 
     internal suspend fun readCatalog() {
@@ -183,9 +195,12 @@ class LiveLightRunner(
         // The games furthest along first: they are the ones that can be decided.
         for (ev in live) {
             val ms = all.filter { it.eventId == ev.eventId }
-            val lines = ms.mapNotNull { Ladders.line(it) }
-            if (lines.isEmpty()) continue
-            val keep = ms.filter { m -> lines.any { it.marketId == m.marketId } }
+            val allLines = ms.mapNotNull { Ladders.line(it) }
+            if (allLines.isEmpty()) continue
+            // Every alternate spread and total is its own market; the stream budget goes to the strikes that can be wrong now (LiveLightLines).
+            val lines = LiveLightLines.window(allLines, ev.league, feeds[ev.eventId]?.game?.let { e -> stateOf(ev, e) }, feeds[ev.eventId]?.game)
+            val keepIds = lines.mapTo(HashSet()) { it.marketId }
+            val keep = ms.filter { it.marketId in keepIds }
             if (keep.size > budget) continue
             budget -= keep.size
             built[ev.eventId] = Game(ev, keep, lines)
@@ -216,6 +231,7 @@ class LiveLightRunner(
                 val m = game.ev.matchup ?: continue
                 val e = boards.filter { it.live }.firstOrNull { TeamMatcher.similarity(it.home, m.home) >= 0.5 && TeamMatcher.similarity(it.away, m.away) >= 0.5 } ?: continue
                 val before = feeds[game.ev.eventId]?.game
+                if (before == null) recatalog = true
                 feeds[game.ev.eventId] = Feed(e, now)
                 if (before == null || before.homeScore != e.homeScore || before.awayScore != e.awayScore || before.period != e.period || before.clockSec != e.clockSec) {
                     dirty += game.ev.eventId
@@ -260,8 +276,8 @@ class LiveLightRunner(
         val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + curve + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
         val s = _status.value
         _status.value = s.copy(scans = s.scans + 1, lastScanMs = now, lastScanTookMs = (clock() - triggeredAtMs).coerceAtLeast(0))
-        // The best view of an outcome both models like is the more cautious one.
-        for (c in found.groupBy { it.outcomeId }.values.map { g -> g.minBy { it.fair } }.sortedByDescending { it.edge }) {
+        // An outcome the score calls decided is judged by the more cautious of the score models; a curve bet is only for an outcome they do not call.
+        for (c in found.groupBy { it.outcomeId }.values.map { g -> g.filter { it.rule != LiveLightCurve.RULE }.minByOrNull { it.fair } ?: g.first() }.sortedByDescending { it.edge }) {
             val prev = offered[c.outcomeId]
             if (prev != null && now - prev.first < REOFFER_MS && c.ask >= prev.second - 1e-9) continue
             val line = game.lines.firstOrNull { it.marketId == c.marketId } ?: continue
