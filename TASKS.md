@@ -5109,3 +5109,8 @@ Tj: "Make these errors refresh and disappear automatically as soon as they no lo
 - [x] TER1 (`NovigHealth`, `MainViewModel.errorStillApplies`, FeedScreen `errorApplies`) Find where those cards come from and make each one clear itself the moment the thing it reports works again (a key read, a Novig read, any later scan), without a new scan.
 - [x] TER2 (deeper second bids: `MakerBid.rung`, `MakerDesk.cycle(rung)`, MakerRunner deep pass; `MakerTest`) Bids: find why only 17 bids / $19 are up of a $152 wallet (supply, stake size, a limit) and fix it.
 - [x] TER3 (shipped v0.99.7) Tests, ship.
+
+## TWR: bids read a week of games (Tj, 2026-10-14: "There are games this weekend with a full NFL and college football slate ... it should automatically post bids on popular sports and props")
+Cause found: the feed's "Starts within 48h" chip also set how far the scan read (`scanWindowHours`), so the weekend slate was never priced.
+- [x] TWR1 (`ScanSettings.scanWindowHours`, `BID_REACH_DAYS`, schema 19, `MakerSetup.set`, `MakerTest`) With bids on (deploy on) the scan reads the whole Days-ahead window; picking a bid mode raises Days ahead and prop hours to a week; the chip only filters the view.
+- [ ] TWR2 ship v0.99.8 (`bash ship.sh`, trigger release.yml, `tools/record-release.sh`), then ask Tj to read Diagnostics › WALLET DEPLOYMENT to see the fill.
