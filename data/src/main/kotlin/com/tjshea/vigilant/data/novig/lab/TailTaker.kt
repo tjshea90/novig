@@ -46,8 +46,11 @@ object TailTradeLimits {
     const val MIN_FAIR = 0.92
 
     /** The curve rule's floors (alternate lines priced off their own ladder). */
-    const val MIN_FAIR_CURVE = 0.60
-    const val MIN_EDGE_CURVE = 0.08
+    const val MIN_FAIR_CURVE = 0.55
+    const val MIN_EDGE_CURVE = 0.06
+
+    /** Live light's score model calls a side decided at this chance (the tail rules keep [MIN_FAIR]). */
+    const val MIN_FAIR_LIGHT = 0.90
 
     /** An edge this large is the model or the game state being wrong, not a gift: refused, unless a second live source agrees ([MAX_EDGE_CONFIRMED]). */
     const val MAX_EDGE = 0.30
@@ -125,7 +128,7 @@ class TailTaker(
         if (c.rule != CONSERVATIVE && c.rule != LiveLightScan.RULE && c.rule != LiveLightCurve.RULE) return skip("not the conservative rules")
         // A curve bet is an alternate line out of line with its neighbours, not a decided game: a lower fair is believed, and only for a bigger edge.
         val curve = c.rule == LiveLightCurve.RULE
-        val minFair = if (curve) TailTradeLimits.MIN_FAIR_CURVE else TailTradeLimits.MIN_FAIR
+        val minFair = if (curve) TailTradeLimits.MIN_FAIR_CURVE else if (c.rule == LiveLightScan.RULE) TailTradeLimits.MIN_FAIR_LIGHT else TailTradeLimits.MIN_FAIR
         if (c.fair < minFair) return skip("fair under ${(minFair * 100).toInt()}%")
         val floor = maxOf(minEdge(), if (curve) TailTradeLimits.MIN_EDGE_CURVE else 0.0)
         if (c.edge < floor) return skip("edge under your minimum")

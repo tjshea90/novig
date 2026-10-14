@@ -11,11 +11,11 @@ import kotlin.math.sqrt
  * stale price even when the whole ladder is stale (a blowout offered at 50/50).
  */
 data class LiveLightRules(
-    val sdMult: Double = 1.4,
+    val sdMult: Double = 1.3,
     /** Points (goals, runs) the expected final margin or total is moved against the bet. */
-    val shiftPoints: Double = 2.0,
-    val minFair: Double = 0.93,
-    val minEdge: Double = 0.03,
+    val shiftPoints: Double = 1.5,
+    val minFair: Double = 0.90,
+    val minEdge: Double = 0.025,
     /** Too little time left to bet is a game that is over (Novig is about to settle it); too much is a game that has barely started. */
     val minFractionLeft: Double = 0.02,
     val maxFractionLeft: Double = 0.75,

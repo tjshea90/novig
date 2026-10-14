@@ -145,7 +145,7 @@ class AppContainer(val app: Application) {
         /** The leagues the paper lab reads: the ones ESPN's scoreboard can give a clock for. */
         const val LAB_BOARD_MS = 25_000L
         /** How far under the model's fair Live light's bids sit (the edge a bid has at the moment it goes up). */
-        const val LIGHT_BID_MARGIN = 0.10
+        const val LIGHT_BID_MARGIN = 0.07
         val LAB_LEAGUES = setOf("NFL", "NCAAF", "NBA", "WNBA", "NCAAB", "NHL", "MLB")
         const val BURST_TRADE_MAX_STAKE = 10.0
 
@@ -1820,10 +1820,10 @@ class AppContainer(val app: Application) {
         val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.livebid.LiveBidConfig.OFF
         val t = s.tailLive
         val limits = com.tjshea.vigilant.data.livebid.LiveBidLimits(
-            stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = t.stake, minStake = 1.0, maxStake = t.stake, maxBids = 4, maxBidsPerGame = 2,
+            stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.CUSTOM, customStake = t.stake, minStake = 1.0, maxStake = t.stake, maxBids = 6, maxBidsPerGame = 3,
             maxPerGame = t.maxGame, maxPerDay = t.maxDay, haltLoss = t.haltLoss, walletReserve = 5.0,
         )
-        val quality = com.tjshea.vigilant.data.livebid.LiveBidQuality(margin = LIGHT_BID_MARGIN, minPrice = 0.30, maxPrice = 0.93, ttlSec = 20)
+        val quality = com.tjshea.vigilant.data.livebid.LiveBidQuality(margin = LIGHT_BID_MARGIN, minPrice = 0.30, maxPrice = 0.95, ttlSec = 20)
         return com.tjshea.vigilant.data.livebid.LiveBidConfig(
             on = lightBidsOn(s), real = t.bet, quality = quality, limits = limits, bankroll = s.bankroll, apiMaxStake = s.apiMaxStake, preset = "Live light",
             halted = t.halted, blockedWhy = if (t.bet && trading == null) "no betting key connected" else null,

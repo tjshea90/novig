@@ -24,11 +24,11 @@ interface LightBidDesk {
  * and comes down the moment it does not, or the game is no longer being judged (the desk pulls any bid nobody vouched for in 3.5 s).
  */
 data class LiveLightBidRules(
-    val margin: Double = 0.10,
-    val minFair: Double = 0.90,
+    val margin: Double = 0.07,
+    val minFair: Double = 0.85,
     val minPrice: Double = 0.30,
-    val maxPrice: Double = 0.93,
-    val keepEv: Double = 0.04,
+    val maxPrice: Double = 0.95,
+    val keepEv: Double = 0.03,
 )
 
 object LiveLightBids {

@@ -48,7 +48,7 @@ data class LadderFit(val mu: Double, val sigma: Double, val rms: Double, val n: 
         }
 
         const val MIN_POINTS = 4
-        const val MAX_RMS = 0.03
+        const val MAX_RMS = 0.04
 
         /** Φ⁻¹ (Acklam's rational approximation, error under 1.2e-9). */
         fun probit(p: Double): Double {
@@ -72,17 +72,17 @@ data class LiveLightCurveRules(
     val minOthers: Int = 4,
     val shiftSd: Double = 0.25,
     val sdMult: Double = 1.25,
-    val minFair: Double = 0.60,
+    val minFair: Double = 0.55,
     /** The score model's own chance for the side under which a curve bet is refused (see [LiveLightCurve.scan]). */
     val vetoBelow: Double = 0.02,
     /** Higher than the score model's: a curve says a price is out of line with its neighbours, not that the game is decided. */
-    val minEdge: Double = 0.08,
+    val minEdge: Double = 0.06,
     val maxAsk: Double = 0.985,
     val minContracts: Long = 20L,
     /** A strike this many sigmas outside the liquid lines is an extrapolation, not an interpolation: left alone. */
     val reachSd: Double = 0.5,
     /** The fitted sigma must be within this factor of the one the game's sport and time left allow. */
-    val sigmaBand: Double = 2.0,
+    val sigmaBand: Double = 2.5,
     /** A line counts as liquid (it says where the game is centred) when its two sides are within this of each other. */
     val maxSpread: Double = 0.06,
     val name: String = LiveLightCurve.RULE,

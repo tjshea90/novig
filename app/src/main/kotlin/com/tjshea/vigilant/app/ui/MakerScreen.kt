@@ -453,7 +453,7 @@ private fun LightSection(ui: MakerUi) {
     val up = ui.lightBids.filter { it.active }
     val ended = ui.lightBids.filter { !it.active }.takeLast(5).reversed()
     Text("Live light bids up (${up.size})", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp).testTag("lightBidsTitle"))
-    if (up.isEmpty()) Muted("None up right now: a bid goes up only on a side the score and clock call at least 90% decided, 10% under its fair and under what Novig offers. Most live sides are not that clear.")
+    if (up.isEmpty()) Muted("None up right now: a bid goes up only on a side the score and clock call at least 85% decided, 7% under its fair and under what Novig offers. Most live sides are not that clear.")
     up.forEach { b -> LightBidRow(b, ui.now) }
     if (ended.isNotEmpty()) {
         Text("Last ended", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 6.dp))

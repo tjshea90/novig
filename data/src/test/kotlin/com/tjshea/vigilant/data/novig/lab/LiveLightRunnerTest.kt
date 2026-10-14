@@ -158,7 +158,7 @@ class LiveLightRunnerTest {
         runner(view, ArrayList(), scoreboard(105, 80), desk = desk).look()
         val w = desk.wants.single()
         assertEquals("m1-b", w.outcomeId)
-        assertTrue("price ${w.verdict.price}", w.verdict.price in 0.88..0.92)
+        assertTrue("price ${w.verdict.price}", w.verdict.price in 0.90..0.945)
         assertTrue(w.verdict.fair > 0.99)
         assertEquals("105-80", w.score)
         // The side nobody can win is not bid on.
@@ -226,7 +226,7 @@ class LiveLightRunnerTest {
         r.look()
         val line = r.status.value.gameLines.getValue("ev")
         assertTrue(line, line.contains("Miami Heat 80 @ Boston Celtics 82"))
-        assertTrue(line, line.contains("closest:") && line.contains("sure (needs 93.0%)"))
+        assertTrue(line, line.contains("closest:") && line.contains("sure (needs 90.0%)"))
         // A game the scoreboard does not have is named, not silently skipped.
         val none = runner(view, ArrayList(), """{"events":[]}""")
         none.readCatalog(); none.readScores()
