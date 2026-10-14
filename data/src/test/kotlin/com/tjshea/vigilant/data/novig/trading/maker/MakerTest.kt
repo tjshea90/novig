@@ -953,6 +953,36 @@ class MakerTest {
         assertTrue(desk(FakeNovig(), tracker()).cycle(listOf(far), kelly.copy(earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
     }
 
+    @Test
+    fun `a second, deeper bid goes up on a side that already has one while the wallet is under its target, and not once it is at it`() = runBlocking {
+        val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1, deployPct = 0.9)
+        val l = line("m1-over", fair = 0.60, offer = 0.64)
+        val d = desk(FakeNovig(), tracker())
+        d.cycle(listOf(l), kelly, stop = null, maxPerDay = 500.0, wallet = 100.0)
+        val usual = d.bids().single()
+        assertEquals(0, usual.rung)
+        val deepRules = kelly.copy(margin = kelly.margin + MakerDesk.DEEP_MARGIN)
+        val r = d.cycle(listOf(l), deepRules, stop = null, maxPerDay = 500.0, wallet = 100.0, rung = 1)
+        assertEquals(1, r.placed)
+        val all = d.bids().filter { it.active }
+        assertEquals("two bids on one side", 2, all.size)
+        val deep = all.first { it.rung == 1 }
+        assertTrue("deeper: ${deep.price} under ${usual.price}", deep.price < usual.price - 0.03)
+        assertTrue(deep.evAtFair > usual.evAtFair)
+        assertEquals(usual.outcomeId, deep.outcomeId)
+        assertEquals(1L, d.deepPlaced)
+        // The usual rung's next pass leaves the deeper bid alone, and a second deep pass does not stack a third bid.
+        d.cycle(listOf(l), kelly, stop = null, maxPerDay = 500.0, wallet = 100.0)
+        assertEquals(2, d.bids().count { it.active })
+        d.cycle(listOf(l), deepRules, stop = null, maxPerDay = 500.0, wallet = 100.0, rung = 1)
+        assertEquals(2, d.bids().count { it.active })
+        // At the target: nothing deeper is posted for another side.
+        val d2 = desk(FakeNovig(), tracker())
+        d2.cycle(listOf(l), kelly, stop = null, maxPerDay = 500.0, wallet = 100.0)
+        val atTarget = d2.cycle(listOf(line("m2-over", fair = 0.60, offer = 0.64, m = market("m2"))), deepRules, stop = null, maxPerDay = 500.0, wallet = 0.9 * 0.0 + (d2.bids().sumOf { it.restingDollars } / 0.9), rung = 1)
+        assertEquals(0, atTarget.placed)
+    }
+
     // ---- the desk: a cancel is only queued; fills never go unrecorded ----------------------------------------------------
 
     @Test

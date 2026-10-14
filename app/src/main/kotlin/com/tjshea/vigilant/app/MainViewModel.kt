@@ -2757,7 +2757,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     if (d == null) add("no pass has worked it out yet (bids off, no wallet reading, or the switch is off)") else {
                         fun m(v: Double) = String.format(java.util.Locale.US, "$%.2f", v)
                         add("last pass: wallet ${m(d.walletDollars)} · target ${m(d.targetDollars)} · resting ${m(d.restingDollars)} (${(100 * d.restingDollars / d.walletDollars.coerceAtLeast(0.01)).toInt()}% of the wallet) · stake scale x${String.format(java.util.Locale.US, "%.1f", d.scale)} (cap ${(d.kellyCeiling * 100).toInt()}% Kelly)")
-                        add("wanted after this pass: ${m(d.wantedDollars)} · riskier wallet-filling bids wanted: ${d.overflowWanted} (${m(d.overflowDollars)})")
+                        add("wanted after this pass: ${m(d.wantedDollars)} · riskier wallet-filling bids wanted: ${d.overflowWanted} (${m(d.overflowDollars)}) · deeper second bids posted this run: ${c.makerDesk()?.deepPlaced ?: 0}")
                         val short = d.targetDollars - d.wantedDollars - d.overflowDollars
                         add(if (short > 1.0) "STILL SHORT of the target by ${m(short)}: there are not enough bids that pass every rule (the games on Novig, the sharp-book and EV rules): the skip reasons below say which" else "target reached")
                         if (d.skips.isNotEmpty()) {
