@@ -383,17 +383,24 @@ data class UiState(
      * that price) the widget, the CNO tab and the bet sheet show. [pick] itself without one.
      */
     fun livePick(pick: CnoPick, now: Long): CnoPick {
-        val live = livePrice(pick.row, now) ?: return pick
-        return CnoPick(pick.row.copy(odds = live.american, available = live.available ?: pick.row.available), lowestFairEv(pick.row, live, live.ev ?: pick.ev, now), pick.live)
+        val live = livePrice(pick.row, now)
+            // No fresh price read for this bet: it is still judged by the lowest fair any scanner has, which needs only its Novig outcome (Tj, 2026-10-14, screenshot: a card stayed at +1.15% after the Bet sheet called it -0.6%).
+            ?: return CnoPick(pick.row, lowestFairEv(pick.row, outcomeIdFor(pick.row), null, pick.ev, now), pick.live)
+        return CnoPick(pick.row.copy(odds = live.american, available = live.available ?: pick.row.available), lowestFairEv(pick.row, live.outcomeId, live.marketId, live.ev ?: pick.ev, now), pick.live)
     }
+
+    /** The Novig outcome a CNO row is, with no price read: from the last read of it (any age), else from CNO's own link to it. */
+    private fun outcomeIdFor(row: CnoRow): String? =
+        novigLive[row.key]?.outcomeId ?: com.tjshea.vigilant.data.cno.CnoFeed.outcomeIdOf(cnoLinks[com.tjshea.vigilant.data.cno.CnoFeed.linkKey(row)])
 
     /**
      * [ev] (a fraction, at Novig's price now against CNO's fair) re-judged by the LOWEST fair any scanner has for the same Novig outcome, as the Bet sheet does ([ApiBettingController]:
      * Tj, 2026-10-11, "if a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it"), so the list never shows +EV for a bet the sheet then calls negative
      * (Tj, 2026-10-13, screenshot: the card said +2.04%, the sheet -0.1%). Vigilant's latest scan only counts while its fair is fresh.
      */
-    private fun lowestFairEv(row: CnoRow, live: com.tjshea.vigilant.data.cno.LivePrice, ev: Double, now: Long): Double {
-        val own = result?.opportunities?.firstOrNull { it.market.marketId == live.marketId && it.outcome.outcomeId == live.outcomeId && !it.isLive && !it.fairIsOld(now) }?.fairProbability ?: return ev
+    private fun lowestFairEv(row: CnoRow, outcomeId: String?, marketId: String?, ev: Double, now: Long): Double {
+        if (outcomeId == null) return ev
+        val own = result?.opportunities?.firstOrNull { (marketId == null || it.market.marketId == marketId) && it.outcome.outcomeId == outcomeId && !it.isLive && !it.fairIsOld(now) }?.fairProbability ?: return ev
         val cnoFair = com.tjshea.vigilant.data.cno.CnoChecks.fairProbability(row) ?: return ev
         return if (own < cnoFair && cnoFair > 0.0) (1.0 + ev) * (own / cnoFair) - 1.0 else ev
     }
