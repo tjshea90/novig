@@ -160,6 +160,18 @@ class MakerRunner(
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,
             )
             notifyFills(report.fills, desk.bids())
+            // Still under the wallet target after the usual and the riskier bids (Tj, 2026-10-14: "the bids up ... never fill my wallet"): a second, DEEPER bid on the sides that already have one. Each is priced
+            // [MakerDesk.DEEP_MARGIN] further under the fair, so its edge and its Kelly stake are bigger and it fills rarely but well; it only runs while the bids up are under the target, and every guard counts it.
+            if (s.maker && stop == null && !partial && !cnoSource) {
+                val deepRules = rules.copy(margin = rules.margin + MakerDesk.DEEP_MARGIN)
+                val deep = desk.cycle(
+                    withMoves(lines, deepRules, now, read = false), deepRules, stop, s.apiMaxPerDay, wallet,
+                    denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = false, keepPosting = ::stillPosting, rung = 1,
+                )
+                notifyFills(deep.fills, desk.bids())
+                if (deep.placed > 0 || deep.cancelled > 0) c.eventLog.info("MAKER", "$why: deeper bids: ${deep.placed} posted, ${deep.cancelled} cancelled")
+                deep.problems.forEach { p -> runCatching { c.problems.add("Make orders", p) } }
+            }
             guard(s, desk)
             if (report.placed > 0 || report.cancelled > 0 || report.fills.isNotEmpty()) {
                 // Whether Novig holds a resting bid's cost from the balance isn't in its docs (NOVIG_API.md §17): the wallet just after posting says.
