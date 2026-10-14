@@ -5087,3 +5087,12 @@ Evidence (research/bet_history_2026-10-14.md + my recomputation over 1,228 settl
 - [x] TPH1 (`PropHaircut`, `PropHaircutTest`) `PropHaircut`: the fair of a player-prop Over is cut 7 points and of an Under 3, in the Vigilant scan (`Pricing`) and in CNO's rows (`CnoChecks.screen`), so the edge, stake, STARS (and so the 4-star rule), auto-bet, bids and bet sheet all see it; switch `vigGuards.propHaircut` default on; Settings switch.
 - [x] TPH2 (schema 18) One-time settings migration: Profit-proven only turns on (schema 18); he can turn it off.
 - [x] TPH3 (floor green 3552, shipped v0.99.4) Tests, ship.
+
+## TRD: back to R&D: profit first (Tj, 2026-10-14)
+Tj: "Have the losing bet types been consistent since the start. There is still lag and freezing. The settings are getting long and complicated. I no longer have pinnodds socket yet the new live betting features are buried under pinnodds settings. I need a way to turn off all live features and sockets on one main toggle. Investigate how I'm consistently beating clv yet losing so much money. Either the clv values are wrong, or the EV analysis is wrong. Back to research and development. Optimize the app for making profit, whatever needs to be done"
+- [ ] TRD1 Research: are the losing types consistent week by week (research/bet_history_2026-10-14.md addendum).
+- [ ] TRD2 Research: CLV vs losses: is the close or the EV wrong (calibration of closeFair and fair against results, devig bias, grading).
+- [ ] TRD3 Fix what TRD2 finds in the fair line (calibrate against results, not only against the close).
+- [ ] TRD4 Lag/freezing: find the next main-thread cost (state emission rate, deep equality, recomposition).
+- [ ] TRD5 One "Live features" master switch (all live lanes, live bids, Pinnodds/BoltOdds/Kalshi live engine, live sockets) and a "Live" settings page that is not under Pinnodds.
+- [ ] TRD6 Ship.
