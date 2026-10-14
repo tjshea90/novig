@@ -55,10 +55,23 @@ class LiveLightRunnerTest {
 
     private val now = 1_800_000_000_000L
 
-    private fun runner(view: View, offers: MutableList<TailOffer>, board: String?, confirm: LiveConfirm? = null, clock: () -> Long = { now }) =
+    private class Desk(var heldPrice: Double? = null) : LightBidDesk {
+        val wants = ArrayList<com.tjshea.vigilant.data.livebid.LiveBidWant>()
+        val pulls = ArrayList<Pair<String, String>>()
+        val noWants = ArrayList<String>()
+        var kept = 0
+        override fun want(w: com.tjshea.vigilant.data.livebid.LiveBidWant) { wants += w }
+        override fun keepAlive(outcomeId: String, nowMs: Long) { kept++ }
+        override fun noWant(outcomeId: String, reason: String) { noWants += reason }
+        override fun pull(outcomeId: String, reason: String) { pulls += outcomeId to reason }
+        override fun noteFair(outcomeId: String, fair: Double, atMs: Long) {}
+        override fun held(outcomeId: String) = heldPrice?.takeIf { outcomeId == "m1-b" }?.let { com.tjshea.vigilant.data.livebid.LiveBidHeld(it, 0L, null) }
+    }
+
+    private fun runner(view: View, offers: MutableList<TailOffer>, board: String?, confirm: LiveConfirm? = null, clock: () -> Long = { now }, desk: Desk? = null) =
         LiveLightRunner(
             scope = TestScope(), source = Src(event, listOf(market)), newView = { _: BookListener -> view },
-            fetch = { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock,
+            fetch = { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock, bids = { desk },
         ).also { it.bind() }
 
     private suspend fun LiveLightRunner.look() { readCatalog(); readScores(); scanGame("ev") }
@@ -135,5 +148,40 @@ class LiveLightRunnerTest {
         r.look()
         r.scanGame("ev")
         assertEquals(1, offers.size)
+    }
+
+    @Test
+    fun `with bids on a decided side gets a bid well under its fair and under what Novig offers, and none when bids are off`() = runBlocking {
+        // Boston is 25 up with two minutes left; Novig sells it at 0.95 (the taker's edge is thin there), so a bid goes under it.
+        val view = View(mapOf("m1" to book(bostonBid = 900, miamiBid = 50)))
+        val desk = Desk()
+        runner(view, ArrayList(), scoreboard(105, 80), desk = desk).look()
+        val w = desk.wants.single()
+        assertEquals("m1-b", w.outcomeId)
+        assertTrue("price ${w.verdict.price}", w.verdict.price in 0.88..0.92)
+        assertTrue(w.verdict.fair > 0.99)
+        assertEquals("105-80", w.score)
+        // The side nobody can win is not bid on.
+        assertTrue(desk.wants.none { it.outcomeId == "m1-m" })
+        val off = Desk()
+        runner(view, ArrayList(), scoreboard(105, 80), desk = null).look()
+        assertTrue(off.wants.isEmpty())
+    }
+
+    @Test
+    fun `a bid already up is vouched for while the model clears it and pulled when it no longer does`() = runBlocking {
+        val view = View(mapOf("m1" to book(bostonBid = 900, miamiBid = 50)))
+        val comfortable = Desk(heldPrice = 0.90)
+        runner(view, ArrayList(), scoreboard(105, 80), desk = comfortable).look()
+        assertTrue(comfortable.pulls.isEmpty())
+        assertEquals(1, comfortable.kept)
+        val tight = Desk(heldPrice = 0.99)
+        runner(view, ArrayList(), scoreboard(105, 80), desk = tight).look()
+        assertEquals(listOf("m1-b"), tight.pulls.map { it.first })
+        assertTrue(tight.pulls.single().second.contains("no longer clears"))
+        // The game becomes unjudgeable (overtime has no readable clock): the bid comes down rather than stay on a guess.
+        val ot = Desk(heldPrice = 0.90)
+        runner(view, ArrayList(), scoreboard(105, 105, period = 5, clock = "5:00"), desk = ot).look()
+        assertTrue(ot.pulls.isEmpty() || ot.pulls.single().second.contains("no longer judged") || ot.wants.isEmpty())
     }
 }
