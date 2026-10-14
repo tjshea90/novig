@@ -971,6 +971,68 @@ class MakerTest {
         assertTrue(desk(FakeNovig(), tracker()).cycle(listOf(far), kelly.copy(earlyHours = 20), stop = null, maxPerDay = 500.0, wallet = 100.0).decisions.none { it is MakerDecision.Post })
     }
 
+    // ---- spread over games, rest longer (Tj, 2026-10-14) ------------------------------------------------------------------
+
+    private fun onGame(game: String, market: String, kind: BetKind = BetKind.PROP) =
+        line("$market-over", fair = 0.60, offer = 0.64, kind = kind, m = market(market).copy(eventId = game))
+
+    private fun postOf(l: MakerLine, price: Double = 0.55) = MakerDecision.Post(l, price, 100, 0.04)
+
+    @Test
+    fun `the bids are put up one game at a time - every game's first choice before any game's second, the kinds of market taking turns`() {
+        val bids = listOf(
+            postOf(onGame("g1", "a1")), postOf(onGame("g1", "a2")), postOf(onGame("g1", "a3", BetKind.SPREAD)),
+            postOf(onGame("g2", "b1")), postOf(onGame("g2", "b2")),
+            postOf(onGame("g3", "c1")),
+        )
+        val order = BidSpread.interleave(bids).map { it.line.market.marketId }
+        // Round one: the first bid of each game (g1's first kind, g2's, g3's); then g1's other kind before g1's second prop.
+        assertEquals(setOf("a1", "b1", "c1"), order.take(3).toSet())
+        assertTrue("a game's second kind comes before its second bid of the first kind", order.indexOf("a3") < order.indexOf("a2"))
+        assertEquals("nothing is lost", bids.map { it.line.market.marketId }.toSet(), order.toSet())
+    }
+
+    @Test
+    fun `no more bids or dollars on one game than the limit, the rest go to other games`() {
+        val limited = rules.copy(perGameBids = 2, perGameBidDollars = 0.0, maxBids = 100, maxDollars = 10_000.0)
+        val wanted = (1..5).map { postOf(onGame("g1", "x$it")) } + (1..3).map { postOf(onGame("g2", "y$it")) }
+        val plan = MakerPlan.plan(wanted = wanted, resting = emptyList(), rules = limited, now = now, budget = 10_000.0)
+        assertEquals("two on each game", mapOf("ev" to 0, "g1" to 2, "g2" to 2).filterValues { it > 0 }, plan.places.groupingBy { it.line.market.eventId }.eachCount())
+        assertEquals(mapOf(MakerPlan.GAME_BIDS_REACHED.format(2) to 4), plan.waiting)
+        // Bids already up count: g1 has two resting, so no new bid goes up on it.
+        val up = MakerPlan.plan(wanted = listOf(postOf(onGame("g1", "z1"))), resting = listOf(resting("x1-over", 0.5).copy(game = com.tjshea.vigilant.data.tracker.GameRef("g1", "A @ B", start, "NFL")), resting("x2-over", 0.5).copy(game = com.tjshea.vigilant.data.tracker.GameRef("g1", "A @ B", start, "NFL"))),
+            rules = limited, now = now, budget = 10_000.0, skips = emptyMap(), partial = true)
+        assertTrue(up.places.isEmpty())
+        // Dollars: each bid costs 100 contracts x 0.55 = $55 here; a $60 limit takes one.
+        val dollars = MakerPlan.plan(wanted = (1..3).map { postOf(onGame("g1", "d$it")) }, resting = emptyList(), rules = rules.copy(perGameBidDollars = 60.0, maxBids = 100, maxDollars = 10_000.0), now = now, budget = 10_000.0)
+        assertEquals(1, dollars.places.size)
+    }
+
+    @Test
+    fun `a bid whose fair is only too old THIS pass stays until its own expiry, and a real skip still takes it down`() {
+        val old = "The fair price goes old within a minute: re-priced at the next scan"
+        val skips = mapOf("m1-over" to old)
+        val inLife = MakerPlan.plan(wanted = emptyList(), resting = listOf(resting("m1-over", 0.5, expires = now + 20 * 60_000)), rules = rules, now = now, skips = skips)
+        assertTrue(inLife.cancels.isEmpty())
+        assertEquals(listOf("o-m1-over"), inLife.kept.map { it.orderId })
+        val pastLife = MakerPlan.plan(wanted = emptyList(), resting = listOf(resting("m1-over", 0.5, expires = now - 1)), rules = rules, now = now, skips = skips)
+        assertEquals(1, pastLife.cancels.size)
+        val real = MakerPlan.plan(wanted = emptyList(), resting = listOf(resting("m1-over", 0.5)), rules = rules, now = now, skips = mapOf("m1-over" to "The player is out (OUT)"))
+        assertEquals(1, real.cancels.size)
+    }
+
+    @Test
+    fun `a wallet-filling bid on a far game rests up to half an hour from a fair a few minutes old, a near one keeps the ordinary life`() {
+        val seenAgo = 9 * 60_000L
+        val far = line("m1-over", fair = 0.60, offer = 0.64, m = market("m1", starts = start + 48 * 3_600_000L)).copy(fairAsOfMs = now - seenAgo)
+        val ordinary = MakerQuote.decide(far, rules.copy(earlyHours = 0), now)
+        assertTrue("the ordinary rule: 1 minute of life is left of the 10", ordinary is MakerDecision.Skip)
+        val filling = MakerQuote.decide(far, rules.copy(earlyHours = 0, farFairMaxAgeMs = MakerDesk.DEPLOY_FAR_FAIR_MS), now) as MakerDecision.Post
+        assertEquals(now + 21 * 60_000L, filling.restUntilMs)
+        val near = line("m2-over", fair = 0.60, offer = 0.64, m = market("m2", starts = start + 2 * 3_600_000L)).copy(fairAsOfMs = now - seenAgo)
+        assertTrue("a game under 12 h away keeps the ordinary limit", MakerQuote.decide(near, rules.copy(earlyHours = 0, farFairMaxAgeMs = MakerDesk.DEPLOY_FAR_FAIR_MS), now) is MakerDecision.Skip)
+    }
+
     @Test
     fun `a wallet-filling bid may rest far behind the best bid - it is posted to see if anyone takes it`() = runBlocking {
         val kelly = rules.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1)
