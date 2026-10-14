@@ -7287,3 +7287,8 @@ Resume
 ```
 This bet is negative ev. Why did it not automatically remove itself from the list
 ```
+
+## 2026-10-14T18:06:01Z
+```
+I finished a full scan and it still is not posting many bids
+```
