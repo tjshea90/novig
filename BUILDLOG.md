@@ -275,3 +275,4 @@ day that changes.
 | v0.99.14 | code 273 | 2026-10-14T20:25Z | v0.99.14: Volume mode for bids (EV floors 1.5% / 2.5%, up to 3,000 bids, fastest-filling kinds first)
 | v0.99.15 | code 274 | 2026-10-14T20:40Z | v0.99.15: far games' books kept and bid from up to 90 min old in Volume mode
 | v0.99.16 | code 275 | 2026-10-14T20:49Z | v0.99.16: Volume mode scales new stakes toward the wallet target
+| v0.100.0 | code 276 | 2026-10-14T22:39Z | v0.100.0: Cloud scan - the scans run on GitHub (engine, cloud-scan.yml), the phone sets settings and shows the list; bets, bids and history saved to GitHub automatically
