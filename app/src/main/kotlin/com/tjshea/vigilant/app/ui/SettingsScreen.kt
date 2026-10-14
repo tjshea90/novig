@@ -2568,7 +2568,7 @@ private fun PinnDollarChips(title: String, choices: List<Double>, selected: Doub
 }
 
 
-/** The one main switch for every live feature and socket ([com.tjshea.vigilant.app.LiveMaster]); on top of the Settings home and of the Live light page. */
+/** The one main switch for every live feature and socket ([com.tjshea.vigilant.app.LiveMaster]); on top of the Live tab. */
 @Composable
 fun LiveMasterRow(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val on = com.tjshea.vigilant.app.LiveMaster.isOn(s)

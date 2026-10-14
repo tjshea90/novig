@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Badge
@@ -582,6 +583,8 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
     AUTOBET("Auto-bet", drawable = R.drawable.ic_autobet),
     /** Make orders (Tj, 2026-10-03: "It may need a separate section in the app"; RESEARCH.md §70): bids posted under Vigilant's fair. */
     BIDS("Bids", drawable = R.drawable.ic_bids),
+    /** Every live feature in one place (Tj, 2026-10-14: "make a live tab with all of the features and well organized"). */
+    LIVE("Live", Icons.Filled.PlayArrow),
     TRACKER("Tracker", Icons.AutoMirrored.Filled.List),
     SETTINGS("Settings", Icons.Filled.Settings),
     ;
@@ -595,6 +598,7 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
         // Always there (Tj, 2026-10-03: "make it so the make bidding system is always shown, even if vigilant scanning is turned off"): picking a mode
         // that bids turns Vigilant's scanner on ([com.tjshea.vigilant.data.novig.trading.maker.MakerSetup]).
         BIDS -> AppBook.isNovig
+        LIVE -> AppBook.isNovig
         TRACKER, SETTINGS -> true
     }
 }
@@ -805,6 +809,15 @@ private fun VigilantRoot(
                         notificationsBlocked = AutoBetNotes.blocked(context),
                         onTestNotification = { (context.applicationContext as? android.app.Application)?.let(AutoBetNotes::sample) ?: false },
                         onOpenBids = if (Tab.BIDS.shownIn(mode)) ({ tabName = Tab.BIDS.name }) else null,
+                    )
+                }
+                Tab.LIVE -> {
+                    val light by vm.lightUi.collectAsStateWithLifecycle()
+                    val now = com.tjshea.vigilant.app.ui.rememberNow(30_000)
+                    com.tjshea.vigilant.app.ui.LiveScreen(
+                        state = state, light = light, now = now, onUpdate = vm::updateSettings, onShown = vm::refreshLiveBid,
+                        onOpenPinnodds = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.PINNODDS.name; tabName = Tab.SETTINGS.name },
+                        onOpenLiveBids = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.LIVEBIDS.name; tabName = Tab.SETTINGS.name },
                     )
                 }
                 Tab.BIDS -> {
