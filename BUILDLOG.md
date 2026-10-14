@@ -277,3 +277,4 @@ day that changes.
 | v0.99.16 | code 275 | 2026-10-14T20:49Z | v0.99.16: Volume mode scales new stakes toward the wallet target
 | v0.100.0 | code 276 | 2026-10-14T22:39Z | v0.100.0: Cloud scan - the scans run on GitHub (engine, cloud-scan.yml), the phone sets settings and shows the list; bets, bids and history saved to GitHub automatically
 | v0.100.1 | code 277 | 2026-10-14T22:54Z | v0.100.1: the app sends your API keys to GitHub secrets for the cloud engine (sealed on the phone, write-only; Pinnodds, BoltOdds and Kalshi never sent)
+| v0.100.2 | code 278 | 2026-10-14T23:55Z | v0.100.2: cloud engine sends heartbeats during its first long scan, Send API keys no longer restarts the engine for unchanged keys, and the empty list says the engine is on its first scan
