@@ -21,10 +21,10 @@ import org.junit.Test
 
 /** Live light's push lane on a fake Novig and a fake scoreboard: a blowout at a stale price becomes an offer for the taker, and only with the right safeguards. */
 class LiveLightRunnerTest {
-    private val event = NovigEvent("ev", "Basketball", "NBA", NovigEvent.STATUS_LIVE, "Away Team @ Home Team", 0L)
+    private val event = NovigEvent("ev", "Basketball", "NBA", NovigEvent.STATUS_LIVE, "Miami Heat @ Boston Celtics", 0L)
     private val market = NovigMarket(
         "m1", "ev", "MONEY", "OPEN", "d", 0L, MarketFee.GAME,
-        listOf(NovigOutcome("m1-h", "Home Team", "TBD"), NovigOutcome("m1-a", "Away Team", "TBD")), null,
+        listOf(NovigOutcome("m1-b", "Boston Celtics", "TBD"), NovigOutcome("m1-m", "Miami Heat", "TBD")), null,
     )
 
     private class Src(val event: NovigEvent, val markets: List<NovigMarket>) : NovigSource {
@@ -45,13 +45,13 @@ class LiveLightRunnerTest {
         override fun close() {}
     }
 
-    /** The home team's best bid and the away team's: the away side (the line's YES) costs 1 - the home bid. */
-    private fun book(homeBid: Int, awayBid: Int) = NovigBook("m1", 1L, mapOf("m1-h" to listOf(BidLevel(homeBid, 5_000)), "m1-a" to listOf(BidLevel(awayBid, 5_000))), 0L)
+    /** The best bids on Boston (the line's YES: it costs 1 - Miami's bid) and on Miami. */
+    private fun book(bostonBid: Int, miamiBid: Int) = NovigBook("m1", 1L, mapOf("m1-b" to listOf(BidLevel(bostonBid, 5_000)), "m1-m" to listOf(BidLevel(miamiBid, 5_000))), 0L)
 
     private fun scoreboard(home: Int, away: Int, period: Int = 4, clock: String = "2:00") =
         """{"events":[{"status":{"period":$period,"displayClock":"$clock","type":{"state":"in"}},"competitions":[{"competitors":[
-        {"homeAway":"home","score":"$home","team":{"displayName":"Home Team","abbreviation":"HOM"}},
-        {"homeAway":"away","score":"$away","team":{"displayName":"Away Team","abbreviation":"AWY"}}]}]}]}"""
+        {"homeAway":"home","score":"$home","team":{"displayName":"Boston Celtics","abbreviation":"BOS"}},
+        {"homeAway":"away","score":"$away","team":{"displayName":"Miami Heat","abbreviation":"MIA"}}]}]}]}"""
 
     private val now = 1_800_000_000_000L
 
@@ -65,15 +65,15 @@ class LiveLightRunnerTest {
 
     @Test
     fun `a moderately stale price on a decided game is offered to the taker with no second source`() = runBlocking {
-        // Away leads by 25 with two minutes left; Novig still sells it at 0.80.
-        val view = View(mapOf("m1" to book(homeBid = 200, awayBid = 200)))
+        // Boston (home) leads by 25 with two minutes left; Novig still sells it at 0.80.
+        val view = View(mapOf("m1" to book(bostonBid = 200, miamiBid = 200)))
         val offers = ArrayList<TailOffer>()
-        val r = runner(view, offers, scoreboard(80, 105))
+        val r = runner(view, offers, scoreboard(105, 80))
         r.look()
         assertEquals(listOf("m1"), view.watched)
         assertTrue(view.opened)
         val o = offers.single()
-        assertEquals("m1-a", o.candidate.outcomeId)
+        assertEquals("m1-b", o.candidate.outcomeId)
         assertNull(o.confirm)
         assertEquals(0.80, o.candidate.ask, 1e-9)
         assertEquals(1L, r.status.value.offers)
@@ -83,15 +83,15 @@ class LiveLightRunnerTest {
 
     @Test
     fun `a fifty-fifty price on a decided game is not believed alone, and is believed when BoltOdds' soft books agree`() = runBlocking {
-        val view = View(mapOf("m1" to book(homeBid = 490, awayBid = 490)))
+        val view = View(mapOf("m1" to book(bostonBid = 490, miamiBid = 490)))
         val alone = ArrayList<TailOffer>()
-        val r1 = runner(view, alone, scoreboard(80, 105))
+        val r1 = runner(view, alone, scoreboard(105, 80))
         r1.look()
         assertTrue("an edge of 90% is more likely a wrong game than a gift", alone.isEmpty())
         assertTrue(r1.status.value.skipped.keys.any { it.contains("no second live source") })
 
         val agreeing = ArrayList<TailOffer>()
-        val r2 = runner(view, agreeing, scoreboard(80, 105), confirm = LiveConfirm { _, ref, _ -> if (ref == "Away Team") 0.985 else 0.015 })
+        val r2 = runner(view, agreeing, scoreboard(105, 80), confirm = LiveConfirm { _, ref, _ -> if (ref == "Boston Celtics") 0.985 else 0.015 })
         r2.look()
         val o = agreeing.single()
         assertEquals(0.985, o.confirm!!, 1e-9)
@@ -99,7 +99,7 @@ class LiveLightRunnerTest {
 
         // A second source that does not agree changes nothing: still not offered.
         val split = ArrayList<TailOffer>()
-        runner(view, split, scoreboard(80, 105), confirm = LiveConfirm { _, _, _ -> 0.55 }).look()
+        runner(view, split, scoreboard(105, 80), confirm = LiveConfirm { _, _, _ -> 0.55 }).look()
         assertTrue(split.isEmpty())
     }
 
@@ -108,17 +108,17 @@ class LiveLightRunnerTest {
         val offers = ArrayList<TailOffer>()
         var t = now
         val view = View(mapOf("m1" to book(200, 200)))
-        val r = runner(view, offers, scoreboard(80, 105), clock = { t })
+        val r = runner(view, offers, scoreboard(105, 80), clock = { t })
         r.readCatalog(); r.readScores()
         t += LiveLightRunner.STATE_MAX_AGE_MS + 1
         r.scanGame("ev")
         assertTrue(offers.isEmpty())
         assertTrue(r.status.value.skipped.keys.any { it.startsWith("score older") })
         val close = ArrayList<TailOffer>()
-        runner(view, close, scoreboard(80, 82)).look()
+        runner(view, close, scoreboard(82, 80)).look()
         assertTrue(close.isEmpty())
         val noBooks = ArrayList<TailOffer>()
-        runner(View(emptyMap()), noBooks, scoreboard(80, 105)).look()
+        runner(View(emptyMap()), noBooks, scoreboard(105, 80)).look()
         assertTrue(noBooks.isEmpty())
         val noScore = ArrayList<TailOffer>()
         val rn = runner(view, noScore, null)
@@ -131,7 +131,7 @@ class LiveLightRunnerTest {
     fun `the same offer is not handed over again within a moment unless the price improves`() = runBlocking {
         val view = View(mapOf("m1" to book(200, 200)))
         val offers = ArrayList<TailOffer>()
-        val r = runner(view, offers, scoreboard(80, 105))
+        val r = runner(view, offers, scoreboard(105, 80))
         r.look()
         r.scanGame("ev")
         assertEquals(1, offers.size)

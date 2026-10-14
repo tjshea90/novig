@@ -15,7 +15,7 @@ import org.junit.Test
 class LiveLightScanTest {
     private fun ml(id: String = "m1") = NovigMarket(
         id, "ev", "MONEY", "OPEN", "d", 0L, MarketFee.GAME,
-        listOf(NovigOutcome("$id-h", "Home Team", "TBD"), NovigOutcome("$id-a", "Away Team", "TBD")), null,
+        listOf(NovigOutcome("$id-h", "Chicago Bulls", "TBD"), NovigOutcome("$id-a", "Denver Nuggets", "TBD")), null,
     )
 
     private fun total(id: String, strike: Double) = NovigMarket(
@@ -28,7 +28,7 @@ class LiveLightScanTest {
     /** Away Team is the line's YES (names sort), so its ask is 1 - the bid on Home. */
     private fun moneyline(homeBid: Int, awayBid: Int) = LadderPoint(Ladders.line(ml())!!, book("m1", mapOf("m1-h" to homeBid, "m1-a" to awayBid)))
 
-    private val away: (String) -> Int? = { ref -> if (ref == "Away Team") 25 else null }
+    private val away: (String) -> Int? = { ref -> if (ref == "Denver Nuggets") 25 else null }
     private val nba = { frac: Double, home: Int, awayScore: Int -> GameState(TailSport.BASKETBALL, home, awayScore, frac) }
 
     @Test
