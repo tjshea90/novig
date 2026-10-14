@@ -40,7 +40,7 @@ class ScanReachTest {
     @Test
     fun `scans read a week ahead by default, and a saved 3-day window moves to 7 once`() {
         assertEquals(7, ScanSettings().daysAhead)
-        assertEquals(7, ScanSettings(daysAhead = 3, schema = 7).migrate().daysAhead)
+        assertEquals(7, ScanSettings(daysAhead = 3, schema = 7, maker = false, makerRecommend = false).migrate().daysAhead)
         // Tj's own other picks stay, and so does a 3 chosen after the move.
         for (kept in listOf(1, 2, 5, 10)) assertEquals(kept, ScanSettings(daysAhead = kept, schema = 7, maker = false, makerRecommend = false).migrate().daysAhead)
         assertEquals(3, ScanSettings(daysAhead = 3, schema = 8, maker = false, makerRecommend = false).migrate().daysAhead)

@@ -1,7 +1,7 @@
-# CHECKPOINT 3246 — read me first, then TASKS.md
+# CHECKPOINT 3247 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T18:16:00Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `56455fc30` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T18:19:23Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-5fc41785-3m8rjr` · **builds on:** `8afb8b263` (this checkpoint is the commit after it)
 
 ## Just done
 pre-ship: v0.99.11: the last wallet-filling pass bids every start time and kind with no sharp book needed (popular first, riskier kinds at a higher edge), and bids read ten days ahead
@@ -13,12 +13,12 @@ ship.sh gates and releases this
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
-     M data/src/test/kotlin/com/tjshea/vigilant/data/novig/trading/maker/MakerTest.kt
+     M data/src/test/kotlin/com/tjshea/vigilant/data/scanner/AltMarketsTest.kt
+     M data/src/test/kotlin/com/tjshea/vigilant/data/scanner/ScanReachTest.kt
 
 ## Last ten checkpoints
 ```
+  8afb8b263 ckpt 3246: pre-ship: v0.99.11: the last wallet-filling pass bids every start time and 
   2b98e8d05 ckpt 3245: v0.99.9 recorded; v0.99.10 shipped (wallet-filling bids ignore max-behind, 
   1d5882246 ckpt 3244: pre-release: v0.99.10: wallet-filling bids may rest far behind the best bid
   17c56d7d7 ckpt 3243: pre-ship: v0.99.10: wallet-filling bids may rest far behind the best bid, a
@@ -28,8 +28,4 @@ ship.sh gates and releases this
   d8aae8d11 ckpt 3239: pre-ship: v0.99.9: the +EV list re-prices its bets from Novig's live prices
   ae43c57f5 ckpt 3238: v0.99.8 released and recorded (TWR2 done)
   4702f8911 ckpt 3237: v0.99.8 shipped, release.yml triggered
-  173d62fd8 ckpt 3236: pre-release: v0.99.8: the auto bids read a week of games, so the weekend's 
 ```
-
-(6 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
