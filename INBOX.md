@@ -7396,3 +7396,13 @@ I have multiple keys for each API does it send all of them
 ```
 The scan takes less than a second and shows nothing
 ```
+
+## 2026-10-14T23:56:35Z
+```
+Now results pop up. If I pull down to refresh, does it send GitHub a command to scan again? It only took a second to scan. Is this correct? Could it really work that fast?
+I want it to tell GitHub to scan every time I pull to refresh. If possible, I want GitHub to show me its scanning progress and some type of confirmation that the scan is current and the data and bets in the list are current (maybe a stat which shows how current the odds are, but it must be accurate).
+
+I want the app to still work just the same as it always has, all buttons and features must simply send the options to the GitHub engine. The GitHub engine must always mirror my settings on the phone. The only difference is GitHub handles the processing. 
+
+Confirm that GitHub can actually scan as fast as it did, or if it messed up as because I got many results very quickly
+```
