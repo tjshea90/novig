@@ -7162,3 +7162,16 @@ And the auto bids are still only filling up a small part of the available wallet
 ```
 Auto bet is betting a lot of the same teams many times just at different spreads. Check to see if the guard on same game bets is working
 ```
+
+## 2026-10-14T02:52:30Z
+```
+I want a "light" version of the feature which looks for obviously wrong/stale odds in live games which result in positive EV. This can run with novig only using the web socket or in combination with other sockets that offer live odds except pinnodds because my subscription ran out. Maybe kalshi socket has live games. 
+
+This feature will only look for and auto bet odds that are live and obviously wrong or stale in my favor. For example, a game that is almost over with a team winning by many points but offered at 50/50 odds, or a game that is very high scoring with a low "over" bet offered at good odds.
+
+It must be fast and auto bet fast as well. 
+
+Make a toggle for live auto bids as well, which does the same thing but offers bids that are very favorable to me based on the actual score/live odds. 
+
+All of this should be able to work simultaneously with the regular pregame odds scanning/ auto bet and auto bid, but only if I'm already using those.
+```
