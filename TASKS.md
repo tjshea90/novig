@@ -5147,4 +5147,4 @@ Cause: passes already run on partial scan results every 20 s, but `MakerLines.fr
 
 ## TWR2: v0.99.12 is worse: fewer bids, scan far too long (Tj, 2026-10-14 ~15:20 local, file 55a487c0...)
 Tj: "It's broken. It placed even fewer bids on this version. The scan takes way too long."
-- [ ] TWR2a Read the file: scan duration and what made it long (10-day reach?), bid counts and skip reasons; fix before shipping v0.99.13 (v0.99.13 built, NOT released).
+- [x] TWR2a (v0.99.12 file: a 10-day scan = 7,669 Novig prices in 496 s, fair read in 47 s so 5,000+ lines "fair too old"; the 130 bids were cleared by STOP ALL at 15:19:46 before the report) `FarLane`: background scans alternate a quick 48 h scan with a full-reach one every 15 min; bids past a quick scan's reach stay until expiry (`MakerPlan.reachUntilMs`); switch `bidFarLane`. Tests `FarLaneTest`, `MakerTest`. v0.99.13 (with progressive bidding).
