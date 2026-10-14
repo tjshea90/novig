@@ -333,11 +333,12 @@ class MakerDesk(
         }
         // Keep the wallet working: stakes scale up while the bids up are worth less than the target, and riskier bids fill what the usual ones cannot.
         val usual = allBids.filter { it.active }.sumOf { it.restingDollars }
-        val scale = if (rung > 0 || rules.volume) 1.0 else deployScale(rules, usual, wallet)
+        // Volume mode scales the stakes of NEW bids up while the bids up are worth less than the wallet target (Tj, 2026-10-14: "still only around half the wallet balance"): the count stays, each bid is bigger, never past the Kelly ceiling or the most per bid.
+        val scale = if (rung > 0) 1.0 else deployScale(rules, usual, wallet)
         val rulesNow = if (scale > 1.0) rules.copy(stakeScale = scale, kellyCeiling = rules.deployMaxKelly) else rules
         val ownless = MakerLines.withoutOwn(lines, allBids)
         val base = MakerQuote.decideAll(ownless, rulesNow, now, held).map(judge)
-        val extra = if (rung > 0) (emptyList<MakerDecision>() to null) else deployFor(rulesNow, ownless, base, bids, activeOutcomes, held, now, wallet, usual, judge)
+        val extra = if (rung > 0 || rules.volume) (emptyList<MakerDecision>() to null) else deployFor(rulesNow, ownless, base, bids, activeOutcomes, held, now, wallet, usual, judge)
         val decisions = base + extra.first
         // Volume mode runs no wallet-filling pass, so its Diagnostics line is made here: how many bids are wanted, how much money, how they are spread over games.
         val deployInfo = extra.second ?: if (rules.volume && wallet != null && wallet > 0.0) {
@@ -347,7 +348,7 @@ class MakerDesk(
             val gd = HashMap<String, Double>()
             for (b in allBids) if (b.active) { gb.merge(b.eventId, 1, Int::plus); gd.merge(b.eventId, b.restingDollars, Double::plus) }
             for (c in fresh) { gb.merge(c.line.market.eventId, 1, Int::plus); gd.merge(c.line.market.eventId, c.cost, Double::plus) }
-            Deploy(wallet, 0.9 * wallet, usual, 1.0, rules.deployMaxKelly, fresh.size, fresh.sumOf { it.cost }, usual + fresh.sumOf { it.cost }, spread = spreadLines(gb, gd, allBids, lines, rules))
+            Deploy(wallet, (if (rules.deployPct > 0.0) rules.deployPct else 0.9) * wallet, usual, scale, rules.deployMaxKelly, fresh.size, fresh.sumOf { it.cost }, usual + fresh.sumOf { it.cost }, spread = spreadLines(gb, gd, allBids, lines, rules))
         } else null
         if (rung == 0) lastDeploy = deployInfo?.copy(
             scale = scale, judged = decisions.size,

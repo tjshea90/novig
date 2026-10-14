@@ -1064,14 +1064,14 @@ class MakerTest {
 
     // ---- Volume mode (Tj, 2026-10-14) -------------------------------------------------------------------------------------
 
-    private val volume = MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = true)))
+    private val volume = MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = true, bidDeploy = true)))
 
     @Test
     fun `Volume mode is thousands of bids at any start time, the margin is an EV floor by type and the wallet scale-up passes are off`() {
         assertTrue(volume.volume)
         assertEquals(BidVolume.MAX_BIDS, volume.maxBids)
         assertEquals("any start time", 0, volume.earlyHours)
-        assertEquals(0.0, volume.deployPct, 0.0)
+        assertEquals("the stake scale-up target is kept", 0.9, MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = true, bidDeploy = true))).deployPct, 1e-9)
         assertFalse("off: the usual rules", MakerRules.of(ScanSettings(maker = true, vigGuards = ScanGuards(bidVolume = false))).volume)
         // The safest types (a proven NHL prop with a sharp book) bid at 1.5% under the fair; a risky one (an NFL prop) and a line with no sharp book at 2.5%.
         val safe = line("s-over", fair = 0.60, offer = 0.70, m = market("s")).copy(league = "NHL", sharpFairs = listOf(0.60), books = 5, bookFairs = listOf(0.60, 0.60, 0.60, 0.60, 0.60))
@@ -1098,7 +1098,7 @@ class MakerTest {
     }
 
     @Test
-    fun `Volume mode runs no wallet-filling pass and does not scale the stakes, and says how the bids are spread`() = runBlocking {
+    fun `Volume mode runs no wallet-filling pass, scales the new stakes toward the wallet target, and says how the bids are spread`() = runBlocking {
         val rs = volume.copy(stakeMode = com.tjshea.vigilant.data.scanner.AutoBetStake.entries.first { it.kelly == 1.0 / 16 }, bankroll = 1_000.0, maxStake = 100.0, minBooks = 1, maxOdds = 0, minOdds = 0, perGameBids = 0, perGameBidDollars = 0.0)
         val near = (1..6).map { line("n$it-over", fair = 0.60, offer = 0.70, m = market("n$it", starts = start + 6 * 3_600_000L).copy(eventId = "g${it % 3}")).copy(league = "NHL", sharpFairs = listOf(0.60), books = 5, bookFairs = List(5) { 0.60 }) }
         val r = desk(FakeNovig(), tracker()).cycle(near, rs, stop = null, maxPerDay = 5_000.0, wallet = 500.0)
@@ -1107,7 +1107,9 @@ class MakerTest {
         assertTrue("no wallet-filling bid", posts.none { it.overflow })
         val plain = rs.copy(volume = false, deployPct = 0.0)
         val usual = desk(FakeNovig(), tracker()).cycle(near, plain, stop = null, maxPerDay = 5_000.0, wallet = 500.0).decisions.filterIsInstance<MakerDecision.Post>()
-        assertTrue("the stake is the usual one, never scaled: ${posts.first().cost} vs ${usual.first().cost}", posts.first().cost <= usual.first().cost * 1.0001 + 1.0)
+        // Nothing is up and the wallet is empty of bids: the new bids' stakes are scaled up toward the target (the count is unchanged), never past the Kelly ceiling.
+        assertTrue("scaled up from the usual stake: ${posts.first().cost} vs ${usual.first().cost}", posts.first().cost > usual.first().cost)
+        assertEquals(usual.size, posts.size)
         assertTrue(r.deploy != null && r.deploy!!.spread.isNotEmpty())
     }
 

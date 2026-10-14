@@ -178,7 +178,7 @@ class MakerRunner(
             notifyFills(report.fills, desk.bids())
             // Still under the wallet target after the usual and the riskier bids (Tj, 2026-10-14: "the bids up ... never fill my wallet"): a second, DEEPER bid on the sides that already have one. Each is priced
             // [MakerDesk.DEEP_MARGIN] further under the fair, so its edge and its Kelly stake are bigger and it fills rarely but well; it only runs while the bids up are under the target, and every guard counts it.
-            if (s.maker && stop == null && !partial && !cnoSource) {
+            if (s.maker && stop == null && !partial && !cnoSource && !rules.volume) {
                 val deepRules = rules.copy(margin = rules.margin + MakerDesk.DEEP_MARGIN)
                 val deep = desk.cycle(
                     moved, deepRules, stop, s.apiMaxPerDay, wallet,
