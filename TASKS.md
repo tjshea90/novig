@@ -5120,3 +5120,7 @@ Tj: "This bet is negative ev. Why did it not automatically remove itself from th
 Cause: FeedScreen's 15 s recheck (`AUTO_RECHECK_MS`) is skipped while `status.scanning`, `MainViewModel.recheck` returns while `c.runner.running`, and `Scanner.recheck` needs the scan's mutex; v0.99.8's week-wide scan runs for minutes, so listed rows were never re-priced.
 - [x] TNR1 (`Pricing.requote`, `OddsScanner.requoteListed`, `MainViewModel.recheck` during a scan, `FeedScreen`) Re-price the listed rows from Novig's live top of book every 15 s even while a scan runs (no scan lock); a row no longer +EV leaves the list. Test `RequoteTest`.
 - [ ] TNR2 v0.99.9 shipped, release.yml triggered: confirm get_release_by_tag v0.99.9, record-release.sh v0.99.9 268, send Tj the link.
+
+## TWS: still few bids after a full scan on v0.99.8 (Tj, 2026-10-14 ~18:05Z, screenshot: wallet $143.91, 16 bids up = $15.89; "13 bets hidden: the other books' odds behind them are too old (over 15 minutes)"; "2 bets >= +1.5% EV, 13120 checked")
+Tj: "I finished a full scan and it still is not posting many bids"
+- [ ] TWS1 Needs Tj's v0.99.8+ Diagnostics file (WALLET DEPLOYMENT lists the bid skip reasons; the newest file in research/uploads is v0.98.0, before the week-wide scan). Hypothesis to test with it: the week-wide scan (7,738 markets) takes so long that fair odds read early in it pass the 15-minute freshness limit before bids are priced.
