@@ -7364,3 +7364,10 @@ Can it tell me positive EV bets on novig without me scanning locally with vigila
 ```
 Put vigilant scans on GitHub runners. Outsource as much Internet bandwidth and processing power as possible to GitHub without sacrificing quality or freshness of odds. Can this run on GitHub and simply steam me the bets list? I just control the settings from the phone?
 ```
+
+## 2026-10-14T22:03:59Z
+```
+I want as much processing and Internet bandwidth as possible on GitHub, but consider GitHub limits. Will I get cut off? The goal is to use the phone only to set the settings and retrieve the scanned results. GitHub will provide all the power. I agree to all three questions you sent.
+
+If this is all plausible, build the GitHub vigilant engine, and make a mechanism where it can save bets and bids and history permanently to GitHub and automatically so Claude can analytize it
+```
