@@ -111,9 +111,8 @@ class MakerRunner(
      * The last start the scan behind [result] reached: the quick scan's 48 hours past [now] when it was one ([ScanSettings.nearScan] is not in the result, so the latest start it priced stands for it,
      * never less than the quick scan's own reach). Null for a full scan or no result.
      */
-    private fun reachOf(result: com.tjshea.vigilant.data.scanner.ScanResult?, now: Long): Long? {
+    private fun reachOf(result: com.tjshea.vigilant.data.scanner.ScanResult?, s: ScanSettings, now: Long): Long? {
         result ?: return null
-        val s = c.currentSettings()
         if (!s.maker || !s.vigGuards.bidFarLane || s.daysAhead * 24 <= com.tjshea.vigilant.data.scanner.FarLane.NEAR_HOURS) return null
         val latest = result.opportunities.maxOfOrNull { minOf(it.event.startsTs, it.market.startsTs) } ?: return null
         // A full-reach scan priced games out to the reach; only a scan that stopped at the quick scan's hours leaves later games unjudged.
@@ -174,7 +173,7 @@ class MakerRunner(
                 moved, rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,
                 // A quick scan (FarLane) reads only the next 48 hours: a bid on a game past that stays up for its own expiry instead of coming down as "no longer a bid to post".
-                reachUntilMs = reachOf(result, now),
+                reachUntilMs = reachOf(result, s, now),
             )
             notifyFills(report.fills, desk.bids())
             // Still under the wallet target after the usual and the riskier bids (Tj, 2026-10-14: "the bids up ... never fill my wallet"): a second, DEEPER bid on the sides that already have one. Each is priced
