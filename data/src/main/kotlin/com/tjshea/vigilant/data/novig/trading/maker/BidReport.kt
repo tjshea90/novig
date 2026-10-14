@@ -58,6 +58,8 @@ object BidReport {
         val fairNewestAgeSec: Int? = null,
         /** A small-market bid (Quick & likely's fill of the money popular bids leave idle). */
         val obscure: Boolean = false,
+        /** A riskier bid posted only to keep the wallet working ([MakerDesk.deployFor]). */
+        val overflow: Boolean = false,
         /** Which scanner priced it: "vigilant" or "cno" ([ScanSettings.makerSource]); for a CNO bid how old CNO's data behind the list and the page was when it was posted (seconds). */
         val source: String = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
         val listAgeSec: Int? = null,
@@ -103,7 +105,7 @@ object BidReport {
                 bestBid = b.bestBidAtPost, offer = b.offerAtPost, bookAgeSec = b.bookAtMs?.let { ((b.postedAtMs - it) / 1000L).coerceAtLeast(0L) },
                 lifeMin = b.expiresAtMs?.let { ((it - b.postedAtMs) / 60_000L).coerceAtLeast(0L) },
                 basis = b.fairBasis?.group,
-                focus = b.focus, fairBooks = b.fairBooks, fairAgeSec = b.fairAgeSec, fairNewestAgeSec = b.fairNewestAgeSec, obscure = b.obscure,
+                focus = b.focus, fairBooks = b.fairBooks, fairAgeSec = b.fairAgeSec, fairNewestAgeSec = b.fairNewestAgeSec, obscure = b.obscure && !b.overflow, overflow = b.overflow,
                 source = b.source, listAgeSec = b.listAgeSec, pageAgeSec = b.pageAgeSec,
                 status = b.status.name, why = b.why.takeIf { b.status.ended }, endedAtMs = b.endedAtMs,
                 restedMin = ((b.endedAtMs ?: now) - b.postedAtMs).coerceAtLeast(0L) / 60_000.0,
@@ -172,6 +174,7 @@ object BidReport {
         }
         // Small-market bids are counted from the first one posted, before any fill ([rows] split by fill only once there are fills).
         if (rows.any { it.obscure }) out += "small-market bids (Quick & likely's fill of idle money): ${rows.count { it.obscure }} posted, ${rows.count { it.obscure && it.filled > 0 }} filled"
+        if (rows.any { it.overflow }) out += "wallet-filling bids (riskier: 4 points wider margin, a sharp book required, half the stake; posted only while the wallet is under its target): ${rows.count { it.overflow }} posted, ${rows.count { it.overflow && it.filled > 0 }} filled"
         out += funnel(rows)
         if (filled.isEmpty()) return out
         val all = Agg().also { a -> filled.forEach(a::add) }
@@ -217,10 +220,10 @@ object BidReport {
             split("age of the oldest sharp price when posted, low API usage bids", AGE_ORDER) { r -> r.takeIf { it.focus == com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE.name }?.fairAgeSec?.let(::ageBand) }
         }
         // Small-market bids (Quick & likely fills the money popular bids leave idle with them, under strict safeguards): shown once any was posted, so Tj sees whether they pay.
-        if (rows.any { it.obscure }) {
-            out += "-- popular and small-market bids --"
-            out += "   posted: ${rows.count { !it.obscure }} popular, ${rows.count { it.obscure }} small-market"
-            split("popular or small market", null) { if (it.obscure) "small market (strict safeguards)" else "popular market" }
+        if (rows.any { it.obscure || it.overflow }) {
+            out += "-- popular, small-market and wallet-filling bids --"
+            out += "   posted: ${rows.count { !it.obscure && !it.overflow }} popular, ${rows.count { it.obscure }} small-market, ${rows.count { it.overflow }} wallet-filling"
+            split("popular, small market or wallet-filling", null) { if (it.overflow) "wallet-filling (riskier, wider margin)" else if (it.obscure) "small market (strict safeguards)" else "popular market" }
         }
         split("league", null) { it.league }
         return out
