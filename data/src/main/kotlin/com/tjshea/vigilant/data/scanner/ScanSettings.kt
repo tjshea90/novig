@@ -977,7 +977,7 @@ data class ScanSettings(
             val days = daysAhead.coerceAtLeast(1) * 24
             // The auto bids fill the wallet from games later in the week (Tj, 2026-10-14: "There are games this weekend with a full NFL and college football slate ..."): the Starts within chip is a VIEW of the next
             // hours, and it must not stop the scan from reading the whole Days ahead window the bids are priced from. Only the bids' own switch widens it; a feed that shows 48 h still shows 48 h.
-            if (maker && vigGuards.bidDeploy) return days
+            if (maker && vigGuards.bidDeploy && !lowUsageScan) return days
             return if (startsWithinHours in 1 until days) startsWithinHours else days
         }
 
