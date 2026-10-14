@@ -350,16 +350,39 @@ class NovigPublicClient(
             put("limit", "5000")
         }) { body -> json.decodeFromString(MarketPageDto.serializer(), body).let { it.items.map(MarketDto::toDomain) to it.next } }
 
+    /** A market looked up one at a time, and when: the same market is asked for by the paper lab's grading, the CNO live prices and the settler, over and over (Tj's 2026-10-13 file: 1,186 of 7,780 public calls refused). */
+    private class Looked(val at: Long, val market: NovigMarket?)
+    private val lookedUp = object : LinkedHashMap<String, Looked>(256, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Looked>?) = size > LOOKUP_KEEP
+    }
+
+    /**
+     * One market by id, from the public route (the per-IP edge limit applies). A recent answer is re-used ([LOOKUP_TTL_MS]; a market Novig no longer lists, [LOOKUP_GONE_TTL_MS]), a 429 slows the
+     * public pace and waits out its Retry-After like every other public read (it used to be thrown, with the pace unchanged, so the next lookups were refused too), and one retry follows.
+     */
     override suspend fun market(marketId: String): NovigMarket? {
-        val request = Request.Builder().url("$baseUrl/v3/public/catalog/markets/$marketId").get().build()
-        publicGate.acquire()
-        http.newCall(request).await().use { response ->
-            count(response.code)
-            if (response.code == 404) return null
-            val body = response.body?.string().orEmpty()
-            if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
-            return json.decodeFromString(MarketDto.serializer(), body).toDomain()
+        synchronized(lookedUp) { lookedUp[marketId] }?.let { k -> if (rateClock() - k.at < (if (k.market == null) LOOKUP_GONE_TTL_MS else LOOKUP_TTL_MS)) return k.market }
+        repeat(2) { attempt ->
+            val request = Request.Builder().url("$baseUrl/v3/public/catalog/markets/$marketId").get().build()
+            publicGate.acquire()
+            http.newCall(request).await().use { response ->
+                count(response.code)
+                if (response.code == 404) { synchronized(lookedUp) { lookedUp[marketId] = Looked(rateClock(), null) }; return null }
+                val body = response.body?.string().orEmpty()
+                if (response.code == 429 && attempt == 0) {
+                    val wait = response.header("Retry-After")?.trim()?.toLongOrNull() ?: 1L
+                    publicGate.pause(rateClock() + wait * 1000L)
+                    publicGate.slowDown()
+                    return@use
+                }
+                if (!response.isSuccessful) {
+                    if (response.code == 429) { publicGate.pause(rateClock() + (response.header("Retry-After")?.trim()?.toLongOrNull() ?: 1L) * 1000L); publicGate.slowDown() }
+                    throw httpError(response.code, body, response.header("Retry-After"))
+                }
+                return json.decodeFromString(MarketDto.serializer(), body).toDomain().also { m -> synchronized(lookedUp) { lookedUp[marketId] = Looked(rateClock(), m) } }
+            }
         }
+        return null
     }
 
     override suspend fun event(eventId: String): NovigEvent? {
@@ -369,6 +392,7 @@ class NovigPublicClient(
             count(response.code)
             if (response.code == 404) return null
             val body = response.body?.string().orEmpty()
+            if (response.code == 429) { publicGate.pause(rateClock() + (response.header("Retry-After")?.trim()?.toLongOrNull() ?: 1L) * 1000L); publicGate.slowDown() }
             if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
             return json.decodeFromString(EventDto.serializer(), body).toDomain()
         }
@@ -386,6 +410,7 @@ class NovigPublicClient(
             count(response.code)
             if (response.code == 404) return emptyList()
             val body = response.body?.string().orEmpty()
+            if (response.code == 429) { publicGate.pause(rateClock() + (response.header("Retry-After")?.trim()?.toLongOrNull() ?: 1L) * 1000L); publicGate.slowDown() }
             if (!response.isSuccessful) throw httpError(response.code, body, response.header("Retry-After"))
             return json.decodeFromString(TradePageDto.serializer(), body).items.mapNotNull { it.toDomain() }
         }
