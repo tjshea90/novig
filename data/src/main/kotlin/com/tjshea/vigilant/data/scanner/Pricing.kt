@@ -308,7 +308,7 @@ object Pricing {
                     // Thin soft-book fairs far from the start run high (ThinEarlyHaircut): cut before anything reads the chance.
                     val thin = if (settings.thinEarlyHaircut) (raw - ThinEarlyHaircut.points(pm.league.novigName, pm.lineKey?.stat, fair.booksUsed.size, (pm.event.startsTs - now) / 3_600_000.0)).coerceAtLeast(0.0) else raw
                     // Player-prop fairs run high, Overs most (PropHaircut): the history's Overs won 39.7% against a 49.4% fair.
-                    if (settings.propHaircut) (thin - PropHaircut.points(pm.kind, po.selection)).coerceAtLeast(0.0) else thin
+                    if (settings.propHaircut) (thin - PropHaircut.points(BetKind.of(pm.label, po.selection), po.selection)).coerceAtLeast(0.0) else thin
                 }
                 val quote = if (p != null && ladder.isNotEmpty()) EvMath.quote(p, ladder.first().price, fee, live) else null
                 val depth = if (p != null && ladder.isNotEmpty()) EvMath.positiveDepth(ladder, p, fee, live) else null
