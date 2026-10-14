@@ -883,6 +883,10 @@ data class ScanSettings(
         if (s.schema < 19) {
             s = if (s.maker || s.makerRecommend) s.copy(daysAhead = maxOf(s.daysAhead, BID_REACH_DAYS), bookPropHours = maxOf(s.bookPropHours, BID_REACH_DAYS * 24), schema = 19) else s.copy(schema = 19)
         }
+        // v0.99.11 (Tj, 2026-10-14: "All times are allowed"): bids read the longest reach the scan offers, ten days.
+        if (s.schema < 20) {
+            s = if (s.maker || s.makerRecommend) s.copy(daysAhead = maxOf(s.daysAhead, BID_REACH_DAYS), bookPropHours = maxOf(s.bookPropHours, BID_REACH_DAYS * 24), schema = 20) else s.copy(schema = 20)
+        }
         return s
     }
 
@@ -1127,7 +1131,7 @@ data class ScanSettings(
         val STARTS_WITHIN_CHOICES = listOf(0, 3, 6, 12, 24, 48)
 
         /** How many days ahead the scan must read for the auto bids to find a full slate of games and props (the week). */
-        const val BID_REACH_DAYS = 7
+        const val BID_REACH_DAYS = 10
 
         /** [daysAhead]'s choices. */
         val DAYS_AHEAD_CHOICES = listOf(1, 2, 3, 5, 7, 10)
