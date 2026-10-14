@@ -1446,4 +1446,13 @@ data class ScanGuards(
     val bidLevel: Int = 0,
     /** The Bids slider's "More, smaller bids" mode ([BidSlider.many], Tj 2026-10-13): hundreds of 1/16-Kelly bids, proven types first, riskier ones under stricter rules. */
     val bidMany: Boolean = false,
+    /**
+     * Keep the wallet working (Tj, 2026-10-14: "I want the auto bids to fill up my wallet at all times. As long as the bids are placed at positive EV, it is fine. If there are not great bids to put up, make it put
+     * up riskier bids but with safeguards such as higher EV"): while the bids resting are worth less than [bidDeployPct] percent of the wallet, every new bid's stake is scaled up (never past [bidDeployKelly]
+     * percent of full Kelly or the per-bid maximum), and when that is still not enough, riskier bids go up too (games further out, a sharp book required) at a wider margin and half the stake.
+     * Off = bids are sized exactly as before.
+     */
+    val bidDeploy: Boolean = true,
+    val bidDeployPct: Int = 90,
+    val bidDeployKelly: Int = 25,
 )

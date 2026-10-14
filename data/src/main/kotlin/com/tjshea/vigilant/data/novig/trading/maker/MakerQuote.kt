@@ -105,6 +105,14 @@ data class MakerRules(
      */
     val tiered: Boolean = false,
     /**
+     * Keep the wallet working ([com.tjshea.vigilant.data.scanner.VigGuards.bidDeploy]): the share of the wallet the resting bids should add up to (0 = off), the ceiling on a stake while it is scaled up (a fraction
+     * of full Kelly), and what the desk works out each pass: [stakeScale], the multiple of the usual stake a new bid asks for (1 = usual; never past [maxStake] or [kellyCeiling]).
+     */
+    val deployPct: Double = 0.0,
+    val deployMaxKelly: Double = 0.25,
+    val stakeScale: Double = 1.0,
+    val kellyCeiling: Double = 0.0,
+    /**
      * Low API usage bids ([LowUsage], RESEARCH.md §92): the fair must be built from [lowUsageBooks] alone (their names as the fair line gives them: "Kalshi", "ProphetX"),
      * at least two of them, which is what the low-usage scan prices ([com.tjshea.vigilant.data.scanner.LowUsageBids.profile]); a line priced by an older full scan, with
      * a soft book or a sharp book that wasn't picked in it, waits for the next scan. Empty = the rule is off.
@@ -235,6 +243,8 @@ data class MakerRules(
             maxPerGame = s.apiMaxPerGame.coerceAtLeast(0.0),
             popularFirst = s.makerPopularFirst,
             tiered = s.vigGuards.bidMany,
+            deployPct = if (s.vigGuards.bidDeploy) s.vigGuards.bidDeployPct.coerceIn(10, 100) / 100.0 else 0.0,
+            deployMaxKelly = s.vigGuards.bidDeployKelly.coerceIn(5, 100) / 100.0,
             postsPerPass = if (s.vigGuards.bidMany) MANY_POSTS_PER_PASS else POSTS_PER_PASS,
             requireSharp = s.makerRequireSharp,
             anchorSharp = s.makerAnchorSharp,
@@ -668,7 +678,12 @@ object MakerQuote {
                 f * (fair - price) / (1.0 - price) * rules.bankroll * EvMath.leadScale(hoursToStart)
             }
         }
-        return minOf(wanted, rules.maxStake).takeIf { it > 0.0 }
+        // Scaled up to keep the wallet working (or down for a riskier bid): never past the per-bid maximum, and a scaled-UP stake never past the Kelly ceiling for this bid's own edge.
+        var sized = wanted * rules.stakeScale
+        if (rules.stakeScale > 1.0 && rules.kellyCeiling > 0.0 && rules.bankroll > 0.0 && fair > price && price < 1.0) {
+            sized = minOf(sized, rules.kellyCeiling * (fair - price) / (1.0 - price) * rules.bankroll * EvMath.leadScale(hoursToStart))
+        }
+        return minOf(sized, rules.maxStake).takeIf { it > 0.0 }
     }
 
     /**
