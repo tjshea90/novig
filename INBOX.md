@@ -7185,3 +7185,10 @@ The live light should look at alternate market odds as well on novig, for exampl
 ```
 Record 99.1
 ```
+
+## 2026-10-14T04:17:34Z
+```
+@"/root/.claude/uploads/cf6ab219-16ec-5602-bdb7-367accddf30a/495f8673-vigilant-diagnostics-v0.99.1-2026-10-14-0017.txt" I don't think it is working, so far no bets and I can't even see where the bids are supposed to be. I don't think it posted bids.
+
+This must work without pinnodds at all, because I no longer have pinnodds socket
+```
