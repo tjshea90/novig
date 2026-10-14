@@ -1,0 +1,64 @@
+package com.tjshea.vigilant.data.cloud
+
+import com.tjshea.vigilant.data.scanner.ScanResult
+import com.tjshea.vigilant.data.scanner.ScanSettings
+import com.tjshea.vigilant.data.scanner.ScanStats
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class CloudScannerTest {
+    private val none = ScanStats(0, 0, 0, 0, 0)
+    private fun feed(at: Long) = CloudFeed(at, 1, none, emptyList())
+
+    private class Local : com.tjshea.vigilant.data.scanner.OddsScanner {
+        var scans = 0
+        override suspend fun scan(settings: ScanSettings, sources: List<com.tjshea.vigilant.data.reference.ReferenceSource>, pinned: Set<String>, onProgress: (com.tjshea.vigilant.data.scanner.ScanProgress) -> Unit, onPartial: (ScanResult) -> Unit): com.tjshea.vigilant.data.scanner.ScanReport {
+            scans++
+            return com.tjshea.vigilant.data.scanner.ScanReport(null, listOf("local"), null, 0, 0, 0, 0, null, emptyList(), null)
+        }
+        override suspend fun recheck(settings: ScanSettings, marketIds: Collection<String>, onProgress: (Int, Int) -> Unit) = com.tjshea.vigilant.data.scanner.RecheckReport(null, 0, 0, "local")
+        override suspend fun reprice(settings: ScanSettings): ScanResult? = null
+        override suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = setOf("local")
+    }
+
+    @Test
+    fun `before any list arrives a cloud scan says why, with no result`() = runBlocking {
+        val latest = CloudLatest().also { it.why = "no GitHub token saved" }
+        val r = CloudScanner(latest).scan(ScanSettings(cloudScan = true), emptyList(), emptySet(), {}, {})
+        assertNull(r.result)
+        assertTrue(r.errors.single().contains("no GitHub token saved"))
+    }
+
+    @Test
+    fun `a list is the scan's result, and an old one is said to be old`() = runBlocking {
+        val now = 1_000_000_000L
+        val latest = CloudLatest().also { it.put(feed(now - 10 * 60_000L), now) }
+        val r = CloudScanner(latest, clock = { now }).scan(ScanSettings(cloudScan = true), emptyList(), emptySet(), {}, {})
+        assertNotNull(r.result)
+        assertEquals(now - 10 * 60_000L, r.result!!.computedAtMs)
+        assertTrue(r.errors.single().contains("10 min old"))
+    }
+
+    @Test
+    fun `the switch picks the scanner per call, and only scans and re-pricing move`() = runBlocking {
+        val local = Local()
+        val latest = CloudLatest().also { it.put(feed(5L), 5L) }
+        val s = SwitchingScanner(local, CloudScanner(latest))
+        val on = ScanSettings(cloudScan = true)
+        val off = ScanSettings(cloudScan = false)
+        assertNotNull(s.scan(on, emptyList(), emptySet(), {}, {}).result)
+        assertEquals(0, local.scans)
+        s.scan(off, emptyList(), emptySet(), {}, {})
+        assertEquals(1, local.scans)
+        assertNotNull(s.reprice(on))
+        assertNull(s.reprice(off))
+        assertEquals(emptySet<String>(), s.unscannedLeagues(on))
+        assertEquals(setOf("local"), s.unscannedLeagues(off))
+        // re-checking open bets is always the phone's own
+        assertEquals("local", s.recheck(on, emptyList()).error)
+    }
+}
