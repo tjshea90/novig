@@ -44,4 +44,11 @@ class PropHaircutTest {
         assertTrue(migrated.propHaircut)
         assertTrue(!ScanSettings(schema = 18).migrate().propHaircut)   // a choice made after the migration stays
     }
+
+    @Test
+    fun `comparing two scan results never walks their opportunities (the main-thread freeze in Tj's 2026-10-14 file)`() {
+        fun result(at: Long, n: Int) = ScanResult(emptyList(), List(n) { throw AssertionError("the opportunities must not be touched") }.takeIf { false } ?: emptyList(), ScanStats(), at)
+        assertEquals(result(5, 0), result(5, 0))
+        assertTrue(result(5, 0) != result(6, 0))
+    }
 }
