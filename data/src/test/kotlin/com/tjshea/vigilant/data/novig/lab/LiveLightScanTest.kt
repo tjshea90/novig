@@ -54,7 +54,7 @@ class LiveLightScanTest {
 
     @Test
     fun `a team that cannot be matched to the score is never judged, and the last seconds and the first minutes are left alone`() {
-        assertTrue(LiveLightScan.scan(listOf(moneyline(490, 490)), "NBA", nba(0.10, 80, 105)) { null }.isEmpty())
+        assertTrue(LiveLightScan.scan(listOf(moneyline(490, 490)), "NBA", nba(0.10, 80, 105), { _ -> null }).isEmpty())
         assertTrue(LiveLightScan.scan(listOf(moneyline(490, 490)), "NBA", nba(0.01, 80, 105), away).isEmpty())
         assertTrue(LiveLightScan.scan(listOf(moneyline(490, 490)), "NBA", nba(0.90, 80, 105), away).isEmpty())
         assertNull(LiveLightScan.priorTotal("CRICKET"))
@@ -62,7 +62,7 @@ class LiveLightScanTest {
     }
 
     @Test
-    fun `a low over in a high scoring game, or a high under in a low scoring one, is found; the other side of it is not`() {
+    fun `a low over in a high scoring game, or a high under in a low scoring one, is found and the other side of it is not`() {
         val low = LadderPoint(Ladders.line(total("t1", 170.5))!!, book("t1", mapOf("t1-u" to 100, "t1-o" to 100)))   // both sides offered at 0.90
         val found = LiveLightScan.scan(listOf(low), "NBA", nba(0.15, 100, 90), { null })
         assertEquals(listOf("OVER"), found.map { it.side })
