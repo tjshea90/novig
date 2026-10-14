@@ -65,6 +65,18 @@ data class MakerRules(
     /** No bid is posted for less time than this (its fair about to go old, the start or the stop window too near). */
     val minLifeMs: Long = 60_000L,
     /**
+     * How old the fair behind a bid on a FAR game ([MakerQuote.FAR_HOURS] or more out) may be before the bid must end, when longer than [Freshness]'s own limit (0 = that limit). Only the wallet-filling bids
+     * set it (Tj, 2026-10-14: "They don't rest anywhere near long enough"): a game days away moves little in half an hour, and those bids sit 8+ points under the fair; the quotes behind the fair are still
+     * the scan's fresh ones, only the bid's life after the post is longer.
+     */
+    val farFairMaxAgeMs: Long = 0L,
+    /**
+     * The most Vigilant's own BIDS put on one game (Tj, 2026-10-14: "I only want so many bids/money on each game. Make it diversify bids among many games and bid types"): dollars up on it, and bids
+     * up on it (0 = no limit). Counted apart from Tj's open bets, which the per-game limit above covers.
+     */
+    val perGameBidDollars: Double = 0.0,
+    val perGameBids: Int = 0,
+    /**
      * The trap guard's first rule ([com.tjshea.vigilant.data.scanner.TrapGuard.early], RESEARCH.md §71): no bid on a game starting more than this
      * many hours from now (0 = off). The fair that far out is the least reliable (Tj's own bets placed then lost to the close), and 71% of prop
      * takers' dollars trade in the last 6 h anyway, so the wallet goes where the fills are.
@@ -241,6 +253,8 @@ data class MakerRules(
             earlyHours = s.trapBidHours.coerceAtLeast(0),
             novigMove = s.trapNovigMove,
             maxPerGame = s.apiMaxPerGame.coerceAtLeast(0.0),
+            perGameBidDollars = s.bidPerGameDollars.coerceAtLeast(0.0),
+            perGameBids = s.bidPerGameBids.coerceAtLeast(0),
             popularFirst = s.makerPopularFirst,
             tiered = s.vigGuards.bidMany,
             deployPct = if (s.vigGuards.bidDeploy) s.vigGuards.bidDeployPct.coerceIn(10, 100) / 100.0 else 0.0,
@@ -642,7 +656,8 @@ object MakerQuote {
         if (line.fairOld) return skip("The fair price is too old to bid on")
         val seen = line.fairAsOfMs ?: return skip("The fair price's age isn't known: no bid on it")
         // A bid never outlives what it was priced from: the fair's own freshness, the stop window before the start, and the expiry setting.
-        val until = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, seen + (line.fairMaxAgeMs ?: Freshness.maxAgeMs(line.startsTs, now)))
+        val fairLife = line.fairMaxAgeMs ?: Freshness.maxAgeMs(line.startsTs, now).let { own -> if (rules.farFairMaxAgeMs > own && farOf(line.startsTs, now) == 1) rules.farFairMaxAgeMs else own }
+        val until = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, seen + fairLife)
         if (until - now < rules.minLifeMs) return skip("The fair price goes old within a minute: re-priced at the next scan")
         if (line.outcomeId in held) return skip("Already bet or bid on this side")
         val price = PriceGrid.floor(fair / (1.0 + marginOf(line, rules, smallMarket != null))) ?: return skip("The fair price is too small to bid under")
@@ -799,10 +814,17 @@ object MakerPlan {
                 kept += r
                 continue
             }
+            // A fair that is merely too old THIS pass (a scan in flight has not refreshed it yet) does not take a bid down: the bid's own expiry, set from the fair it was priced from, ends it
+            // (Tj, 2026-10-14: "every minute or less it takes hundreds of bids back down"). Only a bid still inside its life stays.
+            if (w == null && transientSkip(skips[r.outcomeId]) && (r.expiresAtMs == null || r.expiresAtMs > now)) {
+                kept += r
+                continue
+            }
             val why = when {
                 w == null -> skips[r.outcomeId] ?: "No longer a bid to post"
                 w.price < r.price - 1e-9 -> if (repost) "The fair price fell: re-posted lower" else "The fair price fell under the bid: taken down"
-                repost && w.price >= r.price + rules.requoteSteps * MakerQuote.step(r.price) - 1e-9 -> "The fair price rose: re-posted higher"
+                // A wallet-filling bid (small-market flag) stays put through small rises of the fair: it is posted to rest, and moving it loses its place for a gain of a tick or two.
+                repost && w.price >= r.price + (if (r.obscure) rules.requoteSteps * WALLET_FILL_REQUOTE_FACTOR else rules.requoteSteps) * MakerQuote.step(r.price) - 1e-9 -> "The fair price rose: re-posted higher"
                 // Only when the new bid would rest at least [MakerRules.minLifeMs] longer (a fresher fair): re-posted from the same fair it would end at
                 // the same moment and only lose its place in the queue (Tj's v0.53.0 file: 163 of 289 bids re-posted every pass, a minute's rest each).
                 repost && r.expiresAtMs != null && r.expiresAtMs - now <= rules.refreshBeforeMs && w.restUntilMs - r.expiresAtMs >= rules.minLifeMs -> "About to expire: re-posted"
@@ -868,10 +890,11 @@ object MakerPlan {
         val waiting = HashMap<String, Int>()
         fun wait(why: String) = waiting.merge(why, 1, Int::plus)
         // What a pass has left to spend on bids: the bids up, the dollars they hold, the wallet, and what each game already has at risk.
-        class Room(var bids: Int, var dollars: Double, var spend: Double, var games: List<GameExposure.Item>, var pos: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>)
+        class Room(var bids: Int, var dollars: Double, var spend: Double, var games: List<GameExposure.Item>, var pos: List<com.tjshea.vigilant.data.tracker.RepeatGuard.Pos>,
+            var gameBids: Map<String, Int> = emptyMap(), var gameDollars: Map<String, Double> = emptyMap())
         // The repeat guard's picture: Tj's open bets, and every bid that stays up as if it filled (it adds to the other-side test but not to the count of bets).
         val keptPos = if (rules.repeat != null) held + kept.map { com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(it.marketId, it.outcomeId, it.restingDollars, it.remaining * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0) } else emptyList()
-        val state = Room(bids, dollars, spend, onGames, keptPos)
+        val state = Room(bids, dollars, spend, onGames, keptPos, BidSpread.bidsPerGame(kept), BidSpread.dollarsPerGame(kept))
         /** Why [w] can't go up in [r] (the most bids, the pass's own limit when [passCapped], the most dollars, the per-game limit, the wallet), or null. */
         fun capacity(w: MakerDecision.Post, r: Room, passCapped: Boolean): String? = when {
             r.bids >= rules.maxBids -> MAX_BIDS_REACHED.format(rules.maxBids)
@@ -879,6 +902,8 @@ object MakerPlan {
             r.dollars + w.cost > rules.maxDollars + 1e-9 -> MAX_DOLLARS_REACHED.format(money(rules.maxDollars))
             rules.maxPerGame > 0.0 && GameExposure.check(w.gameItem.game, r.games, w.gameItem.marketId, w.gameItem.outcomeId, w.cost, rules.maxPerGame).blocked ->
                 GAME_REACHED.format(money(rules.maxPerGame))
+            rules.perGameBids > 0 && (r.gameBids[w.line.market.eventId] ?: 0) >= rules.perGameBids -> GAME_BIDS_REACHED.format(rules.perGameBids)
+            rules.perGameBidDollars > 0.0 && (r.gameDollars[w.line.market.eventId] ?: 0.0) + w.cost > rules.perGameBidDollars + 1e-9 -> GAME_BID_DOLLARS_REACHED.format(money(rules.perGameBidDollars))
             rules.repeat != null && com.tjshea.vigilant.data.tracker.RepeatGuard.check(rules.repeat, r.pos, w.line.marketId, w.line.outcomeId, w.cost, w.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, w.line.market.outcomes.map { it.outcomeId }) != null -> REPEAT_GUARD
             w.cost > r.spend + (freed[w.line.outcomeId] ?: 0.0) + 1e-9 -> BUDGET_REACHED
             else -> null
@@ -887,10 +912,13 @@ object MakerPlan {
             if (rules.maxPerGame > 0.0) r.games = r.games + w.gameItem
             if (rules.repeat != null) r.pos = r.pos + com.tjshea.vigilant.data.tracker.RepeatGuard.Pos(w.line.marketId, w.line.outcomeId, w.cost, w.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, count = 0)
             r.bids++
+            r.gameBids = r.gameBids + (w.line.market.eventId to ((r.gameBids[w.line.market.eventId] ?: 0) + 1))
+            r.gameDollars = r.gameDollars + (w.line.market.eventId to ((r.gameDollars[w.line.market.eventId] ?: 0.0) + w.cost))
             r.dollars += w.cost
             r.spend -= (w.cost - (freed[w.line.outcomeId] ?: 0.0)).coerceAtLeast(0.0)
         }
-        val ordered = wanted.filter { it.line.outcomeId !in covered }.sortedWith(priority(rules, now))
+        // Each game's best bids first and every game in turn, the kinds of market within a game in turn (Tj, 2026-10-14: diversify among many games and bid types): the priority order kept as the tiebreak.
+        val ordered = BidSpread.interleave(wanted.filter { it.line.outcomeId !in covered }.sortedWith(priority(rules, now)))
         // The popular bids first (Tj, 2026-10-07: popular large markets first, then, if there is room, obscure ones). A popular bid held up by the room is remembered.
         val roomShort = ArrayList<MakerDecision.Post>()
         for (w in ordered.filter { !it.obscure }) {
@@ -913,7 +941,9 @@ object MakerPlan {
         fun without(down: Collection<RestingBid>): List<MakerDecision.Post> {
             val games = state.games.toMutableList()
             for (d in down) d.gameItem?.let { games.remove(it) }
-            val r = Room(state.bids - down.size, state.dollars - down.sumOf { it.restingDollars }, state.spend + down.sumOf { it.restingDollars }, games, state.pos.filter { p -> p.count > 0 || down.none { d -> d.outcomeId == p.outcomeId } })
+            val remaining = kept.filter { k -> down.none { d -> d.orderId == k.orderId } }
+            val r = Room(state.bids - down.size, state.dollars - down.sumOf { it.restingDollars }, state.spend + down.sumOf { it.restingDollars }, games, state.pos.filter { p -> p.count > 0 || down.none { d -> d.outcomeId == p.outcomeId } },
+                BidSpread.bidsPerGame(remaining) + state.gameBids.filterKeys { it !in BidSpread.bidsPerGame(kept).keys }, BidSpread.dollarsPerGame(remaining) + state.gameDollars.filterKeys { it !in BidSpread.dollarsPerGame(kept).keys })
             return roomShort.filter { w -> (capacity(w, r, passCapped = false) == null).also { ok -> if (ok) take(w, r) } }
         }
         var popularWaits = false
@@ -1009,6 +1039,14 @@ object MakerPlan {
     const val BUDGET_REACHED = "the wallet (or today's limit for API bets) can't cover it beside the bids already up"
     const val REPEAT_GUARD = "the repeat guard holds it back: this side is already bet or bid to your limit, or the other side of its market is held and both sides would not be a sure profit"
     const val GAME_REACHED = "the most at risk on one game (%s) is reached"
+    const val GAME_BIDS_REACHED = "the most bids on one game (%d) is reached"
+    const val GAME_BID_DOLLARS_REACHED = "the most bid dollars on one game (%s) is reached"
+
+    /** A wallet-filling bid is moved up only when the fair rose this many times [MakerRules.requoteSteps] steps. */
+    const val WALLET_FILL_REQUOTE_FACTOR = 3
+
+    /** A line skipped for a reason that says only that the fair is not fresh THIS pass: a resting bid on it stays until its own expiry. */
+    fun transientSkip(why: String?): Boolean = why != null && (why.startsWith("The fair price goes old within") || why.startsWith("The fair price is too old") || why.startsWith("The fair price's age isn't known"))
     const val WASH = "it would trade with your own bid on the other side of that market (a wash: the two prices add up to \$1 or more); it goes up once that bid is gone"
     const val PASS_FULL = "a pass sends at most %d new bids; the rest go up on the next pass"
 
