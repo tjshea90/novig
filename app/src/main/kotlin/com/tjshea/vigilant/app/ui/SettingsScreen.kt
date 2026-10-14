@@ -122,6 +122,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The Novig key, the wallet, bet amounts, limits, bankroll. */
     BETTING("Betting & Novig account", "Your Novig key, wallet, bet amounts and limits", SettingsGroup.BET),
 
+    /** Every protection against bad bets and bids in one list, with a switch each and one button to turn them all on (Tj, 2026-10-14). */
+    SAFEGUARDS("Safeguards", "Every protection against bad bets and bids, on or off, and one button for all", SettingsGroup.BET),
+
     /** Pause, which scanner, which games, the background scan. */
     SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background", SettingsGroup.FIND),
 
@@ -169,9 +172,6 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
 
     /** Each feed's usage charts and the keys backup. A page of [APIS]. */
     USAGE("Usage details & keys backup", "Credits left on each feed, the day-by-day chart, and a backup of your keys", SettingsGroup.FIND),
-
-    /** Every protection against bad bets and bids in one list, with a switch each and one button to turn them all on (Tj, 2026-10-14). */
-    SAFEGUARDS("Safeguards", "Every protection against bad bets and bids, on or off, and one button for all", SettingsGroup.BET),
 
     /** Pinnacle's live price on the Pinnodds WebSocket against Novig's lagging quote: the key, the switches and the limits (Tj, 2026-10-08). */
     PINNODDS("Pinnodds live (needs its socket)", "Pinnacle's live price against Novig: key, paper or real bets, limits; only if you have a Pinnodds socket", SettingsGroup.LIVE),
