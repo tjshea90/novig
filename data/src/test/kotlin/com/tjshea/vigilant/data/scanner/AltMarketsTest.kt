@@ -204,7 +204,7 @@ class AltMarketsTest {
         // v0.38.0 schema 12 (the auto-scan interval in seconds).
         assertEquals(19, picked.schema)
         // A current file is left alone.
-        assertEquals(ScanSettings(propsPerGame = 4, schema = 19, leagues = setOf("NFL") + ScanSettings.TENNIS, gates = ScanSettings().gates.copy(profitProven = true), vigGuards = ScanGuards(propHaircut = true), autoBetTennis = false), ScanSettings(propsPerGame = 4, schema = 13).migrate())
+        assertEquals(ScanSettings(propsPerGame = 4, schema = 19, bookPropHours = ScanSettings.BID_REACH_DAYS * 24, leagues = setOf("NFL") + ScanSettings.TENNIS, gates = ScanSettings().gates.copy(profitProven = true), vigGuards = ScanGuards(propHaircut = true), autoBetTennis = false), ScanSettings(propsPerGame = 4, schema = 13).migrate())
     }
 
     // ---- sources --------------------------------------------------------------------------------
