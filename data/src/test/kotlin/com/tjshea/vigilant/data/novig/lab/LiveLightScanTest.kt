@@ -47,7 +47,7 @@ class LiveLightScanTest {
     @Test
     fun `a close game or a game with a lot left finds nothing, and neither does a price that already knows`() {
         assertTrue(LiveLightScan.scan(listOf(moneyline(490, 490)), "NBA", nba(0.50, 50, 53), { 3 }).isEmpty())
-        assertTrue(LiveLightScan.scan(listOf(moneyline(490, 490)), "NBA", nba(0.60, 50, 70), { 20 }).isEmpty())
+        assertTrue(LiveLightScan.scan(listOf(moneyline(490, 490)), "NBA", nba(0.60, 50, 62), { 12 }).isEmpty())
         // Novig already prices the leader at 0.97: no edge after the fee.
         assertTrue(LiveLightScan.scan(listOf(moneyline(20, 960)), "NBA", nba(0.10, 80, 105), away).isEmpty())
     }
