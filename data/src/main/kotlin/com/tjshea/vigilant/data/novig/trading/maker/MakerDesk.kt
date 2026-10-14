@@ -528,7 +528,7 @@ class MakerDesk(
             for (l in lines) put(l.market.eventId, l.eventName)
         }
         return buildList {
-            add("games with a bid: ${gameBids.size} · most bids on one game ${gameBids.values.maxOrNull() ?: 0}, most dollars ${String.format(java.util.Locale.US, "$%.2f", gameDollars.values.maxOrNull() ?: 0.0)} (limits: ${if (rules.perGameBids > 0) "${rules.perGameBids} bids" else "no bid count"}, ${if (rules.perGameBidDollars > 0.0) String.format(java.util.Locale.US, "$%.2f", rules.perGameBidDollars) else "no dollars"} a game)")
+            add("${gameBids.values.sum()} bids (up now and wanted this pass) across ${gameBids.size} games · most bids on one game ${gameBids.values.maxOrNull() ?: 0}, most dollars ${String.format(java.util.Locale.US, "$%.2f", gameDollars.values.maxOrNull() ?: 0.0)} (limits: ${if (rules.perGameBids > 0) "${rules.perGameBids} bids" else "no bid count"}, ${if (rules.perGameBidDollars > 0.0) String.format(java.util.Locale.US, "$%.2f", rules.perGameBidDollars) else "no dollars"} a game)")
             gameDollars.entries.sortedByDescending { it.value }.take(5).forEach { (g, d) -> add("  ${names[g] ?: g}: ${gameBids[g] ?: 0} bids, ${String.format(java.util.Locale.US, "$%.2f", d)}") }
         }
     }
