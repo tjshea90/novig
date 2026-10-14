@@ -170,8 +170,8 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** Each feed's usage charts and the keys backup. A page of [APIS]. */
     USAGE("Usage details & keys backup", "Credits left on each feed, the day-by-day chart, and a backup of your keys", SettingsGroup.FIND),
 
-    /** Live light and the one switch for every live feature and socket (Tj, 2026-10-14). No Pinnodds needed. */
-    LIVELIGHT("Live light & live switch", "One switch for every live feature and socket, and Live light: bets and bids on obviously wrong live prices (no Pinnodds needed)", SettingsGroup.LIVE),
+    /** Every protection against bad bets and bids in one list, with a switch each and one button to turn them all on (Tj, 2026-10-14). */
+    SAFEGUARDS("Safeguards", "Every protection against bad bets and bids, on or off, and one button for all", SettingsGroup.BET),
 
     /** Pinnacle's live price on the Pinnodds WebSocket against Novig's lagging quote: the key, the switches and the limits (Tj, 2026-10-08). */
     PINNODDS("Pinnodds live (needs its socket)", "Pinnacle's live price against Novig: key, paper or real bets, limits; only if you have a Pinnodds socket", SettingsGroup.LIVE),
@@ -200,7 +200,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR -> s.vigilantOn
-        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, ODDSPAPI, UNABATED, ODDSPAPI_FREE, LIVELIGHT -> AppBook.isNovig
+        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
         APIS -> true
         PINNODDS, LIVEBIDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
@@ -247,11 +247,7 @@ object SettingsSummary {
                 "bankroll ${Format.money(s.bankroll)}",
                 Format.kellyLabel(s.kellyMultiplier),
             ).joinToString(" · ")
-            SettingsPage.LIVELIGHT -> when {
-                !com.tjshea.vigilant.app.LiveMaster.isOn(s) -> "ALL live features and sockets are OFF"
-                !s.tailLive.on -> "Live light off"
-                else -> "Live light on" + (if (s.tailLive.bids) " with bids" else "") + (if (s.tailLive.bet) ", real money" else ", paper")
-            }
+            SettingsPage.SAFEGUARDS -> com.tjshea.vigilant.app.Safeguards.off(s).let { off -> if (off.isEmpty()) "All ${com.tjshea.vigilant.app.Safeguards.ALL.size} safeguards on" else "${off.size} of ${com.tjshea.vigilant.app.Safeguards.ALL.size} OFF" }
             SettingsPage.PINNODDS -> when {
                 state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.noPinnKey -> "No Pinnodds key saved"
                 !s.pinnLive -> "Off" + if (s.pinnWebsite.website) " (Pinnacle website feed)" else if (s.pinnWebsite.bolt) " (BoltOdds soft-book average)" else ""
@@ -420,7 +416,7 @@ fun SettingsScreen(
                 .testTag("settingsPage-${current?.name ?: "HOME"}"),
         ) {
             when (current) {
-                null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids, onUpdate = onUpdate)
+                null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids)
                 SettingsPage.SCANNING -> ScanningPage(s, onUpdate)
                 SettingsPage.ALERTS -> AlertsPage(state, onUpdate)
                 SettingsPage.CNO -> CnoPage(s, onUpdate)
@@ -428,7 +424,7 @@ fun SettingsScreen(
                 SettingsPage.FEED -> FeedTab(s, onUpdate)
                 SettingsPage.FAIR -> FairOddsTab(state, onUpdate, onOpenPage = go)
                 SettingsPage.BETTING -> BettingTab(state, onUpdate, onNovigConnect, onNovigTest, onNovigDisconnect, bettingActions, onOpenAutoBet)
-                SettingsPage.LIVELIGHT -> LiveLightPage(state, reportActions, onUpdate)
+                SettingsPage.SAFEGUARDS -> SafeguardsPage(s, onUpdate)
                 SettingsPage.PINNODDS -> PinnLiveSection(state, keys, reportActions, onUpdate)
                 SettingsPage.LIVEBIDS -> LiveBidPage(state, reportActions, onUpdate)
                 SettingsPage.RESEARCH -> ResearchPage(state, reportActions, onUpdate)
@@ -452,9 +448,8 @@ fun SettingsScreen(
 
 /** The Settings home: a search box, the Auto-bet row (it opens its tab), then every page with what it's set to now. */
 @Composable
-private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> Unit, onOpenAutoBet: (() -> Unit)?, onOpenBids: (() -> Unit)?, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> Unit, onOpenAutoBet: (() -> Unit)?, onOpenBids: (() -> Unit)?) {
     val s = state.settings
-    if (AppBook.isNovig) LiveMasterRow(s, onUpdate)
     var query by rememberSaveable { mutableStateOf("") }
     OutlinedTextField(
         value = query,
@@ -2585,12 +2580,16 @@ fun LiveMasterRow(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) ->
     ) { v -> onUpdate { com.tjshea.vigilant.app.LiveMaster.set(it, v) } }
 }
 
-/** Settings › Live light & live switch: the master switch, then Live light (bets, bids, real money, limits, status). */
+/** Settings › Safeguards: every protection with what it guards against and a switch, and one button for all of them. */
 @Composable
-fun LiveLightPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
-    val shown by androidx.compose.runtime.rememberUpdatedState(reportActions.onLiveBidShown)
-    androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { shown(); kotlinx.coroutines.delay(1_500) } }
-    LiveMasterRow(state.settings, onUpdate)
-    Hint("Live light needs only Novig's live connection (your Novig key) and ESPN's scoreboard. Pinnodds is not needed.")
-    TailLiveBlock(state, onUpdate)
+fun SafeguardsPage(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val off = com.tjshea.vigilant.app.Safeguards.off(s)
+    Hint(
+        if (off.isEmpty()) "All ${com.tjshea.vigilant.app.Safeguards.ALL.size} safeguards are on."
+        else "${off.size} of ${com.tjshea.vigilant.app.Safeguards.ALL.size} safeguards are off. Each one exists because of something that lost money or was measured to; turn them on unless you have a reason.",
+    )
+    Button(onClick = { onUpdate { com.tjshea.vigilant.app.Safeguards.allOn(it) } }, enabled = off.isNotEmpty(), modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag("safeguardsAllOn")) { Text("Turn all safeguards on") }
+    com.tjshea.vigilant.app.Safeguards.ALL.forEach { g ->
+        SwitchRow(g.title, g.why, g.isOn(s), tag = "safeguard-${g.key}") { v -> onUpdate { g.set(it, v) } }
+    }
 }
