@@ -834,6 +834,7 @@ private fun VigilantRoot(
                             denied = denied.orEmpty().filter { it.startsTs > now }, backgroundFeeds = state.settings.autoScansVigilant,
                             waiting = status.lastReport?.waiting.orEmpty(), lastPass = status.lastReport?.let(com.tjshea.vigilant.app.ui.MakerText::passLine),
                             cno = if (state.settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO) cnoLane else null,
+                            lightBids = state.lightBids, light = state.lightStatus,
                         ),
                         actions,
                     )

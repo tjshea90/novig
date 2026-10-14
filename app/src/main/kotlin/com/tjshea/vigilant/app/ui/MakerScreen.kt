@@ -85,6 +85,9 @@ data class MakerUi(
     val lastPass: String? = null,
     /** Bids priced from CrazyNinjaOdds ([ScanSettings.makerSource]): what the lane reads for them and why it stops them; null with bids priced from Vigilant's scan. */
     val cno: com.tjshea.vigilant.data.novig.trading.maker.CnoBidLane.Status? = null,
+    /** Live light's own bids (its desk) and its lane's status ([com.tjshea.vigilant.data.novig.lab.LiveLightRunner]). */
+    val lightBids: List<com.tjshea.vigilant.data.livebid.LiveBid> = emptyList(),
+    val light: com.tjshea.vigilant.data.novig.lab.LiveLightStatus = com.tjshea.vigilant.data.novig.lab.LiveLightStatus(),
 ) {
     /** Bids are priced from CrazyNinjaOdds ([ScanSettings.makerSource]). */
     val fromCno: Boolean get() = settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO
@@ -331,6 +334,7 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                 .testTag("makerScreen"),
         ) {
             item(key = "head") { MakerHead(ui, actions) }
+            item(key = "light") { LightSection(ui) }
             item(key = "rules") {
                 SectionTitle("Bid level")
                 val bidLevel = ui.settings.vigGuards.bidLevel
@@ -425,6 +429,52 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
 }
 
 private const val MAX_READY = 40
+
+/** Live light on the Bids tab (Tj, 2026-10-14: "I can't even see where the bids are supposed to be"): the lane's status, one line per watched game, the bids it has up and the last ones it took down. */
+@Composable
+private fun LightSection(ui: MakerUi) {
+    val t = ui.settings.tailLive
+    val l = ui.light
+    SectionTitle("Live light")
+    if (!(t.on && t.light)) {
+        Muted("Off. Turn it on in Settings › Live bids › Live tail bets (it finds live prices that are obviously wrong and bets, or bids under, them).")
+        return
+    }
+    if (!l.running) {
+        Muted("Starting: it needs the Novig key's live feed and a live game on a picked league.")
+        return
+    }
+    Muted("${l.games} live games watched (${l.withScore} with a score) · ${l.pushes} pushes from Novig · ${l.scans} judgments (the last ${l.lastScanTookMs} ms after its push) · ${l.offers} bets offered to the bettor" + (if (t.bids) " · ${l.bidWants} bids asked for" else ""))
+    l.gameLines.values.forEach { Muted(it) }
+    if (!t.bids) {
+        Muted("Live light bids are off (Settings › Live bids › Live light bids).")
+        return
+    }
+    val up = ui.lightBids.filter { it.active }
+    val ended = ui.lightBids.filter { !it.active }.takeLast(5).reversed()
+    Text("Live light bids up (${up.size})", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 6.dp).testTag("lightBidsTitle"))
+    if (up.isEmpty()) Muted("None up right now: a bid goes up only on a side the score and clock call at least 90% decided, 10% under its fair and under what Novig offers. Most live sides are not that clear.")
+    up.forEach { b -> LightBidRow(b, ui.now) }
+    if (ended.isNotEmpty()) {
+        Text("Last ended", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 6.dp))
+        ended.forEach { b -> LightBidRow(b, ui.now) }
+    }
+}
+
+@Composable
+private fun LightBidRow(b: com.tjshea.vigilant.data.livebid.LiveBid, now: Long) {
+    RowCard {
+        BetTitle(b.selection, "${b.marketLabel} · ${b.eventName}")
+        Text(
+            "${if (b.real) "REAL" else "PAPER"} · bid ${"%.1f".format(java.util.Locale.US, b.price * 100)}¢ · model ${"%.1f".format(java.util.Locale.US, b.fair * 100)}% · EV ${"%+.1f".format(java.util.Locale.US, b.ev * 100)}% · ${b.contracts} contracts",
+            style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 4.dp),
+        )
+        Text(
+            "${b.status.label}" + (if (b.filled > 0) " · ${b.filled} filled" else "") + " · ${Format.age(b.postedAtMs, now)}" + (b.why?.let { " · $it" } ?: ""),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
 
 @Composable
 private fun Muted(text: String) {
