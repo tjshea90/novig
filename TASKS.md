@@ -5158,3 +5158,4 @@ Tj: "It seems to be working now. Now fine tune it. The key is volume. I want hun
 
 ## TVM4: v0.99.14 Volume mode: "The scan is almost done but few bids" (Tj, 2026-10-14 4:28 PM local, screenshot: wallet $139.75, 93 bids up = $18.30, scan 4946/7808 prices, "1 bet hidden: other books' odds too old")
 - [x] TVM4a (file b4003289: 93-121 bids up; supply is ~12,000 of 13,000 lines far games; a quick scan dropped their Novig books and a full scan reads them last; Tj's own limits: 5 bids a game, odds +120) `Scanner.BOOK_KEEP_MS` keeps unplanned books 90 min, `MakerLines.VOLUME_FAR_BOOK_AGE_MS` lets Volume mode bid far games from a book up to 90 min old; `MakerTest`. v0.99.15.
+- [ ] TVM4b v0.99.15 shipped, release.yml triggered: confirm get_release_by_tag v0.99.15, record-release.sh v0.99.15 274, send Tj the link; then read his next file (bids up during/after a full scan; per-game 5 and odds +120 are Tj's own settings: tell him they cap the count).
