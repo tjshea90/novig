@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tjshea.vigilant.app.ui.collectAsStateByReference
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.tjshea.vigilant.app.ui.CnoScreen
@@ -164,7 +165,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             VigilantTheme {
-                val state by vm.state.collectAsStateWithLifecycle()
+                val state by vm.state.collectAsStateByReference()
                 if (inMiniWindow) {
                     // The picture-in-picture window counts as looking at CNO's list while it shows it.
                     if (MiniWindow.showsCno(state.settings)) {
@@ -229,7 +230,7 @@ class MainActivity : ComponentActivity() {
     @androidx.compose.runtime.Composable
     private fun FloatingContent(w: FloatingWidget) {
         VigilantTheme {
-            val state by vm.state.collectAsStateWithLifecycle()
+            val state by vm.state.collectAsStateByReference()
             // Made once for this window: a new holder with every state (3 a second mid-scan) redrew the whole widget, rows and all.
             val actions = remember(w) {
                 FloatingActions(
