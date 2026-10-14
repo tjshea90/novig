@@ -117,7 +117,7 @@ sealed interface PlanResult {
     data class Ready(val plan: BetPlan) : PlanResult
 
     /** Nothing is sent: [reason] says why, in words for the card. [gameLimit]: it's the per-game limit ([BetLimits.maxPerGame]), which the auto-bet counts under one reason. */
-    data class Refused(val reason: String, val gameLimit: Boolean = false) : PlanResult
+    data class Refused(val reason: String, val gameLimit: Boolean = false, /** The bet is not +EV at Novig's price now: the lists drop it (Tj, 2026-10-14). */ val negativeEv: Boolean = false) : PlanResult
 }
 
 /**
@@ -208,15 +208,16 @@ object ApiBetPlanner {
         // No money ever goes on a negative-EV bet (Tj, 2026-10-11: "If a bet ever becomes negative EV anywhere in the app on any scanner, prevent me from betting it at all ... No money should ever
         // go on a negative ev bet"): by hand too. This supersedes the 2026-10-02 "no minimum edge by hand" for a NEGATIVE edge only: a hand bet still needs no minimum, but not less than zero.
         if (limits.manual && bestQuote.evPercent < -1e-9) {
-            return no(
+            return PlanResult.Refused(
                 "This bet is negative EV now: Novig's best price is ${american(best.price)} against fair odds of ${american(target.fair)}, " +
                     "${percent(bestQuote.evPercent)} EV${if (live) " with Novig's live fee" else ""}. Nothing is bet on a negative-EV price.",
+                negativeEv = true,
             )
         }
         if (!limits.manual && bestQuote.evPercent < limits.minEv - 1e-9) {
             // Still +EV, only under Tj's own minimum: say that, and where it's set (Tj, 2026-10-02: "Why is this saying the edge is gone? It's
             // the same odds, and they are positive ev": +2.4% under his +3% read as "The edge is gone").
-            return no(
+            return PlanResult.Refused(
                 if (bestQuote.evPercent > 0.0) {
                     "${percent(bestQuote.evPercent)} EV at Novig's best price now (${american(best.price)}, fair ${american(target.fair)}) is under your " +
                         "${percent(limits.minEv)} minimum (${limits.minEvWhere}). Lower it there to bet this one."
