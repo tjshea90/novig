@@ -125,6 +125,8 @@ data class MakerBid(
     val obscure: Boolean = false,
     /** A riskier bid posted only to keep the wallet working (Tj, 2026-10-14; [MakerDesk.deployFor]): Diagnostics counts these apart. */
     val overflow: Boolean = false,
+    /** 0 = the usual bid on its side; 1 = a second, DEEPER bid on the same side (Tj, 2026-10-14: fill the wallet at a higher edge; [MakerDesk.DEEP_MARGIN]). Each rung is planned, moved and cancelled on its own. */
+    val rung: Int = 0,
     /**
      * A CNO-priced bid ([source] "cno", [CnoMakerLines]): how old CNO's own data was when it was posted, in seconds, for the list that found the side and for the game page whose
      * books made the fair (CNO's "Last Updated" at the read plus the time since the read). What the BIDS section splits picked-off rates by (RESEARCH.md §113). Null for every other bid.
@@ -288,13 +290,25 @@ class MakerDesk(
          * bid was posted, and then that bid was cancelled).
          */
         keepPosting: () -> Boolean = { true },
+        /** The rung this pass works on ([MakerBid.rung]); 1 only runs while the bids up are under the wallet target. */
+        rung: Int = 0,
     ): Report = lock.withLock {
+        cycleRung = rung
         val problems = ArrayList<String>()
         val fills = ArrayList(settle(problems))
-        lineRefs = lines.associateBy { it.outcomeId }
+        if (rung == 0) lineRefs = lines.associateBy { it.outcomeId } else lineRefs = lineRefs + lines.associateBy { it.outcomeId }
         judgeFills()
         val now = clock()
-        val bids = store.all()
+        // Every bid on record counts against the wallet, the game and the day; a pass plans, moves and cancels only the bids of its own rung.
+        val allBids = store.all()
+        val bids = allBids.filter { it.rung == rung }
+        val others = allBids.filter { it.rung != rung }
+        if (rung > 0) {
+            val pct = rules.deployPct
+            val target = if (wallet != null) pct * wallet else 0.0
+            val inUse = allBids.filter { it.active }.sumOf { it.restingDollars }
+            if (pct <= 0.0 || wallet == null || inUse >= target) return@withLock Report(0, 0, fills, problems, allBids.count { it.active }, null, emptyList(), emptyMap(), partial, 0)
+        }
         val active = bids.filter { it.resting && it.orderId != null }
         val bets = tracker.all()
         val activeOutcomes = active.mapTo(HashSet()) { it.outcomeId }
@@ -310,14 +324,14 @@ class MakerDesk(
             } else d
         }
         // Keep the wallet working: stakes scale up while the bids up are worth less than the target, and riskier bids fill what the usual ones cannot.
-        val usual = bids.filter { it.active }.sumOf { it.restingDollars }
-        val scale = deployScale(rules, usual, wallet)
+        val usual = allBids.filter { it.active }.sumOf { it.restingDollars }
+        val scale = if (rung > 0) 1.0 else deployScale(rules, usual, wallet)
         val rulesNow = if (scale > 1.0) rules.copy(stakeScale = scale, kellyCeiling = rules.deployMaxKelly) else rules
-        val ownless = MakerLines.withoutOwn(lines, bids)
+        val ownless = MakerLines.withoutOwn(lines, allBids)
         val base = MakerQuote.decideAll(ownless, rulesNow, now, held).map(judge)
-        val extra = deployFor(rulesNow, ownless, base, bids, activeOutcomes, held, now, wallet, usual, judge)
+        val extra = if (rung > 0) (emptyList<MakerDecision>() to null) else deployFor(rulesNow, ownless, base, bids, activeOutcomes, held, now, wallet, usual, judge)
         val decisions = base + extra.first
-        lastDeploy = extra.second?.copy(
+        if (rung == 0) lastDeploy = extra.second?.copy(
             scale = scale, judged = decisions.size,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().groupingBy { it.why.replace(Regex("[0-9]+(\\.[0-9]+)?"), "#") }.eachCount().entries.sortedByDescending { it.value }.take(10).map { it.key to it.value },
         )
@@ -327,12 +341,12 @@ class MakerDesk(
         // Every bid not yet ended can still fill (one on its way down too), and Novig doesn't hold a resting bid's cost from the balance (Tj's v0.53.0
         // file: "wallet $8.32 → $8.32 with $12.54 resting", NOVIG_API.md §17): what's up counts against the wallet as well as the day's limit. Under zero
         // when the money behind the bids fell short after they went up (a bet by hand, an auto-bet, a fill: Tj, 2026-10-04): the plan takes those bids down.
-        val budget = spare(bids, spent, wallet, maxPerDay)
+        val budget = spare(allBids, spent, wallet, maxPerDay)
         val actions = MakerPlan.plan(
             wanted = decisions.filterIsInstance<MakerDecision.Post>(), resting = resting, rules = rules, now = now,
             skips = decisions.filterIsInstance<MakerDecision.Skip>().associate { it.line.outcomeId to it.why }, stopAll = stopAll, budget = budget,
-            repost = autoPost, partial = partial, heldItems = GameExposure.items(bets), onTheWay = comingDown(bids),
-            held = if (rules.repeat != null) com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(bets) else emptyList(),
+            repost = autoPost, partial = partial, heldItems = GameExposure.items(bets) + GameExposure.bidItems(others), onTheWay = comingDown(allBids),
+            held = if (rules.repeat != null) com.tjshea.vigilant.data.tracker.RepeatGuard.fromBets(bets) + com.tjshea.vigilant.data.tracker.RepeatGuard.fromBids(others) else emptyList(),
         )
         val noReplace = HashSet<String>()
         val cancelled = withContext(NonCancellable) { runCancels(actions.cancels, problems, fills, noReplace) }
@@ -367,8 +381,16 @@ class MakerDesk(
             }
         }
         val after = store.all().count { it.active }
+        if (rung > 0) deepPlaced += placed
         Report(placed, cancelled, fills, problems, after, stopAll, decisions, actions.waiting, partial, actions.trimmed, lastDeploy)
     }
+
+    /** The rung the pass in progress works on (read by [bidFor], which runs inside [cycle]'s lock). */
+    @Volatile private var cycleRung = 0
+
+    /** Deeper second bids posted since the app started, for Diagnostics. */
+    @Volatile var deepPlaced = 0L
+        private set
 
     /** What the last pass's wallet deployment worked out, for Diagnostics ([Report.deploy]). */
     @Volatile var lastDeploy: Deploy? = null
@@ -617,7 +639,7 @@ class MakerDesk(
             // Never past what it was priced from ([MakerDecision.Post.restUntilMs]: the expiry, the fair's freshness, the stop window before the start).
             expiresAtMs = minOf(now + rules.ttlMs, line.startsTs - rules.stopMs, post.restUntilMs), auto = auto,
             bestBidAtPost = line.bestBid, offerAtPost = line.offer, bookAtMs = line.bookAtMs,
-            focus = rules.focus, fairBooks = line.fairBooks, obscure = post.obscure, overflow = post.overflow,
+            focus = rules.focus, fairBooks = line.fairBooks, obscure = post.obscure, overflow = post.overflow || cycleRung > 0, rung = cycleRung,
             fairAgeSec = line.fairAsOfMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() }, fairNewestAgeSec = line.fairNewestMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() },
             listAgeSec = line.listAtMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() }, pageAgeSec = line.pageAtMs?.let { ((now - it) / 1000L).coerceAtLeast(0L).toInt() },
         )
@@ -994,6 +1016,9 @@ class MakerDesk(
         /** The furthest start the wallet-filling bids reach when the usual window has nothing left, and the margin they add for it. */
         const val DEPLOY_WEEK_HOURS = 168
         const val DEPLOY_WEEK_MARGIN = 0.02
+
+        /** A second, deeper bid on a side that already has one: this much more margin under the fair (about 6 points more edge), so its Kelly stake is bigger and it rests where it fills rarely but well. */
+        const val DEEP_MARGIN = 0.06
         /** New bids go up this many to a request (Novig's batch is all or nothing: one refused bid costs only its own ten, not a whole pass of them; Tj, 2026-10-09: "smaller batches because they are getting rejected sometimes"). */
         const val PLACE_CHUNK = 10
 
