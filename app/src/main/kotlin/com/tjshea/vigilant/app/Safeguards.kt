@@ -73,7 +73,7 @@ object Safeguards {
         Item(
             "bidGuard", "Bid guard",
             "Watches every resting bid and takes one down that has stopped being worth it.",
-            { it.vigGuards.bidGuard }, guards { g, on -> g.copy(bidGuard = on) },
+            { it.guards.bidGuard }, { s, on -> s.copy(guards = s.guards.copy(bidGuard = on)) },
         ),
     )
 
