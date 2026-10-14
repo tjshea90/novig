@@ -1,21 +1,24 @@
-# CHECKPOINT 3208 — read me first, then TASKS.md
+# CHECKPOINT 3209 — read me first, then TASKS.md
 
-**Written:** 2026-10-14T02:58:21Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-147419fb-llvuq5` · **builds on:** `797e4ea13` (this checkpoint is the commit after it)
+**Written:** 2026-10-14T03:04:38Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-147419fb-llvuq5` · **builds on:** `4f4ceacc0` (this checkpoint is the commit after it)
 
 ## Just done
-TLL2/TLL3 in progress: LiveLightScan (score model), TailOffers extracted, LiveLightRunner (push lane) compile
+TLL1-3: Live light push lane built (LiveLightScan, LiveLightRunner, BoltLiveConfirm, taker edge cap with a second source), wired, switch + diagnostics
 
 ## Do this next
-write LiveLightScanTest + runner test, wire VigilantApp (start/stop in labTick, onTail yields when runner carries), settings toggle UI, diagnostics; then bids (TLL4)
+TLL4 live auto-bids (second LiveBidDesk fed model-priced wants), TLL5 full tests + ship v0.99.0
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+    ?? research/live_light_2026-10-14.md
 
 ## Last ten checkpoints
 ```
+  85db7bf22 ckpt 3208: TLL2/TLL3 in progress: LiveLightScan (score model), TailOffers extracted, L
   171bb4e1a ckpt 3207: v0.98.1 recorded; v0.98.2 (line-stack guard for the auto-bet) shipped, rele
   1f7ab6693 ckpt 3206: pre-release: v0.98.2: the auto-bet holds one line of a team's spread (or a 
   040d8b6e2 ckpt 3205: pre-ship: v0.98.2: the auto-bet holds one line of a team's spread (or a pla
@@ -25,8 +28,7 @@ write LiveLightScanTest + runner test, wire VigilantApp (start/stop in labTick, 
   bcf471faa ckpt 3201: v0.98.0 released and recorded
   13cdd2f2f ckpt 3200: pre-release: v0.98.0: bids keep the wallet working (stakes scale to 1/4 Kel
   55278ff8e ckpt 3199: pre-ship: v0.98.0: bids keep the wallet working (stakes scale to 1/4 Kelly,
-  150d1c5bf ckpt 3198: TWF5: diagnostics sockets, wallet deployment, stream phase timings, lab yie
 ```
 
-(7 automatic checkpoint(s) since the last deliberate one — the
+(10 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
