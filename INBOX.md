@@ -7472,3 +7472,19 @@ Updates should be made automatically by any of the three Claude accounts, with s
 
 Improvements in code, speed, accuracy. Improvements in bet and bid settings for most profit and good fills volume. It should review saved logs of scanned bets and find patterns and the most profitable betting and bidding strategies. It can alter this at any time as sample sizes grow and the research is more sound
 ```
+
+## 2026-10-15T05:17:00Z
+```
+Build the fully autonomous bet and bid app running on GitHub. The engine should only run from 8am to 10pm Eastern Time daily. Make sure there is a method to turn it off and back on automatically.
+
+1) it can use up to 100% of money in the vigilant wallet. 
+2) Claude research is allowed to change bet and bid rules for the app without my permission, as long as the data and research is sound and should lead to better profit or less losses, Claude has full permission to use the full subaccount wallet balance and tweak the types and amounts of bets and bids for maximum profit. I accept the risk of loss. It should use a smart kelly system for bet and bid sizes.
+3) let me know what I need to do in each of my Claude accounts to link them together in this repo with smart handoffs and communication between Claude sessions for efficient updates and work on this repo without problems of two Claude sessions running at once. 
+4) each Claude account should be used in rotation so that the Claude usage is split evenly. Each account should have scheduled check-ins on a rotating schedule so as not to interfere with each other. Each Claude account should work on this repo fully autonomously, without my input.
+5) the Claude usage should not be wasteful. It should be used for legitimate research and analyzing stats and improving the engine.
+6) make it so I can push all needed keys, including secret keys, from the app on my phone to GitHub for vigilant. I think it uses a management key plus a pem file
+
+Betting and bidding: 
+
+Vigilant should make bets and bids based on profitable statistics and strategy. It should log and save scanned results to GitHub including comprehensive data such as ev, odds, bet type, sport , time until game starts, closing odds (which may need to be obtained retroactively), whether the bet won lost or pushed, etc. A Claude account should check in daily to see the updated logs, analyze the data, and use the data to tweak the settings for profit. 
+```
