@@ -125,6 +125,9 @@ fun main(args: Array<String>) = runBlocking {
         TradeLedger.parse(text)?.let { trader.load(it); log("trades: ${it.entries.size} entries carried over from the previous job") }
     }
     var tradesText = ""
+    // The engine's own scan study (TCL20e): every bet each finished scan lists, in the app's journal format, in the folder the archive loop gzips to the day's cloud-archive Release (study-<day>-run<id>.jsonl.gz).
+    // Each run's file is a segment of its own; the daily grader (engine-grade.yml) puts the segments together, finds results and closes, and the daily digest reads them beside the phone's.
+    val study = com.tjshea.vigilant.data.study.ScanStudy(com.tjshea.vigilant.data.study.StudyJournal(File(out, "cloud")), version = { "github-engine" })
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
@@ -135,6 +138,7 @@ fun main(args: Array<String>) = runBlocking {
         bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
+        onResult = { result, s -> study.observeVigilant(result, s.copy(scanStudy = true)); study.flush() },
         trade = { rows, s, now ->
             val mode = s.gates.cloudTrading
             if (mode == CloudTradeMode.OFF) null else {
@@ -150,6 +154,7 @@ fun main(args: Array<String>) = runBlocking {
     val end = engine.run(until, started)
     // The window is over (or the job is): whatever rests on Novig under the engine's key is cancelled, and the ledger goes out one last time.
     runCatching { trader.windowEnded() }
+    runCatching { study.flush() }
     runCatching { publisher.stageTrades(TradeLedger.text(trader.ledger), System.currentTimeMillis()) }
     log("cloud engine ending: $end after ${(System.currentTimeMillis() - started) / 60_000L} min, ${engine.passes} passes")
     runCatching { publisher.flush(force = true) }

@@ -74,6 +74,11 @@ class CloudEngine(
      * (or null when trading is off). A failure is a line in the log and never stops the scan.
      */
     private val trade: (suspend (List<Opportunity>, ScanSettings, Long) -> TradeStatus?)? = null,
+    /**
+     * Called with each scan that ran to its end and the phone's latest settings (TCL20e): the engine's own scan study logs every bet the scan listed ([com.tjshea.vigilant.data.study.ScanStudy.observeVigilant]), so the
+     * record of what was listed, at what price and edge, does not depend on the phone being awake. A failure is a line in the log.
+     */
+    private val onResult: suspend (ScanResult, ScanSettings) -> Unit = { _, _ -> },
 ) {
     /** What the engine's trading says about itself in the heartbeat. */
     data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long)
@@ -295,6 +300,7 @@ class CloudEngine(
         onFeed(rows, done)
         sendBids(result, cfg.rev, latest, done)
         sendTrades(rows, latest, done)
+        runCatching { onResult(result, forCloud(latest)) }.onFailure { if (it is CancellationException) throw it; log("scan study failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
         problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = lastScanMs))
         log("pass $passes: ${rows.size} bets listed of ${result.stats.outcomesWithFair} priced, ${lastScanMs / 1000}s" + (problem?.let { ", publish problem: $it" } ?: ""))
         false
