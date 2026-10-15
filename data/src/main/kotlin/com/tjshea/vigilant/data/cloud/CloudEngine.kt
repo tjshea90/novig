@@ -165,7 +165,8 @@ class CloudEngine(
             if (now - lastConfigAt >= configEveryMs) {
                 lastConfigAt = now
                 val newer = runCatching { config() }.getOrNull()
-                if (newer != null) {
+                // Nothing to decide unless the phone wrote something new (a revision, a switch-off, a refresh): the settings are compared only then.
+                if (newer != null && (newer.rev != cfg.rev || !newer.on || newer.refreshAtMs > handledRefresh)) {
                     when {
                         !newer.on -> { restartReason = "switched off"; job.cancel(CancellationException(restartReason)); break }
                         // A refresh asked for after this scan began wants a scan that began after it (the scan just begun already is one).
