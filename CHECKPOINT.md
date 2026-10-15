@@ -1,13 +1,13 @@
-# CHECKPOINT 3386 — read me first, then TASKS.md
+# CHECKPOINT 3387 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T23:36:39Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `5be7a3eff` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T23:40:19Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `b57240f3a` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v0.111.0: chat with Claude inside the app (through the repo; sessions watch for your messages), away-account cover
+pre-release: v0.111.0: chat with Claude inside the app (through the repo; sessions watch for your messages), away-account cover (versionCode 291, v0.111.0)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.111.0), then run: bash tools/record-release.sh v0.111.0 291 "v0.111.0: chat with Claude inside the app (through the repo; sessions watch for your messages), away-account cover"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ ship.sh gates and releases this
 
 ## Last ten checkpoints
 ```
+  b57240f3a ckpt 3386: pre-ship: v0.111.0: chat with Claude inside the app (through the repo; sess
   7d4783d5f ckpt 3385: TCL29 chat built (model, phone page, watcher, tell_tj chat-reply), away.jso
   dfe553bef ckpt 3384: slot3 ENGINEER: WATCH only, engine healthy, 0 orders held by trap guard
   04f6651f0 ckpt 3383: TCL28 shipped as v0.110.0 (released, recorded), engine restarted on new cod
@@ -25,8 +26,4 @@ ship.sh gates and releases this
   cd1d34a78 ckpt 3379: TCL28 pure parts: ApiToggles, CloudMessages, CloudOverrides, ApiAdvisor, Ap
   56e145350 ckpt 3377: pre-release: v0.109.1: API keys added or changed in the phone app are uploa
   7c2be47df ckpt 3376: pre-ship: v0.109.1: API keys added or changed in the phone app are uploaded
-  fbdc0bfbb ckpt 3375: edge floor identified as the volume limiter; rule for lowering it written (
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
