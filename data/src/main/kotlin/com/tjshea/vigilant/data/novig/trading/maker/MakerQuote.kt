@@ -398,22 +398,49 @@ object MakerLines {
         result ?: return emptyList()
         val rules = MakerRules.of(settings)
         return result.opportunities.filter { o ->
-            o.league.novigName in settings.leagues && !o.isLive && o.fairProbability != null &&
-                o.bookFetchedAtMs != null && now - o.bookFetchedAtMs <= (if (rules.volume && minOf(o.event.startsTs, o.market.startsTs) - now >= 6 * 3_600_000L) VOLUME_FAR_BOOK_AGE_MS else MAX_BOOK_AGE_MS) &&
-                (result.waitingFor.isEmpty() || settings.vigGuards.bidWhileScanning || com.tjshea.vigilant.data.scanner.ScanResult.waitKey(o.league.novigName, o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP) !in result.waitingFor)
+            inScope(o, result, settings) && o.bookFetchedAtMs != null && now - o.bookFetchedAtMs <= maxBookAgeMs(o, rules, now)
         }.map { o ->
-            val line = MakerLine(
-                market = o.market, outcomeId = o.outcome.outcomeId, startsTs = minOf(o.event.startsTs, o.market.startsTs), league = o.league.displayName,
-                eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kindOf(o), fair = o.fairProbability,
-                fairAsOfMs = o.fairAsOfMs, fairNewestMs = o.fair?.usedUpdates?.first, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0,
-                fairBooks = o.fair?.booksUsed.orEmpty(), offer = o.quote?.price,
-                bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
-                basis = FairBasis.of(o), bookAtMs = o.bookFetchedAtMs, bidLevels = o.bidLevels, unavailable = unavailable(o),
-            )
+            val line = lineOf(o, now, unavailable(o))
             // Each book's own fair only where a bid could follow: every other line is skipped before [MakerQuote.decide] asks for them.
-            if (line.outcomeId !in always && MakerQuote.precheck(line, rules, now) is MakerQuote.Pre.No) line
-            else line.copy(bookFairs = bookFairs(o, sharpOnly = false), sharpFairs = bookFairs(o, sharpOnly = true))
+            if (line.outcomeId !in always && MakerQuote.precheck(line, rules, now) is MakerQuote.Pre.No) line else withFairs(line, o)
         }
+    }
+
+    /** Whether [o] is a side a bid could be judged on at all: in the picked leagues, pregame, with a fair, and (on a scan still running) in a league whose fair-odds sources have all answered. */
+    fun inScope(o: com.tjshea.vigilant.data.scanner.Opportunity, result: com.tjshea.vigilant.data.scanner.ScanResult, settings: ScanSettings): Boolean =
+        o.league.novigName in settings.leagues && !o.isLive && o.fairProbability != null &&
+            (result.waitingFor.isEmpty() || settings.vigGuards.bidWhileScanning ||
+                com.tjshea.vigilant.data.scanner.ScanResult.waitKey(o.league.novigName, o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP) !in result.waitingFor)
+
+    /** The oldest Novig book [o] may be judged with at [now]: [MAX_BOOK_AGE_MS], or [VOLUME_FAR_BOOK_AGE_MS] for a far game in Volume mode. */
+    fun maxBookAgeMs(o: com.tjshea.vigilant.data.scanner.Opportunity, rules: MakerRules, now: Long): Long =
+        if (rules.volume && minOf(o.event.startsTs, o.market.startsTs) - now >= 6 * 3_600_000L) VOLUME_FAR_BOOK_AGE_MS else MAX_BOOK_AGE_MS
+
+    /** [o] as a bid line, without each book's own fair ([withFairs] adds them where a bid could follow). */
+    fun lineOf(o: com.tjshea.vigilant.data.scanner.Opportunity, now: Long, unavailable: String?): MakerLine = MakerLine(
+        market = o.market, outcomeId = o.outcome.outcomeId, startsTs = minOf(o.event.startsTs, o.market.startsTs), league = o.league.displayName,
+        eventName = o.event.description, marketLabel = o.marketLabel, selection = o.selection, kind = kindOf(o), fair = o.fairProbability,
+        fairAsOfMs = o.fairAsOfMs, fairNewestMs = o.fair?.usedUpdates?.first, fairOld = o.fairIsOld(now), books = o.fair?.booksUsed?.size ?: 0,
+        fairBooks = o.fair?.booksUsed.orEmpty(), offer = o.quote?.price,
+        bestBid = o.bestBid, live = o.isLive, source = com.tjshea.vigilant.data.tracker.BetTracker.SOURCE_VIGILANT,
+        basis = FairBasis.of(o), bookAtMs = o.bookFetchedAtMs, bidLevels = o.bidLevels, unavailable = unavailable,
+    )
+
+    /** [line] with each book's own fair and the sharp books' ([bookFairs]), worked out from [o]'s fair line. */
+    fun withFairs(line: MakerLine, o: com.tjshea.vigilant.data.scanner.Opportunity): MakerLine = line.copy(bookFairs = bookFairs(o, sharpOnly = false), sharpFairs = bookFairs(o, sharpOnly = true))
+
+    /**
+     * [line] with Novig's side taken from a newer [book]: the price to take, the best bid, the bids behind it and when it was read. The same four fields [com.tjshea.vigilant.data.scanner.Pricing.requote]
+     * gives an [com.tjshea.vigilant.data.scanner.Opportunity] (`MakerLinesTest` proves they are equal), so a line made on one machine from the fair odds can be given Novig's book on another. A market
+     * Novig has closed or put in play has nothing to take, as in [com.tjshea.vigilant.data.scanner.Pricing.requote].
+     */
+    fun withBook(line: MakerLine, book: com.tjshea.vigilant.data.novig.NovigBook): MakerLine {
+        val closed = book.lifecycle?.let { it.closed || it.live == true } == true
+        val ladder = if (closed) emptyList() else book.takeLadder(line.market, line.outcomeId)
+        return line.copy(
+            offer = ladder.firstOrNull()?.price, bestBid = book.bestBid(line.outcomeId)?.price,
+            bidLevels = book.bidsByOutcome[line.outcomeId].orEmpty(), bookAtMs = book.fetchedAtMs,
+        )
     }
 
     /**
