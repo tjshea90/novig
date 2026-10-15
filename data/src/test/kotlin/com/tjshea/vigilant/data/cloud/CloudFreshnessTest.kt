@@ -36,6 +36,20 @@ class CloudFreshnessTest {
     }
 
     @Test
+    fun `games starting within 12 hours are told apart from the far ones`() {
+        fun at(startInS: Long, novigAgeS: Long, fairAgeS: Long, id: String): Opportunity {
+            val r = row(novigAgeS, fairAgeS, id)
+            return r.copy(event = r.event.copy(startsTs = now + startInS * 1000L))
+        }
+        val c = CloudFreshness.of(listOf(at(3 * 3600, 5, 120, "a"), at(40 * 3600, 5, 900, "b"), at(60 * 3600, 5, 800, "c")), alive, now)
+        assertTrue(c.label, c.label.endsWith("games within 12h: fair 2m 00s"))
+        assertTrue(c.detail, c.detail.contains("The 1 starting within 12 h: Novig a median 5s ago, fair odds 2m 00s (the oldest 2m 00s)."))
+        // all far, or all near: no second figure that would only repeat the first
+        assertTrue(CloudFreshness.of(listOf(at(40 * 3600, 5, 900, "a")), alive, now).detail.contains("starting within").not())
+        assertTrue(CloudFreshness.of(listOf(at(3 * 3600, 5, 120, "a")), alive, now).label.contains("games within").not())
+    }
+
+    @Test
     fun `old Novig prices, a silent engine or an engine that is off are never green`() {
         assertEquals(CloudText.Level.WARN, CloudFreshness.of(listOf(row(120, 60)), alive, now).level)
         assertEquals(CloudText.Level.BAD, CloudFreshness.of(listOf(row(5, 60), row(700, 60, "b")), alive, now).level)
