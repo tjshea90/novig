@@ -9,7 +9,7 @@ import com.tjshea.vigilant.R
 import com.tjshea.vigilant.data.cloud.CloudClient
 import com.tjshea.vigilant.data.cloud.CloudMessages
 import com.tjshea.vigilant.data.cloud.CloudOverrides
-import com.tjshea.vigilant.data.JsonFileStore
+import com.tjshea.vigilant.data.store.JsonFileStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,18 +35,18 @@ data class InboxState(
  * what it reads, announces important messages as notifications, and applies each settings request from the GitHub side ONCE to this phone's settings (the engine or a Claude session turning an API on or off): the
  * settings then go back to GitHub through the usual push, so both sides show the same, and a change Tj makes afterwards on the phone stands until a newer request arrives.
  */
-class CloudInbox(private val c: VigilantApp, private val client: CloudClient) {
+class CloudInbox(private val c: AppContainer, private val client: CloudClient) {
     private val store = JsonFileStore(File(c.app.filesDir, "claude_messages.json"), InboxState.serializer(), { InboxState() }, c.json)
     private val _state = MutableStateFlow(InboxState())
     val state: StateFlow<InboxState> = _state.asStateFlow()
     private var messagesEtag: String? = null
     private var overridesEtag: String? = null
 
-    suspend fun load() { _state.value = runCatching { store.load() }.getOrDefault(InboxState()) }
+    suspend fun load() { _state.value = runCatching { store.read() }.getOrDefault(InboxState()) }
 
     private suspend fun save(s: InboxState) {
         _state.value = s
-        runCatching { store.save(s) }
+        runCatching { store.update { s } }
     }
 
     suspend fun markAllRead() {
