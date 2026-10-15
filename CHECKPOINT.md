@@ -1,24 +1,22 @@
-# CHECKPOINT 3388 — read me first, then TASKS.md
+# CHECKPOINT 3389 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T23:41:47Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `622e67758` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T23:43:15Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `2500ab214` (this checkpoint is the commit after it)
 
 ## Just done
-TCL30: volume diagnosis + standing volume/quality loop (CLAUDE.md, ROUTINE.md, TASKS TCL30, board note); v0.111.0 gated and release triggered
+Dormancy safeguard: this account's routine stops at rotation checkin / coord acquire (exit 5) until away.json time (Fri 22:00 ET); tests
 
 ## Do this next
-record-release v0.111.0 291 once release.yml is green; then TCL30b-d
+record v0.111.0 release; TCL30b-e
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M CLAUDE.md
-     M TASKS.md
-     M research/review/ROUTINE.md
 
 ## Last ten checkpoints
 ```
+  8bccba7f3 ckpt 3388: TCL30: volume diagnosis + standing volume/quality loop (CLAUDE.md, ROUTINE.
   5e2281ea8 ckpt 3387: pre-release: v0.111.0: chat with Claude inside the app (through the repo; s
   b57240f3a ckpt 3386: pre-ship: v0.111.0: chat with Claude inside the app (through the repo; sess
   7d4783d5f ckpt 3385: TCL29 chat built (model, phone page, watcher, tell_tj chat-reply), away.jso
@@ -28,8 +26,7 @@ record-release v0.111.0 291 once release.yml is green; then TCL30b-d
   4c3771fc8 ckpt 3381: pre-ship: v0.110.0: the engine rests/turns off silent APIs and advises what
   7248cc027 ckpt 3380: TCL28b/a: governor + advisor wired into the engine (rests silent APIs, asks
   cd1d34a78 ckpt 3379: TCL28 pure parts: ApiToggles, CloudMessages, CloudOverrides, ApiAdvisor, Ap
-  56e145350 ckpt 3377: pre-release: v0.109.1: API keys added or changed in the phone app are uploa
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
