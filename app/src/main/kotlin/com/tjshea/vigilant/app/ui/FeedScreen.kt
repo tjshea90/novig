@@ -737,6 +737,7 @@ fun adjustedStarsOf(settings: ScanSettings, row: com.tjshea.vigilant.data.cno.Cn
 /** The cloud scan's own progress bar under the top bar: the engine's step as a fraction when it knows its total, else the moving bar. */
 @Composable
 private fun CloudProgressBar(st: com.tjshea.vigilant.data.cloud.CloudStatus?) {
+    val LinearProgressIndicator = androidx.compose.material3.LinearProgressIndicator
     if (st != null && st.scanning && st.progressTotal > 0) LinearProgressIndicator(progress = { (st.progressDone.toFloat() / st.progressTotal).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
     else LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
 }
