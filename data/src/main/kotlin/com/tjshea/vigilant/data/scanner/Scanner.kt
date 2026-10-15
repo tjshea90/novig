@@ -260,10 +260,13 @@ class Scanner(
                 catalogJob.await()
                 pump.run()
             }
+            // The hot refresh (GitHub engine, [ScanGuards.hotRefresh]): the fair odds of the games about to start are read again while the books are read, so they are not minutes old by the scan's end.
+            val hotJob = if (settings.vigGuards.hotRefresh && !betsOnly) launch { hotFair(ordered, leagues, settings, pump) } else null
             val reports = ordered.map { jobs.getValue(it.id) }.awaitAll()
             fairAt = elapsed() - t0
             pump.fairOddsDone()
             pumpJob.await()
+            hotJob?.cancelAndJoin()
             // A long scan's first edges were read minutes before its last books: read them again.
             if (!betsOnly) pump.deepenEdges()
             if (!betsOnly) pump.rereadEarlyEdges()
@@ -477,6 +480,7 @@ class Scanner(
                     memoryStopped = true
                     return
                 }
+                hotStep(cat)
                 // Read before planning: a provider answering mid-plan still wakes the next pass.
                 val lastPass = fairDone
                 val plan = planFor(cat, settings, now)
@@ -667,6 +671,47 @@ class Scanner(
 
         /** Books read a second time by [rereadEarlyEdges]. */
         var reread = 0
+
+        /** The hot refresh's counters ([ScanGuards.hotRefresh]): Novig books of games about to start read again, and fair-odds leagues asked again ([hotFair]). */
+        var hotReads = 0
+        @Volatile var hotFairReads = 0
+        private var lastHotAt = Long.MIN_VALUE / 2
+
+        /**
+         * The hot refresh's book side, between two batches (Tj, 2026-10-15): every [ScanGuards.hotEverySeconds], the games starting within [ScanGuards.hotHours] are priced again with whatever fair odds the scan now holds ([hotFair]
+         * keeps them young) against the books already held, and the books of the likeliest +EV lines among them (a line within [HOT_EV_FLOOR] of zero, or one Tj has a bet on) are read again, at most [MAX_HOT_READS]. A
+         * book is only replaced by one read now. Nothing when Novig asked to stop. Single-threaded with the batches: it uses the same books and the same fair memo.
+         */
+        private suspend fun hotStep(cat: Catalog) {
+            if (!settings.vigGuards.hotRefresh || retryAfter != null || requested.isEmpty()) return
+            val t = clock()
+            if (t - lastHotAt < settings.vigGuards.hotEverySeconds.coerceIn(10, 600) * 1_000L) return
+            lastHotAt = t
+            val until = t + settings.vigGuards.hotHours.coerceIn(1, 72) * 3_600_000L
+            val shown = planFor(cat, settings, now, youngFairOnly = true, headroomMs = Freshness.MIN_SHOWN_MS)
+            val hot = shown.markets.filter { it.event.startsTs <= until && it.event.startsTs > t - Planner.STARTED_GRACE_MS }
+            if (hot.isEmpty()) return
+            val held = HashMap(books).apply { putAll(fresh) }
+            val priced = Pricing.price(Plan(hot, shown.events), held, settings, now, fairMemo).opportunities
+            val bestEv = HashMap<String, Double>()
+            for (o in priced) o.evPercent?.let { ev -> bestEv.merge(o.market.marketId, ev) { a, b -> maxOf(a, b) } }
+            val ids = hot.map { it.market.marketId }.filter { id -> id in held && (id in pinned || (bestEv[id] ?: Double.NEGATIVE_INFINITY) >= HOT_EV_FLOOR) }
+                .sortedByDescending { id -> if (id in pinned) Double.MAX_VALUE else bestEv[id] ?: 0.0 }.take(MAX_HOT_READS)
+            if (ids.isEmpty()) return
+            try {
+                val batch = withContext(com.tjshea.vigilant.data.novig.NovigReadTag("scan-hot")) { novig.books(ids) }
+                // A book served from the last scan's copy (a failed read) is no refresh: only one read just now replaces what is held.
+                for ((id, book) in batch.books) if (book.fetchedAtMs >= t) fresh[id] = book
+                hotReads += batch.books.count { it.value.fetchedAtMs >= t }
+                refused += batch.refused
+                batch.retryAfterSeconds?.let { retryAfter = it }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The books held stand.
+            }
+            publish(cat)
+        }
 
         /**
          * Everything priced so far. Its feed shows only prices read this scan, and only for leagues whose fair
@@ -1088,6 +1133,8 @@ class Scanner(
         fallback: Boolean = false,
         /** Once per league this source supports, whatever came of it. */
         onCall: (League) -> Unit,
+        /** Ask even when the last answer is inside the re-use window (the hot refresh of a long scan, [hotFair]). */
+        force: Boolean = false,
     ): SourceReport {
         var fetched = 0
         var reused = 0
@@ -1103,7 +1150,7 @@ class Scanner(
             val key = "${source.id}|${league.novigName}"
             val have = synchronized(references) { references[key] }
             // A skipped league (nothing to read in the window) is never re-used: a game may come inside the window before the next scan.
-            if (have != null && have.requestKey == requestKey && reuseMs > 0 && now - have.snapshot.fetchedAtMs < reuseMs && !have.snapshot.skipped) {
+            if (!force && have != null && have.requestKey == requestKey && reuseMs > 0 && now - have.snapshot.fetchedAtMs < reuseMs && !have.snapshot.skipped) {
                 reused++
                 synchronized(answered) { answered += key }
                 onCall(league)
@@ -1282,6 +1329,38 @@ class Scanner(
      * life of the process (Tj's Diagnostics, 2026-10-01: an OutOfMemoryError at 256 MB with seven leagues picked and more having been): a
      * scan starts by letting them go.
      */
+    /**
+     * The hot refresh's fair side (Tj, 2026-10-15: "Is this speed too slow for pre game betting and bidding?"): every [ScanGuards.hotEverySeconds] while the scan reads Novig, the leagues with a game starting within
+     * [ScanGuards.hotHours] ask [HOT_FEEDS] again (the feeds that cost nothing per read or are flat-rate: never a credit-metered one, whose budget is a day's share), ignoring the re-use window. The new snapshots replace the old
+     * ones; the pump prices with them from its next batch. Network only: it never touches the pump's books.
+     */
+    private suspend fun hotFair(ordered: List<ReferenceSource>, leagues: List<League>, settings: ScanSettings, pump: BookPump) {
+        val everyMs = settings.vigGuards.hotEverySeconds.coerceIn(10, 600) * 1_000L
+        val feeds = ordered.filter { it.id in HOT_FEEDS }
+        if (feeds.isEmpty()) return
+        while (true) {
+            kotlinx.coroutines.delay(everyMs)
+            val cat = catalog ?: continue
+            val t = clock()
+            val until = t + settings.vigGuards.hotHours.coerceIn(1, 72) * 3_600_000L
+            val hotLeagues = leagues.filter { l -> cat.events.any { it.league == l.novigName && it.startsTs <= until && it.startsTs > t - Planner.STARTED_GRACE_MS } }
+            if (hotLeagues.isEmpty()) continue
+            val sink = ArrayList<String>()
+            for (source in feeds) {
+                val context = if (source.needsCatalog) ScanContext(cat.events, cat.markets, t) else null
+                try {
+                    fetchSource(source, hotLeagues, settings, clock(), sink, context, force = true) { }
+                    pump.hotFairReads += hotLeagues.count { source.supports(it) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // The last snapshot stays until the freshness rule drops it.
+                }
+            }
+            pump.wake()
+        }
+    }
+
     private fun dropUnusedReferences(sources: List<ReferenceSource>, leagues: List<League>) {
         val wanted = HashSet<String>()
         for (source in sources) for (league in leagues) if (source.supports(league)) wanted += "${source.id}|${league.novigName}"
@@ -1375,6 +1454,18 @@ class Scanner(
 
         /** Most books the end-of-scan re-read takes: about seven seconds on Novig's public routes. */
         const val MAX_REREAD = 40
+
+        /**
+         * The feeds the hot refresh asks again ([hotFair]): the ones that cost nothing per read (BoltOdds' boards, Kalshi's and Polymarket's public reads) or are flat-rate (SportsGameOdds Pro, OddsPapi v5). Never a
+         * credit-metered or daily-capped feed (ParlayAPI, The Odds API, PropLine, Pinnacle's hosts, OddsPapi Free): their budgets are a day's share, and the full scan keeps asking them.
+         */
+        val HOT_FEEDS = setOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "bolt", "bolt-props", "kalshi", "polymarket")
+
+        /** A hot line this close to zero (or above it) has its Novig book read again by the hot refresh. */
+        const val HOT_EV_FLOOR = -0.03
+
+        /** Most books one hot step reads (about 8 seconds on the key's 16 a second). */
+        const val MAX_HOT_READS = 120
 
         /** Feeds that relay Novig's own prices ([RefSnapshot.novig]). */
         private val NOVIG_RELAYS = listOf(com.tjshea.vigilant.data.reference.PropLineClient.ID, com.tjshea.vigilant.data.reference.PropLinePropsSource.ID)
