@@ -227,6 +227,7 @@ class CloudEngineTest {
     )
 
     private val bidsOn = on.copy(settings = on.settings.copy(maker = true))
+    private val recommendOnly = on.copy(settings = on.settings.copy(maker = false, makerRecommend = true))
 
     @Test
     fun `with Vigilant-priced bids on, the candidate lines are made from the list and sent with it, and the status says how many`() = runBlocking {
@@ -247,7 +248,9 @@ class CloudEngineTest {
 
     @Test
     fun `with no bids on, or bids priced from CrazyNinjaOdds, no candidate line is ever made`() = runBlocking {
-        for (cfg in listOf(on, on.copy(settings = on.settings.copy(maker = true, makerSource = com.tjshea.vigilant.data.scanner.BidSource.CNO)))) {
+        // (Recommend mode is a bid mode too, and the app's default: only switching it off as well means no bids.)
+        val none = on.settings.copy(maker = false, makerRecommend = false)
+        for (cfg in listOf(on.copy(settings = none), on.copy(settings = on.settings.copy(maker = true, makerSource = com.tjshea.vigilant.data.scanner.BidSource.CNO)))) {
             val scanner = FakeScanner { _, partial, _ -> partial(result("a")); delay(30); report(result("a")) }
             val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
             val log = BidLog()
