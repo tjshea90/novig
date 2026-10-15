@@ -1,13 +1,13 @@
-# CHECKPOINT 3299 — read me first, then TASKS.md
+# CHECKPOINT 3300 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T01:08:00Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-e8041e9d-7grwre` · **builds on:** `35b8fbe3e` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T01:14:53Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-e8041e9d-7grwre` · **builds on:** `18a436ef8` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.102.0: cloud review: bids keep the phone scanning (the cloud list lacks every priced line), the Feed's recheck works in cloud mode, pause stops the engine, every setting classified (fetch/pricing/filter/phone), freshness chip in the Feed title, settings-sync line, engine log on cloud-feed (versionCode 280, v0.102.0)
+v0.102.0 released and recorded; engine restarted on the new code (gate+engine workflow works, engine-log.txt published)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.102.0), then run: bash tools/record-release.sh v0.102.0 280 "v0.102.0: cloud review: bids keep the phone scanning (the cloud list lacks every priced line), the Feed's recheck works in cloud mode, pause stops the engine, every setting classified (fetch/pricing/filter/phone), freshness chip in the Feed title, settings-sync line, engine log on cloud-feed"
+Tj installs v0.102.0; decide TCL9c (bids on GitHub) and TCL11 (read-only Novig key for the engine); read live round trip (TCL10g)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  dc63ba210 ckpt 3299: pre-release: v0.102.0: cloud review: bids keep the phone scanning (the clou
   35b8fbe3e ckpt 3298: TCL10: efficiency (poll cadence, 5 s clock, requote throttle), push/keys mu
   2a846efcc ckpt 3297: TCL10: cloud review fixes (bids pause, recheck, pause/kill, token removal, 
   d022bf6e3 ckpt 3296: TCL10 written (review/fix/simplify/mirror/refresh/freshness)
@@ -25,5 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   5a182e3ae ckpt 3292: v0.100.2 recorded; engine now has 13 feeds from the app-sent keys and publi
   306606dff ckpt 3291: engine: settings change late in a scan waits for next pass (switch-off stil
   42de5fb66 ckpt 3290: pre-release: v0.100.2: cloud engine sends heartbeats during its first long 
-  9df5958eb ckpt 3289: TCL8: heartbeat during long scans, sendKeys no longer restarts the engine f
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
