@@ -149,9 +149,9 @@ class CloudBidsTest {
     fun `a market Novig has closed or put in play has nothing to take`() {
         val line = BidCandidates.from(board(), settings, now, outPlayer).first().line
         val book = books(now + 1_000).getValue(line.marketId)
-        val closed = book.copy(lifecycle = com.tjshea.vigilant.data.novig.stream.MarketLifecycle(closed = true, live = false, atMs = now))
+        val closed = book.copy(lifecycle = com.tjshea.vigilant.data.novig.stream.MarketLifecycle(status = "CLOSED", transition = "END", live = false, atMs = now))
         assertNull(MakerLines.withBook(line, closed).offer)
-        val inPlay = book.copy(lifecycle = com.tjshea.vigilant.data.novig.stream.MarketLifecycle(closed = false, live = true, atMs = now))
+        val inPlay = book.copy(lifecycle = com.tjshea.vigilant.data.novig.stream.MarketLifecycle(status = "OPEN", transition = "GOLIVE", live = true, atMs = now))
         assertNull(MakerLines.withBook(line, inPlay).offer)
         assertNotNull(MakerLines.withBook(line, book).offer)
     }
