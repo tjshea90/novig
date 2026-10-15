@@ -708,13 +708,14 @@ class Scanner(
                 .take(HotBudget.reads(hotRate, settings.vigGuards.hotEverySeconds.coerceIn(10, 600)))
             if (ids.isEmpty()) return
             try {
+                val readStart = clock()
                 val batch = withContext(com.tjshea.vigilant.data.novig.NovigReadTag("scan-hot")) { novig.books(ids) }
                 // A book served from the last scan's copy (a failed read) is no refresh: only one read just now replaces what is held.
                 for ((id, book) in batch.books) if (book.fetchedAtMs >= t) fresh[id] = book
                 val read = batch.books.count { it.value.fetchedAtMs >= t }
                 hotReads += read
                 // The route's speed as this step saw it sizes the next one, and the wait before it starts when this one ENDS.
-                HotBudget.rate(read, clock() - t)?.let { hotRate = it }
+                HotBudget.rate(read, clock() - readStart)?.let { hotRate = it }
                 refused += batch.refused
                 batch.retryAfterSeconds?.let { retryAfter = it }
             } catch (e: CancellationException) {
