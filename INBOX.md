@@ -7534,7 +7534,6 @@ See if you can take over and finish building the app
 The other session is archived so force
 ```
 
-<<<<<<< HEAD
 ## 2026-10-15T06:28:23Z
 ```
 Right now another session is working on this app. Don't interrupt it, but schedule this:
@@ -7563,9 +7562,7 @@ Do the check in now
 ## 2026-10-15T14:16:55Z
 ```
 Force
-=======
 ## 2026-10-15T06:50:56Z
 ```
 Ci is done
->>>>>>> origin/main
 ```
