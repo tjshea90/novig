@@ -120,6 +120,10 @@ data class CloudStatus(
     val walletCash: Double = -1.0,
     val walletEquity: Double = -1.0,
     val walletReadAtMs: Long = 0L,
+    /** What each fair-odds feed did on the last finished scan (TCL22d): the dashboard's per-API table. Keys never appear here. */
+    val feedReport: List<FeedLine> = emptyList(),
+    /** When that scan ended, so the dashboard says how old the per-feed answers are. */
+    val feedReportAtMs: Long = 0L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
@@ -127,6 +131,20 @@ data class CloudStatus(
         fun text(s: CloudStatus): String = json.encodeToString(serializer(), s)
     }
 }
+
+/** One feed's answer on the last scan ([com.tjshea.vigilant.data.scanner.SourceReport] without the long words): leagues answered fresh/reused, games matched, leagues it stood by or skipped, and its error. */
+@Serializable
+data class FeedLine(
+    val id: String,
+    val name: String = "",
+    val fetched: Int = 0,
+    val reused: Int = 0,
+    val matched: Int = 0,
+    val standingBy: Int = 0,
+    val skipped: Int = 0,
+    val error: String? = null,
+    val heldBack: String? = null,
+)
 
 /**
  * One list as the engine publishes it (`feed.json.gz`). [computedAtMs] is the moment it was PUBLISHED, so every list (each partial one of a long scan, then the final one) has a time of its own

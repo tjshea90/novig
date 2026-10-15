@@ -116,6 +116,8 @@ class CloudEngine(
     @Volatile private var settingsPending = false
     /** What the last finished scan said about itself (Novig reads, throttling, each feed's answer), a few hundred characters for the heartbeat. */
     @Volatile private var scanNote = ""
+    @Volatile private var feedLines: List<FeedLine> = emptyList()
+    @Volatile private var feedLinesAt = 0L
     private val progress = AtomicReference<ScanProgress?>(null)
     @Volatile private var bidsAt = 0L
     @Volatile private var bidsCount = 0
@@ -331,6 +333,8 @@ class CloudEngine(
         scanning = false
         scanNote = describe(report)
         log("scan report: $scanNote")
+        feedLines = report.sources.map { FeedLine(it.id, it.name, it.fetched, it.reused, it.matched, it.standingBy, it.skipped, it.error?.take(120), it.heldBack?.take(120)) }
+        feedLinesAt = clock()
         val result = report.result
         if (result == null) {
             problem = report.errors.firstOrNull()?.take(160) ?: "the scan returned nothing"
@@ -369,6 +373,7 @@ class CloudEngine(
             addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
             tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,
+            feedReport = feedLines, feedReportAtMs = feedLinesAt,
         )
     }
 
