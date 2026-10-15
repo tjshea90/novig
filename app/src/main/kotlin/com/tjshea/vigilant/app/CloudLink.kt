@@ -219,6 +219,16 @@ class CloudLink(private val c: AppContainer) {
                 delay(if (c.onScreen) INBOX_POLL_MS else INBOX_BACKGROUND_MS)
             }
         }
+        // 5. the chat with Claude (TCL29): the thread every 8 s while the chat screen is open, every minute otherwise; the lease line with it.
+        scope.launch(Dispatchers.IO) {
+            while (isActive) {
+                if (hasToken()) {
+                    runCatching { inbox.pollChat() }
+                    if (inbox.chatOpen) runCatching { inbox.pollWho() }
+                }
+                delay(if (inbox.chatOpen) CHAT_OPEN_POLL_MS else INBOX_POLL_MS)
+            }
+        }
         // 3. a key added or changed in the phone's key store goes to GitHub's secrets by itself (Tj, 2026-10-15: "If I add api keys inside my phone vigilant app, will it automatically upload them to GitHub ... If it doesn't already do this, make it do so"):
         // until now the upload rode only on a settings push, so a new key with no setting change waited for the next one. A changed fingerprint is the only trigger (no network when nothing changed), only while the cloud scan is on.
         scope.launch(Dispatchers.IO) {
@@ -578,6 +588,7 @@ class CloudLink(private val c: AppContainer) {
     companion object {
         const val POLL_MS = 5_000L
         const val INBOX_POLL_MS = 60_000L
+        const val CHAT_OPEN_POLL_MS = 8_000L
         const val INBOX_BACKGROUND_MS = 5 * 60_000L
         /** How often the engine's usage file is asked for (a 304 costs nothing against GitHub's limit). */
         const val USAGE_POLL_MS = 30_000L
