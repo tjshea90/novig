@@ -1041,6 +1041,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun recheck(marketIds: Collection<String>, quiet: Boolean = false) {
         val current = _state.value
         if (!current.loaded || !current.settings.vigilantOn || current.settings.liveOnly || current.status.rechecking || marketIds.isEmpty()) return
+        // Cloud scan (Tj, 2026-10-15 review): this phone holds no scan plan to re-check against (the GitHub engine made the list), so the listed rows are re-priced from Novig's newest books over the phone's own
+        // connection, with GitHub's fair odds kept: the way the list stays honest every 15 s and the Recheck button works. A stale fair is the engine's to refresh (it scans all the time; Scan asks for one now).
+        if (current.settings.cloudDrives) {
+            if (!current.settings.paused) requoteDuringScan(marketIds, toast = !quiet)
+            return
+        }
         // A scan holds the scanner for minutes: the list is still kept honest from Novig's live top of book, without the scan's lock (Tj, 2026-10-14: a -3.7% bet stayed listed during a scan).
         if (c.runner.running || current.status.scanning) {
             if (quiet && !current.settings.paused) requoteDuringScan(marketIds)
@@ -1085,7 +1091,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var requoting = false
 
     /** Re-prices the listed rows [marketIds] from Novig's newest books while a scan runs; a row that is no longer +EV drops out of the feed. */
-    private fun requoteDuringScan(marketIds: Collection<String>) {
+    private fun requoteDuringScan(marketIds: Collection<String>, toast: Boolean = false) {
         if (requoting) return
         requoting = true
         viewModelScope.launch {
@@ -1094,6 +1100,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val ids = marketIds.toSet()
                 val rows = before.opportunities.filter { it.market.marketId in ids }
                 val fresh = runCatching { withContext(Dispatchers.IO) { c.scanner.requoteListed(_state.value.settings, rows) } }.getOrNull().orEmpty()
+                if (toast) _toasts.tryEmit(if (fresh.isEmpty()) "Recheck: no newer Novig price yet" else "Rechecked ${fresh.size} price${if (fresh.size == 1) "" else "s"}")
                 if (fresh.isEmpty()) return@launch
                 val byKey = fresh.associateBy { it.market.marketId + "|" + it.outcome.outcomeId }
                 fun swap(o: com.tjshea.vigilant.data.scanner.Opportunity) = byKey[o.market.marketId + "|" + o.outcome.outcomeId] ?: o
@@ -1138,6 +1145,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // A scan just ended, or this screen opened after one did.
                 applyReport(report, run.settings ?: _state.value.settings, run.result)
                 shown = _state.value.result
+                // A cloud list carries Novig prices as GitHub read them: the listed bets are re-read from Novig at once, so a price this phone read a moment ago never goes back to an older one.
+                val cs = _state.value
+                if (cs.settings.cloudDrives) com.tjshea.vigilant.app.ui.feedMarketIds(cs).takeIf { it.isNotEmpty() }?.let { ids -> recheck(ids, quiet = true) }
             } else {
                 val r = run.result
                 if (r != null && r !== shown) {
