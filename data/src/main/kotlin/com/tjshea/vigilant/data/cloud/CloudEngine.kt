@@ -85,6 +85,7 @@ class CloudEngine(
      */
     private val walletProbe: (suspend (ScanSettings) -> Double?)? = null,
     private val walletEveryMs: Long = WALLET_EVERY_MS,
+    private val walletRetryMs: Long = WALLET_RETRY_MS,
 ) {
     /** What the engine's trading says about itself in the heartbeat. */
     data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null)
@@ -195,7 +196,7 @@ class CloudEngine(
         walletRefreshSeen = maxOf(walletRefreshSeen, cfg.refreshAtMs)
         walletCheckedAt = t
         val cash = runCatching { probe(cfg.settings) }.getOrNull()
-        walletNextAt = t + if (cash == null) minOf(walletEveryMs, WALLET_RETRY_MS) else walletEveryMs
+        walletNextAt = t + if (cash == null) minOf(walletEveryMs, walletRetryMs) else walletEveryMs
         if (cash == null) return walletSleep.isNotEmpty()
         if (walletEquity == null || walletEquity!! < cash) walletEquity = cash
         walletCash = cash; walletReadAt = t
