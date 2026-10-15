@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import java.io.File
@@ -255,7 +256,12 @@ class CloudLink(private val c: AppContainer) {
     private val offPending = File(c.app.filesDir, "cloud_off_pending")
     private var lastWanted: Boolean? = null
 
-    private suspend fun pushSettings(s: ScanSettings, force: Boolean = false) {
+    /** One writer at a time: the settings collector, the 10-minute retry and a pull to refresh all write the same config and share its revision counter. */
+    private val pushMutex = kotlinx.coroutines.sync.Mutex()
+
+    private suspend fun pushSettings(s: ScanSettings, force: Boolean = false) = pushMutex.withLock { pushLocked(s, force) }
+
+    private suspend fun pushLocked(s: ScanSettings, force: Boolean) {
         if (!hasToken()) return
         val wanted = s.cloudDrives
         if (lastWanted == null) lastWanted = runCatching { wantedFile.readText() == "1" }.getOrNull()
@@ -293,7 +299,11 @@ class CloudLink(private val c: AppContainer) {
      * keys and Kalshi's private key are never sent. Words only: no value is ever in the result, a log or an error. A running engine read its secrets when its job began, so it is stopped and started
      * again to pick them up.
      */
-    suspend fun sendKeys(auto: Boolean = false): String {
+    private val keysMutex = kotlinx.coroutines.sync.Mutex()
+
+    suspend fun sendKeys(auto: Boolean = false): String = keysMutex.withLock { sendKeysLocked(auto) }
+
+    private suspend fun sendKeysLocked(auto: Boolean): String {
         if (!hasToken()) return "Save the GitHub token first."
         val m = keysToSend()
         if (m.isEmpty()) return "No API keys are saved on this phone to send."
