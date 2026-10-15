@@ -1518,7 +1518,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
             style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudPausedNote"),
         )
     } else if (s.cloudScan) {
-        val now = System.currentTimeMillis()
+        val now = rememberNow(1_000)
         val v = com.tjshea.vigilant.data.cloud.CloudText.view(u.status, u.requestedAtMs, now, u.why)
         Text(v.headline + (v.detail?.let { "\n$it" } ?: ""), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudLine"))
         com.tjshea.vigilant.data.cloud.CloudText.settings(u.status, u.pushedRev, u.pushedAtMs, now)?.let { (lvl, text) ->

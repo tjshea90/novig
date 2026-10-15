@@ -59,7 +59,7 @@ object CloudText {
             append("List published ${dur(listAge)} ago, ${st.rows} bets")
             if (st.novigAgeMedianS >= 0) append(" · Novig prices: median ${dur(st.novigAgeMedianS + sinceList)}, oldest ${dur(st.novigAgeMaxS + sinceList)}")
             if (st.fairAgeMedianS >= 0) append(" · fair odds: median ${dur(st.fairAgeMedianS + sinceList)}, oldest ${dur(st.fairAgeMaxS + sinceList)}")
-            append(" (the phone re-reads each listed bet's Novig price every 15 s, and the Bet sheet again when you tap).")
+            append(" · this phone re-reads the listed bets' Novig prices every 15 s")
         }
         val level = when {
             listAge < 0 -> Level.INFO

@@ -54,9 +54,9 @@ class CloudUiTest {
         compose.onNodeWithTag("cloudFreshness").assertExists().assertHasClickAction()
         compose.onNodeWithTag("cloudFreshness").assertTextContains("Novig", substring = true)
         assertTrue("the sample bets' Novig prices were read 4 s before the clock", compose.onAllNodesWithTag("cloudFreshness").fetchSemanticsNodes().isNotEmpty())
-        assertEquals("the detail is closed until tapped", 0, compose.onAllNodesWithTag("cloudFreshnessDetail").fetchSemanticsNodes().size)
+        assertEquals("the detail is closed until tapped", 0, compose.onAllNodesWithTag("cloudFreshnessDetail", useUnmergedTree = true).fetchSemanticsNodes().size)
         compose.onNodeWithTag("cloudFreshness").performClick()
-        compose.onNodeWithTag("cloudFreshnessDetail").assertExists().assertTextContains("Across the", substring = true)
+        compose.onNodeWithTag("cloudFreshnessDetail", useUnmergedTree = true).assertExists().assertTextContains("Across the", substring = true)
     }
 
     @Test
