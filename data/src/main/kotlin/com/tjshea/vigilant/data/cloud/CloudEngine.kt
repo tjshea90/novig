@@ -58,7 +58,7 @@ class CloudEngine(
      * The bid desk's candidate lines of a priced board under the phone's mirrored settings ([com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.from]); null = this engine makes none. Only called
      * while the phone has Vigilant-priced bids on ([ScanSettings.bidsFromCloud]).
      */
-    private val bidLines: ((ScanResult, ScanSettings, Long) -> List<com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.BidLine>)? = null,
+    private val bidLines: (suspend (ScanResult, ScanSettings, Long) -> List<com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.BidLine>)? = null,
     /** Publishes the candidate lines. */
     private val publishBids: suspend (CloudBids) -> Unit = {},
     /** While a scan runs, a new candidate list goes out at most this often (a list is thousands of lines; a rule change sends one at once). */

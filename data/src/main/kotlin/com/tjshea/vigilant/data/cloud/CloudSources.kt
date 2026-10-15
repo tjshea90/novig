@@ -91,6 +91,8 @@ class CloudSources(
     private val parlayQuality = ParlaySourceQuality(http, json)
     private val parlayOdds = TheOddsApiClient(http, parlayPool, json, baseUrl = OddsFeed.PARLAY.base, feed = OddsFeed.PARLAY, quality = parlayQuality)
     private val parlayProps = ParlayPropsSource(parlayOdds, injuries)
+    @Volatile private var parlayInjuriesOn = false
+    private val parlayInjuries = ParlayInjuries(parlayOdds, injuries, json, active = { parlayInjuriesOn })
     private val parlayHalves = ParlayPeriodSource(parlayOdds, json)
     private val pinnacle = PinnapiClient(
         http, json,
@@ -120,6 +122,34 @@ class CloudSources(
         }
         val last = buildList { if (unabatedActive(s)) { add(unabatedGames); addAll(propsOf(s, unabatedProps)) } }
         return front + base(s) + last
+    }
+
+    /**
+     * Why a side must not be bid on: its player is out ([PlayerOut]; the reports are the props answers' own, and ParlayAPI's injury list for the prop players no report covers). The phone's own
+     * [com.tjshea.vigilant.data.novig.trading.maker.MakerLines] gets the same answer from the app's index; the candidate lines are made here, so the engine asks.
+     */
+    fun unavailable(o: com.tjshea.vigilant.data.scanner.Opportunity, now: Long): String? = PlayerOut.forOpportunity(injuries.book.value, o, now)
+
+    /**
+     * Asks ParlayAPI's injury list about the prop players of [result]'s priced lines that no report covers yet: one read a sport at most every [ParlayInjuries.REUSE_MS], only while ParlayAPI is on with a key
+     * (as `MakerRunner.askInjuries` does on the phone). Awaited, so the candidate lines made right after already know the answer (a few requests at most).
+     */
+    suspend fun askInjuries(result: com.tjshea.vigilant.data.scanner.ScanResult, s: ScanSettings, now: Long) {
+        parlayInjuriesOn = s.useParlay && has(CloudKeys.PARLAY)
+        if (!parlayInjuriesOn) return
+        val book = injuries.book.value
+        val uncovered = HashMap<String, MutableSet<String>>()
+        val seen = HashSet<String>()
+        for (o in result.opportunities) {
+            if (o.kind != com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP || o.isLive || !o.league.oddsApiListed || o.league.novigName !in s.leagues) continue
+            val sport = o.league.oddsApiSportKey
+            if (sport !in ParlayInjuries.SPORTS) continue
+            val player = o.lineKey?.subject ?: continue
+            if (!seen.add("$sport|$player") || book.covers(sport, player, now)) continue
+            uncovered.getOrPut(sport) { HashSet() } += player
+        }
+        if (uncovered.isEmpty()) return
+        kotlinx.coroutines.coroutineScope { uncovered.map { (sport, players) -> async { runCatching { parlayInjuries.fill(sport, players) } } }.awaitAll() }
     }
 
     /** What is in [sources], by name, for the status file and the logs (never a key). */
