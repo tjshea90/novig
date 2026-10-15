@@ -64,7 +64,7 @@ object CloudDashboard {
         appendLine("| API | Health | Leagues (fresh+reused) | Games matched | Left of allowance | Resets | Calls today | Throttled | Note |")
         appendLine("|:--|:--|--:|--:|--:|:--|--:|--:|:--|")
         val byProvider = st.feedReport.groupBy { providerOf(it.id) }
-        val policies = QuotaPolicy.ALL + QuotaPolicy.PINNODDS.takeIf { false }.let { emptyList() }
+        val policies = QuotaPolicy.ALL
         val views = ArrayList<ProviderView>()
         val shown = HashSet<String>()
         for (policy in policies) {
@@ -79,7 +79,7 @@ object CloudDashboard {
                 view.totalLeft != null -> "${num(view.totalLeft)} ${policy.unit}"
                 else -> "no allowance published"
             }
-            val reset = if (policy.keyed && view.nextReset != null && view.totalAllowance != null) clock(view.nextReset) else if (policy.keyed && view.totalAllowance == null) "—" else "—"
+            val reset = if (policy.keyed && view.nextReset != null && view.totalAllowance != null) clock(view.nextReset) else "—"
             val note = (feeds.mapNotNull { f -> f.error ?: f.heldBack }.firstOrNull() ?: "").replace('|', '/').take(90)
             appendLine("| ${policy.displayName} | ${health.label} | ${feeds.joinToString(" · ") { "${it.id} ${it.fetched}+${it.reused}" }.ifBlank { "—" }} | ${feeds.sumOf { it.matched }.takeIf { feeds.isNotEmpty() } ?: "—"} | $left | $reset | ${num(view.callsToday)} | ${view.throttledToday} | $note |")
         }
