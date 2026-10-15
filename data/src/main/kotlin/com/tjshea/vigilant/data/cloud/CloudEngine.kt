@@ -227,28 +227,3 @@ class CloudEngine(
         fun forCloud(s: ScanSettings): ScanSettings = s.copy(scanner = ScannerMode.VIGILANT, includeLive = false, gates = s.gates.copy(liveOnly = LiveOnlyMode()))
     }
 }
-
-/**
- * Which of the phone's settings change WHAT a scan reads and prices (so a new value starts the scan again) and which only change what the finished list shows or what the phone itself does (the auto-bet, the bids' own
- * rules, the widget, alerts: they never reach a scan, and the list is filtered again with the newest ones). Phone-only and filter-only top-level fields are named here; everything else, including every nested group (`gates`,
- * `vigGuards`, `guards`), counts as scan-affecting, so a setting missing from this list errs toward re-scanning, never toward a stale mirror ([CloudScanKeyTest] pins both directions).
- */
-object CloudScanKey {
-    private val filterOnly = setOf(
-        "minEvPercent", "maxEvPercent", "minOdds", "maxOdds", "feedSort", "exchangeMaxSpread", "outlierGuard", "bankroll", "kellyMultiplier", "startsWithinHours",
-    )
-    private val phoneOnlyPrefixes = listOf(
-        "autoBet", "autoLock", "apiBet", "apiMax", "slip", "sharpAutoBet", "sharpAlerts", "sharpConfirm", "sharpVeto", "propGuard", "trap",
-        "burst", "pinnLive", "pinnWebsite", "liveBid", "tailLive", "cno", "floatingWidget", "miniWindow", "widget", "autoScan", "alert", "quiet", "killed", "tracker", "scanStudy", "feedRace", "altLab", "research", "presets", "presetName", "bookState", "schema",
-    )
-    /** The bids' own rules never reach a scan; the few that do ([maker], [makerRecommend], [makerFocus], [makerSource], the low-usage settings: `ScanSettings.effective`) stay in the key. */
-    private val makerKept = setOf("maker", "makerRecommend", "makerFocus", "makerSource")
-
-    private fun phoneOnly(k: String) = (k.startsWith("maker") && k !in makerKept) || phoneOnlyPrefixes.any { k.startsWith(it) } || k in setOf("trapEarlyHours")
-
-    /** The part of [s] that decides what a scan reads, as text (equal text = the same scan). */
-    fun of(s: ScanSettings): String {
-        val j = CloudConfig.json.encodeToJsonElement(ScanSettings.serializer(), s) as kotlinx.serialization.json.JsonObject
-        return kotlinx.serialization.json.JsonObject(j.filterKeys { it !in filterOnly && !phoneOnly(it) }).toString()
-    }
-}
