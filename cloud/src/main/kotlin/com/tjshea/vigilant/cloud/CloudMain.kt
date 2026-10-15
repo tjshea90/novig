@@ -56,15 +56,16 @@ fun main(args: Array<String>) = runBlocking {
     val scanner = Scanner(novig)
     val edge = EdgeLog(DayJournal(File(out, "cloud"), "edge", EdgeRow.serializer()) { it.atMs })
     val git = Git(token)
-    val publisher = Publisher(pubDir, repo, token, git)
     val log = Log(File(out, "cloud-engine.log"))
+    val publisher = Publisher(pubDir, repo, token, git, log::tail)
+    val config = ConfigReader(git, cfgDir)
     val started = System.currentTimeMillis()
     val until = started + minutes * 60_000L
     log("cloud engine starting: $minutes min, run $runId, keys present: " + CloudKeys.ALL.filter { CloudKeys.fromEnv(it).isNotEmpty() }.joinToString(",").ifBlank { "none (public feeds only)" })
 
     val flusher = scope.launch { while (isActive) { runCatching { publisher.flush() }; delay(4_000L) } }
     val engine = CloudEngine(
-        scanner = scanner, sources = sources::sources, config = { readConfig(git, cfgDir) },
+        scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
         engine = "github-actions", runId = runId, log = log::invoke, sourceNames = sources::names,
@@ -77,19 +78,38 @@ fun main(args: Array<String>) = runBlocking {
     File(out, "end").writeText(end.name)
 }
 
-/** Reads `settings.json` from the `cloud-config` branch with git (the checkout already has the token). */
-private fun readConfig(git: Git, dir: File): CloudConfig? {
-    if (git.run(dir, "fetch", "-q", "--depth=1", "origin", "cloud-config") != 0) return null
-    val text = git.out(dir, "show", "FETCH_HEAD:settings.json") ?: return null
-    return CloudConfig.parse(text)
+/**
+ * Reads `settings.json` from the `cloud-config` branch with git (the checkout already has the token). The engine looks every 3 s, so it asks first with the light `ls-remote` which commit the branch is at and
+ * fetches only when that changed: an unchanged answer is a few hundred bytes, not a fetch.
+ */
+private class ConfigReader(private val git: Git, private val dir: File) {
+    private var sha: String? = null
+    private var cached: CloudConfig? = null
+
+    @Synchronized
+    fun read(): CloudConfig? {
+        val head = git.out(dir, "ls-remote", "origin", "refs/heads/cloud-config")?.trim()?.substringBefore('\t')?.takeIf { it.length >= 40 } ?: return cached
+        if (head == sha && cached != null) return cached
+        if (git.run(dir, "fetch", "-q", "--depth=1", "origin", "cloud-config") != 0) return cached
+        val text = git.out(dir, "show", "FETCH_HEAD:settings.json") ?: return cached
+        return CloudConfig.parse(text)?.also { cached = it; sha = head } ?: cached
+    }
 }
 
 private class Log(private val file: File) {
+    private val recent = ArrayDeque<String>()
+
     operator fun invoke(s: String) {
         val line = "${Instant.now()} $s"
         println(line)
         runCatching { file.appendText(line + "\n") }
+        synchronized(recent) { recent.addLast(line); while (recent.size > TAIL_LINES) recent.removeFirst() }
     }
+
+    /** The newest lines, published with the list (`engine-log.txt` on `cloud-feed`) so the engine can be read from the repository without opening a job's logs. */
+    fun tail(): String = synchronized(recent) { recent.joinToString("\n") }
+
+    companion object { const val TAIL_LINES = 200 }
 }
 
 /** git through the command line; the token is never printed (it is part of the remote URL only, and anything git says is scrubbed). */
@@ -109,7 +129,7 @@ internal class Git(private val token: String) {
  * heartbeat; [flush] (every few seconds, from one coroutine) pushes the newest, never faster than [MIN_GAP_MS] (GitHub's secondary limits dislike a push a second), a heartbeat at least
  * every [HEARTBEAT_MS] when nothing else changed.
  */
-internal class Publisher(private val dir: File, private val repo: String, private val token: String, private val git: Git) {
+internal class Publisher(private val dir: File, private val repo: String, private val token: String, private val git: Git, private val logTail: () -> String = { "" }) {
     private var feedBytes: ByteArray? = null
     private var status: CloudStatus? = null
     private var dirty = false
@@ -140,6 +160,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         }
         feedBytes?.let { File(dir, "feed.json.gz").writeBytes(it) }
         File(dir, "status.json").writeText(CloudStatus.text(st.copy(heartbeatMs = now)))
+        logTail().takeIf { it.isNotBlank() }?.let { File(dir, "engine-log.txt").writeText(it + "\n") }
         git.run(dir, "add", "-A")
         val msg = "cloud feed ${java.time.Instant.ofEpochMilli(now)}"
         val c = if (committed) git.exec(dir, listOf("commit", "-q", "--amend", "--allow-empty", "-m", msg)) else git.exec(dir, listOf("commit", "-q", "--allow-empty", "-m", msg))
