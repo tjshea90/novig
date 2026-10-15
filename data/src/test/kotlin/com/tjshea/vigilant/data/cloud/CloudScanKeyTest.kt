@@ -46,7 +46,7 @@ class CloudScanKeyTest {
         // the phone's own: neither
         val phone = base.copy(
             autoBet = true, autoBetMinEv = 0.1, makerMargin = 0.02, makerMaxBids = 9, apiMaxStake = 3.0, includeLive = true, cnoEnabled = !base.cnoEnabled, startsWithinHours = 6,
-            gates = base.gates.copy(cloudSave = !base.gates.cloudSave, useBoltOdds = !base.gates.useBoltOdds, streamScan = !base.gates.streamScan),
+            gates = base.gates.copy(cloudSave = !base.gates.cloudSave, usePinnodds = !base.gates.usePinnodds, streamScan = !base.gates.streamScan),
             vigGuards = base.vigGuards.copy(betLevel = 12, bidLevel = 90, bidVolume = !base.vigGuards.bidVolume),
         )
         assertEquals(scan, CloudScanKey.scanKey(phone))
