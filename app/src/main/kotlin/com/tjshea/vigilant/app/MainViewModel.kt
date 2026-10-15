@@ -2359,6 +2359,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun testCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.test() } }
     fun startCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.startEngine() } }
     fun sendCloudKeys() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendKeys() } }
+    fun sendNovigKey() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendNovigKey() } }
+    fun removeNovigKey() { viewModelScope.launch(Dispatchers.IO) { c.cloud.removeNovigKey() } }
     fun saveCloudNow() { viewModelScope.launch(Dispatchers.IO) { c.cloud.saveHistory() } }
 
     fun removeKalshiKey() {

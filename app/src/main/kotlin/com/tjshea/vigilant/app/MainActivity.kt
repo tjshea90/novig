@@ -898,6 +898,8 @@ private fun VigilantRoot(
                         onStartCloud = { vm.startCloud() },
                         onSaveCloudNow = { vm.saveCloudNow() },
                         onSendCloudKeys = { vm.sendCloudKeys() },
+                        onSendNovigKey = { vm.sendNovigKey() },
+                        onRemoveNovigKey = { vm.removeNovigKey() },
                         onTestBoltKey = { share -> vm.testBoltKey(share) },
                         onTestOddsPapiFreeKey = { share -> vm.testOddsPapiFreeKey(share) },
                         onShareFeedRace = vm::shareFeedRace,

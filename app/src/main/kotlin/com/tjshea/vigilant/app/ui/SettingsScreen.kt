@@ -1534,8 +1534,18 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
         Button(onClick = reportActions.onSendCloudKeys, enabled = u.hasToken, modifier = Modifier.testTag("cloudSendKeys")) { Text("Send my API keys to GitHub") }
     }
-    Hint("Every key saved on this phone for an API that is on, sealed here before it leaves (GitHub keeps secrets write-only). Pinnodds, BoltOdds and Kalshi are never sent. Sent again by itself when a key changes while the scan is on GitHub.")
+    Hint("Every key saved on this phone for an API that is on, BoltOdds included, sealed here before it leaves (GitHub keeps secrets write-only). Pinnodds and Kalshi are never sent. Sent again by itself when a key changes while the scan is on GitHub.")
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        Button(onClick = reportActions.onSendNovigKey, enabled = u.hasToken, modifier = Modifier.testTag("cloudSendNovigKey")) { Text(if (u.novigKeyMadeAtMs > 0L) "Send my Novig key again" else "Send a Novig read-only key") }
+        if (u.novigKeyMadeAtMs > 0L) OutlinedButton(onClick = reportActions.onRemoveNovigKey, enabled = u.hasToken, modifier = Modifier.testTag("cloudRemoveNovigKey")) { Text("Remove it") }
+    }
+    Hint(
+        if (u.novigKeyMadeAtMs > 0L) "A read-only Novig key made ${Format.age(u.novigKeyMadeAtMs, now)} is on GitHub for the engine alone. It can read prices; it cannot bet or move money. Remove it to put the engine back on Novig's public routes."
+        else "Makes ONE new read-only key in your Novig account for GitHub's engine alone (it can read prices, it cannot bet or move money; your trading and management keys never leave this phone), so the engine reads Novig at the key's own speed instead of the public routes' about 2 prices a second.",
+    )
     u.keysNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudKeysNote")) }
+    u.status?.novigRoute?.takeIf { it.isNotBlank() && s.cloudScan }?.let { Text("GitHub reads Novig: $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudNovigRoute")) }
+    u.status?.ranking?.takeIf { it.isNotBlank() && s.cloudScan }?.let { Text("APIs on GitHub, best first (measured freshness and accuracy):\n$it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudRanking")) }
     // 4. history for Claude
     SectionTitle("History")
     SwitchRow(
