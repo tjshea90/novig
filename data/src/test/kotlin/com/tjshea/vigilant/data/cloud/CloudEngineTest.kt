@@ -31,18 +31,18 @@ import java.util.concurrent.atomic.AtomicInteger
 class CloudEngineTest {
     private val start = System.currentTimeMillis() + 6 * 3_600_000L
 
-    private fun row(id: String): Opportunity {
+    private fun row(id: String, fetched: Long = System.currentTimeMillis()): Opportunity {
         val event = NovigEvent("e-$id", "BASKETBALL", "NBA", NovigEvent.STATUS_PREGAME, "Boston Celtics @ New York Knicks", start)
         val market = NovigMarket("m-$id", "e-$id", "SPREAD", "OPEN", "Spread", start, MarketFee.GAME, listOf(NovigOutcome("o-$id", "NYK -3.5", "TBD"), NovigOutcome("x-$id", "BOS +3.5", "TBD")), strike = -3.5)
         return Opportunity(
             league = Leagues.byNovigName("NBA")!!, event = event, market = market, outcome = market.outcomes.first(), marketLabel = "Spread", kind = LineKind.SPREAD,
             selection = "NYK -3.5", fair = null, fairProbability = 0.55, quote = EvQuote(0.55, 0.48, 0.0075), ladder = listOf(TakeLevel(0.48, 5_000)), depth = null,
-            suggestedStake = null, novigWidth = null, bookFetchedAtMs = System.currentTimeMillis(), fairUpdatedMs = null, refEvent = null, lineKey = null, target = null,
+            suggestedStake = null, novigWidth = null, bookFetchedAtMs = fetched, fairUpdatedMs = null, refEvent = null, lineKey = null, target = null,
         )
     }
 
-    private fun result(vararg ids: String, at: Long = System.currentTimeMillis()) =
-        ScanResult(games = emptyList(), opportunities = ids.map(::row), stats = ScanStats(ids.size, ids.size, ids.size, ids.size, ids.size), computedAtMs = at)
+    private fun result(vararg ids: String, at: Long = System.currentTimeMillis(), fetched: Long = System.currentTimeMillis()) =
+        ScanResult(games = emptyList(), opportunities = ids.map { row(it, fetched) }, stats = ScanStats(ids.size, ids.size, ids.size, ids.size, ids.size), computedAtMs = at)
 
     private fun report(r: ScanResult?) = ScanReport(r, emptyList(), null, 1, 0, 0, 0, null, emptyList(), null)
 
@@ -118,7 +118,7 @@ class CloudEngineTest {
         val askedIds = CopyOnWriteArrayList<Collection<String>>()
         val judged = CopyOnWriteArrayList<List<String>>()
         val scanner = object : OddsScanner {
-            override suspend fun scan(settings: ScanSettings, sources: List<ReferenceSource>, pinned: Set<String>, onProgress: (ScanProgress) -> Unit, onPartial: (ScanResult) -> Unit) = report(result("a", "b"))
+            override suspend fun scan(settings: ScanSettings, sources: List<ReferenceSource>, pinned: Set<String>, onProgress: (ScanProgress) -> Unit, onPartial: (ScanResult) -> Unit) = report(result("a", "b", fetched = System.currentTimeMillis() - 600_000L))
             override suspend fun recheck(settings: ScanSettings, marketIds: Collection<String>, onProgress: (Int, Int) -> Unit): RecheckReport { askedIds += marketIds; return RecheckReport(result("a"), 2, 0, null) }
             override suspend fun reprice(settings: ScanSettings): ScanResult? = null
             override suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = emptySet()
@@ -130,7 +130,7 @@ class CloudEngineTest {
         delay(400)
         job.cancel()
         assertTrue("the old prices were read again", askedIds.isNotEmpty())
-        assertEquals("the trader saw only the bet that is still +EV after the re-read", listOf("a"), judged.first().map { it.removePrefix("ev-") }.let { listOf(it.first()) }.map { if (it.endsWith("a")) "a" else it })
+        assertEquals("the trader saw only the bet that is still +EV after the re-read", listOf("e-a"), judged.first())
     }
 
     @Test
