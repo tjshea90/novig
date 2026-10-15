@@ -140,7 +140,11 @@ class MakerRunner(
         }
         // Bids priced from CrazyNinjaOdds never look at Vigilant's scan (it may be off): their lines are the lane's, and a pass has no "scan" to be partial.
         val cnoSource = s.makerSource == BidSource.CNO
-        val result = if (cnoSource) null else scan().result
+        // The scan is GitHub's and so are the candidate lines (Tj, 2026-10-15): this phone adds Novig's side and posts. A list older than [CLOUD_BIDS_MAX_AGE_MS] (the engine is down) is no list: the
+        // bids already up stay until their own expiry, as with no scan at all.
+        val cloudSource = !cnoSource && s.bidsFromCloud
+        val cloud = if (cloudSource) c.cloudBids.current?.takeIf { clock() - it.atMs <= CLOUD_BIDS_MAX_AGE_MS } else null
+        val result = if (cnoSource || cloudSource) null else scan().result
         _status.update { it.copy(running = true) }
         try {
             val now = clock()
@@ -152,7 +156,7 @@ class MakerRunner(
             // prices it read first were going old): its finished leagues' lines are bid on, and a bid whose line it hasn't judged yet stays up.
             val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()?.let { forBids(it, s) }
             val rules = MakerRules.of(s)
-            if (result == null && stop == null && !cnoSource) {
+            if (stop == null && !cnoSource && (if (cloudSource) cloud == null else result == null)) {
                 // No lines to judge by, but the bids up still have to fit the wallet (a bet by hand or an auto-bet since they went up: Tj, 2026-10-04).
                 val report = desk.fit(rules, s.apiMaxPerDay, wallet)
                 notifyFills(report.fills, desk.bids())
@@ -161,19 +165,23 @@ class MakerRunner(
                 _status.update { it.copy(running = false, lastAtMs = now, problem = report.problems.firstOrNull()) }
                 return@withLock null
             }
-            val partial = result?.partial == true
-            askInjuries(result, s, now)
+            val partial = if (cloudSource) cloud?.partial == true else result?.partial == true
+            if (!cloudSource) askInjuries(result, s, now)
             // The sides Vigilant has a bid on, or a fill not yet judged, get their books' fairs worked out whatever the precheck says (a fill is judged against them).
             val mine = desk.bids().filter { it.active || (it.filled > 0 && it.fairAtFill == null) }.mapTo(HashSet()) { it.outcomeId }
-            val lines = if (cnoSource) cnoSet?.lines.orEmpty() else MakerLines.from(result, s, now, always = mine, unavailable = playerOut(now))
-            if (!cnoSource && c.researchOn()) runCatching { c.bidLab.observe(lines.mapNotNull { com.tjshea.vigilant.data.novig.lab.labLineOf(it, now) }, now) }
+            val lines = when {
+                cnoSource -> cnoSet?.lines.orEmpty()
+                cloudSource -> c.cloudBids.lines(now, rules, keep = mine)
+                else -> MakerLines.from(result, s, now, always = mine, unavailable = playerOut(now))
+            }
+            if (!cnoSource && !cloudSource && c.researchOn()) runCatching { c.bidLab.observe(lines.mapNotNull { com.tjshea.vigilant.data.novig.lab.labLineOf(it, now) }, now) }
             // Novig's recent trades are read once per pass: the deeper pass below judges the same lines (a game line whose read failed gets no bid in either).
             val moved = withMoves(lines, rules, now, read = stop == null)
             val report = desk.cycle(
                 moved, rules, stop, s.apiMaxPerDay, wallet,
                 denied = c.makerDenials.outcomes(clock()), autoPost = s.maker, partial = partial, keepPosting = ::stillPosting,
                 // A quick scan (FarLane) reads only the next 48 hours: a bid on a game past that stays up for its own expiry instead of coming down as "no longer a bid to post".
-                reachUntilMs = reachOf(result, s, now),
+                reachUntilMs = if (cloudSource) null else reachOf(result, s, now),
             )
             notifyFills(report.fills, desk.bids())
             // Still under the wallet target after the usual and the riskier bids (Tj, 2026-10-14: "the bids up ... never fill my wallet"): a second, DEEPER bid on the sides that already have one. Each is priced
@@ -208,7 +216,7 @@ class MakerRunner(
             _status.update {
                 it.copy(
                     running = false, lastAtMs = now, lastReport = report, problem = report.problems.firstOrNull(),
-                    decisions = report.decisions, decisionsAtMs = now, scanAtMs = if (cnoSource) cnoSet?.listAtMs else result?.computedAtMs,
+                    decisions = report.decisions, decisionsAtMs = now, scanAtMs = if (cnoSource) cnoSet?.listAtMs else if (cloudSource) cloud?.atMs else result?.computedAtMs,
                 )
             }
             if (!s.maker && stop == null && s.makerRecommend) recommend(report.decisions)
@@ -274,13 +282,15 @@ class MakerRunner(
         val denied = c.makerDenials.outcomes(clock())
         val rules = MakerRules.of(settings)
         val cnoSet = if (settings.makerSource == BidSource.CNO) cnoLines(settings, now, bids, readNovig) else null
-        val result = if (cnoSet == null) scan().result else null
-        val base = cnoSet?.lines ?: MakerLines.from(result, settings, now, unavailable = playerOut(now))
+        val cloudSource = cnoSet == null && settings.bidsFromCloud
+        val cloud = if (cloudSource) c.cloudBids.current?.takeIf { clock() - it.atMs <= CLOUD_BIDS_MAX_AGE_MS } else null
+        val result = if (cnoSet == null && !cloudSource) scan().result else null
+        val base = cnoSet?.lines ?: if (cloudSource) c.cloudBids.lines(now, rules, keep = resting + busy) else MakerLines.from(result, settings, now, unavailable = playerOut(now))
         val lines = withMoves(MakerLines.withoutOwn(base, bids), rules, now, read = false)
         val decisions = MakerQuote.decideAll(lines, rules, now, held).map { d ->
             if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, MakerDesk.DENIED) else d
         }
-        _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = if (cnoSet != null) cnoSet.listAtMs else result?.computedAtMs) }
+        _status.update { it.copy(decisions = decisions, decisionsAtMs = now, scanAtMs = if (cnoSet != null) cnoSet.listAtMs else if (cloudSource) cloud?.atMs else result?.computedAtMs) }
         return decisions
     }
 
@@ -333,7 +343,7 @@ class MakerRunner(
         // Bids priced from CNO: the stop (CNO paused, late, unreadable) is a reason not to post by hand either.
         val cnoSet = if (s.makerSource == BidSource.CNO) cnoLines(s, now, bids, true) else null
         cnoSet?.stop?.let { return it }
-        val base = cnoSet?.lines ?: MakerLines.from(scan().result, s, now, unavailable = playerOut(now))
+        val base = cnoSet?.lines ?: if (s.bidsFromCloud) c.cloudBids.lines(now, rules, keep = setOf(outcomeId)) else MakerLines.from(scan().result, s, now, unavailable = playerOut(now))
         val line = withMoves(MakerLines.withoutOwn(base.filter { it.outcomeId == outcomeId }, bids), rules, now, read = true)
             .firstOrNull() ?: return "That line isn't in the latest scan any more"
         val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()?.let { forBids(it, s) }
