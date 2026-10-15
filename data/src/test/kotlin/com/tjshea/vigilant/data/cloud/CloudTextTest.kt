@@ -25,7 +25,7 @@ class CloudTextTest {
         val running = CloudText.view(st(scanning = true, acked = req), req, now)
         assertTrue(running.busy); assertTrue(running.headline.contains("Scanning on GitHub: Reading Novig books 30/120 (25%)")); assertTrue(running.headline.contains("acknowledged"))
         val done = CloudText.view(st(acked = req, forRefresh = req), req, now)
-        assertFalse(done.busy); assertTrue(done.headline.contains("Last scan finished 1m 00s ago and took 9m 00s"))
+        assertFalse(done.busy); assertTrue(done.headline.contains("Last scan finished 60s ago and took 9m 00s"))
     }
 
     @Test
@@ -33,8 +33,8 @@ class CloudTextTest {
         val v = CloudText.view(st(listAge = 20, novig = 30, fair = 90), 0, now)
         // 20 s since publish: Novig median 30+20 = 50 s, oldest 90+20 = 110 s; fair median 110 s, oldest 200 s = 3m 20s
         assertTrue(v.detail!!, v.detail!!.contains("List published 20s ago, 40 bets"))
-        assertTrue(v.detail!!, v.detail!!.contains("Novig prices: median 50s, oldest 110s"))
-        assertTrue(v.detail!!, v.detail!!.contains("fair odds: median 110s, oldest 3m 20s"))
+        assertTrue(v.detail!!, v.detail!!.contains("Novig prices: median 50s, oldest 1m 50s"))
+        assertTrue(v.detail!!, v.detail!!.contains("fair odds: median 1m 50s, oldest 3m 20s"))
         assertEquals(CloudText.Level.GOOD, v.level)
     }
 
