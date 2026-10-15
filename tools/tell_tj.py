@@ -3,6 +3,7 @@
 
   python3 tools/tell_tj.py say "Title" "Body" [--kind recommendation|bet|alert|shipped|info] [--priority 0|1] [--action APIS]
   python3 tools/tell_tj.py set-api "reason" sgo=on parlay=off ...
+  python3 tools/tell_tj.py chat-reply <message id> "answer"      (the chat; tools/chat_watch.sh prints Tj's new messages)
   python3 tools/tell_tj.py selftest
 
 Each call adds ONE small file (messages/ or overrides/) to the `cloud-config` branch with a plain (non-force) push, so two writers never overwrite each other. The phone reads the folders every minute
@@ -88,6 +89,17 @@ def set_api(reason, pairs, who=None, **kw):
     return ident
 
 
+def chat_reply(reply_to, text, who=None, **kw):
+    """One reply in the app's chat thread (chat/ on cloud-config), answering Tj's message `reply_to`."""
+    if SECRET.search(text):
+        raise SystemExit("refused: the text looks like a key or token (the repo is public)")
+    at = int(time.time() * 1000)
+    ident = "c%d-%s" % (at // 1000, secrets.token_hex(2))
+    m = {"id": ident, "at": at, "from": who or me(), "text": text, "replyTo": reply_to}
+    put("chat/" + fname(at, ident), json.dumps(m), **kw)
+    return ident
+
+
 def selftest():
     with tempfile.TemporaryDirectory() as d:
         bare = os.path.join(d, "bare.git"); work = os.path.join(d, "w")
@@ -101,6 +113,9 @@ def selftest():
         assert m["title"] == "Refill SGO" and m["priority"] == 1 and m["action"] == "APIS" and m["id"] == a, m
         o = json.loads(git("show", "%s:%s" % (BRANCH, [f for f in files if f.startswith("overrides/")][0]), cwd=bare).stdout)
         assert o["apis"] == {"parlay": False, "sgo": True} and o["id"] == b, o
+        c = chat_reply("t1", "hello Tj", who="claude:test", cwd=work)
+        cf = [f for f in git("ls-tree", "-r", "--name-only", BRANCH, cwd=bare).stdout.split() if f.startswith("chat/")]
+        assert len(cf) == 1 and json.loads(git("show", "%s:%s" % (BRANCH, cf[0]), cwd=bare).stdout)["replyTo"] == "t1"
         for bad in (lambda: say("x", "ghp_" + "a" * 30, cwd=work), lambda: set_api("r", ["nope=on"], cwd=work)):
             try:
                 bad(); raise AssertionError("should refuse")
@@ -121,6 +136,8 @@ def main(argv):
             if argv[i] in opts: opts[argv[i]] = argv[i + 1]; i += 2
             else: pos.append(argv[i]); i += 1
         print("sent", say(pos[0], pos[1] if len(pos) > 1 else "", opts["--kind"], opts["--priority"], opts["--action"])); return 0
+    if argv[0] == "chat-reply" and len(argv) >= 3:
+        print("sent", chat_reply(argv[1], " ".join(argv[2:]))); return 0
     if argv[0] == "set-api" and len(argv) >= 3:
         print("sent", set_api(argv[1], argv[2:])); return 0
     print(__doc__); return 2
