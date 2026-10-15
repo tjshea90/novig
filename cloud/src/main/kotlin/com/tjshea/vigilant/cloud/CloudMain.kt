@@ -18,7 +18,10 @@ import com.tjshea.vigilant.data.cloud.CloudTrader
 import com.tjshea.vigilant.data.cloud.TradeLedger
 import com.tjshea.vigilant.data.cloud.TradeSettle
 import com.tjshea.vigilant.data.scanner.CloudTradeMode
+import com.tjshea.vigilant.data.cloud.ApiGovernor
 import com.tjshea.vigilant.data.cloud.CloudDashboard
+import com.tjshea.vigilant.data.cloud.CloudMessages
+import com.tjshea.vigilant.data.cloud.CloudOverrides
 import com.tjshea.vigilant.data.cloud.CloudUsage
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.keys.UsageMeter
@@ -145,6 +148,16 @@ fun main(args: Array<String>) = runBlocking {
     // Novig refusing THIS runner's address ends the job early so the workflow draws another runner (AddressWatch, Tj 2026-10-15); the streak is carried from job to job in the status file.
     val prevStatus = runCatching { PreviousFeed.read(git, cfgDir, "status.json") }.getOrNull()?.let { CloudStatus.parse(it) }
     val addressWatch = novigKeyed?.let { nk -> AddressWatch(started, prevStatus?.addressHandovers ?: 0, prevStatus?.addressHandoverAtMs ?: 0L) { now -> nk.addressRefused(now) } }
+    // Messages for Tj and settings requests for the phone go to the cloud-config branch as one small file each (CloudMessages / CloudOverrides), by the same REST client the phone uses, with the job's own token.
+    val ghClient = com.tjshea.vigilant.data.cloud.CloudClient(http, { token.ifBlank { null } }, repo)
+    val postMessage: suspend (CloudMessages.Message) -> Unit = { m ->
+        ghClient.putFile(CloudMessages.BRANCH, "${CloudMessages.DIR}/${CloudMessages.fileName(m)}", CloudMessages.encode(m).toByteArray(Charsets.UTF_8), "message: ${m.title.take(60)}")?.let { log("message not saved: $it") }
+    }
+    val postOverride: suspend (CloudOverrides.Request) -> Unit = { r ->
+        ghClient.putFile(CloudOverrides.BRANCH, "${CloudOverrides.DIR}/${CloudOverrides.fileName(r)}", CloudOverrides.encode(r).toByteArray(Charsets.UTF_8), "settings request: ${r.apis}")?.let { log("settings request not saved: $it") }
+    }
+    val governor = ApiGovernor().also { g -> prevStatus?.governorOff?.let { g.seedOff(it, started) } }
+    var lastStoppedSaid = ""
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
@@ -163,12 +176,24 @@ fun main(args: Array<String>) = runBlocking {
                 runCatching { passJournal.append(r.row(now)) }
                 val text = TradeLedger.text(trader.ledger)
                 if (text != tradesText) { tradesText = text; publisher.stageTrades(text, now) }
-                if (r.placed.isNotEmpty()) log("trading: " + r.line())
+                if (r.placed.isNotEmpty()) {
+                    log("trading: " + r.line())
+                    // Bets placed are news for Tj (Tj, 2026-10-15: "tell me ... bets placed"): one message per pass, the notification-worthy kind.
+                    val lines = r.placed.joinToString("\n") { e -> "${e.selection} (${e.event}): ${e.contracts} at ${String.format(java.util.Locale.US, "%.0f", e.avgPrice * 100)}c, edge ${String.format(java.util.Locale.US, "%.1f", e.evPercent * 100)}%, $${String.format(java.util.Locale.US, "%.2f", e.cost)}" }
+                    runCatching { postMessage(CloudMessages.Message("bets-${r.placed.first().id.take(12)}", now, "engine", "bet", (if (mode == CloudTradeMode.LIVE) "Placed " else "Paper-placed ") + "${r.placed.size} bet${if (r.placed.size == 1) "" else "s"}", lines, if (mode == CloudTradeMode.LIVE) 1 else 0, "CLOUD")) }
+                }
+                val stoppedNow = r.stopped.ifEmpty { trader.ledger.stopped }
+                if (stoppedNow.isNotBlank() && stoppedNow != lastStoppedSaid) {
+                    lastStoppedSaid = stoppedNow
+                    runCatching { postMessage(CloudMessages.Message("stop-$now", now, "engine", "alert", "The engine stopped ordering", stoppedNow.take(300), 1, "CLOUD")) }
+                } else if (stoppedNow.isBlank()) lastStoppedSaid = ""
                 CloudEngine.TradeStatus(mode.name.lowercase(), r.line(), r.stopped.ifEmpty { trader.ledger.stopped }, now, cash = r.cash, equity = r.equity)
             }
         },
         // The wallet gate (Tj, 2026-10-15): only a LIVE engine with a trading key has a wallet to read; everything else is "not applicable" and never sleeps.
         walletProbe = { s -> if (s.gates.cloudTrading == CloudTradeMode.LIVE) tradePort?.cash() else null },
+        governor = governor, usageBook = { usage.flow.value }, keysOf = { p -> CloudKeys.envFor(p.id)?.let { CloudKeys.fromEnv(it) }.orEmpty() },
+        overrideSink = postOverride, messageSink = postMessage,
         engine = "github-actions", runId = runId, log = log::invoke, sourceNames = sources::names,
     )
     val end = engine.run(until, started)
