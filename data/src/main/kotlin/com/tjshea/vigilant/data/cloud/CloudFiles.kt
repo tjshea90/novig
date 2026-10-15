@@ -116,6 +116,10 @@ data class CloudStatus(
     /** The wallet is under [CloudEngine.WALLET_MIN] and the engine trades live: it scans nothing and calls no feed, and only reads the balance every [CloudEngine.WALLET_EVERY_MS] (Tj, 2026-10-15). Empty = not asleep. */
     val walletSleep: String = "",
     val walletCheckedAtMs: Long = 0L,
+    /** The trading wallet as last read, in dollars, and when; -1 = never read. Cash is spendable, equity adds what is at risk in open orders. */
+    val walletCash: Double = -1.0,
+    val walletEquity: Double = -1.0,
+    val walletReadAtMs: Long = 0L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }

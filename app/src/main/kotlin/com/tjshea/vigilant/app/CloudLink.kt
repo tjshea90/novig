@@ -546,6 +546,8 @@ class CloudLink(private val c: AppContainer) {
         const val POLL_MS = 5_000L
         /** How often the engine's usage file is asked for (a 304 costs nothing against GitHub's limit). */
         const val USAGE_POLL_MS = 30_000L
+        const val TRADES_POLL_MS = 20_000L
+        const val TRADES_POLL_BACKGROUND_MS = 5 * 60_000L
         /** Candidate books read per round, and the rounds' pace: the stream's books are free; the rest go through the key's paced reads. */
         const val BIDS_READS_PER_ROUND = 120
         const val BIDS_ROUND_MS = 3_000L

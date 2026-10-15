@@ -87,7 +87,7 @@ class CloudEngine(
     private val walletEveryMs: Long = WALLET_EVERY_MS,
 ) {
     /** What the engine's trading says about itself in the heartbeat. */
-    data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long)
+    data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null)
 
     /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once; WINDOW: the engine's hours (08:00-22:00 Eastern, [EngineHours]) are over or not yet begun: no hand-over, the schedule starts the next engine when they open. */
     enum class End { TIME_UP, IDLE, ADDRESS, WINDOW }
@@ -124,6 +124,10 @@ class CloudEngine(
     @Volatile private var lastPublished: CloudFeed? = null
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
     @Volatile private var tradeStatus: TradeStatus? = null
+    /** The trading wallet's cash and equity as last read (a trading pass or the wallet probe), for the phone's wallet line; null = never read. */
+    @Volatile private var walletCash: Double? = null
+    @Volatile private var walletEquity: Double? = null
+    @Volatile private var walletReadAt = 0L
     @Volatile private var walletSleep = ""
     @Volatile private var walletCheckedAt = 0L
     private var walletRefreshSeen = 0L
@@ -189,6 +193,8 @@ class CloudEngine(
         walletRefreshSeen = maxOf(walletRefreshSeen, cfg.refreshAtMs)
         walletCheckedAt = t
         val cash = runCatching { probe(cfg.settings) }.getOrNull() ?: return walletSleep.isNotEmpty()
+        if (walletEquity == null || walletEquity!! < cash) walletEquity = cash
+        walletCash = cash; walletReadAt = t
         val was = walletSleep.isNotEmpty()
         walletSleep = if (cash >= WALLET_MIN) "" else
             "the trading wallet has ${usd(cash)}, under ${usd(WALLET_MIN)}: no scans or feed calls until it is funded (balance re-read every ${walletEveryMs / 60_000} min, or when you pull to refresh)"
@@ -357,7 +363,7 @@ class CloudEngine(
             novigRoute = runCatching(novigRoute).getOrDefault(""), ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
             addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
             tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
-            walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt,
+            walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,
         )
     }
 
@@ -383,7 +389,11 @@ class CloudEngine(
     /** Hands the published list to the engine's trading. It only ever runs on the engine's own time inside the scan loop; a failure is a line in the log. */
     private suspend fun sendTrades(rows: List<Opportunity>, settings: ScanSettings, now: Long) {
         val t = trade ?: return
-        runCatching { t(rows, settings, now) }.onSuccess { tradeStatus = it ?: tradeStatus?.copy(mode = "off", note = "") }
+        runCatching { t(rows, settings, now) }.onSuccess {
+            tradeStatus = it ?: tradeStatus?.copy(mode = "off", note = "")
+            // a pass that reached the wallet read says the cash and the equity (cash plus what is at risk); one that stopped earlier says 0 and 0, which is "not read", not "empty"
+            if (it?.cash != null && (it.cash > 0.0 || (it.equity ?: 0.0) > 0.0)) { walletCash = it.cash; walletEquity = it.equity; walletReadAt = now }
+        }
             .onFailure { if (it is CancellationException) throw it; log("trading pass failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
     }
 

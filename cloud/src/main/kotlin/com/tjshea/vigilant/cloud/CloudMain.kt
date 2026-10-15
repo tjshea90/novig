@@ -160,7 +160,7 @@ fun main(args: Array<String>) = runBlocking {
                 val text = TradeLedger.text(trader.ledger)
                 if (text != tradesText) { tradesText = text; publisher.stageTrades(text, now) }
                 if (r.placed.isNotEmpty()) log("trading: " + r.line())
-                CloudEngine.TradeStatus(mode.name.lowercase(), r.line(), r.stopped.ifEmpty { trader.ledger.stopped }, now)
+                CloudEngine.TradeStatus(mode.name.lowercase(), r.line(), r.stopped.ifEmpty { trader.ledger.stopped }, now, cash = r.cash, equity = r.equity)
             }
         },
         // The wallet gate (Tj, 2026-10-15): only a LIVE engine with a trading key has a wallet to read; everything else is "not applicable" and never sleeps.

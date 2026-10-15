@@ -2761,6 +2761,7 @@ private fun EngineTradingSection(state: UiState, onUpdate: ((ScanSettings) -> Sc
             modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudTradeLine"),
         )
     }
+    EngineActivity(u)
     fun pct(v: Double) = "${(v * 100).roundToInt()}%"
     @Composable
     fun sizing(label: String, value: Double, range: ClosedFloatingPointRange<Float>, stepsCount: Int, tag: String, set: (com.tjshea.vigilant.data.scanner.ApiGates, Double) -> com.tjshea.vigilant.data.scanner.ApiGates) {
@@ -2777,4 +2778,37 @@ private fun EngineTradingSection(state: UiState, onUpdate: ((ScanSettings) -> Sc
     sizing("Most at risk at once", g.cloudWalletUse, 0.1f..1f, 18, "cloudWalletUseSlider") { gg, v -> gg.copy(cloudWalletUse = v) }
     sizing("Stop for the day when down", g.cloudDayStop, 0.05f..0.9f, 16, "cloudDayStopSlider") { gg, v -> gg.copy(cloudDayStop = v) }
     Hint("Stakes are a fraction of full Kelly, cut again when the fair odds are old, few books agree or the rating is low; half stakes after a drawdown of half the stop. The sliders move only how much, never which bets: those are your Auto-bet rules.")
+}
+
+/**
+ * What the GitHub engine did (Tj, 2026-10-15): the wallet it trades from, the totals of its orders and the newest ones, read from its order book as soon as the app opens (CloudLink loop 6). Paper orders are
+ * labelled as such; nothing here places or changes an order, so it is safe to look at while the engine runs.
+ */
+@Composable
+private fun EngineActivity(u: com.tjshea.vigilant.app.CloudLink.Ui) {
+    val ledger = u.trades ?: return
+    val st = u.status
+    SectionTitle("What the engine did")
+    val now = System.currentTimeMillis()
+    val sum = remember(ledger, now / 60_000L) { com.tjshea.vigilant.data.cloud.TradeSummary.of(ledger, now) }
+    if (st != null && st.walletCash >= 0.0) {
+        val age = ((now - st.walletReadAtMs) / 60_000L).coerceAtLeast(0L)
+        Text(
+            "Wallet \$${"%.2f".format(st.walletCash)} cash, \$${"%.2f".format(st.walletEquity.coerceAtLeast(st.walletCash))} with open orders (read ${if (age < 1) "just now" else "$age min ago"})",
+            style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp, bottom = 2.dp).testTag("engineWallet"),
+        )
+    }
+    Text(sum.line(), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("engineTotals"))
+    if (sum.newest.isEmpty()) {
+        Text("No orders yet.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp))
+    } else {
+        val fmt = remember { java.text.SimpleDateFormat("MMM d h:mm a", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("America/New_York") } }
+        sum.newest.forEach { e ->
+            val result = when (e.status) { "OPEN", "UNCONFIRMED" -> "open"; else -> e.status.lowercase() + (e.pnl?.let { " " + (if (it < 0) "-" else "+") + "\$${"%.2f".format(kotlin.math.abs(it))}" } ?: "") }
+            Text(
+                "${fmt.format(java.util.Date(e.atMs))} · ${if (e.mode.equals("paper", true)) "PAPER " else ""}${e.selection} (${e.league}) · \$${"%.2f".format(e.cost)} @ ${"%.0f".format(e.avgPrice * 100)}c · EV ${"%.1f".format(e.evPercent)}% · $result",
+                style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 2.dp),
+            )
+        }
+    }
 }
