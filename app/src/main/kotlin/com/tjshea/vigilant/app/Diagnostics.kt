@@ -75,6 +75,8 @@ object Diagnostics {
         val walletReport: List<String>? = null,
         /** The bid desk on GitHub's candidate lines (Tj, 2026-10-15): the list's age, the Novig books this phone has for it. Null unless bids are priced from GitHub. */
         val cloudBidsReport: List<String>? = null,
+        /** The GitHub engine as its last heartbeat described it (Tj, 2026-10-15): how it reads Novig, the API ranking by measured freshness and accuracy, the last scan's account of itself. Null unless the scan is on GitHub. */
+        val cloudEngineReport: List<String>? = null,
         /** [com.tjshea.vigilant.data.tracker.FairCalibration]: win rate against the fair and the close, by kind and side. */
         val calibrationReport: List<String>? = null,
         /** Novig's live feed (NOVIG_API.md §26): the channel each market is on, the room, the connection's drops and 429s, the bbo fallback, the check against the book. Null with no key connected. */
@@ -257,6 +259,7 @@ object Diagnostics {
         x.socketReport?.let { lines -> o.appendLine(); o.appendLine("== SOCKETS (Settings › APIs › Sockets: on = kept open for real-time prices; off with the API on = read by request) =="); lines.forEach { o.appendLine(it) } }
         x.calibrationReport?.let { lines -> o.appendLine(); o.appendLine("== FAIR CALIBRATION (is the fair line honest? win rate vs fair and close) =="); lines.forEach { o.appendLine(it) } }
         x.walletReport?.let { lines -> o.appendLine(); o.appendLine("== WALLET DEPLOYMENT (Bids › Keep the wallet working) =="); lines.forEach { o.appendLine(it) } }
+        x.cloudEngineReport?.let { lines -> o.appendLine(); o.appendLine("== GITHUB ENGINE (its own heartbeat on the cloud-feed branch) =="); lines.forEach { o.appendLine(it) } }
         x.cloudBidsReport?.let { lines -> o.appendLine(); o.appendLine("== BIDS FROM GITHUB (the engine's candidate lines + this phone's Novig books) =="); lines.forEach { o.appendLine(it) } }
         x.boltReport?.let { lines -> o.appendLine(); o.appendLine("== BOLTODDS PRO (BOLTODDS_API.md) =="); lines.forEach { o.appendLine(it) } }
         x.unabatedReport?.let { lines -> o.appendLine(); o.appendLine("== UNABATED FREE (UNABATED_API.md) =="); lines.forEach { o.appendLine(it) } }

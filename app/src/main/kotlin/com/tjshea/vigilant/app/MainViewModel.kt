@@ -2830,6 +2830,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }.getOrNull(),
             calibrationReport = runCatching { com.tjshea.vigilant.data.tracker.FairCalibration.lines(_state.value.bets) }.getOrNull(),
+            cloudEngineReport = runCatching {
+                val st = c.cloud.latest.status
+                if (!_state.value.settings.cloudScan) null
+                else if (st == null) listOf("no heartbeat read from the engine yet")
+                else buildList {
+                    val now = System.currentTimeMillis()
+                    add("run ${st.runId.ifBlank { "?" }} · heartbeat ${(now - st.heartbeatMs) / 1000}s ago · ${if (st.scanning) "scanning (${st.progressStep} ${st.progressDone}/${st.progressTotal})" else "idle between scans"} · passes ${st.passes} · ${st.rows} bets listed · settings rev ${st.configRev} (priced under ${st.pricedConfigRev})")
+                    add("Novig: ${st.novigRoute.ifBlank { "not said (an engine older than this app)" }}")
+                    add("APIs on the engine: ${st.sources.joinToString(", ").ifBlank { "none" }}")
+                    add("ranking by measured freshness and accuracy: " + st.ranking.ifBlank { "not measured yet" }.replace("\n", " | "))
+                    if (st.scanNote.isNotBlank()) add("last scan: ${st.scanNote}")
+                    st.problem?.let { add("PROBLEM: $it") }
+                }
+            }.getOrNull(),
             cloudBidsReport = runCatching { if (_state.value.settings.bidsFromCloud) c.cloudBids.report(System.currentTimeMillis(), c.cloud.latest.status, com.tjshea.vigilant.data.novig.trading.maker.MakerRules.of(_state.value.settings)) else null }.getOrNull(),
             walletReport = runCatching {
                 val st = _state.value.settings
