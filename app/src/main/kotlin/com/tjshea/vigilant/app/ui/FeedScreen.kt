@@ -239,8 +239,7 @@ fun FeedScreen(
                 if (state.settings.cloudScan && !state.settings.cloudDrives) item(key = "cloudPaused") {
                     Column(Modifier.padding(horizontal = 12.dp)) {
                         Banner(
-                            if (state.settings.bidsNeedFullScan) "Scan on GitHub is paused: the bid desk needs every priced line, which GitHub's list does not carry, so this phone scans for itself while bids are on. GitHub's engine is told to stand down."
-                            else "Scan on GitHub is paused with scanning; resume it and GitHub's engine starts again.",
+                            "Scan on GitHub is paused with scanning; resume it and GitHub's engine starts again.",
                             modifier = Modifier.testTag("cloudPaused"),
                         )
                     }

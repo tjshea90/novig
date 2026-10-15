@@ -278,7 +278,7 @@ class CloudLink(private val c: AppContainer) {
             if (wanted) runCatching { sendKeys(auto = true) }
             lastPushedKey = key; lastRev = rev
             if (!wanted) runCatching { offPending.delete() }
-            val why2 = if (s.cloudScan && !wanted) (if (s.bidsNeedFullScan) "bids need every priced line" else "scanning is paused") else null
+            val why2 = if (s.cloudScan && !wanted) "scanning is paused" else null
             _ui.update { it.copy(pushedRev = rev, pushedAtMs = System.currentTimeMillis(), note = if (wanted) "Settings sent to the engine." else "The engine was told to stand down" + (why2?.let { w -> " ($w)" } ?: "") + ".") }
         } else { c.eventLog.warn("CLOUD", "settings not sent: $why"); _ui.update { it.copy(note = "Settings not sent: $why") } }
     }

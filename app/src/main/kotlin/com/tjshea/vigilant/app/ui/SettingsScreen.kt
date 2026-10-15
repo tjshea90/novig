@@ -266,7 +266,7 @@ object SettingsSummary {
             }
             SettingsPage.CLOUD -> when {
                 !state.cloudUi.hasToken -> "No GitHub token saved"
-                s.cloudScan && !s.cloudDrives -> if (s.bidsNeedFullScan) "Paused: bids need every priced line, so this phone scans" else "Paused with scanning"
+                s.cloudScan && !s.cloudDrives -> "Paused with scanning"
                 s.cloudScan -> "On: " + state.cloudUi.line
                 else -> "Off (token saved, history saved to GitHub: ${if (s.cloudSave) "on" else "off"})"
             }
@@ -1513,8 +1513,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudScan = v)) } }
     if (s.cloudScan && !s.cloudDrives) {
         Text(
-            if (s.bidsNeedFullScan) "Paused while bids are on: the bid desk needs every priced line and GitHub's list carries only the +EV ones, so this phone scans for itself and GitHub's engine stands down. Switch bids off, or price them from CrazyNinjaOdds, to use GitHub."
-            else "Paused with scanning: GitHub's engine stands down until you resume.",
+            "Paused with scanning: GitHub's engine stands down until you resume.",
             style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudPausedNote"),
         )
     } else if (s.cloudScan) {
@@ -1524,6 +1523,10 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
         com.tjshea.vigilant.data.cloud.CloudText.settings(u.status, u.pushedRev, u.pushedAtMs, now)?.let { (lvl, text) ->
             Text(text, style = MaterialTheme.typography.bodySmall, color = if (lvl == com.tjshea.vigilant.data.cloud.CloudText.Level.GOOD) Edge.colors.positive else Edge.colors.warning, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudSettingsSync"))
         }
+        if (s.bidsFromCloud) Text(
+            "Bids are on: GitHub picks the candidate lines (every fair-odds check done there); this phone reads Novig's order books for them and posts, moves and cancels the bids with your wallet and limits.",
+            style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudBidsNote"),
+        )
         Button(onClick = reportActions.onStartCloud, enabled = u.hasToken, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudStart")) { Text("Start the engine now") }
     }
     // 3. the API keys the engine uses
