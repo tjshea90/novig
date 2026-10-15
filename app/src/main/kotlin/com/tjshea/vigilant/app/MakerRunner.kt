@@ -343,7 +343,7 @@ class MakerRunner(
         // Bids priced from CNO: the stop (CNO paused, late, unreadable) is a reason not to post by hand either.
         val cnoSet = if (s.makerSource == BidSource.CNO) cnoLines(s, now, bids, true) else null
         cnoSet?.stop?.let { return it }
-        val base = cnoSet?.lines ?: if (s.bidsFromCloud) c.cloudBids.lines(now, rules, keep = setOf(outcomeId)) else MakerLines.from(scan().result, s, now, unavailable = playerOut(now))
+        val base = cnoSet?.lines ?: if (s.bidsFromCloud) c.cloudBids.lines(now, rules, keep = setOf(outcomeId), prune = false) else MakerLines.from(scan().result, s, now, unavailable = playerOut(now))
         val line = withMoves(MakerLines.withoutOwn(base.filter { it.outcomeId == outcomeId }, bids), rules, now, read = true)
             .firstOrNull() ?: return "That line isn't in the latest scan any more"
         val wallet = runCatching { c.wallet.fresh()?.dollars }.onFailure { if (it is CancellationException) throw it }.getOrNull()?.let { forBids(it, s) }

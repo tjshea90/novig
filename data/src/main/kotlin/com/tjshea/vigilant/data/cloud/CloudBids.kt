@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.cloud
 
+import com.tjshea.vigilant.data.JsonSplit
 import com.tjshea.vigilant.data.cloud.CloudCodec.dbl
 import com.tjshea.vigilant.data.cloud.CloudCodec.int
 import com.tjshea.vigilant.data.cloud.CloudCodec.lng
@@ -52,12 +53,18 @@ class CloudBids(val atMs: Long, val partial: Boolean, val configRev: Long, val l
             return out.toByteArray()
         }
 
-        /** The candidates in [gz], or null when the bytes are not a file this version understands; a line that cannot be read is skipped and counted. */
+        /**
+         * The candidates in [gz], or null when the bytes are not a file this version understands; a line that cannot be read is skipped and counted. The lines are cut out of the text one at a time
+         * ([JsonSplit]: a `JsonElement` tree costs about 8 times its JSON in heap and a list can be thousands of lines), so the peak is the text plus one line.
+         */
         fun decode(gz: ByteArray): CloudBids? = runCatching {
             val text = GZIPInputStream(gz.inputStream()).use { it.readBytes() }.toString(Charsets.UTF_8)
-            val j = Json.parseToJsonElement(text).jsonObject
+            val split = JsonSplit.elements(text, "lines")
+            val j = Json.parseToJsonElement(split?.rest ?: text).jsonObject
             var bad = 0
-            val lines = j["lines"]!!.jsonArray.mapNotNull { e -> runCatching { line(e.jsonObject) }.getOrNull().also { if (it == null) bad++ } }
+            fun one(e: () -> BidLine): BidLine? = runCatching(e).getOrNull().also { if (it == null) bad++ }
+            val lines = if (split != null) (0 until split.size).mapNotNull { i -> one { line(Json.parseToJsonElement(split.element(i)).jsonObject) } }
+            else j["lines"]!!.jsonArray.mapNotNull { e -> one { line(e.jsonObject) } }
             CloudBids(j["at"]!!.jsonPrimitive.content.toLong(), j["pt"]?.jsonPrimitive?.content == "true", j["rev"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L, lines, bad)
         }.getOrNull()
 
@@ -124,16 +131,19 @@ class CloudBidLane(
     }
 
     /** One of [outcomeIds] is a side the phone has a bid or an unjudged fill on: its last candidate line is kept for as long as it is asked for. */
-    private fun remember(b: CloudBids, outcomeIds: Set<String>) {
-        if (outcomeIds.isEmpty()) { kept.clear(); return }
+    private fun remember(b: CloudBids, outcomeIds: Set<String>, prune: Boolean) {
+        if (outcomeIds.isEmpty()) { if (prune) kept.clear(); return }
         for (l in b.lines) if (l.line.outcomeId in outcomeIds) kept[l.line.outcomeId] = l
-        kept.keys.removeIf { it !in outcomeIds }
+        if (prune) kept.keys.removeIf { it !in outcomeIds }
     }
 
-    /** The desk's lines at [now] under [rules]; [keep]: the outcome ids the phone has bids or unjudged fills on. Empty before any candidate list arrived. */
-    fun lines(now: Long, rules: MakerRules, keep: Set<String> = emptySet()): List<MakerLine> {
+    /**
+     * The desk's lines at [now] under [rules]; [keep]: the outcome ids the phone has bids or unjudged fills on. Empty before any candidate list arrived. [prune]: [keep] is ALL of them, so the lines kept
+     * for any other side are let go (the desk's own pass and the Bids tab); a caller that asks about one side only (an Approve) leaves what the others kept alone.
+     */
+    fun lines(now: Long, rules: MakerRules, keep: Set<String> = emptySet(), prune: Boolean = true): List<MakerLine> {
         val b = bids ?: return emptyList()
-        remember(b, keep)
+        remember(b, keep, prune)
         val seen = HashSet<String>()
         val out = ArrayList<MakerLine>(b.lines.size)
         fun add(bl: BidLine, dropped: Boolean = false) {
