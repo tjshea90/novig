@@ -83,5 +83,8 @@ A release >/dev/null 2>&1
 PUSH_B; expect "push.sh pushes once the lease is free" 0 $?
 git -C "$T/origin.git" log --oneline refs/heads/main 2>/dev/null | head -1 | grep -q "two" && ok "the held-back commit reached the remote afterwards" || bad "commit two is not on the remote"
 
+# 10. rotation: duties, ET slot times across daylight saving, missed-slot detection
+python3 -I "$D/tools/rotation.py" selftest >/dev/null 2>&1; expect "rotation selftest (duties, DST, missed slots)" 0 $?
+
 echo
 if [ "$FAILS" -eq 0 ]; then echo "PASS $N checks"; else echo "FAILED $FAILS of $N checks"; exit 1; fi

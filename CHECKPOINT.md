@@ -1,21 +1,23 @@
-# CHECKPOINT 3349 — read me first, then TASKS.md
+# CHECKPOINT 3350 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T07:01:26Z · **tests:** all 5 fast checks green
-**Branch:** `claude/new-session-2gmle1` · **builds on:** `dbc65005e` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T14:19:01Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-5182c4e7-h37dlu` · **builds on:** `c4edc70ec` (this checkpoint is the commit after it)
 
 ## Just done
-v0.107.0 released and recorded; TCL20 finished
+rotation: missed-slot detector + checkin/cover + routine repo step, tested
 
 ## Do this next
-WATCH: first engine-grade.yml run, first paper trades if Tj switches Paper on, engine-study segments in cloud-archive Releases
+empty-wallet auto-pause, phone pause/resume + sync on open, key advisor, grep engine for existing pause logic
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M tools/test_coord.sh
 
 ## Last ten checkpoints
 ```
+  17bc01bf7 ckpt 3349: v0.107.0 released and recorded; TCL20 finished
   4fbb2081b ckpt 3348: pre-release: the GitHub engine can trade by itself: Settings > Cloud scan >
   85f56ee4d ckpt 3347: TCL20e: engine scan study segments + engine-grade.yml grader + GradeMain + 
   2469c3107 ckpt 3346: TCL20d ticked: engine trading (paper/live, Kelly, port, UI, phone auto-bet 
@@ -25,8 +27,7 @@ WATCH: first engine-grade.yml run, first paper trades if Tj switches Paper on, e
   c0e26d2e1 ckpt 3342: Took the lease by force (Tj: other session archived); merged origin/main wi
   ae727c03a ckpt 3341: TCL20c done: trading key swap+share (CloudTradeKey, SharedTradeVault, Cloud
   5f430adbd ckpt 3340: TCL20b done: EngineHours (08-22 ET, DST), End.WINDOW, workflow gate, Settin
-  8e321e57c ckpt 3340: Third account (acct-7542bf) joined rotation: slot 2 19:20 ET, routine trig_
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(7 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
