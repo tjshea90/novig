@@ -1391,10 +1391,15 @@ private fun ColumnScope.UsageTab(state: UiState, keys: KeyActions) {
     // ---- Usage meters ------------------------------------------------------------------
     // Opening the tab asks ParlayAPI's keys what they have left (free, at most every few minutes): the meter shows the provider's figures.
     val onShown by androidx.compose.runtime.rememberUpdatedState(keys.onUsageShown)
-    androidx.compose.runtime.LaunchedEffect(Unit) { onShown() }
+    // With the scan on GitHub the engine spends these keys too (Tj, 2026-10-15): while this page is open the APIs' own figures are asked again every 2 minutes (free), so what is left stays true.
+    val cloudSpends = state.settings.cloudScan
+    androidx.compose.runtime.LaunchedEffect(cloudSpends) { onShown(); while (cloudSpends) { kotlinx.coroutines.delay(120_000L); onShown() } }
     Intro("The odds feeds Vigilant's own scan reads (Pinnacle, ParlayAPI, PropLine, The Odds API) each allow so many requests a day or month. This shows what's left on each key.")
     SectionTitle("API usage")
     OutlinedButton(onClick = keys.onUsageShown, enabled = !state.usageBusy, modifier = Modifier.testTag("usageRefresh")) { Text(if (state.usageBusy) "Reading…" else "Refresh from the APIs") }
+    if (state.settings.cloudScan) Hint(
+        "The scan is on GitHub, so GitHub spends these keys too: its engine sends its own count every half minute and it is added to this phone's (each meter says how much was GitHub's). Where an API reports its own figure, the newest reading from either side is shown, with its age.",
+    )
     Hint("Where an API has a prompt for it (The Odds API, PropLine, SportsGameOdds, ParlayAPI, OddsPapi Free) the figures come from the API itself and say so; PinnWire, pinnapi, Pinnodds, OddsPapi v5 and Unabated offer none, so those show the app's own count.")
     UsageSection(state)
 
