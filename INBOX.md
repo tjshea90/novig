@@ -7488,3 +7488,8 @@ Betting and bidding:
 
 Vigilant should make bets and bids based on profitable statistics and strategy. It should log and save scanned results to GitHub including comprehensive data such as ev, odds, bet type, sport , time until game starts, closing odds (which may need to be obtained retroactively), whether the bet won lost or pushed, etc. A Claude account should check in daily to see the updated logs, analyze the data, and use the data to tweak the settings for profit. 
 ```
+
+## 2026-10-15T05:31:52Z
+```
+Tell me how to add the permissions on Claude for Android
+```
