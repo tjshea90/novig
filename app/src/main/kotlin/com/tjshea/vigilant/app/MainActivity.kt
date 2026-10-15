@@ -753,6 +753,7 @@ private fun VigilantRoot(
                     onToggleLeague = vm::toggleLeague,
                     // Its Settings buttons are about fair-odds sources and keys: that page.
                     onOpenSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.FAIR.name; tabName = Tab.SETTINGS.name },
+                    onOpenDashboard = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.DASHBOARD.name; tabName = Tab.SETTINGS.name },
                     onTrack = vm::trackBet,
                     onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
                     onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },

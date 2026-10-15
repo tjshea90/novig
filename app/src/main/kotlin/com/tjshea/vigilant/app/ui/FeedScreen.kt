@@ -73,6 +73,8 @@ fun FeedScreen(
     onToggleLeague: (String) -> Unit,
     onOpenSettings: () -> Unit,
     onTrack: (Opportunity, Double) -> Unit,
+    /** Tapping the GitHub engine's bar opens the engine dashboard (Settings › Engine dashboard). */
+    onOpenDashboard: () -> Unit = {},
     onSort: (FeedSort) -> Unit = {},
     /** Show only games starting within this many hours (0 = any). */
     onStartsWithin: (Int) -> Unit = {},
@@ -231,7 +233,7 @@ fun FeedScreen(
                     }
                     val sync = com.tjshea.vigilant.data.cloud.CloudText.settings(state.cloudUi.status, state.cloudUi.pushedRev, state.cloudUi.pushedAtMs, now)
                     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Banner(cloud.headline + (cloud.detail?.let { "\n$it" } ?: ""), color = color, modifier = Modifier.testTag("cloudBar"))
+                        Banner(cloud.headline + (cloud.detail?.let { "\n$it" } ?: "") + "\nTap for the engine dashboard", color = color, modifier = Modifier.clickable(onClick = onOpenDashboard).testTag("cloudBar"))
                         if (sync != null && sync.first != com.tjshea.vigilant.data.cloud.CloudText.Level.GOOD) Banner(sync.second, color = Edge.colors.warning, modifier = Modifier.testTag("cloudSync"))
                     }
                 }
