@@ -95,6 +95,15 @@ class CloudLink(private val c: AppContainer) {
     }
 
     suspend fun removeToken() {
+        // The engine is told to stand down while the token still works: without it nothing could ever say so, and it would run for hours for a phone that no longer reads it.
+        if (hasToken()) runCatching {
+            val st = c.currentSettings()
+            val rev = maxOf(System.currentTimeMillis(), lastRev + 1)
+            client.writeConfig(CloudConfig(rev = rev, on = false, settings = st.copy(gates = st.gates.copy(cloudScan = false)), device = "token removed"))
+            lastRev = rev
+        }
+        runCatching { wantedFile.writeText("0"); offPending.delete() }
+        lastWanted = false
         store.update { CloudToken() }
         tokenPlain = null
         _ui.update { it.copy(hasToken = false, tokenTail = "", note = "Token removed.") }
