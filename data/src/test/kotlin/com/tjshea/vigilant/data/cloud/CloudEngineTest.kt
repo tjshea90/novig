@@ -60,11 +60,11 @@ class CloudEngineTest {
 
     private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH, gates = com.tjshea.vigilant.data.scanner.ApiGates().copy(cloudHours = false)), passGapSeconds = 5)
 
-    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, clock: () -> Long = System::currentTimeMillis) = CloudEngine(
+    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
         pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, restartEveryMs = restartEveryMs,
-        addressWatch = addressWatch, clock = clock,
+        addressWatch = addressWatch, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs,
     )
 
     @Test
@@ -88,6 +88,39 @@ class CloudEngineTest {
         assertTrue(s.vigGuards.hotRefresh)
         assertFalse(on.settings.vigGuards.hotRefresh)
         assertTrue(e.passes >= 1)
+    }
+
+    @Test
+    fun `a wallet under 50 cents puts the engine to sleep: no scan, no feed call, and it wakes when the balance is read again as funded`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val cash = java.util.concurrent.atomic.AtomicReference<Double?>(0.12)
+        val reads = AtomicInteger()
+        val e = engine(scanner, { on }, published, walletProbe = { reads.incrementAndGet(); cash.get() }, walletEveryMs = 60)
+        val job = launch { e.run(untilMs = System.currentTimeMillis() + 5_000) }
+        delay(40)
+        assertEquals("asleep: nothing scanned", 0, scanner.calls.get())
+        assertTrue("the phone is told why", published.any { it.second.walletSleep.contains("under \$0.50") && it.second.idle && it.first == null })
+        val asleepReads = reads.get()
+        cash.set(null)   // an unreadable balance changes nothing
+        delay(120)
+        assertEquals("still asleep on an unreadable balance", 0, scanner.calls.get())
+        cash.set(25.0)
+        delay(300)
+        assertTrue("awake again once funded", scanner.calls.get() >= 1)
+        assertTrue("the balance was read only now and then, not every pass", reads.get() - asleepReads < 12)
+        assertEquals("", published.last().second.walletSleep)
+        job.cancel()
+    }
+
+    @Test
+    fun `an engine with no wallet to read (not trading live) never sleeps`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = engine(scanner, { on }, published, walletProbe = { null })
+        e.run(untilMs = System.currentTimeMillis() + 120)
+        assertTrue(scanner.calls.get() >= 1)
+        assertTrue(published.all { it.second.walletSleep.isEmpty() })
     }
 
     @Test
