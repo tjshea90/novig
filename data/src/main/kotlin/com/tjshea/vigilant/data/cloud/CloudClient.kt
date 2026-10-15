@@ -166,7 +166,7 @@ class CloudClient(
             http.newCall(req("actions/secrets/$name").delete().build()).execute().use { r ->
                 note(r)
                 when {
-                    r.isSuccessful || r.code == 404 && r.header("X-GitHub-Request-Id") != null && r.body?.string()?.contains("Not Found") == true -> null
+                    r.isSuccessful || r.code == 404 -> null
                     r.code == 403 -> "the token cannot remove secrets (give it Secrets: read and write on the repository)"
                     else -> why(r.code, r.body?.string())
                 }
