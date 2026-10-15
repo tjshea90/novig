@@ -260,6 +260,9 @@ class AppContainer(val app: Application) {
      * Cloud scan (Tj, 2026-10-14): with Settings › Cloud scan on, a "scan" adopts the list the GitHub engine published and calls no API; off, it is [localScanner] exactly as before ([com.tjshea.vigilant.data.cloud.SwitchingScanner]).
      */
     val cloud: CloudLink by lazy { CloudLink(this) }
+
+    /** The bid desk on GitHub's candidate lines (Tj, 2026-10-15): this phone adds Novig's order books and posts ([com.tjshea.vigilant.data.cloud.CloudBidLane]). */
+    val cloudBids = com.tjshea.vigilant.data.cloud.CloudBidLane(novig)
     val scanner: OddsScanner = com.tjshea.vigilant.data.cloud.SwitchingScanner(localScanner, com.tjshea.vigilant.data.cloud.CloudScanner(cloud.latest))
 
     /**

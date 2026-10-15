@@ -470,6 +470,9 @@ class MakerRunner(
     }
 
     companion object {
+        /** GitHub's candidate list is used for this long after it was made; older (the engine is down), the bids already up stay until their own expiry, as with no scan. */
+        const val CLOUD_BIDS_MAX_AGE_MS = 30 * 60_000L
+
         /** The most bids recommended (notified) in one pass, and in an hour. */
         const val MAX_RECOMMENDED = 3
         const val MAX_RECOMMENDED_PER_HOUR = 6

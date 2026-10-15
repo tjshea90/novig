@@ -77,6 +77,7 @@ class CloudLink(private val c: AppContainer) {
     /** The phone's clock when it last asked for a scan (pull to refresh, the Scan button); written into every config so a later settings push never forgets it. */
     @Volatile private var refreshRequestedAt = 0L
     private var feedFetchedFor = 0L
+    private var bidsFetchedFor = 0L
 
     private fun token(): String? {
         tokenPlain?.let { return it }
@@ -162,6 +163,7 @@ class CloudLink(private val c: AppContainer) {
                         latest.status = p.value
                         latest.why = null
                         if (p.value.computedAtMs > 0L && p.value.computedAtMs != feedFetchedFor) fetch(p.value.computedAtMs)
+                        if (s.bidsFromCloud && p.value.bidsAtMs > 0L && p.value.bidsAtMs != bidsFetchedFor) fetchBids()
                         maybeStart(p.value, s)
                     }
                     is CloudClient.Poll.NotModified -> latest.why = null
@@ -182,6 +184,21 @@ class CloudLink(private val c: AppContainer) {
         scope.launch(Dispatchers.IO) {
             // A failed write is tried again; settings are also re-sent every 10 minutes so the engine always has them (a new job reads them first thing).
             while (isActive) { delay(RETRY_PUSH_MS); c.settingsStore.flow.value?.let { pushSettings(it) } }
+        }
+        // 4. the bid desk's Novig side (Tj, 2026-10-15): while bids are priced from GitHub's candidates, the candidates' order books are read over this phone's key and stream and a pass judges them. Sleeps otherwise.
+        scope.launch(Dispatchers.IO) {
+            var lastPassFor = 0L
+            while (isActive) {
+                val s = c.settingsStore.flow.value
+                if (s == null || !s.bidsFromCloud || !hasToken() || c.cloudBids.current == null) { delay(IDLE_MS); continue }
+                val read = runCatching { c.cloudBids.refresh(System.currentTimeMillis(), BIDS_READS_PER_ROUND) }.getOrDefault(0)
+                val at = c.cloudBids.current?.atMs ?: 0L
+                if (read > 0 || at != lastPassFor) {
+                    lastPassFor = at
+                    runCatching { c.maker.run("GitHub's candidates", minGapMs = BIDS_PASS_GAP_MS) }
+                }
+                delay(if (read > 0) BIDS_ROUND_MS else BIDS_IDLE_ROUND_MS)
+            }
         }
         // 3. save
         scope.launch(Dispatchers.IO) {
@@ -221,6 +238,15 @@ class CloudLink(private val c: AppContainer) {
                 c.adoptCloud()
             }
             is CloudClient.Poll.Failed -> latest.why = f.why
+            else -> {}
+        }
+    }
+
+    /** GitHub's candidate lines for the bid desk: handed to the lane, which gives them Novig's books ([CloudBidLane]). */
+    private suspend fun fetchBids() {
+        when (val b = client.fetchBids()) {
+            is CloudClient.Poll.Fresh -> { bidsFetchedFor = b.value.atMs; c.cloudBids.put(b.value) }
+            is CloudClient.Poll.Failed -> latest.why = b.why
             else -> {}
         }
     }
@@ -383,6 +409,11 @@ class CloudLink(private val c: AppContainer) {
 
     companion object {
         const val POLL_MS = 5_000L
+        /** Candidate books read per round, and the rounds' pace: the stream's books are free; the rest go through the key's paced reads. */
+        const val BIDS_READS_PER_ROUND = 120
+        const val BIDS_ROUND_MS = 3_000L
+        const val BIDS_IDLE_ROUND_MS = 10_000L
+        const val BIDS_PASS_GAP_MS = 20_000L
         const val POLL_BACKGROUND_MS = 20_000L
         /** Nothing to read (the switch off, paused, bids on, no token): look again this often; settings changes are also picked up by the loops that wait on them. */
         const val IDLE_MS = 10_000L
