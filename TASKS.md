@@ -5233,3 +5233,9 @@ The meters (Settings › APIs usage, Diagnostics, the quota policies) are built 
 - [x] TCL14b The engine's own request counts (and credits-left it saw from the APIs' answers) are published with its heartbeat (`status.json`) and merged into the phone's meters: shown as the total and split phone/GitHub, per API, per key, same periods as the local meter.
 - [x] TCL14c The provider-reported figures (the authoritative total, which includes the engine's calls) keep refreshing on the phone for APIs that are on, within the "off = never called" rule; a stale figure says how old it is.
 - [ ] TCL14d Tests, docs (CLAUDE.md), full floor, ship, restart the engine, read the first heartbeat's usage.
+
+## TCL15: speed up scanning: split work between phone and GitHub, several GitHub runs scanning sections of the Novig list at once? (Tj, 2026-10-15)
+Tj: "See if there is any way to speed up scanning. Split processing between phone and GitHub? Multiple GitHub actions simultaneously scanning sections of the novig list?"
+- [ ] TCL15a Measure where a scan's time goes (the engine's own log: Novig book reads vs fair-odds feeds vs pricing; `scanNote`, `timing`), on the public routes and, once the read key is sent, on the key route. Write research/scan_speed_2026-10-15.md with numbers.
+- [ ] TCL15b Evaluate each idea against the real limits (Novig's per-IP public limit, per-key buckets, GitHub's concurrency and minutes, the phone's key) and say what each buys: (1) the engine's own read-only Novig key (14 a second, TCL13), (2) the phone's key reading part of the list beside the engine, (3) several parallel engine jobs each reading a slice of the Novig books (separate runner IPs, separate public rate buckets; the keyed bucket is per key), (4) fewer books asked (priority/likeliest-first, delta reads), (5) the Novig websocket pushes.
+- [ ] TCL15c Build what the numbers support, keep every accuracy and freshness rule, test, ship.
