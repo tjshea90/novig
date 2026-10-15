@@ -176,6 +176,12 @@ PYLAB
       echo "  CLOUD phone-data (bets/bids/study, git fetch origin phone-data; files phone/bets, phone/study) and cloud-feed (status.json) exist; rules: CLAUDE.md 'Cloud scan'"
     fi
 
+    # COORD (Tj, 2026-10-15): three Claude accounts share this repo and only ONE works at a time. The lease and the notes between accounts live on the claude-coord branch
+    # (tools/coord.py, research/coordination/PROTOCOL.md). A few short lines; any failure is silent so the briefing never breaks.
+    if [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ]; then
+      timeout 45 python3 -I tools/coord.py status --acquire 2>/dev/null | head -8
+    fi
+
     # WAS THE LAST SESSION CUT OFF MID-CHANGE?
     # This is the question CHECKPOINT.md cannot answer about itself. The
     # autosave hook commits after every edit, so a session killed by a usage
