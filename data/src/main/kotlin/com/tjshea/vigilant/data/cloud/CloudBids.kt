@@ -93,7 +93,8 @@ class CloudBids(val atMs: Long, val partial: Boolean, val configRev: Long, val l
  * the part that must be seconds old and needs the key), and hands the unchanged desk its [MakerLine]s: GitHub's fair side, Novig's side as new as the phone has it. Nothing here decides a bid.
  *
  *  - [lines] is [MakerLines.from]'s answer for the candidates: the freshest Novig side known (the phone's own read when newer than the engine's), the fair's age worked out at [now], and the same book-age
- *    rule ([MakerLines.maxBookAgeMs]); a side the phone has a bid or an unjudged fill on is kept from the last list that carried it ([keep]) so its fill can still be judged.
+ *    rule ([MakerLines.maxBookAgeMs]); a side the phone has a bid or an unjudged fill on is kept from the last list that carried it ([keep]) so its fill can still be judged, and marked
+ *    unavailable ([DROPPED]) once a complete list no longer carries it, so the desk takes its bid down as the local scan would.
  *  - [refresh] reads the books of the candidates whose Novig side is older than [REFRESH_AFTER_MS], soonest game first, at most [maxReads] a call; a book the stream already holds costs nothing.
  */
 class CloudBidLane(
@@ -135,9 +136,12 @@ class CloudBidLane(
         remember(b, keep)
         val seen = HashSet<String>()
         val out = ArrayList<MakerLine>(b.lines.size)
-        fun add(bl: BidLine) {
+        fun add(bl: BidLine, dropped: Boolean = false) {
             if (!seen.add(bl.line.outcomeId)) return
             var l = bl.line
+            // A side the phone has a bid on that the newest COMPLETE list no longer carries stopped passing the bid rules at the engine (the fair moved, the player is out, its window closed): the same line the
+            // local scan would have skipped, so the desk takes the bid down. A running scan's list (partial) only says that league is not priced yet, which keeps the bid up as it always did.
+            if (dropped) l = l.copy(unavailable = l.unavailable ?: DROPPED)
             books[l.marketId]?.takeIf { l.bookAtMs == null || it.fetchedAtMs > l.bookAtMs!! }?.let { l = MakerLines.withBook(l, it) }
             val at = l.bookAtMs ?: return
             val old = if (rules.volume && l.startsTs - now >= 6 * 3_600_000L) MakerLines.VOLUME_FAR_BOOK_AGE_MS else MakerLines.MAX_BOOK_AGE_MS
@@ -145,7 +149,7 @@ class CloudBidLane(
             out += l.copy(fairOld = l.fairAsOfMs != null && now - l.fairAsOfMs!! > Freshness.maxAgeMs(bl.eventStartsTs, now))
         }
         b.lines.forEach(::add)
-        for ((id, bl) in kept) if (id !in seen) add(bl)
+        for ((id, bl) in kept) if (id !in seen) add(bl, dropped = !b.partial)
         return out
     }
 
@@ -196,5 +200,9 @@ class CloudBidLane(
     companion object {
         /** A candidate's Novig side older than this is read again. */
         const val REFRESH_AFTER_MS = 90_000L
+
+        /** Why a side the phone has a bid on is no line any more: GitHub's complete list dropped it. */
+        const val DROPPED = "GitHub's candidate list no longer carries this side (it stopped passing the bid rules)"
+
     }
 }

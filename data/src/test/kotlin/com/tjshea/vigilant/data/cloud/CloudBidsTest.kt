@@ -245,17 +245,21 @@ class CloudBidsTest {
         // the fair gets old with the game near: the line is still there, marked old, and the desk skips it
         val l = lane.lines(now + 10 * 60_000, rules).first()
         assertEquals(sent.first { it.line.outcomeId == l.outcomeId }.line.fairAsOfMs, l.fairAsOfMs)
-        // a newer list without a side the phone has a bid on: its last line is kept so the bid's fill can still be judged
+        // a newer COMPLETE list without a side the phone has a bid on: its last line is kept so the bid's fill can still be judged, but it is unavailable, so the desk takes the bid down
         val mine = setOf(sent.first().line.outcomeId)
         lane.lines(now, rules, keep = mine)
         lane.put(CloudBids(now + 1_000, false, 1L, sent.drop(1)))
-        val kept = lane.lines(now + 1_000, rules, keep = mine)
-        assertTrue(kept.any { it.outcomeId in mine })
+        val kept = lane.lines(now + 1_000, rules, keep = mine).first { it.outcomeId in mine }
+        assertEquals(CloudBidLane.DROPPED, kept.unavailable)
+        assertTrue("a skip at the desk", MakerQuote.decide(kept, rules, now + 1_000, emptySet()) is MakerDecision.Skip)
+        // a newer list that is still being made (a scan running) only says the league is not priced yet: the line stays as it was
+        lane.put(CloudBids(now + 2_000, true, 1L, sent.drop(1)))
+        assertNull(lane.lines(now + 2_000, rules, keep = mine).first { it.outcomeId in mine }.unavailable)
         // and let go of it the moment no bid asks for it
-        assertFalse(lane.lines(now + 1_000, rules, keep = emptySet()).any { it.outcomeId in mine })
+        assertFalse(lane.lines(now + 2_000, rules, keep = emptySet()).any { it.outcomeId in mine })
         // an older list never replaces a newer one
         lane.put(CloudBids(now - 5_000, false, 1L, sent))
-        assertEquals(now + 1_000, lane.current?.atMs)
+        assertEquals(now + 2_000, lane.current?.atMs)
     }
 
     @Test
