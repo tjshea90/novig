@@ -117,10 +117,22 @@ object CloudFreshness {
             nm > 90L || nx > 300L || (fm != null && fm > 600L) -> CloudText.Level.WARN
             else -> CloudText.Level.GOOD
         }
-        val label = "Novig ${CloudText.dur(nm)} (oldest ${CloudText.dur(nx)})" + (fm?.let { " · fair ${CloudText.dur(it)}" } ?: "")
+        // The games that matter for betting now (Tj, 2026-10-15: "is this speed too slow for pre game betting"): the engine keeps the ones starting within [SOON_HOURS] hours young while it scans, so they are told apart.
+        val soon = rows.filter { it.event.startsTs - now in 1L..SOON_HOURS * 3_600_000L }
+        val soonFair = soon.mapNotNull { it.fairAsOfMs }.map { ((now - it) / 1000L).coerceAtLeast(0L) }
+        val soonNovig = soon.mapNotNull { it.bookFetchedAtMs }.map { ((now - it) / 1000L).coerceAtLeast(0L) }
+        val label = "Novig ${CloudText.dur(nm)} (oldest ${CloudText.dur(nx)})" + (fm?.let { " · fair ${CloudText.dur(it)}" } ?: "") +
+            (if (soonFair.isNotEmpty() && soon.size < rows.size) " · games within ${SOON_HOURS}h: fair ${CloudText.dur(median(soonFair))}" else "")
         val detail = "Across the ${rows.size} bets shown: Novig prices were read a median ${CloudText.dur(nm)} ago (the oldest ${CloudText.dur(nx)}); " +
             (fm?.let { "the oldest book price behind each fair line is a median ${CloudText.dur(it)} old (the oldest ${CloudText.dur(fair.max())}). " } ?: "") +
+            (if (soon.isNotEmpty() && soonNovig.isNotEmpty()) {
+                "The ${soon.size} starting within ${SOON_HOURS} h: Novig a median ${CloudText.dur(median(soonNovig))} ago" +
+                    (if (soonFair.isNotEmpty()) ", fair odds ${CloudText.dur(median(soonFair))} (the oldest ${CloudText.dur(soonFair.max())}). " else ". ")
+            } else "") +
             "$engine."
         return Chip(level, label, detail)
     }
+
+    /** Games starting within this many hours are the ones the engine refreshes during its long scan ([com.tjshea.vigilant.data.scanner.ScanGuards.hotHours]). */
+    const val SOON_HOURS = 12L
 }
