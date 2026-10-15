@@ -175,7 +175,15 @@ class CloudTrader(
         // the money: a paper wallet is the bankroll setting plus what graded entries made; a live one is the subaccount's cash
         val settled = ledger.entries.filter { it.status != "OPEN" }.sumOf { it.pnl ?: 0.0 }
         var risk = atRisk(now)
-        var cash = if (live) (port!!.cash() ?: run { port.blocked?.let { stop(it) }; return Report(mode, stopped = port.blocked ?: "the subaccount's cash could not be read") }) else (s.bankroll + settled - risk).coerceAtLeast(0.0)
+        var cash: Double
+        if (live) {
+            val p = port!!
+            val c = p.cash()
+            if (c == null) { p.blocked?.let { stop(it) }; return Report(mode, stopped = p.blocked ?: "the subaccount's cash could not be read") }
+            cash = c
+        } else {
+            cash = (s.bankroll + settled - risk).coerceAtLeast(0.0)
+        }
         val equity = cash + risk
         val day = Instant.ofEpochMilli(now).atZone(ZONE).toLocalDate().toString()
         if (ledger.dayKey != day) ledger = ledger.copy(dayKey = day, dayStartEquity = equity, stopped = if (live) ledger.stopped else "")
