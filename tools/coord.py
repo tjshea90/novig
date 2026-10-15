@@ -211,6 +211,13 @@ def acquire(kind=None, task=None, force=False, quiet=False):
     kind = kind or me["kind"]
     if kind == "routine" and not force:
         u = dormant_until(me["label"])
+        if u is None:
+            try:
+                import rotation
+                hit = rotation.slot_dormant(rotation.read_roster())
+                u = hit[1] if hit else None
+            except Exception:
+                u = None
         if u is not None:
             print("COORD  DORMANT: this account (%s) is out of usage until %s (research/coordination/away.json). A routine does nothing: no lease, no push." % (me["label"], u.isoformat()), file=sys.stderr)
             return 5

@@ -206,6 +206,11 @@ def selftest():
     # covered once by someone: gone
     notes.append(({"from": "a/yy", "at": "2026-10-16T11:30:00Z"}, "rotation-cover slot=2 date=2026-10-15"))
     assert missed_slots(roster, notes, now) == []
+    # a routine inside an away account's slot window is dormant whatever its label says
+    sd = slot_dormant(roster, dt.datetime(2026, 10, 16, 11, 40, tzinfo=dt.timezone.utc), {roster["accounts"][0]["tag"]: "2026-10-17T02:00:00Z"})
+    assert sd and sd[0] == roster["accounts"][0]["tag"], sd
+    assert slot_dormant(roster, dt.datetime(2026, 10, 16, 17, 40, tzinfo=dt.timezone.utc), {roster["accounts"][0]["tag"]: "2026-10-17T02:00:00Z"}) is None, "13:40 ET is slot 1's window"
+    assert slot_dormant(roster, dt.datetime(2026, 10, 17, 11, 40, tzinfo=dt.timezone.utc), {roster["accounts"][0]["tag"]: "2026-10-17T02:00:00Z"}) is None, "after the away time"
     # dormant: away_until is set only for a future time
     assert away_until("nobody-at-all") is None
     # an account Tj said is out of usage: its slots before the 'away until' time are AWAY at once (no grace), and a cover removes them
@@ -294,9 +299,42 @@ def away_until(tag, now=None):
     return until if until > now else None
 
 
+def slot_dormant(roster, now=None, away=None):
+    """A routine that starts inside the scheduled window of a slot whose account is away is that account's own routine, whatever label it carries (a fresh routine container is 'acct-unknown'
+    until it says who it is). Returns (tag, until) or None. Window: 20 min before the slot to 3 h after. Pure given its arguments."""
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    if away is None:
+        try:
+            away = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "research", "coordination", "away.json")))
+        except Exception:
+            return None
+    accounts = roster.get("accounts", [])
+    from zoneinfo import ZoneInfo
+    et = ZoneInfo(ZONE)
+    d = now.astimezone(et).date()
+    for day in (d - datetime.timedelta(days=1), d):
+        for sidx, acc in enumerate(accounts[:len(SLOTS)]):
+            h, m = SLOTS[sidx].split(":")
+            inst = datetime.datetime(day.year, day.month, day.day, int(h), int(m), tzinfo=et)
+            if inst - datetime.timedelta(minutes=20) <= now <= inst + datetime.timedelta(hours=3):
+                try:
+                    until = datetime.datetime.fromisoformat(str(away.get(acc["tag"], "")).replace("Z", "+00:00"))
+                except Exception:
+                    continue
+                if until > now:
+                    return acc["tag"], until
+    return None
+
+
 def checkin(tag):
     import coord
     until = away_until(tag)
+    if until is None:
+        try:
+            hit = slot_dormant(read_roster())
+            until = hit[1] if hit else None
+        except Exception:
+            until = None
     if until is not None:
         print("ROTATION  DORMANT: %s is out of usage until %s (research/coordination/away.json). Do nothing: no lease, no push, no workflow. Say so in one line and stop." % (tag, until.isoformat()))
         return 5
