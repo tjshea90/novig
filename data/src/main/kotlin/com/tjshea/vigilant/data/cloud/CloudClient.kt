@@ -121,6 +121,24 @@ class CloudClient(
         }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
     }
 
+    /** The engine's order book (`trades.json`, [TradeLedger]), or [Poll.NotModified] when [etag] is still current. */
+    suspend fun fetchTrades(etag: String?): Poll<TradeLedger> = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
+        val b = req("contents/trades.json?ref=$FEED_BRANCH").header("Accept", RAW)
+        if (etag != null) b.header("If-None-Match", etag)
+        runCatching {
+            http.newCall(b.build()).execute().use { r ->
+                note(r)
+                when {
+                    r.code == 304 -> Poll.NotModified
+                    r.isSuccessful -> TradeLedger.parse(r.body?.string().orEmpty())?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's orders could not be read")
+                    r.code == 404 -> Poll.Fresh(TradeLedger(), null)   // the engine has not traded yet
+                    else -> Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
+                }
+            }
+        }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
+    }
+
     /** Writes the settings the engine reads (creating the branch the first time). Null = done; otherwise why not. */
     suspend fun writeConfig(config: CloudConfig): String? =
         putFile(CONFIG_BRANCH, "settings.json", CloudConfig.text(config).toByteArray(Charsets.UTF_8), "settings rev ${config.rev}")

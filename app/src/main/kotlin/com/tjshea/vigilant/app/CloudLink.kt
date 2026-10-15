@@ -66,6 +66,9 @@ class CloudLink(private val c: AppContainer) {
         /** The newest settings revision this phone wrote to GitHub and when (its clock), for the "is GitHub using my settings" line ([com.tjshea.vigilant.data.cloud.CloudText.settings]). */
         val pushedRev: Long = 0L,
         val pushedAtMs: Long = 0L,
+        /** The engine's own orders and results (`trades.json`) as of the phone's last read, with the clock of that read; null before the first read. */
+        val trades: com.tjshea.vigilant.data.cloud.TradeLedger? = null,
+        val tradesReadAtMs: Long = 0L,
     )
 
     private val _ui = MutableStateFlow(Ui())
@@ -214,6 +217,18 @@ class CloudLink(private val c: AppContainer) {
                     else -> {}
                 }
                 delay(USAGE_POLL_MS)
+            }
+        }
+        // 6. what the engine did (Tj, 2026-10-15: opening the app syncs the automated system's bets and results): its order book, read whenever a token is saved and the engine has ever traded or trades now; an unchanged file is a free 304.
+        scope.launch(Dispatchers.IO) {
+            var etag: String? = null
+            while (isActive) {
+                if (hasToken()) when (val p = client.fetchTrades(etag)) {
+                    is CloudClient.Poll.Fresh -> { etag = p.etag; _ui.update { it.copy(trades = p.value, tradesReadAtMs = System.currentTimeMillis()) } }
+                    is CloudClient.Poll.NotModified -> _ui.update { it.copy(tradesReadAtMs = System.currentTimeMillis()) }
+                    is CloudClient.Poll.Failed -> {}
+                }
+                delay(if (c.onScreen) TRADES_POLL_MS else TRADES_POLL_BACKGROUND_MS)
             }
         }
         // 3. save
