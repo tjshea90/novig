@@ -648,7 +648,7 @@ class MakerAppTest {
         val report = cloud.run("test")!!
         assertEquals("the same orders, at the same prices, sizes and lives", local, novig.placed.sorted())
         assertEquals(localReport.placed, report.placed)
-        assertEquals(localReport.decisions.map { it.line.outcomeId to it::class }.sortedBy { it.first }.filter { it.second == MakerDecision.Post::class }, report.decisions.map { it.line.outcomeId to it::class }.sortedBy { it.first }.filter { it.second == MakerDecision.Post::class })
+        assertEquals(localReport.decisions.map { it.line.outcomeId to it::class }.sortedBy { it.first }.filter { it.second == com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Post::class }, report.decisions.map { it.line.outcomeId to it::class }.sortedBy { it.first }.filter { it.second == com.tjshea.vigilant.data.novig.trading.maker.MakerDecision.Post::class })
         assertEquals("the Bids tab says which list the lines came from", now, cloud.status.value.scanAtMs)
         // a list that is half an hour old is no list: nothing new goes up and the bids already up stay (as with no scan at all)
         val stale = MakerRunner(
