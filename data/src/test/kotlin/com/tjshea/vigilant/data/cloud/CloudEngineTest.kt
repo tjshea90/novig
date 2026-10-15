@@ -113,23 +113,74 @@ class CloudEngineTest {
     }
 
     @Test
-    fun `a settings change late in a scan waits for the next pass, a switch-off does not`() = runBlocking {
+    fun `a filter-only or phone-only change never restarts a scan; it filters the list at once`() = runBlocking {
         var cfg = on
-        val scanner = FakeScanner { _, _, n -> if (n == 1) { delay(200); report(result("a")) } else report(result("b")) }
+        val scanner = FakeScanner { _, partial, n -> partial(result("a")); delay(300); report(result("a")) }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
-        val e = engine(scanner, { cfg }, published, restartWithinMs = 20)
-        launch(kotlinx.coroutines.Dispatchers.Default) { delay(80); cfg = on.copy(rev = 2, settings = on.settings.copy(minEvPercent = 0.03)) }
-        e.run(untilMs = System.currentTimeMillis() + 500)
-        assertTrue("the first scan finished and was published", published.any { it.first?.rows?.map { r -> r.event.eventId } == listOf("e-a") })
-        assertEquals("the second scan ran under the new settings", 0.03, scanner.settingsSeen.last().minEvPercent, 0.0)
-        // a switch-off cancels at once
+        val e = engine(scanner, { cfg }, published)
+        // the phone raises the minimum edge to 50% (nothing passes) and moves an auto-bet setting: no scan is cut short
+        launch(kotlinx.coroutines.Dispatchers.Default) { delay(100); cfg = on.copy(rev = 2, settings = on.settings.copy(minEvPercent = 0.5, autoBetMinEv = 0.07, autoBetStake = 3.0)) }
+        e.run(untilMs = System.currentTimeMillis() + 450)
+        assertEquals("the first scan ran to its end (no restart); a second began only after it", 1, published.count { it.second.passes == 1 && !it.second.scanning }.coerceAtMost(1))
+        val lastFeed = published.mapNotNull { it.first }.last()
+        assertTrue("the final list was filtered under the new minimum edge", lastFeed.rows.isEmpty())
+        assertEquals(2L, lastFeed.configRev)
+    }
+
+    @Test
+    fun `a refresh asked for mid-scan starts a fresh scan at once and is acknowledged`() = runBlocking {
+        var cfg = on
+        val scanner = FakeScanner { _, _, n -> if (n == 1) { delay(5_000); report(result("a")) } else { delay(60); report(result("c")) } }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = engine(scanner, { cfg }, published)
+        launch(kotlinx.coroutines.Dispatchers.Default) { delay(100); cfg = on.copy(rev = 2, refreshAtMs = 777L) }
+        val t0 = System.currentTimeMillis()
+        e.run(untilMs = t0 + 600)
+        assertTrue("the 5 s scan was cut short", scanner.calls.get() >= 2)
+        val st = published.map { it.second }
+        assertTrue("acknowledged", st.any { it.ackedRefreshAtMs == 777L && it.scanning })
+        val done = st.last { it.lastScanForRefreshAtMs == 777L }
+        assertTrue("a scan that began after the request finished and says which request it served", done.lastScanEndedAtMs >= done.lastScanStartedAtMs && done.lastScanStartedAtMs > 0L)
+        assertTrue("the list published by it", published.any { it.first?.rows?.map { r -> r.event.eventId } == listOf("e-c") })
+    }
+
+    @Test
+    fun `a refresh asked for in a scan's first moments is served by that scan, not a second one`() = runBlocking {
+        var cfg = on
+        val scanner = FakeScanner { _, _, _ -> delay(150); report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = engine(scanner, { cfg }, published)
+        launch(kotlinx.coroutines.Dispatchers.Default) { delay(5); cfg = on.copy(rev = 2, refreshAtMs = 55L) }
+        e.run(untilMs = System.currentTimeMillis() + 120)
+        assertEquals("one scan served it", 1, scanner.calls.get())
+        assertTrue(published.any { it.second.ackedRefreshAtMs == 55L })
+    }
+
+    @Test
+    fun `a switch-off cancels a scan at once`() = runBlocking {
         var c2 = on
         val s2 = FakeScanner { _, _, _ -> delay(5_000); report(result("a")) }
-        val e2 = engine(s2, { c2 }, CopyOnWriteArrayList(), idleExitMs = 30, restartWithinMs = 20)
+        val e2 = engine(s2, { c2 }, CopyOnWriteArrayList(), idleExitMs = 30)
         launch(kotlinx.coroutines.Dispatchers.Default) { delay(60); c2 = on.copy(rev = 3, on = false) }
         val t0 = System.currentTimeMillis()
         e2.run(untilMs = t0 + 3_000)
         assertTrue("stopped well before the 5 s scan would end", System.currentTimeMillis() - t0 < 2_500)
+    }
+
+    @Test
+    fun `the heartbeat carries the scan's progress and the list's measured ages`() = runBlocking {
+        val scanner = object : OddsScanner by FakeScanner({ _, _, _ -> report(null) }) {
+            override suspend fun scan(settings: ScanSettings, sources: List<ReferenceSource>, pinned: Set<String>, onProgress: (ScanProgress) -> Unit, onPartial: (ScanResult) -> Unit): ScanReport {
+                onProgress(ScanProgress("Reading Novig books", 3, 12)); onPartial(result("a")); delay(80)
+                return report(result("a", "b"))
+            }
+        }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        engine(scanner, { on }, published).run(untilMs = System.currentTimeMillis() + 150)
+        val mid = published.map { it.second }.first { it.scanning && it.progressStep == "Reading Novig books" }
+        assertEquals(3, mid.progressDone); assertEquals(12, mid.progressTotal)
+        val withList = published.map { it.second }.last { it.rows > 0 && it.novigAgeMedianS >= 0 }
+        assertTrue("ages come from the rows' own stamps (the test rows were read just now)", withList.novigAgeMedianS in 0..5)
     }
 
     @Test
