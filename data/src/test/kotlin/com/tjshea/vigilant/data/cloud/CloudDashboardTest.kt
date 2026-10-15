@@ -88,4 +88,15 @@ class CloudDashboardTest {
         assertFalse(md.contains("sk_") || md.contains("-----BEGIN"))
         assertTrue("only the id, masked", md.contains("cccc…cccc"))
     }
+
+    @Test
+    fun `the page lists what to refill and which apis the engine is resting`() {
+        val st = status(FeedLine("sgo", fetched = 1)).copy(
+            advice = listOf(ApiAdvisor.Advice("refill:propline", "refill", 2, "propline", "PropLine is used up", "0 of 1000 requests left")),
+            resting = listOf("ParlayAPI until 22:30 UTC: answered nothing for 3 scans in a row"), governorOff = listOf("odds_api"),
+        )
+        val md = page(st)
+        assertTrue(md.contains("## What to refill, buy or fix") && md.contains("PropLine is used up"))
+        assertTrue(md.contains("## Resting to save usage") && md.contains("ParlayAPI until 22:30 UTC") && md.contains("The Odds API: the engine asked the phone to switch it off"))
+    }
 }

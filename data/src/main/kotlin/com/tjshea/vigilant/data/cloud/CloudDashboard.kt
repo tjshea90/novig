@@ -84,6 +84,19 @@ object CloudDashboard {
         val extra = st.feedReport.filter { providerOf(it.id) !in shown }
         for (f in extra) appendLine("| ${f.name.ifBlank { f.id }} | ${health(listOf(f), true).label} | ${f.id} ${f.fetched}+${f.reused} | ${f.matched} | not metered | — | — | — | ${(f.error ?: f.heldBack ?: "").replace('|', '/').take(90)} |")
         appendLine()
+        if (st.advice.isNotEmpty()) {
+            appendLine("## What to refill, buy or fix")
+            appendLine()
+            st.advice.forEach { a -> appendLine("- ${when (a.severity) { 2 -> "🔴"; 1 -> "🟠"; else -> "🟢" }} **${a.title}**: ${a.body}") }
+            appendLine()
+        }
+        if (st.resting.isNotEmpty() || st.governorOff.isNotEmpty()) {
+            appendLine("## Resting to save usage")
+            appendLine()
+            st.resting.forEach { appendLine("- 💤 $it") }
+            st.governorOff.forEach { appendLine("- ⛔ ${ApiToggles.name(it)}: the engine asked the phone to switch it off (silent after every rest); switch it back on after fixing its key or plan") }
+            appendLine()
+        }
         val keyed = views.filter { it.policy.keyed && it.keys.isNotEmpty() }
         if (keyed.isNotEmpty()) {
             appendLine("## Usage meters per key")
