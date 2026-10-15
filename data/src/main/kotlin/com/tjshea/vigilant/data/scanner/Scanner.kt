@@ -704,13 +704,17 @@ class Scanner(
             val bestEv = HashMap<String, Double>()
             for (o in priced) o.evPercent?.let { ev -> bestEv.merge(o.market.marketId, ev) { a, b -> maxOf(a, b) } }
             val ids = hot.map { it.market.marketId }.filter { id -> id in held && (id in pinned || (bestEv[id] ?: Double.NEGATIVE_INFINITY) >= HOT_EV_FLOOR) }
-                .sortedByDescending { id -> if (id in pinned) Double.MAX_VALUE else bestEv[id] ?: 0.0 }.take(MAX_HOT_READS)
+                .sortedByDescending { id -> if (id in pinned) Double.MAX_VALUE else bestEv[id] ?: 0.0 }
+                .take(HotBudget.reads(hotRate, settings.vigGuards.hotEverySeconds.coerceIn(10, 600)))
             if (ids.isEmpty()) return
             try {
                 val batch = withContext(com.tjshea.vigilant.data.novig.NovigReadTag("scan-hot")) { novig.books(ids) }
                 // A book served from the last scan's copy (a failed read) is no refresh: only one read just now replaces what is held.
                 for ((id, book) in batch.books) if (book.fetchedAtMs >= t) fresh[id] = book
-                hotReads += batch.books.count { it.value.fetchedAtMs >= t }
+                val read = batch.books.count { it.value.fetchedAtMs >= t }
+                hotReads += read
+                // The route's speed as this step saw it sizes the next one, and the wait before it starts when this one ENDS.
+                HotBudget.rate(read, clock() - t)?.let { hotRate = it }
                 refused += batch.refused
                 batch.retryAfterSeconds?.let { retryAfter = it }
             } catch (e: CancellationException) {
@@ -718,6 +722,7 @@ class Scanner(
             } catch (e: Exception) {
                 // The books held stand.
             }
+            lastHotAt = clock()
             publish(cat)
         }
 
