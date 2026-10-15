@@ -64,7 +64,7 @@ class CloudScannerTest {
         val local = Local()
         val latest = CloudLatest().also { it.put(feed(5L), 5L) }
         val s = SwitchingScanner(local, CloudScanner(latest))
-        val on = ScanSettings(gates = ApiGates(cloudScan = true))
+        val on = ScanSettings(gates = ApiGates(cloudScan = true), makerRecommend = false)
         val off = ScanSettings(gates = ApiGates(cloudScan = false))
         assertNotNull(s.scan(on, emptyList(), emptySet(), {}, {}).result)
         assertEquals(0, local.scans)
@@ -76,5 +76,10 @@ class CloudScannerTest {
         assertEquals(setOf("local"), s.unscannedLeagues(off))
         // re-checking open bets is always the phone's own
         assertEquals("local", s.recheck(on, emptyList()).error)
+        // with a bid desk that needs every priced line the phone scans for itself, switch or not
+        s.scan(on.copy(maker = true), emptyList(), emptySet(), {}, {})
+        assertEquals(2, local.scans)
+        s.scan(on.copy(pausedByHand = true), emptyList(), emptySet(), {}, {})
+        assertEquals(3, local.scans)
     }
 }

@@ -12,7 +12,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CloudScanKeyTest {
-    private val base = ScanSettings(leagues = setOf("NBA"))
+    private val base = ScanSettings(leagues = setOf("NBA"), makerRecommend = false)
 
     @Test
     fun `every setting, and every member of the nested groups, has a decision`() {
@@ -70,7 +70,7 @@ class CloudScanKeyTest {
         assertTrue(on.cloudDrives)
         assertFalse(base.cloudDrives)
         assertFalse("bids from Vigilant's scan need every line", on.copy(maker = true).cloudDrives)
-        assertFalse(on.copy(makerRecommend = true).cloudDrives)
+        assertFalse("Recommend mode needs the lines too (it is the app's default)", on.copy(makerRecommend = true).cloudDrives)
         assertTrue("bids priced from CNO never read Vigilant's scan", on.copy(maker = true, makerSource = BidSource.CNO).cloudDrives)
         assertFalse("paused by hand", on.copy(pausedByHand = true).cloudDrives)
         assertFalse("the kill switch", on.copy(killed = true).cloudDrives)
