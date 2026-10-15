@@ -91,6 +91,19 @@ class CloudClient(
         }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
     }
 
+    /** The bid desk's candidate lines, as the engine published them. */
+    suspend fun fetchBids(): Poll<CloudBids> = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
+        runCatching {
+            http.newCall(req("contents/bids.json.gz?ref=$FEED_BRANCH").header("Accept", RAW).build()).execute().use { r ->
+                note(r)
+                if (!r.isSuccessful) return@use Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
+                val bytes = r.body?.bytes() ?: return@use Poll.Failed("empty answer")
+                CloudBids.decode(bytes)?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the candidate list could not be read (an engine newer than this app?)")
+            }
+        }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
+    }
+
     /** Writes the settings the engine reads (creating the branch the first time). Null = done; otherwise why not. */
     suspend fun writeConfig(config: CloudConfig): String? =
         putFile(CONFIG_BRANCH, "settings.json", CloudConfig.text(config).toByteArray(Charsets.UTF_8), "settings rev ${config.rev}")

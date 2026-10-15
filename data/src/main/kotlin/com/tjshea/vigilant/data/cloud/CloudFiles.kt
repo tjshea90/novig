@@ -95,6 +95,10 @@ data class CloudStatus(
     val settingsPending: Boolean = false,
     /** The last finished scan's account of itself: Novig reads, throttling, each feed's answer and errors. */
     val scanNote: String = "",
+    /** The bid desk's candidate list (`bids.json.gz`; only while the phone has Vigilant-priced bids on): when it was made, how many lines it holds and how big the file is; 0 = none. */
+    val bidsAtMs: Long = 0L,
+    val bidsCount: Int = 0,
+    val bidsBytes: Int = 0,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
