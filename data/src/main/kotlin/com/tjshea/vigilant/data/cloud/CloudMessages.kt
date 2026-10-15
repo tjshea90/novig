@@ -40,9 +40,8 @@ object CloudMessages {
     /** Newest first. */
     fun newestFirst(ms: Collection<Message>): List<Message> = ms.sortedByDescending { it.at }
 
-    /** The names a listing holds that the phone has not read yet (names are `<ms>-<id>.json`, so newest last when sorted). */
-    fun unseenNames(names: Collection<String>, haveIds: Set<String>): List<String> =
-        names.filter { it.endsWith(".json") && it.substringAfter('-').removeSuffix(".json") !in haveIds.map { id -> id.filter { c -> c.isLetterOrDigit() || c == '-' }.take(24) }.toSet() }.sorted()
+    /** The file names in a listing that the phone has not read yet, oldest first (`<ms>-<id>.json`: sorting the names sorts by time). */
+    fun unseen(names: Collection<String>, seenNames: Set<String>): List<String> = names.filter { it.endsWith(".json") && it !in seenNames }.sorted()
 
     /** Words only: a value that looks like a key or a token never goes out (the repository is public). */
     fun looksSecret(text: String): Boolean = Regex("""(sk-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|[A-Fa-f0-9]{40,})""").containsMatchIn(text)

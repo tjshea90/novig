@@ -10,8 +10,26 @@ object ApiToggles {
     /** The ids the engine may ask to switch: the odds feeds (never Novig, never the trading switches). Pinnodds and Kalshi's socket stay the phone's own. */
     val IDS = listOf("sgo", "boltodds", "oddspapi", "oddspapi_free", "unabated", "parlay", "propline", "odds_api", "pinnwire", "pinnapi", "kalshi", "polymarket")
 
-    /** The meter id ([com.tjshea.vigilant.data.keys.QuotaPolicy.id]) of a switch id, for matching the usage ledger and the feeds' answers. */
-    fun policyId(id: String): String = if (id == "odds_api") "oddsapi" else id
+    /** The meter ([com.tjshea.vigilant.data.keys.QuotaPolicy]) of a switch id, for the usage ledger and the feeds' answers; null for a keyless API. */
+    fun policy(id: String): com.tjshea.vigilant.data.keys.QuotaPolicy? = when (id) {
+        "sgo" -> com.tjshea.vigilant.data.keys.QuotaPolicy.SGO
+        "boltodds" -> com.tjshea.vigilant.data.keys.QuotaPolicy.BOLTODDS
+        "oddspapi" -> com.tjshea.vigilant.data.keys.QuotaPolicy.ODDSPAPI
+        "oddspapi_free" -> com.tjshea.vigilant.data.keys.QuotaPolicy.ODDSPAPI_FREE
+        "unabated" -> com.tjshea.vigilant.data.keys.QuotaPolicy.UNABATED
+        "parlay" -> com.tjshea.vigilant.data.keys.QuotaPolicy.PARLAY
+        "propline" -> com.tjshea.vigilant.data.keys.QuotaPolicy.PROPLINE
+        "odds_api" -> com.tjshea.vigilant.data.keys.QuotaPolicy.ODDS_API
+        "pinnwire" -> com.tjshea.vigilant.data.keys.QuotaPolicy.PINNWIRE
+        "pinnapi" -> com.tjshea.vigilant.data.keys.QuotaPolicy.PINNAPI
+        else -> null
+    }
+
+    /** The switch id whose feeds carry the meter id [policyId] (feeds are named by meter, see [CloudDashboard.providerOf]); null when no ONE switch owns it (the two Pinnacle boards share a feed). */
+    fun idOfPolicy(policyId: String): String? = IDS.firstOrNull { policy(it)?.id == policyId }.takeIf { policyId != "pinnacle" }
+
+    /** What a person calls the API. */
+    fun name(id: String): String = policy(id)?.displayName ?: when (id) { "kalshi" -> "Kalshi"; "polymarket" -> "Polymarket"; else -> id }
 
     fun isOn(s: ScanSettings, id: String): Boolean? = when (id) {
         "sgo" -> s.sgoPro
