@@ -30,3 +30,10 @@ application {
 }
 
 tasks.named<JavaExec>("run") { workingDir = rootProject.projectDir }
+
+// The daily review (ReviewMain.kt): `./gradlew :cloud:review --args="<phone-data checkout> <output file>"`, run by .github/workflows/review-digest.yml.
+tasks.register<JavaExec>("review") {
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.tjshea.vigilant.cloud.ReviewMainKt")
+    jvmArgs("-Xmx3g")
+}
