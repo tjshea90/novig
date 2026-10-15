@@ -375,6 +375,12 @@ class ApiBettingController(
         }
     }
 
+    /** Re-reads the saved connection after something else changed it (the trading key shared with GitHub's engine, TCL20c). */
+    suspend fun reloadConnection() {
+        val conn = runCatching { c.novigConnection.load() }.getOrNull() ?: return
+        state.update { it.copy(novig = it.novig.copy(connection = conn), betting = it.betting.copy(enabled = c.trading != null)) }
+    }
+
     private fun fail(text: String) = state.update { it.copy(betting = it.betting.copy(busy = false, message = null, error = text)) }
 
     /** Turns betting off on this phone (the Bet buttons go). The trading key stays in the Keystore, so turning it on again is quick. */

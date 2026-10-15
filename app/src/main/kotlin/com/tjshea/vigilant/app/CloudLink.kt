@@ -59,6 +59,9 @@ class CloudLink(private val c: AppContainer) {
         val keysNote: String? = null,
         /** When the read-only Novig key made for the engine was made (this phone's clock); 0 = none was made. */
         val novigKeyMadeAtMs: Long = 0L,
+        /** When the Vigilant subaccount's trading key was made for sharing with the engine (0 = none) and whether it is on GitHub as secrets (TCL20c). */
+        val tradeKeyMadeAtMs: Long = 0L,
+        val tradeKeyOnGitHub: Boolean = false,
         val rateRemaining: Int? = null,
         /** The newest settings revision this phone wrote to GitHub and when (its clock), for the "is GitHub using my settings" line ([com.tjshea.vigilant.data.cloud.CloudText.settings]). */
         val pushedRev: Long = 0L,
@@ -323,6 +326,7 @@ class CloudLink(private val c: AppContainer) {
     }
 
     private val keysSent = File(c.app.filesDir, "cloud_keys_sent")
+    private val tradeSent = File(c.app.filesDir, "cloud_trade_sent")
     @Volatile private var keysAttempt: String? = null
 
     /**
@@ -332,6 +336,8 @@ class CloudLink(private val c: AppContainer) {
     private suspend fun keysToSend(): Map<String, String> {
         val m = CloudKeys.BY_PROVIDER.mapNotNull { (p, name) -> c.keyStore.current(p).filter { it.isNotBlank() }.takeIf { it.isNotEmpty() }?.let { name to it.joinToString(",") } }.toMap().toMutableMap()
         c.cloudNovigKeys.load()?.let { m[CloudKeys.NOVIG_KEY_ID] = it.keyId; m[CloudKeys.NOVIG_KEY_PEM] = it.pem }
+        // The subaccount's trading key, only once Tj asked for it to go (tradeSent) and until he takes it off GitHub; never the management key.
+        if (tradeSent.exists()) c.cloudTradeKeys.load()?.let { m[CloudKeys.TRADE_KEY_ID] = it.keyId; m[CloudKeys.TRADE_KEY_PEM] = it.pem }
         return m
     }
 
@@ -369,7 +375,7 @@ class CloudLink(private val c: AppContainer) {
         }
         val previous = runCatching { keysSent.readText() }.getOrNull()
         runCatching { keysSent.writeText(fp) }
-        val msg = "Sent ${sent.size} key set(s) to GitHub secrets: ${sent.joinToString(", ")}. Pinnodds and Kalshi keys, and Novig's trading and management keys, stay on the phone."
+        val msg = "Sent ${sent.size} key set(s) to GitHub secrets: ${sent.joinToString(", ")}. Pinnodds and Kalshi keys and Novig's management key stay on the phone."
         c.eventLog.info("CLOUD", msg)
         val tail = restartEngineFor(changed = previous != fp)
         _ui.update { it.copy(keysNote = msg + tail) }
@@ -432,10 +438,53 @@ class CloudLink(private val c: AppContainer) {
         say("The Novig key was removed from GitHub." + restartEngineFor(changed = true).replace(" to use them.", " to stop using it."))
     }
 
+    /**
+     * Gives the engine the Vigilant subaccount's trading key (Tj, 2026-10-15: "make it so I can push all needed keys, including secret keys, from the app on my phone to GitHub"; TASKS.md TCL20c). Novig allows one
+     * live trading key per subaccount and the phone's lives in the Keystore, so the first time this REPLACES it ([CloudTradeKey.swap]: the management key revokes the old one and makes a new one the phone seals and
+     * then signs with too). The management key never leaves the phone. Words only: no key text is ever in the result, a log or an error.
+     */
+    suspend fun sendTradeKey(): String = keysMutex.withLock {
+        fun say(m: String): String { _ui.update { it.copy(keysNote = m) }; return m }
+        if (!hasToken()) return@withLock say("Save the GitHub token first.")
+        if (c.cloudTradeKeys.load() == null) {
+            val mgmt = c.managementKeys.load() ?: return@withLock say("Connect your Novig management key first (Settings › Betting & Novig account): it is what replaces the trading key.")
+            val conn = runCatching { c.novigConnection.load() }.getOrNull()
+            val sub = conn?.subaccountKeyId?.takeIf { it.isNotBlank() } ?: return@withLock say("The Vigilant subaccount is not connected yet (Settings › Betting & Novig account).")
+            val swapped = try {
+                com.tjshea.vigilant.data.cloud.CloudTradeKey.swap(c.http, c.json, mgmt, sub)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                return@withLock say("Novig did not make the trading key: ${novigWords(e)}. If the old key was already revoked, tap Enable betting in Settings › Betting & Novig account to get betting back.").also { c.eventLog.warn("CLOUD", it) }
+            }
+            c.cloudTradeKeys.save(swapped.key, sub)
+            c.tradeVault.reload()
+            val updated = conn.copy(tradingKeyId = swapped.key.keyId, tradingAlias = com.tjshea.vigilant.app.data.SharedTradeVault.SHARED)
+            runCatching { c.novigConnection.save(updated) }
+            c.useConnection(updated)
+            c.eventLog.info("CLOUD", "replaced the subaccount's trading key with one the engine can hold (••••${swapped.key.keyId.takeLast(4)}), proved: ${swapped.verified}")
+        }
+        runCatching { tradeSent.writeText("1") }
+        refreshNovigKey()
+        sendKeysLocked(auto = false)
+    }
+
+    /** Takes the trading key off GitHub (both secrets). The phone keeps it and goes on betting with it; the engine can no longer order. */
+    suspend fun removeTradeKey(): String = keysMutex.withLock {
+        fun say(m: String): String { _ui.update { it.copy(keysNote = m) }; return m }
+        if (!hasToken()) return@withLock say("Save the GitHub token first.")
+        for (name in CloudKeys.TRADE) client.deleteSecret(name)?.let { why -> return@withLock say("Not removed ($name): $why") }
+        runCatching { tradeSent.delete() }
+        runCatching { keysSent.delete() }
+        refreshNovigKey()
+        say("The trading key was removed from GitHub; this phone still bets with it." + restartEngineFor(changed = true).replace(" to use them.", " to stop using it."))
+    }
+
     /** Reads whether an engine key exists into the page's state. */
     suspend fun refreshNovigKey() {
         val at = c.cloudNovigKeys.saved()?.mintedAtMs ?: 0L
-        _ui.update { it.copy(novigKeyMadeAtMs = at) }
+        val tradeAt = c.cloudTradeKeys.saved()?.mintedAtMs ?: 0L
+        _ui.update { it.copy(novigKeyMadeAtMs = at, tradeKeyMadeAtMs = tradeAt, tradeKeyOnGitHub = tradeSent.exists()) }
     }
 
     /** Saves the bet and bid day files and the scan study's days to `phone-data`; each file is sent again only when it changed. */

@@ -72,6 +72,8 @@ data class ReportActions(
     val onSendCloudKeys: () -> Unit = {},
     val onSendNovigKey: () -> Unit = {},
     val onRemoveNovigKey: () -> Unit = {},
+    val onSendTradeKey: () -> Unit = {},
+    val onRemoveTradeKey: () -> Unit = {},
     val onTestOddsPapiFreeKey: (Boolean) -> Unit = {},
     /** The live feed test (Tj, 2026-10-07): make its file and share it, and read the line that says what it is doing. */
     val onShareFeedRace: () -> Unit = {},
