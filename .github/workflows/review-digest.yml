@@ -7,7 +7,7 @@ name: Daily review of every scanned +EV bet
 on:
   workflow_dispatch:
   schedule:
-    - cron: "20 12 * * *"
+    - cron: "20 10 * * *"
 
 permissions:
   contents: write
