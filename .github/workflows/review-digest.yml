@@ -77,6 +77,33 @@ jobs:
           } > out/latest.txt
           wc -c out/latest.txt
 
+      # The engine's OWN record (TCL20e): every bet each finished GitHub scan listed, in the app's study format, with the results and closing lines engine-grade.yml added; and the engine's own orders.
+      - name: The engine's own scan study and orders
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p assets
+          for TAG in $(gh release list --limit 500 --json tagName --jq '.[].tagName' | grep '^cloud-archive-' || true); do
+            gh release download "$TAG" -p 'study-*' -D assets --clobber 2>/dev/null || true
+          done
+          gh release download engine-grades -p 'grades-*' -D assets --clobber 2>/dev/null || true
+          python3 -I tools/engine_study.py assemble assets eng/phone/study
+          {
+            echo
+            echo "== THE ENGINE'S OWN SCAN STUDY (GitHub's record of every bet its scans listed, graded by engine-grade.yml; same report as above; cut at 90000 characters) =="
+            if ls eng/phone/study/study-*.jsonl >/dev/null 2>&1; then
+              ./gradlew :cloud:review --args="$PWD/eng $PWD/out/engine-study.txt" --no-daemon -q
+              head -c 90000 out/engine-study.txt
+            else
+              echo "no engine study segments yet (the engine writes them while it runs, 08:00-22:00 Eastern)"
+            fi
+            echo
+            echo "== THE ENGINE'S OWN ORDERS (trades.json on cloud-feed: paper or live, settled by engine-grade.yml) =="
+            if git fetch -q --depth=1 origin cloud-feed 2>/dev/null && git show FETCH_HEAD:trades.json > trades.json 2>/dev/null; then python3 -I tools/trade_summary.py trades.json; else echo "no trades.json yet"; fi
+          } >> out/latest.txt
+          wc -c out/latest.txt
+
       - name: Append to the review-digest branch (never forced)
         env:
           GH_TOKEN: ${{ github.token }}
