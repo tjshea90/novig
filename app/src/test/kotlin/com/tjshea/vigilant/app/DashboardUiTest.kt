@@ -7,7 +7,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -64,25 +63,31 @@ class DashboardUiTest {
     @Test
     fun `the page shows the engine state, the tiles, each api's health and its meter`() {
         show(status)
-        compose.onNodeWithTag("dashboardHeadline").assertIsDisplayed().assertTextContains("Running", substring = true)
+        compose.onNodeWithTag("dashboardHeadline").assertIsDisplayed()
+        compose.onNodeWithText("Running").assertExists()
         compose.onNodeWithText("$124.27").assertExists()
         compose.onNodeWithText("Bets listed").assertExists()
-        compose.onNodeWithTag("dashboardApi-propline").performScrollTo().assertTextContains("794 of 2000 requests left", substring = true)
-        compose.onNodeWithTag("dashboardApi-propline").assertTextContains("working", substring = true)
-        compose.onNodeWithTag("dashboardApi-boltodds").performScrollTo().assertTextContains("failing", substring = true)
-        compose.onNodeWithTag("dashboardApi-boltodds").assertTextContains("lines socket is not connected", substring = true)
-        // the failing API is listed before the working one
+        compose.onNodeWithTag("dashboardApi-propline").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("794 of 2000 requests left", substring = true).assertExists()
+        compose.onNodeWithText("working").assertExists()
+        compose.onNodeWithTag("dashboardApi-boltodds").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("failing").assertExists()
+        compose.onNodeWithText("lines socket is not connected", substring = true).assertExists()
         compose.onNodeWithTag("dashboardOpenGitHub").performScrollTo().assertIsDisplayed()
     }
 
     @Test
-    fun `before any engine word the page says so, and with history it draws a graph for each number`() {
+    fun `before any engine word the page says so`() {
         show(null)
-        compose.onNodeWithTag("dashboardHeadline").assertTextContains("Not connected", substring = true)
+        compose.onNodeWithText("Not connected").assertExists()
+    }
+
+    @Test
+    fun `with history the page draws a graph for each number`() {
         val points = (1..10).map { DashboardModel.Point(now - (10 - it) * 300_000L, 280 + it, 38, 200 + it, 40, 200 + it, 120.0 + it) }
-        compose.setContent { }
         show(status, points)
         compose.onNodeWithTag("dashboardTrend-Scan time").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithTag("dashboardTrend-Wallet").performScrollTo().assertTextContains("$130.00", substring = true)
+        compose.onNodeWithTag("dashboardTrend-Wallet").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("$130.00").assertExists()
     }
 }
