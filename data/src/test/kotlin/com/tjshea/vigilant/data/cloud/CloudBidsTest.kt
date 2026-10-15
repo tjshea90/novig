@@ -85,6 +85,8 @@ class CloudBidsTest {
         val asked = ArrayList<String>()
         val watched = ArrayList<String>()
         var fail: String? = null
+        /** When set, a book is stamped as read at this time (a real read is stamped when it is made). */
+        var readAt: Long? = null
         override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?) = emptyList<NovigEvent>()
         override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?) = emptyList<NovigMarket>()
         override suspend fun market(marketId: String): NovigMarket? = null
@@ -92,7 +94,7 @@ class CloudBidsTest {
             asked += marketIds
             val err = fail
             if (err != null) throw java.io.IOException(err)
-            val got = marketIds.mapNotNull { id -> books[id]?.let { id to it } }.toMap()
+            val got = marketIds.mapNotNull { id -> books[id]?.let { id to (readAt?.let { at -> it.copy(fetchedAtMs = at) } ?: it) } }.toMap()
             return BookBatch(got, notModified = 0, fetched = got.size, failed = marketIds.size - got.size)
         }
         override fun watch(marketIds: Collection<String>) { watched += marketIds }
@@ -219,6 +221,7 @@ class CloudBidsTest {
         assertEquals(sent.size to sent.size, lane.readiness(now))
         // two minutes on they are older than REFRESH_AFTER_MS: each market once, at most maxReads
         val later = now + 120_000
+        novig.readAt = later
         assertEquals(1, lane.refresh(later, 1))
         assertEquals(1, novig.asked.size)
         assertEquals(sent.map { it.line.marketId }.distinct().first(), novig.asked.single())
