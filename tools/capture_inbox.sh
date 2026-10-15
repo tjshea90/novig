@@ -63,7 +63,23 @@ fi
 # not Tj's words, and logging them made INBOX.md look like he had sent them (2026-09-27).
 case "$PROMPT" in
   "<task-notification>"*) exit 0 ;;
+  # a scheduled rotation routine's own stored prompt is not Tj's words (and must never make its session look interactive)
+  "You are a Vigilant rotation worker"*) exit 0 ;;
 esac
+
+# ONE ACCOUNT, THREE ACCOUNTS (Tj, 2026-10-15: "chat with any of the Claude accounts ... make changes from any account ... as though all three accounts are one account"):
+# a message from Tj means a person is here, in whichever account he opened. Take the repo's lease for this session NOW, before anything is pushed: from a routine (it stops at its next push and
+# parks its work on a routine-wip branch), from a stale holder, or from nobody. Another LIVE interactive session (Tj chatting in a second account) is not taken from: Claude is told to say so.
+# Never blocks the prompt; any failure is silent (losing a message is worse than two sessions meeting).
+if [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interactive}" = "interactive" ]; then
+  COORD_OUT="$(timeout 40 python3 -I tools/coord.py acquire --kind interactive 2>&1)"; COORD_RC=$?
+  if [ "$COORD_RC" -eq 3 ]; then
+    printf '%s\n' "COORD: ANOTHER LIVE CLAUDE SESSION HOLDS THIS REPO (see below). Do not edit, push or ship. Tell Tj plainly which session it is and ask whether to take over; only on his word run: bash tools/coord.py acquire --force"
+    printf '%s\n' "$COORD_OUT" | head -3
+  elif printf '%s' "$COORD_OUT" | grep -qi "took over\|TAKEN BY FORCE"; then
+    printf '%s\n' "COORD: $(printf '%s' "$COORD_OUT" | head -1 | sed 's/^COORD  //')"
+  fi
+fi
 
 {
   echo ""
