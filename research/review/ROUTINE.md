@@ -4,6 +4,9 @@ Tj: "I want Claude to do scheduled diagnostics and improvements in vigilant. I w
 
 A fresh Claude session runs this once a day. GitHub has already done the crunching for free: `.github/workflows/review-digest.yml` (12:20 UTC) runs the app's own scan-study report over every bet the phone logged (`phone-data` branch: `phone/study`, `phone/bets`) and appends it to the `review-digest` branch (`latest.txt`, `digest/<date>.txt`). **Read the digest; do not re-crunch the journals** (that is the usage this routine exists to save).
 
+## Step 0, before anything: take the lease (research/coordination/PROTOCOL.md)
+`bash tools/coord.sh acquire --kind routine --task "daily review"`. If it says another live session holds the repo (exit 3), STOP: write nothing, push nothing; one line in your final answer ("an interactive session held the repo; no review today"). The routine never takes the lease from a live interactive session. When you finish: `bash tools/coord.sh post "daily review <date>" "<found / shipped / waits for Tj>"` then `bash tools/coord.sh release`.
+
 ## Each run, in this order (save as you go: `bash tools/ckpt.sh "did" "next"` after every step; you can be cut off at any moment)
 1. `bash tools/install-hooks.sh` if the session briefing did not show. Read CHECKPOINT.md and the open items of TASKS.md; if another session is mid-change, finish that first.
 2. `git fetch origin review-digest cloud-feed phone-data`. Read `git show origin/review-digest:latest.txt` (READ ME, SUMMARY, SPLITS, then the placed-bets table). If it is older than 36 h, the workflow failed: read its run (`mcp__github__actions_list` `review-digest.yml`, `get_job_logs`), fix it, re-dispatch it once.
