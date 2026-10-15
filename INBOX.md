@@ -7621,3 +7621,8 @@ This is too much information. Run me through what to do step by step. You may wa
 ```
 It all works I'm skipping the screenshots, should I press create
 ```
+
+## 2026-10-15T20:16:56Z
+```
+It says active and I pressed run, but it won't start until 1:20pm tomorrow
+```
