@@ -7493,3 +7493,8 @@ Vigilant should make bets and bids based on profitable statistics and strategy. 
 ```
 Tell me how to add the permissions on Claude for Android
 ```
+
+## 2026-10-15T05:36:29Z
+```
+I have settings.json open  what do I do
+```
