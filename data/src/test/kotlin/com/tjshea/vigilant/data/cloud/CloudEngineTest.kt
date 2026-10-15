@@ -83,6 +83,9 @@ class CloudEngineTest {
         assertFalse(s.includeLive)
         assertEquals(ScannerMode.VIGILANT, s.scanner)
         assertFalse(s.liveOnly)
+        // the long scan keeps the games about to start young (Tj, 2026-10-15), and the phone's own scans do not
+        assertTrue(s.vigGuards.hotRefresh)
+        assertFalse(on.settings.vigGuards.hotRefresh)
         assertTrue(e.passes >= 1)
     }
 
