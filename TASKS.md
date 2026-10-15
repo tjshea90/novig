@@ -5335,4 +5335,4 @@ Tj: "Make the GitHub engine able to turn on and off apis as needed or to save us
 - [x] TCL28b `ApiGovernor` (engine): rests an API that answered nothing for N scans or whose allowance cannot cover the day, re-tests it later, never touches a feed the phone has off, never rests the last good source of a league; shown as "resting (auto)" with the reason; saves usage.
 - [x] TCL28c Two-way settings: `overrides.json` on `cloud-config` (requests from the engine or any Claude session: API toggles and the other whitelisted settings), applied ONCE by the phone, which then pushes its settings as before so both sides show the same; the phone's own later change wins; tests.
 - [x] TCL28d Messages from Claude to Tj: `messages.json` on `cloud-config` (any session or the engine appends: recommendations, bets placed, what shipped, alerts), `tools/tell_tj.py`, the phone's Messages screen (unread badge, push notification for high priority), ROUTINE.md says every run ends by telling Tj what matters.
-- [ ] TCL28e Docs, tests, release.
+- [x] TCL28e Docs, tests, release.
