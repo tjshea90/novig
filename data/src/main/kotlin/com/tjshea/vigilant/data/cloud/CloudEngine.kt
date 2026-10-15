@@ -54,6 +54,15 @@ class CloudEngine(
     /** At most one restart for changed settings in this long. */
     private val restartEveryMs: Long = 30_000L,
     private val sourceNames: (ScanSettings) -> List<String> = { s -> sources(s).map { it.id } },
+    /**
+     * The bid desk's candidate lines of a priced board under the phone's mirrored settings ([com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.from]); null = this engine makes none. Only called
+     * while the phone has Vigilant-priced bids on ([ScanSettings.bidsFromCloud]).
+     */
+    private val bidLines: ((ScanResult, ScanSettings, Long) -> List<com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.BidLine>)? = null,
+    /** Publishes the candidate lines. */
+    private val publishBids: suspend (CloudBids) -> Unit = {},
+    /** While a scan runs, a new candidate list goes out at most this often (a list is thousands of lines; a rule change sends one at once). */
+    private val bidsEveryMs: Long = 45_000L,
 ) {
     enum class End { TIME_UP, IDLE }
 
@@ -81,6 +90,9 @@ class CloudEngine(
     /** What the last finished scan said about itself (Novig reads, throttling, each feed's answer), a few hundred characters for the heartbeat. */
     @Volatile private var scanNote = ""
     private val progress = AtomicReference<ScanProgress?>(null)
+    @Volatile private var bidsAt = 0L
+    @Volatile private var bidsCount = 0
+    @Volatile private var bidsOn = false
     @Volatile private var lastPublished: CloudFeed? = null
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
 
@@ -138,6 +150,10 @@ class CloudEngine(
         progress.set(ScanProgress("starting"))
         val job = async { scanner.scan(scanSettings, feedSources, emptySet(), onProgress = { progress.set(it) }, onPartial = { partial.set(it) }) }
         var lastPublishedAt = 0L
+        var lastBidsAt = 0L
+        var lastResult: ScanResult? = null
+        var latest = cfg0.settings
+        var bidKey = CloudScanKey.key(cfg0.settings, CloudScanKey.Kind.BIDS)
         var lastConfigAt = t0
         var lastStatusAt = t0
         var restartReason: String? = null
@@ -153,6 +169,9 @@ class CloudEngine(
                     val feed = CloudFeed(now, cfg.rev, r.stats, rows)
                     onFeed(rows, now)
                     lastPublished = feed; lastAges = CloudCurrency.of(rows, now)
+                    lastResult = r
+                    // The bid desk's candidates ride with the list, at most every [bidsEveryMs] (before the status, so it says what was sent).
+                    if (now - lastBidsAt >= bidsEveryMs) { lastBidsAt = now; sendBids(r, cfg.rev, latest, now) }
                     problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = now - t0))
                     lastStatusAt = now
                 }
@@ -179,6 +198,10 @@ class CloudEngine(
                             cfg = cfg.copy(rev = newer.rev)
                             filterSettings = CloudScanKey.withFilters(scanSettings, newer.settings)
                             settingsPending = CloudScanKey.scanKey(newer.settings) != scanKey
+                            latest = newer.settings
+                            // A bid rule changed: the candidates are made again from what is held, at once, with no scan.
+                            val k = CloudScanKey.key(newer.settings, CloudScanKey.Kind.BIDS)
+                            if (k != bidKey) { bidKey = k; lastResult?.let { r -> lastBidsAt = now; sendBids(r, cfg.rev, latest, now) } }
                         }
                     }
                 }
@@ -220,6 +243,7 @@ class CloudEngine(
         lastScanStartedAt = t0; lastScanEndedAt = done; lastScanForRefresh = scanForRefresh
         lastPublished = feed; lastAges = CloudCurrency.of(rows, done)
         onFeed(rows, done)
+        sendBids(result, cfg.rev, latest, done)
         problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = lastScanMs))
         log("pass $passes: ${rows.size} bets listed of ${result.stats.outcomesWithFair} priced, ${lastScanMs / 1000}s" + (problem?.let { ", publish problem: $it" } ?: ""))
         false
@@ -234,8 +258,26 @@ class CloudEngine(
             scanning = scanning && !idle, scanStartedAtMs = scanStartedAt, progressStep = if (scanning) p?.step.orEmpty() else "", progressDone = if (scanning) p?.done ?: 0 else 0, progressTotal = if (scanning) p?.total ?: 0 else 0,
             ackedRefreshAtMs = handledRefresh, scanRefreshAtMs = scanForRefresh, lastScanStartedAtMs = lastScanStartedAt, lastScanEndedAtMs = lastScanEndedAt, lastScanForRefreshAtMs = lastScanForRefresh,
             novigAgeMedianS = lastAges.novigMedianS, novigAgeMaxS = lastAges.novigMaxS, fairAgeMedianS = lastAges.fairMedianS, fairAgeMaxS = lastAges.fairMaxS,
-            pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote,
+            pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote, bidsAtMs = bidsAt, bidsCount = bidsCount,
         )
+    }
+
+    /**
+     * Publishes the bid desk's candidate lines of [result] when the phone has Vigilant-priced bids on; once, an empty list when it stops (so the file does not linger). A failure is a line in the log: the
+     * Feed's list does not depend on it.
+     */
+    private suspend fun sendBids(result: ScanResult, rev: Long, settings: ScanSettings, now: Long) {
+        val make = bidLines ?: return
+        val s = forCloud(settings)
+        if (!s.bidsFromCloud) {
+            if (bidsOn) { bidsOn = false; bidsAt = 0L; bidsCount = 0; runCatching { publishBids(CloudBids(now, false, rev, emptyList())) } }
+            return
+        }
+        runCatching {
+            val lines = make(result, s, now)
+            publishBids(CloudBids(now, result.partial, rev, lines))
+            bidsOn = true; bidsAt = now; bidsCount = lines.size
+        }.onFailure { if (it is CancellationException) throw it; log("candidate lines failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
     }
 
     /** A scan's own account of itself, short: what Novig gave, whether it throttled, and what each feed said (errors included). Never a key. */
