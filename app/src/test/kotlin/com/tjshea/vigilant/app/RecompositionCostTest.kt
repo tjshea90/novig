@@ -33,7 +33,8 @@ class RecompositionCostTest {
     fun `the screen takes a scan's ticks, the meters and the Tracker's saves a few times a second`() {
         val vm = source("MainViewModel.kt")
         assertTrue(vm.contains("followThrottled(c.runner.state, SCAN_MIRROR_MS)"))
-        assertTrue(vm.contains("followThrottled(c.usage.flow, USAGE_MIRROR_MS)"))
+        // the ledger is still taken at most once a second; since 2026-10-15 the GitHub engine's usage is combined in before the throttle
+        assertTrue(vm.contains("followThrottled(kotlinx.coroutines.flow.combine(c.usage.flow, c.cloudUsage) { u, cloud -> u to cloud }, USAGE_MIRROR_MS)"))
         assertTrue(vm.contains("followThrottled(c.tracker.flow.filterNotNull(), TRACKER_MIRROR_MS)"))
     }
 }
