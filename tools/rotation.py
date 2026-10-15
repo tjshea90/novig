@@ -11,6 +11,7 @@ should have scheduled check-ins on a rotating schedule so as not to interfere wi
   register [--tag TAG]            add this account to the roster (idempotent) and print its slot
   today [--tag TAG] [--date D]    print "<slot> <time> <duty>" for this account today (America/New_York date)
   roster                          print the roster
+  cron [--tag TAG]                print the cron line this account's routine must have (the routine checks and repairs itself with it)
   checkin                         post a one-line "I ran" note on the board (every routine run does this FIRST, even when it then stops because the lease is held)
   missed                          list scheduled slots of the last 30 h whose account left no trace on the board (NO-SHOW: usage cap, no repo, dead routine) or checked in but never posted its finished-duty note (INTERRUPTED), and that nobody covered yet
   cover SLOT                      post "rotation-cover" for a missed slot after doing its duty (the first cover the whole duty, the second WATCH only), so no other account repeats it
@@ -249,6 +250,7 @@ def main(argv):
     t = sub.add_parser("today"); t.add_argument("--tag"); t.add_argument("--date")
     sub.add_parser("roster"); sub.add_parser("selftest")
     ci = sub.add_parser("checkin"); ci.add_argument("--tag")
+    cr = sub.add_parser("cron"); cr.add_argument("--tag")
     sub.add_parser("missed")
     cv = sub.add_parser("cover"); cv.add_argument("slot", type=int); cv.add_argument("--date", required=True)
     a = ap.parse_args(argv)
@@ -261,6 +263,13 @@ def main(argv):
             return checkin(my_tag(a.tag))
         if a.cmd == "missed":
             return missed()
+        if a.cmd == "cron":
+            slot = slot_of(my_tag(a.tag), read_roster())
+            if slot is None:
+                print("ROTATION  not on the roster: run  python3 -I tools/rotation.py register")
+                return 2
+            print(cron_for(slot))
+            return 0
         if a.cmd == "cover":
             return cover(a.slot, a.date)
         roster = read_roster()
