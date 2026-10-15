@@ -124,6 +124,8 @@ data class CloudStatus(
     val feedReport: List<FeedLine> = emptyList(),
     /** When that scan ended, so the dashboard says how old the per-feed answers are. */
     val feedReportAtMs: Long = 0L,
+    /** Feeds that answered nothing for [FeedWatch.LIMIT] scans in a row (TCL21f), "id (n scans in a row)"; empty = none. */
+    val feedAlerts: List<String> = emptyList(),
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
