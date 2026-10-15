@@ -263,7 +263,7 @@ class CloudEngine(
     }
 
     /**
-     * Publishes the bid desk's candidate lines of [result] when the phone has Vigilant-priced bids on; once, an empty list when it stops (so the file does not linger). A failure is a line in the log: the
+     * Publishes the bid desk's candidate lines of [result] when the phone has Vigilant-priced bids on; once, null when it stops (so the file does not linger). A failure is a line in the log: the
      * Feed's list does not depend on it.
      */
     private suspend fun sendBids(result: ScanResult, rev: Long, settings: ScanSettings, now: Long) {
