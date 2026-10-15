@@ -7611,3 +7611,8 @@ However, I like things in easy to view format. Can you put the dashboard inside 
 ```
 Tell me exactly what to do step by step to make the automatic claude sessions work and clean up anything that doesn't work
 ```
+
+## 2026-10-15T20:07:55Z
+```
+This is too much information. Run me through what to do step by step. You may wait for me every few steps. Tell me what to do simply and what screenshots to show you
+```
