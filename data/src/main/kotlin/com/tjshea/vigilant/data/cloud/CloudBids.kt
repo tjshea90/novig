@@ -207,6 +207,22 @@ class CloudBidLane(
         return fresh to b.lines.size
     }
 
+    /**
+     * What Diagnostics says about the bid desk's data on GitHub: the candidate list's age and size, how many candidates have a Novig side as new as [REFRESH_AFTER_MS], the last read and its problem.
+     * [engine]: the engine's own account of the list it published (null = no heartbeat read yet).
+     */
+    fun report(now: Long, engine: CloudStatus?): List<String> = buildList {
+        val b = bids
+        if (b == null) add("no candidate list has reached this phone yet" + (engine?.let { if (it.bidsAtMs > 0) " (the engine says it published one ${(now - it.bidsAtMs) / 1000}s ago: not fetched, or unreadable)" else " (the engine has not published one)" } ?: " (no engine heartbeat read)"))
+        else {
+            val (fresh, total) = readiness(now)
+            add("candidate list: ${b.lines.size} lines made ${(now - b.atMs) / 1000}s ago at settings rev ${b.configRev}" + (if (b.partial) " from a scan still running" else " from a finished scan") + (if (b.unreadable > 0) " · ${b.unreadable} lines unreadable" else "") + (engine?.takeIf { it.bidsBytes > 0 }?.let { " · file ${it.bidsBytes / 1024} KB" } ?: ""))
+            add("Novig sides read in the last ${REFRESH_AFTER_MS / 1000}s: $fresh of $total · last read ${if (lastReadAtMs > 0) "${(now - lastReadAtMs) / 1000}s ago, ${lastReads} markets" else "none yet"}" + (problem?.let { " · PROBLEM: $it" } ?: ""))
+            add("lines the desk can judge now: ${lines(now, MakerRules.of(com.tjshea.vigilant.data.scanner.ScanSettings()), prune = false).size} (a Novig side older than ${MakerLines.MAX_BOOK_AGE_MS / 60_000} min is no line; the fair's age is judged on this phone's clock)")
+        }
+        engine?.let { add("engine: candidate pass ${if (it.bidsAtMs > 0) "${(now - it.bidsAtMs) / 1000}s ago, ${it.bidsCount} lines" else "none published"} · heartbeat ${(now - it.heartbeatMs) / 1000}s ago") }
+    }
+
     companion object {
         /** A candidate's Novig side older than this is read again. */
         const val REFRESH_AFTER_MS = 90_000L

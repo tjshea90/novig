@@ -73,6 +73,8 @@ object Diagnostics {
         /** Which sockets are on and what they are doing, and the wallet deployment's last pass (Tj, 2026-10-14: a diagnostics file that says why a scan was slow or the wallet idle without guessing). */
         val socketReport: List<String>? = null,
         val walletReport: List<String>? = null,
+        /** The bid desk on GitHub's candidate lines (Tj, 2026-10-15): the list's age, the Novig books this phone has for it. Null unless bids are priced from GitHub. */
+        val cloudBidsReport: List<String>? = null,
         /** [com.tjshea.vigilant.data.tracker.FairCalibration]: win rate against the fair and the close, by kind and side. */
         val calibrationReport: List<String>? = null,
         /** Novig's live feed (NOVIG_API.md §26): the channel each market is on, the room, the connection's drops and 429s, the bbo fallback, the check against the book. Null with no key connected. */
@@ -255,6 +257,7 @@ object Diagnostics {
         x.socketReport?.let { lines -> o.appendLine(); o.appendLine("== SOCKETS (Settings › APIs › Sockets: on = kept open for real-time prices; off with the API on = read by request) =="); lines.forEach { o.appendLine(it) } }
         x.calibrationReport?.let { lines -> o.appendLine(); o.appendLine("== FAIR CALIBRATION (is the fair line honest? win rate vs fair and close) =="); lines.forEach { o.appendLine(it) } }
         x.walletReport?.let { lines -> o.appendLine(); o.appendLine("== WALLET DEPLOYMENT (Bids › Keep the wallet working) =="); lines.forEach { o.appendLine(it) } }
+        x.cloudBidsReport?.let { lines -> o.appendLine(); o.appendLine("== BIDS FROM GITHUB (the engine's candidate lines + this phone's Novig books) =="); lines.forEach { o.appendLine(it) } }
         x.boltReport?.let { lines -> o.appendLine(); o.appendLine("== BOLTODDS PRO (BOLTODDS_API.md) =="); lines.forEach { o.appendLine(it) } }
         x.unabatedReport?.let { lines -> o.appendLine(); o.appendLine("== UNABATED FREE (UNABATED_API.md) =="); lines.forEach { o.appendLine(it) } }
         x.op4Report?.let { lines -> o.appendLine(); o.appendLine("== ODDSPAPI FREE v4 (ODDSPAPI_API.md addendum) =="); lines.forEach { o.appendLine(it) } }
