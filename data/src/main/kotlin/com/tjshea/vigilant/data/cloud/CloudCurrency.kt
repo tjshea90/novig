@@ -69,4 +69,58 @@ object CloudText {
         }
         return View(level, headline, detail, pending)
     }
+
+    /**
+     * Whether the GitHub engine has read the phone's latest settings, said plainly (Tj, 2026-10-15: "make sure the settings are properly mirrored"). [pushedRev] and [pushedAtMs] are the newest settings the phone
+     * wrote; the engine reports the newest it has read ([CloudStatus.configRev]) and whether the scan in progress still runs under older ones ([CloudStatus.settingsPending], applied at its next scan).
+     */
+    fun settings(st: CloudStatus?, pushedRev: Long, pushedAtMs: Long, now: Long): Pair<Level, String>? {
+        if (pushedRev <= 0L) return null
+        if (st == null) return Level.INFO to "Settings sent; waiting for the engine to read them"
+        val sent = ((now - pushedAtMs) / 1000L).coerceAtLeast(0L)
+        return when {
+            st.configRev < pushedRev && sent < 45L -> Level.INFO to "Settings on their way to GitHub (sent ${dur(sent)} ago)"
+            st.configRev < pushedRev -> Level.WARN to "GitHub has not read your latest settings after ${dur(sent)} (a running engine reads them every 3 s)"
+            st.settingsPending -> Level.WARN to "GitHub applies your latest settings from its next scan (the one running began before the change)"
+            else -> Level.GOOD to "GitHub is using your current settings"
+        }
+    }
+}
+
+/**
+ * The one-glance freshness of the list on screen (Tj, 2026-10-15: "a mechanism by which I can quickly see the freshness of the odds"), worked out from the bets actually SHOWN, never from a claim: how long ago each
+ * one's Novig order book was read ([Opportunity.bookFetchedAtMs]: the phone re-reads the listed bets' Novig books every 15 s, so this is the phone's own read when it has made one) and how old the books behind each fair
+ * line are ([Opportunity.fairAsOfMs]: the oldest book price in it, as its feed last saw it). Medians say what is typical, the oldest says what to distrust.
+ */
+object CloudFreshness {
+    data class Chip(val level: CloudText.Level, val label: String, val detail: String)
+
+    private fun median(l: List<Long>) = l.sorted()[l.size / 2]
+
+    fun of(rows: List<Opportunity>, st: CloudStatus?, now: Long, why: String? = null): Chip {
+        val beat = st?.let { ((now - it.heartbeatMs) / 1000L).coerceAtLeast(0L) }
+        val listAge = st?.takeIf { it.computedAtMs > 0L }?.let { ((now - it.computedAtMs) / 1000L).coerceAtLeast(0L) }
+        val engine = when {
+            st == null -> why ?: "the engine has not answered yet"
+            st.idle -> "the engine is switched off"
+            beat!! > 120L -> "the engine has been silent for ${CloudText.dur(beat)}"
+            else -> "the engine reported ${CloudText.dur(beat)} ago"
+        } + (listAge?.let { "; its last list went out ${CloudText.dur(it)} ago" } ?: "")
+        val novig = rows.mapNotNull { it.bookFetchedAtMs }.map { ((now - it) / 1000L).coerceAtLeast(0L) }
+        val fair = rows.mapNotNull { it.fairAsOfMs }.map { ((now - it) / 1000L).coerceAtLeast(0L) }
+        val dead = st == null || st.idle || beat!! > 120L
+        if (novig.isEmpty()) return Chip(if (dead) CloudText.Level.BAD else CloudText.Level.INFO, if (dead) "GitHub: ${engine.substringBefore(';')}" else "GitHub: no bets listed", "No bet is shown, so there is no price to date. $engine.")
+        val nm = median(novig); val nx = novig.max()
+        val fm = if (fair.isEmpty()) null else median(fair)
+        val level = when {
+            dead || nx > 600L -> CloudText.Level.BAD
+            nm > 90L || nx > 300L || (fm != null && fm > 600L) -> CloudText.Level.WARN
+            else -> CloudText.Level.GOOD
+        }
+        val label = "Novig ${CloudText.dur(nm)} (oldest ${CloudText.dur(nx)})" + (fm?.let { " · fair ${CloudText.dur(it)}" } ?: "")
+        val detail = "Across the ${rows.size} bets shown: Novig prices were read a median ${CloudText.dur(nm)} ago (the oldest ${CloudText.dur(nx)}); " +
+            (fm?.let { "the oldest book price behind each fair line is a median ${CloudText.dur(it)} old (the oldest ${CloudText.dur(fair.max())}). " } ?: "") +
+            "$engine."
+        return Chip(level, label, detail)
+    }
 }
