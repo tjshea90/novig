@@ -125,6 +125,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** Every protection against bad bets and bids in one list, with a switch each and one button to turn them all on (Tj, 2026-10-14). */
     SAFEGUARDS("Safeguards", "Every protection against bad bets and bids, on or off, and one button for all", SettingsGroup.BET),
 
+    /** The GitHub engine at a glance (Tj, 2026-10-15): state, odds age, wallet, which APIs work, usage meters and trends, synced from the engine. */
+    DASHBOARD("Engine dashboard", "The GitHub engine at a glance: is it running, which APIs work, what each has left, graphs of the last scans", SettingsGroup.FIND),
+
     /** The scan on GitHub's computers, the token, and the permanent saving of bets, bids and history to GitHub (Tj, 2026-10-14). */
     CLOUD("Cloud scan", "Run the scans on GitHub's computers: the phone only sets the settings and shows the list; bets, bids and history are saved to GitHub", SettingsGroup.FIND),
 
@@ -263,6 +266,10 @@ object SettingsSummary {
                 s.liveBidHalted != null -> "Stopped"
                 s.liveBidReal -> "On: real money, ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
                 else -> "On: paper only (nothing is sent), ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
+            }
+            SettingsPage.DASHBOARD -> {
+                val h = com.tjshea.vigilant.data.cloud.DashboardModel.headline(state.cloudUi.status, System.currentTimeMillis())
+                if (!state.cloudUi.hasToken) "No GitHub token saved" else h.title + (if (h.detail.isNotBlank() && h.title != "Not connected") ": " + h.detail.take(60) else "")
             }
             SettingsPage.CLOUD -> when {
                 !state.cloudUi.hasToken -> "No GitHub token saved"
@@ -427,6 +434,7 @@ fun SettingsScreen(
             when (current) {
                 null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids)
                 SettingsPage.SCANNING -> ScanningPage(s, onUpdate)
+                SettingsPage.DASHBOARD -> DashboardPage(state, onOpenCloudSettings = { go(SettingsPage.CLOUD) })
                 SettingsPage.CLOUD -> CloudPage(state, reportActions, onUpdate)
                 SettingsPage.ALERTS -> AlertsPage(state, onUpdate)
                 SettingsPage.CNO -> CnoPage(s, onUpdate)
