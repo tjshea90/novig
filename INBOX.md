@@ -7442,3 +7442,8 @@ See if there is any way to speed up scanning. Split processing between phone and
 ```
 Is this speed too slow for pre game betting and bidding? If so, can it be sped up or optimized
 ```
+
+## 2026-10-15T03:18:48Z
+```
+Is it possible to have multiple runners or apis read in parallel? 
+```
