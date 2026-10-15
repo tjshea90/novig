@@ -56,6 +56,7 @@ object CloudDashboard {
         appendLine("## APIs: working or not, and what each has left")
         appendLine()
         appendLine("Health is from the **last finished scan** (${if (st.feedReportAtMs > 0) "${clock(st.feedReportAtMs)}, ${ago(now - st.feedReportAtMs)}" else "no report yet: this engine build is older than the page, the next job fills it in"}): leagues answered fresh+reused, Novig games matched. An API the phone has switched off, or with no key on GitHub, is never called and shows as off.")
+        if (st.feedAlerts.isNotEmpty()) { appendLine(); appendLine("**Silent feeds (answered nothing for ${FeedWatch.LIMIT}+ scans in a row):** " + st.feedAlerts.joinToString(", ")) }
         appendLine()
         appendLine("| API | Health | Leagues (fresh+reused) | Games matched | Left of allowance | Resets | Calls today | Throttled | Note |")
         appendLine("|:--|:--|--:|--:|--:|:--|--:|--:|:--|")
