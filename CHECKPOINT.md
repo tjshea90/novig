@@ -1,23 +1,24 @@
-# CHECKPOINT 3374 — read me first, then TASKS.md
+# CHECKPOINT 3375 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T21:43:39Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `a1b4d9696` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T21:44:51Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `e5fbd18d4` (this checkpoint is the commit after it)
 
 ## Just done
-filters judged on the digest: trap guard keep, others no proof; Tj's full-reign permission recorded in CLAUDE.md/ROUTINE.md
+edge floor identified as the volume limiter; rule for lowering it written (class B not met yet)
 
 ## Do this next
-check the restarted engine's first passes (send_later fires 21:46Z), tune from tradepass journal
+wait for the 21:46Z engine check; WATCH fills; lower the floor when two digests agree
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-    ?? research/auto_bet_filters_2026-10-15.md
-    ?? research/review/CHANGES.md
+     M TASKS.md
+     M research/auto_bet_filters_2026-10-15.md
 
 ## Last ten checkpoints
 ```
+  e5fbd18d4 ckpt 3374: filters judged on the digest: trap guard keep, others no proof; Tj's full-r
   6a29ad8e9 ckpt 3373: TCL26: engine re-reads listed bets before judging (fixes stale-price refusa
   474eb2e6d ckpt 3372: test_coord: board window 8 (a same-second paused note pushed the checked no
   c1d020fb9 ckpt 3371: TCL25: paused routines resume by themselves (rotation-paused note, wait-fre
@@ -27,8 +28,4 @@ check the restarted engine's first passes (send_later fires 21:46Z), tune from t
   fc4704199 ckpt 3367: one-account behaviour: Tj's message in any account takes the lease from a r
   b80a0a4b5 ckpt 3367: WATCH ok: engine live-mode, scanning, 0 orders (passed 0), route key ok
   063b8f882 ckpt 3366: lease released; routine on account 2 works (stood down correctly)
-  9c430c30c ckpt 3365: routine failure #2 recorded (classifier blocks scripts from a self-cloned r
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
