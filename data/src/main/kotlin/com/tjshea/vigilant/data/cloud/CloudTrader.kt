@@ -179,7 +179,7 @@ class CloudTrader(
         val placed = ArrayList<TradeEntry>()
         var stopped = ""
         for (o in ordered) {
-            if (placed.size >= MAX_PER_PASS) { stopped = ""; skip("pass limit ($MAX_PER_PASS) reached: the rest wait"); break }
+            if (placed.size >= MAX_PER_PASS) { skip("pass limit ($MAX_PER_PASS) reached: the rest wait"); break }
             val q = o.quote ?: continue
             val fair = o.fairProbability ?: continue
             val fee = o.market.fee ?: continue
@@ -201,7 +201,8 @@ class CloudTrader(
                 is CloudKelly.Stake.Skip -> { skip(sized.reason); if (sized.reason.contains("loss stop") || sized.reason.contains("wallet-use")) break else continue }
                 is CloudKelly.Stake.Amount -> sized
             }
-            val fill = walk(o, fair, fee, stake.dollars, rules.readEv) ?: run { skip("less than one contract at a positive edge"); null } ?: continue
+            val fill = walk(o, fair, fee, stake.dollars, rules.readEv)
+            if (fill == null) { skip("less than one contract at a positive edge"); continue }
             if (repeat != null) {
                 val held = ledger.entries.filter { open(it, now) }.map { RepeatGuard.Pos(it.marketId, it.outcomeId, it.cost, it.payout, family = RepeatGuard.family(it.event, it.startsTs, it.marketLabel, it.selection)) }
                 RepeatGuard.check(repeat, held, o.market.marketId, o.outcome.outcomeId, fill.cost, fill.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, o.market.outcomes.map { it.outcomeId }, RepeatGuard.family(o.eventName, o.event.startsTs, o.marketLabel, o.selection))
