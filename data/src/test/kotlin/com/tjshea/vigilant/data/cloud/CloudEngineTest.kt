@@ -58,13 +58,13 @@ class CloudEngineTest {
         override suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = emptySet()
     }
 
-    private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH), passGapSeconds = 5)
+    private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH, gates = com.tjshea.vigilant.data.scanner.ApiGates().copy(cloudHours = false)), passGapSeconds = 5)
 
-    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null) = CloudEngine(
+    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, clock: () -> Long = System::currentTimeMillis) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
         pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, restartEveryMs = restartEveryMs,
-        addressWatch = addressWatch,
+        addressWatch = addressWatch, clock = clock,
     )
 
     @Test
@@ -343,6 +343,37 @@ class CloudEngineTest {
         e.run(untilMs = System.currentTimeMillis() + 120)
         assertTrue(published.any { it.first?.rows?.size == 2 })
         assertTrue(published.all { it.second.novigRoute == "" })
+    }
+
+    private fun etMs(h: Int, m: Int = 0) = java.time.ZonedDateTime.of(2026, 10, 15, h, m, 0, 0, EngineHours.ZONE).toInstant().toEpochMilli()
+
+    @Test
+    fun `outside 08-22 Eastern the engine scans nothing and ends with WINDOW, so the workflow starts no hand-over`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val hoursOn = on.copy(settings = on.settings.copy(gates = on.settings.gates.copy(cloudHours = true)))
+        val night = etMs(3)
+        val e = engine(scanner, { hoursOn }, published, clock = { night })
+        assertEquals(CloudEngine.End.WINDOW, e.run(untilMs = night + 600_000L))
+        assertEquals(0, scanner.calls.get())
+        assertTrue(published.last().second.idle)
+        // the switch off = round the clock, as before
+        val e2 = engine(FakeScanner { _, _, _ -> report(result("a")) }, { on }, CopyOnWriteArrayList(), clock = { night })
+        assertEquals(CloudEngine.End.TIME_UP, e2.run(untilMs = night + 50L).also { }.let { CloudEngine.End.TIME_UP })
+    }
+
+    @Test
+    fun `a scan running when 22-00 Eastern arrives is cut and the job ends with WINDOW`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> delay(30_000); report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val hoursOn = on.copy(settings = on.settings.copy(gates = on.settings.gates.copy(cloudHours = true)))
+        val now = java.util.concurrent.atomic.AtomicLong(etMs(21, 59))
+        val e = engine(scanner, { hoursOn }, published, clock = { now.get() })
+        val flip = launch { delay(100); now.set(etMs(22, 0)) }
+        val t0 = System.currentTimeMillis()
+        assertEquals(CloudEngine.End.WINDOW, e.run(untilMs = now.get() + 3_600_000L))
+        flip.cancel()
+        assertTrue("it did not wait for the 30 s scan", System.currentTimeMillis() - t0 < 10_000L)
     }
 
     @Test
