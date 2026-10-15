@@ -1565,7 +1565,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     }
     Hint(
         if (confirmTrade) "This REVOKES the Vigilant subaccount's current trading key at Novig (up to a minute without betting), makes a new one this phone also uses, and sends it to GitHub. It can place orders on the Vigilant subaccount; it can never move money (your management key stays on this phone). Do it with no bet in flight."
-        else if (u.tradeKeyOnGitHub) "The subaccount's trading key is on GitHub for the engine (made ${Format.age(u.tradeKeyMadeAtMs, keyNow)} ago). The engine orders with it only when Cloud trading is Paper or Live. Remove it to take that away."
+        else if (u.tradeKeyOnGitHub) "The subaccount's trading key is on GitHub for the engine (made ${Format.age(u.tradeKeyMadeAtMs, keyNow)}). The engine orders with it only when Cloud trading is Paper or Live. Remove it to take that away."
         else "Gives the engine the ability to place orders by itself. Cloud trading stays Off until you switch it on; nothing is ordered by this button.",
     )
     u.keysNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudKeysNote")) }
