@@ -59,18 +59,18 @@ fun main(args: Array<String>) = runBlocking {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val sources = CloudSources(http, json, usage, scope, File(out, "state").apply { mkdirs() }, CloudKeys::fromEnv)
     val scanner = Scanner(novig)
-    // The engine's own Novig key (Tj, 2026-10-15): a read-only key sent as two secrets. Without them the engine reads the public routes as before; with them it reads through the signed route and keeps the key's websocket.
-    val novigKeyId = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_ID)
-    val novigKeyPem = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_PEM)
-    val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = { println(it) }) else null
     val edge = EdgeLog(DayJournal(File(out, "cloud"), "edge", EdgeRow.serializer()) { it.atMs })
     val git = Git(token)
     val log = Log(File(out, "cloud-engine.log"))
+    // The engine's own Novig key (Tj, 2026-10-15): a read-only key sent as two secrets. Without them the engine reads the public routes as before; with them it reads through the signed route and keeps the key's websocket.
+    val novigKeyId = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_ID)
+    val novigKeyPem = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_PEM)
+    val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = log::invoke) else null
     val publisher = Publisher(pubDir, repo, token, git, log::tail)
     val config = ConfigReader(git, cfgDir)
     val started = System.currentTimeMillis()
     val until = started + minutes * 60_000L
-    log("cloud engine starting: $minutes min, run $runId, keys present: " + CloudKeys.ALL.filter { CloudKeys.fromEnv(it).isNotEmpty() }.joinToString(",").ifBlank { "none (public feeds only)" })
+    log("cloud engine starting: $minutes min, run $runId, keys present: " + CloudKeys.ALL.filter { CloudKeys.fromEnv(it).isNotEmpty() }.joinToString(",").ifBlank { "none (public feeds only)" } + " · Novig read-only key: " + (if (novigKeyed != null) "present" else "none (public routes)"))
 
     novigKeyed?.problem?.let { log("Novig key: $it") }
     // The APIs' measured ranking survives the handover: the previous job's file is read back before the first scan ([CloudRanking]), and this job writes its own with every push.
