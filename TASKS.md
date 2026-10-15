@@ -5317,3 +5317,10 @@ Tj: "Make it so I can chat with any of the Claude accounts in the repo and I can
 - [x] TCL25b A paused routine resumes itself: acquire posts `rotation-paused`, `coord.py wait-free` (background poll), ROUTINE.md "park, wait cheaply, resume", `rotation.py missed` lists PAUSED with no grace. Tests: test_coord.sh, `rotation.py selftest`.
 - [x] TCL25c Roster matches the claude.ai routines (07:20 tjshea90@outlook = acct-7542bf, 13:20 tjshea90@gmail = acct-27a37e, 19:20 mirageticket@outlook = acct-5d1e2d).
 - [ ] TCL25d WATCH: the first time Tj interrupts a live routine, confirm it parks, waits and resumes (board notes rotation-paused / rotation-resumed).
+
+## TCL26: does the GitHub engine auto bet? profit with a decent volume of fills (Tj, 2026-10-15)
+Tj: "any Claude session on any account is permitted to update and diagnose and change the code ... I want the app to make profit ... balance it with volume of fills ... Right now I haven't seen the GitHub engine do any auto bets at all, does it work?"
+- [x] TCL26a Found: 27 of 31 listed bets refused "no Novig price read in the last 3 minutes" (a scan takes 5-6 min, the books were read early) and 1 passed with no order and no reason. Fixed: `CloudEngine.freshForTrading` re-reads the listed bets' books (<= 40) before judging, bets that lose their edge drop out; the silent skips now say why. Test: `CloudEngineTest` (re-read), `CloudTraderTest`.
+- [x] TCL26b Volume journal: `tradepass-<day>.jsonl` (every trading pass: looked/passed/ordered/spent and the held-back reasons) archived with the engine's journals. Test: `CloudTraderTest`.
+- [x] TCL26c Standing permission and the profit+volume goal written into CLAUDE.md.
+- [ ] TCL26d WATCH the first live fills after the fix: orders/day, which rules still hold most bets back (trap guard >6 h, kinds, books agreeing), fill rate of IOC orders; tune with data (class B gates).

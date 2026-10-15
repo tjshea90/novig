@@ -212,4 +212,14 @@ class CloudTraderTest {
         trader(port).windowEnded()
         assertEquals(1, port.cancelled)
     }
+
+    @Test
+    fun `a pass is journaled with its counts and the reasons bets were held back, so volume can be tuned from data`() {
+        val r = CloudTrader.Report(com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE, looked = 31, passed = 1, skipped = mapOf("no Novig price read in the last 3 minutes" to 27), cash = 116.0)
+        val row = r.row(1234L)
+        org.junit.Assert.assertEquals(listOf("live", 31, 1, 0), listOf(row.mode, row.looked, row.passed, row.ordered))
+        org.junit.Assert.assertEquals(27, row.skipped.getValue("no Novig price read in the last 3 minutes"))
+        val text = kotlinx.serialization.json.Json.encodeToString(CloudTrader.PassRow.serializer(), row)
+        org.junit.Assert.assertEquals(row, kotlinx.serialization.json.Json.decodeFromString(CloudTrader.PassRow.serializer(), text))
+    }
 }
