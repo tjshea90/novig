@@ -256,6 +256,7 @@ data class UiState(
     /** The dashboard's graph points (one per scan the GitHub engine finished). */
     val cloudHistory: List<com.tjshea.vigilant.data.cloud.DashboardModel.Point> = emptyList(),
     val claudeInbox: InboxState = InboxState(),
+    val chatWho: String = "",
     val kalshiKeyOk: Boolean? = null,
     val kalshiKeyBusy: Boolean = false,
     /** BoltOdds Pro: the Test key's answer, whether it passed, and that a test is running (it listens on a socket for about 15 s). */
@@ -538,6 +539,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Cloud scan: the link's state (token, engine line, list age, last save) for Settings.
         viewModelScope.launch { c.cloud.ui.collect { u -> _state.update { it.copy(cloudUi = u) } } }
         viewModelScope.launch { c.cloud.history.collect { h -> _state.update { it.copy(cloudHistory = h) } } }
+        viewModelScope.launch { c.cloud.inbox.who.collect { w -> _state.update { it.copy(chatWho = w) } } }
         viewModelScope.launch { c.cloud.inbox.state.collect { i -> _state.update { it.copy(claudeInbox = i) } } }
     }
 
@@ -1016,6 +1018,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * One scan: Novig's board and prices plus fair odds from every enabled source. It runs in the
      * app's runner under a foreground service, so it keeps going if Tj switches apps.
      */
+    fun setChatOpen(open: Boolean) { c.cloud.inbox.chatOpen = open }
+
+    /** Sends a chat message to whichever Claude session is active; returns why not, or null. */
+    suspend fun sendChat(text: String): String? = withContext(Dispatchers.IO) { c.cloud.inbox.sendChat(text) }
+
     fun markClaudeRead() { viewModelScope.launch(Dispatchers.IO) { c.cloud.inbox.markAllRead() } }
 
     fun scan(resume: Boolean = false) {

@@ -876,6 +876,8 @@ private fun VigilantRoot(
                         onCopied = vm::reportCopied,
                         onShare = vm::shareDiagnostics,
                         markClaudeRead = vm::markClaudeRead,
+                        setChatOpen = vm::setChatOpen,
+                        sendChat = vm::sendChat,
                         onShareStudy = vm::shareScanStudy,
                         onResetDiagnostics = vm::resetDiagnostics,
                         onClearStudy = vm::clearScanStudy,

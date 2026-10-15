@@ -128,6 +128,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The GitHub engine at a glance (Tj, 2026-10-15): state, odds age, wallet, which APIs work, usage meters and trends, synced from the engine. */
     DASHBOARD("Engine dashboard", "The GitHub engine at a glance: is it running, which APIs work, what each has left, graphs of the last scans", SettingsGroup.FIND),
 
+    /** Chat with whichever Claude session is working, through the repo (TCL29, Tj 2026-10-15). */
+    CHAT("Chat with Claude", "Talk to the Claude session that is working on the app right now; it reads your message within about a minute", SettingsGroup.FIND),
+
     /** Everything Claude or the engine wants Tj to know: recommendations, bets placed, settings changed from GitHub (TCL28). */
     MESSAGES("Messages from Claude", "Recommendations, bets placed and anything Claude or the engine wants you to know", SettingsGroup.FIND),
 
@@ -270,6 +273,7 @@ object SettingsSummary {
                 s.liveBidReal -> "On: real money, ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
                 else -> "On: paper only (nothing is sent), ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
             }
+            SettingsPage.CHAT -> state.chatWho.ifBlank { "Open it to see who is answering" }.take(70)
             SettingsPage.MESSAGES -> state.claudeInbox.unread.let { if (it > 0) "$it unread" else "No new messages" }
             SettingsPage.DASHBOARD -> {
                 val h = com.tjshea.vigilant.data.cloud.DashboardModel.headline(state.cloudUi.status, System.currentTimeMillis())
@@ -439,6 +443,7 @@ fun SettingsScreen(
                 null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids)
                 SettingsPage.SCANNING -> ScanningPage(s, onUpdate)
                 SettingsPage.DASHBOARD -> DashboardPage(state, onOpenCloudSettings = { go(SettingsPage.CLOUD) })
+                SettingsPage.CHAT -> ChatPage(state.claudeInbox.chat, state.chatWho, reportActions.sendChat, reportActions.setChatOpen)
                 SettingsPage.MESSAGES -> MessagesPage(state.claudeInbox, onMarkRead = reportActions.markClaudeRead, onOpen = { go(SettingsPage.valueOf(it)) })
                 SettingsPage.CLOUD -> CloudPage(state, reportActions, onUpdate)
                 SettingsPage.ALERTS -> AlertsPage(state, onUpdate)

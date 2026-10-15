@@ -38,6 +38,8 @@ data class ReportActions(
     val onClearStudy: () -> Unit = {},
     /** Settings › Messages from Claude: mark everything read. */
     val markClaudeRead: () -> Unit = {},
+    val setChatOpen: (Boolean) -> Unit = {},
+    val sendChat: suspend (String) -> String? = { null },
     /** Make the scan study's file and open the share sheet (Tj, 2026-10-03), and read the line that says what's logged when the page opens. */
     val onShareStudy: () -> Unit = {},
     val onStudyShown: () -> Unit = {},
