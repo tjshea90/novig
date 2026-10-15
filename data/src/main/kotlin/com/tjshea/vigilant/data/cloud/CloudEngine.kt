@@ -86,6 +86,14 @@ class CloudEngine(
     private val walletProbe: (suspend (ScanSettings) -> Double?)? = null,
     private val walletEveryMs: Long = WALLET_EVERY_MS,
     private val walletRetryMs: Long = WALLET_RETRY_MS,
+    /** Rests silent APIs to save usage and asks the phone to turn a dead one off (TCL28b, [ApiGovernor]). */
+    private val governor: ApiGovernor = ApiGovernor(),
+    /** The engine's usage ledger and the keys it holds per meter, for [ApiAdvisor]. */
+    private val usageBook: () -> com.tjshea.vigilant.data.keys.UsageBook = { com.tjshea.vigilant.data.keys.UsageBook() },
+    private val keysOf: (com.tjshea.vigilant.data.keys.QuotaPolicy) -> List<String> = { emptyList() },
+    /** Where a settings request for the phone goes ([CloudOverrides]) and where a message for Tj goes ([CloudMessages]); a failure is a line in the log. */
+    private val overrideSink: suspend (CloudOverrides.Request) -> Unit = {},
+    private val messageSink: suspend (CloudMessages.Message) -> Unit = {},
 ) {
     /** What the engine's trading says about itself in the heartbeat. */
     data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null)
@@ -116,6 +124,8 @@ class CloudEngine(
     @Volatile private var settingsPending = false
     /** What the last finished scan said about itself (Novig reads, throttling, each feed's answer), a few hundred characters for the heartbeat. */
     @Volatile private var scanNote = ""
+    @Volatile private var advice: List<ApiAdvisor.Advice> = emptyList()
+    private val announced = HashMap<String, String>()
     @Volatile private var feedLines: List<FeedLine> = emptyList()
     private val feedWatch = FeedWatch()
     @Volatile private var feedAlerts: List<String> = emptyList()
@@ -223,7 +233,7 @@ class CloudEngine(
         val t0 = clock()
         var cfg = cfg0
         // The settings the scan READS under stay as they were when it began; the list is filtered under the newest ones (a raised minimum edge shows at once, no scan is thrown away for it).
-        val scanSettings = forCloud(cfg0.settings)
+        val scanSettings = governor.apply(forCloud(cfg0.settings), clock())
         runCatching { prepare(scanSettings) }.onFailure { log("could not prepare the scan's connections: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
         val fetchKey = CloudScanKey.fetchKey(cfg0.settings)
         val scanKey = CloudScanKey.scanKey(cfg0.settings)
@@ -338,6 +348,7 @@ class CloudEngine(
         feedLines = report.sources.map { FeedLine(it.id, it.name, it.fetched, it.reused, it.matched, it.standingBy, it.skipped, it.error?.take(120), it.heldBack?.take(120)) }
         feedLinesAt = clock()
         feedAlerts = feedWatch.observe(feedLines).also { if (it != feedAlerts && it.isNotEmpty()) log("silent feeds: " + it.joinToString(", ")) }
+        govern(latest, feedLinesAt)
         val result = report.result
         if (result == null) {
             problem = report.errors.firstOrNull()?.take(160) ?: "the scan returned nothing"
@@ -377,6 +388,8 @@ class CloudEngine(
             tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,
             feedReport = feedLines, feedReportAtMs = feedLinesAt, feedAlerts = feedAlerts,
+            advice = advice, governorOff = governor.askedOff().sorted(),
+            resting = governor.resting(clock()).map { r -> "${ApiToggles.name(r.id)} until ${java.time.Instant.ofEpochMilli(r.untilMs).atZone(java.time.ZoneOffset.UTC).toLocalTime().withSecond(0).withNano(0)} UTC: ${r.reason}" },
         )
     }
 
@@ -423,6 +436,39 @@ class CloudEngine(
         val out = rows.mapNotNull { r -> if (r.key in staleKeys) fresh[r.key] else r }
         log("trading: re-read ${ids.size} books before judging: ${out.count { it.key in staleKeys }} bets still +EV, ${stale.size - out.count { it.key in staleKeys }} no longer")
         return out
+    }
+
+    /** Says something to Tj in the phone's Messages (words only: nothing that looks like a key goes out). */
+    private suspend fun say(m: CloudMessages.Message) {
+        if (CloudMessages.looksSecret(m.title + " " + m.body)) return
+        runCatching { messageSink(m) }.onFailure { if (it is CancellationException) throw it; log("message to Tj not sent: ${it.javaClass.simpleName}") }
+    }
+
+    /**
+     * After each finished scan (TCL28): the governor looks at what each API answered and rests or switches off one that is silent; the advisor works out what Tj should refill, buy, fix or switch off, and
+     * anything new is said in the Messages once a day. [phone] is the phone's latest settings (what is switched on there), never the engine's resting copy.
+     */
+    private suspend fun govern(phone: ScanSettings, now: Long) {
+        val day = java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneOffset.UTC).toLocalDate().toString()
+        for (e in governor.observe(feedLines, phone, now)) when (e) {
+            is ApiGovernor.Event.Rested -> {
+                log("API governor: resting ${ApiToggles.name(e.id)} for ${(e.untilMs - now) / 60_000L} min (silent, strike ${e.strikes})")
+                say(CloudMessages.Message("gov-rest-${e.id}-$now", now, "engine", "info", "Resting ${ApiToggles.name(e.id)} to save usage", "It answered nothing for ${ApiGovernor.LIMIT} scans in a row, so the engine scans without it for ${(e.untilMs - now) / 3_600_000L.coerceAtLeast(1)} h, then asks it once more (strike ${e.strikes} of ${ApiGovernor.REST_MS.size}).", 0, null))
+            }
+            is ApiGovernor.Event.Resumed -> log("API governor: asking ${ApiToggles.name(e.id)} again")
+            is ApiGovernor.Event.TurnedOff -> {
+                log("API governor: asking the phone to turn ${ApiToggles.name(e.id)} off (silent after every rest)")
+                runCatching { overrideSink(CloudOverrides.Request("gov-off-${e.id}-$now", now, "engine", "silent after every rest", mapOf(e.id to false))) }.onFailure { if (it is CancellationException) throw it; log("override not sent: ${it.javaClass.simpleName}") }
+                say(CloudMessages.Message("gov-off-${e.id}-$now", now, "engine", "alert", "Switched ${ApiToggles.name(e.id)} off", "It stayed silent after three rests, so the engine asked the phone to turn it off (it was costing requests for nothing). Fix its key or plan, then switch it back on in Settings › APIs.", 1, "APIS"))
+            }
+        }
+        advice = ApiAdvisor.advise(usageBook(), feedLines, feedAlerts, phone, keysOf, now)
+        for (a in advice) {
+            if (announced[a.id] == day) continue
+            announced[a.id] = day
+            say(CloudMessages.Message("adv-${a.id}-$day", now, "engine", "recommendation", a.title, a.body, if (a.severity >= 2) 1 else 0, "APIS"))
+        }
+        announced.keys.retainAll(advice.map { it.id }.toSet())
     }
 
     /** Hands the published list to the engine's trading. It only ever runs on the engine's own time inside the scan loop; a failure is a line in the log. */
