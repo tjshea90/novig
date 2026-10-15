@@ -1,13 +1,13 @@
-# CHECKPOINT 3302 — read me first, then TASKS.md
+# CHECKPOINT 3303 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T01:39:20Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-4dcbaa5f-skgw6q` · **builds on:** `4b465a371` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T01:43:41Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-4dcbaa5f-skgw6q` · **builds on:** `e5d9c8a4d` (this checkpoint is the commit after it)
 
 ## Just done
-Reviewed interrupted TCL12 work (compiles: BidCandidates, CloudBids codec+lane, CloudClient.fetchBids, engine sendBids, phone wiring in CloudLink/MakerRunner)
+TCL12: CloudMain wiring (bidLines+publishBids, injuries via CloudSources), Publisher.stageBids/bids.json.gz, CloudBidsTest (9 tests incl. decisions-from-candidates == decisions-from-full-scan)
 
 ## Do this next
-TCL12b/e: wire CloudMain (bidLines+publishBids, injuries from CloudSources, Publisher writes bids.json.gz), then tests: BidCandidatesTest equivalence, CloudBids codec, CloudBidLane, CloudEngine bids; then Diagnostics, docs, full tests, ship
+TCL12: CloudEngineTest for bids (publish only when bidsFromCloud, null on stop, republish on bid-rule change), CloudClient fetchBids test, Diagnostics lines, CLAUDE.md/doc updates, full tests, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ TCL12b/e: wire CloudMain (bidLines+publishBids, injuries from CloudSources, Publ
 
 ## Last ten checkpoints
 ```
+  44ad74831 ckpt 3302: Reviewed interrupted TCL12 work (compiles: BidCandidates, CloudBids codec+l
   08c014b0e ckpt 3301: TCL12 written: bid desk data on GitHub (design in research/cloud_bids_2026-
   9b118fe1b ckpt 3300: v0.102.0 released and recorded; engine restarted on the new code (gate+engi
   dc63ba210 ckpt 3299: pre-release: v0.102.0: cloud review: bids keep the phone scanning (the clou
@@ -25,5 +26,5 @@ TCL12b/e: wire CloudMain (bidLines+publishBids, injuries from CloudSources, Publ
   e4cb95841 ckpt 3295: v0.101.0 released and recorded; engine restarted on the new engine code
 ```
 
-(12 automatic checkpoint(s) since the last deliberate one — the
+(9 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
