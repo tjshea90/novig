@@ -87,6 +87,6 @@ class DashboardModelTest {
         assertEquals(DashboardModel.MAX_POINTS, long.size)
         assertEquals(b, DashboardModel.decode(DashboardModel.encode(b)))
         assertTrue(DashboardModel.decode("not json").isEmpty())
-        assertSame("a status with no finished scan adds nothing", emptyList<DashboardModel.Point>(), DashboardModel.record(emptyList(), CloudStatus()).let { emptyList<DashboardModel.Point>() })
+        assertTrue("a status with no finished scan adds nothing", DashboardModel.record(emptyList(), CloudStatus()).isEmpty())
     }
 }

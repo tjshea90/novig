@@ -74,6 +74,18 @@ class CloudLink(private val c: AppContainer) {
     private val _ui = MutableStateFlow(Ui())
     val ui: StateFlow<Ui> = _ui.asStateFlow()
 
+    /** The dashboard's graphs (TCL24b): one point per scan the engine finished, kept on the phone (a day's worth) so the lines are there when the screen opens. */
+    private val historyFile = File(c.app.filesDir, "cloud_history.json")
+    private val _history = MutableStateFlow(runCatching { com.tjshea.vigilant.data.cloud.DashboardModel.decode(historyFile.readText()) }.getOrDefault(emptyList()))
+    val history: StateFlow<List<com.tjshea.vigilant.data.cloud.DashboardModel.Point>> = _history.asStateFlow()
+    private fun recordHistory(st: com.tjshea.vigilant.data.cloud.CloudStatus) {
+        val next = com.tjshea.vigilant.data.cloud.DashboardModel.record(_history.value, st)
+        if (next !== _history.value) {
+            _history.value = next
+            runCatching { historyFile.writeText(com.tjshea.vigilant.data.cloud.DashboardModel.encode(next)) }
+        }
+    }
+
     private val store = JsonFileStore(File(c.app.filesDir, "cloud_token.json"), CloudToken.serializer(), { CloudToken() }, c.json)
     @Volatile private var tokenPlain: String? = null
     private val client = CloudClient(c.http, { token() })
@@ -169,6 +181,7 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.Fresh -> {
                         etag = p.etag
                         latest.status = p.value
+                        recordHistory(p.value)
                         latest.why = null
                         if (p.value.computedAtMs > 0L && p.value.computedAtMs != feedFetchedFor) fetch(p.value.computedAtMs)
                         if (s.bidsFromCloud && p.value.bidsAtMs > 0L && p.value.bidsAtMs != bidsFetchedFor) fetchBids()

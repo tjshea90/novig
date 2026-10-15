@@ -253,6 +253,8 @@ data class UiState(
     val kalshiKeyNote: String? = null,
     /** Cloud scan (Settings › Cloud scan): the GitHub link's token, the engine's state and what was saved to GitHub last. */
     val cloudUi: CloudLink.Ui = CloudLink.Ui(),
+    /** The dashboard's graph points (one per scan the GitHub engine finished). */
+    val cloudHistory: List<com.tjshea.vigilant.data.cloud.DashboardModel.Point> = emptyList(),
     val kalshiKeyOk: Boolean? = null,
     val kalshiKeyBusy: Boolean = false,
     /** BoltOdds Pro: the Test key's answer, whether it passed, and that a test is running (it listens on a socket for about 15 s). */
@@ -534,6 +536,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         // Cloud scan: the link's state (token, engine line, list age, last save) for Settings.
         viewModelScope.launch { c.cloud.ui.collect { u -> _state.update { it.copy(cloudUi = u) } } }
+        viewModelScope.launch { c.cloud.history.collect { h -> _state.update { it.copy(cloudHistory = h) } } }
     }
 
     init {
