@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.cloud
 
+import com.tjshea.vigilant.data.cloud.AddressWatch
 import com.tjshea.vigilant.data.cloud.CloudBids
 import com.tjshea.vigilant.data.cloud.CloudConfig
 import com.tjshea.vigilant.data.cloud.CloudEngine
@@ -98,12 +99,16 @@ fun main(args: Array<String>) = runBlocking {
             delay(4_000L)
         }
     }
+    // Novig refusing THIS runner's address ends the job early so the workflow draws another runner (AddressWatch, Tj 2026-10-15); the streak is carried from job to job in the status file.
+    val prevStatus = runCatching { PreviousFeed.read(git, cfgDir, "status.json") }.getOrNull()?.let { CloudStatus.parse(it) }
+    val addressWatch = novigKeyed?.let { nk -> AddressWatch(started, prevStatus?.addressHandovers ?: 0, prevStatus?.addressHandoverAtMs ?: 0L) { now -> nk.addressRefused(now) } }
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
         prepare = { s -> novigKeyed?.configure(s) },
         novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },
+        addressWatch = addressWatch,
         bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },

@@ -125,7 +125,11 @@ class CloudEngine(
             offSince = 0L
             val restarted = scanOnce(cfg, startedAtMs, untilMs)
             lastBeat = clock()
-            if (addressEnd) return End.ADDRESS
+            if (addressEnd) {
+                // the last word goes out before the job ends: the phone shows why, and the next job reads the streak from it
+                problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = false))
+                return End.ADDRESS
+            }
             // A scan cut short by the phone's word (a refresh, new settings) starts again at once; one that ran to its end waits the gap.
             if (!restarted) pause((cfg.passGapSeconds.coerceIn(5, 600) * 1000L))
         }
@@ -226,7 +230,7 @@ class CloudEngine(
             }
         }
         if (restartReason != null) {
-            log("scan cut short ($restartReason) after ${(clock() - t0) / 1000}s: starting over")
+            log("scan cut short ($restartReason) after ${(clock() - t0) / 1000}s: " + if (addressEnd) "this job ends" else "starting over")
             if (restartReason != "switched off") lastRestartAt = clock()
             scanning = false
             return@supervisorScope restartReason != "switched off"
