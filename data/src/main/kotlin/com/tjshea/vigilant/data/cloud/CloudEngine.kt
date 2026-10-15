@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference
  *  3. **Off means off.** `on = false` publishes an idle heartbeat and calls no API; after [idleExitMs] of it the job ends (nothing spends a minute while the phone is asleep).
  *  4. **Live games are never here.** The cloud list is pregame: the 5-second live lane needs the phone's own sockets, and a hop through GitHub is slower than five seconds.
  *
- * Nothing in here places an order or holds a trading key.
+ * Nothing in here places an order or holds a trading key: the engine's trading ([CloudTrader], TCL20d) is handed in through [trade] and lives in the JVM program.
  */
 class CloudEngine(
     private val scanner: OddsScanner,

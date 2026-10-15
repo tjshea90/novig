@@ -50,7 +50,7 @@ import java.time.Instant
  *   --cfg DIR       a git work tree of the repository, to read the `cloud-config` branch with (default `.`)
  *
  * Environment: the API keys as repository secrets ([CloudKeys.ALL], optional, each only used when its API is switched on in the phone's settings), `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_RUN_ID`.
- * It **places no order**: Novig's public client only.
+ * It places no order unless the phone's trading switch is LIVE and the Vigilant subaccount's trading key was sent (`NOVIG_TRADE_KEY_*`, [CloudNovigPort]); PAPER only records what it would have ordered. Never a management key.
  */
 fun main(args: Array<String>) = runBlocking {
     fun v(name: String) = args.indexOf(name).takeIf { it >= 0 }?.let { args.getOrNull(it + 1) }
