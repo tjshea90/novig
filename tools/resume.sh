@@ -182,6 +182,10 @@ PYLAB
       timeout 45 python3 -I tools/coord.py status --acquire 2>/dev/null | head -8
     fi
 
+    # CHAT (TCL29): Tj chats from the phone app; the repo is the channel. One line so every session starts the zero-token watcher.
+    echo "  CHAT  Tj chats in the app: start Monitor(persistent) 'bash tools/chat_watch.sh'; answer: python3 tools/tell_tj.py chat-reply <id> \"...\""
+    [ -f research/coordination/away.json ] && echo "  AWAY  $(tr -d '\n ' < research/coordination/away.json) (research/coordination/away.json: those slots are covered at once)"
+
     # WAS THE LAST SESSION CUT OFF MID-CHANGE?
     # This is the question CHECKPOINT.md cannot answer about itself. The
     # autosave hook commits after every edit, so a session killed by a usage

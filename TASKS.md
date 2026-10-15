@@ -5336,3 +5336,12 @@ Tj: "Make the GitHub engine able to turn on and off apis as needed or to save us
 - [x] TCL28c Two-way settings: `overrides.json` on `cloud-config` (requests from the engine or any Claude session: API toggles and the other whitelisted settings), applied ONCE by the phone, which then pushes its settings as before so both sides show the same; the phone's own later change wins; tests.
 - [x] TCL28d Messages from Claude to Tj: `messages.json` on `cloud-config` (any session or the engine appends: recommendations, bets placed, what shipped, alerts), `tools/tell_tj.py`, the phone's Messages screen (unread badge, push notification for high priority), ROUTINE.md says every run ends by telling Tj what matters.
 - [x] TCL28e Docs, tests, release.
+
+
+## TCL29: chat with Claude inside the app, through the repo; away accounts (Tj, 2026-10-15)
+Tj: "Chat via the repo, but make a rule that each Claude session actively look for new messages from me in the repo the most efficient way ... little lag" and "This Claude account will run out of weekly usage very soon and not reset until tomorrow, Friday, at 10pm Eastern time. Make sure the other Claude sessions know and plan accordingly".
+- [x] TCL29a `CloudChat` + `CloudChatTest`; `tools/chat_watch.sh`, `tell_tj.py chat-reply` (selftest), resume.sh CHAT/AWAY lines, CLAUDE.md rule.
+- [x] TCL29b away.json + `rotation.py missed` AWAY state (selftest), board note, ROTATION.md.
+- [x] TCL29c phone: `CloudInbox` chat poll/send/lease line, `ChatPage` (Settings › Chat with Claude), compiles.
+- [ ] TCL29d Run `bash tools/test.sh` (app + data), fix any red (SettingsPagesTest list already has CHAT), `bash ship.sh`, release v0.111.0 (code 291), record-release, tell Tj.
+- [ ] TCL29e Claude usage meters: NOT possible from a phone (no API exposes subscription usage); say so. Optional later: each session posts a rough usage note on the board; the app shows it.
