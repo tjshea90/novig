@@ -1,13 +1,13 @@
-# CHECKPOINT 3324 — read me first, then TASKS.md
+# CHECKPOINT 3325 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T03:58:58Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-4dcbaa5f-skgw6q` · **builds on:** `753e1222d` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T03:59:18Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-4dcbaa5f-skgw6q` · **builds on:** `dbdb32f50` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.106.1: the GitHub engine's hot refresh no longer starves the scan on a slow route (its Novig re-reads are sized to a quarter of the route's measured speed), and the Feed's freshness chip tells the games within 12 hours apart from the far ones (versionCode 285, v0.106.1)
+v0.106.1 shipped (3690 tests green), release.yml triggered, engine run 38673681637 cancelled and cloud-scan.yml dispatched on main so the engine runs HotBudget (a code update; the new runner address is incidental)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.106.1), then run: bash tools/record-release.sh v0.106.1 285 "v0.106.1: the GitHub engine's hot refresh no longer starves the scan on a slow route (its Novig re-reads are sized to a quarter of the route's measured speed), and the Feed's freshness chip tells the games within 12 hours apart from the far ones"
+Confirm v0.106.1 release (get_release_by_tag) then bash tools/record-release.sh v0.106.1 285 with the ship note; read st.sh after ~15 min for the new engine: base Novig prices read vs hot re-reads per pass, novigRoute; tell Tj
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  dbdb32f50 ckpt 3324: pre-release: v0.106.1: the GitHub engine's hot refresh no longer starves th
   753e1222d ckpt 3323: TCL16d: HotBudget (hot re-reads sized to a quarter of the route's measured 
   c859d2e58 ckpt 3322: TCL17: answered 'multiple runners or APIs in parallel?' (research note + fi
   5ab2e2118 ckpt 3321: v0.106.0 released and recorded; new engine run hit RESTRICTED_NETWORK_REGIO
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   26f23ed9d ckpt 3317: TCL16a: hot refresh in the scanner (fair feeds + likeliest Novig books of g
   03246fa10 ckpt 3316: v0.105.0 recorded; engine scan note carries timing; TCL16 written from live
   079c76aa5 ckpt 3315: pre-release: v0.105.0: API usage meters stay accurate with the scan on GitH
-  14168bece ckpt 3314: pre-ship: v0.105.0: API usage meters stay accurate with the scan on GitHub:
 ```
