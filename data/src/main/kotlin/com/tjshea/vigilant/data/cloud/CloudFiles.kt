@@ -108,6 +108,11 @@ data class CloudStatus(
     /** The order the engine asks its APIs in, best first, with what each was measured to deliver (p90 age of its quotes by the books' own stamps, distance from Pinnacle): [com.tjshea.vigilant.data.scanner.SourceScore]. Empty before the first measurement. */
     val ranking: String = "",
     val bidsBytes: Int = 0,
+    /** The engine's own trading (TCL20d): its mode (off / paper / live), what its last pass did in words, why ordering has stopped if it has, and when `trades.json` last changed. */
+    val tradeMode: String = "",
+    val tradeNote: String = "",
+    val tradeStopped: String = "",
+    val tradesAtMs: Long = 0L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }

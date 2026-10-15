@@ -69,7 +69,15 @@ class CloudEngine(
     private val novigRoute: () -> String = { "" },
     /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
     private val addressWatch: AddressWatch? = null,
+    /**
+     * The engine's trading (TCL20d, [CloudTrader]): called with each list that is published (partial ones too: their Novig prices are the freshest) and the phone's latest settings; returns a few words for the status
+     * (or null when trading is off). A failure is a line in the log and never stops the scan.
+     */
+    private val trade: (suspend (List<Opportunity>, ScanSettings, Long) -> TradeStatus?)? = null,
 ) {
+    /** What the engine's trading says about itself in the heartbeat. */
+    data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long)
+
     /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once; WINDOW: the engine's hours (08:00-22:00 Eastern, [EngineHours]) are over or not yet begun: no hand-over, the schedule starts the next engine when they open. */
     enum class End { TIME_UP, IDLE, ADDRESS, WINDOW }
 
@@ -104,6 +112,7 @@ class CloudEngine(
     @Volatile private var windowEnd = false
     @Volatile private var lastPublished: CloudFeed? = null
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
+    @Volatile private var tradeStatus: TradeStatus? = null
 
     /** Runs until [untilMs] (the job's time limit) or until the phone has had the engine off for [idleExitMs]. */
     suspend fun run(untilMs: Long, startedAtMs: Long = clock()): End {
@@ -212,6 +221,7 @@ class CloudEngine(
                     lastResult = r
                     // The bid desk's candidates ride with the list, at most every [bidsEveryMs] (before the status, so it says what was sent).
                     if (now - lastBidsAt >= bidsEveryMs) { lastBidsAt = now; sendBids(r, cfg.rev, latest, now) }
+                    sendTrades(rows, latest, now)
                     problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = now - t0))
                     lastStatusAt = now
                 }
@@ -284,6 +294,7 @@ class CloudEngine(
         lastPublished = feed; lastAges = CloudCurrency.of(rows, done)
         onFeed(rows, done)
         sendBids(result, cfg.rev, latest, done)
+        sendTrades(rows, latest, done)
         problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = lastScanMs))
         log("pass $passes: ${rows.size} bets listed of ${result.stats.outcomesWithFair} priced, ${lastScanMs / 1000}s" + (problem?.let { ", publish problem: $it" } ?: ""))
         false
@@ -301,6 +312,7 @@ class CloudEngine(
             pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote, bidsAtMs = bidsAt, bidsCount = bidsCount,
             novigRoute = runCatching(novigRoute).getOrDefault(""), ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
             addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
+            tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
         )
     }
 
@@ -321,6 +333,13 @@ class CloudEngine(
             publishBids(CloudBids(now, result.partial, rev, lines))
             bidsOn = true; bidsAt = now; bidsCount = lines.size
         }.onFailure { if (it is CancellationException) throw it; log("candidate lines failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
+    }
+
+    /** Hands the published list to the engine's trading. It only ever runs on the engine's own time inside the scan loop; a failure is a line in the log. */
+    private suspend fun sendTrades(rows: List<Opportunity>, settings: ScanSettings, now: Long) {
+        val t = trade ?: return
+        runCatching { t(rows, settings, now) }.onSuccess { tradeStatus = it ?: tradeStatus?.copy(mode = "off", note = "") }
+            .onFailure { if (it is CancellationException) throw it; log("trading pass failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
     }
 
     /** A scan's own account of itself, short: what Novig gave, whether it throttled, and what each feed said (errors included). Never a key. */
