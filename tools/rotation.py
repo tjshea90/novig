@@ -206,6 +206,13 @@ def selftest():
     # covered once by someone: gone
     notes.append(({"from": "a/yy", "at": "2026-10-16T11:30:00Z"}, "rotation-cover slot=2 date=2026-10-15"))
     assert missed_slots(roster, notes, now) == []
+    # an account Tj said is out of usage: its slots before the 'away until' time are AWAY at once (no grace), and a cover removes them
+    t0 = roster["accounts"][0]["tag"]
+    soon = dt.datetime(2026, 10, 16, 11, 30, tzinfo=dt.timezone.utc)
+    aw = missed_slots(roster, [], soon, {t0: "2026-10-17T02:00:00Z"})
+    assert [(x[0], x[4]) for x in aw if x[0] == 0 and x[1].isoformat() == "2026-10-16"] == [(0, "AWAY")], aw
+    assert [x for x in missed_slots(roster, [({"from": "a/yy", "at": "2026-10-16T11:35:00Z"}, "rotation-cover slot=0 date=2026-10-16")], soon, {t0: "2026-10-17T02:00:00Z"}) if x[0] == 0 and x[1].isoformat() == "2026-10-16"] == []
+    assert [x for x in missed_slots(roster, [], soon, {t0: "2026-10-16T01:00:00Z"}) if x[0] == 0 and x[1].isoformat() == "2026-10-16"] == [], "past its away time: normal grace again"
     # an account is never blamed for a slot before it joined; with two accounts nothing is "missed"
     roster2 = {"accounts": [dict(a) for a in roster["accounts"]]}
     roster2["accounts"][2]["registeredAt"] = "2026-10-16T00:00:00Z"
