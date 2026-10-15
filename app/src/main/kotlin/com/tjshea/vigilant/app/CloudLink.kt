@@ -267,6 +267,60 @@ class CloudLink(private val c: AppContainer) {
         } else { c.eventLog.warn("CLOUD", "settings not sent: $why"); _ui.update { it.copy(note = "Settings not sent: $why") } }
     }
 
+    private val keysSent = File(c.app.filesDir, "cloud_keys_sent")
+    @Volatile private var keysAttempt: String? = null
+
+    /** The keys this phone would send, by secret name, values joined by commas; empty providers are left out. Pinnodds and BoltOdds never ([CloudKeys.PHONE_ONLY]). */
+    private fun keysToSend(): Map<String, String> =
+        CloudKeys.BY_PROVIDER.mapNotNull { (p, name) -> c.keyStore.current(p).filter { it.isNotBlank() }.takeIf { it.isNotEmpty() }?.let { name to it.joinToString(",") } }.toMap()
+
+    private fun fingerprint(m: Map<String, String>): String =
+        java.security.MessageDigest.getInstance("SHA-256").digest(m.toSortedMap().entries.joinToString("\n") { "${it.key}=${it.value}" }.toByteArray()).joinToString("") { "%02x".format(it) }
+
+    /**
+     * Sends this phone's API keys to the repository's secrets for the engine to use (Tj, 2026-10-14: "make it so the app itself uploads the API keys to GitHub"). Each value is sealed to the
+     * repository's public key on this phone ([com.tjshea.vigilant.data.cloud.SealedBox]), so GitHub stores it write-only: nothing, including this app, can read a secret back. Pinnodds and BoltOdds
+     * keys and Kalshi's private key are never sent. Words only: no value is ever in the result, a log or an error. A running engine read its secrets when its job began, so it is stopped and started
+     * again to pick them up.
+     */
+    suspend fun sendKeys(auto: Boolean = false): String {
+        if (!hasToken()) return "Save the GitHub token first."
+        val m = keysToSend()
+        if (m.isEmpty()) return "No API keys are saved on this phone to send."
+        val fp = fingerprint(m)
+        if (auto && (fp == keysAttempt || runCatching { keysSent.readText() }.getOrNull() == fp)) return ""
+        keysAttempt = fp
+        val key = when (val k = client.secretsKey()) {
+            is CloudClient.Poll.Fresh -> k.value
+            is CloudClient.Poll.Failed -> return k.why.also { _ui.update { u -> u.copy(keysNote = "Keys not sent: $it") } }
+            else -> return "GitHub's secrets key could not be read"
+        }
+        val sent = ArrayList<String>()
+        for ((name, value) in m) {
+            val why = client.putSecret(name, value, key)
+            if (why != null) { val msg = "Keys not sent ($name): $why"; _ui.update { it.copy(keysNote = msg) }; c.eventLog.warn("CLOUD", msg); return msg }
+            sent += name
+            delay(300L)
+        }
+        val previous = runCatching { keysSent.readText() }.getOrNull()
+        runCatching { keysSent.writeText(fp) }
+        val msg = "Sent ${sent.size} key set(s) to GitHub secrets: ${sent.joinToString(", ")}. Pinnodds, BoltOdds and Kalshi keys stay on the phone."
+        c.eventLog.info("CLOUD", msg)
+        // A running engine holds the secrets it read when its job began: restart it only when the keys CHANGED (a second tap with the same keys must not throw away a scan that is minutes in), and at most
+        // once in 10 minutes.
+        val st = latest.status
+        val now = System.currentTimeMillis()
+        val running = st != null && !st.idle && now - st.heartbeatMs < ENGINE_DEAD_S * 1000L
+        val changed = previous != fp
+        val tail = if (running && changed && c.settingsStore.flow.value?.cloudDrives == true && now - lastRestartAt > 10 * 60_000L) {
+            lastRestartAt = now
+            client.cancelRun(st!!.runId); delay(4_000L); lastStartAskedAt = System.currentTimeMillis(); client.startEngine()
+            " The engine was restarted to use them."
+        } else if (running && changed) " The running engine reads them the next time it starts (within 6 hours, or tap Start the engine now after switching it off and on)." else ""
+        _ui.update { it.copy(keysNote = msg + tail) }
+        return msg + tail
+    }
+
     /** Saves the bet and bid day files and the scan study's days to `phone-data`; each file is sent again only when it changed. */
     suspend fun saveHistory(): String {
         if (!hasToken()) return "no token"
