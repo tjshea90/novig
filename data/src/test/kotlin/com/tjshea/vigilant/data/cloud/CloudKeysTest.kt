@@ -24,7 +24,7 @@ class CloudKeysTest {
         // every secret the phone sends is one the engine reads, and the workflow passes it
         assertEquals(CloudKeys.ALL.toSet(), CloudKeys.BY_PROVIDER.values.toSet())
         val wf = java.io.File("../.github/workflows/cloud-scan.yml").takeIf { it.exists() } ?: java.io.File(".github/workflows/cloud-scan.yml")
-        if (wf.exists()) (CloudKeys.ALL + CloudKeys.NOVIG).forEach { n -> assertTrue("cloud-scan.yml passes $n", wf.readText().contains("$n: \${{ secrets.$n }}")) }
+        if (wf.exists()) (CloudKeys.ALL + CloudKeys.NOVIG + CloudKeys.TRADE).forEach { n -> assertTrue("cloud-scan.yml passes $n", wf.readText().contains("$n: \${{ secrets.$n }}")) }
     }
 
     @Test
@@ -32,6 +32,14 @@ class CloudKeysTest {
         assertEquals(listOf("NOVIG_READ_KEY_ID", "NOVIG_READ_KEY_PEM"), CloudKeys.NOVIG)
         // none of them is a provider key (a provider key is a list of comma-separated API keys; the PEM must never be cut at its line breaks)
         assertTrue(CloudKeys.NOVIG.none { it in CloudKeys.ALL })
+    }
+
+    @Test
+    fun `the trading key's secrets are the subaccount's trading key id and PEM, no management key anywhere`() {
+        assertEquals(listOf("NOVIG_TRADE_KEY_ID", "NOVIG_TRADE_KEY_PEM"), CloudKeys.TRADE)
+        assertTrue(CloudKeys.TRADE.none { it in CloudKeys.ALL || it in CloudKeys.NOVIG })
+        val all = CloudKeys.ALL + CloudKeys.NOVIG + CloudKeys.TRADE
+        assertTrue("no secret is named for the management key", all.none { it.contains("MGMT", true) || it.contains("MANAGEMENT", true) })
     }
 
     @Test
