@@ -18,7 +18,6 @@ import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.engine.FairSource
 import com.tjshea.vigilant.engine.MarketFee
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -61,11 +60,10 @@ class HotRefreshTest {
         }
     }
 
-    private class Fair(override val id: String, val clock: () -> Long, val metered: Boolean = false) : ReferenceSource {
+    private inner class Fair(override val id: String, val clock: () -> Long, private val isMetered: Boolean = false) : ReferenceSource {
         val asked = CopyOnWriteArrayList<Long>()
         override val displayName = id
-        override val metered: Boolean get() = metered0
-        private val metered0 = metered
+        override val metered: Boolean get() = isMetered
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
             asked += clock()
             val q = listOf(RefQuote(Side.HOME, 1 / 0.56, null), RefQuote(Side.AWAY, 1 / 0.44, null))
@@ -79,14 +77,6 @@ class HotRefreshTest {
         leagues = setOf("NFL"), families = setOf(MarketFamily.MONEYLINE), fairSource = FairSource.MARKET_AVERAGE, minBooks = 1, minEvPercent = 0.01, sharpBooks = emptySet(), outlierGuard = false,
         vigGuards = ScanGuards(hotRefresh = hot, hotHours = 12, hotEverySeconds = 30),
     )
-
-    private fun TestScope.run(hot: Boolean, feeds: (() -> Long) -> List<Fair>): Triple<Novig, List<Fair>, ScanReport> {
-        val clock = { base + currentTime }
-        val novig = Novig(hotMl, farMl, listOf(hotEvent, farEvent), clock)
-        val fs = feeds(clock)
-        val report = kotlinx.coroutines.runBlocking { Scanner(novig, clock = clock, elapsed = { currentTime }).scan(settings(hot), fs, emptySet(), {}, {}) }
-        return Triple(novig, fs, report)
-    }
 
     @Test
     fun `while the scan reads Novig, a game about to start gets its fair odds and its Novig book read again, and a far game does not`() = runTest {
@@ -124,7 +114,7 @@ class HotRefreshTest {
         val clock = { base + currentTime }
         val novig = Novig(hotMl, farMl, listOf(hotEvent, farEvent), clock)
         val kalshi = Fair("kalshi", clock)
-        val parlay = Fair("parlay", clock, metered = true)
+        val parlay = Fair("parlay", clock, isMetered = true)
         Scanner(novig, clock = clock, elapsed = { currentTime }).scan(settings(hot = true), listOf(kalshi, parlay), emptySet(), {}, {})
         assertTrue("kalshi is on the hot list", kalshi.asked.size >= 2)
         assertEquals("ParlayAPI is asked once, as in any scan", 1, parlay.asked.size)
