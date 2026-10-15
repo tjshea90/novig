@@ -1,13 +1,13 @@
-# CHECKPOINT 3347 — read me first, then TASKS.md
+# CHECKPOINT 3348 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T06:34:28Z · **tests:** all 5 fast checks green
-**Branch:** `claude/new-session-2gmle1` · **builds on:** `3e59b0dea` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T06:41:01Z · **tests:** all 5 fast checks green
+**Branch:** `claude/new-session-2gmle1` · **builds on:** `ae4436242` (this checkpoint is the commit after it)
 
 ## Just done
-TCL20e: engine scan study segments + engine-grade.yml grader + GradeMain + TradeSettle + engine-results branch applied by the engine + digest sections (study + trade_summary); EngineStudyTest/TradeSettleTest/selftests green; CLAUDE.md + TASKS ticked
+pre-release: the GitHub engine can trade by itself: Settings > Cloud scan > Engine trading (off / paper / live, smart Kelly sizing), logs and grades every bet it lists (versionCode 286, v0.107.0)
 
 ## Do this next
-run the whole test floor (bash tools/test.sh) in the background, then TCL20f (rotation routines: verify all three exist), then ship a release (ship.sh) so the phone gets Engine trading
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.107.0), then run: bash tools/record-release.sh v0.107.0 286 "the GitHub engine can trade by itself: Settings > Cloud scan > Engine trading (off / paper / live, smart Kelly sizing), logs and grades every bet it lists"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ run the whole test floor (bash tools/test.sh) in the background, then TCL20f (ro
 
 ## Last ten checkpoints
 ```
+  85f56ee4d ckpt 3347: TCL20e: engine scan study segments + engine-grade.yml grader + GradeMain + 
   2469c3107 ckpt 3346: TCL20d ticked: engine trading (paper/live, Kelly, port, UI, phone auto-bet 
   633957eee ckpt 3345: TCL20d: CloudNovigPort (IOC by REST, lost-answer lookup, stop on location/k
   81d9bcf12 ckpt 3344: TCL20d paper trading: CloudTrader tested (15 cases), engine hook + heartbea
@@ -25,8 +26,7 @@ run the whole test floor (bash tools/test.sh) in the background, then TCL20f (ro
   5f430adbd ckpt 3340: TCL20b done: EngineHours (08-22 ET, DST), End.WINDOW, workflow gate, Settin
   8e321e57c ckpt 3340: Third account (acct-7542bf) joined rotation: slot 2 19:20 ET, routine trig_
   85e368cd6 ckpt 3339: TCL20 step 1: scheduled task trig_011QGvat6eD9ER3bfE59T51T re-pointed (Vigi
-  3ed534f1b ckpt 3339: Joined rotation as acct-27a37e slot 1 (13:20 ET), created routine trig_01Js
 ```
 
-(13 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
