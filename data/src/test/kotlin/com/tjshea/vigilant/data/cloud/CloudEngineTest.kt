@@ -91,7 +91,7 @@ class CloudEngineTest {
     }
 
     @Test
-    fun `a wallet under 50 cents puts the engine to sleep: no scan, no feed call, and it wakes when the balance is read again as funded`() = runBlocking {
+    fun `a wallet under 50 cents puts the engine to sleep, no scan and no feed call, and it wakes when the balance is read again as funded`() = runBlocking {
         val scanner = FakeScanner { _, _, _ -> report(result("a")) }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
         val cash = java.util.concurrent.atomic.AtomicReference<Double?>(0.12)
