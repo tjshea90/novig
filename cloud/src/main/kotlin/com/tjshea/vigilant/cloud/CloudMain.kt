@@ -18,6 +18,7 @@ import com.tjshea.vigilant.data.cloud.CloudTrader
 import com.tjshea.vigilant.data.cloud.TradeLedger
 import com.tjshea.vigilant.data.cloud.TradeSettle
 import com.tjshea.vigilant.data.scanner.CloudTradeMode
+import com.tjshea.vigilant.data.cloud.CloudDashboard
 import com.tjshea.vigilant.data.cloud.CloudUsage
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.keys.UsageMeter
@@ -76,7 +77,7 @@ fun main(args: Array<String>) = runBlocking {
     val novigKeyId = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_ID)
     val novigKeyPem = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_PEM)
     val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = log::invoke) else null
-    val publisher = Publisher(pubDir, repo, token, git, log::tail)
+    val publisher = Publisher(pubDir, repo, token, git, log::tail) { policy -> CloudKeys.envFor(policy.id)?.let { CloudKeys.fromEnv(it) }.orEmpty().map(CloudUsage::keyId) }
     val config = ConfigReader(git, cfgDir)
     val started = System.currentTimeMillis()
     val until = started + minutes * 60_000L
