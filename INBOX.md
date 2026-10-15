@@ -7437,3 +7437,8 @@ Make sure I can still see accurate api usage meters in the app on my phone
 ```
 See if there is any way to speed up scanning. Split processing between phone and GitHub? Multiple GitHub actions simultaneously scanning sections of the novig list?
 ```
+
+## 2026-10-15T02:33:40Z
+```
+Is this speed too slow for pre game betting and bidding? If so, can it be sped up or optimized
+```
