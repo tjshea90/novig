@@ -63,7 +63,7 @@ class CloudUiTest {
     @Test
     fun `a scan asked for shows the engine's progress and the acknowledgement, and the old list is not called the answer`() {
         val requested = now - 20_000
-        feed(cloudState(status = alive().copy(ackedRefreshAtMs = requested, lastScanForRefreshAtMs = 0L), requested = requested))
+        feed(cloudState(status = SampleScan.cloudStatus().copy(ackedRefreshAtMs = requested, lastScanForRefreshAtMs = 0L), requested = requested))
         compose.onNodeWithTag("cloudBar").assertIsDisplayed()
             .assertTextContains("Scanning on GitHub: Novig prices 300/1200 (25%)", substring = true)
             .assertTextContains("acknowledged", substring = true)
@@ -87,7 +87,7 @@ class CloudUiTest {
 
     @Test
     fun `a settings change GitHub has not applied yet is said on the Feed`() {
-        feed(cloudState(status = alive().copy(configRev = 10, settingsPending = true)))
+        feed(cloudState(status = SampleScan.cloudStatus().copy(configRev = 10, settingsPending = true)))
         compose.onNodeWithTag("cloudSync").assertIsDisplayed()
     }
 
