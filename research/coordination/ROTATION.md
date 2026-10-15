@@ -14,3 +14,9 @@ Tj: "each Claude account should be used in rotation so that the Claude usage is 
 - **The engine** runs 08:00-22:00 ET; the three slots cover the morning before it starts (07:20), the middle of the day (13:20) and the evening before it stops (19:20).
 - The roster lives in `roster.json` on the `claude-coord` branch; `python3 -I tools/rotation.py roster` prints it.
 - One routine per account, created in THAT account (a scheduled task fires a session in the account that made it). The standard prompt is `research/coordination/ROUTINE_PROMPT.txt`; the setup message Tj pastes is `research/coordination/SETUP_FOR_TJ.md`.
+
+## When an account does not show up (added 2026-10-15)
+- **Every routine run leaves a trace first**: `rotation.py checkin` (a board note) before it even tries the lease. No trace within 5 h of the slot = the account is dead for that slot (usage cap, no repo attached, routine deleted).
+- **The next run covers it, once, cheaply**: `rotation.py missed` lists such slots from the last 30 h; the run does that slot's WATCH checks and posts `rotation-cover`, so a third account never repeats it. A whole missed ANALYST/ENGINEER day is not made up (the digest and backlog wait).
+- **The lease is the other half**: a session cut off mid-task stops renewing; after 20 minutes anyone takes over, and CHECKPOINT.md (written after every step) says what was done and what is next. Half-done changes show as "INTERRUPTED MID-CHANGE" in the briefing.
+- **Routines get their own repo**: a scheduled session starts empty. Every routine prompt begins with `add_repo` and a clone (the first Tj check-in lacked it and did nothing). Tests: `python3 -I tools/rotation.py selftest`.
