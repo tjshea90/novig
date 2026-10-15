@@ -204,9 +204,9 @@ class CloudTrader(
         var stopped = ""
         for (o in ordered) {
             if (placed.size >= MAX_PER_PASS) { skip("pass limit ($MAX_PER_PASS) reached: the rest wait"); break }
-            val q = o.quote ?: continue
-            val fair = o.fairProbability ?: continue
-            val fee = o.market.fee ?: continue
+            val q = o.quote ?: run { skip("no Novig price at decision time"); null } ?: continue
+            val fair = o.fairProbability ?: run { skip("no fair odds at decision time"); null } ?: continue
+            val fee = o.market.fee ?: run { skip("no fee known for the market"); null } ?: continue
             val id = clientId(o, now)
             if (ledger.entries.any { it.id == id }) { skip("already decided"); continue }
             if ((cooldown[o.key] ?: 0L) > now) { skip("tried a moment ago"); continue }

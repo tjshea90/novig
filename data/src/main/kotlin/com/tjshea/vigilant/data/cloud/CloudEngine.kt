@@ -355,7 +355,7 @@ class CloudEngine(
         lastPublished = feed; lastAges = CloudCurrency.of(rows, done)
         onFeed(rows, done)
         sendBids(result, cfg.rev, latest, done)
-        sendTrades(rows, latest, done)
+        sendTrades(freshForTrading(rows, latest, done), latest, done)
         runCatching { onResult(result, forCloud(latest)) }.onFailure { if (it is CancellationException) throw it; log("scan study failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
         problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = lastScanMs))
         log("pass $passes: ${rows.size} bets listed of ${result.stats.outcomesWithFair} priced, ${lastScanMs / 1000}s" + (problem?.let { ", publish problem: $it" } ?: ""))
@@ -399,6 +399,32 @@ class CloudEngine(
         }.onFailure { if (it is CancellationException) throw it; log("candidate lines failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
     }
 
+    /**
+     * The listed bets whose Novig book was read more than [TRADE_RECHECK_AFTER_MS] ago are read AGAIN now, before the trader judges them (Tj, 2026-10-15: "I haven't seen the GitHub engine do any auto bets at all"):
+     * a scan reads ~12,000 books over 5 to 6 minutes, so by its end most listed bets carried a price older than the trader's 3-minute bar and 27 of 31 were refused as "no Novig price read in the last 3 minutes".
+     * One recheck of at most 40 books (a couple of seconds on the key) makes their price and depth current; a bet whose edge has gone after the re-read leaves the list instead of being ordered on a stale price,
+     * and a failed re-read changes nothing (the trader still refuses a stale price). Only while the engine trades (paper or live).
+     */
+    private suspend fun freshForTrading(rows: List<Opportunity>, settings: ScanSettings, now: Long): List<Opportunity> {
+        if (trade == null || settings.gates.cloudTrading == com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF || rows.isEmpty()) return rows
+        val stale = rows.filter { now - (it.bookFetchedAtMs ?: 0L) > TRADE_RECHECK_AFTER_MS }
+        if (stale.isEmpty()) return rows
+        val ids = stale.map { it.market.marketId }.distinct().take(com.tjshea.vigilant.data.scanner.Scanner.MAX_RECHECK)
+        val rc = try {
+            scanner.recheck(forCloud(settings), ids) { _, _ -> }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log("trading: the re-read before judging failed: ${e.javaClass.simpleName}")
+            return rows
+        }
+        val fresh = rc.result?.feed(forCloud(settings))?.associateBy { it.key } ?: run { log("trading: the re-read gave no list (${rc.error ?: "no scan yet"}): the stale prices are refused"); return rows }
+        val staleKeys = stale.mapTo(HashSet()) { it.key }
+        val out = rows.mapNotNull { r -> if (r.key in staleKeys) fresh[r.key] else r }
+        log("trading: re-read ${ids.size} books before judging: ${out.count { it.key in staleKeys }} bets still +EV, ${stale.size - out.count { it.key in staleKeys }} no longer")
+        return out
+    }
+
     /** Hands the published list to the engine's trading. It only ever runs on the engine's own time inside the scan loop; a failure is a line in the log. */
     private suspend fun sendTrades(rows: List<Opportunity>, settings: ScanSettings, now: Long) {
         val t = trade ?: return
@@ -428,6 +454,8 @@ class CloudEngine(
         /** The trading wallet below this (Tj, 2026-10-15: "any amount under 50 cents") puts the engine to sleep; it is read again this often. */
         const val WALLET_MIN = 0.50
         const val WALLET_RETRY_MS = 60_000L
+        /** A listed bet whose Novig book is older than this is read again before the trader judges it (the trader's own bar is 3 minutes, [CloudTrader.FRESH_PRICE_MS]). */
+        const val TRADE_RECHECK_AFTER_MS = 45_000L
         const val WALLET_EVERY_MS = 30 * 60_000L
 
         /** The settings the cloud scans under: the phone's, with the parts that only make sense on the phone switched off. */

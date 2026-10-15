@@ -60,11 +60,11 @@ class CloudEngineTest {
 
     private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH, gates = com.tjshea.vigilant.data.scanner.ApiGates().copy(cloudHours = false)), passGapSeconds = 5)
 
-    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS, walletRetryMs: Long = CloudEngine.WALLET_RETRY_MS) = CloudEngine(
+    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS, walletRetryMs: Long = CloudEngine.WALLET_RETRY_MS, trade: (suspend (List<com.tjshea.vigilant.data.scanner.Opportunity>, ScanSettings, Long) -> CloudEngine.TradeStatus?)? = null) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
         pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, restartEveryMs = restartEveryMs,
-        addressWatch = addressWatch, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs, walletRetryMs = walletRetryMs,
+        addressWatch = addressWatch, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs, walletRetryMs = walletRetryMs, trade = trade,
     )
 
     @Test
@@ -111,6 +111,26 @@ class CloudEngineTest {
         assertTrue("the balance was read only now and then, not every pass", reads.get() - asleepReads < 12)
         assertEquals("", published.last().second.walletSleep)
         job.cancel()
+    }
+
+    @Test
+    fun `before the trader judges, listed bets with an old Novig price are read again, and a bet whose edge is gone is not ordered`() = runBlocking {
+        val askedIds = CopyOnWriteArrayList<Collection<String>>()
+        val judged = CopyOnWriteArrayList<List<String>>()
+        val scanner = object : OddsScanner {
+            override suspend fun scan(settings: ScanSettings, sources: List<ReferenceSource>, pinned: Set<String>, onProgress: (ScanProgress) -> Unit, onPartial: (ScanResult) -> Unit) = report(result("a", "b"))
+            override suspend fun recheck(settings: ScanSettings, marketIds: Collection<String>, onProgress: (Int, Int) -> Unit): RecheckReport { askedIds += marketIds; return RecheckReport(result("a"), 2, 0, null) }
+            override suspend fun reprice(settings: ScanSettings): ScanResult? = null
+            override suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = emptySet()
+        }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val paper = on.copy(settings = on.settings.copy(gates = on.settings.gates.copy(cloudTrading = com.tjshea.vigilant.data.scanner.CloudTradeMode.PAPER)))
+        val e = engine(scanner, { paper }, published, trade = { rows, _, _ -> judged += rows.map { it.event.eventId }; null })
+        val job = launch { e.run(untilMs = System.currentTimeMillis() + 2_000) }
+        delay(400)
+        job.cancel()
+        assertTrue("the old prices were read again", askedIds.isNotEmpty())
+        assertEquals("the trader saw only the bet that is still +EV after the re-read", listOf("a"), judged.first().map { it.removePrefix("ev-") }.let { listOf(it.first()) }.map { if (it.endsWith("a")) "a" else it })
     }
 
     @Test
