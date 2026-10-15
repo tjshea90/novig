@@ -1486,7 +1486,8 @@ private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportAct
 private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val s = state.settings
     val u = state.cloudUi
-    Intro("GitHub's computers (free for this public repository) run Vigilant's scanner with the APIs you sent them keys for, under exactly these settings, and send this phone the +EV list. Pull to refresh and Scan ask GitHub for a new scan; the Feed shows its progress and how fresh each price is. Stays on this phone: live games, the auto-bet's and bids' own rules and orders, Pinnodds, BoltOdds and your Kalshi key.")
+    val keyNow = rememberNow(30_000)
+    Intro("GitHub's computers (free for this public repository) run Vigilant's scanner with the APIs you sent them keys for, under exactly these settings, and send this phone the +EV list. Pull to refresh and Scan ask GitHub for a new scan; the Feed shows its progress and how fresh each price is. Stays on this phone: live games, every order, Pinnodds and your Kalshi key. BoltOdds' key and a read-only Novig key made for GitHub can go there for faster scanning.")
     // 1. the token
     SectionTitle("GitHub token")
     var token by remember { mutableStateOf("") }
@@ -1540,7 +1541,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
         if (u.novigKeyMadeAtMs > 0L) OutlinedButton(onClick = reportActions.onRemoveNovigKey, enabled = u.hasToken, modifier = Modifier.testTag("cloudRemoveNovigKey")) { Text("Remove it") }
     }
     Hint(
-        if (u.novigKeyMadeAtMs > 0L) "A read-only Novig key made ${Format.age(u.novigKeyMadeAtMs, now)} is on GitHub for the engine alone. It can read prices; it cannot bet or move money. Remove it to put the engine back on Novig's public routes."
+        if (u.novigKeyMadeAtMs > 0L) "A read-only Novig key made ${Format.age(u.novigKeyMadeAtMs, keyNow)} is on GitHub for the engine alone. It can read prices; it cannot bet or move money. Remove it to put the engine back on Novig's public routes."
         else "Makes ONE new read-only key in your Novig account for GitHub's engine alone (it can read prices, it cannot bet or move money; your trading and management keys never leave this phone), so the engine reads Novig at the key's own speed instead of the public routes' about 2 prices a second.",
     )
     u.keysNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudKeysNote")) }
