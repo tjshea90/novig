@@ -102,5 +102,13 @@ echo '{"prompt":"You are a Vigilant rotation worker for github.com/tjshea90/novi
 grep -q 'coord.py acquire --kind interactive' "$D/tools/capture_inbox.sh" && ok "a human message takes the lease (hook calls acquire --kind interactive)" || bad "capture_inbox does not take the lease"
 rm -rf "$H"
 
+# a dormant account's routine stops (away.json in the future) and a past entry does nothing
+DORM="$(mktemp -d)"; mkdir -p "$DORM/tools" "$DORM/research/coordination"; cp tools/coord.py tools/rotation.py "$DORM/tools/"
+echo '{"acct-dorm": "2099-01-01T00:00:00Z", "acct-old": "2000-01-01T00:00:00Z"}' > "$DORM/research/coordination/away.json"
+(cd "$DORM" && COORD_KIND=routine COORD_LABEL=acct-dorm python3 -I tools/coord.py acquire --kind routine --task t >/dev/null 2>&1); expect "a routine of a dormant account refuses to start" 5 $?
+(cd "$DORM" && python3 -I tools/rotation.py checkin --tag acct-dorm >/dev/null 2>&1); expect "rotation checkin of a dormant account exits 5" 5 $?
+python3 -c "import sys; sys.path.insert(0,'$DORM/tools'); import coord; sys.exit(0 if coord.dormant_until('acct-old') is None else 1)"; expect "a past away time is not dormant" 0 $?
+rm -rf "$DORM"
+
 echo
 if [ "$FAILS" -eq 0 ]; then echo "PASS $N checks"; else echo "FAILED $FAILS of $N checks"; exit 1; fi
