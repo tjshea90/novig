@@ -266,6 +266,7 @@ object SettingsSummary {
             }
             SettingsPage.CLOUD -> when {
                 !state.cloudUi.hasToken -> "No GitHub token saved"
+                s.cloudScan && !s.cloudDrives -> if (s.bidsNeedFullScan) "Paused: bids need every priced line, so this phone scans" else "Paused with scanning"
                 s.cloudScan -> "On: " + state.cloudUi.line
                 else -> "Off (token saved, history saved to GitHub: ${if (s.cloudSave) "on" else "off"})"
             }
@@ -1485,10 +1486,12 @@ private fun ColumnScope.OddsPapiPage(state: UiState, keys: KeyActions, reportAct
 private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     val s = state.settings
     val u = state.cloudUi
-    Intro("Cloud scan runs Vigilant's scanner on GitHub's computers (free for this public repository) with every API you have a repository secret for, and sends this phone the +EV list. The phone sets the settings; GitHub does the reading and the pricing. Bets shown are re-checked against Novig's live price when you tap them. Live games, the auto-bet's and bids' own scans, Pinnodds, BoltOdds and your Kalshi key stay on the phone.")
+    Intro("GitHub's computers (free for this public repository) run Vigilant's scanner with the APIs you sent them keys for, under exactly these settings, and send this phone the +EV list. Pull to refresh and Scan ask GitHub for a new scan; the Feed shows its progress and how fresh each price is. Stays on this phone: live games, the auto-bet's and bids' own rules and orders, Pinnodds, BoltOdds and your Kalshi key.")
+    // 1. the token
+    SectionTitle("GitHub token")
     var token by remember { mutableStateOf("") }
     Text(
-        if (u.hasToken) "Token saved (ends …${u.tokenTail}). It is sealed in this phone's secure storage and not shown again." else "No GitHub token saved. Create a fine-grained token for the repository tjshea90/novig with Contents, Actions and Secrets all set to read and write, and paste it here.",
+        if (u.hasToken) "Saved (ends …${u.tokenTail}), sealed in this phone's secure storage and never shown again." else "None saved. Create a fine-grained token for tjshea90/novig with Contents, Actions and Secrets all set to read and write, and paste it here.",
         style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudTokenState"),
     )
     OutlinedTextField(
@@ -1502,24 +1505,38 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
         androidx.compose.material3.OutlinedButton(onClick = reportActions.onRemoveCloudToken, enabled = u.hasToken, modifier = Modifier.testTag("cloudRemove")) { Text("Remove") }
     }
     u.note?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudNote")) }
+    // 2. the scan
+    SectionTitle("Scan")
+    SwitchRow(
+        "Scan on GitHub", "On: this phone makes no scan of its own and calls no odds API for it. Off: the app is what it was.",
+        s.cloudScan, tag = "cloudScanSwitch", enabled = u.hasToken,
+    ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudScan = v)) } }
+    if (s.cloudScan && !s.cloudDrives) {
+        Text(
+            if (s.bidsNeedFullScan) "Paused while bids are on: the bid desk needs every priced line and GitHub's list carries only the +EV ones, so this phone scans for itself and GitHub's engine stands down. Switch bids off, or price them from CrazyNinjaOdds, to use GitHub."
+            else "Paused with scanning: GitHub's engine stands down until you resume.",
+            style = MaterialTheme.typography.bodySmall, color = Edge.colors.warning, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudPausedNote"),
+        )
+    } else if (s.cloudScan) {
+        val now = System.currentTimeMillis()
+        val v = com.tjshea.vigilant.data.cloud.CloudText.view(u.status, u.requestedAtMs, now, u.why)
+        Text(v.headline + (v.detail?.let { "\n$it" } ?: ""), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudLine"))
+        com.tjshea.vigilant.data.cloud.CloudText.settings(u.status, u.pushedRev, u.pushedAtMs, now)?.let { (lvl, text) ->
+            Text(text, style = MaterialTheme.typography.bodySmall, color = if (lvl == com.tjshea.vigilant.data.cloud.CloudText.Level.GOOD) Edge.colors.positive else Edge.colors.warning, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudSettingsSync"))
+        }
+        Button(onClick = reportActions.onStartCloud, enabled = u.hasToken, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudStart")) { Text("Start the engine now") }
+    }
+    // 3. the API keys the engine uses
+    SectionTitle("API keys for GitHub")
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
         Button(onClick = reportActions.onSendCloudKeys, enabled = u.hasToken, modifier = Modifier.testTag("cloudSendKeys")) { Text("Send my API keys to GitHub") }
     }
-    Hint("Sends the keys saved on this phone to the repository's secrets, for the engine to use. Each is sealed on this phone before it leaves, so GitHub keeps it write-only (nothing can read it back). Pinnodds, BoltOdds and your Kalshi key are never sent. Needs the token's Secrets: read and write permission. Sent again by itself when a key changes while Scan on GitHub is on.")
+    Hint("Every key saved on this phone for an API that is on, sealed here before it leaves (GitHub keeps secrets write-only). Pinnodds, BoltOdds and Kalshi are never sent. Sent again by itself when a key changes while the scan is on GitHub.")
     u.keysNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudKeysNote")) }
+    // 4. history for Claude
+    SectionTitle("History")
     SwitchRow(
-        "Scan on GitHub", "On: the phone makes no scan of its own and no API call; the engine on GitHub scans under these settings and this phone shows its list. Off: the app is what it was.",
-        s.cloudScan, tag = "cloudScanSwitch", enabled = u.hasToken,
-    ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudScan = v)) } }
-    if (s.cloudScan) {
-        Text(
-            u.line + (u.listAgeSec?.let { " The list is ${if (it < 90) "$it s" else "${it / 60} min"} old (${u.rows} bets)." } ?: ""),
-            style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudLine"),
-        )
-        Button(onClick = reportActions.onStartCloud, enabled = u.hasToken, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudStart")) { Text("Start the engine now") }
-    }
-    SwitchRow(
-        "Save bets, bids and history to GitHub", "Automatically, every 15 minutes: every bet and bid (day files) and the scan study, to the repository's phone-data branch, kept for good, for Claude to analyse. Needs the token.",
+        "Save bets, bids and history to GitHub", "Every 15 minutes: every bet and bid and the scan study go to the repository's phone-data branch, kept for good, for Claude to analyse. Works with the scan on or off; needs the token.",
         s.cloudSave, tag = "cloudSaveSwitch", enabled = u.hasToken,
     ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudSave = v)) } }
     if (u.hasToken && s.cloudSave) {
@@ -1528,7 +1545,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
             Text(u.saveLine.ifBlank { "Nothing sent yet this session." }, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("cloudSaveLine"))
         }
     }
-    Hint("GitHub allows 5,000 API requests an hour on this token; reading the list uses about 720 an hour while the screen is on (a 304 \"nothing new\" answer is free). " + (u.rateRemaining?.let { "Left this hour: $it." } ?: ""))
+    Hint("The phone looks at GitHub every 5 s (3 s while a scan you asked for runs); an unchanged answer is free, so the token's 5,000 requests an hour are never near." + (u.rateRemaining?.let { " Left this hour: $it." } ?: ""))
 }
 
 /**
