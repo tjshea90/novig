@@ -89,6 +89,9 @@ data class MakerUi(
     /** Bids are priced from CrazyNinjaOdds ([ScanSettings.makerSource]). */
     val fromCno: Boolean get() = settings.makerSource == com.tjshea.vigilant.data.scanner.BidSource.CNO
 
+    /** The lines are GitHub's candidates (Tj, 2026-10-15): the engine did the fair-odds side, this phone adds Novig's books and posts. */
+    val fromGithub: Boolean get() = settings.bidsFromCloud
+
     val mode: BidMode get() = BidMode.of(settings)
 
     /** Bids up on Novig, and ones on their way down (a fill can still land until Novig confirms). */
@@ -404,6 +407,9 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                         ui.fromCno && ui.scanAtMs == null -> "No CrazyNinjaOdds list read yet: the background scan (CNO) reads it and the games' pages, then prices the bids."
                         ui.fromCno && ui.settings.maker -> "From CrazyNinjaOdds' list ${Format.age(ui.scanAtMs!!, ui.now)}. Fully automatic posts these by itself at each background cycle, cheapest (underdog) first; Post now doesn't wait."
                         ui.fromCno -> "From CrazyNinjaOdds' list ${Format.age(ui.scanAtMs!!, ui.now)}. Approve re-checks the bid on the latest prices before posting it; Deny skips that side until its game."
+                        ui.fromGithub && ui.scanAtMs == null -> "No candidate list from GitHub yet: the engine makes one as its scan finishes leagues (a cold scan takes several minutes); this phone then reads Novig's books for it."
+                        ui.fromGithub && ui.settings.maker -> "From GitHub's candidates made ${Format.age(ui.scanAtMs!!, ui.now)} (the fair-odds side is done there). Fully automatic reads Novig's books for them and posts at the next pass (every 20-30 s), cheapest (underdog) first; Post now doesn't wait."
+                        ui.fromGithub -> "From GitHub's candidates made ${Format.age(ui.scanAtMs!!, ui.now)}. Approve re-checks the bid on the latest prices before posting it; Deny skips that side until its game."
                         ui.scanAtMs == null -> "No Vigilant scan yet: scan (or let the background scan run) to price lines to bid on."
                         ui.settings.maker -> "From the scan ${Format.age(ui.scanAtMs, ui.now)}. Fully automatic posts these by itself at the next pass (every 20-30 s), cheapest (underdog) first; Post now doesn't wait."
                         else -> "From the scan ${Format.age(ui.scanAtMs, ui.now)}. Approve re-checks the bid on the latest prices before posting it; Deny skips that side until its game."
