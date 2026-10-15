@@ -4,6 +4,7 @@ import com.tjshea.vigilant.data.reference.ReferenceSource
 import com.tjshea.vigilant.data.scanner.LiveOnlyMode
 import com.tjshea.vigilant.data.scanner.OddsScanner
 import com.tjshea.vigilant.data.scanner.Opportunity
+import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScannerMode
@@ -42,11 +43,15 @@ class CloudEngine(
     private val pause: suspend (Long) -> Unit = { delay(it) },
     private val log: (String) -> Unit = {},
     private val partialEveryMs: Long = 20_000L,
-    private val configEveryMs: Long = 8_000L,
+    private val configEveryMs: Long = 3_000L,
     private val idleExitMs: Long = 10 * 60_000L,
     private val heartbeatEveryMs: Long = 25_000L,
-    /** A new settings revision restarts a scan only this soon after it began; later it waits for the next pass (a scan minutes in is not thrown away for every toggle: Tj changed settings every few seconds). */
-    private val restartWithinMs: Long = 45_000L,
+    /** While a scan runs, a status (its progress) goes out at least this often. */
+    private val statusEveryMs: Long = 10_000L,
+    /** A refresh asked for within this long of a scan's start is served by that scan (it is already fresh); later it starts a new one. */
+    private val refreshMinAgeMs: Long = 8_000L,
+    /** At most one restart for changed settings in this long. */
+    private val restartEveryMs: Long = 30_000L,
     private val sourceNames: (ScanSettings) -> List<String> = { s -> sources(s).map { it.id } },
 ) {
     enum class End { TIME_UP, IDLE }
@@ -60,19 +65,31 @@ class CloudEngine(
     @Volatile var problem: String? = null
         private set
 
+    // What the heartbeat says about scans and requests (CloudStatus): kept here so every status, whoever publishes it, tells the same story.
+    @Volatile private var handledRefresh = 0L
+    @Volatile private var scanning = false
+    @Volatile private var scanStartedAt = 0L
+    @Volatile private var scanForRefresh = 0L
+    @Volatile private var lastScanStartedAt = 0L
+    @Volatile private var lastScanEndedAt = 0L
+    @Volatile private var lastScanForRefresh = 0L
+    @Volatile private var lastRestartAt = 0L
+    private val progress = AtomicReference<ScanProgress?>(null)
+    @Volatile private var lastPublished: CloudFeed? = null
+    @Volatile private var lastAges = CloudCurrency.UNKNOWN
+
     /** Runs until [untilMs] (the job's time limit) or until the phone has had the engine off for [idleExitMs]. */
     suspend fun run(untilMs: Long, startedAtMs: Long = clock()): End {
         var offSince = 0L
         var lastCfg: CloudConfig? = null
         var lastBeat = 0L
-        var lastFeed: CloudFeed? = null
         while (currentScopeActive() && clock() < untilMs) {
             val cfg = runCatching { config() }.getOrNull() ?: lastCfg
             lastCfg = cfg
             if (cfg == null || !cfg.on) {
                 if (offSince == 0L) offSince = clock()
                 if (clock() - lastBeat >= heartbeatEveryMs) {
-                    problem = publish(null, status(cfg?.rev ?: 0L, startedAtMs, untilMs, emptyList(), idle = true, feed = lastFeed))
+                    problem = publish(null, status(cfg?.rev ?: 0L, startedAtMs, untilMs, emptyList(), idle = true))
                     lastBeat = clock()
                 }
                 if (clock() - offSince >= idleExitMs) return End.IDLE
@@ -80,58 +97,85 @@ class CloudEngine(
                 continue
             }
             offSince = 0L
-            val s = forCloud(cfg.settings)
-            val feed = scanOnce(cfg, s, startedAtMs, untilMs)
-            if (feed != null) lastFeed = feed
+            val restarted = scanOnce(cfg, startedAtMs, untilMs)
             lastBeat = clock()
-            pause((cfg.passGapSeconds.coerceIn(5, 600) * 1000L))
+            // A scan cut short by the phone's word (a refresh, new settings) starts again at once; one that ran to its end waits the gap.
+            if (!restarted) pause((cfg.passGapSeconds.coerceIn(5, 600) * 1000L))
         }
         return End.TIME_UP
     }
 
     private suspend fun currentScopeActive(): Boolean = currentCoroutineContext().isActive
 
-    /** One scan under [s], publishing partial lists as it goes; returns the final list, or null when the scan was cut short (a newer revision) or failed. */
-    private suspend fun scanOnce(cfg: CloudConfig, s: ScanSettings, startedAtMs: Long, untilMs: Long): CloudFeed? = supervisorScope {
+    /**
+     * One scan under the phone's settings, publishing partial lists as it goes. Returns true when it was cut short because the phone asked for something (a refresh, settings that change what is read, off), so the loop
+     * starts the next one without waiting.
+     */
+    private suspend fun scanOnce(cfg0: CloudConfig, startedAtMs: Long, untilMs: Long): Boolean = supervisorScope {
         val t0 = clock()
+        var cfg = cfg0
+        // The settings the scan READS under stay as they were when it began; the list is filtered under the newest ones (a raised minimum edge shows at once, no scan is thrown away for it).
+        val scanSettings = forCloud(cfg0.settings)
+        val scanKey = CloudScanKey.of(cfg0.settings)
+        var filterSettings = scanSettings
         val partial = AtomicReference<ScanResult?>(null)
-        val feedSources = sources(s)
-        val names = sourceNames(s)
-        val job = async { scanner.scan(s, feedSources, emptySet(), onProgress = {}, onPartial = { partial.set(it) }) }
+        val feedSources = sources(scanSettings)
+        val names = sourceNames(scanSettings)
+        // This scan serves the newest refresh request the phone has made so far: acknowledged now.
+        handledRefresh = maxOf(handledRefresh, cfg0.refreshAtMs)
+        scanForRefresh = cfg0.refreshAtMs
+        scanning = true
+        scanStartedAt = t0
+        progress.set(ScanProgress("starting"))
+        val job = async { scanner.scan(scanSettings, feedSources, emptySet(), onProgress = { progress.set(it) }, onPartial = { partial.set(it) }) }
         var lastPublishedAt = 0L
         var lastConfigAt = t0
-        var lastBeatAt = t0
-        var deferredLogged = false
-        var restart = false
+        var lastStatusAt = t0
+        var restartReason: String? = null
+        // The first status goes out at once: it is the engine's acknowledgement of the request.
+        problem = publish(null, status(cfg.rev, startedAtMs, untilMs, names, idle = false))
         while (job.isActive) {
             pause(1_000L)
             val now = clock()
             if (now - lastPublishedAt >= partialEveryMs) {
                 lastPublishedAt = now
                 partial.getAndSet(null)?.let { r ->
-                    val rows = r.feed(s)
+                    val rows = r.feed(filterSettings)
                     val feed = CloudFeed(now, cfg.rev, r.stats, rows)
                     onFeed(rows, now)
-                    problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = feed, scanMs = now - t0))
-                    lastBeatAt = now
+                    lastPublished = feed; lastAges = CloudCurrency.of(rows, now)
+                    problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = now - t0))
+                    lastStatusAt = now
                 }
             }
-            // A long first scan has no list to publish for minutes (a league is listed only when every feed has answered it): the heartbeat still goes out, so the phone can tell a working engine from a dead one.
-            if (now - lastBeatAt >= heartbeatEveryMs) {
-                lastBeatAt = now
-                problem = publish(null, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = null, scanMs = now - t0))
+            // The heartbeat carries the scan's progress: a long first scan has no list for minutes (a league is listed only when every feed has answered it), and the phone shows how far it is.
+            if (now - lastStatusAt >= statusEveryMs) {
+                lastStatusAt = now
+                problem = publish(null, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = now - t0))
             }
             if (now - lastConfigAt >= configEveryMs) {
                 lastConfigAt = now
                 val newer = runCatching { config() }.getOrNull()
-                if (newer != null && newer.rev != cfg.rev) {
-                    if (!newer.on) { restart = true; job.cancel(CancellationException("switched off")); break }
-                    if (now - t0 <= restartWithinMs) { restart = true; job.cancel(CancellationException("settings changed")); break }
-                    if (!deferredLogged) { deferredLogged = true; log("settings changed ${(now - t0) / 1000}s into a scan: kept, applied at the next pass") }
+                if (newer != null) {
+                    when {
+                        !newer.on -> { restartReason = "switched off"; job.cancel(CancellationException(restartReason)); break }
+                        // A refresh asked for after this scan began wants a scan that began after it (the scan just begun already is one).
+                        newer.refreshAtMs > handledRefresh && now - t0 >= refreshMinAgeMs -> { restartReason = "refresh requested"; job.cancel(CancellationException(restartReason)); break }
+                        newer.refreshAtMs > handledRefresh -> { handledRefresh = newer.refreshAtMs; scanForRefresh = newer.refreshAtMs }
+                        // Settings that change what is READ (a league, a feed, days ahead...) start the scan again, at most once in restartEveryMs; the rest (the minimum edge, odds limits, order, every
+                        // phone-only setting) only change how the finished list is filtered.
+                        CloudScanKey.of(newer.settings) != scanKey && now - lastRestartAt >= restartEveryMs -> { restartReason = "settings changed"; job.cancel(CancellationException(restartReason)); break }
+                        else -> if (newer.rev != cfg.rev) { cfg = cfg.copy(rev = newer.rev); filterSettings = forCloud(newer.settings) }
+                    }
                 }
             }
         }
-        if (restart) { log("settings changed mid-scan: starting over"); return@supervisorScope null }
+        if (restartReason != null) {
+            log("scan cut short ($restartReason) after ${(clock() - t0) / 1000}s: starting over")
+            if (restartReason != "switched off") lastRestartAt = clock()
+            scanning = false
+            return@supervisorScope restartReason != "switched off"
+        }
         val report = try {
             job.await()
         } catch (e: CancellationException) {
@@ -139,34 +183,71 @@ class CloudEngine(
         } catch (e: Exception) {
             problem = "scan failed: ${e.javaClass.simpleName}: ${e.message?.take(120)}"
             log(problem!!)
-            publish(null, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = null))
-            return@supervisorScope null
+            scanning = false
+            publish(null, status(cfg.rev, startedAtMs, untilMs, names, idle = false))
+            return@supervisorScope false
         }
+        scanning = false
         val result = report.result
         if (result == null) {
             problem = report.errors.firstOrNull()?.take(160) ?: "the scan returned nothing"
             log("no result: $problem")
-            publish(null, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = null))
-            return@supervisorScope null
+            publish(null, status(cfg.rev, startedAtMs, untilMs, names, idle = false))
+            return@supervisorScope false
         }
-        val rows = result.feed(s)
-        val feed = CloudFeed(clock(), cfg.rev, result.stats, rows)
+        val done = clock()
+        val rows = result.feed(filterSettings)
+        val feed = CloudFeed(done, cfg.rev, result.stats, rows)
         passes++
         lastRows = rows.size
-        lastScanMs = clock() - t0
-        onFeed(rows, clock())
-        problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, feed = feed, scanMs = lastScanMs))
+        lastScanMs = done - t0
+        lastScanStartedAt = t0; lastScanEndedAt = done; lastScanForRefresh = scanForRefresh
+        lastPublished = feed; lastAges = CloudCurrency.of(rows, done)
+        onFeed(rows, done)
+        problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = lastScanMs))
         log("pass $passes: ${rows.size} bets listed of ${result.stats.outcomesWithFair} priced, ${lastScanMs / 1000}s" + (problem?.let { ", publish problem: $it" } ?: ""))
-        feed
+        false
     }
 
-    private fun status(rev: Long, startedAtMs: Long, untilMs: Long, names: List<String>, idle: Boolean, feed: CloudFeed?, scanMs: Long = lastScanMs) = CloudStatus(
-        engine = engine, runId = runId, computedAtMs = feed?.computedAtMs ?: 0L, startedAtMs = startedAtMs, heartbeatMs = clock(), scanMs = scanMs,
-        rows = feed?.rows?.size ?: lastRows, configRev = rev, sources = names, passes = passes, problem = problem, idle = idle, handoverAtMs = untilMs,
-    )
+    private fun status(rev: Long, startedAtMs: Long, untilMs: Long, names: List<String>, idle: Boolean, scanMs: Long = lastScanMs): CloudStatus {
+        val p = progress.get()
+        val feed = lastPublished
+        return CloudStatus(
+            engine = engine, runId = runId, computedAtMs = feed?.computedAtMs ?: 0L, startedAtMs = startedAtMs, heartbeatMs = clock(), scanMs = scanMs,
+            rows = feed?.rows?.size ?: lastRows, configRev = rev, sources = names, passes = passes, problem = problem, idle = idle, handoverAtMs = untilMs,
+            scanning = scanning && !idle, scanStartedAtMs = scanStartedAt, progressStep = if (scanning) p?.step.orEmpty() else "", progressDone = if (scanning) p?.done ?: 0 else 0, progressTotal = if (scanning) p?.total ?: 0 else 0,
+            ackedRefreshAtMs = handledRefresh, scanRefreshAtMs = scanForRefresh, lastScanStartedAtMs = lastScanStartedAt, lastScanEndedAtMs = lastScanEndedAt, lastScanForRefreshAtMs = lastScanForRefresh,
+            novigAgeMedianS = lastAges.novigMedianS, novigAgeMaxS = lastAges.novigMaxS, fairAgeMedianS = lastAges.fairMedianS, fairAgeMaxS = lastAges.fairMaxS,
+        )
+    }
 
     companion object {
         /** The settings the cloud scans under: the phone's, with the parts that only make sense on the phone switched off. */
         fun forCloud(s: ScanSettings): ScanSettings = s.copy(scanner = ScannerMode.VIGILANT, includeLive = false, gates = s.gates.copy(liveOnly = LiveOnlyMode()))
+    }
+}
+
+/**
+ * Which of the phone's settings change WHAT a scan reads and prices (so a new value starts the scan again) and which only change what the finished list shows or what the phone itself does (the auto-bet, the bids' own
+ * rules, the widget, alerts: they never reach a scan, and the list is filtered again with the newest ones). Phone-only and filter-only top-level fields are named here; everything else, including every nested group (`gates`,
+ * `vigGuards`, `guards`), counts as scan-affecting, so a setting missing from this list errs toward re-scanning, never toward a stale mirror ([CloudScanKeyTest] pins both directions).
+ */
+object CloudScanKey {
+    private val filterOnly = setOf(
+        "minEvPercent", "maxEvPercent", "minOdds", "maxOdds", "feedSort", "exchangeMaxSpread", "outlierGuard", "bankroll", "kellyMultiplier", "startsWithinHours",
+    )
+    private val phoneOnlyPrefixes = listOf(
+        "autoBet", "autoLock", "apiBet", "apiMax", "slip", "sharpAutoBet", "sharpAlerts", "sharpConfirm", "sharpVeto", "propGuard", "trap",
+        "burst", "pinnLive", "pinnWebsite", "liveBid", "tailLive", "cno", "floatingWidget", "miniWindow", "widget", "autoScan", "alert", "quiet", "killed", "tracker", "scanStudy", "feedRace", "altLab", "research", "presets", "presetName", "bookState", "schema",
+    )
+    /** The bids' own rules never reach a scan; the few that do ([maker], [makerRecommend], [makerFocus], [makerSource], the low-usage settings: `ScanSettings.effective`) stay in the key. */
+    private val makerKept = setOf("maker", "makerRecommend", "makerFocus", "makerSource")
+
+    private fun phoneOnly(k: String) = (k.startsWith("maker") && k !in makerKept) || phoneOnlyPrefixes.any { k.startsWith(it) } || k in setOf("trapEarlyHours")
+
+    /** The part of [s] that decides what a scan reads, as text (equal text = the same scan). */
+    fun of(s: ScanSettings): String {
+        val j = CloudConfig.json.encodeToJsonElement(ScanSettings.serializer(), s) as kotlinx.serialization.json.JsonObject
+        return kotlinx.serialization.json.JsonObject(j.filterKeys { it !in filterOnly && !phoneOnly(it) }).toString()
     }
 }
