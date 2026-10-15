@@ -22,3 +22,7 @@ Tj: "each Claude account should be used in rotation so that the Claude usage is 
 - **The lease is the other half**: a session cut off mid-task stops renewing; after 20 minutes anyone takes over, and CHECKPOINT.md says what was done and what is next.
 - **What no session can see**: another account's routine (a scheduled task lives in the account that made it) and that account's remaining usage. The only evidence is the board. If a slot shows NO-SHOW two days running, the cause is on that account (routine disabled, no usage, repo not attached): Tj looks at claude.ai/code/routines in that account.
 - **Routines get their own repo**: a scheduled session starts empty. Every routine prompt begins with `add_repo` and a clone. Tests: `python3 -I tools/rotation.py selftest`.
+
+
+## Away until (Tj says an account is out of usage)
+`research/coordination/away.json` maps an account tag to the time (UTC) its usage returns. `rotation.py missed` then lists that account's slots before that time as **AWAY** right away (no 5-hour grace) so the next live session covers them (first with the slot's whole duty, the second with WATCH only, as usual). Remove the entry (or let it pass) when the account is back. 2026-10-15, Tj: acct-7542bf (slot 0, 07:20 ET) is out of weekly usage until Friday 2026-10-16 22:00 ET (= 2026-10-17T02:00Z).
