@@ -58,7 +58,7 @@ object CloudScanKey {
         "miniSource", "cnoFilters", "floatingWidget", "cnoCheckBooks", "cnoPlayerTeams", "cnoOnlyAgreed", "widgetRescanMinutes", "cnoLivePrices", "bookState", "startsWithinHours", "autoScan",
         "autoScanSeconds", "autoScanMinutes", "autoScanKeepAwake", "alertMinEv", "paused", "killed", "killedAtMs", "schema",
         // gates: sockets, the live lane, the streaming engine, the guards of orders: all the phone's
-        "gates.usePinnodds", "gates.liveOnly", "gates.cloudScan", "gates.cloudSave", "gates.liveMaster",
+        "gates.usePinnodds", "gates.liveOnly", "gates.cloudScan", "gates.cloudSave", "gates.cloudHours", "gates.liveMaster",
         "gates.pinnSocket", "gates.kalshiSocket", "gates.novigOrderPush", "gates.novigSocketOrders", "gates.moneyDeposited",
         "gates.streamScan", "gates.streamGapSeconds", "gates.streamLive", "gates.boltLiveMinCompanies",
         "gates.boltLiveMaxAgeSeconds", "gates.boltLiveMaxSpreadPoints", "gates.boltLiveReal",

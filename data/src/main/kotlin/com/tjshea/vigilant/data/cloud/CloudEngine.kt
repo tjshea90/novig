@@ -70,8 +70,8 @@ class CloudEngine(
     /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
     private val addressWatch: AddressWatch? = null,
 ) {
-    /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once. */
-    enum class End { TIME_UP, IDLE, ADDRESS }
+    /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once; WINDOW: the engine's hours (08:00-22:00 Eastern, [EngineHours]) are over or not yet begun: no hand-over, the schedule starts the next engine when they open. */
+    enum class End { TIME_UP, IDLE, ADDRESS, WINDOW }
 
     @Volatile var passes = 0
         private set
@@ -101,6 +101,7 @@ class CloudEngine(
     @Volatile private var bidsCount = 0
     @Volatile private var bidsOn = false
     @Volatile private var addressEnd = false
+    @Volatile private var windowEnd = false
     @Volatile private var lastPublished: CloudFeed? = null
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
 
@@ -123,8 +124,17 @@ class CloudEngine(
                 continue
             }
             offSince = 0L
+            if (cfg.settings.cloudHours && !EngineHours.isOpen(clock())) {
+                log("outside the engine's hours (08:00-22:00 Eastern): ending")
+                problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = true))
+                return End.WINDOW
+            }
             val restarted = scanOnce(cfg, startedAtMs, untilMs)
             lastBeat = clock()
+            if (windowEnd) {
+                problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = true))
+                return End.WINDOW
+            }
             if (addressEnd) {
                 // the last word goes out before the job ends: the phone shows why, and the next job reads the streak from it
                 problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = false))
@@ -176,6 +186,14 @@ class CloudEngine(
         while (job.isActive) {
             pause(1_000L)
             val now = clock()
+            // The engine's hours end: stop the scan; the job ends with End.WINDOW (nothing orders after this; TCL20d cancels what rests first).
+            if (cfg.settings.cloudHours && !EngineHours.isOpen(now)) {
+                windowEnd = true
+                restartReason = "engine hours over"
+                log("the engine's hours (08:00-22:00 Eastern) are over: this job ends")
+                job.cancel(CancellationException(restartReason))
+                break
+            }
             // Novig refuses this runner's address: stop, publish what there is, and let the workflow draw another runner (AddressWatch).
             if (addressWatch?.shouldHandOver(now) == true) {
                 addressEnd = true
@@ -230,7 +248,7 @@ class CloudEngine(
             }
         }
         if (restartReason != null) {
-            log("scan cut short ($restartReason) after ${(clock() - t0) / 1000}s: " + if (addressEnd) "this job ends" else "starting over")
+            log("scan cut short ($restartReason) after ${(clock() - t0) / 1000}s: " + if (addressEnd || windowEnd) "this job ends" else "starting over")
             if (restartReason != "switched off") lastRestartAt = clock()
             scanning = false
             return@supervisorScope restartReason != "switched off"
