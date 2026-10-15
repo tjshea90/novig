@@ -60,11 +60,11 @@ class CloudEngineTest {
 
     private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH, gates = com.tjshea.vigilant.data.scanner.ApiGates().copy(cloudHours = false)), passGapSeconds = 5)
 
-    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS, walletRetryMs: Long = CloudEngine.WALLET_RETRY_MS, trade: (suspend (List<com.tjshea.vigilant.data.scanner.Opportunity>, ScanSettings, Long) -> CloudEngine.TradeStatus?)? = null) = CloudEngine(
+    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS, walletRetryMs: Long = CloudEngine.WALLET_RETRY_MS, trade: (suspend (List<com.tjshea.vigilant.data.scanner.Opportunity>, ScanSettings, Long) -> CloudEngine.TradeStatus?)? = null, governor: ApiGovernor = ApiGovernor(), overrideSink: suspend (CloudOverrides.Request) -> Unit = {}, messageSink: suspend (CloudMessages.Message) -> Unit = {}) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
         pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, restartEveryMs = restartEveryMs,
-        addressWatch = addressWatch, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs, walletRetryMs = walletRetryMs, trade = trade,
+        addressWatch = addressWatch, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs, walletRetryMs = walletRetryMs, trade = trade, governor = governor, overrideSink = overrideSink, messageSink = messageSink,
     )
 
     @Test
@@ -131,6 +131,33 @@ class CloudEngineTest {
         job.cancel()
         assertTrue("the old prices were read again", askedIds.isNotEmpty())
         assertEquals("the trader saw only the bet that is still +EV after the re-read", listOf("e-a"), judged.first())
+    }
+
+    @Test
+    fun `an api that answers nothing for three scans is rested, the next scans run without it, the phone's switch is untouched and Tj is told`() = runBlocking {
+        val seen = CopyOnWriteArrayList<ScanSettings>()
+        val scanner = object : OddsScanner {
+            override suspend fun scan(settings: ScanSettings, sources: List<ReferenceSource>, pinned: Set<String>, onProgress: (ScanProgress) -> Unit, onPartial: (ScanResult) -> Unit): ScanReport {
+                seen += settings
+                val silent = listOf(com.tjshea.vigilant.data.scanner.SourceReport("parlay", "ParlayAPI", 0, 0, 0, null), com.tjshea.vigilant.data.scanner.SourceReport("sgo", "SGO", 8, 0, 5, null))
+                return report(result("a")).copy(sources = silent)
+            }
+            override suspend fun recheck(settings: ScanSettings, marketIds: Collection<String>, onProgress: (Int, Int) -> Unit) = RecheckReport(null, 0, 0, null)
+            override suspend fun reprice(settings: ScanSettings): ScanResult? = null
+            override suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = emptySet()
+        }
+        val messages = CopyOnWriteArrayList<CloudMessages.Message>()
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val withParlay = on.copy(settings = on.settings.copy(useParlay = true))
+        val e = engine(scanner, { withParlay }, published, messageSink = { messages += it })
+        val job = launch { e.run(untilMs = System.currentTimeMillis() + 3_000) }
+        delay(900)
+        job.cancel()
+        assertTrue("the first scans ask parlay", seen.take(3).all { it.useParlay })
+        assertTrue("then the engine scans without it", seen.drop(3).isNotEmpty() && seen.drop(3).all { !it.useParlay })
+        assertTrue("Tj was told it is resting", messages.any { it.title.startsWith("Resting ParlayAPI") })
+        assertTrue("the status says so", published.last().second.resting.any { it.startsWith("ParlayAPI") })
+        assertTrue("the phone's own switch is still on in the config", withParlay.settings.useParlay)
     }
 
     @Test
