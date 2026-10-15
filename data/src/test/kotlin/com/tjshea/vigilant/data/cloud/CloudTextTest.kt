@@ -55,7 +55,7 @@ class CloudTextTest {
         val key = CloudScanKey.of(base)
         // filtered at publish time, or phone-only: no re-scan
         assertEquals(key, CloudScanKey.of(base.copy(minEvPercent = 0.04, maxEvPercent = 0.2, feedSort = com.tjshea.vigilant.data.scanner.FeedSort.START, bankroll = 999.0)))
-        assertEquals(key, CloudScanKey.of(base.copy(autoBet = true, autoBetMinEv = 0.1, apiMaxStake = 3.0, makerMargin = 0.02, makerMaxBids = 50, autoScan = true, cnoEnabled = true)))
+        assertEquals(key, CloudScanKey.of(base.copy(autoBet = true, autoBetMinEv = 0.1, apiMaxStake = 3.0, makerMargin = 0.02, makerMaxBids = 50, cnoEnabled = true)))
         // what is read or how it is priced: a re-scan
         assertNotEquals(key, CloudScanKey.of(base.copy(leagues = setOf("NBA", "NHL"))))
         assertNotEquals(key, CloudScanKey.of(base.copy(daysAhead = 3)))

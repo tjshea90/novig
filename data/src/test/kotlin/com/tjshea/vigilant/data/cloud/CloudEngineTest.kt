@@ -113,13 +113,13 @@ class CloudEngineTest {
     }
 
     @Test
-    fun `a filter-only or phone-only change never restarts a scan; it filters the list at once`() = runBlocking {
+    fun `a filter-only or phone-only change never restarts a scan, it filters the list at once`() = runBlocking {
         var cfg = on
         val scanner = FakeScanner { _, partial, n -> partial(result("a")); delay(300); report(result("a")) }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
         val e = engine(scanner, { cfg }, published)
         // the phone raises the minimum edge to 50% (nothing passes) and moves an auto-bet setting: no scan is cut short
-        launch(kotlinx.coroutines.Dispatchers.Default) { delay(100); cfg = on.copy(rev = 2, settings = on.settings.copy(minEvPercent = 0.5, autoBetMinEv = 0.07, autoBetStake = 3.0)) }
+        launch(kotlinx.coroutines.Dispatchers.Default) { delay(100); cfg = on.copy(rev = 2, settings = on.settings.copy(minEvPercent = 0.5, autoBetMinEv = 0.07)) }
         e.run(untilMs = System.currentTimeMillis() + 450)
         assertEquals("the first scan ran to its end (no restart); a second began only after it", 1, published.count { it.second.passes == 1 && !it.second.scanning }.coerceAtMost(1))
         val lastFeed = published.mapNotNull { it.first }.last()
