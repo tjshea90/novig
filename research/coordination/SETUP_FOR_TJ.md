@@ -3,6 +3,8 @@
 **What was wrong:** the old "Vigilant rotation" routines were created from inside a Claude chat (a command, `create_trigger`). A routine made that way starts EMPTY: no repository, no GitHub tools, and it cannot clone or push (the probe of 2026-10-15 failed steps 2-7 and was refused at step 4). So nothing it was told to do could happen, and the board shows no routine run ever checked in.
 **The fix:** each account's routine is created on claude.ai's Routines page with the repository attached. Then the session starts with `tjshea90/novig` cloned, this repo's `.claude/settings.json` (Bash allowed, hooks) loaded, and the GitHub tools present.
 
+**Second failure seen (2026-10-15, the 13:20 account's run, from Tj's screenshot):** with no repo attached the session cloned the repo itself with plain git, and the permission classifier then refused `tools/install-hooks.sh` and `tools/coord.sh` as "external code from a freshly cloned repo" (it never got the lease, wrote nothing, sent a push notification). A repo the routine is CREATED WITH (the Repository field) is the session's own project: its scripts are trusted and `.claude/settings.json` (Bash allowed) is read. So the Repository field is the fix for both failures; if a run still says "external code", the repository was not attached.
+
 ## Do this once in EACH of the three Claude accounts (about 5 minutes each)
 1. Sign in to claude.ai as that account. Open **claude.ai/code/routines** (Claude Code on the web, then Routines). If you do not see Routines, open Claude Code on the web and look for "Routines" or "Scheduled" in the menu.
 2. Find the old routine named **Vigilant rotation** (if there is one) and **delete** it.
