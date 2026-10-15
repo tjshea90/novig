@@ -1,22 +1,22 @@
-# CHECKPOINT 3310 — read me first, then TASKS.md
+# CHECKPOINT 3311 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T02:11:50Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-4dcbaa5f-skgw6q` · **builds on:** `5d8854d83` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T02:14:45Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-4dcbaa5f-skgw6q` · **builds on:** `a50f88791` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v0.104.0: Novig and BoltOdds keys can go to the GitHub engine (a read-only Novig key made for the engine alone, BoltOdds' sockets on the runner), the engine's API ranking by measured freshness and accuracy is kept across handovers and shown, Diagnostics GITHUB ENGINE
+pre-release: v0.104.0: Novig and BoltOdds keys can go to the GitHub engine (a read-only Novig key made for the engine alone, BoltOdds' sockets on the runner), the engine's API ranking by measured freshness and accuracy is kept across handovers and shown, Diagnostics GITHUB ENGINE (versionCode 282, v0.104.0)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.104.0), then run: bash tools/record-release.sh v0.104.0 282 "v0.104.0: Novig and BoltOdds keys can go to the GitHub engine (a read-only Novig key made for the engine alone, BoltOdds' sockets on the runner), the engine's API ranking by measured freshness and accuracy is kept across handovers and shown, Diagnostics GITHUB ENGINE"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/build.gradle.kts
 
 ## Last ten checkpoints
 ```
+  a50f88791 ckpt 3310: pre-ship: v0.104.0: Novig and BoltOdds keys can go to the GitHub engine (a 
   810737e67 ckpt 3309: TCL13: engine Novig read-only key (CloudNovigKey mint+store, CloudNovig wir
   671773ac5 ckpt 3308: pre-release: v0.103.0: the bid desk's data runs on GitHub: the engine publi
   257a52f09 ckpt 3307: pre-ship: v0.103.0: the bid desk's data runs on GitHub: the engine publishe
@@ -26,8 +26,4 @@ ship.sh gates and releases this
   aa4ad8bbf ckpt 3303: TCL12: CloudMain wiring (bidLines+publishBids, injuries via CloudSources), 
   44ad74831 ckpt 3302: Reviewed interrupted TCL12 work (compiles: BidCandidates, CloudBids codec+l
   08c014b0e ckpt 3301: TCL12 written: bid desk data on GitHub (design in research/cloud_bids_2026-
-  9b118fe1b ckpt 3300: v0.102.0 released and recorded; engine restarted on the new code (gate+engi
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
