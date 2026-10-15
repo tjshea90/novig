@@ -7,6 +7,10 @@ import com.tjshea.vigilant.data.cloud.CloudEngine
 import com.tjshea.vigilant.data.cloud.CloudFeed
 import com.tjshea.vigilant.data.cloud.CloudKeys
 import com.tjshea.vigilant.data.cloud.CloudNovig
+import com.tjshea.vigilant.data.cloud.CloudNovigPort
+import com.tjshea.vigilant.data.novig.signing.NovigSignedClient
+import com.tjshea.vigilant.data.novig.signing.PemSigningKey
+import com.tjshea.vigilant.data.novig.trading.NovigTradingClient
 import com.tjshea.vigilant.data.cloud.CloudRanking
 import com.tjshea.vigilant.data.cloud.CloudSources
 import com.tjshea.vigilant.data.cloud.CloudStatus
@@ -106,7 +110,17 @@ fun main(args: Array<String>) = runBlocking {
     val prevStatus = runCatching { PreviousFeed.read(git, cfgDir, "status.json") }.getOrNull()?.let { CloudStatus.parse(it) }
     val addressWatch = novigKeyed?.let { nk -> AddressWatch(started, prevStatus?.addressHandovers ?: 0, prevStatus?.addressHandoverAtMs ?: 0L) { now -> nk.addressRefused(now) } }
     // The engine's own trading (TCL20d): paper orders unless the phone's switch says live AND the trading key was sent; its ledger is carried from job to job in `trades.json`.
-    val trader = CloudTrader(unavailable = { o, now -> sources.unavailable(o, now) })
+    // The trading key (Tj sent it from the phone, TCL20c) only ever makes a port; whether anything is ordered is the phone's three-way switch (off / paper / live), read with every list.
+    val tradeKeyId = CloudKeys.rawEnv(CloudKeys.TRADE_KEY_ID)
+    val tradeKeyPem = CloudKeys.rawEnv(CloudKeys.TRADE_KEY_PEM)
+    var traderRef: CloudTrader? = null
+    val tradePort = if (tradeKeyId.isNotEmpty() && tradeKeyPem.isNotEmpty()) {
+        runCatching { NovigSignedClient(http, json, PemSigningKey(tradeKeyId, tradeKeyPem), "https://api.novig.com") }.getOrNull()?.let { signer ->
+            CloudNovigPort(NovigTradingClient(signer, json), tradeKeyId, { traderRef?.ledger?.entries?.mapTo(HashSet()) { it.id } ?: emptySet() }, log = log::invoke)
+        }
+    } else null
+    log("trading: ${if (tradePort != null) "the trading key is present (orders possible only if the phone's switch says live)" else "no trading key: paper only"}")
+    val trader = CloudTrader(unavailable = { o, now -> sources.unavailable(o, now) }, port = tradePort).also { traderRef = it }
     runCatching { PreviousFeed.read(git, cfgDir, "trades.json") }.getOrNull()?.let { text ->
         TradeLedger.parse(text)?.let { trader.load(it); log("trades: ${it.entries.size} entries carried over from the previous job") }
     }
