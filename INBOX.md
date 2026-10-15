@@ -40,3 +40,8 @@ Make the GitHub engine able to turn on and off apis as needed or to save usage w
 
 The vigilant phone app should be able to tell me anything Claude wants me to know, including recommendations, bets placed, etc. All the settings should be mirrored between the phone app and the GitHub app, including API toggles. 
 ```
+
+## 2026-10-15T23:28:31Z
+```
+Can you make it so I can talk to Claude directly inside the vigilant app and it automatically connects me to whichever claude account/session is active at that particular time in the repo? Basically I should be able to use these Claude chats I'm doing right now but inside the vigilant app. And if possible, include Claude usage meters
+```
