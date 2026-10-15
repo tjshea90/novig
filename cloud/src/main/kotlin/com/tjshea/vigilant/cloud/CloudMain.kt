@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.cloud
 
+import com.tjshea.vigilant.data.cloud.CloudBids
 import com.tjshea.vigilant.data.cloud.CloudConfig
 import com.tjshea.vigilant.data.cloud.CloudEngine
 import com.tjshea.vigilant.data.cloud.CloudFeed
@@ -11,6 +12,7 @@ import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.novig.NovigPublicClient
 import com.tjshea.vigilant.data.novig.lab.gh.EdgeLog
 import com.tjshea.vigilant.data.novig.lab.gh.EdgeRow
+import com.tjshea.vigilant.data.novig.trading.maker.BidCandidates
 import com.tjshea.vigilant.data.pinnodds.DayJournal
 import com.tjshea.vigilant.data.scanner.Scanner
 import com.tjshea.vigilant.data.store.JsonFileStore
@@ -67,6 +69,9 @@ fun main(args: Array<String>) = runBlocking {
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
+        // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
+        bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
+        publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
         engine = "github-actions", runId = runId, log = log::invoke, sourceNames = sources::names,
     )
@@ -131,6 +136,8 @@ internal class Git(private val token: String) {
  */
 internal class Publisher(private val dir: File, private val repo: String, private val token: String, private val git: Git, private val logTail: () -> String = { "" }) {
     private var feedBytes: ByteArray? = null
+    private var bidsBytes: ByteArray? = null
+    private var bidsGone = false
     private var status: CloudStatus? = null
     private var dirty = false
     private var lastPushAt = 0L
@@ -140,9 +147,18 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     @Synchronized
     fun stage(feed: CloudFeed?, st: CloudStatus): String? {
         if (feed != null) feedBytes = CloudFeed.encode(feed)
-        status = st.copy(feedBytes = feedBytes?.size ?: 0)
+        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0)
         dirty = true
         return lastProblem
+    }
+
+    /** The bid desk's candidate lines (`bids.json.gz`); an empty list (bids switched off on the phone) takes the file away so nothing stale lingers. Goes out with the next push. */
+    @Synchronized
+    fun stageBids(b: CloudBids) {
+        if (b.lines.isEmpty() && b.partial.not() && bidsBytes == null && false) return
+        if (b.lines.isEmpty() && b.atMs > 0 && b.configRev >= 0 && b.isGone) { bidsBytes = null; bidsGone = true } else { bidsBytes = CloudBids.encode(b); bidsGone = false }
+        status = status?.copy(bidsBytes = bidsBytes?.size ?: 0)
+        dirty = true
     }
 
     @Synchronized

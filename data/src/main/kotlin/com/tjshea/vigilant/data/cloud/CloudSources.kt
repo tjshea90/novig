@@ -18,10 +18,12 @@ import com.tjshea.vigilant.data.reference.Op4PropsSource
 import com.tjshea.vigilant.data.reference.Op4Store
 import com.tjshea.vigilant.data.reference.OpGamesSource
 import com.tjshea.vigilant.data.reference.OpPropsSource
+import com.tjshea.vigilant.data.reference.ParlayInjuries
 import com.tjshea.vigilant.data.reference.ParlayPeriodSource
 import com.tjshea.vigilant.data.reference.ParlayPropsSource
 import com.tjshea.vigilant.data.reference.ParlaySourceQuality
 import com.tjshea.vigilant.data.reference.PinnapiClient
+import com.tjshea.vigilant.data.reference.PlayerOut
 import com.tjshea.vigilant.data.reference.PolymarketClient
 import com.tjshea.vigilant.data.reference.PropLineClient
 import com.tjshea.vigilant.data.reference.PropLinePropsSource
@@ -37,6 +39,8 @@ import com.tjshea.vigilant.data.reference.UnabatedPropsSource
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
