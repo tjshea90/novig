@@ -75,6 +75,11 @@ class CloudEngine(
     @Volatile private var lastScanEndedAt = 0L
     @Volatile private var lastScanForRefresh = 0L
     @Volatile private var lastRestartAt = 0L
+    /** The settings revision the running scan was priced under, and whether the phone has since changed something that only the NEXT scan applies. */
+    @Volatile private var pricedRev = 0L
+    @Volatile private var settingsPending = false
+    /** What the last finished scan said about itself (Novig reads, throttling, each feed's answer), a few hundred characters for the heartbeat. */
+    @Volatile private var scanNote = ""
     private val progress = AtomicReference<ScanProgress?>(null)
     @Volatile private var lastPublished: CloudFeed? = null
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
@@ -117,8 +122,11 @@ class CloudEngine(
         var cfg = cfg0
         // The settings the scan READS under stay as they were when it began; the list is filtered under the newest ones (a raised minimum edge shows at once, no scan is thrown away for it).
         val scanSettings = forCloud(cfg0.settings)
-        val scanKey = CloudScanKey.of(cfg0.settings)
+        val fetchKey = CloudScanKey.fetchKey(cfg0.settings)
+        val scanKey = CloudScanKey.scanKey(cfg0.settings)
         var filterSettings = scanSettings
+        pricedRev = cfg0.rev
+        settingsPending = false
         val partial = AtomicReference<ScanResult?>(null)
         val feedSources = sources(scanSettings)
         val names = sourceNames(scanSettings)
@@ -165,8 +173,12 @@ class CloudEngine(
                         newer.refreshAtMs > handledRefresh -> { handledRefresh = newer.refreshAtMs; scanForRefresh = newer.refreshAtMs }
                         // Settings that change what is READ (a league, a feed, days ahead...) start the scan again, at most once in restartEveryMs; the rest (the minimum edge, odds limits, order, every
                         // phone-only setting) only change how the finished list is filtered.
-                        CloudScanKey.of(newer.settings) != scanKey && now - lastRestartAt >= restartEveryMs -> { restartReason = "settings changed"; job.cancel(CancellationException(restartReason)); break }
-                        else -> if (newer.rev != cfg.rev) { cfg = cfg.copy(rev = newer.rev); filterSettings = forCloud(newer.settings) }
+                        CloudScanKey.fetchKey(newer.settings) != fetchKey && now - lastRestartAt >= restartEveryMs -> { restartReason = "settings changed"; job.cancel(CancellationException(restartReason)); break }
+                        else -> if (newer.rev != cfg.rev) {
+                            cfg = cfg.copy(rev = newer.rev)
+                            filterSettings = CloudScanKey.withFilters(scanSettings, newer.settings)
+                            settingsPending = CloudScanKey.scanKey(newer.settings) != scanKey
+                        }
                     }
                 }
             }
@@ -189,6 +201,7 @@ class CloudEngine(
             return@supervisorScope false
         }
         scanning = false
+        scanNote = describe(report)
         val result = report.result
         if (result == null) {
             problem = report.errors.firstOrNull()?.take(160) ?: "the scan returned nothing"
@@ -219,8 +232,17 @@ class CloudEngine(
             scanning = scanning && !idle, scanStartedAtMs = scanStartedAt, progressStep = if (scanning) p?.step.orEmpty() else "", progressDone = if (scanning) p?.done ?: 0 else 0, progressTotal = if (scanning) p?.total ?: 0 else 0,
             ackedRefreshAtMs = handledRefresh, scanRefreshAtMs = scanForRefresh, lastScanStartedAtMs = lastScanStartedAt, lastScanEndedAtMs = lastScanEndedAt, lastScanForRefreshAtMs = lastScanForRefresh,
             novigAgeMedianS = lastAges.novigMedianS, novigAgeMaxS = lastAges.novigMaxS, fairAgeMedianS = lastAges.fairMedianS, fairAgeMaxS = lastAges.fairMaxS,
+            pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote,
         )
     }
+
+    /** A scan's own account of itself, short: what Novig gave, whether it throttled, and what each feed said (errors included). Never a key. */
+    private fun describe(r: com.tjshea.vigilant.data.scanner.ScanReport): String = buildString {
+        append("Novig books: ${r.booksFetched} read, ${r.booksNotModified} unchanged, ${r.booksFromCache} from cache, ${r.booksTooLate} left out as too late")
+        r.retryAfterSeconds?.let { append("; Novig asked us to slow down ${it}s") }
+        if (r.sources.isNotEmpty()) append("; feeds: " + r.sources.joinToString(", ") { "${it.id} ${it.fetched}+${it.reused}" + (it.error?.let { e -> " ERR ${e.take(50)}" } ?: "") })
+        if (r.errors.isNotEmpty()) append("; errors: " + r.errors.take(3).joinToString(" | ") { it.take(80) })
+    }.take(700)
 
     companion object {
         /** The settings the cloud scans under: the phone's, with the parts that only make sense on the phone switched off. */

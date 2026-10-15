@@ -90,6 +90,11 @@ data class CloudStatus(
     val novigAgeMaxS: Long = -1L,
     val fairAgeMedianS: Long = -1L,
     val fairAgeMaxS: Long = -1L,
+    /** The settings revision the running (or last) scan was priced under, and whether the phone changed something since that only the next scan applies ([CloudScanKey]). */
+    val pricedConfigRev: Long = 0L,
+    val settingsPending: Boolean = false,
+    /** The last finished scan's account of itself: Novig reads, throttling, each feed's answer and errors. */
+    val scanNote: String = "",
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
