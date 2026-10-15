@@ -88,9 +88,9 @@ python3 -I "$D/tools/rotation.py" selftest >/dev/null 2>&1; expect "rotation sel
 
 # 11a. wait-free: exits 0 at once when the lease is free; times out (exit 1) while a live session holds it; an interactive takeover of a routine leaves a rotation-paused note
 A release >/dev/null 2>&1
-(COORD_HOME="$T/a" COORD_LABEL=acctA COORD_WAIT_POLL_S=1 python3 -I "$D/tools/coord.py" wait-free --max-min 0.05 >/dev/null 2>&1); expect "wait-free returns 0 when the lease is free" 0 $?
+(COORD_WAIT_POLL_S=1 A wait-free --max-min 0.05 >/dev/null 2>&1); expect "wait-free returns 0 when the lease is free" 0 $?
 A acquire --kind routine --task "ENGINEER" >/dev/null 2>&1
-(COORD_HOME="$T/b" COORD_LABEL=acctB COORD_WAIT_POLL_S=1 python3 -I "$D/tools/coord.py" wait-free --max-min 0.05 >/dev/null 2>&1); expect "wait-free times out (1) while a routine holds the lease" 1 $?
+(COORD_WAIT_POLL_S=1 B wait-free --max-min 0.05 >/dev/null 2>&1); expect "wait-free times out (1) while a routine holds the lease" 1 $?
 B acquire --kind interactive >/dev/null 2>&1
 B board 20 2>/dev/null | grep -q "rotation-paused label=acctA" && ok "taking a routine's lease posts rotation-paused for it" || bad "no rotation-paused note after the takeover"
 B release >/dev/null 2>&1
