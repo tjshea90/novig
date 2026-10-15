@@ -36,7 +36,9 @@ import java.io.File
  *
  * Free sources only unless `SGO_API_KEY` is present (SportsGameOdds' scores and closes are flat-rate on the Pro plan). It places no order and holds no trading key.
  */
-fun main(args: Array<String>) = runBlocking {
+fun main(args: Array<String>) { runBlocking { gradeMain(args) } }
+
+private suspend fun gradeMain(args: Array<String>) {
     fun v(name: String) = args.indexOf(name).takeIf { it >= 0 }?.let { args.getOrNull(it + 1) }
     val journalDir = File(v("--journal") ?: error("--journal DIR"))
     val newDir = File(v("--new") ?: error("--new DIR")).apply { mkdirs() }
