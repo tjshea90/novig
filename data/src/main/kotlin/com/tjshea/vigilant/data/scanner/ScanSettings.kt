@@ -922,6 +922,18 @@ data class ScanSettings(
     /** Save every bet, bid and the scan study's days to GitHub's `phone-data` branch automatically (Tj, 2026-10-14), whenever a GitHub token is saved in Settings › Cloud scan. */
     val cloudSave: Boolean get() = gates.cloudSave
 
+    /**
+     * The bid desk (Vigilant-priced bids on) needs EVERY priced line, not only the +EV ones the GitHub engine lists, so with bids on the phone scans itself (Tj, 2026-10-15 review: a cloud list starved the
+     * bids: a +EV row is already cheaper to take than to bid on, so no bid is made from it). CNO-priced bids never read Vigilant's scan.
+     */
+    val bidsNeedFullScan: Boolean get() = (maker || makerRecommend) && makerSource == BidSource.VIGILANT
+
+    /**
+     * The scan is the GitHub engine's (the phone adopts its list, the engine mirrors these settings): the switch is on, scanning is not paused, the kill switch is not thrown, and no bid desk needs every priced
+     * line ([bidsNeedFullScan]). When false with [cloudScan] on, the engine is told to stand down, so it spends no minutes and no API credits for a list nothing would show.
+     */
+    val cloudDrives: Boolean get() = cloudScan && !paused && !killed && !bidsNeedFullScan
+
     /** The scanner choice as it runs. */
     val scannerNow: ScannerMode get() = scanner
 
