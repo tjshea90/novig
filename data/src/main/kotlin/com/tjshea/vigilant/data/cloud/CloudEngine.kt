@@ -202,6 +202,7 @@ class CloudEngine(
         }
         scanning = false
         scanNote = describe(report)
+        log("scan report: $scanNote")
         val result = report.result
         if (result == null) {
             problem = report.errors.firstOrNull()?.take(160) ?: "the scan returned nothing"
