@@ -5194,3 +5194,12 @@ Findings: the 1-second "scan" only adopted the last published list (no command w
 - [x] TCL9a `CloudConfig.refreshAtMs`, `CloudStatus` scan/ack/progress/lastScan/ages fields, `CloudEngine` (refresh restart + ack, progress, 3 s config reads, `CloudScanKey`, no pause after a restart, status every 10 s), `CloudCurrency`, `CloudText` (`CloudEngineTest`, `CloudTextTest`), phone `CloudLink.requestScan`, `MainViewModel.scan` cloud branch, Feed cloud bar + busy Scan button/pull + progress bar.
 - [x] TCL9b v0.101.0 shipped and recorded (release tag pushed first try); restart the engine once to run the new engine code; read the first refresh round trip (request time, ack time, scan time) from `cloud-feed` status.
 - [ ] TCL9c Full priced list for the bid desk and auto-bet in cloud mode (the cloud list is +EV rows only): slim encoding of every priced line, memory check on the phone (TCL6 CloudReferenceSource).
+
+## TCL10: review, fix, full tests, simplify, mirror settings, refresh always scans, freshness at a glance (Tj, 2026-10-15)
+Tj: "Fix anything that needs to be fixed, run full tests protocol, simplify and clean up any settings, make the code optimal and efficient, make sure the settings are properly mirrored to GitHub, look for contradictory or unneeded settings, make sure whenever I pull down to refresh the scan it tells GitHub to send me a fresh scan, make sure GitHub is sending me current odds and there is a mechanism by which I can quickly see the freshness of the odds."
+- [ ] TCL10a Read the live state first (cloud-feed status, cloud-config, phone-data, engine run) and the cloud code end to end; list every defect found in research/cloud_review_2026-10-15.md.
+- [ ] TCL10b Fix the defects (each with a test); simplify the Cloud scan settings page (contradictions: switches that do nothing, duplicated paths).
+- [ ] TCL10c Settings mirror: prove with a test that every ScanSettings field is either in the scan key, filter-only or phone-only (no field unclassified by accident).
+- [ ] TCL10d Pull to refresh: prove the round trip end to end (request -> config -> engine ack -> fresh scan -> list newer than the request) and that a list older than the request is never shown as the answer.
+- [ ] TCL10e Freshness at a glance: a chip on the Feed top bar (green/amber/red with the age) and per-bet age in the cards, from measured stamps.
+- [ ] TCL10f Full tests protocol (.claude/skills/test-protocols), ship, release, record.
