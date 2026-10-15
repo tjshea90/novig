@@ -139,20 +139,20 @@ object CloudCodec {
 
     // --- parts ---------------------------------------------------------------------------------------------------------------------------------------------
 
-    private fun event(e: NovigEvent) = buildJsonObject {
+    internal fun event(e: NovigEvent) = buildJsonObject {
         put("id", e.eventId); put("sp", e.sport); put("lg", e.league); put("st", e.status); put("ds", e.description); put("ts", e.startsTs)
     }
 
     private fun event(j: JsonObject) = NovigEvent(j.str("id"), j.str("sp"), j.str("lg"), j.str("st"), j.str("ds"), j.lng("ts")!!)
 
-    private fun market(m: NovigMarket) = buildJsonObject {
+    internal fun market(m: NovigMarket) = buildJsonObject {
         put("id", m.marketId); put("ev", m.eventId); put("ty", m.marketType); put("st", m.status); put("ds", m.description); put("ts", m.startsTs)
         m.fee?.let { f -> put("fee", buildJsonObject { put("c", f.coefficient); put("m", f.makerCredit); put("ch", f.charged.name) }) }
         put("oc", buildJsonArray { m.outcomes.forEach { add(outcome(it)) } })
         m.strike?.let { put("sk", it) }
     }
 
-    private fun market(j: JsonObject) = NovigMarket(
+    internal fun market(j: JsonObject) = NovigMarket(
         marketId = j.str("id"), eventId = j.str("ev"), marketType = j.str("ty"), status = j.str("st"), description = j.str("ds"), startsTs = j.lng("ts")!!,
         fee = j["fee"]?.jsonObject?.let { MarketFee(it.dbl("c")!!, it.dbl("m")!!, FeeCharge.valueOf(it.str("ch"))) },
         outcomes = j["oc"]!!.jsonArray.map { outcome(it.jsonObject) },
@@ -191,17 +191,17 @@ object CloudCodec {
 
     private fun book(j: JsonObject) = BookPrices(j.str("k"), j.str("t"), j["o"]!!.jsonArray.map { it.num()!! }, j.lng("u"))
 
-    private fun doubles(l: List<Double>) = buildJsonArray { l.forEach { add(JsonPrimitive(it)) } }
-    private fun strings(l: List<String>) = buildJsonArray { l.forEach { add(JsonPrimitive(it)) } }
+    internal fun doubles(l: List<Double>) = buildJsonArray { l.forEach { add(JsonPrimitive(it)) } }
+    internal fun strings(l: List<String>) = buildJsonArray { l.forEach { add(JsonPrimitive(it)) } }
 
-    private fun JsonObject.obj(k: String) = this[k]!!.jsonObject
-    private fun JsonObject.str(k: String) = (this[k] as JsonPrimitive).content
-    private fun JsonObject.strOrNull(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.contentOrNull
-    private fun JsonObject.dbl(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.doubleOrNull
-    private fun JsonObject.lng(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.longOrNull
-    private fun JsonObject.int(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.intOrNull
-    private fun JsonElement.num() = (this as? JsonPrimitive)?.doubleOrNull
-    private fun JsonElement.lng() = (this as? JsonPrimitive)?.longOrNull
-    private fun JsonElement.int() = (this as? JsonPrimitive)?.intOrNull
-    private fun JsonElement.str() = (this as JsonPrimitive).content
+    internal fun JsonObject.obj(k: String) = this[k]!!.jsonObject
+    internal fun JsonObject.str(k: String) = (this[k] as JsonPrimitive).content
+    internal fun JsonObject.strOrNull(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.contentOrNull
+    internal fun JsonObject.dbl(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.doubleOrNull
+    internal fun JsonObject.lng(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.longOrNull
+    internal fun JsonObject.int(k: String) = (this[k] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.intOrNull
+    internal fun JsonElement.num() = (this as? JsonPrimitive)?.doubleOrNull
+    internal fun JsonElement.lng() = (this as? JsonPrimitive)?.longOrNull
+    internal fun JsonElement.int() = (this as? JsonPrimitive)?.intOrNull
+    internal fun JsonElement.str() = (this as JsonPrimitive).content
 }
