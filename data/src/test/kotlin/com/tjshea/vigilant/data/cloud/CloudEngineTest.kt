@@ -301,4 +301,43 @@ class CloudEngineTest {
         assertTrue(published.any { it.first?.rows?.size == 2 })
         assertTrue(published.all { it.second.bidsAtMs == 0L })
     }
+
+    // ---- the engine's Novig route and ranking, said in the status (TCL13) --------------------------------------------------------
+
+    @Test
+    fun `each scan prepares the engine's connections under the settings it reads, and the status carries how Novig is read and the API ranking`() = runBlocking {
+        val prepared = CopyOnWriteArrayList<ScanSettings>()
+        val scanner = object : OddsScanner {
+            override suspend fun scan(settings: ScanSettings, sources: List<ReferenceSource>, pinned: Set<String>, onProgress: (ScanProgress) -> Unit, onPartial: (ScanResult) -> Unit): ScanReport = report(result("a"))
+            override suspend fun recheck(settings: ScanSettings, marketIds: Collection<String>, onProgress: (Int, Int) -> Unit) = RecheckReport(null, 0, 0, null)
+            override suspend fun reprice(settings: ScanSettings): ScanResult? = null
+            override suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = emptySet()
+            override fun sourceRanking(): String? = "SGO (p90 20s) > ParlayAPI (p90 2m)"
+        }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = CloudEngine(
+            scanner = scanner, sources = { emptyList() }, config = { on }, publish = { f, s -> published += f to s; null },
+            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20,
+            prepare = { prepared += it }, novigRoute = { "Novig read-only key active: 14 reads a second, websocket on" },
+        )
+        e.run(untilMs = System.currentTimeMillis() + 120)
+        assertTrue("prepared before a scan, under the engine's own settings", prepared.isNotEmpty() && prepared.all { !it.includeLive })
+        val st = published.map { it.second }.last()
+        assertEquals("Novig read-only key active: 14 reads a second, websocket on", st.novigRoute)
+        assertEquals("SGO (p90 20s) > ParlayAPI (p90 2m)", st.ranking)
+    }
+
+    @Test
+    fun `a connection that cannot be prepared never stops the scan`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> report(result("a", "b")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = CloudEngine(
+            scanner = scanner, sources = { emptyList() }, config = { on }, publish = { f, s -> published += f to s; null },
+            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20,
+            prepare = { throw IllegalStateException("socket") }, novigRoute = { throw IllegalStateException("route") },
+        )
+        e.run(untilMs = System.currentTimeMillis() + 120)
+        assertTrue(published.any { it.first?.rows?.size == 2 })
+        assertTrue(published.all { it.second.novigRoute == "" })
+    }
 }
