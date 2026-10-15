@@ -125,6 +125,46 @@ def missed_slots(roster, notes, now):
     return out
 
 
+def paused_slots(roster, notes, now):
+    """Slots whose routine was stopped because Tj arrived (a 'rotation-paused label=X date=D' note from coord.acquire) and that no later note of the routine's account or a cover resolved:
+    (slot, day, instant, tag, "PAUSED"). No grace: it is resumable as soon as the lease is free. Pure."""
+    from zoneinfo import ZoneInfo
+    accounts = roster.get("accounts", [])
+    tags = [a["tag"] for a in accounts]
+    out = []
+    for meta, subject in notes:
+        if not subject.startswith("rotation-paused"):
+            continue
+        kv = dict(p.split("=", 1) for p in subject.split()[1:] if "=" in p)
+        tag, date = kv.get("label", ""), kv.get("date", "")
+        if tag not in tags or not date:
+            continue
+        try:
+            at = datetime.datetime.fromisoformat(meta.get("at", "").replace("Z", "+00:00"))
+            day = datetime.date.fromisoformat(date)
+        except Exception:
+            continue
+        if (now - at).total_seconds() > LOOKBACK_S:
+            continue
+        s = tags.index(tag)
+        resolved = False
+        for m2, sub2 in notes:
+            try:
+                at2 = datetime.datetime.fromisoformat(m2.get("at", "").replace("Z", "+00:00"))
+            except Exception:
+                continue
+            if at2 <= at:
+                continue
+            if m2.get("from", "").split("/")[0] == tag and (sub2.split(" ")[0] in DUTY_WORDS or sub2.startswith("rotation-resumed")):
+                resolved = True
+            if sub2.startswith("rotation-cover") and ("slot=%d" % s) in sub2 and ("date=%s" % date) in sub2:
+                resolved = True
+        if not resolved:
+            h, m = SLOTS[s].split(":")
+            out.append((s, day, datetime.datetime(day.year, day.month, day.day, int(h), int(m), tzinfo=ZoneInfo(ZONE)), tag, "PAUSED"))
+    return out
+
+
 def selftest():
     import datetime as dt
     z = dt.timezone.utc
@@ -144,6 +184,14 @@ def selftest():
     assert [x[4] for x in interrupted if x[0] == 2] == ([want_state] if want_state else []), interrupted
     done = missed_slots(roster, notes + [({"from": "c/zz", "at": "2026-10-15T23:21:00Z"}, "rotation-checkin slot=2"), ({"from": "c/zz", "at": "2026-10-16T01:00:00Z"}, "%s 2026-10-15" % duty_for(2, d15))], now)
     assert [x for x in done if x[0] == 2] == [], done
+    # paused because Tj arrived: PAUSED until a later duty/resume note of that account or a cover; no grace
+    pn = [({"from": "t/zz", "at": "2026-10-16T11:40:00Z"}, "rotation-paused label=c date=2026-10-16")]
+    pz = paused_slots(roster, pn, now + datetime.timedelta(hours=1))
+    assert [(x[0], x[4]) for x in pz] == [(2, "PAUSED")], pz
+    assert paused_slots(roster, pn + [({"from": "c/q", "at": "2026-10-16T12:30:00Z"}, "rotation-resumed label=c")], now + datetime.timedelta(hours=1)) == []
+    assert paused_slots(roster, pn + [({"from": "c/q", "at": "2026-10-16T12:30:00Z"}, "WATCH 2026-10-16")], now + datetime.timedelta(hours=1)) == []
+    assert paused_slots(roster, pn + [({"from": "a/q", "at": "2026-10-16T12:30:00Z"}, "rotation-cover slot=2 date=2026-10-16")], now + datetime.timedelta(hours=1)) == []
+    assert paused_slots(roster, [({"from": "t/zz", "at": "2026-10-16T11:40:00Z"}, "rotation-paused label=zzz date=2026-10-16")], now) == [], "an unknown account is ignored"
     # covered once by someone: gone
     notes.append(({"from": "a/yy", "at": "2026-10-16T11:30:00Z"}, "rotation-cover slot=2 date=2026-10-15"))
     assert missed_slots(roster, notes, now) == []
@@ -227,12 +275,15 @@ def checkin(tag):
 def missed():
     roster = read_roster()
     now = datetime.datetime.now(datetime.timezone.utc)
-    m = missed_slots(roster, board_notes(), now)
+    notes = board_notes()
+    m = paused_slots(roster, notes, now) + missed_slots(roster, notes, now)
     if not m:
         print("ROTATION  no missed slots")
         return 0
     for i, (s, day, inst, tag, state) in enumerate(m[:6]):
         what = "its whole duty (%s), under the usual skip rules" % duty_for(s, day) if i == 0 else "WATCH checks only"
+        if state == "PAUSED":
+            what = "resume it from the routine-wip-%s branch (read CHECKPOINT.md), once the lease is free; then post: rotation-resumed" % day.isoformat()
         print("ROTATION  %s slot %d (%s ET on %s, account %s); duty then: %s; cover with: %s" % (state, s, SLOTS[s], day.isoformat(), tag, duty_for(s, day), what))
     print("ROTATION  cover at most %d (the first with the whole duty, the next with WATCH only), then for each: python3 -I tools/rotation.py cover <slot> --date <date>" % MAX_COVER)
     return 0
