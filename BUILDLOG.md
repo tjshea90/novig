@@ -289,3 +289,4 @@ day that changes.
 | v0.108.0 | code 287 | 2026-10-15T14:45Z | v0.108.0: phone shows what the GitHub engine did, engine sleeps under 50 cents, missed-slot cover
 | v0.109.0 | code 288 | 2026-10-15T20:16Z | v0.109.0: Engine dashboard inside the app (Settings > Engine dashboard, tap the Feed's GitHub bar), per-API health, usage meters, trend graphs; wallet shows not-read instead of 0; rotation failover
 | v0.109.1 | code 289 | 2026-10-15T22:09Z | v0.109.1: API keys added or changed in the phone app upload to GitHub secrets by themselves while the cloud scan is on
+| v0.110.0 | code 290 | 2026-10-15T22:23Z | v0.110.0: engine governs APIs + advice; Claude messages and settings requests reach the phone; API switches mirror both ways
