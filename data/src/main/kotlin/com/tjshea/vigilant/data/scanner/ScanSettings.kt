@@ -1562,5 +1562,13 @@ data class ScanGuards(
      * ten days is ~7,700 Novig prices and 8 minutes, by when the fair odds read at its start are too old to bid on). Never saved; a scan Tj starts is always the full reach.
      */
     @Transient val nearScan: Boolean = false,
-
+    /**
+     * The GitHub engine only, never saved (Tj, 2026-10-15: "Is this speed too slow for pre game betting and bidding?"): a long scan reads its fair odds once, at its start, and then spends minutes on Novig's books, so the
+     * odds behind the bets it lists were 13-19 minutes old by the end (measured on the engine, 16 Novig reads a second, 9,619 books in 537 s). With this on, while the scan reads Novig, the games starting within [hotHours]
+     * get their fair odds read again from the feeds that cost nothing per read or are flat-rate, and the Novig books of the likeliest +EV lines among them are read again, every [hotEverySeconds]: what Tj can bet soonest is
+     * priced from odds a minute or two old instead of ten. The far games keep the scan's own pace. See `Scanner.hotFair` and `BookPump.hotStep`.
+     */
+    @Transient val hotRefresh: Boolean = false,
+    @Transient val hotHours: Int = 12,
+    @Transient val hotEverySeconds: Int = 45,
 )
