@@ -21,6 +21,8 @@ B() { COORD_REPO="$T/work" COORD_HOME="$T/b" COORD_LABEL=acctB COORD_CACHE_S=0 C
 # 1. the first session takes the lease (and creates the branch)
 A acquire --kind interactive --task "test" >/dev/null 2>&1; expect "A takes a free lease" 0 $?
 git -C "$T/origin.git" rev-parse -q --verify refs/heads/claude-coord >/dev/null && ok "the claude-coord branch exists on the remote" || bad "no claude-coord branch"
+# 1b. a session that changes its label keeps its lease (found in live use: a renamed session was held back as "another session")
+COORD_REPO="$T/work" COORD_HOME="$T/a" COORD_LABEL=acctA-renamed COORD_CACHE_S=0 COORD_RENEW_S=0 python3 -I "$D/tools/coord.py" check >/dev/null 2>&1; expect "a renamed session is still itself" 0 $?
 # 2. a second session is turned away, and its push guard says no
 B acquire >/dev/null 2>&1; expect "B is refused while A holds the lease" 3 $?
 B check >/dev/null 2>&1; expect "B's push check says held back" 3 $?

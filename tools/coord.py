@@ -93,7 +93,7 @@ def identity():
     if os.environ.get("COORD_KIND") in ("interactive", "routine"):
         d["kind"] = os.environ["COORD_KIND"]
     save(ID_FILE, d)
-    d["id"] = d["label"] + "/" + d["nonce"]
+    d["id"] = d["nonce"]  # the lease is keyed to the session, never to its label (a renamed session must still be itself)
     return d
 
 
@@ -157,7 +157,7 @@ def verdict(lease, me, t):
     """free | mine | stale | other"""
     if not lease or not lease.get("holder"):
         return "free"
-    if lease["holder"] == me["id"]:
+    if lease["holder"] == me["id"] or str(lease["holder"]).endswith("/" + me["nonce"]):
         return "mine"
     if t - int(lease.get("hb", 0)) > int(lease.get("leaseS", LEASE_S)):
         return "stale"
@@ -166,7 +166,10 @@ def verdict(lease, me, t):
 
 def describe(lease, t):
     age = (t - int(lease.get("hb", t))) // 60
-    return "%s (%s, last heartbeat %d min ago, working on: %s)" % (lease.get("holder"), lease.get("kind", "?"), age, (lease.get("task") or "-")[:80])
+    who = lease.get("holder") or "?"
+    if lease.get("label") and "/" not in str(who):
+        who = "%s/%s" % (lease["label"], who)
+    return "%s (%s, last heartbeat %d min ago, working on: %s)" % (who, lease.get("kind", "?"), age, (lease.get("task") or "-")[:80])
 
 
 def cache_put(lease):
@@ -174,10 +177,10 @@ def cache_put(lease):
 
 
 def new_lease(me, kind, task, old, t):
-    mine_already = bool(old and old.get("holder") == me["id"])
+    mine_already = bool(old and (old.get("holder") == me["id"] or str(old.get("holder")).endswith("/" + me["nonce"])))
     since = old.get("since", t) if mine_already else t
     keep = (old or {}).get("task", "") if mine_already else ""
-    return {"v": 1, "holder": me["id"], "kind": kind, "task": task if task else keep,
+    return {"v": 1, "holder": me["id"], "label": me["label"], "kind": kind, "task": task if task else keep,
             "since": since, "sinceIso": iso(since), "hb": t, "hbIso": iso(t), "leaseS": LEASE_S}
 
 
@@ -221,7 +224,7 @@ def acquire(kind=None, task=None, force=False, quiet=False):
             cache_put(mine)
             save(STATE_FILE, {**load(STATE_FILE, {}), "lastRenew": t})
             if not quiet:
-                print("COORD  lease is yours (%s, %s)%s" % (me["id"], kind, ("; " + note) if note else ""))
+                print("COORD  lease is yours (%s/%s, %s)%s" % (me["label"], me["nonce"], kind, ("; " + note) if note else ""))
             return 0
         # lost the race: read again and decide again
     return 2
@@ -297,7 +300,7 @@ def release():
     except Exception:
         return 2
     lease = read_lease()
-    if lease and lease.get("holder") == me["id"]:
+    if lease and verdict(lease, me, now()) == "mine":
         t = now()
         ok = push({LEASE_FILE: json.dumps({"v": 1, "holder": None, "hb": t, "hbIso": iso(t), "leaseS": LEASE_S}, indent=1) + "\n"}, "release: " + me["id"])
         cache_put({"holder": None})
@@ -310,7 +313,7 @@ def release():
 # ---- the board -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def board_text(me, to, subject, body):
-    return "from: %s\nto: %s\nat: %s\nsubject: %s\n\n%s\n" % (me["id"], to, iso(now()), subject.replace("\n", " ")[:120], body)
+    return "from: %s/%s\nto: %s\nat: %s\nsubject: %s\n\n%s\n" % (me["label"], me["nonce"], to, iso(now()), subject.replace("\n", " ")[:120], body)
 
 
 def post(subject, body="", to="all"):
@@ -372,7 +375,7 @@ def status(do_acquire, kind, task):
     elif do_acquire and v == "other" and (kind or me["kind"]) == "interactive" and lease.get("kind") == "routine":
         pass  # Tj is here: the first command of a real session takes the lease from a routine; resume.sh only reports
     if v == "mine":
-        print("  COORD you hold the lease (%s, %s)" % (me["id"], me["kind"]))
+        print("  COORD you hold the lease (%s/%s, %s)" % (me["label"], me["nonce"], me["kind"]))
     elif v == "free":
         print("  COORD nobody holds the lease; take it before editing: bash tools/coord.py acquire")
     elif v == "stale":
@@ -423,7 +426,7 @@ def main(argv):
                 d["label"] = "".join(c for c in args.label if c.isalnum() or c in "-_")[:24] or "acct-unknown"
                 save(ID_FILE, {k: d[k] for k in ("nonce", "label", "kind")})
             me = identity()
-            print(me["id"], me["kind"])
+            print("%s/%s" % (me["label"], me["nonce"]), me["kind"])
             return 0
     except SystemExit:
         raise
