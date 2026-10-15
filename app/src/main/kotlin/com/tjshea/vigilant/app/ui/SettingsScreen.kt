@@ -1517,6 +1517,10 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
         "Scan on GitHub", "On: this phone makes no scan of its own and calls no odds API for it. Off: the app is what it was.",
         s.cloudScan, tag = "cloudScanSwitch", enabled = u.hasToken,
     ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudScan = v)) } }
+    SwitchRow(
+        "Only 8 am to 10 pm Eastern", "GitHub's engine starts by itself at 8:00 and stops at 22:00 America/New_York every day (daylight saving included). Off: it runs round the clock.",
+        s.cloudHours, tag = "cloudHoursSwitch", enabled = u.hasToken,
+    ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudHours = v)) } }
     if (s.cloudScan && !s.cloudDrives) {
         Text(
             "Paused with scanning: GitHub's engine stands down until you resume.",
@@ -1548,6 +1552,21 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     Hint(
         if (u.novigKeyMadeAtMs > 0L) "A read-only Novig key made ${Format.age(u.novigKeyMadeAtMs, keyNow)} is on GitHub for the engine alone. It can read prices; it cannot bet or move money. Remove it to put the engine back on Novig's public routes."
         else "Makes ONE new read-only key in your Novig account for GitHub's engine alone (it can read prices, it cannot bet or move money; your trading and management keys never leave this phone), so the engine reads Novig at the key's own speed instead of the public routes' about 2 prices a second.",
+    )
+    // The subaccount's TRADING key for GitHub's autonomous orders (TCL20c): replaces the live trading key, so it asks twice.
+    var confirmTrade by remember { mutableStateOf(false) }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+        if (!confirmTrade) Button(onClick = { confirmTrade = true }, enabled = u.hasToken && !u.tradeKeyOnGitHub, modifier = Modifier.testTag("cloudSendTradeKey")) { Text(if (u.tradeKeyOnGitHub) "Trading key is on GitHub" else "Send my Novig trading key…") }
+        else {
+            Button(onClick = { confirmTrade = false; reportActions.onSendTradeKey() }, modifier = Modifier.testTag("cloudConfirmTradeKey")) { Text("Yes, replace it and send") }
+            OutlinedButton(onClick = { confirmTrade = false }) { Text("Cancel") }
+        }
+        if (u.tradeKeyOnGitHub) OutlinedButton(onClick = reportActions.onRemoveTradeKey, enabled = u.hasToken, modifier = Modifier.testTag("cloudRemoveTradeKey")) { Text("Remove it") }
+    }
+    Hint(
+        if (confirmTrade) "This REVOKES the Vigilant subaccount's current trading key at Novig (up to a minute without betting), makes a new one this phone also uses, and sends it to GitHub. It can place orders on the Vigilant subaccount; it can never move money (your management key stays on this phone). Do it with no bet in flight."
+        else if (u.tradeKeyOnGitHub) "The subaccount's trading key is on GitHub for the engine (made ${Format.age(u.tradeKeyMadeAtMs, keyNow)}). The engine orders with it only when Cloud trading is Paper or Live. Remove it to take that away."
+        else "Gives the engine the ability to place orders by itself. Cloud trading stays Off until you switch it on; nothing is ordered by this button.",
     )
     u.keysNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudKeysNote")) }
     u.status?.novigRoute?.takeIf { it.isNotBlank() && s.cloudScan }?.let { Text("GitHub reads Novig: $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudNovigRoute")) }

@@ -900,6 +900,8 @@ private fun VigilantRoot(
                         onSendCloudKeys = { vm.sendCloudKeys() },
                         onSendNovigKey = { vm.sendNovigKey() },
                         onRemoveNovigKey = { vm.removeNovigKey() },
+                        onSendTradeKey = { vm.sendTradeKey() },
+                        onRemoveTradeKey = { vm.removeTradeKey() },
                         onTestBoltKey = { share -> vm.testBoltKey(share) },
                         onTestOddsPapiFreeKey = { share -> vm.testOddsPapiFreeKey(share) },
                         onShareFeedRace = vm::shareFeedRace,

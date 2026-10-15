@@ -2367,6 +2367,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun sendCloudKeys() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendKeys() } }
     fun sendNovigKey() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendNovigKey() } }
     fun removeNovigKey() { viewModelScope.launch(Dispatchers.IO) { c.cloud.removeNovigKey() } }
+    fun sendTradeKey() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendTradeKey(); api.reloadConnection() } }
+    fun removeTradeKey() { viewModelScope.launch(Dispatchers.IO) { c.cloud.removeTradeKey() } }
     fun saveCloudNow() { viewModelScope.launch(Dispatchers.IO) { c.cloud.saveHistory() } }
 
     fun removeKalshiKey() {

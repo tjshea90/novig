@@ -223,6 +223,14 @@ object CloudKeys {
     const val NOVIG_KEY_PEM = "NOVIG_READ_KEY_PEM"
     val NOVIG = listOf(NOVIG_KEY_ID, NOVIG_KEY_PEM)
 
+    /**
+     * The Vigilant subaccount's `trading` key for the engine's orders (Tj, 2026-10-15, TCL20c): a software key made by [CloudTradeKey.swap] and sent by the phone only after Tj confirms. It can order, never move
+     * money. The management key is NOT here and never goes to GitHub ([CloudKeysTest]).
+     */
+    const val TRADE_KEY_ID = "NOVIG_TRADE_KEY_ID"
+    const val TRADE_KEY_PEM = "NOVIG_TRADE_KEY_PEM"
+    val TRADE = listOf(TRADE_KEY_ID, TRADE_KEY_PEM)
+
     val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, ODDS_API, PARLAY, BOLT)
 
     /**
