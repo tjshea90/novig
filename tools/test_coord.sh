@@ -62,7 +62,7 @@ A board 10 2>/dev/null | grep -qi "force" && ok "the forced take is on the board
 # 7. notes pass between sessions
 A post "hello from A" "line of body" >/dev/null 2>&1; expect "A posts a note" 0 $?
 B board 3 2>/dev/null | grep -q "hello from A" && ok "B reads A's note" || bad "B did not see the note"
-B status 2>/dev/null | grep -q "ANOTHER CLAUDE SESSION" && ok "status tells B who holds the repo" || bad "status text"
+OUT="$(B status 2>/dev/null)"; case "$OUT" in *"ANOTHER CLAUDE SESSION"*) ok "status tells B who holds the repo";; *) bad "status text: $OUT";; esac
 # 8. EVERY failure lets work through: an unreachable remote
 git init -q "$T/lonely"; git -C "$T/lonely" remote add origin "$T/does-not-exist.git"
 COORD_REPO="$T/lonely" COORD_HOME="$T/c" COORD_LABEL=acctC python3 -I "$D/tools/coord.py" check >/dev/null 2>&1; expect "an unreachable remote does not hold a push back" 0 $?
