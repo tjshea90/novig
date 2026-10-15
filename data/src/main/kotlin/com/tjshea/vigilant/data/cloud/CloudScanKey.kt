@@ -47,13 +47,11 @@ object CloudScanKey {
         "includeLive", "slipStake", "slipCustomStake", "apiBetStake", "apiMaxPerDay", "autoBet", "autoBetTennis", "autoBetBooks", "autoBetMinEv", "autoBetAllAgree",
         "sharpAutoBet", "sharpAlerts", "sharpConfirmBooks", "sharpConfirmMaxAgeSeconds", "sharpConfirmMinEv", "sharpConfirmViaCno", "autoBetTwoSided", "autoBetStake", "autoBetCustomStake",
         "autoBetMaxStake", "autoBetMaxOdds", "autoBetMinOdds", "autoBetFavouriteExtraEv", "propGuardShare", "propGuardMinSample", "propGuardPerGame", "autoBetKinds", "autoLock", "trackerNovigOnly",
-        "trackerHideLocked", "scanStudy", "scanStudyHidden", "autoLockMinPercent", "autoLockLive", 
-        
+        "trackerHideLocked", "scanStudy", "scanStudyHidden", "autoLockMinPercent", "autoLockLive",
         "burstRecorder", "feedRace", "altLab", "quietNotifications", "researchMode", "burstLeagues", "burstTrade", "burstTradeStake", "burstTradeMaxGame", "burstTradeMaxDay",
         "burstTradeHaltLoss", "burstTradeHalted", "pinnLive", "pinnLiveBet", "pinnLiveStake", "pinnLiveMaxGame", "pinnLiveMaxDay", "pinnLiveHaltLoss", "pinnLiveHalted", "pinnLiveMinEv", "pinnLiveMinMove",
         "pinnLiveDevig", "pinnLiveTrigger", "pinnLivePregame", "pinnLiveHoldoffSeconds", "liveBid", "liveBidReal", "liveBidHalted", "liveBidQuality", "liveBidLimits", "liveBidPresetName", "liveBidPresets",
-        "tailLive", "pinnWebsite", 
-        
+        "tailLive", "pinnWebsite",
         "presets", "presetName", "autoBetHalted", "kalshiFastPace", "miniWindow", "cnoEnabled", "cnoViewUrl", "cnoRefreshSeconds",
         "miniSource", "cnoFilters", "floatingWidget", "cnoCheckBooks", "cnoPlayerTeams", "cnoOnlyAgreed", "widgetRescanMinutes", "cnoLivePrices", "bookState", "startsWithinHours", "autoScan",
         "autoScanSeconds", "autoScanMinutes", "autoScanKeepAwake", "alertMinEv", "paused", "killed", "killedAtMs", "schema",
@@ -63,10 +61,7 @@ object CloudScanKey {
         "gates.streamScan", "gates.streamGapSeconds", "gates.streamLive", "gates.boltLiveMinCompanies",
         "gates.boltLiveMaxAgeSeconds", "gates.boltLiveMaxSpreadPoints", "gates.boltLiveReal",
         // vigGuards: the auto-bet's and the bid desk's own rules
-        "vigGuards.autoBetVigilant", "vigGuards.autoBetMinStars", "vigGuards.autoBetOverPropExtraEv", "vigGuards.betArchive", "vigGuards.betLevel", 
-        
-        // guards
-        
+        "vigGuards.autoBetVigilant", "vigGuards.autoBetMinStars", "vigGuards.autoBetOverPropExtraEv", "vigGuards.betArchive", "vigGuards.betLevel",
     )
 
     private val groups = setOf("gates", "vigGuards", "guards")

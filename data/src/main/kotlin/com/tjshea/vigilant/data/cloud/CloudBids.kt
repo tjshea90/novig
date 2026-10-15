@@ -172,7 +172,7 @@ class CloudBidLane(
         val wanted = LinkedHashSet<String>()
         for (bl in b.lines) {
             val at = books[bl.line.marketId]?.fetchedAtMs ?: bl.line.bookAtMs
-            if (at == null || now - at > REFRESH_AFTER_MS) wanted += bl.line.marketId
+            if (at == null || now - at > refreshAfterMs(bl.line.startsTs, now)) wanted += bl.line.marketId
             if (wanted.size >= maxReads) break
         }
         if (wanted.isEmpty()) return 0
@@ -203,7 +203,7 @@ class CloudBidLane(
     /** How many of the candidates' Novig sides are as new as [REFRESH_AFTER_MS] at [now], and how many there are: Diagnostics' "books ready". */
     fun readiness(now: Long): Pair<Int, Int> {
         val b = bids ?: return 0 to 0
-        val fresh = b.lines.count { bl -> (books[bl.line.marketId]?.fetchedAtMs ?: bl.line.bookAtMs)?.let { now - it <= REFRESH_AFTER_MS } == true }
+        val fresh = b.lines.count { bl -> (books[bl.line.marketId]?.fetchedAtMs ?: bl.line.bookAtMs)?.let { now - it <= refreshAfterMs(bl.line.startsTs, now) } == true }
         return fresh to b.lines.size
     }
 
@@ -217,15 +217,27 @@ class CloudBidLane(
         else {
             val (fresh, total) = readiness(now)
             add("candidate list: ${b.lines.size} lines made ${(now - b.atMs) / 1000}s ago at settings rev ${b.configRev}" + (if (b.partial) " from a scan still running" else " from a finished scan") + (if (b.unreadable > 0) " · ${b.unreadable} lines unreadable" else "") + (engine?.takeIf { it.bidsBytes > 0 }?.let { " · file ${it.bidsBytes / 1024} KB" } ?: ""))
-            add("Novig sides read in the last ${REFRESH_AFTER_MS / 1000}s: $fresh of $total · last read ${if (lastReadAtMs > 0) "${(now - lastReadAtMs) / 1000}s ago, ${lastReads} markets" else "none yet"}" + (problem?.let { " · PROBLEM: $it" } ?: ""))
+            add("Novig sides as new as the lane wants ($fresh of $total; 90 s for a game under 6 h away, 4.5 min under 48 h, 9 min further out) · last read ${if (lastReadAtMs > 0) "${(now - lastReadAtMs) / 1000}s ago, ${lastReads} markets" else "none yet"}" + (problem?.let { " · PROBLEM: $it" } ?: ""))
             add("lines the desk can judge now: ${lines(now, rules, prune = false).size} (a Novig side older than ${MakerLines.MAX_BOOK_AGE_MS / 60_000} min is no line; the fair's age is judged on this phone's clock)")
         }
         engine?.let { add("engine: candidate pass ${if (it.bidsAtMs > 0) "${(now - it.bidsAtMs) / 1000}s ago, ${it.bidsCount} lines" else "none published"} · heartbeat ${(now - it.heartbeatMs) / 1000}s ago") }
     }
 
     companion object {
-        /** A candidate's Novig side older than this is read again. */
+        /** A candidate's Novig side older than this is read again (a game under [NEAR_MS] away). */
         const val REFRESH_AFTER_MS = 90_000L
+
+        /**
+         * How old a candidate's Novig side may be before it is read again, by how near its game is: a bid only needs a book under [MakerLines.MAX_BOOK_AGE_MS] old (it says whether the bid would cross the offer and what
+         * is already bid), and a game days away moves slowly, so the far ones are read less often and the key's reads (about 14 a second) go to the games that fill first.
+         */
+        fun refreshAfterMs(startsTs: Long, now: Long): Long = when {
+            startsTs - now < NEAR_MS -> REFRESH_AFTER_MS
+            startsTs - now < MID_MS -> 3 * REFRESH_AFTER_MS
+            else -> 6 * REFRESH_AFTER_MS
+        }
+        const val NEAR_MS = 6 * 3_600_000L
+        const val MID_MS = 48 * 3_600_000L
 
         /** Why a side the phone has a bid on is no line any more: GitHub's complete list dropped it. */
         const val DROPPED = "GitHub's candidate list no longer carries this side (it stopped passing the bid rules)"

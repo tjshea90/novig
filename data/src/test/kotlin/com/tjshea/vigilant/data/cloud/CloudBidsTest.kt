@@ -234,6 +234,16 @@ class CloudBidsTest {
     }
 
     @Test
+    fun `a far game's Novig side is read less often than a near one's - the key's reads go to the games that fill first`() {
+        val soon = now + 2 * 3_600_000L
+        assertEquals(90_000L, CloudBidLane.refreshAfterMs(soon, now))
+        assertEquals(270_000L, CloudBidLane.refreshAfterMs(now + 20 * 3_600_000L, now))
+        assertEquals(540_000L, CloudBidLane.refreshAfterMs(now + 100 * 3_600_000L, now))
+        // never older than the desk's own limit for a book
+        assertTrue(CloudBidLane.refreshAfterMs(now + 1_000L * 3_600_000L, now) < MakerLines.MAX_BOOK_AGE_MS)
+    }
+
+    @Test
     fun `a line is judged at the phone's own clock - an old book or an old fair leaves it out, and a side with a bid is kept from the last list`() {
         val result = board()
         val sent = BidCandidates.from(result, settings, now, outPlayer)
@@ -282,7 +292,7 @@ class CloudBidsTest {
         val text = lane.report(now, CloudStatus(bidsAtMs = now - 30_000, bidsCount = sent.size, bidsBytes = 4096, heartbeatMs = now - 5_000), rules).joinToString("\n")
         assertTrue(text, text.contains("candidate list: ${sent.size} lines made 30s ago at settings rev 4 from a finished scan"))
         assertTrue(text, text.contains("file 4 KB"))
-        assertTrue(text, text.contains("Novig sides read in the last 90s:"))
+        assertTrue(text, text.contains("Novig sides as new as the lane wants ("))
         assertTrue(text, text.contains("engine: candidate pass 30s ago, ${sent.size} lines · heartbeat 5s ago"))
         novig.fail = "HTTP 429"
         lane.refresh(now + 200_000, 100)
