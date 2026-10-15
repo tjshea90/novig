@@ -59,8 +59,8 @@ class CloudEngine(
      * while the phone has Vigilant-priced bids on ([ScanSettings.bidsFromCloud]).
      */
     private val bidLines: (suspend (ScanResult, ScanSettings, Long) -> List<com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.BidLine>)? = null,
-    /** Publishes the candidate lines. */
-    private val publishBids: suspend (CloudBids) -> Unit = {},
+    /** Publishes the candidate lines; null = the phone no longer prices bids from them, take the file away. */
+    private val publishBids: suspend (CloudBids?) -> Unit = {},
     /** While a scan runs, a new candidate list goes out at most this often (a list is thousands of lines; a rule change sends one at once). */
     private val bidsEveryMs: Long = 45_000L,
 ) {
@@ -270,7 +270,7 @@ class CloudEngine(
         val make = bidLines ?: return
         val s = forCloud(settings)
         if (!s.bidsFromCloud) {
-            if (bidsOn) { bidsOn = false; bidsAt = 0L; bidsCount = 0; runCatching { publishBids(CloudBids(now, false, rev, emptyList())) } }
+            if (bidsOn) { bidsOn = false; bidsAt = 0L; bidsCount = 0; runCatching { publishBids(null) } }
             return
         }
         runCatching {

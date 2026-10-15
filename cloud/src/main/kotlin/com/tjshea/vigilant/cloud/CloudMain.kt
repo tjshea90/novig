@@ -137,7 +137,6 @@ internal class Git(private val token: String) {
 internal class Publisher(private val dir: File, private val repo: String, private val token: String, private val git: Git, private val logTail: () -> String = { "" }) {
     private var feedBytes: ByteArray? = null
     private var bidsBytes: ByteArray? = null
-    private var bidsGone = false
     private var status: CloudStatus? = null
     private var dirty = false
     private var lastPushAt = 0L
@@ -152,11 +151,10 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         return lastProblem
     }
 
-    /** The bid desk's candidate lines (`bids.json.gz`); an empty list (bids switched off on the phone) takes the file away so nothing stale lingers. Goes out with the next push. */
+    /** The bid desk's candidate lines (`bids.json.gz`); null (bids switched off on the phone) takes the file away so nothing stale lingers. Goes out with the next push. */
     @Synchronized
-    fun stageBids(b: CloudBids) {
-        if (b.lines.isEmpty() && b.partial.not() && bidsBytes == null && false) return
-        if (b.lines.isEmpty() && b.atMs > 0 && b.configRev >= 0 && b.isGone) { bidsBytes = null; bidsGone = true } else { bidsBytes = CloudBids.encode(b); bidsGone = false }
+    fun stageBids(b: CloudBids?) {
+        bidsBytes = b?.let { CloudBids.encode(it) }
         status = status?.copy(bidsBytes = bidsBytes?.size ?: 0)
         dirty = true
     }
@@ -175,6 +173,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
             git.run(dir, "checkout", "-q", "--orphan", "cloud-feed")
         }
         feedBytes?.let { File(dir, "feed.json.gz").writeBytes(it) }
+        File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }
         File(dir, "status.json").writeText(CloudStatus.text(st.copy(heartbeatMs = now)))
         logTail().takeIf { it.isNotBlank() }?.let { File(dir, "engine-log.txt").writeText(it + "\n") }
         git.run(dir, "add", "-A")
