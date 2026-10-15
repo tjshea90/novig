@@ -174,9 +174,11 @@ def cache_put(lease):
 
 
 def new_lease(me, kind, task, old, t):
-    since = old.get("since") if (old and old.get("holder") == me["id"]) else t
-    return {"v": 1, "holder": me["id"], "kind": kind, "task": task or (old or {}).get("task", "") if (old and old.get("holder") == me["id"]) else (task or ""),
-            "since": since, "hb": t, "leaseS": LEASE_S, "sinceIso": iso(since), "hbIso": iso(t)}
+    mine_already = bool(old and old.get("holder") == me["id"])
+    since = old.get("since", t) if mine_already else t
+    keep = (old or {}).get("task", "") if mine_already else ""
+    return {"v": 1, "holder": me["id"], "kind": kind, "task": task if task else keep,
+            "since": since, "sinceIso": iso(since), "hb": t, "hbIso": iso(t), "leaseS": LEASE_S}
 
 
 def acquire(kind=None, task=None, force=False, quiet=False):
@@ -225,26 +227,17 @@ def acquire(kind=None, task=None, force=False, quiet=False):
     return 2
 
 
-def renew(force=False):
-    me = identity()
-    st = load(STATE_FILE, {})
-    t = now()
-    if not force and t - int(st.get("lastRenew", 0)) < RENEW_EVERY_S:
-        return 0
-    try:
-        sync()
-    except Exception:
-        return 2
-    lease = read_lease()
+def maintain(me, lease, t):
+    """The lease has just been read. Mine: heartbeat when due. Free or stale: take it. Another live session's: say so. Returns 0 or 3 (or 2 when a push failed)."""
     v = verdict(lease, me, t)
     if v == "other":
-        print("COORD  LEASE LOST: %s now holds this repo. Stop editing and ask Tj; your commits stay local." % describe(lease, t), file=sys.stderr)
         cache_put(lease)
         return 3
-    return acquire(me["kind"], None, quiet=True) if v in ("free", "stale") else _heartbeat(me, lease, t)
-
-
-def _heartbeat(me, lease, t):
+    if v in ("free", "stale"):
+        return acquire(me["kind"], None, quiet=True)
+    cache_put(lease)
+    if t - int(load(STATE_FILE, {}).get("lastRenew", 0)) < RENEW_EVERY_S:
+        return 0
     mine = dict(lease)
     mine["hb"] = t
     mine["hbIso"] = iso(t)
@@ -255,35 +248,46 @@ def _heartbeat(me, lease, t):
     return 2
 
 
+def renew(force=False):
+    me = identity()
+    t = now()
+    if not force and t - int(load(STATE_FILE, {}).get("lastRenew", 0)) < RENEW_EVERY_S:
+        return 0
+    try:
+        sync()
+    except Exception:
+        return 2
+    lease = read_lease()
+    rc = maintain(me, lease, t)
+    if rc == 3:
+        print("COORD  LEASE LOST: %s now holds this repo. Stop editing and ask Tj; your commits stay local." % describe(lease, t), file=sys.stderr)
+    return rc
+
+
 def check():
-    """For tools/push.sh. 0 = go ahead, 3 = another live session holds the lease."""
+    """For tools/push.sh. 0 = go ahead (also on any failure of this tool), 3 = another live session holds the lease."""
     if os.environ.get("COORD_OFF"):
         return 0
     me = identity()
     st = load(STATE_FILE, {})
     t = now()
-    lease = st.get("lease")
-    fresh = t - int(st.get("fetchedAt", 0)) < CACHE_S
-    if fresh and lease is not None:
-        v = verdict(lease, me, t)
-        if v == "other":
-            print("COORD  push held back: %s holds this repo. Commits stay local; see tools/coord.py." % describe(lease, t), file=sys.stderr)
+    cached = st.get("lease")
+    if cached is not None and t - int(st.get("fetchedAt", 0)) < CACHE_S:
+        # at most one look at GitHub a minute: the cache is a fresh copy of the lease
+        if verdict(cached, me, t) == "other":
+            print("COORD  push held back: %s holds this repo. Commits stay local; see tools/coord.py." % describe(cached, t), file=sys.stderr)
             return 3
-        if v == "mine":
-            return renew()
-    # not cached (or the cache says free/stale): look at the branch itself
+        return 0
     try:
         sync()
     except Exception:
         return 0
     lease = read_lease()
-    v = verdict(lease, me, t)
-    if v == "other":
-        cache_put(lease)
+    rc = maintain(me, lease, t)
+    if rc == 3:
         print("COORD  push held back: %s holds this repo. Commits stay local; see tools/coord.py." % describe(lease, t), file=sys.stderr)
         return 3
-    rc = acquire(me["kind"], None, quiet=True) if v in ("free", "stale") else renew(force=True)
-    return 3 if rc == 3 else 0
+    return 0
 
 
 def release():
