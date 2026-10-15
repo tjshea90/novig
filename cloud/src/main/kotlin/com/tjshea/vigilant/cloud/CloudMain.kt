@@ -10,6 +10,9 @@ import com.tjshea.vigilant.data.cloud.CloudNovig
 import com.tjshea.vigilant.data.cloud.CloudRanking
 import com.tjshea.vigilant.data.cloud.CloudSources
 import com.tjshea.vigilant.data.cloud.CloudStatus
+import com.tjshea.vigilant.data.cloud.CloudTrader
+import com.tjshea.vigilant.data.cloud.TradeLedger
+import com.tjshea.vigilant.data.scanner.CloudTradeMode
 import com.tjshea.vigilant.data.cloud.CloudUsage
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.keys.UsageMeter
@@ -102,6 +105,12 @@ fun main(args: Array<String>) = runBlocking {
     // Novig refusing THIS runner's address ends the job early so the workflow draws another runner (AddressWatch, Tj 2026-10-15); the streak is carried from job to job in the status file.
     val prevStatus = runCatching { PreviousFeed.read(git, cfgDir, "status.json") }.getOrNull()?.let { CloudStatus.parse(it) }
     val addressWatch = novigKeyed?.let { nk -> AddressWatch(started, prevStatus?.addressHandovers ?: 0, prevStatus?.addressHandoverAtMs ?: 0L) { now -> nk.addressRefused(now) } }
+    // The engine's own trading (TCL20d): paper orders unless the phone's switch says live AND the trading key was sent; its ledger is carried from job to job in `trades.json`.
+    val trader = CloudTrader(unavailable = { o, now -> sources.unavailable(o, now) })
+    runCatching { PreviousFeed.read(git, cfgDir, "trades.json") }.getOrNull()?.let { text ->
+        TradeLedger.parse(text)?.let { trader.load(it); log("trades: ${it.entries.size} entries carried over from the previous job") }
+    }
+    var tradesText = ""
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
@@ -112,9 +121,22 @@ fun main(args: Array<String>) = runBlocking {
         bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
+        trade = { rows, s, now ->
+            val mode = s.gates.cloudTrading
+            if (mode == CloudTradeMode.OFF) null else {
+                val r = trader.pass(rows, s, now)
+                val text = TradeLedger.text(trader.ledger)
+                if (text != tradesText) { tradesText = text; publisher.stageTrades(text, now) }
+                if (r.placed.isNotEmpty()) log("trading: " + r.line())
+                CloudEngine.TradeStatus(mode.name.lowercase(), r.line(), r.stopped.ifEmpty { trader.ledger.stopped }, now)
+            }
+        },
         engine = "github-actions", runId = runId, log = log::invoke, sourceNames = sources::names,
     )
     val end = engine.run(until, started)
+    // The window is over (or the job is): whatever rests on Novig under the engine's key is cancelled, and the ledger goes out one last time.
+    runCatching { trader.windowEnded() }
+    runCatching { publisher.stageTrades(TradeLedger.text(trader.ledger), System.currentTimeMillis()) }
     log("cloud engine ending: $end after ${(System.currentTimeMillis() - started) / 60_000L} min, ${engine.passes} passes")
     runCatching { publisher.flush(force = true) }
     novigKeyed?.close()
@@ -187,6 +209,8 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     private var bidsBytes: ByteArray? = null
     private var usageText: String? = null
     private var usageAt = 0L
+    private var tradesText: String? = null
+    private var tradesAt = 0L
     private var status: CloudStatus? = null
     private var dirty = false
     private var lastPushAt = 0L
@@ -196,7 +220,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     @Synchronized
     fun stage(feed: CloudFeed?, st: CloudStatus): String? {
         if (feed != null) feedBytes = CloudFeed.encode(feed)
-        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, usageAtMs = usageAt)
+        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, usageAtMs = usageAt, tradesAtMs = maxOf(st.tradesAtMs, tradesAt))
         dirty = true
         return lastProblem
     }
@@ -206,6 +230,14 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     fun stageUsage(text: String, at: Long) {
         usageText = text; usageAt = at
         status = status?.copy(usageAtMs = at)
+        dirty = true
+    }
+
+    /** The engine's trading ledger (`trades.json`, [TradeLedger]), written beside the list and announced in the status. */
+    @Synchronized
+    fun stageTrades(text: String, at: Long) {
+        tradesText = text; tradesAt = at
+        status = status?.copy(tradesAtMs = at)
         dirty = true
     }
 
@@ -232,6 +264,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         }
         feedBytes?.let { File(dir, "feed.json.gz").writeBytes(it) }
         usageText?.let { File(dir, "usage.json").writeText(it) }
+        tradesText?.let { File(dir, "trades.json").writeText(it) }
         ApiChain.measures.takeIf { it.isNotEmpty() }?.let { File(dir, "ranking.json").writeText(CloudRanking.encode(it)) }
         File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }
         File(dir, "status.json").writeText(CloudStatus.text(st.copy(heartbeatMs = now)))

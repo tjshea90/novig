@@ -153,6 +153,8 @@ class CloudTrader(
         val mode = s.gates.cloudTrading
         if (mode == CloudTradeMode.OFF) return Report(mode)
         val live = mode == CloudTradeMode.LIVE
+        // The phone's STOP / Pause outranks everything: the engine does not run then, and a pass that still arrives orders nothing.
+        if (s.killed || s.paused) return Report(mode, stopped = "the app is stopped or paused on the phone")
         if (live && port == null) return Report(mode, stopped = "live trading needs the trading key sent from the phone (Settings › Cloud scan)")
         if (ledger.stopped.isNotEmpty() && live) return Report(mode, stopped = ledger.stopped)
         val rules = AutoBet.rules(s)
