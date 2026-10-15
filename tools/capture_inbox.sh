@@ -78,6 +78,7 @@ if [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interact
     printf '%s\n' "$COORD_OUT" | head -3
   elif printf '%s' "$COORD_OUT" | grep -qi "took over\|TAKEN BY FORCE"; then
     printf '%s\n' "COORD: $(printf '%s' "$COORD_OUT" | head -1 | sed 's/^COORD  //')"
+    printf '%s\n' "COORD: a paused routine is not lost: a rotation-paused note is on the board, the routine parks its work and waits for the lease, and resumes by itself when you have been idle 20 minutes (or the next run covers it). You need do nothing."
   fi
 fi
 

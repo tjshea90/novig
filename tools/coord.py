@@ -416,7 +416,7 @@ def status(do_acquire, kind, task):
 def wait_free(max_min):
     """Poll (cheaply, no model tokens: run it as a background command) until the lease is free, stale or already mine; exit 0 then, 1 on timeout. A paused routine uses it to resume by itself."""
     me = identity()
-    end = time.time() + max(1, int(max_min)) * 60
+    end = time.time() + max(0.02, float(max_min)) * 60
     while True:
         try:
             sync()
@@ -429,7 +429,7 @@ def wait_free(max_min):
         except Exception:
             pass
         if time.time() >= end:
-            print("COORD  still held after %d min: leave the work parked; the next routine run covers it (rotation.py missed)" % int(max_min))
+            print("COORD  still held after %g min: leave the work parked; the next routine run covers it (rotation.py missed)" % float(max_min))
             return 1
         time.sleep(int(os.environ.get("COORD_WAIT_POLL_S", 30)))
 
@@ -443,7 +443,7 @@ def main(argv):
     p = sub.add_parser("post"); p.add_argument("subject"); p.add_argument("body", nargs="?", default=""); p.add_argument("--to", default="all")
     b = sub.add_parser("board"); b.add_argument("n", nargs="?", type=int, default=8)
     w = sub.add_parser("whoami"); w.add_argument("label", nargs="?")
-    wf = sub.add_parser("wait-free"); wf.add_argument("--max-min", type=int, default=120)
+    wf = sub.add_parser("wait-free"); wf.add_argument("--max-min", type=float, default=120)
     args = ap.parse_args(argv)
     try:
         if args.cmd == "status":

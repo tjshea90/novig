@@ -86,6 +86,15 @@ git -C "$T/origin.git" log --oneline refs/heads/main 2>/dev/null | head -1 | gre
 # 10. rotation: duties, ET slot times across daylight saving, missed-slot detection
 python3 -I "$D/tools/rotation.py" selftest >/dev/null 2>&1; expect "rotation selftest (duties, DST, missed slots)" 0 $?
 
+# 11a. wait-free: exits 0 at once when the lease is free; times out (exit 1) while a live session holds it; an interactive takeover of a routine leaves a rotation-paused note
+A release >/dev/null 2>&1
+(COORD_HOME="$T/a" COORD_LABEL=acctA COORD_WAIT_POLL_S=1 python3 -I "$D/tools/coord.py" wait-free --max-min 0.05 >/dev/null 2>&1); expect "wait-free returns 0 when the lease is free" 0 $?
+A acquire --kind routine --task "ENGINEER" >/dev/null 2>&1
+(COORD_HOME="$T/b" COORD_LABEL=acctB COORD_WAIT_POLL_S=1 python3 -I "$D/tools/coord.py" wait-free --max-min 0.05 >/dev/null 2>&1); expect "wait-free times out (1) while a routine holds the lease" 1 $?
+B acquire --kind interactive >/dev/null 2>&1
+B board 20 2>/dev/null | grep -q "rotation-paused label=acctA" && ok "taking a routine's lease posts rotation-paused for it" || bad "no rotation-paused note after the takeover"
+B release >/dev/null 2>&1
+
 # 11. the UserPromptSubmit hook: a scheduled routine's own prompt is never logged as Tj's words and never makes its session interactive; a human message does reach the lease step
 H="$(mktemp -d)"; cp -r "$D/tools" "$H/tools"; git -C "$H" init -q 2>/dev/null; : > "$H/INBOX.md"
 echo '{"prompt":"You are a Vigilant rotation worker for github.com/tjshea90/novig"}' | (cd "$H" && COORD_OFF=1 bash tools/capture_inbox.sh >/dev/null 2>&1); expect "capture_inbox ignores a routine's stored prompt" 0 $?
