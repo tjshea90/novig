@@ -79,6 +79,12 @@ class CloudEngine(
      * record of what was listed, at what price and edge, does not depend on the phone being awake. A failure is a line in the log.
      */
     private val onResult: suspend (ScanResult, ScanSettings) -> Unit = { _, _ -> },
+    /**
+     * Reads the trading wallet's cash with the phone's latest settings; null = not applicable (trading is not live) or unreadable. Under [WALLET_MIN] the engine sleeps (no scan, no feed call, no order) and asks
+     * again every [walletEveryMs] or when the phone asks for a refresh (Tj, 2026-10-15: pause when the wallet is under 50 cents, do not waste API use, check in now and then).
+     */
+    private val walletProbe: (suspend (ScanSettings) -> Double?)? = null,
+    private val walletEveryMs: Long = WALLET_EVERY_MS,
 ) {
     /** What the engine's trading says about itself in the heartbeat. */
     data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long)
@@ -118,6 +124,9 @@ class CloudEngine(
     @Volatile private var lastPublished: CloudFeed? = null
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
     @Volatile private var tradeStatus: TradeStatus? = null
+    @Volatile private var walletSleep = ""
+    @Volatile private var walletCheckedAt = 0L
+    private var walletRefreshSeen = 0L
 
     /** Runs until [untilMs] (the job's time limit) or until the phone has had the engine off for [idleExitMs]. */
     suspend fun run(untilMs: Long, startedAtMs: Long = clock()): End {
@@ -143,6 +152,14 @@ class CloudEngine(
                 problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = true))
                 return End.WINDOW
             }
+            if (walletSleeping(cfg)) {
+                if (clock() - lastBeat >= heartbeatEveryMs) {
+                    problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = true))
+                    lastBeat = clock()
+                }
+                pause(10_000L)
+                continue
+            }
             val restarted = scanOnce(cfg, startedAtMs, untilMs)
             lastBeat = clock()
             if (windowEnd) {
@@ -158,6 +175,28 @@ class CloudEngine(
             if (!restarted) pause((cfg.passGapSeconds.coerceIn(5, 600) * 1000L))
         }
         return End.TIME_UP
+    }
+
+    /**
+     * True while the live wallet is under [WALLET_MIN]. One balance read at the start, then every [walletEveryMs] while asleep (and every [walletEveryMs] while awake, so a drained wallet is noticed even with no
+     * candidate bet), or at once when the phone asks for a refresh. An unreadable balance changes nothing: asleep stays asleep, awake stays awake.
+     */
+    private suspend fun walletSleeping(cfg: CloudConfig): Boolean {
+        val probe = walletProbe ?: return false
+        val t = clock()
+        val asked = cfg.refreshAtMs > walletRefreshSeen
+        if (walletCheckedAt != 0L && t - walletCheckedAt < walletEveryMs && !(asked && walletSleep.isNotEmpty())) return walletSleep.isNotEmpty()
+        walletRefreshSeen = maxOf(walletRefreshSeen, cfg.refreshAtMs)
+        walletCheckedAt = t
+        val cash = runCatching { probe(cfg.settings) }.getOrNull()
+        if (cash == null) {
+            if (walletSleep.isNotEmpty()) walletSleep = walletSleep.substringBefore(" (checked") + " (checked ${'$'}{java.time.Instant.ofEpochMilli(t)}: balance unreadable)"
+            return walletSleep.isNotEmpty()
+        }
+        val was = walletSleep.isNotEmpty()
+        walletSleep = if (cash < WALLET_MIN) "the trading wallet has ${'$'}${"%.2f".format(cash)}, under ${'$'}${"%.2f".format(WALLET_MIN)}: no scans or feed calls until it is funded (balance re-read every ${walletEveryMs / 60_000} min, or when you pull to refresh)" else ""
+        if (was != walletSleep.isNotEmpty()) log(if (walletSleep.isEmpty()) "wallet funded again (${'$'}${"%.2f".format(cash)}): scanning resumes" else "wallet under ${'$'}${"%.2f".format(WALLET_MIN)}: engine sleeps")
+        return walletSleep.isNotEmpty()
     }
 
     private suspend fun currentScopeActive(): Boolean = currentCoroutineContext().isActive
@@ -319,6 +358,7 @@ class CloudEngine(
             novigRoute = runCatching(novigRoute).getOrDefault(""), ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
             addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
             tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
+            walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt,
         )
     }
 

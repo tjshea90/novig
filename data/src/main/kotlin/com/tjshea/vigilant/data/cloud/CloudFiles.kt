@@ -113,6 +113,9 @@ data class CloudStatus(
     val tradeNote: String = "",
     val tradeStopped: String = "",
     val tradesAtMs: Long = 0L,
+    /** The wallet is under [CloudEngine.WALLET_MIN] and the engine trades live: it scans nothing and calls no feed, and only reads the balance every [CloudEngine.WALLET_EVERY_MS] (Tj, 2026-10-15). Empty = not asleep. */
+    val walletSleep: String = "",
+    val walletCheckedAtMs: Long = 0L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
