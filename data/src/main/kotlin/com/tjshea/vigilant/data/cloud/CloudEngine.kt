@@ -130,6 +130,8 @@ class CloudEngine(
     @Volatile private var walletReadAt = 0L
     @Volatile private var walletSleep = ""
     @Volatile private var walletCheckedAt = 0L
+    /** When the balance is asked for next: [walletEveryMs] after a read, but only [WALLET_RETRY_MS] after one that gave nothing (trading not live yet, or Novig did not answer), so the switch to LIVE is not left unread for 30 minutes (Tj, 2026-10-15: "it says 0"). */
+    @Volatile private var walletNextAt = 0L
     private var walletRefreshSeen = 0L
 
     /** Runs until [untilMs] (the job's time limit) or until the phone has had the engine off for [idleExitMs]. */
@@ -189,10 +191,12 @@ class CloudEngine(
         val probe = walletProbe ?: return false
         val t = clock()
         val asked = cfg.refreshAtMs > walletRefreshSeen
-        if (walletCheckedAt != 0L && t - walletCheckedAt < walletEveryMs && !(asked && walletSleep.isNotEmpty())) return walletSleep.isNotEmpty()
+        if (walletCheckedAt != 0L && t < walletNextAt && !(asked && walletSleep.isNotEmpty())) return walletSleep.isNotEmpty()
         walletRefreshSeen = maxOf(walletRefreshSeen, cfg.refreshAtMs)
         walletCheckedAt = t
-        val cash = runCatching { probe(cfg.settings) }.getOrNull() ?: return walletSleep.isNotEmpty()
+        val cash = runCatching { probe(cfg.settings) }.getOrNull()
+        walletNextAt = t + if (cash == null) minOf(walletEveryMs, WALLET_RETRY_MS) else walletEveryMs
+        if (cash == null) return walletSleep.isNotEmpty()
         if (walletEquity == null || walletEquity!! < cash) walletEquity = cash
         walletCash = cash; walletReadAt = t
         val was = walletSleep.isNotEmpty()
@@ -414,6 +418,7 @@ class CloudEngine(
     companion object {
         /** The trading wallet below this (Tj, 2026-10-15: "any amount under 50 cents") puts the engine to sleep; it is read again this often. */
         const val WALLET_MIN = 0.50
+        const val WALLET_RETRY_MS = 60_000L
         const val WALLET_EVERY_MS = 30 * 60_000L
 
         /** The settings the cloud scans under: the phone's, with the parts that only make sense on the phone switched off. */
