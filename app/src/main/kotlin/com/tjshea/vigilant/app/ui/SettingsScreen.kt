@@ -2755,8 +2755,9 @@ private fun EngineTradingSection(state: UiState, onUpdate: ((ScanSettings) -> Sc
     )
     u.status?.takeIf { it.tradeMode.isNotBlank() }?.let { st ->
         Text(
-            "Engine ${st.tradeMode}: ${st.tradeNote}" + (st.tradeStopped.takeIf { it.isNotBlank() }?.let { "\nStopped: $it" } ?: ""),
-            style = MaterialTheme.typography.bodySmall, color = if (st.tradeStopped.isNotBlank()) Edge.colors.warning else MaterialTheme.colorScheme.onSurface,
+            "Engine ${st.tradeMode}: ${st.tradeNote}" + (st.tradeStopped.takeIf { it.isNotBlank() }?.let { "\nStopped: $it" } ?: "") +
+                (st.walletSleep.takeIf { it.isNotBlank() }?.let { "\nPaused: $it" } ?: ""),
+            style = MaterialTheme.typography.bodySmall, color = if (st.tradeStopped.isNotBlank() || st.walletSleep.isNotBlank()) Edge.colors.warning else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudTradeLine"),
         )
     }

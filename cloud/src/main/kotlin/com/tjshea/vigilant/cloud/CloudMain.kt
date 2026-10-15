@@ -163,6 +163,8 @@ fun main(args: Array<String>) = runBlocking {
                 CloudEngine.TradeStatus(mode.name.lowercase(), r.line(), r.stopped.ifEmpty { trader.ledger.stopped }, now)
             }
         },
+        // The wallet gate (Tj, 2026-10-15): only a LIVE engine with a trading key has a wallet to read; everything else is "not applicable" and never sleeps.
+        walletProbe = { s -> if (s.gates.cloudTrading == CloudTradeMode.LIVE) tradePort?.cash() else null },
         engine = "github-actions", runId = runId, log = log::invoke, sourceNames = sources::names,
     )
     val end = engine.run(until, started)

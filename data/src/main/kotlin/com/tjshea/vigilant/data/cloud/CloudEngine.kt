@@ -188,16 +188,15 @@ class CloudEngine(
         if (walletCheckedAt != 0L && t - walletCheckedAt < walletEveryMs && !(asked && walletSleep.isNotEmpty())) return walletSleep.isNotEmpty()
         walletRefreshSeen = maxOf(walletRefreshSeen, cfg.refreshAtMs)
         walletCheckedAt = t
-        val cash = runCatching { probe(cfg.settings) }.getOrNull()
-        if (cash == null) {
-            if (walletSleep.isNotEmpty()) walletSleep = walletSleep.substringBefore(" (checked") + " (checked ${'$'}{java.time.Instant.ofEpochMilli(t)}: balance unreadable)"
-            return walletSleep.isNotEmpty()
-        }
+        val cash = runCatching { probe(cfg.settings) }.getOrNull() ?: return walletSleep.isNotEmpty()
         val was = walletSleep.isNotEmpty()
-        walletSleep = if (cash < WALLET_MIN) "the trading wallet has ${'$'}${"%.2f".format(cash)}, under ${'$'}${"%.2f".format(WALLET_MIN)}: no scans or feed calls until it is funded (balance re-read every ${walletEveryMs / 60_000} min, or when you pull to refresh)" else ""
-        if (was != walletSleep.isNotEmpty()) log(if (walletSleep.isEmpty()) "wallet funded again (${'$'}${"%.2f".format(cash)}): scanning resumes" else "wallet under ${'$'}${"%.2f".format(WALLET_MIN)}: engine sleeps")
+        walletSleep = if (cash >= WALLET_MIN) "" else
+            "the trading wallet has ${usd(cash)}, under ${usd(WALLET_MIN)}: no scans or feed calls until it is funded (balance re-read every ${walletEveryMs / 60_000} min, or when you pull to refresh)"
+        if (was != walletSleep.isNotEmpty()) log(if (walletSleep.isEmpty()) "wallet funded again (${usd(cash)}): scanning resumes" else "wallet under ${usd(WALLET_MIN)}: the engine sleeps")
         return walletSleep.isNotEmpty()
     }
+
+    private fun usd(x: Double) = String.format(java.util.Locale.US, "$%.2f", x)
 
     private suspend fun currentScopeActive(): Boolean = currentCoroutineContext().isActive
 
@@ -403,6 +402,10 @@ class CloudEngine(
     }.take(1_200)
 
     companion object {
+        /** The trading wallet below this (Tj, 2026-10-15: "any amount under 50 cents") puts the engine to sleep; it is read again this often. */
+        const val WALLET_MIN = 0.50
+        const val WALLET_EVERY_MS = 30 * 60_000L
+
         /** The settings the cloud scans under: the phone's, with the parts that only make sense on the phone switched off. */
         fun forCloud(s: ScanSettings): ScanSettings = s.copy(
             scanner = ScannerMode.VIGILANT, includeLive = false, gates = s.gates.copy(liveOnly = LiveOnlyMode()),
