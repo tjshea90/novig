@@ -1,13 +1,13 @@
-# CHECKPOINT 3321 — read me first, then TASKS.md
+# CHECKPOINT 3322 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T03:09:47Z · **tests:** all 4 fast checks green
-**Branch:** `ccr-4dcbaa5f-skgw6q` · **builds on:** `3f9de5d10` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T03:20:03Z · **tests:** all 4 fast checks green
+**Branch:** `ccr-4dcbaa5f-skgw6q` · **builds on:** `31531d41d` (this checkpoint is the commit after it)
 
 ## Just done
-v0.106.0 released and recorded; new engine run hit RESTRICTED_NETWORK_REGION (runner address), Novig side at public pace; finding written to research/scan_speed_2026-10-15.md and TCL16c
+TCL17: answered 'multiple runners or APIs in parallel?' (research note + first v0.106.0 scan numbers: 852 s, 1,442 of 9,548 books on public routes, hot refresh ran 72/84, EV spread)
 
 ## Do this next
-Wait for run 38673681637's first scan to end then read scanNote hot refresh counts + fair ages (st.sh); ask Tj: accept / hand over on region refusal / Novig reads on phone; do NOT re-dispatch the engine just to draw another address
+Check-in at 03:50Z reads the second scan on v0.106.0; wait for Tj's word on parallel readers / region-refusal handover; build nothing for TCL17 without it
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -18,6 +18,7 @@ Wait for run 38673681637's first scan to end then read scanNote hot refresh coun
 
 ## Last ten checkpoints
 ```
+  5ab2e2118 ckpt 3321: v0.106.0 released and recorded; new engine run hit RESTRICTED_NETWORK_REGIO
   34df9edd6 ckpt 3320: TCL16b: Feed freshness chip splits games within 12 h from the far ones (Clo
   d5cef8451 ckpt 3319: pre-release: v0.106.0: the GitHub engine keeps games about to start young w
   870e6c72b ckpt 3318: pre-ship: v0.106.0: the GitHub engine keeps games about to start young whil
@@ -27,5 +28,7 @@ Wait for run 38673681637's first scan to end then read scanNote hot refresh coun
   14168bece ckpt 3314: pre-ship: v0.105.0: API usage meters stay accurate with the scan on GitHub:
   e1c031802 ckpt 3313: TCL14: usage meters merged (engine usage.json by key id, seed across handov
   da6b9cf15 ckpt 3312: TCL14 written (usage meters accurate with scans on GitHub); v0.104.0 releas
-  926e29cfc ckpt 3311: pre-release: v0.104.0: Novig and BoltOdds keys can go to the GitHub engine 
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
