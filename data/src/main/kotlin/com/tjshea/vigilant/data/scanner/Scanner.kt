@@ -343,6 +343,8 @@ class Scanner(
                 refused = pump.refused,
                 leftTooLate = pump.tooLate.size,
                 sourceMs = synchronized(sourceMs) { sourceMs.toList() },
+                hotReads = pump.hotReads,
+                hotFairReads = pump.hotFairReads,
                 liveFeedAtMs = pump.streamAt,
                 liveFeedAsked = pump.streamAsked,
                 // The feed's whole worth is what it holds: asked for 2,000 at 4 s and holding 315 at the end is the number that says it was slow (Tj's

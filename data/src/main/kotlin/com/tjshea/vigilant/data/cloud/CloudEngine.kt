@@ -299,6 +299,10 @@ class CloudEngine(
 
     companion object {
         /** The settings the cloud scans under: the phone's, with the parts that only make sense on the phone switched off. */
-        fun forCloud(s: ScanSettings): ScanSettings = s.copy(scanner = ScannerMode.VIGILANT, includeLive = false, gates = s.gates.copy(liveOnly = LiveOnlyMode()))
+        fun forCloud(s: ScanSettings): ScanSettings = s.copy(
+            scanner = ScannerMode.VIGILANT, includeLive = false, gates = s.gates.copy(liveOnly = LiveOnlyMode()),
+            // The long scan keeps the soonest games' fair odds and likeliest Novig books young (Tj, 2026-10-15: "Is this speed too slow for pre game betting and bidding?"): see [com.tjshea.vigilant.data.scanner.ScanGuards.hotRefresh].
+            vigGuards = s.vigGuards.copy(hotRefresh = true),
+        )
     }
 }

@@ -31,6 +31,9 @@ data class ScanTiming(
     val liveFeedHeld: Int? = null,
     /** What paced the reads: each route's pace when they began, the lowest a refusal took it to, and when they ended; the key route's 429s. */
     val pace: ReadPace? = null,
+    /** The hot refresh's work ([ScanGuards.hotRefresh], the GitHub engine): Novig books of games about to start read again, and fair-odds leagues asked again, during the scan. */
+    val hotReads: Int = 0,
+    val hotFairReads: Int = 0,
 ) {
     val novigMs: Long get() = if (novigFromMs != null && novigToMs != null) (novigToMs - novigFromMs).coerceAtLeast(0) else 0
 
@@ -64,6 +67,7 @@ data class ScanTiming(
                 append(" · live feed asked for ").append(String.format(Locale.US, "%,d", t.liveFeedAsked)).append(" at ").append(seconds(it))
             }
             routeNotes(t, (prices - viaKey - viaPush).coerceAtLeast(0), keyed = viaKey + viaPush > 0).forEach { append(" · ").append(it) }
+            if (t.hotReads + t.hotFairReads > 0) append(" · hot refresh: ").append(t.hotFairReads).append(" fair-odds reads, ").append(t.hotReads).append(" Novig re-reads of games about to start")
             append(" · ").append(t.firstBetAtMs?.let { "first bet at ${seconds(it)}" } ?: "no bet")
             append(" · Novig refused ").append(if (t.refused == 0) "none" else "${t.refused}")
             if (t.leftTooLate > 0) append(" · ").append(String.format(Locale.US, "%,d", t.leftTooLate)).append(" left for the next scan (their odds would have been too old)")
