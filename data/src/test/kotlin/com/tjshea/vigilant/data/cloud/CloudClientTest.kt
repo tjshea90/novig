@@ -90,4 +90,20 @@ class CloudClientTest {
         assertEquals(6, back.stats.laterGames)
         assertNull(CloudFeed.decode("not gzip".toByteArray()))
     }
+
+    @Test
+    fun `the bid desk's candidate file is read from the feed branch, and an unreadable one is said so`() = runBlocking {
+        server.enqueue(MockResponse().setBody(okio.Buffer().write(CloudBids.encode(CloudBids(77L, true, 3L, emptyList())))).setHeader("ETag", "\"b1\""))
+        server.enqueue(MockResponse().setBody("not gzip"))
+        server.enqueue(MockResponse().setResponseCode(404).setBody("""{"message":"Not Found"}"""))
+        val c = client()
+        val ok = c.fetchBids() as CloudClient.Poll.Fresh
+        assertEquals(77L, ok.value.atMs)
+        assertTrue(ok.value.partial)
+        assertTrue(server.takeRequest().path!!.contains("/repos/o/r/contents/bids.json.gz?ref=cloud-feed"))
+        assertTrue((c.fetchBids() as CloudClient.Poll.Failed).why.contains("candidate list could not be read"))
+        assertTrue(c.fetchBids() is CloudClient.Poll.Failed)
+        assertEquals(0, client(token = null).also { }.let { server.requestCount - 3 })
+        assertTrue(client(token = null).fetchBids() is CloudClient.Poll.Failed)
+    }
 }
