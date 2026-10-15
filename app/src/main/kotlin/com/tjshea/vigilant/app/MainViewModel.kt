@@ -2349,7 +2349,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Settings › Cloud scan: the GitHub token (sealed in this phone's secure storage, only ever sent to api.github.com). */
     fun saveCloudToken(token: String) { viewModelScope.launch(Dispatchers.IO) { c.cloud.saveToken(token) } }
-    fun removeCloudToken() { viewModelScope.launch(Dispatchers.IO) { c.cloud.removeToken() } }
+    /** Removing the token also switches the cloud scan off: with nothing to read the list with, the phone would otherwise show no scan at all. */
+    fun removeCloudToken() {
+        updateSettings { it.copy(gates = it.gates.copy(cloudScan = false)) }
+        viewModelScope.launch(Dispatchers.IO) { c.cloud.removeToken() }
+    }
     fun testCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.test() } }
     fun startCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.startEngine() } }
     fun sendCloudKeys() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendKeys() } }
