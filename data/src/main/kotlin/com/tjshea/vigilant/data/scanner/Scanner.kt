@@ -681,10 +681,14 @@ class Scanner(
         @Volatile var hotFairReads = 0
         private var lastHotAt = Long.MIN_VALUE / 2
 
+        /** Books a second the route made at the last hot step (0 = none yet): sizes the next one ([HotBudget]). */
+        private var hotRate = 0.0
+
         /**
-         * The hot refresh's book side, between two batches (Tj, 2026-10-15): every [ScanGuards.hotEverySeconds], the games starting within [ScanGuards.hotHours] are priced again with whatever fair odds the scan now holds ([hotFair]
-         * keeps them young) against the books already held, and the books of the likeliest +EV lines among them (a line within [HOT_EV_FLOOR] of zero, or one Tj has a bet on) are read again, at most [MAX_HOT_READS]. A
-         * book is only replaced by one read now. Nothing when Novig asked to stop. Single-threaded with the batches: it uses the same books and the same fair memo.
+         * The hot refresh's book side, between two batches (Tj, 2026-10-15): every [ScanGuards.hotEverySeconds] AFTER the last step ended, the games starting within [ScanGuards.hotHours] are priced again with whatever fair odds
+         * the scan now holds ([hotFair] keeps them young) against the books already held, and the books of the likeliest +EV lines among them (a line within [HOT_EV_FLOOR] of zero, or one Tj has a bet on) are read again, as
+         * many as [HotBudget] allows for the route's measured speed (a quarter of its reads: on a slow public route a fixed 120 took the whole scan). A book is only replaced by one read now. Nothing when Novig asked to stop.
+         * Single-threaded with the batches: it uses the same books and the same fair memo.
          */
         private suspend fun hotStep(cat: Catalog) {
             if (!settings.vigGuards.hotRefresh || retryAfter != null || requested.isEmpty()) return
