@@ -62,7 +62,7 @@ class CloudBidsTest {
     }
 
     /** Four props through the real planner: an ordinary one, a second, a long shot nobody would bid on, and a player who is out. */
-    private fun plan(): com.tjshea.vigilant.data.scanner.ScanPlan {
+    private fun plan(): com.tjshea.vigilant.data.scanner.Plan {
         val quotes = listOf(
             quote(0, "kalshi", "Kalshi", 1.95, 1.95) to quote(0, "prophetx", "ProphetX", 1.90, 2.00),
             quote(1, "kalshi", "Kalshi", 1.85, 2.05) to quote(1, "prophetx", "ProphetX", 1.88, 2.02),
