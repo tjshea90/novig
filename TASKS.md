@@ -5345,3 +5345,12 @@ Tj: "Chat via the repo, but make a rule that each Claude session actively look f
 - [x] TCL29c phone: `CloudInbox` chat poll/send/lease line, `ChatPage` (Settings › Chat with Claude), compiles.
 - [ ] TCL29d Run `bash tools/test.sh` (app + data), fix any red (SettingsPagesTest list already has CHAT), `bash ship.sh`, release v0.111.0 (code 291), record-release, tell Tj.
 - [ ] TCL29e Claude usage meters: NOT possible from a phone (no API exposes subscription usage); say so. Optional later: each session posts a rough usage note on the board; the app shows it.
+
+
+## TCL30: more auto-bet volume, balanced with quality (Tj, 2026-10-15)
+Tj: "So far the auto bet has only placed two bets. There must be much more volume ... regularly improving on best types of bets but also on volume ... The goal is always profit." Rule + loop: CLAUDE.md "Volume AND quality", ROUTINE.md "The volume loop".
+- [x] TCL30a Diagnosis 23:40Z: stale-price fix works (re-reads 1-5 books); held back: trap guard 34 of 41 listed, team totals 4, other books' prices too old 2-3; live, wallet $95; 2 open orders (NCAAF spread +12.5, NBA spread -2.5). BoltOdds REST snapshot 429 at 23:36 (6 a minute) hurt fair odds one scan.
+- [ ] TCL30b ENGINEER: from the digest, CLV by lead-time band and edge band for bets inside 0-6 h that the edge floor (2.9%) held back; if the 1.5-2.9% band beats the close (interval > 0, n >= 200) lower the floor one 25% step (slider level / floor), test, CHANGES.md line. Same for team totals (kinds list) when n allows.
+- [ ] TCL30c ENGINEER: BoltOdds REST fallback hits 429 (6 a minute) when the socket is off in the engine; gap the snapshot to the limit or keep the socket on.
+- [ ] TCL30d ENGINEER: add held-back counts by reason to the dashboard/tradeNote history so a trend per day is visible (orders per day vs listed per day).
+- [ ] TCL30e Each run: the volume loop (ROUTINE.md), one line in CHANGES.md.

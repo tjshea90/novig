@@ -1,21 +1,25 @@
-# CHECKPOINT 3387 — read me first, then TASKS.md
+# CHECKPOINT 3388 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T23:40:19Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `b57240f3a` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T23:41:47Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `622e67758` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.111.0: chat with Claude inside the app (through the repo; sessions watch for your messages), away-account cover (versionCode 291, v0.111.0)
+TCL30: volume diagnosis + standing volume/quality loop (CLAUDE.md, ROUTINE.md, TASKS TCL30, board note); v0.111.0 gated and release triggered
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.111.0), then run: bash tools/record-release.sh v0.111.0 291 "v0.111.0: chat with Claude inside the app (through the repo; sessions watch for your messages), away-account cover"
+record-release v0.111.0 291 once release.yml is green; then TCL30b-d
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M CLAUDE.md
+     M TASKS.md
+     M research/review/ROUTINE.md
 
 ## Last ten checkpoints
 ```
+  5e2281ea8 ckpt 3387: pre-release: v0.111.0: chat with Claude inside the app (through the repo; s
   b57240f3a ckpt 3386: pre-ship: v0.111.0: chat with Claude inside the app (through the repo; sess
   7d4783d5f ckpt 3385: TCL29 chat built (model, phone page, watcher, tell_tj chat-reply), away.jso
   dfe553bef ckpt 3384: slot3 ENGINEER: WATCH only, engine healthy, 0 orders held by trap guard
@@ -25,5 +29,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   7248cc027 ckpt 3380: TCL28b/a: governor + advisor wired into the engine (rests silent APIs, asks
   cd1d34a78 ckpt 3379: TCL28 pure parts: ApiToggles, CloudMessages, CloudOverrides, ApiAdvisor, Ap
   56e145350 ckpt 3377: pre-release: v0.109.1: API keys added or changed in the phone app are uploa
-  7c2be47df ckpt 3376: pre-ship: v0.109.1: API keys added or changed in the phone app are uploaded
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
