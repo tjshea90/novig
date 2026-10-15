@@ -5304,3 +5304,9 @@ Tj: "For the three Claude accounts, usage will soon run out on one or two accoun
 - [ ] TCL23b Verify engine run + logs of every bet and bid on GitHub (cloud-archive, trades.json, phone-data bids).
 - [ ] TCL23c Verify the phone shows active APIs and usage meters (merged usage, cloud status).
 - [ ] TCL23d Verify the automatic review/update loop (review-digest, engine-grade, ROUTINE.md) is intact.
+
+## TCL24: the dashboard inside the Android app (Tj, 2026-10-15)
+Tj: "I like this site you built: https://github.com/tjshea90/novig/blob/cloud-feed/DASHBOARD.md However, I like things in easy to view format. Can you put the dashboard inside the vigilant android app with easy to see organized information and meters/graphs optimized for mobile phone viewing which is synced to the GitHub engine"
+- [ ] TCL24a Dashboard screen in the app (phone-width cards: engine state, list freshness, Novig route/address, trading + wallet, per-API health chips, usage meters as bars with reset times, per-key rows), fed by the engine's status.json + usage.json that CloudLink already polls (synced; no extra GitHub calls), working offline from the last copy.
+- [ ] TCL24b Graphs: history of the engine's own numbers kept on the phone (scan time, +EV count, list age, wallet) as small sparklines; usage bars per API.
+- [ ] TCL24c Wire it in (tab or Settings entry), Android 16 edge-to-edge, tests (pure view-model builder `DashboardModel` + a Compose render test), release.

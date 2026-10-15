@@ -1,21 +1,23 @@
-# CHECKPOINT 3359 — read me first, then TASKS.md
+# CHECKPOINT 3360 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T19:44:31Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `0269dc960` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T19:48:09Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `8e71e9387` (this checkpoint is the commit after it)
 
 ## Just done
-TCL23c: Settings > Cloud scan shows which APIs work on GitHub + link to DASHBOARD.md (app compiles)
+TCL24 written (in-app dashboard)
 
 ## Do this next
-read the routine permission probe result (trig_01PgKTBiRFFh8piXgUAg9z1M), then fix routine setup, ship app v0.109.0, answer Tj
+load compose skills, find where cloudUi/usage live, build DashboardModel + screen
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  d04b47104 ckpt 3359: TCL23c: Settings > Cloud scan shows which APIs work on GitHub + link to DAS
   69e1c2513 ckpt 3358: TCL23a: rotation failover (cover up to 2, whole duty first, INTERRUPTED sta
   fe049f26d ckpt 3357: TCL22a wallet retry in 60 s (CloudEngine, test), TCL22d CloudDashboard + Fe
   0fe1a14fe ckpt 3356: TCL22 written (wallet, conflicts, address, dashboard)
@@ -25,7 +27,6 @@ read the routine permission probe result (trig_01PgKTBiRFFh8piXgUAg9z1M), then f
   477b459bd ckpt 3352: phone syncs the engine's orders/results/wallet on open (trades.json loop, T
   df97cc223 ckpt 3351: engine empty-wallet sleep (CloudEngine.walletProbe, status.walletSleep, Set
   3a82a6ef0 ckpt 3350: rotation: missed-slot detector + checkin/cover + routine repo step, tested
-  17bc01bf7 ckpt 3349: v0.107.0 released and recorded; TCL20 finished
 ```
 
 (1 automatic checkpoint(s) since the last deliberate one — the
