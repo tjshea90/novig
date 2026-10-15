@@ -159,6 +159,21 @@ class CloudClient(
         }.getOrElse { it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "") }
     }
 
+    /** Removes the repository secret [name]. Null = removed (or it was not there); otherwise why not. */
+    suspend fun deleteSecret(name: String): String? = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext "no GitHub token saved"
+        runCatching {
+            http.newCall(req("actions/secrets/$name").delete().build()).execute().use { r ->
+                note(r)
+                when {
+                    r.isSuccessful || r.code == 404 && r.header("X-GitHub-Request-Id") != null && r.body?.string()?.contains("Not Found") == true -> null
+                    r.code == 403 -> "the token cannot remove secrets (give it Secrets: read and write on the repository)"
+                    else -> why(r.code, r.body?.string())
+                }
+            }
+        }.getOrElse { it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "") }
+    }
+
     /** The key a secret is sealed to. */
     class SecretsKey(val keyId: String, val publicKey: ByteArray)
 

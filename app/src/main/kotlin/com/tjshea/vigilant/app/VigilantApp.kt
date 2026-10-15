@@ -154,6 +154,7 @@ class AppContainer(val app: Application) {
 
         /** Excluded from backups (res/xml): sealed by this phone's Keystore, it couldn't be opened anywhere else. */
         const val MANAGEMENT_KEY_FILE = "novig_management_key.json"
+        const val CLOUD_NOVIG_KEY_FILE = "cloud_novig_key.json"
 
         /** The fewest milliseconds between two make-orders passes on a running scan's partial results. */
         const val MAKER_SCAN_PASS_MS = 20_000L
@@ -237,9 +238,17 @@ class AppContainer(val app: Application) {
     @Volatile var managementKeys = ManagementKeyStore(File(app.filesDir, MANAGEMENT_KEY_FILE), KeystoreSecretBox, json)
         private set
 
+    /**
+     * The read-only Novig key made for the GitHub engine (Tj, 2026-10-15), sealed by the Keystore like the management key and left out of backups: kept so it can be sent again, never shown. It cannot trade;
+     * still a key, so never stored plain.
+     */
+    @Volatile var cloudNovigKeys = com.tjshea.vigilant.data.cloud.CloudNovigKeyStore(File(app.filesDir, CLOUD_NOVIG_KEY_FILE), KeystoreSecretBox, json)
+        private set
+
     /** Robolectric has no Android Keystore: tests seal the management key with [box] (same file). */
     internal fun installSecretBoxForTest(box: com.tjshea.vigilant.data.novig.signing.SecretBox) {
         managementKeys = ManagementKeyStore(File(filesDir, MANAGEMENT_KEY_FILE), box, json)
+        cloudNovigKeys = com.tjshea.vigilant.data.cloud.CloudNovigKeyStore(File(filesDir, CLOUD_NOVIG_KEY_FILE), box, json)
         secretBox = box
     }
 
@@ -1223,6 +1232,9 @@ class AppContainer(val app: Application) {
     /** The connected Novig key as [useConnection] last saw it (null: none): the score-burst recorder opens its own connection on its READ key. */
     @Volatile
     private var readConnection: NovigConnection? = null
+
+    /** The Vigilant subaccount's address (its trading key's id), once the Novig connection is set up: where the engine's read-only key is made. */
+    val connectedSubaccountKeyId: String? get() = readConnection?.subaccountKeyId
 
     /** The burst recorder's files (RESEARCH.md §95): one journal a day, appended to, never rewritten. */
     val burstJournal = com.tjshea.vigilant.data.novig.burst.BurstJournal(File(app.filesDir, "burst"))
