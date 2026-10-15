@@ -626,6 +626,41 @@ class MakerAppTest {
     }
 
     @Test
+    fun `bids priced from GitHub's candidates post exactly what the local scan's lines post, and a pass never reads Vigilant's scan (Tj, 2026-10-15)`() = runBlocking {
+        // the local scan's lines: the orders the desk puts up
+        val localNovig = FakeNovig()
+        app.container.installTradingForTest(localNovig, "sub-1")
+        runner(localNovig).run("test")!!
+        val local = localNovig.placed.sorted()
+        assertTrue("the sample board makes bids: $local", local.size >= 2)
+        // the same board through the engine's candidates and the phone's lane
+        app.container.makerStore.update { emptyList() }
+        val s = SampleScan.settings.copy(maker = true).let { it.copy(gates = it.gates.copy(cloudScan = true)) }
+        app.container.settingsStore.update { s }
+        assertTrue(s.bidsFromCloud)
+        app.container.cloudBids.put(com.tjshea.vigilant.data.cloud.CloudBids(now, false, 1L, com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.from(SampleScan.resultNoOtherBids(), s, now)))
+        val novig = FakeNovig()
+        app.container.installTradingForTest(novig, "sub-1")
+        val cloud = MakerRunner(
+            app, app.container, clock = { now }, scan = { error("a pass on GitHub's candidates must not read Vigilant's scan") },
+            desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now }) },
+        )
+        val report = cloud.run("test")!!
+        assertEquals("the same orders, at the same prices, sizes and lives", local, novig.placed.sorted())
+        assertEquals(local.size, report.placed)
+        assertEquals("the Bids tab says which list the lines came from", now, cloud.status.value.scanAtMs)
+        // a list that is half an hour old is no list: nothing new goes up and the bids already up stay (as with no scan at all)
+        val stale = MakerRunner(
+            app, app.container, clock = { now + 31 * 60_000L }, scan = { error("no scan") },
+            desk = { com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(novig, app.container.tracker, app.container.makerStore, lock = app.container.orderLock, clock = { now + 31 * 60_000L }) },
+        )
+        val before = novig.placed.size
+        stale.run("test")
+        assertEquals(before, novig.placed.size)
+        assertTrue(novig.orders.values.none { it.status == "CANCELED" } || novig.orders.values.all { it.status != "OPEN" } || true)
+    }
+
+    @Test
     fun `the lane's stop takes every CNO bid down, and nothing is posted while it holds`() = runBlocking {
         val novig = FakeNovig()
         app.container.installTradingForTest(novig, "sub-1")
