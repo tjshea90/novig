@@ -227,7 +227,6 @@ class CloudEngineTest {
     )
 
     private val bidsOn = on.copy(settings = on.settings.copy(maker = true))
-    private val recommendOnly = on.copy(settings = on.settings.copy(maker = false, makerRecommend = true))
 
     @Test
     fun `with Vigilant-priced bids on, the candidate lines are made from the list and sent with it, and the status says how many`() = runBlocking {
