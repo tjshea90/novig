@@ -57,6 +57,9 @@ class CloudLink(private val c: AppContainer) {
         /** What the last "Send my API keys" said (words only). */
         val keysNote: String? = null,
         val rateRemaining: Int? = null,
+        /** The newest settings revision this phone wrote to GitHub and when (its clock), for the "is GitHub using my settings" line ([com.tjshea.vigilant.data.cloud.CloudText.settings]). */
+        val pushedRev: Long = 0L,
+        val pushedAtMs: Long = 0L,
     )
 
     private val _ui = MutableStateFlow(Ui())
@@ -140,7 +143,7 @@ class CloudLink(private val c: AppContainer) {
             var etag: String? = null
             while (isActive) {
                 val s = c.settingsStore.flow.value
-                if (s == null || !s.cloudScan || !hasToken()) { delay(3_000L); continue }
+                if (s == null || !s.cloudDrives || !hasToken()) { delay(3_000L); continue }
                 var wait = if (refreshRequestedAt > 0L && (latest.status?.lastScanForRefreshAtMs ?: 0L) < refreshRequestedAt) POLL_PENDING_MS else POLL_MS
                 when (val p = client.pollStatus(etag)) {
                     is CloudClient.Poll.Fresh -> {
@@ -186,6 +189,7 @@ class CloudLink(private val c: AppContainer) {
     suspend fun requestScan(): String? {
         if (!hasToken()) { _ui.update { it.copy(note = "Save a GitHub token first (Settings › Cloud scan).") }; return "no token" }
         val s = c.currentSettings()
+        if (!s.cloudDrives) return "the cloud scan is not driving the scan now"
         val now = System.currentTimeMillis()
         refreshRequestedAt = maxOf(now, refreshRequestedAt + 1)
         _ui.update { it.copy(requestedAtMs = refreshRequestedAt, note = null) }
@@ -233,80 +237,34 @@ class CloudLink(private val c: AppContainer) {
         }
     }
 
-    /** A switch-off the engine has not been told yet (kept in a file, so a restart before it was sent does not leave the engine running for a phone that is off). */
+    /**
+     * Whether the engine was last told to run (kept in a file): a switch-off the engine has not heard of yet is retried until it has, and survives a restart of the app, so the engine is never left running for
+     * a phone that is not using it (Settings › Cloud scan off, scanning paused, the kill switch, or a bid desk that needs the phone's own scan).
+     */
+    private val wantedFile = File(c.app.filesDir, "cloud_wanted")
     private val offPending = File(c.app.filesDir, "cloud_off_pending")
-    private var lastOn: Boolean? = null
+    private var lastWanted: Boolean? = null
 
     private suspend fun pushSettings(s: ScanSettings, force: Boolean = false) {
         if (!hasToken()) return
-        if (lastOn == true && !s.cloudScan) runCatching { offPending.writeText("1") }
-        lastOn = s.cloudScan
-        // Off and nothing owed: the engine is left alone (no request is made for a phone that never used the cloud scan).
-        if (!s.cloudScan && !offPending.exists()) return
-        val key = (if (s.cloudScan) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt"
+        val wanted = s.cloudDrives
+        if (lastWanted == null) lastWanted = runCatching { wantedFile.readText() == "1" }.getOrNull()
+        if (lastWanted == true && !wanted) runCatching { offPending.writeText("1") }
+        lastWanted = wanted
+        runCatching { wantedFile.writeText(if (wanted) "1" else "0") }
+        // Not wanted and nothing owed: the engine is left alone (no request is made for a phone that never used the cloud scan).
+        if (!wanted && !offPending.exists()) return
+        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt"
         if (key == lastPushedKey && !force) return
         val rev = maxOf(System.currentTimeMillis(), lastRev + 1)
-        val why = client.writeConfig(CloudConfig(rev = rev, on = s.cloudScan, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt))
+        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt))
         if (why == null) {
-            if (s.cloudScan) runCatching { sendKeys(auto = true) }
+            if (wanted) runCatching { sendKeys(auto = true) }
             lastPushedKey = key; lastRev = rev
-            if (!s.cloudScan) runCatching { offPending.delete() }
-            _ui.update { it.copy(note = if (s.cloudScan) "Settings sent to the engine." else "Cloud scan off: the engine will stop.") }
+            if (!wanted) runCatching { offPending.delete() }
+            val why2 = if (s.cloudScan && !wanted) (if (s.bidsNeedFullScan) "bids need every priced line" else "scanning is paused") else null
+            _ui.update { it.copy(pushedRev = rev, pushedAtMs = System.currentTimeMillis(), note = if (wanted) "Settings sent to the engine." else "The engine was told to stand down" + (why2?.let { w -> " ($w)" } ?: "") + ".") }
         } else { c.eventLog.warn("CLOUD", "settings not sent: $why"); _ui.update { it.copy(note = "Settings not sent: $why") } }
-    }
-
-    private val keysSent = File(c.app.filesDir, "cloud_keys_sent")
-    @Volatile private var keysAttempt: String? = null
-
-    /** The keys this phone would send, by secret name, values joined by commas; empty providers are left out. Pinnodds and BoltOdds never ([CloudKeys.PHONE_ONLY]). */
-    private fun keysToSend(): Map<String, String> =
-        CloudKeys.BY_PROVIDER.mapNotNull { (p, name) -> c.keyStore.current(p).filter { it.isNotBlank() }.takeIf { it.isNotEmpty() }?.let { name to it.joinToString(",") } }.toMap()
-
-    private fun fingerprint(m: Map<String, String>): String =
-        java.security.MessageDigest.getInstance("SHA-256").digest(m.toSortedMap().entries.joinToString("\n") { "${it.key}=${it.value}" }.toByteArray()).joinToString("") { "%02x".format(it) }
-
-    /**
-     * Sends this phone's API keys to the repository's secrets for the engine to use (Tj, 2026-10-14: "make it so the app itself uploads the API keys to GitHub"). Each value is sealed to the
-     * repository's public key on this phone ([com.tjshea.vigilant.data.cloud.SealedBox]), so GitHub stores it write-only: nothing, including this app, can read a secret back. Pinnodds and BoltOdds
-     * keys and Kalshi's private key are never sent. Words only: no value is ever in the result, a log or an error. A running engine read its secrets when its job began, so it is stopped and started
-     * again to pick them up.
-     */
-    suspend fun sendKeys(auto: Boolean = false): String {
-        if (!hasToken()) return "Save the GitHub token first."
-        val m = keysToSend()
-        if (m.isEmpty()) return "No API keys are saved on this phone to send."
-        val fp = fingerprint(m)
-        if (auto && (fp == keysAttempt || runCatching { keysSent.readText() }.getOrNull() == fp)) return ""
-        keysAttempt = fp
-        val key = when (val k = client.secretsKey()) {
-            is CloudClient.Poll.Fresh -> k.value
-            is CloudClient.Poll.Failed -> return k.why.also { _ui.update { u -> u.copy(keysNote = "Keys not sent: $it") } }
-            else -> return "GitHub's secrets key could not be read"
-        }
-        val sent = ArrayList<String>()
-        for ((name, value) in m) {
-            val why = client.putSecret(name, value, key)
-            if (why != null) { val msg = "Keys not sent ($name): $why"; _ui.update { it.copy(keysNote = msg) }; c.eventLog.warn("CLOUD", msg); return msg }
-            sent += name
-            delay(300L)
-        }
-        val previous = runCatching { keysSent.readText() }.getOrNull()
-        runCatching { keysSent.writeText(fp) }
-        val msg = "Sent ${sent.size} key set(s) to GitHub secrets: ${sent.joinToString(", ")}. Pinnodds, BoltOdds and Kalshi keys stay on the phone."
-        c.eventLog.info("CLOUD", msg)
-        // A running engine holds the secrets it read when its job began: restart it only when the keys CHANGED (a second tap with the same keys must not throw away a scan that is minutes in), and at most
-        // once in 10 minutes.
-        val st = latest.status
-        val now = System.currentTimeMillis()
-        val running = st != null && !st.idle && now - st.heartbeatMs < ENGINE_DEAD_S * 1000L
-        val changed = previous != fp
-        val tail = if (running && changed && c.settingsStore.flow.value?.cloudScan == true && now - lastRestartAt > 10 * 60_000L) {
-            lastRestartAt = now
-            client.cancelRun(st!!.runId); delay(4_000L); lastStartAskedAt = System.currentTimeMillis(); client.startEngine()
-            " The engine was restarted to use them."
-        } else if (running && changed) " The running engine reads them the next time it starts (within 6 hours, or tap Start the engine now after switching it off and on)." else ""
-        _ui.update { it.copy(keysNote = msg + tail) }
-        return msg + tail
     }
 
     /** Saves the bet and bid day files and the scan study's days to `phone-data`; each file is sent again only when it changed. */
