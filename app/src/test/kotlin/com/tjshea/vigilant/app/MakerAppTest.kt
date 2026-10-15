@@ -630,7 +630,7 @@ class MakerAppTest {
         // the local scan's lines: the orders the desk puts up
         val localNovig = FakeNovig()
         app.container.installTradingForTest(localNovig, "sub-1")
-        runner(localNovig).run("test")!!
+        val localReport = runner(localNovig).run("test")!!
         val local = localNovig.placed.sorted()
         assertTrue("the sample board makes bids: $local", local.size >= 2)
         // the same board through the engine's candidates and the phone's lane
@@ -647,7 +647,8 @@ class MakerAppTest {
         )
         val report = cloud.run("test")!!
         assertEquals("the same orders, at the same prices, sizes and lives", local, novig.placed.sorted())
-        assertEquals(local.size, report.placed)
+        assertEquals(localReport.placed, report.placed)
+        assertEquals(localReport.decisions.map { it.line.outcomeId to it::class }.sortedBy { it.first }.filter { it.second == MakerDecision.Post::class }, report.decisions.map { it.line.outcomeId to it::class }.sortedBy { it.first }.filter { it.second == MakerDecision.Post::class })
         assertEquals("the Bids tab says which list the lines came from", now, cloud.status.value.scanAtMs)
         // a list that is half an hour old is no list: nothing new goes up and the bids already up stay (as with no scan at all)
         val stale = MakerRunner(
@@ -657,7 +658,7 @@ class MakerAppTest {
         val before = novig.placed.size
         stale.run("test")
         assertEquals(before, novig.placed.size)
-        assertTrue(novig.orders.values.none { it.status == "CANCELED" } || novig.orders.values.all { it.status != "OPEN" } || true)
+        assertTrue("the bids already up stay", novig.orders.values.none { it.status == "CANCELED" })
     }
 
     @Test
