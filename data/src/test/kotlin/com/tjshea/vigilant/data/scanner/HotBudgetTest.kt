@@ -45,10 +45,8 @@ class HotBudgetTest {
     }
 
     @Test
-    fun `the old fixed 120 books a step would have taken the whole of a public route`() {
-        val oldShare = (120 / 1.5) / (120 / 1.5 + 0.0)   // 80 s of reading, the next step already due: no time left for anything else
-        assertEquals(80.0, oldShare, 1e-9)
-        val newStepSeconds = HotBudget.reads(1.5, 45) / 1.5
-        assertTrue("a step is ${newStepSeconds}s now", newStepSeconds < 15.0)
+    fun `on the public route a step is seconds, not the 80 s the fixed 120 books took`() {
+        val stepSeconds = HotBudget.reads(1.5, 45) / 1.5
+        assertTrue("a step is ${stepSeconds}s now (120 books at 1.5 a second were 80 s, longer than the 45 s between steps)", stepSeconds < 15.0)
     }
 }
