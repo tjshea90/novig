@@ -67,7 +67,7 @@ object UsageMerge {
             lastCost = newerCall.lastCost,
             recent = l.recent + c.recent,
             firstSeenMs = listOfNotNull(l.firstSeenMs, c.firstSeenMs).minOrNull(),
-            depletedUntil = listOfNotNull(l.depletedUntil, c.depletedUntil).maxOrNull(),
+            depletedUntil = listOfNotNull(rest(l, figure), rest(c, figure)).maxOrNull(),
             coolUntil = listOfNotNull(l.coolUntil, c.coolUntil).maxOrNull(),
             refused = newerCall.refused,
             refusals = newerCall.refusals,
@@ -80,14 +80,18 @@ object UsageMerge {
             out.copy(used = if (limit != null && figure.remaining != null) (limit - figure.remaining).coerceAtLeast(0) else figure.used)
         } else {
             // Our own counts: each machine counted its own calls, in the same period.
-            out.copy(used = if (samePeriod) l.used + c.used else maxOf(l, c) { a, b -> a.periodStart.compareTo(b.periodStart) }.used, remaining = null)
-        }
-        // A rest the provider's figure lifted is lifted: a key with something left is not "spent".
-        if (figure != null && (out.remaining ?: 0) > 0 && out.depletedUntil != null && figure.depletedUntil == null && out.depletedUntil!! > now && (figure.figureAtMs ?: 0L) > (newerCall.lastCallMs ?: 0L) - 1) {
-            out = out.copy(depletedUntil = null)
+            out.copy(used = if (samePeriod) l.used + c.used else (if (l.periodStart >= c.periodStart) l else c).used, remaining = null)
         }
         return out
     }
 
-    private inline fun <T> maxOf(a: T, b: T, cmp: (T, T) -> Int): T = if (cmp(a, b) >= 0) a else b
+    /**
+     * A side's "spent until" rest, unless the provider's newest figure shows credits left and was read AFTER that rest was set (the side's last call is when it set it): a key with something left is not spent,
+     * and a stale rest on one machine must not hold the other machine's fresher word hostage.
+     */
+    private fun rest(side: KeyUsage, figure: KeyUsage?): Long? {
+        val until = side.depletedUntil ?: return null
+        val lifted = figure != null && (figure.remaining ?: 0) > 0 && (figure.figureAtMs ?: 0L) > (side.lastCallMs ?: 0L)
+        return until.takeUnless { lifted }
+    }
 }
