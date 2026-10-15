@@ -1571,6 +1571,8 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     u.keysNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudKeysNote")) }
     u.status?.novigRoute?.takeIf { it.isNotBlank() && s.cloudScan }?.let { Text("GitHub reads Novig: $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudNovigRoute")) }
     u.status?.ranking?.takeIf { it.isNotBlank() && s.cloudScan }?.let { Text("APIs on GitHub, best first (measured freshness and accuracy):\n$it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudRanking")) }
+    // 3b. the engine's own trading (TCL20d): off / paper / live, and how it sizes (smart fractional Kelly)
+    EngineTradingSection(state, onUpdate)
     // 4. history for Claude
     SectionTitle("History")
     SwitchRow(
@@ -2711,4 +2713,67 @@ fun SafeguardsPage(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -
     com.tjshea.vigilant.app.Safeguards.ALL.forEach { g ->
         SwitchRow(g.title, g.why, g.isOn(s), tag = "safeguard-${g.key}") { v -> onUpdate { g.set(it, v) } }
     }
+}
+
+/**
+ * Settings › Cloud scan › Engine trading (Tj, 2026-10-15, TCL20d): what GitHub's engine does with the bets it lists. Off = nothing; Paper = it records the orders it WOULD have sent (no money moves); Live = it orders from
+ * the Vigilant subaccount with the trading key sent above. Live needs that key on GitHub and a second tap. While it is not Off the phone's own auto-bet stands down, so one decision is never two orders.
+ */
+@Composable
+private fun EngineTradingSection(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    val u = state.cloudUi
+    val g = s.gates
+    SectionTitle("Engine trading")
+    val modes = com.tjshea.vigilant.data.scanner.CloudTradeMode.entries
+    var pendingLive by remember { mutableStateOf(false) }
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 8.dp).testTag("cloudTradeMode")) {
+        modes.forEachIndexed { i, m ->
+            SegmentedButton(
+                selected = g.cloudTrading == m,
+                onClick = {
+                    if (m == com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE && g.cloudTrading != m) pendingLive = true
+                    else { pendingLive = false; onUpdate { it.copy(gates = it.gates.copy(cloudTrading = m)) } }
+                },
+                enabled = u.hasToken && (m != com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE || u.tradeKeyOnGitHub),
+                shape = SegmentedButtonDefaults.itemShape(i, modes.size),
+            ) { Text(m.name.lowercase().replaceFirstChar { it.uppercase() }, maxLines = 1) }
+        }
+    }
+    if (pendingLive) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 8.dp, top = 4.dp)) {
+            Button(onClick = { pendingLive = false; onUpdate { it.copy(gates = it.gates.copy(cloudTrading = com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE)) } }, modifier = Modifier.testTag("cloudTradeLiveConfirm")) { Text("Yes, bet real money") }
+            OutlinedButton(onClick = { pendingLive = false }) { Text("Cancel") }
+        }
+    }
+    Hint(
+        when (g.cloudTrading) {
+            com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF -> "GitHub only lists bets. Paper first is the safe way in: it records what it would have bet so the results can be checked before any money moves."
+            com.tjshea.vigilant.data.scanner.CloudTradeMode.PAPER -> "GitHub decides and sizes bets with your Auto-bet rules and writes the orders it WOULD have sent. No money moves. Your phone's auto-bet stands down."
+            com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE -> "GitHub places the bets itself, 8 am to 10 pm Eastern, from the Vigilant subaccount, sized by Kelly. Your phone's auto-bet stands down. It stops by itself on a location refusal, a loss stop or a short wallet, and says why below."
+        } + if (!u.tradeKeyOnGitHub) " Live needs the trading key above on GitHub." else "",
+    )
+    u.status?.takeIf { it.tradeMode.isNotBlank() }?.let { st ->
+        Text(
+            "Engine ${st.tradeMode}: ${st.tradeNote}" + (st.tradeStopped.takeIf { it.isNotBlank() }?.let { "\nStopped: $it" } ?: ""),
+            style = MaterialTheme.typography.bodySmall, color = if (st.tradeStopped.isNotBlank()) Edge.colors.warning else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudTradeLine"),
+        )
+    }
+    fun pct(v: Double) = "${(v * 100).roundToInt()}%"
+    @Composable
+    fun sizing(label: String, value: Double, range: ClosedFloatingPointRange<Float>, stepsCount: Int, tag: String, set: (com.tjshea.vigilant.data.scanner.ApiGates, Double) -> com.tjshea.vigilant.data.scanner.ApiGates) {
+        var v by remember(value) { mutableFloatStateOf(value.toFloat()) }
+        Text("$label: ${pct(v.toDouble())}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 8.dp))
+        Slider(
+            value = v, onValueChange = { v = (it * 100).roundToInt() / 100f }, onValueChangeFinished = { onUpdate { s0 -> s0.copy(gates = set(s0.gates, v.toDouble())) } },
+            valueRange = range, steps = stepsCount, modifier = Modifier.padding(horizontal = 8.dp).testTag(tag),
+        )
+    }
+    sizing("Share of full Kelly", g.cloudKelly, 0.05f..1f, 18, "cloudKellySlider") { gg, v -> gg.copy(cloudKelly = v) }
+    sizing("Most on one bet (of bankroll)", g.cloudBetCap, 0.01f..0.25f, 23, "cloudBetCapSlider") { gg, v -> gg.copy(cloudBetCap = v) }
+    sizing("Most on one game", g.cloudGameCap, 0.01f..0.5f, 48, "cloudGameCapSlider") { gg, v -> gg.copy(cloudGameCap = v) }
+    sizing("Most at risk at once", g.cloudWalletUse, 0.1f..1f, 18, "cloudWalletUseSlider") { gg, v -> gg.copy(cloudWalletUse = v) }
+    sizing("Stop for the day when down", g.cloudDayStop, 0.05f..0.9f, 16, "cloudDayStopSlider") { gg, v -> gg.copy(cloudDayStop = v) }
+    Hint("Stakes are a fraction of full Kelly, cut again when the fair odds are old, few books agree or the rating is low; half stakes after a drawdown of half the stop. The sliders move only how much, never which bets: those are your Auto-bet rules.")
 }
