@@ -57,6 +57,9 @@ class CloudNovig(
     @Synchronized
     fun close() { stream?.close(); stream = null; novig.stream = null }
 
+    /** True while the key route stands down because Novig refused this runner's ADDRESS (not the device check): [AddressWatch] then draws another runner. */
+    fun addressRefused(now: Long): Boolean = signer != null && AddressWatch.isAddressRefusal(novig.keyDown(now))
+
     /** One line for the status file and the Cloud page: how this scan's Novig reads are going out. */
     fun route(now: Long): String = route(novig, signer != null, stream != null, problem, now)
 

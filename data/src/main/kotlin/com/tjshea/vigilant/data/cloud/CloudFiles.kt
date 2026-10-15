@@ -98,6 +98,9 @@ data class CloudStatus(
     /** The bid desk's candidate list (`bids.json.gz`; only while the phone has Vigilant-priced bids on): when it was made, how many lines it holds and how big the file is; 0 = none. */
     val bidsAtMs: Long = 0L,
     val bidsCount: Int = 0,
+    /** Jobs in a row that ended early because Novig refused the runner's address, and when the last did ([AddressWatch]); carried from job to job. */
+    val addressHandovers: Int = 0,
+    val addressHandoverAtMs: Long = 0L,
     /** When the engine's API usage snapshot (`usage.json`, [CloudUsage]) was made: the phone fetches it when this changes. 0 = none yet (an engine older than this app). */
     val usageAtMs: Long = 0L,
     /** How the engine reads Novig now ([CloudNovig.route]): its own read-only key (with the key's rate) or the public routes, and why (a refusal of the runner's address). Empty = not said. */

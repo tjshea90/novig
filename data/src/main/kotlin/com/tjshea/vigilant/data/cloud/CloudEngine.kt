@@ -67,8 +67,11 @@ class CloudEngine(
     private val prepare: (ScanSettings) -> Unit = {},
     /** One line on how Novig is being read now ([CloudNovig.route]). */
     private val novigRoute: () -> String = { "" },
+    /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
+    private val addressWatch: AddressWatch? = null,
 ) {
-    enum class End { TIME_UP, IDLE }
+    /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once. */
+    enum class End { TIME_UP, IDLE, ADDRESS }
 
     @Volatile var passes = 0
         private set
@@ -97,6 +100,7 @@ class CloudEngine(
     @Volatile private var bidsAt = 0L
     @Volatile private var bidsCount = 0
     @Volatile private var bidsOn = false
+    @Volatile private var addressEnd = false
     @Volatile private var lastPublished: CloudFeed? = null
     @Volatile private var lastAges = CloudCurrency.UNKNOWN
 
@@ -121,6 +125,7 @@ class CloudEngine(
             offSince = 0L
             val restarted = scanOnce(cfg, startedAtMs, untilMs)
             lastBeat = clock()
+            if (addressEnd) return End.ADDRESS
             // A scan cut short by the phone's word (a refresh, new settings) starts again at once; one that ran to its end waits the gap.
             if (!restarted) pause((cfg.passGapSeconds.coerceIn(5, 600) * 1000L))
         }
@@ -167,6 +172,14 @@ class CloudEngine(
         while (job.isActive) {
             pause(1_000L)
             val now = clock()
+            // Novig refuses this runner's address: stop, publish what there is, and let the workflow draw another runner (AddressWatch).
+            if (addressWatch?.shouldHandOver(now) == true) {
+                addressEnd = true
+                restartReason = "Novig refused this runner's address"
+                log("Novig refused this runner's address: handing over to a new runner (#${addressWatch.count} in a row)")
+                job.cancel(CancellationException(restartReason))
+                break
+            }
             if (now - lastPublishedAt >= partialEveryMs) {
                 lastPublishedAt = now
                 partial.getAndSet(null)?.let { r ->
@@ -265,6 +278,7 @@ class CloudEngine(
             novigAgeMedianS = lastAges.novigMedianS, novigAgeMaxS = lastAges.novigMaxS, fairAgeMedianS = lastAges.fairMedianS, fairAgeMaxS = lastAges.fairMaxS,
             pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote, bidsAtMs = bidsAt, bidsCount = bidsCount,
             novigRoute = runCatching(novigRoute).getOrDefault(""), ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
+            addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
         )
     }
 
