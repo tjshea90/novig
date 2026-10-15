@@ -7581,3 +7581,8 @@ How do I start the GitHub auto betting and bidding system
 ```
 Can you confirm that the auto bet system is now on and working on GitHub
 ```
+
+## 2026-10-15T19:27:41Z
+```
+There is money in the wallet but it says 0 on GitHub. Figure this out. Is the API running on my phone and therefore conflicting with GitHub? Is the address accepted? Also, I want a way where I can see which apis are working and active at any time on GitHub and with accurate usage meters
+```
