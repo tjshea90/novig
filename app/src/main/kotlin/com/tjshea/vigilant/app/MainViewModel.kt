@@ -1016,6 +1016,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * One scan: Novig's board and prices plus fair odds from every enabled source. It runs in the
      * app's runner under a foreground service, so it keeps going if Tj switches apps.
      */
+    fun markClaudeRead() { viewModelScope.launch(Dispatchers.IO) { c.cloud.inbox.markAllRead() } }
+
     fun scan(resume: Boolean = false) {
         val current = _state.value
         // A pull to refresh while paused resumes the scanner, then scans ([resumeThen]).
