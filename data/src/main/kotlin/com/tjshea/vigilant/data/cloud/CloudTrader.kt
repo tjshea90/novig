@@ -172,6 +172,14 @@ class CloudTrader(
         val skipped = LinkedHashMap<String, Int>()
         fun skip(r: String) { skipped.merge(r, 1, Int::plus) }
 
+        val candidates = ArrayList<Opportunity>()
+        for (o in rows) {
+            val why = reason(o, rules, s, now)
+            if (why != null) skip(why) else candidates += o
+        }
+        // Nothing passed the rules (most passes, most of the time): no wallet read, no request to Novig.
+        if (candidates.isEmpty()) return Report(mode, looked = rows.size, skipped = skipped)
+
         // the money: a paper wallet is the bankroll setting plus what graded entries made; a live one is the subaccount's cash
         val settled = ledger.entries.filter { it.status != "OPEN" }.sumOf { it.pnl ?: 0.0 }
         var risk = atRisk(now)
@@ -189,11 +197,6 @@ class CloudTrader(
         if (ledger.dayKey != day) ledger = ledger.copy(dayKey = day, dayStartEquity = equity, stopped = if (live) ledger.stopped else "")
         if (cash < AutoBet.SLEEP_BELOW) return Report(mode, cash = cash, equity = equity, stopped = "the wallet has ${money(cash)}, under ${money(AutoBet.SLEEP_BELOW)}")
 
-        val candidates = ArrayList<Opportunity>()
-        for (o in rows) {
-            val why = reason(o, rules, s, now)
-            if (why != null) skip(why) else candidates += o
-        }
         // The best-rated, then the likeliest edge first (the edge a sharp book would not back counts for 70%).
         val ordered = candidates.sortedWith(compareByDescending<Opportunity> { it.rating?.stars ?: 0.0 }.thenByDescending { AutoBet.credibleEv(it.evPercent ?: 0.0, null) })
         val repeat = s.gates.repeatRules()

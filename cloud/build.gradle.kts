@@ -37,3 +37,10 @@ tasks.register<JavaExec>("review") {
     mainClass.set("com.tjshea.vigilant.cloud.ReviewMainKt")
     jvmArgs("-Xmx3g")
 }
+
+// The daily grader of the engine's scan study (GradeMain.kt): `./gradlew :cloud:grade --args="--journal DIR --new DIR [--trades FILE --results FILE]"`, run by .github/workflows/engine-grade.yml.
+tasks.register<JavaExec>("grade") {
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.tjshea.vigilant.cloud.GradeMainKt")
+    jvmArgs("-Xmx3g")
+}

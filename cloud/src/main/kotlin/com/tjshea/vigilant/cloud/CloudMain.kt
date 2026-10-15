@@ -16,6 +16,7 @@ import com.tjshea.vigilant.data.cloud.CloudSources
 import com.tjshea.vigilant.data.cloud.CloudStatus
 import com.tjshea.vigilant.data.cloud.CloudTrader
 import com.tjshea.vigilant.data.cloud.TradeLedger
+import com.tjshea.vigilant.data.cloud.TradeSettle
 import com.tjshea.vigilant.data.scanner.CloudTradeMode
 import com.tjshea.vigilant.data.cloud.CloudUsage
 import com.tjshea.vigilant.data.keys.UsageBook
@@ -96,19 +97,6 @@ fun main(args: Array<String>) = runBlocking {
             log("usage: carried over from the previous job (${f.book.providers.size} providers)")
         }
     }
-    val flusher = scope.launch {
-        var usageAt = 0L
-        while (isActive) {
-            val now = System.currentTimeMillis()
-            // The engine's API usage goes out with the list, at most every 30 s (keys by id, never in clear: [CloudUsage]).
-            if (now - usageAt >= 30_000L) { usageAt = now; runCatching { publisher.stageUsage(CloudUsage.encode(usage.flow.value, runId, now, allKeys), now) } }
-            runCatching { publisher.flush() }
-            delay(4_000L)
-        }
-    }
-    // Novig refusing THIS runner's address ends the job early so the workflow draws another runner (AddressWatch, Tj 2026-10-15); the streak is carried from job to job in the status file.
-    val prevStatus = runCatching { PreviousFeed.read(git, cfgDir, "status.json") }.getOrNull()?.let { CloudStatus.parse(it) }
-    val addressWatch = novigKeyed?.let { nk -> AddressWatch(started, prevStatus?.addressHandovers ?: 0, prevStatus?.addressHandoverAtMs ?: 0L) { now -> nk.addressRefused(now) } }
     // The engine's own trading (TCL20d): paper orders unless the phone's switch says live AND the trading key was sent; its ledger is carried from job to job in `trades.json`.
     // The trading key (Tj sent it from the phone, TCL20c) only ever makes a port; whether anything is ordered is the phone's three-way switch (off / paper / live), read with every list.
     val tradeKeyId = CloudKeys.rawEnv(CloudKeys.TRADE_KEY_ID)
@@ -128,6 +116,32 @@ fun main(args: Array<String>) = runBlocking {
     // The engine's own scan study (TCL20e): every bet each finished scan lists, in the app's journal format, in the folder the archive loop gzips to the day's cloud-archive Release (study-<day>-run<id>.jsonl.gz).
     // Each run's file is a segment of its own; the daily grader (engine-grade.yml) puts the segments together, finds results and closes, and the daily digest reads them beside the phone's.
     val study = com.tjshea.vigilant.data.study.ScanStudy(com.tjshea.vigilant.data.study.StudyJournal(File(out, "cloud")), version = { "github-engine" })
+    // The grader's settled orders (engine-results branch, TCL20e): applied at the start and every 30 minutes, so the paper wallet and the day's figures follow the real results.
+    var resultsAt = 0L
+    fun applyTradeResults() {
+        runCatching { PreviousFeed.read(git, cfgDir, "trade-results.json", "engine-results") }.getOrNull()?.let { text ->
+            TradeSettle.File.parse(text)?.let { f ->
+                val open = trader.ledger.entries.filter { it.status == "OPEN" || it.status == "UNCONFIRMED" }.mapTo(HashSet()) { it.id }
+                var n = 0
+                for (r in f.settled) if (r.id in open) { trader.settle(r.id, r.status, r.pnl); n++ }
+                if (n > 0) log("trades: $n of the engine's orders settled by the grader")
+            }
+        }
+    }
+    val flusher = scope.launch {
+        var usageAt = 0L
+        while (isActive) {
+            val now = System.currentTimeMillis()
+            // The engine's API usage goes out with the list, at most every 30 s (keys by id, never in clear: [CloudUsage]).
+            if (now - resultsAt >= 30 * 60_000L) { resultsAt = now; applyTradeResults() }
+            if (now - usageAt >= 30_000L) { usageAt = now; runCatching { publisher.stageUsage(CloudUsage.encode(usage.flow.value, runId, now, allKeys), now) } }
+            runCatching { publisher.flush() }
+            delay(4_000L)
+        }
+    }
+    // Novig refusing THIS runner's address ends the job early so the workflow draws another runner (AddressWatch, Tj 2026-10-15); the streak is carried from job to job in the status file.
+    val prevStatus = runCatching { PreviousFeed.read(git, cfgDir, "status.json") }.getOrNull()?.let { CloudStatus.parse(it) }
+    val addressWatch = novigKeyed?.let { nk -> AddressWatch(started, prevStatus?.addressHandovers ?: 0, prevStatus?.addressHandoverAtMs ?: 0L) { now -> nk.addressRefused(now) } }
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
@@ -184,8 +198,8 @@ private class ConfigReader(private val git: Git, private val dir: File) {
 
 /** The previous job's `ranking.json` or `usage.json` from `cloud-feed`, read with git like [ConfigReader] reads the settings (the checkout already has the token). Null when there is none. */
 private object PreviousFeed {
-    fun read(git: Git, dir: File, file: String): String? {
-        if (git.run(dir, "fetch", "-q", "--depth=1", "origin", "cloud-feed") != 0) return null
+    fun read(git: Git, dir: File, file: String, branch: String = "cloud-feed"): String? {
+        if (git.run(dir, "fetch", "-q", "--depth=1", "origin", branch) != 0) return null
         return git.out(dir, "show", "FETCH_HEAD:$file")
     }
 }
