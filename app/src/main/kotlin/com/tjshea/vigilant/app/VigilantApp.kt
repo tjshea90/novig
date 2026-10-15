@@ -260,7 +260,6 @@ class AppContainer(val app: Application) {
         cloudNovigKeys = com.tjshea.vigilant.data.cloud.CloudNovigKeyStore(File(filesDir, CLOUD_NOVIG_KEY_FILE), box, json)
         cloudTradeKeys = com.tjshea.vigilant.data.cloud.CloudNovigKeyStore(File(filesDir, CLOUD_TRADE_KEY_FILE), box, json)
         tradeVault = com.tjshea.vigilant.app.data.SharedTradeVault(cloudTradeKeys)
-        bettingSetup = NovigBettingSetup(http, json, tradeVault)
         secretBox = box
     }
 
