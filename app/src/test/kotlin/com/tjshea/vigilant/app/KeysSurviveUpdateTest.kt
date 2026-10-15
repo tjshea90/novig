@@ -45,6 +45,7 @@ class KeysSurviveUpdateTest {
         val conn = NovigConnection("read-1", "vigilant_novig_read_1", "sub-1", createdSubaccount = false, tradingKeyId = "trading-1", tradingAlias = "vigilant_novig_trading_1")
         before.novigConnection.save(conn)
         before.managementKeys.save(ManagementKey("mgmt-key-12345678", pem))
+        before.cloudNovigKeys.save(com.tjshea.vigilant.data.cloud.EngineNovigKey("engine-read-0001", pem), "sub-1")
 
         // The updated app's first process.
         val after = AppContainer(app)
@@ -61,6 +62,8 @@ class KeysSurviveUpdateTest {
         assertNotNull(mgmt)
         assertEquals("mgmt-key-12345678", mgmt!!.keyId)
         assertEquals(pem, mgmt.pem)
+        // the engine's read-only key (Tj, 2026-10-15) is kept through an update too, so it can be sent again without making another
+        assertEquals("engine-read-0001", after.cloudNovigKeys.load()!!.keyId)
         // Loading the app (the move from v0.6.0's store, the connection) leaves every key in place.
         after.ensureLoaded()
         assertEquals(listOf("pinnwire-a", "pinnwire-b"), after.keyStore.getKeys(ApiProvider.PINNWIRE))
@@ -74,6 +77,7 @@ class KeysSurviveUpdateTest {
             val excludes = Regex("""<exclude domain="file" path="([^"]+)"""").findAll(xml).map { it.groupValues[1] }.toSet()
             // Sealed by this phone's Keystore: useless anywhere else.
             assertTrue("$name: management key", "novig_management_key.json" in excludes)
+            assertTrue("$name: the engine's read-only Novig key (sealed by this phone's Keystore)", "cloud_novig_key.json" in excludes)
             assertTrue("$name: Novig connection", "datastore/vigilant_api_keys.preferences_pb" in excludes)
             // Plain JSON: restores on a new phone.
             assertFalse("$name: odds keys", "api_keys.json" in excludes)
