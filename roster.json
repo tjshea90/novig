@@ -2,16 +2,16 @@
  "v": 1,
  "accounts": [
   {
-   "tag": "acct-5d1e2d",
-   "registeredAt": "2026-10-15T05:22:03Z"
+   "tag": "acct-7542bf",
+   "registeredAt": "2026-10-15T21:22:27Z"
   },
   {
    "tag": "acct-27a37e",
-   "registeredAt": "2026-10-15T05:44:56Z"
+   "registeredAt": "2026-10-15T21:22:27Z"
   },
   {
-   "tag": "acct-7542bf",
-   "registeredAt": "2026-10-15T05:49:53Z"
+   "tag": "acct-5d1e2d",
+   "registeredAt": "2026-10-15T21:22:27Z"
   }
  ]
 }
