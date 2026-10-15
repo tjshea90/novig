@@ -65,15 +65,30 @@ class CloudScanKeyTest {
     }
 
     @Test
-    fun `the cloud drives the scan only when it is on, scanning is not paused and no bid desk needs every priced line`() {
+    fun `the cloud drives the scan when it is on and not paused, and the bid desk's lines come from GitHub only with Vigilant-priced bids on`() {
         val on = base.copy(gates = base.gates.copy(cloudScan = true))
         assertTrue(on.cloudDrives)
+        assertFalse("no bids, no candidate lines", on.bidsFromCloud)
         assertFalse(base.cloudDrives)
-        assertFalse("bids from Vigilant's scan need every line", on.copy(maker = true).cloudDrives)
-        assertFalse("Recommend mode needs the lines too (it is the app's default)", on.copy(makerRecommend = true).cloudDrives)
-        assertTrue("bids priced from CNO never read Vigilant's scan", on.copy(maker = true, makerSource = BidSource.CNO).cloudDrives)
+        for (bids in listOf(on.copy(maker = true), on.copy(makerRecommend = true))) {
+            assertTrue("bids do not stop the cloud scan any more", bids.cloudDrives)
+            assertTrue(bids.bidsNeedLines)
+            assertTrue("automatic and Recommend bids are both made from GitHub's candidates", bids.bidsFromCloud)
+        }
+        assertFalse("bids priced from CNO never read Vigilant's scan", on.copy(maker = true, makerSource = BidSource.CNO).bidsFromCloud)
+        assertTrue(on.copy(maker = true, makerSource = BidSource.CNO).cloudDrives)
         assertFalse("paused by hand", on.copy(pausedByHand = true).cloudDrives)
-        assertFalse("the kill switch", on.copy(killed = true).cloudDrives)
+        assertFalse("the kill switch", on.copy(killed = true, maker = true).bidsFromCloud)
+    }
+
+    @Test
+    fun `bid rules reach the engine as a kind of their own, and the settings that change what is read stay fetch settings`() {
+        val bidRule = base.copy(makerMargin = 0.07, makerKinds = emptySet(), vigGuards = base.vigGuards.copy(bidVolume = !base.vigGuards.bidVolume), trapBidHours = 3)
+        assertEquals(CloudScanKey.scanKey(base), CloudScanKey.scanKey(bidRule))
+        assertNotEquals(CloudScanKey.key(base, Kind.BIDS), CloudScanKey.key(bidRule, Kind.BIDS))
+        // turning bids on, or setting low-usage bids, changes the scan's own profile: a restart
+        assertNotEquals(CloudScanKey.fetchKey(base), CloudScanKey.fetchKey(base.copy(maker = true)))
+        assertNotEquals(CloudScanKey.fetchKey(base), CloudScanKey.fetchKey(base.copy(makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE)))
     }
 
     @Test

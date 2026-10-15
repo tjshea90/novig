@@ -76,10 +76,11 @@ class CloudScannerTest {
         assertEquals(setOf("local"), s.unscannedLeagues(off))
         // re-checking open bets is always the phone's own
         assertEquals("local", s.recheck(on, emptyList()).error)
-        // with a bid desk that needs every priced line the phone scans for itself, switch or not
-        s.scan(on.copy(maker = true), emptyList(), emptySet(), {}, {})
-        assertEquals(2, local.scans)
+        // bids on do not take the scan back: the Feed's list and the bid desk's candidates both come from GitHub
+        assertNotNull(s.scan(on.copy(maker = true), emptyList(), emptySet(), {}, {}).result)
+        assertEquals(1, local.scans)
+        // paused: the phone's own scanner (which then does not scan either: paused)
         s.scan(on.copy(pausedByHand = true), emptyList(), emptySet(), {}, {})
-        assertEquals(3, local.scans)
+        assertEquals(2, local.scans)
     }
 }
