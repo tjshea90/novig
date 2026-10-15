@@ -57,7 +57,7 @@ class CloudDashboardTest {
         assertTrue("one key spent, one active: the total is the second's 794 of 2,000", md.contains("794 of 2,000 requests (39%)"))
         assertTrue(md.contains("▶ active"))
         assertTrue(md.contains("spent"))
-        assertTrue("the provider's own figure and how old it is", md.contains("provider, read 5 s ago"))
+        assertTrue("the provider's own figure and how old it is, once", md.contains("provider, read 5 s ago |"))
         assertTrue("SGO has no allowance published, only a count", md.contains("SportsGameOdds | ✅ working") && md.contains("no allowance published"))
         assertTrue(md.contains("BoltOdds | ❌ failing"))
         assertTrue(md.contains("ParlayAPI | ⚠️ answered nothing"))

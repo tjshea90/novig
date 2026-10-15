@@ -27,7 +27,7 @@ object CloudDashboard {
 
     /** What the table says about one provider after the last scan. */
     enum class Health(val label: String) {
-        WORKING("✅ working"), STANDING_BY("💤 standing by"), HELD_BACK("⏸ held back"), FAILING("❌ failing"), SILENT("⚠️ answered nothing"), NOT_ASKED("— not asked"), OFF("⛔ off / no key"),
+        WORKING("✅ working"), STANDING_BY("💤 standing by"), HELD_BACK("⏸ held back"), FAILING("❌ failing"), SILENT("⚠️ answered nothing"), NOT_ASKED("— not asked"), OFF("⛔ off / no key"), UNKNOWN("… no scan report yet"),
     }
 
     fun markdown(st: CloudStatus, book: UsageBook, keyIdsOf: (QuotaPolicy) -> List<String>, now: Long, repo: String = "tjshea90/novig"): String = buildString {
@@ -43,7 +43,7 @@ object CloudDashboard {
         appendLine()
         appendLine("| | |")
         appendLine("|:--|:--|")
-        if (st.scanning) appendLine("| Scan now | ${st.progressStep.ifBlank { "starting" }}${if (st.progressTotal > 0) " (${st.progressDone}/${st.progressTotal})" else ""} · running ${ago(now - st.scanStartedAtMs)} |")
+        if (st.scanning) appendLine("| Scan now | ${st.progressStep.ifBlank { "starting" }}${if (st.progressTotal > 0) " (${st.progressDone}/${st.progressTotal})" else ""} · running ${dur(now - st.scanStartedAtMs)} |")
         appendLine("| Last scan | ${if (st.lastScanEndedAtMs > 0) "ended ${clock(st.lastScanEndedAtMs)} (${ago(now - st.lastScanEndedAtMs)}), took ${st.scanMs / 1000} s, ${st.rows} bets listed" else "none finished yet"} |")
         appendLine("| List age | Novig prices median ${secs(st.novigAgeMedianS)} (oldest ${secs(st.novigAgeMaxS)}) · fair odds median ${secs(st.fairAgeMedianS)} (oldest ${secs(st.fairAgeMaxS)}) |")
         appendLine("| Novig | ${st.novigRoute.ifBlank { "not said yet" }} |")
@@ -55,7 +55,7 @@ object CloudDashboard {
         appendLine()
         appendLine("## APIs: working or not, and what each has left")
         appendLine()
-        appendLine("Health is from the **last finished scan** (${if (st.feedReportAtMs > 0) "${clock(st.feedReportAtMs)}, ${ago(now - st.feedReportAtMs)}" else "none yet"}): leagues answered fresh+reused, Novig games matched. An API the phone has switched off, or with no key on GitHub, is never called and shows as off.")
+        appendLine("Health is from the **last finished scan** (${if (st.feedReportAtMs > 0) "${clock(st.feedReportAtMs)}, ${ago(now - st.feedReportAtMs)}" else "no report yet: this engine build is older than the page, the next job fills it in"}): leagues answered fresh+reused, Novig games matched. An API the phone has switched off, or with no key on GitHub, is never called and shows as off.")
         appendLine()
         appendLine("| API | Health | Leagues (fresh+reused) | Games matched | Left of allowance | Resets | Calls today | Throttled | Note |")
         appendLine("|:--|:--|--:|--:|--:|:--|--:|--:|:--|")
@@ -68,7 +68,7 @@ object CloudDashboard {
             val view = UsageViews.build(policy, keyIdsOf(policy), book.providers[policy.id], now)
             views += view
             shown += policy.id
-            val health = health(feeds, policy.id in st.sources.map { providerOf(it) } || feeds.isNotEmpty() || !policy.keyed)
+            val health = if (st.feedReportAtMs <= 0L) Health.UNKNOWN else health(feeds, policy.id in st.sources.map { providerOf(it) } || feeds.isNotEmpty() || !policy.keyed)
             val left = when {
                 !policy.keyed -> "no key, not metered"
                 view.totalLeft != null && view.totalAllowance != null -> "${num(view.totalLeft)} of ${num(view.totalAllowance)} ${policy.unit} (${(100 * view.totalLeft / view.totalAllowance.coerceAtLeast(1))}%)"
@@ -93,7 +93,7 @@ object CloudDashboard {
             appendLine("|:--|:--|:--|--:|--:|:--|:--|")
             for (v in keyed) for (k in v.keys) {
                 val state = when (k.state) { KeyState.ACTIVE -> "▶ active"; KeyState.STANDBY -> "standby"; KeyState.SPENT -> "spent"; KeyState.COOLING -> "cooling"; KeyState.REFUSED -> "refused by provider" }
-                val fig = if (k.serverReported) "provider${k.figureAtMs?.let { ", read ${ago(now - it)} ago" } ?: ""}" else "count"
+                val fig = if (k.serverReported) "provider${k.figureAtMs?.let { ", read ${dur(now - it)} ago" } ?: ""}" else "count"
                 appendLine("| ${v.policy.displayName} | `${k.masked}` | $state | ${num(k.used)}${k.allowance?.let { " / ${num(it)}" } ?: ""} | ${k.left?.let { num(it) } ?: "—"} | $fig | ${k.until?.let { clock(it) } ?: "—"} |")
             }
             appendLine()
@@ -119,8 +119,8 @@ object CloudDashboard {
 
     private fun wallet(st: CloudStatus, now: Long): String = when {
         st.walletSleep.isNotBlank() -> "SLEEPING: ${st.walletSleep}"
-        st.walletReadAtMs <= 0L -> if (st.tradeMode.equals("live", true)) "not read yet${if (st.walletCheckedAtMs > 0) " (asked ${ago(now - st.walletCheckedAtMs)} ago and got no answer)" else ""}: NOT zero, just unknown" else "not applicable (trading is not live)"
-        else -> "cash ${money(st.walletCash)} · equity ${money(st.walletEquity)} · read ${ago(now - st.walletReadAtMs)} ago"
+        st.walletReadAtMs <= 0L -> if (st.tradeMode.equals("live", true)) "not read yet${if (st.walletCheckedAtMs > 0) " (asked ${dur(now - st.walletCheckedAtMs)} ago and got no answer)" else ""}: NOT zero, just unknown" else "not applicable (trading is not live)"
+        else -> "cash ${money(st.walletCash)} · equity ${money(st.walletEquity)} · read ${dur(now - st.walletReadAtMs)} ago"
     }
 
     private fun money(x: Double) = if (x < 0) "unknown" else String.format(java.util.Locale.US, "$%.2f", x)
@@ -128,10 +128,11 @@ object CloudDashboard {
     private fun secs(s: Long) = if (s < 0) "n/a" else if (s < 120) "$s s" else "${s / 60} min"
     private val fmt = DateTimeFormatter.ofPattern("MMM d HH:mm:ss 'UTC'").withZone(ZoneOffset.UTC)
     private fun clock(ms: Long) = if (ms <= 0) "never" else fmt.format(Instant.ofEpochMilli(ms))
-    private fun ago(ms: Long): String = when {
+    private fun dur(ms: Long): String = when {
         ms < 0 -> "n/a"
-        ms < 90_000 -> "${ms / 1000} s ago"
-        ms < 90 * 60_000L -> "${ms / 60_000} min ago"
-        else -> "${ms / 3_600_000} h ago"
+        ms < 90_000 -> "${ms / 1000} s"
+        ms < 90 * 60_000L -> "${ms / 60_000} min"
+        else -> "${ms / 3_600_000} h"
     }
+    private fun ago(ms: Long): String = if (ms < 0) "n/a" else "${dur(ms)} ago"
 }
