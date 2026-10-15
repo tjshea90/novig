@@ -50,6 +50,10 @@ class CloudLink(private val c: AppContainer) {
         val listAgeSec: Long? = null,
         val rows: Int = 0,
         val saveLine: String = "",
+        /** The engine's last heartbeat, when the phone asked for a scan last (its own clock), and why nothing arrives, for the Feed's cloud bar ([com.tjshea.vigilant.data.cloud.CloudText]). */
+        val status: com.tjshea.vigilant.data.cloud.CloudStatus? = null,
+        val requestedAtMs: Long = 0L,
+        val why: String? = null,
         /** What the last "Send my API keys" said (words only). */
         val keysNote: String? = null,
         val rateRemaining: Int? = null,
@@ -66,6 +70,8 @@ class CloudLink(private val c: AppContainer) {
     private var lastRev = 0L
     private var lastStartAskedAt = 0L
     private var lastRestartAt = 0L
+    /** The phone's clock when it last asked for a scan (pull to refresh, the Scan button); written into every config so a later settings push never forgets it. */
+    @Volatile private var refreshRequestedAt = 0L
     private var feedFetchedFor = 0L
 
     private fun token(): String? {
@@ -135,7 +141,7 @@ class CloudLink(private val c: AppContainer) {
             while (isActive) {
                 val s = c.settingsStore.flow.value
                 if (s == null || !s.cloudScan || !hasToken()) { delay(3_000L); continue }
-                var wait = POLL_MS
+                var wait = if (refreshRequestedAt > 0L && (latest.status?.lastScanForRefreshAtMs ?: 0L) < refreshRequestedAt) POLL_PENDING_MS else POLL_MS
                 when (val p = client.pollStatus(etag)) {
                     is CloudClient.Poll.Fresh -> {
                         etag = p.etag
@@ -173,6 +179,25 @@ class CloudLink(private val c: AppContainer) {
         }
     }
 
+    /**
+     * Pull to refresh / the Scan button in cloud mode (Tj, 2026-10-14): tells the engine to scan now, in the settings file it reads every 3 s (settings and the request travel together, so the scan it starts
+     * is under exactly what the phone shows). The engine acknowledges in its heartbeat and reports progress; [CloudText] says it in words. If no engine is running one is started. Null = sent, else why not.
+     */
+    suspend fun requestScan(): String? {
+        if (!hasToken()) { _ui.update { it.copy(note = "Save a GitHub token first (Settings › Cloud scan).") }; return "no token" }
+        val s = c.currentSettings()
+        val now = System.currentTimeMillis()
+        refreshRequestedAt = maxOf(now, refreshRequestedAt + 1)
+        _ui.update { it.copy(requestedAtMs = refreshRequestedAt, note = null) }
+        pushSettings(s, force = true)
+        // A silent engine is started now rather than at the next 15-minute look.
+        val st = latest.status
+        if (st == null || st.idle || now - st.heartbeatMs > ENGINE_DEAD_S * 1000L) {
+            if (now - lastStartAskedAt > 60_000L) { lastStartAskedAt = now; client.startEngine() }
+        }
+        return null
+    }
+
     private suspend fun fetch(computedAt: Long) {
         when (val f = client.fetchFeed()) {
             is CloudClient.Poll.Fresh -> {
@@ -194,7 +219,7 @@ class CloudLink(private val c: AppContainer) {
             st != null -> engineLine(st, now)
             else -> "Waiting for the engine."
         }
-        _ui.update { it.copy(line = line, listAgeSec = f?.let { x -> ((now - x.computedAtMs) / 1000L).coerceAtLeast(0L) }, rows = f?.rows?.size ?: 0, rateRemaining = client.rateRemaining) }
+        _ui.update { it.copy(status = st, why = latest.why, requestedAtMs = refreshRequestedAt, line = line, listAgeSec = f?.let { x -> ((now - x.computedAtMs) / 1000L).coerceAtLeast(0L) }, rows = f?.rows?.size ?: 0, rateRemaining = client.rateRemaining) }
     }
 
     /** Starts the engine when the switch is on and no heartbeat has been heard for a while (once in 15 minutes at most; the engine's own schedule is the backstop). */
@@ -212,16 +237,16 @@ class CloudLink(private val c: AppContainer) {
     private val offPending = File(c.app.filesDir, "cloud_off_pending")
     private var lastOn: Boolean? = null
 
-    private suspend fun pushSettings(s: ScanSettings) {
+    private suspend fun pushSettings(s: ScanSettings, force: Boolean = false) {
         if (!hasToken()) return
         if (lastOn == true && !s.cloudScan) runCatching { offPending.writeText("1") }
         lastOn = s.cloudScan
         // Off and nothing owed: the engine is left alone (no request is made for a phone that never used the cloud scan).
         if (!s.cloudScan && !offPending.exists()) return
-        val key = (if (s.cloudScan) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode()
-        if (key == lastPushedKey) return
+        val key = (if (s.cloudScan) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt"
+        if (key == lastPushedKey && !force) return
         val rev = maxOf(System.currentTimeMillis(), lastRev + 1)
-        val why = client.writeConfig(CloudConfig(rev = rev, on = s.cloudScan, settings = s, device = android.os.Build.MODEL.orEmpty().take(40)))
+        val why = client.writeConfig(CloudConfig(rev = rev, on = s.cloudScan, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt))
         if (why == null) {
             if (s.cloudScan) runCatching { sendKeys(auto = true) }
             lastPushedKey = key; lastRev = rev
@@ -326,6 +351,8 @@ class CloudLink(private val c: AppContainer) {
 
     companion object {
         const val POLL_MS = 5_000L
+        /** While a requested scan has not finished the phone looks every 3 s (a 304 costs nothing). */
+        const val POLL_PENDING_MS = 3_000L
         const val SAVE_EVERY_MS = 15 * 60_000L
         const val RETRY_PUSH_MS = 10 * 60_000L
         const val ENGINE_DEAD_S = 240L

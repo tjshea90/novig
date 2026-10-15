@@ -99,7 +99,9 @@ fun FeedScreen(
     // The ParlayAPI pick whose sheet is open (its key: a recheck re-prices it while it's open; TASKS.md P4).
     var parlaySelected by remember { mutableStateOf<String?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
-    val now = rememberNow(15_000)
+    // Cloud scan (Tj, 2026-10-14): the GitHub engine's progress and how current its list is, ticking every second while it is on.
+    val now = rememberNow(if (state.settings.cloudScan) 1_000 else 15_000)
+    val cloud = if (state.settings.cloudScan) com.tjshea.vigilant.data.cloud.CloudText.view(state.cloudUi.status, state.cloudUi.requestedAtMs, now, state.cloudUi.why) else null
     // The list keeps itself honest: every AUTO_RECHECK_MS Novig's prices for the listed bets are read again (a few order books, no fair-odds calls), so a bet that is no longer +EV or has no liquidity left leaves it.
     val latest = androidx.compose.runtime.rememberUpdatedState(state)
     androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -164,17 +166,18 @@ fun FeedScreen(
                             }
                         }
                         PauseButton(state.settings.paused, onPause)
-                        ScanButton(state.status.scanning, state.loaded && state.settings.leagues.isNotEmpty() && !state.settings.paused, onScan)
+                        ScanButton(state.status.scanning || cloud?.busy == true, state.loaded && state.settings.leagues.isNotEmpty() && !state.settings.paused, onScan)
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 )
                 ScanProgressBar(state.status)
+                if (cloud?.busy == true) CloudProgressBar(state.cloudUi.status)
             }
         },
     ) { padding ->
         VigilantPullToRefresh(
             // The progress bar under the top bar shows the scan; the pull's arrow lets go once it starts.
-            busy = state.status.scanning,
+            busy = state.status.scanning || cloud?.busy == true,
             onRefresh = onPull,
             modifier = Modifier.padding(padding).fillMaxSize(),
             holdWhileBusy = false,
@@ -209,6 +212,15 @@ fun FeedScreen(
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                }
+                if (cloud != null) item(key = "cloud") {
+                    val color = when (cloud.level) {
+                        com.tjshea.vigilant.data.cloud.CloudText.Level.GOOD -> Edge.colors.positive
+                        com.tjshea.vigilant.data.cloud.CloudText.Level.INFO -> MaterialTheme.colorScheme.primary
+                        com.tjshea.vigilant.data.cloud.CloudText.Level.WARN -> Edge.colors.warning
+                        com.tjshea.vigilant.data.cloud.CloudText.Level.BAD -> Edge.colors.negative
+                    }
+                    Column(Modifier.padding(horizontal = 12.dp)) { Banner(cloud.headline + (cloud.detail?.let { "\n$it" } ?: ""), color = color, modifier = Modifier.testTag("cloudBar")) }
                 }
                 item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin, errorApplies) { onRecheck(feedMarketIds(state, now)) } }
                 // The real-time live lane (Settings › Include live games): what it is linked to and how fresh its bets are, or why it shows none (Tj, 2026-10-11).
@@ -720,3 +732,11 @@ fun adjustedStarsOf(settings: ScanSettings, row: com.tjshea.vigilant.data.cno.Cn
     com.tjshea.vigilant.data.scanner.ProfitProfile.adjustedStars(
         settings.gates.profitProven, stars, row.league, com.tjshea.vigilant.data.scanner.BetKind.of(row.market, row.bet).label, row.bet, ev, row.startsAtMs, now,
     )
+
+
+/** The cloud scan's own progress bar under the top bar: the engine's step as a fraction when it knows its total, else the moving bar. */
+@Composable
+private fun CloudProgressBar(st: com.tjshea.vigilant.data.cloud.CloudStatus?) {
+    if (st != null && st.scanning && st.progressTotal > 0) LinearProgressIndicator(progress = { (st.progressDone.toFloat() / st.progressTotal).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
+    else LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+}

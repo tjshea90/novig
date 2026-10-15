@@ -1013,6 +1013,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         // CNO only: Vigilant's scanner and every API behind it stay asleep.
+        if (current.loaded && current.settings.cloudScan && current.settings.vigilantOn && !current.settings.liveOnly && current.settings.leagues.isNotEmpty() && !current.settings.paused) {
+            // Cloud scan (Tj, 2026-10-14: "tell GitHub to scan every time I pull to refresh"): the request goes to the engine, which scans under the settings it mirrors; progress comes back in its heartbeat.
+            viewModelScope.launch(Dispatchers.IO) { c.cloud.requestScan() }
+            return
+        }
         if (!current.loaded || !current.settings.vigilantOn || current.settings.liveOnly || c.runner.running || current.status.rechecking) return
         if (current.settings.paused) {
             _toasts.tryEmit(PAUSED_TOAST)
