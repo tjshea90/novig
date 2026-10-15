@@ -60,10 +60,11 @@ class CloudEngineTest {
 
     private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH), passGapSeconds = 5)
 
-    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L) = CloudEngine(
+    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
         pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, restartEveryMs = restartEveryMs,
+        addressWatch = addressWatch,
     )
 
     @Test
@@ -342,5 +343,30 @@ class CloudEngineTest {
         e.run(untilMs = System.currentTimeMillis() + 120)
         assertTrue(published.any { it.first?.rows?.size == 2 })
         assertTrue(published.all { it.second.novigRoute == "" })
+    }
+
+    @Test
+    fun `when Novig refuses the runner's address the job ends early so the workflow draws another runner, and says so`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> delay(30_000); report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        // the job began 5 minutes ago and Novig has been refusing its address
+        val watch = AddressWatch(startedAtMs = System.currentTimeMillis() - 5 * 60_000L) { true }
+        val e = engine(scanner, { on }, published, addressWatch = watch)
+        val t0 = System.currentTimeMillis()
+        val end = e.run(untilMs = System.currentTimeMillis() + 60_000L, startedAtMs = System.currentTimeMillis() - 5 * 60_000L)
+        assertEquals(CloudEngine.End.ADDRESS, end)
+        assertTrue("it did not wait for the 30 s scan", System.currentTimeMillis() - t0 < 10_000L)
+        assertEquals("the last status carries the streak for the next job", 1, published.last().second.addressHandovers)
+        assertTrue(published.last().second.addressHandoverAtMs > 0L)
+    }
+
+    @Test
+    fun `with no address trouble the engine never ends early`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> delay(20); report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val watch = AddressWatch(startedAtMs = System.currentTimeMillis() - 5 * 60_000L) { false }
+        val end = engine(scanner, { on }, published, addressWatch = watch).run(untilMs = System.currentTimeMillis() + 120)
+        assertEquals(CloudEngine.End.TIME_UP, end)
+        assertEquals(0, published.last().second.addressHandovers)
     }
 }
