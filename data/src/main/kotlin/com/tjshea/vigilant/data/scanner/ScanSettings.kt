@@ -1352,6 +1352,21 @@ data class ApiGates(
     val cloudSave: Boolean = true,
     /** The GitHub engine works only 08:00-22:00 America/New_York ([com.tjshea.vigilant.data.cloud.EngineHours]), Tj 2026-10-15; off = round the clock. */
     val cloudHours: Boolean = true,
+    /**
+     * What the GitHub engine does with the bets it lists (Tj, 2026-10-15, TCL20d): OFF = nothing, PAPER = decides and sizes them with the auto-bet's rules and writes the orders it would have sent to a ledger,
+     * LIVE = sends them with the Vigilant subaccount's trading key. Set only on the phone ([com.tjshea.vigilant.data.cloud.CloudTrader]); the sizing numbers below are [com.tjshea.vigilant.data.cloud.CloudKelly]'s.
+     */
+    val cloudTrading: CloudTradeMode = CloudTradeMode.OFF,
+    /** The share of full Kelly the engine stakes before its confidence shrink (0.25 = quarter Kelly). */
+    val cloudKelly: Double = 0.25,
+    /** The most on one bet, as a share of the bankroll (wallet plus what is at risk). */
+    val cloudBetCap: Double = 0.05,
+    /** The most on one game across all its markets, as a share of the bankroll. */
+    val cloudGameCap: Double = 0.10,
+    /** The most at risk at once, as a share of the bankroll (Tj allows up to 1.0). */
+    val cloudWalletUse: Double = 0.9,
+    /** Trading stops for the day when the bankroll is down this share since the day began (half stakes from half of it). */
+    val cloudDayStop: Double = 0.40,
     /** The one main switch for every live feature and socket (Tj, 2026-10-14): see [LiveMasterMode]. */
     val liveMaster: LiveMasterMode = LiveMasterMode(),
     /**
@@ -1475,6 +1490,10 @@ data class LiveMasterMode(
     val pinnSocket: Boolean = true,
     val kalshiSocket: Boolean = true,
 )
+
+/** What the GitHub engine does with the bets it lists ([ApiGates.cloudTrading]). */
+@kotlinx.serialization.Serializable
+enum class CloudTradeMode { OFF, PAPER, LIVE }
 
 @kotlinx.serialization.Serializable
 data class LiveOnlyMode(
