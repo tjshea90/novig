@@ -97,6 +97,25 @@ fun main(args: Array<String>) = runBlocking {
             log("usage: carried over from the previous job (${f.book.providers.size} providers)")
         }
     }
+    // The engine's own trading (TCL20d): paper orders unless the phone's switch says live AND the trading key was sent; its ledger is carried from job to job in `trades.json`.
+    // The trading key (Tj sent it from the phone, TCL20c) only ever makes a port; whether anything is ordered is the phone's three-way switch (off / paper / live), read with every list.
+    val tradeKeyId = CloudKeys.rawEnv(CloudKeys.TRADE_KEY_ID)
+    val tradeKeyPem = CloudKeys.rawEnv(CloudKeys.TRADE_KEY_PEM)
+    var traderRef: CloudTrader? = null
+    val tradePort = if (tradeKeyId.isNotEmpty() && tradeKeyPem.isNotEmpty()) {
+        runCatching { NovigSignedClient(http, json, PemSigningKey(tradeKeyId, tradeKeyPem), "https://api.novig.com") }.getOrNull()?.let { signer ->
+            CloudNovigPort(NovigTradingClient(signer, json), tradeKeyId, { traderRef?.ledger?.entries?.mapTo(HashSet()) { it.id } ?: emptySet() }, log = log::invoke)
+        }
+    } else null
+    log("trading: ${if (tradePort != null) "the trading key is present (orders possible only if the phone's switch says live)" else "no trading key: paper only"}")
+    val trader = CloudTrader(unavailable = { o, now -> sources.unavailable(o, now) }, port = tradePort).also { traderRef = it }
+    runCatching { PreviousFeed.read(git, cfgDir, "trades.json") }.getOrNull()?.let { text ->
+        TradeLedger.parse(text)?.let { trader.load(it); log("trades: ${it.entries.size} entries carried over from the previous job") }
+    }
+    var tradesText = ""
+    // The engine's own scan study (TCL20e): every bet each finished scan lists, in the app's journal format, in the folder the archive loop gzips to the day's cloud-archive Release (study-<day>-run<id>.jsonl.gz).
+    // Each run's file is a segment of its own; the daily grader (engine-grade.yml) puts the segments together, finds results and closes, and the daily digest reads them beside the phone's.
+    val study = com.tjshea.vigilant.data.study.ScanStudy(com.tjshea.vigilant.data.study.StudyJournal(File(out, "cloud")), version = { "github-engine" })
     // The grader's settled orders (engine-results branch, TCL20e): applied at the start and every 30 minutes, so the paper wallet and the day's figures follow the real results.
     var resultsAt = 0L
     fun applyTradeResults() {
@@ -123,25 +142,6 @@ fun main(args: Array<String>) = runBlocking {
     // Novig refusing THIS runner's address ends the job early so the workflow draws another runner (AddressWatch, Tj 2026-10-15); the streak is carried from job to job in the status file.
     val prevStatus = runCatching { PreviousFeed.read(git, cfgDir, "status.json") }.getOrNull()?.let { CloudStatus.parse(it) }
     val addressWatch = novigKeyed?.let { nk -> AddressWatch(started, prevStatus?.addressHandovers ?: 0, prevStatus?.addressHandoverAtMs ?: 0L) { now -> nk.addressRefused(now) } }
-    // The engine's own trading (TCL20d): paper orders unless the phone's switch says live AND the trading key was sent; its ledger is carried from job to job in `trades.json`.
-    // The trading key (Tj sent it from the phone, TCL20c) only ever makes a port; whether anything is ordered is the phone's three-way switch (off / paper / live), read with every list.
-    val tradeKeyId = CloudKeys.rawEnv(CloudKeys.TRADE_KEY_ID)
-    val tradeKeyPem = CloudKeys.rawEnv(CloudKeys.TRADE_KEY_PEM)
-    var traderRef: CloudTrader? = null
-    val tradePort = if (tradeKeyId.isNotEmpty() && tradeKeyPem.isNotEmpty()) {
-        runCatching { NovigSignedClient(http, json, PemSigningKey(tradeKeyId, tradeKeyPem), "https://api.novig.com") }.getOrNull()?.let { signer ->
-            CloudNovigPort(NovigTradingClient(signer, json), tradeKeyId, { traderRef?.ledger?.entries?.mapTo(HashSet()) { it.id } ?: emptySet() }, log = log::invoke)
-        }
-    } else null
-    log("trading: ${if (tradePort != null) "the trading key is present (orders possible only if the phone's switch says live)" else "no trading key: paper only"}")
-    val trader = CloudTrader(unavailable = { o, now -> sources.unavailable(o, now) }, port = tradePort).also { traderRef = it }
-    runCatching { PreviousFeed.read(git, cfgDir, "trades.json") }.getOrNull()?.let { text ->
-        TradeLedger.parse(text)?.let { trader.load(it); log("trades: ${it.entries.size} entries carried over from the previous job") }
-    }
-    var tradesText = ""
-    // The engine's own scan study (TCL20e): every bet each finished scan lists, in the app's journal format, in the folder the archive loop gzips to the day's cloud-archive Release (study-<day>-run<id>.jsonl.gz).
-    // Each run's file is a segment of its own; the daily grader (engine-grade.yml) puts the segments together, finds results and closes, and the daily digest reads them beside the phone's.
-    val study = com.tjshea.vigilant.data.study.ScanStudy(com.tjshea.vigilant.data.study.StudyJournal(File(out, "cloud")), version = { "github-engine" })
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
