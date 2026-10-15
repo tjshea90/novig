@@ -88,8 +88,8 @@ object CloudKelly {
         val gameLeft = equity * i.gameCap - i.gameAtRisk
         val walletLeft = equity * i.walletUse - i.atRisk
         val capped = minOf(wanted, perBet, gameLeft, walletLeft, i.cash)
-        if (gameLeft < AutoBet.MIN_STAKE) return Stake.Skip("its game already has the most at risk")
-        if (walletLeft < AutoBet.MIN_STAKE) return Stake.Skip("the wallet-use cap is reached")
+        if (gameLeft <= 1e-9) return Stake.Skip("its game already has the most at risk")
+        if (walletLeft <= 1e-9) return Stake.Skip("the wallet-use cap is reached")
         val dollars = AutoBet.floorCents(capped)
         if (dollars < AutoBet.MIN_STAKE - 1e-9) return Stake.Skip("its Kelly stake is under a cent")
         val why = when (capped) {

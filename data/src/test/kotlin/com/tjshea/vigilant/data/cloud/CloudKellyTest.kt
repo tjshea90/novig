@@ -31,7 +31,8 @@ class CloudKellyTest {
         assertTrue(dollars(inputs(ageMs = 10 * 60_000L)) < base)
         assertTrue(dollars(inputs(agreeing = 2)) < base)
         assertTrue(dollars(inputs(stars = 2.0)) < base)
-        assertEquals(CloudKelly.confidence(20 * 60_000L, 1, 1.0), 0.6 * 0.6 * 0.7, 1e-9)
+        // every factor at its worst (0.6 x 0.6 x 0.7) is floored at 0.3
+        assertEquals(0.3, CloudKelly.confidence(20 * 60_000L, 1, 1.0), 1e-9)
         assertTrue(CloudKelly.confidence(null, 0, null) >= 0.3)
     }
 
@@ -51,7 +52,7 @@ class CloudKellyTest {
     @Test
     fun `the wallet-use cap and the cash both limit the total at risk`() {
         assertTrue(skip(inputs(cash = 100.0, atRisk = 900.0, walletUse = 0.9)).contains("wallet-use"))
-        assertEquals(3.0, dollars(inputs(cash = 3.0, atRisk = 0.0)), 0.01)
+        assertEquals(30.0, dollars(inputs(cash = 30.0, atRisk = 970.0, walletUse = 1.0, kelly = 1.0, betCap = 0.5, gameCap = 0.5, fair = 0.9)), 0.01)
     }
 
     @Test
