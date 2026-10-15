@@ -11,6 +11,9 @@ should have scheduled check-ins on a rotating schedule so as not to interfere wi
   register [--tag TAG]            add this account to the roster (idempotent) and print its slot
   today [--tag TAG] [--date D]    print "<slot> <time> <duty>" for this account today (America/New_York date)
   roster                          print the roster
+  checkin                         post a one-line "I ran" note on the board (every routine run does this FIRST, even when it then stops because the lease is held)
+  missed                          list scheduled slots of the last 30 h whose account left no trace on the board (usage cap, no repo, dead routine) and that nobody covered yet
+  cover SLOT                      post "rotation-cover" for a missed slot after doing its WATCH duty, so no other account repeats it
   selftest                        run the pure checks
 Exit status: 0 ok, 2 could not reach GitHub or not registered (callers carry on).
 """
@@ -55,7 +58,87 @@ def cron_for(slot):
     return "CRON_TZ=%s %d %d * * *" % (ZONE, int(m), int(h))
 
 
+GRACE_S = 5 * 3600     # an account has until 5 h after its slot to leave a trace (a long run, a lease wait, retries)
+LOOKBACK_S = 30 * 3600
+MAX_COVER = 1          # a run covers at most one missed slot: the cheap WATCH duty, never a whole day of work
+
+
+def slot_instants(now, n_slots=3):
+    """(slot, day, instant) for every scheduled slot instant in the last LOOKBACK_S before `now` (aware datetime). Pure."""
+    from zoneinfo import ZoneInfo
+    et = ZoneInfo(ZONE)
+    out = []
+    d = now.astimezone(et).date()
+    for back in range(0, 3):
+        day = d - datetime.timedelta(days=back)
+        for s in range(n_slots):
+            h, m = SLOTS[s].split(":")
+            inst = datetime.datetime(day.year, day.month, day.day, int(h), int(m), tzinfo=et)
+            age = (now - inst).total_seconds()
+            if 0 <= age <= LOOKBACK_S:
+                out.append((s, day, inst))
+    return sorted(out, key=lambda x: x[2])
+
+
+def missed_slots(roster, notes, now):
+    """Slots (slot, day, instant, tag) whose account left no board note between the slot instant and instant+GRACE_S, that are past
+    that grace, were scheduled after the account joined, and carry no 'rotation-cover slot=S date=D' note. `notes` = [(meta, subject)]. Pure."""
+    from zoneinfo import ZoneInfo
+    accounts = roster.get("accounts", [])
+    if len(accounts) < 3:
+        return []   # with fewer accounts every run already does ALL duties; nobody is "missing"
+    out = []
+    for s, day, inst in slot_instants(now):
+        if (now - inst).total_seconds() < GRACE_S:
+            continue
+        acc = accounts[s]
+        tag = acc["tag"]
+        try:
+            joined = datetime.datetime.fromisoformat(acc.get("registeredAt", "1970-01-01T00:00:00Z").replace("Z", "+00:00"))
+        except Exception:
+            joined = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+        if inst < joined:
+            continue
+        lo, hi = inst - datetime.timedelta(minutes=10), inst + datetime.timedelta(seconds=GRACE_S)
+        seen, covered = False, False
+        for meta, subject in notes:
+            try:
+                at = datetime.datetime.fromisoformat(meta.get("at", "").replace("Z", "+00:00"))
+            except Exception:
+                continue
+            frm = meta.get("from", "").split("/")[0]
+            if frm == tag and lo <= at <= hi:
+                seen = True
+            if subject.startswith("rotation-cover") and ("slot=%d" % s) in subject and ("date=%s" % day.isoformat()) in subject:
+                covered = True
+        if not seen and not covered:
+            out.append((s, day, inst, tag))
+    return out
+
+
 def selftest():
+    import datetime as dt
+    z = dt.timezone.utc
+    roster = {"accounts": [{"tag": "a", "registeredAt": "2026-10-15T05:00:00Z"}, {"tag": "b", "registeredAt": "2026-10-15T05:00:00Z"}, {"tag": "c", "registeredAt": "2026-10-15T05:00:00Z"}]}
+    # 2026-10-16 12:00Z = 08:00 ET: slot 0 of Oct 16 (07:20 ET) is 40 min old: still inside the grace; Oct 15 slots 1 and 2 are due
+    now = dt.datetime(2026, 10, 16, 12, 0, tzinfo=z)
+    m = missed_slots(roster, [], now)
+    assert [(x[0], x[1].isoformat()) for x in m] == [(0, "2026-10-15"), (1, "2026-10-15"), (2, "2026-10-15")], m
+    # a and b checked in at their slots (11:21Z and 17:21Z on the 15th): fine; c left nothing: slot 2 missed
+    notes = [({"from": "a/zz", "at": "2026-10-15T11:21:00Z"}, "rotation-checkin slot=0"), ({"from": "b/xx", "at": "2026-10-15T17:21:00Z"}, "rotation-checkin slot=1")]
+    assert [x[0] for x in missed_slots(roster, notes, now)] == [2]
+    # covered once by someone: gone
+    notes.append(({"from": "a/yy", "at": "2026-10-16T11:30:00Z"}, "rotation-cover slot=2 date=2026-10-15"))
+    assert missed_slots(roster, notes, now) == []
+    # an account is never blamed for a slot before it joined; with two accounts nothing is "missed"
+    roster2 = {"accounts": [dict(a) for a in roster["accounts"]]}
+    roster2["accounts"][2]["registeredAt"] = "2026-10-16T00:00:00Z"
+    assert [x[0] for x in missed_slots(roster2, notes[:1], now)] == [1]
+    assert missed_slots({"accounts": roster["accounts"][:2]}, [], now) == []
+    # the ET slot instants follow daylight saving: 07:20 ET is 11:20Z in October (EDT) and 12:20Z in December (EST)
+    assert slot_instants(dt.datetime(2026, 10, 16, 12, 0, tzinfo=z))[-1][2].astimezone(z).hour == 11
+    assert [i for i in slot_instants(dt.datetime(2026, 12, 16, 13, 0, tzinfo=z)) if i[0] == 0][-1][2].astimezone(z).hour == 12
+
     d0 = datetime.date(2026, 10, 15)
     # over three consecutive days each slot does each duty exactly once
     for s in range(3):
@@ -109,18 +192,60 @@ def register(tag):
     return 2
 
 
+def board_notes():
+    import coord
+    coord.sync()
+    return [(meta, meta.get("subject", "")) for _, meta, _ in coord.notes()]
+
+
+def checkin(tag):
+    import coord
+    roster = read_roster()
+    s = slot_of(tag, roster)
+    day = today_et()
+    duty = duty_for(s, day, len(roster["accounts"])) if s is not None else "?"
+    return coord.post("rotation-checkin slot=%s date=%s duty=%s" % (s, day.isoformat(), duty), "%s ran its routine. If this is the only line, it then stood down (lease held or nothing to do)." % tag)
+
+
+def missed():
+    roster = read_roster()
+    now = datetime.datetime.now(datetime.timezone.utc)
+    m = missed_slots(roster, board_notes(), now)
+    if not m:
+        print("ROTATION  no missed slots")
+        return 0
+    for s, day, inst, tag in m[:6]:
+        print("ROTATION  MISSED slot %d (%s ET on %s, account %s) left no trace on the board; duty then: %s" % (s, SLOTS[s], day.isoformat(), tag, duty_for(s, day)))
+    print("ROTATION  cover at most %d: do that slot's WATCH checks only, then: python3 -I tools/rotation.py cover <slot> --date <date>" % MAX_COVER)
+    return 0
+
+
+def cover(slot, date):
+    import coord
+    return coord.post("rotation-cover slot=%d date=%s" % (slot, date), "WATCH duty done for a slot whose account left no trace (usage cap, no repo, a dead routine).")
+
+
 def main(argv):
     ap = argparse.ArgumentParser(prog="rotation.py")
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("register"); r.add_argument("--tag")
     t = sub.add_parser("today"); t.add_argument("--tag"); t.add_argument("--date")
     sub.add_parser("roster"); sub.add_parser("selftest")
+    ci = sub.add_parser("checkin"); ci.add_argument("--tag")
+    sub.add_parser("missed")
+    cv = sub.add_parser("cover"); cv.add_argument("slot", type=int); cv.add_argument("--date", required=True)
     a = ap.parse_args(argv)
     if a.cmd == "selftest":
         return selftest()
     try:
         if a.cmd == "register":
             return register(my_tag(a.tag))
+        if a.cmd == "checkin":
+            return checkin(my_tag(a.tag))
+        if a.cmd == "missed":
+            return missed()
+        if a.cmd == "cover":
+            return cover(a.slot, a.date)
         roster = read_roster()
         if a.cmd == "roster":
             for i, acc in enumerate(roster.get("accounts", [])):
