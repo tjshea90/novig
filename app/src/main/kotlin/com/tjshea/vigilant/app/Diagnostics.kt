@@ -380,14 +380,16 @@ object Diagnostics {
         o.appendLine()
         o.appendLine("== API usage (each provider's own allowance) ==")
         if (s.usage.providers.isEmpty()) o.appendLine("Nothing counted yet.")
+        // The scan runs on GitHub (Tj, 2026-10-15): what its engine spent is added to this phone's count; the provider's own newest figure, from either side, decides what is left.
+        if (s.cloudUsageAtMs > 0L) o.appendLine("Includes the GitHub engine's usage, published ${ago(s.cloudUsageAtMs)} (its share is the 'GitHub' figure on each line; a key's 'left' is the provider's own newest figure when it sent one).")
         x.kalshiPace?.let { o.appendLine(it) }
         // Who asked Novig for books (v0.89.35): the 651k reads of the v0.89.34 file had no caller in them.
         com.tjshea.vigilant.data.novig.NovigReads.line()?.let { o.appendLine(it) }
         for ((id, p) in s.usage.providers.toSortedMap()) {
-            o.appendLine("$id: ${p.callsToday} calls today, ${p.throttledToday} refused/throttled" + (p.lastThrottleMs?.let { ", last throttle ${ago(it)}" } ?: ""))
+            o.appendLine("$id: ${p.callsToday} calls today, ${p.throttledToday} refused/throttled" + (p.lastThrottleMs?.let { ", last throttle ${ago(it)}" } ?: "") + (com.tjshea.vigilant.app.ui.cloudCallsToday(s, id, now).takeIf { it > 0 }?.let { " · GitHub $it of them" } ?: ""))
             for ((key, u) in p.keys) {
                 val left = u.remaining ?: (u.limit?.let { (it - u.used).coerceAtLeast(0) })
-                o.appendLine("    key …${key.takeLast(4)}: used ${u.used}${left?.let { ", $it left" } ?: ""}${if (u.refused) ", REFUSED" else ""}${u.depletedUntil?.let { ", spent until ${at(it)}" } ?: ""}${u.resetAtMs?.let { ", resets ${at(it)} (the provider's time)" } ?: ""}${u.lastNote?.let { " · $it" } ?: ""}")
+                o.appendLine("    key …${key.takeLast(4)}: used ${u.used}${left?.let { ", $it left" } ?: ""}${if (u.refused) ", REFUSED" else ""}${u.depletedUntil?.let { ", spent until ${at(it)}" } ?: ""}${u.resetAtMs?.let { ", resets ${at(it)} (the provider's time)" } ?: ""}${u.figureAtMs?.takeIf { u.remaining != null }?.let { ", the provider's figure read ${ago(it)}" } ?: ""}${u.lastNote?.let { " · $it" } ?: ""}")
                 // What a ParlayAPI key said of itself (Tj, 2026-09-30: "the API key to tell the app how many credits I have left").
                 if (id == com.tjshea.vigilant.data.keys.QuotaPolicy.PARLAY.id) x.parlayAccounts[key]?.let { a ->
                     o.appendLine(
