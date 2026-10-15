@@ -33,3 +33,10 @@ Can you confirm that the auto updating of the app by Claude and the auto diagnos
 ```
 If I add api keys inside my phone vigilant app, will it automatically upload them to GitHub as well so the GitHub engine can use them? If it doesn't already do this, make it do so
 ```
+
+## 2026-10-15T21:52:10Z
+```
+Make the GitHub engine able to turn on and off apis as needed or to save usage when an API is not needed, and recommend to me what apis to buy or refill.
+
+The vigilant phone app should be able to tell me anything Claude wants me to know, including recommendations, bets placed, etc. All the settings should be mirrored between the phone app and the GitHub app, including API toggles. 
+```
