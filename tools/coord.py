@@ -213,6 +213,7 @@ def acquire(kind=None, task=None, force=False, quiet=False):
         u = dormant_until(me["label"])
         if u is None:
             try:
+                sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
                 import rotation
                 hit = rotation.slot_dormant(rotation.read_roster())
                 u = hit[1] if hit else None

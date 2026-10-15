@@ -1,21 +1,23 @@
-# CHECKPOINT 3389 — read me first, then TASKS.md
+# CHECKPOINT 3390 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T23:43:15Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `2500ab214` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T23:52:07Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `2eda70543` (this checkpoint is the commit after it)
 
 ## Just done
-Dormancy safeguard: this account's routine stops at rotation checkin / coord acquire (exit 5) until away.json time (Fri 22:00 ET); tests
+Dormancy also by slot window (a fresh routine container is acct-unknown); test_coord isolated from real id.json; v0.111.0 released
 
 ## Do this next
-record v0.111.0 release; TCL30b-e
+TCL30b-e; start chat_watch each session
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M tools/coord.py
 
 ## Last ten checkpoints
 ```
+  1724f3455 ckpt 3389: Dormancy safeguard: this account's routine stops at rotation checkin / coor
   8bccba7f3 ckpt 3388: TCL30: volume diagnosis + standing volume/quality loop (CLAUDE.md, ROUTINE.
   5e2281ea8 ckpt 3387: pre-release: v0.111.0: chat with Claude inside the app (through the repo; s
   b57240f3a ckpt 3386: pre-ship: v0.111.0: chat with Claude inside the app (through the repo; sess
@@ -25,8 +27,7 @@ record v0.111.0 release; TCL30b-e
   e21ac688f ckpt 3382: pre-release: v0.110.0: the engine rests/turns off silent APIs and advises w
   4c3771fc8 ckpt 3381: pre-ship: v0.110.0: the engine rests/turns off silent APIs and advises what
   7248cc027 ckpt 3380: TCL28b/a: governor + advisor wired into the engine (rests silent APIs, asks
-  cd1d34a78 ckpt 3379: TCL28 pure parts: ApiToggles, CloudMessages, CloudOverrides, ApiAdvisor, Ap
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
