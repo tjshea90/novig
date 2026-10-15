@@ -47,6 +47,28 @@ jobs:
             echo
             echo "== BETS TJ PLACED: profit by type (tools/profit_types.py over phone/bets; ROI is noisy, read the t-statistics; n under 40 says little) =="
             ls pd/phone/bets/*.jsonl >/dev/null 2>&1 && python3 tools/profit_types.py pd/phone/bets/*.jsonl 2>&1 | head -400 || echo "no placed-bet files on phone-data yet"
+            # The same bets split at v0.99.4 (PropHaircut -7/-3 points, Profit-proven only on): did the fix close the gap? Judge it only with 200+ settled prop bets on the AFTER side.
+            python3 -I - <<'PY'
+          import glob, json, os
+          def ver(b):
+              try: return tuple(int(x) for x in str(b.get("appVersion", "0")).split("."))
+              except Exception: return (0,)
+          before, after = [], []
+          for f in sorted(glob.glob("pd/phone/bets/*.jsonl")):
+              for line in open(f, encoding="utf-8"):
+                  line = line.strip()
+                  if not line.startswith("{"): continue
+                  try: b = json.loads(line)
+                  except Exception: continue
+                  (after if ver(b) >= (0, 99, 4) else before).append(line)
+          for name, rows in (("before", before), ("after", after)):
+              with open("out/bets-" + name + ".jsonl", "w", encoding="utf-8") as o: o.write("\n".join(rows) + ("\n" if rows else ""))
+              print(f"\n== PLACED BETS {name.upper()} v0.99.4 (prop haircut): {len(rows)} records ==")
+          PY
+            for part in before after; do
+              echo; echo "== PLACED BETS $part v0.99.4: profit by type =="
+              [ -s out/bets-$part.jsonl ] && python3 tools/profit_types.py out/bets-$part.jsonl 2>&1 | head -120 || echo "none"
+            done
           } > out/latest.txt
           wc -c out/latest.txt
 
