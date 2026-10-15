@@ -105,10 +105,10 @@ class CloudEngineTest {
         }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
         val e = engine(scanner, { cfg }, published)
-        launch(kotlinx.coroutines.Dispatchers.Default) { delay(60); cfg = on.copy(rev = 2, settings = on.settings.copy(leagues = setOf("NHL"))) }
+        launch(kotlinx.coroutines.Dispatchers.Default) { delay(60); cfg = on.copy(rev = 2, settings = on.settings.copy(leagues = setOf("NBA", "NHL"))) }
         e.run(untilMs = System.currentTimeMillis() + 400)
         assertTrue("scanned again", scanner.calls.get() >= 2)
-        assertEquals(setOf("NHL"), scanner.settingsSeen.last().leagues)
+        assertEquals(setOf("NBA", "NHL"), scanner.settingsSeen.last().leagues)
         assertTrue(published.any { it.second.configRev == 2L && it.first?.rows?.map { r -> r.event.eventId } == listOf("e-c") })
     }
 
