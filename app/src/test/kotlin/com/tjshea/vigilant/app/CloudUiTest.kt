@@ -64,8 +64,8 @@ class CloudUiTest {
         val requested = now - 20_000
         feed(cloudState(status = SampleScan.cloudStatus().copy(ackedRefreshAtMs = requested, lastScanForRefreshAtMs = 0L), requested = requested))
         compose.onNodeWithTag("cloudBar").assertIsDisplayed()
-            .assertTextContains("Scanning on GitHub: Novig prices 300/1200 (25%)", substring = true)
-            .assertTextContains("acknowledged", substring = true)
+        compose.onNode(androidx.compose.ui.test.hasText("Scanning on GitHub: Novig prices 300/1200 (25%)", substring = true)).assertIsDisplayed()
+        compose.onNode(androidx.compose.ui.test.hasText("your request was acknowledged", substring = true)).assertIsDisplayed()
     }
 
     @Test
