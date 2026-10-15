@@ -1,21 +1,24 @@
-# CHECKPOINT 3345 — read me first, then TASKS.md
+# CHECKPOINT 3346 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T06:20:56Z · **tests:** all 5 fast checks green
-**Branch:** `claude/new-session-2gmle1` · **builds on:** `5d7fbbf0e` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T06:24:32Z · **tests:** all 5 fast checks green
+**Branch:** `claude/new-session-2gmle1` · **builds on:** `627f7c0f4` (this checkpoint is the commit after it)
 
 ## Just done
-TCL20d: CloudNovigPort (IOC by REST, lost-answer lookup, stop on location/key/lock refusals, cancels only its own), trader UNCONFIRMED+stop hold, client id UUID, CloudMain wires the trade key, phone auto-bet stands down when engine trading is on, Settings > Cloud scan > Engine trading (off/paper/live + Kelly sliders); data cloud tests green, app compiles
+TCL20d ticked: engine trading (paper/live, Kelly, port, UI, phone auto-bet stand-down) + CLAUDE.md section; tests green (data cloud 124, AutoBettorTest 62)
 
 ## Do this next
-run whole data cloud tests + AutoBettorTest + SettingsScreen tests, then docs (CLAUDE.md section, research note, TASKS tick TCL20d), then TCL20e
+TCL20e: engine-side ScanStudy journal + engine-data branch + scheduled grader workflow + digest section; read ScanStudy.settle wiring (VigilantApp ~600-650) for the JVM grader
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M CLAUDE.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  633957eee ckpt 3345: TCL20d: CloudNovigPort (IOC by REST, lost-answer lookup, stop on location/k
   81d9bcf12 ckpt 3344: TCL20d paper trading: CloudTrader tested (15 cases), engine hook + heartbea
   d0fb5137a ckpt 3343: TCL20d: CloudKelly (tested), CloudTrader+ledger+order port written, gates c
   c0e26d2e1 ckpt 3342: Took the lease by force (Tj: other session archived); merged origin/main wi
@@ -25,8 +28,7 @@ run whole data cloud tests + AutoBettorTest + SettingsScreen tests, then docs (C
   85e368cd6 ckpt 3339: TCL20 step 1: scheduled task trig_011QGvat6eD9ER3bfE59T51T re-pointed (Vigi
   3ed534f1b ckpt 3339: Joined rotation as acct-27a37e slot 1 (13:20 ET), created routine trig_01Js
   fa85deab1 ckpt 3338: TCL20a done in the repo; Tj committed the Bash/create_trigger/update_trigge
-  2a10e669b ckpt 3337: TCL20 written (Tj's words): autonomous bet+bid app on GitHub, 8am-10pm ET, 
 ```
 
-(8 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
