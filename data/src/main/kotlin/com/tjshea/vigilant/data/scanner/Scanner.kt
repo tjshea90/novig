@@ -884,7 +884,10 @@ class Scanner(
     override fun sourceRanking(): String? {
         val m = ApiChain.measures
         if (m.isEmpty()) return null
-        return ApiChain.order().joinToString("\n") { SourceScore.describe(it, m) }
+        val chains = ApiChain.order()
+        // Feeds measured but on no chain (BoltOdds' push boards, the exchanges, Pinnacle's own hosts) are asked for every league, so they are never put to sleep: listed beside the ranking so their freshness can be compared.
+        val unchained = m.keys.filter { id -> chains.none { id in it } }.sorted()
+        return chains.joinToString("\n") { SourceScore.describe(it, m) } + if (unchained.isEmpty()) "" else "\nalways asked, not ranked: " + unchained.joinToString("; ") { SourceScore.describe(listOf(it), m) }
     }
 
     override fun sourceRace(now: Long): List<String> {

@@ -63,6 +63,10 @@ class CloudEngine(
     private val publishBids: suspend (CloudBids?) -> Unit = {},
     /** While a scan runs, a new candidate list goes out at most this often (a list is thousands of lines; a rule change sends one at once). */
     private val bidsEveryMs: Long = 45_000L,
+    /** Called as each scan begins, with the settings it reads under: the engine's keyed Novig client and its websocket follow the phone's switches ([CloudNovig.configure]). */
+    private val prepare: (ScanSettings) -> Unit = {},
+    /** One line on how Novig is being read now ([CloudNovig.route]). */
+    private val novigRoute: () -> String = { "" },
 ) {
     enum class End { TIME_UP, IDLE }
 
@@ -134,6 +138,7 @@ class CloudEngine(
         var cfg = cfg0
         // The settings the scan READS under stay as they were when it began; the list is filtered under the newest ones (a raised minimum edge shows at once, no scan is thrown away for it).
         val scanSettings = forCloud(cfg0.settings)
+        runCatching { prepare(scanSettings) }.onFailure { log("could not prepare the scan's connections: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
         val fetchKey = CloudScanKey.fetchKey(cfg0.settings)
         val scanKey = CloudScanKey.scanKey(cfg0.settings)
         var filterSettings = scanSettings
@@ -259,6 +264,7 @@ class CloudEngine(
             ackedRefreshAtMs = handledRefresh, scanRefreshAtMs = scanForRefresh, lastScanStartedAtMs = lastScanStartedAt, lastScanEndedAtMs = lastScanEndedAt, lastScanForRefreshAtMs = lastScanForRefresh,
             novigAgeMedianS = lastAges.novigMedianS, novigAgeMaxS = lastAges.novigMaxS, fairAgeMedianS = lastAges.fairMedianS, fairAgeMaxS = lastAges.fairMaxS,
             pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote, bidsAtMs = bidsAt, bidsCount = bidsCount,
+            novigRoute = runCatching(novigRoute).getOrDefault(""), ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
         )
     }
 
