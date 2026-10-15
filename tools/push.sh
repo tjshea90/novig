@@ -37,6 +37,14 @@ else
 fi
 [ "${AHEAD:-1}" -eq 0 ] && exit 0
 
+# ONE CLAUDE SESSION AT A TIME (Tj, 2026-10-15: three Claude accounts share this repo). tools/coord.py keeps a lease on the claude-coord branch; while ANOTHER live session
+# holds it the push is held back (the commit stays local and is pushed on a later call), so two sessions never write main together. Exit status 3 from coord means "held back";
+# anything else (no network, no branch, an error in the tool) lets the push through: losing work is worse than a meeting of two sessions. COORD_OFF=1 switches it off.
+if [ -z "${COORD_OFF:-}" ] && [ -f tools/coord.py ]; then
+  timeout 40 python3 -I tools/coord.py check >&2
+  [ $? -eq 3 ] && exit 4
+fi
+
 # Explicit destination: works whether or not tracking is configured.
 # `timeout` bounds this well under the caller's hook budget — a hung
 # connection should fail fast and cleanly (commit stays local, retried on the
