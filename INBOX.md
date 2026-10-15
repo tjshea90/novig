@@ -7616,3 +7616,8 @@ Tell me exactly what to do step by step to make the automatic claude sessions wo
 ```
 This is too much information. Run me through what to do step by step. You may wait for me every few steps. Tell me what to do simply and what screenshots to show you
 ```
+
+## 2026-10-15T20:15:37Z
+```
+It all works I'm skipping the screenshots, should I press create
+```
