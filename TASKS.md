@@ -5203,6 +5203,6 @@ Tj: "Fix anything that needs to be fixed, run full tests protocol, simplify and 
 - [x] TCL10d refresh round trip proven in `CloudEngineTest` (a refresh mid-scan restarts and is acknowledged; one in a scan's first moments is served by it) and `CloudTextTest` (waiting -> scanning -> done); the bar never calls the old list the answer. LIVE round trip: pending Tj's phone (TCL10g).
 - [x] TCL10e freshness chip in the Feed title from the shown bets' own stamps (`CloudFreshnessTest`, `CloudUiTest`, screenshots 1k/1l/1m/5i).
 - [ ] TCL10f Full tests protocol (.claude/skills/test-protocols), ship, release, record.
-- [ ] TCL10f Full tests protocol (floor with -Pscreenshots, sweep), ship, release, record.
+- [x] TCL10f full floor with -Pscreenshots (3633 tests, PNGs 1k/1l/1m/5i/5_settings looked at), v0.102.0 shipped, released and recorded.
 - [ ] TCL10g After Tj installs: read the live round trip from cloud-feed `status.json` (`ackedRefreshAtMs`, `lastScanForRefreshAtMs`) and `engine-log.txt`.
 - [ ] TCL11 (needs Tj's word: it changes his Novig account) a read-only `trading::read` Novig key for the engine, minted by the phone from the management key and sent as a secret, so the engine reads Novig at the key's 14 a second (and by stream) instead of the public ~2: a cold scan from ~15 min toward ~8, fair odds fresher.
