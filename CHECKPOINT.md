@@ -1,21 +1,23 @@
-# CHECKPOINT 3362 — read me first, then TASKS.md
+# CHECKPOINT 3363 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T19:55:17Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `f16d00dde` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T20:01:18Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `e33b30a2a` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v0.109.0: Engine dashboard inside the app (Settings > Engine dashboard, tap the Feed's GitHub bar): engine state, tiles, per-API health, usage meters, trend graphs; wallet shows not-read instead of 0; rotation failover covers whole duties
+TCL23a: routine setup rewritten (UI-created routines with the repo attached), ROUTINE/ROUTINE_PROMPT no longer assume add_repo/install-hooks; SettingsPagesTest lists the dashboard page
 
 ## Do this next
-ship.sh gates and releases this
+re-run ship.sh for v0.109.0, then release.yml + record-release; Tj creates the 3 routines on claude.ai (SETUP_FOR_TJ.md)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M research/coordination/ROUTINE_PROMPT.txt
 
 ## Last ten checkpoints
 ```
+  6ab6ec346 ckpt 3362: pre-ship: v0.109.0: Engine dashboard inside the app (Settings > Engine dash
   6dd1373c0 ckpt 3361: TCL24a-c: in-app Engine dashboard (Settings > Engine dashboard, tap the Fee
   b908f24a7 ckpt 3360: TCL24 written (in-app dashboard)
   d04b47104 ckpt 3359: TCL23c: Settings > Cloud scan shows which APIs work on GitHub + link to DAS
@@ -25,8 +27,7 @@ ship.sh gates and releases this
   62dd1cb15 ckpt 3355: v0.108.0 released and recorded; TCL21 a-e,h done
   f804cb535 ckpt 3354: pre-release: the phone shows what the GitHub engine did (wallet, orders, wi
   8d34f27e6 ckpt 3353: TCL21 written into TASKS.md; recommendations_2026-10-15.md (ParlayAPI/OddsA
-  477b459bd ckpt 3352: phone syncs the engine's orders/results/wallet on open (trades.json loop, T
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
