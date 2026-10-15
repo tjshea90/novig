@@ -1,9 +1,9 @@
-VIGILANT DAILY REVIEW (made by GitHub from the phone-data branch) · 2026-10-15T04:11:08.502Z · 9 study day files · 1440 bets logged
+VIGILANT DAILY REVIEW (made by GitHub from the phone-data branch) · 2026-10-15T04:21:32.321Z · 9 study day files · 1440 bets logged
 
-VIGILANT SCAN STUDY · version github-review · vigilant-scan-study-vgithub-review-2026-10-15-0011.txt
+VIGILANT SCAN STUDY · version github-review · vigilant-scan-study-vgithub-review-2026-10-15-0021.txt
 
 == READ ME FIRST (for Claude) ==
-This file was made by the Vigilant app (Android, Kotlin + Compose; modules engine, data, app) on Oct 15, 2026 12:11 AM EDT, version github-review (code 0), on GitHub Actions.
+This file was made by the Vigilant app (Android, Kotlin + Compose; modules engine, data, app) on Oct 15, 2026 12:21 AM EDT, version github-review (code 0), on GitHub Actions.
 Vigilant finds +EV bets on the Novig sportsbook for Tj, who owns it; it is built across Claude sessions. Repo: github.com/tjshea90/novig (public), branch main.
 
 WHAT THIS IS: the scan study, a log of EVERY +EV bet Vigilant's scanners found on Novig — CrazyNinjaOdds ("CNO") and Vigilant's own scan — not only the ones Tj bet, and not only the ones the app showed him:
@@ -608,3 +608,175 @@ Why started bets have no close yet, most common first (each source's own reason;
   WNBA Player props under                n=  19 win= 47% ROI=  -0.6% profit=   -0.19 t=-0.06 CLV=+0.3%/18
   NFL Player props under                 n=  54 win= 33% ROI= -36.8% profit=  -29.68 t=-2.14 CLV=+2.2%/51
   MLB Player props over                  n=  17 win= 35% ROI= -42.8% profit=  -10.11 t=-0.90 CLV=+0.3%/15
+
+== PLACED BETS BEFORE v0.99.4 (prop haircut): 62135 records ==
+
+== PLACED BETS AFTER v0.99.4 (prop haircut): 116 records ==
+
+== PLACED BETS before v0.99.4: profit by type ==
+
+######## BETS: 1334 records
+
+-- league (n>=15)
+  NCAAF                                  n= 151 win= 51% ROI= +15.4% profit=  +26.39 t=+0.96 CLV=-0.1%/137
+                                         n=  64 win= 53% ROI=  +9.9% profit=   +6.32 t=+0.75 CLV=-2.4%/5
+  WNBA                                   n=  76 win= 41% ROI=  -6.6% profit=   -5.80 t=-1.25 CLV=+2.1%/73
+  NFL                                    n= 526 win= 44% ROI=  -9.2% profit=  -64.13 t=-1.81 CLV=+1.1%/493
+  MLB                                    n=  90 win= 42% ROI= -10.6% profit=  -11.83 t=-1.39 CLV=+0.9%/80
+  NHL                                    n= 227 win= 44% ROI= -11.1% profit=  -31.82 t=-0.92 CLV=+2.3%/221
+  WTA                                    n=  31 win= 32% ROI= -20.8% profit=   -6.43 t=-1.44 CLV=+1.2%/20
+  ATP                                    n=  18 win= 22% ROI= -24.6% profit=   -4.27 t=-2.38 CLV=-0.2%/7
+  NBA                                    n=  55 win= 40% ROI= -28.6% profit=  -18.78 t=-1.43 CLV=-5.6%/47
+
+-- kind (n>=15)
+  1st half / inning / set lines          n=  17 win= 59% ROI= +26.2% profit=   +4.33 t=+0.96 CLV=+1.8%/17
+  Game totals                            n= 149 win= 48% ROI=  +7.2% profit=  +11.05 t=+0.04 CLV=+0.1%/121
+  Spreads                                n= 145 win= 46% ROI=  +2.7% profit=   +4.47 t=-0.22 CLV=-1.6%/128
+  Team totals                            n=  33 win= 45% ROI=  -8.2% profit=   -3.16 t=-0.23 CLV=+2.8%/31
+  Player props                           n= 850 win= 43% ROI= -10.5% profit= -116.99 t=-2.98 CLV=+1.5%/754
+  Moneylines                             n=  34 win= 47% ROI= -13.0% profit=   -4.02 t=-0.01 CLV=-4.2%/25
+
+-- side (n>=15)
+  other                                  n= 191 win= 48% ROI=  +1.1% profit=   +2.22 t=-0.06 CLV=-2.0%/160
+  under                                  n= 439 win= 45% ROI=  -5.5% profit=  -31.34 t=-1.34 CLV=+0.8%/379
+  over                                   n= 610 win= 43% ROI= -10.4% profit=  -79.15 t=-2.33 CLV=+1.9%/546
+
+-- lead (n>=15)
+  <1h                                    n= 192 win= 49% ROI=  +3.2% profit=   +7.82 t=-0.03 CLV=+3.1%/174
+  >13h                                   n= 541 win= 47% ROI=  -2.2% profit=  -13.59 t=-0.25 CLV=-0.1%/441
+  3-6h                                   n= 166 win= 41% ROI= -12.2% profit=  -25.59 t=-1.39 CLV=+2.0%/158
+  6-13h                                  n= 197 win= 38% ROI= -16.8% profit=  -44.33 t=-2.98 CLV=-0.6%/179
+  1-3h                                   n= 144 win= 41% ROI= -17.4% profit=  -32.58 t=-1.81 CLV=+2.5%/133
+
+-- ev (n>=15)
+  ?                                      n=  77 win= 52% ROI=  +2.7% profit=   +2.28 t=+0.55 CLV=+1.2%/15
+  <2%                                    n= 156 win= 44% ROI=  -3.4% profit=   -4.89 t=-1.02 CLV=-0.0%/150
+  2-4%                                   n= 722 win= 45% ROI=  -4.4% profit=  -38.40 t=-1.39 CLV=+1.0%/671
+  4-6%                                   n= 285 win= 40% ROI= -15.3% profit=  -67.25 t=-2.44 CLV=+1.3%/249
+
+-- price (n>=15)
+  55-70c                                 n=  71 win= 56% ROI=  +2.2% profit=   +2.06 t=-0.37 CLV=+0.3%/57
+  30-45c                                 n= 212 win= 43% ROI=  -0.8% profit=   -1.87 t=+0.21 CLV=+1.8%/183
+  45-55c                                 n= 946 win= 44% ROI=  -9.0% profit= -107.91 t=-2.85 CLV=+0.8%/841
+
+-- league+kind (n>=15)
+  NCAAF Spreads                          n=  66 win= 56% ROI= +30.4% profit=  +24.30 t=+1.49 CLV=-0.7%/61
+  NCAAF Game totals                      n=  65 win= 49% ROI= +10.6% profit=   +7.40 t=+0.36 CLV=-1.1%/58
+  NFL Game totals                        n=  33 win= 52% ROI=  +5.9% profit=   +2.00 t=+0.01 CLV=+1.7%/28
+   Player props                          n=  53 win= 51% ROI=  +5.0% profit=   +2.63 t=+0.34 CLV=n/a
+  NFL Spreads                            n=  22 win= 45% ROI=  -1.9% profit=   -0.42 t=-0.03 CLV=-0.8%/22
+  NBA Game totals                        n=  23 win= 48% ROI=  -2.6% profit=   -0.57 t=-0.02 CLV=+1.3%/18
+  WNBA Player props                      n=  61 win= 39% ROI=  -6.3% profit=   -4.51 t=-1.29 CLV=+2.5%/59
+  NFL Player props                       n= 446 win= 43% ROI= -10.2% profit=  -62.53 t=-2.14 CLV=+1.2%/419
+  MLB Player props                       n=  79 win= 42% ROI= -11.1% profit=  -11.07 t=-1.46 CLV=+1.1%/71
+  NHL Player props                       n= 211 win= 42% ROI= -15.2% profit=  -41.49 t=-1.46 CLV=+2.2%/205
+  WTA Spreads                            n=  17 win= 29% ROI= -31.0% profit=   -5.53 t=-1.40 CLV=+1.8%/11
+  NBA Spreads                            n=  23 win= 35% ROI= -37.0% profit=  -11.60 t=-1.51 CLV=-7.9%/22
+
+-- kind+side (n>=15)
+  Game totals over                       n=  72 win= 56% ROI= +27.7% profit=  +20.73 t=+1.52 CLV=+0.1%/62
+  Spreads other                          n= 145 win= 46% ROI=  +2.7% profit=   +4.47 t=-0.22 CLV=-1.6%/128
+  Player props under                     n= 344 win= 47% ROI=  -4.6% profit=  -21.08 t=-0.77 CLV=+0.9%/299
+  Team totals under                      n=  19 win= 42% ROI=  -9.4% profit=   -2.13 t=-0.35 CLV=+2.7%/18
+  Moneylines other                       n=  34 win= 47% ROI= -13.0% profit=   -4.02 t=-0.01 CLV=-4.2%/25
+  Game totals under                      n=  73 win= 38% ROI= -13.2% profit=   -9.93 t=-1.55 CLV=+0.0%/59
+  Player props over                      n= 506 win= 40% ROI= -14.8% profit=  -95.90 t=-3.23 CLV=+2.0%/455
+
+-- league+side (n>=15)
+  NCAAF other                            n=  70 win= 57% ROI= +30.5% profit=  +25.19 t=+1.70 CLV=-0.4%/64
+   over                                  n=  28 win= 61% ROI= +28.8% profit=   +8.07 t=+1.44 CLV=-3.2%/3
+  NFL other                              n=  33 win= 58% ROI=  +6.2% profit=   +1.99 t=+0.51 CLV=-1.3%/29
+  NCAAF over                             n=  42 win= 50% ROI=  +5.3% profit=   +2.46 t=+0.32 CLV=+0.3%/40
+  WNBA under                             n=  38 win= 47% ROI=  +4.2% profit=   +1.97 t=+0.02 CLV=+0.8%/36
+  NHL under                              n=  44 win= 50% ROI=  +1.9% profit=   +1.24 t=+0.14 CLV=+2.3%/43
+  NCAAF under                            n=  39 win= 41% ROI=  -3.0% profit=   -1.27 t=-0.70 CLV=-0.2%/33
+  MLB under                              n=  46 win= 48% ROI=  -3.1% profit=   -1.89 t=-0.47 CLV=+0.6%/42
+   under                                 n=  33 win= 45% ROI=  -8.7% profit=   -2.87 t=-0.49 CLV=n/a
+  NFL under                              n= 222 win= 44% ROI=  -9.1% profit=  -27.18 t=-1.23 CLV=+0.7%/213
+  NFL over                               n= 271 win= 43% ROI= -10.6% profit=  -38.94 t=-1.57 CLV=+1.7%/251
+  NHL over                               n= 179 win= 42% ROI= -15.1% profit=  -33.28 t=-1.19 CLV=+2.3%/174
+  WTA other                              n=  26 win= 35% ROI= -20.4% profit=   -5.32 t=-1.03 CLV=+1.1%/17
+  MLB over                               n=  43 win= 35% ROI= -22.4% profit=  -11.11 t=-1.69 CLV=+1.4%/37
+  WNBA over                              n=  29 win= 28% ROI= -25.3% profit=   -8.07 t=-2.46 CLV=+4.0%/29
+  NBA other                              n=  32 win= 34% ROI= -42.2% profit=  -18.20 t=-1.97 CLV=-9.9%/29
+
+-- league+kind+side (n>=15)
+  NFL Game totals over                   n=  15 win= 73% ROI= +65.0% profit=  +10.70 t=+2.35 CLV=+2.6%/15
+  NCAAF Spreads other                    n=  66 win= 56% ROI= +30.4% profit=  +24.30 t=+1.49 CLV=-0.7%/61
+  NCAAF Game totals over                 n=  29 win= 55% ROI= +17.3% profit=   +5.32 t=+0.84 CLV=-1.7%/28
+   Player props over                     n=  22 win= 55% ROI= +15.9% profit=   +3.50 t=+0.69 CLV=n/a
+  WNBA Player props under                n=  35 win= 49% ROI=  +6.6% profit=   +2.87 t=+0.16 CLV=+1.1%/33
+  NCAAF Game totals under                n=  36 win= 44% ROI=  +5.3% profit=   +2.08 t=-0.26 CLV=-0.6%/30
+  NFL Spreads other                      n=  22 win= 45% ROI=  -1.9% profit=   -0.42 t=-0.03 CLV=-0.8%/22
+  MLB Player props under                 n=  39 win= 49% ROI=  -2.7% profit=   -1.45 t=-0.38 CLV=+0.5%/36
+   Player props under                    n=  31 win= 48% ROI=  -2.8% profit=   -0.87 t=-0.15 CLV=n/a
+  NFL Player props under                 n= 203 win= 46% ROI=  -5.3% profit=  -14.89 t=-0.61 CLV=+0.8%/195
+  NHL Player props under                 n=  36 win= 44% ROI= -12.1% profit=   -6.74 t=-0.55 CLV=+1.7%/35
+  NFL Player props over                  n= 243 win= 40% ROI= -14.3% profit=  -47.65 t=-2.35 CLV=+1.5%/224
+  NHL Player props over                  n= 175 win= 42% ROI= -16.0% profit=  -34.75 t=-1.35 CLV=+2.3%/170
+  MLB Player props over                  n=  40 win= 35% ROI= -20.9% profit=   -9.63 t=-1.66 CLV=+1.7%/35
+  WNBA Player props over                 n=  26 win= 27% ROI= -26.0% profit=   -7.38 t=-2.41 CLV=+4.3%/26
+  WTA Spreads other                      n=  17 win= 29% ROI= -31.0% profit=   -5.53 t=-1.40 CLV=+1.8%/11
+  NBA Spreads other                      n=  23 win= 35% ROI= -37.0% profit=  -11.60 t=-1.51 CLV=-7.9%/22
+
+######## BIDS: 469 records
+
+-- league (n>=15)
+  NCAAF                                  n=  32 win= 56% ROI= +29.3% profit=  +10.25 t=+0.98 CLV=+2.8%/31
+  NHL                                    n= 145 win= 51% ROI= +15.0% profit=  +24.81 t=+1.05 CLV=+2.9%/136
+  MLB                                    n=  60 win= 55% ROI= +10.6% profit=   +8.84 t=+0.83 CLV=+1.9%/54
+  ATP                                    n=  26 win= 50% ROI=  +4.3% profit=   +1.09 t=+0.74 CLV=+6.3%/8
+  NBA                                    n=  18 win= 44% ROI=  -0.5% profit=   -0.05 t=-0.69 CLV=+0.3%/7
+  WNBA                                   n=  32 win= 44% ROI=  -5.2% profit=   -2.53 t=-0.39 CLV=+0.4%/30
+  NFL                                    n= 110 win= 41% ROI= -17.7% profit=  -27.66 t=-1.29 CLV=+2.1%/104
+  WTA                                    n=  21 win= 24% ROI= -47.9% profit=   -9.70 t=-2.13 CLV=+2.7%/5
+
+-- kind (n>=15)
+  Team totals                            n=  99 win= 57% ROI= +25.4% profit=  +31.70 t=+2.02 CLV=+2.9%/99
+  Game totals                            n=  20 win= 55% ROI= +13.3% profit=   +1.94 t=+0.99 CLV=+3.6%/7
+
+== PLACED BETS after v0.99.4: profit by type ==
+
+######## BETS: 108 records
+
+-- league (n>=15)
+
+-- kind (n>=15)
+
+-- side (n>=15)
+
+-- lead (n>=15)
+
+-- ev (n>=15)
+
+-- price (n>=15)
+
+-- league+kind (n>=15)
+
+-- kind+side (n>=15)
+
+-- league+side (n>=15)
+
+-- league+kind+side (n>=15)
+
+######## BIDS: 0 records
+
+-- league (n>=15)
+
+-- kind (n>=15)
+
+-- side (n>=15)
+
+-- lead (n>=15)
+
+-- ev (n>=15)
+
+-- price (n>=15)
+
+-- league+kind (n>=15)
+
+-- kind+side (n>=15)
+
+-- league+side (n>=15)
+
+-- league+kind+side (n>=15)
