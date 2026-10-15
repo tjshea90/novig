@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -58,6 +59,8 @@ class CloudUiTest {
     @Test
     fun `the title carries the measured freshness of the bets shown and a tap says how it was worked out`() {
         feed(cloudState())
+        println("CHIPDEBUG " + compose.onNodeWithTag("cloudFreshness").fetchSemanticsNode().let { it.boundsInRoot.toString() + " " + it.size })
+        println("CHIPDEBUG root " + compose.onRoot().fetchSemanticsNode().boundsInRoot)
         compose.onNodeWithTag("cloudFreshness").assertIsDisplayed()
         assertTrue("the sample bets' Novig prices were read 4 s before the clock", compose.onAllNodesWithTag("cloudFreshness").fetchSemanticsNodes().isNotEmpty())
         assertEquals("the detail is closed until tapped", 0, compose.onAllNodesWithTag("cloudFreshnessDetail").fetchSemanticsNodes().size)
