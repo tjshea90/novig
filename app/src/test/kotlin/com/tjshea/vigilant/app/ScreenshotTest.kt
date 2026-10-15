@@ -101,6 +101,16 @@ class ScreenshotTest {
 
     @Test fun feed() = shoot("1_feed") { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }) }
 
+    @Test fun feedCloud() = shoot("1k_feed_cloud") { FeedScreen(SampleScan.cloud(), {}, {}, {}, { _, _ -> }) }
+
+    @Test fun feedCloudRequested() = shoot("1l_feed_cloud_requested") {
+        FeedScreen(SampleScan.cloud(status = SampleScan.cloudStatus().copy(ackedRefreshAtMs = SampleScan.NOW - 20_000), requested = SampleScan.NOW - 20_000), {}, {}, {}, { _, _ -> })
+    }
+
+    @Test fun feedCloudPausedByBids() = shoot("1m_feed_cloud_paused_bids") { FeedScreen(SampleScan.cloud(bids = true), {}, {}, {}, { _, _ -> }) }
+
+    @Test fun settingsCloud() = shoot("5i_settings_cloud") { SettingsScreen(SampleScan.cloud(), {}, page = SettingsPage.CLOUD) }
+
     @Test fun feedLight() = shoot("1b_feed_light", dark = false) { FeedScreen(SampleScan.state(), {}, {}, {}, { _, _ -> }) }
 
     @Test fun feedBeforeFirstScan() = shoot("1c_feed_before_scan") { FeedScreen(SampleScan.fresh(), {}, {}, {}, { _, _ -> }) }

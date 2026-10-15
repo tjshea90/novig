@@ -7,11 +7,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertExists
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -41,16 +43,7 @@ class CloudUiTest {
 
     private val now = SampleScan.NOW
 
-    private fun cloudState(bids: Boolean = false, status: CloudStatus? = alive(), requested: Long = 0L): UiState {
-        val base = SampleScan.state()
-        val s = base.settings.copy(maker = bids, makerRecommend = false, gates = base.settings.gates.copy(cloudScan = true))
-        return base.copy(settings = s, cloudUi = CloudLink.Ui(hasToken = true, tokenTail = "wxyz", status = status, requestedAtMs = requested, pushedRev = 10, pushedAtMs = now - 3_000L))
-    }
-
-    private fun alive() = CloudStatus(
-        heartbeatMs = now - 3_000, computedAtMs = now - 15_000, rows = 12, configRev = 10, pricedConfigRev = 10, scanning = true, scanStartedAtMs = now - 90_000,
-        progressStep = "Novig prices", progressDone = 300, progressTotal = 1200, ackedRefreshAtMs = 0,
-    )
+    private fun cloudState(bids: Boolean = false, status: CloudStatus? = SampleScan.cloudStatus(), requested: Long = 0L) = SampleScan.cloud(bids, status, requested)
 
     private fun feed(state: UiState) = compose.setContent {
         CompositionLocalProvider(LocalClock provides { now }) { VigilantTheme(darkTheme = true) { FeedScreen(state, {}, {}, {}, { _, _ -> }) } }
@@ -59,13 +52,12 @@ class CloudUiTest {
     @Test
     fun `the title carries the measured freshness of the bets shown and a tap says how it was worked out`() {
         feed(cloudState())
-        println("CHIPDEBUG " + compose.onNodeWithTag("cloudFreshness").fetchSemanticsNode().let { it.boundsInRoot.toString() + " " + it.size })
-        println("CHIPDEBUG root " + compose.onRoot().fetchSemanticsNode().boundsInRoot)
-        compose.onNodeWithTag("cloudFreshness").assertIsDisplayed()
+        compose.onNodeWithTag("cloudFreshness").assertExists().assertHasClickAction()
+        compose.onNodeWithTag("cloudFreshness").assertTextContains("Novig", substring = true)
         assertTrue("the sample bets' Novig prices were read 4 s before the clock", compose.onAllNodesWithTag("cloudFreshness").fetchSemanticsNodes().isNotEmpty())
         assertEquals("the detail is closed until tapped", 0, compose.onAllNodesWithTag("cloudFreshnessDetail").fetchSemanticsNodes().size)
         compose.onNodeWithTag("cloudFreshness").performClick()
-        compose.onNodeWithTag("cloudFreshnessDetail").assertIsDisplayed()
+        compose.onNodeWithTag("cloudFreshnessDetail").assertExists().assertTextContains("Across the", substring = true)
     }
 
     @Test
@@ -73,9 +65,8 @@ class CloudUiTest {
         val requested = now - 20_000
         feed(cloudState(status = alive().copy(ackedRefreshAtMs = requested, lastScanForRefreshAtMs = 0L), requested = requested))
         compose.onNodeWithTag("cloudBar").assertIsDisplayed()
-        val text = compose.onNodeWithTag("cloudBar").fetchSemanticsNode().config.toString()
-        assertTrue(text, text.contains("Scanning on GitHub: Novig prices 300/1200 (25%)"))
-        assertTrue(text, text.contains("acknowledged"))
+            .assertTextContains("Scanning on GitHub: Novig prices 300/1200 (25%)", substring = true)
+            .assertTextContains("acknowledged", substring = true)
     }
 
     @Test

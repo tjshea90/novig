@@ -145,6 +145,21 @@ object SampleScan {
     )
 
     /** After a scan. [withFair] false = no source matched anything (Novig prices only). */
+    /**
+     * The Feed as it looks with the scan on GitHub (Tj, 2026-10-14/15): the sample board, the cloud switch on (bids [bids] decide whether the cloud drives it), and the engine's heartbeat on [NOW]'s clock:
+     * mid-scan at 25%, its last list 15 s old, the phone's settings read and applied. [requested] = when the phone asked for a scan (0 = none).
+     */
+    fun cloud(bids: Boolean = false, status: com.tjshea.vigilant.data.cloud.CloudStatus? = cloudStatus(), requested: Long = 0L): UiState {
+        val base = state()
+        val s = base.settings.copy(maker = bids, makerRecommend = false, gates = base.settings.gates.copy(cloudScan = true))
+        return base.copy(settings = s, cloudUi = CloudLink.Ui(hasToken = true, tokenTail = "wxyz", status = status, requestedAtMs = requested, pushedRev = 10, pushedAtMs = NOW - 3_000L))
+    }
+
+    fun cloudStatus() = com.tjshea.vigilant.data.cloud.CloudStatus(
+        heartbeatMs = NOW - 3_000, computedAtMs = NOW - 15_000, rows = 12, configRev = 10, pricedConfigRev = 10, scanning = true, scanStartedAtMs = NOW - 90_000,
+        progressStep = "Novig prices", progressDone = 300, progressTotal = 1200,
+    )
+
     fun state(s: ScanSettings = settings, withFair: Boolean = true): UiState {
         val r = if (withFair) result(s) else Pricing.price(Planner.plan(events, markets, emptyMap(), s, NOW), books, s, NOW)
         return UiState(
