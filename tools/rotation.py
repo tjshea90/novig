@@ -12,8 +12,8 @@ should have scheduled check-ins on a rotating schedule so as not to interfere wi
   today [--tag TAG] [--date D]    print "<slot> <time> <duty>" for this account today (America/New_York date)
   roster                          print the roster
   checkin                         post a one-line "I ran" note on the board (every routine run does this FIRST, even when it then stops because the lease is held)
-  missed                          list scheduled slots of the last 30 h whose account left no trace on the board (usage cap, no repo, dead routine) and that nobody covered yet
-  cover SLOT                      post "rotation-cover" for a missed slot after doing its WATCH duty, so no other account repeats it
+  missed                          list scheduled slots of the last 30 h whose account left no trace on the board (NO-SHOW: usage cap, no repo, dead routine) or checked in but never posted its finished-duty note (INTERRUPTED), and that nobody covered yet
+  cover SLOT                      post "rotation-cover" for a missed slot after doing its duty (the first cover the whole duty, the second WATCH only), so no other account repeats it
   selftest                        run the pure checks
 Exit status: 0 ok, 2 could not reach GitHub or not registered (callers carry on).
 """
@@ -60,7 +60,8 @@ def cron_for(slot):
 
 GRACE_S = 5 * 3600     # an account has until 5 h after its slot to leave a trace (a long run, a lease wait, retries)
 LOOKBACK_S = 30 * 3600
-MAX_COVER = 1          # a run covers at most one missed slot: the cheap WATCH duty, never a whole day of work
+MAX_COVER = 2          # a run covers at most two missed slots (Tj, 2026-10-15: usage runs out on one or two accounts): the FIRST with the slot's whole duty, the second with WATCH only
+DUTY_WORDS = ("ANALYST", "ENGINEER", "WATCH", "ALL")   # the handoff note a finished run posts starts with its duty: "ANALYST 2026-10-15"
 
 
 def slot_instants(now, n_slots=3):
@@ -81,8 +82,9 @@ def slot_instants(now, n_slots=3):
 
 
 def missed_slots(roster, notes, now):
-    """Slots (slot, day, instant, tag) whose account left no board note between the slot instant and instant+GRACE_S, that are past
-    that grace, were scheduled after the account joined, and carry no 'rotation-cover slot=S date=D' note. `notes` = [(meta, subject)]. Pure."""
+    """Slots (slot, day, instant, tag, state) that need covering: state NO-SHOW = the account left no board note between the slot instant and instant+GRACE_S (usage cap, no repo, dead routine);
+    INTERRUPTED = it checked in but never posted its finished-duty note (cut off by its usage cap mid-task) and the duty was ANALYST or ENGINEER (a cut-off WATCH is cheap and not worth covering).
+    Only slots past that grace, scheduled after the account joined, with no 'rotation-cover slot=S date=D' note. `notes` = [(meta, subject)]. Pure."""
     from zoneinfo import ZoneInfo
     accounts = roster.get("accounts", [])
     if len(accounts) < 3:
@@ -100,7 +102,7 @@ def missed_slots(roster, notes, now):
         if inst < joined:
             continue
         lo, hi = inst - datetime.timedelta(minutes=10), inst + datetime.timedelta(seconds=GRACE_S)
-        seen, covered = False, False
+        seen, finished, covered = False, False, False
         for meta, subject in notes:
             try:
                 at = datetime.datetime.fromisoformat(meta.get("at", "").replace("Z", "+00:00"))
@@ -109,10 +111,16 @@ def missed_slots(roster, notes, now):
             frm = meta.get("from", "").split("/")[0]
             if frm == tag and lo <= at <= hi:
                 seen = True
+                if subject.split(" ")[0] in DUTY_WORDS or subject.startswith("rotation-cover"):
+                    finished = True
             if subject.startswith("rotation-cover") and ("slot=%d" % s) in subject and ("date=%s" % day.isoformat()) in subject:
                 covered = True
-        if not seen and not covered:
-            out.append((s, day, inst, tag))
+        if covered:
+            continue
+        if not seen:
+            out.append((s, day, inst, tag, "NO-SHOW"))
+        elif not finished and duty_for(s, day) in ("ANALYST", "ENGINEER", "ALL"):
+            out.append((s, day, inst, tag, "INTERRUPTED"))
     return out
 
 
@@ -127,6 +135,13 @@ def selftest():
     # a and b checked in at their slots (11:21Z and 17:21Z on the 15th): fine; c left nothing: slot 2 missed
     notes = [({"from": "a/zz", "at": "2026-10-15T11:21:00Z"}, "rotation-checkin slot=0"), ({"from": "b/xx", "at": "2026-10-15T17:21:00Z"}, "rotation-checkin slot=1")]
     assert [x[0] for x in missed_slots(roster, notes, now)] == [2]
+    # b checked in but never posted its finished-duty note and its duty that day was ANALYST/ENGINEER: INTERRUPTED (cover it); a cut-off WATCH is not covered
+    d15 = datetime.date(2026, 10, 15)
+    interrupted = missed_slots(roster, notes + [({"from": "c/zz", "at": "2026-10-15T23:21:00Z"}, "rotation-checkin slot=2")], now)
+    want_state = "INTERRUPTED" if duty_for(2, d15) in ("ANALYST", "ENGINEER") else None
+    assert [x[4] for x in interrupted if x[0] == 2] == ([want_state] if want_state else []), interrupted
+    done = missed_slots(roster, notes + [({"from": "c/zz", "at": "2026-10-15T23:21:00Z"}, "rotation-checkin slot=2"), ({"from": "c/zz", "at": "2026-10-16T01:00:00Z"}, "%s 2026-10-15" % duty_for(2, d15))], now)
+    assert [x for x in done if x[0] == 2] == [], done
     # covered once by someone: gone
     notes.append(({"from": "a/yy", "at": "2026-10-16T11:30:00Z"}, "rotation-cover slot=2 date=2026-10-15"))
     assert missed_slots(roster, notes, now) == []
@@ -214,15 +229,16 @@ def missed():
     if not m:
         print("ROTATION  no missed slots")
         return 0
-    for s, day, inst, tag in m[:6]:
-        print("ROTATION  MISSED slot %d (%s ET on %s, account %s) left no trace on the board; duty then: %s" % (s, SLOTS[s], day.isoformat(), tag, duty_for(s, day)))
-    print("ROTATION  cover at most %d: do that slot's WATCH checks only, then: python3 -I tools/rotation.py cover <slot> --date <date>" % MAX_COVER)
+    for i, (s, day, inst, tag, state) in enumerate(m[:6]):
+        what = "its whole duty (%s), under the usual skip rules" % duty_for(s, day) if i == 0 else "WATCH checks only"
+        print("ROTATION  %s slot %d (%s ET on %s, account %s); duty then: %s; cover with: %s" % (state, s, SLOTS[s], day.isoformat(), tag, duty_for(s, day), what))
+    print("ROTATION  cover at most %d (the first with the whole duty, the next with WATCH only), then for each: python3 -I tools/rotation.py cover <slot> --date <date>" % MAX_COVER)
     return 0
 
 
 def cover(slot, date):
     import coord
-    return coord.post("rotation-cover slot=%d date=%s" % (slot, date), "WATCH duty done for a slot whose account left no trace (usage cap, no repo, a dead routine).")
+    return coord.post("rotation-cover slot=%d date=%s" % (slot, date), "Duty done for a slot whose account left no trace or was cut off (usage cap, no repo, a dead routine).")
 
 
 def main(argv):
