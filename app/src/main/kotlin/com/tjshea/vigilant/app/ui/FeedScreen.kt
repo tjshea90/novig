@@ -102,10 +102,12 @@ fun FeedScreen(
     var parlaySelected by remember { mutableStateOf<String?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
     // Cloud scan (Tj, 2026-10-14): the GitHub engine's progress and how current its list is, ticking every second while it is on.
-    val now = rememberNow(if (state.settings.cloudDrives) 1_000 else 15_000)
+    // 1 s while a scan the phone asked for runs (the progress), 5 s otherwise in cloud mode (the chip's ages), 15 s as ever without it.
+    val cloudPending = state.settings.cloudDrives && state.cloudUi.requestedAtMs > 0L && (state.cloudUi.status?.lastScanForRefreshAtMs ?: 0L) < state.cloudUi.requestedAtMs
+    val now = rememberNow(if (cloudPending) 1_000 else if (state.settings.cloudDrives) 5_000 else 15_000)
     val cloud = if (state.settings.cloudDrives) com.tjshea.vigilant.data.cloud.CloudText.view(state.cloudUi.status, state.cloudUi.requestedAtMs, now, state.cloudUi.why) else null
     // The freshness of what is ON SCREEN, measured from the shown bets' own stamps (not a claim): one glance in the title, a tap for the detail.
-    val chip = if (cloud != null) remember(state.feed, state.cloudUi.status, state.cloudUi.why, state.placedIndex, state.settings, now / 1_000L) {
+    val chip = if (cloud != null) remember(state.feed, state.cloudUi.status, state.cloudUi.why, state.placedIndex, state.settings, now) {
         com.tjshea.vigilant.data.cloud.CloudFreshness.of(state.feedAt(now), state.cloudUi.status, now, state.cloudUi.why)
     } else null
     var freshDetail by remember { mutableStateOf(false) }

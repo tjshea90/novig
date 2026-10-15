@@ -152,8 +152,9 @@ class CloudLink(private val c: AppContainer) {
             var etag: String? = null
             while (isActive) {
                 val s = c.settingsStore.flow.value
-                if (s == null || !s.cloudDrives || !hasToken()) { delay(3_000L); continue }
-                var wait = if (refreshRequestedAt > 0L && (latest.status?.lastScanForRefreshAtMs ?: 0L) < refreshRequestedAt) POLL_PENDING_MS else POLL_MS
+                if (s == null || !s.cloudDrives || !hasToken()) { delay(IDLE_MS); continue }
+                // 3 s while a scan the phone asked for runs; 5 s with the app on screen; 20 s off screen (the background auto-scan and auto-bet still get a list well inside a scan's length, and a 304 is free).
+                var wait = if (refreshRequestedAt > 0L && (latest.status?.lastScanForRefreshAtMs ?: 0L) < refreshRequestedAt) POLL_PENDING_MS else if (c.onScreen) POLL_MS else POLL_BACKGROUND_MS
                 when (val p = client.pollStatus(etag)) {
                     is CloudClient.Poll.Fresh -> {
                         etag = p.etag
@@ -372,6 +373,9 @@ class CloudLink(private val c: AppContainer) {
 
     companion object {
         const val POLL_MS = 5_000L
+        const val POLL_BACKGROUND_MS = 20_000L
+        /** Nothing to read (the switch off, paused, bids on, no token): look again this often; settings changes are also picked up by the loops that wait on them. */
+        const val IDLE_MS = 10_000L
         /** While a requested scan has not finished the phone looks every 3 s (a 304 costs nothing). */
         const val POLL_PENDING_MS = 3_000L
         const val SAVE_EVERY_MS = 15 * 60_000L

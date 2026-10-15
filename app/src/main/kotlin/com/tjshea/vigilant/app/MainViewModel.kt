@@ -1089,11 +1089,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private var requoting = false
+    @Volatile private var lastRequoteAt = 0L
 
     /** Re-prices the listed rows [marketIds] from Novig's newest books while a scan runs; a row that is no longer +EV drops out of the feed. */
     private fun requoteDuringScan(marketIds: Collection<String>, toast: Boolean = false) {
         if (requoting) return
         requoting = true
+        lastRequoteAt = System.currentTimeMillis()
         viewModelScope.launch {
             try {
                 val before = _state.value.result ?: return@launch
@@ -1147,7 +1149,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 shown = _state.value.result
                 // A cloud list carries Novig prices as GitHub read them: the listed bets are re-read from Novig at once, so a price this phone read a moment ago never goes back to an older one.
                 val cs = _state.value
-                if (cs.settings.cloudDrives) com.tjshea.vigilant.app.ui.feedMarketIds(cs).takeIf { it.isNotEmpty() }?.let { ids -> recheck(ids, quiet = true) }
+                if (cs.settings.cloudDrives && System.currentTimeMillis() - lastRequoteAt > 8_000L) com.tjshea.vigilant.app.ui.feedMarketIds(cs).takeIf { it.isNotEmpty() }?.let { ids -> recheck(ids, quiet = true) }
             } else {
                 val r = run.result
                 if (r != null && r !== shown) {
