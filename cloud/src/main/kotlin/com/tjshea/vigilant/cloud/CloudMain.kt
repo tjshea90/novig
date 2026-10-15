@@ -71,6 +71,8 @@ fun main(args: Array<String>) = runBlocking {
     val sources = CloudSources(http, json, usage, scope, File(out, "state").apply { mkdirs() }, CloudKeys::fromEnv)
     val scanner = Scanner(novig)
     val edge = EdgeLog(DayJournal(File(out, "cloud"), "edge", EdgeRow.serializer()) { it.atMs })
+    // The volume journal (Tj, 2026-10-15: balance the best +EV bets with a decent number of fills): every trading pass's counts and why bets were held back, so a session can tune volume against edge with data.
+    val passJournal = DayJournal(File(out, "cloud"), "tradepass", com.tjshea.vigilant.data.cloud.CloudTrader.PassRow.serializer()) { it.atMs }
     val git = Git(token)
     val log = Log(File(out, "cloud-engine.log"))
     // The engine's own Novig key (Tj, 2026-10-15): a read-only key sent as two secrets. Without them the engine reads the public routes as before; with them it reads through the signed route and keeps the key's websocket.
@@ -158,6 +160,7 @@ fun main(args: Array<String>) = runBlocking {
             val mode = s.gates.cloudTrading
             if (mode == CloudTradeMode.OFF) null else {
                 val r = trader.pass(rows, s, now)
+                runCatching { passJournal.append(r.row(now)) }
                 val text = TradeLedger.text(trader.ledger)
                 if (text != tradesText) { tradesText = text; publisher.stageTrades(text, now) }
                 if (r.placed.isNotEmpty()) log("trading: " + r.line())

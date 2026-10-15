@@ -116,6 +116,10 @@ class CloudTrader(
     /** The cooldown after a miss, per decision key. */
     private val cooldown = HashMap<String, Long>()
 
+    /** One trading pass as the volume journal keeps it (`tradepass-<day>.jsonl`, archived with the engine's other journals): how many listed bets, how many passed the rules, how many orders, and why the rest were held back. */
+    @kotlinx.serialization.Serializable
+    data class PassRow(val atMs: Long, val mode: String, val looked: Int, val passed: Int, val ordered: Int, val spent: Double, val cash: Double, val skipped: Map<String, Int> = emptyMap(), val stopped: String = "")
+
     data class Report(
         val mode: CloudTradeMode,
         val looked: Int = 0,
@@ -126,6 +130,8 @@ class CloudTrader(
         val cash: Double = 0.0,
         val equity: Double = 0.0,
     ) {
+        fun row(atMs: Long) = PassRow(atMs, mode.name.lowercase(), looked, passed, placed.size, placed.sumOf { it.cost }, cash, skipped, stopped)
+
         /** One line for the status and the log. */
         fun line(): String = when (mode) {
             CloudTradeMode.OFF -> "trading off"
