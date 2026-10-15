@@ -73,6 +73,6 @@ class CloudKellyTest {
 
     @Test
     fun `a stake under a cent is skipped and never rounded up`() {
-        assertTrue(skip(inputs(cash = 0.05, atRisk = 0.0, kelly = 0.01, betCap = 0.01)).contains("under a cent"))
+        assertTrue(skip(inputs(cash = 0.05, atRisk = 0.0, dayStart = 0.05, kelly = 0.01, betCap = 0.01)).contains("under a cent"))
     }
 }
