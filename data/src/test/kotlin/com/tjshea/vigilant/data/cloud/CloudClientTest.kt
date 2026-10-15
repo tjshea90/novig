@@ -107,4 +107,23 @@ class CloudClientTest {
         assertTrue(client(token = null).fetchBids() is CloudClient.Poll.Failed)
         assertEquals("no token, no request", before, server.requestCount)
     }
+
+    @Test
+    fun `the engine's usage file is read from the feed branch, an unchanged one is a 304, and nothing is asked without a token`() = runBlocking {
+        val text = CloudUsage.encode(com.tjshea.vigilant.data.keys.UsageBook(mapOf("novig" to com.tjshea.vigilant.data.keys.ProviderUsage(callsToday = 42))), "run-5", 1_000L, emptyList())
+        server.enqueue(MockResponse().setBody(text).setHeader("ETag", "\"u1\""))
+        server.enqueue(MockResponse().setResponseCode(304))
+        server.enqueue(MockResponse().setBody("garbage"))
+        val c = client()
+        val fresh = c.fetchUsage(null) as CloudClient.Poll.Fresh
+        assertEquals(42, fresh.value.book.providers.getValue("novig").callsToday)
+        assertEquals("run-5", fresh.value.run)
+        assertTrue(server.takeRequest().path!!.contains("/repos/o/r/contents/usage.json?ref=cloud-feed"))
+        assertTrue(c.fetchUsage("\"u1\"") is CloudClient.Poll.NotModified)
+        assertEquals("\"u1\"", server.takeRequest().getHeader("If-None-Match"))
+        assertTrue((c.fetchUsage(null) as CloudClient.Poll.Failed).why.contains("usage could not be read"))
+        val before = server.requestCount
+        assertTrue(client(token = null).fetchUsage(null) is CloudClient.Poll.Failed)
+        assertEquals(before, server.requestCount)
+    }
 }
