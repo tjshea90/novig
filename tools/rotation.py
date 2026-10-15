@@ -133,10 +133,11 @@ def selftest():
     m = missed_slots(roster, [], now)
     assert [(x[0], x[1].isoformat()) for x in m] == [(0, "2026-10-15"), (1, "2026-10-15"), (2, "2026-10-15")], m
     # a and b checked in at their slots (11:21Z and 17:21Z on the 15th): fine; c left nothing: slot 2 missed
-    notes = [({"from": "a/zz", "at": "2026-10-15T11:21:00Z"}, "rotation-checkin slot=0"), ({"from": "b/xx", "at": "2026-10-15T17:21:00Z"}, "rotation-checkin slot=1")]
+    d15 = datetime.date(2026, 10, 15)
+    notes = [({"from": "a/zz", "at": "2026-10-15T11:21:00Z"}, "rotation-checkin slot=0"), ({"from": "a/zz", "at": "2026-10-15T12:30:00Z"}, "%s 2026-10-15" % duty_for(0, d15)),
+             ({"from": "b/xx", "at": "2026-10-15T17:21:00Z"}, "rotation-checkin slot=1"), ({"from": "b/xx", "at": "2026-10-15T18:10:00Z"}, "%s 2026-10-15" % duty_for(1, d15))]
     assert [x[0] for x in missed_slots(roster, notes, now)] == [2]
     # b checked in but never posted its finished-duty note and its duty that day was ANALYST/ENGINEER: INTERRUPTED (cover it); a cut-off WATCH is not covered
-    d15 = datetime.date(2026, 10, 15)
     interrupted = missed_slots(roster, notes + [({"from": "c/zz", "at": "2026-10-15T23:21:00Z"}, "rotation-checkin slot=2")], now)
     want_state = "INTERRUPTED" if duty_for(2, d15) in ("ANALYST", "ENGINEER") else None
     assert [x[4] for x in interrupted if x[0] == 2] == ([want_state] if want_state else []), interrupted
@@ -148,7 +149,7 @@ def selftest():
     # an account is never blamed for a slot before it joined; with two accounts nothing is "missed"
     roster2 = {"accounts": [dict(a) for a in roster["accounts"]]}
     roster2["accounts"][2]["registeredAt"] = "2026-10-16T00:00:00Z"
-    assert [x[0] for x in missed_slots(roster2, notes[:1], now)] == [1]
+    assert [x[0] for x in missed_slots(roster2, notes[:2], now)] == [1]
     assert missed_slots({"accounts": roster["accounts"][:2]}, [], now) == []
     # the ET slot instants follow daylight saving: 07:20 ET is 11:20Z in October (EDT) and 12:20Z in December (EST)
     assert slot_instants(dt.datetime(2026, 10, 16, 12, 0, tzinfo=z))[-1][2].astimezone(z).hour == 11
