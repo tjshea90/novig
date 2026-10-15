@@ -89,6 +89,8 @@ class CloudLink(private val c: AppContainer) {
     private val store = JsonFileStore(File(c.app.filesDir, "cloud_token.json"), CloudToken.serializer(), { CloudToken() }, c.json)
     @Volatile private var tokenPlain: String? = null
     private val client = CloudClient(c.http, { token() })
+    /** Claude's messages to Tj and the settings requests from the GitHub side (TCL28). */
+    val inbox = CloudInbox(c, client)
     private val uploaded = JsonFileStore(File(c.app.filesDir, "cloud_uploaded.json"), kotlinx.serialization.builtins.MapSerializer(kotlinx.serialization.serializer<String>(), kotlinx.serialization.serializer<String>()), { emptyMap() }, c.json)
     private var lastPushedKey: String? = null
     private var lastRev = 0L
@@ -205,6 +207,17 @@ class CloudLink(private val c: AppContainer) {
         scope.launch(Dispatchers.IO) {
             // A failed write is tried again; settings are also re-sent every 10 minutes so the engine always has them (a new job reads them first thing).
             while (isActive) { delay(RETRY_PUSH_MS); c.settingsStore.flow.value?.let { pushSettings(it) } }
+        }
+        // 4. messages from Claude / the engine and settings requests from the GitHub side (TCL28): 304s are free; once a minute on screen, every 5 minutes off screen.
+        scope.launch(Dispatchers.IO) {
+            runCatching { inbox.load() }
+            while (isActive) {
+                if (hasToken()) {
+                    runCatching { inbox.pollOverrides() }
+                    runCatching { inbox.pollMessages() }
+                }
+                delay(if (c.onScreen) INBOX_POLL_MS else INBOX_BACKGROUND_MS)
+            }
         }
         // 3. a key added or changed in the phone's key store goes to GitHub's secrets by itself (Tj, 2026-10-15: "If I add api keys inside my phone vigilant app, will it automatically upload them to GitHub ... If it doesn't already do this, make it do so"):
         // until now the upload rode only on a settings push, so a new key with no setting change waited for the next one. A changed fingerprint is the only trigger (no network when nothing changed), only while the cloud scan is on.
@@ -564,6 +577,8 @@ class CloudLink(private val c: AppContainer) {
 
     companion object {
         const val POLL_MS = 5_000L
+        const val INBOX_POLL_MS = 60_000L
+        const val INBOX_BACKGROUND_MS = 5 * 60_000L
         /** How often the engine's usage file is asked for (a 304 costs nothing against GitHub's limit). */
         const val USAGE_POLL_MS = 30_000L
         const val TRADES_POLL_MS = 20_000L
