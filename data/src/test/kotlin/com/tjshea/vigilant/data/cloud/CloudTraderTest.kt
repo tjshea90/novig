@@ -57,6 +57,7 @@ class CloudTraderTest {
     private class FakePort(var cash: Double? = 1_000.0, var answer: (TradeEntry) -> CloudOrderPort.Placed) : CloudOrderPort {
         val sent = ArrayList<Pair<TradeEntry, Double>>()
         var cancelled = 0
+        override val blocked: String? = null
         override suspend fun cash() = cash
         override suspend fun place(entry: TradeEntry, limitPrice: Double): CloudOrderPort.Placed { sent += entry to limitPrice; return answer(entry) }
         override suspend fun cancelResting() { cancelled++ }

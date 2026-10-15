@@ -80,6 +80,10 @@ data class TradeLedger(
 interface CloudOrderPort {
     /** The subaccount's cash in dollars, or null when it cannot be read (nothing is ordered then). */
     suspend fun cash(): Double?
+
+    /** Set when the last call was refused in a way that must stop ordering (a location check, a bad or revoked key, a locked account); null otherwise. Said in words, never a key. */
+    val blocked: String?
+
     suspend fun place(entry: TradeEntry, limitPrice: Double): Placed
     suspend fun cancelResting()
 
@@ -88,8 +92,11 @@ interface CloudOrderPort {
         data class Filled(val contracts: Long, val avgPrice: Double, val feeDollars: Double, val orderId: String) : Placed
         /** Nothing was bought (the price moved, no depth): the decision is dropped, cooled down. */
         data class Missed(val why: String) : Placed
-        /** Ordering must stop: location refusal (GEOLOCATION_*), 401/403/423, a lost answer. */
+        /** Ordering must stop: location refusal (GEOLOCATION_*), 401/403/423. Nothing was bought. */
         data class Stop(val why: String) : Placed
+
+        /** The order was sent and its end was never seen: it may have filled. It is kept as money at risk (UNCONFIRMED), never sent again, and ordering stops for a while. */
+        data class Unconfirmed(val why: String) : Placed
     }
 }
 
@@ -141,7 +148,7 @@ class CloudTrader(
     /** What is at risk now: open entries of games that have not been over long (a game is over for exposure 3 h after its start; the grader settles it for good). */
     fun atRisk(now: Long): Double = ledger.entries.filter { open(it, now) }.sumOf { it.cost }
 
-    private fun open(e: TradeEntry, now: Long) = e.status == "OPEN" && now - e.startsTs < EXPOSURE_AFTER_START_MS
+    private fun open(e: TradeEntry, now: Long) = (e.status == "OPEN" || e.status == "UNCONFIRMED") && now - e.startsTs < EXPOSURE_AFTER_START_MS
 
     /** Stops ordering (a location refusal, a bad key): kept in the ledger so the phone says why and the next job knows. */
     fun stop(why: String) { ledger = ledger.copy(stopped = why, stoppedAtMs = clock()) }
@@ -156,7 +163,11 @@ class CloudTrader(
         // The phone's STOP / Pause outranks everything: the engine does not run then, and a pass that still arrives orders nothing.
         if (s.killed || s.paused) return Report(mode, stopped = "the app is stopped or paused on the phone")
         if (live && port == null) return Report(mode, stopped = "live trading needs the trading key sent from the phone (Settings › Cloud scan)")
-        if (ledger.stopped.isNotEmpty() && live) return Report(mode, stopped = ledger.stopped)
+        // A stop (a location refusal, a lost answer) holds ordering for [STOP_HOLD_MS]; then one pass tries again, and the cash read is the first thing it asks.
+        if (ledger.stopped.isNotEmpty() && live) {
+            if (now - ledger.stoppedAtMs < STOP_HOLD_MS) return Report(mode, stopped = ledger.stopped)
+            ledger = ledger.copy(stopped = "", stoppedAtMs = 0L)
+        }
         val rules = AutoBet.rules(s)
         val skipped = LinkedHashMap<String, Int>()
         fun skip(r: String) { skipped.merge(r, 1, Int::plus) }
@@ -164,7 +175,7 @@ class CloudTrader(
         // the money: a paper wallet is the bankroll setting plus what graded entries made; a live one is the subaccount's cash
         val settled = ledger.entries.filter { it.status != "OPEN" }.sumOf { it.pnl ?: 0.0 }
         var risk = atRisk(now)
-        var cash = if (live) (port!!.cash() ?: return Report(mode, stopped = "the subaccount's cash could not be read")) else (s.bankroll + settled - risk).coerceAtLeast(0.0)
+        var cash = if (live) (port!!.cash() ?: run { port.blocked?.let { stop(it) }; return Report(mode, stopped = port.blocked ?: "the subaccount's cash could not be read") }) else (s.bankroll + settled - risk).coerceAtLeast(0.0)
         val equity = cash + risk
         val day = Instant.ofEpochMilli(now).atZone(ZONE).toLocalDate().toString()
         if (ledger.dayKey != day) ledger = ledger.copy(dayKey = day, dayStartEquity = equity, stopped = if (live) ledger.stopped else "")
@@ -220,6 +231,12 @@ class CloudTrader(
                     is CloudOrderPort.Placed.Filled -> entry = entry.copy(contracts = r.contracts, avgPrice = r.avgPrice, fee = r.feeDollars, cost = r.contracts * r.avgPrice * EvMath.CONTRACT_PAYOUT_DOLLARS + r.feeDollars, orderId = r.orderId)
                     is CloudOrderPort.Placed.Missed -> { cooldown[o.key] = now + AutoBet.COOLDOWN_MS; skip("not filled: ${r.why.take(60)}"); continue }
                     is CloudOrderPort.Placed.Stop -> { stopped = r.why; stop(r.why); break }
+                    is CloudOrderPort.Placed.Unconfirmed -> {
+                        // possibly filled: counted as at risk, never sent again, ordering held while Tj / the grader reconcile
+                        val u = entry.copy(status = "UNCONFIRMED", note = entry.note + " | " + r.why.take(160))
+                        ledger = ledger.copy(entries = ledger.entries + u); placed += u; cash -= u.cost; risk += u.cost
+                        stopped = r.why; stop(r.why); break
+                    }
                 }
             }
             ledger = ledger.copy(entries = ledger.entries + entry)
@@ -287,7 +304,11 @@ class CloudTrader(
         val ZONE: ZoneId = EngineHours.ZONE
 
         /** The decision's client id: (market, outcome, rule version, minute). A restart or hand-over inside the same minute makes the same id. */
-        fun clientId(o: Opportunity, now: Long): String = "vc$RULE_VERSION-${o.market.marketId.takeLast(12)}-${o.outcome.outcomeId.takeLast(12)}-${now / 60_000L}"
+        fun clientId(o: Opportunity, now: Long): String =
+            java.util.UUID.nameUUIDFromBytes("vc$RULE_VERSION|${o.market.marketId}|${o.outcome.outcomeId}|${now / 60_000L}".toByteArray(Charsets.UTF_8)).toString()
+
+        /** How long a stop holds live ordering before one pass tries again. */
+        const val STOP_HOLD_MS = 30 * 60_000L
 
         private fun money(v: Double) = String.format(java.util.Locale.US, "$%.2f", v)
     }
