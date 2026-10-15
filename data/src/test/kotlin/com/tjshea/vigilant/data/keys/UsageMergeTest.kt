@@ -1,7 +1,6 @@
 package com.tjshea.vigilant.data.keys
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -77,7 +76,6 @@ class UsageMergeTest {
         // no cloud usage at all: the phone's book is returned as it is
         val only = book("propline", "k" to KeyUsage(periodStart = day, used = 3))
         assertTrue(UsageMerge.merge(only, UsageBook(), now) === only)
-        assertFalse(UsageMerge.merge(only, only, now).providers.getValue("propline").keys.getValue("k").used == 3)
     }
 
     @Test

@@ -98,6 +98,8 @@ data class CloudStatus(
     /** The bid desk's candidate list (`bids.json.gz`; only while the phone has Vigilant-priced bids on): when it was made, how many lines it holds and how big the file is; 0 = none. */
     val bidsAtMs: Long = 0L,
     val bidsCount: Int = 0,
+    /** When the engine's API usage snapshot (`usage.json`, [CloudUsage]) was made: the phone fetches it when this changes. 0 = none yet (an engine older than this app). */
+    val usageAtMs: Long = 0L,
     /** How the engine reads Novig now ([CloudNovig.route]): its own read-only key (with the key's rate) or the public routes, and why (a refusal of the runner's address). Empty = not said. */
     val novigRoute: String = "",
     /** The order the engine asks its APIs in, best first, with what each was measured to deliver (p90 age of its quotes by the books' own stamps, distance from Pinnacle): [com.tjshea.vigilant.data.scanner.SourceScore]. Empty before the first measurement. */

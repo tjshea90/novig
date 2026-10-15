@@ -9,6 +9,7 @@ import com.tjshea.vigilant.data.cloud.CloudNovig
 import com.tjshea.vigilant.data.cloud.CloudRanking
 import com.tjshea.vigilant.data.cloud.CloudSources
 import com.tjshea.vigilant.data.cloud.CloudStatus
+import com.tjshea.vigilant.data.cloud.CloudUsage
 import com.tjshea.vigilant.data.keys.UsageBook
 import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.novig.NovigPublicClient
@@ -74,12 +75,29 @@ fun main(args: Array<String>) = runBlocking {
 
     novigKeyed?.problem?.let { log("Novig key: $it") }
     // The APIs' measured ranking survives the handover: the previous job's file is read back before the first scan ([CloudRanking]), and this job writes its own with every push.
-    runCatching { RankingSeed.read(git, cfgDir) }.getOrNull()?.let { text ->
+    runCatching { PreviousFeed.read(git, cfgDir, "ranking.json") }.getOrNull()?.let { text ->
         val seeded = CloudRanking.decode(text, System.currentTimeMillis())
         if (seeded.isNotEmpty()) { ApiChain.measures = seeded; log("ranking: ${seeded.size} measurements carried over from the previous job") }
     }
 
-    val flusher = scope.launch { while (isActive) { runCatching { publisher.flush() }; delay(4_000L) } }
+    // What each key spent in the previous job (Tj, 2026-10-15): read back so a handover does not forget a daily allowance already spent, and so the phone's meters keep their totals.
+    val allKeys = (CloudKeys.ALL.flatMap { CloudKeys.fromEnv(it) }).distinct()
+    runCatching { PreviousFeed.read(git, cfgDir, "usage.json") }.getOrNull()?.let { text ->
+        CloudUsage.decode(text)?.let { f ->
+            runBlocking { usage.seed(CloudUsage.rekey(f.book, allKeys)) }
+            log("usage: carried over from the previous job (${f.book.providers.size} providers)")
+        }
+    }
+    val flusher = scope.launch {
+        var usageAt = 0L
+        while (isActive) {
+            val now = System.currentTimeMillis()
+            // The engine's API usage goes out with the list, at most every 30 s (keys by id, never in clear: [CloudUsage]).
+            if (now - usageAt >= 30_000L) { usageAt = now; runCatching { publisher.stageUsage(CloudUsage.encode(usage.flow.value, runId, now, allKeys), now) } }
+            runCatching { publisher.flush() }
+            delay(4_000L)
+        }
+    }
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
@@ -118,11 +136,11 @@ private class ConfigReader(private val git: Git, private val dir: File) {
     }
 }
 
-/** The previous job's `ranking.json` from `cloud-feed`, read with git like [ConfigReader] reads the settings (the checkout already has the token). Null when there is none. */
-private object RankingSeed {
-    fun read(git: Git, dir: File): String? {
+/** The previous job's `ranking.json` or `usage.json` from `cloud-feed`, read with git like [ConfigReader] reads the settings (the checkout already has the token). Null when there is none. */
+private object PreviousFeed {
+    fun read(git: Git, dir: File, file: String): String? {
         if (git.run(dir, "fetch", "-q", "--depth=1", "origin", "cloud-feed") != 0) return null
-        return git.out(dir, "show", "FETCH_HEAD:ranking.json")
+        return git.out(dir, "show", "FETCH_HEAD:$file")
     }
 }
 
@@ -162,6 +180,8 @@ internal class Git(private val token: String) {
 internal class Publisher(private val dir: File, private val repo: String, private val token: String, private val git: Git, private val logTail: () -> String = { "" }) {
     private var feedBytes: ByteArray? = null
     private var bidsBytes: ByteArray? = null
+    private var usageText: String? = null
+    private var usageAt = 0L
     private var status: CloudStatus? = null
     private var dirty = false
     private var lastPushAt = 0L
@@ -171,9 +191,17 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     @Synchronized
     fun stage(feed: CloudFeed?, st: CloudStatus): String? {
         if (feed != null) feedBytes = CloudFeed.encode(feed)
-        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0)
+        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, usageAtMs = usageAt)
         dirty = true
         return lastProblem
+    }
+
+    /** The engine's API usage snapshot ([CloudUsage]; keys by id), written beside the list and announced in the status. */
+    @Synchronized
+    fun stageUsage(text: String, at: Long) {
+        usageText = text; usageAt = at
+        status = status?.copy(usageAtMs = at)
+        dirty = true
     }
 
     /** The bid desk's candidate lines (`bids.json.gz`); null (bids switched off on the phone) takes the file away so nothing stale lingers. Goes out with the next push. */
@@ -198,6 +226,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
             git.run(dir, "checkout", "-q", "--orphan", "cloud-feed")
         }
         feedBytes?.let { File(dir, "feed.json.gz").writeBytes(it) }
+        usageText?.let { File(dir, "usage.json").writeText(it) }
         ApiChain.measures.takeIf { it.isNotEmpty() }?.let { File(dir, "ranking.json").writeText(CloudRanking.encode(it)) }
         File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }
         File(dir, "status.json").writeText(CloudStatus.text(st.copy(heartbeatMs = now)))
