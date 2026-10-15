@@ -53,14 +53,19 @@ jobs:
           def ver(b):
               try: return tuple(int(x) for x in str(b.get("appVersion", "0")).split("."))
               except Exception: return (0,)
-          before, after = [], []
+          rows, vmap = [], {}
           for f in sorted(glob.glob("pd/phone/bets/*.jsonl")):
               for line in open(f, encoding="utf-8"):
                   line = line.strip()
                   if not line.startswith("{"): continue
                   try: b = json.loads(line)
                   except Exception: continue
-                  (after if ver(b) >= (0, 99, 4) else before).append(line)
+                  rows.append((b, line))
+                  if "id" in b and "appVersion" in b: vmap[b["id"]] = ver(b)
+          before, after = [], []
+          # a bet belongs to the version it was placed under, whichever of its lines carries the field
+          for b, line in rows:
+              (after if vmap.get(b.get("id"), ver(b)) >= (0, 99, 4) else before).append(line)
           for name, rows in (("before", before), ("after", after)):
               with open("out/bets-" + name + ".jsonl", "w", encoding="utf-8") as o: o.write("\n".join(rows) + ("\n" if rows else ""))
               print(f"\n== PLACED BETS {name.upper()} v0.99.4 (prop haircut): {len(rows)} records ==")
