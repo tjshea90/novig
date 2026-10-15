@@ -239,7 +239,8 @@ internal class Git(private val token: String) {
  * heartbeat; [flush] (every few seconds, from one coroutine) pushes the newest, never faster than [MIN_GAP_MS] (GitHub's secondary limits dislike a push a second), a heartbeat at least
  * every [HEARTBEAT_MS] when nothing else changed.
  */
-internal class Publisher(private val dir: File, private val repo: String, private val token: String, private val git: Git, private val logTail: () -> String = { "" }) {
+internal class Publisher(private val dir: File, private val repo: String, private val token: String, private val git: Git, private val logTail: () -> String = { "" }, private val keyIds: (com.tjshea.vigilant.data.keys.QuotaPolicy) -> List<String> = { emptyList() }) {
+    private var usageBook: UsageBook? = null
     private var feedBytes: ByteArray? = null
     private var bidsBytes: ByteArray? = null
     private var usageText: String? = null
@@ -264,6 +265,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     @Synchronized
     fun stageUsage(text: String, at: Long) {
         usageText = text; usageAt = at
+        usageBook = CloudUsage.decode(text)?.book
         status = status?.copy(usageAtMs = at)
         dirty = true
     }
@@ -299,6 +301,8 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         }
         feedBytes?.let { File(dir, "feed.json.gz").writeBytes(it) }
         usageText?.let { File(dir, "usage.json").writeText(it) }
+        // The page Tj reads on GitHub (TCL22d): which APIs work, what each has left. A failure to draw it never blocks the list.
+        runCatching { File(dir, "DASHBOARD.md").writeText(CloudDashboard.markdown(st.copy(heartbeatMs = now), usageBook ?: UsageBook(), keyIds, now, repo)) }
         tradesText?.let { File(dir, "trades.json").writeText(it) }
         ApiChain.measures.takeIf { it.isNotEmpty() }?.let { File(dir, "ranking.json").writeText(CloudRanking.encode(it)) }
         File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }

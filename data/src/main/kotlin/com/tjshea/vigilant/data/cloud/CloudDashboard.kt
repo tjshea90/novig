@@ -22,11 +22,7 @@ object CloudDashboard {
     /** A feed id ("sgo-props", "parlay_1h", "oddspapi_free-props") to the provider whose meter it spends. */
     fun providerOf(feedId: String): String {
         val base = feedId.removeSuffix("-props").removeSuffix("_props").removeSuffix("_1h")
-        return when (base) {
-            "bolt" -> "boltodds"
-            "pinnacle" -> "pinnacle"
-            else -> base
-        }
+        return if (base == "bolt") "boltodds" else base
     }
 
     /** What the table says about one provider after the last scan. */
@@ -68,7 +64,7 @@ object CloudDashboard {
         val views = ArrayList<ProviderView>()
         val shown = HashSet<String>()
         for (policy in policies) {
-            val feeds = byProvider[policy.id].orEmpty() + if (policy.id == "pinnapi") byProvider["pinnacle"].orEmpty() else emptyList()
+            val feeds = byProvider[policy.id].orEmpty()
             val view = UsageViews.build(policy, keyIdsOf(policy), book.providers[policy.id], now)
             views += view
             shown += policy.id
@@ -84,7 +80,7 @@ object CloudDashboard {
             appendLine("| ${policy.displayName} | ${health.label} | ${feeds.joinToString(" · ") { "${it.id} ${it.fetched}+${it.reused}" }.ifBlank { "—" }} | ${feeds.sumOf { it.matched }.takeIf { feeds.isNotEmpty() } ?: "—"} | $left | $reset | ${num(view.callsToday)} | ${view.throttledToday} | $note |")
         }
         // Feeds that map to no known meter (BoltOdds' two sockets are under boltodds; anything new lands here so it is never invisible).
-        val extra = st.feedReport.filter { providerOf(it.id) !in shown && providerOf(it.id) != "pinnacle" }
+        val extra = st.feedReport.filter { providerOf(it.id) !in shown }
         for (f in extra) appendLine("| ${f.name.ifBlank { f.id }} | ${health(listOf(f), true).label} | ${f.id} ${f.fetched}+${f.reused} | ${f.matched} | not metered | — | — | — | ${(f.error ?: f.heldBack ?: "").replace('|', '/').take(90)} |")
         appendLine()
         val keyed = views.filter { it.policy.keyed && it.keys.isNotEmpty() }

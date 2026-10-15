@@ -231,6 +231,13 @@ object CloudKeys {
     const val TRADE_KEY_PEM = "NOVIG_TRADE_KEY_PEM"
     val TRADE = listOf(TRADE_KEY_ID, TRADE_KEY_PEM)
 
+    /** The secret holding each meter's keys (the dashboard needs the keys' order to say which one is active). A policy with no secret here has no key on GitHub. */
+    fun envFor(policyId: String): String? = when (policyId) {
+        "sgo" -> SGO; "oddspapi" -> ODDSPAPI; "oddspapi_free" -> ODDSPAPI_FREE; "unabated" -> UNABATED; "pinnwire" -> PINNWIRE; "pinnacle" -> PINNAPI
+        "propline" -> PROPLINE; "oddsapi" -> ODDS_API; "parlay" -> PARLAY; "boltodds" -> BOLT
+        else -> null
+    }
+
     val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, ODDS_API, PARLAY, BOLT)
 
     /**
