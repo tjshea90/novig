@@ -195,10 +195,22 @@ object CloudKeys {
     const val ODDS_API = "ODDS_API_KEY"
     const val PARLAY = "PARLAY_API_KEY"
 
-    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, ODDS_API, PARLAY)
+    /** BoltOdds Pro (Tj, 2026-10-15: "allow me to send my novig key and boltodds key to GitHub for rapid scanning"): the engine opens the odds sockets itself (the plan allows 3; the engine uses its two). */
+    const val BOLT = "BOLTODDS_API_KEY"
 
     /**
-     * Which of the phone's keys go to which repository secret (the app sends them: Settings › Cloud scan › Send my API keys to GitHub; Tj, 2026-10-14). **Pinnodds and BoltOdds are never in it** (their sockets allow one
+     * The engine's own Novig key (Tj, 2026-10-15): a **`trading::read`** key, minted for the engine alone (so its rate bucket and stream are separate from the phone's) from the management key the phone holds, and sent
+     * as these two secrets: the key's id and its PKCS#8 private key (a PEM, several lines: read with [rawEnv], never split). It cannot place an order or move money, and the engine only ever reads with it. Never the
+     * trading key and never the management key ([CloudKeysTest] and `CloudNovigKey` hold that line).
+     */
+    const val NOVIG_KEY_ID = "NOVIG_READ_KEY_ID"
+    const val NOVIG_KEY_PEM = "NOVIG_READ_KEY_PEM"
+    val NOVIG = listOf(NOVIG_KEY_ID, NOVIG_KEY_PEM)
+
+    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, ODDS_API, PARLAY, BOLT)
+
+    /**
+     * Which of the phone's keys go to which repository secret (the app sends them: Settings › Cloud scan › Send my API keys to GitHub; Tj, 2026-10-14). **Pinnodds is never in it** (its socket allows one
      * connection and a second one evicts the app's), and neither is Kalshi's private key (it can trade; it is not an [com.tjshea.vigilant.data.keys.ApiProvider]). A new provider must be added here or left out on purpose
      * (`CloudKeysTest` fails until it is one or the other).
      */
@@ -212,10 +224,14 @@ object CloudKeys {
         com.tjshea.vigilant.data.keys.ApiProvider.PROPLINE to PROPLINE,
         com.tjshea.vigilant.data.keys.ApiProvider.THE_ODDS_API to ODDS_API,
         com.tjshea.vigilant.data.keys.ApiProvider.PARLAY to PARLAY,
+        com.tjshea.vigilant.data.keys.ApiProvider.BOLTODDS to BOLT,
     )
 
-    /** Providers whose keys stay on the phone, on purpose. */
-    val PHONE_ONLY = setOf(com.tjshea.vigilant.data.keys.ApiProvider.PINNODDS, com.tjshea.vigilant.data.keys.ApiProvider.BOLTODDS)
+    /** Providers whose keys stay on the phone, on purpose: Pinnodds (one WebSocket per account: a second connection evicts the app's). */
+    val PHONE_ONLY = setOf(com.tjshea.vigilant.data.keys.ApiProvider.PINNODDS)
 
     fun fromEnv(name: String): List<String> = System.getenv(name).orEmpty().split(',', '\n', ' ').map { it.trim() }.filter { it.isNotEmpty() }
+
+    /** A secret's whole text (a PEM has line breaks and spaces that [fromEnv] would cut apart). */
+    fun rawEnv(name: String): String = System.getenv(name).orEmpty().trim()
 }
