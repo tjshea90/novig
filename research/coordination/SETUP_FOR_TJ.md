@@ -1,16 +1,25 @@
-# What Tj does in each Claude account (once per account)
+# Making the three Claude accounts work by themselves (rewritten 2026-10-15 after the permission probe)
 
-Open a new Claude Code session on the Vigilant repo (github.com/tjshea90/novig) in that account and paste the message below. Do it on the second and third accounts; the first account (slot 0, 07:20 ET) is already set up. Nothing else is needed: the sessions then run by themselves every day at their slot.
+**What was wrong:** the old "Vigilant rotation" routines were created from inside a Claude chat (a command, `create_trigger`). A routine made that way starts EMPTY: no repository, no GitHub tools, and it cannot clone or push (the probe of 2026-10-15 failed steps 2-7 and was refused at step 4). So nothing it was told to do could happen, and the board shows no routine run ever checked in.
+**The fix:** each account's routine is created on claude.ai's Routines page with the repository attached. Then the session starts with `tjshea90/novig` cloned, this repo's `.claude/settings.json` (Bash allowed, hooks) loaded, and the GitHub tools present.
 
----- paste from here ----
-You are being set up as one of three Claude accounts that work on github.com/tjshea90/novig one at a time, without Tj's input. Do these steps, in order, then answer in five lines.
-1. Get the repo: if /home/user/novig is missing, call mcp__claude-code-remote__add_repo (owner tjshea90, repo novig, access push), run the clone command, then mcp__claude-code-remote__register_repo_root. Use the main branch. Read CLAUDE.md's section "Three Claude accounts, one worker at a time" and research/coordination/ROTATION.md.
-2. Run: bash tools/install-hooks.sh
-3. Say who you are: bash tools/coord.sh whoami acct-$(printf %s "<the e-mail address of the Claude account you are logged in as>" | sha1sum | cut -c1-6)   (a short tag; never write the e-mail itself anywhere in the repo)
-4. Join the rotation: python3 -I tools/rotation.py register   (it prints your slot and the cron line)
-5. Create your daily routine with mcp__claude-code-remote__create_trigger: name "Vigilant rotation", cron_expression = the cron line step 4 printed, create_new_session_on_fire true, notifications {"push": true}, initiation human_request, prompt = the exact text of research/coordination/ROUTINE_PROMPT.txt. Then call list_triggers and confirm it is enabled with the right time.
-6. Post a note: bash tools/coord.sh post "account joined the rotation" "<your tag>, slot <n>, routine <trigger id>"
-Answer with: your tag, your slot and time, the trigger id, "routine enabled", and anything that failed.
----- to here ----
+## Do this once in EACH of the three Claude accounts (about 5 minutes each)
+1. Sign in to claude.ai as that account. Open **claude.ai/code/routines** (Claude Code on the web, then Routines). If you do not see Routines, open Claude Code on the web and look for "Routines" or "Scheduled" in the menu.
+2. Find the old routine named **Vigilant rotation** (if there is one) and **delete** it.
+3. Tap **New routine** and fill it in:
+   - **Name:** Vigilant rotation
+   - **Repository:** tjshea90/novig (allow it to push; branch main). This is the step the old routines missed.
+   - **Connectors:** turn on **GitHub** (and nothing else).
+   - **Permission mode:** **Auto** (so it never stops to ask you).
+   - **Schedule:** daily at the slot of THIS account, Eastern time: first account 07:20, second account 13:20, third account 19:20. Never give two accounts the same time.
+   - **Prompt:** paste the whole text of `research/coordination/ROUTINE_PROMPT.txt` (open it on GitHub: github.com/tjshea90/novig/blob/main/research/coordination/ROUTINE_PROMPT.txt, tap Raw, select all, copy).
+   - **Notifications:** push on.
+4. Save, then tap **Run now** once. Wait about 5 minutes.
+5. Check it worked: open github.com/tjshea90/novig/blob/claude-coord/ and look for a new note "rotation-checkin" from that account (or just tell the next Claude session "check the routines": it runs `python3 -I tools/coord.py board`).
 
-If a step fails the session says so; the usual causes are a missing GitHub connection in that account (connect it at claude.ai: Settings, Connectors) or an account without scheduled tasks.
+If the run fails, open its transcript (Routines, tap the run) and send me the last lines.
+
+## Keeping it running
+- Each routine repairs its own cron and prompt from this repo every run (ROUTINE.md "Keep your own routine correct"), so once the three exist you never touch them again.
+- If an account is out of usage its run just does not happen; the next account's run covers it (ROUTINE.md "A missed slot is covered").
+- To pause everything: turn each routine off on the Routines page, or switch the cloud scan off in the app (the engine stops by itself).
