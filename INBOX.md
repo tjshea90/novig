@@ -7457,3 +7457,18 @@ Can you access the GitHub vigilant engine as though you have full access to the 
 ```
 I want Claude to do scheduled diagnostics and improvements in vigilant. I want it to log and review all scanned positive EV bets and look for patterns and what really is profitable. Can Claude also install the updated code automatically onto GitHub so I notice improvements on my phone without doing anything myself?
 ```
+
+## 2026-10-15T04:37:45Z
+```
+I have three Claude accounts with access to this repo. I want each of the three Claude accounts to be linked in some way and know exactly what to do in this repo, maybe by handoffs and communications between Claude accounts posted on GitHub. I want there to be 24/7 scanning on GitHub for positive EV bets and bids . 
+
+I want to send my novig api key to GitHub so GitHub can place bets and bids automatically without me. I want to send my boltodds key to GitHub so it can use the socket for fast fresh odds. Vigilant running on GitHub should use novig socket and boltodds socket in addition to the other apis and it should place bets and bids over the socket. GitHub should make full use of both sockets and other needed apis. 
+
+The end product should be fully autonomous running on GitHub. It should use the safeguards and best bet and bid logic for the most profit but also the best chance of getting fills. 
+
+If novig refuses a runner's address, it should find a way to reconnect or try a different runner automatically.
+
+Updates should be made automatically by any of the three Claude accounts, with safeguards so only one Claude account can be working on the project at any time. Claude should look at the GitHub vigilant engine and look for: 
+
+Improvements in code, speed, accuracy. Improvements in bet and bid settings for most profit and good fills volume. It should review saved logs of scanned bets and find patterns and the most profitable betting and bidding strategies. It can alter this at any time as sample sizes grow and the research is more sound
+```
