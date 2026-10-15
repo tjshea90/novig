@@ -155,6 +155,7 @@ class AppContainer(val app: Application) {
         /** Excluded from backups (res/xml): sealed by this phone's Keystore, it couldn't be opened anywhere else. */
         const val MANAGEMENT_KEY_FILE = "novig_management_key.json"
         const val CLOUD_NOVIG_KEY_FILE = "cloud_novig_key.json"
+        const val CLOUD_TRADE_KEY_FILE = "cloud_trade_key.json"
 
         /** The fewest milliseconds between two make-orders passes on a running scan's partial results. */
         const val MAKER_SCAN_PASS_MS = 20_000L
@@ -245,10 +246,21 @@ class AppContainer(val app: Application) {
     @Volatile var cloudNovigKeys = com.tjshea.vigilant.data.cloud.CloudNovigKeyStore(File(app.filesDir, CLOUD_NOVIG_KEY_FILE), KeystoreSecretBox, json)
         private set
 
+    /**
+     * The subaccount's trading key that the GitHub engine shares (Tj, 2026-10-15, TCL20c): sealed by the Keystore, left out of backups; the phone signs with it too ([SharedTradeVault]). Null key = none made.
+     */
+    @Volatile var cloudTradeKeys = com.tjshea.vigilant.data.cloud.CloudNovigKeyStore(File(app.filesDir, CLOUD_TRADE_KEY_FILE), KeystoreSecretBox, json)
+        private set
+    @Volatile var tradeVault = com.tjshea.vigilant.app.data.SharedTradeVault(cloudTradeKeys)
+        private set
+
     /** Robolectric has no Android Keystore: tests seal the management key with [box] (same file). */
     internal fun installSecretBoxForTest(box: com.tjshea.vigilant.data.novig.signing.SecretBox) {
         managementKeys = ManagementKeyStore(File(filesDir, MANAGEMENT_KEY_FILE), box, json)
         cloudNovigKeys = com.tjshea.vigilant.data.cloud.CloudNovigKeyStore(File(filesDir, CLOUD_NOVIG_KEY_FILE), box, json)
+        cloudTradeKeys = com.tjshea.vigilant.data.cloud.CloudNovigKeyStore(File(filesDir, CLOUD_TRADE_KEY_FILE), box, json)
+        tradeVault = com.tjshea.vigilant.app.data.SharedTradeVault(cloudTradeKeys)
+        bettingSetup = NovigBettingSetup(http, json, tradeVault)
         secretBox = box
     }
 
@@ -440,7 +452,7 @@ class AppContainer(val app: Application) {
         private set
     @Volatile var apiSync: ApiBetSync? = null
         private set
-    @Volatile var bettingSetup = NovigBettingSetup(http, json, KeystoreVault)
+    @Volatile var bettingSetup = NovigBettingSetup(http, json, tradeVault)
         private set
 
     /** Setup and transfers against a Novig the test fakes. */
@@ -1218,7 +1230,7 @@ class AppContainer(val app: Application) {
         settingsStore.flow.value?.let { s -> novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush); novig.stream?.configureCompression(s.gates.novigCompress) }
         val alias = connection?.tradingAlias
         val key = connection?.tradingKeyId
-        val tradingSigner = if (alias != null && key != null && alias in KeystoreVault.aliases(NovigBettingSetup.TRADING_PREFIX)) NovigSignedClient(http, json, KeystoreSigningKey(alias, key)) else null
+        val tradingSigner = if (alias != null && key != null && alias in tradeVault.aliases(NovigBettingSetup.TRADING_PREFIX)) NovigSignedClient(http, json, tradeVault.signer(alias, key)) else null
         // Orders over the websocket (NOVIG_API.md §27): a connection of its own on the TRADING key (the read key's connection cannot place), opened as soon as betting is set up and kept while orders are likely.
         orderSocket?.close()
         orderSocket = tradingSigner?.let { sg -> com.tjshea.vigilant.data.novig.trading.NovigOrderSocket(http, sg, appScope) }
