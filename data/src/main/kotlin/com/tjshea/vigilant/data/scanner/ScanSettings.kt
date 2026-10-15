@@ -929,10 +929,10 @@ data class ScanSettings(
     val bidsNeedFullScan: Boolean get() = (maker || makerRecommend) && makerSource == BidSource.VIGILANT
 
     /**
-     * The scan is the GitHub engine's (the phone adopts its list, the engine mirrors these settings): the switch is on, scanning is not paused, the kill switch is not thrown, and no bid desk needs every priced
+     * The scan is the GitHub engine's (the phone adopts its list, the engine mirrors these settings): the switch is on, scanning is not paused (by hand or by the kill switch), and no bid desk needs every priced
      * line ([bidsNeedFullScan]). When false with [cloudScan] on, the engine is told to stand down, so it spends no minutes and no API credits for a list nothing would show.
      */
-    val cloudDrives: Boolean get() = cloudScan && !paused && !killed && !bidsNeedFullScan
+    val cloudDrives: Boolean get() = cloudScan && !paused && !bidsNeedFullScan
 
     /** The scanner choice as it runs. */
     val scannerNow: ScannerMode get() = scanner

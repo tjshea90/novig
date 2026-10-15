@@ -1113,9 +1113,9 @@ class AppContainer(val app: Application) {
         if (settings.lowUsageNow) pinned += com.tjshea.vigilant.data.novig.trading.maker.LowUsage.restingMarkets(makerStore.flow.value.orEmpty())
         val before = usage.flow.value
         // ParlayAPI's own figure for what's left, read for free (at most every few minutes): the pace decides from the key's word.
-        if (!settings.cloudScan && settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) appScope.launch { runCatching { parlayAccount.refresh(minAgeMs = com.tjshea.vigilant.data.reference.ParlayAccount.SCAN_REFRESH_MS) } }
+        if (!settings.cloudDrives && settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) appScope.launch { runCatching { parlayAccount.refresh(minAgeMs = com.tjshea.vigilant.data.reference.ParlayAccount.SCAN_REFRESH_MS) } }
         // A streaming pass (StreamEngine) reads only what costs nothing per read; every other scan reads every source that is on. A cloud scan reads none: the GitHub engine did.
-        val sources = if (settings.cloudScan) emptyList() else if (streamPass) streamSources(settings) else referenceSources(settings, background, scan = true)
+        val sources = if (settings.cloudDrives) emptyList() else if (streamPass) streamSources(settings) else referenceSources(settings, background, scan = true)
         return runner.start(settings, sources, pinned) { report ->
             // A scan that ended with Vigilant off screen (background auto-scan, or Tj left) closes Novig's
             // live feed at once: nothing will recheck in the next two minutes, and pushes cost battery.
@@ -1134,7 +1134,7 @@ class AppContainer(val app: Application) {
     fun adoptCloud() {
         appScope.launch {
             val s = currentSettings()
-            if (!s.cloudScan || !s.vigilantOn || s.liveOnly) return@launch
+            if (!s.cloudDrives || !s.vigilantOn || s.liveOnly) return@launch
             runCatching { startVigilantScan(s, runCatching { tracker.all() }.getOrDefault(emptyList()), background = false) }
         }
     }

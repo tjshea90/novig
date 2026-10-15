@@ -83,7 +83,7 @@ class CloudScanner(
  * the streaming pass, diagnostics) stays with [local], so switching the cloud scan on or off loses nothing.
  */
 class SwitchingScanner(private val local: OddsScanner, private val cloud: OddsScanner) : OddsScanner by local {
-    private fun pick(s: ScanSettings) = if (s.cloudScan) cloud else local
+    private fun pick(s: ScanSettings) = if (s.cloudDrives) cloud else local
 
     override suspend fun scan(settings: ScanSettings, sources: List<ReferenceSource>, pinned: Set<String>, onProgress: (ScanProgress) -> Unit, onPartial: (ScanResult) -> Unit): ScanReport =
         pick(settings).scan(settings, sources, pinned, onProgress, onPartial)
