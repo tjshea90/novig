@@ -1,5 +1,12 @@
 {
   "_comment": "This is the FALLBACK path, for when this repo IS the Claude Code session root (e.g. opened standalone, not side-by-side with other repos under one container). When several repos share a session root, Claude Code does not load hooks from here — see tools/install-hooks.sh, which merges the equivalent hooks into the session root's own settings file instead. Keep the two in sync by hand if either changes.",
+    "permissions": {
+    "allow": [
+      "Bash",
+      "mcp__claude-code-remote__create_trigger",
+      "mcp__claude-code-remote__update_trigger"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
