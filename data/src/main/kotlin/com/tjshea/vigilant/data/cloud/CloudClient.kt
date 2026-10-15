@@ -139,6 +139,41 @@ class CloudClient(
         }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
     }
 
+    /**
+     * The file names in [dir] on [branch] (one request; [Poll.NotModified] when [etag] is current, which costs nothing against the rate limit). A folder that does not exist yet is an empty list.
+     * Used for the Messages and the settings requests ([CloudMessages], [CloudOverrides]): one small file each, so two writers never overwrite each other.
+     */
+    suspend fun listDir(branch: String, dir: String, etag: String?): Poll<List<String>> = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
+        val b = req("contents/${encodePath(dir)}?ref=$branch")
+        if (etag != null) b.header("If-None-Match", etag)
+        runCatching {
+            http.newCall(b.build()).execute().use { r ->
+                note(r)
+                when {
+                    r.code == 304 -> Poll.NotModified
+                    r.code == 404 -> Poll.Fresh(emptyList(), null)
+                    r.isSuccessful -> {
+                        val names = Json.parseToJsonElement(r.body?.string().orEmpty()).jsonArray.mapNotNull { (it as? JsonObject)?.get("name")?.jsonPrimitive?.contentOrNull }
+                        Poll.Fresh(names, r.header("ETag"))
+                    }
+                    else -> Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
+                }
+            }
+        }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
+    }
+
+    /** One file's text from [branch], or null when it cannot be read. */
+    suspend fun readFile(branch: String, path: String): String? = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext null
+        runCatching {
+            http.newCall(req("contents/${encodePath(path)}?ref=$branch").header("Accept", RAW).build()).execute().use { r ->
+                note(r)
+                if (r.isSuccessful) r.body?.string() else null
+            }
+        }.getOrNull()
+    }
+
     /** Writes the settings the engine reads (creating the branch the first time). Null = done; otherwise why not. */
     suspend fun writeConfig(config: CloudConfig): String? =
         putFile(CONFIG_BRANCH, "settings.json", CloudConfig.text(config).toByteArray(Charsets.UTF_8), "settings rev ${config.rev}")
