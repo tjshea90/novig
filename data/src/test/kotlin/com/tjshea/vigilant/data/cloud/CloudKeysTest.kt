@@ -19,11 +19,19 @@ class CloudKeysTest {
         assertEquals("a new ApiProvider must be added to CloudKeys.BY_PROVIDER or PHONE_ONLY", ApiProvider.entries.toSet(), covered)
         assertTrue(CloudKeys.BY_PROVIDER.keys.intersect(CloudKeys.PHONE_ONLY).isEmpty())
         assertTrue("Pinnodds never goes to GitHub", ApiProvider.PINNODDS !in CloudKeys.BY_PROVIDER)
-        assertTrue("BoltOdds never goes to GitHub", ApiProvider.BOLTODDS !in CloudKeys.BY_PROVIDER)
+        // BoltOdds goes to GitHub since Tj's word of 2026-10-15; Pinnodds' one-connection socket never does
+        assertEquals("BOLTODDS_API_KEY", CloudKeys.BY_PROVIDER[ApiProvider.BOLTODDS])
         // every secret the phone sends is one the engine reads, and the workflow passes it
         assertEquals(CloudKeys.ALL.toSet(), CloudKeys.BY_PROVIDER.values.toSet())
         val wf = java.io.File("../.github/workflows/cloud-scan.yml").takeIf { it.exists() } ?: java.io.File(".github/workflows/cloud-scan.yml")
-        if (wf.exists()) CloudKeys.ALL.forEach { n -> assertTrue("cloud-scan.yml passes $n", wf.readText().contains("$n: \${{ secrets.$n }}")) }
+        if (wf.exists()) (CloudKeys.ALL + CloudKeys.NOVIG).forEach { n -> assertTrue("cloud-scan.yml passes $n", wf.readText().contains("$n: \${{ secrets.$n }}")) }
+    }
+
+    @Test
+    fun `the engine's Novig secrets are a read key's id and its PEM, never a trading or management key`() {
+        assertEquals(listOf("NOVIG_READ_KEY_ID", "NOVIG_READ_KEY_PEM"), CloudKeys.NOVIG)
+        // none of them is a provider key (a provider key is a list of comma-separated API keys; the PEM must never be cut at its line breaks)
+        assertTrue(CloudKeys.NOVIG.none { it in CloudKeys.ALL })
     }
 
     @Test

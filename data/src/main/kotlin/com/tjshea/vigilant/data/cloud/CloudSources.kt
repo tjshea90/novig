@@ -1,5 +1,9 @@
 package com.tjshea.vigilant.data.cloud
 
+import com.tjshea.vigilant.data.boltodds.BoltGamesSource
+import com.tjshea.vigilant.data.boltodds.BoltOddsClient
+import com.tjshea.vigilant.data.boltodds.BoltOddsFeed
+import com.tjshea.vigilant.data.boltodds.BoltPropsSource
 import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.keys.UsageMeter
@@ -51,7 +55,10 @@ import java.io.File
  * called** (Tj, 2026-10-11).
  *
  * Left out on purpose, and why:
- *  - **Pinnodds** (one WebSocket per account, and a second connection evicts the app's; Tj, 2026-10-09) and **BoltOdds** (three sockets, the app's own two plus the Test's probe are the budget): both stay on the phone.
+ *  - **Pinnodds** (one WebSocket per account, and a second connection evicts the app's; Tj, 2026-10-09) stays on the phone.
+ *  - **BoltOdds** is here since 2026-10-15 (Tj: "allow me to send my novig key and boltodds key to GitHub for rapid scanning"): the engine opens the two odds sockets itself (lines, props) while BoltOdds is switched on and its
+ *    socket switch is on (off = the REST snapshot), and reads their boards from memory like the phone does. The plan allows 3 connections: the engine uses 2, so the phone's own sockets (the live lane, the streaming engine)
+ *    and the Test key's probe share the one left.
  *  - **Kalshi's signed key** (an API key can trade; it is never placed in a repository secret): the cloud reads Kalshi's public markets unsigned.
  *
  * [keys] maps a [CloudKeys] name to the secret's value (comma, space or newline separated for several), read once per call so a rotated secret is picked up by the next job.
@@ -87,6 +94,10 @@ class CloudSources(
     private val op4Games = Op4GamesSource(op4Feed)
     private val op4Props = Op4PropsSource(op4Feed)
 
+    private val boltFeed = BoltOddsFeed(BoltOddsClient(http, { keys(CloudKeys.BOLT) }, usage), http, scope)
+    private val boltGames = BoltGamesSource(boltFeed)
+    private val boltProps = BoltPropsSource(boltFeed)
+
     private val polymarket = PolymarketClient(http, json, usage = usage)
     private val kalshi = KalshiClient(http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage)
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keys(CloudKeys.ODDS_API) }, usage), json)
@@ -112,6 +123,7 @@ class CloudSources(
 
     fun sgoActive(s: ScanSettings) = s.sgoPro && has(CloudKeys.SGO) && !sgoClient.down()
     fun opActive(s: ScanSettings) = s.oddsPapi && has(CloudKeys.ODDSPAPI) && !opClient.down()
+    fun boltActive(s: ScanSettings) = s.gates.useBoltOdds && has(CloudKeys.BOLT)
     fun unabatedActive(s: ScanSettings) = s.unabated && has(CloudKeys.UNABATED) && !unabatedClient.down()
     fun op4Active(s: ScanSettings) = s.oddsPapiFree && s.gates.op4Fair > 0 && has(CloudKeys.ODDSPAPI_FREE)
 
@@ -119,9 +131,13 @@ class CloudSources(
 
     /** The flat-rate feeds that are on, SGO first, Unabated last; then the rest. Same order as the phone's list. */
     fun sources(s: ScanSettings): List<ReferenceSource> {
+        // Switched off (or its socket switch off) the sockets are closed: nothing is held open or sent to BoltOdds.
+        if (!boltActive(s) || !s.gates.boltSocket) boltFeed.close()
         val front = buildList {
             if (sgoActive(s)) { add(sgoGames); addAll(propsOf(s, sgoProps)) }
             if (opActive(s)) { add(opGames); addAll(propsOf(s, opProps)) }
+            // BoltOdds: read from the sockets' boards, which costs nothing, so it is asked for every league it carries beside every other API that is on (as on the phone).
+            if (boltActive(s)) { add(boltGames); addAll(propsOf(s, boltProps)) }
             if (op4Active(s)) { add(op4Games); addAll(propsOf(s, op4Props)) }
         }
         val last = buildList { if (unabatedActive(s)) { add(unabatedGames); addAll(propsOf(s, unabatedProps)) } }
