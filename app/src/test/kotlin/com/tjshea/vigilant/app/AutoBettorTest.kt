@@ -162,6 +162,20 @@ class AutoBettorTest {
     }
 
     @Test
+    fun `while the GitHub engine trades (paper or live) the phone's auto-bet places nothing and says why, so one decision is never two orders`() = runBlocking {
+        for (mode in listOf(com.tjshea.vigilant.data.scanner.CloudTradeMode.PAPER, com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE)) {
+            val novig = FakeNovig()
+            val s = settings { it.copy(gates = it.gates.copy(cloudTrading = mode)) }
+            val report = bettor(novig).run(s, state(s))
+            assertEquals(0, novig.orders.get())
+            assertTrue(report.placed.isEmpty())
+        }
+        // switched back off: the phone bets again
+        val novig = FakeNovig()
+        assertEquals(1, bettor(novig).run(settings(), state()).placed.size)
+    }
+
+    @Test
     fun `the same bet is never placed twice - once it is in the Tracker the next cycle leaves it alone`() = runBlocking {
         val novig = FakeNovig()
         val b = bettor(novig)
