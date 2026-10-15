@@ -77,11 +77,10 @@ class CloudUiTest {
     }
 
     @Test
-    fun `bids that need every priced line pause the cloud scan and the Feed says why`() {
+    fun `bids no longer pause the cloud scan - the Feed shows GitHub's bar as with no bids (TCL12)`() {
         feed(cloudState(bids = true))
-        compose.onNodeWithTag("cloudPaused").assertIsDisplayed()
-        assertEquals(0, compose.onAllNodesWithTag("cloudFreshness").fetchSemanticsNodes().size)
-        assertEquals(0, compose.onAllNodesWithTag("cloudBar").fetchSemanticsNodes().size)
+        assertEquals(0, compose.onAllNodesWithTag("cloudPaused").fetchSemanticsNodes().size)
+        compose.onNodeWithTag("cloudBar").assertIsDisplayed()
     }
 
     @Test
@@ -104,9 +103,10 @@ class CloudUiTest {
     }
 
     @Test
-    fun `the Cloud page with bids on says the phone scans for itself`() {
+    fun `the Cloud page with bids on says GitHub picks the candidate lines and the phone posts`() {
         settings(cloudState(bids = true))
-        compose.onNodeWithTag("cloudPausedNote").performScrollTo().assertIsDisplayed()
-        assertEquals(0, compose.onAllNodesWithTag("cloudLine").fetchSemanticsNodes().size)
+        compose.onNodeWithTag("cloudBidsNote").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("cloudLine").performScrollTo().assertIsDisplayed()
+        assertEquals(0, compose.onAllNodesWithTag("cloudPausedNote").fetchSemanticsNodes().size)
     }
 }
