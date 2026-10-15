@@ -922,17 +922,17 @@ data class ScanSettings(
     /** Save every bet, bid and the scan study's days to GitHub's `phone-data` branch automatically (Tj, 2026-10-14), whenever a GitHub token is saved in Settings › Cloud scan. */
     val cloudSave: Boolean get() = gates.cloudSave
 
-    /**
-     * The bid desk (Vigilant-priced bids on) needs EVERY priced line, not only the +EV ones the GitHub engine lists, so with bids on the phone scans itself (Tj, 2026-10-15 review: a cloud list starved the
-     * bids: a +EV row is already cheaper to take than to bid on, so no bid is made from it). CNO-priced bids never read Vigilant's scan.
-     */
-    val bidsNeedFullScan: Boolean get() = (maker || makerRecommend) && makerSource == BidSource.VIGILANT
+    /** The bid desk is on (automatic or Recommend) and priced from Vigilant's scan: it needs a line for every side worth a bid, not only the +EV ones the Feed lists. CNO-priced bids never read Vigilant's scan. */
+    val bidsNeedLines: Boolean get() = (maker || makerRecommend) && makerSource == BidSource.VIGILANT
 
     /**
-     * The scan is the GitHub engine's (the phone adopts its list, the engine mirrors these settings): the switch is on, scanning is not paused (by hand or by the kill switch), and no bid desk needs every priced
-     * line ([bidsNeedFullScan]). When false with [cloudScan] on, the engine is told to stand down, so it spends no minutes and no API credits for a list nothing would show.
+     * The scan is the GitHub engine's (the phone adopts its list, the engine mirrors these settings): the switch is on and scanning is not paused (by hand or by the kill switch). The engine publishes the Feed's
+     * list; with Vigilant-priced bids on ([bidsFromCloud]) it also publishes the bid desk's candidate lines. When false with [cloudScan] on, the engine is told to stand down.
      */
-    val cloudDrives: Boolean get() = cloudScan && !paused && !bidsNeedFullScan
+    val cloudDrives: Boolean get() = cloudScan && !paused
+
+    /** The bid desk's lines are GitHub's candidates, given Novig's books by this phone ([com.tjshea.vigilant.data.cloud.CloudBidLane]); the engine publishes them only then. */
+    val bidsFromCloud: Boolean get() = cloudDrives && bidsNeedLines
 
     /** The scanner choice as it runs. */
     val scannerNow: ScannerMode get() = scanner
