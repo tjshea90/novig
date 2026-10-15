@@ -26,3 +26,5 @@ Tj: "each Claude account should be used in rotation so that the Claude usage is 
 
 ## Away until (Tj says an account is out of usage)
 `research/coordination/away.json` maps an account tag to the time (UTC) its usage returns. `rotation.py missed` then lists that account's slots before that time as **AWAY** right away (no 5-hour grace) so the next live session covers them (first with the slot's whole duty, the second with WATCH only, as usual). Remove the entry (or let it pass) when the account is back. 2026-10-15, Tj: acct-7542bf (slot 0, 07:20 ET) is out of weekly usage until Friday 2026-10-16 22:00 ET (= 2026-10-17T02:00Z).
+
+Dormant account: its own routine stops at `rotation.py checkin` (exit 5, prints DORMANT) and `coord.py acquire --kind routine` refuses (exit 5) while now is before its away.json time, so it cannot take the lease from the accounts covering its slot. After that time both work normally again, with nothing to edit (an interactive session by Tj is never blocked). Tests: `rotation.py selftest`, `tools/test_coord.sh`.
