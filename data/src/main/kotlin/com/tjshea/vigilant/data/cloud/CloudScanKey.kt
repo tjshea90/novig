@@ -9,17 +9,21 @@ import kotlinx.serialization.json.JsonObject
  *  - [Kind.FETCH]: changes WHAT is read (a league, a feed, days ahead, alternate lines, per-scan caps): the running scan starts again (at most once in 30 s);
  *  - [Kind.PRICING]: changes how what was read is priced (devig method, sharp books, minimum books, bankroll, guards): applied from the next scan (a scan holds the scanner for minutes, and re-pricing needs it);
  *  - [Kind.FILTER]: only which priced bets the list keeps (minimum and maximum edge, odds limits, order): applied to the very next list, no scan;
- *  - [Kind.PHONE]: never reaches a scan (the auto-bet's and bids' rules, alerts, the widget, CNO, live games and sockets, which stay on the phone): ignored by the engine.
+ *  - [Kind.BIDS]: the bid desk's rules (margin, kinds, windows, popularity, limits; Tj, 2026-10-15: the candidate lines are made on GitHub under them): the engine makes the candidate lines again from the board it holds,
+ *    at once, with no scan;
+ *  - [Kind.PHONE]: never reaches a scan (the auto-bet's rules, alerts, the widget, CNO, live games and sockets, which stay on the phone): ignored by the engine.
  * Every serialized setting, and every member of the nested groups (`gates.*`, `vigGuards.*`, `guards.*`), is named here; [CloudScanKeyTest] fails when a new one is added without a decision, so a setting can no longer
  * be mirrored (or not) by accident.
  */
 object CloudScanKey {
-    enum class Kind { FETCH, PRICING, FILTER, PHONE }
+    enum class Kind { FETCH, PRICING, FILTER, BIDS, PHONE }
 
     private val fetch = setOf(
         "leagues", "families", "daysAhead", "sgoPro", "sgoExtraBooks", "sgoAltLines", "oddsPapi", "opExtraBooks", "opAltLines", "unabated", "oddsPapiFree",
         "usePinnacle", "usePolymarket", "useKalshi", "useOddsApi", "useParlay", "usePropLine", "oddsApiReuseMinutes", "staleReferenceMinutes",
         "linesPerGame", "propsPerGame", "maxBooksPerScan", "fillBudget", "useBookProps", "bookPropSet", "bookPropCreditsPerScan", "bookPropHours", "propLineGamesPerScan", "bookPropReuseMinutes",
+        // bids on, and low-usage bids, change the scan's own profile (`ScanSettings.effective`) and whether candidate lines are made at all
+        "maker", "makerRecommend", "makerSource", "makerFocus", "lowUsageBooks",
         "gates.usePinnwire", "gates.usePinnapi", "gates.opAllBooks", "gates.op4Fair", "gates.sgoAllBooks", "gates.propLineAllBooks", "gates.askAllSources", "gates.rankByMeasure",
     )
     private val pricing = setOf(
@@ -27,33 +31,42 @@ object CloudScanKey {
         "exchangeMaxSpread", "outlierGuard", "gates.freshestWins", "vigGuards.oneVotePerCompany", "vigGuards.ignoreBadOdds", "vigGuards.thinEarlyHaircut", "vigGuards.propHaircut",
     )
     private val filter = setOf("minEvPercent", "maxEvPercent", "minOdds", "maxOdds", "feedSort")
+    private val bids = setOf(
+        "makerMargin", "makerStakeMode", "makerStake", "makerMaxStake", "makerSharpVeto", "makerPopularFirst", "makerRequireSharp", "makerAnchorSharp", "makerGuard", "makerHalted", "makerGuardFromMs",
+        "makerCnoMaxAgeSeconds", "makerMaxBids", "makerMaxDollars", "makerKinds", "makerTtlMinutes", "makerStopMinutes", "makerMinPrice", "makerMaxPrice", "makerMaxOdds", "makerMinOdds", "makerQuickMinBooks",
+        "makerObscureFill", "makerObscureMargin", "makerObscureSharpMinEv", "makerObscureAgreePoints", "makerObscureMinBooks", "makerObscureStake", "makerBothSides", "makerMinBooks", "makerLongRun",
+        "lowUsagePace", "lowUsageMargin", "sharpVetoMinEv", "trapEarlyHours", "trapBidHours", "trapNovigMove", "trapFirstListed", "apiMaxPerGame", "apiMaxStake",
+        "gates.profitProven", "gates.repeatGuard", "gates.repeatMaxBets", "gates.repeatMaxDollars", "gates.repeatHedge", "gates.repeatMaxLines",
+        "vigGuards.bidLevel", "vigGuards.bidMany", "vigGuards.bidDeploy", "vigGuards.bidDeployPct", "vigGuards.bidDeployKelly", "vigGuards.bidPerGameDollars", "vigGuards.bidPerGameBids",
+        "vigGuards.bidWhileScanning", "vigGuards.bidFarLane", "vigGuards.bidVolume", "guards.bidGuard", "guards.bidGuardMinutes",
+    )
 
     /** Everything else: the settings the engine never reads. Named one by one so that an unnamed one is a failing test, not a silent guess. */
     private val phone = setOf(
         // top level
-        "includeLive", "slipStake", "slipCustomStake", "apiBetStake", "apiMaxStake", "apiMaxPerDay", "apiMaxPerGame", "autoBet", "autoBetTennis", "autoBetBooks", "autoBetMinEv", "autoBetAllAgree",
-        "sharpAutoBet", "sharpAlerts", "sharpConfirmBooks", "sharpConfirmMaxAgeSeconds", "sharpConfirmMinEv", "sharpConfirmViaCno", "sharpVetoMinEv", "autoBetTwoSided", "autoBetStake", "autoBetCustomStake",
+        "includeLive", "slipStake", "slipCustomStake", "apiBetStake", "apiMaxPerDay", "autoBet", "autoBetTennis", "autoBetBooks", "autoBetMinEv", "autoBetAllAgree",
+        "sharpAutoBet", "sharpAlerts", "sharpConfirmBooks", "sharpConfirmMaxAgeSeconds", "sharpConfirmMinEv", "sharpConfirmViaCno", "autoBetTwoSided", "autoBetStake", "autoBetCustomStake",
         "autoBetMaxStake", "autoBetMaxOdds", "autoBetMinOdds", "autoBetFavouriteExtraEv", "propGuardShare", "propGuardMinSample", "propGuardPerGame", "autoBetKinds", "autoLock", "trackerNovigOnly",
-        "trackerHideLocked", "scanStudy", "scanStudyHidden", "autoLockMinPercent", "autoLockLive", "maker", "makerMargin", "makerStakeMode", "makerStake", "makerMaxStake", "makerSharpVeto", "makerPopularFirst",
-        "makerLongRun", "makerRequireSharp", "makerAnchorSharp", "makerGuard", "makerHalted", "makerGuardFromMs", "makerFocus", "makerSource", "makerCnoMaxAgeSeconds", "lowUsageBooks", "lowUsagePace",
-        "lowUsageMargin", "burstRecorder", "feedRace", "altLab", "quietNotifications", "researchMode", "burstLeagues", "burstTrade", "burstTradeStake", "burstTradeMaxGame", "burstTradeMaxDay",
+        "trackerHideLocked", "scanStudy", "scanStudyHidden", "autoLockMinPercent", "autoLockLive", 
+        
+        "burstRecorder", "feedRace", "altLab", "quietNotifications", "researchMode", "burstLeagues", "burstTrade", "burstTradeStake", "burstTradeMaxGame", "burstTradeMaxDay",
         "burstTradeHaltLoss", "burstTradeHalted", "pinnLive", "pinnLiveBet", "pinnLiveStake", "pinnLiveMaxGame", "pinnLiveMaxDay", "pinnLiveHaltLoss", "pinnLiveHalted", "pinnLiveMinEv", "pinnLiveMinMove",
         "pinnLiveDevig", "pinnLiveTrigger", "pinnLivePregame", "pinnLiveHoldoffSeconds", "liveBid", "liveBidReal", "liveBidHalted", "liveBidQuality", "liveBidLimits", "liveBidPresetName", "liveBidPresets",
-        "tailLive", "pinnWebsite", "makerRecommend", "makerMaxBids", "makerMaxDollars", "makerKinds", "makerTtlMinutes", "makerStopMinutes", "makerMinPrice", "makerMaxPrice", "makerMaxOdds", "makerMinOdds",
-        "makerQuickMinBooks", "makerObscureFill", "makerObscureMargin", "makerObscureSharpMinEv", "makerObscureAgreePoints", "makerObscureMinBooks", "makerObscureStake", "makerBothSides", "makerMinBooks",
-        "trapEarlyHours", "trapBidHours", "trapNovigMove", "trapFirstListed", "presets", "presetName", "autoBetHalted", "kalshiFastPace", "miniWindow", "cnoEnabled", "cnoViewUrl", "cnoRefreshSeconds",
+        "tailLive", "pinnWebsite", 
+        
+        "presets", "presetName", "autoBetHalted", "kalshiFastPace", "miniWindow", "cnoEnabled", "cnoViewUrl", "cnoRefreshSeconds",
         "miniSource", "cnoFilters", "floatingWidget", "cnoCheckBooks", "cnoPlayerTeams", "cnoOnlyAgreed", "widgetRescanMinutes", "cnoLivePrices", "bookState", "startsWithinHours", "autoScan",
         "autoScanSeconds", "autoScanMinutes", "autoScanKeepAwake", "alertMinEv", "paused", "killed", "killedAtMs", "schema",
         // gates: sockets, the live lane, the streaming engine, the guards of orders: all the phone's
         "gates.usePinnodds", "gates.liveOnly", "gates.cloudScan", "gates.cloudSave", "gates.liveMaster", "gates.useBoltOdds", "gates.boltAllBooks", "gates.novigBbo", "gates.novigKeepOpen", "gates.novigSocket",
-        "gates.boltSocket", "gates.pinnSocket", "gates.kalshiSocket", "gates.novigOrderPush", "gates.novigSocketOrders", "gates.novigCompress", "gates.profitProven", "gates.repeatGuard", "gates.moneyDeposited",
-        "gates.repeatMaxBets", "gates.repeatMaxDollars", "gates.repeatHedge", "gates.repeatMaxLines", "gates.streamScan", "gates.streamGapSeconds", "gates.streamLive", "gates.boltLiveMinCompanies",
+        "gates.boltSocket", "gates.pinnSocket", "gates.kalshiSocket", "gates.novigOrderPush", "gates.novigSocketOrders", "gates.novigCompress", "gates.moneyDeposited",
+        "gates.streamScan", "gates.streamGapSeconds", "gates.streamLive", "gates.boltLiveMinCompanies",
         "gates.boltLiveMaxAgeSeconds", "gates.boltLiveMaxSpreadPoints", "gates.boltLiveReal",
         // vigGuards: the auto-bet's and the bid desk's own rules
-        "vigGuards.autoBetVigilant", "vigGuards.autoBetMinStars", "vigGuards.autoBetOverPropExtraEv", "vigGuards.betArchive", "vigGuards.betLevel", "vigGuards.bidLevel", "vigGuards.bidMany", "vigGuards.bidDeploy",
-        "vigGuards.bidDeployPct", "vigGuards.bidDeployKelly", "vigGuards.bidPerGameDollars", "vigGuards.bidPerGameBids", "vigGuards.bidWhileScanning", "vigGuards.bidFarLane", "vigGuards.bidVolume",
+        "vigGuards.autoBetVigilant", "vigGuards.autoBetMinStars", "vigGuards.autoBetOverPropExtraEv", "vigGuards.betArchive", "vigGuards.betLevel", 
+        
         // guards
-        "guards.bidGuard", "guards.bidGuardMinutes",
+        
     )
 
     private val groups = setOf("gates", "vigGuards", "guards")
@@ -62,6 +75,7 @@ object CloudScanKey {
         in fetch -> Kind.FETCH
         in pricing -> Kind.PRICING
         in filter -> Kind.FILTER
+        in bids -> Kind.BIDS
         in phone -> Kind.PHONE
         else -> null
     }
