@@ -87,7 +87,7 @@ git -C "$T/origin.git" log --oneline refs/heads/main 2>/dev/null | head -1 | gre
 python3 -I "$D/tools/rotation.py" selftest >/dev/null 2>&1; expect "rotation selftest (duties, DST, missed slots)" 0 $?
 
 # 11a. wait-free: exits 0 at once when the lease is free; times out (exit 1) while a live session holds it; an interactive takeover of a routine leaves a rotation-paused note
-A release >/dev/null 2>&1
+B release >/dev/null 2>&1; A release >/dev/null 2>&1
 (COORD_WAIT_POLL_S=1 A wait-free --max-min 0.05 >/dev/null 2>&1); expect "wait-free returns 0 when the lease is free" 0 $?
 A acquire --kind routine --task "ENGINEER" >/dev/null 2>&1
 (COORD_WAIT_POLL_S=1 B wait-free --max-min 0.05 >/dev/null 2>&1); expect "wait-free times out (1) while a routine holds the lease" 1 $?
