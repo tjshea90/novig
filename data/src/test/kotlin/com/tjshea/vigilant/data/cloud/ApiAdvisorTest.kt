@@ -15,7 +15,8 @@ class ApiAdvisorTest {
     private val day = QuotaPolicy.PROPLINE.periodStart(now)
     private val monthStart = QuotaPolicy.PARLAY.periodStart(now)
 
-    private fun on(vararg ids: String): ScanSettings = ids.fold(ScanSettings()) { s, id -> ApiToggles.setOn(s, id, true) }
+    private val allOff = ApiToggles.rest(ScanSettings(), ApiToggles.IDS)
+    private fun on(vararg ids: String): ScanSettings = ids.fold(allOff) { s, id -> ApiToggles.setOn(s, id, true) }
     private fun keys(vararg byId: Pair<String, List<String>>): (QuotaPolicy) -> List<String> = { p -> byId.toMap().entries.firstOrNull { ApiToggles.policy(it.key)?.id == p.id }?.value.orEmpty() }
 
     @Test
@@ -23,7 +24,7 @@ class ApiAdvisorTest {
         val a = ApiAdvisor.advise(UsageBook(), emptyList(), emptyList(), on("sgo"), keys(), now)
         assertEquals(listOf("key:sgo"), a.map { it.id })
         assertEquals(2, a.first().severity)
-        assertTrue(ApiAdvisor.advise(UsageBook(), emptyList(), emptyList(), ScanSettings(), keys(), now).isEmpty())
+        assertTrue(ApiAdvisor.advise(UsageBook(), emptyList(), emptyList(), allOff, keys(), now).isEmpty())
     }
 
     @Test
