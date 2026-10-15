@@ -46,7 +46,8 @@ class CloudFreshnessTest {
         assertTrue(c.detail, c.detail.contains("The 1 starting within 12 h: Novig a median 5s ago, fair odds 2m 00s (the oldest 2m 00s)."))
         // all far, or all near: no second figure that would only repeat the first
         assertTrue(CloudFreshness.of(listOf(at(40 * 3600, 5, 900, "a")), alive, now).detail.contains("starting within").not())
-        assertTrue(CloudFreshness.of(listOf(at(3 * 3600, 5, 120, "a")), alive, now).label.contains("games within").not())
+        val near = CloudFreshness.of(listOf(at(3 * 3600, 5, 120, "a")), alive, now)
+        assertTrue(near.label.contains("games within").not()); assertTrue(near.detail.contains("starting within").not())
     }
 
     @Test
