@@ -16,3 +16,10 @@ One important thing to emphasize : I want the app to make profit. Look for the b
 
 Right now  I haven't seen the GitHub engine do any auto bets at all, does it work?
 ```
+
+## 2026-10-15T21:42:43Z
+```
+You said: "The ones I saw were the 6-hour trap guard, the bet kinds you allow, and needing three books to agree. I won't loosen any of those without data"
+
+Keep in mind you have full reign to change filters and settings. If any of these filters or settings prove too strict or not necessary for profit, you may change them without my permission
+```
