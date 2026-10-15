@@ -60,11 +60,11 @@ class CloudEngineTest {
 
     private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH, gates = com.tjshea.vigilant.data.scanner.ApiGates().copy(cloudHours = false)), passGapSeconds = 5)
 
-    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS) = CloudEngine(
+    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L, addressWatch: AddressWatch? = null, clock: () -> Long = System::currentTimeMillis, walletProbe: (suspend (ScanSettings) -> Double?)? = null, walletEveryMs: Long = CloudEngine.WALLET_EVERY_MS, walletRetryMs: Long = CloudEngine.WALLET_RETRY_MS) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
         pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, restartEveryMs = restartEveryMs,
-        addressWatch = addressWatch, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs,
+        addressWatch = addressWatch, clock = clock, walletProbe = walletProbe, walletEveryMs = walletEveryMs, walletRetryMs = walletRetryMs,
     )
 
     @Test
@@ -110,6 +110,22 @@ class CloudEngineTest {
         assertTrue("awake again once funded", scanner.calls.get() >= 1)
         assertTrue("the balance was read only now and then, not every pass", reads.get() - asleepReads < 12)
         assertEquals("", published.last().second.walletSleep)
+        job.cancel()
+    }
+
+    @Test
+    fun `a balance that gave nothing is asked for again soon, not after the 30 minutes (switching to LIVE reads the wallet at once)`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val cash = java.util.concurrent.atomic.AtomicReference<Double?>(null)   // trading was not live yet: nothing to read
+        val e = engine(scanner, { on }, published, walletProbe = { cash.get() }, walletEveryMs = 10 * 60_000L, walletRetryMs = 40)
+        val job = launch { e.run(untilMs = System.currentTimeMillis() + 5_000) }
+        delay(100)
+        assertTrue("nothing read yet: shown as not read (-1), never as an empty wallet", published.last().second.walletCash == -1.0 && published.last().second.walletReadAtMs == 0L)
+        cash.set(42.5)   // the phone switched to LIVE and the key can read the balance
+        delay(300)
+        assertEquals("read within the short retry, not the long interval", 42.5, published.last().second.walletCash, 0.0)
+        assertTrue(published.last().second.walletReadAtMs > 0L)
         job.cancel()
     }
 
