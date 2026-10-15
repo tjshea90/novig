@@ -18,3 +18,7 @@ A fresh Claude session runs this once a day. GitHub has already done the crunchi
 
 ## Delivery to the phone (TCL18d)
 The engine runs from `main` on GitHub's runners, so a pushed engine change is live at the engine's next handover or restart. The phone's APK is different: Android will not install a sideloaded APK without the phone's own installer. An in-app updater (Settings › Updates) is TASKS.md TCL18d; until it exists and Tj has allowed it, a release is a link he taps.
+
+## How it is scheduled (TCL18c)
+Scheduled task "Vigilant daily review" (`trig_011QGvat6eD9ER3bfE59T51T`, a fresh session each fire, 08:55 America/New_York, push notification when a run has something noteworthy). Created 2026-10-15 from a session that held no connectors, so the task stores none: a fired session may lack `mcp__github__*` tools and a checkout of this repo. Its prompt therefore starts with getting the repo (`mcp__claude-code-remote__add_repo`) and says what to do without the GitHub tools (read-only plus notes). **The first fire (2026-10-15 12:55Z) is the real test of that: read the checkpoint it leaves; if it could not reach the repo or the tools, tell Tj and fix the prompt.** To stop it: `update_trigger enabled=false` (Tj can also pause it in the routines list).
+
