@@ -14,6 +14,8 @@ import com.tjshea.vigilant.data.reference.ScanContext
 import com.tjshea.vigilant.data.reference.LineKind
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -1131,10 +1133,10 @@ class Scanner(
         errors: MutableList<String>,
         context: ScanContext?,
         fallback: Boolean = false,
-        /** Once per league this source supports, whatever came of it. */
-        onCall: (League) -> Unit,
         /** Ask even when the last answer is inside the re-use window (the hot refresh of a long scan, [hotFair]). */
         force: Boolean = false,
+        /** Once per league this source supports, whatever came of it. */
+        onCall: (League) -> Unit,
     ): SourceReport {
         var fetched = 0
         var reused = 0
@@ -1349,7 +1351,7 @@ class Scanner(
             for (source in feeds) {
                 val context = if (source.needsCatalog) ScanContext(cat.events, cat.markets, t) else null
                 try {
-                    fetchSource(source, hotLeagues, settings, clock(), sink, context, force = true) { }
+                    fetchSource(source, hotLeagues, settings, clock(), sink, context, force = true, onCall = { })
                     pump.hotFairReads += hotLeagues.count { source.supports(it) }
                 } catch (e: CancellationException) {
                     throw e
