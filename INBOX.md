@@ -7411,3 +7411,8 @@ Confirm that GitHub can actually scan as fast as it did, or if it messed up as b
 ```
 Fix anything that needs to be fixed, run full tests protocol, simplify and clean up any settings, make the code optimal and efficient, make sure the settings are properly mirrored to GitHub, look for contradictory or unneeded settings, make sure whenever I pull down to refresh the scan it tells GitHub to send me a fresh scan, make sure GitHub is sending me current odds and there is a mechanism by which I can quickly see the freshness of the odds.
 ```
+
+## 2026-10-15T01:18:20Z
+```
+Can you make the bids engine also run on GitHub? In other words, GitHub provides the data that recommends the positive EV bids, and all the phone does is post the bids. Is this plausible? The phone connection and processor may be used as much as needed, but I want as much to run on GitHub as possible
+```
