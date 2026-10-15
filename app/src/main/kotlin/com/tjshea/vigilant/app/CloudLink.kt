@@ -397,7 +397,7 @@ class CloudLink(private val c: AppContainer) {
             val mgmt = c.managementKeys.load() ?: return@withLock say("Connect your Novig management key first (Settings › Betting & Novig account): it is what makes the read-only key.")
             val sub = c.connectedSubaccountKeyId ?: return@withLock say("The Vigilant subaccount is not connected yet (Settings › Betting & Novig account).")
             val minted = try {
-                CloudNovigKey.mint(c.http, c.json, mgmt, sub)
+                com.tjshea.vigilant.data.cloud.CloudNovigKey.mint(c.http, c.json, mgmt, sub)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
