@@ -1,5 +1,6 @@
 # CHECKPOINT 3339 — read me first, then TASKS.md
 
+<<<<<<< HEAD
 **Written:** 2026-10-15T05:48:35Z · **tests:** all 5 fast checks green
 **Branch:** `main` · **builds on:** `a1ac99c89` (this checkpoint is the commit after it)
 
@@ -8,12 +9,21 @@ TCL20 step 1: scheduled task trig_011QGvat6eD9ER3bfE59T51T re-pointed (Vigilant 
 
 ## Do this next
 TCL20b engine hours: read research/autonomous_engine_2026-10-15.md build notes, then gate job + End.WINDOW + phone switch
+=======
+**Written:** 2026-10-15T05:45:40Z · **tests:** all 5 fast checks green
+**Branch:** `claude/new-session-eihbkm` · **builds on:** `39d7b3be4` (this checkpoint is the commit after it)
+
+## Just done
+Joined rotation as acct-27a37e slot 1 (13:20 ET), created routine trig_01JseqhREC6NnbfunLXZKPA9, cleaned roster; the old trig_011QGvat... from the checkpoint does not exist on this account
+
+## Do this next
+TCL20b engine hours 8-22 ET (phone setting + cloud-config + gate step), then TCL20c/d/e per research/autonomous_engine_2026-10-15.md; third account still needs SETUP_FOR_TJ.md pasted
+>>>>>>> 3ed534f1b38f595aedd8edaa97450677d9a4f135
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
@@ -29,5 +39,9 @@ TCL20b engine hours: read research/autonomous_engine_2026-10-15.md build notes, 
   61f877868 ckpt 3329: TCL18c/e: first digest read and written up (research/review/2026-10-15.md, 
 ```
 
+<<<<<<< HEAD
 (3 automatic checkpoint(s) since the last deliberate one — the
+=======
+(1 automatic checkpoint(s) since the last deliberate one — the
+>>>>>>> 3ed534f1b38f595aedd8edaa97450677d9a4f135
 session was still mid-step. `git diff` against it shows what changed.)
