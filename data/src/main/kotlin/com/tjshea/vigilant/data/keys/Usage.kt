@@ -171,6 +171,11 @@ data class KeyUsage(
      * (Tj's diagnostics 2026-09-30: a new ParlayAPI key's 600 credits of the month showed as one scan's cost).
      */
     val charged: Long = 0,
+    /**
+     * When the provider's own figure in [remaining]/[used]/[limit] was read (a call's answer or an account read): the newest figure wins when two machines (this phone and the GitHub engine, Tj 2026-10-15) both
+     * spend one key, [UsageMerge]. Null = never from the provider (our own count).
+     */
+    val figureAtMs: Long? = null,
 ) {
     /** When this key's period ends: the provider's own word when it gave one, else [policy]'s calendar. */
     fun nextReset(policy: QuotaPolicy): Long = resetAtMs ?: policy.nextReset(periodStart)
@@ -262,6 +267,7 @@ class UsageMeter(
             val cycleStart = Instant.ofEpochMilli(resetAtMs).atZone(ZoneOffset.UTC).minusMonths(1).toInstant().toEpochMilli()
             x = x.copy(resetAtMs = resetAtMs, periodStart = if (policy.period == QuotaPeriod.MONTH_UTC && cycleStart <= now) cycleStart else x.periodStart)
         }
+        if (serverRemaining != null) x = x.copy(figureAtMs = now)
         // Nothing left: rest the key until its reset instead of spending a refused call on it.
         if (x.left(policy) == 0) x = x.copy(depletedUntil = x.nextReset(policy))
         x
@@ -287,7 +293,7 @@ class UsageMeter(
         val sinceLast = u.lastCallMs?.let { now - it } ?: Long.MAX_VALUE
         if (!exhausted && !inactive && used != null && u.remaining != null && used < u.used && u.used - used <= STALE_SLACK && sinceLast < STALE_WINDOW_MS) return@edit x
         val lim = limit ?: if (remaining != null && used != null) remaining + used else x.limit
-        if (remaining != null) x = x.copy(remaining = remaining, used = used ?: lim?.let { (it - remaining).coerceAtLeast(0) } ?: x.used, limit = lim)
+        if (remaining != null) x = x.copy(remaining = remaining, used = used ?: lim?.let { (it - remaining).coerceAtLeast(0) } ?: x.used, limit = lim, figureAtMs = now)
         else if (lim != null) x = x.copy(limit = lim)
         if (note != null) x = x.copy(lastNote = note)
         when {
@@ -344,6 +350,25 @@ class UsageMeter(
                 lastThrottleMs = if (throttled > 0) now else p.lastThrottleMs,
             ),
         )
+    }
+
+    /**
+     * Starts an EMPTY ledger from an earlier one (the GitHub engine's previous job, Tj 2026-10-15): without it every 6-hour handover forgot what a key had spent today and a daily allowance could be spent twice.
+     * Only what the ledger does not already hold is taken, and an old period rolls over as usual.
+     */
+    suspend fun seed(book: UsageBook) = mutex.withLock {
+        ensureLoaded()
+        val now = clock()
+        for ((id, theirs) in book.providers) {
+            val policy = QuotaPolicy.ALL.firstOrNull { it.id == id } ?: continue
+            val mine = provider(id)
+            val keys = mine.keys.toMutableMap()
+            for ((k, u) in theirs.keys) if (k !in keys) keys[k] = policy.roll(u, now)
+            val today = QuotaPolicy.NOVIG.periodStart(now)
+            val merged = if (mine.callsToday == 0 && theirs.dayStart == today) mine.copy(dayStart = today, callsToday = theirs.callsToday, throttledToday = theirs.throttledToday, lastThrottleMs = theirs.lastThrottleMs) else mine
+            put(id, merged.copy(keys = keys))
+        }
+        persist()
     }
 
     /** Saves the ledger (keyed calls save as they happen; keyless counts save here, once a scan). */
