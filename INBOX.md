@@ -28,3 +28,8 @@ Keep in mind you have full reign to change filters and settings. If any of these
 ```
 Can you confirm that the auto updating of the app by Claude and the auto diagnostics and tweaking the app for profit is all in place and running?
 ```
+
+## 2026-10-15T21:49:41Z
+```
+If I add api keys inside my phone vigilant app, will it automatically upload them to GitHub as well so the GitHub engine can use them? If it doesn't already do this, make it do so
+```
