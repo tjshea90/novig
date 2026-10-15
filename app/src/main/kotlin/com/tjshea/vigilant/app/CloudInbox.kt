@@ -129,6 +129,7 @@ class CloudInbox(private val c: AppContainer, private val client: CloudClient) {
                 .setStyle(NotificationCompat.BigTextStyle().bigText(m.body.ifBlank { m.title }))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
+                .withWallet(app)
                 .setContentIntent(EvAlerts.openVigilant(app, ID))
                 .build()
             NotificationManagerCompat.from(app).notify(m.id, ID, n)
