@@ -50,3 +50,8 @@ Can you make it so I can talk to Claude directly inside the vigilant app and it 
 ```
 I accidentally pressed stop, resume
 ```
+
+## 2026-10-15T23:34:32Z
+```
+This Claude account will run out of weekly usage very soon and not reset until tomorrow, Friday, at 10pm Eastern time. Make sure the other Claude sessions know and plan accordingly
+```
