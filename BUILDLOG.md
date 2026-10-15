@@ -287,3 +287,4 @@ day that changes.
 | v0.106.1 | code 285 | 2026-10-15T04:05Z | the GitHub engine's hot refresh no longer starves the scan on a slow route (its Novig re-reads are sized to a quarter of the route's measured speed), and the Feed's freshness chip tells the games within 12 hours apart from the far ones
 | v0.107.0 | code 286 | 2026-10-15T07:01Z | the GitHub engine can trade by itself: Settings > Cloud scan > Engine trading (off / paper / live, smart Kelly sizing), logs and grades every bet it lists
 | v0.108.0 | code 287 | 2026-10-15T14:45Z | v0.108.0: phone shows what the GitHub engine did, engine sleeps under 50 cents, missed-slot cover
+| v0.109.0 | code 288 | 2026-10-15T20:16Z | v0.109.0: Engine dashboard inside the app (Settings > Engine dashboard, tap the Feed's GitHub bar), per-API health, usage meters, trend graphs; wallet shows not-read instead of 0; rotation failover
