@@ -23,8 +23,9 @@ import java.util.concurrent.atomic.AtomicReference
  * public API, every feed, the pricing), takes the feed (`ScanResult.feed(settings)`: the same filter as the phone's) and hands it to [publish]. Four rules:
  *  1. **Progressive.** While a long scan runs, what is priced so far (a partial result: only Novig prices read since the scan began, only leagues whose feeds all answered) is published every
  *     [partialEveryMs], so the list fills as the scan goes.
- *  2. **The phone's word is final, without thrashing.** A new settings revision in a scan's first [restartWithinMs] stops it and starts again under the new settings (checked every [configEveryMs]); later it is applied at the next pass,
- *     and a switch-off always stops at once. (The phone filters the list again with its own display settings, so a raised minimum edge shows at once.)
+ *  2. **The phone's word is final.** The settings are read again every [configEveryMs]: a switch-off stops at once; a refresh the phone asked for (pull to refresh, Scan) starts a fresh scan and is acknowledged in the
+ *     heartbeat; a setting that changes what is READ ([CloudScanKey]) starts the scan again (at most once in [restartEveryMs]); a setting that only changes how the list is filtered (the minimum edge, odds limits, order) is
+ *     applied to the next list at once without a scan, and phone-only settings (auto-bet, bids' rules, the widget) change nothing here.
  *  3. **Off means off.** `on = false` publishes an idle heartbeat and calls no API; after [idleExitMs] of it the job ends (nothing spends a minute while the phone is asleep).
  *  4. **Live games are never here.** The cloud list is pregame: the 5-second live lane needs the phone's own sockets, and a hop through GitHub is slower than five seconds.
  *

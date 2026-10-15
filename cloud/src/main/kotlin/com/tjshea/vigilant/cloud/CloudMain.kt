@@ -151,6 +151,6 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     }
 
     companion object {
-        const val MIN_GAP_MS = 10_000L
+        const val MIN_GAP_MS = 8_000L
     }
 }

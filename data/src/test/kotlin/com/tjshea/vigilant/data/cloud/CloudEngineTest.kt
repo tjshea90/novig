@@ -60,10 +60,10 @@ class CloudEngineTest {
 
     private val on = CloudConfig(rev = 1, on = true, settings = ScanSettings(leagues = setOf("NBA"), includeLive = true, scanner = ScannerMode.BOTH), passGapSeconds = 5)
 
-    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartWithinMs: Long = 45_000L) = CloudEngine(
+    private fun engine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, idleExitMs: Long = 600_000L, restartEveryMs: Long = 30_000L) = CloudEngine(
         scanner = scanner, sources = { emptyList() }, config = { cfg() },
         publish = { f, s -> published += f to s; null },
-        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, restartWithinMs = restartWithinMs,
+        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = idleExitMs, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, restartEveryMs = restartEveryMs,
     )
 
     @Test
@@ -105,10 +105,10 @@ class CloudEngineTest {
         }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
         val e = engine(scanner, { cfg }, published)
-        launch(kotlinx.coroutines.Dispatchers.Default) { delay(60); cfg = on.copy(rev = 2, settings = on.settings.copy(minEvPercent = 0.03)) }
+        launch(kotlinx.coroutines.Dispatchers.Default) { delay(60); cfg = on.copy(rev = 2, settings = on.settings.copy(leagues = setOf("NHL"))) }
         e.run(untilMs = System.currentTimeMillis() + 400)
         assertTrue("scanned again", scanner.calls.get() >= 2)
-        assertEquals(0.03, scanner.settingsSeen.last().minEvPercent, 0.0)
+        assertEquals(setOf("NHL"), scanner.settingsSeen.last().leagues)
         assertTrue(published.any { it.second.configRev == 2L && it.first?.rows?.map { r -> r.event.eventId } == listOf("e-c") })
     }
 
