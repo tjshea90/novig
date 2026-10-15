@@ -1,13 +1,13 @@
-# CHECKPOINT 3361 — read me first, then TASKS.md
+# CHECKPOINT 3362 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T19:54:23Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `53c219836` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T19:55:17Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `f16d00dde` (this checkpoint is the commit after it)
 
 ## Just done
-TCL24a-c: in-app Engine dashboard (Settings > Engine dashboard, tap the Feed cloud bar): DashboardModel + DashboardScreen + history points on the phone; tests green
+pre-ship: v0.109.0: Engine dashboard inside the app (Settings > Engine dashboard, tap the Feed's GitHub bar): engine state, tiles, per-API health, usage meters, trend graphs; wallet shows not-read instead of 0; rotation failover covers whole duties
 
 ## Do this next
-ship v0.109.0 (ship.sh then release.yml), read the routine probe note, report to Tj
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ ship v0.109.0 (ship.sh then release.yml), read the routine probe note, report to
 
 ## Last ten checkpoints
 ```
+  6dd1373c0 ckpt 3361: TCL24a-c: in-app Engine dashboard (Settings > Engine dashboard, tap the Fee
   b908f24a7 ckpt 3360: TCL24 written (in-app dashboard)
   d04b47104 ckpt 3359: TCL23c: Settings > Cloud scan shows which APIs work on GitHub + link to DAS
   69e1c2513 ckpt 3358: TCL23a: rotation failover (cover up to 2, whole duty first, INTERRUPTED sta
@@ -25,8 +26,7 @@ ship v0.109.0 (ship.sh then release.yml), read the routine probe note, report to
   f804cb535 ckpt 3354: pre-release: the phone shows what the GitHub engine did (wallet, orders, wi
   8d34f27e6 ckpt 3353: TCL21 written into TASKS.md; recommendations_2026-10-15.md (ParlayAPI/OddsA
   477b459bd ckpt 3352: phone syncs the engine's orders/results/wallet on open (trades.json loop, T
-  df97cc223 ckpt 3351: engine empty-wallet sleep (CloudEngine.walletProbe, status.walletSleep, Set
 ```
 
-(8 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
