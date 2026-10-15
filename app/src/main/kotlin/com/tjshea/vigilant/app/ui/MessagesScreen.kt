@@ -38,7 +38,7 @@ fun MessagesPage(inbox: InboxState, onMarkRead: () -> Unit, onOpen: (String) -> 
                         Text(m.title, style = MaterialTheme.typography.titleSmall, fontWeight = if (unread) FontWeight.Bold else FontWeight.Normal)
                         if (m.body.isNotBlank()) Text(m.body, style = MaterialTheme.typography.bodyMedium)
                         Text("${m.from} · ${DashboardModel.ago(now - m.at)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        m.action.takeIf { it.isNotBlank() && runCatching { SettingsPage.valueOf(it) }.isSuccess }?.let { a ->
+                        m.action?.takeIf { it.isNotBlank() && runCatching { SettingsPage.valueOf(it) }.isSuccess }?.let { a ->
                             TextButton(onClick = { onOpen(a) }) { Text("Open ${SettingsPage.valueOf(a).title}") }
                         }
                     }
