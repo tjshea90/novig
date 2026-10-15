@@ -56,7 +56,7 @@ class CloudEngine(
     private val sourceNames: (ScanSettings) -> List<String> = { s -> sources(s).map { it.id } },
     /**
      * The bid desk's candidate lines of a priced board under the phone's mirrored settings ([com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.from]); null = this engine makes none. Only called
-     * while the phone has Vigilant-priced bids on ([ScanSettings.bidsFromCloud]).
+     * while the phone has Vigilant-priced bids on ([ScanSettings.bidsNeedLines]).
      */
     private val bidLines: (suspend (ScanResult, ScanSettings, Long) -> List<com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.BidLine>)? = null,
     /** Publishes the candidate lines; null = the phone no longer prices bids from them, take the file away. */
@@ -269,7 +269,8 @@ class CloudEngine(
     private suspend fun sendBids(result: ScanResult, rev: Long, settings: ScanSettings, now: Long) {
         val make = bidLines ?: return
         val s = forCloud(settings)
-        if (!s.bidsFromCloud) {
+        // The engine runs only while the phone's switch is on and not paused ([ScanSettings.cloudDrives]), so what is left to ask is whether the bid desk wants lines from Vigilant's scan.
+        if (!s.bidsNeedLines) {
             if (bidsOn) { bidsOn = false; bidsAt = 0L; bidsCount = 0; runCatching { publishBids(null) } }
             return
         }

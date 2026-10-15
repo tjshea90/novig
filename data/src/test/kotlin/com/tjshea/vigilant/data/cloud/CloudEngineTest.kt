@@ -235,7 +235,7 @@ class CloudEngineTest {
         val log = BidLog()
         bidEngine(scanner, { bidsOn }, published, log).run(untilMs = System.currentTimeMillis() + 150)
         assertTrue("candidate lines were made", log.made.isNotEmpty())
-        assertTrue("under the engine's own settings (no live games)", log.made.all { !it.includeLive && it.bidsFromCloud })
+        assertTrue("under the engine's own settings (no live games)", log.made.all { !it.includeLive && it.bidsNeedLines })
         val sent = log.published.filterNotNull()
         assertTrue(sent.isNotEmpty())
         assertEquals(2, sent.last().lines.size)
