@@ -1477,9 +1477,6 @@ class Scanner(
         /** A hot line this close to zero (or above it) has its Novig book read again by the hot refresh. */
         const val HOT_EV_FLOOR = -0.03
 
-        /** Most books one hot step reads (about 8 seconds on the key's 16 a second). */
-        const val MAX_HOT_READS = 120
-
         /** Feeds that relay Novig's own prices ([RefSnapshot.novig]). */
         private val NOVIG_RELAYS = listOf(com.tjshea.vigilant.data.reference.PropLineClient.ID, com.tjshea.vigilant.data.reference.PropLinePropsSource.ID)
 
