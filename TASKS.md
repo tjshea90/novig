@@ -5197,9 +5197,12 @@ Findings: the 1-second "scan" only adopted the last published list (no command w
 
 ## TCL10: review, fix, full tests, simplify, mirror settings, refresh always scans, freshness at a glance (Tj, 2026-10-15)
 Tj: "Fix anything that needs to be fixed, run full tests protocol, simplify and clean up any settings, make the code optimal and efficient, make sure the settings are properly mirrored to GitHub, look for contradictory or unneeded settings, make sure whenever I pull down to refresh the scan it tells GitHub to send me a fresh scan, make sure GitHub is sending me current odds and there is a mechanism by which I can quickly see the freshness of the odds."
-- [ ] TCL10a Read the live state first (cloud-feed status, cloud-config, phone-data, engine run) and the cloud code end to end; list every defect found in research/cloud_review_2026-10-15.md.
-- [ ] TCL10b Fix the defects (each with a test); simplify the Cloud scan settings page (contradictions: switches that do nothing, duplicated paths).
-- [ ] TCL10c Settings mirror: prove with a test that every ScanSettings field is either in the scan key, filter-only or phone-only (no field unclassified by accident).
-- [ ] TCL10d Pull to refresh: prove the round trip end to end (request -> config -> engine ack -> fresh scan -> list newer than the request) and that a list older than the request is never shown as the answer.
-- [ ] TCL10e Freshness at a glance: a chip on the Feed top bar (green/amber/red with the age) and per-bet age in the cards, from measured stamps.
+- [x] TCL10a live state read, cloud code reviewed end to end: 10 defects in research/cloud_review_2026-10-15.md.
+- [x] TCL10b fixed (tests: CloudScanKeyTest, CloudScannerTest, CloudEngineTest, CloudTextTest, CloudFreshnessTest, CloudUiTest); Cloud page reordered Token/Scan/API keys/History.
+- [x] TCL10c `CloudScanKeyTest.every setting ... has a decision` (190 settings + nested groups classified FETCH/PRICING/FILTER/PHONE).
+- [x] TCL10d refresh round trip proven in `CloudEngineTest` (a refresh mid-scan restarts and is acknowledged; one in a scan's first moments is served by it) and `CloudTextTest` (waiting -> scanning -> done); the bar never calls the old list the answer. LIVE round trip: pending Tj's phone (TCL10g).
+- [x] TCL10e freshness chip in the Feed title from the shown bets' own stamps (`CloudFreshnessTest`, `CloudUiTest`, screenshots 1k/1l/1m/5i).
 - [ ] TCL10f Full tests protocol (.claude/skills/test-protocols), ship, release, record.
+- [ ] TCL10f Full tests protocol (floor with -Pscreenshots, sweep), ship, release, record.
+- [ ] TCL10g After Tj installs: read the live round trip from cloud-feed `status.json` (`ackedRefreshAtMs`, `lastScanForRefreshAtMs`) and `engine-log.txt`.
+- [ ] TCL11 (needs Tj's word: it changes his Novig account) a read-only `trading::read` Novig key for the engine, minted by the phone from the management key and sent as a secret, so the engine reads Novig at the key's 14 a second (and by stream) instead of the public ~2: a cold scan from ~15 min toward ~8, fair odds fresher.
