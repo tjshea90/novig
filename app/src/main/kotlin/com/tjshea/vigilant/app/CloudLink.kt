@@ -57,6 +57,8 @@ class CloudLink(private val c: AppContainer) {
         val why: String? = null,
         /** What the last "Send my API keys" said (words only). */
         val keysNote: String? = null,
+        /** When the read-only Novig key made for the engine was made (this phone's clock); 0 = none was made. */
+        val novigKeyMadeAtMs: Long = 0L,
         val rateRemaining: Int? = null,
         /** The newest settings revision this phone wrote to GitHub and when (its clock), for the "is GitHub using my settings" line ([com.tjshea.vigilant.data.cloud.CloudText.settings]). */
         val pushedRev: Long = 0L,
@@ -312,9 +314,15 @@ class CloudLink(private val c: AppContainer) {
     private val keysSent = File(c.app.filesDir, "cloud_keys_sent")
     @Volatile private var keysAttempt: String? = null
 
-    /** The keys this phone would send, by secret name, values joined by commas; empty providers are left out. Pinnodds and BoltOdds never ([CloudKeys.PHONE_ONLY]). */
-    private fun keysToSend(): Map<String, String> =
-        CloudKeys.BY_PROVIDER.mapNotNull { (p, name) -> c.keyStore.current(p).filter { it.isNotBlank() }.takeIf { it.isNotEmpty() }?.let { name to it.joinToString(",") } }.toMap()
+    /**
+     * The keys this phone would send, by secret name, values joined by commas; empty providers are left out. Pinnodds never ([CloudKeys.PHONE_ONLY]). BoltOdds goes since Tj's word of 2026-10-15. And the
+     * engine's own read-only Novig key ([CloudNovigKey]) when one was made: its id and its PEM, never the trading key or the management key.
+     */
+    private suspend fun keysToSend(): Map<String, String> {
+        val m = CloudKeys.BY_PROVIDER.mapNotNull { (p, name) -> c.keyStore.current(p).filter { it.isNotBlank() }.takeIf { it.isNotEmpty() }?.let { name to it.joinToString(",") } }.toMap().toMutableMap()
+        c.cloudNovigKeys.load()?.let { m[CloudKeys.NOVIG_KEY_ID] = it.keyId; m[CloudKeys.NOVIG_KEY_PEM] = it.pem }
+        return m
+    }
 
     private fun fingerprint(m: Map<String, String>): String =
         java.security.MessageDigest.getInstance("SHA-256").digest(m.toSortedMap().entries.joinToString("\n") { "${it.key}=${it.value}" }.toByteArray()).joinToString("") { "%02x".format(it) }
@@ -350,21 +358,73 @@ class CloudLink(private val c: AppContainer) {
         }
         val previous = runCatching { keysSent.readText() }.getOrNull()
         runCatching { keysSent.writeText(fp) }
-        val msg = "Sent ${sent.size} key set(s) to GitHub secrets: ${sent.joinToString(", ")}. Pinnodds, BoltOdds and Kalshi keys stay on the phone."
+        val msg = "Sent ${sent.size} key set(s) to GitHub secrets: ${sent.joinToString(", ")}. Pinnodds and Kalshi keys, and Novig's trading and management keys, stay on the phone."
         c.eventLog.info("CLOUD", msg)
-        // A running engine holds the secrets it read when its job began: restart it only when the keys CHANGED (a second tap with the same keys must not throw away a scan that is minutes in), and at most
-        // once in 10 minutes.
+        val tail = restartEngineFor(changed = previous != fp)
+        _ui.update { it.copy(keysNote = msg + tail) }
+        return msg + tail
+    }
+
+    /**
+     * A running engine holds the secrets it read when its job began: it is stopped and started again to pick up [changed] keys, only when they changed (a second tap with the same keys must not throw away a
+     * scan that is minutes in), and at most once in 10 minutes. Words for the note.
+     */
+    private suspend fun restartEngineFor(changed: Boolean): String {
         val st = latest.status
         val now = System.currentTimeMillis()
         val running = st != null && !st.idle && now - st.heartbeatMs < ENGINE_DEAD_S * 1000L
-        val changed = previous != fp
-        val tail = if (running && changed && c.settingsStore.flow.value?.cloudDrives == true && now - lastRestartAt > 10 * 60_000L) {
+        return if (running && changed && c.settingsStore.flow.value?.cloudDrives == true && now - lastRestartAt > 10 * 60_000L) {
             lastRestartAt = now
             client.cancelRun(st!!.runId); delay(4_000L); lastStartAskedAt = System.currentTimeMillis(); client.startEngine()
             " The engine was restarted to use them."
         } else if (running && changed) " The running engine reads them the next time it starts (within 6 hours, or tap Start the engine now after switching it off and on)." else ""
-        _ui.update { it.copy(keysNote = msg + tail) }
-        return msg + tail
+    }
+
+    private fun novigWords(e: Exception): String = when (e) {
+        is com.tjshea.vigilant.data.novig.signing.NovigApiException -> "Novig refused (${e.status}${e.code?.let { " $it" }.orEmpty()})"
+        else -> e.javaClass.simpleName + (e.message?.let { m -> ": " + m.take(80) } ?: "")
+    }
+
+    /**
+     * Makes the engine's own read-only Novig key (once) and sends it to GitHub with the other keys (Tj, 2026-10-15: "allow me to send my novig key and boltodds key to GitHub for rapid scanning"). The key is a
+     * `trading::read` key: it cannot place an order or move money. It is minted from the management key this phone already holds, so Novig sees one new key named "Vigilant cloud engine" on the Vigilant
+     * subaccount; its private half is sealed by this phone and goes to a write-only GitHub secret. Words only: no key text is ever in the result, a log or an error.
+     */
+    suspend fun sendNovigKey(): String = keysMutex.withLock {
+        fun say(m: String): String { _ui.update { it.copy(keysNote = m) }; return m }
+        if (!hasToken()) return@withLock say("Save the GitHub token first.")
+        if (c.cloudNovigKeys.load() == null) {
+            val mgmt = c.managementKeys.load() ?: return@withLock say("Connect your Novig management key first (Settings › Betting & Novig account): it is what makes the read-only key.")
+            val sub = c.connectedSubaccountKeyId ?: return@withLock say("The Vigilant subaccount is not connected yet (Settings › Betting & Novig account).")
+            val minted = try {
+                CloudNovigKey.mint(c.http, c.json, mgmt, sub)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                return@withLock say("Novig did not make the key: ${novigWords(e)}").also { c.eventLog.warn("CLOUD", it) }
+            }
+            c.cloudNovigKeys.save(minted, sub)
+            c.eventLog.info("CLOUD", "made a read-only Novig key for the engine (••••${minted.keyId.takeLast(4)}); it cannot trade")
+        }
+        refreshNovigKey()
+        sendKeysLocked(auto = false)
+    }
+
+    /** Takes the Novig key off GitHub (both secrets) and forgets it here: the engine reads the public routes from its next start. The key stays registered in Novig (revoke it there if you like); it can only read. */
+    suspend fun removeNovigKey(): String = keysMutex.withLock {
+        fun say(m: String): String { _ui.update { it.copy(keysNote = m) }; return m }
+        if (!hasToken()) return@withLock say("Save the GitHub token first.")
+        for (name in CloudKeys.NOVIG) client.deleteSecret(name)?.let { why -> return@withLock say("Not removed ($name): $why") }
+        c.cloudNovigKeys.clear()
+        runCatching { keysSent.delete() }
+        refreshNovigKey()
+        say("The Novig key was removed from GitHub." + restartEngineFor(changed = true).replace(" to use them.", " to stop using it."))
+    }
+
+    /** Reads whether an engine key exists into the page's state. */
+    suspend fun refreshNovigKey() {
+        val at = c.cloudNovigKeys.saved()?.mintedAtMs ?: 0L
+        _ui.update { it.copy(novigKeyMadeAtMs = at) }
     }
 
     /** Saves the bet and bid day files and the scan study's days to `phone-data`; each file is sent again only when it changed. */
