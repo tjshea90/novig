@@ -56,7 +56,7 @@ class EngineStudyTest {
         val dir = Files.createTempDirectory("engine-study").toFile()
         try {
             val study = ScanStudy(StudyJournal(dir), version = { "github-engine" }, flushEveryMs = 0)
-            val s = ScanSettings(scanStudy = true, minEvPercent = 0.0)
+            val s = ScanSettings(scanStudy = true, leagues = setOf("NBA"), minEvPercent = 0.0)
             val result = ScanResult(emptyList(), listOf(row("a")), ScanStats(1, 1, 1, 1, 1), now)
             val created = study.observeVigilant(result, s)
             study.flush()
