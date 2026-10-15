@@ -397,4 +397,35 @@ class CloudEngineTest {
         assertEquals(CloudEngine.End.TIME_UP, end)
         assertEquals(0, published.last().second.addressHandovers)
     }
+
+    @Test
+    fun `the engine hands each published list to its trading with the phone's latest settings and says what it did in the heartbeat`() = runBlocking {
+        val scanner = FakeScanner { _, partial, _ -> partial(result("a")); delay(40); report(result("a", "b")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val seen = CopyOnWriteArrayList<Pair<Int, com.tjshea.vigilant.data.scanner.CloudTradeMode>>()
+        val cfg = on.copy(settings = on.settings.copy(gates = on.settings.gates.copy(cloudTrading = com.tjshea.vigilant.data.scanner.CloudTradeMode.PAPER)))
+        val e = CloudEngine(
+            scanner = scanner, sources = { emptyList() }, config = { cfg }, publish = { f, st -> published += f to st; null },
+            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, heartbeatEveryMs = 1, statusEveryMs = 1,
+            trade = { rows, s, now -> seen += rows.size to s.gates.cloudTrading; CloudEngine.TradeStatus("paper", "paper: looked ${rows.size}", "", now) },
+        )
+        e.run(untilMs = System.currentTimeMillis() + 150)
+        assertTrue("the partial list reached the trading", seen.any { it.first == 1 })
+        assertTrue("the final list reached the trading", seen.any { it.first == 2 })
+        assertTrue(seen.all { it.second == com.tjshea.vigilant.data.scanner.CloudTradeMode.PAPER })
+        assertTrue(published.any { it.second.tradeMode == "paper" && it.second.tradeNote.startsWith("paper: looked") })
+    }
+
+    @Test
+    fun `a trading pass that fails never stops the scan`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = CloudEngine(
+            scanner = scanner, sources = { emptyList() }, config = { on }, publish = { f, st -> published += f to st; null },
+            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, heartbeatEveryMs = 1, statusEveryMs = 1,
+            trade = { _, _, _ -> error("boom") },
+        )
+        e.run(untilMs = System.currentTimeMillis() + 100)
+        assertTrue(published.mapNotNull { it.first }.any { it.rows.size == 1 })
+    }
 }
