@@ -109,4 +109,23 @@ class CloudUiTest {
         compose.onNodeWithTag("cloudLine").performScrollTo().assertIsDisplayed()
         assertEquals(0, compose.onAllNodesWithTag("cloudPausedNote").fetchSemanticsNodes().size)
     }
+
+    @Test
+    fun `the Cloud page offers a Novig read-only key, says what it is, and with one made offers to remove it (Tj, 2026-10-15)`() {
+        settings(cloudState())
+        compose.onNodeWithTag("cloudSendNovigKey").performScrollTo().assertIsDisplayed().assertHasClickAction()
+        assertEquals(0, compose.onAllNodesWithTag("cloudRemoveNovigKey").fetchSemanticsNodes().size)
+        compose.onNode(androidx.compose.ui.test.hasText("cannot bet or move money", substring = true)).assertExists()
+    }
+
+    @Test
+    fun `with a key made, the page says so, offers to send it again or remove it, and shows how GitHub reads Novig and the API ranking`() {
+        val st = SampleScan.cloudStatus().copy(novigRoute = "Novig read-only key active: 14 reads a second, websocket on", ranking = "SGO (p90 20s) > ParlayAPI (p90 2m)\nalways asked, not ranked: BoltOdds (p90 3s)")
+        val base = cloudState(status = st)
+        settings(base.copy(cloudUi = base.cloudUi.copy(novigKeyMadeAtMs = now - 3_600_000L)))
+        compose.onNodeWithTag("cloudSendNovigKey").performScrollTo().assertTextContains("again", substring = true)
+        compose.onNodeWithTag("cloudRemoveNovigKey").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("cloudNovigRoute").performScrollTo().assertTextContains("14 reads a second", substring = true)
+        compose.onNodeWithTag("cloudRanking").performScrollTo().assertTextContains("BoltOdds", substring = true)
+    }
 }
