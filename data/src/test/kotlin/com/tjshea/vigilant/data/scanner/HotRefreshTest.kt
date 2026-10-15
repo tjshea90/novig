@@ -60,12 +60,14 @@ class HotRefreshTest {
         }
     }
 
-    private inner class Fair(override val id: String, val clock: () -> Long, private val isMetered: Boolean = false) : ReferenceSource {
+    private inner class Fair(override val id: String, val clock: () -> Long, private val isMetered: Boolean = false, private val slowMs: Long = 0L, private val holds: Boolean = true) : ReferenceSource {
         val asked = CopyOnWriteArrayList<Long>()
         override val displayName = id
         override val metered: Boolean get() = isMetered
+        override val holdsBackList: Boolean get() = holds
         override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
             asked += clock()
+            if (slowMs > 0) delay(slowMs)
             val q = listOf(RefQuote(Side.HOME, 1 / 0.56, null), RefQuote(Side.AWAY, 1 / 0.44, null))
             val t = clock()
             fun ev(home: String, away: String, start: Long) = RefEvent("r-$home", "americanfootball_nfl", start, home = home, away = away, markets = listOf(RefBookMarket(id, id, LineKind.MONEYLINE, q, t)))
@@ -119,5 +121,20 @@ class HotRefreshTest {
         assertTrue("kalshi is on the hot list", kalshi.asked.size >= 2)
         assertEquals("ParlayAPI is asked once, as in any scan", 1, parlay.asked.size)
         assertTrue("Scanner.HOT_FEEDS holds no credit-metered feed", Scanner.HOT_FEEDS.none { it in setOf("parlay", "parlay_props", "parlay_1h", "oddsapi", "oddsapi_props", "propline", "propline_props", "pinnacle", "oddspapi_free") })
+    }
+
+    @Test
+    fun `a slow last-resort feed that does not hold the list back no longer delays a league's bets (Unabated, 95 s of a 548 s scan)`() = runTest {
+        suspend fun firstPartialWaiting(holds: Boolean): Set<String> {
+            val clock = { base + currentTime }
+            val novig = Novig(hotMl, farMl, listOf(hotEvent, farEvent), clock)
+            val kalshi = Fair("kalshi", clock)
+            val slow = Fair("unabated", clock, slowMs = 95_000L, holds = holds)
+            val partials = CopyOnWriteArrayList<ScanResult>()
+            Scanner(novig, clock = clock, elapsed = { currentTime }).scan(settings(hot = false), listOf(kalshi, slow), emptySet(), {}, { partials += it })
+            return partials.first().waitingFor
+        }
+        assertTrue("held back while the slow feed is out", firstPartialWaiting(holds = true).isNotEmpty())
+        assertTrue("not held back by a feed that does not hold the list", firstPartialWaiting(holds = false).isEmpty())
     }
 }
