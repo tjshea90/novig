@@ -34,7 +34,7 @@ class CloudNovigPort(
         private set
 
     private fun refusal(e: NovigApiException): String? =
-        if (e.status in STOP_STATUSES) e.brief.take(300) else null
+        if (e.status in STOP_STATUSES && !e.betLocked) e.brief.take(300) else null
 
     override suspend fun cash(): Double? = try {
         trading.balance(subaccountKeyId).also { blocked = null }
