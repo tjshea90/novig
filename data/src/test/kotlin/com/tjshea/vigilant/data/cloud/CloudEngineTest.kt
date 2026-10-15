@@ -201,4 +201,102 @@ class CloudEngineTest {
         assertTrue(published.any { it.second.problem?.contains("boom") == true })
         assertTrue(e.passes >= 1)
     }
+
+    // ---- the bid desk's candidates (Tj, 2026-10-15) ----------------------------------------------------------------------------
+
+    private fun bidLine(id: String): com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.BidLine {
+        val r = row(id)
+        return com.tjshea.vigilant.data.novig.trading.maker.BidCandidates.BidLine(
+            com.tjshea.vigilant.data.novig.trading.maker.MakerLines.lineOf(r, System.currentTimeMillis(), null), r.event.startsTs,
+        )
+    }
+
+    /** What the engine did about the bid desk: the settings each candidate pass saw, and each list published (null = the file taken away). */
+    private class BidLog {
+        val made = CopyOnWriteArrayList<ScanSettings>()
+        val published = CopyOnWriteArrayList<CloudBids?>()
+    }
+
+    private fun bidEngine(scanner: OddsScanner, cfg: () -> CloudConfig?, published: MutableList<Pair<CloudFeed?, CloudStatus>>, log: BidLog, lines: Int = 2) = CloudEngine(
+        scanner = scanner, sources = { emptyList() }, config = { cfg() },
+        publish = { f, s -> published += f to s; null },
+        pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20, restartEveryMs = 30_000L,
+        bidLines = { _, s, _ -> log.made += s; (1..lines).map { bidLine("b$it") } },
+        publishBids = { log.published += it },
+        bidsEveryMs = 0L,
+    )
+
+    private val bidsOn = on.copy(settings = on.settings.copy(maker = true))
+
+    @Test
+    fun `with Vigilant-priced bids on, the candidate lines are made from the list and sent with it, and the status says how many`() = runBlocking {
+        val scanner = FakeScanner { _, partial, _ -> partial(result("a")); delay(40); report(result("a", "b")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val log = BidLog()
+        bidEngine(scanner, { bidsOn }, published, log).run(untilMs = System.currentTimeMillis() + 150)
+        assertTrue("candidate lines were made", log.made.isNotEmpty())
+        assertTrue("under the engine's own settings (no live games)", log.made.all { !it.includeLive && it.bidsFromCloud })
+        val sent = log.published.filterNotNull()
+        assertTrue(sent.isNotEmpty())
+        assertEquals(2, sent.last().lines.size)
+        assertEquals(1L, sent.last().configRev)
+        val st = published.map { it.second }.last { it.bidsAtMs > 0 }
+        assertEquals(2, st.bidsCount)
+        assertTrue("the final list's candidates went out at the scan's end", sent.any { !it.partial })
+    }
+
+    @Test
+    fun `with no bids on, or bids priced from CrazyNinjaOdds, no candidate line is ever made`() = runBlocking {
+        for (cfg in listOf(on, on.copy(settings = on.settings.copy(maker = true, makerSource = com.tjshea.vigilant.data.scanner.BidSource.CNO)))) {
+            val scanner = FakeScanner { _, partial, _ -> partial(result("a")); delay(30); report(result("a")) }
+            val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+            val log = BidLog()
+            bidEngine(scanner, { cfg }, published, log).run(untilMs = System.currentTimeMillis() + 120)
+            assertTrue("no candidate pass", log.made.isEmpty())
+            assertTrue("no file published, nothing to take away either", log.published.isEmpty())
+            assertTrue(published.all { it.second.bidsAtMs == 0L })
+        }
+    }
+
+    @Test
+    fun `a bid rule changed during a scan makes the candidates again from the held list with no new scan`() = runBlocking {
+        var cfg = bidsOn
+        val scanner = FakeScanner { _, partial, n -> if (n == 1) { partial(result("a")); delay(400); report(result("a")) } else report(result("z")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val log = BidLog()
+        launch(kotlinx.coroutines.Dispatchers.Default) { delay(120); cfg = bidsOn.copy(rev = 2, settings = bidsOn.settings.copy(makerMargin = 0.09)) }
+        bidEngine(scanner, { cfg }, published, log).run(untilMs = System.currentTimeMillis() + 330)
+        assertEquals("no restart for a bid rule", 1, scanner.calls.get())
+        assertTrue("made under the old margin, then under the new one", log.made.any { it.makerMargin != 0.09 } && log.made.any { it.makerMargin == 0.09 })
+        assertEquals(2L, log.published.filterNotNull().last().configRev)
+    }
+
+    @Test
+    fun `bids switched off mid-scan take the candidate file away, once`() = runBlocking {
+        var cfg = bidsOn
+        val scanner = FakeScanner { _, partial, _ -> partial(result("a")); delay(400); report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val log = BidLog()
+        launch(kotlinx.coroutines.Dispatchers.Default) { delay(120); cfg = bidsOn.copy(rev = 2, settings = bidsOn.settings.copy(maker = false, makerRecommend = false)) }
+        bidEngine(scanner, { cfg }, published, log).run(untilMs = System.currentTimeMillis() + 330)
+        assertEquals("the list was sent while they were on, then taken away once", 1, log.published.count { it == null })
+        assertTrue(log.published.last() == null)
+        val st = published.map { it.second }.last()
+        assertEquals(0L, st.bidsAtMs)
+    }
+
+    @Test
+    fun `a failing candidate pass never costs the Feed its list`() = runBlocking {
+        val scanner = FakeScanner { _, partial, _ -> partial(result("a")); delay(30); report(result("a", "b")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val e = CloudEngine(
+            scanner = scanner, sources = { emptyList() }, config = { bidsOn },
+            publish = { f, s -> published += f to s; null },
+            pause = { delay(3) }, partialEveryMs = 5, configEveryMs = 5, idleExitMs = 600_000L, heartbeatEveryMs = 1, statusEveryMs = 1, refreshMinAgeMs = 20,
+            bidLines = { _, _, _ -> throw IllegalStateException("boom") }, publishBids = {}, bidsEveryMs = 0L,
+        )
+        e.run(untilMs = System.currentTimeMillis() + 150)
+        assertTrue(published.any { it.first?.rows?.size == 2 })
+        assertTrue(published.all { it.second.bidsAtMs == 0L })
+    }
 }
