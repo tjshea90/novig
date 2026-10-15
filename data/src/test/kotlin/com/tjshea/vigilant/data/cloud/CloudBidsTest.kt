@@ -28,6 +28,7 @@ import com.tjshea.vigilant.data.scanner.Pricing
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.engine.MarketFee
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -60,9 +61,8 @@ class CloudBidsTest {
         "p$i" to NovigBook("p$i", 1, mapOf("o$i" to listOf(BidLevel(470, 10_000), BidLevel(460, 5_000)), "u$i" to listOf(BidLevel(500, 10_000))), at)
     }
 
-    /** Four props through the real planner and pricer: an ordinary one, a second, a long shot nobody would bid on, and a player who is out. */
-    private fun board(bookAt: Long = now): ScanResult {
-        val e = settings.effective()
+    /** Four props through the real planner: an ordinary one, a second, a long shot nobody would bid on, and a player who is out. */
+    private fun plan(): com.tjshea.vigilant.data.scanner.ScanPlan {
         val quotes = listOf(
             quote(0, "kalshi", "Kalshi", 1.95, 1.95) to quote(0, "prophetx", "ProphetX", 1.90, 2.00),
             quote(1, "kalshi", "Kalshi", 1.85, 2.05) to quote(1, "prophetx", "ProphetX", 1.88, 2.02),
@@ -70,9 +70,11 @@ class CloudBidsTest {
             quote(3, "kalshi", "Kalshi", 1.95, 1.95) to quote(3, "prophetx", "ProphetX", 1.90, 2.00),
         ).flatMap { it.toList() }
         val refs = listOf(RefSnapshot("americanfootball_nfl", listOf(RefEvent("r", "americanfootball_nfl", Fixtures.START_MS, "Dallas Cowboys", "Baltimore Ravens", quotes)), now))
-        val plan = Planner.plan(listOf(event), players.indices.map(::market), refs, e, now)
-        return Pricing.price(plan, books(bookAt), e, now)
+        return Planner.plan(listOf(event), players.indices.map(::market), refs, settings.effective(), now)
     }
+
+    /** The plan priced against Novig's books as they were at [bookAt], as a scan finishing at [at] would. */
+    private fun board(bookAt: Long = now, at: Long = now): ScanResult = Pricing.price(plan(), books(bookAt), settings.effective(), at)
 
     private val outPlayer = { o: Opportunity -> if (o.market.marketId == "p3") "The player is out (Out): no bet or bid on a player who isn't playing" else null }
 
@@ -96,36 +98,37 @@ class CloudBidsTest {
         override fun watch(marketIds: Collection<String>) { watched += marketIds }
     }
 
-    private fun viaGithub(result: ScanResult, novigBooks: Map<String, NovigBook>, at: Long, lane: CloudBidLane = CloudBidLane(FakeNovig(novigBooks), clock = { at }), keep: Set<String> = emptySet()): List<MakerLine> = runBlockingTest {
-        val sent = BidCandidates.from(result, settings, at, outPlayer)
+    /** What the phone's desk is given: the engine's candidates (made at [engineAt] from [result]), carried over the wire, then Novig's books [phoneBooks] read by the phone, judged at [phoneAt]. */
+    private fun viaGithub(result: ScanResult, engineAt: Long, phoneBooks: Map<String, NovigBook>, phoneAt: Long, keep: Set<String> = emptySet()): List<MakerLine> = runBlocking {
+        val sent = BidCandidates.from(result, settings, engineAt, outPlayer)
         // across the wire: encoded, compressed, read again
-        val got = CloudBids.decode(CloudBids.encode(CloudBids(at, false, 7L, sent)))!!
+        val got = CloudBids.decode(CloudBids.encode(CloudBids(engineAt, false, 7L, sent)))!!
+        val lane = CloudBidLane(FakeNovig(phoneBooks), clock = { phoneAt })
         lane.put(got)
-        lane.refresh(at, 1_000)
-        lane.lines(at, rules, keep)
+        lane.refresh(phoneAt, 1_000)
+        lane.lines(phoneAt, rules, keep)
     }
-
-    private fun <T> runBlockingTest(block: suspend () -> T): T = kotlinx.coroutines.runBlocking { block() }
 
     // ---- the equivalence ---------------------------------------------------------------------------------------------------
 
     @Test
     fun `the desk decides the same bids from GitHub's candidates and the phone's Novig books as from the whole local scan`() {
-        val result = board()
-        val local = MakerQuote.decideAll(MakerLines.from(result, settings, now, unavailable = outPlayer), rules, now, emptySet())
-        // the phone's own books are newer than the engine's: the engine's side is replaced by them, as it is on the phone
-        val fresh = books(now + 5_000)
-        val lines = viaGithub(result, fresh, now + 5_000)
-        val cloud = MakerQuote.decideAll(lines, rules, now + 5_000, emptySet())
-        val localNew = MakerQuote.decideAll(MakerLines.from(Pricing.price(Planner.plan(listOf(event), players.indices.map(::market), board().let { emptyList<RefSnapshot>() }, settings.effective(), now), fresh, settings.effective(), now + 5_000), settings, now + 5_000, outPlayer), rules, now + 5_000, emptySet())
+        val engineBoard = board()
+        // the phone reads Novig again 5 s later and the local scan prices the same plan against those same books
+        val t = now + 5_000
+        val fresh = books(t)
+        val local = MakerQuote.decideAll(MakerLines.from(board(bookAt = t, at = t), settings, t, unavailable = outPlayer), rules, t, emptySet())
+        val cloud = MakerQuote.decideAll(viaGithub(engineBoard, now, fresh, t), rules, t, emptySet())
         assertTrue("some bids go up from the ordinary props: ${posts(local)}", posts(local).isNotEmpty())
         assertEquals("same bids, same prices, same size", posts(local), posts(cloud))
-        assertEquals("(no refs, no lines: the local scan with new books and no fair has nothing to bid on)", emptyList<Any>(), posts(localNew))
+        // with the engine's own books (nothing newer on the phone) the answer is the same again
+        val sameBooks = MakerQuote.decideAll(viaGithub(engineBoard, now, books(now), now), rules, now, emptySet())
+        assertEquals(posts(MakerQuote.decideAll(MakerLines.from(engineBoard, settings, now, unavailable = outPlayer), rules, now, emptySet())), posts(sameBooks))
         // every side the candidates leave out is a skip on the local scan
-        val candidateIds = BidCandidates.from(result, settings, now, outPlayer).map { it.line.outcomeId }.toSet()
+        val candidateIds = BidCandidates.from(engineBoard, settings, now, outPlayer).map { it.line.outcomeId }.toSet()
         for (d in local) if (d.line.outcomeId !in candidateIds) assertTrue("${d.line.outcomeId} was left out but the desk would bid on it", d !is MakerDecision.Post)
-        assertTrue("the candidates are fewer than the sides priced", candidateIds.size < result.opportunities.size)
-        assertFalse("a player who is out is no candidate", "o3" in candidateIds)
+        assertTrue("the candidates are fewer than the sides priced", candidateIds.size < engineBoard.opportunities.size)
+        assertFalse("a player who is out is no candidate", "o3" in candidateIds || "u3" in candidateIds)
     }
 
     @Test
@@ -135,9 +138,7 @@ class CloudBidsTest {
         val line = BidCandidates.from(result, settings, now, outPlayer).first { it.line.outcomeId == "o0" }.line
         val repriced = MakerLines.withBook(line, newer.getValue("p0"))
         // the pricer's own arithmetic for the same book
-        val e = settings.effective()
-        val plan = Planner.plan(listOf(event), players.indices.map(::market), listOf(RefSnapshot("americanfootball_nfl", listOf(RefEvent("r", "americanfootball_nfl", Fixtures.START_MS, "Dallas Cowboys", "Baltimore Ravens", listOf(quote(0, "kalshi", "Kalshi", 1.95, 1.95), quote(0, "prophetx", "ProphetX", 1.90, 2.00)))), now)), e, now)
-        val direct = Pricing.price(plan, newer, e, now + 30_000).opportunities.first { it.outcome.outcomeId == "o0" }
+        val direct = board(bookAt = now + 30_000, at = now + 30_000).opportunities.first { it.outcome.outcomeId == "o0" }
         assertEquals(direct.quote?.price, repriced.offer)
         assertEquals(direct.bestBid, repriced.bestBid)
         assertEquals(direct.bidLevels, repriced.bidLevels)
