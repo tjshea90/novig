@@ -55,5 +55,8 @@ Your routine is a scheduled task in YOUR account; nobody else can change it, so 
 ## Delivery to the phone (TCL18d)
 The engine runs from `main` on GitHub's runners. The phone's APK needs an install: an in-app updater is TASKS.md TCL18d (Tj has not yet said yes); until then a release is a link he taps.
 
+## Tell Tj what matters, and ask the phone to switch an API (TCL28, Tj 2026-10-15)
+End every run that found something Tj should act on or know (an API to refill or buy, a rule you changed and why, a release shipped, the engine's first fills) with ONE message: `python3 tools/tell_tj.py say "Title" "Body" --kind recommendation|bet|alert|shipped|info --priority 1 --action APIS` (priority 1 = a notification; quiet 0 otherwise; words only, never a key). To switch an API on or off for the whole system: `python3 tools/tell_tj.py set-api "reason" parlay=off sgo=on` (the phone applies it once and mirrors it back; API switches only, nothing about money, keys or trading). The engine itself rests silent credit-metered APIs (`ApiGovernor`) and writes its own advice (`ApiAdvisor`); do not duplicate its messages, add judgment it cannot.
+
 ## How it is scheduled
 Each account has its own routine (a scheduled task fires a fresh session in THAT account): slots 07:20, 13:20 and 19:20 ET, one per account (`research/coordination/ROTATION.md`; the one-message setup is in `research/coordination/SETUP_FOR_TJ.md`). A fired session may lack `mcp__github__*` tools and a checkout of the repo: its prompt starts with getting the repo (`mcp__claude-code-remote__add_repo`) and says what to do without the GitHub tools (read-only plus notes; no release). To stop one: `update_trigger enabled=false`, or pause it in the routines list.
