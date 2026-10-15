@@ -5310,3 +5310,10 @@ Tj: "I like this site you built: https://github.com/tjshea90/novig/blob/cloud-fe
 - [ ] TCL24a Dashboard screen in the app (phone-width cards: engine state, list freshness, Novig route/address, trading + wallet, per-API health chips, usage meters as bars with reset times, per-key rows), fed by the engine's status.json + usage.json that CloudLink already polls (synced; no extra GitHub calls), working offline from the last copy.
 - [ ] TCL24b Graphs: history of the engine's own numbers kept on the phone (scan time, +EV count, list age, wallet) as small sparklines; usage bars per API.
 - [ ] TCL24c Wire it in (tab or Settings entry), Android 16 edge-to-edge, tests (pure view-model builder `DashboardModel` + a Compose render test), release.
+
+## TCL25: chat with any account as if the three were one; paused sessions resume by themselves (Tj, 2026-10-15, "Force this")
+Tj: "Make it so I can chat with any of the Claude accounts in the repo and I can control or make changes to the app or repo from any account without breaking the rotation or anything else. If I make changes from any account the other accounts should know as though all three accounts are one account ... Also if any session is paused or stopped because I messaged Claude on another account, make sure it can be resumed automatically"
+- [x] TCL25a A message from Tj in any account takes the lease (capture_inbox.sh -> coord.py acquire --kind interactive), a routine's own prompt is never logged as his; a second live interactive session is told and Tj decides. Test: `bash tools/test_coord.sh` (32 checks).
+- [x] TCL25b A paused routine resumes itself: acquire posts `rotation-paused`, `coord.py wait-free` (background poll), ROUTINE.md "park, wait cheaply, resume", `rotation.py missed` lists PAUSED with no grace. Tests: test_coord.sh, `rotation.py selftest`.
+- [x] TCL25c Roster matches the claude.ai routines (07:20 tjshea90@outlook = acct-7542bf, 13:20 tjshea90@gmail = acct-27a37e, 19:20 mirageticket@outlook = acct-5d1e2d).
+- [ ] TCL25d WATCH: the first time Tj interrupts a live routine, confirm it parks, waits and resumes (board notes rotation-paused / rotation-resumed).
