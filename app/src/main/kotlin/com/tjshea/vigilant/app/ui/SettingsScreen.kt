@@ -128,6 +128,9 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The GitHub engine at a glance (Tj, 2026-10-15): state, odds age, wallet, which APIs work, usage meters and trends, synced from the engine. */
     DASHBOARD("Engine dashboard", "The GitHub engine at a glance: is it running, which APIs work, what each has left, graphs of the last scans", SettingsGroup.FIND),
 
+    /** Everything Claude or the engine wants Tj to know: recommendations, bets placed, settings changed from GitHub (TCL28). */
+    MESSAGES("Messages from Claude", "Recommendations, bets placed and anything Claude or the engine wants you to know", SettingsGroup.FIND),
+
     /** The scan on GitHub's computers, the token, and the permanent saving of bets, bids and history to GitHub (Tj, 2026-10-14). */
     CLOUD("Cloud scan", "Run the scans on GitHub's computers: the phone only sets the settings and shows the list; bets, bids and history are saved to GitHub", SettingsGroup.FIND),
 
@@ -267,6 +270,7 @@ object SettingsSummary {
                 s.liveBidReal -> "On: real money, ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
                 else -> "On: paper only (nothing is sent), ${com.tjshea.vigilant.app.LiveBidText.preset(s)}"
             }
+            SettingsPage.MESSAGES -> state.claudeInbox.unread.let { if (it > 0) "$it unread" else "No new messages" }
             SettingsPage.DASHBOARD -> {
                 val h = com.tjshea.vigilant.data.cloud.DashboardModel.headline(state.cloudUi.status, System.currentTimeMillis())
                 if (!state.cloudUi.hasToken) "No GitHub token saved" else h.title + (if (h.detail.isNotBlank() && h.title != "Not connected") ": " + h.detail.take(60) else "")
@@ -435,6 +439,7 @@ fun SettingsScreen(
                 null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids)
                 SettingsPage.SCANNING -> ScanningPage(s, onUpdate)
                 SettingsPage.DASHBOARD -> DashboardPage(state, onOpenCloudSettings = { go(SettingsPage.CLOUD) })
+                SettingsPage.MESSAGES -> MessagesPage(state.claudeInbox, onMarkRead = reportActions.markClaudeRead, onOpen = { go(SettingsPage.valueOf(it)) })
                 SettingsPage.CLOUD -> CloudPage(state, reportActions, onUpdate)
                 SettingsPage.ALERTS -> AlertsPage(state, onUpdate)
                 SettingsPage.CNO -> CnoPage(s, onUpdate)

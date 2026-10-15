@@ -79,6 +79,15 @@ fun DashboardContent(
         status?.takeIf { it.tradeMode.isNotBlank() && it.tradeNote.isNotBlank() }?.let { InfoLine("Trading", it.tradeNote, if (it.tradeStopped.isNotBlank()) Tone.WARN else Tone.NEUTRAL) }
         status?.takeIf { it.tradeStopped.isNotBlank() }?.let { InfoLine("Stopped", it.tradeStopped, Tone.WARN) }
 
+        status?.advice?.takeIf { it.isNotEmpty() }?.let { adv ->
+            SectionHeader("What to refill, buy or fix")
+            adv.forEach { InfoLine(it.title, it.body, if (it.severity >= 2) Tone.BAD else Tone.WARN) }
+        }
+        status?.takeIf { it.resting.isNotEmpty() || it.governorOff.isNotEmpty() }?.let { st ->
+            if (st.resting.isNotEmpty()) InfoLine("Resting to save usage", st.resting.joinToString(", "))
+            if (st.governorOff.isNotEmpty()) InfoLine("Turned off by the engine", st.governorOff.joinToString(", "), Tone.WARN)
+        }
+
         SectionHeader("APIs")
         val health = remember(status) { DashboardModel.apiHealth(status) }
         val cards = remember(meters, health) {
