@@ -30,10 +30,10 @@ class TradeSettleTest {
     }
 
     @Test
-    fun `entries without a result, already settled ones and a pending bet are left alone, and an unconfirmed order is settled like an open one`() {
+    fun `entries without a result and a pending bet are left out, an unconfirmed order is settled like an open one, and a settled one gives the same answer again`() {
         val rows = listOf(entry("a", "m1"), entry("b", "m2", status = "WON"), entry("c", "m3"), entry("u", "m4", status = "UNCONFIRMED"))
-        val s = TradeSettle.settle(rows) { m, _ -> when (m) { "m3" -> TradeSettle.Outcome(BetStatus.PENDING); "m4" -> TradeSettle.Outcome(BetStatus.LOST); else -> null } }
-        assertEquals(listOf("u"), s.map { it.id })
+        val s = TradeSettle.settle(rows) { m, _ -> when (m) { "m2" -> TradeSettle.Outcome(BetStatus.WON); "m3" -> TradeSettle.Outcome(BetStatus.PENDING); "m4" -> TradeSettle.Outcome(BetStatus.LOST); else -> null } }
+        assertEquals(listOf("b", "u"), s.map { it.id })
         assertNull(s.firstOrNull { it.id == "a" })
     }
 

@@ -25,9 +25,11 @@ object TradeSettle {
         }
     }
 
-    /** The settlements of the entries that are still open, given [outcome] for a (market, outcome) pair; entries whose game has no result yet are left out. */
+    /**
+     * The settlements of every entry whose game has a result, given [outcome] for a (market, outcome) pair; entries with no result yet are left out. An entry the engine has already marked is settled again to the same
+     * answer: the file is a standing list, so an engine that was off when it was written still finds every result on its next start.
+     */
     fun settle(entries: List<TradeEntry>, outcome: (marketId: String, outcomeId: String) -> Outcome?): List<Settled> = entries.mapNotNull { e ->
-        if (e.status != "OPEN" && e.status != "UNCONFIRMED") return@mapNotNull null
         val o = outcome(e.marketId, e.outcomeId) ?: return@mapNotNull null
         when (o.status) {
             BetStatus.WON -> Settled(e.id, "WON", round(e.payout - e.cost))
