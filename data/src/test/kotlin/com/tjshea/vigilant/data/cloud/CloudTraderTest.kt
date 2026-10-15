@@ -32,10 +32,10 @@ class CloudTraderTest {
     private val start = now + 6 * 3_600_000L
 
     /** A +EV spread side: fair 0.53 against a price of 0.48 + fee, five books pricing both sides, a sharp one among them. */
-    private fun row(id: String, ageMs: Long = 60_000L, live: Boolean = false, price: Double = 0.48, depth: Long = 50_000, starts: Long = start, event: String = "e-$id"): Opportunity {
+    private fun row(id: String, ageMs: Long = 60_000L, live: Boolean = false, price: Double = 0.48, depth: Long = 50_000, starts: Long = start, event: String = "e-$id", at: Long = now): Opportunity {
         val ev = NovigEvent(event, "BASKETBALL", "NBA", if (live) NovigEvent.STATUS_LIVE else NovigEvent.STATUS_PREGAME, "Boston Celtics @ New York Knicks", starts)
         val market = NovigMarket("m-$id", event, "SPREAD", "OPEN", "Spread", starts, MarketFee.GAME, listOf(NovigOutcome("o-$id", "NYK -3.5", "TBD"), NovigOutcome("x-$id", "BOS +3.5", "TBD")), strike = -3.5)
-        fun book(k: String, sharp: Boolean) = BookFair(BookPrices(k, k, listOf(1.78, 2.15), now - ageMs), listOf(0.54, 0.46), 0.03, sharp)
+        fun book(k: String, sharp: Boolean) = BookFair(BookPrices(k, k, listOf(1.78, 2.15), at - ageMs), listOf(0.54, 0.46), 0.03, sharp)
         val fair = FairLine(
             probabilities = listOf(0.53, 0.47), requestedSource = FairSource.BLEND, sourceUsed = FairSource.BLEND, method = DevigMethod.WORST_CASE,
             perBook = listOf(book("pinnacle", true), book("dk", false), book("fd", false), book("mgm", false), book("czr", false)),
@@ -44,8 +44,8 @@ class CloudTraderTest {
         return Opportunity(
             league = Leagues.byNovigName("NBA")!!, event = ev, market = market, outcome = market.outcomes.first(), marketLabel = "Spread", kind = LineKind.SPREAD,
             selection = "NYK -3.5", fair = fair, fairProbability = 0.53, quote = EvQuote(0.53, price, 0.0075), ladder = listOf(TakeLevel(price, depth)), depth = null,
-            suggestedStake = null, novigWidth = null, bookFetchedAtMs = now - 5_000, fairUpdatedMs = now - ageMs, refEvent = null,
-            lineKey = LineKey("ref-$id", LineKind.SPREAD, -3.5, 0, null, null), target = OutcomeTarget.Is(Side.HOME), fairAsOfMs = now - ageMs,
+            suggestedStake = null, novigWidth = null, bookFetchedAtMs = at - 5_000, fairUpdatedMs = at - ageMs, refEvent = null,
+            lineKey = LineKey("ref-$id", LineKind.SPREAD, -3.5, 0, null, null), target = OutcomeTarget.Is(Side.HOME), fairAsOfMs = at - ageMs,
         )
     }
 
@@ -89,7 +89,7 @@ class CloudTraderTest {
     fun `the same market is not ordered twice while the first is open, and its game cap holds`() = runBlocking {
         val t = trader()
         t.pass(listOf(row("a")), settings(), now)
-        val again = t.pass(listOf(row("a")), settings(), now + 120_000L)
+        val again = t.pass(listOf(row("a", at = now + 120_000L)), settings(), now + 120_000L)
         assertEquals(0, again.placed.size)
         assertTrue(again.skipped.keys.joinToString(), again.skipped.keys.any { it.contains("already open") })
         assertEquals(1, t.ledger.entries.size)
@@ -145,13 +145,13 @@ class CloudTraderTest {
         val t = trader(port)
         val s = settings(CloudTradeMode.LIVE)
         assertEquals(0, t.pass(listOf(row("a")), s, now).placed.size)
-        assertEquals(0, t.pass(listOf(row("a")), s, now + 30_000L).placed.size)
+        assertEquals(0, t.pass(listOf(row("a", at = now + 30_000L)), s, now + 30_000L).placed.size)
         assertEquals(1, port.sent.size)
         port.answer = { CloudOrderPort.Placed.Stop("GEOLOCATION_NOT_ALLOWED") }
-        val r = t.pass(listOf(row("b")), s, now + 5 * 60_000L)
+        val r = t.pass(listOf(row("b", at = now + 5 * 60_000L)), s, now + 5 * 60_000L)
         assertEquals("GEOLOCATION_NOT_ALLOWED", r.stopped)
         assertEquals("GEOLOCATION_NOT_ALLOWED", t.ledger.stopped)
-        assertEquals(0, t.pass(listOf(row("c")), s, now + 6 * 60_000L).placed.size)
+        assertEquals(0, t.pass(listOf(row("c", at = now + 6 * 60_000L)), s, now + 6 * 60_000L).placed.size)
         assertEquals(2, port.sent.size)
     }
 
