@@ -103,7 +103,8 @@ class CloudClientTest {
         assertTrue(server.takeRequest().path!!.contains("/repos/o/r/contents/bids.json.gz?ref=cloud-feed"))
         assertTrue((c.fetchBids() as CloudClient.Poll.Failed).why.contains("candidate list could not be read"))
         assertTrue(c.fetchBids() is CloudClient.Poll.Failed)
-        assertEquals(0, client(token = null).also { }.let { server.requestCount - 3 })
+        val before = server.requestCount
         assertTrue(client(token = null).fetchBids() is CloudClient.Poll.Failed)
+        assertEquals("no token, no request", before, server.requestCount)
     }
 }
