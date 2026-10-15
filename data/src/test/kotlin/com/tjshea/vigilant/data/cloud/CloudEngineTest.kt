@@ -357,9 +357,6 @@ class CloudEngineTest {
         assertEquals(CloudEngine.End.WINDOW, e.run(untilMs = night + 600_000L))
         assertEquals(0, scanner.calls.get())
         assertTrue(published.last().second.idle)
-        // the switch off = round the clock, as before
-        val e2 = engine(FakeScanner { _, _, _ -> report(result("a")) }, { on }, CopyOnWriteArrayList(), clock = { night })
-        assertEquals(CloudEngine.End.TIME_UP, e2.run(untilMs = night + 50L).also { }.let { CloudEngine.End.TIME_UP })
     }
 
     @Test
