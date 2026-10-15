@@ -1,21 +1,25 @@
-# CHECKPOINT 3366 — read me first, then TASKS.md
+# CHECKPOINT 3367 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T21:02:31Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `e838ad82a` (this checkpoint is the commit after it)
+**Written:** 2026-10-15T21:19:58Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `fe7108c83` (this checkpoint is the commit after it)
 
 ## Just done
-lease released; routine on account 2 works (stood down correctly)
+one-account behaviour: Tj's message in any account takes the lease from a routine, routine parks work on routine-wip and stops, docs + test
 
 ## Do this next
-Tj creates the routines on the other two accounts (07:20, 19:20 ET); then WATCH engine
+wait for Tj's three slot times, fix roster; check the routines' check-ins on the board
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M CLAUDE.md
+     M research/coordination/PROTOCOL.md
+     M tools/test_coord.sh
 
 ## Last ten checkpoints
 ```
+  063b8f882 ckpt 3366: lease released; routine on account 2 works (stood down correctly)
   9c430c30c ckpt 3365: routine failure #2 recorded (classifier blocks scripts from a self-cloned r
   babb89b26 ckpt 3364: pre-release: v0.109.0: Engine dashboard inside the app (Settings > Engine d
   6c2b70cfa ckpt 3363: TCL23a: routine setup rewritten (UI-created routines with the repo attached
@@ -25,8 +29,7 @@ Tj creates the routines on the other two accounts (07:20, 19:20 ET); then WATCH 
   d04b47104 ckpt 3359: TCL23c: Settings > Cloud scan shows which APIs work on GitHub + link to DAS
   69e1c2513 ckpt 3358: TCL23a: rotation failover (cover up to 2, whole duty first, INTERRUPTED sta
   fe049f26d ckpt 3357: TCL22a wallet retry in 60 s (CloudEngine, test), TCL22d CloudDashboard + Fe
-  0fe1a14fe ckpt 3356: TCL22 written (wallet, conflicts, address, dashboard)
 ```
 
-(4 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

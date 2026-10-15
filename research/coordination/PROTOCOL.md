@@ -37,3 +37,10 @@ Tj: "I have three Claude accounts with access to this repo. I want each of the t
 | a session is cut off while holding the lease | it goes stale after 20 minutes; the next session takes over and the board says "took over a stale lease". |
 | the lease is lost while you work (Tj forced it, or you went quiet 20+ minutes) | the next checkpoint prints `LEASE LOST`; your commits stay local; stop and tell Tj. |
 | a bug in coord.py | `push.sh` only blocks on exit status 3; any other status pushes. Test: `bash tools/test_coord.sh`. |
+
+## Chatting with any account, as if the three were one (Tj, 2026-10-15)
+- **A message from Tj takes the lease.** The UserPromptSubmit hook (`tools/capture_inbox.sh`) runs `coord.py acquire --kind interactive` before it saves and pushes the message, in whichever account he opened. It takes the repo from a running routine (which stands down at its next push: ROUTINE.md "Tj comes back mid-run", parking its work on `routine-wip-<date>`), from a stale holder, or from nobody.
+- **A second account chatting at the same time** is not taken from: its Claude says so and asks Tj; his word `--force` takes it, logged on the board. So two accounts never push over each other.
+- **What every account knows, because it is all in the repo:** the board notes (every lease change and handoff), `CHECKPOINT.md` (what was done and what is next, rewritten after each step), `INBOX.md` (every message Tj sends in ANY account, verbatim), `TASKS.md`, `research/review/CHANGES.md`, and `main`. A new session in any account reads them in its first briefing (`tools/resume.sh`). Idle for 20 minutes = the lease is stale and the next routine proceeds by itself.
+- **Control of the app from any account:** the app's settings are the phone's (Settings, written to `cloud-config`); code changes go through `main` and a Release like any session's; the engine picks code up from `main` at its next start. Nothing is tied to one account.
+- **Never:** two sessions pushing at once; a routine continuing after Tj has arrived; any account keeping a private plan outside the repo.
