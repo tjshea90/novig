@@ -268,4 +268,24 @@ class CloudBidsTest {
         assertTrue(lane.lines(now, rules).isEmpty())
         assertEquals(0 to 0, lane.readiness(now))
     }
+
+    @Test
+    fun `the Diagnostics lines say how old the list is, how many Novig sides are ready, and what the last read said`() = runBlocking {
+        val sent = BidCandidates.from(board(), settings, now, outPlayer)
+        val novig = FakeNovig(books(now))
+        val lane = CloudBidLane(novig, clock = { now })
+        val none = lane.report(now, null, rules).joinToString("\n")
+        assertTrue(none, none.contains("no candidate list has reached this phone yet"))
+        lane.put(CloudBids(now - 30_000, false, 4L, sent))
+        novig.readAt = now
+        lane.refresh(now, 100)
+        val text = lane.report(now, CloudStatus(bidsAtMs = now - 30_000, bidsCount = sent.size, bidsBytes = 4096, heartbeatMs = now - 5_000), rules).joinToString("\n")
+        assertTrue(text, text.contains("candidate list: ${sent.size} lines made 30s ago at settings rev 4 from a finished scan"))
+        assertTrue(text, text.contains("file 4 KB"))
+        assertTrue(text, text.contains("Novig sides read in the last 90s:"))
+        assertTrue(text, text.contains("engine: candidate pass 30s ago, ${sent.size} lines · heartbeat 5s ago"))
+        novig.fail = "HTTP 429"
+        lane.refresh(now + 200_000, 100)
+        assertTrue(lane.report(now + 200_000, null, rules).joinToString("\n").contains("PROBLEM: HTTP 429"))
+    }
 }

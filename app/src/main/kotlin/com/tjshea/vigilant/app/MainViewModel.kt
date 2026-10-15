@@ -2828,7 +2828,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }.getOrNull(),
             calibrationReport = runCatching { com.tjshea.vigilant.data.tracker.FairCalibration.lines(_state.value.bets) }.getOrNull(),
-            cloudBidsReport = runCatching { if (_state.value.settings.bidsFromCloud) c.cloudBids.report(System.currentTimeMillis(), c.cloud.latest.status) else null }.getOrNull(),
+            cloudBidsReport = runCatching { if (_state.value.settings.bidsFromCloud) c.cloudBids.report(System.currentTimeMillis(), c.cloud.latest.status, com.tjshea.vigilant.data.novig.trading.maker.MakerRules.of(_state.value.settings)) else null }.getOrNull(),
             walletReport = runCatching {
                 val st = _state.value.settings
                 val vg = st.vigGuards
