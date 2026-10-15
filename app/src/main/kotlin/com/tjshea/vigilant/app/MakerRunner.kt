@@ -285,7 +285,7 @@ class MakerRunner(
         val cloudSource = cnoSet == null && settings.bidsFromCloud
         val cloud = if (cloudSource) c.cloudBids.current?.takeIf { clock() - it.atMs <= CLOUD_BIDS_MAX_AGE_MS } else null
         val result = if (cnoSet == null && !cloudSource) scan().result else null
-        val base = cnoSet?.lines ?: if (cloudSource) c.cloudBids.lines(now, rules, keep = resting + busy) else MakerLines.from(result, settings, now, unavailable = playerOut(now))
+        val base = cnoSet?.lines ?: if (cloudSource) c.cloudBids.lines(now, rules, keep = resting + busy, prune = false) else MakerLines.from(result, settings, now, unavailable = playerOut(now))
         val lines = withMoves(MakerLines.withoutOwn(base, bids), rules, now, read = false)
         val decisions = MakerQuote.decideAll(lines, rules, now, held).map { d ->
             if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, MakerDesk.DENIED) else d
