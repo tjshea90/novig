@@ -125,7 +125,7 @@ object CloudFreshness {
             (if (soonFair.isNotEmpty() && soon.size < rows.size) " · games within ${SOON_HOURS}h: fair ${CloudText.dur(median(soonFair))}" else "")
         val detail = "Across the ${rows.size} bets shown: Novig prices were read a median ${CloudText.dur(nm)} ago (the oldest ${CloudText.dur(nx)}); " +
             (fm?.let { "the oldest book price behind each fair line is a median ${CloudText.dur(it)} old (the oldest ${CloudText.dur(fair.max())}). " } ?: "") +
-            (if (soon.isNotEmpty() && soonNovig.isNotEmpty()) {
+            (if (soon.isNotEmpty() && soon.size < rows.size && soonNovig.isNotEmpty()) {
                 "The ${soon.size} starting within ${SOON_HOURS} h: Novig a median ${CloudText.dur(median(soonNovig))} ago" +
                     (if (soonFair.isNotEmpty()) ", fair odds ${CloudText.dur(median(soonFair))} (the oldest ${CloudText.dur(soonFair.max())}). " else ". ")
             } else "") +
