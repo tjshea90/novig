@@ -1,12 +1,7 @@
 {
  "v": 1,
- "holder": "856389",
- "label": "acct-7542bf",
- "kind": "interactive",
- "task": "TCL20",
- "since": 1792044039,
- "sinceIso": "2026-10-15T06:00:39Z",
- "hb": 1792046461,
- "hbIso": "2026-10-15T06:41:01Z",
+ "holder": null,
+ "hb": 1792047691,
+ "hbIso": "2026-10-15T07:01:31Z",
  "leaseS": 1200
 }
