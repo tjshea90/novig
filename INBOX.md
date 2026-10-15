@@ -7606,3 +7606,8 @@ https://github.com/tjshea90/novig/blob/cloud-feed/DASHBOARD.md
 
 However, I like things in easy to view format. Can you put the dashboard inside the vigilant android app with easy to see organized information and meters/graphs optimized for mobile phone viewing which is synced to the GitHub engine
 ```
+
+## 2026-10-15T20:00:16Z
+```
+Tell me exactly what to do step by step to make the automatic claude sessions work and clean up anything that doesn't work
+```
