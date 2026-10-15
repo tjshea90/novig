@@ -206,6 +206,13 @@ class CloudLink(private val c: AppContainer) {
             // A failed write is tried again; settings are also re-sent every 10 minutes so the engine always has them (a new job reads them first thing).
             while (isActive) { delay(RETRY_PUSH_MS); c.settingsStore.flow.value?.let { pushSettings(it) } }
         }
+        // 3. a key added or changed in the phone's key store goes to GitHub's secrets by itself (Tj, 2026-10-15: "If I add api keys inside my phone vigilant app, will it automatically upload them to GitHub ... If it doesn't already do this, make it do so"):
+        // until now the upload rode only on a settings push, so a new key with no setting change waited for the next one. A changed fingerprint is the only trigger (no network when nothing changed), only while the cloud scan is on.
+        scope.launch(Dispatchers.IO) {
+            c.keyStore.flow.filterNotNull().debounce(3_000L).collect {
+                if (c.settingsStore.flow.value?.cloudDrives == true && hasToken()) runCatching { sendKeys(auto = true) }
+            }
+        }
         // 4. the bid desk's Novig side (Tj, 2026-10-15): while bids are priced from GitHub's candidates, the candidates' order books are read over this phone's key and stream and a pass judges them. Sleeps otherwise.
         scope.launch(Dispatchers.IO) {
             var lastPassFor = 0L
