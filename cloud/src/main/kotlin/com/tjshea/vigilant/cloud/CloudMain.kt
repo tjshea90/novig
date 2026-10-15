@@ -5,6 +5,8 @@ import com.tjshea.vigilant.data.cloud.CloudConfig
 import com.tjshea.vigilant.data.cloud.CloudEngine
 import com.tjshea.vigilant.data.cloud.CloudFeed
 import com.tjshea.vigilant.data.cloud.CloudKeys
+import com.tjshea.vigilant.data.cloud.CloudNovig
+import com.tjshea.vigilant.data.cloud.CloudRanking
 import com.tjshea.vigilant.data.cloud.CloudSources
 import com.tjshea.vigilant.data.cloud.CloudStatus
 import com.tjshea.vigilant.data.keys.UsageBook
@@ -14,6 +16,7 @@ import com.tjshea.vigilant.data.novig.lab.gh.EdgeLog
 import com.tjshea.vigilant.data.novig.lab.gh.EdgeRow
 import com.tjshea.vigilant.data.novig.trading.maker.BidCandidates
 import com.tjshea.vigilant.data.pinnodds.DayJournal
+import com.tjshea.vigilant.data.scanner.ApiChain
 import com.tjshea.vigilant.data.scanner.Scanner
 import com.tjshea.vigilant.data.store.JsonFileStore
 import com.tjshea.vigilant.data.vigilantHttpClient
@@ -56,6 +59,10 @@ fun main(args: Array<String>) = runBlocking {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val sources = CloudSources(http, json, usage, scope, File(out, "state").apply { mkdirs() }, CloudKeys::fromEnv)
     val scanner = Scanner(novig)
+    // The engine's own Novig key (Tj, 2026-10-15): a read-only key sent as two secrets. Without them the engine reads the public routes as before; with them it reads through the signed route and keeps the key's websocket.
+    val novigKeyId = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_ID)
+    val novigKeyPem = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_PEM)
+    val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = { println(it) }) else null
     val edge = EdgeLog(DayJournal(File(out, "cloud"), "edge", EdgeRow.serializer()) { it.atMs })
     val git = Git(token)
     val log = Log(File(out, "cloud-engine.log"))
@@ -65,11 +72,20 @@ fun main(args: Array<String>) = runBlocking {
     val until = started + minutes * 60_000L
     log("cloud engine starting: $minutes min, run $runId, keys present: " + CloudKeys.ALL.filter { CloudKeys.fromEnv(it).isNotEmpty() }.joinToString(",").ifBlank { "none (public feeds only)" })
 
+    novigKeyed?.problem?.let { log("Novig key: $it") }
+    // The APIs' measured ranking survives the handover: the previous job's file is read back before the first scan ([CloudRanking]), and this job writes its own with every push.
+    runCatching { RankingSeed.read(git, cfgDir) }.getOrNull()?.let { text ->
+        val seeded = CloudRanking.decode(text, System.currentTimeMillis())
+        if (seeded.isNotEmpty()) { ApiChain.measures = seeded; log("ranking: ${seeded.size} measurements carried over from the previous job") }
+    }
+
     val flusher = scope.launch { while (isActive) { runCatching { publisher.flush() }; delay(4_000L) } }
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
+        prepare = { s -> novigKeyed?.configure(s) },
+        novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },
         bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
@@ -78,6 +94,7 @@ fun main(args: Array<String>) = runBlocking {
     val end = engine.run(until, started)
     log("cloud engine ending: $end after ${(System.currentTimeMillis() - started) / 60_000L} min, ${engine.passes} passes")
     runCatching { publisher.flush(force = true) }
+    novigKeyed?.close()
     flusher.cancel()
     scope.cancel()
     File(out, "end").writeText(end.name)
@@ -98,6 +115,14 @@ private class ConfigReader(private val git: Git, private val dir: File) {
         if (git.run(dir, "fetch", "-q", "--depth=1", "origin", "cloud-config") != 0) return cached
         val text = git.out(dir, "show", "FETCH_HEAD:settings.json") ?: return cached
         return CloudConfig.parse(text)?.also { cached = it; sha = head } ?: cached
+    }
+}
+
+/** The previous job's `ranking.json` from `cloud-feed`, read with git like [ConfigReader] reads the settings (the checkout already has the token). Null when there is none. */
+private object RankingSeed {
+    fun read(git: Git, dir: File): String? {
+        if (git.run(dir, "fetch", "-q", "--depth=1", "origin", "cloud-feed") != 0) return null
+        return git.out(dir, "show", "FETCH_HEAD:ranking.json")
     }
 }
 
@@ -173,6 +198,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
             git.run(dir, "checkout", "-q", "--orphan", "cloud-feed")
         }
         feedBytes?.let { File(dir, "feed.json.gz").writeBytes(it) }
+        ApiChain.measures.takeIf { it.isNotEmpty() }?.let { File(dir, "ranking.json").writeText(CloudRanking.encode(it)) }
         File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }
         File(dir, "status.json").writeText(CloudStatus.text(st.copy(heartbeatMs = now)))
         logTail().takeIf { it.isNotBlank() }?.let { File(dir, "engine-log.txt").writeText(it + "\n") }
