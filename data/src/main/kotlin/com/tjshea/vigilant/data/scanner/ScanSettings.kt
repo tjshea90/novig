@@ -922,6 +922,9 @@ data class ScanSettings(
     /** Save every bet, bid and the scan study's days to GitHub's `phone-data` branch automatically (Tj, 2026-10-14), whenever a GitHub token is saved in Settings › Cloud scan. */
     val cloudSave: Boolean get() = gates.cloudSave
 
+    /** The GitHub engine keeps to 08:00-22:00 Eastern ([com.tjshea.vigilant.data.cloud.EngineHours]). */
+    val cloudHours: Boolean get() = gates.cloudHours
+
     /** The bid desk is on (automatic or Recommend) and priced from Vigilant's scan: it needs a line for every side worth a bid, not only the +EV ones the Feed lists. CNO-priced bids never read Vigilant's scan. */
     val bidsNeedLines: Boolean get() = (maker || makerRecommend) && makerSource == BidSource.VIGILANT
 
@@ -1347,6 +1350,8 @@ data class ApiGates(
     /** Cloud scan on / history saving to GitHub on (see [ScanSettings.cloudScan]). */
     val cloudScan: Boolean = false,
     val cloudSave: Boolean = true,
+    /** The GitHub engine works only 08:00-22:00 America/New_York ([com.tjshea.vigilant.data.cloud.EngineHours]), Tj 2026-10-15; off = round the clock. */
+    val cloudHours: Boolean = true,
     /** The one main switch for every live feature and socket (Tj, 2026-10-14): see [LiveMasterMode]. */
     val liveMaster: LiveMasterMode = LiveMasterMode(),
     /**
