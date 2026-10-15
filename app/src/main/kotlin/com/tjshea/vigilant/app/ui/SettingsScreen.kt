@@ -1517,6 +1517,10 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
         "Scan on GitHub", "On: this phone makes no scan of its own and calls no odds API for it. Off: the app is what it was.",
         s.cloudScan, tag = "cloudScanSwitch", enabled = u.hasToken,
     ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudScan = v)) } }
+    SwitchRow(
+        "Only 8 am to 10 pm Eastern", "GitHub's engine starts by itself at 8:00 and stops at 22:00 America/New_York every day (daylight saving included). Off: it runs round the clock.",
+        s.cloudHours, tag = "cloudHoursSwitch", enabled = u.hasToken,
+    ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudHours = v)) } }
     if (s.cloudScan && !s.cloudDrives) {
         Text(
             "Paused with scanning: GitHub's engine stands down until you resume.",
