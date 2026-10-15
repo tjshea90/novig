@@ -50,18 +50,15 @@ class CloudTextTest {
     }
 
     @Test
-    fun `scan-affecting settings and display or phone-only settings are told apart`() {
-        val base = ScanSettings(leagues = setOf("NBA"))
-        val key = CloudScanKey.of(base)
-        // filtered at publish time, or phone-only: no re-scan
-        assertEquals(key, CloudScanKey.of(base.copy(minEvPercent = 0.04, maxEvPercent = 0.2, feedSort = com.tjshea.vigilant.data.scanner.FeedSort.START, bankroll = 999.0)))
-        assertEquals(key, CloudScanKey.of(base.copy(autoBet = true, autoBetMinEv = 0.1, apiMaxStake = 3.0, makerMargin = 0.02, makerMaxBids = 50, cnoEnabled = true)))
-        // what is read or how it is priced: a re-scan
-        assertNotEquals(key, CloudScanKey.of(base.copy(leagues = setOf("NBA", "NHL"))))
-        assertNotEquals(key, CloudScanKey.of(base.copy(daysAhead = 3)))
-        assertNotEquals(key, CloudScanKey.of(base.copy(sgoPro = true)))
-        assertNotEquals(key, CloudScanKey.of(base.copy(sharpWeight = 0.5)))
-        assertNotEquals(key, CloudScanKey.of(base.copy(gates = base.gates.copy(useBoltOdds = !base.gates.useBoltOdds))))
-        assertNotEquals(key, CloudScanKey.of(base.copy(maker = true, makerFocus = com.tjshea.vigilant.data.scanner.BidFocus.LOW_USAGE)))
+    fun `the settings line says whether GitHub has read and applied the latest settings`() {
+        val ok = st().copy(configRev = 50)
+        assertEquals(null, CloudText.settings(ok, 0, 0, now))
+        assertEquals(CloudText.Level.GOOD, CloudText.settings(ok, 50, now - 5_000, now)!!.first)
+        assertEquals(CloudText.Level.INFO, CloudText.settings(ok.copy(configRev = 40), 50, now - 5_000, now)!!.first)
+        val stuck = CloudText.settings(ok.copy(configRev = 40), 50, now - 120_000, now)!!
+        assertEquals(CloudText.Level.WARN, stuck.first); assertTrue(stuck.second.contains("has not read your latest settings"))
+        val pending = CloudText.settings(ok.copy(settingsPending = true), 50, now - 5_000, now)!!
+        assertEquals(CloudText.Level.WARN, pending.first); assertTrue(pending.second.contains("next scan"))
+        assertEquals(CloudText.Level.INFO, CloudText.settings(null, 50, now - 1_000, now)!!.first)
     }
 }
