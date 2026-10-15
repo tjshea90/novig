@@ -24,6 +24,8 @@ object CloudScanKey {
         "linesPerGame", "propsPerGame", "maxBooksPerScan", "fillBudget", "useBookProps", "bookPropSet", "bookPropCreditsPerScan", "bookPropHours", "propLineGamesPerScan", "bookPropReuseMinutes",
         // bids on, and low-usage bids, change the scan's own profile (`ScanSettings.effective`) and whether candidate lines are made at all
         "maker", "makerRecommend", "makerSource", "makerFocus", "lowUsageBooks",
+        // BoltOdds and Novig's feed run on the engine too (Tj, 2026-10-15): the switches decide which sockets it keeps and what it reads from them
+        "gates.useBoltOdds", "gates.boltAllBooks", "gates.boltSocket", "gates.novigSocket", "gates.novigBbo", "gates.novigKeepOpen", "gates.novigCompress",
         "gates.usePinnwire", "gates.usePinnapi", "gates.opAllBooks", "gates.op4Fair", "gates.sgoAllBooks", "gates.propLineAllBooks", "gates.askAllSources", "gates.rankByMeasure",
     )
     private val pricing = setOf(
@@ -56,8 +58,8 @@ object CloudScanKey {
         "miniSource", "cnoFilters", "floatingWidget", "cnoCheckBooks", "cnoPlayerTeams", "cnoOnlyAgreed", "widgetRescanMinutes", "cnoLivePrices", "bookState", "startsWithinHours", "autoScan",
         "autoScanSeconds", "autoScanMinutes", "autoScanKeepAwake", "alertMinEv", "paused", "killed", "killedAtMs", "schema",
         // gates: sockets, the live lane, the streaming engine, the guards of orders: all the phone's
-        "gates.usePinnodds", "gates.liveOnly", "gates.cloudScan", "gates.cloudSave", "gates.liveMaster", "gates.useBoltOdds", "gates.boltAllBooks", "gates.novigBbo", "gates.novigKeepOpen", "gates.novigSocket",
-        "gates.boltSocket", "gates.pinnSocket", "gates.kalshiSocket", "gates.novigOrderPush", "gates.novigSocketOrders", "gates.novigCompress", "gates.moneyDeposited",
+        "gates.usePinnodds", "gates.liveOnly", "gates.cloudScan", "gates.cloudSave", "gates.liveMaster",
+        "gates.pinnSocket", "gates.kalshiSocket", "gates.novigOrderPush", "gates.novigSocketOrders", "gates.moneyDeposited",
         "gates.streamScan", "gates.streamGapSeconds", "gates.streamLive", "gates.boltLiveMinCompanies",
         "gates.boltLiveMaxAgeSeconds", "gates.boltLiveMaxSpreadPoints", "gates.boltLiveReal",
         // vigGuards: the auto-bet's own rules (the bid desk's are in [bids])

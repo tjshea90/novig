@@ -97,4 +97,17 @@ class CloudScanKeyTest {
         val bad = CloudScanKey.flat(base).keys.filter { k -> listOf("key", "token", "secret", "pem", "password").any { k.contains(it, ignoreCase = true) } }
         assertEquals("a setting that looks like a secret would reach a public branch: $bad", emptyList<String>(), bad.filter { it != "gates.novigKeepOpen" })
     }
+
+    @Test
+    fun `the BoltOdds and Novig feed switches reach the engine as settings that change what it reads (Tj, 2026-10-15)`() {
+        for (path in listOf("gates.useBoltOdds", "gates.boltAllBooks", "gates.boltSocket", "gates.novigSocket", "gates.novigBbo", "gates.novigKeepOpen", "gates.novigCompress")) {
+            assertEquals(path, Kind.FETCH, CloudScanKey.kindOf(path))
+        }
+        // the orders the phone places and the live lane stay the phone's
+        for (path in listOf("gates.novigOrderPush", "gates.novigSocketOrders", "gates.pinnSocket", "gates.usePinnodds")) assertEquals(path, Kind.PHONE, CloudScanKey.kindOf(path))
+        val g = base.gates
+        assertNotEquals(CloudScanKey.fetchKey(base), CloudScanKey.fetchKey(base.copy(gates = g.copy(useBoltOdds = !g.useBoltOdds))))
+        assertNotEquals(CloudScanKey.fetchKey(base), CloudScanKey.fetchKey(base.copy(gates = g.copy(novigSocket = !g.novigSocket))))
+        assertEquals(CloudScanKey.fetchKey(base), CloudScanKey.fetchKey(base.copy(gates = g.copy(novigSocketOrders = !g.novigSocketOrders))))
+    }
 }
