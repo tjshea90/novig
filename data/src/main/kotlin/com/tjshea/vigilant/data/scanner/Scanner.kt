@@ -749,7 +749,7 @@ class Scanner(
             val done = synchronized(settled) { settled.toSet() }
             val out = HashSet<String>()
             for (league in settings.selectedLeagues) {
-                val mine = sources.filter { it.supports(league) }
+                val mine = sources.filter { it.supports(league) && it.holdsBackList }
                 fun ready(list: List<ReferenceSource>, lines: Boolean = false) = list.all {
                     "${it.id}|${league.novigName}" in done || (lines && it.linesFirst && "${it.id}|${league.novigName}|lines" in done)
                 }

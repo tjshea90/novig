@@ -290,6 +290,10 @@ class CloudEngine(
     /** A scan's own account of itself, short: what Novig gave, whether it throttled, and what each feed said (errors included). Never a key. */
     private fun describe(r: com.tjshea.vigilant.data.scanner.ScanReport): String = buildString {
         // Where the scan's time went (Tj, 2026-10-15: "see if there is any way to speed up scanning"): the board, each feed's finish, the Novig prices per second by route, what was left too late.
+        // How far from +EV the priced lines are (the numbers that say whether re-reading the hopeless ones is worth a read): +EV, within 2%, 2-5%, 5-10%, further.
+        r.result?.opportunities?.mapNotNull { it.evPercent }?.takeIf { it.isNotEmpty() }?.let { evs ->
+            append("EV spread of ${evs.size} priced lines: +EV ${evs.count { it > 0 }} · 0 to -2% ${evs.count { it <= 0 && it > -0.02 }} · -2 to -5% ${evs.count { it <= -0.02 && it > -0.05 }} · -5 to -10% ${evs.count { it <= -0.05 && it > -0.10 }} · below -10% ${evs.count { it <= -0.10 }}; ")
+        }
         r.timing?.let { t -> append(com.tjshea.vigilant.data.scanner.ScanTiming.text(t, r.booksFetched + r.booksNotModified, r.booksViaKey, r.booksViaPush)).append("; ") }
         append("Novig books: ${r.booksFetched} read, ${r.booksNotModified} unchanged, ${r.booksFromCache} from cache, ${r.booksTooLate} left out as too late")
         r.retryAfterSeconds?.let { append("; Novig asked us to slow down ${it}s") }

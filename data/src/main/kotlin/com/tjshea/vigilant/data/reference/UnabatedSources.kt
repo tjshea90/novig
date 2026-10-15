@@ -151,6 +151,7 @@ private val LEAGUES = setOf("NFL", "NCAAF", "NBA", "NCAAB", "WNBA", "MLB", "NHL"
 class UnabatedGamesSource(private val feed: UnabatedFeed, private val clock: () -> Long = System::currentTimeMillis) : ReferenceSource {
     override val id = ID
     override val displayName = "Unabated"
+    override val holdsBackList = false
     override fun supports(league: League) = league.novigName in LEAGUES
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val r = feed.read(league, "straight", settings) ?: return RefSnapshot(league.oddsApiSportKey, emptyList(), clock(), provider = ID)
@@ -164,6 +165,7 @@ class UnabatedGamesSource(private val feed: UnabatedFeed, private val clock: () 
 class UnabatedPropsSource(private val feed: UnabatedFeed, private val clock: () -> Long = System::currentTimeMillis) : ReferenceSource {
     override val id = ID
     override val displayName = "Unabated props"
+    override val holdsBackList = false
     override val propsOnly = true
     override val extraPropTypes: Set<String> get() = OpProps.ALL_TYPES
     override fun supports(league: League) = league.novigName in LEAGUES

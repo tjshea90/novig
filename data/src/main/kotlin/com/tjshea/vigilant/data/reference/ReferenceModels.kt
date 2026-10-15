@@ -149,6 +149,12 @@ interface ReferenceSource {
      */
     val propsOnly: Boolean get() = false
 
+    /**
+     * False for a last-resort feed slow enough that waiting for it only delays the list (Unabated Free: one request every 5 seconds, 95 s of a 548 s scan on the GitHub engine; it prices only the gaps the better feeds
+     * leave). A league's bets mid-scan wait for every source that holds them back; a source that does not appears in the list when it answers (Tj, 2026-10-15: "is this speed too slow").
+     */
+    val holdsBackList: Boolean get() = true
+
     /** How long a fetched snapshot may be re-used instead of calling again. 0 = fetch on every scan. */
     fun reuseMs(settings: ScanSettings): Long = 0L
 
