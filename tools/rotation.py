@@ -82,17 +82,26 @@ def slot_instants(now, n_slots=3):
     return sorted(out, key=lambda x: x[2])
 
 
-def missed_slots(roster, notes, now):
+def missed_slots(roster, notes, now, away=None):
     """Slots (slot, day, instant, tag, state) that need covering: state NO-SHOW = the account left no board note between the slot instant and instant+GRACE_S (usage cap, no repo, dead routine);
     INTERRUPTED = it checked in but never posted its finished-duty note (cut off by its usage cap mid-task) and the duty was ANALYST or ENGINEER (a cut-off WATCH is cheap and not worth covering).
-    Only slots past that grace, scheduled after the account joined, with no 'rotation-cover slot=S date=D' note. `notes` = [(meta, subject)]. Pure."""
+    Only slots past that grace, scheduled after the account joined, with no 'rotation-cover slot=S date=D' note. `notes` = [(meta, subject)]. Pure.
+    `away` = {tag: ISO time}: an account Tj said is out of usage until then (research/coordination/away.json). Its slots before that time are state AWAY, covered at once (no grace, no waiting)."""
     from zoneinfo import ZoneInfo
     accounts = roster.get("accounts", [])
     if len(accounts) < 3:
         return []   # with fewer accounts every run already does ALL duties; nobody is "missing"
     out = []
     for s, day, inst in slot_instants(now):
-        if (now - inst).total_seconds() < GRACE_S:
+        tag0 = accounts[s]["tag"]
+        gone = (away or {}).get(tag0)
+        is_away = False
+        if gone:
+            try:
+                is_away = inst < datetime.datetime.fromisoformat(gone.replace("Z", "+00:00"))
+            except Exception:
+                is_away = False
+        if (now - inst).total_seconds() < GRACE_S and not is_away:
             continue
         acc = accounts[s]
         tag = acc["tag"]
@@ -118,7 +127,9 @@ def missed_slots(roster, notes, now):
                 covered = True
         if covered:
             continue
-        if not seen:
+        if is_away and not (seen and finished):
+            out.append((s, day, inst, tag, "AWAY"))
+        elif not seen:
             out.append((s, day, inst, tag, "NO-SHOW"))
         elif not finished and duty_for(s, day) in ("ANALYST", "ENGINEER", "ALL"):
             out.append((s, day, inst, tag, "INTERRUPTED"))
@@ -276,7 +287,12 @@ def missed():
     roster = read_roster()
     now = datetime.datetime.now(datetime.timezone.utc)
     notes = board_notes()
-    m = paused_slots(roster, notes, now) + missed_slots(roster, notes, now)
+    away = {}
+    try:
+        away = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "research", "coordination", "away.json")))
+    except Exception:
+        pass
+    m = paused_slots(roster, notes, now) + missed_slots(roster, notes, now, away)
     if not m:
         print("ROTATION  no missed slots")
         return 0
