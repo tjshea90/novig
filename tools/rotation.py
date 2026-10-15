@@ -206,6 +206,8 @@ def selftest():
     # covered once by someone: gone
     notes.append(({"from": "a/yy", "at": "2026-10-16T11:30:00Z"}, "rotation-cover slot=2 date=2026-10-15"))
     assert missed_slots(roster, notes, now) == []
+    # dormant: away_until is set only for a future time
+    assert away_until("nobody-at-all") is None
     # an account Tj said is out of usage: its slots before the 'away until' time are AWAY at once (no grace), and a cover removes them
     t0 = roster["accounts"][0]["tag"]
     soon = dt.datetime(2026, 10, 16, 11, 30, tzinfo=dt.timezone.utc)
@@ -281,8 +283,23 @@ def board_notes():
     return [(meta, meta.get("subject", "")) for _, meta, _ in coord.notes()]
 
 
+def away_until(tag, now=None):
+    """The UTC datetime until which `tag` is dormant (out of usage, research/coordination/away.json), or None. Pure apart from reading the file."""
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    try:
+        d = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "research", "coordination", "away.json")))
+        until = datetime.datetime.fromisoformat(str(d.get(tag, "")).replace("Z", "+00:00"))
+    except Exception:
+        return None
+    return until if until > now else None
+
+
 def checkin(tag):
     import coord
+    until = away_until(tag)
+    if until is not None:
+        print("ROTATION  DORMANT: %s is out of usage until %s (research/coordination/away.json). Do nothing: no lease, no push, no workflow. Say so in one line and stop." % (tag, until.isoformat()))
+        return 5
     roster = read_roster()
     s = slot_of(tag, roster)
     day = today_et()

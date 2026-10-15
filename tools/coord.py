@@ -195,9 +195,25 @@ def new_lease(me, kind, task, old, t):
             "since": since, "sinceIso": iso(since), "hb": t, "hbIso": iso(t), "leaseS": LEASE_S}
 
 
+def dormant_until(label):
+    """A routine of an account that is out of usage (research/coordination/away.json) must not start: the datetime it is dormant until, else None."""
+    try:
+        import datetime as _dt
+        d = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "research", "coordination", "away.json")))
+        until = _dt.datetime.fromisoformat(str(d.get(str(label).split("/")[0], "")).replace("Z", "+00:00"))
+        return until if until > _dt.datetime.now(_dt.timezone.utc) else None
+    except Exception:
+        return None
+
+
 def acquire(kind=None, task=None, force=False, quiet=False):
     me = identity()
     kind = kind or me["kind"]
+    if kind == "routine" and not force:
+        u = dormant_until(me["label"])
+        if u is not None:
+            print("COORD  DORMANT: this account (%s) is out of usage until %s (research/coordination/away.json). A routine does nothing: no lease, no push." % (me["label"], u.isoformat()), file=sys.stderr)
+            return 5
     if kind != me["kind"]:
         me["kind"] = kind
         save(ID_FILE, {k: me[k] for k in ("nonce", "label", "kind")})
