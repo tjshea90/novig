@@ -30,6 +30,8 @@ data class KeyView(
     val lastCallMs: Long?,
     /** True when [left] is the provider's own figure rather than our count. */
     val serverReported: Boolean,
+    /** When the provider's own figure was read (a call's answer, or its account page), on either machine ([UsageMerge]): how old the "left" is. */
+    val figureAtMs: Long? = null,
 )
 
 /** One provider's meter: per-key rows plus totals. */
@@ -93,6 +95,7 @@ object UsageViews {
                 note = u.lastNote,
                 lastCallMs = u.lastCallMs,
                 serverReported = u.remaining != null,
+                figureAtMs = u.figureAtMs.takeIf { u.remaining != null },
             )
         }
         // Paced: what today's scans may still spend, over the keys a scan could use (known plans only): a paid key's day share, a free key down to its reserve.

@@ -143,6 +143,9 @@ data class UiState(
     val op4Keys: List<String> = emptyList(),
     /** Every provider's usage ledger, updated after each call (the meters). */
     val usage: UsageBook = UsageBook(),
+    /** What the GitHub engine spent of this phone's keys (already folded into [usage]) and when it published that: the meters say how much of today's count was GitHub's. */
+    val cloudUsage: UsageBook = UsageBook(),
+    val cloudUsageAtMs: Long = 0L,
     val bets: List<TrackedBet> = emptyList(),
     /** The Tracker's "Check odds now" is running. */
     val checkingOdds: Boolean = false,
@@ -588,7 +591,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             // Every API call is counted as it happens (a scan's 1,500 Novig reads each change the meter): the screen takes the newest count
             // at most once a second, or each read would recompose the whole app mid-scan (Tj, 2026-09-30: "very laggy then crashed").
-            followThrottled(c.usage.flow, USAGE_MIRROR_MS) { u -> _state.update { it.copy(usage = u) } }
+            // The engine's API usage is laid over the phone's own (Tj, 2026-10-15), so the meters count what both spent.
+            followThrottled(kotlinx.coroutines.flow.combine(c.usage.flow, c.cloudUsage) { u, cloud -> u to cloud }, USAGE_MIRROR_MS) { (u, cloud) ->
+                _state.update { it.copy(usage = c.mergedUsage(u), cloudUsage = c.cloudUsageBook(), cloudUsageAtMs = cloud?.at ?: 0L) }
+            }
         }
         viewModelScope.launch {
             runCatching { c.cno.load() }
@@ -2052,7 +2058,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val inputs = gatherDiag()
             // The meter as it stands this moment (a balance just read may not have reached the state yet).
             // The window shows a cut-down copy (a megabyte in one scrolling Text was the lag): the file and Share with Claude have the whole, budgeted one.
-            val text = withContext(Dispatchers.Default) { DiagnosticsFile.preview(DiagnosticsFile.build(_state.value.copy(usage = c.usage.flow.value), diagnosticsExtras(inputs), System.currentTimeMillis())) }
+            val text = withContext(Dispatchers.Default) { DiagnosticsFile.preview(DiagnosticsFile.build(_state.value.copy(usage = c.mergedUsage(), cloudUsage = c.cloudUsageBook(), cloudUsageAtMs = c.cloudUsage.value?.at ?: 0L), diagnosticsExtras(inputs), System.currentTimeMillis())) }
             _state.update { it.copy(report = ReportUi("Diagnostics", text)) }
         }
     }
@@ -2160,7 +2166,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val now = System.currentTimeMillis()
                 stage = "reading the recorders' journals (last $DIAG_DAYS days)"
                 val extras = diagnosticsExtras(inputs)
-                val st = _state.value.copy(usage = c.usage.flow.value)
+                val st = _state.value.copy(usage = c.mergedUsage(), cloudUsage = c.cloudUsageBook(), cloudUsageAtMs = c.cloudUsage.value?.at ?: 0L)
                 stage = "writing the report"
                 val text = DiagnosticsFile.build(st, extras, now)
                 stage = "saving the file"

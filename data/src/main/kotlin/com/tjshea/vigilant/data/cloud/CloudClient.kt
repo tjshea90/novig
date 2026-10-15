@@ -104,6 +104,23 @@ class CloudClient(
         }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
     }
 
+    /** The engine's API usage snapshot (`usage.json`, [CloudUsage]), or [Poll.NotModified] when [etag] is still current. Keys are ids: the caller maps them to its own ([CloudUsage.rekey]). */
+    suspend fun fetchUsage(etag: String?): Poll<CloudUsage.File> = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
+        val b = req("contents/usage.json?ref=$FEED_BRANCH").header("Accept", RAW)
+        if (etag != null) b.header("If-None-Match", etag)
+        runCatching {
+            http.newCall(b.build()).execute().use { r ->
+                note(r)
+                when {
+                    r.code == 304 -> Poll.NotModified
+                    r.isSuccessful -> CloudUsage.decode(r.body?.string().orEmpty())?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's usage could not be read")
+                    else -> Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
+                }
+            }
+        }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
+    }
+
     /** Writes the settings the engine reads (creating the branch the first time). Null = done; otherwise why not. */
     suspend fun writeConfig(config: CloudConfig): String? =
         putFile(CONFIG_BRANCH, "settings.json", CloudConfig.text(config).toByteArray(Charsets.UTF_8), "settings rev ${config.rev}")

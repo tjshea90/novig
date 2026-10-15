@@ -69,6 +69,12 @@ fun meterViews(state: UiState, now: Long): List<ProviderView> =
         .filter { it.id != QuotaPolicy.ODDSPAPI_FREE.id || state.op4Keys.isNotEmpty() || state.settings.oddsPapiFree }
         .map { p -> UsageViews.build(p, keysFor(state, p), state.usage.providers[p.id], now, if (p.id == QuotaPolicy.PARLAY.id) PARLAY_PACE else null) }
 
+/** Requests the GitHub engine made to [providerId] today, from the usage it last published; 0 when it published none or its figure is from an earlier day. */
+fun cloudCallsToday(state: UiState, providerId: String, now: Long): Int {
+    val p = state.cloudUsage.providers[providerId] ?: return 0
+    return if (p.dayStart == QuotaPolicy.NOVIG.periodStart(now)) p.callsToday else 0
+}
+
 /** ParlayAPI's scans spend a day's share at most (Tj's Starter plan, RESEARCH.md §43): the meter says how much is left today. */
 private val PARLAY_PACE = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.pace(QuotaPolicy.PARLAY)
 
@@ -92,13 +98,16 @@ fun UsageSection(state: UiState, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         meterViews(state, now).forEach { v ->
             // ParlayAPI's own day-by-day log under its meter (PARLAY_API.md §6.2).
-            ProviderMeter(v, now, history = state.parlayHistory.takeIf { v.policy.id == QuotaPolicy.PARLAY.id && v.keys.isNotEmpty() })
+            ProviderMeter(
+                v, now, history = state.parlayHistory.takeIf { v.policy.id == QuotaPolicy.PARLAY.id && v.keys.isNotEmpty() },
+                cloudCalls = cloudCallsToday(state, v.policy.id, now), cloudAtMs = state.cloudUsageAtMs,
+            )
         }
     }
 }
 
 @Composable
-private fun ProviderMeter(v: ProviderView, now: Long, history: com.tjshea.vigilant.data.reference.ParlayAccount.History? = null) {
+private fun ProviderMeter(v: ProviderView, now: Long, history: com.tjshea.vigilant.data.reference.ParlayAccount.History? = null, cloudCalls: Int = 0, cloudAtMs: Long = 0L) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -129,6 +138,13 @@ private fun ProviderMeter(v: ProviderView, now: Long, history: com.tjshea.vigila
                         if (v.throttledToday > 0) " · ${v.throttledToday} slowed down" else "",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (v.throttledToday > 0) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            // The GitHub engine's share of today's count (Tj, 2026-10-15): the total above already includes it.
+            if (cloudCalls > 0) {
+                Text(
+                    "of which the GitHub engine made $cloudCalls (its count as of ${Format.age(cloudAtMs, now)}); the rest this phone made",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("usageCloudShare"),
                 )
             }
             history?.let { ParlayUsageChart(it, now) }
@@ -179,7 +195,7 @@ private fun KeyRow(policy: QuotaPolicy, k: KeyView, now: Long) {
             )
         }
         val detail = listOfNotNull(
-            k.left?.let { "$it left" + if (k.serverReported) " (the API's own figure)" else " (counted here)" },
+            k.left?.let { "$it left" + if (k.serverReported) " (the API's own figure" + (k.figureAtMs?.let { at -> ", read ${Format.age(at, now)}" } ?: "") + ")" else " (counted: this phone's calls plus GitHub's)" },
             k.lastCallMs?.let { "last call ${Format.age(it, now)}" },
             k.note?.takeIf { k.state == KeyState.REFUSED || k.state == KeyState.SPENT || k.state == KeyState.COOLING },
         ).joinToString(" · ")

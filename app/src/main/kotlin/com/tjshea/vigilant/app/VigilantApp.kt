@@ -270,6 +270,19 @@ class AppContainer(val app: Application) {
      */
     val cloud: CloudLink by lazy { CloudLink(this) }
 
+    /**
+     * What the GitHub engine spent of the same API keys, as it last published it (Tj, 2026-10-15: "Make sure I can still see accurate api usage meters in the app on my phone"): keys still by id. The meters, Diagnostics and the
+     * health checks read [mergedUsage], this phone's own ledger with the engine's laid over it ([com.tjshea.vigilant.data.keys.UsageMerge]).
+     */
+    val cloudUsage = kotlinx.coroutines.flow.MutableStateFlow<com.tjshea.vigilant.data.cloud.CloudUsage.File?>(null)
+
+    /** The engine's ledger with this phone's own key strings (an id with no key here is dropped); empty before the first fetch. */
+    fun cloudUsageBook(): com.tjshea.vigilant.data.keys.UsageBook =
+        cloudUsage.value?.let { com.tjshea.vigilant.data.cloud.CloudUsage.rekey(it.book, ApiProvider.entries.flatMap { p -> keyStore.current(p) }) } ?: com.tjshea.vigilant.data.keys.UsageBook()
+
+    fun mergedUsage(local: com.tjshea.vigilant.data.keys.UsageBook = usage.flow.value, now: Long = System.currentTimeMillis()): com.tjshea.vigilant.data.keys.UsageBook =
+        com.tjshea.vigilant.data.keys.UsageMerge.merge(local, cloudUsageBook(), now)
+
     /** The bid desk on GitHub's candidate lines (Tj, 2026-10-15): this phone adds Novig's order books and posts ([com.tjshea.vigilant.data.cloud.CloudBidLane]). */
     val cloudBids = com.tjshea.vigilant.data.cloud.CloudBidLane(novig)
     val scanner: OddsScanner = com.tjshea.vigilant.data.cloud.SwitchingScanner(localScanner, com.tjshea.vigilant.data.cloud.CloudScanner(cloud.latest))

@@ -202,6 +202,17 @@ class CloudLink(private val c: AppContainer) {
                 delay(if (read > 0) BIDS_ROUND_MS else BIDS_IDLE_ROUND_MS)
             }
         }
+        // 5. the engine's API usage (Tj, 2026-10-15), for the meters: read whenever a token is saved (the engine's spending today counts whether or not the scan is on GitHub right now); an unchanged file is a free 304.
+        scope.launch(Dispatchers.IO) {
+            var etag: String? = null
+            while (isActive) {
+                if (hasToken()) when (val p = client.fetchUsage(etag)) {
+                    is CloudClient.Poll.Fresh -> { etag = p.etag; c.cloudUsage.value = p.value }
+                    else -> {}
+                }
+                delay(USAGE_POLL_MS)
+            }
+        }
         // 3. save
         scope.launch(Dispatchers.IO) {
             delay(150_000L)
@@ -469,6 +480,8 @@ class CloudLink(private val c: AppContainer) {
 
     companion object {
         const val POLL_MS = 5_000L
+        /** How often the engine's usage file is asked for (a 304 costs nothing against GitHub's limit). */
+        const val USAGE_POLL_MS = 30_000L
         /** Candidate books read per round, and the rounds' pace: the stream's books are free; the rest go through the key's paced reads. */
         const val BIDS_READS_PER_ROUND = 120
         const val BIDS_ROUND_MS = 3_000L
