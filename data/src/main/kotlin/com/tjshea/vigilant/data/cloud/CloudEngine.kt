@@ -289,11 +289,13 @@ class CloudEngine(
 
     /** A scan's own account of itself, short: what Novig gave, whether it throttled, and what each feed said (errors included). Never a key. */
     private fun describe(r: com.tjshea.vigilant.data.scanner.ScanReport): String = buildString {
+        // Where the scan's time went (Tj, 2026-10-15: "see if there is any way to speed up scanning"): the board, each feed's finish, the Novig prices per second by route, what was left too late.
+        r.timing?.let { t -> append(com.tjshea.vigilant.data.scanner.ScanTiming.text(t, r.booksFetched + r.booksNotModified, r.booksViaKey, r.booksViaPush)).append("; ") }
         append("Novig books: ${r.booksFetched} read, ${r.booksNotModified} unchanged, ${r.booksFromCache} from cache, ${r.booksTooLate} left out as too late")
         r.retryAfterSeconds?.let { append("; Novig asked us to slow down ${it}s") }
         if (r.sources.isNotEmpty()) append("; feeds: " + r.sources.joinToString(", ") { "${it.id} ${it.fetched}+${it.reused}" + (it.error?.let { e -> " ERR ${e.take(50)}" } ?: "") })
         if (r.errors.isNotEmpty()) append("; errors: " + r.errors.take(3).joinToString(" | ") { it.take(80) })
-    }.take(700)
+    }.take(1_200)
 
     companion object {
         /** The settings the cloud scans under: the phone's, with the parts that only make sense on the phone switched off. */
