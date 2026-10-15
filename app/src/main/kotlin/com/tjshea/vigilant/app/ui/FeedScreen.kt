@@ -100,8 +100,13 @@ fun FeedScreen(
     var parlaySelected by remember { mutableStateOf<String?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
     // Cloud scan (Tj, 2026-10-14): the GitHub engine's progress and how current its list is, ticking every second while it is on.
-    val now = rememberNow(if (state.settings.cloudScan) 1_000 else 15_000)
-    val cloud = if (state.settings.cloudScan) com.tjshea.vigilant.data.cloud.CloudText.view(state.cloudUi.status, state.cloudUi.requestedAtMs, now, state.cloudUi.why) else null
+    val now = rememberNow(if (state.settings.cloudDrives) 1_000 else 15_000)
+    val cloud = if (state.settings.cloudDrives) com.tjshea.vigilant.data.cloud.CloudText.view(state.cloudUi.status, state.cloudUi.requestedAtMs, now, state.cloudUi.why) else null
+    // The freshness of what is ON SCREEN, measured from the shown bets' own stamps (not a claim): one glance in the title, a tap for the detail.
+    val chip = if (cloud != null) remember(state.feed, state.cloudUi.status, state.cloudUi.why, state.placedIndex, state.settings, now / 1_000L) {
+        com.tjshea.vigilant.data.cloud.CloudFreshness.of(state.feedAt(now), state.cloudUi.status, now, state.cloudUi.why)
+    } else null
+    var freshDetail by remember { mutableStateOf(false) }
     // The list keeps itself honest: every AUTO_RECHECK_MS Novig's prices for the listed bets are read again (a few order books, no fair-odds calls), so a bet that is no longer +EV or has no liquidity left leaves it.
     val latest = androidx.compose.runtime.rememberUpdatedState(state)
     androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -156,7 +161,7 @@ fun FeedScreen(
                     title = {
                         Column {
                             Text("Positive EV", fontWeight = FontWeight.Bold)
-                            StatusLine(state.status)
+                            if (chip != null) FreshnessLine(chip, freshDetail) { freshDetail = !freshDetail } else StatusLine(state.status)
                         }
                     },
                     actions = {
@@ -220,7 +225,21 @@ fun FeedScreen(
                         com.tjshea.vigilant.data.cloud.CloudText.Level.WARN -> Edge.colors.warning
                         com.tjshea.vigilant.data.cloud.CloudText.Level.BAD -> Edge.colors.negative
                     }
-                    Column(Modifier.padding(horizontal = 12.dp)) { Banner(cloud.headline + (cloud.detail?.let { "\n$it" } ?: ""), color = color, modifier = Modifier.testTag("cloudBar")) }
+                    val sync = com.tjshea.vigilant.data.cloud.CloudText.settings(state.cloudUi.status, state.cloudUi.pushedRev, state.cloudUi.pushedAtMs, now)
+                    Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Banner(cloud.headline + (cloud.detail?.let { "\n$it" } ?: ""), color = color, modifier = Modifier.testTag("cloudBar"))
+                        if (sync != null && sync.first != com.tjshea.vigilant.data.cloud.CloudText.Level.GOOD) Banner(sync.second, color = Edge.colors.warning, modifier = Modifier.testTag("cloudSync"))
+                    }
+                }
+                // The cloud scan is switched on but is not the one scanning (Tj, 2026-10-15): say why, so a quiet GitHub engine is never a mystery.
+                if (state.settings.cloudScan && !state.settings.cloudDrives) item(key = "cloudPaused") {
+                    Column(Modifier.padding(horizontal = 12.dp)) {
+                        Banner(
+                            if (state.settings.bidsNeedFullScan) "Scan on GitHub is paused: the bid desk needs every priced line, which GitHub's list does not carry, so this phone scans for itself while bids are on. GitHub's engine is told to stand down."
+                            else "Scan on GitHub is paused with scanning; resume it and GitHub's engine starts again.",
+                            modifier = Modifier.testTag("cloudPaused"),
+                        )
+                    }
                 }
                 item(key = "summary") { FeedSummary(state, shown, now, onScan, onOpenSettings, onSort, onStartsWithin, errorApplies) { onRecheck(feedMarketIds(state, now)) } }
                 // The real-time live lane (Settings › Include live games): what it is linked to and how fresh its bets are, or why it shows none (Tj, 2026-10-11).
@@ -739,4 +758,23 @@ fun adjustedStarsOf(settings: ScanSettings, row: com.tjshea.vigilant.data.cno.Cn
 private fun CloudProgressBar(st: com.tjshea.vigilant.data.cloud.CloudStatus?) {
     if (st != null && st.scanning && st.progressTotal > 0) androidx.compose.material3.LinearProgressIndicator(progress = { (st.progressDone.toFloat() / st.progressTotal).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
     else androidx.compose.material3.LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+}
+
+
+/** The title's one-glance freshness: a dot in the level's colour and the measured ages; a tap shows how they were worked out. */
+@Composable
+private fun FreshnessLine(chip: com.tjshea.vigilant.data.cloud.CloudFreshness.Chip, open: Boolean, onToggle: () -> Unit) {
+    val color = when (chip.level) {
+        com.tjshea.vigilant.data.cloud.CloudText.Level.GOOD -> Edge.colors.positive
+        com.tjshea.vigilant.data.cloud.CloudText.Level.INFO -> MaterialTheme.colorScheme.primary
+        com.tjshea.vigilant.data.cloud.CloudText.Level.WARN -> Edge.colors.warning
+        com.tjshea.vigilant.data.cloud.CloudText.Level.BAD -> Edge.colors.negative
+    }
+    Column(Modifier.clickable(onClick = onToggle).testTag("cloudFreshness")) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Box(Modifier.size(8.dp).background(color, CircleShape))
+            Text(chip.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (open) Text(chip.detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("cloudFreshnessDetail"))
+    }
 }
