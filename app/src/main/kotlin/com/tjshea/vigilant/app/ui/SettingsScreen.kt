@@ -1570,6 +1570,17 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
     )
     u.keysNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudKeysNote")) }
     u.status?.novigRoute?.takeIf { it.isNotBlank() && s.cloudScan }?.let { Text("GitHub reads Novig: $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudNovigRoute")) }
+    // Which APIs are working on GitHub right now (TCL22d): the engine's own per-feed answers of its last scan, with the live status page on GitHub (also shows each key's usage meter) one tap away.
+    u.status?.feedReport?.takeIf { it.isNotEmpty() && s.cloudScan }?.let { fr ->
+        val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+        val lines = fr.groupBy { com.tjshea.vigilant.data.cloud.CloudDashboard.providerOf(it.id) }.entries.joinToString("\n") { (p, feeds) ->
+            val name = com.tjshea.vigilant.data.keys.QuotaPolicy.ALL.firstOrNull { it.id == p }?.displayName ?: p
+            "${com.tjshea.vigilant.data.cloud.CloudDashboard.health(feeds, true).label}  $name: " + feeds.joinToString(" · ") { "${it.id} ${it.fetched}+${it.reused}" } +
+                (feeds.firstNotNullOfOrNull { it.error ?: it.heldBack }?.let { e -> " (${e.take(50)})" } ?: "")
+        }
+        Text("APIs working on GitHub, last scan (leagues fresh+reused):\n$lines", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudApiHealth"))
+        OutlinedButton(onClick = { runCatching { uriHandler.openUri("https://github.com/tjshea90/novig/blob/cloud-feed/DASHBOARD.md") } }, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudOpenDashboard")) { Text("Open the live status page on GitHub") }
+    }
     u.status?.ranking?.takeIf { it.isNotBlank() && s.cloudScan }?.let { Text("APIs on GitHub, best first (measured freshness and accuracy):\n$it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudRanking")) }
     // 3b. the engine's own trading (TCL20d): off / paper / live, and how it sizes (smart fractional Kelly)
     EngineTradingSection(state, onUpdate)
