@@ -181,6 +181,8 @@ class SportsGameOddsClient(
                         response.code == 401 -> KeyAttemptResult.Invalid("HTTP 401, key refused")
                         // 403 is "this key may not use THIS data or endpoint" (a plan feature, or a cancelled/unpaid subscription): the docs' errors page lists both. It must not refuse the key for the calls
                         // it CAN make, so it is this call's failure; repeated, SGO counts as down and the replaced feeds return.
+                        // ...except a body that says the KEY itself is dead ("Inactive API key", seen 2026-10-16 after a plan ran out): that refuses the key, so a second key in the list is tried and the advisor says "fix".
+                        response.code == 403 && (body.contains("inactive", ignoreCase = true) || body.contains("invalid api", ignoreCase = true)) -> KeyAttemptResult.Invalid("HTTP 403, ${errorOf(body) ?: "inactive API key"}")
                         response.code == 403 -> throw ReferenceException("SportsGameOdds HTTP 403: ${errorOf(body) ?: "your plan or subscription does not allow this"}")
                         response.code == 429 && body.contains("month", ignoreCase = true) && body.contains("object", ignoreCase = true) ->
                             KeyAttemptResult.Depleted("monthly objects used up", retryMs)
