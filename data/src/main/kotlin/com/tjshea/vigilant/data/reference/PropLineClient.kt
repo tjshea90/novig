@@ -165,6 +165,14 @@ class PropLineClient(
     suspend fun trendsRaw(sportKey: String, player: String, market: String): String? =
         call("/sports/$sportKey/players/${java.net.URLEncoder.encode(player, "UTF-8").replace("+", "%20")}/trends", listOf("market" to market), notFound = null) { raw -> raw }.value
 
+    /** A sport's recent games with their scores (`/scores`, free): the PropLine grading source's day list. One request. */
+    suspend fun scoresRaw(sportKey: String): String? =
+        call("/sports/$sportKey/scores", listOf("daysFrom" to "3"), notFound = null) { raw -> raw }.value
+
+    /** One game's official box score (`/events/{id}/stats`, free): player_name, stat_type, stat_value rows. One request. */
+    suspend fun statsRaw(sportKey: String, eventId: String): String? =
+        call("/sports/$sportKey/events/$eventId/stats", emptyList(), notFound = null) { raw -> raw }.value
+
     /** The books a call asks for: the picked books, and Novig's relay unless it's off. */
     private fun asked(books: List<String>): List<String> = if (relayNovig) books + NOVIG else books
 
