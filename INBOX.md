@@ -120,3 +120,8 @@ Why is there no Claude session for the app right now? There are 3 Claude account
 ```
 I don't think the resume worked from the chat in the app
 ```
+
+## 2026-10-16T16:56:29Z
+```
+Why is Claude not seeing my newest message
+```
