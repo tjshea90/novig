@@ -5485,3 +5485,9 @@ Screenshots: Install update froze the app ("Vigilant isn't responding") at a thi
 Screenshots kept (chat-keep) on chat-files: t1792174875453-Screenshot_20261016-141946_Vigilant.png, ...-142017_Vigilant.png.
 - [ ] TCL52a +EV screen: the "All agree" chip shows as "Al" (the Books agree row is too wide at phone width). Fix in FeedScreen `viewFilter` row: wrap onto a second line (FlowRow) or drop the chips to 0..3 + "All".
 - [ ] TCL52b Chat with the keyboard open: the thread is blank (nothing visible between the New chat/Clear chat row and the keyboard; the status bar also overlaps the tab row). Likely imePadding/scroll in ChatScreen.kt: keep the newest messages visible above the input when the IME opens.
+
+## TCL53: engine hung after ADDRESS refusal; address handover (Tj, chat t1792174998004 + t1792175079172, 2026-10-16)
+Tj: "if novig refuses an IP address from a GitHub runner, research if there is a way to switch ip address on GitHub, or maybe restart with a new runner" then "the engine just stopped, diagnose and resume".
+Finding: AddressWatch/End.ADDRESS already hands over (CLAUDE.md, 2026-10-15), but run 61 (18:20Z) printed "cloud engine ending: ADDRESS" and the Engine step then hung 5+ min (no Summary/Final archive/Hand over), so no replacement started. Resumed by cancelling run 61 and dispatching a new run. No proxy/VPN to hide the runner's location (would evade Novig's location check).
+- [x] TCL53a CloudMain: end watchdog (90 s) + halt(0) after the end marker so the job always finishes and hands over. cloud tests green.
+- [ ] TCL53b Confirm the new run starts and scans; ship the engine fix (engine runs from main's source: a run after the push uses it; no APK needed) and watch the next ADDRESS handover end cleanly.
