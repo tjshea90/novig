@@ -74,7 +74,12 @@ class Archive:
 
     @staticmethod
     def gkey(r):
-        return (r["event_id"], r["market"], r.get("market_description") or "", r.get("team") or "", r.get("player_name") or "", r.get("closing_point") or "")
+        cp = r.get("closing_point") or ""
+        if r["market"] == "spreads" and cp:
+            # a spread's two sides carry opposite numbers (-3.5 / +3.5): one group, keyed by the size of the number
+            n = num(cp)
+            cp = "" if n is None else repr(abs(n))
+        return (r["event_id"], r["market"], r.get("market_description") or "", r.get("team") or "", r.get("player_name") or "", cp)
 
     def add(self, r):
         if (r.get("player_name") or "").startswith("(Watermark)") or (r.get("home_team") or "").startswith("(Watermark)"):
@@ -121,7 +126,7 @@ def parse_bet(row):
     m = re.match(r"^(.*?)\s*([+-]?\d+(?:\.\d+)?)$", sel)
     if kind == "MONEYLINE":
         return ("h2h", "", "", "", sel, None), None
-    if kind == "SPREAD" and m and "Games" not in market:
+    if kind == "SPREAD" and m:
         return ("spreads", "", "", "", m.group(1).strip(), num(m.group(2))), None
     if kind == "TOTAL" and m:
         return ("totals", "", "", "", m.group(1).strip(), num(m.group(2))), None
@@ -171,9 +176,10 @@ def grade_bet(arch, row):
     pick = None
     for k in cands:
         cp = num(k[5])
-        if point is None or cp is None or abs(cp - point) < 1e-9 or (market == "spreads"):
+        want = abs(point) if (market == "spreads" and point is not None) else point
+        if want is None or cp is None or abs(cp - want) < 1e-9:
             pick = k
-            if cp is not None and point is not None and abs(cp - point) < 1e-9:
+            if cp is not None and want is not None and abs(cp - want) < 1e-9:
                 break
     if pick is None:
         out["pl_status"] = "no Pinnacle close for this market"
@@ -193,7 +199,10 @@ def grade_bet(arch, row):
     cp = num(pick[5])
     out["pl_pinn_close_price"] = prices[side]
     out["pl_close_point"] = "" if cp is None else cp
-    if point is not None and cp is not None and abs(cp - point) > 1e-9:
+    if market == "spreads":
+        # spreads were grouped by the size of the number: the bet and the close are the same line (a different size would not have been picked)
+        out["pl_status"] = "ok"
+    elif point is not None and cp is not None and abs(cp - point) > 1e-9:
         # the number moved: spreads are quoted per side (our side's number is the close for that side); for totals the move itself is the information
         out["pl_point_moved"] = round(cp - point, 3)
         if market == "totals":
