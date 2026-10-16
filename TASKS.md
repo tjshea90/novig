@@ -5514,3 +5514,8 @@ Pricing screenshot: Free (59 sports, 60+ prop markets, 5 books streamed ~1 s, re
 - [ ] TCL56f CLV stats: save whether each bet beat the PropLine close; engine + phone; datasets for Claude (engine-dataset).
 - [ ] TCL56g Archive: resolved-prop archive / graded outcomes / closing lines saved to GitHub (Release assets) for research; schedule via Actions (free).
 - [ ] TCL56h Tests, docs, ship, tell Tj.
+
+## TCL57: use SGO's NFL odds API guide to optimise Vigilant's SGO use (Tj, terminal, 2026-10-16)
+Tj (verbatim): "See if any of this info can optimize the way vigilant uses sgo API, and if so, implement it: https://sportsgameodds.com/blog/nfl-odds-api-guide?_kx=..."
+- [ ] TCL57a Read the guide (saved to research/sgo/nfl-odds-api-guide_2026-10-16.txt); list what it says that Vigilant's SGO client does not do (SPORTSGAMEODDS_API.md, data/.../reference/Sgo*.kt).
+- [ ] TCL57b Implement what is correct and measurable (tests), update SPORTSGAMEODDS_API.md.
