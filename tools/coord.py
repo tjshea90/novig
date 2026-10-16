@@ -256,6 +256,13 @@ def acquire(kind=None, task=None, force=False, quiet=False):
                     print("COORD  another Claude session holds this repo: %s. Do not work on it; your commits stay local until the lease is free or stale (%d min). "
                           "Tj can override with: bash tools/coord.py acquire --force" % (describe(lease, t), LEASE_S // 60), file=sys.stderr)
                 cache_put(lease)
+                if kind == "routine":
+                    # A routine that yields to a live session still leaves a trace (Tj, 2026-10-16: the 13:20 account's routine did start and stood down, but left no note, so it looked like a
+                    # no-show): rotation.py counts a stand-down as a run that did what it should.
+                    try:
+                        post("rotation-standdown", "%s ran its routine and stood down: %s holds the lease." % (me["label"], describe(lease, t)))
+                    except Exception:
+                        pass
                 return 3
         elif v == "stale":
             note = "took over a stale lease from " + describe(lease, t)

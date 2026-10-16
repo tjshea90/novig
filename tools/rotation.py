@@ -121,7 +121,7 @@ def missed_slots(roster, notes, now, away=None):
             frm = meta.get("from", "").split("/")[0]
             if frm == tag and lo <= at <= hi:
                 seen = True
-                if subject.split(" ")[0] in DUTY_WORDS or subject.startswith("rotation-cover"):
+                if subject.split(" ")[0] in DUTY_WORDS or subject.startswith("rotation-cover") or subject.startswith("rotation-standdown"):
                     finished = True
             if subject.startswith("rotation-cover") and ("slot=%d" % s) in subject and ("date=%s" % day.isoformat()) in subject:
                 covered = True
