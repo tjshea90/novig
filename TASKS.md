@@ -5404,3 +5404,8 @@ Tj (t1792123171360): "also sometimes I ask for several features or changes in ba
 - [x] TCL35b Chat: New chat (a break marker), Clear chat (removes the viewed chat's messages from the phone), switch between earlier chats.
 - [x] TCL35c Standing rule in CLAUDE.md: batch back-to-back requests into one release; read the chat for new requests before shipping.
 - [x] TCL35d Chat always scrolls to the newest message (Tj, t1792123306587): on open, on a new message and whenever the room changes.
+
+## TCL36: updater fixes (Tj, in-app chat, 2026-10-16)
+Tj (t1792124061597, screenshot): "updates mess up" (INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed). Tj (t1792124128063): "when I manually press update inside the app, it automatically closes the app. that is ok, but can you make it restart the app automatically".
+- [x] TCL36a A refused quiet install is retried once with Android's confirmation screen (Play Protect's Install anyway); the failure note says where to look.
+- [x] TCL36b `UpdatedReceiver` (MY_PACKAGE_REPLACED): opens the app after an update this app started, plus a note that opens it.
