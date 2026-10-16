@@ -9,6 +9,7 @@ import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -353,11 +354,31 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
             try {
                 val listed = client.events(sport)
                 val matches = com.tjshea.vigilant.data.scanner.Planner.matchEvents(buying, listOf(RefSnapshot(sport, listed, now, provider = ID)))
-                for (m in matches.sortedBy { it.event.startsTs }) {
-                    val ref = m.refEvent ?: continue
-                    val markets = toBuy[m.event.eventId].orEmpty()
-                    if (markets.isEmpty()) continue
-                    val board = client.eventBoard(sport, ref.id.removePrefix(PREFIX), markets, books)
+                // A paid key reads several games at once (the client's own spacing still sets the pace, and PropLine allows 20 in flight); the free key one at a time, as before.
+                val width = if (client.plan() != null) 6 else 1
+                val gate = kotlinx.coroutines.sync.Semaphore(width)
+                val results = kotlinx.coroutines.coroutineScope {
+                    matches.sortedBy { it.event.startsTs }.mapNotNull { m ->
+                        val ref = m.refEvent ?: return@mapNotNull null
+                        val markets = toBuy[m.event.eventId].orEmpty()
+                        if (markets.isEmpty()) return@mapNotNull null
+                        kotlinx.coroutines.async {
+                            gate.withPermit {
+                                try {
+                                    Result.success(Triple(m, ref, client.eventBoard(sport, ref.id.removePrefix(PREFIX), markets, books)))
+                                } catch (e: kotlinx.coroutines.CancellationException) {
+                                    throw e
+                                } catch (e: Exception) {
+                                    Result.failure(e)
+                                }
+                            }
+                        }
+                    }.map { it.await() }
+                }
+                for (r in results) {
+                    val t = r.getOrNull()
+                    if (t == null) { if (failure == null) failure = r.exceptionOrNull() as? Exception; continue }
+                    val (m, ref, board) = t
                     // The listing's teams and time (the ones matched on) with the odds call's quotes.
                     bought[m.event.eventId] = Bought(
                         m.event.eventId, ref.copy(markets = board?.events?.singleOrNull()?.markets.orEmpty()), now, ask,
@@ -399,7 +420,8 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
             .filter { it.status == com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME && it.startsTs > now && it.startsTs <= horizon && it.league in settings.leagues }
             .sortedBy { it.startsTs }
         for (e in games) {
-            if (out.size >= settings.propLineGamesPerScan.coerceAtLeast(1)) break
+            // A paid key with room in today's share reads every game in the window (Tj, 2026-10-16); the free key keeps the setting's cap.
+            if (out.size >= (if (client.roomForEveryGame(context.now)) Int.MAX_VALUE else settings.propLineGamesPerScan.coerceAtLeast(1))) break
             val have = bought[e.eventId]
             if (have != null && have.ask == ask) continue
             val league = com.tjshea.vigilant.data.scanner.Leagues.byNovigName(e.league) ?: continue
