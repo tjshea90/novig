@@ -1,0 +1,12 @@
+# Who answers Tj's chat: the account scheduled at that time (Tj, 2026-10-16, permanent, all three accounts)
+
+Tj (chat t1792177184373): "if another Claude session is scheduled to start, this Claude account hands over the chat to that other account and this account stands down until it is scheduled to start again ... make this a rule for every claude account. I should chat with the account scheduled at that time, and if it is almost time for a new account to start, the current claude account hands over the chat"
+
+**The rule.** The account whose slot (07:20 / 13:20 / 19:20 ET, `rotation.py roster`) began last owns the chat until the next slot begins. `python3 -I tools/rotation.py chat` prints `CHATSTATE <STATE> <why>`; `tools/chat_watch.sh` runs it every 2 minutes and prints a line only when the state changes to SOON or STANDDOWN (or back from STANDDOWN). What each state means:
+- **OWNER**: your slot is current. Answer the chat; do the duty.
+- **SOON** (the next slot, another account's, starts within 10 min, and that account is not out of usage): (1) tell Tj in the chat, once: "the chat moves to <account> at <time> ET: use that account", (2) finish what you are doing and checkpoint, (3) `bash tools/coord.sh post "chat-handover" "<what is open>"` and `bash tools/coord.sh release` so that account's routine can take the lease, (4) keep answering until the slot starts.
+- **STANDDOWN** (another account's slot is current and it has checked in): do not work, do not answer chat, do not take the lease, push nothing; if Tj writes here (the capture hook says CHAT OWNER) tell him in one line that the chat belongs to that account until <time> ET and that he can say "force" to take it back. You come back when the watcher says the chat is yours again (your slot starts, or the owner never shows).
+- **CONTINUE**: nobody else is running the chat (fewer than 3 accounts registered, the owner is out of usage per `research/coordination/away.json`, its routine has not checked in within 15 minutes of its slot, or it only stood down): carry on as before. A hand-over never leaves the chat unanswered.
+
+**The owner's routine serves the chat** (research/review/ROUTINE.md, "Chat owner"): after its duty it starts `tools/chat_watch.sh` under Monitor and answers Tj until its window ends, then hands over by the same rule.
+Tj's word beats all of it: a message containing "force" takes the lease from anyone (`coord.py acquire --force`). The dead-man switch (DEADMAN.md) still applies. Tests: `python3 -I tools/rotation.py selftest` (the chat_state cases).
