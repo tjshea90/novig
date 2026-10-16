@@ -145,8 +145,9 @@ class SettingsPagesTest {
             listOf(SettingsPage.ALERTS, SettingsPage.BETTING, SettingsPage.SAFEGUARDS, SettingsPage.CLOUD, SettingsPage.SCANNING, SettingsPage.CNO, SettingsPage.APIS, SettingsPage.SGO, SettingsPage.BOLTODDS, SettingsPage.KALSHI, SettingsPage.ODDSPAPI, SettingsPage.UNABATED, SettingsPage.ODDSPAPI_FREE, SettingsPage.PINNACLE, SettingsPage.PROPLINE, SettingsPage.PARLAY, SettingsPage.ODDS_API, SettingsPage.USAGE, SettingsPage.PINNODDS, SettingsPage.LIVEBIDS, SettingsPage.RESEARCH, SettingsPage.WIDGET, SettingsPage.HELP),
             SettingsPage.shown(base.settings.copy(scanner = ScannerMode.CNO)),
         )
-        assertEquals(SettingsPage.entries.filter { it != SettingsPage.CNO }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.VIGILANT)))
-        assertEquals(SettingsPage.entries.toList(), SettingsPage.shown(base.settings.copy(scanner = ScannerMode.BOTH)))
+        val moved = setOf(SettingsPage.DASHBOARD, SettingsPage.CHAT, SettingsPage.MESSAGES)   // central tabs now, not Settings pages
+        assertEquals(SettingsPage.entries.filter { it != SettingsPage.CNO && it !in moved }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.VIGILANT)))
+        assertEquals(SettingsPage.entries.filter { it !in moved }, SettingsPage.shown(base.settings.copy(scanner = ScannerMode.BOTH)))
         screen(base.copy(settings = base.settings.copy(scanner = ScannerMode.CNO))) { SettingsScreen(it, {}, page = SettingsPage.FAIR) }
         compose.onNodeWithTag("settingsPage-HOME").assertExists()
         compose.onAllNodesWithTag("settingsRow-FAIR").assertCountEquals(0)

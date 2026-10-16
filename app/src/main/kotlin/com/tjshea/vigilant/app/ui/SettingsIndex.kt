@@ -162,7 +162,7 @@ object SettingsIndex {
         Entry("API usage", SettingsPage.USAGE, "Credits left on each feed", "credits usage meter quota"),
         Entry("Keys backup", SettingsPage.USAGE, "Export or import your keys", "export import backup keys"),
         // Diagnostics & about
-        Entry("Diagnostics report", SettingsPage.HELP, "What the app recorded: errors, speeds, API usage", "diagnostics report bug show"),
+        Entry("Show report", SettingsPage.HELP, "What the app recorded: errors, speeds, API usage", "diagnostics report bug show"),
         Entry("Reset diagnostics", SettingsPage.HELP, "Clear the logs and recorders' journals and start fresh", "diagnostics reset clear delete logs fresh clean"),
         Entry("Clear scan study", SettingsPage.HELP, "Delete the scan study's whole log and start it again", "scan study clear delete reset fresh clean"),
         Entry("Test live score and odds feeds", SettingsPage.RESEARCH, "Which free feed shows a score or an odds move before Novig's price moves (reads only, no orders)", "live feed race test sofascore polymarket espn nhl mlb scores odds rapid websocket latency"),
