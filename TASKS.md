@@ -5483,7 +5483,7 @@ Screenshots: Install update froze the app ("Vigilant isn't responding") at a thi
 
 ## TCL52: two small UI fixes, DO NOT BUILD NOW; fold into the next release when Tj asks for more (Tj, chat t1792174875453, 2026-10-16: "the word all is cut off. in the chat when the keyboard opens I can't see anything. this is not a big deal. don't build these now just [include] them in the next update when I ask for more stuff")
 Screenshots kept (chat-keep) on chat-files: t1792174875453-Screenshot_20261016-141946_Vigilant.png, ...-142017_Vigilant.png.
-- [ ] TCL52a +EV screen: the "All agree" chip shows as "Al" (the Books agree row is too wide at phone width). Fix in FeedScreen `viewFilter` row: wrap onto a second line (FlowRow) or drop the chips to 0..3 + "All".
+- [x] TCL52a (FlowRow in FeedScreen agree row and the PropLine screen filter rows; compiles)  +EV screen: the "All agree" chip shows as "Al" (the Books agree row is too wide at phone width). Fix in FeedScreen `viewFilter` row: wrap onto a second line (FlowRow) or drop the chips to 0..3 + "All".
 - [ ] TCL52b Chat with the keyboard open: the thread is blank (nothing visible between the New chat/Clear chat row and the keyboard; the status bar also overlaps the tab row). Likely imePadding/scroll in ChatScreen.kt: keep the newest messages visible above the input when the IME opens.
 
 ## TCL53: engine hung after ADDRESS refusal; address handover (Tj, chat t1792174998004 + t1792175079172, 2026-10-16)
