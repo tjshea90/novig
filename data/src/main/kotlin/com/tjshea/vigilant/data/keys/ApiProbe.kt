@@ -122,8 +122,12 @@ class ApiProbe(
                 r.code == 401 || r.code == 403 -> { meter.recordBalance(QuotaPolicy.PROPLINE, key, null, inactive = true); false to refused(r.code) }
                 r.code == 429 -> { meter.recordBalance(QuotaPolicy.PROPLINE, key, 0, exhausted = true); true to "Accepted, but today's requests are used up (back at midnight UTC)." }
                 r.isSuccessful || r.code == 404 -> {
-                    if (remaining != null) meter.recordBalance(QuotaPolicy.PROPLINE, key, remaining, used = used)
-                    true to "Active and accepted" + (remaining?.let { " · $it requests left today" + (used?.let { u -> " ($u used)" } ?: "") } ?: " (it did not say how many requests are left).")
+                    // The plan is the key's own daily limit (Free 1,000, Hobby 5,000, Pro 25,000): a paid key unlocks +EV, closing lines, results, CLV and the exports, and goes first (TCL56).
+                    val limit = r.headers["X-Daily-Limit"]?.trim()?.toIntOrNull()
+                    if (remaining != null) meter.recordBalance(QuotaPolicy.PROPLINE, key, remaining, limit = limit, used = used)
+                    val plan = limit?.let { com.tjshea.vigilant.data.reference.PropLineAccount.tierOf(it) }
+                    true to "Active and accepted" + (plan?.let { " · ${it.replaceFirstChar { c -> c.uppercase() }} plan (${"%,d".format(limit)} a day)" + (if (com.tjshea.vigilant.data.reference.PropLineAccount.isPaid(limit)) ": history, +EV, closing lines, results and CLV are unlocked" else ": a paid plan unlocks history, +EV, closing lines, results and CLV") } ?: "") +
+                        (remaining?.let { " · $it requests left today" + (used?.let { u -> " ($u used)" } ?: "") } ?: " (it did not say how many requests are left).")
                 }
                 else -> false to "Answered HTTP ${r.code}."
             }
