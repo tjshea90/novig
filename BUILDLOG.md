@@ -303,3 +303,4 @@ day that changes.
 | v0.114.5 | code 301 | 2026-10-16T16:36Z | v0.114.5: the chat refreshes the moment the app comes back after the phone was off
 | v0.114.6 | code 302 | 2026-10-16T16:49Z | v0.114.6: the app can send your Kalshi key to GitHub so the engine runs Kalshi's socket
 | v0.114.7 | code 303 | 2026-10-16T18:14Z | v0.114.7: +EV screen filters (books agreeing, all must agree; phone-only); ParlayAPI paid key goes first; dead-man switch
+| v0.114.8 | code 304 | 2026-10-16T18:27Z | v0.114.8: app update no longer times out or freezes (download resumes, progress throttled, install off the main thread)
