@@ -50,8 +50,7 @@ jobs:
           print("deleted", gone)
           PY
           git add -A
-          git commit -q --amend --no-edit -m "chat attachments $(date -u +%FT%TZ)" --allow-empty
           # one commit with no parent: the deleted files are not reachable any more
-          TREE=$(git rev-parse HEAD^{tree})
+          TREE=$(git write-tree)
           NEW=$(git commit-tree "$TREE" -m "chat attachments $(date -u +%FT%TZ)")
           git push -q --force-with-lease=chat-files:"$LEASE" origin "$NEW":refs/heads/chat-files || echo "branch moved while cleaning (a new attachment); next hour"
