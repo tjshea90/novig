@@ -107,9 +107,29 @@ class PropLineClient(
     suspend fun eventOdds(sportKey: String, eventId: String, markets: List<String>, books: List<String>): RefEvent? =
         eventBoard(sportKey, eventId, markets, books)?.events?.singleOrNull()
 
-    /** [eventOdds] with Novig's own prices for the same game alongside (same request: [Board.novig]). */
+    /**
+     * [eventOdds] with Novig's own prices for the same game alongside (same request: [Board.novig]). With a paid key a long list of prop markets (NFL: 17, each with alternate ladders from many books) goes
+     * in requests of at most [CHUNK] markets, so no one answer is heavy enough to time out (2026-10-16: "HTTP 504" on the first Pro scan); a free key's 1,000 a day keeps one request per game.
+     */
     suspend fun eventBoard(sportKey: String, eventId: String, markets: List<String>, books: List<String>): Board? {
         require(markets.isNotEmpty()) { "No markets to ask for" }
+        if (plan() == null || markets.size <= CHUNK) return eventBoardOnce(sportKey, eventId, markets, books)
+        var first: Board? = null
+        val ev = ArrayList<RefBookMarket>()
+        val nv = ArrayList<RefBookMarket>()
+        var gone = true
+        for (part in markets.chunked(CHUNK)) {
+            val b = eventBoardOnce(sportKey, eventId, part, books) ?: continue
+            gone = false
+            if (first == null) first = b
+            b.events.singleOrNull()?.let { ev += it.markets }
+            b.novig.singleOrNull()?.let { nv += it.markets }
+        }
+        if (gone || first == null) return null
+        return Board(first.events.map { it.copy(markets = ev) }, first.novig.map { it.copy(markets = nv) })
+    }
+
+    private suspend fun eventBoardOnce(sportKey: String, eventId: String, markets: List<String>, books: List<String>): Board? {
         return call(
             "/sports/$sportKey/events/$eventId/odds",
             listOf("markets" to markets.joinToString(","), "bookmakers" to asked(books).distinct().joinToString(",")) + idParams(),
@@ -252,6 +272,9 @@ class PropLineClient(
         )
 
         const val REUSE_MS = 2 * 60_000L
+
+        /** The most prop markets one request asks for with a paid key. */
+        const val CHUNK = 6
 
         /** A timeout or a 502/503/504 is tried again this many times. */
         const val RETRIES = 2
