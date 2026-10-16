@@ -568,6 +568,7 @@ class AppContainer(val app: Application) {
         val on = AppBook.isNovig && s.sgoPro
         sgoCloses.enabled = on
         sgoScores.enabled = on
+        propScores.enabled = AppBook.isNovig && s.usePropLine
         parlayCloses.enabled = s.useParlay   // ParlayAPI's closes follow its switch on every settings change, not only when a back-fill starts
         NotifyGate.quiet = s.quietNotifications
         com.tjshea.vigilant.data.scanner.Freshness.sgoMaxAgeMs = s.sgoMaxAgeMinutes.coerceIn(10, 30) * 60_000L
@@ -575,10 +576,19 @@ class AppContainer(val app: Application) {
     }
 
     /** The free score feeds (ESPN, MLB): one instance, so its per-day and box-score caches serve the Tracker's grading and the scan study's alike. */
+    /** Thirty sportsbooks' lines (per league) and props (per game) through one free PropLine key. */
+    private val propLine = PropLineClient(
+        http, KeyPool(QuotaPolicy.PROPLINE, { keyStore.current(ApiProvider.PROPLINE) }, usage), json,
+        // Vigilant MGM: no Novig reads to order, and BetMGM's own ids for its bet-slip links.
+        relayNovig = AppBook.isNovig, bookIds = !AppBook.isNovig, meter = usage,
+    )
+    /** PropLine's scores and box scores (free endpoints; Pro key or free key alike): the last link of the grading chain, on while its switch is on ([syncSgo]). */
+    val propScores = com.tjshea.vigilant.data.tracker.PropLineScores(propLine, { keyStore.current(ApiProvider.PROPLINE).isNotEmpty() }, json)
+
     val freeScores = FreeScores(http, json)
 
     /** OddsPapi's final scores first while it is on ([syncOp]), then SportsGameOdds' while Pro is on ([syncSgo]), the free feeds behind them (and for a prop's box score). */
-    val scores: com.tjshea.vigilant.data.tracker.ScoreSource = com.tjshea.vigilant.data.tracker.ChainedScores(opScores, com.tjshea.vigilant.data.tracker.ChainedScores(sgoScores, freeScores))
+    val scores: com.tjshea.vigilant.data.tracker.ScoreSource = com.tjshea.vigilant.data.tracker.ChainedScores(opScores, com.tjshea.vigilant.data.tracker.ChainedScores(sgoScores, com.tjshea.vigilant.data.tracker.ChainedScores(freeScores, propScores)))
     val settler = BetSettler(tracker, scores, leaveApiBets = { trading != null })
 
     /**
@@ -2102,12 +2112,6 @@ class AppContainer(val app: Application) {
     fun pinnacleFeedNote(now: Long = System.currentTimeMillis()): String =
         pinnacle.lastHost?.let { "$it, ${(now - pinnacle.lastBoardAtMs) / 1000L}s old when read" } ?: "no board read yet"
 
-    /** Thirty sportsbooks' lines (per league) and props (per game) through one free PropLine key. */
-    private val propLine = PropLineClient(
-        http, KeyPool(QuotaPolicy.PROPLINE, { keyStore.current(ApiProvider.PROPLINE) }, usage), json,
-        // Vigilant MGM: no Novig reads to order, and BetMGM's own ids for its bet-slip links.
-        relayNovig = AppBook.isNovig, bookIds = !AppBook.isNovig, meter = usage,
-    )
     private val propLineProps = PropLinePropsSource(propLine)
 
     /**

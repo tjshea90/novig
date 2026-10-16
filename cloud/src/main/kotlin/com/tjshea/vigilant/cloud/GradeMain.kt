@@ -56,6 +56,12 @@ private suspend fun gradeMain(args: Array<String>) {
         scores = ChainedScores(sgoScores, scores)
         closes += SgoCloses(client, { true }).also { it.enabled = true }
     }
+    val plKeys = CloudKeys.fromEnv(CloudKeys.PROPLINE)
+    if (plKeys.isNotEmpty()) {
+        val usage = UsageMeter(JsonFileStore(File(journalDir.parentFile ?: File("."), "grade-usage-pl.json"), UsageBook.serializer(), { UsageBook() }, json))
+        val pl = com.tjshea.vigilant.data.reference.PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { plKeys }, usage), json, relayNovig = false, meter = usage)
+        scores = ChainedScores(scores, com.tjshea.vigilant.data.tracker.PropLineScores(pl, { true }, json).also { it.enabled = true })
+    }
     closes += EspnCloses(http, json)
     closes += NovigTradeCloses(http, json)
 
