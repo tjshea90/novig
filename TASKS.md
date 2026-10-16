@@ -5517,5 +5517,5 @@ Pricing screenshot: Free (59 sports, 60+ prop markets, 5 books streamed ~1 s, re
 
 ## TCL57: use SGO's NFL odds API guide to optimise Vigilant's SGO use (Tj, terminal, 2026-10-16)
 Tj (verbatim): "See if any of this info can optimize the way vigilant uses sgo API, and if so, implement it: https://sportsgameodds.com/blog/nfl-odds-api-guide?_kx=..."
-- [ ] TCL57a Read the guide (saved to research/sgo/nfl-odds-api-guide_2026-10-16.txt); list what it says that Vigilant's SGO client does not do (SPORTSGAMEODDS_API.md, data/.../reference/Sgo*.kt).
-- [ ] TCL57b Implement what is correct and measurable (tests), update SPORTSGAMEODDS_API.md.
+- [x] TCL57a Read the guide (saved to research/sgo/nfl-odds-api-guide_2026-10-16.txt); list what it says that Vigilant's SGO client does not do (SPORTSGAMEODDS_API.md, data/.../reference/Sgo*.kt).
+- [x] TCL57b Nothing to implement: every tip (oddID trimming, bookmakerID, includeAltLines care, oddsAvailable) is already how the client calls SGO; includeOpposingOdds saves nothing measurable (both sides listed, URL about 3 KB). Documented in SPORTSGAMEODDS_API.md.
