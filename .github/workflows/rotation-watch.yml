@@ -1,0 +1,31 @@
+name: Rotation watch (Tj, 2026-10-16)
+
+# Tells Tj in the app when a scheduled Claude slot (07:20 / 13:20 / 19:20 ET) left no check-in (a dead routine, a missing repository, a usage cap). tools/rotation_watch.py, hourly, free.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "52 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rotation-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Look for a slot nobody ran
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 -I tools/rotation_watch.py selftest
+          python3 -I tools/rotation_watch.py check
