@@ -735,7 +735,8 @@ enum class OddsFeed(
     /** A key with this allowance or less is a free plan's: not paced by day, used for scans down to [CreditPace.FREE_RESERVE] credits after the keys before it. */
     val freeLimit: Int = 0,
 ) {
-    ODDS_API("oddsapi", "oddsapi_props", "The Odds API", "https://api.the-odds-api.com/v4", null),
+    /** Paced like ParlayAPI's paid keys (Tj, 2026-10-16: "pace the parlayapi apis as well ... up to a pace that keeps them running until their reset"): each 500-credit key spends its pro-rata share of the month at most, a few credits kept. */
+    ODDS_API("oddsapi", "oddsapi_props", "The Odds API", "https://api.the-odds-api.com/v4", null, reserve = 20),
 
     /** Its own ten books (its keys differ from The Odds API's for some): the sharp ones first, the Settings picker doesn't apply. */
     PARLAY(
