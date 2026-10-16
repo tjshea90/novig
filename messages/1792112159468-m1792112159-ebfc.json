@@ -1,0 +1,1 @@
+{"id": "m1792112159-ebfc", "at": 1792112159468, "from": "claude:session", "kind": "info", "title": "Engine now posts bids too", "body": "v0.112.0: GitHub's engine runs your bid desk (same rules as the Bids tab) beside the bets. First pass posted 194 bids ($28 resting). The Dashboard shows bets, bids and fills, synced when you open the app.", "priority": 0}
