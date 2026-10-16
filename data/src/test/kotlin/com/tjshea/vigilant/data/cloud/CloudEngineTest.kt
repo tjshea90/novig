@@ -441,10 +441,11 @@ class CloudEngineTest {
         assertTrue(published.all { it.second.novigRoute == "" })
     }
 
-    private fun etMs(h: Int, m: Int = 0) = java.time.ZonedDateTime.of(2026, 10, 15, h, m, 0, 0, EngineHours.ZONE).toInstant().toEpochMilli()
+    /** [h] may run past 23 into the next morning (24 = 00:xx tomorrow): the window now closes at 01:00. */
+    private fun etMs(h: Int, m: Int = 0) = java.time.ZonedDateTime.of(2026, 10, 15, 0, m, 0, 0, EngineHours.ZONE).plusHours(h.toLong()).toInstant().toEpochMilli()
 
     @Test
-    fun `outside 08-22 Eastern the engine scans nothing and ends with WINDOW, so the workflow starts no hand-over`() = runBlocking {
+    fun `outside 08-01 Eastern the engine scans nothing and ends with WINDOW, so the workflow starts no hand-over`() = runBlocking {
         val scanner = FakeScanner { _, _, _ -> report(result("a")) }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
         val hoursOn = on.copy(settings = on.settings.copy(gates = on.settings.gates.copy(cloudHours = true)))
@@ -456,13 +457,13 @@ class CloudEngineTest {
     }
 
     @Test
-    fun `a scan running when 22-00 Eastern arrives is cut and the job ends with WINDOW`() = runBlocking {
+    fun `a scan running when 01-00 Eastern arrives is cut and the job ends with WINDOW`() = runBlocking {
         val scanner = FakeScanner { _, _, _ -> delay(30_000); report(result("a")) }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
         val hoursOn = on.copy(settings = on.settings.copy(gates = on.settings.gates.copy(cloudHours = true)))
-        val now = java.util.concurrent.atomic.AtomicLong(etMs(21, 59))
+        val now = java.util.concurrent.atomic.AtomicLong(etMs(24, 59))
         val e = engine(scanner, { hoursOn }, published, clock = { now.get() })
-        val flip = launch { delay(100); now.set(etMs(22, 0)) }
+        val flip = launch { delay(100); now.set(etMs(25, 0)) }
         val t0 = System.currentTimeMillis()
         assertEquals(CloudEngine.End.WINDOW, e.run(untilMs = now.get() + 3_600_000L))
         flip.cancel()
