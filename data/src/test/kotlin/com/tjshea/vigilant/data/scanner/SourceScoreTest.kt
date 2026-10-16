@@ -12,7 +12,12 @@ class SourceScoreTest {
 
     @Test fun `fresher feeds move ahead, a feed with no measurement counts as four minutes old, ties keep the shipped order`() {
         val r = SourceScore.rank(prior, mapOf("sgo" to m("sgo", 380), "propline" to m("propline", 70), "parlay" to m("parlay", 30)))
-        assertEquals(listOf("parlay", "propline", "oddspapi", "unabated", "sgo"), r)
+        assertEquals(listOf("parlay", "propline", "oddspapi", "unabated", "sgo"), r)   // a credit-metered but ample feed (ParlayAPI's paid keys) still ranks by freshness
+    }
+
+    @Test fun `a feed with a small monthly allowance never leads, however fresh (Tj 2026-10-16)`() {
+        val r = SourceScore.rank(listOf("propline", "sgo", "oddspapi_free", "oddsapi", "unabated"), mapOf("oddsapi" to m("oddsapi", 46), "oddspapi_free" to m("oddspapi_free", 20), "sgo" to m("sgo", 600), "propline" to m("propline", 420), "unabated" to m("unabated", 7200)))
+        assertEquals(listOf("propline", "sgo", "unabated", "oddspapi_free", "oddsapi"), r)
     }
 
     @Test fun `an inaccurate feed goes after every accurate one however fresh`() {

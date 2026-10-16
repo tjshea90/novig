@@ -116,4 +116,20 @@ class ApiChainTest {
         assertFalse(ApiChain.needed("oddspapi", nfl, s, ctx(books = setOf("draftkings", "circa", "superbook", "bet365"))))
         assertFalse("switch off: no extra", ApiChain.needed("oddspapi", nfl, s.copy(opExtraBooks = false), ctx(books = setOf("draftkings"))))
     }
+
+    @Test
+    fun `a scarce feed fills the same league's gap once in half an hour, a failure of the better feeds is never held back`() {
+        ApiChain.reset()
+        val gap = ctx(covered = null)
+        assertTrue("first time: the gap is filled", ApiChain.needed("oddsapi", nfl, ScanSettings(), gap))
+        assertFalse("the next scan, same gap: asleep (credits are few)", ApiChain.needed("oddsapi", nfl, ScanSettings(), gap))
+        val later = ScanContext(novigEvents = gap.novigEvents, novigMarkets = gap.novigMarkets, now = now + ApiChain.SCARCE_GAP_MS + 1, covered = gap.covered, firstAnswered = gap.firstAnswered, coveredBooks = gap.coveredBooks)
+        assertTrue("half an hour on: asked again", ApiChain.needed("oddsapi", nfl, ScanSettings(), later))
+        assertTrue("every better feed failed: always asked", ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx(answered = false)))
+        assertTrue("and again", ApiChain.needed("oddsapi", nfl, ScanSettings(), ctx(answered = false)))
+        // A flat-rate feed is not held back this way.
+        assertTrue(ApiChain.needed("oddspapi", nfl, ScanSettings(), gap))
+        assertTrue(ApiChain.needed("oddspapi", nfl, ScanSettings(), gap))
+        ApiChain.reset()
+    }
 }
