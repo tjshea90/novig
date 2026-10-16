@@ -89,7 +89,7 @@ fun main(args: Array<String>) = runBlocking {
     val config = ConfigReader(git, cfgDir)
     val started = System.currentTimeMillis()
     val until = started + minutes * 60_000L
-    log("cloud engine starting: $minutes min, run $runId, keys present: " + CloudKeys.ALL.filter { CloudKeys.fromEnv(it).isNotEmpty() }.joinToString(",").ifBlank { "none (public feeds only)" } + " · Novig read-only key: " + (if (novigKeyed != null) "present" else "none (public routes)"))
+    log("cloud engine starting: $minutes min, run $runId, keys present: " + CloudKeys.ALL.filter { CloudKeys.fromEnv(it).isNotEmpty() }.joinToString(",") { n -> CloudKeys.fromEnv(n).size.let { c -> if (c > 1) "$n($c keys)" else n } }.ifBlank { "none (public feeds only)" } + " · Novig read-only key: " + (if (novigKeyed != null) "present" else "none (public routes)"))
 
     novigKeyed?.problem?.let { log("Novig key: $it") }
     // The APIs' measured ranking survives the handover: the previous job's file is read back before the first scan ([CloudRanking]), and this job writes its own with every push.
