@@ -248,7 +248,7 @@ def selftest():
     # b's window, b is me: OWNER; a 10-min-to-go look at c's slot: b is told SOON
     assert chat_state(cz(18, 0), roster, [ci("b", 17, 21)], {}, "b")["state"] == "OWNER"
     assert chat_state(cz(23, 12), roster, [ci("b", 17, 21)], {}, "b")["state"] == "SOON"
-    assert chat_state(cz(23, 12), roster, [], {}, "c")["state"] == "OWNER"                    # c's own slot is coming: not told to hand over
+    assert chat_state(cz(23, 12), roster, [], {}, "c")["state"] == "CONTINUE"                  # c's own slot is coming: not told to hand over
     # a (not the owner) while b's routine has checked in: stand down; before b checked in / never did: carry on
     assert chat_state(cz(18, 0), roster, [ci("b", 17, 21)], {}, "a")["state"] == "STANDDOWN"
     assert chat_state(cz(17, 25), roster, [], {}, "a")["state"] == "CONTINUE"                  # 5 min after the slot: wait for it
