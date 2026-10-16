@@ -1,13 +1,13 @@
-# CHECKPOINT 3391 — read me first, then TASKS.md
+# CHECKPOINT 3392 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T00:28:27Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-6cce5eff-xcxliy` · **builds on:** `a9fb06e94` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T00:38:38Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-6cce5eff-xcxliy` · **builds on:** `2dc499ae8` (this checkpoint is the commit after it)
 
 ## Just done
-TCL31 planned: engine bid desk (see TASKS.md TCL31)
+TCL31a-e: engine bid desk built (CloudBidRunner, wired in CloudEngine/CloudMain, desk.json, trader counts bids), CloudBidRunnerTest 9 green
 
 ## Do this next
-TCL31a: gates.cloudBids + engineBids + forCloud, then CloudBidRunner
+TCL31f phone side: stand down own desk when status.deskLive, fetch desk.json, Dashboard bets+bids, syncNow on open, Settings switch; then full tests, ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ TCL31a: gates.cloudBids + engineBids + forCloud, then CloudBidRunner
 
 ## Last ten checkpoints
 ```
+  b7de504cd ckpt 3391: TCL31 planned: engine bid desk (see TASKS.md TCL31)
   fed8df095 ckpt 3390: Dormancy also by slot window (a fresh routine container is acct-unknown); t
   1724f3455 ckpt 3389: Dormancy safeguard: this account's routine stops at rotation checkin / coor
   8bccba7f3 ckpt 3388: TCL30: volume diagnosis + standing volume/quality loop (CLAUDE.md, ROUTINE.
@@ -26,8 +27,7 @@ TCL31a: gates.cloudBids + engineBids + forCloud, then CloudBidRunner
   dfe553bef ckpt 3384: slot3 ENGINEER: WATCH only, engine healthy, 0 orders held by trap guard
   04f6651f0 ckpt 3383: TCL28 shipped as v0.110.0 (released, recorded), engine restarted on new cod
   e21ac688f ckpt 3382: pre-release: v0.110.0: the engine rests/turns off silent APIs and advises w
-  4c3771fc8 ckpt 3381: pre-ship: v0.110.0: the engine rests/turns off silent APIs and advises what
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(13 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
