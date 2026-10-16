@@ -25,9 +25,24 @@ for n in sorted(names):
     except Exception:
         pass
 answered = {m.get("replyTo") for m in msgs if m.get("replyTo")}
+acked = {m.get("ack") for m in msgs if m.get("ack")}
+seen_file = "/tmp/chat_watch_printed"
+try:
+    printed = set(open(seen_file).read().split())
+except Exception:
+    printed = set()
+fresh_ack = []
 for m in msgs:
-    if m.get("from") == "tj" and m.get("id") not in answered:
-        print("CHAT %s %s" % (m["id"], " ".join(str(m.get("text", "")).split())[:1500]), flush=True)
+    if m.get("from") == "tj" and not m.get("ack") and m.get("id") not in answered and m.get("id") not in printed:
+        files = m.get("files") or []
+        print("CHAT %s %s%s" % (m["id"], " ".join(str(m.get("text", "")).split())[:1500], ("  [ATTACHMENTS: %s]" % ", ".join(files)) if files else ""), flush=True)
+        printed.add(m["id"])
+        if m.get("id") not in acked:
+            fresh_ack.append(m["id"])
+open(seen_file, "w").write(" ".join(sorted(printed)))
+# a thumbs-up under each message this watcher has just shown the session (Tj, 2026-10-16: mark messages Claude has read)
+if fresh_ack:
+    subprocess.run(["python3", "tools/tell_tj.py", "chat-ack", *fresh_ack], capture_output=True)
 PY
     fi
   fi

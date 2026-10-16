@@ -1,0 +1,51 @@
+name: Clean up chat attachments (Tj, 2026-10-16)
+
+# Attachments Tj adds in the app's chat (screenshots, files) are stored under chat-files/ on the cloud-config branch so Claude can read them. They are deleted after 24 hours by this hourly job unless a Claude
+# session flagged the message important (`python3 tools/tell_tj.py chat-keep <message id>` writes chat-keep/<id>). Only chat-files/ is touched; the messages' text stays. Plain (non-force) push, so a message the phone
+# or a session adds while this runs is never overwritten (the push just retries next hour).
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: chat-cleanup
+  cancel-in-progress: false
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout cloud-config
+        uses: actions/checkout@v4
+        with:
+          ref: cloud-config
+          fetch-depth: 1
+
+      - name: Delete old, unflagged attachments
+        run: |
+          python3 - <<'PY'
+          import os, re, subprocess, time
+          now = time.time() * 1000
+          keep = {f for f in os.listdir("chat-keep")} if os.path.isdir("chat-keep") else set()
+          gone = 0
+          if os.path.isdir("chat-files"):
+              for f in sorted(os.listdir("chat-files")):
+                  # chat-files/<message id>-<name>; a message id is t<epoch ms> (Tj's)
+                  m = re.match(r"^(t(\d{13}))-", f)
+                  at = int(m.group(2)) if m else 0
+                  mid = m.group(1) if m else ""
+                  if m and mid not in keep and now - at > 24 * 3600 * 1000:
+                      os.remove(os.path.join("chat-files", f)); gone += 1
+          print("deleted", gone)
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && { echo "nothing to delete"; exit 0; }
+          git commit -q -m "chat cleanup: attachments older than 24 h"
+          git push -q origin HEAD:cloud-config || echo "push raced a new message; next hour"
