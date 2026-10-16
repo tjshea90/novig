@@ -21,10 +21,26 @@ object DashboardModel {
     /** The engine is called not responding when its heartbeat is older than this (it beats every few seconds, even in the middle of a scan). */
     const val STALE_MS = 3 * 60_000L
 
-    fun headline(st: CloudStatus?, now: Long): Headline {
+    /** The engine is running now: its heartbeat is recent and its last word was not "idle". Everything else on the page is then the LAST KNOWN reading, and says so (Tj, 2026-10-16: "make sure this page shows true readings on everything"). */
+    fun running(st: CloudStatus?, now: Long): Boolean = st != null && st.heartbeatMs > 0 && now - st.heartbeatMs < STALE_MS && !st.idle
+
+    /** Why the engine is not running, in words, for the headline and the tiles; null while it is running. [hoursOn]: the phone's "only 8 am to 1 am Eastern" switch. */
+    fun notRunningWhy(st: CloudStatus?, now: Long, hoursOn: Boolean = true): String? {
+        if (st == null || running(st, now)) return null
+        val beat = if (st.heartbeatMs > 0) now - st.heartbeatMs else Long.MAX_VALUE
+        return when {
+            hoursOn && !EngineHours.isOpen(now) -> "outside its hours (8 am to 1 am Eastern); it starts again at 8 am"
+            st.idle && beat < STALE_MS -> st.problem ?: "switched off on the phone"
+            else -> "no heartbeat for ${ago(beat).removeSuffix(" ago")}"
+        }
+    }
+
+    fun headline(st: CloudStatus?, now: Long, hoursOn: Boolean = true): Headline {
         if (st == null) return Headline("Not connected", Tone.NEUTRAL, "No word from the GitHub engine yet. Save the GitHub token in Settings › Cloud scan, and switch the cloud scan on.")
         val beat = if (st.heartbeatMs > 0) now - st.heartbeatMs else Long.MAX_VALUE
         return when {
+            // Closed hours are not a failure: the engine ends itself at the window's end and the next one starts at 8 am.
+            hoursOn && !running(st, now) && !EngineHours.isOpen(now) -> Headline("Idle: outside its hours", Tone.NEUTRAL, "The engine runs 8 am to 1 am Eastern and stopped ${ago(beat)}. What is shown below is its last reading, not live.")
             st.idle && beat < STALE_MS -> Headline("Idle", Tone.NEUTRAL, st.problem ?: "The engine is switched off (the phone's switch) or outside its hours (8 am to 1 am Eastern).")
             beat >= STALE_MS -> Headline("Not responding", Tone.BAD, "The engine's last heartbeat was ${ago(beat)}. A new one is started within 15 minutes while the cloud scan is on and it is 8 am to 1 am Eastern.")
             st.problem != null -> Headline("Problem", Tone.BAD, st.problem)
@@ -44,8 +60,10 @@ object DashboardModel {
     /** Priced lines out of the same note. */
     fun priced(scanNote: String): Int? = Regex("""EV spread of (\d+) priced""").find(scanNote)?.groupValues?.get(1)?.toIntOrNull()
 
-    fun tiles(st: CloudStatus?, now: Long): List<Tile> {
+    fun tiles(st: CloudStatus?, now: Long, hoursOn: Boolean = true): List<Tile> {
         if (st == null) return emptyList()
+        val why = notRunningWhy(st, now, hoursOn)
+        if (why != null) return lastKnown(st, now, why)
         val ev = posEv(st.scanNote)
         val ageTone = when {
             st.fairAgeMedianS < 0 -> Tone.NEUTRAL
@@ -60,6 +78,20 @@ object DashboardModel {
             Tile("Wallet", cash(st), walletSub(st, now), if (st.walletReadAtMs > 0 && st.walletCash >= 0.5) Tone.GOOD else if (st.walletReadAtMs > 0) Tone.WARN else Tone.NEUTRAL),
             Tile("Trading", st.tradeMode.ifBlank { "off" }.uppercase(), tradeSub(st), if (st.tradeStopped.isNotBlank()) Tone.WARN else if (st.tradeMode.equals("live", true)) Tone.GOOD else Tone.NEUTRAL),
             Tile("Address", if (st.addressHandovers == 0) "accepted" else "refused ${st.addressHandovers}x", if (st.addressHandovers == 0) "Novig takes this runner" else "a new runner is drawn", if (st.addressHandovers == 0) Tone.GOOD else Tone.WARN),
+        )
+    }
+
+    /** The tiles of an engine that is not running: every figure is its last reading with its age, in grey, and the two that describe the LIVE state (trading, address) say they are not happening now. */
+    private fun lastKnown(st: CloudStatus, now: Long, why: String): List<Tile> {
+        val at = ago(now - st.heartbeatMs)
+        val mode = st.tradeMode.ifBlank { "off" }
+        return listOf(
+            Tile("Bets listed", "${st.rows}", "last list, not live (engine's last word $at)"),
+            Tile("Last scan", if (st.lastScanEndedAtMs > 0) "${st.scanMs / 1000} s" else "none yet", if (st.lastScanEndedAtMs > 0) ago(now - st.lastScanEndedAtMs) else "no scan finished in the last run"),
+            Tile("Odds age", if (st.fairAgeMedianS >= 0) age(st.fairAgeMedianS) else "n/a", "when the engine last ran; not ageing live"),
+            Tile("Wallet", cash(st), walletSub(st, now).let { if (st.walletReadAtMs > 0) "$it (last read)" else it }),
+            Tile("Trading", "not trading", "engine $why; set to ${mode.uppercase()} for when it runs"),
+            Tile("Address", "not checked", "engine not running" + if (st.addressHandovers > 0) " (last run: refused ${st.addressHandovers}x)" else ""),
         )
     }
 

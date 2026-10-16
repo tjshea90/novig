@@ -276,7 +276,7 @@ object SettingsSummary {
             SettingsPage.CHAT -> state.chatWho.ifBlank { "Open it to see who is answering" }.take(70)
             SettingsPage.MESSAGES -> state.claudeInbox.unread.let { if (it > 0) "$it unread" else "No new messages" }
             SettingsPage.DASHBOARD -> {
-                val h = com.tjshea.vigilant.data.cloud.DashboardModel.headline(state.cloudUi.status, System.currentTimeMillis())
+                val h = com.tjshea.vigilant.data.cloud.DashboardModel.headline(state.cloudUi.status, System.currentTimeMillis(), state.settings.cloudHours)
                 if (!state.cloudUi.hasToken) "No GitHub token saved" else h.title + (if (h.detail.isNotBlank() && h.title != "Not connected") ": " + h.detail.take(60) else "")
             }
             SettingsPage.CLOUD -> when {

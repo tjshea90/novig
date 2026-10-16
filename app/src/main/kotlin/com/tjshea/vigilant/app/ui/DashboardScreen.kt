@@ -55,7 +55,7 @@ fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Mod
     }
     val u = state.cloudUi
     val board = remember(u.trades, u.desk, u.status, now / 15_000L) { EngineBoard.of(u.trades, u.desk, u.status, now) }
-    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null })
+    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, hoursOn = state.settings.cloudHours)
 }
 
 @Composable
@@ -68,20 +68,23 @@ fun DashboardContent(
     onOpenCloudSettings: () -> Unit,
     modifier: Modifier = Modifier,
     board: EngineBoard.Board? = null,
+    hoursOn: Boolean = true,
 ) {
     val uri = LocalUriHandler.current
     Column(modifier.testTag("dashboard"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        HeadlineCard(status, now, cloudOn)
-        val tiles = remember(status, now / 5_000L) { DashboardModel.tiles(status, now) }
+        HeadlineCard(status, now, cloudOn, hoursOn)
+        val tiles = remember(status, now / 5_000L) { DashboardModel.tiles(status, now, hoursOn) }
         tiles.chunked(2).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 row.forEach { t -> TileCard(t, Modifier.weight(1f)) }
                 if (row.size == 1) Box(Modifier.weight(1f))
             }
         }
-        status?.takeIf { it.novigRoute.isNotBlank() }?.let { InfoLine("Novig", it.novigRoute) }
-        status?.takeIf { it.tradeMode.isNotBlank() && it.tradeNote.isNotBlank() }?.let { InfoLine("Trading", it.tradeNote, if (it.tradeStopped.isNotBlank()) Tone.WARN else Tone.NEUTRAL) }
-        status?.takeIf { it.tradeStopped.isNotBlank() }?.let { InfoLine("Stopped", it.tradeStopped, Tone.WARN) }
+        val running = DashboardModel.running(status, now)
+        val stale = if (running) "" else " (last run, not live)"
+        status?.takeIf { it.novigRoute.isNotBlank() }?.let { InfoLine("Novig", it.novigRoute + stale) }
+        status?.takeIf { it.tradeMode.isNotBlank() && it.tradeNote.isNotBlank() }?.let { InfoLine("Trading", it.tradeNote + stale, if (running && it.tradeStopped.isNotBlank()) Tone.WARN else Tone.NEUTRAL) }
+        status?.takeIf { it.tradeStopped.isNotBlank() }?.let { InfoLine("Stopped", it.tradeStopped + stale, if (running) Tone.WARN else Tone.NEUTRAL) }
 
         board?.let { EngineActivityCard(it, status) }
 
@@ -145,8 +148,8 @@ private fun toneColor(t: Tone): Color = when (t) {
 }
 
 @Composable
-private fun HeadlineCard(status: CloudStatus?, now: Long, cloudOn: Boolean) {
-    val h = remember(status, now / 5_000L) { DashboardModel.headline(status, now) }
+private fun HeadlineCard(status: CloudStatus?, now: Long, cloudOn: Boolean, hoursOn: Boolean) {
+    val h = remember(status, now / 5_000L) { DashboardModel.headline(status, now, hoursOn) }
     val progress = remember(status) { DashboardModel.scanProgress(status) }
     val c = toneColor(h.tone)
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().testTag("dashboardHeadline")) {
@@ -192,7 +195,7 @@ private fun EngineActivityCard(b: EngineBoard.Board, status: CloudStatus?) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(b.headline, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag("engineHeadline"))
             val wallet = status?.takeIf { it.walletCash >= 0.0 }
-            if (wallet != null) Text("Wallet \$${"%.2f".format(java.util.Locale.US, wallet.walletCash)} cash · \$${"%.2f".format(java.util.Locale.US, wallet.walletEquity.coerceAtLeast(wallet.walletCash))} with open orders", style = MaterialTheme.typography.bodySmall)
+            if (wallet != null) Text("Wallet \$${"%.2f".format(java.util.Locale.US, wallet.walletCash)} cash · \$${"%.2f".format(java.util.Locale.US, wallet.walletEquity.coerceAtLeast(wallet.walletCash))} with open orders (read ${DashboardModel.ago(System.currentTimeMillis() - wallet.walletReadAtMs)})", style = MaterialTheme.typography.bodySmall)
             val bid = when {
                 b.deskStopped.isNotBlank() -> "Bids stopped: ${b.deskStopped}"
                 b.deskLive -> "The engine is posting the bids (this phone's own bid desk is down). " + b.deskNote
