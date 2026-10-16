@@ -1,13 +1,13 @@
-# CHECKPOINT 3488 — read me first, then TASKS.md
+# CHECKPOINT 3489 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T20:37:44Z · **tests:** 1 RED: test_coord.sh (4 green)
-**Branch:** `ccr-95eefe49-t2qp21` · **builds on:** `2385e9b73` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T20:42:43Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-95eefe49-t2qp21` · **builds on:** `4aa99146f` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.114.11: PropLine +EV screen: fits under the status bar, the same bet at every other book with a books-agree verdict, Bet button; PropLine paced across the engine hours (versionCode 307, v0.114.11)
+TCL61 written; read governor/advisor/toggles
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.114.11), then run: bash tools/record-release.sh v0.114.11 307 "v0.114.11: PropLine +EV screen: fits under the status bar, the same bet at every other book with a books-agree verdict, Bet button; PropLine paced across the engine hours"
+record v0.114.11, then design api manager scorecard (TCL61a)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  fd74ea492 ckpt 3488: pre-release: v0.114.11: PropLine +EV screen: fits under the status bar, the
   2385e9b73 ckpt 3487: pre-ship: v0.114.11: PropLine +EV screen: fits under the status bar, the sa
   8ce93473f ckpt 3486: TCL60b review written; TCL59/60 done in code
   ddd2a241a ckpt 3485: propline speed: delivered age too
@@ -25,5 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   4b228d7a5 ckpt 3481: TCL59 written (PropLine +EV: cut-off top, cross-book check, bet button)
   c16ef6a6e ckpt 3480: v0.114.10 released+recorded; engine restarted; CLV Release live
   c944020d7 ckpt 3479: pre-release: v0.114.10: scarce APIs (The Odds API, OddsPapi Free) never lea
-  193306028 ckpt 3478: propline_clv.py validated on real archive: spreads grouped by size of numbe
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
