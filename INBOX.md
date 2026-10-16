@@ -125,3 +125,20 @@ I don't think the resume worked from the chat in the app
 ```
 Why is Claude not seeing my newest message
 ```
+
+## 2026-10-16T19:13:20Z
+```
+I am signing up for a propline pro account. The api for the pro tier has additional features that I want vigilant to take full advantage of, including everything offered in the attached screenshot. 
+
+1) Read https://prop-line.com/llms-full.txt then make vigilant take full advantage and use of this pro tier. Right now it is only using free tier. The following may help vigilant: 
+Resolved-prop archive for research on profitable bets and bids
+Graded outcomes and closing lines
+25,000 requests per day
+Fresh odds
+
+2) I'm going to add the key to vigilant Android app. When I send it to GitHub, have GitHub refresh it and find the paid key and prioritize its use. 
+
+3) research the docs and make sure vigilant is using the correct commands and taking full advantage of the pro tier and all of its features, including prop resolution for grading and stats, cross book +ev scanner (make a section in the android app for this because I want to see what +ev bets it finds), Historical line movement + opening/closing lines (CLV) which can help Claude study profitable bets and tune the engine plus save stats on whether I beat the clv (use this for clv on all the bets it offers), Best line across every book (maybe it has his novig picks), Player prop history + hit-rate trends (maybe this can help Claude research).
+
+I am paying for this api so I want vigilant and GitHub and Claude to use it to its full features and benefit
+```
