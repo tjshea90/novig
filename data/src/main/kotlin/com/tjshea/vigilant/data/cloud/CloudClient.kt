@@ -105,6 +105,19 @@ class CloudClient(
         }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
     }
 
+    /** PropLine's +EV-at-Novig list as the engine published it (`propline-ev.json.gz`, TCL56). */
+    suspend fun fetchPropLineEv(): Poll<com.tjshea.vigilant.data.reference.PlEvFeed> = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
+        runCatching {
+            http.newCall(req("contents/propline-ev.json.gz?ref=$FEED_BRANCH").header("Accept", RAW).build()).execute().use { r ->
+                note(r)
+                if (!r.isSuccessful) return@use Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
+                val bytes = r.body?.bytes() ?: return@use Poll.Failed("empty answer")
+                com.tjshea.vigilant.data.reference.PlEvFeed.decode(bytes)?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the PropLine +EV list could not be read (an engine newer than this app?)")
+            }
+        }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
+    }
+
     /** The engine's API usage snapshot (`usage.json`, [CloudUsage]), or [Poll.NotModified] when [etag] is still current. Keys are ids: the caller maps them to its own ([CloudUsage.rekey]). */
     suspend fun fetchUsage(etag: String?): Poll<CloudUsage.File> = withContext(Dispatchers.IO) {
         if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")

@@ -73,6 +73,8 @@ class CloudLink(private val c: AppContainer) {
         /** The engine's bids (`desk.json`) as of the phone's last read, and when (this phone's clock). */
         val desk: com.tjshea.vigilant.data.cloud.DeskFile? = null,
         val deskReadAtMs: Long = 0L,
+        /** PropLine's +EV lines at Novig, as the engine's last sweep found them (`propline-ev.json.gz`, TCL56); null = none yet. */
+        val propLineEv: com.tjshea.vigilant.data.reference.PlEvFeed? = null,
     )
 
     private val _ui = MutableStateFlow(Ui())
@@ -104,6 +106,7 @@ class CloudLink(private val c: AppContainer) {
     @Volatile private var refreshRequestedAt = 0L
     private var feedFetchedFor = 0L
     private var bidsFetchedFor = 0L
+    private var evFetchedFor = 0L
 
     private fun token(): String? {
         tokenPlain?.let { return it }
@@ -194,6 +197,7 @@ class CloudLink(private val c: AppContainer) {
                         latest.why = null
                         if (p.value.computedAtMs > 0L && p.value.computedAtMs != feedFetchedFor) fetch(p.value.computedAtMs)
                         if (s.bidsFromCloud && p.value.bidsAtMs > 0L && p.value.bidsAtMs != bidsFetchedFor) fetchBids()
+                        if (p.value.propLineEvAtMs > 0L && p.value.propLineEvAtMs != evFetchedFor) fetchPropLineEv()
                         maybeStart(p.value, s)
                     }
                     is CloudClient.Poll.NotModified -> latest.why = null
@@ -351,6 +355,15 @@ class CloudLink(private val c: AppContainer) {
     private suspend fun fetchBids() {
         when (val b = client.fetchBids()) {
             is CloudClient.Poll.Fresh -> { bidsFetchedFor = b.value.atMs; c.cloudBids.put(b.value) }
+            is CloudClient.Poll.Failed -> latest.why = b.why
+            else -> {}
+        }
+    }
+
+    /** PropLine's +EV lines at Novig, for the +EV tab's PropLine screen. */
+    private suspend fun fetchPropLineEv() {
+        when (val b = client.fetchPropLineEv()) {
+            is CloudClient.Poll.Fresh -> { evFetchedFor = b.value.atMs; _ui.update { it.copy(propLineEv = b.value) } }
             is CloudClient.Poll.Failed -> latest.why = b.why
             else -> {}
         }
