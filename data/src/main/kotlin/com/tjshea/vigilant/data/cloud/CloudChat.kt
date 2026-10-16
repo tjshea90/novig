@@ -13,6 +13,9 @@ object CloudChat {
     const val BRANCH = "cloud-config"
     const val LEASE_BRANCH = "claude-coord"
     const val FILES_DIR = "chat-files"
+
+    /** Attachments live on a branch of their own (one force-pushed commit by the cleanup, so deleted files are gone from GitHub, history included); the flags are files in [KEEP_DIR] on [BRANCH]. */
+    const val FILES_BRANCH = "chat-files"
     const val KEEP_DIR = "chat-keep"
     const val FILES_KEEP_HOURS = 24
 
@@ -24,7 +27,7 @@ object CloudChat {
         val id: String, val at: Long, val from: String, val text: String, val replyTo: String? = null,
         /** A read receipt (Tj, 2026-10-16: a thumbs-up when Claude has read a message): [ack] is the id of Tj's message a session has read; the message itself is never shown. */
         val ack: String? = null,
-        /** Attachments Tj added (screenshots, files): paths on the branch under [FILES_DIR]. They are deleted after [FILES_KEEP_HOURS] hours unless a session flags the message important (`chat-keep/<id>`). */
+        /** Attachments Tj added (screenshots, files): paths under [FILES_DIR] on [FILES_BRANCH]. They are deleted after [FILES_KEEP_HOURS] hours unless a session flags the message important (`chat-keep/<id>`). */
         val files: List<String> = emptyList(),
     ) {
         val fromTj: Boolean get() = from == "tj"

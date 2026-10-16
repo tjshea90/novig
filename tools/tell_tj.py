@@ -5,7 +5,7 @@
   python3 tools/tell_tj.py set-api "reason" sgo=on parlay=off ...
   python3 tools/tell_tj.py chat-reply <message id> "answer"      (the chat; tools/chat_watch.sh prints Tj's new messages)
   python3 tools/tell_tj.py chat-ack <message id> [<id> ...]     (a thumbs-up under Tj's message: this session has read it; chat_watch.sh does it by itself)
-  python3 tools/tell_tj.py chat-file <path on the branch> <out dir>   (download an attachment Tj added: paths are printed by chat_watch.sh)
+  python3 tools/tell_tj.py chat-file <path on the branch> <out dir>   (download an attachment Tj added, from the chat-files branch: paths are printed by chat_watch.sh)
   python3 tools/tell_tj.py chat-keep <message id>               (flag the message's attachments important: the hourly cleanup deletes the rest after 24 h)
   python3 tools/tell_tj.py selftest
 
@@ -124,12 +124,12 @@ def chat_file(path, out, cwd=None):
     """Download an attachment (a path under chat-files/) from the branch into `out`; prints where it landed."""
     if not path.startswith("chat-files/") or ".." in path:
         raise SystemExit("only chat-files/ paths")
-    git("fetch", "-q", "origin", BRANCH, cwd=cwd)
+    git("fetch", "-q", "origin", "chat-files", cwd=cwd)
     os.makedirs(out, exist_ok=True)
     dest = os.path.join(out, os.path.basename(path))
     r = subprocess.run(["git", "show", "FETCH_HEAD:" + path], capture_output=True, cwd=cwd)
     if r.returncode:
-        raise SystemExit("not on the branch (deleted after 24 h unless flagged?): " + path)
+        raise SystemExit("not on the chat-files branch (deleted after 24 h unless flagged?): " + path)
     open(dest, "wb").write(r.stdout)
     return dest
 
