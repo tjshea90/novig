@@ -779,6 +779,7 @@ private fun VigilantRoot(
                     // Its Settings buttons are about fair-odds sources and keys: that page.
                     onOpenSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.FAIR.name; tabName = Tab.SETTINGS.name },
                     onOpenDashboard = { tabName = Tab.ENGINE.name },
+                    onOpenPropLine = if (Tab.PROPLINE.shownIn(mode)) ({ tabName = Tab.PROPLINE.name }) else null,
                     onTrack = vm::trackBet,
                     onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
                     onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },

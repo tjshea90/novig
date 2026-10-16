@@ -75,6 +75,8 @@ fun FeedScreen(
     onTrack: (Opportunity, Double) -> Unit,
     /** Tapping the GitHub engine's bar opens the engine dashboard (Settings › Engine dashboard). */
     onOpenDashboard: () -> Unit = {},
+    /** The PropLine +EV-at-Novig screen (TCL56): a card here opens it while the engine has a list from PropLine. Null = no card. */
+    onOpenPropLine: (() -> Unit)? = null,
     onSort: (FeedSort) -> Unit = {},
     /** Show only games starting within this many hours (0 = any). */
     onStartsWithin: (Int) -> Unit = {},
@@ -255,6 +257,16 @@ fun FeedScreen(
                             modifier = Modifier.testTag("cloudPaused"),
                         )
                     }
+                }
+                if (onOpenPropLine != null && state.cloudUi.propLineEv != null) item(key = "propLineEv") {
+                    val pl = state.cloudUi.propLineEv!!
+                    val ago = ((now - pl.atMs) / 60_000L).coerceAtLeast(0)
+                    val best = pl.rows.maxOfOrNull { it.evPct }
+                    Banner(
+                        "PropLine +EV at Novig: ${pl.rows.size} lines" + (best?.let { " · best +${"%.1f".format(java.util.Locale.US, it)}%" } ?: "") + " · swept $ago min ago\nTap to open",
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 12.dp).clickable(onClick = onOpenPropLine).testTag("propLineEvCard"),
+                    )
                 }
                 item(key = "viewFilter") {
                     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
