@@ -110,3 +110,8 @@ Is this still running
 ```
 Did you get my messages from the app
 ```
+
+## 2026-10-16T15:20:18Z
+```
+Why is there no Claude session for the app right now? There are 3 Claude accounts
+```
