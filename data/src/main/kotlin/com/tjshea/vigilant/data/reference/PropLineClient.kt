@@ -357,31 +357,32 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
                 // A paid key reads several games at once (the client's own spacing still sets the pace, and PropLine allows 20 in flight); the free key one at a time, as before.
                 val width = if (client.plan() != null) 6 else 1
                 val gate = kotlinx.coroutines.sync.Semaphore(width)
-                val results = kotlinx.coroutines.coroutineScope {
+                val results: List<Triple<String, RefEvent, Result<Board?>>> = kotlinx.coroutines.coroutineScope {
                     matches.sortedBy { it.event.startsTs }.mapNotNull { m ->
                         val ref = m.refEvent ?: return@mapNotNull null
                         val markets = toBuy[m.event.eventId].orEmpty()
                         if (markets.isEmpty()) return@mapNotNull null
+                        val eventId = m.event.eventId
                         kotlinx.coroutines.async {
                             gate.withPermit {
-                                try {
-                                    Result.success(Triple(m, ref, client.eventBoard(sport, ref.id.removePrefix(PREFIX), markets, books)))
+                                val r: Result<Board?> = try {
+                                    Result.success(client.eventBoard(sport, ref.id.removePrefix(PREFIX), markets, books))
                                 } catch (e: kotlinx.coroutines.CancellationException) {
                                     throw e
                                 } catch (e: Exception) {
                                     Result.failure(e)
                                 }
+                                Triple(eventId, ref, r)
                             }
                         }
                     }.map { it.await() }
                 }
-                for (r in results) {
-                    val t = r.getOrNull()
-                    if (t == null) { if (failure == null) failure = r.exceptionOrNull() as? Exception; continue }
-                    val (m, ref, board) = t
+                for ((eventId, ref, r) in results) {
+                    if (r.isFailure) { if (failure == null) failure = r.exceptionOrNull() as? Exception; continue }
+                    val board = r.getOrNull()
                     // The listing's teams and time (the ones matched on) with the odds call's quotes.
-                    bought[m.event.eventId] = Bought(
-                        m.event.eventId, ref.copy(markets = board?.events?.singleOrNull()?.markets.orEmpty()), now, ask,
+                    bought[eventId] = Bought(
+                        eventId, ref.copy(markets = board?.events?.singleOrNull()?.markets.orEmpty()), now, ask,
                         novig = board?.novig?.singleOrNull()?.let { ref.copy(markets = it.markets) },
                     )
                 }
