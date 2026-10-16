@@ -140,7 +140,7 @@ class CloudSources(
             PinnapiClient.pinnapi(KeyPool(QuotaPolicy.PINNAPI, { keys(CloudKeys.PINNAPI) }, usage)),
         ),
     )
-    private val propLine = PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { keys(CloudKeys.PROPLINE) }, usage), json, relayNovig = true, bookIds = false)
+    private val propLine = PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { keys(CloudKeys.PROPLINE) }, usage), json, relayNovig = true, bookIds = false, meter = usage)
     private val propLineProps = PropLinePropsSource(propLine)
     /** PropLine's plan per key from its quota headers (Tj, 2026-10-16, TCL56): the paid key is found and used first ([KeyPool]). The engine asks hourly. */
     private val propLineAccount = com.tjshea.vigilant.data.reference.PropLineAccount(http, { keys(CloudKeys.PROPLINE) }, usage)

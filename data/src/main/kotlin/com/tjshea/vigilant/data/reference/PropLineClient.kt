@@ -492,6 +492,28 @@ object PropLineProps {
             "player_points_rebounds_assists" to "POINTS_REBOUNDS_ASSISTS",
             "player_double_double" to "DOUBLE_DOUBLE",
         ),
+        // NBA and NHL (Tj, 2026-10-16, PropLine Pro: its docs' market keys; Novig lists both): the free key's 1,000 a day could not afford every game, a paid key's 5,000 to 25,000 can.
+        "basketball_nba" to listOf(
+            "player_points" to "POINTS",
+            "player_rebounds" to "REBOUNDS",
+            "player_assists" to "ASSISTS",
+            "player_threes" to "THREE_POINTERS_MADE",
+            "player_points_rebounds_assists" to "POINTS_REBOUNDS_ASSISTS",
+            "player_points_assists" to "POINTS_ASSISTS",
+            "player_points_rebounds" to "POINTS_REBOUNDS",
+            "player_rebounds_assists" to "REBOUNDS_ASSISTS",
+            "player_steals" to "STEALS",
+            "player_blocks" to "BLOCKS",
+            "player_double_double" to "DOUBLE_DOUBLE",
+        ),
+        "icehockey_nhl" to listOf(
+            "player_goals" to "PLAYER_GOALS",
+            "player_shots_on_goal" to "SHOTS_ON_GOAL",
+            "player_points" to "POINTS",
+            "player_assists" to "ASSISTS",
+            "goalie_saves" to "SAVES",
+            "player_power_play_points" to "POWER_PLAY_POINTS",
+        ),
     ).let { m -> m + ("americanfootball_ncaaf" to m.getValue("americanfootball_nfl")) }
 
     /** Yes/No markets: Yes is Over 0.5, No is Under 0.5. */
