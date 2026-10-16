@@ -5576,3 +5576,9 @@ Tj (verbatim): "It concerns me that Claude did not auto build the prop grading s
 - [x] TCL67a (CLAUDE.md rule added) CLAUDE.md standing rule: full autonomy to build/ship improvements across engine, app, Actions; never decide "not worth building" for a paid-API feature Tj asked for; build it.
 - [x] TCL67b DONE (shapes verified against the real probe answers 2026-10-16) (PropLineScores + PropLineStatMap, wired into the app chain and the engine grader; tests PropLineScoresTest); verify shapes against the probe (scores, stats), then done.  PropLine as a grading source (props + game lines): ScoreSource from /results (actual_value per player/market, final scores) wired into the grader chain (app + engine TradeSettle), switch + test.
 - [ ] TCL67c Revisit what I skipped: Bet button for PropLine lines Vigilant never priced (TCL64a); PropLine /clv/grade for the app's own bets' CLV; hit-rate on all prop rows.
+
+## TCL68: research PropLine's studies + archive for profitable trends; replicate on the GitHub engine (Tj, chat t1792192290353, 2026-10-16)
+Tj (verbatim): "research the studies on propline's archive plus other patterns or profitable trends you can find in the propline history. I'm very interested in the profitable trends they found in the study. investigate all of the findings and see if they can be replicated on GitHub engine"
+- [ ] TCL68a Read PropLine's own published studies/reports (site, docs, books/accuracy, hit-rates, resolution-summary) and list every claimed trend.
+- [ ] TCL68b Test each on the resolved archive (Novig + Pinnacle, 90 d) with out-of-sample splits and t-stats; find more patterns (CLV by type/lead time/line move/steam).
+- [ ] TCL68c Replicate what holds on the GitHub engine: rule/filters (class B gates) + a recurring Actions study; write research/propline_trends_2026-10-16.md.
