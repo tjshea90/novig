@@ -109,7 +109,7 @@ class CloudInbox(private val c: AppContainer, private val client: CloudClient) {
         if (done.isEmpty()) return 0
         val first = s.chatNotifiedUpToMs < 0
         val upTo = maxOf(s.chatNotifiedUpToMs, got.maxOfOrNull { it.at } ?: 0L)
-        if (!first && !chatOpen) got.filter { !it.fromTj && it.at > s.chatNotifiedUpToMs }.takeLast(2).forEach {
+        if (!first && !chatOpen) got.filter { !it.fromTj && it.ack == null && it.at > s.chatNotifiedUpToMs }.takeLast(2).forEach {
             notify(CloudMessages.Message("chat-${it.id}", it.at, it.from, "reply", "Claude replied", it.text.take(300), 1, "CHAT"))
         }
         save(s.copy(chat = CloudChat.thread(s.chat + got).takeLast(MAX_KEPT), chatSeen = (s.chatSeen + done).takeLast(MAX_NAMES), chatNotifiedUpToMs = upTo))
@@ -117,16 +117,37 @@ class CloudInbox(private val c: AppContainer, private val client: CloudClient) {
     }
 
     /** Sends Tj's words as one file on GitHub and shows it in the thread at once. Null = sent; otherwise why not. */
-    suspend fun sendChat(text: String, now: Long = System.currentTimeMillis()): String? {
+    suspend fun sendChat(text: String, now: Long = System.currentTimeMillis(), attachments: List<Pair<String, ByteArray>> = emptyList()): String? {
         val t = text.trim()
-        if (t.isEmpty()) return "Nothing to send."
+        if (t.isEmpty() && attachments.isEmpty()) return "Nothing to send."
         if (CloudChat.looksSecret(t)) return "That looks like a key or token. Keys must never go in the chat (the repo is public)."
-        val m = CloudChat.Msg("t$now", now, "tj", t)
+        val id = "t$now"
+        // Attachments go first, to the chat-files branch (deleted after 24 h unless Claude flags the message): the message names them only once they are all there.
+        val paths = ArrayList<String>()
+        for ((name, bytes) in attachments) {
+            if (bytes.size > MAX_ATTACHMENT_BYTES) return "$name is over ${MAX_ATTACHMENT_BYTES / 1_000_000} MB."
+            val path = CloudChat.filePath(id, name)
+            client.putFile(CloudChat.FILES_BRANCH, path, bytes, "chat attachment")?.let { return "Could not upload $name: $it" }
+            paths += path
+        }
+        val m = CloudChat.Msg(id, now, "tj", t, files = paths)
         val err = client.putFile(CloudChat.BRANCH, "${CloudChat.DIR}/${CloudChat.fileName(m)}", CloudChat.encode(m).toByteArray(Charsets.UTF_8), "chat from Tj")
         if (err != null) return err
         val s = _state.value
         save(s.copy(chat = CloudChat.thread(s.chat + m).takeLast(MAX_KEPT), chatSeen = (s.chatSeen + CloudChat.fileName(m)).takeLast(MAX_NAMES)))
         return null
+    }
+
+    /** One message leaves the list (the trash can); it does not come back, because the file is remembered as seen. */
+    suspend fun dismissMessage(id: String) {
+        val s = _state.value
+        save(s.copy(messages = s.messages.filter { it.id != id }, readIds = s.readIds.filter { it != id }))
+    }
+
+    /** Clear all: every message leaves the list. */
+    suspend fun clearMessages() {
+        val s = _state.value
+        save(s.copy(messages = emptyList(), readIds = emptyList()))
     }
 
     /** Reads the lease on `claude-coord` and says who would answer. */
@@ -196,6 +217,9 @@ class CloudInbox(private val c: AppContainer, private val client: CloudClient) {
     }
 
     companion object {
+        /** The most one attachment may be (the contents API takes 100 MB; a screenshot is a few). */
+        const val MAX_ATTACHMENT_BYTES = 20_000_000
+
         const val CHANNEL = "claude_messages"
         const val ID = 7710
         const val MAX_PER_ROUND = 20
