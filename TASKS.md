@@ -5433,3 +5433,6 @@ Tj: "it is sgo pro. my boltodds is working fine here, see if GitHub can refresh 
 ## TCL41: confirm Claude auto-updates of app + profit engine are live and routine (Tj, chat t1792165602030, 2026-10-16)
 - [x] TCL41a (this account verified; other two need Tj to check claude.ai Routines) Verify the three rotation routines exist/enabled, next fire times, and what each does (ROUTINE.md); report to Tj; fix gaps (e.g. account away, no routine for 7542bf slot).
 - [ ] TCL40d WATCH: BoltOdds snapshot still 429 on the runner after the 60 s retry (scan note truncates the reason at ~60 chars; get the full text: log boltFeed.report() or widen the note). Bid churn: each 25 s pass re-posts 15-33 bids (posted == taken down); look at why (queue position lost, bid TTL) before it costs fills.
+
+## TCL42: chat does not refresh after phone screen off/on (Tj, chat t1792167486204, 2026-10-16)
+- [ ] TCL42a Chat must re-poll the moment the app resumes (lifecycle ON_RESUME / syncNow) and after network returns; test; ship with next batch.
