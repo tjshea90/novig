@@ -166,6 +166,20 @@ class PropLineClientTest {
     }
 
     @Test
+    fun `a 504 under load is tried again and the board still arrives, three in a row is an error`() = runTest {
+        var n = 0
+        routes["/v1/sports/americanfootball_nfl/odds"] = { if (++n <= 2) MockResponse().setResponseCode(504) else ok(board) }
+        val snap = client().odds(nfl, ScanSettings())
+        assertEquals(3, n)
+        assertEquals(true, snap.events.isNotEmpty())
+        var m = 0
+        routes["/v1/sports/americanfootball_nfl/odds"] = { m++; MockResponse().setResponseCode(504) }
+        val failed = runCatching { client().odds(nfl, ScanSettings()) }.exceptionOrNull()
+        assertEquals(3, m)
+        assertEquals("PropLine HTTP 504", failed?.message)
+    }
+
+    @Test
     fun `every reply's daily figures feed the usage meter`() = runTest {
         routes["/v1/sports/americanfootball_nfl/odds"] = { ok(board) }
         client().odds(nfl, ScanSettings())
