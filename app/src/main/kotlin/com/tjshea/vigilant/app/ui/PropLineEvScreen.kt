@@ -117,12 +117,17 @@ private fun PropLineEvCard(r: PlEvRow, now: Long, expanded: Boolean, onToggle: (
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(PropLineEvView.pick(r), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Text(String.format(Locale.US, "+%.1f%%", r.evPct), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                val cal = PropLineEvView.calibratedEv(r)
+                Text(String.format(Locale.US, "%+.1f%%", cal), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
             Text("${r.league} · ${r.away} @ ${r.home} · ${PropLineEvView.starts(r, now)}", style = MaterialTheme.typography.bodySmall)
             Text(
                 "Novig ${Odds.formatAmerican(r.price)} · fair ${Format.american(r.fairProb)} (${Format.percent(r.fairProb)}) from ${r.fairSource.ifBlank { "?" }}",
                 style = MaterialTheme.typography.bodyMedium,
+            )
+            if (kotlin.math.abs(cal - r.evPct) >= 0.5) Text(
+                String.format(Locale.US, "PropLine says %+.1f%%; after Vigilant's prop cut %+.1f%% (prop Overs PropLine called +EV lost money on 6,400 graded bets)", r.evPct, cal),
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("plCalibrated"),
             )
             Text(
                 "Novig's price read ${if (priceAgeMin <= 0) "just now" else "$priceAgeMin min ago"}" + if (stale) " · old: check the live price before betting" else "",
@@ -231,8 +236,20 @@ object PropLineEvView {
 
     fun select(rows: List<PlEvRow>, league: String, minEv: Double, kind: String, now: Long, maxOdds: Int = ANY_ODDS): List<PlEvRow> =
         rows.filter { r ->
-            r.startsAtMs > now && r.evPct >= minEv && r.price <= maxOdds &&
+            r.startsAtMs > now && calibratedEv(r) >= minEv && r.price <= maxOdds &&
                 (league == "All" || r.league == league) &&
                 when (kind) { "Props" -> isProp(r); "Game lines" -> !isProp(r); else -> true }
-        }.sortedByDescending { it.evPct }
+        }.sortedByDescending { calibratedEv(it) }
+
+    /**
+     * PropLine's edge after Vigilant's own prop cut ([com.tjshea.vigilant.data.scanner.PropHaircut]: -7 pts on an Over, -3 on an Under; research/propline_vs_vigilant_2026-10-16.md: the Overs PropLine called +EV
+     * lost 9-14% over 6,400 graded bets). A game line is not cut. This is the number the list is filtered and ranked on.
+     */
+    fun calibratedEv(r: PlEvRow): Double {
+        if (!isProp(r)) return r.evPct
+        val cut = com.tjshea.vigilant.data.scanner.PropHaircut.points(com.tjshea.vigilant.data.scanner.BetKind.PROP, r.outcome)
+        if (cut <= 0.0) return r.evPct
+        val dec = if (r.price > 0) 1 + r.price / 100.0 else 1 + 100.0 / -r.price
+        return ((r.fairProb - cut).coerceAtLeast(0.0) * dec - 1) * 100
+    }
 }
