@@ -5531,3 +5531,8 @@ Tj (verbatim): "two things: 1) look at the screenshot, the app is getting cut of
 - [ ] TCL59a The PropLine screen (and any tab without its own top bar) is cut off at the top: status bar / title overlap; fix like the other tabs.
 - [ ] TCL59b Each PropLine +EV line shows the same bet at every book PropLine/others carry NOW (price per book, best price, the fair line, how many books agree it is +EV) so Tj can judge it: PropLine /best-line or per-event odds, with ages; the existing OtherBooks (ParlayAPI/PropLine/The Odds API) sheet logic.
 - [ ] TCL59c A Bet button on each line like the Feed's: re-price at Novig's live book and place through the same Bet sheet (match the line to a Novig market/outcome).
+
+## TCL60: pace PropLine through the day; review its speed and odds freshness (Tj, chat t1792182359273, 2026-10-16)
+Tj (verbatim): "pace the propline api so that I can use it throughout the day without it running out very fast, and give me a review of its speed and freshness of odds"
+- [ ] TCL60a Pace: the day's 25,000 (reset 00:00 UTC = 8 pm ET) spread over the hours the engine runs, per consumer (game lines, props, +EV sweep, cross-check), never past the day's share; show the use in the app.
+- [ ] TCL60b Review of speed (response times) and freshness (age of each book's quote at read) from real measurements: write research/propline_speed_freshness_2026-10-16.md and tell Tj.
