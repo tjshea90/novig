@@ -279,12 +279,24 @@ fun main(args: Array<String>) = runBlocking {
     runCatching { study.flush() }
     runCatching { publisher.stageTrades(TradeLedger.text(trader.ledger), System.currentTimeMillis()) }
     log("cloud engine ending: $end after ${(System.currentTimeMillis() - started) / 60_000L} min, ${engine.passes} passes")
+    // The job must end: run 61 (2026-10-16, Tj: "the engine just stopped") logged this line at 18:20 and then sat in the Engine step for 5+ minutes, so the hand-over never ran and no new engine could start. A
+    // daemon watchdog writes the end marker and halts the JVM after 90 s whatever the flush, a socket or a thread is doing; the normal path below ends first and exits at once.
+    Thread {
+        runCatching { Thread.sleep(END_WATCHDOG_MS) }
+        runCatching { File(out, "end").writeText(end.name) }
+        Runtime.getRuntime().halt(0)
+    }.apply { isDaemon = true; name = "end-watchdog"; start() }
     runCatching { publisher.flush(force = true) }
-    novigKeyed?.close()
+    runCatching { novigKeyed?.close() }
     flusher.cancel()
     scope.cancel()
     File(out, "end").writeText(end.name)
+    // Non-daemon threads (a socket's executor) kept the process alive after main returned; the job is over, so exit.
+    System.out.flush()
+    Runtime.getRuntime().halt(0)
 }
+
+private const val END_WATCHDOG_MS = 90_000L
 
 /**
  * Reads `settings.json` from the `cloud-config` branch with git (the checkout already has the token). The engine looks every 3 s, so it asks first with the light `ls-remote` which commit the branch is at and
