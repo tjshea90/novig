@@ -95,3 +95,8 @@ If it isn't a strain on the system, make the cloud scanner save every single bet
 ```
 Make the vigilant cloud system run until 1am eastern every day instead of stopping at 10pm Eastern
 ```
+
+## 2026-10-16T02:16:17Z
+```
+Why does this say trading live and address accepted when the engine is idle? Make sure this page shows true readings on everything
+```
