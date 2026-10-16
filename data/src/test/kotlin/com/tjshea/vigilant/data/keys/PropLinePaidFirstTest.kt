@@ -74,7 +74,7 @@ class PropLinePaidFirstTest {
         assertEquals(5.0 / 17, f(5), 1e-9)
         assertEquals("nothing is read from 05:00 to 12:00", f(5), f(12), 1e-9)
         assertEquals(11.0 / 17, f(18), 1e-9)
-        assertEquals(1.0, f(24), 1e-9)
+        assertEquals("the last millisecond of the day", 1.0, com.tjshea.vigilant.data.reference.PropLineClient.activeDayFraction(day + 24 * 3_600_000L - 1), 1e-6)
         // Winter (EST): 13:00Z to 06:00Z
         val w = Instant.parse("2026-12-10T00:00:00Z").toEpochMilli()
         assertEquals(6.0 / 17, com.tjshea.vigilant.data.reference.PropLineClient.activeDayFraction(w + 6 * 3_600_000L), 1e-9)
