@@ -1,0 +1,1 @@
+{"id": "m1792118902-c8d1", "at": 1792118902907, "from": "claude:session", "kind": "info", "title": "Engine hours now 8 am to 1 am; dashboard fixed", "body": "v0.113.2: the engine now runs until 1 am Eastern. When it is not running the dashboard shows 'Idle: outside its hours' and every reading as last known (Trading: not trading, Address: not checked).", "priority": 0}
