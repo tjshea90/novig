@@ -5450,3 +5450,6 @@ Tj: "confirm the second boltodds key and see if it works. Make sure this app is 
 Tj: "https://boltodds.com/docs make sure the app is using the boltodds to its full potential including the socket, and the auto reconnect. I want to send my kalshi key to GitHub so GitHub can use the socket for faster odds"
 - [ ] TCL45a Kalshi key (id + private key) as Actions secrets KALSHI_KEY_ID / KALSHI_PRIVATE_KEY, sent sealed by the app (like the Novig read key); engine builds KalshiClient + KalshiStream from them; status line; Kalshi socket switch mirrored.
 - [ ] TCL45b Read boltodds.com/docs vs BoltOdds code (socket, reconnect/backoff, snapshot rate limits, get_games, markets): list gaps, fix.
+
+## TCL46: chats should not waste usage: maintain chats, new context windows (Tj, chat t1792168404473, 2026-10-16)
+- [ ] TCL46a Answer/design: chat_watch prints only new messages already; session context is the cost. Plan: a rolling chat summary file (chat/SUMMARY.md on cloud-config or research/chat_digest.md) updated at each checkpoint, so a fresh session starts from CHECKPOINT+summary; recommend fresh session when context is large (toobig.sh). Build + tell Tj.
