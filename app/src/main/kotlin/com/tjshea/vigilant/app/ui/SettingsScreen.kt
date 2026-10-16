@@ -403,6 +403,7 @@ fun SettingsScreen(
     onOpenAutoBet: (() -> Unit)? = null,
     /** Opens the Bids tab (its row on the home list, and search results for it). */
     onOpenBids: (() -> Unit)? = null,
+    onOpenCno: (() -> Unit)? = null,
 ) {
     val s = state.settings
     state.report?.let { ReportDialog(it, reportActions) }
@@ -442,7 +443,7 @@ fun SettingsScreen(
                 .testTag("settingsPage-${current?.name ?: "HOME"}"),
         ) {
             when (current) {
-                null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids)
+                null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids, onOpenCno = onOpenCno)
                 SettingsPage.SCANNING -> ScanningPage(s, onUpdate)
                 SettingsPage.DASHBOARD -> DashboardPage(state, onOpenCloudSettings = { go(SettingsPage.CLOUD) })
                 // Moved out of Settings (Tj, 2026-10-16): the Engine and Claude tabs.
@@ -478,7 +479,7 @@ fun SettingsScreen(
 
 /** The Settings home: a search box, the Auto-bet row (it opens its tab), then every page with what it's set to now. */
 @Composable
-private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> Unit, onOpenAutoBet: (() -> Unit)?, onOpenBids: (() -> Unit)?) {
+private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> Unit, onOpenAutoBet: (() -> Unit)?, onOpenBids: (() -> Unit)?, onOpenCno: (() -> Unit)? = null) {
     val s = state.settings
     var query by rememberSaveable { mutableStateOf("") }
     OutlinedTextField(
@@ -509,17 +510,20 @@ private fun ColumnScope.SettingsHome(state: UiState, onOpen: (SettingsPage) -> U
     val shown = SettingsPage.home(s)
     SettingsGroup.entries.forEach { g ->
         val rows = shown.filter { it.group == g }
-        val autoBet = g == SettingsGroup.BET && AppBook.isNovig && s.cnoOn && onOpenAutoBet != null
+        val autoBet = g == SettingsGroup.BET && AppBook.isNovig && onOpenAutoBet != null
         val bids = g == SettingsGroup.BET && AppBook.isNovig && onOpenBids != null
         if (rows.isEmpty() && !autoBet && !bids) return@forEach
         SectionTitle(g.title, Modifier.testTag("settingsGroup-${g.name}"))
         if (autoBet) {
             SettingsRow(
                 title = "Auto-bet & presets",
-                summary = "Its own tab · ${SettingsSummary.autoBet(s)}",
+                summary = "The phone's own auto-bet (with the engine live, GitHub places the bets) · ${SettingsSummary.autoBet(s)}",
                 tag = "settingsRow-AUTOBET",
                 onClick = onOpenAutoBet!!,
             )
+        }
+        if (g == SettingsGroup.FIND && onOpenCno != null) {
+            SettingsRow(title = "CrazyNinjaOdds list (phone)", summary = "The phone's own CNO scanner view, no longer in the tab bar", tag = "settingsRow-CNOTAB", onClick = onOpenCno)
         }
         if (bids) {
             SettingsRow(
