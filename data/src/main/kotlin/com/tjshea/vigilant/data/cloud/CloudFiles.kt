@@ -108,6 +108,9 @@ data class CloudStatus(
     /** The order the engine asks its APIs in, best first, with what each was measured to deliver (p90 age of its quotes by the books' own stamps, distance from Pinnacle): [com.tjshea.vigilant.data.scanner.SourceScore]. Empty before the first measurement. */
     val ranking: String = "",
     val bidsBytes: Int = 0,
+    /** PropLine's +EV-at-Novig list (`propline-ev.json.gz`, [com.tjshea.vigilant.data.reference.PlEvFeed], TCL56): when the engine's last sweep finished and how many lines it holds; 0 = none (no paid PropLine key, or not swept yet). */
+    val propLineEvAtMs: Long = 0L,
+    val propLineEvRows: Int = 0,
     /** The engine's own trading (TCL20d): its mode (off / paper / live), what its last pass did in words, why ordering has stopped if it has, and when `trades.json` last changed. */
     val tradeMode: String = "",
     val tradeNote: String = "",

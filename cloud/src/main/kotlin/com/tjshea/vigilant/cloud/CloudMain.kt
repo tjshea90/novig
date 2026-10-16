@@ -363,6 +363,9 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     private var usageBook: UsageBook? = null
     private var feedBytes: ByteArray? = null
     private var bidsBytes: ByteArray? = null
+    private var evBytes: ByteArray? = null
+    private var evAt = 0L
+    private var evRows = 0
     private var usageText: String? = null
     private var usageAt = 0L
     private var tradesText: String? = null
@@ -377,7 +380,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     @Synchronized
     fun stage(feed: CloudFeed?, st: CloudStatus): String? {
         if (feed != null) feedBytes = CloudFeed.encode(feed)
-        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, usageAtMs = usageAt, tradesAtMs = maxOf(st.tradesAtMs, tradesAt), deskBytes = deskText?.length ?: 0)
+        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, propLineEvAtMs = evAt, propLineEvRows = evRows, usageAtMs = usageAt, tradesAtMs = maxOf(st.tradesAtMs, tradesAt), deskBytes = deskText?.length ?: 0)
         dirty = true
         return lastProblem
     }
@@ -415,6 +418,15 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         dirty = true
     }
 
+    /** PropLine's +EV-at-Novig list (`propline-ev.json.gz`, TCL56), announced in the status; goes out with the next push. */
+    @Synchronized
+    fun stagePropLineEv(f: com.tjshea.vigilant.data.reference.PlEvFeed) {
+        evBytes = com.tjshea.vigilant.data.reference.PlEvFeed.encode(f)
+        evAt = f.atMs; evRows = f.rows.size
+        status = status?.copy(propLineEvAtMs = evAt, propLineEvRows = evRows)
+        dirty = true
+    }
+
     @Synchronized
     fun flush(force: Boolean = false) {
         val st = status ?: return
@@ -436,6 +448,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         deskText?.let { File(dir, "desk.json").writeText(it) }
         ApiChain.measures.takeIf { it.isNotEmpty() }?.let { File(dir, "ranking.json").writeText(CloudRanking.encode(it)) }
         File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }
+        evBytes?.let { File(dir, "propline-ev.json.gz").writeBytes(it) }
         File(dir, "status.json").writeText(CloudStatus.text(st.copy(heartbeatMs = now)))
         logTail().takeIf { it.isNotBlank() }?.let { File(dir, "engine-log.txt").writeText(it + "\n") }
         git.run(dir, "add", "-A")
