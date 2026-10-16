@@ -198,16 +198,23 @@ class PropLineClient(
     private fun intervalMs(): Long = plan()?.let { if (it.limit >= 25_000) 100L else 150L } ?: minIntervalMs
 
     /**
-     * Whether a paid key has room to read every game's props this scan: its used share of the day so far is within the day's share plus a headroom (so a busy morning cannot spend the evening's
-     * requests). Always false for a free key (its [propLineGamesPerScan] cap stays).
+     * Whether a paid key has room for a consumer taking up to [share] of the plan, now: what the key has used today is at or under the share of the day's requests that the engine's working hours have
+     * run through ([activeDayFraction]) plus a 5% headroom. The quota day runs 00:00 to 00:00 UTC (8 pm ET), the engine works 08:00 to 01:00 ET, so a clock-linear day would hand the hours the engine sleeps
+     * to the ones it works; this spends the day's requests only across the hours that read them (Tj, 2026-10-16: "pace the propline api so that I can use it throughout the day without it running out very fast").
+     * Tiers: game lines are always read (a handful of requests); player props for every game while under [PROPS_SHARE] of that pace; the +EV sweep and its cross-check while under [EV_SHARE]. Over the
+     * line a consumer falls back to its own small cap (props: the setting's games a scan) rather than stopping. Always false for a free key.
      */
-    fun roomForEveryGame(now: Long = clock()): Boolean {
+    fun roomFor(share: Double, now: Long = clock()): Boolean {
         val p = plan() ?: return false
-        val dayMs = 24 * 3_600_000L
-        val sinceMidnight = now - (now / dayMs) * dayMs
-        val allowed = p.limit * (sinceMidnight.toDouble() / dayMs) + p.limit * 0.10
-        return p.used <= allowed
+        return p.used <= p.limit * activeDayFraction(now) * share + p.limit * 0.05
     }
+
+    /** Player props for every game in the window. */
+    fun roomForEveryGame(now: Long = clock()): Boolean = roomFor(PROPS_SHARE, now)
+
+    /** The +EV-at-Novig sweep (one request per game plus one for the cross-check of games that have lines). */
+    fun roomForEv(now: Long = clock()): Boolean = roomFor(EV_SHARE, now)
+
 
     private suspend fun <T> call(path: String, params: List<Pair<String, String>>, notFound: T, parse: (String) -> T): Answer<T> {
         spacing.withLock {
@@ -276,6 +283,39 @@ class PropLineClient(
         )
 
         const val REUSE_MS = 2 * 60_000L
+
+        /** The shares of the day's pace the consumers may reach (the rest is headroom for game lines, rechecks, other books and research). */
+        const val PROPS_SHARE = 0.70
+        const val EV_SHARE = 0.90
+
+        /**
+         * The share of the quota day (00:00 to 00:00 UTC) that the engine's working hours ([com.tjshea.vigilant.data.cloud.EngineHours]: 08:00 to 01:00 ET) have run through at [now]: 0 at the reset, 1 at
+         * the end of the day, growing only while the engine works. Pure. Falls back to the plain clock when the window never meets the day.
+         */
+        fun activeDayFraction(now: Long): Double {
+            val dayMs = 24 * 3_600_000L
+            val start = (now / dayMs) * dayMs
+            val end = start + dayMs
+            val zone = com.tjshea.vigilant.data.cloud.EngineHours.ZONE
+            val day = java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+            var total = 0L
+            var elapsed = 0L
+            for (d in -1L..1L) {
+                val from = day.plusDays(d).atTime(com.tjshea.vigilant.data.cloud.EngineHours.OPEN).atZone(zone).toInstant().toEpochMilli()
+                val to = day.plusDays(d + 1).atTime(com.tjshea.vigilant.data.cloud.EngineHours.CLOSE).atZone(zone).toInstant().toEpochMilli()
+                val lo = maxOf(from, start)
+                val hi = minOf(to, end)
+                if (hi > lo) {
+                    total += hi - lo
+                    elapsed += (minOf(hi, now) - lo).coerceAtLeast(0L)
+                }
+            }
+            return if (total <= 0L) (now - start).toDouble() / dayMs else elapsed.toDouble() / total
+        }
+
+        /** How long a game's props are re-used before they are bought again: 2 minutes for a game within 3 hours of its start (its lines move most), 5 minutes for a farther one (quotes are then 5 + PropLine's own 1.5 minutes old, inside the 10-minute limit for far games). */
+        fun propsReuseMs(startsAtMs: Long, now: Long): Long =
+            if (startsAtMs - now > com.tjshea.vigilant.data.scanner.Freshness.FAR_OFF_MS) 5 * 60_000L else com.tjshea.vigilant.data.scanner.Freshness.MAX_REUSE_MS
 
         /** The most prop markets one request asks for with a paid key. */
         const val CHUNK = 6
@@ -409,7 +449,7 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
         // spends the budget across every league at once, soonest games first.
         if (now != scanAt) {
             scanAt = now
-            bought.values.removeAll { now - it.atMs >= REUSE_MS }
+            bought.values.removeAll { now - it.atMs >= PropLineClient.propsReuseMs(it.ref.commenceMs, now) }
             toBuy = if (books.isEmpty()) emptyMap() else allocate(settings, context, ask)
         }
         val leagueEvents = context.novigEvents.filter { it.league == league.novigName }
@@ -458,7 +498,7 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
             }
         }
         val ids = leagueEvents.mapTo(HashSet()) { it.eventId }
-        val current = bought.values.filter { it.novigEventId in ids && it.ask == ask && now - it.atMs < REUSE_MS }
+        val current = bought.values.filter { it.novigEventId in ids && it.ask == ask && now - it.atMs < PropLineClient.propsReuseMs(it.ref.commenceMs, now) }
         val events = current.filter { it.ref.markets.isNotEmpty() }.map { it.ref }.distinctBy { it.id }
         // Novig's own prices steer reads only while young: a game's props are re-used longer.
         val novig = current.filter { now - it.atMs <= NOVIG_MAX_AGE_MS }.mapNotNull { it.novig }.distinctBy { it.id }

@@ -150,7 +150,7 @@ class CloudSources(
     suspend fun propLineEvSweep(s: ScanSettings, now: Long, scanned: List<com.tjshea.vigilant.data.scanner.Opportunity> = emptyList()) = propLineEv.sweep(s, now, scanned)
     fun propLinePaid(): Boolean = propLine.plan() != null
     /** The paid key is within the day's share of its requests (the props read the same budget). */
-    fun propLineHasRoom(now: Long): Boolean = propLine.roomForEveryGame(now)
+    fun propLineHasRoom(now: Long): Boolean = propLine.roomForEv(now)
     suspend fun refreshPropLineAccounts(force: Boolean = false): Int = if (has(CloudKeys.PROPLINE)) propLineAccount.refresh(force, minAgeMs = 50 * 60_000L) else 0
 
     private fun has(name: String) = keys(name).isNotEmpty()
