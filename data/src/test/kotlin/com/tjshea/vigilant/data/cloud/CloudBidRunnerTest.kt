@@ -69,7 +69,11 @@ class CloudBidRunnerTest {
             if (o.status == "OPEN") orders[orderId] = o.copy(status = "CANCELED")
             return "OPEN"
         }
-        override suspend fun cancelOrders(marketId: String?, eventId: String?): Int = 0
+        override suspend fun cancelOrders(marketId: String?, eventId: String?): Int {
+            val open = orders.values.filter { it.status == "OPEN" }
+            open.forEach { orders[it.orderId] = it.copy(status = "CANCELED") }
+            return open.size
+        }
         fun fill(orderId: String, qty: Long, at: Long) {
             val o = orders.getValue(orderId)
             val left = o.remaining - qty
