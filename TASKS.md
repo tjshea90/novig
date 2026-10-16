@@ -5466,7 +5466,7 @@ Tj: "force. when I close an old chat to save context, it should automatically fo
 Tj: "I want some filters I can toggle from the +ev scanner screen on the android app, such as amount of books agreeing with the positive EV, and an option that all books must agree positive ev. this should not affect the GitHub engine, only what bets show up in the screen on the Android app"
 - [x] TCL49a (FeedScreen row: Books agree ≥ Any|1-4 + All agree; FeedViewFilterTest) Find the Feed's existing filter row + how books-agree is computed (Opportunity); add to the +EV screen: min books agreeing (stepper) and "all books must agree +EV" toggle.
 - [x] TCL49b (phone prefs "ui", not ScanSettings: never mirrored) Display-only: classify in CloudScanKey as PHONE (never mirrored to the engine/cloud-config), applied to the shown list only; CloudScanKeyTest + a unit test.
-- [ ] TCL49c Ship batched with other asks (one release rule).
+- [x] TCL49c (shipped v0.114.7) Ship batched with other asks (one release rule).
 
 ## TCL50: dead-man switch: if Tj goes quiet, everything stops (Tj, chat t1792171050966, 2026-10-16, permanent rule)
 Tj: "make a permanent rule saved to the repo that if I ever stop responding or chatting for 3 days, Claude sends me a prompt asking if I'm still here. if I don't respond within 24 hours to that prompt, all GitHub actions are stopped, the engine is shut down, all routines are stopped, Claude sessions are paused immediately and indefinitely with schedules turned off. basically if I go away, I want the entire system to stop. everything on GitHub and all 3 Claude accounts should stop"
