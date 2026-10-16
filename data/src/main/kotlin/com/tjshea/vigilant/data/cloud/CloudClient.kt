@@ -122,6 +122,24 @@ class CloudClient(
         }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
     }
 
+    /** The engine's bid desk (`desk.json`, [DeskFile]): its bids and their fills; [Poll.NotModified] when [etag] is still current; an empty file when the engine has never bid. */
+    suspend fun fetchDesk(etag: String?): Poll<DeskFile> = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")
+        val b = req("contents/desk.json?ref=$FEED_BRANCH").header("Accept", RAW)
+        if (etag != null) b.header("If-None-Match", etag)
+        runCatching {
+            http.newCall(b.build()).execute().use { r ->
+                note(r)
+                when {
+                    r.code == 304 -> Poll.NotModified
+                    r.isSuccessful -> DeskFile.parse(r.body?.string().orEmpty())?.let { Poll.Fresh(it, r.header("ETag")) } ?: Poll.Failed("the engine's bids could not be read")
+                    r.code == 404 -> Poll.Fresh(DeskFile(), null)   // the engine has not bid yet
+                    else -> Poll.Failed(why(r.code, r.body?.string()), retryAfter(r))
+                }
+            }
+        }.getOrElse { Poll.Failed(it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "")) }
+    }
+
     /** The engine's order book (`trades.json`, [TradeLedger]), or [Poll.NotModified] when [etag] is still current. */
     suspend fun fetchTrades(etag: String?): Poll<TradeLedger> = withContext(Dispatchers.IO) {
         if (!hasToken()) return@withContext Poll.Failed("no GitHub token saved")

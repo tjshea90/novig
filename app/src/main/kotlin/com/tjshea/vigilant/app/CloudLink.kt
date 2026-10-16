@@ -69,6 +69,9 @@ class CloudLink(private val c: AppContainer) {
         /** The engine's own orders and results (`trades.json`) as of the phone's last read, with the clock of that read; null before the first read. */
         val trades: com.tjshea.vigilant.data.cloud.TradeLedger? = null,
         val tradesReadAtMs: Long = 0L,
+        /** The engine's bids (`desk.json`) as of the phone's last read, and when (this phone's clock). */
+        val desk: com.tjshea.vigilant.data.cloud.DeskFile? = null,
+        val deskReadAtMs: Long = 0L,
     )
 
     private val _ui = MutableStateFlow(Ui())
@@ -197,7 +200,7 @@ class CloudLink(private val c: AppContainer) {
                     }
                 }
                 publishUi(s)
-                delay(wait)
+                nap(wait)
             }
         }
         // 2. write
@@ -271,7 +274,19 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.NotModified -> _ui.update { it.copy(tradesReadAtMs = System.currentTimeMillis()) }
                     is CloudClient.Poll.Failed -> {}
                 }
-                delay(if (c.onScreen) TRADES_POLL_MS else TRADES_POLL_BACKGROUND_MS)
+                nap(if (c.onScreen) TRADES_POLL_MS else TRADES_POLL_BACKGROUND_MS)
+            }
+        }
+        // 6b. the engine's bids (TCL31), the same way: opening the app reads them at once ([syncNow]); an unchanged file is a free 304.
+        scope.launch(Dispatchers.IO) {
+            var etag: String? = null
+            while (isActive) {
+                if (hasToken()) when (val p = client.fetchDesk(etag)) {
+                    is CloudClient.Poll.Fresh -> { etag = p.etag; _ui.update { it.copy(desk = p.value, deskReadAtMs = System.currentTimeMillis()) } }
+                    is CloudClient.Poll.NotModified -> _ui.update { it.copy(deskReadAtMs = System.currentTimeMillis()) }
+                    is CloudClient.Poll.Failed -> {}
+                }
+                nap(if (c.onScreen) TRADES_POLL_MS else TRADES_POLL_BACKGROUND_MS)
             }
         }
         // 3. save
@@ -283,6 +298,17 @@ class CloudLink(private val c: AppContainer) {
             }
         }
     }
+
+    /** Every loop that waits is woken by this; a missed wake only means the loop looks a few seconds later. */
+    private val wake = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    private suspend fun nap(ms: Long) { kotlinx.coroutines.withTimeoutOrNull(ms) { wake.first() } }
+
+    /**
+     * Opening the app syncs everything at once (Tj, 2026-10-16: "when I open the android app, I want it to automatically sync to whatever GitHub is currently doing including all the status and bets"): the engine's
+     * heartbeat and list, its bets and its bids, the messages and the usage are read now instead of at their next turn. Unchanged files answer 304 and cost nothing.
+     */
+    fun syncNow() { wake.tryEmit(Unit) }
 
     /**
      * Pull to refresh / the Scan button in cloud mode (Tj, 2026-10-14): tells the engine to scan now, in the settings file it reads every 3 s (settings and the request travel together, so the scan it starts
