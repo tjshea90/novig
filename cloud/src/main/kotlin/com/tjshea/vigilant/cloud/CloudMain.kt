@@ -108,9 +108,11 @@ fun main(args: Array<String>) = runBlocking {
     val tradeKeyId = CloudKeys.rawEnv(CloudKeys.TRADE_KEY_ID)
     val tradeKeyPem = CloudKeys.rawEnv(CloudKeys.TRADE_KEY_PEM)
     var traderRef: CloudTrader? = null
+    var tradingClient: NovigTradingClient? = null
     val tradePort = if (tradeKeyId.isNotEmpty() && tradeKeyPem.isNotEmpty()) {
         runCatching { NovigSignedClient(http, json, PemSigningKey(tradeKeyId, tradeKeyPem), "https://api.novig.com") }.getOrNull()?.let { signer ->
-            CloudNovigPort(NovigTradingClient(signer, json), tradeKeyId, { traderRef?.ledger?.entries?.mapTo(HashSet()) { it.id } ?: emptySet() }, log = log::invoke)
+            val tc = NovigTradingClient(signer, json).also { tradingClient = it }
+            CloudNovigPort(tc, tradeKeyId, { traderRef?.ledger?.entries?.filter { !it.note.startsWith("bid") }?.mapTo(HashSet()) { it.id } ?: emptySet() }, log = log::invoke)
         }
     } else null
     log("trading: ${if (tradePort != null) "the trading key is present (orders possible only if the phone's switch says live)" else "no trading key: paper only"}")
@@ -119,6 +121,10 @@ fun main(args: Array<String>) = runBlocking {
         TradeLedger.parse(text)?.let { trader.load(it); log("trades: ${it.entries.size} entries carried over from the previous job") }
     }
     var tradesText = ""
+    fun stageLedger(now: Long) {
+        val text = TradeLedger.text(trader.ledger)
+        if (text != tradesText) { tradesText = text; publisher.stageTrades(text, now) }
+    }
     // The engine's own scan study (TCL20e): every bet each finished scan lists, in the app's journal format, in the folder the archive loop gzips to the day's cloud-archive Release (study-<day>-run<id>.jsonl.gz).
     // Each run's file is a segment of its own; the daily grader (engine-grade.yml) puts the segments together, finds results and closes, and the daily digest reads them beside the phone's.
     val study = com.tjshea.vigilant.data.study.ScanStudy(com.tjshea.vigilant.data.study.StudyJournal(File(out, "cloud")), version = { "github-engine" })
@@ -157,6 +163,58 @@ fun main(args: Array<String>) = runBlocking {
         ghClient.putFile(CloudOverrides.BRANCH, "${CloudOverrides.DIR}/${CloudOverrides.fileName(r)}", CloudOverrides.encode(r).toByteArray(Charsets.UTF_8), "settings request: ${r.apis}")?.let { log("settings request not saved: $it") }
     }
     val governor = ApiGovernor().also { g -> prevStatus?.governorOff?.let { g.seedOff(it, started) } }
+    // The engine's bid desk (TCL31): the phone's own desk on the runner, with the trading key. Its record of bids and fills is carried from job to job in `desk.json` and rebuilt into the desk's files here.
+    val deskDir = File(out, "desk").apply { mkdirs() }
+    val bidRunner: com.tjshea.vigilant.data.cloud.CloudBidRunner? = tradingClient?.let { tc ->
+        runCatching { PreviousFeed.read(git, cfgDir, "desk.json") }.getOrNull()?.let { text ->
+            com.tjshea.vigilant.data.cloud.DeskFile.parse(text)?.let { f ->
+                val keep = com.tjshea.vigilant.data.cloud.DeskFile.trim(f.bids, System.currentTimeMillis())
+                File(deskDir, "maker.json").writeText(Json { encodeDefaults = false }.encodeToString(com.tjshea.vigilant.data.cloud.DeskFile.bidsSerializer, keep))
+                File(deskDir, "tracker.json").writeText(Json { encodeDefaults = false }.encodeToString(kotlinx.serialization.builtins.ListSerializer(com.tjshea.vigilant.data.tracker.TrackedBet.serializer()), f.fills))
+                log("bids: ${keep.size} bids and ${f.fills.size} fills carried over from the previous job")
+            }
+        }
+        val desk = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(
+            tc, com.tjshea.vigilant.data.tracker.BetTracker(File(deskDir, "tracker.json")), com.tjshea.vigilant.data.novig.trading.maker.MakerStore(File(deskDir, "maker.json")),
+            cancelStrays = false, newClientId = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk::engineClientId,
+        )
+        com.tjshea.vigilant.data.cloud.CloudBidRunner(
+            desk, com.tjshea.vigilant.data.cloud.CloudBidLane(novig), tradePort!!, tradeMarkets = { trader.openMarkets() },
+            onFills = { bets, all ->
+                val now = System.currentTimeMillis()
+                val lines = ArrayList<String>()
+                for (bet in bets) {
+                    val bid = all.firstOrNull { it.betId == bet.id || (it.orderId != null && it.orderId == bet.orderId) } ?: continue
+                    trader.record(com.tjshea.vigilant.data.cloud.CloudBidRunner.toEntry(bid, bet, now))
+                    lines += "${bid.selection} (${bid.eventName}): ${bid.filled} of ${bid.contracts} at ${String.format(java.util.Locale.US, "%.0f", bid.price * 100)}c"
+                }
+                if (lines.isNotEmpty()) {
+                    stageLedger(now)
+                    runCatching { postMessage(CloudMessages.Message("bidfill-${bets.first().id.take(12)}-$now", now, "engine", "bet", "Bid filled: ${lines.size} bid${if (lines.size == 1) "" else "s"}", lines.joinToString("\n"), 1, "CLOUD")) }
+                }
+            },
+            tell = { title, body -> runCatching { postMessage(CloudMessages.Message("bidstop-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title, body.take(400), 1, "CLOUD")) } },
+            recentTrades = { id -> novig.trades(id) }, log = log::invoke,
+        )
+    }
+    var deskText = ""
+    // The runner behind a thin wrapper that puts the desk's record on cloud-feed after each pass (only when the bids or fills changed: the file is the phone's screen of the engine's bids).
+    val bidFacade: com.tjshea.vigilant.data.cloud.EngineBids? = bidRunner?.let { r ->
+        val deskStore = com.tjshea.vigilant.data.novig.trading.maker.MakerStore(File(deskDir, "maker.json"))
+        val deskTracker = com.tjshea.vigilant.data.tracker.BetTracker(File(deskDir, "tracker.json"))
+        suspend fun stageDesk(now: Long) {
+            val bids = com.tjshea.vigilant.data.cloud.DeskFile.trim(deskStore.all(), now)
+            val fills = deskTracker.all().filter { it.createdAtMs >= now - 7L * 24 * 3_600_000L }
+            val body = com.tjshea.vigilant.data.cloud.DeskFile(0L, "", "", bids, fills)
+            val text = com.tjshea.vigilant.data.cloud.DeskFile.text(body)
+            if (text != deskText) { deskText = text; publisher.stageDesk(com.tjshea.vigilant.data.cloud.DeskFile.text(body.copy(atMs = now, note = r.status()?.note.orEmpty(), stopped = r.status()?.stopped.orEmpty())), now) }
+        }
+        object : com.tjshea.vigilant.data.cloud.EngineBids {
+            override fun put(b: CloudBids) = r.put(b)
+            override suspend fun pass(s: com.tjshea.vigilant.data.scanner.ScanSettings, now: Long) = r.pass(s, now).also { runCatching { stageDesk(now) } }
+            override suspend fun stop(why: String) { r.stop(why); runCatching { stageDesk(System.currentTimeMillis()) } }
+        }
+    }
     var lastStoppedSaid = ""
     val engine = CloudEngine(
         scanner = scanner, sources = sources::sources, config = { config.read() },
@@ -165,6 +223,7 @@ fun main(args: Array<String>) = runBlocking {
         prepare = { s -> novigKeyed?.configure(s) },
         novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },
         addressWatch = addressWatch,
+        bids = bidFacade,
         bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
@@ -172,7 +231,7 @@ fun main(args: Array<String>) = runBlocking {
         trade = { rows, s, now ->
             val mode = s.gates.cloudTrading
             if (mode == CloudTradeMode.OFF) null else {
-                val r = trader.pass(rows, s, now)
+                val r = trader.pass(rows, s, now, bidRunner?.positions().orEmpty())
                 runCatching { passJournal.append(r.row(now)) }
                 val text = TradeLedger.text(trader.ledger)
                 if (text != tradesText) { tradesText = text; publisher.stageTrades(text, now) }
@@ -276,6 +335,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     private var usageAt = 0L
     private var tradesText: String? = null
     private var tradesAt = 0L
+    private var deskText: String? = null
     private var status: CloudStatus? = null
     private var dirty = false
     private var lastPushAt = 0L
@@ -285,7 +345,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     @Synchronized
     fun stage(feed: CloudFeed?, st: CloudStatus): String? {
         if (feed != null) feedBytes = CloudFeed.encode(feed)
-        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, usageAtMs = usageAt, tradesAtMs = maxOf(st.tradesAtMs, tradesAt))
+        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, usageAtMs = usageAt, tradesAtMs = maxOf(st.tradesAtMs, tradesAt), deskBytes = deskText?.length ?: 0)
         dirty = true
         return lastProblem
     }
@@ -304,6 +364,14 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     fun stageTrades(text: String, at: Long) {
         tradesText = text; tradesAt = at
         status = status?.copy(tradesAtMs = at)
+        dirty = true
+    }
+
+    /** The engine's bid desk record (`desk.json`, [com.tjshea.vigilant.data.cloud.DeskFile]): the bids and their fills, for the phone's screens and for the next job. */
+    @Synchronized
+    fun stageDesk(text: String, at: Long) {
+        deskText = text
+        status = status?.copy(deskBytes = text.length)
         dirty = true
     }
 
@@ -333,6 +401,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
         // The page Tj reads on GitHub (TCL22d): which APIs work, what each has left. A failure to draw it never blocks the list.
         runCatching { File(dir, "DASHBOARD.md").writeText(CloudDashboard.markdown(st.copy(heartbeatMs = now), usageBook ?: UsageBook(), keyIds, now, repo)) }
         tradesText?.let { File(dir, "trades.json").writeText(it) }
+        deskText?.let { File(dir, "desk.json").writeText(it) }
         ApiChain.measures.takeIf { it.isNotEmpty() }?.let { File(dir, "ranking.json").writeText(CloudRanking.encode(it)) }
         File(dir, "bids.json.gz").let { f -> bidsBytes?.let { f.writeBytes(it) } ?: f.delete() }
         File(dir, "status.json").writeText(CloudStatus.text(st.copy(heartbeatMs = now)))

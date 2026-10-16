@@ -453,10 +453,11 @@ class CloudEngine(
         val make = bidLines ?: return
         val s = forCloud(settings)
         // The engine's own desk takes the candidates straight (no file, no phone in the loop): TCL31.
-        if (s.engineBids && bids != null) {
+        val desk = bids
+        if (s.engineBids && desk != null) {
             runCatching {
                 val lines = make(result, s, now)
-                bids.put(CloudBids(now, result.partial, rev, lines))
+                desk.put(CloudBids(now, result.partial, rev, lines))
                 if (bidsOn) { bidsOn = false; publishBids(null) }
                 bidsAt = now; bidsCount = lines.size
             }.onFailure { if (it is CancellationException) throw it; log("candidate lines failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
