@@ -42,6 +42,8 @@ fun PropLineEvScreen(state: UiState, modifier: Modifier = Modifier) {
     var league by rememberSaveable { mutableStateOf("All") }
     var minEv by rememberSaveable { mutableStateOf(1.0) }
     var props by rememberSaveable { mutableStateOf("All") }   // All | Props | Game lines
+    // Longshots carry the biggest edges on paper (a +1900 home run at +28%) and lose to the favorite-longshot bias (RESEARCH.md §8.1, §16.2): the list starts at +300 and under.
+    var maxOdds by rememberSaveable { mutableStateOf(300) }
     Column(modifier.fillMaxWidth().padding(horizontal = 12.dp).testTag("propLineEv"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("PropLine +EV at Novig", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         if (feed == null) {
@@ -66,8 +68,12 @@ fun PropLineEvScreen(state: UiState, modifier: Modifier = Modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("All", "Props", "Game lines").forEach { k -> FilterChip(selected = props == k, onClick = { props = k }, label = { Text(k, maxLines = 1) }, modifier = Modifier.testTag("plKind-$k")) }
         }
-        val shown = remember(feed, league, minEv, props, now / 60_000L) {
-            PropLineEvView.select(feed.rows, league, minEv, props, now)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Odds up to", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            listOf(150, 300, 600, PropLineEvView.ANY_ODDS).forEach { v -> FilterChip(selected = maxOdds == v, onClick = { maxOdds = v }, label = { Text(if (v == PropLineEvView.ANY_ODDS) "Any" else "+$v") }, modifier = Modifier.testTag("plOdds-$v")) }
+        }
+        val shown = remember(feed, league, minEv, props, maxOdds, now / 60_000L) {
+            PropLineEvView.select(feed.rows, league, minEv, props, now, maxOdds)
         }
         Text(
             "${shown.size} +EV lines at Novig" + if (shown.size != feed.rows.size) " (of ${feed.rows.size})" else "",
@@ -131,9 +137,12 @@ object PropLineEvView {
     }
 
     /** The lines to list: league, edge floor and kind filters, games not yet started, best edge first. */
-    fun select(rows: List<PlEvRow>, league: String, minEv: Double, kind: String, now: Long): List<PlEvRow> =
+    /** No odds limit. */
+    const val ANY_ODDS = 100_000
+
+    fun select(rows: List<PlEvRow>, league: String, minEv: Double, kind: String, now: Long, maxOdds: Int = ANY_ODDS): List<PlEvRow> =
         rows.filter { r ->
-            r.startsAtMs > now && r.evPct >= minEv &&
+            r.startsAtMs > now && r.evPct >= minEv && r.price <= maxOdds &&
                 (league == "All" || r.league == league) &&
                 when (kind) { "Props" -> isProp(r); "Game lines" -> !isProp(r); else -> true }
         }.sortedByDescending { it.evPct }

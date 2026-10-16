@@ -20,6 +20,14 @@ class PropLineEvViewTest {
     }
 
     @Test
+    fun longshotsAreCutByTheOddsLimit() {
+        val rows = listOf(row(ev = 28.0, player = "A").copy(price = 1941), row(ev = 5.0, player = "B").copy(price = 250), row(ev = 4.0, player = "C").copy(price = -120))
+        assertEquals(listOf(5.0, 4.0), PropLineEvView.select(rows, "All", 0.5, "All", now, 300).map { it.evPct })
+        assertEquals(listOf(4.0), PropLineEvView.select(rows, "All", 0.5, "All", now, 150).map { it.evPct })
+        assertEquals(3, PropLineEvView.select(rows, "All", 0.5, "All", now).size)
+    }
+
+    @Test
     fun picksAreReadable() {
         assertEquals("Tyrese Maxey Over 24.5 · Points", PropLineEvView.pick(row()))
         assertEquals("Over 220.5 · Totals", PropLineEvView.pick(row(player = "", market = "totals", point = 220.5)))
