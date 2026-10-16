@@ -68,7 +68,7 @@ class ApiScorecardTest {
         val card = ApiScorecard.Card("parlay", "ParlayAPI", true, "active", surplus = true, leftFraction = 0.7, timeFraction = 0.48)
         val a = ApiAdvisor.manage(listOf(card), UsageBook(), { emptyList() }, ScanSettings(), now)
         assertTrue(a.single().body.contains("70%"))
-        val spent = UsageBook(mapOf("odds_api" to ProviderUsage(keys = (0 until 4).associate { "k$it" to KeyUsage(limit = 500, remaining = 20) })))
+        val spent = UsageBook(mapOf(QuotaPolicy.ODDS_API.id to ProviderUsage(keys = (0 until 4).associate { "k$it" to KeyUsage(limit = 500, remaining = 20) })))
         val free = ApiScorecard.Card("odds_api", "The Odds API", false, "active", answeredPct = 90)
         val b = ApiAdvisor.manage(listOf(free), spent, { emptyList() }, ScanSettings(useOddsApi = true), now)
         assertTrue(b.any { it.id == "keys:odds_api" && it.body.contains("90%") })
