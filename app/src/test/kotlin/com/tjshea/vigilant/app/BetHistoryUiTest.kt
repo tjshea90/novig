@@ -64,8 +64,8 @@ class BetHistoryUiTest {
         var shared: com.tjshea.vigilant.app.BetShare.Range? = null
         screen { TrackerScreen(withRecords(), { _, _ -> }, {}, initialView = TrackerView.STATS, onShareBets = { shared = it }, archiveNote = "3 day files kept") }
         compose.onNodeWithTag("smartFilter").assertExists()
-        compose.onNodeWithTag("shareBetsCard").performScrollTo().assertExists()
-        compose.onNodeWithText("3 day files kept", substring = true).assertExists()
+        // The share card is gone (Tj, 2026-10-16): the phone saves every bet to GitHub by itself.
+        compose.onAllNodesWithTag("shareBetsCard").assertCountEquals(0)
         compose.onAllNodes(androidx.compose.ui.test.hasScrollAction()).onFirst().performScrollToNode(androidx.compose.ui.test.hasTestTag("dimBreakdown"))
         compose.onNodeWithTag("dimBreakdown").assertExists()
         compose.onNodeWithText("Type of bet").assertExists()

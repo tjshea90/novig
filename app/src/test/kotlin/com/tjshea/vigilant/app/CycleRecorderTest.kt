@@ -102,6 +102,5 @@ class CycleRecorderTest {
         assertTrue(activity.contains("app.container.eventLog.info(\"APP\", \"screen opened\" + (switchedOff?.let { \" (first since the phone restarted): \$it\" } ?: \" (auto-bet and auto-scan kept as they were)\"))"))
         assertTrue(activity.contains("perf.noteColdStart(sinceStartMs, COLD_START_WINDOW_MS)"))
         assertTrue(activity.contains("vm.shareRequests.collect { intent -> runCatching { startActivity(intent) }"))
-        assertTrue(activity.contains("onShare = vm::shareDiagnostics,"))
     }
 }

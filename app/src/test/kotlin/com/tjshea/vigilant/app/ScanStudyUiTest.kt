@@ -53,11 +53,10 @@ class ScanStudyUiTest {
                 }
             }
         }
-        // Both buttons are there, and each asks for its own file.
-        compose.onNodeWithTag("shareDiagnostics").performScrollTo().assertTextContains("Share with Claude", substring = true)
-        compose.onNodeWithTag("shareScanStudy").performScrollTo().assertTextContains("Share scan study with Claude", substring = true)
-        compose.onNodeWithTag("shareScanStudy").performClick()
-        assertEquals(1, studied)
+        // No share buttons any more (Tj, 2026-10-16): Claude reads the study from GitHub.
+        compose.onAllNodesWithTag("shareDiagnostics").assertCountEquals(0)
+        compose.onAllNodesWithTag("shareScanStudy").assertCountEquals(0)
+        assertEquals(0, studied)
         assertEquals(0, shared)
         // The page asks for the counts when it opens, and shows them.
         assertEquals(1, shown)

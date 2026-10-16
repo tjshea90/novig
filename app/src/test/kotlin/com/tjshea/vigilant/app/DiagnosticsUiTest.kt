@@ -44,36 +44,27 @@ class DiagnosticsUiTest {
                 }
             }
         }
-        compose.onNodeWithText("Tap Share with Claude: it makes one file with everything the app has recorded", substring = true).assertExists()
+        // Claude reads the data from GitHub by itself (Tj, 2026-10-16): no share button, just the report.
+        compose.onAllNodesWithTag("shareDiagnostics").assertCountEquals(0)
         compose.onNodeWithText("It never has a key in it.", substring = true).assertExists()
-        compose.onNodeWithTag("shareDiagnostics").performScrollTo().performClick()
-        assertEquals(1, shared)
-        compose.onNodeWithText("Show report").performClick()
+        compose.onNodeWithTag("showDiagnostics").performScrollTo().performClick()
         assertEquals(1, shown)
-        assertEquals(1, shared)
+        assertEquals(0, shared)
     }
 
     @Test
-    fun `the Diagnostics page offers Share with Claude and Copy, other reports only Copy`() {
-        var shared = 0
+    fun `the Diagnostics report has Copy and no share button`() {
         var copied = 0
-        fun show(report: ReportUi) = compose.setContent {
-            VigilantTheme(darkTheme = true) { ReportDialog(report, ReportActions(onShare = { shared++ }, onCopied = { copied++ })) }
-        }
-        show(ReportUi("Diagnostics", "VIGILANT DIAGNOSTICS FILE …"))
-        compose.onNodeWithTag("reportShare").performClick()
-        assertEquals(1, shared)
+        compose.setContent { VigilantTheme(darkTheme = true) { ReportDialog(ReportUi("Diagnostics", "VIGILANT DIAGNOSTICS FILE …"), ReportActions(onCopied = { copied++ })) } }
+        compose.onAllNodesWithTag("reportShare").assertCountEquals(0)
         compose.onNodeWithText("Copy").performClick()
         assertEquals(1, copied)
     }
 
     @Test
-    fun `while the report is still being made, Share and Copy wait`() {
-        var shared = 0
-        compose.setContent { VigilantTheme(darkTheme = true) { ReportDialog(ReportUi("Diagnostics", "", busy = true), ReportActions(onShare = { shared++ })) } }
-        compose.onNodeWithTag("reportShare").assertIsNotEnabled()
+    fun `while the report is still being made, Copy waits`() {
+        compose.setContent { VigilantTheme(darkTheme = true) { ReportDialog(ReportUi("Diagnostics", "", busy = true), ReportActions()) } }
         compose.onNodeWithText("Copy").assertIsNotEnabled()
-        assertEquals(0, shared)
     }
 
     @Test
