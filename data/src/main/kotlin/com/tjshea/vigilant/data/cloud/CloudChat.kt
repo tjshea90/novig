@@ -12,15 +12,33 @@ object CloudChat {
     const val DIR = "chat"
     const val BRANCH = "cloud-config"
     const val LEASE_BRANCH = "claude-coord"
+    const val FILES_DIR = "chat-files"
+    const val KEEP_DIR = "chat-keep"
+    const val FILES_KEEP_HOURS = 24
+
+    /** The path of an attachment named [name] on message [msgId]: unique, and the cleanup finds the message from its prefix. */
+    fun filePath(msgId: String, name: String): String = "$FILES_DIR/$msgId-" + name.map { if (it.isLetterOrDigit() || it == '.' || it == '-' || it == '_') it else '_' }.joinToString("").takeLast(60)
 
     @Serializable
-    data class Msg(val id: String, val at: Long, val from: String, val text: String, val replyTo: String? = null) {
+    data class Msg(
+        val id: String, val at: Long, val from: String, val text: String, val replyTo: String? = null,
+        /** A read receipt (Tj, 2026-10-16: a thumbs-up when Claude has read a message): [ack] is the id of Tj's message a session has read; the message itself is never shown. */
+        val ack: String? = null,
+        /** Attachments Tj added (screenshots, files): paths on the branch under [FILES_DIR]. They are deleted after [FILES_KEEP_HOURS] hours unless a session flags the message important (`chat-keep/<id>`). */
+        val files: List<String> = emptyList(),
+    ) {
         val fromTj: Boolean get() = from == "tj"
     }
 
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     fun encode(m: Msg): String = json.encodeToString(Msg.serializer(), m)
-    fun decode(text: String): Msg? = runCatching { json.decodeFromString(Msg.serializer(), text) }.getOrNull()?.takeIf { it.id.isNotBlank() && it.text.isNotBlank() }
+    fun decode(text: String): Msg? = runCatching { json.decodeFromString(Msg.serializer(), text) }.getOrNull()?.takeIf { it.id.isNotBlank() && (it.text.isNotBlank() || it.files.isNotEmpty() || it.ack != null) }
+
+    /** The messages to show: read receipts are not messages. */
+    fun visible(ms: Collection<Msg>): List<Msg> = thread(ms).filter { it.ack == null }
+
+    /** Tj's message ids a session has read, with when. */
+    fun acked(ms: Collection<Msg>): Map<String, Long> = ms.filter { it.ack != null }.groupBy { it.ack!! }.mapValues { (_, l) -> l.minOf { it.at } }
     fun fileName(m: Msg): String = String.format(java.util.Locale.US, "%013d-%s.json", m.at, m.id.filter { it.isLetterOrDigit() || it == '-' }.take(24))
 
     /** The thread, oldest first. */
@@ -29,7 +47,7 @@ object CloudChat {
     /** Tj's messages no reply answers yet (a reply names it in [Msg.replyTo]); the sessions' watcher prints these. */
     fun unanswered(ms: Collection<Msg>): List<Msg> {
         val answered = ms.mapNotNull { it.replyTo }.toSet()
-        return thread(ms).filter { it.fromTj && it.id !in answered }
+        return thread(ms).filter { it.fromTj && it.ack == null && it.id !in answered }
     }
 
     /** What the app says under the thread: who will answer, from the lease on `claude-coord` (holder, kind, heartbeat age in seconds), or null when it could not be read. */
