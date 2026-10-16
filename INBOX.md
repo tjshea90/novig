@@ -171,3 +171,8 @@ force take it
 ```
 View my messages from the app
 ```
+
+## 2026-10-16T21:24:46Z
+```
+Why isn't it reading my chats in the app
+```
