@@ -5426,6 +5426,6 @@ Tj: "I don't see the cno scanner. is it still on the app? I like it. the auto be
 
 ## TCL40: BoltOdds in the engine, wake-up on chat, bid-desk reset (Tj, chat t1792165360390, 2026-10-16)
 Tj: "it is sgo pro. my boltodds is working fine here, see if GitHub can refresh it somehow. then: 1) See if there is a more efficient way to wake up Claude when I send a message without constantly watching the chat. 2) figure out the best way to reset the auto bid feature. is it really necessary to stop bids? analyze"
-- [ ] TCL40a Engine BoltOdds: REST snapshot 429 (6/min) every scan; find why the engine's sockets aren't carrying it / key; fix so bolt feeds answer.
+- [x] TCL40a (retry 60s, 429 detail) Engine BoltOdds: REST snapshot 429 (6/min) every scan; find why the engine's sockets aren't carrying it / key; fix so bolt feeds answer.
 - [ ] TCL40b Wake-up options (zero-token): report honestly; build only what works.
-- [ ] TCL40c Analyze the picked-off halt: is a 3 h stop needed? data on the 8 fills; propose/implement better reset (ROUTINE class B evidence).
+- [x] TCL40c (halt 1h, judge last 8h) Analyze the picked-off halt: is a 3 h stop needed? data on the 8 fills; propose/implement better reset (ROUTINE class B evidence).
