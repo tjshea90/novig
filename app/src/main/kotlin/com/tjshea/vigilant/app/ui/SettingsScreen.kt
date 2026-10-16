@@ -2782,6 +2782,20 @@ private fun EngineTradingSection(state: UiState, onUpdate: ((ScanSettings) -> Sc
             com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE -> "GitHub places the bets itself, 8 am to 10 pm Eastern, from the Vigilant subaccount, sized by Kelly. Your phone's auto-bet stands down. It stops by itself on a location refusal, a loss stop or a short wallet, and says why below."
         } + if (!u.tradeKeyOnGitHub) " Live needs the trading key above on GitHub." else "",
     )
+    if (g.cloudTrading == com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE) {
+        SwitchRow(
+            "Engine also posts bids",
+            "GitHub's engine runs your bid desk too (the Bids tab's slider and rules, the same desk): resting bids under the fair on the games that start too far out for a taker bet. While it is live your phone's own bid desk stands down; if the engine goes quiet the phone takes the bids back.",
+            g.cloudBids, tag = "cloudBidsSwitch",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudBids = v)) } }
+        u.status?.takeIf { it.deskNote.isNotBlank() || it.deskStopped.isNotBlank() }?.let { st ->
+            Text(
+                "Engine bids: ${st.deskNote}" + (st.deskStopped.takeIf { it.isNotBlank() }?.let { "\nStopped: $it" } ?: ""),
+                style = MaterialTheme.typography.bodySmall, color = if (st.deskStopped.isNotBlank()) Edge.colors.warning else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudBidsLine"),
+            )
+        }
+    }
     u.status?.takeIf { it.tradeMode.isNotBlank() }?.let { st ->
         Text(
             "Engine ${st.tradeMode}: ${st.tradeNote}" + (st.tradeStopped.takeIf { it.isNotBlank() }?.let { "\nStopped: $it" } ?: "") +

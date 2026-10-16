@@ -34,6 +34,7 @@ import com.tjshea.vigilant.app.UiState
 import com.tjshea.vigilant.data.cloud.CloudDashboard
 import com.tjshea.vigilant.data.cloud.CloudStatus
 import com.tjshea.vigilant.data.cloud.DashboardModel
+import com.tjshea.vigilant.data.cloud.EngineBoard
 import com.tjshea.vigilant.data.cloud.DashboardModel.Tone
 import com.tjshea.vigilant.data.keys.ProviderView
 import com.tjshea.vigilant.data.keys.UsageMeter
