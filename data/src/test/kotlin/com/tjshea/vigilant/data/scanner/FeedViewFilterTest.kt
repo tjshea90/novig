@@ -1,9 +1,9 @@
 package com.tjshea.vigilant.data.scanner
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 
 class FeedViewFilterTest {
     private fun c(two: Int, agree: Int) = Agreement.Count(two, agree)
