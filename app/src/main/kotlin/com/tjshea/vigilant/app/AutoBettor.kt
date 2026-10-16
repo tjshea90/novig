@@ -242,9 +242,9 @@ class AutoBettor(
         }
 
         // One bet per Novig market (either side) while any is open: the other side of a line is never bet after the first.
-        val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId } +
-            // What the GitHub engine holds open (its ledger, as the phone last read it): one bet a market across both systems.
-            state.cloudUi.trades?.entries.orEmpty().filter { it.status == "OPEN" || it.status == "UNCONFIRMED" }.map { it.marketId }
+        val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
+        // What the GitHub engine holds open (its ledger, as the phone last read it): one bet a market across both systems.
+        state.cloudUi.trades?.entries.orEmpty().filter { it.status == "OPEN" || it.status == "UNCONFIRMED" }.mapTo(openMarkets) { it.marketId }
         val limits = limitsOf(rules, settings)
         // One game is one event (Tj, 2026-10-04: "auto bet placed bets on a team at +5, then the same team at +6, then the same team at +10"): what is at risk
         // on each game across all its markets, open bets and resting bids, as the cycle began. The placer checks it again on its own read of the Tracker
