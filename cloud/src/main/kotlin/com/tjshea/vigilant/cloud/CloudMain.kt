@@ -84,6 +84,14 @@ fun main(args: Array<String>) = runBlocking {
     // The engine's own Novig key (Tj, 2026-10-15): a read-only key sent as two secrets. Without them the engine reads the public routes as before; with them it reads through the signed route and keeps the key's websocket.
     val novigKeyId = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_ID)
     val novigKeyPem = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_PEM)
+    // ParlayAPI's plan per key, read now and hourly (free): an upgraded key is found and used before the free ones.
+    scope.launch {
+        while (isActive) {
+            runCatching { sources.refreshParlayAccounts() }
+            log("ParlayAPI plans: " + sources.parlayPlans())
+            delay(60 * 60_000L)
+        }
+    }
     val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = log::invoke) else null
     val publisher = Publisher(pubDir, repo, token, git, log::tail) { policy -> CloudKeys.envFor(policy.id)?.let { CloudKeys.fromEnv(it) }.orEmpty().map(CloudUsage::keyId) }
     val config = ConfigReader(git, cfgDir)

@@ -124,6 +124,8 @@ class CloudSources(
     private val parlayPool = KeyPool(QuotaPolicy.PARLAY, { keys(CloudKeys.PARLAY) }, usage)
     /** ParlayAPI's own account read per key (free): plan and credits into the meter, so an upgraded key is found and goes first ([KeyPool]). The engine asks hourly ([refreshParlayAccounts]). */
     private val parlayAccount = com.tjshea.vigilant.data.reference.ParlayAccount(http, { keys(CloudKeys.PARLAY) }, usage, json)
+    /** Which ParlayAPI key (by position, never the key) is on which plan, as last read: for the engine's log. */
+    fun parlayPlans(): String = keys(CloudKeys.PARLAY).mapIndexedNotNull { i, k -> parlayAccount.last[k]?.let { c -> "#${i + 1} ${c.tier ?: "?"} ${c.remaining ?: "?"}/${c.limit ?: "?"}" } }.joinToString(", ").ifBlank { "none read" }
     suspend fun refreshParlayAccounts(force: Boolean = false): Int = if (has(CloudKeys.PARLAY)) parlayAccount.refresh(force, minAgeMs = 50 * 60_000L) else 0
     private val parlayQuality = ParlaySourceQuality(http, json)
     private val parlayOdds = TheOddsApiClient(http, parlayPool, json, baseUrl = OddsFeed.PARLAY.base, feed = OddsFeed.PARLAY, quality = parlayQuality)
