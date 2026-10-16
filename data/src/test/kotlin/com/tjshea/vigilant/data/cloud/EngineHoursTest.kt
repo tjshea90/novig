@@ -26,7 +26,7 @@ class EngineHoursTest {
     fun `the window follows daylight saving, at both changes`() {
         // 2026-11-01 clocks go back (EDT -> EST): 08:00 EST is 13:00 UTC, in summer 12:00 UTC
         assertEquals(java.time.Instant.parse("2026-10-31T12:00:00Z").toEpochMilli(), EngineHours.nextOpenAtMs(et(2026, 10, 31, 3)))
-        assertEquals(java.time.Instant.parse("2026-11-02T13:00:00Z").toEpochMilli(), EngineHours.nextOpenAtMs(et(2026, 11, 1, 23)))
+        assertEquals(java.time.Instant.parse("2026-11-01T13:00:00Z").toEpochMilli(), EngineHours.nextOpenAtMs(et(2026, 11, 1, 3)))
         // 2026-03-08 clocks go forward
         assertTrue(EngineHours.isOpen(java.time.Instant.parse("2026-03-08T12:00:00Z").toEpochMilli()))   // 08:00 EDT
         assertFalse(EngineHours.isOpen(java.time.Instant.parse("2026-03-08T11:59:00Z").toEpochMilli()))
