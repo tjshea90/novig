@@ -73,4 +73,12 @@ class ApiScorecardTest {
         val b = ApiAdvisor.manage(listOf(free), spent, { emptyList() }, ScanSettings(useOddsApi = true), now)
         assertTrue(b.any { it.id == "keys:odds_api" && it.body.contains("90%") })
     }
+
+    @Test
+    fun contributionOfNoScanIsEmptyAndCardsDefaultToZero() {
+        org.junit.Assert.assertTrue(ApiScorecard.contribution(null, 0L).isEmpty())
+        val c = ApiScorecard.Card("sgo", "SGO", true, "active")
+        org.junit.Assert.assertEquals(0, c.fedLines)
+        org.junit.Assert.assertEquals(0, c.soleLines)
+    }
 }

@@ -107,7 +107,7 @@ object ApiScorecard {
         val sole = HashMap<String, Int>()
         for (g in result.games) for (o in g.outcomes) {
             if (o.fair == null) continue
-            val ids = com.tjshea.vigilant.data.scanner.FairProvenance.of(o, now).mapNotNull { it.source }.mapNotNull { ApiToggles.idOfPolicy(CloudDashboard.providerOf(it)) }.toSet()
+            val ids = com.tjshea.vigilant.data.scanner.FairProvenance.of(o, now).mapNotNull { it.source }.map { CloudDashboard.providerOf(it).let { p -> ApiToggles.idOfPolicy(p) ?: p } }.toSet()
             for (id in ids) fed.merge(id, 1, Int::plus)
             if (ids.size == 1) sole.merge(ids.first(), 1, Int::plus)
         }
