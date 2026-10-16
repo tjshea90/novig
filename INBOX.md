@@ -186,3 +186,8 @@ TCL56: the PropLine items for grading, hit-rate trends and line movement.
 Build these. I want vigilant and the GitHub engine and Claude to use all the features of my paid apis, including propline
 It is concerning to me why vigilant couldnt find the positive EV opportunities that propline found. This is important. Investigate and find a fix
 ```
+
+## 2026-10-16T22:08:52Z
+```
+It concerns me that Claude did not auto build the prop grading support and other features from propline. Remember the standing rule: Claude has full control over updating and running the engine. It does not need to ask me. I want Claude to always update the engine to improve it and update the entire chain including the android app and the GitHub actions process to make the ui better, the code better, the profit engine better, the api usage better, etc. Claude should maintain and make this system better as much as it can
+```
