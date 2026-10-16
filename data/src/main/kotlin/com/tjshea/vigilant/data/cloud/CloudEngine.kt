@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.data.cloud
 
 import com.tjshea.vigilant.data.reference.ReferenceSource
+import com.tjshea.vigilant.data.scanner.ApiChain
 import com.tjshea.vigilant.data.scanner.LiveOnlyMode
 import com.tjshea.vigilant.data.scanner.OddsScanner
 import com.tjshea.vigilant.data.scanner.Opportunity
