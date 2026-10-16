@@ -107,7 +107,10 @@ class CloudBidRunnerTest {
         return BidLine(l, start)
     }
 
-    private val live = ScanSettings(gates = ApiGates(cloudScan = true, cloudTrading = CloudTradeMode.LIVE))
+    private val deployOn = ScanSettings(gates = ApiGates(cloudScan = true, cloudTrading = CloudTradeMode.LIVE))
+
+    /** One bid per side (the wallet-deployment second rung off) so the counts below are about the wiring. */
+    private val live = deployOn.copy(vigGuards = deployOn.vigGuards.copy(bidDeploy = false))
 
     private class Rig(val trading: FakeTrading, val runner: CloudBidRunner, val store: MakerStore, val filled: MutableList<Pair<List<TrackedBet>, Int>>, val held: MutableSet<String>)
 
@@ -137,6 +140,16 @@ class CloudBidRunnerTest {
         assertTrue("and still a plain UUID", NovigTradingClient.isUuid(r.trading.placed[0].second))
         assertEquals(1, st.resting)
         assertTrue(st.note, st.note.contains("1 bids resting"))
+    }
+
+    @Test
+    fun `with the wallet under its target the engine posts the phone's deeper second bid on the side too, at a lower price`() = runBlocking {
+        val r = rig()
+        put(r, "m1")
+        r.runner.pass(deployOn, now)
+        val prices = r.store.all().map { it.price to it.rung }.sortedBy { it.second }
+        assertEquals(prices.toString(), listOf(0, 1), prices.map { it.second })
+        assertTrue(prices.toString(), prices[1].first < prices[0].first)
     }
 
     @Test
