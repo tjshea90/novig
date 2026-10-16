@@ -5570,3 +5570,9 @@ Tj (verbatim): "I added the-odds api keys. They are already included now so you 
 ## TCL66: Tj away a couple of hours (chat t1792187539204, 2026-10-16 ~22:00Z): "maintain the auto bets and bids. keep improving the system and profit engine"
 - [ ] TCL66a Watch the engine (status/tradeNote, trades.json, desk.json) while he is away: no halted trading, volume AND quality (ROUTINE.md volume loop); restart the engine onto the new code (PropLine trends, wide match) when safe.
 - [ ] TCL66b Improve the profit engine inside the class B gates; write each finding in research/review/CHANGES.md.
+
+## TCL67: STANDING RULE (Tj, chat 2026-10-16 ~22:20Z) + build PropLine prop grading
+Tj (verbatim): "It concerns me that Claude did not auto build the prop grading support and other features from propline. Remember the standing rule: Claude has full control over updating and running the engine. It does not need to ask me. I want Claude to always update the engine to improve it and update the entire chain including the android app and the GitHub actions process to make the ui better, the code better, the profit engine better, the api usage better, etc. Claude should maintain and make this system better as much as it can"
+- [ ] TCL67a CLAUDE.md standing rule: full autonomy to build/ship improvements across engine, app, Actions; never decide "not worth building" for a paid-API feature Tj asked for; build it.
+- [ ] TCL67b PropLine as a grading source (props + game lines): ScoreSource from /results (actual_value per player/market, final scores) wired into the grader chain (app + engine TradeSettle), switch + test.
+- [ ] TCL67c Revisit what I skipped: Bet button for PropLine lines Vigilant never priced (TCL64a); PropLine /clv/grade for the app's own bets' CLV; hit-rate on all prop rows.
