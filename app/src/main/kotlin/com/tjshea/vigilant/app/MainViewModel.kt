@@ -1534,6 +1534,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun refreshBalances(force: Boolean = false, history: Boolean = false) {
         // An API that is switched off is never called, not even for its balance (Tj, 2026-10-11).
+        if (keysFor(ApiProvider.PROPLINE).isNotEmpty() && _state.value.settings.usePropLine) viewModelScope.launch(Dispatchers.IO) { runCatching { c.propLineAccount.refresh(force) } }
         if (keysFor(ApiProvider.PARLAY).isEmpty() || !_state.value.settings.useParlay) return
         viewModelScope.launch(Dispatchers.IO) {
             runCatching { c.parlayAccount.refresh(force) }

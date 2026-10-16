@@ -596,6 +596,8 @@ class AppContainer(val app: Application) {
 
     /** Each ParlayAPI key's own account (credits left, plan, reset), read for free so the meter is exact (Tj, 2026-09-30). */
     val parlayAccount = com.tjshea.vigilant.data.reference.ParlayAccount(http, { keyStore.current(ApiProvider.PARLAY) }, usage, json)
+    /** PropLine's plan per key (quota headers): the paid key is found and goes first (Tj, 2026-10-16, TCL56). */
+    val propLineAccount = com.tjshea.vigilant.data.reference.PropLineAccount(http, { keyStore.current(ApiProvider.PROPLINE) }, usage)
 
     /** Pinnacle's closes from ParlayAPI (RESEARCH.md §43): asked first when ParlayAPI is on and Tj has a key; nothing otherwise. */
     val parlayCloses = com.tjshea.vigilant.data.tracker.ParlayCloses(http, parlayPool, json, historyDays = { parlayAccount.historyDays() })
@@ -1153,6 +1155,7 @@ class AppContainer(val app: Application) {
         val before = usage.flow.value
         // ParlayAPI's own figure for what's left, read for free (at most every few minutes): the pace decides from the key's word.
         if (!settings.cloudDrives && settings.useParlay && keyStore.current(ApiProvider.PARLAY).isNotEmpty()) appScope.launch { runCatching { parlayAccount.refresh(minAgeMs = com.tjshea.vigilant.data.reference.ParlayAccount.SCAN_REFRESH_MS) } }
+        if (!settings.cloudDrives && settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) appScope.launch { runCatching { propLineAccount.refresh() } }
         // A streaming pass (StreamEngine) reads only what costs nothing per read; every other scan reads every source that is on. A cloud scan reads none: the GitHub engine did.
         val sources = if (settings.cloudDrives) emptyList() else if (streamPass) streamSources(settings) else referenceSources(settings, background, scan = true)
         return runner.start(settings, sources, pinned) { report ->
