@@ -5551,6 +5551,6 @@ Tj (verbatim): "I'm adding many free the odds apis so the app can use them freel
 
 ## TCL63: key bar not red, chat blank with keyboard, PropLine Pro review (Tj, chat t1792184923853, 2026-10-16, screenshots in chat-files)
 Tj (verbatim): "one key says spent but the red line doesn't appear. the chat is still cut off from view when the keyboard opens. you never gave me a review of how the new pro propline api runs"
-- [ ] TCL63a Settings > APIs & keys, The Odds API Key 4 ("0 left of 500 ... spent, until Nov 1 · monthly credits used up"): its bar shows an empty track with a red dot, not the full red bar every other spent key has. Make every spent key's bar full red.
-- [ ] TCL63b Chat with keyboard open: thread area blank, status bar overlaps the Chat | Messages tab row (same as TCL52b). Keep newest messages visible above the input.
-- [ ] TCL63c Send Tj the PropLine Pro review (research/propline_speed_freshness_2026-10-16.md exists; summarise in chat with verdict + numbers, and call out cost/benefit).
+- [x] TCL63a (UsageBar follows the API left figure; spent = full red) Settings > APIs & keys, The Odds API Key 4 ("0 left of 500 ... spent, until Nov 1 · monthly credits used up"): its bar shows an empty track with a red dot, not the full red bar every other spent key has. Make every spent key's bar full red.
+- [x] TCL63b (consumeWindowInsets for the tab bar in MainActivity; compiles, unverified on device) Chat with keyboard open: thread area blank, status bar overlaps the Chat | Messages tab row (same as TCL52b). Keep newest messages visible above the input.
+- [x] TCL63c (sent in chat) Send Tj the PropLine Pro review (research/propline_speed_freshness_2026-10-16.md exists; summarise in chat with verdict + numbers, and call out cost/benefit).
