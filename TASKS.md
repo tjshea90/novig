@@ -5409,3 +5409,9 @@ Tj (t1792123171360): "also sometimes I ask for several features or changes in ba
 Tj (t1792124061597, screenshot): "updates mess up" (INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed). Tj (t1792124128063): "when I manually press update inside the app, it automatically closes the app. that is ok, but can you make it restart the app automatically".
 - [x] TCL36a A refused quiet install is retried once with Android's confirmation screen (Play Protect's Install anyway); the failure note says where to look.
 - [x] TCL36b `UpdatedReceiver` (MY_PACKAGE_REPLACED): opens the app after an update this app started, plus a note that opens it.
+
+## TCL37: CNO back in the bar, CNO still an auto-bet source (Tj, chat t1792125719136, 2026-10-16)
+Tj: "I don't see the cno scanner. is it still on the app? I like it. the auto bet system should still use it as a source"
+- [x] TCL37a CNO tab back in the bar (Auto-bet stays under Settings).
+- [x] TCL37b The phone's auto-bet CNO lane keeps betting while the engine trades; one bet a market across both (the engine's open ledger markets are skipped). `AutoBettorTest`.
+- [x] TCL37c engine-grade.yml YAML fixed (a colon in a step name broke it from 01:46Z to 04:45Z: no grading ran); lines_dataset not_shown_why parses nested parentheses.
