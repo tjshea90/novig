@@ -5448,7 +5448,7 @@ Tj: "confirm the second boltodds key and see if it works. Make sure this app is 
 
 ## TCL45: BoltOdds to full potential (docs) + Kalshi key to GitHub for the engine's socket (Tj, chat t1792168347603, 2026-10-16; his yes to the trading-key risk)
 Tj: "https://boltodds.com/docs make sure the app is using the boltodds to its full potential including the socket, and the auto reconnect. I want to send my kalshi key to GitHub so GitHub can use the socket for faster odds"
-- [ ] TCL45a Kalshi key (id + private key) as Actions secrets KALSHI_KEY_ID / KALSHI_PRIVATE_KEY, sent sealed by the app (like the Novig read key); engine builds KalshiClient + KalshiStream from them; status line; Kalshi socket switch mirrored.
+- [x] TCL45a (secrets + engine signer + socket + phone send; ships in next app release) Kalshi key (id + private key) as Actions secrets KALSHI_KEY_ID / KALSHI_PRIVATE_KEY, sent sealed by the app (like the Novig read key); engine builds KalshiClient + KalshiStream from them; status line; Kalshi socket switch mirrored.
 - [ ] TCL45b Read boltodds.com/docs vs BoltOdds code (socket, reconnect/backoff, snapshot rate limits, get_games, markets): list gaps, fix.
 
 ## TCL46: chats should not waste usage: maintain chats, new context windows (Tj, chat t1792168404473, 2026-10-16)
