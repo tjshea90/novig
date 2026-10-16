@@ -1021,7 +1021,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setChatOpen(open: Boolean) { c.cloud.inbox.chatOpen = open }
 
     /** Sends a chat message to whichever Claude session is active; returns why not, or null. */
-    suspend fun sendChat(text: String): String? = withContext(Dispatchers.IO) { c.cloud.inbox.sendChat(text) }
+    suspend fun sendChat(text: String, attachments: List<Pair<String, ByteArray>> = emptyList()): String? = withContext(Dispatchers.IO) { c.cloud.inbox.sendChat(text, attachments = attachments) }
+
+    /** The trash can on one message, and Clear all (Tj, 2026-10-16). */
+    fun dismissClaudeMessage(id: String) { viewModelScope.launch(Dispatchers.IO) { c.cloud.inbox.dismissMessage(id) } }
+    fun clearClaudeMessages() { viewModelScope.launch(Dispatchers.IO) { c.cloud.inbox.clearMessages() } }
 
     fun markClaudeRead() { viewModelScope.launch(Dispatchers.IO) { c.cloud.inbox.markAllRead() } }
 
