@@ -96,6 +96,18 @@ class CreditPaceTest {
     }
 
     @Test
+    fun `a scan tries the paid key before the free ones even when the free ones come first in the list`() = runBlocking<Unit> {
+        val m = meter()
+        val seed = KeyPool(QuotaPolicy.PARLAY, { listOf("free1", "free2", "paid") }, m)
+        // The server's own figures tell the plans apart: two free keys (1,000) and one Starter key (20,000).
+        for (k in listOf("free1", "free2")) m.recordCall(QuotaPolicy.PARLAY, k, 1, serverRemaining = 990, serverUsed = 10)
+        m.recordCall(QuotaPolicy.PARLAY, "paid", 1, serverRemaining = 19_990, serverUsed = 10)
+        val used = ArrayList<String>()
+        seed.execute(cost = 5, reserve = 300, pace = pace) { k -> used += k; KeyAttemptResult.Success(Unit, cost = 5, remaining = 19_985, used = 15) }
+        assertEquals(listOf("paid"), used)
+    }
+
+    @Test
     fun `the meter says what scans can still spend today, paid and free keys together`() {
         val now = Instant.parse("2026-09-10T12:00:00Z").toEpochMilli()
         val free = KeyUsage(periodStart = sept1, used = 10, remaining = 990, limit = 1_000)
