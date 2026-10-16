@@ -58,17 +58,10 @@ jobs:
                 gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "PropLine resolved-prop archive $day" --notes "Resolved props with closing and opening lines (Pro export). Never delete. Filter the (Watermark) canary rows."
                 gh release upload "$tag" out/archive/* --clobber
               fi ;;
-            clv)
-              python3 -I tools/propline_clv.py selftest
-              mkdir -p in/lines in/arch
-              gh release download engine-dataset -p 'lines-*.csv.gz' -D in/lines --clobber || true
-              for tag in $(gh release list --limit 200 --json tagName -q '.[].tagName' | grep '^propline-archive-'); do gh release download "$tag" -p 'resolved-*.csv.gz' -D in/arch --clobber || true; done
-              ls in/lines in/arch | head -50
-              if ls in/lines/*.csv.gz >/dev/null 2>&1 && ls in/arch/*.csv.gz >/dev/null 2>&1; then
-                python3 -I tools/propline_clv.py run --lines in/lines/*.csv.gz --archive in/arch/*.csv.gz --out out/propline-clv.csv.gz --summary out/propline-clv.md
-                gh release view propline-clv >/dev/null 2>&1 || gh release create propline-clv --title "PropLine CLV of the engine's bets" --notes "Closing-line value of every bet the engine saw, from PropLine's resolved-prop archive (tools/propline_clv.py). Replaced by each run."
-                gh release upload propline-clv out/propline-clv.csv.gz out/propline-clv.md --clobber
-              else
-                echo "no lines or no archive yet"
-              fi ;;
+            clv) bash tools/propline_clv_job.sh ;;
           esac
+      - name: CLV after the daily archive
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.task == 'archive' || github.event.inputs.task == 'backfill' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/propline_clv_job.sh
