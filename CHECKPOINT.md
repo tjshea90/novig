@@ -1,22 +1,22 @@
-# CHECKPOINT 3467 — read me first, then TASKS.md
+# CHECKPOINT 3468 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T19:34:49Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-95eefe49-t2qp21` · **builds on:** `ffd2585df` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T19:37:41Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-95eefe49-t2qp21` · **builds on:** `6d2bbcc03` (this checkpoint is the commit after it)
 
 ## Just done
-TCL56e: PropLine +EV sweep (engine) + phone screen
+TCL56f: propline_clv.py (CLV of every engine bet from PropLine archive) + selftest; settings text + probe plan
 
 ## Do this next
-check backfill run, CLV join tool (TCL56f), Settings page text + ApiProbe plan, ship
+wait for backfill to land; run propline_clv.py on real data and fix matching; workflow to run it daily; ship
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  f1fa57c48 ckpt 3467: TCL56e: PropLine +EV sweep (engine) + phone screen
   919679d21 ckpt 3466: propline.py: export per sport and book (novig, pinnacle), streamed to gzip;
   6c4c69d72 ckpt 3465: propline.py selftest independent of the environment
   736816dc0 ckpt 3464: TCL56g: tools/propline.py (plans/probe/archive) + propline.yml workflow
@@ -26,8 +26,7 @@ check backfill run, CLV join tool (TCL56f), Settings page text + ApiProbe plan, 
   b22c77c63 ckpt 3460: TCL55: chat owner hand-over rule (rotation chat_state, watcher, capture hoo
   bf511b0d9 ckpt 3459: TCL54: 13:20 routine started and stood down (Tj screenshot); coord.acquire 
   93847f108 ckpt 3458: TCL54b verified live; Tj told
-  43ef22780 ckpt 3457: TCL54b: rotation-watch workflow + selftest
 ```
 
-(10 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
