@@ -142,3 +142,10 @@ Fresh odds
 
 I am paying for this api so I want vigilant and GitHub and Claude to use it to its full features and benefit
 ```
+
+## 2026-10-16T19:40:32Z
+```
+See if any of this info can optimize the way vigilant uses sgo API, and if so, implement it:
+
+https://sportsgameodds.com/blog/nfl-odds-api-guide?_kx=[key redacted …zn-Y].TwX928
+```
