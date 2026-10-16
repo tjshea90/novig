@@ -142,6 +142,10 @@ class CloudSources(
     )
     private val propLine = PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { keys(CloudKeys.PROPLINE) }, usage), json, relayNovig = true, bookIds = false)
     private val propLineProps = PropLinePropsSource(propLine)
+    /** PropLine's plan per key from its quota headers (Tj, 2026-10-16, TCL56): the paid key is found and used first ([KeyPool]). The engine asks hourly. */
+    private val propLineAccount = com.tjshea.vigilant.data.reference.PropLineAccount(http, { keys(CloudKeys.PROPLINE) }, usage)
+    fun propLinePlans(): String = keys(CloudKeys.PROPLINE).mapIndexedNotNull { i, k -> propLineAccount.last[k]?.let { c -> "#${i + 1} ${c.tier} ${c.remaining ?: "?"}/${c.limit ?: "?"}" + (if (!c.valid) " (${c.reason})" else "") } }.joinToString(", ").ifBlank { "none read" }
+    suspend fun refreshPropLineAccounts(force: Boolean = false): Int = if (has(CloudKeys.PROPLINE)) propLineAccount.refresh(force, minAgeMs = 50 * 60_000L) else 0
 
     private fun has(name: String) = keys(name).isNotEmpty()
 

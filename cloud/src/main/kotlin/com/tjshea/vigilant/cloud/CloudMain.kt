@@ -89,6 +89,8 @@ fun main(args: Array<String>) = runBlocking {
         while (isActive) {
             runCatching { sources.refreshParlayAccounts() }
             log("ParlayAPI plans: " + sources.parlayPlans())
+            runCatching { sources.refreshPropLineAccounts() }
+            log("PropLine plans: " + sources.propLinePlans())
             delay(60 * 60_000L)
         }
     }

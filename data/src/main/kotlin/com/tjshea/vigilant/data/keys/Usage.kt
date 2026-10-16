@@ -31,6 +31,11 @@ data class QuotaPolicy(
     val defaultLimit: Int? = null,
     val perMinute: Int? = null,
     val perHour: Int? = null,
+    /**
+     * A key whose own plan allows more than this per period is a paid key and goes first ([KeyPool]), free keys after (Tj, 2026-10-16, PropLine Pro: "find the paid key and prioritize its use").
+     * Null = the order Tj typed. Needs the key's plan to be known (a call's answer or an account read).
+     */
+    val paidFirstAbove: Int? = null,
     /** One line for the meter: what the provider allows. */
     val rule: String,
 ) {
@@ -97,8 +102,8 @@ data class QuotaPolicy(
             rule = "100 requests a day per free key (20 a minute), reset at midnight UTC. About 1 per sport per scan, player props included.",
         )
         val PROPLINE = QuotaPolicy(
-            "propline", "PropLine", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, defaultLimit = 1000,
-            rule = "1,000 requests a day per free key, reset at midnight UTC. 1 per league per scan for game lines, 1 per game for props; a tapped ParlayAPI pick's books 1-2.",
+            "propline", "PropLine", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, defaultLimit = 1000, paidFirstAbove = 1000,
+            rule = "Free 1,000 requests a day per key (burst 10, 5 a second); Hobby 5,000; Pro 25,000 (burst 50, 20 a second); reset at midnight UTC; the plan is each key's own X-Daily-Limit and a paid key goes first. 1 per league per scan for game lines, 1 per game for props; /ev, /odds/closing, /results and the exports are paid features.",
         )
         val PARLAY = QuotaPolicy(
             "parlay", "ParlayAPI", "credits", keyed = true, period = QuotaPeriod.MONTH_UTC, defaultLimit = 1000,
@@ -555,7 +560,14 @@ class KeyPool(
             val all = keys()
             // A pace is ParlayAPI's: a paid key (its allowance, once read, is above the free 1,000) goes first, free keys after (Tj, 2026-10-16: "I upgraded one of my parlayapi keys ... start using it over the free ones"); the order is otherwise Tj's.
             val open = all.filter { it !in tried }.let { o ->
-                if (pace == null) o else {
+                if (pace == null) {
+                    // PropLine (and any policy that says so): a key whose own limit is above the free one goes first.
+                    val above = policy.paidFirstAbove
+                    if (above == null) o else {
+                        val ks = meter.flow.value.providers[policy.id]?.keys
+                        o.sortedBy { k -> ks?.get(k)?.limit?.let { lim -> if (lim > above) 0 else 1 } ?: 1 }
+                    }
+                } else {
                     val ks = meter.flow.value.providers[policy.id]?.keys
                     o.sortedBy { k -> ks?.get(k)?.let { u -> if (pace.isFree(u)) 1 else 0 } ?: 1 }
                 }
