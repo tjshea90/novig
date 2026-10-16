@@ -37,4 +37,15 @@ class PropLineScoresTest {
         assertEquals("RECEIVING_YARDS", PropLineStatMap.novig("americanfootball_nfl", "receiving_yards"))
         assertNull(PropLineStatMap.novig("tennis", "aces"))
     }
+
+    @Test
+    fun theRealScoresShapeHasStatusAndNoCompletedFlag() {
+        // PropLine's real /scores row (probe 2026-10-16): `status` ("upcoming", "final", ...) and scores, no `completed`; team and period rows of /stats have a blank player and are ignored.
+        val raw = """[{"id":"129679","sport_key":"basketball_nba","home_team":"Golden State Warriors","away_team":"Denver Nuggets","commence_time":"2026-12-26T03:40:00Z","live":false,"status":"upcoming","home_score":null,"away_score":null},
+            {"id":"372170","home_team":"Houston Rockets","away_team":"Oklahoma City Thunder","commence_time":"2026-10-16T00:30:00Z","status":"final","home_score":116,"away_score":89}]"""
+        val g = PropLineScores.parseGames(raw, json, "NBA")
+        assertFalse(g[0].final); assertTrue(g[1].final); assertEquals(116, g[1].homeScore)
+        val box = PropLineScores.parseBox("""{"status":"final","stats":[{"player_name":"","stat_type":"period_q1_home","stat_value":33.0}]}""", json, "basketball_nba")
+        assertEquals(emptyList<PlayerLine>(), box)
+    }
 }
