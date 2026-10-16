@@ -131,6 +131,7 @@ class CloudEngine(
     /** What the last finished scan said about itself (Novig reads, throttling, each feed's answer), a few hundred characters for the heartbeat. */
     @Volatile private var scanNote = ""
     @Volatile private var advice: List<ApiAdvisor.Advice> = emptyList()
+    @Volatile private var apiCards: List<ApiScorecard.Card> = emptyList()
     private val announced = HashMap<String, String>()
     @Volatile private var feedLines: List<FeedLine> = emptyList()
     private val feedWatch = FeedWatch()
@@ -438,7 +439,7 @@ class CloudEngine(
             tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,
             feedReport = feedLines, feedReportAtMs = feedLinesAt, feedAlerts = feedAlerts,
-            advice = advice, governorOff = governor.askedOff().sorted(),
+            advice = advice, apiCards = apiCards, governorOff = governor.askedOff().sorted(),
             deskActive = !idle && deskStatus?.active == true, deskNote = deskStatus?.note.orEmpty().take(500), deskResting = deskStatus?.resting ?: 0, deskRestingDollars = deskStatus?.restingDollars ?: 0.0,
             deskAtMs = deskStatus?.atMs ?: 0L, deskStopped = deskStatus?.stopped.orEmpty().take(200),
             resting = governor.resting(clock()).map { r -> "${ApiToggles.name(r.id)} until ${java.time.Instant.ofEpochMilli(r.untilMs).atZone(java.time.ZoneOffset.UTC).toLocalTime().withSecond(0).withNano(0)} UTC: ${r.reason}" },
@@ -525,7 +526,16 @@ class CloudEngine(
                 say(CloudMessages.Message("gov-off-${e.id}-$now", now, "engine", "alert", "Switched ${ApiToggles.name(e.id)} off", "It stayed silent after three rests, so the engine asked the phone to turn it off (it was costing requests for nothing). Fix its key or plan, then switch it back on in Settings › APIs.", 1, "APIS"))
             }
         }
-        advice = ApiAdvisor.advise(usageBook(), feedLines, feedAlerts, phone, keysOf, now)
+        // The smart manager (TCL61): paid plans win freshness ties, a paid monthly plan ahead of the calendar is asked as a second opinion, and the scorecard goes to the phone.
+        val book = usageBook()
+        val keyed = { id: String -> ApiToggles.policy(id)?.let { keysOf(it).isNotEmpty() } ?: true }
+        ApiScorecard.observe(feedLines)
+        val paid = ApiScorecard.paidProviders(book, keyed)
+        val surplus = ApiScorecard.surplus(book, paid, now)
+        ApiChain.paidProviders = paid.mapNotNull { ApiToggles.policy(it)?.id }.toSet()
+        ApiChain.surplusProviders = surplus.mapNotNull { ApiToggles.policy(it)?.id }.toSet()
+        apiCards = ApiScorecard.cards(phone, book, ApiChain.measures, feedLines, governor.resting(now).map { it.id }.toSet(), keyed, now)
+        advice = ApiAdvisor.advise(book, feedLines, feedAlerts, phone, keysOf, now) + ApiAdvisor.manage(apiCards, book, keysOf, phone, now)
         for (a in advice) {
             if (announced[a.id] == day) continue
             announced[a.id] = day

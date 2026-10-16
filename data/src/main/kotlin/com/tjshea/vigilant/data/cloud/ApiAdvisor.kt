@@ -81,4 +81,26 @@ object ApiAdvisor {
         }
         return out.sortedWith(compareByDescending<Advice> { it.severity }.thenBy { it.id })
     }
+
+    /**
+     * What the manager's scorecard adds to the advice (TCL61): a paid plan whose credits would expire unspent (so the engine now uses it more), and free keys of a useful API that are mostly spent, with the
+     * numbers. Information (severity 0), once a day each.
+     */
+    fun manage(cards: List<ApiScorecard.Card>, book: UsageBook, keysOf: (QuotaPolicy) -> List<String>, settings: ScanSettings, now: Long): List<Advice> {
+        val out = ArrayList<Advice>()
+        for (c in cards) {
+            if (c.surplus && c.leftFraction != null && c.timeFraction != null) {
+                out += Advice("use:${c.id}", "ok", 0, c.id, "${c.name}: using more of the plan you pay for", "${(c.leftFraction * 100).toInt()}% of its paid credits are left with ${(c.timeFraction * 100).toInt()}% of the month to go, so the engine now asks it as a second opinion for each league now and then (credits that expire unused are the only waste).")
+            }
+            val policy = ApiToggles.policy(c.id) ?: continue
+            if (!c.paid && c.role == "active" && ApiToggles.isOn(settings, c.id) == true) {
+                val keys = book.providers[policy.id]?.keys?.values.orEmpty()
+                val spent = keys.count { (it.remaining ?: ((it.limit ?: 0) - it.used)) <= (it.limit ?: 0) * 0.1 }
+                if (keys.size >= 3 && spent * 2 >= keys.size) {
+                    out += Advice("keys:${c.id}", "key", 0, c.id, "${c.name}: $spent of ${keys.size} free keys are nearly spent", "It is answering well (${c.answeredPct ?: 100}% of scans), so another free key would keep it going until its reset; the engine leaves each key's last credits for closing lines.")
+                }
+            }
+        }
+        return out
+    }
 }

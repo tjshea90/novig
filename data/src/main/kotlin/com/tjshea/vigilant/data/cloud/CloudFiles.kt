@@ -132,6 +132,8 @@ data class CloudStatus(
     /** APIs the engine is resting to save usage, in words ("ParlayAPI until 22:30 UTC: answered nothing for 3 scans in a row"), and the switch ids it has asked the phone to turn off ([ApiGovernor]). */
     val resting: List<String> = emptyList(),
     val governorOff: List<String> = emptyList(),
+    /** The API manager's scorecard, one card per odds API ([ApiScorecard]): paid or free, role, freshness, accuracy, reliability, budget against the calendar. */
+    val apiCards: List<ApiScorecard.Card> = emptyList(),
     /** Feeds that answered nothing for [FeedWatch.LIMIT] scans in a row (TCL21f), "id (n scans in a row)"; empty = none. */
     val feedAlerts: List<String> = emptyList(),
     /**
