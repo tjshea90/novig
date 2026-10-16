@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -645,6 +647,7 @@ private fun TabIconWithCount(t: Tab, state: UiState) {
             val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
             androidx.compose.runtime.remember(state.feed, state.settings, now) { state.feedAt(now).size }
         }
+        Tab.CLAUDE -> state.claudeInbox.unread
         Tab.CNO -> {
             val now = com.tjshea.vigilant.app.ui.rememberNow(15_000)
             // Placed and removed bets aren't counted (nor, with "only bets the books agree on", the rest): the tab doesn't list them.
@@ -759,6 +762,12 @@ private fun VigilantRoot(
         val modifier = Modifier.padding(bottom = padding.calculateBottomPadding()).fillMaxSize()
         androidx.compose.foundation.layout.Box(modifier) {
             when (tab) {
+                Tab.ENGINE -> com.tjshea.vigilant.app.ui.EngineScreen(state, onOpenCloudSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.CLOUD.name; tabName = Tab.SETTINGS.name })
+                Tab.CLAUDE -> com.tjshea.vigilant.app.ui.ClaudeScreen(
+                    state, onSend = vm::sendChat, onChatOpen = vm::setChatOpen, onMarkRead = vm::markClaudeRead,
+                    onDismissMessage = vm::dismissClaudeMessage, onClearMessages = vm::clearClaudeMessages,
+                    onOpenPage = { p -> settingsPage = p; tabName = Tab.SETTINGS.name },
+                )
                 Tab.EV -> FeedScreen(
                     state = state,
                     onScan = onScan,
@@ -766,7 +775,7 @@ private fun VigilantRoot(
                     onToggleLeague = vm::toggleLeague,
                     // Its Settings buttons are about fair-odds sources and keys: that page.
                     onOpenSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.FAIR.name; tabName = Tab.SETTINGS.name },
-                    onOpenDashboard = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.DASHBOARD.name; tabName = Tab.SETTINGS.name },
+                    onOpenDashboard = { tabName = Tab.ENGINE.name },
                     onTrack = vm::trackBet,
                     onSort = { sort -> vm.updateSettings { it.copy(feedSort = sort) } },
                     onStartsWithin = { h -> vm.updateSettings { it.copy(startsWithinHours = h) } },
