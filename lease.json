@@ -2,11 +2,11 @@
  "v": 1,
  "holder": "56f5bf",
  "label": "acct-unknown",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "since": 1792192864,
  "sinceIso": "2026-10-16T23:21:04Z",
- "hb": 1792192864,
- "hbIso": "2026-10-16T23:21:04Z",
+ "hb": 1792192877,
+ "hbIso": "2026-10-16T23:21:17Z",
  "leaseS": 1200
 }
