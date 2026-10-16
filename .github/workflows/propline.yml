@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | speed | archive | backfill | clv"
+        description: "plans | probe | speed | archive | backfill | clv | timing"
         default: "plans"
   schedule:
     - cron: "37 9 * * *"
@@ -63,6 +63,14 @@ jobs:
                 gh release upload "$tag" out/archive/* --clobber
               fi ;;
             clv) bash tools/propline_clv_job.sh ;;
+            timing)
+              # Timing study (TCL68): Novig's price at 72..1 h before the start against Pinnacle's close and the real result; needs the archive Release's CSVs.
+              tag=$(gh release list --limit 30 --json tagName --jq '.[].tagName' | grep '^propline-archive-' | sort | tail -1)
+              mkdir -p out/arch && gh release download "$tag" --pattern 'resolved-*.csv.gz' --dir out/arch
+              python3 -I tools/propline_timing_study.py selftest
+              python3 -I tools/propline_timing_study.py run out/arch out/timing --events 500
+              gh release view propline-timing >/dev/null 2>&1 || gh release create propline-timing --title "PropLine timing study" --notes "Novig price at each lead time vs Pinnacle's close and the result (tools/propline_timing_study.py). Replaced each run."
+              gh release upload propline-timing out/timing/* --clobber ;;
           esac
       - name: CLV after the daily archive
         if: ${{ github.event_name == 'schedule' || github.event.inputs.task == 'archive' || github.event.inputs.task == 'backfill' }}
