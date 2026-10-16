@@ -133,7 +133,7 @@ class PropLineEvSweep(private val client: PropLineClient, private val json: Json
                 note = "${league.displayName}: ${e.message?.take(80) ?: e.javaClass.simpleName}"
                 continue
             }
-            val soon = events.filter { it.startsTs in (now + 1)..horizon }
+            val soon = events.filter { it.commenceMs in (now + 1)..horizon }
             games += soon.size
             val results = coroutineScope {
                 soon.map { ev ->
@@ -142,7 +142,7 @@ class PropLineEvSweep(private val client: PropLineClient, private val json: Json
                             try {
                                 requests++
                                 val raw = client.evRaw(sport, ev.id.removePrefix(PropLinePropsSource.PREFIX)) ?: return@withPermit null
-                                PropLineEv.parse(raw, json, sport, league.displayName, ev.id.removePrefix(PropLinePropsSource.PREFIX), ev.home, ev.away, ev.startsTs, now)
+                                PropLineEv.parse(raw, json, sport, league.displayName, ev.id.removePrefix(PropLinePropsSource.PREFIX), ev.home, ev.away, ev.commenceMs, now)
                             } catch (e: kotlinx.coroutines.CancellationException) {
                                 throw e
                             } catch (e: Exception) {
