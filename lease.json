@@ -1,12 +1,7 @@
 {
  "v": 1,
- "holder": "77dc25",
- "label": "acct-unknown",
- "kind": "interactive",
- "task": "resume: TCL61 API manager, TCL56 PropLine follow-ups",
- "since": 1792184965,
- "sinceIso": "2026-10-16T21:09:25Z",
- "hb": 1792192302,
- "hbIso": "2026-10-16T23:11:42Z",
+ "holder": null,
+ "hb": 1792192448,
+ "hbIso": "2026-10-16T23:14:08Z",
  "leaseS": 1200
 }
