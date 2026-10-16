@@ -281,6 +281,9 @@ class AppContainer(val app: Application) {
      */
     val cloud: CloudLink by lazy { CloudLink(this) }
 
+    /** New releases from GitHub: the notification, the Install update button, the installer (Tj, 2026-10-16). */
+    val updater: AppUpdater by lazy { AppUpdater(this) }
+
     /**
      * What the GitHub engine spent of the same API keys, as it last published it (Tj, 2026-10-15: "Make sure I can still see accurate api usage meters in the app on my phone"): keys still by id. The meters, Diagnostics and the
      * health checks read [mergedUsage], this phone's own ledger with the engine's laid over it ([com.tjshea.vigilant.data.keys.UsageMerge]).

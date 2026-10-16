@@ -168,6 +168,9 @@ class CloudLink(private val c: AppContainer) {
 
     private fun hasToken() = token() != null
 
+    /** The saved GitHub token (for the app updater's reads of a private repo), or null. */
+    fun githubToken(): String? = token()
+
     @OptIn(FlowPreview::class)
     fun start(scope: CoroutineScope) {
         scope.launch(Dispatchers.IO) {

@@ -537,6 +537,8 @@ class MainActivity : ComponentActivity() {
         (application as VigilantApp).container.onScreen = true
         // Everything GitHub is doing is read the moment the app opens (the engine's heartbeat, list, bets, bids, messages, usage): TCL31.
         runCatching { (application as VigilantApp).container.cloud.syncNow() }
+        // A release published while the phone was asleep is found as the app opens, and the 15-minute worker keeps looking when it is closed.
+        runCatching { UpdateWorker.schedule(applicationContext); (application as VigilantApp).container.let { c -> c.appScope.launch { c.updater.check(notify = true) } } }
         // The full app is back in front: no need for the widget over it.
         if (::widget.isInitialized) widget.hide()
         val allowed = FloatingWidget.allowed(this)
@@ -722,6 +724,7 @@ private fun VigilantRoot(
         bottomBar = {
             androidx.compose.foundation.layout.Column {
             // The kill switch on every tab (Tj, 2026-10-05): one tap stops everything and keeps it stopped until Resume, even after the app is closed.
+            com.tjshea.vigilant.app.ui.UpdateBar()
             com.tjshea.vigilant.app.ui.KillBar(state.settings, onKill = vm::killAll, onResume = vm::resumeAfterKill)
             // The wallet on every tab (Tj, 2026-10-03: "show it somewhere in the app at all times"), once betting through the API is set up.
             if (AppBook.isNovig && state.betting.enabled) WalletBar(vm)

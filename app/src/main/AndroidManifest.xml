@@ -9,6 +9,8 @@
          (specialUse) while it's on, woken by an exact alarm every 5-40 minutes (USE_EXACT_ALARM;
          SCHEDULE_EXACT_ALARM before Android 13), restarted after a reboot or an update. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- App updates from GitHub (AppUpdater.kt): Vigilant installs its own newer APK through Android's PackageInstaller. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Test key tries the other connection (mobile data / Wi-Fi) when Novig flags this one's address. -->
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
@@ -99,6 +101,9 @@
         </service>
 
         <!-- The +EV alert's "✓ Placed" and the confirmation's "Undo": run in the background, no screen. -->
+        <receiver android:name=".UpdateActionReceiver" android:exported="false" />
+        <receiver android:name=".UpdateStatusReceiver" android:exported="false" />
+
         <receiver
             android:name=".AlertActionReceiver"
             android:exported="false" />
