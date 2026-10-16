@@ -5436,3 +5436,6 @@ Tj: "it is sgo pro. my boltodds is working fine here, see if GitHub can refresh 
 
 ## TCL42: chat does not refresh after phone screen off/on (Tj, chat t1792167486204, 2026-10-16)
 - [x] TCL42a (chat loop naps, woken by syncNow; ships with the next release) Chat must re-poll the moment the app resumes (lifecycle ON_RESUME / syncNow) and after network returns; test; ship with next batch.
+
+## TCL43: second BoltOdds key, auto-fail-over (Tj, chat t1792167732952, 2026-10-16)
+- [ ] TCL43a Verify phone saves 2 keys, sends BOTH to GitHub (BOLTODDS_API_KEY comma-joined), engine splits them, REST + sockets fail over from key 1 to key 2 on 401/403/429/quota/socket refusal; test.
