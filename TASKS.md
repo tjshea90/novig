@@ -5452,4 +5452,4 @@ Tj: "https://boltodds.com/docs make sure the app is using the boltodds to its fu
 - [x] TCL45b (no gaps) Read boltodds.com/docs vs BoltOdds code (socket, reconnect/backoff, snapshot rate limits, get_games, markets): list gaps, fix.
 
 ## TCL46: chats should not waste usage: maintain chats, new context windows (Tj, chat t1792168404473, 2026-10-16)
-- [ ] TCL46a Answer/design: chat_watch prints only new messages already; session context is the cost. Plan: a rolling chat summary file (chat/SUMMARY.md on cloud-config or research/chat_digest.md) updated at each checkpoint, so a fresh session starts from CHECKPOINT+summary; recommend fresh session when context is large (toobig.sh). Build + tell Tj.
+- [x] TCL46a (answered: fresh session = no loss; checkpoint and suggest new session when long) Answer/design: chat_watch prints only new messages already; session context is the cost. Plan: a rolling chat summary file (chat/SUMMARY.md on cloud-config or research/chat_digest.md) updated at each checkpoint, so a fresh session starts from CHECKPOINT+summary; recommend fresh session when context is large (toobig.sh). Build + tell Tj.
