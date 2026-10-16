@@ -22,6 +22,7 @@ import androidx.work.WorkerParameters
 import com.tjshea.vigilant.data.update.AppUpdate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -99,7 +100,8 @@ class AppUpdater(private val c: AppContainer) {
             _state.update { it.copy(progress = 0f, note = "Downloading ${latest.tag}…") }
             download(latest, file)
             _state.update { it.copy(progress = null, installing = true, note = "Installing ${latest.tag}…") }
-            commit(file)
+            // Copying the APK into the installer session (and fsync) is disk work: off the main thread (the freeze in Tj's screenshot, "Vigilant isn't responding").
+            withContext(Dispatchers.IO) { commit(file) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -110,27 +112,62 @@ class AppUpdater(private val c: AppContainer) {
         }
     }
 
+    /**
+     * The APK is megabytes: the app's shared client gives every call 30 s in total and 20 s of silence, which cut a slow download off as "timeout" (Tj, 2026-10-16 screenshot: "Update failed: timeout" at a third of the
+     * progress bar). This client has no total limit (a stall of 60 s still ends a try), and a try that fails half way carries on from the bytes already on disk (Range), up to 4 tries.
+     */
     private suspend fun download(u: AppUpdate, file: File) = withContext(Dispatchers.IO) {
         val token = c.cloud.githubToken()
+        val client = c.http.newBuilder().callTimeout(0, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).build()
+        file.delete()
+        var attempt = 0
+        while (true) {
+            attempt++
+            try {
+                downloadTry(client, token, u, file)
+                return@withContext
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: java.io.IOException) {
+                if (attempt >= 4) throw e
+                _state.update { it.copy(note = "Download interrupted (${e.message?.take(60) ?: e.javaClass.simpleName}); continuing, try ${attempt + 1} of 4…") }
+                delay(1_500L * attempt)
+            }
+        }
+    }
+
+    private fun downloadTry(client: okhttp3.OkHttpClient, token: String?, u: AppUpdate, file: File) {
+        val have = if (file.exists()) file.length() else 0L
         // With a token the API asset URL works for a private repo; without one the public download URL does. OkHttp drops the Authorization header on the redirect to the file host.
-        val req = (if (token != null) Request.Builder().url(u.apkApiUrl).header("Accept", "application/octet-stream").header("Authorization", "Bearer $token") else Request.Builder().url(u.apkUrl)).build()
-        c.http.newCall(req).execute().use { r ->
+        val rb = if (token != null) Request.Builder().url(u.apkApiUrl).header("Accept", "application/octet-stream").header("Authorization", "Bearer $token") else Request.Builder().url(u.apkUrl)
+        if (have > 0) rb.header("Range", "bytes=$have-")
+        client.newCall(rb.build()).execute().use { r ->
             if (!r.isSuccessful) error("GitHub answered ${r.code} for the APK")
             val body = r.body ?: error("empty download")
-            val total = body.contentLength().takeIf { it > 0 } ?: u.apkBytes
-            var done = 0L
-            file.outputStream().use { out ->
+            // 206 = the server continued from [have]; a plain 200 sent the whole file again.
+            val resumed = r.code == 206 && have > 0
+            var done = if (resumed) have else 0L
+            val total = (if (resumed) have + body.contentLength() else body.contentLength()).takeIf { it > 0 } ?: u.apkBytes
+            var shown = -1
+            var lastMs = 0L
+            java.io.FileOutputStream(file, resumed).use { out ->
                 body.byteStream().use { input ->
                     val buf = ByteArray(64 * 1024)
                     while (true) {
                         val n = input.read(buf)
                         if (n < 0) break
                         out.write(buf, 0, n); done += n
-                        if (total > 0) _state.update { it.copy(progress = (done.toFloat() / total).coerceIn(0f, 1f)) }
+                        // Progress at most every 250 ms and whole percents: a state change per 64 KB chunk recomposed the screen dozens of times a second.
+                        val now = System.currentTimeMillis()
+                        val pct = if (total > 0) ((done * 100) / total).toInt() else 0
+                        if (total > 0 && pct != shown && now - lastMs >= 250) {
+                            shown = pct; lastMs = now
+                            _state.update { it.copy(progress = (done.toFloat() / total).coerceIn(0f, 1f)) }
+                        }
                     }
                 }
             }
-            if (u.apkBytes > 0 && done != u.apkBytes) error("the download was cut short ($done of ${u.apkBytes} bytes)")
+            if (u.apkBytes > 0 && done != u.apkBytes) throw java.io.IOException("the download was cut short ($done of ${u.apkBytes} bytes)")
         }
     }
 
