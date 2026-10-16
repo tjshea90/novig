@@ -306,3 +306,4 @@ day that changes.
 | v0.114.8 | code 304 | 2026-10-16T18:27Z | v0.114.8: app update no longer times out or freezes (download resumes, progress throttled, install off the main thread)
 | v0.114.9 | code 305 | 2026-10-16T19:51Z | v0.114.9: PropLine Pro: paid key found and used first, every game's props incl. NBA and NHL, a PropLine +EV-at-Novig screen (from the +EV tab), plan shown in the key test
 | v0.114.10 | code 306 | 2026-10-16T20:08Z | v0.114.10: scarce APIs never lead and fill a gap at most every 30 min; PropLine retries timeouts and 504s and reads big prop lists in chunks; PropLine +EV odds limit
+| v0.114.11 | code 307 | 2026-10-16T20:43Z | v0.114.11: PropLine +EV screen: fits under the status bar, the same bet at every other book with a books-agree verdict, Bet button; PropLine paced across the engine hours
