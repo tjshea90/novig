@@ -1,0 +1,73 @@
+{
+ "status": 200,
+ "quota": {
+  "x-daily-limit": "25000",
+  "x-daily-used": "1006",
+  "x-daily-remaining": "23994",
+  "x-daily-reset": "1792195200",
+  "ratelimit-limit": "25000",
+  "ratelimit-remaining": "23994",
+  "ratelimit-reset": "16515",
+  "ratelimit-policy": "25000;w=86400"
+ },
+ "body": {
+  "id": "369360",
+  "sport_key": "basketball_nba",
+  "home_team": "Philadelphia 76ers",
+  "away_team": "Boston Celtics",
+  "commence_time": "2026-10-16T23:00:00Z",
+  "fair_source_default": "consensus (median no-vig of 3+ books per market)",
+  "devig_method": "multiplicative",
+  "lines": [
+   {
+    "market_key": "h2h",
+    "description": "",
+    "point": null,
+    "fair_source": "consensus",
+    "fair_probs": {
+     "Philadelphia 76ers": 0.6159,
+     "Boston Celtics": 0.3841
+    },
+    "fair_books": [
+     "betdaq",
+     "betmgm",
+     "betrivers"
+    ],
+    "outcomes": [
+     {
+      "book": "kalshi",
+      "book_title": "Kalshi",
+      "name": "Philadelphia 76ers",
+      "price": -156,
+      "ev_pct": 1.07,
+      "is_plus_ev": true,
+      "point": null,
+      "last_update": "2026-10-16T19:23:49.431065Z"
+     },
+     {
+      "book": "prophetx",
+      "book_title": "ProphetX",
+      "name": "Philadelphia 76ers",
+      "price": -160,
+      "ev_pct": 0.09,
+      "is_plus_ev": true,
+      "point": null,
+      "last_update": "2026-10-16T19:23:58.610038Z"
+     },
+     {
+      "book": "novig",
+      "book_title": "Novig",
+      "name": "Philadelphia 76ers",
+      "price": -160,
+      "ev_pct": 0.09,
+      "is_plus_ev": true,
+      "point": null,
+      "last_update": "2026-10-16T19:23:51.287352Z"
+     }
+    ]
+   }
+  ],
+  "redacted": false,
+  "upgrade_url": null
+ }
+}

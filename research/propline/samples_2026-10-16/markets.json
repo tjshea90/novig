@@ -1,0 +1,27 @@
+{
+ "status": 200,
+ "quota": {
+  "x-daily-limit": "25000",
+  "x-daily-used": "1004",
+  "x-daily-remaining": "23996",
+  "x-daily-reset": "1792195200",
+  "ratelimit-limit": "25000",
+  "ratelimit-remaining": "23996",
+  "ratelimit-reset": "16521",
+  "ratelimit-policy": "25000;w=86400"
+ },
+ "body": [
+  {
+   "key": "h2h",
+   "outcomes_count": 112
+  },
+  {
+   "key": "player_assists",
+   "outcomes_count": 138
+  },
+  {
+   "key": "player_points",
+   "outcomes_count": 264
+  }
+ ]
+}

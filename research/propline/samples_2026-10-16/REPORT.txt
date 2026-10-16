@@ -1,0 +1,14 @@
+PropLine Pro probe, 2026-10-16 19:25 UTC, plan pro (25000 a day)
+sports                             HTTP 200 
+events                             HTTP 200 (basketball_nba, 60 events)
+markets                            HTTP 200 
+event_odds                         HTTP 200 
+ev_novig                           HTTP 200 
+ev_consensus                       HTTP 200 
+best_line                          HTTP 200 
+movement                           HTTP 200 
+projections                        HTTP 200 
+books_accuracy                     HTTP 200 
+resolution_summary                 HTTP 200 
+coverage_history                   HTTP 200 
+export_resolved_props              HTTP 200  header: event_id,sport_key,commence_time,home_team,away_team,home_score,away_score,market,bookmaker,player_name,outcome_name,line,price_american,price_decimal,resolution,actual_value,resolved_at,closing_price,closing_at,dfs_odds_type,closing_point,opening_price,opening_point,opening_at,payout_multiplier,outcome_id,player_id,market_description,team,customer_token
