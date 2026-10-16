@@ -180,6 +180,7 @@ class AppUpdater(private val c: AppContainer) {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setContentIntent(EvAlerts.openVigilant(c.app, ID_UPDATE))
+                .withWallet(c.app)
                 .addAction(0, "Install update", install)
                 .build()
             NotificationManagerCompat.from(c.app).notify(ID_UPDATE, n)
@@ -191,7 +192,7 @@ class AppUpdater(private val c: AppContainer) {
         if (!ScanService.canNotify(c.app)) return
         runCatching {
             channel()
-            NotificationManagerCompat.from(c.app).notify(ID_UPDATE + 1, NotificationCompat.Builder(c.app, CHANNEL).setSmallIcon(R.drawable.ic_scan).setContentTitle(title).setContentText(text).setAutoCancel(true).setContentIntent(pi).build())
+            NotificationManagerCompat.from(c.app).notify(ID_UPDATE + 1, NotificationCompat.Builder(c.app, CHANNEL).setSmallIcon(R.drawable.ic_scan).setContentTitle(title).setContentText(text).setAutoCancel(true).setContentIntent(pi).withWallet(c.app).build())
         }
     }
 
