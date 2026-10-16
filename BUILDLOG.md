@@ -299,3 +299,4 @@ day that changes.
 | v0.114.1 | code 297 | 2026-10-16T04:08Z | v0.114.1: chat keeps its input pinned above the keyboard and the thread scrolling
 | v0.114.2 | code 298 | 2026-10-16T04:19Z | v0.114.2: chat New chat, Clear chat and earlier chats; chat always scrolls to the newest message
 | v0.114.3 | code 299 | 2026-10-16T04:28Z | v0.114.3: updater retries a refused install with Android's own screen; the app reopens itself after an update
+| v0.114.4 | code 300 | 2026-10-16T04:57Z | v0.114.4: CNO tab back in the bar; the phone's auto-bet keeps using CNO beside the engine
