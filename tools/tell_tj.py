@@ -4,6 +4,9 @@
   python3 tools/tell_tj.py say "Title" "Body" [--kind recommendation|bet|alert|shipped|info] [--priority 0|1] [--action APIS]
   python3 tools/tell_tj.py set-api "reason" sgo=on parlay=off ...
   python3 tools/tell_tj.py chat-reply <message id> "answer"      (the chat; tools/chat_watch.sh prints Tj's new messages)
+  python3 tools/tell_tj.py chat-ack <message id> [<id> ...]     (a thumbs-up under Tj's message: this session has read it; chat_watch.sh does it by itself)
+  python3 tools/tell_tj.py chat-file <path on the branch> <out dir>   (download an attachment Tj added: paths are printed by chat_watch.sh)
+  python3 tools/tell_tj.py chat-keep <message id>               (flag the message's attachments important: the hourly cleanup deletes the rest after 24 h)
   python3 tools/tell_tj.py selftest
 
 Each call adds ONE small file (messages/ or overrides/) to the `cloud-config` branch with a plain (non-force) push, so two writers never overwrite each other. The phone reads the folders every minute
@@ -98,6 +101,42 @@ def chat_reply(reply_to, text, who=None, **kw):
     m = {"id": ident, "at": at, "from": who or me(), "text": text, "replyTo": reply_to}
     put("chat/" + fname(at, ident), json.dumps(m), **kw)
     return ident
+
+
+def chat_ack(ids, who=None, **kw):
+    """A read receipt for each of Tj's messages in `ids` (the app shows a thumbs-up under it). Idempotent per (message, account): a message already acknowledged by this account is skipped."""
+    me_ = who or me()
+    git("fetch", "-q", "origin", BRANCH, cwd=kw.get("cwd"), check=False)
+    have = git("ls-tree", "-r", "--name-only", "FETCH_HEAD", cwd=kw.get("cwd"), check=False).stdout.split()
+    done = 0
+    for i in ids:
+        tag = "ack-" + re.sub(r"[^A-Za-z0-9]", "", i)
+        if any(tag in f for f in have if f.startswith("chat/")):
+            continue
+        at = int(time.time() * 1000)
+        m = {"id": "a%d-%s" % (at // 1000, secrets.token_hex(2)), "at": at, "from": me_, "text": "\U0001F44D", "ack": i}
+        put("chat/%013d-%s.json" % (at, tag[:24]), json.dumps(m), **kw)
+        done += 1
+    return done
+
+
+def chat_file(path, out, cwd=None):
+    """Download an attachment (a path under chat-files/) from the branch into `out`; prints where it landed."""
+    if not path.startswith("chat-files/") or ".." in path:
+        raise SystemExit("only chat-files/ paths")
+    git("fetch", "-q", "origin", BRANCH, cwd=cwd)
+    os.makedirs(out, exist_ok=True)
+    dest = os.path.join(out, os.path.basename(path))
+    r = subprocess.run(["git", "show", "FETCH_HEAD:" + path], capture_output=True, cwd=cwd)
+    if r.returncode:
+        raise SystemExit("not on the branch (deleted after 24 h unless flagged?): " + path)
+    open(dest, "wb").write(r.stdout)
+    return dest
+
+
+def chat_keep(msg_id, who=None, **kw):
+    """Flag the attachments of message `msg_id` as important: chat-cleanup.yml leaves them alone."""
+    put("chat-keep/" + re.sub(r"[^A-Za-z0-9-]", "", msg_id)[:40], json.dumps({"id": msg_id, "by": who or me(), "at": int(time.time() * 1000)}), **kw)
 
 
 def selftest():
