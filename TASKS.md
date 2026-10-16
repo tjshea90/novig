@@ -5373,3 +5373,13 @@ Tj: "make it so GitHub/Claude can push updates directly to the vigilant android 
 - [x] TCL32a `data/update/AppUpdate` (parse releases/latest, compare versions) + `AppUpdateTest`.
 - [x] TCL32b `app/AppUpdater` (check, notification with Install update, download, PackageInstaller with no-confirm update on Android 12+, status receiver), `UpdateWorker` every 15 min, check on app open, `UpdateBar` above the tab bar, REQUEST_INSTALL_PACKAGES + receivers in the manifest, `UpdateBarUiTest`.
 - [x] TCL32c Ship v0.113.0, then v0.114.0 later proves the loop on the phone (first update needs Tj to allow installs from Vigilant once and tap Install once).
+
+
+## TCL33: every scanned bet saved, bids confirmed on GitHub and optimised (Tj, 2026-10-16)
+Tj: "Confirm that make bids are on GitHub and do not need my phone at all. Optimize bids over time just as you optimize bets ... make the cloud scanner save every single bet scanned to GitHub whether it takes the bet or not, even bets not shown in the scanner window, with comprehensive data ... closing line ... stars ... final result ... in a format best for Claude to read and analyze".
+- [x] TCL33a Confirmed: the desk runs in the engine job (heartbeat fresh, 487 bids resting while the phone was off).
+- [x] TCL33b Wide log: `ScanStudy.observeVigilant(wideFloor)` (EV at or above -2%, `NOT SHOWN (why)`), `EngineStudyTest`.
+- [x] TCL33c Bids journal `bids-<day>-run<id>` (every ended bid) in `CloudMain`.
+- [x] TCL33d `tools/lines_dataset.py` (lines + bids CSVs + dictionary) and `tools/bid_summary.py`, selftests; `engine-grade.yml` publishes the `engine-dataset` Release.
+- [x] TCL33e ROUTINE.md step 7 + CLAUDE.md.
+- [ ] TCL33f WATCH: first `engine-dataset` Release after the next engine-grade run (07:40/17:40 UTC); check row counts, CLV coverage, and bid fill rate; first bid-rule tuning once 200+ bids ended.
