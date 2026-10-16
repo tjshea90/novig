@@ -5435,4 +5435,4 @@ Tj: "it is sgo pro. my boltodds is working fine here, see if GitHub can refresh 
 - [ ] TCL40d WATCH: BoltOdds snapshot still 429 on the runner after the 60 s retry (scan note truncates the reason at ~60 chars; get the full text: log boltFeed.report() or widen the note). Bid churn: each 25 s pass re-posts 15-33 bids (posted == taken down); look at why (queue position lost, bid TTL) before it costs fills.
 
 ## TCL42: chat does not refresh after phone screen off/on (Tj, chat t1792167486204, 2026-10-16)
-- [ ] TCL42a Chat must re-poll the moment the app resumes (lifecycle ON_RESUME / syncNow) and after network returns; test; ship with next batch.
+- [x] TCL42a (chat loop naps, woken by syncNow; ships with the next release) Chat must re-poll the moment the app resumes (lifecycle ON_RESUME / syncNow) and after network returns; test; ship with next batch.

@@ -233,7 +233,8 @@ class CloudLink(private val c: AppContainer) {
                     runCatching { inbox.pollChat() }
                     if (inbox.chatOpen) runCatching { inbox.pollWho() }
                 }
-                delay(if (inbox.chatOpen) CHAT_OPEN_POLL_MS else INBOX_POLL_MS)
+                // woken by syncNow() when the app comes back to the front (a phone switched off and on stalls a plain delay; Tj, 2026-10-16: the chat showed old messages until he scrolled)
+                nap(if (inbox.chatOpen) CHAT_OPEN_POLL_MS else INBOX_POLL_MS)
             }
         }
         // 3. a key added or changed in the phone's key store goes to GitHub's secrets by itself (Tj, 2026-10-15: "If I add api keys inside my phone vigilant app, will it automatically upload them to GitHub ... If it doesn't already do this, make it do so"):
