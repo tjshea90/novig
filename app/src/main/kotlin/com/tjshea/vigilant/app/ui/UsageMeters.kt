@@ -278,5 +278,5 @@ fun keyLine(policy: QuotaPolicy, k: KeyView, now: Long): String = buildString {
 @Composable
 fun UsageBar(used: Int, left: Int?, allowance: Int?, modifier: Modifier = Modifier) {
     if (allowance == null || allowance <= 0) return
-    LinearProgressIndicator(progress = { (used.toFloat() / allowance).coerceIn(0f, 1f) }, color = meterColor(left, allowance), modifier = modifier.fillMaxWidth().padding(vertical = 2.dp))
+    LinearProgressIndicator(progress = { (left?.let { 1f - it.toFloat() / allowance } ?: (used.toFloat() / allowance)).coerceIn(0f, 1f) }, color = meterColor(left, allowance), modifier = modifier.fillMaxWidth().padding(vertical = 2.dp))
 }
