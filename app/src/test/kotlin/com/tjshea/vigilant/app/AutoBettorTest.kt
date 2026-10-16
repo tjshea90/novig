@@ -162,17 +162,23 @@ class AutoBettorTest {
     }
 
     @Test
-    fun `while the GitHub engine trades (paper or live) the phone's auto-bet places nothing and says why, so one decision is never two orders`() = runBlocking {
+    fun `while the GitHub engine trades the phone's CNO lane keeps betting (the engine never reads CNO) but never takes a market the engine's ledger holds open`() = runBlocking {
         for (mode in listOf(com.tjshea.vigilant.data.scanner.CloudTradeMode.PAPER, com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE)) {
             val novig = FakeNovig()
             val s = settings { it.copy(gates = it.gates.copy(cloudTrading = mode)) }
-            val report = bettor(novig).run(s, state(s))
-            assertEquals(0, novig.orders.get())
-            assertTrue(report.placed.isEmpty())
+            assertEquals("the CNO list is still a source (Tj, 2026-10-16)", 1, bettor(novig).run(s, state(s)).placed.size)
         }
-        // switched back off: the phone bets again
+        // the engine already holds that market open: one bet a market across both systems
         val novig = FakeNovig()
-        assertEquals(1, bettor(novig).run(settings(), state()).placed.size)
+        val s = settings { it.copy(gates = it.gates.copy(cloudTrading = com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE)) }
+        val held = com.tjshea.vigilant.data.cloud.TradeEntry(
+            id = "e1", atMs = now, mode = "LIVE", marketId = "mkt", outcomeId = "out-x", eventId = "ev", event = "A @ B", league = "NFL", kind = "Prop", marketLabel = "Prop", selection = "x", startsTs = now + 3_600_000L,
+            contracts = 10, avgPrice = 0.5, cost = 5.0, fee = 0.0, fair = 0.55, evPercent = 0.05, stars = null, fairAgeS = 10, books = 4, note = "",
+        )
+        val st = state(s).let { it.copy(cloudUi = it.cloudUi.copy(trades = com.tjshea.vigilant.data.cloud.TradeLedger(listOf(held)))) }
+        val report = bettor(novig).run(s, st)
+        assertEquals(0, report.placed.size)
+        assertEquals(0, novig.orders.get())
     }
 
     @Test
