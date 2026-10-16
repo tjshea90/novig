@@ -828,7 +828,7 @@ private fun VigilantRoot(
                         onLock = vm::lockIn,
                     ),
                 )
-                Tab.PROPLINE -> com.tjshea.vigilant.app.ui.PropLineEvScreen(state)
+                Tab.PROPLINE -> com.tjshea.vigilant.app.ui.PropLineEvScreen(state, onTrack = vm::trackBet, onRecheck = { vm.recheck(it) })
                 Tab.AUTOBET -> {
                     val context = androidx.compose.ui.platform.LocalContext.current
                     com.tjshea.vigilant.app.ui.AutoBetScreen(
