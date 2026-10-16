@@ -94,6 +94,10 @@ class CloudEngine(
     /** Where a settings request for the phone goes ([CloudOverrides]) and where a message for Tj goes ([CloudMessages]); a failure is a line in the log. */
     private val overrideSink: suspend (CloudOverrides.Request) -> Unit = {},
     private val messageSink: suspend (CloudMessages.Message) -> Unit = {},
+    /** The engine's bid desk (TCL31, [CloudBidRunner]); null = this engine makes no bids. */
+    private val bids: EngineBids? = null,
+    /** How often the bid desk runs between scans' lists (it reads fills, moves and posts bids on the lines it holds). */
+    private val deskEveryMs: Long = 25_000L,
 ) {
     /** What the engine's trading says about itself in the heartbeat. */
     data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null)
@@ -134,6 +138,10 @@ class CloudEngine(
     @Volatile private var bidsAt = 0L
     @Volatile private var bidsCount = 0
     @Volatile private var bidsOn = false
+    /** The bid desk's last word, the phone's settings as the desk reads them, and one pass at a time. */
+    @Volatile private var deskStatus: BidStatus? = null
+    @Volatile private var phoneSettings: ScanSettings? = null
+    private val deskLock = kotlinx.coroutines.sync.Mutex()
     @Volatile private var addressEnd = false
     @Volatile private var windowEnd = false
     @Volatile private var lastPublished: CloudFeed? = null
@@ -149,14 +157,52 @@ class CloudEngine(
     @Volatile private var walletNextAt = 0L
     private var walletRefreshSeen = 0L
 
-    /** Runs until [untilMs] (the job's time limit) or until the phone has had the engine off for [idleExitMs]. */
-    suspend fun run(untilMs: Long, startedAtMs: Long = clock()): End {
+    /** Runs until [untilMs] (the job's time limit) or until the phone has had the engine off for [idleExitMs]. The bid desk runs beside the scan loop and comes down with it. */
+    suspend fun run(untilMs: Long, startedAtMs: Long = clock()): End = kotlinx.coroutines.coroutineScope {
+        val desk = if (bids != null) launch { deskLoop() } else null
+        try {
+            runLoop(untilMs, startedAtMs)
+        } finally {
+            desk?.cancel()
+            // Whatever ends the job (time, the phone's switch, the engine's hours, a refused address), the bids the engine has up come down: nothing rests on Novig for a desk that is no longer watching.
+            if (bids != null) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { deskDown("the engine is ending") }
+        }
+    }
+
+    /** The desk beside the scan: every [deskEveryMs] one pass on the lines it holds (fills read, bids moved and posted), under the phone's newest settings, only inside the engine's hours. */
+    private suspend fun deskLoop() {
+        while (currentScopeActive()) {
+            pause(deskEveryMs)
+            val s = phoneSettings ?: continue
+            if (!s.cloudDrives || (s.cloudHours && !EngineHours.isOpen(clock()))) { deskDown("the engine is off or outside its hours"); continue }
+            deskPass(s)
+        }
+    }
+
+    private suspend fun deskPass(s: ScanSettings) {
+        val b = bids ?: return
+        deskLock.withLock {
+            val st = try { b.pass(s, clock()) } catch (e: CancellationException) { throw e } catch (e: Exception) { log("bid desk failed: ${e.javaClass.simpleName}: ${e.message?.take(120)}"); null }
+            deskStatus = st
+        }
+    }
+
+    private suspend fun deskDown(why: String) {
+        val b = bids ?: return
+        deskLock.withLock {
+            if (deskStatus?.active == true) { runCatching { b.stop(why) }.onFailure { if (it is CancellationException) throw it }; log("bids: down ($why)") }
+            deskStatus = deskStatus?.copy(active = false)?.takeIf { false }
+        }
+    }
+
+    private suspend fun runLoop(untilMs: Long, startedAtMs: Long): End {
         var offSince = 0L
         var lastCfg: CloudConfig? = null
         var lastBeat = 0L
         while (currentScopeActive() && clock() < untilMs) {
             val cfg = runCatching { config() }.getOrNull() ?: lastCfg
             lastCfg = cfg
+            cfg?.settings?.let { phoneSettings = it }
             if (cfg == null || !cfg.on) {
                 if (offSince == 0L) offSince = clock()
                 if (clock() - lastBeat >= heartbeatEveryMs) {
@@ -317,6 +363,7 @@ class CloudEngine(
                             filterSettings = CloudScanKey.withFilters(scanSettings, newer.settings)
                             settingsPending = CloudScanKey.scanKey(newer.settings) != scanKey
                             latest = newer.settings
+                            phoneSettings = newer.settings
                             // A bid rule changed: the candidates are made again from what is held, at once, with no scan.
                             val k = CloudScanKey.key(newer.settings, CloudScanKey.Kind.BIDS)
                             if (k != bidKey) { bidKey = k; lastResult?.let { r -> lastBidsAt = now; sendBids(r, cfg.rev, latest, now) } }
@@ -370,6 +417,7 @@ class CloudEngine(
         runCatching { onResult(result, forCloud(latest)) }.onFailure { if (it is CancellationException) throw it; log("scan study failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
         problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = lastScanMs))
         log("pass $passes: ${rows.size} bets listed of ${result.stats.outcomesWithFair} priced, ${lastScanMs / 1000}s" + (problem?.let { ", publish problem: $it" } ?: ""))
+        if (bids != null) deskPass(latest)
         false
     }
 
@@ -389,6 +437,8 @@ class CloudEngine(
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,
             feedReport = feedLines, feedReportAtMs = feedLinesAt, feedAlerts = feedAlerts,
             advice = advice, governorOff = governor.askedOff().sorted(),
+            deskActive = !idle && deskStatus?.active == true, deskNote = deskStatus?.note.orEmpty().take(500), deskResting = deskStatus?.resting ?: 0, deskRestingDollars = deskStatus?.restingDollars ?: 0.0,
+            deskAtMs = deskStatus?.atMs ?: 0L, deskStopped = deskStatus?.stopped.orEmpty().take(200),
             resting = governor.resting(clock()).map { r -> "${ApiToggles.name(r.id)} until ${java.time.Instant.ofEpochMilli(r.untilMs).atZone(java.time.ZoneOffset.UTC).toLocalTime().withSecond(0).withNano(0)} UTC: ${r.reason}" },
         )
     }
@@ -400,6 +450,16 @@ class CloudEngine(
     private suspend fun sendBids(result: ScanResult, rev: Long, settings: ScanSettings, now: Long) {
         val make = bidLines ?: return
         val s = forCloud(settings)
+        // The engine's own desk takes the candidates straight (no file, no phone in the loop): TCL31.
+        if (s.engineBids && bids != null) {
+            runCatching {
+                val lines = make(result, s, now)
+                bids.put(CloudBids(now, result.partial, rev, lines))
+                if (bidsOn) { bidsOn = false; publishBids(null) }
+                bidsAt = now; bidsCount = lines.size
+            }.onFailure { if (it is CancellationException) throw it; log("candidate lines failed: ${it.javaClass.simpleName}: ${it.message?.take(120)}") }
+            return
+        }
         // The engine runs only while the phone's switch is on and not paused ([ScanSettings.cloudDrives]), so what is left to ask is whether the bid desk wants lines from Vigilant's scan.
         if (!s.bidsNeedLines) {
             if (bidsOn) { bidsOn = false; bidsAt = 0L; bidsCount = 0; runCatching { publishBids(null) } }
