@@ -232,6 +232,93 @@ def cmd_probe(outdir):
     return 0
 
 
+def pct(v, p):
+    v = sorted(v)
+    return v[min(len(v) - 1, int(len(v) * p))] if v else None
+
+
+def parse_ts(t):
+    try:
+        return datetime.datetime.fromisoformat(t.replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
+
+
+def cmd_speed(outdir):
+    """Speed (response times) and freshness (age of each book's quote at the moment it is read) of the paid key, measured on real calls."""
+    keys = keys_from_env()
+    key, p = need_paid(keys) if keys else (None, None)
+    if key is None:
+        print("no usable key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    lat = {}
+
+    def timed(name, path, params=None, **kw):
+        t0 = time.time()
+        st, h, data = request(path, key, params, **kw)
+        ms = (time.time() - t0) * 1000
+        lat.setdefault(name, []).append(ms)
+        return st, h, data, ms
+
+    for _ in range(6):
+        timed("sports (tiny)", "/v1/sports")
+    rows = []
+    ages_lines = {}
+    ages_props = {}
+    best_sport = None
+    best_events = []
+    for sp in ("basketball_nba", "hockey_nhl", "baseball_mlb", "football_nfl", "football_ncaaf", "basketball_wnba"):
+        st, h, data, ms = timed("events list", "/v1/sports/%s/events" % sp)
+        ev = j(data)
+        if st == 200 and isinstance(ev, list) and len(ev) > len(best_events):
+            best_sport, best_events = sp, ev
+    rows.append("sport used: %s (%d events)" % (best_sport, len(best_events)))
+    books = "pinnacle,draftkings,fanduel,betmgm,novig,bovada,kalshi,polymarket,caesars,hardrock"
+    now_ts = time.time()
+    for _ in range(3):
+        st, h, data, ms = timed("bulk game lines, 10 books", "/v1/sports/%s/odds" % best_sport, {"markets": "h2h,spreads,totals", "bookmakers": books})
+        body = j(data)
+        now_ts = time.time()
+        for ev in body or []:
+            for bk in ev.get("bookmakers", []):
+                for m in bk.get("markets", []):
+                    for o in m.get("outcomes", []):
+                        t = parse_ts(o.get("last_change_at") or "")
+                        ls = parse_ts(o.get("last_seen_at") or "")
+                        if t:
+                            ages_lines.setdefault(bk["key"], []).append(now_ts - t)
+    # props of the three soonest events
+    from_ev = sorted(best_events, key=lambda e: e.get("commence_time", ""))[:3]
+    propkeys = {"basketball_nba": "player_points,player_rebounds,player_assists,player_threes,player_points_rebounds_assists,player_steals", "hockey_nhl": "player_goals,player_shots_on_goal,player_points,player_assists,goalie_saves,player_power_play_points",
+                "baseball_mlb": "batter_hits,batter_total_bases,pitcher_strikeouts,batter_home_runs,batter_rbis,pitcher_outs", "football_nfl": "player_pass_yds,player_rush_yds,player_reception_yds,player_receptions,player_pass_tds,player_anytime_td",
+                "football_ncaaf": "player_pass_yds,player_rush_yds,player_reception_yds,player_receptions,player_pass_tds,player_anytime_td", "basketball_wnba": "player_points,player_rebounds,player_assists,player_threes,player_points_rebounds_assists,player_double_double"}[best_sport]
+    for e in from_ev:
+        for _ in range(2):
+            st, h, data, ms = timed("props of one game, 6 markets, 6 books", "/v1/sports/%s/events/%s/odds" % (best_sport, e["id"]), {"markets": propkeys, "bookmakers": "pinnacle,draftkings,fanduel,betmgm,novig,bovada"})
+        body = j(data)
+        now_ts = time.time()
+        for bk in (body or {}).get("bookmakers", []):
+            for m in bk.get("markets", []):
+                for o in m.get("outcomes", []):
+                    t = parse_ts(o.get("last_change_at") or "")
+                    if t:
+                        ages_props.setdefault(bk["key"], []).append(now_ts - t)
+        timed("+EV of one game (all markets, novig)", "/v1/sports/%s/events/%s/ev" % (best_sport, e["id"]), {"bookmakers": "novig"})
+        timed("best-line of one game (all markets)", "/v1/sports/%s/events/%s/best-line" % (best_sport, e["id"]))
+    out = ["PropLine Pro speed and freshness, measured %s UTC, plan %s" % (datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M"), tier_of(p["limit"])), ""] + rows + ["", "RESPONSE TIME (ms): n, p50, p90, max"]
+    for name, v in lat.items():
+        out.append("%-44s n=%-3d p50=%-6d p90=%-6d max=%d" % (name, len(v), pct(v, .5), pct(v, .9), max(v)))
+    for title, ages in (("GAME LINES: age of each quote when read (seconds since its price last CHANGED; a still price is old by nature)", ages_lines), ("PLAYER PROPS: same", ages_props)):
+        out += ["", title]
+        for bk, v in sorted(ages.items(), key=lambda kv: pct(kv[1], .5) or 0):
+            out.append("%-14s n=%-5d p50=%-7d p90=%-7d" % (bk, len(v), pct(v, .5), pct(v, .9)))
+    text = "\n".join(out) + "\n"
+    open(os.path.join(outdir, "speed.txt"), "w").write(text)
+    print(text)
+    return 0
+
+
 def cmd_archive(outdir, days):
     keys = keys_from_env()
     key, p = need_paid(keys) if keys else (None, None)
@@ -304,6 +391,8 @@ if __name__ == "__main__":
         sys.exit(cmd_plans())
     if a[0] == "probe":
         sys.exit(cmd_probe(a[1] if len(a) > 1 else "out/propline-probe"))
+    if a[0] == "speed":
+        sys.exit(cmd_speed(a[1] if len(a) > 1 else "out/propline-speed"))
     if a[0] == "archive":
         d = 3
         if "--days" in a:

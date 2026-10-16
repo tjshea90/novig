@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | archive | backfill | clv"
+        description: "plans | probe | speed | archive | backfill | clv"
         default: "plans"
   schedule:
     - cron: "37 9 * * *"
@@ -50,6 +50,10 @@ jobs:
                 gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine Pro samples (keyless)" --notes "Real answers of every Pro endpoint, trimmed; written by .github/workflows/propline.yml (task probe)."
                 gh release upload propline-samples out/probe/* --clobber
               fi ;;
+            speed)
+              python3 -I tools/propline.py speed out/speed
+              gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine Pro samples (keyless)" --notes "Real answers of every Pro endpoint, trimmed."
+              gh release upload propline-samples out/speed/speed.txt --clobber ;;
             archive|backfill)
               if [ "$TASK" = backfill ]; then days=90; else days=3; fi
               python3 -I tools/propline.py archive out/archive --days "$days"
