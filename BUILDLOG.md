@@ -304,3 +304,4 @@ day that changes.
 | v0.114.6 | code 302 | 2026-10-16T16:49Z | v0.114.6: the app can send your Kalshi key to GitHub so the engine runs Kalshi's socket
 | v0.114.7 | code 303 | 2026-10-16T18:14Z | v0.114.7: +EV screen filters (books agreeing, all must agree; phone-only); ParlayAPI paid key goes first; dead-man switch
 | v0.114.8 | code 304 | 2026-10-16T18:27Z | v0.114.8: app update no longer times out or freezes (download resumes, progress throttled, install off the main thread)
+| v0.114.9 | code 305 | 2026-10-16T19:51Z | v0.114.9: PropLine Pro: paid key found and used first, every game's props incl. NBA and NHL, a PropLine +EV-at-Novig screen (from the +EV tab), plan shown in the key test
