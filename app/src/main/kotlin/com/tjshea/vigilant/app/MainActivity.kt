@@ -535,6 +535,8 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         (application as VigilantApp).container.onScreen = true
+        // Everything GitHub is doing is read the moment the app opens (the engine's heartbeat, list, bets, bids, messages, usage): TCL31.
+        runCatching { (application as VigilantApp).container.cloud.syncNow() }
         // The full app is back in front: no need for the widget over it.
         if (::widget.isInitialized) widget.hide()
         val allowed = FloatingWidget.allowed(this)

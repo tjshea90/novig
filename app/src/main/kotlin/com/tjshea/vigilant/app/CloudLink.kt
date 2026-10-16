@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -219,7 +220,7 @@ class CloudLink(private val c: AppContainer) {
                     runCatching { inbox.pollOverrides() }
                     runCatching { inbox.pollMessages() }
                 }
-                delay(if (c.onScreen) INBOX_POLL_MS else INBOX_BACKGROUND_MS)
+                nap(if (c.onScreen) INBOX_POLL_MS else INBOX_BACKGROUND_MS)
             }
         }
         // 5. the chat with Claude (TCL29): the thread every 8 s while the chat screen is open, every minute otherwise; the lease line with it.
@@ -262,7 +263,7 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.Fresh -> { etag = p.etag; c.cloudUsage.value = p.value }
                     else -> {}
                 }
-                delay(USAGE_POLL_MS)
+                nap(USAGE_POLL_MS)
             }
         }
         // 6. what the engine did (Tj, 2026-10-15: opening the app syncs the automated system's bets and results): its order book, read whenever a token is saved and the engine has ever traded or trades now; an unchanged file is a free 304.

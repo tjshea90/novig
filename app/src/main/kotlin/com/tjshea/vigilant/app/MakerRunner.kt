@@ -440,6 +440,8 @@ class MakerRunner(
         s.killed -> "Stopped by the kill switch"
         s.paused -> "Scanning is paused"
         s.maker && s.makerHalted != null -> "Stopped by the picked-off guard"
+        // The GitHub engine posts the bids (TCL31) while its heartbeat is fresh and says its desk is live; a silent engine hands them back to this phone at once. Its bids carry their own client-id prefix, so this desk never takes them for strays.
+        s.engineBids && c.cloud.ui.value.status?.deskLive(clock()) == true -> "The GitHub engine posts the bids now"
         else -> null
     }
 
