@@ -131,8 +131,23 @@ data class CloudStatus(
     val governorOff: List<String> = emptyList(),
     /** Feeds that answered nothing for [FeedWatch.LIMIT] scans in a row (TCL21f), "id (n scans in a row)"; empty = none. */
     val feedAlerts: List<String> = emptyList(),
+    /**
+     * The engine's bid desk (TCL31): true while the engine itself is posting and watching bids (the phone's own desk then stays down), the last pass in words, the bids resting and the dollars they hold, when it last
+     * ran, and why it is stopped (the picked-off guard, a refusal) if it is. [deskBytes]: the size of `desk.json`, the bids and their fills for the phone's screens.
+     */
+    val deskActive: Boolean = false,
+    val deskNote: String = "",
+    val deskResting: Int = 0,
+    val deskRestingDollars: Double = 0.0,
+    val deskAtMs: Long = 0L,
+    val deskStopped: String = "",
+    val deskBytes: Int = 0,
 ) {
+    /** The engine's desk is the one posting bids now: it says so and its heartbeat is recent. A silent engine hands the bids back to the phone. */
+    fun deskLive(now: Long): Boolean = deskActive && heartbeatMs > 0 && now - heartbeatMs < DESK_STALE_MS
+
     companion object {
+        const val DESK_STALE_MS = 3 * 60_000L
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
         fun parse(text: String): CloudStatus? = runCatching { json.decodeFromString(serializer(), text) }.getOrNull()
         fun text(s: CloudStatus): String = json.encodeToString(serializer(), s)
