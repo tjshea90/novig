@@ -95,7 +95,7 @@ fun main(args: Array<String>) = runBlocking {
         }
     }
     // The settings of the scan in progress, for the PropLine +EV sweep below (it follows the phone's leagues).
-    @Volatile var latestSettings: com.tjshea.vigilant.data.scanner.ScanSettings? = null
+    val latestSettings = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.scanner.ScanSettings?>(null)
     val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = log::invoke) else null
     val publisher = Publisher(pubDir, repo, token, git, log::tail) { policy -> CloudKeys.envFor(policy.id)?.let { CloudKeys.fromEnv(it) }.orEmpty().map(CloudUsage::keyId) }
     // PropLine's own +EV read at Novig (Tj, 2026-10-16, TCL56): with a paid key, every 15 minutes (and only while the key is within the day's share of its requests) the pregame games of the picked
@@ -104,7 +104,7 @@ fun main(args: Array<String>) = runBlocking {
     scope.launch {
         delay(90_000L)
         while (isActive) {
-            val s = latestSettings
+            val s = latestSettings.get()
             val now = System.currentTimeMillis()
             if (s != null && s.usePropLine && sources.propLinePaid() && sources.propLineHasRoom(now)) {
                 runCatching { sources.propLineEvSweep(s, now) }.onSuccess { f ->
@@ -259,7 +259,7 @@ fun main(args: Array<String>) = runBlocking {
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
-        prepare = { s -> latestSettings = s; novigKeyed?.configure(s) },
+        prepare = { s -> latestSettings.set(s); novigKeyed?.configure(s) },
         novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },
         addressWatch = addressWatch,
         bids = bidFacade,
