@@ -5366,3 +5366,10 @@ Finding: yes. `MakerDesk`/`MakerQuote`/`CloudBidLane` are all in the shared data
 - [x] TCL31e CloudEngine/CloudMain wiring: desk loop every 25 s, status fields (`deskNote`, resting, dollars), messages for fills.
 - [x] TCL31f Phone: stands down its own bid desk while the engine's bids are live (heartbeat fresh); Dashboard shows the engine's bets AND bids; everything syncs the moment the app opens (`CloudLink.syncNow`); a switch in Settings › Cloud scan.
 - [ ] TCL31g Tests, docs (CLAUDE.md, ROUTINE.md volume loop mentions bids), CHANGES.md line, ship, release.
+
+
+## TCL32: app updates pushed from GitHub (Tj, 2026-10-16)
+Tj: "make it so GitHub/Claude can push updates directly to the vigilant android app on my phone. When an update is available, I get a push notification and an install update button which automatically downloads the update from GitHub and updates the app just like other Android apps". (Also asked: "Are you sure those weren't the bids already up on my phone?" Answered: all 1,011 bids in desk.json carry the engine's client-id prefix; the phone's maker switch is off.)
+- [x] TCL32a `data/update/AppUpdate` (parse releases/latest, compare versions) + `AppUpdateTest`.
+- [x] TCL32b `app/AppUpdater` (check, notification with Install update, download, PackageInstaller with no-confirm update on Android 12+, status receiver), `UpdateWorker` every 15 min, check on app open, `UpdateBar` above the tab bar, REQUEST_INSTALL_PACKAGES + receivers in the manifest, `UpdateBarUiTest`.
+- [ ] TCL32c Ship v0.113.0, then v0.114.0 later proves the loop on the phone (first update needs Tj to allow installs from Vigilant once and tap Install once).

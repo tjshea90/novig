@@ -25,13 +25,15 @@ class UpdateBarUiTest {
     private val latest = AppUpdate("v9.9.9", "Vigilant v9.9.9", "notes", "u", "a", 1000, "2026-10-16T00:00:00Z")
 
     @Test
-    fun `no newer release shows nothing, a newer one shows the button and it installs`() {
-        var installs = 0
-        var state = AppUpdater.State()
-        compose.setContent { VigilantTheme(darkTheme = true) { UpdateBarContent(state, { installs++ }, {}) } }
+    fun `no newer release shows nothing`() {
+        compose.setContent { VigilantTheme(darkTheme = true) { UpdateBarContent(AppUpdater.State(), {}, {}) } }
         compose.onNodeWithTag("updateBar").assertDoesNotExist()
-        state = AppUpdater.State(latest = latest, available = true)
-        compose.setContent { VigilantTheme(darkTheme = true) { UpdateBarContent(state, { installs++ }, {}) } }
+    }
+
+    @Test
+    fun `a newer release shows the button and it installs`() {
+        var installs = 0
+        compose.setContent { VigilantTheme(darkTheme = true) { UpdateBarContent(AppUpdater.State(latest = latest, available = true), { installs++ }, {}) } }
         compose.onNodeWithTag("updateInstall").assertIsDisplayed().performClick()
         assertEquals(1, installs)
     }
