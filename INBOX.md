@@ -115,3 +115,8 @@ Did you get my messages from the app
 ```
 Why is there no Claude session for the app right now? There are 3 Claude accounts
 ```
+
+## 2026-10-16T16:52:58Z
+```
+I don't think the resume worked from the chat in the app
+```
