@@ -149,3 +149,10 @@ See if any of this info can optimize the way vigilant uses sgo API, and if so, i
 
 https://sportsgameodds.com/blog/nfl-odds-api-guide?_kx=[key redacted …zn-Y].TwX928
 ```
+
+## 2026-10-16T19:52:43Z
+```
+1) make sure the GitHub cloud scanning does not waste any api usage that is unnecessary. For apis toggled on but not needed for a scan due to redundant data offered by a better api, make sure the unnecessary API is not used unless needed for extra data or a fallback.
+2) make sure vigilant and the cloud scanning app and Claude are all taking advantage of the propline pro speed and features, including the features that were not offered on my free plans
+3) make sure Claude is doing, or scheduled to do, the bets and bids profit analysis and fine tuning and updates. It may use the new propline pro API features for any research needed
+```
