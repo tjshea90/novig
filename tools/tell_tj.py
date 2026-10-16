@@ -155,6 +155,12 @@ def selftest():
         c = chat_reply("t1", "hello Tj", who="claude:test", cwd=work)
         cf = [f for f in git("ls-tree", "-r", "--name-only", BRANCH, cwd=bare).stdout.split() if f.startswith("chat/")]
         assert len(cf) == 1 and json.loads(git("show", "%s:%s" % (BRANCH, cf[0]), cwd=bare).stdout)["replyTo"] == "t1"
+        a1 = chat_ack(["t1"], who="claude:test", cwd=work); a2 = chat_ack(["t1"], who="claude:test", cwd=work)
+        assert (a1, a2) == (1, 0), (a1, a2)
+        af = [f for f in git("ls-tree", "-r", "--name-only", BRANCH, cwd=bare).stdout.split() if f.startswith("chat/") and "ack-t1" in f]
+        assert len(af) == 1 and json.loads(git("show", "%s:%s" % (BRANCH, af[0]), cwd=bare).stdout)["ack"] == "t1"
+        chat_keep("t9", who="claude:test", cwd=work)
+        assert "chat-keep/t9" in git("ls-tree", "-r", "--name-only", BRANCH, cwd=bare).stdout.split()
         for bad in (lambda: say("x", "ghp_" + "a" * 30, cwd=work), lambda: set_api("r", ["nope=on"], cwd=work)):
             try:
                 bad(); raise AssertionError("should refuse")
@@ -177,6 +183,12 @@ def main(argv):
         print("sent", say(pos[0], pos[1] if len(pos) > 1 else "", opts["--kind"], opts["--priority"], opts["--action"])); return 0
     if argv[0] == "chat-reply" and len(argv) >= 3:
         print("sent", chat_reply(argv[1], " ".join(argv[2:]))); return 0
+    if argv[0] == "chat-ack" and len(argv) >= 2:
+        print("acked", chat_ack(argv[1:])); return 0
+    if argv[0] == "chat-file" and len(argv) >= 3:
+        print(chat_file(argv[1], argv[2])); return 0
+    if argv[0] == "chat-keep" and len(argv) >= 2:
+        chat_keep(argv[1]); print("kept", argv[1]); return 0
     if argv[0] == "set-api" and len(argv) >= 3:
         print("sent", set_api(argv[1], argv[2:])); return 0
     print(__doc__); return 2
