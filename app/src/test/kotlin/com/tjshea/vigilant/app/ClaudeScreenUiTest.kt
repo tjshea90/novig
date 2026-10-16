@@ -54,4 +54,19 @@ class ClaudeScreenUiTest {
         assertEquals(listOf("m2"), deleted)
         assertEquals(1, cleared)
     }
+
+    @Test
+    fun `a new chat starts empty, the earlier chat is under Chats, and New chat and Clear chat ask for what they say`() {
+        val thread = listOf(CloudChat.Msg("t1", now - 600_000, "tj", "old question"), CloudChat.Msg("t2", now - 10_000, "tj", "fresh question"))
+        var newChats = 0
+        var cleared: Pair<Long, Long>? = null
+        compose.setContent { VigilantTheme(darkTheme = true) { ChatPage(thread, "who", { _, _ -> null }, {}, breaks = listOf(now - 300_000), onNewChat = { newChats++ }, onClearChat = { a, b -> cleared = a to b }) } }
+        compose.onNodeWithTag("chat-t2").assertIsDisplayed()
+        compose.onAllNodesWithTag("chat-t1").assertCountEquals(0)
+        compose.onNodeWithTag("chatList").assertIsDisplayed()
+        compose.onNodeWithTag("chatNew").performClick()
+        assertEquals(1, newChats)
+        compose.onNodeWithTag("chatClear").performClick()
+        assertEquals(now - 300_000 to Long.MAX_VALUE, cleared)
+    }
 }

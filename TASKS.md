@@ -5401,5 +5401,6 @@ Tj (t1792122945171): "consider ways for Claude to immediately notice my messages
 Tj (t1792123007442): "for the chat feature, make it so I can clear chats or open new chats"
 Tj (t1792123171360): "also sometimes I ask for several features or changes in back to back messages. make Claude consolidate feature requests from different messages into one release version if this is efficient"
 - [x] TCL35a Keyboard layout fix (v0.114.1), watcher every 6 s.
-- [ ] TCL35b Chat: New chat (a break marker), Clear chat (removes the viewed chat's messages from the phone), switch between earlier chats.
+- [x] TCL35b Chat: New chat (a break marker), Clear chat (removes the viewed chat's messages from the phone), switch between earlier chats.
 - [x] TCL35c Standing rule in CLAUDE.md: batch back-to-back requests into one release; read the chat for new requests before shipping.
+- [x] TCL35d Chat always scrolls to the newest message (Tj, t1792123306587): on open, on a new message and whenever the room changes.
