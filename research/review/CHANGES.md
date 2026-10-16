@@ -1,3 +1,6 @@
 
 ## 2026-10-15 (no rule changed): auto-bet filters judged against the digest
 Trap guard 6 h kept (CLV +2.0 to +2.9% inside 6 h vs -0.6 to -0.1% beyond); books-agree and kinds: no evidence of too strict. Plumbing fix instead: the engine re-reads listed bets' Novig books before the trader judges them (27 of 31 had been refused as "no Novig price in the last 3 minutes"). Metric to watch: engine orders per day and the held-back reasons in tradepass-<day>.jsonl. Revert rule: n/a (plumbing).
+
+## 2026-10-16 (no filter changed; new volume lever): the engine posts bids
+Count at 00:35Z: 4 engine orders in a day; 41 of 42 listed bets held by the 6 h trap guard (kept: CLV +2.0 to +2.9% inside 6 h, -0.6 to -0.1% beyond), phone `maker` OFF so no bids anywhere. Built TCL31: the engine now runs the bid desk (resting bids are how games beyond 6 h earn). Metric to watch: bids posted / resting / filled per day and bid-fill CLV by tier (`desk.json`, `trades.json` entries with note `bid`). Revert rule: set `gates.cloudBids` false if bid fills show picked-off rate above 50% over 20+ fills (the guard halts it for 3 h at that rate by itself) or CLV below the close with an interval below zero over 100+ fills.
