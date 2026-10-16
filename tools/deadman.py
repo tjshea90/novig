@@ -177,8 +177,8 @@ def tick(cwd=None):
     st, acts = step(now, pres, st0)
     for a in acts:
         act(a, st, now, cwd)
-    st["checkedAt"] = now; st["presenceAt"] = pres
-    put_json("deadman/state.json", st, cwd)
+    if st != st0 or not st0:        # no hourly commit while nothing changed
+        put_json("deadman/state.json", st, cwd)
     print("deadman: phase=%s actions=%s presence=%s" % (st.get("phase"), acts or "-", pres))
     return 0
 

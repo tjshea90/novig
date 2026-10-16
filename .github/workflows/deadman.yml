@@ -1,0 +1,34 @@
+name: Dead-man switch (Tj, 2026-10-16)
+
+# If Tj sends no message for 3 days this asks "still there?" (phone notification + chat); with no reply in 24 h it stops the engine, disables every other workflow and
+# writes deadman/STOP.json, which every Claude session and routine on all 3 accounts obeys (tools/coord.py acquire refuses). A message from Tj lifts it.
+# This workflow itself is the only one that stays enabled. Rules and state machine: tools/deadman.py, research/coordination/DEADMAN.md. Free: no Claude usage.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 * * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: deadman
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: One step of the dead-man switch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 -I tools/deadman.py selftest
+          python3 -I tools/deadman.py tick
