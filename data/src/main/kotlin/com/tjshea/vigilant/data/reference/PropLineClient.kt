@@ -130,6 +130,13 @@ class PropLineClient(
         ) { raw -> raw }.value
     }
 
+    /**
+     * PropLine's own +EV read for one game (`/events/{id}/ev`, Hobby+; cached 45 s on its side): every line's no-vig fair probability from the sharpest anchor and each asked book's EV% at the same
+     * line. [books] narrows the PRICES (never the anchor): `novig` is the +EV at Novig. Null when PropLine no longer lists the game. One request.
+     */
+    suspend fun evRaw(sportKey: String, eventId: String, books: String = NOVIG): String? =
+        call("/sports/$sportKey/events/$eventId/ev", listOf("bookmakers" to books), notFound = null) { raw -> raw }.value
+
     /** The books a call asks for: the picked books, and Novig's relay unless it's off. */
     private fun asked(books: List<String>): List<String> = if (relayNovig) books + NOVIG else books
 
