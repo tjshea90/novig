@@ -49,6 +49,8 @@ data class PlEvRow(
     val fairSource: String,
     /** When PropLine last read Novig's price for this line. */
     val updatedAtMs: Long,
+    /** When the sweep that found it ran (the journal's clock; a line is journaled each sweep it is found in). */
+    val seenAtMs: Long = 0L,
 )
 
 @Serializable
@@ -104,7 +106,7 @@ object PropLineEv {
                 val price = (oc["price"] as? JsonPrimitive)?.intOrNull ?: continue
                 val fair = (probs[name] as? JsonPrimitive)?.doubleOrNull ?: continue
                 val upd = (oc["last_update"] as? JsonPrimitive)?.contentOrNull?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() } ?: now
-                out += PlEvRow(sport, league, eventId, home, away, startsAtMs, market, player, (oc["point"] as? JsonPrimitive)?.doubleOrNull ?: point, name, price, ev, fair, source, upd)
+                out += PlEvRow(sport, league, eventId, home, away, startsAtMs, market, player, (oc["point"] as? JsonPrimitive)?.doubleOrNull ?: point, name, price, ev, fair, source, upd, now)
             }
         }
         return Parsed(out, false)

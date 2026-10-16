@@ -94,8 +94,28 @@ fun main(args: Array<String>) = runBlocking {
             delay(60 * 60_000L)
         }
     }
+    // The settings of the scan in progress, for the PropLine +EV sweep below (it follows the phone's leagues).
+    @Volatile var latestSettings: com.tjshea.vigilant.data.scanner.ScanSettings? = null
     val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = log::invoke) else null
     val publisher = Publisher(pubDir, repo, token, git, log::tail) { policy -> CloudKeys.envFor(policy.id)?.let { CloudKeys.fromEnv(it) }.orEmpty().map(CloudUsage::keyId) }
+    // PropLine's own +EV read at Novig (Tj, 2026-10-16, TCL56): with a paid key, every 15 minutes (and only while the key is within the day's share of its requests) the pregame games of the picked
+    // leagues are asked for their +EV lines at Novig; the list goes to cloud-feed for the phone's PropLine screen, and every sweep's rows to a journal that the archive loop keeps for research.
+    val evJournal = DayJournal(File(out, "cloud"), "propline-ev", com.tjshea.vigilant.data.reference.PlEvRow.serializer()) { it.seenAtMs }
+    scope.launch {
+        delay(90_000L)
+        while (isActive) {
+            val s = latestSettings
+            val now = System.currentTimeMillis()
+            if (s != null && s.usePropLine && sources.propLinePaid() && sources.propLineHasRoom(now)) {
+                runCatching { sources.propLineEvSweep(s, now) }.onSuccess { f ->
+                    publisher.stagePropLineEv(f)
+                    f.rows.forEach { runCatching { evJournal.append(it) } }
+                    log("PropLine +EV: ${f.rows.size} lines at Novig from ${f.games} games (${f.requests} requests, ${f.tier})" + (if (f.note.isNotBlank()) " · ${f.note}" else ""))
+                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("PropLine +EV sweep failed: ${e.message?.take(120) ?: e.javaClass.simpleName}") }
+            }
+            delay(15 * 60_000L)
+        }
+    }
     val config = ConfigReader(git, cfgDir)
     val started = System.currentTimeMillis()
     val until = started + minutes * 60_000L
@@ -239,7 +259,7 @@ fun main(args: Array<String>) = runBlocking {
         scanner = scanner, sources = sources::sources, config = { config.read() },
         publish = { feed, status -> publisher.stage(feed, status) },
         // The bid desk's candidate lines (Tj, 2026-10-15), only while the phone has Vigilant-priced bids on: the fair side of every bid decision is made here, the phone adds Novig's books and posts.
-        prepare = { s -> novigKeyed?.configure(s) },
+        prepare = { s -> latestSettings = s; novigKeyed?.configure(s) },
         novigRoute = { novigKeyed?.route(System.currentTimeMillis()) ?: CloudNovig.PUBLIC_ONLY },
         addressWatch = addressWatch,
         bids = bidFacade,
