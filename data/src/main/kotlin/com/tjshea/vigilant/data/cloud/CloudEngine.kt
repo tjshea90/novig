@@ -14,6 +14,8 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -165,7 +167,7 @@ class CloudEngine(
         } finally {
             desk?.cancel()
             // Whatever ends the job (time, the phone's switch, the engine's hours, a refused address), the bids the engine has up come down: nothing rests on Novig for a desk that is no longer watching.
-            if (bids != null) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { deskDown("the engine is ending") }
+            if (bids != null) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { deskDown("the engine is ending", force = true) }
         }
     }
 
@@ -187,11 +189,11 @@ class CloudEngine(
         }
     }
 
-    private suspend fun deskDown(why: String) {
+    private suspend fun deskDown(why: String, force: Boolean = false) {
         val b = bids ?: return
         deskLock.withLock {
-            if (deskStatus?.active == true) { runCatching { b.stop(why) }.onFailure { if (it is CancellationException) throw it }; log("bids: down ($why)") }
-            deskStatus = deskStatus?.copy(active = false)?.takeIf { false }
+            if (force || deskStatus?.active == true) { runCatching { b.stop(why) }.onFailure { if (it is CancellationException) throw it }; log("bids: down ($why)") }
+            deskStatus = null
         }
     }
 
