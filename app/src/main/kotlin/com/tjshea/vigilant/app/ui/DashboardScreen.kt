@@ -52,7 +52,9 @@ fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Mod
     val meters = remember(state.usage, state.cloudUsage, state.settings.sgoPro, state.settings.oddsPapi, state.settings.unabated, state.settings.gates.useBoltOdds, state.settings.oddsPapiFree, now / 30_000L) {
         meterViews(state, now)
     }
-    DashboardContent(state.cloudUi.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier)
+    val u = state.cloudUi
+    val board = remember(u.trades, u.desk, u.status, now / 15_000L) { EngineBoard.of(u.trades, u.desk, u.status, now) }
+    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null })
 }
 
 @Composable
@@ -64,6 +66,7 @@ fun DashboardContent(
     cloudOn: Boolean,
     onOpenCloudSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    board: EngineBoard.Board? = null,
 ) {
     val uri = LocalUriHandler.current
     Column(modifier.testTag("dashboard"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -78,6 +81,8 @@ fun DashboardContent(
         status?.takeIf { it.novigRoute.isNotBlank() }?.let { InfoLine("Novig", it.novigRoute) }
         status?.takeIf { it.tradeMode.isNotBlank() && it.tradeNote.isNotBlank() }?.let { InfoLine("Trading", it.tradeNote, if (it.tradeStopped.isNotBlank()) Tone.WARN else Tone.NEUTRAL) }
         status?.takeIf { it.tradeStopped.isNotBlank() }?.let { InfoLine("Stopped", it.tradeStopped, Tone.WARN) }
+
+        board?.let { EngineActivityCard(it, status) }
 
         status?.advice?.takeIf { it.isNotEmpty() }?.let { adv ->
             SectionHeader("What to refill, buy or fix")
@@ -172,6 +177,41 @@ private fun InfoLine(label: String, text: String, tone: Tone = Tone.NEUTRAL) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
         Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 1.dp))
         Text(text, style = MaterialTheme.typography.bodySmall, color = if (tone == Tone.NEUTRAL) MaterialTheme.colorScheme.onSurfaceVariant else toneColor(tone))
+    }
+}
+
+/**
+ * Everything the engine is doing with money (Tj, 2026-10-16: "the point of the android app is to be a monitor and control center"): the bets it placed, the bids it has up and the bids that filled, newest
+ * first, read from GitHub the moment the app opens. Nothing here places or changes an order.
+ */
+@Composable
+private fun EngineActivityCard(b: EngineBoard.Board, status: CloudStatus?) {
+    SectionHeader("What the engine is doing with money")
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().testTag("engineActivity")) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(b.headline, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag("engineHeadline"))
+            val wallet = status?.takeIf { it.walletCash >= 0.0 }
+            if (wallet != null) Text("Wallet \$${"%.2f".format(java.util.Locale.US, wallet.walletCash)} cash · \$${"%.2f".format(java.util.Locale.US, wallet.walletEquity.coerceAtLeast(wallet.walletCash))} with open orders", style = MaterialTheme.typography.bodySmall)
+            val bid = when {
+                b.deskStopped.isNotBlank() -> "Bids stopped: ${b.deskStopped}"
+                b.deskLive -> "The engine is posting the bids (this phone's own bid desk is down). " + b.deskNote
+                b.deskNote.isNotBlank() -> "Engine bids last said: ${b.deskNote}"
+                else -> "The engine has not posted bids yet."
+            }
+            Text(bid, style = MaterialTheme.typography.bodySmall, color = if (b.deskStopped.isNotBlank()) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("engineBidLine"))
+            if (b.rows.isEmpty()) Text("No orders or bids yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val fmt = remember { java.text.SimpleDateFormat("MMM d h:mm a", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("America/New_York") } }
+            b.rows.forEach { r ->
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(r.kind, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = if (r.kind == "BID") Edge.colors.warning else toneColor(Tone.GOOD))
+                        Text(r.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                        Text(fmt.format(java.util.Date(r.atMs)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Text(r.sub, style = MaterialTheme.typography.bodySmall, color = if (r.tone == Tone.NEUTRAL) MaterialTheme.colorScheme.onSurfaceVariant else toneColor(r.tone))
+                }
+            }
+        }
     }
 }
 
