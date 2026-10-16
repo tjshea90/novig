@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.app
 
+import androidx.compose.foundation.layout.consumeWindowInsets
 import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -762,7 +763,8 @@ private fun VigilantRoot(
             }
         },
     ) { padding ->
-        val modifier = Modifier.padding(bottom = padding.calculateBottomPadding()).fillMaxSize()
+        // The tab bar's room is already taken here, so a screen's imePadding must add only what the keyboard covers BEYOND the bar (Tj, 2026-10-16: the chat thread was squeezed to nothing with the keyboard open).
+        val modifier = Modifier.padding(bottom = padding.calculateBottomPadding()).consumeWindowInsets(androidx.compose.foundation.layout.PaddingValues(bottom = padding.calculateBottomPadding())).fillMaxSize()
         androidx.compose.foundation.layout.Box(modifier) {
             when (tab) {
                 Tab.ENGINE -> com.tjshea.vigilant.app.ui.EngineScreen(state, onOpenCloudSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.CLOUD.name; tabName = Tab.SETTINGS.name })
