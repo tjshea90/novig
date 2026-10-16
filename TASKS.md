@@ -5528,11 +5528,11 @@ Tj (verbatim): "1) make sure the GitHub cloud scanning does not waste any api us
 
 ## TCL59: PropLine +EV screen: top cut off, cross-check against other books, bet button (Tj, chat t1792182134862, 2026-10-16)
 Tj (verbatim): "two things: 1) look at the screenshot, the app is getting cut off at the top 2) for the propline +ev list, check its scanned results against current odds for the same bets across as many books as possible so I can see if it is truly a good bet. 3) add a function for me to bet the bets it listed just like the vigilant scanner" (screenshot kept on chat-files: t1792182134862-Screenshot_20261016-162028_Vigilant.png)
-- [ ] TCL59a The PropLine screen (and any tab without its own top bar) is cut off at the top: status bar / title overlap; fix like the other tabs.
-- [ ] TCL59b Each PropLine +EV line shows the same bet at every book PropLine/others carry NOW (price per book, best price, the fair line, how many books agree it is +EV) so Tj can judge it: PropLine /best-line or per-event odds, with ages; the existing OtherBooks (ParlayAPI/PropLine/The Odds API) sheet logic.
-- [ ] TCL59c A Bet button on each line like the Feed's: re-price at Novig's live book and place through the same Bet sheet (match the line to a Novig market/outcome).
+- [x] TCL59a status-bar inset on the PropLine tab
+- [x] TCL59b other books now (best-line) + books-agree verdict + Vigilant view per row
+- [x] TCL59c Bet button via the engine-matched Opportunity -> OpportunitySheet -> vm.trackBet
 
 ## TCL60: pace PropLine through the day; review its speed and odds freshness (Tj, chat t1792182359273, 2026-10-16)
 Tj (verbatim): "pace the propline api so that I can use it throughout the day without it running out very fast, and give me a review of its speed and freshness of odds"
-- [ ] TCL60a Pace: the day's 25,000 (reset 00:00 UTC = 8 pm ET) spread over the hours the engine runs, per consumer (game lines, props, +EV sweep, cross-check), never past the day's share; show the use in the app.
-- [ ] TCL60b Review of speed (response times) and freshness (age of each book's quote at read) from real measurements: write research/propline_speed_freshness_2026-10-16.md and tell Tj.
+- [x] TCL60a pacing across the engine hours (props 70%, +EV 90% of the pace), far-game props reused 5 min; tests PropLinePaidFirstTest
+- [x] TCL60b research/propline_speed_freshness_2026-10-16.md (measured by tools/propline.py speed)
