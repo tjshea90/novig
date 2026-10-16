@@ -83,3 +83,10 @@ If you finish building the auto bid, start it up. I think it can use the same ke
 ```
 Are you sure those weren't the bids already up on my phone? Also, make it so GitHub/Claude can push updates directly to the vigilant android app on my phone. When an update is available, I get a push notification and an install update button which automatically downloads the update from GitHub and updates the app just like other Android apps
 ```
+
+## 2026-10-16T01:42:14Z
+```
+Confirm that make bids are on GitHub and do not need my phone at all. Optimize bids over time just as you optimize bets: balance between good volume of bids filled but also good quality positive EV bids which should improve in profitablity over time based on Claude analysis of all bids and bets.
+
+If it isn't a strain on the system, make the cloud scanner save every single bet scanned to GitHub whether it takes the bet or not, even bets not shown in the scanner window, with comprehensive data on every bet such as odds, time before game, ev, percentage of books which agree, whether a sharp book agrees, the closing line when it can be found (retroactively if  possible), the stars rating, and the final result whether win loss or push. The data should be saved in a format best for Claude to read and analyze for improvement of the app and profitability by finding patterns and best strategies
+```
