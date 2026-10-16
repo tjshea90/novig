@@ -1088,6 +1088,15 @@ class MakerDesk(
     private fun money(v: Double) = String.format(java.util.Locale.US, "$%,.2f", v)
 
     companion object {
+        /**
+         * The first group of every client id the GitHub engine's desk sends (TCL31): a plain UUID still, so Novig takes it, and recognisable, so the phone's desk and the live desks never take a resting engine bid for a stray
+         * (every one of them cancels post-only orders it has no record of).
+         */
+        const val ENGINE_PREFIX = "e91ce0de-"
+
+        /** A client id for an engine bid: [ENGINE_PREFIX] and the rest of a random UUID. */
+        fun engineClientId(): String = ENGINE_PREFIX + java.util.UUID.randomUUID().toString().substring(ENGINE_PREFIX.length)
+
         /** Wallet deployment ([deployScale], [deployFor]): the most a stake is scaled up, the resting dollars below which the scale stops growing, the riskier bids' extra margin, their stake share and their furthest start. */
         const val DEPLOY_MAX_SCALE = 4.0
         const val DEPLOY_FLOOR_DOLLARS = 1.0
