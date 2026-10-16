@@ -81,7 +81,8 @@ class KeyRotationTest {
     @Test
     fun `a paid key goes first even when a free key is listed first (Tj, 2026-10-16), free keys after`() = runBlocking<Unit> {
         val pool = KeyPool(QuotaPolicy.PARLAY, { listOf("free1", "paid") }, meter)
-        seed("free1" to plan(0, 1_000), "paid" to plan(1_000, 20_000))
+        // The paid key has been known since the month began (its day's share is spread from then, not from this test's first call).
+        seed("free1" to plan(0, 1_000), "paid" to plan(1_000, 20_000).copy(firstSeenMs = sept1))
         // The ledger is read once, as it is in the running app before any scan (the sort needs each key's allowance).
         meter.pick(QuotaPolicy.PARLAY, listOf("free1", "paid"), 0)
         val server = Server(mapOf("free1" to 1_000, "paid" to 20_000)).also { it.used["paid"] = 1_000 }
