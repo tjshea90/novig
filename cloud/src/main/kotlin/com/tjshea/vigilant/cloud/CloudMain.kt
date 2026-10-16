@@ -166,14 +166,6 @@ fun main(args: Array<String>) = runBlocking {
     // The engine's bid desk (TCL31): the phone's own desk on the runner, with the trading key. Its record of bids and fills is carried from job to job in `desk.json` and rebuilt into the desk's files here.
     val deskDir = File(out, "desk").apply { mkdirs() }
     val bidRunner: com.tjshea.vigilant.data.cloud.CloudBidRunner? = tradingClient?.let { tc ->
-        runCatching { PreviousFeed.read(git, cfgDir, "desk.json") }.getOrNull()?.let { text ->
-            com.tjshea.vigilant.data.cloud.DeskFile.parse(text)?.let { f ->
-                val keep = com.tjshea.vigilant.data.cloud.DeskFile.trim(f.bids, System.currentTimeMillis())
-                File(deskDir, "maker.json").writeText(Json { encodeDefaults = false }.encodeToString(com.tjshea.vigilant.data.cloud.DeskFile.bidsSerializer, keep))
-                File(deskDir, "tracker.json").writeText(Json { encodeDefaults = false }.encodeToString(kotlinx.serialization.builtins.ListSerializer(com.tjshea.vigilant.data.tracker.TrackedBet.serializer()), f.fills))
-                log("bids: ${keep.size} bids and ${f.fills.size} fills carried over from the previous job")
-            }
-        }
         val desk = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk(
             tc, com.tjshea.vigilant.data.tracker.BetTracker(File(deskDir, "tracker.json")), com.tjshea.vigilant.data.novig.trading.maker.MakerStore(File(deskDir, "maker.json")),
             cancelStrays = false, newClientId = com.tjshea.vigilant.data.novig.trading.maker.MakerDesk::engineClientId,
