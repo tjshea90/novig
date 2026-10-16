@@ -5464,6 +5464,6 @@ Tj: "force. when I close an old chat to save context, it should automatically fo
 
 ## TCL49: +EV screen display filters, phone-only (Tj, chat t1792170198412, 2026-10-16)
 Tj: "I want some filters I can toggle from the +ev scanner screen on the android app, such as amount of books agreeing with the positive EV, and an option that all books must agree positive ev. this should not affect the GitHub engine, only what bets show up in the screen on the Android app"
-- [ ] TCL49a Find the Feed's existing filter row + how books-agree is computed (Opportunity); add to the +EV screen: min books agreeing (stepper) and "all books must agree +EV" toggle.
-- [ ] TCL49b Display-only: classify in CloudScanKey as PHONE (never mirrored to the engine/cloud-config), applied to the shown list only; CloudScanKeyTest + a unit test.
+- [x] TCL49a (FeedScreen row: Books agree ≥ Any|1-4 + All agree; FeedViewFilterTest) Find the Feed's existing filter row + how books-agree is computed (Opportunity); add to the +EV screen: min books agreeing (stepper) and "all books must agree +EV" toggle.
+- [x] TCL49b (phone prefs "ui", not ScanSettings: never mirrored) Display-only: classify in CloudScanKey as PHONE (never mirrored to the engine/cloud-config), applied to the shown list only; CloudScanKeyTest + a unit test.
 - [ ] TCL49c Ship batched with other asks (one release rule).

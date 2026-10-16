@@ -1,13 +1,13 @@
-# CHECKPOINT 3442 — read me first, then TASKS.md
+# CHECKPOINT 3443 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T16:57:21Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-95eefe49-t2qp21` · **builds on:** `822bb8359` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T17:09:54Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-95eefe49-t2qp21` · **builds on:** `0307338bd` (this checkpoint is the commit after it)
 
 ## Just done
-forced lease, started chat watcher, replied to Tj; wrote TCL48
+TCL49: phone-only +EV books-agree filters built, data test green, app compiles
 
 ## Do this next
-TCL48a/b, then CHECKPOINT items: confirm v0.114.6 record-release, ParlayAPI paid key, v0.114.7
+ship v0.114.7 with TCL49 + ParlayAPI KeyPool; confirm v0.114.6 record-release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ TCL48a/b, then CHECKPOINT items: confirm v0.114.6 record-release, ParlayAPI paid
 
 ## Last ten checkpoints
 ```
+  614fb31a1 ckpt 3442: forced lease, started chat watcher, replied to Tj; wrote TCL48
   d4b9aa365 ckpt 3441: session handoff: v0.114.5 released; v0.114.6 (Kalshi key send) building; Pa
   871c3d795 ckpt 3440: TCL47: ParlayAPI paid key goes first (KeyPool), engine reads plans hourly
   00103ecfa ckpt 3439: Bolt 2 keys confirmed working; v0.114.6 releasing (Kalshi send)
@@ -26,8 +27,7 @@ TCL48a/b, then CHECKPOINT items: confirm v0.114.6 record-release, ParlayAPI paid
   d822fa174 ckpt 3435: engine start log shows how many keys each secret holds
   4ee06d0a5 ckpt 3434: pre-release: v0.114.5: the chat refreshes the moment the app comes back aft
   e778af458 ckpt 3433: pre-ship: v0.114.5: the chat refreshes the moment the app comes back after 
-  87e39ba2e ckpt 3432: TCL43: bolt multi-key already supported; answered
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
