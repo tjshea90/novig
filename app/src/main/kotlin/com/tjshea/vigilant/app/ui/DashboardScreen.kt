@@ -97,6 +97,20 @@ fun DashboardContent(
             if (st.governorOff.isNotEmpty()) InfoLine("Turned off by the engine", st.governorOff.joinToString(", "), Tone.WARN)
         }
 
+        status?.apiCards?.takeIf { it.isNotEmpty() }?.let { cs ->
+            SectionHeader("API manager")
+            cs.forEach { c ->
+                val bits = listOfNotNull(
+                    if (c.paid) "paid" else "free", c.role,
+                    c.p90AgeS?.let { "p90 ${it}s" }, c.offPinnaclePts?.let { "%.1f pts off Pinnacle".format(it) },
+                    c.answeredPct?.let { "answers $it%" },
+                    c.leftFraction?.let { l -> "${(l * 100).toInt()}% left" + (c.timeFraction?.let { t -> " of ${(t * 100).toInt()}% period" } ?: "") },
+                    if (c.surplus) "surplus" else null, c.note.takeIf { it.isNotBlank() },
+                )
+                InfoLine(c.name, bits.joinToString(" · "), if (c.role == "failing") Tone.BAD else if (c.role == "rested" || c.role == "nokey") Tone.WARN else Tone.NEUTRAL)
+            }
+        }
+
         SectionHeader("APIs")
         val health = remember(status) { DashboardModel.apiHealth(status) }
         val cards = remember(meters, health) {
