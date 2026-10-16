@@ -71,6 +71,6 @@ object EngineBoard {
 
     private fun money(x: Double) = String.format(Locale.US, "%.2f", x)
     private fun cents(p: Double) = String.format(Locale.US, "%.0fc", p * 100)
-    private fun pct(x: Double) = String.format(Locale.US, "%.1f%%", x * (if (kotlin.math.abs(x) < 1.0) 100 else 1))
+    private fun pct(x: Double) = String.format(Locale.US, "%.1f%%", x * 100)
     private fun signed(x: Double) = (if (x < 0) "-$" else "+$") + String.format(Locale.US, "%.2f", kotlin.math.abs(x))
 }

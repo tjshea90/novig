@@ -2835,7 +2835,7 @@ private fun EngineActivity(u: com.tjshea.vigilant.app.CloudLink.Ui) {
         sum.newest.forEach { e ->
             val result = when (e.status) { "OPEN", "UNCONFIRMED" -> "open"; else -> e.status.lowercase() + (e.pnl?.let { " " + (if (it < 0) "-" else "+") + "\$${"%.2f".format(kotlin.math.abs(it))}" } ?: "") }
             Text(
-                "${fmt.format(java.util.Date(e.atMs))} · ${if (e.mode.equals("paper", true)) "PAPER " else ""}${e.selection} (${e.league}) · \$${"%.2f".format(e.cost)} @ ${"%.0f".format(e.avgPrice * 100)}c · EV ${"%.1f".format(e.evPercent)}% · $result",
+                "${fmt.format(java.util.Date(e.atMs))} · ${if (e.mode.equals("paper", true)) "PAPER " else ""}${e.selection} (${e.league}) · \$${"%.2f".format(e.cost)} @ ${"%.0f".format(e.avgPrice * 100)}c · EV ${"%.1f".format(e.evPercent * 100)}% · $result",
                 style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 2.dp),
             )
         }
