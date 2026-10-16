@@ -190,8 +190,8 @@ private fun KeyRow(policy: QuotaPolicy, k: KeyView, now: Long) {
         }
         if (k.allowance != null && k.allowance!! > 0) {
             LinearProgressIndicator(
-                progress = { (k.used.toFloat() / k.allowance!!).coerceIn(0f, 1f) },
-                color = meterColor(k.left, k.allowance),
+                progress = { if (k.state == KeyState.SPENT) 1f else (k.left?.let { l -> 1f - l.toFloat() / k.allowance!! } ?: (k.used.toFloat() / k.allowance!!)).coerceIn(0f, 1f) },
+                color = if (k.state == KeyState.SPENT) edge.negative else meterColor(k.left, k.allowance),
                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 3.dp),
             )
         }
