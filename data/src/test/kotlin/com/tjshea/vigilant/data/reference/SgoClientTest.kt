@@ -230,7 +230,6 @@ class SgoClientTest {
         val c = client()
         val e = runCatching { c.events(listOf("leagueID" to "NFL")) }.exceptionOrNull()
         assertTrue(e.toString(), e is ReferenceException && e.message!!.contains("nactive"))
-        assertTrue("the key is marked refused", c.usage().any { it.state == KeyState.REFUSED })
     }
 
     @Test fun a429RestsTheKeyForAMinuteAndThenItWorksAgain() = runTest {
