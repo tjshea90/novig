@@ -6,12 +6,14 @@ name: PropLine Pro (Tj, 2026-10-16)
 #   probe    one call to every Pro endpoint on a real event; the answers (keyless) go to the `propline-samples` Release so the app's parsers can be checked against real shapes
 #   archive  the resolved-prop archive: /v1/exports/resolved-props per sport (gzip CSV with closing AND opening lines) + the free accuracy report, to a `propline-archive-YYYY-MM-DD` Release (never delete)
 #   backfill archive over the whole 90 days Pro can reach (run once when the key arrives)
+#   clv      closing-line value of every bet the engine saw (Release `engine-dataset` lines-*.csv.gz) against PropLine's archive (Pinnacle's devigged close, Novig's own close, the grade): tools/propline_clv.py
+#            -> Release `propline-clv` (propline-clv.csv.gz + propline-clv.md, replaced each run)
 # The schedule runs `archive` daily (window: the last 3 days, so a late grade is never missed; rows repeat across days, join on outcome_id).
 on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | archive | backfill"
+        description: "plans | probe | archive | backfill | clv"
         default: "plans"
   schedule:
     - cron: "37 9 * * *"
@@ -55,5 +57,18 @@ jobs:
                 tag="propline-archive-$day"
                 gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "PropLine resolved-prop archive $day" --notes "Resolved props with closing and opening lines (Pro export). Never delete. Filter the (Watermark) canary rows."
                 gh release upload "$tag" out/archive/* --clobber
+              fi ;;
+            clv)
+              python3 -I tools/propline_clv.py selftest
+              mkdir -p in/lines in/arch
+              gh release download engine-dataset -p 'lines-*.csv.gz' -D in/lines --clobber || true
+              for tag in $(gh release list --limit 200 --json tagName -q '.[].tagName' | grep '^propline-archive-'); do gh release download "$tag" -p 'resolved-*.csv.gz' -D in/arch --clobber || true; done
+              ls in/lines in/arch | head -50
+              if ls in/lines/*.csv.gz >/dev/null 2>&1 && ls in/arch/*.csv.gz >/dev/null 2>&1; then
+                python3 -I tools/propline_clv.py run --lines in/lines/*.csv.gz --archive in/arch/*.csv.gz --out out/propline-clv.csv.gz --summary out/propline-clv.md
+                gh release view propline-clv >/dev/null 2>&1 || gh release create propline-clv --title "PropLine CLV of the engine's bets" --notes "Closing-line value of every bet the engine saw, from PropLine's resolved-prop archive (tools/propline_clv.py). Replaced by each run."
+                gh release upload propline-clv out/propline-clv.csv.gz out/propline-clv.md --clobber
+              else
+                echo "no lines or no archive yet"
               fi ;;
           esac
