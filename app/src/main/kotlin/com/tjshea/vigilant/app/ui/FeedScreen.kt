@@ -135,6 +135,15 @@ fun FeedScreen(
     var showRemoved by remember { mutableStateOf(false) }
     // "Live only" (Tj, 2026-10-11): with Include live games on, the list can be cut to games under way.
     var liveOnly by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    // Display-only +EV filters (Tj, 2026-10-16): kept in this phone's own preferences, never in ScanSettings, so the GitHub engine never sees them.
+    val uiPrefs = androidx.compose.ui.platform.LocalContext.current.getSharedPreferences("ui", android.content.Context.MODE_PRIVATE)
+    var viewFilter by remember {
+        mutableStateOf(com.tjshea.vigilant.data.scanner.FeedViewFilter(uiPrefs.getInt("ev_min_agree", 0), uiPrefs.getBoolean("ev_all_agree", false)))
+    }
+    fun setViewFilter(f: com.tjshea.vigilant.data.scanner.FeedViewFilter) {
+        viewFilter = f
+        runCatching { uiPrefs.edit().putInt("ev_min_agree", f.minAgreeing).putBoolean("ev_all_agree", f.allMustAgree).apply() }
+    }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     fun undoable(text: String, key: String) {
@@ -210,6 +219,7 @@ fun FeedScreen(
                 }
                 // Only EVs whose other books' prices are still current (RESEARCH.md §24).
                 val shown = state.feedAt(now).let { all -> if (state.settings.includeLive && liveOnly) all.filter { it.isLive || it.liveAges != null } else all }
+                    .let { viewFilter.apply(it) }
                 if (state.settings.killed) item(key = "paused") { KilledBanner(Modifier.padding(horizontal = 12.dp)) } else if (state.settings.paused) item(key = "paused") { PausedBanner({ onPause(false) }, Modifier.padding(horizontal = 12.dp)) }
                 if (AppBook.isNovig) item(key = "liveMode") {
                     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -243,6 +253,28 @@ fun FeedScreen(
                         Banner(
                             "Scan on GitHub is paused with scanning; resume it and GitHub's engine starts again.",
                             modifier = Modifier.testTag("cloudPaused"),
+                        )
+                    }
+                }
+                item(key = "viewFilter") {
+                    Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("Books agree ≥", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+                            (0..4).forEach { n ->
+                                FilterChip(
+                                    selected = viewFilter.minAgreeing == n, onClick = { setViewFilter(viewFilter.copy(minAgreeing = n)) },
+                                    label = { Text(if (n == 0) "Any" else "$n", maxLines = 1) }, modifier = Modifier.testTag("agreeMin$n"),
+                                )
+                            }
+                            FilterChip(
+                                selected = viewFilter.allMustAgree, onClick = { setViewFilter(viewFilter.copy(allMustAgree = !viewFilter.allMustAgree)) },
+                                label = { Text("All agree", maxLines = 1) }, modifier = Modifier.testTag("agreeAll"),
+                            )
+                        }
+                        if (viewFilter.active) Text(
+                            "Showing only bets where " + (if (viewFilter.allMustAgree) "every book that prices both sides" else "at least ${viewFilter.minAgreeing} books") +
+                                (if (viewFilter.allMustAgree && viewFilter.minAgreeing > 0) " and at least ${viewFilter.minAgreeing}" else "") + " say +EV. This only changes this screen, not the GitHub engine.",
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("agreeFilterNote"),
                         )
                     }
                 }
