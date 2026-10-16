@@ -328,6 +328,7 @@ class BoltOddsStream(
         snapshotJob = scope.launch {
             val t0 = clock()
             var games = 0
+            var failed = false
             try {
                 client.snapshotStream(asked) { text ->
                     val now = clock()
@@ -341,9 +342,12 @@ class BoltOddsStream(
                 throw e
             } catch (e: Exception) {
                 snapshotError = client.redact(e.message ?: e.javaClass.simpleName).take(200)
+                failed = true
             } finally {
                 snapshotMs = clock() - t0
-                lastSnapshotAt = clock()
+                // A failed snapshot (a 429 from a shared runner address, a daily quota) is asked again in a minute, not five: the board stays empty until it lands (Tj, 2026-10-16: his BoltOdds works on the phone, silent on GitHub).
+                lastSnapshotAt = if (failed) clock() - resnapshotGapMs + 60_000L else clock()
+                if (failed) needSnapshot = true
                 // Ready either way: a failed snapshot leaves the socket to fill the board, and a scan must not wait on it for ever.
                 if (state == State.LIVE) readyAtMs = clock()
             }

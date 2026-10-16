@@ -153,7 +153,7 @@ class BoltOddsClient(
                         }
                         r.code == 429 -> {
                             val wait = (r.header("Retry-After")?.trim()?.toDoubleOrNull()?.let { (it * 1000).toLong() } ?: 15_000L).coerceIn(1_000L, 120_000L)
-                            if (keys().size > 1) KeyAttemptResult.RateLimited(wait, "BoltOdds snapshot limit (HTTP 429)") else throw BoltOddsException("BoltOdds snapshot HTTP 429 (6 a minute, plus a daily token quota)")
+                            if (keys().size > 1) KeyAttemptResult.RateLimited(wait, "BoltOdds snapshot limit (HTTP 429)") else throw BoltOddsException("BoltOdds snapshot HTTP 429 (6 a minute per address, plus a daily token quota)${detailOf(r.body?.string().orEmpty())?.let { ": $it" } ?: ""}${r.header("Retry-After")?.let { " · retry-after $it s" } ?: ""}")
                         }
                         !r.isSuccessful -> throw BoltOddsException("BoltOdds snapshot HTTP ${r.code}")
                         else -> {
