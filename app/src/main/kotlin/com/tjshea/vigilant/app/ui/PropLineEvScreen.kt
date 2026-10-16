@@ -113,11 +113,11 @@ fun PropLineEvScreen(
 private fun PropLineEvCard(r: PlEvRow, now: Long, expanded: Boolean, onToggle: () -> Unit, onBet: () -> Unit) {
     val priceAgeMin = ((now - r.updatedAtMs) / 60_000L).coerceAtLeast(0)
     val stale = priceAgeMin >= PropLineEvView.STALE_MIN
+    val cal = PropLineEvView.calibratedEv(r)
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle).testTag("plRow-${PropLineEvView.key(r)}")) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(PropLineEvView.pick(r), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                val cal = PropLineEvView.calibratedEv(r)
                 Text(String.format(Locale.US, "%+.1f%%", cal), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
             Text("${r.league} · ${r.away} @ ${r.home} · ${PropLineEvView.starts(r, now)}", style = MaterialTheme.typography.bodySmall)
