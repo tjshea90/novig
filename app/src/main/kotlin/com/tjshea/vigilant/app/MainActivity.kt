@@ -598,6 +598,8 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
     LIVE("Live", Icons.Filled.PlayArrow),
     TRACKER("Tracker", Icons.AutoMirrored.Filled.List),
     SETTINGS("Settings", Icons.Filled.Settings),
+    /** PropLine's +EV at Novig (Tj, 2026-10-16, TCL56): reached from the +EV tab's card, not in the bar. */
+    PROPLINE("PropLine +EV", Icons.Filled.Star, inBar = false),
     ;
 
     /** Whether the tab exists in this scanner mode: CNO only hides what needs Vigilant's scanner. */
@@ -612,6 +614,7 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
         BIDS -> AppBook.isNovig
         LIVE -> AppBook.isNovig
         TRACKER, SETTINGS -> true
+        PROPLINE -> AppBook.isNovig
     }
 }
 
@@ -824,6 +827,7 @@ private fun VigilantRoot(
                         onLock = vm::lockIn,
                     ),
                 )
+                Tab.PROPLINE -> com.tjshea.vigilant.app.ui.PropLineEvScreen(state)
                 Tab.AUTOBET -> {
                     val context = androidx.compose.ui.platform.LocalContext.current
                     com.tjshea.vigilant.app.ui.AutoBetScreen(
