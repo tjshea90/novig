@@ -57,6 +57,11 @@ class PropLineClient(
      * Vigilant MGM builds BetMGM's bet-slip links from them. Off for Vigilant, whose requests stay as they were.
      */
     private val bookIds: Boolean = false,
+    /**
+     * The usage ledger, to read the plan of the key in use (`X-Daily-Limit`): a paid key (Hobby 5,000, Pro 25,000 a day) is paced at 10 requests a second instead of 4, and its props are asked for
+     * every game in the window instead of the free key's few (Tj, 2026-10-16, TCL56: "make vigilant take full advantage and use of this pro tier"). Null: the free key's pace, as before.
+     */
+    private val meter: com.tjshea.vigilant.data.keys.UsageMeter? = null,
 ) : ReferenceSource {
 
     override val id = ID
@@ -146,9 +151,34 @@ class PropLineClient(
     private val spacing = Mutex()
     private var lastCallAt = 0L
 
+    /** The paid key's day: its daily limit and what it has used, from the ledger; null when no key with a limit above the free one is known. */
+    data class Plan(val limit: Int, val used: Int, val tier: String)
+
+    fun plan(): Plan? {
+        val ks = meter?.flow?.value?.providers?.get(com.tjshea.vigilant.data.keys.QuotaPolicy.PROPLINE.id)?.keys ?: return null
+        val best = ks.values.filter { u -> (u.limit ?: 0) > PropLineAccount.FREE_LIMIT && !u.refused }.maxByOrNull { it.limit ?: 0 } ?: return null
+        val limit = best.limit ?: return null
+        return Plan(limit, best.used, PropLineAccount.tierOf(limit))
+    }
+
+    /** Requests a second the plan allows us to use: half the sustained rate (Hobby 10, Pro 20 a second; free 5). */
+    private fun intervalMs(): Long = plan()?.let { if (it.limit >= 25_000) 100L else 150L } ?: minIntervalMs
+
+    /**
+     * Whether a paid key has room to read every game's props this scan: its used share of the day so far is within the day's share plus a headroom (so a busy morning cannot spend the evening's
+     * requests). Always false for a free key (its [propLineGamesPerScan] cap stays).
+     */
+    fun roomForEveryGame(now: Long = clock()): Boolean {
+        val p = plan() ?: return false
+        val dayMs = 24 * 3_600_000L
+        val sinceMidnight = now - (now / dayMs) * dayMs
+        val allowed = p.limit * (sinceMidnight.toDouble() / dayMs) + p.limit * 0.10
+        return p.used <= allowed
+    }
+
     private suspend fun <T> call(path: String, params: List<Pair<String, String>>, notFound: T, parse: (String) -> T): Answer<T> {
         spacing.withLock {
-            val wait = lastCallAt + minIntervalMs - System.currentTimeMillis()
+            val wait = lastCallAt + intervalMs() - System.currentTimeMillis()
             if (wait > 0) delay(wait)
             lastCallAt = System.currentTimeMillis()
         }
