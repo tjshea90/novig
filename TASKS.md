@@ -5394,3 +5394,12 @@ Tj (t1792119193334): "when Claude has seen and read messages in this chat system
 - [x] TCL34c Chat attachments: phone uploads images/files to `chat-files/` on cloud-config, message carries the names, Claude downloads them (`tell_tj.py chat-file`), `chat-cleanup.yml` deletes unflagged files after 24 h (`tell_tj.py chat-keep <id>` flags).
 - [x] TCL34d App layout: tabs/sections for Engine (dashboard), Claude (chat + messages), Feed, Bids/Auto-bet views as monitors; Settings keeps settings only; remove phone-only features (share with Claude buttons etc.).
 - [ ] TCL34e Tests, ship, release (updater test: Tj installs v0.113.2 first).
+
+
+## TCL35: chat management and batching releases (Tj, in-app chat, 2026-10-16)
+Tj (t1792122945171): "consider ways for Claude to immediately notice my messages without the delay, but only if there are efficient ways. also look at the attached screenshot, the chat screen messes up when the keyboard pops up". Done: input pinned above the keyboard (v0.114.1), watcher poll 15 s -> 6 s; the doorbell-PR idea is offered to Tj, not built (no PRs unasked).
+Tj (t1792123007442): "for the chat feature, make it so I can clear chats or open new chats"
+Tj (t1792123171360): "also sometimes I ask for several features or changes in back to back messages. make Claude consolidate feature requests from different messages into one release version if this is efficient"
+- [x] TCL35a Keyboard layout fix (v0.114.1), watcher every 6 s.
+- [ ] TCL35b Chat: New chat (a break marker), Clear chat (removes the viewed chat's messages from the phone), switch between earlier chats.
+- [x] TCL35c Standing rule in CLAUDE.md: batch back-to-back requests into one release; read the chat for new requests before shipping.
