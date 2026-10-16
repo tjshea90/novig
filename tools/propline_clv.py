@@ -182,7 +182,7 @@ def grade_bet(arch, row):
             if cp is not None and want is not None and abs(cp - want) < 1e-9:
                 break
     if pick is None:
-        out["pl_status"] = "no Pinnacle close for this market"
+        out["pl_status"] = "no Pinnacle close at this line (moved, or not offered)"
         return out
     prices = arch.pinn[pick]
     # which of Pinnacle's outcome names is our side
@@ -301,7 +301,7 @@ def selftest():
     assert g["pl_status"] == "ok" and abs(float(g["pl_close_fair"]) - 0.4892) < 1e-3 and abs(float(g["clv_pinn"]) + 0.0217) < 1e-3, g   # Over closed -105/-115: fair .4892 (cost .50: -2.2%)
     moved = dict(tot, selection="Over 219.5")
     g = grade_bet(arch, moved)
-    assert "line moved" in g["pl_status"] or g["pl_status"] == "no Pinnacle close for this market", g
+    assert "line moved" in g["pl_status"] or g["pl_status"] .startswith("no Pinnacle close"), g
     assert grade_bet(arch, dict(bet, league="CFL"))["pl_status"].startswith("league")
     assert grade_bet(arch, dict(bet, event="Nobody @ Nowhere"))["pl_status"] == "event not in the archive"
     assert devig({"a": -110, "b": -110}) == {"a": 0.5, "b": 0.5} and devig({"a": 100}) is None
