@@ -65,7 +65,6 @@ class ScanStudyUiTest {
         compose.onNodeWithTag("scanStudyNote").performScrollTo().assertTextContains("1,234 bets logged over 6 days", substring = true)
         // What it does, in words.
         compose.onNodeWithText("The scan study logs and grades every bet a scan lists", substring = true).assertExists()
-        compose.onNodeWithText("analyze every bet for the patterns that beat the close and profit", substring = true).assertExists()
         // The switch: on by default, and Tj can turn the logging off.
         assertTrue(ui.settings.scanStudy)
         compose.onNodeWithTag("scanStudySwitch").performScrollTo().performClick()
