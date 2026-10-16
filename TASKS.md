@@ -5383,3 +5383,14 @@ Tj: "Confirm that make bids are on GitHub and do not need my phone at all. Optim
 - [x] TCL33d `tools/lines_dataset.py` (lines + bids CSVs + dictionary) and `tools/bid_summary.py`, selftests; `engine-grade.yml` publishes the `engine-dataset` Release.
 - [x] TCL33e ROUTINE.md step 7 + CLAUDE.md.
 - [ ] TCL33f WATCH: first `engine-dataset` Release after the next engine-grade run (07:40/17:40 UTC); check row counts, CLV coverage, and bid fill rate; first bid-rule tuning once 200+ bids ended.
+
+
+## TCL34: the app as a monitor and control center (Tj, in-app chat, 2026-10-16)
+Tj (chat t1792119006665): "make an update for this android app to optimize it as a monitor and remove unnecessary archaic features that only made sense for the phone only, such as 'share with Claude' buttons. move major features out of the settings and into their own sections that are now central to the app, such as the engine monitor and messaging with and notifications from Claude. this app is a monitoring and central control app, make the UI match"
+Tj (t1792119065490): "also make it so I can clear Claude messages, either one at a time with a trash can icon, or a button to clear all messages"
+Tj (t1792119193334): "when Claude has seen and read messages in this chat system, mark each message with a 👍 icon to acknowledge it has been read. put all of these changes into an all update. also allow me to add screenshots and attachments into the chat feature but delete them from GitHub after a short period automatically unless Claude flags them as important"
+- [ ] TCL34a Chat: read receipts (a session's `chat_watch.sh`/`tell_tj.py chat-ack` writes an ack file; the phone shows 👍 on acknowledged messages).
+- [ ] TCL34b Messages: trash icon per message, Clear all (phone-side dismissed set; persists).
+- [ ] TCL34c Chat attachments: phone uploads images/files to `chat-files/` on cloud-config, message carries the names, Claude downloads them (`tell_tj.py chat-file`), `chat-cleanup.yml` deletes unflagged files after 24 h (`tell_tj.py chat-keep <id>` flags).
+- [ ] TCL34d App layout: tabs/sections for Engine (dashboard), Claude (chat + messages), Feed, Bids/Auto-bet views as monitors; Settings keeps settings only; remove phone-only features (share with Claude buttons etc.).
+- [ ] TCL34e Tests, ship, release (updater test: Tj installs v0.113.2 first).
