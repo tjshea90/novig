@@ -31,7 +31,7 @@ class DashboardModelTest {
     }
 
     @Test
-    fun `an engine that is not running shows its last readings as last known, never as live (Tj, 2026-10-16: trading LIVE and address accepted while idle)`() {
+    fun `an engine that is not running shows its last readings as last known, never as live (Tj, 2026-10-16, trading LIVE and address accepted shown while idle)`() {
         val closed = java.time.Instant.parse("2026-10-16T07:00:00Z").toEpochMilli()   // 03:00 Eastern: closed
         val last = st { copy(heartbeatMs = closed - 9 * 60_000, tradeMode = "live", addressHandovers = 0) }
         assertEquals("Idle: outside its hours", DashboardModel.headline(last, closed).title)
