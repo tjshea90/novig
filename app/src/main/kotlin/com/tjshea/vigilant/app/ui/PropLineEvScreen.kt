@@ -68,17 +68,21 @@ fun PropLineEvScreen(
             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("propLineEvAge"),
         )
         val leagues = listOf("All") + feed.rows.map { it.league }.distinct().sorted()
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            leagues.take(6).forEach { l -> FilterChip(selected = league == l, onClick = { league = l }, label = { Text(l, maxLines = 1) }, modifier = Modifier.testTag("plLeague-$l")) }
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            leagues.take(12).forEach { l -> FilterChip(selected = league == l, onClick = { league = l }, label = { Text(l, maxLines = 1) }, modifier = Modifier.testTag("plLeague-$l")) }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text("Edge ≥", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             listOf(0.5, 1.0, 2.0, 3.0, 5.0).forEach { v -> FilterChip(selected = minEv == v, onClick = { minEv = v }, label = { Text("${v.toString().removeSuffix(".0")}%") }, modifier = Modifier.testTag("plMin-$v")) }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("All", "Props", "Game lines").forEach { k -> FilterChip(selected = props == k, onClick = { props = k }, label = { Text(k, maxLines = 1) }, modifier = Modifier.testTag("plKind-$k")) }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text("Odds up to", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             listOf(150, 300, 600, PropLineEvView.ANY_ODDS).forEach { v -> FilterChip(selected = maxOdds == v, onClick = { maxOdds = v }, label = { Text(if (v == PropLineEvView.ANY_ODDS) "Any" else "+$v") }, modifier = Modifier.testTag("plOdds-$v")) }
         }

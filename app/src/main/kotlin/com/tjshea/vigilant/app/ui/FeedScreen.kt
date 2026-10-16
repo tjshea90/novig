@@ -270,8 +270,10 @@ fun FeedScreen(
                 }
                 item(key = "viewFilter") {
                     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("Books agree ≥", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+                        // A FlowRow: seven chips did not fit a phone's width and "All agree" was clipped to "Al" (Tj, 2026-10-16, twice).
+                        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                        androidx.compose.foundation.layout.FlowRow(verticalArrangement = Arrangement.spacedBy(2.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("Books agree ≥", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false, modifier = Modifier.align(Alignment.CenterVertically))
                             (0..4).forEach { n ->
                                 FilterChip(
                                     selected = viewFilter.minAgreeing == n, onClick = { setViewFilter(viewFilter.copy(minAgreeing = n)) },
