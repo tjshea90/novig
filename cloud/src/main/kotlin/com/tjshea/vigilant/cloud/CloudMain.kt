@@ -109,7 +109,7 @@ fun main(args: Array<String>) = runBlocking {
             if (s != null && s.usePropLine && sources.propLinePaid() && sources.propLineHasRoom(now)) {
                 runCatching { sources.propLineEvSweep(s, now) }.onSuccess { f ->
                     publisher.stagePropLineEv(f)
-                    f.rows.forEach { runCatching { evJournal.append(it) } }
+                    runCatching { evJournal.appendAll(f.rows) }
                     log("PropLine +EV: ${f.rows.size} lines at Novig from ${f.games} games (${f.requests} requests, ${f.tier})" + (if (f.note.isNotBlank()) " · ${f.note}" else ""))
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("PropLine +EV sweep failed: ${e.message?.take(120) ?: e.javaClass.simpleName}") }
             }
