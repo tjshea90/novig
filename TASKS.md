@@ -5536,3 +5536,11 @@ Tj (verbatim): "two things: 1) look at the screenshot, the app is getting cut of
 Tj (verbatim): "pace the propline api so that I can use it throughout the day without it running out very fast, and give me a review of its speed and freshness of odds"
 - [x] TCL60a pacing across the engine hours (props 70%, +EV 90% of the pace), far-game props reused 5 min; tests PropLinePaidFirstTest
 - [x] TCL60b research/propline_speed_freshness_2026-10-16.md (measured by tools/propline.py speed)
+
+## TCL61: autonomous smart API manager (Tj, chat t1792183219177, 2026-10-16)
+Tj (verbatim): "I'm adding many free the odds apis so the app can use them freely if they provide fresh odds. I want the app and GitHub engine to smartly decide which apis to use and when and which apis to toggle off and on. it should have full control of api management. the api usage should be efficient but also use the best providers for accuracy and freshness, but also take full advantage of the few apis I pay for. the app should send me messages on which apis to purchase or refill free keys. the goal is a smart api manager that is autonomous and uses the best apis for their features and speed while also taking full advantage of my paid providers"
+- [ ] TCL61a Read what exists (ApiGovernor, ApiAdvisor, ApiToggles, ApiChain, SourceScore, CloudOverrides) and the usage/measurement data it has; design the manager as a scorecard + decisions on top of it (research/api_manager_2026-10-16.md).
+- [ ] TCL61b Scorecard per API (freshness p90, accuracy vs Pinnacle, coverage, UNIQUE contribution, reliability, cost class, budget pace) published in status + the app's Engine tab.
+- [ ] TCL61c Decisions: role per API (primary / fallback / extra-only / rested), paid APIs preferred when quality is not worse, free keys used freely while fresh; the engine rests and wakes APIs itself (and asks the phone to toggle when the phone's switch is the master).
+- [ ] TCL61d Messages: which API to buy or refill (with the numbers), which free key is spent, which feed is stale; once per change, in the app's Messages.
+- [ ] TCL61e New free APIs: ask Tj which providers he is adding (names/keys) and wire each through the same adapter so the manager can score it.
