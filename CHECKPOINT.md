@@ -1,22 +1,22 @@
-# CHECKPOINT 3398 — read me first, then TASKS.md
+# CHECKPOINT 3399 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T01:22:35Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-6cce5eff-xcxliy` · **builds on:** `4e59400bd` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T01:25:29Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-6cce5eff-xcxliy` · **builds on:** `6f2fdfddd` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v0.113.0: app updates from GitHub: notification, Install update button, in-app download and install
+pre-release: v0.113.0: app updates from GitHub: notification, Install update button, in-app download and install (versionCode 293, v0.113.0)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.113.0), then run: bash tools/record-release.sh v0.113.0 293 "v0.113.0: app updates from GitHub: notification, Install update button, in-app download and install"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M app/src/main/kotlin/com/tjshea/vigilant/app/AppUpdater.kt
 
 ## Last ten checkpoints
 ```
+  6f2fdfddd ckpt 3398: pre-ship: v0.113.0: app updates from GitHub: notification, Install update b
   4e59400bd ckpt 3397: pre-ship: v0.113.0: app updates from GitHub: notification, Install update b
   8c71b6585 ckpt 3396: TCL31 shipped v0.112.0: engine posted 194 live bids on first pass; released
   8899d4553 ckpt 3395: pre-release: v0.112.0: the GitHub engine posts bids too; the phone syncs ev
@@ -26,5 +26,4 @@ ship.sh gates and releases this
   b7de504cd ckpt 3391: TCL31 planned: engine bid desk (see TASKS.md TCL31)
   fed8df095 ckpt 3390: Dormancy also by slot window (a fresh routine container is acct-unknown); t
   1724f3455 ckpt 3389: Dormancy safeguard: this account's routine stops at rotation checkin / coor
-  8bccba7f3 ckpt 3388: TCL30: volume diagnosis + standing volume/quality loop (CLAUDE.md, ROUTINE.
 ```
