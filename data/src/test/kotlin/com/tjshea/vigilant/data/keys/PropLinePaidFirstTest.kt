@@ -47,4 +47,21 @@ class PropLinePaidFirstTest {
         assertEquals("free", t.tierOf(1_000)); assertEquals("hobby", t.tierOf(5_000)); assertEquals("pro", t.tierOf(25_000))
         assertEquals("streaming-lite", t.tierOf(250_000)); assertEquals("?", t.tierOf(null))
     }
+
+    @Test
+    fun aProKeyReadsEveryGameWhileTodaysShareHoldsAndTheFreeKeyNever() = runBlocking<Unit> {
+        val noon = Instant.parse("2026-10-16T12:00:00Z").toEpochMilli()
+        val m = UsageMeter(JsonFileStore(File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), clock = { noon })
+        val client = com.tjshea.vigilant.data.reference.PropLineClient(
+            okhttp3.OkHttpClient(), KeyPool(QuotaPolicy.PROPLINE, { listOf("pro", "free") }, m), kotlinx.serialization.json.Json { ignoreUnknownKeys = true }, clock = { noon }, meter = m,
+        )
+        assertEquals(null, client.plan())
+        m.recordBalance(QuotaPolicy.PROPLINE, "free", remaining = 900, limit = 1_000, used = 100)
+        assertEquals(false, client.roomForEveryGame(noon))                    // a free key keeps the setting's cap
+        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 20_000, limit = 25_000, used = 5_000)
+        assertEquals("pro", client.plan()?.tier)
+        assertEquals(true, client.roomForEveryGame(noon))                     // noon: 12,500 + 10% = 15,000 allowed, 5,000 used
+        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 5_000, limit = 25_000, used = 20_000)
+        assertEquals(false, client.roomForEveryGame(noon))                    // over the day's share: back to the setting's cap
+    }
 }

@@ -2106,7 +2106,7 @@ class AppContainer(val app: Application) {
     private val propLine = PropLineClient(
         http, KeyPool(QuotaPolicy.PROPLINE, { keyStore.current(ApiProvider.PROPLINE) }, usage), json,
         // Vigilant MGM: no Novig reads to order, and BetMGM's own ids for its bet-slip links.
-        relayNovig = AppBook.isNovig, bookIds = !AppBook.isNovig,
+        relayNovig = AppBook.isNovig, bookIds = !AppBook.isNovig, meter = usage,
     )
     private val propLineProps = PropLinePropsSource(propLine)
 
