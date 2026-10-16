@@ -51,7 +51,21 @@ data class PlEvRow(
     val updatedAtMs: Long,
     /** When the sweep that found it ran (the journal's clock; a line is journaled each sweep it is found in). */
     val seenAtMs: Long = 0L,
+    /** The same bet at every other book PropLine carries, read now (`/best-line`), best price first; empty = not read. */
+    val others: List<PlBookPrice> = emptyList(),
+    /** Of the books that price both sides of this line, how many say Novig's price is +EV by their own no-vig number, and whether Pinnacle does (null = Pinnacle does not price both sides). */
+    val twoSided: Int = 0,
+    val agree: Int = 0,
+    val pinnacleAgrees: Boolean? = null,
+    /** Vigilant's own scan of the same Novig line (null = the scan did not price it): its EV% now, its star rating, and the line itself ([com.tjshea.vigilant.data.cloud.CloudCodec] JSON) so the phone can open the Bet sheet. */
+    val vigilantEv: Double? = null,
+    val vigilantStars: Double? = null,
+    val opp: String? = null,
 )
+
+/** One book's price for a bet and when PropLine last saw it change hands at that book. */
+@Serializable
+data class PlBookPrice(val book: String, val price: Int, val updatedAtMs: Long)
 
 @Serializable
 data class PlEvFeed(
@@ -110,6 +124,111 @@ object PropLineEv {
             }
         }
         return Parsed(out, false)
+    }
+}
+
+/** PropLine's `/best-line` (every book's price for every line of a game) read for the lines Novig's +EV rows are on, and the cross-check it gives. */
+object PropLineBestLine {
+    /** line -> outcome name -> every book's price. */
+    class Board(val lines: List<Line>)
+    class Line(val market: String, val player: String, val point: Double?, val sides: Map<String, List<PlBookPrice>>)
+
+    fun parse(raw: String, json: Json, now: Long): Board {
+        val root = runCatching { json.parseToJsonElement(raw) as? JsonObject }.getOrNull() ?: return Board(emptyList())
+        if ((root["redacted"] as? JsonPrimitive)?.booleanOrNull == true) return Board(emptyList())
+        val out = ArrayList<Line>()
+        for (l in (root["lines"] as? JsonArray).orEmpty()) {
+            val o = l as? JsonObject ?: continue
+            val market = (o["market_key"] as? JsonPrimitive)?.contentOrNull ?: continue
+            val sides = LinkedHashMap<String, List<PlBookPrice>>()
+            for ((name, v) in (o["sides"] as? JsonObject).orEmpty()) {
+                val prices = ((v as? JsonObject)?.get("all_prices") as? JsonArray).orEmpty().mapNotNull { p ->
+                    val po = p as? JsonObject ?: return@mapNotNull null
+                    val book = (po["book"] as? JsonPrimitive)?.contentOrNull ?: return@mapNotNull null
+                    val price = (po["price"] as? JsonPrimitive)?.intOrNull ?: return@mapNotNull null
+                    val upd = (po["last_update"] as? JsonPrimitive)?.contentOrNull?.let { runCatching { Instant.parse(it).toEpochMilli() }.getOrNull() } ?: now
+                    PlBookPrice(book, price, upd)
+                }
+                if (prices.isNotEmpty()) sides[name] = prices
+            }
+            if (sides.isNotEmpty()) out += Line(market, (o["description"] as? JsonPrimitive)?.contentOrNull.orEmpty(), (o["point"] as? JsonPrimitive)?.doubleOrNull, sides)
+        }
+        return Board(out)
+    }
+
+    private fun toks(s: String): List<String> = s.lowercase().replace(Regex("[^a-z0-9 ]"), " ").split(' ').filter { it.isNotEmpty() }
+    private fun sameName(a: String, b: String): Boolean {
+        val x = toks(a); val y = toks(b)
+        return x.isNotEmpty() && y.isNotEmpty() && (x.toSet().containsAll(y) || y.toSet().containsAll(x) || x.last() == y.last())
+    }
+
+    private fun implied(american: Int): Double = if (american > 0) 100.0 / (american + 100.0) else -american / (-american + 100.0)
+
+    /** [row] with the other books' prices for its outcome, and how many of the books that quote both sides say Novig's price is +EV by their own devigged number. */
+    fun attach(row: PlEvRow, board: Board): PlEvRow {
+        val spread = row.market == "spreads"
+        val line = board.lines.firstOrNull { l ->
+            l.market == row.market && sameName(l.player, row.player) && l.player.isNotBlank() == row.player.isNotBlank() &&
+                (l.point == null && row.point == null || (l.point != null && row.point != null && (if (spread) kotlin.math.abs(kotlin.math.abs(l.point) - kotlin.math.abs(row.point)) < 1e-9 else kotlin.math.abs(l.point - row.point) < 1e-9)))
+        } ?: return row
+        val ours = line.sides.keys.firstOrNull { it.equals(row.outcome, true) } ?: line.sides.keys.firstOrNull { sameName(it, row.outcome) } ?: return row
+        val theirs = line.sides.keys.filter { it != ours }
+        val mine = line.sides.getValue(ours).filter { it.book != PropLineClient.NOVIG }
+        if (mine.isEmpty()) return row
+        val novigCost = implied(row.price)
+        var two = 0; var agree = 0; var pinn: Boolean? = null
+        for (p in mine) {
+            val opp = theirs.mapNotNull { n -> line.sides.getValue(n).firstOrNull { it.book == p.book }?.price }
+            if (opp.isEmpty()) continue
+            val a = implied(p.price); val b = opp.sumOf { implied(it) }
+            val fair = a / (a + b)
+            two++
+            val good = fair > novigCost
+            if (good) agree++
+            if (p.book == "pinnacle") pinn = good
+        }
+        return row.copy(others = mine.sortedByDescending { it.price }.take(16), twoSided = two, agree = agree, pinnacleAgrees = pinn)
+    }
+}
+
+/** Finds the line in Vigilant's own scan that is the same Novig bet as a PropLine +EV row, so the phone can show Vigilant's view and open the Bet sheet on it. */
+object PropLineMatch {
+    private fun toks(s: String): List<String> = s.lowercase().replace(Regex("[^a-z0-9 ]"), " ").split(' ').filter { it.isNotEmpty() }
+    private fun sameTeam(a: String, b: String): Boolean {
+        val x = toks(a); val y = toks(b)
+        return x.isNotEmpty() && y.isNotEmpty() && (x.toSet().containsAll(y) || y.toSet().containsAll(x) || x.last() == y.last())
+    }
+
+    fun find(row: PlEvRow, all: List<com.tjshea.vigilant.data.scanner.Opportunity>): com.tjshea.vigilant.data.scanner.Opportunity? {
+        val stat = PropLineProps.MARKETS[row.market]
+        return all.firstOrNull { o ->
+            if (o.league.displayName != row.league || o.quote == null) return@firstOrNull false
+            if (kotlin.math.abs(o.event.startsTs - row.startsAtMs) > 3 * 3_600_000L) return@firstOrNull false
+            val teams = o.event.description.split(" @ ")
+            if (teams.size != 2 || !((sameTeam(teams[0], row.away) && sameTeam(teams[1], row.home)) || (sameTeam(teams[0], row.home) && sameTeam(teams[1], row.away)))) return@firstOrNull false
+            val side = (o.target as? com.tjshea.vigilant.data.scanner.OutcomeTarget.Is)?.side
+            val line = o.lineKey?.line
+            when (row.market) {
+                "h2h" -> o.kind == com.tjshea.vigilant.data.reference.LineKind.MONEYLINE && o.lineKey?.period == 0 && sameTeam(o.selection, row.outcome)
+                "totals" -> o.kind == com.tjshea.vigilant.data.reference.LineKind.TOTAL && o.lineKey?.period == 0 && line != null && row.point != null && kotlin.math.abs(line - row.point) < 1e-9 &&
+                    side == (if (row.outcome.equals("Over", true)) com.tjshea.vigilant.data.reference.Side.OVER else com.tjshea.vigilant.data.reference.Side.UNDER)
+                "spreads" -> o.kind == com.tjshea.vigilant.data.reference.LineKind.SPREAD && o.lineKey?.period == 0 && row.point != null &&
+                    sameTeam(o.selection.replace(Regex("\\s*[+-]?\\d+(\\.\\d+)?$"), ""), row.outcome) &&
+                    Regex("([+-]?\\d+(\\.\\d+)?)$").find(o.selection)?.value?.toDoubleOrNull()?.let { kotlin.math.abs(it - row.point) < 1e-9 } == true
+                else -> stat != null && o.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP && o.market.marketType == stat && row.player.isNotBlank() &&
+                    com.tjshea.vigilant.data.match.PlayerNames.same(o.lineKey?.subject, row.player) && line != null && row.point != null && kotlin.math.abs(line - row.point) < 1e-9 &&
+                    side == (if (row.outcome.equals("Over", true)) com.tjshea.vigilant.data.reference.Side.OVER else com.tjshea.vigilant.data.reference.Side.UNDER)
+            }
+        }
+    }
+
+    /** [row] with Vigilant's own view of the same Novig bet and the line itself for the phone's Bet sheet. */
+    fun attach(row: PlEvRow, all: List<com.tjshea.vigilant.data.scanner.Opportunity>): PlEvRow {
+        val o = find(row, all) ?: return row
+        return row.copy(
+            vigilantEv = o.evPercent, vigilantStars = o.rating?.stars,
+            opp = runCatching { com.tjshea.vigilant.data.cloud.CloudCodec.encode(o).toString() }.getOrNull(),
+        )
     }
 }
 
