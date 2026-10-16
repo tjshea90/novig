@@ -147,7 +147,7 @@ class CloudSources(
     fun propLinePlans(): String = keys(CloudKeys.PROPLINE).mapIndexedNotNull { i, k -> propLineAccount.last[k]?.let { c -> "#${i + 1} ${c.tier} ${c.remaining ?: "?"}/${c.limit ?: "?"}" + (if (!c.valid) " (${c.reason})" else "") } }.joinToString(", ").ifBlank { "none read" }
     private val propLineEv = com.tjshea.vigilant.data.reference.PropLineEvSweep(propLine, json)
     /** PropLine's +EV-at-Novig sweep (TCL56): only with a paid key; a free key's answers are redacted. */
-    suspend fun propLineEvSweep(s: ScanSettings, now: Long) = propLineEv.sweep(s, now)
+    suspend fun propLineEvSweep(s: ScanSettings, now: Long, scanned: List<com.tjshea.vigilant.data.scanner.Opportunity> = emptyList()) = propLineEv.sweep(s, now, scanned)
     fun propLinePaid(): Boolean = propLine.plan() != null
     /** The paid key is within the day's share of its requests (the props read the same budget). */
     fun propLineHasRoom(now: Long): Boolean = propLine.roomForEveryGame(now)

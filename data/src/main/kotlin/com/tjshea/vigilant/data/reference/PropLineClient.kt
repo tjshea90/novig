@@ -157,6 +157,10 @@ class PropLineClient(
     suspend fun evRaw(sportKey: String, eventId: String, books: String = NOVIG): String? =
         call("/sports/$sportKey/events/$eventId/ev", listOf("bookmakers" to books), notFound = null) { raw -> raw }.value
 
+    /** Every book's price for every line of one game (`/events/{id}/best-line`, Hobby+): the cross-check of a +EV line at Novig. [markets] narrows it. One request. */
+    suspend fun bestLineRaw(sportKey: String, eventId: String, markets: List<String>): String? =
+        call("/sports/$sportKey/events/$eventId/best-line", if (markets.isEmpty()) emptyList() else listOf("markets" to markets.joinToString(",")), notFound = null) { raw -> raw }.value
+
     /** The books a call asks for: the picked books, and Novig's relay unless it's off. */
     private fun asked(books: List<String>): List<String> = if (relayNovig) books + NOVIG else books
 

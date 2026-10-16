@@ -234,7 +234,7 @@ object PropLineMatch {
 
 /** The engine's sweep: the picked leagues' pregame games within [PropLineEv.WINDOW_HOURS], one `/ev` request each, six at a time (PropLine allows 20 in flight; its client paces the starts). */
 class PropLineEvSweep(private val client: PropLineClient, private val json: Json = Json { ignoreUnknownKeys = true }) {
-    suspend fun sweep(settings: ScanSettings, now: Long): PlEvFeed {
+    suspend fun sweep(settings: ScanSettings, now: Long, scanned: List<com.tjshea.vigilant.data.scanner.Opportunity> = emptyList()): PlEvFeed {
         val plan = client.plan() ?: return PlEvFeed(now, emptyList(), tier = "free", note = "needs a paid PropLine key (Hobby or Pro): the free key's +EV answers are redacted")
         var requests = 0
         var games = 0
@@ -262,8 +262,14 @@ class PropLineEvSweep(private val client: PropLineClient, private val json: Json
                         gate.withPermit {
                             try {
                                 requests++
-                                val raw = client.evRaw(sport, ev.id.removePrefix(PropLinePropsSource.PREFIX)) ?: return@withPermit null
-                                PropLineEv.parse(raw, json, sport, league.displayName, ev.id.removePrefix(PropLinePropsSource.PREFIX), ev.home, ev.away, ev.commenceMs, now)
+                                val plId = ev.id.removePrefix(PropLinePropsSource.PREFIX)
+                                val raw = client.evRaw(sport, plId) ?: return@withPermit null
+                                val parsed = PropLineEv.parse(raw, json, sport, league.displayName, plId, ev.home, ev.away, ev.commenceMs, now)
+                                if (parsed.rows.isEmpty()) return@withPermit parsed
+                                // The same bets at every other book now (one more request for the game), and Vigilant's own view of each Novig line.
+                                requests++
+                                val board = runCatching { client.bestLineRaw(sport, plId, parsed.rows.map { it.market }.distinct())?.let { PropLineBestLine.parse(it, json, now) } }.getOrNull()
+                                PropLineEv.Parsed(parsed.rows.map { r -> PropLineMatch.attach(board?.let { b -> PropLineBestLine.attach(r, b) } ?: r, scanned) }, false)
                             } catch (e: kotlinx.coroutines.CancellationException) {
                                 throw e
                             } catch (e: Exception) {
