@@ -1,13 +1,13 @@
-# CHECKPOINT 3439 — read me first, then TASKS.md
+# CHECKPOINT 3440 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T16:40:53Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-6cce5eff-xcxliy` · **builds on:** `907d72588` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T16:47:08Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-6cce5eff-xcxliy` · **builds on:** `8bf6dafa5` (this checkpoint is the commit after it)
 
 ## Just done
-Bolt 2 keys confirmed working; v0.114.6 releasing (Kalshi send)
+TCL47: ParlayAPI paid key goes first (KeyPool), engine reads plans hourly
 
 ## Do this next
-record v0.114.6; engine restart after Tj sends Kalshi key; TCL46 chat context
+restart engine; release phone side; tell Tj which key
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ record v0.114.6; engine restart after Tj sends Kalshi key; TCL46 chat context
 
 ## Last ten checkpoints
 ```
+  00103ecfa ckpt 3439: Bolt 2 keys confirmed working; v0.114.6 releasing (Kalshi send)
   907d72588 ckpt 3438: pre-release: v0.114.6: the app can send your Kalshi key to GitHub so the en
   7117154ba ckpt 3437: pre-ship: v0.114.6: the app can send your Kalshi key to GitHub so the engin
   9b7042126 ckpt 3436: TCL45a: Kalshi key to GitHub secrets, engine signer + socket; app sends it
@@ -26,5 +27,7 @@ record v0.114.6; engine restart after Tj sends Kalshi key; TCL46 chat context
   87e39ba2e ckpt 3432: TCL43: bolt multi-key already supported; answered
   3e5964d35 ckpt 3431: TCL42a: chat loop wakes on app resume
   16cbd85f8 ckpt 3430: engine run 55 live: bids resume (494 resting); Bolt still 429
-  304c35bf3 ckpt 3429: TCL40\/41 answered; engine restarted on new code (Bolt retry, bid guard 1h\
 ```
+
+(5 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)

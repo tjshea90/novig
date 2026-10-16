@@ -5455,4 +5455,4 @@ Tj: "https://boltodds.com/docs make sure the app is using the boltodds to its fu
 - [x] TCL46a (answered: fresh session = no loss; checkpoint and suggest new session when long) Answer/design: chat_watch prints only new messages already; session context is the cost. Plan: a rolling chat summary file (chat/SUMMARY.md on cloud-config or research/chat_digest.md) updated at each checkpoint, so a fresh session starts from CHECKPOINT+summary; recommend fresh session when context is large (toobig.sh). Build + tell Tj.
 
 ## TCL47: ParlayAPI key upgraded to Starter: detect and prefer it (Tj, chat t1792169064333, 2026-10-16)
-- [ ] TCL47a How does KeyPool order ParlayAPI keys / read each key's plan+credits? Make the pool prefer the key with the biggest plan/credits (both phone and engine), verify with the key's own usage read; tell Tj which key.
+- [x] TCL47a (KeyPool paid-first, engine reads ParlayAPI plans hourly; app side ships in next release) How does KeyPool order ParlayAPI keys / read each key's plan+credits? Make the pool prefer the key with the biggest plan/credits (both phone and engine), verify with the key's own usage read; tell Tj which key.
