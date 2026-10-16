@@ -340,7 +340,8 @@ class CloudEngine(
                     lastResult = r
                     // The bid desk's candidates ride with the list, at most every [bidsEveryMs] (before the status, so it says what was sent).
                     if (now - lastBidsAt >= bidsEveryMs) { lastBidsAt = now; sendBids(r, cfg.rev, latest, now) }
-                    sendTrades(rows, latest, now)
+                    // The mid-scan passes re-read the stale books too (2026-10-16: 64 of 79 listed bets were refused as "no Novig price read in the last 3 minutes" because only the end-of-scan pass did; a scan takes 5+ minutes).
+                    sendTrades(freshForTrading(rows, latest, now), latest, now)
                     problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = now - t0))
                     lastStatusAt = now
                 }
