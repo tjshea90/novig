@@ -1,13 +1,13 @@
-# CHECKPOINT 3426 — read me first, then TASKS.md
+# CHECKPOINT 3427 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T15:22:43Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-6cce5eff-xcxliy` · **builds on:** `833f9d7d0` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T15:36:56Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-6cce5eff-xcxliy` · **builds on:** `8975a8f43` (this checkpoint is the commit after it)
 
 ## Just done
-TCL38: answered why no bids (picked-off pause, SGO key inactive)
+TCL39a: SGO 403 'Inactive API key' now refuses the key (rotation + advisor fix); test added
 
 ## Do this next
-WATCH chat; desk restart ~18:14Z; tell Tj about SGO key
+TCL39b: after Tj adds key, read status.scanNote + /account/usage tier; consider SGO stream if tier allows
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ WATCH chat; desk restart ~18:14Z; tell Tj about SGO key
 
 ## Last ten checkpoints
 ```
+  60f49130c ckpt 3426: TCL38: answered why no bids (picked-off pause, SGO key inactive)
   4a850946c ckpt 3425: bid fill-rate by lead time recorded
   914580f6b ckpt 3424: first bid analysis written to CHANGES.md (17/6829 filled, no rule change)
   2dec33aee ckpt 3423: v0.114.4 shipped; engine-grade fixed; datasets live; status answer sent
@@ -26,8 +27,7 @@ WATCH chat; desk restart ~18:14Z; tell Tj about SGO key
   798a7c5d3 ckpt 3419: v0.114.3 shipped: updater retry + reopen
   92ad74132 ckpt 3418: pre-release: v0.114.3: updater retries a refused install with Android's own
   1a329863a ckpt 3417: pre-ship: v0.114.3: updater retries a refused install with Android's own sc
-  3db6bb8fb ckpt 3416: v0.114.2 shipped: chat new/clear/scroll; batching rule in CLAUDE.md
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(5 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

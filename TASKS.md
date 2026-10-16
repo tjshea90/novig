@@ -5421,5 +5421,5 @@ Tj: "I don't see the cno scanner. is it still on the app? I like it. the auto be
 - [ ] TCL38b WATCH: desk restarts ~18:14Z; if fills are picked off again with SGO inactive, tighten bids' fair-source requirement rather than shortening the halt. Tell Tj to renew/replace the SGO key.
 
 ## TCL39: new SGO key must reach the engine; engine uses everything SGO offers (Tj, chat t1792164798282, 2026-10-16)
-- [ ] TCL39a Verify the new key path: phone Settings -> sendKeys -> SGO_API_KEY secret -> engine restart reads it; add a status line when SGO answers 403/401 (tell Tj).
+- [x] TCL39a Verify the new key path: phone Settings -> sendKeys -> SGO_API_KEY secret -> engine restart reads it; add a status line when SGO answers 403/401 (tell Tj).
 - [ ] TCL39b Audit engine's SGO use vs docs (llms-full.txt): oddsAvailable, oddID filters, includeAltLines, cursor paging, bookmaker list, props, open/close, speed (limit, request rate).
