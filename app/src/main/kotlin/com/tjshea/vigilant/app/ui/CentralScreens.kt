@@ -49,6 +49,8 @@ fun ClaudeScreen(
     state: com.tjshea.vigilant.app.UiState,
     onSend: suspend (String, List<Pair<String, ByteArray>>) -> String?,
     onChatOpen: (Boolean) -> Unit,
+    onNewChat: () -> Unit,
+    onClearChat: (Long, Long) -> Unit,
     onMarkRead: () -> Unit,
     onDismissMessage: (String) -> Unit,
     onClearMessages: () -> Unit,
@@ -63,7 +65,7 @@ fun ClaudeScreen(
                 SegmentedButton(selected = section == "messages", onClick = { section = "messages" }, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text(if (unread > 0) "Messages ($unread)" else "Messages") }
             }
             // The chat lays itself out (thread above, input pinned below, both inside the room the keyboard leaves); only the messages list scrolls here.
-            if (section == "chat") ChatPage(state.claudeInbox.chat, state.chatWho, onSend, onChatOpen, Modifier.weight(1f).fillMaxWidth())
+            if (section == "chat") ChatPage(state.claudeInbox.chat, state.chatWho, onSend, onChatOpen, Modifier.weight(1f).fillMaxWidth(), breaks = state.claudeInbox.chatBreaks, onNewChat = onNewChat, onClearChat = onClearChat)
             else Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 MessagesPage(state.claudeInbox, onMarkRead = onMarkRead, onOpen = onOpenPage, onDismiss = onDismissMessage, onClearAll = onClearMessages)
             }

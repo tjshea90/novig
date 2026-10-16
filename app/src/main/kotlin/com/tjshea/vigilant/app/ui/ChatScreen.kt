@@ -1,6 +1,7 @@
 package com.tjshea.vigilant.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,7 +36,10 @@ import kotlinx.coroutines.withContext
  * thread says who is answering, from the lease. Nothing here can place a bet or move money: Claude changes things only through the repo's usual, tested paths.
  */
 @Composable
-fun ChatPage(thread: List<CloudChat.Msg>, who: String, onSend: suspend (String, List<Pair<String, ByteArray>>) -> String?, onOpen: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+fun ChatPage(
+    thread: List<CloudChat.Msg>, who: String, onSend: suspend (String, List<Pair<String, ByteArray>>) -> String?, onOpen: (Boolean) -> Unit, modifier: Modifier = Modifier,
+    breaks: List<Long> = emptyList(), onNewChat: () -> Unit = {}, onClearChat: (Long, Long) -> Unit = { _, _ -> },
+) {
     DisposableEffect(Unit) { onOpen(true); onDispose { onOpen(false) } }
     val now = rememberNow(15_000)
     val scope = rememberCoroutineScope()
@@ -51,13 +55,36 @@ fun ChatPage(thread: List<CloudChat.Msg>, who: String, onSend: suspend (String, 
             picked = (picked + read).takeLast(5)
         }
     }
+    // The thread is split into chats at each break (Tj, 2026-10-16: clear chats or open new chats); the newest chat is open unless an earlier one is picked.
+    val starts = remember(breaks) { listOf(0L) + breaks.sorted() }
+    var picked0 by remember { mutableStateOf<Int?>(null) }
+    val sel = (picked0 ?: (starts.size - 1)).coerceIn(0, starts.size - 1)
+    val from = starts[sel]
+    val to = starts.getOrNull(sel + 1) ?: Long.MAX_VALUE
+    val inChat = remember(thread, from, to) { thread.filter { it.at >= from && it.at < to } }
     val acked = remember(thread) { CloudChat.acked(thread) }
-    val shown = remember(thread) { CloudChat.visible(thread) }
+    val shown = remember(inChat) { CloudChat.visible(inChat) }
+    var menu by remember { mutableStateOf(false) }
     val scroll = androidx.compose.foundation.rememberScrollState()
     // The newest message stays in view (also when the keyboard opens and the thread shrinks).
-    androidx.compose.runtime.LaunchedEffect(shown.size, picked.size) { scroll.animateScrollTo(scroll.maxValue) }
+    // Always at the newest message (Tj, 2026-10-16: it sometimes came back scrolled to the middle): when it opens, when a message arrives, and whenever the room changes (keyboard, attachments).
+    androidx.compose.runtime.LaunchedEffect(shown.size, picked.size, scroll.maxValue, sel) { scroll.scrollTo(scroll.maxValue) }
     Column(modifier.testTag("chat"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
       // The thread takes whatever room is left and scrolls; the box to type in is pinned under it (Tj, 2026-10-16: the screen broke when the keyboard opened).
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+          OutlinedButton(onClick = { onNewChat(); picked0 = null }, modifier = Modifier.testTag("chatNew")) { Text("New chat") }
+          OutlinedButton(onClick = { onClearChat(from, to); picked0 = null }, enabled = inChat.isNotEmpty(), modifier = Modifier.testTag("chatClear")) { Text("Clear chat") }
+          if (starts.size > 1) Box {
+              OutlinedButton(onClick = { menu = true }, modifier = Modifier.testTag("chatList")) { Text("Chats (${starts.size})") }
+              androidx.compose.material3.DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                  starts.indices.reversed().forEach { i ->
+                      val ms = CloudChat.visible(thread.filter { it.at >= starts[i] && it.at < (starts.getOrNull(i + 1) ?: Long.MAX_VALUE) })
+                      val label = (ms.firstOrNull { it.fromTj }?.text ?: ms.firstOrNull()?.text ?: "(empty)").take(40)
+                      androidx.compose.material3.DropdownMenuItem(text = { Text((if (i == sel) "• " else "") + label) }, onClick = { picked0 = i; menu = false })
+                  }
+              }
+          }
+      }
       Column(Modifier.weight(1f, fill = true).fillMaxWidth().verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(who.ifBlank { "Checking who is answering..." }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("chatWho"))
         if (thread.isEmpty()) Text("No messages yet. Ask about the engine, tell Claude what to change, or ask for a status.", style = MaterialTheme.typography.bodyMedium)

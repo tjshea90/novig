@@ -764,7 +764,7 @@ private fun VigilantRoot(
             when (tab) {
                 Tab.ENGINE -> com.tjshea.vigilant.app.ui.EngineScreen(state, onOpenCloudSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.CLOUD.name; tabName = Tab.SETTINGS.name })
                 Tab.CLAUDE -> com.tjshea.vigilant.app.ui.ClaudeScreen(
-                    state, onSend = vm::sendChat, onChatOpen = vm::setChatOpen, onMarkRead = vm::markClaudeRead,
+                    state, onSend = vm::sendChat, onChatOpen = vm::setChatOpen, onNewChat = vm::newChat, onClearChat = vm::clearChat, onMarkRead = vm::markClaudeRead,
                     onDismissMessage = vm::dismissClaudeMessage, onClearMessages = vm::clearClaudeMessages,
                     onOpenPage = { p -> settingsPage = p; tabName = Tab.SETTINGS.name },
                 )

@@ -30,6 +30,8 @@ data class InboxState(
     val chat: List<CloudChat.Msg> = emptyList(),
     val chatSeen: List<String> = emptyList(),
     val chatNotifiedUpToMs: Long = -1L,
+    /** Where each new chat begins (Tj, 2026-10-16: clear chats or open new chats): the thread is split at these times; earlier chats stay readable until cleared. */
+    val chatBreaks: List<Long> = emptyList(),
 ) {
     val unread: Int get() = messages.count { it.id !in readIds.toSet() }
 }
@@ -136,6 +138,19 @@ class CloudInbox(private val c: AppContainer, private val client: CloudClient) {
         val s = _state.value
         save(s.copy(chat = CloudChat.thread(s.chat + m).takeLast(MAX_KEPT), chatSeen = (s.chatSeen + CloudChat.fileName(m)).takeLast(MAX_NAMES)))
         return null
+    }
+
+    /** A new chat begins now: the screen starts empty, the earlier chat stays under the Chats menu. */
+    suspend fun newChat(now: Long = System.currentTimeMillis()) {
+        val s = _state.value
+        if (s.chat.none { it.at >= (s.chatBreaks.maxOrNull() ?: 0L) && it.ack == null }) return   // already empty: no second break
+        save(s.copy(chatBreaks = (s.chatBreaks + now).takeLast(MAX_NAMES)))
+    }
+
+    /** Clear chat: the messages of the chat between [fromMs] (inclusive) and [toMs] (exclusive) leave this phone (the files on GitHub stay for Claude); their break goes too. */
+    suspend fun clearChat(fromMs: Long, toMs: Long) {
+        val s = _state.value
+        save(s.copy(chat = s.chat.filterNot { it.at >= fromMs && it.at < toMs }, chatBreaks = s.chatBreaks.filterNot { it == fromMs }))
     }
 
     /** One message leaves the list (the trash can); it does not come back, because the file is remembered as seen. */
