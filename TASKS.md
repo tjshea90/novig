@@ -5445,3 +5445,8 @@ Tj: "confirm the second boltodds key and see if it works. Make sure this app is 
 - [ ] TCL44a Confirm 2 BoltOdds keys reach the engine (start log) and that key 2 works when key 1 429s.
 - [ ] TCL44b ASK Tj: Kalshi key for the PHONE's socket (already supported, Settings > Kalshi) or for the GitHub ENGINE (CLAUDE.md forbids a Kalshi private key in a secret: it can trade; needs his explicit word incl. read-only note).
 - [ ] TCL44c Audit sockets: phone Novig/Bolt/Kalshi on; engine: Novig stream yes, Bolt sockets yes (snapshot 429), Kalshi socket no (REST).
+
+## TCL45: BoltOdds to full potential (docs) + Kalshi key to GitHub for the engine's socket (Tj, chat t1792168347603, 2026-10-16; his yes to the trading-key risk)
+Tj: "https://boltodds.com/docs make sure the app is using the boltodds to its full potential including the socket, and the auto reconnect. I want to send my kalshi key to GitHub so GitHub can use the socket for faster odds"
+- [ ] TCL45a Kalshi key (id + private key) as Actions secrets KALSHI_KEY_ID / KALSHI_PRIVATE_KEY, sent sealed by the app (like the Novig read key); engine builds KalshiClient + KalshiStream from them; status line; Kalshi socket switch mirrored.
+- [ ] TCL45b Read boltodds.com/docs vs BoltOdds code (socket, reconnect/backoff, snapshot rate limits, get_games, markets): list gaps, fix.
