@@ -200,10 +200,14 @@ def cmd_probe(outdir):
             done = (sp, {"id": r0["event_id"], "home_team": r0["home_team"], "away_team": r0["away_team"]})
             report.append("%-34s found a finished %s event %s (%s @ %s) in %d rows" % ("finished event", sp, r0["event_id"], r0["away_team"], r0["home_team"], len(rows)))
             break
+    if not done:
+        # The export is capped at 50 calls a day and the archive may have used them: fall back to a finished game from the 2026-10-16 archive (LAD v MIL, event 351344) so the results/trends/closing/CLV shapes are still captured.
+        done = ("baseball_mlb", {"id": "351344", "home_team": "Los Angeles Dodgers", "away_team": "Milwaukee Brewers"})
+        report.append("%-34s export gave none (daily cap?): using the archive's finished game 351344" % "finished event")
     if done:
         dsp, g = done
         did = g["id"]
-        st, h, data = request("/v1/sports/%s/players" % dsp, key, {"search": "a", "limit": 3}); save("players_search", st, h, data)
+        st, h, data = request("/v1/sports/%s/players" % dsp, key, {"search": "ohtani" if dsp == "baseball_mlb" else "a", "limit": 3}); save("players_search", st, h, data)
         pl = (j(data) or {}).get("players", []) if st == 200 else []
         if pl:
             pid = pl[0]["player_id"]
@@ -229,6 +233,39 @@ def cmd_probe(outdir):
     with open(os.path.join(outdir, "REPORT.txt"), "w") as f:
         f.write("PropLine Pro probe, %s UTC, plan %s (%s a day)\n" % (datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M"), tier_of(p["limit"]), p["limit"]) + "\n".join(report) + "\n")
     print("\n".join(report))
+    return 0
+
+
+def cmd_steam(outdir):
+    """Line movement and steam for every game starting in the next 24 hours (`/movement`, Hobby+): the cross-book sharp-money signal, saved as JSON lines for later study against the close (TCL56d).
+    One request per game; the file is `steam-YYYY-MM-DDTHHMM.jsonl.gz` (one line per game: the event, when we read it, the whole `steam` array and the count of moving lines)."""
+    keys = keys_from_env()
+    key, p = need_paid(keys) if keys else (None, None)
+    if key is None:
+        print("no paid key")
+        return 0
+    os.makedirs(outdir, exist_ok=True)
+    now = time.time()
+    stamp = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M")
+    path = os.path.join(outdir, "steam-%s.jsonl.gz" % stamp)
+    games = steamy = 0
+    with gzip.open(path, "wt") as out:
+        for sp in ("baseball_mlb", "basketball_nba", "basketball_wnba", "hockey_nhl", "football_nfl", "football_ncaaf"):
+            st, h, data = request("/v1/sports/%s/events" % sp, key)
+            evs = j(data) if st == 200 else None
+            for ev in evs or []:
+                t = parse_ts(ev.get("commence_time") or "")
+                if not t or not (now < t < now + 24 * 3600):
+                    continue
+                st, h, data = request("/v1/sports/%s/events/%s/movement" % (sp, ev["id"]), key, {"markets": "h2h,spreads,totals"})
+                body = j(data) if st == 200 else None
+                if not isinstance(body, dict):
+                    continue
+                st2 = body.get("steam") or []
+                games += 1
+                steamy += 1 if st2 else 0
+                out.write(json.dumps({"sport": sp, "event_id": ev["id"], "home": ev.get("home_team"), "away": ev.get("away_team"), "commence": ev.get("commence_time"), "read_at": int(now), "steam": st2, "keys": sorted(body.keys())}) + "\n")
+    print("steam: %d games read, %d with a steam signal -> %s" % (games, steamy, path))
     return 0
 
 
