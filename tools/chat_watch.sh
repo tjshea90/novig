@@ -8,7 +8,25 @@ set -u
 cd "$(dirname "$0")/.." || exit 1
 every="${CHAT_WATCH_EVERY:-6}"
 last=""
+lastrot=0
+rotfile=/tmp/chat_watch_rotstate
 while true; do
+  # Who answers the chat now (Tj, 2026-10-16: the account scheduled at that time; a session hands the chat over when another account's slot is about to start). Every 2 minutes, no model tokens;
+  # a line is printed only when the state CHANGES to SOON or STANDDOWN, or leaves STANDDOWN. See research/coordination/CHAT_OWNER.md for what to do on each.
+  nowt=$(date +%s)
+  if [ $((nowt - lastrot)) -ge 120 ]; then
+    lastrot=$nowt
+    line=$(timeout 60 python3 -I tools/rotation.py chat 2>/dev/null | head -1)
+    st=$(printf '%s' "$line" | awk '{print $2}')
+    prev=$(cat "$rotfile" 2>/dev/null || echo "")
+    if [ -n "$st" ] && [ "$st" != "$prev" ]; then
+      echo "$st" > "$rotfile"
+      case "$st" in
+        SOON|STANDDOWN) echo "$line" ;;
+        *) [ "$prev" = "STANDDOWN" ] && echo "$line (the chat is yours again)" ;;
+      esac
+    fi
+  fi
   head=$(git ls-remote origin refs/heads/cloud-config 2>/dev/null | cut -f1)
   if [ -n "$head" ] && [ "$head" != "$last" ]; then
     last="$head"

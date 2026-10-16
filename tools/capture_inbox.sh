@@ -73,7 +73,20 @@ esac
 # Never blocks the prompt; any failure is silent (losing a message is worse than two sessions meeting).
 # a message from Tj lifts the dead-man switch's STOP before anything else (TCL50)
 [ -f tools/deadman.py ] && [ "${COORD_KIND:-interactive}" = "interactive" ] && timeout 40 python3 -I tools/deadman.py resume 2>&1 | head -2
-if [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interactive}" = "interactive" ]; then
+# Chat owner (Tj, 2026-10-16): while ANOTHER account's slot owns the chat and it is running, a message typed here does not take the lease (the routine there is serving Tj); the session is told, and
+# Tj's word "force" (this message containing it) still takes it.
+CHAT_STAND=""
+if [ -f tools/rotation.py ] && [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interactive}" = "interactive" ]; then
+  CHAT_LINE="$(timeout 60 python3 -I tools/rotation.py chat 2>/dev/null | head -1)"
+  case "$CHAT_LINE" in
+    "CHATSTATE STANDDOWN"*)
+      if printf '%s' "$PROMPT" | grep -qi "force"; then :; else
+        CHAT_STAND="$CHAT_LINE"
+        printf '%s\n' "CHAT OWNER: $CHAT_LINE. Tell Tj plainly that this account is not scheduled right now and the chat belongs to that account; do NOT work, edit, push or take the lease. He can say 'force' to take it back."
+      fi ;;
+  esac
+fi
+if [ -z "$CHAT_STAND" ] && [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interactive}" = "interactive" ]; then
   COORD_OUT="$(timeout 40 python3 -I tools/coord.py acquire --kind interactive 2>&1)"; COORD_RC=$?
   if [ "$COORD_RC" -eq 3 ]; then
     printf '%s\n' "COORD: ANOTHER LIVE CLAUDE SESSION HOLDS THIS REPO (see below). Do not edit, push or ship. Tell Tj plainly which session it is and ask whether to take over; only on his word run: bash tools/coord.py acquire --force"
