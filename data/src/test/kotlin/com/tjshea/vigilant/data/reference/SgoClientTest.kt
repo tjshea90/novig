@@ -225,6 +225,14 @@ class SgoClientTest {
         assertEquals("the same key still works for events", 1, c.events(listOf("leagueID" to "NFL")).events.size)
     }
 
+    @Test fun a403SayingTheKeyIsInactiveRefusesTheKey() = runTest {
+        handler = { MockResponse().setResponseCode(403).setBody("""{"success":false,"error":"Inactive API key"}""") }
+        val c = client()
+        val e = runCatching { c.events(listOf("leagueID" to "NFL")) }.exceptionOrNull()
+        assertTrue(e.toString(), e is ReferenceException && e.message!!.contains("nactive"))
+        assertTrue("the key is marked refused", c.usage().any { it.state == KeyState.REFUSED })
+    }
+
     @Test fun a429RestsTheKeyForAMinuteAndThenItWorksAgain() = runTest {
         var limited = true
         handler = { if (limited) MockResponse().setResponseCode(429).setBody("""{"success":false,"error":"rate limit"}""") else ok(sample) }
