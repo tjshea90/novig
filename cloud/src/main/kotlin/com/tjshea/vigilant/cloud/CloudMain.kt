@@ -57,6 +57,9 @@ import java.time.Instant
  * Environment: the API keys as repository secrets ([CloudKeys.ALL], optional, each only used when its API is switched on in the phone's settings), `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_RUN_ID`.
  * It places no order unless the phone's trading switch is LIVE and the Vigilant subaccount's trading key was sent (`NOVIG_TRADE_KEY_*`, [CloudNovigPort]); PAPER only records what it would have ordered. Never a management key.
  */
+/** The scan study also logs lines this close to break-even (EV at or above -2%), shown on the list or not. */
+private const val WIDE_FLOOR = -0.02
+
 fun main(args: Array<String>) = runBlocking {
     fun v(name: String) = args.indexOf(name).takeIf { it >= 0 }?.let { args.getOrNull(it + 1) }
     val minutes = v("--minutes")?.toIntOrNull()?.coerceIn(1, 350) ?: 345
@@ -201,10 +204,15 @@ fun main(args: Array<String>) = runBlocking {
         )
     }
     var deskText = ""
+    // Every bid's whole life (Tj, 2026-10-16: optimise bids over time from analysis of all of them): an ended bid is written once, a couple of minutes after it ended (a late fill still lands), to the day's `bids` journal,
+    // which the archive loop gzips to the cloud-archive Release like the other journals. A bid carried into the next job may be written twice; the dataset tool keeps the newest.
+    val bidJournal = DayJournal(File(out, "cloud"), "bids", com.tjshea.vigilant.data.novig.trading.maker.MakerBid.serializer()) { it.postedAtMs }
+    val bidsJournaled = HashSet<String>()
     // The runner behind a thin wrapper that puts the desk's record on cloud-feed after each pass (only when the bids or fills changed: the file is the phone's screen of the engine's bids).
     val bidFacade: com.tjshea.vigilant.data.cloud.EngineBids? = bidRunner?.let { r ->
         suspend fun stageDesk(now: Long) {
             val bids = com.tjshea.vigilant.data.cloud.DeskFile.trim(deskStore.all(), now)
+            for (b in deskStore.all()) if (b.status.ended && now - (b.endedAtMs ?: b.postedAtMs) > 120_000L && bidsJournaled.add(b.clientId)) runCatching { bidJournal.append(b) }
             val fills = deskTracker.all().filter { it.createdAtMs >= now - 7L * 24 * 3_600_000L }
             val body = com.tjshea.vigilant.data.cloud.DeskFile(0L, "", "", bids, fills)
             val text = com.tjshea.vigilant.data.cloud.DeskFile.text(body)
@@ -228,7 +236,8 @@ fun main(args: Array<String>) = runBlocking {
         bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
-        onResult = { result, s -> study.observeVigilant(result, s.copy(scanStudy = true)); study.flush() },
+        // Every priced line within 2 points of break-even is logged, shown or not, with why it was not shown (Tj, 2026-10-16, TCL33).
+        onResult = { result, s -> study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush() },
         trade = { rows, s, now ->
             val mode = s.gates.cloudTrading
             if (mode == CloudTradeMode.OFF) null else {

@@ -654,6 +654,9 @@ class ScanStudy(
         /** A study bet is one unit. */
         const val STUDY_STAKE = 1.0
 
+        /** The most lines one scan adds beyond the list's own (the engine's wide log, best edge first): keeps a scan's bookkeeping bounded. */
+        const val WIDE_MAX = 4_000
+
         const val ID_LENGTH = 12
 
         /** Whether a look is worth a line: the first, or a change, or the heartbeat. [prev] was logged at [prevAt]. */
