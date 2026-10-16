@@ -9,7 +9,7 @@
 Keys come from the environment variable PROPLINE_API_KEY (several keys: comma, space or newline separated; the phone's "send keys to GitHub" writes this secret). The key used is the one whose own
 plan is largest (its `X-Daily-Limit`), so a Pro key is found among free ones. A key is never printed. See research/PROPLINE_PRO_2026-10-16.md for the endpoints.
 """
-import datetime, gzip, json, os, re, shutil, sys, time, urllib.error, urllib.parse, urllib.request
+import csv, datetime, gzip, io, json, os, re, shutil, sys, time, urllib.error, urllib.parse, urllib.request
 
 BASE = "https://api.prop-line.com"
 # The exports are huge (8 million graded outcomes in 30 days across all books), so the archive asks for the books that matter to Vigilant: Novig (where it bets) and Pinnacle (the sharp close).
@@ -188,20 +188,29 @@ def cmd_probe(outdir):
     st, h, data = request("/v1/sports/%s/events/%s/best-line" % (sport, eid), key, {"markets": mkq}); save("best_line", st, h, data)
     st, h, data = request("/v1/sports/%s/events/%s/movement" % (sport, eid), key, {"markets": "h2h,spreads,totals"}); save("movement", st, h, data)
     st, h, data = request("/v1/sports/%s/events/%s/projections" % (sport, eid), key, {"markets": mkq}); save("projections", st, h, data)
-    # a finished event: closing, results, history
+    # a finished event (the newest in a small export), for closing lines, results, history, box score, context and CLV grading
     done = None
-    for sp in ("basketball_nba", "baseball_mlb", "hockey_nhl", "football_nfl", "football_ncaaf", "basketball_wnba"):
-        st, h, data = request("/v1/sports/%s/scores" % sp, key)
-        sc = j(data)
-        if st == 200 and isinstance(sc, list):
-            fin = [g for g in sc if g.get("completed")]
-            if fin:
-                done = (sp, fin[0])
-                save("scores", st, h, data, "(%s)" % sp)
-                break
+    for sp in ("basketball_nba", "hockey_nhl", "football_ncaaf", "football_nfl", "baseball_mlb"):
+        st, h, data = request("/v1/exports/resolved-props", key, {"sport": sp, "bookmaker": "pinnacle", "since": (datetime.datetime.utcnow() - datetime.timedelta(days=2)).strftime("%Y-%m-%dT00:00:00Z")}, accept_gzip=True)
+        raw = (gzip.decompress(data) if h.get("content-encoding") == "gzip" else data).decode("utf8", "replace")
+        rows = list(csv.DictReader(io.StringIO(raw))) if st == 200 else []
+        rows = [r for r in rows if r.get("event_id") and not (r.get("home_team") or "").startswith("(Watermark)")]
+        if rows:
+            r0 = rows[0]
+            done = (sp, {"id": r0["event_id"], "home_team": r0["home_team"], "away_team": r0["away_team"]})
+            report.append("%-34s found a finished %s event %s (%s @ %s) in %d rows" % ("finished event", sp, r0["event_id"], r0["away_team"], r0["home_team"], len(rows)))
+            break
     if done:
         dsp, g = done
         did = g["id"]
+        st, h, data = request("/v1/sports/%s/players" % dsp, key, {"search": "a", "limit": 3}); save("players_search", st, h, data)
+        pl = (j(data) or {}).get("players", []) if st == 200 else []
+        if pl:
+            pid = pl[0]["player_id"]
+            st, h, data = request("/v1/sports/%s/players/%s/trends" % (dsp, urllib.parse.quote(pid, safe="")), key); save("player_trends", st, h, data, "(%s)" % pid)
+            st, h, data = request("/v1/sports/%s/players/%s/games" % (dsp, urllib.parse.quote(pid, safe="")), key, {"limit": 5}); save("player_games", st, h, data)
+            mk0 = next(iter((j(data) or {}).get("games", [{}])[0].get("stats", {}) or {}), None) if st == 200 else None
+            st, h, data = request("/v1/sports/%s/players/%s/history" % (dsp, urllib.parse.quote(pid, safe="")), key, {"market": "player_points", "limit": 5}); save("player_history", st, h, data)
         st, h, data = request("/v1/sports/%s/events/%s/odds/closing" % (dsp, did), key, {"markets": "h2h,spreads,totals", "bookmakers": "novig,pinnacle"}); save("closing", st, h, data)
         st, h, data = request("/v1/sports/%s/events/%s/results" % (dsp, did), key, {"bookmakers": "novig,pinnacle"}); save("results", st, h, data)
         st, h, data = request("/v1/sports/%s/events/%s/odds/history" % (dsp, did), key, {"markets": "h2h", "bookmakers": "pinnacle", "changes_only": "true"}); save("history", st, h, data)
