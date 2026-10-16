@@ -6,6 +6,7 @@ import com.tjshea.vigilant.data.cno.CnoFeed
 import com.tjshea.vigilant.data.cno.CnoRow
 import com.tjshea.vigilant.data.cno.CnoSnapshot
 import com.tjshea.vigilant.data.cno.LivePrice
+import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanResult
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.tracker.AtBet
