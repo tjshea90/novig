@@ -90,7 +90,7 @@ class CloudBidRunner(
             return null.also { lastStatus = null }
         }
         up = true
-        val sb = ScanSettings.forEngineBids(s)
+        val sb = CloudEngine.forCloud(s)
         val rules = MakerRules.of(sb)
         val halted = if (haltedUntil > now) haltedWhy else ""
         val stop = when {

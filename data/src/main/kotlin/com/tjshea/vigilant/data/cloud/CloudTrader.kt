@@ -162,7 +162,22 @@ class CloudTrader(
     /** Called at the end of the engine's hours: whatever rests on Novig under the engine's key is cancelled. */
     suspend fun windowEnded() { runCatching { port?.cancelResting() } }
 
-    suspend fun pass(rows: List<Opportunity>, s: ScanSettings, now: Long = clock()): Report {
+    /**
+     * The engine's bids' fills are positions of the same book (TCL31): an entry whose id is already there is replaced (a bid that filled more), a new one is added. The trader's risk caps, the one-bet-a-market rule
+     * and the grader all see them. Nothing is ordered by this.
+     */
+    fun record(entry: TradeEntry) {
+        val i = ledger.entries.indexOfFirst { it.id == entry.id }
+        ledger = ledger.copy(entries = if (i >= 0) ledger.entries.toMutableList().also { it[i] = entry.copy(status = it[i].status, pnl = it[i].pnl) } else ledger.entries + entry)
+    }
+
+    /** The markets this book holds an open position in (the bid desk puts no bid there). */
+    fun openMarkets(now: Long = clock()): Set<String> = ledger.entries.filter { open(it, now) && !it.note.startsWith("bid") }.mapTo(HashSet()) { it.marketId }
+
+    /**
+     * [extraHeld]: the bid desk's resting and filled bids as positions, so the repeat guard counts them with the bets (resting bids count as filled: they may fill any moment).
+     */
+    suspend fun pass(rows: List<Opportunity>, s: ScanSettings, now: Long = clock(), extraHeld: List<RepeatGuard.Pos> = emptyList()): Report {
         val mode = s.gates.cloudTrading
         if (mode == CloudTradeMode.OFF) return Report(mode)
         val live = mode == CloudTradeMode.LIVE
@@ -234,7 +249,8 @@ class CloudTrader(
             val fill = walk(o, fair, fee, stake.dollars, rules.readEv)
             if (fill == null) { skip("less than one contract at a positive edge"); continue }
             if (repeat != null) {
-                val held = ledger.entries.filter { open(it, now) }.map { RepeatGuard.Pos(it.marketId, it.outcomeId, it.cost, it.payout, family = RepeatGuard.family(it.event, it.startsTs, it.marketLabel, it.selection)) }
+                val bidIds = extraHeld.mapTo(HashSet()) { it.outcomeId + "|" + it.marketId }
+                val held = ledger.entries.filter { open(it, now) && !(it.note.startsWith("bid") && it.outcomeId + "|" + it.marketId in bidIds) }.map { RepeatGuard.Pos(it.marketId, it.outcomeId, it.cost, it.payout, family = RepeatGuard.family(it.event, it.startsTs, it.marketLabel, it.selection)) } + extraHeld
                 RepeatGuard.check(repeat, held, o.market.marketId, o.outcome.outcomeId, fill.cost, fill.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, o.market.outcomes.map { it.outcomeId }, RepeatGuard.family(o.eventName, o.event.startsTs, o.marketLabel, o.selection))
                     ?.let { skip("repeat guard"); continue }
             }
