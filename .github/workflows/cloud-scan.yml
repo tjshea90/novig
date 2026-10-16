@@ -123,6 +123,8 @@ jobs:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           PARLAY_API_KEY: ${{ secrets.PARLAY_API_KEY }}
           BOLTODDS_API_KEY: ${{ secrets.BOLTODDS_API_KEY }}
+          KALSHI_KEY_ID: ${{ secrets.KALSHI_KEY_ID }}
+          KALSHI_KEY_PEM: ${{ secrets.KALSHI_KEY_PEM }}
           NOVIG_READ_KEY_ID: ${{ secrets.NOVIG_READ_KEY_ID }}
           NOVIG_READ_KEY_PEM: ${{ secrets.NOVIG_READ_KEY_PEM }}
           # the Vigilant subaccount's trading key (Tj, 2026-10-15): used only when the phone's cloud trading switch is paper or live (TCL20d); never the management key

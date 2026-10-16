@@ -425,6 +425,10 @@ class CloudLink(private val c: AppContainer) {
     private suspend fun keysToSend(): Map<String, String> {
         val m = CloudKeys.BY_PROVIDER.mapNotNull { (p, name) -> c.keyStore.current(p).filter { it.isNotBlank() }.takeIf { it.isNotEmpty() }?.let { name to it.joinToString(",") } }.toMap().toMutableMap()
         c.cloudNovigKeys.load()?.let { m[CloudKeys.NOVIG_KEY_ID] = it.keyId; m[CloudKeys.NOVIG_KEY_PEM] = it.pem }
+        // Kalshi's key (Tj, 2026-10-16: "I want to send my kalshi key to GitHub so GitHub can use the socket"): the Key ID and the PEM opened from this phone's Keystore; the engine reads and streams with it, never trades.
+        c.kalshiKeyStore.flow.value?.takeIf { it.complete }?.let { cred ->
+            runCatching { c.openSecret(cred.pem) }.getOrNull()?.takeIf { it.isNotBlank() }?.let { pem -> m[CloudKeys.KALSHI_KEY_ID] = cred.keyId.trim(); m[CloudKeys.KALSHI_KEY_PEM] = pem }
+        }
         // The subaccount's trading key, only once Tj asked for it to go (tradeSent) and until he takes it off GitHub; never the management key.
         if (tradeSent.exists()) c.cloudTradeKeys.load()?.let { m[CloudKeys.TRADE_KEY_ID] = it.keyId; m[CloudKeys.TRADE_KEY_PEM] = it.pem }
         return m
@@ -464,7 +468,7 @@ class CloudLink(private val c: AppContainer) {
         }
         val previous = runCatching { keysSent.readText() }.getOrNull()
         runCatching { keysSent.writeText(fp) }
-        val msg = "Sent ${sent.size} key set(s) to GitHub secrets: ${sent.joinToString(", ")}. Pinnodds and Kalshi keys and Novig's management key stay on the phone."
+        val msg = "Sent ${sent.size} key set(s) to GitHub secrets: ${sent.joinToString(", ")}. Pinnodds' key and Novig's management key stay on the phone."
         c.eventLog.info("CLOUD", msg)
         val tail = restartEngineFor(changed = previous != fp)
         _ui.update { it.copy(keysNote = msg + tail) }

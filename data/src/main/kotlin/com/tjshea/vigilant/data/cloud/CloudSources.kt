@@ -8,6 +8,9 @@ import com.tjshea.vigilant.data.keys.KeyPool
 import com.tjshea.vigilant.data.keys.QuotaPolicy
 import com.tjshea.vigilant.data.keys.UsageMeter
 import com.tjshea.vigilant.data.reference.InjuryIndex
+import com.tjshea.vigilant.data.kalshi.KalshiCredentials
+import com.tjshea.vigilant.data.kalshi.KalshiSigner
+import com.tjshea.vigilant.data.kalshi.KalshiStream
 import com.tjshea.vigilant.data.reference.KalshiClient
 import com.tjshea.vigilant.data.reference.OddsApiPropsSource
 import com.tjshea.vigilant.data.reference.OddsFeed
@@ -59,7 +62,7 @@ import java.io.File
  *  - **BoltOdds** is here since 2026-10-15 (Tj: "allow me to send my novig key and boltodds key to GitHub for rapid scanning"): the engine opens the two odds sockets itself (lines, props) while BoltOdds is switched on and its
  *    socket switch is on (off = the REST snapshot), and reads their boards from memory like the phone does. The plan allows 3 connections: the engine uses 2, so the phone's own sockets (the live lane, the streaming engine)
  *    and the Test key's probe share the one left.
- *  - **Kalshi's signed key** (an API key can trade; it is never placed in a repository secret): the cloud reads Kalshi's public markets unsigned.
+ *  - **Kalshi's signed key** (an API key can trade; placed in a repository secret only on Tj's word of 2026-10-16, TCL45): the engine reads with it and runs Kalshi's socket; without it, Kalshi's public markets unsigned.
  *
  * [keys] maps a [CloudKeys] name to the secret's value (comma, space or newline separated for several), read once per call so a rotated secret is picked up by the next job.
  */
@@ -99,7 +102,23 @@ class CloudSources(
     private val boltProps = BoltPropsSource(boltFeed)
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
-    private val kalshi = KalshiClient(http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage)
+    /**
+     * Kalshi's signed key and socket (Tj, 2026-10-16, chat: "I want to send my kalshi key to GitHub so GitHub can use the socket for faster odds"; he accepted that an API key can trade, which is why this
+     * is his word and not a default): the phone's sealed key goes up as [CloudKeys.KALSHI_KEY_ID] + [CloudKeys.KALSHI_KEY_PEM]. The engine only READS with it (signed market reads and the socket's price pushes);
+     * no code path here places a Kalshi order. Without the secrets, or with the socket switch off, it is the unsigned REST reads as before.
+     */
+    private val kalshiSigner: KalshiSigner? by lazy {
+        val id = CloudKeys.rawEnv(CloudKeys.KALSHI_KEY_ID); val pem = CloudKeys.rawEnv(CloudKeys.KALSHI_KEY_PEM)
+        if (id.isEmpty() || pem.isEmpty()) null else KalshiSigner.of(KalshiCredentials(id, pem)).getOrNull()
+    }
+    @Volatile private var kalshiSocketWanted = false
+    private val kalshiStream = KalshiStream(KalshiStream.socketClient(http), { kalshiSigner }, scope)
+    private val kalshi = KalshiClient(
+        http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage,
+        signer = { kalshiSigner }, stream = kalshiStream, socketOn = { kalshiSocketWanted },
+    )
+    /** One line for the engine's start-up log and status: whether Kalshi's key reached the engine and whether its socket is wanted. */
+    fun kalshiNote(): String = if (kalshiSigner == null) "Kalshi: public reads (no key on GitHub)" else "Kalshi: signed key present, socket ${if (kalshiSocketWanted) "on" else "off"}"
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keys(CloudKeys.ODDS_API) }, usage), json)
     private val bookProps = OddsApiPropsSource(oddsApi)
     private val parlayPool = KeyPool(QuotaPolicy.PARLAY, { keys(CloudKeys.PARLAY) }, usage)
@@ -133,6 +152,8 @@ class CloudSources(
     fun sources(s: ScanSettings): List<ReferenceSource> {
         // Switched off (or its socket switch off) the sockets are closed: nothing is held open or sent to BoltOdds.
         if (!boltActive(s) || !s.gates.boltSocket) boltFeed.close()
+        kalshiSocketWanted = s.useKalshi && s.gates.kalshiSocket && kalshiSigner != null
+        if (!kalshiSocketWanted) kalshiStream.close()
         val front = buildList {
             if (sgoActive(s)) { add(sgoGames); addAll(propsOf(s, sgoProps)) }
             if (opActive(s)) { add(opGames); addAll(propsOf(s, opProps)) }
@@ -222,6 +243,14 @@ object CloudKeys {
     const val NOVIG_KEY_ID = "NOVIG_READ_KEY_ID"
     const val NOVIG_KEY_PEM = "NOVIG_READ_KEY_PEM"
     val NOVIG = listOf(NOVIG_KEY_ID, NOVIG_KEY_PEM)
+
+    /**
+     * Kalshi's API key (Tj, 2026-10-16: "I want to send my kalshi key to GitHub so GitHub can use the socket for faster odds"): the Key ID and the private key PEM (several lines: read with [rawEnv]). The engine uses it
+     * to read and to hold Kalshi's price socket and never to trade. An API key CAN trade, so this is the one trading-capable key besides the Novig subaccount's that Tj chose to put on GitHub.
+     */
+    const val KALSHI_KEY_ID = "KALSHI_KEY_ID"
+    const val KALSHI_KEY_PEM = "KALSHI_KEY_PEM"
+    val KALSHI = listOf(KALSHI_KEY_ID, KALSHI_KEY_PEM)
 
     /**
      * The Vigilant subaccount's `trading` key for the engine's orders (Tj, 2026-10-15, TCL20c): a software key made by [CloudTradeKey.swap] and sent by the phone only after Tj confirms. It can order, never move
