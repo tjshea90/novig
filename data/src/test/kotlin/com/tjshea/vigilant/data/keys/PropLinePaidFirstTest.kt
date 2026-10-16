@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.keys
 
+import com.tjshea.vigilant.data.store.JsonFileStore
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
