@@ -1,24 +1,25 @@
-# CHECKPOINT 3501 — read me first, then TASKS.md
+# CHECKPOINT 3502 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T22:04:17Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-49ded3ac-g4ipzt` · **builds on:** `b1b3b576b` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T22:06:17Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-49ded3ac-g4ipzt` · **builds on:** `a5fb82a8d` (this checkpoint is the commit after it)
 
 ## Just done
-PropLineTrends verified against real /trends answer; v0.114.12 shipped
+research: open-vs-close study from PropLine archive; CHANGES line
 
 ## Do this next
-TCL66: watch engine; profit loop; /results grading source; CLV via /clv/grade; TCL64a unpriced lines
+TCL66: engine watch; PropLine /results grading source; /clv/grade; TCL64a
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M data/src/test/kotlin/com/tjshea/vigilant/data/reference/PropLineTrendsTest.kt
-    ?? data/src/test/resources/propline-trends-real-2026-10-16.json
+     M research/review/CHANGES.md
+    ?? research/novig_open_vs_pinnacle_2026-10-16.md
+    ?? tools/research/propline_open_vs_close.py
 
 ## Last ten checkpoints
 ```
+  a5fb82a8d ckpt 3501: PropLineTrends verified against real /trends answer; v0.114.12 shipped
   68ec8c961 ckpt 3500: pre-release: PropLine +EV shown after Vigilant's prop cut + hit-rate trends
   41d29b50c ckpt 3499: TCL52a: FlowRow chips (All agree, PropLine filters)
   85451736c ckpt 3498: propline probe: trends by name fallback; real /results and /clv/grade shape
@@ -28,8 +29,4 @@ TCL66: watch engine; profit loop; /results grading source; CLV via /clv/grade; T
   060a3257b ckpt 3494: TCL63: spent-key bars full red, chat keyboard inset fix, PropLine review se
   f5887f98d ckpt 3493: TCL61: API manager scorecard section on the Engine dashboard (compiles)
   571f774e5 ckpt 3492: engine restarted with 14 Odds keys; handoff rule; TCL62 done
-  2eb025303 ckpt 3491: TCL61 core: scorecard, paid-first ranking, surplus second opinions, Odds AP
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
