@@ -5419,3 +5419,7 @@ Tj: "I don't see the cno scanner. is it still on the app? I like it. the auto be
 ## TCL38: why no bids listed, shouldn't it reset itself (Tj, chat t1792163858660, 2026-10-16)
 - [x] Cause: engine's picked-off guard halted the bid desk at 15:14Z for 3 h (5 of last 8 fills picked off); it restarts itself at ~18:14Z. SportsGameOdds key answers 403 Inactive (fair is from weaker feeds) and BoltOdds REST 429: likely why fills were picked off.
 - [ ] TCL38b WATCH: desk restarts ~18:14Z; if fills are picked off again with SGO inactive, tighten bids' fair-source requirement rather than shortening the halt. Tell Tj to renew/replace the SGO key.
+
+## TCL39: new SGO key must reach the engine; engine uses everything SGO offers (Tj, chat t1792164798282, 2026-10-16)
+- [ ] TCL39a Verify the new key path: phone Settings -> sendKeys -> SGO_API_KEY secret -> engine restart reads it; add a status line when SGO answers 403/401 (tell Tj).
+- [ ] TCL39b Audit engine's SGO use vs docs (llms-full.txt): oddsAvailable, oddID filters, includeAltLines, cursor paging, bookmaker list, props, open/close, speed (limit, request rate).
