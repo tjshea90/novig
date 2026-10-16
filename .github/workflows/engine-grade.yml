@@ -36,9 +36,10 @@ jobs:
 
       - name: Download every study segment and every grade segment
         run: |
-          mkdir -p assets
+          mkdir -p assets bidassets
           for TAG in $(gh release list --limit 500 --json tagName --jq '.[].tagName' | grep '^cloud-archive-' || true); do
             gh release download "$TAG" -p 'study-*' -D assets --clobber 2>/dev/null || true
+            gh release download "$TAG" -p 'bids-*' -D bidassets --clobber 2>/dev/null || true
           done
           gh release download engine-grades -p 'grades-*' -D assets --clobber 2>/dev/null || echo "no grades yet"
           echo "segments downloaded: $(ls assets | wc -l)"
@@ -64,6 +65,15 @@ jobs:
           ls packed/* >/dev/null 2>&1 || { echo "nothing new to keep"; exit 0; }
           gh release view engine-grades >/dev/null 2>&1 || gh release create engine-grades --title "Engine study grades" --prerelease --latest=false --target main --notes "Result and closing-line lines the daily grader added to the engine's scan study (.github/workflows/engine-grade.yml). Permanent: never delete."
           gh release upload engine-grades packed/* --clobber
+
+      - name: Flat datasets for Claude (derived: rebuilt whole each run; the engine-dataset Release)
+        run: |
+          python3 -I tools/lines_dataset.py lines journal dataset || true
+          python3 -I tools/lines_dataset.py bids bidassets dataset || true
+          python3 -I tools/lines_dataset.py dictionary > dataset/DATA_DICTIONARY.md
+          ls dataset/* >/dev/null 2>&1 || { echo "nothing to publish"; exit 0; }
+          gh release view engine-dataset >/dev/null 2>&1 || gh release create engine-dataset --title "Engine datasets (flat, for analysis)" --prerelease --latest=false --target main --notes "Derived, flat CSVs of every bet the engine's scan saw (shown or not) with odds, lead time, EV, books agreeing, sharp agreement, stars, closing line and result, and of every bid it posted. Rebuilt twice a day by engine-grade.yml from the permanent journals (cloud-archive-*, engine-grades); see DATA_DICTIONARY.md. Safe to read and to replace; the journals are the record."
+          gh release upload engine-dataset dataset/* --clobber
 
       - name: Publish the engine's settled orders (engine-results branch, one force-pushed commit)
         run: |
