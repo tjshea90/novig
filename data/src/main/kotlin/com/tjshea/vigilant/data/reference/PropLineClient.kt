@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.match.PlayerNames
 import com.tjshea.vigilant.data.scanner.League
 import com.tjshea.vigilant.data.scanner.MarketFamily
 import com.tjshea.vigilant.data.scanner.ScanSettings
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withPermit
@@ -363,7 +364,7 @@ class PropLinePropsSource(private val client: PropLineClient) : ReferenceSource 
                         val markets = toBuy[m.event.eventId].orEmpty()
                         if (markets.isEmpty()) return@mapNotNull null
                         val eventId = m.event.eventId
-                        kotlinx.coroutines.async {
+                        async {
                             gate.withPermit {
                                 val r: Result<PropLineClient.Board?> = try {
                                     Result.success(client.eventBoard(sport, ref.id.removePrefix(PREFIX), markets, books))
