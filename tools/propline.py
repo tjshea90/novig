@@ -266,6 +266,8 @@ def cmd_speed(outdir):
     rows = []
     ages_lines = {}
     ages_props = {}
+    seen_lines = {}
+    seen_props = {}
     best_sport = None
     best_events = []
     for sp in ("basketball_nba", "hockey_nhl", "baseball_mlb", "football_nfl", "football_ncaaf", "basketball_wnba"):
@@ -288,6 +290,8 @@ def cmd_speed(outdir):
                         ls = parse_ts(o.get("last_seen_at") or "")
                         if t:
                             ages_lines.setdefault(bk["key"], []).append(now_ts - t)
+                        if ls:
+                            seen_lines.setdefault(bk["key"], []).append(now_ts - ls)
     # props of the three soonest events
     from_ev = sorted(best_events, key=lambda e: e.get("commence_time", ""))[:3]
     propkeys = {"basketball_nba": "player_points,player_rebounds,player_assists,player_threes,player_points_rebounds_assists,player_steals", "hockey_nhl": "player_goals,player_shots_on_goal,player_points,player_assists,goalie_saves,player_power_play_points",
@@ -304,15 +308,19 @@ def cmd_speed(outdir):
                     t = parse_ts(o.get("last_change_at") or "")
                     if t:
                         ages_props.setdefault(bk["key"], []).append(now_ts - t)
+                    ls = parse_ts(o.get("last_seen_at") or "")
+                    if ls:
+                        seen_props.setdefault(bk["key"], []).append(now_ts - ls)
         timed("+EV of one game (all markets, novig)", "/v1/sports/%s/events/%s/ev" % (best_sport, e["id"]), {"bookmakers": "novig"})
         timed("best-line of one game (all markets)", "/v1/sports/%s/events/%s/best-line" % (best_sport, e["id"]))
     out = ["PropLine Pro speed and freshness, measured %s UTC, plan %s" % (datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M"), tier_of(p["limit"])), ""] + rows + ["", "RESPONSE TIME (ms): n, p50, p90, max"]
     for name, v in lat.items():
         out.append("%-44s n=%-3d p50=%-6d p90=%-6d max=%d" % (name, len(v), pct(v, .5), pct(v, .9), max(v)))
-    for title, ages in (("GAME LINES: age of each quote when read (seconds since its price last CHANGED; a still price is old by nature)", ages_lines), ("PLAYER PROPS: same", ages_props)):
-        out += ["", title]
-        for bk, v in sorted(ages.items(), key=lambda kv: pct(kv[1], .5) or 0):
-            out.append("%-14s n=%-5d p50=%-7d p90=%-7d" % (bk, len(v), pct(v, .5), pct(v, .9)))
+    for title, ages, seen in (("GAME LINES", ages_lines, seen_lines), ("PLAYER PROPS", ages_props, seen_props)):
+        out += ["", "%s: seconds since the price last CHANGED (a quiet line is old by nature) | seconds since the book last DELIVERED the outcome (the real freshness: how recently PropLine confirmed it is still on the board)" % title]
+        for bk, v in sorted(ages.items(), key=lambda kv: pct(seen.get(kv[0], kv[1]), .5) or 0):
+            sv = seen.get(bk, [])
+            out.append("%-14s n=%-5d changed p50=%-6d p90=%-7d | delivered p50=%-5s p90=%-6s" % (bk, len(v), pct(v, .5), pct(v, .9), pct(sv, .5) and int(pct(sv, .5)), pct(sv, .9) and int(pct(sv, .9))))
     text = "\n".join(out) + "\n"
     open(os.path.join(outdir, "speed.txt"), "w").write(text)
     print(text)
