@@ -1,22 +1,24 @@
-# CHECKPOINT 3443 — read me first, then TASKS.md
+# CHECKPOINT 3444 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T17:09:54Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-95eefe49-t2qp21` · **builds on:** `0307338bd` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T17:20:38Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-95eefe49-t2qp21` · **builds on:** `f8ff545af` (this checkpoint is the commit after it)
 
 ## Just done
-TCL49: phone-only +EV books-agree filters built, data test green, app compiles
+TCL50 dead-man switch: deadman.py (+selftest), deadman.yml, coord.py/capture_inbox/resume hooks, DEADMAN.md, CLAUDE.md rule
 
 ## Do this next
-ship v0.114.7 with TCL49 + ParlayAPI KeyPool; confirm v0.114.6 record-release
+dispatch deadman.yml once to confirm it runs and state.json appears; ship v0.114.7 (TCL49 + KeyPool); confirm v0.114.6 record-release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M CLAUDE.md
      M TASKS.md
 
 ## Last ten checkpoints
 ```
+  db1a6a54f ckpt 3443: TCL49: phone-only +EV books-agree filters built, data test green, app compi
   614fb31a1 ckpt 3442: forced lease, started chat watcher, replied to Tj; wrote TCL48
   d4b9aa365 ckpt 3441: session handoff: v0.114.5 released; v0.114.6 (Kalshi key send) building; Pa
   871c3d795 ckpt 3440: TCL47: ParlayAPI paid key goes first (KeyPool), engine reads plans hourly
@@ -26,7 +28,6 @@ ship v0.114.7 with TCL49 + ParlayAPI KeyPool; confirm v0.114.6 record-release
   9b7042126 ckpt 3436: TCL45a: Kalshi key to GitHub secrets, engine signer + socket; app sends it
   d822fa174 ckpt 3435: engine start log shows how many keys each secret holds
   4ee06d0a5 ckpt 3434: pre-release: v0.114.5: the chat refreshes the moment the app comes back aft
-  e778af458 ckpt 3433: pre-ship: v0.114.5: the chat refreshes the moment the app comes back after 
 ```
 
 (4 automatic checkpoint(s) since the last deliberate one — the
