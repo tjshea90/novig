@@ -232,7 +232,7 @@ class ScanStudy(
      * One finished Vigilant scan ([result]): the +EV bets its feed lists, the same way. A bet CNO listed too is the same bet (one record, looks from both);
      * Vigilant's own record of it (its fair line's method and books) is kept beside CNO's. Returns the bets first listed.
      */
-    suspend fun observeVigilant(result: ScanResult, s: ScanSettings): Int = mutex.withLock {
+    suspend fun observeVigilant(result: ScanResult, s: ScanSettings, wideFloor: Double? = null): Int = mutex.withLock {
         if (!s.scanStudy || result.partial) return@withLock 0
         val now = clock()
         if (result.computedAtMs == lastVigAt) return@withLock 0
@@ -245,25 +245,33 @@ class ScanStudy(
         if (!same) active.values.forEach { it.listed.remove(Sight.VIGILANT) }
         val seen = HashSet<String>()
         var created = 0
-        for (o in result.feed(s)) {
+        // The GitHub engine logs the lines the list did NOT show as well (Tj, 2026-10-16: "save every single bet scanned ... whether it takes the bet or not, even bets not shown in the scanner window"): every
+        // priced line within [wideFloor] of break-even (the near misses are what tell whether a rule is too strict), each carrying why it was not shown. The phone passes null and logs only what its list shows.
+        val shownList = result.feed(s)
+        val shownKeys = shownList.mapTo(HashSet()) { it.key }
+        val hidden: List<Pair<Opportunity, String>> = if (wideFloor == null) emptyList() else result.opportunities.asSequence()
+            .filter { it.key !in shownKeys && (it.evPercent ?: -9.0) >= wideFloor && !it.isLive && it.quote != null && it.fairProbability != null && it.league.novigName in s.leagues }
+            .sortedByDescending { it.evPercent ?: -9.0 }.take(WIDE_MAX).map { it to hiddenReason(it, s) }.toList()
+        for ((o, why) in shownList.map { it to null as String? } + hidden) {
             val q = o.quote ?: continue
             val fair = o.fairProbability ?: continue
             if (o.isLive || o.event.startsTs <= now) continue
             val starts = o.event.startsTs
             val identity = PlacedIndex.identity(o.event.description, o.marketLabel, o.selection)
             val fallback = "v|${o.key}"
+            fun mark(a: AtBet) = if (why == null) a else a.copy(rules = "NOT SHOWN ($why) · " + (a.rules ?: ""))
             val sight = Sight(
                 Sight.VIGILANT, o = Odds.probabilityToAmerican(q.price.coerceIn(0.001, 0.999)), ev = q.evPercent, f = fair,
                 b = o.fair?.booksUsed?.size, a = o.depth?.dollarCost,
             )
             var a = find(identity, o.league.displayName, starts, fallback)
             if (a == null) {
-                val atBet = AtBets.opportunity(o, s, now, AtBet.HOW_STUDY, version())
+                val atBet = mark(AtBets.opportunity(o, s, now, AtBet.HOW_STUDY, version()))
                 val bet = BetTracker.opportunityBet(o, STUDY_STAKE, null, atBet, idOf(identity, fallback, starts), now) ?: continue
                 a = register(bet, identity, null, now, checked = false)
                 created++
             } else if (!a.vigRecorded) {
-                queue(a, Line(Line.VIG, a.id, now, a = AtBets.opportunity(o, s, now, AtBet.HOW_STUDY, version())))
+                queue(a, Line(Line.VIG, a.id, now, a = mark(AtBets.opportunity(o, s, now, AtBet.HOW_STUDY, version()))))
                 a.vigRecorded = true
             }
             seen += a.id
@@ -277,6 +285,19 @@ class ScanStudy(
         if (same) sweepGone(Sight.VIGILANT, Sight.GONE_VIGILANT, seen, now)
         maybeFlush(now)
         created
+    }
+
+    /** Why the list under [s] did not show [o]: the feed's own filters, in the feed's order ([com.tjshea.vigilant.data.scanner.ScanResult.feed]). */
+    private fun hiddenReason(o: Opportunity, s: ScanSettings): String {
+        val ev = o.evPercent ?: return "no edge could be worked out"
+        return when {
+            ev <= 0.0 -> "not +EV (${String.format(java.util.Locale.US, "%.1f", ev * 100)}%)"
+            ev < s.minEvPercent -> "edge under the ${String.format(java.util.Locale.US, "%.1f", s.minEvPercent * 100)}% minimum"
+            ev > s.maxEvPercent -> "edge over the cap"
+            (o.depth?.dollarCost ?: 1.0) < 0.10 -> "under 10 cents available"
+            !s.withinOdds(o.quote!!.cost) -> "odds outside the window"
+            else -> "market type not selected or league waiting"
+        }
     }
 
     /**
