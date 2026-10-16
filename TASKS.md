@@ -5475,3 +5475,8 @@ Tj: "make a permanent rule saved to the repo that if I ever stop responding or c
 - [x] TCL50c Sessions/routines: coord.py acquire, resume.sh, rotation.py and capture of routines refuse to work while STOP.json is set (tell Tj's next message resumes: clears STOP, re-enables workflows, on:true only by his word); scheduled triggers: stop via update_trigger enabled=false where a session can, else routines see STOP and exit at once without model work.
 - [x] TCL50d Resume path: Tj's next message in ANY account/app chat clears STOP (capture_inbox.sh / chat), re-enables workflows, tells him what was off. Never auto-restart the engine's trading without his word.
 - [x] TCL50e (live: deadman.yml run 38938976946 green) CLAUDE.md permanent rule, tests (python selftest for the state machine), ship batched.
+
+## TCL51: update install glitches (Tj, chat t1792174636888 screenshots + t1792174701992, 2026-10-16)
+Screenshots: Install update froze the app ("Vigilant isn't responding") at a third of the progress bar, then "Update failed: timeout"; he then updated successfully ("a little glitchy on the update method"). Cause: the shared OkHttp client's 30 s callTimeout/20 s readTimeout applied to the APK download; per-chunk progress state flooded recomposition; the PackageInstaller copy+fsync ran on the scope's thread.
+- [x] TCL51a AppUpdater: dedicated download client (no total timeout, 60 s stall), Range resume up to 4 tries, progress throttled (250 ms, whole percents), commit() on IO. UpdateBarUiTest green.
+- [ ] TCL51b Ship v0.114.8; ask Tj whether the next update goes smoothly; if the freeze persists, get Diagnostics (ANR trace) rather than guess.
