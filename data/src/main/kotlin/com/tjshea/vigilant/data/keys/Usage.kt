@@ -553,7 +553,13 @@ class KeyPool(
         }
         while (true) {
             val all = keys()
-            val open = all.filter { it !in tried }
+            // A pace is ParlayAPI's: a paid key (its allowance, once read, is above the free 1,000) goes first, free keys after (Tj, 2026-10-16: "I upgraded one of my parlayapi keys ... start using it over the free ones"); the order is otherwise Tj's.
+            val open = all.filter { it !in tried }.let { o ->
+                if (pace == null) o else {
+                    val ks = meter.flow.value.providers[policy.id]?.keys
+                    o.sortedBy { k -> ks?.get(k)?.let { u -> if (pace.isFree(u)) 1 else 0 } ?: 1 }
+                }
+            }
             val key = meter.pick(policy, open, cost, held)
                 ?: if (held !== UsageMeter.NO_FLOOR && open.isNotEmpty() && meter.pick(policy, open, cost) != null) {
                     throw CreditsHeldBackException(heldBackMessage(all, open, cost, reserve, pace))

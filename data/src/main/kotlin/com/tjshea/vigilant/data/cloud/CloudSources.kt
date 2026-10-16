@@ -122,6 +122,9 @@ class CloudSources(
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keys(CloudKeys.ODDS_API) }, usage), json)
     private val bookProps = OddsApiPropsSource(oddsApi)
     private val parlayPool = KeyPool(QuotaPolicy.PARLAY, { keys(CloudKeys.PARLAY) }, usage)
+    /** ParlayAPI's own account read per key (free): plan and credits into the meter, so an upgraded key is found and goes first ([KeyPool]). The engine asks hourly ([refreshParlayAccounts]). */
+    private val parlayAccount = com.tjshea.vigilant.data.reference.ParlayAccount(http, { keys(CloudKeys.PARLAY) }, usage, json)
+    suspend fun refreshParlayAccounts(force: Boolean = false): Int = if (has(CloudKeys.PARLAY)) parlayAccount.refresh(force, minAgeMs = 50 * 60_000L) else 0
     private val parlayQuality = ParlaySourceQuality(http, json)
     private val parlayOdds = TheOddsApiClient(http, parlayPool, json, baseUrl = OddsFeed.PARLAY.base, feed = OddsFeed.PARLAY, quality = parlayQuality)
     private val parlayProps = ParlayPropsSource(parlayOdds, injuries)
