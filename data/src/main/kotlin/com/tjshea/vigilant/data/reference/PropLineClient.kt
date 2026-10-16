@@ -191,9 +191,35 @@ class PropLineClient(
             if (wait > 0) delay(wait)
             lastCallAt = System.currentTimeMillis()
         }
+        // A heavy answer (a whole league's game lines from every book, a game's 500 prop markets) can outlast the app's 30-second call limit, and PropLine answers 502/503/504 under load (2026-10-16: the first
+        // scan on the Pro key got "PropLine NFL: timeout" and "HTTP 504" and PropLine, the plan Tj pays for, delivered nothing that scan): the call gets a minute, and a timeout or a gateway error is tried again
+        // twice (a second or two apart) before it is an error.
+        var attempt = 0
+        while (true) {
+            try {
+                return callOnce(path, params, notFound, parse)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: java.io.IOException) {
+                if (++attempt > RETRIES) throw e
+            } catch (e: TransientHttp) {
+                if (++attempt > RETRIES) throw ReferenceException("PropLine HTTP ${e.code}")
+            }
+            delay(1_500L * attempt)
+        }
+    }
+
+    private class TransientHttp(val code: Int) : Exception("HTTP $code")
+
+    /** The app's client with a minute for a call (the shared one gives 30 s), keeping its interceptors. */
+    private val slowHttp: OkHttpClient by lazy {
+        http.newBuilder().callTimeout(75, java.util.concurrent.TimeUnit.SECONDS).readTimeout(60, java.util.concurrent.TimeUnit.SECONDS).build()
+    }
+
+    private suspend fun <T> callOnce(path: String, params: List<Pair<String, String>>, notFound: T, parse: (String) -> T): Answer<T> {
         return pool.execute(cost = 1) { key ->
             val url = "$baseUrl$path".toHttpUrl().newBuilder().apply { params.forEach { (k, v) -> addQueryParameter(k, v) } }.build()
-            http.newCall(Request.Builder().url(url).header("X-API-Key", key).get().build()).await().use { response ->
+            slowHttp.newCall(Request.Builder().url(url).header("X-API-Key", key).get().build()).await().use { response ->
                 val body = response.body?.string().orEmpty()
                 val remaining = response.header("X-Daily-Remaining")?.trim()?.toIntOrNull()
                 val used = response.header("X-Daily-Used")?.trim()?.toIntOrNull()
@@ -208,6 +234,7 @@ class PropLineClient(
                     response.code == 403 -> throw ReferenceException("PropLine: that needs a paid plan (HTTP 403)")
                     // A league out of season or a game that's gone: not the key's fault.
                     response.code == 404 -> KeyAttemptResult.Success(Answer(notFound, remaining, used), remaining = remaining, used = used)
+                    response.code in 502..504 -> throw TransientHttp(response.code)
                     !response.isSuccessful -> throw ReferenceException("PropLine HTTP ${response.code}")
                     else -> KeyAttemptResult.Success(Answer(parse(body), remaining, used), remaining = remaining, used = used)
                 }
@@ -225,6 +252,9 @@ class PropLineClient(
         )
 
         const val REUSE_MS = 2 * 60_000L
+
+        /** A timeout or a 502/503/504 is tried again this many times. */
+        const val RETRIES = 2
 
         /** Novig's key on PropLine: asked for alongside the books, never one of them. */
         const val NOVIG = "novig"
