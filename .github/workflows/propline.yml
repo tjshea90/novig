@@ -1,0 +1,59 @@
+name: PropLine Pro (Tj, 2026-10-16)
+
+# Free, no Claude usage. Tj's PropLine Pro key (25,000 requests a day, resolved-prop exports) is one of the keys in the PROPLINE_API_KEY secret (the phone's "send my API keys" writes them all);
+# tools/propline.py finds the paid one by its own X-Daily-Limit. Tasks (workflow_dispatch):
+#   plans    which key is paid, what it unlocks (log only)
+#   probe    one call to every Pro endpoint on a real event; the answers (keyless) go to the `propline-samples` Release so the app's parsers can be checked against real shapes
+#   archive  the resolved-prop archive: /v1/exports/resolved-props per sport (gzip CSV with closing AND opening lines) + the free accuracy report, to a `propline-archive-YYYY-MM-DD` Release (never delete)
+#   backfill archive over the whole 90 days Pro can reach (run once when the key arrives)
+# The schedule runs `archive` daily (window: the last 3 days, so a late grade is never missed; rows repeat across days, join on outcome_id).
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "plans | probe | archive | backfill"
+        default: "plans"
+  schedule:
+    - cron: "37 9 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: propline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: PropLine task
+        env:
+          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          TASK: ${{ github.event.inputs.task || 'archive' }}
+        run: |
+          set -u
+          python3 -I tools/propline.py selftest
+          day=$(date -u +%F)
+          case "$TASK" in
+            plans) python3 -I tools/propline.py plans ;;
+            probe)
+              python3 -I tools/propline.py probe out/probe
+              if [ -f out/probe/REPORT.txt ]; then
+                gh release view propline-samples >/dev/null 2>&1 || gh release create propline-samples --title "PropLine Pro samples (keyless)" --notes "Real answers of every Pro endpoint, trimmed; written by .github/workflows/propline.yml (task probe)."
+                gh release upload propline-samples out/probe/* --clobber
+              fi ;;
+            archive|backfill)
+              if [ "$TASK" = backfill ]; then days=90; else days=3; fi
+              python3 -I tools/propline.py archive out/archive --days "$days"
+              if ls out/archive/*.csv.gz >/dev/null 2>&1; then
+                tag="propline-archive-$day"
+                gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "PropLine resolved-prop archive $day" --notes "Resolved props with closing and opening lines (Pro export). Never delete. Filter the (Watermark) canary rows."
+                gh release upload "$tag" out/archive/* --clobber
+              fi ;;
+          esac
