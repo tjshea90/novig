@@ -169,8 +169,8 @@ class AutoBettor(
         val rules = AutoBet.rules(settings)
         // Whoever calls, a halted or switched-off auto-bet places nothing.
         if (!settings.autoBet) return finish(now, Report(), blocker = "Auto-bet is off")
-        // The GitHub engine places the bets (Tj, 2026-10-15, TCL20d) from the same subaccount: the phone's auto-bet stands down so one decision is never two orders.
-        if (settings.gates.cloudTrading != com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF) return finish(now, Report(), blocker = "The GitHub engine is placing the bets (Settings › Cloud scan › Engine trading)")
+        // The GitHub engine places the bets of Vigilant's own scan (Tj, 2026-10-15, TCL20d), so that lane ([runTennis]) stands down while it trades. THIS lane is CrazyNinjaOdds' list, which the engine never
+        // reads (Tj, 2026-10-16: "I like it. the auto bet system should still use it as a source"): it keeps betting, and never takes a market the engine's own ledger holds open (below).
         // The kill switch (Tj, 2026-10-05): whoever calls, and whatever the settings passed in say, a stopped app places nothing.
         if (settings.killed || c.settingsStore.flow.value?.killed == true) return finish(now, Report(), blocker = "Stopped by the STOP button: tap RESUME on the red bar to run again")
         settings.autoBetHalted?.let { return finish(now, Report(halted = true), blocker = "stopped: $it (the Auto-bet tab › Resume auto-bet)") }
@@ -242,7 +242,9 @@ class AutoBettor(
         }
 
         // One bet per Novig market (either side) while any is open: the other side of a line is never bet after the first.
-        val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId }
+        val openMarkets = c.tracker.all().filter { it.status == BetStatus.PENDING && it.marketId.isNotBlank() }.mapTo(HashSet()) { it.marketId } +
+            // What the GitHub engine holds open (its ledger, as the phone last read it): one bet a market across both systems.
+            state.cloudUi.trades?.entries.orEmpty().filter { it.status == "OPEN" || it.status == "UNCONFIRMED" }.map { it.marketId }
         val limits = limitsOf(rules, settings)
         // One game is one event (Tj, 2026-10-04: "auto bet placed bets on a team at +5, then the same team at +6, then the same team at +10"): what is at risk
         // on each game across all its markets, open bets and resting bids, as the cycle began. The placer checks it again on its own read of the Tracker

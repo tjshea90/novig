@@ -55,7 +55,7 @@ def lines(src, out):
             a = b.get("atBet") or {}
             rules = a.get("rules") or ""
             hidden = rules.startswith("NOT SHOWN (")
-            why = rules[len("NOT SHOWN ("):rules.index(")")] if hidden else ""
+            why = rules[len("NOT SHOWN ("):rules.index(") \u00b7 ")] if hidden and ") \u00b7 " in rules else ""
             ls = looks.get(i, [])
             evs = [x["s"].get("ev") for x in ls if x["s"].get("ev") is not None]
             rs = res.get(i, {})

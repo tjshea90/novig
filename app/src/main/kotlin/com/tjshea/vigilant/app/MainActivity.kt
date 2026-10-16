@@ -588,8 +588,8 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
     EV("+EV", Icons.Filled.Star),
     /** Chat with the Claude session that is working, and everything Claude and the engine tell you (moved out of Settings, 2026-10-16). */
     CLAUDE("Claude", Icons.Filled.Email),
-    /** Phone-side views that the engine has replaced as the main way to work: reachable from Settings, not in the bar. */
-    CNO("CNO", drawable = R.drawable.ic_cno, inBar = false),
+    /** The CrazyNinjaOdds list stays in the bar (Tj, 2026-10-16: "I like it"); the phone's Auto-bet view is the one that moved to Settings. */
+    CNO("CNO", drawable = R.drawable.ic_cno),
     /** Its own tab since 2026-10-02 (Tj: "maybe make the auto bet feature its own section instead of buried in the settings"). */
     AUTOBET("Auto-bet", drawable = R.drawable.ic_autobet, inBar = false),
     /** Make orders (Tj, 2026-10-03: "It may need a separate section in the app"; RESEARCH.md §70): bids posted under Vigilant's fair. */
