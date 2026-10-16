@@ -314,7 +314,7 @@ class PropLineClientTest {
     }
 
     @Test
-    fun `props are bought per game for the stats Novig lists, and re-used for five minutes (the game is five hours away; two minutes inside three hours)`() = runTest {
+    fun `props are bought per game for the stats Novig lists, and re-used for five minutes for a far game`() = runTest {
         routes["/v1/sports/americanfootball_nfl/events"] = { ok(board) }
         routes["/v1/sports/americanfootball_nfl/events/555/odds"] = { ok(props) }
         val source = PropLinePropsSource(client())
