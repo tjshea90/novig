@@ -294,3 +294,4 @@ day that changes.
 | v0.112.0 | code 292 | 2026-10-16T00:55Z | v0.112.0: the GitHub engine posts bids too; the phone syncs everything on open and shows the engine's bets and bids
 | v0.113.0 | code 293 | 2026-10-16T01:30Z | v0.113.0: app updates from GitHub: notification, Install update button, in-app download and install
 | v0.113.1 | code 294 | 2026-10-16T01:57Z | v0.113.1: the engine saves every scanned bet (shown or not) and every bid; flat datasets for analysis
+| v0.113.2 | code 295 | 2026-10-16T02:48Z | v0.113.2: the engine runs 8 am to 1 am Eastern; the dashboard shows last-known readings as such when the engine is not running
