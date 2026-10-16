@@ -297,3 +297,4 @@ day that changes.
 | v0.113.2 | code 295 | 2026-10-16T02:48Z | v0.113.2: the engine runs 8 am to 1 am Eastern; the dashboard shows last-known readings as such when the engine is not running
 | v0.114.0 | code 296 | 2026-10-16T03:22Z | v0.114.0: the app as a monitor and control center: Engine and Claude tabs, no share buttons, chat read receipts and attachments, delete messages
 | v0.114.1 | code 297 | 2026-10-16T04:08Z | v0.114.1: chat keeps its input pinned above the keyboard and the thread scrolling
+| v0.114.2 | code 298 | 2026-10-16T04:19Z | v0.114.2: chat New chat, Clear chat and earlier chats; chat always scrolls to the newest message
