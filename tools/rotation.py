@@ -242,6 +242,22 @@ def selftest():
     assert slot_of("b", {"accounts": [{"tag": "a"}, {"tag": "b"}]}) == 1 and slot_of("z", {"accounts": []}) is None
     assert cron_for(1) == "CRON_TZ=America/New_York 20 13 * * *"
     assert today_et(datetime.datetime(2026, 10, 16, 3, 0, tzinfo=datetime.timezone.utc)) == datetime.date(2026, 10, 15), "ET date, not UTC"
+    # chat hand-over (Tj, 2026-10-16): roster a/b/c own the 07:20 / 13:20 / 19:20 ET windows (11:20Z / 17:20Z / 23:20Z)
+    cz = lambda h, mi, d=16: dt.datetime(2026, 10, d, h, mi, tzinfo=z)
+    ci = lambda who, h, mi, sub="rotation-checkin": ({"from": who + "/x", "at": cz(h, mi).isoformat().replace("+00:00", "Z")}, sub)
+    # b's window, b is me: OWNER; a 10-min-to-go look at c's slot: b is told SOON
+    assert chat_state(cz(18, 0), roster, [ci("b", 17, 21)], {}, "b")["state"] == "OWNER"
+    assert chat_state(cz(23, 12), roster, [ci("b", 17, 21)], {}, "b")["state"] == "SOON"
+    assert chat_state(cz(23, 12), roster, [], {}, "c")["state"] == "OWNER"                    # c's own slot is coming: not told to hand over
+    # a (not the owner) while b's routine has checked in: stand down; before b checked in / never did: carry on
+    assert chat_state(cz(18, 0), roster, [ci("b", 17, 21)], {}, "a")["state"] == "STANDDOWN"
+    assert chat_state(cz(17, 25), roster, [], {}, "a")["state"] == "CONTINUE"                  # 5 min after the slot: wait for it
+    assert chat_state(cz(18, 0), roster, [], {}, "a")["state"] == "CONTINUE"                   # 40 min on, no trace: not waited for
+    assert chat_state(cz(18, 0), roster, [ci("b", 17, 21, "rotation-standdown")], {}, "a")["state"] == "CONTINUE"   # a stand-down is not serving the chat
+    # b out of usage (away.json): its window is nobody's, a keeps the chat; and nobody is told to hand over to an away account
+    assert chat_state(cz(18, 0), roster, [], {"b": "2026-10-17T02:00:00Z"}, "a")["state"] == "CONTINUE"
+    assert chat_state(cz(23, 12), roster, [], {"c": "2026-10-17T02:00:00Z"}, "b")["state"] == "OWNER"
+    assert chat_state(cz(12, 0), {"accounts": [{"tag": "a"}]}, [], {}, "a")["state"] == "CONTINUE"
     print("selftest ok")
     return 0
 
