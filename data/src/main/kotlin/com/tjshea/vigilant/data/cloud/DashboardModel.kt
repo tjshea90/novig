@@ -25,8 +25,8 @@ object DashboardModel {
         if (st == null) return Headline("Not connected", Tone.NEUTRAL, "No word from the GitHub engine yet. Save the GitHub token in Settings › Cloud scan, and switch the cloud scan on.")
         val beat = if (st.heartbeatMs > 0) now - st.heartbeatMs else Long.MAX_VALUE
         return when {
-            st.idle && beat < STALE_MS -> Headline("Idle", Tone.NEUTRAL, st.problem ?: "The engine is switched off (the phone's switch) or outside its hours (8 am to 10 pm Eastern).")
-            beat >= STALE_MS -> Headline("Not responding", Tone.BAD, "The engine's last heartbeat was ${ago(beat)}. A new one is started within 15 minutes while the cloud scan is on and it is 8 am to 10 pm Eastern.")
+            st.idle && beat < STALE_MS -> Headline("Idle", Tone.NEUTRAL, st.problem ?: "The engine is switched off (the phone's switch) or outside its hours (8 am to 1 am Eastern).")
+            beat >= STALE_MS -> Headline("Not responding", Tone.BAD, "The engine's last heartbeat was ${ago(beat)}. A new one is started within 15 minutes while the cloud scan is on and it is 8 am to 1 am Eastern.")
             st.problem != null -> Headline("Problem", Tone.BAD, st.problem)
             st.tradeStopped.isNotBlank() -> Headline("Trading stopped", Tone.WARN, st.tradeStopped)
             st.walletSleep.isNotBlank() -> Headline("Sleeping: wallet empty", Tone.WARN, st.walletSleep)

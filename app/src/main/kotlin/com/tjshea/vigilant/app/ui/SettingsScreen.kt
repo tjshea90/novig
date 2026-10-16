@@ -1536,7 +1536,7 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
         s.cloudScan, tag = "cloudScanSwitch", enabled = u.hasToken,
     ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudScan = v)) } }
     SwitchRow(
-        "Only 8 am to 10 pm Eastern", "GitHub's engine starts by itself at 8:00 and stops at 22:00 America/New_York every day (daylight saving included). Off: it runs round the clock.",
+        "Only 8 am to 1 am Eastern", "GitHub's engine starts by itself at 8:00 and stops at 1:00 the next morning America/New_York every day (daylight saving included). Off: it runs round the clock.",
         s.cloudHours, tag = "cloudHoursSwitch", enabled = u.hasToken,
     ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudHours = v)) } }
     if (s.cloudScan && !s.cloudDrives) {
@@ -2779,7 +2779,7 @@ private fun EngineTradingSection(state: UiState, onUpdate: ((ScanSettings) -> Sc
         when (g.cloudTrading) {
             com.tjshea.vigilant.data.scanner.CloudTradeMode.OFF -> "GitHub only lists bets. Paper first is the safe way in: it records what it would have bet so the results can be checked before any money moves."
             com.tjshea.vigilant.data.scanner.CloudTradeMode.PAPER -> "GitHub decides and sizes bets with your Auto-bet rules and writes the orders it WOULD have sent. No money moves. Your phone's auto-bet stands down."
-            com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE -> "GitHub places the bets itself, 8 am to 10 pm Eastern, from the Vigilant subaccount, sized by Kelly. Your phone's auto-bet stands down. It stops by itself on a location refusal, a loss stop or a short wallet, and says why below."
+            com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE -> "GitHub places the bets itself, 8 am to 1 am Eastern, from the Vigilant subaccount, sized by Kelly. Your phone's auto-bet stands down. It stops by itself on a location refusal, a loss stop or a short wallet, and says why below."
         } + if (!u.tradeKeyOnGitHub) " Live needs the trading key above on GitHub." else "",
     )
     if (g.cloudTrading == com.tjshea.vigilant.data.scanner.CloudTradeMode.LIVE) {

@@ -53,7 +53,7 @@ jobs:
           fi
           # A manual start (the phone's Start button, a hand-over, Claude) always runs: the engine itself idles out if the switch is off.
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then RUN=true; fi
-          # The engine's hours (Tj, 2026-10-15): 08:00 inclusive to 22:00 exclusive, America/New_York, for the schedule AND for dispatches (a hand-over at 21:59 must not start an engine).
+          # The engine's hours (Tj, 2026-10-15): 08:00 inclusive to 01:00 exclusive the next morning (Tj, 2026-10-16), America/New_York, for the schedule AND for dispatches (a hand-over at 21:59 must not start an engine).
           # The phone's switch settings.gates.cloudHours (default true) turns the window off. Same rule as data/.../cloud/EngineHours.kt.
           if [ "$RUN" = "true" ]; then
             HOURS=$(python3 - <<'PY'
@@ -66,7 +66,7 @@ jobs:
           except Exception:
               pass
           now = datetime.datetime.now(ZoneInfo("America/New_York")).time()
-          print("open" if (not use) or (datetime.time(8, 0) <= now < datetime.time(22, 0)) else "closed")
+          print("open" if (not use) or (now >= datetime.time(8, 0) or now < datetime.time(1, 0)) else "closed")
           PY
             )
             echo "engine hours: $HOURS"

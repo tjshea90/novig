@@ -104,7 +104,7 @@ class CloudEngine(
     /** What the engine's trading says about itself in the heartbeat. */
     data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null)
 
-    /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once; WINDOW: the engine's hours (08:00-22:00 Eastern, [EngineHours]) are over or not yet begun: no hand-over, the schedule starts the next engine when they open. */
+    /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once; WINDOW: the engine's hours (08:00-01:00 Eastern, [EngineHours]) are over or not yet begun: no hand-over, the schedule starts the next engine when they open. */
     enum class End { TIME_UP, IDLE, ADDRESS, WINDOW }
 
     @Volatile var passes = 0
@@ -217,7 +217,7 @@ class CloudEngine(
             }
             offSince = 0L
             if (cfg.settings.cloudHours && !EngineHours.isOpen(clock())) {
-                log("outside the engine's hours (08:00-22:00 Eastern): ending")
+                log("outside the engine's hours (08:00-01:00 Eastern): ending")
                 problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = true))
                 return End.WINDOW
             }
@@ -315,7 +315,7 @@ class CloudEngine(
             if (cfg.settings.cloudHours && !EngineHours.isOpen(now)) {
                 windowEnd = true
                 restartReason = "engine hours over"
-                log("the engine's hours (08:00-22:00 Eastern) are over: this job ends")
+                log("the engine's hours (08:00-01:00 Eastern) are over: this job ends")
                 job.cancel(CancellationException(restartReason))
                 break
             }
