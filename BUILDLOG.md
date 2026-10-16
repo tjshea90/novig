@@ -291,3 +291,4 @@ day that changes.
 | v0.109.1 | code 289 | 2026-10-15T22:09Z | v0.109.1: API keys added or changed in the phone app upload to GitHub secrets by themselves while the cloud scan is on
 | v0.110.0 | code 290 | 2026-10-15T22:23Z | v0.110.0: engine governs APIs + advice; Claude messages and settings requests reach the phone; API switches mirror both ways
 | v0.111.0 | code 291 | 2026-10-15T23:52Z | v0.111.0: chat with Claude in the app; away-account cover; volume loop
+| v0.112.0 | code 292 | 2026-10-16T00:55Z | v0.112.0: the GitHub engine posts bids too; the phone syncs everything on open and shows the engine's bets and bids
