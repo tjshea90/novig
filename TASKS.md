@@ -5415,3 +5415,7 @@ Tj: "I don't see the cno scanner. is it still on the app? I like it. the auto be
 - [x] TCL37a CNO tab back in the bar (Auto-bet stays under Settings).
 - [x] TCL37b The phone's auto-bet CNO lane keeps betting while the engine trades; one bet a market across both (the engine's open ledger markets are skipped). `AutoBettorTest`.
 - [x] TCL37c engine-grade.yml YAML fixed (a colon in a step name broke it from 01:46Z to 04:45Z: no grading ran); lines_dataset not_shown_why parses nested parentheses.
+
+## TCL38: why no bids listed, shouldn't it reset itself (Tj, chat t1792163858660, 2026-10-16)
+- [x] Cause: engine's picked-off guard halted the bid desk at 15:14Z for 3 h (5 of last 8 fills picked off); it restarts itself at ~18:14Z. SportsGameOdds key answers 403 Inactive (fair is from weaker feeds) and BoltOdds REST 429: likely why fills were picked off.
+- [ ] TCL38b WATCH: desk restarts ~18:14Z; if fills are picked off again with SGO inactive, tighten bids' fair-source requirement rather than shortening the halt. Tell Tj to renew/replace the SGO key.
