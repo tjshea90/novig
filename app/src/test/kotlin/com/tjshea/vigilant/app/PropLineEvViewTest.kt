@@ -12,7 +12,7 @@ class PropLineEvViewTest {
 
     @Test
     fun filtersSortsAndDropsStartedGames() {
-        val rows = listOf(row(ev = 2.0), row(ev = 6.0, player = "A"), row(ev = 4.0, league = "NHL", player = "B"), row(ev = 9.0, starts = now - 1), row(ev = 0.6, player = "", market = "totals", outcome = "Over", point = 220.5))
+        val rows = listOf(row(ev = 2.0, outcome = "Yes"), row(ev = 6.0, player = "A", outcome = "Yes"), row(ev = 4.0, league = "NHL", player = "B", outcome = "Yes"), row(ev = 9.0, starts = now - 1, outcome = "Yes"), row(ev = 0.6, player = "", market = "totals", outcome = "Over", point = 220.5))
         assertEquals(listOf(6.0, 4.0, 2.0), PropLineEvView.select(rows, "All", 1.0, "All", now).map { it.evPct })
         assertEquals(listOf(6.0, 2.0), PropLineEvView.select(rows, "NBA", 1.0, "All", now).map { it.evPct })
         assertEquals(listOf(0.6), PropLineEvView.select(rows, "All", 0.5, "Game lines", now).map { it.evPct })
@@ -21,10 +21,20 @@ class PropLineEvViewTest {
 
     @Test
     fun longshotsAreCutByTheOddsLimit() {
-        val rows = listOf(row(ev = 28.0, player = "A").copy(price = 1941), row(ev = 5.0, player = "B").copy(price = 250), row(ev = 4.0, player = "C").copy(price = -120))
+        val rows = listOf(row(ev = 28.0, player = "A", outcome = "Yes").copy(price = 1941), row(ev = 5.0, player = "B", outcome = "Yes").copy(price = 250), row(ev = 4.0, player = "C", outcome = "Yes").copy(price = -120))
         assertEquals(listOf(5.0, 4.0), PropLineEvView.select(rows, "All", 0.5, "All", now, 300).map { it.evPct })
         assertEquals(listOf(4.0), PropLineEvView.select(rows, "All", 0.5, "All", now, 150).map { it.evPct })
         assertEquals(3, PropLineEvView.select(rows, "All", 0.5, "All", now).size)
+    }
+
+    @Test
+    fun aPropOverIsRatedAfterVigilantsOwnCut() {
+        // PropLine +7% on an Over at -105 with a 51% fair: 44% after the 7-point cut is a losing bet; an Under loses only 3 points; a game line is not cut.
+        val over = row(ev = 7.0)
+        assertEquals(true, PropLineEvView.calibratedEv(over) < 0)
+        assertEquals(0.51 * (1 + 100 / 105.0) * 100 - 100 - 3 * (1 + 100 / 105.0), PropLineEvView.calibratedEv(row(ev = 7.0, outcome = "Under")), 1e-9)
+        assertEquals(0.6, PropLineEvView.calibratedEv(row(ev = 0.6, player = "", market = "totals", point = 220.5)), 1e-9)
+        assertEquals(emptyList<Double>(), PropLineEvView.select(listOf(over), "All", 0.5, "All", now).map { it.evPct })
     }
 
     @Test
