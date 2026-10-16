@@ -54,6 +54,7 @@ jobs:
       - name: Grade
         env:
           SGO_API_KEY: ${{ secrets.SGO_API_KEY }}
+          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
         run: |
           set -o pipefail
           ls journal/*.jsonl >/dev/null 2>&1 || { echo "no study journal yet: nothing to grade"; mkdir -p newgrades; exit 0; }

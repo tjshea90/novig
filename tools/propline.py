@@ -224,6 +224,7 @@ def cmd_probe(outdir):
         st, h, data = request("/v1/sports/%s/events/%s/results" % (dsp, did), key, {"bookmakers": "novig,pinnacle"}); save("results", st, h, data)
         st, h, data = request("/v1/sports/%s/events/%s/odds/history" % (dsp, did), key, {"markets": "h2h", "bookmakers": "pinnacle", "changes_only": "true"}); save("history", st, h, data)
         st, h, data = request("/v1/sports/%s/events/%s/stats" % (dsp, did), key); save("stats", st, h, data)
+    st, h, data = request("/v1/sports/%s/scores" % dsp, key, {"daysFrom": "3"}); save("scores", st, h, data)
         st, h, data = request("/v1/sports/%s/events/%s/context" % (dsp, did), key); save("context", st, h, data)
         body = [{"ref": "probe1", "sport_key": dsp, "event_id": int(did) if str(did).isdigit() else did, "market": "h2h", "bookmaker": "pinnacle", "selection": g.get("home_team"), "side": g.get("home_team"), "price": -110, "stake": 1}]
         st, h, data = request("/v1/clv/grade", key, method="POST", body=body); save("clv_grade", st, h, data)
