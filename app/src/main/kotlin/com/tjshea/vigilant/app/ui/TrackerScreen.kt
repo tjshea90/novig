@@ -400,9 +400,6 @@ fun TrackerScreen(
             }
             when (view) {
                 TrackerView.STATS -> {
-                    if (bets.isNotEmpty()) {
-                        item(key = "shareBets") { ShareBetsCard(bets.size, { r -> r.fromMs(now)?.let { from -> bets.count { it.createdAtMs >= from } } ?: bets.size }, shareBusy, archiveNote, onShareBets) }
-                    }
                     if (periodBets.isEmpty()) {
                         item(key = "empty") { EmptyState(TrackerText.emptyStats(made, period == TrackerPeriod.ALL, bets.isEmpty()), if (made == MadeFilter.BIDS) BIDS_HINT else EMPTY_HINT) }
                     } else {

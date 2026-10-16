@@ -214,6 +214,8 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
         FEED, FAIR -> s.vigilantOn
         ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
         APIS -> true
+        // Central sections of their own since 2026-10-16 (the Engine and Claude tabs): not Settings pages any more.
+        DASHBOARD, CHAT, MESSAGES -> false
         PINNODDS, LIVEBIDS -> AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS   // Tj, 2026-10-09: "Stop using the pinnodds API"
         else -> true
     }
@@ -330,7 +332,7 @@ object SettingsSummary {
                 val keys = state.pinnwireKeys.size + state.pinnapiKeys.size + state.proplineKeys.size + state.parlayKeys.size + state.oddsApiKeys.size
                 if (keys == 0) "No feed keys saved" else "$keys feed key${if (keys == 1) "" else "s"} saved"
             }
-            SettingsPage.HELP -> "Share with Claude · Vigilant ${BuildConfig.VERSION_NAME}"
+            SettingsPage.HELP -> "Diagnostics · Vigilant ${BuildConfig.VERSION_NAME}"
         }
     }
 
@@ -443,8 +445,8 @@ fun SettingsScreen(
                 null -> SettingsHome(state, onOpen = go, onOpenAutoBet = onOpenAutoBet, onOpenBids = onOpenBids)
                 SettingsPage.SCANNING -> ScanningPage(s, onUpdate)
                 SettingsPage.DASHBOARD -> DashboardPage(state, onOpenCloudSettings = { go(SettingsPage.CLOUD) })
-                SettingsPage.CHAT -> ChatPage(state.claudeInbox.chat, state.chatWho, reportActions.sendChat, reportActions.setChatOpen)
-                SettingsPage.MESSAGES -> MessagesPage(state.claudeInbox, onMarkRead = reportActions.markClaudeRead, onOpen = { go(SettingsPage.valueOf(it)) })
+                // Moved out of Settings (Tj, 2026-10-16): the Engine and Claude tabs.
+                SettingsPage.CHAT, SettingsPage.MESSAGES -> Unit
                 SettingsPage.CLOUD -> CloudPage(state, reportActions, onUpdate)
                 SettingsPage.ALERTS -> AlertsPage(state, onUpdate)
                 SettingsPage.CNO -> CnoPage(s, onUpdate)
@@ -2020,12 +2022,12 @@ private fun ColumnScope.ResearchPage(state: UiState, reportActions: ReportAction
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
-    Intro("When something looks wrong, Share with Claude makes one file (kept under a size cap) with what the app recorded, for Claude to diagnose and fix.")
+    Intro("Claude reads your bets, bids, the engine's data and the scan study from GitHub by itself: there is nothing to share. What is left here is for looking at the app's own diagnostics.")
     // ---- Every bet and bid, kept day by day (Tj, 2026-10-11) -----------------------------
     SectionTitle("Bet history")
     Hint(
         "The app keeps a file for every day of bets and every day of bids (all the facts: odds, EV, books, sharp book, stars, liquidity, close, CLV, result). With this on it also copies each day to " +
-            "Downloads/Vigilant/bets, so nothing is lost if the app is cleared. Share them with Claude from Tracker › Stats › Share bets with Claude.",
+            "Downloads/Vigilant/bets, so nothing is lost if the app is cleared.",
     )
     SwitchRow(
         "Save each day's bets to Downloads", "Downloads/Vigilant/bets: one file for the bets and one for the bids of each day, updated as results and closing lines arrive.",
@@ -2033,14 +2035,9 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
     ) { v -> onUpdate { it.copy(vigGuards = it.vigGuards.copy(betArchive = v)) } }
     // ---- Diagnostics ---------------------------------------------------------------------
     SectionTitle("Diagnostics")
-    Hint(
-        "Tap Share with Claude: it makes one file with everything the app has recorded (errors with the code that threw them, every call's speed and failures by host, API usage, " +
-            "scan and cycle timings, what auto-bet and the sharp check decided, the app's own log) and a ranked list of what to fix and speed up, then opens Android's Share sheet: " +
-            "pick Claude. The next file is compared with this one, so each upload shows whether the last change worked. It never has a key in it.",
-    )
+    Hint("Show report lists what the app recorded (errors with the code that threw them, every call's speed and failures by host, API usage, timings, what auto-bet decided) and a ranked list of what to fix. It never has a key in it.")
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        androidx.compose.material3.Button(onClick = reportActions.onShare, modifier = Modifier.testTag("shareDiagnostics")) { Text("Share with Claude") }
-        OutlinedButton(onClick = reportActions.onDiagnostics) { Text("Show report") }
+        OutlinedButton(onClick = reportActions.onDiagnostics, modifier = Modifier.testTag("showDiagnostics")) { Text("Show report") }
         // The ledger check needs the betting key: Novig's own record of each API bet against what the Tracker did with it.
         if (AppBook.isNovig && state.betting.enabled) OutlinedButton(onClick = reportActions.onGradingCheck) { Text("Grading check") }
     }
@@ -2062,17 +2059,14 @@ private fun ColumnScope.ToolsTab(state: UiState, reportActions: ReportActions, o
     // ---- The scan study (Tj, 2026-10-03): every bet a scan lists, logged and graded, for Claude to find what beats the close -------------
     val studyShown by androidx.compose.runtime.rememberUpdatedState(reportActions.onStudyShown)
     androidx.compose.runtime.LaunchedEffect(Unit) { studyShown() }
-    Hint(StudyText.HINT)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        androidx.compose.material3.Button(onClick = reportActions.onShareStudy, modifier = Modifier.testTag("shareScanStudy")) { Text(StudyText.BUTTON) }
-    }
+    Hint("The scan study logs and grades every bet a scan lists, with its closing line and result. The phone's study is saved to GitHub with your other history; the GitHub engine keeps its own, wider one.")
     state.studyNote?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp).testTag("scanStudyNote")) }
     var confirmStudy by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     OutlinedButton(
         onClick = { if (confirmStudy) { confirmStudy = false; reportActions.onClearStudy() } else confirmStudy = true },
         modifier = Modifier.testTag("clearScanStudy"),
     ) { Text(if (confirmStudy) "Tap again: delete the whole scan study" else "Clear scan study") }
-    Hint("Clear scan study deletes every bet the study logged and graded, and starts it again from now. It is not in your Tracker, so no bet of yours is touched. Share it with Claude first if you want it analysed.")
+    Hint("Clear scan study deletes every bet the study logged and graded, and starts it again from now. It is not in your Tracker, so no bet of yours is touched.")
     SwitchRow(StudyText.SWITCH_TITLE, StudyText.SWITCH_SUB, state.settings.scanStudy, tag = "scanStudySwitch") { v -> onUpdate { it.copy(scanStudy = v) } }
     SwitchRow(StudyText.HIDDEN_TITLE, StudyText.HIDDEN_SUB, state.settings.scanStudyHidden, tag = "scanStudyHiddenSwitch") { v -> onUpdate { it.copy(scanStudyHidden = v) } }
 

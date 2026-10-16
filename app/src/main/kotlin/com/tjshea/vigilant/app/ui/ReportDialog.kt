@@ -37,9 +37,6 @@ data class ReportActions(
     val onResetDiagnostics: () -> Unit = {},
     val onClearStudy: () -> Unit = {},
     /** Settings › Messages from Claude: mark everything read. */
-    val markClaudeRead: () -> Unit = {},
-    val setChatOpen: (Boolean) -> Unit = {},
-    val sendChat: suspend (String) -> String? = { null },
     /** Make the scan study's file and open the share sheet (Tj, 2026-10-03), and read the line that says what's logged when the page opens. */
     val onShareStudy: () -> Unit = {},
     val onStudyShown: () -> Unit = {},
@@ -96,8 +93,6 @@ fun ReportDialog(report: ReportUi, actions: ReportActions) {
         text = { ReportContent(report) },
         confirmButton = {
             Row {
-                // Only the Diagnostics report is the file Claude works from.
-                if (report.title == "Diagnostics") TextButton(onClick = actions.onShare, enabled = !report.busy, modifier = Modifier.testTag("reportShare")) { Text("Share with Claude") }
                 TextButton(onClick = { clipboard.setText(AnnotatedString(report.text)); actions.onCopied() }, enabled = !report.busy) { Text("Copy") }
             }
         },
