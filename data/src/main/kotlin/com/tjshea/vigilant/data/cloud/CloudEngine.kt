@@ -133,6 +133,7 @@ class CloudEngine(
     @Volatile private var scanNote = ""
     @Volatile private var advice: List<ApiAdvisor.Advice> = emptyList()
     @Volatile private var apiCards: List<ApiScorecard.Card> = emptyList()
+    @Volatile private var contribution: Map<String, Pair<Int, Int>> = emptyMap()
     private val announced = HashMap<String, String>()
     @Volatile private var feedLines: List<FeedLine> = emptyList()
     private val feedWatch = FeedWatch()
@@ -399,6 +400,7 @@ class CloudEngine(
         feedLines = report.sources.map { FeedLine(it.id, it.name, it.fetched, it.reused, it.matched, it.standingBy, it.skipped, it.error?.take(120), it.heldBack?.take(120)) }
         feedLinesAt = clock()
         feedAlerts = feedWatch.observe(feedLines).also { if (it != feedAlerts && it.isNotEmpty()) log("silent feeds: " + it.joinToString(", ")) }
+        contribution = runCatching { ApiScorecard.contribution(report.result, clock()) }.getOrDefault(emptyMap())
         govern(latest, feedLinesAt)
         val result = report.result
         if (result == null) {
@@ -535,7 +537,7 @@ class CloudEngine(
         val surplus = ApiScorecard.surplus(book, paid, now)
         ApiChain.paidProviders = paid.mapNotNull { ApiToggles.policy(it)?.id }.toSet()
         ApiChain.surplusProviders = surplus.mapNotNull { ApiToggles.policy(it)?.id }.toSet()
-        apiCards = ApiScorecard.cards(phone, book, ApiChain.measures, feedLines, governor.resting(now).map { it.id }.toSet(), keyed, now)
+        apiCards = ApiScorecard.cards(phone, book, ApiChain.measures, feedLines, governor.resting(now).map { it.id }.toSet(), keyed, now, contribution)
         advice = ApiAdvisor.advise(book, feedLines, feedAlerts, phone, keysOf, now) + ApiAdvisor.manage(apiCards, book, keysOf, phone, now)
         for (a in advice) {
             if (announced[a.id] == day) continue

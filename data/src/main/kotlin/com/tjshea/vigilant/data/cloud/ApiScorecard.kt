@@ -34,6 +34,9 @@ object ApiScorecard {
         val timeFraction: Double? = null,
         val surplus: Boolean = false,
         val note: String = "",
+        /** Priced lines whose fair odds it helped build (of the last scan), and those it was the ONLY API behind: the unique contribution that justifies keeping it on. */
+        val fedLines: Int = 0,
+        val soleLines: Int = 0,
     )
 
     const val WINDOW = 12
@@ -97,6 +100,20 @@ object ApiScorecard {
 
     private const val MONTH_MS = 30L * 86_400_000L
 
+    /** Per API id: (lines its books helped price, lines it was the only API behind) over every priced outcome of [result]. */
+    fun contribution(result: com.tjshea.vigilant.data.scanner.ScanResult?, now: Long): Map<String, Pair<Int, Int>> {
+        if (result == null) return emptyMap()
+        val fed = HashMap<String, Int>()
+        val sole = HashMap<String, Int>()
+        for (g in result.games) for (o in g.outcomes) {
+            if (o.fair == null) continue
+            val ids = com.tjshea.vigilant.data.scanner.FairProvenance.of(o, now).mapNotNull { it.source }.mapNotNull { ApiToggles.idOfPolicy(CloudDashboard.providerOf(it)) }.toSet()
+            for (id in ids) fed.merge(id, 1, Int::plus)
+            if (ids.size == 1) sole.merge(ids.first(), 1, Int::plus)
+        }
+        return fed.mapValues { (id, n) -> n to (sole[id] ?: 0) }
+    }
+
     fun cards(
         settings: ScanSettings,
         book: UsageBook,
@@ -105,6 +122,7 @@ object ApiScorecard {
         resting: Set<String>,
         keyed: (String) -> Boolean,
         now: Long,
+        contribution: Map<String, Pair<Int, Int>> = emptyMap(),
     ): List<Card> {
         val paid = paidProviders(book, keyed)
         val surplus = surplus(book, paid, now)
@@ -132,6 +150,7 @@ object ApiScorecard {
                 leftFraction = left?.takeIf { it.second > 0 && id in paid && pol.period == QuotaPeriod.MONTH_UTC }?.let { it.first.toDouble() / it.second },
                 timeFraction = left?.takeIf { id in paid && pol.period == QuotaPeriod.MONTH_UTC }?.third,
                 surplus = id in surplus,
+                fedLines = contribution[id]?.first ?: 0, soleLines = contribution[id]?.second ?: 0,
             )
         }
     }

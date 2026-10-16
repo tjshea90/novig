@@ -105,6 +105,7 @@ fun DashboardContent(
                     c.p90AgeS?.let { "p90 ${it}s" }, c.offPinnaclePts?.let { "%.1f pts off Pinnacle".format(it) },
                     c.answeredPct?.let { "answers $it%" },
                     c.leftFraction?.let { l -> "${(l * 100).toInt()}% left" + (c.timeFraction?.let { t -> " of ${(t * 100).toInt()}% period" } ?: "") },
+                    if (c.fedLines > 0) "feeds ${c.fedLines} lines" + (if (c.soleLines > 0) ", ${c.soleLines} only it" else ", none only it") else null,
                     if (c.surplus) "surplus" else null, c.note.takeIf { it.isNotBlank() },
                 )
                 InfoLine(c.name, bits.joinToString(" · "), if (c.role == "failing") Tone.BAD else if (c.role == "rested" || c.role == "nokey") Tone.WARN else Tone.NEUTRAL)
