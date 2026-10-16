@@ -580,11 +580,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-internal enum class Tab(val label: String, val icon: ImageVector? = null, val drawable: Int? = null) {
+internal enum class Tab(val label: String, val icon: ImageVector? = null, val drawable: Int? = null, val inBar: Boolean = true) {
+    /** The home (Tj, 2026-10-16: "this app is a monitoring and central control app, make the UI match"): everything the GitHub engine is doing, live from GitHub. */
+    ENGINE("Engine", Icons.Filled.Home),
     EV("+EV", Icons.Filled.Star),
-    CNO("CNO", drawable = R.drawable.ic_cno),
+    /** Chat with the Claude session that is working, and everything Claude and the engine tell you (moved out of Settings, 2026-10-16). */
+    CLAUDE("Claude", Icons.Filled.Email),
+    /** Phone-side views that the engine has replaced as the main way to work: reachable from Settings, not in the bar. */
+    CNO("CNO", drawable = R.drawable.ic_cno, inBar = false),
     /** Its own tab since 2026-10-02 (Tj: "maybe make the auto bet feature its own section instead of buried in the settings"). */
-    AUTOBET("Auto-bet", drawable = R.drawable.ic_autobet),
+    AUTOBET("Auto-bet", drawable = R.drawable.ic_autobet, inBar = false),
     /** Make orders (Tj, 2026-10-03: "It may need a separate section in the app"; RESEARCH.md §70): bids posted under Vigilant's fair. */
     BIDS("Bids", drawable = R.drawable.ic_bids),
     /** Every live feature in one place (Tj, 2026-10-14: "make a live tab with all of the features and well organized"). */
@@ -595,6 +600,7 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
 
     /** Whether the tab exists in this scanner mode: CNO only hides what needs Vigilant's scanner. */
     fun shownIn(mode: ScannerMode): Boolean = when (this) {
+        ENGINE, CLAUDE -> true
         EV -> mode != ScannerMode.CNO
         CNO -> mode != ScannerMode.VIGILANT
         // Auto-bet bets CrazyNinjaOdds' list through Novig's API.
@@ -687,12 +693,14 @@ private fun VigilantRoot(
     openingBet: String? = null,
 ) {
     val mode = state.settings.scannerNow
-    val tabs = Tab.entries.filter { it.shownIn(mode) }
+    // The bar shows the central sections; the phone-side Auto-bet and CNO views are still tabs (Settings opens them) but are not in the bar.
+    val allTabs = Tab.entries.filter { it.shownIn(mode) }
+    val tabs = allTabs.filter { it.inBar }
     var tabName by rememberSaveable { mutableStateOf<String?>(null) }
     // The Settings page open (null = its home list): kept here so the Auto-bet tab can open Betting.
     var settingsPage by rememberSaveable { mutableStateOf<String?>(null) }
     // Until Tj picks a tab: CNO only opens on CNO's list, otherwise on the +EV feed.
-    val tab = tabs.firstOrNull { it.name == tabName } ?: if (mode == ScannerMode.CNO) Tab.CNO else tabs.first()
+    val tab = allTabs.firstOrNull { it.name == tabName } ?: Tab.ENGINE
     // The tab a Bet sheet's "Add money" left, for "Back to the bet" (Tj, 2026-09-29).
     var betTab by rememberSaveable { mutableStateOf<String?>(null) }
     var detail by remember { mutableStateOf<Opportunity?>(null) }
