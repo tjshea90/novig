@@ -17,6 +17,13 @@ class PropLineTrendsTest {
     }
 
     @Test
+    fun theRealAnswerOfTheProbeReads() {
+        // PropLine's real /players/LeBron James/trends?market=player_points answer, saved 2026-10-16 by the probe (Release propline-samples).
+        val real = javaClass.getResource("/propline-trends-real-2026-10-16.json")!!.readText()
+        assertEquals("Over hit last 5: 3 of 5 · last 10: 6 of 9 · averages 21.7 (recent line 19.5)", PropLineTrends.summarize(real, json, "Over"))
+    }
+
+    @Test
     fun anAnswerWithoutWindowsOrJunkIsBlank() {
         assertEquals("", PropLineTrends.summarize("{}", json, "Over"))
         assertEquals("", PropLineTrends.summarize("not json", json, "Over"))

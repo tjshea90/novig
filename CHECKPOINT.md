@@ -1,21 +1,25 @@
-# CHECKPOINT 3500 — read me first, then TASKS.md
+# CHECKPOINT 3501 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T21:54:52Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-49ded3ac-g4ipzt` · **builds on:** `c15eeee1a` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T22:04:17Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-49ded3ac-g4ipzt` · **builds on:** `b1b3b576b` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: PropLine +EV shown after Vigilant's prop cut + hit-rate trends; spent API keys show a full red bar; chat no longer blank with the keyboard open; filter chips wrap (All agree, PropLine leagues); PropLine steam workflow (versionCode 308, v0.114.12)
+PropLineTrends verified against real /trends answer; v0.114.12 shipped
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.114.12), then run: bash tools/record-release.sh v0.114.12 308 "PropLine +EV shown after Vigilant's prop cut + hit-rate trends; spent API keys show a full red bar; chat no longer blank with the keyboard open; filter chips wrap (All agree, PropLine leagues); PropLine steam workflow"
+TCL66: watch engine; profit loop; /results grading source; CLV via /clv/grade; TCL64a unpriced lines
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M data/src/test/kotlin/com/tjshea/vigilant/data/reference/PropLineTrendsTest.kt
+    ?? data/src/test/resources/propline-trends-real-2026-10-16.json
 
 ## Last ten checkpoints
 ```
+  68ec8c961 ckpt 3500: pre-release: PropLine +EV shown after Vigilant's prop cut + hit-rate trends
   41d29b50c ckpt 3499: TCL52a: FlowRow chips (All agree, PropLine filters)
   85451736c ckpt 3498: propline probe: trends by name fallback; real /results and /clv/grade shape
   92c0abb40 ckpt 3497: TCL65c: hit-rate trends on PropLine screen, steam/movement workflow, probe 
@@ -25,5 +29,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   f5887f98d ckpt 3493: TCL61: API manager scorecard section on the Engine dashboard (compiles)
   571f774e5 ckpt 3492: engine restarted with 14 Odds keys; handoff rule; TCL62 done
   2eb025303 ckpt 3491: TCL61 core: scorecard, paid-first ranking, surplus second opinions, Odds AP
-  5bd900c43 ckpt 3490: TCL61f ParlayAPI finding + reply
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
