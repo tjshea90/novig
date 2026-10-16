@@ -5364,5 +5364,5 @@ Finding: yes. `MakerDesk`/`MakerQuote`/`CloudBidLane` are all in the shared data
 - [x] TCL31c `CloudBidRunner` (data/cloud): the phone's MakerRunner pass on the lane's lines with the engine's wallet; picked-off guard; fills mirrored into the trade ledger (so the grader, Kelly risk and the phone see them); `desk.json` published + carried job to job; bids cancelled when the engine stops.
 - [x] TCL31d `CloudTrader.pass(extraHeld)`: resting/filled bids count in the repeat guard; bids skip markets the engine bought.
 - [x] TCL31e CloudEngine/CloudMain wiring: desk loop every 25 s, status fields (`deskNote`, resting, dollars), messages for fills.
-- [ ] TCL31f Phone: stands down its own bid desk while the engine's bids are live (heartbeat fresh); Dashboard shows the engine's bets AND bids; everything syncs the moment the app opens (`CloudLink.syncNow`); a switch in Settings › Cloud scan.
+- [x] TCL31f Phone: stands down its own bid desk while the engine's bids are live (heartbeat fresh); Dashboard shows the engine's bets AND bids; everything syncs the moment the app opens (`CloudLink.syncNow`); a switch in Settings › Cloud scan.
 - [ ] TCL31g Tests, docs (CLAUDE.md, ROUTINE.md volume loop mentions bids), CHANGES.md line, ship, release.
