@@ -81,7 +81,7 @@ class CloudBidRunnerTest {
     private object NoBooks : NovigSource {
         override suspend fun events(leagues: Collection<String>, statuses: Collection<String>, startsBefore: Long?): List<NovigEvent> = emptyList()
         override suspend fun markets(leagues: Collection<String>, marketTypes: Collection<String>, eventStatuses: Collection<String>, startsBefore: Long?): List<NovigMarket> = emptyList()
-        override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?) = BookBatch(emptyMap(), null)
+        override suspend fun books(marketIds: Collection<String>, onProgress: ((Int, Int) -> Unit)?) = BookBatch(emptyMap(), 0, 0, 0)
         override suspend fun market(marketId: String): NovigMarket? = null
     }
 
@@ -107,7 +107,7 @@ class CloudBidRunnerTest {
         return BidLine(l, start)
     }
 
-    private val live = ScanSettings(cloudScan = true, gates = ApiGates(cloudTrading = CloudTradeMode.LIVE))
+    private val live = ScanSettings(gates = ApiGates(cloudScan = true, cloudTrading = CloudTradeMode.LIVE))
 
     private class Rig(val trading: FakeTrading, val runner: CloudBidRunner, val store: MakerStore, val filled: MutableList<Pair<List<TrackedBet>, Int>>, val held: MutableSet<String>)
 
@@ -218,8 +218,8 @@ class CloudBidRunnerTest {
     @Test
     fun `engine switches alone decide where bids run`() {
         assertFalse(ScanSettings().engineBids)
-        assertFalse(live.copy(cloudScan = false).let { it.copy(gates = it.gates.copy(cloudScan = false)) }.engineBids)
-        assertFalse(live.copy(paused = true).engineBids)
+        assertFalse(live.copy(gates = live.gates.copy(cloudScan = false)).engineBids)
+        assertFalse(live.copy(pausedByHand = true).engineBids)
         assertTrue("the phone's own maker switch is not needed: the engine does it", !live.maker && live.engineBids)
         assertTrue("the engine runs the bid profile", CloudEngine.forCloud(live).maker)
         assertFalse("a phone with the engine not bidding is unchanged", CloudEngine.forCloud(ScanSettings()).maker)
