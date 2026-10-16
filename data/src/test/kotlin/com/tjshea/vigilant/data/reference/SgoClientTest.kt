@@ -229,7 +229,7 @@ class SgoClientTest {
         handler = { MockResponse().setResponseCode(403).setBody("""{"success":false,"error":"Inactive API key"}""") }
         val c = client()
         val e = runCatching { c.events(listOf("leagueID" to "NFL")) }.exceptionOrNull()
-        assertTrue(e.toString(), e is ReferenceException && e.message!!.contains("nactive"))
+        assertTrue(e.toString(), e is com.tjshea.vigilant.data.keys.AllKeysExhaustedException && e.message!!.contains("Inactive"))
     }
 
     @Test fun a429RestsTheKeyForAMinuteAndThenItWorksAgain() = runTest {
