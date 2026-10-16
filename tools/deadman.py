@@ -16,7 +16,7 @@ never a routine's stored prompt). The app merely syncing, phone-data pushes, bot
   stopped -> a message from Tj: STOP.json removed, the disabled workflows enabled again; the engine's `on` and every trading switch stay as Tj sets them (never restarted by this).
 State is deadman/state.json on cloud-config. Nothing here touches a key, a limit or money.
 """
-import json, os, re, subprocess, sys, time, urllib.request
+import calendar, json, os, re, subprocess, sys, time, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -69,7 +69,7 @@ def last_inbox(cwd=None):
     txt = tell_tj.git("show", "origin/main:INBOX.md", cwd=cwd, check=False).stdout
     best = 0
     for m in re.finditer(r"^## (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)", txt, re.M):
-        best = max(best, int(time.mktime(time.strptime(m.group(1), "%Y-%m-%dT%H:%M:%SZ")) - time.timezone) * 1000)
+        best = max(best, calendar.timegm(time.strptime(m.group(1), "%Y-%m-%dT%H:%M:%SZ")) * 1000)
     return best
 
 

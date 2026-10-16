@@ -182,6 +182,15 @@ PYLAB
       timeout 45 python3 -I tools/coord.py status --acquire 2>/dev/null | head -8
     fi
 
+    # DEADMAN (TCL50): the dead-man switch's state, one line, only when something is wrong.
+    if [ -f tools/deadman.py ]; then
+      timeout 30 python3 -I tools/deadman.py status 2>/dev/null | python3 -c 'import sys,json
+try:
+ d=json.load(sys.stdin); s=d.get("state") or {}
+ if d.get("stopped"): print("  !!    DEADMAN: SYSTEM STOPPED (Tj silent 3+ days). Do no work; only a message from Tj resumes it.")
+ elif s.get("phase")=="asked": print("  DEAD  check-in sent to Tj, waiting for any message (24 h grace)")
+except Exception: pass'
+    fi
     # CHAT (TCL29): Tj chats from the phone app; the repo is the channel. One line so every session starts the zero-token watcher.
     echo "  CHAT  Tj chats in the app: start Monitor(persistent) 'bash tools/chat_watch.sh'; answer: python3 tools/tell_tj.py chat-reply <id> \"...\""
     [ -f research/coordination/away.json ] && echo "  AWAY  $(tr -d '\n ' < research/coordination/away.json) (research/coordination/away.json: those slots are covered at once)"

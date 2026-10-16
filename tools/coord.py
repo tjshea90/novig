@@ -208,6 +208,16 @@ def dormant_until(label):
 
 def acquire(kind=None, task=None, force=False, quiet=False):
     me = identity()
+    # Dead-man switch (TCL50, Tj 2026-10-16): while deadman/STOP.json is on cloud-config no session or routine starts (only Tj's own message lifts it, capture_inbox.sh).
+    if not force:
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import deadman
+            if deadman.stopped():
+                print("COORD  STOPPED by the dead-man switch: Tj has been silent for 3+ days and did not answer the check-in. No work, no lease, no push, no schedules, on any account, until Tj sends a message (research/coordination/DEADMAN.md).", file=sys.stderr)
+                return 5
+        except Exception:
+            pass
     kind = kind or me["kind"]
     if kind == "routine" and not force:
         u = dormant_until(me["label"])

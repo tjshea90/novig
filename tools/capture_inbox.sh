@@ -71,6 +71,8 @@ esac
 # a message from Tj means a person is here, in whichever account he opened. Take the repo's lease for this session NOW, before anything is pushed: from a routine (it stops at its next push and
 # parks its work on a routine-wip branch), from a stale holder, or from nobody. Another LIVE interactive session (Tj chatting in a second account) is not taken from: Claude is told to say so.
 # Never blocks the prompt; any failure is silent (losing a message is worse than two sessions meeting).
+# a message from Tj lifts the dead-man switch's STOP before anything else (TCL50)
+[ -f tools/deadman.py ] && [ "${COORD_KIND:-interactive}" = "interactive" ] && timeout 40 python3 -I tools/deadman.py resume 2>&1 | head -2
 if [ -f tools/coord.py ] && [ -z "${COORD_OFF:-}" ] && [ "${COORD_KIND:-interactive}" = "interactive" ]; then
   COORD_OUT="$(timeout 40 python3 -I tools/coord.py acquire --kind interactive 2>&1)"; COORD_RC=$?
   if [ "$COORD_RC" -eq 3 ]; then
