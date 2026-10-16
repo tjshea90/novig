@@ -26,7 +26,7 @@ def tier_of(limit):
 
 
 def keys_from_env(env=None):
-    raw = (env or os.environ).get("PROPLINE_API_KEY", "")
+    raw = (os.environ if env is None else env).get("PROPLINE_API_KEY", "")
     return [k for k in re.split(r"[\s,;]+", raw) if k]
 
 
