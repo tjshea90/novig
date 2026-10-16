@@ -59,6 +59,7 @@ class AppUpdater(private val c: AppContainer) {
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state.asStateFlow()
     private val lock = Mutex()
+    @Volatile private var retriedLoud = false
     private val prefs get() = c.app.getSharedPreferences("app_update", Context.MODE_PRIVATE)
 
     /** Reads the newest Release; posts the notification (once per version) when it is newer than this app. Null when it could not be read. */
@@ -133,11 +134,14 @@ class AppUpdater(private val c: AppContainer) {
         }
     }
 
-    private fun commit(file: File) {
+    /** [quiet]: ask Android to install with no confirmation when it may (an update by the installer of record); false = the usual confirmation screen, where Play Protect offers "Install anyway". */
+    private fun commit(file: File, quiet: Boolean = true) {
+        // The update kills this process: the receiver of the new version's start-up finds this stamp and brings the app back in front (Tj, 2026-10-16: restart the app by itself after an update).
+        prefs.edit().putLong("installing_since", System.currentTimeMillis()).apply()
         val installer = c.app.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
             setAppPackageName(c.app.packageName)
-            if (Build.VERSION.SDK_INT >= 31) setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+            if (quiet && Build.VERSION.SDK_INT >= 31) setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
         }
         val id = installer.createSession(params)
         installer.openSession(id).use { session ->
@@ -157,12 +161,23 @@ class AppUpdater(private val c: AppContainer) {
                 else notifyPlain("Tap to finish updating Vigilant", "Android needs one confirmation.", PendingIntent.getActivity(c.app, 2, i, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             }
             PackageInstaller.STATUS_SUCCESS -> {
+                retriedLoud = false
                 _state.update { it.copy(installing = false, available = false, note = "Updated.") }
                 File(c.app.cacheDir, "update").deleteRecursively()
             }
             else -> {
-                _state.update { it.copy(installing = false, note = "Android would not install it: ${message ?: "status $status"}") }
-                notifyPlain("Update not installed", message ?: "Android refused the update (status $status).", EvAlerts.openVigilant(c.app, ID_UPDATE))
+                // A refusal of the quiet install (Play Protect's verification, "Install not allowed", Tj 2026-10-16) is tried once more the ordinary way, with Android's own confirmation screen, where
+                // Play Protect's "Install anyway" is offered. The downloaded file is kept for it.
+                val file = File(c.app.cacheDir, "update").listFiles()?.firstOrNull { it.name.endsWith(".apk") }
+                if (!retriedLoud && file != null) {
+                    retriedLoud = true
+                    _state.update { it.copy(installing = true, note = "Android refused the quiet install (${message ?: "status $status"}); asking again with its own screen…") }
+                    runCatching { commit(file, quiet = false) }.onFailure { _state.update { s -> s.copy(installing = false, note = "Update failed: ${it.message}") } }
+                } else {
+                    retriedLoud = false
+                    _state.update { it.copy(installing = false, note = "Android would not install it: ${message ?: "status $status"}") }
+                    notifyPlain("Update not installed", (message ?: "Android refused the update (status $status).") + " If Play Protect blocked it, open Play Store > Play Protect > settings, or tap Install anyway when it asks.", EvAlerts.openVigilant(c.app, ID_UPDATE))
+                }
             }
         }
     }
@@ -241,6 +256,33 @@ class UpdateWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         fun schedule(context: Context) {
             val request = PeriodicWorkRequestBuilder<UpdateWorker>(15, TimeUnit.MINUTES).setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()).build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork("app-update-check", ExistingPeriodicWorkPolicy.KEEP, request)
+        }
+    }
+}
+
+/**
+ * The new version's first moments (Tj, 2026-10-16: "when I manually press update inside the app, it automatically closes the app ... make it restart the app automatically"): Android ends the old process when it
+ * replaces the app, so this runs in the NEW one. If an update this app started was under way (the stamp [AppUpdater] left), the app is opened again; where Android does not let a background app open a screen it says
+ * "Vigilant updated" in a notification that opens it. (The "Display over other apps" permission the widget uses is what lets the first work.)
+ */
+class UpdatedReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
+        val prefs = context.getSharedPreferences("app_update", Context.MODE_PRIVATE)
+        val since = prefs.getLong("installing_since", 0L)
+        if (since == 0L || System.currentTimeMillis() - since > 20 * 60_000L) return
+        prefs.edit().remove("installing_since").putString("notified", "").apply()
+        val open = Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val started = runCatching { context.startActivity(open); true }.getOrDefault(false)
+        // Always leave the note: a background start may be silently dropped, and the note is the way back in.
+        runCatching {
+            val nm = context.getSystemService(NotificationManager::class.java)
+            nm.createNotificationChannel(NotificationChannel(AppUpdater.CHANNEL, "App updates", NotificationManager.IMPORTANCE_HIGH))
+            val pi = PendingIntent.getActivity(context, 4, open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            if (ScanService.canNotify(context)) {
+                nm.notify(AppUpdater.ID_UPDATE + 2, NotificationCompat.Builder(context, AppUpdater.CHANNEL).setSmallIcon(R.drawable.ic_scan).setContentTitle("Vigilant updated to ${BuildConfig.VERSION_NAME}")
+                    .setContentText(if (started) "Opened for you." else "Tap to open it.").setAutoCancel(true).setContentIntent(pi).withWallet(context).build())
+            }
         }
     }
 }

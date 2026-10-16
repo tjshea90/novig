@@ -103,6 +103,11 @@
         <!-- The +EV alert's "✓ Placed" and the confirmation's "Undo": run in the background, no screen. -->
         <receiver android:name=".UpdateActionReceiver" android:exported="false" />
         <receiver android:name=".UpdateStatusReceiver" android:exported="false" />
+        <receiver android:name=".UpdatedReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <receiver
             android:name=".AlertActionReceiver"
