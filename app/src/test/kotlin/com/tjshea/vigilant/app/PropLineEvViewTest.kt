@@ -34,4 +34,41 @@ class PropLineEvViewTest {
         assertEquals("Celtics -3 · Spreads", PropLineEvView.pick(row(player = "", market = "spreads", outcome = "Celtics", point = -3.0)))
         assertEquals("in 60 min", PropLineEvView.starts(row(), now))
     }
+
+    @Test
+    fun theVerdictSaysHowManyBooksBackIt() {
+        val base = row()
+        assertEquals(PropLineEvView.Level.NONE, PropLineEvView.verdict(base).level)
+        val some = base.copy(others = listOf(com.tjshea.vigilant.data.reference.PlBookPrice("draftkings", -108, now)))
+        assertEquals(PropLineEvView.Level.WARN, PropLineEvView.verdict(some.copy(twoSided = 0)).level)
+        assertEquals(PropLineEvView.Level.GOOD, PropLineEvView.verdict(some.copy(twoSided = 8, agree = 6, pinnacleAgrees = true)).level)
+        assertEquals("a sharp book against it is never GOOD", PropLineEvView.Level.WARN, PropLineEvView.verdict(some.copy(twoSided = 8, agree = 6, pinnacleAgrees = false)).level)
+        assertEquals(PropLineEvView.Level.BAD, PropLineEvView.verdict(some.copy(twoSided = 9, agree = 1, pinnacleAgrees = false)).level)
+        assertEquals("7 of 9 books that price both sides say Novig's price is +EV. Pinnacle agrees.", PropLineEvView.verdict(some.copy(twoSided = 9, agree = 7, pinnacleAgrees = true)).text)
+    }
+
+    @Test
+    fun bookNamesAndOldTags() {
+        assertEquals("Hard Rock", PropLineEvView.bookName("hardrock")); assertEquals("Polymarket Us", PropLineEvView.bookName("polymarket_us"))
+        assertEquals("", PropLineEvView.oldTag(com.tjshea.vigilant.data.reference.PlBookPrice("x", 100, now - 5 * 60_000L), now))
+        assertEquals(" (25 min old)", PropLineEvView.oldTag(com.tjshea.vigilant.data.reference.PlBookPrice("x", 100, now - 25 * 60_000L), now))
+        assertEquals(null, PropLineEvView.opportunity(row()))
+        assertEquals(null, PropLineEvView.opportunity(row().copy(opp = "not json")))
+    }
+
+    @Test
+    fun theEngineMatchesARowToTheSameNovigBetAndThePhoneDecodesIt() {
+        val all = SampleScan.state().result!!.opportunities
+        // a game total of the sample scan: the PropLine row for the same game, line and side
+        val o = all.first { it.kind == com.tjshea.vigilant.data.reference.LineKind.TOTAL && it.quote != null && it.lineKey?.period == 0 }
+        val teams = o.event.description.split(" @ ")
+        val side = (o.target as com.tjshea.vigilant.data.scanner.OutcomeTarget.Is).side
+        val r = PlEvRow("x", o.league.displayName, "1", teams[1], teams[0], o.event.startsTs, "totals", "", o.lineKey!!.line, if (side == com.tjshea.vigilant.data.reference.Side.OVER) "Over" else "Under", -105, 3.0, 0.52, "pinnacle", now)
+        val found = com.tjshea.vigilant.data.reference.PropLineMatch.find(r, all)
+        assertEquals(o.key, found?.key)
+        val withOpp = com.tjshea.vigilant.data.reference.PropLineMatch.attach(r, all)
+        assertEquals(o.key, PropLineEvView.opportunity(withOpp)?.key)
+        // a different line is a different bet
+        assertEquals(null, com.tjshea.vigilant.data.reference.PropLineMatch.find(r.copy(point = o.lineKey!!.line!! + 0.5), all))
+    }
 }
