@@ -5438,4 +5438,4 @@ Tj: "it is sgo pro. my boltodds is working fine here, see if GitHub can refresh 
 - [x] TCL42a (chat loop naps, woken by syncNow; ships with the next release) Chat must re-poll the moment the app resumes (lifecycle ON_RESUME / syncNow) and after network returns; test; ship with next batch.
 
 ## TCL43: second BoltOdds key, auto-fail-over (Tj, chat t1792167732952, 2026-10-16)
-- [ ] TCL43a Verify phone saves 2 keys, sends BOTH to GitHub (BOLTODDS_API_KEY comma-joined), engine splits them, REST + sockets fail over from key 1 to key 2 on 401/403/429/quota/socket refusal; test.
+- [x] TCL43a (already built: keystore holds many, sent comma-joined, engine splits; socket 1008 + REST 401/403/429 move to the next key) Verify phone saves 2 keys, sends BOTH to GitHub (BOLTODDS_API_KEY comma-joined), engine splits them, REST + sockets fail over from key 1 to key 2 on 401/403/429/quota/socket refusal; test.
