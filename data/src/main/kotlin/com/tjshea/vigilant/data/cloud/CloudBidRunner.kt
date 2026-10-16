@@ -162,7 +162,7 @@ class CloudBidRunner(
     /** The picked-off guard: when the newest fills were mostly taken at a price the fair had already left, the desk stops for [HALT_MS] and Tj is told; it then starts from the fills after it. */
     private suspend fun guard(s: ScanSettings, now: Long) {
         if (!s.makerGuard || haltedUntil > now) return
-        val verdict = MakerGuard.check(desk.bids(), maxOf(s.makerGuardFromMs, guardFromMs), s.makerAnchorSharp)
+        val verdict = MakerGuard.check(desk.bids(), maxOf(s.makerGuardFromMs, guardFromMs, now - JUDGE_WINDOW_MS), s.makerAnchorSharp)
         if (!verdict.tripped) return
         haltedWhy = "picked off: " + verdict.text
         haltedUntil = now + HALT_MS
@@ -190,7 +190,10 @@ class CloudBidRunner(
         /** The candidate list is used for this long after it was made; older, the bids up stay until their own expiry. */
         const val MAX_LIST_AGE_MS = 30 * 60_000L
         const val READS_PER_PASS = 60
-        const val HALT_MS = 3 * 3_600_000L
+        /** A pause of an hour (was 3): the guard then judges only NEW fills, six at least, so a long pause adds nothing but lost volume (Tj, 2026-10-16: "is it really necessary to stop bids?"). */
+        const val HALT_MS = 3_600_000L
+        /** Only fills of the last 8 hours are judged: older ones were priced against a different fair (feeds come and go) and cannot say how the bids do now. */
+        const val JUDGE_WINDOW_MS = 8 * 3_600_000L
         const val MOVE_READ_MS = 15 * 60_000L
         const val MAX_MOVE_READS = 12
 
