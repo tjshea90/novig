@@ -1,0 +1,1 @@
+{"id": "m1792114240-ce85", "at": 1792114240949, "from": "claude:session", "kind": "info", "title": "App updates from GitHub", "body": "v0.113.0: Vigilant now looks for new releases every 15 min and when it opens, notifies you, and shows an Install update bar on every screen. First time: allow installs from Vigilant once.", "priority": 0}
