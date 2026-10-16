@@ -5439,3 +5439,9 @@ Tj: "it is sgo pro. my boltodds is working fine here, see if GitHub can refresh 
 
 ## TCL43: second BoltOdds key, auto-fail-over (Tj, chat t1792167732952, 2026-10-16)
 - [x] TCL43a (already built: keystore holds many, sent comma-joined, engine splits; socket 1008 + REST 401/403/429 move to the next key) Verify phone saves 2 keys, sends BOTH to GitHub (BOLTODDS_API_KEY comma-joined), engine splits them, REST + sockets fail over from key 1 to key 2 on 401/403/429/quota/socket refusal; test.
+
+## TCL44: all sockets (Novig, BoltOdds, Kalshi); Kalshi key (Tj, chat t1792168111699, 2026-10-16)
+Tj: "confirm the second boltodds key and see if it works. Make sure this app is taking full advantage of all sockets including novig boltodds and kalshi. I want to send my kalshi key so the app can use the socket"
+- [ ] TCL44a Confirm 2 BoltOdds keys reach the engine (start log) and that key 2 works when key 1 429s.
+- [ ] TCL44b ASK Tj: Kalshi key for the PHONE's socket (already supported, Settings > Kalshi) or for the GitHub ENGINE (CLAUDE.md forbids a Kalshi private key in a secret: it can trade; needs his explicit word incl. read-only note).
+- [ ] TCL44c Audit sockets: phone Novig/Bolt/Kalshi on; engine: Novig stream yes, Bolt sockets yes (snapshot 429), Kalshi socket no (REST).
