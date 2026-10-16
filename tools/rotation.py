@@ -282,6 +282,82 @@ def register(tag):
     return 2
 
 
+HANDOVER_LEAD_S = 10 * 60   # the account whose slot is about to start is told about 10 minutes before
+OWNER_WAIT_S = 15 * 60      # after its slot started, the owner has this long to leave a trace before the chat is not waited for
+
+
+def _instants_around(now):
+    from zoneinfo import ZoneInfo
+    et = ZoneInfo(ZONE)
+    d = now.astimezone(et).date()
+    out = []
+    for back in (-1, 0, 1):
+        day = d + datetime.timedelta(days=back)
+        for s in range(len(SLOTS)):
+            h, m = SLOTS[s].split(":")
+            out.append((s, day, datetime.datetime(day.year, day.month, day.day, int(h), int(m), tzinfo=et)))
+    return sorted(out, key=lambda x: x[2])
+
+
+def chat_state(now, roster, notes, away, me):
+    """Who answers Tj's chat now (Tj, 2026-10-16: "I should chat with the account scheduled at that time, and if it is almost time for a new account to start, the current claude account
+    hands over the chat"). The account whose slot began last owns the chat until the next slot begins. Returns {state, owner, next, detail}; state is
+      OWNER      this account's slot is current: answer the chat (and do the duty);
+      SOON       the next slot (another account's) starts within HANDOVER_LEAD_S: tell Tj the chat moves, release the lease so that routine can take it, keep answering until it starts;
+      STANDDOWN  another account's slot is current and it has checked in: do not work, do not answer; tell Tj who has the chat if he writes here ('force' takes it back);
+      CONTINUE   nobody else is running the chat (fewer than 3 accounts, the owner is out of usage, its routine has not checked in yet or never did): carry on as usual.
+    `notes` = [(meta, subject)] from the board; `away` = {tag: ISO until}. Pure."""
+    accounts = roster.get("accounts", [])
+    if len(accounts) < len(SLOTS):
+        return {"state": "CONTINUE", "owner": None, "next": None, "detail": "fewer than 3 accounts are registered"}
+    inst = _instants_around(now)
+    cur = [x for x in inst if x[2] <= now][-1]
+    nxt = [x for x in inst if x[2] > now][0]
+    cur_tag, nxt_tag = accounts[cur[0]]["tag"], accounts[nxt[0]]["tag"]
+
+    def away_at(tag, t):
+        try:
+            return datetime.datetime.fromisoformat(str((away or {}).get(tag, "")).replace("Z", "+00:00")) > t
+        except Exception:
+            return False
+
+    def ran(tag, since):
+        lo = since - datetime.timedelta(minutes=10)
+        for meta, subject in notes:
+            try:
+                at = datetime.datetime.fromisoformat(meta.get("at", "").replace("Z", "+00:00"))
+            except Exception:
+                continue
+            if meta.get("from", "").split("/")[0] == tag and lo <= at <= now and not subject.startswith("rotation-standdown"):
+                return True
+        return False
+
+    base = {"owner": cur_tag, "next": nxt_tag}
+    if (nxt[2] - now).total_seconds() <= HANDOVER_LEAD_S and nxt_tag != me and not away_at(nxt_tag, nxt[2]):
+        return dict(base, state="SOON", detail="the chat moves to %s at %s ET" % (nxt_tag, SLOTS[nxt[0]]))
+    if cur_tag == me:
+        return dict(base, state="OWNER", detail="this account's slot is current until %s ET" % SLOTS[nxt[0]])
+    if away_at(cur_tag, cur[2]):
+        return dict(base, state="CONTINUE", detail="%s owns this window but is out of usage (away.json)" % cur_tag)
+    if ran(cur_tag, cur[2]):
+        return dict(base, state="STANDDOWN", detail="the chat belongs to %s (slot %s ET) until %s ET" % (cur_tag, SLOTS[cur[0]], SLOTS[nxt[0]]))
+    if (now - cur[2]).total_seconds() < OWNER_WAIT_S:
+        return dict(base, state="CONTINUE", detail="%s's routine has not checked in yet (waiting up to %d min)" % (cur_tag, OWNER_WAIT_S // 60))
+    return dict(base, state="CONTINUE", detail="%s's routine left no trace this window: carrying on" % cur_tag)
+
+
+def chat(tag):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    away = {}
+    try:
+        away = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "research", "coordination", "away.json")))
+    except Exception:
+        pass
+    st = chat_state(now, read_roster(), board_notes(), away, tag)
+    print("CHATSTATE %s %s" % (st["state"], st["detail"]))
+    return 0
+
+
 def board_notes():
     import coord
     coord.sync()
@@ -381,6 +457,7 @@ def main(argv):
     ci = sub.add_parser("checkin"); ci.add_argument("--tag")
     cr = sub.add_parser("cron"); cr.add_argument("--tag")
     sub.add_parser("missed")
+    chp = sub.add_parser("chat"); chp.add_argument("--tag")
     cv = sub.add_parser("cover"); cv.add_argument("slot", type=int); cv.add_argument("--date", required=True)
     a = ap.parse_args(argv)
     if a.cmd == "selftest":
@@ -392,6 +469,8 @@ def main(argv):
             return checkin(my_tag(a.tag))
         if a.cmd == "missed":
             return missed()
+        if a.cmd == "chat":
+            return chat(my_tag(a.tag))
         if a.cmd == "cron":
             slot = slot_of(my_tag(a.tag), read_roster())
             if slot is None:
