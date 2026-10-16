@@ -78,3 +78,8 @@ So far only a couple auto bets were made. There must be more volume. Try to bala
 My phone battery is about to die. You have full permission to build and begin running the auto bid feature with the volume setting activated (hundreds of bids up at a time, you can max out the wallet) as long as each bid is positive EV 
 If you finish building the auto bid, start it up. I think it can use the same key already on GitHub that makes auto bets. Use the novig socket for all features that it can improve
 ```
+
+## 2026-10-16T01:13:25Z
+```
+Are you sure those weren't the bids already up on my phone? Also, make it so GitHub/Claude can push updates directly to the vigilant android app on my phone. When an update is available, I get a push notification and an install update button which automatically downloads the update from GitHub and updates the app just like other Android apps
+```
