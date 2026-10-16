@@ -1893,11 +1893,11 @@ private fun ColumnScope.PinnaclePage(state: UiState, keys: KeyActions, onUpdate:
 @Composable
 private fun ColumnScope.PropLinePage(state: UiState, keys: KeyActions, onUpdate: SettingsUpdate) {
     val s = state.settings
-    Intro("PropLine sends about 30 sportsbooks' lines and player props in one feed. Keys are used one after another. The sportsbooks it is asked for are picked under Fair odds.")
+    Intro("PropLine sends about 30 sportsbooks' lines and player props in one feed. A paid key (Hobby 5,000 or Pro 25,000 requests a day) is found by its own daily limit and used first, free keys after it. With a paid key every game's props are read, the +EV scanner at Novig runs on GitHub (the PropLine +EV card on the +EV tab), and PropLine's graded results, closing lines and exports are archived to GitHub for research. The sportsbooks it is asked for are picked under Fair odds.")
     SwitchRow(
         "PropLine",
         if (state.proplineKeys.isEmpty()) "Your sportsbooks below (Pinnacle, DraftKings, FanDuel, BetMGM…) in one feed. Free key at prop-line.com: 1,000 requests a day."
-        else "1 request per league per scan for game lines, 1 per game for player props (${gamesLabel(s.propLineGamesPerScan)} a scan, set under Fair odds). 1,000 a day per key.",
+        else "1 request per league per scan for game lines, 1 per game for player props (${gamesLabel(s.propLineGamesPerScan)} a scan on a free key, set under Fair odds; a paid key reads every game while it is within the day's share). 1,000 a day on a free key, 5,000 Hobby, 25,000 Pro.",
         s.usePropLine,
     ) { v -> onUpdate { it.copy(usePropLine = v) } }
     if (s.usePropLine) {
