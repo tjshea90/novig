@@ -80,4 +80,26 @@ class EngineStudyTest {
             dir.deleteRecursively()
         }
     }
+
+    @Test
+    fun `the wide log also keeps lines the list did not show, with why, and only the engine asks for it (Tj, 2026-10-16)`() = runBlocking {
+        val dir = Files.createTempDirectory("engine-study-wide").toFile()
+        try {
+            val study = ScanStudy(StudyJournal(dir), version = { "github-engine" }, flushEveryMs = 0)
+            val s = ScanSettings(scanStudy = true, leagues = setOf("NBA"), minEvPercent = 0.03)
+            val shown = row("a")
+            val nearMiss = row("b").copy(fairProbability = 0.485, quote = EvQuote(0.485, 0.48, 0.0075))
+            val far = row("c").copy(fairProbability = 0.40, quote = EvQuote(0.40, 0.48, 0.0075))
+            val result = ScanResult(emptyList(), listOf(shown, nearMiss, far), ScanStats(3, 3, 3, 3, 3), now)
+            assertEquals("the phone's study logs what its list shows", 1, study.observeVigilant(result, s))
+            study.flush()
+            val wide = ScanStudy(StudyJournal(Files.createTempDirectory("engine-study-wide2").toFile()), version = { "github-engine" }, flushEveryMs = 0)
+            assertEquals("the engine also logs the near miss, not the far one", 2, wide.observeVigilant(result, s, wideFloor = -0.02))
+            wide.flush()
+            val j = StudyJournal(dir)
+            assertEquals(1, j.days().flatMap { j.fold(it).values }.size)
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
 }
