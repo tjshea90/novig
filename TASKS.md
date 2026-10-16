@@ -5354,3 +5354,15 @@ Tj: "So far the auto bet has only placed two bets. There must be much more volum
 - [ ] TCL30c ENGINEER: BoltOdds REST fallback hits 429 (6 a minute) when the socket is off in the engine; gap the snapshot to the limit or keep the socket on.
 - [ ] TCL30d ENGINEER: add held-back counts by reason to the dashboard/tradeNote history so a trend per day is visible (orders per day vs listed per day).
 - [ ] TCL30e Each run: the volume loop (ROUTINE.md), one line in CHANGES.md.
+
+
+## TCL31: the GitHub engine posts bids too; the phone is the monitor (Tj, 2026-10-16)
+Tj: "Investigate if I can make vigilant on the GitHub cloud do auto bids in addition to bets, with the same functionality that is already in the android app. If so build it now ... So far only a couple auto bets were made. There must be more volume. Try to balance volume but also the best types of bets that are profitable. When I open the android app, I want it to automatically sync to whatever GitHub is currently doing including all the status and bets. The point of the android app is to be a monitor and control center."
+Finding: yes. `MakerDesk`/`MakerQuote`/`CloudBidLane` are all in the shared data module; the engine already makes the candidates and holds a Novig reader; the trading key is already there. Volume finding: at 8:35 pm ET 41 of 42 listed bets were held by the 6 h trap guard (taker bets beyond 6 h lose CLV, kept); BIDS are the proven way to earn on those early games (resting under the fair, no taker loss), and the phone's `maker` switch was OFF, so nothing posted them.
+- [ ] TCL31a `ApiGates.cloudBids` (default on; effective only with engine trading LIVE) + `ScanSettings.engineBids`; `forCloud` makes the scan run the bid profile (maker on); CloudScanKey FETCH.
+- [ ] TCL31b `MakerDesk`: `ENGINE_PREFIX` client ids (phone's desk never cancels the engine's bids as strays), `cancelStrays` off for the engine.
+- [ ] TCL31c `CloudBidRunner` (data/cloud): the phone's MakerRunner pass on the lane's lines with the engine's wallet; picked-off guard; fills mirrored into the trade ledger (so the grader, Kelly risk and the phone see them); `desk.json` published + carried job to job; bids cancelled when the engine stops.
+- [ ] TCL31d `CloudTrader.pass(extraHeld)`: resting/filled bids count in the repeat guard; bids skip markets the engine bought.
+- [ ] TCL31e CloudEngine/CloudMain wiring: desk loop every 25 s, status fields (`deskNote`, resting, dollars), messages for fills.
+- [ ] TCL31f Phone: stands down its own bid desk while the engine's bids are live (heartbeat fresh); Dashboard shows the engine's bets AND bids; everything syncs the moment the app opens (`CloudLink.syncNow`); a switch in Settings › Cloud scan.
+- [ ] TCL31g Tests, docs (CLAUDE.md, ROUTINE.md volume loop mentions bids), CHANGES.md line, ship, release.

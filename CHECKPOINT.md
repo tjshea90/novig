@@ -1,22 +1,23 @@
-# CHECKPOINT 3390 — read me first, then TASKS.md
+# CHECKPOINT 3391 — read me first, then TASKS.md
 
-**Written:** 2026-10-15T23:52:07Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-09f8e1bf-qtmu63` · **builds on:** `2eda70543` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T00:28:27Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-6cce5eff-xcxliy` · **builds on:** `a9fb06e94` (this checkpoint is the commit after it)
 
 ## Just done
-Dormancy also by slot window (a fresh routine container is acct-unknown); test_coord isolated from real id.json; v0.111.0 released
+TCL31 planned: engine bid desk (see TASKS.md TCL31)
 
 ## Do this next
-TCL30b-e; start chat_watch each session
+TCL31a: gates.cloudBids + engineBids + forCloud, then CloudBidRunner
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M tools/coord.py
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  fed8df095 ckpt 3390: Dormancy also by slot window (a fresh routine container is acct-unknown); t
   1724f3455 ckpt 3389: Dormancy safeguard: this account's routine stops at rotation checkin / coor
   8bccba7f3 ckpt 3388: TCL30: volume diagnosis + standing volume/quality loop (CLAUDE.md, ROUTINE.
   5e2281ea8 ckpt 3387: pre-release: v0.111.0: chat with Claude inside the app (through the repo; s
@@ -26,8 +27,7 @@ TCL30b-e; start chat_watch each session
   04f6651f0 ckpt 3383: TCL28 shipped as v0.110.0 (released, recorded), engine restarted on new cod
   e21ac688f ckpt 3382: pre-release: v0.110.0: the engine rests/turns off silent APIs and advises w
   4c3771fc8 ckpt 3381: pre-ship: v0.110.0: the engine rests/turns off silent APIs and advises what
-  7248cc027 ckpt 3380: TCL28b/a: governor + advisor wired into the engine (rests silent APIs, asks
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
