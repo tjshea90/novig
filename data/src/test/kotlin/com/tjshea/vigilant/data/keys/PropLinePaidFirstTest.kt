@@ -64,4 +64,39 @@ class PropLinePaidFirstTest {
         m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 5_000, limit = 25_000, used = 20_000)
         assertEquals(false, client.roomForEveryGame(noon))                    // over the day's share: back to the setting's cap
     }
+
+    @Test
+    fun theDayIsSpentOnlyAcrossTheHoursTheEngineWorks() {
+        val day = Instant.parse("2026-10-16T00:00:00Z").toEpochMilli()
+        fun f(h: Int) = com.tjshea.vigilant.data.reference.PropLineClient.activeDayFraction(day + h * 3_600_000L)
+        // October 16 is daylight time: the engine works 12:00Z to 05:00Z next day, so the UTC day holds 00:00-05:00 and 12:00-24:00 = 17 hours of work.
+        assertEquals(0.0, f(0), 1e-9)
+        assertEquals(5.0 / 17, f(5), 1e-9)
+        assertEquals("nothing is read from 05:00 to 12:00", f(5), f(12), 1e-9)
+        assertEquals(11.0 / 17, f(18), 1e-9)
+        assertEquals(1.0, f(24), 1e-9)
+        // Winter (EST): 13:00Z to 06:00Z
+        val w = Instant.parse("2026-12-10T00:00:00Z").toEpochMilli()
+        assertEquals(6.0 / 17, com.tjshea.vigilant.data.reference.PropLineClient.activeDayFraction(w + 6 * 3_600_000L), 1e-9)
+    }
+
+    @Test
+    fun farGamesKeepTheirPropsLongerThanNearOnes() {
+        val now = Instant.parse("2026-10-16T18:00:00Z").toEpochMilli()
+        assertEquals(2 * 60_000L, com.tjshea.vigilant.data.reference.PropLineClient.propsReuseMs(now + 2 * 3_600_000L, now))
+        assertEquals(5 * 60_000L, com.tjshea.vigilant.data.reference.PropLineClient.propsReuseMs(now + 5 * 3_600_000L, now))
+    }
+
+    @Test
+    fun propsThrottleBeforeTheEvSweepDoes() = runBlocking<Unit> {
+        val t = Instant.parse("2026-10-16T18:00:00Z").toEpochMilli()      // 11 of 17 working hours gone: pace 16,176 of 25,000
+        val m = UsageMeter(JsonFileStore(File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), clock = { t })
+        val client = com.tjshea.vigilant.data.reference.PropLineClient(okhttp3.OkHttpClient(), KeyPool(QuotaPolicy.PROPLINE, { listOf("pro") }, m), kotlinx.serialization.json.Json { ignoreUnknownKeys = true }, clock = { t }, meter = m)
+        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 25_000 - 12_000, limit = 25_000, used = 12_000)      // props line: 16,176 * .7 + 1,250 = 12,573
+        assertEquals(true, client.roomForEveryGame(t)); assertEquals(true, client.roomForEv(t))
+        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 25_000 - 13_000, limit = 25_000, used = 13_000)
+        assertEquals("props over their share: back to the setting's cap", false, client.roomForEveryGame(t)); assertEquals("the sweep still has room (16,176 * .9 + 1,250 = 15,808)", true, client.roomForEv(t))
+        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 25_000 - 16_000, limit = 25_000, used = 16_000)
+        assertEquals(false, client.roomForEv(t))
+    }
 }
