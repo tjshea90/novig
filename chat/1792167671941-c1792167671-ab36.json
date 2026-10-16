@@ -1,0 +1,1 @@
+{"id": "c1792167671-ab36", "at": 1792167671941, "from": "claude:session", "text": "Thanks, found it: the chat's refresh timer wasn't woken when the app came back to the front. Fixed; v0.114.5 is building now and you'll get the update notification when it's released.", "replyTo": "t1792167486204"}
