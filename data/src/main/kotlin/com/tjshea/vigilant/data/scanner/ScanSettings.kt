@@ -937,6 +937,12 @@ data class ScanSettings(
     /** The bid desk's lines are GitHub's candidates, given Novig's books by this phone ([com.tjshea.vigilant.data.cloud.CloudBidLane]); the engine publishes them only then. */
     val bidsFromCloud: Boolean get() = cloudDrives && bidsNeedLines
 
+    /**
+     * The GitHub engine posts the bids (Tj, 2026-10-16, TCL31): the cloud scan drives, the engine trades LIVE with the trading key, bids are priced from Vigilant's scan and [ApiGates.cloudBids] is on. Whether the
+     * phone's own bid desk then stands down is decided by the engine's heartbeat, not by this alone ([com.tjshea.vigilant.data.cloud.CloudStatus.deskLive]), so a dead engine never leaves the wallet unbid.
+     */
+    val engineBids: Boolean get() = cloudDrives && !killed && gates.cloudTrading == CloudTradeMode.LIVE && gates.cloudBids && makerSource == BidSource.VIGILANT
+
     /** The scanner choice as it runs. */
     val scannerNow: ScannerMode get() = scanner
 
@@ -1367,6 +1373,11 @@ data class ApiGates(
     val cloudWalletUse: Double = 0.9,
     /** Trading stops for the day when the bankroll is down this share since the day began (half stakes from half of it). */
     val cloudDayStop: Double = 0.40,
+    /**
+     * The GitHub engine also posts BIDS (Tj, 2026-10-16, TCL31): the phone's bid desk, unchanged, runs on the runner with the engine's trading key whenever [cloudTrading] is LIVE. Default on: the 6 h trap guard
+     * holds back almost every taker bet on a game further out, and resting bids are how those games earn. The bid rules are the phone's own (bid slider, many, kinds, windows); the switch only decides WHERE they run.
+     */
+    val cloudBids: Boolean = true,
     /** The one main switch for every live feature and socket (Tj, 2026-10-14): see [LiveMasterMode]. */
     val liveMaster: LiveMasterMode = LiveMasterMode(),
     /**

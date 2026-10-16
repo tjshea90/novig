@@ -23,7 +23,7 @@ object CloudScanKey {
         "usePinnacle", "usePolymarket", "useKalshi", "useOddsApi", "useParlay", "usePropLine", "oddsApiReuseMinutes", "staleReferenceMinutes",
         "linesPerGame", "propsPerGame", "maxBooksPerScan", "fillBudget", "useBookProps", "bookPropSet", "bookPropCreditsPerScan", "bookPropHours", "propLineGamesPerScan", "bookPropReuseMinutes",
         // bids on, and low-usage bids, change the scan's own profile (`ScanSettings.effective`) and whether candidate lines are made at all
-        "maker", "makerRecommend", "makerSource", "makerFocus", "lowUsageBooks",
+        "maker", "makerRecommend", "makerSource", "makerFocus", "lowUsageBooks", "gates.cloudBids",
         // BoltOdds and Novig's feed run on the engine too (Tj, 2026-10-15): the switches decide which sockets it keeps and what it reads from them
         "gates.useBoltOdds", "gates.boltAllBooks", "gates.boltSocket", "gates.novigSocket", "gates.novigBbo", "gates.novigKeepOpen", "gates.novigCompress",
         "gates.usePinnwire", "gates.usePinnapi", "gates.opAllBooks", "gates.op4Fair", "gates.sgoAllBooks", "gates.propLineAllBooks", "gates.askAllSources", "gates.rankByMeasure",

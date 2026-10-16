@@ -235,6 +235,12 @@ class MakerDesk(
     private val pause: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) },
     /** Post-only orders that belong to another desk (the live bids): not this desk's to cancel as strays. */
     private val otherDesks: () -> OtherOrders = { OtherOrders.NONE },
+    /**
+     * The GitHub engine's desk (TCL31): its bids carry [ENGINE_PREFIX] client ids and no other desk may call them strays; it never cancels orders it has no record of either (the phone's and the live desks' bids
+     * rest under the same subaccount), and a bid it loses track of ends with its own expiry.
+     */
+    private val cancelStrays: Boolean = true,
+    private val newClientId: () -> String = { NovigTradingClient.newClientId() },
 ) {
     /** The ids of the orders another desk placed: [orderIds] by Novig's id, [clientIds] by the id they were sent with (an order whose answer never came has only that one). */
     data class OtherOrders(val orderIds: Set<String>, val clientIds: Set<String>) {
@@ -707,7 +713,7 @@ class MakerDesk(
     private fun bidFor(post: MakerDecision.Post, rules: MakerRules, auto: Boolean, now: Long): Pair<MakerBid, Long>? {
         val line = post.line
         val bid = MakerBid(
-            clientId = NovigTradingClient.newClientId(), marketId = line.marketId, eventId = line.market.eventId, outcomeId = line.outcomeId,
+            clientId = newClientId(), marketId = line.marketId, eventId = line.market.eventId, outcomeId = line.outcomeId,
             league = line.league, eventName = line.eventName, startsTs = line.startsTs, marketLabel = line.marketLabel, selection = line.selection,
             kind = line.kind, price = post.price, contracts = post.contracts, fair = post.anchorFair ?: line.fair ?: post.price, evAtFair = post.evAtFair,
             blendFair = line.fair, sharpFairAtPost = line.sharpFairs.minOrNull(),
@@ -978,7 +984,7 @@ class MakerDesk(
         val knownClients = known.mapTo(HashSet()) { it.clientId }
         val other = otherDesks()
         for (o in open) {
-            if (o.tif == "PO" && o.orderId !in knownIds && o.clientId !in knownClients && o.orderId !in other.orderIds && o.clientId !in other.clientIds) {
+            if (cancelStrays && o.tif == "PO" && o.clientId?.startsWith(ENGINE_PREFIX) != true && o.orderId !in knownIds && o.clientId !in knownClients && o.orderId !in other.orderIds && o.clientId !in other.clientIds) {
                 try {
                     trading.cancelOrder(o.orderId)
                 } catch (e: CancellationException) {
