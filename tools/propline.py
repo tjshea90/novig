@@ -9,9 +9,11 @@
 Keys come from the environment variable PROPLINE_API_KEY (several keys: comma, space or newline separated; the phone's "send keys to GitHub" writes this secret). The key used is the one whose own
 plan is largest (its `X-Daily-Limit`), so a Pro key is found among free ones. A key is never printed. See research/PROPLINE_PRO_2026-10-16.md for the endpoints.
 """
-import datetime, gzip, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
+import datetime, gzip, json, os, re, shutil, sys, time, urllib.error, urllib.parse, urllib.request
 
 BASE = "https://api.prop-line.com"
+# The exports are huge (8 million graded outcomes in 30 days across all books), so the archive asks for the books that matter to Vigilant: Novig (where it bets) and Pinnacle (the sharp close).
+BOOKS_ARCHIVE = ["novig", "pinnacle"]
 SPORTS_ARCHIVE = ["baseball_mlb", "basketball_nba", "basketball_wnba", "hockey_nhl", "football_nfl", "football_ncaaf", "basketball_ncaab", "tennis", "mma_ufc"]
 TIERS = [(1_000, "free"), (5_000, "hobby"), (25_000, "pro"), (250_000, "streaming-lite"), (1_000_000, "streaming")]
 
@@ -60,6 +62,37 @@ def request(path, key, params=None, method="GET", body=None, accept_gzip=False, 
                 continue
             raise
     return 0, {}, b""
+
+
+def download(path, key, params, dest, timeout=1800):
+    """Stream a (large) CSV export to the gzip file `dest` without holding it in memory. -> (status, headers, error text)."""
+    url = BASE + path + "?" + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url)
+    req.add_header("X-API-Key", key)
+    req.add_header("Accept-Encoding", "gzip")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            hdr = {k.lower(): v for k, v in r.headers.items()}
+            if hdr.get("content-encoding") == "gzip":
+                with open(dest, "wb") as f:
+                    shutil.copyfileobj(r, f, 1 << 20)
+            else:
+                with gzip.open(dest, "wb") as f:
+                    shutil.copyfileobj(r, f, 1 << 20)
+            return r.status, hdr, ""
+    except urllib.error.HTTPError as e:
+        return e.code, {k.lower(): v for k, v in e.headers.items()}, e.read()[:300].decode("utf8", "replace")
+
+
+def count_rows(path):
+    n = 0
+    try:
+        with gzip.open(path, "rb") as f:
+            for _ in f:
+                n += 1
+    except (EOFError, OSError):
+        return -1      # a truncated stream: the export was cut off
+    return max(n - 1, 0)
 
 
 def plan_of(key):
@@ -201,21 +234,34 @@ def cmd_archive(outdir, days):
     since = (now - datetime.timedelta(days=days)).strftime("%Y-%m-%dT00:00:00Z")
     until = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     made = []
+    stop = False
     for sp in SPORTS_ARCHIVE:
-        st, h, data = request("/v1/exports/resolved-props", key, {"sport": sp, "since": since, "until": until}, accept_gzip=True, timeout=600)
-        if st != 200:
-            print("%s: HTTP %s %s" % (sp, st, data[:200].decode("utf8", "replace")))
-            if st == 429:
-                break
-            continue
-        raw = gzip.decompress(data) if h.get("content-encoding") == "gzip" else data
-        name = "resolved-%s-%s_%s.csv.gz" % (sp, since[:10], until[:10])
-        with gzip.open(os.path.join(outdir, name), "wb") as f:
-            f.write(raw)
-        rows = raw.count(b"\n") - 1
-        made.append(name)
-        print("%s: %d rows, archive starts %s, export calls left today %s" % (sp, rows, h.get("x-propline-archive-starts"), h.get("x-propline-export-daily-remaining")))
-        time.sleep(1)
+        for book in BOOKS_ARCHIVE:
+            name = "resolved-%s-%s-%s_%s.csv.gz" % (sp, book, since[:10], until[:10])
+            dest = os.path.join(outdir, name)
+            st, h, err = download("/v1/exports/resolved-props", key, {"sport": sp, "bookmaker": book, "since": since, "until": until}, dest)
+            if st != 200:
+                print("%s %s: HTTP %s %s" % (sp, book, st, err))
+                if os.path.exists(dest):
+                    os.remove(dest)
+                if st == 429:
+                    stop = True
+                    break
+                continue
+            rows = count_rows(dest)
+            if rows < 0:
+                print("%s %s: the export was cut off (truncated gzip); dropped" % (sp, book))
+                os.remove(dest)
+                continue
+            if rows <= 2:      # only the two watermark canary rows: nothing resolved in the window
+                os.remove(dest)
+                print("%s %s: nothing resolved in the window (archive starts %s)" % (sp, book, h.get("x-propline-archive-starts")))
+                continue
+            made.append(name)
+            print("%s %s: %d rows, archive starts %s, export calls left today %s" % (sp, book, rows, h.get("x-propline-archive-starts"), h.get("x-propline-export-daily-remaining")))
+            time.sleep(1)
+        if stop:
+            break
     # the free reports (daily record for Claude)
     stamp = now.strftime("%Y-%m-%d")
     for name, path, params in [("books-accuracy", "/v1/books/accuracy", {"days": 30}), ("resolution-summary", "/v1/markets/resolution-summary", {"days": 30})]:
