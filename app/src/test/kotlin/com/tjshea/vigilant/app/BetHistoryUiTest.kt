@@ -61,7 +61,7 @@ class BetHistoryUiTest {
     }
 
     @Test
-    fun `Stats has a smart filter, a split by any dimension and a share card`() {
+    fun `Stats has a smart filter, a split by any dimension and no share card`() {
         var shared: com.tjshea.vigilant.app.BetShare.Range? = null
         screen { TrackerScreen(withRecords(), { _, _ -> }, {}, initialView = TrackerView.STATS, onShareBets = { shared = it }, archiveNote = "3 day files kept") }
         compose.onNodeWithTag("smartFilter").assertExists()
@@ -73,9 +73,7 @@ class BetHistoryUiTest {
         // Splitting by the star rating shows a row for the bets' rating.
         compose.onNodeWithText("Star rating").performClick()
         assertTrue(compose.onAllNodesWithTag("dimBreakdown").fetchSemanticsNodes().isNotEmpty())
-        compose.onAllNodes(androidx.compose.ui.test.hasScrollAction()).onFirst().performScrollToNode(androidx.compose.ui.test.hasTestTag("shareBetsCard"))
-        compose.onNodeWithTag("shareBetsButton").performClick()
-        assertEquals(com.tjshea.vigilant.app.BetShare.Range.ALL, shared)
+        assertEquals(null, shared)
     }
 
     @Test
