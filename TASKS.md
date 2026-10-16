@@ -5431,4 +5431,4 @@ Tj: "it is sgo pro. my boltodds is working fine here, see if GitHub can refresh 
 - [x] TCL40c (halt 1h, judge last 8h) Analyze the picked-off halt: is a 3 h stop needed? data on the 8 fills; propose/implement better reset (ROUTINE class B evidence).
 
 ## TCL41: confirm Claude auto-updates of app + profit engine are live and routine (Tj, chat t1792165602030, 2026-10-16)
-- [ ] TCL41a Verify the three rotation routines exist/enabled, next fire times, and what each does (ROUTINE.md); report to Tj; fix gaps (e.g. account away, no routine for 7542bf slot).
+- [x] TCL41a (this account verified; other two need Tj to check claude.ai Routines) Verify the three rotation routines exist/enabled, next fire times, and what each does (ROUTINE.md); report to Tj; fix gaps (e.g. account away, no routine for 7542bf slot).
