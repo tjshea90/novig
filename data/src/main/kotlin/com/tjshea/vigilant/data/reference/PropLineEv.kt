@@ -168,7 +168,7 @@ object PropLineBestLine {
     fun attach(row: PlEvRow, board: Board): PlEvRow {
         val spread = row.market == "spreads"
         val line = board.lines.firstOrNull { l ->
-            l.market == row.market && sameName(l.player, row.player) && l.player.isNotBlank() == row.player.isNotBlank() &&
+            l.market == row.market && (if (row.player.isBlank()) l.player.isBlank() else sameName(l.player, row.player)) &&
                 (l.point == null && row.point == null || (l.point != null && row.point != null && (if (spread) kotlin.math.abs(kotlin.math.abs(l.point) - kotlin.math.abs(row.point)) < 1e-9 else kotlin.math.abs(l.point - row.point) < 1e-9)))
         } ?: return row
         val ours = line.sides.keys.firstOrNull { it.equals(row.outcome, true) } ?: line.sides.keys.firstOrNull { sameName(it, row.outcome) } ?: return row
