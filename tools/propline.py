@@ -210,6 +210,10 @@ def cmd_probe(outdir):
         did = g["id"]
         st, h, data = request("/v1/sports/%s/players" % dsp, key, {"search": "ohtani" if dsp == "baseball_mlb" else "a", "limit": 3}); save("players_search", st, h, data)
         pl = (j(data) or {}).get("players", []) if st == 200 else []
+        if not pl:
+            # the search answered 422 on the first run: the trends endpoint also takes a plain name, so capture that shape anyway (market narrows it to one stat)
+            nm = "Shohei Ohtani" if dsp == "baseball_mlb" else "LeBron James"
+            st, h, data = request("/v1/sports/%s/players/%s/trends" % (dsp, urllib.parse.quote(nm, safe="")), key, {"market": "batter_hits" if dsp == "baseball_mlb" else "player_points"}); save("player_trends", st, h, data, "(by name %s)" % nm)
         if pl:
             pid = pl[0]["player_id"]
             st, h, data = request("/v1/sports/%s/players/%s/trends" % (dsp, urllib.parse.quote(pid, safe="")), key); save("player_trends", st, h, data, "(%s)" % pid)
