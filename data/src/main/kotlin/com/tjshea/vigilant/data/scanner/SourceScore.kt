@@ -33,7 +33,7 @@ object SourceScore {
     fun inaccurate(m: Measure?): Boolean = m != null && m.agreementPts != null && m.agreementLines >= MIN_AGREEMENT_LINES && m.agreementPts > INACCURATE_PTS
 
     /** [prior] re-ordered by [measures]; ids not in [measures] keep their place by the 4-minute rule. */
-    fun rank(prior: List<String>, measures: Map<String, Measure>): List<String> =
+    fun rank(prior: List<String>, measures: Map<String, Measure>, paid: Set<String> = emptySet()): List<String> =
         prior.withIndex().sortedWith(
             compareBy<IndexedValue<String>>(
                 { (_, id) -> if (inaccurate(measures[id])) 1 else 0 },
@@ -42,6 +42,8 @@ object SourceScore {
                 // its 3,500 monthly credits in 16 days while flat-rate SGO and PropLine slept. It is asked as the fallback or for a gap, never first.
                 { (_, id) -> if (id in SCARCE) 1 else 0 },
                 { (_, id) -> bucket(measures[id]) },
+                // A plan Tj pays for wins a tie on freshness (TCL61): the subscription is used and the free credits are kept.
+                { (_, id) -> if (id in paid) 0 else 1 },
                 { it.index },
             ),
         ).map { it.value }

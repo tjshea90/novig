@@ -32,11 +32,21 @@ object ApiChain {
     /** What each feed was last measured to deliver ([SourceScore]); empty = the shipped order. Set by the scanner after each scan while [ApiGates.rankByMeasure] is on. */
     @Volatile var measures: Map<String, SourceScore.Measure> = emptyMap()
 
+    /** Providers (switch ids' meter ids, e.g. "parlay") Tj pays for, and the paid monthly ones whose credits are ahead of the calendar ([com.tjshea.vigilant.data.cloud.ApiScorecard]); set by the engine. */
+    @Volatile var paidProviders: Set<String> = emptySet()
+    @Volatile var surplusProviders: Set<String> = emptySet()
+    private val surplusAsked = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    /** A surplus provider is asked as a second opinion for a league at most this often. */
+    const val SURPLUS_GAP_MS = 15 * 60_000L
+
+    private fun providerOf(feedId: String): String = com.tjshea.vigilant.data.cloud.CloudDashboard.providerOf(feedId)
+
     /** When each feed was last auditioned (asked only to be measured), so one that never yields a measurable board is not auditioned on every scan. */
     private val auditioned = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     /** A new scanner starts from the shipped order. */
-    fun reset() { measures = emptyMap(); auditioned.clear(); scarceAsked.clear() }
+    fun reset() { measures = emptyMap(); auditioned.clear(); scarceAsked.clear(); surplusAsked.clear(); paidProviders = emptySet(); surplusProviders = emptySet() }
 
     /** When a scarce feed (small monthly allowance, [SourceScore.SCARCE]) was last asked for a league to fill a gap or add an extra book, so it is not asked again every scan for the same gap. */
     private val scarceAsked = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -51,7 +61,7 @@ object ApiChain {
             if (m.isEmpty()) return STATIC_CHAINS
             return STATIC_CHAINS.map { chain ->
                 val kinds = chain.toMap()
-                SourceScore.rank(chain.map { it.first }, m).map { it to kinds.getValue(it) }
+                SourceScore.rank(chain.map { it.first }, m, chain.map { it.first }.filter { providerOf(it) in paidProviders }.toSet()).map { it to kinds.getValue(it) }
             }
         }
 
@@ -92,6 +102,12 @@ object ApiChain {
         if (settings.gates.askAllSources) return true
         // No better feed answered this league: it failed, ran out of credits, was held back, or does not list it. The next best takes over.
         if (league.novigName !in context.firstAnswered) return true
+        // A paid provider whose credits would expire unspent is a second opinion for the league now and then (TCL61).
+        if (providerOf(sourceId) in surplusProviders) {
+            val key = sourceId + "|" + league.novigName
+            val last = surplusAsked[key]
+            if (last == null || context.now - last >= SURPLUS_GAP_MS) { surplusAsked[key] = context.now; return true }
+        }
         val horizon = context.now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
         val games = context.novigEvents.filter { it.league == league.novigName && it.startsTs <= horizon && it.matchup != null }
         if (games.isEmpty()) return false
