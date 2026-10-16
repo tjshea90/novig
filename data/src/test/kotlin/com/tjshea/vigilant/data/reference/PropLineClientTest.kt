@@ -180,6 +180,20 @@ class PropLineClientTest {
     }
 
     @Test
+    fun `a paid key asks a long prop list in chunks of six, a free key in one request`() = runTest {
+        val markets = (1..13).map { "player_m$it" }
+        routes["/v1/sports/americanfootball_nfl/events/e1/odds"] = { MockResponse().setResponseCode(404) }
+        client().eventBoard("americanfootball_nfl", "e1", markets, listOf("pinnacle"))
+        assertEquals("free: one request", 1, requests.count { it.requestUrl!!.encodedPath.endsWith("/events/e1/odds") })
+        requests.clear()
+        meter.recordBalance(QuotaPolicy.PROPLINE, "pl-key", remaining = 24_000, limit = 25_000, used = 1_000)
+        val paid = PropLineClient(OkHttpClient(), KeyPool(QuotaPolicy.PROPLINE, { listOf("pl-key") }, meter), json, server.url("/v1").toString().trimEnd('/'), clock = { clockMs }, minIntervalMs = 0, meter = meter)
+        paid.eventBoard("americanfootball_nfl", "e1", markets, listOf("pinnacle"))
+        assertEquals("paid: 6 + 6 + 1 markets", 3, requests.count { it.requestUrl!!.encodedPath.endsWith("/events/e1/odds") })
+        assertEquals(listOf(6, 6, 1), requests.map { it.requestUrl!!.queryParameter("markets")!!.split(",").size })
+    }
+
+    @Test
     fun `every reply's daily figures feed the usage meter`() = runTest {
         routes["/v1/sports/americanfootball_nfl/odds"] = { ok(board) }
         client().odds(nfl, ScanSettings())
