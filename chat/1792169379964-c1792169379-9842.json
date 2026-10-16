@@ -1,0 +1,1 @@
+{"id": "c1792169379-9842", "at": 1792169379964, "from": "claude:session", "text": "v0.114.6 is out: https://github.com/tjshea90/novig/releases/tag/v0.114.6 . Install it (the app should offer it), then Settings > Cloud scan > Send my API keys to send the Kalshi key. I'll confirm the engine shows the Kalshi key and socket.", "replyTo": "t1792168347603"}
