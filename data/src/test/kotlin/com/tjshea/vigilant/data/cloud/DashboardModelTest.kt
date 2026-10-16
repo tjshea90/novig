@@ -31,6 +31,29 @@ class DashboardModelTest {
     }
 
     @Test
+    fun `an engine that is not running shows its last readings as last known, never as live (Tj, 2026-10-16: trading LIVE and address accepted while idle)`() {
+        val closed = java.time.Instant.parse("2026-10-16T07:00:00Z").toEpochMilli()   // 03:00 Eastern: closed
+        val last = st { copy(heartbeatMs = closed - 9 * 60_000, tradeMode = "live", addressHandovers = 0) }
+        assertEquals("Idle: outside its hours", DashboardModel.headline(last, closed).title)
+        assertEquals(Tone.NEUTRAL, DashboardModel.headline(last, closed).tone)
+        val tiles = DashboardModel.tiles(last, closed).associateBy { it.label }
+        assertEquals("not trading", tiles.getValue("Trading").value)
+        assertTrue(tiles.getValue("Trading").sub, tiles.getValue("Trading").sub.contains("outside its hours") && tiles.getValue("Trading").sub.contains("LIVE"))
+        assertEquals("not checked", tiles.getValue("Address").value)
+        assertTrue(tiles.values.all { it.tone == Tone.NEUTRAL })
+        // in its hours with no heartbeat it is a real failure, still not shown as live
+        val dead = st { copy(heartbeatMs = now - 9 * 60_000, tradeMode = "live") }
+        assertEquals("Not responding", DashboardModel.headline(dead, now).title)
+        assertEquals("not trading", DashboardModel.tiles(dead, now).first { it.label == "Trading" }.value)
+        assertTrue(DashboardModel.tiles(dead, now).first { it.label == "Trading" }.sub.contains("no heartbeat"))
+        // running: the live readings
+        assertEquals("LIVE", DashboardModel.tiles(st { copy(tradeMode = "live") }, now).first { it.label == "Trading" }.value)
+        assertEquals("accepted", DashboardModel.tiles(st(), now).first { it.label == "Address" }.value)
+        // an idle engine inside its hours (switched off on the phone) is not live either
+        assertEquals("not trading", DashboardModel.tiles(st { copy(idle = true, tradeMode = "live") }, now).first { it.label == "Trading" }.value)
+    }
+
+    @Test
     fun `scan progress is a fraction only while a scan runs and its size is known`() {
         assertNull(DashboardModel.scanProgress(st()))
         assertEquals(0.25f, DashboardModel.scanProgress(st { copy(scanning = true, progressDone = 10, progressTotal = 40) })!!, 0.0001f)
