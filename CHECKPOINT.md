@@ -1,21 +1,23 @@
-# CHECKPOINT 3510 — read me first, then TASKS.md
+# CHECKPOINT 3511 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T23:01:01Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-49ded3ac-g4ipzt` · **builds on:** `15d41942d` (this checkpoint is the commit after it)
+**Written:** 2026-10-16T23:04:38Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-49ded3ac-g4ipzt` · **builds on:** `b668a4384` (this checkpoint is the commit after it)
 
 ## Just done
-engine: mid-scan trading passes re-read stale Novig books (13,039 'no Novig price in 3 min' holds)
+engine restarted onto partial-pass re-read; CHANGES entry
 
 ## Do this next
-restart engine onto it; then verify holds drop
+verify holds dropped (~23:20Z); equity vs reserve question; TCL61c/d; UI
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  b668a4384 ckpt 3510: engine: mid-scan trading passes re-read stale Novig books (13,039 'no Novig
   03deb4185 ckpt 3509: v0.114.13 shipped
   b8beaf872 ckpt 3508: pre-release: PropLine is now a grading source (box scores, scores) in the a
   70b472c6f ckpt 3507: TCL67b: PropLineScores verified on real shapes
@@ -25,8 +27,4 @@ restart engine onto it; then verify holds drop
   db32d6f1c ckpt 3503: TCL56/64/65 closed; CLAUDE.md PropLine section updated
   1ee1f392b ckpt 3502: research: open-vs-close study from PropLine archive; CHANGES line
   a5fb82a8d ckpt 3501: PropLineTrends verified against real /trends answer; v0.114.12 shipped
-  68ec8c961 ckpt 3500: pre-release: PropLine +EV shown after Vigilant's prop cut + hit-rate trends
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
