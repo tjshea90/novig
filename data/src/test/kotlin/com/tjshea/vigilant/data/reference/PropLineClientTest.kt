@@ -314,7 +314,7 @@ class PropLineClientTest {
     }
 
     @Test
-    fun `props are bought per game for the stats Novig lists, and re-used for two minutes`() = runTest {
+    fun `props are bought per game for the stats Novig lists, and re-used for five minutes (the game is five hours away; two minutes inside three hours)`() = runTest {
         routes["/v1/sports/americanfootball_nfl/events"] = { ok(board) }
         routes["/v1/sports/americanfootball_nfl/events/555/odds"] = { ok(props) }
         val source = PropLinePropsSource(client())
@@ -339,8 +339,11 @@ class PropLineClientTest {
         clockMs = now + 60_000L
         source.odds(nfl, settings, context.copy(now = clockMs))
         assertEquals(before, requests.size)
-        // Never older than a couple of minutes (RESEARCH.md §24): bought again three minutes on.
+        // A far game's props keep five minutes (2026-10-16 pacing: its quotes are then about 6.5 minutes old, inside the 10-minute limit for far games); bought again six minutes on.
         clockMs = now + 3 * 60_000L
+        source.odds(nfl, settings, context.copy(now = clockMs))
+        assertEquals(before, requests.size)
+        clockMs = now + 6 * 60_000L
         source.odds(nfl, settings, context.copy(now = clockMs))
         assertTrue(requests.size > before)
     }
