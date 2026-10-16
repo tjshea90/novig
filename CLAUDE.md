@@ -648,6 +648,10 @@ Settings › Betting & Novig account › Profit-proven only (`ApiGates.profitPro
 `data/boltodds/BoltLiveConsensus.kt` (pure: quorum of COMPANIES that pushed within seconds and agree, trimmed mean, else the line is closed) + `BoltLiveFeed.kt` (push: `BoltBoard.addGameListener`; speaks Pinnodds frames) make `PinnFeedChoice.BOLT` a third source for `PinnLiveRunner`, so the matcher, the 5 s rule, the taker fee, the live trader and live bids run on it unchanged. It has no scores and BoltOdds has no sharp book (BOLTODDS_API.md §9-§10): the trigger is never "after a score", the edge floor is 4%, and REAL orders need `ApiGates.boltLiveReal` (default off = paper) on top of the live switches. Never loosen those without Tj's paper results. The streaming engine and the live feed are push (`addGameListener`, Novig `BookListener`); a new reader of either socket must be push too.
 
 <!-- handoff:learnings:begin -->
+## Long conversations: checkpoint and tell Tj a handoff is ready (Tj, 2026-10-16, chat, permanent)
+
+**Standing instruction from Tj (2026-10-16):** "see how to make the context automatically reset and just tell me when you make handoffs for a new Claude session every time you see it getting long". A session cannot clear its own context; what it can do (and must) is: when the conversation is long (many compactions, or a big task just finished), run `bash tools/ckpt.sh "did" "next"` with a specific next step, then say in the chat (`tell_tj.py chat-reply`) "Handoff ready: start a new session, it resumes from CHECKPOINT.md". The SessionStart briefing and `chat_watch.sh` carry the new session on by themselves.
+
 ## Session Learnings (auto-updated by handoff)
 
 ### Implicit Rules
