@@ -36,7 +36,13 @@ object ApiChain {
     private val auditioned = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     /** A new scanner starts from the shipped order. */
-    fun reset() { measures = emptyMap(); auditioned.clear() }
+    fun reset() { measures = emptyMap(); auditioned.clear(); scarceAsked.clear() }
+
+    /** When a scarce feed (small monthly allowance, [SourceScore.SCARCE]) was last asked for a league to fill a gap or add an extra book, so it is not asked again every scan for the same gap. */
+    private val scarceAsked = java.util.concurrent.ConcurrentHashMap<String, Long>()
+
+    /** A scarce feed fills the same league's gap at most this often (a fallback because every better feed failed is never held back). */
+    const val SCARCE_GAP_MS = 30 * 60_000L
 
     /** The chains, best first: the shipped order re-ranked by [measures]. */
     private val CHAINS: List<List<Pair<String, Kind>>>
@@ -90,10 +96,18 @@ object ApiChain {
         val games = context.novigEvents.filter { it.league == league.novigName && it.startsTs <= horizon && it.matchup != null }
         if (games.isEmpty()) return false
         val gap = games.any { e -> missing(kind, e, context) }
-        if (gap) return true
         // Extra information: a book the better feeds did not send, that Tj has on.
         val have = context.coveredBooks[league.novigName].orEmpty()
-        return extraBooks(sourceId, settings).any { it !in have }
+        val wanted = gap || extraBooks(sourceId, settings).any { it !in have }
+        if (!wanted) return false
+        if (sourceId in SourceScore.SCARCE) {
+            // Credits are few: the same league's gap is asked for once in SCARCE_GAP_MS (a gap that no feed fills, such as a game nobody prices props for, would otherwise cost credits every scan).
+            val key = sourceId + "|" + league.novigName
+            val last = scarceAsked[key]
+            if (last != null && context.now - last < SCARCE_GAP_MS) return false
+            scarceAsked[key] = context.now
+        }
+        return true
     }
 
     private fun missing(kind: Kind, e: NovigEvent, context: ScanContext): Boolean {

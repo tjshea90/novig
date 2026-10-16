@@ -37,6 +37,10 @@ object SourceScore {
         prior.withIndex().sortedWith(
             compareBy<IndexedValue<String>>(
                 { (_, id) -> if (inaccurate(measures[id])) 1 else 0 },
+                // A feed with a small monthly allowance never leads, however fresh its last answers were (Tj, 2026-10-16: "make sure the GitHub cloud scanning does not waste any api usage that is
+                // unnecessary ... redundant data offered by a better api ... not used unless needed for extra data or a fallback"): The Odds API led both chains on its 46-second p90 and spent 2,507 of
+                // its 3,500 monthly credits in 16 days while flat-rate SGO and PropLine slept. It is asked as the fallback or for a gap, never first.
+                { (_, id) -> if (id in SCARCE) 1 else 0 },
                 { (_, id) -> bucket(measures[id]) },
                 { it.index },
             ),
