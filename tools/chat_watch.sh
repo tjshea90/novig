@@ -6,7 +6,7 @@
 # State is in /tmp only; a fresh watcher re-prints anything still unanswered.
 set -u
 cd "$(dirname "$0")/.." || exit 1
-every="${CHAT_WATCH_EVERY:-15}"
+every="${CHAT_WATCH_EVERY:-6}"
 last=""
 while true; do
   head=$(git ls-remote origin refs/heads/cloud-config 2>/dev/null | cut -f1)

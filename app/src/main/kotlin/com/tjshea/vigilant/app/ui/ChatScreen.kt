@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +53,12 @@ fun ChatPage(thread: List<CloudChat.Msg>, who: String, onSend: suspend (String, 
     }
     val acked = remember(thread) { CloudChat.acked(thread) }
     val shown = remember(thread) { CloudChat.visible(thread) }
-    Column(modifier.testTag("chat"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    val scroll = androidx.compose.foundation.rememberScrollState()
+    // The newest message stays in view (also when the keyboard opens and the thread shrinks).
+    androidx.compose.runtime.LaunchedEffect(shown.size, picked.size) { scroll.animateScrollTo(scroll.maxValue) }
+    Column(modifier.testTag("chat"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      // The thread takes whatever room is left and scrolls; the box to type in is pinned under it (Tj, 2026-10-16: the screen broke when the keyboard opened).
+      Column(Modifier.weight(1f, fill = true).fillMaxWidth().verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(who.ifBlank { "Checking who is answering..." }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("chatWho"))
         if (thread.isEmpty()) Text("No messages yet. Ask about the engine, tell Claude what to change, or ask for a status.", style = MaterialTheme.typography.bodyMedium)
         shown.takeLast(40).forEach { m ->
@@ -71,6 +77,7 @@ fun ChatPage(thread: List<CloudChat.Msg>, who: String, onSend: suspend (String, 
                 }
             }
         }
+      }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
         picked.forEachIndexed { i, (name, bytes) ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

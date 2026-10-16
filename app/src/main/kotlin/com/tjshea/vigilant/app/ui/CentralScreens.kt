@@ -62,9 +62,10 @@ fun ClaudeScreen(
                 SegmentedButton(selected = section == "chat", onClick = { section = "chat" }, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text("Chat") }
                 SegmentedButton(selected = section == "messages", onClick = { section = "messages" }, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text(if (unread > 0) "Messages ($unread)" else "Messages") }
             }
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                if (section == "chat") ChatPage(state.claudeInbox.chat, state.chatWho, onSend, onChatOpen)
-                else MessagesPage(state.claudeInbox, onMarkRead = onMarkRead, onOpen = onOpenPage, onDismiss = onDismissMessage, onClearAll = onClearMessages)
+            // The chat lays itself out (thread above, input pinned below, both inside the room the keyboard leaves); only the messages list scrolls here.
+            if (section == "chat") ChatPage(state.claudeInbox.chat, state.chatWho, onSend, onChatOpen, Modifier.weight(1f).fillMaxWidth())
+            else Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                MessagesPage(state.claudeInbox, onMarkRead = onMarkRead, onOpen = onOpenPage, onDismiss = onDismissMessage, onClearAll = onClearMessages)
             }
         }
     }
