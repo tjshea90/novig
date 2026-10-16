@@ -1,12 +1,12 @@
 {
  "v": 1,
- "holder": "3204a3",
+ "holder": "a511f9",
  "label": "acct-unknown",
  "kind": "interactive",
- "task": "",
- "since": 1792163929,
- "sinceIso": "2026-10-16T15:18:49Z",
- "hb": 1792169350,
- "hbIso": "2026-10-16T16:49:10Z",
+ "task": "resume: v0.114.6 follow-ups, chat auto-resume",
+ "since": 1792169805,
+ "sinceIso": "2026-10-16T16:56:45Z",
+ "hb": 1792169805,
+ "hbIso": "2026-10-16T16:56:45Z",
  "leaseS": 1200
 }
