@@ -58,4 +58,45 @@ class PropLineEvTest {
         assertNotNull(back); assertEquals(feed, back)
         assertEquals(null, PlEvFeed.decode(ByteArray(10)))
     }
+
+    private val bestLine = """
+        {"id":"369360","sport_key":"basketball_nba","lines":[
+          {"market_key":"player_points","description":"Tyrese Maxey","point":24.5,"sides":{
+            "Over":{"best":{"book":"fanduel","price":105},"all_prices":[
+               {"book":"fanduel","price":105,"last_update":"2026-10-16T19:20:00Z"},{"book":"pinnacle","price":-102,"last_update":"2026-10-16T19:21:00Z"},
+               {"book":"draftkings","price":-108,"last_update":"2026-10-16T19:19:00Z"},{"book":"novig","price":-105,"last_update":"2026-10-16T19:20:00Z"},{"book":"onlyover","price":140,"last_update":"2026-10-16T19:20:00Z"}]},
+            "Under":{"best":{"book":"draftkings","price":-105},"all_prices":[
+               {"book":"fanduel","price":-130,"last_update":"2026-10-16T19:20:00Z"},{"book":"pinnacle","price":-118,"last_update":"2026-10-16T19:21:00Z"},
+               {"book":"draftkings","price":-112,"last_update":"2026-10-16T19:19:00Z"},{"book":"novig","price":-115,"last_update":"2026-10-16T19:20:00Z"}]}}},
+          {"market_key":"h2h","description":"","point":null,"sides":{
+            "Celtics":{"best":{"book":"x","price":157},"all_prices":[{"book":"pinnacle","price":150,"last_update":"2026-10-16T19:20:00Z"},{"book":"draftkings","price":155,"last_update":"2026-10-16T19:20:00Z"}]},
+            "76ers":{"best":{"book":"x","price":-150},"all_prices":[{"book":"pinnacle","price":-170,"last_update":"2026-10-16T19:20:00Z"},{"book":"draftkings","price":-175,"last_update":"2026-10-16T19:20:00Z"}]}}}]}
+    """.trimIndent()
+
+    @Test
+    fun otherBooksAreShownAndCountedByTheirOwnDevig() {
+        val row = parse(answer("""{"book":"novig","name":"Over","price":-105,"ev_pct":3.2,"is_plus_ev":true,"point":24.5,"last_update":"2026-10-16T19:20:00Z"}""")).rows.single()
+        val r = PropLineBestLine.attach(row, PropLineBestLine.parse(bestLine, json, start))
+        // fanduel +105/-130: fair over .4796 ... > novig's cost .5122? no (devig .4687 vs .5122); pinnacle -102/-118: over .4900 vs .5122 no; draftkings -108/-112: .4906 no -> 0 of 3 agree
+        assertEquals(listOf("fanduel", "draftkings", "pinnacle").sorted(), r.others.map { it.book }.filter { it != "onlyover" }.sorted())
+        assertEquals("the best price is first", "onlyover", r.others.first().book)
+        assertEquals(3, r.twoSided)               // onlyover quotes one side: not counted; novig itself is left out
+        assertEquals(0, r.agree)
+        assertEquals(false, r.pinnacleAgrees)
+    }
+
+    @Test
+    fun aBookThatFavoursTheBetCountsAsAgreeing() {
+        val row = PlEvRow("basketball_nba", "NBA", "369360", "76ers", "Celtics", start, "h2h", "", null, "Boston Celtics", 175, 3.0, 0.40, "pinnacle", start)
+        val r = PropLineBestLine.attach(row, PropLineBestLine.parse(bestLine, json, start))
+        // Celtics +175 at Novig (cost .3636); pinnacle +150/-170 fair Celtics .3846 > .3636, draftkings +155/-175 fair .3868 > .3636: both agree
+        assertEquals(2, r.twoSided); assertEquals(2, r.agree); assertEquals(true, r.pinnacleAgrees)
+    }
+
+    @Test
+    fun aRedactedOrUnknownBoardLeavesTheRowAlone() {
+        val row = parse(answer("""{"book":"novig","name":"Over","price":-105,"ev_pct":3.2,"is_plus_ev":true,"point":24.5,"last_update":"2026-10-16T19:20:00Z"}""")).rows.single()
+        assertEquals(row, PropLineBestLine.attach(row, PropLineBestLine.parse("""{"lines":[],"redacted":true}""", json, start)))
+        assertEquals(row, PropLineBestLine.attach(row, PropLineBestLine.parse("not json", json, start)))
+    }
 }
