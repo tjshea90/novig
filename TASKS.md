@@ -5429,3 +5429,6 @@ Tj: "it is sgo pro. my boltodds is working fine here, see if GitHub can refresh 
 - [x] TCL40a (retry 60s, 429 detail) Engine BoltOdds: REST snapshot 429 (6/min) every scan; find why the engine's sockets aren't carrying it / key; fix so bolt feeds answer.
 - [ ] TCL40b Wake-up options (zero-token): report honestly; build only what works.
 - [x] TCL40c (halt 1h, judge last 8h) Analyze the picked-off halt: is a 3 h stop needed? data on the 8 fills; propose/implement better reset (ROUTINE class B evidence).
+
+## TCL41: confirm Claude auto-updates of app + profit engine are live and routine (Tj, chat t1792165602030, 2026-10-16)
+- [ ] TCL41a Verify the three rotation routines exist/enabled, next fire times, and what each does (ROUTINE.md); report to Tj; fix gaps (e.g. account away, no routine for 7542bf slot).
