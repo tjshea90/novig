@@ -3,6 +3,7 @@
 
   python3 tools/propline.py plans                      which key is the paid one (X-Daily-Limit of each) and what it unlocks
   python3 tools/propline.py probe OUTDIR               one call to every Pro endpoint on a real recent event; saves the answers (keyless) so the app's parsers can be checked against real shapes
+  python3 tools/propline.py steam OUTDIR               line movement + steam signals for every game in the next 24 h (JSON lines)
   python3 tools/propline.py archive OUTDIR [--days N]  the resolved-prop archive: GET /v1/exports/resolved-props per sport (gzip CSV), the free accuracy/coverage reports; files for a Release
   python3 tools/propline.py selftest
 
@@ -436,6 +437,8 @@ if __name__ == "__main__":
         sys.exit(cmd_plans())
     if a[0] == "probe":
         sys.exit(cmd_probe(a[1] if len(a) > 1 else "out/propline-probe"))
+    if a[0] == "steam":
+        sys.exit(cmd_steam(a[1] if len(a) > 1 else "out/propline-steam"))
     if a[0] == "speed":
         sys.exit(cmd_speed(a[1] if len(a) > 1 else "out/propline-speed"))
     if a[0] == "archive":

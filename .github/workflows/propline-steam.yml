@@ -1,0 +1,36 @@
+name: PropLine steam and line movement (Tj, 2026-10-16, TCL56d)
+
+# Free, no Claude usage. Every 3 hours reads PropLine Pro's /movement (cross-book steam signal) for every game starting in the next 24 hours and keeps it as JSON lines in a
+# `propline-steam-YYYY-MM-DD` Release (never delete), so Claude can study whether steam predicts the close (join on event_id with the resolved-prop archive and the engine's lines). ~100 requests a run of the key's 25,000 a day.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */3 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: propline-steam
+  cancel-in-progress: false
+
+jobs:
+  steam:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Read steam
+        env:
+          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -u
+          python3 -I tools/propline.py steam out/steam
+          if ls out/steam/*.jsonl.gz >/dev/null 2>&1; then
+            tag="propline-steam-$(date -u +%F)"
+            gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "PropLine steam $(date -u +%F)" --notes "Line movement and steam signals read every 3 hours (propline-steam.yml). Never delete."
+            gh release upload "$tag" out/steam/*.jsonl.gz --clobber
+          fi
