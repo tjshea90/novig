@@ -61,6 +61,8 @@ data class PlEvRow(
     val vigilantEv: Double? = null,
     val vigilantStars: Double? = null,
     val opp: String? = null,
+    /** How often the player went over/under this line recently (PropLine `/trends`, props only): "last 10: Over 7, Under 3 · last 20: Over 11, Under 9 · averages 5.9 (line 5.5)"; blank = not read. */
+    val trend: String = "",
 )
 
 /** One book's price for a bet and when PropLine last saw it change hands at that book. */
@@ -232,8 +234,37 @@ object PropLineMatch {
     }
 }
 
+/** The one-line hit-rate summary of a player's `/trends` answer for the side and line of a bet. The shape is read defensively (research/propline_vs_vigilant_2026-10-16.md: the probe saves a real sample for TCL65c). */
+object PropLineTrends {
+    fun summarize(raw: String, json: Json, side: String): String {
+        val root = runCatching { json.parseToJsonElement(raw) }.getOrNull() ?: return ""
+        val node = find(root) ?: return ""
+        val parts = ArrayList<String>()
+        for (w in listOf("last_5", "last_10", "last_20")) {
+            val o = (node[w] as? kotlinx.serialization.json.JsonObject) ?: continue
+            val over = o["over"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.toDoubleOrNull()?.toInt() } ?: continue
+            val under = (o["under"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toDoubleOrNull()?.toInt() ?: continue
+            val mine = if (side.equals("Under", true)) under else over
+            parts += "${w.removePrefix("last_").let { "last $it" }}: $mine of ${over + under}"
+        }
+        if (parts.isEmpty()) return ""
+        val avg = (node["avg_actual"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toDoubleOrNull()
+        val line = (node["recent_line"] as? kotlinx.serialization.json.JsonPrimitive)?.content?.toDoubleOrNull()
+        return "${side.ifBlank { "Over" }} hit " + parts.joinToString(" · ") + if (avg != null) " · averages ${"%.1f".format(java.util.Locale.US, avg)}" + (line?.let { " (recent line ${"%.1f".format(java.util.Locale.US, it)})" } ?: "") else ""
+    }
+
+    /** The first object anywhere in the answer that carries a `last_10` or `last_5` window (the market's trend). */
+    private fun find(e: kotlinx.serialization.json.JsonElement): kotlinx.serialization.json.JsonObject? = when (e) {
+        is kotlinx.serialization.json.JsonObject -> if (e.containsKey("last_10") || e.containsKey("last_5")) e else e.values.firstNotNullOfOrNull { find(it) }
+        is kotlinx.serialization.json.JsonArray -> e.firstNotNullOfOrNull { find(it) }
+        else -> null
+    }
+}
+
 /** The engine's sweep: the picked leagues' pregame games within [PropLineEv.WINDOW_HOURS], one `/ev` request each, six at a time (PropLine allows 20 in flight; its client paces the starts). */
 class PropLineEvSweep(private val client: PropLineClient, private val json: Json = Json { ignoreUnknownKeys = true }) {
+    private val trendCache = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, String>>()
+    private companion object { const val TREND_ROWS = 40 }
     suspend fun sweep(settings: ScanSettings, now: Long, scanned: List<com.tjshea.vigilant.data.scanner.Opportunity> = emptyList()): PlEvFeed {
         val plan = client.plan() ?: return PlEvFeed(now, emptyList(), tier = "free", note = "needs a paid PropLine key (Hobby or Pro): the free key's +EV answers are redacted")
         var requests = 0
@@ -282,6 +313,26 @@ class PropLineEvSweep(private val client: PropLineClient, private val json: Json
             }
             for (p in results) if (p != null) rows += p.rows
         }
-        return PlEvFeed(now, rows.sortedByDescending { it.evPct }, games, requests, plan.tier, note)
+        val sorted = rows.sortedByDescending { it.evPct }
+        // Hit rates for the props nearest the top (one request per player and market, kept an hour): a line that also hit most nights recently is worth more than one that did not.
+        val want = sorted.filter { it.player.isNotBlank() && it.price <= 300 }.take(TREND_ROWS)
+        val withTrend = HashMap<String, String>()
+        coroutineScope {
+            want.map { r ->
+                async {
+                    gate.withPermit {
+                        val key = "${r.sport}|${r.player}|${r.market}|${r.outcome}"
+                        val cached = trendCache[key]?.takeIf { now - it.first < 3_600_000L }
+                        val text = cached?.second ?: try {
+                            requests++
+                            client.trendsRaw(r.sport, r.player, r.market)?.let { PropLineTrends.summarize(it, json, r.outcome) }.orEmpty().also { trendCache[key] = now to it }
+                        } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { "" }
+                        if (text.isNotBlank()) synchronized(withTrend) { withTrend["${r.eventId}|${r.market}|${r.player}|${r.point}|${r.outcome}"] = text }
+                    }
+                }
+            }.forEach { it.await() }
+        }
+        val out = if (withTrend.isEmpty()) sorted else sorted.map { r -> withTrend["${r.eventId}|${r.market}|${r.player}|${r.point}|${r.outcome}"]?.let { r.copy(trend = it) } ?: r }
+        return PlEvFeed(now, out, games, requests, plan.tier, note)
     }
 }

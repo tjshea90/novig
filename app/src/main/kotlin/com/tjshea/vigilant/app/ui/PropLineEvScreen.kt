@@ -157,6 +157,7 @@ private fun PropLineEvCard(r: PlEvRow, now: Long, expanded: Boolean, onToggle: (
                         style = MaterialTheme.typography.bodySmall,
                     )
                 } else Text("PropLine gave no other book's price for this line.", style = MaterialTheme.typography.bodySmall)
+                if (r.trend.isNotBlank()) Text(r.trend, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("plTrend"))
                 Text(
                     r.vigilantEv?.let { "Vigilant's own scan prices this Novig line at ${if (it >= 0) "+" else ""}${String.format(Locale.US, "%.1f", it)}% now" + (r.vigilantStars?.let { s -> " · ${s} stars" } ?: "") }
                         ?: "Vigilant's own scan did not price this line (no Bet button).",

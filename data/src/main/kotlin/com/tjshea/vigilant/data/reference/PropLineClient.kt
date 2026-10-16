@@ -161,6 +161,10 @@ class PropLineClient(
     suspend fun bestLineRaw(sportKey: String, eventId: String, markets: List<String>): String? =
         call("/sports/$sportKey/events/$eventId/best-line", if (markets.isEmpty()) emptyList() else listOf("markets" to markets.joinToString(",")), notFound = null) { raw -> raw }.value
 
+    /** How often a player went over his posted line (`/players/{name}/trends`, Hobby+): last 5/10/20/50 splits, streak, average actual, for [market]. One request; null when unknown. */
+    suspend fun trendsRaw(sportKey: String, player: String, market: String): String? =
+        call("/sports/$sportKey/players/${java.net.URLEncoder.encode(player, "UTF-8").replace("+", "%20")}/trends", listOf("market" to market), notFound = null) { raw -> raw }.value
+
     /** The books a call asks for: the picked books, and Novig's relay unless it's off. */
     private fun asked(books: List<String>): List<String> = if (relayNovig) books + NOVIG else books
 
