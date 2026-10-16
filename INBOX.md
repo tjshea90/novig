@@ -176,3 +176,13 @@ View my messages from the app
 ```
 Why isn't it reading my chats in the app
 ```
+
+## 2026-10-16T21:28:06Z
+```
+I added the-odds api keys. They are already included now  so you can close that issue.
+
+TCL56: the PropLine items for grading, hit-rate trends and line movement.
+
+Build these. I want vigilant and the GitHub engine and Claude to use all the features of my paid apis, including propline
+It is concerning to me why vigilant couldnt find the positive EV opportunities that propline found. This is important. Investigate and find a fix
+```
