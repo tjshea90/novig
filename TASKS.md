@@ -5461,3 +5461,9 @@ Tj: "https://boltodds.com/docs make sure the app is using the boltodds to its fu
 Tj: "force. when I close an old chat to save context, it should automatically force a new session to continue chat". Cause of the miss: a resumed session had no chat_watch running, and the old session's lease blocked it.
 - [ ] TCL48a Resume path: a new session started after a close starts chat_watch itself and, if the lease holder is idle/closed, takes it (Tj's standing word) instead of staying read-only. Check tools/resume.sh + coord.py for a "previous session closed" signal.
 - [ ] TCL48b Wake-up (see TCL40b): what can start a session from a chat message with zero tokens (scheduled trigger polling cloud-config via Actions + create_session)? Report honestly; build only what works.
+
+## TCL49: +EV screen display filters, phone-only (Tj, chat t1792170198412, 2026-10-16)
+Tj: "I want some filters I can toggle from the +ev scanner screen on the android app, such as amount of books agreeing with the positive EV, and an option that all books must agree positive ev. this should not affect the GitHub engine, only what bets show up in the screen on the Android app"
+- [ ] TCL49a Find the Feed's existing filter row + how books-agree is computed (Opportunity); add to the +EV screen: min books agreeing (stepper) and "all books must agree +EV" toggle.
+- [ ] TCL49b Display-only: classify in CloudScanKey as PHONE (never mirrored to the engine/cloud-config), applied to the shown list only; CloudScanKeyTest + a unit test.
+- [ ] TCL49c Ship batched with other asks (one release rule).
