@@ -1,0 +1,48 @@
+{
+ "status": 200,
+ "quota": {
+  "x-daily-limit": "25000",
+  "x-daily-used": "1019",
+  "x-daily-remaining": "23981",
+  "x-daily-reset": "1792195200",
+  "ratelimit-limit": "25000",
+  "ratelimit-remaining": "23981",
+  "ratelimit-reset": "16487",
+  "ratelimit-policy": "25000;w=86400"
+ },
+ "body": {
+  "sport_key": "basketball_nba",
+  "bookmakers": [
+   {
+    "key": "bovada",
+    "title": "Bovada",
+    "history_start": "2026-04-05",
+    "game_lines_start": "2026-04-05",
+    "props_start": "2026-04-05",
+    "latest_event": "2026-12-26",
+    "events": 239,
+    "retired": false
+   },
+   {
+    "key": "draftkings",
+    "title": "DraftKings",
+    "history_start": "2026-04-19",
+    "game_lines_start": "2026-04-19",
+    "props_start": "2026-04-22",
+    "latest_event": "2026-12-26",
+    "events": 136,
+    "retired": false
+   },
+   {
+    "key": "fanduel",
+    "title": "FanDuel",
+    "history_start": "2026-04-19",
+    "game_lines_start": "2026-04-19",
+    "props_start": "2026-04-20",
+    "latest_event": "2026-12-26",
+    "events": 163,
+    "retired": false
+   }
+  ]
+ }
+}

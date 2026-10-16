@@ -1,0 +1,2355 @@
+{
+ "status": 200,
+ "quota": {
+  "x-daily-limit": "25000",
+  "x-daily-used": "1015",
+  "x-daily-remaining": "23985",
+  "x-daily-reset": "1792195200",
+  "ratelimit-limit": "25000",
+  "ratelimit-remaining": "23985",
+  "ratelimit-reset": "16493",
+  "ratelimit-policy": "25000;w=86400"
+ },
+ "body": {
+  "days": 30,
+  "sport": null,
+  "method": "Closing two-way player-prop lines priced by 3+ books. Each book's de-vigged Over probability is scored (Brier) against the result and against the average of the other books on the same line. skill_bp > 0 = closer to the result than the market. verdict is beats_market/trails_market only when the 95% interval excludes zero. Exchange margins exclude trading fees.",
+  "total_props": 510584,
+  "books": [
+   {
+    "key": "kalshi",
+    "title": "Kalshi",
+    "props": 55071,
+    "brier": 0.1695,
+    "consensus_brier": 0.1699,
+    "skill_bp": 4.0,
+    "skill_ci95_bp": [
+     2.1,
+     5.9
+    ],
+    "verdict": "beats_market",
+    "margin_pct": 3.23
+   },
+   {
+    "key": "fanatics",
+    "title": "Fanatics",
+    "props": 22620,
+    "brier": 0.2302,
+    "consensus_brier": 0.2303,
+    "skill_bp": 1.9,
+    "skill_ci95_bp": [
+     -0.6,
+     4.5
+    ],
+    "verdict": "in_line",
+    "margin_pct": 7.84
+   },
+   {
+    "key": "sportzino",
+    "title": "Sportzino",
+    "props": 14804,
+    "brier": 0.1987,
+    "consensus_brier": 0.1989,
+    "skill_bp": 1.8,
+    "skill_ci95_bp": [
+     -0.9,
+     4.5
+    ],
+    "verdict": "in_line",
+    "margin_pct": 7.42
+   }
+  ],
+  "by_sport": {
+   "baseball_mlb": [
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 2653,
+     "brier": 0.1983,
+     "consensus_brier": 0.1988,
+     "skill_bp": 5.7,
+     "skill_ci95_bp": [
+      -0.1,
+      11.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.2
+    },
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 43458,
+     "brier": 0.1642,
+     "consensus_brier": 0.1646,
+     "skill_bp": 4.2,
+     "skill_ci95_bp": [
+      2.0,
+      6.4
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 3.47
+    },
+    {
+     "key": "fanatics",
+     "title": "Fanatics",
+     "props": 21637,
+     "brier": 0.2293,
+     "consensus_brier": 0.2295,
+     "skill_bp": 2.3,
+     "skill_ci95_bp": [
+      -0.3,
+      4.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.83
+    }
+   ],
+   "basketball_wnba": [
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 358,
+     "brier": 0.2314,
+     "consensus_brier": 0.2392,
+     "skill_bp": 77.5,
+     "skill_ci95_bp": [
+      15.4,
+      139.7
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 5.93
+    },
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 1179,
+     "brier": 0.2482,
+     "consensus_brier": 0.2482,
+     "skill_bp": 0.2,
+     "skill_ci95_bp": [
+      -13.7,
+      14.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.42
+    },
+    {
+     "key": "fanduel",
+     "title": "FanDuel",
+     "props": 1744,
+     "brier": 0.2485,
+     "consensus_brier": 0.2483,
+     "skill_bp": -1.9,
+     "skill_ci95_bp": [
+      -15.6,
+      11.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.87
+    }
+   ],
+   "football_ncaaf": [
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 998,
+     "brier": 0.2467,
+     "consensus_brier": 0.248,
+     "skill_bp": 13.2,
+     "skill_ci95_bp": [
+      -0.5,
+      26.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 10.67
+    },
+    {
+     "key": "betonlineag",
+     "title": "BetOnline.ag",
+     "props": 272,
+     "brier": 0.2447,
+     "consensus_brier": 0.2459,
+     "skill_bp": 11.5,
+     "skill_ci95_bp": [
+      -8.4,
+      31.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.48
+    },
+    {
+     "key": "lowvig",
+     "title": "LowVig.ag",
+     "props": 272,
+     "brier": 0.2447,
+     "consensus_brier": 0.2459,
+     "skill_bp": 11.5,
+     "skill_ci95_bp": [
+      -8.4,
+      31.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.48
+    }
+   ],
+   "football_nfl": [
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 4116,
+     "brier": 0.2487,
+     "consensus_brier": 0.2491,
+     "skill_bp": 4.1,
+     "skill_ci95_bp": [
+      -0.3,
+      8.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.8
+    },
+    {
+     "key": "betmgm",
+     "title": "BetMGM",
+     "props": 2770,
+     "brier": 0.2488,
+     "consensus_brier": 0.2491,
+     "skill_bp": 2.9,
+     "skill_ci95_bp": [
+      -4.2,
+      10.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.03
+    },
+    {
+     "key": "hardrock",
+     "title": "Hard Rock Bet",
+     "props": 7431,
+     "brier": 0.2189,
+     "consensus_brier": 0.219,
+     "skill_bp": 1.2,
+     "skill_ci95_bp": [
+      -4.4,
+      6.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.73
+    }
+   ],
+   "hockey_nhl": [
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 3014,
+     "brier": 0.166,
+     "consensus_brier": 0.1666,
+     "skill_bp": 5.8,
+     "skill_ci95_bp": [
+      0.3,
+      11.3
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 3.94
+    },
+    {
+     "key": "novig",
+     "title": "Novig",
+     "props": 8975,
+     "brier": 0.1945,
+     "consensus_brier": 0.1946,
+     "skill_bp": 1.3,
+     "skill_ci95_bp": [
+      -2.5,
+      5.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.7
+    },
+    {
+     "key": "rebet",
+     "title": "ReBet",
+     "props": 2373,
+     "brier": 0.2462,
+     "consensus_brier": 0.2463,
+     "skill_bp": 1.1,
+     "skill_ci95_bp": [
+      -5.0,
+      7.2
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.6
+    }
+   ],
+   "tennis": [
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 314,
+     "brier": 0.2476,
+     "consensus_brier": 0.2487,
+     "skill_bp": 10.8,
+     "skill_ci95_bp": [
+      -4.8,
+      26.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.63
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 264,
+     "brier": 0.2497,
+     "consensus_brier": 0.2503,
+     "skill_bp": 6.2,
+     "skill_ci95_bp": [
+      -11.3,
+      23.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.87
+    },
+    {
+     "key": "pinnacle",
+     "title": "Pinnacle",
+     "props": 211,
+     "brier": 0.2522,
+     "consensus_brier": 0.2527,
+     "skill_bp": 5.5,
+     "skill_ci95_bp": [
+      -13.1,
+      24.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 3.67
+    }
+   ]
+  },
+  "by_market": {
+   "batter_doubles": [
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 319,
+     "brier": 0.0907,
+     "consensus_brier": 0.0918,
+     "skill_bp": 10.8,
+     "skill_ci95_bp": [
+      -0.2,
+      21.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 5.74
+    },
+    {
+     "key": "thescorebet",
+     "title": "theScore Bet",
+     "props": 147,
+     "brier": 0.1064,
+     "consensus_brier": 0.1069,
+     "skill_bp": 4.5,
+     "skill_ci95_bp": [
+      -7.5,
+      16.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.93
+    },
+    {
+     "key": "hardrock",
+     "title": "Hard Rock Bet",
+     "props": 3264,
+     "brier": 0.1148,
+     "consensus_brier": 0.1152,
+     "skill_bp": 3.3,
+     "skill_ci95_bp": [
+      1.2,
+      5.3
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 5.78
+    }
+   ],
+   "batter_hits": [
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 7524,
+     "brier": 0.1797,
+     "consensus_brier": 0.1801,
+     "skill_bp": 3.5,
+     "skill_ci95_bp": [
+      -2.3,
+      9.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 2.65
+    },
+    {
+     "key": "prophetx",
+     "title": "ProphetX",
+     "props": 3395,
+     "brier": 0.2336,
+     "consensus_brier": 0.2339,
+     "skill_bp": 3.2,
+     "skill_ci95_bp": [
+      -5.1,
+      11.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.25
+    },
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 838,
+     "brier": 0.2408,
+     "consensus_brier": 0.241,
+     "skill_bp": 2.0,
+     "skill_ci95_bp": [
+      -3.4,
+      7.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 12.53
+    }
+   ],
+   "batter_hits_runs_rbis": [
+    {
+     "key": "thescorebet",
+     "title": "theScore Bet",
+     "props": 149,
+     "brier": 0.2411,
+     "consensus_brier": 0.2421,
+     "skill_bp": 9.6,
+     "skill_ci95_bp": [
+      -7.2,
+      26.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.15
+    },
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 14841,
+     "brier": 0.178,
+     "consensus_brier": 0.1786,
+     "skill_bp": 5.7,
+     "skill_ci95_bp": [
+      1.8,
+      9.6
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 3.85
+    },
+    {
+     "key": "fanatics",
+     "title": "Fanatics",
+     "props": 3508,
+     "brier": 0.2462,
+     "consensus_brier": 0.2462,
+     "skill_bp": 0.6,
+     "skill_ci95_bp": [
+      -5.9,
+      7.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.67
+    }
+   ],
+   "batter_home_runs": [
+    {
+     "key": "thescorebet",
+     "title": "theScore Bet",
+     "props": 149,
+     "brier": 0.0771,
+     "consensus_brier": 0.0774,
+     "skill_bp": 2.7,
+     "skill_ci95_bp": [
+      -3.2,
+      8.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.28
+    },
+    {
+     "key": "novig",
+     "title": "Novig",
+     "props": 2619,
+     "brier": 0.0981,
+     "consensus_brier": 0.0982,
+     "skill_bp": 1.3,
+     "skill_ci95_bp": [
+      -1.5,
+      4.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 2.85
+    },
+    {
+     "key": "pinnacle",
+     "title": "Pinnacle",
+     "props": 2575,
+     "brier": 0.104,
+     "consensus_brier": 0.1039,
+     "skill_bp": -0.2,
+     "skill_ci95_bp": [
+      -2.3,
+      1.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.51
+    }
+   ],
+   "batter_rbis": [
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 5855,
+     "brier": 0.1484,
+     "consensus_brier": 0.1489,
+     "skill_bp": 5.7,
+     "skill_ci95_bp": [
+      0.5,
+      10.8
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 3.97
+    },
+    {
+     "key": "thescorebet",
+     "title": "theScore Bet",
+     "props": 281,
+     "brier": 0.13,
+     "consensus_brier": 0.1304,
+     "skill_bp": 4.8,
+     "skill_ci95_bp": [
+      -4.2,
+      13.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.24
+    },
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 324,
+     "brier": 0.1726,
+     "consensus_brier": 0.1729,
+     "skill_bp": 2.8,
+     "skill_ci95_bp": [
+      -11.2,
+      16.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.23
+    }
+   ],
+   "batter_runs": [
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 322,
+     "brier": 0.2151,
+     "consensus_brier": 0.2164,
+     "skill_bp": 13.6,
+     "skill_ci95_bp": [
+      -1.3,
+      28.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.33
+    },
+    {
+     "key": "onexbet",
+     "title": "1xBet",
+     "props": 3096,
+     "brier": 0.2217,
+     "consensus_brier": 0.2222,
+     "skill_bp": 4.8,
+     "skill_ci95_bp": [
+      -1.0,
+      10.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.37
+    },
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 1641,
+     "brier": 0.2212,
+     "consensus_brier": 0.2213,
+     "skill_bp": 0.4,
+     "skill_ci95_bp": [
+      -4.7,
+      5.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.58
+    }
+   ],
+   "batter_singles": [
+    {
+     "key": "fanatics",
+     "title": "Fanatics",
+     "props": 3439,
+     "brier": 0.2394,
+     "consensus_brier": 0.2402,
+     "skill_bp": 8.7,
+     "skill_ci95_bp": [
+      1.0,
+      16.3
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 8.6
+    },
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 323,
+     "brier": 0.2338,
+     "consensus_brier": 0.2344,
+     "skill_bp": 6.1,
+     "skill_ci95_bp": [
+      -12.8,
+      24.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.04
+    },
+    {
+     "key": "thescorebet",
+     "title": "theScore Bet",
+     "props": 149,
+     "brier": 0.2358,
+     "consensus_brier": 0.236,
+     "skill_bp": 1.8,
+     "skill_ci95_bp": [
+      -16.4,
+      20.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.0
+    }
+   ],
+   "batter_stolen_bases": [
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 233,
+     "brier": 0.091,
+     "consensus_brier": 0.0924,
+     "skill_bp": 13.7,
+     "skill_ci95_bp": [
+      -4.1,
+      31.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 5.58
+    },
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 1641,
+     "brier": 0.0953,
+     "consensus_brier": 0.0956,
+     "skill_bp": 3.4,
+     "skill_ci95_bp": [
+      -3.5,
+      10.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 3.0
+    },
+    {
+     "key": "betmgm",
+     "title": "BetMGM",
+     "props": 1573,
+     "brier": 0.0978,
+     "consensus_brier": 0.0977,
+     "skill_bp": -0.8,
+     "skill_ci95_bp": [
+      -7.6,
+      6.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.47
+    }
+   ],
+   "batter_total_bases": [
+    {
+     "key": "thescorebet",
+     "title": "theScore Bet",
+     "props": 282,
+     "brier": 0.2247,
+     "consensus_brier": 0.2257,
+     "skill_bp": 10.7,
+     "skill_ci95_bp": [
+      -5.0,
+      26.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.16
+    },
+    {
+     "key": "fanatics",
+     "title": "Fanatics",
+     "props": 3341,
+     "brier": 0.2431,
+     "consensus_brier": 0.2435,
+     "skill_bp": 3.6,
+     "skill_ci95_bp": [
+      -1.8,
+      9.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.75
+    },
+    {
+     "key": "onexbet",
+     "title": "1xBet",
+     "props": 2850,
+     "brier": 0.2173,
+     "consensus_brier": 0.2175,
+     "skill_bp": 2.1,
+     "skill_ci95_bp": [
+      -4.3,
+      8.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.88
+    }
+   ],
+   "batter_walks": [
+    {
+     "key": "fanatics",
+     "title": "Fanatics",
+     "props": 3078,
+     "brier": 0.204,
+     "consensus_brier": 0.2051,
+     "skill_bp": 11.3,
+     "skill_ci95_bp": [
+      3.3,
+      19.4
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 8.07
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 3159,
+     "brier": 0.2032,
+     "consensus_brier": 0.2028,
+     "skill_bp": -4.0,
+     "skill_ci95_bp": [
+      -9.8,
+      1.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.56
+    },
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 800,
+     "brier": 0.2,
+     "consensus_brier": 0.1996,
+     "skill_bp": -4.2,
+     "skill_ci95_bp": [
+      -9.1,
+      0.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 12.76
+    }
+   ],
+   "goalie_saves": [
+    {
+     "key": "novig",
+     "title": "Novig",
+     "props": 221,
+     "brier": 0.2446,
+     "consensus_brier": 0.2472,
+     "skill_bp": 26.3,
+     "skill_ci95_bp": [
+      -19.4,
+      72.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.66
+    },
+    {
+     "key": "pinnacle",
+     "title": "Pinnacle",
+     "props": 145,
+     "brier": 0.2455,
+     "consensus_brier": 0.2474,
+     "skill_bp": 18.8,
+     "skill_ci95_bp": [
+      -10.8,
+      48.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.12
+    },
+    {
+     "key": "bovada",
+     "title": "Bovada",
+     "props": 215,
+     "brier": 0.2482,
+     "consensus_brier": 0.2493,
+     "skill_bp": 10.9,
+     "skill_ci95_bp": [
+      -9.5,
+      31.2
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.79
+    }
+   ],
+   "pitcher_earned_runs": [
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 320,
+     "brier": 0.2428,
+     "consensus_brier": 0.2433,
+     "skill_bp": 5.0,
+     "skill_ci95_bp": [
+      -15.3,
+      25.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.2
+    },
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 163,
+     "brier": 0.2443,
+     "consensus_brier": 0.2448,
+     "skill_bp": 4.5,
+     "skill_ci95_bp": [
+      -28.6,
+      37.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.9
+    },
+    {
+     "key": "polymarket_us",
+     "title": "Polymarket US",
+     "props": 389,
+     "brier": 0.2461,
+     "consensus_brier": 0.2457,
+     "skill_bp": -3.7,
+     "skill_ci95_bp": [
+      -39.0,
+      31.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 4.03
+    }
+   ],
+   "pitcher_hits_allowed": [
+    {
+     "key": "fanatics",
+     "title": "Fanatics",
+     "props": 316,
+     "brier": 0.2486,
+     "consensus_brier": 0.2501,
+     "skill_bp": 15.0,
+     "skill_ci95_bp": [
+      -12.3,
+      42.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.72
+    },
+    {
+     "key": "novig",
+     "title": "Novig",
+     "props": 276,
+     "brier": 0.2484,
+     "consensus_brier": 0.2494,
+     "skill_bp": 10.3,
+     "skill_ci95_bp": [
+      -14.1,
+      34.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 5.64
+    },
+    {
+     "key": "onexbet",
+     "title": "1xBet",
+     "props": 304,
+     "brier": 0.2463,
+     "consensus_brier": 0.2467,
+     "skill_bp": 3.2,
+     "skill_ci95_bp": [
+      -22.7,
+      29.2
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.18
+    }
+   ],
+   "pitcher_outs": [
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 314,
+     "brier": 0.2324,
+     "consensus_brier": 0.2382,
+     "skill_bp": 58.4,
+     "skill_ci95_bp": [
+      14.2,
+      102.5
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 5.09
+    },
+    {
+     "key": "novig",
+     "title": "Novig",
+     "props": 391,
+     "brier": 0.2347,
+     "consensus_brier": 0.2382,
+     "skill_bp": 35.3,
+     "skill_ci95_bp": [
+      4.9,
+      65.7
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 5.49
+    },
+    {
+     "key": "polymarket_us",
+     "title": "Polymarket US",
+     "props": 470,
+     "brier": 0.2385,
+     "consensus_brier": 0.2398,
+     "skill_bp": 12.8,
+     "skill_ci95_bp": [
+      -28.1,
+      53.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.37
+    }
+   ],
+   "pitcher_strikeouts": [
+    {
+     "key": "prophetx",
+     "title": "ProphetX",
+     "props": 504,
+     "brier": 0.2374,
+     "consensus_brier": 0.2394,
+     "skill_bp": 20.3,
+     "skill_ci95_bp": [
+      1.1,
+      39.6
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 5.59
+    },
+    {
+     "key": "smarkets",
+     "title": "Smarkets",
+     "props": 476,
+     "brier": 0.2437,
+     "consensus_brier": 0.2455,
+     "skill_bp": 18.8,
+     "skill_ci95_bp": [
+      -14.7,
+      52.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.66
+    },
+    {
+     "key": "betmgm",
+     "title": "BetMGM",
+     "props": 316,
+     "brier": 0.2408,
+     "consensus_brier": 0.2415,
+     "skill_bp": 7.4,
+     "skill_ci95_bp": [
+      -14.1,
+      28.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.12
+    }
+   ],
+   "pitcher_walks": [
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 149,
+     "brier": 0.2249,
+     "consensus_brier": 0.2256,
+     "skill_bp": 6.4,
+     "skill_ci95_bp": [
+      -23.7,
+      36.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.88
+    },
+    {
+     "key": "bovada",
+     "title": "Bovada",
+     "props": 293,
+     "brier": 0.2279,
+     "consensus_brier": 0.2277,
+     "skill_bp": -2.4,
+     "skill_ci95_bp": [
+      -18.3,
+      13.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.61
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 295,
+     "brier": 0.23,
+     "consensus_brier": 0.2285,
+     "skill_bp": -15.5,
+     "skill_ci95_bp": [
+      -32.0,
+      1.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.14
+    }
+   ],
+   "player_anytime_td": [
+    {
+     "key": "pinnacle",
+     "title": "Pinnacle",
+     "props": 173,
+     "brier": 0.1865,
+     "consensus_brier": 0.1867,
+     "skill_bp": 2.0,
+     "skill_ci95_bp": [
+      -12.4,
+      16.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 4.86
+    },
+    {
+     "key": "novig",
+     "title": "Novig",
+     "props": 173,
+     "brier": 0.1865,
+     "consensus_brier": 0.1866,
+     "skill_bp": 1.3,
+     "skill_ci95_bp": [
+      -13.4,
+      16.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 1.21
+    },
+    {
+     "key": "prophetx",
+     "title": "ProphetX",
+     "props": 173,
+     "brier": 0.1869,
+     "consensus_brier": 0.1864,
+     "skill_bp": -4.6,
+     "skill_ci95_bp": [
+      -20.1,
+      10.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 2.94
+    }
+   ],
+   "player_assists": [
+    {
+     "key": "rebet",
+     "title": "ReBet",
+     "props": 244,
+     "brier": 0.2477,
+     "consensus_brier": 0.2501,
+     "skill_bp": 24.3,
+     "skill_ci95_bp": [
+      -1.5,
+      50.2
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.12
+    },
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 728,
+     "brier": 0.1963,
+     "consensus_brier": 0.1969,
+     "skill_bp": 5.2,
+     "skill_ci95_bp": [
+      -5.4,
+      15.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 5.27
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 2427,
+     "brier": 0.203,
+     "consensus_brier": 0.2034,
+     "skill_bp": 3.9,
+     "skill_ci95_bp": [
+      -2.4,
+      10.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.03
+    }
+   ],
+   "player_blocked_shots": [
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 145,
+     "brier": 0.2435,
+     "consensus_brier": 0.245,
+     "skill_bp": 14.5,
+     "skill_ci95_bp": [
+      -13.4,
+      42.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.01
+    },
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 116,
+     "brier": 0.2469,
+     "consensus_brier": 0.2478,
+     "skill_bp": 9.3,
+     "skill_ci95_bp": [
+      -41.0,
+      59.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.81
+    },
+    {
+     "key": "hardrock",
+     "title": "Hard Rock Bet",
+     "props": 144,
+     "brier": 0.2482,
+     "consensus_brier": 0.2475,
+     "skill_bp": -6.7,
+     "skill_ci95_bp": [
+      -31.8,
+      18.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.03
+    }
+   ],
+   "player_field_goals_made": [
+    {
+     "key": "hardrock",
+     "title": "Hard Rock Bet",
+     "props": 123,
+     "brier": 0.2551,
+     "consensus_brier": 0.2561,
+     "skill_bp": 10.5,
+     "skill_ci95_bp": [
+      -23.5,
+      44.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.29
+    },
+    {
+     "key": "pinnacle",
+     "title": "Pinnacle",
+     "props": 124,
+     "brier": 0.2565,
+     "consensus_brier": 0.2553,
+     "skill_bp": -11.8,
+     "skill_ci95_bp": [
+      -35.4,
+      11.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 4.75
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 123,
+     "brier": 0.2589,
+     "consensus_brier": 0.2561,
+     "skill_bp": -28.6,
+     "skill_ci95_bp": [
+      -61.2,
+      4.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.21
+    }
+   ],
+   "player_games_won": [
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 314,
+     "brier": 0.2476,
+     "consensus_brier": 0.2487,
+     "skill_bp": 10.8,
+     "skill_ci95_bp": [
+      -4.8,
+      26.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.63
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 264,
+     "brier": 0.2497,
+     "consensus_brier": 0.2503,
+     "skill_bp": 6.2,
+     "skill_ci95_bp": [
+      -11.3,
+      23.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.87
+    },
+    {
+     "key": "pinnacle",
+     "title": "Pinnacle",
+     "props": 211,
+     "brier": 0.2522,
+     "consensus_brier": 0.2527,
+     "skill_bp": 5.5,
+     "skill_ci95_bp": [
+      -13.1,
+      24.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 3.67
+    }
+   ],
+   "player_goals": [
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 1058,
+     "brier": 0.1195,
+     "consensus_brier": 0.12,
+     "skill_bp": 5.1,
+     "skill_ci95_bp": [
+      -3.5,
+      13.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 2.36
+    },
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 2903,
+     "brier": 0.1185,
+     "consensus_brier": 0.119,
+     "skill_bp": 4.8,
+     "skill_ci95_bp": [
+      -0.9,
+      10.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 0.02
+    },
+    {
+     "key": "prophetx",
+     "title": "ProphetX",
+     "props": 1025,
+     "brier": 0.175,
+     "consensus_brier": 0.1753,
+     "skill_bp": 3.4,
+     "skill_ci95_bp": [
+      -5.7,
+      12.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.4
+    }
+   ],
+   "player_kicking_points": [
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 118,
+     "brier": 0.2522,
+     "consensus_brier": 0.2525,
+     "skill_bp": 3.7,
+     "skill_ci95_bp": [
+      -23.2,
+      30.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.85
+    },
+    {
+     "key": "hardrock",
+     "title": "Hard Rock Bet",
+     "props": 118,
+     "brier": 0.2514,
+     "consensus_brier": 0.2513,
+     "skill_bp": -1.6,
+     "skill_ci95_bp": [
+      -29.5,
+      26.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.24
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 117,
+     "brier": 0.2505,
+     "consensus_brier": 0.2499,
+     "skill_bp": -6.4,
+     "skill_ci95_bp": [
+      -32.7,
+      19.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.25
+    }
+   ],
+   "player_pass_attempts": [
+    {
+     "key": "hardrock",
+     "title": "Hard Rock Bet",
+     "props": 127,
+     "brier": 0.2499,
+     "consensus_brier": 0.2511,
+     "skill_bp": 12.4,
+     "skill_ci95_bp": [
+      -8.3,
+      33.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.54
+    },
+    {
+     "key": "pinnacle",
+     "title": "Pinnacle",
+     "props": 115,
+     "brier": 0.2498,
+     "consensus_brier": 0.2502,
+     "skill_bp": 4.1,
+     "skill_ci95_bp": [
+      -22.2,
+      30.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 4.78
+    },
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 128,
+     "brier": 0.2524,
+     "consensus_brier": 0.2526,
+     "skill_bp": 1.6,
+     "skill_ci95_bp": [
+      -21.0,
+      24.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.74
+    }
+   ],
+   "player_pass_completions": [
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 183,
+     "brier": 0.2475,
+     "consensus_brier": 0.2483,
+     "skill_bp": 7.7,
+     "skill_ci95_bp": [
+      -8.8,
+      24.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 10.31
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 124,
+     "brier": 0.2477,
+     "consensus_brier": 0.2483,
+     "skill_bp": 5.2,
+     "skill_ci95_bp": [
+      -16.8,
+      27.2
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.26
+    },
+    {
+     "key": "bovada",
+     "title": "Bovada",
+     "props": 127,
+     "brier": 0.249,
+     "consensus_brier": 0.2494,
+     "skill_bp": 4.7,
+     "skill_ci95_bp": [
+      -15.0,
+      24.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.72
+    }
+   ],
+   "player_pass_interceptions": [
+    {
+     "key": "betrivers",
+     "title": "BetRivers",
+     "props": 126,
+     "brier": 0.2522,
+     "consensus_brier": 0.2539,
+     "skill_bp": 17.2,
+     "skill_ci95_bp": [
+      -14.5,
+      48.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.4
+    },
+    {
+     "key": "betway",
+     "title": "Betway",
+     "props": 124,
+     "brier": 0.2532,
+     "consensus_brier": 0.2541,
+     "skill_bp": 8.7,
+     "skill_ci95_bp": [
+      -34.8,
+      52.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.8
+    },
+    {
+     "key": "pinnacle",
+     "title": "Pinnacle",
+     "props": 128,
+     "brier": 0.2534,
+     "consensus_brier": 0.2541,
+     "skill_bp": 7.3,
+     "skill_ci95_bp": [
+      -14.5,
+      29.2
+     ],
+     "verdict": "in_line",
+     "margin_pct": 4.74
+    }
+   ],
+   "player_pass_tds": [
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 304,
+     "brier": 0.2297,
+     "consensus_brier": 0.2323,
+     "skill_bp": 26.4,
+     "skill_ci95_bp": [
+      4.1,
+      48.8
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 10.98
+    },
+    {
+     "key": "betway",
+     "title": "Betway",
+     "props": 127,
+     "brier": 0.2276,
+     "consensus_brier": 0.2295,
+     "skill_bp": 19.4,
+     "skill_ci95_bp": [
+      -16.0,
+      54.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.94
+    },
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 206,
+     "brier": 0.2309,
+     "consensus_brier": 0.2318,
+     "skill_bp": 9.7,
+     "skill_ci95_bp": [
+      -19.9,
+      39.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 10.63
+    }
+   ],
+   "player_pass_yds": [
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 158,
+     "brier": 0.2499,
+     "consensus_brier": 0.2524,
+     "skill_bp": 24.7,
+     "skill_ci95_bp": [
+      0.8,
+      48.5
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 10.33
+    },
+    {
+     "key": "hardrock",
+     "title": "Hard Rock Bet",
+     "props": 751,
+     "brier": 0.1975,
+     "consensus_brier": 0.1997,
+     "skill_bp": 22.2,
+     "skill_ci95_bp": [
+      3.2,
+      41.2
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 8.65
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 114,
+     "brier": 0.25,
+     "consensus_brier": 0.2513,
+     "skill_bp": 13.7,
+     "skill_ci95_bp": [
+      -12.4,
+      39.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 5.85
+    }
+   ],
+   "player_points": [
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 230,
+     "brier": 0.2505,
+     "consensus_brier": 0.2524,
+     "skill_bp": 19.3,
+     "skill_ci95_bp": [
+      -21.1,
+      59.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.98
+    },
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 1333,
+     "brier": 0.1902,
+     "consensus_brier": 0.1916,
+     "skill_bp": 13.4,
+     "skill_ci95_bp": [
+      -0.3,
+      27.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 4.7
+    },
+    {
+     "key": "thescorebet",
+     "title": "theScore Bet",
+     "props": 1298,
+     "brier": 0.199,
+     "consensus_brier": 0.1998,
+     "skill_bp": 8.0,
+     "skill_ci95_bp": [
+      -1.5,
+      17.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.04
+    }
+   ],
+   "player_points_assists": [
+    {
+     "key": "fanduel",
+     "title": "FanDuel",
+     "props": 171,
+     "brier": 0.2512,
+     "consensus_brier": 0.2532,
+     "skill_bp": 20.4,
+     "skill_ci95_bp": [
+      -8.0,
+      48.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.93
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 167,
+     "brier": 0.252,
+     "consensus_brier": 0.2525,
+     "skill_bp": 5.4,
+     "skill_ci95_bp": [
+      -24.1,
+      35.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.92
+    },
+    {
+     "key": "onexbet",
+     "title": "1xBet",
+     "props": 180,
+     "brier": 0.2527,
+     "consensus_brier": 0.2525,
+     "skill_bp": -1.5,
+     "skill_ci95_bp": [
+      -29.2,
+      26.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.69
+    }
+   ],
+   "player_points_rebounds": [
+    {
+     "key": "fanduel",
+     "title": "FanDuel",
+     "props": 215,
+     "brier": 0.2477,
+     "consensus_brier": 0.2511,
+     "skill_bp": 34.3,
+     "skill_ci95_bp": [
+      8.4,
+      60.2
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 6.91
+    },
+    {
+     "key": "onexbet",
+     "title": "1xBet",
+     "props": 213,
+     "brier": 0.249,
+     "consensus_brier": 0.2493,
+     "skill_bp": 2.8,
+     "skill_ci95_bp": [
+      -21.7,
+      27.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.62
+    },
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 133,
+     "brier": 0.2502,
+     "consensus_brier": 0.2499,
+     "skill_bp": -3.3,
+     "skill_ci95_bp": [
+      -39.1,
+      32.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.56
+    }
+   ],
+   "player_points_rebounds_assists": [
+    {
+     "key": "bovada",
+     "title": "Bovada",
+     "props": 163,
+     "brier": 0.2484,
+     "consensus_brier": 0.2514,
+     "skill_bp": 29.2,
+     "skill_ci95_bp": [
+      -8.0,
+      66.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.63
+    },
+    {
+     "key": "novig",
+     "title": "Novig",
+     "props": 272,
+     "brier": 0.2485,
+     "consensus_brier": 0.2508,
+     "skill_bp": 23.2,
+     "skill_ci95_bp": [
+      -1.5,
+      47.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.01
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 186,
+     "brier": 0.2502,
+     "consensus_brier": 0.2504,
+     "skill_bp": 1.6,
+     "skill_ci95_bp": [
+      -20.9,
+      24.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.91
+    }
+   ],
+   "player_power_play_points": [
+    {
+     "key": "hardrock",
+     "title": "Hard Rock Bet",
+     "props": 1284,
+     "brier": 0.1595,
+     "consensus_brier": 0.1602,
+     "skill_bp": 6.1,
+     "skill_ci95_bp": [
+      -3.7,
+      16.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.49
+    },
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 983,
+     "brier": 0.1933,
+     "consensus_brier": 0.1938,
+     "skill_bp": 5.1,
+     "skill_ci95_bp": [
+      -6.5,
+      16.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 10.07
+    },
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 1305,
+     "brier": 0.1598,
+     "consensus_brier": 0.1592,
+     "skill_bp": -5.7,
+     "skill_ci95_bp": [
+      -13.1,
+      1.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.05
+    }
+   ],
+   "player_rebounds": [
+    {
+     "key": "kalshi",
+     "title": "Kalshi",
+     "props": 199,
+     "brier": 0.2392,
+     "consensus_brier": 0.2465,
+     "skill_bp": 73.4,
+     "skill_ci95_bp": [
+      -6.5,
+      153.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 5.61
+    },
+    {
+     "key": "fanduel",
+     "title": "FanDuel",
+     "props": 270,
+     "brier": 0.2438,
+     "consensus_brier": 0.2447,
+     "skill_bp": 9.5,
+     "skill_ci95_bp": [
+      -28.2,
+      47.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.97
+    },
+    {
+     "key": "bovada",
+     "title": "Bovada",
+     "props": 251,
+     "brier": 0.2424,
+     "consensus_brier": 0.2429,
+     "skill_bp": 5.0,
+     "skill_ci95_bp": [
+      -19.3,
+      29.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.68
+    }
+   ],
+   "player_rebounds_assists": [
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 106,
+     "brier": 0.2517,
+     "consensus_brier": 0.2557,
+     "skill_bp": 39.5,
+     "skill_ci95_bp": [
+      1.1,
+      77.9
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 7.59
+    },
+    {
+     "key": "bovada",
+     "title": "Bovada",
+     "props": 179,
+     "brier": 0.2517,
+     "consensus_brier": 0.252,
+     "skill_bp": 3.6,
+     "skill_ci95_bp": [
+      -27.5,
+      34.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.67
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 171,
+     "brier": 0.2521,
+     "consensus_brier": 0.2521,
+     "skill_bp": 0.5,
+     "skill_ci95_bp": [
+      -32.1,
+      33.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.86
+    }
+   ],
+   "player_reception_longest": [
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 189,
+     "brier": 0.2492,
+     "consensus_brier": 0.2503,
+     "skill_bp": 10.7,
+     "skill_ci95_bp": [
+      -17.1,
+      38.4
+     ],
+     "verdict": "in_line",
+     "margin_pct": 10.03
+    },
+    {
+     "key": "betmgm",
+     "title": "BetMGM",
+     "props": 242,
+     "brier": 0.2501,
+     "consensus_brier": 0.2508,
+     "skill_bp": 6.5,
+     "skill_ci95_bp": [
+      -15.8,
+      28.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.99
+    },
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 628,
+     "brier": 0.2498,
+     "consensus_brier": 0.2503,
+     "skill_bp": 5.3,
+     "skill_ci95_bp": [
+      -6.7,
+      17.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.44
+    }
+   ],
+   "player_reception_yds": [
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 558,
+     "brier": 0.2496,
+     "consensus_brier": 0.2507,
+     "skill_bp": 10.8,
+     "skill_ci95_bp": [
+      -5.3,
+      26.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 10.25
+    },
+    {
+     "key": "thescorebet",
+     "title": "theScore Bet",
+     "props": 220,
+     "brier": 0.2531,
+     "consensus_brier": 0.2539,
+     "skill_bp": 7.4,
+     "skill_ci95_bp": [
+      -22.0,
+      36.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.74
+    },
+    {
+     "key": "betmgm",
+     "title": "BetMGM",
+     "props": 652,
+     "brier": 0.2498,
+     "consensus_brier": 0.2503,
+     "skill_bp": 4.9,
+     "skill_ci95_bp": [
+      -6.7,
+      16.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.99
+    }
+   ],
+   "player_receptions": [
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 709,
+     "brier": 0.2473,
+     "consensus_brier": 0.2478,
+     "skill_bp": 4.3,
+     "skill_ci95_bp": [
+      -7.1,
+      15.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.22
+    },
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 1125,
+     "brier": 0.2479,
+     "consensus_brier": 0.2482,
+     "skill_bp": 3.6,
+     "skill_ci95_bp": [
+      -7.1,
+      14.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 10.47
+    },
+    {
+     "key": "thescorebet",
+     "title": "theScore Bet",
+     "props": 264,
+     "brier": 0.2454,
+     "consensus_brier": 0.2456,
+     "skill_bp": 2.0,
+     "skill_ci95_bp": [
+      -21.7,
+      25.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.5
+    }
+   ],
+   "player_rush_attempts": [
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 217,
+     "brier": 0.2472,
+     "consensus_brier": 0.2491,
+     "skill_bp": 18.7,
+     "skill_ci95_bp": [
+      1.7,
+      35.8
+     ],
+     "verdict": "beats_market",
+     "margin_pct": 9.8
+    },
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 232,
+     "brier": 0.247,
+     "consensus_brier": 0.2481,
+     "skill_bp": 10.6,
+     "skill_ci95_bp": [
+      -12.4,
+      33.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.01
+    },
+    {
+     "key": "betmgm",
+     "title": "BetMGM",
+     "props": 107,
+     "brier": 0.2499,
+     "consensus_brier": 0.2504,
+     "skill_bp": 4.7,
+     "skill_ci95_bp": [
+      -40.7,
+      50.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.0
+    }
+   ],
+   "player_rush_longest": [
+    {
+     "key": "bovada",
+     "title": "Bovada",
+     "props": 265,
+     "brier": 0.2505,
+     "consensus_brier": 0.251,
+     "skill_bp": 5.4,
+     "skill_ci95_bp": [
+      -7.4,
+      18.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.84
+    },
+    {
+     "key": "novig",
+     "title": "Novig",
+     "props": 151,
+     "brier": 0.2504,
+     "consensus_brier": 0.251,
+     "skill_bp": 5.2,
+     "skill_ci95_bp": [
+      -69.4,
+      79.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 22.78
+    },
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 225,
+     "brier": 0.2514,
+     "consensus_brier": 0.2516,
+     "skill_bp": 2.3,
+     "skill_ci95_bp": [
+      -19.1,
+      23.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.78
+    }
+   ],
+   "player_rush_reception_yds": [
+    {
+     "key": "novig",
+     "title": "Novig",
+     "props": 222,
+     "brier": 0.2468,
+     "consensus_brier": 0.2508,
+     "skill_bp": 40.0,
+     "skill_ci95_bp": [
+      -26.9,
+      106.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 17.02
+    },
+    {
+     "key": "hardrock",
+     "title": "Hard Rock Bet",
+     "props": 167,
+     "brier": 0.2496,
+     "consensus_brier": 0.2505,
+     "skill_bp": 9.8,
+     "skill_ci95_bp": [
+      -8.5,
+      28.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.71
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 124,
+     "brier": 0.2501,
+     "consensus_brier": 0.2503,
+     "skill_bp": 2.1,
+     "skill_ci95_bp": [
+      -20.8,
+      24.9
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.38
+    }
+   ],
+   "player_rush_yds": [
+    {
+     "key": "betonlineag",
+     "title": "BetOnline.ag",
+     "props": 125,
+     "brier": 0.248,
+     "consensus_brier": 0.2494,
+     "skill_bp": 14.5,
+     "skill_ci95_bp": [
+      -17.0,
+      46.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.84
+    },
+    {
+     "key": "lowvig",
+     "title": "LowVig.ag",
+     "props": 125,
+     "brier": 0.248,
+     "consensus_brier": 0.2494,
+     "skill_bp": 14.5,
+     "skill_ci95_bp": [
+      -17.0,
+      46.0
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.84
+    },
+    {
+     "key": "betmgm",
+     "title": "BetMGM",
+     "props": 294,
+     "brier": 0.2505,
+     "consensus_brier": 0.2517,
+     "skill_bp": 11.4,
+     "skill_ci95_bp": [
+      -9.7,
+      32.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.99
+    }
+   ],
+   "player_shots_on_goal": [
+    {
+     "key": "betrivers",
+     "title": "BetRivers",
+     "props": 117,
+     "brier": 0.2591,
+     "consensus_brier": 0.2597,
+     "skill_bp": 6.7,
+     "skill_ci95_bp": [
+      -45.2,
+      58.7
+     ],
+     "verdict": "in_line",
+     "margin_pct": 8.21
+    },
+    {
+     "key": "pinnacle",
+     "title": "Pinnacle",
+     "props": 1477,
+     "brier": 0.2478,
+     "consensus_brier": 0.2482,
+     "skill_bp": 4.8,
+     "skill_ci95_bp": [
+      -2.9,
+      12.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.03
+    },
+    {
+     "key": "sportzino",
+     "title": "Sportzino",
+     "props": 1604,
+     "brier": 0.2457,
+     "consensus_brier": 0.246,
+     "skill_bp": 3.5,
+     "skill_ci95_bp": [
+      -3.9,
+      10.8
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.01
+    }
+   ],
+   "player_solo_tackles": [
+    {
+     "key": "prophetx",
+     "title": "ProphetX",
+     "props": 105,
+     "brier": 0.2451,
+     "consensus_brier": 0.2466,
+     "skill_bp": 15.2,
+     "skill_ci95_bp": [
+      -79.2,
+      109.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 11.26
+    },
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 105,
+     "brier": 0.2451,
+     "consensus_brier": 0.246,
+     "skill_bp": 9.6,
+     "skill_ci95_bp": [
+      -42.3,
+      61.5
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.74
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 105,
+     "brier": 0.2483,
+     "consensus_brier": 0.2445,
+     "skill_bp": -38.8,
+     "skill_ci95_bp": [
+      -97.2,
+      19.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.6
+    }
+   ],
+   "player_tackles_assists": [
+    {
+     "key": "fliff",
+     "title": "Fliff",
+     "props": 150,
+     "brier": 0.2478,
+     "consensus_brier": 0.2496,
+     "skill_bp": 18.4,
+     "skill_ci95_bp": [
+      -15.6,
+      52.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.7
+    },
+    {
+     "key": "draftkings",
+     "title": "DraftKings",
+     "props": 150,
+     "brier": 0.2488,
+     "consensus_brier": 0.2492,
+     "skill_bp": 3.5,
+     "skill_ci95_bp": [
+      -35.0,
+      42.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 6.63
+    },
+    {
+     "key": "prophetx",
+     "title": "ProphetX",
+     "props": 109,
+     "brier": 0.2491,
+     "consensus_brier": 0.2447,
+     "skill_bp": -44.7,
+     "skill_ci95_bp": [
+      -117.0,
+      27.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 9.35
+    }
+   ],
+   "player_threes": [
+    {
+     "key": "courtside",
+     "title": "Courtside",
+     "props": 124,
+     "brier": 0.2388,
+     "consensus_brier": 0.2406,
+     "skill_bp": 18.6,
+     "skill_ci95_bp": [
+      -32.9,
+      70.1
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.34
+    },
+    {
+     "key": "novig",
+     "title": "Novig",
+     "props": 248,
+     "brier": 0.2385,
+     "consensus_brier": 0.2402,
+     "skill_bp": 17.3,
+     "skill_ci95_bp": [
+      -12.0,
+      46.6
+     ],
+     "verdict": "in_line",
+     "margin_pct": 5.63
+    },
+    {
+     "key": "fanduel",
+     "title": "FanDuel",
+     "props": 215,
+     "brier": 0.2416,
+     "consensus_brier": 0.2424,
+     "skill_bp": 8.0,
+     "skill_ci95_bp": [
+      -53.3,
+      69.3
+     ],
+     "verdict": "in_line",
+     "margin_pct": 7.01
+    }
+   ]
+  }
+ }
+}

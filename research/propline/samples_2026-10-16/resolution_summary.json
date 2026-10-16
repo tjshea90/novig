@@ -1,0 +1,54 @@
+{
+ "status": 200,
+ "quota": {
+  "x-daily-limit": "25000",
+  "x-daily-used": "1019",
+  "x-daily-remaining": "23981",
+  "x-daily-reset": "1792195200",
+  "ratelimit-limit": "25000",
+  "ratelimit-remaining": "23981",
+  "ratelimit-reset": "16490",
+  "ratelimit-policy": "25000;w=86400"
+ },
+ "body": {
+  "days": 30,
+  "total_graded": 8215117,
+  "total_settled": 7516903,
+  "events_graded": 3401,
+  "sports_covered": 39,
+  "by_sport": [
+   {
+    "sport_key": "baseball_mlb",
+    "title": "MLB",
+    "graded": 2030011,
+    "events": 236
+   },
+   {
+    "sport_key": "football_ncaaf",
+    "title": "NCAAF",
+    "graded": 1580451,
+    "events": 473
+   },
+   {
+    "sport_key": "football_nfl",
+    "title": "NFL",
+    "graded": 1100688,
+    "events": 64
+   }
+  ],
+  "top_markets": [
+   {
+    "market_key": "totals",
+    "graded": 1645585
+   },
+   {
+    "market_key": "spreads",
+    "graded": 938772
+   },
+   {
+    "market_key": "player_reception_yds",
+    "graded": 399471
+   }
+  ]
+ }
+}

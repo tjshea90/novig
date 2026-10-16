@@ -1,0 +1,24 @@
+{
+ "status": 200,
+ "quota": {
+  "x-daily-limit": "25000",
+  "x-daily-used": "1004",
+  "x-daily-remaining": "23996",
+  "x-daily-reset": "1792195200",
+  "ratelimit-limit": "25000",
+  "ratelimit-remaining": "23996",
+  "ratelimit-reset": "16506",
+  "ratelimit-policy": "25000;w=86400"
+ },
+ "body": {
+  "id": "369360",
+  "sport_key": "basketball_nba",
+  "home_team": "Philadelphia 76ers",
+  "away_team": "Boston Celtics",
+  "commence_time": "2026-10-16T23:00:00Z",
+  "method": "market-implied: per book, the line where the no-vig P(over) crosses 50% (interpolated across two-way alt lines when posted, else the primary line with a bounded skew nudge); consensus = median across books. Derived from sportsbook prices \u2014 not a forecast.",
+  "projections": [],
+  "redacted": false,
+  "upgrade_url": null
+ }
+}

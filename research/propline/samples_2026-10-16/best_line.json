@@ -1,0 +1,516 @@
+{
+ "status": 200,
+ "quota": {
+  "x-daily-limit": "25000",
+  "x-daily-used": "1003",
+  "x-daily-remaining": "23997",
+  "x-daily-reset": "1792195200",
+  "ratelimit-limit": "25000",
+  "ratelimit-remaining": "23997",
+  "ratelimit-reset": "16514",
+  "ratelimit-policy": "25000;w=86400"
+ },
+ "body": {
+  "id": "369360",
+  "sport_key": "basketball_nba",
+  "home_team": "Philadelphia 76ers",
+  "away_team": "Boston Celtics",
+  "commence_time": "2026-10-16T23:00:00Z",
+  "books_considered": [
+   "bet25",
+   "bet99",
+   "bet9ja"
+  ],
+  "lines": [
+   {
+    "market_key": "h2h",
+    "description": "",
+    "point": null,
+    "sides": {
+     "Celtics": {
+      "best": {
+       "book": "stoiximan",
+       "book_title": "Stoiximan",
+       "price": 157,
+       "last_update": "2026-10-16T19:22:05.423956Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": null,
+       "liquidity_updated_at": null,
+       "line_type": "main"
+      },
+      "all_prices": [
+       {
+        "book": "stoiximan",
+        "book_title": "Stoiximan",
+        "price": 157,
+        "last_update": "2026-10-16T19:22:05.423956Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "main"
+       },
+       {
+        "book": "novig",
+        "book_title": "Novig",
+        "price": 156,
+        "last_update": "2026-10-16T19:23:51.287352Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": 242.93,
+        "liquidity_updated_at": "2026-10-16T19:20:57.849312Z",
+        "line_type": "main"
+       },
+       {
+        "book": "betmgm",
+        "book_title": "BetMGM",
+        "price": 155,
+        "last_update": "2026-10-16T19:23:56.008972Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "main"
+       }
+      ]
+     },
+     "76ers": {
+      "best": {
+       "book": "polymarket_us",
+       "book_title": "Polymarket US",
+       "price": -156,
+       "last_update": "2026-10-16T19:24:02.814177Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": 5350.46,
+       "liquidity_updated_at": "2026-10-16T19:22:08.877227Z",
+       "line_type": "main"
+      },
+      "all_prices": [
+       {
+        "book": "polymarket_us",
+        "book_title": "Polymarket US",
+        "price": -156,
+        "last_update": "2026-10-16T19:24:02.814177Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": 5350.46,
+        "liquidity_updated_at": "2026-10-16T19:22:08.877227Z",
+        "line_type": "main"
+       },
+       {
+        "book": "kalshi",
+        "book_title": "Kalshi",
+        "price": -156,
+        "last_update": "2026-10-16T19:23:49.431065Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": 1503.44,
+        "liquidity_updated_at": null,
+        "line_type": "main"
+       },
+       {
+        "book": "polymarket",
+        "book_title": "Polymarket",
+        "price": -156,
+        "last_update": "2026-10-16T19:23:48.892134Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": 628.86,
+        "liquidity_updated_at": "2026-10-16T19:23:40.798000Z",
+        "line_type": "main"
+       }
+      ]
+     }
+    }
+   },
+   {
+    "market_key": "player_assists",
+    "description": "Jayson Tatum",
+    "point": null,
+    "sides": {
+     "10+ Assists": {
+      "best": {
+       "book": "fanatics",
+       "book_title": "Fanatics",
+       "price": 2000,
+       "last_update": "2026-10-16T19:24:06.656556Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": null,
+       "liquidity_updated_at": null,
+       "line_type": "milestone"
+      },
+      "all_prices": [
+       {
+        "book": "fanatics",
+        "book_title": "Fanatics",
+        "price": 2000,
+        "last_update": "2026-10-16T19:24:06.656556Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       }
+      ]
+     },
+     "2+ Assists": {
+      "best": {
+       "book": "fanatics",
+       "book_title": "Fanatics",
+       "price": -525,
+       "last_update": "2026-10-16T19:24:06.656556Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": null,
+       "liquidity_updated_at": null,
+       "line_type": "milestone"
+      },
+      "all_prices": [
+       {
+        "book": "fanatics",
+        "book_title": "Fanatics",
+        "price": -525,
+        "last_update": "2026-10-16T19:24:06.656556Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       }
+      ]
+     },
+     "3+ Assists": {
+      "best": {
+       "book": "fanatics",
+       "book_title": "Fanatics",
+       "price": -240,
+       "last_update": "2026-10-16T19:24:06.656556Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": null,
+       "liquidity_updated_at": null,
+       "line_type": "milestone"
+      },
+      "all_prices": [
+       {
+        "book": "fanatics",
+        "book_title": "Fanatics",
+        "price": -240,
+        "last_update": "2026-10-16T19:24:06.656556Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       },
+       {
+        "book": "courtside",
+        "book_title": "Courtside",
+        "price": -258,
+        "last_update": "2026-10-16T19:24:10.393103Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       },
+       {
+        "book": "draftkings",
+        "book_title": "DraftKings",
+        "price": -258,
+        "last_update": "2026-10-16T19:23:47.505251Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       }
+      ]
+     },
+     "4+ Assists": {
+      "best": {
+       "book": "courtside",
+       "book_title": "Courtside",
+       "price": -110,
+       "last_update": "2026-10-16T19:24:10.393103Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": null,
+       "liquidity_updated_at": null,
+       "line_type": "milestone"
+      },
+      "all_prices": [
+       {
+        "book": "courtside",
+        "book_title": "Courtside",
+        "price": -110,
+        "last_update": "2026-10-16T19:24:10.393103Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       },
+       {
+        "book": "draftkings",
+        "book_title": "DraftKings",
+        "price": -110,
+        "last_update": "2026-10-16T19:23:47.505251Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       },
+       {
+        "book": "fanatics",
+        "book_title": "Fanatics",
+        "price": -115,
+        "last_update": "2026-10-16T19:24:06.656556Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       }
+      ]
+     },
+     "5+ Assists": {
+      "best": {
+       "book": "courtside",
+       "book_title": "Courtside",
+       "price": 197,
+       "last_update": "2026-10-16T19:24:10.393103Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": null,
+       "liquidity_updated_at": null,
+       "line_type": "milestone"
+      },
+      "all_prices": [
+       {
+        "book": "courtside",
+        "book_title": "Courtside",
+        "price": 197,
+        "last_update": "2026-10-16T19:24:10.393103Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       },
+       {
+        "book": "draftkings",
+        "book_title": "DraftKings",
+        "price": 197,
+        "last_update": "2026-10-16T19:23:47.505251Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       },
+       {
+        "book": "fanatics",
+        "book_title": "Fanatics",
+        "price": 155,
+        "last_update": "2026-10-16T19:24:06.656556Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       }
+      ]
+     },
+     "6+ Assists": {
+      "best": {
+       "book": "courtside",
+       "book_title": "Courtside",
+       "price": 413,
+       "last_update": "2026-10-16T19:24:10.393103Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": null,
+       "liquidity_updated_at": null,
+       "line_type": "milestone"
+      },
+      "all_prices": [
+       {
+        "book": "courtside",
+        "book_title": "Courtside",
+        "price": 413,
+        "last_update": "2026-10-16T19:24:10.393103Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       },
+       {
+        "book": "draftkings",
+        "book_title": "DraftKings",
+        "price": 413,
+        "last_update": "2026-10-16T19:23:47.505251Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       },
+       {
+        "book": "fanatics",
+        "book_title": "Fanatics",
+        "price": 270,
+        "last_update": "2026-10-16T19:24:06.656556Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       }
+      ]
+     },
+     "7+ Assists": {
+      "best": {
+       "book": "courtside",
+       "book_title": "Courtside",
+       "price": 870,
+       "last_update": "2026-10-16T19:24:10.393103Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": null,
+       "liquidity_updated_at": null,
+       "line_type": "milestone"
+      },
+      "all_prices": [
+       {
+        "book": "courtside",
+        "book_title": "Courtside",
+        "price": 870,
+        "last_update": "2026-10-16T19:24:10.393103Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       },
+       {
+        "book": "draftkings",
+        "book_title": "DraftKings",
+        "price": 870,
+        "last_update": "2026-10-16T19:23:47.505251Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       },
+       {
+        "book": "fanatics",
+        "book_title": "Fanatics",
+        "price": 425,
+        "last_update": "2026-10-16T19:24:06.656556Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       }
+      ]
+     },
+     "8+ Assists": {
+      "best": {
+       "book": "fanatics",
+       "book_title": "Fanatics",
+       "price": 800,
+       "last_update": "2026-10-16T19:24:06.656556Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": null,
+       "liquidity_updated_at": null,
+       "line_type": "milestone"
+      },
+      "all_prices": [
+       {
+        "book": "fanatics",
+        "book_title": "Fanatics",
+        "price": 800,
+        "last_update": "2026-10-16T19:24:06.656556Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       }
+      ]
+     },
+     "9+ Assists": {
+      "best": {
+       "book": "fanatics",
+       "book_title": "Fanatics",
+       "price": 1200,
+       "last_update": "2026-10-16T19:24:06.656556Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": null,
+       "liquidity_updated_at": null,
+       "line_type": "milestone"
+      },
+      "all_prices": [
+       {
+        "book": "fanatics",
+        "book_title": "Fanatics",
+        "price": 1200,
+        "last_update": "2026-10-16T19:24:06.656556Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": null,
+        "liquidity_updated_at": null,
+        "line_type": "milestone"
+       }
+      ]
+     }
+    }
+   },
+   {
+    "market_key": "player_assists",
+    "description": "Jayson Tatum",
+    "point": 3.5,
+    "sides": {
+     "Under": {
+      "best": {
+       "book": "prophetx",
+       "book_title": "ProphetX",
+       "price": 113,
+       "last_update": "2026-10-16T19:23:58.610038Z",
+       "link": null,
+       "app_link": null,
+       "liquidity": 884.96,
+       "liquidity_updated_at": "2026-10-16T16:49:27.351048Z",
+       "line_type": "main"
+      },
+      "all_prices": [
+       {
+        "book": "prophetx",
+        "book_title": "ProphetX",
+        "price": 113,
+        "last_update": "2026-10-16T19:23:58.610038Z",
+        "link": null,
+        "app_link": null,
+        "liquidity": 884.96,
+        "liquidity_updated_at": "2026-10-16T16:49:27.351048Z",
+        "line_type": "main"
+       }
+      ]
+     }
+    }
+   }
+  ],
+  "redacted": false,
+  "upgrade_url": null
+ }
+}

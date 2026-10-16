@@ -1,0 +1,485 @@
+{
+ "status": 200,
+ "quota": {
+  "x-daily-limit": "25000",
+  "x-daily-used": "1009",
+  "x-daily-remaining": "23991",
+  "x-daily-reset": "1792195200",
+  "ratelimit-limit": "25000",
+  "ratelimit-remaining": "23991",
+  "ratelimit-reset": "16508",
+  "ratelimit-policy": "25000;w=86400"
+ },
+ "body": {
+  "id": "369360",
+  "sport_key": "basketball_nba",
+  "home_team": "Philadelphia 76ers",
+  "away_team": "Boston Celtics",
+  "commence_time": "2026-10-16T23:00:00Z",
+  "bookmakers": [
+   {
+    "key": "bet25",
+    "title": "Bet25",
+    "markets": [
+     {
+      "key": "h2h",
+      "description": "Moneyline",
+      "period": null,
+      "team": null,
+      "outcomes": [
+       {
+        "name": "Philadelphia 76ers",
+        "description": "",
+        "open_price": -222,
+        "open_point": null,
+        "open_at": "2026-10-16T01:23:02.645087Z",
+        "latest_price": -182,
+        "latest_point": null,
+        "latest_at": "2026-10-16T17:11:06.392675Z",
+        "prob_shift": -0.0441,
+        "point_shift": null,
+        "direction": "lengthening",
+        "num_snapshots": 24,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14661270646,
+        "book_outcome_id": null
+       },
+       {
+        "name": "Boston Celtics",
+        "description": "",
+        "open_price": 155,
+        "open_point": null,
+        "open_at": "2026-10-16T01:23:02.645087Z",
+        "latest_price": 147,
+        "latest_point": null,
+        "latest_at": "2026-10-16T19:21:44.724666Z",
+        "prob_shift": 0.0127,
+        "point_shift": null,
+        "direction": "flat",
+        "num_snapshots": 23,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14661270645,
+        "book_outcome_id": null
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "description": "Spread -10.5",
+      "period": null,
+      "team": null,
+      "outcomes": [
+       {
+        "name": "Philadelphia 76ers",
+        "description": "",
+        "open_price": 150,
+        "open_point": -10.5,
+        "open_at": "2026-10-16T05:00:18.284984Z",
+        "latest_price": 200,
+        "latest_point": -10.5,
+        "latest_at": "2026-10-16T19:21:44.724666Z",
+        "prob_shift": -0.0667,
+        "point_shift": 0.0,
+        "direction": "lengthening",
+        "num_snapshots": 10,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14721269914,
+        "book_outcome_id": null
+       },
+       {
+        "name": "Boston Celtics",
+        "description": "",
+        "open_price": -213,
+        "open_point": 10.5,
+        "open_at": "2026-10-16T05:00:18.284984Z",
+        "latest_price": -256,
+        "latest_point": 10.5,
+        "latest_at": "2026-10-16T17:11:06.392675Z",
+        "prob_shift": 0.0386,
+        "point_shift": 0.0,
+        "direction": "shortening",
+        "num_snapshots": 9,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14721269913,
+        "book_outcome_id": null
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "description": "Spread -11.5",
+      "period": null,
+      "team": null,
+      "outcomes": [
+       {
+        "name": "Philadelphia 76ers",
+        "description": "",
+        "open_price": 165,
+        "open_point": -11.5,
+        "open_at": "2026-10-16T01:23:02.645087Z",
+        "latest_price": 195,
+        "latest_point": -11.5,
+        "latest_at": "2026-10-16T14:44:13.119295Z",
+        "prob_shift": -0.0384,
+        "point_shift": 0.0,
+        "direction": "lengthening",
+        "num_snapshots": 13,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14661270652,
+        "book_outcome_id": null
+       },
+       {
+        "name": "Boston Celtics",
+        "description": "",
+        "open_price": -238,
+        "open_point": 11.5,
+        "open_at": "2026-10-16T01:23:02.645087Z",
+        "latest_price": -286,
+        "latest_point": 11.5,
+        "latest_at": "2026-10-16T14:44:13.119295Z",
+        "prob_shift": 0.0368,
+        "point_shift": 0.0,
+        "direction": "shortening",
+        "num_snapshots": 8,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14661270651,
+        "book_outcome_id": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "bet99",
+    "title": "Bet99",
+    "markets": [
+     {
+      "key": "h2h",
+      "description": "Moneyline",
+      "period": null,
+      "team": null,
+      "outcomes": [
+       {
+        "name": "Philadelphia 76ers",
+        "description": "",
+        "open_price": -210,
+        "open_point": null,
+        "open_at": "2026-10-16T01:20:08.511856Z",
+        "latest_price": -175,
+        "latest_point": null,
+        "latest_at": "2026-10-16T18:56:09.379072Z",
+        "prob_shift": -0.0411,
+        "point_shift": null,
+        "direction": "lengthening",
+        "num_snapshots": 21,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14660187279,
+        "book_outcome_id": null
+       },
+       {
+        "name": "Boston Celtics",
+        "description": "",
+        "open_price": 170,
+        "open_point": null,
+        "open_at": "2026-10-16T01:20:08.511856Z",
+        "latest_price": 150,
+        "latest_point": null,
+        "latest_at": "2026-10-16T18:56:09.379072Z",
+        "prob_shift": 0.0296,
+        "point_shift": null,
+        "direction": "shortening",
+        "num_snapshots": 21,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14660187278,
+        "book_outcome_id": null
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "description": "Spread -4.5",
+      "period": null,
+      "team": null,
+      "outcomes": [
+       {
+        "name": "Philadelphia 76ers",
+        "description": "",
+        "open_price": -115,
+        "open_point": -4.5,
+        "open_at": "2026-10-16T14:53:52.404018Z",
+        "latest_price": -110,
+        "latest_point": -4.5,
+        "latest_at": "2026-10-16T16:40:42.057615Z",
+        "prob_shift": -0.0111,
+        "point_shift": 0.0,
+        "direction": "flat",
+        "num_snapshots": 2,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14898114353,
+        "book_outcome_id": null
+       },
+       {
+        "name": "Boston Celtics",
+        "description": "",
+        "open_price": -105,
+        "open_point": 4.5,
+        "open_at": "2026-10-16T14:53:52.404018Z",
+        "latest_price": -110,
+        "latest_point": 4.5,
+        "latest_at": "2026-10-16T16:40:42.057615Z",
+        "prob_shift": 0.0116,
+        "point_shift": 0.0,
+        "direction": "flat",
+        "num_snapshots": 2,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14898114345,
+        "book_outcome_id": null
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "description": "Spread -5.5",
+      "period": null,
+      "team": null,
+      "outcomes": [
+       {
+        "name": "Philadelphia 76ers",
+        "description": "",
+        "open_price": -115,
+        "open_point": -5.5,
+        "open_at": "2026-10-16T01:20:08.511856Z",
+        "latest_price": -105,
+        "latest_point": -5.5,
+        "latest_at": "2026-10-16T14:05:52.426287Z",
+        "prob_shift": -0.0227,
+        "point_shift": 0.0,
+        "direction": "lengthening",
+        "num_snapshots": 5,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14660187281,
+        "book_outcome_id": null
+       },
+       {
+        "name": "Boston Celtics",
+        "description": "",
+        "open_price": -105,
+        "open_point": 5.5,
+        "open_at": "2026-10-16T01:20:08.511856Z",
+        "latest_price": -115,
+        "latest_point": 5.5,
+        "latest_at": "2026-10-16T14:05:52.426287Z",
+        "prob_shift": 0.0227,
+        "point_shift": 0.0,
+        "direction": "shortening",
+        "num_snapshots": 5,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14660187280,
+        "book_outcome_id": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "bet9ja",
+    "title": "Bet9ja",
+    "markets": [
+     {
+      "key": "h2h",
+      "description": "Winner",
+      "period": null,
+      "team": null,
+      "outcomes": [
+       {
+        "name": "Philadelphia 76ers",
+        "description": "",
+        "open_price": -204,
+        "open_point": null,
+        "open_at": "2026-10-16T01:19:50.143213Z",
+        "latest_price": -192,
+        "latest_point": null,
+        "latest_at": "2026-10-16T18:57:00.358477Z",
+        "prob_shift": -0.0135,
+        "point_shift": null,
+        "direction": "flat",
+        "num_snapshots": 23,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14660052567,
+        "book_outcome_id": null
+       },
+       {
+        "name": "Boston Celtics",
+        "description": "",
+        "open_price": 145,
+        "open_point": null,
+        "open_at": "2026-10-16T01:19:50.143213Z",
+        "latest_price": 140,
+        "latest_point": null,
+        "latest_at": "2026-10-16T16:43:03.186898Z",
+        "prob_shift": 0.0085,
+        "point_shift": null,
+        "direction": "flat",
+        "num_snapshots": 22,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14660052566,
+        "book_outcome_id": null
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "description": "Spread -10.5",
+      "period": null,
+      "team": null,
+      "outcomes": [
+       {
+        "name": "Philadelphia 76ers",
+        "description": "",
+        "open_price": 150,
+        "open_point": -10.5,
+        "open_at": "2026-10-16T05:01:24.059985Z",
+        "latest_price": 185,
+        "latest_point": -10.5,
+        "latest_at": "2026-10-16T18:57:00.358477Z",
+        "prob_shift": -0.0491,
+        "point_shift": 0.0,
+        "direction": "lengthening",
+        "num_snapshots": 9,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14721557472,
+        "book_outcome_id": null
+       },
+       {
+        "name": "Boston Celtics",
+        "description": "",
+        "open_price": -213,
+        "open_point": 10.5,
+        "open_at": "2026-10-16T05:01:24.059985Z",
+        "latest_price": -270,
+        "latest_point": 10.5,
+        "latest_at": "2026-10-16T18:57:00.358477Z",
+        "prob_shift": 0.0492,
+        "point_shift": 0.0,
+        "direction": "shortening",
+        "num_snapshots": 12,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14721557470,
+        "book_outcome_id": null
+       }
+      ]
+     },
+     {
+      "key": "spreads",
+      "description": "Spread -11.5",
+      "period": null,
+      "team": null,
+      "outcomes": [
+       {
+        "name": "Philadelphia 76ers",
+        "description": "",
+        "open_price": 175,
+        "open_point": -11.5,
+        "open_at": "2026-10-16T01:19:50.143213Z",
+        "latest_price": 195,
+        "latest_point": -11.5,
+        "latest_at": "2026-10-16T14:39:16.244134Z",
+        "prob_shift": -0.0247,
+        "point_shift": 0.0,
+        "direction": "lengthening",
+        "num_snapshots": 10,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14660052573,
+        "book_outcome_id": null
+       },
+       {
+        "name": "Boston Celtics",
+        "description": "",
+        "open_price": -256,
+        "open_point": 11.5,
+        "open_at": "2026-10-16T01:19:50.143213Z",
+        "latest_price": -286,
+        "latest_point": 11.5,
+        "latest_at": "2026-10-16T14:39:16.244134Z",
+        "prob_shift": 0.0218,
+        "point_shift": 0.0,
+        "direction": "shortening",
+        "num_snapshots": 12,
+        "redacted": false,
+        "dfs_odds_type": null,
+        "outcome_id": 14660052572,
+        "book_outcome_id": null
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "steam": [
+   {
+    "market": "h2h",
+    "period": null,
+    "name": "76ers",
+    "description": null,
+    "books_quoting": 55,
+    "books_moved": 35,
+    "consensus_direction": "lengthening",
+    "avg_prob_shift": -0.0455,
+    "consensus_point_shift": null,
+    "steam_score": 100.0,
+    "team": null,
+    "open_point": null,
+    "latest_point": null
+   },
+   {
+    "market": "h2h",
+    "period": null,
+    "name": "Celtics",
+    "description": null,
+    "books_quoting": 55,
+    "books_moved": 33,
+    "consensus_direction": "shortening",
+    "avg_prob_shift": 0.0416,
+    "consensus_point_shift": null,
+    "steam_score": 100.0,
+    "team": null,
+    "open_point": null,
+    "latest_point": null
+   },
+   {
+    "market": "spreads",
+    "period": null,
+    "name": "76ers",
+    "description": null,
+    "books_quoting": 21,
+    "books_moved": 19,
+    "consensus_direction": "lengthening",
+    "avg_prob_shift": -0.057,
+    "consensus_point_shift": 0.0,
+    "steam_score": 100.0,
+    "team": null,
+    "open_point": -2.5,
+    "latest_point": -2.5
+   }
+  ],
+  "redacted": false,
+  "upgrade_url": null
+ }
+}

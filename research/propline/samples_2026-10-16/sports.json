@@ -1,0 +1,30 @@
+{
+ "status": 200,
+ "quota": {
+  "x-daily-limit": "25000",
+  "x-daily-used": "1003",
+  "x-daily-remaining": "23997",
+  "x-daily-reset": "1792195200",
+  "ratelimit-limit": "25000",
+  "ratelimit-remaining": "23997",
+  "ratelimit-reset": "16524",
+  "ratelimit-policy": "25000;w=86400"
+ },
+ "body": [
+  {
+   "key": "baseball_mlb",
+   "title": "MLB",
+   "active": true
+  },
+  {
+   "key": "basketball_nba",
+   "title": "NBA",
+   "active": true
+  },
+  {
+   "key": "football_nfl",
+   "title": "NFL",
+   "active": true
+  }
+ ]
+}
