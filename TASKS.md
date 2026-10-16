@@ -5456,3 +5456,8 @@ Tj: "https://boltodds.com/docs make sure the app is using the boltodds to its fu
 
 ## TCL47: ParlayAPI key upgraded to Starter: detect and prefer it (Tj, chat t1792169064333, 2026-10-16)
 - [x] TCL47a (KeyPool paid-first, engine reads ParlayAPI plans hourly; app side ships in next release) How does KeyPool order ParlayAPI keys / read each key's plan+credits? Make the pool prefer the key with the biggest plan/credits (both phone and engine), verify with the key's own usage read; tell Tj which key.
+
+## TCL48: chat continues in a new session when an old one is closed (Tj, chat t1792169705180, 2026-10-16)
+Tj: "force. when I close an old chat to save context, it should automatically force a new session to continue chat". Cause of the miss: a resumed session had no chat_watch running, and the old session's lease blocked it.
+- [ ] TCL48a Resume path: a new session started after a close starts chat_watch itself and, if the lease holder is idle/closed, takes it (Tj's standing word) instead of staying read-only. Check tools/resume.sh + coord.py for a "previous session closed" signal.
+- [ ] TCL48b Wake-up (see TCL40b): what can start a session from a chat message with zero tokens (scheduled trigger polling cloud-config via Actions + create_session)? Report honestly; build only what works.
