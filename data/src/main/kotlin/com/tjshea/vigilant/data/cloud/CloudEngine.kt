@@ -180,6 +180,9 @@ class CloudEngine(
     /** When the engine's own loops last turned over (the run loop and the scan wait loop each tick about once a second): a thread outside the coroutines watches it ([CloudMain] loop watchdog, TCL76d). */
     @Volatile var tickMs: Long = 0L
 
+    /** The phone's config with an off that has reached its scheduled resume counted as on ([CloudManual.effective]). */
+    private suspend fun readConfig(): CloudConfig? = config()?.let { CloudManual.effective(it, clock()) }
+
     /** The newest config the run loop read: the manual Run / Stop fields the other loops (the desk) also honour ([CloudManual]). */
     @Volatile private var manualCfg: CloudConfig? = null
     private fun manualOpen(s: ScanSettings) = CloudManual.open(s.cloudHours, manualCfg, clock())
@@ -216,7 +219,7 @@ class CloudEngine(
         var lastBeat = 0L
         while (currentScopeActive() && clock() < untilMs) {
             tickMs = clock()
-            val cfg = runCatching { config() }.getOrNull() ?: lastCfg
+            val cfg = runCatching { readConfig() }.getOrNull() ?: lastCfg
             lastCfg = cfg
             cfg?.settings?.let { phoneSettings = it }
             cfg?.let { manualCfg = it }
@@ -374,7 +377,7 @@ class CloudEngine(
             }
             if (now - lastConfigAt >= configEveryMs) {
                 lastConfigAt = now
-                val newer = runCatching { config() }.getOrNull()
+                val newer = runCatching { readConfig() }.getOrNull()
                 // Nothing to decide unless the phone wrote something new (a revision, a switch-off, a refresh): the settings are compared only then.
                 if (newer != null && (newer.rev != cfg.rev || !newer.on || newer.refreshAtMs > handledRefresh)) {
                     when {

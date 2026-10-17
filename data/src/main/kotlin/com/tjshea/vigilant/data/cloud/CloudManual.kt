@@ -19,11 +19,27 @@ object CloudManual {
     fun open(hoursOn: Boolean, c: CloudConfig?, now: Long): Boolean =
         !hoursOn || EngineHours.isOpen(now) || (c != null && runActive(c, now))
 
-    /** The next scheduled opening that is a day of work away: tomorrow 08:00 Eastern when the window is open now (or this morning's 08:00 after midnight); 0 when it is closed now (a stop then only ends the manual run). */
+    /**
+     * The next scheduled opening after the window that contains [now] (or after now, when it is closed): tomorrow 08:00 Eastern from 08:00 until midnight, today's 08:00 from midnight on. A Stop, and an engine
+     * switched off by hand, last until then and no longer.
+     */
     fun stopUntil(now: Long): Long {
-        if (!EngineHours.isOpen(now)) return 0L
-        val close = EngineHours.closesAtMs(now) ?: return 0L
+        if (!EngineHours.isOpen(now)) return EngineHours.nextOpenAtMs(now)
+        val close = EngineHours.closesAtMs(now) ?: return EngineHours.nextOpenAtMs(now)
         return EngineHours.nextOpenAtMs(close + 1L)
+    }
+
+    /**
+     * When an engine that Tj switched off resumes by itself (Tj, 2026-10-17, "I'm turning the GitHub engine off. make sure it resumes as scheduled without me"): the next scheduled opening after the moment he wrote
+     * the off. Never after the kill switch ("STOP ALL", [com.tjshea.vigilant.data.scanner.ScanSettings.killed]) and never after the token was removed; null = it stays off until he switches it on.
+     */
+    fun resumeAtMs(c: CloudConfig): Long? =
+        if (c.on || c.rev <= 0L || c.device == "token removed" || c.settings.killed) null else stopUntil(c.rev)
+
+    /** [c] as the engine and the gate read it: an off that has reached its scheduled resume counts as on (with the cloud scan switched on in its copy of the settings). */
+    fun effective(c: CloudConfig, now: Long): CloudConfig {
+        val at = resumeAtMs(c) ?: return c
+        return if (now >= at) c.copy(on = true, settings = c.settings.copy(cloudScan = true, paused = false)) else c
     }
 
     /** The config's manual fields for a Run at [now]: a Stop is cleared; the run lasts until the window opens by itself, or [RUN_MAX_MS] at most. */

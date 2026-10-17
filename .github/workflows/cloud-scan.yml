@@ -40,7 +40,19 @@ jobs:
         run: |
           RUN=false
           if git fetch -q --depth=1 origin cloud-config 2>/dev/null; then
-            ON=$(git show FETCH_HEAD:settings.json 2>/dev/null | python3 -c "import json,sys; print(str(json.load(sys.stdin).get('on', False)).lower())" 2>/dev/null || echo false)
+            # An engine Tj switched off resumes by itself at the next scheduled opening (08:00 America/New_York after the moment he wrote the off), unless the kill switch is on or the token was removed (TCL81, Tj 2026-10-17).
+            ON=$(git show FETCH_HEAD:settings.json 2>/dev/null | python3 -c "
+          import json, sys, time, datetime
+          from zoneinfo import ZoneInfo
+          c = json.load(sys.stdin)
+          on = bool(c.get('on', False))
+          if not on and c.get('rev', 0) > 0 and c.get('device') != 'token removed' and not c.get('settings', {}).get('killed', False):
+              t = datetime.datetime.fromtimestamp(c['rev'] / 1000, ZoneInfo('America/New_York'))
+              day = t.date() + datetime.timedelta(days=1) if t.time() >= datetime.time(8, 0) else t.date()
+              at = datetime.datetime(day.year, day.month, day.day, 8, 0, tzinfo=ZoneInfo('America/New_York')).timestamp()
+              if time.time() >= at: on = True
+          print(str(on).lower())
+          " 2>/dev/null || echo false)
             echo "phone switch: on=$ON"
             [ "$ON" = "true" ] && RUN=true
           else

@@ -34,7 +34,7 @@ class CloudManualTest {
         val noon = et(17, 12)
         assertEquals(et(18, 8), CloudManual.stopUntil(noon))
         assertEquals("after midnight the same morning's 08:00", et(17, 8), CloudManual.stopUntil(et(17, 0, 30)))
-        assertEquals("closed now: a stop only ends a manual run", 0L, CloudManual.stopUntil(et(17, 3)))
+        assertEquals("closed now (a manual run outside the hours): until this morning's 08:00", et(17, 8), CloudManual.stopUntil(et(17, 3)))
         val c = CloudConfig(manualStopUntilMs = CloudManual.stopFields(noon).second)
         assertTrue(CloudManual.stopActive(c, noon))
         assertTrue(CloudManual.stopActive(c, et(18, 7, 59)))
@@ -52,5 +52,19 @@ class CloudManualTest {
         assertNull(CloudManual.words(CloudConfig(), et(17, 12)))
         assertTrue(CloudManual.words(CloudConfig(manualStopUntilMs = et(18, 8)), et(17, 12))!!.contains("8:00 am ET"))
         assertTrue(CloudManual.words(CloudConfig(manualRunUntilMs = et(17, 15)), et(17, 3))!!.startsWith("Running by your request"))
+    }
+
+    @Test
+    fun `an engine Tj switched off resumes at the next scheduled opening by itself, never after the kill switch`() {
+        val off = CloudConfig(on = false, rev = et(17, 2, 45), device = "Moto G")
+        assertEquals(et(17, 8), CloudManual.resumeAtMs(off))
+        assertFalse(CloudManual.effective(off, et(17, 7, 59)).on)
+        val back = CloudManual.effective(off, et(17, 8))
+        assertTrue(back.on && back.settings.cloudScan && !back.settings.paused)
+        assertEquals("off at 14:00 resumes tomorrow 08:00", et(18, 8), CloudManual.resumeAtMs(off.copy(rev = et(17, 14))))
+        assertNull("the kill switch stays off", CloudManual.resumeAtMs(off.copy(settings = off.settings.copy(killed = true))))
+        assertNull("a removed token stays off", CloudManual.resumeAtMs(off.copy(device = "token removed")))
+        assertNull("an engine that is on has nothing to resume", CloudManual.resumeAtMs(off.copy(on = true)))
+        assertEquals("a config that never said when is left alone", off.copy(rev = 0L), CloudManual.effective(off.copy(rev = 0L), et(19, 12)))
     }
 }
