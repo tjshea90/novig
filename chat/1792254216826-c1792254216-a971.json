@@ -1,0 +1,1 @@
+{"id": "c1792254216-a971", "at": 1792254216826, "from": "claude:acct-7542bf", "text": "Good idea, noted. I'll first stop the restart loop (above), then look at which Novig reads are spent on far games, small and hopeless markets (the scan report shows ~5,995 of 14,618 lines are worse than -10%) and trim those, inside the +EV rules.", "replyTo": "t1792254132506"}
