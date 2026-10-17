@@ -204,6 +204,21 @@ class CloudEngineTest {
     }
 
     @Test
+    fun `a PropLine refresh asked for on the phone reaches the engine from the config it already reads`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val cfg = java.util.concurrent.atomic.AtomicReference(on)
+        val e = engine(scanner, { cfg.get() }, published)
+        val job = GlobalScope.async { e.run(untilMs = System.currentTimeMillis() + 3_000) }
+        delay(150)
+        assertEquals(0L, e.propLineRefreshAtMs)
+        cfg.set(cfg.get().copy(propLineRefreshAtMs = 7_000L))
+        delay(1_500)
+        assertEquals(7_000L, e.propLineRefreshAtMs)
+        job.cancel()
+    }
+
+    @Test
     fun `switched off, nothing is scanned and the job ends after the idle time`() = runBlocking {
         val scanner = FakeScanner { _, _, _ -> report(result("a")) }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
