@@ -1,23 +1,22 @@
-# CHECKPOINT 3603 — read me first, then TASKS.md
+# CHECKPOINT 3604 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T22:07:28Z · **tests:** all 5 fast checks green
-**Branch:** `claude/wizardly-meitner-op3sge` · **builds on:** `4818da0e3` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T22:13:25Z · **tests:** all 5 fast checks green
+**Branch:** `claude/wizardly-meitner-op3sge` · **builds on:** `602d4e187` (this checkpoint is the commit after it)
 
 ## Just done
-TCL104b list jump fix (fixed-height live banner), TCL106 kalshi research
+pre-release: v0.114.33: the +EV list no longer jumps: Scanning/No +EV states and the Scan button keep one size (versionCode 329, v0.114.33)
 
 ## Do this next
-ship batch; check engine-log for 12s manual-bet errors
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.114.33), then run: bash tools/record-release.sh v0.114.33 329 "v0.114.33: the +EV list no longer jumps: Scanning/No +EV states and the Scan button keep one size"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-    ?? research/kalshi_plus_novig_2026-10-17.md
 
 ## Last ten checkpoints
 ```
+  62b89ce5f ckpt 3603: TCL104b list jump fix (fixed-height live banner), TCL106 kalshi research
   29751b60d ckpt 3602: chat session done: v0.114.32 released
   03fe938dd ckpt 3601: pre-release: v0.114.32: the bid desk no longer stops a whole pass when Novi
   ef290d521 ckpt 3600: TCL105 bug-hunt rule written
@@ -27,8 +26,7 @@ ship batch; check engine-log for 12s manual-bet errors
   a5ea93910 ckpt 3596: chat: TCL103 bid wallet deployment written
   c7f9ba6da ckpt 3595: chat: TCL102 written; v0.114.31 gating
   03bab4d98 ckpt 3594: pre-release: v0.114.31: the Live engine-trading button lights up whenever t
-  080a7c8c9 ckpt 3593: pre-ship: v0.114.31: the Live engine-trading button lights up whenever the 
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
