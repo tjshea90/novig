@@ -47,6 +47,7 @@ object CloudDashboard {
         appendLine("| Last scan | ${if (st.lastScanEndedAtMs > 0) "ended ${clock(st.lastScanEndedAtMs)} (${ago(now - st.lastScanEndedAtMs)}), took ${st.scanMs / 1000} s, ${st.rows} bets listed" else "none finished yet"} |")
         appendLine("| List age | Novig prices median ${secs(st.novigAgeMedianS)} (oldest ${secs(st.novigAgeMaxS)}) · fair odds median ${secs(st.fairAgeMedianS)} (oldest ${secs(st.fairAgeMaxS)}) |")
         appendLine("| Novig | ${st.novigRoute.ifBlank { "not said yet" }} |")
+        st.novigAddress.takeIf { it.isNotBlank() }?.let { appendLine("| Novig and this machine's address | $it |") }
         appendLine("| Runner address | ${if (st.addressHandovers == 0) "accepted by Novig (no refusal; ${st.addressHandovers} replaced runners in a row)" else "REFUSED ${st.addressHandovers} time(s) in a row, last ${clock(st.addressHandoverAtMs)}: the job ends early and a new runner is drawn"} |")
         appendLine("| Trading | ${st.tradeMode.ifBlank { "off" }.uppercase()}${if (st.tradeNote.isNotBlank()) ": ${st.tradeNote}" else ""}${if (st.tradeStopped.isNotBlank()) " · **STOPPED: ${st.tradeStopped}**" else ""} |")
         appendLine("| Wallet | ${wallet(st, now)} |")
