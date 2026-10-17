@@ -328,3 +328,4 @@ day that changes.
 | v0.114.31 | code 327 | 2026-10-17T20:28Z | v0.114.31: Live engine-trading button lights up when the trading key is on GitHub; order errors say what Novig last returned; any non-live order status counts as finished
 | v0.114.32 | code 328 | 2026-10-17T21:07Z | v0.114.32: bid desk no longer stops a pass when Novig locks one game; Feed list no longer jumps with the progress bar
 | v0.114.33 | code 329 | 2026-10-17T22:18Z | v0.114.33: the +EV list no longer jumps: Scanning/No +EV states and the Scan button keep one size
+| v0.114.34 | code 330 | 2026-10-17T23:16Z | v0.114.34: live fee 0.06 in every league (fallback table), Feed summary row no longer shifts during a scan
