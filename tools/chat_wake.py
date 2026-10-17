@@ -112,6 +112,11 @@ def run():
         pass
     now_ms = int(time.time() * 1000)
     msgs = load()
+    if os.environ.get("WAKE_TEST") == "1":      # a manual test (workflow_dispatch): wake the on-duty account once, whatever the chat holds
+        text, ok = wake(msgs, datetime.datetime.now(datetime.timezone.utc), roster, away, os.environ)
+        at = int(time.time() * 1000)
+        tell_tj.put("chat/%013d-w%d.json" % (at, at), json.dumps({"id": "w%d" % at, "at": at, "from": "claude:github", "text": "TEST: " + text, "replyTo": None, "ack": None, "files": [], "kind": "wake"}))
+        print(text); return 0 if ok else 1
     todo = unanswered(msgs, now_ms)
     if not todo:
         print("nothing to wake for"); return 0
