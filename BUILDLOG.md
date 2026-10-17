@@ -313,3 +313,4 @@ day that changes.
 | v0.114.15 | code 311 | 2026-10-17T05:43Z | Run now / Stop now for the GitHub engine (Settings > Cloud scan), even outside its hours; schedule untouched; study records Novig overround
 | v0.114.16 | code 312 | 2026-10-17T06:44Z | Engine tab Address tile shows the real Novig verdict (red when refused); GitHub watchdog swaps a refused runner every 5 min; PropLine +EV bets graded and reported at 300 bets; standing job rule
 | v0.114.17 | code 313 | 2026-10-17T07:48Z | stale-data rules, LIVE chip over a Cloudflare tunnel, 2 s polling, auto-resume after hand-off, Stop until next opening, engine loop watchdog, origin tables, PropLine +EV bets grading
+| v0.114.18 | code 314 | 2026-10-17T16:03Z | Reset engine, pull-to-refresh Engine tab, frozen Novig scan restarts, engine bids expire in 8 min if engine dies, update check finds app release past data archives, chat takes lease
