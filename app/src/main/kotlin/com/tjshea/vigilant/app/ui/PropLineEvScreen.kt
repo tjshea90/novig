@@ -165,7 +165,8 @@ private fun PropLineEvCard(r: PlEvRow, now: Long, expanded: Boolean, onToggle: (
                 if (r.trend.isNotBlank()) Text(r.trend, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("plTrend"))
                 Text(
                     r.vigilantEv?.let { "Vigilant's own scan prices this Novig line at ${if (it >= 0) "+" else ""}${String.format(Locale.US, "%.1f", it)}% now" + (r.vigilantStars?.let { s -> " · ${s} stars" } ?: "") }
-                        ?: "Vigilant's own scan did not price this line (no Bet button).",
+                        ?: if (r.oppFromPropLine) "Vigilant had no fair odds for this line, so the Bet slip is priced from PropLine's fair (after Vigilant's prop cut)."
+                        else "Vigilant's own scan did not match this line to a Novig market (no Bet button).",
                     style = MaterialTheme.typography.bodySmall,
                 )
                 if (r.opp != null) Button(onClick = onBet, modifier = Modifier.padding(top = 4.dp).testTag("plBet")) { Text("Bet this (re-checks Novig's live price)") }
