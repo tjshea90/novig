@@ -34,7 +34,7 @@ class StatsAccuracyTest {
         val row = CnoRow(0.03, startsAtMs = start - 600_000L, league = "NFL", event = "A @ B", market = "Moneyline", bet = "A", odds = 110, book = "Novig")
         val b = tracker().logCno(row, ev = 0.03, live = true, placedKey = "k")
         val price = 1.0 / 2.1
-        val cost = price + Fees.takerFee(price, MarketFee.GAME, eventLive = true)
+        val cost = price + Fees.takerFee(price, MarketFee.gameFor("NFL"), eventLive = true)
         assertEquals(cost, b.cost, 1e-12)
         assertEquals(1.03 * cost, b.fairAtBet!!, 1e-12)
         // So the EV it was logged with is the EV its own fair gives at its cost.
