@@ -947,6 +947,10 @@ class AppContainer(val app: Application) {
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s -> runCatching { labTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
         }
+        // The phone's own live tail lane hands over to the GitHub engine's while the engine says it runs it (TCL109), and takes the work back when the engine goes quiet.
+        appScope.launch {
+            cloud.ui.map { engineRunsLive() }.distinctUntilChanged().collect { settingsStore.flow.value?.let { s -> runCatching { labTick(s.migrate()) }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e } } }
+        }
         // The burst recorder follows its switch, the leagues and STOP ALL (no orders; RESEARCH.md §95).
         appScope.launch {
             settingsStore.flow.filterNotNull().collect { s -> runCatching { burstTick(s.migrate()) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it } }
@@ -1407,7 +1411,7 @@ class AppContainer(val app: Application) {
     private fun tailTradeRules(): com.tjshea.vigilant.data.pinnodds.LiveTradeRules {
         val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(false, false, 0.0, 0.0, 0.0, 0.0)
         return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(
-            enabled = AppBook.isNovig && s.tailLive.on && !s.killed, bet = s.tailLive.bet,
+            enabled = AppBook.isNovig && s.tailLive.on && !s.killed && !engineRunsLive(), bet = s.tailLive.bet,
             stake = if (s.apiMaxStake > 0.0) minOf(s.tailLive.stake, s.apiMaxStake) else s.tailLive.stake,
             maxPerGame = s.tailLive.maxGame, maxPerDay = s.tailLive.maxDay, haltLoss = s.tailLive.haltLoss, halted = s.tailLive.halted,
         )
@@ -1538,11 +1542,18 @@ class AppContainer(val app: Application) {
     }
 
     /** Starts or stops the paper lab to match [s]: on, not STOP ALL, the Novig app. Safe to call on every settings change. */
+    /** The GitHub engine is running the live tail lane now (TCL109): its switch is on and its heartbeat says so. Then this phone places no tail bets or tail bids of its own. */
+    fun engineRunsLive(): Boolean {
+        val s = settingsStore.flow.value ?: return false
+        return s.engineLive && cloud.ui.value.status?.liveLive(System.currentTimeMillis()) == true
+    }
+
     fun labTick(s: ScanSettings) {
         if (!AppBook.isNovig) return
-        val light = s.tailLive.on && s.tailLive.light && !s.killed && novig.stream != null
+        val engine = engineRunsLive()
+        val light = s.tailLive.on && s.tailLive.light && !s.killed && novig.stream != null && !engine
         // The push lane replaces the slow tail pass while the live feed is connected; a research switch still wants the lab.
-        val on = (s.altLab || s.researchMode || (s.tailLive.on && !light)) && !s.killed
+        val on = (s.altLab || s.researchMode || (s.tailLive.on && !light && !engine)) && !s.killed
         if (light) { if (!liveLight.running) liveLight.start() } else if (liveLight.running) liveLight.stop()
         // The bid desk runs for the life of the app once Live light's bids have been on (a fill that lands after the switch is off is still recorded); switched off, what is up comes down.
         if (lightBidsOn(s)) { lightBidWasOn = true; runCatching { lightBidDesk.start() } } else if (lightBidWasOn) { lightBidWasOn = false; appScope.launch { runCatching { lightBidDesk.stopAll("Live light bids switched off") } } }
@@ -1903,7 +1914,7 @@ class AppContainer(val app: Application) {
 
     /** Live light's bids switch ([com.tjshea.vigilant.data.scanner.TailLiveSettings.bids]): on only while Live light itself is on, the Novig app, no STOP ALL, no hand pause. */
     private fun lightBidsOn(s: com.tjshea.vigilant.data.scanner.ScanSettings?): Boolean =
-        s != null && AppBook.isNovig && s.tailLive.on && s.tailLive.light && s.tailLive.bids && !s.killed && !s.paused
+        s != null && AppBook.isNovig && s.tailLive.on && s.tailLive.light && s.tailLive.bids && !s.killed && !s.paused && !engineRunsLive()
 
     /** What Live light's bid desk is told each time it looks: the tail switches' money limits (paper until "Buy with real money" is on), the bid rules the desk needs (its price window is the model's, not Pinnacle's). */
     private fun lightBidConfig(): com.tjshea.vigilant.data.livebid.LiveBidConfig {
