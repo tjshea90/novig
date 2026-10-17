@@ -280,14 +280,17 @@ data class UiState(
      * that offers Vigilant's bets shows this, not [feed].
      */
     fun feedAt(now: Long): List<Opportunity> =
-        feed.filter { !it.fairIsOld(now) && !it.priceIsOld(now) && settings.startsInWindow(it.event.startsTs, now) && !staleLive(it, now) }
+        feed.filter { !it.fairIsOld(now) && !priceStale(it, now) && settings.startsInWindow(it.event.startsTs, now) && !staleLive(it, now) }
 
     /**
      * The scanned bets the main list leaves out because their Novig price (older than [com.tjshea.vigilant.data.scanner.Pricing.OLD_PRICE_MS]) or the other books' prices behind them are too old (Tj, 2026-10-17: "make sure the
      * android app can't show me stale information ... bets scanned from long ago"): kept one tap away under "Show old bets", each marked OLD with its ages.
      */
     fun feedOldAt(now: Long): List<Opportunity> =
-        feed.filter { (it.fairIsOld(now) || it.priceIsOld(now)) && settings.startsInWindow(it.event.startsTs, now) && !staleLive(it, now) }
+        feed.filter { (it.fairIsOld(now) || priceStale(it, now)) && settings.startsInWindow(it.event.startsTs, now) && !staleLive(it, now) }
+
+    /** Novig's price for [o] was READ more than [com.tjshea.vigilant.data.scanner.Pricing.OLD_PRICE_MS] ago; a row that never said when (or a live-lane row, which has its own 5 s rule) is not judged old here. */
+    private fun priceStale(o: Opportunity, now: Long): Boolean = o.liveAges == null && o.bookFetchedAtMs?.let { now - it > com.tjshea.vigilant.data.scanner.Pricing.OLD_PRICE_MS } == true
 
     /**
      * With "Include live games" on, a game that has started is listed only by the real-time lane: a scanned row whose game has begun (Novig's catalog can still call it pregame for minutes) is

@@ -34,7 +34,10 @@ object CloudManual {
      * the off. Never after the kill switch ("STOP ALL", [com.tjshea.vigilant.data.scanner.ScanSettings.killed]) and never after the token was removed; null = it stays off until he switches it on.
      */
     fun resumeAtMs(c: CloudConfig): Long? =
-        if (c.on || c.rev <= 0L || c.device == "token removed" || c.settings.killed) null else stopUntil(c.rev)
+        if (c.on || c.rev < MIN_REAL_REV || c.device == "token removed" || c.settings.killed) null else stopUntil(c.rev)
+
+    /** A config's [CloudConfig.rev] is the phone's clock in epoch milliseconds; anything below 2017 (a test's counter, a file that never said) is not a time, so nothing resumes from it. */
+    const val MIN_REAL_REV = 1_500_000_000_000L
 
     /** [c] as the engine and the gate read it: an off that has reached its scheduled resume counts as on (with the cloud scan switched on in its copy of the settings). */
     fun effective(c: CloudConfig, now: Long): CloudConfig {
