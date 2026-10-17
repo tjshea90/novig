@@ -135,6 +135,13 @@ private fun PropLineEvCard(r: PlEvRow, now: Long, expanded: Boolean, onToggle: (
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(PropLineEvView.pick(r), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 Text(String.format(Locale.US, "%+.1f%%", cal), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                // The Bet button is on the card itself, not behind a tap (Tj, 2026-10-17: "I see no bet buttons at all"): one press opens the quick bet slip.
+                if (r.opp != null) {
+                    Spacer(Modifier.width(8.dp))
+                    androidx.compose.material3.FilledTonalButton(
+                        onClick = onBet, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp), modifier = Modifier.testTag("plBet"),
+                    ) { Text("Bet", maxLines = 1) }
+                }
             }
             Text("${r.league} · ${r.away} @ ${r.home} · ${PropLineEvView.starts(r, now)}", style = MaterialTheme.typography.bodySmall)
             Text(
@@ -180,8 +187,7 @@ private fun PropLineEvCard(r: PlEvRow, now: Long, expanded: Boolean, onToggle: (
                         else "Vigilant's own scan did not match this line to a Novig market (no Bet button).",
                     style = MaterialTheme.typography.bodySmall,
                 )
-                if (r.opp != null) Button(onClick = onBet, modifier = Modifier.padding(top = 4.dp).testTag("plBet")) { Text(if (LocalApiBet.current?.enabled == true) "Bet" else "Bet this (re-checks Novig's live price)") }
-            } else Text(if (r.opp != null) "Tap for the other books and to bet" else "Tap for the other books", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else Text(if (r.opp != null) "Tap for the other books" else "Tap for the other books (no Novig bet slip for this line yet)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

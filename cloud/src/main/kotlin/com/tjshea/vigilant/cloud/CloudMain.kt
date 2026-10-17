@@ -108,6 +108,9 @@ fun main(args: Array<String>) = runBlocking {
     val evJournal = DayJournal(File(out, "cloud"), "propline-ev", com.tjshea.vigilant.data.reference.PlEvRow.serializer()) { it.seenAtMs }
     scope.launch {
         delay(90_000L)
+        // The first sweep waits for the first scan (up to 8 min): Bet slips are built from what the scan holds, and a sweep before it has none (2026-10-17: a restart's first sweep had no Bet buttons).
+        var waitedForScan = 0L
+        while (isActive && waitedForScan < 8 * 60_000L && latestPriced.get().isEmpty() && latestUnpriced.get().isEmpty()) { delay(5_000L); waitedForScan += 5_000L }
         // A request already in the config when this job starts was served by the job before it: only a newer one starts a sweep out of turn.
         var served = engineHolder.get()?.propLineRefreshAtMs ?: 0L
         while (isActive) {
