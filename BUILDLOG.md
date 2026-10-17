@@ -309,3 +309,4 @@ day that changes.
 | v0.114.11 | code 307 | 2026-10-16T20:43Z | v0.114.11: PropLine +EV screen: fits under the status bar, the same bet at every other book with a books-agree verdict, Bet button; PropLine paced across the engine hours
 | v0.114.12 | code 308 | 2026-10-16T22:01Z | PropLine +EV shown after Vigilant's prop cut + hit-rate trends; spent-key bars full red; chat keyboard fix; filter chips wrap; steam workflow
 | v0.114.13 | code 309 | 2026-10-16T22:23Z | PropLine grading source (app + engine grader); API manager lines-fed / only-it counts
+| v0.114.14 | code 310 | 2026-10-17T05:11Z | red STAY AWAY banner on losing bet types in every scanner; engine hard-blocks them; totals added to the engine's taker kinds; profit profile regenerated (2,210 bets); chat wake
