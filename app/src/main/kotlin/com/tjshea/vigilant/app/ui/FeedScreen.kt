@@ -532,7 +532,7 @@ private fun FeedSummary(
                         "Fair: ${fairSourceLabel(state.settings)}" + sourceSummary(status).let { if (it.isEmpty()) "" else " · $it" },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
+                        maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
                     )
                     // Always laid out (hidden while a scan runs) so the row keeps its height and the list below does not jump.
                     run {
