@@ -5726,3 +5726,8 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 ## TCL98 (Tj, chat t1792262618892 + t1792262680150, 2026-10-17)
 "consider if the propline list is a waste of usage. if so, turn it off and get rid of it"
 - [x] TCL98a Retired: engine PROPLINE_EV_SWEEP=false (no sweep, no carry-over); app: Tab.PROPLINE shownIn=false (no tab, no card). Evidence in research/propline_vs_vigilant_2026-10-16.md (prop Overs -9..-14% on 6,393 graded closes) and the 2026-10-17 live audit (Vigilant <=0 on 470/500). Code kept behind the flag. Revert: flip the flag and Tab.PROPLINE.
+
+## TCL99 (Tj, chat t1792263970495, 2026-10-17)
+"these messages are still stale. also consider parlayapi usage. I just requested its list and it says it is out of usage today. isn't that too fast?"
+- [x] TCL99a CreditPace: a key first seen mid-period whose server used count exceeds this app's own charges by >5% of the limit is paced from the period's start (was: its whole limit spread over the days since first sight, holding ~everything back). CreditPaceTest.
+- [ ] TCL99b Check The Odds API advice with multiple keys (3,707 left over 14 days vs 471 credits today).
