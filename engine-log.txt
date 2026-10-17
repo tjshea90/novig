@@ -1,0 +1,14 @@
+2026-10-17T19:45:24.212452917Z cloud engine starting: 340 min, run 39063659169, keys present: SGO_API_KEY,ODDSPAPI_FREE_API_KEY,UNABATED_API_KEY,PINNWIRE_API_KEY(6 keys),PINNAPI_API_KEY(3 keys),PROPLINE_API_KEY(3 keys),ODDS_API_KEY(14 keys),PARLAY_API_KEY(10 keys),BOLTODDS_API_KEY(2 keys) · Novig read-only key: present · Kalshi: signed key present, socket off
+2026-10-17T19:45:24.801937658Z ranking: 16 measurements carried over from the previous job
+2026-10-17T19:45:25.179445765Z usage: carried over from the previous job (10 providers)
+2026-10-17T19:45:25.185198717Z trading: the trading key is present (orders possible only if the phone's switch says live)
+2026-10-17T19:45:25.586726227Z trades: 205 entries carried over from the previous job
+2026-10-17T19:45:26.562534685Z bids: 2087 bids and 162 fills carried over from the previous job
+2026-10-17T19:45:26.610776133Z live status: the phone can read this run directly (tunnel up)
+2026-10-17T19:45:27.786546610Z Novig stream: stream allowance from this key's /v3/limits: 512, refilling 32 a second, up to 8192 markets watched
+2026-10-17T19:45:29.392650197Z Novig stream: live feed connected (connect #1, compressed)
+2026-10-17T19:45:47.211578378Z ParlayAPI plans: #1 starter 10093/20000, #2 free 8/1000, #3 free 68/1000, #4 starter 16615/20000, #5 free 54/1000, #6 free 60/1000, #7 free 59/1000, #8 free 68/1000, #9 free 73/1000, #10 free 75/1000
+2026-10-17T19:45:50.512295948Z PropLine plans: #1 pro used 19057/25000, #2 free used 50/1000, #3 free used 50/1000
+2026-10-17T19:45:51.997935820Z Novig stream WARN: Novig refused a live-feed request: RATE_LIMIT_EXCEEDED Rate limit exceeded. Please wait before retrying.
+2026-10-17T19:46:02.158930204Z address watch: refused-now=false age=37s lastRefusedAgo=never streak=0
+2026-10-17T19:46:30.308095774Z trading: re-read 6 books before judging: 6 bets re-priced, 0 left out (no fresher price)
