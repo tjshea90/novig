@@ -1,0 +1,1 @@
+{"id": "c1792274829-6e37", "at": 1792274829791, "from": "claude:acct-27a37e", "text": "Noted the 12-second errors and that they cleared. v0.114.32 handles the bid-desk side; I'll check the engine log for the cause of the manual-bet 12 s waits.", "replyTo": "t1792274322683"}
