@@ -5657,3 +5657,9 @@ Cause found: `AppUpdater.check` calls `/repos/.../releases/latest`, which return
 Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on every scan (Novig-side outage; address not refused, streak 0); the engine retries each scan and reads nothing meanwhile; bid desk kept 134 bids, no new candidates.
 - [ ] TCL84a Engine: on 5xx/timeouts from any connection, short backoff retry (not a 30 s scan cycle), then after N minutes of the same error write a `tools/tell_tj.py say` message and an `engine-alert` for sessions (class A, no money rule).
 - [ ] TCL84b A WATCH/chat session reads `status.scanNote`/`engine-log.txt` errors first and fixes what is ours (key, address, route); a pure Novig 5xx is reported, not "fixed".
+
+## TCL85 (Tj, chat t1792248442530, 2026-10-17)
+"add buttons for my android app: 1) reset engine (resets the entire GitHub engine in case of errors, doesn't affect claude, tries to get a new GitHub runner) 2) refresh (with pull down to refresh gesture) (refreshes all the status and charts and engine stats so I see only the most updated status on the GitHub engine)"
+- [ ] TCL85a Engine tab: "Reset engine" button (two taps) -> writes a reset request in cloud-config (like refreshAtMs); a small reset step ends the running job (cancel run via workflow or the engine's own exit) and dispatches cloud-scan.yml again so a new runner/address is drawn; status says "resetting"; keeps trades.json/desk.json handover and takes own bids down; never touches keys, trading switches or Claude.
+- [ ] TCL85b Engine tab: pull-down refresh that re-reads status, list, trades, desk, usage, charts at once (CloudLink.syncNow) and shows when each was last read.
+- [ ] TCL85c Tests (CloudLink reset request, UI) and ship in one release with TCL83/TCL84a.
