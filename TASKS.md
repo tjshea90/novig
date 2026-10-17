@@ -5619,3 +5619,7 @@ Findings (2026-10-16): the phone's records already carry `made` (bet|bid), `how`
 - [ ] TCL75a Per sweep, save every PropLine +EV row with: PropLine's listed price/fair/EV/age, Novig's price NOW from the engine's own read (still available? depth), the Vigilant fair/EV of the same line if scanned, first-seen time; one file per day in the cloud-archive Release (never rewritten per run: segment per run).
 - [ ] TCL75b Grade with PropLine's own results (/results, /clv/grade) + closes; join to the saved rows (propline.yml / propline_clv.py) into a flat dataset `propline-ev-bets.csv.gz` in a Release.
 - [ ] TCL75c Auto report: once 300+ graded unique bets exist, a workflow posts the statistics (n, ROI, CLV, by kind/league/EV band, z) to Tj as an app message + chat + research note; repeats at 600, 1000.
+
+## TCL76 (Tj, chat t1792217932334, 2026-10-17)
+"figure out why the novig scanning stalled. remember the Claude sessions should run diagnostics automatically and notice and fix things like this"
+- [ ] TCL76a Diagnose the stall (status.json, engine-log, run state). TCL76b Fix. TCL76c Make the stall self-detecting: a watchdog/diagnostic (workflow + ROUTINE.md step) that notices a stale heartbeat/scan and restarts the engine or messages Tj.
