@@ -310,7 +310,7 @@ class CloudTrader(
         if (!s.gates.profitProven) return null
         val pf = ProfitProfile.shipped ?: return null
         val q = o.quote ?: return null
-        return pf.judge(ProfitProfile.Instrument.BET, o.league.novigName, BetKind.of(o.marketLabel, o.selection).label, o.selection, q.evPercent, (o.event.startsTs - now) / 60_000L).blocked?.let { "Not bet: $it" }
+        return pf.judge(ProfitProfile.Instrument.BET, o.league.novigName, BetKind.of(o.marketLabel, o.selection).label, o.selection, q.evPercent, (o.event.startsTs - now) / 60_000L, typeOnly = true).blocked?.let { "Not bet: $it" }
     }
 
     /** What taking [dollars] cheapest-first from the visible ladder would buy while each level stays at or above [minEv] after the fee. Null = under one contract. */

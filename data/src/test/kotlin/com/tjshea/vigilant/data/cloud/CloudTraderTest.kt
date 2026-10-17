@@ -8,6 +8,7 @@ import com.tjshea.vigilant.data.reference.Side
 import com.tjshea.vigilant.data.scanner.ApiGates
 import com.tjshea.vigilant.data.scanner.CloudTradeMode
 import com.tjshea.vigilant.data.scanner.Leagues
+import com.tjshea.vigilant.data.scanner.ProfitProfile
 import com.tjshea.vigilant.data.scanner.LineKey
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.OutcomeTarget
@@ -232,5 +233,10 @@ class CloudTraderTest {
         assertEquals(null, trader().profileBlock(row("spread"), on, now))
         val r = trader().pass(listOf(prop), on, now)
         assertEquals(r.line(), 0, r.placed.size)
+        // The winners are not caught: totals (the kinds the profile favours or does not condemn) and team totals pass the type block, at any lead time.
+        val pf = ProfitProfile.shipped!!
+        for ((kind, sel) in listOf("Game totals" to "Over 220.5", "Game totals" to "Under 220.5", "Team totals" to "Boston Celtics Over 110.5", "Team totals" to "Boston Celtics Under 110.5")) {
+            assertEquals("$kind $sel", null, pf.judge(ProfitProfile.Instrument.BET, "NBA", kind, sel, 0.03, 300, typeOnly = true).blocked)
+        }
     }
 }

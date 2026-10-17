@@ -41,14 +41,18 @@ class ProfitProfile(
 
     private data class Hit(val label: String, val g: Group, val specific: Int, val kind: Int)
 
-    fun judge(instrument: Instrument, league: String, kind: String, selection: String, ev: Double?, leadMin: Long?): Judgement {
+    /**
+     * [typeOnly]: judge by the TYPE of bet alone (league, kind, side), ignoring the edge and lead-time buckets. Those buckets are confounded with the kind (the 6-13 h bucket is mostly props) and the trap guard
+     * already owns timing, so the engine's hard block uses the type groups only (Tj, 2026-10-17: "the types of bets and bids that lose").
+     */
+    fun judge(instrument: Instrument, league: String, kind: String, selection: String, ev: Double?, leadMin: Long?, typeOnly: Boolean = false): Judgement {
         val table = groups[instrument.key] ?: return Judgement.NEUTRAL
         val side = sideOf(selection)
         val keys = listOf(
             Triple("league|kind|side", "$league|$kind|$side", 3), Triple("league|kind", "$league|$kind", 2), Triple("kind|side", "$kind|$side", 2),
             Triple("league", league, 1), Triple("kind", kind, 1), Triple("side", side, 1),
             Triple("ev", evBucket(ev), 0), Triple("lead", leadBucket(leadMin), 0),
-        )
+        ).filter { !typeOnly || (it.first != "ev" && it.first != "lead") }
         val hits = ArrayList<Hit>()
         for ((dim, key, specific) in keys) {
             val g = table[dim]?.get(key) ?: continue
