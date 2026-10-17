@@ -422,7 +422,7 @@ class CloudLink(private val c: AppContainer) {
             st != null -> engineLine(st, now)
             else -> "Waiting for the engine."
         }
-        _ui.update { it.copy(status = st, why = latest.why, requestedAtMs = refreshRequestedAt, line = line, listAgeSec = f?.let { x -> ((now - x.computedAtMs) / 1000L).coerceAtLeast(0L) }, rows = f?.rows?.size ?: 0, rateRemaining = client.rateRemaining) }
+        _ui.update { it.copy(manualWords = run { loadManual(); manualWords() }, status = st, why = latest.why, requestedAtMs = refreshRequestedAt, line = line, listAgeSec = f?.let { x -> ((now - x.computedAtMs) / 1000L).coerceAtLeast(0L) }, rows = f?.rows?.size ?: 0, rateRemaining = client.rateRemaining) }
     }
 
     /** Starts the engine when the switch is on and no heartbeat has been heard for a while (once in 15 minutes at most; the engine's own schedule is the backstop). */

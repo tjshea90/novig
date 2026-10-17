@@ -925,6 +925,8 @@ private fun VigilantRoot(
                         onRemoveCloudToken = { vm.removeCloudToken() },
                         onTestCloud = { vm.testCloud() },
                         onStartCloud = { vm.startCloud() },
+                        onRunCloudOutsideHours = { vm.runCloudOutsideHours() },
+                        onStopCloud = { vm.stopCloudUntilNextOpening() },
                         onSaveCloudNow = { vm.saveCloudNow() },
                         onSendCloudKeys = { vm.sendCloudKeys() },
                         onSendNovigKey = { vm.sendNovigKey() },

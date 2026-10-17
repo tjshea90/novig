@@ -69,6 +69,8 @@ data class ReportActions(
     val onRemoveCloudToken: () -> Unit = {},
     val onTestCloud: () -> Unit = {},
     val onStartCloud: () -> Unit = {},
+    val onRunCloudOutsideHours: () -> Unit = {},
+    val onStopCloud: () -> Unit = {},
     val onSaveCloudNow: () -> Unit = {},
     val onSendCloudKeys: () -> Unit = {},
     val onSendNovigKey: () -> Unit = {},

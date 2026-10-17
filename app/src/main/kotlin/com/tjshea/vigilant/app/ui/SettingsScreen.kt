@@ -1562,6 +1562,15 @@ private fun ColumnScope.CloudPage(state: UiState, reportActions: ReportActions, 
             style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudBidsNote"),
         )
         Button(onClick = reportActions.onStartCloud, enabled = u.hasToken, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudStart")) { Text("Start the engine now") }
+        // Run / Stop by hand (Tj, 2026-10-17): outside the engine's hours too; the schedule (8 am to 1 am Eastern, the 15-minute start, the hand-overs) is untouched and resumes by itself.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)) {
+            Button(onClick = reportActions.onRunCloudOutsideHours, enabled = u.hasToken, modifier = Modifier.testTag("cloudRunNow")) { Text("Run now (even outside its hours)") }
+            OutlinedButton(onClick = reportActions.onStopCloud, enabled = u.hasToken, modifier = Modifier.testTag("cloudStopNow")) { Text("Stop now") }
+        }
+        Text(
+            u.manualWords ?: "Following its schedule: 8 am to 1 am Eastern. Run starts it at any hour; Stop keeps it off until its next scheduled opening, then it starts by itself.",
+            style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudManualNote"),
+        )
     }
     // 3. the API keys the engine uses
     SectionTitle("API keys for GitHub")
