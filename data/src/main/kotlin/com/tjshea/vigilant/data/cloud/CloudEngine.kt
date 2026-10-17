@@ -369,7 +369,7 @@ class CloudEngine(
             // already read are cached, so the new scan goes on from there), at most once in PROGRESS_RESTART_GAP_MS so a Novig outage does not turn into a restart loop.
             if (progressChangedAt > 0L && now - progressChangedAt >= PROGRESS_STALL_MS && now - lastRestartAt >= PROGRESS_RESTART_GAP_MS) {
                 restartReason = "no progress for ${(now - progressChangedAt) / 1000}s at ${progressSig ?: "?"}"
-                log("scan frozen: $restartReason; Novig route: ${novigRouteNote()}")
+                log("scan frozen: $restartReason; Novig route: ${runCatching(novigRoute).getOrDefault("")}")
                 job.cancel(CancellationException(restartReason))
                 break
             }
@@ -632,6 +632,9 @@ class CloudEngine(
     }.take(1_200)
 
     companion object {
+        /** A scan whose progress has not moved for this long is started again, at most once in the gap. */
+        const val PROGRESS_STALL_MS = 150_000L
+        const val PROGRESS_RESTART_GAP_MS = 300_000L
         /** The trading wallet below this (Tj, 2026-10-15: "any amount under 50 cents") puts the engine to sleep; it is read again this often. */
         const val WALLET_MIN = 0.50
         const val WALLET_RETRY_MS = 60_000L
