@@ -162,6 +162,9 @@ fun main(args: Array<String>) = runBlocking {
     } else null
     log("trading: ${if (tradePort != null) "the trading key is present (orders possible only if the phone's switch says live)" else "no trading key: paper only"}")
     val trader = CloudTrader(unavailable = { o, now -> sources.unavailable(o, now) }, port = tradePort).also { traderRef = it }
+    // Every Novig outcome of the last scan, so the account's positions can be put in their games (TCL91).
+    val outcomeIndex = java.util.concurrent.atomic.AtomicReference<Map<String, CloudTrader.OutcomeInfo>>(emptyMap())
+    trader.describeOutcome = { id -> outcomeIndex.get()[id] }
     runCatching { PreviousFeed.read(git, cfgDir, "trades.json") }.getOrNull()?.let { text ->
         TradeLedger.parse(text)?.let { trader.load(it); log("trades: ${it.entries.size} entries carried over from the previous job") }
     }
@@ -293,7 +296,7 @@ fun main(args: Array<String>) = runBlocking {
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
         // Every priced line within 2 points of break-even is logged, shown or not, with why it was not shown (Tj, 2026-10-16, TCL33).
-        onResult = { result, s -> latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush() },
+        onResult = { result, s -> latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); outcomeIndex.set(HashMap<String, CloudTrader.OutcomeInfo>(result.opportunities.size * 2).also { m -> for (o in result.opportunities) m[o.outcome.outcomeId] = CloudTrader.OutcomeInfo(o.market.eventId, o.eventName, o.event.startsTs, o.marketLabel, o.selection) }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush() },
         trade = { rows, s, now ->
             val mode = s.gates.cloudTrading
             if (mode == CloudTradeMode.OFF) null else {

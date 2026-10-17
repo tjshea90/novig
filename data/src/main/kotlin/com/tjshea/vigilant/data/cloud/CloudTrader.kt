@@ -87,6 +87,9 @@ interface CloudOrderPort {
     suspend fun place(entry: TradeEntry, limitPrice: Double): Placed
     suspend fun cancelResting()
 
+    /** Every outcome the subaccount holds, whoever placed it (the engine, the phone's desks, Tj by hand); null = could not be read. */
+    suspend fun positions(): List<com.tjshea.vigilant.data.novig.trading.NovigPosition>? = null
+
     sealed interface Placed {
         /** [contracts] filled at [avgPrice]; [feeDollars] paid. */
         data class Filled(val contracts: Long, val avgPrice: Double, val feeDollars: Double, val orderId: String) : Placed
@@ -139,6 +142,12 @@ class CloudTrader(
                 (if (stopped.isNotEmpty()) ", stopped: $stopped" else "") + (skipped.entries.sortedByDescending { it.value }.take(3).takeIf { it.isNotEmpty() }?.joinToString(prefix = "; held back: ") { "${it.key} x${it.value}" } ?: "")
         }
     }
+
+    private data class AcctPos(val marketId: String, val outcomeId: String, val dollars: Double, val payout: Double, val eventId: String?, val family: String)
+
+    /** What one Novig outcome is (its event, start, market and selection), so a position the account holds can be put in its game and family; set by the engine from the scan. */
+    data class OutcomeInfo(val eventId: String, val eventName: String, val startsTs: Long, val marketLabel: String, val selection: String)
+    @Volatile var describeOutcome: ((String) -> OutcomeInfo?)? = null
 
     /** Seeds the ledger from the previous job's file. Entries older than [TradeLedger.KEEP_MS] are dropped. */
     fun load(l: TradeLedger) {
@@ -214,6 +223,13 @@ class CloudTrader(
             cash = (s.bankroll + settled - risk).coerceAtLeast(0.0)
         }
         val equity = cash + risk
+        // The whole account, not only this engine's ledger (Tj, 2026-10-17, TCL91: -18.5 and -17.5 on one game beside the engine's -19.5): what the subaccount holds in each game counts against the game cap and
+        // the same-team-lines rule, whoever placed it. A position the scan cannot describe is still counted by its market.
+        val acct = if (live) port?.positions().orEmpty().mapNotNull { p ->
+            val info = describeOutcome?.invoke(p.outcomeId)
+            if (p.qty <= 0L) null else AcctPos(p.marketId, p.outcomeId, p.cost, p.qty.toDouble(), info?.eventId, info?.let { RepeatGuard.family(it.eventName, it.startsTs, it.marketLabel, it.selection) }.orEmpty())
+        } else emptyList()
+        val acctKeys = acct.mapTo(HashSet()) { it.outcomeId + "|" + it.marketId }
         val day = Instant.ofEpochMilli(now).atZone(ZONE).toLocalDate().toString()
         if (ledger.dayKey != day) ledger = ledger.copy(dayKey = day, dayStartEquity = equity, stopped = if (live) ledger.stopped else "")
         if (cash < AutoBet.SLEEP_BELOW) return Report(mode, cash = cash, equity = equity, stopped = "the wallet has ${money(cash)}, under ${money(AutoBet.SLEEP_BELOW)}")
@@ -234,7 +250,7 @@ class CloudTrader(
             // one bet per Novig market while one is open: the other side of a line is never bet after the first
             if (ledger.entries.any { open(it, now) && it.marketId == o.market.marketId }) { skip("a bet in this market is already open"); continue }
             val a = o.agreement
-            val gameRisk = ledger.entries.filter { open(it, now) && it.eventId == o.market.eventId }.sumOf { it.cost }
+            val gameRisk = maxOf(ledger.entries.filter { open(it, now) && it.eventId == o.market.eventId }.sumOf { it.cost }, acct.filter { it.eventId == o.market.eventId }.sumOf { it.dollars })
             val sized = CloudKelly.stake(
                 CloudKelly.Inputs(
                     fair = fair, cost = q.cost, cash = cash, atRisk = risk, gameAtRisk = gameRisk, dayStartEquity = ledger.dayStartEquity,
@@ -250,7 +266,7 @@ class CloudTrader(
             if (fill == null) { skip("less than one contract at a positive edge"); continue }
             if (repeat != null) {
                 val bidIds = extraHeld.mapTo(HashSet()) { it.outcomeId + "|" + it.marketId }
-                val held = ledger.entries.filter { open(it, now) && !(it.note.startsWith("bid") && it.outcomeId + "|" + it.marketId in bidIds) }.map { RepeatGuard.Pos(it.marketId, it.outcomeId, it.cost, it.payout, family = RepeatGuard.family(it.event, it.startsTs, it.marketLabel, it.selection)) } + extraHeld
+                val held = acct.map { RepeatGuard.Pos(it.marketId, it.outcomeId, it.dollars, it.payout, family = it.family) } + ledger.entries.filter { open(it, now) && it.outcomeId + "|" + it.marketId !in acctKeys && !(it.note.startsWith("bid") && it.outcomeId + "|" + it.marketId in bidIds) }.map { RepeatGuard.Pos(it.marketId, it.outcomeId, it.cost, it.payout, family = RepeatGuard.family(it.event, it.startsTs, it.marketLabel, it.selection)) } + extraHeld
                 RepeatGuard.check(repeat, held, o.market.marketId, o.outcome.outcomeId, fill.cost, fill.contracts * EvMath.CONTRACT_PAYOUT_DOLLARS, o.market.outcomes.map { it.outcomeId }, RepeatGuard.family(o.eventName, o.event.startsTs, o.marketLabel, o.selection))
                     ?.let { skip("repeat guard"); continue }
             }

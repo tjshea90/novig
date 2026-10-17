@@ -99,6 +99,14 @@ class CloudNovigPort(
         return null
     }
 
+    override suspend fun positions(): List<com.tjshea.vigilant.data.novig.trading.NovigPosition>? = try {
+        trading.positions()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        log("positions read failed: ${e.javaClass.simpleName}"); null
+    }
+
     override suspend fun cancelResting() {
         val mine = owned()
         if (mine.isEmpty()) return
