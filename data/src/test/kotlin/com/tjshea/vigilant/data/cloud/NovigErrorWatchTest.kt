@@ -18,7 +18,9 @@ class NovigErrorWatchTest {
         assertNull(w.observe(bad, 5 * 60_000L))
         assertEquals(NovigErrorWatch.Event.ALERT, w.observe(bad, 10 * 60_000L))
         assertNull("only once", w.observe(bad, 11 * 60_000L))
-        assertEquals("doubles to the cap", NovigErrorWatch.MAX_MS, w.backoffMs())
+        assertEquals("10 s, 20 s, 40 s, 80 s after four failures", 80_000L, w.backoffMs())
+        repeat(5) { w.observe(bad, 12 * 60_000L) }
+        assertEquals("never past the cap", NovigErrorWatch.MAX_MS, w.backoffMs())
     }
 
     @Test
