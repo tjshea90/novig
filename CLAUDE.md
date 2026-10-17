@@ -22,6 +22,15 @@ full in `BRIEF.md`; `bootstrap.sh` prints a short version at session start.
 The app is **Vigilant**: Kotlin + Compose, modules `engine` / `data` / `app`,
 built and released by GitHub Actions; `BUILDLOG.md` has the current version.
 
+## THE STANDING JOB OF EVERY CLAUDE SESSION ON EVERY ACCOUNT: make the GitHub engine as profitable as possible, without Tj (Tj, 2026-10-17, verbatim: "I've said this a million times so I want every Claude account to understand")
+
+**Tj, 2026-10-17 (chat t1792218774426, verbatim):** "I want Claude to regularly study the GitHub engine, propline historical data, scanned and saved bets from the scanners, auto bets and bids, and other information and make the GitHub engine as profitable as possible. this constant updating and fine tuning should run without me. Claude has full permission to change filters and settings and bid and bet types and amounts"
+What this means, every session and every scheduled run, with nobody asking:
+1. **Study, every run:** the engine's own orders and bids (`trades.json`, `desk.json`, the digest), every scanned and saved bet (`phone-data`, the `cloud-archive-*` journals, `engine-dataset` `lines-*.csv.gz`), PropLine's resolved archive and the PropLine +EV bets' results (`propline-ev-bets` Release), and anything else that says which bets and bids make money and which lose. Split by kind, side, league, edge, lead time, bet or bid, and by who placed it (`origin`, TCL69); judge by CLV first and results second, counting games not bets.
+2. **Change what the evidence supports, yourself:** filters, settings, bet and bid kinds, sizes and amounts (Kelly, caps, wallet use, edge floors, trap guard, books-agree), tested, shipped and logged in `research/review/CHANGES.md` with a revert rule. The class B evidence gates in `research/review/ROUTINE.md` are how to be SURE, not a reason to idle: do not wait for Tj, do not ask him, and do not leave a proven leak open (the 2026-10-17 study: prop Overs and by-hand props lose, totals win, the engine did not take totals: fixed the same day).
+3. **Only the class C list needs Tj** (keys, moving money out of the Vigilant subaccount, kill switches, Novig's location and device stand-downs, never two orders for one decision, the dead-man switch).
+4. **Keep it running:** a stalled or refused engine is fixed by the session that notices it (the 2026-10-17 stall: Novig refused the runner's address and the swap did not fire); report in the chat what you changed and why, briefly.
+
 ## Vigilant MGM is dormant — every request is for Vigilant (Novig) unless Tj names MGM
 
 **Standing instruction from Tj (2026-09-27, verbatim):** "from now on, everything in this repo and anything I
