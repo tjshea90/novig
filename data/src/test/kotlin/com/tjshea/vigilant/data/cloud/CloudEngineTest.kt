@@ -462,8 +462,9 @@ class CloudEngineTest {
         val night = etMs(3)
         val scanner = FakeScanner { _, _, _ -> report(result("a")) }
         val running = hoursOn.copy(manualRunUntilMs = night + 3_600_000L)
-        val e = engine(scanner, { running }, CopyOnWriteArrayList(), clock = { night })
-        assertEquals(CloudEngine.End.TIME_UP, e.run(untilMs = night + 5_000L))
+        val tick = java.util.concurrent.atomic.AtomicLong(night)
+        val e = engine(scanner, { running }, CopyOnWriteArrayList(), clock = { tick.addAndGet(700L) })
+        assertEquals(CloudEngine.End.TIME_UP, e.run(untilMs = night + 20_000L))
         assertTrue("it scanned although the hours are closed", scanner.calls.get() > 0)
         val noon = etMs(12)
         val stopped = hoursOn.copy(manualStopUntilMs = etMs(32))
