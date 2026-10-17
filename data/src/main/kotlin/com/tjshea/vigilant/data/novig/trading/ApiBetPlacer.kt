@@ -307,6 +307,7 @@ class ApiBetPlacer(
     /** Waits for the order to end, reads its fills, and logs the bet. */
     private suspend fun finish(target: BetTarget, orderId: String): PlaceResult {
         var order: NovigOrder? = null
+        var seen = "never read"
         val started = clock()
         // The private stream says when the order ended: a short look for that first (an IOC is over in milliseconds), so the first read of it by request already finds it ended.
         val feed = events()?.takeIf { it.live }
@@ -314,10 +315,11 @@ class ApiBetPlacer(
         try {
             while (clock() - started < ORDER_WAIT_MS) {
                 order = try {
-                    trading.order(orderId)
+                    trading.order(orderId).also { seen = it?.let { o -> "status ${o.status}, ${o.remaining} of ${o.qty} left" } ?: "Novig says it has no such order" }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
+                    seen = "reading it failed: " + ((e as? com.tjshea.vigilant.data.novig.signing.NovigApiException)?.let { "${it.status} ${it.code ?: ""}".trim() } ?: e.javaClass.simpleName)
                     null
                 }
                 if (order?.terminal == true) break
@@ -337,7 +339,7 @@ class ApiBetPlacer(
             try { trading.cancelOrder(orderId) } catch (e: CancellationException) { throw e } catch (e: Exception) { }
             val again = clock()
             while (clock() - again < CANCEL_WAIT_MS) {
-                order = try { trading.order(orderId) } catch (e: CancellationException) { throw e } catch (e: Exception) { order }
+                order = try { trading.order(orderId).also { o -> seen = o?.let { "status ${it.status}, ${it.remaining} of ${it.qty} left" } ?: "Novig says it has no such order" } } catch (e: CancellationException) { throw e } catch (e: Exception) { seen = "reading it failed: " + e.javaClass.simpleName; order }
                 if (order?.terminal == true) break
                 pause(POLL_MS)
             }
@@ -352,7 +354,7 @@ class ApiBetPlacer(
             return when {
                 order?.terminal == true -> PlaceResult.NotFilled("Nobody was selling at that price any more (Novig ended the order with nothing filled): no bet was placed and no money moved.")
                 else -> PlaceResult.Unconfirmed(
-                    "Novig took the order but hadn't finished it after ${ORDER_WAIT_MS / 1000} seconds. Nothing is assumed: Sync with Novig in the Tracker in a minute.",
+                    "Novig took the order but hadn't finished it after ${ORDER_WAIT_MS / 1000} seconds (last seen: $seen). Nothing is assumed: Sync with Novig in the Tracker in a minute.",
                 )
             }
         }

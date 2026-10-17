@@ -68,8 +68,9 @@ class CloudNovigPort(
     private suspend fun finish(entry: TradeEntry, orderId: String): CloudOrderPort.Placed {
         val started = clock()
         var order: NovigOrder? = null
+        var seen = "never read"
         while (clock() - started < ORDER_WAIT_MS) {
-            order = try { trading.order(orderId) } catch (e: CancellationException) { throw e } catch (e: Exception) { null }
+            order = try { trading.order(orderId).also { seen = it?.let { o -> "status ${o.status}, ${o.remaining} of ${o.qty} left" } ?: "Novig says it has no such order" } } catch (e: CancellationException) { throw e } catch (e: Exception) { seen = "reading it failed: " + ((e as? NovigApiException)?.let { "${it.status} ${it.code ?: ""}".trim() } ?: e.javaClass.simpleName); null }
             if (order?.terminal == true) break
             pause(POLL_MS)
         }
@@ -87,7 +88,7 @@ class CloudNovigPort(
         if (fills.isEmpty() && order?.status == "FILLED") { pause(1_000L); fills = readFills(orderId) }
         if (fills.isEmpty()) {
             return if (order?.terminal == true) CloudOrderPort.Placed.Missed("nothing filled: nobody was selling at that price any more")
-            else CloudOrderPort.Placed.Unconfirmed("Novig took the order ($orderId) but had not finished it after ${ORDER_WAIT_MS / 1000}s: kept as at risk, not sent again")
+            else CloudOrderPort.Placed.Unconfirmed("Novig took the order ($orderId) but had not finished it after ${ORDER_WAIT_MS / 1000}s (last seen: $seen): kept as at risk, not sent again")
         }
         val qty = fills.sumOf { it.qty }
         val dollars = fills.sumOf { it.cost }
