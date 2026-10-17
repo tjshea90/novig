@@ -1,7 +1,12 @@
 {
  "v": 1,
- "holder": null,
- "hb": 1792236097,
- "hbIso": "2026-10-17T11:21:37Z",
+ "holder": "a3eb92",
+ "label": "acct-7542bf",
+ "kind": "interactive",
+ "task": "",
+ "since": 1792238777,
+ "sinceIso": "2026-10-17T12:06:17Z",
+ "hb": 1792238777,
+ "hbIso": "2026-10-17T12:06:17Z",
  "leaseS": 1200
 }
