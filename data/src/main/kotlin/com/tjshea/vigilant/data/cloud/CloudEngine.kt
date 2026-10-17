@@ -400,6 +400,8 @@ class CloudEngine(
             if (now - lastConfigAt >= configEveryMs) {
                 lastConfigAt = now
                 val newer = runCatching { readConfig() }.getOrNull()
+                // What the phone asks for out of band (a PropLine sweep, a manual Run or Stop) is seen at once, not only between scans (2026-10-17: a pull to refresh sat unanswered through a whole scan).
+                newer?.let { manualCfg = it }
                 // Nothing to decide unless the phone wrote something new (a revision, a switch-off, a refresh): the settings are compared only then.
                 if (newer != null && (newer.rev != cfg.rev || !newer.on || newer.refreshAtMs > handledRefresh)) {
                     when {
