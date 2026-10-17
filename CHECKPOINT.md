@@ -1,13 +1,13 @@
-# CHECKPOINT 3589 — read me first, then TASKS.md
+# CHECKPOINT 3590 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T20:04:14Z · **tests:** all 5 fast checks green
-**Branch:** `claude/wizardly-meitner-h2g4pr` · **builds on:** `d0f456fd2` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T20:08:43Z · **tests:** 1 RED: test_coord.sh (4 green)
+**Branch:** `claude/wizardly-meitner-h2g4pr` · **builds on:** `e980b07d8` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v0.114.29: a manual bet whose order Novig leaves pending is cancelled by its id and re-read instead of ending as 'not finished after 12 seconds'
+pre-release: v0.114.29: a manual bet whose order Novig leaves pending is cancelled by its id and re-read instead of ending as 'not finished after 12 seconds' (versionCode 325, v0.114.29)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.114.29), then run: bash tools/record-release.sh v0.114.29 325 "v0.114.29: a manual bet whose order Novig leaves pending is cancelled by its id and re-read instead of ending as 'not finished after 12 seconds'"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ ship.sh gates and releases this
 
 ## Last ten checkpoints
 ```
+  83796c166 ckpt 3589: pre-ship: v0.114.29: a manual bet whose order Novig leaves pending is cance
   8790d2ae2 ckpt 3588: pre-release: v0.114.28: an order Novig leaves pending is cancelled by its i
   1b62190c6 ckpt 3587: pre-ship: v0.114.28: an order Novig leaves pending is cancelled by its id a
   89fcdca7e ckpt 3586: Engine: pending IOC is cancelled by id and re-read before the 'unconfirmed'
@@ -25,8 +26,4 @@ ship.sh gates and releases this
   e11340b99 ckpt 3582: TCL101a: API review; Unabated off; BoltOdds idle flagged to Tj
   da30810d2 ckpt 3581: TCL100a/b: Live light journal (scan/offer/bid) saved to phone-data phone/li
   8055f04e5 ckpt 3580: pre-release: v0.114.26: ParlayAPI and other monthly credits are paced fairl
-  33fd7dc72 ckpt 3579: pre-ship: v0.114.26: ParlayAPI and other monthly credits are paced fairly f
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
