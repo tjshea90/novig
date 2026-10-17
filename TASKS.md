@@ -5746,3 +5746,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [ ] TCL102 (Tj, chat t1792268495905, 2026-10-17): "it just started working again ... looks like I am making money today. figure out what is working and build on it." Next ANALYST run: split today's engine fills (trades.json, digest) by kind/league/edge/bet-vs-bid, CLV first; note what wins in research/ and CHANGES.md; raise volume inside what is proven. Also: Novig orders stalled ~19:30-20:20 UTC (12 s unconfirmed); v0.114.31 reports what Novig last returned.
 
 - [ ] TCL103 (Tj, chat t1792270221397): analysis must explain why only a small part of the wallet has open bids; with many bids that each pass the profit rules, fill the wallet (bidDeploy target, per-bid size, daily API-bet limit, "2626 waiting: wallet can not cover").
+
+- [ ] TCL104 (Tj, chat t1792270354690): with the live engine on, the +EV scanned list jumps up and down every second or so as it refreshes and the loading bar pops up and away. Keep scroll position and show no busy bar for the live lane's own 5 s refresh.
