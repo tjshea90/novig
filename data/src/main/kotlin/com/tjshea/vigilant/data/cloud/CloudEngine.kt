@@ -382,9 +382,9 @@ class CloudEngine(
                     lastPublished = feed; lastAges = CloudCurrency.of(rows, now)
                     lastResult = r
                     // The bid desk's candidates ride with the list, at most every [bidsEveryMs] (before the status, so it says what was sent).
-                    if (now - lastBidsAt >= bidsEveryMs) { lastBidsAt = now; sendBids(r, cfg.rev, latest, now) }
+                    if (now - lastBidsAt >= bidsEveryMs) { lastBidsAt = now; if (withTimeoutOrNull(WATCH_STEP_MS) { sendBids(r, cfg.rev, latest, now) } == null) log("watch loop: the bid candidates took over ${WATCH_STEP_MS / 1000}s: skipped this round") }
                     // The mid-scan passes re-read the stale books too (2026-10-16: 64 of 79 listed bets were refused as "no Novig price read in the last 3 minutes" because only the end-of-scan pass did; a scan takes 5+ minutes).
-                    sendTrades(freshForTrading(rows, latest, now), latest, now)
+                    sendTrades(withTimeoutOrNull(WATCH_STEP_MS) { freshForTrading(rows, latest, now) } ?: rows.also { log("watch loop: the re-read before judging took over ${WATCH_STEP_MS / 1000}s: the stale prices are refused") }, latest, now)
                     problem = publish(feed, status(cfg.rev, startedAtMs, untilMs, names, idle = false, scanMs = now - t0))
                     lastStatusAt = now
                 }
@@ -652,6 +652,8 @@ class CloudEngine(
     companion object {
         /** A scan whose progress has not moved for this long is started again, at most once in the gap. */
         const val PROGRESS_STALL_MS = 150_000L
+        /** A read-only step of the watch loop (the bid candidates, the re-read before judging) that takes longer is dropped for this round: 2026-10-17 a hung step froze the loop's tick and the stall watchdog restarted a healthy engine every 7.5 min. */
+        const val WATCH_STEP_MS = 60_000L
         const val PROGRESS_RESTART_GAP_MS = 300_000L
         /** The trading wallet below this (Tj, 2026-10-15: "any amount under 50 cents") puts the engine to sleep; it is read again this often. */
         const val WALLET_MIN = 0.50

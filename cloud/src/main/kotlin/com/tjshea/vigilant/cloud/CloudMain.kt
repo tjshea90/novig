@@ -321,7 +321,9 @@ fun main(args: Array<String>) = runBlocking {
             runCatching { Thread.sleep(15_000L) }
             val now = System.currentTimeMillis()
             val tick = engine.tickMs
-            if (now - started < STALL_GRACE_MS || tick == 0L || now - tick < STALL_MS) continue
+            // A loop that is silent but whose bid desk, trader or feeds are still logging is slow, not dead: only [STALL_HARD_MS] of silence in the tick counts then (2026-10-17: 24 healthy jobs were killed at 7.5 min).
+            val quiet = now - maxOf(tick, log.lastWriteMs)
+            if (now - started < STALL_GRACE_MS || tick == 0L || now - tick < STALL_MS || (quiet < STALL_MS && now - tick < STALL_HARD_MS)) continue
             runCatching {
                 val sb = StringBuilder("engine loops silent for ${(now - tick) / 1000}s at ${java.time.Instant.ofEpochMilli(now)} (run $runId, up ${(now - started) / 1000}s)\n")
                 for ((t, st) in Thread.getAllStackTraces()) { sb.append("\n\"${t.name}\" ${t.state}\n"); st.take(40).forEach { sb.append("    at ").append(it).append('\n') } }
@@ -360,6 +362,7 @@ private const val END_WATCHDOG_MS = 90_000L
 
 /** The loop watchdog: no turn of the engine's loops for this long (after [STALL_GRACE_MS] of a job) means a stall. */
 private const val STALL_MS = 150_000L
+private const val STALL_HARD_MS = 600_000L
 private const val STALL_GRACE_MS = 5 * 60_000L
 
 /**
