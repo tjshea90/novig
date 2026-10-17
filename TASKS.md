@@ -5690,3 +5690,7 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 ## TCL91 (Tj, chat t1792258071313, 2026-10-17)
 "consider auto safeguards against too many bets or money on the same game such as what is in the photo" (Temple -18.5 and -17.5 takes at 12:54 beside the engine's -19.5 at 12:49; the engine's guards only count its own ledger)
 - [x] TCL91a (CloudTraderTest; engine only, deploys at the next job start) Account-wide per-game exposure cap: read Novig's open positions per event, apply the game cap (10% of equity) and the same-team-lines rule across engine, phone auto/bid desk and live lane. Test.
+
+## TCL92 (Tj, chat t1792259092686, 2026-10-17)
+"now in the propline list I see no bet buttons at all" (screenshot: collapsed/expanded cards, "did not match this line to a Novig market")
+- [x] TCL92a Bet button on the card header (always visible when the row has a slip); the engine's first PropLine sweep waits for the first scan (8 min max) so the first sweep after a restart has Novig markets to match. Ships v0.114.21.
