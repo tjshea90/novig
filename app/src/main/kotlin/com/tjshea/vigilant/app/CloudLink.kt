@@ -682,7 +682,7 @@ class CloudLink(private val c: AppContainer) {
     }
 
     companion object {
-        const val POLL_MS = 5_000L
+        const val POLL_MS = 2_000L   // on screen (Tj, 2026-10-17: "real time or at most every couple seconds"); a 304 costs nothing against GitHub's limit
         const val INBOX_POLL_MS = 60_000L
         const val CHAT_OPEN_POLL_MS = 8_000L
         const val INBOX_BACKGROUND_MS = 5 * 60_000L
