@@ -324,3 +324,4 @@ day that changes.
 | v0.114.26 | code 322 | 2026-10-17T19:26Z | v0.114.26: ParlayAPI and other monthly credits are paced fairly for a key first met mid-month (no more false 'out of usage today')
 | v0.114.27 | code 323 | 2026-10-17T19:36Z | v0.114.27: Live light logs every decision (scans with score and clock, offers, bids and why it passed) to GitHub for analysis; the Live tab shares its budget; Unabated turned off by the API review
 | v0.114.28 | code 324 | 2026-10-17T20:04Z | v0.114.28: an order Novig leaves pending is cancelled by its id and re-read before the engine stops ordering
+| v0.114.29 | code 325 | 2026-10-17T20:15Z | v0.114.29: a manual bet whose order Novig leaves pending is cancelled by its id and re-read
