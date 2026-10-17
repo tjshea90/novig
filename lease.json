@@ -1,12 +1,12 @@
 {
  "v": 1,
- "holder": "d3980d",
- "label": "acct-7542bf",
- "kind": "interactive",
- "task": "",
- "since": 1792257575,
- "sinceIso": "2026-10-17T17:19:35Z",
- "hb": 1792265780,
- "hbIso": "2026-10-17T19:36:20Z",
+ "holder": "0dd792",
+ "label": "acct-27a37e",
+ "kind": "chat",
+ "task": "chat",
+ "since": 1792266080,
+ "sinceIso": "2026-10-17T19:41:20Z",
+ "hb": 1792266080,
+ "hbIso": "2026-10-17T19:41:20Z",
  "leaseS": 1200
 }
