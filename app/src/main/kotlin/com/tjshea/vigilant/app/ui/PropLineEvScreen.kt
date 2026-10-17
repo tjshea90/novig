@@ -72,7 +72,7 @@ fun PropLineEvScreen(
         Text("PropLine +EV at Novig", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         if (feed == null) {
             Text(
-                "Nothing yet. The GitHub engine sweeps PropLine every 15 minutes while a paid PropLine key (Hobby or Pro) is on and the engine is running. Add the key under Settings › PropLine, then send your keys to GitHub.",
+                "Nothing yet. The GitHub engine sweeps PropLine every hour (and whenever you pull this screen down) while a paid PropLine key (Hobby or Pro) is on and the engine is running. Add the key under Settings › PropLine, then send your keys to GitHub.",
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("propLineEvEmpty"),
             )
             return@Column

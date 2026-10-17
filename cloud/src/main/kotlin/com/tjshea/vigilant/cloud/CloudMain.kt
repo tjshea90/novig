@@ -126,9 +126,10 @@ fun main(args: Array<String>) = runBlocking {
                     log("PropLine +EV: ${f.rows.size} lines at Novig from ${f.games} games (${f.requests} requests, ${f.tier})" + (if (byHand) " · asked from the phone" else "") + (if (f.note.isNotBlank()) " · ${f.note}" else ""))
                 }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; served = maxOf(served, asked); log("PropLine +EV sweep failed: ${e.message?.take(120) ?: e.javaClass.simpleName}") }
             } else if (byHand) served = maxOf(served, asked)
-            // Fifteen minutes, but a pull to refresh on the phone cuts the wait short (the config is read every few seconds).
+            // An hour (it was 15 minutes: 224 requests a sweep was ~21,000 of the Pro key's 25,000 a day for a list whose lines Vigilant calls 0% or worse on 94% of them, 2026-10-17), but a pull to refresh on the phone
+            // cuts the wait short (the config is read every few seconds).
             var waited = 0L
-            while (isActive && waited < 15 * 60_000L && (engineHolder.get()?.propLineRefreshAtMs ?: 0L) <= served) { delay(3_000L); waited += 3_000L }
+            while (isActive && waited < 60 * 60_000L && (engineHolder.get()?.propLineRefreshAtMs ?: 0L) <= served) { delay(3_000L); waited += 3_000L }
         }
     }
     val config = ConfigReader(git, cfgDir)
