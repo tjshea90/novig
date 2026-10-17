@@ -29,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.draw.alpha
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -103,6 +104,7 @@ fun FeedScreen(
     onPull: () -> Unit = onScan,
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
+    var showOld by rememberSaveable { mutableStateOf(false) }
     // The ParlayAPI pick whose sheet is open (its key: a recheck re-prices it while it's open; TASKS.md P4).
     var parlaySelected by remember { mutableStateOf<String?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
