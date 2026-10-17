@@ -5608,3 +5608,8 @@ Findings (2026-10-16): the phone's records already carry `made` (bet|bid), `how`
 - [ ] TCL73a Engine: never auto bet/bid the types that lose with a big enough sample (class B gates; prop Overs qualifies: n678 z-2.77 both halves).
 - [ ] TCL73b App: big red X/warning on those bet types in EVERY scanner (feed, CNO, PropLine +EV, live, bet sheet).
 - [ ] TCL73c Flip question (bet the Under when the Over loses): test on the data before building; answer Tj honestly.
+
+## TCL74 (Tj, chat t1792213844722, 2026-10-17)
+"let me start and turn off the GitHub engine from the android app even if it is outside routine hours. make sure this doesn't break any of the scheduled runs"
+- [ ] TCL74a Engine side: a manual RUN override (engine works outside 08:00-01:00 ET until it expires/is cancelled) and a manual STOP that lasts only until the next scheduled window start; neither touches the schedule/cron/hand-over logic.
+- [ ] TCL74b App: Run now / Stop now in Settings > Cloud scan and the Engine tab, showing the state in words.
