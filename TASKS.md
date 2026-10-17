@@ -5636,10 +5636,10 @@ Cause seen in his screenshot (2:28am): Engine tab said "Scanning" with a green d
 
 ## TCL80 (Tj, chat t1792219437312 "tunnel yes", 2026-10-17)
 Real-time engine status in the app (<= 2 s): the engine opens a free Cloudflare quick tunnel (no account, no cost) to a tiny HTTP status server (SSE) on the runner; the tunnel URL goes into status.json; the phone connects directly for status/progress and falls back to the GitHub polling when the tunnel is absent/fails. Read-only: it serves the same public status, never a key, never a command.
-- [ ] TCL80a engine: `LiveStatusServer` (JDK com.sun.net.httpserver, 127.0.0.1:PORT, GET /status SSE/JSON) fed by the same CloudStatus the publisher writes, updated every 1 s from memory; no auth needed beyond a random path token in the URL; serves only status JSON.
-- [ ] TCL80b workflow: download cloudflared (pinned release), `cloudflared tunnel --url http://127.0.0.1:PORT`, parse the trycloudflare URL from its log, hand it to the engine (file) -> status.liveUrl.
-- [ ] TCL80c app: if status.liveUrl set, open an SSE/long-poll to it; show status within 1-2 s; on any failure fall back to GitHub polling with the stale rules (TCL79); a chip "LIVE (direct)" vs "via GitHub (8-10 s)".
-- [ ] TCL80d tests: status server serves JSON, client parse, fallback rules; selftest for the URL parser.
+- [x] TCL80a (LiveStatusServer in cloud module, CloudLive pure helpers) engine: `LiveStatusServer` (JDK com.sun.net.httpserver, 127.0.0.1:PORT, GET /status SSE/JSON) fed by the same CloudStatus the publisher writes, updated every 1 s from memory; no auth needed beyond a random path token in the URL; serves only status JSON.
+- [x] TCL80b (cloud-scan.yml tunnel step, cloudflared 2026.10.1 pinned by sha256) workflow: download cloudflared (pinned release), `cloudflared tunnel --url http://127.0.0.1:PORT`, parse the trycloudflare URL from its log, hand it to the engine (file) -> status.liveUrl.
+- [x] TCL80c (CloudLink live loop, LIVE chip) app: if status.liveUrl set, open an SSE/long-poll to it; show status within 1-2 s; on any failure fall back to GitHub polling with the stale rules (TCL79); a chip "LIVE (direct)" vs "via GitHub (8-10 s)".
+- [x] TCL80d (CloudLiveTest, LiveStatusServerTest); verify on a live run: status.liveUrl set, chip LIVE tests: status server serves JSON, client parse, fallback rules; selftest for the URL parser.
 
 ## TCL81 (Tj, chat t1792219551948, 2026-10-17)
 "I will continue all of this later. I'm turning the GitHub engine off. make sure it resumes as scheduled without me and follows the auto bet and bid strategies for most profit that you've figured out so far"
