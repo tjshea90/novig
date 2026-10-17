@@ -257,6 +257,8 @@ class CloudLink(private val c: AppContainer) {
                 if (s == null || !s.cloudDrives || !hasToken()) { delay(IDLE_MS); continue }
                 // 3 s while a scan the phone asked for runs; 5 s with the app on screen; 20 s off screen (the background auto-scan and auto-bet still get a list well inside a scan's length, and a 304 is free).
                 var wait = if (refreshRequestedAt > 0L && (latest.status?.lastScanForRefreshAtMs ?: 0L) < refreshRequestedAt) POLL_PENDING_MS else if (c.onScreen) POLL_MS else POLL_BACKGROUND_MS
+                // While an app update downloads the phone has enough to do (Tj, 2026-10-17: "Vigilant isn't responding" at 62% of a download on the +EV tab): the status is read every 8 s, not 2.
+                if (c.updater.state.value.progress != null) wait = maxOf(wait, 8_000L)
                 when (val p = client.pollStatus(etag)) {
                     is CloudClient.Poll.Fresh -> {
                         etag = p.etag
