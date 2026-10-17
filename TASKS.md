@@ -5663,3 +5663,8 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [ ] TCL85a Engine tab: "Reset engine" button (two taps) -> writes a reset request in cloud-config (like refreshAtMs); a small reset step ends the running job (cancel run via workflow or the engine's own exit) and dispatches cloud-scan.yml again so a new runner/address is drawn; status says "resetting"; keeps trades.json/desk.json handover and takes own bids down; never touches keys, trading switches or Claude.
 - [ ] TCL85b Engine tab: pull-down refresh that re-reads status, list, trades, desk, usage, charts at once (CloudLink.syncNow) and shows when each was last read.
 - [ ] TCL85c Tests (CloudLink reset request, UI) and ship in one release with TCL83/TCL84a.
+
+## TCL86 (Tj, chat t1792250116002, 2026-10-17)
+"I need this chat to answer me and build apps when I ask. is there a way to make it automatically send the chat to the claude session in charge at the time"
+- [ ] TCL86a A CHAT: wake that gets a build/ship request must take the repo lease itself when it is free (or free by idle/stale), work, ship, release it; today chat mode never holds the lease so it can only answer. Change CHAT_WAKE.md + the routine prompt (Tj must paste the new text) accordingly.
+- [ ] TCL86b Route the fire to the account on duty (rotation.py chat) and fall back to the next account if it does not ack within 40 s.
