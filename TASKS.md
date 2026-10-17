@@ -5748,3 +5748,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [ ] TCL103 (Tj, chat t1792270221397): analysis must explain why only a small part of the wallet has open bids; with many bids that each pass the profit rules, fill the wallet (bidDeploy target, per-bid size, daily API-bet limit, "2626 waiting: wallet can not cover").
 
 - [ ] TCL104 (Tj, chat t1792270354690): with the live engine on, the +EV scanned list jumps up and down every second or so as it refreshes and the loading bar pops up and away. Keep scroll position and show no busy bar for the live lane's own 5 s refresh.
+
+- [ ] TCL105 (Tj, chat t1792270676188): "I keep finding little problems ... Claude should actively diagnose the app and the GitHub engine and look for bugs to fix automatically and push updates automatically." Every WATCH/ENGINEER run: read status.json (problem, deskNote, tradeNote), engine-log.txt errors, per-pass held-back counts (a pass that posts/orders far under what it wanted is a bug), the Diagnostics WARN lines; fix, test, ship.
