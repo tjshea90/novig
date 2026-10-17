@@ -743,7 +743,7 @@ class CloudLink(private val c: AppContainer) {
  // Live light's decisions and the live taker's records (TCL100): one gzip per day file, sent again only when it changed.
         if (failed == null) {
             val known = runCatching { uploaded.read() }.getOrDefault(emptyMap())
-            for ((dir, prefix) in listOf("live-light" to "live-light-", "pinn-live" to "tail-live-")) {
+            for ((dir, prefix) in listOf("live-light" to "live-light-", "pinn-live" to "tail-live-", "live-bids" to "lightbid-")) {
                 val files = File(c.app.filesDir, dir).listFiles { x -> x.isFile && x.name.startsWith(prefix) && x.name.endsWith(".jsonl") }?.sortedBy { it.name }.orEmpty()
                 for (f in files) {
                     if (sent >= MAX_PER_PASS) break

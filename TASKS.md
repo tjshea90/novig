@@ -5734,6 +5734,11 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 
 ## TCL100 (Tj, chat t1792264404796, 2026-10-17)
 "watch the live betting engine... if you can't see it, build a comprehensive logger for it that uploads to GitHub regularly for your analysis"
-- [ ] TCL100a LiveLightRunner journal (scan summaries per game, offers with rule/ask/fair/edge/state, bid want/pull/skip with reasons) -> live-light-DAY.jsonl on the phone (+ DataKeeper rule).
-- [ ] TCL100b Upload to phone-data/phone/live/ with the 15-min save (changed files only, gz); the taker's records (pinn-live/tail-live) too.
+- [x] TCL100a (LiveLightRunner journal, test) LiveLightRunner journal (scan summaries per game, offers with rule/ask/fair/edge/state, bid want/pull/skip with reasons) -> live-light-DAY.jsonl on the phone (+ DataKeeper rule).
+- [x] TCL100b (CloudLink.saveHistory phone/live) Upload to phone-data/phone/live/ with the 15-min save (changed files only, gz); the taker's records (pinn-live/tail-live) too.
 - [ ] TCL100c After games settle: join results (ESPN finals) and write research/live_light_analysis_DATE.md.
+- [ ] TCL100d The grader: tools/live_light_analyze.py reads phone/live/*.gz from phone-data, grades each offer/bid by ESPN final, tables by rule/sport/time-left/edge; run after the first live games with the new build.
+
+## TCL101 (Tj, chat t1792264466163, 2026-10-17)
+"remember to actively manage the apis. see their usage, optimize which ones to use and why, turn off unnecessary ones, pace ones that are too fast, prefer the ones with better data, etc. be a smart manager of the apis"
+- [ ] TCL101a API review pass (every session, ROUTINE): usage per API (usage.json, apiCards), data quality (p90 age, pts off Pinnacle, sole lines), pace vs reset; act through ApiGovernor/overrides; tell Tj the decisions. First pass: see research/api_review_2026-10-17.md.
