@@ -5717,3 +5717,8 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL96a Status poll slows to 8 s while an update downloads (CloudLink). Real cause unproven: needs the ANR trace (Diagnostics after Close app).
 - [x] TCL96b PropLine +EV sweep hourly + pull (was 15 min).
 - [ ] TCL96c Ship v0.114.23 (chip, hourly sweep text, poll slowdown); restart engine for the PropLine carry-over + hourly sweep.
+
+## TCL97 (Tj, chat t1792261442544 + t1792261584239, 2026-10-17)
+"the live betting engine is still missing most live games" / "there are many live games going on right now. it only lists 3" (Live tab: 6 games watched, 3 with a score)
+- [x] TCL97a LiveLightRunner's 48-market budget was taken by the first 3 games (15 markets each): LiveLightLines.perGame shares it evenly (LiveLightBudgetTest). Ships v0.114.24.
+- [ ] TCL97b The Pinnacle-vs-Novig live lane (+EV tab, Live games only): "12 games linked, 11 markets watched": check why only one market per game and whether more games/markets can be linked (needs Pinnodds key; app-side).
