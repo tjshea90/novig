@@ -250,7 +250,7 @@ class LiveLightRunner(
         // The stream's budget is shared by every live game: with many games on, each is watched through fewer strikes (the moneyline and the few nearest the score) rather than the first three games taking all of it
         // (Tj, 2026-10-17: "there are many live games going on right now. it only lists 3").
         val withLines = live.count { ev -> all.any { it.eventId == ev.eventId } }
-        val perGame = if (withLines * (LiveLightLines.MAX_PER_GAME + 1) <= room) LiveLightLines.MAX_PER_GAME else ((room / withLines.coerceAtLeast(1)) - 1).coerceAtLeast(MIN_PER_GAME)
+        val perGame = LiveLightLines.perGame(withLines, room)
         // The games furthest along first: they are the ones that can be decided.
         for (ev in live) {
             val ms = all.filter { it.eventId == ev.eventId }
@@ -409,8 +409,6 @@ class LiveLightRunner(
 
         /** Markets the lane may hold on the feed: a bbo market costs 8 of the key's 512 stream tokens, and the scan and the bids share them. */
         const val MAX_MARKETS = 48
-        /** The fewest strikes besides the moneyline a game keeps when many games share the budget. */
-        const val MIN_PER_GAME = 2
         const val CATALOG_MS = 30_000L
         const val STATE_MS = 3_000L
         const val DEBOUNCE_MS = 120L

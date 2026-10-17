@@ -16,6 +16,12 @@ object LiveLightLines {
     const val MAX_PER_GAME = 14
     const val STICKY_SD = 4.5
 
+    /** How many strikes besides the moneyline each of [games] live games keeps when [room] markets are the stream's whole budget: all [MAX_PER_GAME] while they fit, else an even share (at least [MIN_PER_GAME]). */
+    fun perGame(games: Int, room: Int): Int =
+        if (games * (MAX_PER_GAME + 1) <= room) MAX_PER_GAME else ((room / games.coerceAtLeast(1)) - 1).coerceAtLeast(MIN_PER_GAME)
+
+    const val MIN_PER_GAME = 2
+
     fun window(lines: List<LadderLine>, league: String, state: GameState?, e: EspnGame?, keep: Set<String> = emptySet(), maxPerGame: Int = MAX_PER_GAME): List<LadderLine> {
         val prior = LiveLightScan.priorTotal(league)
         if (state == null || e == null || prior == null) return lines.filter { it.kind == LadderKind.MARGIN && it.threshold == 0.0 }
