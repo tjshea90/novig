@@ -5689,4 +5689,4 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 
 ## TCL91 (Tj, chat t1792258071313, 2026-10-17)
 "consider auto safeguards against too many bets or money on the same game such as what is in the photo" (Temple -18.5 and -17.5 takes at 12:54 beside the engine's -19.5 at 12:49; the engine's guards only count its own ledger)
-- [ ] TCL91a Account-wide per-game exposure cap: read Novig's open positions per event, apply the game cap (10% of equity) and the same-team-lines rule across engine, phone auto/bid desk and live lane. Test.
+- [x] TCL91a (CloudTraderTest; engine only, deploys at the next job start) Account-wide per-game exposure cap: read Novig's open positions per event, apply the game cap (10% of equity) and the same-team-lines rule across engine, phone auto/bid desk and live lane. Test.

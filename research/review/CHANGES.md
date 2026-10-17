@@ -24,3 +24,7 @@ Evidence in `research/review/pnl_2026-10-17.md`: 1,999 settled phone bets and bi
 ## 2026-10-17 chat: engine reliability (TCL87a)
 - Cause of "engine keeps stalling at ~8,800 scanned" and 24 STALL hand-overs (12:08-16:40 UTC): the mid-scan re-read before judging (`Scanner.recheck`) waits on the scanner mutex a running scan holds for its whole run, freezing the watch loop; the TCL76d loop watchdog then killed the healthy job at 7.5 min each time.
 - Fix: `freshForTrading` uses lock-free `requoteListed`; read-only watch steps capped at 60 s; watchdog counts log activity as alive (hard cap 10 min). Revert: restore `scanner.recheck` and `STALL_MS` only. Result: run 39050424049 ran past 15 min, scans 245 s, re-reads every ~20 s.
+
+## 2026-10-17 chat: account-wide per-game exposure (TCL91a)
+- Evidence: Tj's photo, Temple -18.5 and -17.5 (taker, 12:54 ET) beside the engine's own -19.5 (12:49): the engine's game cap and same-team-lines rule counted only its own ledger.
+- Change: `CloudTrader.pass` reads the subaccount's positions (`CloudOrderPort.positions`, `GET /v3/portfolio/positions`) once per pass and counts them in the game risk (max of ledger and account) and in the RepeatGuard held list, mapped to games by `describeOutcome` from the last scan. Resting orders from other paths are still not seen (only filled positions). No cap value changed. Revert: drop the `acct` list in `CloudTrader.pass`.

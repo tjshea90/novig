@@ -1,21 +1,24 @@
-# CHECKPOINT 3559 — read me first, then TASKS.md
+# CHECKPOINT 3560 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T17:30:47Z · **tests:** all 5 fast checks green
-**Branch:** `claude/keen-keller-8fzr9r` · **builds on:** `3bf749d7f` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T17:32:59Z · **tests:** all 5 fast checks green
+**Branch:** `claude/keen-keller-8fzr9r` · **builds on:** `5ae1d1876` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.114.20: PropLine +EV: pull down runs a PropLine-only sweep now; the Bet button opens the quick bet slip with the Kelly stake like the Vigilant feed (a tap on the result still opens the big data view) (versionCode 316, v0.114.20)
+TCL91a: account-wide per-game exposure for the engine's game cap and same-team-lines guard
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.114.20), then run: bash tools/record-release.sh v0.114.20 316 "v0.114.20: PropLine +EV: pull down runs a PropLine-only sweep now; the Bet button opens the quick bet slip with the Kelly stake like the Vigilant feed (a tap on the result still opens the big data view)"
+confirm v0.114.20 release, record it, restart engine to deploy TCL91a
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
+     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  93fea8fc7 ckpt 3559: pre-release: v0.114.20: PropLine +EV: pull down runs a PropLine-only sweep 
   3b35ef708 ckpt 3558: pre-release: v0.114.20: pull down on the PropLine +EV screen runs a PropLin
   be3147158 ckpt 3557: pre-ship: v0.114.20: pull down on the PropLine +EV screen runs a PropLine-o
   2187ac2f6 ckpt 3556: v0.114.19 released; chat handover
@@ -25,7 +28,6 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   2a364e11c ckpt 3552: TCL87b decided: no trim while scans are ~4 min
   1fc8ed937 ckpt 3551: TCL87a verified: engine runs >15 min
   8b5a5d11d ckpt 3550: TCL87a2: mid-scan re-read before judging uses requoteListed (recheck waited
-  d7eac8f5a ckpt 3549: TCL87a: watchdog false positive fixed (bounded watch steps 60s; log activit
 ```
 
 (2 automatic checkpoint(s) since the last deliberate one — the
