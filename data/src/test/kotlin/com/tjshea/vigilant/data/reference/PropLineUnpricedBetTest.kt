@@ -41,7 +41,7 @@ class PropLineUnpricedBetTest {
     fun `a line Vigilant had no fair for is priced from PropLine's fair and carries the slip, quote and stake`() {
         val r = PropLineMatch.attachUnpriced(row(), listOf(unpriced()), ScanSettings(), System.currentTimeMillis())
         assertTrue(r.oppFromPropLine)
-        val o = CloudCodec.decode(kotlinx.serialization.json.Json.parseToJsonElement(r.opp!!).let { it as kotlinx.serialization.json.JsonObject })
+        val o = CloudCodec.decode(kotlinx.serialization.json.Json.parseToJsonElement(r.opp!!).let { it as kotlinx.serialization.json.JsonObject })!!
         assertEquals(0.5, o.fairProbability!!, 1e-9)
         assertNotNull(o.quote)
         assertTrue("+EV at 0.46 against a 0.50 fair", o.evPercent!! > 0)
