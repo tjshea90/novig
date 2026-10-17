@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.data.novig.lab
 
+import kotlinx.serialization.json.put
 import com.tjshea.vigilant.data.live.Fetched
 import com.tjshea.vigilant.data.match.TeamMatcher
 import com.tjshea.vigilant.data.novig.NovigEvent
