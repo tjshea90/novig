@@ -5624,7 +5624,7 @@ Findings (2026-10-16): the phone's records already carry `made` (bet|bid), `how`
 "figure out why the novig scanning stalled. remember the Claude sessions should run diagnostics automatically and notice and fix things like this"
 - [ ] TCL76a Diagnose the stall (status.json, engine-log, run state). TCL76b Fix. TCL76c Make the stall self-detecting: a watchdog/diagnostic (workflow + ROUTINE.md step) that notices a stale heartbeat/scan and restarts the engine or messages Tj.
 - [ ] TCL77 (Tj, chat t1792218471524): "make it so the android app reads GitHub runner whether its address is accepted or not in the engine dashboard" -> the Engine dashboard shows, in words, whether Novig accepts the GitHub runner's address right now (status field `novigAddress`: OK / REFUSED with code and since when / hand-overs so far), separate from the phone's own Test key.
-- [ ] TCL76d AddressWatch did NOT hand over (run 39009568300 refused from 06:23Z, still running at 288 s, hand-overs 0). Find why (log `address watch` state), fix, and add an outside watchdog (watchdog.yml) that cancels+restarts a run whose Novig route is address-refused for 5+ min or whose heartbeat is stale; rate-limited.
+- [x] TCL76d (loop watchdog thread + stack dump, STALL hand-over) AddressWatch did NOT hand over (run 39009568300 refused from 06:23Z, still running at 288 s, hand-overs 0). Find why (log `address watch` state), fix, and add an outside watchdog (watchdog.yml) that cancels+restarts a run whose Novig route is address-refused for 5+ min or whose heartbeat is stale; rate-limited.
 
 ## TCL79 (Tj, chat t1792218911310, 2026-10-17)
 "I don't want cached or stale information. the android app should be a true real time monitor and control board of the GitHub engine. make sure the android app can't show me stale information, whether it is GitHub engine status or bets scanned from long ago"
@@ -5640,3 +5640,9 @@ Real-time engine status in the app (<= 2 s): the engine opens a free Cloudflare 
 - [ ] TCL80b workflow: download cloudflared (pinned release), `cloudflared tunnel --url http://127.0.0.1:PORT`, parse the trycloudflare URL from its log, hand it to the engine (file) -> status.liveUrl.
 - [ ] TCL80c app: if status.liveUrl set, open an SSE/long-poll to it; show status within 1-2 s; on any failure fall back to GitHub polling with the stale rules (TCL79); a chip "LIVE (direct)" vs "via GitHub (8-10 s)".
 - [ ] TCL80d tests: status server serves JSON, client parse, fallback rules; selftest for the URL parser.
+
+## TCL81 (Tj, chat t1792219551948, 2026-10-17)
+"I will continue all of this later. I'm turning the GitHub engine off. make sure it resumes as scheduled without me and follows the auto bet and bid strategies for most profit that you've figured out so far"
+- [x] TCL81a An engine switched off by hand resumes by itself at the next scheduled opening (08:00 ET after the off): CloudManual.resumeAtMs/effective, gate python in cloud-scan.yml; the kill switch and a removed token never auto-resume. Test: CloudManualTest.
+- [ ] TCL81b Watch the 08:00 ET resume (07:20 ET routine account: confirm the engine started, trading mode, held-back reasons) and the strategies in force (totals taker kinds, prop haircut, profile block, team-total bids).
+## TCL82 (Tj, chat t1792219717133): include plenty of Under totals bets and bids that may be profitable when the engine starts back up -> answered with data: team-total Unders (+13%, CLV +2.8%) yes; game-total Unders no (-8%). No code needed beyond TCL72's kinds.
