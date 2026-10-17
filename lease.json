@@ -1,12 +1,12 @@
 {
  "v": 1,
- "holder": "d3980d",
+ "holder": "a3eb92",
  "label": "acct-unknown",
  "kind": "interactive",
- "task": "",
- "since": 1792246086,
- "sinceIso": "2026-10-17T14:08:06Z",
- "hb": 1792251406,
- "hbIso": "2026-10-17T15:36:46Z",
+ "task": "ship latest Android build per Tj",
+ "since": 1792251575,
+ "sinceIso": "2026-10-17T15:39:35Z",
+ "hb": 1792251575,
+ "hbIso": "2026-10-17T15:39:35Z",
  "leaseS": 1200
 }
