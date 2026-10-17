@@ -5655,7 +5655,7 @@ Cause found: `AppUpdater.check` calls `/repos/.../releases/latest`, which return
 ## TCL84 (Tj, chat t1792247226863, 2026-10-17)
 "it says novig http 502. any time there is any error like this for any connection or API, see if Claude can figure it out or reset it without delay"
 Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on every scan (Novig-side outage; address not refused, streak 0); the engine retries each scan and reads nothing meanwhile; bid desk kept 134 bids, no new candidates.
-- [ ] TCL84a Engine: on 5xx/timeouts from any connection, short backoff retry (not a 30 s scan cycle), then after N minutes of the same error write a `tools/tell_tj.py say` message and an `engine-alert` for sessions (class A, no money rule).
+- [x] TCL84a Engine: on 5xx/timeouts from any connection, short backoff retry (not a 30 s scan cycle), then after N minutes of the same error write a `tools/tell_tj.py say` message and an `engine-alert` for sessions (class A, no money rule).
 - [ ] TCL84b A WATCH/chat session reads `status.scanNote`/`engine-log.txt` errors first and fixes what is ours (key, address, route); a pure Novig 5xx is reported, not "fixed".
 
 ## TCL85 (Tj, chat t1792248442530, 2026-10-17)
@@ -5667,5 +5667,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 ## TCL86 (Tj, chat t1792250116002, 2026-10-17)
 "I need this chat to answer me and build apps when I ask. is there a way to make it automatically send the chat to the claude session in charge at the time"
 - [x] TCL86a A CHAT: wake that gets a build/ship request must take the repo lease itself when it is free (or free by idle/stale), work, ship, release it; today chat mode never holds the lease so it can only answer. Change CHAT_WAKE.md + the routine prompt (Tj must paste the new text) accordingly.
-- [ ] TCL86b Route the fire to the account on duty (rotation.py chat) and fall back to the next account if it does not ack within 40 s.
-- [ ] TCL86c Session start/acquire runs whoami automatically so no lease says acct-unknown; optional friendly label map (A/B/C, never emails) shown on the board (Tj chat t1792251390367).
+- [x] TCL86b Route the fire to the account on duty (rotation.py chat) and fall back to the next account if it does not ack within 40 s.
+- [x] TCL86c Session start/acquire runs whoami automatically so no lease says acct-unknown; optional friendly label map (A/B/C, never emails) shown on the board (Tj chat t1792251390367).
