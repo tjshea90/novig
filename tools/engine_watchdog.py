@@ -17,9 +17,14 @@ STALE_MS = 12 * 60 * 1000
 YOUNG_MS = 12 * 60 * 1000
 RECENT_MS = 10 * 60 * 1000
 WF = "cloud-scan.yml"
+# Novig refusing the runner's ADDRESS (RESTRICTED_NETWORK_REGION / ANONYMIZED_NETWORK): the engine's own hand-over missed this on 2026-10-17 (refused from 06:23Z, 5+ minutes, never handed over). Outside check:
+ADDRESS_CODES = ("RESTRICTED_NETWORK_REGION", "ANONYMIZED_NETWORK")
+ADDRESS_AFTER_MS = 5 * 60 * 1000       # a run refused this long is a bad draw, not a blip
+SWAP_WINDOW_MS = 30 * 60 * 1000
+MAX_SWAPS = 6                           # swaps in the window before the watchdog waits (each new run re-reads the fair-odds feeds: it costs API requests)
 
 
-def decide(now, runs, heartbeat_ms, idle, switch_on, stopped):
+def decide(now, runs, heartbeat_ms, idle, switch_on, stopped, route="", status_run=None, recent_runs=()):
     """Pure. runs: list of {id, status, created_ms, started_ms}. -> (action, run id to cancel or None, reason)."""
     if stopped:
         return "none", None, "dead-man STOP is set"
@@ -30,10 +35,18 @@ def decide(now, runs, heartbeat_ms, idle, switch_on, stopped):
     if not live:
         return "none", None, "no engine run in progress (the 15-minute schedule starts one)"
     cur = max(live, key=lambda r: r["started_ms"])
-    if now - cur["started_ms"] < YOUNG_MS:
-        return "none", None, "the run is young"
     if idle:
         return "none", None, "the engine is idle on purpose"
+    if (route and any(c in route for c in ADDRESS_CODES) and now - cur["started_ms"] >= ADDRESS_AFTER_MS
+            and (status_run is None or str(status_run) == str(cur["id"])) and heartbeat_ms and now - heartbeat_ms < STALE_MS):
+        swaps = len([r for r in recent_runs if now - r["created_ms"] < SWAP_WINDOW_MS])
+        if swaps > MAX_SWAPS:
+            return "none", None, "Novig refuses this runner's address, but %d runs were started in 30 minutes: waiting before drawing another" % swaps
+        if queued or any(now - r["created_ms"] < 60 * 1000 for r in runs if r["id"] != cur["id"]):
+            return "cancel", cur["id"], "Novig refuses this runner's address; a replacement is already queued"
+        return "restart", cur["id"], "Novig refuses this runner's address (%d min into the run)" % ((now - cur["started_ms"]) // 60000)
+    if now - cur["started_ms"] < YOUNG_MS:
+        return "none", None, "the run is young"
     if heartbeat_ms and now - heartbeat_ms < STALE_MS:
         return "none", None, "the heartbeat is fresh"
     age = "none" if not heartbeat_ms else "%d min" % ((now - heartbeat_ms) // 60000)
@@ -82,7 +95,8 @@ def check():
     except ValueError:
         cfg = {}
     stopped = show("cloud-config", "deadman/STOP.json") is not None
-    action, rid, why = decide(now, runs, stat.get("heartbeatMs"), bool(stat.get("idle")), bool(cfg.get("on")), stopped)
+    recent = [{"id": r["id"], "created_ms": _ts(r["created_at"])} for r in api("GET", "actions/workflows/%s/runs?per_page=20" % WF).get("workflow_runs", [])]
+    action, rid, why = decide(now, runs, stat.get("heartbeatMs"), bool(stat.get("idle")), bool(cfg.get("on")), stopped, stat.get("novigRoute") or "", stat.get("runId"), recent)
     print("watchdog:", action, why)
     if action in ("cancel", "restart"):
         api("POST", "actions/runs/%d/cancel" % rid)
@@ -112,6 +126,15 @@ def selftest():
     assert decide(now, [run(1, "in_progress", 60)], now - 15 * M, switch_on=True, stopped=True, idle=False)[0] == "none"
     assert decide(now, [run(1, "in_progress", 60)], now - 15 * M, switch_on=True, stopped=False, idle=True)[0] == "none"
     assert decide(now, [], now - 99 * M, **ok)[0] == "none"
+    refused = "public routes: the read key was refused (Novig places this network's internet address outside the states it serves (RESTRICTED_NETWORK_REGION))"
+    fresh = now - 10_000
+    a = decide(now, [run(7, "in_progress", 6)], fresh, route=refused, status_run=7, **ok); assert a[:2] == ("restart", 7), a        # refused 6 minutes: swap
+    assert decide(now, [run(7, "in_progress", 3)], fresh, route=refused, status_run=7, **ok)[0] == "none"                          # too young: maybe a blip
+    assert decide(now, [run(7, "in_progress", 6)], fresh, route=refused, status_run=6, **ok)[0] == "none"                          # the status is another run's
+    assert decide(now, [run(7, "in_progress", 6)], fresh, route="Novig read-only key active", status_run=7, **ok)[0] == "none"    # accepted
+    spin = [{"id": 100 + i, "created_ms": now - i * 2 * M} for i in range(8)]
+    assert decide(now, [run(7, "in_progress", 6)], fresh, route=refused, status_run=7, recent_runs=spin, **ok)[0] == "none"        # too many swaps: wait
+    assert decide(now, [run(7, "in_progress", 6), run(8, "queued", 1)], fresh, route=refused, status_run=7, **ok)[0] == "cancel"
     print("engine_watchdog selftest ok")
     return 0
 

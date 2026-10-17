@@ -1,11 +1,11 @@
 name: Engine watchdog (Tj, 2026-10-16)
 
-# A hung engine job (it said "ending" and never handed over, 2026-10-16) is cancelled and replaced automatically: tools/engine_watchdog.py. Every 10 minutes, free, no Claude usage.
+# A hung engine job (it said "ending" and never handed over, 2026-10-16) is cancelled and replaced automatically: tools/engine_watchdog.py. Every 5 minutes, free, no Claude usage.
 # It acts only while the phone's switch is on and the dead-man STOP is not set; see the file's header for the rules.
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: write

@@ -83,7 +83,7 @@ fun DashboardContent(
         val running = DashboardModel.running(status, now)
         val stale = if (running) "" else " (last run, not live)"
         status?.takeIf { it.novigRoute.isNotBlank() }?.let { InfoLine("Novig", it.novigRoute + stale) }
-        status?.takeIf { it.novigAddress.isNotBlank() }?.let { InfoLine("Runner address", it.novigAddress + stale) }
+        status?.takeIf { it.novigAddress.isNotBlank() }?.let { InfoLine("Runner address", it.novigAddress + stale, if (running && it.novigAddress.startsWith("REFUSED")) Tone.WARN else Tone.NEUTRAL) }
         status?.takeIf { it.tradeMode.isNotBlank() && it.tradeNote.isNotBlank() }?.let { InfoLine("Trading", it.tradeNote + stale, if (running && it.tradeStopped.isNotBlank()) Tone.WARN else Tone.NEUTRAL) }
         status?.takeIf { it.tradeStopped.isNotBlank() }?.let { InfoLine("Stopped", it.tradeStopped + stale, if (running) Tone.WARN else Tone.NEUTRAL) }
 
