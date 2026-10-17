@@ -505,8 +505,8 @@ class CreditPace(
         // its whole limit was spread over the days left): only what was LEFT at that first sight is spread over the days left. What this app spent on the key since is [KeyUsage.charged]; the rest of [KeyUsage.used] was before.
         val firstSeen = u.firstSeenMs
         val usedBefore = if (firstSeen != null && firstSeen > start) (u.used.toLong() - u.charged).coerceIn(0L, limit.toLong()).toInt() else 0
-        val limit = limit - usedBefore
-        val pool = (limit - reserve).coerceAtLeast(0).toLong()
+        val spread = limit - usedBefore
+        val pool = (spread - reserve).coerceAtLeast(0).toLong()
         // Spread over what's left of the period from the key's first answer (ParlayAPI's credits run on the calendar month: a plan bought on
         // the 30th gets its whole month's credits for that last day, not a thirtieth of them; checked with Tj's key 2026-09-30), and a key
         // seen since before the period began over the whole period. Through the end of today (Tj's day), never less than a whole day.
@@ -515,7 +515,7 @@ class CreditPace(
         val elapsed = maxOf(endOfToday - from, minOf(DAY_MS, window)).coerceAtMost(window)
         val allowed = pool * elapsed / window
         val kept = if (keepOfDay > 0.0) (pool * minOf(DAY_MS, window) / window * keepOfDay).toLong() else 0L
-        return (limit - allowed + kept).toInt()
+        return (spread - allowed + kept).toInt()
     }
 
     /** A free plan's key (the server said its allowance is [freeLimit] or less): used for scans after the keys before it, down to [freeReserve]. */

@@ -185,6 +185,19 @@ class CreditPaceTest {
     }
 
     @Test
+    fun `a key first met part-way through the month with half its credits already spent is paced on what was left, not on its whole limit`() {
+        // Tj's Starter key (2026-10-17): first seen on the 16th with 9,754 of 20,000 used; the old rule spread the whole 20,000 and held 18,000+ back for days ("out of usage today").
+        val oct1 = Instant.parse("2026-10-01T00:00:00Z").toEpochMilli()
+        val seen = Instant.parse("2026-10-16T21:18:00Z").toEpochMilli()
+        val now = Instant.parse("2026-10-17T19:00:00Z").toEpochMilli()
+        val u = KeyUsage(periodStart = oct1, used = 9_754, remaining = 10_246, limit = 20_000, firstSeenMs = seen, resetAtMs = Instant.parse("2026-11-01T00:00:00Z").toEpochMilli())
+        val today = newYork.spendableToday(u, now)
+        assertTrue("a day's share of what is left (about 800), not zero: $today", today in 300..1_500)
+        // the same key seen since before the month began is paced over the whole month, as before
+        assertEquals(0, newYork.spendableToday(u.copy(firstSeenMs = oct1 - 1), now))
+    }
+
+    @Test
     fun `a key bought late in the month spreads the month's credits over the days left in it`() = runBlocking<Unit> {
         // Bought on the 30th (Tj's plan, 2026-09-30): ParlayAPI's credits reset at the end of the calendar month (/v1/usage's period_end),
         // so that last day may spend them all, less the reserve (not a thirtieth of them, nor 29 days' worth "left unspent" before it).
