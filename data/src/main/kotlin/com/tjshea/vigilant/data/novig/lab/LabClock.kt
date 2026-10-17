@@ -47,6 +47,20 @@ data class EspnGame(
 object LabClock {
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
+    /**
+     * The scoreboard addresses that together list every game of [league] today. ESPN's plain college-football scoreboard shows only ~16 featured games (2026-10-17: Pitt @ Boston College, Kansas @ Kansas
+     * State, Brown @ Princeton and a dozen more were "no live game with these teams" for the Live tab while playing); `groups=80` is FBS and `groups=81` FCS, `groups=50` is Division I basketball.
+     */
+    fun scoreboardUrls(league: String, path: String, bust: String = ""): List<String> {
+        val base = "https://site.api.espn.com/apis/site/v2/sports/$path/scoreboard"
+        val extras = when (league.uppercase()) {
+            "NCAAF" -> listOf("groups=80&limit=400", "groups=81&limit=400")
+            "NCAAB" -> listOf("groups=50&limit=400")
+            else -> listOf("")
+        }
+        return extras.map { e -> base + listOf(e, bust).filter { it.isNotEmpty() }.let { q -> if (q.isEmpty()) "" else "?" + q.joinToString("&") } }
+    }
+
     /** Novig's league -> ESPN's scoreboard path. */
     val ESPN_PATHS = mapOf(
         "NFL" to "football/nfl",

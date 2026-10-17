@@ -282,7 +282,7 @@ class LiveLightRunner(
         val g = games
         for (league in g.values.map { it.ev.league }.toSet()) {
             val path = LabClock.ESPN_PATHS[league] ?: continue
-            val boards = fetch("https://site.api.espn.com/apis/site/v2/sports/$path/scoreboard")?.let { LabClock.parseEspn(it.body) } ?: continue
+            val boards = LabClock.scoreboardUrls(league, path).mapNotNull { u -> fetch(u)?.let { LabClock.parseEspn(it.body) } }.flatten().ifEmpty { null } ?: continue
             for (game in g.values.filter { it.ev.league == league }) {
                 val m = game.ev.matchup ?: continue
                 val e = boards.filter { it.live }.firstOrNull { TeamMatcher.similarity(it.home, m.home) >= 0.5 && TeamMatcher.similarity(it.away, m.away) >= 0.5 }

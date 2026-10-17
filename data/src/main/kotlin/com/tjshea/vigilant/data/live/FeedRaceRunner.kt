@@ -187,8 +187,10 @@ class FeedRaceRunner(
             for (lg in leagues) {
                 val path = ESPN_PATHS[lg] ?: continue
                 val sent = clock()
-                val f = get("https://site.api.espn.com/apis/site/v2/sports/$path/scoreboard?_cb=${bust()}") ?: continue
-                see(espn, FeedParsers.espn(f.body), f, sent)
+                for (u in com.tjshea.vigilant.data.novig.lab.LabClock.scoreboardUrls(lg, path, "_cb=${bust()}")) {
+                    val f = get(u) ?: continue
+                    see(espn, FeedParsers.espn(f.body), f, sent)
+                }
                 delay(GAP_MS)
             }
             if ("NHL" in leagues) {
