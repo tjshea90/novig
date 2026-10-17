@@ -280,7 +280,14 @@ data class UiState(
      * that offers Vigilant's bets shows this, not [feed].
      */
     fun feedAt(now: Long): List<Opportunity> =
-        feed.filter { !it.fairIsOld(now) && settings.startsInWindow(it.event.startsTs, now) && !staleLive(it, now) }
+        feed.filter { !it.fairIsOld(now) && !it.priceIsOld(now) && settings.startsInWindow(it.event.startsTs, now) && !staleLive(it, now) }
+
+    /**
+     * The scanned bets the main list leaves out because their Novig price (older than [com.tjshea.vigilant.data.scanner.Pricing.OLD_PRICE_MS]) or the other books' prices behind them are too old (Tj, 2026-10-17: "make sure the
+     * android app can't show me stale information ... bets scanned from long ago"): kept one tap away under "Show old bets", each marked OLD with its ages.
+     */
+    fun feedOldAt(now: Long): List<Opportunity> =
+        feed.filter { (it.fairIsOld(now) || it.priceIsOld(now)) && settings.startsInWindow(it.event.startsTs, now) && !staleLive(it, now) }
 
     /**
      * With "Include live games" on, a game that has started is listed only by the real-time lane: a scanned row whose game has begun (Novig's catalog can still call it pregame for minutes) is
