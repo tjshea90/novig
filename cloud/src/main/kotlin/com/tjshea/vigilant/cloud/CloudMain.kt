@@ -107,17 +107,24 @@ fun main(args: Array<String>) = runBlocking {
     val evJournal = DayJournal(File(out, "cloud"), "propline-ev", com.tjshea.vigilant.data.reference.PlEvRow.serializer()) { it.seenAtMs }
     scope.launch {
         delay(90_000L)
+        // A request already in the config when this job starts was served by the job before it: only a newer one starts a sweep out of turn.
+        var served = engineHolder.get()?.propLineRefreshAtMs ?: 0L
         while (isActive) {
             val s = latestSettings.get()
             val now = System.currentTimeMillis()
-            if (s != null && s.usePropLine && sources.propLinePaid() && sources.propLineHasRoom(now)) {
+            val asked = engineHolder.get()?.propLineRefreshAtMs ?: 0L
+            val byHand = asked > served
+            if (s != null && s.usePropLine && sources.propLinePaid() && (byHand || sources.propLineHasRoom(now))) {
                 runCatching { sources.propLineEvSweep(s, now, latestPriced.get(), latestUnpriced.get()) }.onSuccess { f ->
-                    publisher.stagePropLineEv(f)
+                    served = maxOf(served, asked)
+                    publisher.stagePropLineEv(f, asked)
                     runCatching { evJournal.appendAll(f.rows) }
-                    log("PropLine +EV: ${f.rows.size} lines at Novig from ${f.games} games (${f.requests} requests, ${f.tier})" + (if (f.note.isNotBlank()) " · ${f.note}" else ""))
-                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; log("PropLine +EV sweep failed: ${e.message?.take(120) ?: e.javaClass.simpleName}") }
-            }
-            delay(15 * 60_000L)
+                    log("PropLine +EV: ${f.rows.size} lines at Novig from ${f.games} games (${f.requests} requests, ${f.tier})" + (if (byHand) " · asked from the phone" else "") + (if (f.note.isNotBlank()) " · ${f.note}" else ""))
+                }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e; served = maxOf(served, asked); log("PropLine +EV sweep failed: ${e.message?.take(120) ?: e.javaClass.simpleName}") }
+            } else if (byHand) served = maxOf(served, asked)
+            // Fifteen minutes, but a pull to refresh on the phone cuts the wait short (the config is read every few seconds).
+            var waited = 0L
+            while (isActive && waited < 15 * 60_000L && (engineHolder.get()?.propLineRefreshAtMs ?: 0L) <= served) { delay(3_000L); waited += 3_000L }
         }
     }
     val config = ConfigReader(git, cfgDir)
@@ -435,6 +442,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     private var evBytes: ByteArray? = null
     private var evAt = 0L
     private var evRows = 0
+    private var evServed = 0L
     private var usageText: String? = null
     private var usageAt = 0L
     private var tradesText: String? = null
@@ -449,7 +457,7 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     @Synchronized
     fun stage(feed: CloudFeed?, st: CloudStatus): String? {
         if (feed != null) feedBytes = CloudFeed.encode(feed)
-        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, propLineEvAtMs = evAt, propLineEvRows = evRows, usageAtMs = usageAt, tradesAtMs = maxOf(st.tradesAtMs, tradesAt), deskBytes = deskText?.length ?: 0)
+        status = st.copy(feedBytes = feedBytes?.size ?: 0, bidsBytes = bidsBytes?.size ?: 0, propLineEvAtMs = evAt, propLineEvRows = evRows, propLineServedAtMs = evServed, usageAtMs = usageAt, tradesAtMs = maxOf(st.tradesAtMs, tradesAt), deskBytes = deskText?.length ?: 0)
         dirty = true
         return lastProblem
     }
@@ -489,10 +497,10 @@ internal class Publisher(private val dir: File, private val repo: String, privat
 
     /** PropLine's +EV-at-Novig list (`propline-ev.json.gz`, TCL56), announced in the status; goes out with the next push. */
     @Synchronized
-    fun stagePropLineEv(f: com.tjshea.vigilant.data.reference.PlEvFeed) {
+    fun stagePropLineEv(f: com.tjshea.vigilant.data.reference.PlEvFeed, servedForMs: Long = evServed) {
         evBytes = com.tjshea.vigilant.data.reference.PlEvFeed.encode(f)
-        evAt = f.atMs; evRows = f.rows.size
-        status = status?.copy(propLineEvAtMs = evAt, propLineEvRows = evRows)
+        evAt = f.atMs; evRows = f.rows.size; evServed = maxOf(evServed, servedForMs)
+        status = status?.copy(propLineEvAtMs = evAt, propLineEvRows = evRows, propLineServedAtMs = evServed)
         dirty = true
     }
 

@@ -49,6 +49,8 @@ data class CloudConfig(
      * starts a fresh job on a new runner (a new address). A job reads the value at its own start as already handled, so a phone clock that runs ahead cannot loop it.
      */
     val resetAtMs: Long = 0L,
+    /** Pull to refresh on the PropLine +EV screen (Tj, 2026-10-17, TCL89): the phone's clock when it asked; a value newer than the one the engine last served runs the PropLine sweep now (only that). */
+    val propLineRefreshAtMs: Long = 0L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
@@ -127,6 +129,8 @@ data class CloudStatus(
     val bidsBytes: Int = 0,
     /** PropLine's +EV-at-Novig list (`propline-ev.json.gz`, [com.tjshea.vigilant.data.reference.PlEvFeed], TCL56): when the engine's last sweep finished and how many lines it holds; 0 = none (no paid PropLine key, or not swept yet). */
     val propLineEvAtMs: Long = 0L,
+    /** The newest [CloudConfig.propLineRefreshAtMs] a finished PropLine sweep was run for (the engine's echo, in the phone's own clock): the pull-to-refresh is done when it reaches the request. */
+    val propLineServedAtMs: Long = 0L,
     val propLineEvRows: Int = 0,
     /** The engine's own trading (TCL20d): its mode (off / paper / live), what its last pass did in words, why ordering has stopped if it has, and when `trades.json` last changed. */
     val tradeMode: String = "",

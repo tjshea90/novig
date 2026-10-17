@@ -188,6 +188,8 @@ class CloudEngine(
 
     /** The newest config the run loop read: the manual Run / Stop fields the other loops (the desk) also honour ([CloudManual]). */
     @Volatile private var manualCfg: CloudConfig? = null
+    /** The newest PropLine refresh the phone asked for (pull to refresh on the PropLine +EV screen), from the config read every few seconds. */
+    val propLineRefreshAtMs: Long get() = manualCfg?.propLineRefreshAtMs ?: 0L
     private fun manualOpen(s: ScanSettings) = CloudManual.open(s.cloudHours, manualCfg, clock())
     private fun manualStopped() = manualCfg?.let { CloudManual.stopActive(it, clock()) } == true
 
