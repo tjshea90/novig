@@ -501,6 +501,11 @@ class CreditPace(
         val reset = u.resetAtMs ?: policy.nextReset(start)
         val z = zone()
         val endOfToday = Instant.ofEpochMilli(now).atZone(z).toLocalDate().plusDays(1).atStartOfDay(z).toInstant().toEpochMilli()
+        // A key first heard from part-way through its period already had credits spent when this app met it (Tj, 2026-10-17: a Starter key met on the 16th with 49% used showed "out of usage today" for days, because
+        // its whole limit was spread over the days left): only what was LEFT at that first sight is spread over the days left. What this app spent on the key since is [KeyUsage.charged]; the rest of [KeyUsage.used] was before.
+        val firstSeen = u.firstSeenMs
+        val usedBefore = if (firstSeen != null && firstSeen > start) (u.used.toLong() - u.charged).coerceIn(0L, limit.toLong()).toInt() else 0
+        val limit = limit - usedBefore
         val pool = (limit - reserve).coerceAtLeast(0).toLong()
         // Spread over what's left of the period from the key's first answer (ParlayAPI's credits run on the calendar month: a plan bought on
         // the 30th gets its whole month's credits for that last day, not a thirtieth of them; checked with Tj's key 2026-09-30), and a key
