@@ -622,6 +622,7 @@ private fun CnoCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            LosingTypeBanner(losingTypeOf(row))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EvBadge(pick.ev, low = pick.ev < settings.cnoFilters.minEv - 1e-9)
                 Spacer(Modifier.width(8.dp))

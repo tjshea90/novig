@@ -120,6 +120,7 @@ private fun PropLineEvCard(r: PlEvRow, now: Long, expanded: Boolean, onToggle: (
     val cal = PropLineEvView.calibratedEv(r)
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle).testTag("plRow-${PropLineEvView.key(r)}")) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            LosingTypeBanner(com.tjshea.vigilant.data.scanner.ProfitProfile.losingType(r.league, (if (r.player.isNotBlank()) com.tjshea.vigilant.data.scanner.BetKind.PROP else com.tjshea.vigilant.data.scanner.BetKind.of(r.market, PropLineEvView.pick(r))).label, PropLineEvView.pick(r)))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(PropLineEvView.pick(r), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 Text(String.format(Locale.US, "%+.1f%%", cal), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)

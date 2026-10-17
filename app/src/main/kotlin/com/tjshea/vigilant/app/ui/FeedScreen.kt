@@ -590,6 +590,7 @@ fun OpportunityCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            LosingTypeBanner(losingTypeOf(o))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EvBadge(q.evPercent)
                 Spacer(Modifier.width(8.dp))
@@ -790,6 +791,31 @@ internal fun agedOutText(state: UiState, now: Long): String? {
     return "$aged bet${if (aged == 1) "" else "s"} hidden: the other books' odds behind ${if (aged == 1) "it" else "them"} " +
         "are too old (${com.tjshea.vigilant.data.scanner.Freshness.LIMIT_TEXT}). Scan for current odds."
 }
+
+/**
+ * A red X with big words on a bet of a TYPE that has lost money in Tj's history (Tj, 2026-10-17). Warns only: nothing is hidden and the bet can still be placed by hand. [reason] null draws nothing.
+ */
+@Composable
+fun LosingTypeBanner(reason: String?, modifier: Modifier = Modifier) {
+    if (reason == null) return
+    Row(
+        modifier.fillMaxWidth().background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(10.dp)).border(2.dp, MaterialTheme.colorScheme.error, RoundedCornerShape(10.dp)).padding(horizontal = 10.dp, vertical = 8.dp).testTag("losingTypeBanner"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(30.dp).background(MaterialTheme.colorScheme.error, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.Close, contentDescription = "Warning", tint = MaterialTheme.colorScheme.onError, modifier = Modifier.size(22.dp))
+        }
+        Spacer(Modifier.width(10.dp))
+        Column {
+            Text("STAY AWAY: this type loses money", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onErrorContainer)
+            Text(reason, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+        }
+    }
+}
+
+/** The warning for an Opportunity / a CNO row / a PropLine line (null = this type has not lost). */
+fun losingTypeOf(o: Opportunity): String? = com.tjshea.vigilant.data.scanner.ProfitProfile.losingType(o.league.novigName, com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection).label, o.selection)
+fun losingTypeOf(row: com.tjshea.vigilant.data.cno.CnoRow): String? = com.tjshea.vigilant.data.scanner.ProfitProfile.losingType(row.league, com.tjshea.vigilant.data.scanner.BetKind.of(row.market, row.bet).label, row.bet)
 
 /** The stars the auto-bet holds against its minimum for [o] ([ProfitProfile.adjustedStars]), for the card to show beside the rating. */
 fun adjustedStarsOf(settings: ScanSettings, o: Opportunity, now: Long): Double? =
