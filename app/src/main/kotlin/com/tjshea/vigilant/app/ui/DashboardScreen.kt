@@ -95,7 +95,7 @@ fun DashboardContent(
         board?.let { EngineActivityCard(it, status) }
 
         status?.advice?.takeIf { it.isNotEmpty() }?.let { adv ->
-            SectionHeader("What to refill, buy or fix")
+            SectionHeader("What to refill, buy or fix" + adviceAge(status, now, running))
             adv.forEach { InfoLine(it.title, it.body, if (it.severity >= 2) Tone.BAD else Tone.WARN) }
         }
         status?.takeIf { it.resting.isNotEmpty() || it.governorOff.isNotEmpty() }?.let { st ->
@@ -104,7 +104,7 @@ fun DashboardContent(
         }
 
         status?.apiCards?.takeIf { it.isNotEmpty() }?.let { cs ->
-            SectionHeader("API manager")
+            SectionHeader("API manager" + adviceAge(status, now, running))
             cs.forEach { c ->
                 val bits = listOfNotNull(
                     if (c.paid) "paid" else "free", c.role,
@@ -238,6 +238,12 @@ private fun EngineActivityCard(b: EngineBoard.Board, status: CloudStatus?) {
             }
         }
     }
+}
+
+/** When the engine worked out its advice and API cards (after each finished scan), so a frozen one never reads as live (Tj, 2026-10-17: "these messages about the apis are stale"). */
+private fun adviceAge(status: CloudStatus?, now: Long, running: Boolean): String {
+    val at = status?.lastScanEndedAtMs?.takeIf { it > 0L } ?: return ""
+    return " · as of " + com.tjshea.vigilant.data.cloud.DashboardModel.ago(now - at) + if (running) "" else " (engine not running)"
 }
 
 @Composable
