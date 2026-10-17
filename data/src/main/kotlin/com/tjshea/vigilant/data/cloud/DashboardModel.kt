@@ -18,8 +18,21 @@ object DashboardModel {
     /** One tile of the grid: a label, the figure, a small line under it. */
     data class Tile(val label: String, val value: String, val sub: String = "", val tone: Tone = Tone.NEUTRAL)
 
-    /** The engine is called not responding when its heartbeat is older than this (it beats every few seconds, even in the middle of a scan). */
-    const val STALE_MS = 3 * 60_000L
+    /**
+     * Freshness limits (Tj, 2026-10-17: "the android app should be a true real time monitor ... make sure the android app can't show me stale information"): the engine beats every few seconds even in the middle of
+     * a scan, so quiet for [SLOW_MS] is amber and for [STALE_MS] it is not running; a scan whose progress has not moved for [STALL_MS] is STALLED; and when this phone itself has not read GitHub for [LINK_MS]
+     * every figure is old, whatever the engine said last.
+     */
+    const val SLOW_MS = 30_000L
+    const val STALE_MS = 2 * 60_000L
+    const val STALL_MS = 90_000L
+    const val LINK_MS = 20_000L
+
+    /** Whether this phone's own link to GitHub is stale: it never read the status, or not for [LINK_MS]. Null [okAtMs] means the caller has no reading time (an old caller): not judged. */
+    fun linkLost(okAtMs: Long?, now: Long): Boolean = okAtMs != null && (okAtMs <= 0L || now - okAtMs > LINK_MS)
+
+    /** The scan is alive (the engine beats) but its progress has not moved for [STALL_MS]: not "Scanning". */
+    fun stalled(st: CloudStatus, now: Long): Boolean = st.scanning && st.progressChangedAtMs > 0L && now - st.progressChangedAtMs >= STALL_MS && now - st.heartbeatMs < STALE_MS
 
     /** The engine is running now: its heartbeat is recent and its last word was not "idle". Everything else on the page is then the LAST KNOWN reading, and says so (Tj, 2026-10-16: "make sure this page shows true readings on everything"). */
     fun running(st: CloudStatus?, now: Long): Boolean = st != null && st.heartbeatMs > 0 && now - st.heartbeatMs < STALE_MS && !st.idle
@@ -35,14 +48,17 @@ object DashboardModel {
         }
     }
 
-    fun headline(st: CloudStatus?, now: Long, hoursOn: Boolean = true): Headline {
+    fun headline(st: CloudStatus?, now: Long, hoursOn: Boolean = true, linkOkAtMs: Long? = null): Headline {
         if (st == null) return Headline("Not connected", Tone.NEUTRAL, "No word from the GitHub engine yet. Save the GitHub token in Settings › Cloud scan, and switch the cloud scan on.")
         val beat = if (st.heartbeatMs > 0) now - st.heartbeatMs else Long.MAX_VALUE
         return when {
+            linkLost(linkOkAtMs, now) -> Headline("Can't reach GitHub", Tone.BAD, "This phone has not heard from GitHub for ${if ((linkOkAtMs ?: 0L) > 0L) ago(now - linkOkAtMs!!).removeSuffix(" ago") else "a while"}. Everything below is OLD, from ${if (st.heartbeatMs > 0) ago(beat) else "an earlier run"}: do not trust it.")
             // Closed hours are not a failure: the engine ends itself at the window's end and the next one starts at 8 am.
             hoursOn && !running(st, now) && !EngineHours.isOpen(now) -> Headline("Idle: outside its hours", Tone.NEUTRAL, "The engine runs 8 am to 1 am Eastern and stopped ${ago(beat)}. What is shown below is its last reading, not live.")
             st.idle && beat < STALE_MS -> Headline("Idle", Tone.NEUTRAL, st.problem ?: "The engine is switched off (the phone's switch) or outside its hours (8 am to 1 am Eastern).")
             beat >= STALE_MS -> Headline("Not responding", Tone.BAD, "The engine's last heartbeat was ${ago(beat)}. A new one is started within 15 minutes while the cloud scan is on and it is 8 am to 1 am Eastern.")
+            beat >= SLOW_MS -> Headline("Engine quiet ${ago(beat).removeSuffix(" ago")}", Tone.WARN, "No word from the engine for ${ago(beat).removeSuffix(" ago")}. It is probably starting or busy; the watchdog restarts it if it stays silent.")
+            stalled(st, now) -> Headline("Stalled", Tone.BAD, "The scan has not moved for ${ago(now - st.progressChangedAtMs).removeSuffix(" ago")} (${st.progressStep.ifBlank { "scanning" }}: ${st.progressDone} of ${st.progressTotal}). The GitHub watchdog restarts a stuck scan within minutes.")
             st.problem != null -> Headline("Problem", Tone.BAD, st.problem)
             st.tradeStopped.isNotBlank() -> Headline("Trading stopped", Tone.WARN, st.tradeStopped)
             st.walletSleep.isNotBlank() -> Headline("Sleeping: wallet empty", Tone.WARN, st.walletSleep)
@@ -60,9 +76,9 @@ object DashboardModel {
     /** Priced lines out of the same note. */
     fun priced(scanNote: String): Int? = Regex("""EV spread of (\d+) priced""").find(scanNote)?.groupValues?.get(1)?.toIntOrNull()
 
-    fun tiles(st: CloudStatus?, now: Long, hoursOn: Boolean = true): List<Tile> {
+    fun tiles(st: CloudStatus?, now: Long, hoursOn: Boolean = true, linkOkAtMs: Long? = null): List<Tile> {
         if (st == null) return emptyList()
-        val why = notRunningWhy(st, now, hoursOn)
+        val why = if (linkLost(linkOkAtMs, now)) "this phone can't reach GitHub" else notRunningWhy(st, now, hoursOn)
         if (why != null) return lastKnown(st, now, why)
         val ev = posEv(st.scanNote)
         val ageTone = when {

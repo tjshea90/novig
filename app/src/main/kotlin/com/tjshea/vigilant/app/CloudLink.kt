@@ -66,6 +66,8 @@ class CloudLink(private val c: AppContainer) {
         val rateRemaining: Int? = null,
         /** The manual Run / Stop in words ([com.tjshea.vigilant.data.cloud.CloudManual.words]), or null when the schedule alone decides. */
         val manualWords: String? = null,
+        /** When this phone last read the engine's status successfully (its clock; 0 = never): the age of everything the dashboard shows ([com.tjshea.vigilant.data.cloud.DashboardModel.link]). */
+        val statusOkAtMs: Long = 0L,
         /** The newest settings revision this phone wrote to GitHub and when (its clock), for the "is GitHub using my settings" line ([com.tjshea.vigilant.data.cloud.CloudText.settings]). */
         val pushedRev: Long = 0L,
         val pushedAtMs: Long = 0L,
@@ -237,6 +239,7 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.Fresh -> {
                         etag = p.etag
                         latest.status = p.value
+                        latest.statusOkAtMs = System.currentTimeMillis()
                         recordHistory(p.value)
                         latest.why = null
                         if (p.value.computedAtMs > 0L && p.value.computedAtMs != feedFetchedFor) fetch(p.value.computedAtMs)
@@ -244,7 +247,7 @@ class CloudLink(private val c: AppContainer) {
                         if (p.value.propLineEvAtMs > 0L && p.value.propLineEvAtMs != evFetchedFor) fetchPropLineEv()
                         maybeStart(p.value, s)
                     }
-                    is CloudClient.Poll.NotModified -> latest.why = null
+                    is CloudClient.Poll.NotModified -> { latest.why = null; latest.statusOkAtMs = System.currentTimeMillis() }
                     is CloudClient.Poll.Failed -> {
                         latest.why = p.why
                         if (p.why.startsWith("not found")) maybeStart(null, s)
@@ -422,7 +425,7 @@ class CloudLink(private val c: AppContainer) {
             st != null -> engineLine(st, now)
             else -> "Waiting for the engine."
         }
-        _ui.update { it.copy(manualWords = run { loadManual(); manualWords() }, status = st, why = latest.why, requestedAtMs = refreshRequestedAt, line = line, listAgeSec = f?.let { x -> ((now - x.computedAtMs) / 1000L).coerceAtLeast(0L) }, rows = f?.rows?.size ?: 0, rateRemaining = client.rateRemaining) }
+        _ui.update { it.copy(manualWords = run { loadManual(); manualWords() }, statusOkAtMs = latest.statusOkAtMs, status = st, why = latest.why, requestedAtMs = refreshRequestedAt, line = line, listAgeSec = f?.let { x -> ((now - x.computedAtMs) / 1000L).coerceAtLeast(0L) }, rows = f?.rows?.size ?: 0, rateRemaining = client.rateRemaining) }
     }
 
     /** Starts the engine when the switch is on and no heartbeat has been heard for a while (once in 15 minutes at most; the engine's own schedule is the backstop). */

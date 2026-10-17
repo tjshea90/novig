@@ -16,6 +16,8 @@ class CloudLatest {
     @Volatile var fetchedAtMs: Long = 0L
     /** The engine's last heartbeat, when it has been heard. */
     @Volatile var status: CloudStatus? = null
+    /** The last time this phone's read of the status SUCCEEDED (a changed answer or GitHub's "not modified"), its own clock: how old the whole screen could be ([DashboardModel.LINK_MS]). 0 = never. */
+    @Volatile var statusOkAtMs: Long = 0L
     /** Why nothing is arriving ("no GitHub token saved", "GitHub's rate limit"...), null when it is. */
     @Volatile var why: String? = null
 
