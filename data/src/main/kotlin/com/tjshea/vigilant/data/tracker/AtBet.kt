@@ -103,6 +103,8 @@ data class AtBet(
      */
     val stars: Double? = null,
     val fairSpread: Double? = null,
+    /** Novig's own overround on the market when the bet was found: both sides' best take prices summed, minus 1. The Under's ask is about (1 - this side's ask) + this (TCL73c: would betting the other side of a losing prop Over pay). */
+    val novigWidth: Double? = null,
     val sharpAgrees: Boolean? = null,
     val starsEstimated: Boolean? = null,
 ) {
@@ -218,7 +220,7 @@ object AtBets {
             fullKelly = q?.kellyFraction, stake = stake, bankroll = s.bankroll, wallet = wallet,
             // The books behind the fair line and how many of them agree (one a company), the sharp books' verdict and the 1-5 star rating, as the bet was rated when it was made.
             twoSided = o.agreement.twoSided.takeIf { it > 0 }, agreeing = o.agreement.agreeing.takeIf { o.agreement.twoSided > 0 },
-            stars = o.rating?.stars, fairSpread = o.agreement.spread,
+            stars = o.rating?.stars, fairSpread = o.agreement.spread, novigWidth = o.novigWidth,
             sharpAgrees = if (o.agreement.sharpAgrees) true else if (o.agreement.sharpAgainst) false else null,
         )
     }
