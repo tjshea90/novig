@@ -201,27 +201,6 @@ object PropLineBestLine {
         }
         return row.copy(others = mine.sortedByDescending { it.price }.take(16), twoSided = two, agree = agree, pinnacleAgrees = pinn)
     }
-    /**
-     * A row Vigilant's scan did not price (it has the Novig market but no fair odds for it) made bettable from PropLine's own fair, cut by the same prop haircut the screen ranks on: the Bet sheet gets the
-     * line, the +EV quote at Novig's first price, the depth and the Kelly stake, and re-prices at Novig's live book at the tap like every other Bet button. No ladder or a live game = no button.
-     */
-    fun attachUnpriced(row: PlEvRow, unpriced: List<com.tjshea.vigilant.data.scanner.Opportunity>, settings: ScanSettings, now: Long): PlEvRow {
-        if (row.opp != null || unpriced.isEmpty()) return row
-        val o = find(row, unpriced, requireQuote = false) ?: return row
-        val fee = o.market.fee ?: return row
-        if (o.ladder.isEmpty() || o.event.isLive) return row
-        val cut = if (settings.propHaircut) com.tjshea.vigilant.data.scanner.PropHaircut.points(com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection), o.selection) else 0.0
-        val p = (row.fairProb - cut).coerceIn(0.001, 0.999)
-        val quote = com.tjshea.vigilant.engine.EvMath.quote(p, o.ladder.first().price, fee, false)
-        val depth = com.tjshea.vigilant.engine.EvMath.positiveDepth(o.ladder, p, fee, false)
-        val stake = if (quote.evPercent > 0) com.tjshea.vigilant.engine.EvMath.suggestedStake(quote, settings.bankroll, settings.kellyMultiplier, depth?.dollarCost, (o.event.startsTs - now) / 3_600_000.0) else null
-        val priced = o.copy(fairProbability = p, quote = quote, depth = depth, suggestedStake = stake)
-        val enc = runCatching { com.tjshea.vigilant.data.cloud.CloudCodec.encode(priced).toString() }.getOrNull() ?: return row
-        return row.copy(
-            opp = enc, oppFromPropLine = true, novigNowPrice = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(quote.price.coerceIn(0.001, 0.999)),
-            novigNowAtMs = o.bookFetchedAtMs, novigNowDepth = depth?.dollarCost,
-        )
-    }
 }
 
 /** Finds the line in Vigilant's own scan that is the same Novig bet as a PropLine +EV row, so the phone can show Vigilant's view and open the Bet sheet on it. */
@@ -263,6 +242,27 @@ object PropLineMatch {
             novigNowPrice = o.quote?.let { com.tjshea.vigilant.engine.Odds.probabilityToAmerican(it.price.coerceIn(0.001, 0.999)) }, novigNowAtMs = o.bookFetchedAtMs,
             novigNowDepth = o.depth?.dollarCost, vigilantFair = o.fairProbability,
             opp = runCatching { com.tjshea.vigilant.data.cloud.CloudCodec.encode(o).toString() }.getOrNull(),
+        )
+    }
+    /**
+     * A row Vigilant's scan did not price (it has the Novig market but no fair odds for it) made bettable from PropLine's own fair, cut by the same prop haircut the screen ranks on: the Bet sheet gets the
+     * line, the +EV quote at Novig's first price, the depth and the Kelly stake, and re-prices at Novig's live book at the tap like every other Bet button. No ladder or a live game = no button.
+     */
+    fun attachUnpriced(row: PlEvRow, unpriced: List<com.tjshea.vigilant.data.scanner.Opportunity>, settings: ScanSettings, now: Long): PlEvRow {
+        if (row.opp != null || unpriced.isEmpty()) return row
+        val o = find(row, unpriced, requireQuote = false) ?: return row
+        val fee = o.market.fee ?: return row
+        if (o.ladder.isEmpty() || o.event.isLive) return row
+        val cut = if (settings.propHaircut) com.tjshea.vigilant.data.scanner.PropHaircut.points(com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection), o.selection) else 0.0
+        val p = (row.fairProb - cut).coerceIn(0.001, 0.999)
+        val quote = com.tjshea.vigilant.engine.EvMath.quote(p, o.ladder.first().price, fee, false)
+        val depth = com.tjshea.vigilant.engine.EvMath.positiveDepth(o.ladder, p, fee, false)
+        val stake = if (quote.evPercent > 0) com.tjshea.vigilant.engine.EvMath.suggestedStake(quote, settings.bankroll, settings.kellyMultiplier, depth?.dollarCost, (o.event.startsTs - now) / 3_600_000.0) else null
+        val priced = o.copy(fairProbability = p, quote = quote, depth = depth, suggestedStake = stake)
+        val enc = runCatching { com.tjshea.vigilant.data.cloud.CloudCodec.encode(priced).toString() }.getOrNull() ?: return row
+        return row.copy(
+            opp = enc, oppFromPropLine = true, novigNowPrice = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(quote.price.coerceIn(0.001, 0.999)),
+            novigNowAtMs = o.bookFetchedAtMs, novigNowDepth = depth?.dollarCost,
         )
     }
 }
