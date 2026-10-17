@@ -5711,3 +5711,9 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 "most if not all of propline bets tell me that vigilant says they are negative EV. but propline says positive EV. which one is correct? are the propline picks stale?"
 - Finding (live list, 563 rows, 500 Vigilant-priced): Vigilant <=0 on 470 (mean -0.2%) vs PropLine +3.3%; Novig price unchanged since PropLine's read on 411/500; fair 36.1% (PropLine, one book) vs 31.7% (Vigilant, blend). Not stale: a fair-model gap (selection of the largest single-book gaps). Evidence matches the 6,400-bet PropLine prop Over loss.
 - [x] TCL95a (v0.114.23)  PropLine +EV screen: a "Vigilant agrees (+EV)" filter chip (default on?) using row.vigilantEv/ opp quote.
+
+## TCL96 (Tj, chat t1792261137369 + t1792260886306 + t1792260917908, 2026-10-17)
+"sometimes this happens during an app update download even when the app is responsive in the background" (screenshot: "Vigilant isn't responding" at 62%); "consider the propline API usage and optimize it for data that is actually helpful"; "ship an update with all the things I asked for including the live betting fixes"
+- [x] TCL96a Status poll slows to 8 s while an update downloads (CloudLink). Real cause unproven: needs the ANR trace (Diagnostics after Close app).
+- [x] TCL96b PropLine +EV sweep hourly + pull (was 15 min).
+- [ ] TCL96c Ship v0.114.23 (chip, hourly sweep text, poll slowdown); restart engine for the PropLine carry-over + hourly sweep.

@@ -1,13 +1,13 @@
-# CHECKPOINT 3569 — read me first, then TASKS.md
+# CHECKPOINT 3570 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T18:12:21Z · **tests:** all 5 fast checks green
-**Branch:** `claude/keen-keller-8fzr9r` · **builds on:** `8c4a6d098` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T18:20:27Z · **tests:** all 5 fast checks green
+**Branch:** `claude/keen-keller-8fzr9r` · **builds on:** `2126349b6` (this checkpoint is the commit after it)
 
 ## Just done
-TCL95a: PropLine +EV screen lists only lines where Vigilant agrees (+EV) by default, with a chip to show all
+TCL96: update-download poll slowdown; PropLine hourly
 
 ## Do this next
-record v0.114.22 when its release lands; ship v0.114.23 (this chip) after; restart engine for the PropLine carry-over
+ship v0.114.23, restart engine
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ record v0.114.22 when its release lands; ship v0.114.23 (this chip) after; resta
 
 ## Last ten checkpoints
 ```
+  18b7ecac8 ckpt 3569: TCL95a: PropLine +EV screen lists only lines where Vigilant agrees (+EV) by
   361060abc ckpt 3568: pre-release: v0.114.22: Live tab and lab find NCAAF/NCAAB games on ESPN (FB
   cee0c9fd5 ckpt 3567: PropLine +EV list carried over a restart (engine) so the card never vanishe
   d9661c733 ckpt 3566: pre-ship: v0.114.22: Live tab and lab find NCAAF/NCAAB games on ESPN (FBS+F
@@ -26,8 +27,7 @@ record v0.114.22 when its release lands; ship v0.114.23 (this chip) after; resta
   6af8bdb88 ckpt 3562: pre-ship: v0.114.21: PropLine +EV: the Bet button sits on every card (opens
   cbf33e26d ckpt 3561: v0.114.20 released and recorded; engine restarted with TCL89 engine side an
   e66cc9cf1 ckpt 3560: TCL91a: account-wide per-game exposure for the engine's game cap and same-t
-  93fea8fc7 ckpt 3559: pre-release: v0.114.20: PropLine +EV: pull down runs a PropLine-only sweep 
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
