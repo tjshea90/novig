@@ -332,6 +332,7 @@ class MakerDesk(
         val refused = bids.filter { it.status == MakerStatus.REFUSED && now - (it.endedAtMs ?: it.postedAtMs) < REFUSED_COOLOFF_MS }.mapTo(HashSet()) { it.outcomeId }
         val judge = { d: MakerDecision ->
             if (d is MakerDecision.Post && d.line.outcomeId in denied) MakerDecision.Skip(d.line, DENIED)
+            else if (d is MakerDecision.Post && (lockedEvents[d.line.market.eventId] ?: 0L) > now) MakerDecision.Skip(d.line, "Novig has locked this game (started or frozen): it is tried again in ${LOCKED_COOLOFF_MS / 60_000} min")
             // Novig refused a bid here a moment ago (post-only: its price had moved to the bid): not asked again until the cool-off passes.
             else if (d is MakerDecision.Post && d.line.outcomeId in refused && d.line.outcomeId !in activeOutcomes) {
                 MakerDecision.Skip(d.line, "Novig refused a bid here in the last ${REFUSED_COOLOFF_MS / 60_000} min (its price had moved to the bid)")
@@ -396,6 +397,7 @@ class MakerDesk(
         }
         for (post in queue) {
             if (!keepPosting()) break
+            if ((lockedEvents[post.line.market.eventId] ?: 0L) > clock()) continue
             val result = withContext(NonCancellable) { placeOne(post, rules, auto = true) }
             when (result) {
                 is Placed.Ok -> placed++
@@ -409,6 +411,9 @@ class MakerDesk(
         if (rung > 0) deepPlaced += placed
         Report(placed, cancelled, fills, problems, after, stopAll, decisions, actions.waiting, partial, actions.trimmed, lastDeploy)
     }
+
+    /** Games Novig answered EVENT_LOCKED/LEAGUE_LOCKED for, to the time (ms) we try them again. */
+    private val lockedEvents = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     /** The rung the pass in progress works on (read by [bidFor], which runs inside [cycle]'s lock). */
     @Volatile private var cycleRung = 0
@@ -755,8 +760,11 @@ class MakerDesk(
         } catch (e: NovigApiException) {
             val why = "${line.selection}: ${e.advice}"
             store.update { list -> list.map { if (it.clientId == bid.clientId) it.copy(status = MakerStatus.REFUSED, endedAtMs = clock(), why = e.advice) else it } }
+            // A locked game, market, league or player is that one's own trouble (Novig locks a game when it starts or its odds are frozen): every other bid still goes up, and the rest of that game waits. The old
+            // rule stopped the whole pass at the first locked game, so a pass posted 3 bids of 250 while the wallet sat idle (Tj, 2026-10-17).
+            if (e.betLocked) { if (e.code == "EVENT_LOCKED" || e.code == "LEAGUE_LOCKED") lockedEvents[line.market.eventId] = clock() + LOCKED_COOLOFF_MS }
             // The wallet, the account, the location or the throttle: the same for every bid after this one.
-            Placed.Refused(why, stopsCycle = e.status == 422 || e.status == 423 || e.status == 451 || e.status == 429 || e.status == 401 || e.status == 403)
+            Placed.Refused(why, stopsCycle = !e.betLocked && (e.status == 422 || e.status == 423 || e.status == 451 || e.status == 429 || e.status == 401 || e.status == 403))
         } catch (e: Exception) {
             // No answer: it may be resting. The next cycle finds it by its clientId; it's never sent again.
             Placed.Refused("${line.selection}: Novig didn't answer (${e.message ?: e.javaClass.simpleName}); looked for again next time", stopsCycle = true)
@@ -1144,6 +1152,7 @@ class MakerDesk(
 
         /** A side Novig refused a post-only bid on isn't bid on again for this long (the scan's price there was out of date). */
         const val REFUSED_COOLOFF_MS = 5 * 60_000L
+        const val LOCKED_COOLOFF_MS = 10 * 60_000L
 
         /** After cancels, Novig's open orders are read this long later for their confirmation (Cancel all: up to [CANCEL_LOOKS] times). */
         const val CANCEL_LOOKS = 4
