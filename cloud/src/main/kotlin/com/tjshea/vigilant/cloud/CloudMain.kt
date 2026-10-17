@@ -98,6 +98,8 @@ fun main(args: Array<String>) = runBlocking {
     val latestSettings = java.util.concurrent.atomic.AtomicReference<com.tjshea.vigilant.data.scanner.ScanSettings?>(null)
     // Every line the last finished scan priced (not only the listed ones): the PropLine +EV rows are matched to them so the phone can open the Bet sheet on the same Novig bet.
     val latestPriced = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
+    // Novig markets Vigilant had no fair odds for (a ladder, no quote): PropLine's +EV rows on them get a Bet button priced from PropLine's own fair (TCL88).
+    val latestUnpriced = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
     val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = log::invoke) else null
     val publisher = Publisher(pubDir, repo, token, git, log::tail) { policy -> CloudKeys.envFor(policy.id)?.let { CloudKeys.fromEnv(it) }.orEmpty().map(CloudUsage::keyId) }
     // PropLine's own +EV read at Novig (Tj, 2026-10-16, TCL56): with a paid key, every 15 minutes (and only while the key is within the day's share of its requests) the pregame games of the picked
@@ -109,7 +111,7 @@ fun main(args: Array<String>) = runBlocking {
             val s = latestSettings.get()
             val now = System.currentTimeMillis()
             if (s != null && s.usePropLine && sources.propLinePaid() && sources.propLineHasRoom(now)) {
-                runCatching { sources.propLineEvSweep(s, now, latestPriced.get()) }.onSuccess { f ->
+                runCatching { sources.propLineEvSweep(s, now, latestPriced.get(), latestUnpriced.get()) }.onSuccess { f ->
                     publisher.stagePropLineEv(f)
                     runCatching { evJournal.appendAll(f.rows) }
                     log("PropLine +EV: ${f.rows.size} lines at Novig from ${f.games} games (${f.requests} requests, ${f.tier})" + (if (f.note.isNotBlank()) " · ${f.note}" else ""))
@@ -284,7 +286,7 @@ fun main(args: Array<String>) = runBlocking {
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
         // Every priced line within 2 points of break-even is logged, shown or not, with why it was not shown (Tj, 2026-10-16, TCL33).
-        onResult = { result, s -> latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush() },
+        onResult = { result, s -> latestPriced.set((result.opportunities + result.games.flatMap { it.outcomes }).filter { it.quote != null }.distinctBy { it.key }); latestUnpriced.set(result.opportunities.filter { it.quote == null && it.ladder.isNotEmpty() && it.event.isLive.not() && it.kind == com.tjshea.vigilant.data.reference.LineKind.PLAYER_PROP || it.quote == null && it.ladder.isNotEmpty() && !it.event.isLive }.distinctBy { it.key }); study.observeVigilant(result, s.copy(scanStudy = true), wideFloor = WIDE_FLOOR); study.flush() },
         trade = { rows, s, now ->
             val mode = s.gates.cloudTrading
             if (mode == CloudTradeMode.OFF) null else {

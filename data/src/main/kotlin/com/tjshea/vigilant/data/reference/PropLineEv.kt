@@ -61,6 +61,8 @@ data class PlEvRow(
     val vigilantEv: Double? = null,
     val vigilantStars: Double? = null,
     val opp: String? = null,
+    /** The line in [opp] was priced from PropLine's own fair (Vigilant's scan had the Novig market but no fair odds for it; Tj, 2026-10-17: a Bet button on every row). */
+    val oppFromPropLine: Boolean = false,
     /**
      * Novig's price for the same line from the ENGINE's own read when the sweep found it (TCL75, Tj 2026-10-17: "confirm the novig price is still available"): American, when that read was made, the dollars
      * offered at it, and the fair Vigilant used. Null = the engine's scan did not price this line (availability unknown; PropLine's own `price` is minutes old).
@@ -199,6 +201,27 @@ object PropLineBestLine {
         }
         return row.copy(others = mine.sortedByDescending { it.price }.take(16), twoSided = two, agree = agree, pinnacleAgrees = pinn)
     }
+    /**
+     * A row Vigilant's scan did not price (it has the Novig market but no fair odds for it) made bettable from PropLine's own fair, cut by the same prop haircut the screen ranks on: the Bet sheet gets the
+     * line, the +EV quote at Novig's first price, the depth and the Kelly stake, and re-prices at Novig's live book at the tap like every other Bet button. No ladder or a live game = no button.
+     */
+    fun attachUnpriced(row: PlEvRow, unpriced: List<com.tjshea.vigilant.data.scanner.Opportunity>, settings: ScanSettings, now: Long): PlEvRow {
+        if (row.opp != null || unpriced.isEmpty()) return row
+        val o = find(row, unpriced, requireQuote = false) ?: return row
+        val fee = o.market.fee ?: return row
+        if (o.ladder.isEmpty() || o.event.isLive) return row
+        val cut = if (settings.propHaircut) com.tjshea.vigilant.data.scanner.PropHaircut.points(com.tjshea.vigilant.data.scanner.BetKind.of(o.marketLabel, o.selection), o.selection) else 0.0
+        val p = (row.fairProb - cut).coerceIn(0.001, 0.999)
+        val quote = com.tjshea.vigilant.engine.EvMath.quote(p, o.ladder.first().price, fee, false)
+        val depth = com.tjshea.vigilant.engine.EvMath.positiveDepth(o.ladder, p, fee, false)
+        val stake = if (quote.evPercent > 0) com.tjshea.vigilant.engine.EvMath.suggestedStake(quote, settings.bankroll, settings.kellyMultiplier, depth?.dollarCost, (o.event.startsTs - now) / 3_600_000.0) else null
+        val priced = o.copy(fairProbability = p, quote = quote, depth = depth, suggestedStake = stake)
+        val enc = runCatching { com.tjshea.vigilant.data.cloud.CloudCodec.encode(priced).toString() }.getOrNull() ?: return row
+        return row.copy(
+            opp = enc, oppFromPropLine = true, novigNowPrice = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(quote.price.coerceIn(0.001, 0.999)),
+            novigNowAtMs = o.bookFetchedAtMs, novigNowDepth = depth?.dollarCost,
+        )
+    }
 }
 
 /** Finds the line in Vigilant's own scan that is the same Novig bet as a PropLine +EV row, so the phone can show Vigilant's view and open the Bet sheet on it. */
@@ -209,10 +232,10 @@ object PropLineMatch {
         return x.isNotEmpty() && y.isNotEmpty() && (x.toSet().containsAll(y) || y.toSet().containsAll(x) || x.last() == y.last())
     }
 
-    fun find(row: PlEvRow, all: List<com.tjshea.vigilant.data.scanner.Opportunity>): com.tjshea.vigilant.data.scanner.Opportunity? {
+    fun find(row: PlEvRow, all: List<com.tjshea.vigilant.data.scanner.Opportunity>, requireQuote: Boolean = true): com.tjshea.vigilant.data.scanner.Opportunity? {
         val stat = PropLineProps.MARKETS[row.market]
         return all.firstOrNull { o ->
-            if (o.league.displayName != row.league || o.quote == null) return@firstOrNull false
+            if (o.league.displayName != row.league || (requireQuote && o.quote == null)) return@firstOrNull false
             if (kotlin.math.abs(o.event.startsTs - row.startsAtMs) > 3 * 3_600_000L) return@firstOrNull false
             val teams = o.event.description.split(" @ ")
             if (teams.size != 2 || !((sameTeam(teams[0], row.away) && sameTeam(teams[1], row.home)) || (sameTeam(teams[0], row.home) && sameTeam(teams[1], row.away)))) return@firstOrNull false
@@ -275,7 +298,7 @@ object PropLineTrends {
 class PropLineEvSweep(private val client: PropLineClient, private val json: Json = Json { ignoreUnknownKeys = true }) {
     private val trendCache = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, String>>()
     private companion object { const val TREND_ROWS = 40 }
-    suspend fun sweep(settings: ScanSettings, now: Long, scanned: List<com.tjshea.vigilant.data.scanner.Opportunity> = emptyList()): PlEvFeed {
+    suspend fun sweep(settings: ScanSettings, now: Long, scanned: List<com.tjshea.vigilant.data.scanner.Opportunity> = emptyList(), unpriced: List<com.tjshea.vigilant.data.scanner.Opportunity> = emptyList()): PlEvFeed {
         val plan = client.plan() ?: return PlEvFeed(now, emptyList(), tier = "free", note = "needs a paid PropLine key (Hobby or Pro): the free key's +EV answers are redacted")
         var requests = 0
         var games = 0
@@ -310,7 +333,7 @@ class PropLineEvSweep(private val client: PropLineClient, private val json: Json
                                 // The same bets at every other book now (one more request for the game), and Vigilant's own view of each Novig line.
                                 requests++
                                 val board = runCatching { client.bestLineRaw(sport, plId, parsed.rows.map { it.market }.distinct())?.let { PropLineBestLine.parse(it, json, now) } }.getOrNull()
-                                PropLineEv.Parsed(parsed.rows.map { r -> PropLineMatch.attach(board?.let { b -> PropLineBestLine.attach(r, b) } ?: r, scanned) }, false)
+                                PropLineEv.Parsed(parsed.rows.map { r -> PropLineMatch.attachUnpriced(PropLineMatch.attach(board?.let { b -> PropLineBestLine.attach(r, b) } ?: r, scanned), unpriced, settings, now) }, false)
                             } catch (e: kotlinx.coroutines.CancellationException) {
                                 throw e
                             } catch (e: Exception) {
