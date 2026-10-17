@@ -561,8 +561,8 @@ class CloudEngine(
             return rows
         }
         val staleKeys = stale.mapTo(HashSet()) { it.key }
-        val out = rows.mapNotNull { r -> if (r.key in staleKeys) fresh[r.key] ?: r else r }
-        log("trading: re-read ${ids.size} books before judging: ${out.count { it.key in staleKeys && it.key in fresh }} bets re-priced, ${stale.count { it.key !in fresh }} kept as read")
+        val out = rows.mapNotNull { r -> if (r.key in staleKeys) fresh[r.key] else r }
+        log("trading: re-read ${ids.size} books before judging: ${out.count { it.key in staleKeys }} bets re-priced, ${stale.size - out.count { it.key in staleKeys }} left out (no fresher price)")
         return out
     }
 
