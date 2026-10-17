@@ -189,6 +189,10 @@ class CloudBidRunner(
     }
 
     companion object {
+        /** An engine bid rests at most this long on Novig (it removes it itself), so a dead engine leaves nothing stale; a live one re-posts it [ENGINE_REFRESH_BEFORE_MS] before the end. */
+        const val ENGINE_BID_TTL_MS = 8 * 60_000L
+        const val ENGINE_REFRESH_BEFORE_MS = 3 * 60_000L
+
         /** The candidate list is used for this long after it was made; older, the bids up stay until their own expiry. */
         const val MAX_LIST_AGE_MS = 30 * 60_000L
         const val READS_PER_PASS = 60
