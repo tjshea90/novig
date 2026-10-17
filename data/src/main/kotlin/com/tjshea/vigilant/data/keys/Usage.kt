@@ -515,13 +515,7 @@ class CreditPace(
         val elapsed = maxOf(endOfToday - from, minOf(DAY_MS, window)).coerceAtMost(window)
         val allowed = pool * elapsed / window
         val kept = if (keepOfDay > 0.0) (pool * minOf(DAY_MS, window) / window * keepOfDay).toLong() else 0L
-        val calendarFloor = (limit - allowed + kept).toInt()
-        // Pace from NOW as well (Tj, 2026-10-17: a Starter key with 83% of its credits left and half the month gone still read "spent today's share", because its share was spread from the day this app first met it):
-        // what is left, spread evenly over the days left including today, is also fine to spend today. The lower floor wins, so an under-spent key is asked more and a late-bought plan is paced as before.
-        val left = u.left(policy) ?: return calendarFloor
-        val daysLeft = ((reset - (endOfToday - DAY_MS)).toDouble() / DAY_MS).coerceAtLeast(1.0)
-        val evenFloor = (left - Math.ceil((left - reserve).coerceAtLeast(0) / daysLeft).toInt()).coerceAtLeast(reserve)
-        return minOf(calendarFloor, evenFloor)
+        return (limit - allowed + kept).toInt()
     }
 
     /** A free plan's key (the server said its allowance is [freeLimit] or less): used for scans after the keys before it, down to [freeReserve]. */
