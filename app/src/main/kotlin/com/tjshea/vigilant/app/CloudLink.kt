@@ -248,6 +248,8 @@ class CloudLink(private val c: AppContainer) {
             runCatching { store.read() }
             store.flow.value?.takeIf { it.sealed.isNotBlank() }?.let { t -> _ui.update { it.copy(hasToken = true, tokenTail = t.tail) } }
             runCatching { uploaded.read() }
+            // Whether the engine's keys are on GitHub (the Live trading switch needs it) is read at start, not only after a key button was tapped.
+            if (hasToken()) runCatching { refreshNovigKey() }
         }
         // 1. read
         scope.launch(Dispatchers.IO) {
