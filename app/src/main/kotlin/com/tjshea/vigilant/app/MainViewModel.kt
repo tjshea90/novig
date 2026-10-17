@@ -2398,6 +2398,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun startCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.startEngine() } }
     /** Run now outside the engine's hours / stop until the next scheduled opening (Tj, 2026-10-17): the schedule is untouched ([com.tjshea.vigilant.data.cloud.CloudManual]). */
     fun runCloudOutsideHours() { viewModelScope.launch(Dispatchers.IO) { c.cloud.runOutsideHours() } }
+    /** Pull to refresh on the Engine tab: every cloud loop reads at once. */
+    fun refreshEngine() { c.cloud.syncNow() }
+    fun resetEngine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.resetEngine() } }
     fun stopCloudUntilNextOpening() { viewModelScope.launch(Dispatchers.IO) { c.cloud.stopUntilNextOpening() } }
     fun sendCloudKeys() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendKeys() } }
     fun sendNovigKey() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendNovigKey() } }

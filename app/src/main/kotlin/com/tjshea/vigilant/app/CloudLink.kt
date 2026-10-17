@@ -162,6 +162,8 @@ class CloudLink(private val c: AppContainer) {
     @Volatile private var manualRunUntil = 0L
     @Volatile private var manualStopUntil = 0L
     @Volatile private var manualLoaded = false
+    /** Reset engine (Tj, 2026-10-17, TCL85): the phone's clock of the last request; part of the config so the engine that reads a newer value ends and a fresh runner starts. */
+    @Volatile private var resetRequestedAt = 0L
 
     private fun loadManual() {
         if (manualLoaded) return
@@ -197,6 +199,20 @@ class CloudLink(private val c: AppContainer) {
         val msg = if (stop > 0L) "Stopping the engine. It stays off until the next scheduled opening and then starts by itself." else "Ended the manual run. The engine starts again by itself at its next opening (8 am Eastern)."
         _ui.update { it.copy(note = msg) }
         return msg
+    }
+
+    /**
+     * Reset engine: the running job ends (its own bids come down; keys, switches and Claude are untouched) and GitHub starts a new one on a new runner, so a new address. Without a running job the start request
+     * alone does it. Needs the saved token; the engine's hours still decide whether the new job runs.
+     */
+    suspend fun resetEngine(): String {
+        resetRequestedAt = maxOf(System.currentTimeMillis(), resetRequestedAt + 1)
+        c.settingsStore.flow.value?.let { pushSettings(it, force = true) }
+        val msg = startEngine()
+        val words = "Reset sent: the running engine ends within seconds and a new one starts on a new runner. " + msg
+        _ui.update { it.copy(note = words) }
+        syncNow()
+        return words
     }
 
     /** Asks GitHub to start the engine now (Settings › Cloud scan › Start). */
@@ -501,11 +517,11 @@ class CloudLink(private val c: AppContainer) {
         runCatching { wantedFile.writeText(if (wanted) "1" else "0") }
         // Not wanted and nothing owed: the engine is left alone (no request is made for a phone that never used the cloud scan).
         if (!wanted && !offPending.exists()) return
-        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil"
+        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil" + "x$resetRequestedAt"
         if (key == lastPushedKey && !force) return
         val rev = maxOf(System.currentTimeMillis(), lastRev + 1)
         loadManual()
-        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil))
+        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil, resetAtMs = resetRequestedAt))
         if (why == null) {
             if (wanted) runCatching { sendKeys(auto = true) }
             lastPushedKey = key; lastRev = rev
