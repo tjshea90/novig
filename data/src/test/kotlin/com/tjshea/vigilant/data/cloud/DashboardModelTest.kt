@@ -79,8 +79,13 @@ class DashboardModelTest {
         assertTrue(unread.getValue("Wallet").sub.contains("not zero"))
         val old = DashboardModel.tiles(st { copy(fairAgeMedianS = 1000) }, now).associateBy { it.label }
         assertEquals(Tone.BAD, old.getValue("Odds age").tone)
-        val refused = DashboardModel.tiles(st { copy(addressHandovers = 2) }, now).associateBy { it.label }
-        assertEquals(Tone.WARN, refused.getValue("Address").tone)
+        // The tile is the engine's verdict on THIS runner now, never the count of past swaps (2026-10-17: it said "accepted" under a RESTRICTED_NETWORK_REGION line).
+        val swapped = DashboardModel.tiles(st { copy(addressHandovers = 2, novigAddress = "accepted by Novig") }, now).associateBy { it.label }
+        assertEquals("accepted", swapped.getValue("Address").value); assertTrue(swapped.getValue("Address").sub.contains("2 swaps tried"))
+        val refused = DashboardModel.tiles(st { copy(novigAddress = "REFUSED by Novig (RESTRICTED_NETWORK_REGION): this GitHub machine's location is not served; a swap to a new machine is due") }, now).associateBy { it.label }
+        assertEquals("refused", refused.getValue("Address").value); assertEquals(Tone.BAD, refused.getValue("Address").tone)
+        val oldEngine = DashboardModel.tiles(st { copy(novigRoute = "public routes: the read key was refused (Novig places this network's internet address outside the states it serves (RESTRICTED_NETWORK_REGION)).") }, now).associateBy { it.label }
+        assertEquals("an engine without the field is judged by the refusal code in its Novig line", "refused", oldEngine.getValue("Address").value)
         assertTrue(DashboardModel.tiles(null, now).isEmpty())
     }
 
