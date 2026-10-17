@@ -513,6 +513,9 @@ private fun FeedSummary(
                             "${result.stats.outcomesWithFair} checked" + if (status.scanning) " so far" else "",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        // One line always: "checked so far" wrapping to two lines moved the whole list down while a scan ran.
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
                     FeedSort.entries.forEach { sort ->
@@ -531,8 +534,10 @@ private fun FeedSummary(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
-                    if (!status.scanning) {
-                        TextButton(onClick = onRecheck, enabled = !status.rechecking, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                    // Always laid out (hidden while a scan runs) so the row keeps its height and the list below does not jump.
+                    run {
+                        TextButton(onClick = onRecheck, enabled = !status.rechecking && !status.scanning, contentPadding = PaddingValues(horizontal = 8.dp),
+                            modifier = Modifier.alpha(if (status.scanning) 0f else 1f)) {
                             Text(if (status.rechecking) "Rechecking…" else "Recheck prices", style = MaterialTheme.typography.labelMedium)
                         }
                     }
