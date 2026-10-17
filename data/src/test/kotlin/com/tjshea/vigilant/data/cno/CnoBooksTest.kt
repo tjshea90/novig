@@ -102,15 +102,13 @@ class CnoBooksTest {
     }
 
     @Test
-    fun `live MLB NHL and NCAAF bets pay the 0 06 taker fee since 2026-10-08 and every other league 0 03`() {
+    fun `live bets pay the 0 06 taker fee in every league since 2026-10-15 (MLB NHL and NCAAF since 2026-10-08)`() {
         val flat = CnoBooks.evAt(0.5, 110, live = true)
-        val nba = CnoBooks.evAt(0.5, 110, live = true, league = "NBA")
-        assertEquals(flat, nba, 1e-12)
         val price = 1.0 / com.tjshea.vigilant.engine.Odds.americanToDecimal(110)
-        for (league in listOf("MLB", "NHL", "NCAAF")) {
+        for (league in listOf("MLB", "NHL", "NCAAF", "NBA", "NFL")) {
             val ev = CnoBooks.evAt(0.5, 110, live = true, league = league)
             assertEquals(0.5 / (price + 0.06 * price * (1 - price)) - 1.0, ev, 1e-12)
-            assertTrue(ev < flat)
+            assertEquals(flat, ev, 1e-12)
         }
         // Pregame is free in every league.
         assertEquals(CnoBooks.evAt(0.5, 110, live = false), CnoBooks.evAt(0.5, 110, live = false, league = "MLB"), 0.0)
