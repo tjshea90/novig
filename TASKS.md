@@ -5602,3 +5602,9 @@ Findings (2026-10-16): the phone's records already carry `made` (bet|bid), `how`
 - [x] TCL72a (pnl_split.py, pnl_2026-10-17.md) Pull the real P&L: wallet equity trend (status walletEquity), trades.json + trade-results (engine fills), phone-data bets (manual/phone-auto), bids journals; split by origin (manual vs auto vs bid), kind, league, edge band, odds band.
 - [x] TCL72b Name what loses most and whether the sample passes the class B gates (200+ settled, interval excludes 0, two digests); write research/review/ note + CHANGES.md line.
 - [x] TCL72c (totals added; watch ML/spreads/NBA spreads; check totals taker CLV in the next digests) Tweak engine where proven (25% steps, one change a day, test, revert rule); tell Tj in chat.
+
+## TCL73 (Tj, chat t1792212927614, 2026-10-17)
+"for any losing bets and bid types with big enough samples, make the engine never auto bet or auto bid these types of bets and bids. for the vigilant android app, make any of these types of bets in any scanner have a red x or some type of warning sign big enough that I can't ignore it ... then consider: if I'm losing so much on these types of bets, for example player prop overs, shouldn't I just bet and bid the other side (the under in this example)? if this is logical, tune the GitHub engine to automatically do so"
+- [ ] TCL73a Engine: never auto bet/bid the types that lose with a big enough sample (class B gates; prop Overs qualifies: n678 z-2.77 both halves).
+- [ ] TCL73b App: big red X/warning on those bet types in EVERY scanner (feed, CNO, PropLine +EV, live, bet sheet).
+- [ ] TCL73c Flip question (bet the Under when the Over loses): test on the data before building; answer Tj honestly.
