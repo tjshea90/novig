@@ -71,7 +71,19 @@ class LiveLightRunner(
     private val debounceMs: Long = DEBOUNCE_MS,
     /** The status flow is rewritten at most this often (a push can come many times a second; every rewrite wakes whatever reads it). */
     private val publishMs: Long = PUBLISH_MS,
+    /**
+     * One JSON line per decision for Claude's analysis (Tj, 2026-10-17: "build a comprehensive logger... that uploads to GitHub regularly"): a per-game scan summary every [JOURNAL_SCAN_MS], every offer to the taker,
+     * every bid wanted or pulled, and the reason a side was passed over when it changes. The phone saves the file to GitHub with the bet history.
+     */
+    private val journal: (String) -> Unit = {},
 ) {
+    private val lastScanLogged = HashMap<String, Long>()
+    private val lastBidSkip = HashMap<String, String>()
+
+    private fun jlog(kind: String, build: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit) {
+        runCatching { journal(kotlinx.serialization.json.buildJsonObject { put("at", clock()); put("kind", kind); build() }.toString()) }
+    }
+
     private class Game(val ev: NovigEvent, val markets: List<NovigMarket>, val lines: List<LadderLine>) {
         val marketIds: List<String> = markets.map { it.marketId }
     }
@@ -340,6 +352,20 @@ class LiveLightRunner(
         manageBids(game, sides, feed.game, now)
         val scoreText = "${feed.game.away} ${feed.game.awayScore} @ ${feed.game.home} ${feed.game.homeScore} · ${"%.0f".format(java.util.Locale.US, frac * 100)}% left · ${points.size} of ${game.lines.size} lines priced"
         setLine(eventId, "$scoreText · closest: ${if (sides.isEmpty()) "the model cannot judge this game yet" else closestCall(sides)}")
+        if (now - (lastScanLogged[eventId] ?: 0L) >= JOURNAL_SCAN_MS) {
+            lastScanLogged[eventId] = now
+            jlog("scan") {
+                put("eventId", eventId); put("event", game.ev.description); put("league", game.ev.league)
+                put("home", feed.game.home); put("away", feed.game.away); put("homeScore", feed.game.homeScore); put("awayScore", feed.game.awayScore)
+                put("period", feed.game.period); put("clockSec", feed.game.clockSec); put("fractionLeft", frac); put("scoreAgeMs", now - feed.atMs); put("lines", points.size)
+                put("sides", kotlinx.serialization.json.buildJsonArray {
+                    for (sf in sides.sortedByDescending { it.fair - it.ask }.take(8)) add(kotlinx.serialization.json.buildJsonObject {
+                        put("outcomeId", sf.outcomeId); put("kind", sf.line.kind.name); put("threshold", sf.line.threshold); put("side", sf.side)
+                        put("fair", sf.fair); put("ask", sf.ask); put("contracts", sf.contracts)
+                    })
+                })
+            }
+        }
         val curve = LiveLightCurve.scan(points, game.ev.league, st, sides.associate { it.outcomeId to it.fair })
         val found = LiveLightScan.scan(points, game.ev.league, st, marginOf, rules) + curve + TailScan.scan(points, st, marginOf, tailRules).map { it.copy(rule = TailTaker.CONSERVATIVE) }
         upd { it.copy(scans = it.scans + 1, lastScanMs = now, lastScanTookMs = (clock() - triggeredAtMs).coerceAtLeast(0)) }
@@ -361,10 +387,18 @@ class LiveLightRunner(
                     second = pBet
                 }
             }
-            if (cand.edge > TailTradeLimits.MAX_EDGE && second == null) { skip("edge over ${(TailTradeLimits.MAX_EDGE * 100).toInt()}% and no second live source agrees"); continue }
+            if (cand.edge > TailTradeLimits.MAX_EDGE && second == null) {
+                skip("edge over ${(TailTradeLimits.MAX_EDGE * 100).toInt()}% and no second live source agrees")
+                jlog("passed") { put("eventId", eventId); put("rule", c.rule); put("outcomeId", c.outcomeId); put("ask", c.ask); put("fair", cand.fair); put("edge", cand.edge); put("why", "edge too large and no second live source") }
+                continue
+            }
             val offer = (TailOffers.build(game.ev, game.markets, points, st, cand, now) ?: continue).copy(confirm = second)
             offered[c.outcomeId] = now to c.ask
             upd { it.copy(offers = it.offers + 1, last = "${c.rule} · ${offer.target.selection} · ${"%.1f".format(java.util.Locale.US, c.edge * 100)}% edge · ${offer.state}") }
+            jlog("offer") {
+                put("eventId", eventId); put("event", game.ev.description); put("rule", c.rule); put("outcomeId", c.outcomeId); put("selection", offer.target.selection)
+                put("ask", c.ask); put("fair", cand.fair); put("edge", cand.edge); put("confirm", second); put("state", offer.state); put("score", "${feed.game.awayScore}-${feed.game.homeScore}"); put("clockSec", feed.game.clockSec); put("period", feed.game.period)
+            }
             runCatching { onOffer(offer) }
         }
     }
@@ -383,15 +417,25 @@ class LiveLightRunner(
             val held = desk.held(sf.outcomeId)
             if (held != null) {
                 val why = LiveLightBids.keep(sf, held, br)
-                if (why != null) { desk.pull(sf.outcomeId, why); upd { it.copy(bidPulls = it.bidPulls + 1) } } else desk.keepAlive(sf.outcomeId, now)
+                if (why != null) {
+                    desk.pull(sf.outcomeId, why); upd { it.copy(bidPulls = it.bidPulls + 1) }
+                    jlog("bid-pull") { put("eventId", game.ev.eventId); put("event", game.ev.description); put("outcomeId", sf.outcomeId); put("why", why); put("fair", sf.fair); put("score", score); put("clock", clock) }
+                } else desk.keepAlive(sf.outcomeId, now)
                 continue
             }
             when (val v = LiveLightBids.judge(sf, br)) {
                 is com.tjshea.vigilant.data.livebid.LiveBidVerdict.Post -> {
                     desk.want(LiveLightBids.want(game.ev, sf, v, score, clock, now))
                     upd { it.copy(bidWants = it.bidWants + 1) }
+                    if (lastBidSkip.remove(sf.outcomeId) != null || lastScanLogged["bid:" + sf.outcomeId] == null) {
+                        lastScanLogged["bid:" + sf.outcomeId] = now
+                        jlog("bid-want") { put("eventId", game.ev.eventId); put("event", game.ev.description); put("outcomeId", sf.outcomeId); put("side", sf.side); put("fair", sf.fair); put("ask", sf.ask); put("verdict", v.toString().take(160)); put("score", score); put("clock", clock) }
+                    }
                 }
-                is com.tjshea.vigilant.data.livebid.LiveBidVerdict.Skip -> desk.noWant(sf.outcomeId, "light bid: ${v.reason}")
+                is com.tjshea.vigilant.data.livebid.LiveBidVerdict.Skip -> {
+                    desk.noWant(sf.outcomeId, "light bid: ${v.reason}")
+                    if (lastBidSkip.put(sf.outcomeId, v.reason) != v.reason) jlog("bid-skip") { put("eventId", game.ev.eventId); put("event", game.ev.description); put("outcomeId", sf.outcomeId); put("side", sf.side); put("fair", sf.fair); put("ask", sf.ask); put("why", v.reason); put("score", score); put("clock", clock) }
+                }
             }
         }
         // A bid up on an outcome the model can no longer judge (the clock went unreadable, the game entered overtime) does not stay on a guess.
