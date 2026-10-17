@@ -44,6 +44,11 @@ data class CloudConfig(
      */
     val manualRunUntilMs: Long = 0L,
     val manualStopUntilMs: Long = 0L,
+    /**
+     * Reset engine (Tj, 2026-10-17, TCL85): the phone's clock when it asked. A job that started BEFORE this time and sees a newer value than the one it read at its start ends ([CloudEngine.End.RESET]) and the workflow
+     * starts a fresh job on a new runner (a new address). A job reads the value at its own start as already handled, so a phone clock that runs ahead cannot loop it.
+     */
+    val resetAtMs: Long = 0L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }

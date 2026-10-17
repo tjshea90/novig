@@ -110,7 +110,7 @@ class CloudEngine(
     data class TradeStatus(val mode: String, val note: String, val stopped: String, val changedAtMs: Long, val cash: Double? = null, val equity: Double? = null)
 
     /** TIME_UP: the job's time is over; IDLE: the phone switched the engine off; ADDRESS: Novig refused this runner's address, the next job is started at once; WINDOW: the engine's hours (08:00-01:00 Eastern, [EngineHours]) are over or not yet begun: no hand-over, the schedule starts the next engine when they open. */
-    enum class End { TIME_UP, IDLE, ADDRESS, WINDOW }
+    enum class End { TIME_UP, IDLE, ADDRESS, WINDOW, RESET }
 
     @Volatile var passes = 0
         private set
@@ -219,12 +219,21 @@ class CloudEngine(
         var offSince = 0L
         var lastCfg: CloudConfig? = null
         var lastBeat = 0L
+        var resetBaseline = -1L
         while (currentScopeActive() && clock() < untilMs) {
             tickMs = clock()
             val cfg = runCatching { readConfig() }.getOrNull() ?: lastCfg
             lastCfg = cfg
             cfg?.settings?.let { phoneSettings = it }
             cfg?.let { manualCfg = it }
+            if (cfg != null) {
+                if (resetBaseline < 0L) resetBaseline = cfg.resetAtMs
+                if (cfg.resetAtMs > resetBaseline) {
+                    log("reset requested from the phone: ending so a new runner starts")
+                    problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = true))
+                    return End.RESET
+                }
+            }
             if (cfg == null || !cfg.on) {
                 if (offSince == 0L) offSince = clock()
                 if (clock() - lastBeat >= heartbeatEveryMs) {
