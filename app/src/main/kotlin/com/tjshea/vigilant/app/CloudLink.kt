@@ -55,6 +55,8 @@ class CloudLink(private val c: AppContainer) {
         /** The engine's last heartbeat, when the phone asked for a scan last (its own clock), and why nothing arrives, for the Feed's cloud bar ([com.tjshea.vigilant.data.cloud.CloudText]). */
         val status: com.tjshea.vigilant.data.cloud.CloudStatus? = null,
         val requestedAtMs: Long = 0L,
+        /** When this phone last pulled the PropLine +EV screen down (0 = never); the engine's echo is `status.propLineServedAtMs`. */
+        val propLineRequestedAtMs: Long = 0L,
         val why: String? = null,
         /** What the last "Send my API keys" said (words only). */
         val keysNote: String? = null,
@@ -110,6 +112,8 @@ class CloudLink(private val c: AppContainer) {
     private var lastRestartAt = 0L
     /** The phone's clock when it last asked for a scan (pull to refresh, the Scan button); written into every config so a later settings push never forgets it. */
     @Volatile private var refreshRequestedAt = 0L
+    /** Pull to refresh on the PropLine +EV screen (TCL89): the phone's clock when it asked for a PropLine-only sweep. */
+    @Volatile private var propLineRequestedAt = 0L
     private var feedFetchedFor = 0L
     private var bidsFetchedFor = 0L
     private var evFetchedFor = 0L
@@ -413,6 +417,15 @@ class CloudLink(private val c: AppContainer) {
      * Pull to refresh / the Scan button in cloud mode (Tj, 2026-10-14): tells the engine to scan now, in the settings file it reads every 3 s (settings and the request travel together, so the scan it starts
      * is under exactly what the phone shows). The engine acknowledges in its heartbeat and reports progress; [CloudText] says it in words. If no engine is running one is started. Null = sent, else why not.
      */
+    suspend fun requestPropLineSweep(): String? {
+        if (!hasToken()) { _ui.update { it.copy(note = "Save a GitHub token first (Settings › Cloud scan).") }; return "no token" }
+        val now = System.currentTimeMillis()
+        propLineRequestedAt = maxOf(now, propLineRequestedAt + 1)
+        _ui.update { it.copy(propLineRequestedAtMs = propLineRequestedAt) }
+        c.settingsStore.flow.value?.let { pushSettings(it, force = true) }
+        return null
+    }
+
     suspend fun requestScan(): String? {
         if (!hasToken()) { _ui.update { it.copy(note = "Save a GitHub token first (Settings › Cloud scan).") }; return "no token" }
         val s = c.currentSettings()
@@ -517,11 +530,11 @@ class CloudLink(private val c: AppContainer) {
         runCatching { wantedFile.writeText(if (wanted) "1" else "0") }
         // Not wanted and nothing owed: the engine is left alone (no request is made for a phone that never used the cloud scan).
         if (!wanted && !offPending.exists()) return
-        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil" + "x$resetRequestedAt"
+        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil" + "x$resetRequestedAt" + "p$propLineRequestedAt"
         if (key == lastPushedKey && !force) return
         val rev = maxOf(System.currentTimeMillis(), lastRev + 1)
         loadManual()
-        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil, resetAtMs = resetRequestedAt))
+        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil, resetAtMs = resetRequestedAt, propLineRefreshAtMs = propLineRequestedAt))
         if (why == null) {
             if (wanted) runCatching { sendKeys(auto = true) }
             lastPushedKey = key; lastRev = rev

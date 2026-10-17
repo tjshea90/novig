@@ -2400,6 +2400,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun runCloudOutsideHours() { viewModelScope.launch(Dispatchers.IO) { c.cloud.runOutsideHours() } }
     /** Pull to refresh on the Engine tab: every cloud loop reads at once. */
     fun refreshEngine() { c.cloud.syncNow() }
+    /** Pull to refresh on the PropLine +EV screen (TCL89): the engine runs its PropLine sweep now, nothing else. */
+    fun refreshPropLine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.requestPropLineSweep() } }
     fun resetEngine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.resetEngine() } }
     fun stopCloudUntilNextOpening() { viewModelScope.launch(Dispatchers.IO) { c.cloud.stopUntilNextOpening() } }
     fun sendCloudKeys() { viewModelScope.launch(Dispatchers.IO) { c.cloud.sendKeys() } }

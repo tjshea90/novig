@@ -42,9 +42,13 @@ fun PropLineEvScreen(
     state: UiState,
     onTrack: (com.tjshea.vigilant.data.scanner.Opportunity, Double) -> Unit = { _, _ -> },
     onRecheck: (List<String>) -> Unit = {},
+    onRefresh: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val now = rememberNow(30_000)
+    // Busy from the pull until the engine says a PropLine sweep ran for it (its echo of our own request time), at most 3 minutes.
+    val asked = state.cloudUi.propLineRequestedAtMs
+    val busy = asked > 0L && (state.cloudUi.status?.propLineServedAtMs ?: 0L) < asked && System.currentTimeMillis() - asked < 180_000L
     val feed = state.cloudUi.propLineEv
     var league by rememberSaveable { mutableStateOf("All") }
     var minEv by rememberSaveable { mutableStateOf(1.0) }
@@ -54,7 +58,8 @@ fun PropLineEvScreen(
     // statusBarsPadding: this tab has no top bar of its own, and the title sat under the clock (Tj, 2026-10-16 screenshot: "the app is getting cut off at the top").
     var expanded by rememberSaveable { mutableStateOf(setOf<String>()) }
     var betting by remember { mutableStateOf<com.tjshea.vigilant.data.scanner.Opportunity?>(null) }
-    Column(modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 12.dp).testTag("propLineEv"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    VigilantPullToRefresh(busy = busy, onRefresh = onRefresh, modifier = modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 12.dp).testTag("propLineEv"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("PropLine +EV at Novig", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         if (feed == null) {
             Text(
