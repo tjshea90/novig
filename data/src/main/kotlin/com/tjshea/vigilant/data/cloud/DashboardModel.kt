@@ -77,8 +77,23 @@ object DashboardModel {
             Tile("Odds age", if (st.fairAgeMedianS >= 0) age(st.fairAgeMedianS) else "n/a", "fair odds (median); Novig prices " + if (st.novigAgeMedianS >= 0) age(st.novigAgeMedianS) else "n/a", ageTone),
             Tile("Wallet", cash(st), walletSub(st, now), if (st.walletReadAtMs > 0 && st.walletCash >= 0.5) Tone.GOOD else if (st.walletReadAtMs > 0) Tone.WARN else Tone.NEUTRAL),
             Tile("Trading", st.tradeMode.ifBlank { "off" }.uppercase(), tradeSub(st), if (st.tradeStopped.isNotBlank()) Tone.WARN else if (st.tradeMode.equals("live", true)) Tone.GOOD else Tone.NEUTRAL),
-            Tile("Address", if (st.addressHandovers == 0) "accepted" else "refused ${st.addressHandovers}x", if (st.addressHandovers == 0) "Novig takes this runner" else "a new runner is drawn", if (st.addressHandovers == 0) Tone.GOOD else Tone.WARN),
+            addressTile(st),
         )
+    }
+
+    /**
+     * Whether Novig accepts THIS runner's address NOW (Tj, 2026-10-17: the tile said "accepted" while the Novig line under it said RESTRICTED_NETWORK_REGION, because it read the count of past swaps). Read from the
+     * engine's own verdict ([CloudStatus.novigAddress]), or from the refusal code in the Novig line for an engine that predates it; a count of swaps only adds to the words.
+     */
+    fun addressTile(st: CloudStatus): Tile {
+        val said = st.novigAddress
+        val refused = said.startsWith("REFUSED") || (said.isBlank() && AddressWatch.ADDRESS_CODES.any { st.novigRoute.contains(it) })
+        val swaps = if (st.addressHandovers > 0) " · ${st.addressHandovers} swap${if (st.addressHandovers == 1) "" else "s"} tried" else ""
+        return when {
+            refused -> Tile("Address", "refused", "Novig refuses this runner; a new one is drawn$swaps", Tone.BAD)
+            said.startsWith("not tested") -> Tile("Address", "untested", "no Novig key on GitHub", Tone.NEUTRAL)
+            else -> Tile("Address", "accepted", "Novig takes this runner$swaps", Tone.GOOD)
+        }
     }
 
     /** The tiles of an engine that is not running: every figure is its last reading with its age, in grey, and the two that describe the LIVE state (trading, address) say they are not happening now. */
