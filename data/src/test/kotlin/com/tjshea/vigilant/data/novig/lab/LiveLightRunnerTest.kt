@@ -69,10 +69,10 @@ class LiveLightRunnerTest {
         override fun held(outcomeId: String) = heldPrice?.takeIf { outcomeId == "m1-b" }?.let { com.tjshea.vigilant.data.livebid.LiveBidHeld(it, 0L, null) }
     }
 
-    private fun runner(view: View, offers: MutableList<TailOffer>, board: String?, confirm: LiveConfirm? = null, clock: () -> Long = { now }, desk: Desk? = null) =
+    private fun runner(view: View, offers: MutableList<TailOffer>, board: String?, confirm: LiveConfirm? = null, clock: () -> Long = { now }, desk: Desk? = null, journal: (String) -> Unit = {}) =
         LiveLightRunner(
             scope = TestScope(), source = Src(event, listOf(market)), newView = { _: BookListener -> view },
-            fetch = { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock, bids = { desk }, publishMs = 0L,
+            fetch = { board?.let { Fetched(it, 5L) } }, onOffer = { offers += it }, confirm = { confirm }, leagues = { setOf("NBA") }, clock = clock, bids = { desk }, publishMs = 0L, journal = journal,
         ).also { it.bind() }
 
     private suspend fun LiveLightRunner.look() { readCatalog(); readScores(); scanGame("ev") }
@@ -236,6 +236,20 @@ class LiveLightRunnerTest {
         val good = runner(View(mapOf("m1" to book(bostonBid = 200, miamiBid = 200))), ArrayList(), scoreboard(105, 80))
         good.look()
         assertTrue(good.status.value.gameLines.getValue("ev").contains("meets the model's rules"))
+    }
+
+    @Test
+    fun `every decision goes to the journal with the game state behind it`() = runBlocking {
+        val view = View(mapOf("m1" to book(bostonBid = 200, miamiBid = 200)))
+        val lines = ArrayList<String>()
+        val r = runner(view, ArrayList(), scoreboard(105, 80), journal = { lines += it })
+        r.look()
+        val kinds = lines.map { Regex("\"kind\":\"([a-z-]+)\"").find(it)!!.groupValues[1] }.toSet()
+        assertTrue("a per-game scan summary and the offer: $kinds", "scan" in kinds && "offer" in kinds)
+        val scan = lines.first { it.contains("\"kind\":\"scan\"") }
+        assertTrue(scan, scan.contains("\"homeScore\":105") && scan.contains("\"awayScore\":80") && scan.contains("\"fractionLeft\"") && scan.contains("\"sides\""))
+        val offer = lines.first { it.contains("\"kind\":\"offer\"") }
+        assertTrue(offer, offer.contains("\"ask\"") && offer.contains("\"fair\"") && offer.contains("\"edge\""))
     }
 
     @Test
