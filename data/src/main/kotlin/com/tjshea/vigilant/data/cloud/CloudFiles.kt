@@ -115,6 +115,8 @@ data class CloudStatus(
     val novigRoute: String = "",
     /** Whether Novig accepts THIS GitHub machine's internet address, in words ([CloudNovig.addressWords]); blank = an engine older than this field. */
     val novigAddress: String = "",
+    /** Where the phone can read this run's CURRENT status straight from the engine ([CloudLive]); blank = no tunnel (the phone reads GitHub only). */
+    val liveUrl: String = "",
     /** The order the engine asks its APIs in, best first, with what each was measured to deliver (p90 age of its quotes by the books' own stamps, distance from Pinnacle): [com.tjshea.vigilant.data.scanner.SourceScore]. Empty before the first measurement. */
     val ranking: String = "",
     val bidsBytes: Int = 0,

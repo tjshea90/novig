@@ -72,6 +72,8 @@ class CloudEngine(
     /** One line on how Novig is being read now ([CloudNovig.route]). */
     private val novigRoute: () -> String = { "" },
     private val novigAddress: () -> String = { "" },
+    /** The tunnel address of the live status server, or blank ([CloudLive]); read each time a status is built. */
+    private val liveUrl: () -> String = { "" },
     /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
     private val addressWatch: AddressWatch? = null,
     /**
@@ -456,7 +458,14 @@ class CloudEngine(
     private var progressSig: Pair<String?, Int?>? = null
     private var progressChangedAt = 0L
 
+    private class StatusArgs(val rev: Long, val startedAtMs: Long, val untilMs: Long, val names: List<String>, val idle: Boolean)
+    @Volatile private var lastStatusArgs: StatusArgs? = null
+
+    /** The status as it is RIGHT NOW (heartbeat, scan progress, ticks), rebuilt from the engine's memory with the last arguments a published status used: what the live status server hands out every second (TCL80). */
+    fun liveStatus(): CloudStatus? = lastStatusArgs?.let { runCatching { status(it.rev, it.startedAtMs, it.untilMs, it.names, it.idle) }.getOrNull() }
+
     private fun status(rev: Long, startedAtMs: Long, untilMs: Long, names: List<String>, idle: Boolean, scanMs: Long = lastScanMs): CloudStatus {
+        lastStatusArgs = StatusArgs(rev, startedAtMs, untilMs, names, idle)
         val p = progress.get()
         if (scanning && !idle) {
             val sig = p?.step to p?.done
@@ -470,7 +479,7 @@ class CloudEngine(
             ackedRefreshAtMs = handledRefresh, scanRefreshAtMs = scanForRefresh, lastScanStartedAtMs = lastScanStartedAt, lastScanEndedAtMs = lastScanEndedAt, lastScanForRefreshAtMs = lastScanForRefresh,
             novigAgeMedianS = lastAges.novigMedianS, novigAgeMaxS = lastAges.novigMaxS, fairAgeMedianS = lastAges.fairMedianS, fairAgeMaxS = lastAges.fairMaxS,
             pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote, bidsAtMs = bidsAt, bidsCount = bidsCount,
-            novigRoute = runCatching(novigRoute).getOrDefault(""), novigAddress = runCatching(novigAddress).getOrDefault(""), ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
+            novigRoute = runCatching(novigRoute).getOrDefault(""), novigAddress = runCatching(novigAddress).getOrDefault(""), liveUrl = runCatching(liveUrl).getOrDefault(""), ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
             addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
             tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,
