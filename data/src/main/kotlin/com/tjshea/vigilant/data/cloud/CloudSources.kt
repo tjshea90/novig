@@ -162,6 +162,12 @@ class CloudSources(
     fun liveConfirm(s: ScanSettings): com.tjshea.vigilant.data.novig.lab.LiveConfirm? =
         if (boltActive(s) && s.gates.boltSocket) com.tjshea.vigilant.data.novig.lab.BoltLiveConfirm(boltFeed.lines.board) else null
 
+    /** The BoltOdds soft-book average as a live price feed for [com.tjshea.vigilant.data.pinnodds.PinnLiveRunner] (the phone's `BoltLiveFeed`, same arguments); the engine has no Pinnodds. */
+    fun boltLiveFeed(settings: () -> ScanSettings, sink: (String, Long) -> Unit, scope: kotlinx.coroutines.CoroutineScope, rules: () -> com.tjshea.vigilant.data.boltodds.BoltLiveConsensus.Rules): com.tjshea.vigilant.data.boltodds.BoltLiveFeed =
+        com.tjshea.vigilant.data.boltodds.BoltLiveFeed(
+            board = boltFeed.lines.board, socketLive = { boltFeed.lines.live }, ensureOpen = { boltFeed.arrange(settings()); boltFeed.lines.use() }, sink = sink, scope = scope, rules = rules,
+        ).also { boltFeed.liveTennis = true }
+
     fun unabatedActive(s: ScanSettings) = s.unabated && has(CloudKeys.UNABATED) && !unabatedClient.down()
     fun op4Active(s: ScanSettings) = s.oddsPapiFree && s.gates.op4Fair > 0 && has(CloudKeys.ODDSPAPI_FREE)
 
