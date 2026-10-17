@@ -195,8 +195,11 @@ fun FeedScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 )
-                ScanProgressBar(state.status)
-                if (cloud?.busy == true) CloudProgressBar(state.cloudUi.status)
+                // A fixed 4 dp slot: the bars coming and going must not change the top bar's height, or the list under it jumps on every refresh (Tj, 2026-10-17).
+                Box(Modifier.fillMaxWidth().height(4.dp)) {
+                    ScanProgressBar(state.status)
+                    if (cloud?.busy == true) CloudProgressBar(state.cloudUi.status)
+                }
             }
         },
     ) { padding ->
