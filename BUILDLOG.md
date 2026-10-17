@@ -318,3 +318,4 @@ day that changes.
 | v0.114.20 | code 316 | 2026-10-17T17:37Z | v0.114.20: PropLine +EV: pull down runs a PropLine-only sweep now; the Bet button opens the quick bet slip with the Kelly stake like the Vigilant feed (a tap on the result still opens the big data view)
 | v0.114.21 | code 317 | 2026-10-17T17:55Z | v0.114.21: PropLine +EV: the Bet button sits on every card (opens the quick bet slip), the engine's first sweep after a restart waits for its first scan so lines get Bet slips
 | v0.114.22 | code 318 | 2026-10-17T18:19Z | v0.114.22: Live tab and lab find NCAAF/NCAAB games on ESPN (FBS+FCS groups); advice and API-manager headers say how old they are; the engine keeps PropLine's list across restarts
+| v0.114.23 | code 319 | 2026-10-17T18:29Z | v0.114.23: PropLine +EV lists only lines Vigilant agrees on, swept hourly and on pull-down; the phone polls slower during an update download
