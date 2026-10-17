@@ -84,13 +84,26 @@ def save(path, obj):
 
 # ---- identity --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+def account_label():
+    """"acct-" + the first 6 hex of the SHA-1 of this Claude account's e-mail, read from the CLI's own config; the e-mail itself never leaves the file (this repo is public). None when it cannot be read.
+    A session that never ran `whoami` used to show as acct-unknown on the board (Tj, 2026-10-17, TCL86c)."""
+    try:
+        import hashlib
+        cfg = os.environ.get("CLAUDE_CONFIG_FILE") or os.path.expanduser("~/.claude.json")
+        mail = (json.load(open(cfg, encoding="utf-8")).get("oauthAccount") or {}).get("emailAddress", "").strip().lower()
+        return "acct-" + hashlib.sha1(mail.encode()).hexdigest()[:6] if mail else None
+    except Exception:
+        return None
+
+
 def identity():
     d = load(ID_FILE, {})
     if not d.get("nonce"):
         d["nonce"] = secrets.token_hex(3)
     if os.environ.get("COORD_LABEL"):
         d["label"] = os.environ["COORD_LABEL"]
-    d.setdefault("label", "acct-unknown")
+    if d.get("label") in (None, "", "acct-unknown") and not os.environ.get("COORD_LABEL"):
+        d["label"] = account_label() or "acct-unknown"
     d.setdefault("kind", "interactive")
     if os.environ.get("COORD_KIND") in ("interactive", "routine"):
         d["kind"] = os.environ["COORD_KIND"]
