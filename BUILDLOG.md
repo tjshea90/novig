@@ -325,3 +325,4 @@ day that changes.
 | v0.114.27 | code 323 | 2026-10-17T19:36Z | v0.114.27: Live light logs every decision (scans with score and clock, offers, bids and why it passed) to GitHub for analysis; the Live tab shares its budget; Unabated turned off by the API review
 | v0.114.28 | code 324 | 2026-10-17T20:04Z | v0.114.28: an order Novig leaves pending is cancelled by its id and re-read before the engine stops ordering
 | v0.114.29 | code 325 | 2026-10-17T20:15Z | v0.114.29: a manual bet whose order Novig leaves pending is cancelled by its id and re-read
+| v0.114.31 | code 327 | 2026-10-17T20:28Z | v0.114.31: Live engine-trading button lights up when the trading key is on GitHub; order errors say what Novig last returned; any non-live order status counts as finished
