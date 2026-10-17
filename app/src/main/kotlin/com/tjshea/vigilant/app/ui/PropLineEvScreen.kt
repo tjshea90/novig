@@ -81,6 +81,7 @@ fun PropLineEvScreen(
             "Swept ${DashboardModel.ago(now - feed.atMs)} · ${feed.games} games · ${feed.requests} requests · ${feed.tier.ifBlank { "?" }} plan" + (if (feed.note.isNotBlank()) " · ${feed.note}" else ""),
             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("propLineEvAge"),
         )
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             FilterChip(selected = vigilantAgrees, onClick = { vigilantAgrees = !vigilantAgrees }, label = { Text("Vigilant agrees (+EV)", maxLines = 1) }, modifier = Modifier.testTag("plVigAgrees"))
         }
