@@ -5758,3 +5758,6 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 "review boltodds, propline, and parlay-api docs. check that all three are being used correctly and that vigilant and the GitHub engine are using them to their full benefit. then check novig docs for its API for updates or changes and make sure the vigilant app and GitHub engine is using it correctly and to its full potential"
 - [ ] TCL107a Audit BoltOdds / PropLine / ParlayAPI use (app + engine) against BOLTODDS_API.md, research/propline/llms-full, PARLAY_API.md and the live engine status; fix gaps.
 - [ ] TCL107b Check Novig docs (docs.novig.us) for changes vs NOVIG_API.md; fix app/engine gaps. Write research/api_docs_audit_2026-10-17.md.
+- [x] TCL107a/b audit written (research/api_docs_audit_2026-10-17.md); live fee 0.06 all leagues fixed (FeesTest).
+- [ ] TCL107c soccer TEAM_TOTAL / TOTAL_1H: does any fair feed price them? TCL107d Novig /v3/history/* for closes/grading. TCL107e ApiScorecard.surplus per key (matches the pacer).
+- [x] TCL104c Feed summary row fixed height (video t1792277646868): one-line summary, Recheck always laid out.
