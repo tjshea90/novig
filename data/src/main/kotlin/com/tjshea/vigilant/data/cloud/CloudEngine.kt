@@ -104,6 +104,8 @@ class CloudEngine(
     private val messageSink: suspend (CloudMessages.Message) -> Unit = {},
     /** The engine's bid desk (TCL31, [CloudBidRunner]); null = this engine makes no bids. */
     private val bids: EngineBids? = null,
+    /** The engine's live lane (TCL109, [CloudLiveLane]); null = this engine runs none. */
+    private val live: EngineLive? = null,
     /** How often the bid desk runs between scans' lists (it reads fills, moves and posts bids on the lines it holds). */
     private val deskEveryMs: Long = 25_000L,
 ) {
@@ -150,6 +152,7 @@ class CloudEngine(
     @Volatile private var bidsOn = false
     /** The bid desk's last word, the phone's settings as the desk reads them, and one pass at a time. */
     @Volatile private var deskStatus: BidStatus? = null
+    @Volatile private var liveStatus: LiveLaneStatus? = null
     @Volatile private var phoneSettings: ScanSettings? = null
     private val deskLock = kotlinx.coroutines.sync.Mutex()
     @Volatile private var addressEnd = false
@@ -170,10 +173,13 @@ class CloudEngine(
     /** Runs until [untilMs] (the job's time limit) or until the phone has had the engine off for [idleExitMs]. The bid desk runs beside the scan loop and comes down with it. */
     suspend fun run(untilMs: Long, startedAtMs: Long = clock()): End = kotlinx.coroutines.coroutineScope {
         val desk = if (bids != null) launch { deskLoop() } else null
+        val liveJob = if (live != null) launch { liveLoop() } else null
         try {
             runLoop(untilMs, startedAtMs)
         } finally {
             desk?.cancel()
+            liveJob?.cancel()
+            if (live != null) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { runCatching { live.stop("the engine is ending") } }
             // Whatever ends the job (time, the phone's switch, the engine's hours, a refused address), the bids the engine has up come down: nothing rests on Novig for a desk that is no longer watching.
             if (bids != null) kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { deskDown("the engine is ending", force = true) }
         }
@@ -199,6 +205,21 @@ class CloudEngine(
             val s = phoneSettings ?: continue
             if (!s.cloudDrives || !manualOpen(s) || manualStopped()) { deskDown("the engine is off or outside its hours"); continue }
             deskPass(s)
+        }
+    }
+
+    /** The live lane beside the scan (TCL109): every 10 s it is told the phone's newest settings and starts, keeps or stops Live light, the tail taker and its bids; only inside the engine's hours. */
+    private suspend fun liveLoop() {
+        val l = live ?: return
+        while (currentScopeActive()) {
+            pause(10_000L)
+            val s = phoneSettings ?: continue
+            if (!s.cloudDrives || !manualOpen(s) || manualStopped()) {
+                if (liveStatus?.active == true) { runCatching { l.stop("the engine is off or outside its hours") }.onFailure { if (it is CancellationException) throw it } }
+                liveStatus = null
+                continue
+            }
+            liveStatus = try { l.pass(s, clock()) } catch (e: CancellationException) { throw e } catch (e: Exception) { log("live lane failed: ${e.javaClass.simpleName}: ${e.message?.take(120)}"); null }
         }
     }
 
@@ -510,6 +531,7 @@ class CloudEngine(
             advice = advice, apiCards = apiCards, governorOff = governor.askedOff().sorted(),
             deskActive = !idle && deskStatus?.active == true, deskNote = deskStatus?.note.orEmpty().take(500), deskResting = deskStatus?.resting ?: 0, deskRestingDollars = deskStatus?.restingDollars ?: 0.0,
             deskAtMs = deskStatus?.atMs ?: 0L, deskStopped = deskStatus?.stopped.orEmpty().take(200),
+            liveActive = !idle && liveStatus?.active == true, liveNote = liveStatus?.note.orEmpty().take(400), liveStopped = liveStatus?.stopped.orEmpty().take(200), liveAtMs = liveStatus?.atMs ?: 0L,
             resting = governor.resting(clock()).map { r -> "${ApiToggles.name(r.id)} until ${java.time.Instant.ofEpochMilli(r.untilMs).atZone(java.time.ZoneOffset.UTC).toLocalTime().withSecond(0).withNano(0)} UTC: ${r.reason}" },
         )
     }
