@@ -5685,4 +5685,4 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 
 ## TCL90 (Tj, chat t1792257861722, 2026-10-17)
 "the bet buttons in the propline +ev screen don't work right... it is opening a large screen with odds from different sports books. I want the bet button to do the same thing as the bet button in vigilant scanner" (quick bet slip, Kelly amount, one-press bet)
-- [ ] TCL90a PropLine +EV Bet button opens the Feed's quick bet sheet (ApiBetting), with the Kelly stake, not OpportunitySheet.
+- [x] TCL90a (PropLineEvScreen onBet -> LocalApiBet; v0.114.20)  PropLine +EV Bet button opens the Feed's quick bet sheet (ApiBetting), with the Kelly stake, not OpportunitySheet.
