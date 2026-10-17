@@ -122,7 +122,9 @@ jobs:
           if [ -f "$MAP" ]; then gzip -9 -c "$MAP" > "release-out/vigilant-${{ steps.version.outputs.tag }}-mapping.txt.gz"; else echo "::warning::No R8 mapping.txt found"; fi
           echo "Signing certificate verified against BRIEF.md's recorded fingerprint."
 
+      # If pushing the tag from the runner is refused (2026-10-17: it failed three times in a row on v0.114.17 with no tag created), the release action below creates the tag itself, server side, at this commit.
       - name: Create the release tag (server-side — this account's containers get HTTP 403 pushing refs/tags/*)
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -133,6 +135,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name: "Vigilant ${{ steps.version.outputs.tag }}"
           files: |
             release-out/*.apk
