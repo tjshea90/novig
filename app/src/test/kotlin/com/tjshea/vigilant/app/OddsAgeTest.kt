@@ -36,7 +36,7 @@ class OddsAgeTest {
     @Test
     fun `with live games on, a scanned row of a game that has started leaves the feed, a live-lane row stays`() {
         val now = o.event.startsTs + 60_000L
-        val started = o.copy(fairAsOfMs = now)
+        val started = o.copy(fairAsOfMs = now, bookFetchedAtMs = now)
         val lane = started.copy(liveAges = LiveAges(now, now, now, now))
         val base = SampleScan.state()
         val off = base.copy(settings = base.settings.copy(includeLive = false), feed = listOf(started, lane))
@@ -45,6 +45,18 @@ class OddsAgeTest {
         assertEquals(listOf(lane), on.feedAt(now))
         val before = base.copy(settings = base.settings.copy(includeLive = true), feed = listOf(started))
         assertEquals("before the start it is a pregame bet like any other", 1, before.feedAt(o.event.startsTs - 3_600_000L).size)
+    }
+
+    @Test
+    fun `a bet whose Novig price was read more than ten minutes ago leaves the main list for the old list, an unknown age does not`() {
+        val now = o.event.startsTs - 3_600_000L
+        val base = SampleScan.state()
+        val fresh = o.copy(fairAsOfMs = now, bookFetchedAtMs = now - 60_000L)
+        val old = o.copy(fairAsOfMs = now, bookFetchedAtMs = now - 11 * 60_000L)
+        val unknown = o.copy(fairAsOfMs = now, bookFetchedAtMs = null)
+        val s = base.copy(feed = listOf(fresh, old, unknown))
+        assertEquals(listOf(fresh, unknown), s.feedAt(now))
+        assertEquals(listOf(old), s.feedOldAt(now))
     }
 
     @Test
