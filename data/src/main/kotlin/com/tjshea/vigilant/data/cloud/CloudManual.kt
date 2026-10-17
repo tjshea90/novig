@@ -39,7 +39,7 @@ object CloudManual {
     /** [c] as the engine and the gate read it: an off that has reached its scheduled resume counts as on (with the cloud scan switched on in its copy of the settings). */
     fun effective(c: CloudConfig, now: Long): CloudConfig {
         val at = resumeAtMs(c) ?: return c
-        return if (now >= at) c.copy(on = true, settings = c.settings.copy(cloudScan = true, paused = false)) else c
+        return if (now >= at) c.copy(on = true, settings = c.settings.copy(gates = c.settings.gates.copy(cloudScan = true), pausedByHand = false)) else c
     }
 
     /** The config's manual fields for a Run at [now]: a Stop is cleared; the run lasts until the window opens by itself, or [RUN_MAX_MS] at most. */

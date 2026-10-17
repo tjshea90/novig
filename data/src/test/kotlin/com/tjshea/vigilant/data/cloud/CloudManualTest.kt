@@ -60,7 +60,7 @@ class CloudManualTest {
         assertEquals(et(17, 8), CloudManual.resumeAtMs(off))
         assertFalse(CloudManual.effective(off, et(17, 7, 59)).on)
         val back = CloudManual.effective(off, et(17, 8))
-        assertTrue(back.on && back.settings.cloudScan && !back.settings.paused)
+        assertTrue(back.on && back.settings.cloudScan && !back.settings.paused && back.settings.cloudDrives)
         assertEquals("off at 14:00 resumes tomorrow 08:00", et(18, 8), CloudManual.resumeAtMs(off.copy(rev = et(17, 14))))
         assertNull("the kill switch stays off", CloudManual.resumeAtMs(off.copy(settings = off.settings.copy(killed = true))))
         assertNull("a removed token stays off", CloudManual.resumeAtMs(off.copy(device = "token removed")))
