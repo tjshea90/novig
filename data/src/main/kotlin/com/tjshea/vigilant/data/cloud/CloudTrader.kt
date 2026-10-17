@@ -87,6 +87,12 @@ interface CloudOrderPort {
     suspend fun place(entry: TradeEntry, limitPrice: Double): Placed
     suspend fun cancelResting()
 
+    /**
+     * What became of an order whose end was never seen (an UNCONFIRMED entry): found by its client id (the entry's id) and read, never sent again. Filled / Missed once Novig says the order is over; null while it is
+     * still not known (the entry stays money at risk).
+     */
+    suspend fun reconcile(entry: TradeEntry): Placed? = null
+
     /** Every outcome the subaccount holds, whoever placed it (the engine, the phone's desks, Tj by hand); null = could not be read. */
     suspend fun positions(): List<com.tjshea.vigilant.data.novig.trading.NovigPosition>? = null
 
@@ -155,6 +161,21 @@ class CloudTrader(
         ledger = l.copy(entries = l.entries.filter { it.atMs >= cut })
     }
 
+    /** Looks up every UNCONFIRMED entry old enough: a fill makes it an ordinary open entry, an order that ended with nothing filled leaves the ledger. Nothing is ever sent. */
+    private suspend fun reconcileUnconfirmed(now: Long) {
+        val p = port ?: return
+        for (e in ledger.entries.filter { it.status == "UNCONFIRMED" && now - it.atMs >= RECONCILE_AFTER_MS }) {
+            val r = runCatching { p.reconcile(e) }.getOrNull() ?: continue
+            ledger = when (r) {
+                is CloudOrderPort.Placed.Filled -> ledger.copy(entries = ledger.entries.map { x ->
+                    if (x.id == e.id) x.copy(status = "OPEN", contracts = r.contracts, avgPrice = r.avgPrice, fee = r.feeDollars, cost = r.contracts * r.avgPrice * EvMath.CONTRACT_PAYOUT_DOLLARS + r.feeDollars, orderId = r.orderId, note = x.note + " | settled by lookup") else x
+                })
+                is CloudOrderPort.Placed.Missed -> ledger.copy(entries = ledger.entries.filter { it.id != e.id })
+                else -> ledger
+            }
+        }
+    }
+
     /** A settled entry's result written by the grader (TCL20e), or by a test. */
     fun settle(id: String, status: String, pnl: Double) {
         ledger = ledger.copy(entries = ledger.entries.map { if (it.id == id) it.copy(status = status, pnl = pnl) else it })
@@ -166,7 +187,7 @@ class CloudTrader(
     private fun open(e: TradeEntry, now: Long) = (e.status == "OPEN" || e.status == "UNCONFIRMED") && now - e.startsTs < EXPOSURE_AFTER_START_MS
 
     /** Stops ordering (a location refusal, a bad key): kept in the ledger so the phone says why and the next job knows. */
-    fun stop(why: String) { ledger = ledger.copy(stopped = why, stoppedAtMs = clock()) }
+    fun stop(why: String, holdMs: Long = STOP_HOLD_MS) { ledger = ledger.copy(stopped = why, stoppedAtMs = clock() - (STOP_HOLD_MS - holdMs).coerceAtLeast(0L)) }
 
     /** Called at the end of the engine's hours: whatever rests on Novig under the engine's key is cancelled. */
     suspend fun windowEnded() { runCatching { port?.cancelResting() } }
@@ -198,6 +219,7 @@ class CloudTrader(
             if (now - ledger.stoppedAtMs < STOP_HOLD_MS) return Report(mode, stopped = ledger.stopped)
             ledger = ledger.copy(stopped = "", stoppedAtMs = 0L)
         }
+        if (live) reconcileUnconfirmed(now)
         val rules = AutoBet.rules(s)
         val skipped = LinkedHashMap<String, Int>()
         fun skip(r: String) { skipped.merge(r, 1, Int::plus) }
@@ -284,7 +306,8 @@ class CloudTrader(
                         // possibly filled: counted as at risk, never sent again, ordering held while Tj / the grader reconcile
                         val u = entry.copy(status = "UNCONFIRMED", note = entry.note + " | " + r.why.take(160))
                         ledger = ledger.copy(entries = ledger.entries + u); placed += u; cash -= u.cost; risk += u.cost
-                        stopped = r.why; stop(r.why); break
+                        // A slow answer from Novig is not a refusal: ordering waits a minute and a half, the order is settled by looking it up at the next pass (never sent again), not held for half an hour.
+                        stopped = r.why; stop(r.why, UNCONFIRMED_HOLD_MS); break
                     }
                 }
             }
@@ -370,6 +393,10 @@ class CloudTrader(
 
         /** How long a stop holds live ordering before one pass tries again. */
         const val STOP_HOLD_MS = 30 * 60_000L
+        /** How long an unanswered order holds ordering: long enough for Novig to catch up, short enough to keep the day's volume. */
+        const val UNCONFIRMED_HOLD_MS = 90_000L
+        /** An UNCONFIRMED entry is looked up once it is this old. */
+        const val RECONCILE_AFTER_MS = 20_000L
 
         private fun money(v: Double) = String.format(java.util.Locale.US, "$%.2f", v)
     }

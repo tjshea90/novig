@@ -99,6 +99,17 @@ class CloudNovigPort(
         return null
     }
 
+    override suspend fun reconcile(entry: TradeEntry): CloudOrderPort.Placed? {
+        for (status in listOf("FILLED", "CANCELED", "REJECTED")) {
+            val hit = try { trading.orders(status, outcomeId = entry.outcomeId).firstOrNull { it.clientId == entry.id } } catch (e: CancellationException) { throw e } catch (e: Exception) { null } ?: continue
+            val fills = readFills(hit.orderId)
+            if (fills.isEmpty()) return CloudOrderPort.Placed.Missed("the order ended with nothing filled ($status)")
+            val qty = fills.sumOf { it.qty }
+            return CloudOrderPort.Placed.Filled(qty, if (qty > 0) fills.sumOf { it.cost } / (qty * EvMath.CONTRACT_PAYOUT_DOLLARS) else 0.0, fills.sumOf { it.fee }, hit.orderId)
+        }
+        return null
+    }
+
     override suspend fun positions(): List<com.tjshea.vigilant.data.novig.trading.NovigPosition>? = try {
         trading.positions()
     } catch (e: CancellationException) {
@@ -119,7 +130,7 @@ class CloudNovigPort(
     }
 
     companion object {
-        const val ORDER_WAIT_MS = 12_000L
+        const val ORDER_WAIT_MS = 25_000L
         const val POLL_MS = 400L
 
         /** The refusals that stop ordering: 451 (location / network), 401 (key), 403 (scope, VPN, KYC, rate), 423 (locked / halted / self-excluded). */
