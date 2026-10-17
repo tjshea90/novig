@@ -365,6 +365,14 @@ class CloudEngine(
                 job.cancel(CancellationException(restartReason))
                 break
             }
+            // A scan whose progress has not moved for PROGRESS_STALL_MS is frozen (Tj, 2026-10-17: "Stalled ... Novig prices 8378 of 11479" for minutes with nothing in the log): start it again (the Novig books
+            // already read are cached, so the new scan goes on from there), at most once in PROGRESS_RESTART_GAP_MS so a Novig outage does not turn into a restart loop.
+            if (progressChangedAt > 0L && now - progressChangedAt >= PROGRESS_STALL_MS && now - lastRestartAt >= PROGRESS_RESTART_GAP_MS) {
+                restartReason = "no progress for ${(now - progressChangedAt) / 1000}s at ${progressSig ?: "?"}"
+                log("scan frozen: $restartReason; Novig route: ${novigRouteNote()}")
+                job.cancel(CancellationException(restartReason))
+                break
+            }
             if (now - lastPublishedAt >= partialEveryMs) {
                 lastPublishedAt = now
                 partial.getAndSet(null)?.let { r ->
