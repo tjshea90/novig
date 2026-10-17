@@ -5,14 +5,14 @@ import com.tjshea.vigilant.data.scanner.CloudTradeMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.TailLiveSettings
 import com.tjshea.vigilant.data.tracker.TrackedBet
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class CloudLiveLaneTest {
     private fun s(mode: CloudTradeMode, tail: TailLiveSettings, cloud: Boolean = true) =
-        ScanSettings(cloudScan = cloud, tailLive = tail, gates = ApiGates(cloudTrading = mode))
+        ScanSettings(tailLive = tail, gates = ApiGates(cloudScan = cloud, cloudTrading = mode))
 
     @Test fun laneRunsOnlyWhenEngineDrivesTradesAndTailIsOn() {
         val on = TailLiveSettings(on = true)
@@ -46,7 +46,7 @@ class CloudLiveLaneTest {
         val e = CloudLiveLane.entry(bet, "live tail bet")
         assertEquals("live-b1", e.id)
         assertEquals(1L, e.contracts)
-        assertEquals(0.95, e.cost)
+        assertEquals(0.95, e.cost, 1e-9)
         assertFalse(e.note.startsWith("bid"))
     }
 
