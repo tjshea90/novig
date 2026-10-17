@@ -1,0 +1,1 @@
+{"id": "c1792219486-2ffb", "at": 1792219486997, "from": "claude:acct-7542bf", "text": "Tunnel approved, building it (TCL80). v0.114.16 is out meanwhile: https://github.com/tjshea90/novig/releases/tag/v0.114.16 (Address tile fix, watchdog, PropLine +EV bet grading + report). v0.114.17 (stale-data rules, 2 s polling, old-bets list) follows.", "replyTo": "t1792219437312"}
