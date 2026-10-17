@@ -64,6 +64,8 @@ class CloudLink(private val c: AppContainer) {
         val tradeKeyMadeAtMs: Long = 0L,
         val tradeKeyOnGitHub: Boolean = false,
         val rateRemaining: Int? = null,
+        /** The manual Run / Stop in words ([com.tjshea.vigilant.data.cloud.CloudManual.words]), or null when the schedule alone decides. */
+        val manualWords: String? = null,
         /** The newest settings revision this phone wrote to GitHub and when (its clock), for the "is GitHub using my settings" line ([com.tjshea.vigilant.data.cloud.CloudText.settings]). */
         val pushedRev: Long = 0L,
         val pushedAtMs: Long = 0L,
@@ -147,6 +149,48 @@ class CloudLink(private val c: AppContainer) {
             is CloudClient.Poll.NotModified -> "Token works."
             is CloudClient.Poll.Failed -> if (p.why.startsWith("not found")) "The token works, but the engine has not published yet. Turn Cloud scan on to start it." else p.why
         }
+        _ui.update { it.copy(note = msg) }
+        return msg
+    }
+
+    /** The manual Run / Stop (Tj, 2026-10-17), kept in a file so a restart of the app does not forget it: "run,stop" as epoch milliseconds. Both lapse by themselves ([com.tjshea.vigilant.data.cloud.CloudManual]). */
+    private val manualFile = File(c.app.filesDir, "cloud_manual")
+    @Volatile private var manualRunUntil = 0L
+    @Volatile private var manualStopUntil = 0L
+    @Volatile private var manualLoaded = false
+
+    private fun loadManual() {
+        if (manualLoaded) return
+        manualLoaded = true
+        runCatching { manualFile.readText().split(',').let { manualRunUntil = it[0].toLong(); manualStopUntil = it[1].toLong() } }
+    }
+
+    private fun manualWords() = com.tjshea.vigilant.data.cloud.CloudManual.words(CloudConfig(manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil), System.currentTimeMillis())
+
+    private suspend fun setManual(run: Long, stop: Long): String {
+        loadManual()
+        manualRunUntil = run; manualStopUntil = stop
+        runCatching { manualFile.writeText("$run,$stop") }
+        _ui.update { it.copy(manualWords = manualWords()) }
+        c.settingsStore.flow.value?.let { pushSettings(it, force = true) }
+        return _ui.value.note ?: ""
+    }
+
+    /** Run now, even outside the engine's hours (Settings › Cloud scan): the engine counts as open until the next opening or 12 hours at most, and GitHub is asked to start it. The schedule is untouched. */
+    suspend fun runOutsideHours(): String {
+        val s = c.settingsStore.flow.value
+        if (s?.cloudDrives != true) return "Switch on Settings › Cloud scan first (and un-pause scanning): the engine only runs for a phone that uses it.".also { m -> _ui.update { it.copy(note = m) } }
+        val (run, stop) = com.tjshea.vigilant.data.cloud.CloudManual.runFields(System.currentTimeMillis())
+        setManual(run, stop)
+        val msg = startEngine()
+        return if (run == 0L) msg else "Running outside its hours until " + (manualWords()?.substringAfter("until ")?.substringBefore(" (") ?: "later") + ". " + msg
+    }
+
+    /** Stop now: the engine ends, takes its own bids down and stays off until the next scheduled opening (tomorrow 8 am Eastern when it is inside its hours); a manual run outside the hours just ends. */
+    suspend fun stopUntilNextOpening(): String {
+        val (run, stop) = com.tjshea.vigilant.data.cloud.CloudManual.stopFields(System.currentTimeMillis())
+        setManual(run, stop)
+        val msg = if (stop > 0L) "Stopping the engine. It stays off until the next scheduled opening and then starts by itself." else "Ended the manual run. The engine starts again by itself at its next opening (8 am Eastern)."
         _ui.update { it.copy(note = msg) }
         return msg
     }
@@ -414,10 +458,11 @@ class CloudLink(private val c: AppContainer) {
         runCatching { wantedFile.writeText(if (wanted) "1" else "0") }
         // Not wanted and nothing owed: the engine is left alone (no request is made for a phone that never used the cloud scan).
         if (!wanted && !offPending.exists()) return
-        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt"
+        val key = (if (wanted) "on" else "off") + c.json.encodeToString(ScanSettings.serializer(), s).hashCode() + "r$refreshRequestedAt" + "m$manualRunUntil,$manualStopUntil"
         if (key == lastPushedKey && !force) return
         val rev = maxOf(System.currentTimeMillis(), lastRev + 1)
-        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt))
+        loadManual()
+        val why = client.writeConfig(CloudConfig(rev = rev, on = wanted, settings = s, device = android.os.Build.MODEL.orEmpty().take(40), refreshAtMs = refreshRequestedAt, manualRunUntilMs = manualRunUntil, manualStopUntilMs = manualStopUntil))
         if (why == null) {
             if (wanted) runCatching { sendKeys(auto = true) }
             lastPushedKey = key; lastRev = rev
