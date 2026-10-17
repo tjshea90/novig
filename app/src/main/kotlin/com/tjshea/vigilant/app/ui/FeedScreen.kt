@@ -330,6 +330,24 @@ fun FeedScreen(
                 items(shown, key = { it.key }) { o ->
                     OpportunityCard(o, state.settings, now, Modifier.padding(horizontal = 12.dp).animateItem(), onHide = { hide(o) }, injury = state.injuries[o.key], move = state.lineMoves[o.key]) { selected = o }
                 }
+                // Old bets (Tj, 2026-10-17): the Novig price or the other books' prices behind them are past the app's own old limits, so they are not in the list above; one tap shows them, marked OLD.
+                val oldBets = state.feedOldAt(now).let { viewFilter.apply(it) }
+                if (oldBets.isNotEmpty()) {
+                    item(key = "oldToggle") {
+                        TextButton(onClick = { showOld = !showOld }, modifier = Modifier.padding(horizontal = 12.dp).testTag("oldBetsToggle")) {
+                            Text(if (showOld) "Hide old bets (${oldBets.size})" else "Show old bets (${oldBets.size}): their prices are too old to trust")
+                        }
+                    }
+                    if (showOld) items(oldBets, key = { "old/" + it.key }) { o ->
+                        Column(Modifier.padding(horizontal = 12.dp).animateItem(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                "OLD: Novig price ${o.bookFetchedAtMs?.let { ((now - it) / 60_000L).coerceAtLeast(0L).toString() + " min" } ?: "age unknown"}, other books ${o.fairAsOfMs?.let { ((now - it) / 60_000L).coerceAtLeast(0L).toString() + " min" } ?: "age unknown"}. Prices are re-read when you tap it.",
+                                style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("oldBetLabel"),
+                            )
+                            OpportunityCard(o, state.settings, now, Modifier.alpha(0.55f), onHide = { hide(o) }, injury = state.injuries[o.key], move = state.lineMoves[o.key]) { selected = o }
+                        }
+                    }
+                }
             }
         }
     }
