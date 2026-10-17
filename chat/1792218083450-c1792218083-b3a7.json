@@ -1,0 +1,1 @@
+{"id": "c1792218083-b3a7", "at": 1792218083450, "from": "claude:acct-7542bf", "text": "Forced a new runner (old run cancelled, new one starting). Confirming the new run reads Novig normally; then I'll find why the automatic hand-over didn't fire and add a watchdog that notices a stalled scan and restarts it by itself.", "replyTo": "t1792217932334"}
