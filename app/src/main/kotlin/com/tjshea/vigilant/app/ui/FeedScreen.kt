@@ -445,6 +445,7 @@ private fun FeedSummary(
                 "Reading ${AppBook.name}'s board" + sourceNames(state).let { if (it.isEmpty()) "" else " and fair odds from $it" } + ". " +
                     "Bets appear here as ${AppBook.name}'s prices come in, likeliest edges first. " +
                     "You can switch apps: the scan keeps going and tells you when it's done.",
+                steady = true,
             )
             // Live games only mode: no scan ever runs, so "Tap Scan" is never the answer; the live lane's banner above says what it is watching.
             state.settings.liveOnly -> if (shown.isEmpty()) EmptyState(
@@ -503,6 +504,7 @@ private fun FeedSummary(
                     laterGamesText(result.stats.laterGames, state.settings),
                 action = if (result.stats.laterGames > 0) (if (state.settings.scanWindowHours < state.settings.daysAhead * 24) "Any time" else "Days ahead") else null,
                 onAction = { if (state.settings.scanWindowHours < state.settings.daysAhead * 24) onStartsWithin(0) else onOpenSettings() },
+                steady = true,
             )
             else -> Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

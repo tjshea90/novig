@@ -178,7 +178,7 @@ fun ScanButton(scanning: Boolean, enabled: Boolean, onScan: () -> Unit, modifier
     FilledTonalButton(
         onClick = onScan,
         enabled = enabled && !scanning,
-        modifier = modifier.padding(end = 8.dp),
+        modifier = modifier.padding(end = 8.dp).widthIn(min = 124.dp), // same width as "Scanning" so the top bar does not shift (TCL104)
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
     ) {
         if (scanning) {
@@ -265,8 +265,9 @@ fun LabeledValue(label: String, value: String, modifier: Modifier = Modifier, va
 }
 
 @Composable
-fun EmptyState(title: String, body: String, modifier: Modifier = Modifier, action: String? = null, onAction: () -> Unit = {}) {
-    Column(modifier.fillMaxWidth().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+fun EmptyState(title: String, body: String, modifier: Modifier = Modifier, action: String? = null, onAction: () -> Unit = {}, steady: Boolean = false) {
+    // steady: the Feed swaps between "Scanning" and "No +EV" about every second while the engine scans; one height so the page below does not jump (Tj, 2026-10-17, TCL104).
+    Column(modifier.fillMaxWidth().then(if (steady) Modifier.heightIn(min = 300.dp) else Modifier).padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Text(
             body,
