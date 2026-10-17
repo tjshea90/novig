@@ -551,18 +551,18 @@ class CloudEngine(
         val stale = rows.filter { now - (it.bookFetchedAtMs ?: 0L) > TRADE_RECHECK_AFTER_MS }
         if (stale.isEmpty()) return rows
         val ids = stale.map { it.market.marketId }.distinct().take(com.tjshea.vigilant.data.scanner.Scanner.MAX_RECHECK)
-        val rc = try {
-            scanner.recheck(forCloud(settings), ids) { _, _ -> }
+        // requoteListed, not recheck: recheck takes the scanner's mutex, which a running scan holds for its whole 5 to 7 minutes (2026-10-17: every mid-scan re-read waited it out, froze this loop and left 10 bets refused as "no price in 3 minutes").
+        val fresh = try {
+            scanner.requoteListed(forCloud(settings), stale.filter { it.market.marketId in ids }).associateBy { it.key }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             log("trading: the re-read before judging failed: ${e.javaClass.simpleName}")
             return rows
         }
-        val fresh = rc.result?.feed(forCloud(settings))?.associateBy { it.key } ?: run { log("trading: the re-read gave no list (${rc.error ?: "no scan yet"}): the stale prices are refused"); return rows }
         val staleKeys = stale.mapTo(HashSet()) { it.key }
-        val out = rows.mapNotNull { r -> if (r.key in staleKeys) fresh[r.key] else r }
-        log("trading: re-read ${ids.size} books before judging: ${out.count { it.key in staleKeys }} bets still +EV, ${stale.size - out.count { it.key in staleKeys }} no longer")
+        val out = rows.mapNotNull { r -> if (r.key in staleKeys) fresh[r.key] ?: r else r }
+        log("trading: re-read ${ids.size} books before judging: ${out.count { it.key in staleKeys && it.key in fresh }} bets re-priced, ${stale.count { it.key !in fresh }} kept as read")
         return out
     }
 
