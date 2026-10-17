@@ -59,6 +59,9 @@ fun PropLineEvScreen(
     var props by rememberSaveable { mutableStateOf("All") }   // All | Props | Game lines
     // Longshots carry the biggest edges on paper (a +1900 home run at +28%) and lose to the favorite-longshot bias (RESEARCH.md §8.1, §16.2): the list starts at +300 and under.
     var maxOdds by rememberSaveable { mutableStateOf(300) }
+    // Vigilant's own blend of the sharp books and PropLine's single-book fair disagree on most lines (2026-10-17 audit: Vigilant <= 0% on 470 of 500, PropLine +3.3% on the same): by default only the lines where
+    // Vigilant also shows +EV at Novig's price are listed (Tj, TCL95).
+    var vigilantAgrees by rememberSaveable { mutableStateOf(true) }
     // statusBarsPadding: this tab has no top bar of its own, and the title sat under the clock (Tj, 2026-10-16 screenshot: "the app is getting cut off at the top").
     var expanded by rememberSaveable { mutableStateOf(setOf<String>()) }
     var betting by remember { mutableStateOf<com.tjshea.vigilant.data.scanner.Opportunity?>(null) }
@@ -78,6 +81,9 @@ fun PropLineEvScreen(
             "Swept ${DashboardModel.ago(now - feed.atMs)} · ${feed.games} games · ${feed.requests} requests · ${feed.tier.ifBlank { "?" }} plan" + (if (feed.note.isNotBlank()) " · ${feed.note}" else ""),
             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("propLineEvAge"),
         )
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FilterChip(selected = vigilantAgrees, onClick = { vigilantAgrees = !vigilantAgrees }, label = { Text("Vigilant agrees (+EV)", maxLines = 1) }, modifier = Modifier.testTag("plVigAgrees"))
+        }
         val leagues = listOf("All") + feed.rows.map { it.league }.distinct().sorted()
         @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
         androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -97,8 +103,8 @@ fun PropLineEvScreen(
             Text("Odds up to", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             listOf(150, 300, 600, PropLineEvView.ANY_ODDS).forEach { v -> FilterChip(selected = maxOdds == v, onClick = { maxOdds = v }, label = { Text(if (v == PropLineEvView.ANY_ODDS) "Any" else "+$v") }, modifier = Modifier.testTag("plOdds-$v")) }
         }
-        val shown = remember(feed, league, minEv, props, maxOdds, now / 60_000L) {
-            PropLineEvView.select(feed.rows, league, minEv, props, now, maxOdds)
+        val shown = remember(feed, league, minEv, props, maxOdds, vigilantAgrees, now / 60_000L) {
+            PropLineEvView.select(feed.rows, league, minEv, props, now, maxOdds).let { l -> if (vigilantAgrees) l.filter { (it.vigilantEv ?: Double.NEGATIVE_INFINITY) > 0.0 } else l }
         }
         Text(
             "${shown.size} +EV lines at Novig" + if (shown.size != feed.rows.size) " (of ${feed.rows.size})" else "",
