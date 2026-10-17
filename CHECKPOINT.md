@@ -1,13 +1,13 @@
-# CHECKPOINT 3544 — read me first, then TASKS.md
+# CHECKPOINT 3545 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T15:55:30Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-28335dd4-j22axd` · **builds on:** `0dd3e402e` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T15:57:41Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-28335dd4-j22axd` · **builds on:** `63882ac71` (this checkpoint is the commit after it)
 
 ## Just done
-chat kind lease (coord.py --kind chat), engine bid TTL cap, reset/refresh, progress watchdog, update check; v0.114.18 gate running
+pre-release: v0.114.18: Reset engine, pull-to-refresh Engine tab, frozen Novig scan restarts, engine bids expire in 8 min if the engine dies, update check finds app release past data archives (versionCode 314, v0.114.18)
 
 ## Do this next
-wait for ship.sh gate, trigger release.yml, record-release, send Tj link; TCL84a alert, TCL86b/c remain
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.114.18), then run: bash tools/record-release.sh v0.114.18 314 "v0.114.18: Reset engine, pull-to-refresh Engine tab, frozen Novig scan restarts, engine bids expire in 8 min if the engine dies, update check finds app release past data archives"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ wait for ship.sh gate, trigger release.yml, record-release, send Tj link; TCL84a
 
 ## Last ten checkpoints
 ```
+  63882ac71 ckpt 3544: chat kind lease (coord.py --kind chat), engine bid TTL cap, reset/refresh, 
   98f1ab7b2 ckpt 3543: pre-ship: v0.114.18: Reset engine button, pull-to-refresh on Engine tab, fr
   8d462987a ckpt 3542: chat: TCL86 chat-wake should build
   e05e2d5a5 ckpt 3541: TCL81b: engine resumed 08:00 ET (dispatched), address accepted, tunnel live
@@ -25,8 +26,4 @@ wait for ship.sh gate, trigger release.yml, record-release, send Tj link; TCL84a
   f50a76f8d ckpt 3537: pre-ship: v0.114.17: the app can't show stale data (phone link, engine quie
   381640bde ckpt 3536: TCL69 origin dataset + digest table; TCL80 live tunnel code
   e8a954b21 ckpt 3535: TCL80 live tunnel: engine status server, tunnel step, phone live reader + c
-  eca75c18a ckpt 3534: pre-release: v0.114.17: the app can't show stale data (phone-link, engine q
 ```
-
-(7 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
