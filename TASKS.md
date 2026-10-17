@@ -5731,3 +5731,9 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 "these messages are still stale. also consider parlayapi usage. I just requested its list and it says it is out of usage today. isn't that too fast?"
 - [x] TCL99a CreditPace: a key first seen mid-period whose server used count exceeds this app's own charges by >5% of the limit is paced from the period's start (was: its whole limit spread over the days since first sight, holding ~everything back). CreditPaceTest.
 - [ ] TCL99b Check The Odds API advice with multiple keys (3,707 left over 14 days vs 471 credits today).
+
+## TCL100 (Tj, chat t1792264404796, 2026-10-17)
+"watch the live betting engine... if you can't see it, build a comprehensive logger for it that uploads to GitHub regularly for your analysis"
+- [ ] TCL100a LiveLightRunner journal (scan summaries per game, offers with rule/ask/fair/edge/state, bid want/pull/skip with reasons) -> live-light-DAY.jsonl on the phone (+ DataKeeper rule).
+- [ ] TCL100b Upload to phone-data/phone/live/ with the 15-min save (changed files only, gz); the taker's records (pinn-live/tail-live) too.
+- [ ] TCL100c After games settle: join results (ESPN finals) and write research/live_light_analysis_DATE.md.
