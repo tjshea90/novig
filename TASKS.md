@@ -5605,8 +5605,8 @@ Findings (2026-10-16): the phone's records already carry `made` (bet|bid), `how`
 
 ## TCL73 (Tj, chat t1792212927614, 2026-10-17)
 "for any losing bets and bid types with big enough samples, make the engine never auto bet or auto bid these types of bets and bids. for the vigilant android app, make any of these types of bets in any scanner have a red x or some type of warning sign big enough that I can't ignore it ... then consider: if I'm losing so much on these types of bets, for example player prop overs, shouldn't I just bet and bid the other side (the under in this example)? if this is logical, tune the GitHub engine to automatically do so"
-- [ ] TCL73a Engine: never auto bet/bid the types that lose with a big enough sample (class B gates; prop Overs qualifies: n678 z-2.77 both halves).
-- [ ] TCL73b App: big red X/warning on those bet types in EVERY scanner (feed, CNO, PropLine +EV, live, bet sheet).
+- [x] TCL73a (CloudTrader.profileBlock, v0.114.14) Engine: never auto bet/bid the types that lose with a big enough sample (class B gates; prop Overs qualifies: n678 z-2.77 both halves).
+- [x] TCL73b (LosingTypeBanner, v0.114.14) App: big red X/warning on those bet types in EVERY scanner (feed, CNO, PropLine +EV, live, bet sheet).
 - [ ] TCL73c Flip question (bet the Under when the Over loses): test on the data before building; answer Tj honestly.
 
 ## TCL74 (Tj, chat t1792213844722, 2026-10-17)
