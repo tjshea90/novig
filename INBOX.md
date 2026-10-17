@@ -236,3 +236,8 @@ The app is showing a lot of errors on the novig scanning. Diagnose and fix. I wa
 ```
 Make sure if the engine isn't running that the auto bids posted don't get stale and picked off at bad prices
 ```
+
+## 2026-10-17T15:54:16Z
+```
+force take the lease for chat
+```
