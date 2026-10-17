@@ -187,6 +187,19 @@ class CloudEngineTest {
     }
 
     @Test
+    fun `a reset asked for after the job began ends it as RESET, and the value read at its start never loops it`() = runBlocking {
+        val scanner = FakeScanner { _, _, _ -> report(result("a")) }
+        val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
+        val cfg = java.util.concurrent.atomic.AtomicReference(on.copy(resetAtMs = 5_000L))
+        val e = engine(scanner, { cfg.get() }, published)
+        val job = kotlinx.coroutines.GlobalScope.async { e.run(untilMs = System.currentTimeMillis() + 10_000) }
+        delay(150)
+        assertTrue("a reset already in the config when the job starts is handled, not obeyed", !job.isCompleted)
+        cfg.set(cfg.get().copy(resetAtMs = 6_000L))
+        assertEquals(CloudEngine.End.RESET, withTimeout(5_000) { job.await() })
+    }
+
+    @Test
     fun `switched off, nothing is scanned and the job ends after the idle time`() = runBlocking {
         val scanner = FakeScanner { _, _, _ -> report(result("a")) }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
