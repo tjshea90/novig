@@ -10,7 +10,7 @@ object CloudLive {
     /** A direct reading older than this is no longer "live": the phone says "via GitHub" again. */
     const val LIVE_FRESH_MS = 5_000L
 
-    private val TUNNEL = Regex("""https://[a-z0-9-]+\.trycloudflare\.com""")
+    private val TUNNEL = Regex("""https://[a-z0-9]+(?:-[a-z0-9]+)+\.trycloudflare\.com""")
 
     /** The quick tunnel's address out of cloudflared's log, or null while it has not printed one yet. */
     fun tunnelUrl(log: String): String? = TUNNEL.find(log)?.value
@@ -18,7 +18,7 @@ object CloudLive {
     /** The address the phone reads: the tunnel plus this run's path token, `/s/<token>/stream` for the stream and `/s/<token>` for one reading. */
     fun url(tunnel: String, token: String): String = tunnel.trimEnd('/') + "/s/" + token
 
-    private val SAFE = Regex("""^https://[a-z0-9-]+\.trycloudflare\.com/s/[0-9a-f]{24,}$""")
+    private val SAFE = Regex("""^https://[a-z0-9]+(?:-[a-z0-9]+)+\.trycloudflare\.com/s/[0-9a-f]{24,}$""")
 
     /** Only an address of exactly this shape is ever opened by the phone: a status file can never point it anywhere else. */
     fun safeUrl(u: String): Boolean = SAFE.matches(u)
