@@ -5,6 +5,7 @@ name: Chat wake
 on:
   push:
     paths: ['chat/**']
+  workflow_dispatch:
 concurrency:
   group: chat-wake
   cancel-in-progress: false
@@ -28,6 +29,7 @@ jobs:
           CLAUDE_FIRE_5D1E2D_URL: ${{ secrets.CLAUDE_FIRE_5D1E2D_URL }}
           CLAUDE_FIRE_5D1E2D_TOKEN: ${{ secrets.CLAUDE_FIRE_5D1E2D_TOKEN }}
         run: |
+          [ "${{ github.event_name }}" = workflow_dispatch ] && export WAKE_TEST=1
           git config user.name "Claude"; git config user.email "noreply@anthropic.com"
           git fetch -q origin claude-coord:refs/remotes/origin/claude-coord || true
           python3 -I tools/chat_wake.py run
