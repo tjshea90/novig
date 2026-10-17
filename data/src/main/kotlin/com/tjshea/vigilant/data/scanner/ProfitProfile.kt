@@ -52,19 +52,21 @@ class ProfitProfile(
             Triple("league|kind|side", "$league|$kind|$side", 3), Triple("league|kind", "$league|$kind", 2), Triple("kind|side", "$kind|$side", 2),
             Triple("league", league, 1), Triple("kind", kind, 1), Triple("side", side, 1),
             Triple("ev", evBucket(ev), 0), Triple("lead", leadBucket(leadMin), 0),
-        ).filter { !typeOnly || (it.first != "ev" && it.first != "lead") }
+        ).filter { !typeOnly || (it.first == "league|kind|side" || it.first == "league|kind" || it.first == "kind|side") }
         val hits = ArrayList<Hit>()
         for ((dim, key, specific) in keys) {
             val g = table[dim]?.get(key) ?: continue
             // A marginal dimension needs twice the sample: it is checked against every candidate, so it is where chance finds a "loser".
-            val need = if (specific >= 2) minN else 2 * minN
+            val need = if (typeOnly) maxOf(minN, TYPE_MIN_N) else if (specific >= 2) minN else 2 * minN
             if (g.n < need) continue
             hits += Hit(listOf(dimWords(dim), key.replace('|', ' ').trim()).filter { it.isNotBlank() }.joinToString(" "), g, specific, if (g.roi < 0 && g.t <= -tCut) -1 else if (g.roi > 0 && g.t >= tCut) 1 else 0)
         }
         if (hits.isEmpty()) return Judgement.NEUTRAL
         val losers = hits.filter { it.kind < 0 }
         val winners = hits.filter { it.kind > 0 }
-        val blocker = losers.filter { l -> winners.none { it.specific > l.specific } }.maxByOrNull { it.specific * 1000 + it.g.n }
+        // typeOnly: a loser stands unless a MORE SPECIFIC group with a big enough sample is not itself a loser (a neutral NFL|props|under clears NFL|props), not only unless it is a winner.
+        val blocker = if (typeOnly) losers.filter { l -> hits.none { it.specific > l.specific && it.kind >= 0 } }.maxByOrNull { it.specific * 1000 + it.g.n }
+        else losers.filter { l -> winners.none { it.specific > l.specific } }.maxByOrNull { it.specific * 1000 + it.g.n }
         // The more specific the group the more it says about THIS candidate: weights 4, 3, 2, 1 for league|kind|side down to the bucket dimensions.
         val score = hits.sumOf { (it.specific + 1) * it.g.roi * it.g.n / (it.g.n + SHRINK) } / hits.sumOf { it.specific + 1 }
         val blocked = blocker?.let { "your bet history says ${it.label} ${if (instrument == Instrument.BID) "bids" else "bets"} lose money (${it.g.n} settled, ROI ${pct(it.g.roi)}, win ${Math.round(it.g.win * 100)}%, t ${"%.1f".format(Locale.US, it.g.t)}) (Settings › Profit-proven only)" }
@@ -94,6 +96,9 @@ class ProfitProfile(
     companion object {
         /** A group's ROI counts as n / (n + SHRINK) of itself in the score: 100 settled bets count half. */
         const val SHRINK = 100.0
+
+        /** The engine's hard block by type needs this many settled bets in the group (Tj, 2026-10-17: "big enough samples"). */
+        const val TYPE_MIN_N = 100
         const val STAR_BASE = 0.5
         const val STAR_PER_T = 0.5
         const val STAR_MAX = 2.0
