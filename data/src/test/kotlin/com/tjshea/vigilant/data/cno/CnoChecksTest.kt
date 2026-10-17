@@ -96,7 +96,7 @@ class CnoChecksTest {
 
     @Test
     fun `a started game is judged net of Novig's taker fee, which can push it under the floor`() {
-        val live = row("live", 110, 0.4880, startsAt = now - 60_000) // +2.5% before the fee
+        val live = row("live", 110, 0.5050, startsAt = now - 60_000) // +6% before the fee, +3% after the 0.06 live fee
         val s = CnoChecks.screen(snap(live), CnoFilters(minEv = 0.0), now)
         val pick = s.picks.single()
         assertTrue(pick.live)
