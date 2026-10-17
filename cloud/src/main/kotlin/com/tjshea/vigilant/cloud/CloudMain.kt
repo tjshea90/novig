@@ -256,6 +256,23 @@ fun main(args: Array<String>) = runBlocking {
             recentTrades = { id -> novig.trades(id) }, log = log::invoke,
         )
     }
+    // The engine's live lane (TCL109): Live light, the tail taker and its bids on the runner, under the phone's tailLive switches and the engine's trading key; its fills join the ledger.
+    val liveLane = com.tjshea.vigilant.data.cloud.CloudLiveLane(
+        scope = scope, source = novig, stream = { novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream },
+        fetch = { url ->
+            val t0 = System.currentTimeMillis()
+            runCatching {
+                http.newCall(okhttp3.Request.Builder().url(url).header("User-Agent", "Mozilla/5.0").get().build()).execute().use { r ->
+                    if (!r.isSuccessful) null else com.tjshea.vigilant.data.live.Fetched(r.body?.string().orEmpty(), System.currentTimeMillis() - t0)
+                }
+            }.getOrNull()
+        },
+        tc = tradingClient, port = tradePort, dir = File(out, "live"), confirm = { s -> sources.liveConfirm(s) },
+        onEntry = { e -> trader.record(e); stageLedger(System.currentTimeMillis()) },
+        tell = { title, body -> postMessage(CloudMessages.Message("livestop-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title, body.take(400), 1, "CLOUD")) },
+        journalLine = { line -> runCatching { File(File(out, "cloud").also { it.mkdirs() }, "live-light-${java.time.LocalDate.now(java.time.ZoneId.of("America/New_York"))}-run$runId.jsonl").appendText(line + "\n") } },
+        log = log::invoke,
+    )
     var deskText = ""
     // Every bid's whole life (Tj, 2026-10-16: optimise bids over time from analysis of all of them): an ended bid is written once, a couple of minutes after it ended (a late fill still lands), to the day's `bids` journal,
     // which the archive loop gzips to the cloud-archive Release like the other journals. A bid carried into the next job may be written twice; the dataset tool keeps the newest.
