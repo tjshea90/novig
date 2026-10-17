@@ -73,6 +73,13 @@ fun LiveScreen(
 
             SectionTitle("Live light")
             LiveNote("Finds live prices that are obviously wrong (a team up 25 offered near 50/50, an alternate line out of line with its own ladder) from the score, the clock and Novig's live feed, and bets them at once. It needs only your Novig key and ESPN: no Pinnodds.")
+            LiveSwitch(
+                "Run it on GitHub", "GitHub's engine runs Live light, the tail bets and their bids (paper, or real when the engine's trading is LIVE and you buy with real money below); this phone only holds the switches and shows what it does. If the engine goes quiet, the phone takes the lane back.",
+                s.tailLive.engine, "liveEngineSwitch",
+            ) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(engine = v)) } }
+            state.cloudUi.status?.takeIf { s.engineLive && (it.liveNote.isNotBlank() || it.liveStopped.isNotBlank()) }?.let { st ->
+                LiveNote("GitHub's live lane" + (if (st.liveLive(now)) " is running: " else " last said: ") + st.liveNote + (st.liveStopped.takeIf { it.isNotBlank() }?.let { "\nStopped: $it" } ?: ""))
+            }
             TailLiveBlock(state, onUpdate)
             LightStatus(s, light, now)
 

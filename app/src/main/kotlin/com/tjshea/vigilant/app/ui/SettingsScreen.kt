@@ -2795,6 +2795,13 @@ private fun EngineTradingSection(state: UiState, onUpdate: ((ScanSettings) -> Sc
             "GitHub's engine runs your bid desk too (the Bids tab's slider and rules, the same desk): resting bids under the fair on the games that start too far out for a taker bet. While it is live your phone's own bid desk stands down; if the engine goes quiet the phone takes the bids back.",
             g.cloudBids, tag = "cloudBidsSwitch",
         ) { v -> onUpdate { it.copy(gates = it.gates.copy(cloudBids = v)) } }
+        u.status?.takeIf { it.liveNote.isNotBlank() || it.liveStopped.isNotBlank() }?.let { st ->
+            Text(
+                "Engine live lane: ${st.liveNote}" + (st.liveStopped.takeIf { it.isNotBlank() }?.let { "\nStopped: $it" } ?: ""),
+                style = MaterialTheme.typography.bodySmall, color = if (st.liveStopped.isNotBlank()) Edge.colors.warning else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp).testTag("cloudLiveLine"),
+            )
+        }
         u.status?.takeIf { it.deskNote.isNotBlank() || it.deskStopped.isNotBlank() }?.let { st ->
             Text(
                 "Engine bids: ${st.deskNote}" + (st.deskStopped.takeIf { it.isNotBlank() }?.let { "\nStopped: $it" } ?: ""),
