@@ -5651,3 +5651,9 @@ Real-time engine status in the app (<= 2 s): the engine opens a free Cloudflare 
 Cause found: `AppUpdater.check` calls `/repos/.../releases/latest`, which returns the newest Release of ANY kind, now a data archive (`propline-archive-2026-10-17`, no APK) -> `AppUpdate.parse` returns null -> never "newer", never notifies.
 - [ ] TCL83a Fix: read `/releases?per_page=30`, take the newest non-draft non-prerelease whose tag matches `v\d+\.\d+\.\d+` and has an `.apk` asset (AppUpdate.parse list variant) + test in AppUpdateTest with an archive release first in the list.
 - [ ] TCL83b Ship it (needs the repo lease; chat mode held none). Tj must install it by hand once; later updates notify.
+
+## TCL84 (Tj, chat t1792247226863, 2026-10-17)
+"it says novig http 502. any time there is any error like this for any connection or API, see if Claude can figure it out or reset it without delay"
+Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on every scan (Novig-side outage; address not refused, streak 0); the engine retries each scan and reads nothing meanwhile; bid desk kept 134 bids, no new candidates.
+- [ ] TCL84a Engine: on 5xx/timeouts from any connection, short backoff retry (not a 30 s scan cycle), then after N minutes of the same error write a `tools/tell_tj.py say` message and an `engine-alert` for sessions (class A, no money rule).
+- [ ] TCL84b A WATCH/chat session reads `status.scanNote`/`engine-log.txt` errors first and fixes what is ours (key, address, route); a pure Novig 5xx is reported, not "fixed".
