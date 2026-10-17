@@ -52,10 +52,12 @@ class CloudBidRunnerTest {
         val orders = LinkedHashMap<String, NovigOrder>()
         val fillsBy = HashMap<String, MutableList<NovigFill>>()
         val placed = ArrayList<Pair<String, String>>()
+        val ttls = ArrayList<Long?>()
         var n = 0
 
         override suspend fun placeOrder(outcomeId: String, price: Double, qty: Long, tif: String, clientId: String, ttlMs: Long?): String {
             placed += outcomeId to clientId
+            ttls += ttlMs
             val id = "o${++n}"
             orders[id] = NovigOrder(id, clientId, outcomeId.substringBefore('-'), outcomeId, price, qty, qty, tif, "OPEN", 0L, null)
             return id
@@ -144,6 +146,16 @@ class CloudBidRunnerTest {
         assertTrue("and still a plain UUID", NovigTradingClient.isUuid(r.trading.placed[0].second))
         assertEquals(1, st.resting)
         assertTrue(st.note, st.note.contains("1 bids resting"))
+    }
+
+    @Test
+    fun `an engine bid never rests on Novig longer than the engine's own cap, so a dead engine leaves nothing stale`() = runBlocking {
+        val r = rig()
+        put(r, "m1")
+        r.runner.pass(live, now)
+        assertEquals(1, r.trading.ttls.size)
+        val ttl = r.trading.ttls[0]!!
+        assertTrue("ttl $ttl must be within ${CloudBidRunner.ENGINE_BID_TTL_MS}", ttl <= CloudBidRunner.ENGINE_BID_TTL_MS)
     }
 
     @Test
