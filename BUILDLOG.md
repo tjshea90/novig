@@ -311,3 +311,4 @@ day that changes.
 | v0.114.13 | code 309 | 2026-10-16T22:23Z | PropLine grading source (app + engine grader); API manager lines-fed / only-it counts
 | v0.114.14 | code 310 | 2026-10-17T05:11Z | red STAY AWAY banner on losing bet types in every scanner; engine hard-blocks them; totals added to the engine's taker kinds; profit profile regenerated (2,210 bets); chat wake
 | v0.114.15 | code 311 | 2026-10-17T05:43Z | Run now / Stop now for the GitHub engine (Settings > Cloud scan), even outside its hours; schedule untouched; study records Novig overround
+| v0.114.16 | code 312 | 2026-10-17T06:44Z | Engine tab Address tile shows the real Novig verdict (red when refused); GitHub watchdog swaps a refused runner every 5 min; PropLine +EV bets graded and reported at 300 bets; standing job rule
