@@ -5669,3 +5669,8 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL86a A CHAT: wake that gets a build/ship request must take the repo lease itself when it is free (or free by idle/stale), work, ship, release it; today chat mode never holds the lease so it can only answer. Change CHAT_WAKE.md + the routine prompt (Tj must paste the new text) accordingly.
 - [x] TCL86b Route the fire to the account on duty (rotation.py chat) and fall back to the next account if it does not ack within 40 s.
 - [x] TCL86c Session start/acquire runs whoami automatically so no lease says acct-unknown; optional friendly label map (A/B/C, never emails) shown on the board (Tj chat t1792251390367).
+
+## TCL87 (Tj, chat t1792253934706 + t1792254132506, 2026-10-17)
+"the GitHub engine is not running well. do all the diagnostics you can. try to make it run smooth" / "maybe limit the amount of novig scans by taking out scans for games too far away or small or unprofitable markets"
+- [ ] TCL87a Loop watchdog false positive: every job since 12:08 UTC ended STALL at ~7.5 min (stall dumps all idle). Bound the watch loop's read-only steps (WATCH_STEP_MS 60 s) and count log activity as alive (STALL_HARD_MS 600 s). Verify the next job runs past 15 min.
+- [ ] TCL87b Trim Novig reads: far games, small markets, hopeless lines (below -10% EV ~40% of priced lines). Evidence first, class B gates.
