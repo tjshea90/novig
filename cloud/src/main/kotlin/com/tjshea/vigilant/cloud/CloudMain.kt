@@ -393,8 +393,10 @@ private object PreviousFeed {
 
 private class Log(private val file: File) {
     private val recent = ArrayDeque<String>()
+    @Volatile var lastWriteMs: Long = System.currentTimeMillis()
 
     operator fun invoke(s: String) {
+        lastWriteMs = System.currentTimeMillis()
         val line = "${Instant.now()} $s"
         println(line)
         runCatching { file.appendText(line + "\n") }
