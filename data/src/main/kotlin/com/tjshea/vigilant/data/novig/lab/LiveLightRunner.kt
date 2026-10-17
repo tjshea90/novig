@@ -453,6 +453,8 @@ class LiveLightRunner(
 
         /** Markets the lane may hold on the feed: a bbo market costs 8 of the key's 512 stream tokens, and the scan and the bids share them. */
         const val MAX_MARKETS = 48
+        /** A game's scan summary goes to the journal at most this often. */
+        const val JOURNAL_SCAN_MS = 20_000L
         const val CATALOG_MS = 30_000L
         const val STATE_MS = 3_000L
         const val DEBOUNCE_MS = 120L
