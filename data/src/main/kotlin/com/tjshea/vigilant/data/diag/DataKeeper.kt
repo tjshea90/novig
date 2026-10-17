@@ -33,6 +33,7 @@ object DataKeeper {
         Rule("lab", JOURNAL_DAYS, 40 * MB),
         Rule("pinn-live", JOURNAL_DAYS, 20 * MB),
         Rule("live-bids", JOURNAL_DAYS, 20 * MB),
+        Rule("live-light", JOURNAL_DAYS, 30 * MB),
         Rule("burst", JOURNAL_DAYS, 20 * MB),
         Rule("burst-trades", JOURNAL_DAYS, 10 * MB),
         Rule("race", JOURNAL_DAYS, 20 * MB),

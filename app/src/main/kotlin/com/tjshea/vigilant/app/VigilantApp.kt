@@ -1461,9 +1461,19 @@ class AppContainer(val app: Application) {
      * Live light (Tj, 2026-10-14): the push lane that finds obviously wrong live prices as they appear. Novig's one live connection (a view of it, pinned on the live games' markets), ESPN's score every 3 s,
      * and BoltOdds' soft-book consensus as a second opinion when that is on. It places nothing: what it finds goes to [tailTaker], behind the tail switches and limits.
      */
+    /** One JSON line per Live light decision, saved to GitHub with the bet history (`phone/live/`): what it judged, offered, bid and passed over, with the game state behind each. */
+    private val liveLightLog = Any()
+    private fun liveLightJournal(line: String) {
+        runCatching {
+            val day = java.time.LocalDate.now(java.time.ZoneId.of("America/New_York"))
+            val f = File(File(app.filesDir, "live-light").also { it.mkdirs() }, "live-light-$day.jsonl")
+            synchronized(liveLightLog) { f.appendText(line + "\n") }
+        }
+    }
+
     val liveLight: com.tjshea.vigilant.data.novig.lab.LiveLightRunner by lazy {
         com.tjshea.vigilant.data.novig.lab.LiveLightRunner(
-            scope = appScope, source = novig,
+            scope = appScope, source = novig, journal = ::liveLightJournal,
             newView = { l -> com.tjshea.vigilant.data.novig.stream.SharedStreamView({ novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream }, l) },
             fetch = ::feedRaceFetch, onOffer = { tailTaker.offer(it) }, leagues = { LAB_LEAGUES },
             bids = { if (lightBidsOn(settingsStore.flow.value)) lightBidDesk else null },

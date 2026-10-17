@@ -740,6 +740,25 @@ class CloudLink(private val c: AppContainer) {
                 delay(1_200L)
             }
         }
+ // Live light's decisions and the live taker's records (TCL100): one gzip per day file, sent again only when it changed.
+        if (failed == null) {
+            val known = runCatching { uploaded.read() }.getOrDefault(emptyMap())
+            for ((dir, prefix) in listOf("live-light" to "live-light-", "pinn-live" to "tail-live-")) {
+                val files = File(c.app.filesDir, dir).listFiles { x -> x.isFile && x.name.startsWith(prefix) && x.name.endsWith(".jsonl") }?.sortedBy { it.name }.orEmpty()
+                for (f in files) {
+                    if (sent >= MAX_PER_PASS) break
+                    val sig = "${f.length()}:${f.lastModified()}"
+                    val keyName = "$dir/${f.name}"
+                    if (known[keyName] == sig) continue
+                    val gz = withContext(Dispatchers.IO) { gzip(f) }
+                    if (gz.size > MAX_FILE_BYTES) continue
+                    val why = client.putFile(CloudClient.DATA_BRANCH, "phone/live/${f.name}.gz", gz, "${f.name} ${java.time.Instant.now()}")
+                    if (why != null) { failed = why; break }
+                    uploaded.update { it + (keyName to sig) }; sent++
+                    delay(1_200L)
+                }
+            }
+        }
         val line = "Saved to GitHub: $sent file(s) just now" + (failed?.let { ", stopped: $it" } ?: "") + " (${java.time.LocalTime.now().withNano(0)})"
         _ui.update { it.copy(saveLine = line) }
         if (sent > 0 || failed != null) c.eventLog.info("CLOUD", line)
