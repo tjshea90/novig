@@ -12,6 +12,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 BRANCH = "cloud-config"
 WAIT_S = 40            # a live watcher acks within ~6 s; this is generous
+ACK_WAIT_S = 60       # after waking an account: no ack/reply within this long and the next account on the duty order is woken too (TCL86b, Tj 2026-10-17)
 RECENT_S = 15 * 60     # only messages this young are woken for
 DEBOUNCE_S = 10 * 60   # one wake per ten minutes: the woken session reads every message
 FIRE_HEADERS = {"anthropic-beta": "experimental-cc-routine-2026-04-01", "anthropic-version": "2023-06-01", "Content-Type": "application/json"}
@@ -60,10 +61,16 @@ def fire(url, token, text, post=None):
         return json.loads(r.read().decode() or "{}")
 
 
-def wake(msgs, now, roster, away, env, post=None):
-    """Returns (outcome_text, ok). Pure apart from the POST."""
+def still_open(msgs, ids):
+    """Which of Tj's message ids have neither an ack nor a reply yet. Pure."""
+    seen = {m.get("ack") for m in msgs if m.get("ack")} | {m.get("replyTo") for m in msgs if m.get("replyTo")}
+    return [i for i in ids if i not in seen]
+
+
+def wake(msgs, now, roster, away, env, post=None, only=None):
+    """Returns (outcome_text, ok). Pure apart from the POST. [only] = wake just that account tag (the chain in run() goes down the duty order one at a time)."""
     tried = []
-    for tag in order(now, roster, away):
+    for tag in ([only] if only else order(now, roster, away)):
         url, tok = env.get("CLAUDE_FIRE_%s_URL" % tag.upper()), env.get("CLAUDE_FIRE_%s_TOKEN" % tag.upper())
         if not url or not tok:
             tried.append("acct-%s has no wake link saved on GitHub" % tag)
@@ -130,12 +137,23 @@ def run():
         print("a live session picked it up"); return 0
     if recent_wake(msgs, now_ms):
         print("already woken in the last 10 minutes"); return 0
-    text, ok = wake(msgs, datetime.datetime.now(datetime.timezone.utc), roster, away, os.environ)
-    at = int(time.time() * 1000)
-    m = {"id": "w%d" % at, "at": at, "from": "claude:github", "text": text, "replyTo": None, "ack": None, "files": [], "kind": "wake"}
-    tell_tj.put("chat/%013d-w%d.json" % (at, at), json.dumps(m))
-    print(text)
-    return 0 if ok else 0
+    # Down the duty order, one account at a time: the account whose slot is current first; one that does not ack or reply within ACK_WAIT_S has the next one woken as well (TCL86b).
+    ids = [m["id"] for m in todo]
+    tags = order(datetime.datetime.now(datetime.timezone.utc), roster, away)
+    for n, tag in enumerate(tags or [None]):
+        text, ok = wake(msgs, datetime.datetime.now(datetime.timezone.utc), roster, away, os.environ, only=tag)
+        at = int(time.time() * 1000)
+        m = {"id": "w%d" % at, "at": at, "from": "claude:github", "text": text, "replyTo": None, "ack": None, "files": [], "kind": "wake"}
+        tell_tj.put("chat/%013d-w%d.json" % (at, at), json.dumps(m))
+        print(text)
+        if not ok:
+            continue
+        time.sleep(ACK_WAIT_S)
+        msgs = load()
+        if not still_open(msgs, ids):
+            print("acct-%s answered" % tag); return 0
+        print("acct-%s did not answer within %d s: trying the next account" % (tag, ACK_WAIT_S))
+    return 0
 
 
 def selftest():
@@ -161,6 +179,11 @@ def selftest():
     env = {"CLAUDE_FIRE_AAAAAA_URL": "https://x/fire", "CLAUDE_FIRE_AAAAAA_TOKEN": "tok"}
     text, ok = wake([], t, roster, {}, env, post)
     assert ok and "acct-aaaaaa" in text and calls == ["https://x/fire"], text
+    assert still_open([tj], ["t1"]) == ["t1"] and still_open([tj, {"id": "a", "ack": "t1"}], ["t1"]) == []
+    calls.clear()
+    env2 = dict(env, CLAUDE_FIRE_BBBBBB_URL="https://y/fire", CLAUDE_FIRE_BBBBBB_TOKEN="tok2")
+    text, ok = wake([], t, roster, {}, env2, post, only="bbbbbb")
+    assert ok and "acct-bbbbbb" in text and calls == ["https://y/fire"], text
     text, ok = wake([], t, roster, {}, {}, post)
     assert not ok and "no wake link" in text
     print("chat_wake selftest ok"); return 0
