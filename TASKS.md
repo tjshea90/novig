@@ -5596,3 +5596,9 @@ Findings (2026-10-16): the phone's records already carry `made` (bet|bid), `how`
 - [x] TCL70a (CHAT_WAKE.md) (Tj: "this chat feature must be fixed. the Claude lease mechanism must also be fixed. ... my messages are seen within 30 seconds and responded to ... without usage being wasted ... whatever Claude account is active for its schedule should have a lightweight, low usage way to find my messages within 30 seconds ... research online ... maybe GitHub has a feature for this"): research wake-on-message options (PR comment subscription events, routine GitHub/API triggers, Monitor re-arm every 30 min) and what the 3 accounts need.
 - [ ] TCL70b Build the chosen mechanism + fix the lease (a stale/idle interactive lease blocked everyone; a session that holds the lease must be answering chat).
 - [ ] TCL70c Tj sets up the 3 routine API triggers + CLAUDE_FIRE_<TAG>_URL/_TOKEN secrets and prompt paragraph; then test one wake end to end (chat-wake.yml run + fired session). Until then wakes say 'no wake link saved'.
+
+## TCL72 (Tj, chat t1792212591330, 2026-10-17)
+"my money is steadily going down. analyze what bets and bids I'm profiting on and the types of bets and bids I'm losing most on and if the samples are big enough, tweak the engine"
+- [ ] TCL72a Pull the real P&L: wallet equity trend (status walletEquity), trades.json + trade-results (engine fills), phone-data bets (manual/phone-auto), bids journals; split by origin (manual vs auto vs bid), kind, league, edge band, odds band.
+- [ ] TCL72b Name what loses most and whether the sample passes the class B gates (200+ settled, interval excludes 0, two digests); write research/review/ note + CHANGES.md line.
+- [ ] TCL72c Tweak engine where proven (25% steps, one change a day, test, revert rule); tell Tj in chat.
