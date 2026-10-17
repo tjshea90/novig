@@ -5694,3 +5694,9 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 ## TCL92 (Tj, chat t1792259092686, 2026-10-17)
 "now in the propline list I see no bet buttons at all" (screenshot: collapsed/expanded cards, "did not match this line to a Novig market")
 - [x] TCL92a Bet button on the card header (always visible when the row has a slip); the engine's first PropLine sweep waits for the first scan (8 min max) so the first sweep after a restart has Novig markets to match. Ships v0.114.21.
+
+## TCL93 (Tj, chat t1792259401272 + t1792259274830, 2026-10-17)
+"these messages about the apis are stale. the API manager should be smart and live"; "the pull to refresh just gets stuck"
+- [x] TCL93a Engine reads the phone's out-of-band asks (PropLine refresh, manual Run/Stop) every few seconds during a scan too (CloudEngine watch loop sets manualCfg).
+- [x] TCL93b Advice and API manager headers say "as of ..." and "(engine not running)".
+- [ ] TCL93c Advice smarter: no "buy" advice for a monthly meter the engine's own pacing already stretches to the reset; The Odds API pool of keys counted together; live meter refresh between scans.
