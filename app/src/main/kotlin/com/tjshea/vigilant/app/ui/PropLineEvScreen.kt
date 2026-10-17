@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -37,6 +38,7 @@ import java.util.Locale
  * for every pregame game of the picked leagues (Novig's price against a no-vig fair line from the sharpest book that prices it) and publishes the +EV lines; this lists them, best first. A line is
  * information: PropLine read Novig's price some minutes ago (a prop's up to 15-45), so the Bet sheet in the +EV tab still re-prices at Novig's live book before anything is placed.
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun PropLineEvScreen(
     state: UiState,
