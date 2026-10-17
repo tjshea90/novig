@@ -104,7 +104,7 @@ fun FeedScreen(
     onPull: () -> Unit = onScan,
 ) {
     var selected by remember { mutableStateOf<Opportunity?>(null) }
-    var showOld by rememberSaveable { mutableStateOf(false) }
+    var showOld by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     // The ParlayAPI pick whose sheet is open (its key: a recheck re-prices it while it's open; TASKS.md P4).
     var parlaySelected by remember { mutableStateOf<String?>(null) }
     // One coarse clock for every card's "stale" check, instead of a ticker per card.
