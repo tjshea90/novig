@@ -64,6 +64,8 @@ class CloudTraderTest {
         override suspend fun cancelResting() { cancelled++ }
         var held: List<com.tjshea.vigilant.data.novig.trading.NovigPosition>? = null
         override suspend fun positions() = held
+        var reconciled: CloudOrderPort.Placed? = null
+        override suspend fun reconcile(entry: TradeEntry) = reconciled
     }
 
     @Test
@@ -78,6 +80,31 @@ class CloudTraderTest {
         // the same pass without that position orders
         port.held = emptyList()
         assertEquals(1, trader(port).pass(listOf(row("a")), settings(CloudTradeMode.LIVE), now).placed.size)
+    }
+
+    @Test
+    fun `an order Novig answers slowly holds ordering for a minute and a half, then is settled by lookup and never sent again`() = runBlocking {
+        var clockMs = now
+        val port = FakePort { CloudOrderPort.Placed.Unconfirmed("Novig took the order but had not finished it") }
+        val t = CloudTrader({ _, _ -> null }, port) { clockMs }
+        val first = t.pass(listOf(row("a")), settings(CloudTradeMode.LIVE), clockMs)
+        assertEquals(1, first.placed.size)
+        assertEquals("UNCONFIRMED", t.ledger.entries.single().status)
+        // 30 s later: still held (the short hold), nothing more is sent
+        clockMs = now + 30_000L
+        assertTrue(t.pass(listOf(row("b")), settings(CloudTradeMode.LIVE), clockMs).stopped.isNotEmpty())
+        assertEquals(1, port.sent.size)
+        // two minutes later Novig says the order filled: the pass settles it, then orders the next bet; the first order was not sent again
+        clockMs = now + 120_000L
+        port.reconciled = CloudOrderPort.Placed.Filled(60, 0.48, 0.01, "oid-1")
+        port.answer = { e -> CloudOrderPort.Placed.Filled(e.contracts, e.avgPrice, 0.0, "oid-2") }
+        val later = t.pass(listOf(row("b")), settings(CloudTradeMode.LIVE), clockMs)
+        val settled = t.ledger.entries.first()
+        assertEquals("OPEN", settled.status)
+        assertEquals(60L, settled.contracts)
+        assertEquals("oid-1", settled.orderId)
+        assertEquals("the first decision was never sent twice", 1, port.sent.count { it.first.id == settled.id })
+        assertEquals(later.line(), 1, later.placed.size)
     }
 
     @Test
