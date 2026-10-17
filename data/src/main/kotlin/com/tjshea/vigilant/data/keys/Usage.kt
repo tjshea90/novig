@@ -501,21 +501,21 @@ class CreditPace(
         val reset = u.resetAtMs ?: policy.nextReset(start)
         val z = zone()
         val endOfToday = Instant.ofEpochMilli(now).atZone(z).toLocalDate().plusDays(1).atStartOfDay(z).toInstant().toEpochMilli()
-        // A key first heard from part-way through its period already had credits spent when this app met it (Tj, 2026-10-17: a Starter key met on the 16th with 49% used showed "out of usage today" for days, because
-        // its whole limit was spread over the days left): only what was LEFT at that first sight is spread over the days left. What this app spent on the key since is [KeyUsage.charged]; the rest of [KeyUsage.used] was before.
-        val firstSeen = u.firstSeenMs
-        val usedBefore = if (firstSeen != null && firstSeen > start) (u.used.toLong() - u.charged).coerceIn(0L, limit.toLong()).toInt() else 0
-        val spread = limit - usedBefore
-        val pool = (spread - reserve).coerceAtLeast(0).toLong()
+        // A key first heard from part-way through its period may already have been used (Tj, 2026-10-17: a Starter key met on the 16th with 49% used showed "out of usage today" for days, because its whole limit was spread over
+        // only the days since this app met it): when the server's used count is well above what this app itself charged since first sight ([KeyUsage.charged]), the key had a history and is paced from the period's start.
+        // A plan bought late in the month (used about what this app charged) is still spread over the days left.
+        val usedBefore = (u.used.toLong() - u.charged).coerceAtLeast(0L)
+        val hadHistory = usedBefore > limit * HISTORY_FRACTION
+        val pool = (limit - reserve).coerceAtLeast(0).toLong()
         // Spread over what's left of the period from the key's first answer (ParlayAPI's credits run on the calendar month: a plan bought on
         // the 30th gets its whole month's credits for that last day, not a thirtieth of them; checked with Tj's key 2026-09-30), and a key
         // seen since before the period began over the whole period. Through the end of today (Tj's day), never less than a whole day.
-        val from = maxOf(start, u.firstSeenMs ?: start).coerceAtMost(reset - 1)
+        val from = (if (hadHistory) start else maxOf(start, u.firstSeenMs ?: start)).coerceAtMost(reset - 1)
         val window = reset - from
         val elapsed = maxOf(endOfToday - from, minOf(DAY_MS, window)).coerceAtMost(window)
         val allowed = pool * elapsed / window
         val kept = if (keepOfDay > 0.0) (pool * minOf(DAY_MS, window) / window * keepOfDay).toLong() else 0L
-        return (spread - allowed + kept).toInt()
+        return (limit - allowed + kept).toInt()
     }
 
     /** A free plan's key (the server said its allowance is [freeLimit] or less): used for scans after the keys before it, down to [freeReserve]. */
