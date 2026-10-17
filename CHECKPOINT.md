@@ -1,21 +1,23 @@
-# CHECKPOINT 3515 — read me first, then TASKS.md
+# CHECKPOINT 3516 — read me first, then TASKS.md
 
-**Written:** 2026-10-16T23:22:17Z · **tests:** all 5 fast checks green
-**Branch:** `claude/jolly-knuth-mu4imt` · **builds on:** `73c9c0e49` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T03:03:55Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-b02146f9-09npa9` · **builds on:** `6fb557628` (this checkpoint is the commit after it)
 
 ## Just done
-WATCH 19:20 slot: engine healthy, no changes
+TCL71a/b code edits (bolt socket forced on engine, PropLine shares), TASKS TCL70/71
 
 ## Do this next
-TCL68 timing result, TCL69 build
+run tests, ship, confirm bolt fetches, then TCL70 design
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  8f2161d07 ckpt 3515: WATCH 19:20 slot: engine healthy, no changes
   73c9c0e49 ckpt 3514: TCL69 written (origin column)
   efc7bb2b7 ckpt 3513: TCL68 handoff state written
   cd9abe048 ckpt 3512: TCL68: timing study script + propline.yml timing task
@@ -25,5 +27,7 @@ TCL68 timing result, TCL69 build
   b8beaf872 ckpt 3508: pre-release: PropLine is now a grading source (box scores, scores) in the a
   70b472c6f ckpt 3507: TCL67b: PropLineScores verified on real shapes
   347aaced5 ckpt 3506: fix probe indentation
-  c4b130175 ckpt 3505: TCL67: PropLineScores grading source + CLAUDE.md autonomy rule
 ```
+
+(4 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
