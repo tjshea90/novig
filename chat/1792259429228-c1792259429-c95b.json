@@ -1,0 +1,1 @@
+{"id": "c1792259429-c95b", "at": 1792259429228, "from": "claude:acct-7542bf", "text": "Found it: the engine only noticed the PropLine pull-to-refresh between scans, not during one, so it sat. Fixed (the engine now reads it every few seconds, even mid-scan). Needs an engine restart to take effect, doing it right after the app release finishes. Sorry.", "replyTo": "t1792259274830"}
