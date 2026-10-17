@@ -61,6 +61,14 @@ data class PlEvRow(
     val vigilantEv: Double? = null,
     val vigilantStars: Double? = null,
     val opp: String? = null,
+    /**
+     * Novig's price for the same line from the ENGINE's own read when the sweep found it (TCL75, Tj 2026-10-17: "confirm the novig price is still available"): American, when that read was made, the dollars
+     * offered at it, and the fair Vigilant used. Null = the engine's scan did not price this line (availability unknown; PropLine's own `price` is minutes old).
+     */
+    val novigNowPrice: Int? = null,
+    val novigNowAtMs: Long? = null,
+    val novigNowDepth: Double? = null,
+    val vigilantFair: Double? = null,
     /** How often the player went over/under this line recently (PropLine `/trends`, props only): "last 10: Over 7, Under 3 · last 20: Over 11, Under 9 · averages 5.9 (line 5.5)"; blank = not read. */
     val trend: String = "",
 )
@@ -229,6 +237,8 @@ object PropLineMatch {
         val o = find(row, all) ?: return row
         return row.copy(
             vigilantEv = o.evPercent, vigilantStars = o.rating?.stars,
+            novigNowPrice = o.quote?.let { com.tjshea.vigilant.engine.Odds.probabilityToAmerican(it.price.coerceIn(0.001, 0.999)) }, novigNowAtMs = o.bookFetchedAtMs,
+            novigNowDepth = o.depth?.dollarCost, vigilantFair = o.fairProbability,
             opp = runCatching { com.tjshea.vigilant.data.cloud.CloudCodec.encode(o).toString() }.getOrNull(),
         )
     }
