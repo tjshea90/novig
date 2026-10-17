@@ -17,11 +17,11 @@ def load(d, since="0000"):
     return rows
 
 def settled(rows):
-    return [r for r in rows if r.get("result") in ("won", "lost", "push") and r.get("cost")]
+    return [r for r in rows if r.get("result") in ("won", "lost", "push") and r.get("stake")]
 
 def stat(rs):
-    n = len(rs); cost = sum(r["cost"] for r in rs); pr = sum(r.get("profit") or 0 for r in rs)
-    rets = [(r.get("profit") or 0) / r["cost"] for r in rs]
+    n = len(rs); cost = sum(r["stake"] for r in rs); pr = sum(r.get("profit") or 0 for r in rs)
+    rets = [(r.get("profit") or 0) / r["stake"] for r in rs]
     m = sum(rets) / n if n else 0
     sd = math.sqrt(sum((x - m) ** 2 for x in rets) / (n - 1)) if n > 1 else 0
     z = m / (sd / math.sqrt(n)) if sd else 0
@@ -56,4 +56,4 @@ if __name__ == "__main__":
     split(rows, "league", lambda r: r.get("league"))
     split(rows, "EV at placing", lambda r: band(r.get("ev"), [0.01, 0.02, 0.03, 0.05, 0.08], "<%.2f"))
     split(rows, "lead (min before start)", lambda r: band(r.get("leadMin"), [60, 360, 1440, 4320], "<%d"))
-    split(rows, "cost per $ (price): <.25 longshot .. >.75 fav", lambda r: band(r["cost"] / r["stake"] if r.get("stake") else None, [0.25, 0.4, 0.5, 0.6, 0.75], "<%.2f"))
+    split(rows, "cost per $ (price): <.25 longshot .. >.75 fav", lambda r: band(r["cost"] if r.get("stake") else None, [0.25, 0.4, 0.5, 0.6, 0.75], "<%.2f"))
