@@ -321,3 +321,4 @@ day that changes.
 | v0.114.23 | code 319 | 2026-10-17T18:29Z | v0.114.23: PropLine +EV lists only lines Vigilant agrees on, swept hourly and on pull-down; the phone polls slower during an update download
 | v0.114.24 | code 320 | 2026-10-17T18:40Z | v0.114.24: the Live tab shares its stream budget across all live games instead of three games taking it all
 | v0.114.25 | code 321 | 2026-10-17T18:54Z | v0.114.25: the PropLine +EV list is retired (its prop Overs lose; no tab, no card, the engine no longer sweeps it); PropLine odds, CLV and grading stay
+| v0.114.26 | code 322 | 2026-10-17T19:26Z | v0.114.26: ParlayAPI and other monthly credits are paced fairly for a key first met mid-month (no more false 'out of usage today')
