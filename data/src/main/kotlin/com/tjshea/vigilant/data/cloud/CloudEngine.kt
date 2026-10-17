@@ -275,7 +275,7 @@ class CloudEngine(
                 return End.ADDRESS
             }
             // A scan cut short by the phone's word (a refresh, new settings) starts again at once; one that ran to its end waits the gap.
-            if (!restarted) pause((cfg.passGapSeconds.coerceIn(5, 600) * 1000L))
+            if (!restarted) pause(if (novigWatch.active) novigWatch.backoffMs() else (cfg.passGapSeconds.coerceIn(5, 600) * 1000L))
         }
         return End.TIME_UP
     }
@@ -439,6 +439,7 @@ class CloudEngine(
             return@supervisorScope false
         }
         scanning = false
+        novigWatch.observe(report.errors, clock())?.let { ev -> novigOutage(ev) }
         scanNote = describe(report)
         log("scan report: $scanNote")
         feedLines = report.sources.map { FeedLine(it.id, it.name, it.fetched, it.reused, it.matched, it.standingBy, it.skipped, it.error?.take(120), it.heldBack?.take(120)) }
@@ -562,6 +563,23 @@ class CloudEngine(
         val out = rows.mapNotNull { r -> if (r.key in staleKeys) fresh[r.key] else r }
         log("trading: re-read ${ids.size} books before judging: ${out.count { it.key in staleKeys }} bets still +EV, ${stale.size - out.count { it.key in staleKeys }} no longer")
         return out
+    }
+
+    /** Novig's server errors across scans (TCL84): a short retry wait, one message when it lasts, one when it ends. */
+    private val novigWatch = NovigErrorWatch()
+
+    private suspend fun novigOutage(ev: NovigErrorWatch.Event) {
+        val now = clock()
+        when (ev) {
+            NovigErrorWatch.Event.ALERT -> {
+                log("ALERT: Novig has answered with server errors for ${novigWatch.outageMs(now) / 60_000L} min (${novigWatch.last}): retrying every ${novigWatch.backoffMs() / 1000}s")
+                say(CloudMessages.Message("novig-5xx-$now", now, "engine", "alert", "Novig is failing (server errors)", "Novig's servers have answered with errors for ${novigWatch.outageMs(now) / 60_000L} minutes (${novigWatch.last}). The engine keeps retrying with a short wait and starts reading again by itself the moment Novig answers; the address and keys are fine. Nothing to do unless it lasts for hours.", 1, null))
+            }
+            NovigErrorWatch.Event.RECOVERED -> {
+                log("Novig is answering again")
+                say(CloudMessages.Message("novig-ok-$now", now, "engine", "info", "Novig is answering again", "The server errors have stopped and the engine is scanning normally.", 0, null))
+            }
+        }
     }
 
     /** Says something to Tj in the phone's Messages (words only: nothing that looks like a key goes out). */
