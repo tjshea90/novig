@@ -583,7 +583,10 @@ class CloudEngine(
 
         /** The settings the cloud scans under: the phone's, with the parts that only make sense on the phone switched off. */
         fun forCloud(s: ScanSettings): ScanSettings = s.copy(
-            scanner = ScannerMode.VIGILANT, includeLive = false, gates = s.gates.copy(liveOnly = LiveOnlyMode()),
+            scanner = ScannerMode.VIGILANT, includeLive = false,
+            // BoltOdds is read from its sockets on the runner whatever the phone's socket switch says (Tj, 2026-10-17: "my boltodds works fine from my phone. see if it can be reset on GitHub"): with the switch off the engine fell
+            // back to the REST snapshot, which Bolt caps at 6 a minute per address, and a shared runner address answered 429 on both keys for hours. The phone's own switch is untouched.
+            gates = s.gates.copy(liveOnly = LiveOnlyMode(), boltSocket = true),
             // The engine posts the bids itself (TCL31): the scan then runs the bid profile (far lane, many, deployment) exactly as a phone with auto bids on does.
             maker = s.maker || s.engineBids, makerRecommend = s.makerRecommend && !s.engineBids,
             // The long scan keeps the soonest games' fair odds and likeliest Novig books young (Tj, 2026-10-15: "Is this speed too slow for pre game betting and bidding?"): see [com.tjshea.vigilant.data.scanner.ScanGuards.hotRefresh].

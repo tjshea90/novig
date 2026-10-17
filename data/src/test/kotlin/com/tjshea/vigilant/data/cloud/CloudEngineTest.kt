@@ -525,4 +525,10 @@ class CloudEngineTest {
         e.run(untilMs = System.currentTimeMillis() + 100)
         assertTrue(published.mapNotNull { it.first }.any { it.rows.size == 1 })
     }
+
+    @Test fun `the engine reads BoltOdds by socket even when the phone's socket switch is off`() {
+        val phone = ScanSettings(gates = ScanSettings().gates.copy(boltSocket = false))
+        assertFalse(phone.gates.boltSocket)
+        assertTrue(CloudEngine.forCloud(phone).gates.boltSocket)
+    }
 }
