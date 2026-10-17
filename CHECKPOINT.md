@@ -1,13 +1,13 @@
-# CHECKPOINT 3585 — read me first, then TASKS.md
+# CHECKPOINT 3586 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T19:36:45Z · **tests:** all 5 fast checks green
-**Branch:** `claude/keen-keller-8fzr9r` · **builds on:** `39e9ae24c` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T19:46:57Z · **tests:** all 5 fast checks green
+**Branch:** `claude/wizardly-meitner-h2g4pr` · **builds on:** `035a562d0` (this checkpoint is the commit after it)
 
 ## Just done
-v0.114.27 released; BoltOdds key on GitHub, switch request sent
+Engine: pending IOC is cancelled by id and re-read before the 'unconfirmed' stop (CloudNovigPortTest 8 pass)
 
 ## Do this next
-check BoltOdds sockets in the engine log; TCL100d grader after live games; TCL93c/TCL99b/TCL94b-c/TCL97b open
+ship in next release (full gate), restart engine so cloud picks it up; watch status.tradeNote
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ check BoltOdds sockets in the engine log; TCL100d grader after live games; TCL93
 
 ## Last ten checkpoints
 ```
+  e4bb873f6 ckpt 3585: v0.114.27 released; BoltOdds key on GitHub, switch request sent
   70572032a ckpt 3584: pre-release: v0.114.27: Live light logs every decision (scans with score an
   7cb98b00e ckpt 3583: pre-ship: v0.114.27: Live light logs every decision (scans with score and c
   e11340b99 ckpt 3582: TCL101a: API review; Unabated off; BoltOdds idle flagged to Tj
@@ -25,5 +26,7 @@ check BoltOdds sockets in the engine log; TCL100d grader after live games; TCL93
   53cc017be ckpt 3578: TCL99a: credit pacing no longer locks out a key first met mid-month with a 
   dbe32328a ckpt 3577: v0.114.25 released: PropLine +EV list retired; engine restarted with the sw
   153616c86 ckpt 3576: pre-release: v0.114.25: the PropLine +EV list is retired (its prop Overs lo
-  14425b4cd ckpt 3575: TCL98: PropLine +EV list retired (engine sweep off, app tab and card hidden
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
