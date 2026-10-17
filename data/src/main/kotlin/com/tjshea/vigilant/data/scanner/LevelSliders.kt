@@ -166,9 +166,14 @@ object BetSlider {
     fun minOdds(level: Int): Int = when { level <= 15 -> -150; level <= 60 -> -200; level <= 85 -> -300; else -> 0 }
     fun favouriteExtra(level: Int): Double = Levels.curve(level, listOf(1 to 0.015, 100 to 0.005))
     fun horizonHours(level: Int): Int = Levels.curve(level, listOf(1 to 6.0, 50 to 8.0, 100 to 24.0)).roundToInt()
+    /**
+     * Totals come in from the first tier (Tj, 2026-10-17: "analyze what bets and bids I'm profiting on ... and if the samples are big enough, tweak the engine"; research/review/pnl_2026-10-17.md): over 2,000 settled
+     * bets and bids from 09-25 to 10-16, game and team totals returned +33.4% on 390 (z +2.5, positive in both halves of the period, CLV +1.6%), and PropLine's resolved archive agrees on 1,471 game totals (+9.5%, t about 3.7),
+     * while the taker lane's old kinds (props, moneylines, spreads) were its losers. They only ADD volume here: every bet still needs the same edge, books, trap guard and Kelly limits.
+     */
     fun kinds(level: Int): Set<BetKind> = when {
-        level <= 70 -> setOf(BetKind.PROP, BetKind.MONEYLINE, BetKind.SPREAD)
-        level <= 88 -> setOf(BetKind.PROP, BetKind.MONEYLINE, BetKind.SPREAD, BetKind.TEAM_TOTAL, BetKind.PERIOD)
+        level <= 70 -> setOf(BetKind.PROP, BetKind.MONEYLINE, BetKind.SPREAD, BetKind.TOTAL, BetKind.TEAM_TOTAL)
+        level <= 88 -> setOf(BetKind.PROP, BetKind.MONEYLINE, BetKind.SPREAD, BetKind.TOTAL, BetKind.TEAM_TOTAL, BetKind.PERIOD)
         else -> BetKind.entries.toSet()
     }
 

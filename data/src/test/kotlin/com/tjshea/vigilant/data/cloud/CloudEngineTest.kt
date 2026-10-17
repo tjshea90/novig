@@ -531,4 +531,11 @@ class CloudEngineTest {
         assertFalse(phone.gates.boltSocket)
         assertTrue(CloudEngine.forCloud(phone).gates.boltSocket)
     }
+
+    @Test fun `the engine takes the bet slider's kinds from its level, totals included`() {
+        val phone = ScanSettings(autoBetKinds = setOf(com.tjshea.vigilant.data.scanner.BetKind.PROP), vigGuards = ScanSettings().vigGuards.copy(betLevel = 61))
+        val kinds = CloudEngine.forCloud(phone).autoBetKinds
+        assertTrue(com.tjshea.vigilant.data.scanner.BetKind.TOTAL in kinds && com.tjshea.vigilant.data.scanner.BetKind.TEAM_TOTAL in kinds && com.tjshea.vigilant.data.scanner.BetKind.PROP in kinds)
+        assertEquals(phone.autoBetKinds, CloudEngine.forCloud(phone.copy(vigGuards = phone.vigGuards.copy(betLevel = 0))).autoBetKinds)
+    }
 }

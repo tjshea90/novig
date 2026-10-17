@@ -7,6 +7,7 @@ import com.tjshea.vigilant.data.scanner.OddsScanner
 import com.tjshea.vigilant.data.scanner.Opportunity
 import com.tjshea.vigilant.data.scanner.ScanProgress
 import com.tjshea.vigilant.data.scanner.ScanResult
+import com.tjshea.vigilant.data.scanner.BetSlider
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import com.tjshea.vigilant.data.scanner.ScannerMode
 import kotlinx.coroutines.CancellationException
@@ -591,6 +592,8 @@ class CloudEngine(
             maker = s.maker || s.engineBids, makerRecommend = s.makerRecommend && !s.engineBids,
             // The long scan keeps the soonest games' fair odds and likeliest Novig books young (Tj, 2026-10-15: "Is this speed too slow for pre game betting and bidding?"): see [com.tjshea.vigilant.data.scanner.ScanGuards.hotRefresh].
             vigGuards = s.vigGuards.copy(hotRefresh = true),
+            // The bet slider's kinds are re-derived on the runner, so the engine takes up a change of the ladder (totals added 2026-10-17) without waiting for the phone to re-apply its slider.
+            autoBetKinds = if (s.vigGuards.betLevel in 1..100) s.autoBetKinds + BetSlider.kinds(s.vigGuards.betLevel) else s.autoBetKinds,
         )
     }
 }
