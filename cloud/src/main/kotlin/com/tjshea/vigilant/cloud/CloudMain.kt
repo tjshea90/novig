@@ -138,6 +138,10 @@ fun main(args: Array<String>) = runBlocking {
 
     novigKeyed?.problem?.let { log("Novig key: $it") }
     // The APIs' measured ranking survives the handover: the previous job's file is read back before the first scan ([CloudRanking]), and this job writes its own with every push.
+    // PropLine's last list rides over a restart (2026-10-17: after one the phone's PropLine +EV card vanished until the first sweep, which waits for the first scan): the next sweep replaces it.
+    runCatching { PreviousFeed.readBytes(git, cfgDir, "propline-ev.json.gz") }.getOrNull()?.let { b ->
+        com.tjshea.vigilant.data.reference.PlEvFeed.decode(b)?.let { f -> publisher.seedPropLineEv(b, f); log("PropLine +EV: the previous job's list (${f.rows.size} lines) is kept until the first sweep") }
+    }
     runCatching { PreviousFeed.read(git, cfgDir, "ranking.json") }.getOrNull()?.let { text ->
         val seeded = CloudRanking.decode(text, System.currentTimeMillis())
         if (seeded.isNotEmpty()) { ApiChain.measures = seeded; log("ranking: ${seeded.size} measurements carried over from the previous job") }
@@ -400,6 +404,14 @@ private class ConfigReader(private val git: Git, private val dir: File) {
 
 /** The previous job's `ranking.json` or `usage.json` from `cloud-feed`, read with git like [ConfigReader] reads the settings (the checkout already has the token). Null when there is none. */
 private object PreviousFeed {
+    /** A binary file of the previous job's feed (a gzip: the text reader would corrupt it); null when there is none. */
+    fun readBytes(git: Git, dir: File, file: String, branch: String = "cloud-feed"): ByteArray? = runCatching {
+        if (git.run(dir, "fetch", "-q", "--depth=1", "origin", branch) != 0) return null
+        val p = ProcessBuilder("git", "show", "FETCH_HEAD:$file").directory(dir).redirectErrorStream(false).start()
+        val bytes = p.inputStream.readBytes()
+        if (p.waitFor() == 0 && bytes.isNotEmpty()) bytes else null
+    }.getOrNull()
+
     fun read(git: Git, dir: File, file: String, branch: String = "cloud-feed"): String? {
         if (git.run(dir, "fetch", "-q", "--depth=1", "origin", branch) != 0) return null
         return git.out(dir, "show", "FETCH_HEAD:$file")
@@ -502,6 +514,12 @@ internal class Publisher(private val dir: File, private val repo: String, privat
     }
 
     /** PropLine's +EV-at-Novig list (`propline-ev.json.gz`, TCL56), announced in the status; goes out with the next push. */
+    @Synchronized
+    fun seedPropLineEv(bytes: ByteArray, f: com.tjshea.vigilant.data.reference.PlEvFeed) {
+        if (evBytes != null) return
+        evBytes = bytes; evAt = f.atMs; evRows = f.rows.size; dirty = true
+    }
+
     @Synchronized
     fun stagePropLineEv(f: com.tjshea.vigilant.data.reference.PlEvFeed, servedForMs: Long = evServed) {
         evBytes = com.tjshea.vigilant.data.reference.PlEvFeed.encode(f)
