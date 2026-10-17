@@ -94,7 +94,7 @@ class CloudTraderTest {
         clockMs = now + 30_000L
         assertTrue(t.pass(listOf(row("b")), settings(CloudTradeMode.LIVE), clockMs).stopped.isNotEmpty())
         assertEquals(1, port.sent.size)
-        // two minutes later Novig says the order filled: the pass settles it, then orders the next bet; the first order was not sent again
+        // two minutes later Novig says the order filled: the pass settles it and ordering is open again (a second line of the same team is the repeat guard's call); the first order was not sent again
         clockMs = now + 120_000L
         port.reconciled = CloudOrderPort.Placed.Filled(60, 0.48, 0.01, "oid-1")
         port.answer = { e -> CloudOrderPort.Placed.Filled(e.contracts, e.avgPrice, 0.0, "oid-2") }
@@ -104,7 +104,7 @@ class CloudTraderTest {
         assertEquals(60L, settled.contracts)
         assertEquals("oid-1", settled.orderId)
         assertEquals("the first decision was never sent twice", 1, port.sent.count { it.first.id == settled.id })
-        assertEquals(later.line(), 1, later.placed.size)
+        assertTrue("ordering is no longer held: ${later.line()}", later.stopped.isEmpty())
     }
 
     @Test
