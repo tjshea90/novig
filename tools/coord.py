@@ -251,6 +251,10 @@ def acquire(kind=None, task=None, force=False, quiet=False):
                 note = "TAKEN BY FORCE (Tj's word) from " + describe(lease, t)
             elif kind == "interactive" and lease.get("kind") == "routine":
                 note = "interactive session took over from the routine " + describe(lease, t)
+            elif kind == "chat" and lease.get("kind") != "chat":
+                # Tj's app-chat message is his word (Tj, 2026-10-17, TCL86a: "the chat should always take commands, I don't care which claude account responds"): a chat session takes the lease from a
+                # routine or an interactive session and says so on the board. Two chat sessions do not displace each other: the first one serves Tj.
+                note = "CHAT session took the lease on Tj's message from " + describe(lease, t)
             else:
                 if not quiet:
                     print("COORD  another Claude session holds this repo: %s. Do not work on it; your commits stay local until the lease is free or stale (%d min). "
@@ -272,7 +276,7 @@ def acquire(kind=None, task=None, force=False, quiet=False):
             files["README.md"] = README
         if note:
             files["board/%s-%s-lease.md" % (time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(t)), me["label"])] = board_text(me, "all", "lease: " + note[:60], note)
-        if v == "other" and lease.get("kind") == "routine" and kind == "interactive":
+        if v == "other" and lease.get("kind") == "routine" and kind in ("interactive", "chat"):
             # Tj arrived while a scheduled routine was working (Tj, 2026-10-15: "if any session is paused or stopped because I messaged Claude on another account, make sure it can be resumed
             # automatically"): a machine-readable "paused" note, so the routine (which waits cheaply for the lease, ROUTINE.md) and the next run (rotation.py missed -> PAUSED) can resume it.
             rl = lease.get("label") or "acct-unknown"
@@ -478,8 +482,8 @@ def wait_free(max_min):
 def main(argv):
     ap = argparse.ArgumentParser(prog="coord.py", add_help=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("status"); s.add_argument("--acquire", action="store_true"); s.add_argument("--kind", choices=["interactive", "routine"]); s.add_argument("--task")
-    a = sub.add_parser("acquire"); a.add_argument("--kind", choices=["interactive", "routine"]); a.add_argument("--task"); a.add_argument("--force", action="store_true")
+    s = sub.add_parser("status"); s.add_argument("--acquire", action="store_true"); s.add_argument("--kind", choices=["interactive", "routine", "chat"]); s.add_argument("--task")
+    a = sub.add_parser("acquire"); a.add_argument("--kind", choices=["interactive", "routine", "chat"]); a.add_argument("--task"); a.add_argument("--force", action="store_true")
     sub.add_parser("renew"); sub.add_parser("check"); sub.add_parser("release")
     p = sub.add_parser("post"); p.add_argument("subject"); p.add_argument("body", nargs="?", default=""); p.add_argument("--to", default="all")
     b = sub.add_parser("board"); b.add_argument("n", nargs="?", type=int, default=8)
