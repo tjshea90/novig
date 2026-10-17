@@ -5668,3 +5668,4 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 "I need this chat to answer me and build apps when I ask. is there a way to make it automatically send the chat to the claude session in charge at the time"
 - [ ] TCL86a A CHAT: wake that gets a build/ship request must take the repo lease itself when it is free (or free by idle/stale), work, ship, release it; today chat mode never holds the lease so it can only answer. Change CHAT_WAKE.md + the routine prompt (Tj must paste the new text) accordingly.
 - [ ] TCL86b Route the fire to the account on duty (rotation.py chat) and fall back to the next account if it does not ack within 40 s.
+- [ ] TCL86c Session start/acquire runs whoami automatically so no lease says acct-unknown; optional friendly label map (A/B/C, never emails) shown on the board (Tj chat t1792251390367).
