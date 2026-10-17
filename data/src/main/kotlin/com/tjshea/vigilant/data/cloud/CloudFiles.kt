@@ -111,6 +111,8 @@ data class CloudStatus(
     val usageAtMs: Long = 0L,
     /** How the engine reads Novig now ([CloudNovig.route]): its own read-only key (with the key's rate) or the public routes, and why (a refusal of the runner's address). Empty = not said. */
     val novigRoute: String = "",
+    /** Whether Novig accepts THIS GitHub machine's internet address, in words ([CloudNovig.addressWords]); blank = an engine older than this field. */
+    val novigAddress: String = "",
     /** The order the engine asks its APIs in, best first, with what each was measured to deliver (p90 age of its quotes by the books' own stamps, distance from Pinnacle): [com.tjshea.vigilant.data.scanner.SourceScore]. Empty before the first measurement. */
     val ranking: String = "",
     val bidsBytes: Int = 0,

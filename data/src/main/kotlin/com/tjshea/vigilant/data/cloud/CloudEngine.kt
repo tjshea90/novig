@@ -71,6 +71,7 @@ class CloudEngine(
     private val prepare: (ScanSettings) -> Unit = {},
     /** One line on how Novig is being read now ([CloudNovig.route]). */
     private val novigRoute: () -> String = { "" },
+    private val novigAddress: () -> String = { "" },
     /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
     private val addressWatch: AddressWatch? = null,
     /**
@@ -319,6 +320,7 @@ class CloudEngine(
         var latest = cfg0.settings
         var bidKey = CloudScanKey.key(cfg0.settings, CloudScanKey.Kind.BIDS)
         var lastConfigAt = t0
+        var lastWatchLogAt = 0L
         var lastStatusAt = t0
         var restartReason: String? = null
         // The first status goes out at once: it is the engine's acknowledgement of the request.
@@ -336,6 +338,7 @@ class CloudEngine(
                 break
             }
             // Novig refuses this runner's address: stop, publish what there is, and let the workflow draw another runner (AddressWatch).
+            if (addressWatch != null && now - lastWatchLogAt >= 60_000L && now - t0 >= 30_000L) { lastWatchLogAt = now; log(addressWatch.describe(now)) }
             if (addressWatch?.shouldHandOver(now) == true) {
                 addressEnd = true
                 restartReason = "Novig refused this runner's address"
@@ -451,7 +454,7 @@ class CloudEngine(
             ackedRefreshAtMs = handledRefresh, scanRefreshAtMs = scanForRefresh, lastScanStartedAtMs = lastScanStartedAt, lastScanEndedAtMs = lastScanEndedAt, lastScanForRefreshAtMs = lastScanForRefresh,
             novigAgeMedianS = lastAges.novigMedianS, novigAgeMaxS = lastAges.novigMaxS, fairAgeMedianS = lastAges.fairMedianS, fairAgeMaxS = lastAges.fairMaxS,
             pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote, bidsAtMs = bidsAt, bidsCount = bidsCount,
-            novigRoute = runCatching(novigRoute).getOrDefault(""), ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
+            novigRoute = runCatching(novigRoute).getOrDefault(""), novigAddress = runCatching(novigAddress).getOrDefault(""), ranking = runCatching { scanner.sourceRanking() }.getOrNull().orEmpty().take(1_500),
             addressHandovers = addressWatch?.count ?: 0, addressHandoverAtMs = addressWatch?.atMs ?: 0L,
             tradeMode = tradeStatus?.mode.orEmpty(), tradeNote = tradeStatus?.note.orEmpty().take(400), tradeStopped = tradeStatus?.stopped.orEmpty().take(200), tradesAtMs = tradeStatus?.changedAtMs ?: 0L,
             walletSleep = walletSleep, walletCheckedAtMs = walletCheckedAt, walletCash = walletCash ?: -1.0, walletEquity = walletEquity ?: -1.0, walletReadAtMs = walletReadAt,

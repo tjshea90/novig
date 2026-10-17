@@ -42,6 +42,10 @@ class AddressWatch(
         return true
     }
 
+    /** One line for the engine log: why the watch did or did not hand over (the 2026-10-17 miss: refused for 5 minutes and never handed over). */
+    fun describe(now: Long): String =
+        "address watch: refused-now=${refused(now)} age=${(now - startedAtMs) / 1000}s lastRefusedAgo=${if (lastRefusedAt == 0L) "never" else "${(now - lastRefusedAt) / 1000}s"} streak=$count"
+
     companion object {
         /** Long enough for the key route to have been tried and a transient refusal to have passed. */
         const val MIN_AGE_MS = 4 * 60_000L

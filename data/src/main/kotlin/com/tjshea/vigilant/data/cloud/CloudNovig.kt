@@ -60,6 +60,16 @@ class CloudNovig(
     /** True while the key route stands down because Novig refused this runner's ADDRESS (not the device check): [AddressWatch] then draws another runner. */
     fun addressRefused(now: Long): Boolean = signer != null && AddressWatch.isAddressRefusal(novig.keyDown(now))
 
+    /** The verdict on THIS machine's internet address, in words, for the dashboard (Tj, 2026-10-17: "make it so the android app reads GitHub runner whether its address is accepted or not"). */
+    fun addressWords(now: Long, swaps: Int = 0): String {
+        if (signer == null) return "not tested (no Novig key on GitHub: public routes only)"
+        val why = novig.keyDown(now)
+        val code = AddressWatch.ADDRESS_CODES.firstOrNull { why?.contains(it) == true }
+        return if (code != null) "REFUSED by Novig ($code): this GitHub machine's location is not served" + if (swaps > 0) "; $swaps swap${if (swaps == 1) "" else "s"} to a new machine tried in a row" else "; a swap to a new machine is due"
+        else if (why != null) "accepted; the key was refused for another reason ($why)"
+        else "accepted by Novig"
+    }
+
     /** One line for the status file and the Cloud page: how this scan's Novig reads are going out. */
     fun route(now: Long): String = route(novig, signer != null, stream != null, problem, now)
 
