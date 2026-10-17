@@ -5616,9 +5616,9 @@ Findings (2026-10-16): the phone's records already carry `made` (bet|bid), `how`
 
 ## TCL75 (Tj, chat t1792217840179, 2026-10-17)
 "add to the automatic analysis and track the supposed propline +ev bets. save the bets to a GitHub file on every scan, including comprehensive data about each bet needed to determine if it picks profitable bets or not. this will need to confirm the novig price is still available, the listed ev from propline, and whether the bet won or lost (the grading which propline offers on its API). after several hundred of these bets saved, automatically report back to me with the statistics on the bets and whether they are profitable"
-- [ ] TCL75a Per sweep, save every PropLine +EV row with: PropLine's listed price/fair/EV/age, Novig's price NOW from the engine's own read (still available? depth), the Vigilant fair/EV of the same line if scanned, first-seen time; one file per day in the cloud-archive Release (never rewritten per run: segment per run).
-- [ ] TCL75b Grade with PropLine's own results (/results, /clv/grade) + closes; join to the saved rows (propline.yml / propline_clv.py) into a flat dataset `propline-ev-bets.csv.gz` in a Release.
-- [ ] TCL75c Auto report: once 300+ graded unique bets exist, a workflow posts the statistics (n, ROI, CLV, by kind/league/EV band, z) to Tj as an app message + chat + research note; repeats at 600, 1000.
+- [x] TCL75a (PlEvRow novigNow*, journaled each sweep) Per sweep, save every PropLine +EV row with: PropLine's listed price/fair/EV/age, Novig's price NOW from the engine's own read (still available? depth), the Vigilant fair/EV of the same line if scanned, first-seen time; one file per day in the cloud-archive Release (never rewritten per run: segment per run).
+- [x] TCL75b (tools/propline_ev_bets.py, propline_evbets_job.sh, propline.yml) Grade with PropLine's own results (/results, /clv/grade) + closes; join to the saved rows (propline.yml / propline_clv.py) into a flat dataset `propline-ev-bets.csv.gz` in a Release.
+- [x] TCL75c (notify at 300/600/1000 via tell_tj; verify once graded data exists) Auto report: once 300+ graded unique bets exist, a workflow posts the statistics (n, ROI, CLV, by kind/league/EV band, z) to Tj as an app message + chat + research note; repeats at 600, 1000.
 
 ## TCL76 (Tj, chat t1792217932334, 2026-10-17)
 "figure out why the novig scanning stalled. remember the Claude sessions should run diagnostics automatically and notice and fix things like this"

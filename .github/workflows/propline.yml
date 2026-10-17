@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "plans | probe | speed | archive | backfill | clv | timing"
+        description: "plans | probe | speed | archive | backfill | clv | timing | evbets"
         default: "plans"
   schedule:
     - cron: "37 9 * * *"
@@ -63,6 +63,7 @@ jobs:
                 gh release upload "$tag" out/archive/* --clobber
               fi ;;
             clv) bash tools/propline_clv_job.sh ;;
+            evbets) bash tools/propline_evbets_job.sh ;;
             timing)
               # Timing study (TCL68): Novig's price at 72..1 h before the start against Pinnacle's close and the real result; needs the archive Release's CSVs.
               tag=$(gh release list --limit 30 --json tagName --jq '.[].tagName' | grep '^propline-archive-' | sort | tail -1)
@@ -77,3 +78,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash tools/propline_clv_job.sh
+      - name: PropLine +EV bets graded and reported (TCL75)
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.task == 'archive' || github.event.inputs.task == 'backfill' || github.event.inputs.task == 'evbets' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/propline_evbets_job.sh
