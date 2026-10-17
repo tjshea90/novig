@@ -80,6 +80,8 @@ data class CloudStatus(
     val scanStartedAtMs: Long = 0L,
     val progressStep: String = "",
     val progressDone: Int = 0,
+    /** When the scan's progress last changed (0 = no scan running): an engine that is alive but whose progress has not moved for minutes is STALLED, not scanning (Tj, 2026-10-17). */
+    val progressChangedAtMs: Long = 0L,
     val progressTotal: Int = 0,
     /** The newest [CloudConfig.refreshAtMs] the engine has seen and begun serving (its acknowledgement), and the one the running or last scan was started for. */
     val ackedRefreshAtMs: Long = 0L,

@@ -444,13 +444,21 @@ class CloudEngine(
         false
     }
 
+    /** When the scan's progress (step and count) last CHANGED, for the stall check (the phone's STALLED chip, the watchdog): 0 when no scan is running. */
+    private var progressSig: Pair<String?, Int?>? = null
+    private var progressChangedAt = 0L
+
     private fun status(rev: Long, startedAtMs: Long, untilMs: Long, names: List<String>, idle: Boolean, scanMs: Long = lastScanMs): CloudStatus {
         val p = progress.get()
+        if (scanning && !idle) {
+            val sig = p?.step to p?.done
+            if (sig != progressSig || progressChangedAt == 0L) { progressSig = sig; progressChangedAt = clock() }
+        } else { progressSig = null; progressChangedAt = 0L }
         val feed = lastPublished
         return CloudStatus(
             engine = engine, runId = runId, computedAtMs = feed?.computedAtMs ?: 0L, startedAtMs = startedAtMs, heartbeatMs = clock(), scanMs = scanMs,
             rows = feed?.rows?.size ?: lastRows, configRev = rev, sources = names, passes = passes, problem = problem, idle = idle, handoverAtMs = untilMs,
-            scanning = scanning && !idle, scanStartedAtMs = scanStartedAt, progressStep = if (scanning) p?.step.orEmpty() else "", progressDone = if (scanning) p?.done ?: 0 else 0, progressTotal = if (scanning) p?.total ?: 0 else 0,
+            scanning = scanning && !idle, progressChangedAtMs = progressChangedAt, scanStartedAtMs = scanStartedAt, progressStep = if (scanning) p?.step.orEmpty() else "", progressDone = if (scanning) p?.done ?: 0 else 0, progressTotal = if (scanning) p?.total ?: 0 else 0,
             ackedRefreshAtMs = handledRefresh, scanRefreshAtMs = scanForRefresh, lastScanStartedAtMs = lastScanStartedAt, lastScanEndedAtMs = lastScanEndedAt, lastScanForRefreshAtMs = lastScanForRefresh,
             novigAgeMedianS = lastAges.novigMedianS, novigAgeMaxS = lastAges.novigMaxS, fairAgeMedianS = lastAges.fairMedianS, fairAgeMaxS = lastAges.fairMaxS,
             pricedConfigRev = pricedRev, settingsPending = settingsPending, scanNote = scanNote, bidsAtMs = bidsAt, bidsCount = bidsCount,

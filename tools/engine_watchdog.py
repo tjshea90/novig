@@ -21,10 +21,11 @@ WF = "cloud-scan.yml"
 ADDRESS_CODES = ("RESTRICTED_NETWORK_REGION", "ANONYMIZED_NETWORK")
 ADDRESS_AFTER_MS = 5 * 60 * 1000       # a run refused this long is a bad draw, not a blip
 SWAP_WINDOW_MS = 30 * 60 * 1000
+STALL_MS = 10 * 60 * 1000
 MAX_SWAPS = 6                           # swaps in the window before the watchdog waits (each new run re-reads the fair-odds feeds: it costs API requests)
 
 
-def decide(now, runs, heartbeat_ms, idle, switch_on, stopped, route="", status_run=None, recent_runs=()):
+def decide(now, runs, heartbeat_ms, idle, switch_on, stopped, route="", status_run=None, recent_runs=(), progress_changed_ms=0, scanning=False):
     """Pure. runs: list of {id, status, created_ms, started_ms}. -> (action, run id to cancel or None, reason)."""
     if stopped:
         return "none", None, "dead-man STOP is set"
@@ -45,6 +46,15 @@ def decide(now, runs, heartbeat_ms, idle, switch_on, stopped, route="", status_r
         if queued or any(now - r["created_ms"] < 60 * 1000 for r in runs if r["id"] != cur["id"]):
             return "cancel", cur["id"], "Novig refuses this runner's address; a replacement is already queued"
         return "restart", cur["id"], "Novig refuses this runner's address (%d min into the run)" % ((now - cur["started_ms"]) // 60000)
+    # A scan whose progress has not moved for 10 minutes while the engine still heartbeats is STALLED (Tj, 2026-10-17: "Claude should be able to catch slow scanning or stalled scanning and fix it").
+    if (scanning and progress_changed_ms and now - progress_changed_ms >= STALL_MS and now - cur["started_ms"] >= 5 * 60 * 1000
+            and (status_run is None or str(status_run) == str(cur["id"]))):
+        swaps = len([r for r in recent_runs if now - r["created_ms"] < SWAP_WINDOW_MS])
+        if swaps > MAX_SWAPS:
+            return "none", None, "the scan is stalled but %d runs were started in 30 minutes: waiting" % swaps
+        if queued:
+            return "cancel", cur["id"], "the scan's progress has not moved for %d min; a replacement is already queued" % ((now - progress_changed_ms) // 60000)
+        return "restart", cur["id"], "the scan's progress has not moved for %d min" % ((now - progress_changed_ms) // 60000)
     if now - cur["started_ms"] < YOUNG_MS:
         return "none", None, "the run is young"
     if heartbeat_ms and now - heartbeat_ms < STALE_MS:
@@ -96,7 +106,7 @@ def check():
         cfg = {}
     stopped = show("cloud-config", "deadman/STOP.json") is not None
     recent = [{"id": r["id"], "created_ms": _ts(r["created_at"])} for r in api("GET", "actions/workflows/%s/runs?per_page=20" % WF).get("workflow_runs", [])]
-    action, rid, why = decide(now, runs, stat.get("heartbeatMs"), bool(stat.get("idle")), bool(cfg.get("on")), stopped, stat.get("novigRoute") or "", stat.get("runId"), recent)
+    action, rid, why = decide(now, runs, stat.get("heartbeatMs"), bool(stat.get("idle")), bool(cfg.get("on")), stopped, stat.get("novigRoute") or "", stat.get("runId"), recent, int(stat.get("progressChangedAtMs") or 0), bool(stat.get("scanning")))
     print("watchdog:", action, why)
     if action in ("cancel", "restart"):
         api("POST", "actions/runs/%d/cancel" % rid)
@@ -135,6 +145,11 @@ def selftest():
     spin = [{"id": 100 + i, "created_ms": now - i * 2 * M} for i in range(8)]
     assert decide(now, [run(7, "in_progress", 6)], fresh, route=refused, status_run=7, recent_runs=spin, **ok)[0] == "none"        # too many swaps: wait
     assert decide(now, [run(7, "in_progress", 6), run(8, "queued", 1)], fresh, route=refused, status_run=7, **ok)[0] == "cancel"
+    st = dict(route="", status_run=7, scanning=True, **ok)
+    assert decide(now, [run(7, "in_progress", 20)], fresh, progress_changed_ms=now - 11 * M, **st)[0] == "restart"      # alive but frozen 11 minutes
+    assert decide(now, [run(7, "in_progress", 20)], fresh, progress_changed_ms=now - 4 * M, **st)[0] == "none"         # moving
+    assert decide(now, [run(7, "in_progress", 20)], fresh, progress_changed_ms=0, **st)[0] == "none"                    # an older engine: no field
+    assert decide(now, [run(7, "in_progress", 3)], fresh, progress_changed_ms=now - 11 * M, **st)[0] == "none"          # a young run
     print("engine_watchdog selftest ok")
     return 0
 
