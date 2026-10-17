@@ -35,7 +35,7 @@ data class AppUpdate(
             ).takeIf { it.tag.isNotBlank() && it.apkUrl.isNotBlank() }
         }.getOrNull()
 
-        private val VERSION_TAG = Regex("""^v\\d+\\.\\d+\\.\\d+$""")
+        private val VERSION_TAG = Regex("""^v\d+\.\d+\.\d+$""")
 
         /**
          * The newest app release in [text] (GitHub's `releases?per_page=30` array). `releases/latest` answers with the newest Release of ANY kind, and the data
