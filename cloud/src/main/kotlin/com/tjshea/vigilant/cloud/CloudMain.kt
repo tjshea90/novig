@@ -316,7 +316,7 @@ fun main(args: Array<String>) = runBlocking {
         liveUrl = { liveUrlRef.get() },
         novigAddress = { novigKeyed?.addressWords(System.currentTimeMillis(), addressWatch?.count ?: 0) ?: "not tested (no Novig key on GitHub: public routes only)" },
         addressWatch = addressWatch,
-        bids = bidFacade,
+        bids = bidFacade, live = liveLane,
         bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },
