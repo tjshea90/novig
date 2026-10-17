@@ -282,7 +282,9 @@ class LiveLightRunner(
         val g = games
         for (league in g.values.map { it.ev.league }.toSet()) {
             val path = LabClock.ESPN_PATHS[league] ?: continue
-            val boards = LabClock.scoreboardUrls(league, path).mapNotNull { u -> fetch(u)?.let { LabClock.parseEspn(it.body) } }.flatten().ifEmpty { null } ?: continue
+            val read = LabClock.scoreboardUrls(league, path).mapNotNull { u -> fetch(u)?.let { LabClock.parseEspn(it.body) } }
+            if (read.isEmpty()) continue   // no board answered at all (an empty board is an answer: its games get "no score")
+            val boards = read.flatten()
             for (game in g.values.filter { it.ev.league == league }) {
                 val m = game.ev.matchup ?: continue
                 val e = boards.filter { it.live }.firstOrNull { TeamMatcher.similarity(it.home, m.home) >= 0.5 && TeamMatcher.similarity(it.away, m.away) >= 0.5 }

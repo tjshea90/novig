@@ -213,7 +213,7 @@ class LabRecorder(
     private suspend fun state(ev: NovigEvent, now: Long): EspnGame? {
         val path = LabClock.ESPN_PATHS[ev.league] ?: return null
         val cached = espnCache[ev.league]?.takeIf { now - it.first < ESPN_TTL_MS }?.second
-        val games = cached ?: (LabClock.scoreboardUrls(ev.league, path).mapNotNull { u -> fetch(u)?.let { LabClock.parseEspn(it.body) } }.flatten().ifEmpty { null } ?: return null).also { espnCache[ev.league] = now to it }
+        val games = cached ?: (LabClock.scoreboardUrls(ev.league, path).mapNotNull { u -> fetch(u)?.let { LabClock.parseEspn(it.body) } }.takeIf { it.isNotEmpty() }?.flatten() ?: return null).also { espnCache[ev.league] = now to it }
         val m = ev.matchup ?: return null
         return games.filter { it.live }.firstOrNull { TeamMatcher.similarity(it.home, m.home) >= 0.5 && TeamMatcher.similarity(it.away, m.away) >= 0.5 }
     }
