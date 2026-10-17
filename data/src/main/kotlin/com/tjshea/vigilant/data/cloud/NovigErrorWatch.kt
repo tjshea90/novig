@@ -9,8 +9,8 @@ package com.tjshea.vigilant.data.cloud
 class NovigErrorWatch(private val alertAfterMs: Long = ALERT_AFTER_MS) {
     enum class Event { ALERT, RECOVERED }
 
-    /** When the current run of failing scans began; 0 = Novig is answering. */
-    @Volatile var since = 0L
+    /** When the current run of failing scans began; [NONE] = Novig is answering. */
+    @Volatile var since = NONE
         private set
     @Volatile var streak = 0
         private set
@@ -23,10 +23,10 @@ class NovigErrorWatch(private val alertAfterMs: Long = ALERT_AFTER_MS) {
         val bad = errors.firstOrNull { SERVER_ERROR.containsMatchIn(it) }
         if (bad == null) {
             val was = alerted
-            since = 0L; streak = 0; last = ""; alerted = false
+            since = NONE; streak = 0; last = ""; alerted = false
             return if (was) Event.RECOVERED else null
         }
-        if (since == 0L) since = now
+        if (since == NONE) since = now
         streak++
         last = bad.take(160)
         if (!alerted && now - since >= alertAfterMs) { alerted = true; return Event.ALERT }
@@ -34,14 +34,15 @@ class NovigErrorWatch(private val alertAfterMs: Long = ALERT_AFTER_MS) {
     }
 
     /** True while the last scan failed with a server error. */
-    val active: Boolean get() = since != 0L
+    val active: Boolean get() = since != NONE
 
     /** The wait before the next scan while Novig is failing: 10 s, 20 s, 40 s ... at most 2 min. */
     fun backoffMs(): Long = (BASE_MS shl (streak - 1).coerceIn(0, 4)).coerceAtMost(MAX_MS)
 
-    fun outageMs(now: Long): Long = if (since == 0L) 0L else now - since
+    fun outageMs(now: Long): Long = if (since == NONE) 0L else now - since
 
     companion object {
+        private const val NONE = -1L
         const val ALERT_AFTER_MS = 10 * 60_000L
         const val BASE_MS = 10_000L
         const val MAX_MS = 120_000L
