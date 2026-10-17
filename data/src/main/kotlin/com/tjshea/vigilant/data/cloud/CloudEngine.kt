@@ -176,11 +176,16 @@ class CloudEngine(
     }
 
     /** The desk beside the scan: every [deskEveryMs] one pass on the lines it holds (fills read, bids moved and posted), under the phone's newest settings, only inside the engine's hours. */
+    /** The newest config the run loop read: the manual Run / Stop fields the other loops (the desk) also honour ([CloudManual]). */
+    @Volatile private var manualCfg: CloudConfig? = null
+    private fun manualOpen(s: ScanSettings) = CloudManual.open(s.cloudHours, manualCfg, clock())
+    private fun manualStopped() = manualCfg?.let { CloudManual.stopActive(it, clock()) } == true
+
     private suspend fun deskLoop() {
         while (currentScopeActive()) {
             pause(deskEveryMs)
             val s = phoneSettings ?: continue
-            if (!s.cloudDrives || (s.cloudHours && !EngineHours.isOpen(clock()))) { deskDown("the engine is off or outside its hours"); continue }
+            if (!s.cloudDrives || !manualOpen(s) || manualStopped()) { deskDown("the engine is off or outside its hours"); continue }
             deskPass(s)
         }
     }
@@ -209,6 +214,7 @@ class CloudEngine(
             val cfg = runCatching { config() }.getOrNull() ?: lastCfg
             lastCfg = cfg
             cfg?.settings?.let { phoneSettings = it }
+            cfg?.let { manualCfg = it }
             if (cfg == null || !cfg.on) {
                 if (offSince == 0L) offSince = clock()
                 if (clock() - lastBeat >= heartbeatEveryMs) {
@@ -220,7 +226,12 @@ class CloudEngine(
                 continue
             }
             offSince = 0L
-            if (cfg.settings.cloudHours && !EngineHours.isOpen(clock())) {
+            if (CloudManual.stopActive(cfg, clock())) {
+                log("stopped by Tj until the next scheduled opening: ending")
+                problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = true))
+                return End.WINDOW
+            }
+            if (!CloudManual.open(cfg.settings.cloudHours, cfg, clock())) {
                 log("outside the engine's hours (08:00-01:00 Eastern): ending")
                 problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = true))
                 return End.WINDOW
@@ -316,7 +327,7 @@ class CloudEngine(
             pause(1_000L)
             val now = clock()
             // The engine's hours end: stop the scan; the job ends with End.WINDOW (nothing orders after this; TCL20d cancels what rests first).
-            if (cfg.settings.cloudHours && !EngineHours.isOpen(now)) {
+            if (!CloudManual.open(cfg.settings.cloudHours, cfg, now) || CloudManual.stopActive(cfg, now)) {
                 windowEnd = true
                 restartReason = "engine hours over"
                 log("the engine's hours (08:00-01:00 Eastern) are over: this job ends")

@@ -38,6 +38,12 @@ data class CloudConfig(
      * served starts a fresh scan at once ([CloudStatus.ackedRefreshAtMs] is the engine's acknowledgement); 0 = never asked.
      */
     val refreshAtMs: Long = 0L,
+    /**
+     * Run / Stop by hand (Tj, 2026-10-17: "let me start and turn off the GitHub engine from the android app even if it is outside routine hours. make sure this doesn't break any of the scheduled runs"). See [CloudManual]:
+     * a Run lets the engine work outside its hours until this time; a Stop keeps it off until this time (the next scheduled opening). Both 0 = the schedule alone decides.
+     */
+    val manualRunUntilMs: Long = 0L,
+    val manualStopUntilMs: Long = 0L,
 ) {
     companion object {
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
