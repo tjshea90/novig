@@ -241,3 +241,8 @@ Make sure if the engine isn't running that the auto bids posted don't get stale 
 ```
 force take the lease for chat
 ```
+
+## 2026-10-17T16:05:32Z
+```
+Build the Novig 5xx alert and chat routing
+```
