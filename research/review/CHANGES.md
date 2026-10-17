@@ -37,3 +37,5 @@ Evidence in `research/review/pnl_2026-10-17.md`: 1,999 settled phone bets and bi
 - Same-day sequence: sweep 15 min -> hourly + pull-to-refresh and a Vigilant-agrees filter (v0.114.23) -> list retired (v0.114.25). Evidence in the TCL98 entry above.
 
 - 2026-10-17 (chat, Tj t1792270467927; TCL103) BIDS: MakerDesk.placeOne treated Novig 423 EVENT_LOCKED as a cycle stop, so one started/locked game ended the whole pass (3 posted of 250 wanted; $93 cash, $17 up, 2,476 waiting). Now a bet-lock (`betLocked`) refuses only that bid, the game is skipped for 10 min (`lockedEvents`), other bids go up. No rule loosened; every bid still passes the same +EV checks. Revert: restore `stopsCycle` for 423 in placeOne. Check: deskResting should climb well past 31 within a few passes; watch picked-off guard and fills.
+
+- 2026-10-17 ANALYST (slot 19:20 ET, no change): volume loop count last 24h: 34 engine bets + 76 bid fills, 252 bids resting ($60), engine settled 73 orders ROI +1.0% (below the 200-bet gate), top held-back reason the 6 h trap guard (15 of 27 listed). No rule changed; nothing meets class B gates. Revert rule: n/a.
