@@ -73,6 +73,16 @@ class CloudNovigPort(
             if (order?.terminal == true) break
             pause(POLL_MS)
         }
+        if (order?.terminal != true) {
+            // An IOC that is still not over after the wait: cancel it by its id (never a second order), then look once more, so one slow answer does not stop trading.
+            runCatching { trading.cancelOrder(orderId) }.onFailure { if (it is CancellationException) throw it }
+            val again = clock()
+            while (clock() - again < CANCEL_WAIT_MS) {
+                order = try { trading.order(orderId) } catch (e: CancellationException) { throw e } catch (e: Exception) { order }
+                if (order?.terminal == true) break
+                pause(POLL_MS)
+            }
+        }
         var fills = readFills(orderId)
         if (fills.isEmpty() && order?.status == "FILLED") { pause(1_000L); fills = readFills(orderId) }
         if (fills.isEmpty()) {
@@ -121,6 +131,7 @@ class CloudNovigPort(
     companion object {
         const val ORDER_WAIT_MS = 12_000L
         const val POLL_MS = 400L
+        const val CANCEL_WAIT_MS = 8_000L
 
         /** The refusals that stop ordering: 451 (location / network), 401 (key), 403 (scope, VPN, KYC, rate), 423 (locked / halted / self-excluded). */
         val STOP_STATUSES = setOf(451, 401, 403, 423)
