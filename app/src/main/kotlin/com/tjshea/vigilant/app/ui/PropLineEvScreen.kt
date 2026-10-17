@@ -106,6 +106,7 @@ fun PropLineEvScreen(
             }
         }
     }
+    }
     betting?.let { o ->
         // A line Vigilant had no fair for sits in the scan unpriced: the row's own PropLine-priced copy is what the sheet shows then.
         val live = state.result?.opportunities?.firstOrNull { it.key == o.key && it.quote != null } ?: o
