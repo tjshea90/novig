@@ -5681,4 +5681,4 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 
 ## TCL89 (Tj, chat t1792257554198, 2026-10-17)
 "make it so I can pull down to refresh the propline +ev scans. when I do this it will rescan only the propline +ev bets when I have that window open"
-- [ ] TCL89a Engine: a config field (propLineRefreshAtMs) makes the PropLine +EV sweep run now (only it), status acks it. TCL89b Phone: pull-to-refresh on the PropLine +EV screen writes it and shows busy until the ack.
+- [x] TCL89a+b (CloudEngineTest, v0.114.20) Engine: a config field (propLineRefreshAtMs) makes the PropLine +EV sweep run now (only it), status acks it. TCL89b Phone: pull-to-refresh on the PropLine +EV screen writes it and shows busy until the ack.
