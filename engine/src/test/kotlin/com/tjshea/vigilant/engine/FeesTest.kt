@@ -25,6 +25,10 @@ class FeesTest {
         val after = MarketFee.RAISED_FROM_MS + 1
         for (league in listOf("NCAAF", "MLB", "NHL", "mlb")) assertEquals(0.06, MarketFee.gameFor(league, after).coefficient, 0.0)
         for (league in listOf("NFL", "NBA", "WNBA", "NCAAB", "ATP", "UFC", null)) assertEquals(0.03, MarketFee.gameFor(league, after).coefficient, 0.0)
+        // From Eastern midnight 2026-10-15 every league pays 0.06 live (changelog "Live Taker Fee Rises to 0.06").
+        assertEquals(java.time.ZonedDateTime.of(2026, 10, 15, 0, 0, 0, 0, java.time.ZoneId.of("America/New_York")).toInstant().toEpochMilli(), MarketFee.ALL_RAISED_FROM_MS)
+        for (league in listOf("NFL", "NBA", "ATP", null)) assertEquals(0.06, MarketFee.gameFor(league, MarketFee.ALL_RAISED_FROM_MS).coefficient, 0.0)
+        assertEquals(0.03, MarketFee.gameFor("NFL", MarketFee.ALL_RAISED_FROM_MS - 1).coefficient, 0.0)
         // A bet placed the day before kept the old schedule.
         assertEquals(0.03, MarketFee.gameFor("MLB", MarketFee.RAISED_FROM_MS - 1).coefficient, 0.0)
         // The instant is Eastern midnight of Oct 8, 2026 (EDT, UTC-4).

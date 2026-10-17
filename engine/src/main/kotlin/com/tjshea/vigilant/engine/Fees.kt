@@ -28,6 +28,9 @@ data class MarketFee(
         /** The leagues on [GAME_LIVE_RAISED]. */
         val RAISED_LEAGUES = setOf("NCAAF", "MLB", "NHL")
 
+        /** Eastern midnight, Thursday 2026-10-15 (04:00Z): from here a live fill on EVERY straight contract pays 0.06 (docs.novig.com/api-reference/changelog, "Live Taker Fee Rises to 0.06"). */
+        const val ALL_RAISED_FROM_MS = 1_792_036_800_000L
+
         /** Eastern midnight, Thursday 2026-10-08 (04:00Z): from here a live fill in [RAISED_LEAGUES] pays the raised coefficient. */
         const val RAISED_FROM_MS = 1_791_432_000_000L
 
@@ -37,7 +40,7 @@ data class MarketFee(
          * from this table"); this is for CNO's picks, the Tracker's hand-placed bets and the sharp checks, which have the league and not the market.
          */
         fun gameFor(league: String?, atMs: Long = System.currentTimeMillis()): MarketFee =
-            if (atMs >= RAISED_FROM_MS && league != null && league.uppercase() in RAISED_LEAGUES) GAME_LIVE_RAISED else GAME
+            if (atMs >= ALL_RAISED_FROM_MS || (atMs >= RAISED_FROM_MS && league != null && league.uppercase() in RAISED_LEAGUES)) GAME_LIVE_RAISED else GAME
 
         /** Novig's documented NFL/MLB/NCAAF futures schedule: charged pregame too. */
         val FUTURES = MarketFee(coefficient = 0.06, makerCredit = 0.7, charged = FeeCharge.ALWAYS)
