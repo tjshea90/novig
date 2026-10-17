@@ -68,6 +68,8 @@ class CloudLink(private val c: AppContainer) {
         val manualWords: String? = null,
         /** When this phone last read the engine's status successfully (its clock; 0 = never): the age of everything the dashboard shows ([com.tjshea.vigilant.data.cloud.DashboardModel.link]). */
         val statusOkAtMs: Long = 0L,
+        /** When the last status arrived STRAIGHT from the engine over the live link ([com.tjshea.vigilant.data.cloud.CloudLive]); 0 = not now (GitHub only). */
+        val liveDirectAtMs: Long = 0L,
         /** The newest settings revision this phone wrote to GitHub and when (its clock), for the "is GitHub using my settings" line ([com.tjshea.vigilant.data.cloud.CloudText.settings]). */
         val pushedRev: Long = 0L,
         val pushedAtMs: Long = 0L,
@@ -238,7 +240,8 @@ class CloudLink(private val c: AppContainer) {
                 when (val p = client.pollStatus(etag)) {
                     is CloudClient.Poll.Fresh -> {
                         etag = p.etag
-                        latest.status = p.value
+                        // An answer from GitHub is up to ~10 s old: it never replaces a newer reading that came straight from the engine.
+                        latest.status?.let { cur -> if (p.value.runId != cur.runId || p.value.heartbeatMs >= cur.heartbeatMs) latest.status = p.value } ?: run { latest.status = p.value }
                         latest.statusOkAtMs = System.currentTimeMillis()
                         recordHistory(p.value)
                         latest.why = null
@@ -256,6 +259,30 @@ class CloudLink(private val c: AppContainer) {
                 }
                 publishUi(s)
                 nap(wait)
+            }
+        }
+        // 6. the live link to the engine (TCL80, Tj 2026-10-17: "tunnel yes"): while the engine publishes a tunnel address, its CURRENT status streams in once a second, straight from the runner; GitHub's polling goes on
+        // beside it and takes over the moment the stream fails (liveDirectAtMs goes back to 0 and the chip says "via GitHub"). Only an address of the exact quick-tunnel shape is ever opened.
+        scope.launch(Dispatchers.IO) {
+            val live = okhttp3.OkHttpClient.Builder().connectTimeout(8, java.util.concurrent.TimeUnit.SECONDS).readTimeout(12, java.util.concurrent.TimeUnit.SECONDS).build()
+            while (isActive) {
+                val s = c.settingsStore.flow.value
+                val url = latest.status?.liveUrl.orEmpty()
+                if (s == null || !s.cloudDrives || !hasToken() || !com.tjshea.vigilant.data.cloud.CloudLive.safeUrl(url)) { liveDirectAtMs = 0L; delay(5_000L); continue }
+                runCatching {
+                    live.newCall(okhttp3.Request.Builder().url("$url/stream").header("Accept", "text/event-stream").build()).execute().use { r ->
+                        if (!r.isSuccessful) return@use
+                        val reader = com.tjshea.vigilant.data.cloud.CloudLive.SseReader()
+                        val src = r.body!!.source()
+                        while (isActive && !src.exhausted()) {
+                            val line = src.readUtf8Line() ?: break
+                            reader.feed(line)?.let { msg -> com.tjshea.vigilant.data.cloud.CloudStatus.parse(msg)?.let { st -> applyLive(st, s) } }
+                        }
+                    }
+                }
+                liveDirectAtMs = 0L
+                runCatching { publishUi(s) }
+                delay(3_000L)
             }
         }
         // 2. write
@@ -416,6 +443,19 @@ class CloudLink(private val c: AppContainer) {
         }
     }
 
+    @Volatile private var liveDirectAtMs = 0L
+
+    /** A reading that arrived straight from the engine: it is the newest status there is. */
+    private fun applyLive(st: com.tjshea.vigilant.data.cloud.CloudStatus, s: ScanSettings) {
+        val now = System.currentTimeMillis()
+        val cur = latest.status
+        if (cur != null && st.runId == cur.runId && st.heartbeatMs < cur.heartbeatMs) return
+        latest.status = st
+        latest.statusOkAtMs = now
+        liveDirectAtMs = now
+        publishUi(s)
+    }
+
     private fun publishUi(s: ScanSettings) {
         val now = System.currentTimeMillis()
         val f = latest.feed
@@ -425,7 +465,7 @@ class CloudLink(private val c: AppContainer) {
             st != null -> engineLine(st, now)
             else -> "Waiting for the engine."
         }
-        _ui.update { it.copy(manualWords = run { loadManual(); manualWords() }, statusOkAtMs = latest.statusOkAtMs, status = st, why = latest.why, requestedAtMs = refreshRequestedAt, line = line, listAgeSec = f?.let { x -> ((now - x.computedAtMs) / 1000L).coerceAtLeast(0L) }, rows = f?.rows?.size ?: 0, rateRemaining = client.rateRemaining) }
+        _ui.update { it.copy(manualWords = run { loadManual(); manualWords() }, statusOkAtMs = latest.statusOkAtMs, liveDirectAtMs = liveDirectAtMs, status = st, why = latest.why, requestedAtMs = refreshRequestedAt, line = line, listAgeSec = f?.let { x -> ((now - x.computedAtMs) / 1000L).coerceAtLeast(0L) }, rows = f?.rows?.size ?: 0, rateRemaining = client.rateRemaining) }
     }
 
     /** Starts the engine when the switch is on and no heartbeat has been heard for a while (once in 15 minutes at most; the engine's own schedule is the backstop). */

@@ -55,7 +55,7 @@ fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Mod
     }
     val u = state.cloudUi
     val board = remember(u.trades, u.desk, u.status, now / 15_000L) { EngineBoard.of(u.trades, u.desk, u.status, now) }
-    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, hoursOn = state.settings.cloudHours)
+    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours)
 }
 
 @Composable
@@ -71,10 +71,13 @@ fun DashboardContent(
     hoursOn: Boolean = true,
     /** When this phone last read the engine's status (its clock); 0 = never; null = not judged ([DashboardModel.linkLost]). */
     linkOkAtMs: Long? = null,
+    /** When the last status came straight from the engine (0 = through GitHub): the chip under the headline says which ([com.tjshea.vigilant.data.cloud.CloudLive.chip]). */
+    liveDirectAtMs: Long = 0L,
 ) {
     val uri = LocalUriHandler.current
     Column(modifier.testTag("dashboard"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HeadlineCard(status, now, cloudOn, hoursOn, linkOkAtMs)
+        if (status != null) Text(com.tjshea.vigilant.data.cloud.CloudLive.chip(liveDirectAtMs, now), style = MaterialTheme.typography.labelMedium, color = if (liveDirectAtMs > 0L && now - liveDirectAtMs <= com.tjshea.vigilant.data.cloud.CloudLive.LIVE_FRESH_MS) Edge.colors.positive else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp).testTag("liveChip"))
         val tiles = remember(status, now / 1_000L, linkOkAtMs) { DashboardModel.tiles(status, now, hoursOn, linkOkAtMs) }
         tiles.chunked(2).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {

@@ -39,4 +39,14 @@ class CloudLiveTest {
         assertTrue(CloudLive.chip(10_000L, 16_000L).startsWith("via GitHub"))
         assertTrue(CloudLive.chip(0L, 1_000L).startsWith("via GitHub"))
     }
+
+    @Test
+    fun `the phone opens only a quick-tunnel address of the exact shape`() {
+        assertTrue(CloudLive.safeUrl("https://a-b-1.trycloudflare.com/s/0123456789abcdef01234567"))
+        assertFalse(CloudLive.safeUrl("http://a-b-1.trycloudflare.com/s/0123456789abcdef01234567"))
+        assertFalse(CloudLive.safeUrl("https://evil.example.com/s/0123456789abcdef01234567"))
+        assertFalse(CloudLive.safeUrl("https://a.trycloudflare.com.evil.com/s/0123456789abcdef01234567"))
+        assertFalse(CloudLive.safeUrl("https://a.trycloudflare.com/s/short"))
+        assertFalse(CloudLive.safeUrl(""))
+    }
 }

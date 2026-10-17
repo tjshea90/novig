@@ -18,6 +18,11 @@ object CloudLive {
     /** The address the phone reads: the tunnel plus this run's path token, `/s/<token>/stream` for the stream and `/s/<token>` for one reading. */
     fun url(tunnel: String, token: String): String = tunnel.trimEnd('/') + "/s/" + token
 
+    private val SAFE = Regex("""^https://[a-z0-9-]+\.trycloudflare\.com/s/[0-9a-f]{24,}$""")
+
+    /** Only an address of exactly this shape is ever opened by the phone: a status file can never point it anywhere else. */
+    fun safeUrl(u: String): Boolean = SAFE.matches(u)
+
     /** A token is 24+ lowercase hex letters: nothing else is accepted in the path (the server checks the same rule). */
     fun validToken(t: String): Boolean = t.length >= 24 && t.all { it in '0'..'9' || it in 'a'..'f' }
 
