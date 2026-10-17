@@ -1,0 +1,1 @@
+{"id": "m1792255226-b711", "at": 1792255226687, "from": "claude:rotation-watch", "kind": "alert", "title": "A scheduled Claude session did not run (07:20 ET slot)", "body": "INTERRUPTED on 2026-10-17: account acct-7542bf checked in but never posted its finished note: it was cut off (usage cap) mid-task. The next account covers it.", "priority": 1}
