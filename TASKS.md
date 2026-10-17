@@ -5611,5 +5611,5 @@ Findings (2026-10-16): the phone's records already carry `made` (bet|bid), `how`
 
 ## TCL74 (Tj, chat t1792213844722, 2026-10-17)
 "let me start and turn off the GitHub engine from the android app even if it is outside routine hours. make sure this doesn't break any of the scheduled runs"
-- [ ] TCL74a Engine side: a manual RUN override (engine works outside 08:00-01:00 ET until it expires/is cancelled) and a manual STOP that lasts only until the next scheduled window start; neither touches the schedule/cron/hand-over logic.
-- [ ] TCL74b App: Run now / Stop now in Settings > Cloud scan and the Engine tab, showing the state in words.
+- [x] TCL74a (CloudManual.kt, CloudConfig fields, gate in cloud-scan.yml; CloudManualTest, CloudEngineTest) Engine side: a manual RUN override (engine works outside 08:00-01:00 ET until it expires/is cancelled) and a manual STOP that lasts only until the next scheduled window start; neither touches the schedule/cron/hand-over logic.
+- [x] TCL74b (Settings > Cloud scan: Run now / Stop now) App: Run now / Stop now in Settings > Cloud scan and the Engine tab, showing the state in words.
