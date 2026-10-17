@@ -32,3 +32,6 @@ Evidence in `research/review/pnl_2026-10-17.md`: 1,999 settled phone bets and bi
 ## 2026-10-17 chat: PropLine +EV list retired (TCL98)
 - Tj: "if the propline list is a waste of usage, turn it off and get rid of it". Evidence: prop Overs with stated edge lose 9-14% (n 6,393 closes); Unders +1.9%/+9.9% on n 398/210 only; game lines no measurable edge; live audit 470 of 500 Vigilant-priced lines <= 0%; each sweep 224 requests.
 - Change: engine sweep off (`PROPLINE_EV_SWEEP`), no carry-over; app tab and card hidden. PropLine odds source, CLV, grading and archive unchanged. Revert: flip `PROPLINE_EV_SWEEP` and `Tab.PROPLINE.shownIn`.
+
+## 2026-10-17 chat: PropLine +EV sweep hourly for a few hours, then retired (TCL95, superseded by TCL98)
+- Same-day sequence: sweep 15 min -> hourly + pull-to-refresh and a Vigilant-agrees filter (v0.114.23) -> list retired (v0.114.25). Evidence in the TCL98 entry above.
