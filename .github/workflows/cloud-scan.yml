@@ -136,6 +136,17 @@ jobs:
           chmod +x archive.sh
           nohup bash -c 'while true; do sleep 1200; ./archive.sh; done' >/dev/null 2>&1 &
 
+      # Live status for the phone (TCL80, Tj 2026-10-17: "tunnel yes"): a free Cloudflare quick tunnel (no account) to the engine's read-only status server on 127.0.0.1:8787. cloudflared is pinned to a release and
+      # checked against its sha256; the engine reads the tunnel's address from out/tunnel.log and publishes it as status.liveUrl. Any failure here leaves the phone reading GitHub as before.
+      - name: Live tunnel (read-only status for the phone)
+        continue-on-error: true
+        run: |
+          mkdir -p out bin
+          curl -sSL --retry 3 -o bin/cloudflared https://github.com/cloudflare/cloudflared/releases/download/2026.10.1/cloudflared-linux-amd64
+          echo "3bfc539f45d2620c71debb7a86be0efa737ed5ccbad9eb85c787116900e5c586  bin/cloudflared" | sha256sum -c -
+          chmod +x bin/cloudflared
+          nohup bin/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8787 > out/tunnel.log 2>&1 &
+
       - name: Engine
         env:
           SGO_API_KEY: ${{ secrets.SGO_API_KEY }}
