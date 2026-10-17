@@ -201,3 +201,8 @@ Figure out why no Claude session is answering my messages in the vigilant app
 ```
 force take it
 ```
+
+## 2026-10-17T04:04:32Z
+```
+Tell me step by step how to do it in this chat so I can copy and paste. And how do I know which claude account goes with which secret
+```
