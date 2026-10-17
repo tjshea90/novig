@@ -316,3 +316,4 @@ day that changes.
 | v0.114.18 | code 314 | 2026-10-17T16:03Z | Reset engine, pull-to-refresh Engine tab, frozen Novig scan restarts, engine bids expire in 8 min if engine dies, update check finds app release past data archives, chat takes lease
 | v0.114.19 | code 315 | 2026-10-17T17:15Z | v0.114.19: Bet button on every PropLine +EV row (lines Vigilant never priced use PropLine's fair, prop cut, Kelly stake); engine mid-scan re-read no longer waits on the scan, watchdog no longer restarts healthy jobs
 | v0.114.20 | code 316 | 2026-10-17T17:37Z | v0.114.20: PropLine +EV: pull down runs a PropLine-only sweep now; the Bet button opens the quick bet slip with the Kelly stake like the Vigilant feed (a tap on the result still opens the big data view)
+| v0.114.21 | code 317 | 2026-10-17T17:55Z | v0.114.21: PropLine +EV: the Bet button sits on every card (opens the quick bet slip), the engine's first sweep after a restart waits for its first scan so lines get Bet slips
