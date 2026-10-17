@@ -298,6 +298,26 @@ fun main(args: Array<String>) = runBlocking {
         overrideSink = postOverride, messageSink = postMessage,
         engine = "github-actions", runId = runId, log = log::invoke, sourceNames = sources::names,
     )
+    // Loop watchdog (TCL76d, Tj 2026-10-17: "Claude should be able to catch slow scanning or stalled scanning and fix it without my input"). On 2026-10-17 two runners Novig refused went silent: the heartbeat thread
+    // kept publishing while the engine's own loops (the scan, the bids, the address watch) stopped logging for minutes, so no hand-over ever fired and GitHub's cron watchdog runs only every couple of hours.
+    // This thread lives outside the coroutines: when the loops have not turned over for STALL_MS (after the first [STALL_GRACE_MS] of the job) it writes every thread's stack to out/cloud/stall-<run>.txt (the
+    // diagnosis, archived to the Release with the other journals), marks the end as STALL (the workflow hands over to a fresh runner) and halts the JVM.
+    Thread {
+        while (true) {
+            runCatching { Thread.sleep(15_000L) }
+            val now = System.currentTimeMillis()
+            val tick = engine.tickMs
+            if (now - started < STALL_GRACE_MS || tick == 0L || now - tick < STALL_MS) continue
+            runCatching {
+                val sb = StringBuilder("engine loops silent for ${(now - tick) / 1000}s at ${java.time.Instant.ofEpochMilli(now)} (run $runId, up ${(now - started) / 1000}s)\n")
+                for ((t, st) in Thread.getAllStackTraces()) { sb.append("\n\"${t.name}\" ${t.state}\n"); st.take(40).forEach { sb.append("    at ").append(it).append('\n') } }
+                File(out, "cloud").apply { mkdirs() }.let { File(it, "stall-$runId.txt").writeText(sb.toString()) }
+                println(sb.toString().take(6000))
+            }
+            runCatching { File(out, "end").writeText("STALL") }
+            Runtime.getRuntime().halt(0)
+        }
+    }.apply { isDaemon = true; name = "loop-watchdog"; start() }
     val end = engine.run(until, started)
     // The window is over (or the job is): whatever rests on Novig under the engine's key is cancelled, and the ledger goes out one last time.
     runCatching { trader.windowEnded() }
@@ -322,6 +342,10 @@ fun main(args: Array<String>) = runBlocking {
 }
 
 private const val END_WATCHDOG_MS = 90_000L
+
+/** The loop watchdog: no turn of the engine's loops for this long (after [STALL_GRACE_MS] of a job) means a stall. */
+private const val STALL_MS = 150_000L
+private const val STALL_GRACE_MS = 5 * 60_000L
 
 /**
  * Reads `settings.json` from the `cloud-config` branch with git (the checkout already has the token). The engine looks every 3 s, so it asks first with the light `ls-remote` which commit the branch is at and

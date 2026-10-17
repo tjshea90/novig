@@ -113,6 +113,7 @@ jobs:
           # Gzips the engine's journals and uploads them to the day's cloud-archive Release. Safe to run any time; --clobber replaces the same name.
           D="$(date -u +%Y-%m-%d)"; TAG="cloud-archive-$D"; mkdir -p arch
           for f in out/cloud/*.jsonl; do [ -f "$f" ] && gzip -9 -c "$f" > "arch/$(basename "$f" .jsonl)-run${GITHUB_RUN_ID}.jsonl.gz"; done
+          for f in out/cloud/stall-*.txt; do [ -f "$f" ] && gzip -9 -c "$f" > "arch/$(basename "$f" .txt).txt.gz"; done
           [ -f out/cloud-engine.log ] && gzip -9 -c out/cloud-engine.log > "arch/engine-log-run${GITHUB_RUN_ID}.txt.gz"
           ls arch/* >/dev/null 2>&1 || exit 0
           if ! gh release view "$TAG" >/dev/null 2>&1; then
@@ -166,4 +167,4 @@ jobs:
           echo "engine ended: $END"
           # TIME_UP: this job's time is over. ADDRESS: Novig refused this runner's internet address (data-center addresses are fine to Novig, one in a restricted state or on a list is not): draw another runner
           # (the engine limits itself to 5 in a row, then one an hour: cloud/ AddressWatch). Not IDLE: the phone switched the engine off.
-          if [ "$END" = "TIME_UP" ] || [ "$END" = "ADDRESS" ]; then gh workflow run cloud-scan.yml --ref main; fi
+          if [ "$END" = "TIME_UP" ] || [ "$END" = "ADDRESS" ] || [ "$END" = "STALL" ]; then gh workflow run cloud-scan.yml --ref main; fi

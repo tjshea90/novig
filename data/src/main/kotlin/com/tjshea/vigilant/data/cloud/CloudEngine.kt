@@ -177,6 +177,9 @@ class CloudEngine(
     }
 
     /** The desk beside the scan: every [deskEveryMs] one pass on the lines it holds (fills read, bids moved and posted), under the phone's newest settings, only inside the engine's hours. */
+    /** When the engine's own loops last turned over (the run loop and the scan wait loop each tick about once a second): a thread outside the coroutines watches it ([CloudMain] loop watchdog, TCL76d). */
+    @Volatile var tickMs: Long = 0L
+
     /** The newest config the run loop read: the manual Run / Stop fields the other loops (the desk) also honour ([CloudManual]). */
     @Volatile private var manualCfg: CloudConfig? = null
     private fun manualOpen(s: ScanSettings) = CloudManual.open(s.cloudHours, manualCfg, clock())
@@ -212,6 +215,7 @@ class CloudEngine(
         var lastCfg: CloudConfig? = null
         var lastBeat = 0L
         while (currentScopeActive() && clock() < untilMs) {
+            tickMs = clock()
             val cfg = runCatching { config() }.getOrNull() ?: lastCfg
             lastCfg = cfg
             cfg?.settings?.let { phoneSettings = it }
@@ -328,6 +332,7 @@ class CloudEngine(
         while (job.isActive) {
             pause(1_000L)
             val now = clock()
+            tickMs = now
             // The engine's hours end: stop the scan; the job ends with End.WINDOW (nothing orders after this; TCL20d cancels what rests first).
             val mc = manualCfg ?: cfg
             if (!CloudManual.open(mc.settings.cloudHours, mc, now) || CloudManual.stopActive(mc, now)) {
