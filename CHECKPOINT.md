@@ -1,13 +1,13 @@
-# CHECKPOINT 3557 — read me first, then TASKS.md
+# CHECKPOINT 3558 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T17:23:15Z · **tests:** all 5 fast checks green
-**Branch:** `claude/keen-keller-8fzr9r` · **builds on:** `643e04838` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T17:26:46Z · **tests:** all 5 fast checks green
+**Branch:** `claude/keen-keller-8fzr9r` · **builds on:** `083ff258e` (this checkpoint is the commit after it)
 
 ## Just done
-pre-ship: v0.114.20: pull down on the PropLine +EV screen runs a PropLine-only sweep on the engine now and shows busy until it lands
+pre-release: v0.114.20: pull down on the PropLine +EV screen runs a PropLine-only sweep on the engine now and shows busy until it lands (versionCode 316, v0.114.20)
 
 ## Do this next
-ship.sh gates and releases this
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.114.20), then run: bash tools/record-release.sh v0.114.20 316 "v0.114.20: pull down on the PropLine +EV screen runs a PropLine-only sweep on the engine now and shows busy until it lands"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ ship.sh gates and releases this
 
 ## Last ten checkpoints
 ```
+  be3147158 ckpt 3557: pre-ship: v0.114.20: pull down on the PropLine +EV screen runs a PropLine-o
   2187ac2f6 ckpt 3556: v0.114.19 released; chat handover
   8510ce22c ckpt 3555: pre-release: v0.114.19: Bet button on every PropLine +EV row (lines Vigilan
   078e3da9d ckpt 3554: pre-ship: v0.114.19: Bet button on every PropLine +EV row (lines Vigilant n
@@ -25,8 +26,7 @@ ship.sh gates and releases this
   8b5a5d11d ckpt 3550: TCL87a2: mid-scan re-read before judging uses requoteListed (recheck waited
   d7eac8f5a ckpt 3549: TCL87a: watchdog false positive fixed (bounded watch steps 60s; log activit
   c46f496bf ckpt 3548: TCL84a 5xx watch, TCL86b chat fallback chain, TCL86c auto account label; ch
-  aec5f87fe ckpt 3547: TCL84a: NovigErrorWatch (5xx short retry + alert/recovered messages) wired 
 ```
 
-(8 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
