@@ -231,3 +231,8 @@ I don't care how you get it done, but I want the chat feature in the android app
 ```
 The app is showing a lot of errors on the novig scanning. Diagnose and fix. I want the engine tab in the app to always show updated live information about the GitHub engine
 ```
+
+## 2026-10-17T15:51:38Z
+```
+Make sure if the engine isn't running that the auto bids posted don't get stale and picked off at bad prices
+```
