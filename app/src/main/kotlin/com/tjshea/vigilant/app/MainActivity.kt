@@ -767,7 +767,7 @@ private fun VigilantRoot(
         val modifier = Modifier.padding(bottom = padding.calculateBottomPadding()).consumeWindowInsets(androidx.compose.foundation.layout.PaddingValues(bottom = padding.calculateBottomPadding())).fillMaxSize()
         androidx.compose.foundation.layout.Box(modifier) {
             when (tab) {
-                Tab.ENGINE -> com.tjshea.vigilant.app.ui.EngineScreen(state, onOpenCloudSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.CLOUD.name; tabName = Tab.SETTINGS.name })
+                Tab.ENGINE -> com.tjshea.vigilant.app.ui.EngineScreen(state, onOpenCloudSettings = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.CLOUD.name; tabName = Tab.SETTINGS.name }, onRefresh = { vm.refreshEngine() }, onReset = { vm.resetEngine() })
                 Tab.CLAUDE -> com.tjshea.vigilant.app.ui.ClaudeScreen(
                     state, onSend = vm::sendChat, onChatOpen = vm::setChatOpen, onNewChat = vm::newChat, onClearChat = vm::clearChat, onMarkRead = vm::markClaudeRead,
                     onDismissMessage = vm::dismissClaudeMessage, onClearMessages = vm::clearClaudeMessages,

@@ -34,12 +34,26 @@ import com.tjshea.vigilant.data.cloud.CloudChat
 /** The home: what the GitHub engine is doing, live from GitHub (state, readings, APIs, bets, bids, trends). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: () -> Unit) {
+fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: () -> Unit, onRefresh: () -> Unit = {}, onReset: () -> Unit = {}) {
     Scaffold(topBar = { TopAppBar(title = { Text("Engine", fontWeight = FontWeight.Bold) }) }) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp).testTag("engineScreen")) {
-            DashboardPage(state, onOpenCloudSettings)
+        // Pull down to read everything again at once (status, list, trades, bids, usage, charts); the page shows when each was last read (Tj, 2026-10-17, TCL85).
+        VigilantPullToRefresh(busy = false, onRefresh = onRefresh, holdWhileBusy = false, modifier = Modifier.padding(padding).fillMaxSize()) {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp).testTag("engineScreen")) {
+                DashboardPage(state, onOpenCloudSettings)
+                ResetEngineButton(onReset)
+            }
         }
     }
+}
+
+/** Reset engine: two taps (the first arms it). Ends the running GitHub job and starts a new one on a new runner; never touches keys, trading switches or Claude. */
+@Composable
+fun ResetEngineButton(onReset: () -> Unit) {
+    var armed by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    androidx.compose.material3.OutlinedButton(
+        onClick = { if (armed) { armed = false; onReset() } else armed = true },
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp).testTag("resetEngine"),
+    ) { Text(if (armed) "Tap again to reset the engine" else "Reset engine (new GitHub runner)") }
 }
 
 /** Chat with Claude and the messages from Claude/the engine, side by side under one title. */
