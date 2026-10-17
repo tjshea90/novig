@@ -192,9 +192,9 @@ class CreditPaceTest {
         val now = Instant.parse("2026-10-17T19:00:00Z").toEpochMilli()
         val u = KeyUsage(periodStart = oct1, used = 9_754, remaining = 10_246, limit = 20_000, firstSeenMs = seen, resetAtMs = Instant.parse("2026-11-01T00:00:00Z").toEpochMilli())
         val today = newYork.spendableToday(u, now)
-        assertTrue("a day's share of what is left (about 800), not zero: $today", today in 300..1_500)
-        // the same key seen since before the month began is paced over the whole month, as before
-        assertEquals(0, newYork.spendableToday(u.copy(firstSeenMs = oct1 - 1), now))
+        assertTrue("on the month's pace (49% used at 55% of the month): a day's share, about 1,100, not zero: $today", today in 800..1_500)
+        // the same key as a brand-new plan (nothing used before this app met it) is spread over the days left, as before
+        assertTrue(newYork.spendableToday(u.copy(used = 0, remaining = 20_000), now) > 5_000)
     }
 
     @Test

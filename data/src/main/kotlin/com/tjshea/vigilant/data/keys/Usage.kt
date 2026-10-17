@@ -528,6 +528,9 @@ class CreditPace(
         /** Credits a free ParlayAPI key keeps for closing lines (Tj, 2026-10-07: free keys serve scans too; before, all 1,000 were held back). */
         const val FREE_RESERVE = 100
 
+        /** A first-seen key whose server-side used count exceeds this share of its limit beyond what this app charged had a history before it was met: paced from the period's start. */
+        const val HISTORY_FRACTION = 0.05
+
         private const val DAY_MS = 86_400_000L
     }
 }
