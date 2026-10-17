@@ -222,4 +222,15 @@ class CloudTraderTest {
         val text = kotlinx.serialization.json.Json.encodeToString(CloudTrader.PassRow.serializer(), row)
         org.junit.Assert.assertEquals(row, kotlinx.serialization.json.Json.decodeFromString(CloudTrader.PassRow.serializer(), text))
     }
+
+    @Test
+    fun `a type of bet that lost in Tj's history is never ordered, and only with Profit-proven on`() = runBlocking {
+        val prop = row("prop").copy(league = Leagues.byNovigName("NFL")!!, marketLabel = "Player Receiving Yards", selection = "Juwan Johnson Over 39.5")
+        val on = settings { it.copy(gates = it.gates.copy(profitProven = true)) }
+        assertTrue(trader().profileBlock(prop, on, now)!!.startsWith("Not bet:"))
+        assertEquals(null, trader().profileBlock(prop, settings { it.copy(gates = it.gates.copy(profitProven = false)) }, now))
+        assertEquals(null, trader().profileBlock(row("spread"), on, now))
+        val r = trader().pass(listOf(prop), on, now)
+        assertEquals(r.line(), 0, r.placed.size)
+    }
 }

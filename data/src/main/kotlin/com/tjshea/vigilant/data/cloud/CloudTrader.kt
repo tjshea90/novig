@@ -289,6 +289,7 @@ class CloudTrader(
         if (o.priceIsOld(now) || now - (o.bookFetchedAtMs ?: 0L) > FRESH_PRICE_MS) return "no Novig price read in the last 3 minutes"
         unavailable(o, now)?.let { return it }
         if (!rules.byStars && TrapGuard.tooEarly(o.event.startsTs, now, s.trapEarlyHours, null, false) != null) return TrapGuard.earlyReason(s.trapEarlyHours)
+        profileBlock(o, s, now)?.let { return it }
         val a: Agreement.Count = o.agreement
         AutoBet.judgeVigilant(rules, q.evPercent, q.priceAmerican, BetKind.of(o.marketLabel, o.selection), a.twoSided, a.agreeing, AutoBet.isOverProp(o.marketLabel, o.selection))?.let { return it }
         val stars = ProfitProfile.adjustedStars(s.gates.profitProven, o.rating?.stars, o.league.novigName, BetKind.of(o.marketLabel, o.selection).label, o.selection, o.evPercent, o.event.startsTs, now)
@@ -299,6 +300,17 @@ class CloudTrader(
             SharpMode.OFF, SharpMode.VETO -> null
             SharpMode.CONFIRM -> if (!a.sharpAgrees) "no sharp book confirms it is +EV" else null
         }
+    }
+
+    /**
+     * The types of bet Tj's own history says lose (Settings › Profit-proven only, on): never ordered, whatever the star minimum says (Tj, 2026-10-17, chat t1792212927614: "for any losing bets and bid types with
+     * big enough samples, make the engine never auto bet or auto bid these types"). The same [ProfitProfile] the phone's auto-bet and the bid desk judge by; regenerate it with tools/profit-profile.py.
+     */
+    internal fun profileBlock(o: Opportunity, s: ScanSettings, now: Long): String? {
+        if (!s.gates.profitProven) return null
+        val pf = ProfitProfile.shipped ?: return null
+        val q = o.quote ?: return null
+        return pf.judge(ProfitProfile.Instrument.BET, o.league.novigName, BetKind.of(o.marketLabel, o.selection).label, o.selection, q.evPercent, (o.event.startsTs - now) / 60_000L).blocked?.let { "Not bet: $it" }
     }
 
     /** What taking [dollars] cheapest-first from the visible ladder would buy while each level stays at or above [minEv] after the fee. Null = under one contract. */
