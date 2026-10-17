@@ -62,6 +62,22 @@ class CloudTraderTest {
         override suspend fun cash() = cash
         override suspend fun place(entry: TradeEntry, limitPrice: Double): CloudOrderPort.Placed { sent += entry to limitPrice; return answer(entry) }
         override suspend fun cancelResting() { cancelled++ }
+        var held: List<com.tjshea.vigilant.data.novig.trading.NovigPosition>? = null
+        override suspend fun positions() = held
+    }
+
+    @Test
+    fun `what the whole account holds in a game counts against the game cap, whoever placed it`() = runBlocking {
+        val port = FakePort { e -> CloudOrderPort.Placed.Filled(e.contracts, e.avgPrice, 0.0, "o1") }
+        port.held = listOf(com.tjshea.vigilant.data.novig.trading.NovigPosition("m-other", "o-other", 300, 150.0))
+        val t = trader(port)
+        t.describeOutcome = { id -> if (id == "o-other") CloudTrader.OutcomeInfo("e-a", "Boston Celtics @ New York Knicks", start, "Spread", "NYK -7.5") else null }
+        val r = t.pass(listOf(row("a")), settings(CloudTradeMode.LIVE), now)
+        assertEquals("nothing is ordered into a game the account already has \$150 in (cap 10% of the wallet)", 0, r.placed.size)
+        assertTrue(r.line(), r.skipped.keys.any { it.contains("most at risk") })
+        // the same pass without that position orders
+        port.held = emptyList()
+        assertEquals(1, trader(port).pass(listOf(row("a")), settings(CloudTradeMode.LIVE), now).placed.size)
     }
 
     @Test
