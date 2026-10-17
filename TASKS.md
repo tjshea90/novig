@@ -5629,10 +5629,10 @@ Findings (2026-10-16): the phone's records already carry `made` (bet|bid), `how`
 ## TCL79 (Tj, chat t1792218911310, 2026-10-17)
 "I don't want cached or stale information. the android app should be a true real time monitor and control board of the GitHub engine. make sure the android app can't show me stale information, whether it is GitHub engine status or bets scanned from long ago"
 Cause seen in his screenshot (2:28am): Engine tab said "Scanning" with a green dot and progress frozen at 70 of 10,691 for 9+ minutes, "Address accepted" under a refused line, Bets listed 24 from a dead run.
-- [ ] TCL79a Phone link freshness: if the phone's last good read of GitHub is older than 20 s, a red banner "can't reach GitHub: showing data from hh:mm" and every tile greys out.
-- [ ] TCL79b Engine freshness: heartbeat silent > 30 s amber, > 2 min red "engine silent"; progress unchanged for 90 s = "STALLED" (not a green Scanning); stale tiles say "last known".
-- [ ] TCL79c Bets: every row shows how old its Novig price and fair odds are; rows older than the freshness limits (Novig price > 5 min, fair odds > 20 min, or from a run that is not the live one) are dropped from the main list into "Show old bets (N)" and cannot be bet from the list; a list-level banner when the whole list is old.
-- [ ] TCL79d Tests: pure freshness model (CloudFreshness / DashboardModel) with cases for each rule; no cached screen can show a green state older than its limit.
+- [x] TCL79a Phone link freshness: if the phone's last good read of GitHub is older than 20 s, a red banner "can't reach GitHub: showing data from hh:mm" and every tile greys out.
+- [x] TCL79b Engine freshness: heartbeat silent > 30 s amber, > 2 min red "engine silent"; progress unchanged for 90 s = "STALLED" (not a green Scanning); stale tiles say "last known".
+- [x] TCL79c Bets: every row shows how old its Novig price and fair odds are; rows older than the freshness limits (Novig price > 5 min, fair odds > 20 min, or from a run that is not the live one) are dropped from the main list into "Show old bets (N)" and cannot be bet from the list; a list-level banner when the whole list is old.
+- [x] TCL79d (DashboardModel link/quiet/stalled; OddsAgeTest old bets) Tests: pure freshness model (CloudFreshness / DashboardModel) with cases for each rule; no cached screen can show a green state older than its limit.
 
 ## TCL80 (Tj, chat t1792219437312 "tunnel yes", 2026-10-17)
 Real-time engine status in the app (<= 2 s): the engine opens a free Cloudflare quick tunnel (no account, no cost) to a tiny HTTP status server (SSE) on the runner; the tunnel URL goes into status.json; the phone connects directly for status/progress and falls back to the GitHub polling when the tunnel is absent/fails. Read-only: it serves the same public status, never a key, never a command.
