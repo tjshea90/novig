@@ -457,6 +457,23 @@ class CloudEngineTest {
     }
 
     @Test
+    fun `a manual run keeps the engine scanning at night, and a manual stop ends a day-time run with WINDOW`() = runBlocking {
+        val hoursOn = on.copy(settings = on.settings.copy(gates = on.settings.gates.copy(cloudHours = true)))
+        val night = etMs(3)
+        val scanner = FakeScanner { _, _, _ -> report(result("a")) }
+        val running = hoursOn.copy(manualRunUntilMs = night + 3_600_000L)
+        val e = engine(scanner, { running }, CopyOnWriteArrayList(), clock = { night })
+        assertEquals(CloudEngine.End.TIME_UP, e.run(untilMs = night + 5_000L))
+        assertTrue("it scanned although the hours are closed", scanner.calls.get() > 0)
+        val noon = etMs(12)
+        val stopped = hoursOn.copy(manualStopUntilMs = etMs(32))
+        val scanner2 = FakeScanner { _, _, _ -> report(result("a")) }
+        val e2 = engine(scanner2, { stopped }, CopyOnWriteArrayList(), clock = { noon })
+        assertEquals(CloudEngine.End.WINDOW, e2.run(untilMs = noon + 600_000L))
+        assertEquals(0, scanner2.calls.get())
+    }
+
+    @Test
     fun `a scan running when 01-00 Eastern arrives is cut and the job ends with WINDOW`() = runBlocking {
         val scanner = FakeScanner { _, _, _ -> delay(30_000); report(result("a")) }
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
