@@ -122,7 +122,8 @@ class CloudEngineTest {
         val judged = CopyOnWriteArrayList<List<String>>()
         val scanner = object : OddsScanner {
             override suspend fun scan(settings: ScanSettings, sources: List<ReferenceSource>, pinned: Set<String>, onProgress: (ScanProgress) -> Unit, onPartial: (ScanResult) -> Unit) = report(result("a", "b", fetched = System.currentTimeMillis() - 600_000L))
-            override suspend fun recheck(settings: ScanSettings, marketIds: Collection<String>, onProgress: (Int, Int) -> Unit): RecheckReport { askedIds += marketIds; return RecheckReport(result("a"), 2, 0, null) }
+            override suspend fun recheck(settings: ScanSettings, marketIds: Collection<String>, onProgress: (Int, Int) -> Unit) = RecheckReport(null, 0, 0, null)
+            override suspend fun requoteListed(settings: ScanSettings, rows: List<com.tjshea.vigilant.data.scanner.Opportunity>): List<com.tjshea.vigilant.data.scanner.Opportunity> { askedIds += rows.map { it.market.marketId }; return rows.filter { it.event.eventId == "e-a" } }
             override suspend fun reprice(settings: ScanSettings): ScanResult? = null
             override suspend fun unscannedLeagues(settings: ScanSettings): Set<String> = emptySet()
         }
