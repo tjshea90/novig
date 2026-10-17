@@ -5706,3 +5706,8 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL94a ESPN's plain college-football board lists ~16 games: live tab / lab / feed race now read groups 80+81 (NCAAF) and 50 (NCAAB): LabClock.scoreboardUrls, ScoreboardUrlsTest.
 - [ ] TCL94b Grading (Scores.kt) also reads FCS (groups=81).
 - [ ] TCL94c Live lane fallback scores from SGO / OddsPapi v5 / Unabated when ESPN has no match (docs: teams.score + status); verify on live keys first.
+
+## TCL95 (Tj, chat t1792260558273, 2026-10-17)
+"most if not all of propline bets tell me that vigilant says they are negative EV. but propline says positive EV. which one is correct? are the propline picks stale?"
+- Finding (live list, 563 rows, 500 Vigilant-priced): Vigilant <=0 on 470 (mean -0.2%) vs PropLine +3.3%; Novig price unchanged since PropLine's read on 411/500; fair 36.1% (PropLine, one book) vs 31.7% (Vigilant, blend). Not stale: a fair-model gap (selection of the largest single-book gaps). Evidence matches the 6,400-bet PropLine prop Over loss.
+- [ ] TCL95a PropLine +EV screen: a "Vigilant agrees (+EV)" filter chip (default on?) using row.vigilantEv/ opp quote.
