@@ -1,13 +1,13 @@
-# CHECKPOINT 3592 — read me first, then TASKS.md
+# CHECKPOINT 3593 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T20:17:47Z · **tests:** all 5 fast checks green
-**Branch:** `claude/wizardly-meitner-h2g4pr` · **builds on:** `ffa15cc38` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T20:18:19Z · **tests:** all 5 fast checks green
+**Branch:** `claude/wizardly-meitner-h2g4pr` · **builds on:** `1604187f0` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.114.30: the Live engine-trading button lights up whenever the trading key is on GitHub (the app asks GitHub at start instead of trusting a marker file lost on reinstall) (versionCode 326, v0.114.30)
+pre-ship: v0.114.31: the Live engine-trading button lights up whenever the trading key is on GitHub; an order error now says what Novig last returned for it, and any non-live order status counts as finished
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.114.30), then run: bash tools/record-release.sh v0.114.30 326 "v0.114.30: the Live engine-trading button lights up whenever the trading key is on GitHub (the app asks GitHub at start instead of trusting a marker file lost on reinstall)"
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  52852c20a ckpt 3592: pre-release: v0.114.30: the Live engine-trading button lights up whenever t
   f86c8350a ckpt 3591: pre-ship: v0.114.30: the Live engine-trading button lights up whenever the 
   dea99df3a ckpt 3590: pre-release: v0.114.29: a manual bet whose order Novig leaves pending is ca
   83796c166 ckpt 3589: pre-ship: v0.114.29: a manual bet whose order Novig leaves pending is cance
@@ -25,8 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   e4bb873f6 ckpt 3585: v0.114.27 released; BoltOdds key on GitHub, switch request sent
   70572032a ckpt 3584: pre-release: v0.114.27: Live light logs every decision (scans with score an
   7cb98b00e ckpt 3583: pre-ship: v0.114.27: Live light logs every decision (scans with score and c
-  e11340b99 ckpt 3582: TCL101a: API review; Unabated off; BoltOdds idle flagged to Tj
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(1 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
