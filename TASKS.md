@@ -5649,8 +5649,8 @@ Real-time engine status in the app (<= 2 s): the engine opens a free Cloudflare 
 
 ## TCL83 (Tj, chat t1792246407020 "why didn't the app tell me update available", 2026-10-17)
 Cause found: `AppUpdater.check` calls `/repos/.../releases/latest`, which returns the newest Release of ANY kind, now a data archive (`propline-archive-2026-10-17`, no APK) -> `AppUpdate.parse` returns null -> never "newer", never notifies.
-- [ ] TCL83a Fix: read `/releases?per_page=30`, take the newest non-draft non-prerelease whose tag matches `v\d+\.\d+\.\d+` and has an `.apk` asset (AppUpdate.parse list variant) + test in AppUpdateTest with an archive release first in the list.
-- [ ] TCL83b Ship it (needs the repo lease; chat mode held none). Tj must install it by hand once; later updates notify.
+- [x] TCL83a Fix: read `/releases?per_page=30`, take the newest non-draft non-prerelease whose tag matches `v\d+\.\d+\.\d+` and has an `.apk` asset (AppUpdate.parse list variant) + test in AppUpdateTest with an archive release first in the list.
+- [x] TCL83b Ship it (needs the repo lease; chat mode held none). Tj must install it by hand once; later updates notify.
 
 ## TCL84 (Tj, chat t1792247226863, 2026-10-17)
 "it says novig http 502. any time there is any error like this for any connection or API, see if Claude can figure it out or reset it without delay"
@@ -5660,12 +5660,12 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 
 ## TCL85 (Tj, chat t1792248442530, 2026-10-17)
 "add buttons for my android app: 1) reset engine (resets the entire GitHub engine in case of errors, doesn't affect claude, tries to get a new GitHub runner) 2) refresh (with pull down to refresh gesture) (refreshes all the status and charts and engine stats so I see only the most updated status on the GitHub engine)"
-- [ ] TCL85a Engine tab: "Reset engine" button (two taps) -> writes a reset request in cloud-config (like refreshAtMs); a small reset step ends the running job (cancel run via workflow or the engine's own exit) and dispatches cloud-scan.yml again so a new runner/address is drawn; status says "resetting"; keeps trades.json/desk.json handover and takes own bids down; never touches keys, trading switches or Claude.
-- [ ] TCL85b Engine tab: pull-down refresh that re-reads status, list, trades, desk, usage, charts at once (CloudLink.syncNow) and shows when each was last read.
-- [ ] TCL85c Tests (CloudLink reset request, UI) and ship in one release with TCL83/TCL84a.
+- [x] TCL85a Engine tab: "Reset engine" button (two taps) -> writes a reset request in cloud-config (like refreshAtMs); a small reset step ends the running job (cancel run via workflow or the engine's own exit) and dispatches cloud-scan.yml again so a new runner/address is drawn; status says "resetting"; keeps trades.json/desk.json handover and takes own bids down; never touches keys, trading switches or Claude.
+- [x] TCL85b Engine tab: pull-down refresh that re-reads status, list, trades, desk, usage, charts at once (CloudLink.syncNow) and shows when each was last read.
+- [x] TCL85c Tests (CloudLink reset request, UI) and ship in one release with TCL83/TCL84a.
 
 ## TCL86 (Tj, chat t1792250116002, 2026-10-17)
 "I need this chat to answer me and build apps when I ask. is there a way to make it automatically send the chat to the claude session in charge at the time"
-- [ ] TCL86a A CHAT: wake that gets a build/ship request must take the repo lease itself when it is free (or free by idle/stale), work, ship, release it; today chat mode never holds the lease so it can only answer. Change CHAT_WAKE.md + the routine prompt (Tj must paste the new text) accordingly.
+- [x] TCL86a A CHAT: wake that gets a build/ship request must take the repo lease itself when it is free (or free by idle/stale), work, ship, release it; today chat mode never holds the lease so it can only answer. Change CHAT_WAKE.md + the routine prompt (Tj must paste the new text) accordingly.
 - [ ] TCL86b Route the fire to the account on duty (rotation.py chat) and fall back to the next account if it does not ack within 40 s.
 - [ ] TCL86c Session start/acquire runs whoami automatically so no lease says acct-unknown; optional friendly label map (A/B/C, never emails) shown on the board (Tj chat t1792251390367).
