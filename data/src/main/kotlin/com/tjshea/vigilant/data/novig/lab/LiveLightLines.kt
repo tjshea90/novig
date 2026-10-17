@@ -16,7 +16,7 @@ object LiveLightLines {
     const val MAX_PER_GAME = 14
     const val STICKY_SD = 4.5
 
-    fun window(lines: List<LadderLine>, league: String, state: GameState?, e: EspnGame?, keep: Set<String> = emptySet()): List<LadderLine> {
+    fun window(lines: List<LadderLine>, league: String, state: GameState?, e: EspnGame?, keep: Set<String> = emptySet(), maxPerGame: Int = MAX_PER_GAME): List<LadderLine> {
         val prior = LiveLightScan.priorTotal(league)
         if (state == null || e == null || prior == null) return lines.filter { it.kind == LadderKind.MARGIN && it.threshold == 0.0 }
         val left = state.fractionLeft
@@ -32,6 +32,6 @@ object LiveLightLines {
             val held = l.marketId in keep
             if (ml) Triple(l, z, true) else if (z <= REACH_SD || (held && z <= STICKY_SD)) Triple(l, if (held) z - 0.5 else z, false) else null
         }
-        return scored.filter { it.third }.map { it.first } + scored.filter { !it.third }.sortedBy { it.second }.take(MAX_PER_GAME).map { it.first }
+        return scored.filter { it.third }.map { it.first } + scored.filter { !it.third }.sortedBy { it.second }.take(maxPerGame).map { it.first }
     }
 }

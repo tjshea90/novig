@@ -247,13 +247,17 @@ class LiveLightRunner(
         val room = minOf(MAX_MARKETS, view?.room() ?: MAX_MARKETS)
         val built = LinkedHashMap<String, Game>()
         var budget = room
+        // The stream's budget is shared by every live game: with many games on, each is watched through fewer strikes (the moneyline and the few nearest the score) rather than the first three games taking all of it
+        // (Tj, 2026-10-17: "there are many live games going on right now. it only lists 3").
+        val withLines = live.count { ev -> all.any { it.eventId == ev.eventId } }
+        val perGame = if (withLines * (LiveLightLines.MAX_PER_GAME + 1) <= room) LiveLightLines.MAX_PER_GAME else ((room / withLines.coerceAtLeast(1)) - 1).coerceAtLeast(MIN_PER_GAME)
         // The games furthest along first: they are the ones that can be decided.
         for (ev in live) {
             val ms = all.filter { it.eventId == ev.eventId }
             val allLines = ms.mapNotNull { Ladders.line(it) }
             if (allLines.isEmpty()) continue
             // Every alternate spread and total is its own market; the stream budget goes to the strikes that can be wrong now (LiveLightLines).
-            val lines = LiveLightLines.window(allLines, ev.league, feeds[ev.eventId]?.game?.let { e -> stateOf(ev, e) }, feeds[ev.eventId]?.game, keep = games[ev.eventId]?.marketIds?.toSet().orEmpty())
+            val lines = LiveLightLines.window(allLines, ev.league, feeds[ev.eventId]?.game?.let { e -> stateOf(ev, e) }, feeds[ev.eventId]?.game, keep = games[ev.eventId]?.marketIds?.toSet().orEmpty(), maxPerGame = perGame)
             val keepIds = lines.mapTo(HashSet()) { it.marketId }
             val keep = ms.filter { it.marketId in keepIds }
             if (keep.size > budget) continue
@@ -405,6 +409,8 @@ class LiveLightRunner(
 
         /** Markets the lane may hold on the feed: a bbo market costs 8 of the key's 512 stream tokens, and the scan and the bids share them. */
         const val MAX_MARKETS = 48
+        /** The fewest strikes besides the moneyline a game keeps when many games share the budget. */
+        const val MIN_PER_GAME = 2
         const val CATALOG_MS = 30_000L
         const val STATE_MS = 3_000L
         const val DEBOUNCE_MS = 120L
