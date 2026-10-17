@@ -332,6 +332,16 @@ class ApiBetPlacer(
         } finally {
             feed?.forget(orderId)
         }
+        if (order?.terminal != true) {
+            // Still not over after the wait: cancel this very order by its id (never a second order), then look again, so a slow answer ends as a result and not as "Unconfirmed".
+            try { trading.cancelOrder(orderId) } catch (e: CancellationException) { throw e } catch (e: Exception) { }
+            val again = clock()
+            while (clock() - again < CANCEL_WAIT_MS) {
+                order = try { trading.order(orderId) } catch (e: CancellationException) { throw e } catch (e: Exception) { order }
+                if (order?.terminal == true) break
+                pause(POLL_MS)
+            }
+        }
         var fills = readFills(orderId)
         if (fills.isEmpty() && order?.status == "FILLED") {
             // The order says filled and its fills haven't shown yet.
@@ -394,6 +404,7 @@ class ApiBetPlacer(
         const val TOO_SMALL_CODE = "ORDER_TOO_SMALL"
 
         const val ORDER_WAIT_MS = 12_000L
+        const val CANCEL_WAIT_MS = 8_000L
 
         /** A lock this close to the start is worked out as if in-game (the fee is charged by the time it fills: NOVIG_API.md §8). */
         const val LIVE_MARGIN_MS = 2 * 60_000L
