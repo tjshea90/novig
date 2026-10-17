@@ -1,13 +1,13 @@
-# CHECKPOINT 3611 — read me first, then TASKS.md
+# CHECKPOINT 3612 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T23:29:57Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-ym9o0a` · **builds on:** `7291762e7` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T23:49:38Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-ym9o0a` · **builds on:** `af935c0c8` (this checkpoint is the commit after it)
 
 ## Just done
-TCL108 written
+TCL109 written
 
 ## Do this next
-answer live-on-engine question; maybe design
+design: read live runner wiring
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ answer live-on-engine question; maybe design
 
 ## Last ten checkpoints
 ```
+  af935c0c8 ckpt 3611: TCL108 written
   7291762e7 ckpt 3610: ANALYST 2026-10-17: watch ok, no rule change, STATE.json baseline
   d5e6bcda6 ckpt 3609: v0.114.34 released
   d1bbdf4b5 ckpt 3608: pre-release: v0.114.34: live fee 0.06 in every league (fallback table), Fee
@@ -26,5 +27,4 @@ answer live-on-engine question; maybe design
   191eb1d56 ckpt 3604: pre-release: v0.114.33: the +EV list no longer jumps: Scanning/No +EV state
   62b89ce5f ckpt 3603: TCL104b list jump fix (fixed-height live banner), TCL106 kalshi research
   29751b60d ckpt 3602: chat session done: v0.114.32 released
-  03fe938dd ckpt 3601: pre-release: v0.114.32: the bid desk no longer stops a whole pass when Novi
 ```
