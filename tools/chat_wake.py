@@ -69,7 +69,7 @@ def wake(msgs, now, roster, away, env, post=None):
             tried.append("acct-%s has no wake link saved on GitHub" % tag)
             continue
         try:
-            r = fire(url, tok, "CHAT: Tj wrote in the Vigilant app chat. Chat mode (see research/coordination/CHAT_WAKE.md): start tools/chat_watch.sh under Monitor, answer every message with tell_tj.py chat-reply. Do not take the repo lease for chat.", post)
+            r = fire(url, tok, "CHAT: Tj wrote in the Vigilant app chat. Chat mode (see research/coordination/CHAT_WAKE.md): start tools/chat_watch.sh under Monitor, answer every message with tell_tj.py chat-reply. When a message asks for work (a build, a fix, a release), run `bash tools/coord.py acquire --kind chat --task chat` first: Tj's chat message takes the repo lease from any routine or interactive session, so never tell him you do not have it. Release it when the work is shipped.", post)
             return "Waking acct-%s's Claude now (it needs about a minute to start); it will answer here." % tag, True
         except Exception as e:  # noqa: BLE001
             tried.append("acct-%s: %s" % (tag, str(e)[:80]))
