@@ -2,11 +2,11 @@
  "v": 1,
  "holder": "d3980d",
  "label": "acct-unknown",
- "kind": "interactive",
- "task": "",
+ "kind": "routine",
+ "task": "rotation",
  "since": 1792236047,
  "sinceIso": "2026-10-17T11:20:47Z",
- "hb": 1792236047,
- "hbIso": "2026-10-17T11:20:47Z",
+ "hb": 1792236061,
+ "hbIso": "2026-10-17T11:21:01Z",
  "leaseS": 1200
 }
