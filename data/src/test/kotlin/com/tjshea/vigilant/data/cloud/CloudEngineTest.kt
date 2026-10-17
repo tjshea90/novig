@@ -18,6 +18,9 @@ import com.tjshea.vigilant.data.scanner.ScannerMode
 import com.tjshea.vigilant.engine.EvQuote
 import com.tjshea.vigilant.engine.MarketFee
 import com.tjshea.vigilant.engine.TakeLevel
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -192,7 +195,7 @@ class CloudEngineTest {
         val published = CopyOnWriteArrayList<Pair<CloudFeed?, CloudStatus>>()
         val cfg = java.util.concurrent.atomic.AtomicReference(on.copy(resetAtMs = 5_000L))
         val e = engine(scanner, { cfg.get() }, published)
-        val job = kotlinx.coroutines.GlobalScope.async { e.run(untilMs = System.currentTimeMillis() + 10_000) }
+        val job = GlobalScope.async { e.run(untilMs = System.currentTimeMillis() + 10_000) }
         delay(150)
         assertTrue("a reset already in the config when the job starts is handled, not obeyed", !job.isCompleted)
         cfg.set(cfg.get().copy(resetAtMs = 6_000L))
