@@ -1,13 +1,13 @@
-# CHECKPOINT 3590 — read me first, then TASKS.md
+# CHECKPOINT 3591 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T20:08:43Z · **tests:** 1 RED: test_coord.sh (4 green)
-**Branch:** `claude/wizardly-meitner-h2g4pr` · **builds on:** `e980b07d8` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T20:13:46Z · **tests:** 1 RED: test_coord.sh (4 green)
+**Branch:** `claude/wizardly-meitner-h2g4pr` · **builds on:** `119b4d568` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.114.29: a manual bet whose order Novig leaves pending is cancelled by its id and re-read instead of ending as 'not finished after 12 seconds' (versionCode 325, v0.114.29)
+pre-ship: v0.114.30: the Live engine-trading button lights up whenever the trading key is on GitHub (the app asks GitHub at start instead of trusting a marker file lost on reinstall)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.114.29), then run: bash tools/record-release.sh v0.114.29 325 "v0.114.29: a manual bet whose order Novig leaves pending is cancelled by its id and re-read instead of ending as 'not finished after 12 seconds'"
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  dea99df3a ckpt 3590: pre-release: v0.114.29: a manual bet whose order Novig leaves pending is ca
   83796c166 ckpt 3589: pre-ship: v0.114.29: a manual bet whose order Novig leaves pending is cance
   8790d2ae2 ckpt 3588: pre-release: v0.114.28: an order Novig leaves pending is cancelled by its i
   1b62190c6 ckpt 3587: pre-ship: v0.114.28: an order Novig leaves pending is cancelled by its id a
@@ -25,5 +26,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   7cb98b00e ckpt 3583: pre-ship: v0.114.27: Live light logs every decision (scans with score and c
   e11340b99 ckpt 3582: TCL101a: API review; Unabated off; BoltOdds idle flagged to Tj
   da30810d2 ckpt 3581: TCL100a/b: Live light journal (scan/offer/bid) saved to phone-data phone/li
-  8055f04e5 ckpt 3580: pre-release: v0.114.26: ParlayAPI and other monthly credits are paced fairl
 ```
+
+(3 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
