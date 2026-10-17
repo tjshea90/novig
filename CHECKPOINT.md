@@ -1,13 +1,13 @@
-# CHECKPOINT 3564 — read me first, then TASKS.md
+# CHECKPOINT 3565 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T17:52:31Z · **tests:** all 5 fast checks green
-**Branch:** `claude/keen-keller-8fzr9r` · **builds on:** `2c30f74b9` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T18:01:36Z · **tests:** all 5 fast checks green
+**Branch:** `claude/keen-keller-8fzr9r` · **builds on:** `c9c4bbd6d` (this checkpoint is the commit after it)
 
 ## Just done
-TCL93a/b: engine sees PropLine refresh mid-scan; advice headers show age
+TCL94a: live/lab/feed-race ESPN scoreboards read FBS+FCS groups (the plain board lists ~16 games)
 
 ## Do this next
-restart engine to deploy; ship v0.114.22 with TCL93b app change; TCL93c smarter advice
+ship v0.114.22 with TCL93b advice age + TCL94a; then TCL93c, TCL94b/c
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ restart engine to deploy; ship v0.114.22 with TCL93b app change; TCL93c smarter 
 
 ## Last ten checkpoints
 ```
+  3dcceb596 ckpt 3564: TCL93a/b: engine sees PropLine refresh mid-scan; advice headers show age
   c193b2270 ckpt 3563: pre-release: v0.114.21: PropLine +EV: the Bet button sits on every card (op
   6af8bdb88 ckpt 3562: pre-ship: v0.114.21: PropLine +EV: the Bet button sits on every card (opens
   cbf33e26d ckpt 3561: v0.114.20 released and recorded; engine restarted with TCL89 engine side an
@@ -26,8 +27,7 @@ restart engine to deploy; ship v0.114.22 with TCL93b app change; TCL93c smarter 
   be3147158 ckpt 3557: pre-ship: v0.114.20: pull down on the PropLine +EV screen runs a PropLine-o
   2187ac2f6 ckpt 3556: v0.114.19 released; chat handover
   8510ce22c ckpt 3555: pre-release: v0.114.19: Bet button on every PropLine +EV row (lines Vigilan
-  078e3da9d ckpt 3554: pre-ship: v0.114.19: Bet button on every PropLine +EV row (lines Vigilant n
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

@@ -5700,3 +5700,9 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL93a Engine reads the phone's out-of-band asks (PropLine refresh, manual Run/Stop) every few seconds during a scan too (CloudEngine watch loop sets manualCfg).
 - [x] TCL93b Advice and API manager headers say "as of ..." and "(engine not running)".
 - [ ] TCL93c Advice smarter: no "buy" advice for a monthly meter the engine's own pacing already stretches to the reset; The Odds API pool of keys counted together; live meter refresh between scans.
+
+## TCL94 (Tj, chat t1792259936917, 2026-10-17)
+"see why it can't find these scores, and if any of my apis provide live scores to feed the live engine"
+- [x] TCL94a ESPN's plain college-football board lists ~16 games: live tab / lab / feed race now read groups 80+81 (NCAAF) and 50 (NCAAB): LabClock.scoreboardUrls, ScoreboardUrlsTest.
+- [ ] TCL94b Grading (Scores.kt) also reads FCS (groups=81).
+- [ ] TCL94c Live lane fallback scores from SGO / OddsPapi v5 / Unabated when ESPN has no match (docs: teams.score + status); verify on live keys first.
