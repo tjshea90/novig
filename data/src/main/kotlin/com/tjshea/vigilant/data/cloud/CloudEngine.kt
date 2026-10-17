@@ -327,7 +327,8 @@ class CloudEngine(
             pause(1_000L)
             val now = clock()
             // The engine's hours end: stop the scan; the job ends with End.WINDOW (nothing orders after this; TCL20d cancels what rests first).
-            if (!CloudManual.open(cfg.settings.cloudHours, cfg, now) || CloudManual.stopActive(cfg, now)) {
+            val mc = manualCfg ?: cfg
+            if (!CloudManual.open(mc.settings.cloudHours, mc, now) || CloudManual.stopActive(mc, now)) {
                 windowEnd = true
                 restartReason = "engine hours over"
                 log("the engine's hours (08:00-01:00 Eastern) are over: this job ends")

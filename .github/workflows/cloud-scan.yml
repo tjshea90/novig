@@ -65,8 +65,20 @@ jobs:
               use = bool(json.loads(txt).get("settings", {}).get("gates", {}).get("cloudHours", True))
           except Exception:
               pass
+          # Run / Stop by hand from the phone (TCL74, Tj 2026-10-17): manualRunUntilMs opens the window outside its hours, manualStopUntilMs keeps the engine off until the next scheduled opening. Both lapse by themselves.
+          import time
+          run_until = stop_until = 0
+          try:
+              c = json.loads(txt)
+              run_until, stop_until = int(c.get("manualRunUntilMs", 0)), int(c.get("manualStopUntilMs", 0))
+          except Exception:
+              pass
+          now_ms = int(time.time() * 1000)
           now = datetime.datetime.now(ZoneInfo("America/New_York")).time()
-          print("open" if (not use) or (now >= datetime.time(8, 0) or now < datetime.time(1, 0)) else "closed")
+          if now_ms < stop_until:
+              print("closed")
+          else:
+              print("open" if (not use) or now_ms < run_until or (now >= datetime.time(8, 0) or now < datetime.time(1, 0)) else "closed")
           PY
             )
             echo "engine hours: $HOURS"
