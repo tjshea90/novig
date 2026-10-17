@@ -1,86 +1,86 @@
 SETTLED 1999 days 2026-09-25 .. 2026-10-16
-ALL       n 1999  stake $  952.23  profit $ -105.79  ROI  -11.1%  z -1.81  avgEV  +3.6%  avgCLV  +1.3% (n1682)  win 45.8%
+ALL       n 1999  stake $ 2413.82  profit $ -105.79  ROI   -4.4%  z -1.73  avgEV  +3.6%  avgCLV  +1.3% (n1682)  win 45.8%
 
 -- made / how
-  bet/manual                   n  971  stake $  463.12  profit $  -89.27  ROI  -19.3%  z -1.94  avgEV  +3.6%  avgCLV  +0.8% (n808)  win 45.2%
-  bid/auto                     n  508  stake $  239.61  profit $    4.99  ROI   +2.1%  z +0.10  avgEV  +3.5%  avgCLV  +2.2% (n423)  win 47.4%
-  bet/auto                     n  489  stake $  234.38  profit $  -32.84  ROI  -14.0%  z -1.21  avgEV  +3.8%  avgCLV  +1.2% (n437)  win 44.2%
-  bid/manual                   n   19  stake $    8.94  profit $    0.33  ROI   +3.7%  z -0.08  avgEV  +0.0%  avgCLV  +0.6% (n14)  win 47.4%
-  bet/lock                     n   12  stake $    6.17  profit $   10.99  ROI +178.0%  z +2.82  avgEV  -3.5%  avgCLV  +0.0% (n0)  win 83.3%
+  bet/manual                   n  971  stake $ 1141.27  profit $  -89.27  ROI   -7.8%  z -1.48  avgEV  +3.6%  avgCLV  +0.8% (n808)  win 45.2%
+  bid/auto                     n  508  stake $  555.91  profit $    4.99  ROI   +0.9%  z +0.13  avgEV  +3.5%  avgCLV  +2.2% (n423)  win 47.4%
+  bet/auto                     n  489  stake $  676.08  profit $  -32.84  ROI   -4.9%  z -1.87  avgEV  +3.8%  avgCLV  +1.2% (n437)  win 44.2%
+  bid/manual                   n   19  stake $   23.71  profit $    0.33  ROI   +1.4%  z -0.13  avgEV  +0.0%  avgCLV  +0.6% (n14)  win 47.4%
+  bet/lock                     n   12  stake $   16.86  profit $   10.99  ROI  +65.2%  z +2.78  avgEV  -3.5%  avgCLV  +0.0% (n0)  win 83.3%
 
 -- scanner
-  Vigilant                     n 1023  stake $  482.71  profit $  -74.27  ROI  -15.4%  z -1.66  avgEV  +3.9%  avgCLV  +1.5% (n884)  win 44.8%
-  CNO                          n  901  stake $  430.37  profit $  -28.91  ROI   -6.7%  z -0.72  avgEV  +3.1%  avgCLV  +1.0% (n795)  win 46.4%
-  Live bids                    n   47  stake $   22.98  profit $   -4.33  ROI  -18.9%  z -0.47  avgEV  +3.6%  avgCLV  +0.0% (n0)  win 44.7%
-  Pinnodds live                n   16  stake $    6.86  profit $   -2.94  ROI  -42.8%  z -1.40  avgEV  +8.1%  avgCLV  +0.0% (n0)  win 37.5%
-  Live tail                    n    8  stake $    7.20  profit $    0.85  ROI  +11.7%  z +2.83  avgEV  +9.0%  avgCLV  +0.0% (n0)  win 100.0%
-  ParlayAPI                    n    4  stake $    2.10  profit $    3.82  ROI +181.6%  z +3.69  avgEV  +7.2%  avgCLV  -7.1% (n3)  win 100.0%
+  Vigilant                     n 1023  stake $ 1176.74  profit $  -74.27  ROI   -6.3%  z -1.54  avgEV  +3.9%  avgCLV  +1.5% (n884)  win 44.8%
+  CNO                          n  901  stake $ 1174.20  profit $  -28.91  ROI   -2.5%  z -0.86  avgEV  +3.1%  avgCLV  +1.0% (n795)  win 46.4%
+  Live bids                    n   47  stake $   36.65  profit $   -4.33  ROI  -11.8%  z -0.39  avgEV  +3.6%  avgCLV  +0.0% (n0)  win 44.7%
+  Pinnodds live                n   16  stake $   14.83  profit $   -2.94  ROI  -19.8%  z -0.95  avgEV  +8.1%  avgCLV  +0.0% (n0)  win 37.5%
+  Live tail                    n    8  stake $    7.51  profit $    0.85  ROI  +11.3%  z +2.94  avgEV  +9.0%  avgCLV  +0.0% (n0)  win 100.0%
+  ParlayAPI                    n    4  stake $    3.88  profit $    3.82  ROI  +98.2%  z +4.73  avgEV  +7.2%  avgCLV  -7.1% (n3)  win 100.0%
 
 -- day
-  2026-09-25                   n    8  stake $    3.94  profit $   -4.29  ROI -108.9%  z -1.38  avgEV  +1.9%  avgCLV  -2.0% (n7)  win 25.0%
-  2026-09-26                   n   64  stake $   31.05  profit $    6.32  ROI  +20.3%  z +0.76  avgEV  +0.0%  avgCLV  -2.4% (n5)  win 53.1%
-  2026-09-27                   n   58  stake $   27.74  profit $   10.80  ROI  +38.9%  z +1.32  avgEV  +2.9%  avgCLV  +1.9% (n52)  win 56.9%
-  2026-09-28                   n   95  stake $   45.49  profit $    0.60  ROI   +1.3%  z -0.00  avgEV  +2.2%  avgCLV  -0.9% (n90)  win 48.4%
-  2026-09-29                   n   47  stake $   22.22  profit $   10.19  ROI  +45.8%  z +1.47  avgEV  +2.9%  avgCLV  +2.5% (n43)  win 59.6%
-  2026-09-30                   n   94  stake $   44.32  profit $   -8.49  ROI  -19.1%  z -0.77  avgEV  +3.4%  avgCLV  -1.9% (n80)  win 40.4%
-  2026-10-01                   n   56  stake $   26.34  profit $  -16.69  ROI  -63.3%  z -1.28  avgEV  +3.8%  avgCLV  +1.1% (n49)  win 37.5%
-  2026-10-02                   n   80  stake $   38.28  profit $    4.05  ROI  +10.6%  z +0.29  avgEV  +2.3%  avgCLV  +1.1% (n66)  win 50.0%
-  2026-10-03                   n   66  stake $   31.77  profit $    3.93  ROI  +12.4%  z +0.11  avgEV  +4.0%  avgCLV  +0.3% (n59)  win 47.0%
-  2026-10-04                   n   66  stake $   31.62  profit $   -1.49  ROI   -4.7%  z -0.20  avgEV  +3.7%  avgCLV  +2.4% (n66)  win 45.5%
-  2026-10-05                   n   55  stake $   26.32  profit $   -6.85  ROI  -26.0%  z -0.75  avgEV  +3.4%  avgCLV  +1.5% (n53)  win 41.8%
-  2026-10-06                   n   59  stake $   29.11  profit $   14.94  ROI  +51.3%  z +1.00  avgEV  +3.3%  avgCLV  +2.3% (n58)  win 59.3%
-  2026-10-07                   n   46  stake $   22.19  profit $   14.92  ROI  +67.2%  z +1.06  avgEV  +3.7%  avgCLV  +2.8% (n45)  win 58.7%
-  2026-10-08                   n   68  stake $   32.23  profit $   16.91  ROI  +52.5%  z +1.01  avgEV  +3.8%  avgCLV  +1.8% (n64)  win 54.4%
-  2026-10-09                   n  158  stake $   74.94  profit $  -16.19  ROI  -21.6%  z -0.67  avgEV  +4.4%  avgCLV  +1.3% (n143)  win 45.6%
-  2026-10-10                   n  110  stake $   52.58  profit $    2.79  ROI   +5.3%  z +0.12  avgEV  +4.1%  avgCLV  +2.3% (n101)  win 46.4%
-  2026-10-11                   n  285  stake $  139.47  profit $  -66.99  ROI  -48.0%  z -2.74  avgEV  +3.7%  avgCLV  +2.3% (n231)  win 40.7%
-  2026-10-12                   n  183  stake $   84.09  profit $  -21.11  ROI  -25.1%  z -1.35  avgEV  +4.4%  avgCLV  +1.6% (n115)  win 42.1%
-  2026-10-13                   n  235  stake $  110.01  profit $  -34.13  ROI  -31.0%  z -2.06  avgEV  +3.6%  avgCLV  +1.2% (n219)  win 41.7%
-  2026-10-14                   n   71  stake $   33.99  profit $    1.31  ROI   +3.9%  z +0.27  avgEV  +2.9%  avgCLV  +0.6% (n61)  win 47.9%
-  2026-10-15                   n   74  stake $   34.64  profit $   -2.90  ROI   -8.4%  z -0.76  avgEV  +2.6%  avgCLV  +1.0% (n55)  win 45.9%
-  2026-10-16                   n   21  stake $    9.89  profit $  -13.42  ROI -135.8%  z -1.69  avgEV  +4.3%  avgCLV  -2.9% (n20)  win 38.1%
+  2026-09-25                   n    8  stake $    8.55  profit $   -4.29  ROI  -50.2%  z -1.34  avgEV  +1.9%  avgCLV  -2.0% (n7)  win 25.0%
+  2026-09-26                   n   64  stake $   64.00  profit $    6.32  ROI   +9.9%  z +0.75  avgEV  +0.0%  avgCLV  -2.4% (n5)  win 53.1%
+  2026-09-27                   n   58  stake $   58.00  profit $   10.80  ROI  +18.6%  z +1.36  avgEV  +2.9%  avgCLV  +1.9% (n52)  win 56.9%
+  2026-09-28                   n   95  stake $   95.00  profit $    0.60  ROI   +0.6%  z +0.06  avgEV  +2.2%  avgCLV  -0.9% (n90)  win 48.4%
+  2026-09-29                   n   47  stake $   43.86  profit $   10.19  ROI  +23.2%  z +1.71  avgEV  +2.9%  avgCLV  +2.5% (n43)  win 59.6%
+  2026-09-30                   n   94  stake $   91.38  profit $   -8.49  ROI   -9.3%  z -1.28  avgEV  +3.4%  avgCLV  -1.9% (n80)  win 40.4%
+  2026-10-01                   n   56  stake $   82.55  profit $  -16.69  ROI  -20.2%  z -1.37  avgEV  +3.8%  avgCLV  +1.1% (n49)  win 37.5%
+  2026-10-02                   n   80  stake $  112.98  profit $    4.05  ROI   +3.6%  z +0.35  avgEV  +2.3%  avgCLV  +1.1% (n66)  win 50.0%
+  2026-10-03                   n   66  stake $  111.47  profit $    3.93  ROI   +3.5%  z -0.35  avgEV  +4.0%  avgCLV  +0.3% (n59)  win 47.0%
+  2026-10-04                   n   66  stake $  118.32  profit $   -1.49  ROI   -1.3%  z -0.47  avgEV  +3.7%  avgCLV  +2.4% (n66)  win 45.5%
+  2026-10-05                   n   55  stake $   96.15  profit $   -6.85  ROI   -7.1%  z -1.14  avgEV  +3.4%  avgCLV  +1.5% (n53)  win 41.8%
+  2026-10-06                   n   59  stake $  105.35  profit $   14.94  ROI  +14.2%  z +1.54  avgEV  +3.3%  avgCLV  +2.3% (n58)  win 59.3%
+  2026-10-07                   n   46  stake $   81.43  profit $   14.92  ROI  +18.3%  z +1.37  avgEV  +3.7%  avgCLV  +2.8% (n45)  win 58.7%
+  2026-10-08                   n   68  stake $  135.50  profit $   16.91  ROI  +12.5%  z +1.23  avgEV  +3.8%  avgCLV  +1.8% (n64)  win 54.4%
+  2026-10-09                   n  158  stake $  250.91  profit $  -16.19  ROI   -6.5%  z -0.49  avgEV  +4.4%  avgCLV  +1.3% (n143)  win 45.6%
+  2026-10-10                   n  110  stake $  144.89  profit $    2.79  ROI   +1.9%  z -0.37  avgEV  +4.1%  avgCLV  +2.3% (n101)  win 46.4%
+  2026-10-11                   n  285  stake $  356.86  profit $  -66.99  ROI  -18.8%  z -2.93  avgEV  +3.7%  avgCLV  +2.3% (n231)  win 40.7%
+  2026-10-12                   n  183  stake $  196.10  profit $  -21.11  ROI  -10.8%  z -1.10  avgEV  +4.4%  avgCLV  +1.6% (n115)  win 42.1%
+  2026-10-13                   n  235  stake $  165.26  profit $  -34.13  ROI  -20.7%  z -1.18  avgEV  +3.6%  avgCLV  +1.2% (n219)  win 41.7%
+  2026-10-14                   n   71  stake $   37.62  profit $    1.31  ROI   +3.5%  z -0.05  avgEV  +2.9%  avgCLV  +0.6% (n61)  win 47.9%
+  2026-10-15                   n   74  stake $   27.78  profit $   -2.90  ROI  -10.4%  z -0.32  avgEV  +2.6%  avgCLV  +1.0% (n55)  win 45.9%
+  2026-10-16                   n   21  stake $   29.88  profit $  -13.42  ROI  -44.9%  z -0.89  avgEV  +4.3%  avgCLV  -2.9% (n20)  win 38.1%
 
 -- kind
-  Player props                 n 1244  stake $  595.61  profit $ -147.64  ROI  -24.8%  z -2.86  avgEV  +3.6%  avgCLV  +1.7% (n1088)  win 44.2%
-  Spreads                      n  215  stake $  101.65  profit $  -10.23  ROI  -10.1%  z -0.58  avgEV  +3.5%  avgCLV  -1.5% (n175)  win 47.0%
-  Game totals                  n  215  stake $  103.25  profit $   24.98  ROI  +24.2%  z +1.46  avgEV  +3.4%  avgCLV  +0.6% (n164)  win 49.8%
-  Team totals                  n  175  stake $   81.63  profit $   36.74  ROI  +45.0%  z +2.07  avgEV  +3.3%  avgCLV  +2.8% (n159)  win 53.7%
-  Moneylines                   n   82  stake $   37.85  profit $  -11.47  ROI  -30.3%  z -1.07  avgEV  +4.2%  avgCLV  -2.7% (n36)  win 36.6%
-  1st half / inning / set lines n   41  stake $   19.28  profit $    7.55  ROI  +39.2%  z +1.15  avgEV  +2.6%  avgCLV  +2.1% (n40)  win 53.7%
-  Other                        n   27  stake $   12.96  profit $   -5.71  ROI  -44.1%  z -0.88  avgEV  +2.3%  avgCLV  +0.4% (n20)  win 40.7%
+  Player props                 n 1244  stake $ 1616.59  profit $ -147.64  ROI   -9.1%  z -2.60  avgEV  +3.6%  avgCLV  +1.7% (n1088)  win 44.2%
+  Spreads                      n  215  stake $  257.33  profit $  -10.23  ROI   -4.0%  z -0.24  avgEV  +3.5%  avgCLV  -1.5% (n175)  win 47.0%
+  Game totals                  n  215  stake $  207.26  profit $   24.98  ROI  +12.1%  z +0.51  avgEV  +3.4%  avgCLV  +0.6% (n164)  win 49.8%
+  Team totals                  n  175  stake $  184.36  profit $   36.74  ROI  +19.9%  z +1.82  avgEV  +3.3%  avgCLV  +2.8% (n159)  win 53.7%
+  Moneylines                   n   82  stake $   77.92  profit $  -11.47  ROI  -14.7%  z -1.73  avgEV  +4.2%  avgCLV  -2.7% (n36)  win 36.6%
+  1st half / inning / set lines n   41  stake $   33.71  profit $    7.55  ROI  +22.4%  z +0.87  avgEV  +2.6%  avgCLV  +2.1% (n40)  win 53.7%
+  Other                        n   27  stake $   36.65  profit $   -5.71  ROI  -15.6%  z -0.98  avgEV  +2.3%  avgCLV  +0.4% (n20)  win 40.7%
 
 -- league
-  NFL                          n  720  stake $  346.64  profit $  -83.69  ROI  -24.1%  z -2.02  avgEV  +3.5%  avgCLV  +1.2% (n641)  win 44.9%
-  NHL                          n  429  stake $  203.16  profit $  -23.23  ROI  -11.4%  z -0.73  avgEV  +3.6%  avgCLV  +2.5% (n400)  win 46.4%
-  NCAAF                        n  234  stake $  109.83  profit $   46.60  ROI  +42.4%  z +2.41  avgEV  +3.0%  avgCLV  +0.7% (n210)  win 51.7%
-  MLB                          n  185  stake $   89.48  profit $   -1.60  ROI   -1.8%  z -0.55  avgEV  +3.6%  avgCLV  +1.5% (n165)  win 48.6%
-  WNBA                         n  121  stake $   57.16  profit $   -7.78  ROI  -13.6%  z -0.55  avgEV  +3.5%  avgCLV  +1.9% (n113)  win 42.1%
-  NBA                          n  117  stake $   56.53  profit $  -45.65  ROI  -80.7%  z -3.20  avgEV  +4.0%  avgCLV  -3.9% (n92)  win 39.3%
-                               n   70  stake $   33.80  profit $    4.01  ROI  +11.9%  z +0.41  avgEV  +0.0%  avgCLV  -2.9% (n7)  win 51.4%
-  WTA                          n   64  stake $   29.55  profit $  -10.87  ROI  -36.8%  z -0.91  avgEV  +4.0%  avgCLV  +1.4% (n33)  win 34.4%
-  ATP                          n   57  stake $   25.07  profit $   14.33  ROI  +57.1%  z +1.02  avgEV  +5.0%  avgCLV  +2.7% (n19)  win 43.9%
-  MLS (USA)                    n    2  stake $    1.00  profit $    2.09  ROI +209.5%  z +2.45  avgEV  +2.3%  avgCLV  +0.9% (n2)  win 100.0%
+  NFL                          n  720  stake $  953.12  profit $  -83.69  ROI   -8.8%  z -1.81  avgEV  +3.5%  avgCLV  +1.2% (n641)  win 44.9%
+  NHL                          n  429  stake $  500.47  profit $  -23.23  ROI   -4.6%  z -0.27  avgEV  +3.6%  avgCLV  +2.5% (n400)  win 46.4%
+  NCAAF                        n  234  stake $  241.97  profit $   46.60  ROI  +19.3%  z +1.40  avgEV  +3.0%  avgCLV  +0.7% (n210)  win 51.7%
+  MLB                          n  185  stake $  219.77  profit $   -1.60  ROI   -0.7%  z -0.20  avgEV  +3.6%  avgCLV  +1.5% (n165)  win 48.6%
+  WNBA                         n  121  stake $  155.24  profit $   -7.78  ROI   -5.0%  z -1.20  avgEV  +3.5%  avgCLV  +1.9% (n113)  win 42.1%
+  NBA                          n  117  stake $  135.44  profit $  -45.65  ROI  -33.7%  z -2.20  avgEV  +4.0%  avgCLV  -3.9% (n92)  win 39.3%
+                               n   70  stake $   73.66  profit $    4.01  ROI   +5.4%  z +0.52  avgEV  +0.0%  avgCLV  -2.9% (n7)  win 51.4%
+  WTA                          n   64  stake $   66.43  profit $  -10.87  ROI  -16.4%  z -1.64  avgEV  +4.0%  avgCLV  +1.4% (n33)  win 34.4%
+  ATP                          n   57  stake $   65.74  profit $   14.33  ROI  +21.8%  z +0.01  avgEV  +5.0%  avgCLV  +2.7% (n19)  win 43.9%
+  MLS (USA)                    n    2  stake $    1.99  profit $    2.09  ROI +105.0%  z +3.50  avgEV  +2.3%  avgCLV  +0.9% (n2)  win 100.0%
 
 -- EV at placing
-  <0.05                        n  924  stake $  437.83  profit $  -39.89  ROI   -9.1%  z -0.88  avgEV  +3.8%  avgCLV  +1.8% (n813)  win 45.6%
-  <0.03                        n  523  stake $  253.13  profit $  -19.52  ROI   -7.7%  z -0.83  avgEV  +2.5%  avgCLV  +0.7% (n477)  win 46.3%
-  <0.02                        n  185  stake $   89.32  profit $   -5.83  ROI   -6.5%  z -0.44  avgEV  +1.6%  avgCLV  +0.2% (n171)  win 44.3%
-  <0.08                        n  182  stake $   83.44  profit $  -35.29  ROI  -42.3%  z -1.50  avgEV  +5.9%  avgCLV  +1.2% (n144)  win 43.4%
-  n/a                          n  100  stake $   48.18  profit $    0.51  ROI   +1.1%  z -0.08  avgEV  +0.0%  avgCLV  +0.6% (n31)  win 49.0%
-  >=0.08                       n   53  stake $   24.22  profit $  -16.33  ROI  -67.4%  z -0.87  avgEV +11.6%  avgCLV  +4.1% (n27)  win 43.4%
-  <0.01                        n   32  stake $   16.10  profit $   10.57  ROI  +65.7%  z +1.51  avgEV  -1.2%  avgCLV  -1.3% (n19)  win 59.4%
+  <0.05                        n  924  stake $ 1191.92  profit $  -39.89  ROI   -3.3%  z -1.01  avgEV  +3.8%  avgCLV  +1.8% (n813)  win 45.6%
+  <0.03                        n  523  stake $  524.66  profit $  -19.52  ROI   -3.7%  z -1.02  avgEV  +2.5%  avgCLV  +0.7% (n477)  win 46.3%
+  <0.02                        n  185  stake $  146.96  profit $   -5.83  ROI   -4.0%  z -1.03  avgEV  +1.6%  avgCLV  +0.2% (n171)  win 44.3%
+  <0.08                        n  182  stake $  290.38  profit $  -35.29  ROI  -12.2%  z -0.73  avgEV  +5.9%  avgCLV  +1.2% (n144)  win 43.4%
+  n/a                          n  100  stake $  109.87  profit $    0.51  ROI   +0.5%  z +0.04  avgEV  +0.0%  avgCLV  +0.6% (n31)  win 49.0%
+  >=0.08                       n   53  stake $  115.39  profit $  -16.33  ROI  -14.2%  z -0.61  avgEV +11.6%  avgCLV  +4.1% (n27)  win 43.4%
+  <0.01                        n   32  stake $   34.64  profit $   10.57  ROI  +30.5%  z +0.91  avgEV  -1.2%  avgCLV  -1.3% (n19)  win 59.4%
 
 -- lead (min before start)
-  <1440                        n  668  stake $  318.93  profit $  -22.77  ROI   -7.1%  z -0.75  avgEV  +3.7%  avgCLV  +0.3% (n546)  win 46.1%
-  <360                         n  575  stake $  271.67  profit $  -67.93  ROI  -25.0%  z -1.90  avgEV  +3.6%  avgCLV  +2.2% (n528)  win 43.3%
-  <60                          n  353  stake $  170.96  profit $   -9.00  ROI   -5.3%  z -0.58  avgEV  +3.8%  avgCLV  +2.9% (n260)  win 47.3%
-  <4320                        n  254  stake $  120.49  profit $  -10.89  ROI   -9.0%  z -0.46  avgEV  +3.4%  avgCLV  +0.3% (n213)  win 46.9%
-  >=4320                       n  149  stake $   70.19  profit $    4.80  ROI   +6.8%  z +0.39  avgEV  +2.6%  avgCLV  -0.2% (n135)  win 48.3%
+  <1440                        n  668  stake $  853.94  profit $  -22.77  ROI   -2.7%  z -0.98  avgEV  +3.7%  avgCLV  +0.3% (n546)  win 46.1%
+  <360                         n  575  stake $  689.68  profit $  -67.93  ROI   -9.8%  z -1.68  avgEV  +3.6%  avgCLV  +2.2% (n528)  win 43.3%
+  <60                          n  353  stake $  409.58  profit $   -9.00  ROI   -2.2%  z -0.67  avgEV  +3.8%  avgCLV  +2.9% (n260)  win 47.3%
+  <4320                        n  254  stake $  312.83  profit $  -10.89  ROI   -3.5%  z -0.18  avgEV  +3.4%  avgCLV  +0.3% (n213)  win 46.9%
+  >=4320                       n  149  stake $  147.78  profit $    4.80  ROI   +3.2%  z +0.31  avgEV  +2.6%  avgCLV  -0.2% (n135)  win 48.3%
 
 -- cost per $ (price): <.25 longshot .. >.75 fav
-  <0.40                        n  547  stake $  258.94  profit $  -44.07  ROI  -17.0%  z -1.26  avgEV  +3.5%  avgCLV  +1.7% (n509)  win 45.2%
-  <0.50                        n  477  stake $  222.97  profit $  -21.20  ROI   -9.5%  z -0.79  avgEV  +3.1%  avgCLV  +0.6% (n379)  win 44.7%
-  >=0.75                       n  390  stake $  189.05  profit $  -13.01  ROI   -6.9%  z -1.50  avgEV  +3.2%  avgCLV  +2.0% (n323)  win 45.6%
-  <0.25                        n  287  stake $  136.07  profit $  -30.37  ROI  -22.3%  z -0.94  avgEV  +5.2%  avgCLV  +1.2% (n247)  win 46.0%
-  <0.60                        n  204  stake $   98.84  profit $   15.60  ROI  +15.8%  z +1.17  avgEV  +3.1%  avgCLV  +0.3% (n159)  win 52.5%
-  <0.75                        n   94  stake $   46.36  profit $  -12.73  ROI  -27.5%  z -2.01  avgEV  +3.4%  avgCLV  +0.8% (n65)  win 40.4%
+  <0.50                        n 1529  stake $ 1842.71  profit $ -120.91  ROI   -6.6%  z -1.71  avgEV  +3.6%  avgCLV  +1.3% (n1307)  win 44.1%
+  <0.60                        n  372  stake $  475.77  profit $    8.22  ROI   +1.7%  z -0.72  avgEV  +3.0%  avgCLV  +1.2% (n319)  win 51.1%
+  <0.40                        n   51  stake $   36.72  profit $    3.34  ROI   +9.1%  z +0.70  avgEV  +4.1%  avgCLV  +2.6% (n37)  win 41.2%
+  <0.75                        n   32  stake $   41.79  profit $    7.44  ROI  +17.8%  z +0.63  avgEV  +4.3%  avgCLV  +1.5% (n14)  win 68.8%
+  >=0.75                       n    9  stake $   12.73  profit $    0.22  ROI   +1.7%  z -0.28  avgEV  +5.0%  avgCLV  -5.0% (n2)  win 88.9%
+  <0.25                        n    6  stake $    4.09  profit $   -4.09  ROI -100.0%  z +0.00  avgEV +11.4%  avgCLV  -2.4% (n3)  win  0.0%
