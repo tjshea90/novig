@@ -236,10 +236,10 @@ const val KILLED_TEXT = "Everything is stopped by the STOP button: no scanning, 
 const val PAUSED_TEXT = "Scanning is paused: nothing is read (Vigilant's scans, CrazyNinjaOdds' list, background auto-scan) until you resume."
 
 @Composable
-fun Banner(text: String, modifier: Modifier = Modifier, color: Color = Edge.colors.warning, action: String? = null, onAction: () -> Unit = {}) {
+fun Banner(text: String, modifier: Modifier = Modifier, color: Color = Edge.colors.warning, action: String? = null, onAction: () -> Unit = {}, lines: Int? = null) {
     Surface(modifier.fillMaxWidth(), color = color.copy(alpha = 0.14f), shape = RoundedCornerShape(10.dp)) {
         Row(Modifier.padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(text, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+            Text(text, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface, minLines = lines ?: 1, maxLines = lines ?: Int.MAX_VALUE)
             if (action != null) TextButton(onClick = onAction) { Text(action) }
         }
     }
