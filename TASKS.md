@@ -5722,3 +5722,7 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 "the live betting engine is still missing most live games" / "there are many live games going on right now. it only lists 3" (Live tab: 6 games watched, 3 with a score)
 - [x] TCL97a LiveLightRunner's 48-market budget was taken by the first 3 games (15 markets each): LiveLightLines.perGame shares it evenly (LiveLightBudgetTest). Ships v0.114.24.
 - [ ] TCL97b The Pinnacle-vs-Novig live lane (+EV tab, Live games only): "12 games linked, 11 markets watched": check why only one market per game and whether more games/markets can be linked (needs Pinnodds key; app-side).
+
+## TCL98 (Tj, chat t1792262618892 + t1792262680150, 2026-10-17)
+"consider if the propline list is a waste of usage. if so, turn it off and get rid of it"
+- [x] TCL98a Retired: engine PROPLINE_EV_SWEEP=false (no sweep, no carry-over); app: Tab.PROPLINE shownIn=false (no tab, no card). Evidence in research/propline_vs_vigilant_2026-10-16.md (prop Overs -9..-14% on 6,393 graded closes) and the 2026-10-17 live audit (Vigilant <=0 on 470/500). Code kept behind the flag. Revert: flip the flag and Tab.PROPLINE.

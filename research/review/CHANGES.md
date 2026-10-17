@@ -28,3 +28,7 @@ Evidence in `research/review/pnl_2026-10-17.md`: 1,999 settled phone bets and bi
 ## 2026-10-17 chat: account-wide per-game exposure (TCL91a)
 - Evidence: Tj's photo, Temple -18.5 and -17.5 (taker, 12:54 ET) beside the engine's own -19.5 (12:49): the engine's game cap and same-team-lines rule counted only its own ledger.
 - Change: `CloudTrader.pass` reads the subaccount's positions (`CloudOrderPort.positions`, `GET /v3/portfolio/positions`) once per pass and counts them in the game risk (max of ledger and account) and in the RepeatGuard held list, mapped to games by `describeOutcome` from the last scan. Resting orders from other paths are still not seen (only filled positions). No cap value changed. Revert: drop the `acct` list in `CloudTrader.pass`.
+
+## 2026-10-17 chat: PropLine +EV list retired (TCL98)
+- Tj: "if the propline list is a waste of usage, turn it off and get rid of it". Evidence: prop Overs with stated edge lose 9-14% (n 6,393 closes); Unders +1.9%/+9.9% on n 398/210 only; game lines no measurable edge; live audit 470 of 500 Vigilant-priced lines <= 0%; each sweep 224 requests.
+- Change: engine sweep off (`PROPLINE_EV_SWEEP`), no carry-over; app tab and card hidden. PropLine odds source, CLV, grading and archive unchanged. Revert: flip `PROPLINE_EV_SWEEP` and `Tab.PROPLINE.shownIn`.
