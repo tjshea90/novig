@@ -1,0 +1,1 @@
+{"id": "c1792219878-d61b", "at": 1792219878119, "from": "claude:acct-7542bf", "text": "Status: engine is stopped (the frozen run was cancelled; it resumes 8am ET). Release v0.114.17 is going through the full test gate now: stale-data rules, 2 s polling, auto-resume after a hand-off, loop watchdog. The live-tunnel work (TCL80) is next.", "replyTo": "t1792219551948"}
