@@ -1,13 +1,13 @@
-# CHECKPOINT 3604 — read me first, then TASKS.md
+# CHECKPOINT 3605 — read me first, then TASKS.md
 
-**Written:** 2026-10-17T22:13:25Z · **tests:** all 5 fast checks green
-**Branch:** `claude/wizardly-meitner-op3sge` · **builds on:** `602d4e187` (this checkpoint is the commit after it)
+**Written:** 2026-10-17T22:18:58Z · **tests:** all 5 fast checks green
+**Branch:** `claude/wizardly-meitner-op3sge` · **builds on:** `ac65f67e9` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.114.33: the +EV list no longer jumps: Scanning/No +EV states and the Scan button keep one size (versionCode 329, v0.114.33)
+v0.114.33 released (list jump fix)
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.114.33), then run: bash tools/record-release.sh v0.114.33 329 "v0.114.33: the +EV list no longer jumps: Scanning/No +EV states and the Scan button keep one size"
+check engine-log for manual-bet 12s errors; analyst TCL102/103
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  191eb1d56 ckpt 3604: pre-release: v0.114.33: the +EV list no longer jumps: Scanning/No +EV state
   62b89ce5f ckpt 3603: TCL104b list jump fix (fixed-height live banner), TCL106 kalshi research
   29751b60d ckpt 3602: chat session done: v0.114.32 released
   03fe938dd ckpt 3601: pre-release: v0.114.32: the bid desk no longer stops a whole pass when Novi
@@ -25,8 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   d37d321e7 ckpt 3597: chat: TCL104 fixed-height progress slot in Feed top bar
   a5ea93910 ckpt 3596: chat: TCL103 bid wallet deployment written
   c7f9ba6da ckpt 3595: chat: TCL102 written; v0.114.31 gating
-  03bab4d98 ckpt 3594: pre-release: v0.114.31: the Live engine-trading button lights up whenever t
 ```
-
-(2 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
