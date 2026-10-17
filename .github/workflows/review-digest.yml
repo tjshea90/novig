@@ -101,6 +101,9 @@ jobs:
             echo
             echo "== THE ENGINE'S OWN ORDERS (trades.json on cloud-feed: paper or live, settled by engine-grade.yml) =="
             if git fetch -q --depth=1 origin cloud-feed 2>/dev/null && git show FETCH_HEAD:trades.json > trades.json 2>/dev/null; then python3 -I tools/trade_summary.py trades.json; else echo "no trades.json yet"; fi
+            echo
+            # By ORIGIN (TCL69): manual / phone-auto / phone-bid / engine-auto / engine-bid, so the rules are judged only on the bets the engine and the phone's auto-bet took, never on Tj's hand bets.
+            python3 -I tools/bets_dataset.py table --phone "pd/phone/bets/*.jsonl" $( [ -f trades.json ] && echo --engine trades.json ) || echo "origin table failed"
           } >> out/latest.txt
           wc -c out/latest.txt
 
