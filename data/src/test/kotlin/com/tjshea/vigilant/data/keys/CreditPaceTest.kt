@@ -194,7 +194,8 @@ class CreditPaceTest {
         val today = newYork.spendableToday(u, now)
         assertTrue("on the month's pace (49% used at 55% of the month): a day's share, about 1,100, not zero: $today", today in 800..1_500)
         // the same key as a brand-new plan (nothing used before this app met it) is spread over the days left, as before
-        assertTrue(newYork.spendableToday(u.copy(used = 0, remaining = 20_000), now) > 5_000)
+        val fresh = newYork.spendableToday(u.copy(used = 0, remaining = 20_000), now)
+        assertTrue("a day and a bit of 15 days' share: about 1,700: $fresh", fresh in 1_200..2_200)
     }
 
     @Test
