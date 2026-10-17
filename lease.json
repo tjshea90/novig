@@ -1,12 +1,12 @@
 {
  "v": 1,
- "holder": "a3eb92",
- "label": "acct-7542bf",
+ "holder": "d3980d",
+ "label": "acct-unknown",
  "kind": "interactive",
- "task": "answer Tj chat (BoltOdds reset, PropLine usage)",
- "since": 1792205928,
- "sinceIso": "2026-10-17T02:58:48Z",
- "hb": 1792223322,
- "hbIso": "2026-10-17T07:48:42Z",
+ "task": "",
+ "since": 1792236047,
+ "sinceIso": "2026-10-17T11:20:47Z",
+ "hb": 1792236047,
+ "hbIso": "2026-10-17T11:20:47Z",
  "leaseS": 1200
 }
