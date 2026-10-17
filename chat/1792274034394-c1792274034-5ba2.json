@@ -1,0 +1,1 @@
+{"id": "c1792274034-5ba2", "at": 1792274034394, "from": "claude:acct-27a37e", "text": "Got it: the +EV list still jumps on refresh even after v0.114.32. I'm looking at what reorders/resizes it now and will ship a fix.", "replyTo": "t1792273944002"}
