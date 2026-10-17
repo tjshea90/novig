@@ -168,7 +168,15 @@ data class CloudStatus(
     val deskAtMs: Long = 0L,
     val deskStopped: String = "",
     val deskBytes: Int = 0,
+    /** The engine's live lane (TCL109): true while it is running Live light, the tail taker and its bids; the last pass in words and why it is stopped. */
+    val liveActive: Boolean = false,
+    val liveNote: String = "",
+    val liveStopped: String = "",
+    val liveAtMs: Long = 0L,
 ) {
+    /** The engine's live lane is running now and its heartbeat is recent: the phone's own live tail lane stands down. */
+    fun liveLive(now: Long): Boolean = liveActive && heartbeatMs > 0 && now - heartbeatMs < DESK_STALE_MS
+
     /** The engine's desk is the one posting bids now: it says so and its heartbeat is recent. A silent engine hands the bids back to the phone. */
     fun deskLive(now: Long): Boolean = deskActive && heartbeatMs > 0 && now - heartbeatMs < DESK_STALE_MS
 

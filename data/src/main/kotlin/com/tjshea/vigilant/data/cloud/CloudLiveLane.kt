@@ -198,7 +198,7 @@ class CloudLiveLane(
     private val bidDesk: LiveBidDesk = LiveBidDesk(
         scope = scope, orders = orders, store = LiveBidStore(File(dir, "light-bids.json")),
         journal = DayJournal(File(dir, "bids"), "lightbid", LiveBidEvent.serializer()) { it.atMs },
-        config = ::bidConfig, wallet = { null }.let { { runCatchingCash() } },
+        config = ::bidConfig, wallet = { lastCash },
         spentToday = { 0.0 }, dayLimit = { settings.apiMaxPerDay.takeIf { it > 0.0 } ?: Double.MAX_VALUE }, lossToday = ::lossToday,
         logFills = { target, orderId, fills -> tracker.logMakerFills(target, orderId, fills).also { record(it, "live light bid") }?.id },
         onHalt = ::halt, version = "github-engine",
@@ -207,7 +207,6 @@ class CloudLiveLane(
     )
 
     @Volatile private var lastCash: Double? = null
-    private fun runCatchingCash(): Double? = lastCash
 
     private val light: LiveLightRunner = LiveLightRunner(
         scope = scope, source = source, journal = journalLine,

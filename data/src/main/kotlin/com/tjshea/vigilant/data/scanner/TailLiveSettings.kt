@@ -22,4 +22,6 @@ data class TailLiveSettings(
     val light: Boolean = true,
     /** Live light's bids: post-only bids far under the model's fair on decided live games (a second desk of its own). */
     val bids: Boolean = false,
+    /** Run the live tail lane on the GitHub engine (Tj, 2026-10-17, TCL109) whenever the engine drives and trades (paper or live); the phone's own copy then stands down. Off = the phone runs it. */
+    val engine: Boolean = true,
 )

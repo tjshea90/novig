@@ -941,6 +941,9 @@ data class ScanSettings(
      * The GitHub engine posts the bids (Tj, 2026-10-16, TCL31): the cloud scan drives, the engine trades LIVE with the trading key, bids are priced from Vigilant's scan and [ApiGates.cloudBids] is on. Whether the
      * phone's own bid desk then stands down is decided by the engine's heartbeat, not by this alone ([com.tjshea.vigilant.data.cloud.CloudStatus.deskLive]), so a dead engine never leaves the wallet unbid.
      */
+    /** The live tail lane (Live light, the tail taker, its bids) runs on the GitHub engine (TCL109): the engine drives and trades (paper or live) and Tj switched the lane on. The phone's own copy stands down while the engine says it is live ([com.tjshea.vigilant.data.cloud.CloudStatus.liveLive]). */
+    val engineLive: Boolean get() = cloudDrives && !killed && gates.cloudTrading != CloudTradeMode.OFF && tailLive.on && tailLive.engine
+
     val engineBids: Boolean get() = cloudDrives && !killed && gates.cloudTrading == CloudTradeMode.LIVE && gates.cloudBids && makerSource == BidSource.VIGILANT
 
     /** The scanner choice as it runs. */
