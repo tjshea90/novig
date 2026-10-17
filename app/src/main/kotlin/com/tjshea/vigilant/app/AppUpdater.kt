@@ -66,11 +66,11 @@ class AppUpdater(private val c: AppContainer) {
     /** Reads the newest Release; posts the notification (once per version) when it is newer than this app. Null when it could not be read. */
     suspend fun check(notify: Boolean): AppUpdate? = withContext(Dispatchers.IO) {
         val token = c.cloud.githubToken()
-        val req = Request.Builder().url("https://api.github.com/repos/$REPO/releases/latest").header("Accept", "application/vnd.github+json").apply { token?.let { header("Authorization", "Bearer $it") } }.build()
+        val req = Request.Builder().url("https://api.github.com/repos/$REPO/releases?per_page=30").header("Accept", "application/vnd.github+json").apply { token?.let { header("Authorization", "Bearer $it") } }.build()
         val body = try {
             c.http.newCall(req).execute().use { r -> if (r.isSuccessful) r.body?.string() else { _state.update { it.copy(note = "GitHub answered ${r.code} when asked for updates") }; null } }
         } catch (e: CancellationException) { throw e } catch (e: Exception) { _state.update { it.copy(note = "Could not reach GitHub for updates") }; null }
-        val latest = body?.let(AppUpdate::parse) ?: return@withContext null
+        val latest = body?.let(AppUpdate::parseList) ?: return@withContext null
         val newer = AppUpdate.isNewer(latest, BuildConfig.VERSION_NAME)
         _state.update { it.copy(latest = latest, checkedAtMs = System.currentTimeMillis(), available = newer, note = if (newer) null else "Vigilant ${BuildConfig.VERSION_NAME} is the newest release.", needsPermission = newer && !canInstall()) }
         if (newer && notify && prefs.getString("notified", "") != latest.tag) {

@@ -35,6 +35,17 @@ data class AppUpdate(
             ).takeIf { it.tag.isNotBlank() && it.apkUrl.isNotBlank() }
         }.getOrNull()
 
+        private val VERSION_TAG = Regex("""^v\\d+\\.\\d+\\.\\d+$""")
+
+        /**
+         * The newest app release in [text] (GitHub's `releases?per_page=30` array). `releases/latest` answers with the newest Release of ANY kind, and the data
+         * archives (`propline-archive-*`, `cloud-archive-*`) now come after the app's own, so the app's release is picked out by its `vN.N.N` tag and its APK.
+         */
+        fun parseList(text: String): AppUpdate? = runCatching {
+            Json.parseToJsonElement(text).jsonArray.mapNotNull { e -> e.jsonObject.takeIf { VERSION_TAG.matches(it.str("tag_name")) }?.let { parse(it.toString()) } }
+                .maxWithOrNull { a, b -> compare(a.tag, b.tag) }
+        }.getOrNull()
+
         private fun JsonObject.str(k: String) = this[k]?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.jsonPrimitive?.content.orEmpty()
 
         /** Dotted numbers compared part by part ("0.112.0" > "0.111.9" > "0.99.0"); anything non-numeric counts as 0. */

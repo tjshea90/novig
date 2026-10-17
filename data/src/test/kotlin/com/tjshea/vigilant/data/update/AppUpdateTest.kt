@@ -38,4 +38,14 @@ class AppUpdateTest {
         assertEquals(1, AppUpdate.compare("v0.112.0", "0.111.20"))
         assertNotNull(u)
     }
+
+    @Test
+    fun `a data archive release listed first does not hide the app release`() {
+        val apk = """[{"name":"vigilant-v0.114.18.apk","url":"u","browser_download_url":"https://dl/a.apk","size":9}]"""
+        fun rel(tag: String, assets: String) = """{"tag_name":"$tag","name":"$tag","body":"","draft":false,"prerelease":false,"published_at":"2026-10-17T00:00:00Z","assets":$assets}"""
+        val list = "[" + listOf(rel("propline-archive-2026-10-17", "[]"), rel("v0.114.17", apk.replace("0.114.18", "0.114.17")), rel("v0.114.18", apk), rel("cloud-archive-2026-10-17", apk)).joinToString(",") + "]"
+        assertEquals("v0.114.18", AppUpdate.parseList(list)!!.tag)
+        assertNull(AppUpdate.parseList("[" + rel("propline-archive-2026-10-17", "[]") + "]"))
+        assertNull(AppUpdate.parseList("not json"))
+    }
 }
