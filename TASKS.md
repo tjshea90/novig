@@ -5678,3 +5678,7 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 ## TCL88 (Tj, chat t1792256465022, 2026-10-17)
 "I want a bet button that works for all of these bets inside the android app. the functionality of the bet button should be the same as the bet buttons in the +ev scan feed where I can bet it quickly inside the vigilant app with a premade bet slip and Kelly value" (screenshot: PropLine +EV at Novig, "Vigilant's own scan did not price this line (no Bet button)")
 - [x] TCL88a (PropLineMatch.attachUnpriced, PropLineUnpricedBetTest; ships in the next release)  Bet button on EVERY PropLine +EV row, incl. lines Vigilant never priced: premade slip, Kelly stake, re-priced at Novig at the tap (same Bet sheet as the Feed).
+
+## TCL89 (Tj, chat t1792257554198, 2026-10-17)
+"make it so I can pull down to refresh the propline +ev scans. when I do this it will rescan only the propline +ev bets when I have that window open"
+- [ ] TCL89a Engine: a config field (propLineRefreshAtMs) makes the PropLine +EV sweep run now (only it), status acks it. TCL89b Phone: pull-to-refresh on the PropLine +EV screen writes it and shows busy until the ack.
