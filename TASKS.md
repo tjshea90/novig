@@ -5599,6 +5599,6 @@ Findings (2026-10-16): the phone's records already carry `made` (bet|bid), `how`
 
 ## TCL72 (Tj, chat t1792212591330, 2026-10-17)
 "my money is steadily going down. analyze what bets and bids I'm profiting on and the types of bets and bids I'm losing most on and if the samples are big enough, tweak the engine"
-- [ ] TCL72a Pull the real P&L: wallet equity trend (status walletEquity), trades.json + trade-results (engine fills), phone-data bets (manual/phone-auto), bids journals; split by origin (manual vs auto vs bid), kind, league, edge band, odds band.
-- [ ] TCL72b Name what loses most and whether the sample passes the class B gates (200+ settled, interval excludes 0, two digests); write research/review/ note + CHANGES.md line.
-- [ ] TCL72c Tweak engine where proven (25% steps, one change a day, test, revert rule); tell Tj in chat.
+- [x] TCL72a (pnl_split.py, pnl_2026-10-17.md) Pull the real P&L: wallet equity trend (status walletEquity), trades.json + trade-results (engine fills), phone-data bets (manual/phone-auto), bids journals; split by origin (manual vs auto vs bid), kind, league, edge band, odds band.
+- [x] TCL72b Name what loses most and whether the sample passes the class B gates (200+ settled, interval excludes 0, two digests); write research/review/ note + CHANGES.md line.
+- [x] TCL72c (totals added; watch ML/spreads/NBA spreads; check totals taker CLV in the next digests) Tweak engine where proven (25% steps, one change a day, test, revert rule); tell Tj in chat.
