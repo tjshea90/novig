@@ -91,7 +91,9 @@ class CloudBidRunner(
         }
         up = true
         val sb = CloudEngine.forCloud(s)
-        val rules = MakerRules.of(sb)
+        // Tj, 2026-10-17: "if the engine isn't running the auto bids posted [must not] get stale and picked off at bad prices". A bid rests on Novig on its own, so one the engine can no longer watch (the runner lost, the
+        // JVM halted by the watchdog) lives only as long as [ENGINE_BID_TTL_MS]: Novig removes it by itself. A live engine re-posts it from the current fair [ENGINE_REFRESH_BEFORE_MS] before it ends.
+        val rules = MakerRules.of(sb).let { it.copy(ttlMs = minOf(it.ttlMs, ENGINE_BID_TTL_MS), refreshBeforeMs = maxOf(it.refreshBeforeMs, ENGINE_REFRESH_BEFORE_MS)) }
         val halted = if (haltedUntil > now) haltedWhy else ""
         val stop = when {
             s.killed -> "Stopped by the kill switch"
