@@ -60,6 +60,8 @@ fun PropLineEvScreen(
     // statusBarsPadding: this tab has no top bar of its own, and the title sat under the clock (Tj, 2026-10-16 screenshot: "the app is getting cut off at the top").
     var expanded by rememberSaveable { mutableStateOf(setOf<String>()) }
     var betting by remember { mutableStateOf<com.tjshea.vigilant.data.scanner.Opportunity?>(null) }
+    // The same quick bet slip as the Vigilant feed's Bet button (Kelly stake, one press) when betting through the API is set up; the big detail sheet only without it (TCL90).
+    val api = LocalApiBet.current?.takeIf { it.enabled }
     VigilantPullToRefresh(busy = busy, onRefresh = onRefresh, modifier = modifier.fillMaxSize()) {
     Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 12.dp).testTag("propLineEv"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("PropLine +EV at Novig", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -104,7 +106,7 @@ fun PropLineEvScreen(
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             items(shown, key = { PropLineEvView.key(it) }) { r ->
                 val k = PropLineEvView.key(r)
-                PropLineEvCard(r, now, expanded = k in expanded, onToggle = { expanded = if (k in expanded) expanded - k else expanded + k }, onBet = { betting = PropLineEvView.opportunity(r) })
+                PropLineEvCard(r, now, expanded = k in expanded, onToggle = { expanded = if (k in expanded) expanded - k else expanded + k }, onBet = { val o = PropLineEvView.opportunity(r); if (api != null && o != null) api.betOpportunity(o) else betting = o })
             }
         }
     }
@@ -178,7 +180,7 @@ private fun PropLineEvCard(r: PlEvRow, now: Long, expanded: Boolean, onToggle: (
                         else "Vigilant's own scan did not match this line to a Novig market (no Bet button).",
                     style = MaterialTheme.typography.bodySmall,
                 )
-                if (r.opp != null) Button(onClick = onBet, modifier = Modifier.padding(top = 4.dp).testTag("plBet")) { Text("Bet this (re-checks Novig's live price)") }
+                if (r.opp != null) Button(onClick = onBet, modifier = Modifier.padding(top = 4.dp).testTag("plBet")) { Text(if (LocalApiBet.current?.enabled == true) "Bet" else "Bet this (re-checks Novig's live price)") }
             } else Text(if (r.opp != null) "Tap for the other books and to bet" else "Tap for the other books", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

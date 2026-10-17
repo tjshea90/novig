@@ -258,7 +258,7 @@ object PropLineMatch {
         val quote = com.tjshea.vigilant.engine.EvMath.quote(p, o.ladder.first().price, fee, false)
         val depth = com.tjshea.vigilant.engine.EvMath.positiveDepth(o.ladder, p, fee, false)
         val stake = if (quote.evPercent > 0) com.tjshea.vigilant.engine.EvMath.suggestedStake(quote, settings.bankroll, settings.kellyMultiplier, depth?.dollarCost, (o.event.startsTs - now) / 3_600_000.0) else null
-        val priced = o.copy(fairProbability = p, quote = quote, depth = depth, suggestedStake = stake)
+        val priced = o.copy(fairProbability = p, quote = quote, depth = depth, suggestedStake = stake, fairAsOfMs = now)
         val enc = runCatching { com.tjshea.vigilant.data.cloud.CloudCodec.encode(priced).toString() }.getOrNull() ?: return row
         return row.copy(
             opp = enc, oppFromPropLine = true, novigNowPrice = com.tjshea.vigilant.engine.Odds.probabilityToAmerican(quote.price.coerceIn(0.001, 0.999)),
