@@ -5753,3 +5753,8 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 
 - [ ] TCL106 (Tj, chat t1792274217965): Kalshi + Novig trading/arbitrage research written (research/kalshi_plus_novig_2026-10-17.md); next, if Tj says yes: read-only Novig-vs-Kalshi gap logger on the cloud engine (no orders), 3-5 days, then decide.
 - [x] TCL104b Feed live banner + hidden-text slots fixed height (Banner lines=3, hidden text 2 lines) so the list stops jumping; compiles (:app:compileDebugKotlin). Ship with next batch.
+
+## TCL107 (Tj, chat t1792277336265, 2026-10-17)
+"review boltodds, propline, and parlay-api docs. check that all three are being used correctly and that vigilant and the GitHub engine are using them to their full benefit. then check novig docs for its API for updates or changes and make sure the vigilant app and GitHub engine is using it correctly and to its full potential"
+- [ ] TCL107a Audit BoltOdds / PropLine / ParlayAPI use (app + engine) against BOLTODDS_API.md, research/propline/llms-full, PARLAY_API.md and the live engine status; fix gaps.
+- [ ] TCL107b Check Novig docs (docs.novig.us) for changes vs NOVIG_API.md; fix app/engine gaps. Write research/api_docs_audit_2026-10-17.md.
