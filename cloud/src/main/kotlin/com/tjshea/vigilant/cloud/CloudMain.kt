@@ -99,6 +99,7 @@ fun main(args: Array<String>) = runBlocking {
     // Every line the last finished scan priced (not only the listed ones): the PropLine +EV rows are matched to them so the phone can open the Bet sheet on the same Novig bet.
     val latestPriced = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
     // Novig markets Vigilant had no fair odds for (a ladder, no quote): PropLine's +EV rows on them get a Bet button priced from PropLine's own fair (TCL88).
+    val engineHolder = java.util.concurrent.atomic.AtomicReference<CloudEngine?>(null)
     val latestUnpriced = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
     val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = log::invoke) else null
     val publisher = Publisher(pubDir, repo, token, git, log::tail) { policy -> CloudKeys.envFor(policy.id)?.let { CloudKeys.fromEnv(it) }.orEmpty().map(CloudUsage::keyId) }
@@ -270,7 +271,6 @@ fun main(args: Array<String>) = runBlocking {
     // goes into status.json as liveUrl. Read-only: the engine's current status and nothing else. Any failure leaves liveUrl blank and the phone reads GitHub as before.
     val liveToken = (1..3).joinToString("") { "%08x".format(java.security.SecureRandom().nextInt()) }
     val liveUrlRef = java.util.concurrent.atomic.AtomicReference("")
-    val engineHolder = java.util.concurrent.atomic.AtomicReference<CloudEngine?>(null)
     val liveServer = runCatching { LiveStatusServer(liveToken, { engineHolder.get()?.liveStatus() }).also { it.start(8787) } }.onFailure { log("live status server not started: ${it.message}") }.getOrNull()
     if (liveServer != null) scope.launch {
         while (isActive) {
