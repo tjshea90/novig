@@ -615,7 +615,8 @@ internal enum class Tab(val label: String, val icon: ImageVector? = null, val dr
         BIDS -> AppBook.isNovig
         LIVE -> AppBook.isNovig
         TRACKER, SETTINGS -> true
-        PROPLINE -> AppBook.isNovig
+        // The PropLine +EV list is retired (Tj, 2026-10-17: a waste of usage; its prop Overs lose, Vigilant disagrees on 94%): no tab, no card.
+        PROPLINE -> false
     }
 }
 

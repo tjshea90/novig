@@ -106,7 +106,7 @@ fun main(args: Array<String>) = runBlocking {
     // PropLine's own +EV read at Novig (Tj, 2026-10-16, TCL56): with a paid key, every 15 minutes (and only while the key is within the day's share of its requests) the pregame games of the picked
     // leagues are asked for their +EV lines at Novig; the list goes to cloud-feed for the phone's PropLine screen, and every sweep's rows to a journal that the archive loop keeps for research.
     val evJournal = DayJournal(File(out, "cloud"), "propline-ev", com.tjshea.vigilant.data.reference.PlEvRow.serializer()) { it.seenAtMs }
-    scope.launch {
+    if (PROPLINE_EV_SWEEP) scope.launch {
         delay(90_000L)
         // The first sweep waits for the first scan (up to 8 min): Bet slips are built from what the scan holds, and a sweep before it has none (2026-10-17: a restart's first sweep had no Bet buttons).
         var waitedForScan = 0L
@@ -140,7 +140,7 @@ fun main(args: Array<String>) = runBlocking {
     novigKeyed?.problem?.let { log("Novig key: $it") }
     // The APIs' measured ranking survives the handover: the previous job's file is read back before the first scan ([CloudRanking]), and this job writes its own with every push.
     // PropLine's last list rides over a restart (2026-10-17: after one the phone's PropLine +EV card vanished until the first sweep, which waits for the first scan): the next sweep replaces it.
-    runCatching { PreviousFeed.readBytes(git, cfgDir, "propline-ev.json.gz") }.getOrNull()?.let { b ->
+    if (PROPLINE_EV_SWEEP) runCatching { PreviousFeed.readBytes(git, cfgDir, "propline-ev.json.gz") }.getOrNull()?.let { b ->
         com.tjshea.vigilant.data.reference.PlEvFeed.decode(b)?.let { f -> publisher.seedPropLineEv(b, f); log("PropLine +EV: the previous job's list (${f.rows.size} lines) is kept until the first sweep") }
     }
     runCatching { PreviousFeed.read(git, cfgDir, "ranking.json") }.getOrNull()?.let { text ->
@@ -377,6 +377,12 @@ fun main(args: Array<String>) = runBlocking {
     System.out.flush()
     Runtime.getRuntime().halt(0)
 }
+
+/**
+ * PropLine's +EV-at-Novig sweep is OFF (Tj, 2026-10-17: "this propline feature may just be a waste of usage... if it is inaccurate, get rid of it"): its prop Overs lose 9-14% on 6,393 graded closes whatever the stated edge
+ * (research/propline_vs_vigilant_2026-10-16.md), Vigilant calls 94% of its lines 0% or worse, and a sweep was 224 requests of the Pro key's 25,000 a day. PropLine's odds, closing lines, grading and archive are untouched.
+ */
+private const val PROPLINE_EV_SWEEP = false
 
 private const val END_WATCHDOG_MS = 90_000L
 
