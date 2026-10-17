@@ -5646,3 +5646,8 @@ Real-time engine status in the app (<= 2 s): the engine opens a free Cloudflare 
 - [x] TCL81a An engine switched off by hand resumes by itself at the next scheduled opening (08:00 ET after the off): CloudManual.resumeAtMs/effective, gate python in cloud-scan.yml; the kill switch and a removed token never auto-resume. Test: CloudManualTest.
 - [ ] TCL81b Watch the 08:00 ET resume (07:20 ET routine account: confirm the engine started, trading mode, held-back reasons) and the strategies in force (totals taker kinds, prop haircut, profile block, team-total bids).
 ## TCL82 (Tj, chat t1792219717133): include plenty of Under totals bets and bids that may be profitable when the engine starts back up -> answered with data: team-total Unders (+13%, CLV +2.8%) yes; game-total Unders no (-8%). No code needed beyond TCL72's kinds.
+
+## TCL83 (Tj, chat t1792246407020 "why didn't the app tell me update available", 2026-10-17)
+Cause found: `AppUpdater.check` calls `/repos/.../releases/latest`, which returns the newest Release of ANY kind, now a data archive (`propline-archive-2026-10-17`, no APK) -> `AppUpdate.parse` returns null -> never "newer", never notifies.
+- [ ] TCL83a Fix: read `/releases?per_page=30`, take the newest non-draft non-prerelease whose tag matches `v\d+\.\d+\.\d+` and has an `.apk` asset (AppUpdate.parse list variant) + test in AppUpdateTest with an archive release first in the list.
+- [ ] TCL83b Ship it (needs the repo lease; chat mode held none). Tj must install it by hand once; later updates notify.
