@@ -5742,3 +5742,7 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 ## TCL101 (Tj, chat t1792264466163, 2026-10-17)
 "remember to actively manage the apis. see their usage, optimize which ones to use and why, turn off unnecessary ones, pace ones that are too fast, prefer the ones with better data, etc. be a smart manager of the apis"
 - [ ] TCL101a API review pass (every session, ROUTINE): usage per API (usage.json, apiCards), data quality (p90 age, pts off Pinnacle, sole lines), pace vs reset; act through ApiGovernor/overrides; tell Tj the decisions. First pass: see research/api_review_2026-10-17.md.
+
+## TCL102 (Tj, chat t1792265970511, 2026-10-17)
+Screenshot: Engine "Trading stopped: Novig took the order but had not finished it after 12 s: kept as at risk, not sent again" (30 min hold; engine stats: 132 open, 36 won / 37 lost, +$0.15 settled, ROI +1.0%).
+- [x] TCL102a Slow Novig answer no longer halts the engine for 30 min: order wait 25 s, UNCONFIRMED holds ordering 90 s, the next pass settles it by looking the order up by client id (fill -> OPEN entry, nothing filled -> removed); never re-sent. CloudTraderTest.

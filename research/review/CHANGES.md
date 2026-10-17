@@ -35,3 +35,7 @@ Evidence in `research/review/pnl_2026-10-17.md`: 1,999 settled phone bets and bi
 
 ## 2026-10-17 chat: PropLine +EV sweep hourly for a few hours, then retired (TCL95, superseded by TCL98)
 - Same-day sequence: sweep 15 min -> hourly + pull-to-refresh and a Vigilant-agrees filter (v0.114.23) -> list retired (v0.114.25). Evidence in the TCL98 entry above.
+
+## 2026-10-17 chat: a slow Novig answer no longer stops the engine for 30 minutes (TCL102)
+- Evidence: the Engine tab showed "Trading stopped: Novig took the order (id) but had not finished it after 12s" (an IOC that should end in ~1 s); the rule stopped ordering for 30 min, costing volume.
+- Change: ORDER_WAIT_MS 12 -> 25 s; an unconfirmed order holds ordering 90 s (UNCONFIRMED_HOLD_MS), then the next pass looks the order up by client id and settles it (filled -> open entry; ended unfilled -> removed). Orders are still never re-sent. Refusals (451/401/403/423) keep the 30 min hold. Revert: restore the constants and drop `reconcileUnconfirmed`.
