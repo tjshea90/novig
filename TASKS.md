@@ -5633,3 +5633,8 @@ Cause seen in his screenshot (2:28am): Engine tab said "Scanning" with a green d
 - [ ] TCL79b Engine freshness: heartbeat silent > 30 s amber, > 2 min red "engine silent"; progress unchanged for 90 s = "STALLED" (not a green Scanning); stale tiles say "last known".
 - [ ] TCL79c Bets: every row shows how old its Novig price and fair odds are; rows older than the freshness limits (Novig price > 5 min, fair odds > 20 min, or from a run that is not the live one) are dropped from the main list into "Show old bets (N)" and cannot be bet from the list; a list-level banner when the whole list is old.
 - [ ] TCL79d Tests: pure freshness model (CloudFreshness / DashboardModel) with cases for each rule; no cached screen can show a green state older than its limit.
+
+## TCL80 (Tj, chat t1792219313022, 2026-10-17)
+"is there any mechanism that can be added to the android app where I can see GitHub engine status and scanning in real time or at most every couple seconds? right now it is laggy"
+- [ ] TCL80a Measure the lag end to end (engine publish gap 8-10 s + phone poll 5 s + GitHub API/CDN cache). Split status.json (small: heartbeat, progress, scanning) from the heavy feed so the phone polls ONLY status every 2 s with ETag (304s are free; stay under 5,000 REST calls/h per token), engine publishes status at <=2 s while a scan runs.
+- [ ] TCL80b If still >5 s: propose a push relay outside GitHub (ntfy/Firebase) for Tj's word (it sends data out of the repo = his call).
