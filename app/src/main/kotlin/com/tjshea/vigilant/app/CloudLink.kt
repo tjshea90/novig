@@ -709,7 +709,10 @@ class CloudLink(private val c: AppContainer) {
     suspend fun refreshNovigKey() {
         val at = c.cloudNovigKeys.saved()?.mintedAtMs ?: 0L
         val tradeAt = c.cloudTradeKeys.saved()?.mintedAtMs ?: 0L
-        _ui.update { it.copy(novigKeyMadeAtMs = at, tradeKeyMadeAtMs = tradeAt, tradeKeyOnGitHub = tradeSent.exists()) }
+        // The marker file is lost with the app's data (a reinstall), the secret on GitHub is not: ask GitHub, and keep the marker in step so the key is sent again with the rest.
+        val onGitHub = client.secretExists(CloudKeys.TRADE_KEY_ID)
+        if (onGitHub == true && !tradeSent.exists()) runCatching { tradeSent.writeText("1") }
+        _ui.update { it.copy(novigKeyMadeAtMs = at, tradeKeyMadeAtMs = tradeAt, tradeKeyOnGitHub = onGitHub ?: tradeSent.exists()) }
     }
 
     /** Saves the bet and bid day files and the scan study's days to `phone-data`; each file is sent again only when it changed. */

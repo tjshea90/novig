@@ -261,6 +261,17 @@ class CloudClient(
         }.getOrElse { it.javaClass.simpleName + (it.message?.let { m -> ": " + m.take(80) } ?: "") }
     }
 
+    /** True when the repository secret [name] exists (GET answers 200); false on 404; null when it could not be read (no token, no Secrets: read, offline). The value is never returned by GitHub. */
+    suspend fun secretExists(name: String): Boolean? = withContext(Dispatchers.IO) {
+        if (!hasToken()) return@withContext null
+        runCatching {
+            http.newCall(req("actions/secrets/$name").get().build()).execute().use { r ->
+                note(r)
+                when { r.isSuccessful -> true; r.code == 404 -> false; else -> null }
+            }
+        }.getOrNull()
+    }
+
     /** Removes the repository secret [name]. Null = removed (or it was not there); otherwise why not. */
     suspend fun deleteSecret(name: String): String? = withContext(Dispatchers.IO) {
         if (!hasToken()) return@withContext "no GitHub token saved"
