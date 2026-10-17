@@ -144,7 +144,7 @@ class CloudSources(
     private val propLineProps = PropLinePropsSource(propLine)
     /** PropLine's plan per key from its quota headers (Tj, 2026-10-16, TCL56): the paid key is found and used first ([KeyPool]). The engine asks hourly. */
     private val propLineAccount = com.tjshea.vigilant.data.reference.PropLineAccount(http, { keys(CloudKeys.PROPLINE) }, usage)
-    fun propLinePlans(): String = keys(CloudKeys.PROPLINE).mapIndexedNotNull { i, k -> propLineAccount.last[k]?.let { c -> "#${i + 1} ${c.tier} ${c.remaining ?: "?"}/${c.limit ?: "?"}" + (if (!c.valid) " (${c.reason})" else "") } }.joinToString(", ").ifBlank { "none read" }
+    fun propLinePlans(): String = keys(CloudKeys.PROPLINE).mapIndexedNotNull { i, k -> propLineAccount.last[k]?.let { c -> "#${i + 1} ${c.tier} used ${if (c.remaining != null && c.limit != null) c.limit!! - c.remaining!! else "?"}/${c.limit ?: "?"}" + (if (!c.valid) " (${c.reason})" else "") } }.joinToString(", ").ifBlank { "none read" }
     private val propLineEv = com.tjshea.vigilant.data.reference.PropLineEvSweep(propLine, json)
     /** PropLine's +EV-at-Novig sweep (TCL56): only with a paid key; a free key's answers are redacted. */
     suspend fun propLineEvSweep(s: ScanSettings, now: Long, scanned: List<com.tjshea.vigilant.data.scanner.Opportunity> = emptyList()) = propLineEv.sweep(s, now, scanned)

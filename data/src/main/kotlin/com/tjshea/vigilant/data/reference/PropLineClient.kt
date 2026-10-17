@@ -297,8 +297,9 @@ class PropLineClient(
         const val REUSE_MS = 2 * 60_000L
 
         /** The shares of the day's pace the consumers may reach (the rest is headroom for game lines, rechecks, other books and research). */
-        const val PROPS_SHARE = 0.70
-        const val EV_SHARE = 0.90
+        // Tj, 2026-10-17: "propline can use 25000 requests per day. it isn't getting anywhere near that. vigilant can use it liberally": props ran out of their 70% share at 3.6k used by 03:00Z and fell back to the small cap.
+        const val PROPS_SHARE = 0.95
+        const val EV_SHARE = 1.0
 
         /**
          * The share of the quota day (00:00 to 00:00 UTC) that the engine's working hours ([com.tjshea.vigilant.data.cloud.EngineHours]: 08:00 to 01:00 ET) have run through at [now]: 0 at the reset, 1 at

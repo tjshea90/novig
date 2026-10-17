@@ -92,11 +92,11 @@ class PropLinePaidFirstTest {
         val t = Instant.parse("2026-10-16T18:00:00Z").toEpochMilli()      // 11 of 17 working hours gone: pace 16,176 of 25,000
         val m = UsageMeter(JsonFileStore(File.createTempFile("usage", ".json").also { it.delete() }, UsageBook.serializer(), { UsageBook() }), clock = { t })
         val client = com.tjshea.vigilant.data.reference.PropLineClient(okhttp3.OkHttpClient(), KeyPool(QuotaPolicy.PROPLINE, { listOf("pro") }, m), kotlinx.serialization.json.Json { ignoreUnknownKeys = true }, clock = { t }, meter = m)
-        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 25_000 - 12_000, limit = 25_000, used = 12_000)      // props line: 16,176 * .7 + 1,250 = 12,573
+        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 25_000 - 12_000, limit = 25_000, used = 12_000)      // props line: 16,176 * .95 + 1,250 = 16,617
         assertEquals(true, client.roomForEveryGame(t)); assertEquals(true, client.roomForEv(t))
-        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 25_000 - 13_000, limit = 25_000, used = 13_000)
-        assertEquals("props over their share: back to the setting's cap", false, client.roomForEveryGame(t)); assertEquals("the sweep still has room (16,176 * .9 + 1,250 = 15,808)", true, client.roomForEv(t))
-        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 25_000 - 16_000, limit = 25_000, used = 16_000)
+        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 25_000 - 17_000, limit = 25_000, used = 17_000)
+        assertEquals("props over their share: back to the setting's cap", false, client.roomForEveryGame(t)); assertEquals("the sweep still has room (16,176 + 1,250 = 17,426)", true, client.roomForEv(t))
+        m.recordBalance(QuotaPolicy.PROPLINE, "pro", remaining = 25_000 - 18_000, limit = 25_000, used = 18_000)
         assertEquals(false, client.roomForEv(t))
     }
 }
