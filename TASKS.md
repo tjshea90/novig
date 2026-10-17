@@ -5633,3 +5633,10 @@ Cause seen in his screenshot (2:28am): Engine tab said "Scanning" with a green d
 - [ ] TCL79b Engine freshness: heartbeat silent > 30 s amber, > 2 min red "engine silent"; progress unchanged for 90 s = "STALLED" (not a green Scanning); stale tiles say "last known".
 - [ ] TCL79c Bets: every row shows how old its Novig price and fair odds are; rows older than the freshness limits (Novig price > 5 min, fair odds > 20 min, or from a run that is not the live one) are dropped from the main list into "Show old bets (N)" and cannot be bet from the list; a list-level banner when the whole list is old.
 - [ ] TCL79d Tests: pure freshness model (CloudFreshness / DashboardModel) with cases for each rule; no cached screen can show a green state older than its limit.
+
+## TCL80 (Tj, chat t1792219437312 "tunnel yes", 2026-10-17)
+Real-time engine status in the app (<= 2 s): the engine opens a free Cloudflare quick tunnel (no account, no cost) to a tiny HTTP status server (SSE) on the runner; the tunnel URL goes into status.json; the phone connects directly for status/progress and falls back to the GitHub polling when the tunnel is absent/fails. Read-only: it serves the same public status, never a key, never a command.
+- [ ] TCL80a engine: `LiveStatusServer` (JDK com.sun.net.httpserver, 127.0.0.1:PORT, GET /status SSE/JSON) fed by the same CloudStatus the publisher writes, updated every 1 s from memory; no auth needed beyond a random path token in the URL; serves only status JSON.
+- [ ] TCL80b workflow: download cloudflared (pinned release), `cloudflared tunnel --url http://127.0.0.1:PORT`, parse the trycloudflare URL from its log, hand it to the engine (file) -> status.liveUrl.
+- [ ] TCL80c app: if status.liveUrl set, open an SSE/long-poll to it; show status within 1-2 s; on any failure fall back to GitHub polling with the stale rules (TCL79); a chip "LIVE (direct)" vs "via GitHub (8-10 s)".
+- [ ] TCL80d tests: status server serves JSON, client parse, fallback rules; selftest for the URL parser.
