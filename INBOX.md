@@ -579,3 +579,25 @@ Sportmicro publishes sport-specific APIs across 21 sports. Start here for the mo
 - [Tennis docs](https://docs.sportmicro.com/docs/tennis/sportmicro): Representative racket-sport intro page
 - [Tennis OpenAPI](https://docs.sportmicro.com/openapi/tennis.json): Schema for Tennis API tooling and code generation
 ```
+
+## 2026-10-18T22:06:53Z
+```
+the following is a large update that will likely run Claude out of usage. implement frequent checkpoints and save progress to GitHub frequently. assume your usage will interrupt you and act accordingly by saving progress frequently in anticipation of usage running out.
+first audit available plugins and skills that will help you in these tasks and either turn them on and use them or tell me if I need to do anything to turn them on. 
+sometimes the api usage meters are glitchy, like showing it is spent but it has only a red dot or something instead of a full red bar. this is just a random example. 
+
+1) in the app messages feature, only include important messages and API errors or recommendations. do not include bets and bids. 
+2) make sure the app works as a true real time monitor of the GitHub engine, all stats and numbers and meters should be as fresh as possible and refreshed either constantly or very frequently. 
+3) if I pull down to refresh the GitHub engine tab or any other feature in the app, it should give a true refresh with the current state of that section refreshed for the freshest information. 
+4) renovate the live dashboard for live betting. it should be a monitor and control board for the GitHub live betting engine with stats and status on all the sockets plus toggles I can control from the phone for instant settings changes. I'm not interested in phone live betting unless I specifically press phone. there should be a switch for GitHub and phone. if I choose GitHub, it has the live dashboard updated in real time showing what GitHub is scanning, bidding and betting, stats, scanning speed, real time status on apis and sockets, etc. if I choose phone, it should automatically turn off the sockets on GitHub runner, pause all live betting and bidding on GitHub, and switch the engine to the phone and make the dashboard show the phone stats and connections. the functionality should be the same, but all data and bandwidth on the phone mobile connection. include cool real time graphs and easy to see stats for both the GitHub engine and the phone engine. 
+5) audit the sx bet, kalshi, boltodds apis and sockets. are they being used correctly? to their full potential? 
+6) make the profit/loss graph easier to understand. make an option to see the graph for today only. each day does not start at 12am, it should start with that day's first games and end with the results of those games. for example, if the first game is at 7am, that day "begins" at 7am, and ends when the full slate of games for that day are final. this will frequently be after 12am. so the "today" graph should only show profit and loss for the game slate for that day, and the yesterday chart should only show profit and loss for the slate of games yesterday, and so on. make sure the profit/loss math is sound. just because I staked more money doesn't mean I deposited more money. the profit/loss should be calculated from a single start number and that number never changes. that number is the total money staked on all bets for the first day logged. each subsequent day shows how much was made or lost compared to the balance from the day before. 
+7) in the engine home tab, it has a long list of bids. don't show these. keep this section simple and easy to read. organize it. maybe tabs for different data views, like a tab for api usage. 
+8) make sure the API usage meters are correct and updated either real time or very frequently so that I can always see the true usage. if I go to a page that shows the API usage, I should be able to pull down to refresh and it shows a fresh read on each api usage. 
+9) audit the entire settings menu. features that are used should not be in settings. only settings should be in settings. organize the settings, look for and fix redundant or contradictory settings, and simplify the settings so they are easy to find and understand and not overwhelming with too many unnecessary options. 
+10) audit the app ui and code, make sure it is well designed and efficient. 
+11) analyze the saved bids and bets and scan logs with the clv, ev, results, odds, etc. tune the engine for maximum profit with a good balance for fills and volume. you have full control and discretion of the engine 
+12) look for and implement all other fixes and improvements and updates you can find for both the GitHub engine and the Android app
+13) run full tests protocol when all changes are done.
+14) release the new Android app as version 1.0. this is a large update.
+```
