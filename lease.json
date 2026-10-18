@@ -1,12 +1,12 @@
 {
  "v": 1,
- "holder": "56f5bf",
- "label": "acct-5d1e2d",
- "kind": "chat",
- "task": "chat: pinnapi first for Pinnacle game lines, PinnWire backup",
- "since": 1792352482,
- "sinceIso": "2026-10-18T19:41:22Z",
- "hb": 1792352822,
- "hbIso": "2026-10-18T19:47:02Z",
+ "holder": "eb1df3",
+ "label": "acct-27a37e",
+ "kind": "interactive",
+ "task": "",
+ "since": 1792353273,
+ "sinceIso": "2026-10-18T19:54:33Z",
+ "hb": 1792353273,
+ "hbIso": "2026-10-18T19:54:33Z",
  "leaseS": 1200
 }
