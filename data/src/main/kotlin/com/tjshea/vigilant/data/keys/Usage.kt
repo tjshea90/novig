@@ -36,6 +36,11 @@ data class QuotaPolicy(
      * Null = the order Tj typed. Needs the key's plan to be known (a call's answer or an account read).
      */
     val paidFirstAbove: Int? = null,
+    /**
+     * The provider sends no usage figure, so [defaultLimit] minus the app's own count is only a GUESS (PinnWire: Tj, 2026-10-18, TCL119). A guess never rests a key: it is spent only on the provider's
+     * word (a 429 naming the day, or an account read), and [KeyUsage.left] is its last figure or unknown.
+     */
+    val ownCountIsGuess: Boolean = false,
     /** One line for the meter: what the provider allows. */
     val rule: String,
 ) {
@@ -98,7 +103,7 @@ data class QuotaPolicy(
         )
         val PINNWIRE = QuotaPolicy(
             "pinnwire", "Pinnacle (PinnWire)", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, defaultLimit = 100,
-            perMinute = 20,
+            perMinute = 20, ownCountIsGuess = true,
             rule = "100 requests a day per free key (20 a minute), reset at midnight UTC. About 1 per sport per scan, player props included.",
         )
         val PROPLINE = QuotaPolicy(
@@ -186,7 +191,7 @@ data class KeyUsage(
     /** When this key's period ends: the provider's own word when it gave one, else [policy]'s calendar. */
     fun nextReset(policy: QuotaPolicy): Long = resetAtMs ?: policy.nextReset(periodStart)
 
-    fun left(policy: QuotaPolicy): Int? = remaining ?: (limit ?: policy.defaultLimit)?.let { (it - used).coerceAtLeast(0) }
+    fun left(policy: QuotaPolicy): Int? = remaining ?: if (policy.ownCountIsGuess) null else (limit ?: policy.defaultLimit)?.let { (it - used).coerceAtLeast(0) }
     fun allowance(policy: QuotaPolicy): Int? = limit ?: policy.defaultLimit
 }
 
@@ -266,7 +271,8 @@ class UsageMeter(
             // Only what's left (ParlayAPI's X-RateLimit-Remaining): the server's word for it; the count used is ours, the allowance as known.
             x = x.copy(used = u.used + cost, remaining = serverRemaining)
         } else {
-            x = x.copy(used = u.used + cost, remaining = null)
+            // A figure the provider gave earlier stays (less this call, never to zero by our count) until its next account read; a guessed count is not a figure.
+            x = x.copy(used = u.used + cost, remaining = if (policy.ownCountIsGuess) u.remaining?.minus(cost)?.coerceAtLeast(1) else null)
         }
         // The provider's own reset time: its plan's cycle, which the pace and the meter then follow.
         if (resetAtMs != null) {
