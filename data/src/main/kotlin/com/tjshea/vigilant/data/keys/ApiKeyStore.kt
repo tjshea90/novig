@@ -63,6 +63,9 @@ enum class ApiProvider(val storageKey: String, val displayName: String) {
      * The key goes in the query string (`?key=`), REST and WebSocket alike.
      */
     BOLTODDS("boltodds", "BoltOdds"),
+
+    /** sx.bet read-only API key (SXBET_API.md, Tj 2026-10-18): scope "Market data: read" only. Markets are public; the books and the WebSocket token need it. */
+    SXBET("sxbet", "SX Bet"),
 }
 
 /** Tj's own API keys per provider, in the order [KeyPool] tries them. */

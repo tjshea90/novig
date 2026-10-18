@@ -28,7 +28,7 @@ class ApiTogglesTest {
     /** Every API on. */
     private fun everything() = ScanSettings(
         leagues = setOf("NFL", "ATP"), usePinnacle = true, usePolymarket = true, useKalshi = true, usePropLine = true, useParlay = true, useOddsApi = true,
-        sgoPro = true, oddsPapi = true, oddsPapiFree = true, unabated = true, gates = com.tjshea.vigilant.data.scanner.ApiGates(useBoltOdds = true),
+        sgoPro = true, oddsPapi = true, oddsPapiFree = true, unabated = true, gates = com.tjshea.vigilant.data.scanner.ApiGates(useBoltOdds = true, useSxBet = true),
     )
 
     private suspend fun allKeys(c: AppContainer) {
@@ -43,6 +43,7 @@ class ApiTogglesTest {
         c.keyStore.setKeys(ApiProvider.ODDSPAPI_FREE, listOf("op4"))
         c.keyStore.setKeys(ApiProvider.UNABATED, listOf("un"))
         c.keyStore.setKeys(ApiProvider.BOLTODDS, listOf("bolt"))
+        c.keyStore.setKeys(ApiProvider.SXBET, listOf("sx"))
     }
 
     /** The source ids each API contributes (Pinnacle's three hosts share one source). */
@@ -57,6 +58,7 @@ class ApiTogglesTest {
         ApiEntry.ODDS_API to setOf("oddsapi", "oddsapi_props"),
         ApiEntry.KALSHI to setOf("kalshi"),
         ApiEntry.POLYMARKET to setOf("polymarket"),
+        ApiEntry.SXBET to setOf("sxbet"),
     )
 
     @Test

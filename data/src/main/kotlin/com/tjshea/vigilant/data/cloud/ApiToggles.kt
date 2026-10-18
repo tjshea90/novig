@@ -8,7 +8,7 @@ import com.tjshea.vigilant.data.scanner.ScanSettings
  */
 object ApiToggles {
     /** The ids the engine may ask to switch: the odds feeds (never Novig, never the trading switches). Pinnodds and Kalshi's socket stay the phone's own. */
-    val IDS = listOf("sgo", "boltodds", "oddspapi", "oddspapi_free", "unabated", "parlay", "propline", "odds_api", "pinnwire", "pinnapi", "kalshi", "polymarket")
+    val IDS = listOf("sgo", "boltodds", "oddspapi", "oddspapi_free", "unabated", "parlay", "propline", "odds_api", "pinnwire", "pinnapi", "kalshi", "polymarket", "sxbet")
 
     /** The meter ([com.tjshea.vigilant.data.keys.QuotaPolicy]) of a switch id, for the usage ledger and the feeds' answers; null for a keyless API. */
     fun policy(id: String): com.tjshea.vigilant.data.keys.QuotaPolicy? = when (id) {
@@ -22,6 +22,7 @@ object ApiToggles {
         "odds_api" -> com.tjshea.vigilant.data.keys.QuotaPolicy.ODDS_API
         "pinnwire" -> com.tjshea.vigilant.data.keys.QuotaPolicy.PINNWIRE
         "pinnapi" -> com.tjshea.vigilant.data.keys.QuotaPolicy.PINNAPI
+        "sxbet" -> com.tjshea.vigilant.data.keys.QuotaPolicy.SXBET
         else -> null
     }
 
@@ -45,6 +46,7 @@ object ApiToggles {
         "pinnodds" -> s.gates.usePinnodds
         "kalshi" -> s.useKalshi
         "polymarket" -> s.usePolymarket
+        "sxbet" -> s.gates.useSxBet
         else -> null
     }
 
@@ -63,6 +65,7 @@ object ApiToggles {
         "pinnodds" -> s.copy(gates = s.gates.copy(usePinnodds = on), usePinnacle = s.usePinnacle || on)
         "kalshi" -> s.copy(useKalshi = on)
         "polymarket" -> s.copy(usePolymarket = on)
+        "sxbet" -> s.copy(gates = s.gates.copy(useSxBet = on))
         else -> s
     }
 

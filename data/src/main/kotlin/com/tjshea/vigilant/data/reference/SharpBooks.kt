@@ -118,7 +118,7 @@ class SharpBooks(
         const val KEEP_MS = 60_000L
 
         /** Exchanges and prediction markets aren't sharp sportsbooks here; every other source carries Pinnacle among its books. */
-        private val NOT_PINNACLE = setOf("polymarket", "kalshi")
+        private val NOT_PINNACLE = setOf("polymarket", "kalshi", "sxbet")
 
         private fun usable(source: ReferenceSource, league: com.tjshea.vigilant.data.scanner.League, prop: Boolean): Boolean {
             if (source.id in NOT_PINNACLE || !source.supports(league)) return false

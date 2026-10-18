@@ -11,7 +11,7 @@ class TrapGuardSplitTest {
     fun `saved settings keep what the one shared number was, for both, until Tj changes either`() {
         val old = ScanSettings(trapEarlyHours = 12, schema = 13).copy(trapBidHours = 6)
         val moved = old.migrate()
-        assertEquals(21, moved.schema)
+        assertEquals(22, moved.schema)
         assertEquals(12, moved.trapEarlyHours)
         assertEquals(12, moved.trapBidHours)
         // Already migrated: a bids number of his own is never overwritten again.

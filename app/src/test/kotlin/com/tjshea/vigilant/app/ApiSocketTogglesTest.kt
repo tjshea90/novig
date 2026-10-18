@@ -14,7 +14,7 @@ class ApiSocketTogglesTest {
     private val withSockets = ApiEntry.entries.filter { it.hasSocket }
 
     @Test fun `exactly the APIs with a websocket have a socket switch`() {
-        assertEquals(setOf(ApiEntry.BOLTODDS, ApiEntry.PINNODDS, ApiEntry.KALSHI), withSockets.toSet())
+        assertEquals(setOf(ApiEntry.BOLTODDS, ApiEntry.PINNODDS, ApiEntry.KALSHI, ApiEntry.SXBET), withSockets.toSet())
         ApiEntry.entries.filter { !it.hasSocket }.forEach { assertFalse("${it.name} has no socket", it.socketOn(ScanSettings())) }
     }
 
@@ -26,13 +26,13 @@ class ApiSocketTogglesTest {
             assertTrue(e.name, e.socketOn(e.setSocket(off, true)))
             for (other in withSockets.filter { it != e }) assertEquals("${other.name} untouched by ${e.name}", other.socketOn(base), other.socketOn(off))
             assertEquals("the API's own switch is untouched", e.isOn(base), e.isOn(off))
-            assertEquals(base.copy(gates = base.gates.copy(boltSocket = off.gates.boltSocket, pinnSocket = off.gates.pinnSocket, kalshiSocket = off.gates.kalshiSocket)), off)
+            assertEquals(base.copy(gates = base.gates.copy(boltSocket = off.gates.boltSocket, pinnSocket = off.gates.pinnSocket, kalshiSocket = off.gates.kalshiSocket, sxSocket = off.gates.sxSocket)), off)
         }
     }
 
     @Test fun `the socket switches default on, and turning an API off leaves its socket switch as it was`() {
         val s = ScanSettings()
-        assertTrue(s.gates.novigSocket && s.gates.boltSocket && s.gates.pinnSocket && s.gates.kalshiSocket)
+        assertTrue(s.gates.novigSocket && s.gates.boltSocket && s.gates.pinnSocket && s.gates.kalshiSocket && s.gates.sxSocket)
         for (e in withSockets) {
             val apiOn = e.setOn(e.setSocket(s, false), true)
             assertTrue(e.isOn(apiOn))

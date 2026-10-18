@@ -102,6 +102,7 @@ class CloudSources(
     private val boltProps = BoltPropsSource(boltFeed)
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
+    private val sxbet = com.tjshea.vigilant.data.reference.SxBetClient(http, json, { keys(CloudKeys.SXBET).firstOrNull().orEmpty() }, usage, socketOn = { sxSocketWanted }, scope = scope)
     /**
      * Kalshi's signed key and socket (Tj, 2026-10-16, chat: "I want to send my kalshi key to GitHub so GitHub can use the socket for faster odds"; he accepted that an API key can trade, which is why this
      * is his word and not a default): the phone's sealed key goes up as [CloudKeys.KALSHI_KEY_ID] + [CloudKeys.KALSHI_KEY_PEM]. The engine only READS with it (signed market reads and the socket's price pushes);
@@ -168,6 +169,11 @@ class CloudSources(
             board = boltFeed.lines.board, socketLive = { boltFeed.lines.live }, ensureOpen = { boltFeed.arrange(settings()); boltFeed.lines.use() }, sink = sink, scope = scope, rules = rules,
         ).also { boltFeed.liveTennis = true }
 
+    /** SX Bet's socket (null without a scope): the engine hangs its research recorder on it. */
+    val sxStream: com.tjshea.vigilant.data.sxbet.SxBetStream? get() = sxbet.stream
+
+    @Volatile private var sxSocketWanted = false
+
     fun unabatedActive(s: ScanSettings) = s.unabated && has(CloudKeys.UNABATED) && !unabatedClient.down()
     fun op4Active(s: ScanSettings) = s.oddsPapiFree && s.gates.op4Fair > 0 && has(CloudKeys.ODDSPAPI_FREE)
 
@@ -177,6 +183,8 @@ class CloudSources(
     fun sources(s: ScanSettings): List<ReferenceSource> {
         // Switched off (or its socket switch off) the sockets are closed: nothing is held open or sent to BoltOdds.
         if (!boltActive(s) || !s.gates.boltSocket) boltFeed.close()
+        sxSocketWanted = s.gates.useSxBet && s.gates.sxSocket
+        if (!sxSocketWanted) sxbet.stream?.close()
         kalshiSocketWanted = s.useKalshi && s.gates.kalshiSocket && kalshiSigner != null
         if (!kalshiSocketWanted) kalshiStream.close()
         val front = buildList {
@@ -228,6 +236,8 @@ class CloudSources(
         parlayOdds.alternates = !pinnacleOn
         parlayHalves.pinnacleFeedOn = pinnacleOn
         if (s.usePolymarket) add(polymarket)
+        // SX Bet: markets are public but prices need the read-only key; with the switch on and a key it prices beside the other exchanges.
+        if (s.gates.useSxBet && has(CloudKeys.SXBET) && !sxbet.down()) add(sxbet)
         if (s.useKalshi) add(kalshi)
         if (s.usePropLine && has(CloudKeys.PROPLINE)) {
             add(propLine)
@@ -251,6 +261,7 @@ object CloudKeys {
     const val ODDSPAPI = "ODDSPAPI_API_KEY"
     const val ODDSPAPI_FREE = "ODDSPAPI_FREE_API_KEY"
     const val UNABATED = "UNABATED_API_KEY"
+    const val SXBET = "SXBET_API_KEY"
     const val PINNWIRE = "PINNWIRE_API_KEY"
     const val PINNAPI = "PINNAPI_API_KEY"
     const val PROPLINE = "PROPLINE_API_KEY"
@@ -288,11 +299,11 @@ object CloudKeys {
     /** The secret holding each meter's keys (the dashboard needs the keys' order to say which one is active). A policy with no secret here has no key on GitHub. */
     fun envFor(policyId: String): String? = when (policyId) {
         "sgo" -> SGO; "oddspapi" -> ODDSPAPI; "oddspapi_free" -> ODDSPAPI_FREE; "unabated" -> UNABATED; "pinnwire" -> PINNWIRE; "pinnacle" -> PINNAPI
-        "propline" -> PROPLINE; "oddsapi" -> ODDS_API; "parlay" -> PARLAY; "boltodds" -> BOLT
+        "propline" -> PROPLINE; "oddsapi" -> ODDS_API; "parlay" -> PARLAY; "boltodds" -> BOLT; "sxbet" -> SXBET
         else -> null
     }
 
-    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, ODDS_API, PARLAY, BOLT)
+    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, SXBET, PINNWIRE, PINNAPI, PROPLINE, ODDS_API, PARLAY, BOLT)
 
     /**
      * Which of the phone's keys go to which repository secret (the app sends them: Settings › Cloud scan › Send my API keys to GitHub; Tj, 2026-10-14). **Pinnodds is never in it** (its socket allows one
@@ -310,6 +321,7 @@ object CloudKeys {
         com.tjshea.vigilant.data.keys.ApiProvider.THE_ODDS_API to ODDS_API,
         com.tjshea.vigilant.data.keys.ApiProvider.PARLAY to PARLAY,
         com.tjshea.vigilant.data.keys.ApiProvider.BOLTODDS to BOLT,
+        com.tjshea.vigilant.data.keys.ApiProvider.SXBET to SXBET,
     )
 
     /** Providers whose keys stay on the phone, on purpose: Pinnodds (one WebSocket per account: a second connection evicts the app's). */

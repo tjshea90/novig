@@ -18,7 +18,7 @@ class SettingsMergeTest {
         assertEquals(5.0, ScanSettings(slipStake = SlipStake.ONE_DOLLAR, apiBetStake = 10.0, slipCustomStake = 5.0, schema = 12).migrate().slipCustomStake, 0.0)
         // Once migrated, it isn't done again.
         val once = ScanSettings(slipStake = SlipStake.OFF, apiBetStake = 10.0, slipCustomStake = 5.0, schema = 12).migrate()
-        assertEquals(21, once.schema)
+        assertEquals(22, once.schema)
         assertEquals(10.0, once.copy(apiBetStake = 99.0).migrate().slipCustomStake, 0.0)
     }
 
@@ -28,7 +28,7 @@ class SettingsMergeTest {
         assertEquals(com.tjshea.vigilant.engine.DevigMethod.WORST_CASE, com.tjshea.vigilant.engine.FairSettings().method)
         val old = ScanSettings(devigMethod = com.tjshea.vigilant.engine.DevigMethod.POWER, schema = 16).migrate()
         assertEquals(com.tjshea.vigilant.engine.DevigMethod.WORST_CASE, old.devigMethod)
-        assertEquals(21, old.schema)
+        assertEquals(22, old.schema)
         // Tj picks Power afterwards: the file is current, so it is left alone.
         val picked = old.copy(devigMethod = com.tjshea.vigilant.engine.DevigMethod.POWER).migrate()
         assertEquals(com.tjshea.vigilant.engine.DevigMethod.POWER, picked.devigMethod)

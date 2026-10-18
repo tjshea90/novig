@@ -165,6 +165,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     ODDSPAPI("OddsPapi", "v5 (a trial or contract key): a second paid feed for odds, props, closing lines (CLV for any bet) and results, read alongside every other API you have on", SettingsGroup.FIND),
 
     /** Unabated's FREE API: soft-book lines and props at no credit cost, the last source in line (Tj, 2026-10-11). A page of [APIS]. */
+    SXBET("SX Bet", "An exchange read as a sharp source: public markets, free read-only key for the prices", SettingsGroup.FIND),
     UNABATED("Unabated (free)", "Free lines and props from DraftKings, FanDuel, MGM, Caesars and more; fills in what the other feeds miss", SettingsGroup.FIND),
 
     /** OddsPapi's FREE v4 plan: Pinnacle closing lines for CLV from free historical odds (Tj, 2026-10-11). A page of [APIS]. */
@@ -204,7 +205,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     /** The page this one belongs to, or null for a page on the Settings home list: the APIs' own pages and their usage details open from APIs & keys and go back to it. */
     val parent: SettingsPage?
         get() = when (this) {
-            SGO, BOLTODDS, KALSHI, ODDSPAPI, UNABATED, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
+            SGO, BOLTODDS, KALSHI, SXBET, ODDSPAPI, UNABATED, ODDSPAPI_FREE, PINNACLE, PROPLINE, PARLAY, ODDS_API, USAGE -> APIS
             else -> null
         }
 
@@ -212,7 +213,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     fun shownIn(s: ScanSettings): Boolean = when (this) {
         CNO -> s.cnoOn
         FEED, FAIR -> s.vigilantOn
-        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
+        ALERTS, RESEARCH, SGO, BOLTODDS, KALSHI, SXBET, ODDSPAPI, UNABATED, ODDSPAPI_FREE -> AppBook.isNovig
         APIS -> true
         // Central sections of their own since 2026-10-16 (the Engine and Claude tabs): not Settings pages any more.
         DASHBOARD, CHAT, MESSAGES -> false
@@ -316,6 +317,11 @@ object SettingsSummary {
                 state.kalshiHasKey && s.gates.kalshiSocket -> "On: signed reads and a real-time socket"
                 state.kalshiHasKey -> "On: signed reads, socket off"
                 else -> "On: public reads (no key saved)"
+            }
+            SettingsPage.SXBET -> when {
+                state.sxKeys.isEmpty() -> "No key saved"
+                s.gates.useSxBet -> "On: sharp exchange odds"
+                else -> "Off (key saved)"
             }
             SettingsPage.UNABATED -> when {
                 state.unKeys.isEmpty() -> "No key saved"
@@ -466,6 +472,7 @@ fun SettingsScreen(
                 SettingsPage.PROPLINE -> PropLinePage(state, keys, onUpdate)
                 SettingsPage.PARLAY -> ParlayPage(state, keys, onUpdate)
                 SettingsPage.ODDS_API -> OddsApiPage(state, keys, onUpdate)
+                SettingsPage.SXBET -> SxBetPage(state, keys, onUpdate)
                 SettingsPage.UNABATED -> UnabatedPage(state, keys, reportActions, onUpdate)
                 SettingsPage.BOLTODDS -> BoltOddsPage(state, keys, reportActions, onUpdate)
                 SettingsPage.KALSHI -> KalshiPage(state, reportActions, onUpdate)
@@ -1733,6 +1740,18 @@ private fun ColumnScope.UnabatedPage(state: UiState, keys: KeyActions, reportAct
     }
     SwitchRow(com.tjshea.vigilant.app.UnabatedText.SWITCH_TITLE, com.tjshea.vigilant.app.UnabatedText.switchSub(state.unKeys.isNotEmpty()), s.unabated, tag = "unabatedSwitch") { v -> onUpdate { it.copy(unabated = v) } }
     if (s.unabated) Hint(com.tjshea.vigilant.app.UnabatedText.NOTES)
+}
+
+/**
+ * Settings › SX Bet (Tj, 2026-10-18; SXBET_API.md): the read-only API key (scope "Market data: read" only, made at sx.bet > Account > API) and the one switch. On, SX Bet's exchange odds join the sharp books;
+ * the markets are public, the prices and the real-time socket need the key. Off: nothing is sent to SX Bet.
+ */
+@Composable
+private fun ColumnScope.SxBetPage(state: UiState, keys: KeyActions, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
+    val s = state.settings
+    Intro("SX Bet is a peer-to-peer sports exchange. Vigilant reads its order books as a sharp price. Create a key at sx.bet > Account > API with ONLY the \"Market data: read\" scope (never trading or withdraw), paste it here, then Test it in Settings > APIs.")
+    KeyListEditor(ApiProvider.SXBET, state.sxKeys, keys, "Add an SX Bet key")
+    SwitchRow("Use SX Bet", if (state.sxKeys.isEmpty()) "Needs a saved read-only key to price anything" else "On: its odds join the sharp books", s.gates.useSxBet, tag = "sxbetSwitch") { v -> onUpdate { it.copy(gates = it.gates.copy(useSxBet = v)) } }
 }
 
 /**

@@ -78,7 +78,7 @@ git -C "$T/repo" fetch -q origin main 2>/dev/null; git -C "$T/repo" reset -q --s
 git -C "$T/repo" -c user.name=t -c user.email=t@t commit -q --allow-empty -m two
 PUSH_B() { (cd "$T/repo" && COORD_HOME="$T/b" COORD_LABEL=acctB COORD_CACHE_S=0 COORD_RENEW_S=0 bash tools/push.sh >/dev/null 2>&1); }
 A acquire --kind interactive --force >/dev/null 2>&1
-PUSH_B; expect "push.sh holds a push back (exit 4) while A holds the lease" 4 $?
+PUSH_B; expect "push.sh still pushes the branch (exit 0) while A holds the lease: work without the lease (Tj, 2026-10-18)" 0 $?
 A release >/dev/null 2>&1
 PUSH_B; expect "push.sh pushes once the lease is free" 0 $?
 git -C "$T/origin.git" log --oneline refs/heads/main 2>/dev/null | head -1 | grep -q "two" && ok "the held-back commit reached the remote afterwards" || bad "commit two is not on the remote"

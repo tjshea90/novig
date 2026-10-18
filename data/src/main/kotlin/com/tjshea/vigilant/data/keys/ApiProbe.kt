@@ -39,6 +39,7 @@ class ApiProbe(
         val op5: String = "https://v5.oddspapi.io/en",
         val op4: String = "https://api.oddspapi.io",
         val unabated: String = "https://data.unabated.com",
+        val sxbet: String = "https://api.sx.bet",
         val bolt: String = "https://spro.agency/api",
         val pinnodds: String = "https://pinnodds.com",
         val pinnwire: String = "https://pinnwire.com/kit/v1",
@@ -94,6 +95,7 @@ class ApiProbe(
         ApiProvider.ODDSPAPI_FREE -> QuotaPolicy.ODDSPAPI_FREE
         ApiProvider.UNABATED -> QuotaPolicy.UNABATED
         ApiProvider.BOLTODDS -> QuotaPolicy.BOLTODDS
+        ApiProvider.SXBET -> QuotaPolicy.SXBET
         ApiProvider.PINNODDS -> null
     }
 
@@ -184,6 +186,16 @@ class ApiProbe(
                 }
                 r.code == 429 -> true to "Accepted, rate limited for the moment (HTTP 429)."
                 r.isSuccessful -> true to "Active and accepted · OddsPapi v5 does not publish a request allowance${r.headers["X-RateLimit-Remaining"]?.let { " (rate limit left now: $it)" } ?: ""}."
+                else -> false to "Answered HTTP ${r.code}."
+            }
+        }
+        ApiProvider.SXBET -> {
+            // The WebSocket token route accepts any valid key and is the cheapest read that proves the key (30 a minute); it carries no usage figure.
+            val r = get("${hosts.sxbet}/user/realtime-token-v3/api-key", listOf("x-sx-api-key" to key, "Accept" to "application/json"))
+            when {
+                r.code == 401 || r.code == 403 -> { meter.recordBalance(QuotaPolicy.SXBET, key, null, inactive = true); false to refused(r.code) }
+                r.code == 429 -> true to "Accepted, rate limited for the moment (HTTP 429)."
+                r.isSuccessful -> { meter.recordAccepted(QuotaPolicy.SXBET, key); true to "Active and accepted · SX Bet publishes no allowance for market data (best odds 5,500 a minute)." }
                 else -> false to "Answered HTTP ${r.code}."
             }
         }

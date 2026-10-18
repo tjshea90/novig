@@ -57,6 +57,7 @@ object SettingsIndex {
         Entry("Add a BoltOdds key", SettingsPage.BOLTODDS, "Add, order and test your BoltOdds key (the test listens on a socket for 15 seconds and saves a sample)", "boltodds bolt key api test sample websocket rotate", novig),
         Entry("Every sportsbook BoltOdds lists", SettingsPage.BOLTODDS, "Price the fair line with every book BoltOdds carries, not only the picked ones", "boltodds bolt all books every sportsbook fair", novig),
         // Unabated Free and OddsPapi Free v4 (Tj, 2026-10-11)
+        Entry("Use SX Bet", SettingsPage.SXBET, "Switch SX Bet on or off; save a read-only SX Bet API key", "sx bet sxbet exchange sharp key api", novig),
         Entry("Use Unabated (free)", SettingsPage.UNABATED, "Free lines and props from DraftKings, FanDuel, MGM, Caesars and more; fills in what the other feeds miss", "unabated free api feed key draftkings fanduel mgm caesars fallback", novig),
         Entry("Add an Unabated key", SettingsPage.UNABATED, "Add, order and test your Unabated key", "unabated key api test free", novig),
         Entry("Use OddsPapi Free (v4)", SettingsPage.ODDSPAPI_FREE, "Your free OddsPapi key: Pinnacle closing lines for CLV from free historical odds", "oddspapi free v4 key api clv closing pinnacle historical", novig),

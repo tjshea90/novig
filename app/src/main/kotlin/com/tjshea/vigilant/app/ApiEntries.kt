@@ -21,7 +21,8 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
     PINNAPI("pinnapi (Pinnacle)", ApiProvider.PINNAPI, QuotaPolicy.PINNAPI, "Pinnacle's board (PinnWire's backup)", false),
     PINNODDS("Pinnodds", ApiProvider.PINNODDS, null, "Pinnacle's live push feed and REST board", false),
     KALSHI("Kalshi", null, QuotaPolicy.KALSHI, "Exchange prices, free to read; a key adds a real-time socket and a bigger read budget", false),
-    POLYMARKET("Polymarket", null, QuotaPolicy.POLYMARKET, "Free exchange prices, no key", false);
+    POLYMARKET("Polymarket", null, QuotaPolicy.POLYMARKET, "Free exchange prices, no key", false),
+    SXBET("SX Bet", ApiProvider.SXBET, QuotaPolicy.SXBET, "Exchange odds read as a sharp source: markets are public, prices need a free read-only key", false);
 
     /** Whether the app is allowed to call it at all. */
     fun isOn(s: ScanSettings): Boolean = when (this) {
@@ -38,6 +39,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         PINNODDS -> s.gates.usePinnodds
         KALSHI -> s.useKalshi
         POLYMARKET -> s.usePolymarket
+        SXBET -> s.gates.useSxBet
     }
 
     fun setOn(s: ScanSettings, on: Boolean): ScanSettings = when (this) {
@@ -54,6 +56,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         PINNODDS -> s.copy(gates = s.gates.copy(usePinnodds = on), usePinnacle = s.usePinnacle || on)   // its REST board is one of the Pinnacle boards: on here means it is asked there too
         KALSHI -> s.copy(useKalshi = on)
         POLYMARKET -> s.copy(usePolymarket = on)
+        SXBET -> s.copy(gates = s.gates.copy(useSxBet = on))
     }
 
     val keyless: Boolean get() = provider == null
@@ -62,12 +65,13 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
      * Whether the API has a WebSocket the app can keep open (Tj, 2026-10-13: "a toggle for socket on or off" for every API that has one). Socket on = the connection is kept for real-time prices; socket
      * off with the API still on = the regular requests; the API off = never called ([isOn]). Novig's own market feed has its switch beside these rows ([novigSocket]).
      */
-    val hasSocket: Boolean get() = this == BOLTODDS || this == PINNODDS || this == KALSHI
+    val hasSocket: Boolean get() = this == BOLTODDS || this == PINNODDS || this == KALSHI || this == SXBET
 
     fun socketOn(s: ScanSettings): Boolean = when (this) {
         BOLTODDS -> s.gates.boltSocket
         PINNODDS -> s.gates.pinnSocket
         KALSHI -> s.gates.kalshiSocket
+        SXBET -> s.gates.sxSocket
         else -> false
     }
 
@@ -75,6 +79,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         BOLTODDS -> s.copy(gates = s.gates.copy(boltSocket = on))
         PINNODDS -> s.copy(gates = s.gates.copy(pinnSocket = on))
         KALSHI -> s.copy(gates = s.gates.copy(kalshiSocket = on))
+        SXBET -> s.copy(gates = s.gates.copy(sxSocket = on))
         else -> s
     }
 
@@ -83,6 +88,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         get() = when (this) {
             BOLTODDS -> "On: the lines and props sockets stay open and the fair line is read from what they push. Off: BoltOdds' REST snapshot, at most every 12 seconds, no socket."
             PINNODDS -> "On: the live push feed stays open for the live lane and live bids. Off: no socket, so the live lane waits (Pinnacle's REST boards in scans are unaffected)."
+            SXBET -> "On (needs your SX Bet key): the best-odds and live-score channels push every change, so books are read from the socket. Off: the REST read every scan."
             KALSHI -> "On (needs your Kalshi key): a socket pushes every price change, so scans read Kalshi without asking it. Off: the signed or public REST read every scan."
             else -> ""
         }
@@ -102,6 +108,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
             PINNODDS -> com.tjshea.vigilant.app.ui.SettingsPage.PINNODDS
             KALSHI -> com.tjshea.vigilant.app.ui.SettingsPage.KALSHI
             POLYMARKET -> null
+            SXBET -> com.tjshea.vigilant.app.ui.SettingsPage.SXBET
         }
 
     companion object {

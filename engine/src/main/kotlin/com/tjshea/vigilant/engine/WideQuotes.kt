@@ -14,7 +14,7 @@ object WideQuotes {
     const val MAX_HOLD_EXCHANGE = 0.10
 
     /** Bookmaker keys (The Odds API / ParlayAPI / PropLine names, lowercase) that are exchanges. */
-    val EXCHANGE_KEYS: Set<String> = setOf("prophetx", "prophetexchange", "kalshi", "polymarket", "novig", "sporttrade", "betfair_ex_eu", "matchbook", "smarkets")
+    val EXCHANGE_KEYS: Set<String> = setOf("prophetx", "prophetexchange", "kalshi", "polymarket", "sxbet", "novig", "sporttrade", "betfair_ex_eu", "matchbook", "smarkets")
 
     fun isExchangeKey(bookKey: String): Boolean = bookKey.lowercase() in EXCHANGE_KEYS
 

@@ -136,9 +136,10 @@ data class QuotaPolicy(
         )
         val NOVIG = QuotaPolicy("novig", "Novig", "requests", keyed = false, rule = "Read at 4 a second (2 at a time) to stay under Novig's per-network limit.")
         val POLYMARKET = QuotaPolicy("polymarket", "Polymarket", "requests", keyed = false, rule = "No key needed. Allows 300 requests per 10 seconds.")
+        val SXBET = QuotaPolicy("sxbet", "SX Bet", "requests", keyed = true, period = QuotaPeriod.DAY_UTC, rule = "Markets, sports and scores are public (500 a minute per IP, shared); odds need a free read-only API key (best odds 5,500 a minute, 100 markets a call). Realtime is a WebSocket that does not spend the request budget.")
         val KALSHI = QuotaPolicy("kalshi", "Kalshi", "requests", keyed = false, rule = "No key needed. Allows 20 requests a second.")
 
-        val ALL = listOf(SGO, BOLTODDS, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI)
+        val ALL = listOf(SGO, BOLTODDS, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, PARLAY, ODDS_API, NOVIG, POLYMARKET, KALSHI, SXBET)
     }
 }
 

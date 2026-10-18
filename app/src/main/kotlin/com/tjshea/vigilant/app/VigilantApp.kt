@@ -2015,6 +2015,9 @@ class AppContainer(val app: Application) {
     }
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
+    /** SX Bet (SXBET_API.md, Tj 2026-10-18): the exchange's markets are public, its books need the saved read-only key. */
+    val sxBetClient = com.tjshea.vigilant.data.reference.SxBetClient(http, json, { keyStore.current(ApiProvider.SXBET).firstOrNull().orEmpty() }, usage, socketOn = { sxSocketOn }, scope = appScope)
+    @Volatile var sxSocketOn = false
     /**
      * Tj's Kalshi API key (Ed25519 or RSA: Key ID + private key PEM), in the app's own file and never in the repo (KALSHI_API.md). With it Kalshi's reads are signed (recommended host, the account's read
      * budget) and its WebSocket can run.
@@ -2247,6 +2250,9 @@ class AppContainer(val app: Application) {
         parlayHalves.pinnacleFeedOn = pinnacleOn
         parlayHalvesBackground.pinnacleFeedOn = pinnacleOn
         if (settings.usePolymarket) add(polymarket)
+        sxSocketOn = settings.gates.useSxBet && settings.gates.sxSocket
+        if (!sxSocketOn) sxBetClient.stream?.close()
+        if (settings.gates.useSxBet && keyStore.current(ApiProvider.SXBET).isNotEmpty() && !sxBetClient.down()) add(sxBetClient)
         if (settings.useKalshi) add(kalshi)
         if (settings.usePropLine && keyStore.current(ApiProvider.PROPLINE).isNotEmpty()) {
             add(propLine)
