@@ -5774,6 +5774,6 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL111b (REST part: SxBetClient/SxBetConvert/SxBetTest, ApiProvider.SXBET, gates.useSxBet, ApiToggles, CloudSources+SXBET_API_KEY secret, Settings page, sharp default, SOURCE_ORDER; full floor green) Build client/feed in data/ (REST + socket, follow rate limits), as a sharp fair-odds source (ApiChain, CloudSources, ApiEntry + switch + socket switch, tests)
 - [ ] TCL111c Engine (CloudSources) + phone parity; live lane use if the data allows
 - [ ] TCL111d Tell Tj what he must do (keys? none if public)
-- [ ] TCL111e Centrifugo WebSocket (best_odds_v3:global + orderbook + fixtures:live_scores + main_line:global) in data/ (OkHttp, JSON protocol), app socket switch (ApiEntry.hasSocket), engine
+- [x] TCL111e (SxBetStream + SxBetStreamTest, gates.sxSocket, ApiEntry socket switch; full floor green) Centrifugo WebSocket (best_odds_v3:global + orderbook + fixtures:live_scores + main_line:global) in data/ (OkHttp, JSON protocol), app socket switch (ApiEntry.hasSocket), engine
 - [ ] TCL111f Live lane: SX live scores + books as live fair; Test key button saving a real sample (verify the showTakerPerspective frame; NOT YET RUN WITH A KEY)
 - [ ] TCL111g Tj: create read-only key, paste in Settings > SX Bet, Send my API keys to GitHub
