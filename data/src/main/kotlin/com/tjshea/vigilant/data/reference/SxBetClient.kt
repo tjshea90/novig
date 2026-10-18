@@ -109,7 +109,28 @@ class SxBetClient(
                 pages++
             } while (pageKey != null && pages < MAX_PAGES)
         }
-        return if (league.tennis) out.filter { (it.leagueLabel ?: "").startsWith(league.novigName, true) } else out
+        return if (league.tennis) out.filter { SxBetConvert.tourOf(it.leagueLabel) == league.novigName } else out
+    }
+
+    /**
+     * Every market of one SX game (the public `eventId` filter, 100 a page): what the live feed reads for a game that has just gone live (TCL118). Empty when SX has no such game.
+     */
+    suspend fun marketsOfEvent(eventId: String): List<SxBetConvert.Market> {
+        val out = ArrayList<SxBetConvert.Market>()
+        var pageKey: String? = null
+        var pages = 0
+        do {
+            val url = "$baseUrl/markets/active".toHttpUrl().newBuilder().apply {
+                addQueryParameter("eventId", eventId)
+                addQueryParameter("pageSize", "100")
+                pageKey?.let { addQueryParameter("paginationKey", it) }
+            }.build()
+            val (list, next) = SxBetConvert.parseMarkets(get(url.toString()), json)
+            out += list
+            pageKey = next
+            pages++
+        } while (pageKey != null && pages < MAX_PAGES)
+        return out
     }
 
     /** Top of book (converted to the taker's asks, [SxBetConvert.takerBook]) for [hashes], 100 per call, a few calls at once. */

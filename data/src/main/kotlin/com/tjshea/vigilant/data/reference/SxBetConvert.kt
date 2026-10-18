@@ -100,6 +100,26 @@ object SxBetConvert {
         return Book(hash, ask(makerTwo), ask(makerOne), atMs)
     }
 
+    /**
+     * The tour a tennis tournament label belongs to. SX names one league per tournament and writes the tour at the START for the women's ("WTA Ningbo", "WTA - Kinoshita Open") but at the END for the
+     * men's ("Brussels ATP", "Almaty Open ATP", "Guangzhou Challenger ATP"), so a prefix test lost every ATP tournament (found 2026-10-18 against the real league list, TCL117).
+     */
+    fun tourOf(label: String?): String? {
+        val words = (label ?: return null).split(' ', '-', '_').filter { it.isNotBlank() }
+        return when {
+            words.any { it.equals("ATP", true) } -> "ATP"
+            words.any { it.equals("WTA", true) } -> "WTA"
+            else -> null
+        }
+    }
+
+    /** The Vigilant league an SX market belongs to (the league's `sxLeagueIds`, tennis by sport 6 and the tournament's tour), or null for a sport Vigilant does not bet. */
+    fun leagueOf(m: Market): League? {
+        com.tjshea.vigilant.data.scanner.Leagues.ALL.firstOrNull { m.leagueId in it.sxLeagueIds }?.let { return it }
+        if (m.sportId == 6) return tourOf(m.leagueLabel)?.let { com.tjshea.vigilant.data.scanner.Leagues.byNovigName(it) }
+        return null
+    }
+
     /** Which market types make up a league's lines: the team sports play to a finish with overtime, the rest are one-on-one. */
     private fun solo(league: League) = league.tennis || league.novigName in setOf("UFC", "Boxing")
 
