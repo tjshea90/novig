@@ -151,7 +151,8 @@ private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets:
     val minT = firstMs.coerceAtMost(now - ProfitSeries.DAY_MS)
     val maxT = maxOf(now, points.lastOrNull()?.tMs ?: now)
     val zone = remember { ZoneId.systemDefault() }
-    val preset = remember(range, now / 60_000L, firstMs) { range.bounds(now, firstMs, zone).let { (a, b) -> ChartView.clamp(ChartView.Window(a, b), minT, maxT) } }
+    val slates = remember(points) { ProfitSeries.slates(points) }
+    val preset = remember(range, now / 60_000L, firstMs, slates) { range.bounds(now, firstMs, zone, slates).let { (a, b) -> ChartView.clamp(ChartView.Window(a, b), minT, maxT) } }
     var startMs by remember(range, firstMs) { mutableLongStateOf(preset.start) }
     var endMs by remember(range, firstMs) { mutableLongStateOf(preset.end) }
     // The preset's end follows the clock while Tj has not touched the window.
@@ -178,6 +179,15 @@ private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets:
         LabeledValue("Per $ staked", inView.roi?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(inView.roi ?: 0.0), modifier = Modifier.weight(1f))
         LabeledValue("Staked", Format.money(inView.staked), modifier = Modifier.weight(1f))
         LabeledValue("Settled", "${inView.bets}", modifier = Modifier.weight(0.6f))
+    }
+    // The money measured from ONE number that never changes: the first logged day's stake (Tj, 2026-10-18); each day against the balance the day before.
+    ProfitSeries.startingBalance(slates)?.let { start ->
+        val daySlate = if (range == ProfitSeries.Range.TODAY || range == ProfitSeries.Range.YESTERDAY) slates.indexOfFirst { it.startMs == preset.start } else -1
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            LabeledValue("Start number", Format.money(start), modifier = Modifier.weight(1f).testTag("profitStart"))
+            LabeledValue("Balance", Format.money(start + ProfitSeries.valueAt(points, endMs)), modifier = Modifier.weight(1f).testTag("profitBalance"))
+            if (daySlate >= 0) LabeledValue("Day vs day before", ProfitSeries.dayChange(slates, daySlate)?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(slates[daySlate].profit), modifier = Modifier.weight(1f).testTag("profitDayChange"))
+        }
     }
     val sel = selected
     Text(
