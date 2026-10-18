@@ -333,3 +333,4 @@ day that changes.
 | v0.116.0 | code 332 | 2026-10-18T04:08Z | v0.116.0: SX Bet: sharp exchange odds source (REST + WebSocket), Settings > SX Bet, engine secret SXBET_API_KEY
 | v0.117.0 | code 333 | 2026-10-18T07:23Z | v0.117.0: Claude sessions may change any setting/switch except STOP ALL and dead-man; the phone adopts settings a session writes to GitHub
 | v0.117.1 | code 334 | 2026-10-18T16:25Z | v0.117.1: refused Novig address replaced at once (no scan on any API until Novig accepts the runner); SX Bet live feed (exchange mid with live scores) as a live-lane source, paper until allowed; SX mapping and Sam Houston match fix
+| v0.117.2 | code 335 | 2026-10-18T17:21Z | v0.117.2: PinnWire keys are spent only on PinnWire's own word (a per-minute 429 no longer shows a key as used up for the day); SX Bet row on the Live tab's sockets; the engine's bid list stays small enough for the phone to load
