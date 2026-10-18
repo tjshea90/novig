@@ -94,10 +94,11 @@ fun LiveScreen(
             LiveSwitch("Novig market feed", "Novig's own live prices: what Live light, the scan and the bids read.", s.gates.novigSocket, "liveSocketNovig") { v -> onUpdate { it.copy(gates = it.gates.copy(novigSocket = v)) } }
             LiveSwitch("BoltOdds", "Soft-book odds pushed live: Live light's second opinion on a decided game.", s.gates.boltSocket, "liveSocketBolt") { v -> onUpdate { it.copy(gates = it.gates.copy(boltSocket = v)) } }
             LiveSwitch("Kalshi", "The exchange's real-time prices (needs your Kalshi API key).", s.gates.kalshiSocket, "liveSocketKalshi") { v -> onUpdate { it.copy(gates = it.gates.copy(kalshiSocket = v)) } }
+            LiveSwitch("SX Bet", "The sharp exchange's live prices and scores (needs your SX Bet read-only key; pick it as the live feed under Pinnodds live).", s.gates.sxSocket, "liveSocketSx") { v -> onUpdate { it.copy(gates = it.gates.copy(sxSocket = v)) } }
             LiveSwitch("Pinnodds", "Pinnacle's live push feed. Needs a Pinnodds subscription; leave it off if you have none.", s.gates.pinnSocket, "liveSocketPinn") { v -> onUpdate { it.copy(gates = it.gates.copy(pinnSocket = v)) } }
 
             SectionTitle("Live taker and live bids")
-            LiveNote("With the GitHub engine on and trading (paper or live), \"Run it on GitHub\" above also runs these there, priced from BoltOdds' soft-book average (no Pinnodds needed); real orders on that average stay off until you allow them on their pages in Settings.")
+            LiveNote("With the GitHub engine on and trading (paper or live), \"Run it on GitHub\" above also runs these there, priced from BoltOdds' soft-book average or SX Bet's exchange mid, whichever you pick as the live feed (no Pinnodds needed); real orders on that average stay off until you allow them on their pages in Settings.")
             Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onOpenPinnodds, modifier = Modifier.testTag("liveOpenPinnodds")) { Text("Pinnodds live") }
                 OutlinedButton(onClick = onOpenLiveBids, modifier = Modifier.testTag("liveOpenLiveBids")) { Text("Pinnodds live bids") }
