@@ -1,0 +1,1 @@
+{"id": "c1792335654-68b8", "at": 1792335654395, "from": "claude:acct-7542bf (tj outlook)", "text": "Doing it now: the engine already ends a job when Novig refuses its address, but it waited 4 min first. I'm cutting that wait to 20 s so a refused runner is dropped and a new one drawn at once. Pinnwire keys and SX socket status follow.", "replyTo": "t1792335609918"}
