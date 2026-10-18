@@ -60,3 +60,7 @@ Evidence in `research/review/pnl_2026-10-17.md`: 1,999 settled phone bets and bi
 
 ## 2026-10-18 acct-5d1e2d (mirage): Live tab dashboard (Tj chat t1792354383714, TCL121)
 - A "Live dashboard" card at the top of the Live tab: one line per socket (Novig, BoltOdds, Kalshi, SX Bet with its health, last push age and games in play, Pinnodds) and the engine's live lane note, refreshed every 1.5 s while the tab shows (`MainViewModel.liveDashboard`, `LightUi.dash`). Display only; no setting or order path changed. Revert: remove the card. SX scan-price freshness (TCL119) is NOT done.
+
+## 2026-10-18 acct-5d1e2d (mirage): the engine publishes its own socket state; the Live dashboard shows it (Tj chat t1792358681812)
+- Diagnosis of the screenshot: the phone's dashboard showed BoltOdds/Kalshi/SX/Pinnodds "not live" because, with the GitHub engine as the scan (cloud mode), the phone's own sockets are never opened (only the engine holds them); Pinnodds has no socket plan; Kalshi 0 of 0 = the phone subscribes to nothing. Not a fault, but the dashboard hid what the engine's sockets do.
+- `CloudStatus.sockets` (engine: BoltOdds lines/props live, Kalshi live and markets, SX health/last push/games in play), shown on the Live dashboard while `cloudDrives`. Display only. Revert: drop the field. Tests: `:data:test *Cloud*` green; app and cloud compile.
