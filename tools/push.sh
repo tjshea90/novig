@@ -42,7 +42,13 @@ fi
 # anything else (no network, no branch, an error in the tool) lets the push through: losing work is worse than a meeting of two sessions. COORD_OFF=1 switches it off.
 if [ -z "${COORD_OFF:-}" ] && [ -f tools/coord.py ]; then
   timeout 40 python3 -I tools/coord.py check >&2
-  [ $? -eq 3 ] && exit 4
+  # Tj, 2026-10-18: "any Claude session may alter anything even if it doesn't hold the lease, as long as it will not break anything". So a held-back push no longer stops: the session's OWN
+  # branch is always pushed (a plain push, nothing is overwritten), and main is fast-forwarded only when what it adds is safe without the lease (docs, tools, research, notes; see
+  # research/coordination/PROTOCOL.md "Work without the lease"). Code, workflows and release files wait for the lease unless NOLEASE_VERIFIED=1 (the full test gate passed).
+  if [ $? -eq 3 ]; then
+    NOLEASE=1
+    echo "COORD  another session holds the lease: pushing this branch only; main moves only for safe paths." >&2
+  fi
 fi
 
 # Explicit destination: works whether or not tracking is configured.
@@ -76,7 +82,15 @@ if timeout 45 git push -q origin "HEAD:refs/heads/$BR" >/dev/null 2>&1; then
   # and this fails silently — never overwrite unrelated work to keep a
   # convenience in sync.
   if [ "$BR" != "main" ]; then
-    timeout 10 git push -q origin "HEAD:refs/heads/main" >/dev/null 2>&1 || true
+    SKIP_MAIN=0
+    if [ -n "${NOLEASE:-}" ] && [ -z "${NOLEASE_VERIFIED:-}" ]; then
+      timeout 10 git fetch -q origin main >/dev/null 2>&1 || true
+      if git diff --name-only origin/main...HEAD 2>/dev/null | grep -Eq '^(\.github/|app/|data/|engine/|cloud/|lab/|mgm/|build\.gradle|settings\.gradle|gradle|ship\.sh|tools/(push|autosave|ckpt|resume|capture_inbox)\.sh)'; then
+        SKIP_MAIN=1
+        echo "COORD  main NOT moved: this change touches code/workflows/release files and needs the lease (or NOLEASE_VERIFIED=1 after the test gate). It is safe on the branch." >&2
+      fi
+    fi
+    [ "$SKIP_MAIN" -eq 0 ] && timeout 10 git push -q origin "HEAD:refs/heads/main" >/dev/null 2>&1 || true
   fi
   exit 0
 fi
