@@ -246,3 +246,8 @@ force take the lease for chat
 ```
 Build the Novig 5xx alert and chat routing
 ```
+
+## 2026-10-18T03:01:58Z
+```
+claude mcp add --transport http sx-bet https://docs.sx.bet/mcp
+```
