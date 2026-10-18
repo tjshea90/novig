@@ -139,6 +139,7 @@ object ApiScorecard {
                 id in resting -> "rested"
                 mine.any { it.error != null && it.fetched + it.reused == 0 } -> "failing"
                 mine.any { it.fetched + it.reused > 0 } -> "active"
+                (contribution[id]?.first ?: 0) > 0 -> "active" // a socket or memory feed (Kalshi, Polymarket) prices lines without a counted fetch
                 else -> "standby"
             }
             val pol = ApiToggles.policy(id)
