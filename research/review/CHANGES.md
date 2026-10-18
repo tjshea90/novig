@@ -57,3 +57,6 @@ Evidence in `research/review/pnl_2026-10-17.md`: 1,999 settled phone bets and bi
 - Tj added `PINNODDS_API_KEY` as a repo secret himself; `cloud-scan.yml` passes it, `CloudSources` asks Pinnodds' REST board first (`gates.usePinnodds`, key present), PinnWire next, pinnapi last. No socket. `gates.usePinnapi` set false (its keys are bad). The earlier pinnapi-first edit was reverted. Test: `CloudKeysTest` (`SET_BY_HAND`), `PinnoddsFirstTest`.
 - Revert: `python3 tools/engine_set.py gates.usePinnodds=false` (PinnWire is first again).
 - Freshness vs PinnWire: to be read from the engine log after the release (see TASKS).
+
+## 2026-10-18 acct-5d1e2d (mirage): Live tab dashboard (Tj chat t1792354383714, TCL121)
+- A "Live dashboard" card at the top of the Live tab: one line per socket (Novig, BoltOdds, Kalshi, SX Bet with its health, last push age and games in play, Pinnodds) and the engine's live lane note, refreshed every 1.5 s while the tab shows (`MainViewModel.liveDashboard`, `LightUi.dash`). Display only; no setting or order path changed. Revert: remove the card. SX scan-price freshness (TCL119) is NOT done.
