@@ -329,3 +329,4 @@ day that changes.
 | v0.114.32 | code 328 | 2026-10-17T21:07Z | v0.114.32: bid desk no longer stops a pass when Novig locks one game; Feed list no longer jumps with the progress bar
 | v0.114.33 | code 329 | 2026-10-17T22:18Z | v0.114.33: the +EV list no longer jumps: Scanning/No +EV states and the Scan button keep one size
 | v0.114.34 | code 330 | 2026-10-17T23:16Z | v0.114.34: live fee 0.06 in every league (fallback table), Feed summary row no longer shifts during a scan
+| v0.115.0 | code 331 | 2026-10-18T00:35Z | v0.115.0: live betting on GitHub: tail bets, Live light bids, live taker and live bids run on the engine (BoltOdds price, no Pinnodds); phone stands down
