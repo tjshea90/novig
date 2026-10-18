@@ -338,3 +338,4 @@ day that changes.
 | v0.117.4 | code 337 | 2026-10-18T20:42Z | v0.117.4: the engine asks Pinnodds' REST board first for Pinnacle, PinnWire second, pinnapi off
 | v0.117.5 | code 338 | 2026-10-18T21:19Z | v0.117.5: Live tab dashboard: every socket's state and last push, SX Bet health, the engine's live lane
 | v0.117.6 | code 339 | 2026-10-18T22:03Z | v0.117.6: the Live dashboard shows the GitHub engine's own sockets (BoltOdds, Kalshi, SX Bet) instead of the phone's idle ones
+| v1.0.0 | code 340 | 2026-10-18T23:03Z | v1.0.0: Live board with GitHub/Phone switch, slate P/L, Engine tab views, true refresh, fixed meters, settings cleanup, engine auto-bets totals and team totals, SX socket freshness
