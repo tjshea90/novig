@@ -80,5 +80,8 @@ class SlateProfitTest {
         assertEquals(listOf(10.0, 0.0, 10.0), curve.map { it.cum })
         assertEquals(et(2026, 10, 18, 1, 5), curve.last().tMs)
         assertTrue(SlateProfit.book(emptyList(), 0L).days.isEmpty())
+        // A bet with no known start counts from when it was placed, never as a 1970 first day that would fix the start number.
+        val unknown = bet("u", et(2026, 10, 18, 13), 99.0, BetStatus.WON).copy(startsTs = 0L)
+        assertEquals(30.0, SlateProfit.book(bets + unknown, et(2026, 10, 19, 9)).start, 1e-9)
     }
 }

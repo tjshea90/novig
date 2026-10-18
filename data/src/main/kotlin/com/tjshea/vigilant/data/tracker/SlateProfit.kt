@@ -58,12 +58,16 @@ object SlateProfit {
     /** One result on a slate's curve: [cum] is the slate's profit so far, as of this result. */
     data class Point(val tMs: Long, val cum: Double, val profit: Double, val stake: Double, val label: String)
 
-    fun slateOf(b: TrackedBet): LocalDate = Instant.ofEpochMilli(b.startsTs).atZone(ET).toLocalDate()
+    /** The game's start; a bet whose start was never known (0, an old import) counts from when it was placed, so it never makes a 1970 "first day" that would fix the start number. */
+    fun gameMs(b: TrackedBet): Long = if (b.startsTs > 0L) b.startsTs else b.createdAtMs
+
+    fun slateOf(b: TrackedBet): LocalDate = Instant.ofEpochMilli(gameMs(b)).atZone(ET).toLocalDate()
 
     /** When [b]'s result counts on the curve. */
     fun resultMs(b: TrackedBet): Long {
+        val start = gameMs(b)
         val s = b.settledAtMs
-        return if (s != null && s >= b.startsTs && s - b.startsTs <= MAX_GAME_MS) s else b.startsTs + TYPICAL_GAME_MS
+        return if (s != null && s >= start && s - start <= MAX_GAME_MS) s else start + TYPICAL_GAME_MS
     }
 
     private fun counts(b: TrackedBet) = b.status != BetStatus.VOID
@@ -79,7 +83,7 @@ object SlateProfit {
             val settled = list.filter { it.status != BetStatus.PENDING }
             val open = list.size - settled.size
             val profit = settled.sumOf { it.profit ?: 0.0 }
-            val first = list.minOf { it.startsTs }
+            val first = list.minOf(::gameMs)
             val end = if (open > 0) maxOf(now, first) else settled.maxOf(::resultMs)
             val d = Day(
                 date, first, end, profit, list.sumOf { it.stake }, settled.size, open,
