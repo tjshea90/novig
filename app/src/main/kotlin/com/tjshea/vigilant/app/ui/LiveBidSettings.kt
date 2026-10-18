@@ -405,7 +405,8 @@ fun TailLiveBlock(state: UiState, onUpdate: ((ScanSettings) -> ScanSettings) -> 
         }
         Switch(checked = s.tailLive.bet, onCheckedChange = null, enabled = s.tailLive.on || s.tailLive.bet)
     }
-    Text(TailText.statusLine(s, state.tailTrade, state.labStatus, state.lightStatus), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("tailLiveNote"))
+    val engineLive = if (s.cloudDrives && s.liveOnGitHub) state.cloudUi.status?.takeIf { it.liveNote.isNotBlank() } else null
+    Text(if (engineLive != null) "GitHub engine: " + engineLive.liveNote else TailText.statusLine(s, state.tailTrade, state.labStatus, state.lightStatus), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp).testTag("tailLiveNote"))
     LbDollars("Tail bet stake", listOf(1.0, 2.0, 3.0, 5.0), s.tailLive.stake, "tailLiveStake", 1.0, 25.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(stake = v)) } }
     LbDollars("Most on one game", listOf(2.0, 3.0, 5.0, 10.0, 25.0), s.tailLive.maxGame, "tailLiveMaxGame", 1.0, 1_000.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(maxGame = v)) } }
     LbDollars("Most in a day", listOf(5.0, 10.0, 20.0, 40.0, 100.0), s.tailLive.maxDay, "tailLiveMaxDay", 1.0, 10_000.0) { v -> onUpdate { it.copy(tailLive = it.tailLive.copy(maxDay = v)) } }
