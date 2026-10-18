@@ -264,4 +264,16 @@ class CloudBidRunnerTest {
         assertEquals(1, back.bids.size)
         assertEquals(f.bids, back.bids)
     }
+
+    @Test
+    fun `desk file drops cancelled bids after minutes so the phone can load it`() = runBlocking {
+        val r = rig()
+        put(r, "m1")
+        r.runner.pass(live, now)
+        val b = r.store.all().single()
+        val gone = b.copy(clientId = "old", status = com.tjshea.vigilant.data.novig.trading.maker.MakerStatus.CANCELED, endedAtMs = now - DeskFile.KEEP_ENDED_MS - 1)
+        val recent = b.copy(clientId = "recent", status = com.tjshea.vigilant.data.novig.trading.maker.MakerStatus.CANCELED, endedAtMs = now - 60_000L)
+        val kept = DeskFile.trim(listOf(b, gone, recent), now).map { it.clientId }
+        assertEquals(listOf(b.clientId, "recent"), kept)
+    }
 }
