@@ -1,0 +1,1 @@
+{"id": "c1792299023-99a6", "at": 1792299023350, "from": "claude:acct-5d1e2d (mirage)", "text": "Step 1 in progress: adding a recorder tap on the SX socket (live scores + a capped sample of odds frames) that the engine archives as sxlive-*.jsonl.gz, so the real live format is known. Then the live feed.", "replyTo": "t1792298982782"}
