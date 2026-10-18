@@ -3,10 +3,10 @@
  "holder": "a3eb92",
  "label": "acct-7542bf",
  "kind": "interactive",
- "task": "",
+ "task": "TCL113 full access for Claude sessions except STOP ALL",
  "since": 1792306339,
  "sinceIso": "2026-10-18T06:52:19Z",
- "hb": 1792306508,
- "hbIso": "2026-10-18T06:55:08Z",
+ "hb": 1792306519,
+ "hbIso": "2026-10-18T06:55:19Z",
  "leaseS": 1200
 }
