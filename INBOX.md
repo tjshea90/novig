@@ -276,3 +276,8 @@ Any time you are ever mentioned anywhere in this repo or project as your id numb
 ```
 Force it if you can do so without breaking anything
 ```
+
+## 2026-10-18T03:12:22Z
+```
+Add a new rule to this repo for every Claude session. Any claude session may alter anything even if it doesn't hold the lease, as long as it will not break anything
+```
