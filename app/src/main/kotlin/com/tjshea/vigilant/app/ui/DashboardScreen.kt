@@ -48,15 +48,21 @@ private const val DASHBOARD_URL = "https://github.com/tjshea90/novig/blob/cloud-
  * [DashboardContent] takes plain values and no app objects, so it renders from sample data.
  */
 @Composable
-fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier) {
+fun DashboardPage(state: UiState, onOpenCloudSettings: () -> Unit, modifier: Modifier = Modifier, section: EngineSection? = null) {
     val now = rememberNow(1_000)
     val meters = remember(state.usage, state.cloudUsage, state.settings.sgoPro, state.settings.oddsPapi, state.settings.unabated, state.settings.gates.useBoltOdds, state.settings.oddsPapiFree, now / 30_000L) {
         meterViews(state, now)
     }
     val u = state.cloudUi
     val board = remember(u.trades, u.desk, u.status, now / 15_000L) { EngineBoard.of(u.trades, u.desk, u.status, now) }
-    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours)
+    DashboardContent(u.status, state.cloudHistory, meters, now, state.settings.cloudScan, onOpenCloudSettings, modifier, board = board.takeIf { u.trades != null || u.desk != null }, linkOkAtMs = u.statusOkAtMs, liveDirectAtMs = u.liveDirectAtMs, hoursOn = state.settings.cloudHours, section = section, refreshedAtMs = u.refreshedAtMs, refreshNote = u.refreshNote)
 }
+
+/**
+ * The Engine tab's views (Tj, 2026-10-18, TCL122-7: "keep this section simple and easy to read. organize it. maybe tabs for different data views, like a tab for api usage"): what it is doing now, the
+ * money (counts and the latest bets, never the long list of resting bids), the APIs with their usage meters, and the graphs.
+ */
+enum class EngineSection(val label: String) { OVERVIEW("Overview"), MONEY("Money"), APIS("APIs"), TRENDS("Trends") }
 
 @Composable
 fun DashboardContent(
@@ -73,11 +79,41 @@ fun DashboardContent(
     linkOkAtMs: Long? = null,
     /** When the last status came straight from the engine (0 = through GitHub): the chip under the headline says which ([com.tjshea.vigilant.data.cloud.CloudLive.chip]). */
     liveDirectAtMs: Long = 0L,
+    /** Which view of the Engine tab to draw; null = every section, one under the other (the old single page). */
+    section: EngineSection? = null,
+    /** When the last pull to refresh read everything (0 = never) and what it said. */
+    refreshedAtMs: Long = 0L,
+    refreshNote: String = "",
 ) {
     val uri = LocalUriHandler.current
+    fun show(x: EngineSection) = section == null || section == x
     Column(modifier.testTag("dashboard"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HeadlineCard(status, now, cloudOn, hoursOn, linkOkAtMs)
-        if (status != null) Text(com.tjshea.vigilant.data.cloud.CloudLive.chip(liveDirectAtMs, now), style = MaterialTheme.typography.labelMedium, color = if (liveDirectAtMs > 0L && now - liveDirectAtMs <= com.tjshea.vigilant.data.cloud.CloudLive.LIVE_FRESH_MS) Edge.colors.positive else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp).testTag("liveChip"))
+        if (status != null) Text(com.tjshea.vigilant.data.cloud.CloudLive.chip(liveDirectAtMs, now) + (if (refreshedAtMs > 0L) " · pulled ${DashboardModel.ago(now - refreshedAtMs)}" + (refreshNote.takeIf { it.isNotBlank() && !it.startsWith("Everything") }?.let { ": $it" } ?: "") else ""), style = MaterialTheme.typography.labelMedium, color = if (liveDirectAtMs > 0L && now - liveDirectAtMs <= com.tjshea.vigilant.data.cloud.CloudLive.LIVE_FRESH_MS) Edge.colors.positive else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp).testTag("liveChip"))
+        if (show(EngineSection.OVERVIEW)) OverviewSection(status, now, hoursOn, linkOkAtMs)
+        if (show(EngineSection.MONEY)) {
+            if (board != null) EngineMoneyCard(board, status, now) else if (section != null) Text("The engine's bets and bids appear here once it has placed any.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (show(EngineSection.APIS)) ApisSection(status, meters, now)
+        if (show(EngineSection.TRENDS)) TrendsSection(history)
+        if (show(EngineSection.OVERVIEW)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = { runCatching { uri.openUri(DASHBOARD_URL) } }, modifier = Modifier.weight(1f).testTag("dashboardOpenGitHub")) { Text("Open on GitHub", maxLines = 1) }
+                OutlinedButton(onClick = onOpenCloudSettings, modifier = Modifier.weight(1f).testTag("dashboardOpenCloud")) { Text("Cloud settings", maxLines = 1) }
+            }
+        }
+        Text(
+            if (status == null) "Synced from the GitHub engine once the cloud scan is on and a token is saved."
+            else "Synced from the GitHub engine · its last word ${DashboardModel.ago(now - status.heartbeatMs)} · run ${status.runId.takeLast(6)} · pull down to read everything again",
+            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** Overview: the tiles, the Novig/runner/trading lines and what to refill or fix. */
+@Composable
+private fun OverviewSection(status: CloudStatus?, now: Long, hoursOn: Boolean, linkOkAtMs: Long?) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         val tiles = remember(status, now / 1_000L, linkOkAtMs) { DashboardModel.tiles(status, now, hoursOn, linkOkAtMs) }
         tiles.chunked(2).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -92,8 +128,6 @@ fun DashboardContent(
         status?.takeIf { it.tradeMode.isNotBlank() && it.tradeNote.isNotBlank() }?.let { InfoLine("Trading", it.tradeNote + stale, if (running && it.tradeStopped.isNotBlank()) Tone.WARN else Tone.NEUTRAL) }
         status?.takeIf { it.tradeStopped.isNotBlank() }?.let { InfoLine("Stopped", it.tradeStopped + stale, if (running) Tone.WARN else Tone.NEUTRAL) }
 
-        board?.let { EngineActivityCard(it, status) }
-
         status?.advice?.takeIf { it.isNotEmpty() }?.let { adv ->
             SectionHeader("What to refill, buy or fix" + adviceAge(status, now, running))
             adv.forEach { InfoLine(it.title, it.body, if (it.severity >= 2) Tone.BAD else Tone.WARN) }
@@ -102,7 +136,14 @@ fun DashboardContent(
             if (st.resting.isNotEmpty()) InfoLine("Resting to save usage", st.resting.joinToString(", "))
             if (st.governorOff.isNotEmpty()) InfoLine("Turned off by the engine", st.governorOff.joinToString(", "), Tone.WARN)
         }
+    }
+}
 
+/** APIs: the engine's API manager (which feed does what) and every API's health and usage meter. */
+@Composable
+private fun ApisSection(status: CloudStatus?, meters: List<ProviderView>, now: Long) {
+    val running = DashboardModel.running(status, now)
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         status?.apiCards?.takeIf { it.isNotEmpty() }?.let { cs ->
             SectionHeader("API manager" + adviceAge(status, now, running))
             cs.forEach { c ->
@@ -128,7 +169,14 @@ fun DashboardContent(
         if (health.isEmpty() && status != null) {
             Text("Which APIs worked on the last scan appears after the engine's next scan (it has to finish one on the new version).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        Text("Pull down for a fresh read of every API's own usage figure.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
 
+/** Trends: one small graph per number over the engine's last scans. */
+@Composable
+private fun TrendsSection(history: List<DashboardModel.Point>) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SectionHeader("Trends")
         if (history.size < 2) {
             Text("The graphs fill in as the engine finishes scans (one about every 5 minutes).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -138,16 +186,6 @@ fun DashboardContent(
             Trend("Fair odds age (median)", history.map { it.fairAgeS.toFloat() }, "s", Edge.colors.negative)
             Trend("Wallet", history.map { it.cash.toFloat() }, "$", Edge.colors.positive, money = true)
         }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(onClick = { runCatching { uri.openUri(DASHBOARD_URL) } }, modifier = Modifier.weight(1f).testTag("dashboardOpenGitHub")) { Text("Open on GitHub", maxLines = 1) }
-            OutlinedButton(onClick = onOpenCloudSettings, modifier = Modifier.weight(1f).testTag("dashboardOpenCloud")) { Text("Cloud settings", maxLines = 1) }
-        }
-        Text(
-            if (status == null) "Synced from the GitHub engine once the cloud scan is on and a token is saved."
-            else "Synced from the GitHub engine · its last word ${DashboardModel.ago(now - status.heartbeatMs)} · run ${status.runId.takeLast(6)}",
-            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
@@ -206,39 +244,65 @@ private fun InfoLine(label: String, text: String, tone: Tone = Tone.NEUTRAL) {
 }
 
 /**
- * Everything the engine is doing with money (Tj, 2026-10-16: "the point of the android app is to be a monitor and control center"): the bets it placed, the bids it has up and the bids that filled, newest
- * first, read from GitHub the moment the app opens. Nothing here places or changes an order.
+ * The engine's money at a glance (Tj, 2026-10-18, TCL122-7: "it has a long list of bids. don't show these"): the wallet, a few big numbers (open bets, bids resting, placed today, settled profit) and
+ * only the latest bets and bid fills; resting bids are a count and a dollar figure, never a list. Read from GitHub; nothing here places or changes an order.
  */
 @Composable
-private fun EngineActivityCard(b: EngineBoard.Board, status: CloudStatus?) {
+private fun EngineMoneyCard(b: EngineBoard.Board, status: CloudStatus?, now: Long) {
     SectionHeader("What the engine is doing with money")
-    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().testTag("engineActivity")) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(b.headline, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag("engineHeadline"))
-            val wallet = status?.takeIf { it.walletCash >= 0.0 }
-            if (wallet != null) Text("Wallet \$${"%.2f".format(java.util.Locale.US, wallet.walletCash)} cash · \$${"%.2f".format(java.util.Locale.US, wallet.walletEquity.coerceAtLeast(wallet.walletCash))} with open orders (read ${DashboardModel.ago(System.currentTimeMillis() - wallet.walletReadAtMs)})", style = MaterialTheme.typography.bodySmall)
-            val bid = when {
-                b.deskStopped.isNotBlank() -> "Bids stopped: ${b.deskStopped}"
-                b.deskLive -> "The engine is posting the bids (this phone's own bid desk is down). " + b.deskNote
-                b.deskNote.isNotBlank() -> "Engine bids last said: ${b.deskNote}"
-                else -> "The engine has not posted bids yet."
-            }
-            Text(bid, style = MaterialTheme.typography.bodySmall, color = if (b.deskStopped.isNotBlank()) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("engineBidLine"))
-            if (b.rows.isEmpty()) Text("No orders or bids yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            val fmt = remember { java.text.SimpleDateFormat("MMM d h:mm a", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("America/New_York") } }
-            b.rows.forEach { r ->
-                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(r.kind, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = if (r.kind == "BID") Edge.colors.warning else toneColor(Tone.GOOD))
-                        Text(r.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                        Text(fmt.format(java.util.Date(r.atMs)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("engineActivity")) {
+        val wallet = status?.takeIf { it.walletCash >= 0.0 }
+        if (wallet != null) Text("Wallet \$${"%.2f".format(java.util.Locale.US, wallet.walletCash)} cash · \$${"%.2f".format(java.util.Locale.US, wallet.walletEquity.coerceAtLeast(wallet.walletCash))} with open orders (read ${DashboardModel.ago(now - wallet.walletReadAtMs)})", style = MaterialTheme.typography.bodySmall)
+        val open = (b.bets?.open ?: 0) + (b.fills?.open ?: 0)
+        val atRisk = (b.bets?.atRisk ?: 0.0) + (b.fills?.atRisk ?: 0.0)
+        val today = (b.bets?.ordersToday ?: 0) + (b.fills?.ordersToday ?: 0)
+        val pnl = (b.bets?.pnl ?: 0.0) + (b.fills?.pnl ?: 0.0)
+        val pnlToday = (b.bets?.pnlToday ?: 0.0) + (b.fills?.pnlToday ?: 0.0)
+        val won = (b.bets?.won ?: 0) + (b.fills?.won ?: 0)
+        val lost = (b.bets?.lost ?: 0) + (b.fills?.lost ?: 0)
+        fun m(x: Double) = "\$" + "%.2f".format(java.util.Locale.US, kotlin.math.abs(x))
+        fun sm(x: Double) = (if (x < 0) "-" else "+") + m(x)
+        val tiles = listOf(
+            DashboardModel.Tile("Open bets", "$open", "${m(atRisk)} at risk"),
+            DashboardModel.Tile("Bids resting", "${b.resting.size}", "${m(b.restingDollars)} up"),
+            DashboardModel.Tile("Placed or filled today", "$today", "${b.bets?.ordersToday ?: 0} bets · ${b.fills?.ordersToday ?: 0} bid fills"),
+            DashboardModel.Tile("Settled", sm(pnl), "$won won · $lost lost · today ${sm(pnlToday)}", if (pnl > 0.005) Tone.GOOD else if (pnl < -0.005) Tone.BAD else Tone.NEUTRAL),
+        )
+        tiles.chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) { row.forEach { t -> TileCard(t, Modifier.weight(1f)) } }
+        }
+        val bid = when {
+            b.deskStopped.isNotBlank() -> "Bids stopped: ${b.deskStopped}"
+            b.deskLive -> "The engine is posting the bids. " + b.deskNote
+            b.deskNote.isNotBlank() -> "Engine bids last said: ${b.deskNote}"
+            else -> "The engine has not posted bids yet."
+        }
+        Text(bid, style = MaterialTheme.typography.bodySmall, color = if (b.deskStopped.isNotBlank()) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("engineBidLine"))
+        val latest = remember(b) { b.rows.filter { it.kind != "BID" }.take(LATEST_BETS) }
+        SectionHeader("Latest bets")
+        if (latest.isEmpty()) Text("No bets or bid fills yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val fmt = remember { java.text.SimpleDateFormat("MMM d h:mm a", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("America/New_York") } }
+        Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                latest.forEach { r ->
+                    Column(Modifier.fillMaxWidth().testTag("engineRow-${r.kind}"), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(if (r.kind == "FILL") "BID FILL" else r.kind, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = if (r.kind == "FILL") Edge.colors.warning else toneColor(Tone.GOOD))
+                            Text(r.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                            Text(fmt.format(java.util.Date(r.atMs)), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text(r.sub, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis, color = if (r.tone == Tone.NEUTRAL) MaterialTheme.colorScheme.onSurfaceVariant else toneColor(r.tone))
                     }
-                    Text(r.sub, style = MaterialTheme.typography.bodySmall, color = if (r.tone == Tone.NEUTRAL) MaterialTheme.colorScheme.onSurfaceVariant else toneColor(r.tone))
                 }
+                if (latest.isEmpty()) Text("—", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        Text("Every bet with its result is on the Tracker tab.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
+
+/** How many of the newest bets the Money view lists. */
+private const val LATEST_BETS = 8
 
 /** When the engine worked out its advice and API cards (after each finished scan), so a frozen one never reads as live (Tj, 2026-10-17: "these messages about the apis are stale"). */
 private fun adviceAge(status: CloudStatus?, now: Long, running: Boolean): String {
