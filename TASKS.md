@@ -5827,8 +5827,8 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL122-7 (done: EngineSection Overview/Money/APIs/Trends, no bid list; test DashboardUiTest) Engine home tab: remove the long list of bids; keep it simple and organized; tabs for data views (e.g. an API usage tab).
 - [x] TCL122-8 (done: MeterBar, KeyView.fractionUsed, ProviderView.spent; test UsageMeterTest) API usage meters correct and fresh; pull-to-refresh on any usage page gives a fresh read per API.
 - [x] TCL122-9 (done: groups Engine & money / Odds & scanning / Live / On screen / Data & help, GitHub engine first, CNO dup row and deposit field removed, live switches on the Live tab, phone scan hidden while GitHub scans; test SettingsPagesTest) audit the whole Settings menu: features that are used move out of Settings; only settings stay; organize, remove redundant/contradictory settings, simplify.
-- [ ] TCL122-10 audit app UI and code for design and efficiency.
+- [x] TCL122-10 (done in the full test sweep: Live board clock scoped to the board, slate chips renamed off the period chips, unknown-start guard; tests StickyHeadersTest, SlateProfitTest) audit app UI and code for design and efficiency.
 - [x] TCL122-11 (done: research/review/2026-10-18-tuning-v1.md; trader now uses slider kinds CloudEngine.forTrading; test LiveBoardTest) analyze saved bids/bets/scan logs (CLV, EV, results, odds) and tune the engine for max profit with a good balance of fills and volume (full discretion).
-- [ ] TCL122-12 find and implement other fixes/improvements for the engine and the app.
-- [ ] TCL122-13 run the full tests protocol (`.claude/skills/test-protocols`) when all is done.
-- [ ] TCL122-14 release the app as version 1.0 (versionName 1.0.0), one release for all of the above.
+- [x] TCL122-12 (done: engine trader kinds leak, SX freshness, BoltOdds connection budget, messages test fixed; research/review/*-2026-10-18*.md) find and implement other fixes/improvements for the engine and the app.
+- [x] TCL122-13 (done: floor 3914 passed via ship.sh; screenshots 9a/9b/4t/4u looked at; BoltOddsLiveTest flaked once under load, passes alone) run the full tests protocol (`.claude/skills/test-protocols`) when all is done.
+- [x] TCL122-14 (done: https://github.com/tjshea90/novig/releases/tag/v1.0.0, code 340) release the app as version 1.0 (versionName 1.0.0), one release for all of the above.
