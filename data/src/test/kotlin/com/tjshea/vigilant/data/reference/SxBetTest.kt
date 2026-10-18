@@ -2,11 +2,11 @@ package com.tjshea.vigilant.data.reference
 
 import com.tjshea.vigilant.data.scanner.Leagues
 import kotlinx.serialization.json.Json
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 
 class SxBetTest {
     private val json = Json { ignoreUnknownKeys = true }
