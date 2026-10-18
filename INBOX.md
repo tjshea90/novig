@@ -488,3 +488,8 @@ This says novig didn't answer but in parenthesis it is parlayapi not answering. 
 ```
 I added the sportmicro key, but it may not support the socket on the free version. Try it out
 ```
+
+## 2026-10-18T18:57:29Z
+```
+Make sure any api failure is not treated as a novig failure because this can restart the novig engine in error 
+```
