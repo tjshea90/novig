@@ -47,7 +47,7 @@ object BookCompany {
     }
 
     /** Companies whose members are exchanges, so a book of the same group is not folded into them. */
-    private val EXCHANGES = setOf("betfairexchange", "betfairexeu", "betfairex", "matchbook", "smarkets", "kalshi", "polymarket", "novig", "prophetx", "prophetexchange")
+    private val EXCHANGES = setOf("betfairexchange", "betfairexeu", "betfairex", "matchbook", "smarkets", "kalshi", "polymarket", "sxbet", "novig", "prophetx", "prophetexchange")
 
     private val TAIL = Regex("[_.\\-]([a-z]{2})$")
 

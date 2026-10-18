@@ -1444,7 +1444,7 @@ class Scanner(
          * "prioritize its use if it can do anything better"): its books are polled every few seconds and each quote carries its measured
          * age, where PropLine runs ~20 s behind; between ParlayAPI's paced refreshes its quotes age out (Freshness) and PropLine's price.
          */
-        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "propline", "propline_props", "sgo", "sgo-props", "oddspapi", "oddspapi-props", "oddspapi_free", "oddspapi_free-props", "bolt", "bolt-props", "parlay", "parlay_1h", "parlay_props", "oddsapi", "oddsapi_props", "unabated", "unabated-props")
+        val SOURCE_ORDER = listOf("pinnacle", "polymarket", "kalshi", "propline", "propline_props", "sgo", "sgo-props", "oddspapi", "oddspapi-props", "oddspapi_free", "oddspapi_free-props", "bolt", "bolt-props", "parlay", "parlay_1h", "parlay_props", "oddsapi", "oddsapi_props", "unabated", "unabated-props", "sxbet")
 
         /** Sportsbook feeds whose books follow the reference-book picker in Settings. */
         private val PICKED_BOOK_FEEDS = setOf("oddsapi", "oddsapi_props", "propline", "propline_props")
@@ -1473,7 +1473,7 @@ class Scanner(
          * The feeds the hot refresh asks again ([hotFair]): the ones that cost nothing per read (BoltOdds' boards, Kalshi's and Polymarket's public reads) or are flat-rate (SportsGameOdds Pro, OddsPapi v5). Never a
          * credit-metered or daily-capped feed (ParlayAPI, The Odds API, PropLine, Pinnacle's hosts, OddsPapi Free): their budgets are a day's share, and the full scan keeps asking them.
          */
-        val HOT_FEEDS = setOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "bolt", "bolt-props", "kalshi", "polymarket")
+        val HOT_FEEDS = setOf("sgo", "sgo-props", "oddspapi", "oddspapi-props", "bolt", "bolt-props", "kalshi", "polymarket", "sxbet")
 
         /** A hot line this close to zero (or above it) has its Novig book read again by the hot refresh. */
         const val HOT_EV_FLOOR = -0.03

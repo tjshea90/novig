@@ -102,6 +102,7 @@ class CloudSources(
     private val boltProps = BoltPropsSource(boltFeed)
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
+    private val sxbet = com.tjshea.vigilant.data.reference.SxBetClient(http, json, { keys(CloudKeys.SXBET).firstOrNull().orEmpty() }, usage)
     /**
      * Kalshi's signed key and socket (Tj, 2026-10-16, chat: "I want to send my kalshi key to GitHub so GitHub can use the socket for faster odds"; he accepted that an API key can trade, which is why this
      * is his word and not a default): the phone's sealed key goes up as [CloudKeys.KALSHI_KEY_ID] + [CloudKeys.KALSHI_KEY_PEM]. The engine only READS with it (signed market reads and the socket's price pushes);
@@ -228,6 +229,8 @@ class CloudSources(
         parlayOdds.alternates = !pinnacleOn
         parlayHalves.pinnacleFeedOn = pinnacleOn
         if (s.usePolymarket) add(polymarket)
+        // SX Bet: markets are public but prices need the read-only key; with the switch on and a key it prices beside the other exchanges.
+        if (s.gates.useSxBet && has(CloudKeys.SXBET) && !sxbet.down()) add(sxbet)
         if (s.useKalshi) add(kalshi)
         if (s.usePropLine && has(CloudKeys.PROPLINE)) {
             add(propLine)
@@ -251,6 +254,7 @@ object CloudKeys {
     const val ODDSPAPI = "ODDSPAPI_API_KEY"
     const val ODDSPAPI_FREE = "ODDSPAPI_FREE_API_KEY"
     const val UNABATED = "UNABATED_API_KEY"
+    const val SXBET = "SXBET_API_KEY"
     const val PINNWIRE = "PINNWIRE_API_KEY"
     const val PINNAPI = "PINNAPI_API_KEY"
     const val PROPLINE = "PROPLINE_API_KEY"
@@ -288,11 +292,11 @@ object CloudKeys {
     /** The secret holding each meter's keys (the dashboard needs the keys' order to say which one is active). A policy with no secret here has no key on GitHub. */
     fun envFor(policyId: String): String? = when (policyId) {
         "sgo" -> SGO; "oddspapi" -> ODDSPAPI; "oddspapi_free" -> ODDSPAPI_FREE; "unabated" -> UNABATED; "pinnwire" -> PINNWIRE; "pinnacle" -> PINNAPI
-        "propline" -> PROPLINE; "oddsapi" -> ODDS_API; "parlay" -> PARLAY; "boltodds" -> BOLT
+        "propline" -> PROPLINE; "oddsapi" -> ODDS_API; "parlay" -> PARLAY; "boltodds" -> BOLT; "sxbet" -> SXBET
         else -> null
     }
 
-    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, PINNWIRE, PINNAPI, PROPLINE, ODDS_API, PARLAY, BOLT)
+    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, SXBET, PINNWIRE, PINNAPI, PROPLINE, ODDS_API, PARLAY, BOLT)
 
     /**
      * Which of the phone's keys go to which repository secret (the app sends them: Settings › Cloud scan › Send my API keys to GitHub; Tj, 2026-10-14). **Pinnodds is never in it** (its socket allows one
@@ -310,6 +314,7 @@ object CloudKeys {
         com.tjshea.vigilant.data.keys.ApiProvider.THE_ODDS_API to ODDS_API,
         com.tjshea.vigilant.data.keys.ApiProvider.PARLAY to PARLAY,
         com.tjshea.vigilant.data.keys.ApiProvider.BOLTODDS to BOLT,
+        com.tjshea.vigilant.data.keys.ApiProvider.SXBET to SXBET,
     )
 
     /** Providers whose keys stay on the phone, on purpose: Pinnodds (one WebSocket per account: a second connection evicts the app's). */

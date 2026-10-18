@@ -13,6 +13,7 @@ object FairProvenance {
         "pinnacle" -> "Pinnacle feed"
         "polymarket" -> "Polymarket"
         "kalshi" -> "Kalshi"
+        "sxbet" -> "SX Bet"
         "sgo" -> "SGO"
         "oddspapi" -> "OddsPapi"
         "oddspapi_free" -> "OddsPapi Free"
