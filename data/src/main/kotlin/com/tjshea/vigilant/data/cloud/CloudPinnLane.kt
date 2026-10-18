@@ -91,7 +91,6 @@ class CloudPinnLane(
             s.killed -> "STOP ALL is on"
             s.paused -> "scanning is paused"
             !real -> null
-            s.gates.boltLiveReal.not() && takerOnly -> "the soft-book average is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             port == null -> "no trading key on GitHub"
             port.blocked != null -> "Novig refused the engine's key: ${port.blocked}"
             cash == null -> "wallet not read yet"
@@ -99,7 +98,6 @@ class CloudPinnLane(
             else -> null
         }
     }
-    private var takerOnly = true
 
     private suspend fun lossToday(source: String): Double {
         val from = ApiBetPlacer.localMidnight(clock())
@@ -170,7 +168,6 @@ class CloudPinnLane(
 
     override suspend fun pass(s: ScanSettings, now: Long): LiveLaneStatus? {
         settings = s
-        takerOnly = !bidsOn(s)
         if (!wanted(s)) {
             if (up) stop("the engine's live taker and live bids are switched off on the phone")
             return null

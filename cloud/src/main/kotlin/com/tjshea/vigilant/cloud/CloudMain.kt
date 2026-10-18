@@ -257,7 +257,16 @@ fun main(args: Array<String>) = runBlocking {
         )
     }
     // The engine's live lane (TCL109): Live light, the tail taker and its bids on the runner, under the phone's tailLive switches and the engine's trading key; its fills join the ledger.
-    val liveLane = com.tjshea.vigilant.data.cloud.CloudLiveLane(
+    val liveTracker = com.tjshea.vigilant.data.tracker.BetTracker(File(File(out, "live").also { it.mkdirs() }, "live-tracker.json"))
+    val liveOnEntry: suspend (com.tjshea.vigilant.data.cloud.TradeEntry) -> Unit = { e -> trader.record(e); stageLedger(System.currentTimeMillis()) }
+    val liveTell: suspend (String, String) -> Unit = { title, body -> postMessage(CloudMessages.Message("livestop-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title, body.take(400), 1, "CLOUD")) }
+    val pinnLane = com.tjshea.vigilant.data.cloud.CloudPinnLane(
+        scope = scope, source = novig, stream = { novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream },
+        feed = { settings, sink, rules -> sources.boltLiveFeed(settings, sink, scope, rules) },
+        orders = tradingClient?.let { com.tjshea.vigilant.data.cloud.TradingLiveOrders(it) }, port = tradePort, dir = File(out, "live-pinn"), tracker = liveTracker,
+        onEntry = liveOnEntry, tell = liveTell, log = log::invoke,
+    )
+    val tailLane = com.tjshea.vigilant.data.cloud.CloudLiveLane(
         scope = scope, source = novig, stream = { novig.stream as? com.tjshea.vigilant.data.novig.stream.NovigStream },
         fetch = { url ->
             val t0 = System.currentTimeMillis()
@@ -267,9 +276,8 @@ fun main(args: Array<String>) = runBlocking {
                 }
             }.getOrNull()
         },
-        tc = tradingClient, port = tradePort, dir = File(out, "live"), confirm = { s -> sources.liveConfirm(s) },
-        onEntry = { e -> trader.record(e); stageLedger(System.currentTimeMillis()) },
-        tell = { title, body -> postMessage(CloudMessages.Message("livestop-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title, body.take(400), 1, "CLOUD")) },
+        tc = tradingClient, port = tradePort, dir = File(out, "live"), tracker = liveTracker, confirm = { s -> sources.liveConfirm(s) },
+        onEntry = liveOnEntry, tell = liveTell,
         journalLine = { line -> runCatching { File(File(out, "cloud").also { it.mkdirs() }, "live-light-${java.time.LocalDate.now(java.time.ZoneId.of("America/New_York"))}-run$runId.jsonl").appendText(line + "\n") } },
         log = log::invoke,
     )
@@ -316,7 +324,7 @@ fun main(args: Array<String>) = runBlocking {
         liveUrl = { liveUrlRef.get() },
         novigAddress = { novigKeyed?.addressWords(System.currentTimeMillis(), addressWatch?.count ?: 0) ?: "not tested (no Novig key on GitHub: public routes only)" },
         addressWatch = addressWatch,
-        bids = bidFacade, live = liveLane,
+        bids = bidFacade, live = com.tjshea.vigilant.data.cloud.CompositeLive(listOf(tailLane, pinnLane)),
         bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
         publishBids = { publisher.stageBids(it) },
         onFeed = { rows, now -> runCatching { edge.observe(rows, now) } },

@@ -46,6 +46,17 @@ interface EngineLive {
     suspend fun stop(why: String)
 }
 
+/** Several lanes as one (the engine has one live slot): active if any is, the notes and stops joined. */
+class CompositeLive(private val lanes: List<EngineLive>) : EngineLive {
+    override suspend fun pass(s: ScanSettings, now: Long): LiveLaneStatus? {
+        val all = lanes.mapNotNull { runCatching { it.pass(s, now) }.onFailure { e -> if (e is CancellationException) throw e }.getOrNull() }
+        if (all.isEmpty()) return null
+        return LiveLaneStatus(all.any { it.active }, all.joinToString(" | ") { it.note }, all.map { it.stopped }.filter { it.isNotBlank() }.joinToString("; "), now)
+    }
+
+    override suspend fun stop(why: String) { for (l in lanes) runCatching { l.stop(why) }.onFailure { if (it is CancellationException) throw it } }
+}
+
 /** The trading client as the live taker's and the live bid desk's order door (the phone's `pinnOrders` / `liveBidOrders`, for the runner). */
 class TradingLiveOrders(private val tc: NovigTradingClient) : LiveOrders, LiveBidOrders {
     override suspend fun place(outcomeId: String, price: Double, qty: Long, clientId: String) = tc.placeOrder(outcomeId, price, qty, "IOC", clientId)
