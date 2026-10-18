@@ -2272,16 +2272,52 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** What the Bids tab shows of Live light: the lane's status and its desk's bids, looked at every 1.5 s but only while that tab is collecting (nothing runs behind a closed tab). */
-    data class LightUi(val status: com.tjshea.vigilant.data.novig.lab.LiveLightStatus = com.tjshea.vigilant.data.novig.lab.LiveLightStatus(), val bids: List<com.tjshea.vigilant.data.livebid.LiveBid> = emptyList(), val dash: List<String> = emptyList())
+    data class LightUi(
+        val status: com.tjshea.vigilant.data.novig.lab.LiveLightStatus = com.tjshea.vigilant.data.novig.lab.LiveLightStatus(),
+        val bids: List<com.tjshea.vigilant.data.livebid.LiveBid> = emptyList(),
+        val dash: List<String> = emptyList(),
+        /** The Live dashboard (TCL122-4): this phone's sockets and its lane in numbers, and the last few minutes of both lanes (this phone's and the GitHub engine's) for the graphs. */
+        val phoneSockets: List<com.tjshea.vigilant.data.cloud.SocketState> = emptyList(),
+        val phoneStats: com.tjshea.vigilant.data.cloud.LiveStats = com.tjshea.vigilant.data.cloud.LiveStats(),
+        val phoneTrend: List<com.tjshea.vigilant.data.cloud.LiveTrend.Sample> = emptyList(),
+        val githubTrend: List<com.tjshea.vigilant.data.cloud.LiveTrend.Sample> = emptyList(),
+    )
+
+    /** The graphs' history lives with the view model, so leaving the Live tab and coming back does not empty them. */
+    @Volatile private var phoneTrend = emptyList<com.tjshea.vigilant.data.cloud.LiveTrend.Sample>()
+    @Volatile private var githubTrend = emptyList<com.tjshea.vigilant.data.cloud.LiveTrend.Sample>()
 
     val lightUi: StateFlow<LightUi> by lazy {
         kotlinx.coroutines.flow.flow {
             while (true) {
-                emit(LightUi(c.liveLight.status.value, c.lightBidDesk.bidsNow(), liveDashboard(System.currentTimeMillis())))
-                kotlinx.coroutines.delay(1_500L)
+                val now = System.currentTimeMillis()
+                val bids = c.lightBidDesk.bidsNow()
+                val st = c.liveLight.status.value
+                val phoneStats = com.tjshea.vigilant.data.cloud.LiveStats.of(st, real = _state.value.settings.tailLive.bet, bidsUp = bids.count { it.active })
+                if (st.running) phoneTrend = com.tjshea.vigilant.data.cloud.LiveTrend.add(phoneTrend, com.tjshea.vigilant.data.cloud.LiveTrend.of(phoneStats, now))
+                _state.value.cloudUi.status?.let { eng -> eng.liveStats?.let { ls -> githubTrend = com.tjshea.vigilant.data.cloud.LiveTrend.add(githubTrend, com.tjshea.vigilant.data.cloud.LiveTrend.of(ls, eng.heartbeatMs)) } }
+                emit(LightUi(st, bids, liveDashboard(now), phoneSocketStates(), phoneStats, phoneTrend, githubTrend))
+                kotlinx.coroutines.delay(1_000L)
             }
         }.distinctUntilChanged().stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(3_000L), LightUi())
     }
+
+    /** This phone's sockets as the Live dashboard draws them (TCL122-4): wanted (its switch on and the phone may hold it, [ScanSettings.phoneSockets]), connected, last word. */
+    private fun phoneSocketStates(): List<com.tjshea.vigilant.data.cloud.SocketState> = runCatching {
+        val st = _state.value.settings
+        val g = st.gates
+        val held = st.phoneSockets
+        val why = if (held) "" else "held by GitHub while live runs there"
+        val sx = c.sxBetClient.stream
+        listOf(
+            com.tjshea.vigilant.data.cloud.SocketState("Novig", g.novigSocket, c.novig.stream != null, 0L, if (c.novig.stream != null) "this phone's read key" else "off, or no read key"),
+            com.tjshea.vigilant.data.cloud.SocketState("BoltOdds lines", g.boltSocket && held && c.boltActive(st), c.boltFeed.lines.live, c.boltFeed.lines.lastFrameMs, why),
+            com.tjshea.vigilant.data.cloud.SocketState("BoltOdds props", g.boltSocket && held && c.boltActive(st), c.boltFeed.props.live, c.boltFeed.props.lastFrameMs, why),
+            com.tjshea.vigilant.data.cloud.SocketState("Kalshi", g.kalshiSocket && held && st.useKalshi, c.kalshiStream.live, c.kalshiStream.lastFrameMs, why.ifBlank { "${c.kalshiStream.subscribedCount} of ${c.kalshiStream.wantedCount} markets" }),
+            com.tjshea.vigilant.data.cloud.SocketState("SX Bet", g.sxSocket && held && g.useSxBet, sx?.live == true, sx?.lastMessageMs ?: 0L, why.ifBlank { if (sx == null) "no read key" else "${sx.fixtureStatus.values.count { it == 2 }} games in play" }),
+            com.tjshea.vigilant.data.cloud.SocketState("Pinnodds", g.pinnSocket, c.pinnRunner.running, 0L, if (g.pinnSocket) "" else "no subscription"),
+        )
+    }.getOrDefault(emptyList())
 
     /**
      * The Live tab's dashboard (Tj, 2026-10-18, TCL121: "I need to always know what is going on in real time with the live betting and sockets"): one line per socket with whether it is live and how long ago it last
