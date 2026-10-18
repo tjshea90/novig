@@ -1,13 +1,13 @@
-# CHECKPOINT 3645 — read me first, then TASKS.md
+# CHECKPOINT 3646 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T16:11:52Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-5a7eb2e9-bn8drh` · **builds on:** `f0d84d792` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T16:14:53Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-5a7eb2e9-bn8drh` · **builds on:** `be6af74f1` (this checkpoint is the commit after it)
 
 ## Just done
-merged origin/main into branch (docs/tools only on main); v0.117.1 release run had built main without my work and failed
+pre-ship: v0.117.2: SX Bet live feed (exchange mid with live scores) as a live-lane price source on the phone and the engine, paper until allowed; refused Novig address replaced at once
 
 ## Do this next
-ship v0.117.2 from this branch with TCL118 wiring: finish PinnFeedChoice.SX + sxLiveReal gate + engine wiring, then ship.sh and release.yml
+ship.sh gates and releases this
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ ship v0.117.2 from this branch with TCL118 wiring: finish PinnFeedChoice.SX + sx
 
 ## Last ten checkpoints
 ```
+  803af4e34 ckpt 3645: merged origin/main into branch (docs/tools only on main); v0.117.1 release 
   113525a94 ckpt 3644: pre-release: v0.117.1: refused Novig address replaced at once (no scan on a
   59fa89b6e ckpt 3643: TCL117: SX full mapping doc, real-pair test, TeamMatcher Sam Houston fix
   229e6f635 ckpt 3642: pre-release: v0.117.1: refused Novig address replaced at once and unlimited
@@ -25,8 +26,7 @@ ship v0.117.2 from this branch with TCL118 wiring: finish PinnFeedChoice.SX + sx
   3a59130e8 ckpt 3642: reverted AddressWatch MIN_AGE to 4 min (loosening was blocked; awaiting Tj'
   394100891 ckpt 3641: WATCH 2026-10-18: engine healthy, no action
   508a81e88 ckpt 3638: TCL113 proven: engine_set -> phone adopts; bidDeployKelly 20 live, CHANGES.
-  17057ed16 ckpt 3640: TASKS.md triage: grouped 245 open items in research/TASKS_TRIAGE_2026-10-18
 ```
 
-(23 automatic checkpoint(s) since the last deliberate one — the
+(4 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
