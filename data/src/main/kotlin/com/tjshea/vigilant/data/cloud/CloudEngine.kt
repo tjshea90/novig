@@ -77,6 +77,8 @@ class CloudEngine(
     private val liveUrl: () -> String = { "" },
     /** One line per socket the engine holds, for the status file. */
     private val socketLines: () -> List<String> = { emptyList() },
+    /** Each socket's state for the phone's Live dashboard (TCL122-4). */
+    private val socketStates: () -> List<SocketState> = { emptyList() },
     /** Opens or closes the runner's sockets to match the settings (the closing part of [sources]), called every live pass. */
     private val applySockets: (ScanSettings) -> Unit = {},
     /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
@@ -552,6 +554,7 @@ class CloudEngine(
             deskAtMs = deskStatus?.atMs ?: 0L, deskStopped = deskStatus?.stopped.orEmpty().take(200),
             liveActive = !idle && liveStatus?.active == true, liveNote = liveStatus?.note.orEmpty().take(400), liveStopped = liveStatus?.stopped.orEmpty().take(200), liveAtMs = liveStatus?.atMs ?: 0L,
             sockets = runCatching { socketLines() }.getOrDefault(emptyList()),
+            liveStats = if (!idle) liveStatus?.stats else null, socketStates = runCatching { socketStates() }.getOrDefault(emptyList()),
             resting = governor.resting(clock()).map { r -> "${ApiToggles.name(r.id)} until ${java.time.Instant.ofEpochMilli(r.untilMs).atZone(java.time.ZoneOffset.UTC).toLocalTime().withSecond(0).withNano(0)} UTC: ${r.reason}" },
         )
     }

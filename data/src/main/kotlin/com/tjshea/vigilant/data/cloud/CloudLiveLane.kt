@@ -38,7 +38,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /** What the engine's live lane says about itself in the heartbeat. */
-data class LiveLaneStatus(val active: Boolean, val note: String, val stopped: String = "", val atMs: Long = 0L)
+data class LiveLaneStatus(val active: Boolean, val note: String, val stopped: String = "", val atMs: Long = 0L, val stats: LiveStats? = null)
 
 /** The engine's view of its live lane: a pass under the phone's latest settings, an orderly stop. */
 interface EngineLive {
@@ -51,7 +51,7 @@ class CompositeLive(private val lanes: List<EngineLive>) : EngineLive {
     override suspend fun pass(s: ScanSettings, now: Long): LiveLaneStatus? {
         val all = lanes.mapNotNull { runCatching { it.pass(s, now) }.onFailure { e -> if (e is CancellationException) throw e }.getOrNull() }
         if (all.isEmpty()) return null
-        return LiveLaneStatus(all.any { it.active }, all.joinToString(" | ") { it.note }, all.map { it.stopped }.filter { it.isNotBlank() }.joinToString("; "), now)
+        return LiveLaneStatus(all.any { it.active }, all.joinToString(" | ") { it.note }, all.map { it.stopped }.filter { it.isNotBlank() }.joinToString("; "), now, all.firstNotNullOfOrNull { it.stats })
     }
 
     override suspend fun stop(why: String) { for (l in lanes) runCatching { l.stop(why) }.onFailure { if (it is CancellationException) throw it } }
@@ -248,9 +248,10 @@ class CloudLiveLane(
         if (bidsOn(s)) runCatching { bidDesk.start() } else if (bidDesk.bidsNow().any { it.active }) bidDesk.stopAll("Live light bids switched off")
         val st = light.status.value
         val real = realOrders(s)
+        val bidsUp = if (bidsOn(s)) bidDesk.bidsNow().count { it.active } else 0
         line = "${if (real) "REAL" else "paper"} · ${st.games} live games, ${st.withScore} with a score, ${st.pushes} pushes" +
-            (if (bidsOn(s)) " · bids ${bidDesk.bidsNow().count { it.active }} up" else "") + (st.problem?.let { " · ${it.take(80)}" } ?: "")
-        return LiveLaneStatus(true, line, haltedWhy.orEmpty(), now)
+            (if (bidsOn(s)) " · bids $bidsUp up" else "") + (st.problem?.let { " · ${it.take(80)}" } ?: "")
+        return LiveLaneStatus(true, line, haltedWhy.orEmpty(), now, LiveStats.of(st, real, bidsUp))
     }
 
     override suspend fun stop(why: String) {

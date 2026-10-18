@@ -175,6 +175,9 @@ data class CloudStatus(
     val liveAtMs: Long = 0L,
     /** The engine's own sockets in words (Tj, 2026-10-18, TCL121/chat: "diagnose the sockets that are not live"): the phone's dashboard shows these, not its own idle ones, while the engine is the scan. */
     val sockets: List<String> = emptyList(),
+    /** The live lane in numbers and each socket's state, for the phone's Live dashboard (Tj, 2026-10-18, TCL122-4: "stats and status on all the sockets ... real time graphs"). */
+    val liveStats: LiveStats? = null,
+    val socketStates: List<SocketState> = emptyList(),
 ) {
     /** The engine's live lane is running now and its heartbeat is recent: the phone's own live tail lane stands down. */
     fun liveLive(now: Long): Boolean = liveActive && heartbeatMs > 0 && now - heartbeatMs < DESK_STALE_MS
@@ -187,6 +190,40 @@ data class CloudStatus(
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
         fun parse(text: String): CloudStatus? = runCatching { json.decodeFromString(serializer(), text) }.getOrNull()
         fun text(s: CloudStatus): String = json.encodeToString(serializer(), s)
+    }
+}
+
+/** One socket as the Live dashboard draws it (TCL122-4): whether the settings want it, whether it is connected, when it last spoke, and a few words. */
+@Serializable
+data class SocketState(val name: String, val wanted: Boolean = false, val live: Boolean = false, val lastMs: Long = 0L, val detail: String = "")
+
+/**
+ * The live lane in numbers (TCL122-4), on the engine ([CloudStatus.liveStats]) and on the phone alike, so the Live dashboard draws both the same way: games watched, Novig pushes and the lane's judgments
+ * (counters since the lane started: the phone works out the rate from two readings), offers and bids, how long a judgment took after its push, and one line per game.
+ */
+@Serializable
+data class LiveStats(
+    val real: Boolean = false,
+    val games: Int = 0,
+    val withScore: Int = 0,
+    val markets: Int = 0,
+    val pushes: Long = 0,
+    val judgments: Long = 0,
+    val offers: Long = 0,
+    val bidWants: Long = 0,
+    val bidsUp: Int = 0,
+    val lastPushMs: Long = 0,
+    val lastJudgeMs: Long = 0,
+    val judgeTookMs: Long = 0,
+    val problem: String = "",
+    val gameLines: List<String> = emptyList(),
+) {
+    companion object {
+        /** Live light's own status as numbers ([com.tjshea.vigilant.data.novig.lab.LiveLightRunner]). */
+        fun of(st: com.tjshea.vigilant.data.novig.lab.LiveLightStatus, real: Boolean, bidsUp: Int): LiveStats = LiveStats(
+            real = real, games = st.games, withScore = st.withScore, markets = st.markets, pushes = st.pushes, judgments = st.scans, offers = st.offers, bidWants = st.bidWants, bidsUp = bidsUp,
+            lastPushMs = st.lastPushMs, lastJudgeMs = st.lastScanMs, judgeTookMs = st.lastScanTookMs, problem = st.problem.orEmpty().take(160), gameLines = st.gameLines.values.take(12).map { it.take(200) },
+        )
     }
 }
 

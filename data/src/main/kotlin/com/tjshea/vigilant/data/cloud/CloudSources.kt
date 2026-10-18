@@ -129,6 +129,18 @@ class CloudSources(
         }
     }
 
+    /** The runner's sockets as the Live dashboard draws them (TCL122-4): [s] is the settings the engine runs under ([CloudEngine.forCloud]). */
+    fun socketStates(s: ScanSettings): List<SocketState> {
+        val sx = sxbet.stream
+        val bolt = boltActive(s) && s.gates.boltSocket
+        return listOf(
+            SocketState("BoltOdds lines", bolt, boltFeed.lines.live, boltFeed.lines.lastFrameMs, if (!s.gates.useBoltOdds) "API off" else if (!has(CloudKeys.BOLT)) "no key on GitHub" else if (!bolt) "socket off: read by request" else ""),
+            SocketState("BoltOdds props", bolt, boltFeed.props.live, boltFeed.props.lastFrameMs, ""),
+            SocketState("Kalshi", kalshiSocketWanted, kalshiStream.live, kalshiStream.lastFrameMs, if (kalshiSigner == null) "no key on GitHub (public reads)" else "${kalshiStream.subscribedCount} of ${kalshiStream.wantedCount} markets"),
+            SocketState("SX Bet", sxSocketWanted, sx?.live == true, sx?.lastMessageMs ?: 0L, if (!s.gates.useSxBet) "API off" else if (sx == null) "no read key on GitHub" else "${sx.fixtureStatus.values.count { it == 2 }} games in play"),
+        )
+    }
+
     /** One line for the engine's start-up log and status: whether Kalshi's key reached the engine and whether its socket is wanted. */
     fun kalshiNote(): String = if (kalshiSigner == null) "Kalshi: public reads (no key on GitHub)" else "Kalshi: signed key present, socket ${if (kalshiSocketWanted) "on" else "off"}"
     private val oddsApi = TheOddsApiClient(http, KeyPool(QuotaPolicy.ODDS_API, { keys(CloudKeys.ODDS_API) }, usage), json)
