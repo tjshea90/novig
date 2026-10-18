@@ -33,7 +33,7 @@ fun MessagesPage(inbox: InboxState, onMarkRead: () -> Unit, onOpen: (String) -> 
     val now = rememberNow(30_000)
     Column(modifier.testTag("messages"), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (inbox.shown.isEmpty()) {
-            Text("Nothing yet. Recommendations (which API to refill or buy), bets the engine placed and settings Claude changed show up here.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Nothing yet. Only what matters shows up here: alerts (the engine stopped, an API failing), recommendations (which API to refill or buy) and notices from Claude. Bets and bids are on the Engine tab and the Tracker.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 if (inbox.unread > 0) OutlinedButton(onClick = onMarkRead, modifier = Modifier.weight(1f).testTag("messagesMarkRead")) { Text("Mark ${inbox.unread} read") }

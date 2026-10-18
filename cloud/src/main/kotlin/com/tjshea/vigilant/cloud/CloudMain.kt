@@ -276,7 +276,8 @@ fun main(args: Array<String>) = runBlocking {
                 }
                 if (lines.isNotEmpty()) {
                     stageLedger(now)
-                    runCatching { postMessage(CloudMessages.Message("bidfill-${bets.first().id.take(12)}-$now", now, "engine", "bet", "Bid filled: ${lines.size} bid${if (lines.size == 1) "" else "s"}", lines.joinToString("\n"), 1, "CLOUD")) }
+                    // No message (Tj, 2026-10-18, TCL122-1: "do not include bets and bids"): the fills are in trades.json, the Engine tab and the Tracker.
+                    log("bid fills: " + lines.joinToString("; "))
                 }
             },
             tell = { title, body -> runCatching { postMessage(CloudMessages.Message("bidstop-${System.currentTimeMillis()}", System.currentTimeMillis(), "engine", "alert", title, body.take(400), 1, "CLOUD")) } },
@@ -371,9 +372,7 @@ fun main(args: Array<String>) = runBlocking {
                 if (text != tradesText) { tradesText = text; publisher.stageTrades(text, now) }
                 if (r.placed.isNotEmpty()) {
                     log("trading: " + r.line())
-                    // Bets placed are news for Tj (Tj, 2026-10-15: "tell me ... bets placed"): one message per pass, the notification-worthy kind.
-                    val lines = r.placed.joinToString("\n") { e -> "${e.selection} (${e.event}): ${e.contracts} at ${String.format(java.util.Locale.US, "%.0f", e.avgPrice * 100)}c, edge ${String.format(java.util.Locale.US, "%.1f", e.evPercent * 100)}%, $${String.format(java.util.Locale.US, "%.2f", e.cost)}" }
-                    runCatching { postMessage(CloudMessages.Message("bets-${r.placed.first().id.take(12)}", now, "engine", "bet", (if (mode == CloudTradeMode.LIVE) "Placed " else "Paper-placed ") + "${r.placed.size} bet${if (r.placed.size == 1) "" else "s"}", lines, if (mode == CloudTradeMode.LIVE) 1 else 0, "CLOUD")) }
+                    // No message for bets placed (Tj, 2026-10-18, TCL122-1: Messages carry only important news, API errors and recommendations): they are on the Engine tab and the Tracker.
                 }
                 val stoppedNow = r.stopped.ifEmpty { trader.ledger.stopped }
                 if (stoppedNow.isNotBlank() && stoppedNow != lastStoppedSaid) {
