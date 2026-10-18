@@ -1,22 +1,25 @@
-# CHECKPOINT 3638 — read me first, then TASKS.md
+# CHECKPOINT 3639 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T07:34:15Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-5a7eb2e9-bn8drh` · **builds on:** `eb47821e1` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T15:25:09Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-5a7eb2e9-bn8drh` · **builds on:** `9fc224e25` (this checkpoint is the commit after it)
 
 ## Just done
-TCL113 proven: engine_set -> phone adopts; bidDeployKelly 20 live, CHANGES.md logged
+TCL114: runner replacement rule + full engine admin documented (ENGINE_ADMIN.md, CLAUDE.md)
 
 ## Do this next
-other accounts: merge main, run engine_set --show; analyze bids fill next run; TCL112 rest (SX socket, tuning)
+watch 08:00 ET engine start (gate sees on=true, hours open); mirage permission test; SX live data analysis next
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M research/review/CHANGES.md
+     M CLAUDE.md
+     M TASKS.md
+    ?? research/coordination/ENGINE_ADMIN.md
 
 ## Last ten checkpoints
 ```
+  508a81e88 ckpt 3638: TCL113 proven: engine_set -> phone adopts; bidDeployKelly 20 live, CHANGES.
   7d15807bb ckpt 3637: v0.117.0 released (TCL113)
   e8e327c13 ckpt 3636: pre-release: v0.117.0: Claude sessions may change any setting/switch except
   950079b3a ckpt 3635: pre-ship: v0.117.0: Claude sessions may change any setting/switch except ST
@@ -26,8 +29,7 @@ other accounts: merge main, run engine_set --show; analyze bids fill next run; T
   43fa9cb30 ckpt 3631: chat: diagnosed bids not filling wallet (per-game 5, kelly ceiling 13); clo
   c4732629b ckpt 3630: TCL111f1 step 1: SX live frame recorder tap on engine
   04291e4c2 ckpt 3629: TCL111f1: confirmed SX pregame works on engine; live-lane plan written
-  6869e93c3 ckpt 3628: SX Bet key accepted, engine has sxbet source
 ```
 
-(1 automatic checkpoint(s) since the last deliberate one — the
+(2 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)

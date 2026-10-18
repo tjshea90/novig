@@ -5794,3 +5794,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 > relay this message to all Claude accounts and make sure they read it as soon as they are active
 
 - [ ] TCL113 (Tj, 2026-10-18): any Claude session may change any setting/switch on the app and GitHub except STOP ALL (`killed`); engine starts on schedule even when app toggles are off. BUILT: tools/engine_set.py (writes cloud-config settings.json as claude:<acct>), CloudClaudeConfig + CloudLink.adoptClaudeConfig (phone adopts, keeps its own STOP ALL), CloudClaudeConfigTest, rules in CLAUDE.md/ROUTINE.md (class D). RELEASED v0.117.0 (tests green). TODO: Tj installs APK, then apply bidDeployKelly 13->20 via engine_set, log CHANGES.md.
+
+- [x] TCL114 (Tj, 2026-10-18): runner replacement rule + full engine administration written: research/coordination/ENGINE_ADMIN.md, CLAUDE.md section. Existing automation: engine-watchdog.yml (ADDRESS/hang -> cancel + dispatch). TODO: confirm mirage (acct-5d1e2d) passes the three-command permission test; watch the 08:00 ET start.

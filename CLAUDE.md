@@ -330,6 +330,11 @@ to start worrying about only after it happens on this project too:
 - **The only exceptions are STOP ALL and the dead-man rules (Tj, 2026-10-18: "The only exception is the stop all kill switch and the dead-man rules").** STOP ALL (`killed`) is Tj's alone: a session never presses, releases or edits it (the tool refuses; the phone keeps its own value whatever a session writes), and no session ever starts the engine over it. The dead-man switch and Novig's location/device stand-downs stay protected, and keys are never read, printed or committed.
 - Log every change in `research/review/CHANGES.md` with a revert rule. A change made on GitHub reaches an app that is closed the next time it opens.
 
+## Runner replacement and full engine administration (Tj, 2026-10-18, TCL114, permanent)
+
+**Standing instruction from Tj (2026-10-18, verbatim, shortened):** "Do the runner replacement rule and set it up so Claude always has full permissions to change settings and full administration of GitHub engine".
+Full text and the table of powers in `research/coordination/ENGINE_ADMIN.md`. In short: (1) a bad runner (Novig refuses its address, the job hangs, or no replacement started) is replaced at once by whoever notices (cancel the run, dispatch `cloud-scan.yml` on `main`; `engine-watchdog.yml` does it free every 5 minutes), never by hiding the location (no proxy/VPN) and never touching Novig's device check; (2) every session on every account may change any setting or switch (`tools/engine_set.py`), start/stop/replace the engine, run and edit workflows and ship releases without asking, with only STOP ALL and the dead-man rules off limits, and keys never read or printed.
+
 ## Work without the lease, and requests are relayed to the lease holder (Tj, 2026-10-18, permanent)
 
 **Standing instruction from Tj (2026-10-18, verbatim, shortened):** "Any claude session may alter anything even if it doesn't hold the lease, as long as it will not break anything" and "no matter which Claude account I am talking to, if I ask for modifications, the message is automatically relayed to the Claude account holding the lease and it should read the prompt and begin the answer as soon as possible".
