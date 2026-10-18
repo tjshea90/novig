@@ -1,21 +1,23 @@
-# CHECKPOINT 3619 — read me first, then TASKS.md
+# CHECKPOINT 3620 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T00:53:49Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-ym9o0a` · **builds on:** `2fbb0d950` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T01:31:26Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-fggeng` · **builds on:** `5ffff36ef` (this checkpoint is the commit after it)
 
 ## Just done
-chat session done
+TCL104d: fixed hidden-bets note height jump in Feed
 
 ## Do this next
-watch engine live lane
+ship with next batch; watch engine live lane
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
+     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  2aa6cf8ab ckpt 3619: chat session done
   2fbb0d950 ckpt 3618: v0.115.0 released (TCL109)
   87d310316 ckpt 3617: merged main into TCL109 branch
   e569b8c94 ckpt 3616: pre-release: v0.115.0: live betting on GitHub: tail bets, Live light bids, 
@@ -25,5 +27,7 @@ watch engine live lane
   845c20fbc ckpt 3612: TCL109 written
   af935c0c8 ckpt 3611: TCL108 written
   6b06ca03d ckpt 3611: covered missed slots via watch checks
-  7291762e7 ckpt 3610: ANALYST 2026-10-17: watch ok, no rule change, STATE.json baseline
 ```
+
+(1 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
