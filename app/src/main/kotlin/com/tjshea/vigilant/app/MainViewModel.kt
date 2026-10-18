@@ -2428,7 +2428,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Run now outside the engine's hours / stop until the next scheduled opening (Tj, 2026-10-17): the schedule is untouched ([com.tjshea.vigilant.data.cloud.CloudManual]). */
     fun runCloudOutsideHours() { viewModelScope.launch(Dispatchers.IO) { c.cloud.runOutsideHours() } }
     /** Pull to refresh on the Engine tab: every cloud loop reads at once. */
-    fun refreshEngine() { c.cloud.syncNow() }
+    /** Pull to refresh on the Engine tab (TCL122-3): every file the engine publishes is read now, and every API's own usage figure with it. */
+    fun refreshEngine() {
+        viewModelScope.launch(Dispatchers.IO) { c.cloud.refreshNow() }
+        refreshUsage()
+    }
+    /** Pull to refresh on a page that shows only the engine's files (Tracker, Bids, Live, Messages): read them now. */
+    fun refreshCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.refreshNow() } }
     /** Pull to refresh on the PropLine +EV screen (TCL89): the engine runs its PropLine sweep now, nothing else. */
     fun refreshPropLine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.requestPropLineSweep() } }
     fun resetEngine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.resetEngine() } }

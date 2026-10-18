@@ -35,12 +35,23 @@ import com.tjshea.vigilant.data.cloud.CloudChat
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EngineScreen(state: com.tjshea.vigilant.app.UiState, onOpenCloudSettings: () -> Unit, onRefresh: () -> Unit = {}, onReset: () -> Unit = {}) {
+    var section by rememberSaveable { mutableStateOf(EngineSection.OVERVIEW) }
     Scaffold(topBar = { TopAppBar(title = { Text("Engine", fontWeight = FontWeight.Bold) }) }) { padding ->
-        // Pull down to read everything again at once (status, list, trades, bids, usage, charts); the page shows when each was last read (Tj, 2026-10-17, TCL85).
-        VigilantPullToRefresh(busy = false, onRefresh = onRefresh, holdWhileBusy = false, modifier = Modifier.padding(padding).fillMaxSize()) {
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp).testTag("engineScreen")) {
-                DashboardPage(state, onOpenCloudSettings)
-                ResetEngineButton(onReset)
+        Column(Modifier.padding(padding).fillMaxSize()) {
+            // One row of views (Tj, 2026-10-18, TCL122-7): Overview, Money, APIs (the usage meters), Trends.
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).testTag("engineSections")) {
+                EngineSection.entries.forEachIndexed { i, x ->
+                    SegmentedButton(selected = section == x, onClick = { section = x }, shape = SegmentedButtonDefaults.itemShape(i, EngineSection.entries.size), modifier = Modifier.testTag("engineSection-${x.name}")) { Text(x.label, maxLines = 1) }
+                }
+            }
+            // Pull down for a TRUE refresh (TCL122-3): every engine file and every API's own usage figure is read now; the arrow stays until the reads have answered.
+            VigilantPullToRefresh(busy = state.cloudUi.refreshing || state.usageBusy, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
+                // Each view keeps its own scroll, so switching views opens at the top.
+                val scroll = androidx.compose.runtime.key(section) { rememberScrollState() }
+                Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal = 16.dp, vertical = 8.dp).testTag("engineScreen")) {
+                    DashboardPage(state, onOpenCloudSettings, section = section)
+                    if (section == EngineSection.OVERVIEW) ResetEngineButton(onReset)
+                }
             }
         }
     }
