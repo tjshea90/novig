@@ -316,3 +316,8 @@ Force it. I can accept file changes now. Do all the changes necessary so that Cl
 ```
 Do everything now so that all three claude accounts have maximum permissions to alter files and settings and full control over vigilant app and GitHub including but not limited to turning the entire engine on or off despite the toggles and settings in my app on the phone, and changing all settings including engine rules and filters and types of bids and bets automatically placed and anything else necessary for full control and administration of this repo and app 
 ```
+
+## 2026-10-18T07:00:12Z
+```
+The only exception is the stop all kill switch and the dead-man rules
+```
