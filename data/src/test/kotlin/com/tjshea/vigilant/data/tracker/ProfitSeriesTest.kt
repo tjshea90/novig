@@ -60,4 +60,42 @@ class ProfitSeriesTest {
         assertTrue(ProfitSeries.Range.ALL.bounds(now, now, zone).first <= now - ProfitSeries.DAY_MS)
         assertNotNull(ProfitSeries.Range.entries.firstOrNull { it.long == "This week, from Monday" })
     }
+
+    @Test
+    fun `a slate runs from its first game to the last result, past midnight, and the next morning is a new slate`() {
+        // Oct 7: games 7am..11pm (the last one is final after midnight); Oct 8 starts at 8am (9 h after the last start): a new slate.
+        val bets = listOf(
+            bet("a", at(2026, 10, 7, 7), BetStatus.WON, 10.0), bet("b", at(2026, 10, 7, 13), BetStatus.LOST, 10.0), bet("c", at(2026, 10, 7, 23), BetStatus.WON, 10.0),
+            bet("d", at(2026, 10, 8, 8), BetStatus.LOST, 10.0),
+        )
+        val sl = ProfitSeries.slates(ProfitSeries.points(bets))
+        assertEquals(2, sl.size)
+        assertEquals(3, sl[0].bets)
+        assertEquals(at(2026, 10, 7, 7), sl[0].startMs)
+        assertEquals(at(2026, 10, 7, 23) + ProfitSeries.GAME_MS, sl[0].endMs)
+        assertEquals(30.0, sl[0].staked, 1e-9)
+    }
+
+    @Test
+    fun `the start number is the first slate's stake and never moves, and each day is measured against the day before`() {
+        fun b(id: String, t: Long, st: BetStatus, stake: Double, profit: Double) = bet(id, t, st, stake).copy(profit = profit)
+        val bets = listOf(
+            b("a", at(2026, 10, 7, 12), BetStatus.WON, 50.0, 25.0), b("b", at(2026, 10, 7, 14), BetStatus.LOST, 50.0, -50.0),   // day 1: staked 100, profit -25
+            b("c", at(2026, 10, 8, 12), BetStatus.WON, 500.0, 50.0),                                                          // day 2: staked 500 (staking more is not depositing more)
+        )
+        val sl = ProfitSeries.slates(ProfitSeries.points(bets))
+        assertEquals(100.0, ProfitSeries.startingBalance(sl)!!, 1e-9)
+        assertEquals(-0.25, ProfitSeries.dayChange(sl, 0)!!, 1e-9)            // -25 on 100
+        assertEquals(50.0 / 75.0, ProfitSeries.dayChange(sl, 1)!!, 1e-9)      // +50 on 100 - 25 = 75, not on the 500 staked
+    }
+
+    @Test
+    fun `today and yesterday are slates, not calendar days`() {
+        val bets = listOf(bet("a", at(2026, 10, 7, 20), BetStatus.WON), bet("b", at(2026, 10, 7, 23), BetStatus.LOST), bet("c", at(2026, 10, 8, 8), BetStatus.WON))
+        val sl = ProfitSeries.slates(ProfitSeries.points(bets))
+        val now = at(2026, 10, 8, 9)   // Oct 8, 9am: the Oct 7 night slate ended at 3am; today's slate is Oct 8's
+        assertEquals(at(2026, 10, 8, 8), ProfitSeries.Range.TODAY.bounds(now, 0L, zone, sl).first)
+        assertEquals(at(2026, 10, 7, 20), ProfitSeries.Range.YESTERDAY.bounds(now, 0L, zone, sl).first)
+        assertEquals(at(2026, 10, 7, 23) + ProfitSeries.GAME_MS, ProfitSeries.Range.YESTERDAY.bounds(now, 0L, zone, sl).second)
+    }
 }
