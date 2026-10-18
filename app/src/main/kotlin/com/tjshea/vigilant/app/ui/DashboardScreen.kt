@@ -78,8 +78,14 @@ fun DashboardContent(
     Column(modifier.testTag("dashboard"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HeadlineCard(status, now, cloudOn, hoursOn, linkOkAtMs)
         if (status != null) Text(com.tjshea.vigilant.data.cloud.CloudLive.chip(liveDirectAtMs, now), style = MaterialTheme.typography.labelMedium, color = if (liveDirectAtMs > 0L && now - liveDirectAtMs <= com.tjshea.vigilant.data.cloud.CloudLive.LIVE_FRESH_MS) Edge.colors.positive else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 4.dp).testTag("liveChip"))
+        // Tabs instead of one long page (Tj, 2026-10-18, TCL122-7: "keep this section simple and easy to read. organize it. maybe tabs for different data views, like a tab for api usage").
+        var tab by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableIntStateOf(0) }
+        val tabNames = listOf("Overview", "Money", "APIs", "Trends")
+        androidx.compose.material3.TabRow(selectedTabIndex = tab, modifier = Modifier.testTag("dashboardTabs")) {
+            tabNames.forEachIndexed { i, n -> androidx.compose.material3.Tab(selected = tab == i, onClick = { tab = i }, text = { Text(n, maxLines = 1) }, modifier = Modifier.testTag("dashboardTab-$n")) }
+        }
         val tiles = remember(status, now / 1_000L, linkOkAtMs) { DashboardModel.tiles(status, now, hoursOn, linkOkAtMs) }
-        tiles.chunked(2).forEach { row ->
+        if (tab == 0) tiles.chunked(2).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 row.forEach { t -> TileCard(t, Modifier.weight(1f)) }
                 if (row.size == 1) Box(Modifier.weight(1f))
@@ -87,23 +93,26 @@ fun DashboardContent(
         }
         val running = DashboardModel.running(status, now)
         val stale = if (running) "" else " (last run, not live)"
+        if (tab == 0) {
         status?.takeIf { it.novigRoute.isNotBlank() }?.let { InfoLine("Novig", it.novigRoute + stale) }
         status?.takeIf { it.novigAddress.isNotBlank() }?.let { InfoLine("Runner address", it.novigAddress + stale, if (running && it.novigAddress.startsWith("REFUSED")) Tone.WARN else Tone.NEUTRAL) }
         status?.takeIf { it.tradeMode.isNotBlank() && it.tradeNote.isNotBlank() }?.let { InfoLine("Trading", it.tradeNote + stale, if (running && it.tradeStopped.isNotBlank()) Tone.WARN else Tone.NEUTRAL) }
         status?.takeIf { it.tradeStopped.isNotBlank() }?.let { InfoLine("Stopped", it.tradeStopped + stale, if (running) Tone.WARN else Tone.NEUTRAL) }
 
-        board?.let { EngineActivityCard(it, status) }
+        }
+        if (tab == 1) board?.let { EngineActivityCard(it, status) }
+        if (tab == 1 && board == null) Text("No orders or bids yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-        status?.advice?.takeIf { it.isNotEmpty() }?.let { adv ->
+        if (tab == 0) status?.advice?.takeIf { it.isNotEmpty() }?.let { adv ->
             SectionHeader("What to refill, buy or fix" + adviceAge(status, now, running))
             adv.forEach { InfoLine(it.title, it.body, if (it.severity >= 2) Tone.BAD else Tone.WARN) }
         }
-        status?.takeIf { it.resting.isNotEmpty() || it.governorOff.isNotEmpty() }?.let { st ->
+        if (tab == 0) status?.takeIf { it.resting.isNotEmpty() || it.governorOff.isNotEmpty() }?.let { st ->
             if (st.resting.isNotEmpty()) InfoLine("Resting to save usage", st.resting.joinToString(", "))
             if (st.governorOff.isNotEmpty()) InfoLine("Turned off by the engine", st.governorOff.joinToString(", "), Tone.WARN)
         }
 
-        status?.apiCards?.takeIf { it.isNotEmpty() }?.let { cs ->
+        if (tab == 2) status?.apiCards?.takeIf { it.isNotEmpty() }?.let { cs ->
             SectionHeader("API manager" + adviceAge(status, now, running))
             cs.forEach { c ->
                 val bits = listOfNotNull(
@@ -118,21 +127,21 @@ fun DashboardContent(
             }
         }
 
-        SectionHeader("APIs")
+        if (tab == 2) SectionHeader("APIs")
         val health = remember(status) { DashboardModel.apiHealth(status) }
         val cards = remember(meters, health) {
             meters.filter { it.keys.isNotEmpty() || !it.policy.keyed || health.containsKey(it.policy.id) }.sortedBy { severity(health[it.policy.id]) }
         }
-        if (cards.isEmpty()) Text("No API has answered yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        cards.forEach { v -> ApiCard(v, health[v.policy.id], DashboardModel.apiDetail(status, v.policy.id), now) }
-        if (health.isEmpty() && status != null) {
+        if (tab == 2 && cards.isEmpty()) Text("No API has answered yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (tab == 2) cards.forEach { v -> ApiCard(v, health[v.policy.id], DashboardModel.apiDetail(status, v.policy.id), now) }
+        if (tab == 2 && health.isEmpty() && status != null) {
             Text("Which APIs worked on the last scan appears after the engine's next scan (it has to finish one on the new version).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
-        SectionHeader("Trends")
-        if (history.size < 2) {
+        if (tab == 3) SectionHeader("Trends")
+        if (tab == 3 && history.size < 2) {
             Text("The graphs fill in as the engine finishes scans (one about every 5 minutes).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        } else {
+        } else if (tab == 3) {
             Trend("Scan time", history.map { it.scanS.toFloat() }, "s", Edge.colors.warning)
             Trend("+EV lines priced", history.map { it.posEv.toFloat() }, "", Edge.colors.positive)
             Trend("Fair odds age (median)", history.map { it.fairAgeS.toFloat() }, "s", Edge.colors.negative)
@@ -224,9 +233,9 @@ private fun EngineActivityCard(b: EngineBoard.Board, status: CloudStatus?) {
                 else -> "The engine has not posted bids yet."
             }
             Text(bid, style = MaterialTheme.typography.bodySmall, color = if (b.deskStopped.isNotBlank()) Edge.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("engineBidLine"))
-            if (b.rows.isEmpty()) Text("No orders or bids yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (b.rows.none { it.kind != "BID" }) Text("No orders or fills yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             val fmt = remember { java.text.SimpleDateFormat("MMM d h:mm a", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("America/New_York") } }
-            b.rows.forEach { r ->
+            b.rows.filter { it.kind != "BID" }.take(15).forEach { r ->   // the resting bids are counted in the headline, not listed (Tj, 2026-10-18)
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(r.kind, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = if (r.kind == "BID") Edge.colors.warning else toneColor(Tone.GOOD))
