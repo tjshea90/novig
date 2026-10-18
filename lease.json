@@ -1,12 +1,7 @@
 {
  "v": 1,
- "holder": "0dd792",
- "label": "acct-27a37e",
- "kind": "chat",
- "task": "chat: sportmicro probe",
- "since": 1792352362,
- "sinceIso": "2026-10-18T19:39:22Z",
- "hb": 1792352362,
- "hbIso": "2026-10-18T19:39:22Z",
+ "holder": null,
+ "hb": 1792352374,
+ "hbIso": "2026-10-18T19:39:34Z",
  "leaseS": 1200
 }
