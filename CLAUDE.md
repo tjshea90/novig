@@ -319,6 +319,10 @@ to start worrying about only after it happens on this project too:
 
 **Standing instruction from Tj (2026-10-18, verbatim):** "Any time you are referred to by that id, add the name mirage so I know which email account you are." `acct-5d1e2d` is the mirageticket@outlook.com account. Whenever a session on it names itself or the account (chat replies, board notes, handoffs, CHECKPOINT/TASKS lines), write **acct-5d1e2d (mirage)**. The tag stays the key (rotation, `CLAUDE_FIRE_5D1E2D_*` secrets, routines match it); the name is added where a person reads: `coord.py` `ACCOUNT_NAMES`/`named()` (COORD lines, `whoami`, board `name:` header) and `tell_tj.py` (chat sender). A new account name goes into `ACCOUNT_NAMES`, never a renamed tag.
 
+## Account names: acct-7542bf is "tj outlook" (Tj, 2026-10-18, permanent)
+
+**Standing instruction from Tj (2026-10-18, verbatim):** "Any time you are ever mentioned anywhere in this repo or project as your id number, add the name tj outlook." Same mechanism as mirage: write **acct-7542bf (tj outlook)** wherever a person reads it; the tag stays the key. `coord.py` `ACCOUNT_NAMES` and `tell_tj.py` carry both names.
+
 ## Chat wake: Tj's messages are woken for, answering chat needs no lease (Tj, 2026-10-17, TCL70, permanent)
 
 **Standing instruction from Tj (2026-10-17, verbatim, shortened):** "this chat feature must be fixed. the Claude lease mechanism must also be fixed. figure out the best way to coordinate the three Claude accounts so that my messages are seen within 30 seconds and responded to ... without usage being wasted ... maybe GitHub has a feature for this".
