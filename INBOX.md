@@ -509,3 +509,10 @@ Release the Novig watch fix now
 ```
 /active-memory:amhandoff 
 ```
+
+## 2026-10-18T19:13:49Z
+```
+Find handoff-novig.md in the repo root. It is pushed to GitHub on branch ccr-28648a70-j699u7.
+
+Continue 
+```
