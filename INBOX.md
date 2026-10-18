@@ -473,3 +473,8 @@ https://www.postman.com/
 ```
 Yes, test both now
 ```
+
+## 2026-10-18T18:50:09Z
+```
+Build the sportmicro test 
+```
