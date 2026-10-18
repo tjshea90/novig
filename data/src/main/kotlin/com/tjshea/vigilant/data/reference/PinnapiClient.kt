@@ -107,10 +107,10 @@ class PinnapiClient(
     private suspend fun boardFor(sport: Int, props: Boolean, share: Long = shareMs): Board {
         boards[sport to props]?.takeIf { clock() - it.fetchedAtMs < (if (it.host == FIRST_NAME) minOf(share, FIRST_SHARE_MS) else share) }?.let { return it }
         var problem: String? = null
-        for (host in listOfNotNull(first()) + hosts) {
+        // A board with props asks the hosts that send them first (PinnWire), then the rest; game lines keep the given order (pinnapi ahead of PinnWire, Tj 2026-10-18).
+        val order = (listOfNotNull(first()) + hosts).let { all -> if (props) all.sortedByDescending { it.props } else all }
+        for (host in order) {
             if (!host.enabled() || host.pool.keyCount() == 0) continue
-            // A board with props comes from a host that sends them (PinnWire) while one is usable; pinnapi, ahead of it for game lines (Tj, 2026-10-18), would answer without props.
-            if (props && !host.props && (listOfNotNull(first()) + hosts).any { it !== host && it.props && it.enabled() && it.pool.keyCount() > 0 }) continue
             val events = try {
                 fetch(host, sport, props && host.props)
             } catch (e: AllKeysExhaustedException) {
