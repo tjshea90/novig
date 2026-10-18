@@ -600,10 +600,10 @@ private fun StatsCards(
         if (stats.outliers > 0) {
             Caption(TrackerText.outlierNote(stats.outliers))
         }
-        MoneyInCard(allBets, moneyDeposited)
-        // The profit graph has its own time ranges and zoom (Tj, 2026-10-10), over every bet (bets or bids, whatever the period at the top says): the numbers above it are what happened inside the view.
+        // One profit card (Tj, 2026-10-18, TCL122-6): the balance from ONE fixed start (the first day's stakes), each slate of games against the balance before it. It replaced the "Your money" card, whose
+        // deposit base disagreed with that start.
         ProfitChartCard(chartBets)
-        Caption("Profit counts every settled bet, outliers and locks too (it ends at the bankroll's real result); the edge numbers below leave the outliers out. Profit % in the graph is profit over the money staked in that view (each dollar counted every time it is bet again); the card above it is profit over the money you actually put in.")
+        Caption("Profit counts every settled bet, outliers and locks too (it ends at the bankroll's real result); the edge numbers below leave the outliers out. A day here is a slate of games: it starts with that day's first game and ends with its last result, often after midnight.")
         clv()
         StatsCard {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -995,21 +995,3 @@ fun ClosingLineCard(
  * Profit on the money actually put in, all time (Tj, 2026-10-13): winnings that are bet again are not a second deposit, so "$1,000 bet" on "$200 put in" reads as the profit over $200, not over $1,000
  * ([MoneyIn]). The deposit is Tj's own figure from Settings when he gave one, else the least money that could have placed his bets with winnings re-bet.
  */
-@Composable
-private fun MoneyInCard(all: List<TrackedBet>, given: Double) {
-    val r = remember(all, given) { com.tjshea.vigilant.data.tracker.MoneyIn.compute(all, given.takeIf { it > 0 }) }
-    if (r.deposited <= 0) return
-    StatsCard {
-        CardTitle("Your money, all time")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            LabeledValue("Put in", Format.money(r.deposited))
-            LabeledValue("Bet in all", Format.money(r.turnover))
-            LabeledValue("Profit %", r.percent?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(r.percent ?: 0.0), modifier = Modifier.testTag("moneyInPercent"))
-        }
-        Caption(
-            "You have put in ${Format.money(r.deposited)}" + (if (r.estimated) " (worked out from your bets: the least money that could have placed them all with winnings re-bet; type your real total in Settings › Betting & Novig account to use that instead)" else " (the total you gave in Settings)") +
-                " and made ${r.percent?.let { Format.evPercent(it) } ?: "—"} of it (your profit, shown in the graph below, over that money). " +
-                "That money was bet ${Format.money(r.turnover)} in all, about ${r.turns?.let { String.format(java.util.Locale.US, "%.1f", it) } ?: "—"} times over, because winnings and refunds were bet again; that is why Profit % in the graph below (profit over everything staked) reads smaller.",
-        )
-    }
-}
