@@ -33,6 +33,41 @@ object ProfitSeries {
         }
     }
 
+    /**
+     * One day of play, the way Tj counts it (Tj, 2026-10-18, TCL122-6: "each day does not start at 12am, it should start with that day's first games and end with the results of those games"): a run of games
+     * with no gap of more than [SLATE_GAP_MS] between one start and the next; it begins at its first game and ends [GAME_MS] after its last start (when the last game is about final). A late slate that runs
+     * past midnight is still one day.
+     */
+    data class Slate(val startMs: Long, val endMs: Long, val profit: Double, val staked: Double, val bets: Int)
+
+    /** The slates of [points], oldest first. */
+    fun slates(points: List<Point>): List<Slate> {
+        if (points.isEmpty()) return emptyList()
+        val out = ArrayList<Slate>()
+        var from = 0
+        for (i in 1..points.size) {
+            if (i == points.size || points[i].tMs - points[i - 1].tMs > SLATE_GAP_MS) {
+                val part = points.subList(from, i)
+                out += Slate(part.first().tMs, part.last().tMs + GAME_MS, part.sumOf { it.profit }, part.sumOf { it.stake }, part.size)
+                from = i
+            }
+        }
+        return out
+    }
+
+    /**
+     * The one number the profit and loss is measured from and that never changes (Tj, 2026-10-18: "the total money staked on all bets for the first day logged"): the stake of the first slate. Staking more
+     * later is not depositing more, so it never moves. Null with nothing settled.
+     */
+    fun startingBalance(slates: List<Slate>): Double? = slates.firstOrNull()?.staked?.takeIf { it > 0 }
+
+    /** Each slate's change against the balance the day before: its profit over (start number + every earlier profit). Null when the start number is unknown or the balance is not above zero. */
+    fun dayChange(slates: List<Slate>, index: Int): Double? {
+        val start = startingBalance(slates) ?: return null
+        val before = start + slates.take(index).sumOf { it.profit }
+        return if (before > 0) slates[index].profit / before else null
+    }
+
     /** The profit value of the curve at [t]: the cumulative profit of the last bet at or before it (0 before the first). Binary search. */
     fun valueAt(points: List<Point>, t: Long): Double {
         var lo = 0
@@ -73,7 +108,15 @@ object ProfitSeries {
         WEEK("7D", "The last 7 days"), MONTH("30D", "The last 30 days"), ALL("Max", "All time");
 
         /** The window this range shows at [now], with [firstMs] the time of the first bet (what All time starts at). Ends are exclusive of the next period. */
-        fun bounds(now: Long, firstMs: Long, zone: ZoneId = ZoneId.systemDefault()): Pair<Long, Long> {
+        fun bounds(now: Long, firstMs: Long, zone: ZoneId = ZoneId.systemDefault(), slates: List<Slate> = emptyList()): Pair<Long, Long> {
+            if (slates.isNotEmpty() && (this == TODAY || this == YESTERDAY)) {
+                // Today's slate: the latest one if it began today or is still going; yesterday's is the one before it (or, with nothing today, the latest).
+                val startOfToday = Instant.ofEpochMilli(now).atZone(zone).toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli()
+                val last = slates.last()
+                val todayIdx = if (last.startMs >= startOfToday || last.endMs > now) slates.lastIndex else -1
+                val idx = if (this == TODAY) todayIdx else if (todayIdx >= 0) todayIdx - 1 else slates.lastIndex
+                return if (idx < 0) now to now else slates[idx].startMs to minOf(slates[idx].endMs, now).coerceAtLeast(slates[idx].startMs)
+            }
             val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
             fun day(d: java.time.LocalDate) = d.atStartOfDay(zone).toInstant().toEpochMilli()
             return when (this) {
@@ -90,4 +133,10 @@ object ProfitSeries {
     }
 
     const val DAY_MS = 24L * 3_600_000L
+
+    /** More than this between two game starts ends a slate (a late game ends well inside it; the next morning's first game starts after it). */
+    const val SLATE_GAP_MS = 7L * 3_600_000L
+
+    /** A game is final about this long after it starts (the slate's end). */
+    const val GAME_MS = 4L * 3_600_000L
 }
