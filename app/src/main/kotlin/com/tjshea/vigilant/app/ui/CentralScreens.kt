@@ -80,6 +80,8 @@ fun ClaudeScreen(
     onDismissMessage: (String) -> Unit,
     onClearMessages: () -> Unit,
     onOpenPage: (String) -> Unit,
+    /** Pull to refresh on the messages (TCL122-3): read them from GitHub now. */
+    onRefresh: () -> Unit = {},
 ) {
     var section by rememberSaveable { mutableStateOf("chat") }
     val unread = state.claudeInbox.unread
@@ -91,8 +93,10 @@ fun ClaudeScreen(
             }
             // The chat lays itself out (thread above, input pinned below, both inside the room the keyboard leaves); only the messages list scrolls here.
             if (section == "chat") ChatPage(state.claudeInbox.chat, state.chatWho, onSend, onChatOpen, Modifier.weight(1f).fillMaxWidth(), breaks = state.claudeInbox.chatBreaks, onNewChat = onNewChat, onClearChat = onClearChat)
-            else Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                MessagesPage(state.claudeInbox, onMarkRead = onMarkRead, onOpen = onOpenPage, onDismiss = onDismissMessage, onClearAll = onClearMessages)
+            else VigilantPullToRefresh(busy = state.cloudUi.refreshing, onRefresh = onRefresh, modifier = Modifier.weight(1f).fillMaxWidth()) {
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    MessagesPage(state.claudeInbox, onMarkRead = onMarkRead, onOpen = onOpenPage, onDismiss = onDismissMessage, onClearAll = onClearMessages)
+                }
             }
         }
     }

@@ -132,7 +132,7 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
     CHAT("Chat with Claude", "Talk to the Claude session that is working on the app right now; it reads your message within about a minute", SettingsGroup.FIND),
 
     /** Everything Claude or the engine wants Tj to know: recommendations, bets placed, settings changed from GitHub (TCL28). */
-    MESSAGES("Messages from Claude", "Recommendations, bets placed and anything Claude or the engine wants you to know", SettingsGroup.FIND),
+    MESSAGES("Messages from Claude", "Alerts, API problems and recommendations from Claude and the engine (bets and bids are on the Engine tab)", SettingsGroup.FIND),
 
     /** The scan on GitHub's computers, the token, and the permanent saving of bets, bids and history to GitHub (Tj, 2026-10-14). */
     CLOUD("Cloud scan", "Run the scans on GitHub's computers: the phone only sets the settings and shows the list; bets, bids and history are saved to GitHub", SettingsGroup.FIND),
