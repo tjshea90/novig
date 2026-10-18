@@ -84,6 +84,11 @@ class CloudLink(private val c: AppContainer) {
         val deskReadAtMs: Long = 0L,
         /** PropLine's +EV lines at Novig, as the engine's last sweep found them (`propline-ev.json.gz`, TCL56); null = none yet. */
         val propLineEv: com.tjshea.vigilant.data.reference.PlEvFeed? = null,
+        /** A pull to refresh is reading everything now ([refreshNow]); the pull's arrow stays until it is false again. */
+        val refreshing: Boolean = false,
+        /** When the last pull to refresh finished (this phone's clock; 0 = never) and how many of its reads answered. */
+        val refreshedAtMs: Long = 0L,
+        val refreshNote: String = "",
     )
 
     private val _ui = MutableStateFlow(Ui())
@@ -265,14 +270,7 @@ class CloudLink(private val c: AppContainer) {
                 when (val p = client.pollStatus(etag)) {
                     is CloudClient.Poll.Fresh -> {
                         etag = p.etag
-                        // An answer from GitHub is up to ~10 s old: it never replaces a newer reading that came straight from the engine.
-                        latest.status?.let { cur -> if (p.value.runId != cur.runId || p.value.heartbeatMs >= cur.heartbeatMs) latest.status = p.value } ?: run { latest.status = p.value }
-                        latest.statusOkAtMs = System.currentTimeMillis()
-                        recordHistory(p.value)
-                        latest.why = null
-                        if (p.value.computedAtMs > 0L && p.value.computedAtMs != feedFetchedFor) fetch(p.value.computedAtMs)
-                        if (s.bidsFromCloud && p.value.bidsAtMs > 0L && p.value.bidsAtMs != bidsFetchedFor) fetchBids()
-                        if (p.value.propLineEvAtMs > 0L && p.value.propLineEvAtMs != evFetchedFor) fetchPropLineEv()
+                        onStatus(p.value, s)
                         maybeStart(p.value, s)
                     }
                     is CloudClient.Poll.NotModified -> { latest.why = null; latest.statusOkAtMs = System.currentTimeMillis() }
@@ -475,6 +473,50 @@ class CloudLink(private val c: AppContainer) {
             is CloudClient.Poll.Fresh -> { evFetchedFor = b.value.atMs; _ui.update { it.copy(propLineEv = b.value) } }
             is CloudClient.Poll.Failed -> latest.why = b.why
             else -> {}
+        }
+    }
+
+    /** A status read from GitHub: kept unless a newer one came straight from the engine; the list, the bid candidates and PropLine's lines follow when their stamps moved. */
+    private suspend fun onStatus(st: com.tjshea.vigilant.data.cloud.CloudStatus, s: ScanSettings) {
+        // An answer from GitHub is up to ~10 s old: it never replaces a newer reading that came straight from the engine.
+        latest.status?.let { cur -> if (st.runId != cur.runId || st.heartbeatMs >= cur.heartbeatMs) latest.status = st } ?: run { latest.status = st }
+        latest.statusOkAtMs = System.currentTimeMillis()
+        recordHistory(st)
+        latest.why = null
+        if (st.computedAtMs > 0L && st.computedAtMs != feedFetchedFor) fetch(st.computedAtMs)
+        if (s.bidsFromCloud && st.bidsAtMs > 0L && st.bidsAtMs != bidsFetchedFor) fetchBids()
+        if (st.propLineEvAtMs > 0L && st.propLineEvAtMs != evFetchedFor) fetchPropLineEv()
+    }
+
+    private val refreshMutex = kotlinx.coroutines.sync.Mutex()
+
+    /**
+     * Pull to refresh on any engine screen (Tj, 2026-10-18, TCL122-3: "it should give a true refresh with the current state of that section"): reads, right now and without the loops' ETags, the engine's
+     * status, list, orders, bids, API usage, messages and chat, one after another, and returns when every read has answered (the pull's arrow stays up until then, [Ui.refreshing]). The loops go on beside
+     * it. Returns how many reads answered. A second pull while one runs waits for it and returns at once.
+     */
+    suspend fun refreshNow(): Int {
+        if (!hasToken()) return 0
+        if (!refreshMutex.tryLock()) { refreshMutex.withLock { }; return 0 }
+        try {
+            _ui.update { it.copy(refreshing = true) }
+            val s = c.settingsStore.flow.value
+            var ok = 0
+            var asked = 0
+            fun <T> got(p: CloudClient.Poll<T>): T? { asked++; return (p as? CloudClient.Poll.Fresh<T>)?.value?.also { ok++ } }
+            runCatching { got(client.pollStatus(null))?.let { st -> if (s != null) onStatus(st, s) else latest.status = st; latest.statusOkAtMs = System.currentTimeMillis() } }
+            runCatching { got(client.fetchTrades(null))?.let { t -> _ui.update { it.copy(trades = t, tradesReadAtMs = System.currentTimeMillis()) } } }
+            runCatching { got(client.fetchDesk(null))?.let { d -> _ui.update { it.copy(desk = d, deskReadAtMs = System.currentTimeMillis()) } } }
+            runCatching { got(client.fetchUsage(null))?.let { u -> c.cloudUsage.value = u } }
+            runCatching { inbox.pollMessages(); inbox.pollChat(); asked += 2; ok += 2 }
+            if (s != null) runCatching { publishUi(s) }
+            val now = System.currentTimeMillis()
+            _ui.update { it.copy(refreshing = false, refreshedAtMs = now, refreshNote = if (ok == asked) "Everything read just now" else "$ok of $asked reads answered" + (latest.why?.let { w -> ": $w" } ?: "")) }
+            syncNow()
+            return ok
+        } finally {
+            _ui.update { it.copy(refreshing = false) }
+            refreshMutex.unlock()
         }
     }
 
