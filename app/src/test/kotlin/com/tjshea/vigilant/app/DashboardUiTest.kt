@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
@@ -67,6 +68,7 @@ class DashboardUiTest {
         compose.onNodeWithText("Running").assertExists()
         compose.onNodeWithText("$124.27").assertExists()
         compose.onNodeWithText("Bets listed").assertExists()
+        compose.onNodeWithTag("dashboardTab-APIs").performClick()
         compose.onNodeWithTag("dashboardApi-propline").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("794 of 2000 requests left", substring = true).assertExists()
         compose.onNodeWithText("working").assertExists()
@@ -86,6 +88,7 @@ class DashboardUiTest {
     fun `with history the page draws a graph for each number`() {
         val points = (1..10).map { DashboardModel.Point(now - (10 - it) * 300_000L, 280 + it, 38, 200 + it, 40, 200 + it, 120.0 + it) }
         show(status, points)
+        compose.onNodeWithTag("dashboardTab-Trends").performClick()
         compose.onNodeWithTag("dashboardTrend-Scan time").performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag("dashboardTrend-Wallet").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("$130.00").assertExists()
