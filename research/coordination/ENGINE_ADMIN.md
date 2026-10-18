@@ -24,3 +24,6 @@ Every session may do all of these without asking (Tj's word; the exceptions are 
 | Read everything the engine saved | `cloud-feed` (status, log), `cloud-archive-*` Releases, `engine-dataset`, `phone-data` |
 
 Needed once, by Tj, on each of the three Claude accounts: allow Bash and the `cloud-config` write in that account's Claude Code permissions (the session safety check is outside the repo, and an unattended routine can not show a prompt, so allow it in the routine's settings too). Tested on acct-7542bf (tj outlook) and acct-27a37e (tj Gmail); mirage (acct-5d1e2d) still to confirm.
+
+## Only Novig's own failures are Novig failures (Tj, 2026-10-18)
+"Make sure any api failure is not treated as a novig failure because this can restart the novig engine in error." Audited: the outage alert + retry wait (`NovigErrorWatch`) counts only error lines that start with "Novig"; the address hand-over (`AddressWatch`, `engine-watchdog.yml`) reads only the Novig client's own key-route state (`CloudNovig.addressRefused`, `status.novigRoute`), never another API's status; the in-scan freeze restart (`PROGRESS_STALL_MS`) restarts one scan, at most once per gap, and is not tied to any API. A new watch that reacts to errors must filter by source first (test: `NovigErrorWatchTest`).
