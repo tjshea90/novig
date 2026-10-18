@@ -64,3 +64,8 @@ Evidence in `research/review/pnl_2026-10-17.md`: 1,999 settled phone bets and bi
 ## 2026-10-18 acct-5d1e2d (mirage): the engine publishes its own socket state; the Live dashboard shows it (Tj chat t1792358681812)
 - Diagnosis of the screenshot: the phone's dashboard showed BoltOdds/Kalshi/SX/Pinnodds "not live" because, with the GitHub engine as the scan (cloud mode), the phone's own sockets are never opened (only the engine holds them); Pinnodds has no socket plan; Kalshi 0 of 0 = the phone subscribes to nothing. Not a fault, but the dashboard hid what the engine's sockets do.
 - `CloudStatus.sockets` (engine: BoltOdds lines/props live, Kalshi live and markets, SX health/last push/games in play), shown on the Live dashboard while `cloudDrives`. Display only. Revert: drop the field. Tests: `:data:test *Cloud*` green; app and cloud compile.
+
+## 2026-10-18 acct-7542bf (tj outlook): the engine's auto-bet now takes the slider's totals and team totals (TCL122-11, class A plumbing)
+- Found: `CloudEngine.sendTrades` gave the trader the phone's raw settings, so `autoBetKinds` stayed {PROP, MONEYLINE, SPREAD} although the bet slider (level 61) and the scan include TOTAL and TEAM_TOTAL: the engine never auto-bet them (trade pass: "team totals aren't among the kinds of bet you auto-bet"). Fix: `CloudEngine.forTrading`. Evidence the kinds are good: team-total bid fills +77.5% ROI n 22 (t 4.2), dataset team totals +41% n 35 (t 2.5). No cap, stake, edge floor or guard changed. research/review/2026-10-18-tuning-v1.md.
+- Revert: pass `settings` instead of `forTrading(settings)` in `sendTrades`.
+- Trap guard (6 h) kept: early spreads CLV -2.15% (t -1.6), ROI -13% on 107. Watch: bid fills on game totals -43% on 26.
