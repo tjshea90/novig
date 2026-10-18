@@ -1395,6 +1395,8 @@ data class ApiGates(
     val useBoltOdds: Boolean = false,
     /** SX Bet (SXBET_API.md, Tj 2026-10-18): an exchange read as a sharp fair-line source (markets public, books need a read-only key). Off by default; off, nothing is sent to SX Bet. */
     val useSxBet: Boolean = false,
+    /** SX Bet: keep its WebSocket (best-odds and live-score channels) open and read books from it; off = the REST read every scan. Only matters while [useSxBet] is on. */
+    val sxSocket: Boolean = true,
     /** BoltOdds: price the fair line with every sportsbook it lists (not only the picked ones). */
     val boltAllBooks: Boolean = false,
     /**

@@ -102,7 +102,7 @@ class CloudSources(
     private val boltProps = BoltPropsSource(boltFeed)
 
     private val polymarket = PolymarketClient(http, json, usage = usage)
-    private val sxbet = com.tjshea.vigilant.data.reference.SxBetClient(http, json, { keys(CloudKeys.SXBET).firstOrNull().orEmpty() }, usage)
+    private val sxbet = com.tjshea.vigilant.data.reference.SxBetClient(http, json, { keys(CloudKeys.SXBET).firstOrNull().orEmpty() }, usage, socketOn = { sxSocketWanted }, scope = scope)
     /**
      * Kalshi's signed key and socket (Tj, 2026-10-16, chat: "I want to send my kalshi key to GitHub so GitHub can use the socket for faster odds"; he accepted that an API key can trade, which is why this
      * is his word and not a default): the phone's sealed key goes up as [CloudKeys.KALSHI_KEY_ID] + [CloudKeys.KALSHI_KEY_PEM]. The engine only READS with it (signed market reads and the socket's price pushes);
@@ -169,6 +169,8 @@ class CloudSources(
             board = boltFeed.lines.board, socketLive = { boltFeed.lines.live }, ensureOpen = { boltFeed.arrange(settings()); boltFeed.lines.use() }, sink = sink, scope = scope, rules = rules,
         ).also { boltFeed.liveTennis = true }
 
+    @Volatile private var sxSocketWanted = false
+
     fun unabatedActive(s: ScanSettings) = s.unabated && has(CloudKeys.UNABATED) && !unabatedClient.down()
     fun op4Active(s: ScanSettings) = s.oddsPapiFree && s.gates.op4Fair > 0 && has(CloudKeys.ODDSPAPI_FREE)
 
@@ -178,6 +180,8 @@ class CloudSources(
     fun sources(s: ScanSettings): List<ReferenceSource> {
         // Switched off (or its socket switch off) the sockets are closed: nothing is held open or sent to BoltOdds.
         if (!boltActive(s) || !s.gates.boltSocket) boltFeed.close()
+        sxSocketWanted = s.gates.useSxBet && s.gates.sxSocket
+        if (!sxSocketWanted) sxbet.stream?.close()
         kalshiSocketWanted = s.useKalshi && s.gates.kalshiSocket && kalshiSigner != null
         if (!kalshiSocketWanted) kalshiStream.close()
         val front = buildList {
