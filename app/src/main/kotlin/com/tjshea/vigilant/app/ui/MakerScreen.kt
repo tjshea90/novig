@@ -148,6 +148,8 @@ data class MakerActions(
     val onOpenBetting: () -> Unit = {},
     val onDeny: (String) -> Unit = {},
     val onUndoDeny: (String) -> Unit = {},
+    /** Pull to refresh (TCL122-3): the engine's bids read again and the desk's preview worked out now. */
+    val onRefresh: () -> Unit = {},
 )
 
 /** The tab's words, free of Compose so they're tested. */
@@ -326,9 +328,9 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
     ) { padding ->
         val resting = ui.resting
         val ready = ui.ready
+        VigilantPullToRefresh(busy = ui.running, onRefresh = actions.onRefresh, modifier = Modifier.padding(padding).fillMaxSize()) {
         LazyColumn(
             Modifier
-                .padding(padding)
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
                 .testTag("makerScreen"),
@@ -441,6 +443,7 @@ fun MakerScreen(ui: MakerUi, actions: MakerActions) {
                 }
             }
             item(key = "end") { Spacer(Modifier.height(32.dp)) }
+        }
         }
     }
 }

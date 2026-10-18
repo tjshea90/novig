@@ -872,6 +872,7 @@ private fun VigilantRoot(
                             onOpenBetting = { settingsPage = com.tjshea.vigilant.app.ui.SettingsPage.BETTING.name; tabName = Tab.SETTINGS.name },
                             onDeny = vm::makerDeny,
                             onUndoDeny = vm::makerUndoDeny,
+                            onRefresh = { vm.refreshCloud(); vm.makerPreview() },
                         )
                     }
                     com.tjshea.vigilant.app.ui.MakerScreen(
