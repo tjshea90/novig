@@ -453,3 +453,18 @@ The GitHub engine shows 0 resting bids.
 ```
 Why isn't sx bet socket here?
 ```
+
+## 2026-10-18T18:07:34Z
+```
+Read and review each of the following websites and the directories on each site. Let me know if there are any features that can be used for vigilant, Claude, or the github engine to improve efficiency or speed or accuracy or features. Consider anything free or cheap :
+
+https://www.sitepoint.com/building-live-score-widget-using-php-web-sockets/
+https://www.omkar.cloud/tools/flashscore-scraper
+https://api-sports.io/#apis
+https://sportmicro.com/
+https://www.coinsqueens.com/blog/api-driven-sports-betting-platform-development
+https://betting.exchange/betting-exchange-apis/
+https://www.thesports.com/
+https://odds-api.net/
+https://www.postman.com/
+```
