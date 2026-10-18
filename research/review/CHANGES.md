@@ -52,3 +52,8 @@ Evidence in `research/review/pnl_2026-10-17.md`: 1,999 settled phone bets and bi
 - PinnWire accounts #1-#8 were at 0/100 left; pinnapi (3 trial keys, 100/day each) was switched off. `gates.usePinnapi` set true on `cloud-config`; host order in `CloudSources` and `VigilantApp` is now pinnapi, then PinnWire; a props board skips pinnapi (it sends none) while PinnWire is usable (`PinnapiClient.boardFor`). Test: `PinnapiFirstTest`.
 - Revert: `python3 tools/engine_set.py gates.usePinnapi=false` and swap the two hosts back.
 - NOT done (a permission check blocked it twice): sending Pinnodds' REST key to GitHub (`PINNODDS_API_KEY`); Tj to type the word into a claude.ai/code session.
+
+## 2026-10-18 acct-5d1e2d (mirage): Pinnodds REST board first in the engine, PinnWire backup, pinnapi OFF (Tj chat t1792353488529)
+- Tj added `PINNODDS_API_KEY` as a repo secret himself; `cloud-scan.yml` passes it, `CloudSources` asks Pinnodds' REST board first (`gates.usePinnodds`, key present), PinnWire next, pinnapi last. No socket. `gates.usePinnapi` set false (its keys are bad). The earlier pinnapi-first edit was reverted. Test: `CloudKeysTest` (`SET_BY_HAND`), `PinnoddsFirstTest`.
+- Revert: `python3 tools/engine_set.py gates.usePinnodds=false` (PinnWire is first again).
+- Freshness vs PinnWire: to be read from the engine log after the release (see TASKS).
