@@ -5792,3 +5792,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 > 5) always remember that this system is fully in claude control. do everything necessary to optimize the app, ui, coding, and ensure the best chance at making profit. 
 > 
 > relay this message to all Claude accounts and make sure they read it as soon as they are active
+
+- [ ] TCL113 (Tj, 2026-10-18): any Claude session may change any setting/switch on the app and GitHub except STOP ALL (`killed`); engine starts on schedule even when app toggles are off. BUILT: tools/engine_set.py (writes cloud-config settings.json as claude:<acct>), CloudClaudeConfig + CloudLink.adoptClaudeConfig (phone adopts, keeps its own STOP ALL), CloudClaudeConfigTest, rules in CLAUDE.md/ROUTINE.md (class D). TODO: tests green, ship.sh release (phone adopt needs the APK), then apply bidDeployKelly 13->20 via engine_set, log CHANGES.md.
