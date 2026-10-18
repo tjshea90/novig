@@ -98,6 +98,13 @@ class SxBetStream(
 
     fun watch(hashes: Collection<String>) { watched.addAll(hashes) }
 
+    /**
+     * [b] as of [now] when the socket has been live since it was laid on the board on THIS connection: the odds channel pushes every change, so a market with no push since then is unchanged and its price
+     * still true (TCL119 / TCL122-5: the scan saw SX prices "32 min old" while the socket was live, because an unchanged market kept the time it was first read). Otherwise (not live, or laid before the
+     * current subscription) it stays as old as its own stamp. The same rule as Kalshi's ([com.tjshea.vigilant.data.kalshi.KalshiStream.trusted]).
+     */
+    fun currentAt(b: SxBetConvert.Book, now: Long): SxBetConvert.Book = if (live && oddsSubscribedAt > 0L && b.atMs >= oddsSubscribedAt) b.copy(atMs = maxOf(b.atMs, now)) else b
+
     /** Puts a REST read into the board as of its own time (only for watched markets, and never over a newer push). */
     fun seed(rows: Collection<SxBetConvert.Book>) {
         for (b in rows) {

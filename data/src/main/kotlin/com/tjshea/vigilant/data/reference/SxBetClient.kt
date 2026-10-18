@@ -138,7 +138,8 @@ class SxBetClient(
         // While the socket is live its board is current for every market it has heard; the ones it has not are read once and laid on it (no change since the subscription = still true).
         val s = stream?.takeIf { viaStream && socketOn() && it.live }
         if (s != null) {
-            val have = hashes.distinct().mapNotNull { h -> s.books[h] }.associateBy { it.marketHash }
+            val now = clock()
+            val have = hashes.distinct().mapNotNull { h -> s.books[h]?.let { b -> s.currentAt(b, now) } }.associateBy { it.marketHash }
             val missing = hashes.distinct().filter { it !in have }
             if (missing.isEmpty()) return have
             val read = books(missing, viaStream = false)
