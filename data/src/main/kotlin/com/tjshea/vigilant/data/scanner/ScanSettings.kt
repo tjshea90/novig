@@ -891,6 +891,10 @@ data class ScanSettings(
         if (s.schema < 21) {
             s = s.copy(vigGuards = s.vigGuards.copy(bidVolume = true), schema = 21)
         }
+        // v0.116 (Tj, 2026-10-18: "it should be used as one of the sharp odds sources"): SX Bet joins the sharp books once; its own switch (off by default) and a saved key decide whether it prices anything.
+        if (s.schema < 22) {
+            s = s.copy(sharpBooks = s.sharpBooks + "sxbet", schema = 22)
+        }
         return s
     }
 
@@ -1105,6 +1109,7 @@ data class ScanSettings(
             if (oddsPapi) { add("oddspapi"); add("oddspapi-props") }
             // BoltOdds Pro: its own two sources (BOLTODDS_API.md §7); off, this set is exactly what it was.
             if (gates.useBoltOdds) { add("bolt"); add("bolt-props") }
+            if (gates.useSxBet) add("sxbet")
             // Unabated Free: its own two sources, last in the order (UNABATED_API.md §3); off, this set is exactly what it was.
             if (unabated) { add("unabated"); add("unabated-props") }
             // OddsPapi Free (v4) reads whole games for the fair average only when Tj gives it a daily request figure; with 0 it is closing lines only.
@@ -1388,6 +1393,8 @@ data class ApiGates(
      * free of any per-call cost, beside every other API that is on. Off by default; off, the app is what it was and nothing is sent to BoltOdds.
      */
     val useBoltOdds: Boolean = false,
+    /** SX Bet (SXBET_API.md, Tj 2026-10-18): an exchange read as a sharp fair-line source (markets public, books need a read-only key). Off by default; off, nothing is sent to SX Bet. */
+    val useSxBet: Boolean = false,
     /** BoltOdds: price the fair line with every sportsbook it lists (not only the picked ones). */
     val boltAllBooks: Boolean = false,
     /**
