@@ -2127,8 +2127,8 @@ class AppContainer(val app: Application) {
     private val pinnacle = PinnapiClient(
         http, json,
         listOf(
-            PinnapiClient.pinnapi(KeyPool(QuotaPolicy.PINNAPI, { keyStore.current(ApiProvider.PINNAPI) }, usage), enabled = { settingsStore.flow.value?.gates?.usePinnapi != false }),
             PinnapiClient.pinnwire(KeyPool(QuotaPolicy.PINNWIRE, { keyStore.current(ApiProvider.PINNWIRE) }, usage), enabled = { settingsStore.flow.value?.gates?.usePinnwire != false }),
+            PinnapiClient.pinnapi(KeyPool(QuotaPolicy.PINNAPI, { keyStore.current(ApiProvider.PINNAPI) }, usage), enabled = { settingsStore.flow.value?.gates?.usePinnapi != false }),
         ),
         // SGO Pro mode with a Pinnodds key (Tj, 2026-10-09): Pinnodds' board is asked first, so Pinnacle's price in every scan, bid and EV is the fresh one; the others carry on if it fails.
         first = { settingsStore.flow.value?.let { s -> if (pinnoddsActive(s)) pinnoddsHost else null } },
