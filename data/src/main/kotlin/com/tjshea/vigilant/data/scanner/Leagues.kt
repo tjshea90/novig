@@ -30,6 +30,8 @@ data class League(
      * `tennis_atp`, `tennis_wta`, PARLAY_API.md §6.11).
      */
     val oddsApiListed: Boolean = true,
+    /** SX Bet `leagueId`s of this league's games (api.sx.bet `/leagues`; SXBET_API.md). Tennis has one league per tournament, so ATP and WTA are matched by [SxBetClient] on the sport and the label instead. */
+    val sxLeagueIds: List<Int> = emptyList(),
 ) {
     val tennis: Boolean get() = oddsApiSportKey.startsWith("tennis_")
 }
@@ -41,7 +43,7 @@ object Leagues {
      */
     val ALL: List<League> = listOf(
         League(
-            "NFL", "NFL", "americanfootball_nfl", "🏈", maxStartGapHours = 36, polymarketTag = 450, pinnacleSportId = 5,
+            "NFL", "NFL", "americanfootball_nfl", "🏈", sxLeagueIds = listOf(243), maxStartGapHours = 36, polymarketTag = 450, pinnacleSportId = 5,
             kalshiSeries = listOf(
                 "KXNFLGAME", "KXNFLSPREAD", "KXNFLTOTAL", "KXNFL1HSPREAD", "KXNFL1HTOTAL", "KXNFLTEAMTOTAL",
                 "KXNFLPASSYDS", "KXNFLRSHYDS", "KXNFLREC", "KXNFLRECYDS", "KXNFLRRYDS", "KXNFLTD", "KXNFLPASSTDS",
@@ -49,11 +51,11 @@ object Leagues {
             ),
         ),
         League(
-            "NCAAF", "NCAAF", "americanfootball_ncaaf", "🏈", maxStartGapHours = 36, polymarketTag = 100351, pinnacleSportId = 5,
+            "NCAAF", "NCAAF", "americanfootball_ncaaf", "🏈", sxLeagueIds = listOf(246), maxStartGapHours = 36, polymarketTag = 100351, pinnacleSportId = 5,
             kalshiSeries = listOf("KXNCAAFGAME", "KXNCAAFSPREAD", "KXNCAAFTOTAL", "KXNCAAF1HSPREAD", "KXNCAAF1HTOTAL", "KXNCAAFTEAMTOTAL"),
         ),
         League(
-            "MLB", "MLB", "baseball_mlb", "⚾", polymarketTag = 100381, pinnacleSportId = 6,
+            "MLB", "MLB", "baseball_mlb", "⚾", sxLeagueIds = listOf(171, 1180, 1190), polymarketTag = 100381, pinnacleSportId = 6,
             kalshiSeries = listOf(
                 "KXMLBGAME", "KXMLBSPREAD", "KXMLBTOTAL", "KXMLBF5SPREAD", "KXMLBF5TOTAL", "KXMLBRFI", "KXMLBTEAMTOTAL",
                 "KXMLBKS", "KXMLBTB", "KXMLBHIT", "KXMLBHR", "KXMLBHRR", "KXMLBRBI", "KXMLBSB", "KXMLBHA",
@@ -61,13 +63,13 @@ object Leagues {
             ),
         ),
         League(
-            "WNBA", "WNBA", "basketball_wnba", "🏀", polymarketTag = 100254, pinnacleSportId = 3,
+            "WNBA", "WNBA", "basketball_wnba", "🏀", sxLeagueIds = listOf(1384), polymarketTag = 100254, pinnacleSportId = 3,
             kalshiSeries = listOf(
                 "KXWNBAGAME", "KXWNBASPREAD", "KXWNBATOTAL", "KXWNBA1HSPREAD", "KXWNBA1HTOTAL", "KXWNBATEAMTOTAL",
                 "KXWNBAPTS", "KXWNBAREB", "KXWNBAAST", "KXWNBA3PT",
             ),
         ),
-        League("NHL", "NHL", "icehockey_nhl", "🏒", polymarketTag = 899, kalshiSeries = listOf("KXNHLGAME", "KXNHLSPREAD", "KXNHLTOTAL"), pinnacleSportId = 4),
+        League("NHL", "NHL", "icehockey_nhl", "🏒", sxLeagueIds = listOf(3), polymarketTag = 899, kalshiSeries = listOf("KXNHLGAME", "KXNHLSPREAD", "KXNHLTOTAL"), pinnacleSportId = 4),
         // Tennis (Tj, 2026-09-28: "It may be missing many games"): 50 matches on Novig the day it was added,
         // more than every US league together. Kalshi (free) prices the winner, Pinnacle every line. Start
         // times are loose (order of play) and Kalshi's codes carry only a date, so a day either way.
@@ -79,10 +81,10 @@ object Leagues {
             "WTA", "WTA", "tennis_wta", "🎾", maxStartGapHours = 24, pinnacleSportId = 2, oddsApiListed = false,
             kalshiSeries = listOf("KXWTAMATCH", "KXWTACHALLENGERMATCH"),
         ),
-        League("NBA", "NBA", "basketball_nba", "🏀", polymarketTag = 745, kalshiSeries = listOf("KXNBAGAME", "KXNBASPREAD", "KXNBATOTAL"), pinnacleSportId = 3),
-        League("NCAAB", "NCAAB", "basketball_ncaab", "🏀", kalshiSeries = listOf("KXNCAABGAME"), pinnacleSportId = 3),
-        League("UFC", "UFC", "mma_mixed_martial_arts", "🥊", maxStartGapHours = 12, polymarketTag = 279, kalshiSeries = listOf("KXUFCFIGHT"), pinnacleSportId = 8),
-        League("Boxing", "Boxing", "boxing_boxing", "🥊", maxStartGapHours = 12, pinnacleSportId = 9),
+        League("NBA", "NBA", "basketball_nba", "🏀", sxLeagueIds = listOf(1), polymarketTag = 745, kalshiSeries = listOf("KXNBAGAME", "KXNBASPREAD", "KXNBATOTAL"), pinnacleSportId = 3),
+        League("NCAAB", "NCAAB", "basketball_ncaab", "🏀", sxLeagueIds = listOf(2), kalshiSeries = listOf("KXNCAABGAME"), pinnacleSportId = 3),
+        League("UFC", "UFC", "mma_mixed_martial_arts", "🥊", sxLeagueIds = listOf(34, 10009), maxStartGapHours = 12, polymarketTag = 279, kalshiSeries = listOf("KXUFCFIGHT"), pinnacleSportId = 8),
+        League("Boxing", "Boxing", "boxing_boxing", "🥊", sxLeagueIds = listOf(1403, 1490), maxStartGapHours = 12, pinnacleSportId = 9),
     )
 
     private val byNovig = ALL.associateBy { it.novigName }
