@@ -22,6 +22,8 @@ full in `BRIEF.md`; `bootstrap.sh` prints a short version at session start.
 The app is **Vigilant**: Kotlin + Compose, modules `engine` / `data` / `app`,
 built and released by GitHub Actions; `BUILDLOG.md` has the current version.
 
+**Three accounts, one team: start at `research/coordination/ONE_TEAM.md`** (who may work, who answers chat, where state lives, how to change settings, one page).
+
 ## THE STANDING JOB OF EVERY CLAUDE SESSION ON EVERY ACCOUNT: make the GitHub engine as profitable as possible, without Tj (Tj, 2026-10-17, verbatim: "I've said this a million times so I want every Claude account to understand")
 
 **Tj, 2026-10-17 (chat t1792218774426, verbatim):** "I want Claude to regularly study the GitHub engine, propline historical data, scanned and saved bets from the scanners, auto bets and bids, and other information and make the GitHub engine as profitable as possible. this constant updating and fine tuning should run without me. Claude has full permission to change filters and settings and bid and bet types and amounts"
