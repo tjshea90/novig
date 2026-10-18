@@ -111,7 +111,7 @@ class ProfitChartTest {
         compose.onNodeWithTag("profitRange-TODAY").assertIsSelected()
         // The newest slate: one bet won at cost 0.5 on a $1 stake.
         compose.onNodeWithTag("profitSlateLine").assertExists()
-        compose.onNodeWithText("This slate").assertExists()
+        compose.onNodeWithText("Slate profit").assertExists()
         compose.onNodeWithTag("profitCanvas").assertExists()
         compose.onRoot().captureRoboImage("screenshots/4t_profit_chart.png")
         compose.onNodeWithTag("profitRange-YESTERDAY").performClick()

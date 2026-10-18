@@ -116,7 +116,8 @@ object ChartView {
 
 /** The profit card's views (Tj, 2026-10-18, TCL122-6): one slate (today's, yesterday's) or the last few slates day by day. A "day" is a slate of games ([SlateProfit]), never midnight to midnight. */
 enum class SlateRange(val label: String, val days: Int) {
-    TODAY("Today", 1), YESTERDAY("Yesterday", 1), WEEK("7 days", 7), MONTH("30 days", 30), ALL("All", Int.MAX_VALUE);
+    // Slate words, never the Tracker period chips' own (Today, 7 days, 30 days, All time): two chips with one name and two meanings would be a trap (StickyHeadersTest).
+    TODAY("This slate", 1), YESTERDAY("Last slate", 1), WEEK("7 slates", 7), MONTH("30 slates", 30), ALL("Every slate", Int.MAX_VALUE);
 }
 
 /**
@@ -186,7 +187,7 @@ private fun SlateView(bets: List<TrackedBet>, day: SlateProfit.Day, now: Long) {
         style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitSlateLine"),
     )
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        LabeledValue("This slate", Format.signedMoney(day.profit), valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f).testTag("profitInView"))
+        LabeledValue("Slate profit", Format.signedMoney(day.profit), valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f).testTag("profitInView"))
         LabeledValue("vs the day before", day.changePct?.let { pctText(it) } ?: "—", valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f))
         LabeledValue("Record", "${day.won}-${day.lost}", modifier = Modifier.weight(0.8f))
     }
