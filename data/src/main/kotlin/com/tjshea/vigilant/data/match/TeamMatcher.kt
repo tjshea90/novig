@@ -29,6 +29,8 @@ object TeamMatcher {
         "saint " to "st ",
         "manchester" to "man",
         "a and m" to "am",
+        // The school's legal name is Sam Houston State; SX Bet and others print "Sam Houston Bearkats" (2026-10-18, SxBetMappingTest): one team, and no other team is "Sam Houston".
+        "sam houston state" to "sam houston",
     )
 
     private val ALIASES = mapOf(

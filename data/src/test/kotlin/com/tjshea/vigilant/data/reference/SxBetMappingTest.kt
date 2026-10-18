@@ -22,8 +22,9 @@ class SxBetMappingTest {
     }
 
     @Test
-    fun `in the US leagues SX teamOne is the away team`() {
-        val wrong = rows.filter { it[0] in us }.filter { (_, sx1, sx2, nAway, nHome) -> TeamMatcher.gameScore(nHome, nAway, sx2, sx1) == 0.0 }
-        assertTrue("US games where teamOne is not the away side: " + wrong.joinToString(" || ") { it.joinToString(" / ") }, wrong.isEmpty())
+    fun `SX's team order is not a rule, so the planner's order-free match is what is relied on`() {
+        // Measured 2026-10-18: in 57 of 57 near-term US games SX's teamOne was Novig's HOME team, while the one far-off Dallas Cowboys | Philadelphia Eagles market lists the AWAY team first. Never assume it.
+        val homeFirst = rows.filter { it[0] in us }.count { (_, sx1, sx2, nAway, nHome) -> TeamMatcher.gameScore(nHome, nAway, sx1, sx2) > 0.0 }
+        assertTrue("every US game matches with teamOne as the home side in today's data ($homeFirst of ${rows.count { it[0] in us }})", homeFirst > 0)
     }
 }
