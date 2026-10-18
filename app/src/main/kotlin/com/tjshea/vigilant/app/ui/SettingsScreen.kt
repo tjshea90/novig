@@ -2607,6 +2607,14 @@ private fun PinnFeedChooser(state: UiState, onUpdate: ((ScanSettings) -> ScanSet
             g.boltLiveReal, tag = "boltLiveReal",
         ) { v -> setG { it.copy(boltLiveReal = v) } }
     }
+    if (w.sx) {
+        val g = state.settings.gates
+        SwitchRow(
+            "Allow REAL orders on the SX Bet exchange mid",
+            "Off (the default) = it decides, journals and follows up but sends nothing, and real live bets and bids stay paper whatever their own switches say. SX Bet needs its read-only key and socket on (Settings › APIs).",
+            g.sxLiveReal, tag = "sxLiveReal",
+        ) { v -> onUpdate { it.copy(gates = it.gates.copy(sxLiveReal = v)) } }
+    }
     SwitchRow("Compare the website feed with the socket", "Runs the free website feed beside the Pinnodds socket and times every price version against it (it drives nothing). Needs the socket on.", w.compare && !w.website, tag = "pinnCompare") { v -> set { it.copy(compare = v) } }
     Text("Website feed pace: a pause between polls of each live game", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
