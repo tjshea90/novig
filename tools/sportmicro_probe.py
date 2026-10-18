@@ -9,6 +9,9 @@ Output: out/sportmicro/{rest.json,frames-<sport>.jsonl,espn.jsonl,REPORT.txt}. S
 """
 import asyncio, json, os, sys, time, urllib.request, urllib.error
 
+# Cloudflare answered "error code: 1010" (browser signature banned) to the default Python user agent on 2026-10-18: send an ordinary one.
+UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+
 SPORTS = {"basketball": "basketball/nba", "hockey": "hockey/nhl", "american-football": "football/nfl"}
 REST_PATHS = ["matches-live", "matches", "live", "matches/live"]
 
@@ -37,7 +40,7 @@ def first_seen(changes):
 
 
 def http_get(url, headers=None, timeout=15):
-    req = urllib.request.Request(url, headers=headers or {})
+    req = urllib.request.Request(url, headers=dict({"User-Agent": UA}, **(headers or {})))
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, r.read(200000).decode("utf-8", "replace")
@@ -67,7 +70,7 @@ async def listen(key, sport, seconds, out, log):
     with open(path, "w") as f:
         while time.time() < end:
             try:
-                async with websockets.connect(url, subprotocols=["updates"], open_timeout=15, ping_interval=20) as ws:
+                async with websockets.connect(url, subprotocols=["updates"], user_agent_header=UA, open_timeout=15, ping_interval=20) as ws:
                     log.append("%s: connected" % sport)
                     while time.time() < end:
                         try:
