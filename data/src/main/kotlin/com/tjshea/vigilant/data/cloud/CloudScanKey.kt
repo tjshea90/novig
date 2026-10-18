@@ -63,7 +63,7 @@ object CloudScanKey {
         "gates.cloudTrading", "gates.cloudKelly", "gates.cloudBetCap", "gates.cloudGameCap", "gates.cloudWalletUse", "gates.cloudDayStop",
         "gates.pinnSocket", "gates.kalshiSocket", "gates.novigOrderPush", "gates.novigSocketOrders", "gates.moneyDeposited",
         "gates.streamScan", "gates.streamGapSeconds", "gates.streamLive", "gates.boltLiveMinCompanies",
-        "gates.boltLiveMaxAgeSeconds", "gates.boltLiveMaxSpreadPoints", "gates.boltLiveReal",
+        "gates.boltLiveMaxAgeSeconds", "gates.boltLiveMaxSpreadPoints", "gates.boltLiveReal", "gates.sxLiveReal",
         // vigGuards: the auto-bet's own rules (the bid desk's are in [bids])
         "vigGuards.autoBetVigilant", "vigGuards.autoBetMinStars", "vigGuards.autoBetOverPropExtraEv", "vigGuards.betArchive", "vigGuards.betLevel",
     )

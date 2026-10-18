@@ -19,7 +19,7 @@ import com.tjshea.vigilant.data.pinnodds.LiveTradeRules
 import com.tjshea.vigilant.data.pinnodds.LiveTrigger
 import com.tjshea.vigilant.data.pinnodds.PinnLiveRunner
 import com.tjshea.vigilant.data.pinnodds.PinnLiveTrader
-import com.tjshea.vigilant.data.boltodds.BoltLiveFeed
+import com.tjshea.vigilant.data.pinnodds.PinnFeedSource
 import com.tjshea.vigilant.data.scanner.CloudTradeMode
 import com.tjshea.vigilant.data.scanner.Leagues
 import com.tjshea.vigilant.data.scanner.ScanSettings
@@ -47,7 +47,7 @@ class CloudPinnLane(
     private val scope: CoroutineScope,
     private val source: NovigSource,
     private val stream: () -> NovigStream?,
-    private val feed: (settings: () -> ScanSettings, sink: (String, Long) -> Unit, rules: () -> BoltLiveConsensus.Rules) -> BoltLiveFeed,
+    private val feed: (settings: () -> ScanSettings, sink: (String, Long) -> Unit, rules: () -> BoltLiveConsensus.Rules) -> PinnFeedSource,
     private val orders: TradingLiveOrders?,
     private val port: CloudOrderPort?,
     private val dir: File,
@@ -206,9 +206,11 @@ class CloudPinnLane(
         const val BOLT_LIVE_SETTLE_MS = 1_500L
 
         fun takerOn(s: ScanSettings) = s.engineLive && s.pinnLive
-        fun takerReal(s: ScanSettings) = takerOn(s) && s.pinnLiveBet && s.gates.cloudTrading == CloudTradeMode.LIVE && s.gates.boltLiveReal
+        /** The real-orders gate of the feed the engine is on (SX Bet's own, else the soft-book average's). */
+        fun feedReal(s: ScanSettings) = if (s.pinnWebsite.sx) s.gates.sxLiveReal else s.gates.boltLiveReal
+        fun takerReal(s: ScanSettings) = takerOn(s) && s.pinnLiveBet && s.gates.cloudTrading == CloudTradeMode.LIVE && feedReal(s)
         fun bidsOn(s: ScanSettings) = s.engineLive && s.liveBid
-        fun bidsReal(s: ScanSettings) = bidsOn(s) && s.liveBidReal && s.gates.cloudTrading == CloudTradeMode.LIVE && s.gates.boltLiveReal
+        fun bidsReal(s: ScanSettings) = bidsOn(s) && s.liveBidReal && s.gates.cloudTrading == CloudTradeMode.LIVE && feedReal(s)
         fun wanted(s: ScanSettings) = takerOn(s) || bidsOn(s)
     }
 }

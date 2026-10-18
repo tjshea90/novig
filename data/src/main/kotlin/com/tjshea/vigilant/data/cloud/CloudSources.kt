@@ -169,6 +169,12 @@ class CloudSources(
             board = boltFeed.lines.board, socketLive = { boltFeed.lines.live }, ensureOpen = { boltFeed.arrange(settings()); boltFeed.lines.use() }, sink = sink, scope = scope, rules = rules,
         ).also { boltFeed.liveTennis = true }
 
+    /** SX Bet's exchange mid as a live price feed (TCL118); null without the SX socket (no key / no scope). */
+    fun sxLiveFeed(settings: () -> ScanSettings, sink: (String, Long) -> Unit, scope: kotlinx.coroutines.CoroutineScope): com.tjshea.vigilant.data.sxbet.SxBetLiveFeed? {
+        val st = sxbet.stream ?: return null
+        return com.tjshea.vigilant.data.sxbet.SxBetLiveFeed(st, sxbet, ensureOpen = { sxSocketWanted = true; st.open() }, sink = sink, scope = scope)
+    }
+
     /** SX Bet's socket (null without a scope): the engine hangs its research recorder on it. */
     val sxStream: com.tjshea.vigilant.data.sxbet.SxBetStream? get() = sxbet.stream
 

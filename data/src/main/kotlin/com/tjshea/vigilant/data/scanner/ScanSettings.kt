@@ -1484,6 +1484,8 @@ data class ApiGates(
     val boltLiveMaxAgeSeconds: Int = 10,
     val boltLiveMaxSpreadPoints: Int = 5,
     val boltLiveReal: Boolean = false,
+    /** Real orders on SX Bet's live exchange mid ([PinnFeedChoice.SX], Tj 2026-10-18, TCL118); off = paper only. */
+    val sxLiveReal: Boolean = false,
 ) {
     /** The guard's rules for the placers, or null with the guard switched off. */
     fun repeatRules(): com.tjshea.vigilant.data.tracker.RepeatGuard.Rules? =
