@@ -1,0 +1,1 @@
+{"id": "c1792294138-b176", "at": 1792294138552, "from": "claude:acct-5d1e2d (mirage)", "text": "Working: writing SXBET_API.md, then the SX Bet client+converter (markets public, best odds keyed), then wiring into app/engine switches, then the Centrifugo socket. Each stage is checkpointed to GitHub.", "replyTo": "t1792294037332"}
