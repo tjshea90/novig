@@ -5777,3 +5777,4 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL111e (SxBetStream + SxBetStreamTest, gates.sxSocket, ApiEntry socket switch; full floor green) Centrifugo WebSocket (best_odds_v3:global + orderbook + fixtures:live_scores + main_line:global) in data/ (OkHttp, JSON protocol), app socket switch (ApiEntry.hasSocket), engine
 - [ ] TCL111f Live lane: SX live scores + books as live fair; Test key button saving a real sample (verify the showTakerPerspective frame; NOT YET RUN WITH A KEY)
 - [ ] TCL111g Tj: create read-only key, paste in Settings > SX Bet, Send my API keys to GitHub
+- [ ] TCL111h After the engine's first full scan with SX (run 39096482847+): read status.scanNote / engine-log for SX books read, check asks sum 1.00-1.06 and that SX quotes appear in lines-*.csv.gz; if the frame is wrong fix SxBetConvert.takerBook (the key is in Tj's app, Test saved nothing yet)
