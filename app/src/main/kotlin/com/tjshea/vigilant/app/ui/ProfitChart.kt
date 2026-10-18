@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.tjshea.vigilant.data.tracker.ProfitSeries
+import com.tjshea.vigilant.data.tracker.SlateProfit
 import com.tjshea.vigilant.data.tracker.TrackedBet
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -114,208 +115,217 @@ object ChartView {
     }
 }
 
+/** The profit card's views (Tj, 2026-10-18, TCL122-6): one slate (today's, yesterday's) or the last few slates day by day. A "day" is a slate of games ([SlateProfit]), never midnight to midnight. */
+enum class SlateRange(val label: String, val days: Int) {
+    TODAY("Today", 1), YESTERDAY("Yesterday", 1), WEEK("7 days", 7), MONTH("30 days", 30), ALL("All", Int.MAX_VALUE);
+}
+
 /**
- * The Stats tab's profit graph (Tj, 2026-10-10): running profit over time, with quick ranges like a stock chart (Today, Yesterday, 2 days, 3 days, This week, 7 days, 30 days, All time), pinch to zoom,
- * drag to scroll left and right, tap a point to read it, double-tap to go back to the range, and a full-screen view. The numbers above the line are what happened INSIDE the window being looked at.
+ * The Tracker's profit card (Tj, 2026-10-18, TCL122-6: "make the profit/loss graph easier to understand. make an option to see the graph for today only ... make sure the profit/loss math is sound"):
+ *  - the balance, from ONE fixed start (the money staked on the first slate logged), and the change since;
+ *  - Today / Yesterday: that slate alone, from its first game to its last result, as a running line from 0, with the change over the balance it started from;
+ *  - 7 days / 30 days / All: one bar per slate (green up, red down) and the change over the balance before the first of them;
+ *  - a day-by-day list under it. Tap the line or a bar to read it.
  */
 @Composable
 fun ProfitChartCard(bets: List<TrackedBet>, modifier: Modifier = Modifier) {
     val now = rememberNow(60_000)
-    var range by rememberSaveable { mutableStateOf(ProfitSeries.Range.ALL) }
-    var full by rememberSaveable { mutableStateOf(false) }
+    var range by rememberSaveable { mutableStateOf(SlateRange.TODAY) }
+    val book = remember(bets, now / 60_000L) { SlateProfit.book(bets, now) }
     Card(modifier.fillMaxWidth().testTag("profitChart"), shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ProfitChartBody(bets, now, range, { range = it }, tall = false, onFull = { full = true })
-        }
-    }
-    if (full) {
-        Dialog(onDismissRequest = { full = false }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-            Surface(Modifier.fillMaxSize().testTag("profitChartFull"), color = MaterialTheme.colorScheme.background) {
-                Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Profit", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                        TextButton(onClick = { full = false }, modifier = Modifier.testTag("profitChartClose")) { Text("Close") }
-                    }
-                    ProfitChartBody(bets, now, range, { range = it }, tall = true, onFull = null)
-                }
-            }
+            ProfitCardBody(bets, book, now, range) { range = it }
         }
     }
 }
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun androidx.compose.foundation.layout.ColumnScope.ProfitChartBody(bets: List<TrackedBet>, now: Long, range: ProfitSeries.Range, onRange: (ProfitSeries.Range) -> Unit, tall: Boolean, onFull: (() -> Unit)?) {
-    val points = remember(bets) { ProfitSeries.points(bets) }
-    val firstMs = points.firstOrNull()?.tMs ?: now
-    val minT = firstMs.coerceAtMost(now - ProfitSeries.DAY_MS)
-    val maxT = maxOf(now, points.lastOrNull()?.tMs ?: now)
-    val zone = remember { ZoneId.systemDefault() }
-    val preset = remember(range, now / 60_000L, firstMs) { range.bounds(now, firstMs, zone).let { (a, b) -> ChartView.clamp(ChartView.Window(a, b), minT, maxT) } }
-    var startMs by remember(range, firstMs) { mutableLongStateOf(preset.start) }
-    var endMs by remember(range, firstMs) { mutableLongStateOf(preset.end) }
-    // The preset's end follows the clock while Tj has not touched the window.
-    var touched by remember(range, firstMs) { mutableStateOf(false) }
-    LaunchedEffect(preset, touched) { if (!touched) { startMs = preset.start; endMs = preset.end } }
-    val view = ChartView.Window(startMs, endMs)
-    var selected by remember(range, firstMs) { mutableStateOf<ProfitSeries.Point?>(null) }
-    val inView = remember(points, startMs, endMs) { ProfitSeries.window(points, startMs, endMs) }
-    val change = inView.profit
-
-    // The card has its own title and the full-screen button; the full-screen view has a title bar already.
-    if (onFull != null) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text("Profit", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-        TextButton(onClick = onFull, modifier = Modifier.testTag("profitFullScreen")) { Text("Full screen") }
-    }
-    // Wrapped, not a scrolling row: every range is on screen (a chip off the edge is a control nobody finds).
-    androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        ProfitSeries.Range.entries.forEach { r ->
-            FilterChip(selected = r == range && !touched, onClick = { touched = false; onRange(r); if (r == range) { startMs = preset.start; endMs = preset.end } }, label = { Text(r.label, maxLines = 1) }, modifier = Modifier.testTag("profitRange-${r.name}").semantics { contentDescription = r.long })
+private fun ProfitCardBody(bets: List<TrackedBet>, book: SlateProfit.Book, now: Long, range: SlateRange, onRange: (SlateRange) -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+        Column(Modifier.weight(1f)) {
+            Text("Profit and loss", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text("Balance ${Format.money(book.balance)}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.testTag("profitBalance"))
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(Format.signedMoney(book.profit), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = moneyColor(book.profit))
+            Text(book.pct?.let { pctText(it) + " all time" } ?: "all time", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        LabeledValue("Profit in view", Format.signedMoney(change), valueColor = moneyColor(change), modifier = Modifier.weight(1.3f).testTag("profitInView"))
-        LabeledValue("Per $ staked", inView.roi?.let { Format.evPercent(it) } ?: "—", valueColor = moneyColor(inView.roi ?: 0.0), modifier = Modifier.weight(1f))
-        LabeledValue("Staked", Format.money(inView.staked), modifier = Modifier.weight(1f))
-        LabeledValue("Settled", "${inView.bets}", modifier = Modifier.weight(0.6f))
-    }
-    val sel = selected
     Text(
-        if (sel != null) "${SimpleDateFormat("EEE MMM d, h:mm a", Locale.US).format(Date(sel.tMs))} · profit so far ${Format.signedMoney(sel.cum)} · this bet ${Format.signedMoney(sel.profit)} on ${Format.money(sel.stake)}"
-        else (if (touched) "Zoomed or scrolled" else range.long) + ": ${SimpleDateFormat("MMM d h:mm a", Locale.US).format(Date(startMs))} to ${SimpleDateFormat("MMM d h:mm a", Locale.US).format(Date(endMs))}. " +
-            "Pinch to zoom, drag to scroll, tap a point to read it, double-tap to reset. Profit so far: ${Format.signedMoney(ProfitSeries.valueAt(points, endMs))}.",
-        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitChartReadout"),
+        if (book.days.isEmpty()) "No bets yet."
+        else "Started at ${Format.money(book.start)}: the money staked on the first day logged (${dayName(book.days.first().date)}). It never changes, so staking more never looks like a deposit.",
+        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-    if (points.size < 2) {
-        Text("The graph needs two settled bets.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        return
+    androidx.compose.foundation.layout.FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        SlateRange.entries.forEach { r ->
+            FilterChip(selected = r == range, onClick = { onRange(r) }, label = { Text(r.label, maxLines = 1) }, modifier = Modifier.testTag("profitRange-${r.name}"))
+        }
     }
-    ProfitCanvas(
-        points, view, minT, maxT, selected,
-        modifier = Modifier.fillMaxWidth().then(if (tall) Modifier.weight(1f) else Modifier.height(220.dp)),
-        onTransform = { focus, dx, zoom ->
-            touched = true
-            selected = null
-            val w = ChartView.zoom(view, focus, zoom.toDouble(), minT, maxT).let { ChartView.pan(it, dx.toDouble(), minT, maxT) }
-            startMs = w.start; endMs = w.end
-        },
-        onTap = { selected = it },
-        onReset = { touched = false; startMs = preset.start; endMs = preset.end; selected = null },
-    )
+    if (book.days.isEmpty()) return
+    when (range) {
+        SlateRange.TODAY, SlateRange.YESTERDAY -> {
+            val cur = SlateProfit.current(book, now)
+            val day = if (range == SlateRange.TODAY) cur else SlateProfit.previous(book, cur)
+            if (day == null) { Text("No slate before this one yet.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant); return }
+            SlateView(bets, day, now)
+        }
+        else -> {
+            val days = SlateProfit.lastDays(book, now, range.days)
+            DaysView(days)
+        }
+    }
 }
 
+/** One slate: its numbers, its running line from its first game to its last result, and what it did to the balance. */
 @Composable
-private fun ProfitCanvas(
-    points: List<ProfitSeries.Point>, view: ChartView.Window, minT: Long, maxT: Long, selected: ProfitSeries.Point?, modifier: Modifier,
-    onTransform: (focus: Double, dxFraction: Float, zoom: Float) -> Unit, onTap: (ProfitSeries.Point?) -> Unit, onReset: () -> Unit,
-) {
+private fun SlateView(bets: List<TrackedBet>, day: SlateProfit.Day, now: Long) {
+    val points = remember(bets, day.date) { SlateProfit.curve(bets, day.date) }
+    val fmt = remember { SimpleDateFormat("h:mm a", Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("America/New_York") } }
+    Text(
+        "${dayName(day.date)} slate · first game ${fmt.format(Date(day.firstStartMs))}" + if (day.finished) " · last result ${fmt.format(Date(day.endMs))}" else " · ${day.open} still open",
+        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitSlateLine"),
+    )
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        LabeledValue("This slate", Format.signedMoney(day.profit), valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f).testTag("profitInView"))
+        LabeledValue("vs the day before", day.changePct?.let { pctText(it) } ?: "—", valueColor = moneyColor(day.profit), modifier = Modifier.weight(1.2f))
+        LabeledValue("Record", "${day.won}-${day.lost}", modifier = Modifier.weight(0.8f))
+    }
+    Text(
+        "Started the slate at ${Format.money(day.startBalance)}, " + (if (day.finished) "ended at " else "now at ") + "${Format.money(day.endBalance)}. ${day.settled} settled on ${Format.money(day.staked)} staked.",
+        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitChartReadout"),
+    )
+    if (points.isEmpty()) {
+        Text("No results in yet: the line starts with the first one.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        return
+    }
+    var selected by remember(day.date) { mutableStateOf<SlateProfit.Point?>(null) }
+    selected?.let { p -> Text("${fmt.format(Date(p.tMs))} · ${p.label} ${Format.signedMoney(p.profit)} on ${Format.money(p.stake)} · slate so far ${Format.signedMoney(p.cum)}", style = MaterialTheme.typography.labelSmall) }
+    SlateLine(points, day.firstStartMs, maxOf(day.endMs, points.last().tMs), selected, { selected = it }, Modifier.fillMaxWidth().height(200.dp))
+}
+
+/** Several slates: one bar each, then the list. */
+@Composable
+private fun DaysView(days: List<SlateProfit.Day>) {
+    if (days.isEmpty()) return
+    val profit = days.sumOf { it.profit }
+    val from = days.first().startBalance
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        LabeledValue("${days.size} slate${if (days.size == 1) "" else "s"}", Format.signedMoney(profit), valueColor = moneyColor(profit), modifier = Modifier.weight(1.2f).testTag("profitInView"))
+        LabeledValue("vs the start of it", if (from > 0) pctText(profit / from) else "—", valueColor = moneyColor(profit), modifier = Modifier.weight(1.2f))
+        LabeledValue("Up / down days", "${days.count { it.profit > 0.005 }} / ${days.count { it.profit < -0.005 }}", modifier = Modifier.weight(1f))
+    }
+    Text("From ${Format.money(from)} to ${Format.money(days.last().endBalance)}. Each bar is one slate of games (first game to last result).", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("profitChartReadout"))
+    var selected by remember(days) { mutableStateOf<SlateProfit.Day?>(null) }
+    selected?.let { d -> Text("${dayName(d.date)}: ${Format.signedMoney(d.profit)} (${d.changePct?.let { pctText(it) } ?: "—"}) · balance ${Format.money(d.endBalance)} · ${d.won}-${d.lost}" + if (d.open > 0) " · ${d.open} open" else "", style = MaterialTheme.typography.labelSmall) }
+    DayBars(days, selected, { selected = it }, Modifier.fillMaxWidth().height(180.dp))
+    Text("Day by day", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
+    days.asReversed().take(MAX_LIST_DAYS).forEach { d ->
+        Row(Modifier.fillMaxWidth().testTag("profitDay-${d.date}"), verticalAlignment = Alignment.CenterVertically) {
+            Text(dayName(d.date), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+            Text(Format.signedMoney(d.profit), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, color = moneyColor(d.profit), modifier = Modifier.padding(end = 8.dp))
+            Text(d.changePct?.let { pctText(it) } ?: "—", style = MaterialTheme.typography.labelSmall, color = moneyColor(d.profit), modifier = Modifier.padding(end = 8.dp))
+            Text(Format.money(d.endBalance), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+    if (days.size > MAX_LIST_DAYS) Text("…and ${days.size - MAX_LIST_DAYS} earlier slates.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+private const val MAX_LIST_DAYS = 30
+
+private fun pctText(x: Double) = (if (x >= 0) "+" else "") + String.format(Locale.US, "%.1f%%", x * 100)
+
+private fun dayName(d: java.time.LocalDate): String = d.format(java.time.format.DateTimeFormatter.ofPattern("EEE MMM d", Locale.US))
+
+/** The slate's running profit: a line from 0 at its first game, one step per result, with a labelled zero (where the slate started). */
+@Composable
+private fun SlateLine(points: List<SlateProfit.Point>, startMs: Long, endMs: Long, selected: SlateProfit.Point?, onTap: (SlateProfit.Point?) -> Unit, modifier: Modifier) {
     val up = Edge.colors.positive
     val down = Edge.colors.negative
     val axis = MaterialTheme.colorScheme.outlineVariant
     val label = MaterialTheme.colorScheme.onSurfaceVariant
     val labelPx = with(androidx.compose.ui.platform.LocalDensity.current) { 11.dp.toPx() }
-    val zone = remember { ZoneId.systemDefault() }
-    // The gesture detectors must not restart while a gesture changes the view (a key on it would cancel the drag that made the change): they read the newest values through these.
-    val transform by androidx.compose.runtime.rememberUpdatedState(onTransform)
     val tap by androidx.compose.runtime.rememberUpdatedState(onTap)
-    val reset by androidx.compose.runtime.rememberUpdatedState(onReset)
-    val liveView by androidx.compose.runtime.rememberUpdatedState(view)
-    val livePoints by androidx.compose.runtime.rememberUpdatedState(points)
-    val desc = "Profit graph from ${SimpleDateFormat("MMM d h:mm a", Locale.US).format(Date(view.start))} to ${SimpleDateFormat("MMM d h:mm a", Locale.US).format(Date(view.end))}"
+    val span = (endMs - startMs).coerceAtLeast(60_000L)
+    val fmt = remember { SimpleDateFormat("h:mm a", Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("America/New_York") } }
     Box(
-        modifier
-            .semantics { contentDescription = desc }
-            .testTag("profitCanvas")
-            .pointerInput(Unit) {
-                // Pinch (two fingers) and a sideways drag (one finger) belong to the chart; an up-and-down drag is left to the list, so the Stats tab still scrolls over the graph.
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false)
-                    var panning = false
-                    var totalX = 0f
-                    var totalY = 0f
-                    val slop = viewConfiguration.touchSlop
-                    do {
-                        val event = awaitPointerEvent()
-                        val pressed = event.changes.count { it.pressed }
-                        if (pressed >= 2) {
-                            val z = event.calculateZoom()
-                            val pan = event.calculatePan()
-                            val c = event.calculateCentroid()
-                            if (z != 1f || pan.x != 0f) {
-                                transform((c.x / size.width).toDouble(), pan.x / size.width, z)
-                                event.changes.forEach { if (it.positionChange() != Offset.Zero) it.consume() }
-                            }
-                            panning = true
-                        } else if (pressed == 1) {
-                            val ch = event.changes.first { it.pressed }
-                            val d = ch.positionChange()
-                            totalX += d.x; totalY += d.y
-                            if (!panning && abs(totalX) > slop && abs(totalX) > abs(totalY)) panning = true
-                            if (panning && d.x != 0f) { transform((ch.position.x / size.width).toDouble(), d.x / size.width, 1f); ch.consume() }
-                        }
-                    } while (event.changes.any { it.pressed })
+        modifier.testTag("profitCanvas").semantics { contentDescription = "This slate's profit, from ${fmt.format(Date(startMs))} to ${fmt.format(Date(endMs))}" }
+            .pointerInput(points, startMs, span) {
+                detectTapGestures { pos ->
+                    val t = startMs + (pos.x / size.width) * span
+                    tap(points.minByOrNull { abs(it.tMs - t) })
                 }
-            }
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onDoubleTap = { reset() },
-                    onTap = { pos ->
-                        val t = liveView.start + (pos.x / size.width) * liveView.span
-                        val i = ProfitSeries.firstAtOrAfter(livePoints, t.toLong())
-                        val near = listOfNotNull(livePoints.getOrNull(i - 1), livePoints.getOrNull(i)).minByOrNull { abs(it.tMs - t) }
-                        tap(near)
-                    },
-                )
             },
     ) {
         Canvas(Modifier.fillMaxSize()) {
-            val w = size.width
-            val h = size.height
-            val padL = 4f
-            val padB = labelPx * 2.2f
-            val padT = labelPx * 1.2f
+            val w = size.width; val h = size.height
+            val padB = labelPx * 2.2f; val padT = labelPx * 1.2f
             val plotH = h - padB - padT
-            // Visible values: the curve inside the window plus its value at both edges, so the line runs to the edges.
-            val i0 = ProfitSeries.firstAtOrAfter(points, view.start)
-            val i1 = ProfitSeries.firstAtOrAfter(points, view.end + 1)
-            val leftV = ProfitSeries.valueAt(points, view.start)
-            val rightV = ProfitSeries.valueAt(points, view.end)
-            var lo = minOf(leftV, rightV)
-            var hi = maxOf(leftV, rightV)
-            for (k in i0 until i1) { lo = minOf(lo, points[k].cum); hi = maxOf(hi, points[k].cum) }
+            var lo = minOf(0.0, points.minOf { it.cum }); var hi = maxOf(0.0, points.maxOf { it.cum })
             if (hi - lo < 1e-9) { lo -= 1.0; hi += 1.0 }
-            val pad = (hi - lo) * 0.08
-            lo -= pad; hi += pad
-            fun x(t: Long) = padL + ((t - view.start).toDouble() / view.span * (w - padL)).toFloat()
+            val pad = (hi - lo) * 0.1; lo -= pad; hi += pad
+            fun x(t: Long) = ((t - startMs).toDouble() / span * w).toFloat().coerceIn(0f, w)
             fun y(v: Double) = padT + (plotH * (1 - (v - lo) / (hi - lo))).toFloat()
-            // Zero line, when zero is in view.
-            if (lo < 0 && hi > 0) drawLine(axis, Offset(padL, y(0.0)), Offset(w, y(0.0)), strokeWidth = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
-            // The line: from the value at the left edge, through every bet in view (thinned to about one point a pixel), to the value at the right edge.
-            val path = Path()
-            path.moveTo(x(view.start), y(leftV))
-            val stride = ((i1 - i0) / (w / 1.5f)).toInt().coerceAtLeast(1)
-            var k = i0
-            while (k < i1) { path.lineTo(x(points[k].tMs), y(points[k].cum)); k += stride }
-            if (i1 > i0) path.lineTo(x(points[i1 - 1].tMs), y(points[i1 - 1].cum))
-            path.lineTo(x(view.end), y(rightV))
-            drawPath(path, if (rightV >= leftV) up else down, style = Stroke(width = 2.dp.toPx()))
-            selected?.takeIf { it.tMs in view.start..view.end }?.let { s ->
-                drawLine(axis, Offset(x(s.tMs), padT), Offset(x(s.tMs), padT + plotH), strokeWidth = 1.dp.toPx())
-                drawCircle(if (s.cum >= 0) up else down, 4.dp.toPx(), Offset(x(s.tMs), y(s.cum)))
-            }
-            // Labels: the top and bottom values, and times along the bottom.
+            drawLine(axis, Offset(0f, y(0.0)), Offset(w, y(0.0)), strokeWidth = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
+            // A step line: flat until a result comes in, then its jump (a bet's money moves when it settles, not before).
+            val path = Path(); path.moveTo(0f, y(0.0))
+            var prev = 0.0
+            for (p in points) { path.lineTo(x(p.tMs), y(prev)); path.lineTo(x(p.tMs), y(p.cum)); prev = p.cum }
+            path.lineTo(w, y(prev))
+            drawPath(path, if (prev >= 0) up else down, style = Stroke(width = 2.dp.toPx()))
+            drawCircle(if (prev >= 0) up else down, 3.5.dp.toPx(), Offset(x(points.last().tMs), y(prev)))
+            selected?.let { s -> drawLine(axis, Offset(x(s.tMs), padT), Offset(x(s.tMs), padT + plotH), strokeWidth = 1.dp.toPx()); drawCircle(if (s.cum >= 0) up else down, 4.dp.toPx(), Offset(x(s.tMs), y(s.cum))) }
             val paint = android.graphics.Paint().apply { color = label.toArgb(); textSize = labelPx; isAntiAlias = true }
-            drawContext.canvas.nativeCanvas.drawText(Format.signedMoney(hi - pad), padL + 2f, padT + labelPx, paint)
-            drawContext.canvas.nativeCanvas.drawText(Format.signedMoney(lo + pad), padL + 2f, padT + plotH - 2f, paint)
-            val fmtDay = SimpleDateFormat("MMM d", Locale.US)
-            val fmtHour = SimpleDateFormat("h a", Locale.US)
-            val perTick = 5
-            ChartView.ticks(view, perTick, zone).forEach { t ->
-                val tx = x(t)
-                drawLine(axis, Offset(tx, padT + plotH), Offset(tx, padT + plotH + 4.dp.toPx()), strokeWidth = 1.dp.toPx())
-                val text = if (view.span > 2 * ProfitSeries.DAY_MS) fmtDay.format(Date(t)) else if (Instant.ofEpochMilli(t).atZone(zone).hour == 0) fmtDay.format(Date(t)) else fmtHour.format(Date(t))
-                val tw = paint.measureText(text)
-                drawContext.canvas.nativeCanvas.drawText(text, (tx - tw / 2).coerceIn(0f, w - tw), h - labelPx * 0.4f, paint)
+            val nc = drawContext.canvas.nativeCanvas
+            nc.drawText("0 (slate start)", 4f, y(0.0) - 4f, paint)
+            nc.drawText(Format.signedMoney(prev), (w - paint.measureText(Format.signedMoney(prev)) - 4f).coerceAtLeast(0f), (y(prev) - 6f).coerceAtLeast(labelPx), paint)
+            val a = fmt.format(Date(startMs)); val b = fmt.format(Date(endMs))
+            nc.drawText(a, 0f, h - labelPx * 0.4f, paint)
+            nc.drawText(b, w - paint.measureText(b), h - labelPx * 0.4f, paint)
+        }
+    }
+}
+
+/** One bar per slate around a labelled zero; the tapped one is outlined. */
+@Composable
+private fun DayBars(days: List<SlateProfit.Day>, selected: SlateProfit.Day?, onTap: (SlateProfit.Day?) -> Unit, modifier: Modifier) {
+    val up = Edge.colors.positive
+    val down = Edge.colors.negative
+    val axis = MaterialTheme.colorScheme.outlineVariant
+    val label = MaterialTheme.colorScheme.onSurfaceVariant
+    val ink = MaterialTheme.colorScheme.onSurface
+    val labelPx = with(androidx.compose.ui.platform.LocalDensity.current) { 11.dp.toPx() }
+    val tap by androidx.compose.runtime.rememberUpdatedState(onTap)
+    Box(
+        modifier.testTag("profitBars").semantics { contentDescription = "Profit of each of the last ${days.size} slates" }
+            .pointerInput(days) { detectTapGestures { pos -> tap(days.getOrNull((pos.x / size.width * days.size).toInt().coerceIn(0, days.size - 1))) } },
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            val w = size.width; val h = size.height
+            val padB = labelPx * 2.2f; val padT = labelPx * 1.2f
+            val plotH = h - padB - padT
+            var lo = minOf(0.0, days.minOf { it.profit }); var hi = maxOf(0.0, days.maxOf { it.profit })
+            if (hi - lo < 1e-9) { lo -= 1.0; hi += 1.0 }
+            fun y(v: Double) = padT + (plotH * (1 - (v - lo) / (hi - lo))).toFloat()
+            val slot = w / days.size
+            val bar = (slot * 0.7f).coerceAtMost(28.dp.toPx())
+            days.forEachIndexed { i, d ->
+                val cx = slot * i + slot / 2
+                val top = y(maxOf(d.profit, 0.0)); val bottom = y(minOf(d.profit, 0.0))
+                drawRect(if (d.profit >= 0) up else down, Offset(cx - bar / 2, top), androidx.compose.ui.geometry.Size(bar, (bottom - top).coerceAtLeast(1.5f)))
+                if (d == selected) drawRect(ink, Offset(cx - bar / 2, top), androidx.compose.ui.geometry.Size(bar, (bottom - top).coerceAtLeast(1.5f)), style = Stroke(1.5.dp.toPx()))
+            }
+            drawLine(axis, Offset(0f, y(0.0)), Offset(w, y(0.0)), strokeWidth = 1.dp.toPx())
+            val paint = android.graphics.Paint().apply { color = label.toArgb(); textSize = labelPx; isAntiAlias = true }
+            val nc = drawContext.canvas.nativeCanvas
+            nc.drawText(Format.signedMoney(hi), 2f, padT, paint)
+            if (lo < 0) nc.drawText(Format.signedMoney(lo), 2f, padT + plotH, paint)
+            val fmt = java.time.format.DateTimeFormatter.ofPattern("M/d", Locale.US)
+            val every = ((days.size + 6) / 7).coerceAtLeast(1)
+            days.forEachIndexed { i, d ->
+                if (i % every != 0 && i != days.size - 1) return@forEachIndexed
+                val t = d.date.format(fmt); val tw = paint.measureText(t)
+                nc.drawText(t, (slot * i + slot / 2 - tw / 2).coerceIn(0f, w - tw), h - labelPx * 0.4f, paint)
             }
         }
     }
