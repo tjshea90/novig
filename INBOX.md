@@ -301,3 +301,8 @@ Do what you need to change so I can press accept
 ```
 I'm not really sure how all the settings and toggles are set up in the Android app, so I need Claude to have full permission to start up the GitHub engine when scheduled, even if the toggles in my app are off 
 ```
+
+## 2026-10-18T06:52:18Z
+```
+I want any Claude session to be able to change and toggle on and off any setting and any switch anywhere in the app and on GitHub except the stop all master switch
+```
