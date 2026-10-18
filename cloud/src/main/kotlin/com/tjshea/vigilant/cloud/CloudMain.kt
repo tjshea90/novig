@@ -95,9 +95,24 @@ fun main(args: Array<String>) = runBlocking {
     // The engine's own Novig key (Tj, 2026-10-15): a read-only key sent as two secrets. Without them the engine reads the public routes as before; with them it reads through the signed route and keeps the key's websocket.
     val novigKeyId = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_ID)
     val novigKeyPem = CloudKeys.rawEnv(CloudKeys.NOVIG_KEY_PEM)
+    val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = log::invoke) else null
+    // Novig's verdict on THIS runner's address comes first (Tj, 2026-10-18, TCL116): refused = no API of any kind is asked, the job ends at once (the workflow draws a new runner); accepted = full scanning.
+    novigKeyed?.let { nk ->
+        when (nk.probe()) {
+            false -> {
+                log("Novig refuses this runner's address (${nk.addressWords(System.currentTimeMillis())}): nothing is scanned; handing over to a new runner")
+                runCatching { File(out, "end").writeText("ADDRESS") }
+                System.out.flush()
+                Runtime.getRuntime().halt(0)
+            }
+            true -> log("Novig accepts this runner's address: full scanning starts")
+            null -> {}
+        }
+    }
     // ParlayAPI's plan per key, read now and hourly (free): an upgraded key is found and used before the free ones.
     scope.launch {
         while (isActive) {
+            if (novigKeyed?.addressRefused(System.currentTimeMillis()) == true) { delay(15_000L); continue }
             runCatching { sources.refreshParlayAccounts() }
             log("ParlayAPI plans: " + sources.parlayPlans())
             runCatching { sources.refreshPropLineAccounts() }
@@ -112,7 +127,6 @@ fun main(args: Array<String>) = runBlocking {
     // Novig markets Vigilant had no fair odds for (a ladder, no quote): PropLine's +EV rows on them get a Bet button priced from PropLine's own fair (TCL88).
     val engineHolder = java.util.concurrent.atomic.AtomicReference<CloudEngine?>(null)
     val latestUnpriced = java.util.concurrent.atomic.AtomicReference<List<com.tjshea.vigilant.data.scanner.Opportunity>>(emptyList())
-    val novigKeyed = if (novigKeyId.isNotEmpty() && novigKeyPem.isNotEmpty()) CloudNovig(novig, http, json, scope, novigKeyId, novigKeyPem, log = log::invoke) else null
     val publisher = Publisher(pubDir, repo, token, git, log::tail) { policy -> CloudKeys.envFor(policy.id)?.let { CloudKeys.fromEnv(it) }.orEmpty().map(CloudUsage::keyId) }
     // PropLine's own +EV read at Novig (Tj, 2026-10-16, TCL56): with a paid key, every 15 minutes (and only while the key is within the day's share of its requests) the pregame games of the picked
     // leagues are asked for their +EV lines at Novig; the list goes to cloud-feed for the phone's PropLine screen, and every sweep's rows to a journal that the archive loop keeps for research.
@@ -335,6 +349,7 @@ fun main(args: Array<String>) = runBlocking {
         liveUrl = { liveUrlRef.get() },
         novigAddress = { novigKeyed?.addressWords(System.currentTimeMillis(), addressWatch?.count ?: 0) ?: "not tested (no Novig key on GitHub: public routes only)" },
         addressWatch = addressWatch,
+        addressBlocked = { novigKeyed?.addressRefused(System.currentTimeMillis()) == true },
         bids = bidFacade, live = com.tjshea.vigilant.data.cloud.CompositeLive(listOf(tailLane, pinnLane)),
         bidLines = { result, s, now -> sources.askInjuries(result, s, now); BidCandidates.from(result, s, now) { o -> sources.unavailable(o, now) } },
         publishBids = { publisher.stageBids(it) },

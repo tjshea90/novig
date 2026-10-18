@@ -41,6 +41,9 @@ class AddressWatch(
         return true
     }
 
+    /** A hand-over decided outside [shouldHandOver] (the address was refused before the first scan): counted the same way. */
+    fun noteHandOver(now: Long) { count += 1; atMs = now }
+
     /** One line for the engine log: why the watch did or did not hand over (the 2026-10-17 miss: refused for 5 minutes and never handed over). */
     fun describe(now: Long): String =
         "address watch: refused-now=${refused(now)} age=${(now - startedAtMs) / 1000}s lastRefusedAgo=${if (lastRefusedAt == 0L) "never" else "${(now - lastRefusedAt) / 1000}s"} streak=$count"

@@ -77,6 +77,8 @@ class CloudEngine(
     private val liveUrl: () -> String = { "" },
     /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
     private val addressWatch: AddressWatch? = null,
+    /** True while Novig refuses this machine's address: nothing is scanned, bid, traded or asked of any API (Tj, 2026-10-18, TCL116) until the job ends and a new runner is drawn. */
+    private val addressBlocked: () -> Boolean = { false },
     /**
      * The engine's trading (TCL20d, [CloudTrader]): called with each list that is published (partial ones too: their Novig prices are the freshest) and the phone's latest settings; returns a few words for the status
      * (or null when trading is off). A failure is a line in the log and never stops the scan.
@@ -204,6 +206,7 @@ class CloudEngine(
             pause(deskEveryMs)
             val s = phoneSettings ?: continue
             if (!s.cloudDrives || !manualOpen(s) || manualStopped()) { deskDown("the engine is off or outside its hours"); continue }
+            if (addressBlocked()) { deskDown("Novig refuses this runner's address"); continue }
             deskPass(s)
         }
     }
@@ -214,7 +217,7 @@ class CloudEngine(
         while (currentScopeActive()) {
             pause(10_000L)
             val s = phoneSettings ?: continue
-            if (!s.cloudDrives || !manualOpen(s) || manualStopped()) {
+            if (!s.cloudDrives || !manualOpen(s) || manualStopped() || addressBlocked()) {
                 if (liveStatus?.active == true) { runCatching { l.stop("the engine is off or outside its hours") }.onFailure { if (it is CancellationException) throw it } }
                 liveStatus = null
                 continue
@@ -286,6 +289,14 @@ class CloudEngine(
                 }
                 pause(10_000L)
                 continue
+            }
+            // Novig refuses this machine's address: no API is asked at all; the job ends now and a new runner is drawn (TCL116).
+            if (addressBlocked()) {
+                log("Novig refuses this runner's address: no scan is started on any API; handing over to a new runner")
+                addressWatch?.noteHandOver(clock())
+                addressEnd = true
+                problem = publish(null, status(cfg.rev, startedAtMs, untilMs, emptyList(), idle = false))
+                return End.ADDRESS
             }
             val restarted = scanOnce(cfg, startedAtMs, untilMs)
             lastBeat = clock()

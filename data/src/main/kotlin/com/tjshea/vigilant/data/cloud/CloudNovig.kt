@@ -57,6 +57,18 @@ class CloudNovig(
     @Synchronized
     fun close() { stream?.close(); stream = null; novig.stream = null }
 
+    /**
+     * One cheap signed read that learns Novig's verdict on this machine's address BEFORE any odds API is asked (Tj, 2026-10-18, TCL116: "If a novig address is refused, all scanning across all apis should
+     * immediately be stopped completely. They should only scan fully when a GitHub runner address is accepted by novig"). true = accepted, false = refused for the ADDRESS, null = unknown (no key sent: the
+     * public routes carry on as before). The read goes through the keyed catalog, whose refusal is what [addressRefused] reports.
+     */
+    suspend fun probe(): Boolean? {
+        val sg = signer ?: return null
+        novig.keyed = sg
+        runCatching { novig.events(listOf("NFL"), listOf(com.tjshea.vigilant.data.novig.NovigEvent.STATUS_PREGAME)) }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+        return !addressRefused(System.currentTimeMillis())
+    }
+
     /** True while the key route stands down because Novig refused this runner's ADDRESS (not the device check): [AddressWatch] then draws another runner. */
     fun addressRefused(now: Long): Boolean = signer != null && AddressWatch.isAddressRefusal(novig.keyDown(now))
 
