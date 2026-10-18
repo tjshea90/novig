@@ -182,4 +182,23 @@ class UsageMeterTest {
         assertEquals(Instant.parse("2026-10-01T00:00:00Z").toEpochMilli(), v.keys[0].until)
         assertEquals("k1".let { UsageViews.mask(it) }, v.keys[0].masked)
     }
+
+    @Test
+    fun `a spent key's bar is full, and a provider whose keys are all spent is full and red (never a lone dot)`() = runTest {
+        meter.recordCall(odds, "k1", 3, serverRemaining = 0, serverUsed = 500)
+        meter.recordCall(odds, "k2", 3, serverRemaining = 188, serverUsed = 312)
+        val v = UsageViews.build(odds, keys, meter.flow.value.providers["oddsapi"], now)
+        assertEquals(1f, v.keys[0].fractionUsed!!, 0f)
+        assertEquals(312f / 500f, v.keys[1].fractionUsed!!, 0.001f)
+        assertTrue(!v.spent)
+        meter.recordCall(odds, "k2", 3, serverRemaining = 0, serverUsed = 500)
+        meter.recordCall(odds, "k3", 3, serverRemaining = 0, serverUsed = 500)
+        val all = UsageViews.build(odds, keys, meter.flow.value.providers["oddsapi"], now)
+        assertTrue(all.spent)
+        assertEquals(1f, all.fractionUsed!!, 0f)
+        // A key with no published allowance draws nothing while it is usable.
+        val bare = KeyView(0, "x", used = 5, allowance = null, left = null, state = KeyState.ACTIVE, until = null, note = null, lastCallMs = null, serverReported = false)
+        assertNull(bare.fractionUsed)
+        assertEquals(1f, bare.copy(state = KeyState.SPENT).fractionUsed!!, 0f)
+    }
 }
