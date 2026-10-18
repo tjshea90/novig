@@ -336,3 +336,4 @@ day that changes.
 | v0.117.2 | code 335 | 2026-10-18T17:21Z | v0.117.2: PinnWire keys are spent only on PinnWire's own word (a per-minute 429 no longer shows a key as used up for the day); SX Bet row on the Live tab's sockets; the engine's bid list stays small enough for the phone to load
 | v0.117.3 | code 336 | 2026-10-18T20:15Z | v0.117.3: the engine's Novig outage alert and retry wait now count only Novig's own errors (a ParlayAPI 502 no longer raises them)
 | v0.117.4 | code 337 | 2026-10-18T20:42Z | v0.117.4: the engine asks Pinnodds' REST board first for Pinnacle, PinnWire second, pinnapi off
+| v0.117.5 | code 338 | 2026-10-18T21:19Z | v0.117.5: Live tab dashboard: every socket's state and last push, SX Bet health, the engine's live lane
