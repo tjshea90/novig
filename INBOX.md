@@ -483,3 +483,8 @@ Build the sportmicro test
 ```
 This says novig didn't answer but in parenthesis it is parlayapi not answering. Is it restarting novig erroneously?
 ```
+
+## 2026-10-18T18:56:22Z
+```
+I added the sportmicro key, but it may not support the socket on the free version. Try it out
+```
