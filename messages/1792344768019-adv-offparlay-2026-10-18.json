@@ -1,0 +1,1 @@
+{"id":"adv-off:parlay-2026-10-18","at":1792344768019,"from":"engine","kind":"recommendation","title":"ParlayAPI answered nothing","body":"It has returned no leagues for several scans in a row while still being asked. Check its key and plan; the engine rests it for a while to save requests and turns it off if it stays silent.","priority":0,"action":"APIS"}
