@@ -5818,7 +5818,7 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 
 ## TCL122 v1.0 (Tj, 2026-10-18, chat r1792361209-656d, verbatim summary; "a large update that will likely run Claude out of usage": checkpoint and save to GitHub often; audit plugins/skills first; ship all of it as ONE release, version 1.0). Owner: acct-5d1e2d (mirage). Work in this order, ckpt after EACH step.
 - [ ] TCL122-0 audit available plugins/skills (compose-performance, compose-state-and-effects, simplify, code-review, dataviz, test-protocols) and use them; tell Tj if he must turn anything on. Note: API usage meters glitch (a spent API shows a red dot instead of a full red bar).
-- [ ] TCL122-1 app Messages: only important messages, API errors and recommendations; no bets or bids.
+- [x] TCL122-1 (done: CloudMessages.worthShowing + InboxState.shown; test in CloudMessagesOverridesTest) app Messages: only important messages, API errors and recommendations; no bets or bids.
 - [ ] TCL122-2 the app is a true real-time monitor of the engine: all stats/numbers/meters fresh, refreshed constantly or very often.
 - [ ] TCL122-3 pull-to-refresh on the Engine tab and every other screen does a TRUE refresh of that section.
 - [ ] TCL122-4 renovate the Live dashboard: monitor+control board for the GitHub live engine; a GitHub/Phone switch (GitHub: dashboard of what GitHub scans/bids/bets, speed, API+socket status, toggles with instant settings changes; Phone: turns off the sockets on the GitHub runner, pauses GitHub live betting/bidding, runs the same functionality on the phone, dashboard shows phone stats/connections); no phone live betting unless he chooses Phone; real-time graphs and easy stats for both.
