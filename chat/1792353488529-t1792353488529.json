@@ -1,0 +1,1 @@
+{"id":"t1792353488529","at":1792353488529,"from":"tj","text":"1) pinnodds api key is now added as a secret\n2) use pinnodds API, but without socket\n3) test freshness of pinnodds API vs pinnwire\n4) if pinnodds is fresh, use it first  then pinnwire as backup only\n5) do not use pinnapi right now, the keys are bad","replyTo":null,"ack":null,"files":[]}
