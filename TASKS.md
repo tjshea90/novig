@@ -5798,3 +5798,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL114 (Tj, 2026-10-18): runner replacement rule + full engine administration written: research/coordination/ENGINE_ADMIN.md, CLAUDE.md section. Existing automation: engine-watchdog.yml (ADDRESS/hang -> cancel + dispatch). TODO: confirm mirage (acct-5d1e2d) passes the three-command permission test; watch the 08:00 ET start.
 
 - [x] TCL115 (Tj, 2026-10-18): refused Novig address -> runner replaced IMMEDIATELY, unlimited: AddressWatch (10 s, no cap/cooldown, 6 h window), watchdog 30 s no swap cap, AddressWatchTest + engine_watchdog selftest. Ships in v0.117.1 (engine reads main source at its next start).
+
+- [ ] TCL116 (Tj, 2026-10-18): refused Novig address -> ALL scanning on all APIs stops, full scanning only after Novig accepts the runner. BUILT: CloudNovig.probe (first thing in CloudMain, before any API loop; refused -> end marker ADDRESS + halt), CloudEngine.addressBlocked (no scanOnce, desk and live lane down), CloudEngineTest. TODO: tests green, ship (engine-only), watch the next refused runner end within seconds.
