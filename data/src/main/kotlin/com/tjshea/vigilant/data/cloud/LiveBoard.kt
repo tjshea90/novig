@@ -2,6 +2,7 @@ package com.tjshea.vigilant.data.cloud
 
 import com.tjshea.vigilant.data.cloud.DashboardModel.Tile
 import com.tjshea.vigilant.data.cloud.DashboardModel.Tone
+import com.tjshea.vigilant.data.scanner.CloudTradeMode
 import com.tjshea.vigilant.data.scanner.ScanSettings
 import java.time.Instant
 import java.time.ZoneId
