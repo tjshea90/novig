@@ -1,12 +1,12 @@
 {
  "v": 1,
- "holder": "26a1e4",
+ "holder": "0dd792",
  "label": "acct-27a37e",
- "kind": "interactive",
- "task": "",
- "since": 1792346687,
- "sinceIso": "2026-10-18T18:04:47Z",
- "hb": 1792350648,
- "hbIso": "2026-10-18T19:10:48Z",
+ "kind": "chat",
+ "task": "chat: fix lease friction",
+ "since": 1792351365,
+ "sinceIso": "2026-10-18T19:22:45Z",
+ "hb": 1792351365,
+ "hbIso": "2026-10-18T19:22:45Z",
  "leaseS": 1200
 }
