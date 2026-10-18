@@ -1,12 +1,12 @@
 {
  "v": 1,
- "holder": "26a1e4",
- "label": "acct-27a37e",
- "kind": "interactive",
- "task": "name acct-27a37e tj Gmail",
- "since": 1792293486,
- "sinceIso": "2026-10-18T03:18:06Z",
- "hb": 1792293486,
- "hbIso": "2026-10-18T03:18:06Z",
+ "holder": "56f5bf",
+ "label": "acct-5d1e2d",
+ "kind": "chat",
+ "task": "chat",
+ "since": 1792294051,
+ "sinceIso": "2026-10-18T03:27:31Z",
+ "hb": 1792294051,
+ "hbIso": "2026-10-18T03:27:31Z",
  "leaseS": 1200
 }
