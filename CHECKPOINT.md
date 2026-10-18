@@ -1,22 +1,24 @@
-# CHECKPOINT 3679 — read me first, then TASKS.md
+# CHECKPOINT 3680 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T22:08:45Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-r3n3xj` · **builds on:** `a47318d24` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T22:10:31Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-7f278c49-1o357z` · **builds on:** `c97c5fc91` (this checkpoint is the commit after it)
 
 ## Just done
-TCL122-1 Messages show only alerts, recommendations, pushed info; no bets/bids
+TCL122-0 toolbox audit written; took lease by Tj's force; merged mirage's TCL122-1
 
 ## Do this next
-TCL122-6 profit/loss graph: find chart code, rework per Tj's slate-day rule
+TCL122-2/3/8: study CloudLink loops + pull-to-refresh + usage meters (UsageMerge, meters UI) for true real-time refresh
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
      M TASKS.md
+    ?? research/review/toolbox_audit_2026-10-18.md
 
 ## Last ten checkpoints
 ```
+  a7343bbf8 ckpt 3679: TCL122-1 Messages show only alerts, recommendations, pushed info; no bets/b
   9e6c0d604 ckpt 3678: TCL122 v1.0 big update written into TASKS
   da76e7451 ckpt 3677: v0.117.6 released, engine sockets verified live
   33792d2a4 ckpt 3676: pre-release: v0.117.6: the Live dashboard shows the GitHub engine's own soc
@@ -26,8 +28,7 @@ TCL122-6 profit/loss graph: find chart code, rework per Tj's slate-day rule
   cecb00cfb ckpt 3672: Live dashboard card, v0.117.5 bump
   6e13a48a1 ckpt 3671: v0.117.4 released+recorded, engine restarted
   e9c88a640 ckpt 3670: pre-release: v0.117.4: the engine asks Pinnodds' REST board first for Pinna
-  6b55172b0 ckpt 3669: recorded v0.117.3; bumped 0.117.4 (337) for Pinnodds-first
 ```
 
-(2 automatic checkpoint(s) since the last deliberate one — the
+(3 automatic checkpoint(s) since the last deliberate one — the
 session was still mid-step. `git diff` against it shows what changed.)
