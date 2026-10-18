@@ -1,13 +1,13 @@
-# CHECKPOINT 3629 — read me first, then TASKS.md
+# CHECKPOINT 3630 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T04:30:32Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-jc7o7j` · **builds on:** `6869e93c3` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T05:03:19Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-jc7o7j` · **builds on:** `ad8728fee` (this checkpoint is the commit after it)
 
 ## Just done
-TCL111f1: confirmed SX pregame works on engine; live-lane plan written
+TCL111f1 step 1: SX live frame recorder tap on engine
 
 ## Do this next
-TCL111f1 step 1: record real SX live frames on the engine, then SxBetLiveFeed
+once an engine run has live SX games, read sxlive journal, then write SxBetLiveFeed (step 2)
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ TCL111f1 step 1: record real SX live frames on the engine, then SxBetLiveFeed
 
 ## Last ten checkpoints
 ```
+  04291e4c2 ckpt 3629: TCL111f1: confirmed SX pregame works on engine; live-lane plan written
   6869e93c3 ckpt 3628: SX Bet key accepted, engine has sxbet source
   db2985375 ckpt 3627: pre-release: v0.116.0: SX Bet: sharp exchange odds source (REST + WebSocket
   a7612715d ckpt 3626: TCL111e: SX Bet websocket (SxBetStream), socket switch, taker-frame convers
@@ -27,3 +28,6 @@ TCL111f1 step 1: record real SX live frames on the engine, then SxBetLiveFeed
   75ec3d20d ckpt 3621: TCL110: acct-5d1e2d shown as (mirage) in coord, chat sender, CLAUDE.md
   8c9989252 ckpt 3620: TCL104d: fixed hidden-bets note height jump in Feed
 ```
+
+(2 automatic checkpoint(s) since the last deliberate one — the
+session was still mid-step. `git diff` against it shows what changed.)
