@@ -11,6 +11,7 @@ import org.junit.Assert.assertTrue
 class SxBetTest {
     private val json = Json { ignoreUnknownKeys = true }
 
+    // best() takes the TAKER asks wanted (outcome one, outcome two) and writes the makers' frame the API sends: maker one = 100 - ask two.
     // Shapes from the real public /markets/active answer of 2026-10-18 (NFL) and the docs' best-odds example.
     private val marketsBody = """{"status":"success","data":{"markets":[
       {"status":"ACTIVE","marketHash":"0xA","outcomeOneName":"Over 49.5","outcomeTwoName":"Under 49.5","teamOneName":"Dallas Cowboys","teamTwoName":"Philadelphia Eagles","type":28,"gameTime":1795728600,"line":49.5,"sportXeventId":"L1","sportId":8,"leagueId":243,"leagueLabel":"NFL","mainLine":true,"extra":1},
@@ -21,7 +22,7 @@ class SxBetTest {
     private fun lvl(pct: Int, usdc: Long = 500) = """{"percentageOdds":"${pct}000000000000000000","size":"${usdc * 1_000_000}"}"""
 
     private fun best(vararg rows: Triple<String, Int?, Int?>) = """{"status":"success","data":{"bestOdds":[${
-        rows.joinToString(",") { (h, a, b) -> """{"marketHash":"$h","outcomeOne":${a?.let { lvl(it) } ?: "null"},"outcomeTwo":${b?.let { lvl(it) } ?: "null"}}""" }
+        rows.joinToString(",") { (h, a, b) -> """{"marketHash":"$h","outcomeOne":${b?.let { lvl(100 - it) } ?: "null"},"outcomeTwo":${a?.let { lvl(100 - it) } ?: "null"}}""" }
     }]}}"""
 
     @Test fun oddsAreScaledBy1e20() {
