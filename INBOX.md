@@ -368,3 +368,8 @@ I want the GitHub runner to immediately be restarted after every refused novig a
 ```
 Do the data analysis and sx live feed
 ```
+
+## 2026-10-18T15:31:02Z
+```
+If a novig address is refused, all scanning across all apis should immediately be stopped completely. They should only scan fully when a GitHub runner address is accepted by novig 
+```
