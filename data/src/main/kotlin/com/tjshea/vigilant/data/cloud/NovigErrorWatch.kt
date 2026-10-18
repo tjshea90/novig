@@ -20,7 +20,8 @@ class NovigErrorWatch(private val alertAfterMs: Long = ALERT_AFTER_MS) {
 
     /** [errors] are the scan's own error lines; a scan with none (or none of the 5xx kind) counts as Novig answering. Returns what to tell Tj, if anything. */
     fun observe(errors: List<String>, now: Long): Event? {
-        val bad = errors.firstOrNull { SERVER_ERROR.containsMatchIn(it) }
+        // Only lines that are about Novig: a scan's errors also carry the other APIs' ("ParlayAPI NFL: ... HTTP 502" raised the Novig alert and the 10 s to 2 min retry wait on 2026-10-18).
+        val bad = errors.firstOrNull { it.startsWith("Novig", ignoreCase = true) && SERVER_ERROR.containsMatchIn(it) }
         if (bad == null) {
             val was = alerted
             since = NONE; streak = 0; last = ""; alerted = false

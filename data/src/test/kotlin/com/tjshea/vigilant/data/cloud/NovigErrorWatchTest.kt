@@ -41,4 +41,15 @@ class NovigErrorWatchTest {
         w.observe(listOf("Novig HTTP 504"), 1L)
         assertTrue(w.active)
     }
+
+    @Test
+    fun `another API's server error is not Novig failing`() {
+        val w = NovigErrorWatch()
+        assertNull(w.observe(listOf("ParlayAPI NFL: ParlayAPI failed for americanfootball_nfl: HTTP 502 error code: 502"), 0L))
+        assertFalse("no retry wait, no alert", w.active)
+        assertNull(w.observe(listOf("ParlayAPI NFL: HTTP 502", "SportsGameOdds: HTTP 503 service unavailable"), 20 * 60_000L))
+        assertFalse(w.active)
+        w.observe(listOf("ParlayAPI NFL: HTTP 502", "Novig prices: HTTP 502 bad gateway"), 0L)
+        assertTrue("a Novig line in the same scan still counts", w.active)
+    }
 }
