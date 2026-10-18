@@ -117,6 +117,9 @@ enum class SettingsGroup(val title: String, val about: String) {
 enum class SettingsPage(val title: String, val about: String, val group: SettingsGroup) {
     // The order is the order on the home list: its groups, and inside each the pages as listed here. The APIs' own pages follow APIS (they open from it).
 
+    /** The scan on GitHub's computers, the token, and the permanent saving of bets, bids and history to GitHub (Tj, 2026-10-14). */
+    CLOUD("GitHub engine (cloud scan)", "The engine on GitHub's computers: on/off, its hours, engine trading, keys sent to GitHub, and saving history", SettingsGroup.BET),
+
     /** Push alerts for new +EV bets, and the sharp books' say over them. */
     ALERTS("Alerts", "A notification when a new bet is good enough", SettingsGroup.BET),
 
@@ -134,9 +137,6 @@ enum class SettingsPage(val title: String, val about: String, val group: Setting
 
     /** Everything Claude or the engine wants Tj to know: recommendations, bets placed, settings changed from GitHub (TCL28). */
     MESSAGES("Messages from Claude", "Alerts, API problems and recommendations from Claude and the engine (bets and bids are on the Engine tab)", SettingsGroup.FIND),
-
-    /** The scan on GitHub's computers, the token, and the permanent saving of bets, bids and history to GitHub (Tj, 2026-10-14). */
-    CLOUD("GitHub engine (cloud scan)", "The engine on GitHub's computers: on/off, its hours, engine trading, keys sent to GitHub, and saving history", SettingsGroup.BET),
 
     /** Pause, which scanner, which games, the background scan. */
     SCANNING("Scanning", "What Vigilant reads, which games, and checking in the background", SettingsGroup.FIND),
