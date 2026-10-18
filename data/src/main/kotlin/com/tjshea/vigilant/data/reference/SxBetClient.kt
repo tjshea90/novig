@@ -27,9 +27,24 @@ class SxBetClient(
     private val usage: UsageMeter? = null,
     private val baseUrl: String = "https://api.sx.bet",
     private val clock: () -> Long = System::currentTimeMillis,
+    /** The socket switch (Settings › APIs › Sockets): on = keep the WebSocket and read books from it; off = REST every scan. */
+    private val socketOn: () -> Boolean = { false },
+    private val scope: kotlinx.coroutines.CoroutineScope? = null,
+    private val wsUrl: String = "wss://realtime.sx.bet/connection/websocket",
 ) : ReferenceSource {
     override val id = SxBetConvert.BOOK_KEY
     override val displayName = "SX Bet"
+
+    /** The real-time socket (null without a scope). Opened by [odds] while the switch is on and a key is saved; closed when either goes. */
+    val stream: com.tjshea.vigilant.data.sxbet.SxBetStream? = scope?.let {
+        com.tjshea.vigilant.data.sxbet.SxBetStream(http, json, key, it, clock, baseUrl, wsUrl, onSubscribed = { reseed() })
+    }
+
+    /** After every (re)subscription the channel has no history: read the watched markets once over REST and lay them on the board. */
+    private suspend fun reseed() {
+        val s = stream ?: return
+        s.seed(books(s.watchedHashes(), viaStream = false).values)
+    }
 
     @Volatile private var restUntil = 0L
     @Volatile private var failures = 0
@@ -55,10 +70,12 @@ class SxBetClient(
     override suspend fun odds(league: League, settings: ScanSettings): RefSnapshot {
         val now = clock()
         fun empty() = RefSnapshot(league.oddsApiSportKey, emptyList(), now, provider = id)
-        if (!hasKey() || down(now)) return empty()
+        if (!hasKey() || down(now)) { stream?.close(); return empty() }
+        if (stream != null) { if (socketOn()) stream.open() else stream.close() }
         return try {
             val horizon = now + (settings.daysAhead.coerceAtLeast(1) + 1) * 86_400_000L
             val markets = markets(league).filter { it.gameTime * 1000L in (now - 3_600_000L)..horizon }
+            stream?.watch(markets.map { it.marketHash })
             val books = books(markets.map { it.marketHash })
             failures = 0; lastOkMs = clock(); lastError = null
             val events = SxBetConvert.events(markets, books, league, clock())
@@ -96,7 +113,17 @@ class SxBetClient(
     }
 
     /** Top of book (converted to the taker's asks, [SxBetConvert.takerBook]) for [hashes], 100 per call, a few calls at once. */
-    suspend fun books(hashes: List<String>): Map<String, SxBetConvert.Book> {
+    suspend fun books(hashes: List<String>, viaStream: Boolean = true): Map<String, SxBetConvert.Book> {
+        // While the socket is live its board is current for every market it has heard; the ones it has not are read once and laid on it (no change since the subscription = still true).
+        val s = stream?.takeIf { viaStream && socketOn() && it.live }
+        if (s != null) {
+            val have = hashes.distinct().mapNotNull { h -> s.books[h] }.associateBy { it.marketHash }
+            val missing = hashes.distinct().filter { it !in have }
+            if (missing.isEmpty()) return have
+            val read = books(missing, viaStream = false)
+            s.seed(read.values)
+            return have + read
+        }
         val gate = Semaphore(3)
         val parts = coroutineScope {
             hashes.distinct().chunked(100).map { chunk ->

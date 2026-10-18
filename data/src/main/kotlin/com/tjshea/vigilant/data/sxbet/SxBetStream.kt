@@ -142,7 +142,16 @@ class SxBetStream(
         try { done.await() } finally { socket?.close(1000, "bye"); socket = null }
     }
 
-    private fun send(ws: WebSocket, cmd: String, body: JsonObject) { ws.send(buildJsonObject { put("id", ids.getAndIncrement()); put(cmd, body) }.toString()) }
+    private val subscribing = ConcurrentHashMap<Int, String>()
+
+    private fun send(ws: WebSocket, cmd: String, body: JsonObject) {
+        val id = ids.getAndIncrement()
+        if (cmd == "subscribe") (body["channel"] as? JsonPrimitive)?.contentOrNull?.let { subscribing[id] = it }
+        ws.send(buildJsonObject { put("id", id); put(cmd, body) }.toString())
+    }
+
+    /** The markets the owner asked to keep ([watch]). */
+    fun watchedHashes(): List<String> = watched.toList()
 
     private fun handle(ws: WebSocket, o: JsonObject) {
         lastMessageMs = clock()
@@ -150,6 +159,7 @@ class SxBetStream(
         o["error"]?.let { e -> lastError = "server: ${(e as? JsonObject)?.get("message")?.let { (it as? JsonPrimitive)?.contentOrNull } ?: e}".take(160) }
         o["connect"]?.let { c ->
             connected = true
+            subscribing.clear()
             for (ch in CHANNELS) send(ws, "subscribe", buildJsonObject { put("channel", ch) })
             val ttl = ((c as? JsonObject)?.get("ttl") as? JsonPrimitive)?.intOrNull
             if ((c as? JsonObject)?.get("expires")?.let { (it as? JsonPrimitive)?.contentOrNull } == "true" && ttl != null) {
@@ -160,8 +170,9 @@ class SxBetStream(
             }
         }
         o["subscribe"]?.let {
-            // The reply does not name the channel; the odds channel is subscribed first, so the first acknowledgement after connect is it.
-            if (oddsSubscribedAt == 0L) { oddsSubscribedAt = clock(); scope.launch { runCatching { onSubscribed() }.onFailure { lastError = "seed: ${it.message}".take(160) } } }
+            // The reply carries the command's id, not the channel: [subscribing] remembers which channel each id asked for.
+            val channel = (o["id"] as? JsonPrimitive)?.intOrNull?.let { subscribing.remove(it) }
+            if (channel == "best_odds_v3:global" && oddsSubscribedAt == 0L) { oddsSubscribedAt = clock(); scope.launch { runCatching { onSubscribed() }.onFailure { lastError = "seed: ${it.message}".take(160) } } }
         }
         val push = o["push"] as? JsonObject ?: return
         val channel = (push["channel"] as? JsonPrimitive)?.contentOrNull ?: return
@@ -188,7 +199,6 @@ class SxBetStream(
     }
 
     companion object {
-        /** Odds first: the first subscribe acknowledgement is taken as the odds channel's. */
         val CHANNELS = listOf("best_odds_v3:global", "fixtures:live_scores", "main_line:global")
         const val STALE_MS = 90_000L
     }
