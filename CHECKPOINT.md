@@ -1,13 +1,13 @@
-# CHECKPOINT 3667 — read me first, then TASKS.md
+# CHECKPOINT 3668 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T20:12:24Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-r3n3xj` · **builds on:** `0bb6307a7` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T20:13:47Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-r3n3xj` · **builds on:** `46874068e` (this checkpoint is the commit after it)
 
 ## Just done
-answered SX status; TCL119/120 written
+TCL121 live dashboard written
 
 ## Do this next
-when ship.sh ends: release.yml, record-release, read Pinnacle host in engine log
+ship.sh result, release; then TCL119/121 in one release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -17,6 +17,7 @@ when ship.sh ends: release.yml, record-release, read Pinnacle host in engine log
 
 ## Last ten checkpoints
 ```
+  46874068e ckpt 3667: answered SX status; TCL119/120 written
   0bb6307a7 ckpt 3666: pre-release: Engine asks Pinnodds REST board first for Pinnacle, PinnWire b
   796dcc1ed ckpt 3665: Pinnodds REST first in engine, pinnapi off
   7d889e28b ckpt 3664: pinnapi-first order + test + engine usePinnapi=true
@@ -26,5 +27,4 @@ when ship.sh ends: release.yml, record-release, read Pinnacle host in engine log
   1c07c27c7 ckpt 3660: audited all restart/alert paths: only NovigErrorWatch mixed APIs (fixed); r
   5640a3e51 ckpt 3659: NovigErrorWatch: only Novig-lines count (ParlayAPI 502 no longer raises the
   c17c06549 ckpt 3658: built Sportmicro probe: tools/sportmicro_probe.py + sportmicro-probe.yml (n
-  df851d160 ckpt 3657: tested Flashscore scraper and Sportmicro from docs (no key/egress here); Fl
 ```
