@@ -493,3 +493,8 @@ I added the sportmicro key, but it may not support the socket on the free versio
 ```
 Make sure any api failure is not treated as a novig failure because this can restart the novig engine in error 
 ```
+
+## 2026-10-18T19:00:21Z
+```
+Release the Novig watch fix now
+```
