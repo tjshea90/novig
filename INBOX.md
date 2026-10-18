@@ -358,3 +358,8 @@ Tell me what to tell the other accounts to get them to merge on main, then start
 ```
 Do the runner replacement rule and set it up so Claude always has full permissions to change settings and full administration of GitHub engine
 ```
+
+## 2026-10-18T15:28:02Z
+```
+I want the GitHub runner to immediately be restarted after every refused novig address, until there is a runner with an accepted address. Change the 5 minute rule to immediate
+```
