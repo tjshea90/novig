@@ -1,12 +1,7 @@
 {
  "v": 1,
- "holder": "c98f4d",
- "label": "acct-5d1e2d",
- "kind": "interactive",
- "task": "label acct-5d1e2d as mirage",
- "since": 1792292874,
- "sinceIso": "2026-10-18T03:07:54Z",
- "hb": 1792292874,
- "hbIso": "2026-10-18T03:07:54Z",
+ "holder": null,
+ "hb": 1792292965,
+ "hbIso": "2026-10-18T03:09:25Z",
  "leaseS": 1200
 }
