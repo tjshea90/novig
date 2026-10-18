@@ -363,7 +363,6 @@ The release is done. Force and do it now
 Can you confirm from the screenshots that the Claude sessions have the full permissions I want
 ```
 
-<<<<<<< HEAD
 ## 2026-10-18T07:32:05Z
 ```
 I installed 117
@@ -402,7 +401,6 @@ Figure out sx team names and full mapping. Research the full sx bet docs for bot
 ## 2026-10-18T16:03:37Z
 ```
 build the sx live feed now
-=======
 ## 2026-10-18T07:26:34Z
 ```
 Clean up whatever needs to be cleaned and organized in the repo so all three Claude accounts can efficiently act as one 
@@ -436,5 +434,4 @@ force. Bring this checkout up to date and prove you can use the new tools. Run: 
 ## 2026-10-18T07:41:27Z
 ```
 force. Bring this checkout up to date and prove you can use the new tools. Run: git fetch origin main && git merge origin/main (resolve any conflict by keeping both sides, then run bash tools/test_coord.sh). Then run: python3 tools/engine_set.py --show vigGuards.bidDeployKelly (it should print 20). Then read research/review/CHANGES.md (last entry) and CLAUDE.md's section "Any Claude session may change any setting or switch except STOP ALL". Reply with what happened. Do not press or change STOP ALL, and do not touch the dead-man rules.
->>>>>>> origin/main
 ```
