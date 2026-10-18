@@ -1,13 +1,13 @@
-# CHECKPOINT 3676 — read me first, then TASKS.md
+# CHECKPOINT 3677 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T21:29:45Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-r3n3xj` · **builds on:** `9037bd41f` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T22:06:37Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-r3n3xj` · **builds on:** `963ee9474` (this checkpoint is the commit after it)
 
 ## Just done
-pre-release: v0.117.6: the Live dashboard shows the GitHub engine's own sockets (BoltOdds, Kalshi, SX Bet) instead of the phone's idle ones (versionCode 339, v0.117.6)
+v0.117.6 released, engine sockets verified live
 
 ## Do this next
-Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.117.6), then run: bash tools/record-release.sh v0.117.6 339 "v0.117.6: the Live dashboard shows the GitHub engine's own sockets (BoltOdds, Kalshi, SX Bet) instead of the phone's idle ones"
+TCL119 SX scan prices old despite live socket; TCL121 per-game dashboard
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
@@ -16,6 +16,7 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
 
 ## Last ten checkpoints
 ```
+  33792d2a4 ckpt 3676: pre-release: v0.117.6: the Live dashboard shows the GitHub engine's own soc
   9037bd41f ckpt 3675: engine publishes socket lines; dashboard shows them; v0.117.6 bump
   3298f164d ckpt 3674: v0.117.5 released and recorded
   25049b52b ckpt 3673: pre-release: v0.117.5: Live tab dashboard: every socket's state and last pu
@@ -25,5 +26,4 @@ Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, conf
   6b55172b0 ckpt 3669: recorded v0.117.3; bumped 0.117.4 (337) for Pinnodds-first
   2dde3381b ckpt 3668: TCL121 live dashboard written
   46874068e ckpt 3667: answered SX status; TCL119/120 written
-  0bb6307a7 ckpt 3666: pre-release: Engine asks Pinnodds REST board first for Pinnacle, PinnWire b
 ```
