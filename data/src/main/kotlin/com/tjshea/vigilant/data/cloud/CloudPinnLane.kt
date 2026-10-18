@@ -118,7 +118,7 @@ class CloudPinnLane(
     private fun bidConfig(): LiveBidConfig {
         val s = settings
         return LiveBidConfig(
-            on = bidsOn(s), real = bidsReal(s), quality = s.liveBidQuality, limits = s.liveBidLimits.effective(lastCash), bankroll = s.bankroll, apiMaxStake = s.apiMaxStake, preset = s.liveBidPresetName.ifBlank { "engine" },
+            on = bidsOn(s), real = bidsReal(s), quality = s.liveBidQuality, limits = s.liveBidLimits.effective(lastCash), bankroll = s.bankroll, apiMaxStake = s.apiMaxStake, preset = (s.liveBidPresetName ?: "").ifBlank { "engine" },
             halted = bidHalt ?: s.liveBidHalted, blockedWhy = if (bidsReal(s) && (port == null || port.blocked != null)) "no usable trading key on GitHub" else null,
         )
     }
