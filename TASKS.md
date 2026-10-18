@@ -5768,3 +5768,9 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL110 (Tj, 2026-10-18): the account acct-5d1e2d is always written "acct-5d1e2d (mirage)": CLAUDE.md rule, coord.py ACCOUNT_NAMES/named(), tell_tj.py chat sender; tests: test_coord.sh, tell_tj selftest.
 
 - [x] TCL110 (Tj, 2026-10-18): any session may alter anything without the lease if it breaks nothing (push.sh pushes the branch, moves main only for safe paths; test_coord.sh) AND a message typed to a non-holder is relayed into the app chat for the lease holder (capture_inbox.sh -> tell_tj.py relay; tell_tj selftest). Not yet watched live: confirm the holder prints `CHAT r...` after a real relay.
+
+## TCL111 (Tj, chat t1792294037332, 2026-10-18): SX Bet integration
+- [ ] TCL111a Review docs.sx.bet (developers + api-reference, public REST/WebSocket channels: live scores, odds, line moves, props) into SXBET_API.md
+- [ ] TCL111b Build client/feed in data/ (REST + socket, follow rate limits), as a sharp fair-odds source (ApiChain, CloudSources, ApiEntry + switch + socket switch, tests)
+- [ ] TCL111c Engine (CloudSources) + phone parity; live lane use if the data allows
+- [ ] TCL111d Tell Tj what he must do (keys? none if public)
