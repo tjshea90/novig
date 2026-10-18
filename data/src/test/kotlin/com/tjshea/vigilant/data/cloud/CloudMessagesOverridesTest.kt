@@ -38,4 +38,14 @@ class CloudMessagesOverridesTest {
         assertEquals("parlay off, sgo on", CloudOverrides.describe(s, r))
         assertEquals(r, CloudOverrides.decode(CloudOverrides.encode(r)))
     }
+
+    @Test
+    fun `bets, bids and quiet info are not worth showing, alerts and recommendations are`() {
+        fun m(kind: String, pr: Int = 0) = CloudMessages.Message("x", 1L, "engine", kind, "t", priority = pr)
+        org.junit.Assert.assertFalse(CloudMessages.worthShowing(m("bet", 1)))
+        org.junit.Assert.assertFalse(CloudMessages.worthShowing(m("info")))
+        org.junit.Assert.assertTrue(CloudMessages.worthShowing(m("info", 1)))
+        org.junit.Assert.assertTrue(CloudMessages.worthShowing(m("alert")))
+        org.junit.Assert.assertTrue(CloudMessages.worthShowing(m("recommendation")))
+    }
 }
