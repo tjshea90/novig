@@ -677,7 +677,7 @@ class CloudEngine(
     /** Hands the published list to the engine's trading. It only ever runs on the engine's own time inside the scan loop; a failure is a line in the log. */
     private suspend fun sendTrades(rows: List<Opportunity>, settings: ScanSettings, now: Long) {
         val t = trade ?: return
-        runCatching { t(rows, settings, now) }.onSuccess {
+        runCatching { t(rows, forTrading(settings), now) }.onSuccess {
             tradeStatus = it ?: tradeStatus?.copy(mode = "off", note = "")
             // a pass that reached the wallet read says the cash and the equity (cash plus what is at risk); one that stopped earlier says 0 and 0, which is "not read", not "empty"
             if (it?.cash != null && (it.cash > 0.0 || (it.equity ?: 0.0) > 0.0)) { walletCash = it.cash; walletEquity = it.equity; walletReadAt = now }
@@ -713,6 +713,13 @@ class CloudEngine(
         /** A listed bet whose Novig book is older than this is read again before the trader judges it (the trader's own bar is 3 minutes, [CloudTrader.FRESH_PRICE_MS]). */
         const val TRADE_RECHECK_AFTER_MS = 45_000L
         const val WALLET_EVERY_MS = 30 * 60_000L
+
+        /**
+         * The settings the engine's auto-bet judges under: the phone's, with the bet slider's kinds re-derived as the scan has them ([forCloud]). Until 2026-10-18 the trader got the phone's raw settings,
+         * whose kinds were the slider's old ladder (props, moneylines, spreads), so the engine never auto-bet totals or team totals although the slider (and the 2026-10-17 study: "totals win") had them
+         * (TCL122-11: the trade pass's "team totals aren't among the kinds of bet you auto-bet").
+         */
+        fun forTrading(s: ScanSettings): ScanSettings = s.copy(autoBetKinds = forCloud(s).autoBetKinds)
 
         /** The settings the cloud scans under: the phone's, with the parts that only make sense on the phone switched off. */
         fun forCloud(s: ScanSettings): ScanSettings = s.copy(

@@ -86,4 +86,13 @@ class LiveBoardTest {
         assertEquals("—", b.tiles.first { it.label == "Novig pushes" }.value)
         assertTrue(LiveBoard.phone(s.copy(tailLive = s.tailLive.copy(on = false)), LiveStats(), false, emptyList(), emptyList(), LiveBoard.Today(), now).title.contains("off"))
     }
+
+    @Test
+    fun `the engine's auto-bet judges with the bet slider's kinds, totals and team totals included`() {
+        val s = ScanSettings(autoBetKinds = setOf(com.tjshea.vigilant.engine.BetKind.PROP, com.tjshea.vigilant.engine.BetKind.MONEYLINE, com.tjshea.vigilant.engine.BetKind.SPREAD)).let { it.copy(vigGuards = it.vigGuards.copy(betLevel = 61)) }
+        val k = CloudEngine.forTrading(s).autoBetKinds
+        assertTrue(k.toString(), com.tjshea.vigilant.engine.BetKind.TEAM_TOTAL in k && com.tjshea.vigilant.engine.BetKind.TOTAL in k && com.tjshea.vigilant.engine.BetKind.SPREAD in k)
+        // Off the slider (level 0) the phone's own kinds stand.
+        assertEquals(s.autoBetKinds, CloudEngine.forTrading(s.copy(vigGuards = s.vigGuards.copy(betLevel = 0))).autoBetKinds)
+    }
 }
