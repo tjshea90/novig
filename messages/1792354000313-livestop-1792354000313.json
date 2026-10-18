@@ -1,0 +1,1 @@
+{"id":"livestop-1792354000313","at":1792354000313,"from":"engine","kind":"alert","title":"Live tail betting stopped","body":"a tail order was still pending after 20 s, so its result is unknown: check Novig's orders and the Tracker (Sync with Novig), then Resume","priority":1,"action":"CLOUD"}
