@@ -23,7 +23,8 @@ class PinnWireTruthTest {
 
     @Test
     fun `150 of our own calls do not rest a key`() = runTest {
-        repeat(150) { meter.recordCall(wire, "k1", 1) }
+        repeat(150) { now += 61_000L; meter.recordCall(wire, "k1", 1) }
+        now += 61_000L
         assertNull("no figure from PinnWire: unknown, not zero", usage().left(wire))
         assertNull(usage().depletedUntil)
         assertEquals("k1", meter.pick(wire, listOf("k1"), 1))
@@ -34,7 +35,7 @@ class PinnWireTruthTest {
         meter.recordBalance(wire, "k1", remaining = 12, limit = 100, used = 88)
         meter.recordCall(wire, "k1", 1)
         assertEquals(11, usage().left(wire))
-        repeat(40) { meter.recordCall(wire, "k1", 1) }
+        repeat(40) { now += 61_000L; meter.recordCall(wire, "k1", 1) }
         assertTrue("our count never takes it to zero", (usage().left(wire) ?: 0) >= 1)
         meter.recordBalance(wire, "k1", remaining = 0, limit = 100, used = 100, exhausted = true)
         assertTrue(usage().depletedUntil != null)
