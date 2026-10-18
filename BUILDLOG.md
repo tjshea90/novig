@@ -337,3 +337,4 @@ day that changes.
 | v0.117.3 | code 336 | 2026-10-18T20:15Z | v0.117.3: the engine's Novig outage alert and retry wait now count only Novig's own errors (a ParlayAPI 502 no longer raises them)
 | v0.117.4 | code 337 | 2026-10-18T20:42Z | v0.117.4: the engine asks Pinnodds' REST board first for Pinnacle, PinnWire second, pinnapi off
 | v0.117.5 | code 338 | 2026-10-18T21:19Z | v0.117.5: Live tab dashboard: every socket's state and last push, SX Bet health, the engine's live lane
+| v0.117.6 | code 339 | 2026-10-18T22:03Z | v0.117.6: the Live dashboard shows the GitHub engine's own sockets (BoltOdds, Kalshi, SX Bet) instead of the phone's idle ones
