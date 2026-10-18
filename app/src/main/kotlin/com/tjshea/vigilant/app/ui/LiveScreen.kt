@@ -24,6 +24,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -126,12 +129,12 @@ private fun phoneToday(state: UiState, now: Long): LiveBoard.Today {
 @Composable
 private fun WhereSwitch(s: ScanSettings, onUpdate: ((ScanSettings) -> ScanSettings) -> Unit) {
     Text("Run live on", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
-    androidx.compose.material3.SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag("liveWhere")) {
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().testTag("liveWhere")) {
         LiveBoard.Where.entries.forEachIndexed { i, w ->
             val selected = (w == LiveBoard.Where.GITHUB) == s.liveOnGitHub
-            androidx.compose.material3.SegmentedButton(
+            SegmentedButton(
                 selected = selected, onClick = { onUpdate { it.copy(tailLive = it.tailLive.copy(engine = w == LiveBoard.Where.GITHUB)) } },
-                shape = androidx.compose.material3.SegmentedButtonDefaults.itemShape(i, LiveBoard.Where.entries.size), modifier = Modifier.testTag("liveWhere-${w.name}"),
+                shape = SegmentedButtonDefaults.itemShape(i, LiveBoard.Where.entries.size), modifier = Modifier.testTag("liveWhere-${w.name}"),
             ) { Text(w.label) }
         }
     }
