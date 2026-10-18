@@ -27,6 +27,10 @@ import java.util.concurrent.atomic.AtomicInteger
 /** One game's score as `fixtures:live_scores` last said it. */
 data class SxScore(val eventId: String, val sportId: Int, val teamOne: Int?, val teamTwo: Int?, val period: String?, val periodTime: String?, val atMs: Long)
 
+/** One raw push the recorder tap saw (`sxlive-<day>.jsonl`): the channel, when it arrived, and the data exactly as sent, so the live frame shapes are read from real answers. */
+@kotlinx.serialization.Serializable
+data class SxLiveRow(val atMs: Long, val channel: String, val data: String)
+
 /**
  * SX Bet's real-time WebSocket (SXBET_API.md; docs developers/realtime-*). It is Centrifugo v6 speaking its JSON protocol (text frames, one JSON command per line):
  * `connect` with a short-lived token from `GET /user/realtime-token-v3/api-key` (any valid key, 30 a minute), then one `subscribe` per channel. Channels used: `best_odds_v3:global`
@@ -53,6 +57,9 @@ class SxBetStream(
     val books = ConcurrentHashMap<String, SxBetConvert.Book>()
     val scores = ConcurrentHashMap<String, SxScore>()
     val mainLines = ConcurrentHashMap<String, String>()
+
+    /** Research recorder (the engine sets it): sees every push before it is applied. Must not throw or block. */
+    @Volatile var tap: ((String, JsonElement, Long) -> Unit)? = null
 
     private val watched = ConcurrentHashMap.newKeySet<String>()
     private val ids = AtomicInteger(1)
@@ -178,6 +185,7 @@ class SxBetStream(
         val channel = (push["channel"] as? JsonPrimitive)?.contentOrNull ?: return
         val data = ((push["pub"] as? JsonObject)?.get("data")) ?: return
         messages++
+        tap?.let { t -> runCatching { t(channel, data, lastMessageMs) } }
         apply(channel, data)
     }
 

@@ -169,6 +169,9 @@ class CloudSources(
             board = boltFeed.lines.board, socketLive = { boltFeed.lines.live }, ensureOpen = { boltFeed.arrange(settings()); boltFeed.lines.use() }, sink = sink, scope = scope, rules = rules,
         ).also { boltFeed.liveTennis = true }
 
+    /** SX Bet's socket (null without a scope): the engine hangs its research recorder on it. */
+    val sxStream: com.tjshea.vigilant.data.sxbet.SxBetStream? get() = sxbet.stream
+
     @Volatile private var sxSocketWanted = false
 
     fun unabatedActive(s: ScanSettings) = s.unabated && has(CloudKeys.UNABATED) && !unabatedClient.down()

@@ -79,6 +79,17 @@ fun main(args: Array<String>) = runBlocking {
     val edge = EdgeLog(DayJournal(File(out, "cloud"), "edge", EdgeRow.serializer()) { it.atMs })
     // The volume journal (Tj, 2026-10-15: balance the best +EV bets with a decent number of fills): every trading pass's counts and why bets were held back, so a session can tune volume against edge with data.
     val passJournal = DayJournal(File(out, "cloud"), "tradepass", com.tjshea.vigilant.data.cloud.CloudTrader.PassRow.serializer()) { it.atMs }
+    // SX Bet live research (Tj, 2026-10-18, TCL111f1): every live-score push and a capped sample of odds pushes, raw, to sxlive-<day>.jsonl (archived with the other journals), so the live feed is built on real frames.
+    val sxLive = DayJournal(File(out, "cloud"), "sxlive", com.tjshea.vigilant.data.sxbet.SxLiveRow.serializer()) { it.atMs }
+    val sxOddsSeen = java.util.concurrent.atomic.AtomicInteger()
+    sources.sxStream?.tap = { channel, data, at ->
+        val keep = when (channel) {
+            "fixtures:live_scores", "fixtures:global", "main_line:global" -> true
+            "best_odds_v3:global" -> sxOddsSeen.incrementAndGet() <= 3_000
+            else -> false
+        }
+        if (keep) sxLive.append(com.tjshea.vigilant.data.sxbet.SxLiveRow(at, channel, data.toString()))
+    }
     val git = Git(token)
     val log = Log(File(out, "cloud-engine.log"))
     // The engine's own Novig key (Tj, 2026-10-15): a read-only key sent as two secrets. Without them the engine reads the public routes as before; with them it reads through the signed route and keeps the key's websocket.
