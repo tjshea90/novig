@@ -1,0 +1,639 @@
+[
+ {
+  "sx1": "FC Bayern Munich",
+  "sx2": "Arsenal",
+  "novig": "Arsenal FC @ FC Bayern M\u00fcnchen",
+  "league": "Champions League",
+  "how": "fuzzy 1.89"
+ },
+ {
+  "sx1": "Fenerbah\u00e7e",
+  "sx2": "SK Slavia Praha",
+  "novig": "SK Slavia Praha @ Fenerbah\u00e7e Spor Kul\u00fcb\u00fc",
+  "league": "Champions League",
+  "how": "fuzzy 1.62"
+ },
+ {
+  "sx1": "Real Madrid",
+  "sx2": "RB Leipzig",
+  "novig": "RasenBallsport Leipzig @ Real Madrid CF",
+  "league": "Champions League",
+  "how": "fuzzy 1.62"
+ },
+ {
+  "sx1": "Sporting Clube De Portugal CP",
+  "sx2": "Linzer Athletik Sport Klub Linz",
+  "novig": "Linzer Athletik Sport Klub @ Sporting Clube de Portugal",
+  "league": "Champions League",
+  "how": "fuzzy 1.86"
+ },
+ {
+  "sx1": "Inter Milan",
+  "sx2": "FC Shakhtar Donetsk",
+  "novig": "FC Shakhtar Donetsk @ FC Internazionale Milano",
+  "league": "Champions League",
+  "how": "fuzzy 1.69"
+ },
+ {
+  "sx1": "VfB Stuttgart",
+  "sx2": "Atletico Madrid",
+  "novig": "Club Atl\u00e9tico de Madrid @ VfB Stuttgart 1893",
+  "league": "Champions League",
+  "how": "fuzzy 1.75"
+ },
+ {
+  "sx1": "Napoli",
+  "sx2": "Bodo/Glimt",
+  "novig": "FK Bod\u00f8 / Glimt @ SSC Napoli",
+  "league": "Champions League",
+  "how": "fuzzy 1.95"
+ },
+ {
+  "sx1": "Sam Houston Bearkats",
+  "sx2": "New Mexico State Aggies",
+  "novig": "New Mexico State @ Sam Houston State",
+  "league": "NCAAF",
+  "how": "fuzzy 1.58"
+ },
+ {
+  "sx1": "Colorado State Rams",
+  "sx2": "San Diego State Aztecs",
+  "novig": "San Diego State @ Colorado State",
+  "league": "NCAAF",
+  "how": "fuzzy 1.66"
+ },
+ {
+  "sx1": "Ball State Cardinals",
+  "sx2": "Sacramento State",
+  "novig": "Sacramento State @ Ball State",
+  "league": "NCAAF",
+  "how": "fuzzy 1.67"
+ },
+ {
+  "sx1": "Malaga",
+  "sx2": "Real Sociedad",
+  "novig": "Real Sociedad de F\u00fatbol @ M\u00e1laga CF",
+  "league": "La Liga",
+  "how": "fuzzy 1.72"
+ },
+ {
+  "sx1": "Celta de Vigo",
+  "sx2": "Deportivo Alaves",
+  "novig": "Deportivo Alav\u00e9s @ Real Club Celta de Vigo",
+  "league": "La Liga",
+  "how": "fuzzy 1.84"
+ },
+ {
+  "sx1": "Lillestrom",
+  "sx2": "Real Sociedad",
+  "novig": "Real Sociedad de F\u00fatbol @ Lillestrom SK",
+  "league": "Europa League",
+  "how": "fuzzy 1.72"
+ },
+ {
+  "sx1": "Olympiakos Piraeus",
+  "sx2": "AC Sparta Praha",
+  "novig": "AC Sparta Praha @ Olympiakos CFP",
+  "league": "Europa League",
+  "how": "fuzzy 1.75"
+ },
+ {
+  "sx1": "Jagiellonia Bialystok",
+  "sx2": "RSC Anderlecht",
+  "novig": "RSC Anderlecht @ SSA Jagiellonia Bia\u0142ystok",
+  "league": "Europa League",
+  "how": "fuzzy 1.89"
+ },
+ {
+  "sx1": "FC Viktoria Plzen",
+  "sx2": "Levski Sofia",
+  "novig": "PFK Levski Sofia @ FC Viktoria Plze\u0148",
+  "league": "Europa League",
+  "how": "fuzzy 1.86"
+ },
+ {
+  "sx1": "SK Puntigamer Sturm Graz",
+  "sx2": "Olympique Marseille",
+  "novig": "Olympique de Marseille @ SK Sturm Graz",
+  "league": "Europa League",
+  "how": "fuzzy 1.57"
+ },
+ {
+  "sx1": "Celtic",
+  "sx2": "Celta de Vigo",
+  "novig": "Real Club Celta de Vigo @ Celtic FC",
+  "league": "Europa League",
+  "how": "fuzzy 1.84"
+ },
+ {
+  "sx1": "Ferencvaros",
+  "sx2": "Torreense",
+  "novig": "SC Uni\u00e3o Torreense @ Ferencv\u00e1rosi TC",
+  "league": "Europa League",
+  "how": "fuzzy 1.60"
+ },
+ {
+  "sx1": "Lech Poznan",
+  "sx2": "Sunderland",
+  "novig": "Sunderland AFC @ KKS Lech Pozna\u0144",
+  "league": "Europa League",
+  "how": "fuzzy 1.85"
+ },
+ {
+  "sx1": "Borussia Monchengladbach",
+  "sx2": "TSG 1899 Hoffenheim",
+  "novig": "TSG 1899 Hoffenheim @ Borussia VfL M\u00f6nchengladbach",
+  "league": "Bundesliga",
+  "how": "fuzzy 1.92"
+ },
+ {
+  "sx1": "Monterrey",
+  "sx2": "C.F. Pachuca",
+  "novig": "CF Pachuca @ CF Monterrey",
+  "league": "Liga MX",
+  "how": "fuzzy 1.78"
+ },
+ {
+  "sx1": "CD Guadalajara Chivas",
+  "sx2": "Necaxa",
+  "novig": "Club Necaxa @ CD Guadalajara",
+  "league": "Liga MX",
+  "how": "fuzzy 1.80"
+ },
+ {
+  "sx1": "Atletico San Luis",
+  "sx2": "Queretaro",
+  "novig": "Quer\u00e9taro FC @ Atl\u00e9tico de San Luis",
+  "league": "Liga MX",
+  "how": "fuzzy 1.92"
+ },
+ {
+  "sx1": "Alexandra Eala",
+  "sx2": "Diane Parry",
+  "novig": "Diane Parry @ Alexandra Eala Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.70"
+ },
+ {
+  "sx1": "Jelena Ostapenko",
+  "sx2": "Belinda Bencic",
+  "novig": "Belinda Bencic @ Jelena Ostapenko Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.73"
+ },
+ {
+  "sx1": "Hanyu Guo",
+  "sx2": "Ekaterina Alexandrova",
+  "novig": "Ekaterina Alexandrova @ Hanyu Guo Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.60"
+ },
+ {
+  "sx1": "Sara Bejlek",
+  "sx2": "Xiyu Wang",
+  "novig": "Xiyu Wang @ Sara Bejlek Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.65"
+ },
+ {
+  "sx1": "Jasmine Paolini",
+  "sx2": "Anhelina Kalinina",
+  "novig": "Anhelina Kalinina @ Jasmine Paolini Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.71"
+ },
+ {
+  "sx1": "Kamilla Rakhimova",
+  "sx2": "Marie Bouzkova",
+  "novig": "Marie Bouzkova @ Kamilla Rakhimova Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.74"
+ },
+ {
+  "sx1": "Sorana Cirstea",
+  "sx2": "Han Shi",
+  "novig": "Han Shi @ Sorana Cirstea Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.70"
+ },
+ {
+  "sx1": "Daria Kasatkina",
+  "sx2": "Aliaksandra Sasnovich",
+  "novig": "Aliaksandra Sasnovich @ Daria Kasatkina Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.71"
+ },
+ {
+  "sx1": "Katarzyna Kawa",
+  "sx2": "Maja Chwalinska",
+  "novig": "Maja Chwalinska @ Katarzyna Kawa Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.70"
+ },
+ {
+  "sx1": "Yulia Putintseva",
+  "sx2": "Diana Shnaider",
+  "novig": "Diana Shnaider @ Yulia Putintseva Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.73"
+ },
+ {
+  "sx1": "Cristina Bucsa",
+  "sx2": "Polina Kudermetova",
+  "novig": "Polina Kudermetova @ Cristina Bucsa Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.70"
+ },
+ {
+  "sx1": "Lone'er Kavanagh",
+  "sx2": "Ramazonbek Temirov",
+  "novig": "Ramazan Temirov @ Lone'er Kavanagh",
+  "league": "UFC",
+  "how": "fuzzy 1.85"
+ },
+ {
+  "sx1": "Nikita Krylov",
+  "sx2": "Abdulrakhman Yakhyaev",
+  "novig": "Abdul-Rakhman Yakhyaev @ Nikita Krylov",
+  "league": "UFC",
+  "how": "fuzzy 1.98"
+ },
+ {
+  "sx1": "Abusupiyan Magomedov",
+  "sx2": "Cameron Rowston",
+  "novig": "Cameron Rowston @ Abus Magomedov",
+  "league": "UFC",
+  "how": "fuzzy 1.82"
+ },
+ {
+  "sx1": "Katie Boulter",
+  "sx2": "Himeno Sakatsume",
+  "novig": "Himeno Sakatsume @ Katie Boulter Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.68"
+ },
+ {
+  "sx1": "Viktorija Golubic",
+  "sx2": "Mai Hontama",
+  "novig": "Mai Hontama @ Viktorija Golubic Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.74"
+ },
+ {
+  "sx1": "Moyuka Uchijima",
+  "sx2": "Ena Shibahara",
+  "novig": "Ena Shibahara @ Moyuka Uchijima Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.71"
+ },
+ {
+  "sx1": "Paula Badosa Gibert",
+  "sx2": "Antonia Ruzic",
+  "novig": "Antonia Ruzic @ Paula Badosa Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.65"
+ },
+ {
+  "sx1": "Lanlana Tararudee",
+  "sx2": "Kaitlin Quevedo",
+  "novig": "Kaitlin Quevedo @ Lanlana Tararudee Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.74"
+ },
+ {
+  "sx1": "Tereza Valentova",
+  "sx2": "Shuai Zhang",
+  "novig": "Shuai Zhang @ Tereza Valentova Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.73"
+ },
+ {
+  "sx1": "Katerina Siniakova",
+  "sx2": "Peyton Stearns",
+  "novig": "Peyton Stearns @ Katerina Siniakova Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.75"
+ },
+ {
+  "sx1": "Lilli Tagger",
+  "sx2": "Liudmilla Samsonova",
+  "novig": "Liudmila Samsonova @ Lilli Tagger Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.64"
+ },
+ {
+  "sx1": "Ashlyn Krueger",
+  "sx2": "Janice Tjen",
+  "novig": "Janice Tjen @ Ashlyn Krueger Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.70"
+ },
+ {
+  "sx1": "Sonay Kartal",
+  "sx2": "Kimberly Birrell",
+  "novig": "Kimberly Birrell @ Sonay Kartal Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.67"
+ },
+ {
+  "sx1": "Catherine McNally",
+  "sx2": "Sinja Kraus",
+  "novig": "Sinja Kraus @ Catherine McNally Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.74"
+ },
+ {
+  "sx1": "Oleksandra Oliynykova",
+  "sx2": "Mary Stoiana",
+  "novig": "Mary Stoiana @ Oleksandra Oliynykova Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.78"
+ },
+ {
+  "sx1": "Talia Gibson",
+  "sx2": "Harriet Dart",
+  "novig": "Harriet Dart @ Talia Gibson Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.67"
+ },
+ {
+  "sx1": "Maya Joint",
+  "sx2": "Zeynep Sonmez",
+  "novig": "Zeynep Sonmez @ Maya Joint Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.62"
+ },
+ {
+  "sx1": "Claire Liu",
+  "sx2": "Magda Linette",
+  "novig": "Magda Linette @ Claire Liu Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.62"
+ },
+ {
+  "sx1": "Catherine McNally",
+  "sx2": "Sinja Kraus",
+  "novig": "Sinja Kraus @ Catherine McNally Round of 32",
+  "league": "WTA",
+  "how": "fuzzy 1.74"
+ },
+ {
+  "sx1": "Dino Prizmic",
+  "sx2": "Damir Dzumhur",
+  "novig": "Damir Dzumhur @ Dino Prizmic Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.67"
+ },
+ {
+  "sx1": "Jacob Fearnley",
+  "sx2": "Hugo Gaston",
+  "novig": "Hugo Gaston @ Jacob Fearnley Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.70"
+ },
+ {
+  "sx1": "Toby Samuel",
+  "sx2": "Zizou Bergs",
+  "novig": "Zizou Bergs @ Toby Samuel Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.65"
+ },
+ {
+  "sx1": "Tallon Griekspoor",
+  "sx2": "Max Schoenhaus",
+  "novig": "Max Schoenhaus @ Tallon Griekspoor Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.74"
+ },
+ {
+  "sx1": "Jan-Lennard Struff",
+  "sx2": "Marcos Giron",
+  "novig": "Marcos Giron @ Jan-Lennard Struff Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.75"
+ },
+ {
+  "sx1": "Mariano Navone",
+  "sx2": "Juan Manuel Cerundolo",
+  "novig": "Juan Manuel Cerundolo @ Mariano Navone Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.70"
+ },
+ {
+  "sx1": "Martin Damm Jr",
+  "sx2": "Andrea Guerrieri",
+  "novig": "Andrea Guerrieri @ Martin Damm Qualification",
+  "league": "ATP",
+  "how": "fuzzy 1.62"
+ },
+ {
+  "sx1": "Stefanos Tsitsipas",
+  "sx2": "Aleksandar Kovacevic",
+  "novig": "Aleksandar Kovacevic @ Stefanos Tsitsipas Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.75"
+ },
+ {
+  "sx1": "Adrian Mannarino",
+  "sx2": "Aleksandar Vukic",
+  "novig": "Aleksandar Vukic @ Adrian Mannarino Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.73"
+ },
+ {
+  "sx1": "Terence Atmane",
+  "sx2": "Rinky Hijikata",
+  "novig": "Rinky Hijikata @ Terence Atmane Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.70"
+ },
+ {
+  "sx1": "Thiago Agustin Tirante",
+  "sx2": "Facundo Diaz Acosta",
+  "novig": "Facundo Diaz Acosta @ Thiago Agustin Tirante Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.79"
+ },
+ {
+  "sx1": "Miomir Kecmanovic",
+  "sx2": "James Duckworth",
+  "novig": "James Duckworth @ Miomir Kecmanovic Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.74"
+ },
+ {
+  "sx1": "Fabian Marozsan",
+  "sx2": "Timofey Skatov",
+  "novig": "Timofey Skatov @ Fabian Marozsan Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.71"
+ },
+ {
+  "sx1": "Mattia Bellucci",
+  "sx2": "Tomas Martin Etcheverry",
+  "novig": "Tomas Martin Etcheverry @ Mattia Bellucci Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.71"
+ },
+ {
+  "sx1": "Zangar Nurlanuly",
+  "sx2": "Tomas Machac",
+  "novig": "Tomas Machac @ Zangar Nurlanuly Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.73"
+ },
+ {
+  "sx1": "Marin Cilic",
+  "sx2": "Nikoloz Basilashvili",
+  "novig": "Nikoloz Basilashvili @ Marin \u010cili\u0107 Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.65"
+ },
+ {
+  "sx1": "Sho Shimabukuro",
+  "sx2": "Roman Safiullin",
+  "novig": "Roman Safiullin @ Sho Shimabukuro Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.71"
+ },
+ {
+  "sx1": "Mikhail Kukushkin",
+  "sx2": "Stefanos Sakellaridis",
+  "novig": "Stefanos Sakellaridis @ Mikhail Kukushkin Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.74"
+ },
+ {
+  "sx1": "Rei Sakamoto",
+  "sx2": "Karen Khachanov",
+  "novig": "Karen Khachanov @ Rei Sakamoto Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.67"
+ },
+ {
+  "sx1": "Golden State Valkyries W",
+  "sx2": "Atlanta Dream W",
+  "novig": "Atlanta Dream @ Golden State Valkyries",
+  "league": "WNBA",
+  "how": "fuzzy 1.89"
+ },
+ {
+  "sx1": "Mert Alkaya",
+  "sx2": "Andre Ilagan",
+  "novig": "Andre Ilagan @ Mert Alkaya Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.65"
+ },
+ {
+  "sx1": "Chak Lam Coleman Wong",
+  "sx2": "Jake Delaney",
+  "novig": "Jake Delaney @ Chak Lam Coleman Wong Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.78"
+ },
+ {
+  "sx1": "Zhizhen Zhang",
+  "sx2": "Kaichi Uchida",
+  "novig": "Kaichi Uchida @ Zhizhen Zhang Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.68"
+ },
+ {
+  "sx1": "James McCabe",
+  "sx2": "Elias Ymer",
+  "novig": "Elias Ymer @ James McCabe Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.67"
+ },
+ {
+  "sx1": "Fajing Sun",
+  "sx2": "Qian Sun",
+  "novig": "Qian Sun @ Fajing Sun Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.62"
+ },
+ {
+  "sx1": "Sergey Fomin",
+  "sx2": "Tristan Schoolkate",
+  "novig": "Tristan Schoolkate @ Sergey Fomin Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.67"
+ },
+ {
+  "sx1": "Cruz Hewitt",
+  "sx2": "Rigele Te",
+  "novig": "Rigele Te @ Cruz Hewitt Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.65"
+ },
+ {
+  "sx1": "Hayato Matsuoka",
+  "sx2": "Yibing Wu",
+  "novig": "Yibing Wu @ Hayato Matsuoka Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.71"
+ },
+ {
+  "sx1": "Yu Hsiou Hsu",
+  "sx2": "Jie Cui",
+  "novig": "Jie Cui @ Yu Hsiou Hsu Round of 32",
+  "league": "ATP",
+  "how": "fuzzy 1.67"
+ },
+ {
+  "sx1": "Saba Purtseladze",
+  "sx2": "Khumoyun Sultanov",
+  "novig": "Khumoyun Sultanov @ Saba Purtseladze Qualification",
+  "league": "ATP",
+  "how": "fuzzy 1.70"
+ },
+ {
+  "sx1": "Dominik Palan",
+  "sx2": "Semen Pankin",
+  "novig": "Semen Pankin @ Dominik Palan Qualification",
+  "league": "ATP",
+  "how": "fuzzy 1.65"
+ },
+ {
+  "sx1": "Max Purcell",
+  "sx2": "Evan Zhu",
+  "novig": "Evan Zhu @ Max Purcell Qualification",
+  "league": "ATP",
+  "how": "fuzzy 1.61"
+ },
+ {
+  "sx1": "Omar Jasika",
+  "sx2": "Koki Matsuda",
+  "novig": "Koki Matsuda @ Omar Jasika Qualification",
+  "league": "ATP",
+  "how": "fuzzy 1.61"
+ },
+ {
+  "sx1": "Mitsuki Wei Kang Leong",
+  "sx2": "Luca Castelnuovo",
+  "novig": "Luca Castelnuovo @ Mitsuki Wei Kang Leong Qualification",
+  "league": "ATP",
+  "how": "fuzzy 1.76"
+ },
+ {
+  "sx1": "Kasidit Samrej",
+  "sx2": "Yaroslav Demin",
+  "novig": "Yaroslav Demin @ Kasidit Samrej Qualification",
+  "league": "ATP",
+  "how": "fuzzy 1.67"
+ },
+ {
+  "sx1": "L.A. Lakers",
+  "sx2": "Philadelphia 76ers",
+  "novig": "Philadelphia 76ers @ Los Angeles Lakers",
+  "league": "NBA",
+  "how": "fuzzy 1.71"
+ },
+ {
+  "sx1": "L.A. Lakers",
+  "sx2": "Golden State Warriors",
+  "novig": "Golden State Warriors @ Los Angeles Lakers",
+  "league": "NBA",
+  "how": "fuzzy 1.71"
+ }
+]
