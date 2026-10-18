@@ -323,11 +323,10 @@ to start worrying about only after it happens on this project too:
 
 **Standing instruction from Tj (2026-10-18, verbatim):** "Any time you are ever mentioned anywhere in this repo or project as your id number, add the name tj outlook." Same mechanism as mirage: write **acct-7542bf (tj outlook)** wherever a person reads it; the tag stays the key. `coord.py` `ACCOUNT_NAMES` and `tell_tj.py` carry both names.
 
-<<<<<<< HEAD
 ## Account names: acct-27a37e is "tj Gmail" (Tj, 2026-10-18, permanent)
 
 **Standing instruction from Tj (2026-10-18, verbatim):** "Any time you are referred to by your session id account number, 27A37E, add the name tj Gmail so I know which account it is." Same mechanism as mirage and tj outlook: write **acct-27a37e (tj Gmail)** wherever a person reads it; the tag stays the key. `coord.py` `ACCOUNT_NAMES` and `tell_tj.py` carry it.
-=======
+
 ## Any Claude session may change any setting or switch except STOP ALL (Tj, 2026-10-18, TCL113, permanent)
 
 **Standing instruction from Tj (2026-10-18, verbatim):** "I want any Claude session to be able to change and toggle on and off any setting and any switch anywhere in the app and on GitHub except the stop all master switch" and "Do all the changes necessary so that Claude accounts have full access to the GitHub engine and vigilant app except the stop all button". Also: "I need Claude to have full permission to start up the GitHub engine when scheduled, even if the toggles in my app are off".
@@ -340,7 +339,6 @@ to start worrying about only after it happens on this project too:
 **Standing instruction from Tj (2026-10-18, verbatim, shortened):** "Any claude session may alter anything even if it doesn't hold the lease, as long as it will not break anything" and "no matter which Claude account I am talking to, if I ask for modifications, the message is automatically relayed to the Claude account holding the lease and it should read the prompt and begin the answer as soon as possible".
 - **Work without the lease:** a session that does not hold the lease may edit, commit and push its own branch, always. `push.sh` no longer holds a push back: it pushes the branch (a plain push, nothing overwritten) and fast-forwards `main` only when the change touches no code, workflow or release file (docs, tools, research, notes are free; `.github/`, `app/`, `data/`, `engine/`, `cloud/`, `lab/`, gradle files and the save/resume hooks wait for the lease, or `NOLEASE_VERIFIED=1` after the full test gate passed). Never without the lease: a release, a workflow trigger, an engine or trading setting, anything on the class C list. Say what you changed in one board note (`coord.py post`). When in doubt it breaks something: wait.
 - **Relay:** a message Tj types into a session that does not hold the lease (the chat belongs to another account, or another live session holds the repo) is put into the app chat as his message (`tell_tj.py relay`, run by `capture_inbox.sh`, text starts `[typed to <account>, relayed ...]`). The lease holder's `chat_watch.sh` prints it as `CHAT <id> ...` within seconds and it answers and starts; if nobody is watching, `chat-wake.yml` wakes the on-duty account. The relaying session tells Tj it was relayed and does not act on the request itself (unless he says "force"). Tests: `python3 -I tools/tell_tj.py selftest`, `bash tools/test_coord.sh`.
->>>>>>> origin/main
 
 ## Chat wake: Tj's messages are woken for, answering chat needs no lease (Tj, 2026-10-17, TCL70, permanent)
 
