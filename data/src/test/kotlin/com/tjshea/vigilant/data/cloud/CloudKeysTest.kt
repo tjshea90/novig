@@ -22,7 +22,7 @@ class CloudKeysTest {
         // BoltOdds goes to GitHub since Tj's word of 2026-10-15; Pinnodds' one-connection socket never does
         assertEquals("BOLTODDS_API_KEY", CloudKeys.BY_PROVIDER[ApiProvider.BOLTODDS])
         // every secret the phone sends is one the engine reads, and the workflow passes it
-        assertEquals(CloudKeys.ALL.toSet(), CloudKeys.BY_PROVIDER.values.toSet())
+        assertEquals(CloudKeys.ALL.toSet() - CloudKeys.SET_BY_HAND, CloudKeys.BY_PROVIDER.values.toSet())
         val wf = java.io.File("../.github/workflows/cloud-scan.yml").takeIf { it.exists() } ?: java.io.File(".github/workflows/cloud-scan.yml")
         if (wf.exists()) (CloudKeys.ALL + CloudKeys.NOVIG + CloudKeys.TRADE).forEach { n -> assertTrue("cloud-scan.yml passes $n", wf.readText().contains("$n: \${{ secrets.$n }}")) }
     }

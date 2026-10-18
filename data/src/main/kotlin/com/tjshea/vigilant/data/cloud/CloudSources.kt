@@ -345,6 +345,9 @@ object CloudKeys {
         com.tjshea.vigilant.data.keys.ApiProvider.SXBET to SXBET,
     )
 
+    /** Secrets Tj added in GitHub himself, which the phone does not send (Pinnodds' REST key, 2026-10-18: "pinnodds api key is now added as a secret"). The engine reads them like the others. */
+    val SET_BY_HAND = setOf(PINNODDS)
+
     /** Providers whose keys stay on the phone, on purpose: Pinnodds (one WebSocket per account: a second connection evicts the app's). */
     val PHONE_ONLY = setOf(com.tjshea.vigilant.data.keys.ApiProvider.PINNODDS)
 
