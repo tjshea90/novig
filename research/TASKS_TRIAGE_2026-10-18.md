@@ -1,0 +1,269 @@
+# TASKS.md triage, 2026-10-18 (acct-27a37e tj Gmail)
+
+245 open items by line number in TASKS.md, grouped by what they wait on. **Nothing was closed or deleted**: the grouping is by wording, not by proof, and an item is closed only when its test or version is confirmed. Groups A-C are the likely-stale ones for a human skim; D-F are live build work.
+
+## A. Waiting on Tj (decision, word, phone, or file) (41)
+
+- L3791: BX5 Ask Tj (not done without him): reading a book page for every prop >= 1.5% EV (more CNO requests; the sharp-book question needs it); tell him to re
+- L3849: CB2 FOR TJ TO DECIDE (not started): the only version worth testing is a passive RECORDER of live ladders over the websocket for two or three weekends 
+- L3858: CC3 FOR TJ TO DECIDE (not started): (a) run the public tape recorder on the next NFL games (Monday night Falcons @ Saints, 00:15Z Oct 6) and send the 
+- L3865: CD2 FOR TJ TO DECIDE (nothing built): CNO can't carry tennis; tennis can only come from Vigilant's scan. To use it today: Scanner "Both" + league chip
+- L3893: CH4 FOR TJ: Settings › Diagnostics › Grading check › Copy and paste it (or send the next diagnostics) so the ledger rows for the Gordon and Tuten mark
+- L4015: CV2 (OPEN: needs Tj's phone) What cannot be tested here and must be said: this container has no Novig key, so the executor is tested against fakes onl
+- L4161: DK3 (Tj said yes, 2026-10-07 ~21:00Z: see DM1-DM5 below, which carry it out) Only if Tj says yes: build it behind its own switch (default off), tests,
+- L4166: DL2 ASK TJ which he meant: (1) nothing more (he saw bid fills as "Vigilant auto bets"); (2) a visible line on the Auto-bet tab and in Diagnostics sayi
+- L4217: PW10 FOR TJ TO DECIDE (asked in the release message): whether to buy a paid Pinnodds plan after 2026-10-10 23:34Z (WebSocket = a REST plan + $99 add-o
+- L4233: PY3 After Tj sends the next Diagnostics file (v0.76.4+ with real orders): read "Orders by timing". If orders within 20 s of a score fill far less than
+- L4247: PV2 Add Pinnodds' score changes as a contestant in the in-app feed race (no second Pinnodds connection: the runner already sees the score frames). Wai
+- L4305: CR2 If v0.81.1 still crashes: Tj sends Downloads/Vigilant/vigilant-last-crash.txt; fix the real cause from its stack.
+- L4316: SG7 WAIT for Tj's Test-and-share sample (Downloads/Vigilant/vigilant-sgo-sample-*.txt): check SgoParser/SgoConvert/SgoCloses/SgoScores against the REA
+- L4357: SN7 WAIT for Tj's OddsPapi trial key: Settings › OddsPapi › Test and share sample (Downloads/Vigilant/vigilant-oddspapi-sample-*.txt). Then check agai
+- L4388: SU4 WAIT for Tj's pick (or mix). Then mock the bet sheet, CNO, Tracker, Settings in that style (light + dark) and only then change the app.
+- L4396: SV5 DECISION FOR TJ (time-critical: the Pinnodds trial ends 2026-10-10 23:34Z, Saturday's college football slate is the week's biggest live sample): "
+- L4402: SV11 ASK developers@novig.com (Tj's word first) whether a high cancel-to-fill ratio from API bids is acceptable, and whether the in-play order delay i
+- L4411: SW7 FIRST REAL SESSION (Tj runs it; the next session reads it): Diagnostics › LIVE BIDS after the first real hour: accepted / on-the-book / pulled med
+- L4412: SW8 After 2026-10-10 23:34Z the Pinnodds trial ends: no key = no live fair = no live bids (status line says so). Tj decides on the plan (at least $198
+- L4425: SZ2 Tj sends the Settings › Live bids why-line in full and Diagnostics (LIVE BIDS block: Engine line says running / judgments / JUDGE NOT RUNNING / JU
+- L4453: TG2 Tj decides: wait for those 143 to grade (read them first, one session), or build a tiny real taker for the CONSERVATIVE tail rules (switch off by 
+- L4497: TM4 (needs Tj's word) Pinnacle guest REST as the live fair after Pinnodds ends: first a 5-minute freshness test on the phone (log market `version` cha
+- L4498: TM5 (needs Tj's word) soft-book board from the phone (Bovada works keyless; DK/Caesars/Kambi/BetMGM/Superbook endpoints in the research file) for the 
+- L4499: TM6 Tj may start trials: OddsShopper 7 days (benchmark our EVs), OddsCorp 2 weeks via Telegram @oddscorp (ask NCAAF/NFL coverage and the price currenc
+- L4521: TP2c After v0.88.7 Tj sends the Live bids page top: the "no book" reason words name the cause if it is not the refusal bug.
+- L4541: UN5 Tj sends the two samples (Settings › Unabated › Test and share sample; Settings › OddsPapi Free (v4) › Test and share sample); check UnabatedParse
+- L4658: TO3 Auto-bet on live games: opt-in switch with its own guards (fair age ceiling, own minimum EV); off by default. WAITING FOR TJ'S WORD (RESEARCH.md §
+- L4659: TO4 Bids on live games from the Vigilant scan: opt-in, short ttl, fair age cap; off by default (or the Pinnacle-fed live bid desk, NOVIG_API.md §23). 
+- L4825: TBO5 Tj sends the sample: check parser/market table against the real answers, fix BOLTODDS_API.md.
+- L4943: TFR5c After Tj sends a study-mode file: rank PropLine/ParlayAPI/SGO/Unabated by quote age; add per-source agreement-with-Pinnacle (accuracy) to the So
+- L5126: TWS1 Needs Tj's v0.99.8+ Diagnostics file (WALLET DEPLOYMENT lists the bid skip reasons; the newest file in research/uploads is v0.98.0, before the we
+- L5208: TCL11 (needs Tj's word: it changes his Novig account) a read-only `trading::read` Novig key for the engine, minted by the phone from the management ke
+- L5248: TCL16c (v0.106.0 recorded; run 38673681637 got a runner address Novig refuses, RESTRICTED_NETWORK_REGION, so its Novig side ran at the public-route pa
+- L5249: TCL16e NEEDS TJ (numbers in research/scan_speed_2026-10-15.md, run 38679081384): (1) skip re-reads of books whose lines are far from +EV (63% of price
+- L5251: TCL17 Tj asked "Is it possible to have multiple runners or apis read in parallel?" (answered in chat and research/scan_speed_2026-10-15.md): APIs are 
+- L5260: TCL18f NEEDS TJ: (1) build an in-app updater (Settings › Updates: checks this repo's Releases, one-time "install unknown apps" permission, first updat
+- L5446: TCL44b ASK Tj: Kalshi key for the PHONE's socket (already supported, Settings > Kalshi) or for the GitHub ENGINE (CLAUDE.md forbids a Kalshi private k
+- L5482: TCL51b Ship v0.114.8; ask Tj whether the next update goes smoothly; if the freeze persists, get Diagnostics (ANR trace) rather than guess.
+- L5546: TCL61e New free APIs: ask Tj which providers he is adding (names/keys) and wire each through the same adapter so the manager can score it.
+- L5754: TCL106 (Tj, chat t1792274217965): Kalshi + Novig trading/arbitrage research written (research/kalshi_plus_novig_2026-10-17.md); next, if Tj says yes: 
+- L5764: TCL108 (Tj, chat t1792279761330, 2026-10-17): "can the GitHub engine also run the live betting features such as the tail betting? I have all the live 
+
+## B. Waiting on data or a date (11)
+
+- L4123: DH6 At the 4 h and 9 h 10 min check-ins: finish anything above and anything from earlier sessions still open (CHECKPOINT.md, TASKS.md, INBOX.md tail).
+- L4248: PV3 Read the v0.77.0 "Post-score study" and "Orders by timing" from Tj's next Diagnostics before any further feed work (PY3).
+- L4369: SQ4 About 2026-10-16 write READY FOR ANALYSIS in NOTES.md; 2026-10-19 stop rule (STEWARD.json `stopRule`).
+- L4378: SS3 About 2026-10-16: re-rank recipes on graded results + independent closes; only then propose Bids defaults (candidate: margin 3, rest 120 min, no g
+- L4399: SV8 BUILD (S2) Live Sitting tab, alerts only: TAIL / ALT / ladder detectors (and LiveEdge when Pinnacle is on), edge after the live fee, fair source a
+- L4421: SY2 Read the next Diagnostics' "Orders by timing" and the pinn-live journal: misses by trigger (Any edge vs After a score vs Stale orders), by sport (
+- L4813: TAN8 Follow-ups: (a) cut the Novig book reads by the caller the next Diagnostics names (NovigReads line); (b) a lead-dependent minimum edge instead of
+- L4857: TNV11 Read Tj's first files from v0.91.0: Settings > Betting & Novig account > Test key (the "Best-bid feed (bbo)" line: in use / GIVEN UP and why, th
+- L4881: TAB1 (Tj, 2026-10-12 ~16:50Z) "The bet slip is still lagging" (screenshot: Placing… with the profit warning, v0.93.0) and "the auto bet feature gave a
+- L5189: TCL8b Read the next `cloud-feed` status/log once a scan finishes: how long a full-reach first scan really takes with Tj's settings; if over ~10 min, p
+- L5739: TCL100c After games settle: join results (ESPN finals) and write research/live_light_analysis_DATE.md.
+
+## C. Ideas / follow-ups never started (8)
+
+- L4167: DL3 Build what he picks (not started; nothing is built for this yet).
+- L4182: DN1 FOLLOW-UPS from DM (not started; none is needed for v0.75.0 to work): (a) read a market's whole game-page grid once and parse every line from it (
+- L4216: PW9 FOLLOW-UPS (not started; none is needed for v0.76.x): (a) place the order over the already-open Novig websocket (`place` verb, NOVIG_API.md §21) a
+- L4317: SG8 Ideas not built: SGO `fairOdds` vs Vigilant's own fair as a cross-check in Diagnostics; per-book freshness table (which books SGO actually keeps f
+- L4358: SN8 Ideas not built: OddsPapi WebSocket (ODDSPAPI_API.md §7: no phone-side book of every price), `/fixtures/settlement` for prop grading (the free box
+- L4822: TBO6 Novig follow-ups from the re-check: (a) the Scanner asks the live stream for at most 2,000 books (`NovigStream.MAX_MARKETS`) though a key's cap i
+- L4852: TNV9 Later, each behind a switch: WS `place`/`cancel`, WS compression, REST `depth`, `trades` channel for the live lane; TBO6 follow-ups merge into TN
+- L5240: TCL15b Evaluate each idea against the real limits (Novig's per-IP public limit, per-key buckets, GitHub's concurrency and minutes, the phone's key) an
+
+## D. API work (63)
+
+- L1161: First real Novig key connect: confirm NovigSetup + stream against the live API
+- L1164: First real The Odds API scan on device: confirm team matching vs real
+- L4041: DA2 RESEARCH (inline, no spend, no code): is there any way to build Tj's own rapid live odds/scores feed for live betting on Novig (the post-score sta
+- L4223: PX1 AUDIT (workflow wf_e596e2b2-378, ten lenses + skeptic verifiers + synthesis; findings saved to research/pinnodds_audit_2026-10-08/): wrong-side be
+- L4234: PY4 PX3 pregame mode stays the best use of the socket that a live pause cannot touch (RESEARCH.md §118.3); needs a recorder run (tools/research/pinn_p
+- L4315: SG6 floor green, ship, release, tell Tj plainly what the toggle does and what was verified against the real API (nothing live until his key is in).
+- L4361: SO1 Research further odds/score/injury/lineup/weather/news APIs and non-API services (hosting, CI, monitoring, data) worth a free trial or cheap; answ
+- L4377: SS2 Add an independent close (SGO/Pinnacle close from `sgo-close`) to each paper fill's CLV; report game-level CLV.
+- L4398: SV7 BUILD (S1) Live maker lab v2, paper: BidLab live recipes priced from a live fair (Pinnodds when its feed is on; Novig-anchored fair always; NOT SG
+- L4401: SV10 (S4, only if SV6 shows REST is the bottleneck) `place`/`cancel` over the open Novig websocket (NOVIG_API.md §21, PW9).
+- L4507: TN6 ON HOLD (RESEARCH.md §127 addendum: the website API is cached 90-400 s, up to 15 min; pregame only, if at all) (after the compare numbers) make th
+- L4509: TN8 Pinnacle specials (`withSpecials=true`, player props) as a sharp props fair beside PropLine; measure coverage and freshness first.
+- L4557: TC1 Read what exists (TailTrade/LiveBid/Pinnodds live/lab) and why it never filled (Diagnostics: 21 orders sent, 0 filled, all "the offer was gone", m
+- L4575: TE1 Find why a scan with only Unabated + OddsPapi Free on finishes in <1 s with nothing (source gating? cache? no sharp book? Pricing needs?).
+- L4576: TE2 Find why Polymarket alone returns no bets while other APIs show +EV.
+- L4585: TE5 Tj's v0.89.9 Diagnostics had Unabated + OddsPapi Free switched OFF: ask for one scan with only those two ON after v0.89.10. Live bids so far 14 be
+- L4593: TG3 (rest) Tennis from the APIs that offer it but are not wired for it: OddsPapi v4/v5 (sport tennis, a tournament per event week), SGO (check its ATP
+- L4638: TL2 Make it so: a toggled-on API is always asked (for every league/data kind it can serve); a toggled-off API is never called by anything (scan, close
+- L4639: TL3 Tests proving both rules for each API; ship; release.
+- L4656: TO1 ANSWER: it is Vigilant's own rule (`ApiBetPlanner` line `target.startsTs <= now`, `AutoBettor` "not pregame", `MakerQuote` `!o.isLive`), not Novig
+- L4660: TO5 Tests, docs (NOVIG_API.md/RESEARCH.md/CLAUDE.md), ship v0.89.20 (TO2 only).
+- L4670: TQ1 Audit: the "live games in scanner" setting, LiveFeedService/live engine (Novig WS + Pinnodds WS), how live rows reach the Feed.
+- L4671: TQ2 With the switch ON: match live games now, keep both sockets up, compute EV in real time from Pinnodds fair vs Novig taker price; a live row stays 
+- L4826: TBO7 After the first sample (TBO5): if BoltOdds carries Pinnacle / Circa / bet365 and its market names match, put `bolt` and `bolt-props` FIRST on `Ap
+- L4827: TBO8 Live lane: with the sample's latency and book list, let `PinnLiveRunner`/`LiveScan` take BoltOdds' pushed price (when it carries Pinnacle or a sh
+- L4837: TBP8 Tennis: BoltOdds sport "Tennis" with per-tournament names ("WTA Wuhan - Tennis"), 848 games: map ATP/WTA once the odds socket works.
+- L4854: TBP9 BoltOdds `info.is_live` (real data has it): mark live games on the board and keep live games out of the pregame fair unless Include live games is
+- L4929: TPL1 (Tj, 2026-10-12) "Investigate if [PropLine Streaming Lite] is good": DONE as research, see research/propline_streaming_lite_2026-10-12.md. If Tj 
+- L4932: TPL2 (Tj, 2026-10-12) "How can I use the propline pushed live events to my advantage with vigilant": answer in chat; build only if Tj says buy/build (
+- L5128: TWS2 v0.99.10 shipped, release.yml triggered (confirm get_release_by_tag v0.99.10, record-release.sh v0.99.10 269, send link); then read the week pass
+- L5227: TCL13e Tests, docs (CLAUDE.md Cloud scan + CloudKeys rules, NOVIG_API.md, BOLTODDS_API.md), full floor, ship v0.104.0, restart the engine, read `statu
+- L5269: TCL19e BoltOdds + Novig sockets and every other API used by the engine for fresh odds (BoltOdds is already on the runner; the Novig stream is already 
+- L5297: TCL22b Conflicts phone vs GitHub: audit which connections/keys the phone still holds while `cloudDrives` (BoltOdds sockets 3-connection cap, Novig str
+- L5299: TCL22d `DASHBOARD.md` on `cloud-feed` (GitHub renders it): every API with working/standing by/failing/off, last scan answer (leagues, games matched, e
+- L5305: TCL23c Verify the phone shows active APIs and usage meters (merged usage, cloud status).
+- L5310: TCL24a Dashboard screen in the app (phone-width cards: engine state, list freshness, Novig route/address, trading + wallet, per-API health chips, usag
+- L5311: TCL24b Graphs: history of the engine's own numbers kept on the phone (scan time, +EV count, list age, wallet) as small sparklines; usage bars per API.
+- L5347: TCL29e Claude usage meters: NOT possible from a phone (no API exposes subscription usage); say so. Optional later: each session posts a rough usage no
+- L5354: TCL30c ENGINEER: BoltOdds REST fallback hits 429 (6 a minute) when the socket is off in the engine; gap the snapshot to the limit or keep the socket o
+- L5421: TCL38b WATCH: desk restarts ~18:14Z; if fills are picked off again with SGO inactive, tighten bids' fair-source requirement rather than shortening the
+- L5425: TCL39b Audit engine's SGO use vs docs (llms-full.txt): oddsAvailable, oddID filters, includeAltLines, cursor paging, bookmaker list, props, open/close
+- L5435: TCL40d WATCH: BoltOdds snapshot still 429 on the runner after the 60 s retry (scan note truncates the reason at ~60 chars; get the full text: log bolt
+- L5447: TCL44c Audit sockets: phone Novig/Bolt/Kalshi on; engine: Novig stream yes, Bolt sockets yes (snapshot 429), Kalshi socket no (REST).
+- L5542: TCL61a Read what exists (ApiGovernor, ApiAdvisor, ApiToggles, ApiChain, SourceScore, CloudOverrides) and the usage/measurement data it has; design the
+- L5544: TCL61c Decisions: role per API (primary / fallback / extra-only / rested), paid APIs preferred when quality is not worse, free keys used freely while 
+- L5545: TCL61d Messages: which API to buy or refill (with the numbers), which free key is spent, which feed is stale; once per change, in the app's Messages.
+- L5547: TCL61f (Tj, chat t1792183286808, 2026-10-16, verbatim): "parlayapi looks like it may be overworked. I don't know. let it use as much access as needed 
+- L5571: TCL66a Watch the engine (status/tradeNote, trades.json, desk.json) while he is away: no halted trading, volume AND quality (ROUTINE.md volume loop); r
+- L5578: TCL67c Revisit what I skipped: Bet button for PropLine lines Vigilant never priced (TCL64a); PropLine /clv/grade for the app's own bets' CLV; hit-rate
+- L5584: TCL68c Replicate what holds on the GitHub engine: rule/filters (class B gates) + a recurring Actions study; write research/propline_trends_2026-10-16.
+- L5598: TCL70c Tj sets up the 3 routine API triggers + CLAUDE_FIRE_<TAG>_URL/_TOKEN secrets and prompt paragraph; then test one wake end to end (chat-wake.yml
+- L5702: TCL93c Advice smarter: no "buy" advice for a monthly meter the engine's own pacing already stretches to the reset; The Odds API pool of keys counted t
+- L5708: TCL94c Live lane fallback scores from SGO / OddsPapi v5 / Unabated when ESPN has no match (docs: teams.score + status); verify on live keys first.
+- L5719: TCL96c Ship v0.114.23 (chip, hourly sweep text, poll slowdown); restart engine for the PropLine carry-over + hourly sweep.
+- L5724: TCL97b The Pinnacle-vs-Novig live lane (+EV tab, Live games only): "12 games linked, 11 markets watched": check why only one market per game and wheth
+- L5733: TCL99b Check The Odds API advice with multiple keys (3,707 left over 14 days vs 471 credits today).
+- L5744: TCL101a API review pass (every session, ROUTINE): usage per API (usage.json, apiCards), data quality (p90 age, pts off Pinnacle, sole lines), pace vs 
+- L5748: TCL103 (Tj, chat t1792270221397): analysis must explain why only a small part of the wallet has open bids; with many bids that each pass the profit ru
+- L5759: TCL107a Audit BoltOdds / PropLine / ParlayAPI use (app + engine) against BOLTODDS_API.md, research/propline/llms-full, PARLAY_API.md and the live engi
+- L5760: TCL107b Check Novig docs (docs.novig.us) for changes vs NOVIG_API.md; fix app/engine gaps. Write research/api_docs_audit_2026-10-17.md.
+- L5762: TCL107c soccer TEAM_TOTAL / TOTAL_1H: does any fair feed price them? TCL107d Novig /v3/history/* for closes/grading. TCL107e ApiScorecard.surplus per 
+- L5780: TCL111g Tj: create read-only key, paste in Settings > SX Bet, Send my API keys to GitHub
+- L5784: TCL112 When the engine starts (scheduled): 1) auto bet+bids, Claude may change settings/filters (1/4 Kelly, per-game amounts, slightly lower EV for fi
+
+## E. Engine / bids / live lane (75)
+
+- L4165: DL1 FINDING (read from the code, 2026-10-07; to tell Tj before building anything): the taker auto-bet ALREADY uses only CNO's list. Its candidates are
+- L4176: DM2 DESIGN (written in RESEARCH.md §114 as it is built): `BidSource` VIGILANT|CNO setting (`makerSource`, default VIGILANT, never touched by a preset 
+- L4224: PX2 FIX every confirmed critical/high/medium finding with a test that fails before the fix (mutants for the guards): refuse negative-EV and stale bets
+- L4280: QC2 EXPLAIN the screenshots: 99.9% = no price (no bid on the other side); an isolated 90% Under 53.5 = a longshot Over bid at 10c; value is real only 
+- L4397: SV6 BUILD (S0) Live order-timing probe (Settings › Research, off by default, needs the trading key): 20 x post a 1-contract `PO` at 1-2c on a far live
+- L4400: SV9 BUILD (S3) Live Maker at $1: short-ttl (15 s) re-posted `PO` bids, pulls on fair move / score / danger zone / anchor move / stale feed, per-game n
+- L4438: TC2 Real test of the whole chain needs a priceable non-tennis line: Saturday daytime college football / MLB; or Tj turns Live bids > Tennis on in PAPE
+- L4508: TN7 Pinnacle closing line for CLV from the website: poll each open bet's game in its last minutes, keep the last price before `cutoffAt`.
+- L4520: TP2f Look at why ~11% of judgments still say "not subscribed yet" (limit/bucket; `NovigStream.limit`, tune), and why tail reads 0 games with a score a
+- L4555: TB1 MakerRules.tennis: with the Tennis switch on, tennis lines (ATP/WTA) are judged by the plain bid rules (game lines allowed, 1 book is enough when 
+- L4558: TC2 Defensive twin: a watchdog for resting bids (any left up, even outside the app) that cancels one whose fair has moved against it.
+- L4559: TC3 Live anomaly engine design + paper mode first; maker side simultaneous.
+- L4563: TC3 Next, Tj's call: one "Live sniper" switch that turns the tail taker (real, small stakes), the cover taker and tail-model maker bids on together; f
+- L4569: TD2 Read every live-bid setting and decide: keep (in a plain-words Advanced group), derive from the slider, or remove.
+- L4582: TF2 LiveSniper settings + apply/off (like LiveAutopilot), real money behind a confirmation naming the caps.
+- L4623: TK0 Scout: TrackedBet/AtBet/BetLedger fields, stats screen, how files reach Downloads/Vigilant, how bids are stored.
+- L4624: TK1 Persist the star rating (and liquidity) with each new bet/bid record (AtBet).
+- L4625: TK2 BetHistoryExport (pure): all 14 fields + extras, JSONL per day-part, READ ME + dictionary + summary splits for Claude; size-safe (streamed, parts 
+- L4626: TK3 Daily autosave to Downloads/Vigilant/bets/ (one file per day, written incrementally, bounded memory) + "Share all bets" button (zip/parts via shar
+- L4627: TK4 Stats in the app: all fields inside the Stats screen with a smart-filter dropdown (kind, sport, stars, bet/bid, auto/manual, sharp, time to start,
+- L4666: TP3 Settings/Auto-bet text says so; tests for both modes in all three lanes; ship.
+- L4690: TT1 Audit: what Pause (`settings.paused`) does today and which scanners keep running (Scanner run, auto-scan cycle, CNO reads, live lane, bids, backgr
+- L4696: TU1 Cause: (a) a game that has started but Novig's catalog still calls pregame is not `isLive`, so its REST-scanned row stayed on the Feed as a pregam
+- L4697: TU2 With live games on, REST rows of started games leave the Feed; lane rows carry exact ages (Pinnacle line changed, feed spoke; Novig market changed
+- L4705: TV3 ship v0.89.24 (pause fix + live fixes).
+- L4715: TX1 "Live only" filter chip on the +EV Feed (shown only when Include live games is on); TX2 sort by stars (FeedSort gets STARS); tests; ship.
+- L4836: TBP7 ACTIONABLE (sample #2: /livescores and /playbyplay accept subscriptions on this key, no updates seen because no game was live; probe a live game 
+- L4850: TNV7 Lifecycle status used by the planner, scan and bid desk (CLOSED = no bet; GOLIVE voids resting orders).
+- L4853: TNV10 Ship (full floor), release, tell Tj what to tap (Settings > Betting & Novig account > Test key) and what to send back.
+- L4869: TNS7 Later, not asked yet: cancel / cancel_all over the order socket (kill switch), the bid desk reacting to pushed fills and GO_LIVE cancels at once.
+- L4872: TNV15 Read Tj's first v0.92.0 file: "Novig compression:" line (bytes saved, or "answered in plain text"), "Novig order socket:" line after a first bet
+- L4970: TSM1 Test on the scan-study data: does a listed bet whose Pinnacle/sharp fair moved toward it in the last 10-30 min beat the close more often than one
+- L4971: TSM2 Only if TSM1 is positive: add a "sharp moved toward" flag/star input and a stream-engine trigger (re-price that market on a Pinnacle move), behin
+- L5048: TWG2a (v0.98.1) v0.98.0 file (research/uploads/2026-10-14/d47f34fd...): sockets ON now; wallet $21.80 of $67.59 up, riskier tier wanted 0 = supply-lim
+- L5049: TWG2 Wallet (needs the skip reasons from the next file, or a ladder): a second, DEEPER bid on a side already bid (repeat guard allows 2 per side; Make
+- L5178: TCL6 After Tj's first phone run: read `phone-data` (did bets/bids/study land?), `cloud-feed` status (rows, passes, sources), Diagnostics CLOUD section
+- L5196: TCL9c Full priced list for the bid desk and auto-bet in cloud mode (the cloud list is +EV rows only): slim encoding of every priced line, memory check
+- L5207: TCL10g After Tj installs: read the live round trip from cloud-feed `status.json` (`ackedRefreshAtMs`, `lastScanForRefreshAtMs`) and `engine-log.txt`.
+- L5217: TCL12e Full tests, ship, restart the engine, read the first candidate file and the first cloud-priced bids.
+- L5235: TCL14d Tests, docs (CLAUDE.md), full floor, ship, restart the engine, read the first heartbeat's usage.
+- L5239: TCL15a Measure where a scan's time goes (the engine's own log: Novig book reads vs fair-odds feeds vs pricing; `scanNote`, `timing`), on the public ro
+- L5259: TCL18d Delivery: engine code reaches GitHub's runner by itself once it is on main (every handover checks out main); the phone's APK needs an install s
+- L5267: TCL19c The engine decides bets and bids as the phone does and records them as PAPER orders (no key sent yet): port the order-deciding loops (auto-bet,
+- L5268: TCL19d Live orders from GitHub over the Novig socket (`NovigOrderSocket`), behind: a trading key for the small Vigilant subaccount only (its balance i
+- L5290: TCL21g ENGINEER: loss stops on the phone's side (daily/weekly), a profit-take view, an alert (push) when the engine stalls or is geo-blocked: `CloudTr
+- L5292: TCL21i WATCH list for the first live week: CLV and ROI of the engine's own orders vs the digest, paper vs live difference, Kelly fraction review (ROUT
+- L5296: TCL22a Wallet "0": FOUND, the engine's wallet probe runs every 30 min and returns "not applicable" while the mode is not LIVE; LIVE was set at 19:21Z 
+- L5298: TCL22c Address: verdict from the engine's evidence (read key 16 reads/s, websocket on, 0 handovers, "Novig refused none"); the trading key's balance/o
+- L5304: TCL23b Verify engine run + logs of every bet and bid on GitHub (cloud-archive, trades.json, phone-data bids).
+- L5306: TCL23d Verify the automatic review/update loop (review-digest, engine-grade, ROUTINE.md) is intact.
+- L5319: TCL25d WATCH: the first time Tj interrupts a live routine, confirm it parks, waits and resumes (board notes rotation-paused / rotation-resumed).
+- L5326: TCL26d WATCH the first live fills after the fix (fresh-price re-read works, 2026-10-15 21:42Z; what holds bets now: the 6 h trap guard (data says keep
+- L5353: TCL30b ENGINEER: from the digest, CLV by lead-time band and edge band for bets inside 0-6 h that the edge floor (2.9%) held back; if the 1.5-2.9% band
+- L5355: TCL30d ENGINEER: add held-back counts by reason to the dashboard/tradeNote history so a trend per day is visible (orders per day vs listed per day).
+- L5368: TCL31g Tests, docs (CLAUDE.md, ROUTINE.md volume loop mentions bids), CHANGES.md line, ship, release.
+- L5385: TCL33f WATCH: first `engine-dataset` Release after the next engine-grade run (07:40/17:40 UTC); check row counts, CLV coverage, and bid fill rate; fir
+- L5463: TCL48b Wake-up (see TCL40b): what can start a session from a chat message with zero tokens (scheduled trigger polling cloud-config via Actions + creat
+- L5487: TCL52b Chat with the keyboard open: the thread is blank (nothing visible between the New chat/Clear chat row and the keyboard; the status bar also ove
+- L5493: TCL53b Confirm the new run starts and scans; ship the engine fix (engine runs from main's source: a run after the push uses it; no APK needed) and wat
+- L5495: TCL53d Confirm watchdog's first scheduled run is green; confirm the analysis/profit engine (review-digest, engine-grade, rotation routines) is active 
+- L5572: TCL66b Improve the profit engine inside the class B gates; write each finding in research/review/CHANGES.md.
+- L5610: TCL73c Flip question (bet the Under when the Over loses): test on the data before building; answer Tj honestly.
+- L5625: TCL76a Diagnose the stall (status.json, engine-log, run state). TCL76b Fix. TCL76c Make the stall self-detecting: a watchdog/diagnostic (workflow + RO
+- L5626: TCL77 (Tj, chat t1792218471524): "make it so the android app reads GitHub runner whether its address is accepted or not in the engine dashboard" -> th
+- L5647: TCL81b Watch the 08:00 ET resume (07:20 ET routine account: confirm the engine started, trading mode, held-back reasons) and the strategies in force (
+- L5659: TCL84b A WATCH/chat session reads `status.scanNote`/`engine-log.txt` errors first and fixes what is ours (key, address, route); a pure Novig 5xx is re
+- L5740: TCL100d The grader: tools/live_light_analyze.py reads phone/live/*.gz from phone-data, grades each offer/bid by ESPN final, tables by rule/sport/time-
+- L5746: TCL102 (Tj, chat t1792268495905, 2026-10-17): "it just started working again ... looks like I am making money today. figure out what is working and bu
+- L5750: TCL104 (Tj, chat t1792270354690): with the live engine on, the +EV scanned list jumps up and down every second or so as it refreshes and the loading b
+- L5752: TCL105 (Tj, chat t1792270676188): "I keep finding little problems ... Claude should actively diagnose the app and the GitHub engine and look for bugs 
+- L5775: TCL111c Engine (CloudSources) + phone parity; live lane use if the data allows
+- L5778: TCL111f Live lane: SX live scores + books as live fair; Test key button saving a real sample (verify the showTakerPerspective frame; NOT YET RUN WITH 
+- L5779: TCL111f1 (step 1 DONE: SxBetStream.tap + SxLiveRow, CloudMain writes sxlive-<day>.jsonl, fixtures:global subscribed, SxBet tests green; engine picks i
+- L5781: TCL111h After the engine's first full scan with SX (run 39096482847+): read status.scanNote / engine-log for SX books read, check asks sum 1.00-1.06 a
+- L5796: TCL113 (Tj, 2026-10-18): any Claude session may change any setting/switch on the app and GitHub except STOP ALL (`killed`); engine starts on schedule 
+
+## F. App UI / diagnostics (14)
+
+- L4214: PW8 tests, mutants, screenshots, floor green, CI green, release v0.76.0, tell Tj plainly what the trial can and cannot prove (it ends 2026-10-10 23:34
+- L4225: PX3 BUILD the pregame mode (Pinnacle prematch line moves on the socket's `pre` frames vs a stale Novig pregame book; pregame is fee-free on Novig): tr
+- L4430: TA3 Share diagnostics did nothing: find why (toast "Making the diagnostics file…" then the chooser never opened): read the eventLog DIAG lines from th
+- L4632: TK6 Full suite, ship (versionCode 203 / 0.89.18), release (in progress).
+- L4719: TY1 Find where the halt is raised (an order marker left by an interrupted run) and why it happens.
+- L4858: TNV12 Raise "Novig prices per scan" advice: with the feed holding books, a scan of 1,000-2,000 costs no REST; tell Tj (Settings > +EV feed & scan size
+- L5241: TCL15c Build what the numbers support, keep every accuracy and freshness rule, test, ship.
+- L5303: TCL23a Audit rotation: slots, routines (scheduled tasks) per account, permissions/settings, failover when an account is out of usage (missed-slot cove
+- L5312: TCL24c Wire it in (tab or Settings entry), Android 16 edge-to-edge, tests (pure view-model builder `DashboardModel` + a Compose render test), release.
+- L5346: TCL29d Run `bash tools/test.sh` (app + data), fix any red (SettingsPagesTest list already has CHAT), `bash ship.sh`, release v0.111.0 (code 291), reco
+- L5430: TCL40b Wake-up options (zero-token): report honestly; build only what works.
+- L5462: TCL48a Resume path: a new session started after a close starts chat_watch itself and, if the lease holder is idle/closed, takes it (Tj's standing word
+- L5504: TCL55b WATCH: at 19:20 ET (23:20Z) this account (acct-5d1e2d) becomes owner; the 13:20 account gets SOON at 19:10 ET and should release; confirm the 1
+- L5597: TCL70b Build the chosen mechanism + fix the lease (a stale/idle interactive lease blocked everyone; a session that holds the lease must be answering c
+
+## G. Other / unclear (stay open) (33)
+
+- L2102: P6 (PARTLY VERIFIED 2026-09-27 ~14:45Z on Tj's phone with his own key: the league board (`/odds`) parsed,
+- L2349: S2 Show the start-time window in the picture-in-picture window's header (it can't take taps, so today
+- L4226: PX4 floor green, CI green, ship, release v0.77.0, tell Tj plainly what should (not) be switched on tonight, safe defaults, and what could not be teste
+- L4242: PZ5 ship v0.77.0 (floor, CI, release.yml, record), tell Tj what is on by default (nothing new is on).
+- L4417: SX2 Fix, test (the real wiring, not only the pure judge), ship as v0.85.1, tell Tj what it was.
+- L4538: UN4 ship, release
+- L4549: UA5 Tests, docs, ship, release
+- L4577: TE3 Fix, test, ship.
+- L4628: TK5 Closing odds accuracy audit (close source, true-close rule) and shown/exported with source.
+- L4629: TK6 Tests, adversarial review, ship, release.
+- L4672: TQ3 Switch OFF = unchanged. Tests, docs, ship.
+- L4691: TT2 Pause cancels every in-flight scan/read at once and nothing starts until Resume; tests; ship.
+- L4698: TU3 Tests, ship.
+- L4711: TW3 Ship.
+- L4720: TY2 Resolve it automatically: look the order up on Novig (by client id / open orders / fills), record the fill in the Tracker if it filled, then resum
+- L4721: TY3 Tests, ship.
+- L4801: TAM2 Journal the order's end reason and Novig's ask at that moment for IOC misses (proves "quote vanished" vs a delay rule).
+- L4802: TAM3 Hockey lag measurement (20 s) before any hockey taker.
+- L4855: TBP10 Basketball two-stat combos ("Points + Rebounds", "Points + Assists", "Assists + Rebounds") map to Novig POINTS_REBOUNDS / POINTS_ASSISTS / REBOU
+- L4868: TNS6 Full floor, ship v0.92.0, release, tell Tj what to tap and what to send.
+- L4871: TNV14 This key's stream allowance is 512 at 4 a second: a deepen (bbo to book, then back) costs 24 tokens a market (6 s of refill) and 156 of them can
+- L4880: TPF5 Tests (off = byte-identical behaviour), ship.
+- L5025: TDG3 Trace who reads Novig's PUBLIC `/v3/public/catalog/markets` at pace while a key is connected (1,134 of 1,356 429s).
+- L5043: TWF6 Tests, ship.
+- L5050: TWG3 Tests, ship.
+- L5122: TNR2 v0.99.9 shipped, release.yml triggered: confirm get_release_by_tag v0.99.9, record-release.sh v0.99.9 268, send Tj the link.
+- L5205: TCL10f Full tests protocol (.claude/skills/test-protocols), ship, release, record.
+- L5257: TCL18c A scheduled Claude session (one steward, STEWARD.md rules) reads the digest, writes findings to research/ + NOTES.md, and makes the improvement
+- L5270: TCL19f The improvement loop with statistical gates (sample size, interval excludes zero on two digests, one change a day, bounded size, paper first, a
+- L5356: TCL30e Each run: the volume loop (ROUTINE.md), one line in CHANGES.md.
+- L5396: TCL34e Tests, ship, release (updater test: Tj installs v0.113.2 first).
+- L5707: TCL94b Grading (Scores.kt) also reads FCS (groups=81).
+- L5776: TCL111d Tell Tj what he must do (keys? none if public)

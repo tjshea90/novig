@@ -1,3 +1,5 @@
+> **Triage index (2026-10-18):** open items grouped by what they wait on: `research/TASKS_TRIAGE_2026-10-18.md`.
+
 # TASKS — the current job
 
 ## Tj's request, 2026-09-20 (his own words — full text in INBOX.md)
