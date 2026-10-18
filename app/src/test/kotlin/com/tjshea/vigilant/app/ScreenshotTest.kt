@@ -1568,7 +1568,7 @@ class ScreenshotTest {
         shoot("4_tracker") { TrackerScreen(SampleScan.state(), { _, _ -> }, {}) }
         // b1 won, b2 lost, b6 won (settled from the final score): 2-1, and profit is +$34.52 − $18 + $1.
         compose.onNodeWithText("66.7%").assertExists()
-        compose.onNodeWithText("2-1").assertExists()
+        assertTrue(compose.onAllNodesWithText("2-1").fetchSemanticsNodes().isNotEmpty())   // the stats card, and the profit card's slate record when the bets are one slate
         compose.onNodeWithText("+$17.52").assertExists()
         // The split by scanner, league, market, edge and price is one card now (TASKS.md T6).
         compose.onNodeWithText("Where it's working").assertExists()
@@ -1597,7 +1597,7 @@ class ScreenshotTest {
         shoot("4c_tracker_outlier") { TrackerScreen(s, { _, _ -> }, {}) }
         // The record is the same as without it: a $50 win at +18% EV is neither a win nor a loss in it (Tj, 2026-09-27). But Profit is real money (Tj, 2026-10-05:
         // the same bets must make the same profit with "Novig only" on or off): it counts the outlier too, which is the number the old caption called "your bankroll's result".
-        compose.onNodeWithText("2-1").assertExists()
+        assertTrue(compose.onAllNodesWithText("2-1").fetchSemanticsNodes().isNotEmpty())   // the stats card, and the profit card's slate record when the bets are one slate
         val withOutlier = com.tjshea.vigilant.data.tracker.BetTracker.stats(s.bets, SampleScan.NOW)
         assertTrue(withOutlier.profitAll > withOutlier.profit + 1.0)
         compose.onNodeWithText(com.tjshea.vigilant.app.ui.Format.signedMoney(withOutlier.profitAll)).assertExists()

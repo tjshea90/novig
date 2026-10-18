@@ -123,8 +123,6 @@ object SettingsIndex {
         Entry("Most Novig prices per scan", SettingsPage.FEED, "The size of one scan", "scan size budget limit", exchange),
         Entry("Days ahead", SettingsPage.FEED, "How many days of games a scan reads", "days window"),
         Entry("Fill the scan with every quoted line", SettingsPage.FEED, "Spend what's left of the scan's prices on every other line the books quote", "fill budget all lines alternate", exchange),
-        Entry("Include live games", SettingsPage.SCANNING, "Also list games already under way, from the real-time live lane (Pinnacle against Novig, bets at most 5 seconds old)", "live in-game real time lane"),
-        Entry("Live games only mode", SettingsPage.SCANNING, "Only Pinnodds and Novig run and only live bets are listed; every other API, CNO, bids and the auto-bet switch off", "live only mode pinnodds novig rapid", novig),
         // Fair odds & sources
         Entry("Fair odds method", SettingsPage.FAIR, "Sharp books, every book's average, or a blend", "fair true odds blend sharp average"),
         Entry("Books that count as sharp", SettingsPage.FAIR, "Which books' odds count as the most accurate", "sharp pinnacle"),
