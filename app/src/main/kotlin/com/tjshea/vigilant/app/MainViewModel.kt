@@ -139,6 +139,7 @@ data class UiState(
     val sgoKeys: List<String> = emptyList(),
     val opKeys: List<String> = emptyList(),
     val unKeys: List<String> = emptyList(),
+    val sxKeys: List<String> = emptyList(),
     val boltKeys: List<String> = emptyList(),
     val op4Keys: List<String> = emptyList(),
     /** Every provider's usage ledger, updated after each call (the meters). */
@@ -334,6 +335,7 @@ data class UiState(
         ApiProvider.SPORTSGAMEODDS -> sgoKeys
         ApiProvider.ODDSPAPI -> opKeys
         ApiProvider.UNABATED -> unKeys
+        ApiProvider.SXBET -> sxKeys
         ApiProvider.BOLTODDS -> boltKeys
         ApiProvider.ODDSPAPI_FREE -> op4Keys
     }
@@ -349,6 +351,7 @@ data class UiState(
         ApiProvider.SPORTSGAMEODDS -> copy(sgoKeys = keys)
         ApiProvider.ODDSPAPI -> copy(opKeys = keys)
         ApiProvider.UNABATED -> copy(unKeys = keys)
+        ApiProvider.SXBET -> copy(sxKeys = keys)
         ApiProvider.BOLTODDS -> copy(boltKeys = keys)
         ApiProvider.ODDSPAPI_FREE -> copy(op4Keys = keys)
     }

@@ -21,7 +21,8 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
     PINNAPI("pinnapi (Pinnacle)", ApiProvider.PINNAPI, QuotaPolicy.PINNAPI, "Pinnacle's board (PinnWire's backup)", false),
     PINNODDS("Pinnodds", ApiProvider.PINNODDS, null, "Pinnacle's live push feed and REST board", false),
     KALSHI("Kalshi", null, QuotaPolicy.KALSHI, "Exchange prices, free to read; a key adds a real-time socket and a bigger read budget", false),
-    POLYMARKET("Polymarket", null, QuotaPolicy.POLYMARKET, "Free exchange prices, no key", false);
+    POLYMARKET("Polymarket", null, QuotaPolicy.POLYMARKET, "Free exchange prices, no key", false),
+    SXBET("SX Bet", ApiProvider.SXBET, QuotaPolicy.SXBET, "Exchange odds read as a sharp source: markets are public, prices need a free read-only key", false);
 
     /** Whether the app is allowed to call it at all. */
     fun isOn(s: ScanSettings): Boolean = when (this) {
@@ -38,6 +39,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         PINNODDS -> s.gates.usePinnodds
         KALSHI -> s.useKalshi
         POLYMARKET -> s.usePolymarket
+        SXBET -> s.gates.useSxBet
     }
 
     fun setOn(s: ScanSettings, on: Boolean): ScanSettings = when (this) {
@@ -54,6 +56,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
         PINNODDS -> s.copy(gates = s.gates.copy(usePinnodds = on), usePinnacle = s.usePinnacle || on)   // its REST board is one of the Pinnacle boards: on here means it is asked there too
         KALSHI -> s.copy(useKalshi = on)
         POLYMARKET -> s.copy(usePolymarket = on)
+        SXBET -> s.copy(gates = s.gates.copy(useSxBet = on))
     }
 
     val keyless: Boolean get() = provider == null
@@ -102,6 +105,7 @@ enum class ApiEntry(val title: String, val provider: ApiProvider?, val policy: Q
             PINNODDS -> com.tjshea.vigilant.app.ui.SettingsPage.PINNODDS
             KALSHI -> com.tjshea.vigilant.app.ui.SettingsPage.KALSHI
             POLYMARKET -> null
+            SXBET -> com.tjshea.vigilant.app.ui.SettingsPage.SXBET
         }
 
     companion object {
