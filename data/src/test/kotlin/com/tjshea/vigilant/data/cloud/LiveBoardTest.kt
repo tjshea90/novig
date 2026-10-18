@@ -30,12 +30,12 @@ class LiveBoardTest {
 
     @Test
     fun `the switch says where live runs, and each side's predicates follow it`() {
-        val gh = ScanSettings(cloudScan = true)
+        val gh = ScanSettings().let { it.copy(gates = it.gates.copy(cloudScan = true)) }
         assertTrue(gh.liveOnGitHub)
         val phone = gh.copy(tailLive = TailLiveSettings(engine = false))
         assertFalse(phone.liveOnGitHub)
         // On GitHub with the engine scanning, the phone holds no live sockets and runs no live lane; on the phone it does.
-        if (gh.cloudDrives) { assertFalse(gh.phoneSockets); assertFalse(gh.phoneLive) }
+        assertTrue(gh.cloudDrives); assertFalse(gh.phoneSockets); assertFalse(gh.phoneLive)
         assertTrue(phone.phoneSockets); assertTrue(phone.phoneLive)
         // Phone mode closes the runner's BoltOdds, Kalshi and SX Bet sockets.
         val runner = CloudEngine.forCloud(phone.copy(gates = phone.gates.copy(kalshiSocket = true, sxSocket = true, boltSocket = true)))
@@ -46,7 +46,7 @@ class LiveBoardTest {
 
     @Test
     fun `the GitHub board reads the engine's live lane, its sockets and today's live bets`() {
-        val s = ScanSettings(cloudScan = true, tailLive = TailLiveSettings(on = true, light = true, engine = true), gates = ScanSettings().gates.copy(cloudTrading = CloudTradeMode.LIVE))
+        val s = ScanSettings(tailLive = TailLiveSettings(on = true, light = true, engine = true), gates = ScanSettings().gates.copy(cloudScan = true, cloudTrading = CloudTradeMode.LIVE))
         val stats = LiveStats(real = true, games = 4, withScore = 3, markets = 22, pushes = 900, judgments = 120, offers = 2, bidsUp = 1, lastPushMs = now - 2_000, judgeTookMs = 35, gameLines = listOf("A @ B 3-1 Q3"))
         val st = CloudStatus(runId = "1", heartbeatMs = now - 2_000, liveActive = true, liveNote = "REAL · 4 live games", liveStats = stats,
             socketStates = listOf(SocketState("Kalshi", wanted = true, live = true, lastMs = now - 1_000), SocketState("SX Bet", wanted = true, live = false)))
