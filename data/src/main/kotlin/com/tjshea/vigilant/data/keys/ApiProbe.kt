@@ -236,6 +236,14 @@ class ApiProbe(
             val r = get("${if (wire) hosts.pinnwire else hosts.pinnapi}/markets?sport_id=1&event_type=prematch", listOf((if (wire) "x-api-key" else "x-portal-apikey") to key))
             when {
                 r.code == 401 || r.code == 403 -> { meter.recordBalance(policy, key, null, inactive = true); false to refused(r.code) }
+                r.code == 429 && wire -> {
+                    // PinnWire's 429 names the window it hit and when it lifts (`{"error":"rate_limited","window":"minute|day","retry_after_ms":N}`): only "day" is a spent key.
+                    val err = runCatching { kotlinx.serialization.json.Json.parseToJsonElement(r.body) as? kotlinx.serialization.json.JsonObject }.getOrNull()
+                    val window = (err?.get("window") as? kotlinx.serialization.json.JsonPrimitive)?.content
+                    val wait = (err?.get("retry_after_ms") as? kotlinx.serialization.json.JsonPrimitive)?.content?.toLongOrNull() ?: r.header("Retry-After")?.trim()?.toLongOrNull()?.times(1000)
+                    if (window == "day") { meter.recordDepleted(policy, key, "today's requests are used up", wait); true to "Accepted, but PinnWire says today's requests are used up" + (wait?.let { " (back in ${it / 3_600_000L} h ${it / 60_000L % 60} min)." } ?: ".") }
+                    else { meter.recordThrottled(policy, key, wait ?: 60_000L, "per-minute limit"); true to "Accepted; PinnWire's ${window ?: "rate"} limit was hit for a moment (this key is NOT spent for the day)." }
+                }
                 r.code == 429 -> { meter.recordDepleted(policy, key, "today's requests are used up", null); true to "Accepted, but today's requests are used up." }
                 r.isSuccessful -> {
                     meter.recordCall(policy, key, 1)
