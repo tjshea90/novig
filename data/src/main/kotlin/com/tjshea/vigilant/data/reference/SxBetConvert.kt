@@ -104,8 +104,8 @@ object SxBetConvert {
     private fun solo(league: League) = league.tennis || league.novigName in setOf("UFC", "Boxing")
 
     /**
-     * Builds one [RefEvent] per SX game from its markets and their books. Home/away: SX lists the away team first for US sports (verified on NFL markets,
-     * 2026-10-18: "Dallas Cowboys | Philadelphia Eagles" for Dallas at Philadelphia); the planner tries both orientations anyway.
+     * Builds one [RefEvent] per SX game from its markets and their books. Home/away: SX's team order is NOT a rule (research/sxbet/MAPPING_2026-10-18.md: in 57 of 57 near-term US games teamOne was
+     * Novig's HOME team, in a far-off Dallas | Philadelphia market it is the away team); the labels here are a guess and the planner tries both orientations, sides come from the names.
      */
     fun events(markets: List<Market>, books: Map<String, Book>, league: League, now: Long): List<RefEvent> {
         val solo = solo(league)
