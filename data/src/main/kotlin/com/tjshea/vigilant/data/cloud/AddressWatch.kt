@@ -7,9 +7,9 @@ package com.tjshea.vigilant.data.cloud
  * says "a data-center address is fine"; a runner's address that lands in a restricted state or on a list (`RESTRICTED_NETWORK_REGION`, `ANONYMIZED_NETWORK`) is an unlucky draw of a data center, and the
  * next job is drawn again. The OTHER check, the key holder's DEVICE (the Novig app opened on Tj's phone within 3 days: `GEOLOCATION_*`) is not about the runner and is never touched here.
  *
- * Policy (pure, so the cases are tests): in the first [WINDOW_MS] of a job, from [MIN_AGE_MS] on, when the key route was refused for the ADDRESS within the last [RECENT_MS], the job ends and the workflow starts
- * the next one. At most [MAX_IN_A_ROW] hand-overs in a row, then one per [COOLDOWN_MS] (public routes carry on meanwhile): a refusal that follows the account and not the runner must not spin Actions.
- * A job that gets through its first [WINDOW_MS] without a refusal ends the streak.
+ * Policy (pure, so the cases are tests; changed by Tj, 2026-10-18, TCL115: "I want the GitHub runner to immediately be restarted after every refused novig address, until there is a runner with an accepted address"):
+ * as soon as the key route is refused for the ADDRESS ([MIN_AGE_MS] after the job started, so the first request has been made), the job ends and the workflow starts the next one, again and again with no cap and no
+ * cooldown, until a runner Novig accepts. A job that gets through its first [WINDOW_MS] without a refusal ends the streak (the count is for the log and the app only).
  */
 class AddressWatch(
     private val startedAtMs: Long,
@@ -36,7 +36,6 @@ class AddressWatch(
         }
         if (age < MIN_AGE_MS) return false
         if (lastRefusedAt == 0L || now - lastRefusedAt > RECENT_MS) return false
-        if (count >= MAX_IN_A_ROW && now - atMs < COOLDOWN_MS) return false
         count += 1
         atMs = now
         return true
@@ -48,12 +47,10 @@ class AddressWatch(
 
     companion object {
         /** Long enough for the key route to have been tried and a transient refusal to have passed. */
-        const val MIN_AGE_MS = 4 * 60_000L
+        const val MIN_AGE_MS = 10_000L
         /** A refusal later than this in a job's life is not the runner's address (it worked until then). */
-        const val WINDOW_MS = 15 * 60_000L
-        const val RECENT_MS = 3 * 60_000L
-        const val MAX_IN_A_ROW = 5
-        const val COOLDOWN_MS = 60 * 60_000L
+        const val WINDOW_MS = 6 * 60 * 60_000L
+        const val RECENT_MS = 60_000L
 
         /** Novig's codes for a verdict on the request's ADDRESS. The device check (`GEOLOCATION_*`) is deliberately not here. */
         val ADDRESS_CODES = listOf("ANONYMIZED_NETWORK", "RESTRICTED_NETWORK_REGION")

@@ -11,35 +11,31 @@ class AddressWatchTest {
     private fun min(m: Int) = t0 + m * 60_000L
 
     @Test
-    fun `a runner whose address was refused is replaced after a few minutes, not at once`() {
+    fun `a runner whose address was refused is replaced at once`() {
         var refused = false
         val w = AddressWatch(t0) { refused }
         refused = true
-        assertFalse("too early: a transient refusal passes", w.shouldHandOver(min(1)))
-        assertTrue("refused and past the minimum age", w.shouldHandOver(min(5)))
+        assertFalse("not before the first request was made", w.shouldHandOver(t0 + 2_000L))
+        assertTrue("refused and past the first seconds", w.shouldHandOver(t0 + 11_000L))
         assertEquals(1, w.count)
     }
 
     @Test
-    fun `a runner Novig accepted is never replaced, and a late refusal is not the runner's address`() {
+    fun `a runner Novig accepted is never replaced`() {
         val w = AddressWatch(t0, previousCount = 3, previousAtMs = t0 - 600_000L) { false }
         assertFalse(w.shouldHandOver(min(5)))
-        assertFalse(w.shouldHandOver(min(20)))
-        assertEquals("a job that got through its first minutes ends the streak", 0, w.count)
-        var late = false
-        val w2 = AddressWatch(t0) { late }
-        late = true
-        assertFalse("a refusal at minute 30 is not the runner's address", w2.shouldHandOver(min(30)))
+        assertFalse(w.shouldHandOver(7 * 60 * 60_000L + t0))
+        assertEquals("a job that got through its window ends the streak", 0, w.count)
     }
 
     @Test
-    fun `five replacements in a row, then one an hour`() {
-        var refused = true
-        val w = AddressWatch(t0, previousCount = 5, previousAtMs = t0 - 10 * 60_000L) { refused }
-        assertFalse("five in a row and the last was 10 minutes ago: public routes carry on", w.shouldHandOver(min(5)))
-        val later = AddressWatch(t0, previousCount = 5, previousAtMs = t0 - 61 * 60_000L) { refused }
-        assertTrue("an hour after the last one, one more try", later.shouldHandOver(min(5)))
-        assertEquals(6, later.count)
+    fun `every refusal is replaced, with no cap and no cooldown, until a runner is accepted`() {
+        val refused = true
+        for (streak in listOf(5, 6, 20, 100)) {
+            val w = AddressWatch(t0, previousCount = streak, previousAtMs = t0 - 5_000L) { refused }
+            assertTrue("streak $streak: the next refused runner is replaced too", w.shouldHandOver(t0 + 11_000L))
+            assertEquals(streak + 1, w.count)
+        }
     }
 
     @Test

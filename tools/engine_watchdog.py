@@ -19,7 +19,7 @@ RECENT_MS = 10 * 60 * 1000
 WF = "cloud-scan.yml"
 # Novig refusing the runner's ADDRESS (RESTRICTED_NETWORK_REGION / ANONYMIZED_NETWORK): the engine's own hand-over missed this on 2026-10-17 (refused from 06:23Z, 5+ minutes, never handed over). Outside check:
 ADDRESS_CODES = ("RESTRICTED_NETWORK_REGION", "ANONYMIZED_NETWORK")
-ADDRESS_AFTER_MS = 5 * 60 * 1000       # a run refused this long is a bad draw, not a blip
+ADDRESS_AFTER_MS = 30 * 1000           # Tj, 2026-10-18 (TCL115): replace a refused runner at once; the in-job hand-over does it in seconds, this is the outside backup
 SWAP_WINDOW_MS = 30 * 60 * 1000
 STALL_MS = 10 * 60 * 1000
 MAX_SWAPS = 6                           # swaps in the window before the watchdog waits (each new run re-reads the fair-odds feeds: it costs API requests)
@@ -40,9 +40,7 @@ def decide(now, runs, heartbeat_ms, idle, switch_on, stopped, route="", status_r
         return "none", None, "the engine is idle on purpose"
     if (route and any(c in route for c in ADDRESS_CODES) and now - cur["started_ms"] >= ADDRESS_AFTER_MS
             and (status_run is None or str(status_run) == str(cur["id"])) and heartbeat_ms and now - heartbeat_ms < STALE_MS):
-        swaps = len([r for r in recent_runs if now - r["created_ms"] < SWAP_WINDOW_MS])
-        if swaps > MAX_SWAPS:
-            return "none", None, "Novig refuses this runner's address, but %d runs were started in 30 minutes: waiting before drawing another" % swaps
+        # no swap cap for an address refusal (TCL115): every refused runner is replaced until one is accepted
         if queued or any(now - r["created_ms"] < 60 * 1000 for r in runs if r["id"] != cur["id"]):
             return "cancel", cur["id"], "Novig refuses this runner's address; a replacement is already queued"
         return "restart", cur["id"], "Novig refuses this runner's address (%d min into the run)" % ((now - cur["started_ms"]) // 60000)
@@ -139,11 +137,11 @@ def selftest():
     refused = "public routes: the read key was refused (Novig places this network's internet address outside the states it serves (RESTRICTED_NETWORK_REGION))"
     fresh = now - 10_000
     a = decide(now, [run(7, "in_progress", 6)], fresh, route=refused, status_run=7, **ok); assert a[:2] == ("restart", 7), a        # refused 6 minutes: swap
-    assert decide(now, [run(7, "in_progress", 3)], fresh, route=refused, status_run=7, **ok)[0] == "none"                          # too young: maybe a blip
+    assert decide(now, [run(7, "in_progress", 0.2)], fresh, route=refused, status_run=7, **ok)[0] == "none"                      # first seconds
     assert decide(now, [run(7, "in_progress", 6)], fresh, route=refused, status_run=6, **ok)[0] == "none"                          # the status is another run's
     assert decide(now, [run(7, "in_progress", 6)], fresh, route="Novig read-only key active", status_run=7, **ok)[0] == "none"    # accepted
     spin = [{"id": 100 + i, "created_ms": now - i * 2 * M} for i in range(8)]
-    assert decide(now, [run(7, "in_progress", 6)], fresh, route=refused, status_run=7, recent_runs=spin, **ok)[0] == "none"        # too many swaps: wait
+    assert decide(now, [run(7, "in_progress", 6)], fresh, route=refused, status_run=7, recent_runs=spin, **ok)[0] == "restart"   # no swap cap for a refused address
     assert decide(now, [run(7, "in_progress", 6), run(8, "queued", 1)], fresh, route=refused, status_run=7, **ok)[0] == "cancel"
     st = dict(route="", status_run=7, scanning=True, **ok)
     assert decide(now, [run(7, "in_progress", 20)], fresh, progress_changed_ms=now - 11 * M, **st)[0] == "restart"      # alive but frozen 11 minutes
