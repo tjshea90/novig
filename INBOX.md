@@ -529,3 +529,53 @@ Questions:
 ```
 Change coord.py
 ```
+
+## 2026-10-18T19:54:35Z
+```
+1) pinnodds api key is now added as a secret
+2) use pinnodds API, but without socket
+3) test freshness of pinnodds API vs pinnwire
+4) if pinnodds is fresh, use it first  then pinnwire as backup only
+5) do not use pinnapi right now, the keys are bad
+6) here is documentation for sportmicro to test the API:
+
+# Sportmicro API Docs
+
+> Curated machine-readable entry point for Sportmicro REST APIs, WebSockets, OpenAPI specs, and AI-ready context files.
+
+Sportmicro publishes sport-specific APIs across 21 sports. Start here for the most important documentation entry points. If you want a broader catalog, use `https://docs.sportmicro.com/llms-full.txt`. If you want exhaustive endpoint coverage, use the endpoint inventory files linked below.
+
+## Start Here
+
+- [Machine Readable Docs](https://docs.sportmicro.com/docs/machine-readable-docs): Human-facing hub for all AI-ready resources, context blocks, OpenAPI specs, and endpoint inventories
+- [MCP Server](https://docs.sportmicro.com/docs/mcp-server): Published npm MCP setup for Claude Code, Claude Desktop, Cursor, and other MCP clients
+- [Cursor Rules](https://docs.sportmicro.com/docs/cursor-rules): Human-facing setup page for using Sportmicro API rules in Cursor
+- [Vibe Coding](https://docs.sportmicro.com/docs/vibe-coding): Ready-to-paste Sportmicro AI build prompts for real app development
+- [Expanded Index](https://docs.sportmicro.com/llms-full.txt): Broader machine-readable catalog with sport docs and OpenAPI links
+
+## Core Docs
+
+- [Overview](https://docs.sportmicro.com/docs/): Top-level introduction to the Sportmicro docs
+- [Getting Started](https://docs.sportmicro.com/docs/getting_started): Quick orientation for integrating with Sportmicro APIs
+- [Authentication](https://docs.sportmicro.com/docs/authentication): API key access patterns across Sportmicro Dashboard and RapidAPI
+- [Code Examples](https://docs.sportmicro.com/docs/code_examples): Multi-language request examples for Sportmicro endpoints
+- [WebSockets](https://docs.sportmicro.com/docs/websockets): Realtime access patterns and websocket URL conventions
+
+## AI Context Files
+
+- [Minimal context](https://docs.sportmicro.com/ai/sportmicro-minimal-context.txt): Small prompt-ready overview for tight context windows
+- [Full context](https://docs.sportmicro.com/ai/sportmicro-full-context.txt): Larger prompt-ready overview for real integration work
+- [Cursor rules file](https://docs.sportmicro.com/ai/sportmicro-cursor-rules.mdc): Project-ready Cursor rules for Sportmicro API development
+- [Endpoint summary](https://docs.sportmicro.com/ai/sportmicro-endpoint-summary.txt): Per-sport endpoint counts across the docs
+- [Endpoint index JSON](https://docs.sportmicro.com/ai/sportmicro-endpoints.json): Structured machine-readable endpoint inventory
+
+## API Surface
+
+- [Full endpoint index](https://docs.sportmicro.com/ai/sportmicro-all-endpoints.txt): Exhaustive endpoint list generated from the current docs structure
+- [Football docs](https://docs.sportmicro.com/docs/football/sportmicro): Representative high-volume sport intro page
+- [Football OpenAPI](https://docs.sportmicro.com/openapi/football.json): Schema for Football API tooling and code generation
+- [Basketball docs](https://docs.sportmicro.com/docs/basketball/sportmicro): Representative court-sport intro page
+- [Basketball OpenAPI](https://docs.sportmicro.com/openapi/basketball.json): Schema for Basketball API tooling and code generation
+- [Tennis docs](https://docs.sportmicro.com/docs/tennis/sportmicro): Representative racket-sport intro page
+- [Tennis OpenAPI](https://docs.sportmicro.com/openapi/tennis.json): Schema for Tennis API tooling and code generation
+```
