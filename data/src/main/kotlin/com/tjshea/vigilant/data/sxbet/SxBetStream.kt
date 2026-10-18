@@ -25,7 +25,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 /** One game's score as `fixtures:live_scores` last said it. */
-data class SxScore(val eventId: String, val sportId: Int, val teamOne: Int?, val teamTwo: Int?, val period: String?, val periodTime: String?, val atMs: Long)
+data class SxScore(
+    val eventId: String, val sportId: Int, val teamOne: Int?, val teamTwo: Int?, val period: String?, val periodTime: String?, val atMs: Long,
+    /** When the SCORE (not the clock) last changed: a live price older than this was set before the score moved, so it is not trusted ([com.tjshea.vigilant.data.sxbet.SxLiveBuild]). */
+    val changedAtMs: Long = atMs,
+    /** True once every period is finished (the game is over). */
+    val finished: Boolean = false,
+)
 
 /** One raw push the recorder tap saw (`sxlive-<day>.jsonl`): the channel, when it arrived, and the data exactly as sent, so the live frame shapes are read from real answers. */
 @kotlinx.serialization.Serializable
@@ -57,6 +63,16 @@ class SxBetStream(
     val books = ConcurrentHashMap<String, SxBetConvert.Book>()
     val scores = ConcurrentHashMap<String, SxScore>()
     val mainLines = ConcurrentHashMap<String, String>()
+
+    /** `fixtures:global` statuses by event id (1 not started, 2 in progress, 3 finished, 6 interrupted, 9 about to start: docs fixture-statuses), and when each was heard. */
+    val fixtureStatus = ConcurrentHashMap<String, Int>()
+    val fixtureStatusAt = ConcurrentHashMap<String, Long>()
+
+    /** Told the market hash of every watched book push and the event id of every score or fixture push (called on the socket's thread: keep it quick). The live feed is push, not polled. */
+    private val listeners = java.util.concurrent.CopyOnWriteArrayList<(String) -> Unit>()
+    fun addListener(l: (String) -> Unit) { listeners += l }
+    fun removeListener(l: (String) -> Unit) { listeners -= l }
+    private fun told(key: String) { for (l in listeners) runCatching { l(key) } }
 
     /** Research recorder (the engine sets it): sees every push before it is applied. Must not throw or block. */
     @Volatile var tap: ((String, JsonElement, Long) -> Unit)? = null
@@ -192,11 +208,24 @@ class SxBetStream(
     internal fun apply(channel: String, data: JsonElement) {
         val now = clock()
         when {
-            channel == "best_odds_v3:global" -> SxBetConvert.bookOf(data, now)?.let { b -> if (b.marketHash in watched) books[b.marketHash] = b }
+            channel == "best_odds_v3:global" -> SxBetConvert.bookOf(data, now)?.let { b -> if (b.marketHash in watched) { books[b.marketHash] = b; told(b.marketHash) } }
             channel == "fixtures:live_scores" -> (data as? JsonObject)?.let { d ->
                 val id = (d["sportXeventId"] as? JsonPrimitive)?.contentOrNull ?: return
-                scores[id] = SxScore(id, (d["sportId"] as? JsonPrimitive)?.intOrNull ?: 0, (d["teamOneScore"] as? JsonPrimitive)?.intOrNull, (d["teamTwoScore"] as? JsonPrimitive)?.intOrNull,
-                    (d["currentPeriod"] as? JsonPrimitive)?.contentOrNull, (d["periodTime"] as? JsonPrimitive)?.contentOrNull, now)
+                val one = (d["teamOneScore"] as? JsonPrimitive)?.intOrNull
+                val two = (d["teamTwoScore"] as? JsonPrimitive)?.intOrNull
+                val old = scores[id]
+                val periods = d["periods"] as? kotlinx.serialization.json.JsonArray
+                val finished = periods != null && periods.isNotEmpty() && periods.all { ((it as? JsonObject)?.get("isFinished") as? JsonPrimitive)?.contentOrNull == "true" }
+                scores[id] = SxScore(id, (d["sportId"] as? JsonPrimitive)?.intOrNull ?: 0, one, two,
+                    (d["currentPeriod"] as? JsonPrimitive)?.contentOrNull, (d["periodTime"] as? JsonPrimitive)?.contentOrNull, now,
+                    changedAtMs = if (old == null || old.teamOne != one || old.teamTwo != two) now else old.changedAtMs, finished = finished)
+                told(id)
+            }
+            channel == "fixtures:global" -> (data as? JsonObject)?.let { d ->
+                val id = (d["sportXeventId"] as? JsonPrimitive)?.contentOrNull ?: return
+                val st = (d["status"] as? JsonPrimitive)?.intOrNull ?: return
+                fixtureStatus[id] = st; fixtureStatusAt[id] = now
+                told(id)
             }
             channel == "main_line:global" -> (data as? JsonObject)?.let { d ->
                 val ev = (d["sportXeventId"] as? JsonPrimitive)?.contentOrNull ?: return
