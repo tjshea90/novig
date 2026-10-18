@@ -190,5 +190,5 @@ jobs:
           END=$(cat out/end 2>/dev/null || echo UNKNOWN)
           echo "engine ended: $END"
           # TIME_UP: this job's time is over. ADDRESS: Novig refused this runner's internet address (data-center addresses are fine to Novig, one in a restricted state or on a list is not): draw another runner
-          # (the engine limits itself to 5 in a row, then one an hour: cloud/ AddressWatch). Not IDLE: the phone switched the engine off.
+          # (no limit and no cooldown since 2026-10-18, TCL115: every refused runner is replaced at once until one is accepted: cloud/ AddressWatch). Not IDLE: the phone switched the engine off.
           if [ "$END" = "TIME_UP" ] || [ "$END" = "ADDRESS" ] || [ "$END" = "STALL" ] || [ "$END" = "RESET" ]; then gh workflow run cloud-scan.yml --ref main; fi
