@@ -32,7 +32,18 @@ data class KeyView(
     val serverReported: Boolean,
     /** When the provider's own figure was read (a call's answer, or its account page), on either machine ([UsageMerge]): how old the "left" is. */
     val figureAtMs: Long? = null,
-)
+) {
+    /**
+     * How much of the key is used, 0..1, for its bar: 1 when the key is spent or refused (a spent key with no published allowance used to show only a red dot and no bar, Tj 2026-10-18), else from the
+     * API's own "left" when known, else from the count. Null = nothing to draw (no allowance known and still usable).
+     */
+    val fractionUsed: Float?
+        get() {
+            if (state == KeyState.SPENT || state == KeyState.REFUSED) return 1f
+            val a = allowance?.takeIf { it > 0 } ?: return null
+            return ((left?.let { a - it } ?: used).toFloat() / a).coerceIn(0f, 1f)
+        }
+}
 
 /** One provider's meter: per-key rows plus totals. */
 data class ProviderView(
@@ -51,8 +62,11 @@ data class ProviderView(
     val periodStart: Long? = null,
 ) {
     val activeIndex: Int? get() = keys.firstOrNull { it.state == KeyState.ACTIVE }?.index
+    /** Every key that is not refused is spent (and there is at least one): the bar is full and red whatever the last "left" figure said. */
+    val spent: Boolean
+        get() = policy.keyed && keys.any { it.state == KeyState.SPENT } && keys.all { it.state == KeyState.SPENT || it.state == KeyState.REFUSED }
     val fractionUsed: Float?
-        get() = if (totalAllowance != null && totalAllowance > 0 && totalLeft != null) 1f - totalLeft.toFloat() / totalAllowance else null
+        get() = if (spent) 1f else if (totalAllowance != null && totalAllowance > 0 && totalLeft != null) (1f - totalLeft.toFloat() / totalAllowance).coerceIn(0f, 1f) else null
 }
 
 object UsageViews {
