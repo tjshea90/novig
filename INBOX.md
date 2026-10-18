@@ -378,3 +378,8 @@ If a novig address is refused, all scanning across all apis should immediately b
 ```
 Figure out sx team names and full mapping. Research the full sx bet docs for both the api and public channels. Search the Internet for it too.
 ```
+
+## 2026-10-18T16:03:37Z
+```
+build the sx live feed now
+```
