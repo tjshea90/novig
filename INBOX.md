@@ -516,3 +516,11 @@ Find handoff-novig.md in the repo root. It is pushed to GitHub on branch ccr-286
 
 Continue 
 ```
+
+## 2026-10-18T19:16:59Z
+```
+Questions:
+1) is there another fresh source for Pinnacle odds? Pinnwire is being used very fast.  test pinnodds or the other apis for freshness of Pinnacle odds. If other providers have fresh Pinnacle odds, share the workload with pinnwire
+2) is the sx bet socket working? Is it providing odds being used in vigilant? Is it providing live scores and odds for the live betting features? How good is it?
+3) is the sportmicro api working? The socket?
+```
