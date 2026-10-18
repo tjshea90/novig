@@ -300,7 +300,7 @@ def acquire(kind=None, task=None, force=False, quiet=False):
             cache_put(mine)
             save(STATE_FILE, {**load(STATE_FILE, {}), "lastRenew": t})
             if not quiet:
-                print("COORD  lease is yours (%s/%s, %s)%s" % (me["label"], me["nonce"], kind, ("; " + note) if note else ""))
+                print("COORD  lease is yours (%s/%s, %s)%s" % (named(me["label"]), me["nonce"], kind, ("; " + note) if note else ""))
             return 0
         # lost the race: read again and decide again
     return 2
@@ -386,10 +386,19 @@ def release():
     return 0
 
 
+# Tj, 2026-10-18: "Any time you are referred to by that id, add the name mirage so I know which email account you are". The tag stays the key (rotation, secrets, routines match it);
+# this only adds the account's name wherever a person reads it. Add an account here, never rename a tag.
+ACCOUNT_NAMES = {"acct-5d1e2d": "mirage"}
+
+
+def named(label):
+    n = ACCOUNT_NAMES.get(str(label))
+    return "%s (%s)" % (label, n) if n else str(label)
+
 # ---- the board -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def board_text(me, to, subject, body):
-    return "from: %s/%s\nto: %s\nat: %s\nsubject: %s\n\n%s\n" % (me["label"], me["nonce"], to, iso(now()), subject.replace("\n", " ")[:120], body)
+    return ("name: %s\n" % ACCOUNT_NAMES[me["label"]] if me["label"] in ACCOUNT_NAMES else "") + "from: %s/%s\nto: %s\nat: %s\nsubject: %s\n\n%s\n" % (me["label"], me["nonce"], to, iso(now()), subject.replace("\n", " ")[:120], body)
 
 
 def post(subject, body="", to="all"):
@@ -451,7 +460,7 @@ def status(do_acquire, kind, task):
     elif do_acquire and v == "other" and (kind or me["kind"]) == "interactive" and lease.get("kind") == "routine":
         pass  # Tj is here: the first command of a real session takes the lease from a routine; resume.sh only reports
     if v == "mine":
-        print("  COORD you hold the lease (%s/%s, %s)" % (me["label"], me["nonce"], me["kind"]))
+        print("  COORD you hold the lease (%s/%s, %s)" % (named(me["label"]), me["nonce"], me["kind"]))
     elif v == "free":
         print("  COORD nobody holds the lease; take it before editing: bash tools/coord.py acquire")
     elif v == "stale":
@@ -526,7 +535,7 @@ def main(argv):
                 d["label"] = "".join(c for c in args.label if c.isalnum() or c in "-_")[:24] or "acct-unknown"
                 save(ID_FILE, {k: d[k] for k in ("nonce", "label", "kind")})
             me = identity()
-            print("%s/%s" % (me["label"], me["nonce"]), me["kind"])
+            print("%s/%s" % (me["label"], me["nonce"]), me["kind"], ("(%s)" % ACCOUNT_NAMES[me["label"]]) if me["label"] in ACCOUNT_NAMES else "")
             return 0
     except SystemExit:
         raise
