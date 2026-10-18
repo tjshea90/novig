@@ -45,7 +45,7 @@ class PinnapiFirstTest {
     @Test fun game_lines_come_from_pinnapi_first() = runBlocking {
         server.enqueue(MockResponse().setBody(board))
         val c = client()
-        c.odds(nfl, ScanSettings(families = setOf(MarketFamily.GAME_LINES)))
+        c.odds(nfl, ScanSettings(families = setOf(MarketFamily.MONEYLINE, MarketFamily.SPREAD, MarketFamily.TOTAL)))
         assertEquals("api", server.takeRequest().getHeader("x-portal-apikey"))
         assertEquals(1, server.requestCount)
     }
@@ -62,7 +62,7 @@ class PinnapiFirstTest {
         server.enqueue(MockResponse().setResponseCode(500))
         server.enqueue(MockResponse().setBody(board))
         val c = client()
-        c.odds(nfl, ScanSettings(families = setOf(MarketFamily.GAME_LINES)))
+        c.odds(nfl, ScanSettings(families = setOf(MarketFamily.MONEYLINE, MarketFamily.SPREAD, MarketFamily.TOTAL)))
         server.takeRequest()
         assertEquals("wire", server.takeRequest().getHeader("x-api-key"))
     }
