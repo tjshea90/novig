@@ -1,12 +1,12 @@
 {
  "v": 1,
- "holder": "a3eb92",
- "label": "acct-7542bf",
+ "holder": "26a1e4",
+ "label": "acct-27a37e",
  "kind": "interactive",
- "task": "TCL113 full access for Claude sessions except STOP ALL",
- "since": 1792306339,
- "sinceIso": "2026-10-18T06:52:19Z",
- "hb": 1792307573,
- "hbIso": "2026-10-18T07:12:53Z",
+ "task": "permission test (Tj: force)",
+ "since": 1792307676,
+ "sinceIso": "2026-10-18T07:14:36Z",
+ "hb": 1792307676,
+ "hbIso": "2026-10-18T07:14:36Z",
  "leaseS": 1200
 }
