@@ -544,11 +544,13 @@ private fun FeedSummary(
                 }
                 agedOutText(state, now)?.let { note ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(note, style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, modifier = Modifier.weight(1f))
-                        if (!status.scanning) {
-                            TextButton(onClick = onScan, contentPadding = PaddingValues(horizontal = 8.dp)) {
-                                Text("Scan", style = MaterialTheme.typography.labelMedium)
-                            }
+                        // Fixed height and width whether or not a scan runs (the button is hidden, not removed): the note wrapped
+                        // differently without it and the list below jumped (Tj's video, 2026-10-17).
+                        Text(note, style = MaterialTheme.typography.labelSmall, color = Edge.colors.warning, modifier = Modifier.weight(1f),
+                            minLines = 3, maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        TextButton(onClick = onScan, enabled = !status.scanning, contentPadding = PaddingValues(horizontal = 8.dp),
+                            modifier = Modifier.alpha(if (status.scanning) 0f else 1f)) {
+                            Text("Scan", style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }
