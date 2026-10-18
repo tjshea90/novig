@@ -31,9 +31,15 @@ jobs:
         env:
           SPORTMICRO_API_KEY: ${{ secrets.SPORTMICRO_API_KEY }}
         run: python3 tools/sportmicro_probe.py out/sportmicro "${{ github.event.inputs.seconds || '900' }}"
+      - name: Report (keyless, in the log)
+        if: always()
+        run: |
+          cat out/sportmicro/REPORT.txt 2>/dev/null || echo "no report"
+          ls -l out/sportmicro 2>/dev/null
       - name: Publish (keyless)
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view sportmicro-probe >/dev/null 2>&1 || gh release create sportmicro-probe --title "Sportmicro probe (keyless)" --notes "Written by .github/workflows/sportmicro-probe.yml. Replaced each run."
-          gh release upload sportmicro-probe out/sportmicro/* --clobber
+          find out/sportmicro -type f -size +0 -print0 | xargs -0 -r gh release upload sportmicro-probe --clobber
