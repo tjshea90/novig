@@ -369,7 +369,7 @@ class CloudLink(private val c: AppContainer) {
                     is CloudClient.Poll.Fresh -> { etag = p.etag; c.cloudUsage.value = p.value }
                     else -> {}
                 }
-                nap(USAGE_POLL_MS)
+                nap(if (c.onScreen) USAGE_POLL_MS else USAGE_POLL_BACKGROUND_MS)
             }
         }
         // 6. what the engine did (Tj, 2026-10-15: opening the app syncs the automated system's bets and results): its order book, read whenever a token is saved and the engine has ever traded or trades now; an unchanged file is a free 304.
@@ -837,12 +837,14 @@ class CloudLink(private val c: AppContainer) {
 
     companion object {
         const val POLL_MS = 2_000L   // on screen (Tj, 2026-10-17: "real time or at most every couple seconds"); a 304 costs nothing against GitHub's limit
-        const val INBOX_POLL_MS = 60_000L
+        // Freshness on screen (Tj, 2026-10-18, TCL122-2: "all stats and numbers and meters should be as fresh as possible"): unchanged files answer 304, which GitHub does not count against the token's limit.
+        const val INBOX_POLL_MS = 30_000L
         const val CHAT_OPEN_POLL_MS = 8_000L
         const val INBOX_BACKGROUND_MS = 5 * 60_000L
         /** How often the engine's usage file is asked for (a 304 costs nothing against GitHub's limit). */
-        const val USAGE_POLL_MS = 30_000L
-        const val TRADES_POLL_MS = 20_000L
+        const val USAGE_POLL_MS = 10_000L
+        const val USAGE_POLL_BACKGROUND_MS = 60_000L
+        const val TRADES_POLL_MS = 6_000L
         const val TRADES_POLL_BACKGROUND_MS = 5 * 60_000L
         /** Candidate books read per round, and the rounds' pace: the stream's books are free; the rest go through the key's paced reads. */
         const val BIDS_READS_PER_ROUND = 120
