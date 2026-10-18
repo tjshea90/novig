@@ -37,6 +37,12 @@ object CloudMessages {
     /** The file name: time first so the folder sorts by time, then the id. */
     fun fileName(m: Message): String = String.format(java.util.Locale.US, "%013d-%s.json", m.at, m.id.filter { it.isLetterOrDigit() || it == '-' }.take(24))
 
+    /**
+     * What the Messages list and the notifications show (Tj, 2026-10-18, TCL122-1: "only include important messages and API errors or recommendations. do not include bets and bids"): never a bet or bid
+     * fill, never a quiet `info` line. Alerts, recommendations, shipped notices and anything pushed (priority 1) stay.
+     */
+    fun worthShowing(m: Message): Boolean = m.kind != "bet" && !(m.kind == "info" && m.priority < 1)
+
     /** Newest first. */
     fun newestFirst(ms: Collection<Message>): List<Message> = ms.sortedByDescending { it.at }
 
