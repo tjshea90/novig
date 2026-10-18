@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -180,7 +181,7 @@ private fun LiveBoardCard(b: LiveBoard.Board, now: Long) {
                     com.tjshea.vigilant.data.cloud.DashboardModel.Tone.BAD -> Edge.colors.negative
                     else -> MaterialTheme.colorScheme.outline
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("liveSocket-${x.name}")) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp), modifier = Modifier.semantics(mergeDescendants = true) {}.testTag("liveSocket-${x.name}")) {
                     androidx.compose.foundation.layout.Box(Modifier.size(8.dp).background(c, androidx.compose.foundation.shape.CircleShape))
                     Text(x.name, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                     Text(LiveBoard.socketWord(x, now), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
@@ -202,7 +203,7 @@ private fun LiveTile(t: com.tjshea.vigilant.data.cloud.DashboardModel.Tile, modi
         com.tjshea.vigilant.data.cloud.DashboardModel.Tone.WARN -> Edge.colors.warning
         else -> MaterialTheme.colorScheme.onSurface
     }
-    androidx.compose.material3.Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = modifier.testTag("liveTile-${t.label}")) {
+    androidx.compose.material3.Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = modifier.semantics(mergeDescendants = true) {}.testTag("liveTile-${t.label}")) {
         Column(Modifier.padding(10.dp)) {
             Text(t.label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(t.value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = c, maxLines = 1)

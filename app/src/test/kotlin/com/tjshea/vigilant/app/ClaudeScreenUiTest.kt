@@ -45,7 +45,7 @@ class ClaudeScreenUiTest {
 
     @Test
     fun `the trash can deletes one message and Clear all clears them`() {
-        val inbox = InboxState(messages = listOf(CloudMessages.Message("m1", now, "engine", "info", "One", "", 0, null), CloudMessages.Message("m2", now, "engine", "info", "Two", "", 0, null)))
+        val inbox = InboxState(messages = listOf(CloudMessages.Message("m1", now, "engine", "alert", "One", "", 0, null), CloudMessages.Message("m2", now, "engine", "alert", "Two", "", 0, null)))
         val deleted = ArrayList<String>()
         var cleared = 0
         compose.setContent { VigilantTheme(darkTheme = true) { MessagesPage(inbox, {}, {}, onDismiss = { deleted += it }, onClearAll = { cleared++ }) } }
