@@ -271,8 +271,11 @@ private fun ApiCard(v: ProviderView, health: CloudDashboard.Health?, detail: Str
             if (detail.isNotBlank()) Text(detail, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             val allowance = v.totalAllowance
             val left = v.totalLeft
-            if (allowance != null && left != null && allowance > 0) {
-                UsageBar(used = (allowance - left).coerceAtLeast(0), left = left, allowance = allowance)
+            if (v.spent) {
+                ProviderBar(v)
+                Text("Spent" + (v.keys.mapNotNull { it.until }.minOrNull()?.let { " · back ${UsageMeter.whenText(it, now)}" } ?: ""), style = MaterialTheme.typography.labelMedium, color = Edge.colors.negative)
+            } else if (allowance != null && left != null && allowance > 0) {
+                ProviderBar(v)
                 Text(
                     "$left of $allowance ${v.policy.unit} left" + (v.nextReset?.let { " · resets ${UsageMeter.whenText(it, now)}" } ?: ""),
                     style = MaterialTheme.typography.labelMedium,

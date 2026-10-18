@@ -1868,10 +1868,10 @@ private fun ColumnScope.ApisPage(state: UiState, reportActions: ReportActions, o
                     )
                 }
                 views[e.policy?.id]?.let { v ->
-                    if (v.keys.size > 1) UsageBar(v.keys.sumOf { it.used }, v.totalLeft, v.totalAllowance)
+                    if (v.keys.size > 1) ProviderBar(v)
                     v.keys.forEach { k ->
                         Text(keyLine(e.policy!!, k, now), style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        UsageBar(k.used, k.left, k.allowance, Modifier.testTag("apiBar-${e.name}-${k.index}"))
+                        KeyBar(k, Modifier.testTag("apiBar-${e.name}-${k.index}"))
                     }
                 }
                 if (e.provider != null && e.provider != ApiProvider.PINNODDS) Text(

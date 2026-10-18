@@ -5,18 +5,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -79,17 +81,39 @@ fun cloudCallsToday(state: UiState, providerId: String, now: Long): Int {
 /** ParlayAPI's scans spend a day's share at most (Tj's Starter plan, RESEARCH.md §43): the meter says how much is left today. */
 private val PARLAY_PACE = com.tjshea.vigilant.data.reference.OddsFeed.PARLAY.pace(QuotaPolicy.PARLAY)
 
-/** Green with plenty left, amber under half, red under a fifth or spent. */
+/** Green with plenty left, amber past half used, red past four fifths or spent: from the SAME fraction the bar is filled with, so colour and fill always agree. */
 @Composable
-private fun meterColor(left: Int?, allowance: Int?): Color {
+fun meterColor(fractionUsed: Float): Color {
     val edge = Edge.colors
-    if (left == null || allowance == null || allowance <= 0) return MaterialTheme.colorScheme.primary
-    val f = left.toFloat() / allowance
     return when {
-        f < 0.2f -> edge.negative
-        f < 0.5f -> edge.warning
+        fractionUsed >= 0.8f -> edge.negative
+        fractionUsed >= 0.5f -> edge.warning
         else -> edge.positive
     }
+}
+
+/**
+ * A usage bar drawn by hand (full = used up). Material's progress bar draws a stop dot at the end of its track in the bar's colour; on a nearly empty or missing bar that dot was all Tj saw ("a red
+ * dot instead of a full red bar", 2026-10-18). This one is a plain rounded track and fill, nothing else.
+ */
+@Composable
+fun MeterBar(fractionUsed: Float, modifier: Modifier = Modifier, color: Color = meterColor(fractionUsed)) {
+    val f = fractionUsed.coerceIn(0f, 1f)
+    Box(modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.surfaceVariant).testTag("meterBar")) {
+        if (f > 0f) Box(Modifier.fillMaxWidth(f.coerceAtLeast(0.02f)).fillMaxHeight().background(color))
+    }
+}
+
+/** A provider's total bar: full and red when every key is spent; nothing when no allowance is known. */
+@Composable
+fun ProviderBar(v: ProviderView, modifier: Modifier = Modifier) {
+    v.fractionUsed?.let { MeterBar(it, modifier.padding(vertical = 2.dp)) }
+}
+
+/** One key's bar: full and red when spent or refused. */
+@Composable
+fun KeyBar(k: KeyView, modifier: Modifier = Modifier) {
+    k.fractionUsed?.let { MeterBar(it, modifier.padding(vertical = 2.dp)) }
 }
 
 /** Settings → API usage: one card per provider, one row per key. Moves after every call. */
@@ -115,13 +139,7 @@ private fun ProviderMeter(v: ProviderView, now: Long, history: com.tjshea.vigila
                 Text(v.policy.displayName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 Text(summary(v, now), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            v.fractionUsed?.let { used ->
-                LinearProgressIndicator(
-                    progress = { used.coerceIn(0f, 1f) },
-                    color = meterColor(v.totalLeft, v.totalAllowance),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                )
-            }
+            ProviderBar(v)
             if (v.policy.keyed && v.keys.isEmpty()) {
                 Text("No key added.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -157,6 +175,7 @@ private fun ProviderMeter(v: ProviderView, now: Long, history: com.tjshea.vigila
 private fun summary(v: ProviderView, now: Long): String {
     if (!v.policy.keyed) return "no quota"
     if (v.keys.isEmpty()) return ""
+    if (v.spent) return "spent" + (v.keys.mapNotNull { it.until }.minOrNull()?.let { " · back ${UsageMeter.whenText(it, now)}" } ?: "")
     val left = v.totalLeft?.let { "$it ${v.policy.unit} left" } ?: "?"
     val reset = v.nextReset?.let { " · resets ${UsageMeter.whenText(it, now)}" } ?: ""
     return left + reset
@@ -188,13 +207,7 @@ private fun KeyRow(policy: QuotaPolicy, k: KeyView, now: Long) {
                 fontFamily = FontFamily.Monospace,
             )
         }
-        if (k.allowance != null && k.allowance!! > 0) {
-            LinearProgressIndicator(
-                progress = { if (k.state == KeyState.SPENT) 1f else (k.left?.let { l -> 1f - l.toFloat() / k.allowance!! } ?: (k.used.toFloat() / k.allowance!!)).coerceIn(0f, 1f) },
-                color = if (k.state == KeyState.SPENT) edge.negative else meterColor(k.left, k.allowance),
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 3.dp),
-            )
-        }
+        KeyBar(k, Modifier.padding(start = 16.dp, top = 1.dp))
         val detail = listOfNotNull(
             k.left?.let { "$it left" + if (k.serverReported) " (the API's own figure" + (k.figureAtMs?.let { at -> ", read ${Format.age(at, now)}" } ?: "") + ")" else " (counted: this phone's calls plus GitHub's)" },
             k.lastCallMs?.let { "last call ${Format.age(it, now)}" },
@@ -212,6 +225,7 @@ fun UsageStrip(state: UiState, modifier: Modifier = Modifier) {
     val now = rememberNow(30_000)
     val parts = meterViews(state, now).mapNotNull { v ->
         when {
+            v.policy.keyed && v.keys.isNotEmpty() && v.spent -> Triple(shortName(v.policy), "spent", 2)
             v.policy.keyed && v.keys.isNotEmpty() -> {
                 val short = shortName(v.policy)
                 val left = v.totalLeft ?: return@mapNotNull null
@@ -271,12 +285,10 @@ fun keyLine(policy: QuotaPolicy, k: KeyView, now: Long): String = buildString {
     k.note?.takeIf { k.state != KeyState.ACTIVE && k.state != KeyState.STANDBY }?.let { append(" · $it") }
 }
 
-/**
- * The green-to-red usage bar (full = used up; green with plenty left, amber under half, red under a fifth): one for an API's total and one under each key, on Settings › APIs as on Settings › API usage.
- * Nothing is drawn when the allowance is unknown.
- */
+/** The usage bar of a total or one key on Settings › APIs and the Engine tab: [MeterBar] from used/left/allowance; [spent] fills it red. Nothing is drawn when the allowance is unknown and it is not spent. */
 @Composable
-fun UsageBar(used: Int, left: Int?, allowance: Int?, modifier: Modifier = Modifier) {
+fun UsageBar(used: Int, left: Int?, allowance: Int?, modifier: Modifier = Modifier, spent: Boolean = false) {
+    if (spent) { MeterBar(1f, modifier.padding(vertical = 2.dp)); return }
     if (allowance == null || allowance <= 0) return
-    LinearProgressIndicator(progress = { (left?.let { 1f - it.toFloat() / allowance } ?: (used.toFloat() / allowance)).coerceIn(0f, 1f) }, color = meterColor(left, allowance), modifier = modifier.fillMaxWidth().padding(vertical = 2.dp))
+    MeterBar(((left?.let { allowance - it } ?: used).toFloat() / allowance).coerceIn(0f, 1f), modifier.padding(vertical = 2.dp))
 }
