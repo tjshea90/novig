@@ -265,7 +265,7 @@ object SettingsSummary {
             SettingsPage.SAFEGUARDS -> com.tjshea.vigilant.app.Safeguards.off(s).let { off -> if (off.isEmpty()) "All ${com.tjshea.vigilant.app.Safeguards.ALL.size} safeguards on" else "${off.size} of ${com.tjshea.vigilant.app.Safeguards.ALL.size} OFF" }
             SettingsPage.PINNODDS -> when {
                 state.pinnoddsKeys.isEmpty() && !s.pinnWebsite.noPinnKey -> "No Pinnodds key saved"
-                !s.pinnLive -> "Off" + if (s.pinnWebsite.website) " (Pinnacle website feed)" else if (s.pinnWebsite.bolt) " (BoltOdds soft-book average)" else ""
+                !s.pinnLive -> "Off" + if (s.pinnWebsite.website) " (Pinnacle website feed)" else if (s.pinnWebsite.bolt) " (BoltOdds soft-book average)" else if (s.pinnWebsite.sx) " (SX Bet exchange mid)" else ""
                 s.pinnLiveHalted != null -> "Stopped"
                 s.pinnLiveBet -> "On: real bets, ${com.tjshea.vigilant.app.PinnText.money(s.pinnLiveStake)} a bet"
                 else -> "On: paper only (nothing is sent)"

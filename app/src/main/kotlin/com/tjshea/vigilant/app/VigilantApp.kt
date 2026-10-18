@@ -1650,6 +1650,7 @@ class AppContainer(val app: Application) {
             s.pausedByHand -> "scanning is paused"
             s.pinnWebsite.website -> "the free Pinnacle website feed is minutes old (cached): real live bets need the Pinnodds socket"
             s.pinnWebsite.bolt && !s.gates.boltLiveReal -> "the soft-book average is paper-only until you allow real orders on it (Settings › Pinnodds live)"
+            s.pinnWebsite.sx && !s.gates.sxLiveReal -> "the SX Bet exchange mid is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             trading == null -> "no betting key connected"
             wallet == null -> "wallet not read yet"
             wallet < stake * 1.2 -> "wallet too low"
@@ -1709,7 +1710,7 @@ class AppContainer(val app: Application) {
 
     private fun pinnConfig(): com.tjshea.vigilant.data.pinnodds.LiveConfig {
         val s = settingsStore.flow.value ?: ScanSettings()
-        val rules = if (s.pinnWebsite.bolt) {
+        val rules = if (s.pinnWebsite.bolt || s.pinnWebsite.sx) {
             // A soft-book consensus: no scores to wait for (the lag test must be a move or a standing edge), a floor under the edge it must show, a settle time so a price still repricing is not bet, and no Pinnacle-specific
             // margin or limit rule (those describe Pinnacle's own market, which this is not).
             com.tjshea.vigilant.data.pinnodds.LiveRules(
@@ -1761,7 +1762,12 @@ class AppContainer(val app: Application) {
             newFeed = { listener -> readConnection?.let { com.tjshea.vigilant.data.novig.stream.SharedStreamView({ novig.stream as? NovigStream }, listener) } },
             openFeed = { onFrame ->
                 // The feed is read at each start of the engine; changing it in Settings restarts the engine (pinnTick).
-                if (settingsStore.flow.value?.pinnWebsite?.bolt == true) {
+                if (settingsStore.flow.value?.pinnWebsite?.sx == true && sxBetClient.stream != null) {
+                    // SX Bet's exchange mid (Tj, 2026-10-18, TCL118): pushed by its socket with the live scores, spoken as Pinnodds frames.
+                    activeWebsiteFeed = null; boltLiveFeed = null; boltFeed.liveTennis = false
+                    val st = sxBetClient.stream!!
+                    com.tjshea.vigilant.data.sxbet.SxBetLiveFeed(st, sxBetClient, ensureOpen = { sxSocketOn = true; st.open() }, sink = onFrame, scope = appScope)
+                } else if (settingsStore.flow.value?.pinnWebsite?.bolt == true) {
                     // BoltOdds' soft-book average (Tj, 2026-10-12): pushed by the odds socket, spoken as Pinnodds frames.
                     activeWebsiteFeed = null
                     com.tjshea.vigilant.data.boltodds.BoltLiveFeed(
@@ -1858,6 +1864,7 @@ class AppContainer(val app: Application) {
             s.liveBidReal && trading == null -> "no betting key connected"
             // Pinnacle's website feed is served from a cache and was measured 90-400 s old (RESEARCH.md §127): never a basis for a real order.
             s.liveBidReal && s.pinnWebsite.website -> "the free Pinnacle website feed is minutes old (cached): real live bids need the Pinnodds socket"
+            s.liveBidReal && s.pinnWebsite.sx && !s.gates.sxLiveReal -> "the SX Bet exchange mid is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             s.liveBidReal && s.pinnWebsite.bolt && !s.gates.boltLiveReal -> "the soft-book average is paper-only until you allow real orders on it (Settings › Pinnodds live)"
             else -> null
         }
