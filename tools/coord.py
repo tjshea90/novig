@@ -168,6 +168,9 @@ def read_lease():
     return load(os.path.join(CLONE, LEASE_FILE), None)
 
 
+IDLE_TAKEOVER_S = 180
+
+
 def verdict(lease, me, t):
     """free | mine | stale | other"""
     if not lease or not lease.get("holder"):
@@ -270,6 +273,10 @@ def acquire(kind=None, task=None, force=False, quiet=False):
                 # Tj's app-chat message is his word (Tj, 2026-10-17, TCL86a: "the chat should always take commands, I don't care which claude account responds"): a chat session takes the lease from a
                 # routine or an interactive session and says so on the board. Two chat sessions do not displace each other: the first one serves Tj.
                 note = "CHAT session took the lease on Tj's message from " + describe(lease, t)
+            elif kind in ("interactive", "chat") and lease.get("kind") in ("interactive", "chat") and t - int(lease.get("hb", t)) > IDLE_TAKEOVER_S:
+                # Tj, 2026-10-18 ("I need to be able to chat with any Claude account and get stuff done without lease problems"): Tj's own message takes the lease from an
+                # interactive or chat session that has not heartbeat for 3 minutes (idle, not working), logged on the board. A session busy within 3 minutes still serves him first.
+                note = "idle session (no heartbeat for over %d s) replaced by Tj's message: %s" % (IDLE_TAKEOVER_S, describe(lease, t))
             else:
                 if not quiet:
                     print("COORD  another Claude session holds this repo: %s. Do not work on it; your commits stay local until the lease is free or stale (%d min). "
