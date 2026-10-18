@@ -560,8 +560,10 @@ class AppContainer(val app: Application) {
         novig.stream?.configureFeed(s.gates.novigBbo, s.gates.novigKeepOpen, s.gates.novigOrderPush); novig.stream?.configureCompression(s.gates.novigCompress)
         orderSocket?.let { sock -> sock.enabled = s.gates.novigSocketOrders; if (s.gates.novigSocketOrders) sock.warm() }
         // Switched off (or its key gone, or Live games only mode asleep): the sockets are closed at once, not left to idle out.
-        if (!boltActive(s) || !s.gates.boltSocket) boltFeed.close()
-        if (!s.useKalshi || !s.gates.kalshiSocket) kalshiStream.close()
+        // With the engine scanning and live on GitHub the phone holds none of these (TCL122-4, [ScanSettings.phoneSockets]): the runner has them.
+        if (!boltActive(s) || !s.gates.boltSocket || !s.phoneSockets) boltFeed.close()
+        if (!s.useKalshi || !s.gates.kalshiSocket || !s.phoneSockets) kalshiStream.close()
+        if (!s.phoneSockets) { sxSocketOn = false; sxBetClient.stream?.close() }
         // Novig's market feed follows its socket switch (Settings › APIs): off = the scan reads books by request; back on = the feed is built again.
         if (!s.gates.novigSocket && novig.stream != null) { novig.stream?.close(); novig.stream = null }
         else if (s.gates.novigSocket && novig.stream == null && readConnection != null) useConnection(readConnection)
@@ -1544,9 +1546,13 @@ class AppContainer(val app: Application) {
     }
 
     /** Starts or stops the paper lab to match [s]: on, not STOP ALL, the Novig app. Safe to call on every settings change. */
-    /** The GitHub engine is running the live tail lane now (TCL109): its switch is on and its heartbeat says so. Then this phone places no tail bets or tail bids of its own. */
+    /**
+     * This phone runs none of its own live betting or bidding: live is set to GitHub while the engine scans (Tj, 2026-10-18, TCL122-4: "I'm not interested in phone live betting unless I specifically press
+     * phone"; a quiet engine is shown on the Live dashboard, it does not hand live to the phone by itself), or the engine says its lane is running (TCL109).
+     */
     fun engineRunsLive(): Boolean {
         val s = settingsStore.flow.value ?: return false
+        if (!s.phoneLive) return true
         return s.engineLive && cloud.ui.value.status?.liveLive(System.currentTimeMillis()) == true
     }
 
@@ -2049,7 +2055,7 @@ class AppContainer(val app: Application) {
 
     private val kalshi = KalshiClient(
         http, json, altBaseUrl = KalshiClient.ALT_URL, usage = usage, fastPace = { settingsStore.flow.value?.kalshiFastPace ?: true },
-        signer = { kalshiSigner() }, stream = kalshiStream, socketOn = { settingsStore.flow.value?.let { it.useKalshi && it.gates.kalshiSocket } ?: false },
+        signer = { kalshiSigner() }, stream = kalshiStream, socketOn = { settingsStore.flow.value?.let { it.useKalshi && it.gates.kalshiSocket && it.phoneSockets } ?: false },
     )
 
     /** How the Kalshi 3-requests-a-second test has gone this session (Diagnostics). */
@@ -2259,7 +2265,7 @@ class AppContainer(val app: Application) {
         parlayHalves.pinnacleFeedOn = pinnacleOn
         parlayHalvesBackground.pinnacleFeedOn = pinnacleOn
         if (settings.usePolymarket) add(polymarket)
-        sxSocketOn = settings.gates.useSxBet && settings.gates.sxSocket
+        sxSocketOn = settings.gates.useSxBet && settings.gates.sxSocket && settings.phoneSockets
         if (!sxSocketOn) sxBetClient.stream?.close()
         if (settings.gates.useSxBet && keyStore.current(ApiProvider.SXBET).isNotEmpty() && !sxBetClient.down()) add(sxBetClient)
         if (settings.useKalshi) add(kalshi)
