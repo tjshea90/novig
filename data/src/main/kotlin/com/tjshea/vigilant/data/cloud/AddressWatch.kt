@@ -48,7 +48,7 @@ class AddressWatch(
 
     companion object {
         /** Long enough for the key route to have been tried and a transient refusal to have passed. */
-        const val MIN_AGE_MS = 20_000L
+        const val MIN_AGE_MS = 4 * 60_000L
         /** A refusal later than this in a job's life is not the runner's address (it worked until then). */
         const val WINDOW_MS = 15 * 60_000L
         const val RECENT_MS = 3 * 60_000L
