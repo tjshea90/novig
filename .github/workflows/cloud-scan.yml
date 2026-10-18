@@ -156,6 +156,7 @@ jobs:
           SXBET_API_KEY: ${{ secrets.SXBET_API_KEY }}
           PINNWIRE_API_KEY: ${{ secrets.PINNWIRE_API_KEY }}
           PINNAPI_API_KEY: ${{ secrets.PINNAPI_API_KEY }}
+          PINNODDS_API_KEY: ${{ secrets.PINNODDS_API_KEY }}
           PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           PARLAY_API_KEY: ${{ secrets.PARLAY_API_KEY }}

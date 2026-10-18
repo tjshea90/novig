@@ -140,7 +140,11 @@ class CloudSources(
             PinnapiClient.pinnwire(KeyPool(QuotaPolicy.PINNWIRE, { keys(CloudKeys.PINNWIRE) }, usage)),
             PinnapiClient.pinnapi(KeyPool(QuotaPolicy.PINNAPI, { keys(CloudKeys.PINNAPI) }, usage)),
         ),
+        // Pinnodds' REST board first when its key is on GitHub and its switch is on (as on the phone); PinnWire carries on if it fails.
+        first = { if (pinnoddsOn && has(CloudKeys.PINNODDS)) pinnoddsHost else null },
     )
+    @Volatile private var pinnoddsOn = false
+    private val pinnoddsHost = PinnapiClient.pinnodds(KeyPool(QuotaPolicy.PINNODDS, { keys(CloudKeys.PINNODDS) }, usage))
     private val propLine = PropLineClient(http, KeyPool(QuotaPolicy.PROPLINE, { keys(CloudKeys.PROPLINE) }, usage), json, relayNovig = true, bookIds = false, meter = usage)
     private val propLineProps = PropLinePropsSource(propLine)
     /** PropLine's plan per key from its quota headers (Tj, 2026-10-16, TCL56): the paid key is found and used first ([KeyPool]). The engine asks hourly. */
@@ -243,7 +247,8 @@ class CloudSources(
     fun names(s: ScanSettings): List<String> = sources(s).map { it.id }
 
     private fun base(s: ScanSettings): List<ReferenceSource> = buildList {
-        val pinnacleOn = s.usePinnacle && ((s.gates.usePinnwire && has(CloudKeys.PINNWIRE)) || (s.gates.usePinnapi && has(CloudKeys.PINNAPI)))
+        pinnoddsOn = s.gates.usePinnodds
+        val pinnacleOn = s.usePinnacle && ((s.gates.usePinnodds && has(CloudKeys.PINNODDS)) || (s.gates.usePinnwire && has(CloudKeys.PINNWIRE)) || (s.gates.usePinnapi && has(CloudKeys.PINNAPI)))
         if (pinnacleOn) add(pinnacle)
         // ParlayAPI's alternate lines are Pinnacle's: bought only when PinnWire/pinnapi aren't sending them (as on the phone).
         parlayOdds.alternates = !pinnacleOn
@@ -277,6 +282,9 @@ object CloudKeys {
     const val SXBET = "SXBET_API_KEY"
     const val PINNWIRE = "PINNWIRE_API_KEY"
     const val PINNAPI = "PINNAPI_API_KEY"
+
+    /** Pinnodds' REST board key (Tj, 2026-10-18: added the secret himself; "use pinnodds API, but without socket"). REST only: the engine never opens its socket. */
+    const val PINNODDS = "PINNODDS_API_KEY"
     const val PROPLINE = "PROPLINE_API_KEY"
     const val ODDS_API = "ODDS_API_KEY"
     const val PARLAY = "PARLAY_API_KEY"
@@ -311,12 +319,12 @@ object CloudKeys {
 
     /** The secret holding each meter's keys (the dashboard needs the keys' order to say which one is active). A policy with no secret here has no key on GitHub. */
     fun envFor(policyId: String): String? = when (policyId) {
-        "sgo" -> SGO; "oddspapi" -> ODDSPAPI; "oddspapi_free" -> ODDSPAPI_FREE; "unabated" -> UNABATED; "pinnwire" -> PINNWIRE; "pinnacle" -> PINNAPI
+        "sgo" -> SGO; "oddspapi" -> ODDSPAPI; "oddspapi_free" -> ODDSPAPI_FREE; "unabated" -> UNABATED; "pinnwire" -> PINNWIRE; "pinnacle" -> PINNAPI; "pinnodds" -> PINNODDS
         "propline" -> PROPLINE; "oddsapi" -> ODDS_API; "parlay" -> PARLAY; "boltodds" -> BOLT; "sxbet" -> SXBET
         else -> null
     }
 
-    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, SXBET, PINNWIRE, PINNAPI, PROPLINE, ODDS_API, PARLAY, BOLT)
+    val ALL = listOf(SGO, ODDSPAPI, ODDSPAPI_FREE, UNABATED, SXBET, PINNWIRE, PINNAPI, PINNODDS, PROPLINE, ODDS_API, PARLAY, BOLT)
 
     /**
      * Which of the phone's keys go to which repository secret (the app sends them: Settings › Cloud scan › Send my API keys to GitHub; Tj, 2026-10-14). **Pinnodds is never in it** (its socket allows one
