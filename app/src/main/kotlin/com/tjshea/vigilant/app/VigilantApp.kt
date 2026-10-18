@@ -949,7 +949,7 @@ class AppContainer(val app: Application) {
         }
         // The phone's own live tail lane hands over to the GitHub engine's while the engine says it runs it (TCL109), and takes the work back when the engine goes quiet.
         appScope.launch {
-            cloud.ui.map { engineRunsLive() }.distinctUntilChanged().collect { settingsStore.flow.value?.let { s -> runCatching { labTick(s.migrate()) }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e } } }
+            cloud.ui.map { engineRunsLive() }.distinctUntilChanged().collect { settingsStore.flow.value?.let { s -> runCatching { labTick(s.migrate()) }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e }; runCatching { pinnTick(s.migrate()) }.onFailure { e -> if (e is kotlinx.coroutines.CancellationException) throw e } } }
         }
         // The burst recorder follows its switch, the leagues and STOP ALL (no orders; RESEARCH.md §95).
         appScope.launch {
@@ -1979,7 +1979,7 @@ class AppContainer(val app: Application) {
         if (!AppBook.isNovig) return
         // The Feed's live lane (Settings › Include live games) keeps the same two sockets open: it is the reason the engine runs when neither the taker nor the bids are on.
         if (!s.pinnWebsite.bolt) boltFeed.liveTennis = false
-        val wanted = s.pinnLive || s.liveBid || (s.includeLive && !s.paused)
+        val wanted = ((s.pinnLive || s.liveBid) && !engineRunsLive()) || (s.includeLive && !s.paused)
         if (com.tjshea.vigilant.data.scanner.Dormant.PINNODDS || !wanted || s.killed) {   // dormant (Tj, 2026-10-09): never opened
             if (pinnRunner.running) pinnRunner.stop(if (s.killed) "stopped by STOP ALL" else null)
             liveScan.clear(if (s.killed) "STOP ALL is on" else null)

@@ -55,4 +55,17 @@ class CloudLiveLaneTest {
         assertTrue(st.liveLive(1_000_000L + 60_000L))
         assertFalse(st.liveLive(1_000_000L + CloudStatus.DESK_STALE_MS + 1))
     }
+
+    @Test fun theSoftBookTakerAndBidsStayPaperUntilRealIsAllowedOnTheAverage() {
+        val live = ScanSettings(pinnLive = true, pinnLiveBet = true, liveBid = true, liveBidReal = true, gates = ApiGates(cloudScan = true, cloudTrading = CloudTradeMode.LIVE))
+        assertTrue(live.engineLive)
+        assertTrue(CloudPinnLane.takerOn(live))
+        assertFalse(CloudPinnLane.takerReal(live))
+        assertFalse(CloudPinnLane.bidsReal(live))
+        val allowed = live.copy(gates = live.gates.copy(boltLiveReal = true))
+        assertTrue(CloudPinnLane.takerReal(allowed))
+        assertTrue(CloudPinnLane.bidsReal(allowed))
+        assertFalse(CloudPinnLane.takerReal(allowed.copy(gates = allowed.gates.copy(cloudTrading = CloudTradeMode.PAPER))))
+        assertFalse(CloudPinnLane.wanted(ScanSettings(gates = ApiGates(cloudScan = true, cloudTrading = CloudTradeMode.LIVE))))
+    }
 }
