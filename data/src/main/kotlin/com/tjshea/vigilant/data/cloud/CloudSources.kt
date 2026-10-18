@@ -207,14 +207,18 @@ class CloudSources(
     private fun propsOf(s: ScanSettings, props: ReferenceSource): List<ReferenceSource> = if (MarketFamily.PLAYER_PROPS in s.families) listOf(props) else emptyList()
 
     /** The flat-rate feeds that are on, SGO first, Unabated last; then the rest. Same order as the phone's list. */
-    fun sources(s: ScanSettings): List<ReferenceSource> {
-        // Switched off (or its socket switch off) the sockets are closed: nothing is held open or sent to BoltOdds.
+    /** The sockets the settings want, the others closed at once: nothing is held open or sent while a switch (or the GitHub / Phone live switch, [CloudEngine.forCloud]) says no. */
+    fun applySockets(s: ScanSettings) {
         if (!boltActive(s) || !s.gates.boltSocket) boltFeed.close()
         sxSocketWanted = s.gates.useSxBet && s.gates.sxSocket
-        pinnWireWanted = s.usePinnacle && s.gates.usePinnwire
         if (!sxSocketWanted) sxbet.stream?.close()
         kalshiSocketWanted = s.useKalshi && s.gates.kalshiSocket && kalshiSigner != null
         if (!kalshiSocketWanted) kalshiStream.close()
+    }
+
+    fun sources(s: ScanSettings): List<ReferenceSource> {
+        applySockets(s)
+        pinnWireWanted = s.usePinnacle && s.gates.usePinnwire
         val front = buildList {
             if (sgoActive(s)) { add(sgoGames); addAll(propsOf(s, sgoProps)) }
             if (opActive(s)) { add(opGames); addAll(propsOf(s, opProps)) }

@@ -948,6 +948,19 @@ data class ScanSettings(
     /** The live tail lane (Live light, the tail taker, its bids) runs on the GitHub engine (TCL109): the engine drives and trades (paper or live) and Tj switched the lane on. The phone's own copy stands down while the engine says it is live ([com.tjshea.vigilant.data.cloud.CloudStatus.liveLive]). */
     val engineLive: Boolean get() = cloudDrives && !killed && gates.cloudTrading != CloudTradeMode.OFF && tailLive.engine && (tailLive.on || pinnLive || liveBid)
 
+    /**
+     * Where live runs (Tj, 2026-10-18, TCL122-4: "there should be a switch for GitHub and phone"): [TailLiveSettings.engine] true = GitHub (the default), false = this phone. GitHub: the runner holds the
+     * live sockets and runs the live lane, the phone runs no live betting or bidding of its own and opens none of those sockets. Phone: the runner closes its BoltOdds, Kalshi and SX Bet sockets and pauses
+     * its live lane, and the phone runs the same lane on its own connection.
+     */
+    val liveOnGitHub: Boolean get() = tailLive.engine
+
+    /** The phone opens its own BoltOdds, Kalshi and SX Bet sockets only when it scans by itself or live runs on the phone; with the engine scanning and live on GitHub they stay shut (BoltOdds' plan allows 3 connections, the runner holds 2). */
+    val phoneSockets: Boolean get() = !cloudDrives || !tailLive.engine
+
+    /** The phone's own live lanes (Live light, the live taker, live bids) may run: not while the engine scans and live is set to GitHub ("I'm not interested in phone live betting unless I specifically press phone"). */
+    val phoneLive: Boolean get() = !cloudDrives || !tailLive.engine
+
     val engineBids: Boolean get() = cloudDrives && !killed && gates.cloudTrading == CloudTradeMode.LIVE && gates.cloudBids && makerSource == BidSource.VIGILANT
 
     /** The scanner choice as it runs. */

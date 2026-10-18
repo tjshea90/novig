@@ -77,6 +77,8 @@ class CloudEngine(
     private val liveUrl: () -> String = { "" },
     /** One line per socket the engine holds, for the status file. */
     private val socketLines: () -> List<String> = { emptyList() },
+    /** Opens or closes the runner's sockets to match the settings (the closing part of [sources]), called every live pass. */
+    private val applySockets: (ScanSettings) -> Unit = {},
     /** Ends the job early when Novig refuses this runner's address, so the workflow draws another ([AddressWatch]); null = never. */
     private val addressWatch: AddressWatch? = null,
     /** True while Novig refuses this machine's address: nothing is scanned, bid, traded or asked of any API (Tj, 2026-10-18, TCL116) until the job ends and a new runner is drawn. */
@@ -213,12 +215,16 @@ class CloudEngine(
         }
     }
 
-    /** The live lane beside the scan (TCL109): every 10 s it is told the phone's newest settings and starts, keeps or stops Live light, the tail taker and its bids; only inside the engine's hours. */
+    /**
+     * The live lane beside the scan (TCL109): every [LIVE_EVERY_MS] it is told the phone's newest settings and starts, keeps or stops Live light, the tail taker and its bids; only inside the engine's hours.
+     * The sockets follow the GitHub / Phone switch at the same pace ([applySockets]), so a switch to Phone closes the runner's sockets within seconds, not at the next scan (TCL122-4).
+     */
     private suspend fun liveLoop() {
         val l = live ?: return
         while (currentScopeActive()) {
-            pause(10_000L)
+            pause(LIVE_EVERY_MS)
             val s = phoneSettings ?: continue
+            runCatching { applySockets(forCloud(s)) }.onFailure { if (it is CancellationException) throw it }
             if (!s.cloudDrives || !manualOpen(s) || manualStopped() || addressBlocked()) {
                 if (liveStatus?.active == true) { runCatching { l.stop("the engine is off or outside its hours") }.onFailure { if (it is CancellationException) throw it } }
                 liveStatus = null
@@ -693,6 +699,8 @@ class CloudEngine(
     companion object {
         /** A scan whose progress has not moved for this long is started again, at most once in the gap. */
         const val PROGRESS_STALL_MS = 150_000L
+        /** How often the live lane is told the newest settings: a toggle on the phone's Live dashboard lands within the 3 s config read plus this. */
+        const val LIVE_EVERY_MS = 3_000L
         /** A read-only step of the watch loop (the bid candidates, the re-read before judging) that takes longer is dropped for this round: 2026-10-17 a hung step froze the loop's tick and the stall watchdog restarted a healthy engine every 7.5 min. */
         const val WATCH_STEP_MS = 60_000L
         const val PROGRESS_RESTART_GAP_MS = 300_000L
@@ -708,7 +716,9 @@ class CloudEngine(
             scanner = ScannerMode.VIGILANT, includeLive = false,
             // BoltOdds is read from its sockets on the runner whatever the phone's socket switch says (Tj, 2026-10-17: "my boltodds works fine from my phone. see if it can be reset on GitHub"): with the switch off the engine fell
             // back to the REST snapshot, which Bolt caps at 6 a minute per address, and a shared runner address answered 429 on both keys for hours. The phone's own switch is untouched.
-            gates = s.gates.copy(liveOnly = LiveOnlyMode(), boltSocket = true),
+            // ...unless live runs on the PHONE (Tj, 2026-10-18, TCL122-4: "if I choose phone, it should automatically turn off the sockets on GitHub runner"): then BoltOdds, Kalshi and SX Bet are read by request
+            // (BoltOdds' REST is paced by its client) and the phone holds the sockets.
+            gates = s.gates.copy(liveOnly = LiveOnlyMode(), boltSocket = s.liveOnGitHub, kalshiSocket = s.gates.kalshiSocket && s.liveOnGitHub, sxSocket = s.gates.sxSocket && s.liveOnGitHub),
             // The engine posts the bids itself (TCL31): the scan then runs the bid profile (far lane, many, deployment) exactly as a phone with auto bids on does.
             maker = s.maker || s.engineBids, makerRecommend = s.makerRecommend && !s.engineBids,
             // The long scan keeps the soonest games' fair odds and likeliest Novig books young (Tj, 2026-10-15: "Is this speed too slow for pre game betting and bidding?"): see [com.tjshea.vigilant.data.scanner.ScanGuards.hotRefresh].
