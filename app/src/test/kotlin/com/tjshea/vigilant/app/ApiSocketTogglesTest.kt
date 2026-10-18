@@ -26,7 +26,7 @@ class ApiSocketTogglesTest {
             assertTrue(e.name, e.socketOn(e.setSocket(off, true)))
             for (other in withSockets.filter { it != e }) assertEquals("${other.name} untouched by ${e.name}", other.socketOn(base), other.socketOn(off))
             assertEquals("the API's own switch is untouched", e.isOn(base), e.isOn(off))
-            assertEquals(base.copy(gates = base.gates.copy(boltSocket = off.gates.boltSocket, pinnSocket = off.gates.pinnSocket, kalshiSocket = off.gates.kalshiSocket)), off)
+            assertEquals(base.copy(gates = base.gates.copy(boltSocket = off.gates.boltSocket, pinnSocket = off.gates.pinnSocket, kalshiSocket = off.gates.kalshiSocket, sxSocket = off.gates.sxSocket)), off)
         }
     }
 
