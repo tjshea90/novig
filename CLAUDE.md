@@ -22,6 +22,8 @@ full in `BRIEF.md`; `bootstrap.sh` prints a short version at session start.
 The app is **Vigilant**: Kotlin + Compose, modules `engine` / `data` / `app`,
 built and released by GitHub Actions; `BUILDLOG.md` has the current version.
 
+**Three accounts, one team: start at `research/coordination/ONE_TEAM.md`** (who may work, who answers chat, where state lives, how to change settings, one page).
+
 ## THE STANDING JOB OF EVERY CLAUDE SESSION ON EVERY ACCOUNT: make the GitHub engine as profitable as possible, without Tj (Tj, 2026-10-17, verbatim: "I've said this a million times so I want every Claude account to understand")
 
 **Tj, 2026-10-17 (chat t1792218774426, verbatim):** "I want Claude to regularly study the GitHub engine, propline historical data, scanned and saved bets from the scanners, auto bets and bids, and other information and make the GitHub engine as profitable as possible. this constant updating and fine tuning should run without me. Claude has full permission to change filters and settings and bid and bet types and amounts"
@@ -322,6 +324,10 @@ to start worrying about only after it happens on this project too:
 ## Account names: acct-7542bf is "tj outlook" (Tj, 2026-10-18, permanent)
 
 **Standing instruction from Tj (2026-10-18, verbatim):** "Any time you are ever mentioned anywhere in this repo or project as your id number, add the name tj outlook." Same mechanism as mirage: write **acct-7542bf (tj outlook)** wherever a person reads it; the tag stays the key. `coord.py` `ACCOUNT_NAMES` and `tell_tj.py` carry both names.
+
+## Account names: acct-27a37e is "tj Gmail" (Tj, 2026-10-18, permanent)
+
+**Standing instruction from Tj (2026-10-18, verbatim):** "Any time you are referred to by your session id account number, 27A37E, add the name tj Gmail so I know which account it is." Same mechanism as mirage and tj outlook: write **acct-27a37e (tj Gmail)** wherever a person reads it; the tag stays the key. `coord.py` `ACCOUNT_NAMES` and `tell_tj.py` carry it.
 
 ## Any Claude session may change any setting or switch except STOP ALL (Tj, 2026-10-18, TCL113, permanent)
 
