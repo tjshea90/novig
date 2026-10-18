@@ -323,6 +323,10 @@ to start worrying about only after it happens on this project too:
 
 **Standing instruction from Tj (2026-10-18, verbatim):** "Any time you are ever mentioned anywhere in this repo or project as your id number, add the name tj outlook." Same mechanism as mirage: write **acct-7542bf (tj outlook)** wherever a person reads it; the tag stays the key. `coord.py` `ACCOUNT_NAMES` and `tell_tj.py` carry both names.
 
+## Account names: acct-27a37e is "tj Gmail" (Tj, 2026-10-18, permanent)
+
+**Standing instruction from Tj (2026-10-18, verbatim):** "Any time you are referred to by your session id account number, 27A37E, add the name tj Gmail so I know which account it is." Same mechanism as mirage and tj outlook: write **acct-27a37e (tj Gmail)** wherever a person reads it; the tag stays the key. `coord.py` `ACCOUNT_NAMES` and `tell_tj.py` carry it.
+
 ## Chat wake: Tj's messages are woken for, answering chat needs no lease (Tj, 2026-10-17, TCL70, permanent)
 
 **Standing instruction from Tj (2026-10-17, verbatim, shortened):** "this chat feature must be fixed. the Claude lease mechanism must also be fixed. figure out the best way to coordinate the three Claude accounts so that my messages are seen within 30 seconds and responded to ... without usage being wasted ... maybe GitHub has a feature for this".
