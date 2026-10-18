@@ -208,7 +208,7 @@ class CloudPinnLane(
         fun takerOn(s: ScanSettings) = s.engineLive && s.pinnLive
         fun takerReal(s: ScanSettings) = takerOn(s) && s.pinnLiveBet && s.gates.cloudTrading == CloudTradeMode.LIVE && s.gates.boltLiveReal
         fun bidsOn(s: ScanSettings) = s.engineLive && s.liveBid
-        fun bidsReal(s: ScanSettings) = bidsOn(s) && s.liveBidReal && s.gates.cloudTrading == CloudTradeMode.LIVE
+        fun bidsReal(s: ScanSettings) = bidsOn(s) && s.liveBidReal && s.gates.cloudTrading == CloudTradeMode.LIVE && s.gates.boltLiveReal
         fun wanted(s: ScanSettings) = takerOn(s) || bidsOn(s)
     }
 }

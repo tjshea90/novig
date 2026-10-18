@@ -1634,7 +1634,7 @@ class AppContainer(val app: Application) {
     private fun pinnTradeRules(): com.tjshea.vigilant.data.pinnodds.LiveTradeRules {
         val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(false, false, 0.0, 0.0, 0.0, 0.0)
         return com.tjshea.vigilant.data.pinnodds.LiveTradeRules(
-            enabled = AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS && s.pinnLive && !s.killed, bet = s.pinnLiveBet,
+            enabled = AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS && s.pinnLive && !s.killed && !engineRunsLive(), bet = s.pinnLiveBet,
             stake = if (s.apiMaxStake > 0.0) minOf(s.pinnLiveStake, s.apiMaxStake) else s.pinnLiveStake,
             maxPerGame = s.pinnLiveMaxGame, maxPerDay = s.pinnLiveMaxDay, haltLoss = s.pinnLiveHaltLoss, halted = s.pinnLiveHalted,
         )
@@ -1722,7 +1722,7 @@ class AppContainer(val app: Application) {
             rules = rules,
             method = s.pinnLiveDevig, leagues = Leagues.ALL.map { it.novigName }.toSet() + com.tjshea.vigilant.data.pinnodds.PinnLiveRunner.EXTRA_LEAGUES,
             // The lag taker judges only while its own switch is on; with only the live bids on the feed runs for them alone.
-            takerOn = s.pinnLive,
+            takerOn = s.pinnLive && !engineRunsLive(),
             // Settings › Include live games: the Feed's live lane (Tj, 2026-10-11). Off, the engine does exactly what it did.
             scanOn = AppBook.isNovig && s.includeLive && !s.paused, scanSettings = s,
         )
@@ -1853,7 +1853,7 @@ class AppContainer(val app: Application) {
     /** Tj's live bid switches, rules and limits as the desk reads them at each look. STOP ALL and the Pause button switch it off (everything comes down); a real bid also needs the betting key. */
     private fun liveBidConfig(): com.tjshea.vigilant.data.livebid.LiveBidConfig {
         val s = settingsStore.flow.value ?: return com.tjshea.vigilant.data.livebid.LiveBidConfig.OFF
-        val on = AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS && s.liveBid && !s.paused
+        val on = AppBook.isNovig && !com.tjshea.vigilant.data.scanner.Dormant.PINNODDS && s.liveBid && !s.paused && !engineRunsLive()
         val blocked = when {
             s.liveBidReal && trading == null -> "no betting key connected"
             // Pinnacle's website feed is served from a cache and was measured 90-400 s old (RESEARCH.md §127): never a basis for a real order.
