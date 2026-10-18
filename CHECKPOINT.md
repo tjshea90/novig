@@ -1,22 +1,22 @@
-# CHECKPOINT 3691 — read me first, then TASKS.md
+# CHECKPOINT 3692 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T23:36:09Z · **tests:** all 5 fast checks green
-**Branch:** `claude/optimistic-curie-qlj3pq` · **builds on:** `39a4bf934` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T23:36:57Z · **tests:** all 5 fast checks green
+**Branch:** `claude/optimistic-curie-qlj3pq` · **builds on:** `8f0df5f46` (this checkpoint is the commit after it)
 
 ## Just done
-CH1 live status line shows engine note; CH2/CH3 written
+answered CH1-CH3; standby label not found in code, asked Tj for screenshot
 
 ## Do this next
-answer CH3: why Kalshi/Polymarket standby (ApiChain), then CH2 live fills evidence
+CH3: verify Kalshi/Polymarket/SX win books in fair line (freshestWins/SOURCE_ORDER); CH2 needs live results; CH1 ships with next release
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
 
 ## Last ten checkpoints
 ```
+  8f0df5f46 ckpt 3691: CH1 live status line shows engine note; CH2/CH3 written
   28536d5d0 ckpt 3690: TCL122 v1.0 complete: released v1.0.0 (340), engine restarted and verified 
   7c08b817b ckpt 3689: v1.0.0 gated+pushed (3914 green), release.yml triggered, engine restarted o
   a03ebb01a ckpt 3688: pre-release: v1.0.0: Live board with GitHub/Phone switch, slate P/L, Engine
@@ -26,8 +26,4 @@ answer CH3: why Kalshi/Polymarket standby (ApiChain), then CH2 live fills eviden
   7f8a89ad4 ckpt 3684: TCL122-4 phone half written: LiveBoard model, LightUi phone sockets/stats/t
   e8159d38e ckpt 3683: TCL122-4 engine half: liveOnGitHub/phoneSockets/phoneLive predicates; forCl
   fc623715e ckpt 3682: TCL122-6 SlateProfit model (slate days, fixed start) + new profit card (Tod
-  049c471bf ckpt 3681: TCL122-8 meter bars (no M3 stop dot, spent=full red), TCL122-3 CloudLink.re
 ```
-
-(1 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
