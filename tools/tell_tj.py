@@ -169,6 +169,10 @@ def selftest():
         c = chat_reply("t1", "hello Tj", who="claude:test", cwd=work)
         cf = [f for f in git("ls-tree", "-r", "--name-only", BRANCH, cwd=bare).stdout.split() if f.startswith("chat/")]
         assert len(cf) == 1 and json.loads(git("show", "%s:%s" % (BRANCH, cf[0]), cwd=bare).stdout)["replyTo"] == "t1"
+        r = chat_relay("please change X", who="acct-aaaaaa", cwd=work)
+        rf = [f for f in git("ls-tree", "-r", "--name-only", BRANCH, cwd=bare).stdout.split() if r in f]
+        rm = json.loads(git("show", "%s:%s" % (BRANCH, rf[0]), cwd=bare).stdout)
+        assert rm["from"] == "tj" and rm["relayed"] and "please change X" in rm["text"] and "acct-aaaaaa" in rm["text"], rm
         a1 = chat_ack(["t1"], who="claude:test", cwd=work); a2 = chat_ack(["t1"], who="claude:test", cwd=work)
         assert (a1, a2) == (1, 0), (a1, a2)
         af = [f for f in git("ls-tree", "-r", "--name-only", BRANCH, cwd=bare).stdout.split() if f.startswith("chat/") and "ack-t1" in f]
