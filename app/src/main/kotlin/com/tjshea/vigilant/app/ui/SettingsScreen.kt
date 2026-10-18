@@ -439,9 +439,11 @@ fun SettingsScreen(
     ) { padding ->
         // Each page (and the list) has its own scroll, so a page always opens at its top and the list keeps its place.
         val scroll = androidx.compose.runtime.key(current) { rememberScrollState() }
+        // Pull to refresh on the pages that show API usage (TCL122-8: "if I go to a page that shows the API usage, I should be able to pull down to refresh and it shows a fresh read on each api usage").
+        val usagePage = current == SettingsPage.APIS || current == SettingsPage.USAGE || current?.parent == SettingsPage.APIS
+        VigilantPullToRefresh(busy = state.usageBusy || state.cloudUi.refreshing, onRefresh = keys.onRefreshUsage, modifier = Modifier.padding(padding).fillMaxSize(), enabled = usagePage) {
         Column(
             Modifier
-                .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(scroll)
                 .padding(horizontal = 16.dp)
@@ -480,6 +482,7 @@ fun SettingsScreen(
                 SettingsPage.USAGE -> UsageTab(state, keys)
                 SettingsPage.HELP -> ToolsTab(state, reportActions, onUpdate)
             }
+        }
         }
     }
 }

@@ -773,6 +773,7 @@ private fun VigilantRoot(
                     state, onSend = vm::sendChat, onChatOpen = vm::setChatOpen, onNewChat = vm::newChat, onClearChat = vm::clearChat, onMarkRead = vm::markClaudeRead,
                     onDismissMessage = vm::dismissClaudeMessage, onClearMessages = vm::clearClaudeMessages,
                     onOpenPage = { p -> settingsPage = p; tabName = Tab.SETTINGS.name },
+                    onRefresh = vm::refreshCloud,
                 )
                 Tab.EV -> FeedScreen(
                     state = state,
