@@ -5792,3 +5792,4 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 > 5) always remember that this system is fully in claude control. do everything necessary to optimize the app, ui, coding, and ensure the best chance at making profit. 
 > 
 > relay this message to all Claude accounts and make sure they read it as soon as they are active
+- [ ] TCL113 (Tj, chat r1792306336-a218, relayed, 2026-10-18, NOT acted on: widens class C, needs his word in a live session) "I want any Claude session to be able to change and toggle on and off any setting and any switch anywhere in the app and on GitHub except the stop all master switch"; also r1792306045-ac69: start the engine when scheduled even if app toggles are off.
