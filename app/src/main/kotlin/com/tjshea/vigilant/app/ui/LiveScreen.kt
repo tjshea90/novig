@@ -96,8 +96,8 @@ fun LiveScreen(
             LiveSwitch("Kalshi", "The exchange's real-time prices (needs your Kalshi API key).", s.gates.kalshiSocket, "liveSocketKalshi") { v -> onUpdate { it.copy(gates = it.gates.copy(kalshiSocket = v)) } }
             LiveSwitch("Pinnodds", "Pinnacle's live push feed. Needs a Pinnodds subscription; leave it off if you have none.", s.gates.pinnSocket, "liveSocketPinn") { v -> onUpdate { it.copy(gates = it.gates.copy(pinnSocket = v)) } }
 
-            SectionTitle("Only with a Pinnodds socket")
-            LiveNote("These engines price live games from Pinnacle's live feed, so they do nothing without a Pinnodds socket. Their pages are in Settings.")
+            SectionTitle("Live taker and live bids")
+            LiveNote("With the GitHub engine on and trading (paper or live), \"Run it on GitHub\" above also runs these there, priced from BoltOdds' soft-book average (no Pinnodds needed); real orders on that average stay off until you allow them on their pages in Settings.")
             Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onOpenPinnodds, modifier = Modifier.testTag("liveOpenPinnodds")) { Text("Pinnodds live") }
                 OutlinedButton(onClick = onOpenLiveBids, modifier = Modifier.testTag("liveOpenLiveBids")) { Text("Pinnodds live bids") }
