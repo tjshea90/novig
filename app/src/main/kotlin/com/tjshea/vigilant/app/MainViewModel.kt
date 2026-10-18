@@ -2435,6 +2435,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     /** Pull to refresh on a page that shows only the engine's files (Tracker, Bids, Live, Messages): read them now. */
     fun refreshCloud() { viewModelScope.launch(Dispatchers.IO) { c.cloud.refreshNow() } }
+
+    /** Pull to refresh on the Tracker (TCL122-3): every bet graded now, Novig's fills synced, the wallet and the engine's orders read again. */
+    fun refreshTracker() {
+        settleBets(force = true, announce = true)
+        runCatching { api.sync() }
+        refreshWallet(maxAgeMs = 0L)
+        refreshCloud()
+    }
     /** Pull to refresh on the PropLine +EV screen (TCL89): the engine runs its PropLine sweep now, nothing else. */
     fun refreshPropLine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.requestPropLineSweep() } }
     fun resetEngine() { viewModelScope.launch(Dispatchers.IO) { c.cloud.resetEngine() } }
