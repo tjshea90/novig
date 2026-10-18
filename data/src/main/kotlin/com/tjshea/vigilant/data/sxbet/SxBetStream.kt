@@ -207,7 +207,7 @@ class SxBetStream(
     }
 
     companion object {
-        val CHANNELS = listOf("best_odds_v3:global", "fixtures:live_scores", "main_line:global")
+        val CHANNELS = listOf("best_odds_v3:global", "fixtures:live_scores", "fixtures:global", "main_line:global")
         const val STALE_MS = 90_000L
     }
 }
