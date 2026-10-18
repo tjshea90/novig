@@ -1,12 +1,7 @@
 {
  "v": 1,
- "holder": "56f5bf",
- "label": "acct-5d1e2d",
- "kind": "chat",
- "task": "chat: release v0.117.4",
- "since": 1792354519,
- "sinceIso": "2026-10-18T20:15:19Z",
- "hb": 1792358392,
- "hbIso": "2026-10-18T21:19:52Z",
+ "holder": null,
+ "hb": 1792358429,
+ "hbIso": "2026-10-18T21:20:29Z",
  "leaseS": 1200
 }
