@@ -1,24 +1,22 @@
-# CHECKPOINT 3649 — read me first, then TASKS.md
+# CHECKPOINT 3650 — read me first, then TASKS.md
 
-**Written:** 2026-10-18T16:25:37Z · **tests:** all 5 fast checks green
-**Branch:** `ccr-5a7eb2e9-bn8drh` · **builds on:** `e8408fd70` (this checkpoint is the commit after it)
+**Written:** 2026-10-18T16:29:04Z · **tests:** all 5 fast checks green
+**Branch:** `ccr-5a7eb2e9-bn8drh` · **builds on:** `f3901d00c` (this checkpoint is the commit after it)
 
 ## Just done
-TCL119 PinnWireAccount + ownCountIsGuess (PinnWireTruthTest), TCL120 desk trim; versionCode 335 / 0.117.2
+pre-release: v0.117.2: PinnWire keys are spent only on PinnWire's own word (its free account read), not the app's own request count; the engine's bid list stays small enough for the phone to load (versionCode 335, v0.117.2)
 
 ## Do this next
-ship.sh for v0.117.2, release.yml, record-release (also record v0.117.1 335? check release 336 result first); then verify the Engine tab shows resting bids; tell Tj in chat
+Trigger .github/workflows/release.yml via mcp__github__actions_run_trigger, confirm it goes green via mcp__github__get_release_by_tag (tag v0.117.2), then run: bash tools/record-release.sh v0.117.2 335 "v0.117.2: PinnWire keys are spent only on PinnWire's own word (its free account read), not the app's own request count; the engine's bid list stays small enough for the phone to load"
 
 *(resuming? CLAUDE.md's "FIRST ACTION OF EVERY SESSION" comes before "Starting a session" — do that one first, or autosave stays off all session.)*
 
 ## Uncommitted right now
      M CHECKPOINT.md
-     M TASKS.md
-     M app/build.gradle.kts
-     M research/review/CHANGES.md
 
 ## Last ten checkpoints
 ```
+  c86d28c7b ckpt 3649: TCL119 PinnWireAccount + ownCountIsGuess (PinnWireTruthTest), TCL120 desk t
   a95cb6071 ckpt 3648: TCL120: desk.json kept ~12,000 cancelled/expired bids (12.5 MB) so the phon
   60ee93c65 ckpt 3647: pre-release: v0.117.2: SX Bet live feed (exchange mid with live scores) as 
   86e96923a ckpt 3646: pre-ship: v0.117.2: SX Bet live feed (exchange mid with live scores) as a l
@@ -28,8 +26,4 @@ ship.sh for v0.117.2, release.yml, record-release (also record v0.117.1 335? che
   229e6f635 ckpt 3642: pre-release: v0.117.1: refused Novig address replaced at once and unlimited
   965f1de5c ckpt 3641: TCL116: address gate before any API (probe, addressBlocked, test); TCL115 s
   a5dbae061 ckpt 3640: TCL115 tests green; analysis 2026-10-18 written; versionCode 334
-  21e791f41 ckpt 3639: TCL114: runner replacement rule + full engine admin documented (ENGINE_ADMI
 ```
-
-(5 automatic checkpoint(s) since the last deliberate one — the
-session was still mid-step. `git diff` against it shows what changed.)
