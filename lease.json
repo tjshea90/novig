@@ -1,7 +1,12 @@
 {
  "v": 1,
- "holder": null,
- "hb": 1792352374,
- "hbIso": "2026-10-18T19:39:34Z",
+ "holder": "56f5bf",
+ "label": "acct-5d1e2d",
+ "kind": "chat",
+ "task": "chat: pinnapi first for Pinnacle game lines, PinnWire backup",
+ "since": 1792352482,
+ "sinceIso": "2026-10-18T19:41:22Z",
+ "hb": 1792352482,
+ "hbIso": "2026-10-18T19:41:22Z",
  "leaseS": 1200
 }
