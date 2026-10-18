@@ -1,12 +1,7 @@
 {
  "v": 1,
- "holder": "56f5bf",
- "label": "acct-5d1e2d",
- "kind": "chat",
- "task": "chat: pinnacle freshness, sx bet, sportmicro",
- "since": 1792352061,
- "sinceIso": "2026-10-18T19:34:21Z",
- "hb": 1792352061,
- "hbIso": "2026-10-18T19:34:21Z",
+ "holder": null,
+ "hb": 1792352121,
+ "hbIso": "2026-10-18T19:35:21Z",
  "leaseS": 1200
 }
