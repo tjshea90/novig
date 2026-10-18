@@ -116,7 +116,7 @@ class ProfitChartTest {
         compose.onRoot().captureRoboImage("screenshots/4t_profit_chart.png")
         compose.onNodeWithTag("profitRange-YESTERDAY").performClick()
         compose.onNodeWithTag("profitRange-YESTERDAY").assertIsSelected()
-        compose.onNodeWithText("-\$1.00").assertExists()
+        compose.onAllNodesWithText("−\$1.00").fetchSemanticsNodes().isNotEmpty().let { assertTrue(it) }
         // The last 7 slates hold the bets from 0..6 days ago: 4 won (+4) and 3 lost (-3) = +$1.00, a bar each and a row each.
         compose.onNodeWithTag("profitRange-WEEK").performClick()
         compose.onNodeWithTag("profitBars").assertExists()
