@@ -1,5 +1,6 @@
 package com.tjshea.vigilant.app.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -35,8 +36,11 @@ fun VigilantPullToRefresh(
     modifier: Modifier = Modifier,
     holdWhileBusy: Boolean = true,
     state: PullToRefreshState = rememberPullToRefreshState(),
+    /** False: no pull at all, the content is drawn as it is (a screen whose pages only some refresh). */
+    enabled: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    if (!enabled) { Box(modifier, content = content); return }
     var pulled by remember { mutableStateOf(false) }
     val busyNow by rememberUpdatedState(busy)
     LaunchedEffect(pulled) {

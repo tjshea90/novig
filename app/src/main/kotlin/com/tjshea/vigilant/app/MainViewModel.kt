@@ -1649,6 +1649,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshUsage() {
         if (_state.value.usageBusy) return
         _state.update { it.copy(usageBusy = true) }
+        // The engine's own ledger (usage.json) is read again too, so the meters show both machines as of now (TCL122-8).
+        viewModelScope.launch(Dispatchers.IO) { runCatching { c.cloud.refreshNow() } }
         viewModelScope.launch(Dispatchers.IO) {
             val on = ApiEntry.active(_state.value.settings)
             for (e in ApiEntry.entries.filter { it in on && it.usagePrompt && it.provider != null && keysFor(it.provider).isNotEmpty() }) {

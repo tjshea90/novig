@@ -441,7 +441,7 @@ fun SettingsScreen(
         val scroll = androidx.compose.runtime.key(current) { rememberScrollState() }
         // Pull to refresh on the pages that show API usage (TCL122-8: "if I go to a page that shows the API usage, I should be able to pull down to refresh and it shows a fresh read on each api usage").
         val usagePage = current == SettingsPage.APIS || current == SettingsPage.USAGE || current?.parent == SettingsPage.APIS
-        VigilantPullToRefresh(busy = state.usageBusy || state.cloudUi.refreshing, onRefresh = keys.onRefreshUsage, modifier = Modifier.padding(padding).fillMaxSize(), enabled = usagePage) {
+        VigilantPullToRefresh(busy = state.usageBusy || state.cloudUi.refreshing, onRefresh = reportActions.onRefreshUsage, modifier = Modifier.padding(padding).fillMaxSize(), enabled = usagePage) {
         Column(
             Modifier
                 .fillMaxSize()
