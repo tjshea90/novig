@@ -5766,3 +5766,5 @@ Found 14:17-14:26Z: Novig answered 502/504 to the board AND the key route on eve
 - [x] TCL104d (Tj, chat t1792286737328, video): the "N bets hidden ... Scan" note changed height when the Scan button appeared/disappeared (wrapped 2 vs 3 lines), shifting the list ~10px each time a scan started/ended. Note is now fixed 3 lines and the Scan button is always laid out (alpha 0 while scanning). Compiles; ships with the next batch.
 
 - [x] TCL110 (Tj, 2026-10-18): the account acct-5d1e2d is always written "acct-5d1e2d (mirage)": CLAUDE.md rule, coord.py ACCOUNT_NAMES/named(), tell_tj.py chat sender; tests: test_coord.sh, tell_tj selftest.
+
+- [x] TCL110 (Tj, 2026-10-18): any session may alter anything without the lease if it breaks nothing (push.sh pushes the branch, moves main only for safe paths; test_coord.sh) AND a message typed to a non-holder is relayed into the app chat for the lease holder (capture_inbox.sh -> tell_tj.py relay; tell_tj selftest). Not yet watched live: confirm the holder prints `CHAT r...` after a real relay.
